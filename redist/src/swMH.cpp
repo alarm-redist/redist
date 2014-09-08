@@ -1,8 +1,6 @@
 /* Swendsen-Wang Algorithm
    Metropolis-Hastings Implementation */
 
-// test change text text text
-
 #include <RcppArmadillo.h>
 #include <RcppArmadilloExtensions/sample.h>
 #include <igraph/igraph.h>
