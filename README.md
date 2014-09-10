@@ -17,3 +17,9 @@ make fullinstall
 ```
 make remove
 ```
+
+## Clean SourceTree
+
+```
+make clean
+```
