@@ -1099,6 +1099,7 @@ Rcpp::List swMH(Rcpp::List aList,
   Rcpp::NumericVector diffDisstore(nrep);
   Rcpp::NumericVector diffPopstore(nrep);
   Rcpp::NumericVector diffSwitchstore(nrep);
+  Rcpp::NumericVector decisionCount(nrep);
   int ncc;
   int rsplit;
   int rpar;
@@ -1108,8 +1109,7 @@ Rcpp::List swMH(Rcpp::List aList,
   int z = 0;
   int store = 0;
 
-  // Number of proposals accepted, threshold for edge cut
-  int decisionCount = 0;
+  // Threshold for edge cut
   double cutBound = 1 - eprob;
 
   // Create denominator of dissimilarity index
@@ -1135,40 +1135,7 @@ Rcpp::List swMH(Rcpp::List aList,
 
   // This do loop iterates through the number of simulations nrep
   while(k < nrep){
-
-    // Store previous iteration, and advance the counter by 1
-    for(int i = 0; i < units; i++){
-      int index = k * units + i;
-      cdDist[index] = cds(i);
-    }
     
-    if(k > 0){
-      numAcc(z) = decisionCount;
-      numCC(z) = ncc;
-      rejSplit(z) = rsplit;
-      rejPar(z) = rpar;
-      rejAdj(z) = radj;
-      drawLam(z) = rlam;
-      
-      z++;
-    
-    }
-
-    // Store annealed betas and criteria (latter for reweighting)
-    betastore(k) = beta;
-    diffBetastore(k) = distsumssd;
-    betaDisstore(k) = betadiss;
-    diffDisstore(k) = diffDissim;
-    betaPopstore(k) = betapop;
-    // diffPopstore(k) = diffPop;
-    betaSwitchstore(k) = betaswitch;
-    diffSwitchstore(k) = diffSwitch;
-    diffPopstore(k) = psiNewPop; // This is to test whether we've been accepting incorrectly
-    
-    k++;
-  
-    Rcpp::Rcout << k << std::endl;
-
     //////////////////////////////////////////
     // First - determine the boundary cases //
     //////////////////////////////////////////
@@ -1191,7 +1158,7 @@ Rcpp::List swMH(Rcpp::List aList,
     Rcpp::NumericVector distParityProp;
     int breakOuter;
     int propSwitch;
-    int numCC;
+    int nccCheck;
     int thisPart;
     int actccs;
     double mhprob;	
@@ -1291,18 +1258,18 @@ Rcpp::List swMH(Rcpp::List aList,
       for(int n = 0; n < p; n++){
       
 	// Declare objects needed
-	numCC = searchListBound.size();
+	nccCheck = searchListBound.size();
 	int testPart;
 	breakOuter = 0;
-	int reps = numCC;
+	int reps = nccCheck;
 	int breakInner = 0;
 
 	// while there are still >0 partitions to select and no swap eliminated cd
 	for(int c = 0; c < reps; c++){ 
 	  
 	  // Sample a test partition to propose switching
-	  Rcpp::NumericVector numCCVec(numCC);
-	  for(int i = 0; i < numCC; i++){
+	  Rcpp::NumericVector numCCVec(nccCheck);
+	  for(int i = 0; i < nccCheck; i++){
 	    numCCVec(i) = i;
 	  }
 	  if(numCCVec.size() > 1){
@@ -1313,7 +1280,7 @@ Rcpp::List swMH(Rcpp::List aList,
 	  }
 	  switchPartition = searchListBound(testPart);
 	  searchListBound.erase(testPart);
-	  numCC--;
+	  nccCheck--;
 
 	  ///////////////////////////////////////////////
 	  // Compare against accunits - is it adjacent?
@@ -1733,7 +1700,6 @@ Rcpp::List swMH(Rcpp::List aList,
     if(testkeep(0) <= accProb){
       decision++;
     }
-    decisionCount += decision;
 
     // Propose to change beta if we are annealing
     if(annealbeta == 1){
@@ -1767,16 +1733,44 @@ Rcpp::List swMH(Rcpp::List aList,
 
     // Store edges cut
     alCutedge = genCutC(aList, cds);
+
+    // Store previous iteration, and advance the counter by 1
+    for(int i = 0; i < units; i++){
+      int index = k * units + i;
+      cdDist[index] = cds(i);
+    }
+    
+    // Store data about decisions and rejections
+    decisionCount(k) = decision;
+    numCC(k) = ncc;
+    rejSplit(k) = rsplit;
+    rejPar(k) = rpar;
+    rejAdj(k) = radj;
+    drawLam(k) = rlam;
+    
+    // Store annealed betas and criteria (latter for reweighting)
+    betastore(k) = beta;
+    diffBetastore(k) = distsumssd;
+    betaDisstore(k) = betadiss;
+    diffDisstore(k) = diffDissim;
+    betaPopstore(k) = betapop;
+    // diffPopstore(k) = diffPop;
+    betaSwitchstore(k) = betaswitch;
+    diffSwitchstore(k) = diffSwitch;
+    diffPopstore(k) = psiNewPop; 
+
+    // Increase counter by 1
+    Rcpp::Rcout << k << std::endl;
+
+    k++;
     
   }
-  
-  Rcpp::Rcout << decisionCount << std::endl;
-  
+    
   return Rcpp::List::create(cdDist, numAcc, numCC, rejSplit, rejPar, 
 			    rejAdj, drawLam, betastore, betaDisstore, 
 			    betaPopstore, betaSwitchstore,
 			    diffBetastore, diffDisstore, diffPopstore,
-			    diffSwitchstore);
+			    diffSwitchstore, decisionCount);
 
 }
 
