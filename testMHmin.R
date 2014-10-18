@@ -75,6 +75,10 @@ abetaswitch <- params$annealbetaswitch[aid]
 ## Weights power
 wpow <- params$weightpow[aid]
 
+## Thinning amount
+thin <-  params$thin[aid]
+
+## Population parity target, margin allowed
 parity <- sum(pcData$pop) / dists
 margin <- round(parity * margin.pct)
 
@@ -126,7 +130,7 @@ for(i in 1:loop){
         }
         ## Set seed, use rng state from previous sims
         set.seed(1)
-        .Random.seed <- ecuts[[17]]
+        .Random.seed <- ecuts[[19]]
         
         
     } else{
@@ -152,7 +156,7 @@ for(i in 1:loop){
     ## Save seed and simulations
     r <- .Random.seed
         
-    ecuts[[17]] <- r
+    ecuts[[19]] <- r
     
     save(ecuts, file = paste(dwd, "ecuts", state, "_", (1 - eprob) * 100,
                     "_", margin.pct, "_", lambda,
