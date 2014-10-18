@@ -1127,10 +1127,11 @@ Rcpp::List swMH(Rcpp::List aList,
   double distsumssd;
   double newrpi;
   double oldrpi;
-  // double diffPop;
   double diffSwitch;
   
-  double psiNewPop; // These two are to test whether we've been accepting incorrectly
+  double psiNewDiss;
+  double psiOldDiss;
+  double psiNewPop; 
   double psiOldPop;
 
   // This do loop iterates through the number of simulations nrep
@@ -1467,7 +1468,7 @@ Rcpp::List swMH(Rcpp::List aList,
 	    oldrpi = 0;
 
 	    double ssdDenom = ssdDists(propSwitch) + ssdDists(thisPart);
-	      
+
 	    // Loop over congressional district pair
 	    for(int i = 0; i < cdswitch.size(); i++){
 		
@@ -1512,6 +1513,10 @@ Rcpp::List swMH(Rcpp::List aList,
 	    ///////////////////////////////////////////////////////////////////////////
 	    double compRatDissim = 0;
 	    diffDissim = 0;
+
+	    // Initialize psi
+	    psiNewDiss = 0.0;
+	    psiOldDiss = 0.0;
 	      
 	    // Loop over congressional district pair
 	    for(int i = 0; i < cdswitch.size(); i++){
@@ -1540,37 +1545,17 @@ Rcpp::List swMH(Rcpp::List aList,
 	      double newminprop = (double)newpopmin / newpopdist;
 
 	      // Get difference in dissimilarity
-	      diffDissim += (double)(newpopdist * std::abs(newminprop - pAll) - 
-				     oldpopdist * std::abs(oldminprop - pAll));
+	      psiNewDiss += (double)((double)newpopdist * std::abs(newminprop - pAll));
+	      psiOldDiss += (double)((double)oldpopdist * std::abs(oldminprop - pAll));
 		
 	    }
 
-	    compRatDissim = (double)exp((betadiss * log(2)) * 
-					denom * diffDissim);
-
+	    compRatDissim = (double)exp((double)betapop * log(2) * psiNewDiss) / 
+	      exp((double)betapop * log(2) * psiOldDiss);
+	   
 	    ////////////////////////////////////////////////
 	    // Calculate penalty for population deviation //
 	    ////////////////////////////////////////////////
-	    // double compRatPop = 0;
-	    // diffPop = 0.0;
-	      
-	    // // Loop over congressional districts
-	    // for(int i = 0; i < cdswitch.size(); i++){
-		
-	    //   // Population object
-	    //   int distpop = 0;
-	    //   uvec newcds = find(cdPropTest == cdswitch(i));
-
-	    //   for(int j = 0; j < newcds.size(); j++){
-	    // 	distpop += pops(newcds(j));
-	    //   }
-
-	    //   // Calculate penalty
-	    //   diffPop += (double)std::abs((double)((double)distpop / parity) - 1);
-		
-	    // }
-	      
-	    // compRatPop = (double)exp((double)((double)betapop * log(2)) * diffPop);
 
 	    double compRatPop = 0;
 	    double diffPop = 0.0;
@@ -1706,12 +1691,16 @@ Rcpp::List swMH(Rcpp::List aList,
       beta = changeBeta(betavec, beta, distsumssd, betaweights);
     }
     if(annealbetadiss == 1){
-      betadiss = changeBeta(betadissvec, betadiss, diffDissim, betaweights);
+      if(decision == 1){
+	betadiss = changeBeta(betadissvec, betadiss, psiNewDiss, betaweights); 
+      }
+      if(decision == 0){
+	betadiss = changeBeta(betadissvec, betadiss, psiOldDiss, betaweights);
+      }
     }
     if(annealbetapop == 1){
-      // betapop = changeBeta(betapopvec, betapop, diffPop, betaweights);
       if(decision == 1){
-	betapop = changeBeta(betapopvec, betapop, psiNewPop, betaweights); // To test
+	betapop = changeBeta(betapopvec, betapop, psiNewPop, betaweights);
       }
       if(decision == 0){
 	betapop = changeBeta(betapopvec, betapop, psiOldPop, betaweights);
@@ -1729,6 +1718,10 @@ Rcpp::List swMH(Rcpp::List aList,
     if(decision == 1){
       cds = Rcpp::clone(newCds);
       distParity = Rcpp::clone(distParityProp);
+
+      // Switc psi's
+      psiOldPop = psiNewPop;
+      psiOldDiss = psiNewDiss;
     }
 
     // Store edges cut
@@ -1757,7 +1750,7 @@ Rcpp::List swMH(Rcpp::List aList,
     // diffPopstore(k) = diffPop;
     betaSwitchstore(k) = betaswitch;
     diffSwitchstore(k) = diffSwitch;
-    diffPopstore(k) = psiNewPop; 
+    diffPopstore(k) = psiOldPop; 
 
     // Increase counter by 1
     Rcpp::Rcout << k << std::endl;
@@ -1765,12 +1758,16 @@ Rcpp::List swMH(Rcpp::List aList,
     k++;
     
   }
+
+  // Calculate likelihood of last iteration
+  double likPop = (double)exp((double)betapop * log(2) * psiOldPop);
+  double likDissim = (double)exp((double)betadiss * log(2) * psiOldDiss);
     
   return Rcpp::List::create(cdDist, numAcc, numCC, rejSplit, rejPar, 
 			    rejAdj, drawLam, betastore, betaDisstore, 
 			    betaPopstore, betaSwitchstore,
 			    diffBetastore, diffDisstore, diffPopstore,
-			    diffSwitchstore, decisionCount);
+			    diffSwitchstore, decisionCount, likPop, likDissim);
 
 }
 
