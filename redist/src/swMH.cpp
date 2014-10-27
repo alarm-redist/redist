@@ -1760,8 +1760,8 @@ Rcpp::List swMH(Rcpp::List aList,
   }
 
   // Calculate likelihood of last iteration
-  double likPop = (double)exp((double)betapop * log(2) * psiOldPop);
-  double likDissim = (double)exp((double)betadiss * log(2) * psiOldDiss);
+  double likPop = (double)exp(psiOldPop);
+  double likDissim = (double)exp(psiOldDiss);
     
   return Rcpp::List::create(cdDist, numAcc, numCC, rejSplit, rejPar, 
 			    rejAdj, drawLam, betastore, betaDisstore, 
