@@ -40,7 +40,7 @@ load(paste(getwd(), "/pwdPrecinct.RData", sep = ""))
 ######################
             
 ## District type
-dists <- length(unique(pcData$cds))
+dists <- length(unique(pcData$cds1))
 
 ## Edgecut prob - prob of turning edge off = 1 - eprob
 eprob <- params$eprob[aid]
@@ -130,8 +130,10 @@ for(i in 1:loop){
         }
         ## Set seed, use rng state from previous sims
         set.seed(1)
-        .Random.seed <- ecuts[[19]]
-        
+        .Random.seed <- ecuts[[20]]
+
+        ## Delete object once done
+        rm(list = "ecuts")
         
     } else{
 
@@ -156,7 +158,7 @@ for(i in 1:loop){
     ## Save seed and simulations
     r <- .Random.seed
         
-    ecuts[[19]] <- r
+    ecuts[[20]] <- r
     
     save(ecuts, file = paste(dwd, "ecuts", state, "_", (1 - eprob) * 100,
                     "_", margin.pct, "_", lambda,
