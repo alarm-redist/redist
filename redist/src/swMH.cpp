@@ -1019,7 +1019,6 @@ Rcpp::List swMH(Rcpp::List aList,
 		double betadiss = 0.0, 
 		double betapop = 0.0,
 		double betaswitch = 0.0,
-		int origpartcompact = 0,
 		int annealbeta = 0,
 		int annealbetadiss = 0,
 		int annealbetapop = 0,
@@ -1123,16 +1122,18 @@ Rcpp::List swMH(Rcpp::List aList,
   double denom = (double)1 / (2 * tAll * pAll * (1 - pAll));
 
   // Create objects for constraints
-  double diffDissim;
   double distsumssd;
-  double newrpi;
-  double oldrpi;
+  double diffDissim;
   double diffSwitch;
   
+  double psiNewSsd;
+  double psiOldSsd;
   double psiNewDiss;
   double psiOldDiss;
   double psiNewPop; 
   double psiOldPop;
+  double psiNewSwitch;
+  double psiOldSwitch;
 
   // This do loop iterates through the number of simulations nrep
   while(k < nrep){
@@ -1463,9 +1464,8 @@ Rcpp::List swMH(Rcpp::List aList,
 	    // Numerator is ssd within proposed district for switched
 	    // Denominator is ssd within old district for switched
 	    double compRat;
-	    distsumssd = 0;
-	    newrpi = 0;
-	    oldrpi = 0;
+	    psiNewSsd = 0.0;
+	    psiOldSsd = 0.0;
 
 	    double ssdDenom = ssdDists(propSwitch) + ssdDists(thisPart);
 
@@ -1473,8 +1473,8 @@ Rcpp::List swMH(Rcpp::List aList,
 	    for(int i = 0; i < cdswitch.size(); i++){
 		
 	      // Initialize objects
-	      double oldssd = 0;
-	      double newssd = 0;
+	      double oldssd = 0.0;
+	      double newssd = 0.0;
 	      uvec newcds = find(cdPropTest == cdswitch(i));
 	      uvec oldcds = find(cdCurrTest == cdswitch(i));
 
@@ -1494,19 +1494,12 @@ Rcpp::List swMH(Rcpp::List aList,
 		}
 	      }
 
-	      // Standard compactness constraint 
-	      if(origpartcompact == 0){
-		newrpi += newssd / ssdDenom;
-		oldrpi += oldssd / ssdDenom;
-		distsumssd += (double)(newssd - oldssd) / ssdDenom;
-	      }
-	      // Compactness constraint relative to original partition
-	      if(origpartcompact == 1){
-		distsumssd += (double)std::abs((newssd / ssdDenom) - 1);
-	      }
+	      psiNewSsd += newssd / ssdDenom;
+	      psiOldSsd += oldssd / ssdDenom;
+	    
 	    }
 
-	    compRat = (double)exp((beta * log(2)) * distsumssd);
+	    compRat = (double)exp((double)beta * log(2) * ((double)psiNewSsd - psiOldSsd));
 	     
 	    ///////////////////////////////////////////////////////////////////////////
 	    // Calculate dissimilarity index for group - for segregation restriction //
@@ -1688,7 +1681,12 @@ Rcpp::List swMH(Rcpp::List aList,
 
     // Propose to change beta if we are annealing
     if(annealbeta == 1){
-      beta = changeBeta(betavec, beta, distsumssd, betaweights);
+      if(decision == 1){
+	beta = changeBeta(betavec, beta, psiNewSsd, betaweights);
+      }
+      if(decision == 0){
+	beta = changeBeta(betavec, beta, psiOldSsd, betaweights);
+      }
     }
     if(annealbetadiss == 1){
       if(decision == 1){
@@ -1719,7 +1717,8 @@ Rcpp::List swMH(Rcpp::List aList,
       cds = Rcpp::clone(newCds);
       distParity = Rcpp::clone(distParityProp);
 
-      // Switc psi's
+      // Switch psi's
+      psiOldSsd = psiNewSsd;
       psiOldPop = psiNewPop;
       psiOldDiss = psiNewDiss;
     }
@@ -1760,6 +1759,7 @@ Rcpp::List swMH(Rcpp::List aList,
   }
 
   // Calculate likelihood of last iteration
+  double likSsd = (double)exp(psiOldSsd);
   double likPop = (double)exp(psiOldPop);
   double likDissim = (double)exp(psiOldDiss);
     
@@ -1767,7 +1767,8 @@ Rcpp::List swMH(Rcpp::List aList,
 			    rejAdj, drawLam, betastore, betaDisstore, 
 			    betaPopstore, betaSwitchstore,
 			    diffBetastore, diffDisstore, diffPopstore,
-			    diffSwitchstore, decisionCount, likPop, likDissim);
+			    diffSwitchstore, decisionCount, 
+			    likSsd, likPop, likDissim);
 
 }
 
