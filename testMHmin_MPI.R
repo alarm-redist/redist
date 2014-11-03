@@ -18,10 +18,10 @@ params <- expand.grid(state = "OK_final",
                       targbetapop = 0,
                       bybetapop = 0,
                       weightpow = 0,
-                      nsims = 50, loop = 2,
+                      nsims = 50, loop = 2, thin = 2,
                       wd = "/scratch/network/bfifield/segregation/data/",
                       dwd = "/scratch/network/bfifield/segregation/data/simRuns/",
-                      codedir = "/scratch/network/bfifield/segregation/code/")
+                      codedir = "/scratch/network/bfifield/segregation/code/redist-pkg/")
 
 ## Get state
 state <- params$state[1]
@@ -118,6 +118,9 @@ ecutsMPI <- function(){
     
     ## Repeat multiple times, save after
     loop <- params$loop
+
+    ## Thinning amount
+    thin <-  params$thin
     
     ## Weights power
     wpow <- params$weightpow
@@ -250,7 +253,7 @@ ecutsMPI <- function(){
         r <- .Random.seed
         
         ecuts[[20]] <- r
-t        
+        
         save(ecuts, file = paste(dwd, "ecuts", state, "_", (1 - eprob) * 100,
                         "_", margin.pct, "_", lambda,
                         "_b", params$initbeta * -1, 
@@ -263,6 +266,154 @@ t
         print(paste("loop", i, sep = " "))
         
     }
+
+    ######################
+    ## Combine the data ##
+    ######################
+    
+    ## Set up container objects
+    cds <- matrix(NA, nrow = nrow(pcData),
+                  ncol = (nsims * loop / thin))
+
+    ncc <- rep(NA, (nsims * loop / thin))
+    nacc <- rep(NA, (nsims * loop / thin))
+    rsplit <- rep(NA, (nsims * loop / thin))
+    rpar <- rep(NA, (nsims * loop / thin))
+    radj <- rep(NA, (nsims * loop / thin))
+    rlam <- rep(NA, (nsims * loop / thin))
+    beta <- rep(NA, (nsims * loop / thin))
+    betadiss <- rep(NA, (nsims * loop / thin))
+    betapop <- rep(NA, (nsims * loop / thin))
+    betaswitch <- rep(NA, (nsims * loop / thin))
+    ssdvec <- rep(NA, (nsims * loop / thin))
+    dissvec <- rep(NA, (nsims * loop / thin))
+    popvec <- rep(NA, (nsims * loop / thin))
+    switchvec <- rep(NA, (nsims * loop / thin))
+    decisionvec <- rep(NA, (nsims * loop / thin))
+
+    ## Indices for thinning
+    indthin <- which((1:nsims) %% thin == 0)
+
+    ## Loop over simulation parameters ##
+    for(i in 1:loop){
+
+        ## Load data set
+        load(paste(dwd, "ecuts", state, "_", (1 - eprob) * 100,
+                   "_", margin.pct, "_", lambda,
+                   "_b", params$initbeta * -1,
+                   "_bDiss", params$initbetadiss,
+                   "_bPop", params$initbetapop * -1,
+                   "_bSwitch", params$initbetaswitch * -1,
+                   "_pow", wpow,
+                   "_par", pnum, "_loop", i, ".RData", sep = ""))
+
+        ind <- ((i - 1) * (nsims / thin) + 1):(i * (nsims / thin))
+        
+        ## Store objects together
+        cds[1:nrow(pcData), ind] <- ecuts[[1]][,indthin]
+
+        ncc[ind] <- ecuts[[2]][indthin]
+        nacc[ind] <- ecuts[[3]][indthin]
+        rsplit[ind] <- ecuts[[4]][indthin]
+        rpar[ind] <- ecuts[[5]][indthin]
+        radj[ind] <- ecuts[[6]][indthin]
+        rlam[ind] <- ecuts[[7]][indthin]
+        beta[ind] <- ecuts[[8]][indthin]
+        betadiss[ind] <- ecuts[[9]][indthin]
+        betapop[ind] <- ecuts[[10]][indthin]
+        betaswitch[ind] <- ecuts[[11]][indthin]
+        ssdvec[ind] <- ecuts[[12]][indthin]
+        dissvec[ind] <- ecuts[[13]][indthin]
+        popvec[ind] <- ecuts[[14]][indthin]
+        switchvec[ind] <- ecuts[[15]][indthin]
+        decisionvec[ind] <- ecuts[[16]][indthin]
+
+    }
+
+    ## Store data in edgecuts object
+    edgecuts <- vector(mode = "list", length = 16)
+    edgecuts[[1]] <- cds
+    edgecuts[[2]] <- ncc
+    edgecuts[[3]] <- nacc
+    edgecuts[[4]] <- rsplit
+    edgecuts[[5]] <- rpar
+    edgecuts[[6]] <- radj
+    edgecuts[[7]] <- rlam
+    edgecuts[[8]] <- beta
+    edgecuts[[9]] <- betadiss
+    edgecuts[[10]] <- betapop
+    edgecuts[[11]] <- betaswitch
+    edgecuts[[12]] <- ssdvec
+    edgecuts[[13]] <- dissvec
+    edgecuts[[14]] <- popvec
+    edgecuts[[15]] <- switchvec
+    edgecuts[[16]] <- decisionvec
+
+    ## Save full object
+    save(edgecuts, file = paste(dwd, "edgecuts", state, "_", (1 - eprob) * 100,
+                       "_", margin.pct, "_", lambda,
+                       "_b", params$initbeta * -1,
+                       "_bDiss", params$initbetadiss,
+                       "_bPop", params$initbetapop * -1, 
+                       "_bSwitch", params$initbetaswitch * -1, 
+                       "_pow", wpow,
+                       "_par", pnum, ".RData", sep = ""))
+
+    ###############################
+    ## Generate diagnostic plots ##
+    ###############################
+
+    ## Number of acceptances
+    accept <- 0
+    for(z in 2:length(edgecuts[[10]])){
+        if(edgecuts[[10]][z-1] != edgecuts[[10]][z]){
+            accept <- accept + 1
+        }
+    }
+
+    ## Distance from population parity
+    paritydist <- distParity(edgecuts[[1]], pcData$pop, parity)
+
+    ## For subsetting accept/reject plot
+    ind <- seq(1, length(edgecuts[[16]]), by = 25)
+
+    ## Diagnostic plot ##
+    pdf(file = paste(dwd, "diagPlot", state, "_", (1 - eprob) * 100,
+        "_", margin.pct, "_", lambda,
+        "_b", params$initbeta * -1, 
+        "_bDiss", params$initbetadiss,
+        "_bPop", params$initbetapop * -1,
+        "_bSwitch", params$initbetaswitch * -1,
+        "_pow", wpow,
+        "_par", pnum, ".pdf", sep = ""),
+        height = 6, width = 12)
+    par(mfrow = c(1,2))
+    ## Trace of beta
+    plot(edgecuts[[10]], type = "l",
+         xlab = "Iterations", ylab = "",
+         main = paste("Trace of Beta \n Lambda =",
+             params$lambda, "pow =",
+             params$weightpow, sep = " "))
+    ## Distribution of beta values
+    barplot(table(edgecuts[[10]]),
+            main = paste("Distribution of Beta_pop \n Acceptance Rate =",
+                accept / length(edgecuts[[10]]), sep = " "))
+
+    ## Accept/Reject
+    plot(edgecuts[[16]][ind], pch = 16,
+         cex = .5,
+         yaxt = "n",
+         col = ifelse(edgecuts[[16]][ind] == 0, "red", "black"),
+         xlab = "Iterations", ylab = "",
+         main = paste("Rejections from SWA \n Acceptance Rate =",
+             sum(edgecuts[[16]]) / length(edgecuts[[16]]), sep = " "))
+    axis(2, c(0, 1), c("Reject", "Accept"))
+    ## Trace of district population
+    plot(paritydist, type = "l",
+         xlab = "Iterations", ylab = "",
+         main = "Trace of Distance from Parity")
+    dev.off() 
+    
 }
 
 ## Spawn slaves equal to number of rows of params (one for each temperature)
@@ -286,14 +437,13 @@ mpi.bcast.Robj2slave(ecutsMPI)
 mpi.bcast.Robj2slave(ecutsAppend)
 
 ## Execute ecutsMPI program on each slave
-mpi.remote.exec(swaps)
 mpi.bcast.cmd(ecutsMPI())
 
-## ## Combine save files (NEED TO SET DIRECTORY)
-## mpi.bcast.cmd(source(paste(codedir, "combineDataSplit.R", sep = "")))
+## Combine save files (NEED TO SET DIRECTORY)
+## mpi.bcast.cmd(source(paste(params$codedir[1], "combineDataSplit.R", sep = "")))
 
-## ## Generate diagnostics
-## mpi.bcast.cmd(source(paste(codedir, "genDiag.R", sep = "")))
+## Generate diagnostics
+## mpi.bcast.cmd(source(paste(params$codedir[1], "genDiag.R", sep = "")))
 
 ## Close slaves
 mpi.close.Rslaves()
