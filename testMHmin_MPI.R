@@ -5,6 +5,10 @@
 # Institution: Princeton University
 # Purpose: Called by runSWA.R to run simulations
 #####################################
+betaseq <- rep(NA, 11)
+for(i in 1:11){
+    betaseq[i] <- -(0.1^(i-1))
+}
 
 params <- expand.grid(state = "testset_25_2",
                       testset = TRUE,
@@ -12,14 +16,14 @@ params <- expand.grid(state = "testset_25_2",
                       lambda = 1, pnum = 1,
                       initbeta = 0,
                       initbetadiss = 0,
-                      initbetapop = seq(0, -100, by = -10),
+                      initbetapop = betaseq,
                       initbetaswitch = 0,
                       annealbeta = 0, annealbetadiss = 0,
                       annealbetapop = 0, annealbetaswitch = 0,
                       targbetapop = 0,
                       bybetapop = 0,
                       weightpow = 0,
-                      nsims = 50000, loop = 1, thin = 1,
+                      nsims = 10000, loop = 1, thin = 1,
                       wd = "/scratch/network/bfifield/segregation/data/",
                       dwd = "/scratch/network/bfifield/segregation/data/simRuns/",
                       codedir = "/scratch/network/bfifield/segregation/code/redist-pkg/")
