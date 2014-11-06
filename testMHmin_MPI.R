@@ -6,9 +6,10 @@
 # Purpose: Called by runSWA.R to run simulations
 #####################################
 
-params <- expand.grid(state = "OK_final",
+params <- expand.grid(state = "testset_25_2",
+                      testset = TRUE,
                       eprob = 0.05, marginpct = 1,
-                      lambda = 20, pnum = 1,
+                      lambda = 1, pnum = 1,
                       initbeta = 0,
                       initbetadiss = 0,
                       initbetapop = seq(0, -100, by = -10),
@@ -18,33 +19,43 @@ params <- expand.grid(state = "OK_final",
                       targbetapop = 0,
                       bybetapop = 0,
                       weightpow = 0,
-                      nsims = 50, loop = 2, thin = 2,
+                      nsims = 50000, loop = 1, thin = 1,
                       wd = "/scratch/network/bfifield/segregation/data/",
                       dwd = "/scratch/network/bfifield/segregation/data/simRuns/",
                       codedir = "/scratch/network/bfifield/segregation/code/redist-pkg/")
 
 ## Get state
 state <- params$state[1]
+testset <- params$testset[1]
 
 ## Modify pnum
 params$pnum <- 1:nrow(params)
 
 ## Set working directory | state
-setwd(paste(params$wd[1], state, sep = ""))
-
+if(testset == FALSE){
+    setwd(paste(params$wd[1], state, sep = ""))
+} else{
+    setwd(paste(params$wd[1], "testsets/", sep = ""))
+}
 ## Load packages, data
 if (!is.loaded("mpi_initialize")) { 
     library("Rmpi") 
 }
 
-load(paste(getwd(), "/preprocPrec.RData", sep = ""))
-load(paste(getwd(), "/pwdPrecinct.RData", sep = ""))
-
+if(testset == FALSE){
+    load(paste(getwd(), "/preprocPrec.RData", sep = ""))
+    load(paste(getwd(), "/pwdPrecinct.RData", sep = ""))
+} else{
+    load(paste(getwd(), "/", params$state[1], ".RData", sep = ""))
+}
 ## Generate swapping sequence (in future, allow for user to input how often swaps are made)
+freq <- 10
 nits <- params$nsims[1] * params$loop[1]
-swaps <- matrix(0,2,nits)
+swaps <- matrix(NA,2,nits)
 for(i in 1:nits){
-    swaps[,i] = sample(1:nrow(params),size=2)
+    if(i %% freq == 0){
+        swaps[,i] = sample(1:nrow(params),size=2)
+    }
 }
 
 ## Functions
@@ -78,9 +89,12 @@ ecutsMPI <- function(){
 
     library("redist"); library("BARD"); library("maptools"); library("methods")
 
-    load(paste(getwd(), "/preprocPrec.RData", sep = ""))
-    load(paste(getwd(), "/pwdPrecinct.RData", sep = ""))
-    
+    if(params$testset == FALSE){
+        load(paste(getwd(), "/preprocPrec.RData", sep = ""))
+        load(paste(getwd(), "/pwdPrecinct.RData", sep = ""))
+    } else{
+        load(paste(getwd(), "/", params$state, ".RData", sep = ""))
+    }
     ######################
     ## Parameter values ##
     ######################
@@ -93,7 +107,11 @@ ecutsMPI <- function(){
     codedir <- params$codedir
     
     ## District type
-    dists <- length(unique(pcData$cds))
+    if(params$testset == FALSE){
+        dists <- length(unique(pcData$cds))
+    } else{
+        dists <- length(unique(cdmat[,1]))
+    }
     
     ## Edgecut prob - prob of turning edge off = 1 - eprob
     eprob <- params$eprob
@@ -142,9 +160,10 @@ ecutsMPI <- function(){
     ## Swap partners
     partner <- swaps[,swapIts][swaps[,swapIts] != procID]
     
-    ## Initialize ecuts object
-    ecuts <- list()
-    
+    ## Test whether zero indexing causes error
+    for(i in 1:length(al.pc)){
+        al.pc[[i]] <- al.pc[[i]] - 1
+    }
     
     #########################
     ## Run the simulations ##
@@ -171,23 +190,30 @@ ecutsMPI <- function(){
             
             ## Get starting values
             cds <- ecuts[[1]][,nsims]
+
             ## Set seed, use rng state from previous sims
-            set.seed(1)
-            .Random.seed <- ecuts[[20]]
+            ## set.seed(1)
+            ## .Random.seed <- ecuts[[20]]
             
             
         } else{
-            
-            cds <- eval(parse(text = paste("pcData$cds", pnum, sep = "")))
-            
+
+            if(params$testset == FALSE){
+                cds <- eval(parse(text = paste("pcData$cds", pnum, sep = "")))
+            } else{
+                cds <- cdmat[,sample(1:ncol(cdmat), 1)]
+            }
         }
+
+        ## Initialize ecuts object
+        ecuts <- list()
         
         #######################
         ## Run the algorithm ##
         #######################
         pcData$blackhisp <- pcData$BlackPop + pcData$HispPop
         
-        set.seed(pnum)
+        ## set.seed(pnum)
         
         for(j in 1:length(nsimsAdj)){
             
@@ -253,8 +279,10 @@ ecutsMPI <- function(){
         r <- .Random.seed
         
         ecuts[[20]] <- r
-        
-        save(ecuts, file = paste(dwd, "ecuts", state, "_", (1 - eprob) * 100,
+
+        nbetapop <- betapop
+        save(ecuts, nbetapop,
+             file = paste(dwd, "ecuts", state, "_", (1 - eprob) * 100,
                         "_", margin.pct, "_", lambda,
                         "_b", params$initbeta * -1, 
                         "_bDiss", params$initbetadiss, 
@@ -350,14 +378,14 @@ ecutsMPI <- function(){
     edgecuts[[16]] <- decisionvec
 
     ## Save full object
-    save(edgecuts, file = paste(dwd, "edgecuts", state, "_", (1 - eprob) * 100,
+    save(edgecuts,
+         file = paste(dwd, "edgecuts", state, "_", (1 - eprob) * 100,
                        "_", margin.pct, "_", lambda,
                        "_b", params$initbeta * -1,
                        "_bDiss", params$initbetadiss,
-                       "_bPop", params$initbetapop * -1, 
+                       "_bPop", nbetapop, 
                        "_bSwitch", params$initbetaswitch * -1, 
-                       "_pow", wpow,
-                       "_par", pnum, ".RData", sep = ""))
+                       "_pow", wpow, ".RData", sep = ""))
 
     ###############################
     ## Generate diagnostic plots ##
