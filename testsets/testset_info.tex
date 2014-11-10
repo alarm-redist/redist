@@ -1,0 +1,104 @@
+\documentclass[12pt]{article}
+\usepackage{fullpage}
+\usepackage[a4paper,vmargin={1in,1in},hmargin={1in,1in}]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{setspace}
+\usepackage{natbib}
+\usepackage{setspace}
+\usepackage{rotating}
+\usepackage{rotfloat}
+\usepackage{animate}
+\usepackage[flushmargin]{footmisc}
+\usepackage{hyperref}
+\usepackage[sc]{mathpazo}
+%\linespread{1.05}         % Palatino needs more leading (space between lines)
+\usepackage[T1]{fontenc}
+
+% === new commands ===
+\newcommand\ud{\mathrm{d}}
+\newcommand\dist{\buildrel\rm d\over\sim}
+\newcommand\ind{\stackrel{\rm indep.}{\sim}}
+\newcommand\iid{\stackrel{\rm i.i.d.}{\sim}}
+\newcommand\logit{{\rm logit}}
+\renewcommand\r{\right}
+\renewcommand\l{\left}
+\newcommand\Var{{\rm Var}}
+\newcommand\var{{\rm var}}
+\newcommand\Cov{{\rm Cov}}
+\newcommand\bone{\mathbf{1}}
+\newcommand\E{\mathbb{E}}
+\newcommand\V{\mathbb{V}}
+\newcommand\bA{\mathbf{A}}
+\newcommand\bB{\mathbf{B}}
+\newcommand\bC{\mathbf{C}}
+\newcommand\bD{\mathbf{D}}
+\newcommand\bE{\mathbf{E}}
+\newcommand\bM{\mathbf{M}_{\mathbf X}}
+\newcommand\bP{\mathbf{P}_{\mathbf X}}
+\newcommand\bR{\mathbf{R}}
+\newcommand\bT{\mathbf{T}}
+\newcommand\bt{\mathbf{t}}
+\newcommand\bI{\mathbf{I}}
+\newcommand\bX{\mathbf{X}}
+\newcommand\bY{\mathbf{Y}}
+\newcommand\bU{\mathbf{U}}
+\newcommand\bV{\mathbf{V}}
+\newcommand\cC{\mathcal{C}}
+\newcommand\cN{\mathcal{N}}
+\newcommand\cS{\mathcal{S}}
+\newcommand\cU{\mathcal{U}}
+\newcommand\cP{\mathcal{P}}
+\newcommand\cO{\mathcal{O}}
+\newcommand\cX{\mathcal{X}}
+\newcommand\wX{\widetilde{X}}
+\newcommand{\diag}{\mathop{\mathrm{diag}}}
+\newcommand{\argmax}{\operatornamewithlimits{argmax}}
+\newcommand{\argmin}{\operatornamewithlimits{argmin}}
+\newcommand{\indep}{\mbox{$\perp\!\!\!\perp$}}
+\def\independenT#1#2{\mathrel{\rlap{$#1#2$}\mkern2mu{#1#2}}}
+\DeclareMathOperator{\sgn}{sgn}
+\providecommand{\norm}[1]{\lVert#1\rVert}
+
+\bibpunct{(}{)}{,}{a}{,}{,}
+\begin{document}
+All files are marked by the number of precincts in the test sets, and the number of districts they are divided into. For example, {\tt testset\_25\_2.RData} contains the data for the test set made up of every valid two-district partition of 25 precincts. 
+
+Below are the objects in the RData files. The other files contain the information necessary to load maps in R, which we don't need to run the simulations but are useful to have on hand. 
+\section{Objects in {\tt testset} RData file}
+
+\begin{itemize}
+\item {\tt al.pc} --- Adjacency list of precincts in test set
+\item {\tt pcData} --- Population data on each precinct. Relevant columns are:
+	\begin{itemize}
+	\item {\tt pop} --- Population of the precinct
+	\item {\tt obama} --- Obama vote in 2008 election
+	\item {\tt mccain} --- McCain vote in 2008 election
+	\item {\tt BlackPop} --- Number of African-Americans in precinct
+	\item {\tt HispPop} --- Number of Hispanics in precinct
+	\end{itemize}
+\item {\tt cdlist} --- Every partition of the test set into the specified number of districts (in list form)
+\item {\tt cdmat} --- Every partition of the test set into the specified number of districts (in matrix form)
+\item {\tt nulldist} --- Dissimilarity indices calculated on the test set for every feasible redistricting plan. Dissimilarity index is defined as $$\frac{1}{2TP(1 - P)}\sum_{i = 1}^{{\rm dists}}t_i|p_i - P|$$
+where:
+	\begin{itemize}
+	\item $T$ is the number of people across all districts
+	\item $P$ is the proportion of people in the minority group of interest, across all districts
+	\item $t_i$ is the number of people in district $i$
+	\item $p_i$ is the proportion of people in the minority group of interest, in district $i$
+	\end{itemize}
+Each column is a different dissimilarity index:
+	\begin{itemize}
+	\item {\tt hispdiss} --- Hispanic dissimilarity index
+	\item {\tt afamdiss} --- African-American dissimilarity index
+	\item {\tt demdiss} --- Democratic dissimilarity index
+	\item {\tt repdiss} --- Republican dissimilarity index
+	\end{itemize}
+\item {\tt pwdPrecinct} --- the pairwise-district matrix for the test set
+\end{itemize}
+
+\end{document}
