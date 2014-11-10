@@ -66,14 +66,14 @@
 
 \bibpunct{(}{)}{,}{a}{,}{,}
 \begin{document}
-All files are marked by the number of precincts in the test sets, and the number of districts they are divided into. For example, {\tt testset\_25\_2.RData} contains the data for the test set made up of every valid two-district partition of 25 precincts. 
+All files are marked by the number of precincts in the test sets, and the number of districts they are divided into. For example, {\tt testset252.RData} contains the data for the test set made up of every valid two-district partition of 25 precincts. 
 
 Below are the objects in the RData files. The other files contain the information necessary to load maps in R, which we don't need to run the simulations but are useful to have on hand. 
 \section{Objects in {\tt testset} RData file}
 
 \begin{itemize}
 \item {\tt al.pc} --- Adjacency list of precincts in test set
-\item {\tt pcData} --- Population data on each precinct. Relevant columns are:
+\item {\tt geodat} --- Population data on each precinct. Relevant columns are:
 	\begin{itemize}
 	\item {\tt pop} --- Population of the precinct
 	\item {\tt obama} --- Obama vote in 2008 election
@@ -98,7 +98,7 @@ Each column is a different dissimilarity index:
 	\item {\tt demdiss} --- Democratic dissimilarity index
 	\item {\tt repdiss} --- Republican dissimilarity index
 	\end{itemize}
-\item {\tt pwdPrecinct} --- the pairwise-district matrix for the test set
+\item {\tt ssdmat} --- the pairwise-district matrix for the test set
 \end{itemize}
 
 \end{document}
