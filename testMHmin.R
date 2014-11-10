@@ -1,7 +1,7 @@
 #####################################
 # Author: Ben Fifield
 # Created: 2014/09/20
-# Last Revision: 2014/09/21
+# Last Revision: 2014/11/09
 # Institution: Princeton University
 # Purpose: Called by runSWA.R to run simulations
 #####################################
@@ -21,26 +21,29 @@ state <- params$state[aid]
 ## Set working directory | state
 if(a == "Tukey"){
     setwd(paste("/scratch/network/bfifield/segregation/data/", state,
-                "_final", sep = ""))
+                sep = ""))
     dwd <- "/scratch/network/bfifield/segregation/data/simRuns/"
 }
 if(a == "Mac"){
     setwd(paste("~/Dropbox/Graduate School/Projects/segregation/svn/data/", state,
-          "_final", sep = ""))
+                sep = ""))
     dwd <- "~/Desktop/simRuns/"
 }
 
 ## Load packages, data
 library("redist"); library("BARD"); library("maptools"); library("methods")
-load(paste(getwd(), "/preprocPrec.RData", sep = ""))
-load(paste(getwd(), "/pwdPrecinct.RData", sep = ""))
-        
+load(paste(getwd(), "/algdat.RData", sep = ""))
+
 ######################
 ## Parameter values ##
 ######################
             
 ## District type
-dists <- length(unique(pcData$cds1))
+if(substr(state, 1, 7) == "testset"){
+    dists <- length(unique(cdmat[,1]))
+} else{
+    dists <- length(unique(geodat$cds1))
+}
 
 ## Edgecut prob - prob of turning edge off = 1 - eprob
 eprob <- params$eprob[aid]
@@ -79,7 +82,7 @@ wpow <- params$weightpow[aid]
 thin <-  params$thin[aid]
 
 ## Population parity target, margin allowed
-parity <- sum(pcData$pop) / dists
+parity <- sum(geodat$pop) / dists
 margin <- round(parity * margin.pct)
 
 ## Beta vectors
@@ -137,21 +140,26 @@ for(i in 1:loop){
         
     } else{
 
-        cds <- eval(parse(text = paste("pcData$cds", pnum, sep = "")))
+        ## Select starting values
+        if(substr(state, 1, 7) == "testset"){
+            cds <- cdmat[,sample(1:ncol(cdmat), 1)]
+        } else{
+            cds <- eval(parse(text = paste("geodat$cds", pnum, sep = "")))
+        }
         
     }
     
     #######################
     ## Run the algorithm ##
     #######################
-    pcData$blackhisp <- pcData$BlackPop + pcData$HispPop
+    geodat$blackhisp <- geodat$BlackPop + geodat$HispPop
 
     set.seed(pnum)
     ecuts <- swMH(al.pc, cds, cds, nsims, eprob,
-                  pcData$pop, pcData$blackhisp, parity, margin,
-                  dists, lambda, pwdPrecinct,
-                  beta, betadiss, betapop, betaswitch,
+                  geodat$pop, geodat$blackhisp, parity, margin,
+                  dists, lambda, ssdmat,
                   betavec, betadissvec, betapopvec, betaswitchvec, betaweights,
+                  beta = beta, betadiss = betadiss, betapop = betapop, betaswitch = betaswitch,
                   annealbeta = abeta, annealbetadiss = abetadiss,
                   annealbetapop = abetapop, annealbetaswitch = abetaswitch)
 

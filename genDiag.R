@@ -16,7 +16,7 @@ for(z in 2:length(edgecuts[[10]])){
 }
 
 ## Distance from population parity
-paritydist <- distParity(edgecuts[[1]], pcData$pop, parity)
+paritydist <- distParity(edgecuts[[1]], geodat$pop, parity)
 
 ## For subsetting accept/reject plot
 ind <- seq(1, length(edgecuts[[16]]), by = 25)
