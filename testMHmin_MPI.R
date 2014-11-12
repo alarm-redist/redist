@@ -10,8 +10,7 @@ for(i in 1:11){
     betaseq[i] <- -(0.1^(i-1))
 }
 
-params <- expand.grid(state = "testset_25_2",
-                      testset = TRUE,
+params <- expand.grid(state = "testset252",
                       eprob = 0.05, marginpct = 1,
                       lambda = 1, pnum = 1,
                       initbeta = 0,
@@ -36,22 +35,15 @@ testset <- params$testset[1]
 params$pnum <- 1:nrow(params)
 
 ## Set working directory | state
-if(testset == FALSE){
-    setwd(paste(params$wd[1], state, sep = ""))
-} else{
-    setwd(paste(params$wd[1], "testsets/", sep = ""))
-}
+setwd(paste(params$wd[1], state, sep = ""))
+
 ## Load packages, data
 if (!is.loaded("mpi_initialize")) { 
     library("Rmpi") 
 }
 
-if(testset == FALSE){
-    load(paste(getwd(), "/preprocPrec.RData", sep = ""))
-    load(paste(getwd(), "/pwdPrecinct.RData", sep = ""))
-} else{
-    load(paste(getwd(), "/", params$state[1], ".RData", sep = ""))
-}
+load(paste(getwd(), "/algdata.RData", sep = ""))
+
 ## Generate swapping sequence (in future, allow for user to input how often swaps are made)
 freq <- 10
 nits <- params$nsims[1] * params$loop[1]
@@ -93,12 +85,8 @@ ecutsMPI <- function(){
 
     library("redist"); library("BARD"); library("maptools"); library("methods")
 
-    if(params$testset == FALSE){
-        load(paste(getwd(), "/preprocPrec.RData", sep = ""))
-        load(paste(getwd(), "/pwdPrecinct.RData", sep = ""))
-    } else{
-        load(paste(getwd(), "/", params$state, ".RData", sep = ""))
-    }
+    load(paste(getwd(), "/algdat.RData", sep = ""))
+
     ######################
     ## Parameter values ##
     ######################
@@ -111,10 +99,10 @@ ecutsMPI <- function(){
     codedir <- params$codedir
     
     ## District type
-    if(params$testset == FALSE){
-        dists <- length(unique(pcData$cds))
-    } else{
+    if(substr(state, 1, 7) == "testset"){
         dists <- length(unique(cdmat[,1]))
+    } else{
+        dists <- length(unique(geodat$cds))
     }
     
     ## Edgecut prob - prob of turning edge off = 1 - eprob
@@ -147,7 +135,7 @@ ecutsMPI <- function(){
     ## Weights power
     wpow <- params$weightpow
     
-    parity <- sum(pcData$pop) / dists
+    parity <- sum(geodat$pop) / dists
     margin <- round(parity * margin.pct)
     
     ## Empty beta vector and weights for simulated tempering
@@ -203,7 +191,7 @@ ecutsMPI <- function(){
         } else{
 
             if(params$testset == FALSE){
-                cds <- eval(parse(text = paste("pcData$cds", pnum, sep = "")))
+                cds <- eval(parse(text = paste("geodat$cds", pnum, sep = "")))
             } else{
                 cds <- cdmat[,sample(1:ncol(cdmat), 1)]
             }
@@ -215,15 +203,14 @@ ecutsMPI <- function(){
         #######################
         ## Run the algorithm ##
         #######################
-        pcData$blackhisp <- pcData$BlackPop + pcData$HispPop
+        geodat$blackhisp <- geodat$BlackPop + geodat$HispPop
         
-        ## set.seed(pnum)
-        
+        set.seed(pnum)
         for(j in 1:length(nsimsAdj)){
             
             temp <- swMH(al.pc, cds, cds, nsimsAdj[j], eprob,
-                         pcData$pop, pcData$blackhisp, parity, margin,
-                         dists, lambda, pwdPrecinct,
+                         geodat$pop, geodat$blackhisp, parity, margin,
+                         dists, lambda, ssdmat,
                          beta = beta, betadiss = betadiss, betapop = betapop,
                          betaswitch = betaswitch,
                          betavec = bvec, betadissvec = bvec,
@@ -236,8 +223,7 @@ ecutsMPI <- function(){
             likeDiss <- temp[[19]]
             
             ## Update ecuts object
-            ecuts <- ecutsAppend(ecuts,temp)
-            
+            ecuts <- ecutsAppend(ecuts,temp)           
             
             ## Use MPI to exchange swap information
             ##
@@ -304,7 +290,7 @@ ecutsMPI <- function(){
     ######################
     
     ## Set up container objects
-    cds <- matrix(NA, nrow = nrow(pcData),
+    cds <- matrix(NA, nrow = nrow(geodat),
                   ncol = (nsims * loop / thin))
 
     ncc <- rep(NA, (nsims * loop / thin))
@@ -342,7 +328,7 @@ ecutsMPI <- function(){
         ind <- ((i - 1) * (nsims / thin) + 1):(i * (nsims / thin))
         
         ## Store objects together
-        cds[1:nrow(pcData), ind] <- ecuts[[1]][,indthin]
+        cds[1:nrow(geodat), ind] <- ecuts[[1]][,indthin]
 
         ncc[ind] <- ecuts[[2]][indthin]
         nacc[ind] <- ecuts[[3]][indthin]
@@ -404,7 +390,7 @@ ecutsMPI <- function(){
     }
 
     ## Distance from population parity
-    paritydist <- distParity(edgecuts[[1]], pcData$pop, parity)
+    paritydist <- distParity(edgecuts[[1]], geodat$pop, parity)
 
     ## For subsetting accept/reject plot
     ind <- seq(1, length(edgecuts[[16]]), by = 25)
@@ -444,6 +430,42 @@ ecutsMPI <- function(){
     plot(paritydist, type = "l",
          xlab = "Iterations", ylab = "",
          main = "Trace of Distance from Parity")
+
+    ## compare to null distribution if a test set
+    if(substr(state, 1, 7) == "testset"){
+        simdist <- sumstat(edgecuts[[1]],
+                           geodat$HispPop,
+                           geodat$BlackPop,
+                           geodat$obama,
+                           geodat$mccain,
+                           geodat$pop)
+
+        par(mfrow = c(2,2))
+        hist(nulldist[,1], freq = FALSE,
+             ylim = c(0,9),
+             xlab = "",
+             ylab = "Hispanic Dissimilarity",
+             breaks = 20)
+        lines(density(simdist[,1], from = 0))
+        hist(nulldist[,2], freq = FALSE,
+             ylim = c(0,9),
+             xlab = "",
+             ylab = "Afam Dissimilarity",
+             breaks = 20)
+        lines(density(simdist[,2], from = 0))
+        hist(nulldist[,3], freq = FALSE,
+             ylim = c(0,9),
+             xlab = "",
+             ylab = "Democratic Dissimilarity",
+             breaks = 20)
+        lines(density(simdist[,3], from = 0))
+        hist(nulldist[,4], freq = FALSE,
+             ylim = c(0,9),
+             xlab = "",
+             ylab = "Republican Dissimilarity",
+             breaks = 20)
+        lines(density(simdist[,4], from = 0))
+    }
     dev.off() 
     
 }
