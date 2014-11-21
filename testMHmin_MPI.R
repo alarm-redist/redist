@@ -7,10 +7,11 @@
 #####################################
 betaseq <- rep(NA, 11)
 for(i in 1:11){
-    betaseq[i] <- -(0.1^(i-1))
+    betaseq[i] <- -(0.1^((i-1) / (length(betaseq) - 1)))
 }
+betaseq <- 30 * (betaseq + .1)
 
-params <- expand.grid(state = "testset252",
+params <- expand.grid(state = "nh",
                       eprob = 0.05, marginpct = 1,
                       lambda = 1, pnum = 1,
                       initbeta = 0,
@@ -18,12 +19,13 @@ params <- expand.grid(state = "testset252",
                       initbetapop = betaseq,
                       initbetaswitch = 0,
                       annealbeta = 0, annealbetadiss = 0,
-                      annealbetapop = 0, annealbetaswitch = 0,
+                      annealbetapop = 1, annealbetaswitch = 0,
                       targbetapop = 0,
                       bybetapop = 0,
                       weightpow = 0,
-                      nsims = 10000, loop = 1, thin = 1,
+                      nsims = 50000, loop = 1, thin = 1,
                       wd = "/scratch/network/bfifield/segregation/data/",
+                      logdir = "/scratch/network/bfifield/segregation/code/slurm/",
                       dwd = "/scratch/network/bfifield/segregation/data/simRuns/",
                       codedir = "/scratch/network/bfifield/segregation/code/redist-pkg/")
 
@@ -42,10 +44,10 @@ if (!is.loaded("mpi_initialize")) {
     library("Rmpi") 
 }
 
-load(paste(getwd(), "/algdata.RData", sep = ""))
+load(paste(getwd(), "/algdat.RData", sep = ""))
 
 ## Generate swapping sequence (in future, allow for user to input how often swaps are made)
-freq <- 10
+freq <- 500
 nits <- params$nsims[1] * params$loop[1]
 swaps <- matrix(NA,2,nits)
 for(i in 1:nits){
@@ -97,6 +99,7 @@ ecutsMPI <- function(){
     ## Set directories
     dwd <- params$dwd
     codedir <- params$codedir
+    logdir <- params$logdir
     
     ## District type
     if(substr(state, 1, 7) == "testset"){
@@ -152,26 +155,25 @@ ecutsMPI <- function(){
     ## Swap partners
     partner <- swaps[,swapIts][swaps[,swapIts] != procID]
     
-    ## Test whether zero indexing causes error
-    for(i in 1:length(al.pc)){
-        al.pc[[i]] <- al.pc[[i]] - 1
-    }
-    
     #########################
     ## Run the simulations ##
     #########################
+
+    ## Filename for storing progress
+    fname <- paste(logdir,"progress_log_",procID,sep="")
+    
     for(i in 1:loop){
         
         ## Construct adjusted "nsims" vector
-        temp <- swapIts[swapIts <= nsims*loop && swapIts > nsims*(loop-1)]
-        nsimsAdj <- c(temp,nsims*loop) - c((loop-1)*nsims,temp)
+        temp <- swapIts[swapIts <= nsims*i && swapIts > nsims*(i-1)]
+        nsimsAdj <- c(temp,nsims*i) - c((i-1)*nsims,temp)
         nsimsAdj <- nsimsAdj[nsimsAdj > 0] # Corrects issue with swaps occurring on nsims*loop
         
         ## Get starting values and rng state in place
         if(i > 1){
             
             ## Load previous simulation for starting values
-            load(paste(dwd, "ecuts", state, "_", (1 - eprob) * 100,
+            load(paste(dwd, "ecutsMPI", state, "_", (1 - eprob) * 100,
                        "_", margin.pct, "_", lambda,
                        "_b", params$initbeta * -1, 
                        "_bDiss", params$initbetadiss, 
@@ -190,10 +192,10 @@ ecutsMPI <- function(){
             
         } else{
 
-            if(params$testset == FALSE){
-                cds <- eval(parse(text = paste("geodat$cds", pnum, sep = "")))
-            } else{
+            if(substr(state, 1, 7) == "testset"){
                 cds <- cdmat[,sample(1:ncol(cdmat), 1)]
+            } else{
+                cds <- eval(parse(text = paste("geodat$cds", pnum, sep = "")))
             }
         }
 
@@ -259,8 +261,14 @@ ecutsMPI <- function(){
                 }           
             }
             
-                                        # Update inputs to swMH
+            ## Update inputs to swMH
             cds <- ecuts[[1]][,nsimsAdj[j]]
+
+            ## Write progress to file
+            sink(fname)
+            prog <- ( (i-1)*nsims + sum(nsimsAdj[1:j]) )/(loop*nsims/100) 
+            cat(prog,"% of task on processor",procID,"has completed.\n")
+            sink() 
             
         } 
         
@@ -272,7 +280,7 @@ ecutsMPI <- function(){
 
         nbetapop <- betapop
         save(ecuts, nbetapop,
-             file = paste(dwd, "ecuts", state, "_", (1 - eprob) * 100,
+             file = paste(dwd, "ecutsMPI", state, "_", (1 - eprob) * 100,
                         "_", margin.pct, "_", lambda,
                         "_b", params$initbeta * -1, 
                         "_bDiss", params$initbetadiss, 
@@ -316,7 +324,7 @@ ecutsMPI <- function(){
     for(i in 1:loop){
 
         ## Load data set
-        load(paste(dwd, "ecuts", state, "_", (1 - eprob) * 100,
+        load(paste(dwd, "ecutsMPI", state, "_", (1 - eprob) * 100,
                    "_", margin.pct, "_", lambda,
                    "_b", params$initbeta * -1,
                    "_bDiss", params$initbetadiss,
@@ -369,7 +377,7 @@ ecutsMPI <- function(){
 
     ## Save full object
     save(edgecuts,
-         file = paste(dwd, "edgecuts", state, "_", (1 - eprob) * 100,
+         file = paste(dwd, "edgecutsMPI", state, "_", (1 - eprob) * 100,
                        "_", margin.pct, "_", lambda,
                        "_b", params$initbeta * -1,
                        "_bDiss", params$initbetadiss,
@@ -381,93 +389,93 @@ ecutsMPI <- function(){
     ## Generate diagnostic plots ##
     ###############################
 
-    ## Number of acceptances
-    accept <- 0
-    for(z in 2:length(edgecuts[[10]])){
-        if(edgecuts[[10]][z-1] != edgecuts[[10]][z]){
-            accept <- accept + 1
-        }
-    }
-
-    ## Distance from population parity
-    paritydist <- distParity(edgecuts[[1]], geodat$pop, parity)
-
-    ## For subsetting accept/reject plot
-    ind <- seq(1, length(edgecuts[[16]]), by = 25)
-
-    ## Diagnostic plot ##
-    pdf(file = paste(dwd, "diagPlot", state, "_", (1 - eprob) * 100,
-        "_", margin.pct, "_", lambda,
-        "_b", params$initbeta * -1, 
-        "_bDiss", params$initbetadiss,
-        "_bPop", params$initbetapop * -1,
-        "_bSwitch", params$initbetaswitch * -1,
-        "_pow", wpow,
-        "_par", pnum, ".pdf", sep = ""),
-        height = 6, width = 12)
-    par(mfrow = c(1,2))
-    ## Trace of beta
-    plot(edgecuts[[10]], type = "l",
-         xlab = "Iterations", ylab = "",
-         main = paste("Trace of Beta \n Lambda =",
-             params$lambda, "pow =",
-             params$weightpow, sep = " "))
-    ## Distribution of beta values
-    barplot(table(edgecuts[[10]]),
-            main = paste("Distribution of Beta_pop \n Acceptance Rate =",
-                accept / length(edgecuts[[10]]), sep = " "))
-
-    ## Accept/Reject
-    plot(edgecuts[[16]][ind], pch = 16,
-         cex = .5,
-         yaxt = "n",
-         col = ifelse(edgecuts[[16]][ind] == 0, "red", "black"),
-         xlab = "Iterations", ylab = "",
-         main = paste("Rejections from SWA \n Acceptance Rate =",
-             sum(edgecuts[[16]]) / length(edgecuts[[16]]), sep = " "))
-    axis(2, c(0, 1), c("Reject", "Accept"))
-    ## Trace of district population
-    plot(paritydist, type = "l",
-         xlab = "Iterations", ylab = "",
-         main = "Trace of Distance from Parity")
-
-    ## compare to null distribution if a test set
     if(substr(state, 1, 7) == "testset"){
+
+        ##     ## Number of acceptances
+        ##     accept <- 0
+        ##     for(z in 2:length(edgecuts[[10]])){
+        ##         if(edgecuts[[10]][z-1] != edgecuts[[10]][z]){
+        ##             accept <- accept + 1
+        ##         }
+        ##     }
+
+        ##     ## Distance from population parity
+        ##     paritydist <- distParity(edgecuts[[1]], geodat$pop, parity)
+
+        ##     ## For subsetting accept/reject plot
+        ##     ind <- seq(1, length(edgecuts[[16]]), by = 25)
+
         simdist <- sumstat(edgecuts[[1]],
                            geodat$HispPop,
                            geodat$BlackPop,
                            geodat$obama,
                            geodat$mccain,
                            geodat$pop)
+        
+        ## Diagnostic plot ##
+        pdf(file = paste(dwd, "diagPlotMPI", state, "_", (1 - eprob) * 100,
+                "_", margin.pct, "_", lambda,
+                "_b", params$initbeta * -1, 
+                "_bDiss", params$initbetadiss,
+                "_bPop", params$initbetapop * -1,
+                "_bSwitch", params$initbetaswitch * -1,
+                "_pow", wpow, ".pdf", sep = ""),
+            height = 6, width = 12)
+        ## par(mfrow = c(1,2))
+        ## ## Trace of beta
+        ## plot(edgecuts[[10]], type = "l",
+        ##      xlab = "Iterations", ylab = "",
+        ##      main = paste("Trace of Beta \n Lambda =",
+        ##          params$lambda, "pow =",
+        ##          params$weightpow, sep = " "))
+        ## ## Distribution of beta values
+        ## barplot(table(edgecuts[[10]]),
+        ##         main = paste("Distribution of Beta_pop \n Acceptance Rate =",
+        ##             accept / length(edgecuts[[10]]), sep = " "))
 
+        ## ## Accept/Reject
+        ## plot(edgecuts[[16]][ind], pch = 16,
+        ##      cex = .5,
+        ##      yaxt = "n",
+        ##      col = ifelse(edgecuts[[16]][ind] == 0, "red", "black"),
+        ##      xlab = "Iterations", ylab = "",
+        ##      main = paste("Rejections from SWA \n Acceptance Rate =",
+        ##          sum(edgecuts[[16]]) / length(edgecuts[[16]]), sep = " "))
+        ## axis(2, c(0, 1), c("Reject", "Accept"))
+        ## ## Trace of district population
+        ## plot(paritydist, type = "l",
+        ##      xlab = "Iterations", ylab = "",
+        ##      main = "Trace of Distance from Parity")
+
+        ## compare to null distribution if a test set
         par(mfrow = c(2,2))
         hist(nulldist[,1], freq = FALSE,
-             ylim = c(0,9),
+             ylim = c(0,15),
              xlab = "",
              ylab = "Hispanic Dissimilarity",
              breaks = 20)
         lines(density(simdist[,1], from = 0))
         hist(nulldist[,2], freq = FALSE,
-             ylim = c(0,9),
+             ylim = c(0,15),
              xlab = "",
              ylab = "Afam Dissimilarity",
              breaks = 20)
         lines(density(simdist[,2], from = 0))
         hist(nulldist[,3], freq = FALSE,
-             ylim = c(0,9),
+             ylim = c(0,15),
              xlab = "",
              ylab = "Democratic Dissimilarity",
              breaks = 20)
         lines(density(simdist[,3], from = 0))
         hist(nulldist[,4], freq = FALSE,
-             ylim = c(0,9),
+             ylim = c(0,15),
              xlab = "",
              ylab = "Republican Dissimilarity",
              breaks = 20)
         lines(density(simdist[,4], from = 0))
+        dev.off()
     }
-    dev.off() 
-    
+
 }
 
 ## Spawn slaves equal to number of rows of params (one for each temperature)
