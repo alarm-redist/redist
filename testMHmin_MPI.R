@@ -11,11 +11,11 @@ betaseq <- rep(NA, 11)
 for(i in 1:11){
     betaseq[i] <- -(0.1^((i-1) / (length(betaseq) - 1)))
 }
-betaseq <- 150 * (betaseq + .1)
+betaseq <- 30 * (betaseq + .1)
 
-params <- expand.grid(state = "ok",
+params <- expand.grid(state = "nh",
                       eprob = 0.05, marginpct = 1,
-                      lambda = 35, pnum = 1,
+                      lambda = 1, pnum = 1,
                       initbeta = 0,
                       initbetadiss = 0,
                       initbetapop = betaseq,
@@ -25,7 +25,7 @@ params <- expand.grid(state = "ok",
                       targbetapop = 0,
                       bybetapop = 0,
                       weightpow = 0,
-                      nsims = 50000, loop = 1, thin = 5,
+                      nsims = 50000, loop = 1, thin = 1,
                       wd = "/scratch/network/bfifield/segregation/data/",
                       logdir = "/scratch/network/bfifield/segregation/code/slurm/",
                       dwd = "/scratch/network/bfifield/segregation/data/simRuns/",
@@ -212,7 +212,9 @@ ecutsMPI <- function(){
         
         set.seed(pnum)
         for(j in 1:length(nsimsAdj)){
-            
+            sink(fname)        
+
+            cat("Start swMH.\n", append = TRUE)
             temp <- swMH(al.pc, cds, cds, nsimsAdj[j], eprob,
                          geodat$pop, geodat$blackhisp, parity, margin,
                          dists, lambda, ssdmat,
@@ -221,6 +223,7 @@ ecutsMPI <- function(){
                          betavec = bvec, betadissvec = bvec,
                          betapopvec = bvec, betaswitchvec = bvec,
                          betaweights = betaweights)
+            cat("End swMH.\n", append = TRUE)
             
             ## Get likelihood for each of the constraints
             likeComp <- temp[[17]]
@@ -228,7 +231,9 @@ ecutsMPI <- function(){
             likeDiss <- temp[[19]]
             
             ## Update ecuts object
-            ecuts <- ecutsAppend(ecuts,temp)           
+            cat("Start Append.\n", append = TRUE)
+            ecuts <- ecutsAppend(ecuts,temp)
+            cat("End Append.\n", append = TRUE)
             
             ## Use MPI to exchange swap information
             ##
@@ -240,14 +245,17 @@ ecutsMPI <- function(){
             ##       communicated and tested
             
             if(j != length(nsimsAdj) || length(nsimsAdj) == length(temp)){ # Swap proposed
+                cat("Start send/receive.\n", append = TRUE)
                 ## Send commands (blocking)
                 mpi.send.Robj(likePop,dest=partner[j],tag=1)
                 mpi.send.Robj(betapop,dest=partner[j],tag=2)
                 ## Receive commands (blocking)
                 likePart <- mpi.recv.Robj(partner[j],tag=1)
                 betaPart <- mpi.recv.Robj(partner[j],tag=2)
+                cat("End send/receive.\n", append = TRUE)
                 
                 ## Higher ranked process communicates random draw to lower ranked process
+                cat("Start mh step.\n", append = TRUE)
                 if(partner[j] < procID){
                     accept <- runif(1)
                     mpi.send.Robj(accept,dest=partner[j],tag=3)
@@ -261,14 +269,14 @@ ecutsMPI <- function(){
                 if(prob > accept){
                     ## Exchange temperature values
                     betapop <- betaPart
-                }           
+                }
+                cat("End mh step.\n", append = TRUE)
             }
             
             ## Update inputs to swMH
             cds <- ecuts[[1]][,nsimsAdj[j]]
 
             ## Write progress to file
-            sink(fname)
             prog <- ( (i-1)*nsims + sum(nsimsAdj[1:j]) )/(loop*nsims/100) 
             cat(prog,"% of task on processor",procID,"has completed.\n",
                 append = TRUE)
@@ -283,6 +291,8 @@ ecutsMPI <- function(){
         ecuts[[20]] <- r
 
         nbetapop <- betapop
+        sink(fname)
+        cat("Start save of ecuts.\n", append = TRUE)
         save(ecuts, nbetapop,
              file = paste(dwd, "ecutsMPI", state, "_", (1 - eprob) * 100,
                         "_", margin.pct, "_", lambda,
@@ -292,6 +302,8 @@ ecutsMPI <- function(){
                         "_bSwitch", params$initbetaswitch * -1,
                         "_pow", wpow,
                         "_par", aid, "_loop", i, ".RData", sep = ""))
+        cat("End save of ecuts.\n", append = TRUE)
+        sink()
         
         print(paste("loop", i, sep = " "))
         
