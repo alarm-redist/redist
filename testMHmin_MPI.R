@@ -243,16 +243,21 @@ ecutsMPI <- function(){
             ##
             ## Note: Need to allow for multiple betas and likelihoods. As is, only likePop is
             ##       communicated and tested
+
+            ## Print swap iterations
+            cat(swapIts, "\n", append = TRUE)
             
             if(j != length(nsimsAdj) || length(nsimsAdj) == length(temp)){ # Swap proposed
-                cat("Start send/receive.\n", append = TRUE)
+                cat("Start send to ", partner[j], ".\n", append = TRUE)
                 ## Send commands (blocking)
                 mpi.send.Robj(likePop,dest=partner[j],tag=1)
                 mpi.send.Robj(betapop,dest=partner[j],tag=2)
+                cat("End send to ", partner[j], ".\n", append = TRUE)
                 ## Receive commands (blocking)
+                cat("Start receive to ", partner[j], ".\n", append = TRUE)
                 likePart <- mpi.recv.Robj(partner[j],tag=1)
                 betaPart <- mpi.recv.Robj(partner[j],tag=2)
-                cat("End send/receive.\n", append = TRUE)
+                cat("End receive to ", partner[j], ".\n", append = TRUE)
                 
                 ## Higher ranked process communicates random draw to lower ranked process
                 cat("Start mh step.\n", append = TRUE)
@@ -291,8 +296,6 @@ ecutsMPI <- function(){
         ecuts[[20]] <- r
 
         nbetapop <- betapop
-        sink(fname)
-        cat("Start save of ecuts.\n", append = TRUE)
         save(ecuts, nbetapop,
              file = paste(dwd, "ecutsMPI", state, "_", (1 - eprob) * 100,
                         "_", margin.pct, "_", lambda,
@@ -302,8 +305,6 @@ ecutsMPI <- function(){
                         "_bSwitch", params$initbetaswitch * -1,
                         "_pow", wpow,
                         "_par", aid, "_loop", i, ".RData", sep = ""))
-        cat("End save of ecuts.\n", append = TRUE)
-        sink()
         
         print(paste("loop", i, sep = " "))
         
