@@ -5,15 +5,17 @@
 # Institution: Princeton University
 # Purpose: Called by runSWA.R to run simulations
 #####################################
+aid <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
+
 betaseq <- rep(NA, 11)
 for(i in 1:11){
     betaseq[i] <- -(0.1^((i-1) / (length(betaseq) - 1)))
 }
-betaseq <- 30 * (betaseq + .1)
+betaseq <- 150 * (betaseq + .1)
 
-params <- expand.grid(state = "nh",
+params <- expand.grid(state = "ok",
                       eprob = 0.05, marginpct = 1,
-                      lambda = 1, pnum = 1,
+                      lambda = 35, pnum = 1,
                       initbeta = 0,
                       initbetadiss = 0,
                       initbetapop = betaseq,
@@ -23,7 +25,7 @@ params <- expand.grid(state = "nh",
                       targbetapop = 0,
                       bybetapop = 0,
                       weightpow = 0,
-                      nsims = 50000, loop = 1, thin = 1,
+                      nsims = 50000, loop = 1, thin = 5,
                       wd = "/scratch/network/bfifield/segregation/data/",
                       logdir = "/scratch/network/bfifield/segregation/code/slurm/",
                       dwd = "/scratch/network/bfifield/segregation/data/simRuns/",
@@ -31,7 +33,6 @@ params <- expand.grid(state = "nh",
 
 ## Get state
 state <- params$state[1]
-testset <- params$testset[1]
 
 ## Modify pnum
 params$pnum <- 1:nrow(params)
@@ -84,6 +85,8 @@ ecutsAppend <- function(ecuts,ndata){
 }
 
 ecutsMPI <- function(){
+
+    aid <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 
     library("redist"); library("BARD"); library("maptools"); library("methods")
 
@@ -160,7 +163,7 @@ ecutsMPI <- function(){
     #########################
 
     ## Filename for storing progress
-    fname <- paste(logdir,"progress_log_",procID,sep="")
+    fname <- paste(logdir,"progress_log",procID,"_par",aid,sep="")
     
     for(i in 1:loop){
         
@@ -180,7 +183,7 @@ ecutsMPI <- function(){
                        "_bPop", params$initbetapop * -1, 
                        "_bSwitch", params$initbetaswitch * -1,
                        "_pow", wpow,
-                       "_par", pnum, "_loop", (i - 1), ".RData", sep = ""))
+                       "_par", aid, "_loop", (i - 1), ".RData", sep = ""))
             
             ## Get starting values
             cds <- ecuts[[1]][,nsims]
@@ -195,7 +198,7 @@ ecutsMPI <- function(){
             if(substr(state, 1, 7) == "testset"){
                 cds <- cdmat[,sample(1:ncol(cdmat), 1)]
             } else{
-                cds <- eval(parse(text = paste("geodat$cds", pnum, sep = "")))
+                cds <- eval(parse(text = paste("geodat$cds", aid, sep = "")))
             }
         }
 
@@ -267,7 +270,8 @@ ecutsMPI <- function(){
             ## Write progress to file
             sink(fname)
             prog <- ( (i-1)*nsims + sum(nsimsAdj[1:j]) )/(loop*nsims/100) 
-            cat(prog,"% of task on processor",procID,"has completed.\n")
+            cat(prog,"% of task on processor",procID,"has completed.\n",
+                append = TRUE)
             sink() 
             
         } 
@@ -287,7 +291,7 @@ ecutsMPI <- function(){
                         "_bPop", params$initbetapop * -1, 
                         "_bSwitch", params$initbetaswitch * -1,
                         "_pow", wpow,
-                        "_par", pnum, "_loop", i, ".RData", sep = ""))
+                        "_par", aid, "_loop", i, ".RData", sep = ""))
         
         print(paste("loop", i, sep = " "))
         
@@ -331,7 +335,7 @@ ecutsMPI <- function(){
                    "_bPop", params$initbetapop * -1,
                    "_bSwitch", params$initbetaswitch * -1,
                    "_pow", wpow,
-                   "_par", pnum, "_loop", i, ".RData", sep = ""))
+                   "_par", aid, "_loop", i, ".RData", sep = ""))
 
         ind <- ((i - 1) * (nsims / thin) + 1):(i * (nsims / thin))
         
@@ -378,12 +382,13 @@ ecutsMPI <- function(){
     ## Save full object
     save(edgecuts,
          file = paste(dwd, "edgecutsMPI", state, "_", (1 - eprob) * 100,
-                       "_", margin.pct, "_", lambda,
-                       "_b", params$initbeta * -1,
-                       "_bDiss", params$initbetadiss,
-                       "_bPop", nbetapop, 
-                       "_bSwitch", params$initbetaswitch * -1, 
-                       "_pow", wpow, ".RData", sep = ""))
+             "_", margin.pct, "_", lambda,
+             "_b", params$initbeta * -1,
+             "_bDiss", params$initbetadiss,
+             "_bPop", nbetapop, 
+             "_bSwitch", params$initbetaswitch * -1, 
+             "_pow", wpow, "_par", aid,
+             ".RData", sep = ""))
 
     ###############################
     ## Generate diagnostic plots ##
@@ -419,7 +424,7 @@ ecutsMPI <- function(){
                 "_bDiss", params$initbetadiss,
                 "_bPop", params$initbetapop * -1,
                 "_bSwitch", params$initbetaswitch * -1,
-                "_pow", wpow, ".pdf", sep = ""),
+                "_pow", wpow, "_par", aid, ".pdf", sep = ""),
             height = 6, width = 12)
         ## par(mfrow = c(1,2))
         ## ## Trace of beta
