@@ -11,9 +11,9 @@ betaseq <- rep(NA, 11)
 for(i in 1:11){
     betaseq[i] <- -(0.1^((i-1) / (length(betaseq) - 1)))
 }
-betaseq <- 30 * (betaseq + .1)
+betaseq <- 200 * (betaseq + .1)
 
-params <- expand.grid(state = "nh",
+params <- expand.grid(state = "ms",
                       eprob = 0.05, marginpct = 1,
                       lambda = 1, pnum = 1,
                       initbeta = 0,
@@ -25,7 +25,7 @@ params <- expand.grid(state = "nh",
                       targbetapop = 0,
                       bybetapop = 0,
                       weightpow = 0,
-                      nsims = 50000, loop = 1, thin = 1,
+                      nsims = 50000, loop = 1, thin = 5,
                       wd = "/scratch/network/bfifield/segregation/data/",
                       logdir = "/scratch/network/bfifield/segregation/code/slurm/",
                       dwd = "/scratch/network/bfifield/segregation/data/simRuns/",
@@ -155,9 +155,6 @@ ecutsMPI <- function(){
     ## Find iterations for which a swap is proposed involving process procID
     swapIts <- which(swaps == procID, arr.ind = TRUE)[,2]
     
-    ## Swap partners
-    partner <- swaps[,swapIts][swaps[,swapIts] != procID]
-    
     #########################
     ## Run the simulations ##
     #########################
@@ -168,8 +165,10 @@ ecutsMPI <- function(){
     for(i in 1:loop){
         
         ## Construct adjusted "nsims" vector
-        temp <- swapIts[swapIts <= nsims*i && swapIts > nsims*(i-1)]
-        nsimsAdj <- c(temp,nsims*i) - c((i-1)*nsims,temp)
+        tempIts <- swapIts[swapIts <= nsims*i && swapIts > nsims*(i-1)]
+        ## Swap partners
+        partner <- swaps[,tempIts][swaps[,tempIts] != procID]
+        nsimsAdj <- c(tempIts,nsims*i) - c((i-1)*nsims,tempIts)
         nsimsAdj <- nsimsAdj[nsimsAdj > 0] # Corrects issue with swaps occurring on nsims*loop
         
         ## Get starting values and rng state in place
@@ -211,8 +210,11 @@ ecutsMPI <- function(){
         geodat$blackhisp <- geodat$BlackPop + geodat$HispPop
         
         set.seed(pnum)
+        sink(fname)
+        cat("Length nsimsAdj = ",length(nsimsAdj), "\n", append = TRUE)
         for(j in 1:length(nsimsAdj)){
-            sink(fname)        
+
+            cat("Iteration ", j, "\n", append = TRUE)
 
             cat("Start swMH.\n", append = TRUE)
             temp <- swMH(al.pc, cds, cds, nsimsAdj[j], eprob,
@@ -243,11 +245,8 @@ ecutsMPI <- function(){
             ##
             ## Note: Need to allow for multiple betas and likelihoods. As is, only likePop is
             ##       communicated and tested
-
-            ## Print swap iterations
-            cat(swapIts, "\n", append = TRUE)
             
-            if(j != length(nsimsAdj) || length(nsimsAdj) == length(temp)){ # Swap proposed
+            if(j != length(nsimsAdj) || length(nsimsAdj) == length(tempIts)){ # Swap proposed
                 cat("Start send to ", partner[j], ".\n", append = TRUE)
                 ## Send commands (blocking)
                 mpi.send.Robj(likePop,dest=partner[j],tag=1)
@@ -285,10 +284,9 @@ ecutsMPI <- function(){
             prog <- ( (i-1)*nsims + sum(nsimsAdj[1:j]) )/(loop*nsims/100) 
             cat(prog,"% of task on processor",procID,"has completed.\n",
                 append = TRUE)
-            sink() 
             
         } 
-        
+        sink() 
         
         ## Save seed and simulations
         r <- .Random.seed
