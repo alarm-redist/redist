@@ -11,11 +11,11 @@ betaseq <- rep(NA, 11)
 for(i in 1:11){
     betaseq[i] <- -(0.1^((i-1) / (length(betaseq) - 1)))
 }
-betaseq <- 200 * (betaseq + .1)
+betaseq <- 400 * (betaseq + .1)
 
 params <- expand.grid(state = "ms",
                       eprob = 0.05, marginpct = 1,
-                      lambda = 1, pnum = 1,
+                      lambda = 18, pnum = 1,
                       initbeta = 0,
                       initbetadiss = 0,
                       initbetapop = betaseq,
@@ -25,7 +25,7 @@ params <- expand.grid(state = "ms",
                       targbetapop = 0,
                       bybetapop = 0,
                       weightpow = 0,
-                      nsims = 50000, loop = 1, thin = 5,
+                      nsims = 10000, loop = 10, thin = 1,
                       wd = "/scratch/network/bfifield/segregation/data/",
                       logdir = "/scratch/network/bfifield/segregation/code/slurm/",
                       dwd = "/scratch/network/bfifield/segregation/data/simRuns/",
@@ -48,7 +48,7 @@ if (!is.loaded("mpi_initialize")) {
 load(paste(getwd(), "/algdat.RData", sep = ""))
 
 ## Generate swapping sequence (in future, allow for user to input how often swaps are made)
-freq <- 500
+freq <- 1000
 nits <- params$nsims[1] * params$loop[1]
 swaps <- matrix(NA,2,nits)
 for(i in 1:nits){
@@ -165,7 +165,7 @@ ecutsMPI <- function(){
     for(i in 1:loop){
         
         ## Construct adjusted "nsims" vector
-        tempIts <- swapIts[swapIts <= nsims*i && swapIts > nsims*(i-1)]
+        tempIts <- swapIts[swapIts <= nsims*i & swapIts > nsims*(i-1)]
         ## Swap partners
         partner <- swaps[,tempIts][swaps[,tempIts] != procID]
         nsimsAdj <- c(tempIts,nsims*i) - c((i-1)*nsims,tempIts)
