@@ -128,6 +128,62 @@ Rcpp::NumericVector devOrig(Rcpp::NumericMatrix mat,
 
 }
 
+// Function to calculate ssd from cd matrix, population vector, cd matrix
+// [[Rcpp::export]]
+Rcpp::NumericVector ssdcalc(Rcpp::NumericMatrix cdmat,
+			    Rcpp::NumericMatrix pwdmat,
+			    Rcpp::NumericVector popvec){
+
+  // Set up container vector
+  Rcpp::NumericVector pwdvec(popvec.size());
+
+  // Get unique cd labels
+  Rcpp::NumericVector labs = unique(cdmat(Rcpp::_,0));
+
+  // Loop through plans
+  for(int i = 0; i < cdmat.ncol(); i++){
+
+    // First, set item to store ssd value
+    double ssdval = 0;
+
+    // Get plan i
+    arma::vec plan = cdmat(Rcpp::_,i);
+
+    // Loop through precincts 0 -> ncol - 1
+    for(int j = 0; j < popvec.size(); j++){
+
+      // Which plans are also of label cd_j?
+      uvec samecd = find(plan == plan(j));
+
+      // Loop through elements of samecd
+      for(int k = 0; k < samecd.size(); k++){
+
+	if(samecd(k) > j){
+
+	  // Get populations j, samecd(k)
+	  int pop_j = popvec(j);
+	  int pop_k = popvec(samecd(k));
+	  
+	  // Get ssd of j, k
+	  double ssd_jk = pwdmat(j, samecd(k));
+	  
+	  // Add weighted ssd to ssdval
+	  ssdval += (double)pop_j * pop_k * ssd_jk;
+	  
+	}
+	  
+      }
+
+    }
+
+    pwdvec(i) = ssdval;
+
+  }
+
+  return pwdvec;
+
+}
+
 // Function to calculate deviation from parity from cd matrix
 // [[Rcpp::export]]
 Rcpp::NumericVector distParity(Rcpp::NumericMatrix mat,
@@ -329,7 +385,8 @@ Rcpp::NumericMatrix sumstat(Rcpp::NumericMatrix distmat,
 double changeBeta(arma::vec betavec,
 		  double beta,
 		  double constraint,
-		  Rcpp::NumericVector weights){
+		  Rcpp::NumericVector weights,
+		  int adjswap = 1){
 
   // Find beta in betavec
   arma::uvec findBetaVec = find(betavec == beta);
@@ -344,36 +401,62 @@ double changeBeta(arma::vec betavec,
   double wi;
   double wj;
   double propBeta;
-  if(findBeta == 0){ // At first element in betavec
+
+  // Procedure if conducting adjacent swaps
+  if(adjswap == 1){
+    if(findBeta == 0){ // At first element in betavec
+      qij = 1;
+      qji = .5;
+      wi = weights(0);
+      wj = weights(1);
+      propBeta = betavec(1);
+    } else if(findBeta == betaLoc){ // At last element in betavec
+      qij = 1;
+      qji = .5;
+      wi = weights(betaLoc);
+      wj = weights(betaLoc - 1);
+      propBeta = betavec(betaLoc - 1);
+    } else{ // Anywhere in the middle of betavec
+      qij = .5;
+      qji = .5;
+      wi = weights(findBeta);
+      vec betaswitch = Rcpp::runif(1);
+      if(betaswitch(0) < .5){
+	propBeta = betavec(findBeta - 1);
+	wj = weights(findBeta - 1);
+      }
+      if(betaswitch(0) >= .5){
+	propBeta = betavec(findBeta + 1);
+	wj = weights(findBeta + 1);
+      }
+    }
+  } else{
+    // Procedure if not conducting adjacent swaps
+    // qij = qji in non-adjacent framework, don't have to worry abt end units
     qij = 1;
-    qji = .5;
-    wi = weights(0);
-    wj = weights(1);
-    propBeta = betavec(1);
-  } else if(findBeta == betaLoc){ // At last element in betavec
-    qij = 1;
-    qji = .5;
-    wi = weights(betaLoc);
-    wj = weights(betaLoc - 1);
-    propBeta = betavec(betaLoc - 1);
-  } else{ // Anywhere in the middle of betavec
-    qij = .5;
-    qji = .5;
+    qji = 1;
+
+    // Draw element from betavec
+    int randindex = rand() % betaLoc;
+
+    // Weight wi 
     wi = weights(findBeta);
-    vec betaswitch = Rcpp::runif(1);
-    if(betaswitch(0) < .5){
-      propBeta = betavec(findBeta - 1);
-      wj = weights(findBeta - 1);
+
+    // Draw the proposed beta value
+    if(randindex < findBeta){
+      propBeta = betavec(randindex);
+      wj = weights(randindex);
+    } else{
+      propBeta = betavec(randindex + 1);
+      wj = weights(randindex + 1);
     }
-    if(betaswitch(0) >= .5){
-      propBeta = betavec(findBeta + 1);
-      wj = weights(findBeta + 1);
-    }
+
   }
 
   // Accept or reject the proposal
   double mhprobGH = (double)((double)exp((double)propBeta * constraint) / 
-			     exp((double)beta * constraint)) * ((double)wj / wi) * ((double)qji / qij);
+			     exp((double)beta * constraint)) * 
+    ((double)wj / wi) * ((double)qji / qij);
   if(mhprobGH > 1){
     mhprobGH = 1;
   }
@@ -1023,7 +1106,8 @@ Rcpp::List swMH(Rcpp::List aList,
 		int annealbetadiss = 0,
 		int annealbetapop = 0,
 		int annealbetaswitch = 0,
-		int elimCheck = 1
+		int elimCheck = 1,
+		int adjswap_gt = 1
 		) {
 
   int units = cds.size();
@@ -1682,30 +1766,35 @@ Rcpp::List swMH(Rcpp::List aList,
     // Propose to change beta if we are annealing
     if(annealbeta == 1){
       if(decision == 1){
-	beta = changeBeta(betavec, beta, psiNewSsd, betaweights);
+	beta = changeBeta(betavec, beta, psiNewSsd, betaweights, adjswap_gt);
       }
       if(decision == 0){
-	beta = changeBeta(betavec, beta, psiOldSsd, betaweights);
+	beta = changeBeta(betavec, beta, psiOldSsd, betaweights, adjswap_gt);
       }
     }
     if(annealbetadiss == 1){
       if(decision == 1){
-	betadiss = changeBeta(betadissvec, betadiss, psiNewDiss, betaweights); 
+	betadiss = changeBeta(betadissvec, betadiss, psiNewDiss, betaweights,
+			      adjswap_gt); 
       }
       if(decision == 0){
-	betadiss = changeBeta(betadissvec, betadiss, psiOldDiss, betaweights);
+	betadiss = changeBeta(betadissvec, betadiss, psiOldDiss, betaweights,
+			      adjswap_gt);
       }
     }
     if(annealbetapop == 1){
       if(decision == 1){
-	betapop = changeBeta(betapopvec, betapop, psiNewPop, betaweights);
+	betapop = changeBeta(betapopvec, betapop, psiNewPop, betaweights,
+			     adjswap_gt);
       }
       if(decision == 0){
-	betapop = changeBeta(betapopvec, betapop, psiOldPop, betaweights);
+	betapop = changeBeta(betapopvec, betapop, psiOldPop, betaweights,
+			     adjswap_gt);
       }
     }
     if(annealbetaswitch == 1){
-      betaswitch = changeBeta(betaswitchvec, betaswitch, diffSwitch, betaweights);
+      betaswitch = changeBeta(betaswitchvec, betaswitch, diffSwitch, betaweights,
+			      adjswap_gt);
     }
 
     /////////////////////////////////////
@@ -1752,7 +1841,7 @@ Rcpp::List swMH(Rcpp::List aList,
     diffPopstore(k) = psiOldPop; 
 
     // Increase counter by 1
-    Rcpp::Rcout << k << std::endl;
+    // Rcpp::Rcout << k << std::endl;
 
     k++;
     
