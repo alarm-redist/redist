@@ -11,11 +11,11 @@ betaseq <- rep(NA, 11)
 for(i in 1:11){
     betaseq[i] <- -(0.1^((i-1) / (length(betaseq) - 1)))
 }
-betaseq <- 400 * (betaseq + .1)
+betaseq <- 30 * (betaseq + .1)
 
-params <- expand.grid(state = "ms", adjSwap = TRUE, freq = 1000, 
+params <- expand.grid(state = "nh", adjSwap = TRUE, freq = 500, 
                       eprob = 0.05, marginpct = 1,
-                      lambda = 18, pnum = 1,
+                      lambda = 1, pnum = 1,
                       initbeta = 0,
                       initbetadiss = 0,
                       initbetapop = betaseq,
@@ -25,7 +25,7 @@ params <- expand.grid(state = "ms", adjSwap = TRUE, freq = 1000,
                       targbetapop = 0,
                       bybetapop = 0,
                       weightpow = 0,
-                      nsims = 10000, loop = 10, thin = 1,
+                      nsims = 50000, loop = 1, thin = 1,
                       wd = "/scratch/network/bfifield/segregation/data/",
                       logdir = "/scratch/network/bfifield/segregation/code/slurm/",
                       dwd = "/scratch/network/bfifield/segregation/data/simRuns/",
@@ -55,16 +55,15 @@ freq <- params$freq[1]
 nits <- params$nsims[1] * params$loop[1]
 
 if(adjSwap){
-  swaps <- matrix(NA,1,nits)
-  partner <- matrix(NA,1,nits)
+  swaps <- matrix(NA,2,nits)
+  # partner <- matrix(NA,1,nits)
   for(i in 1:nits){
     if(i %% freq == 0){
       swaps[1,i] = sample(1:nrow(params),size=1)
       swaps[2,i] = sample(c(-2,0),size=1)
     }
   }
-}
-else{
+}else{
   swaps <- matrix(NA,2,nits)
   for(i in 1:nits){
       if(i %% freq == 0){
@@ -81,8 +80,7 @@ tempAdj <- 1:nrow(params)
 ecutsAppend <- function(ecuts,ndata){
     if(length(ecuts) == 0){
         ecuts <- ndata
-    }
-    else{
+    }else{
         ecuts[[1]] <- cbind(ecuts[[1]],ndata[[1]])
         ecuts[[2]] <- cbind(ecuts[[2]],ndata[[2]])
         ecuts[[3]] <- cbind(ecuts[[3]],ndata[[3]])
@@ -106,15 +104,15 @@ ecutsAppend <- function(ecuts,ndata){
 ecutsMPI <- function(){
 
     aid <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
-
-    library("redist"); library("BARD"); library("maptools"); library("methods")
-
+    
+    library("redist"); library("BARD"); library("maptools"); library("methods"); library("Kmisc")
+    
     load(paste(getwd(), "/algdat.RData", sep = ""))
-
+    
     ######################
     ## Parameter values ##
     ######################
-
+     
     ## Set state
     state <- params$state
     
@@ -159,7 +157,7 @@ ecutsMPI <- function(){
     
     ## Repeat multiple times, save after
     loop <- params$loop
-
+    
     ## Thinning amount
     thin <-  params$thin
     
@@ -179,7 +177,7 @@ ecutsMPI <- function(){
     
     ## Find iterations for which a swap is proposed involving process procID
     swapIts <- which(swaps == procID, arr.ind = TRUE)[,2]
-      
+    
     #########################
     ## Run the simulations ##
     #########################
@@ -189,17 +187,16 @@ ecutsMPI <- function(){
     
     for(i in 1:loop){
         
-      if(adjSwap){
-        nsimsAdj <- rep(freq,nsims/freq)
-      }
-      else{
-        ## Construct adjusted "nsims" vector
-        tempIts <- swapIts[swapIts <= nsims*i & swapIts > nsims*(i-1)]
-        ## Swap partners
-        partner <- swaps[,tempIts][swaps[,tempIts] != procID]
-        nsimsAdj <- c(tempIts,nsims*i) - c((i-1)*nsims,tempIts)
-        nsimsAdj <- nsimsAdj[nsimsAdj > 0] # Corrects issue with swaps occurring on nsims*loop
-      }
+        if(adjSwap){
+            nsimsAdj <- rep(freq,nsims/freq)
+        }else{
+            ## Construct adjusted "nsims" vector
+            tempIts <- swapIts[swapIts <= nsims*i & swapIts > nsims*(i-1)]
+            ## Swap partners
+            partner <- swaps[,tempIts][swaps[,tempIts] != procID]
+            nsimsAdj <- c(tempIts,nsims*i) - c((i-1)*nsims,tempIts)
+            nsimsAdj <- nsimsAdj[nsimsAdj > 0] # Corrects issue with swaps occurring on nsims*loop
+        }
         ## Get starting values and rng state in place
         if(i > 1){
             
@@ -221,15 +218,15 @@ ecutsMPI <- function(){
             ## .Random.seed <- ecuts[[20]]
             
             
-        } else{
-
+        }else{
+            
             if(substr(state, 1, 7) == "testset"){
                 cds <- cdmat[,sample(1:ncol(cdmat), 1)]
             } else{
                 cds <- eval(parse(text = paste("geodat$cds", aid, sep = "")))
             }
         }
-
+        
         ## Initialize ecuts object
         ecuts <- list()
         
@@ -240,12 +237,10 @@ ecutsMPI <- function(){
         
         set.seed(pnum)
         sink(fname)
-        cat("Length nsimsAdj = ",length(nsimsAdj), "\n", append = TRUE)
         for(j in 1:length(nsimsAdj)){
-
+            
             cat("Iteration ", j, "\n", append = TRUE)
-
-            cat("Start swMH.\n", append = TRUE)
+            
             temp <- swMH(al.pc, cds, cds, nsimsAdj[j], eprob,
                          geodat$pop, geodat$blackhisp, parity, margin,
                          dists, lambda, ssdmat,
@@ -254,7 +249,6 @@ ecutsMPI <- function(){
                          betavec = bvec, betadissvec = bvec,
                          betapopvec = bvec, betaswitchvec = bvec,
                          betaweights = betaweights)
-            cat("End swMH.\n", append = TRUE)
             
             ## Get likelihood for each of the constraints
             likeComp <- temp[[17]]
@@ -262,9 +256,7 @@ ecutsMPI <- function(){
             likeDiss <- temp[[19]]
             
             ## Update ecuts object
-            cat("Start Append.\n", append = TRUE)
             ecuts <- ecutsAppend(ecuts,temp)
-            cat("End Append.\n", append = TRUE)
             
             ## Use MPI to exchange swap information
             ##
@@ -274,118 +266,122 @@ ecutsMPI <- function(){
             ##
             ## Note: Need to allow for multiple betas and likelihoods. As is, only likePop is
             ##       communicated and tested
-            
             if(adjSwap){
-              ## Determine swapping partner
-              tempPart <- swaps[2,(i-1)*nsims + j*freq]
-              
-              ## Account for edge cases if necessary
-              if(tempAdj[1] == swaps[1,(i-1)*nsims + j*freq]){
-                tempPart <- tempAdj[2] #Edge case
-              }
-              else if(tempAdj[length(tempAdj)] == swaps[1,(i-1)*nsims + j*freq]){
-                tempPart <- tempAdj[length(tempAdj)-1] #Edge case
-              }
-              else{
-                tempInd <- which(tempAdj == swaps[1,(i-1)*nsims + j*freq],arr.ind=TRUE)
-                tempPart <- tempAdj[tempInd + tempPart + 1]
-              }
-              
-              ## Set partner variable
-              if(swaps[1,(i-1)*nsims + j*freq] == procID){
-                partner <- tempPart
-              }
-              else if(tempPart == procID){
-                partner <- swaps[1,(i-1)*nsims + j*freq]
-              }
-              
-              ## Communication step
-              if(swaps[1,(i-1)*nsims + j*freq] == procID || tempPart == procID){
-                cat("Start send to ", partner, ".\n", append = TRUE)
-                ## Send commands (blocking)
-                mpi.send.Robj(likePop,dest=partner,tag=1)
-                mpi.send.Robj(betapop,dest=partner,tag=2)
-                cat("End send to ", partner, ".\n", append = TRUE)
-                ## Receive commands (blocking)
-                cat("Start receive to ", partner, ".\n", append = TRUE)
-                likePart <- mpi.recv.Robj(partner,tag=1)
-                betaPart <- mpi.recv.Robj(partner,tag=2)
-                cat("End receive to ", partner, ".\n", append = TRUE)
+                ## Determine swapping partner
+                tempPart <- swaps[2,(i-1)*nsims + j*freq]
                 
-                ## Higher ranked process communicates random draw to lower ranked process
-                cat("Start mh step.\n", append = TRUE)
-                if(partner < procID){
-                  accept <- runif(1)
-                  mpi.send.Robj(accept,dest=partner,tag=3)
-                }
-                else{
-                  accept <- mpi.recv.Robj(partner,tag=3)
+                ## Account for edge cases if necessary
+                if(tempAdj[1] == swaps[1,(i-1)*nsims + j*freq]){
+                    tempPart <- tempAdj[2] #Edge case
+                }else if(tempAdj[length(tempAdj)] == swaps[1,(i-1)*nsims + j*freq]){
+                    tempPart <- tempAdj[length(tempAdj)-1] #Edge case
+                }else{
+                    tempInd <- which(tempAdj == swaps[1,(i-1)*nsims + j*freq],arr.ind=TRUE)
+                    tempPart <- tempAdj[tempInd + tempPart + 1]
                 }
                 
-                ## Compute acceptance probability (for now, population only)
-                prob <- (likePop^betaPart*likePart^betapop)/(likePop^betapop*likePart^betaPart)
-                if(prob > accept){
-                  ## Exchange temperature values
-                  betapop <- betaPart
-                  
-                  ## Adjust temperature adjacency list and distribute among processes
-                  tempAdj[tempAdj == tempPart] <- swaps[1,(i-1)*nsims + j*freq]
-                  tempAdj[tempAdj == swaps[1,(i-1)*nsims + j*freq]] <- tempPart
-                }
-                cat("End mh step.\n", append = TRUE)
-                
-                ## Send temperature adjacency list
+                ## Set partner variable
+                cat("Start set partner variable.\n", append = TRUE)
                 if(swaps[1,(i-1)*nsims + j*freq] == procID){
-                  oProcs <- tempAdj[tempAdj != tempPart & tempAdj != swaps[1,(i-1)*nsims + j*freq]]
-                  for(k in 1:length(oProcs)){
-                    mpi.send.Robj(tempAdj,dest=oProcs[k],tag=4)
-                  }
+                    cat("First condition true.\n", append = TRUE)
+                    partner <- tempPart
+                }else if(tempPart == procID){
+                    cat("Second condition true.\n", append = TRUE)
+                    partner <- swaps[1,(i-1)*nsims + j*freq]
+                }else{
+                    cat("Neither condition true.\n", append = TRUE)
                 }
-              }
-              else{
-                tempAdj <- mpi.recv.Robj(swaps[1,(i-1)*nsims + j*freq],tag=4)
-              }
-            }
-            
-            else{
-              if(j != length(nsimsAdj) || length(nsimsAdj) == length(tempIts)){ # Swap proposed
-                  cat("Start send to ", partner[j], ".\n", append = TRUE)
-                  ## Send commands (blocking)
-                  mpi.send.Robj(likePop,dest=partner[j],tag=1)
-                  mpi.send.Robj(betapop,dest=partner[j],tag=2)
-                  cat("End send to ", partner[j], ".\n", append = TRUE)
-                  ## Receive commands (blocking)
-                  cat("Start receive to ", partner[j], ".\n", append = TRUE)
-                  likePart <- mpi.recv.Robj(partner[j],tag=1)
-                  betaPart <- mpi.recv.Robj(partner[j],tag=2)
-                  cat("End receive to ", partner[j], ".\n", append = TRUE)
+                cat("The adjacency vector is ", tempAdj, "\n", append = TRUE)
+                cat("The pair is", swaps[1,(i-1)*nsims + j*freq], "and", tempPart, ".\n", append = TRUE)
+                cat("My ID is", procID,"\n", append = TRUE)
+                cat("End set partner variable.\n", append = TRUE)
                 
-                  ## Higher ranked process communicates random draw to lower ranked process
-                  cat("Start mh step.\n", append = TRUE)
-                  if(partner[j] < procID){
-                      accept <- runif(1)
-                      mpi.send.Robj(accept,dest=partner[j],tag=3)
-                  }
-                  else{
-                      accept <- mpi.recv.Robj(partner[j],tag=3)
-                  }
-                
-                  ## Compute acceptance probability (for now, population only)
-                  prob <- (likePop^betaPart*likePart^betapop)/(likePop^betapop*likePart^betaPart)
-                  if(prob > accept){
-                      ## Exchange temperature values
-                      betapop <- betaPart
-                  }
-                  cat("End mh step.\n", append = TRUE)
-              }
+                ## Communication step
+                cat("Enter communication step?", swaps[1,(i-1)*nsims + j*freq] == procID || tempPart == procID,
+                    "\n", append = TRUE)
+                if(swaps[1,(i-1)*nsims + j*freq] == procID || tempPart == procID){
+                    cat("Start send to ", partner, ".\n", append = TRUE)
+                    ## Send commands (blocking)
+                    mpi.send.Robj(likePop,dest=partner,tag=1)
+                    mpi.send.Robj(betapop,dest=partner,tag=2)
+                    cat("End send to ", partner, ".\n", append = TRUE)
+                    ## Receive commands (blocking)
+                    cat("Start receive to ", partner, ".\n", append = TRUE)
+                    likePart <- mpi.recv.Robj(partner,tag=1)
+                    betaPart <- mpi.recv.Robj(partner,tag=2)
+                    cat("End receive to ", partner, ".\n", append = TRUE)
+                    
+                    ## Higher ranked process communicates random draw to lower ranked process
+                    if(partner < procID){
+                        accept <- runif(1)
+                        mpi.send.Robj(accept,dest=partner,tag=3)
+                    }else{
+                        accept <- mpi.recv.Robj(partner,tag=3)
+                    }
+                    
+                    ## Compute acceptance probability (for now, population only)
+                    prob <- (likePop^betaPart*likePart^betapop)/(likePop^betapop*likePart^betaPart)
+                    if(prob > accept){
+                        ## Exchange temperature values
+                        betapop <- betaPart
+                        
+                        ## Adjust temperature adjacency list and distribute among processes
+                        ## tempAdj[tempAdj == tempPart] <- swaps[1,(i-1)*nsims + j*freq]
+                        ## tempAdj[tempAdj == swaps[1,(i-1)*nsims + j*freq]] <- tempPart
+                        tempAdj <- swap(tempAdj, c(swaps[1,(i-1)*nsims + j*freq], tempPart),
+                                        c(tempPart, swaps[1,(i-1)*nsims + j*freq]))
+                        
+                    }
+                    
+                    ## Send temperature adjacency list
+                    if(swaps[1,(i-1)*nsims + j*freq] == procID){
+                        oProcs <- tempAdj[tempAdj != tempPart & tempAdj != swaps[1,(i-1)*nsims + j*freq]]
+                        for(k in 1:length(oProcs)){
+                            mpi.send.Robj(tempAdj,dest=oProcs[k],tag=4)
+                        }
+                    }
+                }else{
+                    tempAdj <- mpi.recv.Robj(swaps[1,(i-1)*nsims + j*freq],tag=4)
+                }
+            }else{
+                if(j != length(nsimsAdj) || length(nsimsAdj) == length(tempIts)){ # Swap proposed
+                    cat("Start send to ", partner[j], ".\n", append = TRUE)
+                    ## Send commands (blocking)
+                    mpi.send.Robj(likePop,dest=partner[j],tag=1)
+                    mpi.send.Robj(betapop,dest=partner[j],tag=2)
+                    cat("End send to ", partner[j], ".\n", append = TRUE)
+                    ## Receive commands (blocking)
+                    cat("Start receive to ", partner[j], ".\n", append = TRUE)
+                    likePart <- mpi.recv.Robj(partner[j],tag=1)
+                    betaPart <- mpi.recv.Robj(partner[j],tag=2)
+                    cat("End receive to ", partner[j], ".\n", append = TRUE)
+                    
+                    ## Higher ranked process communicates random draw to lower ranked process
+                    cat("Start mh step.\n", append = TRUE)
+                    if(partner[j] < procID){
+                        accept <- runif(1)
+                        mpi.send.Robj(accept,dest=partner[j],tag=3)
+                    }
+                    else{
+                        accept <- mpi.recv.Robj(partner[j],tag=3)
+                    }
+                    
+                    ## Compute acceptance probability (for now, population only)
+                    prob <- (likePop^betaPart*likePart^betapop)/(likePop^betapop*likePart^betaPart)
+                    if(prob > accept){
+                        ## Exchange temperature values
+                        betapop <- betaPart
+                    }
+                    cat("End mh step.\n", append = TRUE)
+                }
             }
             
             ## Update inputs to swMH
             cds <- ecuts[[1]][,nsimsAdj[j]]
-
+            
             ## Write progress to file
             prog <- ( (i-1)*nsims + sum(nsimsAdj[1:j]) )/(loop*nsims/100) 
-            cat(prog,"% of task on processor",procID,"has completed.\n",
+            cat(prog,"% of task on processor",procID,"has completed.\n\n",
                 append = TRUE)
             
         } 
@@ -395,22 +391,22 @@ ecutsMPI <- function(){
         r <- .Random.seed
         
         ecuts[[20]] <- r
-
+        
         nbetapop <- betapop
         save(ecuts, nbetapop,
              file = paste(dwd, "ecutsMPI", state, "_", (1 - eprob) * 100,
-                        "_", margin.pct, "_", lambda,
-                        "_b", params$initbeta * -1, 
-                        "_bDiss", params$initbetadiss, 
-                        "_bPop", params$initbetapop * -1, 
-                        "_bSwitch", params$initbetaswitch * -1,
-                        "_pow", wpow,
-                        "_par", aid, "_loop", i, ".RData", sep = ""))
+                 "_", margin.pct, "_", lambda,
+                 "_b", params$initbeta * -1, 
+                 "_bDiss", params$initbetadiss, 
+                 "_bPop", params$initbetapop * -1, 
+                 "_bSwitch", params$initbetaswitch * -1,
+                 "_pow", wpow,
+                 "_par", aid, "_loop", i, ".RData", sep = ""))
         
         print(paste("loop", i, sep = " "))
         
     }
-
+    
     ######################
     ## Combine the data ##
     ######################
@@ -418,7 +414,7 @@ ecutsMPI <- function(){
     ## Set up container objects
     cds <- matrix(NA, nrow = nrow(geodat),
                   ncol = (nsims * loop / thin))
-
+    
     ncc <- rep(NA, (nsims * loop / thin))
     nacc <- rep(NA, (nsims * loop / thin))
     rsplit <- rep(NA, (nsims * loop / thin))
@@ -608,7 +604,7 @@ mpi.bcast.Robj2slave(swaps)
 
 ## Send temperature adjacency if doing adjacent swaps
 if(params$adjSwap[1]){
-  mpi.bcastRobj2slave(tempAdj)
+  mpi.bcast.Robj2slave(tempAdj)
 }
 
 ## Send parameters to each slave (different row for each slave)
