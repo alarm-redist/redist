@@ -1,7 +1,7 @@
 #####################################
 # Authors: Alex Tarr
 # Created: 2015/01/09
-# Last Revision: N/A
+# Last Revision: 2015/01/26
 # Institution: Princeton University
 # Purpose: Optimize temperatures for 
 #          parallel tempering
@@ -14,7 +14,7 @@ betaMin <- 0.01 ##Smallest beta assumed to give good mixing
 ## Set params (for running swMH)
 params <- expand.grid(state = "ms",
                       eprob = 0.05, marginpct = 1,
-                      lambda = 18, pnum = 1,
+                      lambda = 18,
                       initbeta = 0,
                       initbetadiss = 0,
                       initbetaswitch = 0,
@@ -28,9 +28,6 @@ params <- expand.grid(state = "ms",
                       logdir = "/scratch/network/bfifield/segregation/code/slurm/",
                       dwd = "/scratch/network/bfifield/segregation/data/simRuns/",
                       codedir = "/scratch/network/bfifield/segregation/code/redist-pkg/")
-
-## Modify pnum
-params$pnum <- 1:2
 
 ## Set working directory | state
 setwd(paste(params$wd[1], params$state[1], sep = ""))
