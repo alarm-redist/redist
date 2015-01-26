@@ -6,20 +6,20 @@
 # Purpose: Optimize temperatures for 
 #          parallel tempering
 #####################################
-
+rm(list = ls())
 ## Inputs
-tBeta <- 400 ##Edit this line for target beta of state
+tBeta <- 27 ##Edit this line for target beta of state (higher for colder temp)
 betaMin <- 0.01 ##Smallest beta assumed to give good mixing
 
 ## Set params (for running swMH)
-params <- expand.grid(state = "ms",
+params <- expand.grid(state = "nh",
                       eprob = 0.05, marginpct = 1,
-                      lambda = 18,
+                      lambda = 1,
                       initbeta = 0,
                       initbetadiss = 0,
                       initbetaswitch = 0,
                       annealbeta = 0, annealbetadiss = 0,
-                      annealbetapop = 1, annealbetaswitch = 0,
+                      annealbetapop = 0, annealbetaswitch = 0,
                       targbetapop = 0,
                       bybetapop = 0,
                       weightpow = 0,
@@ -41,6 +41,9 @@ load(paste(getwd(), "/algdat.RData", sep = ""))
 
 #Convergence flag
 converge <- FALSE
+
+#Set state
+state <- params$state
 
 #Initial districting plan
 if(substr(state, 1, 7) == "testset"){
@@ -69,7 +72,8 @@ ecuts <- function(cds,params,betapop,al.pc,geodat){
   ##########################
   ## Parameter Extraction ##
   ##########################
-  
+
+  print("Start param extraction")  
   ## Set State
   state <- params$state
   
@@ -80,10 +84,9 @@ ecuts <- function(cds,params,betapop,al.pc,geodat){
   
   ## Determine district type
   if(substr(state, 1, 7) == "testset"){
-    dists <- length(unique(cdmat[,1]))
-  } 
-  else{
-    dists <- length(unique(geodat$cds))
+      dists <- length(unique(cdmat[,1]))
+  } else{
+      dists <- length(unique(geodat$cds))
   }
   
   ## Edgecut prob. (prob. of turning edge off = 1 - eprob)
@@ -94,9 +97,6 @@ ecuts <- function(cds,params,betapop,al.pc,geodat){
   
   ## Lambda
   lambda <- params$lambda
-  
-  ## Par num
-  pnum <- params$pnum
   
   ## Compactness beta
   beta <- params$initbeta
@@ -116,12 +116,14 @@ ecuts <- function(cds,params,betapop,al.pc,geodat){
   ## Empty beta vector and weights for simulated tempering
   bvec <- rep(1, 5)  
   betaweights <- rep(1, length(bvec))
+  print("End param extraction")
   
   #########################
   ## Run the simulations ##
   #########################
   
-  samp <- swMH(al.pc, cds, cds, 1, eprob,
+  print("Start swMH")
+  samp <- swMH(al.pc, cds, cds, 2, eprob,
                geodat$pop, geodat$blackhisp, parity, margin,
                dists, lambda, ssdmat,
                beta = beta, betadiss = betadiss, betapop = betapop,
@@ -129,6 +131,7 @@ ecuts <- function(cds,params,betapop,al.pc,geodat){
                betavec = bvec, betadissvec = bvec,
                betapopvec = bvec, betaswitchvec = bvec,
                betaweights = betaweights)
+  print("End swMH")
   
   return(samp)
 }
@@ -137,22 +140,30 @@ ecuts <- function(cds,params,betapop,al.pc,geodat){
 while(!converge){
   
   ## Generate samples
+  print("Start generate samples")
   #Accepted temperature
   ecutsAcc <- ecuts(cdsAcc,params,betaseq[i],al.pc,geodat)
   #Proposed adjacent temperature
   ecutsProp <- ecuts(cdsProp,params,betaseq[i+1],al.pc,geodat)
-  
+  print("End generate samples")  
+
   ## Update current district
+  print("Start update")
   cdsAcc <- ecutsAcc[[1]][,1]
   cdsProp <- ecutsProp[[1]][,1]
-  
+  print("End update")  
+
   ## Get likelihoods
+  print("Start get likelihoods")
   likePop.Acc <- ecutsAcc[[18]]
   likePop.Prop <- ecutsProp[[18]]
-  
+  print("End get likelihoods")  
+
   ## Compute acceptance probability
+  print("Start get acceptance prob")
   alpha <- min(1,exp((betaseq[i+1]-betaseq[i])(log(likePop.Prop)-log(likePop.Acc))))
-  
+  print("End get acceptance prob")  
+
   ## Update rho
   rho <- rho + 1/n*(alpha-0.2338)
   
@@ -160,6 +171,7 @@ while(!converge){
   betaProp <- betaseq[i]/(1+exp(rho))
   
   ## Determine if betaProp has converged
+  print("Start converge check")
   if(abs(betaProp-betaseq[i+1]) < 0.001){
     betaseq[i+1] <- betaProp
     
@@ -182,4 +194,5 @@ while(!converge){
     betaseq[i+1] <- betaProp
     n <- n+1
   }
+  print("End converge check")
 }
