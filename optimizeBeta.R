@@ -54,7 +54,7 @@ if(substr(state, 1, 7) == "testset"){
   cdsProp <- eval(parse(text = paste("geodat$cds", 2, sep = "")))
 }
 
-#Scaling for determining proposed beta
+#Scaling for determining proposed 
 initRho <- -1.5
 rho <- initRho
 #Chain temperatures
@@ -108,6 +108,9 @@ ecuts <- function(cds,params,betapop,al.pc,geodat){
   
   ## Weights power
   wpow <- params$weightpow
+  
+  ## Black-Hispanic population
+  geodat$blackhisp <- geodat$BlackPop + geodat$HispPop
   
   ## Pop. constraints quantities
   parity <- sum(geodat$pop) / dists
