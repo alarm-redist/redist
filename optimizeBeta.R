@@ -6,28 +6,28 @@
 # Purpose: Optimize temperatures for 
 #          parallel tempering
 #####################################
-rm(list = ls())
+# rm(list = ls())
 ## Inputs
-tBeta <- 27 ##Edit this line for target beta of state (higher for colder temp)
+# tBeta <- 27 ##Edit this line for target beta of state (higher for colder temp)
 betaMin <- 0.01 ##Smallest beta assumed to give good mixing
 
-## Set params (for running swMH)
-params <- expand.grid(state = "nh",
-                      eprob = 0.05, marginpct = 1,
-                      lambda = 1,
-                      initbeta = 0,
-                      initbetadiss = 0,
-                      initbetaswitch = 0,
-                      annealbeta = 0, annealbetadiss = 0,
-                      annealbetapop = 0, annealbetaswitch = 0,
-                      targbetapop = 0,
-                      bybetapop = 0,
-                      weightpow = 0,
-                      thin = 1,
-                      wd = "/scratch/network/bfifield/segregation/data/",
-                      logdir = "/scratch/network/bfifield/segregation/code/slurm/",
-                      dwd = "/scratch/network/bfifield/segregation/data/simRuns/",
-                      codedir = "/scratch/network/bfifield/segregation/code/redist-pkg/")
+## Set params (for running swMH) - commented out because being sourced by testMHmin_MPI
+## params <- expand.grid(state = "nh",
+##                       eprob = 0.05, marginpct = 1,
+##                       lambda = 1,
+##                       initbeta = 0,
+##                       initbetadiss = 0,
+##                       initbetaswitch = 0,
+##                       annealbeta = 0, annealbetadiss = 0,
+##                       annealbetapop = 0, annealbetaswitch = 0,
+##                       targbetapop = 0,
+##                       bybetapop = 0,
+##                       weightpow = 0,
+##                       thin = 1,
+##                       wd = "~/Dropbox/Graduate School/Projects/segregation/svn/data/",
+##                       logdir = "/scratch/network/bfifield/segregation/code/slurm/",
+##                       dwd = "~/Desktop/simRuns/",
+##                       codedir = "/scratch/network/bfifield/segregation/code/redist-pkg/")
 
 ## Set working directory | state
 setwd(paste(params$wd[1], params$state[1], sep = ""))
@@ -123,7 +123,7 @@ ecuts <- function(cds,params,betapop,al.pc,geodat){
   ## Run the simulations ##
   #########################
   
-  samp <- swMH(al.pc, cds, cds, 1, eprob,
+  samp <- swMH(al.pc, cds, cds, 2, eprob,
                geodat$pop, geodat$blackhisp, parity, margin,
                dists, lambda, ssdmat,
                beta = beta, betadiss = betadiss, betapop = betapop,
@@ -145,15 +145,16 @@ while(!converge){
   ecutsProp <- ecuts(cdsProp,params,betaseq[i+1],al.pc,geodat)
 
   ## Update current district
-  cdsAcc <- ecutsAcc[[1]][,1]
-  cdsProp <- ecutsProp[[1]][,1]
-
+  cdsAcc <- ecutsAcc[[1]][,2]
+  cdsProp <- ecutsProp[[1]][,2]
+  
   ## Get likelihoods
   likePop.Acc <- ecutsAcc[[18]]
   likePop.Prop <- ecutsProp[[18]]
-
+  
   ## Compute acceptance probability
-  alpha <- min(1,exp((betaseq[i+1]-betaseq[i])*(log(likePop.Prop)-log(likePop.Acc))))
+  alpha <- min(1, exp((betaseq[i+1]-betaseq[i]) *
+                          (log(likePop.Prop)-log(likePop.Acc))))
 
   ## Update rho
   rho <- rho + 1/n*(alpha-0.2338)
@@ -162,27 +163,28 @@ while(!converge){
   betaProp <- betaseq[i]/(1+exp(rho))
   
   ## Determine if betaProp has converged
-  if(abs(betaProp-betaseq[i+1]) < 0.001){
-    betaseq[i+1] <- betaProp
-    
-    ## Check if all optimal temperatures have been found
-    if(betaseq[i+1] > -tBeta*betaMin){
-      betaseq[i+1] <- -tBeta*betaMin
-      converge <- TRUE
-    }
-    #If not, propose a new adjacent beta for current converged beta and repeat algorithm
-    else{
-      i <- i+1
-      ## Reinitialize rho,n
-      n <- 1
-      rho <- initRho
-      ## Propose new beta
-      betaseq[i+1] <- betaseq[i]/(1+exp(rho))
-    }
+  if(abs(betaProp-betaseq[i+1]) < .5){
+      betaseq[i+1] <- betaProp
+      
+      ## Check if all optimal temperatures have been found
+      if(betaseq[i+1] > -tBeta*betaMin){
+          betaseq[i+1] <- -tBeta*betaMin
+          converge <- TRUE
+      }
+                                        #If not, propose a new adjacent beta for current converged beta and repeat algorithm
+      else{
+          i <- i+1
+          ## Reinitialize rho,n
+          n <- 1
+          rho <- initRho
+          ## Propose new beta
+          betaseq[i+1] <- betaseq[i]/(1+exp(rho))
+      }
   }
   else{
-    betaseq[i+1] <- betaProp
-    n <- n+1
+      betaseq[i+1] <- betaProp
+      n <- n+1
   }
+  print(n)
 }
 
