@@ -7,38 +7,47 @@
 #####################################
 aid <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 
-betaseq <- rep(NA, 11)
-for(i in 1:11){
-    betaseq[i] <- -(0.1^((i-1) / (length(betaseq) - 1)))
-}
-betaseq <- 30 * (betaseq + .1)
+## betaseq <- rep(NA, 11)
+## for(i in 1:11){
+##     betaseq[i] <- -(0.1^((i-1) / (length(betaseq) - 1)))
+## }
+## betaseq <- 250 * (betaseq + .1)
 
-params <- expand.grid(state = "nh", adjSwap = TRUE, freq = 500, 
+params <- expand.grid(state = "ms", adjSwap = FALSE, freq = 500, 
                       eprob = 0.05, marginpct = 1,
-                      lambda = 1, pnum = 1,
+                      lambda = 18, pnum = 1,
                       initbeta = 0,
                       initbetadiss = 0,
-                      initbetapop = betaseq,
+                      initbetapop = 0,
                       initbetaswitch = 0,
                       annealbeta = 0, annealbetadiss = 0,
                       annealbetapop = 1, annealbetaswitch = 0,
-                      targbetapop = 0,
+                      targbetapop = 225,
                       bybetapop = 0,
                       weightpow = 0,
-                      nsims = 50000, loop = 1, thin = 1,
+                      nsims = 20000, loop = 5, thin = 5,
                       wd = "/scratch/network/bfifield/segregation/data/",
                       logdir = "/scratch/network/bfifield/segregation/code/slurm/",
                       dwd = "/scratch/network/bfifield/segregation/data/simRuns/",
-                      codedir = "/scratch/network/bfifield/segregation/code/redist-pkg/")
+                      codedir = "/scratch/network/bfifield/segregation/code/")
+
+## Input for optimizeBeta
+set.seed(1)
+tBeta <- params$targbetapop[1]
+source(paste(params$codedir[1], "optimizeBeta.R", sep = ""))
+
+## Modify params matrix
+params <- do.call(rbind, replicate(length(betaseq), params, simplify=FALSE))
+
+## Modify pnum and initbetapop
+params$pnum <- 1:length(betaseq)
+params$initbetapop <- betaseq
 
 ## Get state
 state <- params$state[1]
 
 ## Adjacent swap flag
 adjSwap <- params$adjSwap[1]
-
-## Modify pnum
-params$pnum <- 1:nrow(params)
 
 ## Set working directory | state
 setwd(paste(params$wd[1], state, sep = ""))
@@ -73,7 +82,7 @@ if(adjSwap){
 }
 
 ## Initial temperature adjacency list
-tempAdj <- 1:nrow(params)
+tempAdj <- 1:length(betaseq)
 
 ## Functions
 
@@ -105,7 +114,8 @@ ecutsMPI <- function(){
 
     aid <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
     
-    library("redist"); library("BARD"); library("maptools"); library("methods"); library("Kmisc")
+    library("redist"); library("BARD"); library("maptools"); library("methods");
+    library("Kmisc")
     
     load(paste(getwd(), "/algdat.RData", sep = ""))
     
@@ -505,14 +515,6 @@ ecutsMPI <- function(){
     ###############################
 
     if(substr(state, 1, 7) == "testset"){
-
-        ##     ## Number of acceptances
-        ##     accept <- 0
-        ##     for(z in 2:length(edgecuts[[10]])){
-        ##         if(edgecuts[[10]][z-1] != edgecuts[[10]][z]){
-        ##             accept <- accept + 1
-        ##         }
-        ##     }
 
         ##     ## Distance from population parity
         ##     paritydist <- distParity(edgecuts[[1]], geodat$pop, parity)
