@@ -123,7 +123,7 @@ ecuts <- function(cds,params,betapop,al.pc,geodat){
   ## Run the simulations ##
   #########################
   
-  samp <- swMH(al.pc, cds, cds, 2, eprob,
+  samp <- swMH(al.pc, cds, cds, freq+1, eprob,
                geodat$pop, geodat$blackhisp, parity, margin,
                dists, lambda, ssdmat,
                beta = beta, betadiss = betadiss, betapop = betapop,
@@ -145,8 +145,8 @@ while(!converge){
   ecutsProp <- ecuts(cdsProp,params,betaseq[i+1],al.pc,geodat)
 
   ## Update current district
-  cdsAcc <- ecutsAcc[[1]][,2]
-  cdsProp <- ecutsProp[[1]][,2]
+  cdsAcc <- ecutsAcc[[1]][,freq+1]
+  cdsProp <- ecutsProp[[1]][,freq+1]
   
   ## Get likelihoods
   likePop.Acc <- ecutsAcc[[18]]
