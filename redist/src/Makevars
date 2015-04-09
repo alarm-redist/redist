@@ -1,3 +1,0 @@
-PKG_CXXFLAGS=-I${HOME}/local/include/
-PKG_LIBS = $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) -L${HOME}/local/lib -ligraph
-
