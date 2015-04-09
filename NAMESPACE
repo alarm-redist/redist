@@ -1,0 +1,21 @@
+useDynLib(redist)
+importFrom(Rcpp, evalCpp)
+
+## redist.R
+export(redist.mcmc)
+export(redist.segcalc)
+export(redist.diagplot)
+export(redist.ipw)
+export(redist.rsg)
+importFrom(spdep, poly2nb)
+importFrom(sp, coordinates)
+importFrom(coda, mcmc)
+importFrom(coda, mcmc.list)
+importFrom(coda, traceplot)
+importFrom(coda, autocorr.plot)
+importFrom(coda, densplot)
+importFrom(coda, cumuplot)
+importFrom(coda, gelman.plot)
+
+## Rcpp
+#exportPattern("^[[:alpha:]]+")

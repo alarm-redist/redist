@@ -1,0 +1,57 @@
+\name{redist.segcalc}
+\alias{redist.segcalc}
+\title{
+Segregation index calculation for MCMC redistricting.
+}
+\description{
+\code{redist.segcalc} calculates the dissimilarity index of segregation (see Massey \& Denton 1987 for more details) for a specified subgroup under any redistricting plan. 
+}
+\usage{
+redist.segcalc(algout,
+               grouppop,
+               fullpop)
+}
+
+\arguments{
+  \item{algout}{An object of class "redist".}
+  \item{grouppop}{A vector of populations for some sub-group of
+interest.}
+\item{fullpop}{A vector containing the populations of each geographic
+unit.}
+}
+
+\value{
+\code{redist.segcalc} returns a vector where each entry is the dissimilarity index of segregation (Massey & Denton 1987) for each redistricting plan in \code{algout}.
+}
+\references{
+  Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander Tarr. (2015) "A New Automated Redistricting Simulator Using Markov Chain Monte Carlo." Working 
+  Paper. Available at \url{http://imai.princeton.edu/research/files/redist.pdf}.
+  
+  Massey, Douglas and Nancy Denton. (1987) "The Dimensions of Social Segregation". Social Forces.
+  }
+
+\examples{
+\dontrun{
+data(algdat.pfull)
+
+## Code to run the simulations in Figure 4 of Fifield, Higgins, 
+## Imai and Tarr (2015)
+
+## Get an initial partition
+set.seed(1)
+initcds <- algdat.pfull$cdmat[,sample(1:ncol(algdat.pfull$cdmat), 1)]
+
+## Run simulations
+alg_253 <- redist.mcmc(adjobj = algdat.pfull$adjlist,
+                       popvec = algdat.pfull$precinct.data$pop,
+                       initcds = initcds,
+                       nsims = 10000)
+
+## Get Republican Dissimilarity Index from simulations
+rep_dmi_253 <- redist.segcalc(alg_253,
+                              algdat.pfull$precinct.data$repvote,
+                              algdat.pfull$precinct.data$pop)
+                              
+}
+}
+\keyword{inverseprobabilityweighting}

@@ -1,0 +1,25 @@
+Package: redist
+Version: 1.0
+Date: 2015-04-02
+Title: Markov Chain Monte Carlo Methods for Redistricting Simulation
+Author: Ben Fifield <bfifield@princeton.edu>, Alexander Tarr <atarr@princeton.edu>, and Kosuke Imai <kimai@princeton.edu>, with contributions from the igraph library team. See inst/AUTHORS for details.
+Maintainer: Ben Fifield <bfifield@princeton.edu>
+Copyright: Gabor Csardi <csardi.gabor@gmail.com>, Free Software
+        Foundation, Inc, Sandia Corporation, The R Development Core
+        Team, The Regents of the University of California, Xerox PARC,
+        Timothy A. Davis <davis@cise.ufl.edu>, Tommi Junttila, Juergen
+        Buchmueller <pullmoll@t-online.de>, Patrick R. Amestoy, Iain S.
+        Duff, John K. Reid, University of Florida, Andrew Makhorin
+        <mao@gnu.org>, Fabien Viger, Tamas Nepusz, Joerg Reichardt,
+        Minh Van Nguyen <nguyenminh2@gmail.com>, Jorge Nocedal, Naoaki
+        Okazaki, Aaron Clauset, Gerard Jungman, Pascal Pons
+        <pasal.pons@gmail.com>, Paul Hsieh, David Morton de Lachapelle
+        <david.morton@a3.epfl.ch>, Ross Ihaka
+Description: Enables researchers to statistically simulate congressional redistricting plans using Markov Chain Monte Carlo techniques. This includes the implementation of substantive constraints in the redistricting process such as geographic compactness and population parity requirements, as well as efficient simulation methods such as simulated tempering algorithms. Tools for analysis such as inverse probability reweighting and plotting functionality are included. This code relies on several functionalities implemented in the 'igraph' C++ library. The package implements methods described in Fifield, Higgins, Imai and Tarr (2015) "A New Automated Redistricting Simulator Using Markov Chain Monte Carlo," working paper available at <http://http://imai.princeton.edu/research/files/redist.pdf>.
+Depends: R (>= 3.1.0)
+Imports: Rcpp (>= 0.11.0), spdep, sp, coda
+LinkingTo: Rcpp, RcppArmadillo
+Suggests: stats4, rgl, tcltk, ape
+License: GPL (>= 2)
+SystemRequirements: gmp, libxml2
+Packaged: 2015-04-07 20:53:26 UTC; benfifield
