@@ -11,5 +11,5 @@ function in the `devtools` package.
 ```
 library(devtools)
 install_devtools(repo = "redist",
-                          username = "bfifield")
+	username = "bfifield")
 ```
