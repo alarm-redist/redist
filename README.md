@@ -1,4 +1,4 @@
-##### redist 1.0
+# redist 1.0
 R package for simulating redistricting plans via Markov chain Monte
 Carlo by Ben Fifield ([bfifield@princeton.edu](bfifield@princeton.edu)),
 Alex Tarr ([atarr@princeton.edu](atarr@princeton.edu)), and Kosuke Imai
