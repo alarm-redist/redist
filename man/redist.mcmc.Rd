@@ -17,7 +17,7 @@ plans using Markov Chain Monte Carlo methods.
               betaseq = "powerlaw", betaseqlength = 10,
               betaweights = NULL,
               adjswaps = TRUE, rngseed = NULL,
-              savename = NULL)
+              savename = NULL, verbose = TRUE)
 }
 
 \arguments{
@@ -87,6 +87,7 @@ values adjacent to current constraint are proposed. The default is
 \item{rngseed}{Allows the user to set the seed for the
 simulations. Default is \code{NULL}.}
 \item{savename}{Filename to save simulations. Default is \code{NULL}.}
+\item{verbose}{Whether to print initialization statement. Default is \code{TRUE}.}
 }
 
 \details{

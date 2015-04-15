@@ -154,7 +154,6 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     if(is.null(initcds)){
 
         ## Set up target pop, strength of constraint
-        targpop <- sum(popvec) / ndists
         if(is.null(popcons)){
             popcons <- 100
         }
@@ -162,8 +161,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         ## Run the algorithm
         initout <- redist.rsg(adj.list = adjlist,
                               population = popvec,
-                              Ndistrict = ndists,
-                              target.pop = targpop,
+                              ndists = ndists,
                               thresh = popcons)
 
         ## Get initial cds
@@ -446,7 +444,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                         betaseq = "powerlaw", betaseqlength = 10,
                         betaweights = NULL,
                         adjswaps = TRUE, rngseed = NULL,
-                        savename = NULL
+                        savename = NULL, verbose = TRUE
                         ){
 
     #########################
@@ -493,15 +491,18 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
     ##            parallel tempering. Default to TRUE
     ## rngseed - Random number generator seed number. Provided by user
     ## savename - Where to save the simulations
+    ## verbose - whether to print initialization script
 
-    ## Initialize ##
-    divider <- c(paste(rep("=", 20), sep = "", collapse = ""), "\n")
-
-    cat("\n")
-    cat(divider)
-    cat("redist.mcmc(): Automated Redistricting Simulation Using
+    if(verbose){
+        ## Initialize ##
+        divider <- c(paste(rep("=", 20), sep = "", collapse = ""), "\n")
+        
+        cat("\n")
+        cat(divider)
+        cat("redist.mcmc(): Automated Redistricting Simulation Using
          Markov Chain Monte Carlo\n\n")
-
+    }
+    
     ##########################
     ## Is anything missing? ##
     ##########################

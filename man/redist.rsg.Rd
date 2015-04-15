@@ -18,14 +18,13 @@
   \item{population}{ numeric vector of list N, where N is the number of precincts. Each element lists the
     population total of the corresponding precinct, and is used to enforce population constraints.
   }
-  \item{Ndistrict}{  integer, the number of districts we want to partition the precincts into.
+  \item{ndists}{  integer, the number of districts we want to partition the precincts into.
   }
-  \item{target.pop}{ numeric, indicates the target population of each district.  This is typically the
-    sum of the population vector divided by Ndistrict.}
   \item{thresh}{numeric, indicating how close district population targets have to be to the target population
     before algorithm converges.  thresh=0.05 for example means that all districts must be between 0.95 and 1.05
     times the size of target.pop in population size.
   }
+  \item{verbose}{boolean, indicating whether the time to run the algorithm is printed.}
 }
 
 \value{
@@ -69,7 +68,7 @@ Quarterly Journal of Political Science. 8(3): 239-269.
 ### Real data example from test set
 
 data("algdat.pfull")
-res <- redist.rsg(algdat.pfull$adjlist, algdat.pfull$precinct.data$pop, 3, algdat.pfull$precinct.data$pop, 0.05)
+res <- redist.rsg(algdat.pfull$adjlist, algdat.pfull$precinct.data$pop, 3, 0.05)
 
 
 \dontrun{
@@ -100,7 +99,7 @@ return(adj.list)
 ### Generate a 100x100 precinct map and redistrict it into 10 districts
 adj.list <- genTest(100,100)
 population <- rep(300,length(adj.list))
-tmp <- redist.rsg(adj.list, population, 10, sum(population)/10, 0.05)
+tmp <- redist.rsg(adj.list, population, 10, 0.05)
 
 }
 
