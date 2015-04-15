@@ -8,7 +8,7 @@
 }
 
 \usage{
-  redist.rsg(adj.list, population, Ndistrict, target.pop, thresh)
+  redist.rsg(adj.list, population, ndists, thresh, verbose = TRUE)
 }
 
 \arguments{
