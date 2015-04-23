@@ -2,3 +2,4 @@ redist/src/*.so
 redist/src/*.o
 /redist/R/RcppExports.R
 /redist/src/RcppExports.cpp
+.DS_Store
