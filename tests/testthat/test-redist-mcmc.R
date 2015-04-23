@@ -2,9 +2,6 @@ context("Test functionality of redist.mcmc")
 
 rm(list = ls())
 
-## Load data
-data(algdat.pfull)
-
 ## Get set of initial cds
 set.seed(1)
 cds1 <- algdat.pfull$cdmat[,sample(1:ncol(algdat.pfull$cdmat), 1)]
