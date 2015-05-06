@@ -13,7 +13,7 @@ redist.segcalc(algout,
 }
 
 \arguments{
-  \item{algout}{An object of class "redist".}
+  \item{algout}{A matrix of congressional district assignments or a redist object.}
   \item{grouppop}{A vector of populations for some sub-group of
 interest.}
 \item{fullpop}{A vector containing the populations of each geographic

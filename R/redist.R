@@ -868,13 +868,13 @@ redist.segcalc <- function(algout,
     ########################
     ## Inputs to function ##
     ########################
-    ## algout: an object of class redist
+    ## algout: a matrix of congressional district assignments or a redist object
     ## grouppop: a vector of populations for some subgroup
     ## fullpop: a vector of populations for a geographic district
 
     ## Warnings
-    if(missing(algout) | class(algout) != "redist"){
-        stop("Please provide a proper redist object")
+    if(missing(algout) | !(class(algout) %in% c("data.frame", "matrix", "redist"))){
+        stop("Please provide either a redist object or a proper matrix of congessional districts")
     }
     if(missing(grouppop)){
         stop("Please provide a vector of sub-group populations to calculate
@@ -883,14 +883,20 @@ the segregation index")
     if(missing(fullpop)){
         stop("Please provide a vector of populations for each geographic unit")
     }
-    if(!((nrow(algout$partitions) == length(grouppop)) &
+
+    ## If redist object, get the partitions entry
+    if(class(algout) == "redist"){
+        algout <- algout$partitions
+    }
+    
+    if(!((nrow(algout) == length(grouppop)) &
              (length(grouppop) == length(fullpop)) &
-                 (length(fullpop) == nrow(algout$partitions)))){
+                 (length(fullpop) == nrow(algout)))){
         stop("Please make sure there is a population entry for each geographic unit")
     }
 
     ## Calculate dissimilarity index
-    seg.out <- segregationcalc(algout$partitions,
+    seg.out <- segregationcalc(algout,
                                grouppop,
                                fullpop)
 
