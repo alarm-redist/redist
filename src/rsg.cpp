@@ -14,11 +14,12 @@ List rsg (List adj_list,
 	int Nprecinct = adj_list.size();
 	double maxpop = target_pop * (1+thresh);
 	double minpop = target_pop * (1-thresh);
-	int i, i_dist=0, j_dist=0;
+	int i, j, i_dist=0, j_dist=0;
 	int p, p_index;
 	IntegerVector p_neighbors, d_neighbors;
 	IntegerVector idist_pmembers, jdist_pmembers, idist_pneighbors, idist_dneighbors, idist_newmembers;
 	NumericVector district_pop(Ndistrict);	//Rcpp Reference says it will always be 0
+	NumericVector maxpop_dist(Ndistrict);
 	int i_valid=0, j_candidates_size, p_neighbors_size;
 	IntegerVector idist_members, jdist_members;
 
@@ -104,13 +105,22 @@ List rsg (List adj_list,
 	for(i=0; i< Nprecinct; i++)	district_pop[ member_dvec[i] ] += population[i]; 
 
 
-	while( (max(district_pop) > maxpop) & (min(district_pop) < minpop) ){
+	while( (max(district_pop) > maxpop) | (min(district_pop) < minpop) ){
 
 	// WHILE POPULATION CONSTRAINT NOT MET
 
 	// STEP 3A: Identify the most populated district and denote it as district i
 	i_dist = which_max(district_pop);
 
+	// If more than one district has max population, break the tie randomly
+	j=0;
+	for(i=0; i<Ndistrict; i++){
+		if(district_pop[i] == district_pop[i_dist]){
+			maxpop_dist[j] = i;
+			j++;
+		}
+	}
+	i_dist = maxpop_dist[rand() % j];
 
 	// STEP 3B: Select a random precinct in that district, and denote it as precinct p
 	idist_pmembers = IntegerVector(member_plist[i_dist]);
