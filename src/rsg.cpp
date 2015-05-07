@@ -8,7 +8,8 @@ List rsg (List adj_list,
                NumericVector population,
                int Ndistrict,
                double target_pop,
-               double thresh
+               double thresh,
+               int maxiter
                ) {
 
 	int Nprecinct = adj_list.size();
@@ -16,6 +17,7 @@ List rsg (List adj_list,
 	double minpop = target_pop * (1-thresh);
 	int i, j, i_dist=0, j_dist=0;
 	int p, p_index;
+	int iter;
 	IntegerVector p_neighbors, d_neighbors;
 	IntegerVector idist_pmembers, jdist_pmembers, idist_pneighbors, idist_dneighbors, idist_newmembers;
 	NumericVector district_pop(Ndistrict);	//Rcpp Reference says it will always be 0
@@ -104,7 +106,7 @@ List rsg (List adj_list,
 	
 	for(i=0; i< Nprecinct; i++)	district_pop[ member_dvec[i] ] += population[i]; 
 
-
+	iter=0;
 	while( (max(district_pop) > maxpop) | (min(district_pop) < minpop) ){
 
 	// WHILE POPULATION CONSTRAINT NOT MET
@@ -167,6 +169,15 @@ List rsg (List adj_list,
 		member_plist[j_dist] = jdist_members;
 
 	} // end if(i_valid){
+
+	iter++;
+	if(iter > maxiter){
+		List result;
+		result["district_membership"] = NumericVector::get_na();
+		result["district_list"] = NumericVector::get_na();
+		result["district_pop"] = NumericVector::get_na();
+		return(result);
+	}
 
 	}  // end while( max(district_pop) > maxpop){
 	
