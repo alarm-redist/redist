@@ -39,8 +39,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // rsg
-List rsg(List adj_list, NumericVector population, int Ndistrict, double target_pop, double thresh);
-RcppExport SEXP redist_rsg(SEXP adj_listSEXP, SEXP populationSEXP, SEXP NdistrictSEXP, SEXP target_popSEXP, SEXP threshSEXP) {
+List rsg(List adj_list, NumericVector population, int Ndistrict, double target_pop, double thresh, int maxiter);
+RcppExport SEXP redist_rsg(SEXP adj_listSEXP, SEXP populationSEXP, SEXP NdistrictSEXP, SEXP target_popSEXP, SEXP threshSEXP, SEXP maxiterSEXP) {
 BEGIN_RCPP
     SEXP __sexp_result;
     {
@@ -50,7 +50,8 @@ BEGIN_RCPP
         Rcpp::traits::input_parameter< int >::type Ndistrict(NdistrictSEXP );
         Rcpp::traits::input_parameter< double >::type target_pop(target_popSEXP );
         Rcpp::traits::input_parameter< double >::type thresh(threshSEXP );
-        List __result = rsg(adj_list, population, Ndistrict, target_pop, thresh);
+        Rcpp::traits::input_parameter< int >::type maxiter(maxiterSEXP );
+        List __result = rsg(adj_list, population, Ndistrict, target_pop, thresh, maxiter);
         PROTECT(__sexp_result = Rcpp::wrap(__result));
     }
     UNPROTECT(1);
