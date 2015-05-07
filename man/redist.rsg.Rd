@@ -8,7 +8,7 @@
 }
 
 \usage{
-  redist.rsg(adj.list, population, ndists, thresh, verbose = TRUE)
+  redist.rsg(adj.list, population, ndists, thresh, verbose = TRUE, maxiter=5000)
 }
 
 \arguments{
@@ -18,13 +18,16 @@
   \item{population}{ numeric vector of list N, where N is the number of precincts. Each element lists the
     population total of the corresponding precinct, and is used to enforce population constraints.
   }
-  \item{ndists}{  integer, the number of districts we want to partition the precincts into.
+  \item{ndists}{ integer, the number of districts we want to partition the precincts into.
   }
-  \item{thresh}{numeric, indicating how close district population targets have to be to the target population
+  \item{thresh}{ numeric, indicating how close district population targets have to be to the target population
     before algorithm converges.  thresh=0.05 for example means that all districts must be between 0.95 and 1.05
     times the size of target.pop in population size.
   }
-  \item{verbose}{boolean, indicating whether the time to run the algorithm is printed.}
+  \item{verbose}{ boolean, indicating whether the time to run the algorithm is printed.}
+  \item{maxiter}{ integer, indicating maximum number of iterations to attempt before convergence to population
+    constraint fails.  If it fails once, it will use a different set of start values and try again.  If it
+    fails again, redist.rsg() returns an object of all NAs, indicating that use of more iterations may be advised.}
 }
 
 \value{
