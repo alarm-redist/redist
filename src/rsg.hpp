@@ -10,7 +10,8 @@ Rcpp::List rsg (List adj_list,
                arma::vec population,
                int Ndistrict,
                double target_pop,
-               double thresh
+               double thresh,
+               int maxiter
                );
 
 #endif
