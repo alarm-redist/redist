@@ -2,7 +2,8 @@ redist.rsg <- function(adj.list,
                        population,
                        ndists,
                        thresh,
-                       verbose = TRUE
+                       verbose = TRUE,
+                       maxiter=5000
                        )
 {
 
@@ -23,8 +24,22 @@ redist.rsg <- function(adj.list,
                                      population,
                                      ndists,
                                      target.pop,
-                                     thresh
+                                     thresh,
+                                     as.integer(maxiter)
                                      ))
+
+    ## Make another call if stuck, but only do one more try because maxiter might be too low
+   if( is.na(ret$district_membership[1]) ){
+    time <- system.time(ret <- .Call('redist_rsg',
+                                     PACKAGE = 'redist',
+                                     adj.list,
+                                     population,
+                                     ndists,
+                                     target.pop,
+                                     thresh,
+                                     as.integer(maxiter)
+                                     ))
+	}
 
     if(verbose){
         cat(paste("\n\t", ndists, " districts built using ", length(adj.list), " precincts in ",
