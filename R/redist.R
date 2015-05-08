@@ -159,10 +159,15 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         }
 
         ## Run the algorithm
-        initout <- redist.rsg(adj.list = adjlist,
-                              population = popvec,
-                              ndists = ndists,
-                              thresh = popcons)
+        repeat{
+            initout <- redist.rsg(adj.list = adjlist,
+                                  population = popvec,
+                                  ndists = ndists,
+                                  thresh = popcons)
+            if(!is.na(initout$district_membership[1])){
+                break
+            }
+        }
 
         ## Get initial cds
         initcds <- initout$district_membership
