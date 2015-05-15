@@ -15,10 +15,7 @@ install_devtools(repo = "redist",
 ```
 
 ## src Folder
-The `redist` package utilizes functionalities from the `igraph` C++
-library to speed up computation. In order to use this library, we have
-included the full `igraph` code base in `src`. We hope the following
-guide will be of help to users who want to take a look at the original
+We hope the following guide will be of help to users who want to take a look at the original
 `redist` source code:
 - `sw_mh_alg.cpp`: Contains the `swMH()` function, which conducts
 Markov chain Monte Carlo simulation of redistricting plans.
