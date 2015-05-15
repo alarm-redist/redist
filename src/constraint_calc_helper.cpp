@@ -8,7 +8,6 @@
 
 // Header files
 #include <RcppArmadillo.h>
-#include <igraph.h>
 
 using namespace Rcpp;
 

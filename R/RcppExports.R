@@ -9,8 +9,8 @@ segregationcalc <- function(distmat, grouppop, fullpop) {
     .Call('redist_segregationcalc', PACKAGE = 'redist', distmat, grouppop, fullpop)
 }
 
-rsg <- function(adj_list, population, Ndistrict, target_pop, thresh) {
-    .Call('redist_rsg', PACKAGE = 'redist', adj_list, population, Ndistrict, target_pop, thresh)
+rsg <- function(adj_list, population, Ndistrict, target_pop, thresh, maxiter) {
+    .Call('redist_rsg', PACKAGE = 'redist', adj_list, population, Ndistrict, target_pop, thresh, maxiter)
 }
 
 swMH <- function(aList, cdvec, cdorigvec, popvec, grouppopvec, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, lambda = 0L, beta_population = 0.0, beta_compact = 0.0, beta_segregation = 0.0, beta_similar = 0.0, anneal_beta_population = 0L, anneal_beta_compact = 0L, anneal_beta_segregation = 0L, anneal_beta_similar = 0L, adjswap = 1L) {

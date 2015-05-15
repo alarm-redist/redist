@@ -8,7 +8,6 @@
 
 // Header files
 #include <RcppArmadillo.h>
-#include <igraph.h>
 #include "constraint_calc_helper.hpp"
 
 using namespace Rcpp;
@@ -123,50 +122,90 @@ int elim_check(NumericVector prop_partition,
 
 // Function to generate adjacency graph and count clusters
 int genGraph(List aList)
-{
+{   
 
-  /* Inputs to function:
-     aList: adjacency list
-  */
+  //Takes an adjacency list,
+  //The vector of subset nodes
+  //The number of subset nodes
+						
+  //initialize connCompVec   
+  //Initialize visited indices
+  IntegerVector visitedInd(aList.size());
+  int indexVisit = 0;
+  
+  //Initialize connected components
+  IntegerVector currConnComp(aList.size());
+  int indexCurrConnComp = 0;
 
-  // Declare graph, igraph vector
-  igraph_t g;
-  igraph_vector_t v;
+  //Initialize the number of connected components
+  int numConnComp = 0;
+  
+  
 
-  // Resize vector to accomodate all edges
-  int vecsize = 0;
+  //Loop over nodes
   for(int i = 0; i < aList.size(); i++){
-    NumericVector adj = aList(i);
-    vecsize += adj.size();
-  }
-  igraph_vector_init(&v, 2 * vecsize);
+    
+    //If i has not been visited...
+    if(visitedInd[i] == 0){
+      
+      //List i as visited
+      visitedInd[i] = 1;
 
-  // Create vector of edges
-  int ind = 0;
-  for(int i = 0; i < aList.size(); i++){
-    NumericVector adj = aList(i);
-    for(int j = 0; j < adj.size(); j++){
-      VECTOR(v)[ind] = i;
-      ind++;
-      VECTOR(v)[ind] = adj(j);
-      ind++;
+      //Increase the number of connected components
+      numConnComp++;
+
+      //Add i to the connected component list
+      currConnComp[indexVisit] = i;
+      
+      //increase index visit
+      indexVisit++;
+      
+      //Count the number of nodes in the current connected component
+      int nodeCount = indexVisit - 1;
+      
+      //Initialize a stopping variable:
+      int toStop = 0;
+
+      //While we don't stop
+      while(toStop == 0){
+	
+	//get the neighbors of the next current comp
+	IntegerVector listNeighs = aList[currConnComp[nodeCount]];
+	
+	//If listNeighs does not have length zero...
+	int listLength = listNeighs.size();
+	if(listLength > 0){
+	  
+	  //Add nodes of listLength to currConnComp
+	  //and mark nodes as visited
+	  for(int j = 0; j < listLength; j++){
+	    if( visitedInd[listNeighs[j]] == 0){
+	      currConnComp[indexVisit] = listNeighs[j];
+	      visitedInd[listNeighs[j]] = 1;
+
+	      //Increment indexVisit
+	      indexVisit++;
+	    }
+	  }
+	}
+	
+	//Increment nodeCount
+	nodeCount++;
+
+	//If currConnComp[nodeCount] is zero, then we must have new connected component
+	//Also stop if we have too many guys.
+	if(nodeCount == aList.size()){
+	  toStop = 1;
+	}
+	else if(currConnComp[nodeCount] == 0 ){
+	  toStop = 1;
+	}
+      }
     }
   }
-
-  // Create full graph
-  igraph_create(&g, &v, aList.size(), 0);
-
-  // Objects to calculate clusters
-  igraph_integer_t n;
-
-  igraph_clusters(&g, NULL, NULL, &n, IGRAPH_WEAK);
-
-  // Destroy objects to free memory
-  igraph_vector_destroy(&v);
-  igraph_destroy(&g);
-
-  return n;
-
+  
+  return numConnComp;
+  
 }
 
 // Function to update district populations

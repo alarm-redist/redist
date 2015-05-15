@@ -8,7 +8,6 @@
 
 // Header files
 #include <RcppArmadillo.h>
-#include <igraph.h>
 #include "make_swaps_helper.hpp"
 #include "constraint_calc_helper.hpp"
 
