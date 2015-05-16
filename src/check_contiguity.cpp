@@ -8,13 +8,13 @@
 // can still be contiguously connected to district i, if p flips to a different district
 
 int check_contiguity(Rcpp::List adj_list,
-					Rcpp::IntegerVector p_neighbors,
-					int p_neighbors_size,
-					Rcpp::IntegerVector d_neighbors,
-					int i_dist,
-					Rcpp::IntegerVector member_dvec
+					 Rcpp::IntegerVector p_neighbors,
+					 int p_neighbors_size,
+					 Rcpp::IntegerVector d_neighbors,
+					 int i_dist,
+					 Rcpp::IntegerVector member_dvec
                      ) {
-
+	
 	// pmember_vec tracks which district each precinct belongs to
 	//arma::ivec member_dvec(Nprecinct);	
 

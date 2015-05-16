@@ -8,8 +8,7 @@ Description: Enables researchers to statistically simulate congressional redistr
 Depends: R (>= 3.1.0)
 Imports: Rcpp (>= 0.11.0), spdep, sp, coda
 LinkingTo: Rcpp, RcppArmadillo
-Suggests: testthat
 License: GPL (>= 2)
 SystemRequirements: gmp, libxml2
-Packaged: 2015-05-15 23:47:28 UTC; benfifield
+Packaged: 2015-05-16 17:38:17 UTC; benfifield
 NeedsCompilation: yes
