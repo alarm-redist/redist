@@ -121,7 +121,8 @@ int elim_check(NumericVector prop_partition,
 }
 
 // Function to generate adjacency graph and count clusters
-int genGraph(List aList)
+// [[Rcpp::export]]
+int genGraph(List aList) 
 {   
 
   //Takes an adjacency list,
@@ -140,8 +141,6 @@ int genGraph(List aList)
   //Initialize the number of connected components
   int numConnComp = 0;
   
-  
-
   //Loop over nodes
   for(int i = 0; i < aList.size(); i++){
     

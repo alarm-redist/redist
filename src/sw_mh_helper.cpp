@@ -55,6 +55,7 @@ NumericVector init_pop(NumericVector popvec,
 
 /* Function to modify adjacency list to reflect adjacency only within
    a particular congressional district */
+// [[Rcpp::export]]
 List genAlConn(List aList,
 	       NumericVector cds)
 {

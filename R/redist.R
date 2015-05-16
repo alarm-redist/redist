@@ -158,14 +158,30 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
             popcons <- 100
         }
 
+        ## Print start
+        divider <- c(paste(rep("=", 20), sep = "", collapse = ""), "\n")
+        
+        cat("\n")
+        cat(divider)
+        cat("redist.rsg(): Automated Redistricting Starts\n\n")
+        
         ## Run the algorithm
         repeat{
             initout <- redist.rsg(adj.list = adjlist,
                                   population = popvec,
                                   ndists = ndists,
-                                  thresh = popcons)
+                                  thresh = popcons,
+                                  verbose = FALSE)
             if(!is.na(initout$district_membership[1])){
-                break
+
+                ## Check whether it has enough contiguous districts
+                divlist <- genAlConn(adjlist, initout$district_membership)
+                ncontig <- genGraph(divlist)
+                
+                if(ncontig == ndists){
+                    break
+                }
+                
             }
         }
 

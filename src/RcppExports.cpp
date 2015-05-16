@@ -6,6 +6,17 @@
 
 using namespace Rcpp;
 
+// genGraph
+int genGraph(List aList);
+RcppExport SEXP redist_genGraph(SEXP aListSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< List >::type aList(aListSEXP);
+    __result = Rcpp::wrap(genGraph(aList));
+    return __result;
+END_RCPP
+}
 // calcPWDh
 NumericMatrix calcPWDh(NumericMatrix x);
 RcppExport SEXP redist_calcPWDh(SEXP xSEXP) {
@@ -74,6 +85,18 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type anneal_beta_similar(anneal_beta_similarSEXP);
     Rcpp::traits::input_parameter< int >::type adjswap(adjswapSEXP);
     __result = Rcpp::wrap(swMH(aList, cdvec, cdorigvec, popvec, grouppopvec, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, lambda, beta_population, beta_compact, beta_segregation, beta_similar, anneal_beta_population, anneal_beta_compact, anneal_beta_segregation, anneal_beta_similar, adjswap));
+    return __result;
+END_RCPP
+}
+// genAlConn
+List genAlConn(List aList, NumericVector cds);
+RcppExport SEXP redist_genAlConn(SEXP aListSEXP, SEXP cdsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< List >::type aList(aListSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type cds(cdsSEXP);
+    __result = Rcpp::wrap(genAlConn(aList, cds));
     return __result;
 END_RCPP
 }
