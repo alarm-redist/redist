@@ -122,7 +122,7 @@ int elim_check(NumericVector prop_partition,
 
 // Function to generate adjacency graph and count clusters
 // [[Rcpp::export]]
-int genGraph(List aList) 
+int countpartitions(List aList) 
 {   
 
   //Takes an adjacency list,

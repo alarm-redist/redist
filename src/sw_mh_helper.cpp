@@ -498,7 +498,7 @@ List make_swaps(List boundary_cc,
       // Get adjacency list
       List aList_testsplit = genAlConn(aList, cds_splittest);
       // Get number of connected components
-      int num_cds = genGraph(aList_testsplit);
+      int num_cds = countpartitions(aList_testsplit);
       if(num_cds != ndists){
 	continue;
       }

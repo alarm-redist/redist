@@ -16,7 +16,7 @@ Rcpp::List adjcheck_propcd(Rcpp::List aList,
 			   Rcpp::NumericVector cds);
 int elim_check(Rcpp::NumericVector prop_partition,
 	       Rcpp::NumericVector cds);
-int genGraph(Rcpp::List aList);
+int countpartitions(Rcpp::List aList);
 Rcpp::NumericVector update_distpop(Rcpp::NumericVector prop_partition,
 				   Rcpp::NumericVector unitpop_vec,
 				   int prop_cd,

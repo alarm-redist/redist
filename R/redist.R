@@ -176,7 +176,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
 
                 ## Check whether it has enough contiguous districts
                 divlist <- genAlConn(adjlist, initout$district_membership)
-                ncontig <- genGraph(divlist)
+                ncontig <- countpartitions(divlist)
                 
                 if(ncontig == ndists){
                     break
