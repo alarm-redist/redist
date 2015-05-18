@@ -8,8 +8,8 @@
 
 // Header files
 #include <RcppArmadillo.h>
-#include "make_swaps_helper.hpp"
-#include "constraint_calc_helper.hpp"
+#include "make_swaps_helper.h"
+#include "constraint_calc_helper.h"
 
 using namespace Rcpp;
 

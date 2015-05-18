@@ -7,8 +7,8 @@
 //          called by sw_mh_helper.cpp and sw_mh_alg.cpp
 ///////////////////////////////////////
 
-#ifndef make_swaps_helper_hpp
-#define make_swaps_helper_hpp
+#ifndef make_swaps_helper_h
+#define make_swaps_helper_h
 
 Rcpp::List adjcheck_propcd(Rcpp::List aList,
 			   Rcpp::NumericVector prop_partitions,

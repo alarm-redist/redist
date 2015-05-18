@@ -1,7 +1,5 @@
-// -*- mode: C++; c-indent-level: 4; c-basic-offset: 4; tab-width: 4 -*-
-
-#ifndef RSG_HPP
-#define RSG_HPP
+#ifndef RSG_H
+#define RSG_H
 
 #include <RcppArmadillo.h>
 

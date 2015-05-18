@@ -6,8 +6,8 @@
 // Purpose: header file for constraint_calc_helper.cpp
 ///////////////////////////////////////
 
-#ifndef constraint_calc_helper_hpp
-#define constraint_calc_helper_hpp
+#ifndef constraint_calc_helper_h
+#define constraint_calc_helper_h
 
 Rcpp::List calc_betapop(arma::vec current_dists,
 			arma::vec new_dists,

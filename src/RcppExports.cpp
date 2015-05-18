@@ -6,14 +6,14 @@
 
 using namespace Rcpp;
 
-// genGraph
-int genGraph(List aList);
-RcppExport SEXP redist_genGraph(SEXP aListSEXP) {
+// countpartitions
+int countpartitions(List aList);
+RcppExport SEXP redist_countpartitions(SEXP aListSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< List >::type aList(aListSEXP);
-    __result = Rcpp::wrap(genGraph(aList));
+    __result = Rcpp::wrap(countpartitions(aList));
     return __result;
 END_RCPP
 }

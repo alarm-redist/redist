@@ -8,7 +8,7 @@
 
 // Header files
 #include <RcppArmadillo.h>
-#include "constraint_calc_helper.hpp"
+#include "constraint_calc_helper.h"
 
 using namespace Rcpp;
 

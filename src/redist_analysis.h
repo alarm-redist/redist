@@ -1,5 +1,5 @@
-#ifndef redist_analysis_hpp
-#define redist_analysis_hpp
+#ifndef redist_analysis_h
+#define redist_analysis_h
 
 Rcpp::NumericVector segregationcalc(Rcpp::NumericMatrix distmat,
 				    Rcpp::NumericVector grouppop,

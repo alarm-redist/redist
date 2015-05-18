@@ -9,10 +9,10 @@
 // Header files
 #include <RcppArmadillo.h>
 #include <RcppArmadilloExtensions/sample.h>
-#include "sw_mh_helper.hpp"
-#include "make_swaps_helper.hpp"
-#include "constraint_calc_helper.hpp"
-#include "redist_analysis.hpp"
+#include "sw_mh_helper.h"
+#include "make_swaps_helper.h"
+#include "constraint_calc_helper.h"
+#include "redist_analysis.h"
 
 using namespace Rcpp;
 
