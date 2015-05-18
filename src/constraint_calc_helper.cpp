@@ -34,6 +34,9 @@ List calc_betapop(arma::vec current_dists,
   // Calculate parity
   double parity = (double)sum(pops) / (max(current_dists) + 1);
 
+  // Log_e(2)
+  double loge2 = log(2.0);
+
   // Initialize psi values
   double psi_new = 0.0;
   double psi_old = 0.0;
@@ -62,7 +65,7 @@ List calc_betapop(arma::vec current_dists,
   }
 
   // Calculate the ratio
-  double ratio = (double)exp(beta_population * log(2) * (psi_new - psi_old));
+  double ratio = (double)exp(beta_population * loge2 * (psi_new - psi_old));
 
   // Create return object
   List out;
@@ -104,6 +107,9 @@ List calc_betacompact(arma::vec current_dists,
   double psi_new = 0.0;
   double psi_old = 0.0;
 
+  // Log_e(2)
+  double loge2 = log(2.0);
+
   // Loop over the congressional districts
   for(int i = 0; i < distswitch.size(); i++){
 
@@ -140,7 +146,7 @@ List calc_betacompact(arma::vec current_dists,
   psi_old = (double)psi_new / denominator;
 
   // Calculate ratio
-  double ratio = (double)exp(beta_compact * log(2) * (psi_new - psi_old));
+  double ratio = (double)exp(beta_compact * loge2 * (psi_new - psi_old));
 
   // Create return object
   List out;
@@ -179,6 +185,9 @@ List calc_betasegregation(arma::vec current_dists,
   // Initialize psi values
   double psi_new = 0.0;
   double psi_old = 0.0;
+
+  // Log_e(2)
+  double loge2 = log(2.0);
 
   // Initialize denominator
   int T = sum(pops);
@@ -226,7 +235,7 @@ List calc_betasegregation(arma::vec current_dists,
   psi_old = (double)psi_old / denom;
 
   // Get mh ratio
-  double ratio = (double)exp(beta_segregation * log(2) * (psi_new - psi_old));
+  double ratio = (double)exp(beta_segregation * loge2 * (psi_new - psi_old));
 
   // Create return object
   List out;
@@ -264,6 +273,9 @@ List calc_betasimilar(arma::vec current_dists,
   double psi_new = 0.0;
   double psi_old = 0.0;
 
+  // Log_e(2)
+  double loge2 = log(2.0);
+
   // Loop over congressional districts
   for(int i = 0; i < distswitch.size(); i++){
 
@@ -299,7 +311,7 @@ List calc_betasimilar(arma::vec current_dists,
   }
 
   // Get MH ratio
-  double ratio = (double)exp(beta_similar * log(2) * (psi_new - psi_old));
+  double ratio = (double)exp(beta_similar * loge2 * (psi_new - psi_old));
 
   // Rcout << "New psi" << psi_new << std::endl;
   // Rcout << "Old psi" << psi_old << std::endl;

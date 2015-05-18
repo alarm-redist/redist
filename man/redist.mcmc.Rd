@@ -16,7 +16,7 @@ plans using Markov Chain Monte Carlo methods.
               temperbetaseg = 0, temperbetasimilar = 0,
               betaseq = "powerlaw", betaseqlength = 10,
               betaweights = NULL,
-              adjswaps = TRUE, rngseed = NULL,
+              adjswaps = TRUE, rngseed = NULL, maxiterrsg = 5000,
               savename = NULL, verbose = TRUE)
 }
 
@@ -86,6 +86,7 @@ values adjacent to current constraint are proposed. The default is
 \code{TRUE}.}
 \item{rngseed}{Allows the user to set the seed for the
 simulations. Default is \code{NULL}.}
+\item{maxiterrsg}{Maximum number of iterations for random seed-and-grow algorithm to generate starting values. Default is 5000.}
 \item{savename}{Filename to save simulations. Default is \code{NULL}.}
 \item{verbose}{Whether to print initialization statement. Default is \code{TRUE}.}
 }

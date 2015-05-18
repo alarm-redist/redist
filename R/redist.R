@@ -13,7 +13,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
                            temperbetacompact = 0, temperbetapop = 0,
                            temperbetaseg = 0, temperbetasimilar = 0,
                            betaseq = NULL, betaseqlength = 10,
-                           betaweights = NULL, adjswaps = TRUE
+                           betaweights = NULL, adjswaps = TRUE, maxiterrsg = NULL
                            ){
 
     #########################
@@ -52,7 +52,8 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ## betaweights - Vector of weights for beta sequence. Provided by user
     ## adjswaps - Flag for adjacent swaps for geyer-thompson tempering or MPI
     ##            parallel tempering. Default to TRUE
-
+    ## maxiterrsg - Maximum number of iterations for RSG algorithm
+    
     #######################
     ## Check missingness ##
     #######################
@@ -147,6 +148,20 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         
     }
 
+    ###################################################################
+    ## Check whether initial partitions (if provided) are contiguous ##
+    ###################################################################
+    if(!is.null(initcds)){
+        ndists <- length(unique(initcds))
+        divlist <- genAlConn(adjlist, initcds)
+        ncontig <- countpartitions(divlist)
+
+        if(ncontig != ndists){
+            stop(paste("Your initial congressional districts have ", ndists, " unique districts but ",
+                 ncontig, " contigous connected components. Please provide a starting map with contigous districts.", sep = ""))
+        }
+    }
+
     ##############################################################################
     ## If no initial congressional districts provided, use Random Seed and Grow ##
     ## (Chen and Rodden 2013) algorithm                                         ##
@@ -171,7 +186,8 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
                                   population = popvec,
                                   ndists = ndists,
                                   thresh = popcons,
-                                  verbose = FALSE)
+                                  verbose = FALSE,
+                                  maxiter = maxiterrsg)
             if(!is.na(initout$district_membership[1])){
 
                 ## Check whether it has enough contiguous districts
@@ -189,7 +205,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         initcds <- initout$district_membership
         
     }
-
+    
     ###########################################################
     ## Check other inputs to make sure they are right length ##
     ###########################################################
@@ -464,7 +480,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                         temperbetaseg = 0, temperbetasimilar = 0,
                         betaseq = "powerlaw", betaseqlength = 10,
                         betaweights = NULL,
-                        adjswaps = TRUE, rngseed = NULL,
+                        adjswaps = TRUE, rngseed = NULL, maxiterrsg = 5000,
                         savename = NULL, verbose = TRUE
                         ){
 
@@ -511,6 +527,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
     ## adjswaps - Flag for adjacent swaps for geyer-thompson tempering or MPI
     ##            parallel tempering. Default to TRUE
     ## rngseed - Random number generator seed number. Provided by user
+    ## maxiterrsg - Maximum number of iterations for random seed-and-grow algorithm
     ## savename - Where to save the simulations
     ## verbose - whether to print initialization script
 
@@ -558,7 +575,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                                  temperbetaseg = temperbetaseg,
                                  temperbetasimilar = temperbetasimilar,
                                  betaseq = betaseq, betaweights = betaweights,
-                                 adjswaps = adjswaps)
+                                 adjswaps = adjswaps, maxiterrsg = maxiterrsg)
 
     ## Set seed before first iteration of algorithm if provided by user
     if(!is.null(rngseed) & is.numeric(rngseed)){
