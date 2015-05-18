@@ -1,5 +1,3 @@
-// -*- mode: C++; c-indent-level: 4; c-basic-offset: 4; tab-width: 4 -*-
-
 #ifndef CHECK_CONTIG_H
 #define CHECK_CONTIG_H
 

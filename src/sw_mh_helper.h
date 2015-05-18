@@ -6,8 +6,8 @@
 // Purpose: header file for sw_mh_helper.cpp, called by sw_mh_alg.cpp
 ///////////////////////////////////////
 
-#ifndef sw_mh_helper_h
-#define sw_mh_helper_h
+#ifndef SW_MH_HELPER_H
+#define SW_MH_HELPER_H
 
 Rcpp::NumericVector init_pop(Rcpp::NumericVector popvec,
 			     arma::vec cds);
