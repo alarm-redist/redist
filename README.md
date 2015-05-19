@@ -5,14 +5,18 @@ Alex Tarr ([atarr@princeton.edu](atarr@princeton.edu)), Michael
 Higgins ([mjh5@princeton.edu](mjh5@princeton.edu)), and Kosuke Imai
 ([kimai@princeton.edu](kimai@princeton.edu)). Maintainer is Ben Fifield.
 
-## Installation
-Users can install the `redist` package using the `install_github()`
-function in the `devtools` package.
+## Installation Instructions
+The package is available on CRAN and can be installed using:
+
+```
+install.packages("redist")
+```
+
+Users can also install the most stable development release of the `redist` package using the `install_github()` function in the `devtools` package.
 
 ```
 library(devtools)
-install_devtools(repo = "redist",
-	username = "redistricting")
+install_devtools("redistricting/redist")
 ```
 
 ## src Folder
