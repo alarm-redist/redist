@@ -136,7 +136,6 @@ int countpartitions(List aList)
   
   //Initialize connected components
   IntegerVector currConnComp(aList.size());
-  int indexCurrConnComp = 0;
 
   //Initialize the number of connected components
   int numConnComp = 0;
