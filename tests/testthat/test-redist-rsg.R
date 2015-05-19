@@ -25,7 +25,7 @@ test_that("redist.rsg works", {
                          popvec = algdat.pfull$precinct.data$pop,
                          nsims = 100,
                          ndists = ndists)
-    expect_equal(length(unique(test2$partitions[100])), ndists)
+    expect_equal(length(unique(test2$partitions[,100])), ndists)
 
 })
 
