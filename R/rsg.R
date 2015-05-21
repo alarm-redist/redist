@@ -17,29 +17,46 @@ redist.rsg <- function(adj.list,
     
     target.pop <- sum(population) / ndists
     
-    ## Main Call to Computation
-    time <- system.time(ret <- .Call('redist_rsg',
-                                     PACKAGE = 'redist',
-                                     adj.list,
-                                     population,
-                                     ndists,
-                                     target.pop,
-                                     thresh,
-                                     as.integer(maxiter)
-                                     ))
+    ## Main Call to Computation - if returning NA, break.
+    ## If returning districts but not contiguous, repeat
+    repeat{
 
-    ## Make another call if stuck, but only do one more try because maxiter might be too low
-   if( is.na(ret$district_membership[1]) ){
-    time <- system.time(ret <- .Call('redist_rsg',
-                                     PACKAGE = 'redist',
-                                     adj.list,
-                                     population,
-                                     ndists,
-                                     target.pop,
-                                     thresh,
-                                     as.integer(maxiter)
-                                     ))
+        ## First attempt
+        time <- system.time(ret <- .Call('redist_rsg',
+                                         PACKAGE = 'redist',
+                                         adj.list,
+                                         population,
+                                         ndists,
+                                         target.pop,
+                                         thresh,
+                                         as.integer(maxiter)
+                                         ))
+        
+        ## Make another call if stuck, but only do one more try because maxiter might be too low
+        if( is.na(ret$district_membership[1]) ){
+            time <- system.time(ret <- .Call('redist_rsg',
+                                             PACKAGE = 'redist',
+                                             adj.list,
+                                             population,
+                                             ndists,
+                                             target.pop,
+                                             thresh,
+                                             as.integer(maxiter)
+                                             ))
 	}
+
+        ## Check contiguity of output
+        if(!is.na(ret$district_membership[1])){
+            divlist <- genAlConn(adj.list, ret$district_membership)
+            ncontig <- countpartitions(divlist)
+            if(ncontig == ndists){
+                break
+            }
+        }else{
+            break
+        }
+        
+    }
 
     if(verbose){
         cat(paste("\n\t", ndists, " districts built using ", length(adj.list), " precincts in ",
