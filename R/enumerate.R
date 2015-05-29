@@ -125,8 +125,14 @@ redist.enumerate <- function(adjobj,
         popConstraintHigh <- parity + popcons * parity
     }
     if(is.null(popcons)){
-        popConstraintLow <- min(popvec)
-        popConstraintHigh <- sum(popvec)
+        if(!is.null(popvec)){
+            popConstraintLow <- min(popvec)
+            popConstraintHigh <- sum(popvec)
+        }else{
+            popVec <- rep(1,adjListLength)
+            popConstraintLow <- 1
+            popConstraintHigh <- adjListLength
+        }
     }
     
     ## If there is no pop vector, 
@@ -150,13 +156,14 @@ redist.enumerate <- function(adjobj,
     }
     
     ## Run the cpp function and return the output
-    return(cppGeneratePartitions(adjlist,
+    out <- cppGeneratePartitions(adjlist,
                                  ndists,
                                  popvec,
                                  nconstraintlow,
                                  nconstrainthigh,
                                  popConstraintLow,
-                                 popConstraintHigh))
+                                 popConstraintHigh)
+    return(out)
 	
 }
 

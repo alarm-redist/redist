@@ -11,5 +11,5 @@ Suggests: testthat
 LinkingTo: Rcpp, RcppArmadillo
 License: GPL (>= 2)
 SystemRequirements: gmp, libxml2
-Packaged: 2015-05-29 19:42:55 UTC; benfifield
+Packaged: 2015-05-29 20:18:00 UTC; benfifield
 NeedsCompilation: yes

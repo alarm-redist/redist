@@ -6,6 +6,39 @@
 
 using namespace Rcpp;
 
+// testSpan
+void testSpan(List adjList, NumericVector popSizes);
+RcppExport SEXP redist_testSpan(SEXP adjListSEXP, SEXP popSizesSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< List >::type adjList(adjListSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type popSizes(popSizesSEXP);
+    testSpan(adjList, popSizes);
+    return R_NilValue;
+END_RCPP
+}
+// testSpan3
+void testSpan3(List adjList, NumericVector popSizes);
+RcppExport SEXP redist_testSpan3(SEXP adjListSEXP, SEXP popSizesSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< List >::type adjList(adjListSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type popSizes(popSizesSEXP);
+    testSpan3(adjList, popSizes);
+    return R_NilValue;
+END_RCPP
+}
+// testSpan2
+void testSpan2(List adjList, NumericVector popSizes);
+RcppExport SEXP redist_testSpan2(SEXP adjListSEXP, SEXP popSizesSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< List >::type adjList(adjListSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type popSizes(popSizesSEXP);
+    testSpan2(adjList, popSizes);
+    return R_NilValue;
+END_RCPP
+}
 // cppGeneratePartitions
 List cppGeneratePartitions(List adjList, int numBlocks, NumericVector popSizes, int numConstraintLow, int numConstraintHigh, double popConstraintLow, double popConstraintHigh);
 RcppExport SEXP redist_cppGeneratePartitions(SEXP adjListSEXP, SEXP numBlocksSEXP, SEXP popSizesSEXP, SEXP numConstraintLowSEXP, SEXP numConstraintHighSEXP, SEXP popConstraintLowSEXP, SEXP popConstraintHighSEXP) {
