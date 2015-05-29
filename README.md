@@ -37,5 +37,8 @@ described in detail in Chen and Rodden (2013).
 the Chen and Rodden (2013) algorithm in `rsg.cpp`.
 - `redist_analysis.cpp`: Functions to aid in analysis of simulated
 redistricting plans.
+- `enumerate.cpp`: Functions called by `enumerate.R` that allow users
+to fully enumerate all valid, contiguous redistricting plans for a
+given set of geographic units.  
   
 

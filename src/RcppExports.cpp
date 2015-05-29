@@ -6,6 +6,23 @@
 
 using namespace Rcpp;
 
+// cppGeneratePartitions
+List cppGeneratePartitions(List adjList, int numBlocks, NumericVector popSizes, int numConstraintLow, int numConstraintHigh, double popConstraintLow, double popConstraintHigh);
+RcppExport SEXP redist_cppGeneratePartitions(SEXP adjListSEXP, SEXP numBlocksSEXP, SEXP popSizesSEXP, SEXP numConstraintLowSEXP, SEXP numConstraintHighSEXP, SEXP popConstraintLowSEXP, SEXP popConstraintHighSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< List >::type adjList(adjListSEXP);
+    Rcpp::traits::input_parameter< int >::type numBlocks(numBlocksSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type popSizes(popSizesSEXP);
+    Rcpp::traits::input_parameter< int >::type numConstraintLow(numConstraintLowSEXP);
+    Rcpp::traits::input_parameter< int >::type numConstraintHigh(numConstraintHighSEXP);
+    Rcpp::traits::input_parameter< double >::type popConstraintLow(popConstraintLowSEXP);
+    Rcpp::traits::input_parameter< double >::type popConstraintHigh(popConstraintHighSEXP);
+    __result = Rcpp::wrap(cppGeneratePartitions(adjList, numBlocks, popSizes, numConstraintLow, numConstraintHigh, popConstraintLow, popConstraintHigh));
+    return __result;
+END_RCPP
+}
 // countpartitions
 int countpartitions(List aList);
 RcppExport SEXP redist_countpartitions(SEXP aListSEXP) {
