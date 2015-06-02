@@ -29,6 +29,7 @@ redist.enumerate <- function(adjobj,
     ############################################
     ## If not a list, convert adjlist to list ##
     ############################################
+    ## NOTE - FOR ENUMERATION, WE WANT ONE-INDEXING VERSUS ZERO-INDEXING
     if(!is.list(adjobj)){
 
         ## If a matrix, check to see if adjacency matrix
@@ -59,8 +60,6 @@ redist.enumerate <- function(adjobj,
                     inds <- which(adjobj == 1)
                     ## Remove self-adjacency
                     inds <- inds[inds != i,]
-                    ## Zero-index
-                    inds <- inds - 1
                     ## Put in adjlist
                     adjlist[[i]] <- inds
                     
@@ -73,11 +72,6 @@ redist.enumerate <- function(adjobj,
 
             ## Convert shp object to adjacency list
             adjlist <- poly2nb(adjobj, queen = FALSE)
-            
-            ## Zero-index list
-            for(i in 1:length(adjlist)){
-                adjlist[[i]] <- adjlist[[i]] - 1
-            }
             
             ## Change class to list
             class(adjlist) <- "list"
@@ -98,10 +92,10 @@ redist.enumerate <- function(adjobj,
         oneind <- (sum(minlist == 1, maxlist == length(adjlist)) == 2)
         zeroind <- (sum(minlist == 0, maxlist == (length(adjlist) - 1)) == 2)
         
-        if(oneind){
+        if(zeroind){
             ## Zero-index list
             for(i in 1:length(adjlist)){
-                adjlist[[i]] <- adjlist[[i]] - 1
+                adjlist[[i]] <- adjlist[[i]] + 1
             }
         }else if(!(oneind | zeroind)){
             ## if neither oneind or zeroind, then stop
