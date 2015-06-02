@@ -13,7 +13,8 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
                            temperbetacompact = 0, temperbetapop = 0,
                            temperbetaseg = 0, temperbetasimilar = 0,
                            betaseq = NULL, betaseqlength = 10,
-                           betaweights = NULL, adjswaps = TRUE, maxiterrsg = NULL
+                           betaweights = NULL, adjswaps = TRUE, maxiterrsg = NULL,
+                           contiguitymap = NULL
                            ){
 
     #########################
@@ -53,6 +54,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ## adjswaps - Flag for adjacent swaps for geyer-thompson tempering or MPI
     ##            parallel tempering. Default to TRUE
     ## maxiterrsg - Maximum number of iterations for RSG algorithm
+    ## contiguitymap - Distance criteria for adjacency list from input map
     
     #######################
     ## Check missingness ##
@@ -109,8 +111,11 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
             }
         }else if(class(adjobj) == "SpatialPolygonsDataFrame"){ ## shp object
 
+            ## Distance criterion
+            queens <- ifelse(contiguitymap == "rooks", FALSE, TRUE)
+            
             ## Convert shp object to adjacency list
-            adjlist <- poly2nb(adjobj, queen = FALSE)
+            adjlist <- poly2nb(adjobj, queen = queens)
             
             ## Zero-index list
             for(i in 1:length(adjlist)){
@@ -481,7 +486,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                         betaseq = "powerlaw", betaseqlength = 10,
                         betaweights = NULL,
                         adjswaps = TRUE, rngseed = NULL, maxiterrsg = 5000,
-                        savename = NULL, verbose = TRUE
+                        contiguitymap = "rooks", savename = NULL, verbose = TRUE
                         ){
 
     #########################
@@ -528,6 +533,8 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
     ##            parallel tempering. Default to TRUE
     ## rngseed - Random number generator seed number. Provided by user
     ## maxiterrsg - Maximum number of iterations for random seed-and-grow algorithm
+    ## contiguitymap - Use queens distance or rooks distance for creating an adjlist
+    ##                 from map. Defaults to rooks.
     ## savename - Where to save the simulations
     ## verbose - whether to print initialization script
 
@@ -560,7 +567,10 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
     if(nloop > 1 & missing(savename)){
         stop("Please supply save directory if saving simulations at checkpoints")
     }
-
+    if(!(contiguitymap %in% c("queens", "rooks"))){
+        stop("Please supply `queens` or `rooks` for a distance criteria")
+    }
+    
     #####################
     ## Preprocess data ##
     #####################
@@ -575,7 +585,8 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                                  temperbetaseg = temperbetaseg,
                                  temperbetasimilar = temperbetasimilar,
                                  betaseq = betaseq, betaweights = betaweights,
-                                 adjswaps = adjswaps, maxiterrsg = maxiterrsg)
+                                 adjswaps = adjswaps, maxiterrsg = maxiterrsg,
+                                 contiguitymap = contiguitymap)
 
     ## Set seed before first iteration of algorithm if provided by user
     if(!is.null(rngseed) & is.numeric(rngseed)){

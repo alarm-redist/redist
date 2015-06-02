@@ -9,7 +9,8 @@ redist.enumerate <- function(adjobj,
                              popvec = NULL,
                              nconstraintlow = NULL,
                              nconstrainthigh = NULL,
-                             popcons = NULL){
+                             popcons = NULL,
+                             contiguitymap = "rooks"){
 
     #########################
     ## Inputs to function: ##
@@ -20,10 +21,15 @@ redist.enumerate <- function(adjobj,
     ## nconstraintlow - minimum number of precincts contained in district
     ## nconstrainthigh - maximum number of precincts contained in district
     ## popcons - strenght of population constraint. Decimal
+    ## contiguitymap - Use queens distance or rooks distance for creating an adjlist
+    ##                 from map. Defaults to rooks.
 
     ## Warnings
     if(is.null(popvec) & !is.null(popcons)){
         stop("If constraining on population, please provide a vector of populations for geographic units.")
+    }
+    if(!(contiguitymap %in% c("queens", "rooks"))){
+        stop("Please supply `queens` or `rooks` for a distance criteria")
     }
 
     ############################################
@@ -70,8 +76,11 @@ redist.enumerate <- function(adjobj,
             }
         }else if(class(adjobj) == "SpatialPolygonsDataFrame"){ ## shp object
 
+            ## Distance criterion
+            queens <- ifelse(contiguitymap == "rooks", FALSE, TRUE)
+            
             ## Convert shp object to adjacency list
-            adjlist <- poly2nb(adjobj, queen = FALSE)
+            adjlist <- poly2nb(adjobj, queen = queens)
             
             ## Change class to list
             class(adjlist) <- "list"
