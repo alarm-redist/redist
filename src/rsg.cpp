@@ -146,7 +146,9 @@ List rsg (List adj_list,
 	  // Generate list of adjacent districts
 	  IntegerVector j_candidates;
 	  j_candidates = unique(d_neighbors);
-	  for(i=0; i < j_candidates.size(); i++){
+// Loop backwards here to avoid skips induced by erased content
+//	  for(i=0; i < j_candidates.size(); i++){
+	  for(i= (j_candidates.size() - 1); i >= 0; i--){
 	    if(j_candidates[i] == i_dist) j_candidates.erase(i);
 	  }
 	  j_candidates_size = j_candidates.size();
