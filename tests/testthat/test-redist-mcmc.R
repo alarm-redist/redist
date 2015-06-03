@@ -44,7 +44,8 @@ test_that("redist.mcmc works", {
                          popvec = algdat.pfull$precinct.data$pop,
                          initcds = cds1,
                          nsims = nsims,
-                         betapop = -5)
+                         beta = -5,
+                         constraint = "population")
 
     expect_less_than(max(test3$distance_parity), max(test1$distance_parity))
 
@@ -53,8 +54,9 @@ test_that("redist.mcmc works", {
                          popvec = algdat.pfull$precinct.data$pop,
                          initcds = cds1,
                          nsims = nsims,
-                         betapop = -5,
-                         temperbetapop = 1)
+                         beta = -5,
+                         constraint = "population",
+                         temper = "simulated")
 
     expect_equal(length(test4), 12)
     expect_equal(length(test4$beta_sequence), nsims)
@@ -69,8 +71,9 @@ test_that("redist.mcmc works", {
                          initcds = cds1,
                          nsims = nsims,
                          ssdmat = algdat.pfull$distancemat,
-                         betacompact = -2,
-                         temperbetacompact = 1)
+                         beta = -2,
+                         constraint = "compact",
+                         temper = "simulated")
 
     expect_more_than(length(unique(test5$beta_sequence)), 1)
 
@@ -80,8 +83,9 @@ test_that("redist.mcmc works", {
                          initcds = cds1,
                          grouppopvec = algdat.pfull$precinct.data$repvote,
                          nsims = nsims,
-                         betaseg = -2,
-                         temperbetaseg = 1)
+                         beta = -2,
+                         constraint = "segregation",
+                         temper = "simulated")
 
     expect_more_than(length(unique(test6$beta_sequence)), 1)
 
@@ -91,8 +95,9 @@ test_that("redist.mcmc works", {
                          initcds = cds1,
                          grouppopvec = algdat.pfull$precinct.data$repvote,
                          nsims = nsims,
-                         betasimilar = -2,
-                         temperbetasimilar = 1)
+                         beta = -2,
+                         constraint = "similarity",
+                         temper = "simulated")
 
     expect_more_than(length(unique(test7$beta_sequence)), 1)
 

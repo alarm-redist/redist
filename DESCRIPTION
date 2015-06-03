@@ -1,5 +1,5 @@
 Package: redist
-Version: 1.1
+Version: 1.2
 Date: 2015-05-18
 Title: Markov Chain Monte Carlo Methods for Redistricting Simulation
 Author: Ben Fifield <bfifield@princeton.edu>, Alexander Tarr <atarr@princeton.edu>, Michael Higgins <mjh5@princeton.edu>, and Kosuke Imai <kimai@princeton.edu>
@@ -11,5 +11,5 @@ Suggests: testthat
 LinkingTo: Rcpp, RcppArmadillo
 License: GPL (>= 2)
 SystemRequirements: gmp, libxml2
-Packaged: 2015-05-29 20:18:00 UTC; benfifield
+Packaged: 2015-06-03 18:32:00 UTC; benfifield
 NeedsCompilation: yes
