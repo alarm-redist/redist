@@ -44,7 +44,7 @@ redist.rsg <- function(adj.list,
                                          ))
     }
 
-    if(is.na(initout$district_membership[1])){
+    if(is.na(ret$district_membership[1])){
 
         stop("redist.rsg() failed to return a valid partition. Try increasing maxiterrsg")
         
