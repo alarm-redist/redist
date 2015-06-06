@@ -188,15 +188,9 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
                                   thresh = popcons,
                                   verbose = FALSE,
                                   maxiter = maxiterrsg)
-            if(!is.na(initout$district_membership[1])){
+            if(is.na(initout$district_membership[1])){
 
-                ## Check whether it has enough contiguous districts
-                divlist <- genAlConn(adjlist, initout$district_membership)
-                ncontig <- countpartitions(divlist)
-                
-                if(ncontig == ndists){
-                    break
-                }
+                stop("redist.rsg() failed to return a valid partition. Try increasing maxiterrsg")
                 
             }
         }
@@ -507,7 +501,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                         ssdmat = NULL, beta = 0, temper = "none",
                         constraint = "none",
                         betaseq = "powerlaw", betaseqlength = 10,
-                        betaweights = NULL,
+                        betaweights = NULL, adapt_lambda = 1,
                         adjswaps = TRUE, rngseed = NULL, maxiterrsg = 5000,
                         contiguitymap = "rooks", savename = NULL, verbose = TRUE
                         ){
@@ -698,6 +692,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                        anneal_beta_compact = preprocout$params$temperbetacompact,
                        anneal_beta_segregation = preprocout$params$temperbetaseg,
                        anneal_beta_similar = preprocout$params$temperbetasimilar,
+                       adapt_lambda = adapt_lambda,
                        adjswap = preprocout$params$adjswaps)
 
         class(algout) <- "redist"

@@ -1,5 +1,7 @@
 
-#include "check_contiguity.h"
+#include <RcppArmadillo.h>
+#include "make_swaps_helper.h"
+#include "sw_mh_helper.h"
 
 using namespace Rcpp ;
 
@@ -12,21 +14,22 @@ List rsg (List adj_list,
                int maxiter
                ) {
 
+	List alConnected;
 	int Nprecinct = adj_list.size();
 	double maxpop = target_pop * (1+thresh);
 	double minpop = target_pop * (1-thresh);
 	int i, j, i_dist=0, j_dist=0;
 	int p, p_index;
-	int iter;
+	int iter = 0;
 	IntegerVector p_neighbors, d_neighbors;
 	IntegerVector idist_pmembers, jdist_pmembers, idist_pneighbors, idist_dneighbors, idist_newmembers;
 	NumericVector district_pop(Ndistrict);	//Rcpp Reference says it will always be 0
 	NumericVector maxpop_dist(Ndistrict);
-	int i_valid=0, j_candidates_size, p_neighbors_size;
+	int j_candidates_size, p_neighbors_size;
 	IntegerVector idist_members, jdist_members;
 	arma::vec i_dist_vec, j_dist_vec, maxpop_dist_vec, j_candidates_vec, p_index_vec;
 
-	// pmember_vec tracks which district each precinct belongs to
+	// member_dvec tracks which district each precinct belongs to
 	// Always of length Nprecinct
 	IntegerVector member_dvec(Nprecinct);	
 
@@ -42,8 +45,7 @@ List rsg (List adj_list,
 		onevec[0] = i;
 		member_plist[i] = onevec;
 	}
-	
-	
+
 	while(Ndist_current > Ndistrict){
 	  
 	  //STEP 2A: Select one of the N (Ndist_current) districts and denote it as district i
@@ -95,20 +97,18 @@ List rsg (List adj_list,
 	  // Update member_plist
 	  idist_newmembers = union_(idist_pmembers, jdist_pmembers) ;
 	  member_plist[i_dist] = idist_newmembers;	// merge member lists in idist
-	  member_plist.erase(j_dist);					//delete jdist's membership list
-	  
+	  member_plist.erase(j_dist);				//delete jdist's membership list
 	  
 	  Ndist_current = Ndist_current - 1;
-	  
-	  // end while()
-	}
-	
-	
+
+	}	// end while(Ndist_current > Ndistrict)
+
+
 	// Calculate district population	
 	// Only total this once --- we iteratively only add/subtract a single precinct from this after each switch
-	
 	for(i=0; i< Nprecinct; i++)	district_pop[ member_dvec[i] ] += population[i]; 
-	
+
+
 	iter=0;
 	while( (max(district_pop) > maxpop) | (min(district_pop) < minpop) ){
 	  
@@ -116,7 +116,7 @@ List rsg (List adj_list,
 	  
 	  // STEP 3A: Identify the most populated district and denote it as district i
 	  i_dist = which_max(district_pop);
-	  
+  
 	  // If more than one district has max population, break the tie randomly
 	  j=0;
 	  for(i=0; i<Ndistrict; i++){
@@ -146,37 +146,47 @@ List rsg (List adj_list,
 	  // Generate list of adjacent districts
 	  IntegerVector j_candidates;
 	  j_candidates = unique(d_neighbors);
-// Loop backwards here to avoid skips induced by erased content
-//	  for(i=0; i < j_candidates.size(); i++){
-	  for(i= (j_candidates.size() - 1); i >= 0; i--){
-	    if(j_candidates[i] == i_dist) j_candidates.erase(i);
+
+	  // Decrementing downwards instead to ensure erasing doesn't change full coverage
+	  for(i = (j_candidates.size() - 1); i > -1; i--){
+		if( j_candidates[i] == i_dist ) j_candidates.erase(i);
 	  }
 	  j_candidates_size = j_candidates.size();
 	  
-	  // If there is a valid candidate, does swapping break i_dist's contiguity?
-	  if( j_candidates_size > 0) i_valid = check_contiguity(adj_list, p_neighbors, p_neighbors_size, d_neighbors, i_dist, member_dvec);
-	  
-	  // If move is valid, choose of the the valid districts and make the swap from idist to jdist
-	  if( (i_valid==1) & (j_candidates_size > 0)){
+	  // If there is a valid move, choose a valid j_dist to move to
+	  if( j_candidates_size > 0){
+
 	    j_candidates_vec = runif(1, 0, 1000000000);
 	    j_dist = j_candidates[fmod(j_candidates_vec(0), j_candidates_size)]; 
+
+		//Check check that move from i_dist to j_dist is valid
+		NumericVector member_new_dvec;
+		member_new_dvec = NumericVector(Nprecinct);
+		for(i=0; i<Nprecinct; i++) member_new_dvec[i] = member_dvec[i];
+	    member_new_dvec[p] = j_dist;
+		alConnected = genAlConn(adj_list, member_new_dvec);
+
+		//Make the move if valid
+		if(countpartitions(alConnected) == Ndistrict){
+
+			district_pop[i_dist] -= population[p];
+	    	district_pop[j_dist] += population[p];
 	    
-	    district_pop[i_dist] -= population[p];
-	    district_pop[j_dist] += population[p];
+	    	member_dvec[p] = j_dist;
 	    
-	    member_dvec[p] = j_dist;
+	    	//Assumed here that if idist_members.size==1 (a single precinct district), it will never be the largest district
+	    	idist_members = IntegerVector(member_plist[i_dist]);
+		    for(i= (idist_members.size() - 1); i > -1 ; i--){
+		      if(idist_members[i] == p) idist_members.erase(i);
+		    }
+		    jdist_members = IntegerVector(member_plist[j_dist]);
+		    jdist_members.push_back(p);
 	    
-	    idist_members = IntegerVector(member_plist[i_dist]);
-	    for(i=0; i < idist_members.size(); i++){
-	      if(idist_members[i] == p) idist_members.erase(i);
-	    }
-	    jdist_members = IntegerVector(member_plist[j_dist]);
-	    jdist_members.push_back(p);
+		    member_plist[i_dist] = idist_members;
+		    member_plist[j_dist] = jdist_members;
+			}
 	    
-	    member_plist[i_dist] = idist_members;
-	    member_plist[j_dist] = jdist_members;
-	    
-	  } // end if(i_valid){
+	  } // end if(i_valid==1){
 	  
 	  iter++;
 	  if(iter > maxiter){
@@ -188,12 +198,7 @@ List rsg (List adj_list,
 	  }
 	  
 	}  // end while( max(district_pop) > maxpop){
-	
-	
-	// Loop through using checkValid() function on each neighbor
-	
-	// Add a final check function (optional)
-	
+
 	// Output is:
 	// member_dvec - Vector of length #precincts with CD assigments
 	// member_plist - List of length #districts with precinct ID's
@@ -202,7 +207,8 @@ List rsg (List adj_list,
 	result["district_membership"] = member_dvec;
 	result["district_list"] = member_plist;
 	result["district_pop"] = district_pop;
-	
+
 	return(result) ;
 }
+
 
