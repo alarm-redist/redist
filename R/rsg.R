@@ -44,6 +44,12 @@ redist.rsg <- function(adj.list,
                                          ))
     }
 
+    if(is.na(initout$district_membership[1])){
+
+        stop("redist.rsg() failed to return a valid partition. Try increasing maxiterrsg")
+        
+    }
+
     if(verbose){
         cat(paste("\n\t", ndists, " districts built using ",
                   length(adj.list), " precincts in ",

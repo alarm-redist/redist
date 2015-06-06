@@ -181,19 +181,12 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         cat("redist.rsg(): Automated Redistricting Starts\n\n")
         
         ## Run the algorithm
-        repeat{
-            initout <- redist.rsg(adj.list = adjlist,
-                                  population = popvec,
-                                  ndists = ndists,
-                                  thresh = popcons,
-                                  verbose = FALSE,
-                                  maxiter = maxiterrsg)
-            if(is.na(initout$district_membership[1])){
-
-                stop("redist.rsg() failed to return a valid partition. Try increasing maxiterrsg")
-                
-            }
-        }
+        initout <- redist.rsg(adj.list = adjlist,
+                              population = popvec,
+                              ndists = ndists,
+                              thresh = popcons,
+                              verbose = FALSE,
+                              maxiter = maxiterrsg)
 
         ## Get initial cds
         initcds <- initout$district_membership
