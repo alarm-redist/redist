@@ -172,6 +172,19 @@ List swMH(List aList,
     betaseq_store[z] = beta_similar;
   }
 
+  if(anneal_beta_population == 0 && beta_population != 0.0){
+    std::fill(betaseq_store.begin(), betaseq_store.end(), beta_population);
+  }
+  if(anneal_beta_compact == 0 && beta_compact != 0.0){
+    std::fill(betaseq_store.begin(), betaseq_store.end(), beta_compact);
+  }
+  if(anneal_beta_segregation == 0 && beta_segregation != 0.0){
+    std::fill(betaseq_store.begin(), betaseq_store.end(), beta_segregation);
+  }
+  if(anneal_beta_similar == 0 && beta_similar != 0.0){
+    std::fill(betaseq_store.begin(), betaseq_store.end(), beta_similar);
+  }
+
   // Store metropolis-hastings decisions - geyer thompson
   NumericVector decision_betaseq_store(nsims);
   NumericVector mhprob_betaseq_store(nsims);
@@ -490,6 +503,7 @@ List swMH(List aList,
   out["mhprob"] = mhprob_store;
   out["pparam"] = pparam_store;
   out["weight_boundary"] = boundaryweights_store;
+  out["beta_sequence"] = betaseq_store;
   out["constraint_pop"] = psipop_store;
   out["constraint_compact"] = psicompact_store;
   out["constraint_segregation"] = psisegregation_store;
@@ -497,7 +511,6 @@ List swMH(List aList,
   out["boundary_partitions"] = boundarypartitions_store;
   if((anneal_beta_population == 1) || (anneal_beta_compact == 1) ||
      (anneal_beta_segregation == 1) || (anneal_beta_similar == 1)){
-    out["beta_sequence"] = betaseq_store;
     out["mhdecisions_beta"] = decision_betaseq_store;
     out["mhprob_beta"] = mhprob_betaseq_store;
   }
