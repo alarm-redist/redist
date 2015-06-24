@@ -9,6 +9,7 @@
 // Header files
 #include <RcppArmadillo.h>
 #include <RcppArmadilloExtensions/sample.h>
+#include <time.h> 
 #include "sw_mh_helper.h"
 #include "make_swaps_helper.h"
 #include "constraint_calc_helper.h"
@@ -39,6 +40,7 @@ List swMH(List aList,
 	  int anneal_beta_compact = 0,
 	  int anneal_beta_segregation = 0,
 	  int anneal_beta_similar = 0,
+	  int adapt_lambda = 1,
 	  int adjswap = 1)
 {
 
@@ -111,13 +113,18 @@ List swMH(List aList,
   }
 
   // Get ssd denominator
-  double ssd_denom = as<double>(calc_betacompact(cdvec,
-						 cdvec,
-						 popvec,
-						 beta_compact,
-						 uniquedists,
-						 ssdmat,
-						 1.0)["compact_new_psi"]);
+  double ssd_denom;
+  if(beta_compact != 0.0 || anneal_beta_compact == 1){
+    ssd_denom = as<double>(calc_betacompact(cdvec,
+					    cdvec,
+					    popvec,
+					    beta_compact,
+					    uniquedists,
+					    ssdmat,
+					    1.0)["compact_new_psi"]);
+  }else{
+    ssd_denom = 1;
+  }
 
   // Define parity, min and max popoulations
   double parity = sum(popvec) / (max(cdvec) + 1);
@@ -143,8 +150,12 @@ List swMH(List aList,
   NumericVector psisegregation_store(nsims);
   NumericVector psisimilar_store(nsims);
 
-  // Store value of p for all simulations
+  // Store value of p, lambda, weights for all simulations
   NumericVector pparam_store(nsims);
+
+  // Store number of connected components along the boundary, boundary weights
+  NumericVector boundarypartitions_store(nsims);
+  NumericVector boundaryweights_store(nsims);
 
   // Store sequence of betas - geyer thompson
   NumericVector betaseq_store(nsims);
@@ -184,19 +195,18 @@ List swMH(List aList,
     // Second: within each congressional district, turn on edges with pr = p //
     ///////////////////////////////////////////////////////////////////////////
     // Continue trying until you get p good swaps
-    List swap_partitions;
-    int p;
+    List swap_partitions; List boundary_partitions; List cutedge_lists; int p;
     do{
 
       // First element is connected adjlist, second element is cut adjlist
-      List cutedge_lists = cut_edges(aList_con, eprob);
+      cutedge_lists = cut_edges(aList_con, eprob);
 
       ////////////////////////////////////////////////////////////////////
       // Third: generate a list of connected components within each cd //
       ///////////////////////////////////////////////////////////////////
       /* List of connected partitions after edgecuts - first element is list of 
 	 partitions, second element is number of partitions */
-      List boundary_partitions = bsearch_boundary(cutedge_lists["connectedlist"],
+      boundary_partitions = bsearch_boundary(cutedge_lists["connectedlist"],
 						  boundary);
       
       ///////////////////////////////////////////////////////////////////////
@@ -223,14 +233,13 @@ List swMH(List aList,
 				   beta_segregation,
 				   beta_similar,
 				   ssd_denom);
-      
     }while(as<int>(swap_partitions["goodprop"]) == 0);
     
     //////////////////////////////////////////
     // Fifth - Accept with some probability //
     //////////////////////////////////////////
     int decision = mh_decision(as<double>(swap_partitions["mh_prob"]));
-
+    
     /////////////////////////////////////////////////////////////
     // Also - for simulated tempering, propose a possible swap //
     /////////////////////////////////////////////////////////////
@@ -433,7 +442,6 @@ List swMH(List aList,
       }
 
     }
-    
     //////////////////////////////////////
     // Six = clean up and store results //
     //////////////////////////////////////
@@ -442,6 +450,12 @@ List swMH(List aList,
       cdvec = clone(as<NumericVector>(swap_partitions["proposed_partition"]));
       // Update district_pops to proposed district pops
       district_pops = clone(as<NumericVector>(swap_partitions["updated_cd_pops"]));
+      // Store number of boundary partitions, boundary weights
+      boundarypartitions_store[k] = boundary_partitions["npartitions"];
+      boundaryweights_store[k] = as<double>(boundary_partitions["weight_boundary"]);    
+    }else{
+      boundarypartitions_store[k] = boundarypartitions_store[k-1];
+      boundaryweights_store[k] = boundaryweights_store[k-1];
     }
     
     // Store previous iteration
@@ -454,6 +468,7 @@ List swMH(List aList,
 
     // Store the decision
     decision_store[k] = decision;
+    
     mhprob_store[k] = as<double>(swap_partitions["mh_prob"]);
 
     // Advance k
@@ -474,10 +489,12 @@ List swMH(List aList,
   out["mhdecisions"] = decision_store;
   out["mhprob"] = mhprob_store;
   out["pparam"] = pparam_store;
+  out["weight_boundary"] = boundaryweights_store;
   out["constraint_pop"] = psipop_store;
   out["constraint_compact"] = psicompact_store;
   out["constraint_segregation"] = psisegregation_store;
   out["constraint_similar"] = psisimilar_store;
+  out["boundary_partitions"] = boundarypartitions_store;
   if((anneal_beta_population == 1) || (anneal_beta_compact == 1) ||
      (anneal_beta_segregation == 1) || (anneal_beta_similar == 1)){
     out["beta_sequence"] = betaseq_store;

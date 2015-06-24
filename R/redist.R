@@ -168,9 +168,11 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ##############################################################################
     if(is.null(initcds)){
 
-        ## Set up target pop, strength of constraint
+        ## Set up target pop, strength of constraint (10%)
         if(is.null(popcons)){
-            popcons <- 100
+            popcons_rsg <- .1
+        }else{
+            popcons_rsg <- popcons
         }
 
         ## Print start
@@ -184,7 +186,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         initout <- redist.rsg(adj.list = adjlist,
                               population = popvec,
                               ndists = ndists,
-                              thresh = popcons,
+                              thresh = popcons_rsg,
                               verbose = FALSE,
                               maxiter = maxiterrsg)
 
@@ -568,6 +570,11 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
     if(!(contiguitymap %in% c("queens", "rooks"))){
         stop("Please supply `queens` or `rooks` for a distance criteria")
     }
+
+    ## Set seed before first iteration of algorithm if provided by user
+    if(!is.null(rngseed) & is.numeric(rngseed)){
+        set.seed(rngseed)
+    }
     
     #####################
     ## Preprocess data ##
@@ -587,11 +594,6 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
     betacompact <- preprocout$params$betacompact
     betaseg <- preprocout$params$betaseg
     betasimilar <- preprocout$params$betasimilar
-
-    ## Set seed before first iteration of algorithm if provided by user
-    if(!is.null(rngseed) & is.numeric(rngseed)){
-        set.seed(rngseed)
-    }
 
     ## Get starting loop value
     loopstart <- loopscompleted + 1
