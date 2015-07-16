@@ -151,7 +151,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ###################################################################
     ## Check whether initial partitions (if provided) are contiguous ##
     ###################################################################
-    if(!is.null(initcds)){
+    if(!is.null(initcds) & !is.na(initcds)[1]){
         ndists <- length(unique(initcds))
         divlist <- genAlConn(adjlist, initcds)
         ncontig <- countpartitions(divlist)
@@ -166,7 +166,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ## If no initial congressional districts provided, use Random Seed and Grow ##
     ## (Chen and Rodden 2013) algorithm                                         ##
     ##############################################################################
-    if(is.null(initcds)){
+    if(is.null(initcds) | is.na(initcds)[1]){
 
         ## Set up target pop, strength of constraint (10%)
         if(is.null(popcons)){
