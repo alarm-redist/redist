@@ -3,6 +3,7 @@ importFrom(Rcpp, evalCpp)
 
 ## redist.R
 export(redist.mcmc)
+export(redist.mcmc.mpi)
 export(redist.segcalc)
 export(redist.diagplot)
 export(redist.ipw)

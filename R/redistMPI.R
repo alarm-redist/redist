@@ -31,7 +31,8 @@ ecutsMPI <- function()
                                beta = params$beta, temper = "parallel",
                                constraint = params$constraint,
                                betaseq = NULL, betaweights = NULL,
-                               adjswaps = params$adjswaps, maxiterrsg = params$maxiterrsg,
+                               adjswaps = params$adjswaps,
+                               maxiterrsg = params$maxiterrsg,
                                contiguitymap = params$contiguitymap)
   
   ## Extract variables
@@ -155,27 +156,27 @@ ecutsMPI <- function()
     for(j in 1:length(nsimsAdj)){
       
       ## Run algorithm
-      algout <- swMH(aList = preprocout$data$adjlist,
-                     cdvec = cds,
-                     cdorigvec = preprocout$data$initcds,
-                     popvec = preprocout$data$popvec,
-                     grouppopvec = preprocout$data$grouppopvec,
-                     nsims = nsimsAdj[j],
-                     eprob = eprob,
-                     pct_dist_parity = preprocout$params$pctdistparity,
-                     beta_sequence = preprocout$params$betaseq,
-                     beta_weights = preprocout$params$betaweights,
-                     ssdmat = preprocout$data$ssdmat,
-                     lambda = lambda,
-                     beta_population = betapop,
-                     beta_compact = betacompact,
-                     beta_segregation = betaseg,
-                     beta_similar = betasimilar,
-                     anneal_beta_population = preprocout$params$temperbetapop,
-                     anneal_beta_compact = preprocout$params$temperbetacompact,
-                     anneal_beta_segregation = preprocout$params$temperbetaseg,
-                     anneal_beta_similar = preprocout$params$temperbetasimilar,
-                     adjswap = preprocout$params$adjswaps)
+      temp <- swMH(aList = preprocout$data$adjlist,
+                   cdvec = cds,
+                   cdorigvec = preprocout$data$initcds,
+                   popvec = preprocout$data$popvec,
+                   grouppopvec = preprocout$data$grouppopvec,
+                   nsims = nsimsAdj[j],
+                   eprob = eprob,
+                   pct_dist_parity = preprocout$params$pctdistparity,
+                   beta_sequence = preprocout$params$betaseq,
+                   beta_weights = preprocout$params$betaweights,
+                   ssdmat = preprocout$data$ssdmat,
+                   lambda = lambda,
+                   beta_population = betapop,
+                   beta_compact = betacompact,
+                   beta_segregation = betaseg,
+                   beta_similar = betasimilar,
+                   anneal_beta_population = preprocout$params$temperbetapop,
+                   anneal_beta_compact = preprocout$params$temperbetacompact,
+                   anneal_beta_segregation = preprocout$params$temperbetaseg,
+                   anneal_beta_similar = preprocout$params$temperbetasimilar,
+                   adjswap = preprocout$params$adjswaps)
       
       ## Combine data
       algout <- ecutsAppend(algout,temp)
@@ -320,14 +321,30 @@ ecutsAppend <- function(algout,ndata)
 }
 
 redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
-                        loopscompleted = 0, nloop = 1, nthin = 1, eprob = 0.05,
-                        lambda = 0, popcons = NULL, grouppopvec = NULL,
-                        ssdmat = NULL,rngseed = NULL,
-                        beta = -10, constraint = "population"  
-                        betaseqlength = 10,adjswaps = TRUE
-                        freq = 100, savename = NULL, verbose = FALSE
+                            loopscompleted = 0, nloop = 1, nthin = 1,
+                            eprob = 0.05,
+                            lambda = 0, popcons = NULL, grouppopvec = NULL,
+                            ssdmat = NULL,rngseed = NULL,
+                            beta = -10, constraint = "population",  
+                            betaseqlength = 10, adjswaps = TRUE,
+                            freq = 100, savename = NULL, maxiterrsg = 5000,
+                            contiguitymap = "rooks", verbose = FALSE
 ){
-  
+
+    ## To test out on own computer
+    ## library("redist"); data(algdat.pfull)
+    ## adjobj <- algdat.pfull$adjlist; popvec <- algdat.pfull$precinctdata$pop
+    ## nsims <- 10000; ndists <- 3
+    ## initcds = NULL
+    ## loopscompleted = 0; nloop = 1; nthin = 1
+    ## eprob = 0.05
+    ## lambda = 0; popcons = NULL; grouppopvec = NULL
+    ## ssdmat = NULL; rngseed = NULL
+    ## beta = -10; constraint = "population"  
+    ## betaseqlength = 10; adjswaps = TRUE
+    ## freq = 100; savename = NULL; maxiterrsg = 5000
+    ## contiguitymap = "rooks"; verbose = FALSE
+    
   #########################
   ## Inputs to function: ##
   #########################
@@ -353,7 +370,8 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL
   ## betaseqlength - Number of temperatures used in tempering (i.e. number of chains). Default is
   ##                 ten
   ## freq - Frequency of between-chain swaps. Default to once every 100 iterations
-  ## savename - Where to save the simulations
+    ## savename - Where to save the simulations
+    ## maxiterrsg - maximum number of iterations for random seed and grow starts
   ## verbose - whether to print initialization script
 
   ## Check if Rmpi library is installed
@@ -392,8 +410,10 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL
   ###################
   
   ## Augment initcds if necessary
-  if(nrow(initcds) < betaseqlength){
-    initcds <- rbind(initcds,matrix(NA,betaseqlength-nrow(initcds),ncol(initcds)))
+  nrow.init <- ifelse(is.null(initcds), 0, nrow(initcds))
+  ncol.init <- ifelse(is.null(initcds), ndists, ncol(initcds))
+  if(nrow.init < betaseqlength){
+    initcds <- rbind(initcds,matrix(NA,betaseqlength-nrow.init,ncol.init))
   }
   
   ## Generate temperature sequence (power law)
@@ -423,10 +443,16 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL
     }
   }
   
-  ## Create parameters list to distribute across nodes
-  params <- expand.grid(nsims,nloop,eprob,ndists,lambda,popcons,eprob,beta,constraint,betaseqlength,adjswaps,
-                        nthin,freq,maxiterrsg,contiguitymap,verbose,loopscompleted,rngseed,savename)
-  
+    ## Create parameters list to distribute across nodes
+    params <- expand.grid(nsims,nloop,eprob,
+                          ndists,
+                          lambda,popcons,beta,
+                          constraint,betaseqlength,adjswaps,
+                          nthin,freq,maxiterrsg,contiguitymap,verbose,
+                          loopscompleted,rngseed,savename)
+  print(params)
+  print(paste("Params is of length ", nrow(params), " and beta is of length ",
+      length(beta), "and betaseqlength = ", betaseqlength)) 
   ##################
   ## Spawn Slaves ##
   ##################
