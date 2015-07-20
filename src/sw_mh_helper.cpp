@@ -30,17 +30,20 @@ NumericVector init_pop(NumericVector popvec,
   // Create container vector
   NumericVector distpop(ncds);
 
+  // Initialize
+  int i; int pop; arma::uvec cd_i_ind; int j;
+
   // Loop through cd assignments
-  for(int i = 0; i < ncds; i++){
+  for(i = 0; i < ncds; i++){
 
     // Initialize population count
-    int pop = 0;
+    pop = 0;
 
     // Get indices of cds 
-    arma::uvec cd_i_ind = find(cds == i);
+    cd_i_ind = find(cds == i);
     
     // Loop through cd_i_ind, get population values
-    for(int j = 0; j < cd_i_ind.n_elem; j++){
+    for(j = 0; j < cd_i_ind.n_elem; j++){
       pop += popvec(cd_i_ind(j));
     }
 
@@ -69,20 +72,23 @@ List genAlConn(List aList,
   // Initialize container list
   List alConnected(cds.size());
 
+  // Initialize
+  int i; NumericVector avec; int cd_i; int j;
+
   // Loop through precincts
-  for(int i = 0; i < cds.size(); i++){
+  for(i = 0; i < cds.size(); i++){
 
     // For precinct i, get adjacent precincts
-    NumericVector avec = aList(i);
+    avec = aList(i);
     
     // Get precinct i's congressional district
-    int cd_i = cds(i);
+    cd_i = cds(i);
 
     // Initialize empty vector
     NumericVector avec_cd;
 
     // Loop through avec to identify which are in same cd
-    for(int j = 0; j < avec.size(); j++){
+    for(j = 0; j < avec.size(); j++){
       
       // Check if j'th entry in avec is same cd, add to avec_cd if so
       if(cds(avec(j)) == cd_i){
@@ -115,12 +121,15 @@ NumericVector findBoundary(List fullList,
   // Initialize container vector of 0's (not boundary) and 1's (boundary)
   NumericVector isBoundary(fullList.size());
 
+  // Initialize inside loop
+  NumericVector full; NumericVector conn; int i;
+
   // Loop through aList
-  for(int i = 0; i < fullList.size(); i++){
+  for(i = 0; i < fullList.size(); i++){
 
     // Get vectors of full and cd-connected components for precinct i
-    NumericVector full = fullList(i);
-    NumericVector conn = conList(i);
+    full = fullList(i);
+    conn = conList(i);
 
     // Compare lengths - if conn < full, then boundary unit
     if(full.size() > conn.size()){
@@ -135,18 +144,21 @@ NumericVector findBoundary(List fullList,
 
 // Function to make unidirectional adjacency list bidirectional
 List add_ties(List aList){
+
+  // Initialize
+  int i; NumericVector list1; int j; NumericVector list2;
   
   // Loop through vectors in aList
-  for(int i = 0; i < aList.size(); i++){
+  for(i = 0; i < aList.size(); i++){
 
     // Get i'th entry in list
-    NumericVector list1 = aList(i);
+    list1 = aList(i);
     
     // Loop through elements in list1
-    for(int j = 0; j < list1.size(); j++){
+    for(j = 0; j < list1.size(); j++){
 
       // Extract adjacency vector for j'th element of i's adjacency list
-      NumericVector list2 = aList(list1(j));
+      list2 = aList(list1(j));
       
       // Check if list 2 includes i
       if(is_true(any(list2 == i)) == FALSE){
@@ -185,19 +197,23 @@ List cut_edges(List aList_con,
   List aList_uncut(aList_con.size());
   List aList_cut(aList_con.size());
 
+  // Initialize inside loop
+  int i; NumericVector cc_vec_i_all; NumericVector cc_vec_i;
+  arma::vec draws;
+
   // Define list to store output of both lists
 
   // Loop through elements of aList_con
-  for(int i = 0; i < aList_con.size(); i++){
+  for(i = 0; i < aList_con.size(); i++){
 
     // Extract i'th vector in list
-    NumericVector cc_vec_i_all = aList_con(i);
+    cc_vec_i_all = aList_con(i);
 
     // Subset cc_vec_i to elements > i
-    NumericVector cc_vec_i = cc_vec_i_all[cc_vec_i_all > i];
+    cc_vec_i = cc_vec_i_all[cc_vec_i_all > i];
 
     // For each element in vector, take random draw from [0,1] uniform
-    arma::vec draws = runif(cc_vec_i.size());
+    draws = runif(cc_vec_i.size());
 
     // Create container vectors of cut and uncut edges
     NumericVector cut;
@@ -270,6 +286,9 @@ List bsearch_boundary(List aList,
   partition.push_back(boundary_indices(0));
   q = aList(boundary_indices(0));
 
+  // Initialize objects inside loop
+  int u; bool in_part; NumericVector adj_u; int i; int v; 
+
   // Begin do{} loop - run until number of elements in boundary_indices is 0
   do{
 
@@ -277,28 +296,28 @@ List bsearch_boundary(List aList,
     while(q.size() > 0){
       
       // Dequeue first element in queue
-      int u = q(0);
+      u = q(0);
 
       // Mark that element in ledger
       mark(u) = u;
 
       // Check if element is in the partition - add to partition if false
-      bool in_part = is_true(any(partition == u));
-      if(in_part == FALSE){
+      in_part = is_true(any(partition == u));
+      if(in_part == false){
 	partition.push_back(u);
       }
       
       // Get adjacency vector for unit u
-      NumericVector adj_u = aList(u);
+      adj_u = aList(u);
 
       // Loop through elements of adj_u, add to queue and mark if not reached
       if(adj_u.size() > 0){
 	
 	// Start loop
-	for(int i = 0; i < adj_u.size(); i++){
+	for(i = 0; i < adj_u.size(); i++){
 	  
 	  // Reach element v
-	  int v = adj_u(i);
+	  v = adj_u(i);
 
 	  /* Check if already reached - if false, mark, add to partition, and
 	     add to queue */
@@ -322,7 +341,7 @@ List bsearch_boundary(List aList,
 
       /* First, find boundary units that are in the reached partition and
 	 remove them from boundary_units vector */
-      for(int i = boundary_indices.n_elem - 1; i >= 0; i--){
+      for(i = boundary_indices.n_elem - 1; i >= 0; i--){
 	if(is_true(any(partition == boundary_indices(i))) == TRUE){
 	  boundary_indices.shed_row(i);
 	}
@@ -353,6 +372,77 @@ List bsearch_boundary(List aList,
 
   return out;
 
+}
+
+/* Function to count number of valid partitions to swap */
+int count_valid(List aList, List boundarypart, NumericVector cdvec){
+
+  int cd_boundary; arma::vec part; int j; int i;
+  arma::uvec find_cds; int counter = 0;
+
+  for(i = 0; i < boundarypart.size(); i++){
+    
+    // Get the partition
+    part = as<arma::vec>(boundarypart(i));
+    
+    // Get the congressional district of the boundary
+    cd_boundary = cdvec(part(0));
+    
+    // Find indices within that congressional district
+    find_cds = find(as<arma::vec>(cdvec) == cd_boundary);
+    
+    // Remove elements in the partition from that cd
+    NumericVector cd_less_boundary;
+    for(j = 0; j < find_cds.n_elem; j++){
+      if(any(part == find_cds(j)) == false){
+	cd_less_boundary.push_back(find_cds(j));
+      }
+    }
+
+    // If cd_less_boundary empty, then continue
+    // Eliminates district so invalid partition
+    if(cd_less_boundary.size() == 0){
+      continue;
+    }
+    
+    // Create new adjacency list
+    List newadj(cd_less_boundary.size());
+    for(j = 0; j < newadj.size(); j++){
+      
+      // Extract vector from adjacency list
+      NumericVector getadjvec = aList(cd_less_boundary(j));
+      
+      // Subset down to elements in cd_less_boundary
+      NumericVector getadjvec_sub;
+      for(int k = 0; k < getadjvec.size(); k++){
+	if(any(as<arma::vec>(cd_less_boundary) == getadjvec(k))){
+	  getadjvec_sub.push_back(getadjvec(k));
+	}
+      }
+      
+      // Change indices
+      NumericVector getadjvec_new;
+      for(int k = 0; k < getadjvec_sub.size(); k++){
+	arma::uvec ind = find(as<arma::vec>(cd_less_boundary) ==
+			      getadjvec_sub(k));
+	getadjvec_new.push_back(ind(0));
+      }
+      
+      // Add to newadj
+      newadj(j) = getadjvec_new;
+      
+    }
+    
+    // Calculate number of partitions
+    int nparts = countpartitions(newadj);
+    if(nparts == 1){
+      counter++;
+    }
+    
+  }
+  
+  return counter;
+  
 }
 
 /* Function to draw p for the number of connected components */

@@ -302,7 +302,7 @@ double update_mhprob(NumericVector prop_partition,
   }
 
   // Recalculate mh probability
-  mh_prob = (double)mh_prob * pow(1 - eprob, c1) / pow(1 - eprob, c2);
+  mh_prob = (double)mh_prob * ((double)pow(1 - eprob, c1) / pow(1 - eprob, c2));
 
   return mh_prob;
 

@@ -20,6 +20,7 @@ Rcpp::List cut_edges(Rcpp::List aList_con,
 		     double eprob);
 Rcpp::List bsearch_boundary(Rcpp::List aList,
 			    arma::vec boundary);
+int count_valid(Rcpp::List aList, Rcpp::List boundarypart, Rcpp::NumericVector cdvec);
 int draw_p(int lambda);
 Rcpp::List make_swaps(Rcpp::List boundary_cc,
 		      Rcpp::List aList,

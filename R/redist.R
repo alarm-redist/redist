@@ -498,7 +498,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                         betaseq = "powerlaw", betaseqlength = 10,
                         betaweights = NULL, adapt_lambda = 1,
                         adjswaps = TRUE, rngseed = NULL, maxiterrsg = 5000,
-                        contiguitymap = "rooks", savename = NULL, verbose = TRUE
+                        contiguitymap = "rooks", exact_mh = 0, savename = NULL, verbose = TRUE
                         ){
 
     #########################
@@ -535,6 +535,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
     ## maxiterrsg - Maximum number of iterations for random seed-and-grow algorithm
     ## contiguitymap - Use queens distance or rooks distance for creating an adjlist
     ##                 from map. Defaults to rooks.
+    ## exact_mh - Use exact metropolis hastings with boundary correction. Default to 0
     ## savename - Where to save the simulations
     ## verbose - whether to print initialization script
 
@@ -688,7 +689,8 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                        anneal_beta_segregation = preprocout$params$temperbetaseg,
                        anneal_beta_similar = preprocout$params$temperbetasimilar,
                        adapt_lambda = adapt_lambda,
-                       adjswap = preprocout$params$adjswaps)
+                       adjswap = preprocout$params$adjswaps,
+                       exact_mh = exact_mh)
 
         class(algout) <- "redist"
 

@@ -75,8 +75,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // swMH
-List swMH(List aList, NumericVector cdvec, NumericVector cdorigvec, NumericVector popvec, NumericVector grouppopvec, int nsims, double eprob, double pct_dist_parity, NumericVector beta_sequence, NumericVector beta_weights, NumericMatrix ssdmat, int lambda, double beta_population, double beta_compact, double beta_segregation, double beta_similar, int anneal_beta_population, int anneal_beta_compact, int anneal_beta_segregation, int anneal_beta_similar, int adapt_lambda, int adjswap);
-RcppExport SEXP redist_swMH(SEXP aListSEXP, SEXP cdvecSEXP, SEXP cdorigvecSEXP, SEXP popvecSEXP, SEXP grouppopvecSEXP, SEXP nsimsSEXP, SEXP eprobSEXP, SEXP pct_dist_paritySEXP, SEXP beta_sequenceSEXP, SEXP beta_weightsSEXP, SEXP ssdmatSEXP, SEXP lambdaSEXP, SEXP beta_populationSEXP, SEXP beta_compactSEXP, SEXP beta_segregationSEXP, SEXP beta_similarSEXP, SEXP anneal_beta_populationSEXP, SEXP anneal_beta_compactSEXP, SEXP anneal_beta_segregationSEXP, SEXP anneal_beta_similarSEXP, SEXP adapt_lambdaSEXP, SEXP adjswapSEXP) {
+List swMH(List aList, NumericVector cdvec, NumericVector cdorigvec, NumericVector popvec, NumericVector grouppopvec, int nsims, double eprob, double pct_dist_parity, NumericVector beta_sequence, NumericVector beta_weights, NumericMatrix ssdmat, int lambda, double beta_population, double beta_compact, double beta_segregation, double beta_similar, int anneal_beta_population, int anneal_beta_compact, int anneal_beta_segregation, int anneal_beta_similar, int adapt_lambda, int adjswap, int exact_mh);
+RcppExport SEXP redist_swMH(SEXP aListSEXP, SEXP cdvecSEXP, SEXP cdorigvecSEXP, SEXP popvecSEXP, SEXP grouppopvecSEXP, SEXP nsimsSEXP, SEXP eprobSEXP, SEXP pct_dist_paritySEXP, SEXP beta_sequenceSEXP, SEXP beta_weightsSEXP, SEXP ssdmatSEXP, SEXP lambdaSEXP, SEXP beta_populationSEXP, SEXP beta_compactSEXP, SEXP beta_segregationSEXP, SEXP beta_similarSEXP, SEXP anneal_beta_populationSEXP, SEXP anneal_beta_compactSEXP, SEXP anneal_beta_segregationSEXP, SEXP anneal_beta_similarSEXP, SEXP adapt_lambdaSEXP, SEXP adjswapSEXP, SEXP exact_mhSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
@@ -102,7 +102,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type anneal_beta_similar(anneal_beta_similarSEXP);
     Rcpp::traits::input_parameter< int >::type adapt_lambda(adapt_lambdaSEXP);
     Rcpp::traits::input_parameter< int >::type adjswap(adjswapSEXP);
-    __result = Rcpp::wrap(swMH(aList, cdvec, cdorigvec, popvec, grouppopvec, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, lambda, beta_population, beta_compact, beta_segregation, beta_similar, anneal_beta_population, anneal_beta_compact, anneal_beta_segregation, anneal_beta_similar, adapt_lambda, adjswap));
+    Rcpp::traits::input_parameter< int >::type exact_mh(exact_mhSEXP);
+    __result = Rcpp::wrap(swMH(aList, cdvec, cdorigvec, popvec, grouppopvec, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, lambda, beta_population, beta_compact, beta_segregation, beta_similar, anneal_beta_population, anneal_beta_compact, anneal_beta_segregation, anneal_beta_similar, adapt_lambda, adjswap, exact_mh));
     return __result;
 END_RCPP
 }
