@@ -312,14 +312,14 @@ ecutsMPI <- function(){
                         
                         ## Send temperature adjacency list
                         if(procID == tempadj[tempseg+1]){
-                            oProcs <- tempadj[temps != tempadj]
+                            oProcs <- tempadj[!(tempadj %in% temps)]
                             for(k in 1:length(oProcs)){
                                 Rmpi::mpi.send.Robj(tempadj,dest=oProcs[k],tag=4)
                             }
                         }
                     }else{
                         if(procID == tempadj[tempseg]){
-                            oProcs <- tempadj[ls!(tempadj %in% temps)]
+                            oProcs <- tempadj[!(tempadj %in% temps)]
                             for(k in 1:length(oProcs)){
                                 Rmpi::mpi.send.Robj(tempadj,dest=oProcs[k],tag=4)
                             }
