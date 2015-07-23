@@ -276,7 +276,7 @@ ecutsMPI <- function(){
                 ## Determine which nodes are swapping
                 tempseg <- swaps[(i-1)*nsims + j*freq]
                 ## Get node indices
-                temps <- tempadj[c(tempseg, tempseg+1)]
+                temps <- tempadj[tempseg:(tempseg+1)]
                 cat("temps to swap are ", temps, "\n", append = TRUE)
                 cat("tempseg = ", tempseg, "\n", append = TRUE)
                 cat("Is processor ", procID, " in temps? ", procID %in% temps, "\n", append = TRUE)
@@ -304,32 +304,38 @@ ecutsMPI <- function(){
                     ## Compute acceptance probability (for now, population only)
                     prob <- (like^betaPart*likePart^beta)/(like^beta*likePart^betaPart)
                     if(prob > accept){
+                        cat("Proposal accepted\n", append = TRUE)
                         ## Exchange temperature values
                         beta <- betaPart
                         
                         ## Adjust temperature adjacency list
-                        tempadj[tempseg:tempseg+1] <- tempadj[tempseg+1:tempseg]
-                        
+                        tempadj[tempseg:(tempseg+1)] <- tempadj[(tempseg+1):tempseg]
+                        cat("Tempadj is ", tempadj, "\n", append = TRUE)
                         ## Send temperature adjacency list
                         if(procID == tempadj[tempseg+1]){
+                            cat("Sending list\n", append = TRUE)
                             oProcs <- tempadj[!(tempadj %in% temps)]
                             for(k in 1:length(oProcs)){
                                 Rmpi::mpi.send.Robj(tempadj,dest=oProcs[k],tag=4)
                             }
+                            cat("End sending list\n", append = TRUE)
                         }
                     }else{
+                        cat("Proposal not accepted\n", append = TRUE)
                         if(procID == tempadj[tempseg]){
+                            cat("Sending list\n", append = TRUE)
                             oProcs <- tempadj[!(tempadj %in% temps)]
                             for(k in 1:length(oProcs)){
                                 Rmpi::mpi.send.Robj(tempadj,dest=oProcs[k],tag=4)
                             }
+                            cat("End sending list\n", append = TRUE)
                         }
                     } 
                     cat("End swap\n", append = TRUE)
                 }else{
                     cat("Start not swapping\n", append = TRUE)
-                    cat("tempadj is ", tempadj, append = TRUE)
-                    cat("tempseg is ", tempseg, append = TRUE)
+                    cat("tempadj is ", tempadj, "\n", append = TRUE)
+                    cat("Trying to receive from ", tempadj[tempseg], "\n", append = TRUE)
                     tempadj <- Rmpi::mpi.recv.Robj(tempadj[tempseg],tag=4)
                     cat("End not swapping\n", append = TRUE)
                 }
