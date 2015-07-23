@@ -50,8 +50,10 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     if(missing(popvec)){
         stop("Please supply vector of geographic unit populations")
     }
-    if(beta == 0 & (temper != "none" | constraint != "none")){
-        stop("If tempering or constraining, please set non-zero constraint")
+    if((beta == 0 & temper == "none" & constraint != "none") |
+       (beta == 0 & temper == "simulated") |
+       (temper != "none" & constraint == "none")){
+        stop("If applying constraints or using simulated tempering, please set non-zero constraint and specify the constraint.")
     }
     if(!(temper %in% c("none", "simulated", "parallel"))){
         stop("Please specify either `none`, `simulated` or `parallel` for tempering argument")
@@ -178,9 +180,9 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         ## Print start
         divider <- c(paste(rep("=", 20), sep = "", collapse = ""), "\n")
         
-        cat("\n")
-        cat(divider)
-        cat("redist.rsg(): Automated Redistricting Starts\n\n")
+        cat("\n", append = TRUE)
+        cat(divider, append = TRUE)
+        cat("redist.rsg(): Automated Redistricting Starts\n\n", append= TRUE)
         
         ## Run the algorithm
         initout <- redist.rsg(adj.list = adjlist,
@@ -189,12 +191,10 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
                               thresh = popcons_rsg,
                               verbose = FALSE,
                               maxiter = maxiterrsg)
-
         ## Get initial cds
         initcds <- initout$district_membership
         
     }
-    
     ###########################################################
     ## Check other inputs to make sure they are right length ##
     ###########################################################
@@ -206,11 +206,11 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         stop("Each entry in adjacency list must have an initial congressional
              district assignment")
     }
-    if(constraint == "segregation" & (is.null(grouppopvec))){
+    if(constraint == "segregation" & is.null(grouppopvec)){
         stop("If applying the segregation constraint, please provide a vector
              of subgroup populations")
     }
-    if(constraint == "segregation" & (!is.null(grouppopvec))){
+    if(constraint == "segregation" & !(is.null(grouppopvec))){
         if((length(grouppopvec) != length(adjlist)) |
            (sum(is.na(grouppopvec)) > 0)){
             stop("If applying the segregation constraint, each entry in adjacency
@@ -543,10 +543,10 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
         ## Initialize ##
         divider <- c(paste(rep("=", 20), sep = "", collapse = ""), "\n")
         
-        cat("\n")
-        cat(divider)
+        cat("\n", append = TRUE)
+        cat(divider, append = TRUE)
         cat("redist.mcmc(): Automated Redistricting Simulation Using
-         Markov Chain Monte Carlo\n\n")
+         Markov Chain Monte Carlo\n\n", append = TRUE)
     }
     
     ##########################
