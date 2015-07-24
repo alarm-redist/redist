@@ -12,9 +12,9 @@ ecutsMPI <- function(){
     library(redist)
 
     fname <- paste("log", procID, sep = "")
-    sink(fname)
     
     if(params$verbose){
+        sink(fname)
         ## Initialize ##
         divider <- c(paste(rep("=", 20), sep = "", collapse = ""), "\n")
         
@@ -363,10 +363,11 @@ ecutsMPI <- function(){
         
         ## Save output
         if(nloop > 1){
-            save(algout, file = paste(savename, "_loop", i,"_chain",
+            save(algout, file = paste(savename, "_loop", i,"_temp",
                              procID, ".RData", sep = ""))
         }else if(!is.null(savename)){
-            save(algout, file = paste(savename, "_chain", procID,
+            save(algout, file = paste(savename, "_temp",
+                             algout$betaseq_store[nsims],
                              ".RData", sep = ""))
         }
         ## End loop over i
@@ -376,8 +377,8 @@ ecutsMPI <- function(){
         cat(divider, append = TRUE)
         
         cat("redist.mcmc.mpi() simulations finished.\n", append = TRUE)
+        sink()
     }
-    sink()
     ## End function
 }
 
@@ -449,7 +450,7 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
     if (!is.loaded("mpi_initialize")) { 
         library("Rmpi") 
     }
-    
+
     ##########################
     ## Is anything missing? ##
     ##########################
