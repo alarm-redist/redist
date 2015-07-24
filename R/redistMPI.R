@@ -269,20 +269,14 @@ ecutsMPI <- function(){
             ##            3 -> acceptance probability sent
             ##
             
-            cat("Begin MPI step...\n",append = TRUE)
-            cat("Adjswaps = ", adjswaps, "\n", append = TRUE)
             if(adjswaps){
 
                 ## Determine which nodes are swapping
                 tempseg <- swaps[(i-1)*nsims + j*freq]
                 ## Get node indices
                 temps <- tempadj[tempseg:(tempseg+1)]
-                cat("temps to swap are ", temps, "\n", append = TRUE)
-                cat("tempseg = ", tempseg, "\n", append = TRUE)
-                cat("Is processor ", procID, " in temps? ", procID %in% temps, "\n", append = TRUE)
                 ## Communication step        
                 if(procID %in% temps){
-                    cat("Start swap\n", append = TRUE)
                     ## Determine partner
                     partner <- temps[procID != temps]
                     ## Send commands (blocking)
@@ -304,44 +298,30 @@ ecutsMPI <- function(){
                     ## Compute acceptance probability (for now, population only)
                     prob <- (like^betaPart*likePart^beta)/(like^beta*likePart^betaPart)
                     if(prob > accept){
-                        cat("Proposal accepted\n", append = TRUE)
                         ## Exchange temperature values
                         beta <- betaPart
                         
                         ## Adjust temperature adjacency list
                         tempadj[tempseg:(tempseg+1)] <- tempadj[(tempseg+1):tempseg]
-                        cat("Tempadj is ", tempadj, "\n", append = TRUE)
                         ## Send temperature adjacency list
                         if(procID == tempadj[tempseg+1]){
-                            cat("Sending list\n", append = TRUE)
                             oProcs <- tempadj[!(tempadj %in% temps)]
                             for(k in 1:length(oProcs)){
                                 Rmpi::mpi.send.Robj(tempadj,dest=oProcs[k],tag=4)
                             }
-                            cat("End sending list\n", append = TRUE)
                         }
                     }else{
-                        cat("Proposal not accepted\n", append = TRUE)
                         if(procID == tempadj[tempseg]){
-                            cat("Sending list\n", append = TRUE)
                             oProcs <- tempadj[!(tempadj %in% temps)]
                             for(k in 1:length(oProcs)){
                                 Rmpi::mpi.send.Robj(tempadj,dest=oProcs[k],tag=4)
                             }
-                            cat("End sending list\n", append = TRUE)
                         }
                     } 
-                    cat("End swap\n", append = TRUE)
                 }else{
-                    cat("Start not swapping\n", append = TRUE)
-                    cat("tempadj is ", tempadj, "\n", append = TRUE)
-                    cat("Trying to receive from ", tempadj[tempseg], "\n", append = TRUE)
                     tempadj <- Rmpi::mpi.recv.Robj(tempadj[tempseg],tag=4)
-                    cat("End not swapping\n", append = TRUE)
                 }
             }else{
-                cat("length(nsimsadj) = ", length(nsimsAdj), "\n", append = TRUE)
-                cat("j = ", j, "\n", append = TRUE)
                 if(j != length(nsimsAdj) || length(nsimsAdj) == length(tempIts)){
                     ## Swap proposed
                     cat("Start send to ", partner[j], ".\n", append = TRUE)
@@ -357,7 +337,6 @@ ecutsMPI <- function(){
                     
                     ## Higher ranked process communicates random
                     ## draw to lower ranked process
-                    cat("Start mh step.\n", append = TRUE)
                     if(partner[j] < procID){
                         accept <- runif(1)
                         Rmpi::mpi.send.Robj(accept,dest=partner[j],tag=3)
@@ -374,7 +353,6 @@ ecutsMPI <- function(){
                     }
                 }
             }
-            cat("End MH step.\n", append = TRUE)
             ## Update inputs to swMH
             cds <- temp$partitions[,nsimsAdj[j]]
             ## End loop over j
@@ -388,7 +366,7 @@ ecutsMPI <- function(){
         }
         
         ## Save output
-        if(nloop > 1){
+        if(nloop > 1 | !is.null(savename)){
             save(algout, file = paste(savename, "_loop", i,"_chain", procID, ".RData", sep = ""))
         }
         ## End loop over i
@@ -397,18 +375,22 @@ ecutsMPI <- function(){
     ## End function
 }
 
-ecutsAppend <- function(algout,ndata)
-{
-    algout$partitions <- cbind(algout$partitions,ndata$partitions)
-    algout$distance_parity <- c(algout$distance_parity,ndata$distance_parity)
-    algout$mhdecisions <- c(algout$mhdecisions,ndata$mhdecisions)
-    algout$mhprob <- c(algout$mhprob,ndata$mhprob)
-    algout$pparam <- c(algout$pparam,ndata$pparam)
-    algout$constraint_pop <- c(algout$constraint_pop,ndata$constraint_pop)
-    algout$constraint_compact <- c(algout$constraint_compact,ndata$constraint_compact)
-    algout$constraint_segregation <- c(algout$constraint_segregation,ndata$constraint_segregation)
-    algout$constraint_similar <- c(algout$constraint_similar,algout$constraint_similar)
-    algout$beta_sequence <- c(algout$beta_sequence,ndata$beta_sequence)
+ecutsAppend <- function(algout,ndata){
+    if(length(algout) == 0){
+        algout <- ndata
+    }else{
+        algout$partitions <- cbind(algout$partitions,ndata$partitions)
+        algout$distance_parity <- c(algout$distance_parity,ndata$distance_parity)
+        algout$mhdecisions <- c(algout$mhdecisions,ndata$mhdecisions)
+        algout$mhprob <- c(algout$mhprob,ndata$mhprob)
+        algout$pparam <- c(algout$pparam,ndata$pparam)
+        algout$constraint_pop <- c(algout$constraint_pop,ndata$constraint_pop)
+        algout$constraint_compact <- c(algout$constraint_compact,ndata$constraint_compact)
+        algout$constraint_segregation <- c(algout$constraint_segregation,ndata$constraint_segregation)
+        algout$constraint_similar <- c(algout$constraint_similar,ndata$constraint_similar)
+        algout$beta_sequence <- c(algout$beta_sequence,ndata$beta_sequence)
+    }
+    return(algout)
 }
 
 redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
@@ -421,20 +403,6 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
                             freq = 100, savename = NA, maxiterrsg = 5000,
                             contiguitymap = "rooks", verbose = FALSE
 ){
-
-    ## To test out on own computer
-    ## library("redist"); data(algdat.pfull)
-    ## adjobj <- algdat.pfull$adjlist; popvec <- algdat.pfull$precinct.data$pop
-    ## nsims <- 10000; ndists <- 3
-    ## initcds = NULL
-    ## loopscompleted = 0; nloop = 1; nthin = 1
-    ## eprob = 0.05
-    ## lambda = 0; popcons = NA; grouppopvec = NA
-    ## ssdmat = NA; rngseed = NA
-    ## beta = -10; constraint = "population"  
-    ## betaseqlength = 10; adjswaps = TRUE
-    ## freq = 100; savename = NA; maxiterrsg = 5000
-    ## contiguitymap = "rooks"; verbose = FALSE
     
     #########################
     ## Inputs to function: ##
@@ -517,17 +485,17 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
     ## Generate swapping sequence
     if(adjswaps){
         swaps <- matrix(NA,1,nsims*(nloop-loopscompleted))
-                                        # partner <- matrix(NA,1,nits)
+        ## partner <- matrix(NA,1,nits)
         for(i in 1:length(swaps)){
             if(i %% freq == 0){
                 swaps[i] = sample(1:(betaseqlength-1),size=1)
             }
-                                        # Initial temperature adjacency
+            ## Initial temperature adjacency
             tempadj <- 1:betaseqlength
         }
     }else{
         swaps <- matrix(NA,2,nsims*(nloop-loopscompleted))
-        for(i in 1:length(swaps)){
+        for(i in 1:ncol(swaps)){
             if(i %% freq == 0){
                 swaps[,i] = sample(1:betaseqlength,size=2)
             }
