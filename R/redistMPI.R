@@ -121,7 +121,7 @@ ecutsMPI <- function(){
     temper <- "parallel"
     
     ## Find procID involved in swaps (non-adjacent only)
-    if(adjswaps){
+    if(!adjswaps){
         swapIts <- which(swaps == procID, arr.ind = TRUE)[,2]
     }
     
@@ -324,16 +324,12 @@ ecutsMPI <- function(){
             }else{
                 if(j != length(nsimsAdj) || length(nsimsAdj) == length(tempIts)){
                     ## Swap proposed
-                    cat("Start send to ", partner[j], ".\n", append = TRUE)
                     ## Send commands (blocking)
                     Rmpi::mpi.send.Robj(like,dest=partner[j],tag=1)
                     Rmpi::mpi.send.Robj(beta,dest=partner[j],tag=2)
-                    cat("End send to ", partner[j], ".\n", append = TRUE)
                     ## Receive commands (blocking)
-                    cat("Start receive to ", partner[j], ".\n", append = TRUE)
                     likePart <- Rmpi::mpi.recv.Robj(partner[j],tag=1)
                     betaPart <- Rmpi::mpi.recv.Robj(partner[j],tag=2)
-                    cat("End receive to ", partner[j], ".\n", append = TRUE)
                     
                     ## Higher ranked process communicates random
                     ## draw to lower ranked process
@@ -366,10 +362,20 @@ ecutsMPI <- function(){
         }
         
         ## Save output
-        if(nloop > 1 | !is.null(savename)){
-            save(algout, file = paste(savename, "_loop", i,"_chain", procID, ".RData", sep = ""))
+        if(nloop > 1){
+            save(algout, file = paste(savename, "_loop", i,"_chain",
+                             procID, ".RData", sep = ""))
+        }else if(!is.null(savename)){
+            save(algout, file = paste(savename, "_chain", procID,
+                             ".RData", sep = ""))
         }
         ## End loop over i
+    }
+    if(params$verbose){
+        cat("\n", append = TRUE)
+        cat(divider, append = TRUE)
+        
+        cat("redist.mcmc.mpi() simulations finished.\n", append = TRUE)
     }
     sink()
     ## End function
