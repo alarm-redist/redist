@@ -360,11 +360,7 @@ ecutsMPI <- function(){
         if(!is.null(rngseed)){
             algout$randseed <- .Random.seed
         }
-        cat("Nsims is ", nsims, " and length(betaseq) is ", length(algout$beta_sequence), "\n", append = TRUE)
-        cat("Last beta is ", algout$beta_sequence[nsims], "\n", append = TRUE)
-        cat("Save name is ", file = paste(savename, "_temp",
-                             algout$beta_sequence[nsims],
-                             ".RData", sep = ""), "\n", append = TRUE)
+
         ## Save output
         if(nloop > 1){
             save(algout, file = paste(savename, "_loop", i,"_temp",
@@ -399,9 +395,7 @@ ecutsAppend <- function(algout,ndata){
         algout$constraint_compact <- c(algout$constraint_compact,ndata$constraint_compact)
         algout$constraint_segregation <- c(algout$constraint_segregation,ndata$constraint_segregation)
         algout$constraint_similar <- c(algout$constraint_similar,ndata$constraint_similar)
-        cat("length ndata betaseq is ", length(ndata$beta_sequence), "\n", append = TRUE)
         algout$beta_sequence<- c(algout$beta_sequence,ndata$beta_sequence)
-        cat("length algout betaseq is ", length(algout$beta_sequence), "\n", append = TRUE)
     }
     return(algout)
 }
