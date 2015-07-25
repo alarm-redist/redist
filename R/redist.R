@@ -610,16 +610,16 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
             cds <- algout$partitions[,nsims]
             
             if(temper != "none" & constraint == "compact"){
-                betacompact <- algout$betaseq_store[nsims]
+                betacompact <- algout$beta_sequence[nsims]
             }
             if(temper != "none" & constraint == "segregation"){
-                betaseg <- algout$betaseq_store[nsims]
+                betaseg <- algout$beta_sequence[nsims]
             }
             if(temper != "none" & constraint == "population"){
-                betapop <- algout$betaseq_store[nsims]
+                betapop <- algout$beta_sequence[nsims]
             }
             if(temper != "none" & constraint == "similarity"){
-                betasimilar <- algout$betaseq_store[nsims]
+                betasimilar <- algout$beta_sequence[nsims]
             }
             if(!is.null(rngseed) & is.numeric(rngseed)){
                 .Random.seed <- algout$randseed
@@ -644,16 +644,16 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                 cds <- algout$partitions[,nsims]
                 
                 if(temper != "none" & constraint == "compact"){
-                    betacompact <- algout$betaseq_store[nsims]
+                    betacompact <- algout$beta_sequence[nsims]
                 }
                 if(temper != "none" & constraint == "segregation"){
-                    betaseg <- algout$betaseq_store[nsims]
+                    betaseg <- algout$beta_sequence[nsims]
                 }
                 if(temper != "none" & constraint == "population"){
-                    betapop <- algout$betaseq_store[nsims]
+                    betapop <- algout$beta_sequence[nsims]
                 }
                 if(temper != "none" & constraint == "similarity"){
-                    betasimilar <- algout$betaseq_store[nsims]
+                    betasimilar <- algout$beta_sequence[nsims]
                 }
                 if(!is.null(rngseed) & is.numeric(rngseed)){
                     .Random.seed <- algout$randseed

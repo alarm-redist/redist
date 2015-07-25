@@ -153,16 +153,16 @@ ecutsMPI <- function(){
             cds <- algout$partitions[,nsims]
             
             if(temper != "none" & constraint == "compact"){
-                betacompact <- algout$betaseq_store[nsims]
+                betacompact <- algout$beta_sequence[nsims]
             }
             if(temper != "none" & constraint == "segregation"){
-                betaseg <- algout$betaseq_store[nsims]
+                betaseg <- algout$beta_sequence[nsims]
             }
             if(temper != "none" & constraint == "population"){
-                betapop <- algout$betaseq_store[nsims]
+                betapop <- algout$beta_sequence[nsims]
             }
             if(temper != "none" & constraint == "similarity"){
-                betasimilar <- algout$betaseq_store[nsims]
+                betasimilar <- algout$beta_sequence[nsims]
             }
             if(!is.null(rngseed) & is.numeric(rngseed)){
                 .Random.seed <- algout$randseed
@@ -189,16 +189,16 @@ ecutsMPI <- function(){
                 cds <- algout$partitions[,nsims]
                 
                 if(temper != "none" & constraint == "compact"){
-                    betacompact <- algout$betaseq_store[nsims]
+                    betacompact <- algout$beta_sequence[nsims]
                 }
                 if(temper != "none" & constraint == "segregation"){
-                    betaseg <- algout$betaseq_store[nsims]
+                    betaseg <- algout$beta_sequence[nsims]
                 }
                 if(temper != "none" & constraint == "population"){
-                    betapop <- algout$betaseq_store[nsims]
+                    betapop <- algout$beta_sequence[nsims]
                 }
                 if(temper != "none" & constraint == "similarity"){
-                    betasimilar <- algout$betaseq_store[nsims]
+                    betasimilar <- algout$beta_sequence[nsims]
                 }
                 if(!is.null(rngseed) & is.numeric(rngseed)){
                     .Random.seed <- algout$randseed
@@ -360,14 +360,18 @@ ecutsMPI <- function(){
         if(!is.null(rngseed)){
             algout$randseed <- .Random.seed
         }
-        
+        cat("Nsims is ", nsims, " and length(betaseq) is ", length(algout$beta_sequence), "\n", append = TRUE)
+        cat("Last beta is ", algout$beta_sequence[nsims], "\n", append = TRUE)
+        cat("Save name is ", file = paste(savename, "_temp",
+                             algout$beta_sequence[nsims],
+                             ".RData", sep = ""), "\n", append = TRUE)
         ## Save output
         if(nloop > 1){
             save(algout, file = paste(savename, "_loop", i,"_temp",
                              procID, ".RData", sep = ""))
         }else if(!is.null(savename)){
             save(algout, file = paste(savename, "_temp",
-                             algout$betaseq_store[nsims],
+                             algout$beta_sequence[nsims],
                              ".RData", sep = ""))
         }
         ## End loop over i
@@ -395,7 +399,9 @@ ecutsAppend <- function(algout,ndata){
         algout$constraint_compact <- c(algout$constraint_compact,ndata$constraint_compact)
         algout$constraint_segregation <- c(algout$constraint_segregation,ndata$constraint_segregation)
         algout$constraint_similar <- c(algout$constraint_similar,ndata$constraint_similar)
-        algout$beta_sequence <- c(algout$beta_sequence,ndata$beta_sequence)
+        cat("length ndata betaseq is ", length(ndata$beta_sequence), "\n", append = TRUE)
+        algout$beta_sequence<- c(algout$beta_sequence,ndata$beta_sequence)
+        cat("length algout betaseq is ", length(algout$beta_sequence), "\n", append = TRUE)
     }
     return(algout)
 }
