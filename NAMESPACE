@@ -18,6 +18,7 @@ importFrom(coda, autocorr.plot)
 importFrom(coda, densplot)
 importFrom(coda, cumuplot)
 importFrom(coda, gelman.plot)
+importFrom("grDevices", "dev.off", "pdf")
 
 ## Rcpp
 #exportPattern("^[[:alpha:]]+")

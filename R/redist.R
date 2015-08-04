@@ -9,7 +9,7 @@
 redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
                            popcons = NULL, grouppopvec = NULL, ssdmat = NULL,
                            beta = 0, temper = NULL, constraint = NULL,
-                           betaseq = NULL, betaseqlength = 10,
+                           betaseq = NULL, betaseqlength = NULL,
                            betaweights = NULL, adjswaps = TRUE, maxiterrsg = NULL,
                            contiguitymap = NULL
                            ){
@@ -586,7 +586,8 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                                  grouppopvec = grouppopvec, ssdmat = ssdmat,
                                  beta = beta, temper = temper,
                                  constraint = constraint,
-                                 betaseq = betaseq, betaweights = betaweights,
+                                 betaseq = betaseq, betaseqlength = betaseqlength,
+                                 betaweights = betaweights,
                                  adjswaps = adjswaps, maxiterrsg = maxiterrsg,
                                  contiguitymap = contiguitymap)
 
