@@ -246,8 +246,18 @@ ecutsMPI <- function(){
             ## Combine data
             algout <- ecutsAppend(algout,temp)
             
-            ## Get temperature (is it negative?)
+            ## Get temperature
             beta <- temp$beta_sequence[nsimsAdj[j]]
+            
+            ## Check average MH ratio for target beta chain
+            if(beta == target.beta & sum(nsimsAdj[1:j]) >= 10e3 & sum(nsimAdj[1:j]) < 10e3+freq & i == 1){
+              if(mean(algout$mhprob) <= 0.2){
+                stop("Target beta is too small. Please increase beta to a larger value")
+              }
+              else if(mean(algout$mhprob) >= 0.4){
+                stop("Target beta is too large. Please decrease beta to a smaller value")
+              }
+            }
             
             ## Get likelihood
             if(constraint == "compact"){
@@ -488,6 +498,7 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
         temp[i] <- 0.1^((i-1) / (betaseqlength - 1)) - .1
     }
     beta <- temp*beta/0.9
+    target.beta <- beta[1]
   
     ## Generate swapping sequence
     if(adjswaps){
@@ -512,7 +523,7 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
     ## Create parameters list to distribute across nodes
     params <- expand.grid(nsims = nsims,nloop = nloop,eprob = eprob,
                           ndists = ndists,lambda = lambda,popcons = popcons,
-                          beta = beta,constraint = constraint,
+                          beta = beta,target.beta = target.beta,constraint = constraint,
                           betaseqlength = betaseqlength,adjswaps = adjswaps,
                           nthin = nthin,freq = freq,maxiterrsg = maxiterrsg,
                           contiguitymap = contiguitymap,verbose = verbose,
