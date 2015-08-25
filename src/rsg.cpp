@@ -3,7 +3,7 @@
 #include "make_swaps_helper.h"
 #include "sw_mh_helper.h"
 
-using namespace Rcpp ;
+using namespace Rcpp;
 
 // [[Rcpp::export()]]
 List rsg (List adj_list,

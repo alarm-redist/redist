@@ -518,10 +518,13 @@ List swMH(List aList,
   // Get distance from parity of each partition
   NumericVector dist_parity_vec = distParity(cd_store, popvec);
 
+  NumericVector dist_orig_vec = diff_origcds(cd_store, cdorigvec);
+
   // Create list, store outputx
   List out;
   out["partitions"] = cd_store;
   out["distance_parity"] = dist_parity_vec;
+  out["distance_original"] = dist_orig_vec;
   out["mhdecisions"] = decision_store;
   out["mhprob"] = mhprob_store;
   out["pparam"] = pparam_store;

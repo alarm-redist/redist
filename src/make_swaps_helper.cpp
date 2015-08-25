@@ -336,6 +336,44 @@ NumericMatrix calcPWDh (NumericMatrix x)
 
 }
 
+// Function to calculate deviation from original cd vector
+NumericVector diff_origcds(NumericMatrix mat,
+			   NumericVector cds){
+
+  /* Inputs to function:
+     mat: Matrix of congressional district assignments
+
+     cds: Vector of congressional district assignments to serve as baseline
+   */
+
+  // Get length of cd vector
+  unsigned int len_cds = cds.size();
+
+  // Convert cds to arma
+  arma::uvec cds_arma = as<arma::uvec>(cds);
+
+  // Initialize objects
+  unsigned int i; unsigned int j; unsigned int k = mat.ncol(); arma::vec plan;
+  arma::uvec compare; NumericVector store_compare;
+  
+  // Start loop over mat columns
+  for(i = 0; i < k; i++){
+
+    // Get the plan
+    plan = mat(_,i);
+
+    // Compare matrices
+    compare = (plan == cds_arma);
+
+    // Sum up and divide by len_cds
+    store_compare(i) = (double)sum(compare) / len_cds;
+      
+  }
+
+  return store_compare;
+
+}
+
 // Function to calculate deviation from parity from cd matrix
 NumericVector distParity(NumericMatrix mat,
 			 NumericVector popvec)

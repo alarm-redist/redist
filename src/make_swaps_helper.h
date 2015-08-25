@@ -31,6 +31,8 @@ double update_mhprob(Rcpp::NumericVector prop_partition,
 Rcpp::NumericMatrix calcPWDh(Rcpp::NumericMatrix x);
 Rcpp::NumericVector distParity(Rcpp::NumericMatrix mat,
 			       Rcpp::NumericVector popvec);
+Rcpp::NumericVector diff_origcds(Rcpp::NumericMatrix mat,
+				 Rcpp::NumericVector cds);
 
 #endif
 

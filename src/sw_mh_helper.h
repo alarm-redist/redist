@@ -9,8 +9,8 @@
 #ifndef SW_MH_HELPER_H
 #define SW_MH_HELPER_H
 
-Rcpp::NumericVector init_pop(Rcpp::NumericVector popvec,
-			     arma::vec cds);
+
+Rcpp::NumericVector init_pop(Rcpp::NumericVector popvec, arma::vec cds);
 Rcpp::List genAlConn(Rcpp::List aList,
 		     Rcpp::NumericVector cds);
 Rcpp::NumericVector findBoundary(Rcpp::List fullList,

@@ -362,13 +362,16 @@ List bsearch_boundary(List aList,
 
   }while(boundary_indices.n_elem > 0);
 
-  // Get total number of precincts
-  int npartitions = countpartitions(aList);
+  // Get breadth search size
+  int bsearch_size = bsearch.size();
+
+  // Get weight_boundary vector
+  double weight_boundary = (double)countpartitions(aList) / bsearch_size;
 
   List out;
   out["bsearch"] = bsearch;
-  out["npartitions"] = bsearch.size();
-  out["weight_boundary"] = (double)npartitions / bsearch.size();
+  out["npartitions"] = bsearch_size;
+  out["weight_boundary"] = weight_boundary;
 
   return out;
 
