@@ -250,7 +250,7 @@ ecutsMPI <- function(){
             beta <- temp$beta_sequence[nsimsAdj[j]]
             
             ## Check average MH ratio for target beta chain
-            if(beta == target.beta & nsimsAdj[j] >= 10e3 & nsimAdj[j] < 10e3+freq){
+            if(beta == target.beta & sum(nsimsAdj[1:j]) >= 10e3 & sum(nsimAdj[1:j]) < 10e3+freq){
               if(mean(algout$mhprob) <= 0.2){
                 stop("Target beta is too small. Please increase beta to a larger value")
               }
