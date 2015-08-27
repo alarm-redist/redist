@@ -180,6 +180,10 @@ ecutsMPI <- function(){
                 
                 ## Load the temperature adjacency matrix
                 load("tempadjMat.RData")
+                tempadj <- tempadjMat[loopstart,]
+                
+                ## Load the swapping schedule
+                load("swaps.RData")
                 
                 ## Stop if number of simulations per loop is different
                 if(nsims != ncol(algout[[1]])){
@@ -255,7 +259,7 @@ ecutsMPI <- function(){
             beta <- temp$beta_sequence[nsimsAdj[j]]
             
             ## Check average MH ratio for target beta chain
-            if(beta == target.beta & sum(nsimsAdj[1:j]) >= 10e3 & sum(nsimAdj[1:j]) < 10e3+freq & i == 1){
+            if(beta == params$target.beta & sum(nsimsAdj[1:j]) >= 10e3 & sum(nsimAdj[1:j]) < 10e3+freq & i == 1){
               if(mean(algout$mhprob) < 0.2){
                 stop("Target beta is too small. Please increase beta to a larger value")
               }
@@ -389,6 +393,10 @@ ecutsMPI <- function(){
           if(adjswaps){
               save(tempadjMat,file = "tempadjMat.RData")
           }
+          
+          ## Save swaps
+          save(swaps,file = "swaps.RData")
+          
         }else if(!is.null(savename)){
             save(algout, file = paste(savename, "_chain",
                              algout$beta_sequence[nsims],
