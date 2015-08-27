@@ -132,7 +132,7 @@ ecutsMPI <- function(){
     
     ## Get starting loop value
     loopstart <- loopscompleted + 1
-
+    
     for(i in loopstart:nloop){
         
         if(adjswaps){
@@ -175,10 +175,11 @@ ecutsMPI <- function(){
             ## Reload the data if restarting
             if(loopstart > 1){
                 
-                ## Load the data (CHANGE)
-                load(paste(savename, "_loop", i - 1, "_chain", procID, ".RData", sep = ""))
+                ## Load the data
+                load(paste(savename,"_chain", procID, "_loop", i - 1, ".RData", sep = ""))
                 
-                ## NOTE tempadj NEEDS TO BE PART OF SAVE DATA
+                ## Load the temperature adjacency matrix
+                load("tempadjMat.RData")
                 
                 ## Stop if number of simulations per loop is different
                 if(nsims != ncol(algout[[1]])){
@@ -210,6 +211,10 @@ ecutsMPI <- function(){
                 cds <- preprocout$data$initcds
                 ## Initialize algout object (for use in ecutsAppend)
                 algout <- list()
+                ## Temperature Adjacency Matrix
+                if(adjswaps){
+                  tempadjMat <- matrix(NA,nloop,length(tempadj))
+                }
             }
             
         } 
@@ -251,10 +256,10 @@ ecutsMPI <- function(){
             
             ## Check average MH ratio for target beta chain
             if(beta == target.beta & sum(nsimsAdj[1:j]) >= 10e3 & sum(nsimAdj[1:j]) < 10e3+freq & i == 1){
-              if(mean(algout$mhprob) <= 0.2){
+              if(mean(algout$mhprob) < 0.2){
                 stop("Target beta is too small. Please increase beta to a larger value")
               }
-              else if(mean(algout$mhprob) >= 0.4){
+              else if(mean(algout$mhprob) > 0.4){
                 stop("Target beta is too large. Please decrease beta to a smaller value")
               }
             }
@@ -370,11 +375,20 @@ ecutsMPI <- function(){
         if(!is.null(rngseed)){
             algout$randseed <- .Random.seed
         }
-
+        
+        if(adjswaps){
+          ## Update temperature adjacency matrix
+          tempadjMat[i,] <- tempadj
+        }
+          
         ## Save output
         if(nloop > 1){
-            save(algout, file = paste(savename, "_loop", i,"_temp",
-                             procID, ".RData", sep = ""))
+            save(algout, file = paste(savename, "_temp", procID,"_loop", 
+                                      i, ".RData", sep = ""))
+          ## Save temperature adjacency matrix
+          if(adjswaps){
+              save(tempadjMat,file = "tempadjMat.RData")
+          }
         }else if(!is.null(savename)){
             save(algout, file = paste(savename, "_temp",
                              algout$beta_sequence[nsims],
@@ -389,7 +403,108 @@ ecutsMPI <- function(){
         cat("redist.mcmc.mpi() simulations finished.\n", append = TRUE)
         sink()
     }
+    
+    ###############################
+    ## Combine and save the data ##
+    ###############################
+    if(nloop > 1){
+      redist.combine.mpi(savename = savename, nsims = nsims, nloop = nloop,
+                     nthin = nthin, nunits = length(preprocout$data$adjlist),
+                     tempadjMat = tempadjMat)
+    }else if(!is.null(savename)){
+      save(algout, file = paste(savename, ".RData", sep = ""))
+    }
     ## End function
+}
+
+redist.combine.mpi <- function(savename, nsims, nloop, nthin, nunits, tempadjMat
+){
+  
+  ########################
+  ## Inputs to function ##
+  ########################
+  ## savename - filename
+  ## nsims - number of simulations in each loop
+  ## nloop - number of loops to run simulations
+  ## nthin - how much to thin the simulations
+  ## nunits - number of geographic units
+  ## tempadjMat - Matrix of temperature adjacencies for each loop
+  
+  ##############################
+  ## Set up container objects ##
+  ##############################
+  partitions <- matrix(NA, nrow = nunits,
+                       ncol = (nsims * nloop / nthin))
+  
+  distance_parity <- rep(NA, (nsims * nloop / nthin))
+  mhdecisions <- rep(NA, (nsims * nloop / nthin))
+  mhprob <- rep(NA, (nsims * nloop / nthin))
+  pparam <- rep(NA, (nsims * nloop / nthin))
+  constraint_pop <- rep(NA, (nsims * nloop / nthin))
+  constraint_compact <- rep(NA, (nsims * nloop / nthin))
+  constraint_segregation <- rep(NA, (nsims * nloop / nthin))
+  constraint_similar <- rep(NA, (nsims * nloop / nthin))
+  
+  beta_sequence <- rep(NA, (nsims * nloop / nthin))
+  
+  ## Indices for thinning
+  indthin <- which((1:nsims) %% nthin == 0)
+  
+  ####################################
+  ## Combine data in multiple loops ##
+  ####################################
+  for(i in 1:nloop){
+    
+    ## Load data
+    load(paste(savename, "_chain", tempadjMat[i,1], "_loop", i, ".RData", sep = ""))
+    
+    ind <- ((i - 1) * (nsims / nthin) + 1):(i * (nsims / nthin))
+    
+    ## Store objects together
+    partitions[1:nunits, ind] <- algout$partitions[,indthin]
+    
+    distance_parity[ind] <- algout$distance_parity[indthin]
+    mhdecisions[ind] <- algout$mhdecisions[indthin]
+    mhprob[ind] <- algout$mhprob[indthin]
+    pparam[ind] <- algout$pparam[indthin]
+    constraint_pop[ind] <- algout$constraint_pop[indthin]
+    constraint_compact[ind] <- algout$constraint_compact[indthin]
+    constraint_segregation[ind] <- algout$constraint_segregation[indthin]
+    constraint_similar[ind] <- algout$constraint_similar[indthin]
+    
+    beta_sequence[ind] <- algout$beta_sequence[indthin]
+    
+  }
+  
+  #################################
+  ## Store data in algout object ##
+  #################################
+
+  algout <- vector(mode = "list", length = 9)
+    
+  algout$partitions <- partitions
+  algout$distance_parity <- distance_parity
+  algout$mhdecisions <- mhdecisions
+  algout$mhprob <- mhprob
+  algout$pparam <- pparam
+  algout$constraint_pop <- constraint_pop
+  algout$constraint_compact <- constraint_compact
+  algout$constraint_segregation <- constraint_segregation
+  algout$constraint_similar <- constraint_similar
+
+  algout$beta_sequence <- beta_sequence
+
+  
+  #########################
+  ## Set class of object ##
+  #########################
+  class(algout) <- "redist"
+  
+  #################
+  ## Save object ##
+  #################
+  save(algout, file = paste(savename, ".RData", sep = ""))
+  
 }
 
 ecutsAppend <- function(algout,ndata){
