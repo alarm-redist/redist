@@ -7,8 +7,8 @@
 ##          get estimates of performance
 #############################################
 
-run_sims <- function(i, params, adjobj, popvec, nsims, ndists, ssdmat,
-                     grouppopvec, initcds, names, maxiterrsg, report_all){
+run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
+                     ssdmat, grouppopvec, names, maxiterrsg, report_all){
     
     ## Get this iteration
     p_sub <- params[i,]
@@ -117,13 +117,21 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, ssdmat,
 
 }
 
-redist.findparams <- function(adjobj, popvec, nsims, ndists, initcds = NULL,
+redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                               params, ssdmat = NULL, grouppopvec = NULL,
                               maxiterrsg = 5000, report_all = TRUE,
-                              parallel = FALSE, nthreads = NULL){
+                              parallel = FALSE, nthreads = NULL, verbose = TRUE){
 
     ## Get number of trial parameter values to test
     trials <- nrow(params)
+
+    ## Starting statement
+    if(verbose){
+        cat(paste("\n########################################\n",
+            "## redist.findparams(): Parameter tuning for redist.mcmc()\n",
+            "## Searching over", trials, "parameter combinations\n",
+            "########################################\n\n", sep = " "))
+    }
 
     ## Get parameters in params
     valid_names <- c("eprob", "lambda", "popcons", "beta", "constraint")
@@ -133,11 +141,26 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists, initcds = NULL,
         stop(paste(invalid_name, "is not a valid params input. Please see documentation.\n", sep = " "))
     }
 
+    ## Check ndists, initcds
+    if(is.null(ndists) & is.null(initcds)){
+        stop("Please either supply a vector of starting congressional district assignments in `initcds' or a target number of congressional districts in `ndists`")
+    }
+    if(!is.null(initcds)){
+        ndists <- length(unique(initcds))
+    }
+
     if(parallel){ ## Parallel
 
         ## Check to see if threads declared
         if(is.null(nthreads)){
             stop("If parallelizing, please declare the number of threads")
+        }
+
+        ## Statement initializing parallelization
+        if(verbose){
+            cat(paste("########################################\n",
+                "## Parallelizing over", nthreads, "processors\n",
+                "########################################\n\n", sep = " "))
         }
         
         ## Set parallel environment
