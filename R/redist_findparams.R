@@ -164,11 +164,20 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
         }
         
         ## Set parallel environment
-        cl <- makeCluster(nthreads, "PSOCK")
+        if(verbose){
+            cl <- makeCluster(nthreads, "PSOCK", outfile = "")
+        }else{
+            cl <- makeCluster(nthreads, "PSOCK")
+        }
         registerDoParallel(cl)
-       
+        
         ## Execute foreach loop
-        printout <- foreach(i = 1:trials, .combine = "paste") %dopar% {
+        printout <- foreach(i = 1:trials, .combine = paste,
+                            .verbose = verbose,
+                            .export = c("params", "adjobj", "popvec", "nsims",
+                                "ndists", "initcds", "ssdmat",
+                                "grouppopvec", "names",
+                                "maxiterrsg", "report_all", "run_sims")) %dopar% {
 
             ## Run simulations
             out <- run_sims(i, params, adjobj, popvec, nsims, ndists, initcds,
