@@ -6,7 +6,7 @@ Author: Ben Fifield <bfifield@princeton.edu>, Alexander Tarr <atarr@princeton.ed
 Maintainer: Ben Fifield <bfifield@princeton.edu>
 Description: Enables researchers to sample redistricting plans from a pre-specified target distribution using a Markov Chain Monte Carlo algorithm. The package allows for the implementation of various constraints in the redistricting process such as geographic compactness and population parity requirements.  The algorithm also can be used in combination with efficient simulation methods such as simulated and parallel tempering algorithms. Tools for analysis such as inverse probability reweighting and plotting functionality are included. The package implements methods described in Fifield, Higgins, Imai and Tarr (2015) ``A New Automated Redistricting Simulator Using Markov Chain Monte Carlo,'' working paper available at <http://http://imai.princeton.edu/research/files/redist.pdf>.
 Depends: R (>= 3.1.0)
-Imports: Rcpp (>= 0.11.0), spdep, sp, coda
+Imports: Rcpp (>= 0.11.0), spdep, sp, coda, parallel, doParallel, foreach
 Suggests: testthat, Rmpi
 LinkingTo: Rcpp, RcppArmadillo
 License: GPL (>= 2)

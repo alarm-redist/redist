@@ -1,7 +1,7 @@
+## Declare library
 useDynLib(redist)
-importFrom(Rcpp, evalCpp)
 
-## redist.R
+## Export statements
 export(redist.mcmc)
 export(redist.mcmc.mpi)
 export(redist.segcalc)
@@ -10,8 +10,14 @@ export(redist.ipw)
 export(redist.rsg)
 export(redist.enumerate)
 export(redist.findparams)
+
+## Import statements
+importFrom(Rcpp, evalCpp)
+
 importFrom(spdep, poly2nb)
+
 importFrom(sp, coordinates)
+
 importFrom(coda, mcmc)
 importFrom(coda, mcmc.list)
 importFrom(coda, traceplot)
@@ -19,6 +25,14 @@ importFrom(coda, autocorr.plot)
 importFrom(coda, densplot)
 importFrom(coda, cumuplot)
 importFrom(coda, gelman.plot)
+
+importFrom(parallel, makeCluster)
+
+importFrom(doParallel, registerDoParallel)
+
+importFrom(foreach, foreach)
+importFrom(foreach, "%dopar%")
+
 importFrom("grDevices", "dev.off", "pdf")
 
 ## Rcpp
