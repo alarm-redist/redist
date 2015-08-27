@@ -398,6 +398,7 @@ ecutsAppend <- function(algout,ndata){
     }else{
         algout$partitions <- cbind(algout$partitions,ndata$partitions)
         algout$distance_parity <- c(algout$distance_parity,ndata$distance_parity)
+        algout$distance_original <- c(algout$distance_original, ndata$distance_original)
         algout$mhdecisions <- c(algout$mhdecisions,ndata$mhdecisions)
         algout$mhprob <- c(algout$mhprob,ndata$mhprob)
         algout$pparam <- c(algout$pparam,ndata$pparam)
