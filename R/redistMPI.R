@@ -383,14 +383,14 @@ ecutsMPI <- function(){
           
         ## Save output
         if(nloop > 1){
-            save(algout, file = paste(savename, "_temp", procID,"_loop", 
+            save(algout, file = paste(savename, "_chain", procID,"_loop", 
                                       i, ".RData", sep = ""))
           ## Save temperature adjacency matrix
           if(adjswaps){
               save(tempadjMat,file = "tempadjMat.RData")
           }
         }else if(!is.null(savename)){
-            save(algout, file = paste(savename, "_temp",
+            save(algout, file = paste(savename, "_chain",
                              algout$beta_sequence[nsims],
                              ".RData", sep = ""))
         }
