@@ -88,6 +88,7 @@ List swMH(List aList,
      adjswap: flag for whether to force algorithm to only do adjacent swaps
 
      exact_mh: flag for whether to calculate the exact metropolis-hastings w boundary correction
+
    */
 
   // Preprocess vector of congressional district assignments
@@ -519,7 +520,7 @@ List swMH(List aList,
   NumericVector dist_parity_vec = distParity(cd_store, popvec);
 
   NumericVector dist_orig_vec = diff_origcds(cd_store, cdorigvec);
-
+  
   // Create list, store outputx
   List out;
   out["partitions"] = cd_store;

@@ -153,14 +153,17 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ###################################################################
     ## Check whether initial partitions (if provided) are contiguous ##
     ###################################################################
-    if(!is.null(initcds) & !is.na(initcds)[1]){
-        ndists <- length(unique(initcds))
-        divlist <- genAlConn(adjlist, initcds)
-        ncontig <- countpartitions(divlist)
-
-        if(ncontig != ndists){
-            stop(paste("Your initial congressional districts have ", ndists, " unique districts but ",
-                 ncontig, " contigous connected components. Please provide a starting map with contigous districts.", sep = ""))
+    if(!is.null(initcds)){
+        if(!is.na(initcds)[1]){
+            ndists <- length(unique(initcds))
+            divlist <- genAlConn(adjlist, initcds)
+            ncontig <- countpartitions(divlist)
+            
+            if(ncontig != ndists){
+                stop(paste("Your initial congressional districts have ", ndists,
+                           " unique districts but ",
+                           ncontig, " contigous connected components. Please provide a starting map with contigous districts.", sep = ""))
+            }
         }
     }
 
