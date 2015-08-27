@@ -456,7 +456,7 @@ redist.combine.mpi <- function(savename, nsims, nloop, nthin, nunits, tempadjMat
   for(i in 1:nloop){
     
     ## Load data
-    load(paste(savename, "_chain", tempadjMat[i,1], "_loop", i, ".RData", sep = ""))
+    load(paste(savename, "_chain", tempadjMat[nloop,1], "_loop", i, ".RData", sep = ""))
     
     ind <- ((i - 1) * (nsims / nthin) + 1):(i * (nsims / nthin))
     
