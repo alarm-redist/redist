@@ -165,9 +165,9 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
         
         ## Set parallel environment
         if(verbose){
-            cl <- makeCluster(nthreads, "PSOCK", outfile = "")
+            cl <- makeCluster(nthreads, outfile = "")
         }else{
-            cl <- makeCluster(nthreads, "PSOCK")
+            cl <- makeCluster(nthreads)
         }
         registerDoParallel(cl)
         
@@ -182,7 +182,7 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
             ## Run simulations
             out <- run_sims(i, params, adjobj, popvec, nsims, ndists, initcds,
                             ssdmat, grouppopvec, names, maxiterrsg, report_all)
-
+            
             ## Return values
             return(out)
             
@@ -208,6 +208,10 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
     }
 
     cat(printout)
+
+    if(parallel){
+        stopCluster(cl)
+    }
 
 }
 

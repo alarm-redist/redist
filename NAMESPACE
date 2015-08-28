@@ -27,6 +27,7 @@ importFrom(coda, cumuplot)
 importFrom(coda, gelman.plot)
 
 importFrom(parallel, makeCluster)
+importFrom(parallel, stopCluster)
 
 importFrom(doParallel, registerDoParallel)
 
