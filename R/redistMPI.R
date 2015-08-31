@@ -259,14 +259,14 @@ ecutsMPI <- function(){
             beta <- temp$beta_sequence[nsimsAdj[j]]
             
             ## Check average MH ratio for target beta chain
-            if(beta == params$target.beta & sum(nsimsAdj[1:j]) >= 10e3 & sum(nsimAdj[1:j]) < 10e3+freq & i == 1){
-              if(mean(algout$mhprob) < 0.2){
-                stop("Target beta is too small. Please increase beta to a larger value")
-              }
-              else if(mean(algout$mhprob) > 0.4){
-                stop("Target beta is too large. Please decrease beta to a smaller value")
-              }
-            }
+            ## if(beta == params$target.beta & sum(nsimsAdj[1:j]) >= 10e3 & sum(nsimAdj[1:j]) < 10e3+freq & i == 1){
+            ##   if(mean(algout$mhprob) < 0.2){
+            ##     stop("Target beta is too small. Please increase beta to a larger value")
+            ##   }
+            ##   else if(mean(algout$mhprob) > 0.4){
+            ##     stop("Target beta is too large. Please decrease beta to a smaller value")
+            ##   }
+            ## }
             
             ## Get likelihood
             if(constraint == "compact"){
