@@ -404,9 +404,11 @@ ecutsMPI <- function(){
     ## Combine and save the data ##
     ###############################
     if(nloop > 1){
-      redist.combine.mpi(savename = savename, nsims = nsims, nloop = nloop,
-                     nthin = nthin, nunits = length(preprocout$data$adjlist),
-                         tempadjMat = tempadjMat)
+      if(procID == tempadj[1]){
+        redist.combine.mpi(savename = savename, nsims = nsims, nloop = nloop,
+                           nthin = nthin, nunits = length(preprocout$data$adjlist),
+                           tempadjMat = tempadjMat)
+      }
     }else if(!is.null(savename)){
       save(algout, file = paste(savename, ".RData", sep = ""))
   }
