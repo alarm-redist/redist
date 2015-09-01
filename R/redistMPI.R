@@ -510,9 +510,7 @@ redist.combine.mpi <- function(savename, nsims, nloop, nthin, nunits, tempadjMat
     #################
     ## Save object ##
     #################
-    save(algout, file = paste(savename, "_temp",
-                     algout$beta_sequence[length(algout$beta_sequence)],
-                                          ".RData", sep = ""))
+    save(algout, file = paste(savename, ".RData", sep = ""))
     
 }
 
