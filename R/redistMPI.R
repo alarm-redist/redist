@@ -184,7 +184,7 @@ ecutsMPI <- function(){
                 
                 ## Load the temperature adjacency matrix (need to specify WD)
                 load(paste(dirname(savename),"tempadjMat.RData"))
-                tempadj <- tempadjMat[loopstart,]
+                tempadj <- tempadjMat[nrow(tempadjMat),]
                 
                 ## Load the swapping schedule (need to specify WD)
                 load(paste(dirname(savename),"swaps.RData"))
@@ -222,7 +222,7 @@ ecutsMPI <- function(){
                 algout <- list()
                 ## Temperature Adjacency Matrix
                 if(adjswaps){
-                  tempadjMat <- matrix(NA,nloop,length(tempadj))
+                  tempadjMat <- tempadj
                 }
             }
             
@@ -365,6 +365,12 @@ ecutsMPI <- function(){
             }
             ## Update inputs to swMH
             cds <- temp$partitions[,nsimsAdj[j]]
+            
+            ## Update tempadjMat
+            if(adjswaps){
+              ## Update temperature adjacency matrix
+              tempadjMat <- rbind(tempadjMat,tempadj)
+            }
             ## End loop over j
         }
         
@@ -375,11 +381,6 @@ ecutsMPI <- function(){
             algout$randseed <- .Random.seed
         }
 
-        if(adjswaps){
-          ## Update temperature adjacency matrix
-          tempadjMat[i,] <- tempadj
-        }
-          
         ## Save output
         if(nloop > 1){
             save(algout, file = paste(savename, "_proc", procID,"_loop", 
@@ -407,7 +408,7 @@ ecutsMPI <- function(){
       if(procID == tempadj[1]){
         redist.combine.mpi(savename = savename, nsims = nsims, nloop = nloop,
                            nthin = nthin, nunits = length(preprocout$data$adjlist),
-                           tempadjMat = tempadjMat)
+                           tempadj = tempadj)
       }
     }else if(!is.null(savename)){
       save(algout, file = paste(savename, ".RData", sep = ""))
@@ -423,7 +424,7 @@ ecutsMPI <- function(){
     ## End function
 }
 
-redist.combine.mpi <- function(savename, nsims, nloop, nthin, nunits, tempadjMat){
+redist.combine.mpi <- function(savename, nsims, nloop, nthin, nunits, tempadj){
   
     ########################
     ## Inputs to function ##
@@ -433,7 +434,7 @@ redist.combine.mpi <- function(savename, nsims, nloop, nthin, nunits, tempadjMat
     ## nloop - number of loops to run simulations
     ## nthin - how much to thin the simulations
     ## nunits - number of geographic units
-    ## tempadjMat - Matrix of temperature adjacencies for each loop
+    ## tempadj - Current temperature adjacency vector
     
     ##############################
     ## Set up container objects ##
@@ -463,7 +464,7 @@ redist.combine.mpi <- function(savename, nsims, nloop, nthin, nunits, tempadjMat
     for(i in 1:nloop){
 
         ## Load data
-        load(paste(savename, "_proc", tempadjMat[nloop,1], "_loop", i, ".RData", sep = ""))
+        load(paste(savename, "_proc", tempadj[1], "_loop", i, ".RData", sep = ""))
 
         ind <- ((i - 1) * (nsims / nthin) + 1):(i * (nsims / nthin))
         
