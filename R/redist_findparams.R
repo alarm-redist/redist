@@ -68,20 +68,33 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
                        constraint = constraint,
                        maxiterrsg = maxiterrsg)
 
+    ## Get quantiles
+    quant <- floor(nsims / 4)
+    q1 <- 1:quant
+    q2 <- (quant + 1):(2*quant)
+    q3 <- (2*quant + 1):(3 * quant)
+    q4 <- (3*quant + 1):nsims
+
     ## Check acceptance rate
     mh_acceptance <- round(sum(out$mhdecisions) / length(out$mhdecisions),
                            digits = 3)
 
     ## Check population parity
     pop_parity <- round(mean(out$distance_parity), digits = 3)
+    med_pop_parity <- round(median(out$distance_parity), digits = 3)
     range_pop_parity <- round(range(out$distance_parity), digits = 3)
+    q1_pop_median <- round(median(out$distance_parity[q1]), digits = 3)
+    q2_pop_median <- round(median(out$distance_parity[q2]), digits = 3)
+    q3_pop_median <- round(median(out$distance_parity[q3]), digits = 3)
+    q4_pop_median <- round(median(out$distance_parity[q4]), digits = 3)
 
     ## Check distance to original
     dist_orig <- round(mean(out$distance_original), digits = 3)
+    med_dist_orig <- round(median(out$distance_original), digits = 3)
     range_dist_orig <- round(range(out$distance_original), digits = 3)
 
     ## Report statistics
-    out <- paste("\n########################################\n",
+    out <- paste("########################################\n",
                  "## Parameter Values for Simulation", i, "\n",
                  "## Edgecut probability =", eprob, "\n",
                  "## Lambda =", lambda, "\n")
@@ -100,14 +113,19 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
                  "\n", sep = " ")
     if(constraint == "population" | report_all == TRUE){
         out <- paste(out, "## Mean population parity distance =",
-                     pop_parity, "\n", 
+                     pop_parity, "\n",
+                     "## Median population parity distance =",
+                     med_pop_parity, "\n",
                      "## Population parity range =",
                      paste(range_pop_parity, collapse = " "),
                      "\n",
+                     "## MCMC Iteration quantiles of population parity median =",
+                     q1_pop_median, q2_pop_median, q3_pop_median, q4_pop_median, "\n",
                      sep = " ")
     }
     if(constraint == "similarity" | report_all == TRUE){
-        out <- paste(out, "## Mean share of geographies equal to initial assignment =", dist_orig, "\n",
+        out <- paste(out, "\n## Mean share of geographies equal to initial assignment =", dist_orig, "\n",
+                     "## Median share of geographies equal to initial assignment =", med_dist_orig, "\n",
                      "## Range of share of geographies equal to initial assignment =", paste(range_dist_orig, collapse = " "), "\n", sep = " ")
     }
     out <- paste(out, "########################################\n\n",
@@ -127,7 +145,7 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
 
     ## Starting statement
     if(verbose){
-        cat(paste("\n########################################\n",
+        cat(paste("########################################\n",
             "## redist.findparams(): Parameter tuning for redist.mcmc()\n",
             "## Searching over", trials, "parameter combinations\n",
             "########################################\n\n", sep = " "))

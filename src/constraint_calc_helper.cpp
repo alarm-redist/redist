@@ -310,11 +310,13 @@ List calc_betasimilar(arma::vec current_dists,
 
   }
 
+  // Normalize by dividing by number of congressional districts
+  psi_new = psi_new / distswitch.size();
+  psi_old = psi_old / distswitch.size();
+
   // Get MH ratio
   double ratio = (double)exp(beta_similar * loge2 * (psi_new - psi_old));
 
-  // Rcout << "New psi" << psi_new << std::endl;
-  // Rcout << "Old psi" << psi_old << std::endl;
   // Create return object
   List out;
   out["similar_ratio"] = ratio;

@@ -462,9 +462,9 @@ redist.combine <- function(savename, nsims, nloop, nthin, nunits, temper = 0
     ## Store data in algout object ##
     #################################
     if(temper == 1){
-        algout <- vector(mode = "list", length = 11)
+        algout <- vector(mode = "list")
     }else{
-        algout <- vector(mode = "list", length = 8)
+        algout <- vector(mode = "list")
     }
     algout$partitions <- partitions
     algout$distance_parity <- distance_parity

@@ -276,6 +276,7 @@ ecutsMPI <- function(){
             else{
                 like <- exp(temp$constraint_similar[nsimsAdj[j]]) 
             }
+            cat("Likelihood is", like, "\n", append = TRUE)
             ## Use MPI to exchange swap information
             ##
             ## Tag guide: 1 -> likelihood sent
@@ -285,23 +286,31 @@ ecutsMPI <- function(){
 
             if(adjswaps){
 
+                cat("Start adjswaps\n", append = TRUE)
                 ## Determine which nodes are swapping
                 tempseg <- swaps[(i-1)*nsims + j*freq]
                 ## Get node indices
                 temps <- tempadj[tempseg:(tempseg+1)]
-                ## Communication step        
+                ## Communication step
+                cat("Is procID in temps? If true, enter communication",
+                    procID %in% temps, "\n", append = TRUE)
                 if(procID %in% temps){
+                    cat("Enter communication step\n", append = TRUE)
                     ## Determine partner
+                    cat("Start determine partner\n", append = TRUE)
                     partner <- temps[procID != temps]
                     ## Send commands (blocking)
+                    cat("Start send commands\n", append = TRUE)
                     Rmpi::mpi.send.Robj(like,dest=partner,tag=1)
                     Rmpi::mpi.send.Robj(beta,dest=partner,tag=2)
                     ## Receive commands (blocking)
+                    cat("Start receive commands\n", append = TRUE)
                     likePart <- Rmpi::mpi.recv.Robj(partner,tag=1)
                     betaPart <- Rmpi::mpi.recv.Robj(partner,tag=2)
                     
                     ## Higher ranked process communicates random
                     ## draw to lower ranked process
+                    cat("Start communicate draw\n", append = TRUE)
                     if(partner < procID){
                         accept <- runif(1)
                         Rmpi::mpi.send.Robj(accept,dest=partner,tag=3)
@@ -310,14 +319,30 @@ ecutsMPI <- function(){
                     }
                     
                     ## Compute acceptance probability (for now, population only)
+                    cat("Start compute acceptance prob\n", append = TRUE)
+                    
+                    cat("Components of likelihood:\n", append = TRUE)
+                    cat("like =", like, "\n", append = TRUE)
+                    cat("beta =", beta, "\n", append = TRUE)
+                    cat("betaPart =", betaPart, "\n", append = TRUE)
+                    cat("likePart =", likePart, "\n", append = TRUE)
+                    cat("Constraint in likelihood =", log(like), "\n", append = TRUE)
+                    cat("Constraint in likelihoodPart =", log(likePart), "\n", append = TRUE)
+
                     prob <- (like^betaPart*likePart^beta)/(like^beta*likePart^betaPart)
+
+                    cat("Prob =", prob, "and accept =", accept, "\n", append = TRUE)
                     if(prob > accept){
+                        cat("Prob > accept\n", append = TRUE)
                         ## Exchange temperature values
+                        cat("Start exchange temps\n", append = TRUE)
                         beta <- betaPart
                         
                         ## Adjust temperature adjacency list
+                        cat("Start adjust tempAdj list\n", append = TRUE)
                         tempadj[tempseg:(tempseg+1)] <- tempadj[(tempseg+1):tempseg]
                         ## Send temperature adjacency list
+                        cat("Start send tempAdj\n", append = TRUE)
                         if(procID == tempadj[tempseg+1]){
                             oProcs <- tempadj[!(tempadj %in% temps)]
                             for(k in 1:length(oProcs)){
@@ -325,15 +350,20 @@ ecutsMPI <- function(){
                             }
                         }
                     }else{
+                        cat("Prob < accept\n", append = TRUE)
                         if(procID == tempadj[tempseg]){
                             oProcs <- tempadj[!(tempadj %in% temps)]
                             for(k in 1:length(oProcs)){
                                 Rmpi::mpi.send.Robj(tempadj,dest=oProcs[k],tag=4)
                             }
                         }
-                    } 
+                    }
+                    cat("Exit communication step\n", append = TRUE)
                 }else{
+                    cat("Not in temps, receive tempadj from other nodes\n",
+                        append = TRUE)
                     tempadj <- Rmpi::mpi.recv.Robj(tempadj[tempseg],tag=4)
+                    cat("End receive tempadj from other nodes\n", append = TRUE)
                 }
             }else{
                 if(j != length(nsimsAdj) || length(nsimsAdj) == length(tempIts)){
@@ -488,7 +518,7 @@ redist.combine.mpi <- function(savename, nsims, nloop, nthin, nunits, tempadjMat
     ## Store data in algout object ##
     #################################
 
-    algout <- vector(mode = "list", length = 11)
+    algout <- vector(mode = "list")
     
     algout$partitions <- partitions
     algout$distance_parity <- distance_parity
