@@ -41,4 +41,8 @@ redistricting plans.
 to fully enumerate all valid, contiguous redistricting plans for a
 given set of geographic units.  
   
-
+# TODO
+- Flip sign for cold temperatures (currently fed in as negative values, should be positive to fit with paper)
+- Feed in `betaweights` as a numeric argument with an exponential sequence
+- Add `summary` function that calculates acceptance probability, the function call with parameters, and the distribution of `beta` values for tempering
+- Make `q` and `lambda` dynamic - for example, check acceptance probability every 50 iterations. If too high, increase `lambda` or decrease `q`
