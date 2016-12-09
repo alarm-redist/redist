@@ -14,7 +14,7 @@ plans using Markov Chain Monte Carlo methods.
               betaseq = "powerlaw", betaseqlength = 10,
               betaweights = NULL,
               adjswaps = TRUE, rngseed = NULL, maxiterrsg = 5000,
-              contiguitymap = "rooks", savename = NULL, verbose = TRUE)
+              contiguitymap = "rooks", exact_mh = 0, savename = NULL, verbose = TRUE)
 }
 
 \arguments{
@@ -64,6 +64,7 @@ values adjacent to current constraint are proposed. The default is
 simulations. Default is \code{NULL}.}
 \item{maxiterrsg}{Maximum number of iterations for random seed-and-grow algorithm to generate starting values. Default is 5000.}
 \item{contiguitymap}{Use queens or rooks distance criteria for generating an adjacency list from a "SpatialPolygonsDataFrame" data type. Default is "rooks".} 
+\item{exact_mh}{Whether to use the approximate (0) or exact (1) Metropolis-Hastings ratio calculation for accept-reject rule. Default is 0.}
 \item{savename}{Filename to save simulations. Default is \code{NULL}.}
 \item{verbose}{Whether to print initialization statement. Default is \code{TRUE}.}
 }

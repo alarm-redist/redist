@@ -499,7 +499,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                         ssdmat = NULL, beta = 0, temper = "none",
                         constraint = "none",
                         betaseq = "powerlaw", betaseqlength = 10,
-                        betaweights = NULL, adapt_lambda = 1,
+                        betaweights = NULL, 
                         adjswaps = TRUE, rngseed = NULL, maxiterrsg = 5000,
                         contiguitymap = "rooks", exact_mh = 0, savename = NULL, verbose = TRUE
                         ){
@@ -692,7 +692,6 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                        anneal_beta_compact = preprocout$params$temperbetacompact,
                        anneal_beta_segregation = preprocout$params$temperbetaseg,
                        anneal_beta_similar = preprocout$params$temperbetasimilar,
-                       adapt_lambda = adapt_lambda,
                        adjswap = preprocout$params$adjswaps,
                        exact_mh = exact_mh)
 

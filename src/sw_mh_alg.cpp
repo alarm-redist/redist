@@ -40,7 +40,6 @@ List swMH(List aList,
 	  int anneal_beta_compact = 0,
 	  int anneal_beta_segregation = 0,
 	  int anneal_beta_similar = 0,
-	  int adapt_lambda = 1,
 	  int adjswap = 1,
 	  int exact_mh = 0)
 {

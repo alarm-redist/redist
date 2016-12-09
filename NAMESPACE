@@ -37,6 +37,7 @@ importFrom(foreach, foreach)
 importFrom(foreach, "%dopar%")
 
 importFrom("grDevices", "dev.off", "pdf")
+importFrom("stats", "median", "runif")
 
 ## Rcpp
 #exportPattern("^[[:alpha:]]+")
