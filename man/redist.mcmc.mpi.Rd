@@ -1,20 +1,21 @@
-\name{redist.mcmc} 
-\alias{redist.mcmc}
-\title{MCMC Redistricting Simulator} 
+\name{redist.mcmc.mpi} 
+\alias{redist.mcmc.mpi}
+\title{MCMC Redistricting Simulator Using MPI} 
 \description{ 
-\code{redist.mcmc} is used to simulate Congressional redistricting
-plans using Markov Chain Monte Carlo methods. 
+\code{redist.mcmc.mpi} is used to simulate Congressional redistricting
+plans using Markov Chain Monte Carlo methods and parallel tempering implemented in MPI. 
 } 
 
 \usage{
-  redist.mcmc(adjobj, popvec, nsims, ndists = NULL, initcds = NULL, loopscompleted = 0,
-              nloop = 1, nthin = 1, eprob = 0.05, lambda = 0,
-              popcons = NULL, grouppopvec = NULL, ssdmat = NULL,
-              beta = 0, temper = "none", constraint = "none",
-              betaseq = "powerlaw", betaseqlength = 10,
-              betaweights = NULL,
-              adjswaps = TRUE, rngseed = NULL, maxiterrsg = 5000,
-              contiguitymap = "rooks", exact_mh = 0, savename = NULL, verbose = TRUE)
+  redist.mcmc.mpi(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
+                            loopscompleted = 0, nloop = 1, nthin = 1,
+                            eprob = 0.05,
+                            lambda = 0, popcons = NA, grouppopvec = NA,
+                            ssdmat = NA, rngseed = NA,
+                            beta = -10, constraint = "population",  
+                            betaseqlength = 10, adjswaps = TRUE,
+                            freq = 100, savename = NA, maxiterrsg = 5000,
+                            contiguitymap = "rooks", verbose = FALSE)
 }
 
 \arguments{
@@ -47,25 +48,19 @@ rejected. The default is \code{NULL}.}
 interest. The default is \code{NULL}.}
 \item{ssdmat}{A matrix of squared distances between geographic
 units. The default is \code{NULL}.}
+\item{rngseed}{Allows the user to set the seed for the
+simulations. Default is \code{NULL}.}
 \item{beta}{The strength of the target strength in the MH ratio. The default is 0.}
-\item{temper}{Type of tempering algorithm to use. Accepts \code{simulated}, \code{parallel}, or \code{none} (no tempering applied). The default is \code{none}.}
 \item{constraint}{Which constraint to apply. Accepts \code{compact}, \code{segregation}, \code{population}, \code{similarity}, or \code{none} (no constraint applied). The default is \code{none}.}
-\item{betaseq}{Sequence of beta values for tempering. The default is
-\code{powerlaw} (see Fifield et. al (2015) for details).}
 \item{betaseqlength}{Length of beta sequence desired for
 tempering. The default is \code{10}.}
-\item{betaweights}{Sequence of weights for different values of
-beta. Allows the user to upweight certain values of beta over
-others. The default is \code{NULL} (equal weighting).}
 \item{adjswaps}{Flag to restrict swaps of beta so that only
 values adjacent to current constraint are proposed. The default is
 \code{TRUE}.}
-\item{rngseed}{Allows the user to set the seed for the
-simulations. Default is \code{NULL}.}
+\item{freq}{Frequency of between-chain swaps. Default to once every 100 iterations}
+\item{savename}{Filename to save simulations. Default is \code{NULL}.}
 \item{maxiterrsg}{Maximum number of iterations for random seed-and-grow algorithm to generate starting values. Default is 5000.}
 \item{contiguitymap}{Use queens or rooks distance criteria for generating an adjacency list from a "SpatialPolygonsDataFrame" data type. Default is "rooks".} 
-\item{exact_mh}{Whether to use the approximate (0) or exact (1) Metropolis-Hastings ratio calculation for accept-reject rule. Default is 0.}
-\item{savename}{Filename to save simulations. Default is \code{NULL}.}
 \item{verbose}{Whether to print initialization statement. Default is \code{TRUE}.}
 }
 
@@ -75,13 +70,13 @@ using Markov Chain Monte Carlo methods. Several constraints
 correspoding to substantive requirements in the redistricting process
 are implemented, including population parity and geographic
 compactness. In addition, the function includes multiple-swap and
-simulated tempering functionality to improve the mixing of the Markov
+parallel tempering functionality in MPI to improve the mixing of the Markov
 Chain.
 } 
 
 
 \value{
-\code{redist.mcmc} returns an object of class "redist". The object
+\code{redist.mcmc.mpi} returns an object of class "redist". The object
 \code{redist} is a list that contains the folowing components (the
 inclusion of some components is dependent on whether tempering
 techniques are used):
@@ -117,10 +112,10 @@ set.seed(1)
 initcds <- algdat.pfull$cdmat[,sample(1:ncol(algdat.pfull$cdmat), 1)]
 
 ## Run the algorithm
-alg_253 <- redist.mcmc(adjobj = algdat.pfull$adjlist,
+redist.mcmc.mpi(adjobj = algdat.pfull$adjlist,
                        popvec = algdat.pfull$precinct.data$pop,
                        initcds = initcds,
-                       nsims = 10000)
+                       nsims = 10000, savename = "test")
 
 }
 }
