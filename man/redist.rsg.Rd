@@ -45,8 +45,8 @@
   Benjamin Fifield, Department of Politics, Princeton University 
   \email{bfifield@princeton.edu}, \url{http://www.benfifield.com}
 
-  Michael Higgins, Department of Politics, Princeton University
-  \email{mjh5@princeton.edu}, \url{http://www.princeton.edu/~mjh5}
+  Michael Higgins, Department of Statistics, Kansas State University
+  \email{mikehiggins@k-state.edu}, \url{http://www-personal.ksu.edu/~mikehiggins/}
   
   Kosuke Imai, Department of Politics, Princeton University
   \email{kimai@princeton.edu}, \url{http://imai.princeton.edu}

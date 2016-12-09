@@ -5,7 +5,7 @@
 \title{R Package for the MCMC Redistricting Simulator}
 \description{
   \code{redist} implements methods developed by Fifield, Higgins, Imai and
-  Tarr (2015) to randomly sample congressional redistricting plans
+  Tarr (2016) to randomly sample congressional redistricting plans
   using Markov Chain Monte Carlo methods. The current version of this
   package implements the basic simulator and offers several
   improvements to improve the performance of the algorithm and to
@@ -34,8 +34,8 @@ License: \tab GPL (>= 2)\cr
   Benjamin Fifield, Department of Politics, Princeton University 
   \email{bfifield@princeton.edu}, \url{http://www.benfifield.com}
 
-  Michael Higgins, Department of Politics, Princeton University
-  \email{mjh5@princeton.edu}, \url{http://www.princeton.edu/~mjh5}
+  Michael Higgins, Department of Statistics, Princeton University
+  \email{mikehiggins@k-state.edu}, \url{http://www-personal.ksu.edu/~mikehiggins/}
   
   Kosuke Imai, Department of Politics, Princeton University
   \email{kimai@princeton.edu}, \url{http://imai.princeton.edu}
@@ -52,7 +52,7 @@ Sampling Arbitrary Posterior Probabilities." IEEE Transactions on Pattern Analys
 Machine Intelligence.
 
   Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander
-  Tarr. (2015) "A New Automated Redistricting Simulator Using Markov
+  Tarr. (2016) "A New Automated Redistricting Simulator Using Markov
   Chain Monte Carlo."   
   \emph{Working Paper.} Available at
   \url{http://imai.princeton.edu/research/files/redist.pdf}.
