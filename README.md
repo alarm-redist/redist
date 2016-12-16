@@ -16,7 +16,7 @@ Users can also install the most stable development release of the `redist` packa
 
 ```
 library(devtools)
-install_devtools("redistricting/redist")
+install_devtools("kosukeimai/redist")
 ```
 
 ## src Folder
@@ -46,3 +46,4 @@ given set of geographic units.
 - Feed in `betaweights` as a numeric argument with an exponential sequence
 - Add `summary` function that calculates acceptance probability, the function call with parameters, and the distribution of `beta` values for tempering
 - Make `q` and `lambda` dynamic - for example, check acceptance probability every 50 iterations. If too high, increase `lambda` or decrease `q`
+- Don't print out status every iteration - do every 10% instead
