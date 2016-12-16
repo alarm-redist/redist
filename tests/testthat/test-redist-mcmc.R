@@ -19,7 +19,7 @@ test_that("redist.mcmc works", {
     
     expect_is(test1, "redist")
 
-    expect_equal(length(test1), 9)
+    expect_equal(length(test1), 13)
     expect_equal(ncol(test1$partitions), nsims)
     expect_equal(length(test1$distance_parity), nsims)
     expect_equal(length(test1$mhdecisions), nsims)
@@ -37,7 +37,7 @@ test_that("redist.mcmc works", {
                          nsims = nsims,
                          popcons = .2)
 
-    expect_less_than(max(test2$distance_parity), max(test1$distance_parity))
+    expect_lt(max(test2$distance_parity), max(test1$distance_parity))
 
     ## With soft population constraint
     test3 <- redist.mcmc(adjobj = algdat.pfull$adjlist,
@@ -47,7 +47,7 @@ test_that("redist.mcmc works", {
                          beta = -5,
                          constraint = "population")
 
-    expect_less_than(max(test3$distance_parity), max(test1$distance_parity))
+    expect_lt(max(test3$distance_parity), max(test1$distance_parity))
 
     ## Soft population constraint and tempering
     test4 <- redist.mcmc(adjobj = algdat.pfull$adjlist,
@@ -58,12 +58,12 @@ test_that("redist.mcmc works", {
                          constraint = "population",
                          temper = "simulated")
 
-    expect_equal(length(test4), 12)
+    expect_equal(length(test4), 15)
     expect_equal(length(test4$beta_sequence), nsims)
     expect_equal(length(test4$mhdecisions_beta), nsims)
     expect_equal(length(test4$mhprob_beta), nsims)
 
-    expect_more_than(length(unique(test4$beta_sequence)), 1)
+    expect_gt(length(unique(test4$beta_sequence)), 1)
 
     ## Soft compactness constraint and tempering
     test5 <- redist.mcmc(adjobj = algdat.pfull$adjlist,
@@ -75,7 +75,7 @@ test_that("redist.mcmc works", {
                          constraint = "compact",
                          temper = "simulated")
 
-    expect_more_than(length(unique(test5$beta_sequence)), 1)
+    expect_gt(length(unique(test5$beta_sequence)), 1)
 
     ## Soft segregation constraint and tempering
     test6 <- redist.mcmc(adjobj = algdat.pfull$adjlist,
@@ -87,7 +87,7 @@ test_that("redist.mcmc works", {
                          constraint = "segregation",
                          temper = "simulated")
 
-    expect_more_than(length(unique(test6$beta_sequence)), 1)
+    expect_gt(length(unique(test6$beta_sequence)), 1)
 
     ## Soft similarity constraint and tempering
     test7 <- redist.mcmc(adjobj = algdat.pfull$adjlist,
@@ -99,7 +99,7 @@ test_that("redist.mcmc works", {
                          constraint = "similarity",
                          temper = "simulated")
 
-    expect_more_than(length(unique(test7$beta_sequence)), 1)
+    expect_gt(length(unique(test7$beta_sequence)), 1)
 
     ## Multiple swaps test
     test8 <- redist.mcmc(adjobj = algdat.pfull$adjlist,
@@ -107,7 +107,7 @@ test_that("redist.mcmc works", {
                          initcds = cds1,
                          lambda = 1,
                          nsims = nsims)
-    expect_more_than(max(test8$pparam), 1)
+    expect_gt(max(test8$pparam), 1)
 
     ## Multiple save points test
     test9 <- redist.mcmc(adjobj = algdat.pfull$adjlist,
