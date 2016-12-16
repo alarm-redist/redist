@@ -612,10 +612,10 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
             ,call. = FALSE)
     }
     
-    ## Load Rmpi library
-    if (!is.loaded("mpi_initialize")) { 
-        library("Rmpi") 
-    }
+    ## ## Load Rmpi library
+    ## if (!is.loaded("mpi_initialize")) { 
+    ##     library("Rmpi") 
+    ## }
 
     ##########################
     ## Is anything missing? ##
