@@ -3,4 +3,5 @@ README.md
 *.gitignore
 *.o
 *.so
+*.rds
 *.travis.yml
