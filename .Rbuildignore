@@ -1,7 +1,7 @@
 README.md
-*.git
-*.gitignore
+.git
+.gitignore
 *.o
 *.so
 *.rds
-*.travis.yml
+.travis.yml
