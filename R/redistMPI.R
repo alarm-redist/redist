@@ -7,7 +7,7 @@
 # parallel tempering (mpi)                   #
 ##############################################
 
-ecutsMPI <- function(){
+ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec = popvec, initcds = initcds, swaps = swaps){
     ## Load redist library
     library(redist)
 
@@ -693,8 +693,7 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
     Rmpi::mpi.spawn.Rslaves(nslaves = betaseqlength)
     
     ## Get processor ID for each slave
-    Rmpi::mpi.bcast.cmd(procID <- mpi.comm.rank())
-    
+    Rmpi::mpi.bcast.cmd(procID <- Rmpi::mpi.comm.rank())
     
     #########################
     ## Send Data to Slaves ##
