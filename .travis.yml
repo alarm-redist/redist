@@ -4,8 +4,7 @@ language: r
 cache: packages
 sudo: required
 
-before_install:
-install_aptget r-cran-rmpi
+before_install: install_aptget r-cran-rmpi
 
 notifications:
   email:
