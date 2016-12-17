@@ -4,6 +4,9 @@ language: r
 cache: packages
 sudo: required
 
+repos:
+  CRAN: https://cloud.r-project.org
+
 notifications:
   email:
     on_success: change
