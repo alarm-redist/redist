@@ -4,8 +4,8 @@ language: r
 cache: packages
 sudo: required
 
-r_packages:
- - Rmpi
+global:
+  - _R_CHECK_FORCE_SUGGESTS_=FALSE
 
 notifications:
   email:
