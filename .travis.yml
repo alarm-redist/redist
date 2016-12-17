@@ -4,8 +4,8 @@ language: r
 cache: packages
 sudo: required
 
-repos:
-  CRAN: https://cloud.r-project.org
+before_install:
+install_aptget r-cran-rmpi
 
 notifications:
   email:
