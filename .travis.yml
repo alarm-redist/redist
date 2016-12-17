@@ -4,7 +4,11 @@ language: r
 cache: packages
 sudo: required
 
-global: _R_CHECK_FORCE_SUGGESTS_ = false
+r: - release
+
+env:
+  global: 
+    - _R_CHECK_FORCE_SUGGESTS_ = false
 
 notifications:
   email:
