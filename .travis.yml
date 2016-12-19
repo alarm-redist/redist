@@ -1,8 +1,16 @@
 # Sample .travis.yml for R projects
 
-language: r
+language: 
+    - r
+    - cpp
+
 cache: packages
 sudo: required
+
+compiler:
+    - clang
+    - gcc
+    - g++
 
 warnings_are_errors: false
 
