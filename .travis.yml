@@ -2,15 +2,13 @@
 
 language: r
 cache: packages
-
-warnings_are_errors: false
 sudo: required
 
-r: - release
+warnings_are_errors: false
 
 env:
   global: 
-    - _R_CHECK_FORCE_SUGGESTS_ = false
+    - CRAN: http://cran.rstudio.com
 
 notifications:
   email:
