@@ -1,4 +1,6 @@
 README.md
-.git
-.gitignore
-.travis.yml
+\.git
+\.gitignore
+\.travis\.yml
+\.DS_Store
+\.\.Rcheck
