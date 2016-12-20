@@ -1,9 +1,6 @@
-# Sample .travis.yml for R projects
-
 language: 
     - r
     - cpp
-    - c
 
 cache: packages
 sudo: required
@@ -17,11 +14,6 @@ before_install:
   - curl -OL http://raw.github.com/craigcitro/r-travis/master/scripts/travis-tool.sh
   - chmod 755 ./travis-tool.sh
   - ./travis-tool.sh install_aptget r-cran-rmpi
-
-# before_script:
-#   - sudo apt-get install libopenmpi-dev openmpi-bin libhdf5-openmpi-dev
-# install:
-#   - ./travis-tool.sh install_deps
 
 warnings_are_errors: false
 
