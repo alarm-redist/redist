@@ -15,8 +15,6 @@ before_install:
   - chmod 755 ./travis-tool.sh
   - ./travis-tool.sh install_aptget r-cran-rmpi
 
-warnings_are_errors: false
-
 env:
   global: 
     - CRAN: http://cran.rstudio.com
