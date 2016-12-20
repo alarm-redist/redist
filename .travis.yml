@@ -1,14 +1,23 @@
-# Sample .travis.yml for R projects
+language: 
+    - r
+    - cpp
 
-language: r
 cache: packages
 sudo: required
 
-r: - release
+compiler:
+    - clang
+    - gcc
+    - g++
+
+before_install:
+  - curl -OL http://raw.github.com/craigcitro/r-travis/master/scripts/travis-tool.sh
+  - chmod 755 ./travis-tool.sh
+  - ./travis-tool.sh install_aptget r-cran-rmpi
 
 env:
   global: 
-    - _R_CHECK_FORCE_SUGGESTS_ = false
+    - CRAN: http://cran.rstudio.com
 
 notifications:
   email:
