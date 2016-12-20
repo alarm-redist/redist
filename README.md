@@ -1,4 +1,4 @@
-# redist [![Build Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist)
+# redist: Markov Chain Monte Carlo Methods for Redistricting Simulation [![Build Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist)
 R package for simulating redistricting plans via Markov chain Monte
 Carlo by Ben Fifield ([bfifield@princeton.edu](bfifield@princeton.edu)),
 Alex Tarr ([atarr@princeton.edu](atarr@princeton.edu)), Michael
