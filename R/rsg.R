@@ -91,7 +91,7 @@
 #' population <- rep(300,length(adj.list))
 #' tmp <- redist.rsg(adj.list, population, 10, 0.05)
 #' }
-#' @return
+#' @export
 redist.rsg <- function(adj.list,
                        population,
                        ndists,
