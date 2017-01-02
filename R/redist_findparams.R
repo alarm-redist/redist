@@ -145,8 +145,8 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 #' maxiterrsg = 5000, report_all = TRUE,
 #' parallel = FALSE, nthreads = NULL, verbose = TRUE)
 #'
-#' @param \item{adjobj}{An adjacency matrix, list, or object of class
-#' "SpatialPolygonsDataFrame."}
+#' @param adjobj An adjacency matrix, list, or object of class
+#' "SpatialPolygonsDataFrame."
 #' @param popvec A vector containing the populations of each
 #' geographic unit.
 #' @param nsims The number of simulations run before a save point.
