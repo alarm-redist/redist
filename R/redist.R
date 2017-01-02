@@ -580,7 +580,7 @@ redist.combine <- function(savename, nsims, nloop, nthin, nunits, temper = 0
 #' @param nsims The number of simulations run before a save point.
 #' @param ndists The numbe of congressional districts. The default is
 #' \code{NULL}.
-#' @param initcids A vector containing the congressional district labels
+#' @param initcds A vector containing the congressional district labels
 #' of each geographic unit. The default is \code{NULL}. If not provided,
 #' random and contiguous congressional district assignments will be generated
 #' using \code{redist.rsg}.

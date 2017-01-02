@@ -531,16 +531,6 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
 #' }
 #' @export
 redist.combine.mpi <- function(savename, nsims, nloop, nthin, nunits, tempadj){
-  
-    ########################
-    ## Inputs to function ##
-    ########################
-    ## savename - filename
-    ## nsims - number of simulations in each loop
-    ## nloop - number of loops to run simulations
-    ## nthin - how much to thin the simulations
-    ## nunits - number of geographic units
-    ## tempadj - Current temperature adjacency vector
     
     ##############################
     ## Set up container objects ##
