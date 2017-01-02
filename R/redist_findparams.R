@@ -135,6 +135,73 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 
 }
 
+#' Run parameter testing for \code{redist.mcmc}
+#'
+#' \code{redist.findparams} is used to find optimal parameter values of
+#' \code{redist.mcmc} for a given map.
+#'
+#' @usage redist.findparams(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
+#' params, ssdmat = NULL, grouppopvec = NULL,
+#' maxiterrsg = 5000, report_all = TRUE,
+#' parallel = FALSE, nthreads = NULL, verbose = TRUE)
+#'
+#' @param \item{adjobj}{An adjacency matrix, list, or object of class
+#' "SpatialPolygonsDataFrame."}
+#' @param popvec A vector containing the populations of each
+#' geographic unit.
+#' @param nsims The number of simulations run before a save point.
+#' @param ndists The number of congressional districts.
+#' The default is \code{NULL}.
+#' @param initcds A vector containing the congressional district labels
+#' of each geographic unit. The default is \code{NULL}. If not provided, random
+#' and contiguous congressional district assignments will be generated using \code{redist.rsg}.
+#' @param params A matrix of parameter values to test, such as the output of
+#' \code{expand.grid}. Parameters accepted for \code{params} include \code{eprob},
+#' \code{lambda}, \code{popcons}, \code{beta}, and \code{constraint}.
+#' @param ssdmat A matrix of squared distances between geographic
+#' units. The default is \code{NULL}.
+#' @param grouppopvec A vector of populations for some sub-group of
+#' interest. The default is \code{NULL}.
+#' @param maxiterrsg Maximum number of iterations for random seed-and-grow
+#' algorithm to generate starting values. Default is 5000.
+#' @param report_all Whether to report all summary statistics for each set of
+#' parameter values. Default is \code{TRUE}.
+#' @param parallel Whether to run separate parameter settings in parallel.
+#' Default is \code{FALSE}.
+#' @param nthreads Number of parallel tasks to run, declared outside of the
+#' function. Default is \code{NULL}.
+#' @param verbose Whether to print additional information about the tests.
+#' Default is \code{TRUE}.
+#'
+#' @details This function allows users to test multiple parameter settings of
+#' \code{redist.mcmc} in preparation for a longer run for analysis.
+#'
+#' @return \code{redist.findparams} returns a print-out of summary statistics
+#' about each parameter setting.
+#'
+#' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander
+#' Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte
+#' Carlo." Working Paper. Available at
+#' \url{http://imai.princeton.edu/research/files/redist.pdf}.
+#'
+#' @examples \dontrun{
+#' data(algdat.pfull)
+#'
+#' ## Code to run the simulations in Figure 4 in Fifield, Higgins, Imai and
+#' ## Tarr (2015)
+#'
+#' ## Get an initial partition
+#' set.seed(1)
+#' initcds <- algdat.pfull$cdmat[,sample(1:ncol(algdat.pfull$cdmat), 1)]
+#'
+#' params <- expand.grid(eprob = c(.01, .05, .1))
+#'
+#' ## Run the algorithm
+#' redist.findparams(adjobj = algdat.pfull$adjlist,
+#' popvec = algdat.pfull$precinct.data$pop,
+#' initcds = initcds, nsims = 10000, params = params)
+#' }
+#' @export
 redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                               params, ssdmat = NULL, grouppopvec = NULL,
                               maxiterrsg = 5000, report_all = TRUE,
