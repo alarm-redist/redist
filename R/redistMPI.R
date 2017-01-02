@@ -456,10 +456,10 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
 
 #' Combine successive runs of \code{redist.mcmc.mpi}
 #'
-#' \code{redist.combine} is used to combine successive runs of
+#' \code{redist.combine.mpi} is used to combine successive runs of
 #' \code{redist.mcmc.mpi} into a single data object
 #'
-#' @usage redist.combine(savename, nsims, nloop, nthin, nunits, tempadj)
+#' @usage redist.combine.mpi(savename, nsims, nloop, nthin, nunits, tempadj)
 #'
 #' @param savename The name (without the loop or \code{.RData} suffix)
 #' of the saved simulations.
