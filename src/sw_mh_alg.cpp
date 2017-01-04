@@ -518,7 +518,7 @@ List swMH(List aList,
     // Print Progress
     if(k % nsims_10pct == 0){
       Rcout << (double)k / nsims_10pct * 10 << " percent done." << std::endl;
-      Rcout << "Metropolis acceptance ratios: "<< (double)decision_counter / (k-1) << std::endl << std::endl;
+      Rcout << "Metropolis acceptance ratio: "<< (double)decision_counter / (k-1) << std::endl << std::endl;
     }
 
   }
