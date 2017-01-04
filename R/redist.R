@@ -171,7 +171,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ## If no initial congressional districts provided, use Random Seed and Grow ##
     ## (Chen and Rodden 2013) algorithm                                         ##
     ##############################################################################
-    if(is.null(initcds) | is.na(initcds)[1]){
+    if(is.null(initcds)){
 
         ## Set up target pop, strength of constraint (10%)
         if(is.null(popcons)){
@@ -185,7 +185,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         
         cat("\n", append = TRUE)
         cat(divider, append = TRUE)
-        cat("redist.rsg(): Automated Redistricting Starts\n\n", append= TRUE)
+        cat("Using redist.rsg() to generate starting values.\n\n", append= TRUE)
         
         ## Run the algorithm
         initout <- redist.rsg(adj.list = adjlist,
@@ -198,6 +198,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         initcds <- initout$district_membership
         
     }
+
     ###########################################################
     ## Check other inputs to make sure they are right length ##
     ###########################################################
