@@ -11,7 +11,8 @@ beta = 0, temper = "none", constraint = "none",
 betaseq = "powerlaw", betaseqlength = 10,
 betaweights = NULL,
 adjswaps = TRUE, rngseed = NULL, maxiterrsg = 5000,
-contiguitymap = "rooks", exact_mh = 0, savename = NULL, verbose = TRUE)
+adapt_lambda = FALSE, adapt_eprob = FALSE,
+contiguitymap = "rooks", exact_mh = FALSE, savename = NULL, verbose = TRUE)
 }
 \arguments{
 \item{adjobj}{An adjacency matrix, list, or object of class
@@ -79,27 +80,34 @@ tempering. The default is \code{10}.}
 beta. Allows the user to upweight certain values of beta over
 others. The default is \code{NULL} (equal weighting).}
 
+\item{adjswaps}{Flag to restrict swaps of beta so that only
+values adjacent to current constraint are proposed. The default is
+\code{TRUE}.}
+
 \item{rngseed}{Allows the user to set the seed for the
 simulations. Default is \code{NULL}.}
 
 \item{maxiterrsg}{Maximum number of iterations for random seed-and-grow
 algorithm to generate starting values. Default is 5000.}
 
+\item{adapt_lambda}{Whether to adaptively tune the lambda parameter so that the Metropolis-Hastings
+acceptance probability falls between 20\% and 40\%. Default is FALSE.}
+
+\item{adapt_eprob}{Whether to adaptively tune the edgecut probability parameter so that the
+Metropolis-Hastings acceptance probability falls between 20\% and 40\%. Default is
+FALSE.}
+
 \item{contiguitymap}{Use queens or rooks distance criteria for generating an
 adjacency list from a "SpatialPolygonsDataFrame" data type.
 Default is "rooks".}
 
 \item{exact_mh}{Whether to use the approximate (0) or exact (1)
-Metropolis-Hastings ratio calculation for accept-reject rule. Default is 0.}
+Metropolis-Hastings ratio calculation for accept-reject rule. Default is FALSE.}
 
 \item{savename}{Filename to save simulations. Default is \code{NULL}.}
 
 \item{verbose}{Whether to print initialization statement.
 Default is \code{TRUE}.}
-
-\item{adjswaps}{Flag}{to restrict swaps of beta so that only
-values adjacent to current constraint are proposed. The default is
-\code{TRUE}.}
 }
 \value{
 \code{redist.mcmc} returns an object of class "redist". The object

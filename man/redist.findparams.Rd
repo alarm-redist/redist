@@ -5,6 +5,7 @@
 \title{Run parameter testing for \code{redist.mcmc}}
 \usage{
 redist.findparams(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
+adapt_lambda = FALSE, adapt_eprob = FALSE,
 params, ssdmat = NULL, grouppopvec = NULL,
 maxiterrsg = 5000, report_all = TRUE,
 parallel = FALSE, nthreads = NULL, verbose = TRUE)
@@ -24,6 +25,13 @@ The default is \code{NULL}.}
 \item{initcds}{A vector containing the congressional district labels
 of each geographic unit. The default is \code{NULL}. If not provided, random
 and contiguous congressional district assignments will be generated using \code{redist.rsg}.}
+
+\item{adapt_lambda}{Whether to adaptively tune the lambda parameter so that the Metropolis-Hastings
+acceptance probability falls between 20\% and 40\%. Default is FALSE.}
+
+\item{adapt_eprob}{Whether to adaptively tune the edgecut probability parameter so that the
+Metropolis-Hastings acceptance probability falls between 20\% and 40\%. Default is
+FALSE.}
 
 \item{params}{A matrix of parameter values to test, such as the output of
 \code{expand.grid}. Parameters accepted for \code{params} include \code{eprob},

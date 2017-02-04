@@ -8,22 +8,23 @@
 #############################################
 
 run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
-                     ssdmat, grouppopvec, names, maxiterrsg, report_all){
+                     ssdmat, grouppopvec, names, maxiterrsg, report_all,
+                     adapt_lambda, adapt_eprob){
     
     ## Get this iteration
     p_sub <- params[i,]
 
     ## Set parameter values
-    if(!("eprob" %in% names)){
-        eprob <- 0.05
-    }else{
+    if("eprob" %in% names){
         eprob <- p_sub$eprob
+    }else{
+        eprob <- 0.05
     }
 
-    if(!("lambda" %in% names)){
-        lambda <- 0
+    if("lambda" %in% names){
+        lambda <- p_sub$eprob
     }else{
-        lambda <- p_sub$lambda
+        lambda <- 0
     }
 
     if(!("popcons" %in% names)){
@@ -66,7 +67,9 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
                        initcds = initcds, eprob = eprob, lambda = lambda,
                        popcons = popcons, beta = beta,
                        constraint = constraint,
-                       maxiterrsg = maxiterrsg)
+                       maxiterrsg = maxiterrsg,
+                       adapt_lambda = adapt_lambda,
+                       adapt_eprob = adapt_eprob)
 
     ## Get quantiles
     quant <- floor(nsims / 4)
@@ -141,6 +144,7 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 #' \code{redist.mcmc} for a given map.
 #'
 #' @usage redist.findparams(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
+#' adapt_lambda = FALSE, adapt_eprob = FALSE,
 #' params, ssdmat = NULL, grouppopvec = NULL,
 #' maxiterrsg = 5000, report_all = TRUE,
 #' parallel = FALSE, nthreads = NULL, verbose = TRUE)
@@ -155,6 +159,11 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 #' @param initcds A vector containing the congressional district labels
 #' of each geographic unit. The default is \code{NULL}. If not provided, random
 #' and contiguous congressional district assignments will be generated using \code{redist.rsg}.
+#' @param adapt_lambda Whether to adaptively tune the lambda parameter so that the Metropolis-Hastings
+#' acceptance probability falls between 20\% and 40\%. Default is FALSE.
+#' @param adapt_eprob Whether to adaptively tune the edgecut probability parameter so that the
+#' Metropolis-Hastings acceptance probability falls between 20\% and 40\%. Default is
+#' FALSE.
 #' @param params A matrix of parameter values to test, such as the output of
 #' \code{expand.grid}. Parameters accepted for \code{params} include \code{eprob},
 #' \code{lambda}, \code{popcons}, \code{beta}, and \code{constraint}.
@@ -203,6 +212,7 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 #' }
 #' @export
 redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
+                              adapt_lambda = FALSE, adapt_eprob = FALSE,
                               params, ssdmat = NULL, grouppopvec = NULL,
                               maxiterrsg = 5000, report_all = TRUE,
                               parallel = FALSE, nthreads = NULL, verbose = TRUE){
@@ -233,9 +243,17 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
     if(!is.null(initcds)){
         ndists <- length(unique(initcds))
     }
+    if(sum("lambda" %in% names & adapt_lambda) > 0){
+        warning("You have specified a grid of lambda values to search and set `adapt_lambda` to TRUE. Setting `adapt_lambda` to FALSE.")
+        adapt_lambda <- FALSE
+    }
+    if(sum("eprob" %in% names & adapt_eprob) > 0){
+        warning("You have specified a grid of eprob values to search and set `adapt_eprob` to TRUE. Setting `adapt_eprob` to FALSE.")
+        adapt_eprob <- FALSE
+    }
 
     if(parallel){ ## Parallel
-
+        
         ## Check to see if threads declared
         if(is.null(nthreads)){
             stop("If parallelizing, please declare the number of threads")
@@ -262,11 +280,12 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
                             .export = c("params", "adjobj", "popvec", "nsims",
                                 "ndists", "initcds", "ssdmat",
                                 "grouppopvec", "names",
-                                "maxiterrsg", "report_all", "run_sims")) %dopar% {
+                                "maxiterrsg", "report_all", "run_sims", "adapt_lambda", "adapt_eprob")) %dopar% {
 
             ## Run simulations
             out <- run_sims(i, params, adjobj, popvec, nsims, ndists, initcds,
-                            ssdmat, grouppopvec, names, maxiterrsg, report_all)
+                            ssdmat, grouppopvec, names, maxiterrsg, report_all,
+                            adapt_lambda, adapt_eprob)
             
             ## Return values
             return(out)
@@ -283,7 +302,8 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
 
             ## Run simulations
             out <- run_sims(i, params, adjobj, popvec, nsims, ndists, initcds,
-                            ssdmat, grouppopvec, names, maxiterrsg, report_all)
+                            ssdmat, grouppopvec, names, maxiterrsg, report_all,
+                            adapt_lambda, adapt_eprob)
             
             ## Add to printout
             printout <- paste(printout, out)
@@ -292,11 +312,11 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
         
     }
 
-    cat(printout)
-
     if(parallel){
         stopCluster(cl)
     }
+
+    cat(printout)
 
 }
 

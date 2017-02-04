@@ -572,7 +572,8 @@ redist.combine <- function(savename, nsims, nloop, nthin, nunits, temper = 0
 #' betaseq = "powerlaw", betaseqlength = 10,
 #' betaweights = NULL,
 #' adjswaps = TRUE, rngseed = NULL, maxiterrsg = 5000,
-#' contiguitymap = "rooks", exact_mh = 0, savename = NULL, verbose = TRUE)
+#' adapt_lambda = FALSE, adapt_eprob = FALSE,
+#' contiguitymap = "rooks", exact_mh = FALSE, savename = NULL, verbose = TRUE)
 #'
 #' @param adjobj An adjacency matrix, list, or object of class
 #' "SpatialPolygonsDataFrame."
@@ -620,18 +621,23 @@ redist.combine <- function(savename, nsims, nloop, nthin, nunits, temper = 0
 #' @param betaweights Sequence of weights for different values of
 #' beta. Allows the user to upweight certain values of beta over
 #' others. The default is \code{NULL} (equal weighting).
-#' @param adjswaps}{Flag to restrict swaps of beta so that only
+#' @param adjswaps Flag to restrict swaps of beta so that only
 #' values adjacent to current constraint are proposed. The default is
 #' \code{TRUE}.
 #' @param rngseed Allows the user to set the seed for the
 #' simulations. Default is \code{NULL}.
 #' @param maxiterrsg Maximum number of iterations for random seed-and-grow
 #' algorithm to generate starting values. Default is 5000.
+#' @param adapt_lambda Whether to adaptively tune the lambda parameter so that the Metropolis-Hastings
+#' acceptance probability falls between 20\% and 40\%. Default is FALSE.
+#' @param adapt_eprob Whether to adaptively tune the edgecut probability parameter so that the
+#' Metropolis-Hastings acceptance probability falls between 20\% and 40\%. Default is
+#' FALSE.
 #' @param contiguitymap Use queens or rooks distance criteria for generating an
 #' adjacency list from a "SpatialPolygonsDataFrame" data type.
 #' Default is "rooks".
 #' @param exact_mh Whether to use the approximate (0) or exact (1)
-#' Metropolis-Hastings ratio calculation for accept-reject rule. Default is 0.
+#' Metropolis-Hastings ratio calculation for accept-reject rule. Default is FALSE.
 #' @param savename Filename to save simulations. Default is \code{NULL}.
 #' @param verbose Whether to print initialization statement.
 #' Default is \code{TRUE}.
@@ -706,7 +712,8 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                         betaseq = "powerlaw", betaseqlength = 10,
                         betaweights = NULL, 
                         adjswaps = TRUE, rngseed = NULL, maxiterrsg = 5000,
-                        contiguitymap = "rooks", exact_mh = 0, savename = NULL,
+                        adapt_lambda = FALSE, adapt_eprob = FALSE,
+                        contiguitymap = "rooks", exact_mh = FALSE, savename = NULL,
                         verbose = TRUE
                         ){
 
@@ -746,6 +753,22 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
     ## Set seed before first iteration of algorithm if provided by user
     if(!is.null(rngseed) & is.numeric(rngseed)){
         set.seed(rngseed)
+    }
+
+    if(adapt_lambda){
+        adapt_lambda <- 1
+    }else{
+        adapt_lambda <- 0
+    }
+    if(adapt_eprob){
+        adapt_eprob <- 1
+    }else{
+        adapt_eprob <- 0
+    }
+    if(exact_mh){
+        exact_mh <- 1
+    }else{
+        exact_mh <- 0
     }
     
     #####################
@@ -861,7 +884,9 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                        anneal_beta_segregation = preprocout$params$temperbetaseg,
                        anneal_beta_similar = preprocout$params$temperbetasimilar,
                        adjswap = preprocout$params$adjswaps,
-                       exact_mh = exact_mh)
+                       exact_mh = exact_mh,
+                       adapt_lambda = adapt_lambda,
+                       adapt_eprob = adapt_eprob)
 
         class(algout) <- "redist"
 

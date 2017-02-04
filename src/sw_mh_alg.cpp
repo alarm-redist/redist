@@ -42,7 +42,9 @@ List swMH(List aList,
 	  int anneal_beta_segregation = 0,
 	  int anneal_beta_similar = 0,
 	  int adjswap = 1,
-	  int exact_mh = 0)
+	  int exact_mh = 0,
+	  int adapt_eprob = 0,
+	  int adapt_lambda = 0)
 {
 
   /* Inputs to function:
@@ -520,9 +522,31 @@ List swMH(List aList,
       Rcout << (double)k / nsims_10pct * 10 << " percent done." << std::endl;
       Rcout << "Metropolis acceptance ratio: "<< (double)decision_counter / (k-1) << std::endl << std::endl;
     }
-
+  
+    // Change eprob, lambda if adaptive
+    if(adapt_eprob == 1 || adapt_lambda == 1){
+      if(k % 50 == 0){
+	if((double)decision_counter / (k-1) > .4){
+	  if(adapt_lambda == 1 && lambda < floor((double)aList.size() / 10)){
+	    lambda++;
+	  }
+	  if(adapt_eprob == 1 && eprob < .5){
+	    eprob = eprob + .01;
+	  }
+	}
+	if((double)decision_counter / (k-1) < .2){
+	  if(adapt_lambda == 1 && lambda > 0){
+	    lambda--;
+	  }
+	  if(adapt_eprob == 1 && eprob > 0){
+	    eprob = eprob - .01;
+	  }
+	}
+      }
+    }
+        
   }
-
+  
   // Get distance from parity of each partition
   NumericVector dist_parity_vec = distParity(cd_store, popvec);
 
@@ -550,6 +574,6 @@ List swMH(List aList,
   }
   
   return out;
-
+  
 }
 
