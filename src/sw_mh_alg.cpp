@@ -572,6 +572,12 @@ List swMH(List aList,
     out["mhdecisions_beta"] = decision_betaseq_store;
     out["mhprob_beta"] = mhprob_betaseq_store;
   }
+  if(adapt_eprob == 1){
+    out["final_eprob"] = eprob;
+  }
+  if(adapt_lambda == 1){
+    out["final_lambda"] = lambda;
+  }
   
   return out;
   

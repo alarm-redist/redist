@@ -7,6 +7,7 @@
 /////////////////////////////////////
 
 // Header files
+#include <Rcpp.h>
 #include <RcppArmadillo.h>
 #include "make_swaps_helper.h"
 #include "constraint_calc_helper.h"
@@ -108,6 +109,7 @@ List genAlConn(List aList,
 
 /* Function to identify which precincts lie on the boundary of a congressional
    district */
+// [[Rcpp::export]]
 NumericVector findBoundary(List fullList,
 			   List conList)
 {

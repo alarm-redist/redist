@@ -98,9 +98,20 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 
     ## Report statistics
     out <- paste("########################################\n",
-                 "## Parameter Values for Simulation", i, "\n",
-                 "## Edgecut probability =", eprob, "\n",
-                 "## Lambda =", lambda, "\n")
+                 "## Parameter Values for Simulation", i, "\n")
+    if(!adapt_eprob){
+        out <- paste(out, "## Edgecut probability =", eprob, "\n",
+                     sep = "")
+    }else{
+        out <- paste(out, "## Final adaptive edgecut probability =", out$final_eprob, "\n",
+                     sep = "")
+    }
+    if(!adapt_lambda){
+        out <- paste("## Lambda =", lambda, "\n", sep = " ")
+    }else{
+        out <- paste(out, "## Final adaptive lambda =", out$final_lambda, "\n",
+                     sep = "")
+    }
     if(popcons != 100){
         out <- paste(out, "## Hard population constraint =", popcons, "\n",
                      sep = " ")
