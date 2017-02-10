@@ -120,3 +120,15 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// findBoundary
+NumericVector findBoundary(List fullList, List conList);
+RcppExport SEXP redist_findBoundary(SEXP fullListSEXP, SEXP conListSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type fullList(fullListSEXP);
+    Rcpp::traits::input_parameter< List >::type conList(conListSEXP);
+    rcpp_result_gen = Rcpp::wrap(findBoundary(fullList, conList));
+    return rcpp_result_gen;
+END_RCPP
+}

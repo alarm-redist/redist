@@ -70,7 +70,13 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
                        maxiterrsg = maxiterrsg,
                        adapt_lambda = adapt_lambda,
                        adapt_eprob = adapt_eprob)
-
+    if(adapt_eprob){
+        final_eprob <- out$final_eprob
+    }
+    if(adapt_lambda){
+        final_lambda <- out$final_lambda
+    }
+    
     ## Get quantiles
     quant <- floor(nsims / 4)
     q1 <- 1:quant
@@ -100,50 +106,50 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
     out <- paste("########################################\n",
                  "## Parameter Values for Simulation", i, "\n")
     if(!adapt_eprob){
-        out <- paste(out, "## Edgecut probability =", eprob, "\n",
-                     sep = "")
+        out <- paste0(out, "## Edgecut probability = ", eprob, "\n")
     }else{
-        out <- paste(out, "## Final adaptive edgecut probability =", out$final_eprob, "\n",
-                     sep = "")
+        out <- paste0(out, "## Final adaptive edgecut probability = ",
+                      final_eprob, "\n")
     }
     if(!adapt_lambda){
-        out <- paste("## Lambda =", lambda, "\n", sep = " ")
+        out <- paste0("## Lambda = ", lambda, "\n")
     }else{
-        out <- paste(out, "## Final adaptive lambda =", out$final_lambda, "\n",
-                     sep = "")
+        out <- paste0(out, "## Final adaptive lambda = ", final_lambda, "\n")
     }
     if(popcons != 100){
-        out <- paste(out, "## Hard population constraint =", popcons, "\n",
-                     sep = " ")
+        out <- paste0(out, "## Hard population constraint = ", popcons, "\n")
     }else{
-        out <- paste(out, "## No hard population constraint applied\n",
-                     sep = " ")
+        out <- paste0(out, "## No hard population constraint applied\n")
     }
-    out <- paste(out, "## Soft constraint is", as.character(constraint), "\n",
-                 "## Target beta =", beta, "\n",
+    out <- paste0(out, "## Soft constraint is ", as.character(constraint), "\n",
+                 "## Target beta  = ", beta, "\n",
                  "########################################\n",
                  "## Diagnostics:\n",
-                 "## Metropolis-Hastings Acceptance Ratio =", mh_acceptance,
-                 "\n", sep = " ")
+                 "## Metropolis-Hastings Acceptance Ratio = ", mh_acceptance, "\n")
     if(constraint == "population" | report_all == TRUE){
-        out <- paste(out, "## Mean population parity distance =",
+        out <- paste0(out, "## Mean population parity distance = ",
                      pop_parity, "\n",
-                     "## Median population parity distance =",
+                     "## Median population parity distance = ",
                      med_pop_parity, "\n",
-                     "## Population parity range =",
+                     "## Population parity range = ",
                      paste(range_pop_parity, collapse = " "),
                      "\n",
-                     "## MCMC Iteration quantiles of population parity median =",
-                     q1_pop_median, q2_pop_median, q3_pop_median, q4_pop_median, "\n",
-                     sep = " ")
+                     "## MCMC Iteration quantiles of population parity median = ",
+                     paste(q1_pop_median, q2_pop_median,
+                           q3_pop_median, q4_pop_median, sep = " "),
+                     "\n")
     }
     if(constraint == "similarity" | report_all == TRUE){
-        out <- paste(out, "\n## Mean share of geographies equal to initial assignment =", dist_orig, "\n",
-                     "## Median share of geographies equal to initial assignment =", med_dist_orig, "\n",
-                     "## Range of share of geographies equal to initial assignment =", paste(range_dist_orig, collapse = " "), "\n", sep = " ")
+        out <- paste0(
+            out,
+            "\n## Mean share of geographies equal to initial assignment = ",
+            dist_orig, "\n",
+            "## Median share of geographies equal to initial assignment = ",
+            med_dist_orig, "\n",
+            "## Range of share of geographies equal to initial assignment = ",
+            paste(range_dist_orig, collapse = " "), "\n")
     }
-    out <- paste(out, "########################################\n\n",
-                 sep = " ")
+    out <- paste0(out, "########################################\n\n")
 
     return(out)
 

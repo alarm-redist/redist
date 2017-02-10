@@ -29,3 +29,7 @@ genAlConn <- function(aList, cds) {
     .Call('redist_genAlConn', PACKAGE = 'redist', aList, cds)
 }
 
+findBoundary <- function(fullList, conList) {
+    .Call('redist_findBoundary', PACKAGE = 'redist', fullList, conList)
+}
+
