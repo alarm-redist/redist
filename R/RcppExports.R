@@ -21,11 +21,15 @@ rsg <- function(adj_list, population, Ndistrict, target_pop, thresh, maxiter) {
     .Call('redist_rsg', PACKAGE = 'redist', adj_list, population, Ndistrict, target_pop, thresh, maxiter)
 }
 
-swMH <- function(aList, cdvec, cdorigvec, popvec, grouppopvec, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, lambda = 0L, beta_population = 0.0, beta_compact = 0.0, beta_segregation = 0.0, beta_similar = 0.0, anneal_beta_population = 0L, anneal_beta_compact = 0L, anneal_beta_segregation = 0L, anneal_beta_similar = 0L, adjswap = 1L, exact_mh = 0L) {
-    .Call('redist_swMH', PACKAGE = 'redist', aList, cdvec, cdorigvec, popvec, grouppopvec, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, lambda, beta_population, beta_compact, beta_segregation, beta_similar, anneal_beta_population, anneal_beta_compact, anneal_beta_segregation, anneal_beta_similar, adjswap, exact_mh)
+swMH <- function(aList, cdvec, cdorigvec, popvec, grouppopvec, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, lambda = 0L, beta_population = 0.0, beta_compact = 0.0, beta_segregation = 0.0, beta_similar = 0.0, anneal_beta_population = 0L, anneal_beta_compact = 0L, anneal_beta_segregation = 0L, anneal_beta_similar = 0L, adjswap = 1L, exact_mh = 0L, adapt_eprob = 0L, adapt_lambda = 0L) {
+    .Call('redist_swMH', PACKAGE = 'redist', aList, cdvec, cdorigvec, popvec, grouppopvec, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, lambda, beta_population, beta_compact, beta_segregation, beta_similar, anneal_beta_population, anneal_beta_compact, anneal_beta_segregation, anneal_beta_similar, adjswap, exact_mh, adapt_eprob, adapt_lambda)
 }
 
 genAlConn <- function(aList, cds) {
     .Call('redist_genAlConn', PACKAGE = 'redist', aList, cds)
+}
+
+findBoundary <- function(fullList, conList) {
+    .Call('redist_findBoundary', PACKAGE = 'redist', fullList, conList)
 }
 

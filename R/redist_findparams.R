@@ -8,22 +8,23 @@
 #############################################
 
 run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
-                     ssdmat, grouppopvec, names, maxiterrsg, report_all){
+                     ssdmat, grouppopvec, names, maxiterrsg, report_all,
+                     adapt_lambda, adapt_eprob){
     
     ## Get this iteration
     p_sub <- params[i,]
 
     ## Set parameter values
-    if(!("eprob" %in% names)){
-        eprob <- 0.05
-    }else{
+    if("eprob" %in% names){
         eprob <- p_sub$eprob
+    }else{
+        eprob <- 0.05
     }
 
-    if(!("lambda" %in% names)){
-        lambda <- 0
+    if("lambda" %in% names){
+        lambda <- p_sub$eprob
     }else{
-        lambda <- p_sub$lambda
+        lambda <- 0
     }
 
     if(!("popcons" %in% names)){
@@ -66,8 +67,16 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
                        initcds = initcds, eprob = eprob, lambda = lambda,
                        popcons = popcons, beta = beta,
                        constraint = constraint,
-                       maxiterrsg = maxiterrsg)
-
+                       maxiterrsg = maxiterrsg,
+                       adapt_lambda = adapt_lambda,
+                       adapt_eprob = adapt_eprob)
+    if(adapt_eprob){
+        final_eprob <- out$final_eprob
+    }
+    if(adapt_lambda){
+        final_lambda <- out$final_lambda
+    }
+    
     ## Get quantiles
     quant <- floor(nsims / 4)
     q1 <- 1:quant
@@ -95,41 +104,52 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 
     ## Report statistics
     out <- paste("########################################\n",
-                 "## Parameter Values for Simulation", i, "\n",
-                 "## Edgecut probability =", eprob, "\n",
-                 "## Lambda =", lambda, "\n")
-    if(popcons != 100){
-        out <- paste(out, "## Hard population constraint =", popcons, "\n",
-                     sep = " ")
+                 "## Parameter Values for Simulation", i, "\n")
+    if(!adapt_eprob){
+        out <- paste0(out, "## Edgecut probability = ", eprob, "\n")
     }else{
-        out <- paste(out, "## No hard population constraint applied\n",
-                     sep = " ")
+        out <- paste0(out, "## Final adaptive edgecut probability = ",
+                      final_eprob, "\n")
     }
-    out <- paste(out, "## Soft constraint is", as.character(constraint), "\n",
-                 "## Target beta =", beta, "\n",
+    if(!adapt_lambda){
+        out <- paste0("## Lambda = ", lambda, "\n")
+    }else{
+        out <- paste0(out, "## Final adaptive lambda = ", final_lambda, "\n")
+    }
+    if(popcons != 100){
+        out <- paste0(out, "## Hard population constraint = ", popcons, "\n")
+    }else{
+        out <- paste0(out, "## No hard population constraint applied\n")
+    }
+    out <- paste0(out, "## Soft constraint is ", as.character(constraint), "\n",
+                 "## Target beta  = ", beta, "\n",
                  "########################################\n",
                  "## Diagnostics:\n",
-                 "## Metropolis-Hastings Acceptance Ratio =", mh_acceptance,
-                 "\n", sep = " ")
+                 "## Metropolis-Hastings Acceptance Ratio = ", mh_acceptance, "\n")
     if(constraint == "population" | report_all == TRUE){
-        out <- paste(out, "## Mean population parity distance =",
+        out <- paste0(out, "## Mean population parity distance = ",
                      pop_parity, "\n",
-                     "## Median population parity distance =",
+                     "## Median population parity distance = ",
                      med_pop_parity, "\n",
-                     "## Population parity range =",
+                     "## Population parity range = ",
                      paste(range_pop_parity, collapse = " "),
                      "\n",
-                     "## MCMC Iteration quantiles of population parity median =",
-                     q1_pop_median, q2_pop_median, q3_pop_median, q4_pop_median, "\n",
-                     sep = " ")
+                     "## MCMC Iteration quantiles of population parity median = ",
+                     paste(q1_pop_median, q2_pop_median,
+                           q3_pop_median, q4_pop_median, sep = " "),
+                     "\n")
     }
     if(constraint == "similarity" | report_all == TRUE){
-        out <- paste(out, "\n## Mean share of geographies equal to initial assignment =", dist_orig, "\n",
-                     "## Median share of geographies equal to initial assignment =", med_dist_orig, "\n",
-                     "## Range of share of geographies equal to initial assignment =", paste(range_dist_orig, collapse = " "), "\n", sep = " ")
+        out <- paste0(
+            out,
+            "\n## Mean share of geographies equal to initial assignment = ",
+            dist_orig, "\n",
+            "## Median share of geographies equal to initial assignment = ",
+            med_dist_orig, "\n",
+            "## Range of share of geographies equal to initial assignment = ",
+            paste(range_dist_orig, collapse = " "), "\n")
     }
-    out <- paste(out, "########################################\n\n",
-                 sep = " ")
+    out <- paste0(out, "########################################\n\n")
 
     return(out)
 
@@ -141,6 +161,7 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 #' \code{redist.mcmc} for a given map.
 #'
 #' @usage redist.findparams(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
+#' adapt_lambda = FALSE, adapt_eprob = FALSE,
 #' params, ssdmat = NULL, grouppopvec = NULL,
 #' maxiterrsg = 5000, report_all = TRUE,
 #' parallel = FALSE, nthreads = NULL, verbose = TRUE)
@@ -155,6 +176,11 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 #' @param initcds A vector containing the congressional district labels
 #' of each geographic unit. The default is \code{NULL}. If not provided, random
 #' and contiguous congressional district assignments will be generated using \code{redist.rsg}.
+#' @param adapt_lambda Whether to adaptively tune the lambda parameter so that the Metropolis-Hastings
+#' acceptance probability falls between 20\% and 40\%. Default is FALSE.
+#' @param adapt_eprob Whether to adaptively tune the edgecut probability parameter so that the
+#' Metropolis-Hastings acceptance probability falls between 20\% and 40\%. Default is
+#' FALSE.
 #' @param params A matrix of parameter values to test, such as the output of
 #' \code{expand.grid}. Parameters accepted for \code{params} include \code{eprob},
 #' \code{lambda}, \code{popcons}, \code{beta}, and \code{constraint}.
@@ -203,6 +229,7 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 #' }
 #' @export
 redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
+                              adapt_lambda = FALSE, adapt_eprob = FALSE,
                               params, ssdmat = NULL, grouppopvec = NULL,
                               maxiterrsg = 5000, report_all = TRUE,
                               parallel = FALSE, nthreads = NULL, verbose = TRUE){
@@ -233,9 +260,17 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
     if(!is.null(initcds)){
         ndists <- length(unique(initcds))
     }
+    if(sum("lambda" %in% names & adapt_lambda) > 0){
+        warning("You have specified a grid of lambda values to search and set `adapt_lambda` to TRUE. Setting `adapt_lambda` to FALSE.")
+        adapt_lambda <- FALSE
+    }
+    if(sum("eprob" %in% names & adapt_eprob) > 0){
+        warning("You have specified a grid of eprob values to search and set `adapt_eprob` to TRUE. Setting `adapt_eprob` to FALSE.")
+        adapt_eprob <- FALSE
+    }
 
     if(parallel){ ## Parallel
-
+        
         ## Check to see if threads declared
         if(is.null(nthreads)){
             stop("If parallelizing, please declare the number of threads")
@@ -262,11 +297,12 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
                             .export = c("params", "adjobj", "popvec", "nsims",
                                 "ndists", "initcds", "ssdmat",
                                 "grouppopvec", "names",
-                                "maxiterrsg", "report_all", "run_sims")) %dopar% {
+                                "maxiterrsg", "report_all", "run_sims", "adapt_lambda", "adapt_eprob")) %dopar% {
 
             ## Run simulations
             out <- run_sims(i, params, adjobj, popvec, nsims, ndists, initcds,
-                            ssdmat, grouppopvec, names, maxiterrsg, report_all)
+                            ssdmat, grouppopvec, names, maxiterrsg, report_all,
+                            adapt_lambda, adapt_eprob)
             
             ## Return values
             return(out)
@@ -283,7 +319,8 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
 
             ## Run simulations
             out <- run_sims(i, params, adjobj, popvec, nsims, ndists, initcds,
-                            ssdmat, grouppopvec, names, maxiterrsg, report_all)
+                            ssdmat, grouppopvec, names, maxiterrsg, report_all,
+                            adapt_lambda, adapt_eprob)
             
             ## Add to printout
             printout <- paste(printout, out)
@@ -292,11 +329,11 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
         
     }
 
-    cat(printout)
-
     if(parallel){
         stopCluster(cl)
     }
+
+    cat(printout)
 
 }
 
