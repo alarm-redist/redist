@@ -101,6 +101,10 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
     dist_orig <- round(mean(out$distance_original), digits = 3)
     med_dist_orig <- round(median(out$distance_original), digits = 3)
     range_dist_orig <- round(range(out$distance_original), digits = 3)
+    q1_dist_median <- round(median(out$distance_original[q1]), digits = 3)
+    q2_dist_median <- round(median(out$distance_original[q2]), digits = 3)
+    q3_dist_median <- round(median(out$distance_original[q3]), digits = 3)
+    q4_dist_median <- round(median(out$distance_original[q4]), digits = 3)
 
     ## Report statistics
     out <- paste("########################################\n",
@@ -127,17 +131,18 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
                  "## Diagnostics:\n",
                  "## Metropolis-Hastings Acceptance Ratio = ", mh_acceptance, "\n")
     if(constraint == "population" | report_all == TRUE){
-        out <- paste0(out, "## Mean population parity distance = ",
-                     pop_parity, "\n",
-                     "## Median population parity distance = ",
-                     med_pop_parity, "\n",
-                     "## Population parity range = ",
-                     paste(range_pop_parity, collapse = " "),
-                     "\n",
-                     "## MCMC Iteration quantiles of population parity median = ",
-                     paste(q1_pop_median, q2_pop_median,
-                           q3_pop_median, q4_pop_median, sep = " "),
-                     "\n")
+        out <- paste0(
+            out, "## Mean population parity distance = ",
+            pop_parity, "\n",
+            "## Median population parity distance = ",
+            med_pop_parity, "\n",
+            "## Population parity range = ",
+            paste(range_pop_parity, collapse = " "),
+            "\n",
+            "## MCMC Iteration quantiles of population parity median = ",
+            paste(q1_pop_median, q2_pop_median,
+                  q3_pop_median, q4_pop_median, sep = " "),
+            "\n")
     }
     if(constraint == "similarity" | report_all == TRUE){
         out <- paste0(
@@ -147,7 +152,11 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
             "## Median share of geographies equal to initial assignment = ",
             med_dist_orig, "\n",
             "## Range of share of geographies equal to initial assignment = ",
-            paste(range_dist_orig, collapse = " "), "\n")
+            paste(range_dist_orig, collapse = " "), "\n",
+            "## MCMC Iteration quantiles of geography distance to initial assignment = ",
+            paste(q1_dist_median, q2_dist_median,
+                  q3_dist_median, q4_dist_median, sep = " "),
+            "\n")
     }
     out <- paste0(out, "########################################\n\n")
 
