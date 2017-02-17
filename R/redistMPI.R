@@ -857,62 +857,49 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
     ## Spawn Slaves ##
     ##################
     ## Note this will not work on Windows platform
-    cat("Spawn slaves")
     Rmpi::mpi.spawn.Rslaves(nslaves = betaseqlength)
     
     ## Get processor ID for each slave
-    cat("Get procid")
     Rmpi::mpi.bcast.cmd(procID <- Rmpi::mpi.comm.rank())
     
     #########################
     ## Send Data to Slaves ##
     #########################
     ## Swapping Schedule
-    cat("Send broadcast schedule")
     Rmpi::mpi.bcast.Robj2slave(swaps)
     
     ## Temperature adjacency
-    cat("Send temp adjacency")
     if(adjswaps){
         Rmpi::mpi.bcast.Robj2slave(tempadj)
     }
     
     ## Adjacency Object
-    cat("Send adjacency object")
     Rmpi::mpi.bcast.Robj2slave(adjobj)
     
     ## Population Vector
-    cat("Send population vector")
     Rmpi::mpi.bcast.Robj2slave(popvec)
     
     ## Initial Plans
-    cat("Send initial plans")
     initcds <- split(initcds, f=1:nrow(initcds))
     Rmpi::mpi.scatter.Robj2slave(initcds)
     
     ## Group population vector
-    cat("Send group population vector")
     Rmpi::mpi.bcast.Robj2slave(grouppopvec)
     
     ## Squared-distance matrix
-    cat("Send ssdmat")
     Rmpi::mpi.bcast.Robj2slave(ssdmat)
     
     ## Parameters List
-    cat("Send parameters")
     params <- split(params, f=1:nrow(params))
     Rmpi::mpi.scatter.Robj2slave(params)
     
     ## Send ecutsMPI function to slaves
-    cat("Send ecutsMPI")
     Rmpi::mpi.bcast.Robj2slave(ecutsMPI)
     
     ## Send ecutsAppend function to slaves
-    cat("Send ecutsAppend")
     Rmpi::mpi.bcast.Robj2slave(ecutsAppend)
     
     ## Execute ecutsMPI program on each slave
-    cat("Execute ecutsMPI")
     Rmpi::mpi.bcast.cmd(ecutsMPI(procID, params, adjobj, popvec, initcds, swaps))
     
     ## Close slaves
