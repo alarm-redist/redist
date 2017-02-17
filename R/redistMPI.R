@@ -913,7 +913,7 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
     
     ## Execute ecutsMPI program on each slave
     cat("Execute ecutsMPI")
-    Rmpi::mpi.bcast.cmd(ecutsMPI())
+    Rmpi::mpi.bcast.cmd(ecutsMPI(procID, params, adjobj, popvec, initcds, swaps))
     
     ## Close slaves
     Rmpi::mpi.close.Rslaves()
