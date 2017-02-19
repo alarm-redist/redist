@@ -421,7 +421,7 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
           }
           
           ## Save swaps
-          save(swaps,file = paste0(savename, "_swaps.RData")
+          save(swaps,file = paste0(savename, "_swaps.RData"))
           
         }else if(!is.null(savename)){
             save(algout, file = paste(savename, "_chain",
