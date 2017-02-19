@@ -478,6 +478,7 @@ redist.combine <- function(savename, nsims, nloop, nthin, nunits, temper = 0
                          ncol = (nsims * nloop / nthin))
 
     distance_parity <- rep(NA, (nsims * nloop / nthin))
+    distance_original <- rep(NA, (nsims * nloop / nthin))
     mhdecisions <- rep(NA, (nsims * nloop / nthin))
     mhprob <- rep(NA, (nsims * nloop / nthin))
     pparam <- rep(NA, (nsims * nloop / nthin))
@@ -509,6 +510,7 @@ redist.combine <- function(savename, nsims, nloop, nthin, nunits, temper = 0
         partitions[1:nunits, ind] <- algout$partitions[,indthin]
 
         distance_parity[ind] <- algout$distance_parity[indthin]
+        distance_original[ind] <- algout$distance_original[indthin]
         mhdecisions[ind] <- algout$mhdecisions[indthin]
         mhprob[ind] <- algout$mhprob[indthin]
         pparam[ind] <- algout$pparam[indthin]
@@ -535,6 +537,7 @@ redist.combine <- function(savename, nsims, nloop, nthin, nunits, temper = 0
     }
     algout$partitions <- partitions
     algout$distance_parity <- distance_parity
+    algout$distance_original <- distance_original
     algout$mhdecisions <- mhdecisions
     algout$mhprob <- mhprob
     algout$pparam <- pparam

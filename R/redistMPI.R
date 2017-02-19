@@ -568,7 +568,7 @@ redist.combine.mpi <- function(savename, nsims, nloop, nthin, nunits, tempadj){
         partitions[1:nunits, ind] <- algout$partitions[,indthin]
         
         distance_parity[ind] <- algout$distance_parity[indthin]
-        distance_original[ind] <- algout$distance_original
+        distance_original[ind] <- algout$distance_original[indthin]
         mhdecisions[ind] <- algout$mhdecisions[indthin]
         mhprob[ind] <- algout$mhprob[indthin]
         pparam[ind] <- algout$pparam[indthin]
