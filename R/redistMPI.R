@@ -183,11 +183,11 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                 load(paste(savename,"_proc", procID, "_loop", i - 1, ".RData", sep = ""))
                 
                 ## Load the temperature adjacency matrix (need to specify WD)
-                load(paste(dirname(savename),"tempadjMat.RData"))
+                load(paste0(savename,"_tempadjMat.RData"))
                 tempadj <- tempadjMat[nrow(tempadjMat),]
                 
                 ## Load the swapping schedule (need to specify WD)
-                load(paste(dirname(savename),"swaps.RData"))
+                load(paste0(savename,"_swaps.RData"))
                 
                 ## Stop if number of simulations per loop is different
                 if(nsims != ncol(algout[[1]])){
@@ -417,11 +417,11 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                                       i, ".RData", sep = ""))
           ## Save temperature adjacency matrix
           if(adjswaps){
-              save(tempadjMat,file = "tempadjMat.RData")
+              save(tempadjMat, file = paste0(savename, "_tempadjMat.RData"))
           }
           
           ## Save swaps
-          save(swaps,file = "swaps.RData")
+          save(swaps,file = paste0(savename, "_swaps.RData")
           
         }else if(!is.null(savename)){
             save(algout, file = paste(savename, "_chain",
