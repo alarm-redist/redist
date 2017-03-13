@@ -108,4 +108,3 @@ Alternative to the Data Augmentation Algorithm for Creating a Few Imputations
 when Fractions of Missing Information are Modest: the SIR Algorithm."
 Journal of the American Statistical Association.
 }
-

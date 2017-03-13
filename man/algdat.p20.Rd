@@ -41,4 +41,3 @@ Working Paper. Available at
 Massey, Douglas and Nancy Denton. (1987) "The Dimensions of Social Segregation".
 Social Forces.
 }
-

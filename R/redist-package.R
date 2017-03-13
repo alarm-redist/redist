@@ -17,7 +17,7 @@
 #' Date: \tab 2016-12-28\cr License: \tab GPL (>= 2)\cr }
 #'
 #' @name redist-package
-#' @useDynLib redist
+#' @useDynLib redist, .registration = TRUE
 #' @aliases redist-package redist
 #' @docType package
 #' @author Benjamin Fifield, Department of Politics, Princeton University

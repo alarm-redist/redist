@@ -4,3 +4,4 @@ README.md
 \.travis\.yml
 \.DS_Store
 \.\.Rcheck
+builder.sh
