@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Build documentation, compile C++ attributes
-R -e 'library(tools);sink("src/redist_init.c");package_native_routine_registration_skeleton(".");sink()'
-R -e 'library(devtools);document()'
+R -e 'sink("src/redist_init.c");tools::package_native_routine_registration_skeleton(".");sink()'
+R -e 'devtools::document()'
 R -e 'library(Rcpp);compileAttributes(verbose = TRUE)'
 
 # Clean up src folder before build
