@@ -267,7 +267,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
             stop("Provide squared distances matrix if constraining compactness")
         }
     }else if(is.null(ssdmat)){
-        ssdmat <- matrix(1, length(adjlist), length(adjlist))
+        ssdmat <- matrix(1, 2, 2)
     }
     cat("Finish creating ssdmat.\n")
 
@@ -788,7 +788,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
     
     #####################
     ## Preprocess data ##
-#####################
+    #####################
     cat("Start preprocessing.\n")
     preprocout <- redist.preproc(adjobj = adjobj, popvec = popvec,
                                  initcds = initcds, ndists = ndists,
