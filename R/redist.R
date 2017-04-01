@@ -66,6 +66,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ############################################
     ## If not a list, convert adjlist to list ##
     ############################################
+    cat("Convert to list.\n")
     if(!is.list(adjobj)){
 
         ## If a matrix, check to see if adjacency matrix
@@ -149,10 +150,12 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         }
         
     }
+    cat("Converted to list.\n")
 
     ###################################################################
     ## Check whether initial partitions (if provided) are contiguous ##
     ###################################################################
+    cat("Check contiguity.\n")
     if(!is.null(initcds)){
         if(!is.na(initcds)[1]){
             ndists <- length(unique(initcds))
@@ -166,13 +169,14 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
             }
         }
     }
+    cat("Checked contiguity.\n")
 
     ##############################################################################
     ## If no initial congressional districts provided, use Random Seed and Grow ##
     ## (Chen and Rodden 2013) algorithm                                         ##
     ##############################################################################
     if(is.null(initcds)){
-
+        cat("Try RSG.\n")
         ## Set up target pop, strength of constraint (10%)
         if(is.null(popcons)){
             popcons_rsg <- .1
@@ -196,6 +200,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
                               maxiter = maxiterrsg)
         ## Get initial cds
         initcds <- initout$district_membership
+        cat("Finished RSG.\n")
         
     }
 
@@ -225,16 +230,19 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ####################
     ## Zero-index cds ##
     ####################
+    cat("Zero-index.\n")
     if(min(initcds) != 0){
         initcds <- initcds - min(initcds)
     }
     if(length(unique(initcds)) != (max(initcds) + 1)){
         stop("Need congressional assignment ids to be sequence increasing by 1")
     }
+    cat("Zero-indexed.\n")
 
     ####################################################
     ## Calculate parity and population margin allowed ##
     ####################################################
+    cat("Smaller checks.\n")
     dists <- length(unique(initcds))
     if(is.null(popcons)){
         popcons <- 100
@@ -387,7 +395,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
                        )
 
     class(preprocout) <- "redist"
-    
+    cat("Smaller checks finished.\n")
     return(preprocout)
     
 }
@@ -776,7 +784,8 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
     
     #####################
     ## Preprocess data ##
-    #####################
+#####################
+    cat("Start preprocessing.\n")
     preprocout <- redist.preproc(adjobj = adjobj, popvec = popvec,
                                  initcds = initcds, ndists = ndists,
                                  popcons = popcons,
@@ -787,6 +796,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                                  betaweights = betaweights,
                                  adjswaps = adjswaps, maxiterrsg = maxiterrsg,
                                  contiguitymap = contiguitymap)
+    cat("End preprocessing.\n")
 
     ## Set betas - if tempering, modified later
     betapop <- preprocout$params$betapop
@@ -866,6 +876,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
         }        
 
         ## Run algorithm
+        cat("Start algorithm.\n")
         algout <- swMH(aList = preprocout$data$adjlist,
                        cdvec = cds,
                        cdorigvec = preprocout$data$initcds,
@@ -890,6 +901,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                        exact_mh = exact_mh,
                        adapt_lambda = adapt_lambda,
                        adapt_eprob = adapt_eprob)
+        cat("End algorithm.\n")
 
         class(algout) <- "redist"
 
