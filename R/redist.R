@@ -258,6 +258,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ################################
     ## Set ssdmat if not provided ##
     ################################
+    cat("Create ssdmat.\n")
     if(is.null(ssdmat) & constraint == "compact"){
         if(class(adjobj) == "SpatialPolygonsDataFrame"){
             centroids <- coordinates(adjobj)
@@ -268,6 +269,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     }else if(is.null(ssdmat)){
         ssdmat <- matrix(1, length(adjlist), length(adjlist))
     }
+    cat("Finish creating ssdmat.\n")
 
     ########################
     ## Set up constraints ##
@@ -368,10 +370,12 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ## Convert adjacent swaps flag to 0/1 ##
     ########################################
     adjswaps <- adjswaps * 1
+    cat("Smaller checks finished.\n")
 
     #################
     ## Return list ##
     #################
+    cat("Create output list.\n")
     preprocout <- list(data = list(adjlist = adjlist,
                            popvec = popvec,
                            initcds = initcds,
@@ -395,7 +399,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
                        )
 
     class(preprocout) <- "redist"
-    cat("Smaller checks finished.\n")
+    cat("Created output list.\n")
     return(preprocout)
     
 }
