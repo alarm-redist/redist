@@ -172,7 +172,6 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ## (Chen and Rodden 2013) algorithm                                         ##
     ##############################################################################
     if(is.null(initcds)){
-
         ## Set up target pop, strength of constraint (10%)
         if(is.null(popcons)){
             popcons_rsg <- .1
@@ -258,7 +257,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
             stop("Provide squared distances matrix if constraining compactness")
         }
     }else if(is.null(ssdmat)){
-        ssdmat <- matrix(1, length(adjlist), length(adjlist))
+        ssdmat <- matrix(1, 2, 2)
     }
 
     ########################
@@ -387,7 +386,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
                        )
 
     class(preprocout) <- "redist"
-    
+
     return(preprocout)
     
 }
