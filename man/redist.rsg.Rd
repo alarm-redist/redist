@@ -85,11 +85,6 @@ population <- rep(300,length(adj.list))
 tmp <- redist.rsg(adj.list, population, 10, 0.05)
 }
 }
-\references{
-Jowei Chen and Jonathan Rodden (2013) ``Unintentional
-Gerrymandering: Political Geography and Electoral Bias in Legislatures.''
-Quarterly Journal of Political Science. 8(3): 239-269.
-}
 \author{
 Benjamin Fifield, Department of Politics, Princeton University
 \email{bfifield@princeton.edu}, \url{http://www.benfifield.com}
@@ -106,3 +101,9 @@ James Lo, \email{jameslo@princeton.edu}
 Alexander Tarr, Department of Electrical Engineering, Princeton University
 \email{atarr@princeton.edu}
 }
+\references{
+Jowei Chen and Jonathan Rodden (2013) ``Unintentional
+Gerrymandering: Political Geography and Electoral Bias in Legislatures.''
+Quarterly Journal of Political Science. 8(3): 239-269.
+}
+

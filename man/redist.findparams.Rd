@@ -7,6 +7,7 @@
 redist.findparams(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
 adapt_lambda = FALSE, adapt_eprob = FALSE,
 params, ssdmat = NULL, grouppopvec = NULL,
+nstartval_store, maxdist_startval,
 maxiterrsg = 5000, report_all = TRUE,
 parallel = FALSE, nthreads = NULL, verbose = TRUE)
 }
@@ -42,6 +43,12 @@ units. The default is \code{NULL}.}
 
 \item{grouppopvec}{A vector of populations for some sub-group of
 interest. The default is \code{NULL}.}
+
+\item{nstartval_store}{The number of maps to sample from the preprocessing chain
+for use as starting values in future simulations. Default is 1.}
+
+\item{maxdist_startval}{The maximum distance from the starting map that
+sampled maps should be. Default is 100 (no restriction).}
 
 \item{maxiterrsg}{Maximum number of iterations for random seed-and-grow
 algorithm to generate starting values. Default is 5000.}
@@ -95,3 +102,4 @@ Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte
 Carlo." Working Paper. Available at
 \url{http://imai.princeton.edu/research/files/redist.pdf}.
 }
+

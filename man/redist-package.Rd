@@ -2,8 +2,8 @@
 % Please edit documentation in R/redist-package.R
 \docType{package}
 \name{redist-package}
-\alias{redist-package}
 \alias{redist}
+\alias{redist-package}
 \title{Markov Chain Monte Carlo Methods for Redistricting Simulation}
 \description{
 Enables researchers to sample redistricting plans from a pre-specified
@@ -23,19 +23,6 @@ Chain Monte Carlo,'' working paper available at
 Version: \tab 1.3-1\cr
 Date: \tab 2016-12-28\cr License: \tab GPL (>= 2)\cr }
 }
-\references{
-Barbu, Adrian and Song-Chun Zhu. (2005) "Generalizing Swendsen-Wang to
-Sampling Arbitrary Posterior Probabilities." IEEE Transactions on
-Pattern Analysis and Machine Intelligence.
-
-Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander
-Tarr. (2016) "A New Automated Redistricting Simulator Using Markov
-Chain Monte Carlo." \emph{Working Paper.} Available at
-\url{http://imai.princeton.edu/research/files/redist.pdf}.
-
-Swendsen, Robert and Jian-Sheng Wang. (1987) "Nonuniversal Critical
-Dynamics in Monte Carlo Simulations." Physical Review Letters.
-}
 \author{
 Benjamin Fifield, Department of Politics, Princeton University
 \email{bfifield@princeton.edu}, \url{http://www.benfifield.com}
@@ -51,4 +38,18 @@ Kosuke Imai, Department of Politics, Princeton University
 
 Maintainer: Ben Fifield <bfifield@princeton.edu>
 }
+\references{
+Barbu, Adrian and Song-Chun Zhu. (2005) "Generalizing Swendsen-Wang to
+Sampling Arbitrary Posterior Probabilities." IEEE Transactions on
+Pattern Analysis and Machine Intelligence.
+
+Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander
+Tarr. (2016) "A New Automated Redistricting Simulator Using Markov
+Chain Monte Carlo." \emph{Working Paper.} Available at
+\url{http://imai.princeton.edu/research/files/redist.pdf}.
+
+Swendsen, Robert and Jian-Sheng Wang. (1987) "Nonuniversal Critical
+Dynamics in Monte Carlo Simulations." Physical Review Letters.
+}
 \keyword{package}
+

@@ -71,3 +71,4 @@ using multiple sequences (with discussion)." Statistical Science.
 Plummer, Martin, Nicky Best, Kate Cowles and Karen Vines. (2006) "CODA:
 Convergence Diagnosis and Output Analysis for MCMC." R News.
 }
+

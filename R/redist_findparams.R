@@ -9,7 +9,8 @@
 
 run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
                      ssdmat, grouppopvec, names, maxiterrsg, report_all,
-                     adapt_lambda, adapt_eprob){
+                     adapt_lambda, adapt_eprob,
+                     nstartval_store, maxdist_startval){
     
     ## Get this iteration
     p_sub <- params[i,]
@@ -76,6 +77,10 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
     if(adapt_lambda){
         final_lambda <- out$final_lambda
     }
+
+    ## Sample districts for use as starting values
+    inds <- which(out$distance_original < maxdist_startval)
+    startval <- as.matrix(out$partitions[,sample(inds, nstartval_store)])
     
     ## Get quantiles
     quant <- floor(nsims / 4)
@@ -159,8 +164,8 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
             "\n")
     }
     out <- paste0(out, "########################################\n\n")
-
-    return(out)
+    
+    return(list(printout = out, startval = startval))
 
 }
 
@@ -172,6 +177,7 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 #' @usage redist.findparams(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
 #' adapt_lambda = FALSE, adapt_eprob = FALSE,
 #' params, ssdmat = NULL, grouppopvec = NULL,
+#' nstartval_store, maxdist_startval,
 #' maxiterrsg = 5000, report_all = TRUE,
 #' parallel = FALSE, nthreads = NULL, verbose = TRUE)
 #'
@@ -197,6 +203,10 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 #' units. The default is \code{NULL}.
 #' @param grouppopvec A vector of populations for some sub-group of
 #' interest. The default is \code{NULL}.
+#' @param nstartval_store The number of maps to sample from the preprocessing chain
+#' for use as starting values in future simulations. Default is 1.
+#' @param maxdist_startval The maximum distance from the starting map that
+#' sampled maps should be. Default is 100 (no restriction).
 #' @param maxiterrsg Maximum number of iterations for random seed-and-grow
 #' algorithm to generate starting values. Default is 5000.
 #' @param report_all Whether to report all summary statistics for each set of
@@ -240,6 +250,7 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                               adapt_lambda = FALSE, adapt_eprob = FALSE,
                               params, ssdmat = NULL, grouppopvec = NULL,
+                              nstartval_store = 1, maxdist_startval = 100,
                               maxiterrsg = 5000, report_all = TRUE,
                               parallel = FALSE, nthreads = NULL, verbose = TRUE){
 
@@ -301,7 +312,7 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
         registerDoParallel(cl)
         
         ## Execute foreach loop
-        printout <- foreach(i = 1:trials, .combine = paste,
+        ret <- foreach(i = 1:trials, 
                             .verbose = verbose,
                             .export = c("params", "adjobj", "popvec", "nsims",
                                 "ndists", "initcds", "ssdmat",
@@ -316,12 +327,20 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
             ## Return values
             return(out)
             
+                                }
+
+        printout <- c()
+        startval <- vector(mode = "list", length = trials)
+        for(i in 1:trials){
+            printout <- paste(printout, ret[[i]]$printout)
+            startval[[i]] <- ret[[i]]$startval
         }
 
     }else{ ## Sequential
 
         ## Create container for report
         printout <- c()
+        startval <- vector(mode = "list", length = trials)
         
         ## Start loop over parameter values
         for(i in 1:trials){
@@ -329,10 +348,12 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
             ## Run simulations
             out <- run_sims(i, params, adjobj, popvec, nsims, ndists, initcds,
                             ssdmat, grouppopvec, names, maxiterrsg, report_all,
-                            adapt_lambda, adapt_eprob)
+                            adapt_lambda, adapt_eprob,
+                            nstartval_store, maxdist_startval)
             
             ## Add to printout
-            printout <- paste(printout, out)
+            printout <- paste(printout, out$printout)
+            startval[[i]] <- out$startval
             
         }
         
@@ -343,6 +364,7 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
     }
 
     cat(printout)
+    return(list(diagnostics = printout, startvals = startval))
 
 }
 
