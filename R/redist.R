@@ -559,6 +559,7 @@ redist.combine <- function(savename, nsims, nloop, nthin, nunits, temper = 0
     ## Save object ##
     #################
     save(algout, file = paste(savename, ".RData", sep = ""))
+    return(algout)
     
 }
 
