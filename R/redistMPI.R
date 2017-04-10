@@ -610,6 +610,7 @@ redist.combine.mpi <- function(savename, nsims, nloop, nthin, nunits, tempadj){
     ## Save object ##
     #################
     save(algout, file = paste(savename, ".RData", sep = ""))
+    return(algout)
     
 }
 
