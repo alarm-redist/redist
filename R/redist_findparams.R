@@ -13,7 +13,7 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
                      nstartval_store, maxdist_startval){
     
     ## Get this iteration
-    p_sub <- params[i,]
+    p_sub <- as.data.frame(params[i,])
 
     ## Set parameter values
     if("eprob" %in% names){
@@ -79,8 +79,13 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
     }
 
     ## Sample districts for use as starting values
-    inds <- which(out$distance_original < maxdist_startval)
-    startval <- as.matrix(out$partitions[,sample(inds, nstartval_store)])
+    inds <- which(1 - out$distance_original < maxdist_startval)
+    if(length(inds) == 0){
+        cat(paste0("No maps available under parameter set ", i, ".\n")
+        startval <- NULL
+    }else{
+        startval <- as.matrix(out$partitions[,sample(inds, nstartval_store)])
+    }
     
     ## Get quantiles
     quant <- floor(nsims / 4)
@@ -206,7 +211,7 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 #' @param nstartval_store The number of maps to sample from the preprocessing chain
 #' for use as starting values in future simulations. Default is 1.
 #' @param maxdist_startval The maximum distance from the starting map that
-#' sampled maps should be. Default is 100 (no restriction).
+#' sampled maps should be. Default is 100 (no restriction). 
 #' @param maxiterrsg Maximum number of iterations for random seed-and-grow
 #' algorithm to generate starting values. Default is 5000.
 #' @param report_all Whether to report all summary statistics for each set of
