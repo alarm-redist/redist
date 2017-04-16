@@ -317,23 +317,18 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
         registerDoParallel(cl)
         
         ## Execute foreach loop
-        ret <- foreach(i = 1:trials, 
-                            .verbose = verbose,
-                            .export = c("params", "adjobj", "popvec", "nsims",
-                                "ndists", "initcds", "ssdmat",
-                                "grouppopvec", "names",
-                                "maxiterrsg", "report_all", "run_sims", "adapt_lambda", "adapt_eprob",
-                                "nstartval_store", "maxdist_startval")) %dopar% {
+        ret <- foreach(i = 1:trials, .verbose = verbose) %dopar% {
 
             ## Run simulations
             out <- run_sims(i, params, adjobj, popvec, nsims, ndists, initcds,
                             ssdmat, grouppopvec, names, maxiterrsg, report_all,
-                            adapt_lambda, adapt_eprob)
+                            adapt_lambda, adapt_eprob,
+                            nstartval_store, maxdist_startval)
             
             ## Return values
             return(out)
             
-                                }
+        }
 
         printout <- c()
         startval <- vector(mode = "list", length = trials)
