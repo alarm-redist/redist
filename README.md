@@ -17,7 +17,7 @@ Users can also install the most stable development release of the `redist` packa
 
 ```
 library(devtools)
-install_devtools("kosukeimai/redist")
+install_github("redistricting/redist")
 ```
 
 ## src Folder
