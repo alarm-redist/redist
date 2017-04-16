@@ -81,7 +81,7 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
     ## Sample districts for use as starting values
     inds <- which(1 - out$distance_original < maxdist_startval)
     if(length(inds) == 0){
-        cat(paste0("No maps available under parameter set ", i, ".\n")
+        cat(paste0("No maps available under parameter set ", i, ".\n"))
         startval <- NULL
     }else{
         startval <- as.matrix(out$partitions[,sample(inds, nstartval_store)])
