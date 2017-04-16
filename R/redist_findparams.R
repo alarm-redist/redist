@@ -322,7 +322,8 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
                             .export = c("params", "adjobj", "popvec", "nsims",
                                 "ndists", "initcds", "ssdmat",
                                 "grouppopvec", "names",
-                                "maxiterrsg", "report_all", "run_sims", "adapt_lambda", "adapt_eprob")) %dopar% {
+                                "maxiterrsg", "report_all", "run_sims", "adapt_lambda", "adapt_eprob",
+                                "nstartval_store", "maxdist_startval")) %dopar% {
 
             ## Run simulations
             out <- run_sims(i, params, adjobj, popvec, nsims, ndists, initcds,
