@@ -9,7 +9,8 @@
 // Header files
 #include <RcppArmadillo.h>
 #include <RcppArmadilloExtensions/sample.h>
-#include <time.h> 
+#include <time.h>
+#include <R.h>
 #include "sw_mh_helper.h"
 #include "make_swaps_helper.h"
 #include "constraint_calc_helper.h"
@@ -40,9 +41,10 @@ List swMH(List aList,
 	  int anneal_beta_compact = 0,
 	  int anneal_beta_segregation = 0,
 	  int anneal_beta_similar = 0,
-	  int adapt_lambda = 1,
 	  int adjswap = 1,
-	  int exact_mh = 0)
+	  int exact_mh = 0,
+	  int adapt_eprob = 0,
+	  int adapt_lambda = 0)
 {
 
   /* Inputs to function:
@@ -139,7 +141,9 @@ List swMH(List aList,
   // Set counter variable
   int k = 0;
   // For storing beta sequence
-  int z = 0; 
+  int z = 0;
+  // For printing progress
+  int nsims_10pct = ceil((double)nsims / 10);
 
   // Store outputted congressional districts
   NumericMatrix cd_store(cdvec.size(), nsims);
@@ -147,6 +151,7 @@ List swMH(List aList,
   // Store metropolis-hastings decisions for swaps
   NumericVector decision_store(nsims);
   NumericVector mhprob_store(nsims);
+  int decision_counter = 0;
 
   // Store value of psi for all constraints
   NumericVector psipop_store(nsims);
@@ -504,6 +509,7 @@ List swMH(List aList,
 
     // Store the decision
     decision_store[k] = decision;
+    decision_counter += decision;
     
     mhprob_store[k] = as<double>(swap_partitions["mh_prob"]);
 
@@ -511,11 +517,36 @@ List swMH(List aList,
     k++;
     z++;
 
-    // Print k
-    Rcout << k << std::endl;
-
+    // Print Progress
+    if(k % nsims_10pct == 0){
+      Rcout << (double)k / nsims_10pct * 10 << " percent done." << std::endl;
+      Rcout << "Metropolis acceptance ratio: "<< (double)decision_counter / (k-1) << std::endl << std::endl;
+    }
+  
+    // Change eprob, lambda if adaptive
+    if(adapt_eprob == 1 || adapt_lambda == 1){
+      if(k % 50 == 0){
+	if((double)decision_counter / (k-1) > .4){
+	  if(adapt_lambda == 1 && lambda < floor((double)aList.size() / 10)){
+	    lambda++;
+	  }
+	  if(adapt_eprob == 1 && eprob < .5){
+	    eprob = eprob + .01;
+	  }
+	}
+	if((double)decision_counter / (k-1) < .2){
+	  if(adapt_lambda == 1 && lambda > 0){
+	    lambda--;
+	  }
+	  if(adapt_eprob == 1 && eprob > 0){
+	    eprob = eprob - .01;
+	  }
+	}
+      }
+    }
+        
   }
-
+  
   // Get distance from parity of each partition
   NumericVector dist_parity_vec = distParity(cd_store, popvec);
 
@@ -541,8 +572,14 @@ List swMH(List aList,
     out["mhdecisions_beta"] = decision_betaseq_store;
     out["mhprob_beta"] = mhprob_betaseq_store;
   }
+  if(adapt_eprob == 1){
+    out["final_eprob"] = eprob;
+  }
+  if(adapt_lambda == 1){
+    out["final_lambda"] = lambda;
+  }
   
   return out;
-
+  
 }
 

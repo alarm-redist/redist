@@ -958,7 +958,8 @@ IntegerVector findUpperAllocs(int myNumConnComps, int myNumLow, IntegerVector my
   
   //numPartConnComps will determine where we can allocate
   IntegerVector numPartConnComps(myNumConnComps - 1);
-    
+  float test;
+  
   //Generate all ways to create diffBlocks more blocks by further partitioning connected components.
   //First, see how many blocks of size at least myNumLow can be created within each connected component.  
   for(int j = 0; j < myNumConnComps-1; j++){
@@ -969,7 +970,8 @@ IntegerVector findUpperAllocs(int myNumConnComps, int myNumLow, IntegerVector my
       numPartConnComps[j] = myCompConnCompLengths[j];
     }
     else{
-      numPartConnComps[j] = (int)floor(myCompConnCompLengths[j]/myNumLow);
+      test = (float)myCompConnCompLengths[j]/myNumLow;
+      numPartConnComps[j] = (int)floor(test);
     }
     
     if(numPartConnComps[j] >= 1){

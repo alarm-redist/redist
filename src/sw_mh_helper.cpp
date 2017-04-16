@@ -108,6 +108,7 @@ List genAlConn(List aList,
 
 /* Function to identify which precincts lie on the boundary of a congressional
    district */
+// [[Rcpp::export]]
 NumericVector findBoundary(List fullList,
 			   List conList)
 {
