@@ -79,6 +79,7 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
     }
 
     ## Sample districts for use as starting values
+    ## Divide equally by distance
     inds <- which(1 - out$distance_original < maxdist_startval)
     cuts <- c(0, round(quantile(1:length(inds), (1:nstartval_store)/nstartval_store)))
     if(length(inds) == 0){
