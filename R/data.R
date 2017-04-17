@@ -1,4 +1,4 @@
-#' All Partitions of 25 Precincts into 3 Congressional Districts
+##' All Partitions of 25 Precincts into 3 Congressional Districts
 #' (No Population Constraint)
 #'
 #' This data set contains demographic and geographic information about 25
