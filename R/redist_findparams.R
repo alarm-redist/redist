@@ -80,11 +80,17 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 
     ## Sample districts for use as starting values
     inds <- which(1 - out$distance_original < maxdist_startval)
+    cuts <- c(0, round(quantile(1:length(inds), (1:nstartval_store)/nstartval_store)))
     if(length(inds) == 0){
         cat(paste0("No maps available under parameter set ", i, ".\n"))
         startval <- NULL
     }else{
-        startval <- as.matrix(out$partitions[,sample(inds, nstartval_store)])
+        startval <- matrix(NA, nrow(out$partitions), nstartval_store)
+        for(i in 1:nstartval_store){
+            sub <- inds[inds > cuts[i] & inds <= cuts[i+1]]
+            startval[,i] <- out$partitions[,sample(sub, 1)]
+        }
+        startval <- as.matrix(startval)
     }
     
     ## Get quantiles
