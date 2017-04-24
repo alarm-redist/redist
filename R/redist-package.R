@@ -56,5 +56,5 @@
 #' @importFrom doParallel registerDoParallel
 #' @importFrom foreach foreach %dopar%
 #' @importFrom grDevices dev.off pdf
-#' @importFrom stats median runif
+#' @importFrom stats median runif quantile
 NULL
