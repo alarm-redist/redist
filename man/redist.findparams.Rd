@@ -9,7 +9,7 @@ adapt_lambda = FALSE, adapt_eprob = FALSE,
 params, ssdmat = NULL, grouppopvec = NULL,
 nstartval_store, maxdist_startval,
 maxiterrsg = 5000, report_all = TRUE,
-parallel = FALSE, nthreads = NULL, verbose = TRUE)
+parallel = FALSE, nthreads = NULL, log = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{adjobj}{An adjacency matrix, list, or object of class
@@ -61,6 +61,9 @@ Default is \code{FALSE}.}
 
 \item{nthreads}{Number of parallel tasks to run, declared outside of the
 function. Default is \code{NULL}.}
+
+\item{log}{Whether to open a log to track progress for each parameter combination
+being tested. Default is FALSE.}
 
 \item{verbose}{Whether to print additional information about the tests.
 Default is \code{TRUE}.}

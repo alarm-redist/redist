@@ -10,11 +10,17 @@
 run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
                      ssdmat, grouppopvec, names, maxiterrsg, report_all,
                      adapt_lambda, adapt_eprob,
-                     nstartval_store, maxdist_startval){
+                     nstartval_store, maxdist_startval, log){
     
     ## Get this iteration
     p_sub <- as.data.frame(params[i,])
-
+    if(log){
+        sink(paste0("log_", i, ".txt"))
+        cat("Parameter Values:\n")
+        cat(c(p_sub))
+        cat("\n")
+    }
+    
     ## Set parameter values
     if("eprob" %in% names){
         eprob <- p_sub$eprob
@@ -176,6 +182,9 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
             "\n")
     }
     out <- paste0(out, "########################################\n\n")
+    if(log){
+        sink()
+    }
     
     return(list(printout = out, startval = startval))
 
@@ -191,7 +200,7 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 #' params, ssdmat = NULL, grouppopvec = NULL,
 #' nstartval_store, maxdist_startval,
 #' maxiterrsg = 5000, report_all = TRUE,
-#' parallel = FALSE, nthreads = NULL, verbose = TRUE)
+#' parallel = FALSE, nthreads = NULL, log = FALSE, verbose = TRUE)
 #'
 #' @param adjobj An adjacency matrix, list, or object of class
 #' "SpatialPolygonsDataFrame."
@@ -227,6 +236,8 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 #' Default is \code{FALSE}.
 #' @param nthreads Number of parallel tasks to run, declared outside of the
 #' function. Default is \code{NULL}.
+#' @param log Whether to open a log to track progress for each parameter combination
+#' being tested. Default is FALSE.
 #' @param verbose Whether to print additional information about the tests.
 #' Default is \code{TRUE}.
 #'
@@ -264,7 +275,7 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
                               params, ssdmat = NULL, grouppopvec = NULL,
                               nstartval_store = 1, maxdist_startval = 100,
                               maxiterrsg = 5000, report_all = TRUE,
-                              parallel = FALSE, nthreads = NULL, verbose = TRUE){
+                              parallel = FALSE, nthreads = NULL, log = FALSE, verbose = TRUE){
 
     ## Get number of trial parameter values to test
     trials <- nrow(params)
@@ -357,7 +368,7 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
             out <- run_sims(i, params, adjobj, popvec, nsims, ndists, initcds,
                             ssdmat, grouppopvec, names, maxiterrsg, report_all,
                             adapt_lambda, adapt_eprob,
-                            nstartval_store, maxdist_startval)
+                            nstartval_store, maxdist_startval, log)
             
             ## Add to printout
             printout <- paste(printout, out$printout)
