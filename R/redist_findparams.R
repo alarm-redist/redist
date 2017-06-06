@@ -341,7 +341,7 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
             out <- run_sims(i, params, adjobj, popvec, nsims, ndists, initcds,
                             ssdmat, grouppopvec, names, maxiterrsg, report_all,
                             adapt_lambda, adapt_eprob,
-                            nstartval_store, maxdist_startval)
+                            nstartval_store, maxdist_startval, log)
             
             ## Return values
             return(out)
