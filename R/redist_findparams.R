@@ -382,7 +382,7 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
         stopCluster(cl)
     }
 
-    cat(printout)
+    cat(paste(printout, collapse = ""))
     return(list(diagnostics = printout, startvals = startval))
 
 }
