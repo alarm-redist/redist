@@ -35,4 +35,4 @@ License: GPL (>= 2)
 SystemRequirements: gmp, libxml2
 Packaged: 2015-06-03 18:32:00 UTC; benfifield
 NeedsCompilation: yes
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1
