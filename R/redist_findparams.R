@@ -10,11 +10,11 @@
 run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
                      ssdmat, grouppopvec, names, maxiterrsg, report_all,
                      adapt_lambda, adapt_eprob,
-                     nstartval_store, maxdist_startval, log){
+                     nstartval_store, maxdist_startval, logarg){
     
     ## Get this iteration
     p_sub <- as.data.frame(params[i,])
-    if(log){
+    if(logarg){
         sink(paste0("log_", i, ".txt"))
         cat("Parameter Values:\n")
         cat(c(p_sub))
@@ -182,7 +182,7 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
             "\n")
     }
     out <- paste0(out, "########################################\n\n")
-    if(log){
+    if(logarg){
         sink()
     }
     
