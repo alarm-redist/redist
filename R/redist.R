@@ -66,6 +66,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ############################################
     ## If not a list, convert adjlist to list ##
     ############################################
+    cat("Start convert to list.\n")
     if(!is.list(adjobj)){
 
         ## If a matrix, check to see if adjacency matrix
@@ -149,10 +150,12 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         }
         
     }
+    cat("End convert to list.\n")
 
     ###################################################################
     ## Check whether initial partitions (if provided) are contiguous ##
     ###################################################################
+    cat("Start check contiguity.\n")
     if(!is.null(initcds)){
         if(!is.na(initcds)[1]){
             ndists <- length(unique(initcds))
@@ -166,11 +169,13 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
             }
         }
     }
+    cat("End check contiguity.\n")
 
     ##############################################################################
     ## If no initial congressional districts provided, use Random Seed and Grow ##
     ## (Chen and Rodden 2013) algorithm                                         ##
     ##############################################################################
+    cat("Start RSG.\n")
     if(is.null(initcds)){
         ## Set up target pop, strength of constraint (10%)
         if(is.null(popcons)){
@@ -197,10 +202,12 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         initcds <- initout$district_membership
         
     }
+    cat("End RSG.\n")
 
     ###########################################################
     ## Check other inputs to make sure they are right length ##
     ###########################################################
+    cat("Start check length of inputs.\n")
     if((length(popvec) != length(adjlist)) | (sum(is.na(popvec)) > 0)){
         stop("Each entry in adjacency list must have a corresponding entry
               in vector of populations")
@@ -220,10 +227,12 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
               list must have corresponding entry in vector of group populations")
         }
     }
+    cat("End check length of inputs.\n")
 
     ####################
     ## Zero-index cds ##
     ####################
+    cat("Start bunch of smaller checks.\n")
     if(min(initcds) != 0){
         initcds <- initcds - min(initcds)
     }
@@ -359,6 +368,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ## Convert adjacent swaps flag to 0/1 ##
     ########################################
     adjswaps <- adjswaps * 1
+    cat("End bunch of smaller checks.\n")
 
     #################
     ## Return list ##
