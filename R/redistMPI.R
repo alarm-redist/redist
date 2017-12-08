@@ -105,6 +105,7 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     nthin <- params$nthin
     
     ## Run redist preprocessing function
+    cat("Start preproc.\n")
     preprocout <- redist.preproc(adjobj = adjobj, popvec = popvec,
                                  initcds = initcds, ndists = ndists,
                                  popcons = popcons,
@@ -115,6 +116,7 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                                  adjswaps = adjswaps,
                                  maxiterrsg = maxiterrsg,
                                  contiguitymap = contiguitymap)
+    cat("End preproc.\n")
 
     ## Set betas - if tempering, modified later
     betapop <- preprocout$params$betapop
@@ -137,7 +139,8 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     loopstart <- loopscompleted + 1
     
     for(i in loopstart:nloop){
-        
+
+        cat("Loop", i, "started.\n")
         if(adjswaps){
             nsimsAdj <- rep(freq,nsims/freq)
         }
