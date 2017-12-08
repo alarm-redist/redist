@@ -215,6 +215,8 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     }
     cat("End population check.\n")
     cat("Start adjlist check.\n")
+    cat("length(initcds) != length(adjlist):", length(initcds) != length(adjlist), "\n")
+    cat("sum(is.na(initcds)) > 0:" , sum(is.na(initcds)) > 0), "\n")
     if((length(initcds) != length(adjlist)) | (sum(is.na(initcds)) > 0)){
         stop("Each entry in adjacency list must have an initial congressional
              district assignment")
