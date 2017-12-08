@@ -208,18 +208,25 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ## Check other inputs to make sure they are right length ##
     ###########################################################
     cat("Start check length of inputs.\n")
+    cat("Start population check.\n")
     if((length(popvec) != length(adjlist)) | (sum(is.na(popvec)) > 0)){
         stop("Each entry in adjacency list must have a corresponding entry
               in vector of populations")
     }
+    cat("End population check.\n")
+    cat("Start adjlist check.\n")
     if((length(initcds) != length(adjlist)) | (sum(is.na(initcds)) > 0)){
         stop("Each entry in adjacency list must have an initial congressional
              district assignment")
     }
+    cat("End adjlist check.\n")
+    cat("Start segregation check.\n")
     if(constraint == "segregation" & is.null(grouppopvec)){
         stop("If applying the segregation constraint, please provide a vector
              of subgroup populations")
     }
+    cat("End segregation check.\n")
+    cat("Start grouppop check.\n")
     if(constraint == "segregation" & !(is.null(grouppopvec))){
         if((length(grouppopvec) != length(adjlist)) |
            (sum(is.na(grouppopvec)) > 0)){
@@ -227,6 +234,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
               list must have corresponding entry in vector of group populations")
         }
     }
+    cat("End grouppop check.\n")
     cat("End check length of inputs.\n")
 
     ####################
