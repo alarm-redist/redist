@@ -23,9 +23,6 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
         cat("redist.mcmc.mpi(): Automated Redistricting Simulation Using
         Markov Chain Monte Carlo w/ Parallel Tempering \n\n", append = TRUE)
     }
-
-    cat("Entered ecutsMPI\n")
-    cat("initcds:", initcds, "\n\n")
     
     ## Extract variables
     if(is.na(grouppopvec)){
@@ -111,7 +108,6 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     nthin <- params$nthin
     
     ## Run redist preprocessing function
-    cat("Start preproc.\n")
     preprocout <- redist.preproc(adjobj = adjobj, popvec = popvec,
                                  initcds = initcds, ndists = ndists,
                                  popcons = popcons,
@@ -122,7 +118,6 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                                  adjswaps = adjswaps,
                                  maxiterrsg = maxiterrsg,
                                  contiguitymap = contiguitymap)
-    cat("End preproc.\n")
 
     ## Set betas - if tempering, modified later
     betapop <- preprocout$params$betapop
@@ -146,7 +141,6 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     
     for(i in loopstart:nloop){
 
-        cat("Loop", i, "started.\n")
         if(adjswaps){
             nsimsAdj <- rep(freq,nsims/freq)
         }
@@ -863,10 +857,6 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
                           contiguitymap = contiguitymap,verbose = verbose,
                           loopscompleted = loopscompleted,rngseed = rngseed,
                           savename = savename)
-
-    cat("Start spawning processes.\n")
-    cat("is.null(initcds):", is.null(initcds), "\n\n")
-    cat(initcds, "\n")
     
     ##################
     ## Spawn Slaves ##
