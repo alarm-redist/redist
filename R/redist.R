@@ -200,6 +200,9 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
                               maxiter = maxiterrsg)
         ## Get initial cds
         initcds <- initout$district_membership
+        cat("length(initcds) after formation:", length(initcds), "\n")
+        cat("class(initcds):", class(initcds), "\n")
+        cat(initcds, "\n")
         
     }
     cat("End RSG.\n")
