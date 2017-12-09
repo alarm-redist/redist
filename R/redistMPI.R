@@ -857,6 +857,10 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
                           loopscompleted = loopscompleted,rngseed = rngseed,
                           savename = savename)
 
+    cat("Start spawning processes.\n")
+    cat("is.null(initcds):", is.null(initcds), "\n\n")
+    cat(initcds, "\n")
+    
     ##################
     ## Spawn Slaves ##
     ##################
