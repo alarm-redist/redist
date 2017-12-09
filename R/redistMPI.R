@@ -815,8 +815,10 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
     ## Augment initcds if necessary
     nrow.init <- ifelse(is.null(initcds), 0, nrow(initcds))
     ncol.init <- ifelse(is.null(initcds), ndists, ncol(initcds))
-    if(nrow.init < betaseqlength){
-        initcds <- rbind(initcds,matrix(NA,betaseqlength-nrow.init,ncol.init))
+    if(!is.null(initcds)){
+        if(nrow.init < betaseqlength){
+            initcds <- rbind(initcds,matrix(NA,betaseqlength-nrow.init,ncol.init))
+        }
     }
     
     ## Generate temperature sequence (power law)
@@ -884,7 +886,11 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
     Rmpi::mpi.bcast.Robj2slave(popvec)
     
     ## Initial Plans
-    initcds <- split(initcds, f=1:nrow(initcds))
+    if(!is.null(initcds)){
+        initcds <- split(initcds, f=1:nrow(initcds))
+    }else{
+        initcds <- rep(NULL, betaseqlength)
+    }
     Rmpi::mpi.scatter.Robj2slave(initcds)
     
     ## Group population vector

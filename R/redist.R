@@ -156,6 +156,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ## Check whether initial partitions (if provided) are contiguous ##
     ###################################################################
     cat("Start check contiguity.\n")
+    cat("is.null(initcds):", is.null(initcds), "\n")
     if(!is.null(initcds)){
         if(!is.na(initcds)[1]){
             ndists <- length(unique(initcds))
