@@ -23,6 +23,9 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
         cat("redist.mcmc.mpi(): Automated Redistricting Simulation Using
         Markov Chain Monte Carlo w/ Parallel Tempering \n\n", append = TRUE)
     }
+
+    cat("Entered ecutsMPI\n")
+    cat("initcds:", initcds, "\n\n")
     
     ## Extract variables
     if(is.na(grouppopvec)){
@@ -100,6 +103,9 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
         savename <- NULL
     }else{
         savename <- params$savename
+    }
+    if(sum(is.na(initcds)) == length(initcds)){
+        initcds <- NULL
     }
 
     nthin <- params$nthin
@@ -811,6 +817,7 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
     ###################
     ## Preprocessing ##
     ###################
+    
   
     ## Augment initcds if necessary
     nrow.init <- ifelse(is.null(initcds), 0, nrow(initcds))
