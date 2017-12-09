@@ -195,9 +195,6 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
                               maxiter = maxiterrsg)
         ## Get initial cds
         initcds <- initout$district_membership
-        cat("length(initcds) after formation:", length(initcds), "\n")
-        cat("class(initcds):", class(initcds), "\n")
-        cat(initcds, "\n")
         
     }
 
@@ -212,14 +209,10 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         stop("Each entry in adjacency list must have an initial congressional
              district assignment")
     }
-    cat("End adjlist check.\n")
-    cat("Start segregation check.\n")
     if(constraint == "segregation" & is.null(grouppopvec)){
         stop("If applying the segregation constraint, please provide a vector
              of subgroup populations")
     }
-    cat("End segregation check.\n")
-    cat("Start grouppop check.\n")
     if(constraint == "segregation" & !(is.null(grouppopvec))){
         if((length(grouppopvec) != length(adjlist)) |
            (sum(is.na(grouppopvec)) > 0)){
