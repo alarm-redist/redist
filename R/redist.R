@@ -176,6 +176,9 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ## (Chen and Rodden 2013) algorithm                                         ##
     ##############################################################################
     cat("Start RSG.\n")
+    cat("is.null(initcds):", is.null(initcds), "\n")
+    cat("class(initcds):", class(initcds), "\n")
+    cat("length(initcds):", length(initcds), "\n")
     if(is.null(initcds)){
         ## Set up target pop, strength of constraint (10%)
         if(is.null(popcons)){
