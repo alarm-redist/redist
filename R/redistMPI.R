@@ -101,6 +101,9 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     }else{
         savename <- params$savename
     }
+    if(sum(is.na(initcds)) == length(initcds)){
+        initcds <- NULL
+    }
 
     nthin <- params$nthin
     
@@ -137,7 +140,7 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     loopstart <- loopscompleted + 1
     
     for(i in loopstart:nloop){
-        
+
         if(adjswaps){
             nsimsAdj <- rep(freq,nsims/freq)
         }
@@ -808,6 +811,7 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
     ###################
     ## Preprocessing ##
     ###################
+    
   
     ## Augment initcds if necessary
     nrow.init <- ifelse(is.null(initcds), 0, nrow(initcds))
@@ -853,7 +857,7 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
                           contiguitymap = contiguitymap,verbose = verbose,
                           loopscompleted = loopscompleted,rngseed = rngseed,
                           savename = savename)
-
+    
     ##################
     ## Spawn Slaves ##
     ##################
