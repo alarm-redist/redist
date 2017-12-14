@@ -11,7 +11,11 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     ## Load redist library
     library(redist)
 
-    fname <- paste("log", procID, sep = "")
+    if(is.na(params$savename)){
+        fname <- paste0("log", procID)
+    }else{
+        fname <- paste0("log", procID, "_", params$savename)
+    }
     
     if(params$verbose){
         sink(fname)
