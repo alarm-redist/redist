@@ -268,7 +268,8 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
             cat("adjswap =", preprocout$params$adjswaps, "\n")
             cat("==================\n\n")
 
-            save(list(
+            cat("Start save.\n")
+            diaglist <- list(
                 aList = preprocout$data$adjlist,
                 cdvec = cds,
                 cdorigvec = preprocout$data$initcds,
@@ -291,7 +292,10 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                 exact_mh = 0,
                 adapt_eprob = 0,
                 adapt_lambda = 0
-            ), file = paste0("data", procID, "_", params$savename))
+            )
+            cat("Created diaglist.\n")
+            save(diaglist, file = paste0("data", procID, "_", params$savename, ".RData"))
+            cat("End save.\n")
                  
             temp <- swMH(aList = preprocout$data$adjlist,
                          cdvec = cds,
