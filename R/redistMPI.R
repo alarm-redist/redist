@@ -53,7 +53,7 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     if(is.na(params$constraintweights)){
         constraintweights <- NULL
     }else{
-        constraintweights <- strsplit(params$constraintweights, ",")[[1]]
+        constraintweights <- as.numeric(strsplit(params$constraintweights, ",")[[1]])
     }
     if(is.na(params$nsims)){
         nsims <- NULL
