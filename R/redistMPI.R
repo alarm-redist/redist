@@ -27,7 +27,8 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
         cat("redist.mcmc.mpi(): Automated Redistricting Simulation Using
         Markov Chain Monte Carlo w/ Parallel Tempering \n\n", append = TRUE)
     }
-    
+
+    cat("Start unpacking.\n")
     ## Extract variables
     if(is.na(grouppopvec)){
         grouppopvec <- NULL
@@ -115,8 +116,10 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     }
 
     nthin <- params$nthin
+    cat("End unpacking.\n")
     
     ## Run redist preprocessing function
+    cat("Start redist.preproc.\n")
     preprocout <- redist.preproc(adjobj = adjobj, popvec = popvec,
                                  initcds = initcds, ndists = ndists,
                                  popcons = popcons,
@@ -150,6 +153,7 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     
     ## Get starting loop value
     loopstart <- loopscompleted + 1
+    cat("End redist.preproc.\n")
     
     for(i in loopstart:nloop){
 
@@ -770,6 +774,7 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
     ##########################
     ## Is anything missing? ##
     ##########################
+    cat("Run checks in wrapper.\n")
     if(missing(adjobj)){
         stop("Please supply adjacency matrix or list")
     }
@@ -789,12 +794,13 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
     if(!is.na(constraint) & is.na(constraintweights)){
         stop("Please provide a weight value in 'constraintweights' for each constraint specified in 'constraint'.")
     }
+    cat("End run checks in wrapper.\n")
     
     ###################
     ## Preprocessing ##
     ###################
-    
-  
+
+    cat("Wrapper preprocessing.\n")
     ## Augment initcds if necessary
     nrow.init <- ifelse(is.null(initcds), 0, nrow(initcds))
     ncol.init <- ifelse(is.null(initcds), ndists, ncol(initcds))
@@ -841,6 +847,7 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
                           contiguitymap = contiguitymap,verbose = verbose,
                           loopscompleted = loopscompleted,rngseed = rngseed,
                           savename = savename)
+    cat("End wrapper preprocessing.\n")
     
     ##################
     ## Spawn Slaves ##
