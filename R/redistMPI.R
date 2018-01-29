@@ -850,7 +850,7 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
                           nthin = nthin,freq = freq,maxiterrsg = maxiterrsg,
                           contiguitymap = contiguitymap,verbose = verbose,
                           loopscompleted = loopscompleted,rngseed = rngseed,
-                          savename = savename)
+                          savename = savename, stringsAsFactors = FALSE)
     print(params)
     cat("End wrapper preprocessing.\n")
     
