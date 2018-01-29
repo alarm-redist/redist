@@ -46,16 +46,20 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     }else{
         freq <- params$freq
     }
+    cat("Unpack constraints.\n")
     if(is.na(params$constraint)){
         constraint <- NULL
     }else{
         constraint <- strsplit(params$constraint, ",")[[1]]
     }
+    cat("End unpack constraints.\n")
+    cat("Start unpack constraintweights.\n")
     if(is.na(params$constraintweights)){
         constraintweights <- NULL
     }else{
         constraintweights <- strsplit(params$constraintweights, ",")[[1]]
     }
+    cat("End unpack constraintweights.\n")
     if(is.na(params$nsims)){
         nsims <- NULL
     }else{
@@ -847,6 +851,7 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
                           contiguitymap = contiguitymap,verbose = verbose,
                           loopscompleted = loopscompleted,rngseed = rngseed,
                           savename = savename)
+    print(params)
     cat("End wrapper preprocessing.\n")
     
     ##################
