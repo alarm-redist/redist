@@ -15,7 +15,7 @@ extern SEXP redist_findBoundary(SEXP, SEXP);
 extern SEXP redist_genAlConn(SEXP, SEXP);
 extern SEXP redist_rsg(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP redist_segregationcalc(SEXP, SEXP, SEXP);
-extern SEXP redist_swMH(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP redist_swMH(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
     {"redist_calcPWDh",              (DL_FUNC) &redist_calcPWDh,               1},
@@ -25,7 +25,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"redist_genAlConn",             (DL_FUNC) &redist_genAlConn,              2},
     {"redist_rsg",                   (DL_FUNC) &redist_rsg,                    6},
     {"redist_segregationcalc",       (DL_FUNC) &redist_segregationcalc,        3},
-    {"redist_swMH",                  (DL_FUNC) &redist_swMH,                  24},
+    {"redist_swMH",                  (DL_FUNC) &redist_swMH,                  22},
     {NULL, NULL, 0}
 };
 
