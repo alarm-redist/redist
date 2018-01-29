@@ -62,8 +62,8 @@ List calc_psipop(arma::vec current_dists,
 
   // Create return object
   List out;
-  out["pop_new_psi"] = psi_new;
-  out["pop_old_psi"] = psi_old;
+  out["pop_new_psi"] = std::sqrt(psi_new);
+  out["pop_old_psi"] = std::sqrt(psi_old);
 
   return out;
 
