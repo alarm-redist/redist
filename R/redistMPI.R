@@ -235,13 +235,35 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
             cat("Swap ", j, "\n", append = TRUE)
             ## Run algorithm
             cat("Start swMH.\n")
-            
-            cat("Beta =", beta, "\n")
+
+            cat("==================\n")
+            cat("Beta =", beta, "\n\n")
             cat("Population weight =", weightpop, "\n")
             cat("Compactness weight =", weightcompact, "\n")
             cat("Segregation weight =", weightseg, "\n")
             cat("Similarity weight =", weightsimilar, "\n")
             cat("Anneal beta =", preprocout$params$temperbeta, "\n")
+            cat("==================\n\n")
+
+            cat("==================\n")
+            cat("nsims =", nsimsAdj[j], "\n")
+            cat("pct_dist_parity =", preprocout$params$pctdistparity, "\n")
+            cat("beta_sequence =", preprocout$params$betaseq, "\n")
+            cat("beta_weights =", preprocout$params$betaseq, "\n")
+            cat("lambda =", lambda, "\n")
+            cat("eprob =", eprob, "\n")
+            cat("adjswap =", preprocout$params$adjswaps, "\n")
+            cat("==================\n\n")
+
+            cat("==================\n")
+            cat("length(adjlist) =", length(preprocout$data$adjlist), "\n")
+            cat("min(adjlist) =", min(unlist(preprocout$data$adjlist)), "\n")
+            cat("length(cds) =", length(cds), "\n")
+            cat("min(cds) =", min(cds), "\n")
+            cat("length(initcds) =", length(initcds), "\n")
+            cat("min(initcds) =", min(initcds), "\n")
+            cat("==================\n")
+            
             temp <- swMH(aList = preprocout$data$adjlist,
                          cdvec = cds,
                          cdorigvec = preprocout$data$initcds,
