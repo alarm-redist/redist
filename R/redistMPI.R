@@ -28,7 +28,6 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
         Markov Chain Monte Carlo w/ Parallel Tempering \n\n", append = TRUE)
     }
 
-    cat("Start unpacking.\n")
     ## Extract variables
     if(is.na(grouppopvec)){
         grouppopvec <- NULL
@@ -46,20 +45,16 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     }else{
         freq <- params$freq
     }
-    cat("Unpack constraints.\n")
     if(is.na(params$constraint)){
         constraint <- NULL
     }else{
         constraint <- strsplit(params$constraint, ",")[[1]]
     }
-    cat("End unpack constraints.\n")
-    cat("Start unpack constraintweights.\n")
     if(is.na(params$constraintweights)){
         constraintweights <- NULL
     }else{
         constraintweights <- strsplit(params$constraintweights, ",")[[1]]
     }
-    cat("End unpack constraintweights.\n")
     if(is.na(params$nsims)){
         nsims <- NULL
     }else{
@@ -120,10 +115,8 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     }
 
     nthin <- params$nthin
-    cat("End unpacking.\n")
     
     ## Run redist preprocessing function
-    cat("Start redist.preproc.\n")
     preprocout <- redist.preproc(adjobj = adjobj, popvec = popvec,
                                  initcds = initcds, ndists = ndists,
                                  popcons = popcons,
@@ -157,7 +150,6 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     
     ## Get starting loop value
     loopstart <- loopscompleted + 1
-    cat("End redist.preproc.\n")
     
     for(i in loopstart:nloop){
 
@@ -242,6 +234,7 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
 
             cat("Swap ", j, "\n", append = TRUE)
             ## Run algorithm
+            cat("Start swMH.\n")
             temp <- swMH(aList = preprocout$data$adjlist,
                          cdvec = cds,
                          cdorigvec = preprocout$data$initcds,
@@ -261,27 +254,18 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                          weight_similar = weightsimilar,
                          anneal_beta = preprocout$params$temperbeta,
                          adjswap = preprocout$params$adjswaps)
+            cat("End swMH.\n")
             
             ## Combine data
+            cat("Start combine data.\n")
             algout <- ecutsAppend(algout,temp)
+            cat("End combine data.\n")
             
             ## Get temperature
             beta <- temp$beta_sequence[nsimsAdj[j]]
             
             ## Get likelihood
-            like <- exp(temp$energy_psi[nsimsAdj[j]])
-            if(constraint == "compact"){
-                like <- exp(temp$constraint_compact[nsimsAdj[j]]) 
-            }
-            else if(constraint == "population"){
-                like <- exp(temp$constraint_pop[nsimsAdj[j]]) 
-            }
-            else if(constraint == "segregation"){
-                like <- exp(temp$constraint_segregation[nsimsAdj[j]]) 
-            }
-            else{
-                like <- exp(temp$constraint_similar[nsimsAdj[j]]) 
-            }
+            like <- temp$energy_psi[nsimsAdj[j]]
             cat("Likelihood is", like, "\n", append = TRUE)
             ## Use MPI to exchange swap information
             ##
@@ -335,8 +319,8 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                     cat("Constraint in likelihood =", log(like), "\n", append = TRUE)
                     cat("Constraint in likelihoodPart =", log(likePart), "\n", append = TRUE)
 
-                    prob <- (like^(-1 * betaPart)*likePart^(-1 * beta))/(like^(-1 * beta)*likePart^(-1 * betaPart))
-
+                    prob <- (exp(-1 * betapart * like) * exp(-1 * beta * likePart)) / (exp(-1 * beta * like) * exp(-1 * betaPart * likePart))
+                    
                     cat("Prob =", prob, "and accept =", accept, "\n", append = TRUE)
                     if(prob > accept){
                         cat("Prob > accept\n", append = TRUE)
@@ -778,7 +762,6 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
     ##########################
     ## Is anything missing? ##
     ##########################
-    cat("Run checks in wrapper.\n")
     if(missing(adjobj)){
         stop("Please supply adjacency matrix or list")
     }
@@ -798,13 +781,11 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
     if(!is.na(constraint) & is.na(constraintweights)){
         stop("Please provide a weight value in 'constraintweights' for each constraint specified in 'constraint'.")
     }
-    cat("End run checks in wrapper.\n")
     
     ###################
     ## Preprocessing ##
     ###################
 
-    cat("Wrapper preprocessing.\n")
     ## Augment initcds if necessary
     nrow.init <- ifelse(is.null(initcds), 0, nrow(initcds))
     ncol.init <- ifelse(is.null(initcds), ndists, ncol(initcds))
@@ -851,8 +832,6 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
                           contiguitymap = contiguitymap,verbose = verbose,
                           loopscompleted = loopscompleted,rngseed = rngseed,
                           savename = savename, stringsAsFactors = FALSE)
-    print(params)
-    cat("End wrapper preprocessing.\n")
     
     ##################
     ## Spawn Slaves ##
