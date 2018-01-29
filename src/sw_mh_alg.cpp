@@ -91,8 +91,6 @@ List swMH(List aList,
 
   */
 
-  Rcpp::Rcout << "In swMH" << std::endl;
-
   // Preprocess vector of congressional district assignments
   if(min(cdvec) == 1){
     for(int i = 0; i < cdvec.size(); i++){

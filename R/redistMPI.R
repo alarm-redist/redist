@@ -33,7 +33,7 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
         grouppopvec <- NULL
     }
     if(is.na(ssdmat)){
-        ssdmat <- NULL
+        ssdmat <- matrix(1, 2, 2)
     }
     if(is.na(params$adjswaps)){
         adjswaps <- NULL
