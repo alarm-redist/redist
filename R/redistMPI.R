@@ -233,70 +233,8 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
         for(j in 1:length(nsimsAdj)){
 
             cat("Swap ", j, "\n", append = TRUE)
+
             ## Run algorithm
-            cat("Start swMH.\n")
-
-            cat("==================\n")
-            cat("length(adjlist) =", length(preprocout$data$adjlist), "\n")
-            cat("min(adjlist) =", min(unlist(preprocout$data$adjlist)), "\n")
-            cat("length(cds) =", length(cds), "\n")
-            cat("min(cds) =", min(cds), "\n")
-            cat("length(initcds) =", length(preprocout$data$initcds), "\n")
-            cat("min(initcds) =", min(preprocout$data$initcds), "\n")
-            cat("length(popvec) =", length(preprocout$data$popvec), "\n")
-            cat("length(grouppopvec) =", length(preprocout$data$grouppopvec), "\n")
-            cat("==================\n")
-            
-            cat("==================\n")
-            cat("nsims =", nsimsAdj[j], "\n")
-            cat("eprob =", eprob, "\n")
-            cat("pct_dist_parity =", preprocout$params$pctdistparity, "\n")
-            cat("beta_sequence =", preprocout$params$betaseq, "\n")
-            cat("beta_weights =", preprocout$params$betaseq, "\n")
-            cat("nrow(ssdmat) =", nrow(ssdmat), "\n")
-            cat("ncol(ssdmat) =", ncol(ssdmat), "\n")
-            cat("lambda =", lambda, "\n")
-            cat("==================\n\n")
-
-            cat("==================\n")
-            cat("Beta =", beta, "\n\n")
-            cat("Population weight =", weightpop, "\n")
-            cat("Compactness weight =", weightcompact, "\n")
-            cat("Segregation weight =", weightseg, "\n")
-            cat("Similarity weight =", weightsimilar, "\n")
-            cat("Anneal beta =", preprocout$params$temperbeta, "\n")
-            cat("adjswap =", preprocout$params$adjswaps, "\n")
-            cat("==================\n\n")
-
-            cat("Start save.\n")
-            diaglist <- list(
-                aList = preprocout$data$adjlist,
-                cdvec = cds,
-                cdorigvec = preprocout$data$initcds,
-                popvec = preprocout$data$popvec,
-                grouppopvec = preprocout$data$grouppopvec,
-                nsims = nsimsAdj[j],
-                eprob = eprob,
-                pct_dist_parity = preprocout$params$pctdistparity,
-                beta_sequence = preprocout$params$betaseq,
-                beta_weights = preprocout$params$betaweights,
-                ssdmat = preprocout$data$ssdmat,
-                lambda = lambda,
-                beta = beta,
-                weight_population = weightpop,
-                weight_compact = weightcompact,
-                weight_segregation = weightseg,
-                weight_similar = weightsimilar,
-                anneal_beta = preprocout$params$temperbeta,
-                adjswap = preprocout$params$adjswaps,
-                exact_mh = 0,
-                adapt_eprob = 0,
-                adapt_lambda = 0
-            )
-            cat("Created diaglist.\n")
-            save(diaglist, file = paste0("data", procID, "_", params$savename, ".RData"))
-            cat("End save.\n")
-                 
             temp <- swMH(aList = preprocout$data$adjlist,
                          cdvec = cds,
                          cdorigvec = preprocout$data$initcds,
@@ -319,12 +257,9 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                          exact_mh = 0,
                          adapt_eprob = 0,
                          adapt_lambda = 0)
-            cat("End swMH.\n")
             
             ## Combine data
-            cat("Start combine data.\n")
             algout <- ecutsAppend(algout,temp)
-            cat("End combine data.\n")
             
             ## Get temperature
             beta <- temp$beta_sequence[nsimsAdj[j]]
