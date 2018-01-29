@@ -716,8 +716,7 @@ List make_swaps(List boundary_cc,
     }
     
     // Multiply mh_prob by constraint values
-    double loge2 = log(2.0);
-    mh_prob = (double)mh_prob * exp(-1.0 * beta * loge2 * (energy_new - energy_old));
+    mh_prob = (double)mh_prob * exp(-1.0 * beta * (energy_new - energy_old));
     
     // Update cd assignments and cd populations
     cds_prop = cds_test;
@@ -882,7 +881,7 @@ List changeBeta(arma::vec betavec,
   }
 
   // Accept or reject the proposal
-  double mhprobGT = (double)exp(constraint * (propBeta - beta)) * wj / wi * qji / qij;
+  double mhprobGT = (double)exp(-1 * constraint * (propBeta - beta)) * wj / wi * qji / qij;
   if(mhprobGT > 1){
     mhprobGT = 1;
   }

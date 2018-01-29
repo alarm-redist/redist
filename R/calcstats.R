@@ -32,10 +32,10 @@ area.between.curves <- function(x, f1, f2){
 
 #' Calculate standard redistricting diagnostic statistics
 #'
-#' \code{calc.stats} can calculate various statistics used to
+#' \code{redist.calcstats} can calculate various statistics used to
 #' summarize ensembles of simulated redistricting plans.
 #'
-#' @usage calc.stats(algout, group1vote, group2vote, margin, swing, npoints, stats)
+#' @usage redist.calcstats(algout, group1vote, group2vote, margin, swing, npoints, stats)
 #'
 #' @param algout An object of class "redist" or a matrix of congressional district
 #' assignments where columns are different redistricting plans.
@@ -56,11 +56,11 @@ area.between.curves <- function(x, f1, f2){
 #' between the empirical seats-votes curve and a null, balanced seats-votes curve.
 #' @param nc Number of cores to parallelize calculation over. Default is detectCores() - 1.
 #'
-#' @return \code{calc.stats} returns a list of estimated statistics for each plan.
+#' @return \code{redist.calcstats} returns a list of estimated statistics for each plan.
 #'
 #' @export
 #' @importFrom parallel mclapply detectCores
-calc.stats <- function(algout, group1vote, group2vote,
+redist.calcstats <- function(algout, group1vote, group2vote,
                        margin_mc = .05, margin_ps = .05, npoints = 10,
                        stats = c("ec", "mc", "ps_simple", "eg", "ps_full"),
                        nc = NULL){
@@ -257,3 +257,249 @@ calc.stats <- function(algout, group1vote, group2vote,
     return(stat_out)
     
 }
+
+#' Diagnostic plotting functionality for MCMC redistricting.
+#'
+#' \code{redist.diagplot} generates several common MCMC diagnostic plots.
+#'
+#' @usage redist.diagplot(sumstat,
+#' plot = c("trace", "autocorr", "densplot", "mean", "gelmanrubin"),
+#' logit = FALSE, savename = NULL)
+#'
+#' @param sumstat A vector, list, \code{mcmc} or \code{mcmc.list} object
+#' containing a summary statistic of choice.
+#' @param plot The type of diagnostic plot to generate: one of "trace",
+#' "autocorr", "densplot", "mean", "gelmanrubin". If \code{plot = "gelmanrubin"},
+#' the input \code{sumstat} must be of class \code{mcmc.list} or \code{list}.
+#' @param logit Flag for whether to apply the logistic transformation for the
+#' summary statistic. The default is \code{FALSE}.
+#' @param savename Filename to save the plot. Default is \code{NULL}.
+#'
+#' @details This function allows users to generate several standard diagnostic
+#' plots from the MCMC literature, as implemented by Plummer et. al (2006).
+#' Diagnostic plots implemented include trace plots, autocorrelation plots,
+#' density plots, running means, and Gelman-Rubin convergence diagnostics
+#' (Gelman & Rubin 1992).
+#'
+#' @return Returns a plot of file type \code{.pdf}.
+#'
+#' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander
+#' Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte
+#' Carlo." Working Paper. Available at
+#' \url{http://imai.princeton.edu/research/files/redist.pdf}.
+#'
+#' Gelman, Andrew and Donald Rubin. (1992) "Inference from iterative simulations
+#' using multiple sequences (with discussion)." Statistical Science.
+#'
+#' Plummer, Martin, Nicky Best, Kate Cowles and Karen Vines. (2006) "CODA:
+#' Convergence Diagnosis and Output Analysis for MCMC." R News.
+#'
+#' @examples
+#' \dontrun{
+#' data(algdat.pfull)
+#'
+#' ## Get an initial partition
+#' set.seed(1)
+#' initcds <- algdat.pfull$cdmat[,sample(1:ncol(algdat.pfull$cdmat), 1)]
+#'
+#' ## 25 precinct, three districts - no pop constraint ##
+#' alg_253 <- redist.mcmc(adjobj = algdat.pfull$adjlist,
+#' popvec = algdat.pfull$precinct.data$pop,
+#' initcds = initcds,nsims = 10000)
+#'
+#' ## Get Republican Dissimilarity Index from simulations
+#' rep_dmi_253 <- redist.segcalc(alg_253,
+#' algdat.pfull$precinct.data$repvote,
+#' algdat.pfull$precinct.data$pop)
+#'
+#' ## Generate diagnostic plots
+#' redist.diagplot(rep_dmi_253, plot = "trace")
+#' redist.diagplot(rep_dmi_253, plot = "autocorr")
+#' redist.diagplot(rep_dmi_253, plot = "densplot")
+#' redist.diagplot(rep_dmi_253, plot = "mean")
+#' }
+#' @export
+redist.diagplot <- function(sumstat,
+                            plot = c("trace", "autocorr", "densplot",
+                                "mean", "gelmanrubin"),
+                            logit = FALSE, savename = NULL
+                            ){
+
+    ##############
+    ## Warnings ##
+    ##############
+    if(missing(sumstat)){
+        stop("Please provide a vector or list of summary statistics to the function")
+    }
+    if(!(class(sumstat) %in% c("numeric", "list", "mcmc", "mcmc.list"))){
+        stop("Please provide either a numeric vector, list, or mcmc object")
+    }
+    if(!(plot %in% c("trace", "autocorr", "densplot",
+                     "mean", "gelmanrubin"))){
+        stop("Sorry. We don't currently support that MCMC diagnostic.")
+    }
+    if(plot == "gelmanrubin" & !(class(sumstat) %in% c("list", "mcmc.list"))){
+        stop("If generating a Gelman-Rubin plot, please provide an object of class list or mcmc.list")
+    }
+    
+    ########################
+    ## Create mcmc object ##
+    ########################
+    if(class(sumstat) == "numeric"){
+        segout <- mcmc(sumstat)
+    }else if(class(sumstat) == "list"){
+        for(i in 1:length(sumstat)){
+            sumstat[[i]] <- mcmc(sumstat[[i]])
+        }       
+        segout <- mcmc.list(sumstat)
+    }else if(class(sumstat) %in% c("mcmc", "mcmc.list")){
+        segout <- sumstat
+    }
+    
+    ## Logit transform
+    if(logit){
+        if(class(segout) == "mcmc"){
+            segout <- log(segout / (1 - segout))
+        }else if(class(segout) == "mcmc.list"){
+            for(i in 1:length(segout)){
+                segout[[i]] <- log(segout[[i]] / (1 - segout[[i]]))
+            }
+        }
+    }
+
+    ##################
+    ## Create plots ##
+    ##################
+    if(plot == "trace"){
+        if(!is.null(savename)){
+            pdf(file = paste(savename, ".pdf", sep = ""))
+        }
+        traceplot(segout)
+        if(!is.null(savename)){
+            dev.off()
+        }
+    }
+    if(plot == "autocorr"){
+        if(!is.null(savename)){
+            pdf(file = paste(savename, ".pdf", sep = ""))
+        }
+        autocorr.plot(segout, lag.max = 50)
+        if(!is.null(savename)){
+            dev.off()
+        }
+    }
+    if(plot == "densplot"){
+        if(!is.null(savename)){
+            pdf(file = paste(savename, ".pdf", sep = ""))
+        }
+        densplot(segout)
+        if(!is.null(savename)){
+            dev.off()
+        }
+    }
+    if(plot == "mean"){
+        if(!is.null(savename)){
+            pdf(file = paste(savename, ".pdf", sep = ""))
+        }
+        cumuplot(segout, probs = .5, type = "l", lty = 1)
+        if(!is.null(savename)){
+            dev.off()
+        }
+    }
+    if(plot == "gelmanrubin" & class(segout) == "mcmc.list"){
+        if(!is.null(savename)){
+            pdf(file = paste(savename, ".pdf", sep = ""))
+        }
+        gelman.plot(segout, transform = FALSE)
+        if(!is.null(savename)){
+            dev.off()
+        }
+    }
+
+}
+
+#' Segregation index calculation for MCMC redistricting.
+#'
+#' \code{redist.segcalc} calculates the dissimilarity index of segregation (see
+#' Massey \& Denton 1987 for more details) for a specified subgroup under any
+#' redistricting plan.
+#'
+#' @usage redist.segcalc(algout, grouppop, fullpop)
+#'
+#' @param algout A matrix of congressional district assignments or a
+#' redist object.
+#' @param grouppop A vector of populations for some subgroup of interest.
+#' @param fullpop A vector containign the populations of each geographic unit.
+#'
+#' @return \code{redist.segcalc} returns a vector where each entry is the
+#' dissimilarity index of segregation (Massey & Denton 1987) for each
+#' redistricting plan in \code{algout}.
+#'
+#' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander
+#' Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain
+#' Monte Carlo." Working Paper. Available at
+#' \url{http://imai.princeton.edu/research/files/redist.pdf}.
+#'
+#' Massey, Douglas and Nancy Denton. (1987) "The Dimensions of Social
+#' Segregation". Social Forces.
+#'
+#' @examples
+#' \dontrun{
+#' data(algdat.pfull)
+#'
+#' ## Code to run the simulations in Figure 4 of Fifield, Higgins,
+#' ## Imai and Tarr (2015)
+#'
+#' ## Get an initial partition
+#' set.seed(1)
+#' initcds <- algdat.pfull$cdmat[,sample(1:ncol(algdat.pfull$cdmat), 1)]
+#'
+#' ## Run simulations
+#' alg_253 <- redist.mcmc(adjobj = algdat.pfull$adjlist,
+#' popvec = algdat.pfull$precinct.data$pop,
+#' initcds = initcds, nsims = 10000)
+#'
+#' ## Get Republican Dissimilarity Index from simulations
+#' rep_dmi_253 <- redist.segcalc(alg_253,
+#' algdat.pfull$precinct.data$repvote,
+#' algdat.pfull$precinct.data$pop)
+#' }
+#' @export
+redist.segcalc <- function(algout,
+                           grouppop,
+                           fullpop)
+{
+
+    ## Warnings
+    if(missing(algout) | !(class(algout) %in% c("data.frame", "matrix", "redist"))){
+        stop("Please provide either a redist object or a proper matrix of congessional districts")
+    }
+    if(missing(grouppop)){
+        stop("Please provide a vector of sub-group populations to calculate
+the segregation index")
+    }
+    if(missing(fullpop)){
+        stop("Please provide a vector of populations for each geographic unit")
+    }
+
+    ## If redist object, get the partitions entry
+    if(class(algout) == "redist"){
+        algout <- algout$partitions
+    }
+    
+    if(!((nrow(algout) == length(grouppop)) &
+             (length(grouppop) == length(fullpop)) &
+                 (length(fullpop) == nrow(algout)))){
+        stop("Please make sure there is a population entry for each geographic unit")
+    }
+
+    ## Calculate dissimilarity index
+    seg.out <- segregationcalc(algout,
+                               grouppop,
+                               fullpop)
+
+    ## Return
+    return(seg.out)
+    
+}
+    
