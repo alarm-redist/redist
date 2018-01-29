@@ -235,6 +235,13 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
             cat("Swap ", j, "\n", append = TRUE)
             ## Run algorithm
             cat("Start swMH.\n")
+            
+            cat("Beta =", beta, "\n")
+            cat("Population weight =", weightpop, "\n")
+            cat("Compactness weight =", weightcompact, "\n")
+            cat("Segregation weight =", weightseg, "\n")
+            cat("Similarity weight =", weightsimilar, "\n")
+            cat("Anneal beta =", preprocout$params$temperbeta, "\n")
             temp <- swMH(aList = preprocout$data$adjlist,
                          cdvec = cds,
                          cdorigvec = preprocout$data$initcds,
@@ -253,7 +260,10 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                          weight_segregation = weightseg,
                          weight_similar = weightsimilar,
                          anneal_beta = preprocout$params$temperbeta,
-                         adjswap = preprocout$params$adjswaps)
+                         adjswap = preprocout$params$adjswaps,
+                         exact_mh = 0,
+                         adapt_eprob = 0,
+                         adapt_lambda = 0)
             cat("End swMH.\n")
             
             ## Combine data
