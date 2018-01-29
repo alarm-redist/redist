@@ -33,14 +33,12 @@ List swMH(List aList,
 	  NumericVector beta_weights,
 	  NumericMatrix ssdmat,
 	  int lambda = 0,
-	  double beta_population = 0.0,
-	  double beta_compact = 0.0,
-	  double beta_segregation = 0.0,
-	  double beta_similar = 0.0,
-	  int anneal_beta_population = 0,
-	  int anneal_beta_compact = 0,
-	  int anneal_beta_segregation = 0,
-	  int anneal_beta_similar = 0,
+	  double beta = 1.0,
+	  double weight_population = 0.0,
+	  double weight_compact = 0.0,
+	  double weight_segregation = 0.0,
+	  double weight_similar = 0.0,
+	  int anneal_beta = 0,
 	  int adjswap = 1,
 	  int exact_mh = 0,
 	  int adapt_eprob = 0,
@@ -91,7 +89,7 @@ List swMH(List aList,
 
      exact_mh: flag for whether to calculate the exact metropolis-hastings w boundary correction
 
-   */
+  */
 
   // Preprocess vector of congressional district assignments
   if(min(cdvec) == 1){
@@ -120,11 +118,11 @@ List swMH(List aList,
 
   // Get ssd denominator
   double ssd_denom;
-  if(beta_compact != 0.0 || anneal_beta_compact == 1){
+  if(weight_compact != 0.0){
     ssd_denom = as<double>(calc_betacompact(cdvec,
 					    cdvec,
 					    popvec,
-					    beta_compact,
+					    weight_compact,
 					    uniquedists,
 					    ssdmat,
 					    1.0)["compact_new_psi"]);
@@ -154,6 +152,7 @@ List swMH(List aList,
   int decision_counter = 0;
 
   // Store value of psi for all constraints
+  NumericVector energy_store(nsims);
   NumericVector psipop_store(nsims);
   NumericVector psicompact_store(nsims);
   NumericVector psisegregation_store(nsims);
@@ -168,33 +167,15 @@ List swMH(List aList,
 
   // Store sequence of betas - geyer thompson
   NumericVector betaseq_store(nsims);
-  if(anneal_beta_population == 1){
-    betaseq_store[z] = beta_population;
-  }
-  if(anneal_beta_compact == 1){
-    betaseq_store[z] = beta_compact;
-  }
-  if(anneal_beta_segregation == 1){
-    betaseq_store[z] = beta_segregation;
-  }
-  if(anneal_beta_similar == 1){
-    betaseq_store[z] = beta_similar;
+  if(anneal_beta == 1){
+    betaseq_store[z] = beta;
   }
 
   // Iterate up z
   z++;
 
-  if(anneal_beta_population == 0 && beta_population != 0.0){
-    std::fill(betaseq_store.begin(), betaseq_store.end(), beta_population);
-  }
-  if(anneal_beta_compact == 0 && beta_compact != 0.0){
-    std::fill(betaseq_store.begin(), betaseq_store.end(), beta_compact);
-  }
-  if(anneal_beta_segregation == 0 && beta_segregation != 0.0){
-    std::fill(betaseq_store.begin(), betaseq_store.end(), beta_segregation);
-  }
-  if(anneal_beta_similar == 0 && beta_similar != 0.0){
-    std::fill(betaseq_store.begin(), betaseq_store.end(), beta_similar);
+  if(anneal_beta == 0 && beta != 0.0){
+    std::fill(betaseq_store.begin(), betaseq_store.end(), beta);
   }
 
   // Store metropolis-hastings decisions - geyer thompson
@@ -255,10 +236,11 @@ List swMH(List aList,
 				   max_parity,
 				   p,
 				   eprob,
-				   beta_population,
-				   beta_compact,
-				   beta_segregation,
-				   beta_similar,
+				   beta,
+				   weight_population,
+				   weight_compact,
+				   weight_segregation,
+				   weight_similar,
 				   ssd_denom);
 
     }while(as<int>(swap_partitions["goodprop"]) == 0);
@@ -285,205 +267,62 @@ List swMH(List aList,
     // Fifth - Accept with some probability //
     //////////////////////////////////////////
     decision = mh_decision(as<double>(swap_partitions["mh_prob"]));
+
+    // Store betas
+    if(decision == 1){
+      energy_store[k] = swap_partitions["energy_new"];
+      if(weight_population != 0.0){
+	psipop_store[k] = swap_partitions["pop_new_psi"];
+      }
+      if(weight_compact != 0.0){
+	psicompact_store[k] = swap_partitions["compact_new_psi"];
+      }
+      if(weight_segregation != 0.0){
+	psisegregation_store[k] = swap_partitions["segregation_new_psi"];
+      }
+      if(weight_similar != 0.0){
+	psisimilar_store[k] = swap_partitions["similar_new_psi"];
+      }
+    }else{
+      energy_store[k] = swap_partitions["energy_old"];
+      if(weight_population != 0.0){
+	psipop_store[k] = swap_partitions["pop_old_psi"];
+      }
+      if(weight_compact != 0.0){
+	psicompact_store[k] = swap_partitions["compact_old_psi"];
+      }
+      if(weight_segregation != 0.0){
+	psisegregation_store[k] = swap_partitions["segregation_old_psi"];
+      }
+      if(weight_similar != 0.0){
+	psisimilar_store[k] = swap_partitions["similar_old_psi"];
+      }
+    }
   
     /////////////////////////////////////////////////////////////
     // Also - for simulated tempering, propose a possible swap //
     /////////////////////////////////////////////////////////////
-    if((anneal_beta_population == 1) || (beta_population != 0.0)){ // If constraining, get constraints
-      get_constraint = calc_betapop(cdvec,
-				    as<NumericVector>(swap_partitions["proposed_partition"]),
-				    popvec,
-				    beta_population,
-				    uniquedists);
-      
-      // Store psi value
+    if(anneal_beta == 1){
+
+      // Run geyer thompson algorithm
       if(decision == 1){
-	psipop_store[k] = as<double>(get_constraint["pop_new_psi"]);
+	gt_out = changeBeta(beta_sequence, beta, swap_partitions["energy_new"], beta_weights, adjswap);
       }else{
-	psipop_store[k] = as<double>(get_constraint["pop_old_psi"]);
+	gt_out = changeBeta(beta_sequence, beta, swap_partitions["energy_old"], beta_weights, adjswap);
       }
-    
-      if(anneal_beta_population == 1){ // Tempering step
-	if(decision == 1){ // Using value of psi if accepted
-	
-	  // Propose swapping beta
-	  gt_out = changeBeta(beta_sequence,
-			      beta_population,
-			      as<double>(get_constraint["pop_new_psi"]),
-			      beta_weights,
-			      adjswap);
-	
-	}else{ // Using value of psi if not accepted
-	
-	  // Propose swapping beta
-	  gt_out = changeBeta(beta_sequence,
-			      beta_population,
-			      as<double>(get_constraint["pop_old_psi"]),
-			      beta_weights,
-			      adjswap);
-	
-	}
+
+      // Change beta
+      beta = as<double>(gt_out["beta"]);
       
-	// Change beta
-	beta_population = as<double>(gt_out["beta"]);
-      
-	// Store the output of geyer thompson
-	if(k < nsims){
-	  betaseq_store[z] = beta_population;
-	}
-	decision_betaseq_store[k] = as<int>(gt_out["mh_decision"]);
-	mhprob_betaseq_store[k] = as<double>(gt_out["mh_prob"]);
-      
+      // Store the output of geyer thompson
+      if(k < nsims){
+	betaseq_store[z] = beta;
       }
-    
+      decision_betaseq_store[k] = as<int>(gt_out["mh_decision"]);
+      mhprob_betaseq_store[k] = as<double>(gt_out["mh_prob"]);
+      
     }
-    if((anneal_beta_compact == 1) || (beta_compact != 0.0)){ // If constraining, get value of constraints
-      get_constraint = calc_betacompact(cdvec,
-					as<NumericVector>(swap_partitions["proposed_partition"]),
-					popvec,
-					beta_compact,
-					uniquedists,
-					ssdmat,
-					ssd_denom);
-      
-      // Get psi value
-      if(decision == 1){
-	psicompact_store[k] = as<double>(get_constraint["compact_new_psi"]);
-      }else{
-	psicompact_store[k] = as<double>(get_constraint["compact_old_psi"]);
-      }
-    
-      if(anneal_beta_compact == 1){ // Annealing step
-	if(decision == 1){ // Using value of psi if accepted
-	
-	  // Propose swapping beta
-	  gt_out = changeBeta(beta_sequence,
-			      beta_compact,
-			      as<double>(get_constraint["compact_new_psi"]),
-			      beta_weights,
-			      adjswap);
-	
-	}else{ // Using value of psi if not accepted
-	  
-	  // Propose swapping beta
-	  gt_out = changeBeta(beta_sequence,
-			      beta_population,
-			      as<double>(get_constraint["compact_old_psi"]),
-			      beta_weights,
-			      adjswap);
-	  
-	}
-	
-	// Change beta
-	beta_compact = as<double>(gt_out["beta"]);
-	
-	// Store the output of geyer thompson
-	if(k < nsims){
-	  betaseq_store[z] = beta_compact;
-	}
-	decision_betaseq_store[k] = as<int>(gt_out["mh_decision"]);
-	mhprob_betaseq_store[k] = as<double>(gt_out["mh_prob"]);
-
-      }
-
-    }
-    if((anneal_beta_segregation == 1) || (beta_segregation != 0.0)){ // If constraining, get value of constraint
-      get_constraint = calc_betasegregation(cdvec,
-					    as<NumericVector>(swap_partitions["proposed_partition"]),
-					    popvec,
-					    beta_segregation,
-					    uniquedists,
-					    grouppopvec);
-      
-      // Get psi value
-      if(decision == 1){
-	psisegregation_store[k] = as<double>(get_constraint["segregation_new_psi"]);
-      }else{
-	psisegregation_store[k] = as<double>(get_constraint["segregation_old_psi"]);
-      }
-
-      if(anneal_beta_segregation == 1){ // Annealing step
-	if(decision == 1){
-
-	  // Propose swapping beta
-	  gt_out = changeBeta(beta_sequence,
-			      beta_segregation,
-			      as<double>(get_constraint["segregation_new_psi"]),
-			      beta_weights,
-			      adjswap);
-	  
-	}else{ // Use value of psi if not accepted
-
-	  // Propose swapping beta
-	  gt_out = changeBeta(beta_sequence,
-			      beta_segregation,
-			      as<double>(get_constraint["segregation_old_psi"]),
-			      beta_weights,
-			      adjswap);
-	  
-	}
-
-	// Change beta
-	beta_segregation = as<double>(gt_out["beta"]);
-
-	// Store output of geyer thompson
-	if(k < nsims){
-	  betaseq_store[k] = beta_segregation;
-	}
-	decision_betaseq_store[k] = as<int>(gt_out["mh_decision"]);
-	mhprob_betaseq_store[k] = as<double>(gt_out["mh_prob"]);
-
-      }
-
-    }
-    if((anneal_beta_similar == 1) || (beta_similar != 0.0)){ // If constraining, get value of constraint
-      get_constraint = calc_betasimilar(cdvec,
-					as<NumericVector>(swap_partitions["proposed_partition"]),
-					cdorigvec,
-					beta_similar,
-					uniquedists);
-
-      // Get psi value
-      if(decision == 1){
-	psisimilar_store[k] = as<double>(get_constraint["similar_new_psi"]);
-      }else{
-	psisimilar_store[k] = as<double>(get_constraint["similar_old_psi"]);
-      }
-
-      if(anneal_beta_similar == 1){ // Annealing step
-	if(decision == 1){
-
-	  // Propose swapping beta
-	  gt_out = changeBeta(beta_sequence,
-			      beta_similar,
-			      as<double>(get_constraint["similar_new_psi"]),
-			      beta_weights,
-			      adjswap);
-	  
-	}else{ // Use value of psi if not accepted
-
-	  // Propose swapping beta
-	  gt_out = changeBeta(beta_sequence,
-			      beta_similar,
-			      as<double>(get_constraint["similar_new_psi"]),
-			      beta_weights,
-			      adjswap);
-
-	}
-
-	// Change beta
-	beta_similar = as<double>(gt_out["beta"]);
-
-	// Store output of geyer thompson
-	if(k < nsims){
-	  betaseq_store[k] = beta_similar;
-	}
-	decision_betaseq_store[k] = as<int>(gt_out["mh_decision"]);
-	mhprob_betaseq_store[k] = as<double>(gt_out["mh_prob"]);
-	
-      }
-
-    }
+  
     //////////////////////////////////////
     // Six = clean up and store results //
     //////////////////////////////////////
@@ -567,14 +406,14 @@ List swMH(List aList,
   out["mhprob"] = mhprob_store;
   out["pparam"] = pparam_store;
   out["beta_sequence"] = betaseq_store;
+  out["energy_psi"] = energy_store;
   out["constraint_pop"] = psipop_store;
   out["constraint_compact"] = psicompact_store;
   out["constraint_segregation"] = psisegregation_store;
   out["constraint_similar"] = psisimilar_store;
   out["boundary_partitions"] = boundarypartitions_store;
   out["boundaryratio"] = boundaryratio_store;
-  if((anneal_beta_population == 1) || (anneal_beta_compact == 1) ||
-     (anneal_beta_segregation == 1) || (anneal_beta_similar == 1)){
+  if(anneal_beta == 1){
     out["mhdecisions_beta"] = decision_betaseq_store;
     out["mhprob_beta"] = mhprob_betaseq_store;
   }
