@@ -703,7 +703,7 @@ List make_swaps(List boundary_cc,
     List similar_constraint;
     if(weight_population != 0.0){
 
-      population_constraint = calc_psipop(cds_prop, cds_test, pop_vec, weight_population, cd_pair);
+      population_constraint = calc_psipop(cds_prop, cds_test, pop_vec, cd_pair);
 
       pop_new_psi += population_constraint["pop_new_psi"];
       pop_old_psi += population_constraint["pop_old_psi"];
@@ -711,7 +711,7 @@ List make_swaps(List boundary_cc,
     }
     if(weight_compact != 0.0){
       
-      compact_constraint = calc_psicompact(cds_prop, cds_test, pop_vec, weight_compact, cd_pair, ssdmat, ssd_denominator);
+      compact_constraint = calc_psicompact(cds_prop, cds_test, pop_vec, cd_pair, ssdmat, ssd_denominator);
 
       compact_new_psi += compact_constraint["compact_new_psi"];
       compact_old_psi += compact_constraint["compact_old_psi"];
@@ -719,7 +719,7 @@ List make_swaps(List boundary_cc,
     }
     if(weight_segregation != 0.0){
       
-      segregation_constraint = calc_psisegregation(cds_prop, cds_test, pop_vec, weight_segregation, cd_pair, group_pop_vec);
+      segregation_constraint = calc_psisegregation(cds_prop, cds_test, pop_vec, cd_pair, group_pop_vec);
 
       segregation_new_psi += segregation_constraint["segregation_new_psi"];
       segregation_old_psi += segregation_constraint["segregation_new_psi"];
@@ -727,7 +727,7 @@ List make_swaps(List boundary_cc,
     }
     if(weight_similar != 0.0){
       
-      similar_constraint = calc_psisimilar(cds_prop, cds_test, cds_orig, weight_similar, cd_pair);
+      similar_constraint = calc_psisimilar(cds_prop, cds_test, cds_orig, cd_pair);
 
       similar_new_psi += similar_constraint["similar_new_psi"];
       similar_old_psi += similar_constraint["similar_old_psi"];
