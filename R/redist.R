@@ -51,12 +51,10 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     if(missing(popvec)){
         stop("Please supply vector of geographic unit populations")
     }
-    if((any(constraintweights == 0) & !temper & !is.null(constraint)) |
-       (any(constraintweights == 0) & temper) |
-       (!is.na(temper) & is.na(constraint))){
-        stop("If applying constraints or using simulated tempering, please set non-zero constraint by specifying the 'constraintweight' argument, and specify the names of the constraints in 'constraint'.")
-    }
-    if(!is.null(constraint)){
+    if(!is.null(constraintweights)){
+        if((any(constraintweights == 0) & !is.null(constraint))){
+            stop("If applying constraints or using simulated tempering, please set non-zero constraint by specifying the 'constraintweight' argument, and specify the names of the constraints in 'constraint'.")
+        }
         if(any(!(constraint %in% c("compact", "segregation", "population", "similarity")))){
             stop("Please specify any combination of `compact`, `segregation`, `population`, or `similarity` for constraint")
         }
