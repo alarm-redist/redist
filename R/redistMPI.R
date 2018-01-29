@@ -254,7 +254,7 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
             cat("beta_sequence =", preprocout$params$betaseq, "\n")
             cat("beta_weights =", preprocout$params$betaseq, "\n")
             cat("nrow(ssdmat) =", nrow(ssdmat), "\n")
-            cat("ncol(ssdmat) =", ncol(ssdmat), "\n"0
+            cat("ncol(ssdmat) =", ncol(ssdmat), "\n")
             cat("lambda =", lambda, "\n")
             cat("==================\n\n")
 
