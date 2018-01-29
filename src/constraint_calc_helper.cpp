@@ -12,11 +12,10 @@
 using namespace Rcpp;
 
 // Function to calculate the strength of the beta constraint for population
-List calc_betapop(arma::vec current_dists,
-		  arma::vec new_dists,
-		  NumericVector pops,
-		  double beta_population,
-		  NumericVector distswitch)
+List calc_psipop(arma::vec current_dists,
+		 arma::vec new_dists,
+		 NumericVector pops,
+		 NumericVector distswitch)
 {
 
   /* Inputs to function 
@@ -26,16 +25,13 @@ List calc_betapop(arma::vec current_dists,
 
      pops: vector of district populations
 
-     beta_population: strength of the beta constraint
+     weight_population: strength of the beta constraint
 
      distswitch: vector containing the old district, and the proposed new district
-   */
+  */
 
   // Calculate parity
   double parity = (double)sum(pops) / (max(current_dists) + 1);
-
-  // Log_e(2)
-  double loge2 = log(2.0);
 
   // Initialize psi values
   double psi_new = 0.0;
@@ -59,17 +55,13 @@ List calc_betapop(arma::vec current_dists,
     }
 
     // Calculate the penalty
-    psi_new += (double)std::abs((pop_new / parity) - 1);
-    psi_old += (double)std::abs((pop_old / parity) - 1);
+    psi_new += std::pow(pop_new / parity - 1, 2.0);
+    psi_old += std::pow(pop_old / parity - 1, 2.0);
 
   }
 
-  // Calculate the ratio
-  double ratio = (double)exp(beta_population * loge2 * (psi_new - psi_old));
-
   // Create return object
   List out;
-  out["pop_ratio"] = ratio;
   out["pop_new_psi"] = psi_new;
   out["pop_old_psi"] = psi_old;
 
@@ -79,13 +71,12 @@ List calc_betapop(arma::vec current_dists,
 
 // Function to calculate the strength of the beta constraint for compactness
 // Fryer and Holden 2011 RPI index
-List calc_betacompact(arma::vec current_dists,
-		      arma::vec new_dists,
-		      NumericVector pops,
-		      double beta_compact,
-		      NumericVector distswitch,
-		      NumericMatrix ssdmat,
-		      double denominator = 1.0){
+List calc_psicompact(arma::vec current_dists,
+		     arma::vec new_dists,
+		     NumericVector pops,
+		     NumericVector distswitch,
+		     NumericMatrix ssdmat,
+		     double denominator = 1.0){
 
   /* Inputs to function:
      current_dists: vector of the current cong district assignments
@@ -101,14 +92,11 @@ List calc_betacompact(arma::vec current_dists,
      ssdmat: squared distance matrix
 
      denominator: normalizing constant for rpi
-   */
+  */
   
   // Initialize psi values
   double psi_new = 0.0;
   double psi_old = 0.0;
-
-  // Log_e(2)
-  double loge2 = log(2.0);
 
   // Loop over the congressional districts
   for(int i = 0; i < distswitch.size(); i++){
@@ -141,30 +129,21 @@ List calc_betacompact(arma::vec current_dists,
 
   }
 
-  // Normalize psi
-  psi_new = (double)psi_new / denominator;
-  psi_old = (double)psi_new / denominator;
-
-  // Calculate ratio
-  double ratio = (double)exp(beta_compact * loge2 * (psi_new - psi_old));
-
   // Create return object
   List out;
-  out["compact_ratio"] = ratio;
-  out["compact_new_psi"] = psi_new;
-  out["compact_old_psi"] = psi_old;
+  out["compact_new_psi"] = (double)psi_new / denominator;
+  out["compact_old_psi"] = (double)psi_old / denominator;
 
   return out;
 
 }
 
 // Function to constrain by segregating a group
-List calc_betasegregation(arma::vec current_dists,
-			  arma::vec new_dists,
-			  NumericVector pops,
-			  double beta_segregation,
-			  NumericVector distswitch,
-			  NumericVector grouppop)
+List calc_psisegregation(arma::vec current_dists,
+			 arma::vec new_dists,
+			 NumericVector pops,
+			 NumericVector distswitch,
+			 NumericVector grouppop)
 {
 
   /* Inputs to function:
@@ -185,9 +164,6 @@ List calc_betasegregation(arma::vec current_dists,
   // Initialize psi values
   double psi_new = 0.0;
   double psi_old = 0.0;
-
-  // Log_e(2)
-  double loge2 = log(2.0);
 
   // Initialize denominator
   int T = sum(pops);
@@ -234,12 +210,8 @@ List calc_betasegregation(arma::vec current_dists,
   psi_new = (double)psi_new / denom;
   psi_old = (double)psi_old / denom;
 
-  // Get mh ratio
-  double ratio = (double)exp(beta_segregation * loge2 * (psi_new - psi_old));
-
   // Create return object
   List out;
-  out["segregation_ratio"] = ratio;
   out["segregation_new_psi"] = psi_new;
   out["segregation_old_psi"] = psi_old;
 
@@ -248,11 +220,10 @@ List calc_betasegregation(arma::vec current_dists,
 }
 
 // Function to constrain on plan similarity to original plan
-List calc_betasimilar(arma::vec current_dists,
-		      arma::vec new_dists,
-		      arma::vec orig_dists,
-		      double beta_similar,
-		      NumericVector distswitch)
+List calc_psisimilar(arma::vec current_dists,
+		     arma::vec new_dists,
+		     arma::vec orig_dists,
+		     NumericVector distswitch)
 {
 
   /* Inputs to function:
@@ -267,14 +238,11 @@ List calc_betasimilar(arma::vec current_dists,
 
      distswitch: vector containing the old district, and the proposed new district
 
-   */
+  */
 
   // Initialize psi values
   double psi_new = 0.0;
   double psi_old = 0.0;
-
-  // Log_e(2)
-  double loge2 = log(2.0);
 
   // Loop over congressional districts
   for(int i = 0; i < distswitch.size(); i++){
@@ -314,12 +282,8 @@ List calc_betasimilar(arma::vec current_dists,
   psi_new = psi_new / distswitch.size();
   psi_old = psi_old / distswitch.size();
 
-  // Get MH ratio
-  double ratio = (double)exp(beta_similar * loge2 * (psi_new - psi_old));
-
   // Create return object
   List out;
-  out["similar_ratio"] = ratio;
   out["similar_new_psi"] = psi_new;
   out["similar_old_psi"] = psi_old;
 

@@ -22,7 +22,7 @@ NumericVector init_pop(NumericVector popvec,
      cds: Vector of congressional district populations
 
      popvec: Vector of populations
-   */ 
+  */ 
 
   // Get number of cds
   int ncds = cds.max() + 1;
@@ -67,7 +67,7 @@ List genAlConn(List aList,
      aList: adjacency list of geographic units
 
      cds: vector of congressional district assignments
-   */
+  */
   
   // Initialize container list
   List alConnected(cds.size());
@@ -117,7 +117,7 @@ NumericVector findBoundary(List fullList,
      fullList: Full adjacency list of geographic units
 
      conList: Adjacency list of geographic units within cong district
-   */
+  */
 
   // Initialize container vector of 0's (not boundary) and 1's (boundary)
   NumericVector isBoundary(fullList.size());
@@ -189,7 +189,7 @@ List cut_edges(List aList_con,
      aList_con: adjacency list within cong district
 
      eprob: edgecut probability (transformed into 1-eprob in function)
-   */
+  */
 
   // Create threshold
   double threshold_prob = 1 - eprob;
@@ -265,7 +265,7 @@ List bsearch_boundary(List aList,
      aList: adjacency list
 
      boundary: vector of boundary element indicators (as arma)
-   */
+  */
 
   // Get indices of boundary units
   arma::uvec boundary_indices = find(boundary == 1);
@@ -455,7 +455,7 @@ int draw_p(int lambda)
 
   /* Inputs to function:
      lambda: lambda parameter
-   */
+  */
 
   int p;
   if(lambda > 0){
@@ -485,10 +485,11 @@ List make_swaps(List boundary_cc,
 		double maxparity, 
 		int p, 
 		double eprob,
-		double beta_population,
-		double beta_compact,
-		double beta_segregation,
-		double beta_similar,
+		double beta,
+		double weight_population,
+		double weight_compact,
+		double weight_segregation,
+		double weight_similar,
 		double ssd_denominator)
 {
 
@@ -525,7 +526,7 @@ List make_swaps(List boundary_cc,
 
      ssd_denominator: normalizing constant for sum of squared distance psi
 
-   */
+  */
   
   // Initialize objects for swap //
   NumericVector cds_prop = clone(cds_old);
@@ -687,45 +688,36 @@ List make_swaps(List boundary_cc,
 			    mh_prob);
     
     // Calculate beta constraints
-    double population_constraint = 1.0;
-    if(beta_population != 0.0){
-      population_constraint = as<double>(calc_betapop(cds_prop,
-						      cds_test,
-						      pop_vec,
-						      beta_population,
-						      cd_pair)["pop_ratio"]);
+    double energy_new = 0.0;
+    double energy_old = 0.0;
+    List population_constraint;
+    List compact_constraint;
+    List segregation_constraint;
+    List similar_constraint;
+    if(weight_population != 0.0){
+      population_constraint = calc_psipop(cds_prop, cds_test, pop_vec, weight_population, cd_pair);
+      energy_new += weight_population * population_constraint["pop_new_psi"];
+      energy_old += weight_population * population_constraint["pop_old_psi"];
     }
-    double compact_constraint = 1.0;
-    if(beta_compact != 0.0){
-      compact_constraint = as<double>(calc_betacompact(cds_prop,
-						       cds_test,
-						       pop_vec,
-						       beta_compact,
-						       cd_pair,
-						       ssdmat,
-						       ssd_denominator)["compact_ratio"]);
+    if(weight_compact != 0.0){
+      compact_constraint = calc_psicompact(cds_prop, cds_test, pop_vec, weight_compact, cd_pair, ssdmat, ssd_denominator);
+      energy_new += weight_compact * compact_constraint["compact_new_psi"];
+      energy_old += weight_compact * compact_constraint["compact_old_psi"];
     }
-    double segregation_constraint = 1.0;
-    if(beta_segregation != 0.0){
-      segregation_constraint = as<double>(calc_betasegregation(cds_prop,
-							       cds_test,
-							       pop_vec,
-							       beta_segregation,
-							       cd_pair,
-							       group_pop_vec)["segregation_ratio"]);
+    if(weight_segregation != 0.0){
+      segregation_constraint = calc_psisegregation(cds_prop, cds_test, pop_vec, weight_segregation, cd_pair, group_pop_vec);
+      energy_new += weight_segregation * segregation_constraint["segregation_new_psi"];
+      energy_old += weight_segregation * segregation_constraint["segregation_old_psi"];
     }
-    double similar_constraint = 1.0;
-    if(beta_similar != 0.0){
-      similar_constraint = as<double>(calc_betasimilar(cds_prop,
-						       cds_test,
-						       cds_orig,
-						       beta_similar,
-						       cd_pair)["similar_ratio"]);
+    if(weight_similar != 0.0){
+      similar_constraint = calc_psisimilar(cds_prop, cds_test, cds_orig, weight_similar, cd_pair);
+      energy_new += weight_similar * similar_constraint["similar_new_psi"];
+      energy_old += weight_similar * similar_constraint["similar_old_psi"];
     }
     
     // Multiply mh_prob by constraint values
-    mh_prob = (double)mh_prob * population_constraint * compact_constraint *
-      segregation_constraint * similar_constraint;
+    double loge2 = log(2.0);
+    mh_prob = (double)mh_prob * exp(-1.0 * beta * loge2 * (energy_new - energy_old));
     
     // Update cd assignments and cd populations
     cds_prop = cds_test;
@@ -749,6 +741,24 @@ List make_swaps(List boundary_cc,
   out["mh_prob"] = mh_prob;
   out["updated_cd_pops"] = cdspop_prop;
   out["goodprop"] = goodprop;
+  out["energy_new"] = energy_new;
+  out["energy_old"] = energy_old;
+  if(weight_population != 0.0){
+    out["pop_new_psi"] = population_constraint["pop_new_psi"];
+    out["pop_old_psi"] = population_constraint["pop_old_psi"]
+      }
+  if(weight_compact != 0.0){
+    out["compact_new_psi"] = compact_constraint["compact_new_psi"];
+    out["compact_old_psi"] = compact_constraint["compact_old_psi"];
+  }
+  if(weight_segregation != 0.0){
+    out["segregation_new_psi"] = segregation_constraint["segregation_new_psi"];
+    out["segregation_old_psi"] = segregation_constraint["segregation_old_psi"];
+  }
+  if(weight_similar != 0.0){
+    out["similar_new_psi"] = similar_constraint["similar_new_psi"];
+    out["similar_old_psi"] = similar_constraint["similar_old_psi"]
+      }
   
   return out;
   
@@ -803,7 +813,7 @@ List changeBeta(arma::vec betavec,
      weights: priors on the betas
 
      adjswap: flag - do we want adjacent swaps? default to 1
-   */
+  */
   
   // Find beta in betavec
   arma::uvec findBetaVec = find(betavec == beta);
