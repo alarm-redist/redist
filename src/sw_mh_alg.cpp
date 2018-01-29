@@ -118,17 +118,16 @@ List swMH(List aList,
 
   // Get ssd denominator
   double ssd_denom = 1.0;
-  // if(weight_compact != 0.0){
-  //   ssd_denom = as<double>(calc_psicompact(cdvec,
-  // 					    cdvec,
-  // 					    popvec,
-  // 					    weight_compact,
-  // 					    uniquedists,
-  // 					    ssdmat,
-  // 					    1.0)["compact_new_psi"]);
-  // }else{
-  //   ssd_denom = 1.0;
-  // }
+  if(weight_compact != 0.0){
+    ssd_denom = as<double>(calc_psicompact(cdvec,
+					   cdvec,
+					   popvec,
+					   uniquedists,
+					   ssdmat,
+					   1.0)["compact_new_psi"]);
+  }else{
+    ssd_denom = 1.0;
+  }
 
   // Define parity, min and max popoulations
   double parity = sum(popvec) / (max(cdvec) + 1);

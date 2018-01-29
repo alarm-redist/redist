@@ -538,6 +538,15 @@ List make_swaps(List boundary_cc,
   // Initialize metropolis-hastings probabilities
   double mh_prob = 1.0;
 
+  double pop_new_psi = 0.0;
+  double pop_old_psi = 0.0;
+  double compact_new_psi = 0.0;
+  double compact_old_psi = 0.0;
+  double segregation_new_psi = 0.0;
+  double segregation_old_psi = 0.0;
+  double similar_new_psi = 0.0;
+  double similar_old_psi = 0.0;
+
   // Number of unique congressional districts
   int ndists = max(cds_old) + 1;
 
@@ -688,35 +697,51 @@ List make_swaps(List boundary_cc,
 			    mh_prob);
     
     // Calculate beta constraints
-    double energy_new = 0.0;
-    double energy_old = 0.0;
     List population_constraint;
     List compact_constraint;
     List segregation_constraint;
     List similar_constraint;
     if(weight_population != 0.0){
+
       population_constraint = calc_psipop(cds_prop, cds_test, pop_vec, weight_population, cd_pair);
-      energy_new += weight_population * population_constraint["pop_new_psi"];
-      energy_old += weight_population * population_constraint["pop_old_psi"];
+
+      pop_new_psi += population_constraint["pop_new_psi"];
+      pop_old_psi += population_constraint["pop_old_psi"];
+      
     }
     if(weight_compact != 0.0){
+      
       compact_constraint = calc_psicompact(cds_prop, cds_test, pop_vec, weight_compact, cd_pair, ssdmat, ssd_denominator);
+      
       energy_new += weight_compact * compact_constraint["compact_new_psi"];
       energy_old += weight_compact * compact_constraint["compact_old_psi"];
+
+      compact_new_psi += compact_constraint["compact_new_psi"];
+      compact_old_psi += compact_constraint["compact_old_psi"];
+      
     }
     if(weight_segregation != 0.0){
+      
       segregation_constraint = calc_psisegregation(cds_prop, cds_test, pop_vec, weight_segregation, cd_pair, group_pop_vec);
+      
       energy_new += weight_segregation * segregation_constraint["segregation_new_psi"];
       energy_old += weight_segregation * segregation_constraint["segregation_old_psi"];
+
+      segregation_new_psi += segregation_constraint["segregation_new_psi"];
+      segregation_old_psi += segregation_constraint["segregation_new_psi"];
+      
     }
     if(weight_similar != 0.0){
+      
       similar_constraint = calc_psisimilar(cds_prop, cds_test, cds_orig, weight_similar, cd_pair);
+      
       energy_new += weight_similar * similar_constraint["similar_new_psi"];
       energy_old += weight_similar * similar_constraint["similar_old_psi"];
+
+      similar_new_psi += similar_constraint["similar_new_psi"];
+      similar_old_psi += similar_constraint["similar_old_psi"];
+      
     }
-    
-    // Multiply mh_prob by constraint values
-    mh_prob = (double)mh_prob * exp(-1.0 * beta * (energy_new - energy_old));
     
     // Update cd assignments and cd populations
     cds_prop = cds_test;
@@ -733,6 +758,11 @@ List make_swaps(List boundary_cc,
     }
     
   }
+
+  // Multiply mh_prob by constraint values
+  double energy_new = weight_population * pop_new_psi + weight_compact * compact_new_psi + weight_segregation * segregation_new_psi + weight_similar * similar_new_psi;
+  double energy_old = weight_population * pop_old_psi + weight_compact * compact_old_psi + weight_segregation * segregation_old_psi + weight_similar * similar_old_psi;
+  mh_prob = (double)mh_prob * exp(-1.0 * beta * (energy_new - energy_old));
   
   // Create returned list
   List out;
@@ -743,21 +773,21 @@ List make_swaps(List boundary_cc,
   out["energy_new"] = energy_new;
   out["energy_old"] = energy_old;
   if(weight_population != 0.0){
-    out["pop_new_psi"] = population_constraint["pop_new_psi"];
-    out["pop_old_psi"] = population_constraint["pop_old_psi"]
-      }
+    out["pop_new_psi"] = pop_new_psi;
+    out["pop_old_psi"] = pop_old_psi;
+  }
   if(weight_compact != 0.0){
-    out["compact_new_psi"] = compact_constraint["compact_new_psi"];
-    out["compact_old_psi"] = compact_constraint["compact_old_psi"];
+    out["compact_new_psi"] = compact_new_psi;
+    out["compact_old_psi"] = compact_old_psi;
   }
   if(weight_segregation != 0.0){
-    out["segregation_new_psi"] = segregation_constraint["segregation_new_psi"];
-    out["segregation_old_psi"] = segregation_constraint["segregation_old_psi"];
+    out["segregation_new_psi"] = segregation_new_psi;
+    out["segregation_old_psi"] = segregation_old_psi;
   }
   if(weight_similar != 0.0){
-    out["similar_new_psi"] = similar_constraint["similar_new_psi"];
-    out["similar_old_psi"] = similar_constraint["similar_old_psi"]
-      }
+    out["similar_new_psi"] = similar_new_psi;
+    out["similar_old_psi"] = similar_old_psi;
+  }
   
   return out;
   
