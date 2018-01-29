@@ -712,9 +712,6 @@ List make_swaps(List boundary_cc,
     if(weight_compact != 0.0){
       
       compact_constraint = calc_psicompact(cds_prop, cds_test, pop_vec, weight_compact, cd_pair, ssdmat, ssd_denominator);
-      
-      energy_new += weight_compact * compact_constraint["compact_new_psi"];
-      energy_old += weight_compact * compact_constraint["compact_old_psi"];
 
       compact_new_psi += compact_constraint["compact_new_psi"];
       compact_old_psi += compact_constraint["compact_old_psi"];
@@ -723,9 +720,6 @@ List make_swaps(List boundary_cc,
     if(weight_segregation != 0.0){
       
       segregation_constraint = calc_psisegregation(cds_prop, cds_test, pop_vec, weight_segregation, cd_pair, group_pop_vec);
-      
-      energy_new += weight_segregation * segregation_constraint["segregation_new_psi"];
-      energy_old += weight_segregation * segregation_constraint["segregation_old_psi"];
 
       segregation_new_psi += segregation_constraint["segregation_new_psi"];
       segregation_old_psi += segregation_constraint["segregation_new_psi"];
@@ -734,9 +728,6 @@ List make_swaps(List boundary_cc,
     if(weight_similar != 0.0){
       
       similar_constraint = calc_psisimilar(cds_prop, cds_test, cds_orig, weight_similar, cd_pair);
-      
-      energy_new += weight_similar * similar_constraint["similar_new_psi"];
-      energy_old += weight_similar * similar_constraint["similar_old_psi"];
 
       similar_new_psi += similar_constraint["similar_new_psi"];
       similar_old_psi += similar_constraint["similar_old_psi"];
