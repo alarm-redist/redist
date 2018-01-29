@@ -130,6 +130,8 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                                  contiguitymap = contiguitymap)
 
     ## Set betas - if tempering, modified later
+    beta <- params$beta
+    
     weightpop <- preprocout$params$weightpop
     weightcompact <- preprocout$params$weightcompact
     weightseg <- preprocout$params$weightseg

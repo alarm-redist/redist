@@ -260,7 +260,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ########################
     ## Set up constraints ##
     ########################
-    beta <- ifelse(!is.null(constraint), 1, 0)
+    beta <- ifelse(is.null(constraint) | temper, 0, 1)
     temperbeta <- ifelse(temper, 1, 0)
 
     if("population" %in% constraint){
