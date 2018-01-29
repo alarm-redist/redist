@@ -291,7 +291,7 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                 exact_mh = 0,
                 adapt_eprob = 0,
                 adapt_lambda = 0
-            ), file = paste0("data", procID, "_", params$savename)
+            ), file = paste0("data", procID, "_", params$savename))
                  
             temp <- swMH(aList = preprocout$data$adjlist,
                          cdvec = cds,
