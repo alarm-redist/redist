@@ -119,7 +119,7 @@ List swMH(List aList,
   // Get ssd denominator
   double ssd_denom;
   if(weight_compact != 0.0){
-    ssd_denom = as<double>(calc_betacompact(cdvec,
+    ssd_denom = as<double>(calc_psicompact(cdvec,
 					    cdvec,
 					    popvec,
 					    weight_compact,
