@@ -267,7 +267,32 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
             cat("Anneal beta =", preprocout$params$temperbeta, "\n")
             cat("adjswap =", preprocout$params$adjswaps, "\n")
             cat("==================\n\n")
-            
+
+            save(list(
+                aList = preprocout$data$adjlist,
+                cdvec = cds,
+                cdorigvec = preprocout$data$initcds,
+                popvec = preprocout$data$popvec,
+                grouppopvec = preprocout$data$grouppopvec,
+                nsims = nsimsAdj[j],
+                eprob = eprob,
+                pct_dist_parity = preprocout$params$pctdistparity,
+                beta_sequence = preprocout$params$betaseq,
+                beta_weights = preprocout$params$betaweights,
+                ssdmat = preprocout$data$ssdmat,
+                lambda = lambda,
+                beta = beta,
+                weight_population = weightpop,
+                weight_compact = weightcompact,
+                weight_segregation = weightseg,
+                weight_similar = weightsimilar,
+                anneal_beta = preprocout$params$temperbeta,
+                adjswap = preprocout$params$adjswaps,
+                exact_mh = 0,
+                adapt_eprob = 0,
+                adapt_lambda = 0
+            ), file = paste0("data", procID, "_", params$savename)
+                 
             temp <- swMH(aList = preprocout$data$adjlist,
                          cdvec = cds,
                          cdorigvec = preprocout$data$initcds,
