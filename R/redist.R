@@ -279,7 +279,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         weightseg <- 0
     }
     if("similarity" %in% constraint){
-        weightsimilar <- constraintweights[which(constraint == "similar")]
+        weightsimilar <- constraintweights[which(constraint == "similarity")]
     }else{
         weightsimilar <- 0
     }
