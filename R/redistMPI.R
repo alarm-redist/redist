@@ -384,7 +384,7 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                     cat("Constraint in likelihood =", log(like), "\n", append = TRUE)
                     cat("Constraint in likelihoodPart =", log(likePart), "\n", append = TRUE)
 
-                    prob <- (exp(-1 * betapart * like) * exp(-1 * beta * likePart)) / (exp(-1 * beta * like) * exp(-1 * betaPart * likePart))
+                    prob <- (exp(-1 * betaPart * like) * exp(-1 * beta * likePart)) / (exp(-1 * beta * like) * exp(-1 * betaPart * likePart))
                     
                     cat("Prob =", prob, "and accept =", accept, "\n", append = TRUE)
                     if(prob > accept){
