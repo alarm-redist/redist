@@ -21,8 +21,8 @@ rsg <- function(adj_list, population, Ndistrict, target_pop, thresh, maxiter) {
     .Call(`redist_rsg`, PACKAGE = 'redist', adj_list, population, Ndistrict, target_pop, thresh, maxiter)
 }
 
-swMH <- function(aList, cdvec, cdorigvec, popvec, grouppopvec, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, lambda = 0L, beta = 0.0, weight_population = 0.0, weight_compact = 0.0, weight_segregation = 0.0, weight_similar = 0.0, anneal_beta = 0L, adjswap = 1L, exact_mh = 0L, adapt_eprob = 0L, adapt_lambda = 0L) {
-    .Call(`redist_swMH`, PACKAGE = 'redist', aList, cdvec, cdorigvec, popvec, grouppopvec, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, lambda, beta, weight_population, weight_compact, weight_segregation, weight_similar, anneal_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda)
+swMH <- function(aList, cdvec, cdorigvec, popvec, grouppopvec, county_membership, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, lambda = 0L, beta = 0.0, weight_population = 0.0, weight_compact = 0.0, weight_segregation = 0.0, weight_similar = 0.0, weight_countysplit, anneal_beta = 0L, adjswap = 1L, exact_mh = 0L, adapt_eprob = 0L, adapt_lambda = 0L) {
+    .Call(`redist_swMH`, PACKAGE = 'redist', aList, cdvec, cdorigvec, popvec, grouppopvec, county_membership, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, lambda, beta, weight_population, weight_compact, weight_segregation, weight_similar, weight_countysplit, anneal_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda)
 }
 
 genAlConn <- function(aList, cds) {

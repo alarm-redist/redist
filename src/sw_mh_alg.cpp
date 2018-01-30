@@ -26,6 +26,7 @@ List swMH(List aList,
 	  NumericVector cdorigvec,
 	  NumericVector popvec,
 	  NumericVector grouppopvec,
+	  NumericVector county_membership,
 	  int nsims,
 	  double eprob,
 	  double pct_dist_parity,
@@ -38,6 +39,7 @@ List swMH(List aList,
 	  double weight_compact = 0.0,
 	  double weight_segregation = 0.0,
 	  double weight_similar = 0.0,
+	  double weight_countysplit = 0.0,
 	  int anneal_beta = 0,
 	  int adjswap = 1,
 	  int exact_mh = 0,
@@ -156,6 +158,7 @@ List swMH(List aList,
   NumericVector psicompact_store(nsims);
   NumericVector psisegregation_store(nsims);
   NumericVector psisimilar_store(nsims);
+  NumericVector psicountysplit_store(nsims);
 
   // Store value of p, lambda, weights for all simulations
   NumericVector pparam_store(nsims);
@@ -231,6 +234,7 @@ List swMH(List aList,
 				   district_pops,
 				   grouppopvec,
 				   ssdmat,
+				   county_membership,
 				   min_parity,
 				   max_parity,
 				   p,
@@ -282,6 +286,9 @@ List swMH(List aList,
       if(weight_similar != 0.0){
 	psisimilar_store[k] = swap_partitions["similar_new_psi"];
       }
+      if(weight_countysplit != 0.0){
+	psicountysplit_store[k] = swap_partitions["countysplit_new_psi"];
+      }
     }else{
       energy_store[k] = swap_partitions["energy_old"];
       if(weight_population != 0.0){
@@ -295,6 +302,9 @@ List swMH(List aList,
       }
       if(weight_similar != 0.0){
 	psisimilar_store[k] = swap_partitions["similar_old_psi"];
+      }
+      if(weight_countysplit != 0.0){
+	psicountysplit_store[k] = swap_partitions["countysplit_old_psi"];
       }
     }
   
@@ -410,6 +420,7 @@ List swMH(List aList,
   out["constraint_compact"] = psicompact_store;
   out["constraint_segregation"] = psisegregation_store;
   out["constraint_similar"] = psisimilar_store;
+  out["constraint_countysplit"] = psicountysplit_store;
   out["boundary_partitions"] = boundarypartitions_store;
   out["boundaryratio"] = boundaryratio_store;
   if(anneal_beta == 1){
