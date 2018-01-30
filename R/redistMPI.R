@@ -32,6 +32,9 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     if(is.na(grouppopvec)){
         grouppopvec <- NULL
     }
+    if(is.na(countymembership)){
+        countymembership <- NULL
+    }
     if(is.na(ssdmat)){
         ssdmat <- matrix(1, 2, 2)
     }
@@ -120,7 +123,9 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     preprocout <- redist.preproc(adjobj = adjobj, popvec = popvec,
                                  initcds = initcds, ndists = ndists,
                                  popcons = popcons,
-                                 grouppopvec = grouppopvec, ssdmat = ssdmat,
+                                 grouppopvec = grouppopvec,
+                                 countymembership = countymembership,
+                                 ssdmat = ssdmat,
                                  temper = FALSE,
                                  constraint = constraint,
                                  constraintweights = constraintweights,
@@ -136,6 +141,7 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     weightcompact <- preprocout$params$weightcompact
     weightseg <- preprocout$params$weightseg
     weightsimilar <- preprocout$params$weightsimilar
+    weightcountysplit <- preprocout$params$weightcountysplit
     temper <- "parallel"
     
     ## Find procID involved in swaps (non-adjacent only)
@@ -240,6 +246,7 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                          cdorigvec = preprocout$data$initcds,
                          popvec = preprocout$data$popvec,
                          grouppopvec = preprocout$data$grouppopvec,
+                         county_membership = preprocout$data$countymembership,
                          nsims = nsimsAdj[j],
                          eprob = eprob,
                          pct_dist_parity = preprocout$params$pctdistparity,
@@ -252,6 +259,7 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                          weight_compact = weightcompact,
                          weight_segregation = weightseg,
                          weight_similar = weightsimilar,
+                         weight_countysplit = weightcountysplit,
                          anneal_beta = preprocout$params$temperbeta,
                          adjswap = preprocout$params$adjswaps,
                          exact_mh = 0,
@@ -652,6 +660,7 @@ ecutsAppend <- function(algout,ndata){
 #' rejected. The default is \code{NULL}.
 #' @param grouppopvec A vector of populations for some sub-group of
 #' interest. The default is \code{NULL}.
+#' @param countymembership A vector of county membership assignments. The default is \code{NULL}.
 #' @param ssdmat A matrix of squared distances between geographic
 #' units. The default is \code{NULL}.
 #' @param rngseed Allows the user to set the seed for the
@@ -742,6 +751,7 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
                             loopscompleted = 0, nloop = 1, nthin = 1,
                             eprob = 0.05,
                             lambda = 0, popcons = NA, grouppopvec = NA,
+                            countymembership = NA,
                             ssdmat = NA,rngseed = NA,
                             constraint = NA, constraintweights = NA,
                             betaseq = "powerlaw",
@@ -867,6 +877,9 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
     
     ## Group population vector
     Rmpi::mpi.bcast.Robj2slave(grouppopvec)
+
+    ## County memberhsip vector
+    Rmpi::mpi.bcast.Robj2slave(countymembership)
     
     ## Squared-distance matrix
     Rmpi::mpi.bcast.Robj2slave(ssdmat)
