@@ -983,7 +983,7 @@ redist.ipw <- function(algout, targetpop = NULL){
     weights <- 1 / exp(-1 * psi)
 
     ## Resample indices
-    inds <- sample(1:length(inds), length(inds), replace = TRUE, prob = weights)
+    inds <- sample(inds, length(inds), replace = TRUE, prob = weights)
 
     ## Subset the entire list
     algout_new <- vector(mode = "list", length = length(algout))
