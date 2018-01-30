@@ -122,7 +122,6 @@ List swMH(List aList,
     ssd_denom = as<double>(calc_psicompact(cdvec,
 					   cdvec,
 					   popvec,
-					   uniquedists,
 					   ssdmat,
 					   1.0)["compact_new_psi"]);
   }else{
