@@ -244,6 +244,7 @@ List swMH(List aList,
 				   weight_compact,
 				   weight_segregation,
 				   weight_similar,
+				   weight_countysplit,
 				   ssd_denom);
 
     }while(as<int>(swap_partitions["goodprop"]) == 0);
