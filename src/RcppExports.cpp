@@ -76,7 +76,7 @@ END_RCPP
 }
 // swMH
 List swMH(List aList, NumericVector cdvec, NumericVector cdorigvec, NumericVector popvec, NumericVector grouppopvec, NumericVector county_membership, int nsims, double eprob, double pct_dist_parity, NumericVector beta_sequence, NumericVector beta_weights, NumericMatrix ssdmat, int lambda, double beta, double weight_population, double weight_compact, double weight_segregation, double weight_similar, double weight_countysplit, int anneal_beta, int adjswap, int exact_mh, int adapt_eprob, int adapt_lambda);
-RcppExport SEXP redist_swMH(SEXP aListSEXP, SEXP cdvecSEXP, SEXP cdorigvecSEXP, SEXP popvecSEXP, SEXP grouppopvecSEXP, SEXP nsimsSEXP, SEXP eprobSEXP, SEXP pct_dist_paritySEXP, SEXP beta_sequenceSEXP, SEXP beta_weightsSEXP, SEXP ssdmatSEXP, SEXP lambdaSEXP, SEXP betaSEXP, SEXP weight_populationSEXP, SEXP weight_compactSEXP, SEXP weight_segregationSEXP, SEXP weight_similarSEXP, SEXP anneal_betaSEXP, SEXP adjswapSEXP, SEXP exact_mhSEXP, SEXP adapt_eprobSEXP, SEXP adapt_lambdaSEXP) {
+RcppExport SEXP redist_swMH(SEXP aListSEXP, SEXP cdvecSEXP, SEXP cdorigvecSEXP, SEXP popvecSEXP, SEXP grouppopvecSEXP, SEXP county_membershipSEXP, SEXP nsimsSEXP, SEXP eprobSEXP, SEXP pct_dist_paritySEXP, SEXP beta_sequenceSEXP, SEXP beta_weightsSEXP, SEXP ssdmatSEXP, SEXP lambdaSEXP, SEXP betaSEXP, SEXP weight_populationSEXP, SEXP weight_compactSEXP, SEXP weight_segregationSEXP, SEXP weight_similarSEXP, SEXP weight_countysplitSEXP, SEXP anneal_betaSEXP, SEXP adjswapSEXP, SEXP exact_mhSEXP, SEXP adapt_eprobSEXP, SEXP adapt_lambdaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -98,7 +98,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type weight_compact(weight_compactSEXP);
     Rcpp::traits::input_parameter< double >::type weight_segregation(weight_segregationSEXP);
     Rcpp::traits::input_parameter< double >::type weight_similar(weight_similarSEXP);
-    Rcpp::traits::input_parameter< double >::type weight_countysplit(weight_countysplit);
+    Rcpp::traits::input_parameter< double >::type weight_countysplit(weight_countysplitSEXP);
     Rcpp::traits::input_parameter< int >::type anneal_beta(anneal_betaSEXP);
     Rcpp::traits::input_parameter< int >::type adjswap(adjswapSEXP);
     Rcpp::traits::input_parameter< int >::type exact_mh(exact_mhSEXP);
