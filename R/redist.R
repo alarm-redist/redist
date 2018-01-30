@@ -809,6 +809,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
         }        
 
         ## Run algorithm
+        print(preprocout$data$countymembership)
         algout <- swMH(aList = preprocout$data$adjlist,
                        cdvec = cds,
                        cdorigvec = preprocout$data$initcds,
