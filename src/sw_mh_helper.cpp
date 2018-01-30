@@ -757,7 +757,9 @@ List make_swaps(List boundary_cc,
   // County split metric
   if(weight_countysplit != 0.0){
 
+    Rcpp::Rcout << "calc county split" << std::endl;
     List countysplit_constraint = calc_psicounty(cds_prop, cds_test, as<arma::vec>(county_membership));
+    Rcpp::Rcout << "end calc county split" << std::endl;
 
     countysplit_new_psi += as<double>(countysplit_constraint["countysplit_new_psi"]);
     countysplit_old_psi += as<double>(countysplit_constraint["countysplit_old_psi"]);
