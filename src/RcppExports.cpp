@@ -85,7 +85,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type cdorigvec(cdorigvecSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type popvec(popvecSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type grouppopvec(grouppopvecSEXP);
-    Rcpp::trains::input_parameter< NumericVector >::type county_membership(county_membershipSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type county_membership(county_membershipSEXP);
     Rcpp::traits::input_parameter< int >::type nsims(nsimsSEXP);
     Rcpp::traits::input_parameter< double >::type eprob(eprobSEXP);
     Rcpp::traits::input_parameter< double >::type pct_dist_parity(pct_dist_paritySEXP);
