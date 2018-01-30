@@ -7,7 +7,8 @@
 ###########################################
 
 redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
-                           popcons = NULL, grouppopvec = NULL, ssdmat = NULL,
+                           popcons = NULL, grouppopvec = NULL,
+                           countymembership = NULL, ssdmat = NULL,
                            temper = NULL, constraint = NULL,
                            constraintweights = constraintweights,
                            betaseq = NULL, betaseqlength = NULL,
@@ -55,8 +56,8 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         if((any(constraintweights == 0) & !is.null(constraint))){
             stop("If applying constraints or using simulated tempering, please set non-zero constraint by specifying the 'constraintweight' argument, and specify the names of the constraints in 'constraint'.")
         }
-        if(any(!(constraint %in% c("compact", "segregation", "population", "similarity")))){
-            stop("Please specify any combination of `compact`, `segregation`, `population`, or `similarity` for constraint")
+        if(any(!(constraint %in% c("compact", "segregation", "population", "similarity", "countysplit")))){
+            stop("Please specify any combination of `compact`, `segregation`, `population`, `countysplit`, or `similarity` for constraint")
         }
     }
     
@@ -210,11 +211,19 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         stop("If applying the segregation constraint, please provide a vector
              of subgroup populations")
     }
+    if("countysplit" %in% constraint & is.null(countymembership)){
+        stop("If applying the county split constraint, please provide a numeric vector indicating county membership.")
+    }
     if("segregation" %in% constraint & !(is.null(grouppopvec))){
         if((length(grouppopvec) != length(adjlist)) |
            (sum(is.na(grouppopvec)) > 0)){
             stop("If applying the segregation constraint, each entry in adjacency
               list must have corresponding entry in vector of group populations")
+        }
+    }
+    if("countysplit" %in% constraint & !is.null(countymembership)){
+        if(length(countymembership) != length(adjlist) | sum(is.na(countymembership)) > 0){
+            stop("You do not have a county membership assigned for every unit.")
         }
     }
 
@@ -243,6 +252,15 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         grouppopvec <- popvec
     }
 
+    ## -------------------------------------
+    ## Set county membership if not provided
+    ## -------------------------------------
+    if(is.null(countymembership)){
+        countymembership <- c(0, 0, 0, 0)
+    }else{
+        countymembership <- countymembership - min(countymembership)
+    }
+   
     ################################
     ## Set ssdmat if not provided ##
     ################################
@@ -282,6 +300,11 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         weightsimilar <- constraintweights[which(constraint == "similarity")]
     }else{
         weightsimilar <- 0
+    }
+    if("countysplit" %in% constraint){
+        weightcountysplit <- constraintweights[which(constraint == "countysplit")]
+    }else{
+        weightcountysplit <- 0
     }
    
     ###################################
@@ -326,7 +349,8 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
             popvec = popvec,
             initcds = initcds,
             grouppopvec = grouppopvec,
-            ssdmat = ssdmat
+            ssdmat = ssdmat,
+            countymembership = countymembership
         ),
         params = list(
             pctdistparity = popcons,
@@ -339,7 +363,8 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
             weightpop = weightpop,
             weightcompact = weightcompact,
             weightseg = weightseg,
-            weightsimilar = weightsimilar
+            weightsimilar = weightsimilar,
+            weightcountysplit = weightcountysplit
         )
     )
 
@@ -500,7 +525,7 @@ redist.combine <- function(savename, nsims, nloop, nthin, nunits, temper = 0
 #'
 #' @usage redist.mcmc(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
 #' loopscompleted = 0, nloop = 1, nthin = 1, eprob = 0.05, lambda = 0,
-#' popcons = NULL, grouppopvec = NULL, ssdmat = NULL,
+#' popcons = NULL, grouppopvec = NULL, countymembership = NULL, ssdmat = NULL,
 #' beta = 0, temper = "none", constraint = "none",
 #' betaseq = "powerlaw", betaseqlength = 10,
 #' betaweights = NULL,
@@ -537,6 +562,7 @@ redist.combine <- function(savename, nsims, nloop, nthin, nunits, temper = 0
 #' rejected. The default is \code{NULL}.
 #' @param grouppopvec A vector of populations for some sub-group of
 #' interest. The default is \code{NULL}.
+#' @param countymembership A vector of county membership assignments. The default is \code{NULL}.
 #' @param ssdmat A matrix of squared distances between geographic
 #' units. The default is \code{NULL}.
 #' @param temper Whether to use simulated tempering algorithm. Default is FALSE.
@@ -638,7 +664,7 @@ redist.combine <- function(savename, nsims, nloop, nthin, nunits, temper = 0
 redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                         loopscompleted = 0, nloop = 1, nthin = 1, eprob = 0.05,
                         lambda = 0, popcons = NULL, grouppopvec = NULL,
-                        ssdmat = NULL, temper = FALSE,
+                        countymembership = NULL, ssdmat = NULL, temper = FALSE,
                         constraint = NULL, constraintweights = NULL,
                         betaseq = "powerlaw", betaseqlength = 10,
                         betaweights = NULL, 
@@ -711,6 +737,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
     preprocout <- redist.preproc(adjobj = adjobj, popvec = popvec,
                                  initcds = initcds, ndists = ndists,
                                  popcons = popcons,
+                                 countymembership = countymembership,
                                  grouppopvec = grouppopvec, ssdmat = ssdmat,
                                  temper = temper,
                                  constraint = constraint, constraintweights = constraintweights,
@@ -724,6 +751,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
     weightcompact <- preprocout$params$weightcompact
     weightseg <- preprocout$params$weightseg
     weightsimilar <- preprocout$params$weightsimilar
+    weightcountysplit <- preprocout$params$weightcountysplit
 
     ## Get starting loop value
     loopstart <- loopscompleted + 1
@@ -786,6 +814,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                        cdorigvec = preprocout$data$initcds,
                        popvec = preprocout$data$popvec,
                        grouppopvec = preprocout$data$grouppopvec,
+                       county_membership = preprocout$data$countymembership,
                        nsims = nsims,
                        eprob = eprob,
                        pct_dist_parity = preprocout$params$pctdistparity,
@@ -798,6 +827,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                        weight_compact = weightcompact,
                        weight_segregation = weightseg,
                        weight_similar = weightsimilar,
+                       weight_countysplit = weightcountysplit,
                        anneal_beta = preprocout$params$temperbeta,
                        adjswap = preprocout$params$adjswaps,
                        exact_mh = exact_mh,

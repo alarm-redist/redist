@@ -481,6 +481,7 @@ List make_swaps(List boundary_cc,
 		NumericVector cd_pop_vec,
 		NumericVector group_pop_vec,
 		NumericMatrix ssdmat,
+		NumericVector county_membership,
 		double minparity,
 		double maxparity, 
 		int p, 
@@ -490,6 +491,7 @@ List make_swaps(List boundary_cc,
 		double weight_compact,
 		double weight_segregation,
 		double weight_similar,
+		double weight_countysplit,
 		double ssd_denominator)
 {
 
@@ -546,6 +548,8 @@ List make_swaps(List boundary_cc,
   double segregation_old_psi = 0.0;
   double similar_new_psi = 0.0;
   double similar_old_psi = 0.0;
+  double countysplit_new_psi = 0.0;
+  double countysplit_old_psi = 0.0;
 
   // Number of unique congressional districts
   int ndists = max(cds_old) + 1;
@@ -750,9 +754,23 @@ List make_swaps(List boundary_cc,
     
   }
 
+  // County split metric
+  if(weight_count != 0.0){
+
+    List countysplit_constraint = calc_psicounty(cds_prop, cds_test, as<arma::vec>(county_membership));
+
+    countysplit_new_psi += as<double>(countysplit_constraint["countysplit_new_psi"]);
+    countysplit_old_psi += as<double>(countysplit_constraint["countysplit_old_psi"]);
+    
+  }
+
   // Multiply mh_prob by constraint values
-  double energy_new = weight_population * pop_new_psi + weight_compact * compact_new_psi + weight_segregation * segregation_new_psi + weight_similar * similar_new_psi;
-  double energy_old = weight_population * pop_old_psi + weight_compact * compact_old_psi + weight_segregation * segregation_old_psi + weight_similar * similar_old_psi;
+  double energy_new = weight_population * pop_new_psi + weight_compact * compact_new_psi
+    + weight_segregation * segregation_new_psi + weight_similar * similar_new_psi
+    + weight_countysplit * countysplit_new_psi;
+  double energy_old = weight_population * pop_old_psi + weight_compact * compact_old_psi
+    + weight_segregation * segregation_old_psi + weight_similar * similar_old_psi
+    + weight_countysplit * countysplit_old_psi;
   mh_prob = (double)mh_prob * exp(-1.0 * beta * (energy_new - energy_old));
   
   // Create returned list
@@ -778,6 +796,10 @@ List make_swaps(List boundary_cc,
   if(weight_similar != 0.0){
     out["similar_new_psi"] = similar_new_psi;
     out["similar_old_psi"] = similar_old_psi;
+  }
+  if(weight_countysplit != 0.0){
+    out["countysplit_new_psi"] = countysplit_new_psi;
+    out["countysplit_old_psi"] = countysplit_old_psi;
   }
   
   return out;
