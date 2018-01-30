@@ -226,6 +226,7 @@ List swMH(List aList,
       p = draw_p(lambda);
       
       // Loop over p, draw p connected components
+      Rcpp::Rcout << "start swap partitions" << std::endl;
       swap_partitions = make_swaps(boundary_partitions["bsearch"], 
 				   aList, 
 				   cdvec,
@@ -246,6 +247,7 @@ List swMH(List aList,
 				   weight_similar,
 				   weight_countysplit,
 				   ssd_denom);
+      Rcpp::Rcout << "end swap partitions" << std::endl;
 
     }while(as<int>(swap_partitions["goodprop"]) == 0);
     
@@ -273,6 +275,7 @@ List swMH(List aList,
     decision = mh_decision(as<double>(swap_partitions["mh_prob"]));
 
     // Store betas
+    Rcpp::Rcout << "store betas" << std::endl;
     if(decision == 1){
       energy_store[k] = swap_partitions["energy_new"];
       if(weight_population != 0.0){
@@ -308,6 +311,7 @@ List swMH(List aList,
 	psicountysplit_store[k] = swap_partitions["countysplit_old_psi"];
       }
     }
+    Rcpp::Rcout << "end store betas" << std::endl;
   
     /////////////////////////////////////////////////////////////
     // Also - for simulated tempering, propose a possible swap //
