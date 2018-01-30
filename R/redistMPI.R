@@ -431,8 +431,10 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                            tempadj = tempadj)
       }
     }else if(!is.null(savename)){
-      save(algout, file = paste(savename, ".RData", sep = ""))
-  }
+        if(procID == tempadj[1]){
+            save(algout, file = paste(savename, ".RData", sep = ""))
+        }
+    }
     
     if(params$verbose){
         cat("\n", append = TRUE)
