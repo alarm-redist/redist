@@ -14,23 +14,17 @@ using namespace Rcpp;
 // Function to calculate the strength of the beta constraint for population
 List calc_psipop(arma::vec current_dists,
 		 arma::vec new_dists,
-		 NumericVector pops)
+		 NumericVector pops,
+		 NumericVector distswitch)
 {
 
   /* Inputs to function 
      current_dists: vector of the current cong district assignments
-
      new_dists: vector of the new cong district assignments
-
      pops: vector of district populations
-
      weight_population: strength of the beta constraint
-
      distswitch: vector containing the old district, and the proposed new district
   */
-
-  // Get unique districts
-  arma::vec distswitch = unique(current_dists);
 
   // Calculate parity
   double parity = (double)sum(pops) / (max(current_dists) + 1);
@@ -40,13 +34,13 @@ List calc_psipop(arma::vec current_dists,
   double psi_old = 0.0;
 
   // Loop over congressional districts
-  for(int i = 0; i < distswitch.n_elem; i++){
+  for(int i = 0; i < distswitch.size(); i++){
 
     // Population objects
     int pop_new = 0;
     int pop_old = 0;
-    arma::uvec new_cds = find(new_dists == i);
-    arma::uvec current_cds = find(current_dists == i);
+    arma::uvec new_cds = find(new_dists == distswitch(i));
+    arma::uvec current_cds = find(current_dists == distswitch(i));
 
     // Get population of the old districts
     for(int j = 0; j < new_cds.size(); j++){
@@ -76,40 +70,32 @@ List calc_psipop(arma::vec current_dists,
 List calc_psicompact(arma::vec current_dists,
 		     arma::vec new_dists,
 		     NumericVector pops,
+		     NumericVector distswitch,
 		     NumericMatrix ssdmat,
 		     double denominator = 1.0){
 
   /* Inputs to function:
      current_dists: vector of the current cong district assignments
-
      new_dists: vector of the new cong district assignments
-
      pops: vector of district populations
-
      beta_compact: strength of the beta constraint
-
      distswitch: vector containing the old district, and the proposed new district
-
      ssdmat: squared distance matrix
-
      denominator: normalizing constant for rpi
   */
-
-  // Create vector of congressional districts
-  arma::vec distswitch = unique(current_dists);
   
   // Initialize psi values
   double psi_new = 0.0;
   double psi_old = 0.0;
 
   // Loop over the congressional districts
-  for(int i = 0; i < distswitch.n_elem; i++){
+  for(int i = 0; i < distswitch.size(); i++){
 
     // Initialize objects
     double ssd_new = 0.0;
     double ssd_old = 0.0;
-    arma::uvec new_cds = find(new_dists == i);
-    arma::uvec current_cds = find(current_dists == i);
+    arma::uvec new_cds = find(new_dists == distswitch(i));
+    arma::uvec current_cds = find(current_dists == distswitch(i));
 
     // SSD for new partition
     for(int j = 0; j < new_cds.size(); j++){
@@ -146,26 +132,19 @@ List calc_psicompact(arma::vec current_dists,
 List calc_psisegregation(arma::vec current_dists,
 			 arma::vec new_dists,
 			 NumericVector pops,
+			 NumericVector distswitch,
 			 NumericVector grouppop)
 {
 
   /* Inputs to function:
      current_dists: vector of the current cong district assignments
-
      new_dists: vector of the new cong district assignments
-
      pops: vector of district populations
-
      beta_segregation: strength of the beta constraint
-
      distswitch: vector containing the old district, and the proposed new district
-
      grouppop: vector of subgroup district populations
      
   */
-
-  // Create distswitch
-  arma::vec distswitch = unique(current_dists);
 
   // Initialize psi values
   double psi_new = 0.0;
@@ -177,15 +156,15 @@ List calc_psisegregation(arma::vec current_dists,
   double denom = (double)2 * T * pAll * (1 - pAll);
   
   // Loop over congressional districts
-  for(int i = 0; i < distswitch.n_elem; i++){
+  for(int i = 0; i < distswitch.size(); i++){
 
     // Initialize objects
     int oldpopall = 0;
     int newpopall = 0;
     int oldpopgroup = 0;
     int newpopgroup = 0;
-    arma::uvec new_cds = find(new_dists == i);
-    arma::uvec current_cds = find(current_dists == i);
+    arma::uvec new_cds = find(new_dists == distswitch(i));
+    arma::uvec current_cds = find(current_dists == distswitch(i));
   
     // Segregation for proposed assignments
     for(int j = 0; j < new_cds.size(); j++){
@@ -228,39 +207,31 @@ List calc_psisegregation(arma::vec current_dists,
 // Function to constrain on plan similarity to original plan
 List calc_psisimilar(arma::vec current_dists,
 		     arma::vec new_dists,
-		     arma::vec orig_dists)
+		     arma::vec orig_dists,
+		     NumericVector distswitch)
 {
 
   /* Inputs to function:
-
      current_dists: vector of the current cong district assignments
-
      new_dists: vector of the new cong district assignments
-
      orig_dists: vector of the true congressional district assignments
-
      beta_similar: strength of the beta constraint
-
      distswitch: vector containing the old district, and the proposed new district
-
   */
-
-  // Create distswitch
-  arma::vec distswitch = unique(current_dists);
 
   // Initialize psi values
   double psi_new = 0.0;
   double psi_old = 0.0;
 
   // Loop over congressional districts
-  for(int i = 0; i < distswitch.n_elem; i++){
+  for(int i = 0; i < distswitch.size(); i++){
 
     // Initialize objects
     int new_count = 0;
     int old_count = 0;
-    NumericVector orig_cds = wrap(find(orig_dists == i));
-    arma::uvec new_cds = find(new_dists == i);
-    arma::uvec current_cds = find(current_dists == i);
+    NumericVector orig_cds = wrap(find(orig_dists == distswitch(i)));
+    arma::uvec new_cds = find(new_dists == distswitch(i));
+    arma::uvec current_cds = find(current_dists == distswitch(i));
 
     // Similarity measure for proposed assignments
     for(int j = 0; j < new_cds.size(); j++){
@@ -287,8 +258,8 @@ List calc_psisimilar(arma::vec current_dists,
   }
 
   // Normalize by dividing by number of congressional districts
-  psi_new = psi_new / distswitch.n_elem;
-  psi_old = psi_old / distswitch.n_elem;
+  psi_new = psi_new / distswitch.size();
+  psi_old = psi_old / distswitch.size();
 
   // Create return object
   List out;

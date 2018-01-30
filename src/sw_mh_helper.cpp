@@ -696,6 +696,44 @@ List make_swaps(List boundary_cc,
 			    eprob,
 			    mh_prob);
     
+    // Calculate beta constraints
+    List population_constraint;
+    List compact_constraint;
+    List segregation_constraint;
+    List similar_constraint;
+    if(weight_population != 0.0){
+
+      population_constraint = calc_psipop(cds_prop, cds_test, pop_vec, cd_pair);
+
+      pop_new_psi += as<double>(population_constraint["pop_new_psi"]);
+      pop_old_psi += as<double>(population_constraint["pop_old_psi"]);
+      
+    }
+    if(weight_compact != 0.0){
+      
+      compact_constraint = calc_psicompact(cds_prop, cds_test, pop_vec, cd_pair, ssdmat, ssd_denominator);
+
+      compact_new_psi += as<double>(compact_constraint["compact_new_psi"]);
+      compact_old_psi += as<double>(compact_constraint["compact_old_psi"]);
+      
+    }
+    if(weight_segregation != 0.0){
+      
+      segregation_constraint = calc_psisegregation(cds_prop, cds_test, pop_vec, cd_pair, group_pop_vec);
+
+      segregation_new_psi += as<double>(segregation_constraint["segregation_new_psi"]);
+      segregation_old_psi += as<double>(segregation_constraint["segregation_new_psi"]);
+      
+    }
+    if(weight_similar != 0.0){
+      
+      similar_constraint = calc_psisimilar(cds_prop, cds_test, cds_orig, cd_pair);
+
+      similar_new_psi += as<double>(similar_constraint["similar_new_psi"]);
+      similar_old_psi += as<double>(similar_constraint["similar_old_psi"]);
+      
+    }
+    
     // Update cd assignments and cd populations
     cds_prop = cds_test;
     cdspop_prop = prop_cd_pops;
@@ -710,44 +748,6 @@ List make_swaps(List boundary_cc,
       break;
     }
     
-  }
-
-  // Calculate beta constraints
-  List population_constraint;
-  List compact_constraint;
-  List segregation_constraint;
-  List similar_constraint;
-  if(weight_population != 0.0){
-
-    population_constraint = calc_psipop(cds_prop, cds_test, pop_vec);
-
-    pop_new_psi += as<double>(population_constraint["pop_new_psi"]);
-    pop_old_psi += as<double>(population_constraint["pop_old_psi"]);
-      
-  }
-  if(weight_compact != 0.0){
-      
-    compact_constraint = calc_psicompact(cds_prop, cds_test, pop_vec, ssdmat, ssd_denominator);
-
-    compact_new_psi += as<double>(compact_constraint["compact_new_psi"]);
-    compact_old_psi += as<double>(compact_constraint["compact_old_psi"]);
-      
-  }
-  if(weight_segregation != 0.0){
-      
-    segregation_constraint = calc_psisegregation(cds_prop, cds_test, pop_vec, group_pop_vec);
-
-    segregation_new_psi += as<double>(segregation_constraint["segregation_new_psi"]);
-    segregation_old_psi += as<double>(segregation_constraint["segregation_new_psi"]);
-      
-  }
-  if(weight_similar != 0.0){
-      
-    similar_constraint = calc_psisimilar(cds_prop, cds_test, cds_orig);
-
-    similar_new_psi += as<double>(similar_constraint["similar_new_psi"]);
-    similar_old_psi += as<double>(similar_constraint["similar_old_psi"]);
-      
   }
 
   // Multiply mh_prob by constraint values
