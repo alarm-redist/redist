@@ -287,7 +287,11 @@ List calc_psicounty(arma::vec current_dists,
   */
 
   // Get unique psi labels
+  Rcpp::Rcout << "get unique county" << std::endl;
   arma::vec unique_county = unique(county_assignments);
+  for(int j = 0; j < unique_county.n_elem; j++){
+    Rcpp::Rcout << "Element" << j << "in unique_county =" << unique_county[j] << std::endl;
+  }
 
   // Loop over county labels
   int i;

@@ -226,7 +226,6 @@ List swMH(List aList,
       p = draw_p(lambda);
       
       // Loop over p, draw p connected components
-      Rcpp::Rcout << "start swap partitions" << std::endl;
       swap_partitions = make_swaps(boundary_partitions["bsearch"], 
 				   aList, 
 				   cdvec,
@@ -247,7 +246,6 @@ List swMH(List aList,
 				   weight_similar,
 				   weight_countysplit,
 				   ssd_denom);
-      Rcpp::Rcout << "end swap partitions" << std::endl;
 
     }while(as<int>(swap_partitions["goodprop"]) == 0);
     
