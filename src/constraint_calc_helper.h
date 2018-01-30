@@ -11,19 +11,23 @@
 
 Rcpp::List calc_psipop(arma::vec current_dists,
 		       arma::vec new_dists,
-		       Rcpp::NumericVector pops);
+		       Rcpp::NumericVector pops,
+		       Rcpp::NumericVector distswitch);
 Rcpp::List calc_psicompact(arma::vec current_dists,
 			   arma::vec new_dists,
 			   Rcpp::NumericVector pops,
+			   Rcpp::NumericVector distswitch,
 			   Rcpp::NumericMatrix ssdmat,
 			   double denominator);
 Rcpp::List calc_psisegregation(arma::vec current_dists,
 			       arma::vec new_dists,
 			       Rcpp::NumericVector pops,
+			       Rcpp::NumericVector distswitch,
 			       Rcpp::NumericVector grouppop);
 Rcpp::List calc_psisimilar(arma::vec current_dists,
 			   arma::vec new_dists,
-			   arma::vec orig_dists);
+			   arma::vec orig_dists,
+			   Rcpp::NumericVector distswitch);
 Rcpp::List calc_psicounty(arma::vec current_dists,
 			  arma::vec new_dists,
 			  arma::vec county_assignments);
