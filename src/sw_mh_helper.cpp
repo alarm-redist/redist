@@ -755,7 +755,7 @@ List make_swaps(List boundary_cc,
   }
 
   // County split metric
-  if(weight_count != 0.0){
+  if(weight_countysplit != 0.0){
 
     List countysplit_constraint = calc_psicounty(cds_prop, cds_test, as<arma::vec>(county_membership));
 
