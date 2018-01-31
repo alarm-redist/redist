@@ -1,39 +1,38 @@
-redist: Markov Chain Monte Carlo Methods for Redistricting Simulation [![Build Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist) [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/redist)](https://cran.r-project.org/package=redist)
-===========================================================================================================================================================================================================================================================================================================
-
-Authors: - [Ben Fifield](https://www.benfifield.com), <bfifield@princeton.edu> (Maintainer) - Alex Tarr, <atarr@princeton.edu> - [Michael Higgins](http://www-personal.k-state.edu/~mikehiggins/), <mjh5@princeton.edu> - [Kosuke Imai](https://imai.princeton.edu), <kimai@princeton.edu>
+---
+title: "redist: Markov Chain Monte Carlo Methods for Redistricting Simulation"
+output: 
+  md_document:
+    variant: markdown_github
+---
+# redist: Markov Chain Monte Carlo Methods for Redistricting Simulation [![Build Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist) [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/redist)](https://cran.r-project.org/package=redist)
+Authors:
+- [Ben Fifield](https://www.benfifield.com), bfifield@princeton.edu (Maintainer)
+- Alex Tarr, atarr@princeton.edu
+- [Michael Higgins](http://www-personal.k-state.edu/~mikehiggins/), mjh5@princeton.edu
+- [Kosuke Imai](https://imai.princeton.edu), kimai@princeton.edu
 
 Paper: [A New Automated Redistricting Simulator Using Markov Chain Monte Carlo](http://imai.princeton.edu/research/files/redist.pdf)
 
-Installation Instructions
--------------------------
-
+## Installation Instructions
 `redist` is available on CRAN and can be installed using:
-
-``` r
+```{r eval = FALSE}
 install.packages("redist")
 ```
 
-You can also install the most recent development version of `redist` using the `devtools` package. First you have to install `devtools` using the following code. Note that you only have to do this once:
-
-``` r
+You can also install the most recent development version of `redist` using the `devtools` package.  First you have to install `devtools` using the following code. Note that you only have to do this once:
+```{r eval=FALSE} 
 if(!require(devtools)) install.packages("devtools")
-```
-
+```   
 Then, load `devtools` and use the function `install_github()` to install `redist`:
 
-``` r
+```{r eval=FALSE}
 library(devtools)
 install_github("kosukeimai/redist",dependencies=TRUE)
 ```
 
-Usage Examples - 25 Precincts into 3 Districts
-==============================================
-
-No Population Constraint
-------------------------
-
-``` r
+# Usage Examples - 25 Precincts into 3 Districts
+## No Population Constraint
+```{r eval = FALSE}
 ## Load data
 library(redist)
 data(algdat.pfull)
@@ -45,10 +44,8 @@ mcmc.out <- redist.mcmc(adjobj = algdat.pfull$adjlist,
                         ndists = 3)
 ```
 
-20% Population Constraint
--------------------------
-
-``` r
+## 20% Population Constraint
+```{r eval = FALSE}
 ## Load data
 data(algdat.p20)
 
@@ -94,10 +91,8 @@ mcmc.out.st <- redist.mcmc(adjobj = algdat.p20$adjlist,
 mcmc.out.st <- redist.ipw(mcmc.out.st, targetpop = .2)
 ```
 
-20% Population Constraint and Compactness Constraint
-----------------------------------------------------
-
-``` r
+## 20% Population Constraint and Compactness Constraint
+```{r eval = FALSE}
 ## ----------------------------------------------------------
 ## Constrain on population and compactness with tempering,
 ## weight on population = 5.4 while weight on compactness = 2
