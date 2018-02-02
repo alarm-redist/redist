@@ -317,6 +317,9 @@ List calc_psicounty(arma::vec current_dists,
     
   }
 
+  psi_new = (double)psi_new / unique_county.n_elem;
+  psi_old = (double)psi_old / unique_county.n_elem;
+
   // Create return object
   List out;
   out["countysplit_new_psi"] = psi_new;
