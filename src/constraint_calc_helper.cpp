@@ -308,10 +308,10 @@ List calc_psicounty(arma::vec current_dists,
     unique_new = unique(new_dists_incounty);
 
     // Increment psi
-    if(unique_current.n_elem > 1){
+    if(unique_new.n_elem > 1){
       psi_new += 1.0;
     }
-    if(unique_new.n_elem > 1){
+    if(unique_current.n_elem > 1){
       psi_old += 1.0;
     }
     
