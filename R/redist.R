@@ -733,7 +733,8 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
     
     #####################
     ## Preprocess data ##
-    #####################
+    ##################### 
+    cat("Preprocessing data.\n\n")
     preprocout <- redist.preproc(adjobj = adjobj, popvec = popvec,
                                  initcds = initcds, ndists = ndists,
                                  popcons = popcons,

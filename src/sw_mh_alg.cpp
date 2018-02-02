@@ -191,6 +191,7 @@ List swMH(List aList,
   List get_constraint; List gt_out; NumericVector cdvec_prop; int i;
 
   // Open the simulations
+  Rcpp::Rcout << "Finished preprocessing data, now sampling plans." << std::endl << std::endl;;
   while(k < nsims){
 
     /////////////////////////////////////
