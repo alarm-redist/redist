@@ -154,13 +154,13 @@ List pp_compact(arma::uvec new_cds,
   int j; int k;
 
   arma::vec perimeter_vec;
-  arma::vec adj_precs;
-  arma::vec adj_boundary;
+  arma::ivec adj_precs;
+  arma::ivec adj_boundary;
   arma::uvec adj_precs_gt;
   arma::uvec adj_precs_inds;
   arma::uvec new_boundaryprecs_indist_inds;
   arma::uvec current_boundaryprecs_indist_inds;
-  arma::ivec indices_boundary_indist;
+  arma::vec indices_boundary_indist;
 
   double pi = 3.141592653589793238463;
 
