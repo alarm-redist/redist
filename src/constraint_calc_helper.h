@@ -9,15 +9,21 @@
 #ifndef CONSTRAINT_CALC_HELPER_H
 #define CONSTRAINT_CALC_HELPER_H
 
+Rcpp::NumericVector findBoundary(Rcpp::List fullList,
+				 Rcpp::List conList);
 Rcpp::List calc_psipop(arma::vec current_dists,
 		       arma::vec new_dists,
 		       Rcpp::NumericVector pops,
 		       Rcpp::NumericVector distswitch);
 Rcpp::List calc_psicompact(arma::vec current_dists,
 			   arma::vec new_dists,
-			   Rcpp::NumericVector pops,
-			   Rcpp::NumericVector distswitch,
-			   Rcpp::NumericMatrix ssdmat,
+			   NumericVector distswitch,
+			   std::string measure,
+			   List aList,
+			   NumericVector areas_vec,
+			   List boundarylength_list,
+			   NumericVector pops,
+			   NumericMatrix ssdmat,
 			   double denominator);
 Rcpp::List calc_psisegregation(arma::vec current_dists,
 			       arma::vec new_dists,

@@ -26,7 +26,9 @@ List swMH(List aList,
 	  NumericVector cdorigvec,
 	  NumericVector popvec,
 	  NumericVector grouppopvec,
+	  NumericVector areas_vec,
 	  NumericVector county_membership,
+	  List boundarylength_list,
 	  int nsims,
 	  double eprob,
 	  double pct_dist_parity,
@@ -44,7 +46,8 @@ List swMH(List aList,
 	  int adjswap = 1,
 	  int exact_mh = 0,
 	  int adapt_eprob = 0,
-	  int adapt_lambda = 0)
+	  int adapt_lambda = 0,
+	  std::string compactness_measure = "fryer-holden")
 {
 
   /* Inputs to function:
@@ -120,11 +123,15 @@ List swMH(List aList,
 
   // Get ssd denominator
   double ssd_denom = 1.0;
-  if(weight_compact != 0.0){
+  if(weight_compact != 0.0 & compactness_measure == "fryer-holden"){
     ssd_denom = as<double>(calc_psicompact(cdvec,
 					   cdvec,
-					   popvec,
 					   uniquedists,
+					   compactness_measure,
+					   aList,
+					   areas_vec,
+					   boundarylength_list,
+					   popvec,
 					   ssdmat,
 					   1.0)["compact_new_psi"]);
   }else{
@@ -234,6 +241,8 @@ List swMH(List aList,
 				   popvec,
 				   district_pops,
 				   grouppopvec,
+				   areas_vec,
+				   boundarylength_list,
 				   ssdmat,
 				   county_membership,
 				   min_parity,
@@ -246,7 +255,8 @@ List swMH(List aList,
 				   weight_segregation,
 				   weight_similar,
 				   weight_countysplit,
-				   ssd_denom);
+				   ssd_denom,
+				   compactness_measure);
 
     }while(as<int>(swap_partitions["goodprop"]) == 0);
     
