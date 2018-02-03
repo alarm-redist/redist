@@ -160,7 +160,7 @@ List pp_compact(arma::uvec new_cds,
   arma::uvec adj_precs_inds;
   arma::uvec new_boundaryprecs_indist_inds;
   arma::uvec current_boundaryprecs_indist_inds;
-  arma::vec indices_boundary_indist;
+  arma::ivec indices_boundary_indist;
 
   double pi = 3.141592653589793238463;
 
