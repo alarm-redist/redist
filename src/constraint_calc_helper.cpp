@@ -11,6 +11,154 @@
 
 using namespace Rcpp;
 
+/* Function to identify which precincts lie on the boundary of a congressional
+   district */
+// [[Rcpp::export]]
+NumericVector findBoundary(List fullList,
+			   List conList)
+{
+
+  /* Inputs to function:
+     fullList: Full adjacency list of geographic units
+
+     conList: Adjacency list of geographic units within cong district
+  */
+
+  // Initialize container vector of 0's (not boundary) and 1's (boundary)
+  NumericVector isBoundary(fullList.size());
+
+  // Initialize inside loop
+  NumericVector full; NumericVector conn; int i;
+
+  // Loop through aList
+  for(i = 0; i < fullList.size(); i++){
+
+    // Get vectors of full and cd-connected components for precinct i
+    full = fullList(i);
+    conn = conList(i);
+
+    // Compare lengths - if conn < full, then boundary unit
+    if(full.size() > conn.size()){
+      isBoundary(i) = 1;
+    }
+    
+  }
+
+  return isBoundary;
+
+}
+
+// Fryer-Holden measure
+List fh_compact(arma::uvec new_cds,
+		arma::uvec current_cds,
+		NumericVector pops,
+		NumericMatrix ssdmat,
+		double denominator = 1.0){
+
+  // Initialize objects
+  double ssd_new = 0.0;
+  double ssd_old = 0.0;
+  int j; int k;
+
+  // SSD for new partition
+  for(j = 0; j < new_cds.size(); j++){
+    for(k = j + 1; k < new_cds.size(); k++){
+      ssd_new += (double)ssdmat(new_cds(j),new_cds(k)) *
+	pops(new_cds(j)) * pops(new_cds(k));
+    }
+  }
+
+  // SSD for old partition
+  for(j = 0; j < current_cds.size(); j++){
+    for(k = j + 1; k < current_cds.size(); k++){
+      ssd_old += (double)ssdmat(current_cds(j),current_cds(k)) *
+	pops(current_cds(j)) * pops(current_cds(k));
+    }
+  }
+
+  List out;
+  out["ssd_new"] = ssd_new / denominator;
+  out["ssd_old"] = ssd_old / denominator;
+  
+}
+
+// Polsby-popper measure
+List pp_compact(arma::uvec new_cds,
+		arma::uvec current_cds,
+		NumericVector areas_vec,
+		NumericVector boundarylist_new,
+		NumericVector boundarylist_current,
+		List aList,
+		List boundarylength_list){
+
+  // Declare objects
+  arma::uvec new_boundaryprecs = find(boundarylist_new == 1);
+  arma::uvec current_boundaryprecs = find(boundarylist_current == 1);
+  arma::ivec new_boundaryprecs_indist = intersect(new_cds, new_boundaryprecs);
+  arma::ivec current_boundaryprecs_indist = intersect(current_cds, current_boundaryprecs);
+  
+  double area_new = 0.0;
+  double area_old = 0.0;
+  double perimeter_new = 0.0;
+  double perimeter_old = 0.0;
+  int j; int k;
+
+  arma::vec perimeter_vec;
+  arma::vec adj_precs;
+  arma::vec adj_boundary;
+  arma::uvec adj_precs_gt;
+  arma::uvec adj_precs_inds;
+  arma::uvec new_boundaryprecs_indist_inds;
+  arma::ivec indices_boundary_indist;
+
+  double pi = 3.141592653589793238463;
+
+  // Areas for current and new partitions
+  for(j = 0; j < new_cds.size(); j++){
+    area_new += areas_vec(new_cds(j));
+  }
+  for(j = 0; j < current_cds.size(); j++){
+    area_old += areas_vec(current_cds(j));
+  }
+
+  // Perimeters for current and new partitions
+  for(j = 0; j < new_boundaryprecs_indist.n_elem; j++){
+    adj_precs = aList(new_boundaryprecs_indist[j]);
+    perimeter_vec = boundarylength_list(newboundaryprecs_indist[j]);
+    // Get indices of adj_precs that are greater than j
+    // adj_precs_gt
+    adj_precs_gt = find(adj_precs > j);
+    // Get indices of adj_precs that are boundaries
+    // adj_precs_inds
+    intersect(adj_boundary, adj_precs_inds, new_boundaryprecs_indist_inds, adj_precs, new_boundaryprecs_indist);
+    // Get intersection
+    indices_boundary_indist = intersect(adj_precs_gt, adj_precs_inds);
+    for(k = 0; k < indices_boundary_indist.n_elem; k++){
+      perimeter_new += perimeter_vec(indices_boundary_indist[k]);
+    }
+  }
+  for(j = 0; j < current_boundaryprecs_indist.n_elem; j++){
+    adj_precs = aList(current_boundaryprecs_indist[j]);
+    perimeter_vec = boundarylength_list(currentboundaryprecs_indist[j]);
+    // Get indices of adj_precs that are greater than j
+    // adj_precs_gt
+    adj_precs_gt = find(adj_precs > j);
+    // Get indices of adj_precs that are boundaries
+    // adj_precs_inds
+    intersect(adj_boundary, adj_precs_inds, current_boundaryprecs_indist_inds, adj_precs, current_boundaryprecs_indist);
+    // Get intersection
+    indices_boundary_indist = intersect(adj_precs_gt, adj_precs_inds);
+    for(k = 0; k < indices_boundary_indist.n_elem; k++){
+      perimeter_old += perimeter_vec(indices_boundary_indist[k]);
+    }
+  }
+
+  List out;
+  out["pp_new"] = (double)4.0 * pi * area_new / pow(perimeter_new, 2.0);
+  out["pp_old"] = (double)4.0 * pi * area_old / pow(perimeter_old, 2.0);
+  
+}
+
 // Function to calculate the strength of the beta constraint for population
 List calc_psipop(arma::vec current_dists,
 		 arma::vec new_dists,
@@ -51,8 +199,8 @@ List calc_psipop(arma::vec current_dists,
     }
 
     // Calculate the penalty
-    psi_new += std::pow(pop_new / parity - 1, 2.0);
-    psi_old += std::pow(pop_old / parity - 1, 2.0);
+    psi_new += std::pow(pop_new / parity - 1.0, 2.0);
+    psi_old += std::pow(pop_old / parity - 1.0, 2.0);
 
   }
 
@@ -66,11 +214,17 @@ List calc_psipop(arma::vec current_dists,
 }
 
 // Function to calculate the strength of the beta constraint for compactness
-// Fryer and Holden 2011 RPI index
+// Currently implemented: Fryer and Holden 2011 RPI index, Polsby-Popper
 List calc_psicompact(arma::vec current_dists,
 		     arma::vec new_dists,
-		     NumericVector pops,
 		     NumericVector distswitch,
+		     std::string measure,
+		     // For Polsby-Popper
+		     List aList,
+		     NumericVector areas_vec,
+		     List boundarylength_list,
+		     // For Fryer Holden
+		     NumericVector pops,
 		     NumericMatrix ssdmat,
 		     double denominator = 1.0){
 
@@ -88,41 +242,50 @@ List calc_psicompact(arma::vec current_dists,
   double psi_new = 0.0;
   double psi_old = 0.0;
 
+  // Initialize lists and boundary vectors
+  List aList_new;
+  List aList_current;
+  NumericVector boundarylist_new(new_dists.size());
+  NumericVector boundarylist_current(current_dists.size());
+  if(measure == "polsby-popper"){
+    aList_new = genAlConn(aList, new_dists);
+    aList_current = genAlConn(aList, current_dists);
+    boundarylist_new = findBoundary(aList, aList_new);
+    boundarylist_current = findBoundary(aList, aList_current);
+  }
+
   // Loop over the congressional districts
   for(int i = 0; i < distswitch.size(); i++){
 
     // Initialize objects
-    double ssd_new = 0.0;
-    double ssd_old = 0.0;
     arma::uvec new_cds = find(new_dists == distswitch(i));
     arma::uvec current_cds = find(current_dists == distswitch(i));
 
-    // SSD for new partition
-    for(int j = 0; j < new_cds.size(); j++){
-      for(int k = j + 1; k < new_cds.size(); k++){
-	ssd_new += (double)ssdmat(new_cds(j),new_cds(k)) *
-	  pops(new_cds(j)) * pops(new_cds(k));
-      }
-    }
+    if(measure == "fryer-holden"){
 
-    // SSD for old partition
-    for(int j = 0; j < current_cds.size(); j++){
-      for(int k = j + 1; k < current_cds.size(); k++){
-	ssd_old += (double)ssdmat(current_cds(j),current_cds(k)) *
-	  pops(current_cds(j)) * pops(current_cds(k));
-      }
-    }
+      List fh_out = fh_compact(new_cds, current_cds, pops, ssdmat, denominator);
+      
+      // Add to psi
+      psi_new += fh_out["ssd_new"];
+      psi_old += fh_out["ssd_old"];
+      
+    }else if(measure == "polsby-popper"){
 
-    // Add to psi
-    psi_new += ssd_new;
-    psi_old += ssd_old;
+      List pp_out = pp_compact(new_cds, current_cds, areas_vec, boundarylist_new,
+			       boundarylist_current, aList, boundarylength_list);
+
+	// Add to psi
+      psi_new += pp_out["pp_new"];
+      psi_old += pp_out["pp_old"];
+      
+    }
 
   }
 
   // Create return object
   List out;
-  out["compact_new_psi"] = (double)psi_new / denominator;
-  out["compact_old_psi"] = (double)psi_old / denominator;
+  out["compact_new_psi"] = psi_new;
+  out["compact_old_psi"] = psi_old;
 
   return out;
 
@@ -283,7 +446,7 @@ List calc_psicounty(arma::vec current_dists,
      1) Get the unique county labels
      2) Loop through the unique county labels
      3) Increment psi if there are more than 2 unique district assignments for 
-        that county
+     that county
   */
 
   // Get unique psi labels

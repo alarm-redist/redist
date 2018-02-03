@@ -106,43 +106,6 @@ List genAlConn(List aList,
 
 }
 
-/* Function to identify which precincts lie on the boundary of a congressional
-   district */
-// [[Rcpp::export]]
-NumericVector findBoundary(List fullList,
-			   List conList)
-{
-
-  /* Inputs to function:
-     fullList: Full adjacency list of geographic units
-
-     conList: Adjacency list of geographic units within cong district
-  */
-
-  // Initialize container vector of 0's (not boundary) and 1's (boundary)
-  NumericVector isBoundary(fullList.size());
-
-  // Initialize inside loop
-  NumericVector full; NumericVector conn; int i;
-
-  // Loop through aList
-  for(i = 0; i < fullList.size(); i++){
-
-    // Get vectors of full and cd-connected components for precinct i
-    full = fullList(i);
-    conn = conList(i);
-
-    // Compare lengths - if conn < full, then boundary unit
-    if(full.size() > conn.size()){
-      isBoundary(i) = 1;
-    }
-    
-  }
-
-  return isBoundary;
-
-}
-
 // Function to make unidirectional adjacency list bidirectional
 List add_ties(List aList){
 
@@ -480,6 +443,8 @@ List make_swaps(List boundary_cc,
 		NumericVector pop_vec, 
 		NumericVector cd_pop_vec,
 		NumericVector group_pop_vec,
+		NumericVector areas_vec,
+		List boundarylength_list,
 		NumericMatrix ssdmat,
 		NumericVector county_membership,
 		double minparity,
@@ -492,7 +457,8 @@ List make_swaps(List boundary_cc,
 		double weight_segregation,
 		double weight_similar,
 		double weight_countysplit,
-		double ssd_denominator)
+		double ssd_denominator,
+		std::string compactness_measure)
 {
 
   /* Inputs to function:
@@ -715,7 +681,11 @@ List make_swaps(List boundary_cc,
     }
     if(weight_compact != 0.0){
       
-      compact_constraint = calc_psicompact(cds_prop, cds_test, pop_vec, cd_pair, ssdmat, ssd_denominator);
+      compact_constraint = calc_psicompact(cds_prop, cds_test,
+					   cd_pair, compactness_measure,
+					   aList, areas_vec,
+					   boundarylength_list, pop_vec,
+					   ssdmat, ssd_denominator);
 
       compact_new_psi += as<double>(compact_constraint["compact_new_psi"]);
       compact_old_psi += as<double>(compact_constraint["compact_old_psi"]);
