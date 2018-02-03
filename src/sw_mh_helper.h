@@ -11,8 +11,6 @@
 
 
 Rcpp::NumericVector init_pop(Rcpp::NumericVector popvec, arma::vec cds);
-Rcpp::List genAlConn(Rcpp::List aList,
-		     Rcpp::NumericVector cds);
 Rcpp::List add_ties(Rcpp::List aList);
 Rcpp::List cut_edges(Rcpp::List aList_con,
 		     double eprob);
