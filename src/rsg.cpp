@@ -2,6 +2,7 @@
 #include <RcppArmadillo.h>
 #include "make_swaps_helper.h"
 #include "sw_mh_helper.h"
+#include "constraint_calc_helper.h"
 
 using namespace Rcpp;
 
