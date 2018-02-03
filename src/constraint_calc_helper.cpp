@@ -156,7 +156,7 @@ List pp_compact(arma::uvec new_cds,
   int j; int k;
 
   arma::vec perimeter_vec;
-  arma::ivec adj_precs;
+  arma::vec adj_precs;
   arma::uvec adj_precs_gt;
   arma::ivec adj_boundary;
   arma::uvec adj_precs_inds;
@@ -176,31 +176,31 @@ List pp_compact(arma::uvec new_cds,
 
   // Perimeters for current and new partitions
   for(j = 0; j < new_boundaryprecs_indist.n_elem; j++){
-    adj_precs = aList(new_boundaryprecs_indist[j]);
-    perimeter_vec = boundarylength_list(new_boundaryprecs_indist[j]);
+    adj_precs = as<arma::vec>(aList(new_boundaryprecs_indist[j]));
+    perimeter_vec = as<arma::vec>(boundarylength_list(new_boundaryprecs_indist[j]));
     // Get indices of adj_precs that are greater than j
     // adj_precs_gt
     adj_precs_gt = find(adj_precs > j);
     // Get indices of adj_precs that are boundaries
     // adj_precs_inds
-    intersect(adj_boundary, adj_precs_inds, new_boundaryprecs_indist_inds, adj_precs, new_boundaryprecs_indist);
+    intersect(adj_boundary, adj_precs_inds, new_boundaryprecs_indist_inds, arma::conv_to<arma::ivec>::from(adj_precs), new_boundaryprecs_indist);
     // Get intersection
-    indices_boundary_indist = intersect(adj_precs_gt, adj_precs_inds);
+    indices_boundary_indist = intersect(arma::conv_to<arma::ivec>::from(adj_precs_gt), arma::conv_to<arma::ivec>::from(adj_precs_inds));
     for(k = 0; k < indices_boundary_indist.n_elem; k++){
       perimeter_new += perimeter_vec(indices_boundary_indist[k]);
     }
   }
   for(j = 0; j < current_boundaryprecs_indist.n_elem; j++){
-    adj_precs = aList(current_boundaryprecs_indist[j]);
-    perimeter_vec = boundarylength_list(current_boundaryprecs_indist[j]);
+    adj_precs = as<arma::vec>(aList(current_boundaryprecs_indist[j]));
+    perimeter_vec = as<arma::vec>(boundarylength_list(current_boundaryprecs_indist[j]));
     // Get indices of adj_precs that are greater than j
     // adj_precs_gt
     adj_precs_gt = find(adj_precs > j);
     // Get indices of adj_precs that are boundaries
     // adj_precs_inds
-    intersect(adj_boundary, adj_precs_inds, current_boundaryprecs_indist_inds, adj_precs, current_boundaryprecs_indist);
+    intersect(adj_boundary, adj_precs_inds, current_boundaryprecs_indist_inds, arma::conv_to<arma::ivec>::from(adj_precs), current_boundaryprecs_indist);
     // Get intersection
-    indices_boundary_indist = intersect(adj_precs_gt, adj_precs_inds);
+    indices_boundary_indist = intersect(arma::conv_to<arma::ivec>::from(adj_precs_gt), arma::conv_to<arma::ivec>::from(adj_precs_inds));
     for(k = 0; k < indices_boundary_indist.n_elem; k++){
       perimeter_old += perimeter_vec(indices_boundary_indist[k]);
     }
@@ -303,8 +303,8 @@ List calc_psicompact(arma::vec current_dists,
   NumericVector boundarylist_new(new_dists.size());
   NumericVector boundarylist_current(current_dists.size());
   if(measure == "polsby-popper"){
-    aList_new = genAlConn(aList, new_dists);
-    aList_current = genAlConn(aList, current_dists);
+    aList_new = genAlConn(aList, NumericVector(new_dists.begin(), new_dists.end()));
+    aList_current = genAlConn(aList, NumericVector(current_dists.begin(), current_dists.end()));
     boundarylist_new = findBoundary(aList, aList_new);
     boundarylist_current = findBoundary(aList, aList_current);
   }
@@ -321,8 +321,8 @@ List calc_psicompact(arma::vec current_dists,
       List fh_out = fh_compact(new_cds, current_cds, pops, ssdmat, denominator);
       
       // Add to psi
-      psi_new += fh_out["ssd_new"];
-      psi_old += fh_out["ssd_old"];
+      psi_new += as<double>(fh_out["ssd_new"]);
+      psi_old += as<double>(fh_out["ssd_old"]);
       
     }else if(measure == "polsby-popper"){
 
@@ -330,8 +330,8 @@ List calc_psicompact(arma::vec current_dists,
 			       boundarylist_current, aList, boundarylength_list);
 
 	// Add to psi
-      psi_new += pp_out["pp_new"];
-      psi_old += pp_out["pp_old"];
+      psi_new += as<double>(pp_out["pp_new"]);
+      psi_old += as<double>(pp_out["pp_old"]);
       
     }
 
