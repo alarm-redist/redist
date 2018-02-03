@@ -146,8 +146,8 @@ List pp_compact(arma::uvec new_cds,
   // Declare objects
   arma::uvec new_boundaryprecs = find(as<arma::vec>(boundarylist_new) == 1);
   arma::uvec current_boundaryprecs = find(as<arma::vec>(boundarylist_current) == 1);
-  arma::ivec new_boundaryprecs_indist = arma::intersect(new_cds, new_boundaryprecs);
-  arma::ivec current_boundaryprecs_indist = arma::intersect(current_cds, current_boundaryprecs);
+  arma::ivec new_boundaryprecs_indist = arma::intersect(arma::conv_to<arma::ivec>::from(new_cds), arma::conv_to<arma::ivec>::from(new_boundaryprecs));
+  arma::ivec current_boundaryprecs_indist = arma::intersect(arma::conv_to<arma::ivec>::from(current_cds), arma::conv_to<arma::ivec>::from(current_boundaryprecs));
   
   double area_new = 0.0;
   double area_old = 0.0;
@@ -183,9 +183,9 @@ List pp_compact(arma::uvec new_cds,
     adj_precs_gt = find(adj_precs > j);
     // Get indices of adj_precs that are boundaries
     // adj_precs_inds
-    arma::intersect(adj_boundary, adj_precs_inds, new_boundaryprecs_indist_inds, adj_precs, new_boundaryprecs_indist);
+    intersect(adj_boundary, adj_precs_inds, new_boundaryprecs_indist_inds, adj_precs, new_boundaryprecs_indist);
     // Get intersection
-    indices_boundary_indist = arma::intersect(adj_precs_gt, adj_precs_inds);
+    indices_boundary_indist = intersect(adj_precs_gt, adj_precs_inds);
     for(k = 0; k < indices_boundary_indist.n_elem; k++){
       perimeter_new += perimeter_vec(indices_boundary_indist[k]);
     }
@@ -198,9 +198,9 @@ List pp_compact(arma::uvec new_cds,
     adj_precs_gt = find(adj_precs > j);
     // Get indices of adj_precs that are boundaries
     // adj_precs_inds
-    arma::intersect(adj_boundary, adj_precs_inds, current_boundaryprecs_indist_inds, adj_precs, current_boundaryprecs_indist);
+    intersect(adj_boundary, adj_precs_inds, current_boundaryprecs_indist_inds, adj_precs, current_boundaryprecs_indist);
     // Get intersection
-    indices_boundary_indist = arma::intersect(adj_precs_gt, adj_precs_inds);
+    indices_boundary_indist = intersect(adj_precs_gt, adj_precs_inds);
     for(k = 0; k < indices_boundary_indist.n_elem; k++){
       perimeter_old += perimeter_vec(indices_boundary_indist[k]);
     }
