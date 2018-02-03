@@ -155,12 +155,7 @@ List pp_compact(arma::uvec new_cds,
 
   arma::vec perimeter_vec;
   arma::ivec adj_precs;
-  arma::ivec adj_boundary;
   arma::uvec adj_precs_gt;
-  arma::uvec adj_precs_inds;
-  arma::uvec new_boundaryprecs_indist_inds;
-  arma::uvec current_boundaryprecs_indist_inds;
-  arma::ivec indices_boundary_indist;
 
   double pi = 3.141592653589793238463;
 
@@ -181,9 +176,10 @@ List pp_compact(arma::uvec new_cds,
     adj_precs_gt = find(adj_precs > j);
     // Get indices of adj_precs that are boundaries
     // adj_precs_inds
+    arma::ivec adj_boundary; arma::uvec adj_precs_inds; arma::uvec new_boundaryprecs_indist_inds;
     intersect(adj_boundary, adj_precs_inds, new_boundaryprecs_indist_inds, adj_precs, new_boundaryprecs_indist);
     // Get intersection
-    indices_boundary_indist = intersect(adj_precs_gt, adj_precs_inds);
+    arma::ivec indices_boundary_indist = indices_boundary_indist = intersect(adj_precs_gt, adj_precs_inds);
     for(k = 0; k < indices_boundary_indist.n_elem; k++){
       perimeter_new += perimeter_vec(indices_boundary_indist[k]);
     }
@@ -196,9 +192,10 @@ List pp_compact(arma::uvec new_cds,
     adj_precs_gt = find(adj_precs > j);
     // Get indices of adj_precs that are boundaries
     // adj_precs_inds
+    arma::ivec adj_boundary; arma::uvec adj_precs_inds; arma::uvec current_boundaryprecs_indist_inds;
     intersect(adj_boundary, adj_precs_inds, current_boundaryprecs_indist_inds, adj_precs, current_boundaryprecs_indist);
     // Get intersection
-    indices_boundary_indist = intersect(adj_precs_gt, adj_precs_inds);
+    arma::ivec indices_boundary_indist = intersect(adj_precs_gt, adj_precs_inds);
     for(k = 0; k < indices_boundary_indist.n_elem; k++){
       perimeter_old += perimeter_vec(indices_boundary_indist[k]);
     }
