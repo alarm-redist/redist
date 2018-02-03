@@ -11,6 +11,56 @@
 
 using namespace Rcpp;
 
+/* Function to modify adjacency list to reflect adjacency only within
+   a particular congressional district */
+// [[Rcpp::export]]
+List genAlConn(List aList,
+	       NumericVector cds)
+{
+
+  /* Inputs to function:
+     aList: adjacency list of geographic units
+
+     cds: vector of congressional district assignments
+  */
+  
+  // Initialize container list
+  List alConnected(cds.size());
+
+  // Initialize
+  int i; NumericVector avec; int cd_i; int j;
+
+  // Loop through precincts
+  for(i = 0; i < cds.size(); i++){
+
+    // For precinct i, get adjacent precincts
+    avec = aList(i);
+    
+    // Get precinct i's congressional district
+    cd_i = cds(i);
+
+    // Initialize empty vector
+    NumericVector avec_cd;
+
+    // Loop through avec to identify which are in same cd
+    for(j = 0; j < avec.size(); j++){
+      
+      // Check if j'th entry in avec is same cd, add to avec_cd if so
+      if(cds(avec(j)) == cd_i){
+	avec_cd.push_back(avec(j));
+      }
+
+    }
+
+    // Add to alConnected list
+    alConnected(i) = avec_cd;
+
+  }
+
+  return alConnected;
+
+}
+
 /* Function to identify which precincts lie on the boundary of a congressional
    district */
 // [[Rcpp::export]]
@@ -109,6 +159,7 @@ List pp_compact(arma::uvec new_cds,
   arma::uvec adj_precs_gt;
   arma::uvec adj_precs_inds;
   arma::uvec new_boundaryprecs_indist_inds;
+  arma::uvec current_boundaryprecs_indist_inds;
   arma::ivec indices_boundary_indist;
 
   double pi = 3.141592653589793238463;
@@ -139,7 +190,7 @@ List pp_compact(arma::uvec new_cds,
   }
   for(j = 0; j < current_boundaryprecs_indist.n_elem; j++){
     adj_precs = aList(current_boundaryprecs_indist[j]);
-    perimeter_vec = boundarylength_list(currentboundaryprecs_indist[j]);
+    perimeter_vec = boundarylength_list(current_boundaryprecs_indist[j]);
     // Get indices of adj_precs that are greater than j
     // adj_precs_gt
     adj_precs_gt = find(adj_precs > j);

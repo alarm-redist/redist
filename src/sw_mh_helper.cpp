@@ -56,56 +56,6 @@ NumericVector init_pop(NumericVector popvec,
 
 }
 
-/* Function to modify adjacency list to reflect adjacency only within
-   a particular congressional district */
-// [[Rcpp::export]]
-List genAlConn(List aList,
-	       NumericVector cds)
-{
-
-  /* Inputs to function:
-     aList: adjacency list of geographic units
-
-     cds: vector of congressional district assignments
-  */
-  
-  // Initialize container list
-  List alConnected(cds.size());
-
-  // Initialize
-  int i; NumericVector avec; int cd_i; int j;
-
-  // Loop through precincts
-  for(i = 0; i < cds.size(); i++){
-
-    // For precinct i, get adjacent precincts
-    avec = aList(i);
-    
-    // Get precinct i's congressional district
-    cd_i = cds(i);
-
-    // Initialize empty vector
-    NumericVector avec_cd;
-
-    // Loop through avec to identify which are in same cd
-    for(j = 0; j < avec.size(); j++){
-      
-      // Check if j'th entry in avec is same cd, add to avec_cd if so
-      if(cds(avec(j)) == cd_i){
-	avec_cd.push_back(avec(j));
-      }
-
-    }
-
-    // Add to alConnected list
-    alConnected(i) = avec_cd;
-
-  }
-
-  return alConnected;
-
-}
-
 // Function to make unidirectional adjacency list bidirectional
 List add_ties(List aList){
 
