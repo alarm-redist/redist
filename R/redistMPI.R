@@ -35,8 +35,14 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     if(is.na(countymembership)){
         countymembership <- NULL
     }
+    if(is.na(areasvec)){
+        areasvec <- NULL
+    }
     if(is.na(ssdmat)){
         ssdmat <- matrix(1, 2, 2)
+    }
+    if(is.na(borderlength_list)){
+        borderlength_list <- NULL
     }
     if(is.na(params$adjswaps)){
         adjswaps <- NULL
@@ -116,6 +122,11 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     if(sum(is.na(initcds)) == length(initcds)){
         initcds <- NULL
     }
+    if(is.na(params$compactness_metric)){
+        compactness_metric <- NULL
+    }else{
+        compactness_metric <- params$compactness_metric
+    }
 
     nthin <- params$nthin
     
@@ -124,8 +135,11 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                                  initcds = initcds, ndists = ndists,
                                  popcons = popcons,
                                  grouppopvec = grouppopvec,
+                                 areasvec = areasvec,
+                                 borderlength_list = borderlength_list,
                                  countymembership = countymembership,
                                  ssdmat = ssdmat,
+                                 compactness_metric = compactness_metric,
                                  temper = FALSE,
                                  constraint = constraint,
                                  constraintweights = constraintweights,
@@ -246,7 +260,9 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                          cdorigvec = preprocout$data$initcds,
                          popvec = preprocout$data$popvec,
                          grouppopvec = preprocout$data$grouppopvec,
+                         areas_vec = preprocout$data$areasvec,
                          county_membership = preprocout$data$countymembership,
+                         borderlength_list = preprocout$data$borderlength_list,
                          nsims = nsimsAdj[j],
                          eprob = eprob,
                          pct_dist_parity = preprocout$params$pctdistparity,
@@ -264,7 +280,8 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                          adjswap = preprocout$params$adjswaps,
                          exact_mh = 0,
                          adapt_eprob = 0,
-                         adapt_lambda = 0)
+                         adapt_lambda = 0,
+                         compactness_measure = compactness_metric)
             
             ## Combine data
             algout <- ecutsAppend(algout,temp)
@@ -751,8 +768,9 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
                             loopscompleted = 0, nloop = 1, nthin = 1,
                             eprob = 0.05,
                             lambda = 0, popcons = NA, grouppopvec = NA,
-                            countymembership = NA,
-                            ssdmat = NA,rngseed = NA,
+                            areasvec = NA,
+                            countymembership = NA, borderlength_list = NA,
+                            ssdmat = NA, compactness_metric = "fryer-holden", rngseed = NA,
                             constraint = NA, constraintweights = NA,
                             betaseq = "powerlaw",
                             betaseqlength = 10, adjswaps = TRUE,
@@ -839,6 +857,7 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
                           beta = beta,target.beta = target.beta,
                           constraint = paste(constraint, collapse = ","),
                           constraintweights = paste(constraintweights, collapse = ","),
+                          compactness_metric = compactness_metric,
                           betaseqlength = betaseqlength,adjswaps = adjswaps,
                           nthin = nthin,freq = freq,maxiterrsg = maxiterrsg,
                           contiguitymap = contiguitymap,verbose = verbose,
@@ -878,8 +897,14 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
     ## Group population vector
     Rmpi::mpi.bcast.Robj2slave(grouppopvec)
 
+    ## Areas vector
+    Rmpi::mpi.bcast.Robj2slave(areasvec)
+
     ## County memberhsip vector
     Rmpi::mpi.bcast.Robj2slave(countymembership)
+
+    ## Border distance list
+    Rmpi::mpi.bcast.Robj2slave(borderlength_list)
     
     ## Squared-distance matrix
     Rmpi::mpi.bcast.Robj2slave(ssdmat)
