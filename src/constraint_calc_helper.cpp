@@ -176,34 +176,40 @@ List pp_compact(arma::uvec new_cds,
 
   // Perimeters for current and new partitions
   for(j = 0; j < new_boundaryprecs_indist.n_elem; j++){
+    // Get the adjacent indices, and their perimeters
     adj_precs = as<arma::vec>(aList(new_boundaryprecs_indist[j]));
     perimeter_vec = as<arma::vec>(borderlength_list(new_boundaryprecs_indist[j]));
-    // Get indices of adj_precs that are greater than j
-    // adj_precs_gt
-    adj_precs_gt = find(adj_precs > j);
-    // Get indices of adj_precs that are boundaries
-    // adj_precs_inds
+
+    // Find adjacent precincts with index > new_boundaryprecs_indist[j],
+    // and find the members of adj_precs on the boundary of the district
+    adj_precs_gt = find(adj_precs > new_boundaryprecs_indist[j]);
     intersect(adj_boundary, adj_precs_inds, new_boundaryprecs_indist_inds, arma::conv_to<arma::ivec>::from(adj_precs), new_boundaryprecs_indist);
-    // Get intersection
+
+    // Get their intersection - new boundaries on the border
     indices_boundary_indist = intersect(arma::conv_to<arma::ivec>::from(adj_precs_gt), arma::conv_to<arma::ivec>::from(adj_precs_inds));
+    
     for(k = 0; k < indices_boundary_indist.n_elem; k++){
       perimeter_new += perimeter_vec(indices_boundary_indist[k]);
     }
+    
   }
   for(j = 0; j < current_boundaryprecs_indist.n_elem; j++){
+    // Get the adjacent indices, and their perimeters
     adj_precs = as<arma::vec>(aList(current_boundaryprecs_indist[j]));
     perimeter_vec = as<arma::vec>(borderlength_list(current_boundaryprecs_indist[j]));
-    // Get indices of adj_precs that are greater than j
-    // adj_precs_gt
-    adj_precs_gt = find(adj_precs > j);
-    // Get indices of adj_precs that are boundaries
-    // adj_precs_inds
+
+    // Find adjacent precincts with index > current_boundaryprecs_indist[j],
+    // and find the members of adj_precs on the boundary of the district
+    adj_precs_gt = find(adj_precs > current_boundaryprecs_indist[j]);
     intersect(adj_boundary, adj_precs_inds, current_boundaryprecs_indist_inds, arma::conv_to<arma::ivec>::from(adj_precs), current_boundaryprecs_indist);
-    // Get intersection
+    
+    // Get their interseciton - current boundaries on the border
     indices_boundary_indist = intersect(arma::conv_to<arma::ivec>::from(adj_precs_gt), arma::conv_to<arma::ivec>::from(adj_precs_inds));
+    
     for(k = 0; k < indices_boundary_indist.n_elem; k++){
       perimeter_old += perimeter_vec(indices_boundary_indist[k]);
     }
+    
   }
 
   List out;
