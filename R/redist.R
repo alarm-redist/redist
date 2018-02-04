@@ -7,8 +7,12 @@
 ###########################################
 
 redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
-                           popcons = NULL, grouppopvec = NULL,
-                           countymembership = NULL, ssdmat = NULL,
+                           popcons = NULL,
+                           countymembership = NULL,
+                           grouppopvec = NULL,
+                           areasvec = NULL,
+                           borderlength_list = NULL, ssdmat = NULL,
+                           compactness_metric = NULL,
                            temper = NULL, constraint = NULL,
                            constraintweights = constraintweights,
                            betaseq = NULL, betaseqlength = NULL,
@@ -264,15 +268,36 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ################################
     ## Set ssdmat if not provided ##
     ################################
-    if(is.null(ssdmat) & "compact" %in% constraint){
+    if(is.null(ssdmat) & "compact" %in% constraint & compactness_metric == "fryer-holden"){
         if(class(adjobj) == "SpatialPolygonsDataFrame"){
             centroids <- coordinates(adjobj)
             ssdmat <- calcPWDh(centroids)
         }else{
-            stop("Provide squared distances matrix if constraining compactness")
+            stop("Provide squared distances matrix if constraining compactness using the Fryer-Holden metric.")
         }
     }else if(is.null(ssdmat)){
         ssdmat <- matrix(1, 2, 2)
+    }
+
+    ## ------------------------------------
+    ## Set Polsby-Popper compactness inputs
+    ## ------------------------------------
+    if("compact" %in% constraint & compactness_metric == "polsby-popper"){
+        if(is.null(areasvec) | is.null(borderlength_list)){
+            stop("If constraining on Polsby-Popper compactness, please provide both a vector of the areas of each geographic unit and a list with the border lengths of each pair of points.")
+        }
+        if(length(areasvec) != length(adjlist)){
+            stop("The lengths of the areas vector and the adjacency list do not add up.")
+        }
+        if(length(borderlength_list) != length(adjlist)){
+            stop("The lengths of the borderlength list and the adjacency list do not add up.")
+        }
+    }else{
+        areasvec <- c(0, 0, 0, 0)
+        borderlength_list <- vector(mode = "list", length = 4)
+        for(i in 1:length(borderlength_list)){
+            borderlength_list[[i]] <- 0
+        }
     }
 
     ########################
@@ -349,6 +374,8 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
             popvec = popvec,
             initcds = initcds,
             grouppopvec = grouppopvec,
+            areasvec = areasvec,
+            borderlength_list = borderlength_list,
             ssdmat = ssdmat,
             countymembership = countymembership
         ),
@@ -664,8 +691,10 @@ redist.combine <- function(savename, nsims, nloop, nthin, nunits, temper = 0
 redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                         loopscompleted = 0, nloop = 1, nthin = 1, eprob = 0.05,
                         lambda = 0, popcons = NULL, grouppopvec = NULL,
-                        countymembership = NULL, ssdmat = NULL, temper = FALSE,
+                        areasvec = NULL, countymembership = NULL,
+                        borderlength_list = NULL, ssdmat = NULL, temper = FALSE,
                         constraint = NULL, constraintweights = NULL,
+                        compactness_metric = "fryer-holden",
                         betaseq = "powerlaw", betaseqlength = 10,
                         betaweights = NULL, 
                         adjswaps = TRUE, rngseed = NULL, maxiterrsg = 5000,
@@ -709,6 +738,9 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
     if(!is.null(constraint) & is.null(constraintweights)){
         stop("Please provide a weight value in 'constraintweights' for each constraint specified in 'constraint'.")
     }
+    if(!(compactness_metric %in% c("fryer-holden", "polsby-popper"))){
+        stop("We only support either 'fryer-holden' or 'polsby-popper' as compactness metrics.")
+    }
 
     ## Set seed before first iteration of algorithm if provided by user
     if(!is.null(rngseed) & is.numeric(rngseed)){
@@ -739,7 +771,11 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                                  initcds = initcds, ndists = ndists,
                                  popcons = popcons,
                                  countymembership = countymembership,
-                                 grouppopvec = grouppopvec, ssdmat = ssdmat,
+                                 grouppopvec = grouppopvec,
+                                 areasvec = areasvec,
+                                 borderlength_list = borderlength_list,
+                                 ssdmat = ssdmat,
+                                 compactness_metric = compactness_metric,
                                  temper = temper,
                                  constraint = constraint, constraintweights = constraintweights,
                                  betaseq = betaseq, betaseqlength = betaseqlength,
@@ -815,7 +851,9 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                        cdorigvec = preprocout$data$initcds,
                        popvec = preprocout$data$popvec,
                        grouppopvec = preprocout$data$grouppopvec,
+                       areas_vec = preprocout$data$areasvec,
                        county_membership = preprocout$data$countymembership,
+                       borderlength_list = preprocout$data$borderlength_list,
                        nsims = nsims,
                        eprob = eprob,
                        pct_dist_parity = preprocout$params$pctdistparity,
@@ -833,7 +871,8 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                        adjswap = preprocout$params$adjswaps,
                        exact_mh = exact_mh,
                        adapt_lambda = adapt_lambda,
-                       adapt_eprob = adapt_eprob)
+                       adapt_eprob = adapt_eprob,
+                       compactness_measure = compactness_metric)
 
         class(algout) <- "redist"
 
