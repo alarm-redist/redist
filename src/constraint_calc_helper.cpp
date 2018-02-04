@@ -98,6 +98,24 @@ NumericVector findBoundary(List fullList,
 
 }
 
+arma::uvec getIn(arma::ivec vec1, arma::ivec vec2){
+
+  int i; int j; bool match; arma::uvec store_in(vec1.n_elem); int counter = 0;
+  for(i = 0; i < vec1.n_elem; i++){
+    match = false;
+    for(j = 0; j < vec2.n_elem; j++){
+      if(vec1(i) == vec2(j)){
+	match = true;
+	break;
+      }
+    }
+    store_in(counter) = match;
+  }
+
+  return store_in;
+  
+}
+
 // Fryer-Holden measure
 List fh_compact(arma::uvec new_cds,
 		arma::uvec current_cds,
@@ -156,7 +174,9 @@ List pp_compact(arma::uvec new_cds,
   int j; int k;
 
   arma::vec perimeter_vec;
-  arma::vec adj_precs;
+  arma::ivec adj_precs;
+  arma::uvec check_overlap;
+  
   arma::uvec adj_precs_gt;
   arma::ivec adj_boundary;
   arma::uvec adj_precs_inds;
@@ -178,14 +198,14 @@ List pp_compact(arma::uvec new_cds,
   for(j = 0; j < new_boundaryprecs_indist.n_elem; j++){
     
     // Get the adjacent indices, and their perimeters
-    adj_precs = as<arma::vec>(aList(new_boundaryprecs_indist[j]));
+    adj_precs = as<arma::ivec>(aList(new_boundaryprecs_indist[j]));
     perimeter_vec = as<arma::vec>(borderlength_list(new_boundaryprecs_indist[j]));
-    LogicalVector check_overlap = !is_na(match(adj_precs, new_boundaryprecs_indist));
+    check_overlap = getIn(adj_precs, new_boundaryprecs_indist);
 
     for(k = 0; k < adj_precs.n_elem; k++){
 
-      if(check_overlap[k] & adj_precs[k] > new_boundaryprecs_indist[j]){
-	perimeter_new += perimeter_vec(indices_boundary_indist[k]);
+      if(check_overlap[k] == true & adj_precs[k] > new_boundaryprecs_indist[j]){
+	perimeter_new += perimeter_vec(k);
       }
       
     }
@@ -201,22 +221,23 @@ List pp_compact(arma::uvec new_cds,
     // for(k = 0; k < indices_boundary_indist.n_elem; k++){
     //   perimeter_new += perimeter_vec(indices_boundary_indist[k]);
     // }
-    
   }
   for(j = 0; j < current_boundaryprecs_indist.n_elem; j++){
 
     // Get the adjacent indices, and their perimeters
-    adj_precs = as<arma::vec>(aList(current_boundaryprecs_indist[j]));
+    adj_precs = as<arma::ivec>(aList(current_boundaryprecs_indist[j]));
     perimeter_vec = as<arma::vec>(borderlength_list(current_boundaryprecs_indist[j]));
-    LogicalVector check_overlap = !is_na(match(adj_precs, current_boundaryprecs_indist));
+    check_overlap = getIn(adj_precs, current_boundaryprecs_indist);
 
     for(k = 0; k < adj_precs.n_elem; k++){
 
-      if(check_overlap[k] & adj_precs[k] > current_boundaryprecs_indist[j]){
-	perimeter_new += perimeter_vec(indices_boundary_indist[k]);
+      if(check_overlap[k] == true & adj_precs[k] > current_boundaryprecs_indist[j]){
+	perimeter_current += perimeter_vec(k);
       }
       
     }
+      
+  }
     
     // // Get the adjacent indices, and their perimeters
     // adj_precs = as<arma::vec>(aList(current_boundaryprecs_indist[j]));
@@ -233,8 +254,6 @@ List pp_compact(arma::uvec new_cds,
     // for(k = 0; k < indices_boundary_indist.n_elem; k++){
     //   perimeter_old += perimeter_vec(indices_boundary_indist[k]);
     // }
-    
-  }
 
   List out;
   out["pp_new"] = (double)4.0 * pi * area_new / pow(perimeter_new, 2.0);
