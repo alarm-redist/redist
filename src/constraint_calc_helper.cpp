@@ -176,13 +176,6 @@ List pp_compact(arma::uvec new_cds,
   arma::vec perimeter_vec;
   arma::ivec adj_precs;
   arma::uvec check_overlap;
-  
-  arma::uvec adj_precs_gt;
-  arma::ivec adj_boundary;
-  arma::uvec adj_precs_inds;
-  arma::uvec new_boundaryprecs_indist_inds;
-  arma::uvec current_boundaryprecs_indist_inds;
-  arma::ivec indices_boundary_indist;
 
   double pi = 3.141592653589793238463;
 
@@ -205,22 +198,11 @@ List pp_compact(arma::uvec new_cds,
     for(k = 0; k < adj_precs.n_elem; k++){
 
       if(check_overlap[k] == true & adj_precs[k] > new_boundaryprecs_indist[j]){
-	perimeter_new += perimeter_vec(k);
+	perimeter_new += (double)perimeter_vec(k);
       }
       
     }
 
-    // // Find adjacent precincts with index > new_boundaryprecs_indist[j],
-    // // and find the members of adj_precs on the boundary of the district
-    // adj_precs_gt = find(adj_precs > new_boundaryprecs_indist[j]);
-    // intersect(adj_boundary, adj_precs_inds, new_boundaryprecs_indist_inds, arma::conv_to<arma::ivec>::from(adj_precs), new_boundaryprecs_indist);
-
-    // // Get their intersection - new boundaries on the border
-    // indices_boundary_indist = intersect(arma::conv_to<arma::ivec>::from(adj_precs_gt), arma::conv_to<arma::ivec>::from(adj_precs_inds));
-    
-    // for(k = 0; k < indices_boundary_indist.n_elem; k++){
-    //   perimeter_new += perimeter_vec(indices_boundary_indist[k]);
-    // }
   }
   for(j = 0; j < current_boundaryprecs_indist.n_elem; j++){
 
@@ -232,32 +214,18 @@ List pp_compact(arma::uvec new_cds,
     for(k = 0; k < adj_precs.n_elem; k++){
 
       if(check_overlap[k] == true & adj_precs[k] > current_boundaryprecs_indist[j]){
-	perimeter_current += perimeter_vec(k);
+	perimeter_old += (double)perimeter_vec(k);
       }
       
     }
       
   }
-    
-    // // Get the adjacent indices, and their perimeters
-    // adj_precs = as<arma::vec>(aList(current_boundaryprecs_indist[j]));
-    // perimeter_vec = as<arma::vec>(borderlength_list(current_boundaryprecs_indist[j]));
 
-    // // Find adjacent precincts with index > current_boundaryprecs_indist[j],
-    // // and find the members of adj_precs on the boundary of the district
-    // adj_precs_gt = find(adj_precs > current_boundaryprecs_indist[j]);
-    // intersect(adj_boundary, adj_precs_inds, current_boundaryprecs_indist_inds, arma::conv_to<arma::ivec>::from(adj_precs), current_boundaryprecs_indist);
-    
-    // // Get their interseciton - current boundaries on the border
-    // indices_boundary_indist = intersect(arma::conv_to<arma::ivec>::from(adj_precs_gt), arma::conv_to<arma::ivec>::from(adj_precs_inds));
-    
-    // for(k = 0; k < indices_boundary_indist.n_elem; k++){
-    //   perimeter_old += perimeter_vec(indices_boundary_indist[k]);
-    // }
-
+  // Note - multiplying by -1 since we want to maximize Polsby-Popper,
+  // but in general minimize metrics
   List out;
-  out["pp_new"] = (double)4.0 * pi * area_new / pow(perimeter_new, 2.0);
-  out["pp_old"] = (double)4.0 * pi * area_old / pow(perimeter_old, 2.0);
+  out["pp_new"] = (double)-1.0 * 4.0 * pi * area_new / pow(perimeter_new, 2.0);
+  out["pp_old"] = (double)-1.0 * 4.0 * pi * area_old / pow(perimeter_old, 2.0);
 
   return out;
   
