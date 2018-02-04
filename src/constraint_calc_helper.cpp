@@ -141,7 +141,7 @@ List pp_compact(arma::uvec new_cds,
 		NumericVector boundarylist_new,
 		NumericVector boundarylist_current,
 		List aList,
-		List boundarylength_list){
+		List borderlength_list){
 
   // Declare objects
   arma::uvec new_boundaryprecs = find(as<arma::vec>(boundarylist_new) == 1);
@@ -177,7 +177,7 @@ List pp_compact(arma::uvec new_cds,
   // Perimeters for current and new partitions
   for(j = 0; j < new_boundaryprecs_indist.n_elem; j++){
     adj_precs = as<arma::vec>(aList(new_boundaryprecs_indist[j]));
-    perimeter_vec = as<arma::vec>(boundarylength_list(new_boundaryprecs_indist[j]));
+    perimeter_vec = as<arma::vec>(borderlength_list(new_boundaryprecs_indist[j]));
     // Get indices of adj_precs that are greater than j
     // adj_precs_gt
     adj_precs_gt = find(adj_precs > j);
@@ -192,7 +192,7 @@ List pp_compact(arma::uvec new_cds,
   }
   for(j = 0; j < current_boundaryprecs_indist.n_elem; j++){
     adj_precs = as<arma::vec>(aList(current_boundaryprecs_indist[j]));
-    perimeter_vec = as<arma::vec>(boundarylength_list(current_boundaryprecs_indist[j]));
+    perimeter_vec = as<arma::vec>(borderlength_list(current_boundaryprecs_indist[j]));
     // Get indices of adj_precs that are greater than j
     // adj_precs_gt
     adj_precs_gt = find(adj_precs > j);
@@ -277,7 +277,7 @@ List calc_psicompact(arma::vec current_dists,
 		     // For Polsby-Popper
 		     List aList,
 		     NumericVector areas_vec,
-		     List boundarylength_list,
+		     List borderlength_list,
 		     // For Fryer Holden
 		     NumericVector pops,
 		     NumericMatrix ssdmat,
@@ -327,7 +327,7 @@ List calc_psicompact(arma::vec current_dists,
     }else if(measure == "polsby-popper"){
 
       List pp_out = pp_compact(new_cds, current_cds, areas_vec, boundarylist_new,
-			       boundarylist_current, aList, boundarylength_list);
+			       boundarylist_current, aList, borderlength_list);
 
 	// Add to psi
       psi_new += as<double>(pp_out["pp_new"]);

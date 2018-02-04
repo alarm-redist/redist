@@ -23,7 +23,7 @@ Rcpp::List calc_psicompact(arma::vec current_dists,
 			   std::string measure,
 			   Rcpp::List aList,
 			   Rcpp::NumericVector areas_vec,
-			   Rcpp::List boundarylength_list,
+			   Rcpp::List borderlength_list,
 			   Rcpp::NumericVector pops,
 			   Rcpp::NumericMatrix ssdmat,
 			   double denominator);

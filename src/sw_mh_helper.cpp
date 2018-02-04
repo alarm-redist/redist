@@ -394,7 +394,7 @@ List make_swaps(List boundary_cc,
 		NumericVector cd_pop_vec,
 		NumericVector group_pop_vec,
 		NumericVector areas_vec,
-		List boundarylength_list,
+		List borderlength_list,
 		NumericMatrix ssdmat,
 		NumericVector county_membership,
 		double minparity,
@@ -634,7 +634,7 @@ List make_swaps(List boundary_cc,
       compact_constraint = calc_psicompact(cds_prop, cds_test,
 					   cd_pair, compactness_measure,
 					   aList, areas_vec,
-					   boundarylength_list, pop_vec,
+					   borderlength_list, pop_vec,
 					   ssdmat, ssd_denominator);
 
       compact_new_psi += as<double>(compact_constraint["compact_new_psi"]);
