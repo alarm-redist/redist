@@ -109,7 +109,7 @@ arma::uvec getIn(arma::ivec vec1, arma::ivec vec2){
 	break;
       }
     }
-    store_in(counter) = match;
+    store_in(i) = match;
   }
 
   return store_in;
