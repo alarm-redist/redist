@@ -817,9 +817,6 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
     if(nloop > 1 & missing(savename)){
         stop("Please supply save directory if saving simulations at checkpoints")
     }
-    if(!is.na(constraint) & is.na(constraintweights)){
-        stop("Please provide a weight value in 'constraintweights' for each constraint specified in 'constraint'.")
-    }
     
     ###################
     ## Preprocessing ##
