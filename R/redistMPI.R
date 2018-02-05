@@ -252,7 +252,8 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
         #######################
         for(j in 1:length(nsimsAdj)){
 
-            cat("Swap ", j, "\n", append = TRUE)
+            cat("Swap ", j, " out of ", length(nsimsAdj), " swaps.\n",
+                append = TRUE)
 
             ## Run algorithm
             temp <- swMH(aList = preprocout$data$adjlist,
@@ -404,8 +405,12 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                         accept <- Rmpi::mpi.recv.Robj(partner[j],tag=3)
                     }
                     
-                    ## Compute acceptance probability (for now, population only)
-                    prob <- (like^(-1 * betaPart)*likePart^(-1 * beta))/(like^(-1 * beta)*likePart^(-1 * betaPart))
+                    ## Compute acceptance probability
+                    a_like <- -1 * betaPart * like
+                    b_like <- -1 * beta * likePart
+                    x_like <- -1 * beta * like
+                    y_like <- -1 * betaPart * likePart
+                    prob <- exp(a_like + b_like - x_like - y_like)
                     if(prob > accept){
                         ## Exchange temperature values
                         beta <- betaPart
