@@ -38,7 +38,8 @@ Rcpp::List calc_psisimilar(arma::vec current_dists,
 			   Rcpp::NumericVector distswitch);
 Rcpp::List calc_psicounty(arma::vec current_dists,
 			  arma::vec new_dists,
-			  arma::vec county_assignments);
+			  arma::vec county_assignments,
+			  Rcpp::NumericVector popvec);
 
 #endif
 
