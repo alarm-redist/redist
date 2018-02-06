@@ -540,7 +540,7 @@ List calc_psicounty(arma::vec current_dists,
   }
 
   // Get unique CD labels
-  arma::uvec unique_cd = unique(new_dists);
+  arma::vec unique_cd = unique(new_dists);
   arma::vec pop_cd_new(unique_cd.n_elem);
   arma::vec pop_cd_current(unique_cd.n_elem);
   int pop_new; int pop_current;
@@ -612,6 +612,7 @@ List calc_psicounty(arma::vec current_dists,
 
   // Loop through the CDs
   arma::uvec cd_index_new;
+  arma::uvec cd_index_current;
   arma::vec pops_incd_new;
   arma::vec pops_incd_current;
   arma::vec current_countyassign_indist;
@@ -646,18 +647,18 @@ List calc_psicounty(arma::vec current_dists,
       for(k = 0; k < inds_indistrict.n_elem; k++){
 	pop += pops_incd_current(inds_indistrict(k));
       }
-      ent_county_current += pow((double)pop / pop_county(unique_current_counties(j)));
+      ent_county_current += pow((double)pop / pop_county(unique_current_counties(j)), 0.5);
     }
     ent_overcds_current += pop_cd_current(i) * ent_county_current;
 
     ent_county_new = 0.0;
     for(j = 0; j < unique_new_counties.n_elem; j++){
-      inds_indistrict = arma::find(new_countyassign_indist = new_current_counties(j));
+      inds_indistrict = arma::find(new_countyassign_indist = unique_new_counties(j));
       pop = 0;
       for(k = 0; k < inds_indistrict.n_elem; k++){
 	pop += pops_incd_new(inds_indistrict(k));
       }
-      ent_county_new += pow((double)pop / pop_county(unique_new_counties(j)));
+      ent_county_new += pow((double)pop / pop_county(unique_new_counties(j)), 0.5);
     }
     ent_overcds_new += pop_cd_new(i) * ent_county_new;
     
