@@ -532,7 +532,7 @@ List calc_psicounty(arma::vec current_dists,
   arma::uvec inds;
   for(i = 0; i < unique_county.n_elem; i++){
     pop = 0;
-    inds = find(county_assignments == unique_county(i));
+    inds = arma::find(county_assignments == unique_county(i));
     for(j = 0; j < inds.n_elem; j++){
       pop += popvec(inds(j));
     }
@@ -546,11 +546,11 @@ List calc_psicounty(arma::vec current_dists,
   int pop_new; int pop_old;
   for(i = 0; i < unique_cd.n_elem; i++){
     pop_new = 0; pop_old = 0;
-    inds = find(new_dists == unique_cd(i));
+    inds = arma::find(new_dists == unique_cd(i));
     for(j = 0; j < inds.n_elem; j++){
       pop_new += popvec(inds(j));
     }
-    inds = find(current_dists == unique(cd(i)));
+    inds = arma::find(current_dists == unique_cd(i));
     for(j = 0; j < inds.n_elem; j++){
       pop_current += popvec(inds(j));
     }
@@ -575,7 +575,7 @@ List calc_psicounty(arma::vec current_dists,
 
     // Get the new and old CD assignments of the current and new plans,
     // and their labels
-    county_index = find(county_assignments == unique_county(i));
+    county_index = arma::find(county_assignments == unique_county(i));
 
     pops_incounty = popvec.elem(current_dist_index);
     
@@ -588,7 +588,7 @@ List calc_psicounty(arma::vec current_dists,
     // Get populations of the cds in the county
     ent_cd_current = 0.0;
     for(j = 0; j < unique_current_dists.n_elem; j++){
-      inds_indistrict = find(current_distassign_incounty == unique_current_dists(j));
+      inds_indistrict = arma::find(current_distassign_incounty == unique_current_dists(j));
       pop = 0;
       for(k = 0; k < inds_indistrict.n_elem; k++){
 	pop += pops_incounty(inds_indistrict(k));
@@ -599,7 +599,7 @@ List calc_psicounty(arma::vec current_dists,
 
     ent_cd_new = 0.0;
     for(j = 0; j < unique_current_dists.n_elem; j++){
-      inds_indistrict = find(new_distassign_incounty == new_current_dists(i));
+      inds_indistrict = arma::find(new_distassign_incounty == new_current_dists(i));
       pop = 0;
       for(k = 0; k < inds_indistrict.n_elem; k++){
 	pop += pops_incounty(inds_indistrict(k));
@@ -626,8 +626,8 @@ List calc_psicounty(arma::vec current_dists,
   for(i = 0; i < unique_cd.n_elem; i++){
 
     // Get the indices of the the units in the new and old plans
-    cd_index_new = find(new_dists == unique_cd(j));
-    cd_index_current = find(current_dists == unique_cd(j));
+    cd_index_new = arma::find(new_dists == unique_cd(j));
+    cd_index_current = arma::find(current_dists == unique_cd(j));
 
     pops_incd_new = popvec.elem(cd_index_new);
     pops_incd_current = popvec.elem(cd_index_current);
@@ -641,7 +641,7 @@ List calc_psicounty(arma::vec current_dists,
     // Get populations of the counties in the cd
     ent_county_current = 0.0;
     for(j = 0; j < unique_current_counties.n_elem; j++){
-      inds_indistrict = find(current_countyassign_indist = unique_current_counties(j));
+      inds_indistrict = arma::find(current_countyassign_indist = unique_current_counties(j));
       pop = 0;
       for(k = 0; k < inds_indistrict.n_elem; k++){
 	pop += pops_incd_current(inds_indistrict(k));
@@ -652,7 +652,7 @@ List calc_psicounty(arma::vec current_dists,
 
     ent_county_new = 0.0;
     for(j = 0; j < unique_new_counties.n_elem; j++){
-      inds_indistrict = find(new_countyassign_indist = new_current_counties(j));
+      inds_indistrict = arma::find(new_countyassign_indist = new_current_counties(j));
       pop = 0;
       for(k = 0; k < inds_indistrict.n_elem; k++){
 	pop += pops_incd_new(inds_indistrict(k));
