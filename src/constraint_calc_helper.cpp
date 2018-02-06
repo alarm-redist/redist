@@ -155,70 +155,101 @@ List fh_compact(arma::uvec new_cds,
 // Polsby-popper measure
 List pp_compact(arma::uvec new_cds,
 		arma::uvec current_cds,
-		NumericVector areas_vec,
-		NumericVector boundarylist_new,
-		NumericVector boundarylist_current,
+		arma::vec areas_vec,
+		arma::vec boundarylist_new,
+		arma::vec boundarylist_current,
 		List aList,
 		List borderlength_list){
 
-  // Declare objects
-  arma::uvec new_boundaryprecs = find(as<arma::vec>(boundarylist_new) == 1);
-  arma::uvec current_boundaryprecs = find(as<arma::vec>(boundarylist_current) == 1);
-  arma::ivec new_boundaryprecs_indist = arma::intersect(arma::conv_to<arma::ivec>::from(new_cds), arma::conv_to<arma::ivec>::from(new_boundaryprecs));
-  arma::ivec current_boundaryprecs_indist = arma::intersect(arma::conv_to<arma::ivec>::from(current_cds), arma::conv_to<arma::ivec>::from(current_boundaryprecs));
-  
-  double area_new = 0.0;
-  double area_old = 0.0;
-  double perimeter_new = 0.0;
-  double perimeter_old = 0.0;
-  int j; int k;
-
-  arma::vec perimeter_vec;
-  arma::ivec adj_precs;
-  arma::uvec check_overlap;
-
   double pi = 3.141592653589793238463;
 
-  // Areas for current and new partitions
-  for(j = 0; j < new_cds.size(); j++){
+  /* 
+     Calculate the area for the district
+     by summing over the areas of the cds 
+  */
+  double area_new = 0.0;
+  double area_old = 0.0;
+  int j; int k;
+  for(j = 0; j < new_cds.n_elem; j++){
     area_new += areas_vec(new_cds(j));
   }
-  for(j = 0; j < current_cds.size(); j++){
+  for(j = 0; j < current_cds.n_elem; j++){
     area_old += areas_vec(current_cds(j));
   }
 
-  // Perimeters for current and new partitions
-  for(j = 0; j < new_boundaryprecs_indist.n_elem; j++){
+  /* 
+     Calculate the perimeter for the district
+     by finding boundaries on the CD
+  */
+  // Get indices of the obsevations that are both in the district and
+  // on the boundary
+  arma::uvec boundary_inds_new = find(boundarylist_new == 1);
+  arma::uvec boundary_inds_current = find(boundarylist_current == 1);
+  arma::ivec boundary_precs_new = arma::intersect(arma::conv_to<arma::ivec>::from(new_cds), arma::conv_to<arma::ivec>::from(boundary_inds_new));
+  arma::ivec boundary_precs_current = arma::intersect(arma::conv_to<arma::ivec>::from(current_cds), arma::conv_to<arma::ivec>::from(boundary_inds_current));
+
+  // Loop over the indices in boundary_precs_new and check the adjacent units for
+  // whether they too lie on a boundary
+  arma::vec adj_precs;
+  arma::vec adj_precs_sub;
+  arma::uvec boundary_in_adj_precs;
+  arma::uvec greater_than_adj_precs;
+  arma::ivec adj_precs_valid;
+  arma::uvec inds_overlap;
+  arma::vec perimeter_vec;
+  arma::vec boundary_sub;
+  double perimeter_new = 0.0; double perimeter_old = 0.0;
+  for(j = 0; j < boundary_precs_new.n_elem; j++){
+
+    // Get the adjacent indices - on the boundary and
+    // greater than boundary_precs[j] to avoid double counting
+    adj_precs = as<arma::vec>(aList(boundary_precs_new[j]));
+    boundary_sub = boundarylist_new.elem(arma::conv_to<arma::uvec>::from(adj_precs));
     
-    // Get the adjacent indices, and their perimeters
-    adj_precs = as<arma::ivec>(aList(new_boundaryprecs_indist[j]));
-    perimeter_vec = as<arma::vec>(borderlength_list(new_boundaryprecs_indist[j]));
-    check_overlap = getIn(adj_precs, new_boundaryprecs_indist);
+    boundary_in_adj_precs = find(boundary_sub == 1);
+    greater_than_adj_precs = find(adj_precs > boundary_precs_new[j]);
+    
+    adj_precs_valid = arma::intersect(arma::conv_to<arma::ivec>::from(boundary_in_adj_precs), arma::conv_to<arma::ivec>::from(greater_than_adj_precs));
 
-    for(k = 0; k < adj_precs.n_elem; k++){
+    adj_precs_sub = adj_precs.elem(arma::conv_to<arma::uvec>::from(adj_precs_valid));
 
-      if(check_overlap[k] == true & adj_precs[k] > new_boundaryprecs_indist[j]){
-	perimeter_new += (double)perimeter_vec(k);
+    // Find members of adj_precs_valid in adj_precs
+    inds_overlap = get_in_index(arma::conv_to<arma::vec>::from(adj_precs_sub), adj_precs);
+
+    // Start looping through inds_overlap and add perimeters
+    perimeter_vec = as<arma::vec>(borderlength_list(boundary_precs_new[j]));
+    if(inds_overlap.n_elem > 0){
+      for(k = 0; k < inds_overlap.n_elem; k++){
+	perimeter_new += perimeter_vec(inds_overlap(k));
       }
-      
     }
 
   }
-  for(j = 0; j < current_boundaryprecs_indist.n_elem; j++){
+  for(j = 0; j < boundary_precs_current.n_elem; j++){
 
-    // Get the adjacent indices, and their perimeters
-    adj_precs = as<arma::ivec>(aList(current_boundaryprecs_indist[j]));
-    perimeter_vec = as<arma::vec>(borderlength_list(current_boundaryprecs_indist[j]));
-    check_overlap = getIn(adj_precs, current_boundaryprecs_indist);
+    // Get the adjacent indices - on the boundary and
+    // greater than boundary_precs[j] to avoid double counting
+    adj_precs = as<arma::vec>(aList(boundary_precs_current[j]));
+    boundary_sub = boundarylist_current.elem(arma::conv_to<arma::uvec>::from(adj_precs));
+    
+    boundary_in_adj_precs = find(boundary_sub == 1);
+    greater_than_adj_precs = find(adj_precs > boundary_precs_current[j]);
+    
+    adj_precs_valid = arma::intersect(arma::conv_to<arma::ivec>::from(boundary_in_adj_precs), arma::conv_to<arma::ivec>::from(greater_than_adj_precs));
 
-    for(k = 0; k < adj_precs.n_elem; k++){
+    adj_precs_sub = adj_precs.elem(arma::conv_to<arma::uvec>::from(adj_precs_valid));
 
-      if(check_overlap[k] == true & adj_precs[k] > current_boundaryprecs_indist[j]){
-	perimeter_old += (double)perimeter_vec(k);
+    // Find members of adj_precs_valid in adj_precs
+    inds_overlap = get_in_index(arma::conv_to<arma::vec>::from(adj_precs_sub), adj_precs);
+
+    // Start looping through inds_overlap and add perimeters
+    perimeter_vec = as<arma::vec>(borderlength_list(boundary_precs_current[j]));
+    if(inds_overlap.n_elem > 0){
+      for(k = 0; k < inds_overlap.n_elem; k++){
+	perimeter_old += perimeter_vec(inds_overlap(k));
       }
-      
     }
-      
+
   }
 
   // Note - multiplying by -1 since we want to maximize Polsby-Popper,
@@ -343,10 +374,12 @@ List calc_psicompact(arma::vec current_dists,
       
     }else if(measure == "polsby-popper"){
 
-      List pp_out = pp_compact(new_cds, current_cds, areas_vec, boundarylist_new,
-			       boundarylist_current, aList, borderlength_list);
+      List pp_out = pp_compact(new_cds, current_cds, as<arma::vec>(areas_vec),
+			       as<arma::vec>(boundarylist_new),
+			       as<arma::vec>(boundarylist_current),
+			       aList, borderlength_list);
 
-	// Add to psi
+      // Add to psi
       psi_new += as<double>(pp_out["pp_new"]);
       psi_old += as<double>(pp_out["pp_old"]);
       
