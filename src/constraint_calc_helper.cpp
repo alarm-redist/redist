@@ -599,7 +599,7 @@ List calc_psicounty(arma::vec current_dists,
 
     ent_cd_new = 0.0;
     for(j = 0; j < unique_current_dists.n_elem; j++){
-      inds_indistrict = arma::find(new_distassign_incounty == new_current_dists(i));
+      inds_indistrict = arma::find(new_distassign_incounty == unique_new_dists(i));
       pop = 0;
       for(k = 0; k < inds_indistrict.n_elem; k++){
 	pop += pops_incounty(inds_indistrict(k));
@@ -616,8 +616,8 @@ List calc_psicounty(arma::vec current_dists,
   arma::vec pops_incd_current;
   arma::vec current_countyassign_indist;
   arma::vec new_countyassign_indist;
-  arma::vec unique_current_dists;
-  arma::vec unique_new_dists;
+  arma::vec unique_current_counties;
+  arma::vec unique_new_counties;
   
   double ent_county_current;
   double ent_county_new;
