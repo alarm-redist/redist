@@ -116,6 +116,24 @@ arma::uvec getIn(arma::ivec vec1, arma::ivec vec2){
   
 }
 
+arma::uvec get_in_index(arma::vec vec1, arma::vec vec2){
+
+  int i; int j; bool match; arma::uvec store_in(vec1.n_elem); 
+  for(i = 0; i < vec1.n_elem; i++){
+    match = false;
+    for(j = 0; j < vec2.n_elem; j++){
+      if(vec1(i) == vec2(j)){
+	match = true;
+	break;
+      }
+    }
+    store_in(i) = j;
+  }
+
+  return store_in;
+  
+}
+
 // Fryer-Holden measure
 List fh_compact(arma::uvec new_cds,
 		arma::uvec current_cds,
@@ -557,7 +575,7 @@ List calc_psicounty(arma::vec current_dists,
      5) For each CD, loop through the unique counties and sum over the sqrt of the share of the county in that CD
      6) Sum over the CDs, weight by population of that CD
   */
-
+  
   // Get unique county labels
   int i; int j; int k; int pop;
   arma::vec unique_county = unique(county_assignments);
@@ -629,10 +647,9 @@ List calc_psicounty(arma::vec current_dists,
       ent_cd_current += pow((double)pop / pop_cd_current(unique_current_dists(j)), 0.5);
     }
     ent_overcounties_current += pop_county(i) * ent_cd_current;
-
     ent_cd_new = 0.0;
-    for(j = 0; j < unique_current_dists.n_elem; j++){
-      inds_indistrict = arma::find(new_distassign_incounty == unique_new_dists(i));
+    for(j = 0; j < unique_new_dists.n_elem; j++){
+      inds_indistrict = arma::find(new_distassign_incounty == unique_new_dists(j));
       pop = 0;
       for(k = 0; k < inds_indistrict.n_elem; k++){
 	pop += pops_incounty(inds_indistrict(k));
@@ -660,8 +677,8 @@ List calc_psicounty(arma::vec current_dists,
   for(i = 0; i < unique_cd.n_elem; i++){
 
     // Get the indices of the the units in the new and old plans
-    cd_index_new = arma::find(new_dists == unique_cd(j));
-    cd_index_current = arma::find(current_dists == unique_cd(j));
+    cd_index_new = arma::find(new_dists == unique_cd(i));
+    cd_index_current = arma::find(current_dists == unique_cd(i));
 
     pops_incd_new = popvec.elem(cd_index_new);
     pops_incd_current = popvec.elem(cd_index_current);
