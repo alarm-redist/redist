@@ -101,7 +101,7 @@ double calc_polsbypopper(arma::uvec new_cds,
     }else{
 
       // Add the population around the perimeter
-      perimeter_new += (double)pop_vec(boundary_precs_new(j))
+      perimeter_new += (double)pop_vec(boundary_precs_new(j));
       
     }
 
@@ -114,7 +114,7 @@ double calc_polsbypopper(arma::uvec new_cds,
     out = area_new / pow(perimeter_new, 2.0);
   }
   
-  return out
+  return out;
   
 }
 
