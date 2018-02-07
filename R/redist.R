@@ -11,7 +11,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
                            countymembership = NULL,
                            grouppopvec = NULL,
                            areasvec = NULL,
-                           borderlength_list = NULL, ssdmat = NULL,
+                           borderlength_mat = NULL, ssdmat = NULL,
                            compactness_metric = NULL,
                            temper = NULL, constraint = NULL,
                            constraintweights = constraintweights,
@@ -283,21 +283,16 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ## Set Polsby-Popper compactness inputs
     ## ------------------------------------
     if("compact" %in% constraint & compactness_metric == "polsby-popper"){
-        if(is.null(areasvec) | is.null(borderlength_list)){
+        if(is.null(areasvec) | is.null(borderlength_mat)){
             stop("If constraining on Polsby-Popper compactness, please provide both a vector of the areas of each geographic unit and a list with the border lengths of each pair of points.")
         }
         if(length(areasvec) != length(adjlist)){
             stop("The lengths of the areas vector and the adjacency list do not add up.")
         }
-        if(length(borderlength_list) != length(adjlist)){
-            stop("The lengths of the borderlength list and the adjacency list do not add up.")
-        }
     }else{
         areasvec <- c(0, 0, 0, 0)
-        borderlength_list <- vector(mode = "list", length = 4)
-        for(i in 1:length(borderlength_list)){
-            borderlength_list[[i]] <- 0
-        }
+        borderlength_mat <- matrix(0, 2, 2)
+
     }
 
     ########################
@@ -375,7 +370,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
             initcds = initcds,
             grouppopvec = grouppopvec,
             areasvec = areasvec,
-            borderlength_list = borderlength_list,
+            borderlength_mat = borderlength_mat,
             ssdmat = ssdmat,
             countymembership = countymembership
         ),
@@ -692,7 +687,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                         loopscompleted = 0, nloop = 1, nthin = 1, eprob = 0.05,
                         lambda = 0, popcons = NULL, grouppopvec = NULL,
                         areasvec = NULL, countymembership = NULL,
-                        borderlength_list = NULL, ssdmat = NULL, temper = FALSE,
+                        borderlength_mat = NULL, ssdmat = NULL, temper = FALSE,
                         constraint = NULL, constraintweights = NULL,
                         compactness_metric = "fryer-holden",
                         betaseq = "powerlaw", betaseqlength = 10,
@@ -773,7 +768,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                                  countymembership = countymembership,
                                  grouppopvec = grouppopvec,
                                  areasvec = areasvec,
-                                 borderlength_list = borderlength_list,
+                                 borderlength_mat = borderlength_mat,
                                  ssdmat = ssdmat,
                                  compactness_metric = compactness_metric,
                                  temper = temper,
@@ -853,7 +848,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                        grouppopvec = preprocout$data$grouppopvec,
                        areas_vec = preprocout$data$areasvec,
                        county_membership = preprocout$data$countymembership,
-                       borderlength_list = preprocout$data$borderlength_list,
+                       borderlength_mat = preprocout$data$borderlength_mat,
                        nsims = nsims,
                        eprob = eprob,
                        pct_dist_parity = preprocout$params$pctdistparity,
