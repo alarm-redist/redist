@@ -18,7 +18,9 @@ double calc_polsbypopper(arma::uvec new_cds,
 			 arma::vec areas_vec,
 			 arma::vec boundarylist_new,
 			 arma::mat borderlength_mat,
-			 List aList){
+			 arma::vec pop_vec,
+			 List aList,
+			 bool discrete = false){
 
   double pi = 3.141592653589793238463;
 
@@ -28,8 +30,14 @@ double calc_polsbypopper(arma::uvec new_cds,
   */
   double area_new = 0.0;
   int j; int k; int l;
-  for(j = 0; j < new_cds.n_elem; j++){
-    area_new += areas_vec(new_cds(j));
+  if(discrete == false){
+    for(j = 0; j < new_cds.n_elem; j++){
+      area_new += areas_vec(new_cds(j));
+    }
+  }else{
+    for(j = 0; j < new_cds.n_elem; j++){
+      area_new += pop_vec(new_cds(j));
+    }
   }
 
   /* 
@@ -64,33 +72,49 @@ double calc_polsbypopper(arma::uvec new_cds,
   double perimeter_new = 0.0;
   for(j = 0; j < boundary_precs_new.n_elem; j++){
 
-    // Get the adjacent indices - on the boundary and
-    // greater than boundary_precs[j] to avoid double counting
-    adj_precs = as<arma::vec>(aList(boundary_precs_new(j)));
+    if(discrete == false){
+      
+      // Get the adjacent indices - on the boundary and
+      // greater than boundary_precs[j] to avoid double counting
+      adj_precs = as<arma::vec>(aList(boundary_precs_new(j)));
 
-    // Of the adjacent precincts, which are not in the same congressional district?
-    in_cd = getIn(arma::conv_to<arma::ivec>::from(adj_precs), arma::conv_to<arma::ivec>::from(new_cds));
-    adj_precs_sub = adj_precs.elem( find(in_cd == false) );
-    adj_precs_sub.resize(adj_precs_sub.size() + 1);
-    adj_precs_sub(adj_precs_sub.size() - 1) = -1.0;
+      // Of the adjacent precincts, which are not in the same congressional district?
+      in_cd = getIn(arma::conv_to<arma::ivec>::from(adj_precs), arma::conv_to<arma::ivec>::from(new_cds));
+      adj_precs_sub = adj_precs.elem( find(in_cd == false) );
+      adj_precs_sub.resize(adj_precs_sub.size() + 1);
+      adj_precs_sub(adj_precs_sub.size() - 1) = -1.0;
     
-    // Which elements of boundary_mat's first column are in adj_precs_sub, and what of second column equal the actual precinct
-    find_boundarylength_in_boundarymat = find(borderlength_col2 == boundary_precs_new(j));
-    for(k = 0; k < adj_precs_sub.n_elem; k++){
+      // Which elements of boundary_mat's first column are in adj_precs_sub, and what of second column equal the actual precinct
+      find_boundarylength_in_boundarymat = find(borderlength_col2 == boundary_precs_new(j));
+      for(k = 0; k < adj_precs_sub.n_elem; k++){
 
-      adj_precs_sub_indices = find(borderlength_col1 == adj_precs_sub(k));
-      loop_over_inds = arma::intersect(arma::conv_to<arma::ivec>::from(adj_precs_sub_indices), arma::conv_to<arma::ivec>::from(find_boundarylength_in_boundarymat));
-      if(loop_over_inds.n_elem > 0){
-	for(l = 0; l < loop_over_inds.n_elem; l++){
-	  perimeter_new += (double)borderlength_col3(loop_over_inds(l));
+	adj_precs_sub_indices = find(borderlength_col1 == adj_precs_sub(k));
+	loop_over_inds = arma::intersect(arma::conv_to<arma::ivec>::from(adj_precs_sub_indices), arma::conv_to<arma::ivec>::from(find_boundarylength_in_boundarymat));
+	if(loop_over_inds.n_elem > 0){
+	  for(l = 0; l < loop_over_inds.n_elem; l++){
+	    perimeter_new += (double)borderlength_col3(loop_over_inds(l));
+	  }
 	}
+
       }
 
-    }    
+    }else{
+
+      // Add the population around the perimeter
+      perimeter_new += (double)areas_vec(boundary_precs_new(j))
+      
+    }
 
   }
 
-  return (double)4.0 * pi * area_new / pow(perimeter_new, 2.0);;
+  double out;
+  if(discrete == false){
+    out = (double)4.0 * pi * area_new / pow(perimeter_new, 2.0); 
+  }else{
+    out = area_new / pow(perimeter_new, 2.0);
+  }
+  
+  return out
   
 }
 
