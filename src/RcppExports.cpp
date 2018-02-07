@@ -59,8 +59,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // calc_polsbypopper
-double calc_polsbypopper(arma::uvec new_cds, arma::vec areas_vec, arma::vec boundarylist_new, arma::mat borderlength_mat, List aList);
-RcppExport SEXP redist_calc_polsbypopper(SEXP new_cdsSEXP, SEXP areas_vecSEXP, SEXP boundarylist_newSEXP, SEXP borderlength_matSEXP, SEXP aListSEXP) {
+double calc_polsbypopper(arma::uvec new_cds, arma::vec areas_vec, arma::vec boundarylist_new, arma::mat borderlength_mat, arma::vec pop_vec, List aList, bool discrete);
+RcppExport SEXP redist_calc_polsbypopper(SEXP new_cdsSEXP, SEXP areas_vecSEXP, SEXP boundarylist_newSEXP, SEXP borderlength_matSEXP, SEXP pop_vecSEXP, SEXP aListSEXP, SEXP discreteSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -68,8 +68,10 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::vec >::type areas_vec(areas_vecSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type boundarylist_new(boundarylist_newSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type borderlength_mat(borderlength_matSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type pop_vec(pop_vecSEXP);
     Rcpp::traits::input_parameter< List >::type aList(aListSEXP);
-    rcpp_result_gen = Rcpp::wrap(calc_polsbypopper(new_cds, areas_vec, boundarylist_new, borderlength_mat, aList));
+    Rcpp::traits::input_parameter< double >::type discrete(discreteSEXP);
+    rcpp_result_gen = Rcpp::wrap(calc_polsbypopper(new_cds, areas_vec, boundarylist_new, borderlength_mat, pop_vec, aList, discrete));
     return rcpp_result_gen;
 END_RCPP
 }

@@ -260,7 +260,7 @@ redist.calcstats <- function(algout, group1vote, group2vote,
 
 #' Polsby-Popper calculation for MCMC
 #' @export
-redist.polsbypopper <- function(algout, adj_list, areas_vec, borderlength_mat){
+redist.polsbypopper <- function(algout, adj_list, areas_vec, borderlength_mat, pop_vec, discrete = FALSE){
 
     ## Unpack objects
     nsims <- ncol(algout$partitions)
@@ -270,7 +270,7 @@ redist.polsbypopper <- function(algout, adj_list, areas_vec, borderlength_mat){
     partitions <- algout$partitions    
     cds_unique <- unique(partitions[,1])
 
-    store_pp <- matrix(NA, nsims, 2)
+    store_pp <- matrix(NA, nsims, 3)
     for(i in 1:nsims){
         cds <- partitions[,i]
         sub_al <- genAlConn(adj_list, cds)
@@ -279,14 +279,46 @@ redist.polsbypopper <- function(algout, adj_list, areas_vec, borderlength_mat){
         for(j in 1:length(cds_unique)){
             cd_ind <- which(cds == cds_unique[j]) - 1
             pp_out <- calc_polsbypopper(cd_ind, areas_vec, boundary_indicator,
-                                        borderlength_mat, adj_list)
+                                        borderlength_mat, pop_vec, adj_list,
+                                        discrete)
             store_sim_pp[j] <- pp_out
         }
         store_pp[i, 1] <- mean(store_sim_pp)
 	store_pp[i, 2] <- max(store_sim_pp)
+        store_pp[i, 3] <- min(store_sim_pp)
     }
 
     return(store_pp)
+    
+}
+
+#' Reock calculation for MCMC
+#' @export
+redist.reock <- function(algout, areas_vec, coord_mat){
+
+    ## Unpack objects
+    nsims <- ncol(algout$partitions)
+    partitions <- algout$partitions
+    pwdmat <- calcPWDh(coord_mat)
+    cds_unique <- unique(partitions[,1])
+
+    store_reock <- matrix(NA, nsims, 2)
+    for(i in 1:nsims){
+        cds <- partitions[,i]
+        store_sim_reock <- rep(NA, length(cds_unique))
+        for(j in 1:length(cds_unique)){
+            cd_ind <- which(cds == cds_unique[j])
+            area_dist <- sum(areas_vec[cd_ind])
+            max_dist <- max(coord_mat[cd_ind, cd_ind])
+            area_circle <- pi * (max_dist / 2) ^2
+            store_sim_reock[j] <- area_dist / area_circle
+        }
+        store_reock[i, 1] <- mean(store_sim_reock)
+        store_reock[i, 2] <- max(store_sim_reock)
+        store_reock[i, 3] <- min(store_sim_reock)
+    }
+
+    return(store_reock)
     
 }
 
