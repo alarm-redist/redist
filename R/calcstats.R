@@ -268,21 +268,22 @@ redist.polsbypopper <- function(algout, adj_list, areas_vec, borderlength_mat){
         adj_list <- lapply(adj_list, function(x){x-1})
     }
     partitions <- algout$partitions    
-    cds_unique <- unique(cds)
+    cds_unique <- unique(partitions[,1])
 
-    store_pp <- rep(NA, nsims)
+    store_pp <- matrix(NA, nsims, 2)
     for(i in 1:nsims){
         cds <- partitions[,i]
         sub_al <- genAlConn(adj_list, cds)
         boundary_indicator <- findBoundary(adj_list, sub_al)
-        store_sim_pp <- 0
+        store_sim_pp <- rep(NA, length(cds_unique))
         for(j in 1:length(cds_unique)){
             cd_ind <- which(cds == cds_unique[j]) - 1
             pp_out <- calc_polsbypopper(cd_ind, areas_vec, boundary_indicator,
                                         borderlength_mat, adj_list)
-            store_sim_pp <- store_sim_pp + pp_out
+            store_sim_pp[j] <- pp_out
         }
-        store_pp[i] <- mean(store_sim_pp)
+        store_pp[i, 1] <- mean(store_sim_pp)
+	store_pp[i, 2] <- max(store_sim_pp)
     }
 
     return(store_pp)
