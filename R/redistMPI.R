@@ -41,8 +41,8 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     if(is.na(ssdmat)){
         ssdmat <- matrix(1, 2, 2)
     }
-    if(is.na(borderlength_list)){
-        borderlength_list <- NULL
+    if(is.na(borderlength_mat)){
+        borderlength_mat <- NULL
     }
     if(is.na(params$adjswaps)){
         adjswaps <- NULL
@@ -136,7 +136,7 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                                  popcons = popcons,
                                  grouppopvec = grouppopvec,
                                  areasvec = areasvec,
-                                 borderlength_list = borderlength_list,
+                                 borderlength_mat = borderlength_mat,
                                  countymembership = countymembership,
                                  ssdmat = ssdmat,
                                  compactness_metric = compactness_metric,
@@ -263,7 +263,7 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                          grouppopvec = preprocout$data$grouppopvec,
                          areas_vec = preprocout$data$areasvec,
                          county_membership = preprocout$data$countymembership,
-                         borderlength_list = preprocout$data$borderlength_list,
+                         borderlength_mat = preprocout$data$borderlength_mat,
                          nsims = nsimsAdj[j],
                          eprob = eprob,
                          pct_dist_parity = preprocout$params$pctdistparity,
@@ -778,7 +778,7 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
                             eprob = 0.05,
                             lambda = 0, popcons = NA, grouppopvec = NA,
                             areasvec = NA,
-                            countymembership = NA, borderlength_list = NA,
+                            countymembership = NA, borderlength_mat = NA,
                             ssdmat = NA, compactness_metric = "fryer-holden", rngseed = NA,
                             constraint = NA, constraintweights = NA,
                             betaseq = "powerlaw",
@@ -909,8 +909,8 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
     ## County memberhsip vector
     Rmpi::mpi.bcast.Robj2slave(countymembership)
 
-    ## Border distance list
-    Rmpi::mpi.bcast.Robj2slave(borderlength_list)
+    ## Border distance matrix
+    Rmpi::mpi.bcast.Robj2slave(borderlength_mat)
     
     ## Squared-distance matrix
     Rmpi::mpi.bcast.Robj2slave(ssdmat)
