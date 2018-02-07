@@ -58,6 +58,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// calc_polsbypopper
+double calc_polsbypopper(arma::uvec new_cds, arma::vec areas_vec, arma::vec boundarylist_new, arma::mat borderlength_mat, List aList);
+RcppExport SEXP redist_calc_polsbypopper(SEXP new_cdsSEXP, SEXP areas_vecSEXP, SEXP boundarylist_newSEXP, SEXP borderlength_matSEXP, SEXP aListSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::uvec >::type new_cds(new_cdsSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type areas_vec(areas_vecSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type boundarylist_new(boundarylist_newSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type borderlength_mat(borderlength_matSEXP);
+    Rcpp::traits::input_parameter< List >::type aList(aListSEXP);
+    rcpp_result_gen = Rcpp::wrap(calc_polsbypopper(new_cds, areas_vec, boundarylist_new, borderlength_mat, aList));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rsg
 List rsg(List adj_list, NumericVector population, int Ndistrict, double target_pop, double thresh, int maxiter);
 RcppExport SEXP redist_rsg(SEXP adj_listSEXP, SEXP populationSEXP, SEXP NdistrictSEXP, SEXP target_popSEXP, SEXP threshSEXP, SEXP maxiterSEXP) {
