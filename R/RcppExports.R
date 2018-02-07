@@ -17,6 +17,10 @@ segregationcalc <- function(distmat, grouppop, fullpop) {
     .Call(`redist_segregationcalc`, PACKAGE = 'redist', distmat, grouppop, fullpop)
 }
 
+calc_polsbypopper <- function(new_cds, areas_vec, boundarylist_new, borderlength_mat, aList){
+    .Call(`redist_calc_polsbypopper`, PACKAGE = 'redist', new_cds, areas_vec, boundarylist_new, borderlength_mat, aList)
+}
+
 rsg <- function(adj_list, population, Ndistrict, target_pop, thresh, maxiter) {
     .Call(`redist_rsg`, PACKAGE = 'redist', adj_list, population, Ndistrict, target_pop, thresh, maxiter)
 }

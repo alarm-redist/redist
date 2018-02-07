@@ -258,6 +258,37 @@ redist.calcstats <- function(algout, group1vote, group2vote,
     
 }
 
+#' Polsby-Popper calculation for MCMC
+#' @export
+redist.polsbypopper <- function(algout, adj_list, areas_vec, borderlength_mat){
+
+    ## Unpack objects
+    nsims <- ncol(algout$partitions)
+    if(min(unlist(adj_list)) == 1){
+        adj_list <- lapply(adj_list, function(x){x-1})
+    }
+    partitions <- algout$partitions    
+    cds_unique <- unique(cds)
+
+    store_pp <- rep(NA, nsims)
+    for(i in 1:nsims){
+        cds <- partitions[,i]
+        sub_al <- genAlConn(adj_list, cds)
+        boundary_indicator <- findBoundary(adj_list, sub_al)
+        store_sim_pp <- 0
+        for(j in 1:length(cds_unique)){
+            cd_ind <- which(cds == cds_unique[j]) - 1
+            pp_out <- calc_polsbypopper(cd_ind, areas_vec, boundary_indicator,
+                                        borderlength_mat, adj_list)
+            store_sim_pp <- store_sim_pp + pp_out
+        }
+        store_pp[i] <- mean(store_sim_pp)
+    }
+
+    return(store_pp)
+    
+}
+
 #' Diagnostic plotting functionality for MCMC redistricting.
 #'
 #' \code{redist.diagplot} generates several common MCMC diagnostic plots.
