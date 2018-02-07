@@ -11,6 +11,7 @@
 
 Rcpp::NumericVector findBoundary(Rcpp::List fullList,
 				 Rcpp::List conList);
+arma::uvec getIn(arma::ivec vec1, arma::ivec vec2);
 Rcpp::List genAlConn(Rcpp::List aList,
 		     Rcpp::NumericVector cds);
 Rcpp::List calc_psipop(arma::vec current_dists,
