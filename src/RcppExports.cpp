@@ -75,8 +75,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // swMH
-List swMH(List aList, NumericVector cdvec, NumericVector cdorigvec, NumericVector popvec, NumericVector grouppopvec, NumericVector areas_vec, NumericVector county_membership, List borderlength_list, int nsims, double eprob, double pct_dist_parity, NumericVector beta_sequence, NumericVector beta_weights, NumericMatrix ssdmat, int lambda, double beta, double weight_population, double weight_compact, double weight_segregation, double weight_similar, double weight_countysplit, int anneal_beta, int adjswap, int exact_mh, int adapt_eprob, int adapt_lambda, std::string compactness_measure);
-RcppExport SEXP redist_swMH(SEXP aListSEXP, SEXP cdvecSEXP, SEXP cdorigvecSEXP, SEXP popvecSEXP, SEXP grouppopvecSEXP, SEXP areas_vecSEXP, SEXP county_membershipSEXP, SEXP borderlength_listSEXP, SEXP nsimsSEXP, SEXP eprobSEXP, SEXP pct_dist_paritySEXP, SEXP beta_sequenceSEXP, SEXP beta_weightsSEXP, SEXP ssdmatSEXP, SEXP lambdaSEXP, SEXP betaSEXP, SEXP weight_populationSEXP, SEXP weight_compactSEXP, SEXP weight_segregationSEXP, SEXP weight_similarSEXP, SEXP weight_countysplitSEXP, SEXP anneal_betaSEXP, SEXP adjswapSEXP, SEXP exact_mhSEXP, SEXP adapt_eprobSEXP, SEXP adapt_lambdaSEXP, SEXP compactness_measureSEXP) {
+List swMH(List aList, NumericVector cdvec, NumericVector cdorigvec, NumericVector popvec, NumericVector grouppopvec, NumericVector areas_vec, NumericVector county_membership, arma::mat borderlength_mat, int nsims, double eprob, double pct_dist_parity, NumericVector beta_sequence, NumericVector beta_weights, NumericMatrix ssdmat, int lambda, double beta, double weight_population, double weight_compact, double weight_segregation, double weight_similar, double weight_countysplit, int anneal_beta, int adjswap, int exact_mh, int adapt_eprob, int adapt_lambda, std::string compactness_measure);
+RcppExport SEXP redist_swMH(SEXP aListSEXP, SEXP cdvecSEXP, SEXP cdorigvecSEXP, SEXP popvecSEXP, SEXP grouppopvecSEXP, SEXP areas_vecSEXP, SEXP county_membershipSEXP, SEXP borderlength_matSEXP, SEXP nsimsSEXP, SEXP eprobSEXP, SEXP pct_dist_paritySEXP, SEXP beta_sequenceSEXP, SEXP beta_weightsSEXP, SEXP ssdmatSEXP, SEXP lambdaSEXP, SEXP betaSEXP, SEXP weight_populationSEXP, SEXP weight_compactSEXP, SEXP weight_segregationSEXP, SEXP weight_similarSEXP, SEXP weight_countysplitSEXP, SEXP anneal_betaSEXP, SEXP adjswapSEXP, SEXP exact_mhSEXP, SEXP adapt_eprobSEXP, SEXP adapt_lambdaSEXP, SEXP compactness_measureSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -87,7 +87,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type grouppopvec(grouppopvecSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type areas_vec(areas_vecSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type county_membership(county_membershipSEXP);
-    Rcpp::traits::input_parameter< List >::type borderlength_list(borderlength_listSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type borderlength_mat(borderlength_matSEXP);
     Rcpp::traits::input_parameter< int >::type nsims(nsimsSEXP);
     Rcpp::traits::input_parameter< double >::type eprob(eprobSEXP);
     Rcpp::traits::input_parameter< double >::type pct_dist_parity(pct_dist_paritySEXP);
@@ -107,7 +107,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type adapt_eprob(adapt_eprobSEXP);
     Rcpp::traits::input_parameter< int >::type adapt_lambda(adapt_lambdaSEXP);
     Rcpp::traits::input_parameter< std::string >::type compactness_measure(compactness_measureSEXP);
-    rcpp_result_gen = Rcpp::wrap(swMH(aList, cdvec, cdorigvec, popvec, grouppopvec, areas_vec, county_membership, borderlength_list, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, lambda, beta, weight_population, weight_compact, weight_segregation, weight_similar, weight_countysplit, anneal_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, compactness_measure));
+    rcpp_result_gen = Rcpp::wrap(swMH(aList, cdvec, cdorigvec, popvec, grouppopvec, areas_vec, county_membership, borderlength_mat, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, lambda, beta, weight_population, weight_compact, weight_segregation, weight_similar, weight_countysplit, anneal_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, compactness_measure));
     return rcpp_result_gen;
 END_RCPP
 }
