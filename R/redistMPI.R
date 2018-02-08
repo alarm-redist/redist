@@ -593,7 +593,7 @@ redist.combine.mpi <- function(savename, nloop, nthin, tempadj){
             if(j == 1){
                 partitions[1:nr, ind] <- algout$partitions[,indthin]
             }else{
-                veclist[[i-1]][ind] <- algout[[i]][indthin]
+                veclist[[j-1]][ind] <- algout[[j]][indthin]
             }
         }
         
