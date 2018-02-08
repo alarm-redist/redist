@@ -556,7 +556,7 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
 #' nthin = 10, nunits = length(algdat.pfull$adjlist), tempadj = tempAdjMat)
 #' }
 #' @export
-redist.combine.mpi <- function(savename, nsims, nloop, nthin, nunits, tempadj){
+redist.combine.mpi <- function(savename, nloop, nthin, tempadj){
     
     ##############################
     ## Set up container objects ##
@@ -565,16 +565,17 @@ redist.combine.mpi <- function(savename, nsims, nloop, nthin, nunits, tempadj){
     names_obj <- names(algout)
     
     ## Create containers
-    partitions <- matrix(NA, nrow = nunits,
-                         ncol = (nsims * nloop / nthin))
+    nr <- nrow(algout$partitions)
+    nc <- ncol(algout$partitions)
+    partitions <- matrix(NA, nrow = nr, ncol = (nc * nloop / nthin))
 
     veclist <- vector(mode = "list", length = length(algout)-1)
     for(i in 1:length(veclist)){
-        veclist[[i]] <- rep(NA, (nsims * nloop / nthin))
+        veclist[[i]] <- rep(NA, (nc * nloop / nthin))
     }
     
     ## Indices for thinning
-    indthin <- which((1:nsims) %% nthin == 0)
+    indthin <- which((1:nc) %% nthin == 0)
     
     ####################################
     ## Combine data in multiple loops ##
@@ -585,12 +586,12 @@ redist.combine.mpi <- function(savename, nsims, nloop, nthin, nunits, tempadj){
         ## Load data
         load(paste(savename, "_proc", tempadj[1], "_loop", i, ".RData", sep = ""))
 
-        ind <- ((i - 1) * (nsims / nthin) + 1):(i * (nsims / nthin))
+        ind <- ((i - 1) * (nc / nthin) + 1):(i * (nc / nthin))
         
         ## Store objects together
         for(j in 1:length(algout)){
             if(j == 1){
-                partitions[1:nunits, ind] <- algout$partitions[,indthin]
+                partitions[1:nr, ind] <- algout$partitions[,indthin]
             }else{
                 veclist[[i]][ind] <- algout[[i]][indthin]
             }
