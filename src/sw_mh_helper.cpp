@@ -105,7 +105,7 @@ List cut_edges(List aList_con,
   */
 
   // Create threshold
-  double threshold_prob = 1 - eprob;
+  double threshold_prob = 1.0 - eprob;
 
   // Define lists to store cut-edge and uncut-edge vectors
   List aList_uncut(aList_con.size());
@@ -113,7 +113,7 @@ List cut_edges(List aList_con,
 
   // Initialize inside loop
   int i; NumericVector cc_vec_i_all; NumericVector cc_vec_i;
-  arma::vec draws;
+  arma::vec draws; 
 
   // Define list to store output of both lists
 
