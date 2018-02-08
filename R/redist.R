@@ -522,7 +522,7 @@ redist.combine <- function(savename, nsims, nloop, nthin, nunits, temper = 0
         if(i == 1){
             algout[[i]] <- partitions
         }else{
-            algout[[i]] <- veclist[[i]]
+            algout[[i]] <- veclist[[i-1]]
         }
     }
     names(algout) <- names_obj

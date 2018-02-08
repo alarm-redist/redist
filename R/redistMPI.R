@@ -607,7 +607,7 @@ redist.combine.mpi <- function(savename, nloop, nthin, tempadj){
         if(i == 1){
             algout[[i]] <- partitions
         }else{
-            algout[[i]] <- veclist[[i]]
+            algout[[i]] <- veclist[[i-1]]
         }
     }
     names(algout) <- names_obj
