@@ -508,7 +508,7 @@ redist.combine <- function(savename, nsims, nloop, nthin, nunits, temper = 0
             if(j == 1){
                 partitions[1:nunits, ind] <- algout$partitions[,indthin]
             }else{
-                veclist[[i]][ind] <- algout[[i]][indthin]
+                veclist[[i-1]][ind] <- algout[[i]][indthin]
             }
         }
         
