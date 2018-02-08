@@ -472,7 +472,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
 #' nthin = 10, nunits = length(algdat.pfull$adjlist))
 #' }
 #' @export
-redist.combine <- function(savename, nsims, nloop, nthin, nunits, temper = 0
+redist.combine <- function(savename, nloop, nthin, temper = 0
                            ){
 
     ##############################
@@ -482,16 +482,18 @@ redist.combine <- function(savename, nsims, nloop, nthin, nunits, temper = 0
     names_obj <- names(algout)
 
     ## Create containers
-    partitions <- matrix(NA, nrow = nunits,
-                         ncol = (nsims * nloop / nthin))
+    nr <- nrow(algout$partitions)
+    nc <- ncol(algout$partitions)
+    partitions <- matrix(NA, nrow = nr,
+                         ncol = (nc * nloop / nthin))
 
     veclist <- vector(mode = "list", length = length(algout)-1)
     for(i in 1:length(veclist)){
-        veclist[[i]] <- rep(NA, (nsims * nloop / nthin))
+        veclist[[i]] <- rep(NA, (nc * nloop / nthin))
     }
     
     ## Indices for thinning
-    indthin <- which((1:nsims) %% nthin == 0)
+    indthin <- which((1:nc) %% nthin == 0)
 
     ####################################
     ## Combine data in multiple loops ##
@@ -501,14 +503,14 @@ redist.combine <- function(savename, nsims, nloop, nthin, nunits, temper = 0
         ## Load data
         load(paste(savename, "_loop", i, ".RData", sep = ""))
 
-        ind <- ((i - 1) * (nsims / nthin) + 1):(i * (nsims / nthin))
+        ind <- ((i - 1) * (nc / nthin) + 1):(i * (nc / nthin))
     
         ## Store objects together
         for(j in 1:length(algout)){
             if(j == 1){
-                partitions[1:nunits, ind] <- algout$partitions[,indthin]
+                partitions[1:nr, ind] <- algout$partitions[,indthin]
             }else{
-                veclist[[i-1]][ind] <- algout[[i]][indthin]
+                veclist[[j-1]][ind] <- algout[[j]][indthin]
             }
         }
         
@@ -892,8 +894,8 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
     ## Combine and save the data ##
     ###############################
     if(nloop > 1){
-        redist.combine(savename = savename, nsims = nsims, nloop = nloop,
-                       nthin = nthin, nunits = length(preprocout$data$adjlist),
+        redist.combine(savename = savename, nloop = nloop,
+                       nthin = nthin, 
                        temper = temperflag)
     }else if(!is.null(savename)){
         save(algout, file = paste(savename, ".RData", sep = ""))
