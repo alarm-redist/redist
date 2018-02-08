@@ -561,7 +561,7 @@ redist.combine.mpi <- function(savename, nsims, nloop, nthin, nunits, tempadj){
     ##############################
     ## Set up container objects ##
     ##############################
-    load(paste(savename, "_proc", tempadj[1], "_loop", i, ".RData", sep = ""))
+    load(paste(savename, "_proc", tempadj[1], "_loop1.RData", sep = ""))
     names_obj <- names(algout)
     
     ## Create containers
