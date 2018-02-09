@@ -194,7 +194,7 @@ List pp_compact(arma::uvec new_cds,
     for(j = 0; j < new_cds.n_elem; j++){
       area_new += pop_vec(new_cds(j));
     }
-    for(j = 0; j < new_cds.n_elem; j++){
+    for(j = 0; j < current_cds.n_elem; j++){
       area_old += pop_vec(current_cds(j));
     }
   }else{
@@ -269,7 +269,7 @@ List pp_compact(arma::uvec new_cds,
       }
 
     }else{
-
+      
       // Add the population around the perimeter
       perimeter_new += (double)pop_vec(boundary_precs_new(j));
       
@@ -305,7 +305,7 @@ List pp_compact(arma::uvec new_cds,
       }
 
     }else{
-
+      
       perimeter_old += (double)pop_vec(boundary_precs_current(j));
       
     }
