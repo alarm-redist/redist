@@ -131,6 +131,7 @@ List swMH(List aList,
 					   aList,
 					   areas_vec,
 					   borderlength_mat,
+					   false,
 					   popvec,
 					   ssdmat,
 					   1.0)["compact_new_psi"]);
