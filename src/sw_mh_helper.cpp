@@ -634,8 +634,8 @@ List make_swaps(List boundary_cc,
       compact_constraint = calc_psicompact(cds_prop, cds_test,
 					   cd_pair, compactness_measure,
 					   aList, areas_vec,
-					   borderlength_mat, pop_vec,
-					   ssdmat, ssd_denominator);
+					   borderlength_mat, discrete = TRUE,
+					   pop_vec, ssdmat, ssd_denominator);
 
       compact_new_psi += as<double>(compact_constraint["compact_new_psi"]);
       compact_old_psi += as<double>(compact_constraint["compact_old_psi"]);

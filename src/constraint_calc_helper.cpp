@@ -177,7 +177,9 @@ List pp_compact(arma::uvec new_cds,
 		arma::vec boundarylist_new,
 		arma::vec boundarylist_current,
 		arma::mat borderlength_mat,
-		List aList){
+		arma::vec pop_vec,
+		List aList,
+		bool discrete = false){
 
   double pi = 3.141592653589793238463;
 
@@ -188,11 +190,20 @@ List pp_compact(arma::uvec new_cds,
   double area_new = 0.0;
   double area_old = 0.0;
   int j; int k; int l;
-  for(j = 0; j < new_cds.n_elem; j++){
-    area_new += areas_vec(new_cds(j));
-  }
-  for(j = 0; j < current_cds.n_elem; j++){
-    area_old += areas_vec(current_cds(j));
+  if(discrete == true){
+    for(j = 0; j < new_cds.n_elem; j++){
+      area_new += pop_vec(new_cds(j));
+    }
+    for(j = 0; j < new_cds.n_elem; j++){
+      area_old += pop_vec(current_cds(j));
+    }
+  }else{
+    for(j = 0; j < new_cds.n_elem; j++){
+      area_new += areas_vec(new_cds(j));
+    }
+    for(j = 0; j < current_cds.n_elem; j++){
+      area_old += areas_vec(current_cds(j));
+    }
   }
 
   /* 
@@ -230,65 +241,87 @@ List pp_compact(arma::uvec new_cds,
   double perimeter_new = 0.0; double perimeter_old = 0.0;
   for(j = 0; j < boundary_precs_new.n_elem; j++){
 
-    // Get the adjacent indices - on the boundary and
-    // greater than boundary_precs[j] to avoid double counting
-    adj_precs = as<arma::vec>(aList(boundary_precs_new(j)));
-
-    // Of the adjacent precincts, which are not in the same congressional district?
-    in_cd = getIn(arma::conv_to<arma::ivec>::from(adj_precs), arma::conv_to<arma::ivec>::from(new_cds));
-    adj_precs_sub = adj_precs.elem( find(in_cd == false) );
-    adj_precs_sub.resize(adj_precs_sub.size() + 1);
-    adj_precs_sub(adj_precs_sub.size() - 1) = -1.0;
+    if(discrete == false){
     
-    // Which elements of boundary_mat's first column are in adj_precs_sub, and what of second column equal the actual precinct
-    find_boundarylength_in_boundarymat = find(borderlength_col2 == boundary_precs_new(j));
-    for(k = 0; k < adj_precs_sub.n_elem; k++){
+      // Get the adjacent indices - on the boundary and
+      // greater than boundary_precs[j] to avoid double counting
+      adj_precs = as<arma::vec>(aList(boundary_precs_new(j)));
 
-      adj_precs_sub_indices = find(borderlength_col1 == adj_precs_sub(k));
-      loop_over_inds = arma::intersect(arma::conv_to<arma::ivec>::from(adj_precs_sub_indices), arma::conv_to<arma::ivec>::from(find_boundarylength_in_boundarymat));
-      if(loop_over_inds.n_elem > 0){
-	for(l = 0; l < loop_over_inds.n_elem; l++){
-	  perimeter_new += (double)borderlength_col3(loop_over_inds(l));
+      // Of the adjacent precincts, which are not in the same cong district?
+      in_cd = getIn(arma::conv_to<arma::ivec>::from(adj_precs), arma::conv_to<arma::ivec>::from(new_cds));
+      adj_precs_sub = adj_precs.elem( find(in_cd == false) );
+      adj_precs_sub.resize(adj_precs_sub.size() + 1);
+      adj_precs_sub(adj_precs_sub.size() - 1) = -1.0;
+    
+      // Which elements of boundary_mat's first column are in adj_precs_sub,
+      // and what of second column equal the actual precinct
+      find_boundarylength_in_boundarymat = find(borderlength_col2 == boundary_precs_new(j));
+      for(k = 0; k < adj_precs_sub.n_elem; k++){
+
+	adj_precs_sub_indices = find(borderlength_col1 == adj_precs_sub(k));
+	loop_over_inds = arma::intersect(arma::conv_to<arma::ivec>::from(adj_precs_sub_indices), arma::conv_to<arma::ivec>::from(find_boundarylength_in_boundarymat));
+	if(loop_over_inds.n_elem > 0){
+	  for(l = 0; l < loop_over_inds.n_elem; l++){
+	    perimeter_new += (double)borderlength_col3(loop_over_inds(l));
+	  }
 	}
+
       }
 
-    }    
+    }else{
+
+      // Add the population around the perimeter
+      perimeter_new += (double)pop_vec(boundary_precs_new(j));
+      
+    }
 
   }
   for(j = 0; j < boundary_precs_current.n_elem; j++){
 
-    // Get the adjacent indices - on the boundary and
-    // greater than boundary_precs[j] to avoid double counting
-    adj_precs = as<arma::vec>(aList(boundary_precs_current(j)));
+    if(discrete == false){
 
-    // Of the adjacent precincts, which are not in the same congressional district?
-    in_cd = getIn(arma::conv_to<arma::ivec>::from(adj_precs), arma::conv_to<arma::ivec>::from(current_cds));
-    adj_precs_sub = adj_precs.elem( find(in_cd == false) );
-    adj_precs_sub.resize(adj_precs_sub.size() + 1);
-    adj_precs_sub(adj_precs_sub.size() - 1) = -1.0;
+      // Get the adjacent indices - on the boundary and
+      // greater than boundary_precs[j] to avoid double counting
+      adj_precs = as<arma::vec>(aList(boundary_precs_current(j)));
+
+      // Of the adjacent precincts, which are not in the same congressional district?
+      in_cd = getIn(arma::conv_to<arma::ivec>::from(adj_precs), arma::conv_to<arma::ivec>::from(current_cds));
+      adj_precs_sub = adj_precs.elem( find(in_cd == false) );
+      adj_precs_sub.resize(adj_precs_sub.size() + 1);
+      adj_precs_sub(adj_precs_sub.size() - 1) = -1.0;
     
-    // Which elements of boundary_mat's first column are in adj_precs_sub, and what of second column equal the actual precinct
-    find_boundarylength_in_boundarymat = find(borderlength_col2 == boundary_precs_current(j));
-    for(k = 0; k < adj_precs_sub.n_elem; k++){
+      // Which elements of boundary_mat's first column are in adj_precs_sub, and what of second column equal the actual precinct
+      find_boundarylength_in_boundarymat = find(borderlength_col2 == boundary_precs_current(j));
+      for(k = 0; k < adj_precs_sub.n_elem; k++){
 
-      adj_precs_sub_indices = find(borderlength_col1 == adj_precs_sub(k));
-      loop_over_inds = arma::intersect(arma::conv_to<arma::ivec>::from(adj_precs_sub_indices), arma::conv_to<arma::ivec>::from(find_boundarylength_in_boundarymat));
-      if(loop_over_inds.n_elem > 0){
-	for(l = 0; l < loop_over_inds.n_elem; l++){
-	  perimeter_old += (double)borderlength_col3(loop_over_inds(l));
+	adj_precs_sub_indices = find(borderlength_col1 == adj_precs_sub(k));
+	loop_over_inds = arma::intersect(arma::conv_to<arma::ivec>::from(adj_precs_sub_indices), arma::conv_to<arma::ivec>::from(find_boundarylength_in_boundarymat));
+	if(loop_over_inds.n_elem > 0){
+	  for(l = 0; l < loop_over_inds.n_elem; l++){
+	    perimeter_old += (double)borderlength_col3(loop_over_inds(l));
+	  }
 	}
+
       }
 
-    }    
+    }else{
+
+      perimeter_old += (double)pop_vec(boundary_precs_current(j));
+      
+    }
 
   }
 
   // Note - multiplying by -1 since we want to maximize Polsby-Popper,
   // but in general minimize metrics
   List out;
-  out["pp_new"] = (double)-1.0 * 4.0 * pi * area_new / pow(perimeter_new, 2.0);
-  out["pp_old"] = (double)-1.0 * 4.0 * pi * area_old / pow(perimeter_old, 2.0);
-
+  if(discrete == false){
+    out["pp_new"] = (double)-1.0 * 4.0 * pi * area_new / pow(perimeter_new, 2.0);
+    out["pp_old"] = (double)-1.0 * 4.0 * pi * area_old / pow(perimeter_old, 2.0);
+  }else{
+    out["pp_new"] = (double)-1.0 * area_new / pow(perimeter_new, 2.0);
+    out["pp_old"] = (double)-1.0 * area_old / pow(perimeter_old, 2.0);
+  }
   return out;
   
 }
@@ -357,6 +390,7 @@ List calc_psicompact(arma::vec current_dists,
 		     List aList,
 		     NumericVector areas_vec,
 		     arma::mat borderlength_mat,
+		     bool discrete,
 		     // For Fryer Holden
 		     NumericVector pops,
 		     NumericMatrix ssdmat,
@@ -410,7 +444,9 @@ List calc_psicompact(arma::vec current_dists,
 			       as<arma::vec>(boundarylist_new),
 			       as<arma::vec>(boundarylist_current),
 			       borderlength_mat,
-			       aList);
+			       pops,
+			       aList,
+			       discrete);
 
       // Add to psi
       psi_new += as<double>(pp_out["pp_new"]);
