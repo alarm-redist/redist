@@ -25,6 +25,7 @@ Rcpp::List calc_psicompact(arma::vec current_dists,
 			   Rcpp::List aList,
 			   Rcpp::NumericVector areas_vec,
 			   arma::mat borderlength_mat,
+			   bool discrete,
 			   Rcpp::NumericVector pops,
 			   Rcpp::NumericMatrix ssdmat,
 			   double denominator);
