@@ -18,10 +18,10 @@
 
 using namespace Rcpp;
 
-List vector_to_list(NumericVector vecname){
+List vector_to_list(arma::uvec vecname){
 
-	List list_out(vecname.size());
-	for(int i = 0; i < vecname.size(); i++){
+	List list_out(vecname.n_elem);
+	for(int i = 0; i < vecname.n_elem; i++){
 		list_out(i) = vecname(i);
 	}
 	return list_out;
@@ -208,7 +208,6 @@ List swMH(List aList,
   List get_constraint; List gt_out; NumericVector cdvec_prop; int i;
 
   // Open the simulations
-  Rcpp::Rcout << "Finished preprocessing data, now sampling plans." << std::endl << std::endl;;
   while(k < nsims){
 
     /////////////////////////////////////
@@ -236,7 +235,7 @@ List swMH(List aList,
 	 partitions, second element is number of partitions */
       // boundary_partitions = bsearch_boundary(cutedge_lists["connectedlist"],
       // 					     boundary);
-      boundary_partitions = vector_to_list(boundary);
+      boundary_partitions = vector_to_list(find(as<arma::vec>(boundary) == 1));
 
       ///////////////////////////////////////////////////////////////////////
       // Fourth - select several connected components w/ unif distribution //
@@ -272,7 +271,7 @@ List swMH(List aList,
     }while(as<int>(swap_partitions["goodprop"]) == 0);
     
     // Get new boundary, then get number of partitions
-    if(exact_mh == 1){
+    /* if(exact_mh == 1){
       aList_con_prop = genAlConn(aList, as<NumericVector>(swap_partitions["proposed_partition"]));
       boundary_prop = findBoundary(aList, aList_con_prop);
       boundary_partitions_prop = bsearch_boundary(cutedge_lists["connectedlist"],
@@ -287,7 +286,7 @@ List swMH(List aList,
       swap_partitions["mh_prob"] = as<double>(swap_partitions["mh_prob"]) *
 	pow((double)nvalid_current / nvalid_prop, (double)p);
       boundaryratio_store(k) = pow((double)nvalid_current / nvalid_prop, (double)p);
-    }
+      } */
     
     //////////////////////////////////////////
     // Fifth - Accept with some probability //
@@ -365,7 +364,7 @@ List swMH(List aList,
       // Update district_pops to proposed district pops
       district_pops = clone(as<NumericVector>(swap_partitions["updated_cd_pops"]));
       // Store number of boundary partitions
-      boundarypartitions_store[k] = boundary_partitions["npartitions"];
+      // boundarypartitions_store[k] = boundary_partitions["npartitions"];
     }else{
       boundarypartitions_store[k] = boundarypartitions_store[k-1];
     }
