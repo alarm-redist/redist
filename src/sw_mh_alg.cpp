@@ -18,6 +18,15 @@
 
 using namespace Rcpp;
 
+List vector_to_list(NumericVector vecname){
+
+	List list_out(vecname.size());
+	for(int i = 0; i < vecname.size(); i++){
+		list_out(i) = vecname(i);
+	}
+	return list_out;
+	
+}
 /* Primary function to run redistricting algorithm. An implementation of 
    Algorithm 1 in Barbu and Zhu (2005) */
 // [[Rcpp::export]]
@@ -218,15 +227,16 @@ List swMH(List aList,
     do{
       
       // First element is connected adjlist, second element is cut adjlist
-      cutedge_lists = cut_edges(aList_con, eprob);
+      // cutedge_lists = cut_edges(aList_con, eprob);
       
       ////////////////////////////////////////////////////////////////////
       // Third: generate a list of connected components within each cd //
       ///////////////////////////////////////////////////////////////////
       /* List of connected partitions after edgecuts - first element is list of 
 	 partitions, second element is number of partitions */
-      boundary_partitions = bsearch_boundary(cutedge_lists["connectedlist"],
-					     boundary);
+      // boundary_partitions = bsearch_boundary(cutedge_lists["connectedlist"],
+      // 					     boundary);
+      boundary_partitions = vector_to_list(boundary);
 
       ///////////////////////////////////////////////////////////////////////
       // Fourth - select several connected components w/ unif distribution //
@@ -235,7 +245,7 @@ List swMH(List aList,
       p = draw_p(lambda);
       
       // Loop over p, draw p connected components
-      swap_partitions = make_swaps(boundary_partitions["bsearch"], 
+      swap_partitions = make_swaps(boundary_partitions, 
 				   aList, 
 				   cdvec,
 				   cdorigvec,
