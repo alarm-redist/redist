@@ -18,7 +18,7 @@
 
 using namespace Rcpp;
 
-List vector_to_list(NumericVector vecname){
+List vector_to_list(arma::uvec vecname){
 
 	List list_out(vecname.size());
 	for(int i = 0; i < vecname.size(); i++){
@@ -27,6 +27,22 @@ List vector_to_list(NumericVector vecname){
 	return list_out;
 	
 }
+
+arma::vec get_not_in(arma::uvec vec1, arma::uvec vec2){
+  int i; arma::uvec findtest; arma::uvec out(vec1.n_elem);
+  for(i = 0; i < vec1.n_elem; i++){
+    findtest = find(vec2 == vec1(i));
+    if(findtest.n_elem == 0){
+      out(i) = 1;
+    }else{
+      out(i) = 0;
+    }
+  }
+  arma::vec candidates = vec1.elem( find(out == 1) );
+  
+  return candidates;
+}
+
 /* Primary function to run redistricting algorithm. An implementation of 
    Algorithm 1 in Barbu and Zhu (2005) */
 // [[Rcpp::export]]
@@ -37,6 +53,7 @@ List swMH(List aList,
 	  NumericVector grouppopvec,
 	  NumericVector areas_vec,
 	  NumericVector county_membership,
+	  arma::uvec no_split_precincts,
 	  arma::mat borderlength_mat,
 	  int nsims,
 	  double eprob,
@@ -206,6 +223,7 @@ List swMH(List aList,
   List boundary_partitions; List cutedge_lists; int p; List aList_con_prop;
   NumericVector boundary_prop; List boundary_partitions_prop; int decision;
   List get_constraint; List gt_out; NumericVector cdvec_prop; int i;
+  arma::uvec boundary_precincts; arma::vec boundary_precinct_candidates;
 
   // Open the simulations
   Rcpp::Rcout << "Finished preprocessing data, now sampling plans." << std::endl << std::endl;;
@@ -236,7 +254,10 @@ List swMH(List aList,
 	 partitions, second element is number of partitions */
       // boundary_partitions = bsearch_boundary(cutedge_lists["connectedlist"],
       // 					     boundary);
-      boundary_partitions = vector_to_list(boundary);
+      boundary_precincts = find(as<arma::vec>(boundary) == 1);
+      boundary_precinct_candidates = get_not_in(boundary_precincts,
+						no_split_precincts);
+      boundary_partitions = vector_to_list(boundary_precinct_candidates);
 
       ///////////////////////////////////////////////////////////////////////
       // Fourth - select several connected components w/ unif distribution //
