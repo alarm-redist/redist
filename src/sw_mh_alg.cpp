@@ -18,17 +18,17 @@
 
 using namespace Rcpp;
 
-List vector_to_list(arma::vec vecname){
+List vector_to_list(arma::uvec vecname){
 
-	List list_out(vecname.n_elem);
-	for(int i = 0; i < vecname.n_elem; i++){
-		list_out(i) = vecname(i);
-	}
-	return list_out;
+  List list_out(vecname.n_elem);
+  for(int i = 0; i < vecname.n_elem; i++){
+    list_out(i) = vecname(i);
+  }
+  return list_out;
 	
 }
 
-arma::vec get_not_in(arma::uvec vec1, arma::uvec vec2){
+arma::uvec get_not_in(arma::uvec vec1, arma::uvec vec2){
   int i; arma::uvec findtest; arma::uvec out(vec1.n_elem);
   for(i = 0; i < vec1.n_elem; i++){
     findtest = find(vec2 == vec1(i));
@@ -38,7 +38,7 @@ arma::vec get_not_in(arma::uvec vec1, arma::uvec vec2){
       out(i) = 0;
     }
   }
-  arma::vec candidates = vec1.elem( find(out == 1) );
+  arma::uvec candidates = vec1.elem( find(out == 1) );
   
   return candidates;
 }
@@ -223,7 +223,7 @@ List swMH(List aList,
   List boundary_partitions; List cutedge_lists; int p; List aList_con_prop;
   NumericVector boundary_prop; List boundary_partitions_prop; int decision;
   List get_constraint; List gt_out; NumericVector cdvec_prop; int i;
-  arma::uvec boundary_precincts; arma::vec boundary_precinct_candidates;
+  arma::uvec boundary_precincts; arma::uvec boundary_precinct_candidates;
 
   // Open the simulations
   while(k < nsims){
