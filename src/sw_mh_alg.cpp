@@ -282,7 +282,8 @@ List swMH(List aList,
     //////////////////////////////////////////
     // Fifth - Accept with some probability //
     //////////////////////////////////////////
-    decision = mh_decision(as<double>(swap_partitions["mh_prob"]));
+    // decision = mh_decision(as<double>(swap_partitions["mh_prob"]));
+    decision = mh_decision(0.5);
 
     // Store betas
     if(decision == 1){
