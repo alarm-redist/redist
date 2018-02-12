@@ -55,7 +55,7 @@ List adjcheck_propcd(List aList,
 
       /* If true, iterate adj_check to 1 and break the loop to throw out 
 	 the partition */
-      if(test_adj == TRUE){
+      if(test_adj == true){
 	adj_check++;
 	break;
       }
@@ -67,7 +67,7 @@ List adjcheck_propcd(List aList,
       bool new_cd = is_true(any(prop_cds == cds(adj_units(j))));
 
       // If both conditions are false, add to prop_cds
-      if((same_cd == FALSE) && (new_cd == FALSE)){
+      if((same_cd == false) && (new_cd == false)){
 	prop_cds.push_back(cds(adj_units(j)));
       }
 
@@ -293,7 +293,7 @@ double update_mhprob(NumericVector prop_partition,
 	 proposed switch, if your cd assignment is the same as the old cong
 	 district, and you are not in the switch partition */
       if((cds(adj_vec(j)) == cds(prop_partition(0))) &&
-	 (is_true(any(prop_partition == adj_vec(j))) == FALSE)){
+	 (is_true(any(prop_partition == adj_vec(j))) == false)){
 	c2++;
       }
 
