@@ -4,7 +4,7 @@
 \alias{redist.combine.mpi}
 \title{Combine successive runs of \code{redist.mcmc.mpi}}
 \usage{
-redist.combine.mpi(savename, nsims, nloop, nthin, nunits, tempadj)
+redist.combine.mpi(savename, nloop, nthin, tempadj)
 }
 \arguments{
 \item{savename}{The name (without the loop or \code{.RData} suffix)
@@ -16,10 +16,6 @@ of the saved simulations.}
 
 \item{tempadj}{The temperature adjacency object saved by
 \code{redist.mcmc.mpi}.}
-
-\item{nsims}{The number of simulations in each loop.}
-
-\item{nunits}{The number of geographic units from the simulations.}
 }
 \value{
 \code{redist.combine.mpi} returns an object of class "redist".
@@ -78,8 +74,8 @@ redist.mcmc.mpi(adjobj = algdat.pfull$adjlist,
 popvec = algdat.pfull$precinct.data$pop,
 initcds = initcds,
 nsims = 10000, nloops = 2, savename = "test")
-out <- redist.combine.mpi(savename = "test", nsims = 10000, nloop = 2,
-nthin = 10, nunits = length(algdat.pfull$adjlist), tempadj = tempAdjMat)
+out <- redist.combine.mpi(savename = "test", nloop = 2,
+nthin = 10, tempadj = tempAdjMat)
 }
 }
 \references{
