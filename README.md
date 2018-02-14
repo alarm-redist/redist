@@ -46,7 +46,7 @@ data(algdat.pfull)
 ## Run the simulations
 mcmc.out <- redist.mcmc(adjobj = algdat.pfull$adjlist,
                         popvec = algdat.pfull$precinct.data$pop,
-                        nsims = nsims,
+                        nsims = 10000,
                         ndists = 3)
 ```
 
@@ -63,7 +63,7 @@ data(algdat.p20)
 ## -----------------------------------------------
 mcmc.out <- redist.mcmc(adjobj = algdat.p20$adjlist,
                         popvec = algdat.p20$precinct.data$pop,
-                        nsims = nsims,
+                        nsims = 10000,
                         popcons = .2,
                         ndists = 3)
 
@@ -74,7 +74,7 @@ mcmc.out <- redist.mcmc(adjobj = algdat.p20$adjlist,
 mcmc.out.gb <- redist.mcmc(adjobj = algdat.p20$adjlist,
                            popvec = algdat.p20$precinct.data$pop,
                            ndists = 3,
-                           nsims = nsims,
+                           nsims = 10000,
                            constraint = "population",
                            constraintweights = 5.4)
 ## Reweight draws back to the uniform distribution
@@ -91,7 +91,7 @@ betaweights <- rep(NA, 10); for(i in 1:10){betaweights[i] <- 2^i}
 mcmc.out.st <- redist.mcmc(adjobj = algdat.p20$adjlist,
                            popvec = algdat.p20$precinct.data$pop,
                            ndists = 3,
-                           nsims = nsims,
+                           nsims = 10000,
                            constraint = "population",
                            constraintweights = 5.4,
                            temper = TRUE,
@@ -111,11 +111,66 @@ mcmc.out.st <- redist.ipw(mcmc.out.st, targetpop = .2)
 mcmc.out.st.multiple <- redist.mcmc(adjobj = algdat.p20$adjlist,
                                     popvec = algdat.p20$precinct.data$pop,
                                     ndists = 3,
-                                    nsims = nsims,
+                                    nsims = 10000,
                                     constraint = c("population", "compact"),
                                     constraintweights = c(5.4, 3),
                                     ssdmat = algdat.p20$distancemat,
                                     temper = TRUE,
                                     betaweights = betaweights)
 mcmc.out.st <- redist.ipw(mcmc.out.st.multiple, targetpop = .2)
+```
+
+20% Population Constraint and Compactness Constraint, using MPI
+---------------------------------------------------------------
+
+``` r
+## ----------------------------------------------------------
+## Constrain on population and compactness with parallel tempering,
+## weight on population = 5.4 while weight on compactness = 2
+## Also specifying argument for ssdmat, the distance matrix.
+## In addition, specifying a 20-beta tempering ladder.
+## Save file as "redist_mpi.RData"
+## ----------------------------------------------------------
+redist.mcmc.mpi(
+  adjobj = algdat.p20$adjlist,
+  popvec = algdat.p20$precinct.data$pop,
+  ndists = 3,
+  nsims = 10000,
+  constraint = c("population", "compact"),
+  constraintweights = c(5.4, 3),
+  ssdmat = algdat.p20$distancemat,
+  betaseqlength = 20,
+  savename = "redist_mpi",
+  verbose = TRUE
+)
+```
+
+### A Sample slurm Script for Submitting MPI Jobs
+
+``` bash
+## ----------------------------------------------------------
+## Sample slurm script for submitting an R script using 
+## redist.mcmc.mpi(). Set ntasks equal to the length of the
+## beta sequence ladder plus one extra core.
+## ----------------------------------------------------------
+
+#!/usr/bin/env bash
+#SBATCH --ntasks=21
+#SBATCH --cpus-per-task=1
+#SBATCH -t 02:00:00
+#SBATCH -J [jobname here]
+#SBATCH -o log.%j
+#SBATCH --mail-type=begin
+#SBATCH --mail-type=end
+
+echo '-------------------------------'
+cd ${SLURM_SUBMIT_DIR}
+echo ${SLURM_SUBMIT_DIR}
+echo Running on host $(hostname)
+echo Time is $(date)
+echo SLURM_NODES are $(echo ${SLURM_NODELIST})
+echo '-------------------------------'
+echo -e '\n\n'
+
+mpiexec -np 1 R --no-save < [scriptname here].R
 ```
