@@ -53,7 +53,6 @@ List swMH(List aList,
 	  NumericVector grouppopvec,
 	  NumericVector areas_vec,
 	  NumericVector county_membership,
-	  arma::uvec no_split_precincts,
 	  arma::mat borderlength_mat,
 	  int nsims,
 	  double eprob,
@@ -244,19 +243,15 @@ List swMH(List aList,
     do{
       
       // First element is connected adjlist, second element is cut adjlist
-      // cutedge_lists = cut_edges(aList_con, eprob);
+      cutedge_lists = cut_edges(aList_con, eprob);
       
       ////////////////////////////////////////////////////////////////////
       // Third: generate a list of connected components within each cd //
       ///////////////////////////////////////////////////////////////////
       /* List of connected partitions after edgecuts - first element is list of 
 	 partitions, second element is number of partitions */
-      // boundary_partitions = bsearch_boundary(cutedge_lists["connectedlist"],
-      // 					     boundary);
-      boundary_precincts = find(as<arma::vec>(boundary) == 1);
-      boundary_precinct_candidates = get_not_in(boundary_precincts,
-						no_split_precincts);
-      boundary_partitions = vector_to_list(boundary_precinct_candidates);
+      boundary_partitions = bsearch_boundary(cutedge_lists["connectedlist"],
+      					     boundary);
 
       ///////////////////////////////////////////////////////////////////////
       // Fourth - select several connected components w/ unif distribution //
@@ -265,7 +260,7 @@ List swMH(List aList,
       p = draw_p(lambda);
       
       // Loop over p, draw p connected components
-      swap_partitions = make_swaps(boundary_partitions, 
+      swap_partitions = make_swaps(boundary_partitions["bsearch"], 
 				   aList, 
 				   cdvec,
 				   cdorigvec,
@@ -291,8 +286,8 @@ List swMH(List aList,
 
     }while(as<int>(swap_partitions["goodprop"]) == 0);
     
-    // Get new boundary, then get number of partitions
-    /* if(exact_mh == 1){
+    Get new boundary, then get number of partitions
+    if(exact_mh == 1){
       aList_con_prop = genAlConn(aList, as<NumericVector>(swap_partitions["proposed_partition"]));
       boundary_prop = findBoundary(aList, aList_con_prop);
       boundary_partitions_prop = bsearch_boundary(cutedge_lists["connectedlist"],
@@ -307,7 +302,7 @@ List swMH(List aList,
       swap_partitions["mh_prob"] = as<double>(swap_partitions["mh_prob"]) *
 	pow((double)nvalid_current / nvalid_prop, (double)p);
       boundaryratio_store(k) = pow((double)nvalid_current / nvalid_prop, (double)p);
-      } */
+    }
     
     //////////////////////////////////////////
     // Fifth - Accept with some probability //
@@ -385,7 +380,7 @@ List swMH(List aList,
       // Update district_pops to proposed district pops
       district_pops = clone(as<NumericVector>(swap_partitions["updated_cd_pops"]));
       // Store number of boundary partitions
-      // boundarypartitions_store[k] = boundary_partitions["npartitions"];
+      boundarypartitions_store[k] = boundary_partitions["npartitions"];
     }else{
       boundarypartitions_store[k] = boundarypartitions_store[k-1];
     }

@@ -11,7 +11,6 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
                            countymembership = NULL,
                            grouppopvec = NULL,
                            areasvec = NULL,
-                           no_split_precincts = NULL,
                            borderlength_mat = NULL, ssdmat = NULL,
                            compactness_metric = NULL,
                            temper = NULL, constraint = NULL,
@@ -256,15 +255,6 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     if(is.null(grouppopvec)){
         grouppopvec <- popvec
     }
-
-    ## ----------------------
-    ## Set no_split_precincts
-    ## ----------------------
-    if(is.null(no_split_precincts)){
-        no_split_precincts <- c(1000000, 1000000)
-    }else{
-        no_split_precincts <- which(no_split_precincts == 1) - 1
-    }
     
     ## -------------------------------------
     ## Set county membership if not provided
@@ -382,8 +372,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
             areasvec = areasvec,
             borderlength_mat = borderlength_mat,
             ssdmat = ssdmat,
-            countymembership = countymembership,
-            no_split_precincts = no_split_precincts
+            countymembership = countymembership
         ),
         params = list(
             pctdistparity = popcons,
@@ -549,7 +538,6 @@ redist.combine <- function(savename, nloop, nthin, temper = 0
     ## Save object ##
     #################
     save(algout, file = paste(savename, ".RData", sep = ""))
-    return(algout)
     
 }
 
@@ -700,7 +688,6 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                         loopscompleted = 0, nloop = 1, nthin = 1, eprob = 0.05,
                         lambda = 0, popcons = NULL, grouppopvec = NULL,
                         areasvec = NULL, countymembership = NULL,
-                        no_split_precincts = NULL,
                         borderlength_mat = NULL, ssdmat = NULL, temper = FALSE,
                         constraint = NULL, constraintweights = NULL,
                         compactness_metric = "fryer-holden",
@@ -782,7 +769,6 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                                  countymembership = countymembership,
                                  grouppopvec = grouppopvec,
                                  areasvec = areasvec,
-                                 no_split_precincts = no_split_precincts, 
                                  borderlength_mat = borderlength_mat,
                                  ssdmat = ssdmat,
                                  compactness_metric = compactness_metric,
@@ -863,7 +849,6 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                        grouppopvec = preprocout$data$grouppopvec,
                        areas_vec = preprocout$data$areasvec,
                        county_membership = preprocout$data$countymembership,
-                       no_split_precincts = preprocout$data$no_split_precincts,
                        borderlength_mat = preprocout$data$borderlength_mat,
                        nsims = nsims,
                        eprob = eprob,
