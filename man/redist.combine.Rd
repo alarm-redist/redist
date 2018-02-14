@@ -4,7 +4,7 @@
 \alias{redist.combine}
 \title{Combine successive runs of \code{redist.mcmc}}
 \usage{
-redist.combine(savename, nsims, nloop, nthin, nunits, temper)
+redist.combine(savename, nloop, nthin, temper)
 }
 \arguments{
 \item{savename}{The name (without the loop or \code{.RData} suffix)
@@ -16,10 +16,6 @@ of the saved simulations.}
 
 \item{temper}{Wheterh simulated tempering was used (1) or not (0)
 in the simulations. Default is 0.}
-
-\item{nsims}{The number of simulations in each loop.}
-
-\item{nunits}{The number of geographic units from the simulations.}
 }
 \value{
 \code{redist.combine} returns an object of class "redist". The object
@@ -78,8 +74,8 @@ alg_253 <- redist.mcmc(adjobj = algdat.pfull$adjlist,
 popvec = algdat.pfull$precinct.data$pop,
 initcds = initcds,
 nsims = 10000, nloops = 2, savename = "test")
-out <- redist.combine(savename = "test", nsims = 10000, nloop = 2,
-nthin = 10, nunits = length(algdat.pfull$adjlist))
+out <- redist.combine(savename = "test", nloop = 2,
+nthin = 10)
 }
 }
 \references{
