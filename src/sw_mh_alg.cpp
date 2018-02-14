@@ -286,7 +286,7 @@ List swMH(List aList,
 
     }while(as<int>(swap_partitions["goodprop"]) == 0);
     
-    Get new boundary, then get number of partitions
+    // Get new boundary, then get number of partitions
     if(exact_mh == 1){
       aList_con_prop = genAlConn(aList, as<NumericVector>(swap_partitions["proposed_partition"]));
       boundary_prop = findBoundary(aList, aList_con_prop);
