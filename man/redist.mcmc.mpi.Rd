@@ -56,14 +56,13 @@ rejected. The default is \code{NULL}.}
 \item{grouppopvec}{A vector of populations for some sub-group of
 interest. The default is \code{NULL}.}
 
+\item{countymembership}{A vector of county membership assignments. The default is \code{NULL}.}
+
 \item{ssdmat}{A matrix of squared distances between geographic
 units. The default is \code{NULL}.}
 
 \item{rngseed}{Allows the user to set the seed for the
 simulations. Default is \code{NULL}.}
-
-\item{beta}{The strength of the target strength in the MH ratio. The default
-is 0.}
 
 \item{constraint}{Which constraint to apply. Accepts \code{compact},
 \code{segregation}, \code{population}, \code{similarity}, or \code{none}
@@ -89,6 +88,9 @@ adjacency list from a "SpatialPolygonsDataFrame" data type. Default is "rooks".}
 
 \item{verbose}{Whether to print initialization statement. Default is
 \code{TRUE}.}
+
+\item{beta}{The strength of the target strength in the MH ratio. The default
+is 0.}
 }
 \value{
 \code{redist.mcmc.mpi} returns an object of class "redist". The object

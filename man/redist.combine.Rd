@@ -10,16 +10,16 @@ redist.combine(savename, nsims, nloop, nthin, nunits, temper)
 \item{savename}{The name (without the loop or \code{.RData} suffix)
 of the saved simulations.}
 
-\item{nsims}{The number of simulations in each loop.}
-
 \item{nloop}{The number of loops being combined.}
 
 \item{nthin}{How much to thin the simulations being combined.}
 
-\item{nunits}{The number of geographic units from the simulations.}
-
 \item{temper}{Wheterh simulated tempering was used (1) or not (0)
 in the simulations. Default is 0.}
+
+\item{nsims}{The number of simulations in each loop.}
+
+\item{nunits}{The number of geographic units from the simulations.}
 }
 \value{
 \code{redist.combine} returns an object of class "redist". The object
