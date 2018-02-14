@@ -8,26 +8,26 @@
 */
 
 /* .Call calls */
-extern SEXP redist_calcPWDh(SEXP);
-extern SEXP redist_countpartitions(SEXP);
-extern SEXP redist_cppGeneratePartitions(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP redist_findBoundary(SEXP, SEXP);
-extern SEXP redist_genAlConn(SEXP, SEXP);
-extern SEXP redist_rsg(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP redist_segregationcalc(SEXP, SEXP, SEXP);
-extern SEXP redist_calc_polsbypopper(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP redist_swMH(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _redist_calcPWDh(SEXP);
+extern SEXP _redist_countpartitions(SEXP);
+extern SEXP _redist_cppGeneratePartitions(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _redist_findBoundary(SEXP, SEXP);
+extern SEXP _redist_genAlConn(SEXP, SEXP);
+extern SEXP _redist_rsg(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _redist_segregationcalc(SEXP, SEXP, SEXP);
+extern SEXP _redist_calc_polsbypopper(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _redist_swMH(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
-    {"redist_calcPWDh",              (DL_FUNC) &redist_calcPWDh,               1},
-    {"redist_countpartitions",       (DL_FUNC) &redist_countpartitions,        1},
-    {"redist_cppGeneratePartitions", (DL_FUNC) &redist_cppGeneratePartitions,  7},
-    {"redist_findBoundary",          (DL_FUNC) &redist_findBoundary,           2},
-    {"redist_genAlConn",             (DL_FUNC) &redist_genAlConn,              2},
-    {"redist_rsg",                   (DL_FUNC) &redist_rsg,                    6},
-    {"redist_segregationcalc",       (DL_FUNC) &redist_segregationcalc,        3},
-    {"redist_calc_polsbypopper",     (DL_FUNC) &redist_calc_polsbypopper,      7},
-    {"redist_swMH",                  (DL_FUNC) &redist_swMH,                  27},
+    {"_redist_calcPWDh",              (DL_FUNC) &_redist_calcPWDh,               1},
+    {"_redist_countpartitions",       (DL_FUNC) &_redist_countpartitions,        1},
+    {"_redist_cppGeneratePartitions", (DL_FUNC) &_redist_cppGeneratePartitions,  7},
+    {"_redist_findBoundary",          (DL_FUNC) &_redist_findBoundary,           2},
+    {"_redist_genAlConn",             (DL_FUNC) &_redist_genAlConn,              2},
+    {"_redist_rsg",                   (DL_FUNC) &_redist_rsg,                    6},
+    {"_redist_segregationcalc",       (DL_FUNC) &_redist_segregationcalc,        3},
+    {"_redist_calc_polsbypopper",     (DL_FUNC) &_redist_calc_polsbypopper,      7},
+    {"_redist_swMH",                  (DL_FUNC) &_redist_swMH,                  27},
     {NULL, NULL, 0}
 };
 

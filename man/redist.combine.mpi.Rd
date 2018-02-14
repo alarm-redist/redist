@@ -10,16 +10,16 @@ redist.combine.mpi(savename, nsims, nloop, nthin, nunits, tempadj)
 \item{savename}{The name (without the loop or \code{.RData} suffix)
 of the saved simulations.}
 
-\item{nsims}{The number of simulations in each loop.}
-
 \item{nloop}{The number of loops being combined.}
 
 \item{nthin}{How much to thin the simulations being combined.}
 
-\item{nunits}{The number of geographic units from the simulations.}
-
 \item{tempadj}{The temperature adjacency object saved by
 \code{redist.mcmc.mpi}.}
+
+\item{nsims}{The number of simulations in each loop.}
+
+\item{nunits}{The number of geographic units from the simulations.}
 }
 \value{
 \code{redist.combine.mpi} returns an object of class "redist".
