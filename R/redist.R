@@ -401,14 +401,12 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
 #' \code{redist.combine} is used to combine successive runs of \code{redist.mcmc}
 #' into a single data object
 #'
-#' @usage redist.combine(savename, nsims, nloop, nthin, nunits, temper)
+#' @usage redist.combine(savename, nloop, nthin, temper)
 #'
 #' @param savename The name (without the loop or \code{.RData} suffix)
 #' of the saved simulations.
-#' @param nsims The number of simulations in each loop.
 #' @param nloop The number of loops being combined.
 #' @param nthin How much to thin the simulations being combined.
-#' @param nunits The number of geographic units from the simulations.
 #' @param temper Wheterh simulated tempering was used (1) or not (0)
 #' in the simulations. Default is 0.
 #'
@@ -468,12 +466,11 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
 #' popvec = algdat.pfull$precinct.data$pop,
 #' initcds = initcds,
 #' nsims = 10000, nloops = 2, savename = "test")
-#' out <- redist.combine(savename = "test", nsims = 10000, nloop = 2,
-#' nthin = 10, nunits = length(algdat.pfull$adjlist))
+#' out <- redist.combine(savename = "test", nloop = 2,
+#' nthin = 10)
 #' }
 #' @export
-redist.combine <- function(savename, nloop, nthin, temper = 0
-                           ){
+redist.combine <- function(savename, nloop, nthin, temper = 0){
 
     ##############################
     ## Set up container objects ##
@@ -546,15 +543,13 @@ redist.combine <- function(savename, nloop, nthin, temper = 0
 #' \code{redist.mcmc} is used to simulate Congressional redistricting
 #' plans using Markov Chain Monte Carlo methods.
 #'
-#' @usage redist.mcmc(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
-#' loopscompleted = 0, nloop = 1, nthin = 1, eprob = 0.05, lambda = 0,
-#' popcons = NULL, grouppopvec = NULL, countymembership = NULL, ssdmat = NULL,
-#' beta = 0, temper = "none", constraint = "none",
-#' betaseq = "powerlaw", betaseqlength = 10,
-#' betaweights = NULL,
-#' adjswaps = TRUE, rngseed = NULL, maxiterrsg = 5000,
-#' adapt_lambda = FALSE, adapt_eprob = FALSE,
-#' contiguitymap = "rooks", exact_mh = FALSE, savename = NULL, verbose = TRUE)
+#' @usage redist.mcmc(adjobj, popvec, nsims, ndists, initcds,
+#' loopscompleted, nloop, nthin, eprob, lambda,
+#' popcons, grouppopvec, areasvec, countymembership, borderlength_mat,
+#' ssdmat, temper, constraint, constraintweights, compactness_metric,
+#' betaseq, betaseqlength, betaweights, adjswaps, rngseed, maxiterrsg,
+#' adapt_lambda, adapt_eprob, contiguitymap, exact_mh, savename,
+#' verbose)
 #'
 #' @param adjobj An adjacency matrix, list, or object of class
 #' "SpatialPolygonsDataFrame."
@@ -585,7 +580,12 @@ redist.combine <- function(savename, nloop, nthin, temper = 0
 #' rejected. The default is \code{NULL}.
 #' @param grouppopvec A vector of populations for some sub-group of
 #' interest. The default is \code{NULL}.
+#' @param areasvec A vector of precinct areas for discrete Polsby-Popper.
+#' The default is \code{NULL}.
 #' @param countymembership A vector of county membership assignments. The default is \code{NULL}.
+#' @param borderlength_mat A matrix of border length distances, where
+#' the first two columns are the indices of precincts sharing a border and
+#' the third column is its distance. Default is \code{NULL}.
 #' @param ssdmat A matrix of squared distances between geographic
 #' units. The default is \code{NULL}.
 #' @param temper Whether to use simulated tempering algorithm. Default is FALSE.
@@ -594,6 +594,9 @@ redist.combine <- function(savename, nloop, nthin, temper = 0
 #' (no constraint applied). The default is NULL.
 #' @param constraintweights The weights to apply to each constraint. Should be a vector
 #' the same length as constraint. Default is NULL.
+#' @param compactness_metric The compactness metric to use when constraining on
+#' compactness. Default is \code{fryer-holden}, the other implemented option
+#' is \code{polsby-popper}.
 #' @param betaseq Sequence of beta values for tempering. The default is
 #' \code{powerlaw} (see Fifield et. al (2015) for details).
 #' @param betaseqlength Length of beta sequence desired for

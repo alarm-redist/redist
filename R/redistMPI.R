@@ -292,7 +292,6 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
             
             ## Get likelihood
             like <- temp$energy_psi[nsimsAdj[j]]
-            cat("Likelihood is", like, "\n", append = TRUE)
             ## Use MPI to exchange swap information
             ##
             ## Tag guide: 1 -> likelihood sent
@@ -302,31 +301,23 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
 
             if(adjswaps){
 
-                cat("Start adjswaps\n", append = TRUE)
                 ## Determine which nodes are swapping
                 tempseg <- swaps[(i-1)*nsims + j*freq]
                 ## Get node indices
                 temps <- tempadj[tempseg:(tempseg+1)]
                 ## Communication step
-                cat("Is procID in temps? If true, enter communication",
-                    procID %in% temps, "\n", append = TRUE)
                 if(procID %in% temps){
-                    cat("Enter communication step\n", append = TRUE)
                     ## Determine partner
-                    cat("Start determine partner\n", append = TRUE)
                     partner <- temps[procID != temps]
                     ## Send commands (blocking)
-                    cat("Start send commands\n", append = TRUE)
                     Rmpi::mpi.send.Robj(like,dest=partner,tag=1)
                     Rmpi::mpi.send.Robj(beta,dest=partner,tag=2)
                     ## Receive commands (blocking)
-                    cat("Start receive commands\n", append = TRUE)
                     likePart <- Rmpi::mpi.recv.Robj(partner,tag=1)
                     betaPart <- Rmpi::mpi.recv.Robj(partner,tag=2)
                     
                     ## Higher ranked process communicates random
                     ## draw to lower ranked process
-                    cat("Start communicate draw\n", append = TRUE)
                     if(partner < procID){
                         accept <- runif(1)
                         Rmpi::mpi.send.Robj(accept,dest=partner,tag=3)
@@ -334,16 +325,12 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                         accept <- Rmpi::mpi.recv.Robj(partner,tag=3)
                     }
                     
-                    ## Compute acceptance probability (for now, population only)
-                    cat("Start compute acceptance prob\n", append = TRUE)
-                    
+                    ## Compute acceptance probability (for now, population only)                    
                     cat("Components of likelihood:\n", append = TRUE)
                     cat("like =", like, "\n", append = TRUE)
                     cat("beta =", beta, "\n", append = TRUE)
                     cat("betaPart =", betaPart, "\n", append = TRUE)
                     cat("likePart =", likePart, "\n", append = TRUE)
-                    cat("Constraint in likelihood =", log(like), "\n", append = TRUE)
-                    cat("Constraint in likelihoodPart =", log(likePart), "\n", append = TRUE)
 
                     a_like <- -1 * betaPart * like
                     b_like <- -1 * beta * likePart
@@ -351,18 +338,13 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                     y_like <- -1 * betaPart * likePart
                     prob <- exp(a_like + b_like - x_like - y_like)
                     
-                    cat("Prob =", prob, "and accept =", accept, "\n", append = TRUE)
                     if(prob > accept){
-                        cat("Prob > accept\n", append = TRUE)
                         ## Exchange temperature values
-                        cat("Start exchange temps\n", append = TRUE)
                         beta <- betaPart
                         
                         ## Adjust temperature adjacency list
-                        cat("Start adjust tempAdj list\n", append = TRUE)
                         tempadj[tempseg:(tempseg+1)] <- tempadj[(tempseg+1):tempseg]
                         ## Send temperature adjacency list
-                        cat("Start send tempAdj\n", append = TRUE)
                         if(procID == tempadj[tempseg+1]){
                             oProcs <- tempadj[!(tempadj %in% temps)]
                             for(k in 1:length(oProcs)){
@@ -370,7 +352,6 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                             }
                         }
                     }else{
-                        cat("Prob < accept\n", append = TRUE)
                         if(procID == tempadj[tempseg]){
                             oProcs <- tempadj[!(tempadj %in% temps)]
                             for(k in 1:length(oProcs)){
@@ -378,12 +359,8 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                             }
                         }
                     }
-                    cat("Exit communication step\n", append = TRUE)
                 }else{
-                    cat("Not in temps, receive tempadj from other nodes\n",
-                        append = TRUE)
                     tempadj <- Rmpi::mpi.recv.Robj(tempadj[tempseg],tag=4)
-                    cat("End receive tempadj from other nodes\n", append = TRUE)
                 }
             }else{
                 if(j != length(nsimsAdj) || length(nsimsAdj) == length(tempIts)){
@@ -485,14 +462,12 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
 #' \code{redist.combine.mpi} is used to combine successive runs of
 #' \code{redist.mcmc.mpi} into a single data object
 #'
-#' @usage redist.combine.mpi(savename, nsims, nloop, nthin, nunits, tempadj)
+#' @usage redist.combine.mpi(savename, nloop, nthin, tempadj)
 #'
 #' @param savename The name (without the loop or \code{.RData} suffix)
 #' of the saved simulations.
-#' @param nsims The number of simulations in each loop.
 #' @param nloop The number of loops being combined.
 #' @param nthin How much to thin the simulations being combined.
-#' @param nunits The number of geographic units from the simulations.
 #' @param tempadj The temperature adjacency object saved by
 #' \code{redist.mcmc.mpi}.
 #'
@@ -552,8 +527,8 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
 #' popvec = algdat.pfull$precinct.data$pop,
 #' initcds = initcds,
 #' nsims = 10000, nloops = 2, savename = "test")
-#' out <- redist.combine.mpi(savename = "test", nsims = 10000, nloop = 2,
-#' nthin = 10, nunits = length(algdat.pfull$adjlist), tempadj = tempAdjMat)
+#' out <- redist.combine.mpi(savename = "test", nloop = 2,
+#' nthin = 10, tempadj = tempAdjMat)
 #' }
 #' @export
 redist.combine.mpi <- function(savename, nloop, nthin, tempadj){
@@ -651,8 +626,11 @@ ecutsAppend <- function(algout,ndata){
 #' loopscompleted = 0, nloop = 1, nthin = 1,
 #' eprob = 0.05,
 #' lambda = 0, popcons = NA, grouppopvec = NA,
-#' ssdmat = NA, rngseed = NA,
-#' beta = -10, constraint = "population",
+#' areasvec = NA, countymembership = NA,
+#' borderlength_mat = NA, ssdmat = NA,
+#' compactness_metric = "fryer-holden", rngseed = NA,
+#' constraint = NA, constraintweights = NA,
+#' betaseq = "powerlaw",
 #' betaseqlength = 10, adjswaps = TRUE,
 #' freq = 100, savename = NA, maxiterrsg = 5000,
 #' contiguitymap = "rooks", verbose = FALSE)
@@ -686,16 +664,26 @@ ecutsAppend <- function(algout,ndata){
 #' rejected. The default is \code{NULL}.
 #' @param grouppopvec A vector of populations for some sub-group of
 #' interest. The default is \code{NULL}.
+#' @param areasvec A vector of precinct areas for discrete Polsby-Popper.
+#' The default is \code{NULL}.
 #' @param countymembership A vector of county membership assignments. The default is \code{NULL}.
+#' @param borderlength_mat A matrix of border length distances, where
+#' the first two columns are the indices of precincts sharing a border and
+#' the third column is its distance. Default is \code{NULL}.
 #' @param ssdmat A matrix of squared distances between geographic
 #' units. The default is \code{NULL}.
+#' @param compactness_metric The compactness metric to use when constraining on
+#' compactness. Default is \code{fryer-holden}, the other implemented option
+#' is \code{polsby-popper}.
 #' @param rngseed Allows the user to set the seed for the
 #' simulations. Default is \code{NULL}.
-#' @param beta The strength of the target strength in the MH ratio. The default
-#' is 0.
-#' @param constraint Which constraint to apply. Accepts \code{compact},
+#' @param constraint Which constraint to apply. Accepts any combination of \code{compact},
 #' \code{segregation}, \code{population}, \code{similarity}, or \code{none}
-#' (no constraint applied). The default is \code{none}.
+#' (no constraint applied). The default is NULL.
+#' @param constraintweights The weights to apply to each constraint. Should be a vector
+#' the same length as constraint. Default is NULL.
+#' @param betaseq Sequence of beta values for tempering. The default is
+#' \code{powerlaw} (see Fifield et. al (2015) for details).
 #' @param betaseqlength Length of beta sequence desired for
 #' tempering. The default is \code{10}.
 #' @param adjswaps Flag to restrict swaps of beta so that only
