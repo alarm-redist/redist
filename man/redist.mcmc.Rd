@@ -4,15 +4,13 @@
 \alias{redist.mcmc}
 \title{MCMC Redistricting Simulator}
 \usage{
-redist.mcmc(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
-loopscompleted = 0, nloop = 1, nthin = 1, eprob = 0.05, lambda = 0,
-popcons = NULL, grouppopvec = NULL, countymembership = NULL, ssdmat = NULL,
-beta = 0, temper = "none", constraint = "none",
-betaseq = "powerlaw", betaseqlength = 10,
-betaweights = NULL,
-adjswaps = TRUE, rngseed = NULL, maxiterrsg = 5000,
-adapt_lambda = FALSE, adapt_eprob = FALSE,
-contiguitymap = "rooks", exact_mh = FALSE, savename = NULL, verbose = TRUE)
+redist.mcmc(adjobj, popvec, nsims, ndists, initcds,
+loopscompleted, nloop, nthin, eprob, lambda,
+popcons, grouppopvec, areasvec, countymembership, borderlength_mat,
+ssdmat, temper, constraint, constraintweights, compactness_metric,
+betaseq, betaseqlength, betaweights, adjswaps, rngseed, maxiterrsg,
+adapt_lambda, adapt_eprob, contiguitymap, exact_mh, savename,
+verbose)
 }
 \arguments{
 \item{adjobj}{An adjacency matrix, list, or object of class
@@ -56,7 +54,14 @@ rejected. The default is \code{NULL}.}
 \item{grouppopvec}{A vector of populations for some sub-group of
 interest. The default is \code{NULL}.}
 
+\item{areasvec}{A vector of precinct areas for discrete Polsby-Popper.
+The default is \code{NULL}.}
+
 \item{countymembership}{A vector of county membership assignments. The default is \code{NULL}.}
+
+\item{borderlength_mat}{A matrix of border length distances, where
+the first two columns are the indices of precincts sharing a border and
+the third column is its distance. Default is \code{NULL}.}
 
 \item{ssdmat}{A matrix of squared distances between geographic
 units. The default is \code{NULL}.}
@@ -69,6 +74,10 @@ units. The default is \code{NULL}.}
 
 \item{constraintweights}{The weights to apply to each constraint. Should be a vector
 the same length as constraint. Default is NULL.}
+
+\item{compactness_metric}{The compactness metric to use when constraining on
+compactness. Default is \code{fryer-holden}, the other implemented option
+is \code{polsby-popper}.}
 
 \item{betaseq}{Sequence of beta values for tempering. The default is
 \code{powerlaw} (see Fifield et. al (2015) for details).}
