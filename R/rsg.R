@@ -113,7 +113,7 @@ redist.rsg <- function(adj.list,
     ## Main Call to Computation - if returning NA, break.
     ## If returning districts but not contiguous, repeat
     ## First attempt
-    time <- system.time(ret <- .Call('redist_rsg',
+    time <- system.time(ret <- .Call('_redist_rsg',
                                      PACKAGE = 'redist',
                                      adj.list,
                                      population,
@@ -125,7 +125,7 @@ redist.rsg <- function(adj.list,
     ## Make another call if stuck, but only do one more try
     ## because maxiter might be too low
     if(is.na(ret$district_membership[1])){
-        time <- system.time(ret <- .Call('redist_rsg',
+        time <- system.time(ret <- .Call('_redist_rsg',
                                          PACKAGE = 'redist',
                                          adj.list,
                                          population,

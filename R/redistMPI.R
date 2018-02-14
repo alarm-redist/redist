@@ -437,9 +437,8 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     ###############################
     if(nloop > 1){
       if(procID == tempadj[1]){
-        redist.combine.mpi(savename = savename, nsims = nsims, nloop = nloop,
-                           nthin = nthin, nunits = length(preprocout$data$adjlist),
-                           tempadj = tempadj)
+        redist.combine.mpi(savename = savename, nloop = nloop,
+                           nthin = nthin, tempadj = tempadj)
       }
     }else if(!is.null(savename)){
         if(procID == tempadj[1]){
