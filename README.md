@@ -105,7 +105,7 @@ mcmc.out.st <- redist.ipw(mcmc.out.st, targetpop = .2)
 ``` r
 ## ----------------------------------------------------------
 ## Constrain on population and compactness with tempering,
-## weight on population = 5.4 while weight on compactness = 2
+## weight on population = 5.4 while weight on compactness = 3
 ## Also specifying argument for ssdmat, the distance matrix
 ## ----------------------------------------------------------
 mcmc.out.st.multiple <- redist.mcmc(adjobj = algdat.p20$adjlist,
@@ -126,7 +126,7 @@ mcmc.out.st <- redist.ipw(mcmc.out.st.multiple, targetpop = .2)
 ``` r
 ## ----------------------------------------------------------
 ## Constrain on population and compactness with parallel tempering,
-## weight on population = 5.4 while weight on compactness = 2
+## weight on population = 5.4 while weight on compactness = 3
 ## Also specifying argument for ssdmat, the distance matrix.
 ## In addition, specifying a 20-beta tempering ladder.
 ## Save file as "redist_mpi.RData"
@@ -143,6 +143,13 @@ redist.mcmc.mpi(
   savename = "redist_mpi",
   verbose = TRUE
 )
+
+## Note that reweighting using redist.ipw() currently
+## has to happen in a separate analysis file after
+## redist.mcmc.mpi() is run and the output file is saved. 
+## We will change this in a future release to run the 
+## inverse probability reweighting inside of
+## redist.mcmc.mpi().
 ```
 
 ### A Sample slurm Script for Submitting MPI Jobs
