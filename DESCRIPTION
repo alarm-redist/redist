@@ -29,7 +29,8 @@ Imports:
     foreach
 Suggests:
     testthat,
-    Rmpi
+    Rmpi,
+    doMPI
 LinkingTo: Rcpp, RcppArmadillo
 License: GPL (>= 2)
 SystemRequirements: gmp, libxml2

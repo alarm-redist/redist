@@ -116,8 +116,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // swMH
-List swMH(List aList, NumericVector cdvec, NumericVector cdorigvec, NumericVector popvec, NumericVector grouppopvec, NumericVector areas_vec, NumericVector county_membership, arma::mat borderlength_mat, int nsims, double eprob, double pct_dist_parity, NumericVector beta_sequence, NumericVector beta_weights, NumericMatrix ssdmat, int lambda, double beta, double weight_population, double weight_compact, double weight_segregation, double weight_similar, double weight_countysplit, int anneal_beta, int adjswap, int exact_mh, int adapt_eprob, int adapt_lambda, std::string compactness_measure);
-RcppExport SEXP _redist_swMH(SEXP aListSEXP, SEXP cdvecSEXP, SEXP cdorigvecSEXP, SEXP popvecSEXP, SEXP grouppopvecSEXP, SEXP areas_vecSEXP, SEXP county_membershipSEXP, SEXP borderlength_matSEXP, SEXP nsimsSEXP, SEXP eprobSEXP, SEXP pct_dist_paritySEXP, SEXP beta_sequenceSEXP, SEXP beta_weightsSEXP, SEXP ssdmatSEXP, SEXP lambdaSEXP, SEXP betaSEXP, SEXP weight_populationSEXP, SEXP weight_compactSEXP, SEXP weight_segregationSEXP, SEXP weight_similarSEXP, SEXP weight_countysplitSEXP, SEXP anneal_betaSEXP, SEXP adjswapSEXP, SEXP exact_mhSEXP, SEXP adapt_eprobSEXP, SEXP adapt_lambdaSEXP, SEXP compactness_measureSEXP) {
+List swMH(List aList, NumericVector cdvec, NumericVector cdorigvec, NumericVector popvec, NumericVector grouppopvec, NumericVector areas_vec, NumericVector county_membership, arma::mat borderlength_mat, int nsims, double eprob, double pct_dist_parity, NumericVector beta_sequence, NumericVector beta_weights, NumericMatrix ssdmat, int lambda, double beta, double weight_population, double weight_compact, double weight_segregation, double weight_similar, double weight_countysplit, std::string adapt_beta, int adjswap, int exact_mh, int adapt_eprob, int adapt_lambda, std::string compactness_measure, int num_hot_steps, int num_annealing_steps, int num_cold_steps);
+RcppExport SEXP _redist_swMH(SEXP aListSEXP, SEXP cdvecSEXP, SEXP cdorigvecSEXP, SEXP popvecSEXP, SEXP grouppopvecSEXP, SEXP areas_vecSEXP, SEXP county_membershipSEXP, SEXP borderlength_matSEXP, SEXP nsimsSEXP, SEXP eprobSEXP, SEXP pct_dist_paritySEXP, SEXP beta_sequenceSEXP, SEXP beta_weightsSEXP, SEXP ssdmatSEXP, SEXP lambdaSEXP, SEXP betaSEXP, SEXP weight_populationSEXP, SEXP weight_compactSEXP, SEXP weight_segregationSEXP, SEXP weight_similarSEXP, SEXP weight_countysplitSEXP, SEXP adapt_betaSEXP, SEXP adjswapSEXP, SEXP exact_mhSEXP, SEXP adapt_eprobSEXP, SEXP adapt_lambdaSEXP, SEXP compactness_measureSEXP, SEXP num_hot_stepsSEXP, SEXP num_annealing_stepsSEXP, SEXP num_cold_stepsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -142,13 +142,16 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type weight_segregation(weight_segregationSEXP);
     Rcpp::traits::input_parameter< double >::type weight_similar(weight_similarSEXP);
     Rcpp::traits::input_parameter< double >::type weight_countysplit(weight_countysplitSEXP);
-    Rcpp::traits::input_parameter< int >::type anneal_beta(anneal_betaSEXP);
+    Rcpp::traits::input_parameter< std::string >::type adapt_beta(adapt_betaSEXP);
     Rcpp::traits::input_parameter< int >::type adjswap(adjswapSEXP);
     Rcpp::traits::input_parameter< int >::type exact_mh(exact_mhSEXP);
     Rcpp::traits::input_parameter< int >::type adapt_eprob(adapt_eprobSEXP);
     Rcpp::traits::input_parameter< int >::type adapt_lambda(adapt_lambdaSEXP);
     Rcpp::traits::input_parameter< std::string >::type compactness_measure(compactness_measureSEXP);
-    rcpp_result_gen = Rcpp::wrap(swMH(aList, cdvec, cdorigvec, popvec, grouppopvec, areas_vec, county_membership, borderlength_mat, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, lambda, beta, weight_population, weight_compact, weight_segregation, weight_similar, weight_countysplit, anneal_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, compactness_measure));
+    Rcpp::traits::input_parameter< int >::type num_hot_steps(num_hot_stepsSEXP);
+    Rcpp::traits::input_parameter< int >::type num_annealing_steps(num_annealing_stepsSEXP);
+    Rcpp::traits::input_parameter< int >::type num_cold_steps(num_cold_stepsSEXP);
+    rcpp_result_gen = Rcpp::wrap(swMH(aList, cdvec, cdorigvec, popvec, grouppopvec, areas_vec, county_membership, borderlength_mat, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, lambda, beta, weight_population, weight_compact, weight_segregation, weight_similar, weight_countysplit, adapt_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, compactness_measure, num_hot_steps, num_annealing_steps, num_cold_steps));
     return rcpp_result_gen;
 END_RCPP
 }
