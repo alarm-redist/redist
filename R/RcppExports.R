@@ -33,7 +33,7 @@ rsg <- function(adj_list, population, Ndistrict, target_pop, thresh, maxiter) {
     .Call(`_redist_rsg`, adj_list, population, Ndistrict, target_pop, thresh, maxiter)
 }
 
-swMH <- function(aList, cdvec, cdorigvec, popvec, grouppopvec, areas_vec, county_membership, borderlength_mat, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, lambda = 0L, beta = 0.0, weight_population = 0.0, weight_compact = 0.0, weight_segregation = 0.0, weight_similar = 0.0, weight_countysplit = 0.0, anneal_beta = 0L, adjswap = 1L, exact_mh = 0L, adapt_eprob = 0L, adapt_lambda = 0L, compactness_measure = "fryer-holden") {
-    .Call(`_redist_swMH`, aList, cdvec, cdorigvec, popvec, grouppopvec, areas_vec, county_membership, borderlength_mat, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, lambda, beta, weight_population, weight_compact, weight_segregation, weight_similar, weight_countysplit, anneal_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, compactness_measure)
+swMH <- function(aList, cdvec, cdorigvec, popvec, grouppopvec, areas_vec, county_membership, borderlength_mat, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, lambda = 0L, beta = 0.0, weight_population = 0.0, weight_compact = 0.0, weight_segregation = 0.0, weight_similar = 0.0, weight_countysplit = 0.0, adapt_beta = "none", adjswap = 1L, exact_mh = 0L, adapt_eprob = 0L, adapt_lambda = 0L, compactness_measure = "fryer-holden", num_hot_steps = 0L, num_annealing_steps = 0L, num_cold_steps = 0L) {
+    .Call(`_redist_swMH`, aList, cdvec, cdorigvec, popvec, grouppopvec, areas_vec, county_membership, borderlength_mat, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, lambda, beta, weight_population, weight_compact, weight_segregation, weight_similar, weight_countysplit, adapt_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, compactness_measure, num_hot_steps, num_annealing_steps, num_cold_steps)
 }
 
