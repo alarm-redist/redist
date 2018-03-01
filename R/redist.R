@@ -6,6 +6,251 @@
 ## Purpose: R wrapper to run swMH() code (non-mpi)
 ###########################################
 
+combine.par.anneal <- function(a, b){
+
+    ## Names of object
+    name_out <- names(a)
+
+    ## Create output object
+    output_obj <- vector(mode = "list", length = length(a))
+    
+    ## Combine partitions
+    for(i in 1:length(a)){
+        if(i == i){
+            output_obj[[i]] <- cbind(a[[i]], b[[i]])
+        }else{
+            output_obj[[i]] <- c(a[[i]], b[[i]])
+        }
+    }
+
+    names(output_obj) <- name_out
+    return(output_obj)
+    
+}
+
+#' MCMC Redistricting Simulator using Simulated Annealing
+#'
+#' \code{redist.mcmc.anneal} simulates congressional redistricting plans
+#' using Markov chain Monte Carlo methods coupled with simulated annealing.
+#'
+#' @usage redist.mcmc.anneal(adjobj, popvec, ndists,
+#' initcds, num_hot_steps, num_annealing_steps,
+#' num_cold_steps,
+#' eprob, lambda, popcons, grouppopvec,
+#' areasvec, countymembership, borderlength_mat,
+#' ssdmat, constraint, constraintweights,
+#' compactness_metric, rngseed, maxiterrsg,
+#' adapt_lambda, adapt_eprob,
+#' contiguitymap, exact_mh,
+#' savename, verbose, ncores)
+#'
+#' @param adjobj An adjacency matrix, list, or object of class
+#' "SpatialPolygonsDataFrame."
+#' @param popvec A vector containing the populations of each geographic
+#' unit
+#' @param ndists The numbe of congressional districts. The default is
+#' \code{NULL}.
+#' @param initcds A vector containing the congressional district labels
+#' of each geographic unit. The default is \code{NULL}. If not provided,
+#' random and contiguous congressional district assignments will be generated
+#' using \code{redist.rsg}.
+#' @param num_hot_steps The number of steps to run the simulator at beta = 0.
+#' Default is 40000.
+#' @param num_annealing_steps The number of steps to run the simulator with
+#' linearly changing beta schedule. Default is 60000
+#' @param num_cold_steps The number of steps to run the simulator at beta = 1.
+#' Default is 20000.
+#' @param eprob The probability of keeping an edge connected. The
+#' default is \code{0.05}.
+#' @param lambda The parameter detmerining the number of swaps to attempt
+#' each iteration fo the algoirhtm. The number of swaps each iteration is
+#' equal to Pois(\code{lambda}) + 1. The default is \code{0}.
+#' @param popcons The strength of the hard population
+#' constraint. \code{popcons} = 0.05 means that any proposed swap that
+#' brings a district more than 5\% away from population parity will be
+#' rejected. The default is \code{NULL}.
+#' @param grouppopvec A vector of populations for some sub-group of
+#' interest. The default is \code{NULL}.
+#' @param areasvec A vector of precinct areas for discrete Polsby-Popper.
+#' The default is \code{NULL}.
+#' @param countymembership A vector of county membership assignments. The default is \code{NULL}.
+#' @param borderlength_mat A matrix of border length distances, where
+#' the first two columns are the indices of precincts sharing a border and
+#' the third column is its distance. Default is \code{NULL}.
+#' @param ssdmat A matrix of squared distances between geographic
+#' units. The default is \code{NULL}.
+#' @param constraint Which constraint to apply. Accepts any combination of \code{compact},
+#' \code{segregation}, \code{population}, \code{similarity}, or \code{none}
+#' (no constraint applied). The default is NULL.
+#' @param constraintweights The weights to apply to each constraint. Should be a vector
+#' the same length as constraint. Default is NULL.
+#' @param compactness_metric The compactness metric to use when constraining on
+#' compactness. Default is \code{fryer-holden}, the other implemented option
+#' is \code{polsby-popper}.
+#' @param rngseed Allows the user to set the seed for the
+#' simulations. Default is \code{NULL}.
+#' @param maxiterrsg Maximum number of iterations for random seed-and-grow
+#' algorithm to generate starting values. Default is 5000.
+#' @param adapt_lambda Whether to adaptively tune the lambda parameter so that the Metropolis-Hastings
+#' acceptance probability falls between 20\% and 40\%. Default is FALSE.
+#' @param adapt_eprob Whether to adaptively tune the edgecut probability parameter so that the
+#' Metropolis-Hastings acceptance probability falls between 20\% and 40\%. Default is
+#' FALSE.
+#' @param contiguitymap Use queens or rooks distance criteria for generating an
+#' adjacency list from a "SpatialPolygonsDataFrame" data type.
+#' Default is "rooks".
+#' @param exact_mh Whether to use the approximate (0) or exact (1)
+#' Metropolis-Hastings ratio calculation for accept-reject rule. Default is FALSE.
+#' @param savename Filename to save simulations. Default is \code{NULL}.
+#' @param verbose Whether to print initialization statement.
+#' Default is \code{TRUE}.
+#' @param ncores The number of cores available to parallelize over. Default is 1.
+#'
+#' @export
+redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
+                               initcds = NULL,
+                               num_hot_steps = 40000, num_annealing_steps = 60000,
+                               num_cold_steps = 20000,
+                               eprob = 0.05,
+                               lambda = 0, popcons = NULL, grouppopvec = NULL,
+                               areasvec = NULL,
+                               countymembership = NULL, borderlength_mat = NULL,
+                               ssdmat = NULL,
+                               constraint = NULL, constraintweights = NULL,
+                               compactness_metric = "fryer-holden",
+                               rngseed = NULL, maxiterrsg = 5000,
+                               adapt_lambda = FALSE, adapt_eprob = FALSE,
+                               contiguitymap = "rooks", exact_mh = FALSE,
+                               savename = NULL, verbose = TRUE,
+                               ncores = 1){
+    
+    if(verbose){
+        ## Initialize ##
+        divider <- c(paste(rep("=", 20), sep = "", collapse = ""), "\n")
+        
+        cat("\n", append = TRUE)
+        cat(divider, append = TRUE)
+        cat("redist.mcmc.anneal(): Automated Redistricting Simulation Using
+         Markov Chain Monte Carlo\n\n", append = TRUE)
+    }
+
+    ## --------------
+    ## Initial checks
+    ## --------------
+    if(missing(adjobj)){
+        stop("Please supply adjacency matrix or list")
+    }
+    if(missing(popvec)){
+        stop("Please supply vector of geographic unit populations")
+    }
+    if(is.null(ndists) & is.null(initcds)){
+        stop("Please provide either the desired number of congressional districts
+              or an initial set of congressional district assignments")
+    }
+    if(!(contiguitymap %in% c("queens", "rooks"))){
+        stop("Please supply `queens` or `rooks` for a distance criteria")
+    }
+    if(!is.null(constraint) & is.null(constraintweights)){
+        stop("Please provide a weight value in 'constraintweights' for each constraint specified in 'constraint'.")
+    }
+    if(!(compactness_metric %in% c("fryer-holden", "polsby-popper"))){
+        stop("We only support either 'fryer-holden' or 'polsby-popper' as compactness metrics.")
+    }
+
+    ## Set seed before first iteration of algorithm if provided by user
+    if(!is.null(rngseed) & is.numeric(rngseed)){
+        set.seed(rngseed)
+    }
+
+    if(adapt_lambda){
+        adapt_lambda <- 1
+    }else{
+        adapt_lambda <- 0
+    }
+    if(adapt_eprob){
+        adapt_eprob <- 1
+    }else{
+        adapt_eprob <- 0
+    }
+    if(exact_mh){
+        exact_mh <- 1
+    }else{
+        exact_mh <- 0
+    }
+
+    ## ------------------
+    ## Preprocessing data
+    ## ------------------
+    cat("Preprocessing data.\n\n")
+    preprocout <- redist.preproc(adjobj = adjobj, popvec = popvec,
+                                 initcds = initcds, ndists = ndists,
+                                 popcons = popcons,
+                                 countymembership = countymembership,
+                                 grouppopvec = grouppopvec,
+                                 areasvec = areasvec,
+                                 borderlength_mat = borderlength_mat,
+                                 ssdmat = ssdmat,
+                                 compactness_metric = compactness_metric,
+                                 temper = FALSE,
+                                 constraint = constraint,
+                                 constraintweights = constraintweights,
+                                 betaseq = "powerlaw", betaseqlength = 10,
+                                 betaweights = NULL,
+                                 adjswaps = TRUE, maxiterrsg = maxiterrsg,
+                                 contiguitymap = contiguitymap)
+
+    ## Set betas - if tempering, modified later
+    weightpop <- preprocout$params$weightpop
+    weightcompact <- preprocout$params$weightcompact
+    weightseg <- preprocout$params$weightseg
+    weightsimilar <- preprocout$params$weightsimilar
+    weightcountysplit <- preprocout$params$weightcountysplit
+
+    cat("Starting swMH().\n")
+    algout <- swMH(aList = preprocout$data$adjlist,
+                   cdvec = preprocout$data$initcds,
+                   cdorigvec = preprocout$data$initcds,
+                   popvec = preprocout$data$popvec,
+                   grouppopvec = preprocout$data$grouppopvec,
+                   areas_vec = preprocout$data$areasvec,
+                   county_membership = preprocout$data$countymembership,
+                   borderlength_mat = preprocout$data$borderlength_mat,
+                   nsims = 100,
+                   eprob = eprob,
+                   pct_dist_parity = preprocout$params$pctdistparity,
+                   beta_sequence = preprocout$params$betaseq,
+                   beta_weights = preprocout$params$betaweights,
+                   ssdmat = preprocout$data$ssdmat,
+                   lambda = lambda,
+                   beta = 0,
+                   weight_population = weightpop,
+                   weight_compact = weightcompact,
+                   weight_segregation = weightseg,
+                   weight_similar = weightsimilar,
+                   weight_countysplit = weightcountysplit,
+                   adapt_beta = "annealing",
+                   adjswap = preprocout$params$adjswaps,
+                   exact_mh = exact_mh,
+                   adapt_lambda = adapt_lambda,
+                   adapt_eprob = adapt_eprob,
+                   compactness_measure = compactness_metric,
+                   num_hot_steps = num_hot_steps,
+                   num_annealing_steps = num_annealing_steps,
+                   num_cold_steps = num_cold_steps)
+    class(algout) <- "redist"
+    
+    ## -------------------------
+    ## Combine and save the data
+    ## -------------------------
+    if(!is.null(savename)){
+        save(algout, file = paste(savename, ".RData", sep = ""))
+    }
+
+    ## Examine the data
+    return(algout)
+    
+}
+
 redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
                            popcons = NULL,
                            countymembership = NULL,
@@ -299,7 +544,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ## Set up constraints ##
     ########################
     beta <- ifelse(is.null(constraint) | temper, 0, 1)
-    temperbeta <- ifelse(temper, 1, 0)
+    temperbeta <- ifelse(temper, "tempering", "none")
 
     if("population" %in% constraint){
         weightpop <- constraintweights[which(constraint == "population")]
@@ -330,7 +575,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ###################################
     ## Check if betaspacing provided ##
     ###################################
-    if(temperbeta == 1){
+    if(temperbeta == "tempering"){
         if(betaseq[1] == "powerlaw"){
 
             ## Generate power law sequence
@@ -866,7 +1111,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                        weight_segregation = weightseg,
                        weight_similar = weightsimilar,
                        weight_countysplit = weightcountysplit,
-                       anneal_beta = preprocout$params$temperbeta,
+                       adapt_beta = preprocout$params$temperbeta,
                        adjswap = preprocout$params$adjswaps,
                        exact_mh = exact_mh,
                        adapt_lambda = adapt_lambda,
@@ -890,7 +1135,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
     ####################
     ## Annealing flag ##
     ####################
-    temperflag <- ifelse(preprocout$params$temperbeta == 1, 1, 0)
+    temperflag <- ifelse(preprocout$params$temperbeta == "tempering", 1, 0)
 
     ###############################
     ## Combine and save the data ##

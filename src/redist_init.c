@@ -16,7 +16,7 @@ extern SEXP _redist_genAlConn(SEXP, SEXP);
 extern SEXP _redist_rsg(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_segregationcalc(SEXP, SEXP, SEXP);
 extern SEXP _redist_calc_polsbypopper(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP _redist_swMH(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _redist_swMH(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
     {"_redist_calcPWDh",              (DL_FUNC) &_redist_calcPWDh,               1},
@@ -27,7 +27,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_rsg",                   (DL_FUNC) &_redist_rsg,                    6},
     {"_redist_segregationcalc",       (DL_FUNC) &_redist_segregationcalc,        3},
     {"_redist_calc_polsbypopper",     (DL_FUNC) &_redist_calc_polsbypopper,      7},
-    {"_redist_swMH",                  (DL_FUNC) &_redist_swMH,                  27},
+    {"_redist_swMH",                  (DL_FUNC) &_redist_swMH,                  30},
     {NULL, NULL, 0}
 };
 
