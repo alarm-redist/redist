@@ -277,7 +277,7 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                          weight_segregation = weightseg,
                          weight_similar = weightsimilar,
                          weight_countysplit = weightcountysplit,
-                         anneal_beta = preprocout$params$temperbeta,
+                         adapt_beta = "none",
                          adjswap = preprocout$params$adjswaps,
                          exact_mh = 0,
                          adapt_eprob = 0,
