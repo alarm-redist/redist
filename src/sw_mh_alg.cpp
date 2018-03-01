@@ -240,6 +240,9 @@ List swMH(List aList,
   List get_constraint; List gt_out; NumericVector cdvec_prop; int i;
   arma::uvec boundary_precincts; List boundary_partitions_list;
 
+  Rcout << "---------------------------------" << std::endl;
+  Rcout << "-- Simulating at hot temperature." << std::endl;
+  Rcout << "---------------------------------" << std::endl;
   // Open the simulations
   while(k < nsims){
 

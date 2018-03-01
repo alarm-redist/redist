@@ -4,9 +4,9 @@
 \alias{redist.mcmc.anneal}
 \title{MCMC Redistricting Simulator using Simulated Annealing}
 \usage{
-redist.mcmc.anneal(adjobj, popvec, nsims, ndists,
+redist.mcmc.anneal(adjobj, popvec, ndists,
 initcds, num_hot_steps, num_annealing_steps,
-num_cold_steps, loopscompleted, nloop, nthin,
+num_cold_steps,
 eprob, lambda, popcons, grouppopvec,
 areasvec, countymembership, borderlength_mat,
 ssdmat, constraint, constraintweights,
@@ -21,8 +21,6 @@ savename, verbose, ncores)
 
 \item{popvec}{A vector containing the populations of each geographic
 unit}
-
-\item{nsims}{The number of simulations run before a save point.}
 
 \item{ndists}{The numbe of congressional districts. The default is
 \code{NULL}.}
@@ -40,16 +38,6 @@ linearly changing beta schedule. Default is 60000}
 
 \item{num_cold_steps}{The number of steps to run the simulator at beta = 1.
 Default is 20000.}
-
-\item{loopscompleted}{Number of save points reached by the
-algorithm. The default is \code{0}.}
-
-\item{nloop}{The total number of save points for the algorithm. The
-default is \code{1}. Note that the total number of simulations run
-will be \code{nsims} * \code{nloop}.}
-
-\item{nthin}{The amount by which to thin the Markov Chain. The
-default is \code{1}.}
 
 \item{eprob}{The probability of keeping an edge connected. The
 default is \code{0.05}.}

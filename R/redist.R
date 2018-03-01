@@ -33,9 +33,9 @@ combine.par.anneal <- function(a, b){
 #' \code{redist.mcmc.anneal} simulates congressional redistricting plans
 #' using Markov chain Monte Carlo methods coupled with simulated annealing.
 #'
-#' @usage redist.mcmc.anneal(adjobj, popvec, nsims, ndists,
+#' @usage redist.mcmc.anneal(adjobj, popvec, ndists,
 #' initcds, num_hot_steps, num_annealing_steps,
-#' num_cold_steps, loopscompleted, nloop, nthin,
+#' num_cold_steps,
 #' eprob, lambda, popcons, grouppopvec,
 #' areasvec, countymembership, borderlength_mat,
 #' ssdmat, constraint, constraintweights,
@@ -48,7 +48,6 @@ combine.par.anneal <- function(a, b){
 #' "SpatialPolygonsDataFrame."
 #' @param popvec A vector containing the populations of each geographic
 #' unit
-#' @param nsims The number of simulations run before a save point.
 #' @param ndists The numbe of congressional districts. The default is
 #' \code{NULL}.
 #' @param initcds A vector containing the congressional district labels
@@ -61,13 +60,6 @@ combine.par.anneal <- function(a, b){
 #' linearly changing beta schedule. Default is 60000
 #' @param num_cold_steps The number of steps to run the simulator at beta = 1.
 #' Default is 20000.
-#' @param loopscompleted Number of save points reached by the
-#' algorithm. The default is \code{0}.
-#' @param nloop The total number of save points for the algorithm. The
-#' default is \code{1}. Note that the total number of simulations run
-#' will be \code{nsims} * \code{nloop}.
-#' @param nthin The amount by which to thin the Markov Chain. The
-#' default is \code{1}.
 #' @param eprob The probability of keeping an edge connected. The
 #' default is \code{0.05}.
 #' @param lambda The parameter detmerining the number of swaps to attempt
@@ -115,11 +107,10 @@ combine.par.anneal <- function(a, b){
 #' @param ncores The number of cores available to parallelize over. Default is 1.
 #'
 #' @export
-redist.mcmc.anneal <- function(adjobj, popvec, nsims, ndists = NULL,
+redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
                                initcds = NULL,
                                num_hot_steps = 40000, num_annealing_steps = 60000,
                                num_cold_steps = 20000,
-                               loopscompleted = 0, nloop = 1, nthin = 1,
                                eprob = 0.05,
                                lambda = 0, popcons = NULL, grouppopvec = NULL,
                                areasvec = NULL,
@@ -152,15 +143,9 @@ redist.mcmc.anneal <- function(adjobj, popvec, nsims, ndists = NULL,
     if(missing(popvec)){
         stop("Please supply vector of geographic unit populations")
     }
-    if(missing(nsims)){
-        stop("Please supply number of simulations to run algorithm")
-    }
     if(is.null(ndists) & is.null(initcds)){
         stop("Please provide either the desired number of congressional districts
               or an initial set of congressional district assignments")
-    }
-    if(nloop > 1 & missing(savename)){
-        stop("Please supply save directory if saving simulations at checkpoints")
     }
     if(!(contiguitymap %in% c("queens", "rooks"))){
         stop("Please supply `queens` or `rooks` for a distance criteria")
@@ -223,36 +208,37 @@ redist.mcmc.anneal <- function(adjobj, popvec, nsims, ndists = NULL,
 
     cat("Starting swMH().\n")
     algout <- swMH(aList = preprocout$data$adjlist,
-                             cdvec = preprocout$data$initcds,
-                             cdorigvec = preprocout$data$initcds,
-                             popvec = preprocout$data$popvec,
-                             grouppopvec = preprocout$data$grouppopvec,
-                             areas_vec = preprocout$data$areasvec,
-                             county_membership = preprocout$data$countymembership,
-                             borderlength_mat = preprocout$data$borderlength_mat,
-                             nsims = nsims,
-                             eprob = eprob,
-                             pct_dist_parity = preprocout$params$pctdistparity,
-                             beta_sequence = preprocout$params$betaseq,
-                             beta_weights = preprocout$params$betaweights,
-                             ssdmat = preprocout$data$ssdmat,
-                             lambda = lambda,
-                             beta = 0,
-                             weight_population = weightpop,
-                             weight_compact = weightcompact,
-                             weight_segregation = weightseg,
-                             weight_similar = weightsimilar,
-                             weight_countysplit = weightcountysplit,
-                             adapt_beta = "annealing",
-                             adjswap = preprocout$params$adjswaps,
-                             exact_mh = exact_mh,
-                             adapt_lambda = adapt_lambda,
-                             adapt_eprob = adapt_eprob,
-                             compactness_measure = compactness_metric,
-                             num_hot_steps = num_hot_steps,
-                             num_annealing_steps = num_annealing_steps,
-                             num_cold_steps = num_cold_steps)
-			     class(algout) <- "redist"
+                   cdvec = preprocout$data$initcds,
+                   cdorigvec = preprocout$data$initcds,
+                   popvec = preprocout$data$popvec,
+                   grouppopvec = preprocout$data$grouppopvec,
+                   areas_vec = preprocout$data$areasvec,
+                   county_membership = preprocout$data$countymembership,
+                   borderlength_mat = preprocout$data$borderlength_mat,
+                   nsims = 100,
+                   eprob = eprob,
+                   pct_dist_parity = preprocout$params$pctdistparity,
+                   beta_sequence = preprocout$params$betaseq,
+                   beta_weights = preprocout$params$betaweights,
+                   ssdmat = preprocout$data$ssdmat,
+                   lambda = lambda,
+                   beta = 0,
+                   weight_population = weightpop,
+                   weight_compact = weightcompact,
+                   weight_segregation = weightseg,
+                   weight_similar = weightsimilar,
+                   weight_countysplit = weightcountysplit,
+                   adapt_beta = "annealing",
+                   adjswap = preprocout$params$adjswaps,
+                   exact_mh = exact_mh,
+                   adapt_lambda = adapt_lambda,
+                   adapt_eprob = adapt_eprob,
+                   compactness_measure = compactness_metric,
+                   num_hot_steps = num_hot_steps,
+                   num_annealing_steps = num_annealing_steps,
+                   num_cold_steps = num_cold_steps)
+    class(algout) <- "redist"
+    
     ## -------------------------
     ## Combine and save the data
     ## -------------------------
@@ -261,7 +247,7 @@ redist.mcmc.anneal <- function(adjobj, popvec, nsims, ndists = NULL,
     }
 
     ## Examine the data
-        return(algout)
+    return(algout)
     
 }
 
