@@ -522,20 +522,20 @@ List swMH(List aList,
     }
   }else{
     out["partitions"] = cdvec;
-    out["distance_parity"] = dist_parity_vec[k];
-    out["distance_original"] = dist_orig_vec[k];
-    out["mhdecisions"] = decision_store[k];
-    out["mhprob"] = mhprob_store[k];
-    out["pparam"] = pparam_store[k];
+    out["distance_parity"] = dist_parity_vec[k-1];
+    out["distance_original"] = dist_orig_vec[k-1];
+    out["mhdecisions"] = decision_store[k-1];
+    out["mhprob"] = mhprob_store[k-1];
+    out["pparam"] = pparam_store[k-1];
     out["beta_sequence"] = 1.0;
-    out["energy_psi"] = energy_store[k];
-    out["constraint_pop"] = psipop_store[k];
-    out["constraint_compact"] = psicompact_store[k];
-    out["constraint_segregation"] = psisegregation_store[k];
-    out["constraint_similar"] = psisimilar_store[k];
-    out["constraint_countysplit"] = psicountysplit_store[k];
-    out["boundary_partitions"] = boundarypartitions_store[k];
-    out["boundaryratio"] = boundaryratio_store[k];
+    out["energy_psi"] = energy_store[k-1];
+    out["constraint_pop"] = psipop_store[k-1];
+    out["constraint_compact"] = psicompact_store[k-1];
+    out["constraint_segregation"] = psisegregation_store[k-1];
+    out["constraint_similar"] = psisimilar_store[k-1];
+    out["constraint_countysplit"] = psicountysplit_store[k-1];
+    out["boundary_partitions"] = boundarypartitions_store[k-1];
+    out["boundaryratio"] = boundaryratio_store[k-1];
     if(adapt_eprob == 1){
       out["final_eprob"] = eprob;
     }
