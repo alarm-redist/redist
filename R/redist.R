@@ -132,11 +132,6 @@ redist.mcmc.anneal <- function(adjobj, popvec, nsims, ndists = NULL,
                                contiguitymap = "rooks", exact_mh = FALSE,
                                savename = NULL, verbose = TRUE,
                                ncores = 1){
-
-    if(!requireNamespace("doMPI", quietly = TRUE)) {
-        stop("You must install package 'doMPI' to use this function. Please install it if you wish to continue."
-            ,call. = FALSE)
-    }
     
     if(verbose){
         ## Initialize ##
@@ -144,7 +139,7 @@ redist.mcmc.anneal <- function(adjobj, popvec, nsims, ndists = NULL,
         
         cat("\n", append = TRUE)
         cat(divider, append = TRUE)
-        cat("redist.mcmc(): Automated Redistricting Simulation Using
+        cat("redist.mcmc.anneal(): Automated Redistricting Simulation Using
          Markov Chain Monte Carlo\n\n", append = TRUE)
     }
 
@@ -201,7 +196,7 @@ redist.mcmc.anneal <- function(adjobj, popvec, nsims, ndists = NULL,
     ## ------------------
     ## Preprocessing data
     ## ------------------
-     cat("Preprocessing data.\n\n")
+    cat("Preprocessing data.\n\n")
     preprocout <- redist.preproc(adjobj = adjobj, popvec = popvec,
                                  initcds = initcds, ndists = ndists,
                                  popcons = popcons,
@@ -226,23 +221,8 @@ redist.mcmc.anneal <- function(adjobj, popvec, nsims, ndists = NULL,
     weightsimilar <- preprocout$params$weightsimilar
     weightcountysplit <- preprocout$params$weightcountysplit
 
-    ## Get starting loop value
-    loopstart <- loopscompleted + 1
-
-    ## Parallelize over available cores
-    cl <- doMPI::startMPIcluster(ncores)
-    doMPI::registerDoMPI(cl)
-
-    ## -----------------
-    ## Run the algorithm
-    ## -----------------
-    for(i in loopstart:nloop){
-
-        ## Parallelize over available cores
-        algout <- foreach(j = 1:nsims, .combine = combine.par.anneal) %dopar% {
-
-            ## Run swMH()
-            sims_out <- swMH(aList = preprocout$data$adjlist,
+    cat("Starting swMH().\n")
+    algout <- swMH(aList = preprocout$data$adjlist,
                              cdvec = preprocout$data$initcds,
                              cdorigvec = preprocout$data$initcds,
                              popvec = preprocout$data$popvec,
@@ -272,43 +252,16 @@ redist.mcmc.anneal <- function(adjobj, popvec, nsims, ndists = NULL,
                              num_hot_steps = num_hot_steps,
                              num_annealing_steps = num_annealing_steps,
                              num_cold_steps = num_cold_steps)
-
-            return(sims_out)
-
-        }
-
-        class(algout) <- "redist"
-
-        ## Save random number state if setting the seed
-        if(!is.null(rngseed)){
-            algout$randseed <- .Random.seed
-        }
-        
-        ## Save output
-        if(nloop > 1){
-            save(algout, file = paste(savename, "_loop", i, ".RData", sep = ""))
-        }
-        
-    }
-
+			     class(algout) <- "redist"
     ## -------------------------
     ## Combine and save the data
     ## -------------------------
-    if(nloop > 1){
-        redist.combine(savename = savename, nloop = nloop,
-                       nthin = nthin, 
-                       temper = 0)
-    }else if(!is.null(savename)){
+    if(!is.null(savename)){
         save(algout, file = paste(savename, ".RData", sep = ""))
     }
 
     ## Examine the data
-    if(nloop == 1){
         return(algout)
-    }
-
-    ## Close cluster
-    doMPI::closeCluster(cl)    
     
 }
 
