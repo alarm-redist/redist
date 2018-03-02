@@ -574,6 +574,9 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     if(is.null(countymembership)){
         countymembership <- c(0, 0, 0, 0)
     }else{
+        if(is.factor(countymembership)){
+            countymembership <- as.numeric(countymembership)
+        }
         countymembership <- countymembership - min(countymembership)
     }
    
