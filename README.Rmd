@@ -202,11 +202,15 @@ redist.mcmc.anneal(
   savename = paste0("redist_anneal_", t)
 )
 
+## ----------------------------------------------------
 ## Note that reweighting using redist.ipw() currently
 ## has to happen in a separate analysis file after
 ## redist.mcmc.anneal() is run and the output file is saved. 
-## Below, we provide a sample R script to piece multiple runs of
-## redist.mcmc.anneal() back together, which should be run in a separate script.
+## Below is sample code for combining multiple runs of
+## redist.mcmc.anneal() back together, which should be run 
+## in a separate script. We can then run redist.ipw()
+## on the combined simulations.
+## ----------------------------------------------------
 setwd("[directory with files]")
 algout <- redist.combine.anneal("redist_anneal_")
 algout_rw <- redist.ipw(algout, targetpop = .2)
