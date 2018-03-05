@@ -30,7 +30,7 @@ Imports:
 Suggests:
     testthat,
     Rmpi
-LinkingTo: Rcpp, RcppArmadillo
+LinkingTo: Rcpp, RcppArmadillo, RcppEigen, BH
 License: GPL (>= 2)
 SystemRequirements: gmp, libxml2
 Packaged: 2015-06-03 18:32:00 UTC; benfifield
