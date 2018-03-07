@@ -194,7 +194,12 @@ List swMH(List aList,
   int nsims_10pct = ceil((double)nsims / 10);
 
   // Store outputted congressional districts
-  NumericMatrix cd_store(cdvec.size(), nsims);
+  NumericMatrix cd_store;
+  if(adapt_beta != "annealing"){
+    cd_store = NumericMatrix(cdvec.size(), nsims);
+  }else{
+    cd_store = NumericMatrix(cdvec.size(), 1);
+  }
 
   // Store metropolis-hastings decisions for swaps
   NumericVector decision_store(nsims);
@@ -240,9 +245,11 @@ List swMH(List aList,
   List get_constraint; List gt_out; NumericVector cdvec_prop; int i;
   arma::uvec boundary_precincts; List boundary_partitions_list;
 
-  Rcout << "---------------------------------" << std::endl;
-  Rcout << "-- Simulating at hot temperature." << std::endl;
-  Rcout << "---------------------------------" << std::endl;
+  if(adapt_beta == "annealing"){
+    Rcout << "---------------------------------" << std::endl;
+    Rcout << "-- Simulating at hot temperature." << std::endl;
+    Rcout << "---------------------------------" << std::endl;
+  }
   // Open the simulations
   while(k < nsims){
 
@@ -422,8 +429,10 @@ List swMH(List aList,
     }
     
     // Store previous iteration
-    for(i = 0; i < cdvec.size(); i++){
-      cd_store[k * cdvec.size() + i] = cdvec(i);
+    if(adapt_beta != "annealing"){
+      for(i = 0; i < cdvec.size(); i++){
+	cd_store[k * cdvec.size() + i] = cdvec(i);
+      }
     }
 
     // Store p
@@ -488,9 +497,19 @@ List swMH(List aList,
   }
   
   // Get distance from parity of each partition
-  NumericVector dist_parity_vec = distParity(cd_store, popvec);
+  NumericVector dist_parity_vec;
+  NumericVector dist_orig_vec;
+  if(adapt_beta != "annealing"){
+    dist_parity_vec = distParity(cd_store, popvec);
+    dist_orig_vec = diff_origcds(cd_store, cdorigvec);
+  }else{
+    for(int i = 0; i < cdvec.size(); i++){
+      cd_store[i] = cdvec(i);
+    }
+    dist_parity_vec = distParity(cd_store, popvec);
+    dist_orig_vec = diff_origcds(cd_store, popvec);
+  }
 
-  NumericVector dist_orig_vec = diff_origcds(cd_store, cdorigvec);
   
   // Create list, store output
   List out;
@@ -522,8 +541,8 @@ List swMH(List aList,
     }
   }else{
     out["partitions"] = cdvec;
-    out["distance_parity"] = dist_parity_vec[k-1];
-    out["distance_original"] = dist_orig_vec[k-1];
+    out["distance_parity"] = dist_parity_vec[0];
+    out["distance_original"] = dist_orig_vec[0];
     out["mhdecisions"] = decision_store[k-1];
     out["mhprob"] = mhprob_store[k-1];
     out["pparam"] = pparam_store[k-1];
