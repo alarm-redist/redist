@@ -4,13 +4,21 @@
 \alias{redist.samplepart}
 \title{Sample partitions using spanning trees}
 \usage{
-redist.samplepart(adjobj, ndists, contiguitymap)
+redist.samplepart(adjobj, ndists, popcons, popvec, contiguitymap)
 }
 \arguments{
 \item{adjobj}{An adjacency list, matrix, or object of class
 \code{SpatialPolygonsDataFrame}.}
 
 \item{ndists}{The desired number of congressional districts}
+
+\item{popcons}{The strength of the hard population constraint.
+\code{popcons} = 0.05 means that any sample dtree will be within
+5% of population parity. The default is
+\code{NULL}.}
+
+\item{popvec}{A vector of geographic unit populations. The default is
+\code{NULL}. Must be specified if popcons is not null.}
 
 \item{contiguitymap}{Use queens or rooks distance criteria for generating an
 adjacency list from a "SpatialPolygonsDataFrame" data type.
