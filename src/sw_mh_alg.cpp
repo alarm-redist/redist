@@ -268,7 +268,7 @@ List swMH(List aList,
     // Continue trying until you get p good swaps
     do{
       
-      if(eprob == 0.0){
+      if(eprob != 0.0){
 	// First element is connected adjlist, second element is cut adjlist
 	cutedge_lists = cut_edges(aList_con, eprob);
 	
