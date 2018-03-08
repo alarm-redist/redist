@@ -469,6 +469,10 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ###################################################################
     if(!is.null(initcds)){
         if(!is.na(initcds)[1]){
+            if(sum(is.na(initcds)) > 0){
+                stop("You have NA's in your congressional districts. Please check the provided initcds vector for NA entries.")
+            }
+            
             ndists <- length(unique(initcds))
             divlist <- genAlConn(adjlist, initcds)
             ncontig <- countpartitions(divlist)
