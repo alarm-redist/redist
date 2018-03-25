@@ -210,3 +210,144 @@ redist.enumerate <- function(adjobj,
 	
 }
 
+#' Sample partitions using spanning trees
+#'
+#' \code{redist.samplepart} uses a spanning tree method to randomly sample
+#' redistricting plans.
+#'
+#' @usage redist.samplepart(adjobj, ndists, popcons, popvec, contiguitymap)
+#'
+#' @param adjobj An adjacency list, matrix, or object of class
+#' \code{SpatialPolygonsDataFrame}.
+#' @param ndists The desired number of congressional districts
+#' @param popcons The strength of the hard population constraint.
+#' \code{popcons} = 0.05 means that any sample dtree will be within
+#' 5% of population parity. The default is
+#' \code{NULL}.
+#' @param popvec A vector of geographic unit populations. The default is
+#' \code{NULL}. Must be specified if popcons is not null.
+#' @param contiguitymap Use queens or rooks distance criteria for generating an
+#' adjacency list from a "SpatialPolygonsDataFrame" data type.
+#' Default is "rooks".
+#'
+#' @return \code{redist.samplepart} returns a list where the first entry is the
+#' randomly sampled redistricting plan, and the second entry is the number of
+#' possible redistricting plans from the implied spanning tree.
+#' @export
+redist.samplepart <- function(adjobj, ndists, popcons = NULL, popvec = NULL, contiguitymap = "rooks"){
+
+    if(!is.null(popcons) & is.null(popvec)){
+        stop("Please provide a vector of unit populations if adding a population constraint.")
+    }
+    
+    ## --------------------------------------
+    ## If not a list, convert adjlist to list
+    ## --------------------------------------
+    ## NOTE - FOR ENUMERATION, WE WANT ONE-INDEXING VERSUS ZERO-INDEXING
+    if(!is.list(adjobj)){
+
+        ## If a matrix, check to see if adjacency matrix
+        if(is.matrix(adjobj)){
+
+            ## Is it square?
+            squaremat <- (nrow(adjobj) == ncol(adjobj))
+            ## All binary entries?
+            binary <- ((length(unique(c(adjobj))) == 2) &
+                           (sum(unique(c(adjobj)) %in% c(0, 1)) == 2))
+            ## Diagonal elements all 1?
+            diag <- (sum(diag(adjobj)) == nrow(adjobj))
+            ## Symmetric?
+            symmetric <- isSymmetric(adjobj)
+
+            ## If all are true, change to adjlist and automatically zero-index
+            if(squaremat & binary & diag & symmetric){
+                
+                ## Initialize object
+                adjlist <- vector("list", nrow(adjobj))
+
+                ## Loop through rows in matrix
+                for(i in 1:nrow(adjobj)){
+
+                    ## Extract row
+                    adjvec <- adjobj[,i]
+                    ## Find elements it is adjacent to
+                    inds <- which(adjobj == 1)
+                    ## Remove self-adjacency
+                    inds <- inds[inds != i,]
+                    ## Zero-index
+                    inds <- inds - 1
+                    ## Put in adjlist
+                    adjlist[[i]] <- inds
+                    
+                }
+                
+            }else { ## If not valid adjacency matrix, throw error
+                stop("Please input valid adjacency matrix")
+            }
+        }else if(class(adjobj) == "SpatialPolygonsDataFrame"){ ## shp object
+
+            ## Distance criterion
+            queens <- ifelse(contiguitymap == "rooks", FALSE, TRUE)
+            
+            ## Convert shp object to adjacency list
+            adjlist <- poly2nb(adjobj, queen = queens)
+            
+            ## Zero-index list
+            for(i in 1:length(adjlist)){
+                adjlist[[i]] <- adjlist[[i]] - 1
+            }
+            
+            ## Change class to list
+            class(adjlist) <- "list"
+            
+        }else{ ## If neither list, matrix, or shp, throw error
+            stop("Please input an adjacency list, adjacency matrix, or Spatial
+                 Polygons shp file")
+        }
+
+    }else{
+
+        ## Rename adjacency object as list
+        adjlist <- adjobj
+
+        ## Is list zero-indexed?
+        minlist <- min(unlist(adjlist))
+        maxlist <- max(unlist(adjlist))
+        oneind <- (sum(minlist == 1, maxlist == length(adjlist)) == 2)
+        zeroind <- (sum(minlist == 0, maxlist == (length(adjlist) - 1)) == 2)
+        
+        if(oneind){
+            ## Zero-index list
+            for(i in 1:length(adjlist)){
+                adjlist[[i]] <- adjlist[[i]] - 1
+            }
+        }else if(!(oneind | zeroind)){
+            ## if neither oneind or zeroind, then stop
+            stop("Adjacency list must be one-indexed or zero-indexed")
+        }
+        
+    }
+
+    ## -------------------------
+    ## Run enumeration algorithm
+    ## -------------------------
+    if(!is.null(popcons)){
+        if(length(popvec) != length(adjlist)){
+            stop("The number of population vector entries is not equal to the number of geographic units in adjobj.")
+        }
+    }
+    if(is.null(popvec)){
+        popvec <- rep(1, length(adjlist))
+    }
+    constrain_pop <- ifelse(is.null(popcons), FALSE, TRUE)
+    popcons <- ifelse(is.null(popcons), 0.1, popcons)
+
+    ## Run spanning tree
+    enum_out <- sample_partition(
+        aList = adjlist, num_partitions = ndists, popvec = popvec,
+        popcons = popcons, apply_popcons = constrain_pop
+    )
+
+    return(enum_out)
+    
+}

@@ -2,6 +2,7 @@
 // Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #include <RcppArmadillo.h>
+#include <RcppEigen.h>
 #include <Rcpp.h>
 
 using namespace Rcpp;
@@ -112,6 +113,21 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type thresh(threshSEXP);
     Rcpp::traits::input_parameter< int >::type maxiter(maxiterSEXP);
     rcpp_result_gen = Rcpp::wrap(rsg(adj_list, population, Ndistrict, target_pop, thresh, maxiter));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sample_partition
+List sample_partition(List aList, int num_partitions, NumericVector popvec, double popcons, bool apply_popcons);
+RcppExport SEXP _redist_sample_partition(SEXP aListSEXP, SEXP num_partitionsSEXP, SEXP popvecSEXP, SEXP popconsSEXP, SEXP apply_popconsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type aList(aListSEXP);
+    Rcpp::traits::input_parameter< int >::type num_partitions(num_partitionsSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type popvec(popvecSEXP);
+    Rcpp::traits::input_parameter< double >::type popcons(popconsSEXP);
+    Rcpp::traits::input_parameter< bool >::type apply_popcons(apply_popconsSEXP);
+    rcpp_result_gen = Rcpp::wrap(sample_partition(aList, num_partitions, popvec, popcons, apply_popcons));
     return rcpp_result_gen;
 END_RCPP
 }
