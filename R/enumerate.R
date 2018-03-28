@@ -215,30 +215,21 @@ redist.enumerate <- function(adjobj,
 #' \code{redist.samplepart} uses a spanning tree method to randomly sample
 #' redistricting plans.
 #'
-#' @usage redist.samplepart(adjobj, ndists, popcons, popvec, contiguitymap)
+#' @usage redist.samplepart(adjobj, ndists, contiguitymap, nsamp)
 #'
 #' @param adjobj An adjacency list, matrix, or object of class
 #' \code{SpatialPolygonsDataFrame}.
 #' @param ndists The desired number of congressional districts
-#' @param popcons The strength of the hard population constraint.
-#' \code{popcons} = 0.05 means that any sample dtree will be within
-#' 5% of population parity. The default is
-#' \code{NULL}.
-#' @param popvec A vector of geographic unit populations. The default is
-#' \code{NULL}. Must be specified if popcons is not null.
 #' @param contiguitymap Use queens or rooks distance criteria for generating an
 #' adjacency list from a "SpatialPolygonsDataFrame" data type.
 #' Default is "rooks".
+#' @param nsamp Number of samples to draw before reweighting. Default is 1000.
 #'
 #' @return \code{redist.samplepart} returns a list where the first entry is the
 #' randomly sampled redistricting plan, and the second entry is the number of
 #' possible redistricting plans from the implied spanning tree.
 #' @export
-redist.samplepart <- function(adjobj, ndists, popcons = NULL, popvec = NULL, contiguitymap = "rooks"){
-
-    if(!is.null(popcons) & is.null(popvec)){
-        stop("Please provide a vector of unit populations if adding a population constraint.")
-    }
+redist.samplepart <- function(adjobj, ndists, contiguitymap = "rooks", nsamp = 1000){
     
     ## --------------------------------------
     ## If not a list, convert adjlist to list
@@ -331,23 +322,22 @@ redist.samplepart <- function(adjobj, ndists, popcons = NULL, popvec = NULL, con
     ## -------------------------
     ## Run enumeration algorithm
     ## -------------------------
-    if(!is.null(popcons)){
-        if(length(popvec) != length(adjlist)){
-            stop("The number of population vector entries is not equal to the number of geographic units in adjobj.")
-        }
-    }
-    if(is.null(popvec)){
-        popvec <- rep(1, length(adjlist))
-    }
-    constrain_pop <- ifelse(is.null(popcons), FALSE, TRUE)
-    popcons <- ifelse(is.null(popcons), 0.1, popcons)
-
     ## Run spanning tree
-    enum_out <- sample_partition(
-        aList = adjlist, num_partitions = ndists, popvec = popvec,
-        popcons = popcons, apply_popcons = constrain_pop
-    )
-
-    return(enum_out)
+    part_mat <- matrix(NA, length(adjlist), nsamp)
+    probs <- rep(NA, nsamp)
+    times <- rep(NA, nsamp)
+    for(i in 1:nsamp){
+        start <- Sys.time()
+        enum_out <- sample_partition(
+            aList = adjlist, num_partitions = ndists
+        )
+        end <- Sys.time()
+        part_mat[,i] <- enum_out$partition
+        probs[i] <- enum_out$prob_sample_partition
+        times[i] <- difftime(end, start)
+    }
+    ## ind <- sample(1:nsamp, 1, replace = FALSE, prob = probs)
+    
+    return(list(partition = part_mat, probs = probs, times = times))
     
 }
