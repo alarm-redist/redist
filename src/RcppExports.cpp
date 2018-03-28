@@ -117,17 +117,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // sample_partition
-List sample_partition(List aList, int num_partitions, NumericVector popvec, double popcons, bool apply_popcons);
-RcppExport SEXP _redist_sample_partition(SEXP aListSEXP, SEXP num_partitionsSEXP, SEXP popvecSEXP, SEXP popconsSEXP, SEXP apply_popconsSEXP) {
+List sample_partition(List aList, int num_partitions);
+RcppExport SEXP _redist_sample_partition(SEXP aListSEXP, SEXP num_partitionsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< List >::type aList(aListSEXP);
     Rcpp::traits::input_parameter< int >::type num_partitions(num_partitionsSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type popvec(popvecSEXP);
-    Rcpp::traits::input_parameter< double >::type popcons(popconsSEXP);
-    Rcpp::traits::input_parameter< bool >::type apply_popcons(apply_popconsSEXP);
-    rcpp_result_gen = Rcpp::wrap(sample_partition(aList, num_partitions, popvec, popcons, apply_popcons));
+    rcpp_result_gen = Rcpp::wrap(sample_partition(aList, num_partitions));
     return rcpp_result_gen;
 END_RCPP
 }

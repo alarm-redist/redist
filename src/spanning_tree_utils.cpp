@@ -531,30 +531,21 @@ List RS(List aList, List out, int iter){//
 
 // Sample partition function
 // [[Rcpp::export]]
-List sample_partition(List aList, int num_partitions, NumericVector popvec, double popcons = .01, bool apply_popcons = false){
+List sample_partition(List aList, int num_partitions){
 
   // UST step
   List tree_out = UST(aList);
 
+  // UPS step
+  IntegerVector ups_out = UPS(tree_out, num_partitions - 1);
+
+  // Get NT for inverse probability reweighting
+  double nt_out = NT(aList, ups_out);
+
+  // Create output
   List out;
-  if(apply_popcons == false){
-    // UPS step
-    IntegerVector ups_out = UPS(tree_out, num_partitions - 1);
-
-    // Get NT for inverse probability reweighting
-    double nt_out = NT(aList, ups_out);
-
-    // Create output
-    out["partition"] = ups_out;
-    out["prob_sample_partition"] = nt_out;
-  }else{
-    List tr_out = TR(tree_out, popvec, num_partitions, popcons);
-    List rs_out = RS(tree_out, tr_out, 1);
-
-    // Create output
-    out["partition"] = rs_out["RV"];
-    out["ind"] = rs_out["IND"];
-  }
+  out["partition"] = ups_out;
+  out["prob_sample_partition"] = nt_out;
 
   return out;
   
