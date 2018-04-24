@@ -17,7 +17,7 @@ extern SEXP _redist_rsg(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_segregationcalc(SEXP, SEXP, SEXP);
 extern SEXP _redist_calc_polsbypopper(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_swMH(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP _redist_sample_partition(SEXP, SEXP);
+extern SEXP _redist_sample_partition(SEXP, SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
     {"_redist_calcPWDh",              (DL_FUNC) &_redist_calcPWDh,               1},
@@ -29,7 +29,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_segregationcalc",       (DL_FUNC) &_redist_segregationcalc,        3},
     {"_redist_calc_polsbypopper",     (DL_FUNC) &_redist_calc_polsbypopper,      7},
     {"_redist_swMH",                  (DL_FUNC) &_redist_swMH,                  30},
-    {"_redist_sample_partition",      (DL_FUNC) &_redist_sample_partition,       2},
+    {"_redist_sample_partition",      (DL_FUNC) &_redist_sample_partition,       4},
     {NULL, NULL, 0}
 };
 

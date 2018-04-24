@@ -167,90 +167,55 @@ IntegerVector UPS(List aList, int cutnum){
 
 /* Graph Laplacian determinant calculator 
    GL matrix is divided by a constant to prevent overflow*/
-double LapDet(NumericMatrix A){
-
-  int N = A.nrow(); 
-  NumericMatrix D(N-1,N-1);
-  std::fill( D.begin(), D.end(), 0) ;
-
-  for(int i = 0; i < N; i++){
-    for(int j = 0; j < N; j++){      
-      if(A(i,j)>0){if(i!=(N-1)){
-	  D(i,i)=D(i,i)+A(i,j);
-	  if(j!=(N-1)){
-	    D(i,j)=-A(i,j);
-	  }  
-	}}
-    }
+double LapDet(arma::mat AAA){//, double p
+  NumericMatrix AA = wrap(AAA) ;
+  // Type definitions
+  typedef Eigen::SparseMatrix<double> SpMat;   
+  double d = 0.0;
+  double n = AA.nrow();
+  //Rcpp::Rcout << "n:  " << n << '\n';
+  if(n>1){
+    // Construct D = diag(rowSums(A)) - A
+    SpMat A(Rcpp::as<Eigen::MatrixXd>(AA).sparseView());
+    Eigen::VectorXd D_diag = A * Eigen::VectorXd::Ones(A.cols());
+    Eigen::MatrixXd D_diag_mat = D_diag.asDiagonal();
+    SpMat D = D_diag_mat.sparseView();
+    D -= A;
+    // Calculate d = det(D[c(1:(dim(A)[1]-1)),c(1:(dim(A)[2]-1))]);
+    Eigen::SparseLU<SpMat> solver;
+    solver.compute(D.topLeftCorner(A.cols() - 1, A.cols() - 1));
+    d = solver.logAbsDeterminant();
   } 
-  D=D/pow(10,1);
-  const Eigen::Map<Eigen::MatrixXd> MM(as<Eigen::Map<Eigen::MatrixXd> >(D));
-  double d = MM.determinant();
   return(d);
-}  
+}
 
 /* Spanning tree number calculator */
-double NT(List aList, IntegerVector component){
-  //,IntegerVector popvec, 
-  int u = max(component)+1; 
-  NumericVector NC(u);
-  NumericMatrix M1(u,u); //multigraph 
-  std::fill( M1.begin(), M1.end(), 0) ;
-  //det vector
-  NumericVector dv(u+1);
-  //accumulate by district 
+double NT(arma::mat A, IntegerVector component){
+  int u = max(component)+1;
+  arma::mat L(u,u); L.zeros(); 
+  arma::uvec cid;
+  arma::uvec cid2;
+  arma::vec y= as<arma::vec>(component);
+  double d = 0.0;  
+  double d2;
   for(int k = 0; k < u; k++){    
-    NC(k)=sum(component==k);
-  }
-  for(int k = 0; k < u; k++){ 
-    NumericMatrix Mt(aList.size(),aList.size());  
-    std::fill( Mt.begin(), Mt.end(), 0); 
-    for(int i = 0; i < aList.size(); i++){
-      // Get i'th entry in list
-      NumericVector list1;
-      list1 = aList(i);    
-      // Loop through elements in list1
-      for(int j = 0; j < list1.size(); j++){      
-	if(component(i)==k && component(list1(j))==k){
-	  Mt(i,list1(j))=1;//assign by num 
-	}
-	if(k==0){
-	  if(component(i)!=component(list1(j))){
-	    M1(component(i),component(list1(j)))=M1(component(i),component(list1(j)))+1;}
-	}}}
-    if(NC(k)>1){ 
-      int ii = -1;int jj = -1;
-      NumericMatrix Mt2(NC(k),NC(k));
-      std::fill( Mt2.begin(), Mt2.end(), 0); 
-      for(int i = 0; i < aList.size(); i++){
-	if(component(i)==k){ii=ii+1;
-	  for(int j = 0; j < aList.size(); j++){
-	    if(component(j)==k){jj=jj+1;
-	      if(component(j)==k){
-		Mt2(ii,jj)=Mt(i,j);
-	      }}}          
-	}
-	jj = -1;}   
-      dv(k)=LapDet(Mt2); 
-    } else{
-      dv(k)=1;
-    }
-    //Rcpp::Rcout << "NC(k):  " << NC(k) << '\n';
-    //Rcpp::Rcout << "dv(k):  " << dv(k) << '\n';
-  }
-
-  dv(u) = LapDet(M1);
-  //Rcpp::Rcout << "dv(u):  " << dv(u) << '\n';
-  //Rcpp::Rcout << "dv(0):  " << dv(0) << '\n';
-  //double dd = std::accumulate(dv.begin(),dv.end(), 1, std::multiplies<int>());
-  double dd =1;
-  for(int k = 0; k < (u+1); k++){
-    dd = dd*dv(k);
-    //   Rcpp::Rcout << "dv(k):  " << dv(k) << '\n';
-  }
-  //dd = std::abs(dd);
-  return(dd);
+    cid = find(y == k);   
+    // Calculate district specific #trees
+    d2 = LapDet(A.submat(cid,cid));
+    arma::mat As=A.submat(cid,cid);
+    d = d + d2;
+    for(int j = 0; j < u; j++){ 
+      if(j > k){
+	cid2 = find(y == j);   
+	L(k,j) = accu(A.submat(cid,cid2));
+	L(j,k) = L(k,j);   
+      }}}
+  // Calculate #trees for the multigraph 
+  double d1 = LapDet(L);
+  d = d + d1;
+  return(d);
 }
+
 
 /* Graph reduction given a population constraint*/
 List TR(List aList, NumericVector popvec, int numdist, double delta){//
@@ -531,21 +496,24 @@ List RS(List aList, List out, int iter){//
 
 // Sample partition function
 // [[Rcpp::export]]
-List sample_partition(List aList, int num_partitions){
+List sample_partition(List aList, arma::mat aMat, int num_partitions, int num_samples){
 
-  // UST step
-  List tree_out = UST(aList);
-
-  // UPS step
-  IntegerVector ups_out = UPS(tree_out, num_partitions - 1);
-
-  // Get NT for inverse probability reweighting
-  double nt_out = NT(aList, ups_out);
+  // Store objects
+  NumericMatrix store_parts(aList.size(), num_samples);
+  arma::vec store_probs(num_samples);
+  List tree_out; IntegerVector ups_out; double nt_out;
+  for(int i = 0; i < num_samples; i++){
+    tree_out = UST(aList);
+    ups_out = UPS(tree_out, num_partitions - 1);
+    nt_out = NT(aMat, ups_out);
+    store_parts(_,i) = ups_out;
+    store_probs(i) = nt_out;
+  }
 
   // Create output
   List out;
-  out["partition"] = ups_out;
-  out["prob_sample_partition"] = nt_out;
+  out["partitions"] = store_parts;
+  out["prob_partitions"] = store_probs;
 
   return out;
   
