@@ -4,7 +4,7 @@
 \alias{redist.samplepart}
 \title{Sample partitions using spanning trees}
 \usage{
-redist.samplepart(adjobj, ndists, contiguitymap)
+redist.samplepart(adjobj, ndists, contiguitymap, nsamp)
 }
 \arguments{
 \item{adjobj}{An adjacency list, matrix, or object of class
@@ -15,6 +15,8 @@ redist.samplepart(adjobj, ndists, contiguitymap)
 \item{contiguitymap}{Use queens or rooks distance criteria for generating an
 adjacency list from a "SpatialPolygonsDataFrame" data type.
 Default is "rooks".}
+
+\item{nsamp}{Number of samples to draw before reweighting. Default is 1000.}
 }
 \value{
 \code{redist.samplepart} returns a list where the first entry is the

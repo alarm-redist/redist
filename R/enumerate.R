@@ -4,6 +4,16 @@
 ## Purpose: R wrapper to run full enumeration code
 ###########################################
 
+list_to_mat <- function(A){
+    AM <- matrix(0,length(A),length(A));
+    for(i in 1:length(A)){
+        for(j in 1:length(A[[i]])){
+            AM[i,A[[i]][j]+1] <- 1
+        }
+    }
+    return(AM)
+}
+
 #' Exact Redistricting Plan Enumerator
 #'
 #' \code{redist.enumerate} uses a spanning-tree method to fully enumerate all
@@ -323,21 +333,12 @@ redist.samplepart <- function(adjobj, ndists, contiguitymap = "rooks", nsamp = 1
     ## Run enumeration algorithm
     ## -------------------------
     ## Run spanning tree
-    part_mat <- matrix(NA, length(adjlist), nsamp)
-    probs <- rep(NA, nsamp)
-    times <- rep(NA, nsamp)
-    for(i in 1:nsamp){
-        start <- Sys.time()
-        enum_out <- sample_partition(
-            aList = adjlist, num_partitions = ndists
-        )
-        end <- Sys.time()
-        part_mat[,i] <- enum_out$partition
-        probs[i] <- enum_out$prob_sample_partition
-        times[i] <- difftime(end, start)
-    }
-    ## ind <- sample(1:nsamp, 1, replace = FALSE, prob = probs)
+
+    enum_out <- sample_partition(
+        aList = adjlist, aMat = list_to_mat(adjlist),
+        num_partitions = ndists, num_samples = nsamp
+    )
     
-    return(list(partition = part_mat, probs = probs, times = times))
+    return(enum_out)
     
 }
