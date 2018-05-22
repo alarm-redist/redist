@@ -366,6 +366,7 @@ for each geographic unit.")
     ## Run enumeration algorithm
     ## -------------------------
     ## Run spanning tree
+    cat("Sampling partitions using spanning tree method.\n")
     enum_out <- sample_partition(
         aList = adjlist, aMat = list_to_mat(adjlist),
         num_partitions = ndists, num_samples = nsamp
@@ -375,6 +376,7 @@ for each geographic unit.")
     ## Filtering step
     ## --------------
     if(pop_filter){
+        cat("Calculating distance from population parity for sampled partitions.\n")
         popdist <- unlist(
             mclapply(1:ncol(enum_out$partitions), function(x, pops = popvec){
                 part <- enum_out$partitions[,x]
@@ -389,6 +391,7 @@ for each geographic unit.")
         }
     }
     if(compact_filter){
+        cat("Calculating Polsby-Popper score for sampled partitions.\n")
         shp_sf <- st_as_sf(adjobj)
         cpct <- unlist(
             mclapply(1:ncol(enum_out$partitions), function(x, sf_obj = shp_sf){
