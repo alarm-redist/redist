@@ -23,6 +23,7 @@ Imports:
     Rcpp (>= 0.11.0),
     spdep,
     sp,
+    sf,
     coda,
     parallel,
     doParallel,

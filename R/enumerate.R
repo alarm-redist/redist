@@ -225,21 +225,51 @@ redist.enumerate <- function(adjobj,
 #' \code{redist.samplepart} uses a spanning tree method to randomly sample
 #' redistricting plans.
 #'
-#' @usage redist.samplepart(adjobj, ndists, contiguitymap, nsamp)
+#' @usage redist.samplepart(adjobj, ndists, popvec, pop_filter, pop_constraint,
+#' compact_filter, polsbypopper_constraint, contiguitymap, nsamp, n_cores)
 #'
 #' @param adjobj An adjacency list, matrix, or object of class
 #' \code{SpatialPolygonsDataFrame}.
 #' @param ndists The desired number of congressional districts
+#' @param popvec Population vector for adjacency object. Provide if
+#' filtering by population
+#' @param pop_filter Boolean. Whether or not to filter on population parity.
+#' Default is FALSE.
+#' @param pop_constraint Strength of population filter if filtering on
+#' distance to parity.
+#' @param compact_filter Boolean. Whether or not to filter on compactness.
+#' Default is FALSE.
+#' @param polsbypopper_constraint Strength of compactness filter using Polsby-
+#' Popper compactness if filtering on compactness. 
 #' @param contiguitymap Use queens or rooks distance criteria for generating an
 #' adjacency list from a "SpatialPolygonsDataFrame" data type.
 #' Default is "rooks".
-#' @param nsamp Number of samples to draw before reweighting. Default is 1000.
+#' @param nsamp Number of samples to draw. Default is 1000.
+#' @param n_cores Number of cores to parallelize over for parity calculation and
+#' compactness calculation. Default is 1.
 #'
 #' @return \code{redist.samplepart} returns a list where the first entry is the
 #' randomly sampled redistricting plan, and the second entry is the number of
 #' possible redistricting plans from the implied spanning tree.
 #' @export
-redist.samplepart <- function(adjobj, ndists, contiguitymap = "rooks", nsamp = 1000){
+#' @importFrom parallel mclapply
+#' @importFrom sf st_as_sf st_combine st_area st_union st_boundary st_length
+redist.samplepart <- function(adjobj, ndists, popvec = NULL,
+                              pop_filter = FALSE, pop_constraint = .5,
+                              compact_filter = FALSE, polsbypopper_constraint = .1,
+                              contiguitymap = "rooks", nsamp = 1000,
+                              n_cores = 1){
+
+    if(compact_filter & !inherits(adjobj, "SpatialPolygonsDataFrame")){
+        stop("If filtering on compactness, adjobj must be of class SpatialPolygonsDataFrame.")
+    }
+    if(pop_filter & is.null(popvec)){
+        stop("If filtering on population, you must provide a vector of populations
+for each geographic unit.")
+    }
+    if(pop_filter & sum(is.na(popvec)) > 0){
+        stop("You have NAs in your vector of geographic unit populations.")
+    }
     
     ## --------------------------------------
     ## If not a list, convert adjlist to list
@@ -328,16 +358,76 @@ redist.samplepart <- function(adjobj, ndists, contiguitymap = "rooks", nsamp = 1
         }
         
     }
+    if(pop_filter & length(popvec) != length(adjlist)){
+        stop("Your population vector does not contain an entry for every unit.")
+    }
 
     ## -------------------------
     ## Run enumeration algorithm
     ## -------------------------
     ## Run spanning tree
-
     enum_out <- sample_partition(
         aList = adjlist, aMat = list_to_mat(adjlist),
         num_partitions = ndists, num_samples = nsamp
     )
+
+    ## --------------
+    ## Filtering step
+    ## --------------
+    if(pop_filter){
+        popdist <- unlist(
+            mclapply(1:ncol(enum_out$partitions), function(x, pops = popvec){
+                part <- enum_out$partitions[,x]
+                targ <- sum(pops) / length(unique(part))
+                tab <- tapply(pops, part, sum)
+                return(max(abs((tab/targ - 1))))
+            }, mc.cores = n_cores)
+        )
+        inds_pop <- which(popdist <= pop_constraint)
+        if(!compact_filter){
+            inds_sub <- inds_pop
+        }
+    }
+    if(compact_filter){
+        shp_sf <- st_as_sf(adjobj)
+        cpct <- unlist(
+            mclapply(1:ncol(enum_out$partitions), function(x, sf_obj = shp_sf){
+                part <- enum_out$partitions[,x]
+                dists <- unique(part)
+                pp <- rep(NA, length(dists))
+                for(i in 1:length(dists)){
+                    sf_sub <- st_combine(sf_obj[part == dists[i],])
+                    ar <- st_area(sf_sub)
+                    per <- st_length(st_boundary(st_union(sf_sub)))
+                    pp[i] <- 4 * pi * ar / per^2
+                }
+                return(min(pp))
+            }, mc.cores = n_cores)
+        )
+        inds_compact <- which(cpct >= polsbypopper_constraint)
+        if(!pop_filter){
+            inds_sub <- inds_compact
+        }
+    }
+    if(pop_filter & compact_filter){
+        inds_sub <- intersect(inds_pop, inds_compact)
+    }
+
+    ## Subset
+    if(compact_filter | pop_filter){
+        if(length(inds_sub) == 0){
+            cat("No draws found within target parameters. Returning all partitions.\n")
+            inds_sub <- 1:ncol(enum_out$partitions)
+        }
+        enum_out$partitions <- enum_out$partitions[,inds_sub]
+        enum_out$prob_partitions <- enum_out$prob_partitions[inds_sub]
+        if(pop_filter){
+            enum_out$distance_parity <- popdist[inds_sub]
+        }
+        if(compact_filter){
+            enum_out$polsby_popper <- cpct[inds_sub]
+        }
+    }
     
     return(enum_out)
     
