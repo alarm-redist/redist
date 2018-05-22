@@ -4,7 +4,8 @@
 \alias{redist.samplepart}
 \title{Sample partitions using spanning trees}
 \usage{
-redist.samplepart(adjobj, ndists, contiguitymap, nsamp)
+redist.samplepart(adjobj, ndists, popvec, pop_filter, pop_constraint,
+compact_filter, polsbypopper_constraint, contiguitymap, nsamp, n_cores)
 }
 \arguments{
 \item{adjobj}{An adjacency list, matrix, or object of class
@@ -12,11 +13,29 @@ redist.samplepart(adjobj, ndists, contiguitymap, nsamp)
 
 \item{ndists}{The desired number of congressional districts}
 
+\item{popvec}{Population vector for adjacency object. Provide if
+filtering by population}
+
+\item{pop_filter}{Boolean. Whether or not to filter on population parity.
+Default is FALSE.}
+
+\item{pop_constraint}{Strength of population filter if filtering on
+distance to parity.}
+
+\item{compact_filter}{Boolean. Whether or not to filter on compactness.
+Default is FALSE.}
+
+\item{polsbypopper_constraint}{Strength of compactness filter using Polsby-
+Popper compactness if filtering on compactness.}
+
 \item{contiguitymap}{Use queens or rooks distance criteria for generating an
 adjacency list from a "SpatialPolygonsDataFrame" data type.
 Default is "rooks".}
 
-\item{nsamp}{Number of samples to draw before reweighting. Default is 1000.}
+\item{nsamp}{Number of samples to draw. Default is 1000.}
+
+\item{n_cores}{Number of cores to parallelize over for parity calculation and
+compactness calculation. Default is 1.}
 }
 \value{
 \code{redist.samplepart} returns a list where the first entry is the
