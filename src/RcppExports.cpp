@@ -117,16 +117,17 @@ BEGIN_RCPP
 END_RCPP
 }
 // sample_partition
-List sample_partition(List aList, arma::mat aMat, int num_partitions, int num_samples);
-RcppExport SEXP _redist_sample_partition(SEXP aListSEXP, SEXP aMatSEXP, SEXP num_partitionsSEXP, SEXP num_samplesSEXP) {
+List sample_partition(const std::vector<arma::vec> aList, const arma::mat aMat, const int num_partitions, const int num_samples, const int threads);
+RcppExport SEXP _redist_sample_partition(SEXP aListSEXP, SEXP aMatSEXP, SEXP num_partitionsSEXP, SEXP num_samplesSEXP, SEXP threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< List >::type aList(aListSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type aMat(aMatSEXP);
-    Rcpp::traits::input_parameter< int >::type num_partitions(num_partitionsSEXP);
-    Rcpp::traits::input_parameter< int >::type num_samples(num_samplesSEXP);
-    rcpp_result_gen = Rcpp::wrap(sample_partition(aList, aMat, num_partitions, num_samples));
+    Rcpp::traits::input_parameter< const std::vector<arma::vec> >::type aList(aListSEXP);
+    Rcpp::traits::input_parameter< const arma::mat >::type aMat(aMatSEXP);
+    Rcpp::traits::input_parameter< const int >::type num_partitions(num_partitionsSEXP);
+    Rcpp::traits::input_parameter< const int >::type num_samples(num_samplesSEXP);
+    Rcpp::traits::input_parameter< const int >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(sample_partition(aList, aMat, num_partitions, num_samples, threads));
     return rcpp_result_gen;
 END_RCPP
 }
