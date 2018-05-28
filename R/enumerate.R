@@ -267,8 +267,10 @@ redist.samplepart <- function(adjobj, ndists, popvec = NULL,
         stop("If filtering on population, you must provide a vector of populations
 for each geographic unit.")
     }
-    if(pop_filter & sum(is.na(popvec)) > 0){
-        stop("You have NAs in your vector of geographic unit populations.")
+    if(!is.null(popvec)){
+        if(pop_filter & sum(is.na(popvec)) > 0){
+            stop("You have NAs in your vector of geographic unit populations.")
+        }
     }
     
     ## --------------------------------------
@@ -369,7 +371,8 @@ for each geographic unit.")
     cat("Sampling partitions using spanning tree method.\n")
     enum_out <- sample_partition(
         aList = adjlist, aMat = list_to_mat(adjlist),
-        num_partitions = ndists, num_samples = nsamp
+        num_partitions = ndists, num_samples = nsamp,
+        threads = n_cores
     )
 
     ## --------------
