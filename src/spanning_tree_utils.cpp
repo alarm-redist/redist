@@ -239,7 +239,7 @@ List sample_partition(const std::vector<arma::vec> aList, const arma::mat aMat, 
   
 #ifdef _OPENMP
   omp_set_num_threads(threads);
-  Rcpp::Rcout << "    Parallelizing partitions sampling using OpenMP. "
+  Rcpp::Rcout << "    Parallelizing partition sampling using OpenMP. "
 	<< threads << " threads out of "
 	<< omp_get_num_procs() << " are used."
 	<< std::endl;
