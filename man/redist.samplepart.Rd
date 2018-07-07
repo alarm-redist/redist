@@ -5,7 +5,7 @@
 \title{Sample partitions using spanning trees}
 \usage{
 redist.samplepart(adjobj, ndists, popvec, pop_filter, pop_constraint,
-compact_filter, polsbypopper_constraint, contiguitymap, nsamp, n_cores)
+contiguitymap, nsamp, n_cores)
 }
 \arguments{
 \item{adjobj}{An adjacency list, matrix, or object of class
@@ -21,12 +21,6 @@ Default is FALSE.}
 
 \item{pop_constraint}{Strength of population filter if filtering on
 distance to parity.}
-
-\item{compact_filter}{Boolean. Whether or not to filter on compactness.
-Default is FALSE.}
-
-\item{polsbypopper_constraint}{Strength of compactness filter using Polsby-
-Popper compactness if filtering on compactness.}
 
 \item{contiguitymap}{Use queens or rooks distance criteria for generating an
 adjacency list from a "SpatialPolygonsDataFrame" data type.

@@ -226,7 +226,7 @@ redist.enumerate <- function(adjobj,
 #' redistricting plans.
 #'
 #' @usage redist.samplepart(adjobj, ndists, popvec, pop_filter, pop_constraint,
-#' compact_filter, polsbypopper_constraint, contiguitymap, nsamp, n_cores)
+#' contiguitymap, nsamp, n_cores)
 #'
 #' @param adjobj An adjacency list, matrix, or object of class
 #' \code{SpatialPolygonsDataFrame}.
@@ -237,10 +237,6 @@ redist.enumerate <- function(adjobj,
 #' Default is FALSE.
 #' @param pop_constraint Strength of population filter if filtering on
 #' distance to parity.
-#' @param compact_filter Boolean. Whether or not to filter on compactness.
-#' Default is FALSE.
-#' @param polsbypopper_constraint Strength of compactness filter using Polsby-
-#' Popper compactness if filtering on compactness. 
 #' @param contiguitymap Use queens or rooks distance criteria for generating an
 #' adjacency list from a "SpatialPolygonsDataFrame" data type.
 #' Default is "rooks".
@@ -253,16 +249,14 @@ redist.enumerate <- function(adjobj,
 #' possible redistricting plans from the implied spanning tree.
 #' @export
 #' @importFrom parallel mclapply
-#' @importFrom sf st_as_sf st_combine st_area st_union st_boundary st_length
 redist.samplepart <- function(adjobj, ndists, popvec = NULL,
                               pop_filter = FALSE, pop_constraint = .5,
-                              compact_filter = FALSE, polsbypopper_constraint = .1,
                               contiguitymap = "rooks", nsamp = 1000,
                               n_cores = 1){
 
-    if(compact_filter & !inherits(adjobj, "SpatialPolygonsDataFrame")){
-        stop("If filtering on compactness, adjobj must be of class SpatialPolygonsDataFrame.")
-    }
+    ## if(compact_filter & !inherits(adjobj, "SpatialPolygonsDataFrame")){
+    ##     stop("If filtering on compactness, adjobj must be of class SpatialPolygonsDataFrame.")
+    ## }
     if(pop_filter & is.null(popvec)){
         stop("If filtering on population, you must provide a vector of populations
 for each geographic unit.")
@@ -389,38 +383,39 @@ for each geographic unit.")
             }, mc.cores = n_cores)
         )
         inds_pop <- which(popdist <= pop_constraint)
-        if(!compact_filter){
+        ## if(!compact_filter){
             inds_sub <- inds_pop
-        }
+        ## }
     }
-    if(compact_filter){
-        cat("Calculating Polsby-Popper score for sampled partitions.\n")
-        shp_sf <- st_as_sf(adjobj)
-        cpct <- unlist(
-            mclapply(1:ncol(enum_out$partitions), function(x, sf_obj = shp_sf){
-                part <- enum_out$partitions[,x]
-                dists <- unique(part)
-                pp <- rep(NA, length(dists))
-                for(i in 1:length(dists)){
-                    sf_sub <- st_combine(sf_obj[part == dists[i],])
-                    ar <- st_area(sf_sub)
-                    per <- st_length(st_boundary(st_union(sf_sub)))
-                    pp[i] <- 4 * pi * ar / per^2
-                }
-                return(min(pp))
-            }, mc.cores = n_cores)
-        )
-        inds_compact <- which(cpct >= polsbypopper_constraint)
-        if(!pop_filter){
-            inds_sub <- inds_compact
-        }
-    }
-    if(pop_filter & compact_filter){
-        inds_sub <- intersect(inds_pop, inds_compact)
-    }
+    ## if(compact_filter){
+    ##     cat("Calculating Polsby-Popper score for sampled partitions.\n")
+    ##     shp_sf <- st_as_sf(adjobj)
+    ##     cpct <- unlist(
+    ##         mclapply(1:ncol(enum_out$partitions), function(x, sf_obj = shp_sf){
+    ##             part <- enum_out$partitions[,x]
+    ##             dists <- unique(part)
+    ##             pp <- rep(NA, length(dists))
+    ##             for(i in 1:length(dists)){
+    ##                 sf_sub <- st_combine(sf_obj[part == dists[i],])
+    ##                 ar <- st_area(sf_sub)
+    ##                 per <- st_length(st_boundary(st_union(sf_sub)))
+    ##                 pp[i] <- 4 * pi * ar / per^2
+    ##             }
+    ##             return(min(pp))
+    ##         }, mc.cores = n_cores)
+    ##     )
+    ##     inds_compact <- which(cpct >= polsbypopper_constraint)
+    ##     if(!pop_filter){
+    ##         inds_sub <- inds_compact
+    ##     }
+    ## }
+    ## if(pop_filter & compact_filter){
+    ##     inds_sub <- intersect(inds_pop, inds_compact)
+    ## }
 
     ## Subset
-    if(compact_filter | pop_filter){
+    ## if(compact_filter | pop_filter){
+    if(pop_filter){
         if(length(inds_sub) == 0){
             cat("No draws found within target parameters. Returning all partitions.\n")
             inds_sub <- 1:ncol(enum_out$partitions)
@@ -430,9 +425,9 @@ for each geographic unit.")
         if(pop_filter){
             enum_out$distance_parity <- popdist[inds_sub]
         }
-        if(compact_filter){
-            enum_out$polsby_popper <- cpct[inds_sub]
-        }
+        ## if(compact_filter){
+        ##     enum_out$polsby_popper <- cpct[inds_sub]
+        ## }
     }
     
     return(enum_out)
