@@ -230,7 +230,7 @@ List swMH(List aList,
   // Iterate up z
   z++;
 
-  if(adapt_beta == "tempering" && beta != 0.0){
+  if(adapt_beta != "tempering" && beta != 0.0){
     std::fill(betaseq_store.begin(), betaseq_store.end(), beta);
   }
 
