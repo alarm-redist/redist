@@ -4,7 +4,7 @@ R package for simulating redistricting plans via Markov chain Monte
 Carlo by Ben Fifield ([bfifield@princeton.edu](bfifield@princeton.edu)),
 Alex Tarr ([atarr@princeton.edu](atarr@princeton.edu)), Michael
 Higgins ([mjh5@princeton.edu](mjh5@princeton.edu)), and Kosuke Imai
-([kimai@princeton.edu](kimai@princeton.edu)). Maintainer is Ben Fifield.
+([kimai@princeton.edu](imai@Harvard.Edu)). Maintainer is Ben Fifield.
 
 ## Installation Instructions
 The package is available on CRAN and can be installed using:
