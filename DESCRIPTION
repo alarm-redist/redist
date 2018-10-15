@@ -15,8 +15,7 @@ Description: Enables researchers to sample redistricting plans from a pre-
     for analysis such as inverse probability reweighting and plotting functionality
     are included. The package implements methods described in Fifield, Higgins, Imai
     and Tarr (2016) ``A New Automated Redistricting Simulator Using Markov Chain
-    Monte Carlo,'' working paper available at <http://http://imai.princeton.edu/
-    research/files/redist.pdf>.
+    Monte Carlo,'' working paper available at <https://imai.fas.harvard.edu/research/files/redist.pdf>.
 Depends:
     R (>= 3.1.0)
 Imports:
