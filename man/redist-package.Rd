@@ -16,7 +16,7 @@ analysis such as inverse probability reweighting and plotting functionality
 are included. The package implements methods described in Fifield, Higgins,
 Imai and Tarr (2016) ``A New Automated Redistricting Simulator Using Markov
 Chain Monte Carlo,'' working paper available at
-<http://http://imai.princeton.edu/research/files/redist.pdf>.
+<http://imai.fas.harvard.edu/research/files/redist.pdf>.
 }
 \details{
 \tabular{ll}{ Package: \tab redist\cr Type: \tab Package\cr
