@@ -255,6 +255,55 @@ bool is2con(List adjList){
   return is2con;
 } 
 
+// IntegerMatrix uniqueRows(IntegerMatrix intMat){
+
+//   //NOTE! FASTER THAN R!
+//   //Store rows and columns
+//   int numNrow = intMat.nrow();
+//   int numNcol = intMat.ncol();
+
+//   //Initialize unique row matrix
+//   IntegerMatrix newMat(numNrow,numNcol);
+//   newMat.row(0) = intMat.row(0);
+
+//   //Stores the index of the current row
+//   int j = 1;
+  
+//   //Tests uniqueness:
+//   bool isUniq = true;
+
+//   //See if current row matches all entries of a previous matrix
+//   for(int i = 1; i < numNrow; i++){
+//     for(int k = 0; k < j; k++){
+//       for(int l = 0; l < numNcol; l++){
+// 	//If we have any inequality, stop this check
+// 	if(intMat(i,l) != newMat(k,l)){
+// 	  break;
+// 	}
+// 	//If we have perfect equality than this row is not unique
+// 	if(l == numNcol -1){
+// 	  isUniq = false;
+//       	}
+//       }
+
+//       //If we do not have uniqueness, stop checking for this row
+//       if(!isUniq){
+// 	break;
+//       }
+//     }
+
+//     //If this row is unique, add it
+//     if(isUniq){
+//       newMat.row(j++) = intMat.row(i);
+//     }
+
+//     //Reset isUniq
+//     isUniq = true;
+
+//   }
+//   return newMat(seq(0,j -1),seq(0,numNcol-1));
+// }
+
 bool notInList(IntegerVector intVec, List myList){
 
   //Store length of intVec and size of myList
@@ -583,7 +632,7 @@ class spanTree{
     //IntegerVector myCompConnCompLengths(currDepth);
     
     //Stores the number of connected components
-    int myNumComps = 0;
+    //int myNumComps = 0;
     for(int i = 0; i < countCurrSpan; i++){
       
       //Obtain connected component from the spanning tree
@@ -750,6 +799,119 @@ class spanTree{
   }
 };
 
+//List testSpan(List adjList, NumericVector popSizes){
+void testSpan(List adjList, NumericVector popSizes){
+
+  spanTree tempSpan(adjList,popSizes);
+  tempSpan.allGrow();
+  Rprintf("Test1\n");
+  tempSpan.allGrow();
+  Rprintf("Test2\n");
+
+  tempSpan.allGrow();
+  Rprintf("Test3\n");
+  tempSpan.allGrow();
+  Rprintf("Test4\n");
+  tempSpan.printSpan();
+
+  tempSpan.allGrow();
+  Rprintf("Test5\n");
+tempSpan.allGrow();
+  Rprintf("Test6\n");
+  tempSpan.printSpan();
+  Rcpp::Rcout << "COUNT: " << tempSpan.getCountCurrSpan() << "\n";
+  // tempSpan.allGrow();
+
+  // Rprintf("Test6\n");
+  // tempSpan.allGrow();
+  // Rprintf("Test7\n");
+  // tempSpan.allGrow();
+  // Rprintf("Test8\n");
+  // tempSpan.allGrow();
+  // Rprintf("Test9\n");
+  // tempSpan.allGrow();
+  // Rprintf("Test10\n");
+  // tempSpan.allGrow();
+  // Rprintf("Test11\n");
+  // tempSpan.allGrow();
+  // Rprintf("Test12\n");
+  // tempSpan.allGrow();
+  // Rprintf("Test13\n");
+  // tempSpan.allGrow();
+  // Rprintf("Test14\n");
+  // tempSpan.allGrow();
+  // Rprintf("Test15\n");
+
+  // List newlist;
+  // for(int i = 0; i < tempSpan.getCountCurrSpan(); i++){
+  //   if(tempSpan.getNumConnComps(i) == 2){
+  //     newlist.push_back(tempSpan.getConnComps(i));
+  //   }
+  // }
+
+  // return newlist;
+}
+
+//Test the new span tree
+void testSpan3(List adjList, NumericVector popSizes){
+  spanTree tempSpan(adjList,popSizes);
+  tempSpan.allGrow();
+  Rcpp::Rcout << "Test1";
+  tempSpan.allGrow();
+  Rcpp::Rcout << "Test2";
+  tempSpan.allGrow();
+  Rcpp::Rcout << "Test3";
+  tempSpan.allGrow();
+  Rcpp::Rcout << "Test4";
+  tempSpan.allGrow();
+  Rcpp::Rcout << "Test5";
+  tempSpan.allGrow();
+  Rcpp::Rcout << "Test6";
+  tempSpan.allGrow();
+  Rcpp::Rcout << "Test7";
+  tempSpan.printSpan();
+  tempSpan.allGrow();
+  Rcpp::Rcout << "Test8";
+  tempSpan.printSpan();
+  tempSpan.allGrow();
+  Rcpp::Rcout << "Test9";
+  tempSpan.printSpan();
+  
+}
+
+//Test the new span tree
+void testSpan2(List adjList, NumericVector popSizes){
+  spanTree tempSpan(adjList,popSizes);
+  tempSpan.allGrow();
+  Rcpp::Rcout << "Test1";
+  tempSpan.printSpan();
+  tempSpan.allGrow();
+  Rcpp::Rcout << "Test2";
+  tempSpan.printSpan();
+  tempSpan.allGrow();
+  Rcpp::Rcout << "Test3";
+  tempSpan.printSpan();
+  tempSpan.allGrow();
+  Rcpp::Rcout << "Test4";
+  tempSpan.printSpan();  
+  tempSpan.allGrow();
+  Rcpp::Rcout << "Test5";
+  tempSpan.printSpan();
+  tempSpan.allGrow();
+  Rcpp::Rcout << "Test6";
+  tempSpan.printSpan();
+  tempSpan.allGrow();
+  Rcpp::Rcout << "Test7";
+  tempSpan.printSpan();
+  tempSpan.allGrow();
+  Rcpp::Rcout << "Test8";
+  tempSpan.printSpan();
+  tempSpan.allGrow();
+  Rcpp::Rcout << "Test9";
+  tempSpan.printSpan();
+  
+}
+
 List createSubsetAdjList(List adjList, IntegerVector subsetNodes){
 
   //Initialize
@@ -846,7 +1008,7 @@ IntegerVector nextSample(IntegerVector currSample){
 
 //Generate all ways of allocating numb balls to k urns, where each urn u can hold l_u balls.
 //CHANGING THIS TO A LIST
-List generateAllocations(int numb, IntegerVector capacity){
+List generateAllocations(int numb, IntegerVector capacity, int myNumHigh, IntegerVector myCompConnCompLengths){
 
   //Store the index of allocations
   int indexAlloc = 0;
@@ -886,6 +1048,10 @@ List generateAllocations(int numb, IntegerVector capacity){
     for(int i = countNonZero-1; i >= 0; i--){
       if(storeSample[i] > capacity[nonZeroCap[i]]){
   	toadd = false;
+  	break;
+      }
+      if(storeSample[i] == 0 && myCompConnCompLengths[nonZeroCap[i]] > myNumHigh){
+	toadd = false;
   	break;
       }
     }
@@ -954,12 +1120,11 @@ IntegerMatrix expandGrid(IntegerVector capacity){
   return myExpandGrid;
 }
 
-IntegerVector findUpperAllocs(int myNumConnComps, int myNumLow, IntegerVector myCompConnCompLengths){
+IntegerVector findUpperAllocs(int myNumConnComps, int myNumLow, int myNumHigh, IntegerVector myCompConnCompLengths){
   
   //numPartConnComps will determine where we can allocate
   IntegerVector numPartConnComps(myNumConnComps - 1);
-  float test;
-  
+    
   //Generate all ways to create diffBlocks more blocks by further partitioning connected components.
   //First, see how many blocks of size at least myNumLow can be created within each connected component.  
   for(int j = 0; j < myNumConnComps-1; j++){
@@ -970,14 +1135,16 @@ IntegerVector findUpperAllocs(int myNumConnComps, int myNumLow, IntegerVector my
       numPartConnComps[j] = myCompConnCompLengths[j];
     }
     else{
-      test = (float)myCompConnCompLengths[j]/myNumLow;
-      numPartConnComps[j] = (int)floor(test);
+      numPartConnComps[j] = (int)floor(myCompConnCompLengths[j]/myNumLow);
     }
-    
     if(numPartConnComps[j] >= 1){
-
-      //Subtract 1 to get additional blocks to be produced
-      numPartConnComps[j]--;
+      if(numPartConnComps[j] == 1 && myCompConnCompLengths[j] > myNumHigh){
+	numPartConnComps[j] = -1;
+      }
+     else{
+        //Subtract 1 to get additional blocks to be produced
+        numPartConnComps[j]--;
+     }
     } 
   }
 
@@ -986,13 +1153,13 @@ IntegerVector findUpperAllocs(int myNumConnComps, int myNumLow, IntegerVector my
 
 //Used to call generateAllocations, or return a List with a zero entry if
 //nowhere to expand.
-List doGenerateAllocations(IntegerVector numPartConnComps, int diffBlocks, bool canExpand){
+ List doGenerateAllocations(IntegerVector numPartConnComps, int diffBlocks, bool canExpand, int myNumHigh, IntegerVector myCompConnCompLengths){
     
   //Initialize integer matrix
   if(canExpand){
     
     //Return the result from generateAllocations
-    return generateAllocations(diffBlocks,numPartConnComps);
+    return generateAllocations(diffBlocks,numPartConnComps, myNumHigh, myCompConnCompLengths);
 
   }
   else{
@@ -1112,13 +1279,14 @@ class partitionIterator{
     //looks useless
     //numParts = 0;
     diffBlocks = myNumBlocks - myNumConnComps;
-    numPartConnComps = findUpperAllocs(myNumConnComps, myNumLow, myCompConnCompLengths);
+    numPartConnComps = findUpperAllocs(myNumConnComps, myNumLow, myNumHigh, myCompConnCompLengths);
 
     //You can expand to make a valid partition if the number of extra components in numPartConnComps is 
     //atleast diffBlocks
-    canExpand = (bool)(sum(numPartConnComps) >= diffBlocks);
+    canExpand = (bool)(sum(numPartConnComps) >= diffBlocks && min(numPartConnComps >= 0) );
     //HEY, NOW A LIST!
-    validAllocs = doGenerateAllocations(numPartConnComps, diffBlocks, canExpand);
+    validAllocs = doGenerateAllocations(numPartConnComps, diffBlocks, canExpand, myNumHigh, myCompConnCompLengths);
+ 
     //HEY! NOW A LIST!
     tempGenParts = List();
   }
@@ -1515,7 +1683,7 @@ List cppGeneratePartitions(List adjList, int numBlocks, NumericVector popSizes, 
   //Still need to do manipulations to ensure valid numbers.  But we can do that in R.
   
   //Store length of adjList
-  int adjListLength = adjList.size();
+  //int adjListLength = adjList.size();
 
   //Initialize LIST that holds partitions:
   //HEY
@@ -1707,4 +1875,3 @@ List cppGeneratePartitions(List adjList, int numBlocks, NumericVector popSizes, 
     return partitionMatrix;
   }
 }
-

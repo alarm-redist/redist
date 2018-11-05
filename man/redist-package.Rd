@@ -16,12 +16,12 @@ analysis such as inverse probability reweighting and plotting functionality
 are included. The package implements methods described in Fifield, Higgins,
 Imai and Tarr (2016) ``A New Automated Redistricting Simulator Using Markov
 Chain Monte Carlo,'' working paper available at
-<http://http://imai.princeton.edu/research/files/redist.pdf>.
+<http://imai.fas.harvard.edu/research/files/redist.pdf>.
 }
 \details{
 \tabular{ll}{ Package: \tab redist\cr Type: \tab Package\cr
-Version: \tab 1.3-1\cr
-Date: \tab 2016-12-28\cr License: \tab GPL (>= 2)\cr }
+Version: \tab 1.3-2\cr
+Date: \tab 2018-10-15\cr License: \tab GPL (>= 2)\cr }
 }
 \references{
 Barbu, Adrian and Song-Chun Zhu. (2005) "Generalizing Swendsen-Wang to
