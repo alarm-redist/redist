@@ -1,8 +1,6 @@
-redist: Markov Chain Monte Carlo Methods for Redistricting Simulation [![Build Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist) [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/redist)](https://cran.r-project.org/package=redist)
-===========================================================================================================================================================================================================================================================================================================
+# redist: Markov Chain Monte Carlo Methods for Redistricting Simulation [![Build Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist) [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/redist)](https://cran.r-project.org/package=redist) ![CRAN downloads](http://cranlogs.r-pkg.org/badges/grand-total/redist)
 
 Authors:
-
 -   [Ben Fifield](https://www.benfifield.com), <bfifield@princeton.edu> (Maintainer)
 -   Alex Tarr, <atarr@princeton.edu>
 -   [Michael Higgins](http://www-personal.k-state.edu/~mikehiggins/), <mjh5@princeton.edu>
