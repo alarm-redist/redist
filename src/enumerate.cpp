@@ -1135,7 +1135,7 @@ IntegerVector findUpperAllocs(int myNumConnComps, int myNumLow, int myNumHigh, I
       numPartConnComps[j] = myCompConnCompLengths[j];
     }
     else{
-      numPartConnComps[j] = (int)floor(myCompConnCompLengths[j]/myNumLow);
+      numPartConnComps[j] = (int)floor(myCompConnCompLengths[j]/(double)myNumLow);
     }
     if(numPartConnComps[j] >= 1){
       if(numPartConnComps[j] == 1 && myCompConnCompLengths[j] > myNumHigh){
