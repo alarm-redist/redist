@@ -21,7 +21,7 @@
 #' @aliases redist-package redist
 #' @docType package
 #' @author Benjamin Fifield, Department of Politics, Princeton University
-#' \email{bfifield@@princeton.edu}, \url{http://www.benfifield.com}
+#' \email{benfifield@@gmail.com}, \url{http://www.benfifield.com}
 #'
 #' Michael Higgins, Department of Statistics, Princeton University
 #' \email{mikehiggins@@k-state.edu}, \url{http://www-personal.ksu.edu/~mikehiggins/}
@@ -32,7 +32,7 @@
 #' Kosuke Imai, Department of Politics, Princeton University
 #' \email{kimai@@princeton.edu}, \url{http://imai.princeton.edu}
 #'
-#' Maintainer: Ben Fifield <bfifield@princeton.edu>
+#' Maintainer: Ben Fifield <benfifield@gmail.com>
 #'
 #' @references
 #' Barbu, Adrian and Song-Chun Zhu. (2005) "Generalizing Swendsen-Wang to
