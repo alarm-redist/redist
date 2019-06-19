@@ -274,10 +274,23 @@ List swMH(List aList,
       int nvalid_current = count_valid(aList, boundary_partitions["bsearch"], cdvec);
       int nvalid_prop = count_valid(aList, boundary_partitions_prop["bsearch"],
 				    swap_partitions["proposed_partition"]);
+
+      // Construct multiple swaps term
+      double p_0;
+      double F_pi;
+      double F_pi_prime;
+      if(lambda > 0){
+      	p_0 = R::ppois(0, lambda, 1, 0);
+      	F_pi = R::ppois(nvalid_current, lambda, 1, 0) - p_0;
+      	F_pi_prime = R::ppois(nvalid_prop, lambda, 1, 0) - p_0;
+      }else{
+      	F_pi = 1.0;
+      	F_pi_prime = 1.0;
+      }
       
       // Modify metropolis-hastings ratio
       swap_partitions["mh_prob"] = as<double>(swap_partitions["mh_prob"]) *
-	pow((double)nvalid_current / nvalid_prop, (double)p);
+	pow((double)nvalid_current / nvalid_prop, (double)p) * (F_pi / F_pi_prime);
       boundaryratio_store(k) = pow((double)nvalid_current / nvalid_prop, (double)p);
     }
     
