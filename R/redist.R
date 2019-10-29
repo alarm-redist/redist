@@ -798,7 +798,8 @@ redist.combine.anneal <- function(file_name){
 #' nsims = 10000)
 #' }
 #' @export
-redist.mcmc <- function(algorithm = 'mcmc', adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
+redist.mcmc <- function(adjobj, popvec, nsims, algorithm = c("mcmc", "anneal"),
+                        ndists = NULL, initcds = NULL,
                         loopscompleted = 0, nloop = 1, nthin = 1, eprob = 0.05,
                         lambda = 0, popcons = NULL, grouppopvec = NULL,
                         areasvec = NULL, countymembership = NULL,
@@ -834,6 +835,7 @@ redist.mcmc <- function(algorithm = 'mcmc', adjobj, popvec, nsims, ndists = NULL
   if(missing(popvec)){
     stop("Please supply vector of geographic unit populations")
   }
+  algorithm <- match.arg(algorithm)
   if(missing(nsims) & algorithm=='mcmc'){
     stop("Please supply number of simulations to run algorithm")
   }
