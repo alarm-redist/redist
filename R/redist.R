@@ -962,38 +962,8 @@ redist.mcmc <- function(adjobj, popvec, nsims, algorithm = c("mcmc", "anneal"),
       }
       
     }        
-    
+  }  
     ## Run algorithm
-    algout <- swMH(aList = preprocout$data$adjlist,
-                   cdvec = cds,
-                   cdorigvec = preprocout$data$initcds,
-                   popvec = preprocout$data$popvec,
-                   grouppopvec = preprocout$data$grouppopvec,
-                   areas_vec = preprocout$data$areasvec,
-                   county_membership = preprocout$data$countymembership,
-                   borderlength_mat = preprocout$data$borderlength_mat,
-                   nsims = nsims,
-                   eprob = eprob,
-                   pct_dist_parity = preprocout$params$pctdistparity,
-                   beta_sequence = preprocout$params$betaseq,
-                   beta_weights = preprocout$params$betaweights,
-                   ssdmat = preprocout$data$ssdmat,
-                   lambda = lambda,
-                   beta = preprocout$params$beta,
-                   weight_population = weightpop,
-                   weight_compact = weightcompact,
-                   weight_segregation = weightseg,
-                   weight_similar = weightsimilar,
-                   weight_countysplit = weightcountysplit,
-                   adapt_beta = preprocout$params$temperbeta,
-                   adjswap = preprocout$params$adjswaps,
-                   exact_mh = exact_mh,
-                   adapt_lambda = adapt_lambda,
-                   adapt_eprob = adapt_eprob,
-                   compactness_measure = compactness_metric)
-    
-} # ends if algorithm==mcmc
-  if(algorithm == 'anneal'){
     cat("Starting swMH().\n")
     algout <- swMH(aList = preprocout$data$adjlist,
                    cdvec = preprocout$data$initcds,
@@ -1016,7 +986,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, algorithm = c("mcmc", "anneal"),
                    weight_segregation = weightseg,
                    weight_similar = weightsimilar,
                    weight_countysplit = weightcountysplit,
-                   adapt_beta = "annealing",
+                   adapt_beta = algorithm,
                    adjswap = preprocout$params$adjswaps,
                    exact_mh = exact_mh,
                    adapt_lambda = adapt_lambda,
@@ -1025,7 +995,6 @@ redist.mcmc <- function(adjobj, popvec, nsims, algorithm = c("mcmc", "anneal"),
                    num_hot_steps = num_hot_steps,
                    num_annealing_steps = num_annealing_steps,
                    num_cold_steps = num_cold_steps)
-  } #ends if algorithm==anneal
     
     class(algout) <- "redist"
     
