@@ -2,7 +2,7 @@
 ## Author: Christopher T Kenny
 ## Institution: Harvard University
 ## Date Created: 2020/01/20
-## Date Modified: 2020/01/20
+## Date Modified: 2020/01/22
 ## Purpose: R function to compute compactness
 ##############################################
 
@@ -14,13 +14,14 @@
 #' Convex Hull score, and Reock score.
 #'
 #' @usage redist.compactness(shp, district_membership, 
-#' measure = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock"))
+#' measure = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark"))
 #' 
 #' @param shp A SpatialPolygonsDataFrame or sf object
 #' @param district_membership A string that is the name of a column of district 
 #' identifiers in the shp object.
 #' @param measure A vector with a string for each measure desired. "PolsbyPopper", 
-#' "Schwartzberg", "LengthWidth", "ConvexHull", and "Reock" are implemented.
+#' "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", and "BoyceClark" are implemented. Defaults to 
+#' all implemented measures.
 #' 
 #' @details This function computes specified compactness scores for a map.  If there is more than one
 #' shape specified for a single district, it combines them and computes one score.
@@ -43,14 +44,13 @@
 #' redist.compactness(box, "cds")
 #' }
 #' 
-#' 
 #' @import sf
 #' @import lwgeom
 #' @import tidyverse
 #' @export
 redist.compactness <- function(shp, 
                                district_membership, 
-                               measure = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock")){
+                               measure = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark")){
 
   # Check Inputs
   if('SpatialPolygonsDataFrame' %in% class(shp)){
@@ -75,19 +75,28 @@ redist.compactness <- function(shp,
   # Initialize object
   comp <- tibble(districts = dists, PolsbyPopper = rep(NA_real_, nd), Schwartzberg = rep(NA_real_, nd),
                  LengthWidth = rep(NA_real_, nd),  ConvexHull = rep(NA_real_, nd),
-                 Reock = rep(NA_real_,nd)) %>% 
+                 Reock = rep(NA_real_,nd), BoyceClark = rep(NA_real_, nd)) %>% 
     select('districts', measure)
   
   # Compute Specified Scores for provided districts
   for (i in 1:nd){
     united <- st_union(shp[shp[[district_membership]] == dists[i],])
     area <- st_area(united)
-    perim <- st_perimeter(united)
+    
+    if(is.null(st_crs(united$EPSG))){
+      perim <- st_length(st_cast(st_cast(united, 'POLYGON'),'LINESTRING'))
+    } else if (st_is_longlat(united)){
+      perim <- st_length(united)
+    } else {
+      perim <- st_perimeter(united)
+    }
+    
+    #perim <- ifelse(is.null(st_crs(united)$EPSG), , st_perimeter(united))
     if('PolsbyPopper' %in% measure){  
       comp[['PolsbyPopper']][i] <- 4*pi*(area)/(perim)^2
     }
     if('Schwartzberg' %in% measure){
-      comp[['Schwartzberg']][i] <- 1/(perim/(2*pi*sqrt(area/pi)))
+      comp[['Schwartzberg']][i] <- (perim/(2*pi*sqrt(area/pi)))
     }
     if('LengthWidth' %in% measure){
       bbox <- st_bbox(united)
@@ -101,6 +110,25 @@ redist.compactness <- function(shp,
     if('Reock' %in% measure){
       mbc <- st_area(st_minimum_bounding_circle(united))
       comp[['Reock']][i] <- area/mbc
+    }
+    if('BoyceClark' %in% measure){
+      suppressWarnings(center <- st_coordinates(st_centroid(united)))
+      bbox <- st_bbox(united)
+      max_dist <- sqrt((bbox$ymax-bbox$ymin)^2+(bbox$xmax-bbox$xmin)^2)
+      st_crs(united) <- NA
+      
+      x_list <- center[1] + max_dist*cos(seq(0,15)*pi/8)
+      y_list <- center[2] + max_dist*sin(seq(0,15)*pi/8)
+      
+      plot <- ggplot(united) + geom_sf()
+      radials <- rep(NA_real_, 16)
+      for(angle in 1:16){
+        line <- data.frame(x = c(x_list[angle],center[1]), y = c(y_list[angle], center[2])) %>% 
+          st_as_sf(coords = c('x','y'))  %>% st_coordinates() %>% st_linestring()
+        radials[angle] <- max(0, dist(st_intersection(line, united)))
+        plot <- plot + geom_sf(data = line)
+      }
+     comp[['BoyceClark']][i] <- 1 - (sum(abs(radials/sum(radials)*100-6.25))/200) 
     }
   }
   
