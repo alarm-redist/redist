@@ -22,6 +22,9 @@
 #' @param measure A vector with a string for each measure desired. "PolsbyPopper", 
 #' "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", and "BoyceClark" are implemented. Defaults to 
 #' all implemented measures.
+#' @param population A numeric vector with the population for every observation. Defaults to NULL. Is
+#' only necessary when "FryerHolden" is used for measure. Defaults to NULL.
+#' @param nloop A numeric to specify loop number. Defaults to NA_real_.
 #' 
 #' @details This function computes specified compactness scores for a map.  If there is more than one
 #' shape specified for a single district, it combines them and computes one score.
@@ -39,7 +42,7 @@
 #' box <-  rbind(c(0,0), c(1,0), c(1,1), c(0,1), c(0,0)) %>% list() %>%  
 #' st_polygon() %>% st_sfc() %>% st_as_sf()
 #' # Index the congressional districts
-#' box <- box %>% mutate(cds = 1)
+#' box <- box %>% mutate(cds = 1, pop = 10)
 #' # Run redist.compactness
 #' redist.compactness(box, "cds")
 #' }
@@ -50,7 +53,8 @@
 #' @export
 redist.compactness <- function(shp, 
                                district_membership, 
-                               measure = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark")){
+                               measure = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark"),
+                               population = NULL, nloop = NA_real_){
 
   # Check Inputs
   if('SpatialPolygonsDataFrame' %in% class(shp)){
@@ -67,6 +71,14 @@ redist.compactness <- function(shp,
     stop('Please provide "district_membership" as the name of a column in "shp".')
   }
   match.arg(measure)
+
+  if('FryerHolden' %in% measure & !(population %in% names(shp))){
+    stop('Please provide "population" as the name of a column in "shp".')
+  }
+  
+  if(class(nloop) != 'numeric'){
+    stop('Please provide "nloop" as a numeric.')
+  }
   
   # Compute compactness scores
   dists <- unique(shp[[district_membership]])
@@ -75,8 +87,9 @@ redist.compactness <- function(shp,
   # Initialize object
   comp <- tibble(districts = dists, PolsbyPopper = rep(NA_real_, nd), Schwartzberg = rep(NA_real_, nd),
                  LengthWidth = rep(NA_real_, nd),  ConvexHull = rep(NA_real_, nd),
-                 Reock = rep(NA_real_,nd), BoyceClark = rep(NA_real_, nd)) %>% 
-    select('districts', measure)
+                 Reock = rep(NA_real_,nd), BoyceClark = rep(NA_real_, nd), FryerHolden = rep(NA_real_, nd), 
+                 nloop = rep(nloop, nd)) %>% 
+    select(districts, measure, nloop)
   
   # Compute Specified Scores for provided districts
   for (i in 1:nd){
@@ -113,6 +126,9 @@ redist.compactness <- function(shp,
     }
     if('BoyceClark' %in% measure){
       suppressWarnings(center <- st_coordinates(st_centroid(united)))
+      suppressWarnings(if(!st_within(center, united, sparse = F)[[1]]){
+        center <- st_point_on_surface(united)
+      })
       bbox <- st_bbox(united)
       max_dist <- sqrt((bbox$ymax-bbox$ymin)^2+(bbox$xmax-bbox$xmin)^2)
       st_crs(united) <- NA
@@ -129,6 +145,13 @@ redist.compactness <- function(shp,
         plot <- plot + geom_sf(data = line)
       }
      comp[['BoyceClark']][i] <- 1 - (sum(abs(radials/sum(radials)*100-6.25))/200) 
+    }
+    if('FryerHolden' %in% measure){
+      suppressWarnings(shp_subset <- st_coordinates(st_centroid(shp[[shp[shp[[district_membership]] == dists[i],]]]))
+      dist_sqr <- as.matrix(dist(shp_subset))^2
+      pop <- shp[[population]][shp[[district_membership == i,]]]
+      pop <- pop*t(matrix(rep(pop,nd),nd))
+      comp[['FryerHolden']][i] <- sum(pop*dist_sqr)
     }
   }
   
