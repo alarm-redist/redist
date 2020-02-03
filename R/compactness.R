@@ -14,7 +14,8 @@
 #' Convex Hull score, and Reock score.
 #'
 #' @usage redist.compactness(shp, district_membership, 
-#' measure = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark"))
+#' measure = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden"), 
+#' pop, nloop)
 #' 
 #' @param shp A SpatialPolygonsDataFrame or sf object
 #' @param district_membership A string that is the name of a column of district 
@@ -44,7 +45,7 @@
 #' # Index the congressional districts
 #' box <- box %>% mutate(cds = 1, pop = 10)
 #' # Run redist.compactness
-#' redist.compactness(box, "cds")
+#' redist.compactness(box, "cds", "pop")
 #' }
 #' 
 #' @import sf
@@ -71,10 +72,15 @@
     stop('Please provide "district_membership" as the name of a column in "shp".')
   }
   match.arg(measure)
-
-  if('FryerHolden' %in% measure & !(population %in% names(shp))){
+  
+  if('FryerHolden' %in% measure & is.null(population)) {
+    stop('Please provide a "population" argument.')
+  }  
+  
+  if('FryerHolden' %in% measure){
+    if(!(population %in% names(shp))) {
     stop('Please provide "population" as the name of a column in "shp".')
-  }
+  }}
   
   if(class(nloop) != 'numeric'){
     stop('Please provide "nloop" as a numeric.')
@@ -125,32 +131,30 @@
       comp[['Reock']][i] <- area/mbc
     }
     if('BoyceClark' %in% measure){
-      suppressWarnings(center <- st_coordinates(st_centroid(united)))
-      suppressWarnings(if(!st_within(center, united, sparse = F)[[1]]){
+      suppressWarnings(center <- st_centroid(united))
+      suppressWarnings(if(!st_within(united,center,sparse=F)[[1]]){
         center <- st_point_on_surface(united)
       })
+      center <- st_coordinates(center)
       bbox <- st_bbox(united)
       max_dist <- sqrt((bbox$ymax-bbox$ymin)^2+(bbox$xmax-bbox$xmin)^2)
       st_crs(united) <- NA
       
       x_list <- center[1] + max_dist*cos(seq(0,15)*pi/8)
       y_list <- center[2] + max_dist*sin(seq(0,15)*pi/8)
-      
-      plot <- ggplot(united) + geom_sf()
       radials <- rep(NA_real_, 16)
       for(angle in 1:16){
         line <- data.frame(x = c(x_list[angle],center[1]), y = c(y_list[angle], center[2])) %>% 
           st_as_sf(coords = c('x','y'))  %>% st_coordinates() %>% st_linestring()
         radials[angle] <- max(0, dist(st_intersection(line, united)))
-        plot <- plot + geom_sf(data = line)
       }
      comp[['BoyceClark']][i] <- 1 - (sum(abs(radials/sum(radials)*100-6.25))/200) 
     }
     if('FryerHolden' %in% measure){
-      suppressWarnings(shp_subset <- st_coordinates(st_centroid(shp[[shp[shp[[district_membership]] == dists[i],]]])))
+      suppressWarnings(shp_subset <- st_coordinates(st_centroid(shp[shp[[district_membership]] == dists[i],])))
       dist_sqr <- as.matrix(dist(shp_subset))^2
       pop <- shp[[population]][which(shp[[district_membership]] == dists[i])]
-      pop <- pop*t(matrix(rep(pop,nd),nd))
+      pop <- pop*t(matrix(rep(pop,nrow(shp_subset)),nrow(shp_subset)))
       comp[['FryerHolden']][i] <- sum(pop*dist_sqr)
     }
   }
