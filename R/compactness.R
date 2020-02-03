@@ -51,9 +51,9 @@
 #' @import lwgeom
 #' @import tidyverse
 #' @export
-redist.compactness <- function(shp, 
+  redist.compactness <- function(shp, 
                                district_membership, 
-                               measure = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark"),
+                               measure = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden"),
                                population = NULL, nloop = NA_real_){
 
   # Check Inputs
@@ -147,9 +147,9 @@ redist.compactness <- function(shp,
      comp[['BoyceClark']][i] <- 1 - (sum(abs(radials/sum(radials)*100-6.25))/200) 
     }
     if('FryerHolden' %in% measure){
-      suppressWarnings(shp_subset <- st_coordinates(st_centroid(shp[[shp[shp[[district_membership]] == dists[i],]]]))
+      suppressWarnings(shp_subset <- st_coordinates(st_centroid(shp[[shp[shp[[district_membership]] == dists[i],]]])))
       dist_sqr <- as.matrix(dist(shp_subset))^2
-      pop <- shp[[population]][shp[[district_membership == i,]]]
+      pop <- shp[[population]][which(shp[[district_membership]] == dists[i])]
       pop <- pop*t(matrix(rep(pop,nd),nd))
       comp[['FryerHolden']][i] <- sum(pop*dist_sqr)
     }
