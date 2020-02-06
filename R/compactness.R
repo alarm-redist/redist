@@ -2,7 +2,7 @@
 ## Author: Christopher T Kenny
 ## Institution: Harvard University
 ## Date Created: 2020/01/20
-## Date Modified: 2020/01/22
+## Date Modified: 2020/02/05
 ## Purpose: R function to compute compactness
 ##############################################
 
@@ -10,8 +10,8 @@
 #' Calculate compactness measures for a set of districts
 #' 
 #' \code{redist.compactness} is used to compute different compactness statistics for a 
-#' shapefile. It currently computes the Polsby-Popper, Schwartzberg score, Length Width Ratio,
-#' Convex Hull score, and Reock score.
+#' shapefile. It currently computes the Polsby-Popper, Schwartzberg score, Length-Width Ratio,
+#' Convex Hull score, Reock score, Boyce Clark Index, and Fryer Holden score.
 #'
 #' @usage redist.compactness(shp, district_membership, 
 #' measure = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden"), 
@@ -27,11 +27,68 @@
 #' only necessary when "FryerHolden" is used for measure. Defaults to NULL.
 #' @param nloop A numeric to specify loop number. Defaults to NA_real_.
 #' 
-#' @details This function computes specified compactness scores for a map.  If there is more than one
-#' shape specified for a single district, it combines them and computes one score.
+#' @details This function computes specified compactness scores for a map.  If 
+#' there is more than one shape specified for a single district, it combines 
+#' them and computes one score for each district.
+#' 
+#' Polsby-Popper is computed as \deqn{\frac{4*\pi*A(d)}{P(d)^2}} where A is the area 
+#' function, the district is d, and P is the perimeter function.
+#' 
+#' Schwartzberg is computed as \deqn{\frac{P(d)}{2*\pi*\sqrt{\frac{A(d)}{\pi}}}}
+#' where A is the area function, the district is d, and P is the perimeter function.
+#' 
+#' The Length Width ratio is computed as \deqn{\frac{length}{width}} where length
+#' is the shorter of the maximum x distance and the maximum y distance. Width is 
+#' the longer of the two values.
+#' 
+#' The Reock score is computed as \deqn{\frac{A(d)}{A(CVH)}} where A is the area
+#' function, d is the district, and CVH is the convex hull of the district.
+#' 
+#' The Boyce Clark Index is computed as \deqn{1 - \sum_{1}^{16}\{\frac{|\frac{r_i}{\sum_ir_i}*100-6.25 |\}}{200}}.
+#' The \eqn{r_i} are the distances of the 16 radii computed from the geometric 
+#' centroid of the shape to the most outward point of the shape that intersects
+#' the radii, if the centroid is contained within the shape.  If the centroid
+#' lies outside of the shape, a point on the surface is used, which will naturally
+#' incur a penalty to the score.
+#' 
+#' The Fryer Holden score for each district is computed with \deqn{Pop\odot D(precinct)^2},
+#' where \eqn{Pop} is the population product matrix.  Each element is the 
+#' product of the ith and jth precinct's populations.  D represents the distance, 
+#' where the matrix is the distance between each precinct.  To fully compute this 
+#' index, for any map, the sum of these values should be used as the numerator. 
+#' The denominator can be calculated from the full enumeration of districts as the
+#' smallest calculated numerator.
 #' 
 #' @return A tibble with a column that specifies the district and a column for 
 #' each specified measure.
+#' 
+#' @references Boyce, R., & Clark, W. 1964. The Concept of Shape in Geography. 
+#' Geographical Review, 54(4), 561-572.
+#' 
+#' Cox, E. 1927. A Method of Assigning Numerical and Percentage Values to the 
+#' Degree of Roundness of Sand Grains. Journal of Paleontology, 1(3), 179-183.
+#' 
+#' Fryer R, Holden R. 2011. Measuring the Compactness of Political Districting Plans. 
+#' Journal of Law and Economics.  
+#' 
+#' Harris, Curtis C. 1964. “A scientific method of districting”. 
+#' Behavioral Science 3(9), 219–225.
+#' 
+#' Maceachren, A. 1985. Compactness of Geographic Shape: Comparison and 
+#' Evaluation of Measures. Geografiska Annaler. Series B, Human Geography, 67(1), 
+#' 53-67.
+#'
+#' Polsby, Daniel D., and Robert D. Popper. 1991. “The Third Criterion: 
+#' Compactness as a procedural safeguard against partisan gerrymandering.” 
+#' Yale Law & Policy Review 9 (2): 301–353.
+#'  
+#' Reock, E. 1961. A Note: Measuring Compactness as a Requirement of Legislative 
+#' Apportionment. Midwest Journal of Political Science, 5(1), 70-74.
+#' 
+#' Schwartzberg, Joseph E. 1966. Reapportionment, Gerrymanders, and the Notion 
+#' of Compactness. Minnesota Law Review. 1701.
+#' 
+#' 
 #' 
 #' @example
 #' \dontrun{
@@ -74,7 +131,7 @@
   match.arg(measure)
   
   if('FryerHolden' %in% measure & is.null(population)) {
-    stop('Please provide a "population" argument.')
+    stop('Please provide a "population" argument when FryerHolden is specified.')
   }  
   
   if('FryerHolden' %in% measure){
@@ -102,7 +159,7 @@
     united <- st_union(shp[shp[[district_membership]] == dists[i],])
     area <- st_area(united)
     
-    if(is.null(st_crs(united$EPSG))){
+    if(is.null(st_crs(united$EPSG))|is.na(st_is_longlat(united))){
       perim <- st_length(st_cast(st_cast(united, 'POLYGON'),'LINESTRING'))
     } else if (st_is_longlat(united)){
       perim <- st_length(united)
@@ -110,7 +167,6 @@
       perim <- st_perimeter(united)
     }
     
-    #perim <- ifelse(is.null(st_crs(united)$EPSG), , st_perimeter(united))
     if('PolsbyPopper' %in% measure){  
       comp[['PolsbyPopper']][i] <- 4*pi*(area)/(perim)^2
     }
