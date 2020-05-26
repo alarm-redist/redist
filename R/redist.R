@@ -916,6 +916,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' @param compactness_metric The compactness metric to use when constraining on
 #' compactness. Default is \code{fryer-holden}, the other implemented option
 #' is \code{polsby-popper}.
+#' @param ssd_denom The normalizing constant for the sum-of-squared distance Fryer-Holden metric. Default is 1.0 (unnormalized).
 #' @param betaseq Sequence of beta values for tempering. The default is
 #' \code{powerlaw} (see Fifield et. al (2015) for details).
 #' @param betaseqlength Length of beta sequence desired for
@@ -1013,6 +1014,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                         borderlength_mat = NULL, ssdmat = NULL, temper = FALSE,
                         constraint = NULL, constraintweights = NULL,
                         compactness_metric = "fryer-holden",
+                        ssd_denom = 1.0,
                         betaseq = "powerlaw", betaseqlength = 10,
                         betaweights = NULL, 
                         adjswaps = TRUE, rngseed = NULL, maxiterrsg = 5000,
@@ -1190,7 +1192,8 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                        exact_mh = exact_mh,
                        adapt_lambda = adapt_lambda,
                        adapt_eprob = adapt_eprob,
-                       compactness_measure = compactness_metric)
+                       compactness_measure = compactness_metric,
+                       ssd_denom = ssd_denom)
 
         class(algout) <- "redist"
 
