@@ -73,6 +73,7 @@ List swMH(List aList,
 	  int adapt_eprob = 0,
 	  int adapt_lambda = 0,
 	  std::string compactness_measure = "fryer-holden",
+	  double ssd_denom = 1.0,
 	  int num_hot_steps = 0,
 	  int num_annealing_steps = 0,
 	  int num_cold_steps = 0)
@@ -160,24 +161,6 @@ List swMH(List aList,
     if(is_true(any(uniquedists == cdvec(i))) == FALSE){
       uniquedists.push_back(cdvec(i));
     }
-  }
-
-  // Get ssd denominator
-  double ssd_denom = 1.0;
-  if((weight_compact != 0.0) & (compactness_measure == "fryer-holden")){
-    ssd_denom = as<double>(calc_psicompact(cdvec,
-					   cdvec,
-					   uniquedists,
-					   compactness_measure,
-					   aList,
-					   areas_vec,
-					   borderlength_mat,
-					   false,
-					   popvec,
-					   ssdmat,
-					   1.0)["compact_new_psi"]);
-  }else{
-    ssd_denom = 1.0;
   }
 
   // Define parity, min and max popoulations
@@ -546,7 +529,7 @@ List swMH(List aList,
     out["mhdecisions"] = decision_store[k-1];
     out["mhprob"] = mhprob_store[k-1];
     out["pparam"] = pparam_store[k-1];
-    out["beta_sequence"] = 1.0;
+    out["beta_sequence"] = betaseq_store[k-1];
     out["energy_psi"] = energy_store[k-1];
     out["constraint_pop"] = psipop_store[k-1];
     out["constraint_compact"] = psicompact_store[k-1];
