@@ -862,13 +862,6 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' \code{redist.mcmc} is used to simulate Congressional redistricting
 #' plans using Markov Chain Monte Carlo methods.
 #'
-#' @usage redist.mcmc(adjobj, popvec, nsims, ndists, initcds,
-#' loopscompleted, nloop, nthin, eprob, lambda,
-#' popcons, grouppopvec, areasvec, countymembership, borderlength_mat,
-#' ssdmat, temper, constraint, constraintweights, compactness_metric,
-#' betaseq, betaseqlength, betaweights, adjswaps, rngseed, maxiterrsg,
-#' adapt_lambda, adapt_eprob, contiguitymap, exact_mh, savename,
-#' verbose)
 #'
 #' @param adjobj An adjacency matrix, list, or object of class
 #' "SpatialPolygonsDataFrame."
@@ -916,7 +909,8 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' @param compactness_metric The compactness metric to use when constraining on
 #' compactness. Default is \code{fryer-holden}, the other implemented option
 #' is \code{polsby-popper}.
-#' @param ssd_denom The normalizing constant for the sum-of-squared distance Fryer-Holden metric. Default is 1.0 (unnormalized).
+#' @param ssd_denom The normalizing constant for the sum-of-squared distance Fryer-Holden metric. 
+#' Default is 1.0 (unnormalized).
 #' @param betaseq Sequence of beta values for tempering. The default is
 #' \code{powerlaw} (see Fifield et. al (2015) for details).
 #' @param betaseqlength Length of beta sequence desired for
