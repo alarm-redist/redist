@@ -38,7 +38,7 @@ Dynamics in Monte Carlo Simulations." Physical Review Letters.
 }
 \author{
 Benjamin Fifield, Department of Politics, Princeton University
-\email{bfifield@princeton.edu}, \url{http://www.benfifield.com}
+\email{benfifield@gmail.com}, \url{http://www.benfifield.com}
 
 Michael Higgins, Department of Statistics, Princeton University
 \email{mikehiggins@k-state.edu}, \url{http://www-personal.ksu.edu/~mikehiggins/}
@@ -49,6 +49,6 @@ Alexander Tarr, Department of Electrical Engineering, Princeton University
 Kosuke Imai, Department of Politics, Princeton University
 \email{kimai@princeton.edu}, \url{http://imai.princeton.edu}
 
-Maintainer: Ben Fifield <bfifield@princeton.edu>
+Maintainer: Ben Fifield <benfifield@gmail.com>
 }
 \keyword{package}
