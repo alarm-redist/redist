@@ -4,13 +4,16 @@
 \alias{redist.mcmc}
 \title{MCMC Redistricting Simulator}
 \usage{
-redist.mcmc(adjobj, popvec, nsims, ndists, initcds,
-loopscompleted, nloop, nthin, eprob, lambda,
-popcons, grouppopvec, areasvec, countymembership, borderlength_mat,
-ssdmat, temper, constraint, constraintweights, compactness_metric,
-betaseq, betaseqlength, betaweights, adjswaps, rngseed, maxiterrsg,
-adapt_lambda, adapt_eprob, contiguitymap, exact_mh, savename,
-verbose)
+redist.mcmc(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
+  loopscompleted = 0, nloop = 1, nthin = 1, eprob = 0.05,
+  lambda = 0, popcons = NULL, grouppopvec = NULL, areasvec = NULL,
+  countymembership = NULL, borderlength_mat = NULL, ssdmat = NULL,
+  temper = FALSE, constraint = NULL, constraintweights = NULL,
+  compactness_metric = "fryer-holden", ssd_denom = 1,
+  betaseq = "powerlaw", betaseqlength = 10, betaweights = NULL,
+  adjswaps = TRUE, rngseed = NULL, maxiterrsg = 5000,
+  adapt_lambda = FALSE, adapt_eprob = FALSE, contiguitymap = "rooks",
+  exact_mh = FALSE, savename = NULL, verbose = TRUE)
 }
 \arguments{
 \item{adjobj}{An adjacency matrix, list, or object of class
@@ -78,6 +81,9 @@ the same length as constraint. Default is NULL.}
 \item{compactness_metric}{The compactness metric to use when constraining on
 compactness. Default is \code{fryer-holden}, the other implemented option
 is \code{polsby-popper}.}
+
+\item{ssd_denom}{The normalizing constant for the sum-of-squared distance Fryer-Holden metric. 
+Default is 1.0 (unnormalized).}
 
 \item{betaseq}{Sequence of beta values for tempering. The default is
 \code{powerlaw} (see Fifield et. al (2015) for details).}
