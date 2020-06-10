@@ -30,7 +30,9 @@ Imports:
     foreach
 Suggests:
     testthat,
-    Rmpi
+    Rmpi,
+    knitr,
+    rmarkdown
 LinkingTo: Rcpp, RcppArmadillo, RcppEigen, BH
 License: GPL (>= 2)
 SystemRequirements: gmp, libxml2
@@ -38,3 +40,4 @@ Packaged: 2015-06-03 18:32:00 UTC; benfifield
 NeedsCompilation: yes
 BugReports: https://github.com/kosukeimai/redist/issues
 RoxygenNote: 6.1.1
+VignetteBuilder: knitr
