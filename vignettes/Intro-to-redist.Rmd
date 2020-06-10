@@ -42,7 +42,7 @@ redist can be installed either from CRAN, for the stable version with:
 ```{r, eval=F}
 install.packages('redist')
 ```
-or from github, which is updated more often:
+or from GitHub, which is updated more often:
 ```{r, eval=F}
 devtools::install_github(repo = 'kosukeimai/redist', ref = 'master')
 ```
@@ -119,7 +119,7 @@ Each column contains useful information for typical redistricting questions:
  * `geometry` contains the sf geometry.
 
 
-# Adjaceny-Based Redistricting {#adj}
+# Adjacency-Based Redistricting {#adj}
 We begin with a simple example of thinking about adjacency-based redistricting, using a small piece of Florida, named fl25. It can be 
 loaded with the data command as follows. For more information on the data, see [the data section](#data)
 ```{r}
@@ -161,7 +161,7 @@ Using igraph, we can easily plot the whole set of adjacencies:
 plot(graph_from_adj_list(adjlist, mode = 'total'))
 ```
 
-While these are numbered in 1:25, the backend in C++ requires 0 indexing for efficiency, so we sink the adjacency list to be 0:24.
+While these are numbered in 1:25, the back end in C++ requires 0 indexing for efficiency, so we sink the adjacency list to be 0:24.
 ```{r}
 for(i in 1:25){
   adjlist[[i]] <- adjlist[[i]]-1
@@ -209,7 +209,7 @@ class(alg_mcmc)
 names(alg_mcmc)
 ```
 
-For simple runs of the algorithm, the most important pieces of the output are `partitions` and `distance_parity`.  The `partitions` object is a matrix with `ndist` rows and `nsims` columns. Each column is one districting plan, where the numbers go from 0 to n-1, with each number represents the district assignment.
+For simple runs of the algorithm, the most important pieces of the output are `partitions` and `distance_parity`.  The `partitions` object is a matrix with `ndist` rows and `nsims` columns. Each column is one redistricting plan, where the numbers go from 0 to n-1, with each number represents the district assignment.
 
 ```{r}
 alg_mcmc$partitions[,1]
@@ -272,7 +272,7 @@ mcmc_chains <- parallel::mclapply(1:nchains, function(x){
 [Back to top](#top)
 
 # Random Seed Growth {#rsg}
-This package also contains an implementation of Chen and Rodden's non-compact Random Seed and Grow districting algorithm from their paper [Unintentional Gerrymandering: Political Geography and Electoral Biases in Legislatures](https://web.stanford.edu/~jrodden/wp/florida.pdf).
+This package also contains an implementation of Chen and Rodden's non-compact Random Seed and Grow redistricting algorithm from their paper [Unintentional Gerrymandering: Political Geography and Electoral Biases in Legislatures](https://web.stanford.edu/~jrodden/wp/florida.pdf).
 
 The adjacency list, via `adj.list`, is created as in [Adjacency-Based Redistricting](#adj), `population` is the population of the districts, `ndists` is the number of districts, and `thresh` is the allowed population parity.  A `thresh` of `0.05` allows for 5\% population parity. In easier redistricting questions, a small `maxiter` is typically sufficient, but in large maps, values may be closer to `50,000` to ensure that a solution is found.
 ```{r}
@@ -299,7 +299,7 @@ rsg$district_pop
 [Back to top](#top)
 
 # Segregation Index {#seg}
-To evaluate districting plans, the `redist` package comes with the `redist.segcalc` function. This computes the segregation index introduced in Massey and Denton 1987.
+To evaluate redistricting plans, the `redist` package comes with the `redist.segcalc` function. This computes the segregation index introduced in Massey and Denton 1987.
 
 It takes three arguments, `algout`, which is a `redist` object from the various `mcmc` function or `rsg` function, `grouppop` which is the population of the group being used for comparison, and `fullpop` is the total population of the precinct.
 ```{r}
