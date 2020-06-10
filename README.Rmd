@@ -14,6 +14,8 @@ Authors:
 
 Paper: [A New Automated Redistricting Simulator Using Markov Chain Monte Carlo](http://imai.princeton.edu/research/files/redist.pdf)
 
+# pkgdown &lt;img src="man/figures/logo.png" align="right" /&gt;
+
 ## Installation Instructions
 `redist` is available on CRAN and can be installed using:
 ```{r eval = FALSE}
