@@ -7,7 +7,6 @@ using namespace arma;
  * Compute the log number of spanning trees for `district`
  */
 // TESTED
-// [[Rcpp::export]]
 double log_st_distr(const List &g, const IntegerMatrix &districts, int idx, int district) {
   int V = g.size();
   // number of precincts in this district
@@ -47,6 +46,7 @@ double log_st_distr(const List &g, const IntegerMatrix &districts, int idx, int 
  * `districts` should have each column be a map
  */
 // TESTED
+// [[Rcpp::export]]
 NumericVector log_st_map(const List &g, const IntegerMatrix &districts, int n_distr) {
   int N = districts.ncol();
   NumericVector log_st(N);
