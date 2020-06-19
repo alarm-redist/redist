@@ -17,19 +17,23 @@
 #' measure = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden"), 
 #' pop, nloop)
 #' 
-#' @param shp A SpatialPolygonsDataFrame or sf object
-#' @param district_membership A string that is the name of a column of district 
-#' identifiers in the shp object.
+#' @param shp A SpatialPolygonsDataFrame or sf object. Required unless "EdgesRemoved"
+#' and "logSpanningTree" with adjacency provided.
+#' @param district_membership A numeric vector (if only one map) or matrix with one row 
+#' for each preinct and one column for each map. Required.
 #' @param measure A vector with a string for each measure desired. "PolsbyPopper", 
-#' "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", and "BoyceClark" are implemented. Defaults to 
-#' all implemented measures.
-#' @param population A numeric vector with the population for every observation. Defaults to NULL. Is
+#' "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden",  
+#' "EdgesRemoved", and "logSpanningTree" are implemented. Defaults to "PolsbyPopper".
+#' @param population A numeric vector with the population for every observation. Is
 #' only necessary when "FryerHolden" is used for measure. Defaults to NULL.
-#' @param nloop A numeric to specify loop number. Defaults to NA_real_.
+#' @param adjacency A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
+#' Created with \code{redist.adjacency} if not supplied and needed. Default is NULL.
+#' @param nloop A numeric to specify loop number. Defaults to 1 if only one map provided 
+#' and the column number if multiple maps given.
 #' 
 #' @details This function computes specified compactness scores for a map.  If 
 #' there is more than one shape specified for a single district, it combines 
-#' them and computes one score for each district.
+#' them, if necessary, and computes one score for each district.
 #' 
 #' Polsby-Popper is computed as \deqn{\frac{4*\pi*A(d)}{P(d)^2}} where A is the area 
 #' function, the district is d, and P is the perimeter function.
@@ -59,8 +63,12 @@
 #' The denominator can be calculated from the full enumeration of districts as the
 #' smallest calculated numerator.
 #' 
-#' @return A tibble with a column that specifies the district and a column for 
-#' each specified measure.
+#' The log spanning tree measure is...
+#' 
+#' The edges removed measure is...
+#' 
+#' @return A tibble with a column that specifies the district, a column for 
+#' each specified measure, and a column that specifies the map number.
 #' 
 #' @references Boyce, R., & Clark, W. 1964. The Concept of Shape in Geography. 
 #' Geographical Review, 54(4), 561-572.
@@ -109,26 +117,29 @@
 #' @import lwgeom
 #' @import tidyverse
 #' @export
-  redist.compactness <- function(shp, 
+  redist.compactness <- function(shp = NULL, 
                                district_membership, 
-                               measure = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden"),
-                               population = NULL, nloop = NA_real_){
+                               measure = c("PolsbyPopper"),
+                               population = NULL, adjacency = NULL, nloop = 1){
 
   # Check Inputs
-  if('SpatialPolygonsDataFrame' %in% class(shp)){
-    shp <- shp %>%  st_as_sf()
-  } else if(!('sf' %in% class(shp))){
-    stop('Please provide "shp" as a SpatialPolygonsDataFrame or sf object.')
+  if(is.null(shp)&is.null(adjacency)){
+    stop('Please provide a shp or adjacency argument.')
+  }  
+    
+  if(!is.null(shp)){  
+    if('SpatialPolygonsDataFrame' %in% class(shp)){
+      shp <- shp %>%  st_as_sf()
+    } else if(!('sf' %in% class(shp))){
+      stop('Please provide "shp" as a SpatialPolygonsDataFrame or sf object.')
+    }
+  }
+    
+  if(!(class(district_membership) %in% c('numeric', 'integer', 'matrix'))){
+    stop('Please provide "district_membership" as a numeric vector or matrix.')
   }
   
-  if(class(district_membership) != 'character'){
-    stop('Please provide "district_membership" as a string.')
-  }
-  
-  if(!(district_membership %in% names(shp))){
-    stop('Please provide "district_membership" as the name of a column in "shp".')
-  }
-  match.arg(measure)
+  match.arg(arg = measure,several.ok = TRUE, choices = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden", "EdgesRemoved", "logSpanningTree"))
   
   if('FryerHolden' %in% measure & is.null(population)) {
     stop('Please provide a "population" argument when FryerHolden is specified.')
@@ -144,77 +155,113 @@
   }
   
   # Compute compactness scores
-  dists <- unique(shp[[district_membership]])
+  dists <- sort(unique(c(district_membership)))
   nd <-  length(dists)
+  nmap <- ifelse(class(district_membership) == 'matrix', ncol(district_membership), 1)
+  
+  if(nmap!=1){
+    nloop = 1:ncol(district_membership)
+  }
   
   # Initialize object
-  comp <- tibble(districts = dists, PolsbyPopper = rep(NA_real_, nd), Schwartzberg = rep(NA_real_, nd),
-                 LengthWidth = rep(NA_real_, nd),  ConvexHull = rep(NA_real_, nd),
-                 Reock = rep(NA_real_,nd), BoyceClark = rep(NA_real_, nd), FryerHolden = rep(NA_real_, nd), 
-                 nloop = rep(nloop, nd)) %>% 
+  comp <- tibble(districts = rep(dists,nmap), 
+                 PolsbyPopper = rep(NA_real_, nd*nmap), 
+                 Schwartzberg = rep(NA_real_, nd*nmap),
+                 LengthWidth = rep(NA_real_, nd*nmap),  
+                 ConvexHull = rep(NA_real_, nd*nmap),
+                 Reock = rep(NA_real_,nd*nmap), 
+                 BoyceClark = rep(NA_real_, nd*nmap), 
+                 FryerHolden = rep(NA_real_, nd*nmap),
+                 EdgesRemoved = rep(NA_real_, nd*nmap), 
+                 logSpanningTree = rep(NA_real_, nd*nmap),
+                 nloop = rep(nloop, each = nd)) %>% 
     select(districts, measure, nloop)
   
   # Compute Specified Scores for provided districts
-  for (i in 1:nd){
-    united <- st_union(shp[shp[[district_membership]] == dists[i],])
-    area <- st_area(united)
-    
-    if(is.null(st_crs(united$EPSG))|is.na(st_is_longlat(united))){
-      perim <- st_length(st_cast(st_cast(united, 'POLYGON'),'LINESTRING'))
-    } else if (st_is_longlat(united)){
-      perim <- st_length(united)
-    } else {
-      perim <- st_perimeter(united)
-    }
-    
-    if('PolsbyPopper' %in% measure){  
-      comp[['PolsbyPopper']][i] <- 4*pi*(area)/(perim)^2
-    }
-    if('Schwartzberg' %in% measure){
-      comp[['Schwartzberg']][i] <- (perim/(2*pi*sqrt(area/pi)))
-    }
-    if('LengthWidth' %in% measure){
-      bbox <- st_bbox(united)
-      ratio <- unname((bbox$xmax - bbox$xmin)/(bbox$ymax - bbox$ymin))
-      comp[['LengthWidth']][i] <- ifelse(ratio>1, 1/ratio, ratio) 
-    }
-    if('ConvexHull' %in% measure){
-      cvh <- st_area(st_convex_hull(united))
-      comp[['ConvexHull']][i] <- area/cvh
-    }
-    if('Reock' %in% measure){
-      mbc <- st_area(st_minimum_bounding_circle(united))
-      comp[['Reock']][i] <- area/mbc
-    }
-    if('BoyceClark' %in% measure){
-      suppressWarnings(center <- st_centroid(united))
-      suppressWarnings(if(!st_within(united,center,sparse=F)[[1]]){
-        center <- st_point_on_surface(united)
-      })
-      center <- st_coordinates(center)
-      bbox <- st_bbox(united)
-      max_dist <- sqrt((bbox$ymax-bbox$ymin)^2+(bbox$xmax-bbox$xmin)^2)
-      st_crs(united) <- NA
-      
-      x_list <- center[1] + max_dist*cos(seq(0,15)*pi/8)
-      y_list <- center[2] + max_dist*sin(seq(0,15)*pi/8)
-      radials <- rep(NA_real_, 16)
-      for(angle in 1:16){
-        line <- data.frame(x = c(x_list[angle],center[1]), y = c(y_list[angle], center[2])) %>% 
-          st_as_sf(coords = c('x','y'))  %>% st_coordinates() %>% st_linestring()
-        radials[angle] <- max(0, dist(st_intersection(line, united)))
+  if(any(measure %in% c("PolsbyPopper", "Schwartzberg", "LengthWidth", 
+                        "ConvexHull", "Reock", "BoyceClark", "FryerHolden"))){
+    for(map in 1:nmap){
+      for (i in 1:nd){
+        united <- st_union(shp[district_membership == dists[i],])
+        area <- st_area(united)
+        
+        if(is.null(st_crs(united$EPSG))|is.na(st_is_longlat(united))){
+          perim <- st_length(st_cast(st_cast(united, 'POLYGON'),'LINESTRING'))
+        } else if (st_is_longlat(united)){
+          perim <- st_length(united)
+        } else {
+          perim <- st_perimeter(united)
+        }
+        
+        if('PolsbyPopper' %in% measure){  
+          comp[['PolsbyPopper']][i + nd*(nmap-1)] <- 4*pi*(area)/(perim)^2
+        }
+        if('Schwartzberg' %in% measure){
+          comp[['Schwartzberg']][i + nd*(nmap-1)] <- (perim/(2*pi*sqrt(area/pi)))
+        }
+        if('LengthWidth' %in% measure){
+          bbox <- st_bbox(united)
+          ratio <- unname((bbox$xmax - bbox$xmin)/(bbox$ymax - bbox$ymin))
+          comp[['LengthWidth']][i+ nd*(nmap-1)] <- ifelse(ratio>1, 1/ratio, ratio) 
+        }
+        if('ConvexHull' %in% measure){
+          cvh <- st_area(st_convex_hull(united))
+          comp[['ConvexHull']][i+ nd*(nmap-1)] <- area/cvh
+        }
+        if('Reock' %in% measure){
+          mbc <- st_area(st_minimum_bounding_circle(united))
+          comp[['Reock']][i+ nd*(nmap-1)] <- area/mbc
+        }
+        if('BoyceClark' %in% measure){
+          suppressWarnings(center <- st_centroid(united))
+          suppressWarnings(if(!st_within(united,center,sparse=F)[[1]]){
+            center <- st_point_on_surface(united)
+          })
+          center <- st_coordinates(center)
+          bbox <- st_bbox(united)
+          max_dist <- sqrt((bbox$ymax-bbox$ymin)^2+(bbox$xmax-bbox$xmin)^2)
+          st_crs(united) <- NA
+          
+          x_list <- center[1] + max_dist*cos(seq(0,15)*pi/8)
+          y_list <- center[2] + max_dist*sin(seq(0,15)*pi/8)
+          radials <- rep(NA_real_, 16)
+          for(angle in 1:16){
+            line <- data.frame(x = c(x_list[angle],center[1]), y = c(y_list[angle], center[2])) %>% 
+              st_as_sf(coords = c('x','y'))  %>% st_coordinates() %>% st_linestring()
+            radials[angle] <- max(0, dist(st_intersection(line, united)))
+          }
+          comp[['BoyceClark']][i+ nd*(nmap-1)] <- 1 - (sum(abs(radials/sum(radials)*100-6.25))/200) 
+        }
+        if('FryerHolden' %in% measure){
+          suppressWarnings(shp_subset <- st_coordinates(st_centroid(shp[shp[[district_membership]] == dists[i],])))
+          dist_sqr <- as.matrix(dist(shp_subset))^2
+          pop <- shp[[population]][which(shp[[district_membership]] == dists[i])]
+          pop <- pop*t(matrix(rep(pop,nrow(shp_subset)),nrow(shp_subset)))
+          comp[['FryerHolden']][i+ nd*(nmap-1)] <- sum(pop*dist_sqr)
+        }
       }
-     comp[['BoyceClark']][i] <- 1 - (sum(abs(radials/sum(radials)*100-6.25))/200) 
-    }
-    if('FryerHolden' %in% measure){
-      suppressWarnings(shp_subset <- st_coordinates(st_centroid(shp[shp[[district_membership]] == dists[i],])))
-      dist_sqr <- as.matrix(dist(shp_subset))^2
-      pop <- shp[[population]][which(shp[[district_membership]] == dists[i])]
-      pop <- pop*t(matrix(rep(pop,nrow(shp_subset)),nrow(shp_subset)))
-      comp[['FryerHolden']][i] <- sum(pop*dist_sqr)
     }
   }
+    if(('EdgesRemoved' %in% measure |'logSpanningTree' %in% measure) & is.null(adjacency)){
+      adjacency <- redist.adjacency(shp)
+    }
+    
+    if(('EdgesRemoved' %in% measure |'logSpanningTree' %in% measure)&!is.matrix(district_membership)){
+      district_membership <- as.matrix(district_membership)
+    }
   
+    if('logSpanningTree' %in% measure){
+      comp[['logSpanningTree']] <- log_st_map(g = adjacency, 
+                                              districts = district_membership, 
+                                              n_distr = nd)
+    }
+    
+    if('EdgesRemoved' %in% measure){
+      comp[['EdgesRemoved']] <- n_removed(g = adjacency, 
+                                          districts = district_membership, 
+                                          n_distr = nd)
+    }
+
   # Return results
   return(comp)
 }
