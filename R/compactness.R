@@ -20,7 +20,7 @@
 #' @param shp A SpatialPolygonsDataFrame or sf object. Required unless "EdgesRemoved"
 #' and "logSpanningTree" with adjacency provided.
 #' @param district_membership A numeric vector (if only one map) or matrix with one row 
-#' for each preinct and one column for each map. Required.
+#' for each precinct and one column for each map. Required.
 #' @param measure A vector with a string for each measure desired. "PolsbyPopper", 
 #' "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden",  
 #' "EdgesRemoved", and "logSpanningTree" are implemented. Defaults to "PolsbyPopper".
