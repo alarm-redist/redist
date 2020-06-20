@@ -28,9 +28,13 @@ redist.parity <- function(district_membership, population){
   }
   
   out <- apply(district_membership, 2, function(x){
+    # gets the district population using each column
     distpop <- tapply(population, x, sum)
+    # calculate the optimal pop
     parpop <- sum(distpop) / length(distpop)
+    # calculate the pop parity
     max(abs(distpop / parpop - 1))
   })
+  
   return(out)
 }
