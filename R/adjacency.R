@@ -8,6 +8,12 @@
 #'
 #' @examples
 redist.adjacency <- function(shp){
+  
+  # Check input
+  if(!any(c('sf','SpatialPolygonsDataFrame') %in% class(shp))){
+    stop('Please provide "shp" as an sf or sp object.')
+  }
+  
   # Create the adjacency with spdep function
   adj <- spdep::poly2nb(shp, queen = FALSE)
   
