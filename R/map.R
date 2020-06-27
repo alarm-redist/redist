@@ -20,6 +20,11 @@
 #' 
 #' @examples
 #' \dontrun{
+#' library(redist)
+#' data("fl25")
+#' data("algdat.p10")
+#' cds <- algdat.p10$cdmat[,100]
+#' 
 #' }
 #' 
 #' @export
