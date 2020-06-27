@@ -11,7 +11,7 @@
 #' @examples
 redist.parity <- function(district_membership, population){
   
-  if(!any(class(population %in% c('numeric', 'integer')))){
+  if(!any(class(population) %in% c('numeric', 'integer'))){
     stop('Please provide "population" as a numeric vector.')
   }
   
