@@ -37,4 +37,4 @@ SystemRequirements: gmp, libxml2
 Packaged: 2015-06-03 18:32:00 UTC; benfifield
 NeedsCompilation: yes
 BugReports: https://github.com/kosukeimai/redist/issues
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.1

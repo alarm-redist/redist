@@ -4,7 +4,8 @@
 \alias{algdat.p10}
 \title{All Partitions of 25 Precincts into 3 Congressional Districts
 (10\% Population Constraint)}
-\format{A list with five entries:
+\format{
+A list with five entries:
 \describe{
 \item{\code{adjlist}}{An adjacency list for the 25 precincts.}
 \item{\code{cdmat}}{A matrix containing every partition of the 25 precincts
@@ -16,7 +17,8 @@ segregation (Massey and Denton 1987) for each congressional district map in
 \code{cdmat}.}
 \item{\code{distancemat}}{A square matrix containing the squared distance
 between the centroids of any two precincts.}
-}}
+}
+}
 \usage{
 data("algdat.p10")
 }
