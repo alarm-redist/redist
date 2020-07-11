@@ -5,8 +5,8 @@
  * `districts` should have each column be a map
  */
 // TESTED
-NumericVector log_st_map(const List &g, const IntegerMatrix &districts,
-                         const IntegerVector &counties, int n_distr) {
+NumericVector log_st_map(const Graph &g, const umat &districts,
+                         const uvec &counties, int n_distr) {
     int N = districts.ncol();
     int n_cty = max(counties);
     NumericVector log_st(N);
@@ -27,9 +27,8 @@ NumericVector log_st_map(const List &g, const IntegerMatrix &districts,
  * Compute the log number of spanning trees for `district` intersect `county`
  */
 // TESTED
-double log_st_distr(const List &g, const IntegerMatrix &districts,
-                    const IntegerVector &counties, int idx,
-                    int district, int county) {
+double log_st_distr(const Graph &g, const umat &districts, const uvec &counties,
+                    int idx, int district, int county) {
     int V = g.size();
     // number of precincts in this district
     int K = 0;
@@ -44,13 +43,13 @@ double log_st_distr(const List &g, const IntegerMatrix &districts,
     }
     if (K <= 1) return 0;
 
-    mat adj = zeros(K-1, K-1); // adjacency matrix (minus 1st row and column)
+    sp_mat adj = zeros(K-1, K-1); // adjacency matrix (minus 1st row and column)
     for (int i = start; i < V; i++) {
         if (districts(i, idx) != district || counties[i] != county) continue;
 
         int prec = pos[i];
         if (prec < 0) continue;
-        std::vector<int> nbors = as<std::vector<int>>(g[i]);
+        std::vector<int> nbors = g[i];
         int length = nbors.size();
         int degree = 0; // keep track of index within subgraph
         for (int j = 0; j < length; j++) {
@@ -72,9 +71,8 @@ double log_st_distr(const List &g, const IntegerMatrix &districts,
  * Compute the log number of spanning trees for the contracted graph
  */
 // TESTED
-double log_st_contr(const List &g, const IntegerMatrix &districts,
-                    const IntegerVector &counties, int n_cty, int idx,
-                    int district) {
+double log_st_contr(const Graph &g, const umat &districts, const uvec &counties,
+                    int n_cty, int idx, int district) {
     if (n_cty == 1) return 0;
     int V = g.size();
     // number of counties in this district
@@ -96,13 +94,13 @@ double log_st_contr(const List &g, const IntegerMatrix &districts,
     }
     if (K <= 1) return 0;
 
-    mat adj = zeros(K-1, K-1);
+    sp_mat adj = zeros(K-1, K-1);
     for (int i = start; i < V; i++) {
         if (districts(i, idx) != district) continue;
 
         int cty = pos[i];
         if (cty < 0) continue; // skip 1st row, col
-        std::vector<int> nbors = as<std::vector<int>>(g[i]);
+        std::vector<int> nbors = g[i];
         int length = nbors.size();
         for (int j = 0; j < length; j++) {
             int nbor = nbors[j];
@@ -123,8 +121,7 @@ double log_st_contr(const List &g, const IntegerMatrix &districts,
  * Compute the number of edges removed
  */
 // TESTED
-// [[Rcpp::export]]
-NumericVector n_removed(const List &g, const IntegerMatrix &districts, int n_distr) {
+NumericVector n_removed(const Graph &g, const umat &districts, int n_distr) {
     int V = g.size();
     int N = districts.ncol();
     NumericVector n_rem(N);
@@ -132,7 +129,7 @@ NumericVector n_removed(const List &g, const IntegerMatrix &districts, int n_dis
         double removed = 0.0;
         for (int i = 0; i < V; i++) {
             int dist = districts(i, n);
-            std::vector<int> nbors = as<std::vector<int>>(g[i]);
+            std::vector<int> nbors = g[i];
             int length = nbors.size();
             for (int j = 0; j < length; j++) {
                 if (districts(nbors[j], n) != dist) removed += 1.0;

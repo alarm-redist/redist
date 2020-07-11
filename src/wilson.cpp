@@ -5,7 +5,8 @@
  * Sample a uniform spanning tree using Wilson's algorithm
  */
 // TESTED
-Tree sample_ust(List g, int &root, const IntegerVector &counties) {
+Tree sample_ust(List l, int &root, const uvec &counties) {
+    Graph g = list_to_graph(l);
     int V = g.size();
     Tree tree = init_tree(V);
     Multigraph mg = county_graph(g, counties);
@@ -19,9 +20,9 @@ Tree sample_ust(List g, int &root, const IntegerVector &counties) {
  * Sample a uniform spanning subtree of unvisited nodes using Wilson's algorithm
  */
 // TESTED
-Tree sample_sub_ust(const List &g, Tree &tree, int V, int &root,
+Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
                     const std::vector<bool> &ignore,
-                    const IntegerVector &counties, Multigraph &mg) {
+                    const uvec &counties, Multigraph &mg) {
     int n_county = mg.size();
     std::vector<bool> visited(V, false);
     std::vector<bool> c_visited(n_county, true);
@@ -48,7 +49,6 @@ Tree sample_sub_ust(const List &g, Tree &tree, int V, int &root,
     c_remaining--;
 
     // Connect counties
-    Rcout << "c";
     while (c_remaining > 0) {
         int add = rvtx(c_visited, n_county, c_remaining);
         // random walk from `add` until we hit the path
@@ -71,19 +71,14 @@ Tree sample_sub_ust(const List &g, Tree &tree, int V, int &root,
     }
 
     // Generate tree within each county
-    Rcout << "p";
     do {
-        Rcout << ".";
         int add = rvtx(visited, V, remaining);
         // random walk from `add` until we hit the path
-        Rcout << "_";
         std::vector<int> path = walk_until(g, add, visited, ignore, counties);
-        Rcout << "+";
         // update visited list and constructed tree
         int added = path.size();
         if (added == 0) { // bail
             Tree null_tree;
-            Rcout << "n";
             return null_tree;
         }
         remaining -= added - 1; // minus 1 because ending vertex already in tree
@@ -102,10 +97,10 @@ Tree sample_sub_ust(const List &g, Tree &tree, int V, int &root,
  * Random walk along `g` from `root` until something in `visited` is hit
  */
 // TESTED
-std::vector<int> walk_until(const List &g, int root,
+std::vector<int> walk_until(const Graph &g, int root,
                             const std::vector<bool> &visited,
                             const std::vector<bool> &ignore,
-                            const IntegerVector &counties) {
+                            const uvec &counties) {
     std::vector<int> path = {root};
     // walk until we hit something in `visited`
     int curr = root;
@@ -166,7 +161,7 @@ std::vector<std::vector<int>> walk_until_cty(Multigraph &mg, int root,
     int i;
     int max = visited.size() * 500;
     for (i = 0; i < max; i++) {
-        int prop_idx = std::floor(runif(1, 0, mg[curr].size())[0]);
+        int prop_idx = rint(mg[curr].size());
         int proposal = mg[curr][prop_idx][0];
         if (ignore[mg[curr][prop_idx][2]] || ignore[mg[curr][prop_idx][1]]) {
             continue;

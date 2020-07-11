@@ -8,7 +8,6 @@
 */
 
 /* .Call calls */
-extern SEXP _redist_calc_isoper_quo(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_calc_polsbypopper(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_calcPWDh(SEXP);
 extern SEXP _redist_countpartitions(SEXP);
@@ -25,7 +24,6 @@ extern SEXP _redist_smc_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SE
 extern SEXP _redist_swMH(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_redist_calc_isoper_quo",       (DL_FUNC) &_redist_calc_isoper_quo,        4},
     {"_redist_calc_polsbypopper",     (DL_FUNC) &_redist_calc_polsbypopper,      7},
     {"_redist_calcPWDh",              (DL_FUNC) &_redist_calcPWDh,               1},
     {"_redist_countpartitions",       (DL_FUNC) &_redist_countpartitions,        1},

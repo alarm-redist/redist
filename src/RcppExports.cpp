@@ -49,30 +49,30 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// n_removed
-NumericVector n_removed(const List& g, const IntegerMatrix& districts, int n_distr);
-RcppExport SEXP _redist_n_removed(SEXP gSEXP, SEXP districtsSEXP, SEXP n_distrSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const List& >::type g(gSEXP);
-    Rcpp::traits::input_parameter< const IntegerMatrix& >::type districts(districtsSEXP);
-    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
-    rcpp_result_gen = Rcpp::wrap(n_removed(g, districts, n_distr));
-    return rcpp_result_gen;
-END_RCPP
-}
 // log_st_map
-NumericVector log_st_map(const List& g, const IntegerMatrix& districts, const IntegerVector& counties, int n_distr);
+NumericVector log_st_map(const Graph& g, const IntegerMatrix& districts, const IntegerVector& counties, int n_distr);
 RcppExport SEXP _redist_log_st_map(SEXP gSEXP, SEXP districtsSEXP, SEXP countiesSEXP, SEXP n_distrSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const List& >::type g(gSEXP);
+    Rcpp::traits::input_parameter< const Graph& >::type g(gSEXP);
     Rcpp::traits::input_parameter< const IntegerMatrix& >::type districts(districtsSEXP);
     Rcpp::traits::input_parameter< const IntegerVector& >::type counties(countiesSEXP);
     Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
     rcpp_result_gen = Rcpp::wrap(log_st_map(g, districts, counties, n_distr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// n_removed
+NumericVector n_removed(const Graph& g, const IntegerMatrix& districts, int n_distr);
+RcppExport SEXP _redist_n_removed(SEXP gSEXP, SEXP districtsSEXP, SEXP n_distrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Graph& >::type g(gSEXP);
+    Rcpp::traits::input_parameter< const IntegerMatrix& >::type districts(districtsSEXP);
+    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
+    rcpp_result_gen = Rcpp::wrap(n_removed(g, districts, n_distr));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -108,20 +108,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const NumericVector& >::type pop(popSEXP);
     Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
     rcpp_result_gen = Rcpp::wrap(max_dev(districts, pop, n_distr));
-    return rcpp_result_gen;
-END_RCPP
-}
-// calc_isoper_quo
-NumericMatrix calc_isoper_quo(const IntegerMatrix& districts, const NumericVector& areas, const NumericMatrix& perims, int n_distr);
-RcppExport SEXP _redist_calc_isoper_quo(SEXP districtsSEXP, SEXP areasSEXP, SEXP perimsSEXP, SEXP n_distrSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const IntegerMatrix& >::type districts(districtsSEXP);
-    Rcpp::traits::input_parameter< const NumericVector& >::type areas(areasSEXP);
-    Rcpp::traits::input_parameter< const NumericMatrix& >::type perims(perimsSEXP);
-    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
-    rcpp_result_gen = Rcpp::wrap(calc_isoper_quo(districts, areas, perims, n_distr));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -172,13 +158,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // smc_plans
-IntegerMatrix smc_plans(int N, List g, const IntegerVector& counties, const IntegerVector& pop, int n_distr, double tol, double gamma, NumericVector& log_prob, double thresh, double alpha, int infl, int verbosity);
-RcppExport SEXP _redist_smc_plans(SEXP NSEXP, SEXP gSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP tolSEXP, SEXP gammaSEXP, SEXP log_probSEXP, SEXP threshSEXP, SEXP alphaSEXP, SEXP inflSEXP, SEXP verbositySEXP) {
+IntegerMatrix smc_plans(int N, List l, const IntegerVector& counties, const IntegerVector& pop, int n_distr, double tol, double gamma, NumericVector& log_prob, double thresh, double alpha, int infl, int verbosity);
+RcppExport SEXP _redist_smc_plans(SEXP NSEXP, SEXP lSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP tolSEXP, SEXP gammaSEXP, SEXP log_probSEXP, SEXP threshSEXP, SEXP alphaSEXP, SEXP inflSEXP, SEXP verbositySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< int >::type N(NSEXP);
-    Rcpp::traits::input_parameter< List >::type g(gSEXP);
+    Rcpp::traits::input_parameter< List >::type l(lSEXP);
     Rcpp::traits::input_parameter< const IntegerVector& >::type counties(countiesSEXP);
     Rcpp::traits::input_parameter< const IntegerVector& >::type pop(popSEXP);
     Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
@@ -189,7 +175,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< int >::type infl(inflSEXP);
     Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
-    rcpp_result_gen = Rcpp::wrap(smc_plans(N, g, counties, pop, n_distr, tol, gamma, log_prob, thresh, alpha, infl, verbosity));
+    rcpp_result_gen = Rcpp::wrap(smc_plans(N, l, counties, pop, n_distr, tol, gamma, log_prob, thresh, alpha, infl, verbosity));
     return rcpp_result_gen;
 END_RCPP
 }

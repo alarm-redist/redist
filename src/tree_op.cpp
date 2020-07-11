@@ -5,7 +5,7 @@
  */
 // TESTED
 int rvtx(const std::vector<bool> &visited, int size, int remaining) {
-    int idx = floor(runif(1, 0, remaining))[0];
+    int idx = rint(remaining);
     int accuml = 0;
     for (int i = 0; i < size - 1; i++) {
         accuml += 1 - visited[i];
@@ -18,22 +18,22 @@ int rvtx(const std::vector<bool> &visited, int size, int remaining) {
  * Generate a random neighbor to a vertex, except for the `last` vertex.
  */
 // TESTED
-int rnbor(const List &g, int vtx) {
-    std::vector<int> node = as<std::vector<int>>(g[vtx]);
-    return node[std::floor(runif(1, 0, node.size())[0])];
+int rnbor(const Graph &g, int vtx) {
+    int n_nbors = g[vtx].size();
+    return g[vtx][rint(n_nbors)];
 }
 
 /*
  * Make a county graph from a precinct graph and list of counties
  */
 // TESTED
-Multigraph county_graph(const List &g, const IntegerVector &counties) {
+Multigraph county_graph(const Graph &g, const uvec &counties) {
     int n_county = max(counties);
     Multigraph cg = init_multigraph(n_county);
 
     int V = g.size();
     for (int i = 0; i < V; i++) {
-        std::vector<int> nbors = as<std::vector<int>>(g[i]);
+        std::vector<int> nbors = g[i];
         int length = nbors.size();
         int county = counties[i] - 1;
         for (int j = 0; j < length; j++) {
@@ -72,12 +72,24 @@ Tree init_tree(int V) {
     return tree;
 }
 
+/*
+ * Convert R adjacency list to Graph object (vector of vectors of ints).
+ */
+Graph list_to_graph(const List &l) {
+    int V = l.size();
+    Graph g;
+    for (int i = 0; i < V; i++) {
+        g.push_back(as<std::vector<int>>((IntegerVector) l[i]));
+    }
+    return g;
+}
+
 
 /*
  * Count population below each node in tree
  */
 // TESTED
-double tree_pop(Tree &ust, int vtx, const IntegerVector &pop,
+double tree_pop(Tree &ust, int vtx, const uvec &pop,
                 std::vector<int> &pop_below, std::vector<int> &parent) {
     double pop_at = pop[vtx];
     std::vector<int> *nbors = &ust[vtx];

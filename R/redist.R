@@ -892,6 +892,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                        adapt_eprob = adapt_eprob)
 
         class(algout) <- "redist"
+        algout$algorithm = "mcmc"
 
         ## Save random number state if setting the seed
         if(!is.null(rngseed)){
