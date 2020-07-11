@@ -20,14 +20,7 @@ Description: Enables researchers to sample redistricting plans from a pre-
 Depends:
     R (>= 3.1.0)
 Imports:
-    Rcpp (>= 0.11.0),
-    spdep,
-    sp,
-    sf,
-    coda,
-    parallel,
-    doParallel,
-    foreach
+    Rcpp (>= 0.11.0)
 Suggests:
     testthat,
     Rmpi

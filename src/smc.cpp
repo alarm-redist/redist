@@ -1,4 +1,9 @@
-// [[Rcpp::depends(RcppArmadillo)]]
+/********************************************************
+ * Author: Cory McCartan
+ * Institution: Harvard University
+ * Date Created: 2020/11
+ * Purpose: Sequential Monte Carlo redistricting sampler
+ ********************************************************/
 
 #include "smc.h"
 
@@ -8,13 +13,14 @@
  * Sample `N` redistricting plans on map `g`, ensuring that the maximum
  * population deviation is within `tol`
  */
-IntegerMatrix smc_plans(int N, List g, const IntegerVector &counties,
-                        const IntegerVector &pop, int n_distr, double tol,
+IntegerMatrix smc_plans(int N, List l, const uvec &counties,
+                        const uvec &pop, int n_distr, double tol,
                         double gamma, NumericVector &log_prob, double thresh,
                         double alpha, int infl, int verbosity) {
+    Graph g = list_to_graph(l);
     int V = g.size();
     int N_max = infl * N;
-    IntegerMatrix districts(V, N_max);
+    umat districts(V, N_max);
     double total_pop = sum(pop);
     double distr_pop = total_pop / n_distr;
 
@@ -22,8 +28,8 @@ IntegerMatrix smc_plans(int N, List g, const IntegerVector &counties,
         Rcout << "Sampling " << N << " " << V << "-precinct maps with " << n_distr
               << " districts and population tolerance " << tol*100 << "%.\n";
 
-    NumericVector pop_left(N_max, total_pop);
-    NumericVector lp(N_max, 0.0);
+    vec pop_left(N_max, total_pop);
+    vec lp(N_max, 0.0);
     Multigraph cg = county_graph(g, counties);
 
     int k;
@@ -87,41 +93,28 @@ IntegerMatrix smc_plans(int N, List g, const IntegerVector &counties,
 /*
  * Resample partially-drawn maps according to their weights.
  */
-void resample_maps(int N_sample, int N_new, double alpha, IntegerMatrix &districts,
-                   NumericVector &lp, NumericVector &pop_left) {
+void resample_maps(int N_sample, int N_new, double alpha, umat &districts,
+                   vec &lp, vec &pop_left) {
     if (N_sample == 0) return;
-    int V = districts.nrow();
-    std::vector<int> orig_dist(V*N_sample);
-    for (int i = 0; i < N_sample; i++) {
-        int start = V*i;
-        for (int j = 0; j < V; j++) {
-            orig_dist[start+j] = districts(j, i);
-        }
-    }
 
-    NumericVector wgt = exp(-alpha * lp[Range(0, N_sample - 1)]);
+    vec wgt = exp(-alpha * lp.subvec(0, N_sample - 1));
     lp = lp * (1 - alpha);
-    IntegerVector idxs(N_new);
-    idxs= sample(N_sample, N_new, true, wgt, false);
-    lp = lp[idxs];
-    pop_left = pop_left[idxs];
-    for (int i = 0; i < N_new; i++) {
-        int start = V*idxs[i];
-        for (int j = 0; j < V; j++) {
-            districts(j, i) = orig_dist[start + j];
-        }
-    }
+
+    uvec idxs = as<uvec>(sample(N_sample, N_new, true, wgt, false));
+
+    lp = lp.elem(idxs);
+    pop_left = pop_left.elem(idxs);
+    districts = districts.cols(idxs);
 }
 
 
 /*
  * Split off a piece from each map in `districts`, keeping deviation within `tol`
  */
-void split_maps(List g, const IntegerVector &counties, Multigraph &cg,
-                const IntegerVector &pop, IntegerMatrix &districts,
-                NumericVector &lp, NumericVector &pop_left, int N, int n_distr,
-                int dist_ctr, double distr_pop, double tol, double gamma,
-                int k, int verbosity) {
+void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
+                const uvec &pop, umat &districts, vec &lp, vec &pop_left,
+                int N, int n_distr, int dist_ctr, double distr_pop, double tol,
+                double gamma, int k, int verbosity) {
     // absolute bounds for district populations
     double upper = distr_pop * (1 + tol);
     double lower = distr_pop * (1 - tol);
@@ -169,16 +162,16 @@ void split_maps(List g, const IntegerVector &counties, Multigraph &cg,
     // ensure the leftover slots don't get sampled
     int N_max = lp.size();
     for (int i = N; i < N_max; i++) {
-        lp[i] = -log(0);
+        lp[i] = -log(0.0);
     }
 }
 
 /*
  * Split a map into two pieces with population lying between `lower` and `upper`
  */
-double split_map(List g, const IntegerVector &counties, Multigraph &cg,
+double split_map(const Graph &g, const uvec &counties, Multigraph &cg,
                  IntegerMatrix::Column districts, int dist_ctr,
-                 const IntegerVector &pop, double total_pop,
+                 const uvec &pop, double total_pop,
                  double &lower, double upper, double target, int k) {
     int V = g.size();
 
@@ -188,12 +181,12 @@ double split_map(List g, const IntegerVector &counties, Multigraph &cg,
 
     int root;
     ust = sample_sub_ust(g, ust, V, root, ignore, counties, cg);
-    if (ust.size() == 0) return -log(0);
+    if (ust.size() == 0) return -log(0.0);
 
     // set `lower` as a way to return population of new district
     lower = cut_districts(ust, k, root, districts, dist_ctr, pop, total_pop,
                           lower, upper, target);
-    if (lower == 0) return -log(0); // reject sample
+    if (lower == 0) return -log(0.0); // reject sample
 
     return log_boundary(g, districts, 0, dist_ctr) - log(k);
 }
@@ -204,7 +197,7 @@ double split_map(List g, const IntegerVector &counties, Multigraph &cg,
  */
 // TESTED
 double cut_districts(Tree &ust, int k, int root, IntegerMatrix::Column districts,
-                     int dist_ctr, const IntegerVector &pop, double total_pop,
+                     int dist_ctr, const uvec &pop, double total_pop,
                      double lower, double upper, double target) {
     int V = ust.size();
     // create list that points to parents & computes population below each vtx
@@ -232,13 +225,13 @@ double cut_districts(Tree &ust, int k, int root, IntegerMatrix::Column districts
             is_ok.push_back(lower <= total_pop - below && total_pop - below <= upper);
         }
     }
-    if ((int) candidates.size() < k) return 0;
+    if ((int) candidates.size() < k) return 0.0;
 
-    int idx = std::floor(runif(1, 0, k)[0]);
+    int idx = rint(k);
     idx = select_k(deviances, idx + 1);
     int cut_at = std::abs(candidates[idx]);
     // reject sample
-    if (!is_ok[idx]) return 0;
+    if (!is_ok[idx]) return 0.0;
 
     // find index of node to cut at
     std::vector<int> *siblings = &ust[parent[cut_at]];
@@ -264,12 +257,11 @@ double cut_districts(Tree &ust, int k, int root, IntegerMatrix::Column districts
 /*
  * Choose k and multiplier for efficient, accurate sampling
  */
-void adapt_parameters(List g, int &k, double &prob, int N_adapt, int valid,
-                      const NumericVector &lp, double thresh,
-                      double tol, const IntegerMatrix &districts,
-                      const IntegerVector &counties, Multigraph &cg,
-                      const IntegerVector &pop, const NumericVector &pop_left,
-                      double target) {
+void adapt_parameters(const Graph &g, int &k, double &prob, int N_adapt, int valid,
+                      const vec &lp, double thresh, double tol,
+                      const umat &districts, const uvec &counties,
+                      Multigraph &cg, const uvec &pop,
+                      const vec &pop_left, double target) {
     // sample some spanning trees and compute deviances
     int V = g.size();
     int k_max = std::min(10 + ((int) std::sqrt(V)), V - 1); // heuristic
@@ -329,50 +321,3 @@ void adapt_parameters(List g, int &k, double &prob, int N_adapt, int valid,
     if (prob == 0.0) prob = 1.0 / N_max; // happens sometimes
 }
 
-
-/*
- * Partition `x` and its indices `idxs` between `right` and `left` by `pivot`
- */
-// TESTED
-void partition_vec(std::vector<double> &x, std::vector<int> &idxs, int left,
-                   int right, int &pivot) {
-    double pivot_value = x[pivot];
-    std::swap(x[pivot], x[right]);
-    std::swap(idxs[pivot], idxs[right]);
-    pivot = left;
-    for (int i = left; i < right; i++) {
-        if (x[i] < pivot_value) {
-            std::swap(x[pivot], x[i]);
-            std::swap(idxs[pivot], idxs[i]);
-            pivot++;
-        }
-    }
-    std::swap(x[right], x[pivot]);
-    std::swap(idxs[right], idxs[pivot]);
-}
-
-/*
- * Get the index of the k-th smallest element of x
- */
-// TESTED
-int select_k(std::vector<double> x, int k) {
-    int right = x.size() - 1;
-    int left = 0;
-    std::vector<int> idxs(right + 1);
-    for (int i = 0; i <= right; i++) idxs[i] = i;
-
-    k--;
-    while (true) {
-        if (left == right)
-            return idxs[left];
-        int pivot = std::floor(runif(1, left, right)[0]);
-        partition_vec(x, idxs, left, right, pivot);
-        if (k == pivot) {
-            return idxs[k];
-        } else if (k < pivot) {
-            right = pivot - 1;
-        } else {
-            left = pivot + 1;
-        }
-    }
-}

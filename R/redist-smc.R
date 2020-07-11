@@ -111,15 +111,18 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
         stop("`adapt_k_thresh` parameter must lie in [0, 1].")
     if (seq_alpha < 0 | seq_alpha > 1)
         stop("`seq_alpha` parameter must lie in [0, 1].")
+    if (nsims < 1)
+        stop("`nsims` must be positive.")
 
     if (missing(counties)) counties = rep(1, V)
     if (length(unique(counties)) != max(counties))
         stop("County numbers must run from 1 to n_county with no interruptions.")
 
     # sanity-check everything
-    preproc = redist.preproc(adjobj, popvec, rep(0, V), ndists, popcons,
-                             temper="none", constraint="none")
-    adjlist = preproc$data$adjlist
+    #preproc = redist.preproc(adjobj, popvec, rep(0, V), ndists, popcons,
+    #                         temper="none", constraint="none")
+    #adjlist = preproc$data$adjlist
+    adjlist = adjobj
     class(adjlist) = "list"
 
     verbosity = 1
@@ -164,7 +167,8 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
         counties = counties,
         adapt_k_thresh = adapt_k_thresh,
         seq_alpha = seq_alpha,
-        max_oversample = max_oversample
+        max_oversample = max_oversample,
+        algorithm="smc"
     )
     class(algout) = "redist"
 
@@ -180,51 +184,4 @@ is_ci = function(x, wgt, conf=0.99) {
 
 n_eff = function(wgt) {
     length(wgt) * mean(wgt)^2 / mean(wgt^2)
-}
-n_eff_var = function(wgt) {
-    sum(wgt^2)^2 / sum(wgt^4)
-}
-n_eff_skew = function(wgt) {
-    sum(wgt^2)^3 / sum(wgt^3)^2
-}
-n_eff_f = function(wgt, x) {
-    wgt = wgt * abs(x)
-    wgt = wgt / sum(wgt)
-    1 / sum(wgt^2)
-}
-
-
-######################
-# CALCULATIONS
-perim_matrix = function(geom, g) {
-    suppressMessages(library(sf))
-
-    V = length(g)
-    perims = 0*diag(V)
-    diag(perims) = as.numeric(st_length(st_cast(geom, "MULTILINESTRING")))
-    accounted = rep(0, V)
-    pb = progress_estimated(V)
-    for (i in 1:V) {
-        for (j in g[[i]]) {
-            if (j < i) next;
-            perims[i, j+1] = suppressMessages(st_intersection(geom[i], geom[j+1])) %>%
-                st_length %>% as.numeric
-            perims[j+1, i] = perims[i, j+1]
-            accounted[i] = accounted[i] + perims[i, j+1]
-            accounted[j+1] = accounted[j+1] + perims[i, j+1]
-        }
-        pb$tick()$print()
-    }
-    diag(perims) = round(diag(perims) - accounted, 2)
-
-    perims
-}
-
-isoper_quo = function(geom, g, perims, maps) {
-    suppressMessages(library(sf))
-
-    k = max(maps[,1])
-    areas = as.numeric(st_area(geom))
-
-    colMeans(calc_isoper_quo(maps, areas, perims, k))
 }

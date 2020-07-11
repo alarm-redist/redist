@@ -13,13 +13,13 @@ int rvtx(const std::vector<bool> &visited, int size, int remaining);
  * Generate a random neighbor to a vertex, except for the `last` vertex.
  */
 // TESTED
-int rnbor(const List &g, int vtx);
+int rnbor(const Graph &g, int vtx);
 
 /*
  * Make a county graph from a precinct graph and list of counties
  */
 // TESTED
-Multigraph county_graph(const List &g, const IntegerVector &counties);
+Multigraph county_graph(const Graph &g, const uvec &counties);
 
 /*
  * Initialize empty multigraph structure on graph with `V` vertices
@@ -33,12 +33,16 @@ Multigraph init_multigraph(int V);
 // TESTED
 Tree init_tree(int V);
 
+/*
+ * Convert R adjacency list to Graph object (vector of vectors of ints).
+ */
+Graph list_to_graph(const List &l);
 
 /*
  * Count population below each node in tree
  */
 // TESTED
-double tree_pop(Tree &ust, int vtx, const IntegerVector &pop,
+double tree_pop(Tree &ust, int vtx, const uvec &pop,
                 std::vector<int> &pop_below, std::vector<int> &parent);
 
 /*

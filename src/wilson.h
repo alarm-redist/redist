@@ -6,23 +6,23 @@
 /*
  * Sample a uniform spanning tree using Wilson's algorithm
  */
-Tree sample_ust(List g, int &root, const IntegerVector &counties);
+Tree sample_ust(List g, int &root, const uvec &counties);
 
 /*
  * Sample a uniform spanning subtree of unvisited nodes using Wilson's algorithm
  */
-Tree sample_sub_ust(const List &g, Tree &tree, int V, int &root,
+Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
                     const std::vector<bool> &ignore,
-                    const IntegerVector &counties, Multigraph &mg);
+                    const uvec &counties, Multigraph &mg);
 
 /*
  * Random walk along `g` from `root` until something in `visited` is hit
  */
 // TESTED
-std::vector<int> walk_until(const List &g, int root,
+std::vector<int> walk_until(const Graph &g, int root,
                             const std::vector<bool> &visited,
                             const std::vector<bool> &ignore,
-                            const IntegerVector &counties);
+                            const uvec &counties);
 
 /*
  * Erase loops in `path` that would be created by adding `proposal` to path

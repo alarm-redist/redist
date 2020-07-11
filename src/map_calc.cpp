@@ -4,13 +4,13 @@
  * Compute the logarithm of the graph theoretic length of the boundary between
  * `distr_root` and `distr_other`, where the root of `ust` is in `distr_root`
  */
-double log_boundary(const List &g, const IntegerMatrix::Column &districts,
+double log_boundary(const Graph &g, const IntegerMatrix::Column &districts,
                     int distr_root, int distr_other) {
     int V = g.size();
 
     int count = 0; // number of cuttable edges to create eq-pop districts
     for (int i = 0; i < V; i++) {
-        std::vector<int> nbors = as<std::vector<int>>(g[i]);
+        std::vector<int> nbors = g[i];
         int length = nbors.size();
         if (districts[i] != distr_root) continue; // same side of boundary as root
         for (int j = 0; j < length; j++) {
@@ -30,8 +30,7 @@ double log_boundary(const List &g, const IntegerMatrix::Column &districts,
  * Compute the deviation from the equal population constraint.
  */
 // TESTED
-NumericMatrix pop_dev(const IntegerMatrix &districts,
-                      const NumericVector &pop, int n_distr) {
+NumericMatrix pop_dev(const umat &districts, const uvec &pop, int n_distr) {
     int N = districts.ncol();
     int V = districts.nrow();
     double target_pop = sum(pop) / n_distr;
@@ -53,8 +52,7 @@ NumericMatrix pop_dev(const IntegerMatrix &districts,
  * Compute the maximum deviation from the equal population constraint.
  */
 // TESTED
-NumericVector max_dev(const IntegerMatrix &districts,
-                      const NumericVector &pop, int n_distr) {
+NumericVector max_dev(const umat &districts, const uvec &pop, int n_distr) {
     int N = districts.ncol();
     NumericMatrix dev = pop_dev(districts, pop, n_distr);
     NumericVector max_d(N);
@@ -67,8 +65,8 @@ NumericVector max_dev(const IntegerMatrix &districts,
 /*
  * Calculate the deviation for cutting at every edge in a spanning tree.
  */
-void tree_dev(Tree &ust, int root, vec res,
-              const IntegerVector &pop, double total_pop, double target) {
+void tree_dev(Tree &ust, int root, vec res, const uvec &pop,
+              double total_pop, double target) {
     int V = pop.size();
     std::vector<int> pop_below(V);
     std::vector<int> parent(V);
@@ -83,37 +81,4 @@ void tree_dev(Tree &ust, int root, vec res,
     }
 
     std::sort(res.begin(), res.end());
-}
-
-
-/*
- * Compute the isoperimetric quotient for maps, given the area of each precinct
- * and a matrix of pariwise boundary lengths (with external boundary lengths
- * along the diagonal)
- */
-NumericMatrix calc_isoper_quo(const IntegerMatrix &districts,
-                              const NumericVector &areas,
-                              const NumericMatrix &perims, int n_distr) {
-    int N = districts.ncol();
-    int V = districts.nrow();
-    NumericMatrix comp(n_distr, N);
-    for (int n = 0; n < N; n++) {
-        std::vector<double> area(n_distr, 0.0);
-        std::vector<double> perim(n_distr, 0.0);
-        for (int i = 0; i < V; i++) {
-            int distr = districts(i, n) - 1;
-            area[distr] += areas[i];
-            perim[distr] += perims(i, i);
-            for (int j = 0; j < V; j++) {
-                if (districts(j, n) - 1 != distr) {
-                   perim[distr] += perims(i, j);
-                }
-            }
-        }
-        for (int k = 0; k < n_distr; k++) {
-            comp(k, n) = (4 * M_PI * area[k] / perim[k]) / perim[k];
-        }
-    }
-
-    return comp;
 }

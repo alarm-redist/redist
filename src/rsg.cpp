@@ -7,7 +7,7 @@
 using namespace Rcpp;
 
 // [[Rcpp::export]]
-List rsg (List adj_list,
+List rsg(List adj_list,
                NumericVector population,
                int Ndistrict,
                double target_pop,
