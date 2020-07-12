@@ -18,19 +18,24 @@ IntegerMatrix smc_plans(int N, List l, const uvec &counties,
                         double gamma, NumericVector &log_prob, double thresh,
                         double alpha, int infl, int verbosity) {
     Graph g = list_to_graph(l);
+    Multigraph cg = county_graph(g, counties);
     int V = g.size();
     int N_max = infl * N;
-    umat districts(V, N_max);
+    umat districts(V, N_max, fill::zeros);
     double total_pop = sum(pop);
     double distr_pop = total_pop / n_distr;
 
-    if (verbosity >= 1)
-        Rcout << "Sampling " << N << " " << V << "-precinct maps with " << n_distr
+    if (verbosity >= 1) {
+        Rcout << "Sampling " << N << " " << V << "-unit maps with " << n_distr
               << " districts and population tolerance " << tol*100 << "%.\n";
+        if (cg.size() > 1)
+            Rcout << "Ensuring no more than " << n_distr - 1 << " splits of the "
+                  << cg.size() << " administrative units.\n";
+    }
 
-    vec pop_left(N_max, total_pop);
-    vec lp(N_max, 0.0);
-    Multigraph cg = county_graph(g, counties);
+    vec pop_left(N_max);
+    pop_left.fill(total_pop);
+    vec lp(N_max, fill::zeros);
 
     int k;
     int N_adapt = std::min((int) std::floor(4000.0 / sqrt(V)), N_max);
@@ -44,13 +49,14 @@ IntegerMatrix smc_plans(int N, List l, const uvec &counties,
         // find k and multipliers
         adapt_parameters(g, k, prob, N_adapt, valid, lp, thresh, tol, districts,
                          counties, cg, pop, pop_left, distr_pop);
+
         int N_new = std::ceil(N / prob);
         if (ctr == n_distr - 1) // safety margin for last step
             N_new *= 10;
         N_new = std::min(N_new, N_max);
 
         if (verbosity >= 3)
-            printf("Using k=%d for estimated success probability (%.2f%%)\n",
+            printf("Using k=%d for estimated success probability of %.2f%%\n",
                    k, 100.0*prob);
 
         // Resample
@@ -60,7 +66,10 @@ IntegerMatrix smc_plans(int N, List l, const uvec &counties,
         // perform sampling
         split_maps(g, counties, cg, pop, districts, lp, pop_left, N_sample,
                    n_distr, ctr, distr_pop, tol, gamma, k, verbosity);
-        valid = sum(!is_infinite(lp));
+        valid = 0;
+        for (int i = 0; i < N_sample; i++) {
+            valid += std::isfinite(lp(i));
+        }
 
         if (valid == 0) {
             Rcout << "No valid samples at stage " << ctr << "; stopping sampling.\n"
@@ -70,21 +79,24 @@ IntegerMatrix smc_plans(int N, List l, const uvec &counties,
         }
 
         if (verbosity >= 2)
-            printf("%d valid samples (%.1f%%)\n", valid, (100.0*valid)/N_sample);
+            printf("%d valid samples (%.1f%% of total)\n", valid, (100.0*valid)/N_sample);
 
-        //Rcpp::checkUserInterrupt();
+        Rcpp::checkUserInterrupt();
     }
 
-    //N = std::min(N, valid);
     resample_maps(N_sample, valid, alpha, districts, lp, pop_left);
 
     // Output districts (and set final district label to n_distr rather than 0)
+    N = std::min(N, valid);
     IntegerMatrix distr_ret(V, N);
+    int idx = 0;
     for (int i = 0; i < N; i++) {
+        if (std::isinf(lp(i))) continue;
+        log_prob(idx) = lp(i);
         for (int j = 0; j < V; j++) {
-            distr_ret(j, i) = districts(j, i) == 0 ? n_distr : districts(j, i);
+            distr_ret(j, idx) = districts(j, i) == 0 ? n_distr : districts(j, i);
         }
-        log_prob[i] = lp[i];
+        idx++;
     }
 
     return distr_ret;
@@ -100,7 +112,7 @@ void resample_maps(int N_sample, int N_new, double alpha, umat &districts,
     vec wgt = exp(-alpha * lp.subvec(0, N_sample - 1));
     lp = lp * (1 - alpha);
 
-    uvec idxs = as<uvec>(sample(N_sample, N_new, true, wgt, false));
+    uvec idxs = as<uvec>(Rcpp::sample(N_sample, N_new, true, wrap(wgt), false));
 
     lp = lp.elem(idxs);
     pop_left = pop_left.elem(idxs);
@@ -124,15 +136,13 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     int refresh = N / 10; // how often to print update statements
 
     for (int i = 0; i < N; i++) {
-        double lower_s = std::max(lower, pop_left[i] - new_size * upper);
-        double upper_s = std::min(upper, pop_left[i] - new_size * lower);
+        double lower_s = std::max(lower, pop_left(i) - new_size * upper);
+        double upper_s = std::min(upper, pop_left(i) - new_size * lower);
         // split
-        double inc_lp = split_map(g, counties, cg,
-                          (IntegerMatrix::Column) districts(_, i), dist_ctr,
-                          pop, pop_left[i], lower_s, upper_s, distr_pop, k);
+        double inc_lp = split_map(g, counties, cg, districts.col(i), dist_ctr,
+                          pop, pop_left(i), lower_s, upper_s, distr_pop, k);
 
-        //if (!std::isinf(inc_lp)) {
-        if (false) {
+        if (gamma != 1 && std::isfinite(inc_lp)) {
             double log_st = 0;
             for (int j = 1; j <= n_cty; j++) {
                 log_st += log_st_distr(g, districts, counties, i, dist_ctr, j);
@@ -148,10 +158,10 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
 
             inc_lp += (1 - gamma) * log_st;
         }
-        lp[i] += inc_lp;
+        lp(i) += inc_lp;
 
         // `lower_s` now contains the population of the newly-split district
-        pop_left[i] -= lower_s;
+        pop_left(i) -= lower_s;
 
         if (verbosity >= 2 && refresh > 0 && (i+1) % refresh == 0) {
             printf("Iteration %'6d / %'d\n", i+1, N);
@@ -162,7 +172,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     // ensure the leftover slots don't get sampled
     int N_max = lp.size();
     for (int i = N; i < N_max; i++) {
-        lp[i] = -log(0.0);
+        lp(i) = -log(0.0);
     }
 }
 
@@ -170,14 +180,13 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
  * Split a map into two pieces with population lying between `lower` and `upper`
  */
 double split_map(const Graph &g, const uvec &counties, Multigraph &cg,
-                 IntegerMatrix::Column districts, int dist_ctr,
-                 const uvec &pop, double total_pop,
-                 double &lower, double upper, double target, int k) {
+                 subview_col<uword> districts, int dist_ctr, const uvec &pop,
+                 double total_pop, double &lower, double upper, double target, int k) {
     int V = g.size();
 
     Tree ust = init_tree(V);
     std::vector<bool> ignore(V);
-    for (int i = 0; i < V; i++) ignore[i] = districts[i] != 0;
+    for (int i = 0; i < V; i++) ignore[i] = districts(i) != 0;
 
     int root;
     ust = sample_sub_ust(g, ust, V, root, ignore, counties, cg);
@@ -196,7 +205,7 @@ double split_map(const Graph &g, const uvec &counties, Multigraph &cg,
  * Cut district into two pieces of roughly equal population
  */
 // TESTED
-double cut_districts(Tree &ust, int k, int root, IntegerMatrix::Column districts,
+double cut_districts(Tree &ust, int k, int root, subview_col<uword> &districts,
                      int dist_ctr, const uvec &pop, double total_pop,
                      double lower, double upper, double target) {
     int V = ust.size();
@@ -209,10 +218,10 @@ double cut_districts(Tree &ust, int k, int root, IntegerMatrix::Column districts
     std::vector<int> candidates; // candidate edges to cut,
     std::vector<double> deviances; // how far from target pop.
     std::vector<bool> is_ok; // whether they meet constraints
-    int distr_root = districts[root];
+    int distr_root = districts(root);
     for (int i = 0; i < V; i++) {
-        if (districts[i] != distr_root || i == root) continue;
-        double below = pop_below[i];
+        if (districts(i) != distr_root || i == root) continue;
+        double below = pop_below.at(i);
         double dev1 = std::abs(below - target);
         double dev2 = std::abs(total_pop - below - target);
         if (dev1 < dev2) {
@@ -246,10 +255,10 @@ double cut_districts(Tree &ust, int k, int root, IntegerMatrix::Column districts
 
     if (candidates[idx] > 0) { // if the newly cut district is final
         assign_district(ust, districts, cut_at, dist_ctr);
-        return pop_below[cut_at];
+        return pop_below.at(cut_at);
     } else { // if the root-side district is final
         assign_district(ust, districts, root, dist_ctr);
-        return total_pop - pop_below[cut_at];
+        return total_pop - pop_below.at(cut_at);
     }
 }
 
@@ -264,16 +273,16 @@ void adapt_parameters(const Graph &g, int &k, double &prob, int N_adapt, int val
                       const vec &pop_left, double target) {
     // sample some spanning trees and compute deviances
     int V = g.size();
-    int k_max = std::min(10 + ((int) std::sqrt(V)), V - 1); // heuristic
-    int N_max = districts.ncol();
+    int k_max = std::min(20 + ((int) std::sqrt(V)), V - 1); // heuristic
+    int N_max = districts.n_cols;
     N_adapt = std::min(N_adapt, valid);
 
-    mat devs(V-1, N_adapt);
-    std::vector<double> distr_ok(k_max+1, 0.0);
+    std::vector<std::vector<double>> devs;
+    vec distr_ok(k_max+1, fill::zeros);
     int root;
     std::vector<bool> ignore(V);
     for (int i = 0, idx = 0; i < N_max && idx < N_adapt; i++, idx++) {
-        if (std::isinf(lp[i])) { // skip if not valid
+        if (std::isinf(lp(i))) { // skip if not valid
             idx--;
             continue;
         }
@@ -286,24 +295,29 @@ void adapt_parameters(const Graph &g, int &k, double &prob, int N_adapt, int val
             continue;
         }
 
-        tree_dev(ust, root, devs.unsafe_col(idx), pop, pop_left[i], target);
-        int n_ok = (int) sum(devs.col(idx) <= tol);
-        distr_ok[n_ok] += 1.0 / N_adapt;
+        devs.push_back(tree_dev(ust, root, pop, pop_left(i), target));
+        int n_ok = 0;
+        for (int j = 0; j < V-1; j++) {
+            n_ok += devs.at(idx).at(j) <= tol;
+        }
+
+        if (n_ok <= k_max)
+            distr_ok(n_ok) += 1.0 / N_adapt;
     }
 
     // For each k, compute pr(selected edge within top k),
     // among maps where valid edge was selected
-    std::vector<int> idxs(N_adapt);
+    uvec idxs(N_adapt);
     for (k = 1; k <= k_max; k++) {
-        idxs = as<std::vector<int>>(sample(k, N_adapt, true, R_NilValue, false));
+        idxs = as<uvec>(Rcpp::sample(k, N_adapt, true, R_NilValue, false));
         double sum_within = 0;
         int n_ok = 0;
         for (int i = 0; i < N_adapt; i++) {
-            double dev = devs(idxs[i], i);
+            double dev = devs.at(i).at(idxs[i]);
             if (dev > tol) continue;
             else n_ok++;
             for (int j = 0; j < N_adapt; j++) {
-                sum_within += ((double) (dev <= devs(k-1, j))) / N_adapt;
+                sum_within += ((double) (dev <= devs.at(j).at(k-1))) / N_adapt;
             }
         }
         if (sum_within / n_ok >= thresh) break;
@@ -316,7 +330,7 @@ void adapt_parameters(const Graph &g, int &k, double &prob, int N_adapt, int val
 
     prob = 0;
     for (int i = 0; i <= k; i++) {
-        prob += ((double) i / k) * distr_ok[i];
+        prob += ((double) i / k) * distr_ok(i);
     }
     if (prob == 0.0) prob = 1.0 / N_max; // happens sometimes
 }

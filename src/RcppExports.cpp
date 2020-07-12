@@ -50,27 +50,27 @@ BEGIN_RCPP
 END_RCPP
 }
 // log_st_map
-NumericVector log_st_map(const Graph& g, const IntegerMatrix& districts, const IntegerVector& counties, int n_distr);
+NumericVector log_st_map(const Graph& g, const arma::umat& districts, const arma::uvec& counties, int n_distr);
 RcppExport SEXP _redist_log_st_map(SEXP gSEXP, SEXP districtsSEXP, SEXP countiesSEXP, SEXP n_distrSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const Graph& >::type g(gSEXP);
-    Rcpp::traits::input_parameter< const IntegerMatrix& >::type districts(districtsSEXP);
-    Rcpp::traits::input_parameter< const IntegerVector& >::type counties(countiesSEXP);
+    Rcpp::traits::input_parameter< const arma::umat& >::type districts(districtsSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
     Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
     rcpp_result_gen = Rcpp::wrap(log_st_map(g, districts, counties, n_distr));
     return rcpp_result_gen;
 END_RCPP
 }
 // n_removed
-NumericVector n_removed(const Graph& g, const IntegerMatrix& districts, int n_distr);
+NumericVector n_removed(const Graph& g, const arma::umat& districts, int n_distr);
 RcppExport SEXP _redist_n_removed(SEXP gSEXP, SEXP districtsSEXP, SEXP n_distrSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const Graph& >::type g(gSEXP);
-    Rcpp::traits::input_parameter< const IntegerMatrix& >::type districts(districtsSEXP);
+    Rcpp::traits::input_parameter< const arma::umat& >::type districts(districtsSEXP);
     Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
     rcpp_result_gen = Rcpp::wrap(n_removed(g, districts, n_distr));
     return rcpp_result_gen;
@@ -99,13 +99,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // max_dev
-NumericVector max_dev(const IntegerMatrix& districts, const NumericVector& pop, int n_distr);
+NumericVector max_dev(const arma::umat& districts, const arma::uvec& pop, int n_distr);
 RcppExport SEXP _redist_max_dev(SEXP districtsSEXP, SEXP popSEXP, SEXP n_distrSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const IntegerMatrix& >::type districts(districtsSEXP);
-    Rcpp::traits::input_parameter< const NumericVector& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< const arma::umat& >::type districts(districtsSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
     Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
     rcpp_result_gen = Rcpp::wrap(max_dev(districts, pop, n_distr));
     return rcpp_result_gen;
@@ -158,15 +158,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // smc_plans
-IntegerMatrix smc_plans(int N, List l, const IntegerVector& counties, const IntegerVector& pop, int n_distr, double tol, double gamma, NumericVector& log_prob, double thresh, double alpha, int infl, int verbosity);
+IntegerMatrix smc_plans(int N, List l, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double tol, double gamma, NumericVector& log_prob, double thresh, double alpha, int infl, int verbosity);
 RcppExport SEXP _redist_smc_plans(SEXP NSEXP, SEXP lSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP tolSEXP, SEXP gammaSEXP, SEXP log_probSEXP, SEXP threshSEXP, SEXP alphaSEXP, SEXP inflSEXP, SEXP verbositySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< int >::type N(NSEXP);
     Rcpp::traits::input_parameter< List >::type l(lSEXP);
-    Rcpp::traits::input_parameter< const IntegerVector& >::type counties(countiesSEXP);
-    Rcpp::traits::input_parameter< const IntegerVector& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
     Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
