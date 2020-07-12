@@ -96,7 +96,7 @@
 redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
                       popcons=0.01, compactness=1, resample=TRUE,
                       constraint_fn=function(m) rep(0, ncol(m)),
-                      adapt_k_thresh=0.95, seq_alpha=0.2*compactness,
+                      adapt_k_thresh=0.95, seq_alpha=0.1+0.2*compactness,
                       truncate=(compactness != 1),
                       trunc_fn=function(x) pmin(x, 0.01*nsims^0.4),
                       max_oversample=20, verbose=TRUE, silent=FALSE) {
@@ -109,8 +109,8 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
     if (compactness < 0) stop("Compactness parameter must be non-negative")
     if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
         stop("`adapt_k_thresh` parameter must lie in [0, 1].")
-    if (seq_alpha < 0 | seq_alpha > 1)
-        stop("`seq_alpha` parameter must lie in [0, 1].")
+    if (seq_alpha <= 0 | seq_alpha > 1)
+        stop("`seq_alpha` parameter must lie in (0, 1].")
     if (nsims < 1)
         stop("`nsims` must be positive.")
 
@@ -119,10 +119,9 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
         stop("County numbers must run from 1 to n_county with no interruptions.")
 
     # sanity-check everything
-    #preproc = redist.preproc(adjobj, popvec, rep(0, V), ndists, popcons,
-    #                         temper="none", constraint="none")
-    #adjlist = preproc$data$adjlist
-    adjlist = adjobj
+    preproc = redist.preproc(adjobj, popvec, rep(0, V), ndists, popcons,
+                             temper="none", constraint="none")
+    adjlist = preproc$data$adjlist
     class(adjlist) = "list"
 
     verbosity = 1
@@ -133,12 +132,10 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
     maps = smc_plans(nsims, adjobj, counties, popvec, ndists, popcons, compactness,
                      lp, adapt_k_thresh, seq_alpha, max_oversample, verbosity);
 
-    dev = max_dev(maps, popvec, ndists)
-    ok = dev <= popcons
-    maps = maps[,ok]
-    lp = lp[ok]
-    dev = dev[ok]
     N_ok = ncol(maps)
+    dev = max_dev(maps, popvec, ndists)
+    maps = maps
+    lp = lp[1:N_ok]
     if (N_ok < nsims)
         warning("Fewer maps sampled than requested; try increasing `max_oversample`.")
 
@@ -148,6 +145,7 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
     if (truncate)
         wgt = trunc_fn(wgt)
     wgt = wgt/sum(wgt)
+    n_eff = length(wgt) * mean(wgt)^2 / mean(wgt^2)
 
     if (resample) {
         maps = maps[, sample(N_ok, N_ok, replace=T, prob=wgt)]
@@ -159,9 +157,10 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
         cdvec = maps,
         wgt = wgt,
         nsims = N_ok,
+        n_eff = n_eff,
         pct_dist_parity = popcons,
         compactness = compactness,
-        #log_st = log_st_map(adjlist, maps, counties, ndists),
+        log_st = log_st_map(adjlist, maps, counties, ndists),
         maxdev = dev,
         popvec = popvec,
         counties = counties,

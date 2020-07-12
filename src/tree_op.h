@@ -49,7 +49,7 @@ double tree_pop(Tree &ust, int vtx, const uvec &pop,
  * Assign `district` to all descendants of `root` in `ust`
  */
 // TESTED
-void assign_district(const Tree &ust, IntegerMatrix::Column districts,
+void assign_district(const Tree &ust, subview_col<uword> &districts,
                      int root, int district);
 
 /*

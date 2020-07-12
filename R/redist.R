@@ -1353,10 +1353,14 @@ as.matrix.redist = function(x, ...) {
 #' @method print redist
 #' @export
 print.redist = function(x, ...) {
-    cat(x$nsims, " redistricting plans from a ", length(x$aList), "-unit map", sep="")
+    cat(x$nsims, " sampled plans with ", max(x$cdvec[,1]), " districts from a ",
+        length(x$aList), "-unit map, drawn\n using ",
+        c(mcmc="Markov chain Monte Carlo",
+          smc="Sequential Monte Carlo")[x$algorithm], sep="")
     if (x$pct_dist_parity < 1)
-        cat(", using a ", 100*x$pct_dist_parity, "% population constraint.\n", sep="")
+        cat(" and a ", 100*x$pct_dist_parity, "% population constraint.\n", sep="")
     else
         cat(".\n")
+
     cat(str(x$cdvec))
 }

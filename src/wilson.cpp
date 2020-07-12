@@ -28,24 +28,24 @@ Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
     std::vector<bool> c_visited(n_county, true);
     int remaining = 0;
     for (int i = 0; i < V; i++) {
-        if (ignore[i]) {
+        if (ignore.at(i)) {
             visited[i] = true;
         } else {
             remaining++;
-            c_visited[counties[i] - 1] = false;
+            c_visited.at(counties(i) - 1) = false;
         }
     }
 
     int c_remaining = 0;
     for (int i = 0; i < n_county; i++) {
-        c_remaining += 1 - c_visited[i];
+        c_remaining += 1 - c_visited.at(i);
     }
 
     // pick root
     root = rvtx(visited, V, remaining);
     visited[root] = true;
     remaining--;
-    c_visited[counties[root] - 1] = true;
+    c_visited.at(counties[root] - 1) = true;
     c_remaining--;
 
     // Connect counties
@@ -61,11 +61,11 @@ Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
             return null_tree;
         }
         c_remaining -= added;
-        c_visited[add] = true;
+        c_visited.at(add) = true;
         for (int i = 0; i < added; i++) {
-            c_visited[path[i][0]] = true;
-            tree[path[i][2]].push_back(path[i][1]);
-            visited[path[i][1]] = true; // root for next district
+            c_visited.at(path[i][0]) = true;
+            tree.at(path[i][2]).push_back(path[i][1]);
+            visited.at(path[i][1]) = true; // root for next district
             remaining--;
         }
     }
@@ -83,8 +83,8 @@ Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
         }
         remaining -= added - 1; // minus 1 because ending vertex already in tree
         for (int i = 0; i < added - 1; i++) {
-            visited[path[i]] = true;
-            tree[path[i+1]].push_back(path[i]);
+            visited.at(path[i]) = true;
+            tree.at(path[i+1]).push_back(path[i]);
         }
     } while (remaining > 0);
 
@@ -104,15 +104,15 @@ std::vector<int> walk_until(const Graph &g, int root,
     std::vector<int> path = {root};
     // walk until we hit something in `visited`
     int curr = root;
-    int county = counties[root];
+    int county = counties(root);
     //while (true) {
     int i;
     int max = visited.size() * 500;
     for (i = 0; i < max; i++) {
         int proposal = rnbor(g, curr);
-        if (ignore[proposal] || counties[proposal] != county) {
+        if (ignore.at(proposal) || counties(proposal) != county) {
             continue;
-        } else if (!visited[proposal]) {
+        } else if (!visited.at(proposal)) {
             loop_erase(path, proposal);
             path.push_back(proposal);
         } else {
@@ -161,11 +161,11 @@ std::vector<std::vector<int>> walk_until_cty(Multigraph &mg, int root,
     int i;
     int max = visited.size() * 500;
     for (i = 0; i < max; i++) {
-        int prop_idx = rint(mg[curr].size());
+        int prop_idx = rint(mg.at(curr).size());
         int proposal = mg[curr][prop_idx][0];
         if (ignore[mg[curr][prop_idx][2]] || ignore[mg[curr][prop_idx][1]]) {
             continue;
-        } else if (!visited[proposal]) {
+        } else if (!visited.at(proposal)) {
             path.push_back(mg[curr][prop_idx]);
             loop_erase_cty(path, proposal, root);
         } else {

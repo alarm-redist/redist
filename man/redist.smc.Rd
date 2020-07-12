@@ -15,7 +15,7 @@ redist.smc(
   resample = TRUE,
   constraint_fn = function(m) rep(0, ncol(m)),
   adapt_k_thresh = 0.95,
-  seq_alpha = 0.2 * compactness,
+  seq_alpha = 0.1 + 0.2 * compactness,
   truncate = (compactness != 1),
   trunc_fn = function(x) pmin(x, 0.01 * nsims^0.4),
   max_oversample = 20,

@@ -9,8 +9,8 @@
  */
 // TESTED
 // [[Rcpp::export]]
-NumericVector log_st_map(const Graph &g, const umat &districts,
-                         const uvec &counties, int n_distr);
+NumericVector log_st_map(const Graph &g, const arma::umat &districts,
+                         const arma::uvec &counties, int n_distr);
 
 /*
  * Compute the log number of spanning trees for `district` intersect `county`
@@ -31,6 +31,6 @@ double log_st_contr(const Graph &g, const umat &districts, const uvec &counties,
  */
 // TESTED
 // [[Rcpp::export]]
-NumericVector n_removed(const Graph &g, const umat &districts, int n_distr);
+NumericVector n_removed(const Graph &g, const arma::umat &districts, int n_distr);
 
 #endif

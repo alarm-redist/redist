@@ -7,7 +7,7 @@
 // TESTED
 NumericVector log_st_map(const Graph &g, const umat &districts,
                          const uvec &counties, int n_distr) {
-    int N = districts.ncol();
+    int N = districts.n_cols;
     int n_cty = max(counties);
     NumericVector log_st(N);
     for (int i = 0; i < N; i++) {
@@ -18,7 +18,7 @@ NumericVector log_st_map(const Graph &g, const umat &districts,
             }
             accuml += log_st_contr(g, districts, counties, n_cty, i, d);
         }
-        log_st[i] = accuml;
+        log_st(i) = accuml;
     }
     return log_st;
 }
@@ -36,27 +36,27 @@ double log_st_distr(const Graph &g, const umat &districts, const uvec &counties,
     int start = 0; // where to start loop below, to save time
     for (int i = 0; i < V; i++) {
         pos[i] = K - 1; // minus one because we're dropping 1st row and column
-        if (districts(i, idx) == district && counties[i] == county) {
+        if (districts(i, idx) == district && counties(i) == county) {
             K++;
             if (K == 2) start = i; // start 2nd vertex
         }
     }
     if (K <= 1) return 0;
 
-    sp_mat adj = zeros(K-1, K-1); // adjacency matrix (minus 1st row and column)
+    mat adj = zeros<mat>(K-1, K-1); // adjacency matrix (minus 1st row and column)
     for (int i = start; i < V; i++) {
-        if (districts(i, idx) != district || counties[i] != county) continue;
+        if (districts(i, idx) != district || counties(i) != county) continue;
 
-        int prec = pos[i];
+        int prec = pos.at(i);
         if (prec < 0) continue;
         std::vector<int> nbors = g[i];
         int length = nbors.size();
         int degree = 0; // keep track of index within subgraph
         for (int j = 0; j < length; j++) {
             int nbor = nbors[j];
-            if (districts(nbor, idx) != district || counties[nbor] != county) continue;
+            if (districts(nbor, idx) != district || counties(nbor) != county) continue;
             degree++;
-            if (pos[nbor] < 0) continue;
+            if (pos.at(nbor) < 0) continue;
             adj(prec, pos[nbor]) = -1;
         }
         adj(prec, prec) = degree;
@@ -83,18 +83,18 @@ double log_st_contr(const Graph &g, const umat &districts, const uvec &counties,
     for (int i = 0; i < V; i++) {
         if (districts(i, idx) != district) continue;
 
-        if (seen[counties[i]-1] < 0) {
-            pos[i] = K - 1; // minus one because we're dropping 1st row and column
-            seen[counties[i]-1] = K;
+        if (seen[counties(i)-1] < 0) {
+            pos.at(i) = K - 1; // minus one because we're dropping 1st row and column
+            seen[counties(i)-1] = K;
             K++;
             if (K == 2) start = i; // start 2nd vertex
         } else {
-            pos[i] = seen[counties[i]-1] - 1;
+            pos.at(i) = seen.at(counties(i)-1) - 1;
         }
     }
     if (K <= 1) return 0;
 
-    sp_mat adj = zeros(K-1, K-1);
+    mat adj = zeros<mat>(K-1, K-1); // adjacency matrix (minus 1st row and column)
     for (int i = start; i < V; i++) {
         if (districts(i, idx) != district) continue;
 
@@ -103,8 +103,8 @@ double log_st_contr(const Graph &g, const umat &districts, const uvec &counties,
         std::vector<int> nbors = g[i];
         int length = nbors.size();
         for (int j = 0; j < length; j++) {
-            int nbor = nbors[j];
-            if (districts(nbor, idx) != district || pos[nbor] == cty) continue;
+            int nbor = nbors.at(j);
+            if (districts(nbor, idx) != district || pos.at(nbor) == cty) continue;
             adj(cty, cty)++;
             if (pos[nbor] < 0) continue; // ignore 1st row and column
             adj(cty, pos[nbor])--;
@@ -123,7 +123,7 @@ double log_st_contr(const Graph &g, const umat &districts, const uvec &counties,
 // TESTED
 NumericVector n_removed(const Graph &g, const umat &districts, int n_distr) {
     int V = g.size();
-    int N = districts.ncol();
+    int N = districts.n_cols;
     NumericVector n_rem(N);
     for (int n = 0; n < N; n++) {
         double removed = 0.0;
