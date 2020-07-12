@@ -85,11 +85,12 @@
 #' \item{adapt_k_thresh}{The provided control parameter.}
 #' \item{seq_alpha}{The provided control vector.}
 #' \item{max_oversample}{The provided control vector.}
+#' \item{algorithm}{The algorithm used, here \code{"smc"}.}
 #'
 #' @examples \dontrun{
-#' data(algdat.pfull)
+#' data(algdat.p10)
 #' sampled_plans = redist.smc(algdat.pfull$adjlist, algdat.pfull$precinct.data$pop,
-#'                            nsims=1000, ndists=3, popcons=0.1)
+#'                            nsims=10000, ndists=3, popcons=0.1)
 #' }
 #'
 #' @export
@@ -160,7 +161,6 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
         n_eff = n_eff,
         pct_dist_parity = popcons,
         compactness = compactness,
-        log_st = log_st_map(adjlist, maps, counties, ndists),
         maxdev = dev,
         popvec = popvec,
         counties = counties,
@@ -174,13 +174,23 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
     algout
 }
 
-is_ci = function(x, wgt, conf=0.99) {
+#' Confidence Intervals for Importance Sampling Estimates
+#'
+#' Builds a confidence interval for a quantity of interest,
+#' given importance sampling weights.
+#'
+#' @param x A numeric vector containing the quantity of interest
+#' @param wgt A numeric vector containing the nonnegative importance weights.
+#'   Will be normalized automatically.
+#' @param conf The confidence level for the interval.
+#'
+#' @returns A two-element vector of the form [lower, upper] containing
+#' the importance sampling confidence interval.
+#'
+#' @export
+redist.smc_is_ci = function(x, wgt, conf=0.99) {
     wgt = wgt / sum(wgt)
     mu = sum(x*wgt)
     sig = sqrt(sum((x - mu)^2 * wgt^2))
     mu + qnorm(c((1-conf)/2, 1-(1-conf)/2))*sig
-}
-
-n_eff = function(wgt) {
-    length(wgt) * mean(wgt)^2 / mean(wgt^2)
 }

@@ -1,7 +1,7 @@
 /********************************************************
  * Author: Cory McCartan
  * Institution: Harvard University
- * Date Created: 2020/11
+ * Date Created: 2019/11
  * Purpose: Sequential Monte Carlo redistricting sampler
  ********************************************************/
 
