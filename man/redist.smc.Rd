@@ -96,6 +96,7 @@ and each column is a sample.}
 \item{adapt_k_thresh}{The provided control parameter.}
 \item{seq_alpha}{The provided control vector.}
 \item{max_oversample}{The provided control vector.}
+\item{algorithm}{The algorithm used, here \code{"smc"}.}
 }
 \description{
 \code{redist.smc} uses a Sequential Monte Carlo algorithm to
@@ -123,9 +124,9 @@ should generally alleviate this problem.
 }
 \examples{
 \dontrun{
-data(algdat.pfull)
+data(algdat.p10)
 sampled_plans = redist.smc(algdat.pfull$adjlist, algdat.pfull$precinct.data$pop,
-                           nsims=1000, ndists=3, popcons=0.1)
+                           nsims=10000, ndists=3, popcons=0.1)
 }
 
 }
