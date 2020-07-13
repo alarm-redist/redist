@@ -161,7 +161,7 @@ std::vector<std::vector<int>> walk_until_cty(Multigraph &mg, int root,
     int i;
     int max = visited.size() * 500;
     for (i = 0; i < max; i++) {
-        int prop_idx = rint(mg.at(curr).size());
+        int prop_idx = rint((int) mg.at(curr).size());
         int proposal = mg[curr][prop_idx][0];
         if (ignore[mg[curr][prop_idx][2]] || ignore[mg[curr][prop_idx][1]]) {
             continue;
