@@ -5,7 +5,7 @@
 \title{Calculate compactness measures for a set of districts}
 \usage{
 redist.compactness(shp, district_membership, 
-measure = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden"), 
+measure = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden", "EdgesRemoved", "logSpanningTree"), 
 pop, nloop, ncores)
 }
 \arguments{
