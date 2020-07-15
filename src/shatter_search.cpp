@@ -1,7 +1,7 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-// [[Rcpp::export]]
+
 int shatter_search(List adj_list,
                    int p,
                    int i_dist,
@@ -66,7 +66,7 @@ int shatter_search(List adj_list,
   
 }
 
-//[[Rcpp::export]]
+
 bool can_swap(List adj_list, 
               int p, int j_dist, 
               IntegerVector dist_assignment){

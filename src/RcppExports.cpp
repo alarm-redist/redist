@@ -7,6 +7,32 @@
 
 using namespace Rcpp;
 
+// log_st_map
+NumericVector log_st_map(const List& g, const IntegerMatrix& districts, int n_distr);
+RcppExport SEXP _redist_log_st_map(SEXP gSEXP, SEXP districtsSEXP, SEXP n_distrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const List& >::type g(gSEXP);
+    Rcpp::traits::input_parameter< const IntegerMatrix& >::type districts(districtsSEXP);
+    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
+    rcpp_result_gen = Rcpp::wrap(log_st_map(g, districts, n_distr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// n_removed
+NumericVector n_removed(const List& g, const IntegerMatrix& districts, int n_distr);
+RcppExport SEXP _redist_n_removed(SEXP gSEXP, SEXP districtsSEXP, SEXP n_distrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const List& >::type g(gSEXP);
+    Rcpp::traits::input_parameter< const IntegerMatrix& >::type districts(districtsSEXP);
+    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
+    rcpp_result_gen = Rcpp::wrap(n_removed(g, districts, n_distr));
+    return rcpp_result_gen;
+END_RCPP
+}
 // genAlConn
 List genAlConn(List aList, NumericVector cds);
 RcppExport SEXP _redist_genAlConn(SEXP aListSEXP, SEXP cdsSEXP) {
@@ -31,6 +57,42 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// crsg
+List crsg(List adj_list, NumericVector population, NumericVector area, NumericVector x_center, NumericVector y_center, int Ndistrict, double target_pop, double thresh, int maxiter);
+RcppExport SEXP _redist_crsg(SEXP adj_listSEXP, SEXP populationSEXP, SEXP areaSEXP, SEXP x_centerSEXP, SEXP y_centerSEXP, SEXP NdistrictSEXP, SEXP target_popSEXP, SEXP threshSEXP, SEXP maxiterSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type adj_list(adj_listSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type population(populationSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type area(areaSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type x_center(x_centerSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type y_center(y_centerSEXP);
+    Rcpp::traits::input_parameter< int >::type Ndistrict(NdistrictSEXP);
+    Rcpp::traits::input_parameter< double >::type target_pop(target_popSEXP);
+    Rcpp::traits::input_parameter< double >::type thresh(threshSEXP);
+    Rcpp::traits::input_parameter< int >::type maxiter(maxiterSEXP);
+    rcpp_result_gen = Rcpp::wrap(crsg(adj_list, population, area, x_center, y_center, Ndistrict, target_pop, thresh, maxiter));
+    return rcpp_result_gen;
+END_RCPP
+}
+// dist_dist_diff
+double dist_dist_diff(int p, int i_dist, int j_dist, NumericVector x_center, NumericVector y_center, NumericVector x, NumericVector y);
+RcppExport SEXP _redist_dist_dist_diff(SEXP pSEXP, SEXP i_distSEXP, SEXP j_distSEXP, SEXP x_centerSEXP, SEXP y_centerSEXP, SEXP xSEXP, SEXP ySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type p(pSEXP);
+    Rcpp::traits::input_parameter< int >::type i_dist(i_distSEXP);
+    Rcpp::traits::input_parameter< int >::type j_dist(j_distSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type x_center(x_centerSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type y_center(y_centerSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type y(ySEXP);
+    rcpp_result_gen = Rcpp::wrap(dist_dist_diff(p, i_dist, j_dist, x_center, y_center, x, y));
+    return rcpp_result_gen;
+END_RCPP
+}
 // cppGeneratePartitions
 List cppGeneratePartitions(List adjList, int numBlocks, NumericVector popSizes, int numConstraintLow, int numConstraintHigh, double popConstraintLow, double popConstraintHigh);
 RcppExport SEXP _redist_cppGeneratePartitions(SEXP adjListSEXP, SEXP numBlocksSEXP, SEXP popSizesSEXP, SEXP numConstraintLowSEXP, SEXP numConstraintHighSEXP, SEXP popConstraintLowSEXP, SEXP popConstraintHighSEXP) {
@@ -45,6 +107,18 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type popConstraintLow(popConstraintLowSEXP);
     Rcpp::traits::input_parameter< double >::type popConstraintHigh(popConstraintHighSEXP);
     rcpp_result_gen = Rcpp::wrap(cppGeneratePartitions(adjList, numBlocks, popSizes, numConstraintLow, numConstraintHigh, popConstraintLow, popConstraintHigh));
+    return rcpp_result_gen;
+END_RCPP
+}
+// hamming
+int hamming(IntegerVector x, IntegerVector y);
+RcppExport SEXP _redist_hamming(SEXP xSEXP, SEXP ySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type y(ySEXP);
+    rcpp_result_gen = Rcpp::wrap(hamming(x, y));
     return rcpp_result_gen;
 END_RCPP
 }

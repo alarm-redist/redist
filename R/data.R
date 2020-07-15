@@ -141,3 +141,67 @@ NULL
 #' data(fl25)
 #' }
 NULL
+
+#' Florida 70 Precinct File
+#'
+#' This data set contains the 70 Precinct shapefile and related data for each precinct.
+#'
+#' @name fl70
+#' @usage data("fl70")
+#' @format sf data.frame containing columns for useful data related to the 
+#' redistricting process, subsetted from real data in Florida, and sf geometry column.
+#' \describe{
+#' \item{\code{geoid} Contains unique identifier for each precinct which can be matched to the full Florida dataset.}
+#' \item{\code{pop} Contains the population of each precinct.}
+#' \item{\code{vap} Contains the voting age population of each precinct.}
+#' \item{\code{obama} Contains the 2012 presidential vote for Obama.}
+#' \item{\code{mccain} Contains the 2012 presidential vote for McCain.}
+#' \item{\code{TotPop} Contains the poopulation of each precinct. Identical to pop.}
+#' \item{\code{BlackPop}}
+#' \item{\code{HispPop}}
+#' \item{\code{VAP} Contains the voting age population of each precinct. Identical to vap.}
+#' \item{\code{BlackVAP} Contains the voting age population of black constituents of each precinct.}
+#' \item{\code{HispVAP} Contains the voting age population of hispanic constituents of each precinct.}
+#' \item{\code{geometry} Contains sf geometry of each precinct.}
+#' }
+#' 
+#' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander Tarr.
+#' (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte Carlo."
+#' Working Paper. Available at
+#' \url{http://imai.princeton.edu/research/files/redist.pdf}.
+#' @examples \dontrun{
+#' data(fl70)
+#' }
+NULL
+
+#' Florida 250 Precinct File
+#'
+#' This data set contains the 250 Precinct shapefile and related data for each precinct.
+#'
+#' @name fl250
+#' @usage data("fl250")
+#' @format sf data.frame containing columns for useful data related to the 
+#' redistricting process, subsetted from real data in Florida, and sf geometry column.
+#' \describe{
+#' \item{\code{geoid} Contains unique identifier for each precinct which can be matched to the full Florida dataset.}
+#' \item{\code{pop} Contains the population of each precinct.}
+#' \item{\code{vap} Contains the voting age population of each precinct.}
+#' \item{\code{obama} Contains the 2012 presidential vote for Obama.}
+#' \item{\code{mccain} Contains the 2012 presidential vote for McCain.}
+#' \item{\code{TotPop} Contains the poopulation of each precinct. Identical to pop.}
+#' \item{\code{BlackPop}}
+#' \item{\code{HispPop}}
+#' \item{\code{VAP} Contains the voting age population of each precinct. Identical to vap.}
+#' \item{\code{BlackVAP} Contains the voting age population of black constituents of each precinct.}
+#' \item{\code{HispVAP} Contains the voting age population of hispanic constituents of each precinct.}
+#' \item{\code{geometry} Contains sf geometry of each precinct.}
+#' }
+#' 
+#' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander Tarr.
+#' (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte Carlo."
+#' Working Paper. Available at
+#' \url{http://imai.princeton.edu/research/files/redist.pdf}.
+#' @examples \dontrun{
+#' data(fl250)
+#' }
+NULL
