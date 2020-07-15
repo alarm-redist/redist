@@ -14,7 +14,7 @@
 #' Convex Hull score, Reock score, Boyce Clark Index, and Fryer Holden score.
 #'
 #' @usage redist.compactness(shp, district_membership, 
-#' measure = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden"), 
+#' measure = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden", "EdgesRemoved", "logSpanningTree"), 
 #' pop, nloop, ncores)
 #' 
 #' @param shp A SpatialPolygonsDataFrame or sf object. Required unless "EdgesRemoved"
@@ -97,7 +97,12 @@
 #' Schwartzberg, Joseph E. 1966. Reapportionment, Gerrymanders, and the Notion 
 #' of Compactness. Minnesota Law Review. 1701.
 #' 
-#' 
+#' @importFrom tibble tibble
+#' @importFrom magrittr %>%
+#' @importFrom sf st_as_sf st_union st_area st_crs st_is_longlat st_length
+#' @importFrom sf st_cast st_bbox st_centroid st_within st_point_on_surface st_coordinates
+#' @importFrom sf st_linestring st_intersection
+#' @importFrom lwgeom st_perimeter st_minimum_bounding_circle
 #' 
 #' @examples
 #' \dontrun{
