@@ -4,16 +4,41 @@
 \alias{redist.mcmc}
 \title{MCMC Redistricting Simulator}
 \usage{
-redist.mcmc(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
-  loopscompleted = 0, nloop = 1, nthin = 1, eprob = 0.05,
-  lambda = 0, popcons = NULL, grouppopvec = NULL, areasvec = NULL,
-  countymembership = NULL, borderlength_mat = NULL, ssdmat = NULL,
-  temper = FALSE, constraint = NULL, constraintweights = NULL,
-  compactness_metric = "fryer-holden", ssd_denom = 1,
-  betaseq = "powerlaw", betaseqlength = 10, betaweights = NULL,
-  adjswaps = TRUE, rngseed = NULL, maxiterrsg = 5000,
-  adapt_lambda = FALSE, adapt_eprob = FALSE, contiguitymap = "rooks",
-  exact_mh = FALSE, savename = NULL, verbose = TRUE)
+redist.mcmc(
+  adjobj,
+  popvec,
+  nsims,
+  ndists = NULL,
+  initcds = NULL,
+  loopscompleted = 0,
+  nloop = 1,
+  nthin = 1,
+  eprob = 0.05,
+  lambda = 0,
+  popcons = NULL,
+  grouppopvec = NULL,
+  areasvec = NULL,
+  countymembership = NULL,
+  borderlength_mat = NULL,
+  ssdmat = NULL,
+  temper = FALSE,
+  constraint = NULL,
+  constraintweights = NULL,
+  compactness_metric = "fryer-holden",
+  ssd_denom = 1,
+  betaseq = "powerlaw",
+  betaseqlength = 10,
+  betaweights = NULL,
+  adjswaps = TRUE,
+  rngseed = NULL,
+  maxiterrsg = 5000,
+  adapt_lambda = FALSE,
+  adapt_eprob = FALSE,
+  contiguitymap = "rooks",
+  exact_mh = FALSE,
+  savename = NULL,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{adjobj}{An adjacency matrix, list, or object of class

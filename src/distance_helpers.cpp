@@ -1,14 +1,14 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-// [[Rcpp::export]]
+
 double distance(double x1, double x2,
                 double y1, double y2){
   double dist = sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
   return(dist);
 }
 
-// [[Rcpp::export]]
+
 NumericMatrix distance_matrix(NumericVector x, NumericVector y) {
   // init matrix
   int dim = x.length();
@@ -25,7 +25,7 @@ NumericMatrix distance_matrix(NumericVector x, NumericVector y) {
   return(out);
 }
 
-// [[Rcpp::export]]
+
 int closest_adj(IntegerVector adj,
                 int i_dist,
                 NumericVector x, 

@@ -4,9 +4,8 @@
 #'
 #' @return Adjacency list
 #' @description Creates an adjacency list that is zero indexed with no skips
+#' 
 #' @export
-#'
-#' @examples
 redist.adjacency <- function(shp){
   
   # Check input

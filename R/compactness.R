@@ -2,7 +2,7 @@
 ## Author: Christopher T Kenny
 ## Institution: Harvard University
 ## Date Created: 2020/01/20
-## Date Modified: 2020/06/18
+## Date Modified: 2020/07/14
 ## Purpose: R function to compute compactness
 ##############################################
 
@@ -15,7 +15,7 @@
 #'
 #' @usage redist.compactness(shp, district_membership, 
 #' measure = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden"), 
-#' pop, nloop)
+#' pop, nloop, ncores)
 #' 
 #' @param shp A SpatialPolygonsDataFrame or sf object. Required unless "EdgesRemoved"
 #' and "logSpanningTree" with adjacency provided.
@@ -30,6 +30,7 @@
 #' Created with \code{redist.adjacency} if not supplied and needed. Default is NULL.
 #' @param nloop A numeric to specify loop number. Defaults to 1 if only one map provided 
 #' and the column number if multiple maps given.
+#' @param ncores Number of cores to use for parallel computing. Default is 1.
 #' 
 #' @details This function computes specified compactness scores for a map.  If 
 #' there is more than one shape specified for a single district, it combines 
@@ -98,7 +99,7 @@
 #' 
 #' 
 #' 
-#' @example
+#' @examples
 #' \dontrun{
 #' library(sf)
 #' library(lwgeom)
@@ -113,14 +114,12 @@
 #' redist.compactness(box, "cds", "pop")
 #' }
 #' 
-#' @import sf
-#' @import lwgeom
-#' @import tidyverse
-#' @export
+#' @export redist.compactness
   redist.compactness <- function(shp = NULL, 
                                district_membership, 
                                measure = c("PolsbyPopper"),
-                               population = NULL, adjacency = NULL, nloop = 1){
+                               population = NULL, adjacency = NULL, nloop = 1,
+                               ncores = 1){
 
   # Check Inputs
   if(is.null(shp)&is.null(adjacency)){
@@ -187,11 +186,28 @@
   # Compute Specified Scores for provided districts
   if(any(measure %in% c("PolsbyPopper", "Schwartzberg", "LengthWidth", 
                         "ConvexHull", "Reock", "BoyceClark"))){
-    for(map in 1:nmap){
+
+    nm <- sum(measure %in% c("PolsbyPopper", "Schwartzberg", "LengthWidth",
+                             "ConvexHull", "Reock", "BoyceClark"))
+
+    nc <- min(ncores, ncol(district_membership))
+    if (nc == 1){
+      `%oper%` <- `%do%`
+    } else {
+      `%oper%` <- `%dopar%`
+      cl <- makeCluster(nc, , setup_strategy = 'sequential')
+      registerDoParallel(cl)
+      on.exit(stopCluster(cl))
+    }
+
+
+    results <- foreach(map = 1:nmap, .combine = 'rbind', .packages = c('sf', 'lwgeom')) %oper% {
+      ret <- matrix(nrow = nd, ncol = nm)
       for (i in 1:nd){
+        col <- 1
         united <- st_union(shp[district_membership[, map] == dists[i],])
         area <- st_area(united)
-        
+
         if(is.null(st_crs(united$EPSG))||is.na(st_is_longlat(united))){
           perim <- sum(st_length(st_cast(st_cast(united, 'POLYGON'),'LINESTRING')))
         } else if (st_is_longlat(united)){
@@ -199,31 +215,36 @@
         } else {
           perim <- sum(st_perimeter(united))
         }
-        
-        if('PolsbyPopper' %in% measure){ 
-          comp[['PolsbyPopper']][i + nd*(map-1)] <- 4*pi*(area)/(perim)^2
+
+        if('PolsbyPopper' %in% measure){
+          ret[i, col] <- 4*pi*(area)/(perim)^2
+          col <- col + 1
         }
-        
+
         if('Schwartzberg' %in% measure){
-          comp[['Schwartzberg']][i + nd*(map-1)] <- (perim/(2*pi*sqrt(area/pi)))
+          ret[i, col] <- (perim/(2*pi*sqrt(area/pi)))
+          col <- col + 1
         }
-        
+
         if('LengthWidth' %in% measure){
           bbox <- st_bbox(united)
           ratio <- unname((bbox$xmax - bbox$xmin)/(bbox$ymax - bbox$ymin))
-          comp[['LengthWidth']][i+ nd*(map-1)] <- ifelse(ratio>1, 1/ratio, ratio) 
+          ret[i, col] <- ifelse(ratio>1, 1/ratio, ratio)
+          col <- col + 1
         }
-       
+
         if('ConvexHull' %in% measure){
           cvh <- st_area(st_convex_hull(united))
-          comp[['ConvexHull']][i+ nd*(map-1)] <- area/cvh
+          ret[i, col] <- area/cvh
+          col <- col + 1
         }
-        
+
         if('Reock' %in% measure){
           mbc <- st_area(st_minimum_bounding_circle(united))
-          comp[['Reock']][i+ nd*(map-1)] <- area/mbc
+          ret[i, col] <- area/mbc
+          col <- col + 1
         }
-        
+
         if('BoyceClark' %in% measure){
           suppressWarnings(center <- st_centroid(united))
           suppressWarnings(if(!st_within(united,center,sparse=F)[[1]]){
@@ -233,19 +254,83 @@
           bbox <- st_bbox(united)
           max_dist <- sqrt((bbox$ymax-bbox$ymin)^2+(bbox$xmax-bbox$xmin)^2)
           st_crs(united) <- NA
-          
+
           x_list <- center[1] + max_dist*cos(seq(0,15)*pi/8)
           y_list <- center[2] + max_dist*sin(seq(0,15)*pi/8)
           radials <- rep(NA_real_, 16)
           for(angle in 1:16){
-            line <- data.frame(x = c(x_list[angle],center[1]), y = c(y_list[angle], center[2])) %>% 
+            line <- data.frame(x = c(x_list[angle],center[1]), y = c(y_list[angle], center[2])) %>%
               st_as_sf(coords = c('x','y'))  %>% st_coordinates() %>% st_linestring()
             radials[angle] <- max(0, dist(st_intersection(line, united)))
           }
-          comp[['BoyceClark']][i+ nd*(map-1)] <- 1 - (sum(abs(radials/sum(radials)*100-6.25))/200) 
+          ret[i, col] <- 1 - (sum(abs(radials/sum(radials)*100-6.25))/200)
+          col <- col + 1
         }
       }
+      return(ret)
     }
+     comp[,2:(nm+1)] <- results
+    
+    # legacy version
+    # for(map in 1:nmap){
+    #   for (i in 1:nd){
+    #     united <- st_union(shp[district_membership[, map] == dists[i],])
+    #     area <- st_area(united)
+    # 
+    #     if(is.null(st_crs(united$EPSG))||is.na(st_is_longlat(united))){
+    #       perim <- sum(st_length(st_cast(st_cast(united, 'POLYGON'),'LINESTRING')))
+    #     } else if (st_is_longlat(united)){
+    #       perim <- sum(st_length(united))
+    #     } else {
+    #       perim <- sum(st_perimeter(united))
+    #     }
+    # 
+    #     if('PolsbyPopper' %in% measure){
+    #       comp[['PolsbyPopper']][i + nd*(map-1)] <- 4*pi*(area)/(perim)^2
+    #     }
+    # 
+    #     if('Schwartzberg' %in% measure){
+    #       comp[['Schwartzberg']][i + nd*(map-1)] <- (perim/(2*pi*sqrt(area/pi)))
+    #     }
+    # 
+    #     if('LengthWidth' %in% measure){
+    #       bbox <- st_bbox(united)
+    #       ratio <- unname((bbox$xmax - bbox$xmin)/(bbox$ymax - bbox$ymin))
+    #       comp[['LengthWidth']][i+ nd*(map-1)] <- ifelse(ratio>1, 1/ratio, ratio)
+    #     }
+    # 
+    #     if('ConvexHull' %in% measure){
+    #       cvh <- st_area(st_convex_hull(united))
+    #       comp[['ConvexHull']][i+ nd*(map-1)] <- area/cvh
+    #     }
+    # 
+    #     if('Reock' %in% measure){
+    #       mbc <- st_area(st_minimum_bounding_circle(united))
+    #       comp[['Reock']][i+ nd*(map-1)] <- area/mbc
+    #     }
+    # 
+    #     if('BoyceClark' %in% measure){
+    #       suppressWarnings(center <- st_centroid(united))
+    #       suppressWarnings(if(!st_within(united,center,sparse=F)[[1]]){
+    #         center <- st_point_on_surface(united)
+    #       })
+    #       center <- st_coordinates(center)
+    #       bbox <- st_bbox(united)
+    #       max_dist <- sqrt((bbox$ymax-bbox$ymin)^2+(bbox$xmax-bbox$xmin)^2)
+    #       st_crs(united) <- NA
+    # 
+    #       x_list <- center[1] + max_dist*cos(seq(0,15)*pi/8)
+    #       y_list <- center[2] + max_dist*sin(seq(0,15)*pi/8)
+    #       radials <- rep(NA_real_, 16)
+    #       for(angle in 1:16){
+    #         line <- data.frame(x = c(x_list[angle],center[1]), y = c(y_list[angle], center[2])) %>%
+    #           st_as_sf(coords = c('x','y'))  %>% st_coordinates() %>% st_linestring()
+    #         radials[angle] <- max(0, dist(st_intersection(line, united)))
+    #       }
+    #       comp[['BoyceClark']][i+ nd*(map-1)] <- 1 - (sum(abs(radials/sum(radials)*100-6.25))/200)
+    #     }
+    #   }
+    # }
   }
   
   if('FryerHolden' %in% measure){
