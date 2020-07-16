@@ -18,6 +18,10 @@
 #'
 #' @return ggplot map
 #' 
+#' @importFrom spdep nb2lines
+#' @import ggplot2
+#' @importFrom dplyr filter
+#' 
 #' @examples
 #' \dontrun{
 #' library(redist)
