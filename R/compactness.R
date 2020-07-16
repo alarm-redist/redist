@@ -11,7 +11,8 @@
 #' 
 #' \code{redist.compactness} is used to compute different compactness statistics for a 
 #' shapefile. It currently computes the Polsby-Popper, Schwartzberg score, Length-Width Ratio,
-#' Convex Hull score, Reock score, Boyce Clark Index, and Fryer Holden score.
+#' Convex Hull score, Reock score, Boyce Clark Index, Fryer Holden score, Edges Removed number, 
+#' and the log of the Spanning Trees.
 #'
 #' @usage redist.compactness(shp, district_membership, 
 #' measure = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden", "EdgesRemoved", "logSpanningTree"), 
@@ -23,7 +24,8 @@
 #' for each precinct and one column for each map. Required.
 #' @param measure A vector with a string for each measure desired. "PolsbyPopper", 
 #' "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden",  
-#' "EdgesRemoved", and "logSpanningTree" are implemented. Defaults to "PolsbyPopper". Use "all"
+#' "EdgesRemoved", and "logSpanningTree" are implemented. Defaults to "PolsbyPopper". Use "all" to
+#' return all implemented measures.
 #' @param population A numeric vector with the population for every observation. Is
 #' only necessary when "FryerHolden" is used for measure. Defaults to NULL.
 #' @param adjacency A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
@@ -121,17 +123,17 @@
 #' }
 #' 
 #' @export redist.compactness
-  redist.compactness <- function(shp = NULL, 
+redist.compactness <- function(shp = NULL, 
                                district_membership, 
                                measure = c("PolsbyPopper"),
                                population = NULL, adjacency = NULL, nloop = 1,
                                ncores = 1){
-
+  
   # Check Inputs
   if(is.null(shp)&is.null(adjacency)){
     stop('Please provide a shp or adjacency argument.')
   }  
-    
+  
   if(!is.null(shp)){  
     if('SpatialPolygonsDataFrame' %in% class(shp)){
       shp <- shp %>%  st_as_sf()
@@ -139,7 +141,11 @@
       stop('Please provide "shp" as a SpatialPolygonsDataFrame or sf object.')
     }
   }
-    
+  
+  if(class(district_membership) == 'redist'){
+    district_membership <- district_membership$partitions
+  }  
+  
   if(!any(class(district_membership) %in% c('numeric', 'integer', 'matrix'))){
     stop('Please provide "district_membership" as a numeric vector or matrix.')
   }
@@ -155,17 +161,22 @@
   
   if('FryerHolden' %in% measure){
     if(!any(class(population) %in% c('numeric', 'integer'))) {
-    stop('Please provide "population" as a numeric or integer.')
-  }}
+      stop('Please provide "population" as a numeric or integer.')
+    }}
   
   if(class(nloop) != 'numeric'){
     stop('Please provide "nloop" as a numeric.')
   }
   
+  if(class(ncores) != 'numeric'){
+    stop('Please provide "ncores" as a numeric.')
+  }
+  
+  
   # Compute compactness scores
   dists <- sort(unique(c(district_membership)))
   nd <-  length(dists)
-
+  
   
   if(!is.matrix(district_membership)){
     district_membership <- as.matrix(district_membership)
@@ -177,7 +188,7 @@
   } else {
     nloop = rep(nloop, nd)
   }
-
+  
   # Initialize object
   comp <- tibble(districts = rep(x = dists, nmap), 
                  PolsbyPopper = rep(NA_real_, nd*nmap), 
@@ -191,14 +202,14 @@
                  logSpanningTree = rep(NA_real_, nd*nmap),
                  nloop = nloop) %>% 
     dplyr::select(districts, all_of(measure), nloop)
-
+  
   # Compute Specified Scores for provided districts
   if(any(measure %in% c("PolsbyPopper", "Schwartzberg", "LengthWidth", 
                         "ConvexHull", "Reock", "BoyceClark"))){
-
+    
     nm <- sum(measure %in% c("PolsbyPopper", "Schwartzberg", "LengthWidth",
                              "ConvexHull", "Reock", "BoyceClark"))
-
+    
     nc <- min(ncores, ncol(district_membership))
     if (nc == 1){
       `%oper%` <- `%do%`
@@ -208,15 +219,15 @@
       registerDoParallel(cl)
       on.exit(stopCluster(cl))
     }
-
-
+    
+    
     results <- foreach(map = 1:nmap, .combine = 'rbind', .packages = c('sf', 'lwgeom')) %oper% {
       ret <- matrix(nrow = nd, ncol = nm)
       for (i in 1:nd){
         col <- 1
         united <- st_union(shp[district_membership[, map] == dists[i],])
         area <- st_area(united)
-
+        
         if(is.null(st_crs(united$EPSG))||is.na(st_is_longlat(united))){
           perim <- sum(st_length(st_cast(st_cast(united, 'POLYGON'),'LINESTRING')))
         } else if (st_is_longlat(united)){
@@ -224,36 +235,36 @@
         } else {
           perim <- sum(st_perimeter(united))
         }
-
+        
         if('PolsbyPopper' %in% measure){
           ret[i, col] <- 4*pi*(area)/(perim)^2
           col <- col + 1
         }
-
+        
         if('Schwartzberg' %in% measure){
           ret[i, col] <- (perim/(2*pi*sqrt(area/pi)))
           col <- col + 1
         }
-
+        
         if('LengthWidth' %in% measure){
           bbox <- st_bbox(united)
           ratio <- unname((bbox$xmax - bbox$xmin)/(bbox$ymax - bbox$ymin))
           ret[i, col] <- ifelse(ratio>1, 1/ratio, ratio)
           col <- col + 1
         }
-
+        
         if('ConvexHull' %in% measure){
           cvh <- st_area(st_convex_hull(united))
           ret[i, col] <- area/cvh
           col <- col + 1
         }
-
+        
         if('Reock' %in% measure){
           mbc <- st_area(st_minimum_bounding_circle(united))
           ret[i, col] <- area/mbc
           col <- col + 1
         }
-
+        
         if('BoyceClark' %in% measure){
           suppressWarnings(center <- st_centroid(united))
           suppressWarnings(if(!st_within(united,center,sparse=F)[[1]]){
@@ -263,7 +274,7 @@
           bbox <- st_bbox(united)
           max_dist <- sqrt((bbox$ymax-bbox$ymin)^2+(bbox$xmax-bbox$xmin)^2)
           st_crs(united) <- NA
-
+          
           x_list <- center[1] + max_dist*cos(seq(0,15)*pi/8)
           y_list <- center[2] + max_dist*sin(seq(0,15)*pi/8)
           radials <- rep(NA_real_, 16)
@@ -278,7 +289,7 @@
       }
       return(ret)
     }
-     comp[,2:(nm+1)] <- results
+    comp[,2:(nm+1)] <- results
     
     # legacy version
     # for(map in 1:nmap){
@@ -356,28 +367,28 @@
       ))
       return(sum)
     })), each = nd)
-
+    
   }
   
   
-
-
-    if(('EdgesRemoved' %in% measure ||'logSpanningTree' %in% measure) & is.null(adjacency)){
-      adjacency <- redist.adjacency(shp)
-    }
   
-    if('logSpanningTree' %in% measure){
-      comp[['logSpanningTree']] <- rep(log_st_map(g = adjacency, 
-                                              districts = district_membership, 
-                                              n_distr = nd), each = nd)
-    }
-    
-    if('EdgesRemoved' %in% measure){
-      comp[['EdgesRemoved']] <- rep(n_removed(g = adjacency, 
-                                          districts = district_membership, 
-                                          n_distr = nd), each = nd)
-    }
-
+  
+  if(('EdgesRemoved' %in% measure ||'logSpanningTree' %in% measure) & is.null(adjacency)){
+    adjacency <- redist.adjacency(shp)
+  }
+  
+  if('logSpanningTree' %in% measure){
+    comp[['logSpanningTree']] <- rep(log_st_map(g = adjacency, 
+                                                districts = district_membership, 
+                                                n_distr = nd), each = nd)
+  }
+  
+  if('EdgesRemoved' %in% measure){
+    comp[['EdgesRemoved']] <- rep(n_removed(g = adjacency, 
+                                            districts = district_membership, 
+                                            n_distr = nd), each = nd)
+  }
+  
   # Return results
   return(comp)
 }
