@@ -190,7 +190,7 @@
                  EdgesRemoved = rep(NA_real_, nd*nmap), 
                  logSpanningTree = rep(NA_real_, nd*nmap),
                  nloop = nloop) %>% 
-    select(districts, all_of(measure), nloop)
+    dplyr::select(districts, all_of(measure), nloop)
 
   # Compute Specified Scores for provided districts
   if(any(measure %in% c("PolsbyPopper", "Schwartzberg", "LengthWidth", 
