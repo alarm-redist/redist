@@ -27,7 +27,9 @@ Imports:
     coda,
     parallel,
     doParallel,
-    foreach
+    foreach, 
+    lwgeom,
+    dplyr
 Suggests:
     testthat,
     Rmpi,
