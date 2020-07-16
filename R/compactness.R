@@ -23,7 +23,7 @@
 #' for each precinct and one column for each map. Required.
 #' @param measure A vector with a string for each measure desired. "PolsbyPopper", 
 #' "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden",  
-#' "EdgesRemoved", and "logSpanningTree" are implemented. Defaults to "PolsbyPopper".
+#' "EdgesRemoved", and "logSpanningTree" are implemented. Defaults to "PolsbyPopper". Use "all"
 #' @param population A numeric vector with the population for every observation. Is
 #' only necessary when "FryerHolden" is used for measure. Defaults to NULL.
 #' @param adjacency A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
@@ -103,6 +103,7 @@
 #' @importFrom sf st_cast st_bbox st_centroid st_within st_point_on_surface st_coordinates
 #' @importFrom sf st_linestring st_intersection
 #' @importFrom lwgeom st_perimeter st_minimum_bounding_circle
+#' @importFrom dplyr select
 #' 
 #' @examples
 #' \dontrun{
@@ -143,6 +144,9 @@
     stop('Please provide "district_membership" as a numeric vector or matrix.')
   }
   
+  if(measure == "all"){
+    measure <-  c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden", "EdgesRemoved", "logSpanningTree")
+  }
   match.arg(arg = measure,several.ok = TRUE, choices = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden", "EdgesRemoved", "logSpanningTree"))
   
   if('FryerHolden' %in% measure & is.null(population)) {
