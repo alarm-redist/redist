@@ -29,7 +29,8 @@ Imports:
     doParallel,
     foreach, 
     lwgeom,
-    dplyr
+    dplyr,
+    ggplot2
 Suggests:
     testthat,
     Rmpi,
@@ -41,6 +42,6 @@ SystemRequirements: gmp, libxml2
 Packaged: 2015-06-03 18:32:00 UTC; benfifield
 NeedsCompilation: yes
 BugReports: https://github.com/kosukeimai/redist/issues
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 VignetteBuilder: knitr
 Encoding: UTF-8
