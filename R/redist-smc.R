@@ -130,7 +130,7 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
     if (silent) verbosity = 0
 
     lp = rep(0, nsims)
-    maps = smc_plans(nsims, adjobj, counties, popvec, ndists, popcons, compactness,
+    maps = smc_plans(nsims, adjlist, counties, popvec, ndists, popcons, compactness,
                      lp, adapt_k_thresh, seq_alpha, max_oversample, verbosity);
 
     N_ok = ncol(maps)
