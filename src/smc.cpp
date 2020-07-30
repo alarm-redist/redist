@@ -52,7 +52,7 @@ IntegerMatrix smc_plans(int N, List l, const uvec &counties,
 
         int N_new = std::ceil(N / prob);
         if (ctr == n_distr - 1) // safety margin for last step
-            N_new *= 10;
+            N_new *= n_distr/2;
         N_new = std::min(N_new, N_max);
 
         if (verbosity >= 3)
@@ -165,7 +165,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
 
         if (verbosity >= 2 && refresh > 0 && (i+1) % refresh == 0) {
             printf("Iteration %'6d / %'d\n", i+1, N);
-            //Rcpp::checkUserInterrupt();
+            Rcpp::checkUserInterrupt();
         }
     }
 
@@ -280,6 +280,7 @@ void adapt_parameters(const Graph &g, int &k, double &prob, int N_adapt, int val
     std::vector<std::vector<double>> devs;
     vec distr_ok(k_max+1, fill::zeros);
     int root;
+    int max_ok = 0;
     std::vector<bool> ignore(V);
     for (int i = 0, idx = 0; i < N_max && idx < N_adapt; i++, idx++) {
         if (std::isinf(lp(i))) { // skip if not valid
@@ -303,6 +304,8 @@ void adapt_parameters(const Graph &g, int &k, double &prob, int N_adapt, int val
 
         if (n_ok <= k_max)
             distr_ok(n_ok) += 1.0 / N_adapt;
+        if (n_ok > max_ok && n_ok < k_max)
+            max_ok = n_ok;
     }
 
     // For each k, compute pr(selected edge within top k),
@@ -324,8 +327,8 @@ void adapt_parameters(const Graph &g, int &k, double &prob, int N_adapt, int val
     }
 
     if (k == k_max + 1) {
-        Rcout << "Warning: maximum k of " << k_max << " selected.\n";
-        k = k_max;
+        Rcout << "Warning: maximum hit; falling back to naive k estimator.\n";
+        k = max_ok + 1;
     }
 
     prob = 0;
