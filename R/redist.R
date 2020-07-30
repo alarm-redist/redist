@@ -323,7 +323,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
                            beta = 0, temper = NULL, constraint = NULL,
                            betaseq = NULL, betaseqlength = NULL,
                            betaweights = NULL, adjswaps = TRUE, maxiterrsg = NULL,
-                           contiguitymap = NULL
+                           contiguitymap = "rooks"
                            ){
 
     #########################
