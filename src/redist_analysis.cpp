@@ -24,9 +24,9 @@ double calc_polsbypopper(arma::uvec new_cds,
 
   double pi = 3.141592653589793238463;
 
-  /* 
+  /*
      Calculate the area for the district
-     by summing over the areas of the cds 
+     by summing over the areas of the cds
   */
   double area_new = 0.0;
   int j; int k; int l;
@@ -40,7 +40,7 @@ double calc_polsbypopper(arma::uvec new_cds,
     }
   }
 
-  /* 
+  /*
      Calculate the perimeter for the district
      by finding boundaries on the CD
   */
@@ -59,13 +59,13 @@ double calc_polsbypopper(arma::uvec new_cds,
   // on the boundary
   arma::uvec boundary_inds_new = find(boundarylist_new == 1);
   arma::ivec boundary_precs_new = arma::intersect(arma::conv_to<arma::ivec>::from(new_cds), arma::conv_to<arma::ivec>::from(boundary_inds_new));
-  
+
   // Loop over the indices in boundary_precs_new and check the adjacent units for
   // whether they too lie on a boundary
   arma::vec adj_precs;
-  arma::uvec in_cd;  
+  arma::uvec in_cd;
   arma::vec adj_precs_sub;
-  
+
   arma::uvec adj_precs_sub_indices;
   arma::uvec find_boundarylength_in_boundarymat;
   arma::ivec loop_over_inds;
@@ -73,7 +73,7 @@ double calc_polsbypopper(arma::uvec new_cds,
   for(j = 0; j < boundary_precs_new.n_elem; j++){
 
     if(discrete == false){
-      
+
       // Get the adjacent indices - on the boundary and
       // greater than boundary_precs[j] to avoid double counting
       adj_precs = as<arma::vec>(aList(boundary_precs_new(j)));
@@ -83,7 +83,7 @@ double calc_polsbypopper(arma::uvec new_cds,
       adj_precs_sub = adj_precs.elem( find(in_cd == false) );
       adj_precs_sub.resize(adj_precs_sub.size() + 1);
       adj_precs_sub(adj_precs_sub.size() - 1) = -1.0;
-    
+
       // Which elements of boundary_mat's first column are in adj_precs_sub, and what of second column equal the actual precinct
       find_boundarylength_in_boundarymat = find(borderlength_col2 == boundary_precs_new(j));
       for(k = 0; k < adj_precs_sub.n_elem; k++){
@@ -102,20 +102,20 @@ double calc_polsbypopper(arma::uvec new_cds,
 
       // Add the population around the perimeter
       perimeter_new += (double)pop_vec(boundary_precs_new(j));
-      
+
     }
 
   }
 
   double out;
   if(discrete == false){
-    out = (double)4.0 * pi * area_new / pow(perimeter_new, 2.0); 
+    out = (double)4.0 * pi * area_new / pow(perimeter_new, 2.0);
   }else{
     out = area_new / pow(perimeter_new, 2.0);
   }
-  
+
   return out;
-  
+
 }
 
 // Function to calculate summary statistics (package version)
@@ -183,7 +183,7 @@ NumericVector segregationcalc(NumericMatrix distmat,
 	// Add population counts
 	tpop += fullpop(findCds(k));
 	gpop += grouppop(findCds(k));
-	
+
       }
 
       // Get district proportions
@@ -196,7 +196,7 @@ NumericVector segregationcalc(NumericMatrix distmat,
 
     // Add to vector
     diVec(i) = dissim;
-    
+
   }
 
   // Return vector

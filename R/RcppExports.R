@@ -13,12 +13,24 @@ cppGeneratePartitions <- function(adjList, numBlocks, popSizes, numConstraintLow
     .Call(`_redist_cppGeneratePartitions`, adjList, numBlocks, popSizes, numConstraintLow, numConstraintHigh, popConstraintLow, popConstraintHigh)
 }
 
+log_st_map <- function(g, districts, counties, n_distr) {
+    .Call(`_redist_log_st_map`, g, districts, counties, n_distr)
+}
+
+n_removed <- function(g, districts, n_distr) {
+    .Call(`_redist_n_removed`, g, districts, n_distr)
+}
+
 countpartitions <- function(aList) {
     .Call(`_redist_countpartitions`, aList)
 }
 
 calcPWDh <- function(x) {
     .Call(`_redist_calcPWDh`, x)
+}
+
+max_dev <- function(districts, pop, n_distr) {
+    .Call(`_redist_max_dev`, districts, pop, n_distr)
 }
 
 calc_polsbypopper <- function(new_cds, areas_vec, boundarylist_new, borderlength_mat, pop_vec, aList, discrete = FALSE) {
@@ -31,6 +43,10 @@ segregationcalc <- function(distmat, grouppop, fullpop) {
 
 rsg <- function(adj_list, population, Ndistrict, target_pop, thresh, maxiter) {
     .Call(`_redist_rsg`, adj_list, population, Ndistrict, target_pop, thresh, maxiter)
+}
+
+smc_plans <- function(N, l, counties, pop, n_distr, tol, gamma, log_prob, thresh, alpha, infl = 5L, verbosity = 1L) {
+    .Call(`_redist_smc_plans`, N, l, counties, pop, n_distr, tol, gamma, log_prob, thresh, alpha, infl, verbosity)
 }
 
 sample_partition <- function(aList, aMat, num_partitions, num_samples, threads = 1L) {
