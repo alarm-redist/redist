@@ -25,7 +25,7 @@ List vector_to_list(arma::uvec vecname){
     list_out(i) = vecname(i);
   }
   return list_out;
-	
+
 }
 
 arma::uvec get_not_in(arma::uvec vec1, arma::uvec vec2){
@@ -39,11 +39,11 @@ arma::uvec get_not_in(arma::uvec vec1, arma::uvec vec2){
     }
   }
   arma::uvec candidates = vec1.elem( find(out == 1) );
-  
+
   return candidates;
 }
 
-/* Primary function to run redistricting algorithm. An implementation of 
+/* Primary function to run redistricting algorithm. An implementation of
    Algorithm 1 in Barbu and Zhu (2005) */
 // [[Rcpp::export]]
 List swMH(List aList,
@@ -154,7 +154,7 @@ List swMH(List aList,
 
   // Get populations of districts
   NumericVector district_pops = init_pop(popvec, cdvec);
-  
+
   // Get vector of unique district ids
   NumericVector uniquedists;
   for(int i = 0; i < cdvec.size(); i++){
@@ -250,15 +250,15 @@ List swMH(List aList,
     ///////////////////////////////////////////////////////////////////////////
     // Continue trying until you get p good swaps
     do{
-      
+
       if(eprob != 0.0){
 	// First element is connected adjlist, second element is cut adjlist
 	cutedge_lists = cut_edges(aList_con, eprob);
-	
+
 	////////////////////////////////////////////////////////////////////
 	// Third: generate a list of connected components within each cd //
 	///////////////////////////////////////////////////////////////////
-	/* List of connected partitions after edgecuts - first element is list of 
+	/* List of connected partitions after edgecuts - first element is list of
 	   partitions, second element is number of partitions */
 	boundary_partitions = bsearch_boundary(cutedge_lists["connectedlist"],
 					       boundary);
@@ -273,10 +273,10 @@ List swMH(List aList,
       ///////////////////////////////////////////////////////////////////////
       // Draw parameter p (number of swaps for iteration of alg) from pois(lambda)
       p = draw_p(lambda);
-      
+
       // Loop over p, draw p connected components
-      swap_partitions = make_swaps(boundary_partitions_list, 
-				   aList, 
+      swap_partitions = make_swaps(boundary_partitions_list,
+				   aList,
 				   cdvec,
 				   cdorigvec,
 				   popvec,
@@ -300,25 +300,25 @@ List swMH(List aList,
 				   compactness_measure);
 
     }while(as<int>(swap_partitions["goodprop"]) == 0);
-    
+
     // // Get new boundary, then get number of partitions
     // if(exact_mh == 1){
     //   aList_con_prop = genAlConn(aList, as<NumericVector>(swap_partitions["proposed_partition"]));
     //   boundary_prop = findBoundary(aList, aList_con_prop);
     //   boundary_partitions_prop = bsearch_boundary(cutedge_lists["connectedlist"],
     // 						  boundary_prop);
-      
+
     //   // Correct npartitions to only include boundary partitions that don't break contiguity
     //   int nvalid_current = count_valid(aList, boundary_partitions["bsearch"], cdvec);
     //   int nvalid_prop = count_valid(aList, boundary_partitions_prop["bsearch"],
     // 				    swap_partitions["proposed_partition"]);
-      
+
     //   // Modify metropolis-hastings ratio
     //   swap_partitions["mh_prob"] = as<double>(swap_partitions["mh_prob"]) *
     // 	pow((double)nvalid_current / nvalid_prop, (double)p);
     //   boundaryratio_store(k) = pow((double)nvalid_current / nvalid_prop, (double)p);
     // }
-    
+
     //////////////////////////////////////////
     // Fifth - Accept with some probability //
     //////////////////////////////////////////
@@ -360,7 +360,7 @@ List swMH(List aList,
 	psicountysplit_store[k] = swap_partitions["countysplit_old_psi"];
       }
     }
-  
+
     /////////////////////////////////////////////////////////////
     // Also - for simulated tempering, propose a possible swap //
     /////////////////////////////////////////////////////////////
@@ -375,14 +375,14 @@ List swMH(List aList,
 
       // Change beta
       beta = as<double>(gt_out["beta"]);
-      
+
       // Store the output of geyer thompson
       if(k < nsims){
 	betaseq_store[z] = beta;
       }
       decision_betaseq_store[k] = as<int>(gt_out["mh_decision"]);
       mhprob_betaseq_store[k] = as<double>(gt_out["mh_prob"]);
-      
+
     }else if(adapt_beta == "annealing"){
 
       if((k >= start_anneal) & (k < start_cold)){
@@ -393,9 +393,9 @@ List swMH(List aList,
       if(k < nsims){
 	betaseq_store[z] = beta;
       }
-      
+
     }
-  
+
     //////////////////////////////////////
     // Six = clean up and store results //
     //////////////////////////////////////
@@ -410,7 +410,7 @@ List swMH(List aList,
     }else{
       boundarypartitions_store[k] = boundarypartitions_store[k-1];
     }
-    
+
     // Store previous iteration
     if(adapt_beta != "annealing"){
       for(i = 0; i < cdvec.size(); i++){
@@ -424,7 +424,7 @@ List swMH(List aList,
     // Store the decision
     decision_store[k] = decision;
     decision_counter += decision;
-    
+
     mhprob_store[k] = as<double>(swap_partitions["mh_prob"]);
 
     // Advance k, z
@@ -454,7 +454,7 @@ List swMH(List aList,
 	Rcout << "----------------------------------" << std::endl;
       }
     }
-  
+
     // Change eprob, lambda if adaptive
     if(adapt_eprob == 1 || adapt_lambda == 1){
       if(k % 50 == 0){
@@ -476,9 +476,9 @@ List swMH(List aList,
 	}
       }
     }
-        
+
   }
-  
+
   // Get distance from parity of each partition
   NumericVector dist_parity_vec;
   NumericVector dist_orig_vec;
@@ -493,7 +493,7 @@ List swMH(List aList,
     dist_orig_vec = diff_origcds(cd_store, popvec);
   }
 
-  
+
   // Create list, store output
   List out;
   if(adapt_beta != "annealing"){
@@ -545,8 +545,8 @@ List swMH(List aList,
       out["final_lambda"] = lambda;
     }
   }
-  
+
   return out;
-  
+
 }
 
