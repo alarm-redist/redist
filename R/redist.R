@@ -185,15 +185,15 @@ redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
     preprocout <- redist.preproc(adjobj = adjobj, popvec = popvec,
                                  initcds = initcds, ndists = ndists,
                                  popcons = popcons,
-                                 #countymembership = countymembership, #ctk-comment
+                                 #countymembership = countymembership, #ctk-cran-note
                                  grouppopvec = grouppopvec,
-                                 #areasvec = areasvec, #ctk-comment
-                                 #borderlength_mat = borderlength_mat, #ctk-comment
+                                 #areasvec = areasvec, #ctk-cran-note
+                                 #borderlength_mat = borderlength_mat, #ctk-cran-note
                                  ssdmat = ssdmat,
-                                 #compactness_metric = compactness_metric,#ctk-comment
+                                 #compactness_metric = compactness_metric,#ctk-cran-note
                                  temper = FALSE,
                                  constraint = constraint,
-                                 #constraintweights = constraintweights, #ctk-comment
+                                 #constraintweights = constraintweights, #ctk-cran-note
                                  betaseq = "powerlaw", betaseqlength = 10,
                                  betaweights = NULL,
                                  adjswaps = TRUE, maxiterrsg = maxiterrsg,
