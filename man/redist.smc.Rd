@@ -128,5 +128,4 @@ data(algdat.p10)
 sampled_plans = redist.smc(algdat.pfull$adjlist, algdat.pfull$precinct.data$pop,
                            nsims=10000, ndists=3, popcons=0.1)
 }
-
 }
