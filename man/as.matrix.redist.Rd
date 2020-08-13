@@ -6,6 +6,11 @@
 \usage{
 \method{as.matrix}{redist}(x, ...)
 }
+\arguments{
+\item{x}{redist object}
+
+\item{\\dots}{additional arguments}
+}
 \description{
 Extract the redistricting matrix from a \code{redist} object
 }

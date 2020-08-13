@@ -1657,12 +1657,15 @@ the segregation index")
 
 #' Extract the redistricting matrix from a \code{redist} object
 #' @method as.matrix redist
+#' @param x redist object
+#' @param \\dots additional arguments
 #' @export
 as.matrix.redist = function(x, ...) {
     x$cdvec
 }
 
 #' @method print redist
+#' @importFrom utils str
 #' @export
 print.redist = function(x, ...) {
     cat(x$nsims, " sampled plans with ", max(x$cdvec[,1]), " districts from a ",
