@@ -185,15 +185,15 @@ redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
     preprocout <- redist.preproc(adjobj = adjobj, popvec = popvec,
                                  initcds = initcds, ndists = ndists,
                                  popcons = popcons,
-                                 countymembership = countymembership,
+                                 #countymembership = countymembership, #ctk-cran-note
                                  grouppopvec = grouppopvec,
-                                 areasvec = areasvec,
-                                 borderlength_mat = borderlength_mat,
+                                 #areasvec = areasvec, #ctk-cran-note
+                                 #borderlength_mat = borderlength_mat, #ctk-cran-note
                                  ssdmat = ssdmat,
-                                 compactness_metric = compactness_metric,
+                                 #compactness_metric = compactness_metric,#ctk-cran-note
                                  temper = FALSE,
                                  constraint = constraint,
-                                 constraintweights = constraintweights,
+                                 #constraintweights = constraintweights, #ctk-cran-note
                                  betaseq = "powerlaw", betaseqlength = 10,
                                  betaweights = NULL,
                                  adjswaps = TRUE, maxiterrsg = maxiterrsg,
@@ -1190,14 +1190,14 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                        beta_weights = preprocout$params$betaweights,
                        ssdmat = preprocout$data$ssdmat,
                        lambda = lambda,
-                       beta_population = betapop,
-                       beta_compact = betacompact,
-                       beta_segregation = betaseg,
-                       beta_similar = betasimilar,
-                       anneal_beta_population = preprocout$params$temperbetapop,
-                       anneal_beta_compact = preprocout$params$temperbetacompact,
-                       anneal_beta_segregation = preprocout$params$temperbetaseg,
-                       anneal_beta_similar = preprocout$params$temperbetasimilar,
+                       #beta_population = betapop, #ctk-cran-note
+                       #beta_compact = betacompact, #ctk-cran-note
+                       #beta_segregation = betaseg, #ctk-cran-note
+                       #beta_similar = betasimilar, #ctk-cran-note
+                       #anneal_beta_population = preprocout$params$temperbetapop, #ctk-cran-note
+                       #anneal_beta_compact = preprocout$params$temperbetacompact, #ctk-cran-note
+                       #anneal_beta_segregation = preprocout$params$temperbetaseg, #ctk-cran-note
+                       #anneal_beta_similar = preprocout$params$temperbetasimilar, #ctk-cran-note
                        adjswap = preprocout$params$adjswaps,
                        exact_mh = exact_mh,
                        adapt_lambda = adapt_lambda,
@@ -1657,12 +1657,15 @@ the segregation index")
 
 #' Extract the redistricting matrix from a \code{redist} object
 #' @method as.matrix redist
+#' @param x redist object
+#' @param \\dots additional arguments
 #' @export
 as.matrix.redist = function(x, ...) {
     x$cdvec
 }
 
 #' @method print redist
+#' @importFrom utils str
 #' @export
 print.redist = function(x, ...) {
     cat(x$nsims, " sampled plans with ", max(x$cdvec[,1]), " districts from a ",
