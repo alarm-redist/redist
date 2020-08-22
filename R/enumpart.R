@@ -63,7 +63,7 @@ redist.prep.enumpart <- function(adjlist, unordered_path, ordered_path){
   
   ## Order edges
   res <- sys::exec_wait('python', 
-                        args = system.file('inst/python/ndscut.py', package = 'redist'), 
+                        args = system.file('python/ndscut.py', package = 'redist'), 
                         std_in = paste0(unordered_path, '.dat'), 
                         std_out = paste0(ordered_path, '.dat'))  
   
