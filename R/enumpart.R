@@ -15,6 +15,13 @@
 #' redist.init.enumpart()
 #' }
 redist.init.enumpart <- function(){
+  # Update makefile to direct to library only if Windows
+  if(Sys.info()[['sysname']] == 'Windows'){
+    makecontent <- readLines(system.file('enumpart/Makefile', package = 'redist'))
+    makecontent[7] <-"\tg++ enumpart.cpp SAPPOROBDD/bddc.o SAPPOROBDD/BDD.o SAPPOROBDD/ZBDD.o -o enumpart -I$(TDZDD_DIR) -std=c++11 -O3 -DB_64 -DNDEBUG -lpsapi"
+    writeLines(text = makecontent, con = system.file('enumpart/Makefile', package = 'redist'))
+  }
+  
   servr::make(dir = system.file('enumpart', package = 'redist'))
   sys::exec_wait('python', args= c('-m', 'pip', 'install', 'networkx', '--user'))
   return(0)
