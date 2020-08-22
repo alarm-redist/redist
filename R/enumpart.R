@@ -96,7 +96,7 @@ redist.run.enumpart <- function(ordered_path, out_path, ndist = 2, all = TRUE, n
   n <- as.integer(n)
   
   # use args based on types
-  if(!is.null(options)){
+  if(is.null(options)){
   if(all){
     options <- c('-k', ndist, '-comp', '-allsols')
   } else{
