@@ -317,10 +317,6 @@ This returns a numeric vector with the an entry for each district provided.
 [Back to top](#top)
 
 # Diagnostic Plots {#diag}
-```{r}
-source('~/Documents/GitHub/redist/R/diagplot.R')
-```
-
 When using the MCMC algorithms, there are various useful diagnostic plots. The `redist.diagplot` function creates familiar plots by converting numeric entries into `mcmc` objects to use with `coda`.
 
 The first four plots take a single index, such as one created by `redist.segcalc`.
