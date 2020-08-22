@@ -15,7 +15,7 @@
 #' redist.init.enumpart()
 #' }
 redist.init.enumpart <- function(){
-  servr::make(dir = system.file('src/enumpart', package = 'redist'))
+  servr::make(dir = system.file('enumpart', package = 'redist'))
   exec_wait('pip', args= c('install', 'networkx'))
   return(0)
 }
@@ -108,7 +108,7 @@ redist.run.enumpart <- function(ordered_path, out_path, ndist = 2, all = TRUE, n
   }
   
   ## Run enumpart
-  res <- sys::exec_wait(paste0(system.file('src/enumpart', package = 'redist'), '/enumpart'),
+  res <- sys::exec_wait(paste0(system.file('enumpart', package = 'redist'), '/enumpart'),
                  args = options,
                  std_out = paste0(out_path, '.dat'), std_err = TRUE)
 
