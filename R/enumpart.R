@@ -22,7 +22,7 @@ redist.init.enumpart <- function(){
     writeLines(text = makecontent, con = system.file('enumpart/Makefile', package = 'redist'))
   }
   
-  servr::make(dir = system.file('enumpart', package = 'redist'))
+  servr::make(dir = system.file('enumpart', package = 'redist'), verbose = FALSE)
   sys::exec_wait('python', args= c('-m', 'pip', 'install', 'networkx', '--user'))
   return(0)
 }
