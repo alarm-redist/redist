@@ -8,6 +8,13 @@
 
 <title>MCMC Redistricting Simulator — redist.mcmc • redist</title>
 
+<!-- favicons -->
+<link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png" />
+<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png" />
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
@@ -42,6 +49,7 @@
 <meta property="og:title" content="MCMC Redistricting Simulator — redist.mcmc" />
 <meta property="og:description" content="redist.mcmc is used to simulate Congressional redistricting
 plans using Markov Chain Monte Carlo methods." />
+<meta property="og:image" content="/logo.png" />
 
 
 
@@ -131,16 +139,41 @@ plans using Markov Chain Monte Carlo methods." />
 plans using Markov Chain Monte Carlo methods.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.mcmc</span>(<span class='no'>adjobj</span>, <span class='no'>popvec</span>, <span class='no'>nsims</span>, <span class='kw'>ndists</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>initcds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>loopscompleted</span> <span class='kw'>=</span> <span class='fl'>0</span>, <span class='kw'>nloop</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>nthin</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>eprob</span> <span class='kw'>=</span> <span class='fl'>0.05</span>,
-  <span class='kw'>lambda</span> <span class='kw'>=</span> <span class='fl'>0</span>, <span class='kw'>popcons</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>grouppopvec</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>areasvec</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>countymembership</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>borderlength_mat</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>ssdmat</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>temper</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>constraint</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>constraintweights</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>compactness_metric</span> <span class='kw'>=</span> <span class='st'>"fryer-holden"</span>, <span class='kw'>ssd_denom</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>betaseq</span> <span class='kw'>=</span> <span class='st'>"powerlaw"</span>, <span class='kw'>betaseqlength</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>betaweights</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>adjswaps</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>rngseed</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>maxiterrsg</span> <span class='kw'>=</span> <span class='fl'>5000</span>,
-  <span class='kw'>adapt_lambda</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>adapt_eprob</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>contiguitymap</span> <span class='kw'>=</span> <span class='st'>"rooks"</span>,
-  <span class='kw'>exact_mh</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>savename</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+    <pre class="usage"><span class='fu'>redist.mcmc</span>(
+  <span class='no'>adjobj</span>,
+  <span class='no'>popvec</span>,
+  <span class='no'>nsims</span>,
+  <span class='kw'>ndists</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>initcds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>loopscompleted</span> <span class='kw'>=</span> <span class='fl'>0</span>,
+  <span class='kw'>nloop</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>nthin</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>eprob</span> <span class='kw'>=</span> <span class='fl'>0.05</span>,
+  <span class='kw'>lambda</span> <span class='kw'>=</span> <span class='fl'>0</span>,
+  <span class='kw'>popcons</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>grouppopvec</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>areasvec</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>countymembership</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>borderlength_mat</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>ssdmat</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>temper</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>constraint</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>constraintweights</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>compactness_metric</span> <span class='kw'>=</span> <span class='st'>"fryer-holden"</span>,
+  <span class='kw'>ssd_denom</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>betaseq</span> <span class='kw'>=</span> <span class='st'>"powerlaw"</span>,
+  <span class='kw'>betaseqlength</span> <span class='kw'>=</span> <span class='fl'>10</span>,
+  <span class='kw'>betaweights</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>adjswaps</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>rngseed</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>maxiterrsg</span> <span class='kw'>=</span> <span class='fl'>5000</span>,
+  <span class='kw'>adapt_lambda</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>adapt_eprob</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>contiguitymap</span> <span class='kw'>=</span> <span class='st'>"rooks"</span>,
+  <span class='kw'>exact_mh</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>savename</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">

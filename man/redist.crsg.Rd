@@ -72,6 +72,12 @@ Rodden (2013).
 }
 \examples{
 \dontrun{
+data("fl25")
+adj <- redist.adjacency(fl25)
+area <- sf::st_area(fl25)
+centers <- sf::st_coordinates(sf::st_centroid(fl25))
+redist.crsg(adj.list = adj, population = fl25$pop, area = area,
+x_center = centers[,1], y_center = centers[,2], ndists = 2, thresh = .1)
 }
 }
 \references{

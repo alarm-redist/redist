@@ -10,7 +10,9 @@
 #' @return list of matrices of distances with one for each distance measure selected
 #'
 #' @examples \dontrun{
-#' 
+#' data("algdat.p10")
+#' distances <- redist.distances(district_membership = algdat.p10$cdmat)
+#' distances$Hamming[1:5,1:5]
 #' }
 #' @export
 redist.distances <- function(district_membership, measure = "Hamming", ncores = 1){
@@ -94,3 +96,5 @@ redist.distances <- function(district_membership, measure = "Hamming", ncores = 
   
   return(distances)
 }
+
+utils::globalVariables(names = "map")

@@ -30,15 +30,21 @@ Imports:
     foreach, 
     lwgeom,
     dplyr,
-    ggplot2
+    ggplot2, 
+    magrittr,
+    readr,
+    servr,
+    sys,
+    tibble
 Suggests:
     testthat,
     Rmpi,
     knitr,
-    rmarkdown
+    rmarkdown,
+    igraph
 LinkingTo: Rcpp, RcppArmadillo, RcppEigen, BH
 License: GPL (>= 2)
-SystemRequirements: gmp, libxml2
+SystemRequirements: gmp, libxml2, python
 Packaged: 2015-06-03 18:32:00 UTC; benfifield
 NeedsCompilation: yes
 BugReports: https://github.com/kosukeimai/redist/issues
