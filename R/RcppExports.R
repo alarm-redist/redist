@@ -29,8 +29,8 @@ cppGeneratePartitions <- function(adjList, numBlocks, popSizes, numConstraintLow
     .Call(`_redist_cppGeneratePartitions`, adjList, numBlocks, popSizes, numConstraintLow, numConstraintHigh, popConstraintLow, popConstraintHigh)
 }
 
-hamming <- function(x, y) {
-    .Call(`_redist_hamming`, x, y)
+hamming <- function(v, m) {
+    .Call(`_redist_hamming`, v, m)
 }
 
 countpartitions <- function(aList) {
@@ -39,6 +39,62 @@ countpartitions <- function(aList) {
 
 calcPWDh <- function(x) {
     .Call(`_redist_calcPWDh`, x)
+}
+
+agg_p2d <- function(dm, vote, nd) {
+    .Call(`_redist_agg_p2d`, dm, vote, nd)
+}
+
+dseats <- function(dm, dcounts, rcounts, nd) {
+    .Call(`_redist_dseats`, dm, dcounts, rcounts, nd)
+}
+
+dseatsDVS <- function(dvs) {
+    .Call(`_redist_dseatsDVS`, dvs)
+}
+
+DVS <- function(dcounts, rcounts) {
+    .Call(`_redist_DVS`, dcounts, rcounts)
+}
+
+effgapEP <- function(dvs, dseat_vec, nd) {
+    .Call(`_redist_effgapEP`, dvs, dseat_vec, nd)
+}
+
+effgap <- function(dcounts, rcounts, totvote) {
+    .Call(`_redist_effgap`, dcounts, rcounts, totvote)
+}
+
+taugap <- function(tau, dvs, dseat_vec, nd) {
+    .Call(`_redist_taugap`, tau, dvs, dseat_vec, nd)
+}
+
+meanmedian <- function(dvs) {
+    .Call(`_redist_meanmedian`, dvs)
+}
+
+bias <- function(dvs, nd) {
+    .Call(`_redist_bias`, dvs, nd)
+}
+
+declination <- function(dvs, dseat_vec, nd) {
+    .Call(`_redist_declination`, dvs, dseat_vec, nd)
+}
+
+lopsidedwins <- function(dvs, dseat_vec, nd) {
+    .Call(`_redist_lopsidedwins`, dvs, dseat_vec, nd)
+}
+
+responsiveness <- function(dvs, v, nd, bandwidth = .01) {
+    .Call(`_redist_responsiveness`, dvs, v, nd, bandwidth)
+}
+
+biasatv <- function(dvs, v, nd) {
+    .Call(`_redist_biasatv`, dvs, v, nd)
+}
+
+minkowski <- function(v, m, p) {
+    .Call(`_redist_minkowski`, v, m, p)
 }
 
 calc_polsbypopper <- function(new_cds, areas_vec, boundarylist_new, borderlength_mat, pop_vec, aList, discrete = FALSE) {

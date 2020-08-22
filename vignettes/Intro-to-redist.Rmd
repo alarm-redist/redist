@@ -16,7 +16,6 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(redist)
-library(tidyverse)
 library(igraph)
 library(spdep)
 library(coda)
@@ -58,11 +57,18 @@ For additional functions for working with the shapefiles, using `spdep` is recom
 ```{r}
 library(spdep)
 ```
-For plotting maps and adjacency graphs, `tidyverse` and `igraph` are useful. Tidyverse allows for making ggplot maps, when used with `sf`.  These may be loaded with:
+For plotting maps and adjacency graphs, `ggplot2` and `igraph` are useful. The former allows for making ggplot maps, when used with `sf`.  These may be loaded with:
 ```{r}
 library(igraph)
-library(tidyverse)
+library(ggplot2)
 ```
+
+Additionally useful data manipulation tools for working with objects from the package are `dplyr` and `magrittr`.
+```{r}
+library(dplyr)
+library(magrittr)
+```
+
 
 # Included Data {#data}
 The package contains four datasets. The first three are `algdat.p10`, `algdat.p20`, and `algdat.pfull` which contain data for 25 continuous precincts within Florida when partitioned into three districts.  Respectively, these are those plans which fall within 10% population parity, 20% population parity, and all possible partitions. These are loaded in with the package and can be loaded as follows:
@@ -96,8 +102,7 @@ names(algdat.pfull)
 
 The fourth data set is the sf dataframe, containing the shapes themselves for creating these objects. It can be called with:
 ```{r}
-fl25 <- readRDS('~/Documents/GitHub/redist/data/fl25.rda')#this will be swapped for data line once rebuilt
-#data(fl25)
+data("fl25")
 ```
 
 From the head of the data, we can see this is a typical dataframe with a geometry column appended. See the [website for sf](https://r-spatial.github.io/sf/) for more information about this type of object.
@@ -123,8 +128,7 @@ Each column contains useful information for typical redistricting questions:
 We begin with a simple example of thinking about adjacency-based redistricting, using a small piece of Florida, named fl25. It can be 
 loaded with the data command as follows. For more information on the data, see [the data section](#data)
 ```{r}
-fl25 <- readRDS('~/Documents/GitHub/redist/data/fl25.rda')#this will be swapped for data line once rebuilt
-#data(fl25)
+data("fl25")
 ```
 
 This Florida subset contains the shapefiles for the districts, which can be plotted with sf.

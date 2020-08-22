@@ -39,7 +39,7 @@ library(redist)
 data("fl25")
 data("algdat.p10")
 cds <- algdat.p10$cdmat[,100]
-
+redist.map(shp = fl25, district_membership = cds)
 }
 
 }

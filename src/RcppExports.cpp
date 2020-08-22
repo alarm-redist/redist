@@ -111,14 +111,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // hamming
-int hamming(IntegerVector x, IntegerVector y);
-RcppExport SEXP _redist_hamming(SEXP xSEXP, SEXP ySEXP) {
+IntegerVector hamming(IntegerVector v, IntegerMatrix m);
+RcppExport SEXP _redist_hamming(SEXP vSEXP, SEXP mSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerVector >::type x(xSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type y(ySEXP);
-    rcpp_result_gen = Rcpp::wrap(hamming(x, y));
+    Rcpp::traits::input_parameter< IntegerVector >::type v(vSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type m(mSEXP);
+    rcpp_result_gen = Rcpp::wrap(hamming(v, m));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -141,6 +141,185 @@ BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type x(xSEXP);
     rcpp_result_gen = Rcpp::wrap(calcPWDh(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// agg_p2d
+IntegerMatrix agg_p2d(IntegerMatrix dm, IntegerVector vote, int nd);
+RcppExport SEXP _redist_agg_p2d(SEXP dmSEXP, SEXP voteSEXP, SEXP ndSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type dm(dmSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type vote(voteSEXP);
+    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
+    rcpp_result_gen = Rcpp::wrap(agg_p2d(dm, vote, nd));
+    return rcpp_result_gen;
+END_RCPP
+}
+// dseats
+IntegerVector dseats(IntegerMatrix dm, IntegerMatrix dcounts, IntegerMatrix rcounts, int nd);
+RcppExport SEXP _redist_dseats(SEXP dmSEXP, SEXP dcountsSEXP, SEXP rcountsSEXP, SEXP ndSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type dm(dmSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type dcounts(dcountsSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type rcounts(rcountsSEXP);
+    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
+    rcpp_result_gen = Rcpp::wrap(dseats(dm, dcounts, rcounts, nd));
+    return rcpp_result_gen;
+END_RCPP
+}
+// dseatsDVS
+IntegerVector dseatsDVS(NumericMatrix dvs);
+RcppExport SEXP _redist_dseatsDVS(SEXP dvsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type dvs(dvsSEXP);
+    rcpp_result_gen = Rcpp::wrap(dseatsDVS(dvs));
+    return rcpp_result_gen;
+END_RCPP
+}
+// DVS
+NumericMatrix DVS(IntegerMatrix dcounts, IntegerMatrix rcounts);
+RcppExport SEXP _redist_DVS(SEXP dcountsSEXP, SEXP rcountsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type dcounts(dcountsSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type rcounts(rcountsSEXP);
+    rcpp_result_gen = Rcpp::wrap(DVS(dcounts, rcounts));
+    return rcpp_result_gen;
+END_RCPP
+}
+// effgapEP
+NumericVector effgapEP(NumericMatrix dvs, IntegerVector dseat_vec, int nd);
+RcppExport SEXP _redist_effgapEP(SEXP dvsSEXP, SEXP dseat_vecSEXP, SEXP ndSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type dvs(dvsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type dseat_vec(dseat_vecSEXP);
+    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
+    rcpp_result_gen = Rcpp::wrap(effgapEP(dvs, dseat_vec, nd));
+    return rcpp_result_gen;
+END_RCPP
+}
+// effgap
+NumericVector effgap(IntegerMatrix dcounts, IntegerMatrix rcounts, int totvote);
+RcppExport SEXP _redist_effgap(SEXP dcountsSEXP, SEXP rcountsSEXP, SEXP totvoteSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type dcounts(dcountsSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type rcounts(rcountsSEXP);
+    Rcpp::traits::input_parameter< int >::type totvote(totvoteSEXP);
+    rcpp_result_gen = Rcpp::wrap(effgap(dcounts, rcounts, totvote));
+    return rcpp_result_gen;
+END_RCPP
+}
+// taugap
+NumericVector taugap(double tau, NumericMatrix dvs, IntegerVector dseat_vec, int nd);
+RcppExport SEXP _redist_taugap(SEXP tauSEXP, SEXP dvsSEXP, SEXP dseat_vecSEXP, SEXP ndSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type tau(tauSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type dvs(dvsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type dseat_vec(dseat_vecSEXP);
+    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
+    rcpp_result_gen = Rcpp::wrap(taugap(tau, dvs, dseat_vec, nd));
+    return rcpp_result_gen;
+END_RCPP
+}
+// meanmedian
+NumericVector meanmedian(NumericMatrix dvs);
+RcppExport SEXP _redist_meanmedian(SEXP dvsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type dvs(dvsSEXP);
+    rcpp_result_gen = Rcpp::wrap(meanmedian(dvs));
+    return rcpp_result_gen;
+END_RCPP
+}
+// bias
+NumericVector bias(NumericMatrix dvs, int nd);
+RcppExport SEXP _redist_bias(SEXP dvsSEXP, SEXP ndSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type dvs(dvsSEXP);
+    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
+    rcpp_result_gen = Rcpp::wrap(bias(dvs, nd));
+    return rcpp_result_gen;
+END_RCPP
+}
+// declination
+NumericVector declination(NumericMatrix dvs, IntegerVector dseat_vec, int nd);
+RcppExport SEXP _redist_declination(SEXP dvsSEXP, SEXP dseat_vecSEXP, SEXP ndSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type dvs(dvsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type dseat_vec(dseat_vecSEXP);
+    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
+    rcpp_result_gen = Rcpp::wrap(declination(dvs, dseat_vec, nd));
+    return rcpp_result_gen;
+END_RCPP
+}
+// lopsidedwins
+NumericVector lopsidedwins(NumericMatrix dvs, IntegerVector dseat_vec, int nd);
+RcppExport SEXP _redist_lopsidedwins(SEXP dvsSEXP, SEXP dseat_vecSEXP, SEXP ndSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type dvs(dvsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type dseat_vec(dseat_vecSEXP);
+    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
+    rcpp_result_gen = Rcpp::wrap(lopsidedwins(dvs, dseat_vec, nd));
+    return rcpp_result_gen;
+END_RCPP
+}
+// responsiveness
+NumericVector responsiveness(NumericMatrix dvs, double v, int nd, double bandwidth);
+RcppExport SEXP _redist_responsiveness(SEXP dvsSEXP, SEXP vSEXP, SEXP ndSEXP, SEXP bandwidthSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type dvs(dvsSEXP);
+    Rcpp::traits::input_parameter< double >::type v(vSEXP);
+    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
+    Rcpp::traits::input_parameter< double >::type bandwidth(bandwidthSEXP);
+    rcpp_result_gen = Rcpp::wrap(responsiveness(dvs, v, nd, bandwidth));
+    return rcpp_result_gen;
+END_RCPP
+}
+// biasatv
+NumericVector biasatv(NumericMatrix dvs, double v, int nd);
+RcppExport SEXP _redist_biasatv(SEXP dvsSEXP, SEXP vSEXP, SEXP ndSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type dvs(dvsSEXP);
+    Rcpp::traits::input_parameter< double >::type v(vSEXP);
+    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
+    rcpp_result_gen = Rcpp::wrap(biasatv(dvs, v, nd));
+    return rcpp_result_gen;
+END_RCPP
+}
+// minkowski
+NumericVector minkowski(IntegerVector v, IntegerMatrix m, int p);
+RcppExport SEXP _redist_minkowski(SEXP vSEXP, SEXP mSEXP, SEXP pSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type v(vSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type m(mSEXP);
+    Rcpp::traits::input_parameter< int >::type p(pSEXP);
+    rcpp_result_gen = Rcpp::wrap(minkowski(v, m, p));
     return rcpp_result_gen;
 END_RCPP
 }

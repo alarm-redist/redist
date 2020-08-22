@@ -2,7 +2,7 @@
 ## Author: Christopher T Kenny
 ## Institution: Harvard University
 ## Date Created: 2020/01/20
-## Date Modified: 2020/07/14
+## Date Modified: 2020/08/20
 ## Purpose: R function to compute compactness
 ##############################################
 
@@ -13,10 +13,6 @@
 #' shapefile. It currently computes the Polsby-Popper, Schwartzberg score, Length-Width Ratio,
 #' Convex Hull score, Reock score, Boyce Clark Index, Fryer Holden score, Edges Removed number, 
 #' and the log of the Spanning Trees.
-#'
-#' @usage redist.compactness(shp, district_membership, 
-#' measure = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden", "EdgesRemoved", "logSpanningTree"), 
-#' pop, nloop, ncores)
 #' 
 #' @param shp A SpatialPolygonsDataFrame or sf object. Required unless "EdgesRemoved"
 #' and "logSpanningTree" with adjacency provided.
@@ -66,9 +62,9 @@
 #' The denominator can be calculated from the full enumeration of districts as the
 #' smallest calculated numerator.
 #' 
-#' The log spanning tree measure is...
+#' The log spanning tree measure is the log number of spanning trees.
 #' 
-#' The edges removed measure is...
+#' The edges removed measure is number of egdes removed from the underlying adjacency graph.
 #' 
 #' @return A tibble with a column that specifies the district, a column for 
 #' each specified measure, and a column that specifies the map number.
@@ -101,11 +97,10 @@
 #' 
 #' @importFrom tibble tibble
 #' @importFrom magrittr %>%
-#' @importFrom sf st_as_sf st_union st_area st_crs st_is_longlat st_length
-#' @importFrom sf st_cast st_bbox st_centroid st_within st_point_on_surface st_coordinates
-#' @importFrom sf st_linestring st_intersection
+#' @import sf 
 #' @importFrom lwgeom st_perimeter st_minimum_bounding_circle
-#' @importFrom dplyr select
+#' @importFrom dplyr select all_of
+#' @importFrom stats dist
 #' 
 #' @examples
 #' \dontrun{
@@ -184,7 +179,7 @@ redist.compactness <- function(shp = NULL,
   
   nmap <-  ncol(district_membership)
   if(nmap!=1){
-    nloop = rep(nloop + 1:ncol(district_membership) - 1, each = nd)
+    nloop = rep(nloop + (1:ncol(district_membership)) - 1, each = nd)
   } else {
     nloop = rep(nloop, nd)
   }
@@ -201,7 +196,7 @@ redist.compactness <- function(shp = NULL,
                  EdgesRemoved = rep(NA_real_, nd*nmap), 
                  logSpanningTree = rep(NA_real_, nd*nmap),
                  nloop = nloop) %>% 
-    dplyr::select(districts, all_of(measure), nloop)
+    dplyr::select(all_of(c("districts", measure)), all_of(measure), nloop)
   
   # Compute Specified Scores for provided districts
   if(any(measure %in% c("PolsbyPopper", "Schwartzberg", "LengthWidth", 
@@ -392,3 +387,5 @@ redist.compactness <- function(shp = NULL,
   # Return results
   return(comp)
 }
+
+utils::globalVariables(c("i", "j"))

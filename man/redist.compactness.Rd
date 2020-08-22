@@ -4,9 +4,15 @@
 \alias{redist.compactness}
 \title{Calculate compactness measures for a set of districts}
 \usage{
-redist.compactness(shp, district_membership, 
-measure = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden", "EdgesRemoved", "logSpanningTree"), 
-pop, nloop, ncores)
+redist.compactness(
+  shp = NULL,
+  district_membership,
+  measure = c("PolsbyPopper"),
+  population = NULL,
+  adjacency = NULL,
+  nloop = 1,
+  ncores = 1
+)
 }
 \arguments{
 \item{shp}{A SpatialPolygonsDataFrame or sf object. Required unless "EdgesRemoved"
@@ -17,7 +23,8 @@ for each precinct and one column for each map. Required.}
 
 \item{measure}{A vector with a string for each measure desired. "PolsbyPopper", 
 "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden",  
-"EdgesRemoved", and "logSpanningTree" are implemented. Defaults to "PolsbyPopper". Use "all"}
+"EdgesRemoved", and "logSpanningTree" are implemented. Defaults to "PolsbyPopper". Use "all" to
+return all implemented measures.}
 
 \item{population}{A numeric vector with the population for every observation. Is
 only necessary when "FryerHolden" is used for measure. Defaults to NULL.}
@@ -37,7 +44,8 @@ each specified measure, and a column that specifies the map number.
 \description{
 \code{redist.compactness} is used to compute different compactness statistics for a 
 shapefile. It currently computes the Polsby-Popper, Schwartzberg score, Length-Width Ratio,
-Convex Hull score, Reock score, Boyce Clark Index, and Fryer Holden score.
+Convex Hull score, Reock score, Boyce Clark Index, Fryer Holden score, Edges Removed number, 
+and the log of the Spanning Trees.
 }
 \details{
 This function computes specified compactness scores for a map.  If 
@@ -72,9 +80,9 @@ index, for any map, the sum of these values should be used as the numerator.
 The denominator can be calculated from the full enumeration of districts as the
 smallest calculated numerator.
 
-The log spanning tree measure is...
+The log spanning tree measure is the log number of spanning trees.
 
-The edges removed measure is...
+The edges removed measure is number of egdes removed from the underlying adjacency graph.
 }
 \examples{
 \dontrun{

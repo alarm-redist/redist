@@ -20,7 +20,7 @@
 #' 
 #' @importFrom spdep nb2lines
 #' @import ggplot2
-#' @importFrom dplyr filter
+#' @importFrom dplyr filter .data
 #' 
 #' @examples
 #' \dontrun{
@@ -28,7 +28,7 @@
 #' data("fl25")
 #' data("algdat.p10")
 #' cds <- algdat.p10$cdmat[,100]
-#' 
+#' redist.map(shp = fl25, district_membership = cds)
 #' }
 #' 
 #' @export
