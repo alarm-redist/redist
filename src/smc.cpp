@@ -56,7 +56,7 @@ IntegerMatrix smc_plans(int N, List l, const uvec &counties,
         N_new = std::min(N_new, N_max);
 
         if (verbosity >= 3)
-            printf("Using k=%d for estimated success probability of %.2f%%\n",
+            Rprintf("Using k=%d for estimated success probability of %.2f%%\n",
                    k, 100.0*prob);
 
         // Resample
@@ -79,7 +79,7 @@ IntegerMatrix smc_plans(int N, List l, const uvec &counties,
         }
 
         if (verbosity >= 2)
-            printf("%d valid samples (%.1f%% of total)\n", valid, (100.0*valid)/N_sample);
+            Rprintf("%d valid samples (%.1f%% of total)\n", valid, (100.0*valid)/N_sample);
 
         Rcpp::checkUserInterrupt();
     }
@@ -164,7 +164,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         pop_left(i) -= lower_s;
 
         if (verbosity >= 2 && refresh > 0 && (i+1) % refresh == 0) {
-            printf("Iteration %'6d / %'d\n", i+1, N);
+            Rprintf("Iteration %'6d / %'d\n", i+1, N);
             Rcpp::checkUserInterrupt();
         }
     }

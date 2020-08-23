@@ -8,32 +8,6 @@
 
 using namespace Rcpp;
 
-// log_st_map
-NumericVector log_st_map(const List& g, const IntegerMatrix& districts, int n_distr);
-RcppExport SEXP _redist_log_st_map(SEXP gSEXP, SEXP districtsSEXP, SEXP n_distrSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const List& >::type g(gSEXP);
-    Rcpp::traits::input_parameter< const IntegerMatrix& >::type districts(districtsSEXP);
-    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
-    rcpp_result_gen = Rcpp::wrap(log_st_map(g, districts, n_distr));
-    return rcpp_result_gen;
-END_RCPP
-}
-// n_removed
-NumericVector n_removed(const List& g, const IntegerMatrix& districts, int n_distr);
-RcppExport SEXP _redist_n_removed(SEXP gSEXP, SEXP districtsSEXP, SEXP n_distrSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const List& >::type g(gSEXP);
-    Rcpp::traits::input_parameter< const IntegerMatrix& >::type districts(districtsSEXP);
-    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
-    rcpp_result_gen = Rcpp::wrap(n_removed(g, districts, n_distr));
-    return rcpp_result_gen;
-END_RCPP
-}
 // genAlConn
 List genAlConn(List aList, NumericVector cds);
 RcppExport SEXP _redist_genAlConn(SEXP aListSEXP, SEXP cdsSEXP) {
@@ -123,6 +97,33 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// log_st_map
+NumericVector log_st_map(const Graph& g, const arma::umat& districts, const arma::uvec& counties, int n_distr);
+RcppExport SEXP _redist_log_st_map(SEXP gSEXP, SEXP districtsSEXP, SEXP countiesSEXP, SEXP n_distrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Graph& >::type g(gSEXP);
+    Rcpp::traits::input_parameter< const arma::umat& >::type districts(districtsSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
+    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
+    rcpp_result_gen = Rcpp::wrap(log_st_map(g, districts, counties, n_distr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// n_removed
+NumericVector n_removed(const Graph& g, const arma::umat& districts, int n_distr);
+RcppExport SEXP _redist_n_removed(SEXP gSEXP, SEXP districtsSEXP, SEXP n_distrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Graph& >::type g(gSEXP);
+    Rcpp::traits::input_parameter< const arma::umat& >::type districts(districtsSEXP);
+    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
+    rcpp_result_gen = Rcpp::wrap(n_removed(g, districts, n_distr));
+    return rcpp_result_gen;
+END_RCPP
+}
 // countpartitions
 int countpartitions(List aList);
 RcppExport SEXP _redist_countpartitions(SEXP aListSEXP) {
@@ -142,6 +143,19 @@ BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type x(xSEXP);
     rcpp_result_gen = Rcpp::wrap(calcPWDh(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// max_dev
+NumericVector max_dev(const arma::umat& districts, const arma::uvec& pop, int n_distr);
+RcppExport SEXP _redist_max_dev(SEXP districtsSEXP, SEXP popSEXP, SEXP n_distrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::umat& >::type districts(districtsSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
+    rcpp_result_gen = Rcpp::wrap(max_dev(districts, pop, n_distr));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -321,19 +335,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< IntegerMatrix >::type m(mSEXP);
     Rcpp::traits::input_parameter< int >::type p(pSEXP);
     rcpp_result_gen = Rcpp::wrap(minkowski(v, m, p));
-    return rcpp_result_gen;
-END_RCPP
-}
-// max_dev
-NumericVector max_dev(const arma::umat& districts, const arma::uvec& pop, int n_distr);
-RcppExport SEXP _redist_max_dev(SEXP districtsSEXP, SEXP popSEXP, SEXP n_distrSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::umat& >::type districts(districtsSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
-    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
-    rcpp_result_gen = Rcpp::wrap(max_dev(districts, pop, n_distr));
     return rcpp_result_gen;
 END_RCPP
 }
