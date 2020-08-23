@@ -3,7 +3,7 @@
 #include <stdlib.h> // for NULL
 #include <R_ext/Rdynload.h>
 
-/* FIXME:
+/* FIXME: 
  Check these declarations against the C/Fortran source code.
  */
 
@@ -26,7 +26,7 @@ extern SEXP _redist_effgapEP(SEXP, SEXP, SEXP);
 extern SEXP _redist_findBoundary(SEXP, SEXP);
 extern SEXP _redist_genAlConn(SEXP, SEXP);
 extern SEXP _redist_hamming(SEXP, SEXP);
-extern SEXP _redist_log_st_map(SEXP, SEXP, SEXP);
+extern SEXP _redist_log_st_map(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_lopsidedwins(SEXP, SEXP, SEXP);
 extern SEXP _redist_max_dev(SEXP, SEXP, SEXP);
 extern SEXP _redist_meanmedian(SEXP);
@@ -59,7 +59,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_findBoundary",          (DL_FUNC) &_redist_findBoundary,           2},
     {"_redist_genAlConn",             (DL_FUNC) &_redist_genAlConn,              2},
     {"_redist_hamming",               (DL_FUNC) &_redist_hamming,                2},
-    {"_redist_log_st_map",            (DL_FUNC) &_redist_log_st_map,             3},
+    {"_redist_log_st_map",            (DL_FUNC) &_redist_log_st_map,             4},
     {"_redist_lopsidedwins",          (DL_FUNC) &_redist_lopsidedwins,           3},
     {"_redist_max_dev",               (DL_FUNC) &_redist_max_dev,                3},
     {"_redist_meanmedian",            (DL_FUNC) &_redist_meanmedian,             1},

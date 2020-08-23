@@ -97,30 +97,9 @@
     
     
 <div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">redist</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">tidyverse</span>)
-<span class="co">#&gt; ── Attaching packages ─────────────────────────────────────────────────────────────── tidyverse 1.3.0 ──</span>
-<span class="co">#&gt; ✓ ggplot2 3.3.2     ✓ purrr   0.3.4</span>
-<span class="co">#&gt; ✓ tibble  3.0.3     ✓ dplyr   1.0.0</span>
-<span class="co">#&gt; ✓ tidyr   1.1.0     ✓ stringr 1.4.0</span>
-<span class="co">#&gt; ✓ readr   1.3.1     ✓ forcats 0.5.0</span>
-<span class="co">#&gt; ── Conflicts ────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──</span>
-<span class="co">#&gt; x dplyr::filter() masks stats::filter()</span>
-<span class="co">#&gt; x dplyr::lag()    masks stats::lag()</span>
 <span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">igraph</span>)
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Attaching package: 'igraph'</span>
-<span class="co">#&gt; The following objects are masked from 'package:dplyr':</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt;     as_data_frame, groups, union</span>
-<span class="co">#&gt; The following objects are masked from 'package:purrr':</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt;     compose, simplify</span>
-<span class="co">#&gt; The following object is masked from 'package:tidyr':</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt;     crossing</span>
-<span class="co">#&gt; The following object is masked from 'package:tibble':</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt;     as_data_frame</span>
 <span class="co">#&gt; The following objects are masked from 'package:stats':</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;     decompose, spectrum</span>
@@ -134,7 +113,7 @@
 <span class="co">#&gt; package with: `install.packages('spDataLarge',</span>
 <span class="co">#&gt; repos='https://nowosad.github.io/drat/', type='source')`</span>
 <span class="co">#&gt; Loading required package: sf</span>
-<span class="co">#&gt; Linking to GEOS 3.7.2, GDAL 2.4.2, PROJ 5.2.0</span>
+<span class="co">#&gt; Linking to GEOS 3.8.1, GDAL 3.1.1, PROJ 6.3.1</span>
 <span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">coda</span>)
 <span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span>(<span class="fl">1</span>)</pre></body></html></div>
 <p>The <code>redist</code> package is designed to allow for replicable redistricting simulations. The package comes loaded with data for simple testing and with functions to simulate redistricting and to run diagnostics on the redistricting plans created. These data form the basis for small-scale validations of sampling methods in <a href="https://imai.fas.harvard.edu/research/files/redist.pdf">Automated Redistricting Simulation Using Markov Chain Monte Carlo</a>. For larger scale validation, see <a href="https://imai.fas.harvard.edu/research/files/enumerate.pdf">The Essential Role of Empirical Validation in Legislative Redistricting Simulation</a>, which has additional methods which will be added to this package later in 2020.</p>
@@ -173,15 +152,18 @@
 <span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">ggplot2</span>)</pre></body></html></div>
 <p>Additionally useful data manipulation tools for working with objects from the package are <code>dplyr</code> and <code>magrittr</code>.</p>
 <div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">dplyr</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">magrittr</span>)
 <span class="co">#&gt; </span>
-<span class="co">#&gt; Attaching package: 'magrittr'</span>
-<span class="co">#&gt; The following object is masked from 'package:purrr':</span>
+<span class="co">#&gt; Attaching package: 'dplyr'</span>
+<span class="co">#&gt; The following objects are masked from 'package:igraph':</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;     set_names</span>
-<span class="co">#&gt; The following object is masked from 'package:tidyr':</span>
+<span class="co">#&gt;     as_data_frame, groups, union</span>
+<span class="co">#&gt; The following objects are masked from 'package:stats':</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;     extract</span></pre></body></html></div>
+<span class="co">#&gt;     filter, lag</span>
+<span class="co">#&gt; The following objects are masked from 'package:base':</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt;     intersect, setdiff, setequal, union</span>
+<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">magrittr</span>)</pre></body></html></div>
 </div>
 </div>
 <div id="data" class="section level1">
@@ -637,34 +619,33 @@
 <div id="diag" class="section level1">
 <h1 class="hasAnchor">
 <a href="#diag" class="anchor"></a>Diagnostic Plots</h1>
-<div class="sourceCode" id="cb35"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/source.html">source</a></span>(<span class="st">'~/Documents/GitHub/redist/R/diagplot.R'</span>)</pre></body></html></div>
 <p>When using the MCMC algorithms, there are various useful diagnostic plots. The <code>redist.diagplot</code> function creates familiar plots by converting numeric entries into <code>mcmc</code> objects to use with <code>coda</code>.</p>
 <p>The first four plots take a single index, such as one created by <code>redist.segcalc</code>. * Trace Plot</p>
-<div class="sourceCode" id="cb36"><html><body><pre class="r"><span class="fu"><a href="../reference/redist.diagplot.html">redist.diagplot</a></span>(<span class="no">seg</span>, <span class="kw">plot</span> <span class="kw">=</span> <span class="st">"trace"</span>)</pre></body></html></div>
-<p><img src="Intro-to-redist_files/figure-html/unnamed-chunk-34-1.png" width="700"></p>
+<div class="sourceCode" id="cb35"><html><body><pre class="r"><span class="fu"><a href="../reference/redist.diagplot.html">redist.diagplot</a></span>(<span class="no">seg</span>, <span class="kw">plot</span> <span class="kw">=</span> <span class="st">"trace"</span>)</pre></body></html></div>
+<p><img src="Intro-to-redist_files/figure-html/unnamed-chunk-33-1.png" width="700"></p>
 <ul>
 <li>Autocorrelation Plot</li>
 </ul>
-<div class="sourceCode" id="cb37"><html><body><pre class="r"><span class="fu"><a href="../reference/redist.diagplot.html">redist.diagplot</a></span>(<span class="no">seg</span>, <span class="kw">plot</span> <span class="kw">=</span> <span class="st">"autocorr"</span>)</pre></body></html></div>
-<p><img src="Intro-to-redist_files/figure-html/unnamed-chunk-35-1.png" width="700"></p>
+<div class="sourceCode" id="cb36"><html><body><pre class="r"><span class="fu"><a href="../reference/redist.diagplot.html">redist.diagplot</a></span>(<span class="no">seg</span>, <span class="kw">plot</span> <span class="kw">=</span> <span class="st">"autocorr"</span>)</pre></body></html></div>
+<p><img src="Intro-to-redist_files/figure-html/unnamed-chunk-34-1.png" width="700"></p>
 <ul>
 <li>Density Plot</li>
 </ul>
-<div class="sourceCode" id="cb38"><html><body><pre class="r"><span class="fu"><a href="../reference/redist.diagplot.html">redist.diagplot</a></span>(<span class="no">seg</span>, <span class="kw">plot</span> <span class="kw">=</span> <span class="st">"densplot"</span>)</pre></body></html></div>
-<p><img src="Intro-to-redist_files/figure-html/unnamed-chunk-36-1.png" width="700"></p>
+<div class="sourceCode" id="cb37"><html><body><pre class="r"><span class="fu"><a href="../reference/redist.diagplot.html">redist.diagplot</a></span>(<span class="no">seg</span>, <span class="kw">plot</span> <span class="kw">=</span> <span class="st">"densplot"</span>)</pre></body></html></div>
+<p><img src="Intro-to-redist_files/figure-html/unnamed-chunk-35-1.png" width="700"></p>
 <ul>
 <li>Mean Plot</li>
 </ul>
-<div class="sourceCode" id="cb39"><html><body><pre class="r"><span class="fu"><a href="../reference/redist.diagplot.html">redist.diagplot</a></span>(<span class="no">seg</span>, <span class="kw">plot</span> <span class="kw">=</span> <span class="st">"mean"</span>)</pre></body></html></div>
-<p><img src="Intro-to-redist_files/figure-html/unnamed-chunk-37-1.png" width="700"></p>
+<div class="sourceCode" id="cb38"><html><body><pre class="r"><span class="fu"><a href="../reference/redist.diagplot.html">redist.diagplot</a></span>(<span class="no">seg</span>, <span class="kw">plot</span> <span class="kw">=</span> <span class="st">"mean"</span>)</pre></body></html></div>
+<p><img src="Intro-to-redist_files/figure-html/unnamed-chunk-36-1.png" width="700"></p>
 <p>The final plot requires at least two chains.</p>
-<div class="sourceCode" id="cb40"><html><body><pre class="r"><span class="no">seg_chains</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span>(<span class="fl">1</span>:<span class="no">nchains</span>,
+<div class="sourceCode" id="cb39"><html><body><pre class="r"><span class="no">seg_chains</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span>(<span class="fl">1</span>:<span class="no">nchains</span>,
                      <span class="kw">function</span>(<span class="no">i</span>){<span class="fu"><a href="../reference/redist.segcalc.html">redist.segcalc</a></span>(<span class="kw">algout</span> <span class="kw">=</span> <span class="no">mcmc_chains</span><span class="kw">[[</span><span class="no">i</span>]],
                                   <span class="kw">grouppop</span> <span class="kw">=</span> <span class="no">algdat.pfull</span>$<span class="no">precinct.data</span>$<span class="no">blackpop</span>,
                                   <span class="kw">fullpop</span> <span class="kw">=</span> <span class="no">algdat.pfull</span>$<span class="no">precinct.data</span>$<span class="no">pop</span>)})
 
 <span class="fu"><a href="../reference/redist.diagplot.html">redist.diagplot</a></span>(<span class="no">seg_chains</span>, <span class="kw">plot</span> <span class="kw">=</span> <span class="st">'gelmanrubin'</span>)</pre></body></html></div>
-<p><img src="Intro-to-redist_files/figure-html/unnamed-chunk-38-1.png" width="700"> Beware that this diagnostic will often fail to converge if there are insufficient iterations. If an error is thrown and no plot is created, try increasing <code>nsims</code>.</p>
+<p><img src="Intro-to-redist_files/figure-html/unnamed-chunk-37-1.png" width="700"> Beware that this diagnostic will often fail to converge if there are insufficient iterations. If an error is thrown and no plot is created, try increasing <code>nsims</code>.</p>
 <p><a href="#top">Back to top</a></p>
 </div>
   </div>
@@ -680,7 +661,7 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Ben Fifield.</p>
+  <p>Developed by Ben Fifield, Cory McCartan, Alexander Tarr, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">
