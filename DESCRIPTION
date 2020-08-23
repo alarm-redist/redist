@@ -1,22 +1,22 @@
 Package: redist
 Version: 2.0.0
 Date: 2018-02-14
-Title: Markov Chain Monte Carlo Methods for Redistricting Simulation
-Author: Ben Fifield <benfifield@gmail.com>, Alexander Tarr
-    <atarr@princeton.edu>, Michael Higgins <mikehiggins@k-state.edu>, and Kosuke
-    Imai <imai@harvard.edu>
+Title: Simulation Methods for Legislative Redistricting
+Authors@R: c(
+    person("Ben", "Fifield", email = "benfifield@gmail.com", role = "aut"),
+    person("Cory", "McCartan", email = "cmccartan@g.harvard.edu", role = "aut"),
+    person("Alexander", "Tarr", email = "atarr@princeton.edu", role = "aut"),
+    person("Michael", "Higgins", email = "mikehiggins@k-state.edu", role = "crt"),
+    person("Kosuke", "Imai", email = "imai@harvard.edu", role = c("aut", "cre")))
 Maintainer: Ben Fifield <benfifield@gmail.com>
-Description: Enables researchers to sample redistricting plans from a pre-
-    specified target distribution using a Markov Chain Monte Carlo algorithm.
-    The package allows for the implementation of various constraints in the
-    redistricting process such as geographic compactness and population parity
-    requirements. The algorithm also can be used in combination with efficient
-    simulation methods such as simulated and parallel tempering algorithms. Tools
-    for analysis such as inverse probability reweighting and plotting functionality
-    are included. The package implements methods described in Fifield, Higgins, Imai
-    and Tarr (2016) ``A New Automated Redistricting Simulator Using Markov Chain
-    Monte Carlo,'' working paper available at
-    <https://imai.fas.harvard.edu/research/files/redist.pdf>.
+Description: Enables researchers to sample redistricting plans from a pre-specified
+    target distribution using Sequential Monte Carlo and Markov Chain Monte Carlo
+    algorithms.  The package allows for the implementation of various constraints in
+    the redistricting process such as geographic compactness and population parity
+    requirements. Tools for analysis such as computation of various summary statistics
+    and plotting functionality are also included. The package implements methods
+    described in Fifield, Higgins, Imai and Tarr (2020) <doi: 10.1080/10618600.2020.1739532>,
+    and McCartan and Imai (2020) <https://imai.fas.harvard.edu/research/files/SMCredist.pdf>.
 Depends:
     R (>= 3.5.0)
 Imports:
@@ -27,10 +27,10 @@ Imports:
     coda,
     parallel,
     doParallel,
-    foreach, 
+    foreach,
     lwgeom,
     dplyr,
-    ggplot2, 
+    ggplot2,
     magrittr,
     readr,
     servr,

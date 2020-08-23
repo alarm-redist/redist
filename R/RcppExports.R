@@ -95,6 +95,9 @@ biasatv <- function(dvs, v, nd) {
 
 minkowski <- function(v, m, p) {
     .Call(`_redist_minkowski`, v, m, p)
+    }
+max_dev <- function(districts, pop, n_distr) {
+    .Call(`_redist_max_dev`, districts, pop, n_distr)
 }
 
 calc_polsbypopper <- function(new_cds, areas_vec, boundarylist_new, borderlength_mat, pop_vec, aList, discrete = FALSE) {
@@ -109,6 +112,10 @@ rsg <- function(adj_list, population, Ndistrict, target_pop, thresh, maxiter) {
     .Call(`_redist_rsg`, adj_list, population, Ndistrict, target_pop, thresh, maxiter)
 }
 
+smc_plans <- function(N, l, counties, pop, n_distr, tol, gamma, log_prob, thresh, alpha, infl = 5L, verbosity = 1L) {
+    .Call(`_redist_smc_plans`, N, l, counties, pop, n_distr, tol, gamma, log_prob, thresh, alpha, infl, verbosity)
+}
+
 sample_partition <- function(aList, aMat, num_partitions, num_samples, threads = 1L) {
     .Call(`_redist_sample_partition`, aList, aMat, num_partitions, num_samples, threads)
 }
@@ -116,4 +123,3 @@ sample_partition <- function(aList, aMat, num_partitions, num_samples, threads =
 swMH <- function(aList, cdvec, cdorigvec, popvec, grouppopvec, areas_vec, county_membership, borderlength_mat, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, lambda = 0L, beta = 0.0, weight_population = 0.0, weight_compact = 0.0, weight_segregation = 0.0, weight_similar = 0.0, weight_countysplit = 0.0, adapt_beta = "none", adjswap = 1L, exact_mh = 0L, adapt_eprob = 0L, adapt_lambda = 0L, compactness_measure = "fryer-holden", ssd_denom = 1.0, num_hot_steps = 0L, num_annealing_steps = 0L, num_cold_steps = 0L) {
     .Call(`_redist_swMH`, aList, cdvec, cdorigvec, popvec, grouppopvec, areas_vec, county_membership, borderlength_mat, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, lambda, beta, weight_population, weight_compact, weight_segregation, weight_similar, weight_countysplit, adapt_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, compactness_measure, ssd_denom, num_hot_steps, num_annealing_steps, num_cold_steps)
 }
-
