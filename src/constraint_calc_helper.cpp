@@ -4,7 +4,7 @@
 // Date Created: 2014/12/26
 // Date Last Modified: 2015/02/26
 // Purpose: Contains functions to run calculate beta constraints
-/////////////////////////////////////////////// 
+///////////////////////////////////////////////
 
 // Header files
 #include <RcppArmadillo.h>
@@ -23,7 +23,7 @@ List genAlConn(List aList,
 
      cds: vector of congressional district assignments
   */
-  
+
   // Initialize container list
   List alConnected(cds.size());
 
@@ -35,7 +35,7 @@ List genAlConn(List aList,
 
     // For precinct i, get adjacent precincts
     avec = aList(i);
-    
+
     // Get precinct i's congressional district
     cd_i = cds(i);
 
@@ -44,7 +44,7 @@ List genAlConn(List aList,
 
     // Loop through avec to identify which are in same cd
     for(j = 0; j < avec.size(); j++){
-      
+
       // Check if j'th entry in avec is same cd, add to avec_cd if so
       if(cds(avec(j)) == cd_i){
 	avec_cd.push_back(avec(j));
@@ -91,7 +91,7 @@ NumericVector findBoundary(List fullList,
     if(full.size() > conn.size()){
       isBoundary(i) = 1;
     }
-    
+
   }
 
   return isBoundary;
@@ -100,7 +100,7 @@ NumericVector findBoundary(List fullList,
 
 arma::uvec getIn(arma::ivec vec1, arma::ivec vec2){
 
-  int i; int j; bool match; arma::uvec store_in(vec1.n_elem); 
+  int i; int j; bool match; arma::uvec store_in(vec1.n_elem);
   for(i = 0; i < vec1.n_elem; i++){
     match = false;
     for(j = 0; j < vec2.n_elem; j++){
@@ -113,12 +113,12 @@ arma::uvec getIn(arma::ivec vec1, arma::ivec vec2){
   }
 
   return store_in;
-  
+
 }
 
 arma::uvec get_in_index(arma::vec vec1, arma::vec vec2){
 
-  int i; int j; bool match; arma::uvec store_in(vec1.n_elem); 
+  int i; int j; bool match; arma::uvec store_in(vec1.n_elem);
   for(i = 0; i < vec1.n_elem; i++){
     match = false;
     for(j = 0; j < vec2.n_elem; j++){
@@ -131,7 +131,7 @@ arma::uvec get_in_index(arma::vec vec1, arma::vec vec2){
   }
 
   return store_in;
-  
+
 }
 
 // Fryer-Holden measure
@@ -167,7 +167,7 @@ List fh_compact(arma::uvec new_cds,
   out["ssd_old"] = ssd_old / denominator;
 
   return out;
-  
+
 }
 
 // Polsby-popper measure
@@ -183,9 +183,9 @@ List pp_compact(arma::uvec new_cds,
 
   double pi = 3.141592653589793238463;
 
-  /* 
+  /*
      Calculate the area for the district
-     by summing over the areas of the cds 
+     by summing over the areas of the cds
   */
   double area_new = 0.0;
   double area_old = 0.0;
@@ -206,7 +206,7 @@ List pp_compact(arma::uvec new_cds,
     }
   }
 
-  /* 
+  /*
      Calculate the perimeter for the district
      by finding boundaries on the CD
   */
@@ -228,13 +228,13 @@ List pp_compact(arma::uvec new_cds,
   arma::ivec boundary_precs_new = arma::intersect(arma::conv_to<arma::ivec>::from(new_cds), arma::conv_to<arma::ivec>::from(boundary_inds_new));
   arma::uvec boundary_inds_current = find(boundarylist_current == 1);
   arma::ivec boundary_precs_current = arma::intersect(arma::conv_to<arma::ivec>::from(current_cds), arma::conv_to<arma::ivec>::from(boundary_inds_current));
-  
+
   // Loop over the indices in boundary_precs_new and check the adjacent units for
   // whether they too lie on a boundary
   arma::vec adj_precs;
-  arma::uvec in_cd;  
+  arma::uvec in_cd;
   arma::vec adj_precs_sub;
-  
+
   arma::uvec adj_precs_sub_indices;
   arma::uvec find_boundarylength_in_boundarymat;
   arma::ivec loop_over_inds;
@@ -242,7 +242,7 @@ List pp_compact(arma::uvec new_cds,
   for(j = 0; j < boundary_precs_new.n_elem; j++){
 
     if(discrete == false){
-    
+
       // Get the adjacent indices - on the boundary and
       // greater than boundary_precs[j] to avoid double counting
       adj_precs = as<arma::vec>(aList(boundary_precs_new(j)));
@@ -252,7 +252,7 @@ List pp_compact(arma::uvec new_cds,
       adj_precs_sub = adj_precs.elem( find(in_cd == false) );
       adj_precs_sub.resize(adj_precs_sub.size() + 1);
       adj_precs_sub(adj_precs_sub.size() - 1) = -1.0;
-    
+
       // Which elements of boundary_mat's first column are in adj_precs_sub,
       // and what of second column equal the actual precinct
       find_boundarylength_in_boundarymat = find(borderlength_col2 == boundary_precs_new(j));
@@ -269,10 +269,10 @@ List pp_compact(arma::uvec new_cds,
       }
 
     }else{
-      
+
       // Add the population around the perimeter
       perimeter_new += (double)pop_vec(boundary_precs_new(j));
-      
+
     }
 
   }
@@ -289,7 +289,7 @@ List pp_compact(arma::uvec new_cds,
       adj_precs_sub = adj_precs.elem( find(in_cd == false) );
       adj_precs_sub.resize(adj_precs_sub.size() + 1);
       adj_precs_sub(adj_precs_sub.size() - 1) = -1.0;
-    
+
       // Which elements of boundary_mat's first column are in adj_precs_sub, and what of second column equal the actual precinct
       find_boundarylength_in_boundarymat = find(borderlength_col2 == boundary_precs_current(j));
       for(k = 0; k < adj_precs_sub.n_elem; k++){
@@ -305,9 +305,9 @@ List pp_compact(arma::uvec new_cds,
       }
 
     }else{
-      
+
       perimeter_old += (double)pop_vec(boundary_precs_current(j));
-      
+
     }
 
   }
@@ -323,7 +323,7 @@ List pp_compact(arma::uvec new_cds,
     out["pp_old"] = (double)-1.0 * area_old / pow(perimeter_old, 2.0);
   }
   return out;
-  
+
 }
 
 // Function to calculate the strength of the beta constraint for population
@@ -333,7 +333,7 @@ List calc_psipop(arma::vec current_dists,
 		 NumericVector distswitch)
 {
 
-  /* Inputs to function 
+  /* Inputs to function
      current_dists: vector of the current cong district assignments
      new_dists: vector of the new cong district assignments
      pops: vector of district populations
@@ -405,7 +405,7 @@ List calc_psicompact(arma::vec current_dists,
      ssdmat: squared distance matrix
      denominator: normalizing constant for rpi
   */
-  
+
   // Initialize psi values
   double psi_new = 0.0;
   double psi_old = 0.0;
@@ -432,11 +432,11 @@ List calc_psicompact(arma::vec current_dists,
     if(measure == "fryer-holden"){
 
       List fh_out = fh_compact(new_cds, current_cds, pops, ssdmat, denominator);
-      
+
       // Add to psi
       psi_new += as<double>(fh_out["ssd_new"]);
       psi_old += as<double>(fh_out["ssd_old"]);
-      
+
     }else if(measure == "polsby-popper"){
 
       List pp_out = pp_compact(new_cds, current_cds,
@@ -451,7 +451,7 @@ List calc_psicompact(arma::vec current_dists,
       // Add to psi
       psi_new += as<double>(pp_out["pp_new"]);
       psi_old += as<double>(pp_out["pp_old"]);
-      
+
     }
 
   }
@@ -480,7 +480,7 @@ List calc_psisegregation(arma::vec current_dists,
      beta_segregation: strength of the beta constraint
      distswitch: vector containing the old district, and the proposed new district
      grouppop: vector of subgroup district populations
-     
+
   */
 
   // Initialize psi values
@@ -491,7 +491,7 @@ List calc_psisegregation(arma::vec current_dists,
   int T = sum(pops);
   double pAll = (double)sum(grouppop) / T;
   double denom = (double)2 * T * pAll * (1 - pAll);
-  
+
   // Loop over congressional districts
   for(int i = 0; i < distswitch.size(); i++){
 
@@ -502,19 +502,19 @@ List calc_psisegregation(arma::vec current_dists,
     int newpopgroup = 0;
     arma::uvec new_cds = find(new_dists == distswitch(i));
     arma::uvec current_cds = find(current_dists == distswitch(i));
-  
+
     // Segregation for proposed assignments
     for(int j = 0; j < new_cds.size(); j++){
       newpopall += pops(new_cds(j));
       newpopgroup += grouppop(new_cds(j));
     }
-  
+
     // Segregation for current assignments
     for(int j = 0; j < current_cds.size(); j++){
       oldpopall += pops(current_cds(j));
       oldpopgroup += grouppop(current_cds(j));
     }
-  
+
     // Calculate proportions
     // Rcout << "old population group " << oldpopgroup << std::endl;
     // Rcout << "old population all " << oldpopall << std::endl;
@@ -527,7 +527,7 @@ List calc_psisegregation(arma::vec current_dists,
     psi_old += (double)(oldpopall * std::abs(oldgroupprop - pAll));
 
   }
-  
+
   // Standardize psi
   psi_new = (double)psi_new / denom;
   psi_old = (double)psi_old / denom;
@@ -587,7 +587,7 @@ List calc_psisimilar(arma::vec current_dists,
     // Calculate proportions
     double old_count_prop = (double)old_count / orig_cds.size();
     double new_count_prop = (double)new_count / orig_cds.size();
-    
+
     // Add to psi
     psi_new += (double)std::abs(new_count_prop - 1);
     psi_old += (double)std::abs(old_count_prop - 1);
@@ -626,7 +626,7 @@ List calc_psicounty(arma::vec current_dists,
      5) For each CD, loop through the unique counties and sum over the sqrt of the share of the county in that CD
      6) Sum over the CDs, weight by population of that CD
   */
-  
+
   // Get unique county labels
   int i; int j; int k; int pop;
   arma::vec unique_county = unique(county_assignments);
@@ -689,7 +689,7 @@ List calc_psicounty(arma::vec current_dists,
   // arma::vec unique_current_dists;
   // arma::vec unique_new_dists;
   // arma::uvec inds_indistrict;
-  
+
   // double ent_cd_current;
   // double ent_cd_new;
   // double ent_overcounties_current = 0.0;
@@ -701,7 +701,7 @@ List calc_psicounty(arma::vec current_dists,
   //   county_index = arma::find(county_assignments == unique_county(i));
 
   //   pops_incounty = popvec.elem(county_index);
-    
+
   //   current_distassign_incounty = current_dists.elem(county_index);
   //   new_distassign_incounty = new_dists.elem(county_index);
 
@@ -729,7 +729,7 @@ List calc_psicounty(arma::vec current_dists,
   //     ent_cd_new += pow((double)pop / pop_cd_new(unique_new_dists(j)), 0.5);
   //   }
   //   ent_overcounties_new += pop_county(i) * ent_cd_new;
-    
+
   // }
 
   // // Loop through the CDs
@@ -741,7 +741,7 @@ List calc_psicounty(arma::vec current_dists,
   // arma::vec new_countyassign_indist;
   // arma::vec unique_current_counties;
   // arma::vec unique_new_counties;
-  
+
   // double ent_county_current;
   // double ent_county_new;
   // double ent_overcds_current = 0.0;
@@ -783,7 +783,7 @@ List calc_psicounty(arma::vec current_dists,
   //     ent_county_new += pow((double)pop / pop_county(unique_new_counties(j)), 0.5);
   //   }
   //   ent_overcds_new += pop_cd_new(i) * ent_county_new;
-    
+
   // }
 
   // // Calculate the psis
@@ -796,6 +796,6 @@ List calc_psicounty(arma::vec current_dists,
   out["countysplit_old_psi"] = psi_old;
 
   return out;
-  
+
 }
 

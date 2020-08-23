@@ -3,7 +3,7 @@
 #include <stdlib.h> // for NULL
 #include <R_ext/Rdynload.h>
 
-/* FIXME: 
+/* FIXME:
  Check these declarations against the C/Fortran source code.
  */
 
@@ -28,6 +28,7 @@ extern SEXP _redist_genAlConn(SEXP, SEXP);
 extern SEXP _redist_hamming(SEXP, SEXP);
 extern SEXP _redist_log_st_map(SEXP, SEXP, SEXP);
 extern SEXP _redist_lopsidedwins(SEXP, SEXP, SEXP);
+extern SEXP _redist_max_dev(SEXP, SEXP, SEXP);
 extern SEXP _redist_meanmedian(SEXP);
 extern SEXP _redist_minkowski(SEXP, SEXP, SEXP);
 extern SEXP _redist_n_removed(SEXP, SEXP, SEXP);
@@ -35,6 +36,7 @@ extern SEXP _redist_responsiveness(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_rsg(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_sample_partition(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_segregationcalc(SEXP, SEXP, SEXP);
+extern SEXP _redist_smc_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_swMH(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_taugap(SEXP, SEXP, SEXP, SEXP);
 
@@ -59,6 +61,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_hamming",               (DL_FUNC) &_redist_hamming,                2},
     {"_redist_log_st_map",            (DL_FUNC) &_redist_log_st_map,             3},
     {"_redist_lopsidedwins",          (DL_FUNC) &_redist_lopsidedwins,           3},
+    {"_redist_max_dev",               (DL_FUNC) &_redist_max_dev,                3},
     {"_redist_meanmedian",            (DL_FUNC) &_redist_meanmedian,             1},
     {"_redist_minkowski",             (DL_FUNC) &_redist_minkowski,              3},
     {"_redist_n_removed",             (DL_FUNC) &_redist_n_removed,              3},
@@ -66,6 +69,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_rsg",                   (DL_FUNC) &_redist_rsg,                    6},
     {"_redist_sample_partition",      (DL_FUNC) &_redist_sample_partition,       5},
     {"_redist_segregationcalc",       (DL_FUNC) &_redist_segregationcalc,        3},
+    {"_redist_smc_plans",             (DL_FUNC) &_redist_smc_plans,             12},
     {"_redist_swMH",                  (DL_FUNC) &_redist_swMH,                  31},
     {"_redist_taugap",                (DL_FUNC) &_redist_taugap,                 4},
     {NULL, NULL, 0}
