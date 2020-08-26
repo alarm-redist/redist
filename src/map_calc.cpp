@@ -25,6 +25,41 @@ double log_boundary(const Graph &g, const subview_col<uword> &districts,
     return log(count);
 }
 
+/*
+ * Compute the status quo penalty for district `distr`
+ */
+double sq_entropy(const subview_col<uword> &districts, const uvec &current,
+                  int distr, const uvec &pop, int n_distr, int n_current, int V) {
+    double accuml = 0;
+    for (int j = 1; j <= n_current; j++) { // 1-indexed districts
+        double pop_overlap = 0;
+        double pop_total = 0;
+        for (int k = 0; k < V; k++) {
+            if (current[k] != j) continue;
+            pop_total += pop[k];
+
+            if (districts[k] == distr)
+                pop_overlap += pop[k];
+        }
+        double frac = pop_overlap / pop_total;
+        if (frac > 0)
+            accuml += frac * std::log(frac);
+    }
+
+    return -accuml / n_distr / std::log(n_current);
+}
+
+/*
+ * Compute the VRA penalty for district `distr`
+ */
+double eval_vra(const subview_col<uword> &districts, int distr, double tgt_min,
+                double tgt_other, double pow_vra, const uvec &pop, const uvec &min_pop) {
+    uvec idxs = find(districts == distr);
+    double frac = ((double) sum(min_pop(idxs))) / sum(pop(idxs));
+    return std::pow(std::abs(frac - tgt_min), pow_vra) *
+        std::pow(std::abs(frac - tgt_other), pow_vra);
+}
+
 
 /*
  * Compute the deviation from the equal population constraint.
