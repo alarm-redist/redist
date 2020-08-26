@@ -12,6 +12,13 @@ redist.smc(
   counties = NULL,
   popcons = 0.01,
   compactness = 1,
+  status_quo = 0,
+  current = rep(1, length(popvec)),
+  vra = 0,
+  tgt_vra_min = 0.55,
+  tgt_vra_other = 0.25,
+  pow_vra = 1.5,
+  min_pop = rep(0, length(popvec)),
   resample = TRUE,
   constraint_fn = function(m) rep(0, ncol(m)),
   adapt_k_thresh = 0.95,
@@ -47,6 +54,27 @@ populations within 1\% of the target population.}
 \item{compactness}{Controls the compactness of the generated districts, with
 higher values preferring more compact districts. Must be nonnegative. See the
 'Details' section for more information, and computational considerations.}
+
+\item{status_quo}{Controls the tendency of the generated districts to
+respect the status quo, with higher values preferring more similar districts.}
+
+\item{current}{A vector containing district assignments for the current map,
+used for the status quo constraint.}
+
+\item{vra}{Controls the strength of the Voting Rights Act (VRA) constraint,
+with higher values prioritizing majority-minority districts over other
+considerations.}
+
+\item{tgt_vra_min}{The target percentage of minority voters in minority
+opportunity districts.}
+
+\item{tgt_vra_other}{The target percentage of minority voters in other districts.}
+
+\item{pow_vra}{Controls the allowed deviation from the target minority
+percentage; higher values are more tolerant.}
+
+\item{min_pop}{A vector containing the minority population of each
+geographic unit.}
 
 \item{resample}{Whether to perform a final resampling step so that the
 generated plans can be used immediately.  Set this to \code{FALSE} to perform

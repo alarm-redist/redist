@@ -15,7 +15,11 @@
  */
 IntegerMatrix smc_plans(int N, List l, const uvec &counties,
                         const uvec &pop, int n_distr, double tol,
-                        double gamma, NumericVector &log_prob, double thresh,
+                        double gamma,
+                        double beta_sq, const uvec &current, int n_current,
+                        double beta_vra, double tgt_min, double tgt_other,
+                        double pow_vra, const uvec &min_pop,
+                        NumericVector &log_prob, double thresh,
                         double alpha, int infl, int verbosity) {
     Graph g = list_to_graph(l);
     Multigraph cg = county_graph(g, counties);
@@ -52,7 +56,7 @@ IntegerMatrix smc_plans(int N, List l, const uvec &counties,
 
         int N_new = std::ceil(N / prob);
         if (ctr == n_distr - 1) // safety margin for last step
-            N_new *= n_distr/2;
+            N_new *= (2+n_distr)/2;
         N_new = std::min(N_new, N_max);
 
         if (verbosity >= 3)
@@ -66,10 +70,10 @@ IntegerMatrix smc_plans(int N, List l, const uvec &counties,
         // perform sampling
         split_maps(g, counties, cg, pop, districts, lp, pop_left, N_sample,
                    n_distr, ctr, distr_pop, tol, gamma, k, verbosity);
-        valid = 0;
-        for (int i = 0; i < N_sample; i++) {
-            valid += std::isfinite(lp(i));
-        }
+        valid = apply_constraints(districts, N_sample, n_distr, ctr, lp, pop,
+                                  beta_sq, current, n_current,
+                                  beta_vra, tgt_min, tgt_other, pow_vra, min_pop);
+
 
         if (valid == 0) {
             Rcout << "No valid samples at stage " << ctr << "; stopping sampling.\n"
@@ -117,6 +121,33 @@ void resample_maps(int N_sample, int N_new, double alpha, umat &districts,
     lp = lp.elem(idxs);
     pop_left = pop_left.elem(idxs);
     districts = districts.cols(idxs);
+}
+
+
+/*
+ * Add specific constraint weights & return the number of valid samples
+ */
+int apply_constraints(const umat &districts, int N_sample, int n_distr,
+                      int distr_ctr, vec &lp, const uvec &pop,
+                      double beta_sq, const uvec &current, int n_current,
+                      double beta_vra, double tgt_min, double tgt_other,
+                      double pow_vra, const uvec &min_pop) {
+    int valid = 0;
+    int V = districts.n_rows;
+
+    for (int i = 0; i < N_sample; i++) {
+        if (!std::isfinite(lp(i))) continue;
+        valid++;
+
+        if (beta_sq != 0)
+            lp[i] += beta_sq * sq_entropy(districts.col(i), current, distr_ctr,
+                                          pop, n_distr, n_current, V);
+        if (beta_vra != 0)
+            lp[i] += beta_vra * eval_vra(districts.col(i), distr_ctr, tgt_min,
+                                         tgt_other, pow_vra, pop, min_pop);
+    }
+
+    return valid;
 }
 
 

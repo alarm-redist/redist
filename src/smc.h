@@ -17,7 +17,11 @@
 // [[Rcpp::export]]
 IntegerMatrix smc_plans(int N, List l, const arma::uvec &counties,
                         const arma::uvec &pop, int n_distr, double tol,
-                        double gamma, NumericVector &log_prob, double thresh,
+                        double gamma,
+                        double beta_sq, const arma::uvec &current, int n_current,
+                        double beta_vra, double tgt_min, double tgt_other,
+                        double pow_vra, const arma::uvec &min_pop,
+                        NumericVector &log_prob, double thresh,
                         double alpha, int infl=5, int verbosity=1);
 
 /*
@@ -33,6 +37,15 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
  */
 void resample_maps(int N_drawn, int N_sample, double alpha, umat &districts,
                    vec &lp, vec &pop_left);
+
+/*
+ * Add specific constraint weights & return the number of valid samples
+ */
+int apply_constraints(const umat &districts, int N_sample, int n_distr,
+                      int distr_ctr, vec &lp, const uvec &pop,
+                      double beta_sq, const uvec &current, int n_current,
+                      double beta_vra, double tgt_min, double tgt_other,
+                      double pow_vra, const uvec &min_pop);
 
 /*
  * Split a map into two pieces with population lying between `lower` and `upper`
