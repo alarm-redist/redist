@@ -135,14 +135,14 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                                  initcds = initcds, ndists = ndists,
                                  popcons = popcons,
                                  grouppopvec = grouppopvec,
-                                 #areasvec = areasvec, #ctk-cran-note
-                                 #borderlength_mat = borderlength_mat,#ctk-cran-note
-                                 #countymembership = countymembership,#ctk-cran-note
+                                 areasvec = areasvec, #ctk-cran-note
+                                 borderlength_mat = borderlength_mat,#ctk-cran-note
+                                 countymembership = countymembership,#ctk-cran-note
                                  ssdmat = ssdmat,
-                                 #compactness_metric = compactness_metric,#ctk-cran-note
+                                 compactness_metric = compactness_metric,#ctk-cran-note
                                  temper = FALSE,
                                  constraint = constraint,
-                                 #constraintweights = constraintweights,#ctk-cran-note
+                                 constraintweights = constraintweights,#ctk-cran-note
                                  betaseq = NULL, betaweights = NULL,
                                  adjswaps = adjswaps,
                                  maxiterrsg = maxiterrsg,

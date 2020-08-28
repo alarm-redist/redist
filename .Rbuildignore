@@ -6,5 +6,10 @@ README.Rmd
 \.DS_Store
 \.\.Rcheck
 builder.sh
+^doc$
+^Meta$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
 ^.*\.Rproj$
 ^\.Rproj\.user$

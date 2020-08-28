@@ -78,11 +78,11 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
     out <- redist.mcmc(adjobj = adjobj, popvec = popvec, nsims = nsims,
                        ndists = ndists, ssdmat = ssdmat,
                        grouppopvec = grouppopvec,
-                       #countymembership = countymembership, #ctk-cran-note
+                       countymembership = countymembership, #ctk-cran-note
                        initcds = initcds, eprob = eprob, lambda = lambda,
                        popcons = popcons, 
                        constraint = constraintvec,
-                       #constraintweights = weightvec, #ctk-cran-note
+                       constraintweights = weightvec, #ctk-cran-note
                        maxiterrsg = maxiterrsg,
                        adapt_lambda = adapt_lambda,
                        adapt_eprob = adapt_eprob)
