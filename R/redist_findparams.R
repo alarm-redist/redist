@@ -13,7 +13,7 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
                      nstartval_store, maxdist_startval, logarg){
     
     ## Get this iteration
-    p_sub <- as.data.frame(params[i,])
+    p_sub <- params %>% dplyr::slice(i)
     if(logarg){
         sink(paste0("log_", i, ".txt"))
         cat("Parameter Values:\n")
@@ -301,7 +301,9 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 #' Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte
 #' Carlo." Working Paper. Available at
 #' \url{http://imai.princeton.edu/research/files/redist.pdf}.
-#'
+#' 
+#' @importFrom dplyr slice
+#' 
 #' @examples \dontrun{
 #' data(algdat.pfull)
 #'
@@ -428,7 +430,7 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
         for(i in 1:trials){
 
             ## Run simulations
-            out <- run_sims(i, params, adjobj, popvec, nsims, ndists, initcds,
+            out <- run_sims(i = i, params = params, adjobj, popvec, nsims, ndists, initcds,
                             ssdmat, grouppopvec, countymembership, names, maxiterrsg, report_all,
                             adapt_lambda, adapt_eprob,
                             nstartval_store, maxdist_startval, log)
