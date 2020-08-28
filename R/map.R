@@ -19,8 +19,9 @@
 #' @return ggplot map
 #' 
 #' @importFrom spdep nb2lines
-#' @import ggplot2
+#' @importFrom ggplot2 ggplot geom_sf theme_minimal theme labs aes
 #' @importFrom dplyr filter .data
+#' @importFrom sf st_centroid st_coordinates st_as_sf
 #' 
 #' @examples
 #' \dontrun{
