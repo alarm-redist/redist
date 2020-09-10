@@ -144,3 +144,80 @@ redist.read.enumpart <- function(out_path, skip = 0,  n_max = -1L){
   sols <- apply(do.call("cbind", strsplit(sols, " ")), 2, as.numeric)
   return(sols)
 }
+
+
+#' check if last edge
+#'
+#' @param i integer, current frontier
+#' @param v integer, vertex to search for
+#' @param edges edgelist matrix
+#'
+#' @return bool
+is_last <- function(i, v, edges){
+  if(i == nrow(edges)){
+    return(TRUE)
+  }
+  for(j in (i+1):nrow(edges)){
+    if(v ==  edges[j, 1] | v == edges[j, 2]){
+      return(FALSE)
+    }
+  }
+  return(TRUE)
+}
+
+
+#' Calculate Frontier Size
+#'
+#' @param ordered_path path to ordered path created by redist.prep.enumpart
+#'
+#' @return List, four objects
+#' \itemize{
+#' \item{max}{numeric, maximum frontier size}
+#' \item{average}{numeric, average frontier size}
+#' \item{average_sq}{numeric, average((frontier size)^2)}
+#' \item{sequence}{numeric vector, lists out all sizes for every frontier}
+#' }
+#' @export
+#'
+#' @importFrom stringr str_split
+#' @examples \dontrun{
+#' data(fl25)
+#' adj <- redist.adjacency(fl25)
+#' redist.prep.enumpart(adj, 'unordered', 'ordered')
+#' redist.calc.frontier.size('ordered')
+#' }
+redist.calc.frontier.size <- function(ordered_path){
+  lines_in <- readLines(paste0(ordered_path,'.dat'))
+  n <- length(lines_in)
+  
+  edges_unsort <- apply(stringr::str_split(string = lines_in, pattern = ' ', simplify = T),2, as.integer)
+  edges <- cbind(apply(edges_unsort,1,min), apply(edges_unsort,1,max))
+  
+  frontier_sizes <- rep(NA_real_, 1 +n)
+  frontier <- rep(FALSE, n)
+  frontier_sizes[1] <- 0
+  
+  for(i in 1:n){
+    e1 <- edges[i,1]
+    e2 <- edges[i,2]
+    frontier[e1] <- TRUE
+    frontier[e2] <- TRUE
+    
+    if(is_last(i, e1, edges)){
+      frontier[e1] <- FALSE
+    }
+    if(is_last(i, e2, edges)){
+      frontier[e2] <- FALSE
+    }   
+    
+    frontier_sizes[i+1] <- sum(frontier)
+  }
+  
+  
+  return(
+    list(max = max(frontier_sizes), 
+         average = mean(frontier_sizes),
+         average_sq = mean(frontier_sizes^2),
+         sequence = frontier_sizes)
+  )
+}

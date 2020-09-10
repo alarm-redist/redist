@@ -36,7 +36,8 @@ Imports:
     readr,
     servr,
     sys,
-    tibble
+    tibble,
+    stringr
 Suggests:
     testthat,
     Rmpi,
