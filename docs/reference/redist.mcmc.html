@@ -140,39 +140,39 @@ plans using Markov Chain Monte Carlo methods.</p>
     </div>
 
     <pre class="usage"><span class='fu'>redist.mcmc</span>(
-  <span class='no'>adjobj</span>,
-  <span class='no'>popvec</span>,
-  <span class='no'>nsims</span>,
-  <span class='kw'>ndists</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>initcds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>loopscompleted</span> <span class='kw'>=</span> <span class='fl'>0</span>,
-  <span class='kw'>nloop</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>nthin</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>eprob</span> <span class='kw'>=</span> <span class='fl'>0.05</span>,
-  <span class='kw'>lambda</span> <span class='kw'>=</span> <span class='fl'>0</span>,
-  <span class='kw'>popcons</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>grouppopvec</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>areasvec</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>countymembership</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>borderlength_mat</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>ssdmat</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>temper</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>constraint</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>constraintweights</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>compactness_metric</span> <span class='kw'>=</span> <span class='st'>"fryer-holden"</span>,
-  <span class='kw'>ssd_denom</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>betaseq</span> <span class='kw'>=</span> <span class='st'>"powerlaw"</span>,
-  <span class='kw'>betaseqlength</span> <span class='kw'>=</span> <span class='fl'>10</span>,
-  <span class='kw'>betaweights</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>adjswaps</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>rngseed</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>maxiterrsg</span> <span class='kw'>=</span> <span class='fl'>5000</span>,
-  <span class='kw'>adapt_lambda</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>adapt_eprob</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>contiguitymap</span> <span class='kw'>=</span> <span class='st'>"rooks"</span>,
-  <span class='kw'>exact_mh</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>savename</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
+  <span class='kw'>adjobj</span>,
+  <span class='kw'>popvec</span>,
+  <span class='kw'>nsims</span>,
+  ndists = <span class='kw'>NULL</span>,
+  initcds = <span class='kw'>NULL</span>,
+  loopscompleted = <span class='fl'>0</span>,
+  nloop = <span class='fl'>1</span>,
+  nthin = <span class='fl'>1</span>,
+  eprob = <span class='fl'>0.05</span>,
+  lambda = <span class='fl'>0</span>,
+  popcons = <span class='kw'>NULL</span>,
+  grouppopvec = <span class='kw'>NULL</span>,
+  areasvec = <span class='kw'>NULL</span>,
+  countymembership = <span class='kw'>NULL</span>,
+  borderlength_mat = <span class='kw'>NULL</span>,
+  ssdmat = <span class='kw'>NULL</span>,
+  temper = <span class='fl'>FALSE</span>,
+  constraint = <span class='kw'>NULL</span>,
+  constraintweights = <span class='kw'>NULL</span>,
+  compactness_metric = <span class='st'>"fryer-holden"</span>,
+  ssd_denom = <span class='fl'>1</span>,
+  betaseq = <span class='st'>"powerlaw"</span>,
+  betaseqlength = <span class='fl'>10</span>,
+  betaweights = <span class='kw'>NULL</span>,
+  adjswaps = <span class='fl'>TRUE</span>,
+  rngseed = <span class='kw'>NULL</span>,
+  maxiterrsg = <span class='fl'>5000</span>,
+  adapt_lambda = <span class='fl'>FALSE</span>,
+  adapt_eprob = <span class='fl'>FALSE</span>,
+  contiguitymap = <span class='st'>"rooks"</span>,
+  exact_mh = <span class='fl'>FALSE</span>,
+  savename = <span class='kw'>NULL</span>,
+  verbose = <span class='fl'>TRUE</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -405,21 +405,22 @@ Carlo." Working Paper. Available at
 <a href='http://imai.princeton.edu/research/files/redist.pdf'>http://imai.princeton.edu/research/files/redist.pdf</a>.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='no'>algdat.pfull</span>)
+    <pre class="examples"><div class='input'><span class='co'>if</span> (<span class='fl'>FALSE</span>) {
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='kw'>algdat.pfull</span>)
 <span class='co'>## Code to run the simulations in Figure 4 in Fifield, Higgins,</span>
 <span class='co'>## Imai and Tarr (2015)</span>
 
 <span class='co'>## Get an initial partition</span>
 <span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span>(<span class='fl'>1</span>)
-<span class='no'>initcds</span> <span class='kw'>&lt;-</span> <span class='no'>algdat.pfull</span>$<span class='no'>cdmat</span>[,<span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span>(<span class='fl'>1</span>:<span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span>(<span class='no'>algdat.pfull</span>$<span class='no'>cdmat</span>), <span class='fl'>1</span>)]
+<span class='kw'>initcds</span> <span class='op'>&lt;-</span> <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>cdmat</span>[,<span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span>(<span class='fl'>1</span><span class='op'>:</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span>(<span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>cdmat</span>), <span class='fl'>1</span>)]
 
 <span class='co'>## Run the algorithm</span>
-<span class='no'>alg_253</span> <span class='kw'>&lt;-</span> <span class='fu'>redist.mcmc</span>(<span class='kw'>adjobj</span> <span class='kw'>=</span> <span class='no'>algdat.pfull</span>$<span class='no'>adjlist</span>,
-<span class='kw'>popvec</span> <span class='kw'>=</span> <span class='no'>algdat.pfull</span>$<span class='no'>precinct.data</span>$<span class='no'>pop</span>,
-<span class='kw'>initcds</span> <span class='kw'>=</span> <span class='no'>initcds</span>,
-<span class='kw'>nsims</span> <span class='kw'>=</span> <span class='fl'>10000</span>)
-}</div></pre>
+<span class='kw'>alg_253</span> <span class='op'>&lt;-</span> <span class='fu'>redist.mcmc</span>(adjobj = <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>adjlist</span>,
+popvec = <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>precinct.data</span><span class='op'>$</span><span class='kw'>pop</span>,
+initcds = <span class='kw'>initcds</span>,
+nsims = <span class='fl'>10000</span>)
+}
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -431,11 +432,11 @@ Carlo." Working Paper. Available at
 
       <footer>
       <div class="copyright">
-  <p>Developed by Ben Fifield, Cory McCartan, Alexander Tarr, Kosuke Imai.</p>
+  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Alexander Tarr, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.0.</p>
 </div>
 
       </footer>

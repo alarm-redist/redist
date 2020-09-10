@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Combine successive runs of <code>redist.mcmc.mpi</code> — redist.combine.mpi • redist</title>
+<title>Combine successive runs of redist.mcmc.mpi — redist.combine.mpi • redist</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,7 +46,7 @@
 
 
 
-<meta property="og:title" content="Combine successive runs of <code>redist.mcmc.mpi</code> — redist.combine.mpi" />
+<meta property="og:title" content="Combine successive runs of redist.mcmc.mpi — redist.combine.mpi" />
 <meta property="og:description" content="redist.combine.mpi is used to combine successive runs of
 redist.mcmc.mpi into a single data object" />
 <meta property="og:image" content="/logo.png" />
@@ -139,7 +139,7 @@ redist.mcmc.mpi into a single data object" />
 <code>redist.mcmc.mpi</code> into a single data object</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.combine.mpi</span>(<span class='no'>savename</span>, <span class='no'>nloop</span>, <span class='no'>nthin</span>, <span class='no'>tempadj</span>)</pre>
+    <pre class="usage"><span class='fu'>redist.combine.mpi</span>(<span class='kw'>savename</span>, <span class='kw'>nloop</span>, <span class='kw'>nthin</span>, <span class='kw'>tempadj</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -210,24 +210,25 @@ Carlo." Working Paper. Available at
 <a href='http://imai.princeton.edu/research/files/redist.pdf'>http://imai.princeton.edu/research/files/redist.pdf</a>.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='no'>algdat.pfull</span>)
+    <pre class="examples"><div class='input'><span class='co'>if</span> (<span class='fl'>FALSE</span>) {
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='kw'>algdat.pfull</span>)
 
 <span class='co'>## Code to run the simulations in Figure 4 in Fifield, Higgins, Imai and</span>
 <span class='co'>## Tarr (2015)</span>
 
 <span class='co'>## Get an initial partition</span>
 <span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span>(<span class='fl'>1</span>)
-<span class='no'>initcds</span> <span class='kw'>&lt;-</span> <span class='no'>algdat.pfull</span>$<span class='no'>cdmat</span>[,<span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span>(<span class='fl'>1</span>:<span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span>(<span class='no'>algdat.pfull</span>$<span class='no'>cdmat</span>), <span class='fl'>1</span>)]
+<span class='kw'>initcds</span> <span class='op'>&lt;-</span> <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>cdmat</span>[,<span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span>(<span class='fl'>1</span><span class='op'>:</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span>(<span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>cdmat</span>), <span class='fl'>1</span>)]
 
 <span class='co'>## Run the algorithm</span>
-<span class='fu'><a href='redist.mcmc.mpi.html'>redist.mcmc.mpi</a></span>(<span class='kw'>adjobj</span> <span class='kw'>=</span> <span class='no'>algdat.pfull</span>$<span class='no'>adjlist</span>,
-<span class='kw'>popvec</span> <span class='kw'>=</span> <span class='no'>algdat.pfull</span>$<span class='no'>precinct.data</span>$<span class='no'>pop</span>,
-<span class='kw'>initcds</span> <span class='kw'>=</span> <span class='no'>initcds</span>,
-<span class='kw'>nsims</span> <span class='kw'>=</span> <span class='fl'>10000</span>, <span class='kw'>nloops</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>savename</span> <span class='kw'>=</span> <span class='st'>"test"</span>)
-<span class='no'>out</span> <span class='kw'>&lt;-</span> <span class='fu'>redist.combine.mpi</span>(<span class='kw'>savename</span> <span class='kw'>=</span> <span class='st'>"test"</span>, <span class='kw'>nloop</span> <span class='kw'>=</span> <span class='fl'>2</span>,
-<span class='kw'>nthin</span> <span class='kw'>=</span> <span class='fl'>10</span>, <span class='kw'>tempadj</span> <span class='kw'>=</span> <span class='no'>tempAdjMat</span>)
-}</div></pre>
+<span class='fu'><a href='redist.mcmc.mpi.html'>redist.mcmc.mpi</a></span>(adjobj = <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>adjlist</span>,
+popvec = <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>precinct.data</span><span class='op'>$</span><span class='kw'>pop</span>,
+initcds = <span class='kw'>initcds</span>,
+nsims = <span class='fl'>10000</span>, nloops = <span class='fl'>2</span>, savename = <span class='st'>"test"</span>)
+<span class='kw'>out</span> <span class='op'>&lt;-</span> <span class='fu'>redist.combine.mpi</span>(savename = <span class='st'>"test"</span>, nloop = <span class='fl'>2</span>,
+nthin = <span class='fl'>10</span>, tempadj = <span class='kw'>tempAdjMat</span>)
+}
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -239,11 +240,11 @@ Carlo." Working Paper. Available at
 
       <footer>
       <div class="copyright">
-  <p>Developed by Ben Fifield, Cory McCartan, Alexander Tarr, Kosuke Imai.</p>
+  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Alexander Tarr, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.0.</p>
 </div>
 
       </footer>

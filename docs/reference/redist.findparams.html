@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Run parameter testing for <code>redist.mcmc</code> — redist.findparams • redist</title>
+<title>Run parameter testing for redist.mcmc — redist.findparams • redist</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,7 +46,7 @@
 
 
 
-<meta property="og:title" content="Run parameter testing for <code>redist.mcmc</code> — redist.findparams" />
+<meta property="og:title" content="Run parameter testing for redist.mcmc — redist.findparams" />
 <meta property="og:description" content="redist.findparams is used to find optimal parameter values of
 redist.mcmc for a given map." />
 <meta property="og:image" content="/logo.png" />
@@ -139,12 +139,12 @@ redist.mcmc for a given map." />
 <code>redist.mcmc</code> for a given map.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.findparams</span>(<span class='no'>adjobj</span>, <span class='no'>popvec</span>, <span class='no'>nsims</span>, <span class='kw'>ndists</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>initcds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-<span class='kw'>adapt_lambda</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>adapt_eprob</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-<span class='no'>params</span>, <span class='kw'>ssdmat</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>grouppopvec</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>countymembership</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-<span class='no'>nstartval_store</span>, <span class='no'>maxdist_startval</span>,
-<span class='kw'>maxiterrsg</span> <span class='kw'>=</span> <span class='fl'>5000</span>, <span class='kw'>report_all</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-<span class='kw'>parallel</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>nthreads</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>log</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+    <pre class="usage"><span class='fu'>redist.findparams</span>(<span class='kw'>adjobj</span>, <span class='kw'>popvec</span>, <span class='kw'>nsims</span>, ndists = <span class='kw'>NULL</span>, initcds = <span class='kw'>NULL</span>,
+adapt_lambda = <span class='fl'>FALSE</span>, adapt_eprob = <span class='fl'>FALSE</span>,
+<span class='kw'>params</span>, ssdmat = <span class='kw'>NULL</span>, grouppopvec = <span class='kw'>NULL</span>, countymembership = <span class='kw'>NULL</span>,
+<span class='kw'>nstartval_store</span>, <span class='kw'>maxdist_startval</span>,
+maxiterrsg = <span class='fl'>5000</span>, report_all = <span class='fl'>TRUE</span>,
+parallel = <span class='fl'>FALSE</span>, nthreads = <span class='kw'>NULL</span>, log = <span class='fl'>FALSE</span>, verbose = <span class='fl'>TRUE</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -263,23 +263,24 @@ Carlo." Working Paper. Available at
 <a href='http://imai.princeton.edu/research/files/redist.pdf'>http://imai.princeton.edu/research/files/redist.pdf</a>.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='no'>algdat.pfull</span>)
+    <pre class="examples"><div class='input'><span class='co'>if</span> (<span class='fl'>FALSE</span>) {
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='kw'>algdat.pfull</span>)
 
 <span class='co'>## Code to run the simulations in Figure 4 in Fifield, Higgins, Imai and</span>
 <span class='co'>## Tarr (2015)</span>
 
 <span class='co'>## Get an initial partition</span>
 <span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span>(<span class='fl'>1</span>)
-<span class='no'>initcds</span> <span class='kw'>&lt;-</span> <span class='no'>algdat.pfull</span>$<span class='no'>cdmat</span>[,<span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span>(<span class='fl'>1</span>:<span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span>(<span class='no'>algdat.pfull</span>$<span class='no'>cdmat</span>), <span class='fl'>1</span>)]
+<span class='kw'>initcds</span> <span class='op'>&lt;-</span> <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>cdmat</span>[,<span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span>(<span class='fl'>1</span><span class='op'>:</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span>(<span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>cdmat</span>), <span class='fl'>1</span>)]
 
-<span class='no'>params</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/expand.grid.html'>expand.grid</a></span>(<span class='kw'>eprob</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>.01</span>, <span class='fl'>.05</span>, <span class='fl'>.1</span>))
+<span class='kw'>params</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/expand.grid.html'>expand.grid</a></span>(eprob = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>.01</span>, <span class='fl'>.05</span>, <span class='fl'>.1</span>))
 
 <span class='co'>## Run the algorithm</span>
-<span class='fu'>redist.findparams</span>(<span class='kw'>adjobj</span> <span class='kw'>=</span> <span class='no'>algdat.pfull</span>$<span class='no'>adjlist</span>,
-<span class='kw'>popvec</span> <span class='kw'>=</span> <span class='no'>algdat.pfull</span>$<span class='no'>precinct.data</span>$<span class='no'>pop</span>,
-<span class='kw'>initcds</span> <span class='kw'>=</span> <span class='no'>initcds</span>, <span class='kw'>nsims</span> <span class='kw'>=</span> <span class='fl'>10000</span>, <span class='kw'>params</span> <span class='kw'>=</span> <span class='no'>params</span>)
-}</div></pre>
+<span class='fu'>redist.findparams</span>(adjobj = <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>adjlist</span>,
+popvec = <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>precinct.data</span><span class='op'>$</span><span class='kw'>pop</span>,
+initcds = <span class='kw'>initcds</span>, nsims = <span class='fl'>10000</span>, params = <span class='kw'>params</span>)
+}
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -291,11 +292,11 @@ Carlo." Working Paper. Available at
 
       <footer>
       <div class="copyright">
-  <p>Developed by Ben Fifield, Cory McCartan, Alexander Tarr, Kosuke Imai.</p>
+  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Alexander Tarr, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.0.</p>
 </div>
 
       </footer>
