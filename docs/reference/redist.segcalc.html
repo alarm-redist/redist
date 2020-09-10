@@ -141,7 +141,7 @@ Massey \&amp; Denton 1987 for more details) for a specified subgroup under any
 redistricting plan.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.segcalc</span>(<span class='no'>algout</span>, <span class='no'>grouppop</span>, <span class='no'>fullpop</span>)</pre>
+    <pre class="usage"><span class='fu'>redist.segcalc</span>(<span class='kw'>algout</span>, <span class='kw'>grouppop</span>, <span class='kw'>fullpop</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -176,26 +176,27 @@ Monte Carlo." Working Paper. Available at
 Segregation". Social Forces.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='no'>algdat.pfull</span>)
+    <pre class="examples"><div class='input'><span class='co'>if</span> (<span class='fl'>FALSE</span>) {
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='kw'>algdat.pfull</span>)
 
 <span class='co'>## Code to run the simulations in Figure 4 of Fifield, Higgins,</span>
 <span class='co'>## Imai and Tarr (2015)</span>
 
 <span class='co'>## Get an initial partition</span>
 <span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span>(<span class='fl'>1</span>)
-<span class='no'>initcds</span> <span class='kw'>&lt;-</span> <span class='no'>algdat.pfull</span>$<span class='no'>cdmat</span>[,<span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span>(<span class='fl'>1</span>:<span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span>(<span class='no'>algdat.pfull</span>$<span class='no'>cdmat</span>), <span class='fl'>1</span>)]
+<span class='kw'>initcds</span> <span class='op'>&lt;-</span> <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>cdmat</span>[,<span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span>(<span class='fl'>1</span><span class='op'>:</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span>(<span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>cdmat</span>), <span class='fl'>1</span>)]
 
 <span class='co'>## Run simulations</span>
-<span class='no'>alg_253</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='redist.mcmc.html'>redist.mcmc</a></span>(<span class='kw'>adjobj</span> <span class='kw'>=</span> <span class='no'>algdat.pfull</span>$<span class='no'>adjlist</span>,
-<span class='kw'>popvec</span> <span class='kw'>=</span> <span class='no'>algdat.pfull</span>$<span class='no'>precinct.data</span>$<span class='no'>pop</span>,
-<span class='kw'>initcds</span> <span class='kw'>=</span> <span class='no'>initcds</span>, <span class='kw'>nsims</span> <span class='kw'>=</span> <span class='fl'>10000</span>)
+<span class='kw'>alg_253</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.mcmc.html'>redist.mcmc</a></span>(adjobj = <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>adjlist</span>,
+popvec = <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>precinct.data</span><span class='op'>$</span><span class='kw'>pop</span>,
+initcds = <span class='kw'>initcds</span>, nsims = <span class='fl'>10000</span>)
 
 <span class='co'>## Get Republican Dissimilarity Index from simulations</span>
-<span class='no'>rep_dmi_253</span> <span class='kw'>&lt;-</span> <span class='fu'>redist.segcalc</span>(<span class='no'>alg_253</span>,
-<span class='no'>algdat.pfull</span>$<span class='no'>precinct.data</span>$<span class='no'>repvote</span>,
-<span class='no'>algdat.pfull</span>$<span class='no'>precinct.data</span>$<span class='no'>pop</span>)
-}</div></pre>
+<span class='kw'>rep_dmi_253</span> <span class='op'>&lt;-</span> <span class='fu'>redist.segcalc</span>(<span class='kw'>alg_253</span>,
+<span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>precinct.data</span><span class='op'>$</span><span class='kw'>repvote</span>,
+<span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>precinct.data</span><span class='op'>$</span><span class='kw'>pop</span>)
+}
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -207,11 +208,11 @@ Segregation". Social Forces.</p>
 
       <footer>
       <div class="copyright">
-  <p>Developed by Ben Fifield, Cory McCartan, Alexander Tarr, Kosuke Imai.</p>
+  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Alexander Tarr, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.0.</p>
 </div>
 
       </footer>
