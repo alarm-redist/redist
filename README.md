@@ -27,15 +27,12 @@ Authors:
 Contributors:
  * [Michael Higgins](http://www-personal.k-state.edu/~mikehiggins/), <mjh5@princeton.edu> 
 
-This package implements methods from the following papers:
-
-[Automated Redistricting Simulation Using Markov Chain Monte
+Papers:
+  * [Automated Redistricting Simulation Using Markov Chain Monte
 Carlo](https://doi.org/10.1080/10618600.2020.1739532) *Journal of Computational and Graphical Statistics*
-
-[The Essential Role of Empirical Validation in Legislative Redistricting
-Simulation](https://doi.org/10.1080/2330443X.2020.1791773) *Statistics and Public Policy*  Vol. 7, No. 1, pp 52-68.
-
-[Sequential Monte Carlo for Sampling Balanced and Compact Redistricting
+  * [The Essential Role of Empirical Validation in Legislative Redistricting
+Simulation](https://doi.org/10.1080/2330443X.2020.1791773) *Statistics and Public Policy*  Vol. 7, No. 1, pp. 52-68.
+  * [Sequential Monte Carlo for Sampling Balanced and Compact Redistricting
 Plans](https://arxiv.org/pdf/2008.06131.pdf)
 
 ## Installation Instructions
