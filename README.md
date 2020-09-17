@@ -1,17 +1,19 @@
-\#redist: Simulation Methods for Legislative Redistricting  
-[![Build
-Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist)
-[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/redist)](https://cran.r-project.org/package=redist)
-Authors:
+#redist: Simulation Methods for Legislative Redistricting
 
-Authors: - [Ben Fifield](https://www.benfifield.com),
-<benfifield@gmail.com> (Maintainer) - [Christopher T
-Kenny](https://www.christophertkenny.com),
-<christopherkenny@fas.harvard.edu> - Cory McCartan,
-<cmccartan@g.harvard.edu> - Alex Tarr, <atarr@princeton.edu> - [Michael
-Higgins](http://www-personal.k-state.edu/~mikehiggins/),
-<mjh5@princeton.edu> - Jun Kawahara, <jkawahara@i.kyoto-u.ac.jp> -
-[Kosuke Imai](https://imai.princeton.edu), <kimai@princeton.edu>
+<!-- badges: start --> [![Build
+Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist)
+[![CRAN\_Status\_Badge](https://www.r-pkg.org/badges/version-last-release/redist)](https://cran.r-project.org/package=redist)
+![CRAN downloads](http://cranlogs.r-pkg.org/badges/grand-total/redist)
+<!-- badges: end -->
+
+Authors: 
+ * [Ben Fifield](https://www.benfifield.com), <benfifield@gmail.com> (Maintainer) 
+ * [Christopher T Kenny](https://www.christophertkenny.com), <christopherkenny@fas.harvard.edu> 
+ * Cory McCartan, <cmccartan@g.harvard.edu> 
+ * Alex Tarr, <atarr@princeton.edu> 
+ * [Michael Higgins](http://www-personal.k-state.edu/~mikehiggins/), <mjh5@princeton.edu> 
+ * Jun Kawahara, <jkawahara@i.kyoto-u.ac.jp> 
+ * [Kosuke Imai](https://imai.fas.harvard.edu), <imai@harvard.edu>
 
 This package implements methods from the following papers:
 
@@ -24,7 +26,7 @@ Simulation](https://www.tandfonline.com/doi/full/10.1080/2330443X.2020.1791773)
 [Sequential Monte Carlo for Sampling Balanced and Compact Redistricting
 Plans](https://arxiv.org/pdf/2008.06131.pdf)
 
-# pkgdown \<img src=“man/figures/logo.png” align=“right” /\>
+# pkgdown <img src=“man/figures/logo.png” align=“right” />
 
 ## Installation Instructions
 
