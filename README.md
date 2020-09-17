@@ -6,6 +6,16 @@
 ![CRAN downloads](http://cranlogs.r-pkg.org/badges/grand-total/redist)
 <!-- badges: end -->
 
+This R package enables researchers to sample redistricting plans from a pre-specified
+    target distribution using Sequential Monte Carlo and Markov Chain Monte Carlo
+    algorithms.  The package allows for the implementation of various constraints in
+    the redistricting process such as geographic compactness and population parity
+    requirements. Tools for analysis such as computation of various summary statistics
+    and plotting functionality are also included. The package implements methods
+    described in Fifield, Higgins, Imai and Tarr (2020) <doi: 10.1080/10618600.2020.1739532>,
+    Fifield, Imai, Kawahara, and Kenny (2020) <doi: 10.1080/2330443X.2020.1791773>,
+    and McCartan and Imai (2020) <https://arxiv.org/pdf/2008.06131.pdf>.
+
 Authors: 
  * [Ben Fifield](https://www.benfifield.com), <benfifield@gmail.com> (Maintainer) 
  * [Christopher T Kenny](https://www.christophertkenny.com), <christopherkenny@fas.harvard.edu> 
