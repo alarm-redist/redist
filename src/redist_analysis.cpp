@@ -8,8 +8,115 @@
 
 // Header files
 #include <RcppArmadillo.h>
+#include "constraint_calc_helper.h"
 
 using namespace Rcpp;
+
+// Function to calculate polsby popper
+// [[Rcpp::export]]
+double calc_polsbypopper(arma::uvec new_cds,
+			 arma::vec areas_vec,
+			 arma::vec boundarylist_new,
+			 arma::mat borderlength_mat,
+			 arma::vec pop_vec,
+			 List aList,
+			 bool discrete = false){
+
+  double pi = 3.141592653589793238463;
+
+  /*
+     Calculate the area for the district
+     by summing over the areas of the cds
+  */
+  double area_new = 0.0;
+  int j; int k; int l;
+  if(discrete == false){
+    for(j = 0; j < new_cds.n_elem; j++){
+      area_new += areas_vec(new_cds(j));
+    }
+  }else{
+    for(j = 0; j < new_cds.n_elem; j++){
+      area_new += pop_vec(new_cds(j));
+    }
+  }
+
+  /*
+     Calculate the perimeter for the district
+     by finding boundaries on the CD
+  */
+
+  // Unpack the borderlength matrix
+  arma::vec borderlength_col1 = borderlength_mat.col(0);
+  arma::vec borderlength_col2 = borderlength_mat.col(1);
+  arma::vec borderlength_col3 = borderlength_mat.col(2);
+
+  // Modify the boundary indicator to include -1s
+  arma::uvec border_inds = find(borderlength_col1 == -1.0);
+  arma::vec get_unique_borderinds = unique(borderlength_col2.elem(border_inds));
+  boundarylist_new.elem(arma::conv_to<arma::uvec>::from(get_unique_borderinds)).replace(0, 1);
+
+  // Get indices of the obsevations that are both in the district and
+  // on the boundary
+  arma::uvec boundary_inds_new = find(boundarylist_new == 1);
+  arma::ivec boundary_precs_new = arma::intersect(arma::conv_to<arma::ivec>::from(new_cds), arma::conv_to<arma::ivec>::from(boundary_inds_new));
+
+  // Loop over the indices in boundary_precs_new and check the adjacent units for
+  // whether they too lie on a boundary
+  arma::vec adj_precs;
+  arma::uvec in_cd;
+  arma::vec adj_precs_sub;
+
+  arma::uvec adj_precs_sub_indices;
+  arma::uvec find_boundarylength_in_boundarymat;
+  arma::ivec loop_over_inds;
+  double perimeter_new = 0.0;
+  for(j = 0; j < boundary_precs_new.n_elem; j++){
+
+    if(discrete == false){
+
+      // Get the adjacent indices - on the boundary and
+      // greater than boundary_precs[j] to avoid double counting
+      adj_precs = as<arma::vec>(aList(boundary_precs_new(j)));
+
+      // Of the adjacent precincts, which are not in the same congressional district?
+      in_cd = getIn(arma::conv_to<arma::ivec>::from(adj_precs), arma::conv_to<arma::ivec>::from(new_cds));
+      adj_precs_sub = adj_precs.elem( find(in_cd == false) );
+      adj_precs_sub.resize(adj_precs_sub.size() + 1);
+      adj_precs_sub(adj_precs_sub.size() - 1) = -1.0;
+
+      // Which elements of boundary_mat's first column are in adj_precs_sub, and what of second column equal the actual precinct
+      find_boundarylength_in_boundarymat = find(borderlength_col2 == boundary_precs_new(j));
+      for(k = 0; k < adj_precs_sub.n_elem; k++){
+
+	adj_precs_sub_indices = find(borderlength_col1 == adj_precs_sub(k));
+	loop_over_inds = arma::intersect(arma::conv_to<arma::ivec>::from(adj_precs_sub_indices), arma::conv_to<arma::ivec>::from(find_boundarylength_in_boundarymat));
+	if(loop_over_inds.n_elem > 0){
+	  for(l = 0; l < loop_over_inds.n_elem; l++){
+	    perimeter_new += (double)borderlength_col3(loop_over_inds(l));
+	  }
+	}
+
+      }
+
+    }else{
+
+      // Add the population around the perimeter
+      perimeter_new += (double)pop_vec(boundary_precs_new(j));
+
+    }
+
+  }
+
+  double out;
+  if(discrete == false){
+    out = (double)4.0 * pi * area_new / pow(perimeter_new, 2.0);
+  }else{
+    out = area_new / pow(perimeter_new, 2.0);
+  }
+
+  return out;
+
+}
 
 // Function to calculate summary statistics (package version)
 // [[Rcpp::export]]
@@ -76,7 +183,7 @@ NumericVector segregationcalc(NumericMatrix distmat,
 	// Add population counts
 	tpop += fullpop(findCds(k));
 	gpop += grouppop(findCds(k));
-	
+
       }
 
       // Get district proportions
@@ -89,7 +196,7 @@ NumericVector segregationcalc(NumericMatrix distmat,
 
     // Add to vector
     diVec(i) = dissim;
-    
+
   }
 
   // Return vector

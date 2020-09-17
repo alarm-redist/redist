@@ -9,29 +9,39 @@
 #ifndef CONSTRAINT_CALC_HELPER_H
 #define CONSTRAINT_CALC_HELPER_H
 
-Rcpp::List calc_betapop(arma::vec current_dists,
-			arma::vec new_dists,
-			Rcpp::NumericVector pops,
-			double beta_population,
-			Rcpp::NumericVector distswitch);
-Rcpp::List calc_betacompact(arma::vec current_dists,
-			    arma::vec new_dists,
-			    Rcpp::NumericVector pops,
-			    double beta_compact,
-			    Rcpp::NumericVector distswitch,
-			    Rcpp::NumericMatrix ssdmat,
-			    double denominator);
-Rcpp::List calc_betasegregation(arma::vec current_dists,
-				arma::vec new_dists,
-				Rcpp::NumericVector pops,
-				double beta_segregation,
-				Rcpp::NumericVector distswitch,
-				Rcpp::NumericVector grouppop);
-Rcpp::List calc_betasimilar(arma::vec current_dists,
-			    arma::vec new_dists,
-			    arma::vec orig_dists,
-			    double beta_similar,
-			    Rcpp::NumericVector distswitch);
+Rcpp::NumericVector findBoundary(Rcpp::List fullList,
+				 Rcpp::List conList);
+arma::uvec getIn(arma::ivec vec1, arma::ivec vec2);
+Rcpp::List genAlConn(Rcpp::List aList,
+		     Rcpp::NumericVector cds);
+Rcpp::List calc_psipop(arma::vec current_dists,
+		       arma::vec new_dists,
+		       Rcpp::NumericVector pops,
+		       Rcpp::NumericVector distswitch);
+Rcpp::List calc_psicompact(arma::vec current_dists,
+			   arma::vec new_dists,
+			   Rcpp::NumericVector distswitch,
+			   std::string measure,
+			   Rcpp::List aList,
+			   Rcpp::NumericVector areas_vec,
+			   arma::mat borderlength_mat,
+			   bool discrete,
+			   Rcpp::NumericVector pops,
+			   Rcpp::NumericMatrix ssdmat,
+			   double denominator);
+Rcpp::List calc_psisegregation(arma::vec current_dists,
+			       arma::vec new_dists,
+			       Rcpp::NumericVector pops,
+			       Rcpp::NumericVector distswitch,
+			       Rcpp::NumericVector grouppop);
+Rcpp::List calc_psisimilar(arma::vec current_dists,
+			   arma::vec new_dists,
+			   arma::vec orig_dists,
+			   Rcpp::NumericVector distswitch);
+Rcpp::List calc_psicounty(arma::vec current_dists,
+			  arma::vec new_dists,
+			  arma::vec county_assignments,
+			  arma::vec popvec);
 
 #endif
 

@@ -27,13 +27,22 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
         cat("redist.mcmc.mpi(): Automated Redistricting Simulation Using
         Markov Chain Monte Carlo w/ Parallel Tempering \n\n", append = TRUE)
     }
-    
+
     ## Extract variables
     if(is.na(grouppopvec)){
         grouppopvec <- NULL
     }
+    if(is.na(countymembership)){
+        countymembership <- NULL
+    }
+    if(is.na(areasvec)){
+        areasvec <- NULL
+    }
     if(is.na(ssdmat)){
-        ssdmat <- NULL
+        ssdmat <- matrix(1, 2, 2)
+    }
+    if(is.na(borderlength_mat)){
+        borderlength_mat <- NULL
     }
     if(is.na(params$adjswaps)){
         adjswaps <- NULL
@@ -48,7 +57,12 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     if(is.na(params$constraint)){
         constraint <- NULL
     }else{
-        constraint <- params$constraint
+        constraint <- strsplit(params$constraint, ",")[[1]]
+    }
+    if(is.na(params$constraintweights)){
+        constraintweights <- NULL
+    }else{
+        constraintweights <- as.numeric(strsplit(params$constraintweights, ",")[[1]])
     }
     if(is.na(params$nsims)){
         nsims <- NULL
@@ -108,6 +122,11 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     if(sum(is.na(initcds)) == length(initcds)){
         initcds <- NULL
     }
+    if(is.na(params$compactness_metric)){
+        compactness_metric <- NULL
+    }else{
+        compactness_metric <- params$compactness_metric
+    }
 
     nthin <- params$nthin
     
@@ -115,19 +134,28 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     preprocout <- redist.preproc(adjobj = adjobj, popvec = popvec,
                                  initcds = initcds, ndists = ndists,
                                  popcons = popcons,
-                                 grouppopvec = grouppopvec, ssdmat = ssdmat,
-                                 beta = params$beta, temper = "parallel",
+                                 grouppopvec = grouppopvec,
+                                 areasvec = areasvec, #ctk-cran-note
+                                 borderlength_mat = borderlength_mat,#ctk-cran-note
+                                 countymembership = countymembership,#ctk-cran-note
+                                 ssdmat = ssdmat,
+                                 compactness_metric = compactness_metric,#ctk-cran-note
+                                 temper = FALSE,
                                  constraint = constraint,
+                                 constraintweights = constraintweights,#ctk-cran-note
                                  betaseq = NULL, betaweights = NULL,
                                  adjswaps = adjswaps,
                                  maxiterrsg = maxiterrsg,
                                  contiguitymap = contiguitymap)
 
     ## Set betas - if tempering, modified later
-    betapop <- preprocout$params$betapop
-    betacompact <- preprocout$params$betacompact
-    betaseg <- preprocout$params$betaseg
-    betasimilar <- preprocout$params$betasimilar
+    beta <- params$beta
+    
+    weightpop <- preprocout$params$weightpop
+    weightcompact <- preprocout$params$weightcompact
+    weightseg <- preprocout$params$weightseg
+    weightsimilar <- preprocout$params$weightsimilar
+    weightcountysplit <- preprocout$params$weightcountysplit
     temper <- "parallel"
     
     ## Find procID involved in swaps (non-adjacent only)
@@ -162,18 +190,10 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
             
             cds <- algout$partitions[,nsims]
             
-            if(temper != "none" & constraint == "compact"){
-                betacompact <- algout$beta_sequence[nsims]
+            if(temper == "parallel"){
+                beta <- algout$beta_sequence[nsims]
             }
-            if(temper != "none" & constraint == "segregation"){
-                betaseg <- algout$beta_sequence[nsims]
-            }
-            if(temper != "none" & constraint == "population"){
-                betapop <- algout$beta_sequence[nsims]
-            }
-            if(temper != "none" & constraint == "similarity"){
-                betasimilar <- algout$beta_sequence[nsims]
-            }
+            
             if(!is.null(rngseed) & is.numeric(rngseed)){
                 .Random.seed <- algout$randseed
             }
@@ -204,18 +224,10 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                 
                 cds <- algout$partitions[,nsims]
                 
-                if(temper != "none" & constraint == "compact"){
-                    betacompact <- algout$beta_sequence[nsims]
+                if(temper == "parallel"){
+                    beta <- algout$beta_sequence[nsims]
                 }
-                if(temper != "none" & constraint == "segregation"){
-                    betaseg <- algout$beta_sequence[nsims]
-                }
-                if(temper != "none" & constraint == "population"){
-                    betapop <- algout$beta_sequence[nsims]
-                }
-                if(temper != "none" & constraint == "similarity"){
-                    betasimilar <- algout$beta_sequence[nsims]
-                }
+                
                 if(!is.null(rngseed) & is.numeric(rngseed)){
                     .Random.seed <- algout$randseed
                 }
@@ -240,13 +252,18 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
         #######################
         for(j in 1:length(nsimsAdj)){
 
-            cat("Swap ", j, "\n", append = TRUE)
+            cat("Swap ", j, " out of ", length(nsimsAdj), " swaps.\n",
+                append = TRUE)
+
             ## Run algorithm
             temp <- swMH(aList = preprocout$data$adjlist,
                          cdvec = cds,
                          cdorigvec = preprocout$data$initcds,
                          popvec = preprocout$data$popvec,
                          grouppopvec = preprocout$data$grouppopvec,
+                         areas_vec = preprocout$data$areasvec,
+                         county_membership = preprocout$data$countymembership,
+                         borderlength_mat = preprocout$data$borderlength_mat,
                          nsims = nsimsAdj[j],
                          eprob = eprob,
                          pct_dist_parity = preprocout$params$pctdistparity,
@@ -254,15 +271,18 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                          beta_weights = preprocout$params$betaweights,
                          ssdmat = preprocout$data$ssdmat,
                          lambda = lambda,
-                         beta_population = betapop,
-                         beta_compact = betacompact,
-                         beta_segregation = betaseg,
-                         beta_similar = betasimilar,
-                         anneal_beta_population = preprocout$params$temperbetapop,
-                         anneal_beta_compact = preprocout$params$temperbetacompact,
-                         anneal_beta_segregation = preprocout$params$temperbetaseg,
-                         anneal_beta_similar = preprocout$params$temperbetasimilar,
-                         adjswap = preprocout$params$adjswaps)
+                         beta = beta,
+                         weight_population = weightpop,
+                         weight_compact = weightcompact,
+                         weight_segregation = weightseg,
+                         weight_similar = weightsimilar,
+                         weight_countysplit = weightcountysplit,
+                         adapt_beta = "none",
+                         adjswap = preprocout$params$adjswaps,
+                         exact_mh = 0,
+                         adapt_eprob = 0,
+                         adapt_lambda = 0,
+                         compactness_measure = compactness_metric)
             
             ## Combine data
             algout <- ecutsAppend(algout,temp)
@@ -271,19 +291,7 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
             beta <- temp$beta_sequence[nsimsAdj[j]]
             
             ## Get likelihood
-            if(constraint == "compact"){
-                like <- exp(temp$constraint_compact[nsimsAdj[j]]) 
-            }
-            else if(constraint == "population"){
-                like <- exp(temp$constraint_pop[nsimsAdj[j]]) 
-            }
-            else if(constraint == "segregation"){
-                like <- exp(temp$constraint_segregation[nsimsAdj[j]]) 
-            }
-            else{
-                like <- exp(temp$constraint_similar[nsimsAdj[j]]) 
-            }
-            cat("Likelihood is", like, "\n", append = TRUE)
+            like <- temp$energy_psi[nsimsAdj[j]]
             ## Use MPI to exchange swap information
             ##
             ## Tag guide: 1 -> likelihood sent
@@ -293,31 +301,23 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
 
             if(adjswaps){
 
-                cat("Start adjswaps\n", append = TRUE)
                 ## Determine which nodes are swapping
                 tempseg <- swaps[(i-1)*nsims + j*freq]
                 ## Get node indices
                 temps <- tempadj[tempseg:(tempseg+1)]
                 ## Communication step
-                cat("Is procID in temps? If true, enter communication",
-                    procID %in% temps, "\n", append = TRUE)
                 if(procID %in% temps){
-                    cat("Enter communication step\n", append = TRUE)
                     ## Determine partner
-                    cat("Start determine partner\n", append = TRUE)
                     partner <- temps[procID != temps]
                     ## Send commands (blocking)
-                    cat("Start send commands\n", append = TRUE)
                     Rmpi::mpi.send.Robj(like,dest=partner,tag=1)
                     Rmpi::mpi.send.Robj(beta,dest=partner,tag=2)
                     ## Receive commands (blocking)
-                    cat("Start receive commands\n", append = TRUE)
                     likePart <- Rmpi::mpi.recv.Robj(partner,tag=1)
                     betaPart <- Rmpi::mpi.recv.Robj(partner,tag=2)
                     
                     ## Higher ranked process communicates random
                     ## draw to lower ranked process
-                    cat("Start communicate draw\n", append = TRUE)
                     if(partner < procID){
                         accept <- runif(1)
                         Rmpi::mpi.send.Robj(accept,dest=partner,tag=3)
@@ -325,31 +325,26 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                         accept <- Rmpi::mpi.recv.Robj(partner,tag=3)
                     }
                     
-                    ## Compute acceptance probability (for now, population only)
-                    cat("Start compute acceptance prob\n", append = TRUE)
-                    
+                    ## Compute acceptance probability (for now, population only)                    
                     cat("Components of likelihood:\n", append = TRUE)
                     cat("like =", like, "\n", append = TRUE)
                     cat("beta =", beta, "\n", append = TRUE)
                     cat("betaPart =", betaPart, "\n", append = TRUE)
                     cat("likePart =", likePart, "\n", append = TRUE)
-                    cat("Constraint in likelihood =", log(like), "\n", append = TRUE)
-                    cat("Constraint in likelihoodPart =", log(likePart), "\n", append = TRUE)
 
-                    prob <- (like^betaPart*likePart^beta)/(like^beta*likePart^betaPart)
-
-                    cat("Prob =", prob, "and accept =", accept, "\n", append = TRUE)
+                    a_like <- -1 * betaPart * like
+                    b_like <- -1 * beta * likePart
+                    x_like <- -1 * beta * like
+                    y_like <- -1 * betaPart * likePart
+                    prob <- exp(a_like + b_like - x_like - y_like)
+                    
                     if(prob > accept){
-                        cat("Prob > accept\n", append = TRUE)
                         ## Exchange temperature values
-                        cat("Start exchange temps\n", append = TRUE)
                         beta <- betaPart
                         
                         ## Adjust temperature adjacency list
-                        cat("Start adjust tempAdj list\n", append = TRUE)
                         tempadj[tempseg:(tempseg+1)] <- tempadj[(tempseg+1):tempseg]
                         ## Send temperature adjacency list
-                        cat("Start send tempAdj\n", append = TRUE)
                         if(procID == tempadj[tempseg+1]){
                             oProcs <- tempadj[!(tempadj %in% temps)]
                             for(k in 1:length(oProcs)){
@@ -357,7 +352,6 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                             }
                         }
                     }else{
-                        cat("Prob < accept\n", append = TRUE)
                         if(procID == tempadj[tempseg]){
                             oProcs <- tempadj[!(tempadj %in% temps)]
                             for(k in 1:length(oProcs)){
@@ -365,12 +359,8 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                             }
                         }
                     }
-                    cat("Exit communication step\n", append = TRUE)
                 }else{
-                    cat("Not in temps, receive tempadj from other nodes\n",
-                        append = TRUE)
                     tempadj <- Rmpi::mpi.recv.Robj(tempadj[tempseg],tag=4)
-                    cat("End receive tempadj from other nodes\n", append = TRUE)
                 }
             }else{
                 if(j != length(nsimsAdj) || length(nsimsAdj) == length(tempIts)){
@@ -392,8 +382,12 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                         accept <- Rmpi::mpi.recv.Robj(partner[j],tag=3)
                     }
                     
-                    ## Compute acceptance probability (for now, population only)
-                    prob <- (like^betaPart*likePart^beta)/(like^beta*likePart^betaPart)
+                    ## Compute acceptance probability
+                    a_like <- -1 * betaPart * like
+                    b_like <- -1 * beta * likePart
+                    x_like <- -1 * beta * like
+                    y_like <- -1 * betaPart * likePart
+                    prob <- exp(a_like + b_like - x_like - y_like)
                     if(prob > accept){
                         ## Exchange temperature values
                         beta <- betaPart
@@ -443,13 +437,14 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     ###############################
     if(nloop > 1){
       if(procID == tempadj[1]){
-        redist.combine.mpi(savename = savename, nsims = nsims, nloop = nloop,
-                           nthin = nthin, nunits = length(preprocout$data$adjlist),
-                           tempadj = tempadj)
+        redist.combine.mpi(savename = savename, nloop = nloop,
+                           nthin = nthin, tempadj = tempadj)
       }
     }else if(!is.null(savename)){
-      save(algout, file = paste(savename, ".RData", sep = ""))
-  }
+        if(procID == tempadj[1]){
+            save(algout, file = paste(savename, ".RData", sep = ""))
+        }
+    }
     
     if(params$verbose){
         cat("\n", append = TRUE)
@@ -466,14 +461,12 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
 #' \code{redist.combine.mpi} is used to combine successive runs of
 #' \code{redist.mcmc.mpi} into a single data object
 #'
-#' @usage redist.combine.mpi(savename, nsims, nloop, nthin, nunits, tempadj)
+#' @usage redist.combine.mpi(savename, nloop, nthin, tempadj)
 #'
 #' @param savename The name (without the loop or \code{.RData} suffix)
 #' of the saved simulations.
-#' @param nsims The number of simulations in each loop.
 #' @param nloop The number of loops being combined.
 #' @param nthin How much to thin the simulations being combined.
-#' @param nunits The number of geographic units from the simulations.
 #' @param tempadj The temperature adjacency object saved by
 #' \code{redist.mcmc.mpi}.
 #'
@@ -533,32 +526,30 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
 #' popvec = algdat.pfull$precinct.data$pop,
 #' initcds = initcds,
 #' nsims = 10000, nloops = 2, savename = "test")
-#' out <- redist.combine.mpi(savename = "test", nsims = 10000, nloop = 2,
-#' nthin = 10, nunits = length(algdat.pfull$adjlist), tempadj = tempAdjMat)
+#' out <- redist.combine.mpi(savename = "test", nloop = 2,
+#' nthin = 10, tempadj = tempAdjMat)
 #' }
 #' @export
-redist.combine.mpi <- function(savename, nsims, nloop, nthin, nunits, tempadj){
+redist.combine.mpi <- function(savename, nloop, nthin, tempadj){
     
     ##############################
     ## Set up container objects ##
     ##############################
-    partitions <- matrix(NA, nrow = nunits,
-                         ncol = (nsims * nloop / nthin))
+    load(paste(savename, "_proc", tempadj[1], "_loop1.RData", sep = ""))
+    names_obj <- names(algout)
     
-    distance_parity <- rep(NA, (nsims * nloop / nthin))
-    distance_original <- rep(NA, (nsims * nloop / nthin))
-    mhdecisions <- rep(NA, (nsims * nloop / nthin))
-    mhprob <- rep(NA, (nsims * nloop / nthin))
-    pparam <- rep(NA, (nsims * nloop / nthin))
-    constraint_pop <- rep(NA, (nsims * nloop / nthin))
-    constraint_compact <- rep(NA, (nsims * nloop / nthin))
-    constraint_segregation <- rep(NA, (nsims * nloop / nthin))
-    constraint_similar <- rep(NA, (nsims * nloop / nthin))
-    
-    beta_sequence <- rep(NA, (nsims * nloop / nthin))
+    ## Create containers
+    nr <- nrow(algout$partitions)
+    nc <- ncol(algout$partitions)
+    partitions <- matrix(NA, nrow = nr, ncol = (nc * nloop / nthin))
+
+    veclist <- vector(mode = "list", length = length(algout)-1)
+    for(i in 1:length(veclist)){
+        veclist[[i]] <- rep(NA, (nc * nloop / nthin))
+    }
     
     ## Indices for thinning
-    indthin <- which((1:nsims) %% nthin == 0)
+    indthin <- which((1:nc) %% nthin == 0)
     
     ####################################
     ## Combine data in multiple loops ##
@@ -569,43 +560,31 @@ redist.combine.mpi <- function(savename, nsims, nloop, nthin, nunits, tempadj){
         ## Load data
         load(paste(savename, "_proc", tempadj[1], "_loop", i, ".RData", sep = ""))
 
-        ind <- ((i - 1) * (nsims / nthin) + 1):(i * (nsims / nthin))
+        ind <- ((i - 1) * (nc / nthin) + 1):(i * (nc / nthin))
         
         ## Store objects together
-        partitions[1:nunits, ind] <- algout$partitions[,indthin]
-        
-        distance_parity[ind] <- algout$distance_parity[indthin]
-        distance_original[ind] <- algout$distance_original[indthin]
-        mhdecisions[ind] <- algout$mhdecisions[indthin]
-        mhprob[ind] <- algout$mhprob[indthin]
-        pparam[ind] <- algout$pparam[indthin]
-        constraint_pop[ind] <- algout$constraint_pop[indthin]
-        constraint_compact[ind] <- algout$constraint_compact[indthin]
-        constraint_segregation[ind] <- algout$constraint_segregation[indthin]
-        constraint_similar[ind] <- algout$constraint_similar[indthin]
-        
-        beta_sequence[ind] <- algout$beta_sequence[indthin]
+        for(j in 1:length(algout)){
+            if(j == 1){
+                partitions[1:nr, ind] <- algout$partitions[,indthin]
+            }else{
+                veclist[[j-1]][ind] <- algout[[j]][indthin]
+            }
+        }
         
     }
     
     #################################
     ## Store data in algout object ##
     #################################
-
-    algout <- vector(mode = "list")
-    
-    algout$partitions <- partitions
-    algout$distance_parity <- distance_parity
-    algout$distance_original <- distance_original
-    algout$mhdecisions <- mhdecisions
-    algout$mhprob <- mhprob
-    algout$pparam <- pparam
-    algout$constraint_pop <- constraint_pop
-    algout$constraint_compact <- constraint_compact
-    algout$constraint_segregation <- constraint_segregation
-    algout$constraint_similar <- constraint_similar
-
-    algout$beta_sequence <- beta_sequence
+    algout <- vector(mode = "list", length = length(algout))
+    for(i in 1:length(algout)){
+        if(i == 1){
+            algout[[i]] <- partitions
+        }else{
+            algout[[i]] <- veclist[[i-1]]
+        }
+    }
+    names(algout) <- names_obj
 
     
     #########################
@@ -617,7 +596,6 @@ redist.combine.mpi <- function(savename, nsims, nloop, nthin, nunits, tempadj){
     ## Save object ##
     #################
     save(algout, file = paste(savename, ".RData", sep = ""))
-    return(algout)
     
 }
 
@@ -625,17 +603,15 @@ ecutsAppend <- function(algout,ndata){
     if(length(algout) == 0){
         algout <- ndata
     }else{
-        algout$partitions <- cbind(algout$partitions,ndata$partitions)
-        algout$distance_parity <- c(algout$distance_parity,ndata$distance_parity)
-        algout$distance_original <- c(algout$distance_original, ndata$distance_original)
-        algout$mhdecisions <- c(algout$mhdecisions,ndata$mhdecisions)
-        algout$mhprob <- c(algout$mhprob,ndata$mhprob)
-        algout$pparam <- c(algout$pparam,ndata$pparam)
-        algout$constraint_pop <- c(algout$constraint_pop,ndata$constraint_pop)
-        algout$constraint_compact <- c(algout$constraint_compact,ndata$constraint_compact)
-        algout$constraint_segregation <- c(algout$constraint_segregation,ndata$constraint_segregation)
-        algout$constraint_similar <- c(algout$constraint_similar,ndata$constraint_similar)
-        algout$beta_sequence<- c(algout$beta_sequence,ndata$beta_sequence)
+        names_obj <- names(algout)
+        for(i in 1:length(algout)){
+            if(i == 1){
+                algout[[i]] <- cbind(algout[[i]], ndata[[i]])
+            }else{
+                algout[[i]] <- c(algout[[i]], ndata[[i]])
+            }
+        }
+        names(algout) <- names_obj
     }
     return(algout)
 }
@@ -649,8 +625,11 @@ ecutsAppend <- function(algout,ndata){
 #' loopscompleted = 0, nloop = 1, nthin = 1,
 #' eprob = 0.05,
 #' lambda = 0, popcons = NA, grouppopvec = NA,
-#' ssdmat = NA, rngseed = NA,
-#' beta = -10, constraint = "population",
+#' areasvec = NA, countymembership = NA,
+#' borderlength_mat = NA, ssdmat = NA,
+#' compactness_metric = "fryer-holden", rngseed = NA,
+#' constraint = NA, constraintweights = NA,
+#' betaseq = "powerlaw",
 #' betaseqlength = 10, adjswaps = TRUE,
 #' freq = 100, savename = NA, maxiterrsg = 5000,
 #' contiguitymap = "rooks", verbose = FALSE)
@@ -684,15 +663,26 @@ ecutsAppend <- function(algout,ndata){
 #' rejected. The default is \code{NULL}.
 #' @param grouppopvec A vector of populations for some sub-group of
 #' interest. The default is \code{NULL}.
+#' @param areasvec A vector of precinct areas for discrete Polsby-Popper.
+#' The default is \code{NULL}.
+#' @param countymembership A vector of county membership assignments. The default is \code{NULL}.
+#' @param borderlength_mat A matrix of border length distances, where
+#' the first two columns are the indices of precincts sharing a border and
+#' the third column is its distance. Default is \code{NULL}.
 #' @param ssdmat A matrix of squared distances between geographic
 #' units. The default is \code{NULL}.
+#' @param compactness_metric The compactness metric to use when constraining on
+#' compactness. Default is \code{fryer-holden}, the other implemented option
+#' is \code{polsby-popper}.
 #' @param rngseed Allows the user to set the seed for the
 #' simulations. Default is \code{NULL}.
-#' @param beta The strength of the target strength in the MH ratio. The default
-#' is 0.
-#' @param constraint Which constraint to apply. Accepts \code{compact},
+#' @param constraint Which constraint to apply. Accepts any combination of \code{compact},
 #' \code{segregation}, \code{population}, \code{similarity}, or \code{none}
-#' (no constraint applied). The default is \code{none}.
+#' (no constraint applied). The default is NULL.
+#' @param constraintweights The weights to apply to each constraint. Should be a vector
+#' the same length as constraint. Default is NULL.
+#' @param betaseq Sequence of beta values for tempering. The default is
+#' \code{powerlaw} (see Fifield et. al (2015) for details).
 #' @param betaseqlength Length of beta sequence desired for
 #' tempering. The default is \code{10}.
 #' @param adjswaps Flag to restrict swaps of beta so that only
@@ -774,8 +764,11 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
                             loopscompleted = 0, nloop = 1, nthin = 1,
                             eprob = 0.05,
                             lambda = 0, popcons = NA, grouppopvec = NA,
-                            ssdmat = NA,rngseed = NA,
-                            beta = -10, constraint = "population",  
+                            areasvec = NA,
+                            countymembership = NA, borderlength_mat = NA,
+                            ssdmat = NA, compactness_metric = "fryer-holden", rngseed = NA,
+                            constraint = NA, constraintweights = NA,
+                            betaseq = "powerlaw",
                             betaseqlength = 10, adjswaps = TRUE,
                             freq = 100, savename = NA, maxiterrsg = 5000,
                             contiguitymap = "rooks", verbose = FALSE
@@ -804,7 +797,7 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
     if(missing(nsims)){
         stop("Please supply number of simulations to run algorithm")
     }
-    if(is.null(ndists) & is.null(initcds)){
+    if(is.na(ndists) & is.null(initcds)){
         stop("Please provide either the desired number of congressional districts
          or an initial set of congressional district assignments")
     }
@@ -815,8 +808,7 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
     ###################
     ## Preprocessing ##
     ###################
-    
-  
+
     ## Augment initcds if necessary
     nrow.init <- ifelse(is.null(initcds), 0, nrow(initcds))
     ncol.init <- ifelse(is.null(initcds), ndists, ncol(initcds))
@@ -829,7 +821,7 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
     for(i in 1:betaseqlength){
         temp[i] <- 0.1^((i-1) / (betaseqlength - 1)) - .1
     }
-    beta <- temp*beta/0.9
+    beta <- temp/0.9
     target.beta <- beta[1]
   
     ## Generate swapping sequence
@@ -855,12 +847,15 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
     ## Create parameters list to distribute across nodes
     params <- expand.grid(nsims = nsims,nloop = nloop,eprob = eprob,
                           ndists = ndists,lambda = lambda,popcons = popcons,
-                          beta = beta,target.beta = target.beta,constraint = constraint,
+                          beta = beta,target.beta = target.beta,
+                          constraint = paste(constraint, collapse = ","),
+                          constraintweights = paste(constraintweights, collapse = ","),
+                          compactness_metric = compactness_metric,
                           betaseqlength = betaseqlength,adjswaps = adjswaps,
                           nthin = nthin,freq = freq,maxiterrsg = maxiterrsg,
                           contiguitymap = contiguitymap,verbose = verbose,
                           loopscompleted = loopscompleted,rngseed = rngseed,
-                          savename = savename)
+                          savename = savename, stringsAsFactors = FALSE)
     
     ##################
     ## Spawn Slaves ##
@@ -894,6 +889,15 @@ redist.mcmc.mpi <- function(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
     
     ## Group population vector
     Rmpi::mpi.bcast.Robj2slave(grouppopvec)
+
+    ## Areas vector
+    Rmpi::mpi.bcast.Robj2slave(areasvec)
+
+    ## County memberhsip vector
+    Rmpi::mpi.bcast.Robj2slave(countymembership)
+
+    ## Border distance matrix
+    Rmpi::mpi.bcast.Robj2slave(borderlength_mat)
     
     ## Squared-distance matrix
     Rmpi::mpi.bcast.Robj2slave(ssdmat)

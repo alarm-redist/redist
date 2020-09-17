@@ -8,8 +8,11 @@ redist.mcmc.mpi(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
 loopscompleted = 0, nloop = 1, nthin = 1,
 eprob = 0.05,
 lambda = 0, popcons = NA, grouppopvec = NA,
-ssdmat = NA, rngseed = NA,
-beta = -10, constraint = "population",
+areasvec = NA, countymembership = NA,
+borderlength_mat = NA, ssdmat = NA,
+compactness_metric = "fryer-holden", rngseed = NA,
+constraint = NA, constraintweights = NA,
+betaseq = "powerlaw",
 betaseqlength = 10, adjswaps = TRUE,
 freq = 100, savename = NA, maxiterrsg = 5000,
 contiguitymap = "rooks", verbose = FALSE)
@@ -56,18 +59,34 @@ rejected. The default is \code{NULL}.}
 \item{grouppopvec}{A vector of populations for some sub-group of
 interest. The default is \code{NULL}.}
 
+\item{areasvec}{A vector of precinct areas for discrete Polsby-Popper.
+The default is \code{NULL}.}
+
+\item{countymembership}{A vector of county membership assignments. The default is \code{NULL}.}
+
+\item{borderlength_mat}{A matrix of border length distances, where
+the first two columns are the indices of precincts sharing a border and
+the third column is its distance. Default is \code{NULL}.}
+
 \item{ssdmat}{A matrix of squared distances between geographic
 units. The default is \code{NULL}.}
+
+\item{compactness_metric}{The compactness metric to use when constraining on
+compactness. Default is \code{fryer-holden}, the other implemented option
+is \code{polsby-popper}.}
 
 \item{rngseed}{Allows the user to set the seed for the
 simulations. Default is \code{NULL}.}
 
-\item{beta}{The strength of the target strength in the MH ratio. The default
-is 0.}
-
-\item{constraint}{Which constraint to apply. Accepts \code{compact},
+\item{constraint}{Which constraint to apply. Accepts any combination of \code{compact},
 \code{segregation}, \code{population}, \code{similarity}, or \code{none}
-(no constraint applied). The default is \code{none}.}
+(no constraint applied). The default is NULL.}
+
+\item{constraintweights}{The weights to apply to each constraint. Should be a vector
+the same length as constraint. Default is NULL.}
+
+\item{betaseq}{Sequence of beta values for tempering. The default is
+\code{powerlaw} (see Fifield et. al (2015) for details).}
 
 \item{betaseqlength}{Length of beta sequence desired for
 tempering. The default is \code{10}.}
