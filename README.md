@@ -1,7 +1,7 @@
 # redist: Simulation Methods for Legislative Redistricting
 
-<!-- badges: start --> [![Build
-Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist)
+<!-- badges: start --> 
+[![Build Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist)
 [![CRAN\_Status\_Badge](https://www.r-pkg.org/badges/version-last-release/redist)](https://cran.r-project.org/package=redist)
 ![CRAN downloads](http://cranlogs.r-pkg.org/badges/grand-total/redist)
 <!-- badges: end -->
