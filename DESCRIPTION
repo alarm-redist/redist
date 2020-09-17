@@ -19,7 +19,7 @@ Description: Enables researchers to sample redistricting plans from a pre-specif
     and plotting functionality are also included. The package implements methods
     described in Fifield, Higgins, Imai and Tarr (2020) <doi: 10.1080/10618600.2020.1739532>,
     Fifield, Imai, Kawahara, and Kenny (2020) <doi: 10.1080/2330443X.2020.1791773>,
-    and McCartan and Imai (2020) <https://imai.fas.harvard.edu/research/files/SMCredist.pdf>.
+    and McCartan and Imai (2020) <https://arxiv.org/pdf/2008.06131.pdf>.
 Depends:
     R (>= 3.5.0)
 Imports:
