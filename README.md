@@ -1,4 +1,4 @@
-#redist: Simulation Methods for Legislative Redistricting
+# redist: Simulation Methods for Legislative Redistricting
 
 <!-- badges: start --> [![Build
 Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist)
@@ -25,8 +25,6 @@ Simulation](https://www.tandfonline.com/doi/full/10.1080/2330443X.2020.1791773)
 
 [Sequential Monte Carlo for Sampling Balanced and Compact Redistricting
 Plans](https://arxiv.org/pdf/2008.06131.pdf)
-
-# pkgdown <img src=“man/figures/logo.png” align=“right” />
 
 ## Installation Instructions
 
