@@ -1,12 +1,22 @@
-# redist: Markov Chain Monte Carlo Methods for Redistricting Simulation [![Build Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist) [![CRAN_Status_Badge](https://www.r-pkg.org/badges/version-last-release/redist)](https://cran.r-project.org/package=redist) ![CRAN downloads](http://cranlogs.r-pkg.org/badges/grand-total/redist)
+# redist: Simulation Methods for Legislative Redistricting 
+[![Build Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist) [![CRAN_Status_Badge](https://www.r-pkg.org/badges/version-last-release/redist)](https://cran.r-project.org/package=redist) ![CRAN downloads](http://cranlogs.r-pkg.org/badges/grand-total/redist)
 
 Authors:
--   [Ben Fifield](https://www.benfifield.com), <bfifield@princeton.edu> (Maintainer)
+-   [Ben Fifield](https://www.benfifield.com), <benfifield@gmail.com> (Maintainer)
+-   [Christopher T Kenny](https://www.christophertkenny.com), <christopherkenny@fas.harvard.edu>
+-   Cory McCartan, <cmccartan@g.harvard.edu>
 -   Alex Tarr, <atarr@princeton.edu>
 -   [Michael Higgins](http://www-personal.k-state.edu/~mikehiggins/), <mjh5@princeton.edu>
+-   Jun Kawahara, <jkawahara@i.kyoto-u.ac.jp>
 -   [Kosuke Imai](https://imai.princeton.edu), <kimai@princeton.edu>
 
-Paper: [A New Automated Redistricting Simulator Using Markov Chain Monte Carlo](http://imai.princeton.edu/research/files/redist.pdf)
+This package implements methods from the following papers:
+
+[Automated Redistricting Simulation Using Markov Chain Monte Carlo](https://imai.fas.harvard.edu/research/redist.html)
+
+[The Essential Role of Empirical Validation in Legislative Redistricting Simulation](https://www.tandfonline.com/doi/full/10.1080/2330443X.2020.1791773)
+
+[Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans](https://arxiv.org/pdf/2008.06131.pdf)
 
 Installation Instructions
 -------------------------
