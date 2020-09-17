@@ -1,25 +1,32 @@
-# redist: Simulation Methods for Legislative Redistricting 
-[![Build Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist) [![CRAN_Status_Badge](https://www.r-pkg.org/badges/version-last-release/redist)](https://cran.r-project.org/package=redist) ![CRAN downloads](http://cranlogs.r-pkg.org/badges/grand-total/redist)
-
+\#redist: Simulation Methods for Legislative Redistricting  
+[![Build
+Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist)
+[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/redist)](https://cran.r-project.org/package=redist)
 Authors:
--   [Ben Fifield](https://www.benfifield.com), <benfifield@gmail.com> (Maintainer)
--   [Christopher T Kenny](https://www.christophertkenny.com), <christopherkenny@fas.harvard.edu>
--   Cory McCartan, <cmccartan@g.harvard.edu>
--   Alex Tarr, <atarr@princeton.edu>
--   [Michael Higgins](http://www-personal.k-state.edu/~mikehiggins/), <mjh5@princeton.edu>
--   Jun Kawahara, <jkawahara@i.kyoto-u.ac.jp>
--   [Kosuke Imai](https://imai.princeton.edu), <kimai@princeton.edu>
+
+Authors: - [Ben Fifield](https://www.benfifield.com),
+<benfifield@gmail.com> (Maintainer) - [Christopher T
+Kenny](https://www.christophertkenny.com),
+<christopherkenny@fas.harvard.edu> - Cory McCartan,
+<cmccartan@g.harvard.edu> - Alex Tarr, <atarr@princeton.edu> - [Michael
+Higgins](http://www-personal.k-state.edu/~mikehiggins/),
+<mjh5@princeton.edu> - Jun Kawahara, <jkawahara@i.kyoto-u.ac.jp> -
+[Kosuke Imai](https://imai.princeton.edu), <kimai@princeton.edu>
 
 This package implements methods from the following papers:
 
-[Automated Redistricting Simulation Using Markov Chain Monte Carlo](https://imai.fas.harvard.edu/research/redist.html)
+[Automated Redistricting Simulation Using Markov Chain Monte
+Carlo](https://imai.fas.harvard.edu/research/redist.html)
 
-[The Essential Role of Empirical Validation in Legislative Redistricting Simulation](https://www.tandfonline.com/doi/full/10.1080/2330443X.2020.1791773)
+[The Essential Role of Empirical Validation in Legislative Redistricting
+Simulation](https://www.tandfonline.com/doi/full/10.1080/2330443X.2020.1791773)
 
-[Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans](https://arxiv.org/pdf/2008.06131.pdf)
+[Sequential Monte Carlo for Sampling Balanced and Compact Redistricting
+Plans](https://arxiv.org/pdf/2008.06131.pdf)
 
-Installation Instructions
--------------------------
+# pkgdown \<img src=“man/figures/logo.png” align=“right” /\>
+
+## Installation Instructions
 
 `redist` is available on CRAN and can be installed using:
 
@@ -27,24 +34,25 @@ Installation Instructions
 install.packages("redist")
 ```
 
-You can also install the most recent development version of `redist` using the `devtools` package. First you have to install `devtools` using the following code. Note that you only have to do this once:
+You can also install the most recent development version of `redist`
+using the `devtools` package. First you have to install `devtools` using
+the following code. Note that you only have to do this once:
 
 ``` r
 if(!require(devtools)) install.packages("devtools")
 ```
 
-Then, load `devtools` and use the function `install_github()` to install `redist`:
+Then, load `devtools` and use the function `install_github()` to install
+`redist`:
 
 ``` r
 library(devtools)
 install_github("kosukeimai/redist",dependencies=TRUE)
 ```
 
-Usage Examples - 25 Precincts into 3 Districts
-==============================================
+# Usage Examples - 25 Precincts into 3 Districts
 
-No Population Constraint
-------------------------
+## No Population Constraint
 
 ``` r
 ## Load data
@@ -58,8 +66,7 @@ mcmc.out <- redist.mcmc(adjobj = algdat.pfull$adjlist,
                         ndists = 3)
 ```
 
-20% Population Constraint
--------------------------
+## 20% Population Constraint
 
 ``` r
 ## Load data
@@ -107,8 +114,7 @@ mcmc.out.st <- redist.mcmc(adjobj = algdat.p20$adjlist,
 mcmc.out.st <- redist.ipw(mcmc.out.st, targetpop = .2)
 ```
 
-20% Population Constraint and Compactness Constraint
-----------------------------------------------------
+## 20% Population Constraint and Compactness Constraint
 
 ``` r
 ## ----------------------------------------------------------
@@ -128,8 +134,7 @@ mcmc.out.st.multiple <- redist.mcmc(adjobj = algdat.p20$adjlist,
 mcmc.out.st <- redist.ipw(mcmc.out.st.multiple, targetpop = .2)
 ```
 
-20% Population Constraint and Compactness Constraint, using MPI
----------------------------------------------------------------
+## 20% Population Constraint and Compactness Constraint, using MPI
 
 ``` r
 ## ----------------------------------------------------------
@@ -190,8 +195,7 @@ echo -e '\n\n'
 mpiexec -np 1 R --no-save < [scriptname here].R
 ```
 
-20% Population Constraint and Compactness Constraint, using Annealing
----------------------------------------------------------------------
+## 20% Population Constraint and Compactness Constraint, using Annealing
 
 ``` r
 ## ----------------------------------------------------------
