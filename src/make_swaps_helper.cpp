@@ -4,7 +4,7 @@
 // Date Created: 2014/12/26
 // Date Last Modified: 2015/02/26
 // Purpose: Contains functions to run make_swaps function in sw_mh_helper.cpp
-/////////////////////////////////////////////// 
+///////////////////////////////////////////////
 
 // Header files
 #include <RcppArmadillo.h>
@@ -19,7 +19,7 @@ List adjcheck_propcd(List aList,
 		     NumericVector prop_partitions,
 		     NumericVector accepted_partitions,
 		     NumericVector cds)
-{  
+{
   /* Inputs to function:
      aList: Full adjacency list
 
@@ -27,20 +27,20 @@ List adjcheck_propcd(List aList,
 
      accepted_partitions: Vector of district ID's that have been acccepted
 
-     cds: Vector of cd assignments - has to be cds_prop to 
+     cds: Vector of cd assignments - has to be cds_prop to
      avoid complications with not recognizing splitting, elimination
    */
-  
+
   // Initialize adjacency check value
   int adj_check = 0;
 
   // Initialize vector of proposed congressional cds
   NumericVector prop_cds;
-  
+
   // Get current cd of the proposed partition
   int current_cd = cds(prop_partitions(0));
 
-  /* Loop over units in prop_partitions, test to see if any are adjacent to 
+  /* Loop over units in prop_partitions, test to see if any are adjacent to
      any units in accepted_partitions */
   for(int i = 0; i < prop_partitions.size(); i++){
 
@@ -53,9 +53,9 @@ List adjcheck_propcd(List aList,
       // See if element j of adj_units is in accepted_partitions
       bool test_adj = is_true(any(accepted_partitions == adj_units(j)));
 
-      /* If true, iterate adj_check to 1 and break the loop to throw out 
+      /* If true, iterate adj_check to 1 and break the loop to throw out
 	 the partition */
-      if(test_adj == TRUE){
+      if(test_adj == true){
 	adj_check++;
 	break;
       }
@@ -67,7 +67,7 @@ List adjcheck_propcd(List aList,
       bool new_cd = is_true(any(prop_cds == cds(adj_units(j))));
 
       // If both conditions are false, add to prop_cds
-      if((same_cd == FALSE) && (new_cd == FALSE)){
+      if((same_cd == false) && (new_cd == false)){
 	prop_cds.push_back(cds(adj_units(j)));
       }
 
@@ -97,10 +97,10 @@ int elim_check(NumericVector prop_partition,
   /* Inputs to function:
      prop_partition: Proposed partition
 
-     cds: Vector of congressional districts - 
+     cds: Vector of congressional districts -
      using accepted partitions
-   */ 
-  
+   */
+
   // Indicator for elimimation
   int elimcheck = 0;
 
@@ -122,30 +122,30 @@ int elim_check(NumericVector prop_partition,
 
 // Function to generate adjacency graph and count clusters
 // [[Rcpp::export]]
-int countpartitions(List aList) 
-{   
+int countpartitions(List aList)
+{
 
   //Takes an adjacency list,
   //The vector of subset nodes
   //The number of subset nodes
-						
-  //initialize connCompVec   
+
+  //initialize connCompVec
   //Initialize visited indices
   IntegerVector visitedInd(aList.size());
   int indexVisit = 0;
-  
+
   //Initialize connected components
   IntegerVector currConnComp(aList.size());
 
   //Initialize the number of connected components
   int numConnComp = 0;
-  
+
   //Loop over nodes
   for(int i = 0; i < aList.size(); i++){
-    
+
     //If i has not been visited...
     if(visitedInd[i] == 0){
-      
+
       //List i as visited
       visitedInd[i] = 1;
 
@@ -154,26 +154,26 @@ int countpartitions(List aList)
 
       //Add i to the connected component list
       currConnComp[indexVisit] = i;
-      
+
       //increase index visit
       indexVisit++;
-      
+
       //Count the number of nodes in the current connected component
       int nodeCount = indexVisit - 1;
-      
+
       //Initialize a stopping variable:
       int toStop = 0;
 
       //While we don't stop
       while(toStop == 0){
-	
+
 	//get the neighbors of the next current comp
 	IntegerVector listNeighs = aList[currConnComp[nodeCount]];
-	
+
 	//If listNeighs does not have length zero...
 	int listLength = listNeighs.size();
 	if(listLength > 0){
-	  
+
 	  //Add nodes of listLength to currConnComp
 	  //and mark nodes as visited
 	  for(int j = 0; j < listLength; j++){
@@ -186,7 +186,7 @@ int countpartitions(List aList)
 	    }
 	  }
 	}
-	
+
 	//Increment nodeCount
 	nodeCount++;
 
@@ -201,14 +201,14 @@ int countpartitions(List aList)
       }
     }
   }
-  
+
   return numConnComp;
-  
+
 }
 
 // Function to update district populations
 NumericVector update_distpop(NumericVector prop_partition,
-			     NumericVector unitpop_vec, 
+			     NumericVector unitpop_vec,
 			     int prop_cd,
 			     int curr_cd,
 			     NumericVector distpop_vec)
@@ -228,7 +228,7 @@ NumericVector update_distpop(NumericVector prop_partition,
 
   // Clone distpop_vec
   NumericVector distpop_vec_clone = clone(distpop_vec);
-  
+
   // Current population, proposed district population
   int currpop = distpop_vec_clone(curr_cd);
   int proppop = distpop_vec_clone(prop_cd);
@@ -250,9 +250,9 @@ NumericVector update_distpop(NumericVector prop_partition,
 // Function to update the metropolis-hastings probability for a swap
 double update_mhprob(NumericVector prop_partition,
 		     List aList,
-		     arma::vec cds,		     
+		     arma::vec cds,
 		     int prop_cd,
-		     double eprob, 
+		     double eprob,
 		     double mh_prob)
 {
 
@@ -273,7 +273,7 @@ double update_mhprob(NumericVector prop_partition,
   // Initialize c1, c2
   int c1 = 0;
   int c2 = 0;
-	
+
   // Loop through prop_partition
   for(int i = 0; i < prop_partition.size(); i++){
 
@@ -289,11 +289,11 @@ double update_mhprob(NumericVector prop_partition,
 	c1++;
       }
 
-      /* Calculate C(V_0, V_l \ V_0) - add 1 if you are adjacent to the 
+      /* Calculate C(V_0, V_l \ V_0) - add 1 if you are adjacent to the
 	 proposed switch, if your cd assignment is the same as the old cong
 	 district, and you are not in the switch partition */
       if((cds(adj_vec(j)) == cds(prop_partition(0))) &&
-	 (is_true(any(prop_partition == adj_vec(j))) == FALSE)){
+	 (is_true(any(prop_partition == adj_vec(j))) == false)){
 	c2++;
       }
 
@@ -331,7 +331,7 @@ NumericMatrix calcPWDh (NumericMatrix x)
       out(arow, acol) = q1 * asin(sqrt(q2 + q4 * q3)) ;
     }
   }
-  
+
   return out;
 
 }
@@ -355,7 +355,7 @@ NumericVector diff_origcds(NumericMatrix mat,
   // Initialize objects
   unsigned int i; unsigned int j; unsigned int k = mat.ncol(); arma::vec plan;
   arma::uvec compare; NumericVector store_compare(k);
-  
+
   // Start loop over mat columns
   for(i = 0; i < k; i++){
 
@@ -367,7 +367,7 @@ NumericVector diff_origcds(NumericMatrix mat,
 
     // Sum up and divide by len_cds
     store_compare(i) = (double)sum(compare) / len_cds;
-      
+
   }
 
   return store_compare;

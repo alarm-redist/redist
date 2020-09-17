@@ -1,7 +1,13 @@
 *.so
 *.o
 *.rds
+*.tmp
 /redist/R/RcppExports.R
 /redist/src/RcppExports.cpp
 .DS_Store
 .Rhistory
+inst/doc
+doc
+Meta
+docs
+.Rproj.user

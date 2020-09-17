@@ -22,7 +22,7 @@ NumericVector init_pop(NumericVector popvec,
      cds: Vector of congressional district populations
 
      popvec: Vector of populations
-   */ 
+  */ 
 
   // Get number of cds
   int ncds = cds.max() + 1;
@@ -53,93 +53,6 @@ NumericVector init_pop(NumericVector popvec,
   }
 
   return distpop;
-
-}
-
-/* Function to modify adjacency list to reflect adjacency only within
-   a particular congressional district */
-// [[Rcpp::export]]
-List genAlConn(List aList,
-	       NumericVector cds)
-{
-
-  /* Inputs to function:
-     aList: adjacency list of geographic units
-
-     cds: vector of congressional district assignments
-   */
-  
-  // Initialize container list
-  List alConnected(cds.size());
-
-  // Initialize
-  int i; NumericVector avec; int cd_i; int j;
-
-  // Loop through precincts
-  for(i = 0; i < cds.size(); i++){
-
-    // For precinct i, get adjacent precincts
-    avec = aList(i);
-    
-    // Get precinct i's congressional district
-    cd_i = cds(i);
-
-    // Initialize empty vector
-    NumericVector avec_cd;
-
-    // Loop through avec to identify which are in same cd
-    for(j = 0; j < avec.size(); j++){
-      
-      // Check if j'th entry in avec is same cd, add to avec_cd if so
-      if(cds(avec(j)) == cd_i){
-	avec_cd.push_back(avec(j));
-      }
-
-    }
-
-    // Add to alConnected list
-    alConnected(i) = avec_cd;
-
-  }
-
-  return alConnected;
-
-}
-
-/* Function to identify which precincts lie on the boundary of a congressional
-   district */
-// [[Rcpp::export]]
-NumericVector findBoundary(List fullList,
-			   List conList)
-{
-
-  /* Inputs to function:
-     fullList: Full adjacency list of geographic units
-
-     conList: Adjacency list of geographic units within cong district
-   */
-
-  // Initialize container vector of 0's (not boundary) and 1's (boundary)
-  NumericVector isBoundary(fullList.size());
-
-  // Initialize inside loop
-  NumericVector full; NumericVector conn; int i;
-
-  // Loop through aList
-  for(i = 0; i < fullList.size(); i++){
-
-    // Get vectors of full and cd-connected components for precinct i
-    full = fullList(i);
-    conn = conList(i);
-
-    // Compare lengths - if conn < full, then boundary unit
-    if(full.size() > conn.size()){
-      isBoundary(i) = 1;
-    }
-    
-  }
-
-  return isBoundary;
 
 }
 
@@ -189,10 +102,10 @@ List cut_edges(List aList_con,
      aList_con: adjacency list within cong district
 
      eprob: edgecut probability (transformed into 1-eprob in function)
-   */
+  */
 
   // Create threshold
-  double threshold_prob = 1 - eprob;
+  double threshold_prob = 1.0 - eprob;
 
   // Define lists to store cut-edge and uncut-edge vectors
   List aList_uncut(aList_con.size());
@@ -200,7 +113,7 @@ List cut_edges(List aList_con,
 
   // Initialize inside loop
   int i; NumericVector cc_vec_i_all; NumericVector cc_vec_i;
-  arma::vec draws;
+  arma::vec draws; 
 
   // Define list to store output of both lists
 
@@ -265,7 +178,7 @@ List bsearch_boundary(List aList,
      aList: adjacency list
 
      boundary: vector of boundary element indicators (as arma)
-   */
+  */
 
   // Get indices of boundary units
   arma::uvec boundary_indices = find(boundary == 1);
@@ -455,7 +368,7 @@ int draw_p(int lambda)
 
   /* Inputs to function:
      lambda: lambda parameter
-   */
+  */
 
   int p;
   if(lambda > 0){
@@ -480,16 +393,22 @@ List make_swaps(List boundary_cc,
 		NumericVector pop_vec, 
 		NumericVector cd_pop_vec,
 		NumericVector group_pop_vec,
+		NumericVector areas_vec,
+		arma::mat borderlength_mat,
 		NumericMatrix ssdmat,
+		NumericVector county_membership,
 		double minparity,
 		double maxparity, 
 		int p, 
 		double eprob,
-		double beta_population,
-		double beta_compact,
-		double beta_segregation,
-		double beta_similar,
-		double ssd_denominator)
+		double beta,
+		double weight_population,
+		double weight_compact,
+		double weight_segregation,
+		double weight_similar,
+		double weight_countysplit,
+		double ssd_denominator,
+		std::string compactness_measure)
 {
 
   /* Inputs to function:
@@ -525,7 +444,7 @@ List make_swaps(List boundary_cc,
 
      ssd_denominator: normalizing constant for sum of squared distance psi
 
-   */
+  */
   
   // Initialize objects for swap //
   NumericVector cds_prop = clone(cds_old);
@@ -536,6 +455,17 @@ List make_swaps(List boundary_cc,
 
   // Initialize metropolis-hastings probabilities
   double mh_prob = 1.0;
+
+  double pop_new_psi = 0.0;
+  double pop_old_psi = 0.0;
+  double compact_new_psi = 0.0;
+  double compact_old_psi = 0.0;
+  double segregation_new_psi = 0.0;
+  double segregation_old_psi = 0.0;
+  double similar_new_psi = 0.0;
+  double similar_old_psi = 0.0;
+  double countysplit_new_psi = 0.0;
+  double countysplit_old_psi = 0.0;
 
   // Number of unique congressional districts
   int ndists = max(cds_old) + 1;
@@ -687,45 +617,46 @@ List make_swaps(List boundary_cc,
 			    mh_prob);
     
     // Calculate beta constraints
-    double population_constraint = 1.0;
-    if(beta_population != 0.0){
-      population_constraint = as<double>(calc_betapop(cds_prop,
-						      cds_test,
-						      pop_vec,
-						      beta_population,
-						      cd_pair)["pop_ratio"]);
+    List population_constraint;
+    List compact_constraint;
+    List segregation_constraint;
+    List similar_constraint;
+    if(weight_population != 0.0){
+
+      population_constraint = calc_psipop(cds_prop, cds_test, pop_vec, cd_pair);
+
+      pop_new_psi += as<double>(population_constraint["pop_new_psi"]);
+      pop_old_psi += as<double>(population_constraint["pop_old_psi"]);
+      
     }
-    double compact_constraint = 1.0;
-    if(beta_compact != 0.0){
-      compact_constraint = as<double>(calc_betacompact(cds_prop,
-						       cds_test,
-						       pop_vec,
-						       beta_compact,
-						       cd_pair,
-						       ssdmat,
-						       ssd_denominator)["compact_ratio"]);
+    if(weight_compact != 0.0){
+      
+      compact_constraint = calc_psicompact(cds_prop, cds_test,
+					   cd_pair, compactness_measure,
+					   aList, areas_vec,
+					   borderlength_mat, true,
+					   pop_vec, ssdmat, ssd_denominator);
+
+      compact_new_psi += as<double>(compact_constraint["compact_new_psi"]);
+      compact_old_psi += as<double>(compact_constraint["compact_old_psi"]);
+      
     }
-    double segregation_constraint = 1.0;
-    if(beta_segregation != 0.0){
-      segregation_constraint = as<double>(calc_betasegregation(cds_prop,
-							       cds_test,
-							       pop_vec,
-							       beta_segregation,
-							       cd_pair,
-							       group_pop_vec)["segregation_ratio"]);
+    if(weight_segregation != 0.0){
+      
+      segregation_constraint = calc_psisegregation(cds_prop, cds_test, pop_vec, cd_pair, group_pop_vec);
+
+      segregation_new_psi += as<double>(segregation_constraint["segregation_new_psi"]);
+      segregation_old_psi += as<double>(segregation_constraint["segregation_new_psi"]);
+      
     }
-    double similar_constraint = 1.0;
-    if(beta_similar != 0.0){
-      similar_constraint = as<double>(calc_betasimilar(cds_prop,
-						       cds_test,
-						       cds_orig,
-						       beta_similar,
-						       cd_pair)["similar_ratio"]);
+    if(weight_similar != 0.0){
+      
+      similar_constraint = calc_psisimilar(cds_prop, cds_test, cds_orig, cd_pair);
+
+      similar_new_psi += as<double>(similar_constraint["similar_new_psi"]);
+      similar_old_psi += as<double>(similar_constraint["similar_old_psi"]);
+      
     }
-    
-    // Multiply mh_prob by constraint values
-    mh_prob = (double)mh_prob * population_constraint * compact_constraint *
-      segregation_constraint * similar_constraint;
     
     // Update cd assignments and cd populations
     cds_prop = cds_test;
@@ -742,6 +673,25 @@ List make_swaps(List boundary_cc,
     }
     
   }
+
+  // County split metric
+  if(weight_countysplit != 0.0){
+
+    List countysplit_constraint = calc_psicounty(cds_old, cds_prop, as<arma::vec>(county_membership), as<arma::vec>(pop_vec));
+
+    countysplit_new_psi += as<double>(countysplit_constraint["countysplit_new_psi"]);
+    countysplit_old_psi += as<double>(countysplit_constraint["countysplit_old_psi"]);
+    
+  }
+
+  // Multiply mh_prob by constraint values
+  double energy_new = weight_population * pop_new_psi + weight_compact * compact_new_psi
+    + weight_segregation * segregation_new_psi + weight_similar * similar_new_psi
+    + weight_countysplit * countysplit_new_psi;
+  double energy_old = weight_population * pop_old_psi + weight_compact * compact_old_psi
+    + weight_segregation * segregation_old_psi + weight_similar * similar_old_psi
+    + weight_countysplit * countysplit_old_psi;
+  mh_prob = (double)mh_prob * exp(-1.0 * beta * (energy_new - energy_old));
   
   // Create returned list
   List out;
@@ -749,6 +699,28 @@ List make_swaps(List boundary_cc,
   out["mh_prob"] = mh_prob;
   out["updated_cd_pops"] = cdspop_prop;
   out["goodprop"] = goodprop;
+  out["energy_new"] = energy_new;
+  out["energy_old"] = energy_old;
+  if(weight_population != 0.0){
+    out["pop_new_psi"] = pop_new_psi;
+    out["pop_old_psi"] = pop_old_psi;
+  }
+  if(weight_compact != 0.0){
+    out["compact_new_psi"] = compact_new_psi;
+    out["compact_old_psi"] = compact_old_psi;
+  }
+  if(weight_segregation != 0.0){
+    out["segregation_new_psi"] = segregation_new_psi;
+    out["segregation_old_psi"] = segregation_old_psi;
+  }
+  if(weight_similar != 0.0){
+    out["similar_new_psi"] = similar_new_psi;
+    out["similar_old_psi"] = similar_old_psi;
+  }
+  if(weight_countysplit != 0.0){
+    out["countysplit_new_psi"] = countysplit_new_psi;
+    out["countysplit_old_psi"] = countysplit_old_psi;
+  }
   
   return out;
   
@@ -803,7 +775,7 @@ List changeBeta(arma::vec betavec,
      weights: priors on the betas
 
      adjswap: flag - do we want adjacent swaps? default to 1
-   */
+  */
   
   // Find beta in betavec
   arma::uvec findBetaVec = find(betavec == beta);
@@ -872,7 +844,7 @@ List changeBeta(arma::vec betavec,
   }
 
   // Accept or reject the proposal
-  double mhprobGT = (double)exp(constraint * (propBeta - beta)) * wj / wi * qji / qij;
+  double mhprobGT = (double)exp(-1 * constraint * (propBeta - beta)) * wj / wi * qji / qij;
   if(mhprobGT > 1){
     mhprobGT = 1;
   }

@@ -6,7 +6,7 @@
 \usage{
 redist.findparams(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
 adapt_lambda = FALSE, adapt_eprob = FALSE,
-params, ssdmat = NULL, grouppopvec = NULL,
+params, ssdmat = NULL, grouppopvec = NULL, countymembership = NULL,
 nstartval_store, maxdist_startval,
 maxiterrsg = 5000, report_all = TRUE,
 parallel = FALSE, nthreads = NULL, log = FALSE, verbose = TRUE)
@@ -43,6 +43,8 @@ units. The default is \code{NULL}.}
 
 \item{grouppopvec}{A vector of populations for some sub-group of
 interest. The default is \code{NULL}.}
+
+\item{countymembership}{A vector of county membership assignments. The default is \code{NULL}.}
 
 \item{nstartval_store}{The number of maps to sample from the preprocessing chain
 for use as starting values in future simulations. Default is 1.}

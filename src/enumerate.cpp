@@ -4,14 +4,14 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-class connCompVec{ 
+class connCompVec{
   private:
   //Stores the connected components as an integer vector... same integers designate the same connected componentss
     IntegerVector myConnComp;
 
   //Stores the number of connected components
     int numConnComp;
-  
+
   //Stores the lengths of the connected components
     IntegerVector compLengths;
 
@@ -22,17 +22,17 @@ class connCompVec{
       numConnComp = 0;
       compLengths = IntegerVector(numNodes);
     }
-  
+
   //Add a connected component
   void addConnComp(IntegerVector newConnComp){
     int lenConnComp = newConnComp.size();
-    
+
     //Add the new component length
     compLengths[numConnComp] = lenConnComp;
 
     //Increase the number of connected components
     numConnComp++;
-    
+
     //Add in the new connected component to the connected component vector
     for(int i = 0; i < lenConnComp; i++){
       myConnComp[newConnComp[i]-1] = numConnComp;
@@ -43,12 +43,12 @@ class connCompVec{
   IntegerVector getConnComps(){
     return myConnComp;
   }
-  
+
   //Return compnent lengths
   IntegerVector getCompLengths(){
     return compLengths;
   }
-  
+
   //Return number of connected components
   int getNumComps(){
     return numConnComp;
@@ -60,7 +60,7 @@ LogicalVector isIn(IntegerVector vec1, IntegerVector vec2){
   return !is_na(match(vec1,vec2));
 }
 
-//Mimics ! %in% 
+//Mimics ! %in%
 bool notIn(int int1, IntegerVector vec2){
   bool notIn = true;
   for(int i = 0; i < vec2.size(); i++){
@@ -72,7 +72,7 @@ bool notIn(int int1, IntegerVector vec2){
   return notIn;
 }
 
-//Mimics ! %in% 
+//Mimics ! %in%
 LogicalVector notIn(IntegerVector vec1, IntegerVector vec2){
   return is_na(match(vec1,vec2));
 }
@@ -84,12 +84,12 @@ IntegerVector getIsIn(IntegerVector vec1, IntegerVector vec2){
   IntegerVector matches = match(vec1,vec2);
   int n_out = n - sum(is_na(matches));
   IntegerVector output(n_out);
-  
+
   for(int i = 0,j = 0;i < n; i ++){
     if(matches[i] != NA_INTEGER){
       output[j++] = vec1[i];
     }
-  }		
+  }
   return output;
 }
 
@@ -98,13 +98,13 @@ IntegerVector getNotIn(IntegerVector vec1, IntegerVector vec2){
   IntegerVector matches = match(vec1,vec2);
   int n_out = sum(is_na(matches)) ;
   IntegerVector output(n_out);
-		
+
   for(int i = 0,j = 0;i < vec1.size(); i ++){
     if(matches[i] == NA_INTEGER){
       output[j++] = vec1[i];
     }
-  }	
-  return output;		
+  }
+  return output;
 }
 
 //For printing and debugging
@@ -135,36 +135,36 @@ connCompVec findSubsetConnComp(List adjList, IntegerVector subsetNodes, int numS
   //Takes an adjacency list,
   //The vector of subset nodes
   //The number of subset nodes
-						
+
   //initialize connCompVec
   connCompVec storeConnComp(numSubsetNodes);
-   
+
   //Initialize visited indices
   IntegerVector visitedInd(numSubsetNodes);
   int indexVisit = 0;
-  
+
   //Initialize connected components
   IntegerVector currConnComp(numSubsetNodes);
   int indexCurrConnComp = 0;
-  
+
   //Add in first index if applicable.
   if(numSubsetNodes >= 1){
     visitedInd[0] = subsetNodes[0];
     currConnComp[0] = subsetNodes[0];
   }
-  
-  
+
+
   //While there are unassigned connected components:
   while(indexVisit <= numSubsetNodes - 1){
-    
+
     //If visitedInd[numVisit] = 0,
     //Then no paths go from a discovered connected component to the
     //  current vertex  visited vertex numVisit.
     //Also, if we are at the last visited index, no reason to consider branches.
     //Otherwise, we branch from the current.
-    
+
     if(visitedInd[indexVisit] != 0 && indexVisit != numSubsetNodes - 1){
-      
+
       //find all vertices adjacent to visitedInd[indexVisit] in the complement that
       //have not been visited yet
       IntegerVector newAdjNodes = getIsIn(adjList[visitedInd[indexVisit]-1],getNotIn(subsetNodes,visitedInd));
@@ -174,7 +174,7 @@ connCompVec findSubsetConnComp(List adjList, IntegerVector subsetNodes, int numS
       int numNew = newAdjNodes.size();
       int minVisit = 0;
       if(numNew > 0){
-	minVisit = which_min(visitedInd); 
+	minVisit = which_min(visitedInd);
       }
 
       //Append
@@ -186,7 +186,7 @@ connCompVec findSubsetConnComp(List adjList, IntegerVector subsetNodes, int numS
       //Update connected component size
       indexCurrConnComp = indexCurrConnComp + numNew;
       indexVisit++;
-      
+
     }
     else{
 
@@ -194,17 +194,17 @@ connCompVec findSubsetConnComp(List adjList, IntegerVector subsetNodes, int numS
       //The match function ensures that the connected component indices corresponds to numbers between
       //1 and numSubsetNodes
       storeConnComp.addConnComp(match(currConnComp[seq(0,indexCurrConnComp)],subsetNodes));
-      
+
       //If we need to create a new connected component...
-      //if(indexVisit < numSubsetNodes - 1 || 
+      //if(indexVisit < numSubsetNodes - 1 ||
       if(visitedInd[indexVisit] == 0){
-	
+
 	//Create a new visited node
 	//and a new connected component
-	
+
 	//Finds the first subsetNode that does not correspond to a visited index
 	visitedInd[indexVisit] = getNotIn(subsetNodes,visitedInd)[0];
-	
+
 	//Create new connected component
 	currConnComp[0] = visitedInd[indexVisit];
 
@@ -213,13 +213,13 @@ connCompVec findSubsetConnComp(List adjList, IntegerVector subsetNodes, int numS
 
       }
       else{
-	//If not, we need to terminate the algorithm by increasing indexVisit... 
+	//If not, we need to terminate the algorithm by increasing indexVisit...
 	indexVisit++;
       }
     }
   }
-  
-  return storeConnComp;	
+
+  return storeConnComp;
 }
 
 connCompVec findComplementConnComp(List adjList, IntegerVector compNodes){
@@ -243,17 +243,17 @@ bool is2con(List adjList){
     //Get connected components of vector complement of vec1
     connCompVec myConnComp = findComplementConnComp(adjList,vec1);
 
-    //If the complement connected component has more than one element, 
+    //If the complement connected component has more than one element,
     //set is2con = false and break loop.
     if(myConnComp.getNumComps() > 1){
       is2con = false;
       break;
     }
   }
-  
+
   //Return
   return is2con;
-} 
+}
 
 // IntegerMatrix uniqueRows(IntegerMatrix intMat){
 
@@ -268,7 +268,7 @@ bool is2con(List adjList){
 
 //   //Stores the index of the current row
 //   int j = 1;
-  
+
 //   //Tests uniqueness:
 //   bool isUniq = true;
 
@@ -309,7 +309,7 @@ bool notInList(IntegerVector intVec, List myList){
   //Store length of intVec and size of myList
   int lenIntVec = intVec.size();
   int lenMyList = myList.size();
-  
+
   //Tests uniqueness:
   bool isUniq = true;
 
@@ -322,10 +322,10 @@ bool notInList(IntegerVector intVec, List myList){
 
     //If the component is of the right size...
     if(tempIntVec.size() == lenIntVec){
-      
+
       //Examine each entry of intVec
       for(int j = 0; j < lenIntVec; j++){
-	
+
 	//If we have inequality, stop this check
 	if(intVec[j] != tempIntVec[j]){
 	  break;
@@ -334,8 +334,8 @@ bool notInList(IntegerVector intVec, List myList){
 	//If we have perfect equality, then this row is not unique
 	if(j == lenIntVec - 1){
 	  isUniq = false;
-	}	
-      } 
+	}
+      }
     }
     //If not unique, break
     if(!isUniq){
@@ -346,11 +346,11 @@ bool notInList(IntegerVector intVec, List myList){
   return isUniq;
 }
 
-class spanTree{ 
+class spanTree{
   private:
   //Stores adjacency list
     List spanAdjList;
-  
+
   //Stores list of invalid nodes for building the spanning tree
     List invalidNodes;
 
@@ -362,17 +362,17 @@ class spanTree{
 
   //Stores the population size for each node
     NumericVector myPopSizes;
-    
+
   //Stores the current spanning tree
     List mySpanTree;
-  
+
   //Stores the length of the adjacency list
     int adjListLength;
-  
+
   //Stores the current depth of the spanning tree
     int currDepth;
-  
-  //Stores the count of the component in the spanning tree       
+
+  //Stores the count of the component in the spanning tree
     int countCurrSpan;
 
   //Stores connected components: one for each row of the spanning tree
@@ -380,7 +380,7 @@ class spanTree{
 
   //Stores complement connnected component lengths: one for each row of the spanning tree
     List compConnCompLengths;
-  
+
   //Stores population sums for each connnected component: one for each row of the spanning tree
     List connCompPopSums;
 
@@ -389,7 +389,7 @@ class spanTree{
 
   //Stores 2-connectedness
     bool is2conB;
-  
+
   //MIKE: Changing spanTree!
   //      Changing connComps
   //      Changing compConnCompLengths
@@ -397,7 +397,7 @@ class spanTree{
   //      Changing numConnComps to need push.back, push.forward
   public:
   spanTree(List adjList, NumericVector popSizes){
-     
+
       //Get length of adjacency list
       adjListLength = adjList.size();
 
@@ -414,15 +414,15 @@ class spanTree{
       numConnComps = IntegerVector();
       is2conB = is2con(adjList);
     }
-  
+
   //Grow a spanning tree
-  void growSpanTree(){    
+  void growSpanTree(){
 
     //Store old value of countcurrSpan and
     //Reset countCurrSpan
     int oldCountCurrSpan = countCurrSpan;
     countCurrSpan = 0;
-    
+
     //If we have yet to grow:
     if(currDepth == 0){
 
@@ -435,11 +435,11 @@ class spanTree{
       invalidNodes.push_back(tempInt2);
       exhaustedNodes.push_back(tempInt2);
       countCurrSpan++;
-      
+
     }
     else{
       // Rcpp::Rcout << "def a raizin: " << oldCountCurrSpan << "\n";
-      
+
       // for(int k = 0; k < mySpanTree.size(); k++){
       // 	printIntegerVector(mySpanTree(k));
       // 	printIntegerVector(invalidNodes(k));
@@ -449,7 +449,7 @@ class spanTree{
 
       // Rcpp::Rcout << "raizin\n";
       for(int i = 0; i < oldCountCurrSpan; i++){
-	
+
 	//New idea, push new nodes to the back of the spanning tree, and erase once
 	//to remove old nodes
 
@@ -460,13 +460,13 @@ class spanTree{
 	//Initialize whether current branch of the spanning tree has any adjacent unexplored nodes
 	//int q = 0;
 
-	//Obtain an entry of the spanning tree. 
+	//Obtain an entry of the spanning tree.
 	IntegerVector rowSpan = mySpanTree(i);
 
-	//Obtain invalid nodes and exhausted nodes: 
+	//Obtain invalid nodes and exhausted nodes:
 	IntegerVector invNod = invalidNodes(i);
 	IntegerVector exhNod = exhaustedNodes(i);
-	
+
 	// if(rowSpan.size() == 5){
 	//   Rcpp::Rcout << "Start, lastAdded: "<<lastAdded[i]<<"\n";
 	//   printIntegerVector(rowSpan);
@@ -478,7 +478,7 @@ class spanTree{
 	// printIntegerVector(exhNod);
 	//Create a temporary row where the first currDepth elements are rowSpan
 	IntegerVector tempRowSpan(currDepth+1);
-	
+
 	for(int j = 0; j < currDepth; j++){
 	  tempRowSpan[j] = rowSpan[j];
 	}
@@ -488,10 +488,10 @@ class spanTree{
 
 	//Travel to new unique nodes from each node in rowSpan.
 	for(int j = 0; j < currDepth; j++){
-	  
+
 	  //If j has not been exhausted yet
 	  if(notIn(rowSpan[j],exhNod)){
-	    
+
 	    int rowSpanSize = rowSpan.size();
 	    int tempVisitSize = tempVisit.size();
 
@@ -508,7 +508,7 @@ class spanTree{
 	    //Find nodes not adjacent to j not yet travelled to,
 	    //And that are valid
 	    IntegerVector notTravelled = getNotIn(spanAdjList[rowSpan[j]-1],intvec);
-	    
+
 	    // Rcpp::Rcout << "Not Travelled: \n";
 	    // printIntegerVector(notTravelled);
 	    if(notTravelled.size() == 0){
@@ -522,22 +522,22 @@ class spanTree{
 
 	      //Sort notTravelled... priority to lowest ordered
 	      notTravelled.sort();
-		
+
 	      //Create new branches of the spanning tree
-	      for(int k = 0; k < notTravelled.size(); k ++){		  
+	      for(int k = 0; k < notTravelled.size(); k ++){
 
 		//Add a new unique adjacent node to tempRowSpan
 		tempRowSpan[currDepth] = notTravelled[k];
 
-		//Sort tempRowSpan 
+		//Sort tempRowSpan
 		IntegerVector tempSortRow = clone(tempRowSpan);
 		tempSortRow.sort();
-	    
+
 		bool okToAdd = true;
 		//Check whether maximum in rowSpan is bigger than proposed added node:
 		//if(max(rowSpan) > notTravelled[k]){
-		  
-		  //If so, 
+
+		  //If so,
 		//check uniqueness.
 		for(int r = oldCountCurrSpan; r < oldCountCurrSpan+countCurrSpan; r++){
 		  IntegerVector temptem = mySpanTree[r];
@@ -553,19 +553,19 @@ class spanTree{
 		  if(!okToAdd){
 		    break;
 		  }
-		
+
 		  // okToAdd =  notInList(tempSortRow,mySpanTree(seq(oldCountCurrSpan,countCurrSpan-1));
-		  
+
 		}
 
-		if(okToAdd){   
-				  
+		if(okToAdd){
+
 		  //printIntegerVector(tempRowSpan);
 		  //Clone invNod and exhNod
 		  IntegerVector cInvNod = clone(invNod);
 		  IntegerVector cExhNod = clone(exhNod);
 
-		  
+
 		  //If k = notTravelled.size(), then current node is exhausted is exhausted
 		  if(k == notTravelled.size()-1){
 		    cExhNod.push_back(rowSpan[j]);
@@ -583,18 +583,18 @@ class spanTree{
 		  // printIntegerVector(cInvNod);
 		  // printIntegerVector(cExhNod);
 		  // Rcpp::Rcout << "dun: \n";
-		    
+
 		  //Node notTravelled[m] seen... can add to invalid nodes...
 		  //too strong invNod.push_back(notTravelled[k]);
 		  tempVisit.push_back(notTravelled[k]);
 		}
 	      }
 	    }
-	  } 
+	  }
 	}
       }
       //Rcpp::Rcout << "erasin: " << oldCountCurrSpan << "\n";
-      
+
       //Erase redundant things:
       mySpanTree.erase(0,oldCountCurrSpan);
       invalidNodes.erase(0,oldCountCurrSpan);
@@ -617,35 +617,35 @@ class spanTree{
 
   //Generate connected components
   void genConnCompsSpanTree(){
-    
+
     //Initialize connComps integer matrix, numConnComps integerVector
     //and compConnCompLengths List
-    
+
     connComps = IntegerMatrix(countCurrSpan,adjListLength);
     numConnComps = IntegerVector(countCurrSpan);
     compConnCompLengths = List(countCurrSpan);
 
     //Stores connected component to make the complement.
     IntegerVector compVector(currDepth);
-    
+
     //Stores complement connected component lengths.
     //IntegerVector myCompConnCompLengths(currDepth);
-    
+
     //Stores the number of connected components
     //int myNumComps = 0;
     for(int i = 0; i < countCurrSpan; i++){
-      
+
       //Obtain connected component from the spanning tree
       IntegerVector compVector = mySpanTree(i);
-      
+
       //printIntegerVector(compVector);
       //Find complement connected components
       connCompVec myCompConnComp = findComplementConnComp(spanAdjList,compVector);
-      
-      //Store a connected component 
+
+      //Store a connected component
       IntegerVector tempConnComp = myCompConnComp.getConnComps();
 
-      //Determine whether each node corresponds to the original 
+      //Determine whether each node corresponds to the original
       //row in the spanning tree or a node in the complement connected component
       //If original spanning tree... set as one
       for(int j = 0, k = 0, l = 0; j < adjListLength; j++){
@@ -669,26 +669,26 @@ class spanTree{
 
     }
   }
-  
+
   //Find population sizes for each connected component
   void findPopSizesConnComp(){
-    
+
     //Initialize List connCompPopSums
     connCompPopSums = List(countCurrSpan);
-    
+
     //Every row
     for(int i = 0; i < countCurrSpan; i++){
-      
+
       //Initialize a population sums connected component numeric vector
       NumericVector somePopSums(numConnComps[i]);
 
       //Every component in the sum
       for(int j = 0; j < adjListLength; j++){
-	
+
 	//Add popSize to the corresponding component
-	somePopSums(connComps(i,j)-1) += myPopSizes[j];     
+	somePopSums(connComps(i,j)-1) += myPopSizes[j];
       }
-      
+
       connCompPopSums(i) = somePopSums;
     }
   }
@@ -700,23 +700,23 @@ class spanTree{
 
     //Don't do anything if all are valid:
     if(mySum < countCurrSpan){
-      
+
       //Create a new list:
       List oldList = clone(mySpanTree);
       List oldList2 = clone(invalidNodes);
       List oldList3 = clone(exhaustedNodes);
-      
+
       //Create a new IntegerVector
       IntegerVector oldLastAdded = clone(lastAdded);
       //Rprintf("oldsize: %d, countCurrSpan: %d, mySum: %d\n",oldList.size(), countCurrSpan, mySum);
-      
+
       //Instantiate mySpanTree
       mySpanTree = List(mySum);
       invalidNodes = List(mySum);
       exhaustedNodes = List(mySum);
       lastAdded = IntegerVector(mySum);
 
-      for(int i = 0, j = 0; i < countCurrSpan; i++){   
+      for(int i = 0, j = 0; i < countCurrSpan; i++){
 	if(isValid[i] == true){
 
 	  mySpanTree(j) = oldList(i);
@@ -727,12 +727,12 @@ class spanTree{
 	  j++;
 	}
       }
-      
+
       //Update countCurrSpan
       countCurrSpan = mySum;
     }
   }
-  
+
 
  //Functions to return important quantities
   int getCurrDepth(){
@@ -753,12 +753,12 @@ class spanTree{
     //Rcpp::Rcout << "Inside the makers mark stewdio: ";
     //printIntegerVector(tempConnComps);
     return tempConnComps;
-  }  
+  }
 
   int getNumConnComps(int index){
     return numConnComps[index];
   }
-  
+
   NumericVector getConnCompPopSums(int index){
     NumericVector tempConnCompPopSums = connCompPopSums(index);
     return tempConnCompPopSums;
@@ -767,7 +767,7 @@ class spanTree{
   IntegerVector getCompConnCompLengths(int index){
     IntegerVector tempCompConnCompLengths = compConnCompLengths(index);
     return tempCompConnCompLengths;
-  }  
+  }
 
   bool get2con(){
     return is2conB;
@@ -776,11 +776,11 @@ class spanTree{
   void allGrow(){
     growSpanTree();
     // Rcpp::Rcout<<"growed \n";
-    // Rcpp::Rcout<<"CountCurrSpan: "<<countCurrSpan<<"\n"; 
+    // Rcpp::Rcout<<"CountCurrSpan: "<<countCurrSpan<<"\n";
     // for(int i = 0; i < countCurrSpan; i++){
     //   printIntegerVector(mySpanTree(i));
     // }
-    // Rcpp::Rcout<<"CountCurrSpan: "<<countCurrSpan<<"\n"; 
+    // Rcpp::Rcout<<"CountCurrSpan: "<<countCurrSpan<<"\n";
     genConnCompsSpanTree();
     // Rcpp::Rcout<<"comps \n";
     findPopSizesConnComp();
@@ -876,7 +876,7 @@ void testSpan3(List adjList, NumericVector popSizes){
   tempSpan.allGrow();
   Rcpp::Rcout << "Test9";
   tempSpan.printSpan();
-  
+
 }
 
 //Test the new span tree
@@ -893,7 +893,7 @@ void testSpan2(List adjList, NumericVector popSizes){
   tempSpan.printSpan();
   tempSpan.allGrow();
   Rcpp::Rcout << "Test4";
-  tempSpan.printSpan();  
+  tempSpan.printSpan();
   tempSpan.allGrow();
   Rcpp::Rcout << "Test5";
   tempSpan.printSpan();
@@ -909,7 +909,7 @@ void testSpan2(List adjList, NumericVector popSizes){
   tempSpan.allGrow();
   Rcpp::Rcout << "Test9";
   tempSpan.printSpan();
-  
+
 }
 
 List createSubsetAdjList(List adjList, IntegerVector subsetNodes){
@@ -917,9 +917,9 @@ List createSubsetAdjList(List adjList, IntegerVector subsetNodes){
   //Initialize
   int sizeList = subsetNodes.size();
   List newAdjList(sizeList);
-  
+
   for(int i = 0; i < sizeList; i++){
-    
+
     //Find the set of vertices in adjList that correspond to subsetNodes[i],
     //Only include those that are in subsetNodes
     //And use match to get a vector with numbers between 1 and sizeList
@@ -956,7 +956,7 @@ IntegerVector nextSample(IntegerVector currSample){
 
   //Initialize
   int enn = sum(currSample);
-  int len = currSample.size();  
+  int len = currSample.size();
   int nl = enn+len;
   int j = 0;
   IntegerVector newConfig(len+1);
@@ -968,7 +968,7 @@ IntegerVector nextSample(IntegerVector currSample){
   }
   bool done = false;
   bool a = false;
-  
+
   //If length is 1, don't do anything.
   if(len == 1){
     a = true;
@@ -999,10 +999,10 @@ IntegerVector nextSample(IntegerVector currSample){
   }
   else{
     for(int i = 0; i < len; i++){
-      currSample[i] = newConfig[i+1] - newConfig[i]-1; 
+      currSample[i] = newConfig[i+1] - newConfig[i]-1;
     }
   }
-  
+
   return currSample;
 }
 
@@ -1012,32 +1012,32 @@ List generateAllocations(int numb, IntegerVector capacity, int myNumHigh, Intege
 
   //Store the index of allocations
   int indexAlloc = 0;
-  
+
   //Store the length of capacity
   int caplen = capacity.size();
 
   //Initialize all allocations
   List allAllocs;
-  
+
   //Store non-zero capacities
   IntegerVector nonZeroCap(caplen);
 
   //Count non-zero capacities
   int countNonZero = 0;
-  
+
   //Find which capacities are nonzero:
   for(int i = 0; i < caplen; i ++){
     if(capacity[i] > 0){
       nonZeroCap[countNonZero++] = i;
     }
   }
-  
+
   //Reduce the sample to non-zero entries.
-  IntegerVector storeSample(countNonZero); 
-  
+  IntegerVector storeSample(countNonZero);
+
   //Initialize storeSample
-  storeSample[countNonZero-1] = numb; 
-  
+  storeSample[countNonZero-1] = numb;
+
   //While we still look for additional allocations
   while(storeSample[0] != -1){
 
@@ -1055,7 +1055,7 @@ List generateAllocations(int numb, IntegerVector capacity, int myNumHigh, Intege
   	break;
       }
     }
-    
+
     //If we add the allocation:
     if(toadd){
       IntegerVector tempAdd(caplen);
@@ -1064,7 +1064,7 @@ List generateAllocations(int numb, IntegerVector capacity, int myNumHigh, Intege
       }
 
       allAllocs.push_back(tempAdd);
-      
+
       //Increment indexAlloc
       indexAlloc++;
     }
@@ -1074,7 +1074,7 @@ List generateAllocations(int numb, IntegerVector capacity, int myNumHigh, Intege
   }
 
   return allAllocs;
-  
+
 }
 
 //Works like expand.grid
@@ -1082,13 +1082,13 @@ IntegerMatrix expandGrid(IntegerVector capacity){
 
   //Store the length of capacity
   int caplen = capacity.size();
-  
+
   //Capacities
   IntegerVector myCaps(caplen);
-  
+
   //Take product of capacities:
   int prod = 1;
-  
+
   for(int i = 0; i < caplen; i++){
     prod = prod*(capacity[i]+1);
   }
@@ -1099,17 +1099,17 @@ IntegerMatrix expandGrid(IntegerVector capacity){
   //Initialize.  Set gridIndex = 1 to set first row = 0,0
   int width = 0;
   int gridIndex = 1;
-  
+
   //initialize expand grid
   while(width < caplen){
     if(myCaps[width] == capacity[width]){
       myCaps[width] = 0;
-      width = width + 1;      
+      width = width + 1;
     }
     else{
       myCaps[width] = myCaps[width] + 1;
       width = 0;
-          
+
       for(int i = 0; i < caplen; i++){
 	myExpandGrid(gridIndex,i) = myCaps[i];
       }
@@ -1121,17 +1121,17 @@ IntegerMatrix expandGrid(IntegerVector capacity){
 }
 
 IntegerVector findUpperAllocs(int myNumConnComps, int myNumLow, int myNumHigh, IntegerVector myCompConnCompLengths){
-  
+
   //numPartConnComps will determine where we can allocate
   IntegerVector numPartConnComps(myNumConnComps - 1);
-    
+
   //Generate all ways to create diffBlocks more blocks by further partitioning connected components.
-  //First, see how many blocks of size at least myNumLow can be created within each connected component.  
+  //First, see how many blocks of size at least myNumLow can be created within each connected component.
   for(int j = 0; j < myNumConnComps-1; j++){
-      
+
     //Eliminate case where divide by zero
     if(myNumLow == 0){
-    	
+
       numPartConnComps[j] = myCompConnCompLengths[j];
     }
     else{
@@ -1146,7 +1146,7 @@ IntegerVector findUpperAllocs(int myNumConnComps, int myNumLow, int myNumHigh, I
         //Subtract 1 to get additional blocks to be produced
         numPartConnComps[j]--;
      }
-    } 
+    }
   }
 
   return numPartConnComps;
@@ -1155,10 +1155,10 @@ IntegerVector findUpperAllocs(int myNumConnComps, int myNumLow, int myNumHigh, I
 //Used to call generateAllocations, or return a List with a zero entry if
 //nowhere to expand.
  List doGenerateAllocations(IntegerVector numPartConnComps, int diffBlocks, bool canExpand, int myNumHigh, IntegerVector myCompConnCompLengths){
-    
+
   //Initialize integer matrix
   if(canExpand){
-    
+
     //Return the result from generateAllocations
     return generateAllocations(diffBlocks,numPartConnComps, myNumHigh, myCompConnCompLengths);
 
@@ -1171,7 +1171,7 @@ IntegerVector findUpperAllocs(int myNumConnComps, int myNumLow, int myNumHigh, I
 }
 
 //Only run if something can be split
-class partitionIterator{ 
+class partitionIterator{
   private:
 
   //Store all the inputs
@@ -1183,10 +1183,10 @@ class partitionIterator{
   IntegerVector myConnComp;
   int myNumConnComps;
   IntegerVector myCompConnCompLengths;
-  
+
   //make a myAdjListLength variable
   int myAdjListLength;
-  
+
   //Useful in referring to the connected component
   IntegerVector referConnComp;
 
@@ -1195,7 +1195,7 @@ class partitionIterator{
 
   //Useful in referring to the modified adjacency list
   IntegerVector referAdjList;
-  
+
   //Stores connected component vectors
   List listConnComps;
 
@@ -1204,29 +1204,29 @@ class partitionIterator{
 
   //Stores modified adjacency lists
   List modifiedAdjList;
-  
+
   //Stores new numConstraint Highs
   IntegerVector newNumConsHigh;
 
   //For unique storage
-  int uniqueStorage; 
+  int uniqueStorage;
 
   //Stores results from generatePartitions
   List partitionMatList;
-  
+
   //Stores whether a partition from generatePartitions is valid or not
   IntegerVector isValidPartitionMatList;
 
   //Stores the number of partitions to store
   //Looks useless
   //int numParts;
-  
+
   //Stores results form generateAllocations
   IntegerMatrix myAlloc;
 
   //Stores the number of blocks that need to be allocated
   int diffBlocks;
-  
+
   //Stores the number of blocks that can be allocated within each connected component
   IntegerVector numPartConnComps;
 
@@ -1235,14 +1235,14 @@ class partitionIterator{
 
   //Stores valid allocs matrix
   List validAllocs;
-  
+
   //Stores partitions to add to cppGeneratePartitions
   List tempGenParts;
-  
+
   //aConnComp, numConnComps, and compConnCompLengths come from a
   //connected component object
   public:
-  partitionIterator(List adjList, int numBlocks, NumericVector popSizes, int numConstraintLow, int numConstraintHigh, IntegerVector aConnComp, 
+  partitionIterator(List adjList, int numBlocks, NumericVector popSizes, int numConstraintLow, int numConstraintHigh, IntegerVector aConnComp,
 		    int numConnComps, IntegerVector compConnCompLengths){
 
     //Initialize starting values
@@ -1255,7 +1255,7 @@ class partitionIterator{
     myConnComp = aConnComp;
     myNumConnComps = numConnComps;
     myCompConnCompLengths = compConnCompLengths;
-        
+
     //Now, ones that are not
     myAdjListLength = myAdjList.size();
     //HEY!
@@ -1282,47 +1282,47 @@ class partitionIterator{
     diffBlocks = myNumBlocks - myNumConnComps;
     numPartConnComps = findUpperAllocs(myNumConnComps, myNumLow, myNumHigh, myCompConnCompLengths);
 
-    //You can expand to make a valid partition if the number of extra components in numPartConnComps is 
+    //You can expand to make a valid partition if the number of extra components in numPartConnComps is
     //atleast diffBlocks
     canExpand = (bool)(sum(numPartConnComps) >= diffBlocks && min(numPartConnComps >= 0) );
     //HEY, NOW A LIST!
     validAllocs = doGenerateAllocations(numPartConnComps, diffBlocks, canExpand, myNumHigh, myCompConnCompLengths);
- 
+
     //HEY! NOW A LIST!
     tempGenParts = List();
   }
-  
+
   //Prepare to add connected components for each Add a connected component
   void prepareNewPartitions(){
 
     //What is the fewest number of partitions we need to recursively generate?
-    //For each node, obtain the corresponding column of validAllocs, and pluck off 
-    //Non-zero unique entries.  
+    //For each node, obtain the corresponding column of validAllocs, and pluck off
+    //Non-zero unique entries.
     //i is node
     //j is component
     //l is unique elements
-    //m denotes the first index within a component 
+    //m denotes the first index within a component
 
     for(int i = 0, j = -1, m = 0; i < myNumConnComps-1; i++){
-      
+
       IntegerVector tempAllocCol2(validAllocs.size());
       for(int k = 0; k < validAllocs.size(); k++){
 	IntegerVector intVec = validAllocs(k);
 	tempAllocCol2[k] = intVec[i];
       }
       IntegerVector tempAllocCol = sort_unique(tempAllocCol2);
-   
+
       //k searches elements of tempAllocCol
       for(int k = 0; k < tempAllocCol.size(); k++){
-	
+
 	//If there is something to add
 	if(tempAllocCol[k] > 0){
 
-	  //If it's the first time visiting this guy, 
-	  //and there is at a possibility for splitting this block, 
+	  //If it's the first time visiting this guy,
+	  //and there is at a possibility for splitting this block,
 	  //add a modified adjacency list
 	  if(m == 0 ){
-	    
+
 	    //Increment component
 	    j++;
 
@@ -1330,7 +1330,7 @@ class partitionIterator{
 	    //the tempRef component
 	    IntegerVector connCompRef(myCompConnCompLengths[i]);
 	    NumericVector popSizesRef(myCompConnCompLengths[i]);
-	    
+
 	    //If the node corresponds to the tempRef component, add that node to connCompRef
 	    for(int r = 0, s = 0; r < myAdjListLength; r++){
 
@@ -1340,7 +1340,7 @@ class partitionIterator{
 		s++;
 	      }
 	    }
-	          
+
 	    //Add the connected component to listConnComps
 	    //And the popSizes to listPopSizes
 	    listConnComps.push_back(connCompRef);
@@ -1371,28 +1371,28 @@ class partitionIterator{
 
 	  //increment m
 	  m++;
-	  
-	  
+
+
 	}
       }
-      
+
       //Reset m
       m = 0;
     }
-  } 
+  }
 
   //Get number of unique partitions to generate
   int getNumberIterations(){
     return uniqueStorage;
   }
-  
+
   //Get updated adjacency list
   List getNewAdjList(int index){
-    
+
     //Return the subset Adjacency list
     //for the component that corresponds to that index
     return modifiedAdjList[referAdjList[index]];
-  } 
+  }
 
   //Get new number of blocks
   int getNewNumBlocks(int index){
@@ -1402,7 +1402,7 @@ class partitionIterator{
     //Add one since variable measures number of additional blocks
     return referNumSubBlock[index] + 1;
   }
-  
+
   //Get new number of blocks
   int getReferAdjList(int index){
 
@@ -1414,10 +1414,10 @@ class partitionIterator{
 
   //Get new pop sizes
   NumericVector getNewPopSizes(int index){
-    
+
     return listPopSizes[referAdjList[index]];
   }
-  
+
   //Get new numConstraintHigh
   int getNewNumConstraintHigh(int index){
 
@@ -1425,14 +1425,14 @@ class partitionIterator{
     //for the component that corresponds to that index
     return newNumConsHigh[index];
   }
-  
+
   void storePartition(List storePart){
     //Looks useless
     //printIntegerMatrix(storePart);
     //Check whether the stored partition is valid
 
     if(storePart.size() != 0){
-      isValidPartitionMatList.push_back(1); 
+      isValidPartitionMatList.push_back(1);
     }
     else{
       isValidPartitionMatList.push_back(0);
@@ -1443,9 +1443,9 @@ class partitionIterator{
     partitionMatList.push_back(storePart);
 
     //numParts++;
-    
+
   }
-  
+
   //Combine blocks to obtain partitions to add to the number of partitions
   void combinePartitions(){
 
@@ -1458,7 +1458,7 @@ class partitionIterator{
     IntegerVector isNonZero(myAdjListLength);
     int numNonZero = 0;
     bool didBreak = false;
-  
+
     //For each row of validAllocs
     for(int i = 0; i < validAllocs.size(); i++){
 
@@ -1471,20 +1471,20 @@ class partitionIterator{
       //For each column of validAllocs
       //(each column corresponds to a node - 2)
       for(int j = 0; j < aTempInt.size(); j++){
-	
+
 	//If nonzero...
 	if(aTempInt(j) > 0){
-	  
+
 	  //Update isNonZero
 	  isNonZero[j] = 1;
 
 	  //Find the unique index that corresponds to this value
 	  for(int k = 0; k < uniqueStorage; k++){
 	    if(referConnComp[k] == j+2 && referNumSubBlock[k] == aTempInt(j)){
-	      
+
 	      //Check Validity of the partition
 	      if(isValidPartitionMatList[k] == 0){
-		
+
 		//If invalid, set didbreak = true
 		didBreak = true;
 	      }
@@ -1493,7 +1493,7 @@ class partitionIterator{
 	      else{
 		uniqCorrInd(numNonZero++) = k;
 	      }
-	      
+
 	      //Break out of this for loop regardless
 	      break;
 	    }
@@ -1504,52 +1504,52 @@ class partitionIterator{
 	else{
 	  isNonZero[j] = 0;
 	}
-	
+
 	//If we have didBreak true, break out of this loop
 	if(didBreak){
 	  break;
 	}
       }
-      
+
       //If we didn't break, then generate extra partitions to store into cppGeneratePartitions
       if(!didBreak){
-	
+
 	//Handle case with only one nonzero and many nonzero separately
 	if(sum(isNonZero) == 1){
-	  
+
 	  //Store this guy quick
 	  //NOW a list!
 	  List quickStore = partitionMatList[uniqCorrInd[0]];
-	  
+
 	  //For each row of the partition mat list
 	  for(int j = 0; j < quickStore.size(); j++){
-	    
+
 	    //Obtain current row of the partitionMatList
 	    IntegerVector aCurrRow = quickStore(j);
-	    
+
 	    //Clone the current connected component
 	    IntegerVector toAdd = clone(myConnComp);
-	    
+
 	    //For transforming unique elements of the row
 	    int addExtra = 1;
-	    
+
 	    //Obtain unique elements of the row
 	    IntegerVector unqro = sort_unique(aCurrRow);
 
 	    //Replace elements of unqrow based on how they fit into the partition
 	    for(int k = 0; k < unqro.size(); k++){
-	     
+
 	      //Ones correspond to the original partition
 	      if(unqro[k] == 1){
 		unqro[k] = referConnComp[uniqCorrInd[0]];
 	      }
-	      
+
 	      //Otherwise, replace unique entry with myNumConnComp + addExtra
 	      else{
-		
+
 		unqro[k] = myNumConnComps + addExtra;
 		addExtra++;
-		
+
 	      }
 	    }
 
@@ -1558,29 +1558,29 @@ class partitionIterator{
 	    IntegerVector anoConnComp = listConnComps[referAdjList[uniqCorrInd[0]]];
 
 	    for(int k = 0; k < anoConnComp.size(); k++){
-	      
+
 	      toAdd[anoConnComp[k]-1] = unqro[aCurrRow[k]-1];
 	    }
 
 	    //Add toAdd to tempGenParts
 	    tempGenParts.push_back(toAdd);
-	    
+
 	  }
 	}
-	
+
 	//Do similar stuff if sum isNonZero is greater than 1
 	if(sum(isNonZero) > 1){
-	  
+
 	  //Store this sum
 	  int totNonZero = sum(isNonZero);
-	  
+
 	  //First step, get an expanded grid
 	  //Find the number of rows for each corresponding partition mat list
-	  
+
 	  IntegerVector nRowsPartMat(totNonZero);
-	  
+
 	  for(int k = 0; k < totNonZero; k++){
-	    
+
 	    //Store this guy quick
 	    List quickStore = partitionMatList[uniqCorrInd[k]];
 
@@ -1591,70 +1591,70 @@ class partitionIterator{
 	  IntegerMatrix exGr = expandGrid(nRowsPartMat);
 	  //printIntegerMatrix(exGr);
 	  //Now we are ready to rock!
-	  
+
 	  //For each row of exGr
 	  for(int k = 0; k < exGr.nrow(); k++){
-	    
+
 	    //Get the current row of the expanded grid
 	    IntegerVector currExGr = exGr.row(k);
-	    
+
 	    //For transforming unique elements of the row
 	    int addExtra = 1;
-	    
+
 	    //Clone the current connected component
-	    IntegerVector toAdd = clone(myConnComp);	  
-	    
+	    IntegerVector toAdd = clone(myConnComp);
+
 	    //What's going on here?!?!?
 	    //Cycle through all choices of row
 	    for(int l = 0; l < currExGr.size(); l++){
-	     
+
 	      //Store this guy quick
 	      List quickStore = partitionMatList[uniqCorrInd[l]];
 
 	      //Obtain  current row of the mat list
 	      IntegerVector aCurrRow = quickStore(currExGr[l]);
-	      
+
 	      //Obtain unique elements of the row
 	      IntegerVector unqro = sort_unique(aCurrRow);
-	      
+
 	      //Replace elements of unqrow based on how they fit into the partition
 	      for(int m = 0; m < unqro.size(); m++){
-		
+
 		//Ones correspond to the original partition
 		if(unqro[m] == 1){
 		  unqro[m] = referConnComp[uniqCorrInd[l]];
 		}
-	      
+
 		//Otherwise, replace unique entry with myNumConnComp + addExtra
 		else{
 
 		  unqro[m] = myNumConnComps + addExtra;
 		  addExtra++;
-		  
+
 		}
-		
+
 	      }
 
 	      //Replace elements in myConnComp based on transformation in unqro
 	      //Obtain the connected component associated with uniqCorrInd[0]
 	      IntegerVector anoConnComp = listConnComps[referAdjList[uniqCorrInd[l]]];
-	    
+
 	      for(int m = 0; m < anoConnComp.size(); m++){
-	      
+
 		toAdd[anoConnComp[m]-1] = unqro[aCurrRow[m]-1];
-	      }	      
-	      
+	      }
+
 	    }
-	    
+
 	    //Add toAdd to tempGenParts
 	    tempGenParts.push_back(toAdd);
-	    
+
 	  }
-	} 
+	}
       }
     }
   }
-  
+
   List getGeneratedPartition(){
     if(tempGenParts.size() == 0){
       return List(0);
@@ -1667,38 +1667,38 @@ class partitionIterator{
   bool canSplit(){
     return canExpand;
   }
-  
+
   List getValidAllocs(){
     return validAllocs;
   }
-  
+
  IntegerVector getNumPartConnComps(){
     return numPartConnComps;
   }
 };
 
 //Function to generate the partitions
-//[[Rcpp::export]]
+// [[Rcpp::export]]
 List cppGeneratePartitions(List adjList, int numBlocks, NumericVector popSizes, int numConstraintLow, int numConstraintHigh, double popConstraintLow, double popConstraintHigh){
-  
+
   //Still need to do manipulations to ensure valid numbers.  But we can do that in R.
-  
+
   //Store length of adjList
   //int adjListLength = adjList.size();
 
   //Initialize LIST that holds partitions:
   //HEY
   List partitionMatrix;
-  
+
   //Initialize index for storing the partition
   int indexPartition = 0;
 
-  //Initialize a logical vector to determine whether a span tree branch is valid. 
-  LogicalVector vecIsValid; 
+  //Initialize a logical vector to determine whether a span tree branch is valid.
+  LogicalVector vecIsValid;
 
   //Intialize the spanning tree
   spanTree mySpanTree(adjList,popSizes);
-  
+
   //Continue until the current span tree becomes too big.
   while(mySpanTree.getCurrDepth() < numConstraintHigh){
     // Rprintf("CurrDepth: %d\n",mySpanTree.getCurrDepth());
@@ -1713,8 +1713,8 @@ List cppGeneratePartitions(List adjList, int numBlocks, NumericVector popSizes, 
     //Rcpp::Rcout <<"thengro:\n";
     mySpanTree.allGrow();
     //mySpanTree.printSpan();
-    
-    
+
+
     //Create a boolean for having fewer nodes than is permitted in the spanning tree
     bool fewerNodes = mySpanTree.getCurrDepth() < numConstraintLow;
 
@@ -1731,54 +1731,54 @@ List cppGeneratePartitions(List adjList, int numBlocks, NumericVector popSizes, 
       //For each row in the spanning tree:
       for(int i = 0; i < numRows; i++){
 	//printIntegerVector(mySpanTree.getConnComps(i));
-	  
+
 	//Get pop sums and number of nodes for each connected component:
 	NumericVector popSums = mySpanTree.getConnCompPopSums(i);
 	IntegerVector connCompLengths = mySpanTree.getCompConnCompLengths(i);
-	
+
 	//Create a variable for continuing on after these initial checks:
 	bool carryOn = true;
-        
+
 	//Initialize vecIsValid[i] as true
 	vecIsValid[i] = true;
 
 	//SECOND CHECK: If the current branch has too many connected components
-	//Or the sum of the current spanning tree branch is too big, 
-	//Or the sum of any complement connected component is too small, 
+	//Or the sum of the current spanning tree branch is too big,
+	//Or the sum of any complement connected component is too small,
 	//Or if a connected component has too few nodes, find a new branch.
 	//If the current spanning tree branch is too big OR if it has too many connected components and 2connectness holds...
 	//mark the branch as invalid
 	//otherwise, continue
-	if((mySpanTree.getNumConnComps(i) > numBlocks) || 
+	if((mySpanTree.getNumConnComps(i) > numBlocks) ||
 	   (popSums[0] > popConstraintHigh) ||
 	   (min(popSums[seq(1,mySpanTree.getNumConnComps(i) - 1)]) < popConstraintLow) ||
 	   (min(connCompLengths[seq(0,mySpanTree.getNumConnComps(i) - 2)]) < numConstraintLow )){
-	    
+
 	  carryOn = false;
 
-	  if(popSums[0] > popConstraintHigh|| mySpanTree.get2con()){	      
+	  if(popSums[0] > popConstraintHigh|| mySpanTree.get2con()){
 	    vecIsValid[i] = false;
 	  }
 	}
 
 
-	//THIRD CHECK: If number of nodes too small, or pop sum is too small 
+	//THIRD CHECK: If number of nodes too small, or pop sum is too small
 	//for the current branch of the spanning tree, choose another branch
 	//and we carryOn
 	if(!fewerNodes && popSums[0] >= popConstraintLow && carryOn){
-	 
+
 	  //At this point, each entry has at most numBlocks components
 	  //And population sums are all greater than popConstraintLow
-	  //And each block has at least numBlocks components	    
+	  //And each block has at least numBlocks components
 
 	  IntegerVector tempConnComp = mySpanTree.getConnComps(i);
-	  
+
 	  //printIntegerVector(tempConnComp);
-	  
-	  //If there are exactly numBlocks components 
+
+	  //If there are exactly numBlocks components
 	  if(mySpanTree.getNumConnComps(i) ==  numBlocks){
 
-	    //If all population constraints fall within range, add the partition to the partition matrix: 
+	    //If all population constraints fall within range, add the partition to the partition matrix:
 	    if(checkAllLeq(popSums,popConstraintHigh) && max(connCompLengths) <= numConstraintHigh ){
 	      partitionMatrix.push_back(tempConnComp);
 
@@ -1795,9 +1795,9 @@ List cppGeneratePartitions(List adjList, int numBlocks, NumericVector popSizes, 
 	    //We need the connected components lengths
 	    //IntegerVector tempCompLengths = mySpanTree.getCompConnCompLengths(i);
 	    //Create a partition iterator object
-	    partitionIterator myPartIt(adjList, numBlocks, popSizes, numConstraintLow, numConstraintHigh, tempConnComp, 
+	    partitionIterator myPartIt(adjList, numBlocks, popSizes, numConstraintLow, numConstraintHigh, tempConnComp,
 				       mySpanTree.getNumConnComps(i), connCompLengths);
-	      
+
 	    //FOURTH CHECK: If the complement components of the current branch of the spanning tree cannot be divided to make
 	    //a valid partition, find a new branch
 	    //if two connected, mark the branch as invalid
@@ -1807,9 +1807,9 @@ List cppGeneratePartitions(List adjList, int numBlocks, NumericVector popSizes, 
 
 	      if(mySpanTree.get2con()){
 		vecIsValid[i] = false;
-	      }	
+	      }
 	    }
-	      
+
 	    //Recursion is feasible.  Continue.
 	    else{
 
@@ -1820,28 +1820,28 @@ List cppGeneratePartitions(List adjList, int numBlocks, NumericVector popSizes, 
 	      //And put them into the myPartIt
 	      for(int j = 0; j < myPartIt.getNumberIterations(); j++){
 
-		myPartIt.storePartition(cppGeneratePartitions(myPartIt.getNewAdjList(j),myPartIt.getNewNumBlocks(j), 
-							      myPartIt.getNewPopSizes(j), numConstraintLow, 
+		myPartIt.storePartition(cppGeneratePartitions(myPartIt.getNewAdjList(j),myPartIt.getNewNumBlocks(j),
+							      myPartIt.getNewPopSizes(j), numConstraintLow,
 							      myPartIt.getNewNumConstraintHigh(j), popConstraintLow, popConstraintHigh));
 	      }
 
-		
+
 	      //Work some magic inside the combinePartitions function
-	      myPartIt.combinePartitions();		
-	      
+	      myPartIt.combinePartitions();
+
 
 	      //Store results into a temporary IntegerMatrix
 	      List tempList = myPartIt.getGeneratedPartition();
-	     
+
 	      //If the tempIntegerMatrix is non trivial...
 	      if(tempList.size() != 0){
-		  
+
 		//Replace entries of partitionMatrix
 		for(int j = 0; j < tempList.size(); j++){
-		  
+
 		  partitionMatrix.push_back(tempList(j));
-		  
-		  
+
+
 		  //Increment indexPartition
 		  indexPartition++;
 		}
@@ -1850,26 +1850,26 @@ List cppGeneratePartitions(List adjList, int numBlocks, NumericVector popSizes, 
 	  }
 	}
       }
-    
+
       // for(int b = 0; b < vecIsValid.size(); b++){
       // 	Rcpp::Rcout<< vecIsValid[b] << " ";
-      // } 
+      // }
       // Rcpp::Rcout << "\n";
 
-      //Remove invalid rows  
+      //Remove invalid rows
       mySpanTree.removeSpanTree(vecIsValid);
-      
-    }	
-    
+
+    }
+
   }
-  
+
   //If no valid partition was produced:
   if(indexPartition == 0){
-    
+
     //Return an integer matrix with one row, one column, with a zero
     return List(0);
   }
-  
+
   //Otherwise, return the partition matrix
   else{
 

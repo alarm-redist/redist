@@ -8,12 +8,12 @@
 #############################################
 
 run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
-                     ssdmat, grouppopvec, names, maxiterrsg, report_all,
+                     ssdmat, grouppopvec, countymembership, names, maxiterrsg, report_all,
                      adapt_lambda, adapt_eprob,
                      nstartval_store, maxdist_startval, logarg){
     
     ## Get this iteration
-    p_sub <- as.data.frame(params[i,])
+    p_sub <- params %>% dplyr::slice(i)
     if(logarg){
         sink(paste0("log_", i, ".txt"))
         cat("Parameter Values:\n")
@@ -40,40 +40,49 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
         popcons <- p_sub$popcons
     }
 
-    if(!("beta" %in% names)){
-        beta <- 0
-    }else{
-        beta <- p_sub$beta
+    ## Set constraints
+    constraintvec <- c()
+    weightvec <- c()
+    addweights <- FALSE
+    if("weight_population" %in% names){
+        constraintvec <- c(constraintvec, "population")
+        weightvec <- c(weightvec, p_sub$weight_population)
+        addweights <- TRUE
     }
-
-    if(!("constraint" %in% names)){
-        constraint <- "none"
-    }else{
-        constraint <- p_sub$constraint
-        if(!(constraint %in% c("compact", "segregation", "population",
-                               "similarity"))){
-            stop("Please select either `compact,` `segregation,` `population,` or `similarity` for constraint type")
-        }
+    if("weight_compact" %in% names){
+        constraintvec <- c(constraintvec, "compact")
+        weightvec <- c(weightvec, p_sub$weight_compact)
+        addweights <- TRUE
     }
-
-    ## Warnings
-    if(constraint == "segregation" & is.null(grouppopvec)){
-        stop("If constraining on segregation, please provide a vector of group population")
+    if("weight_segregation" %in% names){
+        constraintvec <- c(constraintvec, "segregation")
+        weightvec <- c(weightvec, p_sub$weight_segregation)
+        addweights <- TRUE
     }
-    if(constraint == "compact" & is.null(ssdmat)){
-        stop("If constraining on compactness, please provide a distances matrix")
+    if("weight_similarity" %in% names){
+        constraintvec <- c(constraintvec, "similarity")
+        weightvec <- c(weightvec, p_sub$weight_similarity)
+        addweights <- TRUE
     }
-    if(constraint == "similarity" & is.null(initcds)){
-        stop("If constraining on similarity, please provide a vector of initial congressional district assignments")
+    if("weight_countysplit" %in% names){
+        constraintvec <- c(constraintvec, "countysplit")
+        weightvec <- c(weightvec, p_sub$weight_countysplit)
+        addweights <- TRUE
+    }
+    if(addweights == FALSE){
+        constraintvec <- NULL
+        weightvec <- NULL
     }
 
     ## Run siulations
     out <- redist.mcmc(adjobj = adjobj, popvec = popvec, nsims = nsims,
                        ndists = ndists, ssdmat = ssdmat,
                        grouppopvec = grouppopvec,
+                       countymembership = countymembership, #ctk-cran-note
                        initcds = initcds, eprob = eprob, lambda = lambda,
-                       popcons = popcons, beta = beta,
-                       constraint = constraint,
+                       popcons = popcons, 
+                       constraint = constraintvec,
+                       constraintweights = weightvec, #ctk-cran-note
                        maxiterrsg = maxiterrsg,
                        adapt_lambda = adapt_lambda,
                        adapt_eprob = adapt_eprob)
@@ -129,8 +138,24 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
     q3_dist_median <- round(median(out$distance_original[q3]), digits = 3)
     q4_dist_median <- round(median(out$distance_original[q4]), digits = 3)
 
+    ## Share of counties split
+    if(!is.null(countymembership)){
+        ncounties_split <- unlist(lapply(1:nsims, function(x){
+            cd_assign <- out$partitions[,x]
+            return(sum(tapply(cd_assign, countymembership, function(y){ifelse(length(unique(y)) > 1, 1, 0)})))
+        }))
+        starting_county_split <- ncounties_split[1]
+        q1_countysplit_median <- median(ncounties_split[q1])
+        q2_countysplit_median <- median(ncounties_split[q2])
+        q3_countysplit_median <- median(ncounties_split[q3])
+        q4_countysplit_median <- median(ncounties_split[q4])
+    }
+
+    ## -----------------
     ## Report statistics
-    out <- paste("########################################\n",
+    ## -----------------
+    out <- paste("## -------------------------------------\n",
+                 "## -------------------------------------\n",
                  "## Parameter Values for Simulation", i, "\n")
     if(!adapt_eprob){
         out <- paste0(out, "## Edgecut probability = ", eprob, "\n")
@@ -139,7 +164,7 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
                       final_eprob, "\n")
     }
     if(!adapt_lambda){
-        out <- paste0("## Lambda = ", lambda, "\n")
+        out <- paste0(out, "## Lambda = ", lambda, "\n")
     }else{
         out <- paste0(out, "## Final adaptive lambda = ", final_lambda, "\n")
     }
@@ -148,12 +173,17 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
     }else{
         out <- paste0(out, "## No hard population constraint applied\n")
     }
-    out <- paste0(out, "## Soft constraint is ", as.character(constraint), "\n",
-                 "## Target beta  = ", beta, "\n",
-                 "########################################\n",
+    if(!is.null(constraintvec)){
+        out <- paste0(out, "## Setting constraints on ", as.character(constraintvec), "\n",
+                      "## Weights  = ", weightvec, "\n")
+    }else{
+        out <- paste0(out, "## Not setting any soft constraints\n")
+    }
+    out <- paste0(out,
+                 "## -------------------------------------\n",
                  "## Diagnostics:\n",
                  "## Metropolis-Hastings Acceptance Ratio = ", mh_acceptance, "\n")
-    if(constraint == "population" | report_all == TRUE){
+    if("population" %in% constraintvec | report_all == TRUE){
         out <- paste0(
             out, "## Mean population parity distance = ",
             pop_parity, "\n",
@@ -167,7 +197,7 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
                   q3_pop_median, q4_pop_median, sep = " "),
             "\n")
     }
-    if(constraint == "similarity" | report_all == TRUE){
+    if("similarity" %in% constraintvec | report_all == TRUE){
         out <- paste0(
             out,
             "\n## Mean share of geographies equal to initial assignment = ",
@@ -181,7 +211,26 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
                   q3_dist_median, q4_dist_median, sep = " "),
             "\n")
     }
-    out <- paste0(out, "########################################\n\n")
+    if(!is.null(countymembership)){
+        if("countysplit" %in% constraintvec | report_all == TRUE){
+            out <- paste0(
+                out,
+                "\n## Median number of counties split = ",
+                mean(ncounties_split), "\n",
+                "## Median number of counties split = ",
+                median(ncounties_split), "\n",
+                "## Range of number of counties split = ",
+                paste(range(ncounties_split), collapse = " "), "\n",
+                "## Initial number of counties split = ",
+                starting_county_split, "\n",
+                "## MCMC Iteration quantiles of number of counties split = ",
+                paste(q1_countysplit_median, q2_countysplit_median, q3_countysplit_median, q4_countysplit_median, sep = " "), "\n"
+            )
+        }
+    }
+    out <- paste0(out,
+                  "## -------------------------------------\n",
+                  "## -------------------------------------\n\n")
     if(logarg){
         sink()
     }
@@ -197,7 +246,7 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 #'
 #' @usage redist.findparams(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
 #' adapt_lambda = FALSE, adapt_eprob = FALSE,
-#' params, ssdmat = NULL, grouppopvec = NULL,
+#' params, ssdmat = NULL, grouppopvec = NULL, countymembership = NULL,
 #' nstartval_store, maxdist_startval,
 #' maxiterrsg = 5000, report_all = TRUE,
 #' parallel = FALSE, nthreads = NULL, log = FALSE, verbose = TRUE)
@@ -224,6 +273,7 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 #' units. The default is \code{NULL}.
 #' @param grouppopvec A vector of populations for some sub-group of
 #' interest. The default is \code{NULL}.
+#' @param countymembership A vector of county membership assignments. The default is \code{NULL}.
 #' @param nstartval_store The number of maps to sample from the preprocessing chain
 #' for use as starting values in future simulations. Default is 1.
 #' @param maxdist_startval The maximum distance from the starting map that
@@ -251,7 +301,9 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 #' Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte
 #' Carlo." Working Paper. Available at
 #' \url{http://imai.princeton.edu/research/files/redist.pdf}.
-#'
+#' 
+#' @importFrom dplyr slice
+#' 
 #' @examples \dontrun{
 #' data(algdat.pfull)
 #'
@@ -273,6 +325,7 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                               adapt_lambda = FALSE, adapt_eprob = FALSE,
                               params, ssdmat = NULL, grouppopvec = NULL,
+                              countymembership = NULL, 
                               nstartval_store = 1, maxdist_startval = 100,
                               maxiterrsg = 5000, report_all = TRUE,
                               parallel = FALSE, nthreads = NULL, log = FALSE, verbose = TRUE){
@@ -282,14 +335,14 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
 
     ## Starting statement
     if(verbose){
-        cat(paste("########################################\n",
+        cat(paste("## ------------------------------\n",
             "## redist.findparams(): Parameter tuning for redist.mcmc()\n",
             "## Searching over", trials, "parameter combinations\n",
-            "########################################\n\n", sep = " "))
+            "## ------------------------------\n\n", sep = " "))
     }
 
     ## Get parameters in params
-    valid_names <- c("eprob", "lambda", "popcons", "beta", "constraint")
+    valid_names <- c("eprob", "lambda", "popcons", "weight_compact", "weight_population", "weight_segregation", "weight_similarity", "weight_countysplit")
     names <- names(params)
     if(sum(names %in% valid_names) < length(names)){
         invalid_name <- names[!(names %in% valid_names)]
@@ -310,6 +363,18 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
     if(sum("eprob" %in% names & adapt_eprob) > 0){
         warning("You have specified a grid of eprob values to search and set `adapt_eprob` to TRUE. Setting `adapt_eprob` to FALSE.")
         adapt_eprob <- FALSE
+    }    
+    if("weight_segregation" %in% names & is.null(grouppopvec)){
+        stop("If constraining on segregation, please provide a vector of group population.")
+    }
+    if("weight_compact" %in% names & is.null(ssdmat)){
+        stop("If constraining on compactness, please provide a distances matrix.")
+    }
+    if("weight_similarity" %in% names & is.null(initcds)){
+        stop("If constraining on similarity, please provide a vector of initial congressional district assignments.")
+    }
+    if("weight_countysplit" %in% names & is.null(countymembership)){
+        stop("If constraining the number of county splits, please provide a vector of county assignments.")
     }
 
     if(parallel){ ## Parallel
@@ -321,9 +386,9 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
 
         ## Statement initializing parallelization
         if(verbose){
-            cat(paste("########################################\n",
+            cat(paste("## -----------------------------\n",
                 "## Parallelizing over", nthreads, "processors\n",
-                "########################################\n\n", sep = " "))
+                "## -----------------------------\n\n", sep = " "))
         }
         
         ## Set parallel environment
@@ -339,7 +404,7 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
 
             ## Run simulations
             out <- run_sims(i, params, adjobj, popvec, nsims, ndists, initcds,
-                            ssdmat, grouppopvec, names, maxiterrsg, report_all,
+                            ssdmat, grouppopvec, countymembership, names, maxiterrsg, report_all,
                             adapt_lambda, adapt_eprob,
                             nstartval_store, maxdist_startval, log)
             
@@ -365,8 +430,8 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
         for(i in 1:trials){
 
             ## Run simulations
-            out <- run_sims(i, params, adjobj, popvec, nsims, ndists, initcds,
-                            ssdmat, grouppopvec, names, maxiterrsg, report_all,
+            out <- run_sims(i = i, params = params, adjobj, popvec, nsims, ndists, initcds,
+                            ssdmat, grouppopvec, countymembership, names, maxiterrsg, report_all,
                             adapt_lambda, adapt_eprob,
                             nstartval_store, maxdist_startval, log)
             
