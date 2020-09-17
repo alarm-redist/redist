@@ -11,17 +11,19 @@ Authors:
  * [Christopher T Kenny](https://www.christophertkenny.com), <christopherkenny@fas.harvard.edu> 
  * Cory McCartan, <cmccartan@g.harvard.edu> 
  * Alex Tarr, <atarr@princeton.edu> 
- * [Michael Higgins](http://www-personal.k-state.edu/~mikehiggins/), <mjh5@princeton.edu> 
  * Jun Kawahara, <jkawahara@i.kyoto-u.ac.jp> 
  * [Kosuke Imai](https://imai.fas.harvard.edu), <imai@harvard.edu>
+ 
+Contributors:
+ * [Michael Higgins](http://www-personal.k-state.edu/~mikehiggins/), <mjh5@princeton.edu> 
 
 This package implements methods from the following papers:
 
 [Automated Redistricting Simulation Using Markov Chain Monte
-Carlo](https://imai.fas.harvard.edu/research/redist.html)
+Carlo](https://doi.org/10.1080/10618600.2020.1739532) *Journal of Computational and Graphical Statistics*
 
 [The Essential Role of Empirical Validation in Legislative Redistricting
-Simulation](https://www.tandfonline.com/doi/full/10.1080/2330443X.2020.1791773)
+Simulation](https://doi.org/10.1080/2330443X.2020.1791773) *Statistics and Public Policy*  Vol. 7, No. 1, pp 52-68.
 
 [Sequential Monte Carlo for Sampling Balanced and Compact Redistricting
 Plans](https://arxiv.org/pdf/2008.06131.pdf)
