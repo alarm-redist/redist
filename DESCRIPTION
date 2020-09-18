@@ -1,15 +1,15 @@
 Package: redist
-Version: 2.0.0
+Version: 2.0.1
 Date: 2020-09-09
 Title: Simulation Methods for Legislative Redistricting
 Authors@R: c(
-    person("Ben", "Fifield", email = "benfifield@gmail.com", role = "aut"),
+    person("Ben", "Fifield", email = "benfifield@gmail.com", role = c("aut", "cre")),
     person("Christopher T.", "Kenny", email = "christopherkenny@fas.harvard.edu", role = "aut"),
     person("Cory", "McCartan", email = "cmccartan@g.harvard.edu", role = "aut"),
     person("Alexander", "Tarr", email = "atarr@princeton.edu", role = "aut"),
     person("Michael", "Higgins", email = "mikehiggins@k-state.edu", role = "ctb"),
     person("Jun", "Kawahara", email = "jkawahara@i.kyoto-u.ac.jp", role = "aut"),
-    person("Kosuke", "Imai", email = "imai@harvard.edu", role = c("aut", "cre")))
+    person("Kosuke", "Imai", email = "imai@harvard.edu", role = "aut"))
 Maintainer: Ben Fifield <benfifield@gmail.com>
 Description: Enables researchers to sample redistricting plans from a pre-specified
     target distribution using Sequential Monte Carlo and Markov Chain Monte Carlo
@@ -19,7 +19,7 @@ Description: Enables researchers to sample redistricting plans from a pre-specif
     and plotting functionality are also included. The package implements methods
     described in Fifield, Higgins, Imai and Tarr (2020) <doi: 10.1080/10618600.2020.1739532>,
     Fifield, Imai, Kawahara, and Kenny (2020) <doi: 10.1080/2330443X.2020.1791773>,
-    and McCartan and Imai (2020) <https://arxiv.org/pdf/2008.06131.pdf>.
+    and McCartan and Imai (2020) <arXiv: 2008.06131>.
 Depends:
     R (>= 3.5.0)
 Imports:
