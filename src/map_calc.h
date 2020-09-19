@@ -24,6 +24,11 @@ double eval_vra(const subview_col<uword> &districts, int distr, double tgt_min,
                 double tgt_other, double pow_vra, const uvec &pop, const uvec &min_pop);
 
 /*
+ * Compute the incumbent-preserving penalty for district `distr`
+ */
+double eval_inc(const subview_col<uword> &districts, int distr, const uvec &incumbents);
+
+/*
  * Compute the deviation from the equal population constraint.
  */
 NumericMatrix pop_dev(const umat &districts, const subview_col<uword> &pop, int n_distr);

@@ -21,6 +21,7 @@ IntegerMatrix smc_plans(int N, List l, const arma::uvec &counties,
                         double beta_sq, const arma::uvec &current, int n_current,
                         double beta_vra, double tgt_min, double tgt_other,
                         double pow_vra, const arma::uvec &min_pop,
+                        double beta_inc, const arma::uvec &incumbents,
                         NumericVector &log_prob, double thresh,
                         double alpha, int infl=5, int verbosity=1);
 
@@ -45,7 +46,8 @@ int apply_constraints(const umat &districts, int N_sample, int n_distr,
                       int distr_ctr, vec &lp, const uvec &pop,
                       double beta_sq, const uvec &current, int n_current,
                       double beta_vra, double tgt_min, double tgt_other,
-                      double pow_vra, const uvec &min_pop);
+                      double pow_vra, const uvec &min_pop,
+                      double beta_inc, const uvec &incumbents);
 
 /*
  * Split a map into two pieces with population lying between `lower` and `upper`
