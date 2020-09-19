@@ -3,8 +3,7 @@
 \name{fl70}
 \alias{fl70}
 \title{Florida 70 Precinct File}
-\format{
-sf data.frame containing columns for useful data related to the 
+\format{sf data.frame containing columns for useful data related to the 
 redistricting process, subsetted from real data in Florida, and sf geometry column.
 \describe{
 \item{\code{geoid}}{ Contains unique identifier for each precinct which can be matched to the full Florida dataset.}
@@ -19,8 +18,7 @@ redistricting process, subsetted from real data in Florida, and sf geometry colu
 \item{\code{BlackVAP}}{ Contains the voting age population of black constituents of each precinct.}
 \item{\code{HispVAP}}{ Contains the voting age population of hispanic constituents of each precinct.}
 \item{\code{geometry}}{ Contains sf geometry of each precinct.}
-}
-}
+}}
 \usage{
 data("fl70")
 }
