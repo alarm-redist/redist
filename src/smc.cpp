@@ -19,6 +19,7 @@ IntegerMatrix smc_plans(int N, List l, const uvec &counties,
                         double beta_sq, const uvec &current, int n_current,
                         double beta_vra, double tgt_min, double tgt_other,
                         double pow_vra, const uvec &min_pop,
+                        double beta_inc, const uvec &incumbents,
                         NumericVector &log_prob, double thresh,
                         double alpha, int infl, int verbosity) {
     Graph g = list_to_graph(l);
@@ -72,7 +73,8 @@ IntegerMatrix smc_plans(int N, List l, const uvec &counties,
                    n_distr, ctr, distr_pop, tol, gamma, k, verbosity);
         valid = apply_constraints(districts, N_sample, n_distr, ctr, lp, pop,
                                   beta_sq, current, n_current,
-                                  beta_vra, tgt_min, tgt_other, pow_vra, min_pop);
+                                  beta_vra, tgt_min, tgt_other, pow_vra, min_pop,
+                                  beta_inc, incumbents);
 
 
         if (valid == 0) {
@@ -131,7 +133,8 @@ int apply_constraints(const umat &districts, int N_sample, int n_distr,
                       int distr_ctr, vec &lp, const uvec &pop,
                       double beta_sq, const uvec &current, int n_current,
                       double beta_vra, double tgt_min, double tgt_other,
-                      double pow_vra, const uvec &min_pop) {
+                      double pow_vra, const uvec &min_pop,
+                      double beta_inc, const uvec &incumbents) {
     int valid = 0;
     int V = districts.n_rows;
 
@@ -145,6 +148,9 @@ int apply_constraints(const umat &districts, int N_sample, int n_distr,
         if (beta_vra != 0)
             lp[i] += beta_vra * eval_vra(districts.col(i), distr_ctr, tgt_min,
                                          tgt_other, pow_vra, pop, min_pop);
+
+        if (beta_inc != 0)
+            lp[i] += beta_inc * eval_inc(districts.col(i), distr_ctr, incumbents);
     }
 
     return valid;

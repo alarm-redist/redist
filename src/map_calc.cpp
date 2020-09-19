@@ -60,6 +60,20 @@ double eval_vra(const subview_col<uword> &districts, int distr, double tgt_min,
         std::pow(std::abs(frac - tgt_other), pow_vra);
 }
 
+/*
+ * Compute the incumbent-preserving penalty for district `distr`
+ */
+double eval_inc(const subview_col<uword> &districts, int distr, const uvec &incumbents) {
+    int n_inc = incumbents.size();
+    double inc_in_distr = -1.0; // first incumbent doesn't count
+    for (int i = 0; i < n_inc; i++) {
+        if (districts[incumbents[i]] == distr)
+            inc_in_distr++;
+    }
+
+    return inc_in_distr;
+}
+
 
 /*
  * Compute the deviation from the equal population constraint.

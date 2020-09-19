@@ -12,13 +12,7 @@ redist.smc(
   counties = NULL,
   popcons = 0.01,
   compactness = 1,
-  status_quo = 0,
-  current = rep(1, length(popvec)),
-  vra = 0,
-  tgt_vra_min = 0.55,
-  tgt_vra_other = 0.25,
-  pow_vra = 1.5,
-  min_pop = rep(0, length(popvec)),
+  constraints = list(),
   resample = TRUE,
   constraint_fn = function(m) rep(0, ncol(m)),
   adapt_k_thresh = 0.95,
@@ -55,26 +49,8 @@ populations within 1\% of the target population.}
 higher values preferring more compact districts. Must be nonnegative. See the
 'Details' section for more information, and computational considerations.}
 
-\item{status_quo}{Controls the tendency of the generated districts to
-respect the status quo, with higher values preferring more similar districts.}
-
-\item{current}{A vector containing district assignments for the current map,
-used for the status quo constraint.}
-
-\item{vra}{Controls the strength of the Voting Rights Act (VRA) constraint,
-with higher values prioritizing majority-minority districts over other
-considerations.}
-
-\item{tgt_vra_min}{The target percentage of minority voters in minority
-opportunity districts.}
-
-\item{tgt_vra_other}{The target percentage of minority voters in other districts.}
-
-\item{pow_vra}{Controls the allowed deviation from the target minority
-percentage; higher values are more tolerant.}
-
-\item{min_pop}{A vector containing the minority population of each
-geographic unit.}
+\item{constraints}{A list containing information on constraints to implement.
+See the 'Details' section for more information.}
 
 \item{resample}{Whether to perform a final resampling step so that the
 generated plans can be used immediately.  Set this to \code{FALSE} to perform
@@ -134,8 +110,8 @@ boundary constraints.
 }
 \details{
 This function draws nearly-independent samples from a specific target measure,
-controlled by the \code{popcons}, \code{compactness}, and \code{constraint_fn}
-parameters.
+controlled by the \code{popcons}, \code{compactness}, \code{constraints}, and
+\code{constraint_fn} parameters.
 
 Higher values of \code{compactness} sample more compact districts;
 setting this parameter to 1 is computationally efficient and generates nicely
@@ -143,6 +119,42 @@ compact districts.  Values of other than 1 may lead to highly variable
 importance sampling weights.  By default these weights are truncated at
 \code{nsims^0.04 / 100} to stabilize the resulting estimates, but if truncation
 is used, a specific truncation function should probably be chosen by the user.
+
+The \code{constraints} parameter allows the user to apply several common
+redistricting contraints without implementing them by hand. This parameter
+is a list, which may contain any of the following named entries:
+\itemize{
+\item \code{status_quo}: a list with two entries:
+\itemize{
+\item \code{strength}, a number controlling the tendency of the generated districts
+to respect the status quo, with higher values preferring more similar
+districts.
+\item \code{current}, a vector containing district assignments for
+the current map.
+}
+\item \code{vra}: a list with five entries:
+\itemize{
+\item \code{strength}, a number controlling the strength of the Voting Rights Act
+(VRA) constraint, with higher values prioritizing majority-minority districts
+over other considerations.
+\item \code{tgt_vra_min}, the target percentage of minority voters in minority
+copportunity districts. Defaults to 0.55.
+\item \code{tgt_vra_other} The target percentage of minority voters in other
+districts. Defaults to 0.25, but should be set to reflect the total minority
+population in the state.
+\item \code{pow_vra}, which controls the allowed deviation from the target
+minority percentage; higher values are more tolerant. Defaults to 1.5
+\item \code{min_pop}, A vector containing the minority population of each
+geographic unit.
+}
+\item \code{incumbency}: a list with two entries:
+\itemize{
+\item \code{strength}, a number controlling the tendency of the generated districts
+to avoid pairing up incumbents.
+\item \code{current}, a vector of precinct indices, one for each incumbent's
+home address.
+}
+}
 
 Because of the randomness inherent in the algorithm and the way it samples,
 this function is not guaranteed to produce exactly \code{nsims} samples.
