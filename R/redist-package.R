@@ -13,24 +13,24 @@
 #' <http://imai.fas.harvard.edu/research/files/redist.pdf>.
 #'
 #' \tabular{ll}{ Package: \tab redist\cr Type: \tab Package\cr
-#' Version: \tab 1.3-2\cr
-#' Date: \tab 2018-10-15\cr License: \tab GPL (>= 2)\cr }
+#' Version: \tab 2.0.1\cr
+#' Date: \tab 2020-09-19\cr License: \tab GPL (>= 2)\cr }
 #'
 #' @name redist-package
 #' @useDynLib redist, .registration = TRUE
 #' @aliases redist-package redist
 #' @docType package
 #' @author Benjamin Fifield, Department of Politics, Princeton University
-#' \email{benfifield@@gmail.com}, \url{http://www.benfifield.com}
+#' \email{benfifield@@gmail.com}, \url{https://www.benfifield.com}
 #'
 #' Michael Higgins, Department of Statistics, Princeton University
-#' \email{mikehiggins@@k-state.edu}, \url{http://www-personal.ksu.edu/~mikehiggins/}
+#' \email{mikehiggins@@k-state.edu}, \url{http://www-personal.k-state.edu/~mikehiggins/}
 #'
 #' Alexander Tarr, Department of Electrical Engineering, Princeton University
 #' \email{atarr@@princeton.edu}
 #'
 #' Kosuke Imai, Department of Politics, Princeton University
-#' \email{kimai@@princeton.edu}, \url{http://imai.princeton.edu}
+#' \email{kimai@@princeton.edu}, \url{http://imai.fas.harvard.edu}
 #'
 #' Maintainer: Ben Fifield <benfifield@gmail.com>
 #'
