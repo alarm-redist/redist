@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Combine successive runs of redist.mcmc.mpi — redist.combine.mpi • redist</title>
+<title>Calculate gerrymandering metrics for a set of districts — redist.metrics • redist</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,9 +46,9 @@
 
 
 
-<meta property="og:title" content="Combine successive runs of redist.mcmc.mpi — redist.combine.mpi" />
-<meta property="og:description" content="redist.combine.mpi is used to combine successive runs of
-redist.mcmc.mpi into a single data object" />
+<meta property="og:title" content="Calculate gerrymandering metrics for a set of districts — redist.metrics" />
+<meta property="og:description" content="redist.metrics is used to compute different gerrymandering metrics for a
+set of maps." />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -129,104 +129,115 @@ redist.mcmc.mpi into a single data object" />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Combine successive runs of <code>redist.mcmc.mpi</code></h1>
-    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/redistMPI.R'><code>R/redistMPI.R</code></a></small>
-    <div class="hidden name"><code>redist.combine.mpi.Rd</code></div>
+    <h1>Calculate gerrymandering metrics for a set of districts</h1>
+    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/metrics.R'><code>R/metrics.R</code></a></small>
+    <div class="hidden name"><code>redist.metrics.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p><code>redist.combine.mpi</code> is used to combine successive runs of
-<code>redist.mcmc.mpi</code> into a single data object</p>
+    <p><code>redist.metrics</code> is used to compute different gerrymandering metrics for a
+set of maps.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.combine.mpi</span>(<span class='kw'>savename</span>, <span class='kw'>nloop</span>, <span class='kw'>nthin</span>, <span class='kw'>tempadj</span>)</pre>
+    <pre class="usage"><span class='fu'>redist.metrics</span>(
+  <span class='kw'>district_membership</span>,
+  measure = <span class='st'>"DSeats"</span>,
+  <span class='kw'>rvote</span>,
+  <span class='kw'>dvote</span>,
+  tau = <span class='fl'>1</span>,
+  biasV = <span class='fl'>0.5</span>,
+  respV = <span class='fl'>0.5</span>,
+  bandwidth = <span class='fl'>0.01</span>,
+  nloop = <span class='fl'>1</span>,
+  ncores = <span class='fl'>1</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>savename</th>
-      <td><p>The name (without the loop or <code>.RData</code> suffix)
-of the saved simulations.</p></td>
+      <th>district_membership</th>
+      <td><p>A numeric vector (if only one map) or matrix with one row 
+for each precinct and one column for each map. Required.</p></td>
+    </tr>
+    <tr>
+      <th>measure</th>
+      <td><p>A vector with a string for each measure desired from list "DSeats", "DVS", "EffGap", 
+"EffGapEqPop", "TauGap", "MeanMedian", "Bias", "BiasV", "Declination", 
+"Responsiveness", and "LopsidedWins". Use "all" to get all metrics. 
+"Dseats" and "DVS" are always computed, so it is recommended to always return those values.</p></td>
+    </tr>
+    <tr>
+      <th>rvote</th>
+      <td><p>A numeric vector with the Republican vote for each precinct.</p></td>
+    </tr>
+    <tr>
+      <th>dvote</th>
+      <td><p>A numeric vector with the Democratic vote for each precinct.</p></td>
+    </tr>
+    <tr>
+      <th>tau</th>
+      <td><p>A non-negative number for calculating Tau Gap. Only used with option "TauGap". Defaults to 1.</p></td>
+    </tr>
+    <tr>
+      <th>biasV</th>
+      <td><p>A value between 0 and 1 to compute bias at. Only used with option "BiasV". Defaults to 0.5.</p></td>
+    </tr>
+    <tr>
+      <th>respV</th>
+      <td><p>A value between 0 and 1 to compute responsiveness at. Only used with option "Responsiveness". Defaults to 0.5.</p></td>
+    </tr>
+    <tr>
+      <th>bandwidth</th>
+      <td><p>A value between 0 and 1 for computing responsiveness. Only used with option "Responsiveness." Defaults to 0.01.</p></td>
     </tr>
     <tr>
       <th>nloop</th>
-      <td><p>The number of loops being combined.</p></td>
+      <td><p>A numeric to specify loop number. Defaults to 1 if only one map provided 
+and the column number if multiple maps given.</p></td>
     </tr>
     <tr>
-      <th>nthin</th>
-      <td><p>How much to thin the simulations being combined.</p></td>
-    </tr>
-    <tr>
-      <th>tempadj</th>
-      <td><p>The temperature adjacency object saved by
-<code>redist.mcmc.mpi</code>.</p></td>
+      <th>ncores</th>
+      <td><p>Number of cores to use for parallel computing. Default is 1.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p><code>redist.combine.mpi</code> returns an object of class "redist".
-The object <code>redist</code> is a list that contains the folowing components (the
-inclusion of some components is dependent on whether tempering
-techniques are used):</p>
-<dt>partitions</dt><dd><p>Matrix of congressional district assignments generated by the
-algorithm. Each row corresponds to a geographic unit, and each column
-corresponds to a simulation.</p></dd>
-<dt>distance_parity</dt><dd><p>Vector containing the maximum distance from parity for
-a particular simulated redistricting plan.</p></dd>
-<dt>mhdecisions</dt><dd><p>A vector specifying whether a proposed redistricting plan
-was accepted (1) or rejected (0) in a given iteration.</p></dd>
-<dt>mhprob</dt><dd><p>A vector containing the Metropolis-Hastings acceptance
-probability for each iteration of the algorithm.</p></dd>
-<dt>pparam</dt><dd><p>A vector containing the draw of the <code>p</code> parameter for each
-simulation, which dictates the number of swaps attempted.</p></dd>
-<dt>constraint_pop</dt><dd><p>A vector containing the value of the population
-constraint for each accepted redistricting plan.</p></dd>
-<dt>constraint_compact</dt><dd><p>A vector containing the value of the compactness
-constraint for each accepted redistricting plan.</p></dd>
-<dt>constraint_segregation</dt><dd><p>A vector containing the value of the
-segregation constraint for each accepted redistricting plan.</p></dd>
-<dt>constraint_similar</dt><dd><p>A vector containing the value of the similarity
-constraint for each accepted redistricting plan.</p></dd>
-<dt>beta_sequence</dt><dd><p>A vector containing the value of beta for each iteration
-of the algorithm. Returned when tempering is being used.</p></dd>
-<dt>mhdecisions_beta</dt><dd><p>A vector specifying whether a proposed beta value was
-accepted (1) or rejected (0) in a given iteration of the algorithm. Returned
-when tempering is being used.</p></dd>
-<dt>mhprob_beta</dt><dd><p>A vector containing the Metropolis-Hastings acceptance
-probability for each iteration of the algorithm. Returned when tempering
-is being used.</p></dd>
-
+    <p>A tibble with  a column for each specified measure and 
+a column that specifies the map number.</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>This function allows users to combine multiple successive runs of
-<code>redist.mcmc.mpi</code> into a single <code>redist</code> object for analysis.</p>
+    <p>This function computes specified compactness scores for a map.  If 
+there is more than one precinct specified for a map, it aggregates to the district level
+and computes one score.</p>
+<p>DSeats is computed as the expected number of Democratic seats with no change in votes.
+DVS is the Democratic Vote Share, which is the two party vote share with Democratic votes as the numerator.
+EffGap is the Efficiency Gap, calculated with votes directly.
+EffGapEqPop is the Efficiency Gap under an Equal Population assumption, calculated with the DVS.
+TauGap is the Tau Gap, comptued with the Equal Population assumption.
+MeanMedian is the Mean Median difference.
+Bias is the Partisan Bias computed at 0.5.
+BiasV is the Partisan Bias computed at value V.
+Declination is the value of declination at 0.5.
+Responsiveness is the responsiveness at the user-supplied value with the user-supplied bandwidth.
+LopsidedWins computed the Lopsided Outcomes value, but does not produce a test statistic.</p>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
-    <p>Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander Tarr.
-(2016) "A New Automated Redistricting Simulator Using Markov Chain Monte
-Carlo." Working Paper. Available at
-<a href='http://imai.princeton.edu/research/files/redist.pdf'>http://imai.princeton.edu/research/files/redist.pdf</a>.</p>
+    <p>Jonathan N. Katz, Gary King, and Elizabeth Rosenblatt. 2020. 
+“Theoretical Foundations and Empirical Evaluations of Partisan Fairness in District-Based Democracies.” 
+American Political Science Review, 114, 1, Pp. 164-178.</p>
+<p>Gregory S. Warrington. 2018. "Quantifying Gerrymandering Using the Vote Distribution."
+Election Law Journal: Rules, Politics, and Policy. Pp. 39-57.http://doi.org/10.1089/elj.2017.0447</p>
+<p>Samuel S.-H. Wang. 2016. "Three Tests for Practical Evaluation of Partisan Gerrymandering." 
+Stanford Law Review, 68, Pp. 1263 - 1321.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='kw'>algdat.pfull</span>)
-
-<span class='co'>## Code to run the simulations in Figure 4 in Fifield, Higgins, Imai and</span>
-<span class='co'>## Tarr (2015)</span>
-
-<span class='co'>## Get an initial partition</span>
-<span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span>(<span class='fl'>1</span>)
-<span class='kw'>initcds</span> <span class='op'>&lt;-</span> <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>cdmat</span>[,<span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span>(<span class='fl'>1</span><span class='op'>:</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span>(<span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>cdmat</span>), <span class='fl'>1</span>)]
-
-<span class='co'>## Run the algorithm</span>
-<span class='fu'><a href='redist.mcmc.mpi.html'>redist.mcmc.mpi</a></span>(adjobj = <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>adjlist</span>,
-popvec = <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>precinct.data</span><span class='op'>$</span><span class='kw'>pop</span>,
-initcds = <span class='kw'>initcds</span>,
-nsims = <span class='fl'>10000</span>, nloops = <span class='fl'>2</span>, savename = <span class='st'>"test"</span>)
-<span class='kw'>out</span> <span class='op'>&lt;-</span> <span class='fu'>redist.combine.mpi</span>(savename = <span class='st'>"test"</span>, nloop = <span class='fl'>2</span>,
-nthin = <span class='fl'>10</span>, tempadj = <span class='kw'>tempAdjMat</span>)
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='st'>"algdat.p10"</span>)
+<span class='kw'>dists</span> <span class='op'>&lt;-</span> <span class='kw'>algdat.p10</span><span class='op'>$</span><span class='kw'>cdmat</span>[,<span class='fl'>1</span><span class='op'>:</span><span class='fl'>100</span>]
+<span class='fu'>redist.metrics</span>(<span class='kw'>dists</span>, measure = <span class='st'>'all'</span>, rvote = <span class='kw'>algdat.p10</span><span class='op'>$</span><span class='kw'>precinct.data</span><span class='op'>$</span><span class='kw'>repvote</span>, 
+dvote = <span class='kw'>algdat.p10</span><span class='op'>$</span><span class='kw'>precinct.data</span><span class='op'>$</span><span class='kw'>demvote</span>)
 }
 </div></pre>
   </div>

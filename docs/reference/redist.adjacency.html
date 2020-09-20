@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Segregation index calculation for MCMC redistricting. — redist.segcalc • redist</title>
+<title>Adjacency List functionality for redist — redist.adjacency • redist</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,10 +46,8 @@
 
 
 
-<meta property="og:title" content="Segregation index calculation for MCMC redistricting. — redist.segcalc" />
-<meta property="og:description" content="redist.segcalc calculates the dissimilarity index of segregation (see
-Massey \&amp;amp; Denton 1987 for more details) for a specified subgroup under any
-redistricting plan." />
+<meta property="og:title" content="Adjacency List functionality for redist — redist.adjacency" />
+<meta property="og:description" content="Creates an adjacency list that is zero indexed with no skips" />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -130,73 +128,30 @@ redistricting plan." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Segregation index calculation for MCMC redistricting.</h1>
-    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/calcstats.R'><code>R/calcstats.R</code></a></small>
-    <div class="hidden name"><code>redist.segcalc.Rd</code></div>
+    <h1>Adjacency List functionality for redist</h1>
+    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/adjacency.R'><code>R/adjacency.R</code></a></small>
+    <div class="hidden name"><code>redist.adjacency.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p><code>redist.segcalc</code> calculates the dissimilarity index of segregation (see
-Massey \&amp; Denton 1987 for more details) for a specified subgroup under any
-redistricting plan.</p>
+    <p>Creates an adjacency list that is zero indexed with no skips</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.segcalc</span>(<span class='kw'>algout</span>, <span class='kw'>grouppop</span>, <span class='kw'>fullpop</span>)</pre>
+    <pre class="usage"><span class='fu'>redist.adjacency</span>(<span class='kw'>shp</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>algout</th>
-      <td><p>A matrix of congressional district assignments or a
-redist object.</p></td>
-    </tr>
-    <tr>
-      <th>grouppop</th>
-      <td><p>A vector of populations for some subgroup of interest.</p></td>
-    </tr>
-    <tr>
-      <th>fullpop</th>
-      <td><p>A vector containign the populations of each geographic unit.</p></td>
+      <th>shp</th>
+      <td><p>A SpatialPolygonsDataFrame or sf object. Required.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p><code>redist.segcalc</code> returns a vector where each entry is the
-dissimilarity index of segregation (Massey &amp; Denton 1987) for each
-redistricting plan in <code>algout</code>.</p>
-    <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
+    <p>Adjacency list</p>
 
-    <p>Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander
-Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain
-Monte Carlo." Working Paper. Available at
-<a href='http://imai.princeton.edu/research/files/redist.pdf'>http://imai.princeton.edu/research/files/redist.pdf</a>.</p>
-<p>Massey, Douglas and Nancy Denton. (1987) "The Dimensions of Social
-Segregation". Social Forces.</p>
-
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='kw'>algdat.pfull</span>)
-
-<span class='co'>## Code to run the simulations in Figure 4 of Fifield, Higgins,</span>
-<span class='co'>## Imai and Tarr (2015)</span>
-
-<span class='co'>## Get an initial partition</span>
-<span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span>(<span class='fl'>1</span>)
-<span class='kw'>initcds</span> <span class='op'>&lt;-</span> <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>cdmat</span>[,<span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span>(<span class='fl'>1</span><span class='op'>:</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span>(<span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>cdmat</span>), <span class='fl'>1</span>)]
-
-<span class='co'>## Run simulations</span>
-<span class='kw'>alg_253</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.mcmc.html'>redist.mcmc</a></span>(adjobj = <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>adjlist</span>,
-popvec = <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>precinct.data</span><span class='op'>$</span><span class='kw'>pop</span>,
-initcds = <span class='kw'>initcds</span>, nsims = <span class='fl'>10000</span>)
-
-<span class='co'>## Get Republican Dissimilarity Index from simulations</span>
-<span class='kw'>rep_dmi_253</span> <span class='op'>&lt;-</span> <span class='fu'>redist.segcalc</span>(<span class='kw'>alg_253</span>,
-<span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>precinct.data</span><span class='op'>$</span><span class='kw'>repvote</span>,
-<span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>precinct.data</span><span class='op'>$</span><span class='kw'>pop</span>)
-}
-</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
