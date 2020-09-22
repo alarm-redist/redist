@@ -162,7 +162,7 @@ arma::vec UPS(std::vector<arma::vec> aList, int cutnum){
   // }
   arma::vec component(num_vertices (mygraph));
   //Rcpp::Rcout << "component:  " << component << '\n';
-  int num_components = connected_components(mygraph, &component[0]);
+  //int num_components = connected_components(mygraph, &component[0]);
   //Rcpp::Rcout << "num_components:  " << num_components << '\n';
   //Rcpp::Rcout << "component:  " << component << '\n';
   // Rcpp::Rcout << "num_components:  " << num_components << '\n';

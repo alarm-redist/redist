@@ -24,6 +24,11 @@ extern std::uniform_real_distribution<double> unif;
 int rint(int max);
 
 /*
+ * Generate a random integer in [0, max) according to weights.
+ */
+int rint(int max, vec cum_wgts);
+
+/*
  * Get the index of the k-th smallest element of x
  */
 // TESTED
