@@ -40,14 +40,14 @@
 #' }
 #'
 #' @author Benjamin Fifield, Department of Politics, Princeton University
-#' \email{bfifield@@princeton.edu}, \url{http://www.benfifield.com}
+#' \email{benfifield@@gmail.com}, \url{https://www.benfifield.com/}
 #'
 #' Michael Higgins, Department of Statistics, Kansas State University
 #' \email{mikehiggins@@k-state.edu},
-#' \url{http://www-personal.ksu.edu/~mikehiggins/}
+#' \url{http://www-personal.k-state.edu/~mikehiggins/}
 #'
 #' Kosuke Imai, Department of Politics, Princeton University
-#' \email{kimai@@princeton.edu}, \url{http://imai.princeton.edu}
+#' \email{imai@@harvard.edu}, \url{http://imai.fas.harvard.edu}
 #'
 #' James Lo, \email{jameslo@@princeton.edu}
 #'

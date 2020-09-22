@@ -172,12 +172,12 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         pop_left_new(i) = pop_left(idx) - lower_s;
 
         if (verbosity >= 2 && refresh > 0 && (i+1) % refresh == 0) {
-            printf("Iteration %'6d / %'d\n", i+1, N);
+            Rprintf("Iteration %'6d / %'d\n", i+1, N);
             Rcpp::checkUserInterrupt();
         }
     }
     if (verbosity >= 2) {
-        printf("%.1f%% acceptance rate.\n", 100.0 * N / iter);
+        Rprintf("%.1f%% acceptance rate.\n", 100.0 * N / iter);
     }
 
     districts = districts_new;

@@ -163,5 +163,4 @@ sampled_constr = redist.smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,
                                 incumbency = lsit(strength=1000, incumbents=c(3, 6, 25))
                             ))
 }
-
 }
