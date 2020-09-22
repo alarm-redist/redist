@@ -48,15 +48,9 @@
 #' * \code{incumbency}: a list with two entries:
 #'   * \code{strength}, a number controlling the tendency of the generated districts
 #'   to avoid pairing up incumbents.
-#'   * \code{current}, a vector of precinct indices, one for each incumbent's
+#'   * \code{incumbents}, a vector of precinct indices, one for each incumbent's
 #'   home address.
 #'
-#'
-#' Because of the randomness inherent in the algorithm and the way it samples,
-#' this function is not guaranteed to produce exactly \code{nsims} samples.
-#' Failure to do so is usually a result of a hard-to-meet population constraint,
-#' especially when there are many districts.  Increasing \code{max_oversample}
-#' should generally alleviate this problem.
 #'
 #' @param adjobj An adjacency matrix, list, or object of class
 #' "SpatialPolygonsDataFrame."
@@ -94,9 +88,6 @@
 #' final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.
 #' @param trunc_fn A function which takes in a vector of weights and returns
 #' a truncated vector. Recommended to specify this manually if truncating weights.
-#' @param max_oversample How much oversampling to allow at each stage; used to
-#' control memory and computation time.  If the algorithm is not producing the
-#' desired nubmer of samples, this should be increased.
 #' @param verbose Whether to print out intermediate information while sampling.
 #'   Recommended.
 #' @param silent Whether to supress all diagnostic information.
@@ -115,13 +106,19 @@
 #' \item{counties}{The provided county vector.}
 #' \item{adapt_k_thresh}{The provided control parameter.}
 #' \item{seq_alpha}{The provided control vector.}
-#' \item{max_oversample}{The provided control vector.}
 #' \item{algorithm}{The algorithm used, here \code{"smc"}.}
 #'
 #' @examples \dontrun{
 #' data(algdat.p10)
-#' sampled_plans = redist.smc(algdat.pfull$adjlist, algdat.pfull$precinct.data$pop,
+#' sampled_basic = redist.smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,
 #'                            nsims=10000, ndists=3, popcons=0.1)
+#'
+#' sampled_constr = redist.smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,
+#'                             nsims=10000, ndists=3, popcons=0.1,
+#'                             constraints=list(
+#'                                 status_quo = list(strength=10, current=algdat.p10$cdmat[,1234]),
+#'                                 incumbency = lsit(strength=1000, incumbents=c(3, 6, 25))
+#'                             ))
 #' }
 #'
 #' @md
@@ -134,7 +131,7 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
                       adapt_k_thresh=0.95, seq_alpha=0.1+0.2*compactness,
                       truncate=(compactness != 1),
                       trunc_fn=function(x) pmin(x, 0.01*nsims^0.4),
-                      max_oversample=20, verbose=TRUE, silent=FALSE) {
+                      verbose=TRUE, silent=FALSE) {
     V = length(popvec)
 
     if (missing(adjobj)) stop("Please supply adjacency matrix or list")
@@ -160,7 +157,7 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
         constraints$vra = list(strength=0, tgt_vra_min=0.55, tgt_vra_other=0.25,
                                pow_vra=1.5, min_pop=rep(0, length(popvec)))
     if (is.null(constraints$incumbency))
-        constraints$incumbency = list(strength=0, current=integer())
+        constraints$incumbency = list(strength=0, incumbents=integer())
 
     if (length(constraints$vra$min_pop) != length(popvec))
         stop("Length of minority population vector must match the number of units.")
@@ -184,14 +181,10 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
                      constraints$vra$strength, constraints$vra$tgt_vra_min,
                      constraints$vra$tgt_vra_other, constraints$vra$pow_vra, constraints$vra$min_pop,
                      constraints$incumbency$strength, constraints$incumbency$incumbents,
-                     lp, adapt_k_thresh, seq_alpha, max_oversample, verbosity);
+                     lp, adapt_k_thresh, seq_alpha, verbosity);
 
-    N_ok = ncol(maps)
     dev = max_dev(maps, popvec, ndists)
     maps = maps
-    lp = lp[1:N_ok]
-    if (N_ok < nsims)
-        warning("Fewer maps sampled than requested; try increasing `max_oversample`.")
 
     lr = -lp + constraint_fn(maps)
     wgt = exp(lr - mean(lr))
@@ -202,15 +195,15 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
     n_eff = length(wgt) * mean(wgt)^2 / mean(wgt^2)
 
     if (resample) {
-        maps = maps[, sample(N_ok, N_ok, replace=T, prob=wgt)]
-        wgt = rep(1/N_ok, N_ok)
+        maps = maps[, sample(nsims, nsims, replace=T, prob=wgt)]
+        wgt = rep(1/nsims, nsims)
     }
 
     algout = list(
         aList = adjlist,
         cdvec = maps,
         wgt = wgt,
-        nsims = N_ok,
+        nsims = N,
         n_eff = n_eff,
         pct_dist_parity = popcons,
         compactness = compactness,
@@ -219,7 +212,6 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
         counties = counties,
         adapt_k_thresh = adapt_k_thresh,
         seq_alpha = seq_alpha,
-        max_oversample = max_oversample,
         algorithm="smc"
     )
     class(algout) = "redist"

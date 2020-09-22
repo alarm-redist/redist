@@ -19,7 +19,6 @@ redist.smc(
   seq_alpha = 0.1 + 0.2 * compactness,
   truncate = (compactness != 1),
   trunc_fn = function(x) pmin(x, 0.01 * nsims^0.4),
-  max_oversample = 20,
   verbose = TRUE,
   silent = FALSE
 )
@@ -75,10 +74,6 @@ final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.}
 \item{trunc_fn}{A function which takes in a vector of weights and returns
 a truncated vector. Recommended to specify this manually if truncating weights.}
 
-\item{max_oversample}{How much oversampling to allow at each stage; used to
-control memory and computation time.  If the algorithm is not producing the
-desired nubmer of samples, this should be increased.}
-
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}
 
@@ -99,7 +94,6 @@ and each column is a sample.}
 \item{counties}{The provided county vector.}
 \item{adapt_k_thresh}{The provided control parameter.}
 \item{seq_alpha}{The provided control vector.}
-\item{max_oversample}{The provided control vector.}
 \item{algorithm}{The algorithm used, here \code{"smc"}.}
 }
 \description{
@@ -155,18 +149,19 @@ to avoid pairing up incumbents.
 home address.
 }
 }
-
-Because of the randomness inherent in the algorithm and the way it samples,
-this function is not guaranteed to produce exactly \code{nsims} samples.
-Failure to do so is usually a result of a hard-to-meet population constraint,
-especially when there are many districts.  Increasing \code{max_oversample}
-should generally alleviate this problem.
 }
 \examples{
 \dontrun{
 data(algdat.p10)
-sampled_plans = redist.smc(algdat.pfull$adjlist, algdat.pfull$precinct.data$pop,
+sampled_basic = redist.smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,
                            nsims=10000, ndists=3, popcons=0.1)
+
+sampled_constr = redist.smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,
+                            nsims=10000, ndists=3, popcons=0.1,
+                            constraints=list(
+                                status_quo = list(strength=10, current=algdat.p10$cdmat[,1234]),
+                                incumbency = lsit(strength=1000, incumbents=c(3, 6, 25))
+                            ))
 }
 
 }

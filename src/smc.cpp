@@ -13,20 +13,18 @@
  * Sample `N` redistricting plans on map `g`, ensuring that the maximum
  * population deviation is within `tol`
  */
-IntegerMatrix smc_plans(int N, List l, const uvec &counties,
-                        const uvec &pop, int n_distr, double tol,
-                        double gamma,
-                        double beta_sq, const uvec &current, int n_current,
-                        double beta_vra, double tgt_min, double tgt_other,
-                        double pow_vra, const uvec &min_pop,
-                        double beta_inc, const uvec &incumbents,
-                        NumericVector &log_prob, double thresh,
-                        double alpha, int infl, int verbosity) {
+umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
+               int n_distr,  double tol, double gamma,
+               double beta_sq, const uvec &current, int n_current,
+               double beta_vra, double tgt_min, double tgt_other,
+               double pow_vra, const uvec &min_pop,
+               double beta_inc, const uvec &incumbents,
+               vec &lp, double thresh,
+               double alpha, int verbosity) {
     Graph g = list_to_graph(l);
     Multigraph cg = county_graph(g, counties);
     int V = g.size();
-    int N_max = infl * N;
-    umat districts(V, N_max, fill::zeros);
+    umat districts(V, N, fill::zeros);
     double total_pop = sum(pop);
     double distr_pop = total_pop / n_distr;
 
@@ -38,110 +36,62 @@ IntegerMatrix smc_plans(int N, List l, const uvec &counties,
                   << cg.size() << " administrative units.\n";
     }
 
-    vec pop_left(N_max);
+    vec pop_left(N);
     pop_left.fill(total_pop);
-    vec lp(N_max, fill::zeros);
+    lp.fill(0.0);
 
     int k;
-    int N_adapt = std::min((int) std::floor(4000.0 / sqrt(V)), N_max);
-    int N_sample = 0;
-    int valid = N_adapt;
-    double prob;
+    vec cum_wgt(N);
+    cum_wgt.fill(1.0 / N);
+    cum_wgt = cumsum(cum_wgt);
     for (int ctr = 1; ctr < n_distr; ctr++) {
         if (verbosity >= 1)
             Rcout << "Making split " << ctr << " of " << n_distr-1 << "\n";
 
         // find k and multipliers
-        adapt_parameters(g, k, prob, N_adapt, valid, lp, thresh, tol, districts,
-                         counties, cg, pop, pop_left, distr_pop);
-
-        int N_new = std::ceil(N / prob);
-        if (ctr == n_distr - 1) // safety margin for last step
-            N_new *= (2+n_distr)/2;
-        N_new = std::min(N_new, N_max);
+        adapt_parameters(g, k, lp, thresh, tol, districts, counties, cg, pop,
+                         pop_left, distr_pop);
 
         if (verbosity >= 3)
-            printf("Using k=%d for estimated success probability of %.2f%%\n",
-                   k, 100.0*prob);
+            Rcout << "Using k = " << k << "\n";
 
-        // Resample
-        resample_maps(N_sample, N_new, alpha, districts, lp, pop_left);
-        N_sample = N_new;
-
-        // perform sampling
-        split_maps(g, counties, cg, pop, districts, lp, pop_left, N_sample,
+        // perform resampling/drawing
+        split_maps(g, counties, cg, pop, districts, cum_wgt, lp, pop_left,
                    n_distr, ctr, distr_pop, tol, gamma, k, verbosity);
-        valid = apply_constraints(districts, N_sample, n_distr, ctr, lp, pop,
-                                  beta_sq, current, n_current,
-                                  beta_vra, tgt_min, tgt_other, pow_vra, min_pop,
-                                  beta_inc, incumbents);
 
-
-        if (valid == 0) {
-            Rcout << "No valid samples at stage " << ctr << "; stopping sampling.\n"
-            << "Consider increasing `N` and/or `infl`.\n";
-            IntegerMatrix distr_ret(V, N);
-            return distr_ret;
-        }
-
-        if (verbosity >= 2)
-            printf("%d valid samples (%.1f%% of total)\n", valid, (100.0*valid)/N_sample);
+        // compute weights for next step
+        cum_wgt = get_wgts(districts, n_distr, ctr, alpha, lp, pop,
+                           beta_sq, current, n_current,
+                           beta_vra, tgt_min, tgt_other, pow_vra, min_pop,
+                           beta_inc, incumbents);
 
         Rcpp::checkUserInterrupt();
     }
 
-    resample_maps(N_sample, valid, alpha, districts, lp, pop_left);
-
-    // Output districts (and set final district label to n_distr rather than 0)
-    N = std::min(N, valid);
-    IntegerMatrix distr_ret(V, N);
-    int idx = 0;
+    // Set final district label to n_distr rather than 0
     for (int i = 0; i < N; i++) {
-        if (std::isinf(lp(i))) continue;
-        log_prob(idx) = lp(i);
         for (int j = 0; j < V; j++) {
-            distr_ret(j, idx) = districts(j, i) == 0 ? n_distr : districts(j, i);
+            districts(j, i) = districts(j, i) == 0 ? n_distr : districts(j, i);
         }
-        idx++;
     }
 
-    return distr_ret;
-}
-
-/*
- * Resample partially-drawn maps according to their weights.
- */
-void resample_maps(int N_sample, int N_new, double alpha, umat &districts,
-                   vec &lp, vec &pop_left) {
-    if (N_sample == 0) return;
-
-    vec wgt = exp(-alpha * lp.subvec(0, N_sample - 1));
-    lp = lp * (1 - alpha);
-
-    uvec idxs = as<uvec>(Rcpp::sample(N_sample, N_new, true, wrap(wgt), false));
-
-    lp = lp.elem(idxs);
-    pop_left = pop_left.elem(idxs);
-    districts = districts.cols(idxs);
+    return districts;
 }
 
 
 /*
- * Add specific constraint weights & return the number of valid samples
+ * Add specific constraint weights & return the cumulative weight vector
  */
-int apply_constraints(const umat &districts, int N_sample, int n_distr,
-                      int distr_ctr, vec &lp, const uvec &pop,
-                      double beta_sq, const uvec &current, int n_current,
-                      double beta_vra, double tgt_min, double tgt_other,
-                      double pow_vra, const uvec &min_pop,
-                      double beta_inc, const uvec &incumbents) {
-    int valid = 0;
+vec get_wgts(const umat &districts, int n_distr, int distr_ctr,
+             double alpha, vec &lp, const uvec &pop,
+             double beta_sq, const uvec &current, int n_current,
+             double beta_vra, double tgt_min, double tgt_other,
+             double pow_vra, const uvec &min_pop,
+             double beta_inc, const uvec &incumbents) {
     int V = districts.n_rows;
+    int N = districts.n_cols;
 
-    for (int i = 0; i < N_sample; i++) {
-        if (!std::isfinite(lp(i))) continue;
-        valid++;
-
+    for (int i = 0; i < N; i++) {
         if (beta_sq != 0)
             lp[i] += beta_sq * sq_entropy(districts.col(i), current, distr_ctr,
                                           pop, n_distr, n_current, V);
@@ -153,7 +103,12 @@ int apply_constraints(const umat &districts, int N_sample, int n_distr,
             lp[i] += beta_inc * eval_inc(districts.col(i), distr_ctr, incumbents);
     }
 
-    return valid;
+    vec wgt = exp(-alpha * lp);
+    if (distr_ctr < n_distr - 1) // not the last iteration
+        lp = lp * (1 - alpha);
+
+    wgt = cumsum(wgt);
+    return wgt / wgt[N-1];
 }
 
 
@@ -161,56 +116,73 @@ int apply_constraints(const umat &districts, int N_sample, int n_distr,
  * Split off a piece from each map in `districts`, keeping deviation within `tol`
  */
 void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
-                const uvec &pop, umat &districts, vec &lp, vec &pop_left,
-                int N, int n_distr, int dist_ctr, double distr_pop, double tol,
-                double gamma, int k, int verbosity) {
+                const uvec &pop, umat &districts, vec &cum_wgt, vec &lp,
+                vec &pop_left, int n_distr, int dist_ctr, double distr_pop,
+                double tol, double gamma, int k, int verbosity) {
+    int V = districts.n_rows;
+    int N = districts.n_cols;
     // absolute bounds for district populations
     double upper = distr_pop * (1 + tol);
     double lower = distr_pop * (1 - tol);
     int new_size = n_distr - dist_ctr;
     int n_cty = max(counties);
 
+    umat districts_new(V, N);
+    vec pop_left_new(N);
+    vec lp_new(N);
+
     int refresh = N / 10; // how often to print update statements
+    double iter = 0; // how many actual iterations
+    for (int i = 0; i < N; i++, iter++) {
+        // resample
+        int idx = rint(N, cum_wgt);
+        districts_new.col(i) = districts.col(idx);
+        double lower_s = std::max(lower, pop_left(idx) - new_size * upper);
+        double upper_s = std::min(upper, pop_left(idx) - new_size * lower);
 
-    for (int i = 0; i < N; i++) {
-        double lower_s = std::max(lower, pop_left(i) - new_size * upper);
-        double upper_s = std::min(upper, pop_left(i) - new_size * lower);
         // split
-        double inc_lp = split_map(g, counties, cg, districts.col(i), dist_ctr,
-                          pop, pop_left(i), lower_s, upper_s, distr_pop, k);
+        double inc_lp = split_map(g, counties, cg, districts_new.col(i), dist_ctr,
+                                  pop, pop_left(idx), lower_s, upper_s, distr_pop, k);
 
-        if (gamma != 1 && std::isfinite(inc_lp)) {
+        // bad sample; try again
+        if (!std::isfinite(inc_lp)) {
+            i--;
+            continue;
+        }
+
+        if (gamma != 1) {
             double log_st = 0;
             for (int j = 1; j <= n_cty; j++) {
-                log_st += log_st_distr(g, districts, counties, i, dist_ctr, j);
+                log_st += log_st_distr(g, districts_new, counties, i, dist_ctr, j);
             }
-            log_st += log_st_contr(g, districts, counties, n_cty, i, dist_ctr);
+            log_st += log_st_contr(g, districts_new, counties, n_cty, i, dist_ctr);
 
             if (dist_ctr == n_distr - 1) {
                 for (int j = 1; j <= n_cty; j++) {
-                    log_st += log_st_distr(g, districts, counties, i, 0, j);
+                    log_st += log_st_distr(g, districts_new, counties, i, 0, j);
                 }
-                log_st += log_st_contr(g, districts, counties, n_cty, i, 0);
+                log_st += log_st_contr(g, districts_new, counties, n_cty, i, 0);
             }
 
             inc_lp += (1 - gamma) * log_st;
         }
-        lp(i) += inc_lp;
+        lp_new(i) = lp(idx) + inc_lp;
 
         // `lower_s` now contains the population of the newly-split district
-        pop_left(i) -= lower_s;
+        pop_left_new(i) = pop_left(idx) - lower_s;
 
         if (verbosity >= 2 && refresh > 0 && (i+1) % refresh == 0) {
             printf("Iteration %'6d / %'d\n", i+1, N);
             Rcpp::checkUserInterrupt();
         }
     }
-
-    // ensure the leftover slots don't get sampled
-    int N_max = lp.size();
-    for (int i = N; i < N_max; i++) {
-        lp(i) = -log(0.0);
+    if (verbosity >= 2) {
+        printf("%.1f%% acceptance rate.\n", 100.0 * N / iter);
     }
+
+    districts = districts_new;
+    pop_left = pop_left_new;
+    lp = lp_new;
 }
 
 /*
@@ -303,16 +275,15 @@ double cut_districts(Tree &ust, int k, int root, subview_col<uword> &districts,
 /*
  * Choose k and multiplier for efficient, accurate sampling
  */
-void adapt_parameters(const Graph &g, int &k, double &prob, int N_adapt, int valid,
-                      const vec &lp, double thresh, double tol,
-                      const umat &districts, const uvec &counties,
+void adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
+                      double tol, const umat &districts, const uvec &counties,
                       Multigraph &cg, const uvec &pop,
                       const vec &pop_left, double target) {
     // sample some spanning trees and compute deviances
     int V = g.size();
     int k_max = std::min(20 + ((int) std::sqrt(V)), V - 1); // heuristic
     int N_max = districts.n_cols;
-    N_adapt = std::min(N_adapt, valid);
+    int N_adapt = std::min((int) std::floor(4000.0 / sqrt(V)), N_max);
 
     std::vector<std::vector<double>> devs;
     vec distr_ok(k_max+1, fill::zeros);
@@ -367,11 +338,5 @@ void adapt_parameters(const Graph &g, int &k, double &prob, int N_adapt, int val
         Rcout << "Warning: maximum hit; falling back to naive k estimator.\n";
         k = max_ok + 1;
     }
-
-    prob = 0;
-    for (int i = 0; i <= k; i++) {
-        prob += ((double) i / k) * distr_ok(i);
-    }
-    if (prob == 0.0) prob = 1.0 / N_max; // happens sometimes
 }
 

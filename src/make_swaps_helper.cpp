@@ -353,7 +353,7 @@ NumericVector diff_origcds(NumericMatrix mat,
   arma::uvec cds_arma = as<arma::uvec>(cds);
 
   // Initialize objects
-  unsigned int i; unsigned int j; unsigned int k = mat.ncol(); arma::vec plan;
+  unsigned int i; unsigned int k = mat.ncol(); arma::vec plan;
   arma::uvec compare; NumericVector store_compare(k);
 
   // Start loop over mat columns
