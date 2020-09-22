@@ -1,13 +1,14 @@
 citHeader("To cite redist in publications use:")
 
 citEntry(entry = "misc",
-	 title = "{redist}: Markov Chain Monte Carlo Methods for Redistricting Simulation", 
-	 author = personList(as.person("Ben Fifield"), as.person("Alexander Tarr"), as.person("Michael Higgins"), as.person("Kosuke Imai")), 
+	 title = "{redist}: Simulation Methods for Legislative Redistricting", 
+	 author = personList(as.person("Ben Fifield"), as.person("Christopher T. Kenny"), as.person("Cory McCartan"), 
+	 as.person("Alexander Tarr"), as.person("Kosuke Imai")), 
 	 howpublished = "Available at The Comprehensive R Archive Network (CRAN)", 
-	 year = "2016",
+	 year = "2020",
 	 url = "https://CRAN.R-project.org/package=redist",
-	 textVersion = paste("Ben Fifield, Alexander Tarr, Michael Higgins, and Kosuke Imai (2016).",
-	 	             "redist: Markov Chain Monte Carlo Methods for Redistricting Simulation.",
+	 textVersion = paste("Ben Fifield, Christopher T. Kenny, Cory McCartan, Alexander Tarr, and Kosuke Imai (2020).",
+	 	             "redist: Simulation Methods for Legislative Redistricting.",
 			     "Available at The Comprehensive R Archive Network (CRAN).",
 			     "URL https://CRAN.R-project.org/package=redist.")
 )

@@ -6,4 +6,8 @@
 /redist/src/RcppExports.cpp
 .DS_Store
 .Rhistory
+inst/doc
+doc
+Meta
+docs
 .Rproj.user

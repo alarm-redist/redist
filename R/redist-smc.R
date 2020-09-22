@@ -122,6 +122,7 @@
 #' }
 #'
 #' @md
+#' @importFrom stats qnorm
 #' @export
 redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
                       popcons=0.01, compactness=1,
