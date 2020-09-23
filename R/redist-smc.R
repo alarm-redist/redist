@@ -147,7 +147,7 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
     if (nsims < 1)
         stop("`nsims` must be positive.")
 
-    if (missing(counties)) counties = rep(1, V)
+    if (is.null(counties)) counties = rep(1, V)
     if (length(unique(counties)) != max(counties))
         stop("County numbers must run from 1 to n_county with no interruptions.")
 
@@ -204,7 +204,7 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
         aList = adjlist,
         cdvec = maps,
         wgt = wgt,
-        nsims = N,
+        nsims = nsims,
         n_eff = n_eff,
         pct_dist_parity = popcons,
         compactness = compactness,
