@@ -101,6 +101,7 @@
 #' \item{nsims}{The number of plans sampled.}
 #' \item{pct_dist_parity}{The population constraint.}
 #' \item{compactness}{The compactness constraint.}
+#' \item{counties}{The computed constraint options list (see above).}
 #' \item{maxdev}{The maximum population deviation of each sample.}
 #' \item{popvec}{The provided vector of unit populations.}
 #' \item{counties}{The provided county vector.}
@@ -208,9 +209,10 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
         n_eff = n_eff,
         pct_dist_parity = popcons,
         compactness = compactness,
+        constraints = constraints,
         maxdev = dev,
         popvec = popvec,
-        counties = counties,
+        counties = if (max(counties)==1) NULL else counties,
         adapt_k_thresh = adapt_k_thresh,
         seq_alpha = seq_alpha,
         algorithm="smc"
