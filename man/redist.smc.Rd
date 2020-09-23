@@ -89,6 +89,7 @@ and each column is a sample.}
 \item{nsims}{The number of plans sampled.}
 \item{pct_dist_parity}{The population constraint.}
 \item{compactness}{The compactness constraint.}
+\item{counties}{The computed constraint options list (see above).}
 \item{maxdev}{The maximum population deviation of each sample.}
 \item{popvec}{The provided vector of unit populations.}
 \item{counties}{The provided county vector.}
@@ -145,7 +146,7 @@ geographic unit.
 \itemize{
 \item \code{strength}, a number controlling the tendency of the generated districts
 to avoid pairing up incumbents.
-\item \code{current}, a vector of precinct indices, one for each incumbent's
+\item \code{incumbents}, a vector of precinct indices, one for each incumbent's
 home address.
 }
 }
@@ -163,4 +164,5 @@ sampled_constr = redist.smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,
                                 incumbency = lsit(strength=1000, incumbents=c(3, 6, 25))
                             ))
 }
+
 }
