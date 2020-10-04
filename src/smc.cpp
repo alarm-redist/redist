@@ -38,7 +38,7 @@ IntegerMatrix smc_plans(int N, List l, const uvec &counties,
     vec lp(N_max, fill::zeros);
 
     int k;
-    int N_adapt = std::min((int) std::floor(4000.0 / sqrt(V)), N_max);
+    int N_adapt = std::min((int) std::floor(4000.0 / sqrt((double)V)), N_max);
     int N_sample = 0;
     int valid = N_adapt;
     double prob;
@@ -197,7 +197,7 @@ double split_map(const Graph &g, const uvec &counties, Multigraph &cg,
                           lower, upper, target);
     if (lower == 0) return -log(0.0); // reject sample
 
-    return log_boundary(g, districts, 0, dist_ctr) - log(k);
+    return log_boundary(g, districts, 0, dist_ctr) - log((double)k);
 }
 
 

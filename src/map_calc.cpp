@@ -22,7 +22,7 @@ double log_boundary(const Graph &g, const subview_col<uword> &districts,
         }
     }
 
-    return log(count);
+    return log((double)count);
 }
 
 
