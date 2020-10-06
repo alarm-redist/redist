@@ -98,6 +98,7 @@
 #' \item{cdvec}{The matrix of sampled plans. Each row is a geographical unit,
 #' and each column is a sample.}
 #' \item{wgt}{The importance sampling weights, normalized to sum to 1.}
+#' \item{orig_wgt}{The importance sampling weights before resampling or truncation, normalized.}
 #' \item{nsims}{The number of plans sampled.}
 #' \item{pct_dist_parity}{The population constraint.}
 #' \item{compactness}{The compactness constraint.}
@@ -194,7 +195,11 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
     if (truncate)
         wgt = trunc_fn(wgt)
     wgt = wgt/sum(wgt)
+    orig_wgt = wgt
     n_eff = length(wgt) * mean(wgt)^2 / mean(wgt^2)
+
+    if (n_eff/nsims <= 0.05)
+        warning("Less than 5% efficiency. Consider weakening constraints and/or adjusting `seq_alpha`.")
 
     if (resample) {
         maps = maps[, sample(nsims, nsims, replace=T, prob=wgt)]
@@ -205,6 +210,7 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
         aList = adjlist,
         cdvec = maps,
         wgt = wgt,
+        orig_wgt = orig_wgt,
         nsims = nsims,
         n_eff = n_eff,
         pct_dist_parity = popcons,

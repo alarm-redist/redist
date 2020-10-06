@@ -86,6 +86,7 @@ is a list containing the following components:
 \item{cdvec}{The matrix of sampled plans. Each row is a geographical unit,
 and each column is a sample.}
 \item{wgt}{The importance sampling weights, normalized to sum to 1.}
+\item{orig_wgt}{The importance sampling weights before resampling or truncation, normalized.}
 \item{nsims}{The number of plans sampled.}
 \item{pct_dist_parity}{The population constraint.}
 \item{compactness}{The compactness constraint.}
