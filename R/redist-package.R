@@ -13,8 +13,8 @@
 #' <http://imai.fas.harvard.edu/research/files/redist.pdf>.
 #'
 #' \tabular{ll}{ Package: \tab redist\cr Type: \tab Package\cr
-#' Version: \tab 2.0.1\cr
-#' Date: \tab 2020-09-19\cr License: \tab GPL (>= 2)\cr }
+#' Version: \tab 2.0.2\cr
+#' Date: \tab 2020-10-03\cr License: \tab GPL (>= 2)\cr }
 #'
 #' @name redist-package
 #' @useDynLib redist, .registration = TRUE

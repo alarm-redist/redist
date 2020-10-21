@@ -110,6 +110,10 @@
 #' \item{seq_alpha}{The provided control vector.}
 #' \item{algorithm}{The algorithm used, here \code{"smc"}.}
 #'
+#' @references
+#' McCartan, C., & Imai, K. (2020). Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans.
+#' Available at \url{https://imai.fas.harvard.edu/research/files/SMCredist.pdf}.
+#'
 #' @examples \dontrun{
 #' data(algdat.p10)
 #' sampled_basic = redist.smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,

@@ -206,7 +206,7 @@ double split_map(const Graph &g, const uvec &counties, Multigraph &cg,
                           lower, upper, target);
     if (lower == 0) return -log(0.0); // reject sample
 
-    return log_boundary(g, districts, 0, dist_ctr) - log(k);
+    return log_boundary(g, districts, 0, dist_ctr) - log((double)k);
 }
 
 
