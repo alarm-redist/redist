@@ -125,3 +125,7 @@ swMH <- function(aList, cdvec, cdorigvec, popvec, grouppopvec, areas_vec, county
     .Call(`_redist_swMH`, aList, cdvec, cdorigvec, popvec, grouppopvec, areas_vec, county_membership, borderlength_mat, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, lambda, beta, weight_population, weight_compact, weight_segregation, weight_similar, weight_countysplit, adapt_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, compactness_measure, ssd_denom, num_hot_steps, num_annealing_steps, num_cold_steps)
 }
 
+var_info_mat <- function(m, i, pop) {
+    .Call(`_redist_var_info_mat`, m, i, pop)
+}
+

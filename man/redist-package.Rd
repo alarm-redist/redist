@@ -20,8 +20,8 @@ Chain Monte Carlo,'' working paper available at
 }
 \details{
 \tabular{ll}{ Package: \tab redist\cr Type: \tab Package\cr
-Version: \tab 2.0.1\cr
-Date: \tab 2020-09-19\cr License: \tab GPL (>= 2)\cr }
+Version: \tab 2.0.2\cr
+Date: \tab 2020-10-03\cr License: \tab GPL (>= 2)\cr }
 }
 \references{
 Barbu, Adrian and Song-Chun Zhu. (2005) "Generalizing Swendsen-Wang to
