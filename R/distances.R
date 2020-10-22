@@ -28,7 +28,7 @@
 #'     VI(\xi, \xi') = -\sum_{i=1}^n\sum_{j=1}^n pop(\xi_i \cap \xi'_j)/P
 #'     (2log(pop(\xi_i \cap \xi'_j)) - log(pop(\xi_i)) - log(pop(\xi'_j)))
 #' } where \eqn{\xi,\xi'} are the partitions, \eqn{\xi_i,\xi_j} the individual
-#' districts, \eqn{\text{pop(\cdot)}} is the population, and \eqn{P} the total
+#' districts, \eqn{pop(\cdot)} is the population, and \eqn{P} the total
 #' population of the state. VI is also expressible as the difference between
 #' the joint entropy and the mutual information (see references).
 #'
