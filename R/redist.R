@@ -106,7 +106,9 @@ combine.par.anneal <- function(a, b){
 #' @param verbose Whether to print initialization statement.
 #' Default is \code{TRUE}.
 #' @param ncores The number of cores available to parallelize over. Default is 1.
-#'
+#' @param tgt_min The majority minority target percent as a decimal. Default is 0.55.
+#' @param tgt_other The remaining target percent as a decimal. Default is 0.25.
+#' 
 #' @export
 redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
                                initcds = NULL,
@@ -123,7 +125,7 @@ redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
                                adapt_lambda = FALSE, adapt_eprob = FALSE,
                                contiguitymap = "rooks", exact_mh = FALSE,
                                savename = NULL, verbose = TRUE,
-                               ncores = 1){
+                               ncores = 1, tgt_min = 0.55, tgt_other = 0.25){
     
     if(verbose){
         ## Initialize ##
@@ -206,7 +208,7 @@ redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
     weightseg <- preprocout$params$weightseg
     weightsimilar <- preprocout$params$weightsimilar
     weightcountysplit <- preprocout$params$weightcountysplit
-    
+
     cat("Starting swMH().\n")
     algout <- swMH(aList = preprocout$data$adjlist,
                    cdvec = preprocout$data$initcds,
@@ -235,6 +237,8 @@ redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
                    adapt_lambda = adapt_lambda,
                    adapt_eprob = adapt_eprob,
                    compactness_measure = compactness_metric,
+                   tgt_min = tgt_min,
+                   tgt_other = tgt_other,
                    num_hot_steps = num_hot_steps,
                    num_annealing_steps = num_annealing_steps,
                    num_cold_steps = num_cold_steps)
@@ -514,7 +518,6 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
                               maxiter = maxiterrsg)
         ## Get initial cds
         initcds <- initout$district_membership
-        
     }
     
     ###########################################################
@@ -939,6 +942,8 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' @param savename Filename to save simulations. Default is \code{NULL}.
 #' @param verbose Whether to print initialization statement.
 #' Default is \code{TRUE}.
+#' @param tgt_min The majority minority target percent as a decimal. Default is 0.55.
+#' @param tgt_other The remaining target percent as a decimal. Default is 0.25.
 #'
 #' @details This function allows users to simulate redistricting plans
 #' using Markov Chain Monte Carlo methods. Several constraints
@@ -979,6 +984,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' \item{mhprob_beta}{A vector containing the Metropolis-Hastings acceptance
 #' probability for each iteration of the algorithm. Returned when tempering
 #' is being used.}
+#' 
 #'
 #' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander
 #' Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte
@@ -1015,9 +1021,9 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                         adjswaps = TRUE, rngseed = NULL, maxiterrsg = 5000,
                         adapt_lambda = FALSE, adapt_eprob = FALSE,
                         contiguitymap = "rooks", exact_mh = FALSE, savename = NULL,
-                        verbose = TRUE
+                        verbose = TRUE, tgt_min = 0.55, tgt_other = 0.25
 ){
-    
+
     if(verbose){
         ## Initialize ##
         divider <- c(paste(rep("=", 20), sep = "", collapse = ""), "\n")
@@ -1159,7 +1165,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
             }
             
         }        
-        
+
         ## Run algorithm
         algout <- swMH(aList = preprocout$data$adjlist,
                        cdvec = cds,
@@ -1188,8 +1194,10 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                        adapt_lambda = adapt_lambda,
                        adapt_eprob = adapt_eprob,
                        compactness_measure = compactness_metric,
-                       ssd_denom = ssd_denom)
-        
+                       ssd_denom = ssd_denom,
+                       tgt_min = tgt_min,
+                       tgt_other = tgt_other)
+
         class(algout) <- "redist"
         
         ## Save random number state if setting the seed

@@ -60,6 +60,8 @@ List swMH(List aList,
 	  NumericVector beta_sequence,
 	  NumericVector beta_weights,
 	  NumericMatrix ssdmat,
+	  double tgt_min,
+	  double tgt_other,
 	  int lambda = 0,
 	  double beta = 0.0,
 	  double weight_population = 0.0,
@@ -297,6 +299,8 @@ List swMH(List aList,
 				   weight_similar,
 				   weight_countysplit,
 				   ssd_denom,
+				   tgt_min,
+				   tgt_other,
 				   compactness_measure);
 
     }while(as<int>(swap_partitions["goodprop"]) == 0);

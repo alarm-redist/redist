@@ -40,6 +40,8 @@ Rcpp::List make_swaps(Rcpp::List boundary_cc,
 		      double weight_similar,
 		      double weight_countysplit,
 		      double ssd_denominator,
+		      double tgt_min,
+		      double tgt_other,
 		      std::string compactness_measure);
 int mh_decision(double mh_prob);
 Rcpp::List changeBeta(arma::vec betavec,
