@@ -13,8 +13,8 @@
 #' boundary constraints.
 #'
 #' This function draws nearly-independent samples from a specific target measure,
-#' controlled by the \code{popcons}, \code{compactness}, and \code{constraint_fn}
-#' parameters.
+#' controlled by the \code{popcons}, \code{compactness}, \code{constraints}, and
+#' \code{constraint_fn} parameters.
 #'
 #' Higher values of \code{compactness} sample more compact districts;
 #' setting this parameter to 1 is computationally efficient and generates nicely
@@ -23,11 +23,34 @@
 #' \code{nsims^0.04 / 100} to stabilize the resulting estimates, but if truncation
 #' is used, a specific truncation function should probably be chosen by the user.
 #'
-#' Because of the randomness inherent in the algorithm and the way it samples,
-#' this function is not guaranteed to produce exactly \code{nsims} samples.
-#' Failure to do so is usually a result of a hard-to-meet population constraint,
-#' especially when there are many districts.  Increasing \code{max_oversample}
-#' should generally alleviate this problem.
+#' The \code{constraints} parameter allows the user to apply several common
+#' redistricting contraints without implementing them by hand. This parameter
+#' is a list, which may contain any of the following named entries:
+#' * \code{status_quo}: a list with two entries:
+#'   * \code{strength}, a number controlling the tendency of the generated districts
+#'   to respect the status quo, with higher values preferring more similar
+#'   districts.
+#'   * \code{current}, a vector containing district assignments for
+#'   the current map.
+#' * \code{vra}: a list with five entries:
+#'   * \code{strength}, a number controlling the strength of the Voting Rights Act
+#'   (VRA) constraint, with higher values prioritizing majority-minority districts
+#'   over other considerations.
+#'   * \code{tgt_vra_min}, the target percentage of minority voters in minority
+#'   copportunity districts. Defaults to 0.55.
+#'   * \code{tgt_vra_other} The target percentage of minority voters in other
+#'   districts. Defaults to 0.25, but should be set to reflect the total minority
+#'   population in the state.
+#'   * \code{pow_vra}, which controls the allowed deviation from the target
+#'   minority percentage; higher values are more tolerant. Defaults to 1.5
+#'   * \code{min_pop}, A vector containing the minority population of each
+#'   geographic unit.
+#' * \code{incumbency}: a list with two entries:
+#'   * \code{strength}, a number controlling the tendency of the generated districts
+#'   to avoid pairing up incumbents.
+#'   * \code{incumbents}, a vector of precinct indices, one for each incumbent's
+#'   home address.
+#'
 #'
 #' @param adjobj An adjacency matrix, list, or object of class
 #' "SpatialPolygonsDataFrame."
@@ -42,10 +65,12 @@
 #' @param popcons The desired population constraint.  All sampled districts
 #' will have a deviation from the target district size no more than this value
 #' in percentage terms, i.e., \code{popcons=0.01} will ensure districts have
-#' populations within 1\% of the target population.
+#' populations within 1% of the target population.
 #' @param compactness Controls the compactness of the generated districts, with
 #' higher values preferring more compact districts. Must be nonnegative. See the
 #' 'Details' section for more information, and computational considerations.
+#' @param constraints A list containing information on constraints to implement.
+#' See the 'Details' section for more information.
 #' @param resample Whether to perform a final resampling step so that the
 #' generated plans can be used immediately.  Set this to \code{FALSE} to perform
 #' direct importance sampling estimates, or to adjust the weights manually.
@@ -63,9 +88,6 @@
 #' final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.
 #' @param trunc_fn A function which takes in a vector of weights and returns
 #' a truncated vector. Recommended to specify this manually if truncating weights.
-#' @param max_oversample How much oversampling to allow at each stage; used to
-#' control memory and computation time.  If the algorithm is not producing the
-#' desired nubmer of samples, this should be increased.
 #' @param verbose Whether to print out intermediate information while sampling.
 #'   Recommended.
 #' @param silent Whether to supress all diagnostic information.
@@ -76,31 +98,47 @@
 #' \item{cdvec}{The matrix of sampled plans. Each row is a geographical unit,
 #' and each column is a sample.}
 #' \item{wgt}{The importance sampling weights, normalized to sum to 1.}
+#' \item{orig_wgt}{The importance sampling weights before resampling or truncation, normalized to have mean 1.}
 #' \item{nsims}{The number of plans sampled.}
 #' \item{pct_dist_parity}{The population constraint.}
 #' \item{compactness}{The compactness constraint.}
+#' \item{counties}{The computed constraint options list (see above).}
 #' \item{maxdev}{The maximum population deviation of each sample.}
 #' \item{popvec}{The provided vector of unit populations.}
 #' \item{counties}{The provided county vector.}
 #' \item{adapt_k_thresh}{The provided control parameter.}
 #' \item{seq_alpha}{The provided control vector.}
-#' \item{max_oversample}{The provided control vector.}
 #' \item{algorithm}{The algorithm used, here \code{"smc"}.}
+#'
+#' @references
+#' McCartan, C., & Imai, K. (2020). Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans.
+#' Available at \url{https://imai.fas.harvard.edu/research/files/SMCredist.pdf}.
 #'
 #' @examples \dontrun{
 #' data(algdat.p10)
-#' sampled_plans = redist.smc(algdat.pfull$adjlist, algdat.pfull$precinct.data$pop,
+#' sampled_basic = redist.smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,
 #'                            nsims=10000, ndists=3, popcons=0.1)
+#'
+#' sampled_constr = redist.smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,
+#'                             nsims=10000, ndists=3, popcons=0.1,
+#'                             constraints=list(
+#'                                 status_quo = list(strength=10, current=algdat.p10$cdmat[,1234]),
+#'                                 incumbency = lsit(strength=1000, incumbents=c(3, 6, 25))
+#'                             ))
 #' }
+#'
+#' @md
 #' @importFrom stats qnorm
 #' @export
 redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
-                      popcons=0.01, compactness=1, resample=TRUE,
+                      popcons=0.01, compactness=1,
+                      constraints=list(),
+                      resample=TRUE,
                       constraint_fn=function(m) rep(0, ncol(m)),
                       adapt_k_thresh=0.95, seq_alpha=0.1+0.2*compactness,
                       truncate=(compactness != 1),
                       trunc_fn=function(x) pmin(x, 0.01*nsims^0.4),
-                      max_oversample=20, verbose=TRUE, silent=FALSE) {
+                      verbose=TRUE, silent=FALSE) {
     V = length(popvec)
 
     if (missing(adjobj)) stop("Please supply adjacency matrix or list")
@@ -115,9 +153,24 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
     if (nsims < 1)
         stop("`nsims` must be positive.")
 
-    if (missing(counties)) counties = rep(1, V)
+    if (is.null(counties)) counties = rep(1, V)
     if (length(unique(counties)) != max(counties))
         stop("County numbers must run from 1 to n_county with no interruptions.")
+
+    # Other constraints
+    if (is.null(constraints$status_quo))
+        constraints$status_quo = list(strength=0, current=rep(1, length(popvec)))
+    if (is.null(constraints$vra))
+        constraints$vra = list(strength=0, tgt_vra_min=0.55, tgt_vra_other=0.25,
+                               pow_vra=1.5, min_pop=rep(0, length(popvec)))
+    if (is.null(constraints$incumbency))
+        constraints$incumbency = list(strength=0, incumbents=integer())
+
+    if (length(constraints$vra$min_pop) != length(popvec))
+        stop("Length of minority population vector must match the number of units.")
+    if (min(constraints$status_quo$current) == 0)
+        constraints$status_quo$current = constraints$status_quo$current + 1
+    n_current = max(constraints$status_quo$current)
 
     # sanity-check everything
     preproc = redist.preproc(adjobj, popvec, rep(0, V), ndists, popcons,
@@ -131,42 +184,47 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
 
     lp = rep(0, nsims)
     maps = smc_plans(nsims, adjlist, counties, popvec, ndists, popcons, compactness,
-                     lp, adapt_k_thresh, seq_alpha, max_oversample, verbosity);
+                     constraints$status_quo$strength, constraints$status_quo$current, n_current,
+                     constraints$vra$strength, constraints$vra$tgt_vra_min,
+                     constraints$vra$tgt_vra_other, constraints$vra$pow_vra, constraints$vra$min_pop,
+                     constraints$incumbency$strength, constraints$incumbency$incumbents,
+                     lp, adapt_k_thresh, seq_alpha, verbosity);
 
-    N_ok = ncol(maps)
     dev = max_dev(maps, popvec, ndists)
     maps = maps
-    lp = lp[1:N_ok]
-    if (N_ok < nsims)
-        warning("Fewer maps sampled than requested; try increasing `max_oversample`.")
 
     lr = -lp + constraint_fn(maps)
     wgt = exp(lr - mean(lr))
     wgt = wgt / mean(wgt)
+    orig_wgt = wgt 
     if (truncate)
         wgt = trunc_fn(wgt)
     wgt = wgt/sum(wgt)
     n_eff = length(wgt) * mean(wgt)^2 / mean(wgt^2)
 
+    if (n_eff/nsims <= 0.05)
+        warning("Less than 5% efficiency. Consider weakening constraints and/or adjusting `seq_alpha`.")
+
     if (resample) {
-        maps = maps[, sample(N_ok, N_ok, replace=T, prob=wgt)]
-        wgt = rep(1/N_ok, N_ok)
+        maps = maps[, sample(nsims, nsims, replace=T, prob=wgt)]
+        wgt = rep(1/nsims, nsims)
     }
 
     algout = list(
         aList = adjlist,
         cdvec = maps,
         wgt = wgt,
-        nsims = N_ok,
+        orig_wgt = orig_wgt,
+        nsims = nsims,
         n_eff = n_eff,
         pct_dist_parity = popcons,
         compactness = compactness,
+        constraints = constraints,
         maxdev = dev,
         popvec = popvec,
-        counties = counties,
+        counties = if (max(counties)==1) NULL else counties,
         adapt_k_thresh = adapt_k_thresh,
         seq_alpha = seq_alpha,
-        max_oversample = max_oversample,
         algorithm="smc"
     )
     class(algout) = "redist"

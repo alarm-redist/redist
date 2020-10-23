@@ -12,13 +12,13 @@ redist.smc(
   counties = NULL,
   popcons = 0.01,
   compactness = 1,
+  constraints = list(),
   resample = TRUE,
   constraint_fn = function(m) rep(0, ncol(m)),
   adapt_k_thresh = 0.95,
   seq_alpha = 0.1 + 0.2 * compactness,
   truncate = (compactness != 1),
   trunc_fn = function(x) pmin(x, 0.01 * nsims^0.4),
-  max_oversample = 20,
   verbose = TRUE,
   silent = FALSE
 )
@@ -48,6 +48,9 @@ populations within 1\% of the target population.}
 higher values preferring more compact districts. Must be nonnegative. See the
 'Details' section for more information, and computational considerations.}
 
+\item{constraints}{A list containing information on constraints to implement.
+See the 'Details' section for more information.}
+
 \item{resample}{Whether to perform a final resampling step so that the
 generated plans can be used immediately.  Set this to \code{FALSE} to perform
 direct importance sampling estimates, or to adjust the weights manually.}
@@ -71,10 +74,6 @@ final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.}
 \item{trunc_fn}{A function which takes in a vector of weights and returns
 a truncated vector. Recommended to specify this manually if truncating weights.}
 
-\item{max_oversample}{How much oversampling to allow at each stage; used to
-control memory and computation time.  If the algorithm is not producing the
-desired nubmer of samples, this should be increased.}
-
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}
 
@@ -87,15 +86,16 @@ is a list containing the following components:
 \item{cdvec}{The matrix of sampled plans. Each row is a geographical unit,
 and each column is a sample.}
 \item{wgt}{The importance sampling weights, normalized to sum to 1.}
+\item{orig_wgt}{The importance sampling weights before resampling or truncation, normalized to have mean 1.}
 \item{nsims}{The number of plans sampled.}
 \item{pct_dist_parity}{The population constraint.}
 \item{compactness}{The compactness constraint.}
+\item{counties}{The computed constraint options list (see above).}
 \item{maxdev}{The maximum population deviation of each sample.}
 \item{popvec}{The provided vector of unit populations.}
 \item{counties}{The provided county vector.}
 \item{adapt_k_thresh}{The provided control parameter.}
 \item{seq_alpha}{The provided control vector.}
-\item{max_oversample}{The provided control vector.}
 \item{algorithm}{The algorithm used, here \code{"smc"}.}
 }
 \description{
@@ -106,8 +106,8 @@ boundary constraints.
 }
 \details{
 This function draws nearly-independent samples from a specific target measure,
-controlled by the \code{popcons}, \code{compactness}, and \code{constraint_fn}
-parameters.
+controlled by the \code{popcons}, \code{compactness}, \code{constraints}, and
+\code{constraint_fn} parameters.
 
 Higher values of \code{compactness} sample more compact districts;
 setting this parameter to 1 is computationally efficient and generates nicely
@@ -116,16 +116,58 @@ importance sampling weights.  By default these weights are truncated at
 \code{nsims^0.04 / 100} to stabilize the resulting estimates, but if truncation
 is used, a specific truncation function should probably be chosen by the user.
 
-Because of the randomness inherent in the algorithm and the way it samples,
-this function is not guaranteed to produce exactly \code{nsims} samples.
-Failure to do so is usually a result of a hard-to-meet population constraint,
-especially when there are many districts.  Increasing \code{max_oversample}
-should generally alleviate this problem.
+The \code{constraints} parameter allows the user to apply several common
+redistricting contraints without implementing them by hand. This parameter
+is a list, which may contain any of the following named entries:
+\itemize{
+\item \code{status_quo}: a list with two entries:
+\itemize{
+\item \code{strength}, a number controlling the tendency of the generated districts
+to respect the status quo, with higher values preferring more similar
+districts.
+\item \code{current}, a vector containing district assignments for
+the current map.
+}
+\item \code{vra}: a list with five entries:
+\itemize{
+\item \code{strength}, a number controlling the strength of the Voting Rights Act
+(VRA) constraint, with higher values prioritizing majority-minority districts
+over other considerations.
+\item \code{tgt_vra_min}, the target percentage of minority voters in minority
+copportunity districts. Defaults to 0.55.
+\item \code{tgt_vra_other} The target percentage of minority voters in other
+districts. Defaults to 0.25, but should be set to reflect the total minority
+population in the state.
+\item \code{pow_vra}, which controls the allowed deviation from the target
+minority percentage; higher values are more tolerant. Defaults to 1.5
+\item \code{min_pop}, A vector containing the minority population of each
+geographic unit.
+}
+\item \code{incumbency}: a list with two entries:
+\itemize{
+\item \code{strength}, a number controlling the tendency of the generated districts
+to avoid pairing up incumbents.
+\item \code{incumbents}, a vector of precinct indices, one for each incumbent's
+home address.
+}
+}
 }
 \examples{
 \dontrun{
 data(algdat.p10)
-sampled_plans = redist.smc(algdat.pfull$adjlist, algdat.pfull$precinct.data$pop,
+sampled_basic = redist.smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,
                            nsims=10000, ndists=3, popcons=0.1)
+
+sampled_constr = redist.smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,
+                            nsims=10000, ndists=3, popcons=0.1,
+                            constraints=list(
+                                status_quo = list(strength=10, current=algdat.p10$cdmat[,1234]),
+                                incumbency = lsit(strength=1000, incumbents=c(3, 6, 25))
+                            ))
 }
+
+}
+\references{
+McCartan, C., & Imai, K. (2020). Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans.
+Available at \url{https://imai.fas.harvard.edu/research/files/SMCredist.pdf}.
 }

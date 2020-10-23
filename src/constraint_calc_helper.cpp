@@ -628,7 +628,7 @@ List calc_psicounty(arma::vec current_dists,
   */
 
   // Get unique county labels
-  int i; int j; int k; int pop;
+  int i; int j; int pop;
   arma::vec unique_county = unique(county_assignments);
   arma::vec pop_county(unique_county.n_elem);
   arma::uvec inds;

@@ -4,23 +4,54 @@
 \alias{redist.distances}
 \title{Compute Distance between Partitions}
 \usage{
-redist.distances(district_membership, measure = "Hamming", ncores = 1)
+redist.distances(
+  district_membership,
+  measure = "Hamming",
+  ncores = 1,
+  pop = NULL
+)
 }
 \arguments{
-\item{district_membership}{A matrix with one row for each precinct and one 
+\item{district_membership}{A matrix with one row for each precinct and one
 column for each map. Required.}
 
-\item{measure}{String vector indicating which distances to compute. Implemented 
-currently are "Hamming", "Manhattan", and "Euclidean". Use all to return all implemented 
-measures.}
+\item{measure}{String vector indicating which distances to compute. Implemented
+currently are "Hamming", "Manhattan", "Euclidean", and "variation of information",
+Use "all" to return all implemented measures.  Not case sensitive, and
+any unique substring is enough, e.g. "ham" for Hamming, or "info" for
+variation of information.}
 
 \item{ncores}{Number of cores to use for parallel computing. Default is 1.}
+
+\item{pop}{The vector of precinct populations. Used only if computing
+variation of information. If not provided, equal population of precincts
+will be assumed, i.e. the VI will be computed with respect to the precincts
+themselves, and not the population.}
 }
 \value{
-list of matrices of distances with one for each distance measure selected
+a named list of distance matrices, one for each distance measure selected.
 }
 \description{
 Compute Distance between Partitions
+}
+\details{
+Hamming distance measures the number of different precinct assignments
+between plans. Manhattan and Euclidean distances are the 1- and 2-norms for
+the assignment vectors.  All three of the Hamming, Manhattan, and Euclidean
+distances implemented here are not invariant to permutations of the district
+labels; permuting will cause large changes in measured distance, and maps
+which are identical up to a permutation may be computed to be maximally
+distant.
+
+Variation of Information is a metric on population partitions (i.e.,
+districtings) which is invariant to permutations of the district labels, and
+arises out of information theory. It is calculated as \deqn{
+    VI(\xi, \xi') = -\sum_{i=1}^n\sum_{j=1}^n pop(\xi_i \cap \xi'_j)/P
+    (2log(pop(\xi_i \cap \xi'_j)) - log(pop(\xi_i)) - log(pop(\xi'_j)))
+} where \eqn{\xi,\xi'} are the partitions, \eqn{\xi_i,\xi_j} the individual
+districts, \eqn{pop(\cdot)} is the population, and \eqn{P} the total
+population of the state. VI is also expressible as the difference between
+the joint entropy and the mutual information (see references).
 }
 \examples{
 \dontrun{
@@ -28,4 +59,7 @@ data("algdat.p10")
 distances <- redist.distances(district_membership = algdat.p10$cdmat)
 distances$Hamming[1:5,1:5]
 }
+}
+\references{
+Cover, T. M. and Thomas, J. A. (2006). \emph{Elements of information theory.} John Wiley & Sons, 2 edition.
 }
