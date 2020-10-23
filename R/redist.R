@@ -34,16 +34,6 @@ combine.par.anneal <- function(a, b){
 #' \code{redist.mcmc.anneal} simulates congressional redistricting plans
 #' using Markov chain Monte Carlo methods coupled with simulated annealing.
 #'
-#' @usage redist.mcmc.anneal(adjobj, popvec, ndists,
-#' initcds, num_hot_steps, num_annealing_steps,
-#' num_cold_steps,
-#' eprob, lambda, popcons, grouppopvec,
-#' areasvec, countymembership, borderlength_mat,
-#' ssdmat, constraint, constraintweights,
-#' compactness_metric, rngseed, maxiterrsg,
-#' adapt_lambda, adapt_eprob,
-#' contiguitymap, exact_mh,
-#' savename, verbose, ncores)
 #'
 #' @param adjobj An adjacency matrix, list, or object of class
 #' "SpatialPolygonsDataFrame."
