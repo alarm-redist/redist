@@ -37,7 +37,9 @@ redist.mcmc(
   contiguitymap = "rooks",
   exact_mh = FALSE,
   savename = NULL,
-  verbose = TRUE
+  verbose = TRUE,
+  tgt_min = 0.55,
+  tgt_other = 0.25
 )
 }
 \arguments{
@@ -148,6 +150,10 @@ Metropolis-Hastings ratio calculation for accept-reject rule. Default is FALSE.}
 
 \item{verbose}{Whether to print initialization statement.
 Default is \code{TRUE}.}
+
+\item{tgt_min}{The majority minority target percent as a decimal. Default is 0.55.}
+
+\item{tgt_other}{The remaining target percent as a decimal. Default is 0.25.}
 }
 \value{
 \code{redist.mcmc} returns an object of class "redist". The object

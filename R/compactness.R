@@ -29,7 +29,7 @@
 #' @param nloop A numeric to specify loop number. Defaults to 1 if only one map provided 
 #' and the column number if multiple maps given.
 #' @param ncores Number of cores to use for parallel computing. Default is 1.
-#' 
+#' @param counties A numeric vector from 1:ncounties corresponding to counties. Required for "logSpanningTree".
 #' @details This function computes specified compactness scores for a map.  If 
 #' there is more than one shape specified for a single district, it combines 
 #' them, if necessary, and computes one score for each district.
