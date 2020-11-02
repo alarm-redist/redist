@@ -215,7 +215,7 @@ redist.compactness <- function(shp = NULL,
       `%oper%` <- `%do%`
     } else {
       `%oper%` <- `%dopar%`
-      cl <- makeCluster(nc, , setup_strategy = 'sequential')
+      cl <- makeCluster(nc, setup_strategy = 'sequential')
       registerDoParallel(cl)
       on.exit(stopCluster(cl))
     }
