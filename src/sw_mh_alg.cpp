@@ -511,7 +511,7 @@ List swMH(List aList,
     out["energy_psi"] = energy_store;
     out["constraint_pop"] = psipop_store;
     out["constraint_compact"] = psicompact_store;
-    out["constraint_segregation"] = psisegregation_store;
+    out["constraint_vra"] = psisegregation_store;
     out["constraint_similar"] = psisimilar_store;
     out["constraint_countysplit"] = psicountysplit_store;
     out["boundary_partitions"] = boundarypartitions_store;
@@ -537,7 +537,7 @@ List swMH(List aList,
     out["energy_psi"] = energy_store[k-1];
     out["constraint_pop"] = psipop_store[k-1];
     out["constraint_compact"] = psicompact_store[k-1];
-    out["constraint_segregation"] = psisegregation_store[k-1];
+    out["constraint_vra"] = psisegregation_store[k-1];
     out["constraint_similar"] = psisimilar_store[k-1];
     out["constraint_countysplit"] = psicountysplit_store[k-1];
     out["boundary_partitions"] = boundarypartitions_store[k-1];
