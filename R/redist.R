@@ -34,16 +34,6 @@ combine.par.anneal <- function(a, b){
 #' \code{redist.mcmc.anneal} simulates congressional redistricting plans
 #' using Markov chain Monte Carlo methods coupled with simulated annealing.
 #'
-#' @usage redist.mcmc.anneal(adjobj, popvec, ndists,
-#' initcds, num_hot_steps, num_annealing_steps,
-#' num_cold_steps,
-#' eprob, lambda, popcons, grouppopvec,
-#' areasvec, countymembership, borderlength_mat,
-#' ssdmat, constraint, constraintweights,
-#' compactness_metric, rngseed, maxiterrsg,
-#' adapt_lambda, adapt_eprob,
-#' contiguitymap, exact_mh,
-#' savename, verbose, ncores)
 #'
 #' @param adjobj An adjacency matrix, list, or object of class
 #' "SpatialPolygonsDataFrame."
@@ -81,7 +71,7 @@ combine.par.anneal <- function(a, b){
 #' @param ssdmat A matrix of squared distances between geographic
 #' units. The default is \code{NULL}.
 #' @param constraint Which constraint to apply. Accepts any combination of \code{compact},
-#' \code{segregation}, \code{population}, \code{similarity}, or \code{none}
+#' \code{vra}, \code{population}, \code{similarity}, or \code{none}
 #' (no constraint applied). The default is NULL.
 #' @param constraintweights The weights to apply to each constraint. Should be a vector
 #' the same length as constraint. Default is NULL.
@@ -106,7 +96,9 @@ combine.par.anneal <- function(a, b){
 #' @param verbose Whether to print initialization statement.
 #' Default is \code{TRUE}.
 #' @param ncores The number of cores available to parallelize over. Default is 1.
-#'
+#' @param tgt_min The majority minority target percent as a decimal. Default is 0.55.
+#' @param tgt_other The remaining target percent as a decimal. Default is 0.25.
+#' 
 #' @export
 redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
                                initcds = NULL,
@@ -123,7 +115,7 @@ redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
                                adapt_lambda = FALSE, adapt_eprob = FALSE,
                                contiguitymap = "rooks", exact_mh = FALSE,
                                savename = NULL, verbose = TRUE,
-                               ncores = 1){
+                               ncores = 1, tgt_min = 0.55, tgt_other = 0.25){
     
     if(verbose){
         ## Initialize ##
@@ -198,15 +190,17 @@ redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
                                  betaseq = "powerlaw", betaseqlength = 10,
                                  betaweights = NULL,
                                  adjswaps = TRUE, maxiterrsg = maxiterrsg,
-                                 contiguitymap = contiguitymap)
+                                 contiguitymap = contiguitymap,
+                                 tgt_min = tgt_min,
+                                 tgt_other = tgt_other)
     
     ## Set betas - if tempering, modified later
     weightpop <- preprocout$params$weightpop
     weightcompact <- preprocout$params$weightcompact
-    weightseg <- preprocout$params$weightseg
+    weightvra <- preprocout$params$weightvra
     weightsimilar <- preprocout$params$weightsimilar
     weightcountysplit <- preprocout$params$weightcountysplit
-    
+
     cat("Starting swMH().\n")
     algout <- swMH(aList = preprocout$data$adjlist,
                    cdvec = preprocout$data$initcds,
@@ -226,7 +220,7 @@ redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
                    beta = 0,
                    weight_population = weightpop,
                    weight_compact = weightcompact,
-                   weight_segregation = weightseg,
+                   weight_vra = weightvra,
                    weight_similar = weightsimilar,
                    weight_countysplit = weightcountysplit,
                    adapt_beta = "annealing",
@@ -235,6 +229,8 @@ redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
                    adapt_lambda = adapt_lambda,
                    adapt_eprob = adapt_eprob,
                    compactness_measure = compactness_metric,
+                   tgt_min = tgt_min,
+                   tgt_other = tgt_other,
                    num_hot_steps = num_hot_steps,
                    num_annealing_steps = num_annealing_steps,
                    num_cold_steps = num_cold_steps)
@@ -330,7 +326,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
                            constraintweights = NULL,
                            betaseq = NULL, betaseqlength = NULL,
                            betaweights = NULL, adjswaps = TRUE, maxiterrsg = NULL,
-                           contiguitymap = "rooks"
+                           contiguitymap = "rooks", tgt_min = 0.55, tgt_other = 0.25
 ){
     
     #########################
@@ -343,7 +339,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ## popcons - strength of hard population constraint. Defaulted to no
     ##           constraint. popcons = 0.01 implies a 1% population constraint.
     ## grouppopvec - vector of populations for a minority group. To be used
-    ##               in conjunction with the segregation M-H constraint
+    ##               in conjunction with the vra M-H constraint
     ## ssdmat - matrix of squared distances between population units.
     ##          To be used when applying the compactness constraint.
     ## beta - target strength of constraint in MH ratio. Defaults to 0.
@@ -359,6 +355,8 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ##            parallel tempering. Default to TRUE
     ## maxiterrsg - Maximum number of iterations for RSG algorithm
     ## contiguitymap - Distance criteria for adjacency list from input map
+    ## tgt_min - vra constraint larger grouppop decimal
+    ## tgt_other - vra constraint smaller grouppop decimal
     
     #######################
     ## Check missingness ##
@@ -373,8 +371,8 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         if((any(constraintweights == 0) & !is.null(constraint))){
             stop("If applying constraints or using simulated tempering, please set non-zero constraint by specifying the 'constraintweight' argument, and specify the names of the constraints in 'constraint'.")
         }
-        if(any(!(constraint %in% c("compact", "segregation", "population", "similarity", "countysplit")))){
-            stop("Please specify any combination of `compact`, `segregation`, `population`, `countysplit`, or `similarity` for constraint")
+        if(any(!(constraint %in% c("compact", "vra", "population", "similarity", "countysplit")))){
+            stop("Please specify any combination of `compact`, `vra`, `population`, `countysplit`, or `similarity` for constraint")
         }
     }
     
@@ -514,7 +512,6 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
                               maxiter = maxiterrsg)
         ## Get initial cds
         initcds <- initout$district_membership
-        
     }
     
     ###########################################################
@@ -528,17 +525,17 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         stop("Each entry in adjacency list must have an initial congressional
              district assignment")
     }
-    if("segregation" %in% constraint & is.null(grouppopvec)){
-        stop("If applying the segregation constraint, please provide a vector
+    if("vra" %in% constraint & is.null(grouppopvec)){
+        stop("If applying the vra constraint, please provide a vector
              of subgroup populations")
     }
     if("countysplit" %in% constraint & is.null(countymembership)){
         stop("If applying the county split constraint, please provide a numeric vector indicating county membership.")
     }
-    if("segregation" %in% constraint & !(is.null(grouppopvec))){
+    if("vra" %in% constraint & !(is.null(grouppopvec))){
         if((length(grouppopvec) != length(adjlist)) |
            (sum(is.na(grouppopvec)) > 0)){
-            stop("If applying the segregation constraint, each entry in adjacency
+            stop("If applying the vra constraint, each entry in adjacency
               list must have corresponding entry in vector of group populations")
         }
     }
@@ -556,6 +553,24 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     }
     if(length(unique(initcds)) != (max(initcds) + 1)){
         stop("Need congressional assignment ids to be sequence increasing by 1")
+    }
+    
+    ## ------------------------------------
+    ## Check VRA targets if necessary
+    ## ------------------------------------
+    if("vra" %in% constraint){
+        if(! 'numeric' %in% class(tgt_min)){
+            stop("Need tgt_min to be numeric.")
+        }
+        if(! 'numeric' %in% class(tgt_other)){
+            stop("Need tgt_other to be numeric.")
+        }
+        if(tgt_min < 0 | tgt_min > 1){
+            stop("Need 0 <= tgt_min <= 1.")
+        }
+        if(tgt_other < 0 | tgt_other > 1){
+            stop("Need 0 <= tgt_other <= 1.")
+        }
     }
     
     ####################################################
@@ -615,6 +630,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         
     }
     
+    
     ########################
     ## Set up constraints ##
     ########################
@@ -631,10 +647,10 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     }else{
         weightcompact <- 0
     }
-    if("segregation" %in% constraint){
-        weightseg <- constraintweights[which(constraint == "segregation")]
+    if("vra" %in% constraint){
+        weightvra <- constraintweights[which(constraint == "vra")]
     }else{
-        weightseg <- 0
+        weightvra <- 0
     }
     if("similarity" %in% constraint){
         weightsimilar <- constraintweights[which(constraint == "similarity")]
@@ -704,9 +720,11 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
             adjswaps = adjswaps,
             weightpop = weightpop,
             weightcompact = weightcompact,
-            weightseg = weightseg,
+            weightvra = weightvra,
             weightsimilar = weightsimilar,
-            weightcountysplit = weightcountysplit
+            weightcountysplit = weightcountysplit, 
+            tgt_min = tgt_min,
+            tgt_other = tgt_other
         )
     )
     
@@ -752,8 +770,8 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
 #' constraint for each accepted redistricting plan.}
 #' \item{constraint_compact}{A vector containing the value of the compactness
 #' constraint for each accepted redistricting plan.}
-#' \item{constraint_segregation}{A vector containing the value of the
-#' segregation constraint for each accepted redistricting plan.}
+#' \item{constraint_vra}{A vector containing the value of the
+#' vra constraint for each accepted redistricting plan.}
 #' \item{constraint_similar}{A vector containing the value of the similarity
 #' constraint for each accepted redistricting plan.}
 #' \item{beta_sequence}{A vector containing the value of beta for each iteration
@@ -903,7 +921,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' units. The default is \code{NULL}.
 #' @param temper Whether to use simulated tempering algorithm. Default is FALSE.
 #' @param constraint Which constraint to apply. Accepts any combination of \code{compact},
-#' \code{segregation}, \code{population}, \code{similarity}, or \code{none}
+#' \code{vra}, \code{population}, \code{similarity}, or \code{none}
 #' (no constraint applied). The default is NULL.
 #' @param constraintweights The weights to apply to each constraint. Should be a vector
 #' the same length as constraint. Default is NULL.
@@ -939,6 +957,8 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' @param savename Filename to save simulations. Default is \code{NULL}.
 #' @param verbose Whether to print initialization statement.
 #' Default is \code{TRUE}.
+#' @param tgt_min The majority minority target percent as a decimal. Default is 0.55.
+#' @param tgt_other The remaining target percent as a decimal. Default is 0.25.
 #'
 #' @details This function allows users to simulate redistricting plans
 #' using Markov Chain Monte Carlo methods. Several constraints
@@ -967,8 +987,8 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' constraint for each accepted redistricting plan.}
 #' \item{constraint_compact}{A vector containing the value of the compactness
 #' constraint for each accepted redistricting plan.}
-#' \item{constraint_segregation}{A vector containing the value of the
-#' segregation constraint for each accepted redistricting plan.}
+#' \item{constraint_vra}{A vector containing the value of the
+#' vra constraint for each accepted redistricting plan.}
 #' \item{constraint_similar}{A vector containing the value of the similarity
 #' constraint for each accepted redistricting plan.}
 #' \item{beta_sequence}{A vector containing the value of beta for each iteration
@@ -979,6 +999,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' \item{mhprob_beta}{A vector containing the Metropolis-Hastings acceptance
 #' probability for each iteration of the algorithm. Returned when tempering
 #' is being used.}
+#' 
 #'
 #' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander
 #' Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte
@@ -1015,9 +1036,9 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                         adjswaps = TRUE, rngseed = NULL, maxiterrsg = 5000,
                         adapt_lambda = FALSE, adapt_eprob = FALSE,
                         contiguitymap = "rooks", exact_mh = FALSE, savename = NULL,
-                        verbose = TRUE
+                        verbose = TRUE, tgt_min = 0.55, tgt_other = 0.25
 ){
-    
+
     if(verbose){
         ## Initialize ##
         divider <- c(paste(rep("=", 20), sep = "", collapse = ""), "\n")
@@ -1096,12 +1117,14 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                                  betaseq = betaseq, betaseqlength = betaseqlength,
                                  betaweights = betaweights,
                                  adjswaps = adjswaps, maxiterrsg = maxiterrsg,
-                                 contiguitymap = contiguitymap)
+                                 contiguitymap = contiguitymap, 
+                                 tgt_min = tgt_min,
+                                 tgt_other = tgt_other)
     
     ## Set betas - if tempering, modified later
     weightpop <- preprocout$params$weightpop
     weightcompact <- preprocout$params$weightcompact
-    weightseg <- preprocout$params$weightseg
+    weightvra <- preprocout$params$weightvra
     weightsimilar <- preprocout$params$weightsimilar
     weightcountysplit <- preprocout$params$weightcountysplit
     
@@ -1159,7 +1182,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
             }
             
         }        
-        
+
         ## Run algorithm
         algout <- swMH(aList = preprocout$data$adjlist,
                        cdvec = cds,
@@ -1179,7 +1202,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                        beta = preprocout$params$beta,
                        weight_population = weightpop,
                        weight_compact = weightcompact,
-                       weight_segregation = weightseg,
+                       weight_vra = weightvra,
                        weight_similar = weightsimilar,
                        weight_countysplit = weightcountysplit,
                        adapt_beta = preprocout$params$temperbeta,
@@ -1188,8 +1211,10 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                        adapt_lambda = adapt_lambda,
                        adapt_eprob = adapt_eprob,
                        compactness_measure = compactness_metric,
-                       ssd_denom = ssd_denom)
-        
+                       ssd_denom = ssd_denom,
+                       tgt_min = tgt_min,
+                       tgt_other = tgt_other)
+
         class(algout) <- "redist"
         
         ## Save random number state if setting the seed
@@ -1266,8 +1291,8 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
 #' constraint for each accepted redistricting plan.}
 #' \item{constraint_compact}{A vector containing the value of the compactness
 #' constraint for each accepted redistricting plan.}
-#' \item{constraint_segregation}{A vector containing the value of the
-#' segregation constraint for each accepted redistricting plan.}
+#' \item{constraint_vra}{A vector containing the value of the
+#' vra constraint for each accepted redistricting plan.}
 #' \item{constraint_similar}{A vector containing the value of the similarity
 #' constraint for each accepted redistricting plan.}
 #' \item{beta_sequence}{A vector containing the value of beta for each iteration

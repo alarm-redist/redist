@@ -59,5 +59,5 @@ redist.parity <- function(district_membership, population, ncores = 1){
   #  max(abs(distpop / parpop - 1))
   #})
   
-  return(out)
+  return(unlist(out))
 }

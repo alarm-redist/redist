@@ -466,31 +466,35 @@ List calc_psicompact(arma::vec current_dists,
 }
 
 // Function to constrain by segregating a group
-List calc_psisegregation(arma::vec current_dists,
+List calc_psivra(arma::vec current_dists,
 			 arma::vec new_dists,
 			 NumericVector pops,
 			 NumericVector distswitch,
-			 NumericVector grouppop)
+			 NumericVector grouppop,
+			 double tgt_min,
+			 double tgt_other)
 {
 
   /* Inputs to function:
      current_dists: vector of the current cong district assignments
      new_dists: vector of the new cong district assignments
      pops: vector of district populations
-     beta_segregation: strength of the beta constraint
+     beta_vra: strength of the beta constraint
      distswitch: vector containing the old district, and the proposed new district
      grouppop: vector of subgroup district populations
 
   */
+  // constants
+  double pow_vra = 1.5;
 
   // Initialize psi values
   double psi_new = 0.0;
   double psi_old = 0.0;
 
   // Initialize denominator
-  int T = sum(pops);
-  double pAll = (double)sum(grouppop) / T;
-  double denom = (double)2 * T * pAll * (1 - pAll);
+  //int T = sum(pops);
+  //double pAll = (double)sum(grouppop) / T;
+  //double denom = (double)2 * T * pAll * (1 - pAll);
 
   // Loop over congressional districts
   for(int i = 0; i < distswitch.size(); i++){
@@ -503,13 +507,13 @@ List calc_psisegregation(arma::vec current_dists,
     arma::uvec new_cds = find(new_dists == distswitch(i));
     arma::uvec current_cds = find(current_dists == distswitch(i));
 
-    // Segregation for proposed assignments
+    // vra for proposed assignments
     for(int j = 0; j < new_cds.size(); j++){
       newpopall += pops(new_cds(j));
       newpopgroup += grouppop(new_cds(j));
     }
 
-    // Segregation for current assignments
+    // vra for current assignments
     for(int j = 0; j < current_cds.size(); j++){
       oldpopall += pops(current_cds(j));
       oldpopgroup += grouppop(current_cds(j));
@@ -523,19 +527,20 @@ List calc_psisegregation(arma::vec current_dists,
     double newgroupprop = (double)newpopgroup / newpopall;
 
     // Get dissimilarity index
-    psi_new += (double)(newpopall * std::abs(newgroupprop - pAll));
-    psi_old += (double)(oldpopall * std::abs(oldgroupprop - pAll));
+    //psi_new += (double)(newpopall * std::abs(newgroupprop - pAll));
+    //psi_old += (double)(oldpopall * std::abs(oldgroupprop - pAll));
+    
+    psi_new += (double)(std::pow(std::abs(newgroupprop - tgt_min),pow_vra)*
+      std::pow(std::abs(newgroupprop - tgt_other),pow_vra));
+    psi_old += (double)(std::pow(std::abs(oldgroupprop - tgt_min),pow_vra)*
+      std::pow(std::abs(oldgroupprop - tgt_other),pow_vra));
 
   }
 
-  // Standardize psi
-  psi_new = (double)psi_new / denom;
-  psi_old = (double)psi_old / denom;
-
   // Create return object
   List out;
-  out["segregation_new_psi"] = psi_new;
-  out["segregation_old_psi"] = psi_old;
+  out["vra_new_psi"] = psi_new;
+  out["vra_old_psi"] = psi_old;
 
   return out;
 
