@@ -88,7 +88,7 @@ the third column is its distance. Default is \code{NULL}.}
 units. The default is \code{NULL}.}
 
 \item{constraint}{Which constraint to apply. Accepts any combination of \code{compact},
-\code{segregation}, \code{population}, \code{similarity}, or \code{none}
+\code{vra}, \code{population}, \code{similarity}, or \code{none}
 (no constraint applied). The default is NULL.}
 
 \item{constraintweights}{The weights to apply to each constraint. Should be a vector

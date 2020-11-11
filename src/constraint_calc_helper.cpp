@@ -466,7 +466,7 @@ List calc_psicompact(arma::vec current_dists,
 }
 
 // Function to constrain by segregating a group
-List calc_psisegregation(arma::vec current_dists,
+List calc_psivra(arma::vec current_dists,
 			 arma::vec new_dists,
 			 NumericVector pops,
 			 NumericVector distswitch,
@@ -479,7 +479,7 @@ List calc_psisegregation(arma::vec current_dists,
      current_dists: vector of the current cong district assignments
      new_dists: vector of the new cong district assignments
      pops: vector of district populations
-     beta_segregation: strength of the beta constraint
+     beta_vra: strength of the beta constraint
      distswitch: vector containing the old district, and the proposed new district
      grouppop: vector of subgroup district populations
 
@@ -507,13 +507,13 @@ List calc_psisegregation(arma::vec current_dists,
     arma::uvec new_cds = find(new_dists == distswitch(i));
     arma::uvec current_cds = find(current_dists == distswitch(i));
 
-    // Segregation for proposed assignments
+    // vra for proposed assignments
     for(int j = 0; j < new_cds.size(); j++){
       newpopall += pops(new_cds(j));
       newpopgroup += grouppop(new_cds(j));
     }
 
-    // Segregation for current assignments
+    // vra for current assignments
     for(int j = 0; j < current_cds.size(); j++){
       oldpopall += pops(current_cds(j));
       oldpopgroup += grouppop(current_cds(j));
@@ -539,8 +539,8 @@ List calc_psisegregation(arma::vec current_dists,
 
   // Create return object
   List out;
-  out["segregation_new_psi"] = psi_new;
-  out["segregation_old_psi"] = psi_old;
+  out["vra_new_psi"] = psi_new;
+  out["vra_old_psi"] = psi_old;
 
   return out;
 
