@@ -197,7 +197,7 @@ redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
     ## Set betas - if tempering, modified later
     weightpop <- preprocout$params$weightpop
     weightcompact <- preprocout$params$weightcompact
-    weightseg <- preprocout$params$weightseg
+    weightvra <- preprocout$params$weightvra
     weightsimilar <- preprocout$params$weightsimilar
     weightcountysplit <- preprocout$params$weightcountysplit
 
@@ -220,7 +220,7 @@ redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
                    beta = 0,
                    weight_population = weightpop,
                    weight_compact = weightcompact,
-                   weight_segregation = weightseg,
+                   weight_vra = weightvra,
                    weight_similar = weightsimilar,
                    weight_countysplit = weightcountysplit,
                    adapt_beta = "annealing",
@@ -648,9 +648,9 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         weightcompact <- 0
     }
     if("vra" %in% constraint){
-        weightseg <- constraintweights[which(constraint == "vra")]
+        weightvra <- constraintweights[which(constraint == "vra")]
     }else{
-        weightseg <- 0
+        weightvra <- 0
     }
     if("similarity" %in% constraint){
         weightsimilar <- constraintweights[which(constraint == "similarity")]
@@ -720,7 +720,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
             adjswaps = adjswaps,
             weightpop = weightpop,
             weightcompact = weightcompact,
-            weightseg = weightseg,
+            weightvra = weightvra,
             weightsimilar = weightsimilar,
             weightcountysplit = weightcountysplit, 
             tgt_min = tgt_min,
@@ -1124,7 +1124,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
     ## Set betas - if tempering, modified later
     weightpop <- preprocout$params$weightpop
     weightcompact <- preprocout$params$weightcompact
-    weightseg <- preprocout$params$weightseg
+    weightvra <- preprocout$params$weightvra
     weightsimilar <- preprocout$params$weightsimilar
     weightcountysplit <- preprocout$params$weightcountysplit
     
@@ -1202,7 +1202,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                        beta = preprocout$params$beta,
                        weight_population = weightpop,
                        weight_compact = weightcompact,
-                       weight_segregation = weightseg,
+                       weight_vra = weightvra,
                        weight_similar = weightsimilar,
                        weight_countysplit = weightcountysplit,
                        adapt_beta = preprocout$params$temperbeta,

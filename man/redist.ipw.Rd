@@ -33,8 +33,8 @@ simulation, which dictates the number of swaps attempted.}
 constraint for each accepted redistricting plan.}
 \item{constraint_compact}{A vector containing the value of the compactness
 constraint for each accepted redistricting plan.}
-\item{constraint_segregation}{A vector containing the value of the
-segregation constraint for each accepted redistricting plan.}
+\item{constraint_vra}{A vector containing the value of the
+vra constraint for each accepted redistricting plan.}
 \item{constraint_similar}{A vector containing the value of the similarity
 constraint for each accepted redistricting plan.}
 \item{beta_sequence}{A vector containing the value of beta for each iteration

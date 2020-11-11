@@ -66,7 +66,7 @@ List swMH(List aList,
 	  double beta = 0.0,
 	  double weight_population = 0.0,
 	  double weight_compact = 0.0,
-	  double weight_segregation = 0.0,
+	  double weight_vra = 0.0,
 	  double weight_similar = 0.0,
 	  double weight_countysplit = 0.0,
 	  std::string adapt_beta = "none",
@@ -109,7 +109,7 @@ List swMH(List aList,
 
      beta_compact: strength of constraint for achieving district compactness
 
-     beta_segregation: strength of constraint for packing group into district
+     beta_vra: strength of constraint for packing group into district
 
      beta_similar: strength of constraint for examining plans similar to original district
 
@@ -117,7 +117,7 @@ List swMH(List aList,
 
      anneal_beta_compact: flag for whether to anneal the beta compactness parameter
 
-     anneal_beta_segregation: flag for whether to anneal the beta segregation parameter
+     anneal_beta_vra: flag for whether to anneal the beta vra parameter
 
      anneal_beta_similar: flag for whether to anneal the beta similarity parameter
 
@@ -195,7 +195,7 @@ List swMH(List aList,
   NumericVector energy_store(nsims);
   NumericVector psipop_store(nsims);
   NumericVector psicompact_store(nsims);
-  NumericVector psisegregation_store(nsims);
+  NumericVector psivra_store(nsims);
   NumericVector psisimilar_store(nsims);
   NumericVector psicountysplit_store(nsims);
 
@@ -295,7 +295,7 @@ List swMH(List aList,
 				   beta,
 				   weight_population,
 				   weight_compact,
-				   weight_segregation,
+				   weight_vra,
 				   weight_similar,
 				   weight_countysplit,
 				   ssd_denom,
@@ -337,8 +337,8 @@ List swMH(List aList,
       if(weight_compact != 0.0){
 	psicompact_store[k] = swap_partitions["compact_new_psi"];
       }
-      if(weight_segregation != 0.0){
-	psisegregation_store[k] = swap_partitions["segregation_new_psi"];
+      if(weight_vra != 0.0){
+	psivra_store[k] = swap_partitions["vra_new_psi"];
       }
       if(weight_similar != 0.0){
 	psisimilar_store[k] = swap_partitions["similar_new_psi"];
@@ -354,8 +354,8 @@ List swMH(List aList,
       if(weight_compact != 0.0){
 	psicompact_store[k] = swap_partitions["compact_old_psi"];
       }
-      if(weight_segregation != 0.0){
-	psisegregation_store[k] = swap_partitions["segregation_old_psi"];
+      if(weight_vra != 0.0){
+	psivra_store[k] = swap_partitions["vra_old_psi"];
       }
       if(weight_similar != 0.0){
 	psisimilar_store[k] = swap_partitions["similar_old_psi"];
@@ -511,7 +511,7 @@ List swMH(List aList,
     out["energy_psi"] = energy_store;
     out["constraint_pop"] = psipop_store;
     out["constraint_compact"] = psicompact_store;
-    out["constraint_vra"] = psisegregation_store;
+    out["constraint_vra"] = psivra_store;
     out["constraint_similar"] = psisimilar_store;
     out["constraint_countysplit"] = psicountysplit_store;
     out["boundary_partitions"] = boundarypartitions_store;
@@ -537,7 +537,7 @@ List swMH(List aList,
     out["energy_psi"] = energy_store[k-1];
     out["constraint_pop"] = psipop_store[k-1];
     out["constraint_compact"] = psicompact_store[k-1];
-    out["constraint_vra"] = psisegregation_store[k-1];
+    out["constraint_vra"] = psivra_store[k-1];
     out["constraint_similar"] = psisimilar_store[k-1];
     out["constraint_countysplit"] = psicountysplit_store[k-1];
     out["boundary_partitions"] = boundarypartitions_store[k-1];

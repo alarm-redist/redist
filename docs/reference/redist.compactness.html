@@ -83,7 +83,7 @@ and the log of the Spanning Trees." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.3</span>
       </span>
     </div>
 
@@ -150,7 +150,8 @@ and the log of the Spanning Trees.</p>
   population = <span class='kw'>NULL</span>,
   adjacency = <span class='kw'>NULL</span>,
   nloop = <span class='fl'>1</span>,
-  ncores = <span class='fl'>1</span>
+  ncores = <span class='fl'>1</span>,
+  counties = <span class='kw'>NULL</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -191,6 +192,10 @@ and the column number if multiple maps given.</p></td>
     <tr>
       <th>ncores</th>
       <td><p>Number of cores to use for parallel computing. Default is 1.</p></td>
+    </tr>
+    <tr>
+      <th>counties</th>
+      <td><p>A numeric vector from 1:ncounties corresponding to counties. Required for "logSpanningTree".</p></td>
     </tr>
     </table>
 
