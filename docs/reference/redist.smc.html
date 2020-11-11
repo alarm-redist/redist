@@ -83,7 +83,7 @@ boundary constraints." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.3</span>
       </span>
     </div>
 
@@ -151,13 +151,13 @@ boundary constraints.</p>
   counties = <span class='kw'>NULL</span>,
   popcons = <span class='fl'>0.01</span>,
   compactness = <span class='fl'>1</span>,
+  constraints = <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(),
   resample = <span class='fl'>TRUE</span>,
   constraint_fn = <span class='fu'>function</span>(<span class='kw'>m</span>) <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span>(<span class='fl'>0</span>, <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span>(<span class='kw'>m</span>)),
   adapt_k_thresh = <span class='fl'>0.95</span>,
   seq_alpha = <span class='fl'>0.1</span> <span class='op'>+</span> <span class='fl'>0.2</span> <span class='op'>*</span> <span class='kw'>compactness</span>,
   truncate = (<span class='kw'>compactness</span> != <span class='fl'>1</span>),
   trunc_fn = <span class='fu'>function</span>(<span class='kw'>x</span>) <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>pmin</a></span>(<span class='kw'>x</span>, <span class='fl'>0.01</span> <span class='op'>*</span> <span class='kw'>nsims</span><span class='op'>^</span><span class='fl'>0.4</span>),
-  max_oversample = <span class='fl'>20</span>,
   verbose = <span class='fl'>TRUE</span>,
   silent = <span class='fl'>FALSE</span>
 )</pre>
@@ -204,6 +204,11 @@ higher values preferring more compact districts. Must be nonnegative. See the
 'Details' section for more information, and computational considerations.</p></td>
     </tr>
     <tr>
+      <th>constraints</th>
+      <td><p>A list containing information on constraints to implement.
+See the 'Details' section for more information.</p></td>
+    </tr>
+    <tr>
       <th>resample</th>
       <td><p>Whether to perform a final resampling step so that the
 generated plans can be used immediately.  Set this to <code>FALSE</code> to perform
@@ -239,12 +244,6 @@ final step by <code>trunc_fn</code>.  Recommended if <code>compactness</code> is
 a truncated vector. Recommended to specify this manually if truncating weights.</p></td>
     </tr>
     <tr>
-      <th>max_oversample</th>
-      <td><p>How much oversampling to allow at each stage; used to
-control memory and computation time.  If the algorithm is not producing the
-desired nubmer of samples, this should be increased.</p></td>
-    </tr>
-    <tr>
       <th>verbose</th>
       <td><p>Whether to print out intermediate information while sampling.
 Recommended.</p></td>
@@ -263,40 +262,80 @@ is a list containing the following components:</p>
 <dt>cdvec</dt><dd><p>The matrix of sampled plans. Each row is a geographical unit,
 and each column is a sample.</p></dd>
 <dt>wgt</dt><dd><p>The importance sampling weights, normalized to sum to 1.</p></dd>
+<dt>orig_wgt</dt><dd><p>The importance sampling weights before resampling or truncation, normalized to have mean 1.</p></dd>
 <dt>nsims</dt><dd><p>The number of plans sampled.</p></dd>
 <dt>pct_dist_parity</dt><dd><p>The population constraint.</p></dd>
 <dt>compactness</dt><dd><p>The compactness constraint.</p></dd>
+<dt>counties</dt><dd><p>The computed constraint options list (see above).</p></dd>
 <dt>maxdev</dt><dd><p>The maximum population deviation of each sample.</p></dd>
 <dt>popvec</dt><dd><p>The provided vector of unit populations.</p></dd>
 <dt>counties</dt><dd><p>The provided county vector.</p></dd>
 <dt>adapt_k_thresh</dt><dd><p>The provided control parameter.</p></dd>
 <dt>seq_alpha</dt><dd><p>The provided control vector.</p></dd>
-<dt>max_oversample</dt><dd><p>The provided control vector.</p></dd>
 <dt>algorithm</dt><dd><p>The algorithm used, here <code>"smc"</code>.</p></dd>
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>This function draws nearly-independent samples from a specific target measure,
-controlled by the <code>popcons</code>, <code>compactness</code>, and <code>constraint_fn</code>
-parameters.</p>
+controlled by the <code>popcons</code>, <code>compactness</code>, <code>constraints</code>, and
+<code>constraint_fn</code> parameters.</p>
 <p>Higher values of <code>compactness</code> sample more compact districts;
 setting this parameter to 1 is computationally efficient and generates nicely
 compact districts.  Values of other than 1 may lead to highly variable
 importance sampling weights.  By default these weights are truncated at
 <code>nsims^0.04 / 100</code> to stabilize the resulting estimates, but if truncation
 is used, a specific truncation function should probably be chosen by the user.</p>
-<p>Because of the randomness inherent in the algorithm and the way it samples,
-this function is not guaranteed to produce exactly <code>nsims</code> samples.
-Failure to do so is usually a result of a hard-to-meet population constraint,
-especially when there are many districts.  Increasing <code>max_oversample</code>
-should generally alleviate this problem.</p>
+<p>The <code>constraints</code> parameter allows the user to apply several common
+redistricting contraints without implementing them by hand. This parameter
+is a list, which may contain any of the following named entries:</p><ul>
+<li><p><code>status_quo</code>: a list with two entries:</p><ul>
+<li><p><code>strength</code>, a number controlling the tendency of the generated districts
+to respect the status quo, with higher values preferring more similar
+districts.</p></li>
+<li><p><code>current</code>, a vector containing district assignments for
+the current map.</p></li>
+</ul></li>
+<li><p><code>vra</code>: a list with five entries:</p><ul>
+<li><p><code>strength</code>, a number controlling the strength of the Voting Rights Act
+(VRA) constraint, with higher values prioritizing majority-minority districts
+over other considerations.</p></li>
+<li><p><code>tgt_vra_min</code>, the target percentage of minority voters in minority
+copportunity districts. Defaults to 0.55.</p></li>
+<li><p><code>tgt_vra_other</code> The target percentage of minority voters in other
+districts. Defaults to 0.25, but should be set to reflect the total minority
+population in the state.</p></li>
+<li><p><code>pow_vra</code>, which controls the allowed deviation from the target
+minority percentage; higher values are more tolerant. Defaults to 1.5</p></li>
+<li><p><code>min_pop</code>, A vector containing the minority population of each
+geographic unit.</p></li>
+</ul></li>
+<li><p><code>incumbency</code>: a list with two entries:</p><ul>
+<li><p><code>strength</code>, a number controlling the tendency of the generated districts
+to avoid pairing up incumbents.</p></li>
+<li><p><code>incumbents</code>, a vector of precinct indices, one for each incumbent's
+home address.</p></li>
+</ul></li>
+</ul>
+
+    <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
+
+    <p>McCartan, C., &amp; Imai, K. (2020). Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans.
+Available at <a href='https://imai.fas.harvard.edu/research/files/SMCredist.pdf'>https://imai.fas.harvard.edu/research/files/SMCredist.pdf</a>.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'>if</span> (<span class='fl'>FALSE</span>) {
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='kw'>algdat.p10</span>)
-<span class='kw'>sampled_plans</span> <span class='op'>=</span> <span class='fu'>redist.smc</span>(<span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>adjlist</span>, <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>precinct.data</span><span class='op'>$</span><span class='kw'>pop</span>,
+<span class='kw'>sampled_basic</span> <span class='op'>=</span> <span class='fu'>redist.smc</span>(<span class='kw'>algdat.p10</span><span class='op'>$</span><span class='kw'>adjlist</span>, <span class='kw'>algdat.p10</span><span class='op'>$</span><span class='kw'>precinct.data</span><span class='op'>$</span><span class='kw'>pop</span>,
                            nsims=<span class='fl'>10000</span>, ndists=<span class='fl'>3</span>, popcons=<span class='fl'>0.1</span>)
+
+<span class='kw'>sampled_constr</span> <span class='op'>=</span> <span class='fu'>redist.smc</span>(<span class='kw'>algdat.p10</span><span class='op'>$</span><span class='kw'>adjlist</span>, <span class='kw'>algdat.p10</span><span class='op'>$</span><span class='kw'>precinct.data</span><span class='op'>$</span><span class='kw'>pop</span>,
+                            nsims=<span class='fl'>10000</span>, ndists=<span class='fl'>3</span>, popcons=<span class='fl'>0.1</span>,
+                            constraints=<span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(
+                                status_quo = <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(strength=<span class='fl'>10</span>, current=<span class='kw'>algdat.p10</span><span class='op'>$</span><span class='kw'>cdmat</span>[,<span class='fl'>1234</span>]),
+                                incumbency = <span class='fu'>lsit</span>(strength=<span class='fl'>1000</span>, incumbents=<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>3</span>, <span class='fl'>6</span>, <span class='fl'>25</span>))
+                            ))
 }
+
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

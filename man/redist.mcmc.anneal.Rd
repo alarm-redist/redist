@@ -4,16 +4,37 @@
 \alias{redist.mcmc.anneal}
 \title{MCMC Redistricting Simulator using Simulated Annealing}
 \usage{
-redist.mcmc.anneal(adjobj, popvec, ndists,
-initcds, num_hot_steps, num_annealing_steps,
-num_cold_steps,
-eprob, lambda, popcons, grouppopvec,
-areasvec, countymembership, borderlength_mat,
-ssdmat, constraint, constraintweights,
-compactness_metric, rngseed, maxiterrsg,
-adapt_lambda, adapt_eprob,
-contiguitymap, exact_mh,
-savename, verbose, ncores)
+redist.mcmc.anneal(
+  adjobj,
+  popvec,
+  ndists = NULL,
+  initcds = NULL,
+  num_hot_steps = 40000,
+  num_annealing_steps = 60000,
+  num_cold_steps = 20000,
+  eprob = 0.05,
+  lambda = 0,
+  popcons = NULL,
+  grouppopvec = NULL,
+  areasvec = NULL,
+  countymembership = NULL,
+  borderlength_mat = NULL,
+  ssdmat = NULL,
+  constraint = NULL,
+  constraintweights = NULL,
+  compactness_metric = "fryer-holden",
+  rngseed = NULL,
+  maxiterrsg = 5000,
+  adapt_lambda = FALSE,
+  adapt_eprob = FALSE,
+  contiguitymap = "rooks",
+  exact_mh = FALSE,
+  savename = NULL,
+  verbose = TRUE,
+  ncores = 1,
+  tgt_min = 0.55,
+  tgt_other = 0.25
+)
 }
 \arguments{
 \item{adjobj}{An adjacency matrix, list, or object of class
@@ -67,7 +88,7 @@ the third column is its distance. Default is \code{NULL}.}
 units. The default is \code{NULL}.}
 
 \item{constraint}{Which constraint to apply. Accepts any combination of \code{compact},
-\code{segregation}, \code{population}, \code{similarity}, or \code{none}
+\code{vra}, \code{population}, \code{similarity}, or \code{none}
 (no constraint applied). The default is NULL.}
 
 \item{constraintweights}{The weights to apply to each constraint. Should be a vector
@@ -103,6 +124,10 @@ Metropolis-Hastings ratio calculation for accept-reject rule. Default is FALSE.}
 Default is \code{TRUE}.}
 
 \item{ncores}{The number of cores available to parallelize over. Default is 1.}
+
+\item{tgt_min}{The majority minority target percent as a decimal. Default is 0.55.}
+
+\item{tgt_other}{The remaining target percent as a decimal. Default is 0.25.}
 }
 \description{
 \code{redist.mcmc.anneal} simulates congressional redistricting plans

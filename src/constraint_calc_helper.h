@@ -29,11 +29,13 @@ Rcpp::List calc_psicompact(arma::vec current_dists,
 			   Rcpp::NumericVector pops,
 			   Rcpp::NumericMatrix ssdmat,
 			   double denominator);
-Rcpp::List calc_psisegregation(arma::vec current_dists,
+Rcpp::List calc_psivra(arma::vec current_dists,
 			       arma::vec new_dists,
 			       Rcpp::NumericVector pops,
 			       Rcpp::NumericVector distswitch,
-			       Rcpp::NumericVector grouppop);
+			       Rcpp::NumericVector grouppop,
+			       double tgt_min,
+			       double tgt_other);
 Rcpp::List calc_psisimilar(arma::vec current_dists,
 			   arma::vec new_dists,
 			   arma::vec orig_dists,

@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.3</span>
       </span>
     </div>
 
@@ -83,7 +83,7 @@
 
       
 
-      </header><div class="row">
+      </header><script src="Intro-to-redist_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Intro-to-redist</h1>
@@ -206,7 +206,8 @@
 <ul>
 <li><p>adjlist - contains 25 adjacency lists as nb objects from package <code>spdep</code></p></li>
 <li><p>cdmat - contains all possible congressional districts under the population constraint for that object as a matrix</p></li>
-<li>precinct.data - data frame with a row for each precinct with five columns: pop, demvote, repvote, blackpop, hispanicpop
+<li>
+<p>precinct.data - data frame with a row for each precinct with five columns: pop, demvote, repvote, blackpop, hispanicpop</p>
 <ul>
 <li>pop - the total population of the district</li>
 <li>demvote - the number of votes cast for Obama in the 2008 presidential election in that precinct</li>
@@ -265,12 +266,12 @@
 <p>If we arbitrarily number the districts from the plot above, we can pick a small subset of them.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit">
 <span class="kw">fl25</span><span class="op">$</span><span class="kw">id</span> <span class="op">&lt;-</span> <span class="fl">1</span><span class="op">:</span><span class="fl">25</span>
-<span class="kw">fl25</span>[<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">18</span>,<span class="fl">19</span>,<span class="fl">23</span><span class="op">:</span><span class="fl">25</span>),] <span class="op">%&gt;%</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span>() <span class="op">+</span> 
+<span class="kw">fl25</span>[<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">12</span>,<span class="fl">13</span>,<span class="fl">1</span>,<span class="fl">14</span>,<span class="fl">15</span>),] <span class="op">%&gt;%</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span>() <span class="op">+</span> 
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html">geom_sf</a></span>() <span class="op">+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html">geom_sf_label</a></span>(<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(label = <span class="kw">id</span>))
 </pre></div>
 <p><img src="Intro-to-redist_files/figure-html/unnamed-chunk-12-1.png" width="480"></p>
-<p>Then, the 25th precinct by this numbering is connected to 19, 23, and 24. So, the adjacency list would be 19,23,24. 18 would not be on this list, as it does not share a portion of a side with precinct 25.</p>
+<p>Then, the 15th precinct by this numbering is connected to 1, 13, and 14. So, the adjacency list would be 1,13,14. 12, for example, would not be on this list, as it does not share a portion of a side with precinct 25.</p>
 <p>To make an adjacency list, we may use the packages <code>spdep</code> with function <code>poly2nb</code>. We use this function with <code>queen = FALSE</code>, as we want the rooks adjacency, not the queens adjacency, which would allow for if only corners touch, like on a chess board.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit">
 <span class="kw">adjlist</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/spdep/man/poly2nb.html">poly2nb</a></span>(pl = <span class="kw">fl25</span>, queen = <span class="fl">FALSE</span>)
@@ -406,7 +407,7 @@
 <span class="co">#&gt;  [1] "partitions"             "distance_parity"        "distance_original"     </span>
 <span class="co">#&gt;  [4] "mhdecisions"            "mhprob"                 "pparam"                </span>
 <span class="co">#&gt;  [7] "beta_sequence"          "energy_psi"             "constraint_pop"        </span>
-<span class="co">#&gt; [10] "constraint_compact"     "constraint_segregation" "constraint_similar"    </span>
+<span class="co">#&gt; [10] "constraint_compact"     "constraint_vra"         "constraint_similar"    </span>
 <span class="co">#&gt; [13] "constraint_countysplit" "boundary_partitions"    "boundaryratio"</span>
 </pre></div>
 <p>For simple runs of the algorithm, the most important pieces of the output are <code>partitions</code> and <code>distance_parity</code>. The <code>partitions</code> object is a matrix with <code>ndist</code> rows and <code>nsims</code> columns. Each column is one redistricting plan, where the numbers go from 0 to n-1, with each number represents the district assignment.</p>
