@@ -1074,8 +1074,8 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
     if(!is.null(constraint) & is.null(constraintweights)){
         stop("Please provide a weight value in 'constraintweights' for each constraint specified in 'constraint'.")
     }
-    if(!(compactness_metric %in% c("fryer-holden", "polsby-popper"))){
-        stop("We only support either 'fryer-holden' or 'polsby-popper' as compactness metrics.")
+    if(!(compactness_metric %in% c("fryer-holden", "polsby-popper", 'edges-removed'))){
+        stop("We only support 'fryer-holden', 'polsby-popper', or 'edges-removed' as compactness metrics.")
     }
     
     ## Set seed before first iteration of algorithm if provided by user
