@@ -329,17 +329,20 @@ List pp_compact(arma::uvec new_cds,
 }
 
 // Edges Removed Measure
-List er_compact(const Graph g, arma::uvec new_cds, arma::uvec current_cds, int ndists){
+List er_compact(const Graph g, arma::vec new_dists, arma::vec current_dists, int ndists){
   NumericVector er;
-  int nprec = new_cds.size();
-  umat districts(nprec, 2, fill::zeros);
+  int nprec = new_dists.size();
+  mat districts(nprec, 2, fill::zeros);
+  
   
   for(int r = 0; r < nprec; r++){
-    districts(r, 0) = new_cds(r);
-    districts(r, 1) = current_cds(r);
+    districts(r, 0) = new_dists(r);
+    districts(r, 1) = current_dists(r);
   }
   
-  er = n_removed(g, districts, ndists);
+  umat udistricts = conv_to<umat>::from(districts);
+  
+  er = n_removed(g, udistricts, ndists);
   
   List out;
   out["er_new"] = (double) er[0];
@@ -481,7 +484,7 @@ List calc_psicompact(arma::vec current_dists,
     } else if(measure == "edges-removed"){
       Graph g = list_to_graph(aList);
       
-      List er_out = er_compact(g, new_cds, current_cds, ndists);
+      List er_out = er_compact(g, new_dists, current_dists, ndists);
       
       psi_new += as<double>(er_out["er_new"]);
       psi_old += as<double>(er_out["er_old"]);
