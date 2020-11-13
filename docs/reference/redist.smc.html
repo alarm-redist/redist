@@ -143,24 +143,24 @@ plans according to contiguity, population, compactness, and administrative
 boundary constraints.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.smc</span>(
-  <span class='kw'>adjobj</span>,
-  <span class='kw'>popvec</span>,
-  <span class='kw'>nsims</span>,
-  <span class='kw'>ndists</span>,
-  counties = <span class='kw'>NULL</span>,
-  popcons = <span class='fl'>0.01</span>,
-  compactness = <span class='fl'>1</span>,
-  constraints = <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(),
-  resample = <span class='fl'>TRUE</span>,
-  constraint_fn = <span class='fu'>function</span>(<span class='kw'>m</span>) <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span>(<span class='fl'>0</span>, <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span>(<span class='kw'>m</span>)),
-  adapt_k_thresh = <span class='fl'>0.95</span>,
-  seq_alpha = <span class='fl'>0.1</span> <span class='op'>+</span> <span class='fl'>0.2</span> <span class='op'>*</span> <span class='kw'>compactness</span>,
-  truncate = (<span class='kw'>compactness</span> != <span class='fl'>1</span>),
-  trunc_fn = <span class='fu'>function</span>(<span class='kw'>x</span>) <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>pmin</a></span>(<span class='kw'>x</span>, <span class='fl'>0.01</span> <span class='op'>*</span> <span class='kw'>nsims</span><span class='op'>^</span><span class='fl'>0.4</span>),
-  verbose = <span class='fl'>TRUE</span>,
-  silent = <span class='fl'>FALSE</span>
-)</pre>
+    <pre class="usage"><span class='fu'>redist.smc</span><span class='op'>(</span>
+  <span class='va'>adjobj</span>,
+  <span class='va'>popvec</span>,
+  <span class='va'>nsims</span>,
+  <span class='va'>ndists</span>,
+  counties <span class='op'>=</span> <span class='cn'>NULL</span>,
+  popcons <span class='op'>=</span> <span class='fl'>0.01</span>,
+  compactness <span class='op'>=</span> <span class='fl'>1</span>,
+  constraints <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>,
+  resample <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  constraint_fn <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>m</span><span class='op'>)</span> <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fl'>0</span>, <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span><span class='op'>(</span><span class='va'>m</span><span class='op'>)</span><span class='op'>)</span>,
+  adapt_k_thresh <span class='op'>=</span> <span class='fl'>0.95</span>,
+  seq_alpha <span class='op'>=</span> <span class='fl'>0.1</span> <span class='op'>+</span> <span class='fl'>0.2</span> <span class='op'>*</span> <span class='va'>compactness</span>,
+  truncate <span class='op'>=</span> <span class='op'>(</span><span class='va'>compactness</span> <span class='op'>!=</span> <span class='fl'>1</span><span class='op'>)</span>,
+  trunc_fn <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span> <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>pmin</a></span><span class='op'>(</span><span class='va'>x</span>, <span class='fl'>0.01</span> <span class='op'>*</span> <span class='va'>nsims</span><span class='op'>^</span><span class='fl'>0.4</span><span class='op'>)</span>,
+  verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  silent <span class='op'>=</span> <span class='cn'>FALSE</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -323,18 +323,18 @@ home address.</p></li>
 Available at <a href='https://imai.fas.harvard.edu/research/files/SMCredist.pdf'>https://imai.fas.harvard.edu/research/files/SMCredist.pdf</a>.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='kw'>algdat.p10</span>)
-<span class='kw'>sampled_basic</span> <span class='op'>=</span> <span class='fu'>redist.smc</span>(<span class='kw'>algdat.p10</span><span class='op'>$</span><span class='kw'>adjlist</span>, <span class='kw'>algdat.p10</span><span class='op'>$</span><span class='kw'>precinct.data</span><span class='op'>$</span><span class='kw'>pop</span>,
-                           nsims=<span class='fl'>10000</span>, ndists=<span class='fl'>3</span>, popcons=<span class='fl'>0.1</span>)
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>algdat.p10</span><span class='op'>)</span>
+<span class='va'>sampled_basic</span> <span class='op'>=</span> <span class='fu'>redist.smc</span><span class='op'>(</span><span class='va'>algdat.p10</span><span class='op'>$</span><span class='va'>adjlist</span>, <span class='va'>algdat.p10</span><span class='op'>$</span><span class='va'>precinct.data</span><span class='op'>$</span><span class='va'>pop</span>,
+                           nsims<span class='op'>=</span><span class='fl'>10000</span>, ndists<span class='op'>=</span><span class='fl'>3</span>, popcons<span class='op'>=</span><span class='fl'>0.1</span><span class='op'>)</span>
 
-<span class='kw'>sampled_constr</span> <span class='op'>=</span> <span class='fu'>redist.smc</span>(<span class='kw'>algdat.p10</span><span class='op'>$</span><span class='kw'>adjlist</span>, <span class='kw'>algdat.p10</span><span class='op'>$</span><span class='kw'>precinct.data</span><span class='op'>$</span><span class='kw'>pop</span>,
-                            nsims=<span class='fl'>10000</span>, ndists=<span class='fl'>3</span>, popcons=<span class='fl'>0.1</span>,
-                            constraints=<span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(
-                                status_quo = <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(strength=<span class='fl'>10</span>, current=<span class='kw'>algdat.p10</span><span class='op'>$</span><span class='kw'>cdmat</span>[,<span class='fl'>1234</span>]),
-                                incumbency = <span class='fu'>lsit</span>(strength=<span class='fl'>1000</span>, incumbents=<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>3</span>, <span class='fl'>6</span>, <span class='fl'>25</span>))
-                            ))
-}
+<span class='va'>sampled_constr</span> <span class='op'>=</span> <span class='fu'>redist.smc</span><span class='op'>(</span><span class='va'>algdat.p10</span><span class='op'>$</span><span class='va'>adjlist</span>, <span class='va'>algdat.p10</span><span class='op'>$</span><span class='va'>precinct.data</span><span class='op'>$</span><span class='va'>pop</span>,
+                            nsims<span class='op'>=</span><span class='fl'>10000</span>, ndists<span class='op'>=</span><span class='fl'>3</span>, popcons<span class='op'>=</span><span class='fl'>0.1</span>,
+                            constraints<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>
+                                status_quo <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>strength<span class='op'>=</span><span class='fl'>10</span>, current<span class='op'>=</span><span class='va'>algdat.p10</span><span class='op'>$</span><span class='va'>cdmat</span><span class='op'>[</span>,<span class='fl'>1234</span><span class='op'>]</span><span class='op'>)</span>,
+                                incumbency <span class='op'>=</span> <span class='fu'>lsit</span><span class='op'>(</span>strength<span class='op'>=</span><span class='fl'>1000</span>, incumbents<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>6</span>, <span class='fl'>25</span><span class='op'>)</span><span class='op'>)</span>
+                            <span class='op'>)</span><span class='op'>)</span>
+<span class='op'>}</span>
 
 </div></pre>
   </div>
@@ -352,7 +352,7 @@ Available at <a href='https://imai.fas.harvard.edu/research/files/SMCredist.pdf'
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
