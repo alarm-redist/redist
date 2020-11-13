@@ -329,7 +329,7 @@ List pp_compact(arma::uvec new_cds,
 }
 
 // Edges Removed Measure
-List er_compact(const Graph g, arma::vec new_cds, arma::vec current_cds, int ndists){
+List er_compact(const Graph g, arma::uvec new_cds, arma::uvec current_cds, int ndists){
   NumericVector er;
   int nprec = new_cds.size();
   umat districts(nprec, 2, fill::zeros);
@@ -417,9 +417,10 @@ List calc_psicompact(arma::vec current_dists,
 		     // For Fryer Holden
 		     NumericVector pops,
 		     NumericMatrix ssdmat,
-		     double denominator = 1.0,
 		     // For Edges Removed
-		     int ndists){
+		     int ndists,
+		     // For Fryer Holden
+		     double denominator = 1.0){
 
   /* Inputs to function:
      current_dists: vector of the current cong district assignments
@@ -477,7 +478,7 @@ List calc_psicompact(arma::vec current_dists,
       psi_new += as<double>(pp_out["pp_new"]);
       psi_old += as<double>(pp_out["pp_old"]);
 
-    }else if(measure == "edges-removed"){
+    } else if(measure == "edges-removed"){
       Graph g = list_to_graph(aList);
       
       List er_out = er_compact(g, new_cds, current_cds, ndists);
