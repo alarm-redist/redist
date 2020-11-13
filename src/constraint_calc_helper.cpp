@@ -330,14 +330,20 @@ List pp_compact(arma::uvec new_cds,
 
 // Edges Removed Measure
 List er_compactness(const Graph g, arma::vec new_cds, arma::vec current_cds, int ndists){
-  double er_new;
-  double er_old;
+  NumericVector er;
+  int nprec = new_cds.size();
+  umat districts(nprec, 2, fill::zeros);
   
+  for(int r = 0; r < nprec; r++){
+    districts(r, 0) = new_cds(r);
+    districts(r, 1) = current_cds(r);
+  }
   
+  er = n_removed(g, districts, ndists);
   
   List out;
-  out["er_new"] = (double) er_new;
-  out["er_old"] = (double) er_old;
+  out["er_new"] = (double) er[0];
+  out["er_old"] = (double) er[1];
   
   return out;
 }
