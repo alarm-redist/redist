@@ -28,7 +28,8 @@ Rcpp::List calc_psicompact(arma::vec current_dists,
 			   bool discrete,
 			   Rcpp::NumericVector pops,
 			   Rcpp::NumericMatrix ssdmat,
-			   double denominator);
+			   double denominator,
+			   int ndists);
 Rcpp::List calc_psivra(arma::vec current_dists,
 			       arma::vec new_dists,
 			       Rcpp::NumericVector pops,

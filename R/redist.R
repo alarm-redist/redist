@@ -76,8 +76,8 @@ combine.par.anneal <- function(a, b){
 #' @param constraintweights The weights to apply to each constraint. Should be a vector
 #' the same length as constraint. Default is NULL.
 #' @param compactness_metric The compactness metric to use when constraining on
-#' compactness. Default is \code{fryer-holden}, the other implemented option
-#' is \code{polsby-popper}.
+#' compactness. Default is \code{fryer-holden}, the other implemented options
+#' are \code{polsby-popper} and \code{edges-removed}.
 #' @param rngseed Allows the user to set the seed for the
 #' simulations. Default is \code{NULL}.
 #' @param maxiterrsg Maximum number of iterations for random seed-and-grow
@@ -146,8 +146,8 @@ redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
     if(!is.null(constraint) & is.null(constraintweights)){
         stop("Please provide a weight value in 'constraintweights' for each constraint specified in 'constraint'.")
     }
-    if(!(compactness_metric %in% c("fryer-holden", "polsby-popper"))){
-        stop("We only support either 'fryer-holden' or 'polsby-popper' as compactness metrics.")
+    if(!(compactness_metric %in% c("fryer-holden", "polsby-popper", "edges-removed"))){
+        stop("We only support 'fryer-holden', 'polsby-popper', or 'edges-removed' as compactness metrics.")
     }
     
     ## Set seed before first iteration of algorithm if provided by user
