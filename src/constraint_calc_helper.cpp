@@ -8,6 +8,8 @@
 
 // Header files
 #include <RcppArmadillo.h>
+#include "kirchhoff.h"
+#include "tree_op.h"
 
 using namespace Rcpp;
 
@@ -326,6 +328,21 @@ List pp_compact(arma::uvec new_cds,
 
 }
 
+// Edges Removed Measure
+List er_compactness(const Graph g, arma::vec new_cds, arma::vec current_cds, int ndists){
+  double er_new;
+  double er_old;
+  
+  
+  
+  List out;
+  out["er_new"] = (double) er_new;
+  out["er_old"] = (double) er_old;
+  
+  return out;
+}
+
+
 // Function to calculate the strength of the beta constraint for population
 List calc_psipop(arma::vec current_dists,
 		 arma::vec new_dists,
@@ -394,7 +411,9 @@ List calc_psicompact(arma::vec current_dists,
 		     // For Fryer Holden
 		     NumericVector pops,
 		     NumericMatrix ssdmat,
-		     double denominator = 1.0){
+		     double denominator = 1.0,
+		     // For Edges Removed
+		     int ndists){
 
   /* Inputs to function:
      current_dists: vector of the current cong district assignments
@@ -452,6 +471,13 @@ List calc_psicompact(arma::vec current_dists,
       psi_new += as<double>(pp_out["pp_new"]);
       psi_old += as<double>(pp_out["pp_old"]);
 
+    }else if(measure == "edges-removed"){
+      Graph g = list_to_graph(aList);
+      
+      List er_out = er_compact(g, new_cds, current_cds, ndists);
+      
+      psi_new += as<double>(er_out["er_new"]);
+      psi_old += as<double>(er_out["er_old"]);
     }
 
   }
