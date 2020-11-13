@@ -329,7 +329,7 @@ List pp_compact(arma::uvec new_cds,
 }
 
 // Edges Removed Measure
-List er_compactness(const Graph g, arma::vec new_cds, arma::vec current_cds, int ndists){
+List er_compact(const Graph g, arma::vec new_cds, arma::vec current_cds, int ndists){
   NumericVector er;
   int nprec = new_cds.size();
   umat districts(nprec, 2, fill::zeros);
