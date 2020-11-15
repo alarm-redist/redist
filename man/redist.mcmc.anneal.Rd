@@ -87,16 +87,16 @@ the third column is its distance. Default is \code{NULL}.}
 \item{ssdmat}{A matrix of squared distances between geographic
 units. The default is \code{NULL}.}
 
-\item{constraint}{Which constraint to apply. Accepts any combination of \code{compact},
-\code{vra}, \code{population}, \code{similarity}, or \code{none}
+\item{constraint}{Which constraint to apply. Accepts any combination of \code{compact}, 
+\code{segregation}, \code{vra}, \code{population}, \code{similarity}, or \code{none}
 (no constraint applied). The default is NULL.}
 
 \item{constraintweights}{The weights to apply to each constraint. Should be a vector
 the same length as constraint. Default is NULL.}
 
 \item{compactness_metric}{The compactness metric to use when constraining on
-compactness. Default is \code{fryer-holden}, the other implemented option
-is \code{polsby-popper}.}
+compactness. Default is \code{fryer-holden}, the other implemented options
+are \code{polsby-popper} and \code{edges-removed}.}
 
 \item{rngseed}{Allows the user to set the seed for the
 simulations. Default is \code{NULL}.}
