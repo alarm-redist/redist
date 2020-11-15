@@ -62,6 +62,8 @@ List swMH(List aList,
 	  NumericMatrix ssdmat,
 	  double tgt_min,
 	  double tgt_other,
+	  IntegerVector rvote,
+	  IntegerVector dvote,
 	  int lambda = 0,
 	  double beta = 0.0,
 	  double weight_population = 0.0,
@@ -70,12 +72,14 @@ List swMH(List aList,
 	  double weight_vra = 0.0,
 	  double weight_similar = 0.0,
 	  double weight_countysplit = 0.0,
+	  double weight_partisan = 0.0,
 	  std::string adapt_beta = "none",
 	  int adjswap = 1,
 	  int exact_mh = 0,
 	  int adapt_eprob = 0,
 	  int adapt_lambda = 0,
 	  std::string compactness_measure = "fryer-holden",
+	  std::string partisan_measure = "efficiency-gap",
 	  double ssd_denom = 1.0,
 	  int num_hot_steps = 0,
 	  int num_annealing_steps = 0,
@@ -115,6 +119,8 @@ List swMH(List aList,
      beta_vra: strength of constraint for packing group into district
 
      beta_similar: strength of constraint for examining plans similar to original district
+   
+   beta_partisan: strength of constraint for minimizing partisan bias measure
 
      anneal_beta_population: flag for whether to anneal the beta pop parameter
 
@@ -129,6 +135,12 @@ List swMH(List aList,
      adjswap: flag for whether to force algorithm to only do adjacent swaps
 
      exact_mh: flag for whether to calculate the exact metropolis-hastings w boundary correction
+   
+   partisan_measure: string, only "efficiency-gap" implemented thus far
+   
+   rvote: vote for Republicans (or Party A)
+   
+   dvote: vote for Democrats (or Party B != A)
 
   */
 
@@ -204,6 +216,7 @@ List swMH(List aList,
   NumericVector psivra_store(nsims);
   NumericVector psisimilar_store(nsims);
   NumericVector psicountysplit_store(nsims);
+  NumericVector psipartisan_store(nsims);
 
   // Store value of p, lambda, weights for all simulations
   NumericVector pparam_store(nsims);
@@ -305,10 +318,14 @@ List swMH(List aList,
 				   weight_vra,
 				   weight_similar,
 				   weight_countysplit,
+				   weight_partisan,
 				   ssd_denom,
 				   tgt_min,
 				   tgt_other,
-				   compactness_measure);
+				   rvote,
+				   dvote,
+				   compactness_measure,
+				   partisan_measure);
 
     }while(as<int>(swap_partitions["goodprop"]) == 0);
 
@@ -356,6 +373,9 @@ List swMH(List aList,
       if(weight_countysplit != 0.0){
 	psicountysplit_store[k] = swap_partitions["countysplit_new_psi"];
       }
+      if(weight_partisan != 0.0){
+        psipartisan_store[k] = swap_partitions["partisan_new_psi"];
+      }
     }else{
       energy_store[k] = swap_partitions["energy_old"];
       if(weight_population != 0.0){
@@ -375,6 +395,9 @@ List swMH(List aList,
       }
       if(weight_countysplit != 0.0){
 	psicountysplit_store[k] = swap_partitions["countysplit_old_psi"];
+      }
+      if(weight_partisan != 0.0){
+        psipartisan_store[k] = swap_partitions["partisan_old_psi"];
       }
     }
 
@@ -528,6 +551,7 @@ List swMH(List aList,
     out["constraint_vra"] = psivra_store;
     out["constraint_similar"] = psisimilar_store;
     out["constraint_countysplit"] = psicountysplit_store;
+    out["constraint_partisan"] = psipartisan_store;
     out["boundary_partitions"] = boundarypartitions_store;
     out["boundaryratio"] = boundaryratio_store;
     if(adapt_beta == "tempering"){
@@ -555,6 +579,7 @@ List swMH(List aList,
     out["constraint_vra"] = psivra_store[k-1];
     out["constraint_similar"] = psisimilar_store[k-1];
     out["constraint_countysplit"] = psicountysplit_store[k-1];
+    out["constraint_partisan"] = psipartisan_store[k-1];
     out["boundary_partitions"] = boundarypartitions_store[k-1];
     out["boundaryratio"] = boundaryratio_store[k-1];
     if(adapt_eprob == 1){

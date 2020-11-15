@@ -40,10 +40,14 @@ Rcpp::List make_swaps(Rcpp::List boundary_cc,
 		      double weight_vra,
 		      double weight_similar,
 		      double weight_countysplit,
+		      double weight_partisan,
 		      double ssd_denominator,
 		      double tgt_min,
 		      double tgt_other,
-		      std::string compactness_measure);
+		      Rcpp::IntegerVector rvote,
+		      Rcpp::IntegerVector dvote,
+		      std::string compactness_measure,
+		      std::string partisan_measure);
 int mh_decision(double mh_prob);
 Rcpp::List changeBeta(arma::vec betavec,
 		      double beta,
