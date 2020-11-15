@@ -51,6 +51,12 @@ Rcpp::List calc_psicounty(arma::vec current_dists,
 			  arma::vec new_dists,
 			  arma::vec county_assignments,
 			  arma::vec popvec);
+Rcpp::List calc_psipartisan(arma::vec current_dists,
+                            arma::vec new_dists,
+                            Rcpp::IntegerVector rvote,
+                            Rcpp::IntegerVector dvote,
+                            std::string measure,
+                            int ndists);
 
 #endif
 

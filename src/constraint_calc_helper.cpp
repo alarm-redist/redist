@@ -915,3 +915,63 @@ List calc_psicounty(arma::vec current_dists,
 
 }
 
+
+
+// Function to constrain by segregating a group
+List calc_psipartisan(arma::vec current_dists,
+                 arma::vec new_dists,
+                 IntegerVector rvote,
+                 IntegerVector dvote,
+                 std::string measure,
+                 int ndists){
+  double psi_new, psi_old;
+  double totvote = (double)sum(rvote) + (double)sum(dvote);
+  
+  //if(measure == "efficiency-gap")
+  // Step 1: Aggregate to District Level Votes
+  IntegerMatrix rcounts(ndists, 2);
+  IntegerMatrix dcounts(ndists, 2);
+  
+  for(int r = 0; r < current_dists.size(); r++){
+    //current
+    rcounts(current_dists(r)-1, 0) += rvote(r);
+    dcounts(current_dists(r)-1, 1) += dvote(r);
+    // new
+    rcounts(new_dists(r)-1, 1) += rvote(r);
+    dcounts(new_dists(r)-1, 1) += dvote(r);
+  }
+  // Step 2: Compute Wasted Votes
+  IntegerMatrix rwaste(ndists, 2);
+  IntegerMatrix dwaste(ndists, 2);
+  int minwin;
+  IntegerVector netwaste(2);
+  
+  for(int c = 0; c < 2; c++){
+    for(int r = 0; r < ndists; r++){
+      minwin = floor((dcounts(r,c) + rcounts(r,c))/2.0)+1;
+      if(dcounts(r,c) > rcounts(r,c)){
+        dwaste(r,c) += (dcounts(r,c) - minwin);
+        rwaste(r,c) += rcounts(r,c);
+      } else{
+        dwaste(r,c) += dcounts(r,c);
+        rwaste(r,c) += (rcounts(r,c) - minwin);
+      }
+    }
+  }
+  
+  netwaste = colSums(dwaste) - colSums(rwaste);
+  
+  psi_old = std::abs((double)netwaste(0)/totvote);
+  psi_new = std::abs((double)netwaste(1)/totvote);
+  
+  //}
+  
+  
+  // Create return object
+  List out;
+  out["partisan_new_psi"] = psi_new;
+  out["partisan_old_psi"] = psi_old;
+  
+  return out;
+}
+

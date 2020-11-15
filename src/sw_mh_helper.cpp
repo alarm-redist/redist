@@ -408,10 +408,14 @@ List make_swaps(List boundary_cc,
                 double weight_vra,
                 double weight_similar,
                 double weight_countysplit,
+                double weight_partisan,
                 double ssd_denominator,
                 double tgt_min,
                 double tgt_other,
-                std::string compactness_measure)
+                IntegerVector rvote,
+                IntegerVector dvote,
+                std::string compactness_measure, 
+                std::string partisan_measure)
 {
   
   /* Inputs to function:
@@ -445,9 +449,13 @@ List make_swaps(List boundary_cc,
    
    beta_vra: strength of constraint for segregating subgroup
    
+   beta_partisan: strength of constraint for minimizing partisan bias measure
+   
    beta_similar: strength of constraint for similarity to orig plan
    
    ssd_denominator: normalizing constant for sum of squared distance psi
+   
+   partisan_measure: string, only "efficiency-gap" implemented thus far
    
    */
   
@@ -473,6 +481,8 @@ List make_swaps(List boundary_cc,
   double similar_old_psi = 0.0;
   double countysplit_new_psi = 0.0;
   double countysplit_old_psi = 0.0;
+  double partisan_new_psi = 0.0;
+  double partisan_old_psi = 0.0;
   
   // Number of unique congressional districts
   int ndists = max(cds_old) + 1;
@@ -629,6 +639,7 @@ List make_swaps(List boundary_cc,
     List segregation_constraint;
     List vra_constraint;
     List similar_constraint;
+    List partisan_constraint;
     if(weight_population != 0.0){
       
       population_constraint = calc_psipop(cds_prop, cds_test, pop_vec, cd_pair);
@@ -674,7 +685,7 @@ List make_swaps(List boundary_cc,
       similar_old_psi += as<double>(similar_constraint["similar_old_psi"]);
       
     }
-    
+
     // Update cd assignments and cd populations
     cds_prop = cds_test;
     cdspop_prop = prop_cd_pops;
@@ -700,14 +711,22 @@ List make_swaps(List boundary_cc,
     countysplit_old_psi += as<double>(countysplit_constraint["countysplit_old_psi"]);
     
   }
+  if(weight_partisan != 0.0){
+    
+    List partisan_constraint =  calc_psipartisan(cds_prop, cds_test, rvote, dvote, partisan_measure, ndists);
+    
+    partisan_new_psi += as<double>(partisan_constraint["partisan_new_psi"]);
+    partisan_old_psi += as<double>(partisan_constraint["partisan_old_psi"]);
+  }
+  
   
   // Multiply mh_prob by constraint values
   double energy_new = weight_population * pop_new_psi + weight_compact * compact_new_psi
     + weight_segregation * segregation_new_psi + weight_vra * vra_new_psi + weight_similar * similar_new_psi
-    + weight_countysplit * countysplit_new_psi;
+    + weight_countysplit * countysplit_new_psi + weight_partisan * partisan_new_psi;
     double energy_old = weight_population * pop_old_psi + weight_compact * compact_old_psi
       + weight_segregation * segregation_old_psi + weight_vra * vra_old_psi + weight_similar * similar_old_psi
-      + weight_countysplit * countysplit_old_psi;
+      + weight_countysplit * countysplit_old_psi + weight_partisan * partisan_old_psi;
       mh_prob = (double)mh_prob * exp(-1.0 * beta * (energy_new - energy_old));
       
       // Create returned list
@@ -742,6 +761,11 @@ List make_swaps(List boundary_cc,
         out["countysplit_new_psi"] = countysplit_new_psi;
         out["countysplit_old_psi"] = countysplit_old_psi;
       }
+      if(weight_partisan != 0.0){
+        out["partisan_new_psi"] = partisan_new_psi;
+        out["partisan_old_psi"] = partisan_old_psi;
+      }
+      
       
       return out;
       
