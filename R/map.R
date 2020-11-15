@@ -82,7 +82,7 @@ redist.map <- function(shp = NULL, adjacency = NULL, district_membership = NULL,
       nb <- lapply(adjacency, function(x){x+1L})
       class(nb) <- 'nb'
     } else{
-      adjacency <- redist.adjacencyacency(shp)
+      adjacency <- redist.adjacency(shp)
       nb <- lapply(adjacency, function(x){x+1L})
       #nb <- spdep::poly2nb(shp, queen = FALSE)
       class(nb) <- 'nb'
