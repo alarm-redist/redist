@@ -9,6 +9,8 @@
 #' Creates a map with optional graph overlay
 #'
 #' @param shp  A SpatialPolygonsDataFrame or sf object. Required.
+#' @param adjacency A zero-indexed adjacency list. Created with redist.adjacency 
+#' if not supplied. Default is NULL. 
 #' @param district_membership A numeric vector with one row for each precinct in shp. 
 #' Used to color the districts. Default is \code{NULL}.  Optional.
 #' @param centroids A logical indicating if centroids should be plotted. Default is \code{TRUE}.
@@ -33,7 +35,7 @@
 #' }
 #' 
 #' @export
-redist.map <- function(shp = NULL, district_membership = NULL, centroids = TRUE, 
+redist.map <- function(shp = NULL, adjacency = NULL, district_membership = NULL, centroids = TRUE, 
                        edges = TRUE, drop = FALSE, title = ""){
   
   # Check inputs
@@ -47,13 +49,17 @@ redist.map <- function(shp = NULL, district_membership = NULL, centroids = TRUE,
     stop('Please provide "shp" as a SpatialPolygonsDataFrame or sf object.')
   }
   
-  if(!any(class(district_membership) %in% c('numeric', 'integer', 'character'))){
-    stop('Please provide "district_membership" as a vector.')
+  if(!is.null(district_membership)){
+    if(!any(class(district_membership) %in% c('numeric', 'integer', 'character'))){
+      stop('Please provide "district_membership" as a vector.')
+    }
+    if(nrow(shp) != length(district_membership)){
+      stop('Arguments "district_membership" and "shp" do not have same number of precincts.')
+    }
+    
   }
   
-  if(nrow(shp) != length(district_membership)){
-    stop('Arguments "district_membership" and "shp" do not have same number of precincts.')
-  }
+
   
   if(!edges & drop){
     warning('edges FALSE while drop TRUE, assumed edges should be TRUE.')
@@ -64,27 +70,35 @@ redist.map <- function(shp = NULL, district_membership = NULL, centroids = TRUE,
     stop('drop is TRUE but no districts supplied')
   }
   
-  
   # Extract Centers
   if(edges | centroids){
     suppressWarnings(centers <- st_centroid(shp))
     st_crs(centers) <- st_crs(shp)
   }
-  
+
   # Extract Edges
   if(edges){
-    nb <- spdep::poly2nb(shp, queen = FALSE)
+    if(!is.null(adjacency)){
+      nb <- lapply(adjacency, function(x){x+1L})
+      class(nb) <- 'nb'
+    } else{
+      adjacency <- redist.adjacencyacency(shp)
+      nb <- lapply(adjacency, function(x){x+1L})
+      #nb <- spdep::poly2nb(shp, queen = FALSE)
+      class(nb) <- 'nb'
+    }
+    
     nb <- spdep::nb2lines(nb, coords = sf::st_coordinates(centers))
-    nb <- sf::st_as_sf(nb)
+    suppressWarnings(nb <- sf::st_as_sf(nb))
+    st_crs(nb) <- st_crs(shp)
   }
-  
+
   # Drop Edges that cross District Boundaries
   if(drop&!is.null(district_membership)){
     nb <- nb %>% 
       filter(district_membership[i] == district_membership[j])
-    st_crs(nb) <- st_crs(shp)
   }
-  
+
   # Create Plot
   if(!is.null(district_membership)){
     district_membership <- as.character(district_membership)
@@ -99,12 +113,12 @@ redist.map <- function(shp = NULL, district_membership = NULL, centroids = TRUE,
       theme_minimal() +
       labs(x = 'Longitude', y = 'Latitude', title = title)
   }
-  
+
   if(centroids){
     plot <- plot + 
       geom_sf(data = centers)
   }
-  
+
   if(edges){
     plot <- plot +
       geom_sf(data = nb)

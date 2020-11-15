@@ -31,6 +31,11 @@ Rcpp::List calc_psicompact(arma::vec current_dists,
 			   int ndists,
 			   double denominator
 			   );
+Rcpp::List calc_psisegregation(arma::vec current_dists,
+                               arma::vec new_dists,
+                               Rcpp::NumericVector pops,
+                               Rcpp::NumericVector distswitch,
+                               Rcpp::NumericVector grouppop);
 Rcpp::List calc_psivra(arma::vec current_dists,
 			       arma::vec new_dists,
 			       Rcpp::NumericVector pops,
