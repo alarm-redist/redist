@@ -37,7 +37,7 @@ extern SEXP _redist_rsg(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_sample_partition(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_segregationcalc(SEXP, SEXP, SEXP);
 extern SEXP _redist_smc_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP _redist_swMH(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _redist_swMH(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_taugap(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_var_info_mat(SEXP, SEXP, SEXP);
 
@@ -71,7 +71,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_sample_partition",      (DL_FUNC) &_redist_sample_partition,       5},
     {"_redist_segregationcalc",       (DL_FUNC) &_redist_segregationcalc,        3},
     {"_redist_smc_plans",             (DL_FUNC) &_redist_smc_plans,             21},
-    {"_redist_swMH",                  (DL_FUNC) &_redist_swMH,                  33},
+    {"_redist_swMH",                  (DL_FUNC) &_redist_swMH,                  34},
     {"_redist_taugap",                (DL_FUNC) &_redist_taugap,                 4},
     {"_redist_var_info_mat",          (DL_FUNC) &_redist_var_info_mat,           3},
     {NULL, NULL, 0}

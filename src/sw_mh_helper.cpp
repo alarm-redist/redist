@@ -404,6 +404,7 @@ List make_swaps(List boundary_cc,
                 double beta,
                 double weight_population,
                 double weight_compact,
+                double weight_segregation,
                 double weight_vra,
                 double weight_similar,
                 double weight_countysplit,
@@ -440,6 +441,8 @@ List make_swaps(List boundary_cc,
    
    beta_compact: strength of constraint for achieving compactness
    
+   beta_segregation: strength of constraint for segregating subgroup
+   
    beta_vra: strength of constraint for segregating subgroup
    
    beta_similar: strength of constraint for similarity to orig plan
@@ -462,6 +465,8 @@ List make_swaps(List boundary_cc,
   double pop_old_psi = 0.0;
   double compact_new_psi = 0.0;
   double compact_old_psi = 0.0;
+  double segregation_new_psi = 0.0;
+  double segregation_old_psi = 0.0;
   double vra_new_psi = 0.0;
   double vra_old_psi = 0.0;
   double similar_new_psi = 0.0;
@@ -621,6 +626,7 @@ List make_swaps(List boundary_cc,
     // Calculate beta constraints
     List population_constraint;
     List compact_constraint;
+    List segregation_constraint;
     List vra_constraint;
     List similar_constraint;
     if(weight_population != 0.0){
@@ -642,6 +648,14 @@ List make_swaps(List boundary_cc,
       
       compact_new_psi += as<double>(compact_constraint["compact_new_psi"]);
       compact_old_psi += as<double>(compact_constraint["compact_old_psi"]);
+      
+    }
+    if(weight_segregation != 0.0){
+      
+      segregation_constraint = calc_psisegregation(cds_prop, cds_test, pop_vec, cd_pair, group_pop_vec);
+      
+      segregation_new_psi += as<double>(segregation_constraint["segregation_new_psi"]);
+      segregation_old_psi += as<double>(segregation_constraint["segregation_new_psi"]);
       
     }
     if(weight_vra != 0.0){
@@ -689,10 +703,10 @@ List make_swaps(List boundary_cc,
   
   // Multiply mh_prob by constraint values
   double energy_new = weight_population * pop_new_psi + weight_compact * compact_new_psi
-    + weight_vra * vra_new_psi + weight_similar * similar_new_psi
+    + weight_segregation * segregation_new_psi + weight_vra * vra_new_psi + weight_similar * similar_new_psi
     + weight_countysplit * countysplit_new_psi;
     double energy_old = weight_population * pop_old_psi + weight_compact * compact_old_psi
-      + weight_vra * vra_old_psi + weight_similar * similar_old_psi
+      + weight_segregation * segregation_old_psi + weight_vra * vra_old_psi + weight_similar * similar_old_psi
       + weight_countysplit * countysplit_old_psi;
       mh_prob = (double)mh_prob * exp(-1.0 * beta * (energy_new - energy_old));
       
@@ -711,6 +725,10 @@ List make_swaps(List boundary_cc,
       if(weight_compact != 0.0){
         out["compact_new_psi"] = compact_new_psi;
         out["compact_old_psi"] = compact_old_psi;
+      }
+      if(weight_segregation != 0.0){
+        out["segregation_new_psi"] = segregation_new_psi;
+        out["segregation_old_psi"] = segregation_old_psi;
       }
       if(weight_vra != 0.0){
         out["vra_new_psi"] = vra_new_psi;

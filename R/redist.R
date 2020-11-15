@@ -70,8 +70,8 @@ combine.par.anneal <- function(a, b){
 #' the third column is its distance. Default is \code{NULL}.
 #' @param ssdmat A matrix of squared distances between geographic
 #' units. The default is \code{NULL}.
-#' @param constraint Which constraint to apply. Accepts any combination of \code{compact},
-#' \code{vra}, \code{population}, \code{similarity}, or \code{none}
+#' @param constraint Which constraint to apply. Accepts any combination of \code{compact}, 
+#' \code{segregation}, \code{vra}, \code{population}, \code{similarity}, or \code{none}
 #' (no constraint applied). The default is NULL.
 #' @param constraintweights The weights to apply to each constraint. Should be a vector
 #' the same length as constraint. Default is NULL.
@@ -197,6 +197,7 @@ redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
     ## Set betas - if tempering, modified later
     weightpop <- preprocout$params$weightpop
     weightcompact <- preprocout$params$weightcompact
+    weightseg <- preprocout$params$weightseg
     weightvra <- preprocout$params$weightvra
     weightsimilar <- preprocout$params$weightsimilar
     weightcountysplit <- preprocout$params$weightcountysplit
@@ -220,6 +221,7 @@ redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
                    beta = 0,
                    weight_population = weightpop,
                    weight_compact = weightcompact,
+                   weight_segregation = weightseg,
                    weight_vra = weightvra,
                    weight_similar = weightsimilar,
                    weight_countysplit = weightcountysplit,
@@ -339,7 +341,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ## popcons - strength of hard population constraint. Defaulted to no
     ##           constraint. popcons = 0.01 implies a 1% population constraint.
     ## grouppopvec - vector of populations for a minority group. To be used
-    ##               in conjunction with the vra M-H constraint
+    ##               in conjunction with the segregation and vra M-H constraints
     ## ssdmat - matrix of squared distances between population units.
     ##          To be used when applying the compactness constraint.
     ## beta - target strength of constraint in MH ratio. Defaults to 0.
@@ -371,8 +373,8 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         if((any(constraintweights == 0) & !is.null(constraint))){
             stop("If applying constraints or using simulated tempering, please set non-zero constraint by specifying the 'constraintweight' argument, and specify the names of the constraints in 'constraint'.")
         }
-        if(any(!(constraint %in% c("compact", "vra", "population", "similarity", "countysplit")))){
-            stop("Please specify any combination of `compact`, `vra`, `population`, `countysplit`, or `similarity` for constraint")
+        if(any(!(constraint %in% c("compact", "vra", "segregation", "population", "similarity", "countysplit")))){
+            stop("Please specify any combination of `compact`, `segregation`, vra`, `population`, `countysplit`, or `similarity` for constraint")
         }
     }
     
@@ -525,12 +527,23 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         stop("Each entry in adjacency list must have an initial congressional
              district assignment")
     }
+    if("segregation" %in% constraint & is.null(grouppopvec)){
+        stop("If applying the segregation constraint, please provide a vector
+             of subgroup populations")
+    }
     if("vra" %in% constraint & is.null(grouppopvec)){
         stop("If applying the vra constraint, please provide a vector
              of subgroup populations")
     }
     if("countysplit" %in% constraint & is.null(countymembership)){
         stop("If applying the county split constraint, please provide a numeric vector indicating county membership.")
+    }
+    if("segregation" %in% constraint & !(is.null(grouppopvec))){
+        if((length(grouppopvec) != length(adjlist)) |
+           (sum(is.na(grouppopvec)) > 0)){
+            stop("If applying the segregation constraint, each entry in adjacency
+              list must have corresponding entry in vector of group populations")
+        }
     }
     if("vra" %in% constraint & !(is.null(grouppopvec))){
         if((length(grouppopvec) != length(adjlist)) |
@@ -647,6 +660,11 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     }else{
         weightcompact <- 0
     }
+    if("segregation" %in% constraint){
+        weightseg <- constraintweights[which(constraint == "segregation")]
+    }else{
+        weightseg <- 0
+    }
     if("vra" %in% constraint){
         weightvra <- constraintweights[which(constraint == "vra")]
     }else{
@@ -720,6 +738,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
             adjswaps = adjswaps,
             weightpop = weightpop,
             weightcompact = weightcompact,
+            weightseg = weightseg,
             weightvra = weightvra,
             weightsimilar = weightsimilar,
             weightcountysplit = weightcountysplit, 
@@ -770,6 +789,8 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
 #' constraint for each accepted redistricting plan.}
 #' \item{constraint_compact}{A vector containing the value of the compactness
 #' constraint for each accepted redistricting plan.}
+#' \item{constraint_segregation}{A vector containing the value of the
+#' segregation constraint for each accepted redistricting plan.}
 #' \item{constraint_vra}{A vector containing the value of the
 #' vra constraint for each accepted redistricting plan.}
 #' \item{constraint_similar}{A vector containing the value of the similarity
@@ -921,7 +942,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' units. The default is \code{NULL}.
 #' @param temper Whether to use simulated tempering algorithm. Default is FALSE.
 #' @param constraint Which constraint to apply. Accepts any combination of \code{compact},
-#' \code{vra}, \code{population}, \code{similarity}, or \code{none}
+#' \code{segregation}, \code{vra}, \code{population}, \code{similarity}, or \code{none}
 #' (no constraint applied). The default is NULL.
 #' @param constraintweights The weights to apply to each constraint. Should be a vector
 #' the same length as constraint. Default is NULL.
@@ -987,6 +1008,8 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' constraint for each accepted redistricting plan.}
 #' \item{constraint_compact}{A vector containing the value of the compactness
 #' constraint for each accepted redistricting plan.}
+#' \item{constraint_segregation}{A vector containing the value of the
+#' segregation constraint for each accepted redistricting plan.}
 #' \item{constraint_vra}{A vector containing the value of the
 #' vra constraint for each accepted redistricting plan.}
 #' \item{constraint_similar}{A vector containing the value of the similarity
@@ -1124,6 +1147,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
     ## Set betas - if tempering, modified later
     weightpop <- preprocout$params$weightpop
     weightcompact <- preprocout$params$weightcompact
+    weightseg <- preprocout$params$weightseg
     weightvra <- preprocout$params$weightvra
     weightsimilar <- preprocout$params$weightsimilar
     weightcountysplit <- preprocout$params$weightcountysplit
@@ -1202,6 +1226,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                        beta = preprocout$params$beta,
                        weight_population = weightpop,
                        weight_compact = weightcompact,
+                       weight_segregation = weightseg,
                        weight_vra = weightvra,
                        weight_similar = weightsimilar,
                        weight_countysplit = weightcountysplit,
@@ -1291,6 +1316,8 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
 #' constraint for each accepted redistricting plan.}
 #' \item{constraint_compact}{A vector containing the value of the compactness
 #' constraint for each accepted redistricting plan.}
+#' \item{constraint_segregation}{A vector containing the value of the
+#' segregation constraint for each accepted redistricting plan.}
 #' \item{constraint_vra}{A vector containing the value of the
 #' vra constraint for each accepted redistricting plan.}
 #' \item{constraint_similar}{A vector containing the value of the similarity
