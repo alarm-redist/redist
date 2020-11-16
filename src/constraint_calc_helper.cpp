@@ -452,44 +452,46 @@ List calc_psicompact(arma::vec current_dists,
   }
 
   // Loop over the congressional districts
-  for(int i = 0; i < distswitch.size(); i++){
-
-    // Initialize objects
-    arma::uvec new_cds = find(new_dists == distswitch(i));
-    arma::uvec current_cds = find(current_dists == distswitch(i));
-
-    if(measure == "fryer-holden"){
-
-      List fh_out = fh_compact(new_cds, current_cds, pops, ssdmat, denominator);
-
-      // Add to psi
-      psi_new += as<double>(fh_out["ssd_new"]);
-      psi_old += as<double>(fh_out["ssd_old"]);
-
-    }else if(measure == "polsby-popper"){
-
-      List pp_out = pp_compact(new_cds, current_cds,
-			       as<arma::vec>(areas_vec),
-			       as<arma::vec>(boundarylist_new),
-			       as<arma::vec>(boundarylist_current),
-			       borderlength_mat,
-			       pops,
-			       aList,
-			       discrete);
-
-      // Add to psi
-      psi_new += as<double>(pp_out["pp_new"]);
-      psi_old += as<double>(pp_out["pp_old"]);
-
-    } else if(measure == "edges-removed"){
-      Graph g = list_to_graph(aList);
+  if(measure == "fryer-holden"|| measure == "polsby-popper"){
+    for(int i = 0; i < distswitch.size(); i++){
       
-      List er_out = er_compact(g, new_dists, current_dists, ndists);
+      // Initialize objects
+      arma::uvec new_cds = find(new_dists == distswitch(i));
+      arma::uvec current_cds = find(current_dists == distswitch(i));
       
-      psi_new += as<double>(er_out["er_new"]);
-      psi_old += as<double>(er_out["er_old"]);
+      if(measure == "fryer-holden"){
+        
+        List fh_out = fh_compact(new_cds, current_cds, pops, ssdmat, denominator);
+        
+        // Add to psi
+        psi_new += as<double>(fh_out["ssd_new"]);
+        psi_old += as<double>(fh_out["ssd_old"]);
+        
+      }else if(measure == "polsby-popper"){
+        
+        List pp_out = pp_compact(new_cds, current_cds,
+                                 as<arma::vec>(areas_vec),
+                                 as<arma::vec>(boundarylist_new),
+                                 as<arma::vec>(boundarylist_current),
+                                 borderlength_mat,
+                                 pops,
+                                 aList,
+                                 discrete);
+        
+        // Add to psi
+        psi_new += as<double>(pp_out["pp_new"]);
+        psi_old += as<double>(pp_out["pp_old"]);
+        
+      } 
+      
     }
-
+  } else if(measure == "edges-removed"){
+    Graph g = list_to_graph(aList);
+    
+    List er_out = er_compact(g, new_dists, current_dists, ndists);
+    
+    psi_new = as<double>(er_out["er_new"]);
+    psi_old = as<double>(er_out["er_old"]);
   }
 
   // Create return object
