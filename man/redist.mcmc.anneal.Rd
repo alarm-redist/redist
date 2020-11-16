@@ -102,7 +102,7 @@ compactness. Default is \code{fryer-holden}, the other implemented options
 are \code{polsby-popper} and \code{edges-removed}.}
 
 \item{partisan_metric}{The partisan metric to use when constraining on partisan metrics.
-Only implemented is "efficiency-gap", the default.}
+Only implemented are "efficiency-gap" (default) and "proportional-representation".}
 
 \item{rngseed}{Allows the user to set the seed for the
 simulations. Default is \code{NULL}.}

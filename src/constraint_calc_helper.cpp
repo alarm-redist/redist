@@ -927,7 +927,7 @@ List calc_psipartisan(arma::vec current_dists,
   double psi_new, psi_old;
   double totvote = (double)sum(rvote) + (double)sum(dvote);
   
-  //if(measure == "efficiency-gap")
+  if(measure == "efficiency-gap"){
   // Step 1: Aggregate to District Level Votes
   IntegerMatrix rcounts(ndists, 2);
   IntegerMatrix dcounts(ndists, 2);
@@ -964,7 +964,40 @@ List calc_psipartisan(arma::vec current_dists,
   psi_old = std::abs((double)netwaste(0)/totvote);
   psi_new = std::abs((double)netwaste(1)/totvote);
   
-  //}
+} else if(measure == "proportional-representation"){
+  // Step 1: Aggregate to District Level Votes
+  IntegerMatrix rcounts(ndists, 2);
+  IntegerMatrix dcounts(ndists, 2);
+  
+  for(int r = 0; r < current_dists.size(); r++){
+    //current
+    rcounts(current_dists(r)-1, 0) += rvote(r);
+    dcounts(current_dists(r)-1, 1) += dvote(r);
+    // new
+    rcounts(new_dists(r)-1, 1) += rvote(r);
+    dcounts(new_dists(r)-1, 1) += dvote(r);
+  }
+  
+  // Step 2: Calculate the target Dem percent
+  double target = (double)sum(dvote)/(totvote);
+  
+  
+  // Step 3: Calculate Number of Dem Seats
+  double actual_new = 0.0;
+  double actual_old = 0.0;
+  for(int d = 0; d < ndists; d++){
+    if(dcounts(d, 0) > rcounts(d, 0)){
+      actual_old += 1.0;
+    }
+    if(dcounts(d, 1) > rcounts(d, 1)){
+      actual_new += 1.0;
+    }
+  }
+  
+  // Step 4: Create psi
+  psi_old = actual_old/(double)ndists;
+  psi_new = actual_new/(double)ndists;
+}
   
   
   // Create return object

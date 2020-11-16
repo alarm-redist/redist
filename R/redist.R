@@ -79,7 +79,7 @@ combine.par.anneal <- function(a, b){
 #' compactness. Default is \code{fryer-holden}, the other implemented options
 #' are \code{polsby-popper} and \code{edges-removed}.
 #' @param partisan_metric The partisan metric to use when constraining on partisan metrics.
-#' Only implemented is "efficiency-gap", the default.
+#' Only implemented are "efficiency-gap" (default) and "proportional-representation".
 #' @param rngseed Allows the user to set the seed for the
 #' simulations. Default is \code{NULL}.
 #' @param maxiterrsg Maximum number of iterations for random seed-and-grow
@@ -243,7 +243,7 @@ redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
                    adapt_lambda = adapt_lambda,
                    adapt_eprob = adapt_eprob,
                    compactness_measure = compactness_metric,
-                   partisan_measure = partisan_metric,
+                   partisan_measure = preprocout$params$partisan_metricpartisan_metric,
                    tgt_min = tgt_min,
                    tgt_other = tgt_other,
                    rvote = preprocout$params$rvote,
@@ -379,6 +379,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ## tgt_other - vra constraint smaller grouppop decimal
     ## rvote - republican (or Party A) votes by precinct
     ## dvote - democratic (or Party B!=A) votes by precinct
+    ## partisan_metric - either efficiency-gap or proportional-representation
     ##
     #######################
     ## Check missingness ##
@@ -598,6 +599,14 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         if(!'integer' %in% class(dvote)){
             stop('dvote must be an integer vector.')
         }
+        if(is.null(partisan_metric)){
+            # defaults to efficiency-gap
+            partisan_metric <- 'efficiency-gap'
+        } else{
+            if(!partisan_metric %in% c("efficiency-gap", "proportional-representation")){
+                stop("partisan_metric is only implemented for choices efficiency-gap and proportional-representation.")
+            }
+        }
     } else{
         rvote <- c(0L,1L)
         dvote <- c(1L,0L)
@@ -796,7 +805,8 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
             tgt_min = tgt_min,
             tgt_other = tgt_other,
             rvote = rvote,
-            dvote = dvote
+            dvote = dvote,
+            partisan_metric = partisan_metric
         )
     )
     
@@ -1198,6 +1208,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                                  borderlength_mat = borderlength_mat,
                                  ssdmat = ssdmat,
                                  compactness_metric = compactness_metric,
+                                 partisan_metric = partisan_metric,
                                  temper = temper,
                                  constraint = constraint, constraintweights = constraintweights,
                                  betaseq = betaseq, betaseqlength = betaseqlength,
@@ -1304,7 +1315,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                        adapt_lambda = adapt_lambda,
                        adapt_eprob = adapt_eprob,
                        compactness_measure = compactness_metric,
-                       partisan_measure = partisan_metric,
+                       partisan_measure = preprocout$params$partisan_metric,
                        ssd_denom = ssd_denom,
                        tgt_min = tgt_min,
                        tgt_other = tgt_other, 
