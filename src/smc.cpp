@@ -63,7 +63,7 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
         cum_wgt = get_wgts(districts, n_distr, ctr, alpha, lp, pop,
                            beta_sq, current, n_current,
                            beta_vra, tgt_min, tgt_other, pow_vra, min_pop,
-                           beta_inc, incumbents);
+                           beta_inc, incumbents, verbosity);
 
         Rcpp::checkUserInterrupt();
     }
@@ -87,7 +87,7 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr,
              double beta_sq, const uvec &current, int n_current,
              double beta_vra, double tgt_min, double tgt_other,
              double pow_vra, const uvec &min_pop,
-             double beta_inc, const uvec &incumbents) {
+             double beta_inc, const uvec &incumbents, int verbosity) {
     int V = districts.n_rows;
     int N = districts.n_cols;
 
@@ -106,9 +106,14 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr,
     vec wgt = exp(-alpha * lp);
     if (distr_ctr < n_distr - 1) // not the last iteration
         lp = lp * (1 - alpha);
+    vec cuml_wgt = cumsum(wgt);
 
-    wgt = cumsum(wgt);
-    return wgt / wgt[N-1];
+    if (verbosity >= 1) {
+        double neff = cuml_wgt[N-1] * cuml_wgt[N-1]  / sum(square(wgt));
+        Rprintf("Resampling effective sample size: %.1f (%.1f%% efficiency).\n", neff, 100*neff/N);
+    }
+
+    return cuml_wgt / cuml_wgt[N-1];
 }
 
 

@@ -29,20 +29,23 @@ redist.parity <- function(district_membership, population, ncores = 1) {
     }
 
     # parallize as in fastLink package to avoid Windows/unix issues
-    nc <- min(ncores, ncol(district_membership))
+    N = ncol(district_membership)
+    nc <- min(ncores, N)
     if (nc == 1) {
         `%oper%` <- `%do%`
     } else {
         `%oper%` <- `%dopar%`
-        cl <- makeCluster(nc, , setup_strategy = 'sequential')
+        cl <- makeCluster(nc, setup_strategy = 'sequential')
         registerDoParallel(cl)
         on.exit(stopCluster(cl))
     }
 
-    if (min(district_membership[,]) == 0)
+    if (min(district_membership[,1]) == 0)
         district_membership = district_membership + 1
     n_distr = max(district_membership[,1])
-    foreach(map=1:ncol(district_membership), .combine = "cbind") %oper% {
+
+    chunks = split(1:N, rep(1:nc, each=ceiling(N/nc))[1:N])
+    foreach(map=chunks, .combine = "c") %oper% {
         max_dev(district_membership[,map], population, n_distr)
     }
 }

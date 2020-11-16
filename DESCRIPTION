@@ -42,6 +42,7 @@ Imports:
     stringr
 Suggests:
     testthat,
+    withr,
     Rmpi,
     knitr,
     rmarkdown,
