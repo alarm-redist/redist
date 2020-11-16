@@ -7,7 +7,7 @@
 redist.parity(district_membership, population, ncores = 1)
 }
 \arguments{
-\item{district_membership}{A matrix with one row 
+\item{district_membership}{A matrix with one row
 for each precinct and one column for each map. Required.}
 
 \item{population}{A numeric vector with the population for every precinct.}

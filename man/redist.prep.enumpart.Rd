@@ -22,12 +22,12 @@ Prepares a run of the enumpart algorithm by ordering edges
 \examples{
 \dontrun{
 data("algdat.p10")
-redist.prep.enumpart(adjlist = algdat.p10$adjlist, unordered_path = '../unordered', 
+redist.prep.enumpart(adjlist = algdat.p10$adjlist, unordered_path = '../unordered',
 ordered_path = '../ordered')
 }
 }
 \references{
 Benjamin Fifield, Kosuke Imai, Jun Kawahara, and Christopher T Kenny.
-"The Essential Role of Empirical Validation in Legislative Redistricting Simulation." 
+"The Essential Role of Empirical Validation in Legislative Redistricting Simulation."
 Forthcoming, Statistics and Public Policy.
 }

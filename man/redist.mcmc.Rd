@@ -109,7 +109,7 @@ the same length as constraint. Default is NULL.}
 compactness. Default is \code{fryer-holden}, the other implemented option
 is \code{polsby-popper}.}
 
-\item{ssd_denom}{The normalizing constant for the sum-of-squared distance Fryer-Holden metric. 
+\item{ssd_denom}{The normalizing constant for the sum-of-squared distance Fryer-Holden metric.
 Default is 1.0 (unnormalized).}
 
 \item{betaseq}{Sequence of beta values for tempering. The default is

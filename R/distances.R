@@ -60,7 +60,8 @@ redist.distances <- function(district_membership, measure = "Hamming",
     done <- 0
 
     # parallel setup
-    nc <- min(ncores, ncol(district_membership))
+    N = ncol(district_membership)
+    nc <- min(ncores, N)
     if (nc == 1) {
         `%oper%` <- `%do%`
     } else {
@@ -72,7 +73,7 @@ redist.distances <- function(district_membership, measure = "Hamming",
 
     # Compute Hamming Distance Metric
     if ("Hamming" %in% measure) {
-        ham <- foreach(map = 1:ncol(district_membership), .combine = "cbind") %oper% {
+        ham <- foreach(map=1:N, .combine="cbind") %oper% {
             hamming(v = district_membership[,map], m = district_membership)
         }
         colnames(ham) <- NULL
@@ -85,7 +86,7 @@ redist.distances <- function(district_membership, measure = "Hamming",
 
     # Compute Manhattan Distance Metric
     if ("Manhattan" %in% measure) {
-        man <- foreach(map = 1:ncol(district_membership), .combine = "cbind") %oper% {
+        man <- foreach(map=1:N, .combine="cbind") %oper% {
             minkowski(v = district_membership[,map], m = district_membership, p = 1)
         }
         colnames(man) <- NULL
@@ -97,7 +98,7 @@ redist.distances <- function(district_membership, measure = "Hamming",
 
     # Compute Euclidean Distance Metric
     if ("Euclidean" %in% measure) {
-        euc <- foreach(map = 1:ncol(district_membership), .combine = "cbind") %oper% {
+        euc <- foreach(map=1:N, .combine="cbind") %oper% {
             minkowski(v = district_membership[,map], m = district_membership, p = 2)
         }
         colnames(euc) <- NULL
@@ -119,7 +120,7 @@ redist.distances <- function(district_membership, measure = "Hamming",
         if (min(district_membership) == 0)
             district_membership = district_membership + 1
 
-        vi = foreach(map = 1:ncol(district_membership), .combine = "cbind") %oper% {
+        vi = foreach(map=1:N, .combine="cbind") %oper% {
             var_info_mat(district_membership, map-1, pop) # 0-index
         }
         colnames(vi) <- NULL

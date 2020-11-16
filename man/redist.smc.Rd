@@ -15,8 +15,8 @@ redist.smc(
   constraints = list(),
   resample = TRUE,
   constraint_fn = function(m) rep(0, ncol(m)),
-  adapt_k_thresh = 0.95,
-  seq_alpha = 0.1 + 0.2 * compactness,
+  adapt_k_thresh = 0.975,
+  seq_alpha = 0.2 + 0.2 * compactness,
   truncate = (compactness != 1),
   trunc_fn = function(x) pmin(x, 0.01 * nsims^0.4),
   verbose = TRUE,
@@ -108,6 +108,13 @@ boundary constraints.
 This function draws nearly-independent samples from a specific target measure,
 controlled by the \code{popcons}, \code{compactness}, \code{constraints}, and
 \code{constraint_fn} parameters.
+
+Key to ensuring good performance is monitoring the efficiency of the resampling
+process at each SMC stage.  Unless \code{silent=F}, this function will print
+out the effective sample size of each resampling step to allow the user to
+monitor the efficiency.  If \code{verbose=T} the function will also print
+out information on the \eqn{k_i} values automatically chosen and the
+acceptance rate (based on the population constraint) at each step.
 
 Higher values of \code{compactness} sample more compact districts;
 setting this parameter to 1 is computationally efficient and generates nicely
