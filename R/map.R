@@ -68,6 +68,7 @@ redist.map <- function(shp = NULL, district_membership = NULL, centroids = TRUE,
   # Extract Centers
   if(edges | centroids){
     suppressWarnings(centers <- st_centroid(shp))
+    st_crs(centers) <- st_crs(shp)
   }
   
   # Extract Edges
@@ -81,6 +82,7 @@ redist.map <- function(shp = NULL, district_membership = NULL, centroids = TRUE,
   if(drop&!is.null(district_membership)){
     nb <- nb %>% 
       filter(district_membership[i] == district_membership[j])
+    st_crs(nb) <- st_crs(shp)
   }
   
   # Create Plot

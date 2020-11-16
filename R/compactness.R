@@ -29,7 +29,7 @@
 #' @param nloop A numeric to specify loop number. Defaults to 1 if only one map provided 
 #' and the column number if multiple maps given.
 #' @param ncores Number of cores to use for parallel computing. Default is 1.
-#' 
+#' @param counties A numeric vector from 1:ncounties corresponding to counties. Required for "logSpanningTree".
 #' @details This function computes specified compactness scores for a map.  If 
 #' there is more than one shape specified for a single district, it combines 
 #' them, if necessary, and computes one score for each district.
@@ -124,7 +124,7 @@ redist.compactness <- function(shp = NULL,
                                district_membership, 
                                measure = c("PolsbyPopper"),
                                population = NULL, adjacency = NULL, nloop = 1,
-                               ncores = 1){
+                               ncores = 1, counties = NULL){
   
   # Check Inputs
   if(is.null(shp)&is.null(adjacency)){
@@ -139,7 +139,7 @@ redist.compactness <- function(shp = NULL,
     }
   }
   
-  if(class(district_membership) == 'redist'){
+  if(any(class(district_membership) == 'redist')){
     district_membership <- district_membership$partitions
   }  
   
@@ -167,6 +167,9 @@ redist.compactness <- function(shp = NULL,
   
   if(class(ncores) != 'numeric'){
     stop('Please provide "ncores" as a numeric.')
+  }
+  if(('logSpanningTree' %in% measure) & is.null(counties)){
+    stop('Please provide "counties" as an argument.')
   }
   
   
@@ -212,7 +215,7 @@ redist.compactness <- function(shp = NULL,
       `%oper%` <- `%do%`
     } else {
       `%oper%` <- `%dopar%`
-      cl <- makeCluster(nc, , setup_strategy = 'sequential')
+      cl <- makeCluster(nc, setup_strategy = 'sequential')
       registerDoParallel(cl)
       on.exit(stopCluster(cl))
     }
@@ -377,6 +380,7 @@ redist.compactness <- function(shp = NULL,
   if('logSpanningTree' %in% measure){
     comp[['logSpanningTree']] <- rep(log_st_map(g = adjacency, 
                                                 districts = district_membership, 
+                                                counties = counties,
                                                 n_distr = nd), each = nd)
   }
   

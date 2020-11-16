@@ -144,12 +144,12 @@ If we number the districts from 1 to 25, we say that two districts are connected
 If we arbitrarily number the districts from the plot above, we can pick a small subset of them.
 ```{r, fig.width=5}
 fl25$id <- 1:25
-fl25[c(18,19,23:25),] %>% ggplot() + 
+fl25[c(12,13,1,14,15),] %>% ggplot() + 
   geom_sf() +
   geom_sf_label(aes(label = id))
 ```
 
-Then, the 25th precinct by this numbering is connected to 19, 23, and 24. So, the adjacency list would be 19,23,24. 18 would not be on this list, as it does not share a portion of a side with precinct 25.
+Then, the 15th precinct by this numbering is connected to 1, 13, and 14. So, the adjacency list would be 1,13,14. 12, for example, would not be on this list, as it does not share a portion of a side with precinct 25.
 
 To make an adjacency list, we may use the packages `spdep` with function `poly2nb`. We use this function with `queen = FALSE`, as we want the rooks adjacency, not the queens adjacency, which would allow for if only corners touch, like on a chess board.
 ```{r}

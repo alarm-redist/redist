@@ -11,7 +11,7 @@
 #' @return numeric vector with the population parity for each column
 #'
 #' @export
-redist.parity <- function(district_membership, population, ncores = 1){
+redist.parity <- function(district_membership, population, ncores = 1) {
     if(!any(class(population) %in% c('numeric', 'integer'))) {
         stop('Please provide "population" as a numeric vector.')
     }

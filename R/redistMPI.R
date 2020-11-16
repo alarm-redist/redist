@@ -153,7 +153,7 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
     
     weightpop <- preprocout$params$weightpop
     weightcompact <- preprocout$params$weightcompact
-    weightseg <- preprocout$params$weightseg
+    weightvra <- preprocout$params$weightvra
     weightsimilar <- preprocout$params$weightsimilar
     weightcountysplit <- preprocout$params$weightcountysplit
     temper <- "parallel"
@@ -274,7 +274,7 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                          beta = beta,
                          weight_population = weightpop,
                          weight_compact = weightcompact,
-                         weight_segregation = weightseg,
+                         weight_vra = weightvra,
                          weight_similar = weightsimilar,
                          weight_countysplit = weightcountysplit,
                          adapt_beta = "none",
@@ -302,9 +302,9 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
             if(adjswaps){
 
                 ## Determine which nodes are swapping
-                tempseg <- swaps[(i-1)*nsims + j*freq]
+                tempvra <- swaps[(i-1)*nsims + j*freq]
                 ## Get node indices
-                temps <- tempadj[tempseg:(tempseg+1)]
+                temps <- tempadj[tempvra:(tempvra+1)]
                 ## Communication step
                 if(procID %in% temps){
                     ## Determine partner
@@ -343,16 +343,16 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                         beta <- betaPart
                         
                         ## Adjust temperature adjacency list
-                        tempadj[tempseg:(tempseg+1)] <- tempadj[(tempseg+1):tempseg]
+                        tempadj[tempvra:(tempvra+1)] <- tempadj[(tempvra+1):tempvra]
                         ## Send temperature adjacency list
-                        if(procID == tempadj[tempseg+1]){
+                        if(procID == tempadj[tempvra+1]){
                             oProcs <- tempadj[!(tempadj %in% temps)]
                             for(k in 1:length(oProcs)){
                                 Rmpi::mpi.send.Robj(tempadj,dest=oProcs[k],tag=4)
                             }
                         }
                     }else{
-                        if(procID == tempadj[tempseg]){
+                        if(procID == tempadj[tempvra]){
                             oProcs <- tempadj[!(tempadj %in% temps)]
                             for(k in 1:length(oProcs)){
                                 Rmpi::mpi.send.Robj(tempadj,dest=oProcs[k],tag=4)
@@ -360,7 +360,7 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
                         }
                     }
                 }else{
-                    tempadj <- Rmpi::mpi.recv.Robj(tempadj[tempseg],tag=4)
+                    tempadj <- Rmpi::mpi.recv.Robj(tempadj[tempvra],tag=4)
                 }
             }else{
                 if(j != length(nsimsAdj) || length(nsimsAdj) == length(tempIts)){
@@ -492,8 +492,8 @@ ecutsMPI <- function(procID = procID, params = params, adjobj = adjobj, popvec =
 #' constraint for each accepted redistricting plan.}
 #' \item{constraint_compact}{A vector containing the value of the compactness
 #' constraint for each accepted redistricting plan.}
-#' \item{constraint_segregation}{A vector containing the value of the
-#' segregation constraint for each accepted redistricting plan.}
+#' \item{constraint_vra}{A vector containing the value of the
+#' vra constraint for each accepted redistricting plan.}
 #' \item{constraint_similar}{A vector containing the value of the similarity
 #' constraint for each accepted redistricting plan.}
 #' \item{beta_sequence}{A vector containing the value of beta for each iteration
@@ -677,7 +677,7 @@ ecutsAppend <- function(algout,ndata){
 #' @param rngseed Allows the user to set the seed for the
 #' simulations. Default is \code{NULL}.
 #' @param constraint Which constraint to apply. Accepts any combination of \code{compact},
-#' \code{segregation}, \code{population}, \code{similarity}, or \code{none}
+#' \code{vra}, \code{population}, \code{similarity}, or \code{none}
 #' (no constraint applied). The default is NULL.
 #' @param constraintweights The weights to apply to each constraint. Should be a vector
 #' the same length as constraint. Default is NULL.
@@ -725,8 +725,8 @@ ecutsAppend <- function(algout,ndata){
 #' constraint for each accepted redistricting plan.}
 #' \item{constraint_compact}{A vector containing the value of the compactness
 #' constraint for each accepted redistricting plan.}
-#' \item{constraint_segregation}{A vector containing the value of the
-#' segregation constraint for each accepted redistricting plan.}
+#' \item{constraint_vra}{A vector containing the value of the
+#' vra constraint for each accepted redistricting plan.}
 #' \item{constraint_similar}{A vector containing the value of the similarity
 #' constraint for each accepted redistricting plan.}
 #' \item{beta_sequence}{A vector containing the value of beta for each iteration

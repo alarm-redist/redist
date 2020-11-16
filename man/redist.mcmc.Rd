@@ -37,7 +37,9 @@ redist.mcmc(
   contiguitymap = "rooks",
   exact_mh = FALSE,
   savename = NULL,
-  verbose = TRUE
+  verbose = TRUE,
+  tgt_min = 0.55,
+  tgt_other = 0.25
 )
 }
 \arguments{
@@ -97,7 +99,7 @@ units. The default is \code{NULL}.}
 \item{temper}{Whether to use simulated tempering algorithm. Default is FALSE.}
 
 \item{constraint}{Which constraint to apply. Accepts any combination of \code{compact},
-\code{segregation}, \code{population}, \code{similarity}, or \code{none}
+\code{vra}, \code{population}, \code{similarity}, or \code{none}
 (no constraint applied). The default is NULL.}
 
 \item{constraintweights}{The weights to apply to each constraint. Should be a vector
@@ -148,6 +150,10 @@ Metropolis-Hastings ratio calculation for accept-reject rule. Default is FALSE.}
 
 \item{verbose}{Whether to print initialization statement.
 Default is \code{TRUE}.}
+
+\item{tgt_min}{The majority minority target percent as a decimal. Default is 0.55.}
+
+\item{tgt_other}{The remaining target percent as a decimal. Default is 0.25.}
 }
 \value{
 \code{redist.mcmc} returns an object of class "redist". The object
@@ -169,8 +175,8 @@ simulation, which dictates the number of swaps attempted.}
 constraint for each accepted redistricting plan.}
 \item{constraint_compact}{A vector containing the value of the compactness
 constraint for each accepted redistricting plan.}
-\item{constraint_segregation}{A vector containing the value of the
-segregation constraint for each accepted redistricting plan.}
+\item{constraint_vra}{A vector containing the value of the
+vra constraint for each accepted redistricting plan.}
 \item{constraint_similar}{A vector containing the value of the similarity
 constraint for each accepted redistricting plan.}
 \item{beta_sequence}{A vector containing the value of beta for each iteration

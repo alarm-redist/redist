@@ -81,7 +81,7 @@ using Markov chain Monte Carlo methods coupled with simulated annealing." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.3</span>
       </span>
     </div>
 
@@ -139,16 +139,37 @@ using Markov chain Monte Carlo methods coupled with simulated annealing." />
 using Markov chain Monte Carlo methods coupled with simulated annealing.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.mcmc.anneal</span>(<span class='kw'>adjobj</span>, <span class='kw'>popvec</span>, <span class='kw'>ndists</span>,
-<span class='kw'>initcds</span>, <span class='kw'>num_hot_steps</span>, <span class='kw'>num_annealing_steps</span>,
-<span class='kw'>num_cold_steps</span>,
-<span class='kw'>eprob</span>, <span class='kw'>lambda</span>, <span class='kw'>popcons</span>, <span class='kw'>grouppopvec</span>,
-<span class='kw'>areasvec</span>, <span class='kw'>countymembership</span>, <span class='kw'>borderlength_mat</span>,
-<span class='kw'>ssdmat</span>, <span class='kw'>constraint</span>, <span class='kw'>constraintweights</span>,
-<span class='kw'>compactness_metric</span>, <span class='kw'>rngseed</span>, <span class='kw'>maxiterrsg</span>,
-<span class='kw'>adapt_lambda</span>, <span class='kw'>adapt_eprob</span>,
-<span class='kw'>contiguitymap</span>, <span class='kw'>exact_mh</span>,
-<span class='kw'>savename</span>, <span class='kw'>verbose</span>, <span class='kw'>ncores</span>)</pre>
+    <pre class="usage"><span class='fu'>redist.mcmc.anneal</span>(
+  <span class='kw'>adjobj</span>,
+  <span class='kw'>popvec</span>,
+  ndists = <span class='kw'>NULL</span>,
+  initcds = <span class='kw'>NULL</span>,
+  num_hot_steps = <span class='fl'>40000</span>,
+  num_annealing_steps = <span class='fl'>60000</span>,
+  num_cold_steps = <span class='fl'>20000</span>,
+  eprob = <span class='fl'>0.05</span>,
+  lambda = <span class='fl'>0</span>,
+  popcons = <span class='kw'>NULL</span>,
+  grouppopvec = <span class='kw'>NULL</span>,
+  areasvec = <span class='kw'>NULL</span>,
+  countymembership = <span class='kw'>NULL</span>,
+  borderlength_mat = <span class='kw'>NULL</span>,
+  ssdmat = <span class='kw'>NULL</span>,
+  constraint = <span class='kw'>NULL</span>,
+  constraintweights = <span class='kw'>NULL</span>,
+  compactness_metric = <span class='st'>"fryer-holden"</span>,
+  rngseed = <span class='kw'>NULL</span>,
+  maxiterrsg = <span class='fl'>5000</span>,
+  adapt_lambda = <span class='fl'>FALSE</span>,
+  adapt_eprob = <span class='fl'>FALSE</span>,
+  contiguitymap = <span class='st'>"rooks"</span>,
+  exact_mh = <span class='fl'>FALSE</span>,
+  savename = <span class='kw'>NULL</span>,
+  verbose = <span class='fl'>TRUE</span>,
+  ncores = <span class='fl'>1</span>,
+  tgt_min = <span class='fl'>0.55</span>,
+  tgt_other = <span class='fl'>0.25</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -236,7 +257,7 @@ units. The default is <code>NULL</code>.</p></td>
     <tr>
       <th>constraint</th>
       <td><p>Which constraint to apply. Accepts any combination of <code>compact</code>,
-<code>segregation</code>, <code>population</code>, <code>similarity</code>, or <code>none</code>
+<code>vra</code>, <code>population</code>, <code>similarity</code>, or <code>none</code>
 (no constraint applied). The default is NULL.</p></td>
     </tr>
     <tr>
@@ -294,6 +315,14 @@ Default is <code>TRUE</code>.</p></td>
     <tr>
       <th>ncores</th>
       <td><p>The number of cores available to parallelize over. Default is 1.</p></td>
+    </tr>
+    <tr>
+      <th>tgt_min</th>
+      <td><p>The majority minority target percent as a decimal. Default is 0.55.</p></td>
+    </tr>
+    <tr>
+      <th>tgt_other</th>
+      <td><p>The remaining target percent as a decimal. Default is 0.25.</p></td>
     </tr>
     </table>
 
