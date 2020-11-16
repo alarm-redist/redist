@@ -1002,8 +1002,8 @@ List calc_psipartisan(arma::vec current_dists,
   
   // Create return object
   List out;
-  out["partisan_new_psi"] = psi_new;
-  out["partisan_old_psi"] = psi_old;
+  out["partisan_new_psi"] = std::abs(psi_new);
+  out["partisan_old_psi"] = std::abs(psi_old);
   
   return out;
 }
