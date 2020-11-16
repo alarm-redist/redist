@@ -11,7 +11,8 @@ redist.compactness(
   population = NULL,
   adjacency = NULL,
   nloop = 1,
-  ncores = 1
+  ncores = 1,
+  counties = NULL
 )
 }
 \arguments{
@@ -36,6 +37,8 @@ Created with \code{redist.adjacency} if not supplied and needed. Default is NULL
 and the column number if multiple maps given.}
 
 \item{ncores}{Number of cores to use for parallel computing. Default is 1.}
+
+\item{counties}{A numeric vector from 1:ncounties corresponding to counties. Required for "logSpanningTree".}
 }
 \value{
 A tibble with a column that specifies the district, a column for 

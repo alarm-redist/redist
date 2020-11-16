@@ -81,7 +81,7 @@ plans using Markov Chain Monte Carlo methods." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.3</span>
       </span>
     </div>
 
@@ -172,7 +172,9 @@ plans using Markov Chain Monte Carlo methods.</p>
   contiguitymap = <span class='st'>"rooks"</span>,
   exact_mh = <span class='fl'>FALSE</span>,
   savename = <span class='kw'>NULL</span>,
-  verbose = <span class='fl'>TRUE</span>
+  verbose = <span class='fl'>TRUE</span>,
+  tgt_min = <span class='fl'>0.55</span>,
+  tgt_other = <span class='fl'>0.25</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -270,7 +272,7 @@ units. The default is <code>NULL</code>.</p></td>
     <tr>
       <th>constraint</th>
       <td><p>Which constraint to apply. Accepts any combination of <code>compact</code>,
-<code>segregation</code>, <code>population</code>, <code>similarity</code>, or <code>none</code>
+<code>vra</code>, <code>population</code>, <code>similarity</code>, or <code>none</code>
 (no constraint applied). The default is NULL.</p></td>
     </tr>
     <tr>
@@ -352,6 +354,14 @@ Metropolis-Hastings ratio calculation for accept-reject rule. Default is FALSE.<
       <td><p>Whether to print initialization statement.
 Default is <code>TRUE</code>.</p></td>
     </tr>
+    <tr>
+      <th>tgt_min</th>
+      <td><p>The majority minority target percent as a decimal. Default is 0.55.</p></td>
+    </tr>
+    <tr>
+      <th>tgt_other</th>
+      <td><p>The remaining target percent as a decimal. Default is 0.25.</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
@@ -375,8 +385,8 @@ simulation, which dictates the number of swaps attempted.</p></dd>
 constraint for each accepted redistricting plan.</p></dd>
 <dt>constraint_compact</dt><dd><p>A vector containing the value of the compactness
 constraint for each accepted redistricting plan.</p></dd>
-<dt>constraint_segregation</dt><dd><p>A vector containing the value of the
-segregation constraint for each accepted redistricting plan.</p></dd>
+<dt>constraint_vra</dt><dd><p>A vector containing the value of the
+vra constraint for each accepted redistricting plan.</p></dd>
 <dt>constraint_similar</dt><dd><p>A vector containing the value of the similarity
 constraint for each accepted redistricting plan.</p></dd>
 <dt>beta_sequence</dt><dd><p>A vector containing the value of beta for each iteration

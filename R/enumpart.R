@@ -146,13 +146,14 @@ redist.read.enumpart <- function(out_path, skip = 0,  n_max = -1L){
 }
 
 
-#' check if last edge
-#'
-#' @param i integer, current frontier
-#' @param v integer, vertex to search for
-#' @param edges edgelist matrix
-#'
-#' @return bool
+# check if last edge
+#
+# @param i integer, current frontier
+# @param v integer, vertex to search for
+# @param edges edgelist matrix
+#
+# @return bool
+#
 is_last <- function(i, v, edges){
   if(i == nrow(edges)){
     return(TRUE)
