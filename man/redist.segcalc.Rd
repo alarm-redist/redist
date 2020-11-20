@@ -12,7 +12,7 @@ redist object.}
 
 \item{grouppop}{A vector of populations for some subgroup of interest.}
 
-\item{fullpop}{A vector containign the populations of each geographic unit.}
+\item{fullpop}{A vector containing the populations of each geographic unit.}
 }
 \value{
 \code{redist.segcalc} returns a vector where each entry is the

@@ -42,11 +42,12 @@
 redist.group_viz = function(prep, browser=TRUE) {
     if (!requireNamespace("shiny", quietly=T)
             | !requireNamespace("cluster", quietly=T)
+            | !requireNamespace("tidyr", quietly=T)
             | !requireNamespace("ggiraph", quietly=T)
             | !requireNamespace("leaflet", quietly=T)
             | !requireNamespace("rmapshaper", quietly=T)
             | !requireNamespace("gridExtra", quietly=T)) {
-        stop('The "shiny", "cluster", "ggiraph", "leaflet", and "gridExtra"',
+        stop('The "shiny", "cluster", "tidyr", "ggiraph", "leaflet", and "gridExtra"',
         "packages are required for this function to work.", call.=F)
     }
     if (!methods::is(prep, "redist_prep_viz"))
@@ -70,6 +71,9 @@ redist.group_viz = function(prep, browser=TRUE) {
 #' @param full_pop a numeric vector with the population of the group for every precinct.
 #' @param group_pop a numeric vector with the population of every precinct.
 #' @param current a numeric vector containing the current plan, which will be plotted separately.
+#' @param renumber whether to renumber districts in ascending order by their group share, so
+#'   district 1 has the smallest fraction of the group, district 2 has the second-smallest,
+#'   and so on.
 #' @param by the way to compute the variation of information distance, by \code{"people"},
 #'   the recommended default, by \code{"group"} or \code{"minority"}, or by
 #'   \code{"land"}, which treats each precinct equally.
@@ -97,16 +101,20 @@ redist.group_viz = function(prep, browser=TRUE) {
 #' redist.group_viz(viz_prep)
 #' }
 redist.prep_group_viz = function(result, geometry, full_pop, group_pop, current=NULL,
-                                 by="people", k=NULL, simp_geom=TRUE) {
+                                 renumber=TRUE, by="people", k=NULL, simp_geom=TRUE) {
     # Type checks
     if (!methods::is(result, "redist") && !is.matrix(result))
         stop("`result` must be of class `redist` or a matrix of district assignments.", call.=F)
+    if (is.matrix(result))
+        result = list(cdvec = result)
     if (min(result$cdvec[,1]) == 0) # 1-index
         result$cdvec = 1 + result$cdvec
     if (!any(class(full_pop) %in% c('numeric', 'integer')))
         stop('Please provide "full_pop" as a numeric vector.')
     if (!any(class(group_pop) %in% c('numeric', 'integer')))
         stop('Please provide "group_pop" as a numeric vector.')
+    full_pop = as.numeric(full_pop)
+    group_pop = as.numeric(group_pop)
 
     # set up geometry
     cat("Reprojecting geometry\n")
@@ -119,7 +127,14 @@ redist.prep_group_viz = function(result, geometry, full_pop, group_pop, current=
     }
     geometry$.id = as.character(1:nrow(geometry))
 
-    if (is.null(current)) current = rep(max(result$cdvec[,1]), nrow(result$cdvec))
+    centroids = geometry %>%
+        sf::st_centroid() %>%
+        suppressWarnings() %>%
+        sf::st_coordinates() %>%
+        dplyr::as_tibble()
+
+    no_current = is.null(current)
+    if (no_current) current = rep(max(result$cdvec[,1]), nrow(result$cdvec))
     m_plot = cbind(current, result$cdvec)
     # different units to use
     dist_by = dplyr::case_when(
@@ -143,7 +158,10 @@ redist.prep_group_viz = function(result, geometry, full_pop, group_pop, current=
 
     cat("Computing group percentages\n")
     pct_min = redist.group.percent(m_plot, group_pop, full_pop)
-    pct_min = apply(pct_min, 2, sort, na.last=T)
+    if (renumber)
+        pct_min = apply(pct_min, 2, sort, na.last=T)
+    if (no_current)
+        pct_min[,1] = rowMeans(pct_min[,-1])
     rownames(pct_min) = 1:nrow(pct_min)
 
     cat("Clustering plans\n")
@@ -158,17 +176,19 @@ redist.prep_group_viz = function(result, geometry, full_pop, group_pop, current=
         }
         k = which.max(silh)
     }
-    cat("  (Using k = ", k, ")\n", sep="")
+    cat("  (Using", k, "clusters)\n")
     cl = cluster::pam(dists, k, diss=T)
 
     cat("Finding typical plans for each cluster\n")
     N = nrow(pct_min)
     typical = 1:k %>%
-        lapply(function(i) prec_cooccur(m_plot, which(cl$clustering == i))) %>%
-        lapply(function(cm) stats::kmeans(cm, N, iter.max=20, nstart=3)$cluster)
+        lapply(function(i) m_plot[,cl$medoids[i]])
+    #typical = 1:k %>%
+    #    lapply(function(i) prec_cooccur(m_plot, which(cl$clustering == i))) %>%
+    #    lapply(function(cm) stats::kmeans(cm, N, iter.max=20, nstart=3)$cluster)
 
     out = list(m=m_plot, geom=geometry, mds=mds, sizes=sizes, hide=c(1, together$row),
-               pct_min=pct_min, pop=full_pop, grp_pop=group_pop,
+               pct_min=pct_min, pop=full_pop, grp_pop=group_pop, centroids=centroids,
                cluster=cl$clustering, centers=mds[cl$medoids,], typical=typical, k=k)
     class(out) = c("redist_prep_viz", "list")
     out
@@ -181,22 +201,50 @@ viz_ui = function() {
         # add in methods from https://github.com/rstudio/leaflet/pull/598
         shiny::tags$head(
             shiny::tags$script(shiny::HTML(viz_script)),
-            shiny::tags$style(type="text/css", ".container-fluid {  max-width: 1200px; }
-                                       #mds svg { cursor: crosshair; }")
+            shiny::tags$style(type="text/css", HTML(
+            ".container-fluid {
+                max-width: 1200px;
+            }
+            #mds svg {
+                cursor: crosshair;
+            }
+            #mindistr .shiny-options-group {
+                column-count: 2;
+            }
+            .leaflet-pane.leaflet-overlay-pane {
+                mix-blend-mode: multiply;
+            }
+            .girafe_container_std g > text {
+                pointer-events: none;
+            }
+            "))
         ),
 
         shiny::titlePanel("Redistricting Ensemble Explorer"),
+
+        shiny::fluidRow(
+            shiny::column(6, shiny::verticalLayout(
+                shiny::h3("Group-controlled seats"),
+                shiny::plotOutput("numseats", width="100%", height=400),
+                shiny::sliderInput("cutoff", "Group control threshold", width="100%",
+                                   min=0.4, max=0.65, value=0.5, step=0.005, round=T)
+            )),
+            shiny::column(6, shiny::verticalLayout(
+                shiny::h3("Fraction of group population by district"),
+                shiny::plotOutput("distrpct", width="100%", height=480)
+            ))
+        ),
+
         shiny::p(
             "The scatterplot below lays out plans according to the shared information
                 distance between them.",
             shiny::tags$ul(
-                shiny::tags$li("The current plan is marked by a black circle."),
+                shiny::tags$li("The current plan, if there is one, is marked by a black square."),
                 shiny::tags$li(shiny::strong("Hover over a plan to learn more,
                     or click a plan to see it on the map.")),
                 shiny::tags$li("Click again to show the fraction of group voters in each precinct."),
-                shiny::tags$li("Districts are numbered in ascending order by group share,
-                    and shaded similarly (dark blue is district 1, bright green
-                    is the last district)")
+                shiny::tags$li("Districts are shaded in ascending order by group share
+                    (dark blue is the smallest group fraction, bright green is the most)")
             )
         ),
 
@@ -218,7 +266,7 @@ viz_ui = function() {
 }
 
 viz_server = function(m, geom, mds, sizes, hide, pct_min, pop, grp_pop,
-                      cluster, centers, typical, k) {
+                      centroids, cluster, centers, typical, k) {
 
     N = max(m)
     colnames(centers) = c("x", "y")
@@ -228,8 +276,40 @@ viz_server = function(m, geom, mds, sizes, hide, pct_min, pop, grp_pop,
 
     function(input, output, session) {
 
+        output$numseats = shiny::renderPlot({
+            num_seats = apply(pct_min, 2, function(x) sum(x > input$cutoff))
+            breaks = seq(min(num_seats)-1/4, max(num_seats)+1/4, 1/2)
+            p = ggplot2::ggplot(NULL, ggplot2::aes(x=num_seats[-1])) +
+              ggplot2::geom_histogram(breaks=breaks) +
+              ggplot2::labs(x="Seats controlled by group", y="Number of plans") +
+              ggplot2::scale_y_continuous(expand=ggplot2::expansion(mult=c(0, 0.05))) +
+              ggplot2::theme_bw()
+
+            if (show_current)
+                p = p + ggplot2::geom_vline(xintercept=num_seats[1], color="red", size=1)
+
+            p
+        })
+
+        output$distrpct = shiny::renderPlot({
+            pct_d = dplyr::as_tibble(pct_min, .name_repair=function(x) as.character(1:ncol(pct_min))) %>%
+                dplyr::mutate(district=factor(as.character(1:N), as.character(1:N))) %>%
+                tidyr::pivot_longer(-starts_with("district"), names_to="plan", values_to="pct")
+            p = ggplot2::ggplot(pct_d[pct_d$plan != 1,], ggplot2::aes(district, pct)) +
+                ggplot2::geom_boxplot(fill="#bbbbbb", outlier.size=0.2) +
+                ggplot2::scale_y_continuous(labels=scales::percent) +
+                ggplot2::labs(x="District", y="Group percentage") +
+                ggplot2::theme_bw()
+
+            if (show_current)
+                p = p + ggplot2::geom_point(data=pct_d[pct_d$plan == 1,],
+                                            color="red", size=3, shape=18)
+
+            p
+        })
+
         output$mindistr = shiny::renderUI({
-            shiny::radioButtons("mindistr", label="Color points by",
+            shiny::radioButtons("mindistr", label="Color points by", width="100%",
                                 choiceValues=c(1:N, -1), selected=N,
                                 choiceNames = c(str_c("Group pct. in district ", 1:N), "Cluster"))
         })
@@ -256,21 +336,24 @@ viz_server = function(m, geom, mds, sizes, hide, pct_min, pop, grp_pop,
             else
                 legend = "Cluster"
 
-            p = ggplot2::ggplot(plot_d[-hide,], aes(x, y, color=col, size=size,
+            p = ggplot2::ggplot(plot_d[-hide,], ggplot2::aes(x, y, color=col, size=size,
                                                     data_id=id, tooltip=label)) +
                 ggiraph::geom_point_interactive(alpha=0.85) +
                 ggplot2::scale_color_viridis_c(labels=if (mindistr > 0) scales::percent else scales::comma) +
                 {if (show_current)
                     ggiraph::geom_point_interactive(data=plot_d[1,], color="black",
                                                     shape=15, size=2.5)} +
-                ggplot2::scale_size_continuous(range=c(1.2, 5.5)) +
+                {if (length(hide) > 1)
+                    ggplot2::scale_size_continuous(range=c(1.2, 5.5))
+                 else
+                    ggplot2::scale_size_continuous(range=c(1.5, 1.5))} +
                 ggplot2::labs(color=legend, x="MDS 1", y="MDS 2") +
                 ggplot2::theme_bw(base_size=11) +
                 ggplot2::guides(color=ggplot2::guide_colourbar(barwidth=20), size=F) +
                 ggplot2::theme(legend.position="bottom")
 
             if (mindistr < 0)
-                p = p + ggplot2::geom_text(aes(x, y, label=id), data=centers, inherit.aes=F, size=5)
+                p = p + ggplot2::geom_text(ggplot2::aes(x, y, label=id), data=centers, inherit.aes=F, size=5)
 
             tooltip_css = "
             background: #000000c0;
@@ -296,13 +379,8 @@ viz_server = function(m, geom, mds, sizes, hide, pct_min, pop, grp_pop,
 
         output$map = leaflet::renderLeaflet({
             leaflet::leaflet(data=geom) %>%
-                leaflet::addMapPane(name = "polygons", zIndex = 410) %>%
-                leaflet::addMapPane(name = "maplabels", zIndex = 420) %>%
-                leaflet::addProviderTiles(leaflet::providers$Stamen.TonerBackground) %>%
-                leaflet::addPolygons(layerId=~.id, weight=1, fillOpacity=0.8, opacity=0.5,
-                            options=leaflet::leafletOptions(pane="polygons")) %>%
-                leaflet::addProviderTiles(leaflet::providers$Stamen.TonerLabels,
-                            options=leaflet::leafletOptions(pane="maplabels"))
+                leaflet::addProviderTiles(leaflet::providers$Stamen.Toner) %>%
+                leaflet::addPolygons(layerId=~.id, weight=1, fillOpacity=0.85, opacity=0.6)
         })
 
         output$map_title = shiny::renderText({
@@ -316,17 +394,31 @@ viz_server = function(m, geom, mds, sizes, hide, pct_min, pop, grp_pop,
         mean_pct = sum(grp_pop)/sum(pop)
         pct = scales::rescale((grp_pop+mean_pct)/(pop+1))
         col_min = scales::gradient_n_pal(c("#00000000", "#440154ff"))(pct)
+        label_opts = leaflet::labelOptions(noHide=T, textOnly=T,
+                                           style=list("font-size"="13pt",
+                                                      "font-weight"="bold",
+                                                      "color"="#ffffffaa"))
         shiny::observe({
             id = selected_map()
             if (id >= 0) {
-                pcts = tapply(grp_pop, m[,id], sum) / tapply(pop, m[,id], sum)
+                distr_pops = tapply(pop, m[,id], sum)
+                centers_x = tapply(centroids$X*pop, m[,id], sum) / distr_pops
+                centers_y = tapply(centroids$Y*pop, m[,id], sum) / distr_pops
+                pcts = tapply(grp_pop, m[,id], sum) / distr_pops
                 cols = pal(rank(pcts))[m[,id]]
+
+                leaflet::leafletProxy("map", data=geom) %>%
+                    viz_setShapeStyle(layerId=~.id, fillColor=cols, color=cols) %>%
+                    leaflet::clearGroup("distr_numbers") %>%
+                    leaflet::addLabelOnlyMarkers(centers_x, centers_y, label=1:N,
+                                                 group="distr_numbers", labelOptions=label_opts)
             } else {
                 cols = col_min
-            }
 
-            leaflet::leafletProxy("map", data=geom) %>%
-                viz_setShapeStyle(layerId=~.id, fillColor=cols, color=cols)
+                leaflet::leafletProxy("map", data=geom) %>%
+                    viz_setShapeStyle(layerId=~.id, fillColor=cols, color=cols) %>%
+                    leaflet::clearGroup("distr_numbers")
+            }
         })
 
         output$typical = shiny::renderPlot({
@@ -336,7 +428,7 @@ viz_server = function(m, geom, mds, sizes, hide, pct_min, pop, grp_pop,
                 cols = pal(rank(pcts))[plan]
 
                 dplyr::mutate(geom, d = plan) %>%
-                ggplot2::ggplot(aes(fill=cols)) +
+                ggplot2::ggplot(ggplot2::aes(fill=cols)) +
                     ggplot2::geom_sf(size=0, color="transparent") +
                     ggplot2::scale_fill_identity() +
                     ggplot2::guides(fill=F) +

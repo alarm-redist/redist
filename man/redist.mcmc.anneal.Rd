@@ -43,7 +43,7 @@ redist.mcmc.anneal(
 \item{popvec}{A vector containing the populations of each geographic
 unit}
 
-\item{ndists}{The numbe of congressional districts. The default is
+\item{ndists}{The number of congressional districts. The default is
 \code{NULL}.}
 
 \item{initcds}{A vector containing the congressional district labels
@@ -63,8 +63,8 @@ Default is 20000.}
 \item{eprob}{The probability of keeping an edge connected. The
 default is \code{0.05}.}
 
-\item{lambda}{The parameter detmerining the number of swaps to attempt
-each iteration fo the algoirhtm. The number of swaps each iteration is
+\item{lambda}{The parameter determining the number of swaps to attempt
+each iteration of the algorihtm. The number of swaps each iteration is
 equal to Pois(\code{lambda}) + 1. The default is \code{0}.}
 
 \item{popcons}{The strength of the hard population
