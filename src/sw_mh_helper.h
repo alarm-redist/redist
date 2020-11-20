@@ -47,7 +47,8 @@ Rcpp::List make_swaps(Rcpp::List boundary_cc,
 		      Rcpp::IntegerVector rvote,
 		      Rcpp::IntegerVector dvote,
 		      std::string compactness_measure,
-		      std::string partisan_measure);
+		      std::string partisan_measure,
+		      const Graph &g);
 int mh_decision(double mh_prob);
 Rcpp::List changeBeta(arma::vec betavec,
 		      double beta,

@@ -8,6 +8,7 @@
 
 // Header files
 #include <RcppArmadillo.h>
+#include "redist_types.h"
 #include "make_swaps_helper.h"
 #include "constraint_calc_helper.h"
 
@@ -415,7 +416,8 @@ List make_swaps(List boundary_cc,
                 IntegerVector rvote,
                 IntegerVector dvote,
                 std::string compactness_measure, 
-                std::string partisan_measure)
+                std::string partisan_measure,
+                const Graph &g)
 {
   
   /* Inputs to function:
@@ -650,12 +652,19 @@ List make_swaps(List boundary_cc,
     }
     if(weight_compact != 0.0){
       
-      compact_constraint = calc_psicompact(cds_prop, cds_test,
-                                           cd_pair, compactness_measure,
-                                           aList, areas_vec,
-                                           borderlength_mat, true,
-                                           pop_vec, ssdmat, ssd_denominator, 
-                                           ndists = ndists);
+      compact_constraint = calc_psicompact(cds_prop, 
+                                           cds_test,
+                                           cd_pair, 
+                                           compactness_measure,
+                                           aList, 
+                                           areas_vec,
+                                           borderlength_mat, 
+                                           true,
+                                           pop_vec, 
+                                           ssdmat, 
+                                           ndists = ndists,
+                                           g, 
+                                           ssd_denominator);
       
       compact_new_psi += as<double>(compact_constraint["compact_new_psi"]);
       compact_old_psi += as<double>(compact_constraint["compact_old_psi"]);
