@@ -219,7 +219,6 @@ viz_ui = function() {
 
 viz_server = function(m, geom, mds, sizes, hide, pct_min, pop, grp_pop,
                       cluster, centers, typical, k) {
-    utils::globalVariables("x", "y") # for R CHECK
 
     N = max(m)
     colnames(centers) = c("x", "y")
@@ -392,3 +391,5 @@ window.LeafletWidget.methods.setStyle = function(category, layerId, style) {
   });
 };
 "
+
+utils::globalVariables(c("x", "y")) # for R CHECK
