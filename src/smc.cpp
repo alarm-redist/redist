@@ -11,10 +11,10 @@
  * Main entry point.
  *
  * Sample `N` redistricting plans on map `g`, ensuring that the maximum
- * population deviation is within `tol`
+ * population deviation is between `lower` and `upper` (and ideally `target`)
  */
 umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
-               int n_distr,  double tol, double gamma,
+               int n_distr, double target, double lower, double upper, double gamma,
                double beta_sq, const uvec &current, int n_current,
                double beta_vra, double tgt_min, double tgt_other,
                double pow_vra, const uvec &min_pop,
@@ -26,11 +26,11 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     int V = g.size();
     umat districts(V, N, fill::zeros);
     double total_pop = sum(pop);
-    double distr_pop = total_pop / n_distr;
+    double tol = std::max(target - lower, upper - target) / target;
 
     if (verbosity >= 1) {
         Rcout << "Sampling " << N << " " << V << "-unit maps with " << n_distr
-              << " districts and population tolerance " << tol*100 << "%.\n";
+              << " districts and population between " << lower << " and " << upper << ".\n";
         if (cg.size() > 1)
             Rcout << "Ensuring no more than " << n_distr - 1 << " splits of the "
                   << cg.size() << " administrative units.\n";
@@ -50,14 +50,14 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
 
         // find k and multipliers
         adapt_parameters(g, k, lp, thresh, tol, districts, counties, cg, pop,
-                         pop_left, distr_pop);
+                         pop_left, target);
 
         if (verbosity >= 3)
             Rcout << "Using k = " << k << "\n";
 
         // perform resampling/drawing
         split_maps(g, counties, cg, pop, districts, cum_wgt, lp, pop_left,
-                   n_distr, ctr, distr_pop, tol, gamma, k, verbosity);
+                   n_distr, ctr, lower, upper, target, gamma, k, verbosity);
 
         // compute weights for next step
         cum_wgt = get_wgts(districts, n_distr, ctr, alpha, lp, pop,
@@ -118,17 +118,15 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr,
 
 
 /*
- * Split off a piece from each map in `districts`, keeping deviation within `tol`
+ * Split off a piece from each map in `districts`,
+ * keeping deviation between `lower` and `upper`
  */
 void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 const uvec &pop, umat &districts, vec &cum_wgt, vec &lp,
-                vec &pop_left, int n_distr, int dist_ctr, double distr_pop,
-                double tol, double gamma, int k, int verbosity) {
+                vec &pop_left, int n_distr, int dist_ctr, double lower,
+                double upper, double target, double gamma, int k, int verbosity) {
     int V = districts.n_rows;
     int N = districts.n_cols;
-    // absolute bounds for district populations
-    double upper = distr_pop * (1 + tol);
-    double lower = distr_pop * (1 - tol);
     int new_size = n_distr - dist_ctr;
     int n_cty = max(counties);
 
@@ -147,7 +145,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
 
         // split
         double inc_lp = split_map(g, counties, cg, districts_new.col(i), dist_ctr,
-                                  pop, pop_left(idx), lower_s, upper_s, distr_pop, k);
+                                  pop, pop_left(idx), lower_s, upper_s, target, k);
 
         // bad sample; try again
         if (!std::isfinite(inc_lp)) {

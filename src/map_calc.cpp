@@ -74,6 +74,59 @@ double eval_inc(const subview_col<uword> &districts, int distr, const uvec &incu
     return inc_in_distr;
 }
 
+/*
+ * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,
+ * given a collection of plans
+ */
+mat prec_cooccur(umat m, uvec idxs) {
+    int v = m.n_rows;
+    int n = idxs.n_elem;
+    mat out(v, v);
+
+    for (int i = 0; i < v; i++) {
+        out(i, i) = 1;
+        for (int j = 0; j < i; j++) {
+            double shared = 0;
+            for (int k = 0; k < n; k++) {
+                shared += m(i, idxs[k]-1) == m(j, idxs[k]-1);
+            }
+            shared /= n;
+            out(i, j) = shared;
+            out(j, i) = shared;
+        }
+    }
+
+    return out;
+}
+
+/*
+ * Compute the percentage of `group` in each district. Asummes `m` is 1-indexed.
+ */
+mat group_pct(umat m, vec group_pop, vec total_pop, int n_distr) {
+    int v = m.n_rows;
+    int n = m.n_cols;
+
+    mat grp_distr(n_distr, n);
+    mat tot_distr(n_distr, n);
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < v; j++) {
+            int distr = m(j, i) - 1;
+            grp_distr(distr, i) += group_pop[j];
+            tot_distr(distr, i) += total_pop[j];
+        }
+    }
+
+    // divide
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n_distr; j++) {
+            grp_distr(j, i) /= tot_distr(j, i);
+        }
+    }
+
+    return grp_distr;
+}
+
 
 /*
  * Compute the deviation from the equal population constraint.

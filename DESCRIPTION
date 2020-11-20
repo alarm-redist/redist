@@ -34,6 +34,7 @@ Imports:
     lwgeom,
     dplyr,
     ggplot2,
+    scales,
     magrittr,
     readr,
     servr,
@@ -41,12 +42,20 @@ Imports:
     tibble,
     stringr
 Suggests:
+    igraph,
     testthat,
     withr,
     Rmpi,
     knitr,
     rmarkdown,
-    igraph
+    shiny,
+    cluster,
+    ggiraph,
+    leaflet,
+    rmapshaper,
+    gridExtra,
+    methods,
+    utils
 LinkingTo: Rcpp, RcppArmadillo, RcppEigen, BH
 License: GPL (>= 2)
 SystemRequirements: gmp, libxml2, python
