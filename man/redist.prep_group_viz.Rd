@@ -10,6 +10,7 @@ redist.prep_group_viz(
   full_pop,
   group_pop,
   current = NULL,
+  renumber = TRUE,
   by = "people",
   k = NULL,
   simp_geom = TRUE
@@ -27,6 +28,10 @@ the current map.}
 \item{group_pop}{a numeric vector with the population of every precinct.}
 
 \item{current}{a numeric vector containing the current plan, which will be plotted separately.}
+
+\item{renumber}{whether to renumber districts in ascending order by their group share, so
+district 1 has the smallest fraction of the group, district 2 has the second-smallest,
+and so on.}
 
 \item{by}{the way to compute the variation of information distance, by \code{"people"},
 the recommended default, by \code{"group"} or \code{"minority"}, or by

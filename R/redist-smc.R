@@ -31,7 +31,7 @@
 #' is used, a specific truncation function should probably be chosen by the user.
 #'
 #' The \code{constraints} parameter allows the user to apply several common
-#' redistricting contraints without implementing them by hand. This parameter
+#' redistricting constraints without implementing them by hand. This parameter
 #' is a list, which may contain any of the following named entries:
 #' * \code{status_quo}: a list with two entries:
 #'   * \code{strength}, a number controlling the tendency of the generated districts

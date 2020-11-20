@@ -18,7 +18,7 @@ list_to_mat <- function(A){
 #'
 #' \code{redist.enumerate} uses a spanning-tree method to fully enumerate all
 #' valid redistricting plans with $n$ districts given a set of geographic units.
-#' \code{redist.enumerate} also allows suers to implement minimum and maximum
+#' \code{redist.enumerate} also allows users to implement minimum and maximum
 #' numbers of geographic units per district, as well as population parity
 #' requirements.
 #'
@@ -103,7 +103,7 @@ redist.enumerate <- function(adjobj,
 
             ## If all are true, change to adjlist and automatically zero-index
             if(squaremat & binary & diag & symmetric){
-                
+
                 ## Initialize object
                 adjlist <- vector("list", nrow(adjobj))
 
@@ -118,9 +118,9 @@ redist.enumerate <- function(adjobj,
                     inds <- inds[inds != i,]
                     ## Put in adjlist
                     adjlist[[i]] <- inds
-                    
+
                 }
-                
+
             }else { ## If not valid adjacency matrix, throw error
                 stop("Please input valid adjacency matrix")
             }
@@ -128,13 +128,13 @@ redist.enumerate <- function(adjobj,
 
             ## Distance criterion
             queens <- ifelse(contiguitymap == "rooks", FALSE, TRUE)
-            
+
             ## Convert shp object to adjacency list
             adjlist <- poly2nb(adjobj, queen = queens)
-            
+
             ## Change class to list
             class(adjlist) <- "list"
-            
+
         }else{ ## If neither list, matrix, or shp, throw error
             stop("Please input an adjacency list, adjacency matrix, or Spatial
                  Polygons shp file")
@@ -150,7 +150,7 @@ redist.enumerate <- function(adjobj,
         maxlist <- max(unlist(adjlist))
         oneind <- (sum(minlist == 1, maxlist == length(adjlist)) == 2)
         zeroind <- (sum(minlist == 0, maxlist == (length(adjlist) - 1)) == 2)
-        
+
         if(zeroind){
             ## Zero-index list
             for(i in 1:length(adjlist)){
@@ -160,14 +160,14 @@ redist.enumerate <- function(adjobj,
             ## if neither oneind or zeroind, then stop
             stop("Adjacency list must be one-indexed or zero-indexed")
         }
-        
+
     }
 
     #########################
     ## Other preprocessing ##
     #########################
-    
-    ## Clean the input ##	
+
+    ## Clean the input ##
     ## Store the number of nodes
     adjListLength <- length(adjlist)
 
@@ -187,8 +187,8 @@ redist.enumerate <- function(adjobj,
             popConstraintHigh <- adjListLength
         }
     }
-    
-    ## If there is no pop vector, 
+
+    ## If there is no pop vector,
     ## Default popvec to vector of 1's,
     ## and default popConstraintLow and popConstraintHigh to 1 and adjListLength respectively
     if(is.null(popvec)){
@@ -196,18 +196,18 @@ redist.enumerate <- function(adjobj,
         popConstraintLow <- 1
         popConstraintHigh <- adjListLength
     }
-    
+
     ## De-facto minimums and maximum on number of units (if not specified)
     if(is.null(nconstraintlow)){
         nconstraintlow <- 1
-    }		
-    
+    }
+
     ## The most amount of nodes to be contained within a block is
     ## numNodes - nconstraintlow*(ndists-1)
     if(is.null(nconstrainthigh)){
         nconstrainthigh <- adjListLength - nconstraintlow*(ndists-1)
     }
-    
+
     ## Run the cpp function and return the output
     out <- cppGeneratePartitions(adjlist,
                                  ndists,
@@ -217,7 +217,7 @@ redist.enumerate <- function(adjobj,
                                  popConstraintLow,
                                  popConstraintHigh)
     return(out)
-	
+
 }
 
 #' Sample partitions using spanning trees
@@ -266,7 +266,7 @@ for each geographic unit.")
             stop("You have NAs in your vector of geographic unit populations.")
         }
     }
-    
+
     ## --------------------------------------
     ## If not a list, convert adjlist to list
     ## --------------------------------------
@@ -288,7 +288,7 @@ for each geographic unit.")
 
             ## If all are true, change to adjlist and automatically zero-index
             if(squaremat & binary & diag & symmetric){
-                
+
                 ## Initialize object
                 adjlist <- vector("list", nrow(adjobj))
 
@@ -305,9 +305,9 @@ for each geographic unit.")
                     inds <- inds - 1
                     ## Put in adjlist
                     adjlist[[i]] <- inds
-                    
+
                 }
-                
+
             }else { ## If not valid adjacency matrix, throw error
                 stop("Please input valid adjacency matrix")
             }
@@ -315,18 +315,18 @@ for each geographic unit.")
 
             ## Distance criterion
             queens <- ifelse(contiguitymap == "rooks", FALSE, TRUE)
-            
+
             ## Convert shp object to adjacency list
             adjlist <- poly2nb(adjobj, queen = queens)
-            
+
             ## Zero-index list
             for(i in 1:length(adjlist)){
                 adjlist[[i]] <- adjlist[[i]] - 1
             }
-            
+
             ## Change class to list
             class(adjlist) <- "list"
-            
+
         }else{ ## If neither list, matrix, or shp, throw error
             stop("Please input an adjacency list, adjacency matrix, or Spatial
                  Polygons shp file")
@@ -342,7 +342,7 @@ for each geographic unit.")
         maxlist <- max(unlist(adjlist))
         oneind <- (sum(minlist == 1, maxlist == length(adjlist)) == 2)
         zeroind <- (sum(minlist == 0, maxlist == (length(adjlist) - 1)) == 2)
-        
+
         if(oneind){
             ## Zero-index list
             for(i in 1:length(adjlist)){
@@ -352,7 +352,7 @@ for each geographic unit.")
             ## if neither oneind or zeroind, then stop
             stop("Adjacency list must be one-indexed or zero-indexed")
         }
-        
+
     }
     if(pop_filter & length(popvec) != length(adjlist)){
         stop("Your population vector does not contain an entry for every unit.")
@@ -429,7 +429,7 @@ for each geographic unit.")
         ##     enum_out$polsby_popper <- cpct[inds_sub]
         ## }
     }
-    
+
     return(enum_out)
-    
+
 }

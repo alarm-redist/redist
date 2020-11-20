@@ -52,6 +52,7 @@ Suggests:
     cluster,
     ggiraph,
     leaflet,
+    tidyr,
     rmapshaper,
     gridExtra,
     methods,

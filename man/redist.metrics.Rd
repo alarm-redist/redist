@@ -18,12 +18,12 @@ redist.metrics(
 )
 }
 \arguments{
-\item{district_membership}{A numeric vector (if only one map) or matrix with one row 
+\item{district_membership}{A numeric vector (if only one map) or matrix with one row
 for each precinct and one column for each map. Required.}
 
-\item{measure}{A vector with a string for each measure desired from list "DSeats", "DVS", "EffGap", 
-"EffGapEqPop", "TauGap", "MeanMedian", "Bias", "BiasV", "Declination", 
-"Responsiveness", and "LopsidedWins". Use "all" to get all metrics. 
+\item{measure}{A vector with a string for each measure desired from list "DSeats", "DVS", "EffGap",
+"EffGapEqPop", "TauGap", "MeanMedian", "Bias", "BiasV", "Declination",
+"Responsiveness", and "LopsidedWins". Use "all" to get all metrics.
 "Dseats" and "DVS" are always computed, so it is recommended to always return those values.}
 
 \item{rvote}{A numeric vector with the Republican vote for each precinct.}
@@ -38,13 +38,13 @@ for each precinct and one column for each map. Required.}
 
 \item{bandwidth}{A value between 0 and 1 for computing responsiveness. Only used with option "Responsiveness." Defaults to 0.01.}
 
-\item{nloop}{A numeric to specify loop number. Defaults to 1 if only one map provided 
+\item{nloop}{A numeric to specify loop number. Defaults to 1 if only one map provided
 and the column number if multiple maps given.}
 
 \item{ncores}{Number of cores to use for parallel computing. Default is 1.}
 }
 \value{
-A tibble with  a column for each specified measure and 
+A tibble with  a column for each specified measure and
 a column that specifies the map number.
 }
 \description{
@@ -52,7 +52,7 @@ a column that specifies the map number.
 set of maps.
 }
 \details{
-This function computes specified compactness scores for a map.  If 
+This function computes specified compactness scores for a map.  If
 there is more than one precinct specified for a map, it aggregates to the district level
 and computes one score.
 
@@ -60,7 +60,7 @@ DSeats is computed as the expected number of Democratic seats with no change in 
 DVS is the Democratic Vote Share, which is the two party vote share with Democratic votes as the numerator.
 EffGap is the Efficiency Gap, calculated with votes directly.
 EffGapEqPop is the Efficiency Gap under an Equal Population assumption, calculated with the DVS.
-TauGap is the Tau Gap, comptued with the Equal Population assumption.
+TauGap is the Tau Gap, computed with the Equal Population assumption.
 MeanMedian is the Mean Median difference.
 Bias is the Partisan Bias computed at 0.5.
 BiasV is the Partisan Bias computed at value V.
@@ -72,18 +72,18 @@ LopsidedWins computed the Lopsided Outcomes value, but does not produce a test s
 \dontrun{
 data("algdat.p10")
 dists <- algdat.p10$cdmat[,1:100]
-redist.metrics(dists, measure = 'all', rvote = algdat.p10$precinct.data$repvote, 
+redist.metrics(dists, measure = 'all', rvote = algdat.p10$precinct.data$repvote,
 dvote = algdat.p10$precinct.data$demvote)
 }
 }
 \references{
-Jonathan N. Katz, Gary King, and Elizabeth Rosenblatt. 2020. 
-“Theoretical Foundations and Empirical Evaluations of Partisan Fairness in District-Based Democracies.” 
+Jonathan N. Katz, Gary King, and Elizabeth Rosenblatt. 2020.
+“Theoretical Foundations and Empirical Evaluations of Partisan Fairness in District-Based Democracies.”
 American Political Science Review, 114, 1, Pp. 164-178.
 
 Gregory S. Warrington. 2018. "Quantifying Gerrymandering Using the Vote Distribution."
 Election Law Journal: Rules, Politics, and Policy. Pp. 39-57.http://doi.org/10.1089/elj.2017.0447
 
-Samuel S.-H. Wang. 2016. "Three Tests for Practical Evaluation of Partisan Gerrymandering." 
+Samuel S.-H. Wang. 2016. "Three Tests for Practical Evaluation of Partisan Gerrymandering."
 Stanford Law Review, 68, Pp. 1263 - 1321.
 }
