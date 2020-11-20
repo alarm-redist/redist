@@ -11,10 +11,13 @@
 #include <RcppArmadilloExtensions/sample.h>
 #include <time.h>
 #include <R.h>
+#include "redist_types.h"
 #include "sw_mh_helper.h"
 #include "make_swaps_helper.h"
 #include "constraint_calc_helper.h"
 #include "redist_analysis.h"
+#include "tree_op.h"
+
 
 using namespace Rcpp;
 
@@ -254,6 +257,8 @@ List swMH(List aList,
     Rcout << "-- Simulating at hot temperature." << std::endl;
     Rcout << "---------------------------------" << std::endl;
   }
+  
+  Graph g = list_to_graph(aList);
   // Open the simulations
   while(k < nsims){
 
@@ -325,7 +330,8 @@ List swMH(List aList,
 				   rvote,
 				   dvote,
 				   compactness_measure,
-				   partisan_measure);
+				   partisan_measure,
+				   g = g);
 
     }while(as<int>(swap_partitions["goodprop"]) == 0);
 

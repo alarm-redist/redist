@@ -8,6 +8,7 @@
 
 // Header files
 #include <RcppArmadillo.h>
+#include "redist_types.h"
 #include "kirchhoff.h"
 #include "tree_op.h"
 
@@ -422,6 +423,7 @@ List calc_psicompact(arma::vec current_dists,
 		     NumericMatrix ssdmat,
 		     // For Edges Removed
 		     int ndists,
+		     const Graph &g,
 		     // For Fryer Holden
 		     double denominator = 1.0){
 
@@ -486,7 +488,6 @@ List calc_psicompact(arma::vec current_dists,
       
     }
   } else if(measure == "edges-removed"){
-    Graph g = list_to_graph(aList);
     
     List er_out = er_compact(g, new_dists, current_dists, ndists);
     

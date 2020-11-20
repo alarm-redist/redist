@@ -9,6 +9,8 @@
 #ifndef CONSTRAINT_CALC_HELPER_H
 #define CONSTRAINT_CALC_HELPER_H
 
+#include "redist_types.h"
+
 Rcpp::NumericVector findBoundary(Rcpp::List fullList,
 				 Rcpp::List conList);
 arma::uvec getIn(arma::ivec vec1, arma::ivec vec2);
@@ -29,6 +31,7 @@ Rcpp::List calc_psicompact(arma::vec current_dists,
 			   Rcpp::NumericVector pops,
 			   Rcpp::NumericMatrix ssdmat,
 			   int ndists,
+			   const Graph &g,
 			   double denominator
 			   );
 Rcpp::List calc_psisegregation(arma::vec current_dists,
