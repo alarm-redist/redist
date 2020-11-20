@@ -25,3 +25,9 @@ test_that("Population parity is computed correctly", {
     res = redist.parity(algdat.p10$cdmat[,1:10], algdat.p10$precinct.data$pop)
     expect_equal(res, dev)
 })
+
+test_that("Group percentages are computed correctly", {
+    res = redist.group.percent(algdat.p10$cdmat[,1:10],
+                               algdat.p10$precinct.data$blackpop,
+                               algdat.p10$precinct.data$pop)
+})

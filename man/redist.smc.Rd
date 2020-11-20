@@ -14,6 +14,7 @@ redist.smc(
   compactness = 1,
   constraints = list(),
   resample = TRUE,
+  pop_bounds = NULL,
   constraint_fn = function(m) rep(0, ncol(m)),
   adapt_k_thresh = 0.975,
   seq_alpha = 0.2 + 0.2 * compactness,
@@ -42,7 +43,8 @@ constraint is desired, this parameter should be left blank.}
 \item{popcons}{The desired population constraint.  All sampled districts
 will have a deviation from the target district size no more than this value
 in percentage terms, i.e., \code{popcons=0.01} will ensure districts have
-populations within 1\% of the target population.}
+populations within 1\% of the target population.  Also see \code{pop_bounds}
+below for a way to specify more precise bounds.}
 
 \item{compactness}{Controls the compactness of the generated districts, with
 higher values preferring more compact districts. Must be nonnegative. See the
@@ -54,6 +56,11 @@ See the 'Details' section for more information.}
 \item{resample}{Whether to perform a final resampling step so that the
 generated plans can be used immediately.  Set this to \code{FALSE} to perform
 direct importance sampling estimates, or to adjust the weights manually.}
+
+\item{pop_bounds}{A numeric vector with three elements \code{c(lower, target, upper)}
+providing more precise population bounds for the algorithm. Districts
+will have population between \code{lower} and \code{upper}, with a goal of
+\code{target}.  If set, overrides \code{popcons}.}
 
 \item{constraint_fn}{A function which takes in a matrix where each column is
 a redistricting plan and outputs a vector of log-weights, which will be

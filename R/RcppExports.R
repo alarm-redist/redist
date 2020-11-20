@@ -41,6 +41,14 @@ calcPWDh <- function(x) {
     .Call(`_redist_calcPWDh`, x)
 }
 
+prec_cooccur <- function(m, idxs) {
+    .Call(`_redist_prec_cooccur`, m, idxs)
+}
+
+group_pct <- function(m, group_pop, total_pop, n_distr) {
+    .Call(`_redist_group_pct`, m, group_pop, total_pop, n_distr)
+}
+
 max_dev <- function(districts, pop, n_distr) {
     .Call(`_redist_max_dev`, districts, pop, n_distr)
 }
@@ -113,8 +121,8 @@ rsg <- function(adj_list, population, Ndistrict, target_pop, thresh, maxiter) {
     .Call(`_redist_rsg`, adj_list, population, Ndistrict, target_pop, thresh, maxiter)
 }
 
-smc_plans <- function(N, l, counties, pop, n_distr, tol, gamma, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_inc, incumbents, lp, thresh, alpha, verbosity = 1L) {
-    .Call(`_redist_smc_plans`, N, l, counties, pop, n_distr, tol, gamma, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_inc, incumbents, lp, thresh, alpha, verbosity)
+smc_plans <- function(N, l, counties, pop, n_distr, target, lower, upper, gamma, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_inc, incumbents, lp, thresh, alpha, verbosity = 1L) {
+    .Call(`_redist_smc_plans`, N, l, counties, pop, n_distr, target, lower, upper, gamma, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_inc, incumbents, lp, thresh, alpha, verbosity)
 }
 
 sample_partition <- function(aList, aMat, num_partitions, num_samples, threads = 1L) {

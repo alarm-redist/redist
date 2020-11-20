@@ -13,6 +13,18 @@ test_that("SMC runs without errors", {
     expect_equal(range(res$cdvec), c(1, 3))
 })
 
+test_that("Subset population bounds are calculated correctly", {
+    bounds = redist.subset_bounds(pop, algdat.p10$cdmat[,1] %in% 1:2, 3, 2, 0.1)
+    expect_equal(bounds, c(52513, 56666, 64182))
+})
+
+test_that("Precise population bounds are enforced", {
+    res = redist.smc(g, pop, 20, 3, pop_bounds=c(52e3, 58e3, 60e3), silent=T)
+    distr_pop = apply(res$cdvec, 2, function(x) tapply(pop, x, sum))
+    expect_true(all(apply(distr_pop, 2, max) <= 60e3))
+    expect_true(all(apply(distr_pop, 2, min) >= 52e3))
+})
+
 test_that("SMC checks arguments", {
     expect_error(redist.smc(g, pop, 10, 3, popcons=0.0), "positive")
     expect_error(redist.smc(g, pop, 10, 3, popcons=0.1, compactness=-1), "non-negative")

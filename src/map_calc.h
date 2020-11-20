@@ -29,6 +29,19 @@ double eval_vra(const subview_col<uword> &districts, int distr, double tgt_min,
 double eval_inc(const subview_col<uword> &districts, int distr, const uvec &incumbents);
 
 /*
+ * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,
+ * given a collection of plans
+ */
+// [[Rcpp::export]]
+arma::mat prec_cooccur(arma::umat m, arma::uvec idxs);
+
+/*
+ * Compute the percentage of `group` in each district. Asummes `m` is 1-indexed.
+ */
+// [[Rcpp::export]]
+arma::mat group_pct(arma::umat m, arma::vec group_pop, arma::vec total_pop, int n_distr);
+
+/*
  * Compute the deviation from the equal population constraint.
  */
 NumericMatrix pop_dev(const umat &districts, const subview_col<uword> &pop, int n_distr);

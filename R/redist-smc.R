@@ -72,7 +72,8 @@
 #' @param popcons The desired population constraint.  All sampled districts
 #' will have a deviation from the target district size no more than this value
 #' in percentage terms, i.e., \code{popcons=0.01} will ensure districts have
-#' populations within 1% of the target population.
+#' populations within 1% of the target population.  Also see \code{pop_bounds}
+#' below for a way to specify more precise bounds.
 #' @param compactness Controls the compactness of the generated districts, with
 #' higher values preferring more compact districts. Must be nonnegative. See the
 #' 'Details' section for more information, and computational considerations.
@@ -81,6 +82,10 @@
 #' @param resample Whether to perform a final resampling step so that the
 #' generated plans can be used immediately.  Set this to \code{FALSE} to perform
 #' direct importance sampling estimates, or to adjust the weights manually.
+#' @param pop_bounds A numeric vector with three elements \code{c(lower, target, upper)}
+#' providing more precise population bounds for the algorithm. Districts
+#' will have population between \code{lower} and \code{upper}, with a goal of
+#' \code{target}.  If set, overrides \code{popcons}.
 #' @param constraint_fn A function which takes in a matrix where each column is
 #'  a redistricting plan and outputs a vector of log-weights, which will be
 #'  added the the final weights.
@@ -135,12 +140,10 @@
 #' }
 #'
 #' @md
-#' @importFrom stats qnorm
 #' @export
 redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
-                      popcons=0.01, compactness=1,
-                      constraints=list(),
-                      resample=TRUE,
+                      popcons=0.01, compactness=1, constraints=list(),
+                      resample=TRUE, pop_bounds=NULL,
                       constraint_fn=function(m) rep(0, ncol(m)),
                       adapt_k_thresh=0.975, seq_alpha=0.2+0.2*compactness,
                       truncate=(compactness != 1),
@@ -163,6 +166,17 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
     if (is.null(counties)) counties = rep(1, V)
     if (length(unique(counties)) != max(counties))
         stop("County numbers must run from 1 to n_county with no interruptions.")
+
+    # Population bounds
+    if (!is.null(pop_bounds)) {
+        if (length(pop_bounds) != 3)
+            stop("`pop_bounds` must be of the form c(lower, target, upper).")
+        if (!all(diff(pop_bounds) > 0))
+            stop("`pop_bounds` satisfy lower < target < upper.")
+    } else {
+        target = sum(popvec) / ndists
+        pop_bounds = target * c(1 - popcons, 1, 1 + popcons)
+    }
 
     # Other constraints
     if (is.null(constraints$status_quo))
@@ -190,7 +204,8 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
     if (silent) verbosity = 0
 
     lp = rep(0, nsims)
-    maps = smc_plans(nsims, adjlist, counties, popvec, ndists, popcons, compactness,
+    maps = smc_plans(nsims, adjlist, counties, popvec, ndists, pop_bounds[2],
+                     pop_bounds[1], pop_bounds[3], compactness,
                      constraints$status_quo$strength, constraints$status_quo$current, n_current,
                      constraints$vra$strength, constraints$vra$tgt_vra_min,
                      constraints$vra$tgt_vra_other, constraints$vra$pow_vra, constraints$vra$min_pop,
@@ -258,4 +273,40 @@ redist.smc_is_ci = function(x, wgt, conf=0.99) {
     mu = sum(x*wgt)
     sig = sqrt(sum((x - mu)^2 * wgt^2))
     mu + qnorm(c((1-conf)/2, 1-(1-conf)/2))*sig
+}
+
+
+#' Calculate Population Bounds for a Subset of a Map
+#'
+#' Creates a 3-element vector, suitable for the precise population constraints
+#' in \code{\link{redist.smc}}, that ensures that samples of plans built from
+#' parts of a map will still satisfy the overall population constraint.
+#'
+#' @param pop a numeric vector containing the population of every precinct in
+#'   the full map.
+#' @param subset a logical vector which is \code{TRUE} for the subset of the map
+#'   that will be studied or resampled.  Often this will take the form
+#'   \code{current_plan %in% c(1, 3, 7)}, where 1, 3, and 7 are the study districts.
+#' @param n_distr the number of districts in the overall map.
+#' @param sub_distr the number of districts in the map subset.
+#' @param tol the overall population tolerance that must be met.
+#'
+#' @return a 3-element numeric vector of the form \code{c(lower, target, upper)},
+#' which can be used inside \code{\link{redist.smc}}.
+#'
+#' @examples
+#' data("fl25")
+#' data(algdat.p10)
+#'
+#' subset = algdat.p10$cdmat[,1] %in% c(1, 2)
+#' redist.subset_bounds(fl25$TotPop, subset, 3, 2, 0.1)
+redist.subset_bounds = function(pop, subset, n_distr, sub_distr, tol=0.01) {
+    if (sub_distr >= n_distr)
+        warning("Same or greater number of districts in the map subset.")
+    overall_target = sum(pop) / n_distr
+    lower = overall_target * (1 - tol)
+    upper = overall_target * (1 + tol)
+    target = sum(pop[subset]) / sub_distr
+
+    c(ceiling(lower), target, floor(upper))
 }
