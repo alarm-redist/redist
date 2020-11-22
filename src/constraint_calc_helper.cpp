@@ -1011,3 +1011,58 @@ List calc_psipartisan(arma::vec current_dists,
   return out;
 }
 
+// Function to calculate the direct limiting constraint
+// Function to calculate the direct limiting constraint
+List calc_psiminority(arma::vec current_dists,
+                      arma::vec new_dists,
+                      NumericVector pops,
+                      NumericVector grouppop,
+                      int ndists,
+                      NumericVector minorityprop){
+
+  int nminority = minorityprop.size();
+  double psi_old;
+  double psi_new;
+  
+  
+  NumericVector mins_curr(ndists);
+  NumericVector mins_new(ndists);
+  NumericVector pops_curr(ndists);
+  NumericVector pops_new(ndists);
+
+  // Step 1: Aggregate to District Level Pops
+  for(int r = 0; r < current_dists.size(); r++){
+    //current
+    mins_curr(current_dists(r)) += grouppop(r);
+    pops_curr(current_dists(r)) += pops(r);
+    // new
+    mins_new(new_dists(r)) += grouppop(r);
+    pops_new(new_dists(r)) += pops(r);
+  }
+
+  // Step 2: Get sort proportions
+  NumericVector minprop_curr(ndists);
+  NumericVector minprop_new(ndists);
+  
+  for(int i = 0; i < ndists; i++){
+    minprop_curr(i) = mins_curr(i)/pops_curr(i);
+    minprop_new(i) = mins_new(i)/pops_new(i);
+  }
+  
+  minprop_curr.sort(TRUE);
+  minprop_new.sort(TRUE);
+
+  // Estimate psi
+  for(int i = 0; i < nminority; i++){
+    psi_old += std::sqrt(std::abs(minprop_curr(i) - minorityprop(i)));
+    psi_new += std::sqrt(std::abs(minprop_new(i) - minorityprop(i)));
+  }
+  
+
+  // Create return object
+  List out;
+  out["minority_new_psi"] = psi_new;
+  out["minority_old_psi"] = psi_old;
+  
+  return out;
+}

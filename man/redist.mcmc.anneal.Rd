@@ -36,7 +36,8 @@ redist.mcmc.anneal(
   tgt_min = 0.55,
   tgt_other = 0.25,
   rvote = NULL,
-  dvote = NULL
+  dvote = NULL,
+  minorityprop = NULL
 )
 }
 \arguments{
@@ -91,7 +92,8 @@ the third column is its distance. Default is \code{NULL}.}
 units. The default is \code{NULL}.}
 
 \item{constraint}{Which constraint to apply. Accepts any combination of \code{compact}, 
-\code{segregation}, \code{vra}, \code{population}, \code{similarity}, \code{partisan} or \code{none}
+\code{segregation}, \code{vra}, \code{population}, \code{similarity}, \code{partisan},
+\code{minority} or \code{none}
 (no constraint applied). The default is NULL.}
 
 \item{constraintweights}{The weights to apply to each constraint. Should be a vector
@@ -138,6 +140,9 @@ Default is \code{TRUE}.}
 \item{rvote}{integer vector of votes for Republicans by precinct}
 
 \item{dvote}{integer vector of votes for Democrats by precinct}
+
+\item{minorityprop}{numeric vector of targeted minority proportions for the top 
+districts with that proportion}
 }
 \description{
 \code{redist.mcmc.anneal} simulates congressional redistricting plans
