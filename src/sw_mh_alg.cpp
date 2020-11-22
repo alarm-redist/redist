@@ -67,6 +67,7 @@ List swMH(List aList,
 	  double tgt_other,
 	  IntegerVector rvote,
 	  IntegerVector dvote,
+	  NumericVector minorityprop,
 	  int lambda = 0,
 	  double beta = 0.0,
 	  double weight_population = 0.0,
@@ -76,6 +77,7 @@ List swMH(List aList,
 	  double weight_similar = 0.0,
 	  double weight_countysplit = 0.0,
 	  double weight_partisan = 0.0,
+	  double weight_minority = 0.0,
 	  std::string adapt_beta = "none",
 	  int adjswap = 1,
 	  int exact_mh = 0,
@@ -220,6 +222,7 @@ List swMH(List aList,
   NumericVector psisimilar_store(nsims);
   NumericVector psicountysplit_store(nsims);
   NumericVector psipartisan_store(nsims);
+  NumericVector psiminority_store(nsims);
 
   // Store value of p, lambda, weights for all simulations
   NumericVector pparam_store(nsims);
@@ -324,11 +327,13 @@ List swMH(List aList,
 				   weight_similar,
 				   weight_countysplit,
 				   weight_partisan,
+				   weight_minority,
 				   ssd_denom,
 				   tgt_min,
 				   tgt_other,
 				   rvote,
 				   dvote,
+				   minorityprop,
 				   compactness_measure,
 				   partisan_measure,
 				   g = g);
@@ -382,6 +387,9 @@ List swMH(List aList,
       if(weight_partisan != 0.0){
         psipartisan_store[k] = swap_partitions["partisan_new_psi"];
       }
+      if(weight_minority != 0.0){
+        psiminority_store[k] = swap_partitions["minority_new_psi"];
+      }
     }else{
       energy_store[k] = swap_partitions["energy_old"];
       if(weight_population != 0.0){
@@ -404,6 +412,9 @@ List swMH(List aList,
       }
       if(weight_partisan != 0.0){
         psipartisan_store[k] = swap_partitions["partisan_old_psi"];
+      }
+      if(weight_minority != 0.0){
+        psiminority_store[k] = swap_partitions["minority_old_psi"];
       }
     }
 
@@ -558,6 +569,7 @@ List swMH(List aList,
     out["constraint_similar"] = psisimilar_store;
     out["constraint_countysplit"] = psicountysplit_store;
     out["constraint_partisan"] = psipartisan_store;
+    out["constraint_minority"] = psiminority_store;
     out["boundary_partitions"] = boundarypartitions_store;
     out["boundaryratio"] = boundaryratio_store;
     if(adapt_beta == "tempering"){
@@ -586,6 +598,7 @@ List swMH(List aList,
     out["constraint_similar"] = psisimilar_store[k-1];
     out["constraint_countysplit"] = psicountysplit_store[k-1];
     out["constraint_partisan"] = psipartisan_store[k-1];
+    out["constraint_minority"] = psiminority_store[k-1];
     out["boundary_partitions"] = boundarypartitions_store[k-1];
     out["boundaryratio"] = boundaryratio_store[k-1];
     if(adapt_eprob == 1){

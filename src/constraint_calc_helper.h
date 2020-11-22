@@ -60,6 +60,12 @@ Rcpp::List calc_psipartisan(arma::vec current_dists,
                             Rcpp::IntegerVector dvote,
                             std::string measure,
                             int ndists);
+Rcpp::List calc_psiminority(arma::vec current_dists,
+                      arma::vec new_dists,
+                      Rcpp::NumericVector pops,
+                      Rcpp::NumericVector grouppop,
+                      int ndists,
+                      Rcpp::NumericVector minorityprop);
 
 #endif
 

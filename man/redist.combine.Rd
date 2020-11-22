@@ -45,6 +45,8 @@ vra constraint for each accepted redistricting plan.}
 constraint for each accepted redistricting plan.}
 \item{constraint_partisan}{A vector containing the value of the
 partisan constraint for each accepted redistricting plan.}
+\item{constraint_minority}{A vector containing the value of the
+minority constraint for each accepted redistricting plan.}
 \item{beta_sequence}{A vector containing the value of beta for each iteration
 of the algorithm. Returned when tempering is being used.}
 \item{mhdecisions_beta}{A vector specifying whether a proposed beta value was

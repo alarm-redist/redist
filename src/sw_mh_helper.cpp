@@ -410,11 +410,13 @@ List make_swaps(List boundary_cc,
                 double weight_similar,
                 double weight_countysplit,
                 double weight_partisan,
+                double weight_minority,
                 double ssd_denominator,
                 double tgt_min,
                 double tgt_other,
                 IntegerVector rvote,
                 IntegerVector dvote,
+                NumericVector minorityprop,
                 std::string compactness_measure, 
                 std::string partisan_measure,
                 const Graph &g)
@@ -485,6 +487,8 @@ List make_swaps(List boundary_cc,
   double countysplit_old_psi = 0.0;
   double partisan_new_psi = 0.0;
   double partisan_old_psi = 0.0;
+  double minority_new_psi = 0.0;
+  double minority_old_psi = 0.0;
   
   // Number of unique congressional districts
   int ndists = max(cds_old) + 1;
@@ -642,6 +646,7 @@ List make_swaps(List boundary_cc,
     List vra_constraint;
     List similar_constraint;
     List partisan_constraint;
+    List minority_constraint;
     if(weight_population != 0.0){
       
       population_constraint = calc_psipop(cds_prop, cds_test, pop_vec, cd_pair);
@@ -727,15 +732,24 @@ List make_swaps(List boundary_cc,
     partisan_new_psi += as<double>(partisan_constraint["partisan_new_psi"]);
     partisan_old_psi += as<double>(partisan_constraint["partisan_old_psi"]);
   }
+  if(weight_minority != 0.0){
+    
+    List minority_constraint =  calc_psiminority(cds_prop, cds_test,
+                                                 pop_vec, group_pop_vec,
+                                                 ndists, minorityprop);
+    
+    minority_new_psi += as<double>(minority_constraint["minority_new_psi"]);
+    minority_old_psi += as<double>(minority_constraint["minority_old_psi"]);
+  }
   
   
   // Multiply mh_prob by constraint values
   double energy_new = weight_population * pop_new_psi + weight_compact * compact_new_psi
     + weight_segregation * segregation_new_psi + weight_vra * vra_new_psi + weight_similar * similar_new_psi
-    + weight_countysplit * countysplit_new_psi + weight_partisan * partisan_new_psi;
+    + weight_countysplit * countysplit_new_psi + weight_partisan * partisan_new_psi + weight_minority * minority_new_psi;
     double energy_old = weight_population * pop_old_psi + weight_compact * compact_old_psi
       + weight_segregation * segregation_old_psi + weight_vra * vra_old_psi + weight_similar * similar_old_psi
-      + weight_countysplit * countysplit_old_psi + weight_partisan * partisan_old_psi;
+      + weight_countysplit * countysplit_old_psi + weight_partisan * partisan_old_psi + weight_minority * minority_old_psi;
       mh_prob = (double)mh_prob * exp(-1.0 * beta * (energy_new - energy_old));
       
       // Create returned list
@@ -773,6 +787,10 @@ List make_swaps(List boundary_cc,
       if(weight_partisan != 0.0){
         out["partisan_new_psi"] = partisan_new_psi;
         out["partisan_old_psi"] = partisan_old_psi;
+      }
+      if(weight_minority != 0.0){
+        out["minority_new_psi"] = minority_new_psi;
+        out["minority_old_psi"] = minority_old_psi;
       }
       
       
