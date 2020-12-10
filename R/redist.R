@@ -472,6 +472,8 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
                  Polygons shp file")
         }
         
+    }else if('sf' %in% class(adjobj)){
+        adjlist <- redist.adjacency(adjobj)
     }else{
         
         ## Rename adjacency object as list
@@ -1553,6 +1555,12 @@ as.matrix.redist = function(x, ...) {
 #' @importFrom utils str
 #' @export
 print.redist = function(x, ...) {
+    if('partitions' %in% names(x)){
+        cat(ncol(x$partitions), 'sampled plans with', length(unique(x$partitions[,1])), 'districts from a',
+            nrow(x$partitions), 'unit map, drawn\n using',
+            'Markov chain Monte Carlo')
+        
+    } else{
     cat(x$nsims, " sampled plans with ", max(x$cdvec[,1]), " districts from a ",
         length(x$aList), "-unit map, drawn\n using ",
         c(mcmc="Markov chain Monte Carlo",
@@ -1562,4 +1570,5 @@ print.redist = function(x, ...) {
     else
         cat(".\n")
     cat(str(x$cdvec))
+    }
 }
