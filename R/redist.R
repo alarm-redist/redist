@@ -1498,7 +1498,6 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
 #' targetpop = .2, temper = 1)
 #' }
 #' @export
-#' @export
 redist.ipw <- function(algout,
                        resampleconstraint = c("pop", "compact",
                                               "segregation", "similar"),
