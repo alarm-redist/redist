@@ -1404,12 +1404,19 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
 #' population parity, geographic compactness, or other constraints are
 #' implemented.
 #'
-#' @usage redist.ipw(algout, targetpop = NULL)
+#' @usage redist.ipw(algout,
+#' resampleconstraint = c("pop", "compact", "segregation", "similar"),
+#' targetbeta, targetpop = NULL, temper = 0)
 #'
 #' @param algout An object of class "redist".
+#' @param resampleconstraint The constraint implemented in the simulations: one
+#' of "pop", "compact", "segregation", or "similar".
+#' @param targetbeta The target value of the constraint.
 #' @param targetpop The desired level of population parity. \code{targetpop} =
 #' 0.01 means that the desired distance from population parity is 1\%. The
 #' default is \code{NULL}.
+#' @param temper A flag for whether simulated tempering was used to improve the
+#' mixing of the Markov Chain. The default is \code{1}.
 #'
 #' @details This function allows users to resample redistricting plans using
 #' inverse probability weighting techniques described in Rubin (1987). This
@@ -1437,10 +1444,10 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
 #' constraint for each accepted redistricting plan.}
 #' \item{constraint_segregation}{A vector containing the value of the
 #' segregation constraint for each accepted redistricting plan.}
-#' \item{constraint_vra}{A vector containing the value of the
-#' vra constraint for each accepted redistricting plan.}
 #' \item{constraint_similar}{A vector containing the value of the similarity
 #' constraint for each accepted redistricting plan.}
+#' \item{constraint_vra}{A vector containing the value of the
+#' vra constraint for each accepted redistricting plan.}
 #' \item{constraint_partisan}{A vector containing the value of the
 #' partisan constraint for each accepted redistricting plan.}
 #' \item{constraint_minority}{A vector containing the value of the
@@ -1485,19 +1492,41 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
 #'
 #' ## Resample using inverse probability weighting.
 #' ## Target distance from parity is 20%
-#' alg_253_20_st <- redist.ipw(alg_253_20_st, targetpop = .2)
-#'
+#' alg_253_20_st <- redist.ipw(alg_253_20_st,
+#' resampleconstraint = "pop",
+#' targetbeta = -5.4,
+#' targetpop = .2, temper = 1)
 #' }
 #' @export
-redist.ipw <- function(algout, targetpop = NULL){
+#' @export
+redist.ipw <- function(algout,
+                       resampleconstraint = c("pop", "compact",
+                                              "segregation", "similar"),
+                       targetbeta,
+                       targetpop = NULL,
+                       temper = 0)
+{
     
     ## Warnings:
-    if(!inherits(algout, "redist")){
+    if(missing(algout) | class(algout) != "redist"){
         stop("Please provide a proper redist object")
+    }
+    if(length(resampleconstraint)!=1){
+        stop("We currently only support one resamplingconstraint at a time.")
+    }
+    if(!(resampleconstraint %in% c("pop", "compact", "segregation", "similar"))){
+        stop("We do not provide support for that constraint at this time")
+    }
+    if(missing(targetbeta)){
+        stop("Please specify the target beta value")
     }
     
     ## Get indices drawn under target beta if tempering
-    indbeta <- which(algout$beta_sequence == 1)
+    if(temper == 1){
+        indbeta <- which(algout$beta_sequence == targetbeta)
+    }else{
+        indbeta <- 1:ncol(algout$partitions)
+    }
     
     ## Get indices of draws that meet target population
     if(!is.null(targetpop)){
@@ -1508,10 +1537,9 @@ redist.ipw <- function(algout, targetpop = NULL){
     
     ## Get intersection of indices
     inds <- intersect(indpop, indbeta)
-    
     ## Construct weights
-    psi <- algout[["energy_psi"]][inds]
-    weights <- 1 / exp(-1 * psi)
+    psi <- algout[[paste("constraint_", resampleconstraint, sep = "")]][inds]
+    weights <- 1 / exp(targetbeta * psi)
     
     ## Resample indices
     inds <- sample(inds, length(inds), replace = TRUE, prob = weights)
