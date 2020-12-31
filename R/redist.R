@@ -1487,14 +1487,15 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
 #' ## Run simulations - tempering population constraint
 #' alg_253_20_st <- redist.mcmc(adjobj = algdat.p20$adjlist,
 #' popvec = algdat.p20$precinct.data$pop,
-#' initcds = initcds, nsims = 10000, betapop = -5.4,
-#' betaweights = betaweights, temperbetapop = 1)
+#' initcds = initcds, nsims = 10000, constraint = 'population',
+#' constraintweights = 5.4,
+#' betaweights = betaweights, temper = 1)
 #'
 #' ## Resample using inverse probability weighting.
 #' ## Target distance from parity is 20%
 #' alg_253_20_st <- redist.ipw(alg_253_20_st,
-#' resampleconstraint = "pop",
-#' targetbeta = -5.4,
+#'    resampleconstraint = "pop",
+#' targetbeta = 1,
 #' targetpop = .2, temper = 1)
 #' }
 #' @export
