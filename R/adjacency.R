@@ -5,6 +5,8 @@
 #' @return Adjacency list
 #' @description Creates an adjacency list that is zero indexed with no skips
 #' 
+#' 
+#' @importFrom sf st_relate
 #' @export
 redist.adjacency <- function(shp){
   
@@ -14,7 +16,7 @@ redist.adjacency <- function(shp){
   }
   
   # Create the adjacency with spdep function
-  adj <- spdep::poly2nb(shp, queen = FALSE)
+  adj <- sf::st_relate(shp, shp, pattern = "F***1****")
   
   # Check for zero indexing
   zero <- min(unlist(adj)) == 0
