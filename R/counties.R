@@ -38,7 +38,7 @@ redist.county.relabel <- function(adjacency, counties){
     mutate(comps = max(comp)) %>% 
     ungroup() %>% 
     rowwise() %>% 
-    mutate(countiescomp = ifelse(comps > 1, paste0(counties, comp))) %>% 
+    mutate(countiescomp = ifelse(comps > 1, paste0(counties, comp), counties)) %>% 
     ungroup()
   
   return(component$countiescomp) 
