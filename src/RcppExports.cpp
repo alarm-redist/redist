@@ -32,6 +32,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// contiguity
+IntegerVector contiguity(List adj, IntegerVector group);
+RcppExport SEXP _redist_contiguity(SEXP adjSEXP, SEXP groupSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type adj(adjSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type group(groupSEXP);
+    rcpp_result_gen = Rcpp::wrap(contiguity(adj, group));
+    return rcpp_result_gen;
+END_RCPP
+}
 // crsg
 List crsg(List adj_list, NumericVector population, NumericVector area, NumericVector x_center, NumericVector y_center, int Ndistrict, double target_pop, double thresh, int maxiter);
 RcppExport SEXP _redist_crsg(SEXP adj_listSEXP, SEXP populationSEXP, SEXP areaSEXP, SEXP x_centerSEXP, SEXP y_centerSEXP, SEXP NdistrictSEXP, SEXP target_popSEXP, SEXP threshSEXP, SEXP maxiterSEXP) {

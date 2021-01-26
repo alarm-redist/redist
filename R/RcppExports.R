@@ -9,6 +9,10 @@ findBoundary <- function(fullList, conList) {
     .Call(`_redist_findBoundary`, fullList, conList)
 }
 
+contiguity <- function(adj, group) {
+    .Call(`_redist_contiguity`, adj, group)
+}
+
 crsg <- function(adj_list, population, area, x_center, y_center, Ndistrict, target_pop, thresh, maxiter) {
     .Call(`_redist_crsg`, adj_list, population, area, x_center, y_center, Ndistrict, target_pop, thresh, maxiter)
 }
