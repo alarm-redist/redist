@@ -35,7 +35,7 @@ redist.parity <- function(district_membership, population, ncores = 1){
     `%oper%` <- `%do%`
   } else { 
     `%oper%` <- `%dopar%`
-    cl <- makeCluster(nc, , setup_strategy = 'sequential')
+    cl <- makeCluster(nc, setup_strategy = 'sequential')
     registerDoParallel(cl)
     on.exit(stopCluster(cl))
   }
