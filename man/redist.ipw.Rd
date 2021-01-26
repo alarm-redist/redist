@@ -4,14 +4,24 @@
 \alias{redist.ipw}
 \title{Inverse probability reweighting for MCMC Redistricting}
 \usage{
-redist.ipw(algout, targetpop = NULL)
+redist.ipw(algout,
+resampleconstraint = c("pop", "compact", "segregation", "similar"),
+targetbeta, targetpop = NULL, temper = 0)
 }
 \arguments{
 \item{algout}{An object of class "redist".}
 
+\item{resampleconstraint}{The constraint implemented in the simulations: one
+of "pop", "compact", "segregation", or "similar".}
+
+\item{targetbeta}{The target value of the constraint.}
+
 \item{targetpop}{The desired level of population parity. \code{targetpop} =
 0.01 means that the desired distance from population parity is 1\%. The
 default is \code{NULL}.}
+
+\item{temper}{A flag for whether simulated tempering was used to improve the
+mixing of the Markov Chain. The default is \code{1}.}
 }
 \value{
 \code{redist.ipw} returns an object of class "redist". The object
@@ -35,10 +45,10 @@ constraint for each accepted redistricting plan.}
 constraint for each accepted redistricting plan.}
 \item{constraint_segregation}{A vector containing the value of the
 segregation constraint for each accepted redistricting plan.}
-\item{constraint_vra}{A vector containing the value of the
-vra constraint for each accepted redistricting plan.}
 \item{constraint_similar}{A vector containing the value of the similarity
 constraint for each accepted redistricting plan.}
+\item{constraint_vra}{A vector containing the value of the
+vra constraint for each accepted redistricting plan.}
 \item{constraint_partisan}{A vector containing the value of the
 partisan constraint for each accepted redistricting plan.}
 \item{constraint_minority}{A vector containing the value of the
@@ -82,13 +92,16 @@ betaweights <- rep(NA, 10); for(i in 1:10){betaweights[i] <- 4^i}
 ## Run simulations - tempering population constraint
 alg_253_20_st <- redist.mcmc(adjobj = algdat.p20$adjlist,
 popvec = algdat.p20$precinct.data$pop,
-initcds = initcds, nsims = 10000, betapop = -5.4,
-betaweights = betaweights, temperbetapop = 1)
+initcds = initcds, nsims = 10000, constraint = 'population',
+constraintweights = 5.4,
+betaweights = betaweights, temper = 1)
 
 ## Resample using inverse probability weighting.
 ## Target distance from parity is 20\%
-alg_253_20_st <- redist.ipw(alg_253_20_st, targetpop = .2)
-
+alg_253_20_st <- redist.ipw(alg_253_20_st,
+   resampleconstraint = "pop",
+targetbeta = 1,
+targetpop = .2, temper = 1)
 }
 }
 \references{
