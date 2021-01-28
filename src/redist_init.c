@@ -14,6 +14,7 @@ extern SEXP _redist_biasatv(SEXP, SEXP, SEXP);
 extern SEXP _redist_calc_polsbypopper(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_calcPWDh(SEXP);
 extern SEXP _redist_contiguity(SEXP, SEXP);
+extern SEXP _redist_cores(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_countpartitions(SEXP);
 extern SEXP _redist_cppGeneratePartitions(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_crsg(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -33,13 +34,17 @@ extern SEXP _redist_max_dev(SEXP, SEXP, SEXP);
 extern SEXP _redist_meanmedian(SEXP);
 extern SEXP _redist_minkowski(SEXP, SEXP, SEXP);
 extern SEXP _redist_n_removed(SEXP, SEXP, SEXP);
+extern SEXP _redist_reduce_adj(SEXP, SEXP, SEXP);
 extern SEXP _redist_responsiveness(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_rsg(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_sample_partition(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_segregationcalc(SEXP, SEXP, SEXP);
 extern SEXP _redist_smc_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _redist_splits(SEXP, SEXP);
 extern SEXP _redist_swMH(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _redist_talisman(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_taugap(SEXP, SEXP, SEXP, SEXP);
+extern SEXP _redist_update_conncomp(SEXP, SEXP, SEXP);
 extern SEXP _redist_var_info_mat(SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
@@ -49,6 +54,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_calc_polsbypopper",     (DL_FUNC) &_redist_calc_polsbypopper,      7},
     {"_redist_calcPWDh",              (DL_FUNC) &_redist_calcPWDh,               1},
     {"_redist_contiguity",            (DL_FUNC) &_redist_contiguity,             2},
+    {"_redist_cores",                 (DL_FUNC) &_redist_cores,                  4},
     {"_redist_countpartitions",       (DL_FUNC) &_redist_countpartitions,        1},
     {"_redist_cppGeneratePartitions", (DL_FUNC) &_redist_cppGeneratePartitions,  7},
     {"_redist_crsg",                  (DL_FUNC) &_redist_crsg,                   9},
@@ -68,13 +74,17 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_meanmedian",            (DL_FUNC) &_redist_meanmedian,             1},
     {"_redist_minkowski",             (DL_FUNC) &_redist_minkowski,              3},
     {"_redist_n_removed",             (DL_FUNC) &_redist_n_removed,              3},
+    {"_redist_reduce_adj",            (DL_FUNC) &_redist_reduce_adj,             3},
     {"_redist_responsiveness",        (DL_FUNC) &_redist_responsiveness,         4},
     {"_redist_rsg",                   (DL_FUNC) &_redist_rsg,                    6},
     {"_redist_sample_partition",      (DL_FUNC) &_redist_sample_partition,       5},
     {"_redist_segregationcalc",       (DL_FUNC) &_redist_segregationcalc,        3},
     {"_redist_smc_plans",             (DL_FUNC) &_redist_smc_plans,             21},
+    {"_redist_splits",                (DL_FUNC) &_redist_splits,                 2},
     {"_redist_swMH",                  (DL_FUNC) &_redist_swMH,                  40},
+    {"_redist_talisman",              (DL_FUNC) &_redist_talisman,               4},
     {"_redist_taugap",                (DL_FUNC) &_redist_taugap,                 4},
+    {"_redist_update_conncomp",       (DL_FUNC) &_redist_update_conncomp,        3},
     {"_redist_var_info_mat",          (DL_FUNC) &_redist_var_info_mat,           3},
     {NULL, NULL, 0}
 };

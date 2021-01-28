@@ -1,6 +1,6 @@
 Package: redist
-Version: 2.0.3
-Date: 2020-11-11
+Version: 2.0.4
+Date: 2021-01-28
 Title: Simulation Methods for Legislative Redistricting
 Authors@R: c(
     person("Ben", "Fifield", email = "benfifield@gmail.com", role = c("aut", "cre")),

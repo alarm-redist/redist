@@ -222,3 +222,56 @@ redist.calc.frontier.size <- function(ordered_path){
          sequence = frontier_sizes)
   )
 }
+
+#' Enumerate All Parititions
+#'
+#' Single function for standard enumeration analysis.
+#'
+#' @param adjlist zero indexed adjacency list
+#' @param unordered_path valid path to output the unordered adjacency map to
+#' @param ordered_path valid path to output the ordered adjacency map to
+#' @param out_path Valid path to output the enumerated districts
+#' @param ndist number of districts to enumerate
+#' @param all boolean. TRUE outputs all districts. FALSE samples n districts. 
+#' @param n integer. Number of districts to output if all is FALSE. Returns 
+#' districts selected from uniform random distribution.
+#' @param init Runs redist.init.enumpart. Defaults to false. Should be run on first use.
+#' @param read boolean. Defaults to TRUE. reads 
+#' @param population Integer Vector. Defaults to NULL. If supplied, computes the parity.
+#'
+#' @return
+#' @export
+#'
+redist.enumpart <- function(adjlist, unordered_path, ordered_path, 
+                             out_path, ndist = 2, all = TRUE, n = NULL, init = FALSE, read = TRUE, 
+                            population = NULL){
+  if(init){
+    redist.init.enumpart()
+  }
+  
+  prep <- redist.prep.enumpart(adjlist = adjlist, 
+                               unordered_path = unordered_path,
+                               ordered_path = ordered_path)
+  if(!prep){
+    run <- redist.run.enumpart(ordered_path = ordered_path, 
+                               out_path = out_path, 
+                               ndist = ndist, 
+                               all = all,
+                               n = n)
+  }
+  
+  if(read){
+    cds <- redist.read.enumpart(out_path = out)
+    if(!is.null(population)){
+      par <- redist.parity(district_membership = cds, population = population)
+    } else{
+      par <- rep(NA_real_, ncol(cds))
+    }
+    out <- list(district_membership = cds, parity = par)
+  } else{
+    return(0)
+  }
+  
+  return(out)
+  
+}

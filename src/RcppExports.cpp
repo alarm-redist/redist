@@ -8,6 +8,33 @@
 
 using namespace Rcpp;
 
+// reduce_adj
+List reduce_adj(List adj_list, IntegerVector prec_keep, IntegerVector prec_idx);
+RcppExport SEXP _redist_reduce_adj(SEXP adj_listSEXP, SEXP prec_keepSEXP, SEXP prec_idxSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type adj_list(adj_listSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type prec_keep(prec_keepSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type prec_idx(prec_idxSEXP);
+    rcpp_result_gen = Rcpp::wrap(reduce_adj(adj_list, prec_keep, prec_idx));
+    return rcpp_result_gen;
+END_RCPP
+}
+// talisman
+NumericVector talisman(NumericMatrix dvs, double nd, double alpha, double beta);
+RcppExport SEXP _redist_talisman(SEXP dvsSEXP, SEXP ndSEXP, SEXP alphaSEXP, SEXP betaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type dvs(dvsSEXP);
+    Rcpp::traits::input_parameter< double >::type nd(ndSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< double >::type beta(betaSEXP);
+    rcpp_result_gen = Rcpp::wrap(talisman(dvs, nd, alpha, beta));
+    return rcpp_result_gen;
+END_RCPP
+}
 // genAlConn
 List genAlConn(List aList, NumericVector cds);
 RcppExport SEXP _redist_genAlConn(SEXP aListSEXP, SEXP cdsSEXP) {
@@ -41,6 +68,33 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< List >::type adj(adjSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type group(groupSEXP);
     rcpp_result_gen = Rcpp::wrap(contiguity(adj, group));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cores
+List cores(List adj, IntegerVector dm, int k, List cd_within_k);
+RcppExport SEXP _redist_cores(SEXP adjSEXP, SEXP dmSEXP, SEXP kSEXP, SEXP cd_within_kSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type adj(adjSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type dm(dmSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< List >::type cd_within_k(cd_within_kSEXP);
+    rcpp_result_gen = Rcpp::wrap(cores(adj, dm, k, cd_within_k));
+    return rcpp_result_gen;
+END_RCPP
+}
+// update_conncomp
+IntegerVector update_conncomp(IntegerVector dm, IntegerVector kvec, List adj);
+RcppExport SEXP _redist_update_conncomp(SEXP dmSEXP, SEXP kvecSEXP, SEXP adjSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type dm(dmSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type kvec(kvecSEXP);
+    Rcpp::traits::input_parameter< List >::type adj(adjSEXP);
+    rcpp_result_gen = Rcpp::wrap(update_conncomp(dm, kvec, adj));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -439,6 +493,18 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const int >::type num_samples(num_samplesSEXP);
     Rcpp::traits::input_parameter< const int >::type threads(threadsSEXP);
     rcpp_result_gen = Rcpp::wrap(sample_partition(aList, aMat, num_partitions, num_samples, threads));
+    return rcpp_result_gen;
+END_RCPP
+}
+// splits
+IntegerVector splits(IntegerMatrix dm, IntegerVector community);
+RcppExport SEXP _redist_splits(SEXP dmSEXP, SEXP communitySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type dm(dmSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type community(communitySEXP);
+    rcpp_result_gen = Rcpp::wrap(splits(dm, community));
     return rcpp_result_gen;
 END_RCPP
 }

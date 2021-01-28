@@ -129,4 +129,85 @@ redist.map <- function(shp = NULL, adjacency = NULL, district_membership = NULL,
 }
 
 
+#' Creates a Choropleth
+#'
+#' @details Creates a basic choropleth for a provided shp with value. Recommended to
+#' normalize data to avoid absolute values, in most use cases.
+#' 
+#' @param shp  A SpatialPolygonsDataFrame or sf object. Required.
+#' @param fill A numeric/integer vector with values to color the plot with. Optional.
+#' @param fill_label A string title of plot. Defaults to empty string. Optional.
+#' @param title A string title of plot. Defaults to empty string. Optional.
+#' @param limit_colors A length two string vector with two colors, either hex or ggplot color names.
+#' @param grad Number of colors to make a gradient with. Accepts values of 1 or 2.
+#' @param lwd Line width. Defaults to 0
+#'
+#' @return ggplot map
+#' 
+#' @importFrom ggplot2 ggplot geom_sf theme_minimal theme labs aes scale_fill_gradient2
+#' @importFrom ggplot2 theme_void scale_fill_gradient
+#' @importFrom dplyr filter .data 
+#' 
+#' @examples
+#' \dontrun{
+#' data("fl25")
+#' redist.choropleth(shp = fl25, fill = fl25$BlackPop/fl25$TotPop)
+#' DVS <- fl25$obama/(fl25$mccain+fl25$obama)
+#' redist.choropleth(shp = fl25, fill = DVS, limit_colors = c('red', 'blue'))
+#' }
+#' 
+#' @export
+redist.choropleth <- function(shp, fill = NULL, fill_label = "", title = "", 
+                              limit_colors = NULL, grad = 1, lwd = 0){
+  
+  # Check inputs
+  if(missing(shp)){
+    stop('Please provide an argument to "shp".')
+  }
+  if('SpatialPolygonsDataFrame' %in% class(shp)){
+    shp <- shp %>%  st_as_sf()
+  } else if(!('sf' %in% class(shp))){
+    stop('Please provide "shp" as a SpatialPolygonsDataFrame or sf object.')
+  }
+  if(!is.null(fill)){
+    if(nrow(shp) != length(fill)){
+      stop('Arguments "fill" and "shp" do not have same number of precincts.')
+    }
+  }
+  
+  plot <- shp %>% ggplot(aes(fill = fill)) +
+    geom_sf(lwd = 0, color = NA) +
+    theme_void() +
+    labs(fill = fill_label, x = 'Longitude', y = 'Latitude', title = title) +
+    theme(legend.position = "bottom")
+  
+  if(!is.null(fill)){
+    l1 <- min(fill)
+    l2 <- max(fill)
+    mp <- mean(fill)
+    
+    if(l1 >= 0 & l2 <= 1){
+      l1 <- 0
+      l2 <- 1
+      mp <- 0.5
+    }
+    
+    if(is.null(limit_colors)){
+      limit_colors <- c('#ffffff', '#08306b')
+    }
+    
+    if(grad == 1){
+      plot <- plot + 
+        scale_fill_gradient(low = limit_colors[1], high = limit_colors[2],
+                            limits = c(l1,l2))
+    } else if(grad == 2){
+      plot <- plot + 
+        scale_fill_gradient2(low = limit_colors[1], high = limit_colors[3],
+                             midpoint = mp, mid = limit_colors[2], limits = c(l1,l2))
+    }
+    
+  }
+  
+  return(plot)
+}
 
