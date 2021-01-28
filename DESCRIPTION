@@ -55,6 +55,7 @@ Suggests:
     tidyr,
     rmapshaper,
     gridExtra,
+    graphics,
     methods,
     utils
 LinkingTo: Rcpp, RcppArmadillo, RcppEigen, BH

@@ -34,20 +34,21 @@
 #'                            nsims=200, ndists=3, popcons=0.1)
 #'
 #' # Prep
-#' viz_prep = redist.prep_group_viz(sampled_plans, fl25$geometry, fl25$VAP, fl25$BlackVAP)
+#' viz_prep = redist.prep_group_viz(sampled_plans, fl25, fl25$VAP, fl25$BlackVAP)
 #'
 #' # Run the app!
 #' redist.group_viz(viz_prep)
 #' }
 redist.group_viz = function(prep, browser=TRUE) {
     if (!requireNamespace("shiny", quietly=T)
+            | !requireNamespace("rmarkdown", quietly=T)
             | !requireNamespace("cluster", quietly=T)
             | !requireNamespace("tidyr", quietly=T)
             | !requireNamespace("ggiraph", quietly=T)
             | !requireNamespace("leaflet", quietly=T)
             | !requireNamespace("rmapshaper", quietly=T)
             | !requireNamespace("gridExtra", quietly=T)) {
-        stop('The "shiny", "cluster", "tidyr", "ggiraph", "leaflet", and "gridExtra"',
+        stop('The "shiny", "rmarkdown", "cluster", "tidyr", "ggiraph", "leaflet", and "gridExtra"',
         "packages are required for this function to work.", call.=F)
     }
     if (!methods::is(prep, "redist_prep_viz"))
@@ -71,13 +72,14 @@ redist.group_viz = function(prep, browser=TRUE) {
 #' @param full_pop a numeric vector with the population of the group for every precinct.
 #' @param group_pop a numeric vector with the population of every precinct.
 #' @param current a numeric vector containing the current plan, which will be plotted separately.
+#' @param comp_meas the compactness measure desired.  See \code{\link{redist.compactness}} for details.
 #' @param renumber whether to renumber districts in ascending order by their group share, so
 #'   district 1 has the smallest fraction of the group, district 2 has the second-smallest,
 #'   and so on.
-#' @param by the way to compute the variation of information distance, by \code{"people"},
+#' @param dist_by the way to compute the variation of information distance, by \code{"people"},
 #'   the recommended default, by \code{"group"} or \code{"minority"}, or by
 #'   \code{"land"}, which treats each precinct equally.
-#' @param k the number of clusters to group the plans into. If left unspecified,
+#' @param clusters the number of clusters to group the plans into. If left unspecified,
 #'   this will be determined automatically using the silhouette method.
 #' @param simp_geom if \code{TRUE}, the geometry will be slightly simplified to
 #'   allow for faster plotting.
@@ -95,24 +97,25 @@ redist.group_viz = function(prep, browser=TRUE) {
 #'                            nsims=200, ndists=3, popcons=0.1)
 #'
 #' # Prep
-#' viz_prep = redist.prep_group_viz(sampled_plans, fl25$geometry, fl25$VAP, fl25$BlackVAP)
+#' viz_prep = redist.prep_group_viz(sampled_plans, fl25, fl25$VAP, fl25$BlackVAP)
 #'
 #' # Run the app!
 #' redist.group_viz(viz_prep)
 #' }
 redist.prep_group_viz = function(result, geometry, full_pop, group_pop, current=NULL,
-                                 renumber=TRUE, by="people", k=NULL, simp_geom=TRUE) {
+                                 comp_meas="EdgesRemoved", renumber=TRUE, dist_by="people",
+                                 clusters=NULL, simp_geom=TRUE) {
     # Type checks
-    if (!methods::is(result, "redist") && !is.matrix(result))
-        stop("`result` must be of class `redist` or a matrix of district assignments.", call.=F)
-    if (is.matrix(result))
-        result = list(cdvec = result)
+    if (!methods::is(result, "redist"))
+        stop("`result` must be of class `redist`.", call.=F)
     if (min(result$cdvec[,1]) == 0) # 1-index
         result$cdvec = 1 + result$cdvec
     if (!any(class(full_pop) %in% c('numeric', 'integer')))
         stop('Please provide "full_pop" as a numeric vector.')
     if (!any(class(group_pop) %in% c('numeric', 'integer')))
         stop('Please provide "group_pop" as a numeric vector.')
+
+    N = max(result$cdvec[,1])
     full_pop = as.numeric(full_pop)
     group_pop = as.numeric(group_pop)
 
@@ -134,13 +137,24 @@ redist.prep_group_viz = function(result, geometry, full_pop, group_pop, current=
         dplyr::as_tibble()
 
     no_current = is.null(current)
-    if (no_current) current = rep(max(result$cdvec[,1]), nrow(result$cdvec))
+    if (no_current) current = rep(N, nrow(result$cdvec))
     m_plot = cbind(current, result$cdvec)
+
+    # basic vitals
+    tot_edges = sum(sapply(result$aList, length))/2
+    maxdev = c(redist.parity(result$cdvec[,1:2,drop=F], fl25$pop)[1], result$maxdev)
+    comp = redist.compactness(geometry, m_plot, measure=comp_meas,
+                              population=full_pop, adjacency=result$aList) %>%
+        dplyr::group_by(nloop) %>%
+        dplyr::summarize_all(mean) %>%
+        dplyr::pull()
+
+
     # different units to use
     dist_by = dplyr::case_when(
-        by == "group" ~ group_pop,
-        by == "minority" ~ group_pop,
-        by == "land" ~ scale(st_area(geometry), center=F),
+        dist_by == "group" ~ group_pop,
+        dist_by == "minority" ~ group_pop,
+        dist_by == "land" ~ scale(st_area(geometry), center=F),
         T ~ full_pop
     )
     cat("Calculating pairwise distances\n")
@@ -166,7 +180,7 @@ redist.prep_group_viz = function(result, geometry, full_pop, group_pop, current=
 
     cat("Clustering plans\n")
     cl_m = cbind(mds, t(pct_min))
-    if (is.null(k)) {
+    if (is.null(clusters)) {
         try_k = 12
         silh = rep(0, try_k)
         for (k in 3:try_k) {
@@ -174,22 +188,23 @@ redist.prep_group_viz = function(result, geometry, full_pop, group_pop, current=
             cl = cluster::pam(dists, k, diss=T)
             silh[k] = cl$silinfo$avg.width
         }
-        k = which.max(silh)
+        clusters = which.max(silh)
     }
-    cat("  (Using", k, "clusters)\n")
-    cl = cluster::pam(dists, k, diss=T)
+    cat("  (Using", clusters, "clusters)\n")
+    cl = cluster::pam(dists, clusters, diss=T)
 
     cat("Finding typical plans for each cluster\n")
     N = nrow(pct_min)
-    typical = 1:k %>%
+    typical = 1:clusters %>%
         lapply(function(i) m_plot[,cl$medoids[i]])
     #typical = 1:k %>%
     #    lapply(function(i) prec_cooccur(m_plot, which(cl$clustering == i))) %>%
     #    lapply(function(cm) stats::kmeans(cm, N, iter.max=20, nstart=3)$cluster)
 
-    out = list(m=m_plot, geom=geometry, mds=mds, sizes=sizes, hide=c(1, together$row),
+    out = list(m=m_plot, dev=maxdev, comp=comp, geom=geometry,
+               mds=mds, sizes=sizes, hide=c(1, together$row),
                pct_min=pct_min, pop=full_pop, grp_pop=group_pop, centroids=centroids,
-               cluster=cl$clustering, centers=mds[cl$medoids,], typical=typical, k=k)
+               cluster=cl$clustering, centers=mds[cl$medoids,], typical=typical, k=clusters)
     class(out) = c("redist_prep_viz", "list")
     out
 }
@@ -201,9 +216,17 @@ viz_ui = function() {
         # add in methods from https://github.com/rstudio/leaflet/pull/598
         shiny::tags$head(
             shiny::tags$script(shiny::HTML(viz_script)),
-            shiny::tags$style(type="text/css", HTML(
+            shiny::tags$style(type="text/css", shiny::HTML(
             ".container-fluid {
                 max-width: 1200px;
+            }
+            h2 {
+                font-weight: bold;
+            }
+            .container-fluid > h2:first-child {
+                font-size: 2.8em;
+                border-bottom: 4px solid #777;
+                padding-bottom: 4px;
             }
             #mds svg {
                 cursor: crosshair;
@@ -222,24 +245,28 @@ viz_ui = function() {
 
         shiny::titlePanel("Redistricting Ensemble Explorer"),
 
+        shiny::h2("Plan Vitals"),
+        shiny::p("The first set of plots show how the set of sampled redistricting
+                 plans measures up, according to basic metrics, and how the
+                 current plan, if any, compares."),
         shiny::fluidRow(
             shiny::column(6, shiny::verticalLayout(
-                shiny::h3("Group-controlled seats"),
-                shiny::plotOutput("numseats", width="100%", height=400),
-                shiny::sliderInput("cutoff", "Group control threshold", width="100%",
-                                   min=0.4, max=0.65, value=0.5, step=0.005, round=T)
+                shiny::h3("Population deviation"),
+                shiny::plotOutput("popdev", width="100%", height=300)
             )),
             shiny::column(6, shiny::verticalLayout(
-                shiny::h3("Fraction of group population by district"),
-                shiny::plotOutput("distrpct", width="100%", height=480)
+                shiny::h3("Compactness"),
+                shiny::plotOutput("comp", width="100%", height=300)
             ))
         ),
+        shiny::br(), shiny::br(),
 
+        shiny::h2("Types of Plans"),
         shiny::p(
             "The scatterplot below lays out plans according to the shared information
                 distance between them.",
             shiny::tags$ul(
-                shiny::tags$li("The current plan, if there is one, is marked by a black square."),
+                shiny::tags$li("The current plan, if there is one, is marked by a red square."),
                 shiny::tags$li(shiny::strong("Hover over a plan to learn more,
                     or click a plan to see it on the map.")),
                 shiny::tags$li("Click again to show the fraction of group voters in each precinct."),
@@ -260,13 +287,34 @@ viz_ui = function() {
             )
         ),
 
-        shiny::h3(shiny::HTML("&lsquo;Average&rsquo; plans for each cluster")),
-        shiny::plotOutput("typical", width="100%", height="640px")
+        shiny::h3(shiny::HTML("&lsquo;Typical&rsquo; plans for each cluster")),
+        shiny::p("These maps show the plan which is at the center of each cluster,
+                 and can be considered representative."),
+        shiny::plotOutput("typical", width="100%", height="640px"),
+        shiny::br(), shiny::br(),
+
+
+        shiny::h2("Seats and Votes"),
+        shiny::fluidRow(
+            shiny::column(6, shiny::verticalLayout(
+                shiny::h3("Group-controlled seats"),
+                shiny::plotOutput("numseats", width="100%", height=400),
+                shiny::sliderInput("cutoff", "Group control threshold", width="100%",
+                                   min=0.4, max=0.65, value=0.5, step=0.005, round=T)
+            )),
+            shiny::column(6, shiny::verticalLayout(
+                shiny::h3("Fraction of group population by district"),
+                shiny::plotOutput("distrpct", width="100%", height=480)
+            ))
+        ),
+        shiny::br(), shiny::br(), shiny::br(), shiny::br()#,
+
+        #downloadButton("report", "Generate report")
     )
 }
 
-viz_server = function(m, geom, mds, sizes, hide, pct_min, pop, grp_pop,
-                      centroids, cluster, centers, typical, k) {
+viz_server = function(m, dev, comp, geom, mds, sizes, hide, pct_min, pop,
+                      grp_pop, centroids, cluster, centers, typical, k) {
 
     N = max(m)
     colnames(centers) = c("x", "y")
@@ -275,7 +323,36 @@ viz_server = function(m, geom, mds, sizes, hide, pct_min, pop, grp_pop,
     show_current = diff(range(m[,1])) > 0
 
     function(input, output, session) {
+        make_hist = function(x, show_current) {
+            nbins = floor(ncol(m)/20)
+            p = ggplot2::ggplot(NULL, ggplot2::aes(x=x[-1])) +
+              ggplot2::geom_histogram(bins=nbins) +
+              ggplot2::scale_y_continuous(expand=ggplot2::expansion(mult=c(0, 0.05))) +
+              ggplot2::theme_bw()
 
+            if (show_current) {
+                ymax = max(graphics::hist(x, plot=F)$counts)
+                p = p +
+                  ggplot2::geom_vline(xintercept=x[1], color="red", size=1) +
+                  ggplot2::annotate("text", y=ymax, x=x[1] + 0.01*diff(range(x)),
+                                    label="Current plan", hjust="left")
+            }
+
+            p
+        }
+
+        # POPULATION DEVIATION PLOT
+        plot_popdev =  make_hist(dev, show_current) +
+            ggplot2::labs(x="Maximum population deviation", y="Number of plans") +
+            ggplot2::scale_x_continuous(labels=scales::percent)
+        output$popdev = shiny::renderPlot(plot_popdev)
+
+        # COMPACTNESS PLOT
+        plot_comp = make_hist(comp, show_current) +
+            ggplot2::labs(x="Average compactness measure", y="Number of plans")
+        output$comp = shiny::renderPlot(plot_comp)
+
+        # SEATS PLOT
         output$numseats = shiny::renderPlot({
             num_seats = apply(pct_min, 2, function(x) sum(x > input$cutoff))
             breaks = seq(min(num_seats)-1/4, max(num_seats)+1/4, 1/2)
@@ -285,12 +362,18 @@ viz_server = function(m, geom, mds, sizes, hide, pct_min, pop, grp_pop,
               ggplot2::scale_y_continuous(expand=ggplot2::expansion(mult=c(0, 0.05))) +
               ggplot2::theme_bw()
 
-            if (show_current)
-                p = p + ggplot2::geom_vline(xintercept=num_seats[1], color="red", size=1)
+            if (show_current) {
+                p = p +
+                  ggplot2::geom_vline(xintercept=num_seats[1], color="red", size=1) +
+                  ggplot2::annotate("text", y=max(table(num_seats)),
+                                    x=num_seats[1]+0.01*diff(range(num_seats)),
+                                    hjust="left", label="Current plan")
+            }
 
             p
         })
 
+        # DISTRICT SHARE BOXPLOTS
         output$distrpct = shiny::renderPlot({
             pct_d = dplyr::as_tibble(pct_min, .name_repair=function(x) as.character(1:ncol(pct_min))) %>%
                 dplyr::mutate(district=factor(as.character(1:N), as.character(1:N))) %>%
@@ -301,9 +384,11 @@ viz_server = function(m, geom, mds, sizes, hide, pct_min, pop, grp_pop,
                 ggplot2::labs(x="District", y="Group percentage") +
                 ggplot2::theme_bw()
 
-            if (show_current)
+            if (show_current) {
                 p = p + ggplot2::geom_point(data=pct_d[pct_d$plan == 1,],
-                                            color="red", size=3, shape=18)
+                                            color="red", size=3.5, shape=18) +
+                  ggplot2::annotate("text", min(pct_min), x=N, label="Current plan in red")
+            }
 
             p
         })
@@ -314,6 +399,7 @@ viz_server = function(m, geom, mds, sizes, hide, pct_min, pop, grp_pop,
                                 choiceNames = c(str_c("Group pct. in district ", 1:N), "Cluster"))
         })
 
+        # MDS PLOT
         output$mds = ggiraph::renderGirafe({
             mindistr = if (is.null(input$mindistr)) N else as.integer(input$mindistr)
             plot_col = if (mindistr > 0) str_c("min_", mindistr) else "cluster"
@@ -341,7 +427,7 @@ viz_server = function(m, geom, mds, sizes, hide, pct_min, pop, grp_pop,
                 ggiraph::geom_point_interactive(alpha=0.85) +
                 ggplot2::scale_color_viridis_c(labels=if (mindistr > 0) scales::percent else scales::comma) +
                 {if (show_current)
-                    ggiraph::geom_point_interactive(data=plot_d[1,], color="black",
+                    ggiraph::geom_point_interactive(data=plot_d[1,], color="#dd0000",
                                                     shape=15, size=2.5)} +
                 {if (length(hide) > 1)
                     ggplot2::scale_size_continuous(range=c(1.2, 5.5))
@@ -377,6 +463,7 @@ viz_server = function(m, geom, mds, sizes, hide, pct_min, pop, grp_pop,
             if (is.null(id) || length(id) == 0) -1 else id
         })
 
+        # MAP
         output$map = leaflet::renderLeaflet({
             leaflet::leaflet(data=geom) %>%
                 leaflet::addProviderTiles(leaflet::providers$Stamen.Toner) %>%
@@ -398,6 +485,7 @@ viz_server = function(m, geom, mds, sizes, hide, pct_min, pop, grp_pop,
                                            style=list("font-size"="13pt",
                                                       "font-weight"="bold",
                                                       "color"="#ffffffaa"))
+        # MAP UPDATE
         shiny::observe({
             id = selected_map()
             if (id >= 0) {
@@ -421,6 +509,7 @@ viz_server = function(m, geom, mds, sizes, hide, pct_min, pop, grp_pop,
             }
         })
 
+        # CLUSTER MEDOIDS
         output$typical = shiny::renderPlot({
             grobs = lapply(1:length(typical), function(i) {
                 plan = typical[[i]]
@@ -438,10 +527,26 @@ viz_server = function(m, geom, mds, sizes, hide, pct_min, pop, grp_pop,
             cols = round(sqrt(k/0.7))
             gridExtra::marrangeGrob(grobs, ncol=cols, nrow=ceiling(k/cols), top=NULL)
         })
+
+
+        ### REPORT
+        output$report = shiny::downloadHandler(
+            filename="redistricting_report.pdf",
+            content = function(file) {
+                # Copy the report file to a temporary directory before processing it, in
+                # case we don't have write permissions to the current working directory
+                tempReport = file.path(tempdir(), "viz_report.Rmd")
+                file.copy("R/viz_report.Rmd", tempReport, overwrite=T)
+
+                params = list(plot_popdev=plot_popdev)
+                rmarkdown::render(tempReport, output_file=file, params=params,
+                                  envir=globalenv())
+                                  #envir=new.env(parent=globalenv()))
+            })
     }
 }
 
-
+# To update map colors quickly
 viz_setShapeStyle = function(map, data=leaflet::getMapData(map), layerId, stroke=NULL,
                          color=NULL, weight=NULL, opacity=NULL, fill=NULL,
                          fillColor=NULL, fillOpacity=NULL, dashArray=NULL,
@@ -462,6 +567,7 @@ viz_setShapeStyle = function(map, data=leaflet::getMapData(map), layerId, stroke
     leaflet::invokeMethod(map, data, "setStyle", "shape", layerId, style)
 }
 
+# To update map colors quickly
 viz_script = "
 window.LeafletWidget.methods.setStyle = function(category, layerId, style) {
   var map = this;
