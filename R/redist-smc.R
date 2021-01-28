@@ -163,9 +163,15 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
     if (nsims < 1)
         stop("`nsims` must be positive.")
 
-    if (is.null(counties)) counties = rep(1, V)
-    if (length(unique(counties)) != max(counties))
-        stop("County numbers must run from 1 to n_county with no interruptions.")
+    if (is.null(counties)) {
+        counties = rep(1, V)
+    } else {
+        if (length(unique(counties)) != max(counties))
+            stop("County numbers must run from 1 to n_county with no interruptions.")
+
+        # handle discontinuous counties
+        counties = redist.county.relabel(adjobj, counties)
+    }
 
     # Population bounds
     if (!is.null(pop_bounds)) {
