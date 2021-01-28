@@ -17,7 +17,6 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(redist)
 library(igraph)
-library(spdep)
 library(coda)
 set.seed(1)
 ```
@@ -54,7 +53,7 @@ library(sf)
 library(sp)
 ```
 For additional functions for working with the shapefiles, using `spdep` is recommended. This is also used with creating lists of which precincts are adjacent to other precincts. It can be loaded with:
-```{r}
+```{r eval=F}
 library(spdep)
 ```
 For plotting maps and adjacency graphs, `ggplot2` and `igraph` are useful. The former allows for making ggplot maps, when used with `sf`.  These may be loaded with:

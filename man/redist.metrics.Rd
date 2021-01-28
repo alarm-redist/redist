@@ -78,7 +78,7 @@ dvote = algdat.p10$precinct.data$demvote)
 }
 \references{
 Jonathan N. Katz, Gary King, and Elizabeth Rosenblatt. 2020.
-“Theoretical Foundations and Empirical Evaluations of Partisan Fairness in District-Based Democracies.”
+Theoretical Foundations and Empirical Evaluations of Partisan Fairness in District-Based Democracies.
 American Political Science Review, 114, 1, Pp. 164-178.
 
 Gregory S. Warrington. 2018. "Quantifying Gerrymandering Using the Vote Distribution."

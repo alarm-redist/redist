@@ -57,7 +57,7 @@
 #' }
 #' @references
 #' Jonathan N. Katz, Gary King, and Elizabeth Rosenblatt. 2020.
-#' “Theoretical Foundations and Empirical Evaluations of Partisan Fairness in District-Based Democracies.”
+#' Theoretical Foundations and Empirical Evaluations of Partisan Fairness in District-Based Democracies.
 #' American Political Science Review, 114, 1, Pp. 164-178.
 #'
 #' Gregory S. Warrington. 2018. "Quantifying Gerrymandering Using the Vote Distribution."
@@ -80,7 +80,7 @@ redist.metrics <- function(district_membership,
                     "LopsidedWins")
 
   # Check Inputs
-  if(measure == "all"){
+  if("all" %in% measure){
     measure <-  all_measures
   }
   match.arg(arg = measure,several.ok = TRUE, choices = all_measures)

@@ -36,7 +36,7 @@ sampled_plans = redist.smc(algdat.p10$adjlist, fl25$TotPop,
                            nsims=200, ndists=3, popcons=0.1)
 
 # Prep
-viz_prep = redist.prep_group_viz(sampled_plans, fl25$geometry, fl25$VAP, fl25$BlackVAP)
+viz_prep = redist.prep_group_viz(sampled_plans, fl25, fl25$VAP, fl25$BlackVAP)
 
 # Run the app!
 redist.group_viz(viz_prep)

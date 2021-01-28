@@ -6,6 +6,7 @@
 \usage{
 redist.map(
   shp = NULL,
+  adjacency = NULL,
   district_membership = NULL,
   centroids = TRUE,
   edges = TRUE,
@@ -16,7 +17,10 @@ redist.map(
 \arguments{
 \item{shp}{A SpatialPolygonsDataFrame or sf object. Required.}
 
-\item{district_membership}{A numeric vector with one row for each precinct in shp. 
+\item{adjacency}{A zero-indexed adjacency list. Created with redist.adjacency
+if not supplied. Default is NULL.}
+
+\item{district_membership}{A numeric vector with one row for each precinct in shp.
 Used to color the districts. Default is \code{NULL}.  Optional.}
 
 \item{centroids}{A logical indicating if centroids should be plotted. Default is \code{TRUE}.}
