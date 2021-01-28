@@ -23,6 +23,7 @@ redist.mcmc.anneal(
   constraint = NULL,
   constraintweights = NULL,
   compactness_metric = "fryer-holden",
+  partisan_metric = "efficiency-gap",
   rngseed = NULL,
   maxiterrsg = 5000,
   adapt_lambda = FALSE,
@@ -33,7 +34,10 @@ redist.mcmc.anneal(
   verbose = TRUE,
   ncores = 1,
   tgt_min = 0.55,
-  tgt_other = 0.25
+  tgt_other = 0.25,
+  rvote = NULL,
+  dvote = NULL,
+  minorityprop = NULL
 )
 }
 \arguments{
@@ -88,15 +92,19 @@ the third column is its distance. Default is \code{NULL}.}
 units. The default is \code{NULL}.}
 
 \item{constraint}{Which constraint to apply. Accepts any combination of \code{compact},
-\code{vra}, \code{population}, \code{similarity}, or \code{none}
+\code{segregation}, \code{vra}, \code{population}, \code{similarity}, \code{partisan},
+\code{minority} or \code{none}
 (no constraint applied). The default is NULL.}
 
 \item{constraintweights}{The weights to apply to each constraint. Should be a vector
 the same length as constraint. Default is NULL.}
 
 \item{compactness_metric}{The compactness metric to use when constraining on
-compactness. Default is \code{fryer-holden}, the other implemented option
-is \code{polsby-popper}.}
+compactness. Default is \code{fryer-holden}, the other implemented options
+are \code{polsby-popper} and \code{edges-removed}.}
+
+\item{partisan_metric}{The partisan metric to use when constraining on partisan metrics.
+Only implemented are "efficiency-gap" (default) and "proportional-representation".}
 
 \item{rngseed}{Allows the user to set the seed for the
 simulations. Default is \code{NULL}.}
@@ -128,6 +136,13 @@ Default is \code{TRUE}.}
 \item{tgt_min}{The majority minority target percent as a decimal. Default is 0.55.}
 
 \item{tgt_other}{The remaining target percent as a decimal. Default is 0.25.}
+
+\item{rvote}{integer vector of votes for Republicans by precinct}
+
+\item{dvote}{integer vector of votes for Democrats by precinct}
+
+\item{minorityprop}{numeric vector of targeted minority proportions for the top
+districts with that proportion}
 }
 \description{
 \code{redist.mcmc.anneal} simulates congressional redistricting plans

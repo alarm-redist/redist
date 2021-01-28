@@ -137,9 +137,9 @@
     <p><code>redist.diagplot</code> generates several common MCMC diagnostic plots.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.diagplot</span>(<span class='kw'>sumstat</span>,
-plot = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"trace"</span>, <span class='st'>"autocorr"</span>, <span class='st'>"densplot"</span>, <span class='st'>"mean"</span>, <span class='st'>"gelmanrubin"</span>),
-logit = <span class='fl'>FALSE</span>, savename = <span class='kw'>NULL</span>)</pre>
+    <pre class="usage"><span class='fu'>redist.diagplot</span><span class='op'>(</span><span class='va'>sumstat</span>,
+plot <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"trace"</span>, <span class='st'>"autocorr"</span>, <span class='st'>"densplot"</span>, <span class='st'>"mean"</span>, <span class='st'>"gelmanrubin"</span><span class='op'>)</span>,
+logit <span class='op'>=</span> <span class='cn'>FALSE</span>, savename <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -188,45 +188,45 @@ using multiple sequences (with discussion)." Statistical Science.</p>
 Convergence Diagnosis and Output Analysis for MCMC." R News.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='kw'>algdat.pfull</span>)
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>algdat.pfull</span><span class='op'>)</span>
 
 <span class='co'>## Get an initial partition</span>
-<span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span>(<span class='fl'>1</span>)
-<span class='kw'>initcds</span> <span class='op'>&lt;-</span> <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>cdmat</span>[,<span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span>(<span class='fl'>1</span><span class='op'>:</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span>(<span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>cdmat</span>), <span class='fl'>1</span>)]
+<span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span><span class='op'>(</span><span class='fl'>1</span><span class='op'>)</span>
+<span class='va'>initcds</span> <span class='op'>&lt;-</span> <span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>cdmat</span><span class='op'>[</span>,<span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span><span class='op'>(</span><span class='fl'>1</span><span class='op'>:</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span><span class='op'>(</span><span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>cdmat</span><span class='op'>)</span>, <span class='fl'>1</span><span class='op'>)</span><span class='op'>]</span>
 
 <span class='co'>## 25 precinct, three districts - no pop constraint ##</span>
-<span class='kw'>alg_253</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.mcmc.html'>redist.mcmc</a></span>(adjobj = <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>adjlist</span>,
-popvec = <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>precinct.data</span><span class='op'>$</span><span class='kw'>pop</span>,
-initcds = <span class='kw'>initcds</span>,nsims = <span class='fl'>10000</span>)
+<span class='va'>alg_253</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.mcmc.html'>redist.mcmc</a></span><span class='op'>(</span>adjobj <span class='op'>=</span> <span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>adjlist</span>,
+popvec <span class='op'>=</span> <span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>precinct.data</span><span class='op'>$</span><span class='va'>pop</span>,
+initcds <span class='op'>=</span> <span class='va'>initcds</span>,nsims <span class='op'>=</span> <span class='fl'>10000</span><span class='op'>)</span>
 
 <span class='co'>## Get Republican Dissimilarity Index from simulations</span>
-<span class='kw'>rep_dmi_253</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.segcalc.html'>redist.segcalc</a></span>(<span class='kw'>alg_253</span>,
-<span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>precinct.data</span><span class='op'>$</span><span class='kw'>repvote</span>,
-<span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>precinct.data</span><span class='op'>$</span><span class='kw'>pop</span>)
+<span class='va'>rep_dmi_253</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.segcalc.html'>redist.segcalc</a></span><span class='op'>(</span><span class='va'>alg_253</span>,
+<span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>precinct.data</span><span class='op'>$</span><span class='va'>repvote</span>,
+<span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>precinct.data</span><span class='op'>$</span><span class='va'>pop</span><span class='op'>)</span>
 
 <span class='co'>## Generate diagnostic plots</span>
-<span class='fu'>redist.diagplot</span>(<span class='kw'>rep_dmi_253</span>, plot = <span class='st'>"trace"</span>)
-<span class='fu'>redist.diagplot</span>(<span class='kw'>rep_dmi_253</span>, plot = <span class='st'>"autocorr"</span>)
-<span class='fu'>redist.diagplot</span>(<span class='kw'>rep_dmi_253</span>, plot = <span class='st'>"densplot"</span>)
-<span class='fu'>redist.diagplot</span>(<span class='kw'>rep_dmi_253</span>, plot = <span class='st'>"mean"</span>)
+<span class='fu'>redist.diagplot</span><span class='op'>(</span><span class='va'>rep_dmi_253</span>, plot <span class='op'>=</span> <span class='st'>"trace"</span><span class='op'>)</span>
+<span class='fu'>redist.diagplot</span><span class='op'>(</span><span class='va'>rep_dmi_253</span>, plot <span class='op'>=</span> <span class='st'>"autocorr"</span><span class='op'>)</span>
+<span class='fu'>redist.diagplot</span><span class='op'>(</span><span class='va'>rep_dmi_253</span>, plot <span class='op'>=</span> <span class='st'>"densplot"</span><span class='op'>)</span>
+<span class='fu'>redist.diagplot</span><span class='op'>(</span><span class='va'>rep_dmi_253</span>, plot <span class='op'>=</span> <span class='st'>"mean"</span><span class='op'>)</span>
 
 <span class='co'>## Gelman Rubin needs two chains, so we run a second</span>
-<span class='kw'>alg_253_2</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.mcmc.html'>redist.mcmc</a></span>(adjobj = <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>adjlist</span>,
-popvec = <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>precinct.data</span><span class='op'>$</span><span class='kw'>pop</span>,
-initcds = <span class='kw'>initcds</span>,nsims = <span class='fl'>10000</span>)
+<span class='va'>alg_253_2</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.mcmc.html'>redist.mcmc</a></span><span class='op'>(</span>adjobj <span class='op'>=</span> <span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>adjlist</span>,
+popvec <span class='op'>=</span> <span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>precinct.data</span><span class='op'>$</span><span class='va'>pop</span>,
+initcds <span class='op'>=</span> <span class='va'>initcds</span>,nsims <span class='op'>=</span> <span class='fl'>10000</span><span class='op'>)</span>
 
-<span class='kw'>rep_dmi_253_2</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.segcalc.html'>redist.segcalc</a></span>(<span class='kw'>alg_253_2</span>,
-<span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>precinct.data</span><span class='op'>$</span><span class='kw'>repvote</span>,
-<span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>precinct.data</span><span class='op'>$</span><span class='kw'>pop</span>)
+<span class='va'>rep_dmi_253_2</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.segcalc.html'>redist.segcalc</a></span><span class='op'>(</span><span class='va'>alg_253_2</span>,
+<span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>precinct.data</span><span class='op'>$</span><span class='va'>repvote</span>,
+<span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>precinct.data</span><span class='op'>$</span><span class='va'>pop</span><span class='op'>)</span>
 
 <span class='co'>## Make a list out of the objects:</span>
-<span class='kw'>rep_dmi_253_list</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>rep_dmi_253</span>, <span class='kw'>rep_dmi_253_2</span>)
+<span class='va'>rep_dmi_253_list</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='va'>rep_dmi_253</span>, <span class='va'>rep_dmi_253_2</span><span class='op'>)</span>
 
 
 <span class='co'>## Generate Gelman Rubin diagnostic plot</span>
-<span class='fu'>redist.diagplot</span>(sumstat = <span class='kw'>rep_dmi_253_list</span>, plot = <span class='st'>'gelmanrubin'</span>)
-}
+<span class='fu'>redist.diagplot</span><span class='op'>(</span>sumstat <span class='op'>=</span> <span class='va'>rep_dmi_253_list</span>, plot <span class='op'>=</span> <span class='st'>'gelmanrubin'</span><span class='op'>)</span>
+<span class='op'>}</span>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -243,7 +243,7 @@ initcds = <span class='kw'>initcds</span>,nsims = <span class='fl'>10000</span>)
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

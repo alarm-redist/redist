@@ -8,7 +8,6 @@
 #' @param group_pop A numeric vector with the population of the group for every precinct.
 #' @param full_pop A numeric vector with the population for every precinct.
 #'
-#' @importFrom foreach %do% %dopar% foreach
 #' @return A matrix with a row for each district and a column for each plan,
 #'  with the entries representing the percentage of the group in that district,
 #'  relative to the total population of the district.

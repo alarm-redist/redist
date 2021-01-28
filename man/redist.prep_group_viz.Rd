@@ -10,9 +10,10 @@ redist.prep_group_viz(
   full_pop,
   group_pop,
   current = NULL,
+  comp_meas = "EdgesRemoved",
   renumber = TRUE,
-  by = "people",
-  k = NULL,
+  dist_by = "people",
+  clusters = NULL,
   simp_geom = TRUE
 )
 }
@@ -29,15 +30,17 @@ the current map.}
 
 \item{current}{a numeric vector containing the current plan, which will be plotted separately.}
 
+\item{comp_meas}{the compactness measure desired.  See \code{\link{redist.compactness}} for details.}
+
 \item{renumber}{whether to renumber districts in ascending order by their group share, so
 district 1 has the smallest fraction of the group, district 2 has the second-smallest,
 and so on.}
 
-\item{by}{the way to compute the variation of information distance, by \code{"people"},
+\item{dist_by}{the way to compute the variation of information distance, by \code{"people"},
 the recommended default, by \code{"group"} or \code{"minority"}, or by
 \code{"land"}, which treats each precinct equally.}
 
-\item{k}{the number of clusters to group the plans into. If left unspecified,
+\item{clusters}{the number of clusters to group the plans into. If left unspecified,
 this will be determined automatically using the silhouette method.}
 
 \item{simp_geom}{if \code{TRUE}, the geometry will be slightly simplified to
@@ -60,7 +63,7 @@ sampled_basic = redist.smc(algdat.p10$adjlist, fl25$TotPop,
                            nsims=200, ndists=3, popcons=0.1)
 
 # Prep
-viz_prep = redist.prep_group_viz(sampled_plans, fl25$geometry, fl25$VAP, fl25$BlackVAP)
+viz_prep = redist.prep_group_viz(sampled_plans, fl25, fl25$VAP, fl25$BlackVAP)
 
 # Run the app!
 redist.group_viz(viz_prep)
