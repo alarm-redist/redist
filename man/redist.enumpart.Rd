@@ -40,7 +40,7 @@ districts selected from uniform random distribution.}
 \item{population}{Integer Vector. Defaults to NULL. If supplied, computes the parity.}
 }
 \value{
-
+List with entries district_membership and parity.
 }
 \description{
 Single function for standard enumeration analysis.

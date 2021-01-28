@@ -22,7 +22,7 @@
 #' 
 #' @importFrom ggplot2 ggplot geom_sf theme_minimal theme labs aes
 #' @importFrom dplyr filter .data
-#' @importFrom sf st_centroid st_coordinates st_as_sf st_linestring
+#' @importFrom sf st_centroid st_coordinates st_as_sf st_linestring st_sfc
 #' 
 #' @examples
 #' \dontrun{
@@ -213,3 +213,4 @@ redist.choropleth <- function(shp, fill = NULL, fill_label = "", title = "",
   return(plot)
 }
 
+globalVariables(c('start', 'finish'))

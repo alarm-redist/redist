@@ -1,6 +1,9 @@
 #' Adjacency List functionality for redist
 #'
 #' @param shp A SpatialPolygonsDataFrame or sf object. Required.
+#' @param district_membership A numeric vector (if only one map) or matrix with one row 
+#' for each precinct and one column for each map. Optional. Checks for contiguity within 
+#' districts if provided.
 #'
 #' @return Adjacency list
 #' @description Creates an adjacency list that is zero indexed with no skips
@@ -8,7 +11,7 @@
 #' 
 #' @importFrom sf st_relate
 #' @export
-redist.adjacency <- function(shp){
+redist.adjacency <- function(shp, district_membership){
   
   # Check input
   if(!any(c('sf','SpatialPolygonsDataFrame') %in% class(shp))){
@@ -32,15 +35,26 @@ redist.adjacency <- function(shp){
   skip <- !all(sort(unique(unlist(adj))) == 0:(nrow(shp)-1))
   correct_n <- nrow(shp) == length(unique(unlist(adj))) 
   
-  # if there are skips, sink
-  while(skip){
-    arr <- sort(unique(unlist(adj)))
-    index <- min(which(arr != 0:(nrow(shp)-1)))-1
-    adj <- lapply(adj, function(x){
-      replace(x, list = which(x == arr[index+1]), index)
-    })
-    skip <- !all(sort(unique(unlist(adj))) == 0:(nrow(shp)-1))
+  if(skip){
+    warning('At least one precinct had no adjacent precincts.')
   }
+  
+  
+  if(!missing(district_membership)){
+    cont <- contiguity(adjacency, district_membership)
+    if(any(cont > 1 )){
+      warning(paste0('District', unique(district_membership[cont>1]), ' was not contiguous.'))
+    }
+  }
+  # if there are skips, sink -- temporary leaving here, but was for spdep issue
+  #while(skip){
+  #  arr <- sort(unique(unlist(adj)))
+  #  index <- min(which(arr != 0:(nrow(shp)-1)))-1
+  #  adj <- lapply(adj, function(x){
+  #    replace(x, list = which(x == arr[index+1]), index)
+  #  })
+  #  skip <- !all(sort(unique(unlist(adj))) == 0:(nrow(shp)-1))
+  #}
 
   # return a checked adjacency list
   return(adj)
