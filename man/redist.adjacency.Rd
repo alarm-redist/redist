@@ -4,10 +4,14 @@
 \alias{redist.adjacency}
 \title{Adjacency List functionality for redist}
 \usage{
-redist.adjacency(shp)
+redist.adjacency(shp, district_membership)
 }
 \arguments{
 \item{shp}{A SpatialPolygonsDataFrame or sf object. Required.}
+
+\item{district_membership}{A numeric vector (if only one map) or matrix with one row 
+for each precinct and one column for each map. Optional. Checks for contiguity within 
+districts if provided.}
 }
 \value{
 Adjacency list

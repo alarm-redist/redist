@@ -130,7 +130,7 @@ redist.enumerate <- function(adjobj,
             queens <- ifelse(contiguitymap == "rooks", FALSE, TRUE)
             
             ## Convert shp object to adjacency list
-            adjlist <- poly2nb(adjobj, queen = queens)
+            adjlist <- redist.adjacency(st_as_sf(adjobj))
             
             ## Change class to list
             class(adjlist) <- "list"
@@ -317,7 +317,7 @@ for each geographic unit.")
             queens <- ifelse(contiguitymap == "rooks", FALSE, TRUE)
             
             ## Convert shp object to adjacency list
-            adjlist <- poly2nb(adjobj, queen = queens)
+            adjlist <- redist.adjacency(adjobj)
             
             ## Zero-index list
             for(i in 1:length(adjlist)){
