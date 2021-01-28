@@ -41,7 +41,7 @@ redist.adjacency <- function(shp, district_membership){
   
   
   if(!missing(district_membership)){
-    cont <- contiguity(adjacency, district_membership)
+    cont <- contiguity(adj, district_membership)
     if(any(cont > 1 )){
       warning(paste0('District', unique(district_membership[cont>1]), ' was not contiguous.'))
     }
