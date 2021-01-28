@@ -56,7 +56,8 @@ Suggests:
     gridExtra,
     graphics,
     methods,
-    utils
+    utils,
+    spdep
 LinkingTo: Rcpp, RcppArmadillo, RcppEigen, BH
 License: GPL (>= 2)
 SystemRequirements: gmp, libxml2, python

@@ -457,7 +457,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
             queens <- ifelse(contiguitymap == "rooks", FALSE, TRUE)
 
             ## Convert shp object to adjacency list
-            adjlist <- poly2nb(adjobj, queen = queens)
+            adjlist <- redist.adjacency(st_as_sf(adjobj))
 
             ## Zero-index list
             for(i in 1:length(adjlist)){

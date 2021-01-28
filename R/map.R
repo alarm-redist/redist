@@ -22,7 +22,7 @@
 #'
 #' @importFrom ggplot2 ggplot geom_sf theme_minimal theme labs aes
 #' @importFrom dplyr filter .data
-#' @importFrom sf st_centroid st_coordinates st_as_sf
+#' @importFrom sf st_centroid st_coordinates st_as_sf st_linestring st_sfc
 #'
 #' @examples
 #' \dontrun{
@@ -79,16 +79,20 @@ redist.map <- function(shp = NULL, adjacency = NULL, district_membership = NULL,
   if(edges){
     if(!is.null(adjacency)){
       nb <- lapply(adjacency, function(x){x+1L})
-      class(nb) <- 'nb'
     } else{
       adjacency <- redist.adjacency(shp)
       nb <- lapply(adjacency, function(x){x+1L})
-      class(nb) <- 'nb'
     }
 
-    #nb <- spdep::nb2lines(nb, coords = sf::st_coordinates(centers))
-    #suppressWarnings(nb <- sf::st_as_sf(nb))
-    #st_crs(nb) <- st_crs(shp)
+    edgedf <- tibble(start = rep(1:length(nb), lengths(nb)), finish = unlist(nb))
+    edgedf <- edgedf %>% rowwise() %>% mutate(i = min(start, finish), j = max(start, finish)) %>% select(i,j)
+    edgedf <- edgedf[!duplicated(edgedf),]
+
+    edgedf <- edgedf %>% rowwise() %>%
+      mutate(geometry = st_sfc(st_linestring(matrix(c(as.numeric(centers$geometry[[i]]), as.numeric(centers$geometry[[j]])), nrow = 2, byrow = TRUE ))))
+
+    suppressWarnings(nb <- sf::st_as_sf(edgedf))
+    st_crs(nb) <- st_crs(shp)
   }
 
   # Drop Edges that cross District Boundaries
@@ -209,3 +213,4 @@ redist.choropleth <- function(shp, fill = NULL, fill_label = "", title = "",
   return(plot)
 }
 
+globalVariables(c('start', 'finish'))
