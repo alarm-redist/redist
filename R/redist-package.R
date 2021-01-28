@@ -49,7 +49,6 @@
 #'
 #' @keywords package
 #' @importFrom Rcpp evalCpp
-#' @importFrom spdep poly2nb
 #' @importFrom sp coordinates
 #' @importFrom coda mcmc mcmc.list traceplot autocorr.plot densplot cumuplot gelman.plot
 #' @importFrom parallel makeCluster stopCluster

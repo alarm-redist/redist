@@ -24,7 +24,6 @@ Depends:
     R (>= 3.5.0)
 Imports:
     Rcpp (>= 0.11.0),
-    spdep,
     sp,
     sf,
     coda,
@@ -45,7 +44,8 @@ Suggests:
     Rmpi,
     knitr,
     rmarkdown,
-    igraph
+    igraph, 
+    spdep
 LinkingTo: Rcpp, RcppArmadillo, RcppEigen, BH
 License: GPL (>= 2)
 SystemRequirements: gmp, libxml2, python
