@@ -21,7 +21,6 @@
 #' \item{subpopcons}{The new parity constraint for a subset.}
 #' @export
 #'
-#' @examples
 redist.subset <- function(shp, adjacency, keep_rows, population, ndist, popcons, subndist){
   if(missing(shp)){
     stop('Please provide an argument to "shp". Use redist.reduce.adjacency to subset adjacency lists.')
