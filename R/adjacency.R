@@ -19,7 +19,11 @@ redist.adjacency <- function(shp, district_membership){
   }
   
   # Create the adjacency with spdep function
+  # Get standard rooks contiguity
   adj <- sf::st_relate(shp, shp, pattern = "F***1****")
+  # items contained entirely within ~ even if validly 'rooks' adjacent ~ do not meet this, you need:
+  withinadj <- st_relate(x = shp, pattern = "21211*2*2")
+  adj <- lapply(1:nrow(shp), function(x){c(adj[[x]], withinadj[[x]])})
   
   # Check for zero indexing
   zero <- min(unlist(adj)) == 0
