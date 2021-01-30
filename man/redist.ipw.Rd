@@ -90,7 +90,7 @@ initcds <- algdat.p20$cdmat[,sample(1:ncol(algdat.p20$cdmat), 1)]
 betaweights <- rep(NA, 10); for(i in 1:10){betaweights[i] <- 4^i}
 
 ## Run simulations - tempering population constraint
-alg_253_20_st <- redist.mcmc(adjobj = algdat.p20$adjlist,
+alg_253_20_st <- redist_mcmc(adjobj = algdat.p20$adjlist,
 popvec = algdat.p20$precinct.data$pop,
 initcds = initcds, nsims = 10000, constraint = 'population',
 constraintweights = 5.4,

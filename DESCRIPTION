@@ -31,7 +31,7 @@ Imports:
     doParallel,
     foreach,
     lwgeom,
-    dplyr,
+    dplyr (>= 1.0.0),
     ggplot2,
     scales,
     magrittr,
@@ -39,6 +39,10 @@ Imports:
     servr,
     sys,
     tibble,
+    rlang,
+    vctrs,
+    tidyselect,
+    cli,
     stringr
 Suggests:
     igraph,

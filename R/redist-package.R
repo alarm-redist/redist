@@ -57,6 +57,6 @@
 #' @importFrom grDevices dev.off pdf
 #' @importFrom stats median runif quantile qnorm
 #' @importFrom magrittr %>%
-#' @importFrom dplyr n
+#' @importFrom dplyr n dplyr_row_slice dplyr_col_modify dplyr_reconstruct
 #' @importFrom stringr str_c str_glue
 NULL

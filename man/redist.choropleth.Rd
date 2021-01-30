@@ -42,7 +42,7 @@ normalize data to avoid absolute values, in most use cases.
 \examples{
 \dontrun{
 data("fl25")
-redist.choropleth(shp = fl25, fill = fl25$BlackPop/fl25$TotPop)
+redist.choropleth(shp = fl25, fill = BlackPop/TotPop)
 DVS <- fl25$obama/(fl25$mccain+fl25$obama)
 redist.choropleth(shp = fl25, fill = DVS, limit_colors = c('red', 'blue'))
 }

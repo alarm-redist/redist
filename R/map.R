@@ -153,64 +153,61 @@ redist.map <- function(shp = NULL, adjacency = NULL, district_membership = NULL,
 #' @examples
 #' \dontrun{
 #' data("fl25")
-#' redist.choropleth(shp = fl25, fill = fl25$BlackPop/fl25$TotPop)
+#' redist.choropleth(shp = fl25, fill = BlackPop/TotPop)
 #' DVS <- fl25$obama/(fl25$mccain+fl25$obama)
 #' redist.choropleth(shp = fl25, fill = DVS, limit_colors = c('red', 'blue'))
 #' }
 #'
 #' @export
 redist.choropleth <- function(shp, fill = NULL, fill_label = "", title = "",
-                              limit_colors = NULL, grad = 1, lwd = 0){
+                              limit_colors = NULL, grad = 1, lwd = 0) {
 
-  # Check inputs
-  if(missing(shp)){
-    stop('Please provide an argument to "shp".')
-  }
-  if('SpatialPolygonsDataFrame' %in% class(shp)){
-    shp <- shp %>%  st_as_sf()
-  } else if(!('sf' %in% class(shp))){
-    stop('Please provide "shp" as a SpatialPolygonsDataFrame or sf object.')
-  }
-  if(!is.null(fill)){
-    if(nrow(shp) != length(fill)){
-      stop('Arguments "fill" and "shp" do not have same number of precincts.')
+    # Check inputs
+    if(missing(shp)) {
+        stop('Please provide an argument to "shp".')
     }
-  }
-
-  plot <- shp %>% ggplot(aes(fill = fill)) +
-    geom_sf(lwd = 0, color = NA) +
-    theme_void() +
-    labs(fill = fill_label, x = 'Longitude', y = 'Latitude', title = title) +
-    theme(legend.position = "bottom")
-
-  if(!is.null(fill)){
-    l1 <- min(fill)
-    l2 <- max(fill)
-    mp <- mean(fill)
-
-    if(l1 >= 0 & l2 <= 1){
-      l1 <- 0
-      l2 <- 1
-      mp <- 0.5
+    if('SpatialPolygonsDataFrame' %in% class(shp)) {
+        shp <- shp %>%  st_as_sf()
+    } else if(!('sf' %in% class(shp))) {
+        stop('Please provide "shp" as a SpatialPolygonsDataFrame or sf object.')
     }
 
-    if(is.null(limit_colors)){
-      limit_colors <- c('#ffffff', '#08306b')
+    fill <- rlang::eval_tidy(rlang::enquo(fill), shp)
+
+    plot <- shp %>% ggplot(aes(fill = fill)) +
+        geom_sf(lwd = 0, color = NA) +
+        theme_void() +
+        labs(fill = fill_label, x = 'Longitude', y = 'Latitude', title = title) +
+        theme(legend.position = "bottom")
+
+    if (!is.null(fill)) {
+        l1 <- min(fill)
+        l2 <- max(fill)
+        mp <- mean(fill)
+
+        if (l1 >= 0 & l2 <= 1) {
+            l1 <- 0
+            l2 <- 1
+            mp <- 0.5
+        }
+
+        if (is.null(limit_colors)) {
+            limit_colors <- c('#ffffff', '#08306b')
+        }
+
+        if (grad == 1) {
+            plot <- plot +
+                scale_fill_gradient(low = limit_colors[1], high = limit_colors[2],
+                                    limits = c(l1, l2))
+        } else if (grad == 2) {
+            plot <- plot +
+                scale_fill_gradient2(low = limit_colors[1], high = limit_colors[3],
+                                     midpoint = mp, mid = limit_colors[2], limits = c(l1, l2))
+        }
+
     }
 
-    if(grad == 1){
-      plot <- plot +
-        scale_fill_gradient(low = limit_colors[1], high = limit_colors[2],
-                            limits = c(l1,l2))
-    } else if(grad == 2){
-      plot <- plot +
-        scale_fill_gradient2(low = limit_colors[1], high = limit_colors[3],
-                             midpoint = mp, mid = limit_colors[2], limits = c(l1,l2))
-    }
-
-  }
-
-  return(plot)
+    return(plot)
 }
 
 globalVariables(c('start', 'finish'))

@@ -2,7 +2,7 @@
 % Please edit documentation in R/redist.R
 \name{redist.combine}
 \alias{redist.combine}
-\title{Combine successive runs of \code{redist.mcmc}}
+\title{Combine successive runs of \code{redist_mcmc}}
 \usage{
 redist.combine(savename, nloop, nthin, temper)
 }
@@ -57,12 +57,12 @@ probability for each iteration of the algorithm. Returned when tempering
 is being used.}
 }
 \description{
-\code{redist.combine} is used to combine successive runs of \code{redist.mcmc}
+\code{redist.combine} is used to combine successive runs of \code{redist_mcmc}
 into a single data object
 }
 \details{
 This function allows users to combine multiple successive runs of
-\code{redist.mcmc} into a single \code{redist} object for analysis.
+\code{redist_mcmc} into a single \code{redist} object for analysis.
 }
 \examples{
 \dontrun{
@@ -76,7 +76,7 @@ set.seed(1)
 initcds <- algdat.pfull$cdmat[,sample(1:ncol(algdat.pfull$cdmat), 1)]
 
 ## Run the algorithm
-alg_253 <- redist.mcmc(adjobj = algdat.pfull$adjlist,
+alg_253 <- redist_mcmc(adjobj = algdat.pfull$adjlist,
 popvec = algdat.pfull$precinct.data$pop,
 initcds = initcds,
 nsims = 10000, nloops = 2, savename = "test")
