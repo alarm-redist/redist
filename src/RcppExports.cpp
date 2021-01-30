@@ -9,15 +9,27 @@
 using namespace Rcpp;
 
 // reduce_adj
-List reduce_adj(List adj_list, IntegerVector prec_keep, IntegerVector prec_idx);
-RcppExport SEXP _redist_reduce_adj(SEXP adj_listSEXP, SEXP prec_keepSEXP, SEXP prec_idxSEXP) {
+List reduce_adj(List adj_list, IntegerVector prec_map, int n_keep);
+RcppExport SEXP _redist_reduce_adj(SEXP adj_listSEXP, SEXP prec_mapSEXP, SEXP n_keepSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< List >::type adj_list(adj_listSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type prec_keep(prec_keepSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type prec_idx(prec_idxSEXP);
-    rcpp_result_gen = Rcpp::wrap(reduce_adj(adj_list, prec_keep, prec_idx));
+    Rcpp::traits::input_parameter< IntegerVector >::type prec_map(prec_mapSEXP);
+    Rcpp::traits::input_parameter< int >::type n_keep(n_keepSEXP);
+    rcpp_result_gen = Rcpp::wrap(reduce_adj(adj_list, prec_map, n_keep));
+    return rcpp_result_gen;
+END_RCPP
+}
+// collapse_adj
+Graph collapse_adj(List graph, const arma::uvec& idxs);
+RcppExport SEXP _redist_collapse_adj(SEXP graphSEXP, SEXP idxsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type graph(graphSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type idxs(idxsSEXP);
+    rcpp_result_gen = Rcpp::wrap(collapse_adj(graph, idxs));
     return rcpp_result_gen;
 END_RCPP
 }

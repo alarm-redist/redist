@@ -10,6 +10,10 @@ redist.subset_bounds(pop, subset, n_distr, sub_distr, tol = 0.01)
 \item{pop}{a numeric vector containing the population of every precinct in
 the full map.}
 
+\item{subset}{an indexing vector for the subset of the map that will be
+studied or resampled.  Often this will take the form \code{current_plan
+\%in\% c(1, 3, 7)}, where 1, 3, and 7 are the study districts.}
+
 \item{n_distr}{the number of districts in the overall map.}
 
 \item{sub_distr}{the number of districts in the map subset.}
@@ -18,11 +22,11 @@ the full map.}
 }
 \value{
 a 3-element numeric vector of the form \code{c(lower, target, upper)},
-which can be used inside \code{\link{redist.smc}}.
+which can be used inside \code{\link{redist_smc}}.
 }
 \description{
 Creates a 3-element vector, suitable for the precise population constraints
-in \code{\link{redist.smc}}, that ensures that samples of plans built from
+in \code{\link{redist_smc}}, that ensures that samples of plans built from
 parts of a map will still satisfy the overall population constraint.
 }
 \examples{

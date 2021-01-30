@@ -9,7 +9,7 @@ redist.reduce.adjacency(adjacency, keep_rows)
 \arguments{
 \item{adjacency}{A zero-indexed adjacency list. Required.}
 
-\item{keep_rows}{row numbers of precincts to keep}
+\item{keep_rows}{A (one-indexed) vector of row numbers of precincts to keep}
 }
 \value{
 zero indexed adjacency list with max value length(keep_rows) - 1

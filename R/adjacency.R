@@ -65,7 +65,7 @@ redist.adjacency <- function(shp, district_membership){
 #' Tool to help reduce adjacency lists for analyzing subsets of maps.
 #'
 #' @param adjacency  A zero-indexed adjacency list. Required.
-#' @param keep_rows row numbers of precincts to keep
+#' @param keep_rows A (one-indexed) vector of row numbers of precincts to keep
 #'
 #' @return zero indexed adjacency list with max value length(keep_rows) - 1
 #' @export
@@ -75,24 +75,22 @@ redist.adjacency <- function(shp, district_membership){
 #' redist.reduce.adjacency(algdat.p10$adjlist, c(2, 3, 4, 6, 21))
 #' }
 redist.reduce.adjacency <- function(adjacency, keep_rows){
-  # Check inputs:
-  if(!(class(keep_rows) %in% c('numeric', 'integer'))){
-    stop('Please provide "keep_rows" as a numeric or integer vector.')
-  }
-  if(min(unlist(adjacency)) != 0){
-    stop('Please provide "adjacency" as a 0-indexed list.')
-  }
-  if(max(unlist(adjacency))!= (length(adjacency)-1)){
-    warning('"adjacency" did not have typical values of 0:(length(adjacency)-1)')
-  }
+    # Check inputs:
+    if(!(class(keep_rows) %in% c('numeric', 'integer'))){
+        stop('Please provide "keep_rows" as a numeric or integer vector.')
+    }
+    if(min(unlist(adjacency)) != 0){
+        stop('Please provide "adjacency" as a 0-indexed list.')
+    }
+    if(max(unlist(adjacency))!= (length(adjacency)-1)){
+        warning('"adjacency" did not have typical values of 0:(length(adjacency)-1)')
+    }
 
-  # Prep objects for Rcpp
-  prec_keep <- rep(0L, length(adjacency))
-  prec_keep[keep_rows] <- 1L
-  keep_rows <- keep_rows - 1
-  keep_rows <- as.integer(keep_rows)
+    # Prep objects for Rcpp
+    prec_map = rep(-1L, length(adjacency))
+    #prec_map[keep_rows] = order(keep_rows) - 1L
+    prec_map <- dplyr::coalesce(match(1:length(adjacency), keep_rows) - 1L, -1L)
 
-  # Reduce!
-  return(reduce_adj(adj_list = adjacency, prec_keep = prec_keep,
-                    prec_idx = keep_rows))
+    # Reduce!
+    reduce_adj(adjacency, prec_map, length(keep_rows))
 }

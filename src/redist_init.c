@@ -13,6 +13,7 @@ extern SEXP _redist_bias(SEXP, SEXP);
 extern SEXP _redist_biasatv(SEXP, SEXP, SEXP);
 extern SEXP _redist_calc_polsbypopper(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_calcPWDh(SEXP);
+extern SEXP _redist_collapse_adj(SEXP, SEXP);
 extern SEXP _redist_contiguity(SEXP, SEXP);
 extern SEXP _redist_cores(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_countpartitions(SEXP);
@@ -55,6 +56,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_biasatv",               (DL_FUNC) &_redist_biasatv,                3},
     {"_redist_calc_polsbypopper",     (DL_FUNC) &_redist_calc_polsbypopper,      7},
     {"_redist_calcPWDh",              (DL_FUNC) &_redist_calcPWDh,               1},
+    {"_redist_collapse_adj",          (DL_FUNC) &_redist_collapse_adj,           2},
     {"_redist_contiguity",            (DL_FUNC) &_redist_contiguity,             2},
     {"_redist_cores",                 (DL_FUNC) &_redist_cores,                  4},
     {"_redist_countpartitions",       (DL_FUNC) &_redist_countpartitions,        1},
