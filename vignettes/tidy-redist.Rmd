@@ -105,36 +105,11 @@ Balanced and Compact Redistricting Plans. Available at
 <https://imai.fas.harvard.edu/research/files/SMCredist.pdf>.]
 
 ```{r}
-houston_plans = redist_smc(houston_merged, 1500, 6, county=T, pop_dev=0.001)
-#> Warning message:
-#> Using `pop` for population, `county` for counties
-#>
-#> Sampling 1500 347-unit maps with 6 districts and population between 697885 and 699428
-#> Making split 1 of 5
-#> Using k = 3
-#> Iteration      1 / 1500
-#> ...
-
+houston_plans = redist_smc(houston_merged, 1500, counties=county)
 print(houston_plans)
-#> A redist.plans object with 1500 sampled plans drawn using Sequential Monte Carlo
-#> Each plan contains 6 districts and 347 units and satisfies
-#>  • A 1% population constraint
-#>  • A compactness level of 1
-#>
-#>     draw  max_dev plan
-#>    <int>    <dbl> <list>
-#>  1     1  0.00098 <int [347]>
-#>  2     2  0.00087 <int [347]>
-#>  3     3  0.00092 <int [347]>
-#>  4     4  0.00097 <int [347]>
-#>  5     5  0.00098 <int [347]>
-#>  6     6  0.00073 <int [347]>
-#>  7     7  0.00098 <int [347]>
-#>  8     8  0.00052 <int [347]>
-#>  9     9  0.00096 <int [347]>
-#> 10    10  0.00099 <int [347]>
-#> # … with 1,490 more rows
+```
 
+```{r}
 houston_plans = houston_plans %>%
     add_reference(houston_merged$cd) %>%
     mutate(comp = distr_compactness(houston_merged, plan, "polsby_popper"),
@@ -214,12 +189,12 @@ plot(houston_orig_plans, type="plan", draw=5, geom=houston_area)
 ####
 # All together: minimum working example for 'signature of gerrymandering'
 houston = read_rds("../vra-f20/data/clean/tx.rds") %>%
-    add_adjacency_graph() %>%
-    filter(cd %in% c(2, 7, 8, 18, 22, 29)) %>% # filter to Houston area
-    mutate(cd_cores = make_cores(id, cd, 18, within=1)) %>%
+    redist_map(n_distr=max(cd), pop_tol=0.05, existing_col=cd) %>%
+    filter(cd %in% c(2, 7, 9, 18, 22, 29)) %>% # filter to Houston area
+    mutate(cd_cores = make_cores(within=1)) %>%
     merge_by(cd_cores)
 
-houston_plans = redist_smc(1500, 6, county=T, pop_dev=0.001) %>%    
+houston_plans = redist_smc(houston_area, 1500, county=county) %>%    
     add_reference(houston$cd) %>%
     pullback(houston) %>%
     mutate(pct_hisp = group_percent(houston, hisp, pop))

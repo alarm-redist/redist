@@ -31,14 +31,16 @@ districts to partition the map into}
 The percentage deviation from the average population will be constrained to
 be no more than this number.}
 
+\item{pop_bounds}{\code{\link[dplyr]{<data-masking>}} more specific
+population bounds, in the form of \code{c(lower, target, upper)}.}
+
 \item{pop_col}{\code{\link[dplyr]{<tidy-select>}} the name of the population
-vector column}
+vector column.}
 
 \item{graph}{the adjacency graph for the object. Defaults to being computed
 from the data if it is coercible to a shapefile.}
 
-\item{graph_col}{\code{\link[dplyr]{<tidy-select>}} the name of the adjacency
-graph column}
+\item{graph_col}{the name of the adjacency graph column}
 
 \item{existing_col}{\code{\link[dplyr]{<tidy-select>}} the name of a column
 with existing district assignment}

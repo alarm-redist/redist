@@ -13,12 +13,7 @@ redist.identify.cores(
   simplify = TRUE
 )
 
-make_cores(
-  graph = get_graph(.data),
-  existing = get_existing(.data),
-  within = 1,
-  focus = NULL
-)
+make_cores(.data = get0(".", parent.frame()), within = 1, focus = NULL)
 }
 \arguments{
 \item{adjacency}{A zero indexed adjacency list.}

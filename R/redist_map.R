@@ -105,10 +105,10 @@ reconstruct.redist_map = function(data, old) {
 #' @param pop_tol \code{\link[dplyr]{<data-masking>}} the population tolerance.
 #'   The percentage deviation from the average population will be constrained to
 #'   be no more than this number.
-#' @param pop_bounds \code{\link[dplyr]{<data-masking>t} more specific
+#' @param pop_bounds \code{\link[dplyr]{<data-masking>}} more specific
 #'   population bounds, in the form of \code{c(lower, target, upper)}.
 #' @param pop_col \code{\link[dplyr]{<tidy-select>}} the name of the population
-#'   vector column
+#'   vector column.
 #' @param graph the adjacency graph for the object. Defaults to being computed
 #'     from the data if it is coercible to a shapefile.
 #' @param graph_col the name of the adjacency graph column
@@ -153,6 +153,7 @@ redist_map = function(..., n_distr, pop_tol=0.01, pop_bounds=NULL, pop_col="pop"
 
     if (is.null(pop_bounds)) {
         stopifnot(!is.null(pop_tol))
+        stopifnot(pop_tol > 0)
 
         target = sum(x[[pop_col]]) / n_distr
         pop_bounds = target * c(1 - pop_tol, 1, 1 + pop_tol)

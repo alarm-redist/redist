@@ -22,11 +22,11 @@ studied or resampled.  Often this will take the form \code{current_plan
 }
 \value{
 a 3-element numeric vector of the form \code{c(lower, target, upper)},
-which can be used inside \code{\link{redist_smc}}.
+which can be used inside \code{\link{redist.smc}}.
 }
 \description{
 Creates a 3-element vector, suitable for the precise population constraints
-in \code{\link{redist_smc}}, that ensures that samples of plans built from
+in \code{\link{redist.smc}}, that ensures that samples of plans built from
 parts of a map will still satisfy the overall population constraint.
 }
 \examples{
