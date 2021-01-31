@@ -7,7 +7,7 @@
 
 #' SMC Redistricting Sampler
 #'
-#' \code{redist_smc} uses a Sequential Monte Carlo algorithm to
+#' \code{redist.smc} uses a Sequential Monte Carlo algorithm to
 #' generate nearly independent congressional or legislative redistricting
 #' plans according to contiguity, population, compactness, and administrative
 #' boundary constraints.
@@ -104,7 +104,7 @@
 #'   Recommended.
 #' @param silent Whether to supress all diagnostic information.
 #'
-#' @return \code{redist_smc} returns an object of class \code{redist}, which
+#' @return \code{redist.smc} returns an object of class \code{redist}, which
 #' is a list containing the following components:
 #' \item{aList}{The adjacency list used to sample}
 #' \item{cdvec}{The matrix of sampled plans. Each row is a geographical unit,
@@ -128,10 +128,10 @@
 #'
 #' @examples \dontrun{
 #' data(algdat.p10)
-#' sampled_basic = redist_smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,
+#' sampled_basic = redist.smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,
 #'                            nsims=10000, ndists=3, popcons=0.1)
 #'
-#' sampled_constr = redist_smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,
+#' sampled_constr = redist.smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,
 #'                             nsims=10000, ndists=3, popcons=0.1,
 #'                             constraints=list(
 #'                                 status_quo = list(strength=10, current=algdat.p10$cdmat[,1234]),
@@ -141,7 +141,7 @@
 #'
 #' @md
 #' @export
-redist_smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
+redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
                       popcons=0.01, compactness=1, constraints=list(),
                       resample=TRUE, pop_bounds=NULL,
                       constraint_fn=function(m) rep(0, ncol(m)),
@@ -285,7 +285,7 @@ redist.smc_is_ci = function(x, wgt, conf=0.99) {
 #' Calculate Population Bounds for a Subset of a Map
 #'
 #' Creates a 3-element vector, suitable for the precise population constraints
-#' in \code{\link{redist_smc}}, that ensures that samples of plans built from
+#' in \code{\link{redist.smc}}, that ensures that samples of plans built from
 #' parts of a map will still satisfy the overall population constraint.
 #'
 #' @param pop a numeric vector containing the population of every precinct in
@@ -298,7 +298,7 @@ redist.smc_is_ci = function(x, wgt, conf=0.99) {
 #' @param tol the overall population tolerance that must be met.
 #'
 #' @return a 3-element numeric vector of the form \code{c(lower, target, upper)},
-#' which can be used inside \code{\link{redist_smc}}.
+#' which can be used inside \code{\link{redist.smc}}.
 #'
 #' @examples
 #' data("fl25")
