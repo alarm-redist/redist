@@ -178,7 +178,7 @@ redist_smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
         if (length(pop_bounds) != 3)
             stop("`pop_bounds` must be of the form c(lower, target, upper).")
         if (!all(diff(pop_bounds) > 0))
-            stop("`pop_bounds` satisfy lower < target < upper.")
+            stop("`pop_bounds` must satisfy lower < target < upper.")
     } else {
         target = sum(popvec) / ndists
         pop_bounds = target * c(1 - popcons, 1, 1 + popcons)

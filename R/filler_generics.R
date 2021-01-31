@@ -1,7 +1,29 @@
 #' @export
 #' @importFrom dplyr mutate
-mutate.redist_map <- function(.data, ...) {
-    reconstruct.redist_map(NextMethod(), .data)
+mutate.redist_map <- function(.data, ..., env=rlang::caller_env()) {
+    dots = rlang::quos(...)
+    for (i in seq_along(dots)) {
+        dot_call = rlang::call_standardise(rlang::quo_get_expr(dots[[i]]))
+        if (!(".data" %in% names(dot_call))) {
+            dot_call$.data = .data
+        }
+        dots[[i]] = rlang::quo_set_expr(dots[[i]], dot_call)
+    }
+
+    .data_ex = rlang::enexpr(.data)
+    mut_call = rlang::expr(getS3method("mutate", "data.frame")(!!.data_ex, !!!dots))
+    res = eval(mut_call, env)
+
+    if (inherits(.data, "sf")) {
+        agr = sf::st_agr(.data)
+        sf_column_name = attr(.data, "sf_column")
+        attr(res, "sf_column") = sf_column_name
+        attr(res, "agr") = agr
+        class(res) = c("sf", class(res))
+    }
+
+    reconstruct.redist_map(res, .data)
+
 }
 
 #' @export

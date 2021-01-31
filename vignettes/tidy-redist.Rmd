@@ -1,0 +1,228 @@
+---
+title: "Tidy `redist`"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Tidy redist}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+We begin by loading `tidyverse` and the `redist` library, and reading in our 
+shapefile.
+```{r}
+library(tidyverse)
+library(redist)
+
+texas_shp = read_rds("../vra-f20/data/clean/tx.rds")
+print(texas_shp)
+```
+
+The first thing we do is to create a `redist_map` object, which is essentially
+a data frame along with an adjacency graph and a little extra metadata about
+the redistricting problem at hand.  It's important to create this object early
+on, since data operations like filtering and summarizing will affect the graph
+structure, number of district, and population constraints.
+
+Here, the existing district assignment is stored in the `cd` column. We provide
+let `redist_map` know about this by providing the `existin_col` argument, and
+we use `max(cd)` to count the total number of districts.
+```{r}
+tx = redist_map(texas_shp, n_distr=max(cd), pop_tol=0.05, existing_col=cd)
+print(tx)
+```
+Our original shapefile stored its geographic information in terms of latitude
+and longitude. While common, this can cause problems for some of the geographic
+operations used in the analysis process, so by default `redist_map` will
+reproject the shapefile geometry to a new coordinate system.  Whether to do this
+and which coordinate system to use can be controlled using the `planarize`
+argument.
+
+Suppose that we want to focus our analysis on the Houston area, which for our
+purposes means the 2nd, 7th, 9th, 18th, 22nd, and 29th congressional districts.
+We can do this simply by using `dplyr`'s `filter()` function.
+```{r}
+houston_area = filter(tx, cd %in% c(2, 7, 9, 18, 22, 29)) 
+print(houston_area)
+```
+Behind the scenes, `redist` has adjusted the adjacency graph to remove the 
+precincts that were filtered away. It has also adjusted the number of districts
+and the population bounds.
+
+We can easily plot this new map, either by congressional district or by any
+other quantity of interest.
+```{r}
+plot(houston_area, edges=F, centroids=F) # hide the hundreds of graph edges and vertices
+plot(houston_area, hisp/pop)
+```
+
+If we want to base our analysis on a geographical unit other than precincts,
+we use the `merge_by()` function, which calls `dplyr`'s `group_by()` and
+`summarize()` in the background.  It also tries to intelligently summarize the
+other columns in the data frame---adding up the population in each county,
+for instance.  By default, `merge_by()` will also group by the current
+congressional districts, if they are provided, to avoid erasing these lines.
+```{r}
+houston_counties = houston_area %>%
+    merge_by(county, drop_geom=FALSE)
+print(houston_counties)
+plot(houston_counties, hisp/pop)
+```
+We specify `drop_geom=FALSE` so that the shapefile geometries are also merged.
+Since this is a time-consuming process and is not necessary for redistricting
+analysis, by default `merge_by()` drops the shapefile geometry. 
+
+If more fine-grained control is needed than is provided by `merge_by()`, you
+can always use `group_by()` and `summarize()`, which will still make the 
+appropriate modifications to the adjacency graph.
+
+Another common use of `merge_by()` is for creating district "cores": gluing
+precincts in the "core" of an area together, to ensure that they stay together
+throughout redistricting.  This has the effect of imposing a status quo
+constraint when applied to existing districts. Here, any precincts that are
+not within 1 precinct of the district borders will be merged into the district
+cores.
+```{r}
+houston_merged = houston_area %>%
+    mutate(cd_cores = make_cores(within=1)) %>% 
+    merge_by(cd_cores, drop_geom=F)
+print(houston_merged)
+plot(houston_merged, centroids=F)
+```
+
+After preprocessing the map to focus on the redistricting problem of interest,
+we are ready to run the redistricting simulation.  The recommended simulation
+function is `redist_smc`, which uses a Sequential Monte Carlo (SMC) 
+algorithm.^[McCartan, C., & Imai, K. (2020). Sequential Monte Carlo for Sampling
+Balanced and Compact Redistricting Plans. Available at
+<https://imai.fas.harvard.edu/research/files/SMCredist.pdf>.]
+
+```{r}
+houston_plans = redist_smc(houston_merged, 1500, 6, county=T, pop_dev=0.001)
+#> Warning message:
+#> Using `pop` for population, `county` for counties
+#>
+#> Sampling 1500 347-unit maps with 6 districts and population between 697885 and 699428
+#> Making split 1 of 5
+#> Using k = 3
+#> Iteration      1 / 1500
+#> ...
+
+print(houston_plans)
+#> A redist.plans object with 1500 sampled plans drawn using Sequential Monte Carlo
+#> Each plan contains 6 districts and 347 units and satisfies
+#>  • A 1% population constraint
+#>  • A compactness level of 1
+#>
+#>     draw  max_dev plan
+#>    <int>    <dbl> <list>
+#>  1     1  0.00098 <int [347]>
+#>  2     2  0.00087 <int [347]>
+#>  3     3  0.00092 <int [347]>
+#>  4     4  0.00097 <int [347]>
+#>  5     5  0.00098 <int [347]>
+#>  6     6  0.00073 <int [347]>
+#>  7     7  0.00098 <int [347]>
+#>  8     8  0.00052 <int [347]>
+#>  9     9  0.00096 <int [347]>
+#> 10    10  0.00099 <int [347]>
+#> # … with 1,490 more rows
+
+houston_plans = houston_plans %>%
+    add_reference(houston_merged$cd) %>%
+    mutate(comp = distr_compactness(houston_merged, plan, "polsby_popper"),
+           pct_hisp = group_percent(houston_merged, hisp, pop),
+           pct_black = group_percent(houston_merged, black, pop),
+           pct_white = group_percent(houston_merged, white, pop),
+           pct_min = 1 - pct_white)
+print(houston_plans)
+#> A redist.plans object with 1500 sampled plans drawn using Sequential Monte Carlo
+#> Each plan contains 6 districts and 347 units and satisfies
+#>  • A 1% population constraint
+#>  • A compactness level of 1
+#>
+#>     draw  max_dev        plan      comp  pct_hisp pct_black pct_white   pct_min
+#>    <chr>    <dbl>      <list>    <list>    <list>    <list>    <list>    <list>
+#>  1 <REF>  0.00098 <int [347]> <dbl [6]> <dbl [6]> <dbl [6]> <dbl [6]> <dbl [6]>
+#>  2     1  0.00087 <int [347]> <dbl [6]> <dbl [6]> <dbl [6]> <dbl [6]> <dbl [6]>
+#>  3     2  0.00092 <int [347]> <dbl [6]> <dbl [6]> <dbl [6]> <dbl [6]> <dbl [6]>
+#>  4     3  0.00097 <int [347]> <dbl [6]> <dbl [6]> <dbl [6]> <dbl [6]> <dbl [6]>
+#>  5     4  0.00098 <int [347]> <dbl [6]> <dbl [6]> <dbl [6]> <dbl [6]> <dbl [6]>
+#>  6     5  0.00073 <int [347]> <dbl [6]> <dbl [6]> <dbl [6]> <dbl [6]> <dbl [6]>
+#>  7     6  0.00098 <int [347]> <dbl [6]> <dbl [6]> <dbl [6]> <dbl [6]> <dbl [6]>
+#>  8     7  0.00052 <int [347]> <dbl [6]> <dbl [6]> <dbl [6]> <dbl [6]> <dbl [6]>
+#>  9     8  0.00096 <int [347]> <dbl [6]> <dbl [6]> <dbl [6]> <dbl [6]> <dbl [6]>
+#> 10     9  0.00099 <int [347]> <dbl [6]> <dbl [6]> <dbl [6]> <dbl [6]> <dbl [6]>
+#> # … with 1,490 more rows
+
+unnest_districts(houston_plans)
+#> A redist.plan.districts object with 1500 sampled plans drawn using Sequential Monte Carlo
+#> Each plan contains 6 districts and 347 units and satisfies
+#>  • A 1% population constraint
+#>  • A compactness level of 1
+#>
+#>     draw district  max_dev       units    comp pct_hisp pct_black pct_white pct_min
+#>    <chr>    <int>    <dbl>      <list>  <list>    <dbl>     <dbl>     <dbl>   <dbl>
+#>  1 <REF>        1  0.00098 <int [173]> 0.21357  0.14578  0.083523    0.6225  0.1482
+#>  2 <REF>        2  0.00098  <int [24]> 0.61843  0.27283  0.009634    0.5143  0.2032
+#>  3 <REF>        3  0.00098  <int [22]> 0.96822  0.18267  0.184508    0.4479  0.1850
+#>  4 <REF>        4  0.00098  <int [37]> 0.48099  0.37730  0.162816    0.2668  0.1931
+#>  5 <REF>        5  0.00098  <int [75]> 0.02042  0.16020  0.107554    0.4817  0.2506
+#>  6 <REF>        6  0.00098  <int [17]> 0.06136  0.08073  0.058471    0.1227  0.7381
+#>  7     1        1  0.00087  <int [25]> 0.13850  0.22100  0.063087    0.5171  0.1988
+#>  8     1        2  0.00087  <int [29]> 0.44982  0.35753  0.079978    0.4194  0.1431
+#>  9     1        3  0.00087  <int [39]> 0.21923  0.23899  0.081302    0.3896  0.2901
+#> 10     1        4  0.00087 <int [122]> 0.71510  0.24224  0.142401    0.2830  0.3324
+#> # … with 8,990 more rows
+
+
+# ggplots with nice defaults and labels
+plot(houston_plans, type="distr_pcts", pct_hisp)
+plot(houston_plans, type="group_seats", pct_min)
+
+# re-express in terms of original
+houston_orig_plans = pullback(houston_plans, houston_merged)
+print(houston_orig_plans)
+#> A redist.plans object with 1500 sampled plans drawn using Sequential Monte Carlo
+#> Each plan contains 6 districts and 833 units and satisfies
+#>  • A 1% population constraint
+#>  • A compactness level of 1
+#>
+#>     draw  max_dev        plan
+#>    <chr>    <dbl>      <list>
+#>  1 <REF>  0.00098 <int [833]>
+#>  2     1  0.00087 <int [833]>
+#>  3     2  0.00092 <int [833]>
+#>  4     3  0.00097 <int [833]>
+#>  5     4  0.00098 <int [833]>
+#>  6     5  0.00073 <int [833]>
+#>  7     6  0.00098 <int [833]>
+#>  8     7  0.00052 <int [833]>
+#>  9     8  0.00096 <int [833]>
+#> 10     9  0.00099 <int [833]>
+#> # … with 1,490 more rows
+
+plot(houston_orig_plans, type="plan", draw=5, geom=houston_area)
+
+####
+# All together: minimum working example for 'signature of gerrymandering'
+houston = read_rds("../vra-f20/data/clean/tx.rds") %>%
+    add_adjacency_graph() %>%
+    filter(cd %in% c(2, 7, 8, 18, 22, 29)) %>% # filter to Houston area
+    mutate(cd_cores = make_cores(id, cd, 18, within=1)) %>%
+    merge_by(cd_cores)
+
+houston_plans = redist_smc(1500, 6, county=T, pop_dev=0.001) %>%    
+    add_reference(houston$cd) %>%
+    pullback(houston) %>%
+    mutate(pct_hisp = group_percent(houston, hisp, pop))
+
+plot(houston_plans, type="distr_pcts", pct_hisp)
+```

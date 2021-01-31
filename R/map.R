@@ -181,9 +181,9 @@ redist.choropleth <- function(shp, fill = NULL, fill_label = "", title = "",
         theme(legend.position = "bottom")
 
     if (!is.null(fill)) {
-        l1 <- min(fill)
-        l2 <- max(fill)
-        mp <- mean(fill)
+        l1 <- min(fill, na.rm=T)
+        l2 <- max(fill, na.rm=T)
+        mp <- mean(fill, na.rm=T)
 
         if (l1 >= 0 & l2 <= 1) {
             l1 <- 0

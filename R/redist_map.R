@@ -19,11 +19,11 @@ new_redist_map = function(data, graph, n_distr, pop_bounds, pop_col="pop",
         data[[graph_col]] = graph
     }
 
-    stopifnot(is.numeric(n_distr))
+    stopifnot(is.integer(n_distr))
     stopifnot(is.numeric(pop_bounds))
     stopifnot(length(pop_bounds) == 3)
 
-    data = reconstruct.redist_map(data, )
+    data = reconstruct.redist_map(data)
     attr(data, "n_distr") = n_distr
     attr(data, "pop_bounds") = pop_bounds
     attr(data, "pop_col") = pop_col
@@ -37,7 +37,7 @@ validate_redist_map = function(data, check_contig=T) {
     if (!is.data.frame(data)) stop("Not a data frame")
     if (!inherits(data, "redist_map")) stop("Not a `redist_map` object")
 
-    col = attr(x, "graph_col")
+    col = attr(data, "graph_col")
     if (is.null(col)) stop("No graph column found")
     if (!is.list(data[[col]]))
         stop("Graph column not a properly formatted adjacency list.")
@@ -45,9 +45,15 @@ validate_redist_map = function(data, check_contig=T) {
     if (check_contig && !is_contiguous(data))
         stop("Graph not contiguous.")
 
-    stopifnot(attr(x, "pop_col"))
+    stopifnot(!is.null(attr(data, "pop_col")))
+    stopifnot(!is.null(attr(data, "n_distr")))
 
-    TRUE
+    pop_bounds = attr(data, "pop_bounds")
+    stopifnot(!is.null(pop_bounds))
+    if (!all(diff(pop_bounds) > 0))
+        stop("`pop_bounds` must satisfy lower < target < upper.")
+
+    data
 }
 
 reconstruct.redist_map = function(data, old) {
@@ -63,7 +69,7 @@ reconstruct.redist_map = function(data, old) {
             attr(data, "pop_col") = attr(old, "pop_col")
         if (attr(old, "graph_col") %in% colnames(data))
             attr(data, "graph_col") = attr(old, "graph_col")
-        if ((exist_col <- attr(old, "existing_col")) %in% colnames(data)) {
+        if (isTRUE((exist_col <- attr(old, "existing_col")) %in% colnames(data))) {
             attr(data, "existing_col") = exist_col
             attr(data, "n_distr") = length(unique(data[[exist_col]]))
         } else {
@@ -105,8 +111,7 @@ reconstruct.redist_map = function(data, old) {
 #'   vector column
 #' @param graph the adjacency graph for the object. Defaults to being computed
 #'     from the data if it is coercible to a shapefile.
-#' @param graph_col \code{\link[dplyr]{<tidy-select>}} the name of the adjacency
-#'   graph column
+#' @param graph_col the name of the adjacency graph column
 #' @param existing_col \code{\link[dplyr]{<tidy-select>}} the name of a column
 #'   with existing district assignment
 #' @param planarize a number, indicating the CRS to project the shapefile to if
@@ -124,7 +129,12 @@ redist_map = function(..., n_distr, pop_tol=0.01, pop_bounds=NULL, pop_col="pop"
     if (is_sf) {
         x = sf::st_sf(x)
 
-        if (sf::st_is_longlat(sf::st_geometry(x))) {
+        if (is.na(sf::st_crs(x))) {
+            warning("Missing CRS, assuming NAD83 (4269).")
+            sf::st_crs(x) = 4269
+        }
+
+        if (isTRUE(sf::st_is_longlat(sf::st_geometry(x)))) {
             if (!is.null(planarize)) {
                 message("Projecting to CRS ", planarize)
                 x = sf::st_transform(x, planarize)
@@ -138,11 +148,10 @@ redist_map = function(..., n_distr, pop_tol=0.01, pop_bounds=NULL, pop_col="pop"
     if (is_sf && is.null(graph))
         graph = redist.adjacency(x)
 
-    n_distr = rlang::eval_tidy(rlang::enquo(n_distr), x)
+    n_distr = as.integer(rlang::eval_tidy(rlang::enquo(n_distr), x))
     pop_tol = rlang::eval_tidy(rlang::enquo(pop_tol), x)
 
     if (is.null(pop_bounds)) {
-        stopifnot(as.integer(n_distr) == n_distr)
         stopifnot(!is.null(pop_tol))
 
         target = sum(x[[pop_col]]) / n_distr
@@ -151,12 +160,15 @@ redist_map = function(..., n_distr, pop_tol=0.01, pop_bounds=NULL, pop_col="pop"
         pop_bounds = rlang::eval_tidy(rlang::enquo(pop_bounds), x)
     }
 
-    pop_col = names(tidyselect::eval_select(rlang::enquo(pop_col), tx))
-    graph_col = names(tidyselect::eval_select(rlang::enquo(graph_col), tx))
-    existing_col = names(tidyselect::eval_select(rlang::enquo(existing_col), tx))
+    pop_col = names(tidyselect::eval_select(rlang::enquo(pop_col), x))
+    existing_col = names(tidyselect::eval_select(rlang::enquo(existing_col), x))
+    if (length(existing_col) == 0)
+        existing_col = NULL
 
-    new_redist_map(x, graph, n_distr, pop_bounds, pop_col, graph_col,
+    validate_redist_map(
+        new_redist_map(x, graph, n_distr, pop_bounds, pop_col, graph_col,
                    add_graph=T, existing_col)
+    )
 }
 
 #' @rdname redist_map
@@ -172,6 +184,15 @@ get_graph = function(x) {
     x[[attr(x, "graph_col")]]
 }
 
+# extract graph
+get_existing = function(x) {
+    stopifnot(inherits(x, "redist_map"))
+
+    exist_col = attr(x, "existing_col")
+    if (is.null(exist_col)) NULL else x[[exist_col]]
+}
+
+
 #######################
 # generics
 
@@ -180,16 +201,19 @@ get_graph = function(x) {
 dplyr_row_slice.redist_map = function(data, i, ...) {
     if (is.logical(i)) i = which(i)
 
+    # reduce adj. graph
     y = vctrs::vec_slice(data, i)
     gr_col = attr(data, "graph_col")
     y[[gr_col]] = redist.reduce.adjacency(data[[gr_col]], i)
 
+    # fix n_distr if existing_col exists
     exist_col = attr(data, "existing_col")
     new_distr = attr(data, "n_distr")
     if (!is.null(exist_col))
         new_distr = length(unique(y[[exist_col]]))
     attr(y, "n_distr") = new_distr
 
+    # fix pop. bounds
     bounds = attr(data, "pop_bounds")
     bounds[2] = sum(y[[attr(data, "pop_col")]]) / new_distr
     attr(y, "pop_bounds") = bounds
@@ -216,6 +240,8 @@ summarise.redist_map = function(.data, ...) {
                                         dplyr::group_indices(.data) - 1)
     }
 
+    attr(ret, "merge_idx") = dplyr::group_indices(.data)
+
     reconstruct.redist_map(ret, .data)
 }
 
@@ -225,6 +251,7 @@ summarise.redist_map = function(.data, ...) {
 print.redist_map = function(x, ...) {
     cli::cat_line("A redist_map object with ", nrow(x),
                   " units and ", ncol(x), " fields")
+
     bounds = attr(x, "pop_bounds")
     cli::cat_line("To be partitioned into ", attr(x, "n_distr"),
                   " districts with population between ",
@@ -232,6 +259,10 @@ print.redist_map = function(x, ...) {
                   format(100 - 100*bounds[1]/bounds[2], nsmall=1), "% and ",
                   format(bounds[2], nsmall=0, big.mark=","), " + ",
                   format(100*bounds[3]/bounds[2] - 100, nsmall=1), "%")
+
+    merge_idx = attr(x, "merge_idx")
+    if (!is.null(merge_idx))
+        cli::cat_line("Merged from another map with reindexing: ", capture_output(str(merge_idx)))
 
     if (inherits(x, "sf")) {
         geom = st_geometry(x)

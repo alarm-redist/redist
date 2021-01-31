@@ -13,7 +13,8 @@ redist_map(
   pop_col = "pop",
   graph = NULL,
   graph_col = "graph",
-  existing_col = NULL
+  existing_col = NULL,
+  planarize = 3857
 )
 
 as_redist_map(x)
@@ -42,8 +43,8 @@ graph column}
 \item{existing_col}{\code{\link[dplyr]{<tidy-select>}} the name of a column
 with existing district assignment}
 
-\item{planarize}{whether to convert to a
-with existing district assignment}
+\item{planarize}{a number, indicating the CRS to project the shapefile to if
+it is latitude-longitude based. Set to NULL to avoid planarizing.}
 }
 \description{
 Sets up a redistricting problem.
