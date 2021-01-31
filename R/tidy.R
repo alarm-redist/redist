@@ -69,9 +69,27 @@ merge_by = function(.data, key, by_existing=TRUE, drop_geom=TRUE) {
         dplyr::group_by(.data, {{ key }}) %>%
             dplyr::summarize(dplyr::across(where(is_nonprop), sum, na.rm=T),
                              dplyr::across(where(is_prop), ~ weighted.mean(., {{ pop_col }}, na.rm=T)),
-                             dplyr::across(where(is_const_rel(key_val)), ~ .[1]))
+                             dplyr::across(where(is_const_rel(key_val)), ~ .[1])) %>%
+            `attr<-`("existing_col", NULL)
     }
 }
+
+#' @rdname redist.identify.cores
+#' @export
+make_cores = function(graph=NULL, existing=NULL, within=1, focus=NULL, .data=NULL) {
+    if (is.null(graph)) {
+        if (is.null(.data)) stop("Must provide `.data` or `graph`")
+        graph = get_graph(.data)
+    }
+
+    if (is.null(existing)) {
+        if (is.null(.data)) stop("Must provide `.data` or `existing`")
+        existing = get_existing(.data)
+    }
+
+    redist.identify.cores(graph, existing, within, focus, simplify=TRUE)
+}
+
 
 ########################
 # Dot formats for backward compatibility
