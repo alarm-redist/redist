@@ -103,6 +103,7 @@
 #' @importFrom sf st_cast st_bbox st_centroid st_within st_point_on_surface st_coordinates
 #' @importFrom sf st_linestring st_intersection st_area st_crs st_is_longlat st_length
 #' @importFrom sf st_convex_hull st_crs<- st_geometry st_distance st_union st_touches
+#' @importFrom sf st_geometry<- st_is_valid st_buffer
 #' @importFrom lwgeom st_perimeter st_minimum_bounding_circle
 #' @importFrom dplyr select all_of arrange bind_rows rename summarize
 #' @importFrom stats dist

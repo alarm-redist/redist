@@ -12,7 +12,8 @@ redist.compactness(
   adjacency = NULL,
   nloop = 1,
   ncores = 1,
-  counties = NULL
+  counties = NULL,
+  pprcpp
 )
 }
 \arguments{
@@ -30,8 +31,9 @@ return all implemented measures.}
 \item{population}{A numeric vector with the population for every observation. Is
 only necessary when "FryerHolden" is used for measure. Defaults to NULL.}
 
-\item{adjacency}{A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
-Created with \code{redist.adjacency} if not supplied and needed. Default is NULL.}
+\item{adjacency}{Recommended. A zero-indexed adjacency list. Only used for "PolsbyPopper",
+EdgesRemoved" and "logSpanningTree". Created with \code{redist.adjacency} if not 
+supplied and needed. Default is NULL.}
 
 \item{nloop}{A numeric to specify loop number. Defaults to 1 if only one map provided 
 and the column number if multiple maps given.}
@@ -39,6 +41,9 @@ and the column number if multiple maps given.}
 \item{ncores}{Number of cores to use for parallel computing. Default is 1.}
 
 \item{counties}{A numeric vector from 1:ncounties corresponding to counties. Required for "logSpanningTree".}
+
+\item{pprcpp}{Boolean, whether to run Polsby Popper using Rcpp. It has a high upfront cost, but quickly becomes faster. 
+Becomes TRUE if ncol(district_membership > 8).}
 }
 \value{
 A tibble with a column that specifies the district, a column for 
