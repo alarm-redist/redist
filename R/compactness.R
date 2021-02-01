@@ -24,12 +24,15 @@
 #' return all implemented measures.
 #' @param population A numeric vector with the population for every observation. Is
 #' only necessary when "FryerHolden" is used for measure. Defaults to NULL.
-#' @param adjacency A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
-#' Created with \code{redist.adjacency} if not supplied and needed. Default is NULL.
+#' @param adjacency Recommended. A zero-indexed adjacency list. Only used for "PolsbyPopper",
+#' EdgesRemoved" and "logSpanningTree". Created with \code{redist.adjacency} if not 
+#' supplied and needed. Default is NULL. 
 #' @param nloop A numeric to specify loop number. Defaults to 1 if only one map provided 
 #' and the column number if multiple maps given.
 #' @param ncores Number of cores to use for parallel computing. Default is 1.
 #' @param counties A numeric vector from 1:ncounties corresponding to counties. Required for "logSpanningTree".
+#' @param pprcpp Boolean, whether to run Polsby Popper using Rcpp. It has a high upfront cost, but quickly becomes faster. 
+#' Becomes TRUE if ncol(district_membership > 8).
 #' @details This function computes specified compactness scores for a map.  If 
 #' there is more than one shape specified for a single district, it combines 
 #' them, if necessary, and computes one score for each district.
@@ -119,7 +122,7 @@ redist.compactness <- function(shp = NULL,
                                district_membership, 
                                measure = c("PolsbyPopper"),
                                population = NULL, adjacency = NULL, nloop = 1,
-                               ncores = 1, counties = NULL){
+                               ncores = 1, counties = NULL, pprcpp){
   
   # Check Inputs
   if(is.null(shp)&is.null(adjacency)){
@@ -141,6 +144,9 @@ redist.compactness <- function(shp = NULL,
   if(!any(class(district_membership) %in% c('numeric', 'integer', 'matrix'))){
     stop('Please provide "district_membership" as a numeric vector or matrix.')
   }
+  
+
+
   
   if("all" %in% measure){
     measure <-  c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden", "EdgesRemoved", "logSpanningTree")
@@ -177,6 +183,14 @@ redist.compactness <- function(shp = NULL,
     district_membership <- as.matrix(district_membership)
   }  
   
+  if(missing(pprcpp)){
+    if(ncol(district_membership) > 8){
+      pprcpp <- TRUE
+    } else{
+      pprcpp <- FALSE
+    }
+  }
+  
   nmap <-  ncol(district_membership)
   if(nmap!=1){
     nloop = rep(nloop + (1:ncol(district_membership)) - 1, each = nd)
@@ -211,14 +225,21 @@ redist.compactness <- function(shp = NULL,
     }
   }
   
-  if('PolsbyPopper' %in% measure){
-    suppressWarnings(alist <- st_touches(shp))
-    suppressWarnings(perims <- st_length(st_cast(shp, 'LINESTRING')))
+  if('PolsbyPopper' %in% measure & pprcpp){
+    if(missing(adjacency)){
+      warning("For PolsbyPopper, it's recommended that you supply an adjacency list.")
+      alist <- lapply(redist.adjacency(shp), function(x){x+1L})
+    } else{
+      alist <- lapply(adjacency, function(x){x+1L})
+    }
     
+    invalid <- which(!st_is_valid(shp))
+    st_geometry(shp[invalid,]) <- st_geometry(st_buffer(shp[invalid,],0))
+    suppressWarnings(perims <- st_perimeter(shp))
     
     perim_adj_df <- lapply(1:length(alist), function(from) {
       suppressWarnings(lines <- st_intersection(shp[from,], shp[alist[[from]],]))
-      suppressWarnings(lines <- st_cast(lines))
+      #suppressWarnings(lines <- st_cast(lines))
       l_lines <- st_length(lines)
       data.frame(origin = from,
                  touching = alist[[from]],
@@ -255,10 +276,14 @@ redist.compactness <- function(shp = NULL,
   
   # Compute Specified Scores for provided districts
   if(any(measure %in% c("Schwartzberg", "LengthWidth", 
-                        "ConvexHull", "Reock", "BoyceClark"))){
+                        "ConvexHull", "Reock", "BoyceClark") | ('PolsbyPopper' %in% measure & !pprcpp)) ){
     
     nm <- sum(measure %in% c("Schwartzberg", "LengthWidth",
                              "ConvexHull", "Reock", "BoyceClark"))
+    
+    if('PolsbyPopper' %in% measure & !pprcpp){
+      nm <- nm + 1
+    }
     
     
     results <- foreach(map = 1:nmap, .combine = 'rbind', .packages = c('sf', 'lwgeom')) %oper% {
@@ -276,7 +301,10 @@ redist.compactness <- function(shp = NULL,
           perim <- sum(st_perimeter(united))
         }
         
-        
+        if('PolsbyPopper' %in% measure & !pprcpp){
+          ret[i, col] <- 4*pi*(area)/(perim)^2
+          col <- col + 1
+        }
         
         if('Schwartzberg' %in% measure){
           ret[i, col] <- (perim/(2*pi*sqrt(area/pi)))
@@ -326,7 +354,7 @@ redist.compactness <- function(shp = NULL,
       }
       return(ret)
     }
-    if('PolsbyPopper' %in% measure){
+    if('PolsbyPopper' %in% measure & pprcpp){
       comp[,3:(nm+2)] <- results
     } else {
       comp[,2:(nm+1)] <- results
