@@ -56,7 +56,8 @@ higher values prefer exploitation, while lower values prefer exploration.
 Must be between 0 and 1.}
 
 \item{truncate}{Whether to truncate the importance sampling weights at the
-final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.}
+final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.
+Truncation only applied if \code{resample=TRUE}.}
 
 \item{trunc_fn}{A function which takes in a vector of weights and returns
 a truncated vector. The default will generally work OK, but consider manual

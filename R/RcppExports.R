@@ -73,6 +73,10 @@ group_pct <- function(m, group_pop, total_pop, n_distr) {
     .Call(`_redist_group_pct`, m, group_pop, total_pop, n_distr)
 }
 
+pop_tally <- function(districts, pop, n_distr) {
+    .Call(`_redist_pop_tally`, districts, pop, n_distr)
+}
+
 max_dev <- function(districts, pop, n_distr) {
     .Call(`_redist_max_dev`, districts, pop, n_distr)
 }

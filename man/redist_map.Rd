@@ -7,7 +7,7 @@
 \usage{
 redist_map(
   ...,
-  n_distr,
+  n_distr = NULL,
   pop_tol = 0.01,
   pop_bounds = NULL,
   pop_col = "pop",

@@ -90,9 +90,9 @@ make_cores = function(.data=get0(".", parent.frame()), within=1, focus=NULL) {
 ########################
 # Dot formats for backward compatibility
 
-#' @rdname redist_mcmc
+#' @rdname redist.mcmc
 #' @export
-redist.mcmc = function(...) redist_mcmc(...)
-#' @rdname redist_mcmc.anneal
+redist_mcmc = function(...) redist.mcmc(...)
+#' @rdname redist.mcmc.anneal
 #' @export
-redist.mcmc.anneal = function(...) redist_mcmc.anneal(...)
+redist_mcmc.anneal = function(...) redist.mcmc.anneal(...)

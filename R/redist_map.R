@@ -69,6 +69,9 @@ reconstruct.redist_map = function(data, old) {
             attr(data, "pop_col") = attr(old, "pop_col")
         if (attr(old, "graph_col") %in% colnames(data))
             attr(data, "graph_col") = attr(old, "graph_col")
+        if (is.null(attr(data, "merge_idx")))
+            attr(data, "merge_idx") = attr(old, "merge_idx")
+
         if (isTRUE((exist_col <- attr(old, "existing_col")) %in% colnames(data))) {
             attr(data, "existing_col") = exist_col
             attr(data, "n_distr") = length(unique(data[[exist_col]]))
@@ -122,7 +125,7 @@ reconstruct.redist_map = function(data, old) {
 #' dplyr::filter(d, pop >= 10e3)
 #'
 #' @export
-redist_map = function(..., n_distr, pop_tol=0.01, pop_bounds=NULL, pop_col="pop",
+redist_map = function(..., n_distr=NULL, pop_tol=0.01, pop_bounds=NULL, pop_col="pop",
                       graph=NULL, graph_col="graph", existing_col=NULL, planarize=3857) {
     x = tibble(...)
     is_sf = any(vapply(x, function(x) inherits(x, "sfc"), TRUE))
@@ -148,7 +151,20 @@ redist_map = function(..., n_distr, pop_tol=0.01, pop_bounds=NULL, pop_col="pop"
     if (is_sf && is.null(graph))
         graph = redist.adjacency(x)
 
-    n_distr = as.integer(rlang::eval_tidy(rlang::enquo(n_distr), x))
+    pop_col = names(tidyselect::eval_select(rlang::enquo(pop_col), x))
+    existing_col = names(tidyselect::eval_select(rlang::enquo(existing_col), x))
+    if (length(existing_col) == 0)
+        existing_col = NULL
+
+    if (is.null(n_distr))  {
+        if (!is.null(existing_col))
+            n_distr = length(unique(x[[existing_col]]))
+        else
+            stop("Must specify `n_distr` if `existing_col` is not supplied")
+    } else {
+        n_distr = as.integer(rlang::eval_tidy(rlang::enquo(n_distr), x))
+    }
+
     pop_tol = rlang::eval_tidy(rlang::enquo(pop_tol), x)
 
     if (is.null(pop_bounds)) {
@@ -161,10 +177,6 @@ redist_map = function(..., n_distr, pop_tol=0.01, pop_bounds=NULL, pop_col="pop"
         pop_bounds = rlang::eval_tidy(rlang::enquo(pop_bounds), x)
     }
 
-    pop_col = names(tidyselect::eval_select(rlang::enquo(pop_col), x))
-    existing_col = names(tidyselect::eval_select(rlang::enquo(existing_col), x))
-    if (length(existing_col) == 0)
-        existing_col = NULL
 
     validate_redist_map(
         new_redist_map(x, graph, n_distr, pop_bounds, pop_col, graph_col,
@@ -213,6 +225,12 @@ dplyr_row_slice.redist_map = function(data, i, ...) {
     if (!is.null(exist_col))
         new_distr = length(unique(y[[exist_col]]))
     attr(y, "n_distr") = new_distr
+
+    # fix merge_idx
+    merge_idx = attr(data, "merge_idx")
+    if (!is.null(merge_idx))
+        merge_idx = as.integer(as.factor(merge_idx[i]))
+    attr(y, "merge_idx") = merge_idx
 
     # fix pop. bounds
     bounds = attr(data, "pop_bounds")
@@ -263,7 +281,8 @@ print.redist_map = function(x, ...) {
 
     merge_idx = attr(x, "merge_idx")
     if (!is.null(merge_idx))
-        cli::cat_line("Merged from another map with reindexing: ", capture_output(str(merge_idx)))
+        cli::cat_line("Merged from another map with reindexing:",
+                      capture_output(str(merge_idx, vec.len=2)))
 
     if (inherits(x, "sf")) {
         geom = st_geometry(x)
