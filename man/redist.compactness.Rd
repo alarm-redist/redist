@@ -89,17 +89,12 @@ The edges removed measure is number of egdes removed from the underlying adjacen
 }
 \examples{
 \dontrun{
-library(sf)
-library(lwgeom)
-library(redist)
-library(tidyverse)
-#Create (or load) a shapefile, in this case the unit square 
-box <-  rbind(c(0,0), c(1,0), c(1,1), c(0,1), c(0,0)) \%>\% list() \%>\%  
-st_polygon() \%>\% st_sfc() \%>\% st_as_sf()
-# Index the congressional districts
-box <- box \%>\% mutate(cds = 1, pop = 10)
-# Run redist.compactness
-redist.compactness(box, "cds", "pop")
+data("fl25")
+data("algdat.p10")
+
+redist.compactness(shp = fl25, district_membership = algdat.p10$cdmat[,1:3], 
+measure = c('PolsbyPopper', 'EdgesRemoved'))
+
 }
 
 }

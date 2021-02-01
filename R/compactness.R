@@ -99,24 +99,19 @@
 #' @importFrom magrittr %>%
 #' @importFrom sf st_cast st_bbox st_centroid st_within st_point_on_surface st_coordinates
 #' @importFrom sf st_linestring st_intersection st_area st_crs st_is_longlat st_length
-#' @importFrom sf st_convex_hull st_crs<- st_geometry st_distance st_union
+#' @importFrom sf st_convex_hull st_crs<- st_geometry st_distance st_union st_touches
 #' @importFrom lwgeom st_perimeter st_minimum_bounding_circle
-#' @importFrom dplyr select all_of
+#' @importFrom dplyr select all_of arrange bind_rows rename summarize
 #' @importFrom stats dist
 #' 
 #' @examples
 #' \dontrun{
-#' library(sf)
-#' library(lwgeom)
-#' library(redist)
-#' library(tidyverse)
-#' #Create (or load) a shapefile, in this case the unit square 
-#' box <-  rbind(c(0,0), c(1,0), c(1,1), c(0,1), c(0,0)) %>% list() %>%  
-#' st_polygon() %>% st_sfc() %>% st_as_sf()
-#' # Index the congressional districts
-#' box <- box %>% mutate(cds = 1, pop = 10)
-#' # Run redist.compactness
-#' redist.compactness(box, "cds", "pop")
+#' data("fl25")
+#' data("algdat.p10")
+#' 
+#' redist.compactness(shp = fl25, district_membership = algdat.p10$cdmat[,1:3], 
+#' measure = c('PolsbyPopper', 'EdgesRemoved'))
+#'
 #' }
 #' 
 #' @export redist.compactness
@@ -147,7 +142,7 @@ redist.compactness <- function(shp = NULL,
     stop('Please provide "district_membership" as a numeric vector or matrix.')
   }
   
-  if(measure == "all"){
+  if("all" %in% measure){
     measure <-  c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden", "EdgesRemoved", "logSpanningTree")
   }
   match.arg(arg = measure,several.ok = TRUE, choices = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden", "EdgesRemoved", "logSpanningTree"))
@@ -203,13 +198,8 @@ redist.compactness <- function(shp = NULL,
                  nloop = nloop) %>% 
     dplyr::select(all_of(c("districts", measure)), all_of(measure), nloop)
   
-  # Compute Specified Scores for provided districts
   if(any(measure %in% c("PolsbyPopper", "Schwartzberg", "LengthWidth", 
                         "ConvexHull", "Reock", "BoyceClark"))){
-    
-    nm <- sum(measure %in% c("PolsbyPopper", "Schwartzberg", "LengthWidth",
-                             "ConvexHull", "Reock", "BoyceClark"))
-    
     nc <- min(ncores, ncol(district_membership))
     if (nc == 1){
       `%oper%` <- `%do%`
@@ -219,6 +209,56 @@ redist.compactness <- function(shp = NULL,
       registerDoParallel(cl)
       on.exit(stopCluster(cl))
     }
+  }
+  
+  if('PolsbyPopper' %in% measure){
+    suppressWarnings(alist <- st_touches(shp))
+    suppressWarnings(perims <- st_length(st_cast(shp, 'LINESTRING')))
+    
+    
+    perim_adj_df <- lapply(1:length(alist), function(from) {
+      suppressWarnings(lines <- st_intersection(shp[from,], shp[alist[[from]],]))
+      suppressWarnings(lines <- st_cast(lines))
+      l_lines <- st_length(lines)
+      data.frame(origin = from,
+                 touching = alist[[from]],
+                 edge = as.vector(l_lines))
+    }) %>% 
+      bind_rows() %>% 
+      filter(edge > 0)
+    
+    adj_boundary_lengths <- perim_adj_df %>% 
+      group_by(origin) %>% 
+      summarize(perim_adj = sum(edge)) %>%
+      mutate(perim_full = as.numeric(perims),
+             perim_boundary = perim_full - perim_adj,
+             X1 = -1) %>%
+      filter(perim_boundary > .001) %>%
+      dplyr::select(X1, origin, perim_boundary) %>%
+      rename(origin = X1, touching = origin, edge = perim_boundary)
+    perim_df <- bind_rows(perim_adj_df, adj_boundary_lengths) %>%
+      arrange(origin, touching)
+    
+    splits <- split(x = district_membership, 
+                    rep(1:nc, 
+                        each = ceiling(ncol(district_membership)/nc)*nrow(district_membership))[1:(ncol(district_membership)*nrow(district_membership))]) %>% 
+      lapply(., FUN = function(x, r = nrow(district_membership)){matrix(data = x, nrow = r)})
+    
+    result <- foreach(map = 1:nc, .combine = 'cbind', .packages = c('sf', 'lwgeom')) %oper% {
+      polsbypopper(from = perim_df$origin, to = perim_df$touching, area = st_area(shp),
+                   perimeter = perim_df$edge, dm = splits[[map]], nd = nd)
+    }
+    
+    comp[['PolsbyPopper']] <- c(result)
+    
+  }
+  
+  # Compute Specified Scores for provided districts
+  if(any(measure %in% c("Schwartzberg", "LengthWidth", 
+                        "ConvexHull", "Reock", "BoyceClark"))){
+    
+    nm <- sum(measure %in% c("Schwartzberg", "LengthWidth",
+                             "ConvexHull", "Reock", "BoyceClark"))
     
     
     results <- foreach(map = 1:nmap, .combine = 'rbind', .packages = c('sf', 'lwgeom')) %oper% {
@@ -236,10 +276,7 @@ redist.compactness <- function(shp = NULL,
           perim <- sum(st_perimeter(united))
         }
         
-        if('PolsbyPopper' %in% measure){
-          ret[i, col] <- 4*pi*(area)/(perim)^2
-          col <- col + 1
-        }
+        
         
         if('Schwartzberg' %in% measure){
           ret[i, col] <- (perim/(2*pi*sqrt(area/pi)))
@@ -289,68 +326,11 @@ redist.compactness <- function(shp = NULL,
       }
       return(ret)
     }
-    comp[,2:(nm+1)] <- results
-    
-    # legacy version
-    # for(map in 1:nmap){
-    #   for (i in 1:nd){
-    #     united <- st_union(shp[district_membership[, map] == dists[i],])
-    #     area <- st_area(united)
-    # 
-    #     if(is.null(st_crs(united$EPSG))||is.na(st_is_longlat(united))){
-    #       perim <- sum(st_length(st_cast(st_cast(united, 'POLYGON'),'LINESTRING')))
-    #     } else if (st_is_longlat(united)){
-    #       perim <- sum(st_length(united))
-    #     } else {
-    #       perim <- sum(st_perimeter(united))
-    #     }
-    # 
-    #     if('PolsbyPopper' %in% measure){
-    #       comp[['PolsbyPopper']][i + nd*(map-1)] <- 4*pi*(area)/(perim)^2
-    #     }
-    # 
-    #     if('Schwartzberg' %in% measure){
-    #       comp[['Schwartzberg']][i + nd*(map-1)] <- (perim/(2*pi*sqrt(area/pi)))
-    #     }
-    # 
-    #     if('LengthWidth' %in% measure){
-    #       bbox <- st_bbox(united)
-    #       ratio <- unname((bbox$xmax - bbox$xmin)/(bbox$ymax - bbox$ymin))
-    #       comp[['LengthWidth']][i+ nd*(map-1)] <- ifelse(ratio>1, 1/ratio, ratio)
-    #     }
-    # 
-    #     if('ConvexHull' %in% measure){
-    #       cvh <- st_area(st_convex_hull(united))
-    #       comp[['ConvexHull']][i+ nd*(map-1)] <- area/cvh
-    #     }
-    # 
-    #     if('Reock' %in% measure){
-    #       mbc <- st_area(st_minimum_bounding_circle(united))
-    #       comp[['Reock']][i+ nd*(map-1)] <- area/mbc
-    #     }
-    # 
-    #     if('BoyceClark' %in% measure){
-    #       suppressWarnings(center <- st_centroid(united))
-    #       suppressWarnings(if(!st_within(united,center,sparse=F)[[1]]){
-    #         center <- st_point_on_surface(united)
-    #       })
-    #       center <- st_coordinates(center)
-    #       bbox <- st_bbox(united)
-    #       max_dist <- sqrt((bbox$ymax-bbox$ymin)^2+(bbox$xmax-bbox$xmin)^2)
-    #       st_crs(united) <- NA
-    # 
-    #       x_list <- center[1] + max_dist*cos(seq(0,15)*pi/8)
-    #       y_list <- center[2] + max_dist*sin(seq(0,15)*pi/8)
-    #       radials <- rep(NA_real_, 16)
-    #       for(angle in 1:16){
-    #         line <- data.frame(x = c(x_list[angle],center[1]), y = c(y_list[angle], center[2])) %>%
-    #           st_as_sf(coords = c('x','y'))  %>% st_coordinates() %>% st_linestring()
-    #         radials[angle] <- max(0, dist(st_intersection(line, united)))
-    #       }
-    #       comp[['BoyceClark']][i+ nd*(map-1)] <- 1 - (sum(abs(radials/sum(radials)*100-6.25))/200)
-    #     }
-    #   }
-    # }
+    if('PolsbyPopper' %in% measure){
+      comp[,3:(nm+2)] <- results
+    } else {
+      comp[,2:(nm+1)] <- results
+    }
   }
   
   if('FryerHolden' %in% measure){
@@ -394,4 +374,5 @@ redist.compactness <- function(shp = NULL,
   return(comp)
 }
 
-utils::globalVariables(c("i", "j"))
+utils::globalVariables(c("i", "j", "edge", "origin", "perim_full", "perim_adj",
+                         "perim_boundary", "X1", ".", "touching"))

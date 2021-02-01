@@ -34,6 +34,7 @@ extern SEXP _redist_max_dev(SEXP, SEXP, SEXP);
 extern SEXP _redist_meanmedian(SEXP);
 extern SEXP _redist_minkowski(SEXP, SEXP, SEXP);
 extern SEXP _redist_n_removed(SEXP, SEXP, SEXP);
+extern SEXP _redist_polsbypopper(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_reduce_adj(SEXP, SEXP, SEXP);
 extern SEXP _redist_responsiveness(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_rsg(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -74,6 +75,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_meanmedian",            (DL_FUNC) &_redist_meanmedian,             1},
     {"_redist_minkowski",             (DL_FUNC) &_redist_minkowski,              3},
     {"_redist_n_removed",             (DL_FUNC) &_redist_n_removed,              3},
+    {"_redist_polsbypopper",          (DL_FUNC) &_redist_polsbypopper,           6},
     {"_redist_reduce_adj",            (DL_FUNC) &_redist_reduce_adj,             3},
     {"_redist_responsiveness",        (DL_FUNC) &_redist_responsiveness,         4},
     {"_redist_rsg",                   (DL_FUNC) &_redist_rsg,                    6},
