@@ -132,36 +132,39 @@ mat group_pct(umat m, vec group_pop, vec total_pop, int n_distr) {
  * Compute the deviation from the equal population constraint.
  */
 // TESTED
-NumericMatrix pop_dev(const umat &districts, const uvec &pop, int n_distr) {
+NumericMatrix pop_tally(umat districts, vec pop, int n_distr) {
     int N = districts.n_cols;
     int V = districts.n_rows;
-    double target_pop = sum(pop) / n_distr;
-    NumericMatrix dev(n_distr, N);
+
+    NumericMatrix tally(n_distr, N);
     for (int i = 0; i < N; i++) {
-        std::vector<double> accuml(n_distr);
         for (int j = 0; j < V; j++) {
             int d = districts(j, i) - 1; // districts are 1-indexed
-            accuml.at(d) += pop(j) / target_pop;
-        }
-        for (int d = 0; d < n_distr; d++) {
-            dev(d,i) = abs(accuml[d]-1);
+            tally(d, i) = tally(d, i) + pop(j);
         }
     }
-    return dev;
+
+    return tally;
 }
 
 /*
  * Compute the maximum deviation from the equal population constraint.
  */
 // TESTED
-NumericVector max_dev(const umat &districts, const uvec &pop, int n_distr) {
+NumericVector max_dev(const umat districts, const vec pop, int n_distr) {
     int N = districts.n_cols;
-    NumericMatrix dev = pop_dev(districts, pop, n_distr);
-    NumericVector max_d(N);
+    double target_pop = sum(pop) / n_distr;
+
+    NumericMatrix dev = pop_tally(districts, pop, n_distr) / target_pop - 1;
+    NumericVector res(N);
     for (int i = 0; i < N; i++) {
-        max_d(i) = max(dev(_, i));
+        for (int j = 0; j < n_distr; j++) {
+            if (abs(dev(i, j)) > res(i))
+                res(i) = abs(dev(i, j));
+        }
     }
-    return max_d;
+
+    return res;
 }
 
 /*

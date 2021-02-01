@@ -86,6 +86,7 @@
 #' Must be between 0 and 1.
 #' @param truncate Whether to truncate the importance sampling weights at the
 #' final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.
+#' Truncation only applied if \code{resample=TRUE}.
 #' @param trunc_fn A function which takes in a vector of weights and returns
 #' a truncated vector. The default will generally work OK, but consider manual
 #' truncation.
@@ -135,7 +136,7 @@ redist_smc = function(map, n_sims, counties=NULL, compactness=1, constraints=lis
         counties = rep(1, V)
     } else {
         # handle discontinuous counties
-        component = contiguity(graph, rep(1, V))
+        component = contiguity(graph, as.integer(as.factor(counties)))
         counties = if_else(component > 1,
                            paste0(as.character(counties), "-", component),
                            as.character(counties)) %>%
@@ -167,50 +168,37 @@ redist_smc = function(map, n_sims, counties=NULL, compactness=1, constraints=lis
     n_distr = attr(map, "n_distr")
 
     lp = rep(0, n_sims)
-    maps = smc_plans(n_sims, graph, counties, pop, n_distr, pop_bounds[2],
-                     pop_bounds[1], pop_bounds[3], compactness,
-                     constraints$status_quo$strength, constraints$status_quo$current, n_current,
-                     constraints$vra$strength, constraints$vra$tgt_vra_min,
-                     constraints$vra$tgt_vra_other, constraints$vra$pow_vra, constraints$vra$min_pop,
-                     constraints$incumbency$strength, constraints$incumbency$incumbents,
-                     lp, adapt_k_thresh, seq_alpha, verbosity);
+    plans = smc_plans(n_sims, graph, counties, pop, n_distr, pop_bounds[2],
+                      pop_bounds[1], pop_bounds[3], compactness,
+                      constraints$status_quo$strength, constraints$status_quo$current, n_current,
+                      constraints$vra$strength, constraints$vra$tgt_vra_min,
+                      constraints$vra$tgt_vra_other, constraints$vra$pow_vra, constraints$vra$min_pop,
+                      constraints$incumbency$strength, constraints$incumbency$incumbents,
+                      lp, adapt_k_thresh, seq_alpha, verbosity);
 
-    dev = max_dev(maps, pop, n_distr)
-    maps = maps
 
-    lr = -lp + constraint_fn(maps)
+    lr = -lp + constraint_fn(plans)
     wgt = exp(lr - mean(lr))
     wgt = wgt / mean(wgt)
-    orig_wgt = wgt
-    if (truncate)
-        wgt = trunc_fn(wgt)
-    wgt = wgt/sum(wgt)
     n_eff = length(wgt) * mean(wgt)^2 / mean(wgt^2)
+
+    if (resample) {
+        mod_wgt = if (truncate) trunc_fn(wgt) else wgt
+        n_eff = length(mod_wgt) * mean(mod_wgt)^2 / mean(mod_wgt^2)
+        mod_wgt = mod_wgt / sum(mod_wgt)
+
+        plans = plans[, sample(n_sims, n_sims, replace=T, prob=mod_wgt)]
+    }
 
     if (n_eff/n_sims <= 0.05)
         warning("Less than 5% resampling efficiency. Consider weakening constraints and/or adjusting `seq_alpha`.")
 
-    if (resample) {
-        maps = maps[, sample(n_sims, n_sims, replace=T, prob=wgt)]
-        wgt = rep(1/n_sims, n_sims)
-    }
-
-    algout = list(
-        graph = graph,
-        plans = maps,
-        wgt = wgt,
-        orig_wgt = orig_wgt,
-        n_sims = n_sims,
-        n_eff = n_eff,
-        compactness = compactness,
-        constraints = constraints,
-        adapt_k_thresh = adapt_k_thresh,
-        seq_alpha = seq_alpha,
-        algorithm="smc"
-    )
-    class(algout) = "redist"
-
-    algout
+    new_redist_plans(plans, map, "smc", wgt, resample,
+                     n_eff = n_eff,
+                     compactness = compactness,
+                     constraints = constraints,
+                     adapt_k_thresh = adapt_k_thresh,
+                     seq_alpha = seq_alpha)
 }
 
 #' Helper function to truncate importance weights.
