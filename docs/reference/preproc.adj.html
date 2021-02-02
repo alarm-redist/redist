@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Redistricting via Compact Random Seed and Grow Algorithm — redist.crsg • redist</title>
+<title>Preprocess adjacency arguments — preproc.adj • redist</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,10 +46,8 @@
 
 
 
-<meta property="og:title" content="Redistricting via Compact Random Seed and Grow Algorithm — redist.crsg" />
-<meta property="og:description" content="redist.crsg generates redistricting plans using a random seed a grow
-algorithm.  This is the compact districting algorithm described in Chen and
-Rodden (2013)." />
+<meta property="og:title" content="Preprocess adjacency arguments — preproc.adj" />
+<meta property="og:description" content="Preprocess adjacency arguments" />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -130,114 +128,38 @@ Rodden (2013)." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Redistricting via Compact Random Seed and Grow Algorithm</h1>
-    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/crsg.R'><code>R/crsg.R</code></a></small>
-    <div class="hidden name"><code>redist.crsg.Rd</code></div>
+    <h1>Preprocess adjacency arguments</h1>
+    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/random_subgraph.R'><code>R/random_subgraph.R</code></a></small>
+    <div class="hidden name"><code>preproc.adj.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p><code>redist.crsg</code> generates redistricting plans using a random seed a grow
-algorithm.  This is the compact districting algorithm described in Chen and
-Rodden (2013).</p>
+    <p>Preprocess adjacency arguments</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.crsg</span><span class='op'>(</span>
-  <span class='va'>adj.list</span>,
-  <span class='va'>population</span>,
-  <span class='va'>area</span>,
-  <span class='va'>x_center</span>,
-  <span class='va'>y_center</span>,
-  <span class='va'>ndists</span>,
-  <span class='va'>thresh</span>,
-  verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  maxiter <span class='op'>=</span> <span class='fl'>5000</span>
-<span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>preproc.adj</span><span class='op'>(</span><span class='va'>shp</span>, <span class='va'>adj</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>adj.list</th>
-      <td><p>List of length N, where N is the number of precincts.
-Each list element is an integer vector indicating which precincts that precinct
-is adjacent to.  It is assumed that precinct numbers start at 0.</p></td>
+      <th>shp</th>
+      <td><p>sf or SpatialPolygonsDataFrame</p></td>
     </tr>
     <tr>
-      <th>population</th>
-      <td><p>numeric vector of length N, where N is the number of precincts.
-Each element lists the population total of the corresponding precinct, and is
-used to enforce population constraints.</p></td>
-    </tr>
-    <tr>
-      <th>area</th>
-      <td><p>numeric vector of length N, where N is the number of precincts. Each
-element is the area of the corresponding precinct.</p></td>
-    </tr>
-    <tr>
-      <th>x_center</th>
-      <td><p>numeric vector of length N, where N is the number of precincts.
-Each element is the x coordinate of the geographic centroid of the corresponding
-precinct.</p></td>
-    </tr>
-    <tr>
-      <th>y_center</th>
-      <td><p>numeric vector of length N, where N is the number of precincts.
-Each element is the y coordinate of the geographic centroid of the corresponding
-precinct.</p></td>
-    </tr>
-    <tr>
-      <th>ndists</th>
-      <td><p>integer, the number of districts we want to partition the
-precincts into.</p></td>
-    </tr>
-    <tr>
-      <th>thresh</th>
-      <td><p>numeric, indicating how close district population targets have
-to be to the target population before algorithm converges.  thresh=0.05 for
-example means that all districts must be between 0.95 and 1.05 times the size
-of target.pop in population size.</p></td>
-    </tr>
-    <tr>
-      <th>verbose</th>
-      <td><p>boolean, indicating whether the time to run the algorithm is
-printed.</p></td>
-    </tr>
-    <tr>
-      <th>maxiter</th>
-      <td><p>integer, indicating maximum number of iterations to attempt
-before convergence to population constraint fails.  If it fails once, it will
-use a different set of start values and try again.  If it fails again,
-redist.rsg() returns an object of all NAs, indicating that use of more
-iterations may be advised. Default is 5000.</p></td>
+      <th>adj</th>
+      <td><p>adjacency list for shp</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>list, containing three objects containing the completed redistricting
-plan.</p><ul>
-<li><p><code>district_membership</code>  A vector of length N, indicating the
-district membership of each precinct.</p></li>
-<li><p><code>district_list</code>  A list of length Ndistrict.  Each list contains a
-vector of the precincts in the respective district.</p></li>
-<li><p><code>district_pop</code>  A vector of length Ndistrict, containing the
-population totals of the respective districts.</p></li>
-</ul>
-
-    <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
-
-    <p>Jowei Chen and Jonathan Rodden (2013) ``Unintentional
-Gerrymandering: Political Geography and Electoral Bias in Legislatures.''
-Quarterly Journal of Political Science. 8(3): 239-269.</p>
+    <p>adjacency list</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"fl25"</span><span class='op'>)</span>
-<span class='va'>adj</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.adjacency.html'>redist.adjacency</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
-<span class='va'>area</span> <span class='op'>&lt;-</span> <span class='fu'>sf</span><span class='fu'>::</span><span class='fu'><a href='https://r-spatial.github.io/sf/reference/geos_measures.html'>st_area</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
-<span class='va'>centers</span> <span class='op'>&lt;-</span> <span class='fu'>sf</span><span class='fu'>::</span><span class='fu'><a href='https://r-spatial.github.io/sf/reference/st_coordinates.html'>st_coordinates</a></span><span class='op'>(</span><span class='fu'>sf</span><span class='fu'>::</span><span class='fu'><a href='https://r-spatial.github.io/sf/reference/geos_unary.html'>st_centroid</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span><span class='op'>)</span>
-<span class='fu'>redist.crsg</span><span class='op'>(</span>adj.list <span class='op'>=</span> <span class='va'>adj</span>, population <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>, area <span class='op'>=</span> <span class='va'>area</span>,
-x_center <span class='op'>=</span> <span class='va'>centers</span><span class='op'>[</span>,<span class='fl'>1</span><span class='op'>]</span>, y_center <span class='op'>=</span> <span class='va'>centers</span><span class='op'>[</span>,<span class='fl'>2</span><span class='op'>]</span>, ndists <span class='op'>=</span> <span class='fl'>2</span>, thresh <span class='op'>=</span> <span class='fl'>.1</span><span class='op'>)</span>
+<span class='fu'>preproc.adj</span><span class='op'>(</span><span class='va'>fl25</span>,<span class='cn'>NULL</span><span class='op'>)</span>
 <span class='op'>}</span>
 </div></pre>
   </div>
