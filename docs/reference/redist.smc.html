@@ -83,7 +83,7 @@ boundary constraints." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.4</span>
       </span>
     </div>
 
@@ -91,7 +91,7 @@ boundary constraints." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -106,7 +106,7 @@ boundary constraints." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
+      <a href="../articles/tidy-redist.html">Tidy `redist`</a>
     </li>
   </ul>
 </li>
@@ -114,7 +114,7 @@ boundary constraints." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/kosukeimai/redist/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -153,9 +153,10 @@ boundary constraints.</p>
   compactness <span class='op'>=</span> <span class='fl'>1</span>,
   constraints <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>,
   resample <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  pop_bounds <span class='op'>=</span> <span class='cn'>NULL</span>,
   constraint_fn <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>m</span><span class='op'>)</span> <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fl'>0</span>, <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span><span class='op'>(</span><span class='va'>m</span><span class='op'>)</span><span class='op'>)</span>,
-  adapt_k_thresh <span class='op'>=</span> <span class='fl'>0.95</span>,
-  seq_alpha <span class='op'>=</span> <span class='fl'>0.1</span> <span class='op'>+</span> <span class='fl'>0.2</span> <span class='op'>*</span> <span class='va'>compactness</span>,
+  adapt_k_thresh <span class='op'>=</span> <span class='fl'>0.975</span>,
+  seq_alpha <span class='op'>=</span> <span class='fl'>0.2</span> <span class='op'>+</span> <span class='fl'>0.2</span> <span class='op'>*</span> <span class='va'>compactness</span>,
   truncate <span class='op'>=</span> <span class='op'>(</span><span class='va'>compactness</span> <span class='op'>!=</span> <span class='fl'>1</span><span class='op'>)</span>,
   trunc_fn <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span> <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>pmin</a></span><span class='op'>(</span><span class='va'>x</span>, <span class='fl'>0.01</span> <span class='op'>*</span> <span class='va'>nsims</span><span class='op'>^</span><span class='fl'>0.4</span><span class='op'>)</span>,
   verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
@@ -195,7 +196,8 @@ constraint is desired, this parameter should be left blank.</p></td>
       <td><p>The desired population constraint.  All sampled districts
 will have a deviation from the target district size no more than this value
 in percentage terms, i.e., <code>popcons=0.01</code> will ensure districts have
-populations within 1% of the target population.</p></td>
+populations within 1% of the target population.  Also see <code>pop_bounds</code>
+below for a way to specify more precise bounds.</p></td>
     </tr>
     <tr>
       <th>compactness</th>
@@ -213,6 +215,13 @@ See the 'Details' section for more information.</p></td>
       <td><p>Whether to perform a final resampling step so that the
 generated plans can be used immediately.  Set this to <code>FALSE</code> to perform
 direct importance sampling estimates, or to adjust the weights manually.</p></td>
+    </tr>
+    <tr>
+      <th>pop_bounds</th>
+      <td><p>A numeric vector with three elements <code><a href='https://rdrr.io/r/base/c.html'>c(lower, target, upper)</a></code>
+providing more precise population bounds for the algorithm. Districts
+will have population between <code>lower</code> and <code>upper</code>, with a goal of
+<code>target</code>.  If set, overrides <code>popcons</code>.</p></td>
     </tr>
     <tr>
       <th>constraint_fn</th>
@@ -279,6 +288,12 @@ and each column is a sample.</p></dd>
     <p>This function draws nearly-independent samples from a specific target measure,
 controlled by the <code>popcons</code>, <code>compactness</code>, <code>constraints</code>, and
 <code>constraint_fn</code> parameters.</p>
+<p>Key to ensuring good performance is monitoring the efficiency of the resampling
+process at each SMC stage.  Unless <code>silent=F</code>, this function will print
+out the effective sample size of each resampling step to allow the user to
+monitor the efficiency.  If <code>verbose=T</code> the function will also print
+out information on the \(k_i\) values automatically chosen and the
+acceptance rate (based on the population constraint) at each step.</p>
 <p>Higher values of <code>compactness</code> sample more compact districts;
 setting this parameter to 1 is computationally efficient and generates nicely
 compact districts.  Values of other than 1 may lead to highly variable
@@ -286,7 +301,7 @@ importance sampling weights.  By default these weights are truncated at
 <code>nsims^0.04 / 100</code> to stabilize the resulting estimates, but if truncation
 is used, a specific truncation function should probably be chosen by the user.</p>
 <p>The <code>constraints</code> parameter allows the user to apply several common
-redistricting contraints without implementing them by hand. This parameter
+redistricting constraints without implementing them by hand. This parameter
 is a list, which may contain any of the following named entries:</p><ul>
 <li><p><code>status_quo</code>: a list with two entries:</p><ul>
 <li><p><code>strength</code>, a number controlling the tendency of the generated districts
@@ -348,7 +363,7 @@ Available at <a href='https://imai.fas.harvard.edu/research/files/SMCredist.pdf'
 
       <footer>
       <div class="copyright">
-  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Alexander Tarr, Jun Kawahara, Kosuke Imai.</p>
+  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Jun Kawahara, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">

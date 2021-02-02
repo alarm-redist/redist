@@ -17,3 +17,4 @@ get_plan_matrix(x)
 \description{
 Extract the matrix of district assignments from a redistricting simulation
 }
+\concept{analyze}

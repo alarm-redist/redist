@@ -185,3 +185,4 @@ sampled_constr = redist.smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,
 McCartan, C., & Imai, K. (2020). Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans.
 Available at \url{https://imai.fas.harvard.edu/research/files/SMCredist.pdf}.
 }
+\concept{simulate}

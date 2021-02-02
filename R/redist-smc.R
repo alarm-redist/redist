@@ -139,6 +139,7 @@
 #'                             ))
 #' }
 #'
+#' @concept simulate
 #' @md
 #' @export
 redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,

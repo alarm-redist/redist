@@ -41,4 +41,6 @@ viz_prep = redist.prep_group_viz(sampled_plans, fl25, fl25$VAP, fl25$BlackVAP)
 # Run the app!
 redist.group_viz(viz_prep)
 }
+
 }
+\concept{visualize}

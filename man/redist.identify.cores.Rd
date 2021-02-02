@@ -41,3 +41,4 @@ precincts. Given a k, it identifies all precincts within k edges of another dist
 on a graph. Each precinct within k of another district gets it own group. Connected
 components more than k away are givent the same grouping variable.
 }
+\concept{prepare}

@@ -114,6 +114,7 @@
 #'                             ))
 #' }
 #'
+#' @concept simulate
 #' @md
 #' @export
 redist_smc = function(map, n_sims, counties=NULL, compactness=1, constraints=list(),

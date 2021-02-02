@@ -87,3 +87,4 @@ Election Law Journal: Rules, Politics, and Policy. Pp. 39-57.http://doi.org/10.1
 Samuel S.-H. Wang. 2016. "Three Tests for Practical Evaluation of Partisan Gerrymandering."
 Stanford Law Review, 68, Pp. 1263 - 1321.
 }
+\concept{analyze}

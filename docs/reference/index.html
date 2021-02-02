@@ -79,7 +79,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.4</span>
       </span>
     </div>
 
@@ -87,7 +87,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -102,7 +102,7 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
+      <a href="../articles/tidy-redist.html">Tidy `redist`</a>
     </li>
   </ul>
 </li>
@@ -110,7 +110,7 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/kosukeimai/redist/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -139,9 +139,287 @@
     </colgroup>
 
     <tbody>
+      
+      
+      <tr>
+        
+        <td>
+          <p><code><a href="redist-package.html">redist-package</a></code> </p>
+        </td>
+        <td><p>Markov Chain Monte Carlo Methods for Redistricting Simulation</p></td>
+      </tr>
+    </tbody><tbody>
       <tr>
         <th colspan="2">
-          <h2 id="section-all-functions" class="hasAnchor"><a href="#section-all-functions" class="anchor"></a>All functions</h2>
+          <h2 id="section-prepare" class="hasAnchor"><a href="#section-prepare" class="anchor"></a>Prepare</h2>
+          <p class="section-desc"><p>Helper functions to prepare a redistricting simulation.</p></p>
+        </th>
+      </tr>
+      
+      
+    </tbody><tbody>
+      
+      
+      <tr>
+        
+        <td>
+          <p><code><a href="redist_map.html">redist_map()</a></code> <code><a href="redist_map.html">as_redist_map()</a></code> </p>
+        </td>
+        <td><p>Create a <code>redist_map</code> object.</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="get_graph.html">get_graph()</a></code> </p>
+        </td>
+        <td><p>Extract the adjacency graph from a <code>redist_map</code> object</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="is_contiguous.html">is_contiguous()</a></code> </p>
+        </td>
+        <td><p>Check that a <code>redist_map</code> object is contiguous</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="merge_by.html">merge_by()</a></code> </p>
+        </td>
+        <td><p>Merge map units</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="plot.redist_map.html">plot(<i>&lt;redist_map&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Plot a <code>redist_map</code></p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.identify.cores.html">redist.identify.cores()</a></code> <code><a href="redist.identify.cores.html">make_cores()</a></code> </p>
+        </td>
+        <td><p>Identify Cores of a District (Heuristic)</p></td>
+      </tr>
+    </tbody><tbody>
+      <tr>
+        <th colspan="2">
+          <h2 id="section-simulate" class="hasAnchor"><a href="#section-simulate" class="anchor"></a>Simulate</h2>
+          <p class="section-desc"><p>Core functions to perform a redistricting simulation.</p></p>
+        </th>
+      </tr>
+      
+      
+    </tbody><tbody>
+      
+      
+      <tr>
+        
+        <td>
+          <p><code><a href="redist_smc.html">redist_smc()</a></code> </p>
+        </td>
+        <td><p>SMC Redistricting Sampler</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.mcmc.html">redist.mcmc()</a></code> </p>
+        </td>
+        <td><p>MCMC Redistricting Simulator</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="get_sampling_info.html">get_sampling_info()</a></code> </p>
+        </td>
+        <td><p>Extract the sampling information from a redistricting simulation</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.combine.html">redist.combine()</a></code> </p>
+        </td>
+        <td><p>Combine successive runs of <code>redist.mcmc</code></p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.combine.anneal.html">redist.combine.anneal()</a></code> </p>
+        </td>
+        <td><p>redist.combine.anneal</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.crsg.html">redist.crsg()</a></code> </p>
+        </td>
+        <td><p>Redistricting via Compact Random Seed and Grow Algorithm</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.enumpart.html">redist.enumpart()</a></code> </p>
+        </td>
+        <td><p>Enumerate All Parititions</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.ipw.html">redist.ipw()</a></code> </p>
+        </td>
+        <td><p>Inverse probability reweighting for MCMC Redistricting</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.mcmc.anneal.html">redist.mcmc.anneal()</a></code> </p>
+        </td>
+        <td><p>MCMC Redistricting Simulator using Simulated Annealing</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.rsg.html">redist.rsg()</a></code> </p>
+        </td>
+        <td><p>Redistricting via Random Seed and Grow Algorithm</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.smc.html">redist.smc()</a></code> </p>
+        </td>
+        <td><p>SMC Redistricting Sampler</p></td>
+      </tr>
+    </tbody><tbody>
+      <tr>
+        <th colspan="2">
+          <h2 id="section-analyze" class="hasAnchor"><a href="#section-analyze" class="anchor"></a>Analyze</h2>
+          <p class="section-desc"><p>Functions to analyze the results of a redistricting simulation.</p></p>
+        </th>
+      </tr>
+      
+      
+    </tbody><tbody>
+      
+      
+      <tr>
+        
+        <td>
+          <p><code><a href="add_reference.html">add_reference()</a></code> </p>
+        </td>
+        <td><p>Add a reference plan to a set of plans</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="get_plan_matrix.html">get_plan_matrix()</a></code> <code><a href="get_plan_matrix.html">as.matrix(<i>&lt;redist_plans&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Extract the matrix of district assignments from a redistricting simulation</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="get_plan_weights.html">get_plan_weights()</a></code> </p>
+        </td>
+        <td><p>Extract the sampling weights from a redistricting simulation</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="imp_confint.html">imp_confint()</a></code> </p>
+        </td>
+        <td><p>Confidence Intervals for Importance Sampling Estimates</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="pullback.html">pullback()</a></code> </p>
+        </td>
+        <td><p>Pull back plans to unmerged units</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.compactness.html">redist.compactness()</a></code> <code><a href="redist.compactness.html">distr_compactness()</a></code> </p>
+        </td>
+        <td><p>Calculate compactness measures for a set of districts</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.distances.html">redist.distances()</a></code> </p>
+        </td>
+        <td><p>Compute Distance between Partitions</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.group.percent.html">redist.group.percent()</a></code> <code><a href="redist.group.percent.html">group_frac()</a></code> </p>
+        </td>
+        <td><p>Calculate Group Percent by District</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.metrics.html">redist.metrics()</a></code> </p>
+        </td>
+        <td><p>Calculate gerrymandering metrics for a set of districts</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist_plans.html">redist_plans</a></code> </p>
+        </td>
+        <td><p>A set of redistricting plans</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="subset_sampled.html">subset_sampled()</a></code> <code><a href="subset_sampled.html">subset_ref()</a></code> </p>
+        </td>
+        <td><p>Subset to sampled or reference draws</p></td>
+      </tr>
+    </tbody><tbody>
+      <tr>
+        <th colspan="2">
+          <h2 id="section-visualize" class="hasAnchor"><a href="#section-visualize" class="anchor"></a>Visualize</h2>
+          <p class="section-desc"><p>Functions to plot redistricting plans and the results of a simulation.</p></p>
+        </th>
+      </tr>
+      
+      
+    </tbody><tbody>
+      
+      
+      <tr>
+        
+        <td>
+          <p><code><a href="plot.redist_map.html">plot(<i>&lt;redist_map&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Plot a <code>redist_map</code></p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="plot.redist_plans.html">plot(<i>&lt;redist_plans&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Summary plots for <code>redist_plans</code></p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="plot_distr_qtys.html">plot_distr_qtys()</a></code> </p>
+        </td>
+        <td><p>Plot sorted box and whisker plots</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="plot_hist.html">plot_hist()</a></code> <code><a href="plot_hist.html">hist(<i>&lt;redist_plans&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Plot a histogram of a summary statistic</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="plot_plan.html">plot_plan()</a></code> </p>
+        </td>
+        <td><p>Plot a district assignment</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.group_viz.html">redist.group_viz()</a></code> </p>
+        </td>
+        <td><p>Visualize Plans and Their Treatment of Groups</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.map.html">redist.map()</a></code> </p>
+        </td>
+        <td><p>Creates a map with optional graph overlay</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.prep_group_viz.html">redist.prep_group_viz()</a></code> </p>
+        </td>
+        <td><p>Prepare to Visualize Plans</p></td>
+      </tr>
+    </tbody><tbody>
+      <tr>
+        <th colspan="2">
+          <h2 id="section-other-functions" class="hasAnchor"><a href="#section-other-functions" class="anchor"></a>Other Functions</h2>
           <p class="section-desc"></p>
         </th>
       </tr>
@@ -198,6 +476,18 @@
       </tr><tr>
         
         <td>
+          <p><code><a href="preproc.adj.html">preproc.adj()</a></code> </p>
+        </td>
+        <td><p>Preprocess adjacency arguments</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="preproc.shp.html">preproc.shp()</a></code> </p>
+        </td>
+        <td><p>Preprocess shapefile arguments</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="redist-package.html">redist-package</a></code> </p>
         </td>
         <td><p>Markov Chain Monte Carlo Methods for Redistricting Simulation</p></td>
@@ -216,9 +506,9 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.combine.anneal.html">redist.combine.anneal()</a></code> </p>
+          <p><code><a href="redist.choropleth.html">redist.choropleth()</a></code> </p>
         </td>
-        <td><p>redist.combine.anneal</p></td>
+        <td><p>Creates a Choropleth</p></td>
       </tr><tr>
         
         <td>
@@ -228,21 +518,21 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.combine.html">redist.combine()</a></code> </p>
+          <p><code><a href="redist.competitiveness.html">redist.competitiveness()</a></code> </p>
         </td>
-        <td><p>Combine successive runs of <code>redist.mcmc</code></p></td>
+        <td><p>Compute Competitiveness</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.compactness.html">redist.compactness()</a></code> </p>
+          <p><code><a href="redist.county.id.html">redist.county.id()</a></code> </p>
         </td>
-        <td><p>Calculate compactness measures for a set of districts</p></td>
+        <td><p>Create County IDs</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.crsg.html">redist.crsg()</a></code> </p>
+          <p><code><a href="redist.county.relabel.html">redist.county.relabel()</a></code> </p>
         </td>
-        <td><p>Redistricting via Compact Random Seed and Grow Algorithm</p></td>
+        <td><p>Relabel Discontinuous Counties</p></td>
       </tr><tr>
         
         <td>
@@ -252,15 +542,15 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.distances.html">redist.distances()</a></code> </p>
-        </td>
-        <td><p>Compute Distance between Partitions</p></td>
-      </tr><tr>
-        
-        <td>
           <p><code><a href="redist.enumerate.html">redist.enumerate()</a></code> </p>
         </td>
         <td><p>Exact Redistricting Plan Enumerator</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.find.target.html">redist.find.target()</a></code> </p>
+        </td>
+        <td><p>Find Majority Minority Remainder</p></td>
       </tr><tr>
         
         <td>
@@ -276,39 +566,9 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.ipw.html">redist.ipw()</a></code> </p>
-        </td>
-        <td><p>Inverse probability reweighting for MCMC Redistricting</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="redist.map.html">redist.map()</a></code> </p>
-        </td>
-        <td><p>Creates a map with optional graph overlay</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="redist.mcmc.anneal.html">redist.mcmc.anneal()</a></code> </p>
-        </td>
-        <td><p>MCMC Redistricting Simulator using Simulated Annealing</p></td>
-      </tr><tr>
-        
-        <td>
           <p><code><a href="redist.mcmc.mpi.html">redist.mcmc.mpi()</a></code> </p>
         </td>
         <td><p>MCMC Redistricting Simulator using MPI</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="redist.mcmc.html">redist.mcmc()</a></code> </p>
-        </td>
-        <td><p>MCMC Redistricting Simulator</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="redist.metrics.html">redist.metrics()</a></code> </p>
-        </td>
-        <td><p>Calculate gerrymandering metrics for a set of districts</p></td>
       </tr><tr>
         
         <td>
@@ -324,15 +584,21 @@
       </tr><tr>
         
         <td>
+          <p><code><a href="redist.random.subgraph.html">redist.random.subgraph()</a></code> </p>
+        </td>
+        <td><p>Return a random subgraph of a shape</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="redist.read.enumpart.html">redist.read.enumpart()</a></code> </p>
         </td>
         <td><p>Read Results from enumpart</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.rsg.html">redist.rsg()</a></code> </p>
+          <p><code><a href="redist.reduce.adjacency.html">redist.reduce.adjacency()</a></code> </p>
         </td>
-        <td><p>Redistricting via Random Seed and Grow Algorithm</p></td>
+        <td><p>Reduce Adjacency List</p></td>
       </tr><tr>
         
         <td>
@@ -354,15 +620,33 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.smc.html">redist.smc()</a></code> </p>
-        </td>
-        <td><p>SMC Redistricting Sampler</p></td>
-      </tr><tr>
-        
-        <td>
           <p><code><a href="redist.smc_is_ci.html">redist.smc_is_ci()</a></code> </p>
         </td>
         <td><p>Confidence Intervals for Importance Sampling Estimates</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.splits.html">redist.splits()</a></code> </p>
+        </td>
+        <td><p>Count County Splits</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.subset.html">redist.subset()</a></code> </p>
+        </td>
+        <td><p>Subset a shp</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.subset_bounds.html">redist.subset_bounds()</a></code> </p>
+        </td>
+        <td><p>Calculate Population Bounds for a Subset of a Map</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist_quantile_trunc.html">redist_quantile_trunc()</a></code> </p>
+        </td>
+        <td><p>Helper function to truncate importance weights</p></td>
       </tr>
     </tbody>
     </table>
@@ -378,7 +662,7 @@
 
       <footer>
       <div class="copyright">
-  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Alexander Tarr, Jun Kawahara, Kosuke Imai.</p>
+  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Jun Kawahara, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">

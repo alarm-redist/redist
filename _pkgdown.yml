@@ -1,0 +1,25 @@
+reference:
+- contents:
+  - redist-package
+- title: Prepare
+  desc: Helper functions to prepare a redistricting simulation.
+- contents:
+  - redist_map
+  - has_concept("prepare")
+- title: Simulate
+  desc: Core functions to perform a redistricting simulation.
+- contents:
+  - redist_smc
+  - redist.mcmc
+  - has_concept("simulate")
+- title: Analyze
+  desc: Functions to analyze the results of a redistricting simulation.
+- contents:
+  - has_concept("analyze")
+- title: Visualize
+  desc: Functions to plot redistricting plans and the results of a simulation.
+- contents:
+  - has_concept("visualize")
+- title: Other Functions
+- contents:
+  - lacks_concepts(c("prepare", "simulate", "analyze", "visualize"))

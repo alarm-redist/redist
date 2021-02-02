@@ -129,6 +129,7 @@ reconstruct.redist_map = function(data, old) {
 #' d = redist_map(fl25, n_distr=3, pop_tol=0.05)
 #' dplyr::filter(d, pop >= 10e3)
 #'
+#' @concept prepare
 #' @md
 #' @export
 redist_map = function(..., n_distr=NULL, pop_tol=0.01, pop_bounds=NULL, pop_col="pop",
@@ -201,6 +202,7 @@ as_redist_map = function(x) {
 #'
 #' @param x the \code{redist_map} object
 #' @returns a zero-indexed adjacency list
+#' @concept prepare
 #' @export
 get_graph = function(x) {
     stopifnot(inherits(x, "redist_map"))
@@ -260,7 +262,7 @@ dplyr_reconstruct.redist_map = function(data, template) {
 
 #' @export
 #' @importFrom dplyr summarise
-summarise.redist_map = function(.data, ...) {
+summarise.redist_map = function(.data, ..., .groups=NULL) {
     ret = NextMethod()
 
     # rebuild the graph if need be
@@ -341,6 +343,8 @@ print.redist_map = function(x, ...) {
 #' plot(d, BlackPop/pop)
 #'
 #' @method plot redist_map
+#' @concept prepare
+#' @concept visualize
 #' @export
 plot.redist_map = function(x, y, ...) {
     if (!inherits(x, "sf")) stop("Plotting requires a shapefile.")

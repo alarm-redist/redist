@@ -152,3 +152,4 @@ sampled_constr = redist_smc(fl_map, 10000, constraints=list(
 McCartan, C., & Imai, K. (2020). Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans.
 Available at \url{https://imai.fas.harvard.edu/research/files/SMCredist.pdf}.
 }
+\concept{simulate}

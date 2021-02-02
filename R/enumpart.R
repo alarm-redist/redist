@@ -255,8 +255,9 @@ redist.calc.frontier.size <- function(ordered_path){
 #' @param population Integer Vector. Defaults to NULL. If supplied, computes the parity.
 #'
 #' @return List with entries district_membership and parity.
-#' @export
 #'
+#' @concept simulate
+#' @export
 redist.enumpart <- function(adjlist, unordered_path, ordered_path, out_path,
                             ndist=2, all=TRUE, n=NULL, init=FALSE,
                             weight_path=NULL, lower=NULL, upper=NULL,

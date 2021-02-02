@@ -25,7 +25,7 @@ is adjacent to.  It is assumed that precinct numbers start at 0.}
 Each element lists the population total of the corresponding precinct, and is
 used to enforce population constraints.}
 
-\item{area}{numeric vector of length N, where N is the number of precincts. Each 
+\item{area}{numeric vector of length N, where N is the number of precincts. Each
 element is the area of the corresponding precinct.}
 
 \item{x_center}{numeric vector of length N, where N is the number of precincts.
@@ -85,3 +85,4 @@ Jowei Chen and Jonathan Rodden (2013) ``Unintentional
 Gerrymandering: Political Geography and Electoral Bias in Legislatures.''
 Quarterly Journal of Political Science. 8(3): 239-269.
 }
+\concept{simulate}

@@ -1,8 +1,6 @@
 #' @export
 dplyr::filter
 
-# See \code{\link[dplyr]{filter}}.
-
 # redist_map generics ------------
 
 #' @export
@@ -99,6 +97,12 @@ transmute.redist_plans <- function(.data, ...) {
 }
 
 #' @export
+#' @importFrom dplyr summarise
+summarise.redist_plans = function(.data, ..., .groups=NULL) {
+    reconstruct.redist_plans(NextMethod(), .data)
+}
+
+#' @export
 #' @importFrom dplyr filter
 filter.redist_plans <- function(.data, ..., .preserve=FALSE) {
     reconstruct.redist_plans(NextMethod(), .data)
@@ -161,5 +165,5 @@ group_by.redist_plans <- function(.data, ..., .add = FALSE) {
 #' @export
 #' @importFrom dplyr ungroup
 ungroup.redist_plans <- function(x, ...) {
-    reconstruct.redist_plans(dplyr::group_by(NextMethod(), .data$draw, .add=FALSE), x)
+    reconstruct.redist_plans(NextMethod(), x)
 }

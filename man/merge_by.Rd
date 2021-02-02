@@ -25,3 +25,4 @@ merge several units together into a larger unit.  This function performs this
 operation, modifying the adjacency graph as needed and attempting to properly
 aggregate other data columns.
 }
+\concept{prepare}

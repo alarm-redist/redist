@@ -4,15 +4,17 @@
 \alias{plot.redist_plans}
 \title{Summary plots for \code{redist_plans}}
 \usage{
-\method{plot}{redist_plans}(x, y, ...)
+\method{plot}{redist_plans}(x, ..., type = "hist")
 }
 \arguments{
 \item{x}{the \code{redist_plans} object.}
 
-\item{y}{ignored}
+\item{...}{passed on to the underlying function}
 
-\item{...}{ignored}
+\item{type}{the name of the plotting function to use. Will have \code{plot_},
+prepended to it; e.g., use \code{type="plan"} to call \code{plot_plan()}.}
 }
 \description{
 Summary plots for \code{redist_plans}
 }
+\concept{visualize}

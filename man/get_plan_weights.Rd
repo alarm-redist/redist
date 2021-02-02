@@ -17,3 +17,4 @@ the weights, with an additional attribute \code{resampled}
 \description{
 Extract the sampling weights from a redistricting simulation
 }
+\concept{analyze}

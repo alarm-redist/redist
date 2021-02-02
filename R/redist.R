@@ -106,6 +106,7 @@ combine.par.anneal <- function(a, b){
 #' @param minorityprop numeric vector of targeted minority proportions for the top
 #' districts with that proportion
 #'
+#' @concept simulate
 #' @export
 redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
                                initcds = NULL,
@@ -280,6 +281,7 @@ redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
 #'
 #' @param file_name The file name to search for in current working directory.
 #'
+#' @concept simulate
 #' @export
 redist.combine.anneal <- function(file_name){
 
@@ -924,6 +926,7 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
 #' out <- redist.combine(savename = "test", nloop = 2,
 #' nthin = 10)
 #' }
+#' @concept simulate
 #' @export
 redist.combine <- function(savename, nloop, nthin, temper = 0){
 
@@ -1152,6 +1155,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' initcds = initcds,
 #' nsims = 10000)
 #' }
+#' @concept simulate
 #' @export
 redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                         loopscompleted = 0, nloop = 1, nthin = 1, eprob = 0.05,
@@ -1501,6 +1505,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
 #' targetbeta = 1,
 #' targetpop = .2, temper = 1)
 #' }
+#' @concept simulate
 #' @export
 redist.ipw <- function(algout,
                        resampleconstraint = c("pop", "compact",
