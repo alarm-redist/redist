@@ -15,3 +15,4 @@ is_contiguous(x)
 \description{
 Check that a \code{redist_map} object is contiguous
 }
+\concept{prepare}

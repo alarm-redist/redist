@@ -148,3 +148,4 @@ districts with that proportion}
 \code{redist.mcmc.anneal} simulates congressional redistricting plans
 using Markov chain Monte Carlo methods coupled with simulated annealing.
 }
+\concept{simulate}

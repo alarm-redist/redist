@@ -102,12 +102,12 @@ mat prec_cooccur(umat m, uvec idxs) {
 /*
  * Compute the percentage of `group` in each district. Asummes `m` is 1-indexed.
  */
-mat group_pct(umat m, vec group_pop, vec total_pop, int n_distr) {
+NumericMatrix group_pct(umat m, vec group_pop, vec total_pop, int n_distr) {
     int v = m.n_rows;
     int n = m.n_cols;
 
-    mat grp_distr(n_distr, n);
-    mat tot_distr(n_distr, n);
+    NumericMatrix grp_distr(n_distr, n);
+    NumericMatrix tot_distr(n_distr, n);
 
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < v; j++) {

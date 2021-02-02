@@ -13,7 +13,6 @@ plans.
 The first two columns of the data frame will be \code{draw}, a factor indexing
 the simulation draw, and \code{district}, an integer indexing the districts
 within a plan. The data frame will therefore have \code{n_sims*n_distr} rows.
-The data frame will at all times be grouped at least by \code{draw}.
 As a data frame, the usual \code{\link{dplyr}} methods will work.
 
 Other useful methods for \code{redist_plans} objects:
@@ -23,7 +22,10 @@ Other useful methods for \code{redist_plans} objects:
 \item \code{\link{get_plan_matrix}}
 \item \code{\link{get_plan_weights}}
 \item \code{\link{get_sampling_info}}
+\item \code{\link{subset_sampled}}
+\item \code{\link{subset_ref}}
 \item \code{\link{as.matrix.redist_plans}}
 \item \code{\link{plot.redist_plans}}
 }
 }
+\concept{analyze}

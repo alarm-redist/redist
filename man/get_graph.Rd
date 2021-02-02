@@ -15,3 +15,4 @@ a zero-indexed adjacency list
 \description{
 Extract the adjacency graph from a \code{redist_map} object
 }
+\concept{prepare}

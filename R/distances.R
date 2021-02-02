@@ -42,6 +42,7 @@
 #' distances <- redist.distances(district_membership = algdat.p10$cdmat)
 #' distances$Hamming[1:5,1:5]
 #' }
+#' @concept analyze
 #' @export
 redist.distances <- function(district_membership, measure = "Hamming",
                              ncores = 1, pop=NULL) {

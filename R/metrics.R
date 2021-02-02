@@ -66,6 +66,7 @@
 #' Samuel S.-H. Wang. 2016. "Three Tests for Practical Evaluation of Partisan Gerrymandering."
 #' Stanford Law Review, 68, Pp. 1263 - 1321.
 #'
+#' @concept analyze
 #' @export
 redist.metrics <- function(district_membership,
                            measure = "DSeats",

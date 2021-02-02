@@ -24,8 +24,6 @@
 #' @param browser if \code{TRUE} (the default), launch the Shiny app in the
 #'   default browser. Otherwise, just start the Shiny server.
 #'
-#' @export
-#'
 #' @examples \dontrun{
 #' data("fl25")
 #' data(algdat.p10)
@@ -39,6 +37,9 @@
 #' # Run the app!
 #' redist.group_viz(viz_prep)
 #' }
+#'
+#' @concept visualize
+#' @export
 redist.group_viz = function(prep, browser=TRUE) {
     if (!requireNamespace("shiny", quietly=T)
             | !requireNamespace("rmarkdown", quietly=T)
@@ -87,8 +88,6 @@ redist.group_viz = function(prep, browser=TRUE) {
 #' @return A list of class \code{redist_prep_viz} containing the preprocessed
 #'   inputs and calculations.
 #'
-#' @export
-#'
 #' @examples \dontrun{
 #' data("fl25")
 #' data(algdat.p10)
@@ -102,6 +101,9 @@ redist.group_viz = function(prep, browser=TRUE) {
 #' # Run the app!
 #' redist.group_viz(viz_prep)
 #' }
+#'
+#' @concept visualize
+#' @export
 redist.prep_group_viz = function(result, geometry, full_pop, group_pop, current=NULL,
                                  comp_meas="EdgesRemoved", renumber=TRUE, dist_by="people",
                                  clusters=NULL, simp_geom=TRUE) {

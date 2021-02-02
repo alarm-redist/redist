@@ -33,6 +33,7 @@
 #' redist.map(shp = fl25, district_membership = cds)
 #' }
 #'
+#' @concept visualize
 #' @export
 redist.map <- function(shp = NULL, adjacency = NULL, district_membership = NULL, centroids = TRUE,
                        edges = TRUE, drop = FALSE, title = ""){

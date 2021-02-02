@@ -237,7 +237,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // group_pct
-arma::mat group_pct(arma::umat m, arma::vec group_pop, arma::vec total_pop, int n_distr);
+NumericMatrix group_pct(arma::umat m, arma::vec group_pop, arma::vec total_pop, int n_distr);
 RcppExport SEXP _redist_group_pct(SEXP mSEXP, SEXP group_popSEXP, SEXP total_popSEXP, SEXP n_distrSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

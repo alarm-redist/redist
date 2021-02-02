@@ -2,7 +2,7 @@
 #'
 #' \code{redist.crsg} generates redistricting plans using a random seed a grow
 #' algorithm.  This is the compact districting algorithm described in Chen and
-#' Rodden (2013).  
+#' Rodden (2013).
 #'
 #'
 #' @param adj.list List of length N, where N is the number of precincts.
@@ -11,7 +11,7 @@
 #' @param population  numeric vector of length N, where N is the number of precincts.
 #' Each element lists the population total of the corresponding precinct, and is
 #' used to enforce population constraints.
-#' @param area numeric vector of length N, where N is the number of precincts. Each 
+#' @param area numeric vector of length N, where N is the number of precincts. Each
 #' element is the area of the corresponding precinct.
 #' @param x_center numeric vector of length N, where N is the number of precincts.
 #' Each element is the x coordinate of the geographic centroid of the corresponding
@@ -44,7 +44,7 @@
 #' population totals of the respective districts.}
 #' }
 #'
-#' 
+#'
 #' @references Jowei Chen and Jonathan Rodden (2013) ``Unintentional
 #' Gerrymandering: Political Geography and Electoral Bias in Legislatures.''
 #' Quarterly Journal of Political Science. 8(3): 239-269.
@@ -58,6 +58,7 @@
 #' redist.crsg(adj.list = adj, population = fl25$pop, area = area,
 #' x_center = centers[,1], y_center = centers[,2], ndists = 2, thresh = .1)
 #' }
+#' @concept simulate
 #' @export
 redist.crsg <- function(adj.list,
                        population,
@@ -68,34 +69,34 @@ redist.crsg <- function(adj.list,
                        thresh,
                        verbose = TRUE,
                        maxiter = 5000){
-  
+
   if(verbose){
     divider <- c(paste(rep("=", 20), sep = "", collapse = ""), "\n")
-    
+
     cat("\n")
     cat(divider)
     cat("redist.crsg(): Automated Redistricting Starts\n\n")
   }
-  
+
   target.pop <- sum(population) / ndists
-  
+
   # Main call to function - unlike rsg, uses RcppExporting not direct .Call
   time <- system.time(ret <- crsg(adj_list = adj.list,
                                   population = population,
-                                  area = area, 
+                                  area = area,
                                   x_center = x_center,
                                   y_center = y_center,
                                   Ndistrict = ndists,
                                   target_pop = target.pop,
                                   thresh = thresh,
                                   maxiter = maxiter))
-  
+
   ## Make another call if NA, but beware this may be due to maxiter.
   ## This could also be if there are no valid moves.
   if(is.na(ret$district_membership[1])){
     time <- system.time(ret <- crsg(adj_list = adj.list,
                                     population = population,
-                                    area = area, 
+                                    area = area,
                                     x_center = x_center,
                                     y_center = y_center,
                                     Ndistrict = ndists,
@@ -103,19 +104,19 @@ redist.crsg <- function(adj.list,
                                     thresh = thresh,
                                     maxiter = maxiter))
   }
-  
- 
+
+
   if(is.na(ret$district_membership[1])){
-    
+
     warning("redist.crsg() failed to return a valid partition. Try increasing maxiter")
-    
+
   }
-  
+
   if(verbose){
     cat(paste("\n\t", ndists, " districts built using ",
               length(adj.list), " precincts in ",
               round(time[3], digits=2), " seconds...\n\n", sep = ""), append = TRUE)
   }
-  
-  return(ret) 
+
+  return(ret)
 }

@@ -39,7 +39,7 @@ arma::mat prec_cooccur(arma::umat m, arma::uvec idxs);
  * Compute the percentage of `group` in each district. Asummes `m` is 1-indexed.
  */
 // [[Rcpp::export]]
-arma::mat group_pct(arma::umat m, arma::vec group_pop, arma::vec total_pop, int n_distr);
+NumericMatrix group_pct(arma::umat m, arma::vec group_pop, arma::vec total_pop, int n_distr);
 
 /*
  * Compute the deviation from the equal population constraint.

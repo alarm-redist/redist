@@ -15,3 +15,4 @@ a list of parameters and information about the sampling problem.
 \description{
 Extract the sampling information from a redistricting simulation
 }
+\concept{simulate}

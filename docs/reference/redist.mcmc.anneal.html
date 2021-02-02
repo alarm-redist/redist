@@ -81,7 +81,7 @@ using Markov chain Monte Carlo methods coupled with simulated annealing." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.4</span>
       </span>
     </div>
 
@@ -89,7 +89,7 @@ using Markov chain Monte Carlo methods coupled with simulated annealing." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -104,7 +104,7 @@ using Markov chain Monte Carlo methods coupled with simulated annealing." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
+      <a href="../articles/tidy-redist.html">Tidy `redist`</a>
     </li>
   </ul>
 </li>
@@ -112,7 +112,7 @@ using Markov chain Monte Carlo methods coupled with simulated annealing." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/kosukeimai/redist/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -158,6 +158,7 @@ using Markov chain Monte Carlo methods coupled with simulated annealing.</p>
   constraint <span class='op'>=</span> <span class='cn'>NULL</span>,
   constraintweights <span class='op'>=</span> <span class='cn'>NULL</span>,
   compactness_metric <span class='op'>=</span> <span class='st'>"fryer-holden"</span>,
+  partisan_metric <span class='op'>=</span> <span class='st'>"efficiency-gap"</span>,
   rngseed <span class='op'>=</span> <span class='cn'>NULL</span>,
   maxiterrsg <span class='op'>=</span> <span class='fl'>5000</span>,
   adapt_lambda <span class='op'>=</span> <span class='cn'>FALSE</span>,
@@ -168,7 +169,10 @@ using Markov chain Monte Carlo methods coupled with simulated annealing.</p>
   verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
   ncores <span class='op'>=</span> <span class='fl'>1</span>,
   tgt_min <span class='op'>=</span> <span class='fl'>0.55</span>,
-  tgt_other <span class='op'>=</span> <span class='fl'>0.25</span>
+  tgt_other <span class='op'>=</span> <span class='fl'>0.25</span>,
+  rvote <span class='op'>=</span> <span class='cn'>NULL</span>,
+  dvote <span class='op'>=</span> <span class='cn'>NULL</span>,
+  minorityprop <span class='op'>=</span> <span class='cn'>NULL</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -186,7 +190,7 @@ unit</p></td>
     </tr>
     <tr>
       <th>ndists</th>
-      <td><p>The numbe of congressional districts. The default is
+      <td><p>The number of congressional districts. The default is
 <code>NULL</code>.</p></td>
     </tr>
     <tr>
@@ -218,8 +222,8 @@ default is <code>0.05</code>.</p></td>
     </tr>
     <tr>
       <th>lambda</th>
-      <td><p>The parameter detmerining the number of swaps to attempt
-each iteration fo the algoirhtm. The number of swaps each iteration is
+      <td><p>The parameter determining the number of swaps to attempt
+each iteration of the algorihtm. The number of swaps each iteration is
 equal to Pois(<code>lambda</code>) + 1. The default is <code>0</code>.</p></td>
     </tr>
     <tr>
@@ -257,7 +261,8 @@ units. The default is <code>NULL</code>.</p></td>
     <tr>
       <th>constraint</th>
       <td><p>Which constraint to apply. Accepts any combination of <code>compact</code>,
-<code>vra</code>, <code>population</code>, <code>similarity</code>, or <code>none</code>
+<code>segregation</code>, <code>vra</code>, <code>population</code>, <code>similarity</code>, <code>partisan</code>,
+<code>minority</code> or <code>none</code>
 (no constraint applied). The default is NULL.</p></td>
     </tr>
     <tr>
@@ -268,8 +273,13 @@ the same length as constraint. Default is NULL.</p></td>
     <tr>
       <th>compactness_metric</th>
       <td><p>The compactness metric to use when constraining on
-compactness. Default is <code>fryer-holden</code>, the other implemented option
-is <code>polsby-popper</code>.</p></td>
+compactness. Default is <code>fryer-holden</code>, the other implemented options
+are <code>polsby-popper</code> and <code>edges-removed</code>.</p></td>
+    </tr>
+    <tr>
+      <th>partisan_metric</th>
+      <td><p>The partisan metric to use when constraining on partisan metrics.
+Only implemented are "efficiency-gap" (default) and "proportional-representation".</p></td>
     </tr>
     <tr>
       <th>rngseed</th>
@@ -324,6 +334,19 @@ Default is <code>TRUE</code>.</p></td>
       <th>tgt_other</th>
       <td><p>The remaining target percent as a decimal. Default is 0.25.</p></td>
     </tr>
+    <tr>
+      <th>rvote</th>
+      <td><p>integer vector of votes for Republicans by precinct</p></td>
+    </tr>
+    <tr>
+      <th>dvote</th>
+      <td><p>integer vector of votes for Democrats by precinct</p></td>
+    </tr>
+    <tr>
+      <th>minorityprop</th>
+      <td><p>numeric vector of targeted minority proportions for the top
+districts with that proportion</p></td>
+    </tr>
     </table>
 
 
@@ -338,7 +361,7 @@ Default is <code>TRUE</code>.</p></td>
 
       <footer>
       <div class="copyright">
-  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Alexander Tarr, Jun Kawahara, Kosuke Imai.</p>
+  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Jun Kawahara, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">
