@@ -69,7 +69,8 @@ Recommended.}
 \item{silent}{Whether to suppress all diagnostic information.}
 }
 \value{
-\code{redist_smc} returns an object of class \code{\link{redist_plans}}.
+\code{redist_smc} returns an object of class
+\code{\link{redist_plans}} containing the simulated plans.
 }
 \description{
 \code{redist_smc} uses a Sequential Monte Carlo algorithm to
@@ -92,9 +93,10 @@ acceptance rate (based on the population constraint) at each step.
 Higher values of \code{compactness} sample more compact districts;
 setting this parameter to 1 is computationally efficient and generates nicely
 compact districts.  Values of other than 1 may lead to highly variable
-importance sampling weights.  By default these weights are truncated at
-\code{nsims^0.04 / 100} to stabilize the resulting estimates, but if truncation
-is used, a specific truncation function should probably be chosen by the user.
+importance sampling weights.  By default these weights are truncated using
+\code{\link{redist_quantile_trunc}} to stabilize the resulting estimates, but
+if truncation is used, a specific truncation function should probably be
+chosen by the user.
 
 The \code{constraints} parameter allows the user to apply several common
 redistricting constraints without implementing them by hand. This parameter

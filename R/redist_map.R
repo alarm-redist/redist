@@ -100,22 +100,27 @@ reconstruct.redist_map = function(data, old) {
 #' also adjust.  Subsetting with \code{`[`} and \code{`[[`} does not recompute
 #' graphs or attributes.
 #'
+#' Other useful methods for \code{redist_map} objects:
+#' * \code{\link{merge_by}}
+#' * \code{\link{get_graph}}
+#' * \code{\link{plot.redist_map}}
+#'
 #' @param ... column elements to be bound into a \code{redist_map} object or a
 #'   single \code{list} or \code{data.frame}.  These will be passed on to the
 #'   \code{\link{tibble}} constructor.
-#' @param n_distr \code{\link[dplyr]{<data-masking>}} the integer number of
+#' @param n_distr \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the integer number of
 #'   districts to partition the map into
-#' @param pop_tol \code{\link[dplyr]{<data-masking>}} the population tolerance.
+#' @param pop_tol \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the population tolerance.
 #'   The percentage deviation from the average population will be constrained to
 #'   be no more than this number.
-#' @param pop_bounds \code{\link[dplyr]{<data-masking>}} more specific
+#' @param pop_bounds \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} more specific
 #'   population bounds, in the form of \code{c(lower, target, upper)}.
-#' @param pop_col \code{\link[dplyr]{<tidy-select>}} the name of the population
+#' @param pop_col \code{\link[tidyr:tidyr_tidy_select]{<tidy-select>}} the name of the population
 #'   vector column.
 #' @param graph the adjacency graph for the object. Defaults to being computed
 #'     from the data if it is coercible to a shapefile.
 #' @param graph_col the name of the adjacency graph column
-#' @param existing_col \code{\link[dplyr]{<tidy-select>}} the name of a column
+#' @param existing_col \code{\link[tidyr:tidyr_tidy_select]{<tidy-select>}} the name of a column
 #'   with existing district assignment
 #' @param planarize a number, indicating the CRS to project the shapefile to if
 #'   it is latitude-longitude based. Set to NULL to avoid planarizing.
@@ -124,6 +129,7 @@ reconstruct.redist_map = function(data, old) {
 #' d = redist_map(fl25, n_distr=3, pop_tol=0.05)
 #' dplyr::filter(d, pop >= 10e3)
 #'
+#' @md
 #' @export
 redist_map = function(..., n_distr=NULL, pop_tol=0.01, pop_bounds=NULL, pop_col="pop",
                       graph=NULL, graph_col="graph", existing_col=NULL, planarize=3857) {
@@ -185,12 +191,17 @@ redist_map = function(..., n_distr=NULL, pop_tol=0.01, pop_bounds=NULL, pop_col=
 }
 
 #' @rdname redist_map
+#' @param x an object to be coerced
 #' @export
 as_redist_map = function(x) {
     reconstruct.redist_map(x)
 }
 
-# extract graph
+#' Extract the adjacency graph from a \code{redist_map} object
+#'
+#' @param x the \code{redist_map} object
+#' @returns a zero-indexed adjacency list
+#' @export
 get_graph = function(x) {
     stopifnot(inherits(x, "redist_map"))
 
@@ -282,7 +293,7 @@ print.redist_map = function(x, ...) {
     merge_idx = attr(x, "merge_idx")
     if (!is.null(merge_idx))
         cli::cat_line("Merged from another map with reindexing:",
-                      capture_output(str(merge_idx, vec.len=2)))
+                      utils::capture.output(str(merge_idx, vec.len=2)))
 
     if (inherits(x, "sf")) {
         geom = st_geometry(x)
@@ -296,21 +307,20 @@ print.redist_map = function(x, ...) {
         if (is.na(crs)) {
             cat(paste0("    CRS:            NA\n"))
         } else {
-            p = sf:::crs_parameters(crs)
-            if (p$Name == "unknown") {
+            if (crs$Name == "unknown") {
                 if (!is.character(crs$input) || is.na(crs$input))
                     cat(paste0("proj4string:    ", crs$proj4string,
                                "\n"))
                 else cat(paste0("CRS:            ", crs$input, "\n"))
             }
-            else if (p$IsGeographic)
-                cat(paste0("    geographic CRS: ", p$Name, "\n"))
+            else if (crs$IsGeographic)
+                cat(paste0("    geographic CRS: ", crs$Name, "\n"))
             else
-                cat(paste0("    projected CRS:  ", p$Name, "\n"))
+                cat(paste0("    projected CRS:  ", crs$Name, "\n"))
         }
     }
 
-    getS3method("print", "tbl")(x)
+    utils::getS3method("print", "tbl")(x)
 
     invisible(x)
 }
@@ -318,15 +328,16 @@ print.redist_map = function(x, ...) {
 #' Plot a \code{redist_map}
 #'
 #' @param x the \code{redist_map} object
-#' @param y \code{\link[dplyr]{<data-masking>}} the optional value to use to
+#' @param y \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the optional value to use to
 #'   color the units. If absent, \code{\link{redist.map}} will be called;
 #'   otherwise \code{\link{redist.choropleth}} will be called.
 #' @param ... passed on to underlying functions
 #'
 #' @examples
+#' data(fl25)
 #' d = redist_map(fl25, n_distr=3, pop_tol=0.05)
 #' plot(d)
-#' plot(d, adjacency=F)
+#' plot(d, edges=F)
 #' plot(d, BlackPop/pop)
 #'
 #' @method plot redist_map
@@ -335,12 +346,12 @@ plot.redist_map = function(x, y, ...) {
     if (!inherits(x, "sf")) stop("Plotting requires a shapefile.")
 
     if (missing(y)) {
-        orig_col = attr(x, "existing_col")
-        if (!is.null(orig_col)) {
-            redist.map(x, get_graph(x), x[[orig_col]], ...) +
+        existing = get_existing(x)
+        if (!is.null(existing)) {
+            redist.map(x, get_graph(x), existing, ...) +
                 ggplot2::theme_void()
         } else {
-            redist.map(x, get_graph(x), ...) +
+            redist.map(x, get_graph(x), district_membership=NULL, ...) +
                 ggplot2::theme_void()
         }
     } else {

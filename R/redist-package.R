@@ -57,6 +57,9 @@
 #' @importFrom grDevices dev.off pdf
 #' @importFrom stats median runif quantile qnorm
 #' @importFrom magrittr %>%
-#' @importFrom dplyr n dplyr_row_slice dplyr_col_modify dplyr_reconstruct
+#' @importFrom dplyr n dplyr_row_slice dplyr_col_modify dplyr_reconstruct .data
 #' @importFrom stringr str_c str_glue
 NULL
+
+# for dplyr
+utils::globalVariables(c("where"))

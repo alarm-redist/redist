@@ -42,7 +42,7 @@ is_const_rel = function(rel) {
 #' aggregate other data columns.
 #'
 #' @param .data a \code{\link{redist_map}} object
-#' @param key \code{\link[dplyr]{<tidy-select>}} the column to merge by
+#' @param key \code{\link[tidyr:tidyr_tidy_select]{<tidy-select>}} the column to merge by
 #' @param by_existing if an existing assignment is present, whether to also group by it
 #' @param drop_geom whether to drop the geometry column. Recommended, as
 #'   otherwise a costly geometric merge is required.
@@ -78,6 +78,11 @@ merge_by = function(.data, key, by_existing=TRUE, drop_geom=TRUE) {
 }
 
 #' @rdname redist.identify.cores
+#'
+#' @param .data a \code{\link{redist_map}} object
+#' @param within the core is defined to be at least this number of steps within
+#'   district boundaries
+#'
 #' @export
 make_cores = function(.data=get0(".", parent.frame()), within=1, focus=NULL) {
     if (is.null(.data))
@@ -87,12 +92,3 @@ make_cores = function(.data=get0(".", parent.frame()), within=1, focus=NULL) {
 }
 
 
-########################
-# Dot formats for backward compatibility
-
-#' @rdname redist.mcmc
-#' @export
-redist_mcmc = function(...) redist.mcmc(...)
-#' @rdname redist.mcmc.anneal
-#' @export
-redist_mcmc.anneal = function(...) redist.mcmc.anneal(...)

@@ -1,3 +1,8 @@
+#' @export
+dplyr::filter
+
+# See \code{\link[dplyr]{filter}}.
+
 # redist_map generics ------------
 
 #' @export
@@ -14,7 +19,7 @@ transmute.redist_map <- function(.data, ...) {
 
 #' @export
 #' @importFrom dplyr filter
-filter.redist_map <- function(.data, ...) {
+filter.redist_map <- function(.data, ..., .preserve=FALSE) {
     reconstruct.redist_map(NextMethod(), .data)
 }
 
@@ -68,7 +73,7 @@ slice.redist_map <- function(.data, ...) {
 
 #' @export
 #' @importFrom dplyr group_by
-group_by.redist_map <- function(.data, ..., add = FALSE) {
+group_by.redist_map <- function(.data, ..., .add = FALSE) {
     reconstruct.redist_map(NextMethod(), .data)
 }
 
@@ -95,7 +100,7 @@ transmute.redist_plans <- function(.data, ...) {
 
 #' @export
 #' @importFrom dplyr filter
-filter.redist_plans <- function(.data, ...) {
+filter.redist_plans <- function(.data, ..., .preserve=FALSE) {
     reconstruct.redist_plans(NextMethod(), .data)
 }
 
@@ -149,12 +154,12 @@ slice.redist_plans <- function(.data, ...) {
 
 #' @export
 #' @importFrom dplyr group_by
-group_by.redist_plans <- function(.data, ..., add = FALSE) {
+group_by.redist_plans <- function(.data, ..., .add = FALSE) {
     reconstruct.redist_plans(NextMethod(), .data)
 }
 
 #' @export
 #' @importFrom dplyr ungroup
 ungroup.redist_plans <- function(x, ...) {
-    reconstruct.redist_plans(NextMethod(), x)
+    reconstruct.redist_plans(dplyr::group_by(NextMethod(), .data$draw, .add=FALSE), x)
 }

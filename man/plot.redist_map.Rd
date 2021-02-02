@@ -9,7 +9,7 @@
 \arguments{
 \item{x}{the \code{redist_map} object}
 
-\item{y}{\code{\link[dplyr]{<data-masking>}} the optional value to use to
+\item{y}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the optional value to use to
 color the units. If absent, \code{\link{redist.map}} will be called;
 otherwise \code{\link{redist.choropleth}} will be called.}
 
@@ -19,9 +19,10 @@ otherwise \code{\link{redist.choropleth}} will be called.}
 Plot a \code{redist_map}
 }
 \examples{
+data(fl25)
 d = redist_map(fl25, n_distr=3, pop_tol=0.05)
 plot(d)
-plot(d, adjacency=F)
+plot(d, edges=F)
 plot(d, BlackPop/pop)
 
 }

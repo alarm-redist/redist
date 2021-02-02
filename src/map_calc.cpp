@@ -155,12 +155,12 @@ NumericVector max_dev(const umat districts, const vec pop, int n_distr) {
     int N = districts.n_cols;
     double target_pop = sum(pop) / n_distr;
 
-    NumericMatrix dev = pop_tally(districts, pop, n_distr) / target_pop - 1;
+    NumericMatrix dev = pop_tally(districts, pop, n_distr) / target_pop - 1.0;
     NumericVector res(N);
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < n_distr; j++) {
-            if (abs(dev(i, j)) > res(i))
-                res(i) = abs(dev(i, j));
+    for (int j = 0; j < n_distr; j++) {
+        for (int i = 0; i < N; i++) {
+            if (abs(dev(j, i)) > res(i))
+                res(i) = abs(dev(j, i));
         }
     }
 
