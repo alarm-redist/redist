@@ -8,6 +8,10 @@
 }
 \arguments{
 \item{x}{the \code{redist_plans} object.}
+
+\item{y}{ignored}
+
+\item{...}{ignored}
 }
 \description{
 Summary plots for \code{redist_plans}

@@ -8,6 +8,32 @@
 #######################
 # constructors and reconstructors
 
+#' A set of redistricting plans
+#'
+#' A \code{redist_plans} object is essentially a data frame of summary
+#' information on each district and each plan, along with the matrix of district
+#' assignments and information about the simulation process used to generate the
+#' plans.
+#'
+#' The first two columns of the data frame will be \code{draw}, a factor indexing
+#' the simulation draw, and \code{district}, an integer indexing the districts
+#' within a plan. The data frame will therefore have \code{n_sims*n_distr} rows.
+#' The data frame will at all times be grouped at least by \code{draw}.
+#' As a data frame, the usual \code{\link{dplyr}} methods will work.
+#'
+#' Other useful methods for \code{redist_plans} objects:
+#' * \code{\link{add_reference}}
+#' * \code{\link{pullback}}
+#' * \code{\link{get_plan_matrix}}
+#' * \code{\link{get_plan_weights}}
+#' * \code{\link{get_sampling_info}}
+#' * \code{\link{as.matrix.redist_plans}}
+#' * \code{\link{plot.redist_plans}}
+#'
+#' @name redist_plans
+#' @md
+NULL
+
 # plans has n_precinct columns and n_sims rows
 # map is a redist_map
 # algorithm is one of "smc" or "mcmc"
@@ -23,16 +49,20 @@ new_redist_plans = function(plans, map, algorithm, wgt, resampled=TRUE, ...) {
     prec_pop = map[[attr(map, "pop_col")]]
     distr_pop = pop_tally(plans, prec_pop, n_distr)
 
-    attr_names = c("plans", "algorithm", "wgt", "resampled", "merge_idx", "pop",
-                   names(list(...)))
+    attr_names = c("redist_attr", "plans", "algorithm", "wgt", "resampled",
+                   "merge_idx", "pop", names(list(...)))
 
-    x = structure(tibble::tibble(draw = rep(as.factor(1:n_sims), each=n_distr),
-                                 district = rep(1:n_distr, n_sims),
-                                 pop = as.numeric(distr_pop)),
-                  plans=plans, algorithm=algorithm, wgt=wgt,
-                  resampled=resampled, merge_idx=attr(map, "merge_idx"),
-                  pop=pop, redist_attr=attr_names, ...,
-                  class=c("redist_plans", "tbl_df", "tbl", "data.frame"))
+    x = structure(
+        dplyr::group_by(
+            tibble::tibble(draw = rep(as.factor(1:n_sims), each=n_distr),
+                           district = rep(1:n_distr, n_sims),
+                           pop = as.numeric(distr_pop)),
+            .data$draw),
+        plans=plans, algorithm=algorithm, wgt=wgt,
+        resampled=resampled, merge_idx=attr(map, "merge_idx"),
+        pop=prec_pop, redist_attr=attr_names, ...,
+        class=c("redist_plans", "grouped_df", "tbl_df", "tbl", "data.frame")
+    )
 
     if (!is.null(attr(map, "existing_col")))
         add_reference(x, get_existing(map))
@@ -55,12 +85,12 @@ reconstruct.redist_plans = function(data, old) {
             if (is.null(attr(data, name)))
                 attr(data, name) = attr(old, name)
         }
+
+        if (is.null(attr(data, "groups")))
+            attr(data, "groups") = attr(old, "groups")
     }
 
-    classes = c("tbl_df", "tbl", "data.frame")
-    if (inherits(data, "grouped_df"))
-        classes = c("grouped_df", classes)
-    class(data) = c("redist_plans", classes)
+    class(data) = c("redist_plans", "grouped_df", "tbl_df", "tbl", "data.frame")
 
     data
 }
@@ -71,17 +101,18 @@ reconstruct.redist_plans = function(data, old) {
 
 #' Extract the matrix of district assignments from a redistricting simulation
 #'
-#' @param plans the \code{redist_plans} object
+#' @param x the \code{redist_plans} object
+#' @param ... ignored
 #'
 #' @export
-get_plan_matrix = function(plans) {
-    stopifnot(inherits(plans, "redist_plans"))
-    attr(plans, "plans")
+get_plan_matrix = function(x) {
+    stopifnot(inherits(x, "redist_plans"))
+    attr(x, "plans")
 }
 # internal -- no check performed!
-set_plan_matrix = function(plans, mat) {
-    attr(plans, "plans") = mat
-    plans
+set_plan_matrix = function(x, mat) {
+    attr(x, "plans") = mat
+    x
 }
 
 #' Extract the sampling weights from a redistricting simulation
@@ -152,7 +183,8 @@ add_reference = function(plans, ref_plan, name="<ref>") {
 
     # then the dataframe
     distr_pop = pop_tally(matrix(ref_plan, ncol=1), attr(plans, "pop"), n_distr)
-    new_draw = rep(factor(c(name, as.character(unique(plans$draw)))), each=n_distr)
+    fct_levels = c(name, levels(plans$draw))
+    new_draw = rep(factor(fct_levels, levels=fct_levels), each=n_distr)
     x = dplyr::bind_rows(
             tibble::tibble(district = 1:n_distr,
                            pop = as.numeric(distr_pop)),
@@ -192,6 +224,7 @@ pullback = function(plans) {
 #######################
 # generics
 
+#' @rdname get_plan_matrix
 #' @method as.matrix redist_plans
 #' @export
 as.matrix.redist_plans = function(x, ...) get_plan_matrix(x)
@@ -201,10 +234,21 @@ as.matrix.redist_plans = function(x, ...) get_plan_matrix(x)
 dplyr_row_slice.redist_plans = function(data, i, ...) {
     if (is.logical(i)) i = which(i)
 
-    draws_left = sort(unique(data$draw[i]))
+    draws_left = unique(as.integer(data$draw[i]))
     y = vctrs::vec_slice(data, i)
+    plans_m = get_plan_matrix(data)
 
-    set_plan_matrix(y, get_plan_matrix(data)[,draws_left])
+    # if we don't have every district present in every row
+    # this check is necessary but not sufficient for what we want
+    distrs = table(y$district)
+    n_draws = length(draws_left)
+    n_distr = max(plans_m[,1])
+    if (!all.equal(range(distrs), rep(n_draws, 2)) || length(distrs) != n_distr)
+        warning("Some districts may have been dropped. ",
+                "This will prevent summary statistics from working correctly.\n",
+                "To avoid this message, coerce using `as_tibble`.")
+
+    set_plan_matrix(y, plans_m[,draws_left])
 }
 
 # 'template' is the old df
@@ -238,16 +282,16 @@ print.redist_plans = function(x, ...) {
     merge_idx = attr(x, "merge_idx")
     if (!is.null(merge_idx))
         cli::cat_line("Merged from another map with reindexing:",
-                      capture_output(str(merge_idx, vec.len=2)))
+                      utils::capture.output(str(merge_idx, vec.len=2)))
 
     if (attr(x, "resampled"))
         cli::cat_line("With plans resampled from weights")
     else
         cli::cat_line("With plans not resampled from weights")
 
-    cli::cat_line("Plans matrix:", capture_output(str(plans_m, give.attr=F)))
+    cli::cat_line("Plans matrix:", utils::capture.output(str(plans_m, give.attr=F)))
 
-    getS3method("print", "tbl")(x)
+    utils::getS3method("print", "tbl")(x)
 
     invisible(x)
 }
@@ -255,6 +299,8 @@ print.redist_plans = function(x, ...) {
 #' Summary plots for \code{redist_plans}
 #'
 #' @param x the \code{redist_plans} object.
+#' @param y ignored
+#' @param ... ignored
 #'
 #' @export
 plot.redist_plans = function(x, y, ...) {

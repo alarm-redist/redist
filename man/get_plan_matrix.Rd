@@ -2,12 +2,17 @@
 % Please edit documentation in R/redist_plans.R
 \name{get_plan_matrix}
 \alias{get_plan_matrix}
+\alias{as.matrix.redist_plans}
 \title{Extract the matrix of district assignments from a redistricting simulation}
 \usage{
-get_plan_matrix(plans)
+get_plan_matrix(x)
+
+\method{as.matrix}{redist_plans}(x, ...)
 }
 \arguments{
-\item{plans}{the \code{redist_plans} object}
+\item{x}{the \code{redist_plans} object}
+
+\item{...}{ignored}
 }
 \description{
 Extract the matrix of district assignments from a redistricting simulation

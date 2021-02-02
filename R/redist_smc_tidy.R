@@ -26,9 +26,10 @@
 #' Higher values of \code{compactness} sample more compact districts;
 #' setting this parameter to 1 is computationally efficient and generates nicely
 #' compact districts.  Values of other than 1 may lead to highly variable
-#' importance sampling weights.  By default these weights are truncated at
-#' \code{nsims^0.04 / 100} to stabilize the resulting estimates, but if truncation
-#' is used, a specific truncation function should probably be chosen by the user.
+#' importance sampling weights.  By default these weights are truncated using
+#' \code{\link{redist_quantile_trunc}} to stabilize the resulting estimates, but
+#' if truncation is used, a specific truncation function should probably be
+#' chosen by the user.
 #'
 #' The \code{constraints} parameter allows the user to apply several common
 #' redistricting constraints without implementing them by hand. This parameter
@@ -94,7 +95,8 @@
 #'   Recommended.
 #' @param silent Whether to suppress all diagnostic information.
 #'
-#' @return \code{redist_smc} returns an object of class \code{\link{redist_plans}}.
+#' @return \code{redist_smc} returns an object of class
+#'   \code{\link{redist_plans}} containing the simulated plans.
 #'
 #' @references
 #' McCartan, C., & Imai, K. (2020). Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans.
@@ -137,9 +139,9 @@ redist_smc = function(map, n_sims, counties=NULL, compactness=1, constraints=lis
     } else {
         # handle discontinuous counties
         component = contiguity(graph, as.integer(as.factor(counties)))
-        counties = if_else(component > 1,
-                           paste0(as.character(counties), "-", component),
-                           as.character(counties)) %>%
+        counties = dplyr::if_else(component > 1,
+                                  paste0(as.character(counties), "-", component),
+                                  as.character(counties)) %>%
             as.factor() %>%
             as.integer()
     }
@@ -201,7 +203,9 @@ redist_smc = function(map, n_sims, counties=NULL, compactness=1, constraints=lis
                      seq_alpha = seq_alpha)
 }
 
-#' Helper function to truncate importance weights.
+#' Helper function to truncate importance weights
+#'
+#' Defined as \code{pmin(x, quantile(x, 1 - length(x)^(-0.5)))}
 #'
 #' @param x the weights
 #'

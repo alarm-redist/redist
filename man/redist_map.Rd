@@ -24,17 +24,17 @@ as_redist_map(x)
 single \code{list} or \code{data.frame}.  These will be passed on to the
 \code{\link{tibble}} constructor.}
 
-\item{n_distr}{\code{\link[dplyr]{<data-masking>}} the integer number of
+\item{n_distr}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the integer number of
 districts to partition the map into}
 
-\item{pop_tol}{\code{\link[dplyr]{<data-masking>}} the population tolerance.
+\item{pop_tol}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the population tolerance.
 The percentage deviation from the average population will be constrained to
 be no more than this number.}
 
-\item{pop_bounds}{\code{\link[dplyr]{<data-masking>}} more specific
+\item{pop_bounds}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} more specific
 population bounds, in the form of \code{c(lower, target, upper)}.}
 
-\item{pop_col}{\code{\link[dplyr]{<tidy-select>}} the name of the population
+\item{pop_col}{\code{\link[tidyr:tidyr_tidy_select]{<tidy-select>}} the name of the population
 vector column.}
 
 \item{graph}{the adjacency graph for the object. Defaults to being computed
@@ -42,11 +42,13 @@ from the data if it is coercible to a shapefile.}
 
 \item{graph_col}{the name of the adjacency graph column}
 
-\item{existing_col}{\code{\link[dplyr]{<tidy-select>}} the name of a column
+\item{existing_col}{\code{\link[tidyr:tidyr_tidy_select]{<tidy-select>}} the name of a column
 with existing district assignment}
 
 \item{planarize}{a number, indicating the CRS to project the shapefile to if
 it is latitude-longitude based. Set to NULL to avoid planarizing.}
+
+\item{x}{an object to be coerced}
 }
 \description{
 Sets up a redistricting problem.
@@ -61,6 +63,13 @@ these units, and the population bounds will adjust accordingly.  If an
 existing map is also attached to the object, the number of districts will
 also adjust.  Subsetting with \code{`[`} and \code{`[[`} does not recompute
 graphs or attributes.
+
+Other useful methods for \code{redist_map} objects:
+\itemize{
+\item \code{\link{merge_by}}
+\item \code{\link{get_graph}}
+\item \code{\link{plot.redist_map}}
+}
 }
 \examples{
 d = redist_map(fl25, n_distr=3, pop_tol=0.05)

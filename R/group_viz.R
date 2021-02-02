@@ -142,10 +142,10 @@ redist.prep_group_viz = function(result, geometry, full_pop, group_pop, current=
 
     # basic vitals
     tot_edges = sum(sapply(result$aList, length))/2
-    maxdev = c(redist.parity(result$cdvec[,1:2,drop=F], fl25$pop)[1], result$maxdev)
+    maxdev = c(redist.parity(result$cdvec[,1:2,drop=F], full_pop)[1], result$maxdev)
     comp = redist.compactness(geometry, m_plot, measure=comp_meas,
                               population=full_pop, adjacency=result$aList) %>%
-        dplyr::group_by(nloop) %>%
+        dplyr::group_by(.data$nloop) %>%
         dplyr::summarize_all(mean) %>%
         dplyr::pull()
 
@@ -377,8 +377,9 @@ viz_server = function(m, dev, comp, geom, mds, sizes, hide, pct_min, pop,
         output$distrpct = shiny::renderPlot({
             pct_d = dplyr::as_tibble(pct_min, .name_repair=function(x) as.character(1:ncol(pct_min))) %>%
                 dplyr::mutate(district=factor(as.character(1:N), as.character(1:N))) %>%
-                tidyr::pivot_longer(-starts_with("district"), names_to="plan", values_to="pct")
-            p = ggplot2::ggplot(pct_d[pct_d$plan != 1,], ggplot2::aes(district, pct)) +
+                tidyr::pivot_longer(-tidyselect::starts_with("district"), names_to="plan", values_to="pct")
+            p = ggplot2::ggplot(pct_d[pct_d$plan != 1,],
+                                ggplot2::aes(.data$district, .data$pct)) +
                 ggplot2::geom_boxplot(fill="#bbbbbb", outlier.size=0.2) +
                 ggplot2::scale_y_continuous(labels=scales::percent) +
                 ggplot2::labs(x="District", y="Group percentage") +
@@ -415,15 +416,16 @@ viz_server = function(m, dev, comp, geom, mds, sizes, hide, pct_min, pop,
                     c("x", "y",  "cluster", str_c("min_", x[-1:-3]))
                 }) %>%
                 dplyr::select(x, y, col=!!plot_col) %>%
-                dplyr::mutate(id = 1:n(), label = labels, size = sizes)
+                dplyr::mutate(id = 1:n(), label = .data$labels, size = .data$sizes)
 
             if (mindistr > 0)
                 legend = str_glue("Group pct. in\ndistrict {mindistr}")
             else
                 legend = "Cluster"
 
-            p = ggplot2::ggplot(plot_d[-hide,], ggplot2::aes(x, y, color=col, size=size,
-                                                    data_id=id, tooltip=label)) +
+            p = ggplot2::ggplot(plot_d[-hide,],
+                                ggplot2::aes(x, y, color=col, size=.data$size,
+                                             data_id=id, tooltip=.data$label)) +
                 ggiraph::geom_point_interactive(alpha=0.85) +
                 ggplot2::scale_color_viridis_c(labels=if (mindistr > 0) scales::percent else scales::comma) +
                 {if (show_current)

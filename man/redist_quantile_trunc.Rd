@@ -2,7 +2,7 @@
 % Please edit documentation in R/redist_smc_tidy.R
 \name{redist_quantile_trunc}
 \alias{redist_quantile_trunc}
-\title{Helper function to truncate importance weights.}
+\title{Helper function to truncate importance weights}
 \usage{
 redist_quantile_trunc(x)
 }
@@ -10,5 +10,5 @@ redist_quantile_trunc(x)
 \item{x}{the weights}
 }
 \description{
-Helper function to truncate importance weights.
+Defined as \code{pmin(x, quantile(x, 1 - length(x)^(-0.5)))}
 }

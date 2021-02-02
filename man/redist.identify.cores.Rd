@@ -25,6 +25,11 @@ make_cores(.data = get0(".", parent.frame()), within = 1, focus = NULL)
 \item{focus}{Optional. Integer. A single district to focus on.}
 
 \item{simplify}{Optional. Logical. Whether to return extra information or just grouping ID.}
+
+\item{.data}{a \code{\link{redist_map}} object}
+
+\item{within}{the core is defined to be at least this number of steps within
+district boundaries}
 }
 \value{
 integer vector if simplify is false. Otherwise returns a tibble with the grouping 

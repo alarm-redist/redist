@@ -18,12 +18,12 @@ test_that("Pairwise distances are computed correctly", {
 })
 
 test_that("Population parity is computed correctly", {
-    dev = c(0.066155929182306, 0.036334344524997, 0.036334344524997,
-            0.022657548802852, 0.00853514319502291, 0.0524105780931325,
-            0.0951548494352752, 0.0948120726001336, 0.0959260973143434, 0.0758222359332956)
+    dev = c(0.066166599064, 0.036345355141, 0.036345355141,
+            0.022645864159, 0.008523619910, 0.052398553498,
+            0.095142336454, 0.094822415063, 0.095913575521, 0.075832795370)
 
     res = redist.parity(algdat.p10$cdmat[,1:10], algdat.p10$precinct.data$pop)
-    expect_equal(res, dev)
+    expect_equal(res, dev, tolerance=2e-5)
 })
 
 test_that("Group percentages are computed correctly", {

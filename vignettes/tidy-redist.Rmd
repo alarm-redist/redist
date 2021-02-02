@@ -105,13 +105,12 @@ Balanced and Compact Redistricting Plans. Available at
 <https://imai.fas.harvard.edu/research/files/SMCredist.pdf>.]
 
 ```{r}
-houston_plans = redist_smc(houston_merged, 10, counties=county)
+houston_plans = redist_smc(houston_merged, 20, counties=county)
 print(houston_plans)
 ```
 
 ```{r}
 houston_plans = houston_plans %>%
-    add_reference(houston_merged$cd) %>%
     mutate(comp = distr_compactness(houston_merged, plan, "polsby_popper"),
            pct_hisp = group_percent(houston_merged, hisp, pop),
            pct_black = group_percent(houston_merged, black, pop),
