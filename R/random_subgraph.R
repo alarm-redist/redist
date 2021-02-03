@@ -60,7 +60,7 @@ preproc.adj <- function(shp, adj){
 redist.random.subgraph <- function(shp, n, adjacency = NULL){
   # Check input:
   shp <- preproc.shp(shp)
-  adj <- preproc.adj(shp, adj)
+  adj <- preproc.adj(shp, adjacency)
   
   if(n < 1){
     stop('Please provide "n" as a positive integer')
