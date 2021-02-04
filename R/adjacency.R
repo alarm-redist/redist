@@ -100,3 +100,30 @@ redist.reduce.adjacency <- function(adjacency, keep_rows){
   return(reduce_adj(adj_list = adjacency, prec_keep = prec_keep, 
                     prec_idx = keep_rows))
 }
+
+#' Coarsen Adjacency List
+#'
+#' @param adjacency A zero-indexed adjacency list
+#' @param groups integer vector of elements of adjacency to group
+#'
+#' @return adjacency list coarsened
+#' @export
+redist.coarsen.adjacency <- function(adjacency, groups){
+  if(min(unlist(adjacency)) != 0){
+    stop('Please provide "adjacency" as a 0-indexed list.')
+  }
+  if(max(unlist(adjacency))!= (length(adjacency)-1)){
+    warning('"adjacency" did not have typical values of 0:(length(adjacency)-1)')
+  }
+  if(length(groups) != length(adjacency)){
+    stop('groups and adjacency have sizes which do not conform.')
+  }
+  if(min(groups) != 0){
+    groups <- groups - min(groups)
+  }
+  
+  groups <- as.integer(groups)
+  
+  return(coarsen_adjacency(adjacency, groups))
+
+}
