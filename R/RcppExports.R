@@ -5,6 +5,10 @@ reduce_adj <- function(adj_list, prec_keep, prec_idx) {
     .Call(`_redist_reduce_adj`, adj_list, prec_keep, prec_idx)
 }
 
+coarsen_adjacency <- function(adj, groups) {
+    .Call(`_redist_coarsen_adjacency`, adj, groups)
+}
+
 talisman <- function(dvs, nd, alpha = 1, beta = 1) {
     .Call(`_redist_talisman`, dvs, nd, alpha, beta)
 }

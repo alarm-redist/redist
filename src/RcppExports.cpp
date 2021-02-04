@@ -21,6 +21,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// coarsen_adjacency
+List coarsen_adjacency(List adj, IntegerVector groups);
+RcppExport SEXP _redist_coarsen_adjacency(SEXP adjSEXP, SEXP groupsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type adj(adjSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type groups(groupsSEXP);
+    rcpp_result_gen = Rcpp::wrap(coarsen_adjacency(adj, groups));
+    return rcpp_result_gen;
+END_RCPP
+}
 // talisman
 NumericVector talisman(NumericMatrix dvs, double nd, double alpha, double beta);
 RcppExport SEXP _redist_talisman(SEXP dvsSEXP, SEXP ndSEXP, SEXP alphaSEXP, SEXP betaSEXP) {
