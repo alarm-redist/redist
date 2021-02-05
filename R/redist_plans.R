@@ -280,11 +280,13 @@ plot.redist_plans = function(x, ..., type="hist") {
 #' @concept visualize
 #' @export
 plot_hist = function(x, qty, bins=ceiling(nrow(x)/5), ...) {
-    ggplot(subset_sampled(x), aes({{ qty }})) +
+    p = ggplot(subset_sampled(x), aes({{ qty }})) +
         ggplot2::geom_histogram(..., bins=bins) +
-        ggplot2::geom_vline(aes(xintercept={{ qty }}, color=draw),
-                            data=subset_ref(x)) +
         labs(y="Number of plans", color="Plan")
+    if (get_n_ref(x) > 0)
+        p = p + ggplot2::geom_vline(aes(xintercept={{ qty }}, color=draw),
+                                    data=subset_ref(x))
+    p
 }
 
 #' @rdname plot_hist
@@ -309,10 +311,12 @@ plot_distr_qtys = function(x, qty, desc=F, ...) {
     ord = if (desc) -1 else 1
     x = dplyr::group_by(x, .data$draw) %>%
         dplyr::mutate(.distr_no = as.factor(rank(ord * {{ qty }})))
-    ggplot(subset_sampled(x), aes(.data$.distr_no, {{ qty }})) +
+    p = ggplot(subset_sampled(x), aes(.data$.distr_no, {{ qty }})) +
         ggplot2::geom_boxplot(..., outlier.size=1) +
-        ggplot2::geom_point(aes(color=draw, shape=draw), size=2, data=subset_ref(x)) +
         labs(x="Ordered district", color="Plan", shape="Plan")
+    if (get_n_ref(x) > 0)
+        p = p + ggplot2::geom_point(aes(color=draw, shape=draw), size=2, data=subset_ref(x))
+    p
 }
 
 #' Plot a district assignment

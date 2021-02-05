@@ -42,7 +42,7 @@ Imports:
     rlang,
     vctrs,
     tidyselect,
-    cli,
+    cli (>= 2.1.0),
     stringr
 Suggests:
     igraph,

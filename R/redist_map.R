@@ -210,7 +210,12 @@ get_graph = function(x) {
     x[[attr(x, "graph_col")]]
 }
 
-# extract graph
+#' Extract the existing district assignment from a \code{redist_map} object
+#'
+#' @param x the \code{redist_map} object
+#' @returns an integer vector of district numbers
+#' @concept prepare
+#' @export
 get_existing = function(x) {
     stopifnot(inherits(x, "redist_map"))
 
