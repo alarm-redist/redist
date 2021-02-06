@@ -36,7 +36,7 @@ on, since data operations like filtering and summarizing will affect the graph
 structure, number of district, and population constraints.
 
 Here, the existing district assignment is stored in the `cd` column. We provide
-let `redist_map` know about this by providing the `existin_col` argument, and
+let `redist_map` know about this by providing the `existing_col` argument, and
 we use `max(cd)` to count the total number of districts.
 ```{r}
 tx = redist_map(texas_shp, pop_tol=0.05, existing_col=cd)
@@ -165,7 +165,7 @@ houston = texas_shp %>%
     mutate(cd_cores = make_cores(within=1)) %>%
     merge_by(cd_cores)
 
-houston_plans = redist_smc(houston, 100, counties=county) %>%    
+houston_plans = redist_smc(houston, 100, counties=county, silent=T) %>%    
     add_reference(houston$cd) %>%
     mutate(pct_hisp = group_frac(houston, hisp, pop))
 
