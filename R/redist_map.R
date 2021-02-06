@@ -344,7 +344,7 @@ print.redist_map = function(x, ...) {
 #' data(fl25)
 #' d = redist_map(fl25, n_distr=3, pop_tol=0.05)
 #' plot(d)
-#' plot(d, edges=F)
+#' plot(d, edges=FALSE)
 #' plot(d, BlackPop/pop)
 #'
 #' @method plot redist_map

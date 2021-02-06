@@ -58,6 +58,7 @@
 #' @importFrom stats median runif quantile qnorm
 #' @importFrom magrittr %>%
 #' @importFrom dplyr n dplyr_row_slice dplyr_col_modify dplyr_reconstruct .data
+#' @importFrom rlang :=
 #' @importFrom stringr str_c str_glue
 NULL
 
