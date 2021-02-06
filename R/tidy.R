@@ -63,7 +63,7 @@ merge_by = function(.data, key, by_existing=TRUE, drop_geom=TRUE) {
     col = attr(.data, "existing_col")
     unique_chr = function(x) paste(unique(x), collapse="~")
     if (!is.null(col) && by_existing) {
-        dplyr::group_by(.data, {{ key }}, dplyr::across(dplyr::all_of(col))) %>%
+        dplyr::group_by(.data, dplyr::across(dplyr::all_of(col)), {{ key }}) %>%
             dplyr::summarize(dplyr::across(where(is_nonprop), sum, na.rm=T),
                              dplyr::across(where(is_prop), ~ weighted.mean(., {{ pop_col }}, na.rm=T)),
                              dplyr::across(where(is_const_rel(key_val)), ~ .[1]),
