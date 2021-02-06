@@ -20,7 +20,8 @@ knitr::opts_chunk$set(
 We begin by loading `tidyverse` and the `redist` library, and reading in our 
 shapefile.
 ```{r message=F}
-library(tidyverse)
+library(dplyr)
+library(ggplot2)
 library(redist)
 
 data(east_tx)
@@ -113,7 +114,7 @@ Balanced and Compact Redistricting Plans. Available at
 <https://imai.fas.harvard.edu/research/files/SMCredist.pdf>.]
 
 ```{r message=F}
-houston_plans = redist_smc(houston_cores, 100, counties=county) %>%
+houston_plans = redist_smc(houston_cores, 100, counties=county, verbose=F) %>%
     add_reference(houston_cores$cd)
 print(houston_plans)
 ```

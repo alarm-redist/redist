@@ -64,14 +64,16 @@ merge_by = function(.data, key, by_existing=TRUE, drop_geom=TRUE) {
     unique_chr = function(x) paste(unique(x), collapse="~")
     if (!is.null(col) && by_existing) {
         dplyr::group_by(.data, dplyr::across(dplyr::all_of(col)), {{ key }}) %>%
-            dplyr::summarize(dplyr::across(where(is_nonprop), sum, na.rm=T),
-                             dplyr::across(where(is_prop), ~ weighted.mean(., {{ pop_col }}, na.rm=T)),
+            dplyr::summarize(dplyr::across(where(is_prop),
+                                           ~ weighted.mean(., w=.data[[pop_col]], na.rm=T)),
+                             dplyr::across(where(is.numeric), sum, na.rm=T),
                              dplyr::across(where(is_const_rel(key_val)), ~ .[1]),
                              dplyr::across(where(is.character), unique_chr))
     } else {
         dplyr::group_by(.data, {{ key }}) %>%
-            dplyr::summarize(dplyr::across(where(is_nonprop), sum, na.rm=T),
-                             dplyr::across(where(is_prop), ~ weighted.mean(., {{ pop_col }}, na.rm=T)),
+            dplyr::summarize(dplyr::across(where(is_prop),
+                                           ~ weighted.mean(., w=.data[[pop_col]], na.rm=T)),
+                             dplyr::across(where(is.numeric), sum, na.rm=T),
                              dplyr::across(where(is_const_rel(key_val)), ~ .[1]),
                              dplyr::across(where(is.character), unique_chr)) %>%
             `attr<-`("existing_col", NULL)
@@ -217,7 +219,7 @@ group_frac = function(map, group_pop, full_pop=map[[attr(map, "pop_col")]],
 #' @returns A tibble with three columns: \code{X}, \code{X_lower}, and
 #'   \code{X_upper}, where \code{X} is the name of the vector of interest,
 #'   containing the mean and confidence interval. When used inside
-#'   \code{\link[dplyr]{summarize()}} this will create three columns in the
+#'   \code{\link[dplyr:summarise]{summarize()}} this will create three columns in the
 #'   output data.
 #'
 #' @concept analyze

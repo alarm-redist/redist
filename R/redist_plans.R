@@ -168,14 +168,14 @@ get_sampling_info = function(plans) {
 #' @export
 subset_sampled = function(plans) {
     n_ref = get_n_ref(plans)
-    dplyr::filter(plans, as.integer(draw) > n_ref)
+    dplyr::filter(plans, as.integer(.data$draw) > n_ref)
 }
 
 #' @rdname subset_sampled
 #' @export
 subset_ref = function(plans) {
     n_ref = get_n_ref(plans)
-    dplyr::filter(plans, as.integer(draw) <= n_ref)
+    dplyr::filter(plans, as.integer(.data$draw) <= n_ref)
 }
 
 
@@ -284,7 +284,7 @@ plot_hist = function(x, qty, bins=ceiling(nrow(x)/5), ...) {
         ggplot2::geom_histogram(..., bins=bins) +
         labs(y="Number of plans", color="Plan")
     if (get_n_ref(x) > 0)
-        p = p + ggplot2::geom_vline(aes(xintercept={{ qty }}, color=draw),
+        p = p + ggplot2::geom_vline(aes(xintercept={{ qty }}, color=.data$draw),
                                     data=subset_ref(x))
     p
 }
@@ -315,7 +315,7 @@ plot_distr_qtys = function(x, qty, desc=F, ...) {
         ggplot2::geom_boxplot(..., outlier.size=1) +
         labs(x="Ordered district", color="Plan", shape="Plan")
     if (get_n_ref(x) > 0)
-        p = p + ggplot2::geom_point(aes(color=draw, shape=draw), size=2, data=subset_ref(x))
+        p = p + ggplot2::geom_point(aes(color=.data$draw, shape=.data$draw), size=2, data=subset_ref(x))
     p
 }
 
@@ -334,7 +334,7 @@ plot_plan = function(x, draw, geom) {
     sf::st_sf(geom) %>%
         dplyr::ungroup() %>%
         dplyr::mutate(District = as.factor(get_plan_matrix(x)[,draw_idx])) %>%
-    ggplot(aes(fill=District)) +
+    ggplot(aes(fill=.data$District)) +
         ggplot2::geom_sf(size=0) +
         theme_void()
 }

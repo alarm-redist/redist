@@ -18,7 +18,7 @@ build importance sampling confidence intervals for.}
 A tibble with three columns: \code{X}, \code{X_lower}, and
   \code{X_upper}, where \code{X} is the name of the vector of interest,
   containing the mean and confidence interval. When used inside
-  \code{\link[dplyr]{summarize()}} this will create three columns in the
+  \code{\link[dplyr:summarise]{summarize()}} this will create three columns in the
   output data.
 }
 \description{
