@@ -11,6 +11,7 @@
 #' "The Essential Role of Empirical Validation in Legislative Redistricting Simulation."
 #' Forthcoming, Statistics and Public Policy.
 #'
+#' @concept enumerate
 #' @examples \dontrun{
 #' redist.init.enumpart()
 #' }
@@ -43,6 +44,7 @@ redist.init.enumpart <- function(){
 #' Benjamin Fifield, Kosuke Imai, Jun Kawahara, and Christopher T Kenny.
 #' "The Essential Role of Empirical Validation in Legislative Redistricting Simulation."
 #' Forthcoming, Statistics and Public Policy.
+#' @concept enumerate
 #' @examples \dontrun{
 #' data("algdat.p10")
 #' redist.prep.enumpart(adjlist = algdat.p10$adjlist, unordered_path = '../unordered',
@@ -98,6 +100,7 @@ redist.prep.enumpart <- function(adjlist, unordered_path, ordered_path){
 #'
 #' @return 0 on success
 #' @export
+#' @concept enumerate
 #'
 #' @examples \dontrun{
 #' redist.run.enumpart(ordered_path = '../ordered', out_path = '../enumerated')
@@ -147,6 +150,7 @@ redist.run.enumpart <- function(ordered_path, out_path, ndist=2, all=TRUE, n=NUL
 #' "The Essential Role of Empirical Validation in Legislative Redistricting Simulation."
 #' Forthcoming, Statistics and Public Policy.
 #'
+#' @concept enumerate
 #' @examples \dontrun{
 #' cds <- redist.read.enumpart(out_path = '../enumerated')
 #' }
@@ -190,6 +194,7 @@ is_last <- function(i, v, edges){
 #' \item{sequence}{numeric vector, lists out all sizes for every frontier}
 #' }
 #' @export
+#' @concept enumerate
 #'
 #' @importFrom stringr str_split
 #' @examples \dontrun{
@@ -256,7 +261,7 @@ redist.calc.frontier.size <- function(ordered_path){
 #'
 #' @return List with entries district_membership and parity.
 #'
-#' @concept simulate
+#' @concept enumerate
 #' @export
 redist.enumpart <- function(adjlist, unordered_path, ordered_path, out_path,
                             ndist=2, all=TRUE, n=NULL, init=FALSE,

@@ -485,6 +485,43 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// plan_joint
+NumericMatrix plan_joint(IntegerVector m1, IntegerVector m2, NumericVector pop);
+RcppExport SEXP _redist_plan_joint(SEXP m1SEXP, SEXP m2SEXP, SEXP popSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type m1(m1SEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type m2(m2SEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type pop(popSEXP);
+    rcpp_result_gen = Rcpp::wrap(plan_joint(m1, m2, pop));
+    return rcpp_result_gen;
+END_RCPP
+}
+// renumber_matrix
+IntegerMatrix renumber_matrix(IntegerMatrix plans, IntegerVector renumb);
+RcppExport SEXP _redist_renumber_matrix(SEXP plansSEXP, SEXP renumbSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type plans(plansSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type renumb(renumbSEXP);
+    rcpp_result_gen = Rcpp::wrap(renumber_matrix(plans, renumb));
+    return rcpp_result_gen;
+END_RCPP
+}
+// best_renumber
+int best_renumber(IntegerMatrix combn, NumericMatrix joint);
+RcppExport SEXP _redist_best_renumber(SEXP combnSEXP, SEXP jointSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type combn(combnSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type joint(jointSEXP);
+    rcpp_result_gen = Rcpp::wrap(best_renumber(combn, joint));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rsg
 List rsg(List adj_list, NumericVector population, int Ndistrict, double target_pop, double thresh, int maxiter);
 RcppExport SEXP _redist_rsg(SEXP adj_listSEXP, SEXP populationSEXP, SEXP NdistrictSEXP, SEXP target_popSEXP, SEXP threshSEXP, SEXP maxiterSEXP) {

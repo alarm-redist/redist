@@ -65,6 +65,7 @@ list_to_mat <- function(A){
 #' data(algdat.pfull)
 #' test <- redist.enumerate(adjobj = algdat.pfull$adjlist)
 #' }
+#' @concept enumerate
 #' @export
 redist.enumerate <- function(adjobj,
                              ndists = 2,

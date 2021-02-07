@@ -31,3 +31,4 @@ Benjamin Fifield, Kosuke Imai, Jun Kawahara, and Christopher T Kenny.
 "The Essential Role of Empirical Validation in Legislative Redistricting Simulation."
 Forthcoming, Statistics and Public Policy.
 }
+\concept{enumerate}

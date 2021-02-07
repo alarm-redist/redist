@@ -119,6 +119,17 @@ houston_plans = redist_smc(houston_cores, 100, counties=county, verbose=F) %>%
 print(houston_plans)
 ```
 
+Since district numbers in simulated plans are by and large random, we often want
+to renumber the simulated districts to match the district numbers in the original plan,
+something which is easily accomplished by the function `match_numbers`:
+```{r}
+houston_plans = match_numbers(houston_plans, houston_cores$cd)
+print(houston_plans)
+```
+This function also creates a new column, which records, for each plan, the
+fraction of the total population which lives in the same district under the
+reference plan.
+
 We can then easily add summary statistics for each district. The 
 `distr_compactness` and `group_frac` functions will implicitly reference the
 simulated plans matrix when called inside `mutate()`.
@@ -131,8 +142,10 @@ houston_plans = houston_plans %>%
            pct_min = 1 - pct_white)
 print(houston_plans)
 ```
+If we wanted, we could sort and number districts according to one of these
+statistics using the `number_by` function.
 
-From there, it's easy to summary statistics by plan.
+From there, it's easy to summarize summary statistics by plan.
 ```{r}
 min_distr = group_by(houston_plans, draw) %>%
     summarize(n_black = sum(pct_black >= 0.5),
@@ -148,6 +161,8 @@ a reference line for each reference plan.
 # ggplots with nice defaults and labels
 plot(min_distr, n_coalition)
 plot(houston_plans, pct_hisp, type="distr_qtys")
+# don't sort; use existing district numbers
+plot(houston_plans, pct_hisp, sort=F, type="distr_qtys")
 ```
 
 We can also re-index the plans back to the original, un-merged map.
@@ -168,7 +183,8 @@ houston = texas_shp %>%
 
 houston_plans = redist_smc(houston, 100, counties=county, silent=T) %>%    
     add_reference(houston$cd) %>%
+    match_numbers(houston$cd) %>%
     mutate(pct_hisp = group_frac(houston, hisp, pop))
 
-plot(houston_plans, type="distr_qtys", pct_hisp)
+plot(houston_plans, pct_hisp, sort=F, type="distr_qtys")
 ```

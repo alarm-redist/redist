@@ -254,12 +254,6 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.enumpart.html">redist.enumpart()</a></code> </p>
-        </td>
-        <td><p>Enumerate All Parititions</p></td>
-      </tr><tr>
-        
-        <td>
           <p><code><a href="redist.ipw.html">redist.ipw()</a></code> </p>
         </td>
         <td><p>Inverse probability reweighting for MCMC Redistricting</p></td>
@@ -321,6 +315,12 @@
       </tr><tr>
         
         <td>
+          <p><code><a href="prec_assignment.html">prec_assignment()</a></code> </p>
+        </td>
+        <td><p>Extract the district assignments for a precint across all simulated plans</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="pullback.html">pullback()</a></code> </p>
         </td>
         <td><p>Pull back plans to unmerged units</p></td>
@@ -330,6 +330,12 @@
           <p><code><a href="redist.compactness.html">redist.compactness()</a></code> <code><a href="redist.compactness.html">distr_compactness()</a></code> </p>
         </td>
         <td><p>Calculate compactness measures for a set of districts</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.competitiveness.html">redist.competitiveness()</a></code> <code><a href="redist.competitiveness.html">competitiveness()</a></code> </p>
+        </td>
+        <td><p>Compute Competitiveness</p></td>
       </tr><tr>
         
         <td>
@@ -345,9 +351,21 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.metrics.html">redist.metrics()</a></code> </p>
+          <p><code><a href="redist.metrics.html">redist.metrics()</a></code> <code><a href="redist.metrics.html">partisan_metrics()</a></code> </p>
         </td>
         <td><p>Calculate gerrymandering metrics for a set of districts</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.segcalc.html">redist.segcalc()</a></code> <code><a href="redist.segcalc.html">segregation_index()</a></code> </p>
+        </td>
+        <td><p>Segregation index calculation for MCMC redistricting.</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.splits.html">redist.splits()</a></code> <code><a href="redist.splits.html">county_splits()</a></code> </p>
+        </td>
+        <td><p>Count County Splits</p></td>
       </tr><tr>
         
         <td>
@@ -390,7 +408,7 @@
         <td>
           <p><code><a href="plot_distr_qtys.html">plot_distr_qtys()</a></code> </p>
         </td>
-        <td><p>Plot sorted box and whisker plots</p></td>
+        <td><p>Plot box and whisker plots for each district</p></td>
       </tr><tr>
         
         <td>
@@ -421,6 +439,61 @@
           <p><code><a href="redist.prep_group_viz.html">redist.prep_group_viz()</a></code> </p>
         </td>
         <td><p>Prepare to Visualize Plans</p></td>
+      </tr>
+    </tbody><tbody>
+      <tr>
+        <th colspan="2">
+          <h2 id="section-enumerate" class="hasAnchor"><a href="#section-enumerate" class="anchor"></a>Enumerate</h2>
+          <p class="section-desc"><p>Functions to help enumerate all possible redistricting plans.</p></p>
+        </th>
+      </tr>
+      
+      
+    </tbody><tbody>
+      
+      
+      <tr>
+        
+        <td>
+          <p><code><a href="redist.calc.frontier.size.html">redist.calc.frontier.size()</a></code> </p>
+        </td>
+        <td><p>Calculate Frontier Size</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.enumerate.html">redist.enumerate()</a></code> </p>
+        </td>
+        <td><p>Exact Redistricting Plan Enumerator</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.enumpart.html">redist.enumpart()</a></code> </p>
+        </td>
+        <td><p>Enumerate All Parititions</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.init.enumpart.html">redist.init.enumpart()</a></code> </p>
+        </td>
+        <td><p>Initialize enumpart</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.prep.enumpart.html">redist.prep.enumpart()</a></code> </p>
+        </td>
+        <td><p>Prepares a run of the enumpart algorithm by ordering edges</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.read.enumpart.html">redist.read.enumpart()</a></code> </p>
+        </td>
+        <td><p>Read Results from enumpart</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.run.enumpart.html">redist.run.enumpart()</a></code> </p>
+        </td>
+        <td><p>Runs the enumpart algorithm</p></td>
       </tr>
     </tbody><tbody>
       <tr>
@@ -482,6 +555,18 @@
       </tr><tr>
         
         <td>
+          <p><code><a href="match_numbers.html">match_numbers()</a></code> </p>
+        </td>
+        <td><p>Renumber districts to match an existing plan</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="number_by.html">number_by()</a></code> </p>
+        </td>
+        <td><p>Renumber districts to match a quantity of interest</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="preproc.adj.html">preproc.adj()</a></code> </p>
         </td>
         <td><p>Preprocess adjacency arguments</p></td>
@@ -506,12 +591,6 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.calc.frontier.size.html">redist.calc.frontier.size()</a></code> </p>
-        </td>
-        <td><p>Calculate Frontier Size</p></td>
-      </tr><tr>
-        
-        <td>
           <p><code><a href="redist.choropleth.html">redist.choropleth()</a></code> </p>
         </td>
         <td><p>Creates a Choropleth</p></td>
@@ -521,12 +600,6 @@
           <p><code><a href="redist.combine.mpi.html">redist.combine.mpi()</a></code> </p>
         </td>
         <td><p>Combine successive runs of <code>redist.mcmc.mpi</code></p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="redist.competitiveness.html">redist.competitiveness()</a></code> </p>
-        </td>
-        <td><p>Compute Competitiveness</p></td>
       </tr><tr>
         
         <td>
@@ -548,12 +621,6 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.enumerate.html">redist.enumerate()</a></code> </p>
-        </td>
-        <td><p>Exact Redistricting Plan Enumerator</p></td>
-      </tr><tr>
-        
-        <td>
           <p><code><a href="redist.find.target.html">redist.find.target()</a></code> </p>
         </td>
         <td><p>Find Majority Minority Remainder</p></td>
@@ -563,12 +630,6 @@
           <p><code><a href="redist.findparams.html">redist.findparams()</a></code> </p>
         </td>
         <td><p>Run parameter testing for <code>redist.mcmc</code></p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="redist.init.enumpart.html">redist.init.enumpart()</a></code> </p>
-        </td>
-        <td><p>Initialize enumpart</p></td>
       </tr><tr>
         
         <td>
@@ -584,21 +645,9 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.prep.enumpart.html">redist.prep.enumpart()</a></code> </p>
-        </td>
-        <td><p>Prepares a run of the enumpart algorithm by ordering edges</p></td>
-      </tr><tr>
-        
-        <td>
           <p><code><a href="redist.random.subgraph.html">redist.random.subgraph()</a></code> </p>
         </td>
         <td><p>Return a random subgraph of a shape</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="redist.read.enumpart.html">redist.read.enumpart()</a></code> </p>
-        </td>
-        <td><p>Read Results from enumpart</p></td>
       </tr><tr>
         
         <td>
@@ -608,33 +657,15 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.run.enumpart.html">redist.run.enumpart()</a></code> </p>
-        </td>
-        <td><p>Runs the enumpart algorithm</p></td>
-      </tr><tr>
-        
-        <td>
           <p><code><a href="redist.samplepart.html">redist.samplepart()</a></code> </p>
         </td>
         <td><p>Sample partitions using spanning trees</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.segcalc.html">redist.segcalc()</a></code> </p>
-        </td>
-        <td><p>Segregation index calculation for MCMC redistricting.</p></td>
-      </tr><tr>
-        
-        <td>
           <p><code><a href="redist.smc_is_ci.html">redist.smc_is_ci()</a></code> </p>
         </td>
         <td><p>Confidence Intervals for Importance Sampling Estimates</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="redist.splits.html">redist.splits()</a></code> </p>
-        </td>
-        <td><p>Count County Splits</p></td>
       </tr><tr>
         
         <td>

@@ -9,6 +9,7 @@
 
 /* .Call calls */
 extern SEXP _redist_agg_p2d(SEXP, SEXP, SEXP);
+extern SEXP _redist_best_renumber(SEXP, SEXP);
 extern SEXP _redist_bias(SEXP, SEXP);
 extern SEXP _redist_biasatv(SEXP, SEXP, SEXP);
 extern SEXP _redist_calc_polsbypopper(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -36,9 +37,11 @@ extern SEXP _redist_max_dev(SEXP, SEXP, SEXP);
 extern SEXP _redist_meanmedian(SEXP);
 extern SEXP _redist_minkowski(SEXP, SEXP, SEXP);
 extern SEXP _redist_n_removed(SEXP, SEXP, SEXP);
+extern SEXP _redist_plan_joint(SEXP, SEXP, SEXP);
 extern SEXP _redist_pop_tally(SEXP, SEXP, SEXP);
 extern SEXP _redist_prec_cooccur(SEXP, SEXP);
 extern SEXP _redist_reduce_adj(SEXP, SEXP, SEXP);
+extern SEXP _redist_renumber_matrix(SEXP, SEXP);
 extern SEXP _redist_responsiveness(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_rsg(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_sample_partition(SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -53,6 +56,7 @@ extern SEXP _redist_var_info_mat(SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
     {"_redist_agg_p2d",               (DL_FUNC) &_redist_agg_p2d,                3},
+    {"_redist_best_renumber",         (DL_FUNC) &_redist_best_renumber,          2},
     {"_redist_bias",                  (DL_FUNC) &_redist_bias,                   2},
     {"_redist_biasatv",               (DL_FUNC) &_redist_biasatv,                3},
     {"_redist_calc_polsbypopper",     (DL_FUNC) &_redist_calc_polsbypopper,      7},
@@ -80,9 +84,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_meanmedian",            (DL_FUNC) &_redist_meanmedian,             1},
     {"_redist_minkowski",             (DL_FUNC) &_redist_minkowski,              3},
     {"_redist_n_removed",             (DL_FUNC) &_redist_n_removed,              3},
+    {"_redist_plan_joint",            (DL_FUNC) &_redist_plan_joint,             3},
     {"_redist_pop_tally",             (DL_FUNC) &_redist_pop_tally,              3},
     {"_redist_prec_cooccur",          (DL_FUNC) &_redist_prec_cooccur,           2},
     {"_redist_reduce_adj",            (DL_FUNC) &_redist_reduce_adj,             3},
+    {"_redist_renumber_matrix",       (DL_FUNC) &_redist_renumber_matrix,        2},
     {"_redist_responsiveness",        (DL_FUNC) &_redist_responsiveness,         4},
     {"_redist_rsg",                   (DL_FUNC) &_redist_rsg,                    6},
     {"_redist_sample_partition",      (DL_FUNC) &_redist_sample_partition,       5},

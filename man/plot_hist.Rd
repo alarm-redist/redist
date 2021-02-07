@@ -5,7 +5,7 @@
 \alias{hist.redist_plans}
 \title{Plot a histogram of a summary statistic}
 \usage{
-plot_hist(x, qty, bins = ceiling(nrow(x)/5), ...)
+plot_hist(x, qty, bins = ceiling(sqrt(nrow(x)) * 1.5), ...)
 
 \method{hist}{redist_plans}(x, qty, ...)
 }

@@ -55,4 +55,4 @@ List with entries district_membership and parity.
 \description{
 Single function for standard enumeration analysis.
 }
-\concept{simulate}
+\concept{enumerate}

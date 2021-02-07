@@ -130,7 +130,11 @@ add_reference = function(plans, ref_plan, name="<ref>") {
     colnames(plan_m)[1] = name
 
     # then the dataframe
-    distr_pop = pop_tally(matrix(ref_plan, ncol=1), attr(plans, "pop"), n_distr)
+    prec_pop = attr(plans, "pop")
+    if (!is.null(prec_pop))
+        distr_pop = pop_tally(matrix(ref_plan, ncol=1), prec_pop, n_distr)
+    else
+        distr_pop = rep(NA_real_, n_distr)
     fct_levels = c(name, levels(plans$draw))
     new_draw = rep(factor(fct_levels, levels=fct_levels), each=n_distr)
     x = dplyr::bind_rows(
@@ -168,7 +172,98 @@ pullback = function(plans) {
     }
 
     attr(plans, "merge_idx") = NULL
+    attr(plans, "pop") = NULL
     set_plan_matrix(plans, get_plan_matrix(plans)[merge_idx,])
+}
+
+
+# helper function for match_numbers
+find_numbering = function(plan, ref, pop) {
+    joint = plan_joint(ref, plan, pop)
+    opts = which(joint > 0, arr.ind=TRUE)
+    combn = as.matrix(expand.grid(split(opts[,2], opts[,1])))
+    combn = combn[apply(combn, 1, anyDuplicated) == 0L, , drop=F]
+    best_idx = best_renumber(combn, joint)
+
+    renumb = as.integer(combn[best_idx,])
+    list(renumb = order(renumb),
+         shared = sum(diag(joint[, renumb])) / sum(pop))
+}
+
+#' Renumber districts to match an existing plan
+#'
+#' District numbers in simulated plans are by and large random.  This
+#' function attempts to renumber the districts across all simulated plans to
+#' match the numbers in a provided plan.
+#'
+#' @param data a \code{redist_plans} object
+#' @param plan a character vector giving the name of the plan to match to (e.g.,
+#'   for a reference plan), or an integer vector containing the plan itself.
+#' @param col the name of a new column to store the vector of population overlap
+#'   with the reference plan: the fraction of the total population who are in
+#'   the same district under each plan and the reference plan. Set to
+#'   \code{NULL} if no column should be created.
+#'
+#' @returns a modified \code{redist_plans} object. New district numbers will be
+#' stored as an ordered factor variable in the \code{district} column. The
+#' district numbers in the plan matrix will match the levels of this factor.
+#'
+#' @export
+match_numbers = function(data, plan, col="pop_overlap") {
+    stopifnot(inherits(data, "redist_plans"))
+    stopifnot("district" %in% colnames(data))
+
+    plan = factor(plan, ordered=TRUE)
+    n_distr = length(levels(plan))
+    plan_mat = get_plan_matrix(data)
+    pop = attr(data, "pop")
+
+    stopifnot(!is.null(pop))
+    stopifnot(max(plan_mat[,1]) == n_distr)
+
+    # compute renumbering and extract info
+    best_renumb = apply(plan_mat, 2, find_numbering, as.integer(plan), pop)
+    renumb = as.integer(vapply(best_renumb, function(x) x$renumb, integer(n_distr)))
+
+    if (!is.null(col))
+        data[[col]] = as.numeric(vapply(best_renumb, function(x) rep(x$shared, n_distr),
+                                        numeric(n_distr)))
+
+    renumb_mat = renumber_matrix(plan_mat, renumb)
+    colnames(renumb_mat) = colnames(plan_mat)
+    data = set_plan_matrix(data, renumb_mat)
+    data$district = factor(levels(plan)[renumb], levels(plan), ordered=TRUE)
+
+    data
+}
+
+#' Renumber districts to match a quantity of interest
+#'
+#' District numbers in simulated plans are by and large random.  This
+#' function will renumber the districts across all simulated plans in order
+#' of a provided quantity of interest.
+#'
+#' @param data a \code{redist_plans} object
+#' @param x \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the quantity of interest.
+#' @param desc \code{TRUE} if district should be sorted in descending order.
+#'
+#' @returns a modified \code{redist_plans} object. New district numbers will be
+#' stored as an ordered factor variable in the \code{district} column. The
+#' district numbers in the plan matrix will match the levels of this factor.
+#'
+#' @export
+number_by = function(data, x, desc=F) {
+    stopifnot(inherits(data, "redist_plans"))
+    stopifnot("district" %in% colnames(data))
+
+    ord = 1 - 2*desc
+    m = get_plan_matrix(data)
+    orig_groups = dplyr::group_vars(data)
+    dplyr::group_by(data, .data$draw) %>%
+        dplyr::mutate(district = rank(ord * {{ x }})) %>%
+        set_plan_matrix(renumber_matrix(m, .$district)) %>%
+        dplyr::arrange(district, .by_group=TRUE) %>%
+        dplyr::group_by(dplyr::across(dplyr::all_of(orig_groups)))
 }
 
 #' @rdname redist.compactness
@@ -203,6 +298,93 @@ group_frac = function(map, group_pop, full_pop=map[[attr(map, "pop_col")]],
     group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
     full_pop = rlang::eval_tidy(rlang::enquo(full_pop), map)
     as.numeric(redist.group.percent(get_plan_matrix(.data), group_pop, full_pop))
+}
+
+#' @rdname redist.segcalc
+#'
+#' @param map a \code{\link{redist_map}} object
+#' @param .data a \code{\link{redist_plans}} object
+#'
+#' @concept analyze
+#' @export
+segregation_index = function(map, group_pop, full_pop=map[[attr(map, "pop_col")]],
+                          .data=get0(".", parent.frame())) {
+    if (!inherits(.data, "redist_plans"))
+        stop("Must provide `.data` if not called within a pipe")
+
+    group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
+    full_pop = rlang::eval_tidy(rlang::enquo(full_pop), map)
+    as.numeric(redist.segcalc(get_plan_matrix(.data), group_pop, full_pop))
+}
+
+#' @rdname redist.metrics
+#'
+#' @param map a \code{\link{redist_map}} object
+#' @param .data a \code{\link{redist_plans}} object
+#' @param ... passed on to \code{redist.metrics}
+#'
+#' @concept analyze
+#' @export
+partisan_metrics = function(map, measure, rvote, dvote, ...,
+                          .data=get0(".", parent.frame())) {
+    if (!inherits(.data, "redist_plans"))
+        stop("Must provide `.data` if not called within a pipe")
+
+    rvote = rlang::eval_tidy(rlang::enquo(rvote), map)
+    dvote = rlang::eval_tidy(rlang::enquo(dvote), map)
+    as.numeric(redist.metrics(get_plan_matrix(.data), meausre, rvote, dvote, ...))
+}
+
+#' @rdname redist.competitiveness
+#'
+#' @param map a \code{\link{redist_map}} object
+#' @param .data a \code{\link{redist_plans}} object
+#'
+#' @concept analyze
+#' @export
+competitiveness = function(map, rvote, dvote, .data=get0(".", parent.frame())) {
+    if (!inherits(.data, "redist_plans"))
+        stop("Must provide `.data` if not called within a pipe")
+
+    rvote = rlang::eval_tidy(rlang::enquo(rvote), map)
+    dvote = rlang::eval_tidy(rlang::enquo(dvote), map)
+    as.numeric(redist.competitiveness(get_plan_matrix(.data), rvote, dvote))
+}
+
+#' @rdname redist.splits
+#'
+#' @param map a \code{\link{redist_map}} object
+#' @param .data a \code{\link{redist_plans}} object
+#'
+#' @concept analyze
+#' @export
+county_splits = function(map, counties, .data=get0(".", parent.frame())) {
+    if (!inherits(.data, "redist_plans"))
+        stop("Must provide `.data` if not called within a pipe")
+
+    counties = rlang::eval_tidy(rlang::enquo(counties), map)
+    as.numeric(redist.splits(get_plan_matrix(.data), counties))
+}
+
+
+#' Extract the district assignments for a precint across all simulated plans
+#'
+#' @param prec the precinct number or ID
+#' @param .data a \code{\link{redist_plans}} object
+#'
+#' @concept analyze
+#' @export
+prec_assignment = function(prec, .data=get0(".", parent.frame())) {
+    if (!inherits(.data, "redist_plans"))
+        stop("Must provide `.data` if not called within a pipe")
+
+    assignment = get_plan_matrix(.data)[prec,]
+    if ("district" %in% colnames(.data) && is.factor(.data$district)) {
+        lev = levels(.data$district)
+        assignment = factor(lev[assignment], lev, ordered=is.ordered(.data$district))
+    }
+
+    assignment
 }
 
 

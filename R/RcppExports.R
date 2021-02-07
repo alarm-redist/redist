@@ -145,6 +145,18 @@ segregationcalc <- function(distmat, grouppop, fullpop) {
     .Call(`_redist_segregationcalc`, distmat, grouppop, fullpop)
 }
 
+plan_joint <- function(m1, m2, pop) {
+    .Call(`_redist_plan_joint`, m1, m2, pop)
+}
+
+renumber_matrix <- function(plans, renumb) {
+    .Call(`_redist_renumber_matrix`, plans, renumb)
+}
+
+best_renumber <- function(combn, joint) {
+    .Call(`_redist_best_renumber`, combn, joint)
+}
+
 rsg <- function(adj_list, population, Ndistrict, target_pop, thresh, maxiter) {
     .Call(`_redist_rsg`, adj_list, population, Ndistrict, target_pop, thresh, maxiter)
 }
