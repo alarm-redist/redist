@@ -209,8 +209,12 @@ dplyr_row_slice.redist_plans = function(data, i, ...) {
                     "To avoid this message, coerce using `as_tibble`.")
     }
 
-    attr(y, "wgt") = attr(y, "wgt")[draws_left]
-    set_plan_matrix(y, plans_m[,draws_left, drop=F])
+    if (length(draws_left) != ncol(plans_m)) {
+        attr(y, "wgt") = attr(y, "wgt")[draws_left]
+        y = set_plan_matrix(y, plans_m[,draws_left, drop=F])
+    }
+
+    y
 }
 
 # 'template' is the old df
@@ -232,6 +236,8 @@ print.redist_plans = function(x, ...) {
     cat(cli::pluralize("{n_samp} sampled plan{?s} "))
     if (n_ref > 0)
         cat(cli::pluralize("and {n_ref} reference plan{?s} "))
+    if (ncol(plans_m) == 0) return(invisible(x))
+
     cli::cat_line("with ", max(plans_m[,1]), " districts from a ",
         nrow(plans_m), "-unit map,\n  drawn using ",
         c(mcmc="Markov chain Monte Carlo",
@@ -279,7 +285,7 @@ plot.redist_plans = function(x, ..., type="hist") {
 #'
 #' @concept visualize
 #' @export
-plot_hist = function(x, qty, bins=ceiling(nrow(x)/5), ...) {
+plot_hist = function(x, qty, bins=ceiling(sqrt(nrow(x))*1.5), ...) {
     p = ggplot(subset_sampled(x), aes({{ qty }})) +
         ggplot2::geom_histogram(..., bins=bins) +
         labs(y="Number of plans", color="Plan")
@@ -291,31 +297,49 @@ plot_hist = function(x, qty, bins=ceiling(nrow(x)/5), ...) {
 
 #' @rdname plot_hist
 #' @export
-hist.redist_plans = function(x, qty, ...) { plot_hist(x, qty, ...) }
+hist.redist_plans = function(x, qty, ...) {
+    qty = rlang::enquo(qty)
+    plot_hist(x, !!qty, ...)
+}
 
-#' Plot sorted box and whisker plots
+#' Plot box and whisker plots for each district
 #'
 #' Plots a boxplot of a quantity of interest across districts, with districts
-#' sorted by this quantity. Adds reference points for each reference plan, if
-#' applicable.
+#' optionally sorted by this quantity. Adds reference points for each reference
+#' plan, if applicable.
 #'
 #' @param x the \code{redist_plans} object.
 #' @param qty \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the
 #'   quantity of interest.
-#' @param desc set \code{TRUE} to sort districts in descending order of \code{qty}
+#' @param sort set to \code{"asc"} to sort districts in ascending order of
+#'   \code{qty} (the default), \code{"desc"} for descending order, or
+#'   \code{FALSE} or \code{"none"} for no sorting.
 #' @param ... passed on to \code{\link[ggplot2]{geom_boxplot}}
 #'
 #' @concept visualize
 #' @export
-plot_distr_qtys = function(x, qty, desc=F, ...) {
-    ord = if (desc) -1 else 1
-    x = dplyr::group_by(x, .data$draw) %>%
-        dplyr::mutate(.distr_no = as.factor(rank(ord * {{ qty }})))
+plot_distr_qtys = function(x, qty, sort="asc", ...) {
+    if (isFALSE(sort) || sort == "none") {
+        x = dplyr::group_by(x, .data$draw) %>%
+            dplyr::mutate(.distr_no = as.factor(district))
+    } else {
+        ord = if (sort == "asc") 1  else if (sort == "desc") -1 else
+            stop("`sort` not recognized: ", sort)
+        x = dplyr::group_by(x, .data$draw) %>%
+            dplyr::mutate(.distr_no = as.factor(rank(ord * {{ qty }})))
+    }
+
     p = ggplot(subset_sampled(x), aes(.data$.distr_no, {{ qty }})) +
-        ggplot2::geom_boxplot(..., outlier.size=1) +
-        labs(x="Ordered district", color="Plan", shape="Plan")
+        ggplot2::geom_boxplot(..., outlier.size=1)
+
+    if (isFALSE(sort) || sort == "none")
+        p = p + labs(x="District", color="Plan", shape="Plan")
+    else
+        p = p + labs(x="Ordered district", color="Plan", shape="Plan")
+
     if (get_n_ref(x) > 0)
         p = p + ggplot2::geom_point(aes(color=.data$draw, shape=.data$draw), size=2, data=subset_ref(x))
+
     p
 }
 
@@ -331,9 +355,10 @@ plot_plan = function(x, draw, geom) {
     stopifnot(inherits(x, "redist_plans"))
 
     draw_idx = match(as.character(draw), levels(x$draw))
+    distr_assign = get_plan_matrix(x)[,draw_idx]
     sf::st_sf(geom) %>%
         dplyr::ungroup() %>%
-        dplyr::mutate(District = as.factor(get_plan_matrix(x)[,draw_idx])) %>%
+        dplyr::mutate(District = levels(as.factor(x$district))[distr_assign]) %>%
     ggplot(aes(fill=.data$District)) +
         ggplot2::geom_sf(size=0) +
         theme_void()

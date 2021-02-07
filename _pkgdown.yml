@@ -20,6 +20,10 @@ reference:
   desc: Functions to plot redistricting plans and the results of a simulation.
 - contents:
   - has_concept("visualize")
+- title: Enumerate
+  desc: Functions to help enumerate all possible redistricting plans.
+- contents:
+  - has_concept("enumerate")
 - title: Other Functions
 - contents:
-  - lacks_concepts(c("prepare", "simulate", "analyze", "visualize"))
+  - lacks_concepts(c("prepare", "simulate", "analyze", "visualize", "enumerate"))

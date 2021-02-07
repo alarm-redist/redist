@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Plot a histogram of a summary statistic — plot_hist • redist</title>
+<title>Extract the district assignments for a precint across all simulated plans — prec_assignment • redist</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,9 +46,8 @@
 
 
 
-<meta property="og:title" content="Plot a histogram of a summary statistic — plot_hist" />
-<meta property="og:description" content="Plots a histogram of a statistic of a redist_plans object,
-with a reference line for each reference plan, if applicable." />
+<meta property="og:title" content="Extract the district assignments for a precint across all simulated plans — prec_assignment" />
+<meta property="og:description" content="Extract the district assignments for a precint across all simulated plans" />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -129,39 +128,27 @@ with a reference line for each reference plan, if applicable." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Plot a histogram of a summary statistic</h1>
-    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/redist_plans.R'><code>R/redist_plans.R</code></a></small>
-    <div class="hidden name"><code>plot_hist.Rd</code></div>
+    <h1>Extract the district assignments for a precint across all simulated plans</h1>
+    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/tidy.R'><code>R/tidy.R</code></a></small>
+    <div class="hidden name"><code>prec_assignment.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Plots a histogram of a statistic of a <code><a href='redist_plans.html'>redist_plans</a></code> object,
-with a reference line for each reference plan, if applicable.</p>
+    <p>Extract the district assignments for a precint across all simulated plans</p>
     </div>
 
-    <pre class="usage"><span class='fu'>plot_hist</span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>qty</span>, bins <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Round.html'>ceiling</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/MathFun.html'>sqrt</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>nrow</a></span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>*</span> <span class='fl'>1.5</span><span class='op'>)</span>, <span class='va'>...</span><span class='op'>)</span>
-
-<span class='co'># S3 method for redist_plans</span>
-<span class='fu'><a href='https://rdrr.io/r/graphics/hist.html'>hist</a></span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>qty</span>, <span class='va'>...</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>prec_assignment</span><span class='op'>(</span><span class='va'>prec</span>, .data <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/exists.html'>get0</a></span><span class='op'>(</span><span class='st'>"."</span>, <span class='fu'><a href='https://rdrr.io/r/base/sys.parent.html'>parent.frame</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>x</th>
-      <td><p>the <code>redist_plans</code> object.</p></td>
+      <th>prec</th>
+      <td><p>the precinct number or ID</p></td>
     </tr>
     <tr>
-      <th>qty</th>
-      <td><p><code><a href='https://dplyr.tidyverse.org/reference/dplyr_data_masking.html'>&lt;data-masking&gt;</a></code> the statistic.</p></td>
-    </tr>
-    <tr>
-      <th>bins</th>
-      <td><p>the number of bins to use in the histogram</p></td>
-    </tr>
-    <tr>
-      <th>...</th>
-      <td><p>passed on to <code><a href='https://ggplot2.tidyverse.org/reference/geom_histogram.html'>geom_histogram</a></code></p></td>
+      <th>.data</th>
+      <td><p>a <code><a href='redist_plans.html'>redist_plans</a></code> object</p></td>
     </tr>
     </table>
 

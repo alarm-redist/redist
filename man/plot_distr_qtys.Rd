@@ -2,9 +2,9 @@
 % Please edit documentation in R/redist_plans.R
 \name{plot_distr_qtys}
 \alias{plot_distr_qtys}
-\title{Plot sorted box and whisker plots}
+\title{Plot box and whisker plots for each district}
 \usage{
-plot_distr_qtys(x, qty, desc = F, ...)
+plot_distr_qtys(x, qty, sort = "asc", ...)
 }
 \arguments{
 \item{x}{the \code{redist_plans} object.}
@@ -12,13 +12,15 @@ plot_distr_qtys(x, qty, desc = F, ...)
 \item{qty}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the
 quantity of interest.}
 
-\item{desc}{set \code{TRUE} to sort districts in descending order of \code{qty}}
+\item{sort}{set to \code{"asc"} to sort districts in ascending order of
+\code{qty} (the default), \code{"desc"} for descending order, or
+\code{FALSE} or \code{"none"} for no sorting.}
 
 \item{...}{passed on to \code{\link[ggplot2]{geom_boxplot}}}
 }
 \description{
 Plots a boxplot of a quantity of interest across districts, with districts
-sorted by this quantity. Adds reference points for each reference plan, if
-applicable.
+optionally sorted by this quantity. Adds reference points for each reference
+plan, if applicable.
 }
 \concept{visualize}

@@ -49,7 +49,7 @@ redist.group_viz = function(prep, browser=TRUE) {
             | !requireNamespace("leaflet", quietly=T)
             | !requireNamespace("rmapshaper", quietly=T)
             | !requireNamespace("gridExtra", quietly=T)) {
-        stop('The "shiny", "rmarkdown", "cluster", "tidyr", "ggiraph", "leaflet", and "gridExtra"',
+        stop('The "shiny", "rmarkdown", "cluster", "tidyr", "ggiraph", "leaflet", "rmapshaper", and "gridExtra"',
         "packages are required for this function to work.", call.=F)
     }
     if (!methods::is(prep, "redist_prep_viz"))

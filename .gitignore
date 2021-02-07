@@ -10,7 +10,6 @@ inst/doc
 inst/enumpart/enumpart
 redist/tests/testthat/_snaps
 doc
-docs/articles/*_files/*
 docs/articles/*_cache/*
 Meta
 .Rproj.user

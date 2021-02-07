@@ -130,7 +130,7 @@ set of maps." />
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Calculate gerrymandering metrics for a set of districts</h1>
-    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/metrics.R'><code>R/metrics.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/metrics.R'><code>R/metrics.R</code></a>, <a href='https://github.com/kosukeimai/redist/blob/master/R/tidy.R'><code>R/tidy.R</code></a></small>
     <div class="hidden name"><code>redist.metrics.Rd</code></div>
     </div>
 
@@ -150,6 +150,15 @@ set of maps.</p>
   bandwidth <span class='op'>=</span> <span class='fl'>0.01</span>,
   nloop <span class='op'>=</span> <span class='fl'>1</span>,
   ncores <span class='op'>=</span> <span class='fl'>1</span>
+<span class='op'>)</span>
+
+<span class='fu'>partisan_metrics</span><span class='op'>(</span>
+  <span class='va'>map</span>,
+  <span class='va'>measure</span>,
+  <span class='va'>rvote</span>,
+  <span class='va'>dvote</span>,
+  <span class='va'>...</span>,
+  .data <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/exists.html'>get0</a></span><span class='op'>(</span><span class='st'>"."</span>, <span class='fu'><a href='https://rdrr.io/r/base/sys.parent.html'>parent.frame</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -199,6 +208,18 @@ and the column number if multiple maps given.</p></td>
     <tr>
       <th>ncores</th>
       <td><p>Number of cores to use for parallel computing. Default is 1.</p></td>
+    </tr>
+    <tr>
+      <th>map</th>
+      <td><p>a <code><a href='redist_map.html'>redist_map</a></code> object</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>passed on to <code>redist.metrics</code></p></td>
+    </tr>
+    <tr>
+      <th>.data</th>
+      <td><p>a <code><a href='redist_plans.html'>redist_plans</a></code> object</p></td>
     </tr>
     </table>
 
