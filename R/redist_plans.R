@@ -23,6 +23,9 @@
 #' Other useful methods for \code{redist_plans} objects:
 #' * \code{\link{add_reference}}
 #' * \code{\link{pullback}}
+#' * \code{\link{number_by}}
+#' * \code{\link{match_numbers}}
+#' * \code{\link{prec_assignment}}
 #' * \code{\link{get_plan_matrix}}
 #' * \code{\link{get_plan_weights}}
 #' * \code{\link{get_sampling_info}}
