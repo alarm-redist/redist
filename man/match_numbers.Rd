@@ -27,3 +27,4 @@ District numbers in simulated plans are by and large random.  This
 function attempts to renumber the districts across all simulated plans to
 match the numbers in a provided plan.
 }
+\concept{analyze}

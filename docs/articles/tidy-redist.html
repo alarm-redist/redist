@@ -134,7 +134,7 @@
 <h1 class="hasAnchor">
 <a href="#specifying-the-redistricting-problem" class="anchor"></a>Specifying the Redistricting Problem</h1>
 <p>The first thing we do is to create a <code>redist_map</code> object, which is essentially a data frame along with an adjacency graph and a little extra metadata about the redistricting problem at hand. It’s important to create this object early on, since data operations like filtering and summarizing will affect the graph structure, number of district, and population constraints.</p>
-<p>Here, the existing district assignment is stored in the <code>cd</code> column. We provide let <code>redist_map</code> know about this by providing the <code>existing_col</code> argument, and we use <code><a href="https://rdrr.io/r/base/Extremes.html">max(cd)</a></code> to count the total number of districts.</p>
+<p>Here, the existing district assignment is stored in the <code>cd</code> column. We provide let <code><a href="../reference/redist_map.html">redist_map()</a></code> know about this by providing the <code>existing_col</code> argument, and we use <code><a href="https://rdrr.io/r/base/Extremes.html">max(cd)</a></code> to count the total number of districts.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">tx</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">texas_shp</span>, pop_tol<span class="op">=</span><span class="fl">0.05</span>, existing_col<span class="op">=</span><span class="va">cd</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">tx</span><span class="op">)</span>
@@ -158,7 +158,7 @@
 <span class="co">#&gt; 10 029    4802… (((-217227.7 710079.4, -…    28    54     7     8    39    45</span>
 <span class="co">#&gt; # … with 3,128 more rows, and 6 more variables: bvap &lt;dbl&gt;, hvap &lt;dbl&gt;,</span>
 <span class="co">#&gt; #   wvap &lt;dbl&gt;, dem &lt;int&gt;, gop &lt;int&gt;, graph &lt;list&gt;</span></code></pre></div>
-<p>Our original shapefile stored its geographic information in terms of latitude and longitude. While common, this can cause problems for some of the geographic operations used in the analysis process, so by default <code>redist_map</code> will reproject the shapefile geometry to a new coordinate system. Whether to do this and which coordinate system to use can be controlled using the <code>planarize</code> argument.</p>
+<p>Our original shapefile stored its geographic information in terms of latitude and longitude. While common, this can cause problems for some of the geographic operations used in the analysis process, so by default <code><a href="../reference/redist_map.html">redist_map()</a></code> will reproject the shapefile geometry to a new coordinate system. Whether to do this and which coordinate system to use can be controlled using the <code>planarize</code> argument.</p>
 <div id="subsetting" class="section level2">
 <h2 class="hasAnchor">
 <a href="#subsetting" class="anchor"></a>Subsetting</h2>
@@ -263,22 +263,22 @@
 <div id="simulating-and-analyzing-plans" class="section level1">
 <h1 class="hasAnchor">
 <a href="#simulating-and-analyzing-plans" class="anchor"></a>Simulating and Analyzing Plans</h1>
-<p>After preprocessing the map to focus on the redistricting problem of interest, we are ready to run the redistricting simulation. The recommended simulation function is <code>redist_smc</code>, which uses a Sequential Monte Carlo (SMC) algorithm.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>After preprocessing the map to focus on the redistricting problem of interest, we are ready to run the redistricting simulation. The recommended simulation function is <code><a href="../reference/redist_smc.html">redist_smc()</a></code>, which uses a Sequential Monte Carlo (SMC) algorithm.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">houston_plans</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">houston_cores</span>, <span class="fl">100</span>, counties<span class="op">=</span><span class="va">county</span>, verbose<span class="op">=</span><span class="cn">F</span><span class="op">)</span> <span class="op">%&gt;%</span>
     <span class="fu"><a href="../reference/add_reference.html">add_reference</a></span><span class="op">(</span><span class="va">houston_cores</span><span class="op">$</span><span class="va">cd</span><span class="op">)</span>
 <span class="co">#&gt; Sampling 100 475-unit maps with 6 districts and population between 663313 and 733136.</span>
 <span class="co">#&gt; Ensuring no more than 5 splits of the 6 administrative units.</span>
 <span class="co">#&gt; Making split 1 of 5</span>
-<span class="co">#&gt; Resampling effective sample size: 98.7 (98.7% efficiency).</span>
+<span class="co">#&gt; Resampling effective sample size: 98.6 (98.6% efficiency).</span>
 <span class="co">#&gt; Making split 2 of 5</span>
-<span class="co">#&gt; Resampling effective sample size: 98.4 (98.4% efficiency).</span>
+<span class="co">#&gt; Resampling effective sample size: 98.0 (98.0% efficiency).</span>
 <span class="co">#&gt; Making split 3 of 5</span>
-<span class="co">#&gt; Resampling effective sample size: 97.6 (97.6% efficiency).</span>
+<span class="co">#&gt; Resampling effective sample size: 97.8 (97.8% efficiency).</span>
 <span class="co">#&gt; Making split 4 of 5</span>
-<span class="co">#&gt; Resampling effective sample size: 94.5 (94.5% efficiency).</span>
+<span class="co">#&gt; Resampling effective sample size: 97.1 (97.1% efficiency).</span>
 <span class="co">#&gt; Making split 5 of 5</span>
-<span class="co">#&gt; Resampling effective sample size: 96.6 (96.6% efficiency).</span>
+<span class="co">#&gt; Resampling effective sample size: 96.7 (96.7% efficiency).</span>
 <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">houston_plans</span><span class="op">)</span>
 <span class="co">#&gt; 100 sampled plans and 1 reference plan with 6 districts from a 475-unit map,</span>
 <span class="co">#&gt;   drawn using Sequential Monte Carlo</span>
@@ -294,12 +294,12 @@
 <span class="co">#&gt;  4 &lt;ref&gt;        4 690022</span>
 <span class="co">#&gt;  5 &lt;ref&gt;        5 701696</span>
 <span class="co">#&gt;  6 &lt;ref&gt;        6 695465</span>
-<span class="co">#&gt;  7 1            1 689622</span>
-<span class="co">#&gt;  8 1            2 666238</span>
-<span class="co">#&gt;  9 1            3 687906</span>
-<span class="co">#&gt; 10 1            4 720542</span>
+<span class="co">#&gt;  7 1            1 672300</span>
+<span class="co">#&gt;  8 1            2 681296</span>
+<span class="co">#&gt;  9 1            3 719951</span>
+<span class="co">#&gt; 10 1            4 705623</span>
 <span class="co">#&gt; # … with 596 more rows</span></code></pre></div>
-<p>Since district numbers in simulated plans are by and large random, we often want to renumber the simulated districts to match the district numbers in the original plan, something which is easily accomplished by the function <code>match_numbers</code>:</p>
+<p>Since district numbers in simulated plans are by and large random, we often want to renumber the simulated districts to match the district numbers in the original plan, something which is easily accomplished by the function <code><a href="../reference/match_numbers.html">match_numbers()</a></code>:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">houston_plans</span> <span class="op">=</span> <span class="fu"><a href="../reference/match_numbers.html">match_numbers</a></span><span class="op">(</span><span class="va">houston_plans</span>, <span class="va">houston_cores</span><span class="op">$</span><span class="va">cd</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">houston_plans</span><span class="op">)</span>
@@ -317,13 +317,13 @@
 <span class="co">#&gt;  4 &lt;ref&gt; 18       690022       1    </span>
 <span class="co">#&gt;  5 &lt;ref&gt; 22       701696       1    </span>
 <span class="co">#&gt;  6 &lt;ref&gt; 29       695465       1    </span>
-<span class="co">#&gt;  7 1     7        689622       0.481</span>
-<span class="co">#&gt;  8 1     22       666238       0.481</span>
-<span class="co">#&gt;  9 1     9        687906       0.481</span>
-<span class="co">#&gt; 10 1     29       720542       0.481</span>
+<span class="co">#&gt;  7 1     22       672300       0.542</span>
+<span class="co">#&gt;  8 1     7        681296       0.542</span>
+<span class="co">#&gt;  9 1     2        719951       0.542</span>
+<span class="co">#&gt; 10 1     29       705623       0.542</span>
 <span class="co">#&gt; # … with 596 more rows</span></code></pre></div>
 <p>This function also creates a new column, which records, for each plan, the fraction of the total population which lives in the same district under the reference plan.</p>
-<p>We can then easily add summary statistics for each district. The <code>distr_compactness</code> and <code>group_frac</code> functions will implicitly reference the simulated plans matrix when called inside <code><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate()</a></code>.</p>
+<p>We can then easily add summary statistics for each district. The <code><a href="../reference/redist.compactness.html">distr_compactness()</a></code> and <code><a href="../reference/redist.group.percent.html">group_frac()</a></code> functions will implicitly reference the simulated plans matrix when called inside <code><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate()</a></code>.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">houston_plans</span> <span class="op">=</span> <span class="va">houston_plans</span> <span class="op">%&gt;%</span>
     <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>comp <span class="op">=</span> <span class="fu"><a href="../reference/redist.compactness.html">distr_compactness</a></span><span class="op">(</span><span class="va">houston_cores</span><span class="op">)</span>,
@@ -346,12 +346,12 @@
 <span class="co">#&gt;  4 &lt;ref&gt; 18       690022       1       874    0.344    0.405      0.201   0.799</span>
 <span class="co">#&gt;  5 &lt;ref&gt; 22       701696       1       874    0.223    0.119      0.482   0.518</span>
 <span class="co">#&gt;  6 &lt;ref&gt; 29       695465       1       874    0.729    0.0993     0.147   0.853</span>
-<span class="co">#&gt;  7 1     7        689622       0.481   466    0.320    0.178      0.394   0.606</span>
-<span class="co">#&gt;  8 1     22       666238       0.481   466    0.282    0.217      0.412   0.588</span>
-<span class="co">#&gt;  9 1     9        687906       0.481   466    0.397    0.276      0.210   0.790</span>
-<span class="co">#&gt; 10 1     29       720542       0.481   466    0.415    0.244      0.308   0.692</span>
+<span class="co">#&gt;  7 1     22       672300       0.542   344    0.318    0.192      0.421   0.579</span>
+<span class="co">#&gt;  8 1     7        681296       0.542   344    0.362    0.131      0.402   0.598</span>
+<span class="co">#&gt;  9 1     2        719951       0.542   344    0.337    0.260      0.281   0.719</span>
+<span class="co">#&gt; 10 1     29       705623       0.542   344    0.421    0.269      0.270   0.730</span>
 <span class="co">#&gt; # … with 596 more rows</span></code></pre></div>
-<p>If we wanted, we could sort and number districts according to one of these statistics using the <code>number_by</code> function.</p>
+<p>If we wanted, we could sort and number districts according to one of these statistics using the <code><a href="../reference/number_by.html">number_by()</a></code> function.</p>
 <p>From there, it’s easy to summarize summary statistics by plan.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">min_distr</span> <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html">group_by</a></span><span class="op">(</span><span class="va">houston_plans</span>, <span class="va">draw</span><span class="op">)</span> <span class="op">%&gt;%</span>
@@ -368,15 +368,15 @@
 <span class="co">#&gt;    draw  n_black n_hisp n_coalition</span>
 <span class="co">#&gt;  * &lt;fct&gt;   &lt;int&gt;  &lt;int&gt;       &lt;int&gt;</span>
 <span class="co">#&gt;  1 &lt;ref&gt;       0      1           4</span>
-<span class="co">#&gt;  2 1           0      1           6</span>
-<span class="co">#&gt;  3 2           0      1           6</span>
+<span class="co">#&gt;  2 1           0      0           6</span>
+<span class="co">#&gt;  3 2           0      0           6</span>
 <span class="co">#&gt;  4 3           0      1           6</span>
-<span class="co">#&gt;  5 4           0      1           6</span>
+<span class="co">#&gt;  5 4           0      0           6</span>
 <span class="co">#&gt;  6 5           0      1           6</span>
-<span class="co">#&gt;  7 6           0      0           6</span>
+<span class="co">#&gt;  7 6           0      1           5</span>
 <span class="co">#&gt;  8 7           0      1           6</span>
 <span class="co">#&gt;  9 8           0      1           6</span>
-<span class="co">#&gt; 10 9           0      1           6</span>
+<span class="co">#&gt; 10 9           0      0           6</span>
 <span class="co">#&gt; # … with 91 more rows</span></code></pre></div>
 <p>And <code>redist</code> provides several useful plotting functions. By default, <code>plot</code> calls <code>hist</code>, which makes a histogram of a quantity of interest along with a reference line for each reference plan.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
@@ -407,10 +407,10 @@
 <span class="co">#&gt;  4 &lt;ref&gt; 18       690022       1       874    0.344    0.405      0.201   0.799</span>
 <span class="co">#&gt;  5 &lt;ref&gt; 22       701696       1       874    0.223    0.119      0.482   0.518</span>
 <span class="co">#&gt;  6 &lt;ref&gt; 29       695465       1       874    0.729    0.0993     0.147   0.853</span>
-<span class="co">#&gt;  7 1     7        689622       0.481   466    0.320    0.178      0.394   0.606</span>
-<span class="co">#&gt;  8 1     22       666238       0.481   466    0.282    0.217      0.412   0.588</span>
-<span class="co">#&gt;  9 1     9        687906       0.481   466    0.397    0.276      0.210   0.790</span>
-<span class="co">#&gt; 10 1     29       720542       0.481   466    0.415    0.244      0.308   0.692</span>
+<span class="co">#&gt;  7 1     22       672300       0.542   344    0.318    0.192      0.421   0.579</span>
+<span class="co">#&gt;  8 1     7        681296       0.542   344    0.362    0.131      0.402   0.598</span>
+<span class="co">#&gt;  9 1     2        719951       0.542   344    0.337    0.260      0.281   0.719</span>
+<span class="co">#&gt; 10 1     29       705623       0.542   344    0.421    0.269      0.270   0.730</span>
 <span class="co">#&gt; # … with 596 more rows</span>
 <span class="fu"><a href="https://r-spatial.github.io/sf/reference/plot.html">plot</a></span><span class="op">(</span><span class="va">houston_orig_plans</span>, type<span class="op">=</span><span class="st">"plan"</span>, draw<span class="op">=</span><span class="fl">5</span>, geom<span class="op">=</span><span class="va">houston_area</span><span class="op">)</span></code></pre></div>
 <p><img src="tidy-redist_files/figure-html/unnamed-chunk-12-1.png" width="700"></p>
@@ -429,7 +429,7 @@
 <span class="va">houston_plans</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">houston</span>, <span class="fl">100</span>, counties<span class="op">=</span><span class="va">county</span>, silent<span class="op">=</span><span class="cn">T</span><span class="op">)</span> <span class="op">%&gt;%</span>    
     <span class="fu"><a href="../reference/add_reference.html">add_reference</a></span><span class="op">(</span><span class="va">houston</span><span class="op">$</span><span class="va">cd</span><span class="op">)</span> <span class="op">%&gt;%</span>
     <span class="fu"><a href="../reference/match_numbers.html">match_numbers</a></span><span class="op">(</span><span class="va">houston</span><span class="op">$</span><span class="va">cd</span><span class="op">)</span> <span class="op">%&gt;%</span>
-    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>pct_hisp <span class="op">=</span> <span class="fu"><a href="../reference/redist.group.percent.html">group_frac</a></span><span class="op">(</span><span class="va">houston</span>, <span class="va">hisp</span>, <span class="va">pop</span><span class="op">)</span><span class="op">)</span>
+    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>pct_hisp <span class="op">=</span> <span class="fu"><a href="../reference/redist.group.percent.html">group_frac</a></span><span class="op">(</span><span class="va">houston</span>, <span class="va">hvap</span>, <span class="va">vap</span><span class="op">)</span><span class="op">)</span>
 
 <span class="fu"><a href="https://r-spatial.github.io/sf/reference/plot.html">plot</a></span><span class="op">(</span><span class="va">houston_plans</span>, <span class="va">pct_hisp</span>, sort<span class="op">=</span><span class="cn">F</span>, type<span class="op">=</span><span class="st">"distr_qtys"</span><span class="op">)</span></code></pre></div>
 <p><img src="tidy-redist_files/figure-html/unnamed-chunk-13-1.png" width="700"></p>
