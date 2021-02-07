@@ -23,3 +23,4 @@ District numbers in simulated plans are by and large random.  This
 function will renumber the districts across all simulated plans in order
 of a provided quantity of interest.
 }
+\concept{analyze}

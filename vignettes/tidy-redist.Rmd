@@ -37,7 +37,7 @@ on, since data operations like filtering and summarizing will affect the graph
 structure, number of district, and population constraints.
 
 Here, the existing district assignment is stored in the `cd` column. We provide
-let `redist_map` know about this by providing the `existing_col` argument, and
+let `redist_map()` know about this by providing the `existing_col` argument, and
 we use `max(cd)` to count the total number of districts.
 ```{r}
 tx = redist_map(texas_shp, pop_tol=0.05, existing_col=cd)
@@ -45,7 +45,7 @@ print(tx)
 ```
 Our original shapefile stored its geographic information in terms of latitude
 and longitude. While common, this can cause problems for some of the geographic
-operations used in the analysis process, so by default `redist_map` will
+operations used in the analysis process, so by default `redist_map()` will
 reproject the shapefile geometry to a new coordinate system.  Whether to do this
 and which coordinate system to use can be controlled using the `planarize`
 argument.
@@ -108,7 +108,7 @@ plot(houston_cores, centroids=F)
 # Simulating and Analyzing Plans
 After preprocessing the map to focus on the redistricting problem of interest,
 we are ready to run the redistricting simulation.  The recommended simulation
-function is `redist_smc`, which uses a Sequential Monte Carlo (SMC) 
+function is `redist_smc()`, which uses a Sequential Monte Carlo (SMC) 
 algorithm.^[McCartan, C., & Imai, K. (2020). Sequential Monte Carlo for Sampling
 Balanced and Compact Redistricting Plans. Available at
 <https://imai.fas.harvard.edu/research/files/SMCredist.pdf>.]
@@ -121,7 +121,7 @@ print(houston_plans)
 
 Since district numbers in simulated plans are by and large random, we often want
 to renumber the simulated districts to match the district numbers in the original plan,
-something which is easily accomplished by the function `match_numbers`:
+something which is easily accomplished by the function `match_numbers()`:
 ```{r}
 houston_plans = match_numbers(houston_plans, houston_cores$cd)
 print(houston_plans)
@@ -131,7 +131,7 @@ fraction of the total population which lives in the same district under the
 reference plan.
 
 We can then easily add summary statistics for each district. The 
-`distr_compactness` and `group_frac` functions will implicitly reference the
+`distr_compactness()` and `group_frac()` functions will implicitly reference the
 simulated plans matrix when called inside `mutate()`.
 ```{r}
 houston_plans = houston_plans %>%
@@ -143,7 +143,7 @@ houston_plans = houston_plans %>%
 print(houston_plans)
 ```
 If we wanted, we could sort and number districts according to one of these
-statistics using the `number_by` function.
+statistics using the `number_by()` function.
 
 From there, it's easy to summarize summary statistics by plan.
 ```{r}
@@ -184,7 +184,7 @@ houston = texas_shp %>%
 houston_plans = redist_smc(houston, 100, counties=county, silent=T) %>%    
     add_reference(houston$cd) %>%
     match_numbers(houston$cd) %>%
-    mutate(pct_hisp = group_frac(houston, hisp, pop))
+    mutate(pct_hisp = group_frac(houston, hvap, vap))
 
 plot(houston_plans, pct_hisp, sort=F, type="distr_qtys")
 ```

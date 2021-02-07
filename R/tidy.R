@@ -208,6 +208,7 @@ find_numbering = function(plan, ref, pop) {
 #' stored as an ordered factor variable in the \code{district} column. The
 #' district numbers in the plan matrix will match the levels of this factor.
 #'
+#' @concept analyze
 #' @export
 match_numbers = function(data, plan, col="pop_overlap") {
     stopifnot(inherits(data, "redist_plans"))
@@ -251,6 +252,7 @@ match_numbers = function(data, plan, col="pop_overlap") {
 #' stored as an ordered factor variable in the \code{district} column. The
 #' district numbers in the plan matrix will match the levels of this factor.
 #'
+#' @concept analyze
 #' @export
 number_by = function(data, x, desc=F) {
     stopifnot(inherits(data, "redist_plans"))
