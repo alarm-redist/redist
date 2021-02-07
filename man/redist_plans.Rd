@@ -19,6 +19,9 @@ Other useful methods for \code{redist_plans} objects:
 \itemize{
 \item \code{\link{add_reference}}
 \item \code{\link{pullback}}
+\item \code{\link{number_by}}
+\item \code{\link{match_numbers}}
+\item \code{\link{prec_assignment}}
 \item \code{\link{get_plan_matrix}}
 \item \code{\link{get_plan_weights}}
 \item \code{\link{get_sampling_info}}
