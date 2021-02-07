@@ -48,6 +48,7 @@ Suggests:
     igraph,
     testthat,
     withr,
+    loo,
     Rmpi,
     knitr,
     rmarkdown,
