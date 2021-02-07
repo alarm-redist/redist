@@ -60,8 +60,9 @@ final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.
 Truncation only applied if \code{resample=TRUE}.}
 
 \item{trunc_fn}{A function which takes in a vector of weights and returns
-a truncated vector. The default will generally work OK, but consider manual
-truncation.}
+a truncated vector. If \code{\link[loo]{loo}} package is installed (strongly
+recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
+rather than naive truncation.}
 
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}

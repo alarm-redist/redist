@@ -89,8 +89,9 @@
 #' final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.
 #' Truncation only applied if \code{resample=TRUE}.
 #' @param trunc_fn A function which takes in a vector of weights and returns
-#' a truncated vector. The default will generally work OK, but consider manual
-#' truncation.
+#' a truncated vector. If \code{\link[loo]{loo}} package is installed (strongly
+#' recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
+#' rather than naive truncation.
 #' @param verbose Whether to print out intermediate information while sampling.
 #'   Recommended.
 #' @param silent Whether to suppress all diagnostic information.
@@ -186,7 +187,14 @@ redist_smc = function(map, n_sims, counties=NULL, compactness=1, constraints=lis
     n_eff = length(wgt) * mean(wgt)^2 / mean(wgt^2)
 
     if (resample) {
-        mod_wgt = if (truncate) trunc_fn(wgt) else wgt
+        if (!truncate) {
+            mod_wgt = wgt
+        } else if (require("loo") && missing(trunc_fn)) {
+            mod_wgt = wgt / sum(wgt)
+            mod_wgt = loo::weights(loo::psis(log(mod_wgt), r_eff=NA), log=FALSE)
+        } else {
+            mod_wgt = trunc_fn(wgt)
+        }
         n_eff = length(mod_wgt) * mean(mod_wgt)^2 / mean(mod_wgt^2)
         mod_wgt = mod_wgt / sum(mod_wgt)
 
