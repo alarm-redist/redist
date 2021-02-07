@@ -203,7 +203,7 @@ dplyr_row_slice.redist_plans = function(data, i, ...) {
     # if we don't have every district present in every row
     # this check is necessary but not sufficient for what we want
     if ("district" %in% colnames(y)) {
-        distrs = table(y$district)
+        distrs = table(as.integer(y$district))
         n_draws = length(draws_left)
         n_distr = max(plans_m[,1])
         if (!all.equal(range(distrs), rep(n_draws, 2)) || length(distrs) != n_distr)
