@@ -20,7 +20,7 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                double pow_vra, const uvec &min_pop,
                double beta_inc, const uvec &incumbents,
                vec &lp, double thresh,
-               double alpha, int verbosity) {
+               double alpha, double pop_temper, int verbosity) {
     Graph g = list_to_graph(l);
     Multigraph cg = county_graph(g, counties);
     int V = g.size();
@@ -38,6 +38,8 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
 
     vec pop_left(N);
     pop_left.fill(total_pop);
+    vec log_temper(N);
+    log_temper.fill(0.0);
     lp.fill(0.0);
 
     int k;
@@ -56,8 +58,8 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
             Rcout << "Using k = " << k << "\n";
 
         // perform resampling/drawing
-        split_maps(g, counties, cg, pop, districts, cum_wgt, lp, pop_left,
-                   n_distr, ctr, lower, upper, target, gamma, k, verbosity);
+        split_maps(g, counties, cg, pop, districts, cum_wgt, lp, pop_left, log_temper,
+                   pop_temper, n_distr, ctr, lower, upper, target, gamma, k, verbosity);
 
         // compute weights for next step
         cum_wgt = get_wgts(districts, n_distr, ctr, alpha, lp, pop,
@@ -67,6 +69,8 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
 
         Rcpp::checkUserInterrupt();
     }
+
+    lp = lp - log_temper;
 
     // Set final district label to n_distr rather than 0
     for (int i = 0; i < N; i++) {
@@ -123,8 +127,9 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr,
  */
 void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 const uvec &pop, umat &districts, vec &cum_wgt, vec &lp,
-                vec &pop_left, int n_distr, int dist_ctr, double lower,
-                double upper, double target, double gamma, int k, int verbosity) {
+                vec &pop_left, vec &log_temper, double pop_temper, int n_distr,
+                int dist_ctr, double lower, double upper, double target,
+                double gamma, int k, int verbosity) {
     int V = districts.n_rows;
     int N = districts.n_cols;
     int new_size = n_distr - dist_ctr;
@@ -133,6 +138,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     umat districts_new(V, N);
     vec pop_left_new(N);
     vec lp_new(N);
+    vec log_temper_new(N);
 
     int refresh = N / 10; // how often to print update statements
     double iter = 0; // how many actual iterations
@@ -169,10 +175,12 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
 
             inc_lp += (1 - gamma) * log_st;
         }
-        lp_new(i) = lp(idx) + inc_lp;
-
         // `lower_s` now contains the population of the newly-split district
         pop_left_new(i) = pop_left(idx) - lower_s;
+        double pop_pen = sqrt(n_distr - 2) * log(abs(lower_s - target)/target);
+        log_temper_new(i) = log_temper(idx) - pop_temper*pop_pen;
+
+        lp_new(i) = lp(idx) + inc_lp - pop_temper*pop_pen;
 
         if (verbosity >= 2 && refresh > 0 && (i+1) % refresh == 0) {
             Rprintf("Iteration %'6d / %'d\n", i+1, N);
@@ -186,6 +194,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     districts = districts_new;
     pop_left = pop_left_new;
     lp = lp_new;
+    log_temper = log_temper_new;
 }
 
 /*

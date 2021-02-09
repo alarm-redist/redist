@@ -100,6 +100,7 @@
 #' final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.
 #' @param trunc_fn A function which takes in a vector of weights and returns
 #' a truncated vector. Recommended to specify this manually if truncating weights.
+#' @param pop_temper The strength of the automatic population tempering.
 #' @param verbose Whether to print out intermediate information while sampling.
 #'   Recommended.
 #' @param silent Whether to supress all diagnostic information.
@@ -149,7 +150,7 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
                       adapt_k_thresh=0.975, seq_alpha=0.2+0.2*compactness,
                       truncate=(compactness != 1),
                       trunc_fn=function(x) pmin(x, 0.01*nsims^0.4),
-                      verbose=TRUE, silent=FALSE) {
+                      pop_temper=max(0.1/seq_alpha, 0.3), verbose=TRUE, silent=FALSE) {
     V = length(popvec)
 
     if (missing(adjobj)) stop("Please supply adjacency matrix or list")
@@ -217,7 +218,7 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
                      constraints$vra$strength, constraints$vra$tgt_vra_min,
                      constraints$vra$tgt_vra_other, constraints$vra$pow_vra, constraints$vra$min_pop,
                      constraints$incumbency$strength, constraints$incumbency$incumbents,
-                     lp, adapt_k_thresh, seq_alpha, verbosity);
+                     lp, adapt_k_thresh, seq_alpha, pop_temper, verbosity);
 
     dev = max_dev(maps, popvec, ndists)
     maps = maps

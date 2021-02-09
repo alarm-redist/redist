@@ -42,8 +42,8 @@ data(algdat)
 cd <- algdat.p10$cdmat[,1:5]
 
 redist.group.percent(district_membership = cd,
-                    grouppop = fl25$BlackPop,
-                    fullpop = fl25$TotPop)
+                    group_pop = fl25$BlackPop,
+                    full_pop = fl25$TotPop)
 }
 }
 \concept{analyze}

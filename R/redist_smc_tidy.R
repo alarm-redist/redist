@@ -92,6 +92,7 @@
 #' a truncated vector. If \code{\link[loo]{loo}} package is installed (strongly
 #' recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
 #' rather than naive truncation.
+#' @param pop_temper The strength of the automatic population tempering.
 #' @param verbose Whether to print out intermediate information while sampling.
 #'   Recommended.
 #' @param silent Whether to suppress all diagnostic information.
@@ -120,9 +121,9 @@
 #' @export
 redist_smc = function(map, n_sims, counties=NULL, compactness=1, constraints=list(),
                       resample=TRUE, constraint_fn=function(m) rep(0, ncol(m)),
-                      adapt_k_thresh=0.975, seq_alpha=0.2+0.2*compactness,
+                      adapt_k_thresh=0.975, seq_alpha=0.2+0.3*compactness,
                       truncate=(compactness != 1), trunc_fn=redist_quantile_trunc,
-                      verbose=TRUE, silent=FALSE) {
+                      pop_temper=max(0.1/seq_alpha, 0.3), verbose=TRUE, silent=FALSE) {
     map = validate_redist_map(map)
     V = nrow(map)
     graph = get_graph(map)
@@ -178,7 +179,7 @@ redist_smc = function(map, n_sims, counties=NULL, compactness=1, constraints=lis
                       constraints$vra$strength, constraints$vra$tgt_vra_min,
                       constraints$vra$tgt_vra_other, constraints$vra$pow_vra, constraints$vra$min_pop,
                       constraints$incumbency$strength, constraints$incumbency$incumbents,
-                      lp, adapt_k_thresh, seq_alpha, verbosity);
+                      lp, adapt_k_thresh, seq_alpha, pop_temper, verbosity);
 
 
     lr = -lp + constraint_fn(plans)
@@ -209,7 +210,8 @@ redist_smc = function(map, n_sims, counties=NULL, compactness=1, constraints=lis
                      compactness = compactness,
                      constraints = constraints,
                      adapt_k_thresh = adapt_k_thresh,
-                     seq_alpha = seq_alpha)
+                     seq_alpha = seq_alpha,
+                     pop_temper = pop_temper)
 }
 
 #' Helper function to truncate importance weights

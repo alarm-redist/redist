@@ -23,7 +23,7 @@ arma::umat smc_plans(int N, List l, const arma::uvec &counties,
                      double pow_vra, const arma::uvec &min_pop,
                      double beta_inc, const arma::uvec &incumbents,
                      arma::vec &lp, double thresh,
-                     double alpha, int verbosity=1);
+                     double alpha, double pop_temper=0.1, int verbosity=1);
 
 /*
  * Split off a piece from each map in `districts`,
@@ -31,8 +31,9 @@ arma::umat smc_plans(int N, List l, const arma::uvec &counties,
  */
 void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 const uvec &pop, umat &districts, vec &cum_wgt, vec &lp,
-                vec &pop_left, int n_distr, int dist_ctr, double lower,
-                double upper, double target, double gamma, int k, int verbosity);
+                vec &pop_left, vec &log_temper, double pop_temper, int n_distr,
+                int dist_ctr, double lower, double upper, double target,
+                double gamma, int k, int verbosity);
 
 
 /*
