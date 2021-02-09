@@ -20,8 +20,8 @@
 #' cd <- algdat.p10$cdmat[,1:5]
 #'
 #' redist.group.percent(district_membership = cd,
-#'                     grouppop = fl25$BlackPop,
-#'                     fullpop = fl25$TotPop)
+#'                     group_pop = fl25$BlackPop,
+#'                     full_pop = fl25$TotPop)
 #' }
 redist.group.percent <- function(district_membership, group_pop, full_pop){
     if (!any(class(full_pop) %in% c('numeric', 'integer')))

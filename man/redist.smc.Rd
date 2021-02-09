@@ -20,6 +20,7 @@ redist.smc(
   seq_alpha = 0.2 + 0.2 * compactness,
   truncate = (compactness != 1),
   trunc_fn = function(x) pmin(x, 0.01 * nsims^0.4),
+  pop_temper = max(0.1/seq_alpha, 0.3),
   verbose = TRUE,
   silent = FALSE
 )
@@ -80,6 +81,8 @@ final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.}
 
 \item{trunc_fn}{A function which takes in a vector of weights and returns
 a truncated vector. Recommended to specify this manually if truncating weights.}
+
+\item{pop_temper}{The strength of the automatic population tempering.}
 
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}

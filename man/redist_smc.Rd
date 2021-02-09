@@ -13,9 +13,10 @@ redist_smc(
   resample = TRUE,
   constraint_fn = function(m) rep(0, ncol(m)),
   adapt_k_thresh = 0.975,
-  seq_alpha = 0.2 + 0.2 * compactness,
+  seq_alpha = 0.2 + 0.3 * compactness,
   truncate = (compactness != 1),
   trunc_fn = redist_quantile_trunc,
+  pop_temper = max(0.1/seq_alpha, 0.3),
   verbose = TRUE,
   silent = FALSE
 )
@@ -63,6 +64,8 @@ Truncation only applied if \code{resample=TRUE}.}
 a truncated vector. If \code{\link[loo]{loo}} package is installed (strongly
 recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
 rather than naive truncation.}
+
+\item{pop_temper}{The strength of the automatic population tempering.}
 
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}
