@@ -245,7 +245,7 @@ print.redist_plans = function(x, ...) {
         nrow(plans_m), "-unit map,\n  drawn using ",
         c(mcmc="Markov chain Monte Carlo",
           smc="Sequential Monte Carlo",
-          mergesplit="Merge-split arkov chain Monte Carlo")[attr(x, "algorithm")])
+          mergesplit="Merge-split Markov chain Monte Carlo")[attr(x, "algorithm")])
 
     merge_idx = attr(x, "merge_idx")
     if (!is.null(merge_idx))
