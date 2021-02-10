@@ -17,7 +17,7 @@
 // [[Rcpp::export]]
 arma::umat smc_plans(int N, List l, const arma::uvec &counties,
                      const arma::uvec &pop, int n_distr, double target,
-                     double lower, double upper, double gamma,
+                     double lower, double upper, double rho,
                      double beta_sq, const arma::uvec &current, int n_current,
                      double beta_vra, double tgt_min, double tgt_other,
                      double pow_vra, const arma::uvec &min_pop,
@@ -33,7 +33,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 const uvec &pop, umat &districts, vec &cum_wgt, vec &lp,
                 vec &pop_left, vec &log_temper, double pop_temper, int n_distr,
                 int dist_ctr, double lower, double upper, double target,
-                double gamma, int k, int verbosity);
+                double rho, int k, int verbosity);
 
 
 /*
