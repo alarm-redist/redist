@@ -50,6 +50,7 @@ umat ms_plans(int N, List l, const uvec init, const uvec &counties, const uvec &
     int distr_1, distr_2;
     select_pair(n_distr, g, init, distr_1, distr_2);
     int refresh = std::max(N / 20, 1);
+    int n_accept = 0;
     for (int i = 1; i < N; i++) {
         districts.col(i) = districts.col(i - 1); // copy over old map
 
@@ -92,6 +93,7 @@ umat ms_plans(int N, List l, const uvec init, const uvec &counties, const uvec &
 
         double alpha = exp(prop_lp);
         if (alpha >= 1 || unif(generator) <= alpha) { // ACCEPT
+            n_accept++;
             // map already stored in districts.col(i);
         } else { // REJECT
             districts.col(i) = districts.col(i - 1); // copy over old map
@@ -101,6 +103,10 @@ umat ms_plans(int N, List l, const uvec init, const uvec &counties, const uvec &
             Rprintf("Iteration %'6d / %'d\n", i+1, N);
         }
         Rcpp::checkUserInterrupt();
+    }
+
+    if (verbosity >= 1) {
+        Rprintf("Acceptance rate: %.1f%%.\n", (100.0 * n_accept) / N);
     }
 
     return districts;
