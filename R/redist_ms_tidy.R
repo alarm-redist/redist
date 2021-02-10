@@ -2,34 +2,24 @@
 # Author: Cory McCartan
 # Institution: Harvard University
 # Date Created: 2021/01/31
-# Purpose: tidy R wrapper to run SMC redistricting code
+# Purpose: tidy R wrapper to run Merge-Split/Recom redistricting code
 ####################################################
 
-#' SMC Redistricting Sampler
+#' Merge-Split/Recombination MCMC Redistricting Sampler
 #'
-#' \code{redist_smc} uses a Sequential Monte Carlo algorithm to
-#' generate nearly independent congressional or legislative redistricting
-#' plans according to contiguity, population, compactness, and administrative
-#' boundary constraints.
+#' \code{redist_mergesplit} uses a Markov Chain Monte Carlo algorithm to
+#' generate congressional or legislative redistricting plans according to
+#' contiguity, population, compactness, and administrative boundary constraints.
+#' The MCMC proposal is the same as is used in the SMC sampler; it is similar
+#' but not identical to those used in the references.
 #'
-#' This function draws nearly-independent samples from a specific target measure,
-#' controlled by the \code{popcons}, \code{compactness}, \code{constraints}, and
+#' This function draws samples from a specific target measure, controlled by the
+#' \code{popcons}, \code{compactness}, \code{constraints}, and
 #' \code{constraint_fn} parameters.
-#'
-#' Key to ensuring good performance is monitoring the efficiency of the resampling
-#' process at each SMC stage.  Unless \code{silent=F}, this function will print
-#' out the effective sample size of each resampling step to allow the user to
-#' monitor the efficiency.  If \code{verbose=T} the function will also print
-#' out information on the \eqn{k_i} values automatically chosen and the
-#' acceptance rate (based on the population constraint) at each step.
 #'
 #' Higher values of \code{compactness} sample more compact districts;
 #' setting this parameter to 1 is computationally efficient and generates nicely
-#' compact districts.  Values of other than 1 may lead to highly variable
-#' importance sampling weights.  By default these weights are truncated using
-#' \code{\link{redist_quantile_trunc}} to stabilize the resulting estimates, but
-#' if truncation is used, a specific truncation function should probably be
-#' chosen by the user.
+#' compact districts.
 #'
 #' The \code{constraints} parameter allows the user to apply several common
 #' redistricting constraints without implementing them by hand. This parameter
@@ -61,7 +51,10 @@
 #'
 #'
 #' @param map A \code{\link{redist_map}} object.
-#' @param n_sims The number of samples to draw.
+#' @param n_sims The number of samples to draw, including warmup.
+#' @param warmup The number of warmup samples to discard.
+#' @param init The initial state of the map. If not provided, will default to
+#'   the reference map of the \code{map} object.
 #' @param counties A vector containing county (or other administrative or
 #' geographic unit) labels for each unit, which may be integers ranging from 1
 #' to the number of counties, or a factor or character vector.  If provided, the
@@ -72,9 +65,6 @@
 #' 'Details' section for more information, and computational considerations.
 #' @param constraints A list containing information on constraints to implement.
 #' See the 'Details' section for more information.
-#' @param resample Whether to perform a final resampling step so that the
-#' generated plans can be used immediately.  Set this to \code{FALSE} to perform
-#' direct importance sampling estimates, or to adjust the weights manually.
 #' @param constraint_fn A function which takes in a matrix where each column is
 #'  a redistricting plan and outputs a vector of log-weights, which will be
 #'  added the the final weights.
@@ -82,17 +72,6 @@
 #' value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if
 #' the algorithm does not appear to be sampling from the target distribution.
 #' Must be between 0 and 1.
-#' @param seq_alpha The amount to adjust the weights by at each resampling step;
-#' higher values prefer exploitation, while lower values prefer exploration.
-#' Must be between 0 and 1.
-#' @param truncate Whether to truncate the importance sampling weights at the
-#' final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.
-#' Truncation only applied if \code{resample=TRUE}.
-#' @param trunc_fn A function which takes in a vector of weights and returns
-#' a truncated vector. If \code{\link[loo]{loo}} package is installed (strongly
-#' recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
-#' rather than naive truncation.
-#' @param pop_temper The strength of the automatic population tempering.
 #' @param verbose Whether to print out intermediate information while sampling.
 #'   Recommended.
 #' @param silent Whether to suppress all diagnostic information.
@@ -101,40 +80,47 @@
 #'   \code{\link{redist_plans}} containing the simulated plans.
 #'
 #' @references
-#' McCartan, C., & Imai, K. (2020). Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans.
-#' Available at \url{https://imai.fas.harvard.edu/research/files/SMCredist.pdf}.
+#' Carter, D., Herschlag, G., Hunter, Z., and Mattingly, J. (2019). A
+#' merge-split proposal for reversible Monte Carlo Markov chain sampling of
+#' redistricting plans. arXiv preprint arXiv:1911.01503.
+#'
+#' DeFord, D., Duchin, M., and Solomon, J. (2019). Recombination: A family of
+#' Markov chains for redistricting. arXiv preprint arXiv:1911.05725.
 #'
 #' @examples \dontrun{
 #' data(fl25)
 #'
 #' fl_map = redist_map(fl25, n_distr=3, pop_tol=0.1)
 #'
-#' sampled_basic = redist_smc(fl_map, 10000)
+#' sampled_basic = redist_mergesplit(fl_map, 10000)
 #'
-#' sampled_constr = redist_smc(fl_map, 10000, constraints=list(
-#'                                 incumbency = list(strength=1000, incumbents=c(3, 6, 25))
-#'                             ))
+#' sampled_constr = redist_mergesplit(fl_map, 10000, constraints=list(
+#'                      incumbency = list(strength=1000, incumbents=c(3, 6, 25))
+#'                  ))
 #' }
 #'
 #' @concept simulate
 #' @md
 #' @export
-redist_smc = function(map, n_sims, counties=NULL, compactness=1, constraints=list(),
-                      resample=TRUE, constraint_fn=function(m) rep(0, ncol(m)),
-                      adapt_k_thresh=0.975, seq_alpha=0.2+0.3*compactness,
-                      truncate=(compactness != 1), trunc_fn=redist_quantile_trunc,
-                      pop_temper=max(0.1/seq_alpha, 0.3), verbose=TRUE, silent=FALSE) {
+redist_mergesplit = function(map, n_sims, warmup=floor(n_sims/2),
+                             init=NULL, counties=NULL, compactness=1,
+                             constraints=list(), constraint_fn=function(m) rep(0, ncol(m)),
+                             adapt_k_thresh=0.975, verbose=TRUE, silent=FALSE) {
     map = validate_redist_map(map)
     V = nrow(map)
     graph = get_graph(map)
+    n_distr = attr(map, "n_distr")
 
     if (compactness < 0) stop("Compactness parameter must be non-negative")
     if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
         stop("`adapt_k_thresh` parameter must lie in [0, 1].")
-    if (seq_alpha <= 0 | seq_alpha > 1)
-        stop("`seq_alpha` parameter must lie in (0, 1].")
     if (n_sims < 1)
         stop("`n_sims` must be positive.")
+
+    if (is.null(init)) init = as.integer(as.factor(get_existing(map)))
+    if (is.null(init)) stop("Must provide an initial map.")
+    stopifnot(length(init) == V)
+    stopifnot(max(init) == n_distr)
 
     counties = rlang::eval_tidy(rlang::enquo(counties), map)
     if (is.null(counties)) {
@@ -170,56 +156,18 @@ redist_smc = function(map, n_sims, counties=NULL, compactness=1, constraints=lis
 
     pop_bounds = attr(map, "pop_bounds")
     pop = map[[attr(map, "pop_col")]]
-    n_distr = attr(map, "n_distr")
 
-    lp = rep(0, n_sims)
-    plans = smc_plans(n_sims, graph, counties, pop, n_distr, pop_bounds[2],
-                      pop_bounds[1], pop_bounds[3], compactness,
-                      constraints$status_quo$strength, constraints$status_quo$current, n_current,
-                      constraints$vra$strength, constraints$vra$tgt_vra_min,
-                      constraints$vra$tgt_vra_other, constraints$vra$pow_vra, constraints$vra$min_pop,
-                      constraints$incumbency$strength, constraints$incumbency$incumbents,
-                      lp, adapt_k_thresh, seq_alpha, pop_temper, verbosity);
+    plans = ms_plans(n_sims, graph, init, counties, pop, n_distr, pop_bounds[2],
+                     pop_bounds[1], pop_bounds[3], compactness,
+                     constraints$status_quo$strength, constraints$status_quo$current, n_current,
+                     constraints$vra$strength, constraints$vra$tgt_vra_min,
+                     constraints$vra$tgt_vra_other, constraints$vra$pow_vra, constraints$vra$min_pop,
+                     constraints$incumbency$strength, constraints$incumbency$incumbents,
+                     adapt_k_thresh, verbosity)
 
-
-    lr = -lp + constraint_fn(plans)
-    wgt = exp(lr - mean(lr))
-    wgt = wgt / mean(wgt)
-    n_eff = length(wgt) * mean(wgt)^2 / mean(wgt^2)
-
-    if (resample) {
-        if (!truncate) {
-            mod_wgt = wgt
-        } else if (require("loo") && missing(trunc_fn)) {
-            mod_wgt = wgt / sum(wgt)
-            mod_wgt = loo::weights.importance_sampling(
-                loo::psis(log(mod_wgt), r_eff=NA), log=FALSE)
-        } else {
-            mod_wgt = trunc_fn(wgt)
-        }
-        n_eff = length(mod_wgt) * mean(mod_wgt)^2 / mean(mod_wgt^2)
-        mod_wgt = mod_wgt / sum(mod_wgt)
-
-        plans = plans[, sample(n_sims, n_sims, replace=T, prob=mod_wgt)]
-    }
-
-    if (n_eff/n_sims <= 0.05)
-        warning("Less than 5% resampling efficiency. Consider weakening constraints and/or adjusting `seq_alpha`.")
-
-    new_redist_plans(plans, map, "smc", wgt, resample,
-                     n_eff = n_eff,
+    new_redist_plans(plans[,-1:-warmup], map, "mergesplit",
+                     rep(1, n_sims - warmup), FALSE,
                      compactness = compactness,
                      constraints = constraints,
-                     adapt_k_thresh = adapt_k_thresh,
-                     seq_alpha = seq_alpha,
-                     pop_temper = pop_temper)
+                     adapt_k_thresh = adapt_k_thresh)
 }
-
-#' Helper function to truncate importance weights
-#'
-#' Defined as \code{pmin(x, quantile(x, 1 - length(x)^(-0.5)))}
-#'
-#' @param x the weights
-#'
-#' @export
-redist_quantile_trunc = function(x) pmin(x, quantile(x, 1 - length(x)^(-0.5)))

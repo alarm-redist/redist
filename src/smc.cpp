@@ -14,7 +14,7 @@
  * population deviation is between `lower` and `upper` (and ideally `target`)
  */
 umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
-               int n_distr, double target, double lower, double upper, double gamma,
+               int n_distr, double target, double lower, double upper, double rho,
                double beta_sq, const uvec &current, int n_current,
                double beta_vra, double tgt_min, double tgt_other,
                double pow_vra, const uvec &min_pop,
@@ -29,6 +29,7 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     double tol = std::max(target - lower, upper - target) / target;
 
     if (verbosity >= 1) {
+        Rcout << "SEQUENTIAL MONTE CARLO\n";
         Rcout << "Sampling " << N << " " << V << "-unit maps with " << n_distr
               << " districts and population between " << lower << " and " << upper << ".\n";
         if (cg.size() > 1)
@@ -59,7 +60,7 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
 
         // perform resampling/drawing
         split_maps(g, counties, cg, pop, districts, cum_wgt, lp, pop_left, log_temper,
-                   pop_temper, n_distr, ctr, lower, upper, target, gamma, k, verbosity);
+                   pop_temper, n_distr, ctr, lower, upper, target, rho, k, verbosity);
 
         // compute weights for next step
         cum_wgt = get_wgts(districts, n_distr, ctr, alpha, lp, pop,
@@ -129,7 +130,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 const uvec &pop, umat &districts, vec &cum_wgt, vec &lp,
                 vec &pop_left, vec &log_temper, double pop_temper, int n_distr,
                 int dist_ctr, double lower, double upper, double target,
-                double gamma, int k, int verbosity) {
+                double rho, int k, int verbosity) {
     int V = districts.n_rows;
     int N = districts.n_cols;
     int new_size = n_distr - dist_ctr;
@@ -159,7 +160,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
             continue;
         }
 
-        if (gamma != 1) {
+        if (rho != 1) {
             double log_st = 0;
             for (int j = 1; j <= n_cty; j++) {
                 log_st += log_st_distr(g, districts_new, counties, i, dist_ctr, j);
@@ -173,7 +174,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 log_st += log_st_contr(g, districts_new, counties, n_cty, i, 0);
             }
 
-            inc_lp += (1 - gamma) * log_st;
+            inc_lp += (1 - rho) * log_st;
         }
         // `lower_s` now contains the population of the newly-split district
         pop_left_new(i) = pop_left(idx) - lower_s;
