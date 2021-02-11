@@ -69,4 +69,30 @@ redist.identify.cores <- function(adjacency, district_membership, k = 1, focus =
   
 }
 
+#' Uncoarsen a District Matrix
+#'
+#' After a cores analysis or other form of coarsening, sometimes you need
+#' to be at the original geography level to be comparable. This takes in a
+#' coarsened matrix and uncoarsens it to the original level
+#'
+#' @param district_membership A coarsened district membership matrix
+#' @param group_index The index used to coarsen the shape.
+#'
+#' @return matrix
+#' @export
+redist.uncoarsen <- function(district_membership, group_index){
+  uncoarse <- matrix(nrow = length(group_index), 
+                     ncol = ncol(district_membership))
+  
+  remain <- sort(unique(group_index))
+  
+  
+  for(i in 1:length(group_index)){
+    uncoarse[i] <- district_membership[which(group_index[i] == remain),]
+  }
+  
+  return(uncoarse)
+}
+
+
 globalVariables(c('dm', 'cc'))
