@@ -38,7 +38,8 @@ Imports:
     servr,
     sys,
     tibble,
-    stringr
+    stringr,
+    patchwork
 Suggests:
     testthat,
     Rmpi,
