@@ -39,7 +39,8 @@ Imports:
     sys,
     tibble,
     stringr,
-    patchwork
+    patchwork,
+    viridis
 Suggests:
     testthat,
     Rmpi,
