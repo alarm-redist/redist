@@ -3,8 +3,11 @@
 #'
 #' @param grouppercent output from redist.group.percent
 #' @param type string in 'hist', 'toptwo', or 'box'
-#' @param title 
-#'
+#' @param title ggplot title
+#' 
+#' @importFrom ggplot2 geom_histogram theme_bw geom_point geom_vline geom_hline annotate geom_boxplot
+#' @importFrom dplyr arrange desc first nth summarise
+#' 
 #' @return ggplot
 #' @export
 redist.majmin.plot <- function(grouppercent, type = 'hist', title = ''){
@@ -53,3 +56,6 @@ redist.majmin.plot <- function(grouppercent, type = 'hist', title = ''){
   
   stop('No available type specified.')
 }
+
+
+globalVariables(c('nloop', 'blk_pct', 'group_id', 'tot_blk_pct', 'first_blk', 'second_blk', 'district'))

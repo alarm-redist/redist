@@ -22,3 +22,33 @@ redist.find.target <- function(tgt_min, grouppop, fullpop, ndists, nmmd){
   return(c(tgt_other = tgt_other))
 }
 
+#' Create Constraints for SMC
+#'
+#' @param constraints Vector of constraints to include. Currently only 'vra' implemented.
+#' @param tgt_min Defaults to 0.55. If 'vra' included, the minority percent to encourage in each district.
+#' @param grouppop The minority group population by precinct, used by 'vra' constraint.
+#' @param fullpop The full population by precinct.
+#' @param ndists The total number of districts.
+#' @param nmmd The number of majority minority districts to target for 'vra' constraint
+#' @param strength_vra The strength of the 'vra' constraint. Defaults to 2500.
+#' @param pow_vra  The exponent for the 'vra' constraint. Defaults to 1.5.
+#'
+#' @return list of lists for each constraint selected
+#' @export
+redist.constraint.helper <- function(constraints = 'vra', tgt_min = 0.55, grouppop, fullpop, ndists, nmmd, strength_vra = 2500, pow_vra = 1.5){
+  ret <- list()
+  
+  if(vra %in% constraints){
+    tgt_other <- redist.find.target(tgt_min, grouppop, fullpop, ndists, nmmd)
+    
+    ret['vra'] <- list(strength = strength, 
+                       min_pop = grouppop, 
+                       tgt_vra_min = tgt_min, 
+                       tgt_vra_other = tgt_other,
+                       pow_vra = 1.5)
+    
+  }
+  return(ret)
+}
+
+globalVariables(c('vra'))

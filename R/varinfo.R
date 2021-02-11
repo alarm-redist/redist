@@ -6,6 +6,10 @@
 #' @param shp sf dataframe
 #' @importFrom  patchwork wrap_plots plot_layout
 #' @importFrom viridis scale_color_viridis
+#' @importFrom dplyr summarize
+#' @importFrom ggplot2 geom_text theme_bw
+#' @importFrom stats cmdscale kmeans
+#' 
 #' @return patchworked ggplot
 #' @export
 redist.varinfo.plot <- function(district_membership, grouppop, fullpop, shp){
@@ -65,3 +69,5 @@ redist.varinfo.plot <- function(district_membership, grouppop, fullpop, shp){
   
   return(patchwork::wrap_plots(p2) + patchwork::plot_layout(design = layouts, guides = 'collect'))
 }
+
+globalVariables(c('geometry', 'cluster', 'mds1', 'mds2', 'id', 'newcd'))
