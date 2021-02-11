@@ -88,7 +88,7 @@ redist.uncoarsen <- function(district_membership, group_index){
   
   
   for(i in 1:length(group_index)){
-    uncoarse[i] <- district_membership[which(group_index[i] == remain),]
+    uncoarse[i,] <- district_membership[which(group_index[i] == remain),]
   }
   
   return(uncoarse)
