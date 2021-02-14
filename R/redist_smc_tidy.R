@@ -190,9 +190,10 @@ redist_smc = function(map, n_sims, counties=NULL, compactness=1, constraints=lis
     if (resample) {
         if (!truncate) {
             mod_wgt = wgt
-        } else if (require("loo") && missing(trunc_fn)) {
+        } else if (suppressMessages(require("loo")) && missing(trunc_fn)) {
             mod_wgt = wgt / sum(wgt)
-            mod_wgt = loo::weights(loo::psis(log(mod_wgt), r_eff=NA), log=FALSE)
+            mod_wgt = loo::weights.importance_sampling(
+                loo::psis(log(mod_wgt), r_eff=NA), log=FALSE)
         } else {
             mod_wgt = trunc_fn(wgt)
         }
