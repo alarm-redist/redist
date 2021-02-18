@@ -42,7 +42,7 @@ reference:
 - contents:
   - redist.choropleth
   - redist.diagplot
-  - redist.minmaj.plot
+  - redist.majmin.plot
   - redist.map
   - redist.varinfo.plot
 - title: "Data"
@@ -53,7 +53,7 @@ reference:
   - algdat.pfull
   - fl25
   - fl70
-  - fl25
+  - fl250
 - title: "Post Processing Helpers"
   desc: "Functions that help setup outputs for easier use"
 - contents:
@@ -74,8 +74,9 @@ reference:
 - title: "Misc."
   desc: "Functions that don't quite fit clean categories"
 - contents:
-  - as.matrix
+  - as.matrix.redist
   - preproc.adj
   - preproc.shp
   - redist.random.subgraph
   - redist.samplepart
+  - redist-package
