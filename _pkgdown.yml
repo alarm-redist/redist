@@ -1,0 +1,81 @@
+template:
+  params:
+    bootswatch: yeti
+reference:
+- title: "Simulation Algorithm Implementations"
+  desc: "Functions for approximating values at different levels of geography"
+- contents:
+  - redist.crsg
+  - redist.enumpart
+  - redist.mcmc
+  - redist.mcmc.anneal
+  - redist.mcmc.mpi 
+  - redist.rsg
+  - redist.smc
+- title: "Analysis Functions"
+  desc: "Functions for analyzing simulation outputs"
+- contents:
+  - redist.compactness
+  - redist.competitiveness
+  - redist.distances
+  - redist.group.percent
+  - redist.metrics
+  - redist.parity
+  - redist.splits
+- title: "Setup Helpers"
+  desc: "Functions that help prepare data and select constraints"
+- contents:
+  - redist.adjacency
+  - redist.calc.frontier.size
+  - redist.coarsen.adjacency
+  - redist.constraint.helper
+  - redist.county.id
+  - redist.county.relabel
+  - redist.find.target
+  - redist.findparams
+  - redist.identify.cores
+  - redist.reduce.adjacency
+  - redist.segcalc
+  - redist.subset
+- title: "Plotting Tools"
+  desc: "Functions for creating plots and maps"
+- contents:
+  - redist.choropleth
+  - redist.diagplot
+  - redist.minmaj.plot
+  - redist.map
+  - redist.varinfo.plot
+- title: "Data"
+  desc: "Data included to help demonstrate capabilities"
+- contents:
+  - algdat.p10
+  - algdat.p20
+  - algdat.pfull
+  - fl25
+  - fl70
+  - fl25
+- title: "Post Processing Helpers"
+  desc: "Functions that help setup outputs for easier use"
+- contents:
+  - redist.combine
+  - redist.combine.anneal
+  - redist.combine.mpi
+  - redist.ipw
+  - redist.smc_is_ci
+  - redist.uncoarsen
+- title: "Enumeration Tools"
+  desc: "Functions for more involved enumeration choices"
+- contents:
+  - redist.enumerate
+  - redist.init.enumpart
+  - redist.prep.enumpart
+  - redist.run.enumpart
+  - redist.read.enumpart
+- title: "Misc."
+  desc: "Functions that don't quite fit clean categories"
+- contents:
+  - as.matrix
+  - preproc.adj
+  - preproc.shp
+  - redist.random.subgraph
+  - redist.samplepart
