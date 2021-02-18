@@ -133,6 +133,10 @@ segregationcalc <- function(distmat, grouppop, fullpop) {
     .Call(`_redist_segregationcalc`, distmat, grouppop, fullpop)
 }
 
+reindex <- function(dm, nd) {
+    .Call(`_redist_reindex`, dm, nd)
+}
+
 rsg <- function(adj_list, population, Ndistrict, target_pop, thresh, maxiter) {
     .Call(`_redist_rsg`, adj_list, population, Ndistrict, target_pop, thresh, maxiter)
 }
