@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.4</span>
       </span>
     </div>
 
@@ -139,6 +139,7 @@
 
     <pre class="usage"><span class='fu'>redist.map</span><span class='op'>(</span>
   shp <span class='op'>=</span> <span class='cn'>NULL</span>,
+  adjacency <span class='op'>=</span> <span class='cn'>NULL</span>,
   district_membership <span class='op'>=</span> <span class='cn'>NULL</span>,
   centroids <span class='op'>=</span> <span class='cn'>TRUE</span>,
   edges <span class='op'>=</span> <span class='cn'>TRUE</span>,
@@ -152,6 +153,11 @@
     <tr>
       <th>shp</th>
       <td><p>A SpatialPolygonsDataFrame or sf object. Required.</p></td>
+    </tr>
+    <tr>
+      <th>adjacency</th>
+      <td><p>A zero-indexed adjacency list. Created with redist.adjacency 
+if not supplied. Default is NULL.</p></td>
     </tr>
     <tr>
       <th>district_membership</th>

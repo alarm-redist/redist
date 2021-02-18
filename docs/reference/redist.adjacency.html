@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.4</span>
       </span>
     </div>
 
@@ -137,7 +137,7 @@
     <p>Creates an adjacency list that is zero indexed with no skips</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.adjacency</span><span class='op'>(</span><span class='va'>shp</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>redist.adjacency</span><span class='op'>(</span><span class='va'>shp</span>, <span class='va'>district_membership</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -145,6 +145,12 @@
     <tr>
       <th>shp</th>
       <td><p>A SpatialPolygonsDataFrame or sf object. Required.</p></td>
+    </tr>
+    <tr>
+      <th>district_membership</th>
+      <td><p>A numeric vector (if only one map) or matrix with one row 
+for each precinct and one column for each map. Optional. Checks for contiguity within 
+districts if provided.</p></td>
     </tr>
     </table>
 
