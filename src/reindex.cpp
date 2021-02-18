@@ -28,12 +28,3 @@ IntegerMatrix reindex(IntegerMatrix dm, int nd) {
   return ordered;
 }
 
-/*** R
-testdat <- matrix(c(rep(c(3,2,1),8), 2 ,
-                    rep(c(1,3,2,3,2,3,1), 3), c(1,2,3,3)), nrow = 25)
-out <- reindex(testdat, 3)
-fixdat <- matrix(c(rep(c(1,2,3),8), 2 ,
-                   rep(c(1,2,3,2,3,2,1), 3), c(1,3,2,2)), nrow = 25)
-all(out == fixdat)
-
-*/
