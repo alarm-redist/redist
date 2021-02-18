@@ -11,7 +11,7 @@ redist.majmin.plot(grouppercent, type = "hist", title = "")
 
 \item{type}{string in 'hist', 'toptwo', or 'box'}
 
-\item{title}{}
+\item{title}{ggplot title}
 }
 \value{
 ggplot

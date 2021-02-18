@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.4</span>
       </span>
     </div>
 
@@ -171,7 +171,7 @@
 <span class="co">#&gt; The following objects are masked from 'package:base':</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;     intersect, setdiff, setequal, union</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">magrittr</span><span class="op">)</span></code></pre></div>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://magrittr.tidyverse.org">magrittr</a></span><span class="op">)</span></code></pre></div>
 </div>
 </div>
 <div id="data" class="section level1">
@@ -384,8 +384,9 @@
 <span class="co">#&gt;  [1] "partitions"             "distance_parity"        "distance_original"     </span>
 <span class="co">#&gt;  [4] "mhdecisions"            "mhprob"                 "pparam"                </span>
 <span class="co">#&gt;  [7] "beta_sequence"          "energy_psi"             "constraint_pop"        </span>
-<span class="co">#&gt; [10] "constraint_compact"     "constraint_vra"         "constraint_similar"    </span>
-<span class="co">#&gt; [13] "constraint_countysplit" "boundary_partitions"    "boundaryratio"</span></code></pre></div>
+<span class="co">#&gt; [10] "constraint_compact"     "constraint_segregation" "constraint_vra"        </span>
+<span class="co">#&gt; [13] "constraint_similar"     "constraint_countysplit" "constraint_partisan"   </span>
+<span class="co">#&gt; [16] "constraint_minority"    "boundary_partitions"    "boundaryratio"</span></code></pre></div>
 <p>For simple runs of the algorithm, the most important pieces of the output are <code>partitions</code> and <code>distance_parity</code>. The <code>partitions</code> object is a matrix with <code>ndist</code> rows and <code>nsims</code> columns. Each column is one redistricting plan, where the numbers go from 0 to n-1, with each number represents the district assignment.</p>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">alg_mcmc</span><span class="op">$</span><span class="va">partitions</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span>

@@ -11,7 +11,7 @@ redist.constraint.helper(
   fullpop,
   ndists,
   nmmd,
-  strength = 2500,
+  strength_vra = 2500,
   pow_vra = 1.5
 )
 }
@@ -28,9 +28,9 @@ redist.constraint.helper(
 
 \item{nmmd}{The number of majority minority districts to target for 'vra' constraint}
 
-\item{pow_vra}{The exponent for the 'vra' constraint. Defaults to 1.5.}
-
 \item{strength_vra}{The strength of the 'vra' constraint. Defaults to 2500.}
+
+\item{pow_vra}{The exponent for the 'vra' constraint. Defaults to 1.5.}
 }
 \value{
 list of lists for each constraint selected

@@ -81,7 +81,7 @@ plans using Markov Chain Monte Carlo methods." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.4</span>
       </span>
     </div>
 
@@ -160,6 +160,7 @@ plans using Markov Chain Monte Carlo methods.</p>
   constraint <span class='op'>=</span> <span class='cn'>NULL</span>,
   constraintweights <span class='op'>=</span> <span class='cn'>NULL</span>,
   compactness_metric <span class='op'>=</span> <span class='st'>"fryer-holden"</span>,
+  partisan_metric <span class='op'>=</span> <span class='st'>"efficiency-gap"</span>,
   ssd_denom <span class='op'>=</span> <span class='fl'>1</span>,
   betaseq <span class='op'>=</span> <span class='st'>"powerlaw"</span>,
   betaseqlength <span class='op'>=</span> <span class='fl'>10</span>,
@@ -174,7 +175,10 @@ plans using Markov Chain Monte Carlo methods.</p>
   savename <span class='op'>=</span> <span class='cn'>NULL</span>,
   verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
   tgt_min <span class='op'>=</span> <span class='fl'>0.55</span>,
-  tgt_other <span class='op'>=</span> <span class='fl'>0.25</span>
+  tgt_other <span class='op'>=</span> <span class='fl'>0.25</span>,
+  rvote <span class='op'>=</span> <span class='cn'>NULL</span>,
+  dvote <span class='op'>=</span> <span class='cn'>NULL</span>,
+  minorityprop <span class='op'>=</span> <span class='cn'>NULL</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -272,7 +276,8 @@ units. The default is <code>NULL</code>.</p></td>
     <tr>
       <th>constraint</th>
       <td><p>Which constraint to apply. Accepts any combination of <code>compact</code>,
-<code>vra</code>, <code>population</code>, <code>similarity</code>, or <code>none</code>
+<code>segregation</code>, <code>vra</code>, <code>population</code>, <code>similarity</code>, <code>partisan</code>, 
+<code>minority</code> or <code>none</code>
 (no constraint applied). The default is NULL.</p></td>
     </tr>
     <tr>
@@ -285,6 +290,11 @@ the same length as constraint. Default is NULL.</p></td>
       <td><p>The compactness metric to use when constraining on
 compactness. Default is <code>fryer-holden</code>, the other implemented option
 is <code>polsby-popper</code>.</p></td>
+    </tr>
+    <tr>
+      <th>partisan_metric</th>
+      <td><p>The partisan metric to use when constraining on partisan metrics.
+Only implemented is "efficiency-gap", the default.</p></td>
     </tr>
     <tr>
       <th>ssd_denom</th>
@@ -362,6 +372,19 @@ Default is <code>TRUE</code>.</p></td>
       <th>tgt_other</th>
       <td><p>The remaining target percent as a decimal. Default is 0.25.</p></td>
     </tr>
+    <tr>
+      <th>rvote</th>
+      <td><p>integer vector of votes for Republicans by precinct</p></td>
+    </tr>
+    <tr>
+      <th>dvote</th>
+      <td><p>integer vector of votes for Democrats by precinct</p></td>
+    </tr>
+    <tr>
+      <th>minorityprop</th>
+      <td><p>numeric vector of targeted minority proportions for the top 
+districts with that proportion</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
@@ -385,10 +408,16 @@ simulation, which dictates the number of swaps attempted.</p></dd>
 constraint for each accepted redistricting plan.</p></dd>
 <dt>constraint_compact</dt><dd><p>A vector containing the value of the compactness
 constraint for each accepted redistricting plan.</p></dd>
+<dt>constraint_segregation</dt><dd><p>A vector containing the value of the
+segregation constraint for each accepted redistricting plan.</p></dd>
 <dt>constraint_vra</dt><dd><p>A vector containing the value of the
 vra constraint for each accepted redistricting plan.</p></dd>
 <dt>constraint_similar</dt><dd><p>A vector containing the value of the similarity
 constraint for each accepted redistricting plan.</p></dd>
+<dt>constraint_partisan</dt><dd><p>A vector containing the value of the
+partisan constraint for each accepted redistricting plan.</p></dd>
+<dt>constraint_minority</dt><dd><p>A vector containing the value of the
+minority constraint for each accepted redistricting plan.</p></dd>
 <dt>beta_sequence</dt><dd><p>A vector containing the value of beta for each iteration
 of the algorithm. Returned when tempering is being used.</p></dd>
 <dt>mhdecisions_beta</dt><dd><p>A vector specifying whether a proposed beta value was
