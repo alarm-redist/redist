@@ -603,10 +603,10 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         if(length(dvote) != length(adjlist)){
             stop("dvote must be an integer vector with corresponding entry for each entry in adjacency list")
         }
-        if(!'integer' %in% class(rvote)){
+        if(!'integer' %in% class(rvote) & !'numeric' %in% class(rvote)){
             stop('rvote must be an integer vector.')
         }
-        if(!'integer' %in% class(dvote)){
+        if(!'integer' %in% class(dvote) & !'numeric' %in% class(dvote)){
             stop('dvote must be an integer vector.')
         }
         if(is.null(partisan_metric)){
