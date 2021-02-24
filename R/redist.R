@@ -595,10 +595,10 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
             stop('You must provide an integer vector to rvote when using partisan constraint.')
         }
         if(is.null(dvote)){
-            stop('You must provide an integer vector to rvote when using partisan constraint.')
+            stop('You must provide an integer vector to dvote when using partisan constraint.')
         }
         if(length(rvote) != length(adjlist)){
-            stop("dvote must be an integer vector with corresponding entry for each entry in adjacency list") 
+            stop("rvote must be an integer vector with corresponding entry for each entry in adjacency list") 
         }
         if(length(dvote) != length(adjlist)){
             stop("dvote must be an integer vector with corresponding entry for each entry in adjacency list")
