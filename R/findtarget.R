@@ -35,13 +35,15 @@ redist.find.target <- function(tgt_min, grouppop, fullpop, ndists, nmmd){
 #'
 #' @return list of lists for each constraint selected
 #' @export
-redist.constraint.helper <- function(constraints = 'vra', tgt_min = 0.55, grouppop, fullpop, ndists, nmmd, strength_vra = 2500, pow_vra = 1.5){
+redist.constraint.helper <- function(constraints = 'vra', tgt_min = 0.55, 
+                                     grouppop, fullpop, ndists, nmmd, 
+                                     strength_vra = 2500, pow_vra = 1.5){
   ret <- list()
   
-  if(vra %in% constraints){
+  if('vra' %in% constraints){
     tgt_other <- redist.find.target(tgt_min, grouppop, fullpop, ndists, nmmd)
     
-    ret['vra'] <- list(strength = strength, 
+    ret['vra'] <- list(strength = strength_vra, 
                        min_pop = grouppop, 
                        tgt_vra_min = tgt_min, 
                        tgt_vra_other = tgt_other,
