@@ -123,7 +123,7 @@ redist_smc = function(map, n_sims, counties=NULL, compactness=1, constraints=lis
                       resample=TRUE, constraint_fn=function(m) rep(0, ncol(m)),
                       adapt_k_thresh=0.975, seq_alpha=0.2+0.3*compactness,
                       truncate=(compactness != 1), trunc_fn=redist_quantile_trunc,
-                      pop_temper=max(0.1/seq_alpha, 0.3), verbose=TRUE, silent=FALSE) {
+                      pop_temper=0, verbose=TRUE, silent=FALSE) {
     map = validate_redist_map(map)
     V = nrow(map)
     graph = get_graph(map)
