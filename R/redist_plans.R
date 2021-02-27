@@ -244,7 +244,8 @@ print.redist_plans = function(x, ...) {
     cli::cat_line("with ", max(plans_m[,1]), " districts from a ",
         nrow(plans_m), "-unit map,\n  drawn using ",
         c(mcmc="Markov chain Monte Carlo",
-          smc="Sequential Monte Carlo")[attr(x, "algorithm")])
+          smc="Sequential Monte Carlo",
+          mergesplit="Merge-split Markov chain Monte Carlo")[attr(x, "algorithm")])
 
     merge_idx = attr(x, "merge_idx")
     if (!is.null(merge_idx))

@@ -151,7 +151,7 @@ the current map.
 (VRA) constraint, with higher values prioritizing majority-minority districts
 over other considerations.
 \item \code{tgt_vra_min}, the target percentage of minority voters in minority
-copportunity districts. Defaults to 0.55.
+opportunity districts. Defaults to 0.55.
 \item \code{tgt_vra_other} The target percentage of minority voters in other
 districts. Defaults to 0.25, but should be set to reflect the total minority
 population in the state.
