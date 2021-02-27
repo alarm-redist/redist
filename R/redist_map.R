@@ -13,8 +13,6 @@ new_redist_map = function(data, graph, n_distr, pop_bounds, pop_col="pop",
                           graph_col="graph", add_graph=TRUE, existing_col=NULL) {
     if (add_graph) {
         stopifnot(!is.null(graph))
-        if (!is.null(data[[graph_col]]))
-            stop("Column `", graph_col, "` already present in data. Specify an alternate graph column.")
 
         data[[graph_col]] = graph
     }
@@ -155,8 +153,12 @@ redist_map = function(..., n_distr=NULL, pop_tol=0.01, pop_bounds=NULL, pop_col=
         }
     }
 
-    if (is_sf && is.null(graph))
+    if (is_sf && is.null(graph)) {
+        if (!is.null(data[[graph_col]]))
+            stop("Column `", graph_col, "` already present in data. Specify an alternate graph column.")
+
         graph = redist.adjacency(x)
+    }
 
     pop_col = names(tidyselect::eval_select(rlang::enquo(pop_col), x))
     existing_col = names(tidyselect::eval_select(rlang::enquo(existing_col), x))
