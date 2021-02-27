@@ -25,7 +25,7 @@ library(ggplot2)
 library(redist)
 
 data(east_tx)
-print(texas_shp)
+print(east_tx)
 ```
 
 # Specifying the Redistricting Problem
@@ -40,8 +40,8 @@ Here, the existing district assignment is stored in the `cd` column. We provide
 let `redist_map()` know about this by providing the `existing_col` argument, and
 we use `max(cd)` to count the total number of districts.
 ```{r}
-tx = redist_map(texas_shp, pop_tol=0.05, existing_col=cd)
-print(tx)
+east_tx_map = redist_map(east_tx, pop_tol=0.05, existing_col=cd)
+print(east_tx_map)
 ```
 Our original shapefile stored its geographic information in terms of latitude
 and longitude. While common, this can cause problems for some of the geographic
@@ -55,7 +55,7 @@ Suppose that we want to focus our analysis on the Houston area, which for our
 purposes means the 2nd, 7th, 9th, 18th, 22nd, and 29th congressional districts.
 We can do this simply by using `dplyr`'s `filter()` function.
 ```{r}
-houston_area = filter(tx, cd %in% c(2, 7, 9, 18, 22, 29)) 
+houston_area = filter(east_tx_map, cd %in% c(2, 7, 9, 18, 22, 29)) 
 print(houston_area)
 ```
 Behind the scenes, `redist` has adjusted the adjacency graph to remove the 
@@ -175,7 +175,7 @@ plot(houston_orig_plans, type="plan", draw=5, geom=houston_area)
 # All Together
 A minimum working example for the 'signature of gerrymandering'.
 ```{r message=F}
-houston = texas_shp %>%
+houston = east_tx %>%
     redist_map(pop_tol=0.05, existing_col=cd) %>%
     filter(cd %in% c(2, 7, 9, 18, 22, 29)) %>% # filter to Houston area
     mutate(cd_cores = make_cores(within=1)) %>%

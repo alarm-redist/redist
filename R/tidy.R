@@ -335,7 +335,7 @@ partisan_metrics = function(map, measure, rvote, dvote, ...,
 
     rvote = rlang::eval_tidy(rlang::enquo(rvote), map)
     dvote = rlang::eval_tidy(rlang::enquo(dvote), map)
-    as.numeric(redist.metrics(get_plan_matrix(.data), meausre, rvote, dvote, ...))
+    as.numeric(redist.metrics(get_plan_matrix(.data), measure, rvote, dvote, ...))
 }
 
 #' @rdname redist.competitiveness

@@ -33,6 +33,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// color_graph
+IntegerVector color_graph(List l, IntegerVector plan);
+RcppExport SEXP _redist_color_graph(SEXP lSEXP, SEXP planSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type l(lSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type plan(planSEXP);
+    rcpp_result_gen = Rcpp::wrap(color_graph(l, plan));
+    return rcpp_result_gen;
+END_RCPP
+}
 // talisman
 NumericVector talisman(NumericMatrix dvs, double nd, double alpha, double beta);
 RcppExport SEXP _redist_talisman(SEXP dvsSEXP, SEXP ndSEXP, SEXP alphaSEXP, SEXP betaSEXP) {

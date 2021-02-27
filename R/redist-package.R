@@ -63,4 +63,4 @@
 NULL
 
 # for dplyr
-utils::globalVariables(c("where"))
+utils::globalVariables(c("where", "."))

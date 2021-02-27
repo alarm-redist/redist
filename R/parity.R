@@ -46,6 +46,6 @@ redist.parity <- function(district_membership, population, ncores = 1) {
 
     chunks = split(1:N, rep(1:nc, each=ceiling(N/nc))[1:N])
     foreach(map=chunks, .combine = "c") %oper% {
-        max_dev(district_membership[,map], population, n_distr)
+        max_dev(district_membership[, map, drop=F], population, n_distr)
     }
 }

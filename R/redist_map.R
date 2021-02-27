@@ -357,7 +357,7 @@ plot.redist_map = function(x, y, ...) {
     if (missing(y)) {
         existing = get_existing(x)
         if (!is.null(existing)) {
-            redist.map(x, get_graph(x), existing, ...) +
+            redist.map(x, get_graph(x), district_membership=existing, ...) +
                 ggplot2::theme_void()
         } else {
             redist.map(x, get_graph(x), district_membership=NULL, ...) +

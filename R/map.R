@@ -15,6 +15,7 @@
 #' Used to color the districts. Default is \code{NULL}.  Optional.
 #' @param centroids A logical indicating if centroids should be plotted. Default is \code{TRUE}.
 #' @param edges A logical indicating if edges should connect adjacent centroids. Default is \code{TRUE}.
+#' @param boundaries A logical indicating if precinct boundaries should be plotted.
 #' @param drop A logical indicating if edges that cross districts should be dropped. Default is \code{FALSE}.
 #' @param title A string title of plot. Defaults to empty string. Optional.
 #'
@@ -36,7 +37,7 @@
 #' @concept visualize
 #' @export
 redist.map <- function(shp = NULL, adjacency = NULL, district_membership = NULL, centroids = TRUE,
-                       edges = TRUE, drop = FALSE, title = ""){
+                       edges = TRUE, boundaries = TRUE, drop = FALSE, title = ""){
 
   # Check inputs
   if(is.null(shp)){
@@ -103,15 +104,26 @@ redist.map <- function(shp = NULL, adjacency = NULL, district_membership = NULL,
   }
 
   # Create Plot
-  if(!is.null(district_membership)){
-    district_membership <- as.character(district_membership)
-    plot <- shp %>% ggplot() +
-      geom_sf(aes(fill = district_membership)) +
+  if (!is.null(district_membership)) {
+    district_membership <- as.factor(district_membership)
+
+    if (!is.null(adjacency)) {
+        district_membership = as.factor(color_graph(adjacency, as.integer(district_membership)))
+    }
+
+    plot <- ggplot(shp) +
+      geom_sf(aes(fill = district_membership), size=0.3*boundaries, color="#444444") +
       theme_minimal()     +
       labs(fill = 'District Membership', x = 'Longitude', y = 'Latitude', title = title) +
       theme(legend.position = "bottom")
+
+    if (inherits(shp, "redist_map")) {
+        PAL = c("#6D9537", "#364B7F", "#DCAD35", "#9A9BB9", "#2A4E45", "#7F4E28")
+        plot = plot + ggplot2::guides(fill=FALSE) +
+            ggplot2::scale_fill_manual(values=PAL)
+    }
   } else {
-    plot <- shp %>% ggplot() +
+    plot <- ggplot(shp) +
       geom_sf() +
       theme_minimal() +
       labs(x = 'Longitude', y = 'Latitude', title = title)
@@ -174,38 +186,46 @@ redist.choropleth <- function(shp, fill = NULL, fill_label = "", title = "",
     }
 
     fill <- rlang::eval_tidy(rlang::enquo(fill), shp)
+    if (!is.numeric(fill) && inherits(shp, "redist_map")) {
+        fill = as.factor(color_graph(get_graph(shp), as.integer(as.factor(fill))))
+    }
 
-    plot <- shp %>% ggplot(aes(fill = fill)) +
-        geom_sf(lwd = 0, color = NA) +
+    plot <- ggplot(shp, aes(fill = fill)) +
+        geom_sf(size = 0, color = NA) +
         theme_void() +
         labs(fill = fill_label, x = 'Longitude', y = 'Latitude', title = title) +
         theme(legend.position = "bottom")
 
     if (!is.null(fill)) {
-        l1 <- min(fill, na.rm=T)
-        l2 <- max(fill, na.rm=T)
-        mp <- mean(fill, na.rm=T)
+        if (is.numeric(fill)) {
+            l1 <- min(fill, na.rm=T)
+            l2 <- max(fill, na.rm=T)
+            mp <- mean(fill, na.rm=T)
 
-        if (l1 >= 0 & l2 <= 1) {
-            l1 <- 0
-            l2 <- 1
-            mp <- 0.5
+            if (l1 >= 0 & l2 <= 1) {
+                l1 <- 0
+                l2 <- 1
+                mp <- 0.5
+            }
+
+            if (is.null(limit_colors)) {
+                limit_colors <- c('#ffffff', '#08306b')
+            }
+
+            if (grad == 1) {
+                plot <- plot +
+                    scale_fill_gradient(low = limit_colors[1], high = limit_colors[2],
+                                        limits = c(l1, l2))
+            } else if (grad == 2) {
+                plot <- plot +
+                    scale_fill_gradient2(low = limit_colors[1], high = limit_colors[3],
+                                         midpoint = mp, mid = limit_colors[2], limits = c(l1, l2))
+            }
+        } else {
+            PAL = c("#6D9537", "#364B7F", "#DCAD35", "#9A9BB9", "#2A4E45", "#7F4E28")
+            plot <- plot + ggplot2::scale_fill_manual(values=PAL) +
+               ggplot2::guides(fill=FALSE)
         }
-
-        if (is.null(limit_colors)) {
-            limit_colors <- c('#ffffff', '#08306b')
-        }
-
-        if (grad == 1) {
-            plot <- plot +
-                scale_fill_gradient(low = limit_colors[1], high = limit_colors[2],
-                                    limits = c(l1, l2))
-        } else if (grad == 2) {
-            plot <- plot +
-                scale_fill_gradient2(low = limit_colors[1], high = limit_colors[3],
-                                     midpoint = mp, mid = limit_colors[2], limits = c(l1, l2))
-        }
-
     }
 
     return(plot)
