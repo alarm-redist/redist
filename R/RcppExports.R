@@ -9,6 +9,10 @@ collapse_adj <- function(graph, idxs) {
     .Call(`_redist_collapse_adj`, graph, idxs)
 }
 
+color_graph <- function(l, plan) {
+    .Call(`_redist_color_graph`, l, plan)
+}
+
 talisman <- function(dvs, nd, alpha = 1, beta = 1) {
     .Call(`_redist_talisman`, dvs, nd, alpha, beta)
 }

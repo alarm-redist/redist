@@ -10,6 +10,7 @@ redist.map(
   district_membership = NULL,
   centroids = TRUE,
   edges = TRUE,
+  boundaries = TRUE,
   drop = FALSE,
   title = ""
 )
@@ -26,6 +27,8 @@ Used to color the districts. Default is \code{NULL}.  Optional.}
 \item{centroids}{A logical indicating if centroids should be plotted. Default is \code{TRUE}.}
 
 \item{edges}{A logical indicating if edges should connect adjacent centroids. Default is \code{TRUE}.}
+
+\item{boundaries}{A logical indicating if precinct boundaries should be plotted.}
 
 \item{drop}{A logical indicating if edges that cross districts should be dropped. Default is \code{FALSE}.}
 

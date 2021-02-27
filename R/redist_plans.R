@@ -325,7 +325,7 @@ hist.redist_plans = function(x, qty, ...) {
 plot_distr_qtys = function(x, qty, sort="asc", ...) {
     if (isFALSE(sort) || sort == "none") {
         x = dplyr::group_by(x, .data$draw) %>%
-            dplyr::mutate(.distr_no = as.factor(district))
+            dplyr::mutate(.distr_no = as.factor(.data$district))
     } else {
         ord = if (sort == "asc") 1  else if (sort == "desc") -1 else
             stop("`sort` not recognized: ", sort)
@@ -357,13 +357,23 @@ plot_distr_qtys = function(x, qty, sort="asc", ...) {
 #' @export
 plot_plan = function(x, draw, geom) {
     stopifnot(inherits(x, "redist_plans"))
+    stopifnot()
 
     draw_idx = match(as.character(draw), levels(x$draw))
     distr_assign = get_plan_matrix(x)[,draw_idx]
+    if (inherits(geom, "redist_map")) {
+        distr_colors = as.factor(color_graph(get_graph(geom), distr_assign))
+    } else {
+        distr_colors = as.factor(distr_assign)
+    }
+
+    PAL = c("#6D9537", "#364B6F", "#E59A20", "#9A9BB9", "#2A4E45")
     sf::st_sf(geom) %>%
         dplyr::ungroup() %>%
-        dplyr::mutate(District = levels(as.factor(x$district))[distr_assign]) %>%
+        dplyr::mutate(District = distr_colors) %>%
     ggplot(aes(fill=.data$District)) +
         ggplot2::geom_sf(size=0) +
+        ggplot2::guides(fill=FALSE) +
+        ggplot2::scale_fill_manual(values=PAL) +
         theme_void()
 }
