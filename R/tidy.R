@@ -214,9 +214,10 @@ match_numbers = function(data, plan, col="pop_overlap") {
     stopifnot(inherits(data, "redist_plans"))
     stopifnot("district" %in% colnames(data))
 
+    plan_mat = get_plan_matrix(data)
+    if (is.character(plan)) plan = plan_mat[,plan]
     plan = factor(plan, ordered=TRUE)
     n_distr = length(levels(plan))
-    plan_mat = get_plan_matrix(data)
     pop = attr(data, "pop")
 
     stopifnot(!is.null(pop))
