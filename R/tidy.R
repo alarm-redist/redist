@@ -92,7 +92,8 @@ make_cores = function(.data=get0(".", parent.frame()), within=1, focus=NULL) {
     if (!inherits(.data, "redist_map"))
         stop("Must provide `.data` if not called within a pipe")
 
-    redist.identify.cores(get_graph(.data), get_existing(.data), within, focus, simplify=TRUE)
+    redist.identify.cores(get_graph(.data), as.integer(as.factor(get_existing(.data))),
+                          within, focus, simplify=TRUE)
 }
 
 
