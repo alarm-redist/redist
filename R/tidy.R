@@ -265,7 +265,7 @@ number_by = function(data, x, desc=F) {
     orig_groups = dplyr::group_vars(data)
     dplyr::group_by(data, .data$draw) %>%
         dplyr::mutate(district = rank(ord * {{ x }})) %>%
-        set_plan_matrix(renumber_matrix(m, .$district)) %>%
+        set_plan_matrix(`colnames<-`(renumber_matrix(m, .$district), colnames(m))) %>%
         dplyr::arrange(district, .by_group=TRUE) %>%
         dplyr::group_by(dplyr::across(dplyr::all_of(orig_groups)))
 }
