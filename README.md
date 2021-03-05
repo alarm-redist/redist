@@ -59,6 +59,11 @@ library(devtools)
 install_github("kosukeimai/redist",dependencies=TRUE)
 ```
 
+# Usage by Other People
+[New Mexico](https://www.r-bloggers.com/2021/02/some-computational-redistricting-methods-or-how-to-sniff-out-a-gerrymander-in-a-pinch/)
+[Montana](https://www.benjaminsorensen.me/post/mt-redistricting/)
+
+
 # Usage Examples - 25 Precincts into 3 Districts
 
 ## No Population Constraint

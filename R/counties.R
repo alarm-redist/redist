@@ -1,6 +1,7 @@
 #' Relabel Discontinuous Counties
 #'
-#' @param adjacency adjacency list
+#' @param adj adjacency list
+#' @param adjacency Deprecated, use adj. adjacency list
 #' @param counties character vector of county names
 #'
 #' @return character vector of county names
@@ -15,16 +16,26 @@
 #' redist.relabel.counties(counties)
 #' 
 #' }
-redist.county.relabel <- function(adjacency, counties){
-  if(missing(adjacency)){
-    stop('Please provide an argument to adjacency.')
+redist.county.relabel <- function(adj, adjacency, counties){
+
+  if(!missing(adjacency)){
+    adj <- adjacency
+    .Deprecated(new = 'adj', old = 'adjacency')
+  }
+    
+  if(missing(adj)){
+    stop('Please provide an argument to adj.')
   }
   
   if(missing(counties)){
     stop('Please provide a character vector of counties.')
   }
-  if(length(adjacency) != length(counties)){
-    stop('Adjacency and group are different lengths.')
+  if(length(adj) != length(counties)){
+    stop('adj and group are different lengths.')
+  }
+  
+  if('numeric' %in% class(counties)| 'integer' %in% class(counties) ){
+    counties <- as.character(counties)
   }
   
   groups <- rep(0, length(counties))
@@ -33,12 +44,12 @@ redist.county.relabel <- function(adjacency, counties){
     groups[i] <- which(sorted == counties[i])
   }
 
-  component <- data.frame(counties = counties, comp = contiguity(adjacency, groups)) %>% 
+  component <- data.frame(counties = counties, comp = contiguity(adj, groups)) %>% 
     group_by(counties) %>% 
     mutate(comps = max(comp)) %>% 
     ungroup() %>% 
     rowwise() %>% 
-    mutate(countiescomp = ifelse(comps > 1, paste0(counties, comp), counties)) %>% 
+    mutate(countiescomp = ifelse(comps > 1, paste0(counties, '-', comp), counties)) %>% 
     ungroup()
   
   return(component$countiescomp) 
