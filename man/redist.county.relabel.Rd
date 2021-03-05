@@ -4,10 +4,12 @@
 \alias{redist.county.relabel}
 \title{Relabel Discontinuous Counties}
 \usage{
-redist.county.relabel(adjacency, counties)
+redist.county.relabel(adj, adjacency, counties)
 }
 \arguments{
-\item{adjacency}{adjacency list}
+\item{adj}{adjacency list}
+
+\item{adjacency}{Deprecated, use adj. adjacency list}
 
 \item{counties}{character vector of county names}
 }

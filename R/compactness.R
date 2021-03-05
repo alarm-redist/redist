@@ -16,15 +16,21 @@
 #' 
 #' @param shp A SpatialPolygonsDataFrame or sf object. Required unless "EdgesRemoved"
 #' and "logSpanningTree" with adjacency provided.
-#' @param district_membership A numeric vector (if only one map) or matrix with one row 
+#' @param plans A numeric vector (if only one map) or matrix with one row 
+#' for each precinct and one column for each map. Required.
+#' @param district_membership Deprecated. Use plans. A numeric vector (if only one map) or matrix with one row 
 #' for each precinct and one column for each map. Required.
 #' @param measure A vector with a string for each measure desired. "PolsbyPopper", 
 #' "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden",  
 #' "EdgesRemoved", and "logSpanningTree" are implemented. Defaults to "PolsbyPopper". Use "all" to
 #' return all implemented measures.
-#' @param population A numeric vector with the population for every observation. Is
+#' @param total_pop A numeric vector with the population for every observation. Is
 #' only necessary when "FryerHolden" is used for measure. Defaults to NULL.
-#' @param adjacency A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
+#' @param population Deprecated. Use total_pop. A numeric vector with the population for every observation. Is
+#' only necessary when "FryerHolden" is used for measure. Defaults to NULL.
+#' @param adj A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
+#' Created with \code{redist.adjacency} if not supplied and needed. Default is NULL.
+#' @param adjacency Deprecated. Use adj. A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
 #' Created with \code{redist.adjacency} if not supplied and needed. Default is NULL.
 #' @param nloop A numeric to specify loop number. Defaults to 1 if only one map provided 
 #' and the column number if multiple maps given.
@@ -121,14 +127,28 @@
 #' 
 #' @export redist.compactness
 redist.compactness <- function(shp = NULL, 
+                               plans, 
                                district_membership, 
                                measure = c("PolsbyPopper"),
-                               population = NULL, adjacency = NULL, nloop = 1,
+                               population, total_pop = NULL, adj = NULL, adjacency, nloop = 1,
                                ncores = 1, counties = NULL){
   
+  if(!missing(district_membership)){
+    plans <- district_membership
+    .Deprecated(new = 'plans', old = 'district_membership')
+  }
+  if(!missing(population)){
+    total_pop <- population
+    .Deprecated(new = 'total_pop', old = 'population')
+  }
+  if(!missing(adjacency)){
+    adj <- adjacency
+    .Deprecated(new = 'adj', old = 'adjacency')
+  }
+  
   # Check Inputs
-  if(is.null(shp)&is.null(adjacency)){
-    stop('Please provide a shp or adjacency argument.')
+  if(is.null(shp)&is.null(adj)){
+    stop('Please provide a shp or adj argument.')
   }  
   
   if(!is.null(shp)){  
@@ -139,12 +159,12 @@ redist.compactness <- function(shp = NULL,
     }
   }
   
-  if(any(class(district_membership) == 'redist')){
-    district_membership <- district_membership$partitions
+  if(any(class(plans) == 'redist')){
+    plans <- plans$plans
   }  
   
-  if(!any(class(district_membership) %in% c('numeric', 'integer', 'matrix'))){
-    stop('Please provide "district_membership" as a numeric vector or matrix.')
+  if(!any(class(plans) %in% c('numeric', 'integer', 'matrix'))){
+    stop('Please provide "plans" as a numeric vector or matrix.')
   }
   
   if(measure == "all"){
@@ -152,13 +172,13 @@ redist.compactness <- function(shp = NULL,
   }
   match.arg(arg = measure,several.ok = TRUE, choices = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden", "EdgesRemoved", "logSpanningTree"))
   
-  if('FryerHolden' %in% measure & is.null(population)) {
-    stop('Please provide a "population" argument when FryerHolden is specified.')
+  if('FryerHolden' %in% measure & is.null(total_pop)) {
+    stop('Please provide a "total_pop" argument when FryerHolden is specified.')
   }  
   
   if('FryerHolden' %in% measure){
-    if(!any(class(population) %in% c('numeric', 'integer'))) {
-      stop('Please provide "population" as a numeric or integer.')
+    if(!any(class(total_pop) %in% c('numeric', 'integer'))) {
+      stop('Please provide "total_pop" as a numeric or integer.')
     }}
   
   if(class(nloop) != 'numeric'){
@@ -174,17 +194,17 @@ redist.compactness <- function(shp = NULL,
   
   
   # Compute compactness scores
-  dists <- sort(unique(c(district_membership)))
+  dists <- sort(unique(c(plans)))
   nd <-  length(dists)
   
   
-  if(!is.matrix(district_membership)){
-    district_membership <- as.matrix(district_membership)
+  if(!is.matrix(plans)){
+    plans <- as.matrix(plans)
   }  
   
-  nmap <-  ncol(district_membership)
+  nmap <-  ncol(plans)
   if(nmap!=1){
-    nloop = rep(nloop + (1:ncol(district_membership)) - 1, each = nd)
+    nloop = rep(nloop + (1:ncol(plans)) - 1, each = nd)
   } else {
     nloop = rep(nloop, nd)
   }
@@ -210,7 +230,7 @@ redist.compactness <- function(shp = NULL,
     nm <- sum(measure %in% c("PolsbyPopper", "Schwartzberg", "LengthWidth",
                              "ConvexHull", "Reock", "BoyceClark"))
     
-    nc <- min(ncores, ncol(district_membership))
+    nc <- min(ncores, ncol(plans))
     if (nc == 1){
       `%oper%` <- `%do%`
     } else {
@@ -225,7 +245,7 @@ redist.compactness <- function(shp = NULL,
       ret <- matrix(nrow = nd, ncol = nm)
       for (i in 1:nd){
         col <- 1
-        united <- st_union(shp[district_membership[, map] == dists[i],])
+        united <- st_union(shp[plans[, map] == dists[i],])
         area <- st_area(united)
         
         if(is.null(st_crs(united$EPSG))||is.na(st_is_longlat(united))){
@@ -356,12 +376,12 @@ redist.compactness <- function(shp = NULL,
   if('FryerHolden' %in% measure){
     suppressWarnings(centroids <- st_geometry(st_centroid(shp)))
     dist_sqr <- st_distance(centroids, centroids)^2
-    pop <- population*t(matrix(rep(population,nrow(shp)),nrow(shp)))
+    pop <- total_pop*t(matrix(rep(total_pop,nrow(shp)),nrow(shp)))
     fh <- pop*dist_sqr
-    comp['FryerHolden'] <- rep(unlist(lapply(1:ncol(district_membership), function(x){
+    comp['FryerHolden'] <- rep(unlist(lapply(1:ncol(plans), function(x){
       sum <- sum(unlist(
         lapply(1:nd, function(i){
-          ind <- district_membership[,x] == i
+          ind <- plans[,x] == i
           return(sum(fh[ind,ind]))
         })
       ))
@@ -373,20 +393,20 @@ redist.compactness <- function(shp = NULL,
   
   
   
-  if(('EdgesRemoved' %in% measure ||'logSpanningTree' %in% measure) & is.null(adjacency)){
-    adjacency <- redist.adjacency(shp)
+  if(('EdgesRemoved' %in% measure ||'logSpanningTree' %in% measure) & is.null(adj)){
+    adj <- redist.adjacency(shp)
   }
   
   if('logSpanningTree' %in% measure){
-    comp[['logSpanningTree']] <- rep(log_st_map(g = adjacency, 
-                                                districts = district_membership, 
+    comp[['logSpanningTree']] <- rep(log_st_map(g = adj, 
+                                                districts = plans, 
                                                 counties = counties,
                                                 n_distr = nd), each = nd)
   }
   
   if('EdgesRemoved' %in% measure){
-    comp[['EdgesRemoved']] <- rep(n_removed(g = adjacency, 
-                                            districts = district_membership, 
+    comp[['EdgesRemoved']] <- rep(n_removed(g = adj, 
+                                            districts = plans, 
                                             n_distr = nd), each = nd)
   }
   
