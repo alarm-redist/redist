@@ -1,6 +1,9 @@
 #' Compute Distance between Partitions
 #'
-#' @param district_membership A matrix with one row for each precinct and one
+#'
+#' @param plans A matrix with one row for each precinct and one
+#' column for each map. Required.
+#' @param district_membership Depreacted, use plans. A matrix with one row for each precinct and one
 #' column for each map. Required.
 #' @param measure String vector indicating which distances to compute. Implemented
 #' currently are "Hamming", "Manhattan", "Euclidean", and "variation of information",
@@ -8,6 +11,10 @@
 #' any unique substring is enough, e.g. "ham" for Hamming, or "info" for
 #' variation of information.
 #' @param ncores Number of cores to use for parallel computing. Default is 1.
+#' @param total_pop The vector of precinct populations. Used only if computing
+#'   variation of information. If not provided, equal population of precincts
+#'   will be assumed, i.e. the VI will be computed with respect to the precincts
+#'   themselves, and not the population.
 #' @param pop The vector of precinct populations. Used only if computing
 #'   variation of information. If not provided, equal population of precincts
 #'   will be assumed, i.e. the VI will be computed with respect to the precincts
@@ -43,8 +50,19 @@
 #' distances$Hamming[1:5,1:5]
 #' }
 #' @export
-redist.distances <- function(district_membership, measure = "Hamming",
-                             ncores = 1, pop=NULL) {
+redist.distances <- function(plans, district_membership, measure = "Hamming",
+                             ncores = 1, total_pop = NULL, pop) {
+    
+    
+    if(!missing(pop)){
+        total_pop <- pop
+        .Deprecated(new = 'total_pop', old = 'pop')
+    }
+    if(!missing(district_membership)){
+        plans <- district_membership
+        .Deprecated('plans')
+    }
+    
 
     supported = c("all", "Hamming", "Manhattan", "Euclidean", "variation of information")
     # fuzzy matching
@@ -60,7 +78,7 @@ redist.distances <- function(district_membership, measure = "Hamming",
     done <- 0
 
     # parallel setup
-    nc <- min(ncores, ncol(district_membership))
+    nc <- min(ncores, ncol(plans))
     if (nc == 1) {
         `%oper%` <- `%do%`
     } else {
@@ -72,8 +90,8 @@ redist.distances <- function(district_membership, measure = "Hamming",
 
     # Compute Hamming Distance Metric
     if ("Hamming" %in% measure) {
-        ham <- foreach(map = 1:ncol(district_membership), .combine = "cbind") %oper% {
-            hamming(v = district_membership[,map], m = district_membership)
+        ham <- foreach(map = 1:ncol(plans), .combine = "cbind") %oper% {
+            hamming(v = plans[,map], m = plans)
         }
         colnames(ham) <- NULL
 
@@ -85,8 +103,8 @@ redist.distances <- function(district_membership, measure = "Hamming",
 
     # Compute Manhattan Distance Metric
     if ("Manhattan" %in% measure) {
-        man <- foreach(map = 1:ncol(district_membership), .combine = "cbind") %oper% {
-            minkowski(v = district_membership[,map], m = district_membership, p = 1)
+        man <- foreach(map = 1:ncol(plans), .combine = "cbind") %oper% {
+            minkowski(v = plans[,map], m = plans, p = 1)
         }
         colnames(man) <- NULL
 
@@ -97,8 +115,8 @@ redist.distances <- function(district_membership, measure = "Hamming",
 
     # Compute Euclidean Distance Metric
     if ("Euclidean" %in% measure) {
-        euc <- foreach(map = 1:ncol(district_membership), .combine = "cbind") %oper% {
-            minkowski(v = district_membership[,map], m = district_membership, p = 2)
+        euc <- foreach(map = 1:ncol(plans), .combine = "cbind") %oper% {
+            minkowski(v = plans[,map], m = plans, p = 2)
         }
         colnames(euc) <- NULL
 
@@ -108,19 +126,19 @@ redist.distances <- function(district_membership, measure = "Hamming",
     }
 
     if ("variation of information" %in% measure) {
-        if (is.null(pop)) {
+        if (is.null(total_pop)) {
             warning("Population not provided, using default of equal population.")
-            pop = rep(1, nrow(district_membership))
+            total_pop = rep(1, nrow(plans))
         }
-        if (length(pop) != nrow(district_membership))
+        if (length(total_pop) != nrow(plans))
             stop("Mismatch: length of population vector does not match the number of precincts.")
 
         # 1-index in preparation
-        if (min(district_membership) == 0)
-            district_membership = district_membership + 1
+        if (min(plans) == 0)
+            plans = plans + 1
 
-        vi = foreach(map = 1:ncol(district_membership), .combine = "cbind") %oper% {
-            var_info_mat(district_membership, map-1, pop) # 0-index
+        vi = foreach(map = 1:ncol(plans), .combine = "cbind") %oper% {
+            var_info_mat(plans, map-1, total_pop) # 0-index
         }
         colnames(vi) <- NULL
         # copy over other half of matrix; we only computed upper triangle

@@ -4,17 +4,20 @@
 \alias{redist.reindex}
 \title{Reorders district numbers}
 \usage{
-redist.reindex(district_membership)
+redist.reindex(plans, district_membership)
 }
 \arguments{
-\item{district_membership}{A numeric vector (if only one map) or 
+\item{plans}{A numeric vector (if only one map) or 
+matrix with one row for each precinct and one column for each map.}
+
+\item{district_membership}{Deprecated, use plans. A numeric vector (if only one map) or 
 matrix with one row for each precinct and one column for each map.}
 }
 \value{
 integer matrix
 }
 \description{
-Ensures that for each column in the district_membership object, the first 
+Ensures that for each column in the plans object, the first 
 district listed is 1, the second is 2, up to n districts. Assumes that all
 columns have the same number of districts as the first.
 }

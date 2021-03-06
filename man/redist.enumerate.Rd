@@ -4,18 +4,32 @@
 \alias{redist.enumerate}
 \title{Exact Redistricting Plan Enumerator}
 \usage{
-redist.enumerate(adjobj,
-ndists = 2, popvec = NULL, nconstraintlow = NULL,
-nconstrainthigh = NULL, popcons = NULL, contiguitymap = "rooks")
+redist.enumerate(
+  adj,
+  adjobj,
+  ndists = 2,
+  total_pop = NULL,
+  popvec,
+  nconstraintlow = NULL,
+  nconstrainthigh = NULL,
+  pop_tol = NULL,
+  popcons,
+  contiguitymap = "rooks"
+)
 }
 \arguments{
-\item{adjobj}{An adjacency list, matrix, or object of class
+\item{adj}{An adjacency list, matrix, or object of class
+\code{SpatialPolygonsDataFrame}.}
+
+\item{adjobj}{Deprecated, use adj. An adjacency list, matrix, or object of class
 \code{SpatialPolygonsDataFrame}.}
 
 \item{ndists}{The desired number of congressional districts. The default is 2.}
 
-\item{popvec}{A vector of geographic unit populations. The default is
+\item{total_pop}{A vector of geographic unit populations. The default is
 \code{NULL}.}
+
+\item{popvec}{Deprecated, use total_pop. A vector of geographic unit populations.}
 
 \item{nconstraintlow}{Lower bound for number of geographic units to include in
 a district. The default is \code{NULL}.}
@@ -23,7 +37,12 @@ a district. The default is \code{NULL}.}
 \item{nconstrainthigh}{Lower bound for number of geographic units to include
 in a district. The default is \code{NULL}.}
 
-\item{popcons}{The strength of the hard population constraint.
+\item{pop_tol}{The strength of the hard population constraint.
+\code{pop_tol} = 0.05 means that any proposed swap that brings a district more
+than 5\% away from population parity will be rejected. The default is
+\code{NULL}.}
+
+\item{popcons}{Deprecated, use pop_tol. The strength of the hard population constraint.
 \code{popcons} = 0.05 means that any proposed swap that brings a district more
 than 5\% away from population parity will be rejected. The default is
 \code{NULL}.}

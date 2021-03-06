@@ -4,10 +4,12 @@
 \alias{redist.coarsen.adjacency}
 \title{Coarsen Adjacency List}
 \usage{
-redist.coarsen.adjacency(adjacency, groups)
+redist.coarsen.adjacency(adj, adjacency, groups)
 }
 \arguments{
-\item{adjacency}{A zero-indexed adjacency list}
+\item{adj}{A zero-indexed adjacency list. Required.}
+
+\item{adjacency}{Deperecated -- use adj. A zero-indexed adjacency list}
 
 \item{groups}{integer vector of elements of adjacency to group}
 }

@@ -184,8 +184,8 @@ Each algorithm within the package maintains geographically contiguous districts.
 # Redistricting with MCMC {#mcmc}
 To begin running the MCMC algorithm, we have to provide some basic data. We provide the adjacency list to `adjobj`, a vector of populations to `popvec`, the number of districts as 3 to `ndists`, and choose to run 10000 simulations with `nsims`.  We can also save the output with `savename`. 
 ```{r}
-alg_mcmc <- redist.mcmc(adjobj = algdat.pfull$adjlist,
-                        popvec = algdat.pfull$precinct.data$pop,
+alg_mcmc <- redist.mcmc(adj = algdat.pfull$adjlist,
+                        total_pop = algdat.pfull$precinct.data$pop,
                         ndists = 3,
                         nsims = 10000,
                         savename = "redist.mcmc")
@@ -195,13 +195,13 @@ Note that we do not need to specify `ndists` when we supply a different argument
 
 We can specify `initcds`, for example, as the first column of the full enumeration in `algdat.pfull`.
 ```{r}
-initcds <- algdat.pfull$cdmat[,1]
+init_plan <- algdat.pfull$cdmat[,1]
 ```
 
 ```{r}
-alg_mcmc <- redist.mcmc(adjobj = algdat.pfull$adjlist,
-                        popvec = algdat.pfull$precinct.data$pop,
-                        initcds = initcds,
+alg_mcmc <- redist.mcmc(adj = algdat.pfull$adjlist,
+                        total_pop = algdat.pfull$precinct.data$pop,
+                        init_plan = init_plan,
                         nsims = 10000,
                         savename = "redist.mcmc")
 ```
@@ -213,10 +213,10 @@ class(alg_mcmc)
 names(alg_mcmc)
 ```
 
-For simple runs of the algorithm, the most important pieces of the output are `partitions` and `distance_parity`.  The `partitions` object is a matrix with `ndist` rows and `nsims` columns. Each column is one redistricting plan, where the numbers go from 0 to n-1, with each number represents the district assignment.
+For simple runs of the algorithm, the most important pieces of the output are `plans` and `distance_parity`.  The `plans` object is a matrix with `ndist` rows and `nsims` columns. Each column is one redistricting plan, where the numbers go from 0 to n-1, with each number represents the district assignment.
 
 ```{r}
-alg_mcmc$partitions[,1]
+alg_mcmc$plans[,1]
 ```
 
 The `distance_parity` output provides the population parity of the districts as an array with `nsims` entries.
@@ -278,17 +278,17 @@ mcmc_chains <- parallel::mclapply(1:nchains, function(x){
 # Random Seed Growth {#rsg}
 This package also contains an implementation of Chen and Rodden's non-compact Random Seed and Grow redistricting algorithm from their paper [Unintentional Gerrymandering: Political Geography and Electoral Biases in Legislatures](https://web.stanford.edu/~jrodden/wp/florida.pdf).
 
-The adjacency list, via `adj.list`, is created as in [Adjacency-Based Redistricting](#adj), `population` is the population of the districts, `ndists` is the number of districts, and `thresh` is the allowed population parity.  A `thresh` of `0.05` allows for 5\% population parity. In easier redistricting questions, a small `maxiter` is typically sufficient, but in large maps, values may be closer to `50,000` to ensure that a solution is found.
+The adjacency list, via `adj`, is created as in [Adjacency-Based Redistricting](#adj), `total_pop` is the population of the districts, `ndists` is the number of districts, and `pop_tol` is the allowed population parity.  A `pop_tol` of `0.05` allows for 5\% population parity. In easier redistricting questions, a small `maxiter` is typically sufficient, but in large maps, values may be closer to `50,000` to ensure that a solution is found.
 ```{r}
-rsg <- redist.rsg(adj.list = algdat.pfull$adjlist,
-                  population = algdat.pfull$precinct.data$pop,
+rsg <- redist.rsg(adj = algdat.pfull$adjlist,
+                  total_pop = algdat.pfull$precinct.data$pop,
                   ndists = 3,
-                  thresh = 0.05, 
+                  pop_tol = 0.05, 
                   maxiter = 5000)
 ```
 The output of `redist.rsg` is a list with three objects. `district_membership` provides a numeric array with indices for which district each precinct belongs to.
 ```{r}
-rsg$district_membership
+rsg$plan
 ```
 `district_list` will provide an alternate formulation of this with `ndists` arrays, indicating which precincts are in each district. 
 ```{r}
@@ -308,8 +308,8 @@ To evaluate redistricting plans, the `redist` package comes with the `redist.seg
 It takes three arguments, `algout`, which is a `redist` object from the various `mcmc` function or `rsg` function, `grouppop` which is the population of the group being used for comparison, and `fullpop` is the total population of the precinct.
 ```{r}
 seg <- redist.segcalc(algout = alg_mcmc, 
-                      grouppop = algdat.pfull$precinct.data$blackpop,
-                      fullpop = algdat.pfull$precinct.data$pop)
+                      group_pop = algdat.pfull$precinct.data$blackpop,
+                      total_pop = algdat.pfull$precinct.data$pop)
 ```
 
 This returns a numeric vector with the an entry for each district provided.
@@ -344,8 +344,8 @@ The final plot requires at least two chains.
 ```{r}
 seg_chains <- lapply(1:nchains, 
                      function(i){redist.segcalc(algout = mcmc_chains[[i]], 
-                                  grouppop = algdat.pfull$precinct.data$blackpop,
-                                  fullpop = algdat.pfull$precinct.data$pop)})
+                                  group_pop = algdat.pfull$precinct.data$blackpop,
+                                  total_pop = algdat.pfull$precinct.data$pop)})
 
 redist.diagplot(seg_chains, plot = 'gelmanrubin')
 ```

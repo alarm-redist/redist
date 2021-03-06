@@ -9,9 +9,13 @@
 #' Creates a map with optional graph overlay
 #'
 #' @param shp  A SpatialPolygonsDataFrame or sf object. Required.
-#' @param adjacency A zero-indexed adjacency list. Created with redist.adjacency 
+#' @param adj A zero-indexed adjacency list. Created with redist.adjacency 
 #' if not supplied. Default is NULL. 
-#' @param district_membership A numeric vector with one row for each precinct in shp. 
+#' @param adjacency Deprecated, use adj. A zero-indexed adjacency list. Created with redist.adjacency 
+#' if not supplied. Default is NULL. 
+#' @param plan A numeric vector with one entry for each precinct in shp. 
+#' Used to color the districts. Default is \code{NULL}.  Optional.
+#' @param district_membership Deprecated, use plan. A numeric vector with one row for each precinct in shp. 
 #' Used to color the districts. Default is \code{NULL}.  Optional.
 #' @param centroids A logical indicating if centroids should be plotted. Default is \code{TRUE}.
 #' @param edges A logical indicating if edges should connect adjacent centroids. Default is \code{TRUE}.
@@ -20,7 +24,7 @@
 #'
 #' @return ggplot map
 #' 
-#' @importFrom ggplot2 ggplot geom_sf theme_minimal theme labs aes
+#' @importFrom ggplot2 ggplot geom_sf theme_minimal theme labs aes theme_void
 #' @importFrom dplyr filter .data
 #' @importFrom sf st_centroid st_coordinates st_as_sf st_linestring st_sfc
 #' 
@@ -30,12 +34,23 @@
 #' data("fl25")
 #' data("algdat.p10")
 #' cds <- algdat.p10$cdmat[,100]
-#' redist.map(shp = fl25, district_membership = cds)
+#' redist.map(shp = fl25, plan = cds)
 #' }
 #' 
 #' @export
-redist.map <- function(shp = NULL, adjacency = NULL, district_membership = NULL, centroids = TRUE, 
+redist.map <- function(shp = NULL, adj = NULL, adjacency, plan = NULL, 
+                       district_membership, centroids = TRUE, 
                        edges = TRUE, drop = FALSE, title = ""){
+  
+  if(!missing(adjacency)){
+    .Deprecated(new = 'adj', old = 'adjacency')
+    adj <- adjacency
+  }
+  if(!missing(district_membership)){
+    .Deprecated(new = 'plan', old = 'district_membership')
+    plan <- district_membership
+  }
+  
   
   # Check inputs
   if(is.null(shp)){
@@ -48,12 +63,12 @@ redist.map <- function(shp = NULL, adjacency = NULL, district_membership = NULL,
     stop('Please provide "shp" as a SpatialPolygonsDataFrame or sf object.')
   }
   
-  if(!is.null(district_membership)){
-    if(!any(class(district_membership) %in% c('numeric', 'integer', 'character'))){
-      stop('Please provide "district_membership" as a vector.')
+  if(!is.null(plan)){
+    if(!any(class(plan) %in% c('numeric', 'integer', 'character'))){
+      stop('Please provide "plan" as a vector.')
     }
-    if(nrow(shp) != length(district_membership)){
-      stop('Arguments "district_membership" and "shp" do not have same number of precincts.')
+    if(nrow(shp) != length(plan)){
+      stop('Arguments "plan" and "shp" do not have same number of precincts.')
     }
     
   }
@@ -65,7 +80,7 @@ redist.map <- function(shp = NULL, adjacency = NULL, district_membership = NULL,
     edges <- TRUE
   }
   
-  if(drop & is.null(district_membership)){
+  if(drop & is.null(plan)){
     stop('drop is TRUE but no districts supplied')
   }
   
@@ -77,11 +92,11 @@ redist.map <- function(shp = NULL, adjacency = NULL, district_membership = NULL,
 
   # Extract Edges
   if(edges){
-    if(!is.null(adjacency)){
-      nb <- lapply(adjacency, function(x){x+1L})
+    if(!is.null(adj)){
+      nb <- lapply(adj, function(x){x+1L})
     } else{
-      adjacency <- redist.adjacency(shp)
-      nb <- lapply(adjacency, function(x){x+1L})
+      adj <- redist.adjacency(shp)
+      nb <- lapply(adj, function(x){x+1L})
     }
     
     edgedf <- tibble(start = rep(1:length(nb), lengths(nb)), finish = unlist(nb))
@@ -96,16 +111,16 @@ redist.map <- function(shp = NULL, adjacency = NULL, district_membership = NULL,
   }
 
   # Drop Edges that cross District Boundaries
-  if(drop&!is.null(district_membership)){
+  if(drop&!is.null(plan)){
     nb <- nb %>% 
-      filter(district_membership[i] == district_membership[j])
+      filter(plan[i] == plan[j])
   }
 
   # Create Plot
-  if(!is.null(district_membership)){
-    district_membership <- as.character(district_membership)
+  if(!is.null(plan)){
+    plan <- as.character(plan)
     plot <- shp %>% ggplot() +
-      geom_sf(aes(fill = district_membership)) +
+      geom_sf(aes(fill = plan)) +
       theme_minimal()     +
       labs(fill = 'District Membership', x = 'Longitude', y = 'Latitude', title = title) +
       theme(legend.position = "bottom")

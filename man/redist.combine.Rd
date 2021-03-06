@@ -73,12 +73,12 @@ Tarr (2015)
 
 ## Get an initial partition
 set.seed(1)
-initcds <- algdat.pfull$cdmat[,sample(1:ncol(algdat.pfull$cdmat), 1)]
+init_plan <- algdat.pfull$cdmat[,sample(1:ncol(algdat.pfull$cdmat), 1)]
 
 ## Run the algorithm
-alg_253 <- redist.mcmc(adjobj = algdat.pfull$adjlist,
-popvec = algdat.pfull$precinct.data$pop,
-initcds = initcds,
+alg_253 <- redist.mcmc(adj = algdat.pfull$adjlist,
+total_pop = algdat.pfull$precinct.data$pop,
+init_plan = init_plan,
 nsims = 10000, nloops = 2, savename = "test")
 out <- redist.combine(savename = "test", nloop = 2,
 nthin = 10)

@@ -488,12 +488,14 @@
 #' Massey \& Denton 1987 for more details) for a specified subgroup under any
 #' redistricting plan.
 #'
-#' @usage redist.segcalc(algout, grouppop, fullpop)
-#'
-#' @param algout A matrix of congressional district assignments or a
+#' @param plans A matrix of congressional district assignments or a
 #' redist object.
-#' @param grouppop A vector of populations for some subgroup of interest.
-#' @param fullpop A vector containign the populations of each geographic unit.
+#' @param algout Deprecated. Use plans. A matrix of congressional district assignments or a
+#' redist object.
+#' @param group_pop A vector of populations for some subgroup of interest.
+#' @param grouppop Deprecated. Use group_pop. A vector of populations for some subgroup of interest.
+#' @param total_pop A vector containign the populations of each geographic unit.
+#' @param fullpop Deprecated. Use total_pop. A vector containign the populations of each geographic unit.
 #'
 #' @return \code{redist.segcalc} returns a vector where each entry is the
 #' dissimilarity index of segregation (Massey & Denton 1987) for each
@@ -529,38 +531,53 @@
 #' algdat.pfull$precinct.data$pop)
 #' }
 #' @export
-redist.segcalc <- function(algout,
+redist.segcalc <- function(plans,
+                           algout,
+                           group_pop,
                            grouppop,
-                           fullpop)
-{
+                           total_pop,
+                           fullpop){
 
+    if(!missing(algout)){
+        plans <- algout
+        .Deprecated(new = 'plans', old = 'algout')
+    }
+    if(!missing(grouppop)){
+        group_pop <- grouppop
+        .Deprecated(new = 'group_pop', old = 'grouppop')
+    }
+    if(!missing(fullpop)){
+        total_pop <- fullpop
+        .Deprecated(new = 'total_pop', old = 'fullpop')
+    }
+    
     ## Warnings
-    if(missing(algout) | !(class(algout) %in% c("data.frame", "matrix", "redist"))){
+    if(missing(plans) | !(class(plans) %in% c("data.frame", "matrix", "redist"))){
         stop("Please provide either a redist object or a proper matrix of congessional districts")
     }
-    if(missing(grouppop)){
+    if(missing(group_pop)){
         stop("Please provide a vector of sub-group populations to calculate
 the segregation index")
     }
-    if(missing(fullpop)){
+    if(missing(total_pop)){
         stop("Please provide a vector of populations for each geographic unit")
     }
 
     ## If redist object, get the partitions entry
-    if(class(algout) == "redist"){
-        algout <- algout$partitions
+    if(class(plans) == "redist"){
+        plans <- plans$plans
     }
     
-    if(!((nrow(algout) == length(grouppop)) &
-             (length(grouppop) == length(fullpop)) &
-                 (length(fullpop) == nrow(algout)))){
+    if(!((nrow(plans) == length(group_pop)) &
+             (length(group_pop) == length(total_pop)) &
+                 (length(total_pop) == nrow(plans)))){
         stop("Please make sure there is a population entry for each geographic unit")
     }
 
     ## Calculate dissimilarity index
-    seg.out <- segregationcalc(algout,
-                               grouppop,
-                               fullpop)
+    seg.out <- segregationcalc(plans,
+                               group_pop,
+                               total_pop)
 
     ## Return
     return(seg.out)

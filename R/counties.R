@@ -34,7 +34,7 @@ redist.county.relabel <- function(adj, adjacency, counties){
     stop('adj and group are different lengths.')
   }
   
-  if('numeric' %in% class(counties)| 'integer' %in% class(counties) ){
+  if('numeric' %in% class(counties) | 'integer' %in% class(counties) ){
     counties <- as.character(counties)
   }
   

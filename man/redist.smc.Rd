@@ -5,12 +5,15 @@
 \title{SMC Redistricting Sampler}
 \usage{
 redist.smc(
+  adj,
   adjobj,
+  total_pop,
   popvec,
   nsims,
   ndists,
   counties = NULL,
-  popcons = 0.01,
+  pop_tol = 0.01,
+  popcons,
   compactness = 1,
   constraints = list(),
   resample = TRUE,
@@ -24,10 +27,15 @@ redist.smc(
 )
 }
 \arguments{
-\item{adjobj}{An adjacency matrix, list, or object of class
+\item{adj}{An adjacency matrix, list, or object of class
 "SpatialPolygonsDataFrame."}
 
-\item{popvec}{A vector containing the populations of each geographic unit.}
+\item{adjobj}{Deprecated, use adj. An adjacency matrix, list, or object of class
+"SpatialPolygonsDataFrame."}
+
+\item{total_pop}{A vector containing the populations of each geographic unit.}
+
+\item{popvec}{Deprecated, use total_pop. A vector containing the populations of each geographic unit.}
 
 \item{nsims}{The number of samples to draw.}
 
@@ -38,6 +46,11 @@ geographic unit) labels for each unit, which must  be integers ranging from 1
 to the number of counties.  If provided, the algorithm will only generate
 maps which split up to \code{ndists-1} counties.  If no county-split
 constraint is desired, this parameter should be left blank.}
+
+\item{pop_tol}{The desired population constraint.  All sampled districts
+will have a deviation from the target district size no more than this value
+in percentage terms, i.e., \code{pop_tol=0.01} will ensure districts have
+populations within 1\% of the target population.}
 
 \item{popcons}{The desired population constraint.  All sampled districts
 will have a deviation from the target district size no more than this value
@@ -92,7 +105,7 @@ and each column is a sample.}
 \item{compactness}{The compactness constraint.}
 \item{counties}{The computed constraint options list (see above).}
 \item{maxdev}{The maximum population deviation of each sample.}
-\item{popvec}{The provided vector of unit populations.}
+\item{total_pop}{The provided vector of unit populations.}
 \item{counties}{The provided county vector.}
 \item{adapt_k_thresh}{The provided control parameter.}
 \item{seq_alpha}{The provided control vector.}
@@ -106,7 +119,7 @@ boundary constraints.
 }
 \details{
 This function draws nearly-independent samples from a specific target measure,
-controlled by the \code{popcons}, \code{compactness}, \code{constraints}, and
+controlled by the \code{pop_tol}, \code{compactness}, \code{constraints}, and
 \code{constraint_fn} parameters.
 
 Higher values of \code{compactness} sample more compact districts;
@@ -156,10 +169,10 @@ home address.
 \dontrun{
 data(algdat.p10)
 sampled_basic = redist.smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,
-                           nsims=10000, ndists=3, popcons=0.1)
+                           nsims=10000, ndists=3, pop_tol=0.1)
 
 sampled_constr = redist.smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,
-                            nsims=10000, ndists=3, popcons=0.1,
+                            nsims=10000, ndists=3, pop_tol=0.1,
                             constraints=list(
                                 status_quo = list(strength=10, current=algdat.p10$cdmat[,1234]),
                                 incumbency = lsit(strength=1000, incumbents=c(3, 6, 25))

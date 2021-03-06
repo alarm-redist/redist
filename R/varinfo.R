@@ -1,9 +1,11 @@
 #' Static Variation of Information Plot
 #'
-#' @param district_membership matrix of district assignments
-#' @param grouppop Required. Population of subgroup being studied in each precinct.
-#' @param fullpop Required. Population of each precinct.
+#' @param plans matrix of district assignments
+#' @param group_pop Required Population of subgroup being studied in each precinct.
+#' @param total_pop Required. Population of each precinct.
 #' @param shp sf dataframe
+#' 
+#' 
 #' @importFrom  patchwork wrap_plots plot_layout
 #' @importFrom viridis scale_color_viridis
 #' @importFrom dplyr summarize
@@ -12,14 +14,14 @@
 #' 
 #' @return patchworked ggplot
 #' @export
-redist.varinfo.plot <- function(district_membership, grouppop, fullpop, shp){
+redist.plot.varinfo <- function(plans, group_pop, total_pop, shp){
   centers <- 5
-  gp <- redist.group.percent(district_membership = district_membership, grouppop = grouppop, fullpop = fullpop)
+  gp <- redist.group.percent(plans = plans, group_pop = group_pop, total_pop = total_pop)
   pct_min <- apply(gp, 2, function(x){min(x)})
-  dists <- redist.distances(district_membership, 'info', pop=grouppop)$VI
+  dists <- redist.distances(plans, 'info', pop=group_pop)$VI
   mds <- cmdscale(dists)
   tb <- tibble(mds1 = mds[,1], mds2 = mds[,2], 
-               pct_min = pct_min, id = 1:ncol(district_membership)) 
+               pct_min = pct_min, id = 1:ncol(plans)) 
   
   
   
@@ -43,13 +45,13 @@ redist.varinfo.plot <- function(district_membership, grouppop, fullpop, shp){
     viridis::scale_color_viridis()
   
   
-  ratio <- grouppop/fullpop
+  ratio <- group_pop/total_pop
   
   p2  <- lapply(1:(centers+1), function(x){
     if(x == 1){
       return(NULL)
     }
-    shp$newcd  <- as.character(district_membership[,sub$id[x-1]])
+    shp$newcd  <- as.character(plans[,sub$id[x-1]])
     shpdist <- shp %>% group_by(newcd) %>% summarize(geometry = st_union(geometry))
     shp %>% ggplot() +
       geom_sf(aes(fill = ratio)) +

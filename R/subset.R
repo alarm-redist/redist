@@ -1,27 +1,56 @@
 #' Subset a shp
 #' 
 #' Subsets a shp object along with its adjacency. Useful for running smaller analyses
-#' on pairs of districts. Provide population, ndist, popcons, and subndist to get proper 
+#' on pairs of districts. Provide population, ndists, pop_tol, and sub_ndists to get proper 
 #' population parity constraints on subsets.
 #'
 #' @param shp  An sf object
-#' @param adjacency A zero-indexed adjacency list. Created with 
+#' @param adj A zero-indexed adjacency list. Created with 
+#' \code{redist.adjacency} if not supplied.
+#' @param adjacency Deprecated, use adj. A zero-indexed adjacency list. Created with 
 #' \code{redist.adjacency} if not supplied.
 #' @param keep_rows row numbers of precincts to keep. Random submap selected if not supplied.
-#' @param population numeric vector with one entry for the population of each precinct.
-#' @param ndist integer, number of districts in whole map
-#' @param popcons The strength of the hard population constraint.
-#' @param subndist integer, number of districts in subset map
+#' @param total_pop numeric vector with one entry for the population of each precinct.
+#' @param population Deprecated, use total_pop. numeric vector with one entry for the population of each precinct.
+#' @param ndists integer, number of districts in whole map
+#' @param ndist Deprecated, use ndists. integer, number of districts in whole map
+#' @param pop_tol The strength of the hard population constraint.
+#' @param popcons Deprecated, use pop_tol. The strength of the hard population constraint.
+#' @param sub_ndists integer, number of districts in subset map
+#' @param subndist Deprecated, use sub_ndists. integer, number of districts in subset map
 #'
 #' @return a list containing the following components:
 #' \item{shp}{The subsetted shp object}
-#' \item{adjacency}{The subsetted adjacency list for shp}
+#' \item{adj}{The subsetted adjacency list for shp}
 #' \item{keep_rows}{The indices of the rows kept.}
-#' \item{subndist}{The number of districts in the subset.}
-#' \item{subpopcons}{The new parity constraint for a subset.}
+#' \item{sub_ndists}{The number of districts in the subset.}
+#' \item{sub_pop_tol}{The new parity constraint for a subset.}
 #' @export
 #'
-redist.subset <- function(shp, adjacency, keep_rows, population, ndist, popcons, subndist){
+redist.subset <- function(shp, adj, adjacency, keep_rows, total_pop, population, ndists, ndist, pop_tol, popcons, sub_ndists, subndist){
+  
+  if(!missing(adjacency)){
+    .Deprecated(new = 'adj', old = 'adjacency')
+    adj <- adjacency
+  }
+  if(!missing(population)){
+    .Deprecated(new = 'total_pop', old = 'population')
+    total_pop <- population
+  }
+  if(!missing(ndist)){
+    .Deprecated(new = 'ndists', old = 'ndist')
+    ndists <- ndist
+  }
+  if(!missing(popcons)){
+    .Deprecated(new = 'pop_tol', old = 'popcons')
+    pop_tol <- popcons
+  }
+  if(!missing(subndist)){
+    .Deprecated(new = 'sub_ndists', old = 'subndist')
+    sub_ndists <- subndist
+  }
+  
+  
   if(missing(shp)){
     stop('Please provide an argument to "shp". Use redist.reduce.adjacency to subset adjacency lists.')
   }
@@ -29,31 +58,31 @@ redist.subset <- function(shp, adjacency, keep_rows, population, ndist, popcons,
     stop('Please provide "shp" as an sf object.')
   }
   
-  if(missing(adjacency)){
-    adjacency <- redist.adjacency(shp)
+  if(missing(adj)){
+    adj <- redist.adjacency(shp)
   }
   
   if(missing(keep_rows)){
     n <- sample(1:nrow(shp),1)
-    keep_rows <- redist.random.subgraph(shp, n, adjacency)$keep_rows
+    keep_rows <- redist.random.subgraph(shp, n, adj)$keep_rows
   }
   
-  if(!missing(population)&!missing(ndist)&!missing(popcons)&!missing(subndist)){
-    parpop <- sum(population)/ndist
-    subparpop <- sum(population[keep_rows])/subndist
-    subdev <- min(abs(subparpop-parpop*(1-popcons)), abs(subparpop-parpop*(1+popcons)))
-    subpopcons <- subdev/subparpop
+  if(!missing(total_pop)&!missing(ndists)&!missing(pop_tol)&!missing(sub_ndists)){
+    parpop <- sum(total_pop)/ndists
+    subparpop <- sum(total_pop[keep_rows])/sub_ndists
+    subdev <- min(abs(subparpop-parpop*(1-pop_tol)), abs(subparpop-parpop*(1+pop_tol)))
+    sub_pop_tol <- subdev/subparpop
   } else{
-    subndist <- NA_real_
-    subpopcons <- NA_real_
+    sub_ndists <- NA_real_
+    sub_pop_tol <- NA_real_
   }
   
   
   rlist <- list(shp = shp %>% dplyr::slice(keep_rows),
-                adjacency = redist.reduce.adjacency(adjacency, keep_rows = keep_rows),
+                adj = redist.reduce.adjacency(adj, keep_rows = keep_rows),
                 keep_rows = keep_rows,
-                subndist = subndist,
-                subpopcons = subpopcons)
+                sub_ndists = sub_ndists,
+                sub_pop_tol = sub_pop_tol)
   
   return(rlist)
   

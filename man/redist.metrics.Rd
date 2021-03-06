@@ -5,6 +5,7 @@
 \title{Calculate gerrymandering metrics for a set of districts}
 \usage{
 redist.metrics(
+  plans,
   district_membership,
   measure = "DSeats",
   rvote,
@@ -18,7 +19,10 @@ redist.metrics(
 )
 }
 \arguments{
-\item{district_membership}{A numeric vector (if only one map) or matrix with one row 
+\item{plans}{A numeric vector (if only one map) or matrix with one row 
+for each precinct and one column for each map. Required.}
+
+\item{district_membership}{Deprecated, use plans. A numeric vector (if only one map) or matrix with one row 
 for each precinct and one column for each map. Required.}
 
 \item{measure}{A vector with a string for each measure desired from list "DSeats", "DVS", "EffGap", 

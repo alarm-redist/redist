@@ -6,10 +6,13 @@
 \usage{
 redist.compactness(
   shp = NULL,
+  plans,
   district_membership,
   measure = c("PolsbyPopper"),
-  population = NULL,
-  adjacency = NULL,
+  population,
+  total_pop = NULL,
+  adj = NULL,
+  adjacency,
   nloop = 1,
   ncores = 1,
   counties = NULL
@@ -19,7 +22,10 @@ redist.compactness(
 \item{shp}{A SpatialPolygonsDataFrame or sf object. Required unless "EdgesRemoved"
 and "logSpanningTree" with adjacency provided.}
 
-\item{district_membership}{A numeric vector (if only one map) or matrix with one row 
+\item{plans}{A numeric vector (if only one map) or matrix with one row 
+for each precinct and one column for each map. Required.}
+
+\item{district_membership}{Deprecated. Use plans. A numeric vector (if only one map) or matrix with one row 
 for each precinct and one column for each map. Required.}
 
 \item{measure}{A vector with a string for each measure desired. "PolsbyPopper", 
@@ -27,10 +33,16 @@ for each precinct and one column for each map. Required.}
 "EdgesRemoved", and "logSpanningTree" are implemented. Defaults to "PolsbyPopper". Use "all" to
 return all implemented measures.}
 
-\item{population}{A numeric vector with the population for every observation. Is
+\item{population}{Deprecated. Use total_pop. A numeric vector with the population for every observation. Is
 only necessary when "FryerHolden" is used for measure. Defaults to NULL.}
 
-\item{adjacency}{A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
+\item{total_pop}{A numeric vector with the population for every observation. Is
+only necessary when "FryerHolden" is used for measure. Defaults to NULL.}
+
+\item{adj}{A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
+Created with \code{redist.adjacency} if not supplied and needed. Default is NULL.}
+
+\item{adjacency}{Deprecated. Use adj. A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
 Created with \code{redist.adjacency} if not supplied and needed. Default is NULL.}
 
 \item{nloop}{A numeric to specify loop number. Defaults to 1 if only one map provided 

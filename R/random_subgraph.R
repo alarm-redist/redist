@@ -49,7 +49,8 @@ preproc.adj <- function(shp, adj){
 #' 
 #' @param shp sf object or SpatialPolygonsDataFrame
 #' @param n number of edges to sample. n must be a positive integer.
-#' @param adjacency Optional. zero indexed adjacency list.
+#' @param adj Optional. zero indexed adjacency list.
+#' @param adjacency Deprecated, use adj. Optional. zero indexed adjacency list.
 #'
 #' @return sf dataframe with n rows
 #' @export
@@ -57,10 +58,15 @@ preproc.adj <- function(shp, adj){
 #' @importFrom magrittr %>%
 #' 
 #' 
-redist.random.subgraph <- function(shp, n, adjacency = NULL){
+redist.random.subgraph <- function(shp, n, adj = NULL, adjacency){
+  if(!missing(adjacency)){
+    .Deprecated(new = 'adj', old = 'adjacency')
+    adj <- adjacency
+  }
+  
   # Check input:
   shp <- preproc.shp(shp)
-  adj <- preproc.adj(shp, adjacency)
+  adj <- preproc.adj(shp, adj)
   
   if(n < 1){
     stop('Please provide "n" as a positive integer')

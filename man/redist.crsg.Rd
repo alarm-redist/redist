@@ -5,41 +5,60 @@
 \title{Redistricting via Compact Random Seed and Grow Algorithm}
 \usage{
 redist.crsg(
+  adj,
   adj.list,
+  total_pop,
   population,
+  shp,
   area,
   x_center,
   y_center,
   ndists,
+  pop_tol,
   thresh,
   verbose = TRUE,
   maxiter = 5000
 )
 }
 \arguments{
-\item{adj.list}{List of length N, where N is the number of precincts.
+\item{adj}{List of length N, where N is the number of precincts.
 Each list element is an integer vector indicating which precincts that precinct
 is adjacent to.  It is assumed that precinct numbers start at 0.}
 
-\item{population}{numeric vector of length N, where N is the number of precincts.
+\item{adj.list}{Deprecated, use adj. List of length N, where N is the number of precincts.
+Each list element is an integer vector indicating which precincts that precinct
+is adjacent to.  It is assumed that precinct numbers start at 0.}
+
+\item{total_pop}{numeric vector of length N, where N is the number of precincts.
+Each element lists the population total of the corresponding precinct, and is
+used to enforce pop_tol constraints.}
+
+\item{population}{Deprecated, use total_pop. numeric vector of length N, where N is the number of precincts.
 Each element lists the population total of the corresponding precinct, and is
 used to enforce population constraints.}
 
-\item{area}{numeric vector of length N, where N is the number of precincts. Each 
+\item{shp}{An sf dataframe to compute area and centroids with.}
+
+\item{area}{Deprecated, use shp. numeric vector of length N, where N is the number of precincts. Each 
 element is the area of the corresponding precinct.}
 
-\item{x_center}{numeric vector of length N, where N is the number of precincts.
+\item{x_center}{Deprecated, use shp. numeric vector of length N, where N is the number of precincts.
 Each element is the x coordinate of the geographic centroid of the corresponding
 precinct.}
 
-\item{y_center}{numeric vector of length N, where N is the number of precincts.
+\item{y_center}{Deprecated, use shp. numeric vector of length N, where N is the number of precincts.
 Each element is the y coordinate of the geographic centroid of the corresponding
 precinct.}
 
 \item{ndists}{integer, the number of districts we want to partition the
 precincts into.}
 
-\item{thresh}{numeric, indicating how close district population targets have
+\item{pop_tol}{numeric, indicating how close district population targets have
+to be to the target population before algorithm converges.  pop_tol=0.05 for
+example means that all districts must be between 0.95 and 1.05 times the size
+of target.pop in population size.}
+
+\item{thresh}{Deprecated, use pop_tol. numeric, indicating how close district population targets have
 to be to the target population before algorithm converges.  thresh=0.05 for
 example means that all districts must be between 0.95 and 1.05 times the size
 of target.pop in population size.}
@@ -57,7 +76,7 @@ iterations may be advised. Default is 5000.}
 list, containing three objects containing the completed redistricting
 plan.
 \itemize{
-\item{\code{district_membership}}{  A vector of length N, indicating the
+\item{\code{plan}}{  A vector of length N, indicating the
 district membership of each precinct.}
 \item{\code{district_list}}{  A list of length Ndistrict.  Each list contains a
 vector of the precincts in the respective district.}
@@ -76,8 +95,8 @@ data("fl25")
 adj <- redist.adjacency(fl25)
 area <- sf::st_area(fl25)
 centers <- sf::st_coordinates(sf::st_centroid(fl25))
-redist.crsg(adj.list = adj, population = fl25$pop, area = area,
-x_center = centers[,1], y_center = centers[,2], ndists = 2, thresh = .1)
+redist.crsg(adj = adj, total_pop = fl25$pop, area = area,
+x_center = centers[,1], y_center = centers[,2], ndists = 2, pop_tol = .1)
 }
 }
 \references{

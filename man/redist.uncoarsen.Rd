@@ -4,10 +4,12 @@
 \alias{redist.uncoarsen}
 \title{Uncoarsen a District Matrix}
 \usage{
-redist.uncoarsen(district_membership, group_index)
+redist.uncoarsen(plans, district_membership, group_index)
 }
 \arguments{
-\item{district_membership}{A coarsened district membership matrix}
+\item{plans}{A coarsened matrix of plans.}
+
+\item{district_membership}{Deprecated, use plans. A coarsened district membership matrix}
 
 \item{group_index}{The index used to coarsen the shape.}
 }

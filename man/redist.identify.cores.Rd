@@ -5,7 +5,9 @@
 \title{Identify Cores of a District (Heuristic)}
 \usage{
 redist.identify.cores(
+  adj,
   adjacency,
+  plan,
   district_membership,
   k = 1,
   focus = NULL,
@@ -13,9 +15,13 @@ redist.identify.cores(
 )
 }
 \arguments{
-\item{adjacency}{A zero indexed adjacency list.}
+\item{adj}{zero indexed adjacency list.}
 
-\item{district_membership}{An integer vector or matrix column of district assignments.}
+\item{adjacency}{Deprecated, use adj. A zero indexed adjacency list.}
+
+\item{plan}{An integer vector or matrix column of district assignments.}
+
+\item{district_membership}{Deprecated, use plan. An integer vector or matrix column of district assignments.}
 
 \item{k}{Number of steps to check for. Defaults to 1.}
 
