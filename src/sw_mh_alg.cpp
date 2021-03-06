@@ -554,7 +554,7 @@ List swMH(List aList,
   // Create list, store output
   List out;
   if(adapt_beta != "annealing"){
-    out["partitions"] = cd_store;
+    out["plans"] = cd_store;
     out["distance_parity"] = dist_parity_vec;
     out["distance_original"] = dist_orig_vec;
     out["mhdecisions"] = decision_store;
@@ -583,7 +583,7 @@ List swMH(List aList,
       out["final_lambda"] = lambda;
     }
   }else{
-    out["partitions"] = cdvec;
+    out["plans"] = cdvec;
     out["distance_parity"] = dist_parity_vec[0];
     out["distance_original"] = dist_orig_vec[0];
     out["mhdecisions"] = decision_store[k-1];
@@ -608,7 +608,10 @@ List swMH(List aList,
       out["final_lambda"] = lambda;
     }
   }
-
+  out["algorithm"] = "mcmc";
+  out["pct_dist_parity"] = pct_dist_parity;
+  out["nsims"] = nsims;
+  out["adj"] = aList;
   return out;
 
 }

@@ -1,7 +1,8 @@
 #' Adjacency List functionality for redist
 #'
 #' @param shp A SpatialPolygonsDataFrame or sf object. Required.
-#' @param district_membership A numeric vector (if only one map) or matrix with one row 
+#' @param plan A numeric vector (if only one map) or matrix with one row 
+#' @param district_membership Deprecated -- Use plan. A numeric vector (if only one map) or matrix with one row. 
 #' for each precinct and one column for each map. Optional. Checks for contiguity within 
 #' districts if provided.
 #'
@@ -11,8 +12,11 @@
 #' 
 #' @importFrom sf st_relate
 #' @export
-redist.adjacency <- function(shp, district_membership){
-  
+redist.adjacency <- function(shp, plan, district_membership){
+  if(!missing(district_membership)){
+    plan <- district_membership
+    .Deprecated('plan')
+  }
   # Check input
   if(!any(c('sf','SpatialPolygonsDataFrame') %in% class(shp))){
     stop('Please provide "shp" as an sf or sp object.')
@@ -44,21 +48,12 @@ redist.adjacency <- function(shp, district_membership){
   }
   
   
-  if(!missing(district_membership)){
-    cont <- contiguity(adj, district_membership)
+  if(!missing(plan)){
+    cont <- contiguity(adj, plan)
     if(any(cont > 1 )){
-      warning(paste0('District', unique(district_membership[cont>1]), ' was not contiguous.'))
+      warning(paste0('District', unique(plan[cont>1]), ' was not contiguous.'))
     }
   }
-  # if there are skips, sink -- temporary leaving here, but was for spdep issue
-  #while(skip){
-  #  arr <- sort(unique(unlist(adj)))
-  #  index <- min(which(arr != 0:(nrow(shp)-1)))-1
-  #  adj <- lapply(adj, function(x){
-  #    replace(x, list = which(x == arr[index+1]), index)
-  #  })
-  #  skip <- !all(sort(unique(unlist(adj))) == 0:(nrow(shp)-1))
-  #}
 
   # return a checked adjacency list
   return(adj)
@@ -68,7 +63,8 @@ redist.adjacency <- function(shp, district_membership){
 #' 
 #' Tool to help reduce adjacency lists for analyzing subsets of maps.
 #'
-#' @param adjacency  A zero-indexed adjacency list. Required.
+#' @param adj A zero-indexed adjacency list. Required.
+#' @param adjacency  Deprecated. Use adj. A zero-indexed adjacency list. 
 #' @param keep_rows row numbers of precincts to keep
 #'
 #' @return zero indexed adjacency list with max value length(keep_rows) - 1
@@ -78,45 +74,56 @@ redist.adjacency <- function(shp, district_membership){
 #' data("algdat.p10")
 #' redist.reduce.adjacency(algdat.p10$adjlist, c(2, 3, 4, 6, 21))
 #' }
-redist.reduce.adjacency <- function(adjacency, keep_rows){
+redist.reduce.adjacency <- function(adj, adjacency, keep_rows){
+  
+  if(~missing(adjacency)){
+    adj <- adjacency
+    .Deprecated('adj', old = 'adjacency')
+  }
   # Check inputs:
   if(!(class(keep_rows) %in% c('numeric', 'integer'))){
     stop('Please provide "keep_rows" as a numeric or integer vector.')
   }
-  if(min(unlist(adjacency)) != 0){
-    stop('Please provide "adjacency" as a 0-indexed list.')
+  if(min(unlist(adj)) != 0){
+    stop('Please provide "adj" as a 0-indexed list.')
   }
-  if(max(unlist(adjacency))!= (length(adjacency)-1)){
-    warning('"adjacency" did not have typical values of 0:(length(adjacency)-1)')
+  if(max(unlist(adj))!= (length(adj)-1)){
+    warning('"adj" did not have typical values of 0:(length(adj)-1)')
   }
   
   # Prep objects for Rcpp
-  prec_keep <- rep(0L, length(adjacency))
+  prec_keep <- rep(0L, length(adj))
   prec_keep[keep_rows] <- 1L
   keep_rows <- keep_rows - 1
   keep_rows <- as.integer(keep_rows)
   
   # Reduce!
-  return(reduce_adj(adj_list = adjacency, prec_keep = prec_keep, 
+  return(reduce_adj(adj_list = adj, prec_keep = prec_keep, 
                     prec_idx = keep_rows))
 }
 
 #' Coarsen Adjacency List
 #'
-#' @param adjacency A zero-indexed adjacency list
+#' @param adj A zero-indexed adjacency list. Required.
+#' @param adjacency Deperecated -- use adj. A zero-indexed adjacency list
 #' @param groups integer vector of elements of adjacency to group
 #'
 #' @return adjacency list coarsened
 #' @export
-redist.coarsen.adjacency <- function(adjacency, groups){
-  if(min(unlist(adjacency)) != 0){
-    stop('Please provide "adjacency" as a 0-indexed list.')
+redist.coarsen.adjacency <- function(adj, adjacency, groups){
+  if(!missing(adjacency)){
+    .Deprecated('adj',  old = 'adjacency')
+      adj <- adjacency
   }
-  if(max(unlist(adjacency))!= (length(adjacency)-1)){
-    warning('"adjacency" did not have typical values of 0:(length(adjacency)-1)')
+  
+  if(min(unlist(adj)) != 0){
+    stop('Please provide "adj" as a 0-indexed list.')
   }
-  if(length(groups) != length(adjacency)){
-    stop('groups and adjacency have sizes which do not conform.')
+  if(max(unlist(adj))!= (length(adj)-1)){
+    warning('"adj" did not have typical values of 0:(length(adj)-1)')
+  }
+  if(length(groups) != length(adj)){
+    stop('groups and adj have sizes which do not conform.')
   }
   if(min(groups) != 0){
     groups <- groups - min(groups)
@@ -124,6 +131,6 @@ redist.coarsen.adjacency <- function(adjacency, groups){
   
   groups <- as.integer(groups)
   
-  return(coarsen_adjacency(adjacency, groups))
+  return(coarsen_adjacency(adj, groups))
 
 }

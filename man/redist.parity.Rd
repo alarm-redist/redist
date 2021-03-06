@@ -4,13 +4,18 @@
 \alias{redist.parity}
 \title{Calculates Population Parity}
 \usage{
-redist.parity(district_membership, population, ncores = 1)
+redist.parity(plans, district_membership, total_pop, population, ncores = 1)
 }
 \arguments{
-\item{district_membership}{A matrix with one row 
+\item{plans}{A matrix with one row 
 for each precinct and one column for each map. Required.}
 
-\item{population}{A numeric vector with the population for every precinct.}
+\item{district_membership}{Deprecated, use plans. A matrix with one row 
+for each precinct and one column for each map. Required.}
+
+\item{total_pop}{A numeric vector with the population for every precinct.}
+
+\item{population}{Deprecated, use total_pop. A numeric vector with the population for every precinct.}
 
 \item{ncores}{Number of cores to use for parallel computing. Default is 1.}
 }

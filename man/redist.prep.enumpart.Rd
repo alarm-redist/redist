@@ -4,10 +4,12 @@
 \alias{redist.prep.enumpart}
 \title{Prepares a run of the enumpart algorithm by ordering edges}
 \usage{
-redist.prep.enumpart(adjlist, unordered_path, ordered_path)
+redist.prep.enumpart(adj, adjlist, unordered_path, ordered_path)
 }
 \arguments{
-\item{adjlist}{zero indexed adjacency list}
+\item{adj}{zero indexed adjacency list}
+
+\item{adjlist}{Deprecated, use adj. zero indexed adjacency list}
 
 \item{unordered_path}{valid path to output the unordered adjacency map to}
 
@@ -22,7 +24,7 @@ Prepares a run of the enumpart algorithm by ordering edges
 \examples{
 \dontrun{
 data("algdat.p10")
-redist.prep.enumpart(adjlist = algdat.p10$adjlist, unordered_path = '../unordered', 
+redist.prep.enumpart(adj = algdat.p10$adjlist, unordered_path = '../unordered', 
 ordered_path = '../ordered')
 }
 }

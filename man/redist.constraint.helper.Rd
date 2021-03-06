@@ -7,7 +7,9 @@
 redist.constraint.helper(
   constraints = "vra",
   tgt_min = 0.55,
+  group_pop,
   grouppop,
+  total_pop,
   fullpop,
   ndists,
   nmmd,
@@ -20,9 +22,13 @@ redist.constraint.helper(
 
 \item{tgt_min}{Defaults to 0.55. If 'vra' included, the minority percent to encourage in each district.}
 
-\item{grouppop}{The minority group population by precinct, used by 'vra' constraint.}
+\item{group_pop}{A vector of populations for some subgroup of interest.}
 
-\item{fullpop}{The full population by precinct.}
+\item{grouppop}{Deprecated, use group_pop. A vector of populations for some subgroup of interest.}
+
+\item{total_pop}{A vector containing the populations of each geographic unit.}
+
+\item{fullpop}{Deprecated, use total_pop. A vector containing the populations of each geographic unit.}
 
 \item{ndists}{The total number of districts.}
 

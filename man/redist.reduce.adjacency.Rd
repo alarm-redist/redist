@@ -4,10 +4,12 @@
 \alias{redist.reduce.adjacency}
 \title{Reduce Adjacency List}
 \usage{
-redist.reduce.adjacency(adjacency, keep_rows)
+redist.reduce.adjacency(adj, adjacency, keep_rows)
 }
 \arguments{
-\item{adjacency}{A zero-indexed adjacency list. Required.}
+\item{adj}{A zero-indexed adjacency list. Required.}
+
+\item{adjacency}{Deprecated. Use adj. A zero-indexed adjacency list.}
 
 \item{keep_rows}{row numbers of precincts to keep}
 }

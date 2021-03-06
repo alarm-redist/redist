@@ -4,10 +4,14 @@
 #' \code{redist.group.percent} computes the percentage that a group makes up in
 #' each district across a matrix of maps.
 #'
-#' @param district_membership A matrix with one row 
+#' @param plans A matrix with one row 
 #' for each precinct and one column for each map. Required.
-#' @param grouppop A numeric vector with the population of the group for every precinct.
-#' @param fullpop A numeric vector with the population for every precinct.
+#' @param district_membership Deprecated, use plans. A matrix with one row 
+#' for each precinct and one column for each map. Required.
+#' @param group_pop A numeric vector with the population of the group for every precinct.
+#' @param grouppop Deprecated, use group_pop. A numeric vector with the population of the group for every precinct.
+#' @param total_pop A numeric vector with the population for every precinct.
+#' @param fullpop Deprecated, use total_pop. A numeric vector with the population for every precinct.
 #' @param ncores Number of cores to use for parallel computing. Default is 1.
 #' 
 #' @importFrom foreach %do% %dopar% foreach
@@ -20,37 +24,53 @@
 #' data(algdat)
 #' cd <- algdat.p10$cdmat[,1:5]
 #'
-#' redist.group.percent(district_membership = cd, 
-#'                     grouppop = fl25$BlackPop, 
-#'                     fullpop = fl25$TotPop)
+#' redist.group.percent(plans = cd, 
+#'                     group_pop = fl25$BlackPop, 
+#'                     total_pop = fl25$TotPop)
 #' }
-redist.group.percent <- function(district_membership, grouppop, fullpop, ncores = 1){
+redist.group.percent <- function(plans, district_membership, group_pop, grouppop, 
+                                 total_pop, fullpop, ncores = 1){
   
-  if(!any(class(fullpop) %in% c('numeric', 'integer'))){
-    stop('Please provide "fullpop" as a numeric vector.')
+  if(!missing(district_membership)){
+    plans <- district_membership
+    .Deprecated(new = 'plans', old = 'district_membership')
   }
-  if(!any(class(grouppop) %in% c('numeric', 'integer'))){
+  if(!missing(grouppop)){
+    group_pop <- grouppop
+    .Deprecated(new = 'group_pop', old = 'grouppop')
+  }
+  if(!missing(fullpop)){
+    total_pop <- fullpop
+    .Deprecated(new = 'total_pop', old = 'fullpop')
+  }
+  
+  
+  
+  if(!any(class(total_pop) %in% c('numeric', 'integer'))){
+    stop('Please provide "total_pop" as a numeric vector.')
+  }
+  if(!any(class(group_pop) %in% c('numeric', 'integer'))){
     stop('Please provide "groupop" as a numeric vector.')
   }
   
-  if(!any(class(district_membership) %in% c('integer', 'numeric', 'matrix'))){
-    stop('Please provide "district_membership" as a matrix.')
+  if(!any(class(plans) %in% c('integer', 'numeric', 'matrix'))){
+    stop('Please provide "plans" as a matrix.')
   }
   
-  if(!is.matrix(district_membership)){
-    district_membership <- as.matrix(district_membership)
+  if(!is.matrix(plans)){
+    plans <- as.matrix(plans)
   }
   
-  if(length(fullpop) != nrow(district_membership)){
-    stop('Arguments "district_membership" and "fullpop" do not have same number of precincts.')
+  if(length(total_pop) != nrow(plans)){
+    stop('Arguments "plans" and "total_pop" do not have same number of precincts.')
   }
-  if(length(grouppop) != nrow(district_membership)){
-    stop('Arguments "district_membership" and "groupop" do not have same number of precincts.')
+  if(length(group_pop) != nrow(plans)){
+    stop('Arguments "plans" and "group_pop" do not have same number of precincts.')
   }
   
-  apply(district_membership, 2, function(x){
-    group_pop <- tapply(grouppop, x, sum)
-    dist_pop <- tapply(fullpop, x, sum)
-    return(group_pop/dist_pop)
+  apply(plans, 2, function(x){
+    group_pop_g <- tapply(group_pop, x, sum)
+    dist_pop <- tapply(total_pop, x, sum)
+    return(group_pop_g/dist_pop)
   })
 }

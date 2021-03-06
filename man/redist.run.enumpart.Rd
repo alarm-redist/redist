@@ -7,7 +7,8 @@
 redist.run.enumpart(
   ordered_path,
   out_path,
-  ndist = 2,
+  ndists = 2,
+  ndist,
   all = TRUE,
   n = NULL,
   options = NULL
@@ -18,7 +19,9 @@ redist.run.enumpart(
 
 \item{out_path}{Valid path to output the enumerated districts}
 
-\item{ndist}{number of districts to enumerate}
+\item{ndists}{number of districts to enumerate}
+
+\item{ndist}{Deprecated, use ndists. number of districts to enumerate}
 
 \item{all}{boolean. TRUE outputs all districts. FALSE samples n districts.}
 

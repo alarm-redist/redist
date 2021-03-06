@@ -30,7 +30,8 @@ redist.init.enumpart <- function(){
 
 #' Prepares a run of the enumpart algorithm by ordering edges
 #'
-#' @param adjlist zero indexed adjacency list
+#' @param adj zero indexed adjacency list
+#' @param adjlist Deprecated, use adj. zero indexed adjacency list
 #' @param unordered_path valid path to output the unordered adjacency map to
 #' @param ordered_path valid path to output the ordered adjacency map to
 #'
@@ -45,26 +46,31 @@ redist.init.enumpart <- function(){
 #' Forthcoming, Statistics and Public Policy.
 #' @examples \dontrun{
 #' data("algdat.p10")
-#' redist.prep.enumpart(adjlist = algdat.p10$adjlist, unordered_path = '../unordered', 
+#' redist.prep.enumpart(adj = algdat.p10$adjlist, unordered_path = '../unordered', 
 #' ordered_path = '../ordered')
 #' }
-redist.prep.enumpart <- function(adjlist, unordered_path, ordered_path){
+redist.prep.enumpart <- function(adj, adjlist, unordered_path, ordered_path){
+  if(!missing(adjlist)){
+    adj <- adjlist
+    .Deprecated(new = 'adj', old = 'adjlist')
+  }
+  
   # Return the list to 1 indexing
-  adjlist <- lapply(adjlist, function(x){x+1})
+  adj <- lapply(adj, function(x){x+1})
   
   ## Sink
-  adjlist_map <- c()
-  for(k in 1:length(adjlist)){
-    sub <- adjlist[[k]]
+  adj_map <- c()
+  for(k in 1:length(adj)){
+    sub <- adj[[k]]
     sub <- sub[sub > k]
     if(length(sub) > 0){
       for(l in 1:length(sub)){
-        adjlist_map <- rbind(adjlist_map, c(k, sub[l]))
+        adj_map <- rbind(adj_map, c(k, sub[l]))
       }
     }
   }
   
-  readr::write_delim(data.frame(adjlist_map),
+  readr::write_delim(data.frame(adj_map),
                      path = paste0(unordered_path,".dat"),
                      col_names = FALSE)
   
@@ -81,7 +87,8 @@ redist.prep.enumpart <- function(adjlist, unordered_path, ordered_path){
 #'
 #' @param ordered_path Path used in redist.prep.enumpart
 #' @param out_path Valid path to output the enumerated districts
-#' @param ndist number of districts to enumerate
+#' @param ndists number of districts to enumerate
+#' @param ndist Deprecated, use ndists. number of districts to enumerate
 #' @param all boolean. TRUE outputs all districts. FALSE samples n districts. 
 #' @param n integer. Number of districts to output if all is FALSE. Returns 
 #' districts selected from uniform random distribution.
@@ -98,18 +105,25 @@ redist.prep.enumpart <- function(adjlist, unordered_path, ordered_path){
 #' @examples \dontrun{
 #' redist.run.enumpart(ordered_path = '../ordered', out_path = '../enumerated')
 #' }
-redist.run.enumpart <- function(ordered_path, out_path, ndist = 2, all = TRUE, n  = NULL, options = NULL){
-  ndist <- as.integer(ndist)
+redist.run.enumpart <- function(ordered_path, out_path, ndists = 2, ndist, 
+                                all = TRUE, n  = NULL, options = NULL){
+  
+  if(!missing(ndist)){
+    ndists <- ndist
+    .Deprecated(new = 'ndists', old = 'ndist')
+  }
+  
+  ndists <- as.integer(ndists)
   n <- as.integer(n)
   
   # use args based on types
   if(is.null(options)){
   if(all){
-    options <- c('-k', ndist, '-comp', '-allsols')
+    options <- c('-k', ndists, '-comp', '-allsols')
   } else{
     if(is.null(n))
       stop('n must be specified when all is FALSE.')
-    options <- c('-k', ndist, '-comp', '-sample', n)
+    options <- c('-k', ndists, '-comp', '-sample', n)
   }
   options <- c(paste0(ordered_path, '.dat'), options)
   }
@@ -227,47 +241,66 @@ redist.calc.frontier.size <- function(ordered_path){
 #'
 #' Single function for standard enumeration analysis.
 #'
-#' @param adjlist zero indexed adjacency list
+#' @param adj zero indexed adjacency list.
+#' @param adjlist Deprecated, use adj. zero indexed adjacency list
 #' @param unordered_path valid path to output the unordered adjacency map to
 #' @param ordered_path valid path to output the ordered adjacency map to
 #' @param out_path Valid path to output the enumerated districts
+#' @param ndists number of districts to enumerate
 #' @param ndist number of districts to enumerate
 #' @param all boolean. TRUE outputs all districts. FALSE samples n districts. 
 #' @param n integer. Number of districts to output if all is FALSE. Returns 
 #' districts selected from uniform random distribution.
 #' @param init Runs redist.init.enumpart. Defaults to false. Should be run on first use.
 #' @param read boolean. Defaults to TRUE. reads 
-#' @param population Integer Vector. Defaults to NULL. If supplied, computes the parity.
+#' @param total_pop Integer Vector. Defaults to NULL. If supplied, computes the parity.
+#' @param population Deprecated, use total_pop. Integer Vector. Defaults to NULL. If supplied, computes the parity.
 #'
 #' @return List with entries district_membership and parity.
 #' @export
 #'
-redist.enumpart <- function(adjlist, unordered_path, ordered_path, 
-                             out_path, ndist = 2, all = TRUE, n = NULL, init = FALSE, read = TRUE, 
-                            population = NULL){
+redist.enumpart <- function(adj, adjlist, unordered_path, ordered_path, 
+                             out_path, ndists = 2, ndist, all = TRUE, n = NULL, 
+                            init = FALSE, read = TRUE, 
+                            total_pop = NULL, population){
+  
+  if(!missing(ndist)){
+    ndists <- ndist
+    .Deprecated(new = 'ndists', old = 'ndist')
+  }
+  if(!missing(population)){
+    total_pop <- population
+    .Deprecated(new = 'total_pop', old = 'population')
+  }
+  if(!missing(adjlist)){
+    adj <- adjlist
+    .Deprecated(new = 'adj', old = 'adjlist')
+  }
+  
+  
   if(init){
     redist.init.enumpart()
   }
   
-  prep <- redist.prep.enumpart(adjlist = adjlist, 
+  prep <- redist.prep.enumpart(adj = adj, 
                                unordered_path = unordered_path,
                                ordered_path = ordered_path)
   if(!prep){
     run <- redist.run.enumpart(ordered_path = ordered_path, 
                                out_path = out_path, 
-                               ndist = ndist, 
+                               ndists = ndists, 
                                all = all,
                                n = n)
   }
   
   if(read){
     cds <- redist.read.enumpart(out_path = out)
-    if(!is.null(population)){
-      par <- redist.parity(district_membership = cds, population = population)
+    if(!is.null(total_pop)){
+      par <- redist.parity(plans = cds, total_pop = total_pop)
     } else{
       par <- rep(NA_real_, ncol(cds))
     }
-    out <- list(district_membership = cds, parity = par)
+    out <- list(plans = cds, parity = par)
   } else{
     return(0)
   }

@@ -1,36 +1,47 @@
 #' Calculates Population Parity
 #' 
 #' \code{redist.parity} computes the population parity of a matrix of maps.
-#'
-#' @param district_membership A matrix with one row 
+#' @param plans A matrix with one row 
 #' for each precinct and one column for each map. Required.
-#' @param population A numeric vector with the population for every precinct.
+#' @param district_membership Deprecated, use plans. A matrix with one row 
+#' for each precinct and one column for each map. Required.
+#' @param total_pop A numeric vector with the population for every precinct.
+#' @param population Deprecated, use total_pop. A numeric vector with the population for every precinct.
 #' @param ncores Number of cores to use for parallel computing. Default is 1.
 #' 
 #' @importFrom foreach %do% %dopar% foreach
 #' @return numeric vector with the population parity for each column
 #' 
 #' @export
-redist.parity <- function(district_membership, population, ncores = 1){
+redist.parity <- function(plans, district_membership, total_pop, population, ncores = 1){
   
-  if(!any(class(population) %in% c('numeric', 'integer'))){
-    stop('Please provide "population" as a numeric vector.')
+  if(!missing(population)){
+    .Deprecated(new = 'total_pop', old = 'population')
+    total_pop <- population
+  }
+  if(!missing(district_membership)){
+    .Deprecated(new = 'plans', old = 'district_membership')
+    plans <- district_membership
   }
   
-  if(!any(class(district_membership) %in% c('numeric', 'matrix'))){
-    stop('Please provide "district_membership" as a matrix.')
+  if(!any(class(total_pop) %in% c('numeric', 'integer'))){
+    stop('Please provide "total_pop" as a numeric vector.')
   }
   
-  if(!is.matrix(district_membership)){
-    district_membership <- as.matrix(district_membership)
+  if(!any(class(plans) %in% c('numeric', 'matrix'))){
+    stop('Please provide "plans" as a matrix.')
   }
   
-  if(length(population) != nrow(district_membership)){
-    stop('Arguments "district_membership" and "population" do not have same number of precincts.')
+  if(!is.matrix(plans)){
+    plans <- as.matrix(plans)
   }
   
-  # parallize as in fastLink package to avoid Windows/unix issues
-  nc <- min(ncores, ncol(district_membership))
+  if(length(total_pop) != nrow(plans)){
+    stop('Arguments "plans" and "total_pop" do not have same number of precincts.')
+  }
+  
+  # parallielze as in fastLink package to avoid Windows/unix issues
+  nc <- min(ncores, ncol(plans))
   if (nc == 1){
     `%oper%` <- `%do%`
   } else { 
@@ -40,24 +51,15 @@ redist.parity <- function(district_membership, population, ncores = 1){
     on.exit(stopCluster(cl))
   }
   
-  out <- foreach(map = 1:ncol(district_membership)) %oper% {
+  out <- foreach(map = 1:ncol(plans)) %oper% {
     # gets the district population using each column
-    distpop <- tapply(population, district_membership[,map], sum)
+    distpop <- tapply(total_pop, plans[,map], sum)
     # calculate the optimal pop
     parpop <- sum(distpop) / length(distpop)
     # calculate the pop parity
     max(abs(distpop / parpop - 1))
   }
   
-  # old method
-  #out <- apply(district_membership, 2, function(x){
-  #  # gets the district population using each column
-  #  distpop <- tapply(population, x, sum)
-  #  # calculate the optimal pop
-  #  parpop <- sum(distpop) / length(distpop)
-  #  # calculate the pop parity
-  #  max(abs(distpop / parpop - 1))
-  #})
   
   return(unlist(out))
 }

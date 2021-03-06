@@ -4,24 +4,54 @@
 \alias{redist.mcmc.mpi}
 \title{MCMC Redistricting Simulator using MPI}
 \usage{
-redist.mcmc.mpi(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
-loopscompleted = 0, nloop = 1, nthin = 1,
-eprob = 0.05,
-lambda = 0, popcons = NA, grouppopvec = NA,
-areasvec = NA, countymembership = NA,
-borderlength_mat = NA, ssdmat = NA,
-compactness_metric = "fryer-holden", rngseed = NA,
-constraint = NA, constraintweights = NA,
-betaseq = "powerlaw",
-betaseqlength = 10, adjswaps = TRUE,
-freq = 100, savename = NA, maxiterrsg = 5000,
-contiguitymap = "rooks", verbose = FALSE)
+redist.mcmc.mpi(
+  adj,
+  adjobj,
+  total_pop,
+  popvec,
+  nsims,
+  ndists = NA,
+  init_plan = NULL,
+  initcds,
+  loopscompleted = 0,
+  nloop = 1,
+  nthin = 1,
+  eprob = 0.05,
+  lambda = 0,
+  pop_tol = NA,
+  popcons,
+  group_pop = NA,
+  grouppopvec,
+  areasvec = NA,
+  counties = NA,
+  countymembership,
+  borderlength_mat = NA,
+  ssdmat = NA,
+  compactness_metric = "fryer-holden",
+  rngseed = NA,
+  constraint = NA,
+  constraintweights = NA,
+  betaseq = "powerlaw",
+  betaseqlength = 10,
+  adjswaps = TRUE,
+  freq = 100,
+  savename = NA,
+  maxiterrsg = 5000,
+  contiguitymap,
+  verbose = FALSE
+)
 }
 \arguments{
-\item{adjobj}{An adjacency matrix, list, or object of class
+\item{adj}{An adjacency matrix, list, or object of class
 "SpatialPolygonsDataFrame."}
 
-\item{popvec}{A vector containing the populations of each geographic
+\item{adjobj}{Deprecated, use adj. An adjacency matrix, list, or object of class
+"SpatialPolygonsDataFrame."}
+
+\item{total_pop}{A vector containing the populations of each geographic
+unit.}
+
+\item{popvec}{Deprecated, use total_pop. A vector containing the populations of each geographic
 unit.}
 
 \item{nsims}{The number of simulations run before a save point.}
@@ -29,7 +59,12 @@ unit.}
 \item{ndists}{The number of congressional districts. The default is
 \code{NULL}.}
 
-\item{initcds}{A vector containing the congressional district labels
+\item{init_plan}{A vector containing the congressional district labels
+of each geographic unit. The default is \code{NULL}. If not provided, random
+and contiguous congressional district assignments will be generated using
+\code{redist.rsg}.}
+
+\item{initcds}{Deprecated, use init_plan. A vector containing the congressional district labels
 of each geographic unit. The default is \code{NULL}. If not provided, random
 and contiguous congressional district assignments will be generated using
 \code{redist.rsg}.}
@@ -51,18 +86,28 @@ is \code{0.05}.}
 each iteration of the algorithm. The number of swaps each iteration is
 equal to Pois(\code{lambda}) + 1. The default is \code{0}.}
 
-\item{popcons}{The strength of the hard population
+\item{pop_tol}{The strength of the hard population
+constraint. \code{pop_tol} = 0.05 means that any proposed swap that
+brings a district more than 5\% away from population parity will be
+rejected. The default is \code{NULL}.}
+
+\item{popcons}{Deprecated, use pop_tol. The strength of the hard population
 constraint. \code{popcons} = 0.05 means that any proposed swap that
 brings a district more than 5\% away from population parity will be
 rejected. The default is \code{NULL}.}
 
-\item{grouppopvec}{A vector of populations for some sub-group of
+\item{group_pop}{A vector of populations for some sub-group of
+interest. The default is \code{NULL}.}
+
+\item{grouppopvec}{Deprecated, use group_pop. A vector of populations for some sub-group of
 interest. The default is \code{NULL}.}
 
 \item{areasvec}{A vector of precinct areas for discrete Polsby-Popper.
 The default is \code{NULL}.}
 
-\item{countymembership}{A vector of county membership assignments. The default is \code{NULL}.}
+\item{counties}{A vector of county membership assignments. The default is \code{NULL}.}
+
+\item{countymembership}{Deprecated, use counties. A vector of county membership assignments. The default is \code{NULL}.}
 
 \item{borderlength_mat}{A matrix of border length distances, where
 the first two columns are the indices of precincts sharing a border and
@@ -163,12 +208,12 @@ data(algdat.pfull)
 
 ## Get an initial partition
 set.seed(1)
-initcds <- algdat.pfull$cdmat[,sample(1:ncol(algdat.pfull$cdmat), 1)]
+init_plan <- algdat.pfull$cdmat[,sample(1:ncol(algdat.pfull$cdmat), 1)]
 
 ## Run the algorithm
-redist.mcmc.mpi(adjobj = algdat.pfull$adjlist,
-popvec = algdat.pfull$precinct.data$pop,
-initcds = initcds,
+redist.mcmc.mpi(adj = algdat.pfull$adjlist,
+total_pop = algdat.pfull$precinct.data$pop,
+init_plan = init_plan,
 nsims = 10000, savename = "test")
 }
 }

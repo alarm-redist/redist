@@ -1,4 +1,3 @@
-
 #' Majority Minority Plots
 #'
 #' @param grouppercent output from redist.group.percent
@@ -10,7 +9,7 @@
 #' 
 #' @return ggplot
 #' @export
-redist.majmin.plot <- function(grouppercent, type = 'hist', title = ''){
+redist.plot.majmin <- function(grouppercent, type = 'hist', title = ''){
   
   if(type == 'hist'){
     mm <-  apply(grouppercent, 2, function(x){sum(x > 0.5)})

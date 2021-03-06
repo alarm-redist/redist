@@ -5,18 +5,26 @@
 #' Rodden (2013).  The algorithm can provide start values for the other
 #' redistricting routines in this package.
 #'
-#' @usage redist.rsg(adj.list, population, ndists, thresh,
-#' verbose = TRUE, maxiter=5000)
 #'
-#' @param adj.list List of length N, where N is the number of precincts.
+#' @param adj List of length N, where N is the number of precincts.
 #' Each list element is an integer vector indicating which precincts that precinct
 #' is adjacent to.  It is assumed that precinct numbers start at 0.
-#' @param population  numeric vector of list N, where N is the number of precincts.
+#' @param adj.list Deprecated, use adj. List of length N, where N is the number of precincts.
+#' Each list element is an integer vector indicating which precincts that precinct
+#' is adjacent to.  It is assumed that precinct numbers start at 0.
+#' @param total_pop numeric vector of length N, where N is the number of precincts.
+#' Each element lists the population total of the corresponding precinct, and is
+#' used to enforce population constraints.
+#' @param population  Deprecated, use total_pop. numeric vector of list N, where N is the number of precincts.
 #' Each element lists the population total of the corresponding precinct, and is
 #' used to enforce population constraints.
 #' @param ndists  integer, the number of districts we want to partition the
 #' precincts into.
-#' @param thresh  numeric, indicating how close district population targets have
+#' @param pop_tol numeric, indicating how close district population targets have
+#' to be to the target population before algorithm converges.  thresh=0.05 for
+#' example means that all districts must be between 0.95 and 1.05 times the size
+#' of target.pop in population size.
+#' @param thresh Deprecated, use pop_tol. numeric, indicating how close district population targets have
 #' to be to the target population before algorithm converges.  thresh=0.05 for
 #' example means that all districts must be between 0.95 and 1.05 times the size
 #' of target.pop in population size.
@@ -31,7 +39,7 @@
 #' @return list, containing three objects containing the completed redistricting
 #' plan.
 #' \itemize{
-#' \item{\code{district_membership}}{  A vector of length N, indicating the
+#' \item{\code{plan}}{  A vector of length N, indicating the
 #' district membership of each precinct.}
 #' \item{\code{district_list}}{  A list of length Ndistrict.  Each list contains a
 #' vector of the precincts in the respective district.}
@@ -61,7 +69,8 @@
 #' @examples
 #' ### Real data example from test set
 #' data("algdat.pfull")
-#' res <- redist.rsg(algdat.pfull$adjlist, algdat.pfull$precinct.data$pop, 3, 0.05)
+#' res <- redist.rsg(adj = algdat.pfull$adjlist, total_pop = algdat.pfull$precinct.data$pop, 
+#'  ndists = 3, pop_tol = 0.05)
 #'
 #' \dontrun{
 #' ### Example that generates test data from a square map with equal population
@@ -92,14 +101,27 @@
 #' tmp <- redist.rsg(adj.list, population, 10, 0.05)
 #' }
 #' @export
-redist.rsg <- function(adj.list,
-                       population,
+redist.rsg <- function(adj, adj.list,
+                       total_pop, population,
                        ndists,
-                       thresh,
+                       pop_tol, thresh,
                        verbose = TRUE,
                        maxiter=5000
-                       )
-{
+                       ){
+    
+    if(!missing(adj.list)){
+        .Deprecated('adj',  old = 'adj.list')
+        adj <- adj.list
+    }
+    if(!missing(population)){
+        .Deprecated(new = 'total_pop', old = 'population')
+        total_pop <- population
+    }
+    if(!missing(thresh)){
+        .Deprecated(new = 'pop_tol', old = 'thresh')
+        pop_tol <- thresh
+    }
+    
     if(verbose){
         divider <- c(paste(rep("=", 20), sep = "", collapse = ""), "\n")
 
@@ -108,35 +130,35 @@ redist.rsg <- function(adj.list,
         cat("redist.rsg(): Automated Redistricting Starts\n\n")
     }
 
-    target.pop <- sum(population) / ndists
+    target.pop <- sum(total_pop) / ndists
 
     ## Main Call to Computation - if returning NA, break.
     ## If returning districts but not contiguous, repeat
     ## First attempt
     time <- system.time(ret <- .Call('_redist_rsg',
                                      PACKAGE = 'redist',
-                                     adj.list,
-                                     population,
+                                     adj,
+                                     total_pop,
                                      ndists,
                                      target.pop,
-                                     thresh,
+                                     pop_tol,
                                      as.integer(maxiter)
                                      ))
     ## Make another call if stuck, but only do one more try
     ## because maxiter might be too low
-    if(is.na(ret$district_membership[1])){
+    if(is.na(ret$plan[1])){
         time <- system.time(ret <- .Call('_redist_rsg',
                                          PACKAGE = 'redist',
-                                         adj.list,
-                                         population,
+                                         adj,
+                                         total_pop,
                                          ndists,
                                          target.pop,
-                                         thresh,
+                                         pop_tol,
                                          as.integer(maxiter)
                                          ))
     }
 
-    if(is.na(ret$district_membership[1])){
+    if(is.na(ret$plan[1])){
 
         stop("redist.rsg() failed to return a valid partition. Try increasing maxiterrsg")
 
@@ -144,7 +166,7 @@ redist.rsg <- function(adj.list,
 
     if(verbose){
         cat(paste("\n\t", ndists, " districts built using ",
-                  length(adj.list), " precincts in ",
+                  length(adj), " precincts in ",
                   round(time[3], digits=2), " seconds...\n\n", sep = ""), append = TRUE)
     }
 
