@@ -362,7 +362,7 @@ plot_plan = function(x, draw, geom) {
     draw_idx = match(as.character(draw), levels(x$draw))
     distr_assign = get_plan_matrix(x)[,draw_idx]
     if (inherits(geom, "redist_map")) {
-        distr_colors = as.factor(color_graph(get_graph(geom), distr_assign))
+        distr_colors = as.factor(color_graph(get_adj(geom), distr_assign))
     } else {
         distr_colors = as.factor(distr_assign)
     }

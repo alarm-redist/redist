@@ -126,7 +126,7 @@ redist_smc = function(map, n_sims, counties=NULL, compactness=1, constraints=lis
                       pop_temper=0, verbose=TRUE, silent=FALSE) {
     map = validate_redist_map(map)
     V = nrow(map)
-    graph = get_graph(map)
+    adj = get_adj(map)
 
     if (compactness < 0) stop("Compactness parameter must be non-negative")
     if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
@@ -141,7 +141,7 @@ redist_smc = function(map, n_sims, counties=NULL, compactness=1, constraints=lis
         counties = rep(1, V)
     } else {
         # handle discontinuous counties
-        component = contiguity(graph, as.integer(as.factor(counties)))
+        component = contiguity(adj, as.integer(as.factor(counties)))
         counties = dplyr::if_else(component > 1,
                                   paste0(as.character(counties), "-", component),
                                   as.character(counties)) %>%
@@ -173,7 +173,7 @@ redist_smc = function(map, n_sims, counties=NULL, compactness=1, constraints=lis
     n_distr = attr(map, "n_distr")
 
     lp = rep(0, n_sims)
-    plans = smc_plans(n_sims, graph, counties, pop, n_distr, pop_bounds[2],
+    plans = smc_plans(n_sims, adj, counties, pop, n_distr, pop_bounds[2],
                       pop_bounds[1], pop_bounds[3], compactness,
                       constraints$status_quo$strength, constraints$status_quo$current, n_current,
                       constraints$vra$strength, constraints$vra$tgt_vra_min,

@@ -9,12 +9,12 @@
 # constructors and reconstructors
 
 # Main internal constructor
-new_redist_map = function(data, graph, n_distr, pop_bounds, pop_col="pop",
-                          graph_col="graph", add_graph=TRUE, existing_col=NULL) {
-    if (add_graph) {
-        stopifnot(!is.null(graph))
+new_redist_map = function(data, adj, n_distr, pop_bounds, pop_col="pop",
+                          adj_col="adj", add_adj=TRUE, existing_col=NULL) {
+    if (add_adj) {
+        stopifnot(!is.null(adj))
 
-        data[[graph_col]] = graph
+        data[[adj_col]] = adj
     }
 
     stopifnot(is.integer(n_distr))
@@ -25,7 +25,7 @@ new_redist_map = function(data, graph, n_distr, pop_bounds, pop_col="pop",
     attr(data, "n_distr") = n_distr
     attr(data, "pop_bounds") = pop_bounds
     attr(data, "pop_col") = pop_col
-    attr(data, "graph_col") = graph_col
+    attr(data, "adj_col") = adj_col
     attr(data, "existing_col") = existing_col
 
     data
@@ -35,13 +35,13 @@ validate_redist_map = function(data, check_contig=T) {
     if (!is.data.frame(data)) stop("Not a data frame")
     if (!inherits(data, "redist_map")) stop("Not a `redist_map` object")
 
-    col = attr(data, "graph_col")
+    col = attr(data, "adj_col")
     if (is.null(col)) stop("No graph column found")
     if (!is.list(data[[col]]))
-        stop("Graph column not a properly formatted adjacency list.")
+        stop("Adjacency graph column not a properly formatted adjacency list.")
 
     if (check_contig && !is_contiguous(data))
-        stop("Graph not contiguous.")
+        stop("Adjacency graph not contiguous.")
 
     stopifnot(!is.null(attr(data, "pop_col")))
     stopifnot(!is.null(attr(data, "n_distr")))
@@ -65,8 +65,8 @@ reconstruct.redist_map = function(data, old) {
     if (!missing(old)) {
         if (attr(old, "pop_col") %in% colnames(data))
             attr(data, "pop_col") = attr(old, "pop_col")
-        if (attr(old, "graph_col") %in% colnames(data))
-            attr(data, "graph_col") = attr(old, "graph_col")
+        if (attr(old, "adj_col") %in% colnames(data))
+            attr(data, "adj_col") = attr(old, "adj_col")
         if (is.null(attr(data, "merge_idx")))
             attr(data, "merge_idx") = attr(old, "merge_idx")
 
@@ -100,7 +100,7 @@ reconstruct.redist_map = function(data, old) {
 #'
 #' Other useful methods for \code{redist_map} objects:
 #' * \code{\link{merge_by}}
-#' * \code{\link{get_graph}}
+#' * \code{\link{get_adj}}
 #' * \code{\link{plot.redist_map}}
 #'
 #' @param ... column elements to be bound into a \code{redist_map} object or a
@@ -115,9 +115,9 @@ reconstruct.redist_map = function(data, old) {
 #'   population bounds, in the form of \code{c(lower, target, upper)}.
 #' @param pop_col \code{\link[tidyr:tidyr_tidy_select]{<tidy-select>}} the name of the population
 #'   vector column.
-#' @param graph the adjacency graph for the object. Defaults to being computed
+#' @param adj the adjacency graph for the object. Defaults to being computed
 #'     from the data if it is coercible to a shapefile.
-#' @param graph_col the name of the adjacency graph column
+#' @param adj_col the name of the adjacency graph column
 #' @param existing_col \code{\link[tidyr:tidyr_tidy_select]{<tidy-select>}} the name of a column
 #'   with existing district assignment
 #' @param planarize a number, indicating the CRS to project the shapefile to if
@@ -131,7 +131,7 @@ reconstruct.redist_map = function(data, old) {
 #' @md
 #' @export
 redist_map = function(..., n_distr=NULL, pop_tol=0.01, pop_bounds=NULL, pop_col="pop",
-                      graph=NULL, graph_col="graph", existing_col=NULL, planarize=3857) {
+                      adj=NULL, adj_col="adj", existing_col=NULL, planarize=3857) {
     x = tibble(...)
     is_sf = any(vapply(x, function(x) inherits(x, "sfc"), TRUE))
     if (is_sf) {
@@ -153,11 +153,11 @@ redist_map = function(..., n_distr=NULL, pop_tol=0.01, pop_bounds=NULL, pop_col=
         }
     }
 
-    if (is_sf && is.null(graph)) {
-        if (!is.null(data[[graph_col]]))
-            stop("Column `", graph_col, "` already present in data. Specify an alternate graph column.")
+    if (is_sf && is.null(adj)) {
+        if (!is.null(x[[adj_col]]))
+            stop("Column `", adj_col, "` already present in data. Specify an alternate adj column.")
 
-        graph = redist.adjacency(x)
+        adj = redist.adjacency(x)
     }
 
     pop_col = names(tidyselect::eval_select(rlang::enquo(pop_col), x))
@@ -188,8 +188,8 @@ redist_map = function(..., n_distr=NULL, pop_tol=0.01, pop_bounds=NULL, pop_col=
 
 
     validate_redist_map(
-        new_redist_map(x, graph, n_distr, pop_bounds, pop_col, graph_col,
-                   add_graph=T, existing_col)
+        new_redist_map(x, adj, n_distr, pop_bounds, pop_col, adj_col,
+                   add_adj=T, existing_col)
     )
 }
 
@@ -206,10 +206,10 @@ as_redist_map = function(x) {
 #' @returns a zero-indexed adjacency list
 #' @concept prepare
 #' @export
-get_graph = function(x) {
+get_adj = function(x) {
     stopifnot(inherits(x, "redist_map"))
 
-    x[[attr(x, "graph_col")]]
+    x[[attr(x, "adj_col")]]
 }
 
 #' Extract the existing district assignment from a \code{redist_map} object
@@ -236,7 +236,7 @@ dplyr_row_slice.redist_map = function(data, i, ...) {
 
     # reduce adj. graph
     y = vctrs::vec_slice(data, i)
-    gr_col = attr(data, "graph_col")
+    gr_col = attr(data, "adj_col")
     y[[gr_col]] = redist.reduce.adjacency(data[[gr_col]], i)
 
     # fix n_distr if existing_col exists
@@ -273,9 +273,9 @@ summarise.redist_map = function(.data, ..., .groups=NULL) {
     ret = NextMethod()
 
     # rebuild the graph if need be
-    graph_col = attr(.data, "graph_col")
-    if (!(graph_col %in% colnames(ret))) {
-        ret[[graph_col]] = collapse_adj(get_graph(.data),
+    adj_col = attr(.data, "adj_col")
+    if (!(adj_col %in% colnames(ret))) {
+        ret[[adj_col]] = collapse_adj(get_adj(.data),
                                         dplyr::group_indices(.data) - 1)
     }
 
@@ -359,10 +359,10 @@ plot.redist_map = function(x, y, ...) {
     if (missing(y)) {
         existing = get_existing(x)
         if (!is.null(existing)) {
-            redist.map(x, get_graph(x), district_membership=existing, ...) +
+            redist.map(x, get_adj(x), district_membership=existing, ...) +
                 ggplot2::theme_void()
         } else {
-            redist.map(x, get_graph(x), district_membership=NULL, ...) +
+            redist.map(x, get_adj(x), district_membership=NULL, ...) +
                 ggplot2::theme_void()
         }
     } else {

@@ -187,7 +187,7 @@ redist.choropleth <- function(shp, fill = NULL, fill_label = "", title = "",
 
     fill <- rlang::eval_tidy(rlang::enquo(fill), shp)
     if (!is.numeric(fill) && inherits(shp, "redist_map")) {
-        fill = as.factor(color_graph(get_graph(shp), as.integer(as.factor(fill))))
+        fill = as.factor(color_graph(get_adj(shp), as.integer(as.factor(fill))))
     }
 
     plot <- ggplot(shp, aes(fill = fill)) +
