@@ -11,16 +11,16 @@
 #' @param shp  A SpatialPolygonsDataFrame or sf object. Required.
 #' @param adj A zero-indexed adjacency list. Created with redist.adjacency 
 #' if not supplied. Default is NULL. 
-#' @param adjacency Deprecated, use adj. A zero-indexed adjacency list. Created with redist.adjacency 
-#' if not supplied. Default is NULL. 
 #' @param plan A numeric vector with one entry for each precinct in shp. 
-#' Used to color the districts. Default is \code{NULL}.  Optional.
-#' @param district_membership Deprecated, use plan. A numeric vector with one row for each precinct in shp. 
 #' Used to color the districts. Default is \code{NULL}.  Optional.
 #' @param centroids A logical indicating if centroids should be plotted. Default is \code{TRUE}.
 #' @param edges A logical indicating if edges should connect adjacent centroids. Default is \code{TRUE}.
 #' @param drop A logical indicating if edges that cross districts should be dropped. Default is \code{FALSE}.
 #' @param title A string title of plot. Defaults to empty string. Optional.
+#' @param adjacency Deprecated, use adj. A zero-indexed adjacency list. Created with redist.adjacency 
+#' if not supplied. Default is NULL. 
+#' @param district_membership Deprecated, use plan. A numeric vector with one row for each precinct in shp. 
+#' Used to color the districts. Default is \code{NULL}.  Optional.
 #'
 #' @return ggplot map
 #' 
@@ -38,9 +38,10 @@
 #' }
 #' 
 #' @export
-redist.map <- function(shp = NULL, adj = NULL, adjacency, plan = NULL, 
-                       district_membership, centroids = TRUE, 
-                       edges = TRUE, drop = FALSE, title = ""){
+redist.map <- function(shp = NULL, adj = NULL,  plan = NULL, 
+                        centroids = TRUE, 
+                       edges = TRUE, drop = FALSE, title = "",
+                       adjacency, district_membership){
   
   if(!missing(adjacency)){
     .Deprecated(new = 'adj', old = 'adjacency')

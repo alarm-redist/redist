@@ -6,14 +6,11 @@
 \usage{
 redist.smc(
   adj,
-  adjobj,
   total_pop,
-  popvec,
   nsims,
   ndists,
   counties = NULL,
   pop_tol = 0.01,
-  popcons,
   compactness = 1,
   constraints = list(),
   resample = TRUE,
@@ -23,19 +20,17 @@ redist.smc(
   truncate = (compactness != 1),
   trunc_fn = function(x) pmin(x, 0.01 * nsims^0.4),
   verbose = TRUE,
-  silent = FALSE
+  silent = FALSE,
+  adjobj,
+  popvec,
+  popcons
 )
 }
 \arguments{
 \item{adj}{An adjacency matrix, list, or object of class
 "SpatialPolygonsDataFrame."}
 
-\item{adjobj}{Deprecated, use adj. An adjacency matrix, list, or object of class
-"SpatialPolygonsDataFrame."}
-
 \item{total_pop}{A vector containing the populations of each geographic unit.}
-
-\item{popvec}{Deprecated, use total_pop. A vector containing the populations of each geographic unit.}
 
 \item{nsims}{The number of samples to draw.}
 
@@ -50,11 +45,6 @@ constraint is desired, this parameter should be left blank.}
 \item{pop_tol}{The desired population constraint.  All sampled districts
 will have a deviation from the target district size no more than this value
 in percentage terms, i.e., \code{pop_tol=0.01} will ensure districts have
-populations within 1\% of the target population.}
-
-\item{popcons}{The desired population constraint.  All sampled districts
-will have a deviation from the target district size no more than this value
-in percentage terms, i.e., \code{popcons=0.01} will ensure districts have
 populations within 1\% of the target population.}
 
 \item{compactness}{Controls the compactness of the generated districts, with
@@ -91,6 +81,16 @@ a truncated vector. Recommended to specify this manually if truncating weights.}
 Recommended.}
 
 \item{silent}{Whether to supress all diagnostic information.}
+
+\item{adjobj}{Deprecated, use adj. An adjacency matrix, list, or object of class
+"SpatialPolygonsDataFrame."}
+
+\item{popvec}{Deprecated, use total_pop. A vector containing the populations of each geographic unit.}
+
+\item{popcons}{The desired population constraint.  All sampled districts
+will have a deviation from the target district size no more than this value
+in percentage terms, i.e., \code{popcons=0.01} will ensure districts have
+populations within 1\% of the target population.}
 }
 \value{
 \code{redist.smc} returns an object of class \code{redist}, which

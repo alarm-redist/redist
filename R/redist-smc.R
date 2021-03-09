@@ -53,10 +53,7 @@
 #'
 #' @param adj An adjacency matrix, list, or object of class
 #' "SpatialPolygonsDataFrame."
-#' @param adjobj Deprecated, use adj. An adjacency matrix, list, or object of class
-#' "SpatialPolygonsDataFrame."
 #' @param total_pop A vector containing the populations of each geographic unit.
-#' @param popvec Deprecated, use total_pop. A vector containing the populations of each geographic unit.
 #' @param nsims The number of samples to draw.
 #' @param ndists The number of districts in each redistricting plan.
 #' @param counties A vector containing county (or other administrative or
@@ -67,10 +64,6 @@
 #' @param pop_tol The desired population constraint.  All sampled districts
 #' will have a deviation from the target district size no more than this value
 #' in percentage terms, i.e., \code{pop_tol=0.01} will ensure districts have
-#' populations within 1% of the target population.
-#' @param popcons The desired population constraint.  All sampled districts
-#' will have a deviation from the target district size no more than this value
-#' in percentage terms, i.e., \code{popcons=0.01} will ensure districts have
 #' populations within 1% of the target population.
 #' @param compactness Controls the compactness of the generated districts, with
 #' higher values preferring more compact districts. Must be nonnegative. See the
@@ -97,6 +90,13 @@
 #' @param verbose Whether to print out intermediate information while sampling.
 #'   Recommended.
 #' @param silent Whether to supress all diagnostic information.
+#' @param adjobj Deprecated, use adj. An adjacency matrix, list, or object of class
+#' "SpatialPolygonsDataFrame."
+#' @param popvec Deprecated, use total_pop. A vector containing the populations of each geographic unit.
+#' @param popcons The desired population constraint.  All sampled districts
+#' will have a deviation from the target district size no more than this value
+#' in percentage terms, i.e., \code{popcons=0.01} will ensure districts have
+#' populations within 1% of the target population.
 #'
 #' @return \code{redist.smc} returns an object of class \code{redist}, which
 #' is a list containing the following components:
@@ -136,15 +136,16 @@
 #' @md
 #' @importFrom stats qnorm
 #' @export
-redist.smc = function(adj, adjobj, total_pop, popvec, nsims, ndists, counties=NULL,
-                      pop_tol = 0.01, popcons, compactness=1,
+redist.smc = function(adj, total_pop, nsims, ndists, counties=NULL,
+                      pop_tol = 0.01, compactness=1,
                       constraints=list(),
                       resample=TRUE,
                       constraint_fn=function(m) rep(0, ncol(m)),
                       adapt_k_thresh=0.95, seq_alpha=0.1+0.2*compactness,
                       truncate=(compactness != 1),
                       trunc_fn=function(x) pmin(x, 0.01*nsims^0.4),
-                      verbose=TRUE, silent=FALSE) {
+                      verbose=TRUE, silent=FALSE,
+                      adjobj, popvec, popcons) {
     if(!missing(adjobj)){
         .Deprecated(new = 'adj', old = 'adjobj')
         adj <- adjobj

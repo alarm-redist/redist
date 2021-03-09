@@ -7,13 +7,13 @@
 redist.map(
   shp = NULL,
   adj = NULL,
-  adjacency,
   plan = NULL,
-  district_membership,
   centroids = TRUE,
   edges = TRUE,
   drop = FALSE,
-  title = ""
+  title = "",
+  adjacency,
+  district_membership
 )
 }
 \arguments{
@@ -22,13 +22,7 @@ redist.map(
 \item{adj}{A zero-indexed adjacency list. Created with redist.adjacency 
 if not supplied. Default is NULL.}
 
-\item{adjacency}{Deprecated, use adj. A zero-indexed adjacency list. Created with redist.adjacency 
-if not supplied. Default is NULL.}
-
 \item{plan}{A numeric vector with one entry for each precinct in shp. 
-Used to color the districts. Default is \code{NULL}.  Optional.}
-
-\item{district_membership}{Deprecated, use plan. A numeric vector with one row for each precinct in shp. 
 Used to color the districts. Default is \code{NULL}.  Optional.}
 
 \item{centroids}{A logical indicating if centroids should be plotted. Default is \code{TRUE}.}
@@ -38,6 +32,12 @@ Used to color the districts. Default is \code{NULL}.  Optional.}
 \item{drop}{A logical indicating if edges that cross districts should be dropped. Default is \code{FALSE}.}
 
 \item{title}{A string title of plot. Defaults to empty string. Optional.}
+
+\item{adjacency}{Deprecated, use adj. A zero-indexed adjacency list. Created with redist.adjacency 
+if not supplied. Default is NULL.}
+
+\item{district_membership}{Deprecated, use plan. A numeric vector with one row for each precinct in shp. 
+Used to color the districts. Default is \code{NULL}.  Optional.}
 }
 \value{
 ggplot map
