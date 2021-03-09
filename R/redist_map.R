@@ -36,12 +36,17 @@ validate_redist_map = function(data, check_contig=T) {
     if (!inherits(data, "redist_map")) stop("Not a `redist_map` object")
 
     col = attr(data, "adj_col")
-    if (is.null(col)) stop("No graph column found")
+    if (is.null(col)) stop("No adjacency graph column found")
     if (!is.list(data[[col]]))
         stop("Adjacency graph column not a properly formatted adjacency list.")
 
-    if (check_contig && !is_contiguous(data))
-        stop("Adjacency graph not contiguous.")
+    if (check_contig && !is_contiguous(data)) {
+        components = contiguity(get_adj(data), rep(1, nrow(data)))
+        disconn = which(components != which.max(table(components)))
+        stop("Adjacency graph not contiguous.\n",
+             "Try manually editing the output of `redist.adjacency`.\n",
+             "Disconnected precincts: c(", paste0(disconn, collapse=", "), ")")
+    }
 
     stopifnot(!is.null(attr(data, "pop_col")))
     stopifnot(!is.null(attr(data, "n_distr")))
