@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Extract the adjacency graph from a redist_map object — get_adj • redist</title>
+<title>Get and set the adjacency graph from a redist_map object — get_adj • redist</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,8 +46,8 @@
 
 
 
-<meta property="og:title" content="Extract the adjacency graph from a redist_map object — get_adj" />
-<meta property="og:description" content="Extract the adjacency graph from a redist_map object" />
+<meta property="og:title" content="Get and set the adjacency graph from a redist_map object — get_adj" />
+<meta property="og:description" content="Get and set the adjacency graph from a redist_map object" />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -134,16 +134,18 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Extract the adjacency graph from a <code>redist_map</code> object</h1>
+    <h1>Get and set the adjacency graph from a <code>redist_map</code> object</h1>
     <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/redist_map.R'><code>R/redist_map.R</code></a></small>
     <div class="hidden name"><code>get_adj.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Extract the adjacency graph from a <code>redist_map</code> object</p>
+    <p>Get and set the adjacency graph from a <code>redist_map</code> object</p>
     </div>
 
-    <pre class="usage"><span class='fu'>get_adj</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>get_adj</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span>
+
+<span class='fu'>set_adj</span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>adj</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -152,11 +154,16 @@
       <th>x</th>
       <td><p>the <code>redist_map</code> object</p></td>
     </tr>
+    <tr>
+      <th>adj</th>
+      <td><p>a new adjacency list.</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>a zero-indexed adjacency list</p>
+    <p>a zero-indexed adjacency list (<code>get_adj</code>)</p>
+<p>the modified <code>redist_map</code> object (<code>set_adj</code>)</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

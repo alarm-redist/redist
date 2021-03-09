@@ -155,7 +155,7 @@ but not identical to those used in the references.</p>
   <span class='va'>map</span>,
   <span class='va'>n_sims</span>,
   warmup <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Round.html'>floor</a></span><span class='op'>(</span><span class='va'>n_sims</span><span class='op'>/</span><span class='fl'>2</span><span class='op'>)</span>,
-  init <span class='op'>=</span> <span class='cn'>NULL</span>,
+  init_plan <span class='op'>=</span> <span class='cn'>NULL</span>,
   counties <span class='op'>=</span> <span class='cn'>NULL</span>,
   compactness <span class='op'>=</span> <span class='fl'>1</span>,
   constraints <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>,
@@ -181,7 +181,7 @@ but not identical to those used in the references.</p>
       <td><p>The number of warmup samples to discard.</p></td>
     </tr>
     <tr>
-      <th>init</th>
+      <th>init_plan</th>
       <td><p>The initial state of the map. If not provided, will default to
 the reference map of the <code>map</code> object.</p></td>
     </tr>
@@ -284,7 +284,7 @@ Markov chains for redistricting. arXiv preprint arXiv:1911.05725.</p>
     <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
 
-<span class='va'>fl_map</span> <span class='op'>=</span> <span class='fu'><a href='redist_map.html'>redist_map</a></span><span class='op'>(</span><span class='va'>fl25</span>, n_distr<span class='op'>=</span><span class='fl'>3</span>, pop_tol<span class='op'>=</span><span class='fl'>0.1</span><span class='op'>)</span>
+<span class='va'>fl_map</span> <span class='op'>=</span> <span class='fu'><a href='redist_map.html'>redist_map</a></span><span class='op'>(</span><span class='va'>fl25</span>, ndists<span class='op'>=</span><span class='fl'>3</span>, pop_tol<span class='op'>=</span><span class='fl'>0.1</span><span class='op'>)</span>
 
 <span class='va'>sampled_basic</span> <span class='op'>=</span> <span class='fu'>redist_mergesplit</span><span class='op'>(</span><span class='va'>fl_map</span>, <span class='fl'>10000</span><span class='op'>)</span>
 

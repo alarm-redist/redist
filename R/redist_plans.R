@@ -291,7 +291,7 @@ plot.redist_plans = function(x, ..., type="hist") {
 #' @export
 redist.plot.hist = function(x, qty, bins=NULL, ...) {
     if (is.null(bins)) {
-        val = rlang::eval_tidy(enquo(qty), x)
+        val = rlang::eval_tidy(rlang::enquo(qty), x)
         n = length(val)
         iqr = IQR(val)
         if (iqr > 0)

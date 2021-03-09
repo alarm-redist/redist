@@ -186,5 +186,5 @@ houston_plans = redist_smc(houston, 100, counties=county, silent=T) %>%
     match_numbers(houston$cd) %>%
     mutate(pct_hisp = group_frac(houston, hvap, vap))
 
-plot(houston_plans, pct_hisp, sort=F, type="distr_qtys")
+plot(houston_plans, pct_hisp, type="distr_qtys")
 ```

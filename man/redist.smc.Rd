@@ -6,14 +6,12 @@
 \usage{
 redist.smc(
   adj,
-  adjobj,
   total_pop,
-  popvec,
   nsims,
   ndists,
   counties = NULL,
   pop_tol = 0.01,
-  popcons,
+  pop_bounds = NULL,
   compactness = 1,
   constraints = list(),
   resample = TRUE,
@@ -24,19 +22,17 @@ redist.smc(
   trunc_fn = function(x) pmin(x, 0.01 * nsims^0.4),
   pop_temper = max(0.1/seq_alpha, 0.3),
   verbose = TRUE,
-  silent = FALSE
+  silent = FALSE,
+  adjobj,
+  popvec,
+  popcons
 )
 }
 \arguments{
 \item{adj}{An adjacency matrix, list, or object of class
 "SpatialPolygonsDataFrame."}
 
-\item{adjobj}{Deprecated, use adj. An adjacency matrix, list, or object of class
-"SpatialPolygonsDataFrame."}
-
 \item{total_pop}{A vector containing the populations of each geographic unit.}
-
-\item{popvec}{Deprecated, use total_pop. A vector containing the populations of each geographic unit.}
 
 \item{nsims}{The number of samples to draw.}
 
@@ -53,11 +49,10 @@ will have a deviation from the target district size no more than this value
 in percentage terms, i.e., \code{pop_tol=0.01} will ensure districts have
 populations within 1\% of the target population.}
 
-\item{popcons}{The desired population constraint.  All sampled districts
-will have a deviation from the target district size no more than this value
-in percentage terms, i.e., \code{popcons=0.01} will ensure districts have
-populations within 1\% of the target population.  Also see \code{pop_bounds}
-below for a way to specify more precise bounds.}
+\item{pop_bounds}{A numeric vector with three elements \code{c(lower, target, upper)}
+providing more precise population bounds for the algorithm. Districts
+will have population between \code{lower} and \code{upper}, with a goal of
+\code{target}.  If set, overrides \code{popcons}.}
 
 \item{compactness}{Controls the compactness of the generated districts, with
 higher values preferring more compact districts. Must be nonnegative. See the
@@ -96,10 +91,15 @@ Recommended.}
 
 \item{silent}{Whether to supress all diagnostic information.}
 
-\item{pop_bounds}{A numeric vector with three elements \code{c(lower, target, upper)}
-providing more precise population bounds for the algorithm. Districts
-will have population between \code{lower} and \code{upper}, with a goal of
-\code{target}.  If set, overrides \code{popcons}.}
+\item{adjobj}{Deprecated, use adj. An adjacency matrix, list, or object of class
+"SpatialPolygonsDataFrame."}
+
+\item{popvec}{Deprecated, use total_pop. A vector containing the populations of each geographic unit.}
+
+\item{popcons}{The desired population constraint.  All sampled districts
+will have a deviation from the target district size no more than this value
+in percentage terms, i.e., \code{popcons=0.01} will ensure districts have
+populations within 1\% of the target population.}
 }
 \value{
 \code{redist.smc} returns an object of class \code{redist}, which

@@ -5,13 +5,13 @@
 #'
 #' @param plans A matrix with one row
 #' for each precinct and one column for each map. Required.
+#' @param group_pop A numeric vector with the population of the group for every precinct.
+#' @param total_pop A numeric vector with the population for every precinct.
+#' @param ncores Number of cores to use for parallel computing. Default is 1.
 #' @param district_membership Deprecated, use plans. A matrix with one row
 #' for each precinct and one column for each map. Required.
-#' @param group_pop A numeric vector with the population of the group for every precinct.
 #' @param grouppop Deprecated, use group_pop. A numeric vector with the population of the group for every precinct.
-#' @param total_pop A numeric vector with the population for every precinct.
 #' @param fullpop Deprecated, use total_pop. A numeric vector with the population for every precinct.
-#' @param ncores Number of cores to use for parallel computing. Default is 1.
 #'
 #' @importFrom foreach %do% %dopar% foreach
 #' @return matrix with percent for each district
@@ -28,8 +28,8 @@
 #'                     group_pop = fl25$BlackPop,
 #'                     total_pop = fl25$TotPop)
 #' }
-redist.group.percent <- function(plans, district_membership, group_pop, grouppop,
-                                 total_pop, fullpop, ncores = 1){
+redist.group.percent <- function(plans, group_pop, total_pop, ncores = 1,
+                                 district_membership, grouppop, fullpop){
 
   if(!missing(district_membership)){
     plans <- district_membership

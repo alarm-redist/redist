@@ -7,12 +7,12 @@
 \usage{
 redist.group.percent(
   plans,
-  district_membership,
   group_pop,
-  grouppop,
   total_pop,
-  fullpop,
-  ncores = 1
+  ncores = 1,
+  district_membership,
+  grouppop,
+  fullpop
 )
 
 group_frac(
@@ -26,18 +26,18 @@ group_frac(
 \item{plans}{A matrix with one row
 for each precinct and one column for each map. Required.}
 
-\item{district_membership}{Deprecated, use plans. A matrix with one row
-for each precinct and one column for each map. Required.}
-
 \item{group_pop}{A numeric vector with the population of the group for every precinct.}
-
-\item{grouppop}{Deprecated, use group_pop. A numeric vector with the population of the group for every precinct.}
 
 \item{total_pop}{A numeric vector with the population for every precinct.}
 
-\item{fullpop}{Deprecated, use total_pop. A numeric vector with the population for every precinct.}
-
 \item{ncores}{Number of cores to use for parallel computing. Default is 1.}
+
+\item{district_membership}{Deprecated, use plans. A matrix with one row
+for each precinct and one column for each map. Required.}
+
+\item{grouppop}{Deprecated, use group_pop. A numeric vector with the population of the group for every precinct.}
+
+\item{fullpop}{Deprecated, use total_pop. A numeric vector with the population for every precinct.}
 
 \item{map}{a \code{\link{redist_map}} object}
 

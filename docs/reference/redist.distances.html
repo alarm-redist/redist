@@ -145,10 +145,10 @@
 
     <pre class="usage"><span class='fu'>redist.distances</span><span class='op'>(</span>
   <span class='va'>plans</span>,
-  <span class='va'>district_membership</span>,
   measure <span class='op'>=</span> <span class='st'>"Hamming"</span>,
   ncores <span class='op'>=</span> <span class='fl'>1</span>,
   total_pop <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>district_membership</span>,
   <span class='va'>pop</span>
 <span class='op'>)</span></pre>
 
@@ -158,11 +158,6 @@
     <tr>
       <th>plans</th>
       <td><p>A matrix with one row for each precinct and one
-column for each map. Required.</p></td>
-    </tr>
-    <tr>
-      <th>district_membership</th>
-      <td><p>Depreacted, use plans. A matrix with one row for each precinct and one
 column for each map. Required.</p></td>
     </tr>
     <tr>
@@ -183,6 +178,11 @@ variation of information.</p></td>
 variation of information. If not provided, equal population of precincts
 will be assumed, i.e. the VI will be computed with respect to the precincts
 themselves, and not the population.</p></td>
+    </tr>
+    <tr>
+      <th>district_membership</th>
+      <td><p>Depreacted, use plans. A matrix with one row for each precinct and one
+column for each map. Required.</p></td>
     </tr>
     <tr>
       <th>pop</th>

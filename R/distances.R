@@ -3,8 +3,6 @@
 #'
 #' @param plans A matrix with one row for each precinct and one
 #' column for each map. Required.
-#' @param district_membership Depreacted, use plans. A matrix with one row for each precinct and one
-#' column for each map. Required.
 #' @param measure String vector indicating which distances to compute. Implemented
 #' currently are "Hamming", "Manhattan", "Euclidean", and "variation of information",
 #' Use "all" to return all implemented measures.  Not case sensitive, and
@@ -15,6 +13,8 @@
 #'   variation of information. If not provided, equal population of precincts
 #'   will be assumed, i.e. the VI will be computed with respect to the precincts
 #'   themselves, and not the population.
+#' @param district_membership Depreacted, use plans. A matrix with one row for each precinct and one
+#' column for each map. Required.
 #' @param pop The vector of precinct populations. Used only if computing
 #'   variation of information. If not provided, equal population of precincts
 #'   will be assumed, i.e. the VI will be computed with respect to the precincts
@@ -51,8 +51,9 @@
 #' }
 #' @concept analyze
 #' @export
-redist.distances <- function(plans, district_membership, measure = "Hamming",
-                             ncores = 1, total_pop = NULL, pop) {
+redist.distances <- function(plans, measure = "Hamming",
+                             ncores = 1, total_pop = NULL,
+                             district_membership, pop) {
 
 
     if(!missing(pop)){

@@ -3,18 +3,18 @@
 #' \code{redist.parity} computes the population parity of a matrix of maps.
 #' @param plans A matrix with one row for each precinct and one column for each
 #'   map. Required.
-#' @param district_membership Deprecated, use plans. A matrix with one row for
-#'   each precinct and one column for each map. Required.
 #' @param total_pop A numeric vector with the population for every precinct.
-#' @param population Deprecated, use total_pop. A numeric vector with the population for every precinct.
 #' @param ncores Number of cores to use for parallel computing. Default is 1.
+#' @param district_membership Deprecated, use plans. A matrix with one row
+#' for each precinct and one column for each map. Required.
+#' @param population Deprecated, use total_pop. A numeric vector with the population for every precinct.
 #'
 #' @importFrom foreach %do% %dopar% foreach
 #' @return numeric vector with the population parity for each column
 #'
 #' @concept analyze
 #' @export
-redist.parity <- function(plans, district_membership, total_pop, population, ncores=1) {
+redist.parity <- function(plans, total_pop, ncores=1, district_membership, population) {
     if (!missing(population)) {
         .Deprecated(new = 'total_pop', old = 'population')
         total_pop <- population
@@ -41,7 +41,8 @@ redist.parity <- function(plans, district_membership, total_pop, population, nco
     }
 
     # parallielze as in fastLink package to avoid Windows/unix issues
-    nc <- min(ncores, ncol(plans))
+    N = ncol(plans)
+    nc <- min(ncores, floor(N/2))
     if (nc == 1){
         `%oper%` <- `%do%`
     } else {
@@ -57,7 +58,7 @@ redist.parity <- function(plans, district_membership, total_pop, population, nco
 
     chunks = split(1:N, rep(1:nc, each=ceiling(N/nc))[1:N])
     out = foreach(map=chunks, .combine = "c") %oper% {
-        max_dev(plans[, map, drop=F], population, n_distr)
+        max_dev(plans[, map, drop=F], total_pop, n_distr)
     }
 
     unlist(out)

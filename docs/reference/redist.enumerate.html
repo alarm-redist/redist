@@ -153,13 +153,13 @@ requirements.</p>
 
     <pre class="usage"><span class='fu'>redist.enumerate</span><span class='op'>(</span>
   <span class='va'>adj</span>,
-  <span class='va'>adjobj</span>,
   ndists <span class='op'>=</span> <span class='fl'>2</span>,
   total_pop <span class='op'>=</span> <span class='cn'>NULL</span>,
-  <span class='va'>popvec</span>,
   nconstraintlow <span class='op'>=</span> <span class='cn'>NULL</span>,
   nconstrainthigh <span class='op'>=</span> <span class='cn'>NULL</span>,
   pop_tol <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>adjobj</span>,
+  <span class='va'>popvec</span>,
   <span class='va'>popcons</span>,
   contiguitymap <span class='op'>=</span> <span class='st'>"rooks"</span>
 <span class='op'>)</span></pre>
@@ -173,11 +173,6 @@ requirements.</p>
 <code>SpatialPolygonsDataFrame</code>.</p></td>
     </tr>
     <tr>
-      <th>adjobj</th>
-      <td><p>Deprecated, use adj. An adjacency list, matrix, or object of class
-<code>SpatialPolygonsDataFrame</code>.</p></td>
-    </tr>
-    <tr>
       <th>ndists</th>
       <td><p>The desired number of congressional districts. The default is 2.</p></td>
     </tr>
@@ -185,10 +180,6 @@ requirements.</p>
       <th>total_pop</th>
       <td><p>A vector of geographic unit populations. The default is
 <code>NULL</code>.</p></td>
-    </tr>
-    <tr>
-      <th>popvec</th>
-      <td><p>Deprecated, use total_pop. A vector of geographic unit populations.</p></td>
     </tr>
     <tr>
       <th>nconstraintlow</th>
@@ -206,6 +197,15 @@ in a district. The default is <code>NULL</code>.</p></td>
 <code>pop_tol</code> = 0.05 means that any proposed swap that brings a district more
 than 5% away from population parity will be rejected. The default is
 <code>NULL</code>.</p></td>
+    </tr>
+    <tr>
+      <th>adjobj</th>
+      <td><p>Deprecated, use adj. An adjacency list, matrix, or object of class
+<code>SpatialPolygonsDataFrame</code>.</p></td>
+    </tr>
+    <tr>
+      <th>popvec</th>
+      <td><p>Deprecated, use total_pop. A vector of geographic unit populations.</p></td>
     </tr>
     <tr>
       <th>popcons</th>

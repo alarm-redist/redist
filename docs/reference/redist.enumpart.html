@@ -47,7 +47,8 @@
 
 
 <meta property="og:title" content="Enumerate All Parititions — redist.enumpart" />
-<meta property="og:description" content="Single function for standard enumeration analysis." />
+<meta property="og:description" content="Single function for standard enumeration analysis.
+Single function for standard enumeration analysis." />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -135,28 +136,51 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Enumerate All Parititions</h1>
-    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/enumpart.R'><code>R/enumpart.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/enum_old.R'><code>R/enum_old.R</code></a>, <a href='https://github.com/kosukeimai/redist/blob/master/R/enumpart.R'><code>R/enumpart.R</code></a></small>
     <div class="hidden name"><code>redist.enumpart.Rd</code></div>
     </div>
 
     <div class="ref-description">
     <p>Single function for standard enumeration analysis.</p>
+<p>Single function for standard enumeration analysis.</p>
     </div>
 
     <pre class="usage"><span class='fu'>redist.enumpart</span><span class='op'>(</span>
   <span class='va'>adj</span>,
-  <span class='va'>adjlist</span>,
   <span class='va'>unordered_path</span>,
   <span class='va'>ordered_path</span>,
   <span class='va'>out_path</span>,
   ndists <span class='op'>=</span> <span class='fl'>2</span>,
-  <span class='va'>ndist</span>,
   all <span class='op'>=</span> <span class='cn'>TRUE</span>,
   n <span class='op'>=</span> <span class='cn'>NULL</span>,
+  weight_path <span class='op'>=</span> <span class='cn'>NULL</span>,
+  lower <span class='op'>=</span> <span class='cn'>NULL</span>,
+  upper <span class='op'>=</span> <span class='cn'>NULL</span>,
   init <span class='op'>=</span> <span class='cn'>FALSE</span>,
   read <span class='op'>=</span> <span class='cn'>TRUE</span>,
   total_pop <span class='op'>=</span> <span class='cn'>NULL</span>,
-  <span class='va'>population</span>
+  <span class='va'>adjlist</span>,
+  <span class='va'>population</span>,
+  <span class='va'>ndist</span>
+<span class='op'>)</span>
+
+<span class='fu'>redist.enumpart</span><span class='op'>(</span>
+  <span class='va'>adj</span>,
+  <span class='va'>unordered_path</span>,
+  <span class='va'>ordered_path</span>,
+  <span class='va'>out_path</span>,
+  ndists <span class='op'>=</span> <span class='fl'>2</span>,
+  all <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  n <span class='op'>=</span> <span class='cn'>NULL</span>,
+  weight_path <span class='op'>=</span> <span class='cn'>NULL</span>,
+  lower <span class='op'>=</span> <span class='cn'>NULL</span>,
+  upper <span class='op'>=</span> <span class='cn'>NULL</span>,
+  init <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  read <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  total_pop <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>adjlist</span>,
+  <span class='va'>population</span>,
+  <span class='va'>ndist</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -165,10 +189,6 @@
     <tr>
       <th>adj</th>
       <td><p>zero indexed adjacency list.</p></td>
-    </tr>
-    <tr>
-      <th>adjlist</th>
-      <td><p>Deprecated, use adj. zero indexed adjacency list</p></td>
     </tr>
     <tr>
       <th>unordered_path</th>
@@ -187,10 +207,6 @@
       <td><p>number of districts to enumerate</p></td>
     </tr>
     <tr>
-      <th>ndist</th>
-      <td><p>number of districts to enumerate</p></td>
-    </tr>
-    <tr>
       <th>all</th>
       <td><p>boolean. TRUE outputs all districts. FALSE samples n districts.</p></td>
     </tr>
@@ -198,22 +214,6 @@
       <th>n</th>
       <td><p>integer. Number of districts to output if all is FALSE. Returns
 districts selected from uniform random distribution.</p></td>
-    </tr>
-    <tr>
-      <th>init</th>
-      <td><p>Runs redist.init.enumpart. Defaults to false. Should be run on first use.</p></td>
-    </tr>
-    <tr>
-      <th>read</th>
-      <td><p>boolean. Defaults to TRUE. reads</p></td>
-    </tr>
-    <tr>
-      <th>total_pop</th>
-      <td><p>Integer Vector. Defaults to NULL. If supplied, computes the parity.</p></td>
-    </tr>
-    <tr>
-      <th>population</th>
-      <td><p>Deprecated, use total_pop. Integer Vector. Defaults to NULL. If supplied, computes the parity.</p></td>
     </tr>
     <tr>
       <th>weight_path</th>
@@ -228,11 +228,36 @@ vertex weights, to be used along with <code>lower</code> and <code>upper</code>.
       <th>upper</th>
       <td><p>An upper bound on each partition's total weight.</p></td>
     </tr>
+    <tr>
+      <th>init</th>
+      <td><p>Runs redist.init.enumpart. Defaults to false. Should be run on first use.</p></td>
+    </tr>
+    <tr>
+      <th>read</th>
+      <td><p>boolean. Defaults to TRUE. reads</p></td>
+    </tr>
+    <tr>
+      <th>total_pop</th>
+      <td><p>Integer Vector. Defaults to NULL. If supplied, computes the parity.</p></td>
+    </tr>
+    <tr>
+      <th>adjlist</th>
+      <td><p>Deprecated, use adj. zero indexed adjacency list</p></td>
+    </tr>
+    <tr>
+      <th>population</th>
+      <td><p>Deprecated, use total_pop. Integer Vector. Defaults to NULL. If supplied, computes the parity.</p></td>
+    </tr>
+    <tr>
+      <th>ndist</th>
+      <td><p>Deprecated, use ndists. number of districts to enumerate</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>List with entries district_membership and parity.</p>
+<p>List with entries district_membership and parity.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

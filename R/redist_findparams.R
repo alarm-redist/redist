@@ -246,19 +246,12 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
 #'
 #' @param adj An adjacency matrix, list, or object of class
 #' "SpatialPolygonsDataFrame."
-#' @param adjobj Deprecated, use adj. An adjacency matrix, list, or object of class
-#' "SpatialPolygonsDataFrame."
 #' @param total_pop A vector containing the populations of each
-#' geographic unit.
-#' @param popvec Deprecated, use total_pop. A vector containing the populations of each
 #' geographic unit.
 #' @param nsims The number of simulations run before a save point.
 #' @param ndists The number of congressional districts.
 #' The default is \code{NULL}.
 #' @param init_plan A vector containing the congressional district labels
-#' of each geographic unit. The default is \code{NULL}. If not provided, random
-#' and contiguous congressional district assignments will be generated using \code{redist.rsg}.
-#' @param initcds Deprecated, use init_plan. A vector containing the congressional district labels
 #' of each geographic unit. The default is \code{NULL}. If not provided, random
 #' and contiguous congressional district assignments will be generated using \code{redist.rsg}.
 #' @param adapt_lambda Whether to adaptively tune the lambda parameter so that the Metropolis-Hastings
@@ -273,11 +266,7 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
 #' units. The default is \code{NULL}.
 #' @param group_pop A vector of populations for some sub-group of
 #' interest. The default is \code{NULL}.
-#' @param grouppopvec A vector of populations for some sub-group of
-#' interest. The default is \code{NULL}.
 #' @param counties A vector of county membership assignments. The default is \code{NULL}.
-#' @param countymembership Deprecated, use counties.
-#' A vector of county membership assignments. The default is \code{NULL}.
 #' @param nstartval_store The number of maps to sample from the preprocessing chain
 #' for use as starting values in future simulations. Default is 1.
 #' @param maxdist_startval The maximum distance from the starting map that
@@ -290,12 +279,23 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
 #' Default is \code{FALSE}.
 #' @param ncores  Number of parallel tasks to run, declared outside of the
 #' function. Default is \code{NULL}.
-#' @param nthreads Deprecated, use ncores. Number of parallel tasks to run, declared outside of the
-#' function. Default is \code{NULL}.
 #' @param log Whether to open a log to track progress for each parameter combination
 #' being tested. Default is FALSE.
 #' @param verbose Whether to print additional information about the tests.
 #' Default is \code{TRUE}.
+#' @param adjobj Deprecated, use adj. An adjacency matrix, list, or object of class
+#' "SpatialPolygonsDataFrame."
+#' @param popvec Deprecated, use total_pop. A vector containing the populations of each
+#' geographic unit.
+#' @param initcds Deprecated, use init_plan. A vector containing the congressional district labels
+#' of each geographic unit. The default is \code{NULL}. If not provided, random
+#' and contiguous congressional district assignments will be generated using \code{redist.rsg}.
+#' @param grouppopvec A vector of populations for some sub-group of
+#' interest. The default is \code{NULL}.
+#' @param countymembership Deprecated, use counties.
+#' A vector of county membership assignments. The default is \code{NULL}.
+#' @param nthreads Deprecated, use ncores. Number of parallel tasks to run, declared outside of the
+#' function. Default is \code{NULL}.
 #'
 #' @details This function allows users to test multiple parameter settings of
 #' \code{redist.mcmc} in preparation for a longer run for analysis.
@@ -329,20 +329,25 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
 #' }
 #' @concept prepare
 #' @export
-redist.findparams <- function(adj, adjobj,
-                              total_pop, popvec,
+redist.findparams <- function(adj,
+                              total_pop,
                               nsims, ndists = NULL,
-                              initcds, init_plan = NULL,
+                              init_plan = NULL,
                               adapt_lambda = FALSE, adapt_eprob = FALSE,
                               params, ssdmat = NULL,
-                              group_pop = NULL, grouppopvec,
-                              counties = NULL, countymembership,
+                              group_pop = NULL,
+                              counties = NULL,
                               nstartval_store = 1, maxdist_startval = 100,
                               maxiterrsg = 5000, report_all = TRUE,
                               parallel = FALSE,
-                              ncores = NULL, nthreads,
-                              log = FALSE, verbose = TRUE){
-
+                              ncores = NULL,
+                              log = FALSE, verbose = TRUE,
+                              adjobj,
+                              popvec,
+                              initcds,
+                              grouppopvec,
+                              countymembership,
+                              nthreads){
 
     if(!missing(adjobj)){
         .Deprecated(new = 'adj', old = 'adjobj')

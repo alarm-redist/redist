@@ -147,12 +147,12 @@ Massey \&amp; Denton 1987 for more details) for a specified subgroup under any
 redistricting plan.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.segcalc</span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>algout</span>, <span class='va'>group_pop</span>, <span class='va'>grouppop</span>, <span class='va'>total_pop</span>, <span class='va'>fullpop</span><span class='op'>)</span>
+    <pre class="usage"><span class='fu'>redist.segcalc</span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>group_pop</span>, <span class='va'>total_pop</span>, <span class='va'>algout</span>, <span class='va'>grouppop</span>, <span class='va'>fullpop</span><span class='op'>)</span>
 
 <span class='fu'>segregation_index</span><span class='op'>(</span>
   <span class='va'>map</span>,
   <span class='va'>group_pop</span>,
-  full_pop <span class='op'>=</span> <span class='va'>map</span><span class='op'>[[</span><span class='fu'><a href='https://rdrr.io/r/base/attr.html'>attr</a></span><span class='op'>(</span><span class='va'>map</span>, <span class='st'>"pop_col"</span><span class='op'>)</span><span class='op'>]</span><span class='op'>]</span>,
+  total_pop <span class='op'>=</span> <span class='va'>map</span><span class='op'>[[</span><span class='fu'><a href='https://rdrr.io/r/base/attr.html'>attr</a></span><span class='op'>(</span><span class='va'>map</span>, <span class='st'>"pop_col"</span><span class='op'>)</span><span class='op'>]</span><span class='op'>]</span>,
   .data <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/exists.html'>get0</a></span><span class='op'>(</span><span class='st'>"."</span>, <span class='fu'><a href='https://rdrr.io/r/base/sys.parent.html'>parent.frame</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>
 <span class='op'>)</span></pre>
 
@@ -165,21 +165,21 @@ redistricting plan.</p>
 redist object.</p></td>
     </tr>
     <tr>
+      <th>group_pop</th>
+      <td><p>A vector of populations for some subgroup of interest.</p></td>
+    </tr>
+    <tr>
+      <th>total_pop</th>
+      <td><p>A vector containign the populations of each geographic unit.</p></td>
+    </tr>
+    <tr>
       <th>algout</th>
       <td><p>Deprecated. Use plans. A matrix of congressional district assignments or a
 redist object.</p></td>
     </tr>
     <tr>
-      <th>group_pop</th>
-      <td><p>A vector of populations for some subgroup of interest.</p></td>
-    </tr>
-    <tr>
       <th>grouppop</th>
       <td><p>Deprecated. Use group_pop. A vector of populations for some subgroup of interest.</p></td>
-    </tr>
-    <tr>
-      <th>total_pop</th>
-      <td><p>A vector containign the populations of each geographic unit.</p></td>
     </tr>
     <tr>
       <th>fullpop</th>

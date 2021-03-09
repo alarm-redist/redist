@@ -6,18 +6,15 @@
 \usage{
 redist.distances(
   plans,
-  district_membership,
   measure = "Hamming",
   ncores = 1,
   total_pop = NULL,
+  district_membership,
   pop
 )
 }
 \arguments{
 \item{plans}{A matrix with one row for each precinct and one
-column for each map. Required.}
-
-\item{district_membership}{Depreacted, use plans. A matrix with one row for each precinct and one
 column for each map. Required.}
 
 \item{measure}{String vector indicating which distances to compute. Implemented
@@ -32,6 +29,9 @@ variation of information.}
 variation of information. If not provided, equal population of precincts
 will be assumed, i.e. the VI will be computed with respect to the precincts
 themselves, and not the population.}
+
+\item{district_membership}{Depreacted, use plans. A matrix with one row for each precinct and one
+column for each map. Required.}
 
 \item{pop}{The vector of precinct populations. Used only if computing
 variation of information. If not provided, equal population of precincts

@@ -1,9 +1,9 @@
 #' Relabel Discontinuous Counties
 #'
 #' @param adj adjacency list
-#' @param adjacency Deprecated, use adj. adjacency list
 #' @param counties character vector of county names
-#'
+#' @param adjacency Deprecated, use adj. adjacency list
+#' 
 #' @return character vector of county names
 #'
 #' @importFrom dplyr group_by mutate ungroup rowwise
@@ -17,7 +17,7 @@
 #' redist.relabel.counties(counties)
 #'
 #' }
-redist.county.relabel <- function(adj, adjacency, counties){
+redist.county.relabel <- function(adj, counties, adjacency){
 
   if(!missing(adjacency)){
     adj <- adjacency

@@ -18,27 +18,29 @@
 #' and "logSpanningTree" with adjacency provided.
 #' @param plans A numeric vector (if only one map) or matrix with one row
 #' for each precinct and one column for each map. Required.
-#' @param district_membership Deprecated. Use plans. A numeric vector (if only one map) or matrix with one row
-#' for each precinct and one column for each map. Required.
 #' @param measure A vector with a string for each measure desired. "PolsbyPopper",
 #' "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden",
 #' "EdgesRemoved", and "logSpanningTree" are implemented. Defaults to "PolsbyPopper". Use "all" to
 #' return all implemented measures.
 #' @param total_pop A numeric vector with the population for every observation. Is
 #' only necessary when "FryerHolden" is used for measure. Defaults to NULL.
-#' @param population Deprecated. Use total_pop. A numeric vector with the population for every observation. Is
-#' only necessary when "FryerHolden" is used for measure. Defaults to NULL.
 #' @param adj A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
-#' Created with \code{redist.adjacency} if not supplied and needed. Default is NULL.
-#' @param adjacency Deprecated. Use adj. A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
 #' Created with \code{redist.adjacency} if not supplied and needed. Default is NULL.
 #' @param nloop A numeric to specify loop number. Defaults to 1 if only one map provided
 #' and the column number if multiple maps given.
 #' @param ncores Number of cores to use for parallel computing. Default is 1.
 #' @param counties A numeric vector from 1:ncounties corresponding to counties. Required for "logSpanningTree".
+#' @param district_membership Deprecated. Use plans. A numeric vector (if only one map) or matrix with one row
+#' for each precinct and one column for each map. Required.
+#' @param population Deprecated. Use total_pop. A numeric vector with the population for every observation. Is
+#' only necessary when "FryerHolden" is used for measure. Defaults to NULL.
+#' @param adjacency Deprecated. Use adj. A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
+#' Created with \code{redist.adjacency} if not supplied and needed. Default is NULL.
+#'
 #' @details This function computes specified compactness scores for a map.  If
 #' there is more than one shape specified for a single district, it combines
 #' them, if necessary, and computes one score for each district.
+#'
 #'
 #' Polsby-Popper is computed as \deqn{\frac{4*\pi*A(d)}{P(d)^2}} where A is the area
 #' function, the district is d, and P is the perimeter function.
@@ -129,10 +131,10 @@
 #' @export redist.compactness
 redist.compactness <- function(shp = NULL,
                                plans,
-                               district_membership,
                                measure = c("PolsbyPopper"),
-                               population, total_pop = NULL, adj = NULL, adjacency, nloop = 1,
-                               ncores = 1, counties = NULL){
+                               total_pop = NULL, adj = NULL, nloop = 1,
+                               ncores = 1, counties = NULL,
+                               district_membership, population, adjacency){
 
   if(!missing(district_membership)){
     plans <- district_membership

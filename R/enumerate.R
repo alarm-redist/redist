@@ -24,12 +24,9 @@ list_to_mat <- function(A){
 #'
 #' @param adj An adjacency list, matrix, or object of class
 #' \code{SpatialPolygonsDataFrame}.
-#' @param adjobj Deprecated, use adj. An adjacency list, matrix, or object of class
-#' \code{SpatialPolygonsDataFrame}.
 #' @param ndists The desired number of congressional districts. The default is 2.
 #' @param total_pop A vector of geographic unit populations. The default is
 #' \code{NULL}.
-#' @param popvec Deprecated, use total_pop. A vector of geographic unit populations.
 #' @param nconstraintlow Lower bound for number of geographic units to include in
 #' a district. The default is \code{NULL}.
 #' @param nconstrainthigh Lower bound for number of geographic units to include
@@ -38,6 +35,10 @@ list_to_mat <- function(A){
 #' \code{pop_tol} = 0.05 means that any proposed swap that brings a district more
 #' than 5\% away from population parity will be rejected. The default is
 #' \code{NULL}.
+#'
+#' @param adjobj Deprecated, use adj. An adjacency list, matrix, or object of class
+#' \code{SpatialPolygonsDataFrame}.
+#' @param popvec Deprecated, use total_pop. A vector of geographic unit populations.
 #' @param popcons Deprecated, use pop_tol. The strength of the hard population constraint.
 #' \code{popcons} = 0.05 means that any proposed swap that brings a district more
 #' than 5\% away from population parity will be rejected. The default is
@@ -70,13 +71,14 @@ list_to_mat <- function(A){
 #' }
 #' @concept enumerate
 #' @export
-redist.enumerate <- function(adj, adjobj,
+redist.enumerate <- function(adj,
                              ndists = 2,
                              total_pop = NULL,
-                             popvec,
                              nconstraintlow = NULL,
                              nconstrainthigh = NULL,
                              pop_tol = NULL,
+                             adjobj,
+                             popvec,
                              popcons,
                              contiguitymap = "rooks"){
     .Deprecated(new = 'redist.enumpart')
@@ -246,14 +248,12 @@ redist.enumerate <- function(adj, adjobj,
 #'
 #' \code{redist.samplepart} uses a spanning tree method to randomly sample
 #' redistricting plans.
+#'
+#'
 #' @param adj An adjacency list, matrix, or object of class
-#' \code{SpatialPolygonsDataFrame}.
-#' @param adjobj Deprecated, use adj. An adjacency list, matrix, or object of class
 #' \code{SpatialPolygonsDataFrame}.
 #' @param ndists The desired number of congressional districts
 #' @param total_pop Population vector for adjacency object. Provide if
-#' filtering by population
-#' @param popvec Deprecated, use total_pop. Population vector for adjacency object. Provide if
 #' filtering by population
 #' @param pop_filter Boolean. Whether or not to filter on population parity.
 #' Default is FALSE.
@@ -261,13 +261,18 @@ redist.enumerate <- function(adj, adjobj,
 #' distance to parity.
 #' @param pop_constraint Deprecated, use pop_tol. Strength of population filter if filtering on
 #' distance to parity.
+#' @param nsims Number of samples to draw. Default is 1000.
+#' @param ncores Number of cores to parallelize over for parity calculation and
+#' compactness calculation. Default is 1.
+#'
+#' @param adjobj Deprecated, use adj. An adjacency list, matrix, or object of class
+#' \code{SpatialPolygonsDataFrame}.
+#' @param popvec Deprecated, use total_pop. Population vector for adjacency object. Provide if
+#' filtering by population
 #' @param contiguitymap Use queens or rooks distance criteria for generating an
 #' adjacency list from a "SpatialPolygonsDataFrame" data type.
 #' Default is "rooks".
-#' @param nsims Number of samples to draw. Default is 1000.
 #' @param nsamp Deprecated, use nsims. Number of samples to draw. Default is 1000.
-#' @param ncores Number of cores to parallelize over for parity calculation and
-#' compactness calculation. Default is 1.
 #' @param n_cores Deprecated, use ncores. Number of cores to parallelize over for parity calculation and
 #' compactness calculation. Default is 1.
 #'
@@ -276,10 +281,11 @@ redist.enumerate <- function(adj, adjobj,
 #' possible redistricting plans from the implied spanning tree.
 #' @export
 #' @importFrom parallel mclapply
-redist.samplepart <- function(adj, adjobj, ndists, total_pop = NULL, popvec,
-                              pop_filter = FALSE, pop_tol = 0.5, pop_constraint,
-                              contiguitymap = "rooks", nsims = 1000, nsamp,
-                              ncores = 1, n_cores){
+redist.samplepart <- function(adj,  ndists, total_pop = NULL,
+                              pop_filter = FALSE, pop_tol = 0.5,
+                               nsims = 1000, ncores = 1,
+                              adjobj, popvec, pop_constraint,
+                              contiguitymap = "rooks", nsamp, n_cores){
 
     if(!missing(adjobj)){
         adj <- adjobj

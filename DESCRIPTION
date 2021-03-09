@@ -44,8 +44,7 @@ Imports:
     tidyselect,
     cli (>= 2.1.0),
     stringr,
-    patchwork,
-    viridis
+    patchwork
 Suggests:
     igraph,
     testthat,

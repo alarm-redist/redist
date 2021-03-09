@@ -6,25 +6,19 @@
 \usage{
 redist.mcmc.mpi(
   adj,
-  adjobj,
   total_pop,
-  popvec,
   nsims,
   ndists = NA,
   init_plan = NULL,
-  initcds,
   loopscompleted = 0,
   nloop = 1,
   nthin = 1,
   eprob = 0.05,
   lambda = 0,
   pop_tol = NA,
-  popcons,
   group_pop = NA,
-  grouppopvec,
   areasvec = NA,
   counties = NA,
-  countymembership,
   borderlength_mat = NA,
   ssdmat = NA,
   compactness_metric = "fryer-holden",
@@ -37,21 +31,21 @@ redist.mcmc.mpi(
   freq = 100,
   savename = NA,
   maxiterrsg = 5000,
-  contiguitymap,
-  verbose = FALSE
+  verbose = FALSE,
+  adjobj,
+  popvec,
+  initcds,
+  popcons,
+  grouppopvec,
+  countymembership,
+  contiguitymap
 )
 }
 \arguments{
 \item{adj}{An adjacency matrix, list, or object of class
 "SpatialPolygonsDataFrame."}
 
-\item{adjobj}{Deprecated, use adj. An adjacency matrix, list, or object of class
-"SpatialPolygonsDataFrame."}
-
 \item{total_pop}{A vector containing the populations of each geographic
-unit.}
-
-\item{popvec}{Deprecated, use total_pop. A vector containing the populations of each geographic
 unit.}
 
 \item{nsims}{The number of simulations run before a save point.}
@@ -60,11 +54,6 @@ unit.}
 \code{NULL}.}
 
 \item{init_plan}{A vector containing the congressional district labels
-of each geographic unit. The default is \code{NULL}. If not provided, random
-and contiguous congressional district assignments will be generated using
-\code{redist.rsg}.}
-
-\item{initcds}{Deprecated, use init_plan. A vector containing the congressional district labels
 of each geographic unit. The default is \code{NULL}. If not provided, random
 and contiguous congressional district assignments will be generated using
 \code{redist.rsg}.}
@@ -91,23 +80,13 @@ constraint. \code{pop_tol} = 0.05 means that any proposed swap that
 brings a district more than 5\% away from population parity will be
 rejected. The default is \code{NULL}.}
 
-\item{popcons}{Deprecated, use pop_tol. The strength of the hard population
-constraint. \code{popcons} = 0.05 means that any proposed swap that
-brings a district more than 5\% away from population parity will be
-rejected. The default is \code{NULL}.}
-
 \item{group_pop}{A vector of populations for some sub-group of
-interest. The default is \code{NULL}.}
-
-\item{grouppopvec}{Deprecated, use group_pop. A vector of populations for some sub-group of
 interest. The default is \code{NULL}.}
 
 \item{areasvec}{A vector of precinct areas for discrete Polsby-Popper.
 The default is \code{NULL}.}
 
 \item{counties}{A vector of county membership assignments. The default is \code{NULL}.}
-
-\item{countymembership}{Deprecated, use counties. A vector of county membership assignments. The default is \code{NULL}.}
 
 \item{borderlength_mat}{A matrix of border length distances, where
 the first two columns are the indices of precincts sharing a border and
@@ -148,11 +127,32 @@ iterations}
 \item{maxiterrsg}{Maximum number of iterations for random seed-and-grow
 algorithm to generate starting values. Default is 5000.}
 
-\item{contiguitymap}{Use queens or rooks distance criteria for generating an
-adjacency list from a "SpatialPolygonsDataFrame" data type. Default is "rooks".}
-
 \item{verbose}{Whether to print initialization statement. Default is
 \code{TRUE}.}
+
+\item{adjobj}{Deprecated, use adj. An adjacency matrix, list, or object of class
+"SpatialPolygonsDataFrame."}
+
+\item{popvec}{Deprecated, use total_pop. A vector containing the populations of each geographic
+unit.}
+
+\item{initcds}{Deprecated, use init_plan. A vector containing the congressional district labels
+of each geographic unit. The default is \code{NULL}. If not provided, random
+and contiguous congressional district assignments will be generated using
+\code{redist.rsg}.}
+
+\item{popcons}{Deprecated, use pop_tol. The strength of the hard population
+constraint. \code{popcons} = 0.05 means that any proposed swap that
+brings a district more than 5\% away from population parity will be
+rejected. The default is \code{NULL}.}
+
+\item{grouppopvec}{Deprecated, use group_pop. A vector of populations for some sub-group of
+interest. The default is \code{NULL}.}
+
+\item{countymembership}{Deprecated, use counties. A vector of county membership assignments. The default is \code{NULL}.}
+
+\item{contiguitymap}{Use queens or rooks distance criteria for generating an
+adjacency list from a "SpatialPolygonsDataFrame" data type. Default is "rooks".}
 }
 \value{
 \code{redist.mcmc.mpi} returns an object of class "redist". The object
