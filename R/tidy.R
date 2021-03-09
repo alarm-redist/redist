@@ -92,8 +92,9 @@ make_cores = function(.data=get0(".", parent.frame()), within=1, focus=NULL) {
     if (!inherits(.data, "redist_map"))
         stop("Must provide `.data` if not called within a pipe")
 
-    redist.identify.cores(get_adj(.data), as.integer(as.factor(get_existing(.data))),
-                          within, focus, simplify=TRUE)
+    redist.identify.cores(adj=get_adj(.data),
+                          plan=as.integer(as.factor(get_existing(.data))),
+                          within=within, focus=focus, simplify=TRUE)
 }
 
 
@@ -108,7 +109,7 @@ make_cores = function(.data=get0(".", parent.frame()), within=1, focus=NULL) {
 #'
 #' @param plans a \code{redist_plans} object
 #' @param ref_plan an integer vector containing the reference plan. It will be
-#' renumbered to 1..\code{n_distr}.
+#' renumbered to 1..\code{ndists}.
 #' @param name a human-readable name for the referece plan.
 #'
 #' @returns a modified \code{redist_plans} object containing the reference plan
@@ -123,24 +124,24 @@ add_reference = function(plans, ref_plan, name="<ref>") {
     stopifnot(length(ref_plan) == nrow(plan_m))
 
     ref_plan = as.integer(as.factor(ref_plan))
-    n_distr = max(ref_plan)
-    stopifnot(n_distr == max(plan_m[,1]))
+    ndists = max(ref_plan)
+    stopifnot(ndists == max(plan_m[,1]))
 
     # first the matrix
     plan_m = cbind(ref_plan, plan_m)
     colnames(plan_m)[1] = name
 
     # then the dataframe
-    prec_pop = attr(plans, "pop")
+    prec_pop = attr(plans, "prec_pop")
     if (!is.null(prec_pop))
-        distr_pop = pop_tally(matrix(ref_plan, ncol=1), prec_pop, n_distr)
+        distr_pop = pop_tally(matrix(ref_plan, ncol=1), prec_pop, ndists)
     else
-        distr_pop = rep(NA_real_, n_distr)
+        distr_pop = rep(NA_real_, ndists)
     fct_levels = c(name, levels(plans$draw))
-    new_draw = rep(factor(fct_levels, levels=fct_levels), each=n_distr)
+    new_draw = rep(factor(fct_levels, levels=fct_levels), each=ndists)
     x = dplyr::bind_rows(
-            tibble::tibble(district = 1:n_distr,
-                           pop = as.numeric(distr_pop)),
+            tibble::tibble(district = 1:ndists,
+                           total_pop = as.numeric(distr_pop)),
             plans[,-1] # 1 is 'draw' by defn
         ) %>%
         dplyr::mutate(draw = new_draw, .before="district")
@@ -173,7 +174,7 @@ pullback = function(plans) {
     }
 
     attr(plans, "merge_idx") = NULL
-    attr(plans, "pop") = NULL
+    attr(plans, "prec_pop") = NULL
     set_plan_matrix(plans, get_plan_matrix(plans)[merge_idx,])
 }
 
@@ -218,19 +219,19 @@ match_numbers = function(data, plan, col="pop_overlap") {
     plan_mat = get_plan_matrix(data)
     if (is.character(plan)) plan = plan_mat[,plan]
     plan = factor(plan, ordered=TRUE)
-    n_distr = length(levels(plan))
-    pop = attr(data, "pop")
+    ndists = length(levels(plan))
+    pop = attr(data, "prec_pop")
 
     stopifnot(!is.null(pop))
-    stopifnot(max(plan_mat[,1]) == n_distr)
+    stopifnot(max(plan_mat[,1]) == ndists)
 
     # compute renumbering and extract info
     best_renumb = apply(plan_mat, 2, find_numbering, as.integer(plan), pop)
-    renumb = as.integer(vapply(best_renumb, function(x) x$renumb, integer(n_distr)))
+    renumb = as.integer(vapply(best_renumb, function(x) x$renumb, integer(ndists)))
 
     if (!is.null(col))
-        data[[col]] = as.numeric(vapply(best_renumb, function(x) rep(x$shared, n_distr),
-                                        numeric(n_distr)))
+        data[[col]] = as.numeric(vapply(best_renumb, function(x) rep(x$shared, ndists),
+                                        numeric(ndists)))
 
     renumb_mat = renumber_matrix(plan_mat, renumb)
     colnames(renumb_mat) = colnames(plan_mat)
@@ -282,9 +283,9 @@ distr_compactness = function(map, measure="EdgesRemoved", .data=get0(".", parent
     if (!inherits(.data, "redist_plans"))
         stop("Must provide `.data` if not called within a pipe")
 
-    redist.compactness(map, get_plan_matrix(.data), measure,
-                       population=map[[attr(map, "pop_col")]],
-                       adjacency=get_adj(map), ...)[[measure]]
+    redist.compactness(shp=map, plans=get_plan_matrix(.data), measure=measure,
+                       total_pop=map[[attr(map, "pop_col")]],
+                       adj=get_adj(map), ...)[[measure]]
 }
 
 #' @rdname redist.group.percent
@@ -294,14 +295,15 @@ distr_compactness = function(map, measure="EdgesRemoved", .data=get0(".", parent
 #'
 #' @concept analyze
 #' @export
-group_frac = function(map, group_pop, full_pop=map[[attr(map, "pop_col")]],
+group_frac = function(map, group_pop, total_pop=map[[attr(map, "pop_col")]],
                           .data=get0(".", parent.frame())) {
     if (!inherits(.data, "redist_plans"))
         stop("Must provide `.data` if not called within a pipe")
 
     group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
-    full_pop = rlang::eval_tidy(rlang::enquo(full_pop), map)
-    as.numeric(redist.group.percent(get_plan_matrix(.data), group_pop, full_pop))
+    total_pop = rlang::eval_tidy(rlang::enquo(total_pop), map)
+    as.numeric(redist.group.percent(plans=get_plan_matrix(.data),
+                                    group_pop=group_pop, total_pop=total_pop))
 }
 
 #' @rdname redist.segcalc
@@ -311,15 +313,16 @@ group_frac = function(map, group_pop, full_pop=map[[attr(map, "pop_col")]],
 #'
 #' @concept analyze
 #' @export
-segregation_index = function(map, group_pop, full_pop=map[[attr(map, "pop_col")]],
+segregation_index = function(map, group_pop, total_pop=map[[attr(map, "pop_col")]],
                           .data=get0(".", parent.frame())) {
     if (!inherits(.data, "redist_plans"))
         stop("Must provide `.data` if not called within a pipe")
 
     group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
-    full_pop = rlang::eval_tidy(rlang::enquo(full_pop), map)
+    total_pop = rlang::eval_tidy(rlang::enquo(total_pop), map)
     plan_m = get_plan_matrix(.data)
-    rep(as.numeric(redist.segcalc(plan_m, group_pop, full_pop)), each=max(plan_m[,1]))
+    rep(as.numeric(redist.segcalc(plans=plan_m, group_pop=group_pop,
+                                  total_pop=total_pop)), each=max(plan_m[,1]))
 }
 
 #' @rdname redist.metrics
@@ -337,7 +340,8 @@ partisan_metrics = function(map, measure, rvote, dvote, ...,
 
     rvote = rlang::eval_tidy(rlang::enquo(rvote), map)
     dvote = rlang::eval_tidy(rlang::enquo(dvote), map)
-    as.numeric(redist.metrics(get_plan_matrix(.data), measure, rvote, dvote, ...))
+    as.numeric(redist.metrics(plans=get_plan_matrix(.data), measure=measure,
+                              rvote=rvote, dvote=dvote, ...))
 }
 
 #' @rdname redist.competitiveness
@@ -353,7 +357,8 @@ competitiveness = function(map, rvote, dvote, .data=get0(".", parent.frame())) {
 
     rvote = rlang::eval_tidy(rlang::enquo(rvote), map)
     dvote = rlang::eval_tidy(rlang::enquo(dvote), map)
-    as.numeric(redist.competitiveness(get_plan_matrix(.data), rvote, dvote))
+    as.numeric(redist.competitiveness(plans=get_plan_matrix(.data),
+                                      rvote=rvote, dvote=dvote))
 }
 
 #' @rdname redist.splits
@@ -368,7 +373,7 @@ county_splits = function(map, counties, .data=get0(".", parent.frame())) {
         stop("Must provide `.data` if not called within a pipe")
 
     counties = rlang::eval_tidy(rlang::enquo(counties), map)
-    as.numeric(redist.splits(get_plan_matrix(.data), counties))
+    as.numeric(redist.splits(plans=get_plan_matrix(.data), counties=counties))
 }
 
 

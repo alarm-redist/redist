@@ -10,7 +10,7 @@ add_reference(plans, ref_plan, name = "<ref>")
 \item{plans}{a \code{redist_plans} object}
 
 \item{ref_plan}{an integer vector containing the reference plan. It will be
-renumbered to 1..\code{n_distr}.}
+renumbered to 1..\code{ndists}.}
 
 \item{name}{a human-readable name for the referece plan.}
 }

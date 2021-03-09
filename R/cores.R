@@ -51,7 +51,7 @@ redist.identify.cores <- function(adj, adjacency, plan, district_membership,
   # init a nice empty list
   cd_within_k <- lapply(1:length(plan), FUN = function(x){integer(0)})
 
-  core <- cores(adj = adj, dm = plan, k = k, cd_within_k = cd_within_k)
+  core <- cores(adj = adj, dm = plan, k = within, cd_within_k = cd_within_k)
 
   if(!is.null(focus)){
     idx <- unlist(lapply(core$cd_within_k, FUN = function(x){focus %in% x})) | plan == focus
@@ -62,12 +62,12 @@ redist.identify.cores <- function(adj, adjacency, plan, district_membership,
     core$conncomp <- conncomp
   }
 
-  tb <- tibble(dm = plan, k = core$k, cc = core$conncomp) %>%
-    group_by(dm, k) %>%
+  tb <- tibble(dm = plan, within = core$k, cc = core$conncomp) %>%
+    group_by(dm, within) %>%
     mutate(gid = row_number()) %>%
     ungroup() %>%
-    mutate(gid = ifelse(k == 0, cc, gid)) %>%
-    mutate(gid = paste0(dm, '-', k, '-', gid)) %>% group_by(gid) %>%
+    mutate(gid = ifelse(within == 0, cc, gid)) %>%
+    mutate(gid = paste0(dm, '-', within, '-', gid)) %>% group_by(gid) %>%
     mutate(group = cur_group_id()) %>% ungroup()
 
   gid <- tb$group

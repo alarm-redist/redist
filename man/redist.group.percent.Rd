@@ -18,7 +18,7 @@ redist.group.percent(
 group_frac(
   map,
   group_pop,
-  full_pop = map[[attr(map, "pop_col")]],
+  total_pop = map[[attr(map, "pop_col")]],
   .data = get0(".", parent.frame())
 )
 }

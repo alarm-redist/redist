@@ -40,7 +40,7 @@ Here, the existing district assignment is stored in the `cd` column. We provide
 let `redist_map()` know about this by providing the `existing_col` argument, and
 we use `max(cd)` to count the total number of districts.
 ```{r}
-east_tx_map = redist_map(east_tx, pop_tol=0.05, existing_col=cd)
+east_tx_map = redist_map(east_tx, pop_tol=0.05, existing_plan=cd)
 print(east_tx_map)
 ```
 Our original shapefile stored its geographic information in terms of latitude
@@ -176,7 +176,7 @@ plot(houston_orig_plans, type="plan", draw=5, geom=houston_area)
 A minimum working example for the 'signature of gerrymandering'.
 ```{r message=F}
 houston = east_tx %>%
-    redist_map(pop_tol=0.05, existing_col=cd) %>%
+    redist_map(pop_tol=0.05, existing_plan=cd) %>%
     filter(cd %in% c(2, 7, 9, 18, 22, 29)) %>% # filter to Houston area
     mutate(cd_cores = make_cores(within=1)) %>%
     merge_by(cd_cores)

@@ -53,7 +53,7 @@
 #' @param map A \code{\link{redist_map}} object.
 #' @param n_sims The number of samples to draw, including warmup.
 #' @param warmup The number of warmup samples to discard.
-#' @param init The initial state of the map. If not provided, will default to
+#' @param init_plan The initial state of the map. If not provided, will default to
 #'   the reference map of the \code{map} object.
 #' @param counties A vector containing county (or other administrative or
 #' geographic unit) labels for each unit, which may be integers ranging from 1
@@ -90,7 +90,7 @@
 #' @examples \dontrun{
 #' data(fl25)
 #'
-#' fl_map = redist_map(fl25, n_distr=3, pop_tol=0.1)
+#' fl_map = redist_map(fl25, ndists=3, pop_tol=0.1)
 #'
 #' sampled_basic = redist_mergesplit(fl_map, 10000)
 #'
@@ -103,13 +103,13 @@
 #' @md
 #' @export
 redist_mergesplit = function(map, n_sims, warmup=floor(n_sims/2),
-                             init=NULL, counties=NULL, compactness=1,
+                             init_plan=NULL, counties=NULL, compactness=1,
                              constraints=list(), constraint_fn=function(m) rep(0, ncol(m)),
                              adapt_k_thresh=0.975, verbose=TRUE, silent=FALSE) {
     map = validate_redist_map(map)
     V = nrow(map)
     adj = get_adj(map)
-    n_distr = attr(map, "n_distr")
+    ndists = attr(map, "ndists")
 
     if (compactness < 0) stop("Compactness parameter must be non-negative")
     if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
@@ -117,10 +117,10 @@ redist_mergesplit = function(map, n_sims, warmup=floor(n_sims/2),
     if (n_sims < 1)
         stop("`n_sims` must be positive.")
 
-    if (is.null(init)) init = as.integer(as.factor(get_existing(map)))
-    if (is.null(init)) stop("Must provide an initial map.")
-    stopifnot(length(init) == V)
-    stopifnot(max(init) == n_distr)
+    if (is.null(init_plan)) init_plan = as.integer(as.factor(get_existing(map)))
+    if (is.null(init_plan)) stop("Must provide an initial map.")
+    stopifnot(length(init_plan) == V)
+    stopifnot(max(init_plan) == ndists)
 
     counties = rlang::eval_tidy(rlang::enquo(counties), map)
     if (is.null(counties)) {
@@ -157,7 +157,7 @@ redist_mergesplit = function(map, n_sims, warmup=floor(n_sims/2),
     pop_bounds = attr(map, "pop_bounds")
     pop = map[[attr(map, "pop_col")]]
 
-    plans = ms_plans(n_sims, adj, init, counties, pop, n_distr, pop_bounds[2],
+    plans = ms_plans(n_sims, adj, init_plan, counties, pop, ndists, pop_bounds[2],
                      pop_bounds[1], pop_bounds[3], compactness,
                      constraints$status_quo$strength, constraints$status_quo$current, n_current,
                      constraints$vra$strength, constraints$vra$tgt_vra_min,

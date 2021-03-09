@@ -108,7 +108,7 @@
 #' @examples \dontrun{
 #' data(fl25)
 #'
-#' fl_map = redist_map(fl25, n_distr=3, pop_tol=0.1)
+#' fl_map = redist_map(fl25, ndists=3, pop_tol=0.1)
 #'
 #' sampled_basic = redist_smc(fl_map, 10000)
 #'
@@ -171,10 +171,10 @@ redist_smc = function(map, n_sims, counties=NULL, compactness=1, constraints=lis
 
     pop_bounds = attr(map, "pop_bounds")
     pop = map[[attr(map, "pop_col")]]
-    n_distr = attr(map, "n_distr")
+    ndists = attr(map, "ndists")
 
     lp = rep(0, n_sims)
-    plans = smc_plans(n_sims, adj, counties, pop, n_distr, pop_bounds[2],
+    plans = smc_plans(n_sims, adj, counties, pop, ndists, pop_bounds[2],
                       pop_bounds[1], pop_bounds[3], compactness,
                       constraints$status_quo$strength, constraints$status_quo$current, n_current,
                       constraints$vra$strength, constraints$vra$tgt_vra_min,
