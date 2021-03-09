@@ -11,8 +11,8 @@ redist_map(
   pop_tol = 0.01,
   pop_bounds = NULL,
   pop_col = "pop",
-  graph = NULL,
-  graph_col = "graph",
+  adj = NULL,
+  adj_col = "adj",
   existing_col = NULL,
   planarize = 3857
 )
@@ -37,10 +37,10 @@ population bounds, in the form of \code{c(lower, target, upper)}.}
 \item{pop_col}{\code{\link[tidyr:tidyr_tidy_select]{<tidy-select>}} the name of the population
 vector column.}
 
-\item{graph}{the adjacency graph for the object. Defaults to being computed
+\item{adj}{the adjacency graph for the object. Defaults to being computed
 from the data if it is coercible to a shapefile.}
 
-\item{graph_col}{the name of the adjacency graph column}
+\item{adj_col}{the name of the adjacency graph column}
 
 \item{existing_col}{\code{\link[tidyr:tidyr_tidy_select]{<tidy-select>}} the name of a column
 with existing district assignment}
@@ -67,7 +67,7 @@ graphs or attributes.
 Other useful methods for \code{redist_map} objects:
 \itemize{
 \item \code{\link{merge_by}}
-\item \code{\link{get_graph}}
+\item \code{\link{get_adj}}
 \item \code{\link{plot.redist_map}}
 }
 }

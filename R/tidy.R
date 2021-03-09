@@ -18,7 +18,7 @@
 #' @export
 is_contiguous = function(x) {
     stopifnot(inherits(x, "redist_map"))
-    all(contiguity(get_graph(x), rep(1, nrow(x))) == 1)
+    all(contiguity(get_adj(x), rep(1, nrow(x))) == 1)
 }
 
 
@@ -92,7 +92,7 @@ make_cores = function(.data=get0(".", parent.frame()), within=1, focus=NULL) {
     if (!inherits(.data, "redist_map"))
         stop("Must provide `.data` if not called within a pipe")
 
-    redist.identify.cores(get_graph(.data), as.integer(as.factor(get_existing(.data))),
+    redist.identify.cores(get_adj(.data), as.integer(as.factor(get_existing(.data))),
                           within, focus, simplify=TRUE)
 }
 
@@ -284,7 +284,7 @@ distr_compactness = function(map, measure="EdgesRemoved", .data=get0(".", parent
 
     redist.compactness(map, get_plan_matrix(.data), measure,
                        population=map[[attr(map, "pop_col")]],
-                       adjacency=get_graph(map), ...)[[measure]]
+                       adjacency=get_adj(map), ...)[[measure]]
 }
 
 #' @rdname redist.group.percent

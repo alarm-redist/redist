@@ -108,7 +108,7 @@ redist_mergesplit = function(map, n_sims, warmup=floor(n_sims/2),
                              adapt_k_thresh=0.975, verbose=TRUE, silent=FALSE) {
     map = validate_redist_map(map)
     V = nrow(map)
-    graph = get_graph(map)
+    adj = get_adj(map)
     n_distr = attr(map, "n_distr")
 
     if (compactness < 0) stop("Compactness parameter must be non-negative")
@@ -127,7 +127,7 @@ redist_mergesplit = function(map, n_sims, warmup=floor(n_sims/2),
         counties = rep(1, V)
     } else {
         # handle discontinuous counties
-        component = contiguity(graph, as.integer(as.factor(counties)))
+        component = contiguity(adj, as.integer(as.factor(counties)))
         counties = dplyr::if_else(component > 1,
                                   paste0(as.character(counties), "-", component),
                                   as.character(counties)) %>%
@@ -157,7 +157,7 @@ redist_mergesplit = function(map, n_sims, warmup=floor(n_sims/2),
     pop_bounds = attr(map, "pop_bounds")
     pop = map[[attr(map, "pop_col")]]
 
-    plans = ms_plans(n_sims, graph, init, counties, pop, n_distr, pop_bounds[2],
+    plans = ms_plans(n_sims, adj, init, counties, pop, n_distr, pop_bounds[2],
                      pop_bounds[1], pop_bounds[3], compactness,
                      constraints$status_quo$strength, constraints$status_quo$current, n_current,
                      constraints$vra$strength, constraints$vra$tgt_vra_min,

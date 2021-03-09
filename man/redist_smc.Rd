@@ -16,7 +16,7 @@ redist_smc(
   seq_alpha = 0.2 + 0.3 * compactness,
   truncate = (compactness != 1),
   trunc_fn = redist_quantile_trunc,
-  pop_temper = max(0.1/seq_alpha, 0.3),
+  pop_temper = 0,
   verbose = TRUE,
   silent = FALSE
 )
