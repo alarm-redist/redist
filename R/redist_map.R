@@ -205,16 +205,33 @@ as_redist_map = function(x) {
     reconstruct.redist_map(x)
 }
 
-#' Extract the adjacency graph from a \code{redist_map} object
+#' Get and set the adjacency graph from a \code{redist_map} object
 #'
 #' @param x the \code{redist_map} object
-#' @returns a zero-indexed adjacency list
+#' @returns a zero-indexed adjacency list (\code{get_adj})
 #' @concept prepare
 #' @export
 get_adj = function(x) {
     stopifnot(inherits(x, "redist_map"))
 
     x[[attr(x, "adj_col")]]
+}
+
+#' @rdname get_adj
+#' @param adj a new adjacency list.
+#' @returns the modified \code{redist_map} object (\code{set_adj})
+#' @export
+set_adj = function(x, adj) {
+    stopifnot(inherits(x, "redist_map"))
+    stopifnot(is.list(adj))
+    # zero-index if need be
+    if ((min_idx <- min(sapply(adj, min))) != 0) {
+        adj = lapply(adj, function(x) x - min_idx)
+    }
+
+    x[[attr(x, "adj_col")]] = adj
+    # contiguity check etc.
+    validate_redist_map(x)
 }
 
 #' Extract the existing district assignment from a \code{redist_map} object
