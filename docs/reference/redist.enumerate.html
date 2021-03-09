@@ -19,8 +19,8 @@
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/yeti/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous" />
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
 
@@ -84,7 +84,7 @@ requirements." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
       </span>
     </div>
 
@@ -107,9 +107,15 @@ requirements." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
+    </li>
+    <li>
       <a href="../articles/tidy-redist.html">Tidy `redist`</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -145,16 +151,30 @@ numbers of geographic units per district, as well as population parity
 requirements.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.enumerate</span><span class='op'>(</span><span class='va'>adjobj</span>,
-ndists <span class='op'>=</span> <span class='fl'>2</span>, popvec <span class='op'>=</span> <span class='cn'>NULL</span>, nconstraintlow <span class='op'>=</span> <span class='cn'>NULL</span>,
-nconstrainthigh <span class='op'>=</span> <span class='cn'>NULL</span>, popcons <span class='op'>=</span> <span class='cn'>NULL</span>, contiguitymap <span class='op'>=</span> <span class='st'>"rooks"</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>redist.enumerate</span><span class='op'>(</span>
+  <span class='va'>adj</span>,
+  <span class='va'>adjobj</span>,
+  ndists <span class='op'>=</span> <span class='fl'>2</span>,
+  total_pop <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>popvec</span>,
+  nconstraintlow <span class='op'>=</span> <span class='cn'>NULL</span>,
+  nconstrainthigh <span class='op'>=</span> <span class='cn'>NULL</span>,
+  pop_tol <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>popcons</span>,
+  contiguitymap <span class='op'>=</span> <span class='st'>"rooks"</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>adjobj</th>
+      <th>adj</th>
       <td><p>An adjacency list, matrix, or object of class
+<code>SpatialPolygonsDataFrame</code>.</p></td>
+    </tr>
+    <tr>
+      <th>adjobj</th>
+      <td><p>Deprecated, use adj. An adjacency list, matrix, or object of class
 <code>SpatialPolygonsDataFrame</code>.</p></td>
     </tr>
     <tr>
@@ -162,9 +182,13 @@ nconstrainthigh <span class='op'>=</span> <span class='cn'>NULL</span>, popcons 
       <td><p>The desired number of congressional districts. The default is 2.</p></td>
     </tr>
     <tr>
-      <th>popvec</th>
+      <th>total_pop</th>
       <td><p>A vector of geographic unit populations. The default is
 <code>NULL</code>.</p></td>
+    </tr>
+    <tr>
+      <th>popvec</th>
+      <td><p>Deprecated, use total_pop. A vector of geographic unit populations.</p></td>
     </tr>
     <tr>
       <th>nconstraintlow</th>
@@ -177,8 +201,15 @@ a district. The default is <code>NULL</code>.</p></td>
 in a district. The default is <code>NULL</code>.</p></td>
     </tr>
     <tr>
-      <th>popcons</th>
+      <th>pop_tol</th>
       <td><p>The strength of the hard population constraint.
+<code>pop_tol</code> = 0.05 means that any proposed swap that brings a district more
+than 5% away from population parity will be rejected. The default is
+<code>NULL</code>.</p></td>
+    </tr>
+    <tr>
+      <th>popcons</th>
+      <td><p>Deprecated, use pop_tol. The strength of the hard population constraint.
 <code>popcons</code> = 0.05 means that any proposed swap that brings a district more
 than 5% away from population parity will be rejected. The default is
 <code>NULL</code>.</p></td>

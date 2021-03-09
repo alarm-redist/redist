@@ -48,3 +48,4 @@ redist.choropleth(shp = fl25, fill = DVS, limit_colors = c('red', 'blue'))
 }
 
 }
+\concept{plot}

@@ -14,6 +14,7 @@ extern SEXP _redist_bias(SEXP, SEXP);
 extern SEXP _redist_biasatv(SEXP, SEXP, SEXP);
 extern SEXP _redist_calc_polsbypopper(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_calcPWDh(SEXP);
+extern SEXP _redist_coarsen_adjacency(SEXP, SEXP);
 extern SEXP _redist_collapse_adj(SEXP, SEXP);
 extern SEXP _redist_color_graph(SEXP, SEXP);
 extern SEXP _redist_contiguity(SEXP, SEXP);
@@ -43,6 +44,7 @@ extern SEXP _redist_plan_joint(SEXP, SEXP, SEXP);
 extern SEXP _redist_pop_tally(SEXP, SEXP, SEXP);
 extern SEXP _redist_prec_cooccur(SEXP, SEXP);
 extern SEXP _redist_reduce_adj(SEXP, SEXP, SEXP);
+extern SEXP _redist_reindex(SEXP, SEXP);
 extern SEXP _redist_renumber_matrix(SEXP, SEXP);
 extern SEXP _redist_responsiveness(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_rsg(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -63,6 +65,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_biasatv",               (DL_FUNC) &_redist_biasatv,                3},
     {"_redist_calc_polsbypopper",     (DL_FUNC) &_redist_calc_polsbypopper,      7},
     {"_redist_calcPWDh",              (DL_FUNC) &_redist_calcPWDh,               1},
+    {"_redist_coarsen_adjacency",     (DL_FUNC) &_redist_coarsen_adjacency,      2},
     {"_redist_collapse_adj",          (DL_FUNC) &_redist_collapse_adj,           2},
     {"_redist_color_graph",           (DL_FUNC) &_redist_color_graph,            2},
     {"_redist_contiguity",            (DL_FUNC) &_redist_contiguity,             2},
@@ -92,6 +95,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_pop_tally",             (DL_FUNC) &_redist_pop_tally,              3},
     {"_redist_prec_cooccur",          (DL_FUNC) &_redist_prec_cooccur,           2},
     {"_redist_reduce_adj",            (DL_FUNC) &_redist_reduce_adj,             3},
+    {"_redist_reindex",               (DL_FUNC) &_redist_reindex,                2},
     {"_redist_renumber_matrix",       (DL_FUNC) &_redist_renumber_matrix,        2},
     {"_redist_responsiveness",        (DL_FUNC) &_redist_responsiveness,         4},
     {"_redist_rsg",                   (DL_FUNC) &_redist_rsg,                    6},

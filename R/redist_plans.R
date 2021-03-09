@@ -271,7 +271,7 @@ print.redist_plans = function(x, ...) {
 #' @param type the name of the plotting function to use. Will have \code{plot_},
 #' prepended to it; e.g., use \code{type="plan"} to call \code{plot_plan()}.
 #'
-#' @concept visualize
+#' @concept plot
 #' @export
 plot.redist_plans = function(x, ..., type="hist") {
     get(paste0("plot_", type))(x, ...)
@@ -287,7 +287,7 @@ plot.redist_plans = function(x, ..., type="hist") {
 #' @param bins the number of bins to use in the histogram
 #' @param ... passed on to \code{\link[ggplot2]{geom_histogram}}
 #'
-#' @concept visualize
+#' @concept plot
 #' @export
 plot_hist = function(x, qty, bins=ceiling(sqrt(nrow(x))*1.5), ...) {
     p = ggplot(subset_sampled(x), aes({{ qty }})) +
@@ -320,7 +320,7 @@ hist.redist_plans = function(x, qty, ...) {
 #'   \code{FALSE} or \code{"none"} for no sorting.
 #' @param ... passed on to \code{\link[ggplot2]{geom_boxplot}}
 #'
-#' @concept visualize
+#' @concept plot
 #' @export
 plot_distr_qtys = function(x, qty, sort="asc", ...) {
     if (isFALSE(sort) || sort == "none") {
@@ -353,7 +353,7 @@ plot_distr_qtys = function(x, qty, sort="asc", ...) {
 #' @param draw the plan to plot. Will match the \code{draw} column of \code{x}.
 #' @param geom the geometry to use
 #'
-#' @concept visualize
+#' @concept plot
 #' @export
 plot_plan = function(x, draw, geom) {
     stopifnot(inherits(x, "redist_plans"))

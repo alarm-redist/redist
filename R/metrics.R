@@ -11,7 +11,9 @@
 #' \code{redist.metrics} is used to compute different gerrymandering metrics for a
 #' set of maps.
 #'
-#' @param district_membership A numeric vector (if only one map) or matrix with one row
+#' @param plans A numeric vector (if only one map) or matrix with one row
+#' for each precinct and one column for each map. Required.
+#' @param district_membership Deprecated, use plans. A numeric vector (if only one map) or matrix with one row
 #' for each precinct and one column for each map. Required.
 #' @param measure A vector with a string for each measure desired from list "DSeats", "DVS", "EffGap",
 #' "EffGapEqPop", "TauGap", "MeanMedian", "Bias", "BiasV", "Declination",
@@ -68,13 +70,19 @@
 #'
 #' @concept analyze
 #' @export
-redist.metrics <- function(district_membership,
+redist.metrics <- function(plans, district_membership,
                            measure = "DSeats",
                            rvote, dvote,
                            tau = 1, biasV = 0.5,
                            respV = 0.5, bandwidth = 0.01,
                            nloop = 1,
                            ncores = 1){
+
+  if(!missing(district_membership)){
+    .Deprecated(new = 'plans', old = 'district_membership')
+    plans <- district_membership
+  }
+
   # All measures available:
   all_measures <- c("DSeats", "DVS", "EffGap", "EffGapEqPop", "TauGap",
                     "MeanMedian", "Bias", "BiasV", "Declination", "Responsiveness",
@@ -86,18 +94,18 @@ redist.metrics <- function(district_membership,
   }
   match.arg(arg = measure,several.ok = TRUE, choices = all_measures)
 
-  if(any(class(district_membership) %in% 'redist')){
-    district_membership <- district_membership$partitions
+  if(any(class(plans) %in% 'redist')){
+    plans <- plans$plans
   }
 
-  if(!any(class(district_membership) %in% c('numeric', 'integer', 'matrix'))){
-    stop('Please provide "district_membership" as a numeric vector or matrix.')
+  if(!any(class(plans) %in% c('numeric', 'integer', 'matrix'))){
+    stop('Please provide "plans" as a numeric vector or matrix.')
   }
-  if(!is.matrix(district_membership)){
-    district_membership <- as.matrix(district_membership)
+  if(!is.matrix(plans)){
+    plans <- as.matrix(plans)
   }
-  if(any(is.na(district_membership))){
-    stop('NA value in argument to district_membership.')
+  if(any(is.na(plans))){
+    stop('NA value in argument to plans.')
   }
 
   if(any(is.na(rvote))){
@@ -115,11 +123,11 @@ redist.metrics <- function(district_membership,
 
   rvote <- as.integer(rvote)
   dvote <- as.integer(dvote)
-  if(length(rvote) != nrow(district_membership)){
-    stop('rvote length and district_membership row dimension are not equal.')
+  if(length(rvote) != nrow(plans)){
+    stop('rvote length and plans row dimension are not equal.')
   }
-  if(length(dvote) != nrow(district_membership)){
-    stop('dvote length and district_membership row dimension are not equal.')
+  if(length(dvote) != nrow(plans)){
+    stop('dvote length and plans row dimension are not equal.')
   }
 
   if(class(nloop) != 'numeric'){
@@ -132,15 +140,15 @@ redist.metrics <- function(district_membership,
 
 
   # Precompute a few useful variables
-  nd <- length(unique(district_membership[,1]))
+  nd <- length(unique(plans[,1]))
   totvote <- sum(rvote) + sum(dvote)
-  nmap <- ncol(district_membership)
-  dists <- sort(unique(district_membership[,1]))
+  nmap <- ncol(plans)
+  dists <- sort(unique(plans[,1]))
 
   # Aggregate to Precinct and get baseline DVS + Seats - compute here to avoid multiple computation
-  rcounts <- agg_p2d(vote = rvote, dm = district_membership, nd = nd)
-  dcounts <- agg_p2d(vote = dvote, dm = district_membership, nd = nd)
-  dseat_vec <- dseats(dm = district_membership, rcounts = rcounts, dcounts = dcounts, nd = nd)
+  rcounts <- agg_p2d(vote = rvote, dm = plans, nd = nd)
+  dcounts <- agg_p2d(vote = dvote, dm = plans, nd = nd)
+  dseat_vec <- dseats(dm = plans, rcounts = rcounts, dcounts = dcounts, nd = nd)
   dvs <- DVS(dcounts = dcounts, rcounts = rcounts)
 
 

@@ -17,4 +17,4 @@ prepended to it; e.g., use \code{type="plan"} to call \code{plot_plan()}.}
 \description{
 Summary plots for \code{redist_plans}
 }
-\concept{visualize}
+\concept{plot}

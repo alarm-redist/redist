@@ -4,14 +4,26 @@
 \alias{redist.find.target}
 \title{Find Majority Minority Remainder}
 \usage{
-redist.find.target(tgt_min, grouppop, fullpop, ndists, nmmd)
+redist.find.target(
+  tgt_min,
+  group_pop,
+  grouppop,
+  total_pop,
+  fullpop,
+  ndists,
+  nmmd
+)
 }
 \arguments{
 \item{tgt_min}{target group population for majority minority district}
 
-\item{grouppop}{A vector of populations for some subgroup of interest.}
+\item{group_pop}{A vector of populations for some subgroup of interest.}
 
-\item{fullpop}{A vector containing the populations of each geographic unit.}
+\item{grouppop}{Deprecated, use group_pop. A vector of populations for some subgroup of interest.}
+
+\item{total_pop}{A vector containing the populations of each geographic unit.}
+
+\item{fullpop}{Deprecated, use total_pop. A vector containing the populations of each geographic unit.}
 
 \item{ndists}{The number of congressional districts.}
 
@@ -21,7 +33,8 @@ redist.find.target(tgt_min, grouppop, fullpop, ndists, nmmd)
 numeric value to target
 }
 \description{
-Given a percent goal for majority minority districts, this computes the average 
-value of minority in non-majority minority districts. This value is "tgt_other" 
+Given a percent goal for majority minority districts, this computes the average
+value of minority in non-majority minority districts. This value is "tgt_other"
 in \code{redist.mcmc} and \code{redist.smc}.
 }
+\concept{prepare}

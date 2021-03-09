@@ -18,3 +18,4 @@ A logical vector which is \code{TRUE} for precincts belonging to
 \description{
 Identify which counties re split by a plan
 }
+\concept{analyze}

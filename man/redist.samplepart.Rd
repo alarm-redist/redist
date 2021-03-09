@@ -4,31 +4,58 @@
 \alias{redist.samplepart}
 \title{Sample partitions using spanning trees}
 \usage{
-redist.samplepart(adjobj, ndists, popvec, pop_filter, pop_constraint,
-contiguitymap, nsamp, n_cores)
+redist.samplepart(
+  adj,
+  adjobj,
+  ndists,
+  total_pop = NULL,
+  popvec,
+  pop_filter = FALSE,
+  pop_tol = 0.5,
+  pop_constraint,
+  contiguitymap = "rooks",
+  nsims = 1000,
+  nsamp,
+  ncores = 1,
+  n_cores
+)
 }
 \arguments{
-\item{adjobj}{An adjacency list, matrix, or object of class
+\item{adj}{An adjacency list, matrix, or object of class
+\code{SpatialPolygonsDataFrame}.}
+
+\item{adjobj}{Deprecated, use adj. An adjacency list, matrix, or object of class
 \code{SpatialPolygonsDataFrame}.}
 
 \item{ndists}{The desired number of congressional districts}
 
-\item{popvec}{Population vector for adjacency object. Provide if
+\item{total_pop}{Population vector for adjacency object. Provide if
+filtering by population}
+
+\item{popvec}{Deprecated, use total_pop. Population vector for adjacency object. Provide if
 filtering by population}
 
 \item{pop_filter}{Boolean. Whether or not to filter on population parity.
 Default is FALSE.}
 
-\item{pop_constraint}{Strength of population filter if filtering on
+\item{pop_tol}{Strength of population filter if filtering on
+distance to parity.}
+
+\item{pop_constraint}{Deprecated, use pop_tol. Strength of population filter if filtering on
 distance to parity.}
 
 \item{contiguitymap}{Use queens or rooks distance criteria for generating an
 adjacency list from a "SpatialPolygonsDataFrame" data type.
 Default is "rooks".}
 
-\item{nsamp}{Number of samples to draw. Default is 1000.}
+\item{nsims}{Number of samples to draw. Default is 1000.}
 
-\item{n_cores}{Number of cores to parallelize over for parity calculation and
+\item{nsamp}{Deprecated, use nsims. Number of samples to draw. Default is 1000.}
+
+\item{ncores}{Number of cores to parallelize over for parity calculation and
+compactness calculation. Default is 1.}
+
+\item{n_cores}{Deprecated, use ncores. Number of cores to parallelize over for parity calculation and
 compactness calculation. Default is 1.}
 }
 \value{

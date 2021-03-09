@@ -6,9 +6,11 @@
 \title{Identify Cores of a District (Heuristic)}
 \usage{
 redist.identify.cores(
+  adj,
   adjacency,
+  plan,
   district_membership,
-  k = 1,
+  within = 1,
   focus = NULL,
   simplify = TRUE
 )
@@ -16,29 +18,31 @@ redist.identify.cores(
 make_cores(.data = get0(".", parent.frame()), within = 1, focus = NULL)
 }
 \arguments{
-\item{adjacency}{A zero indexed adjacency list.}
+\item{adj}{zero indexed adjacency list.}
 
-\item{district_membership}{An integer vector or matrix column of district assignments.}
+\item{adjacency}{Deprecated, use adj. A zero indexed adjacency list.}
 
-\item{k}{Number of steps to check for. Defaults to 1.}
+\item{plan}{An integer vector or matrix column of district assignments.}
+
+\item{district_membership}{Deprecated, use plan. An integer vector or matrix column of district assignments.}
+
+\item{within}{the core is defined to be at least this number of steps within
+district boundaries}
 
 \item{focus}{Optional. Integer. A single district to focus on.}
 
 \item{simplify}{Optional. Logical. Whether to return extra information or just grouping ID.}
 
 \item{.data}{a \code{\link{redist_map}} object}
-
-\item{within}{the core is defined to be at least this number of steps within
-district boundaries}
 }
 \value{
-integer vector if simplify is false. Otherwise returns a tibble with the grouping 
+integer vector if simplify is false. Otherwise returns a tibble with the grouping
 variable and additional information.
 }
 \description{
-Creates a grouping ID to unite geographies and perform analysis on a smaller set of
-precincts. Given a k, it identifies all precincts within k edges of another district
-on a graph. Each precinct within k of another district gets it own group. Connected
-components more than k away are givent the same grouping variable.
+Creates a grouping ID to unite geographies and perform analysis on a smaller
+set of precincts. It identifies all precincts more than \code{within} edges
+of a district district border Each precinct more than \code{within} of
+another district gets it own group.
 }
 \concept{prepare}

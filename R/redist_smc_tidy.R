@@ -40,7 +40,8 @@
 #'   districts.
 #'   * \code{current}, a vector containing district assignments for
 #'   the current map.
-#' * \code{vra}: a list with five entries:
+#' * \code{vra}: a list with five entries, which may be set up using
+#'   \code{\link{redist.constraint.helper}}:
 #'   * \code{strength}, a number controlling the strength of the Voting Rights Act
 #'   (VRA) constraint, with higher values prioritizing majority-minority districts
 #'   over other considerations.

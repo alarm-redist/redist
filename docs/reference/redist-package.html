@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Markov Chain Monte Carlo Methods for Redistricting Simulation — redist-package • redist</title>
+<title>Simulation Methods for Legislative Redistricting — redist-package • redist</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -19,8 +19,8 @@
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/yeti/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous" />
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
 
@@ -46,18 +46,17 @@
 
 
 
-<meta property="og:title" content="Markov Chain Monte Carlo Methods for Redistricting Simulation — redist-package" />
-<meta property="og:description" content="Enables researchers to sample redistricting plans from a pre-specified
-target distribution using a Markov Chain Monte Carlo algorithm. The package
-allows for the implementation of various constraints in the redistricting
-process such as geographic compactness and population parity requirements.
-The algorithm also can be used in combination with efficient simulation
-methods such as simulated and parallel tempering algorithms. Tools for
-analysis such as inverse probability reweighting and plotting functionality
-are included. The package implements methods described in Fifield, Higgins,
-Imai and Tarr (2016) ``A New Automated Redistricting Simulator Using Markov
-Chain Monte Carlo,'' working paper available at
-&amp;lt;http://imai.fas.harvard.edu/research/files/redist.pdf&amp;gt;." />
+<meta property="og:title" content="Simulation Methods for Legislative Redistricting — redist-package" />
+<meta property="og:description" content="Enables researchers to sample redistricting plans from a pre-specified target
+distribution using Sequential Monte Carlo and Markov Chain Monte Carlo
+algorithms.  The package allows for the implementation of various constraints
+in the redistricting process such as geographic compactness and population
+parity requirements. Tools for analysis such as computation of various
+summary statistics and plotting functionality are also included. The package
+implements methods described in Fifield, Higgins, Imai and Tarr (2020)
+&amp;lt;doi:10.1080/10618600.2020.1739532&amp;gt;, Fifield, Imai, Kawahara, and Kenny (2020)
+&amp;lt;doi: 10.1080/2330443X.2020.1791773&amp;gt;, and McCartan and Imai (2020)
+&amp;lt;arXiv:2008.06131&amp;gt;." />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -90,7 +89,7 @@ Chain Monte Carlo,'' working paper available at
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
       </span>
     </div>
 
@@ -113,9 +112,15 @@ Chain Monte Carlo,'' working paper available at
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
+    </li>
+    <li>
       <a href="../articles/tidy-redist.html">Tidy `redist`</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -138,23 +143,22 @@ Chain Monte Carlo,'' working paper available at
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Markov Chain Monte Carlo Methods for Redistricting Simulation</h1>
+    <h1>Simulation Methods for Legislative Redistricting</h1>
     <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/redist-package.R'><code>R/redist-package.R</code></a></small>
     <div class="hidden name"><code>redist-package.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Enables researchers to sample redistricting plans from a pre-specified
-target distribution using a Markov Chain Monte Carlo algorithm. The package
-allows for the implementation of various constraints in the redistricting
-process such as geographic compactness and population parity requirements.
-The algorithm also can be used in combination with efficient simulation
-methods such as simulated and parallel tempering algorithms. Tools for
-analysis such as inverse probability reweighting and plotting functionality
-are included. The package implements methods described in Fifield, Higgins,
-Imai and Tarr (2016) ``A New Automated Redistricting Simulator Using Markov
-Chain Monte Carlo,'' working paper available at
-&lt;http://imai.fas.harvard.edu/research/files/redist.pdf&gt;.</p>
+    <p>Enables researchers to sample redistricting plans from a pre-specified target
+distribution using Sequential Monte Carlo and Markov Chain Monte Carlo
+algorithms.  The package allows for the implementation of various constraints
+in the redistricting process such as geographic compactness and population
+parity requirements. Tools for analysis such as computation of various
+summary statistics and plotting functionality are also included. The package
+implements methods described in Fifield, Higgins, Imai and Tarr (2020)
+&lt;doi:10.1080/10618600.2020.1739532&gt;, Fifield, Imai, Kawahara, and Kenny (2020)
+&lt;doi: 10.1080/2330443X.2020.1791773&gt;, and McCartan and Imai (2020)
+&lt;arXiv:2008.06131&gt;.</p>
     </div>
 
 

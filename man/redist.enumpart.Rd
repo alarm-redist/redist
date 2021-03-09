@@ -5,29 +5,33 @@
 \title{Enumerate All Parititions}
 \usage{
 redist.enumpart(
+  adj,
   adjlist,
   unordered_path,
   ordered_path,
   out_path,
-  ndist = 2,
+  ndists = 2,
+  ndist,
   all = TRUE,
   n = NULL,
   init = FALSE,
-  weight_path = NULL,
-  lower = NULL,
-  upper = NULL,
   read = TRUE,
-  population = NULL
+  total_pop = NULL,
+  population
 )
 }
 \arguments{
-\item{adjlist}{zero indexed adjacency list}
+\item{adj}{zero indexed adjacency list.}
+
+\item{adjlist}{Deprecated, use adj. zero indexed adjacency list}
 
 \item{unordered_path}{valid path to output the unordered adjacency map to}
 
 \item{ordered_path}{valid path to output the ordered adjacency map to}
 
 \item{out_path}{Valid path to output the enumerated districts}
+
+\item{ndists}{number of districts to enumerate}
 
 \item{ndist}{number of districts to enumerate}
 
@@ -38,16 +42,18 @@ districts selected from uniform random distribution.}
 
 \item{init}{Runs redist.init.enumpart. Defaults to false. Should be run on first use.}
 
+\item{read}{boolean. Defaults to TRUE. reads}
+
+\item{total_pop}{Integer Vector. Defaults to NULL. If supplied, computes the parity.}
+
+\item{population}{Deprecated, use total_pop. Integer Vector. Defaults to NULL. If supplied, computes the parity.}
+
 \item{weight_path}{A path (not including ".dat") to a space-delimited file containing a vector of
 vertex weights, to be used along with \code{lower} and \code{upper}.}
 
 \item{lower}{A lower bound on each partition's total weight, implemented by rejection sampling.}
 
 \item{upper}{An upper bound on each partition's total weight.}
-
-\item{read}{boolean. Defaults to TRUE. reads}
-
-\item{population}{Integer Vector. Defaults to NULL. If supplied, computes the parity.}
 }
 \value{
 List with entries district_membership and parity.

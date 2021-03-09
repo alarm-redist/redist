@@ -237,7 +237,7 @@ dplyr_row_slice.redist_map = function(data, i, ...) {
     # reduce adj. graph
     y = vctrs::vec_slice(data, i)
     gr_col = attr(data, "adj_col")
-    y[[gr_col]] = redist.reduce.adjacency(data[[gr_col]], i)
+    y[[gr_col]] = redist.reduce.adjacency(data[[gr_col]], keep_rows=i)
 
     # fix n_distr if existing_col exists
     exist_col = attr(data, "existing_col")
@@ -276,7 +276,7 @@ summarise.redist_map = function(.data, ..., .groups=NULL) {
     adj_col = attr(.data, "adj_col")
     if (!(adj_col %in% colnames(ret))) {
         ret[[adj_col]] = collapse_adj(get_adj(.data),
-                                        dplyr::group_indices(.data) - 1)
+                                      dplyr::group_indices(.data) - 1)
     }
 
     attr(ret, "merge_idx") = dplyr::group_indices(.data)
@@ -351,7 +351,7 @@ print.redist_map = function(x, ...) {
 #'
 #' @method plot redist_map
 #' @concept prepare
-#' @concept visualize
+#' @concept plot
 #' @export
 plot.redist_map = function(x, y, ...) {
     if (!inherits(x, "sf")) stop("Plotting requires a shapefile.")

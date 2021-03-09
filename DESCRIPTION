@@ -1,6 +1,6 @@
 Package: redist
-Version: 2.0.4
-Date: 2021-01-28
+Version: 2.0.5
+Date: 2021-03-06
 Title: Simulation Methods for Legislative Redistricting
 Authors@R: c(
     person("Ben", "Fifield", email = "benfifield@gmail.com", role = c("aut", "cre")),
@@ -43,7 +43,9 @@ Imports:
     vctrs,
     tidyselect,
     cli (>= 2.1.0),
-    stringr
+    stringr,
+    patchwork,
+    viridis
 Suggests:
     igraph,
     testthat,

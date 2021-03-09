@@ -22,4 +22,4 @@ plot_hist(x, qty, bins = ceiling(sqrt(nrow(x)) * 1.5), ...)
 Plots a histogram of a statistic of a \code{\link{redist_plans}} object,
 with a reference line for each reference plan, if applicable.
 }
-\concept{visualize}
+\concept{plot}

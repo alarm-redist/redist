@@ -16,4 +16,4 @@ plot_plan(x, draw, geom)
 \description{
 Plot a district assignment
 }
-\concept{visualize}
+\concept{plot}

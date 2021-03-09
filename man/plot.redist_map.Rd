@@ -26,5 +26,5 @@ plot(d, edges=FALSE)
 plot(d, BlackPop/pop)
 
 }
+\concept{plot}
 \concept{prepare}
-\concept{visualize}

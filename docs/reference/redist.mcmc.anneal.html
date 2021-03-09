@@ -19,8 +19,8 @@
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/yeti/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous" />
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
 
@@ -81,7 +81,7 @@ using Markov chain Monte Carlo methods coupled with simulated annealing." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
       </span>
     </div>
 
@@ -104,9 +104,15 @@ using Markov chain Monte Carlo methods coupled with simulated annealing." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
+    </li>
+    <li>
       <a href="../articles/tidy-redist.html">Tidy `redist`</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -130,7 +136,7 @@ using Markov chain Monte Carlo methods coupled with simulated annealing." />
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>MCMC Redistricting Simulator using Simulated Annealing</h1>
-    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/redist.R'><code>R/redist.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/redist_mcmc.R'><code>R/redist_mcmc.R</code></a></small>
     <div class="hidden name"><code>redist.mcmc.anneal.Rd</code></div>
     </div>
 
@@ -140,19 +146,25 @@ using Markov chain Monte Carlo methods coupled with simulated annealing.</p>
     </div>
 
     <pre class="usage"><span class='fu'>redist.mcmc.anneal</span><span class='op'>(</span>
+  <span class='va'>adj</span>,
   <span class='va'>adjobj</span>,
+  <span class='va'>total_pop</span>,
   <span class='va'>popvec</span>,
   ndists <span class='op'>=</span> <span class='cn'>NULL</span>,
-  initcds <span class='op'>=</span> <span class='cn'>NULL</span>,
+  init_plan <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>initcds</span>,
   num_hot_steps <span class='op'>=</span> <span class='fl'>40000</span>,
   num_annealing_steps <span class='op'>=</span> <span class='fl'>60000</span>,
   num_cold_steps <span class='op'>=</span> <span class='fl'>20000</span>,
   eprob <span class='op'>=</span> <span class='fl'>0.05</span>,
   lambda <span class='op'>=</span> <span class='fl'>0</span>,
-  popcons <span class='op'>=</span> <span class='cn'>NULL</span>,
-  grouppopvec <span class='op'>=</span> <span class='cn'>NULL</span>,
+  pop_tol <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>popcons</span>,
+  group_pop <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>grouppopvec</span>,
   areasvec <span class='op'>=</span> <span class='cn'>NULL</span>,
-  countymembership <span class='op'>=</span> <span class='cn'>NULL</span>,
+  counties <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>countymembership</span>,
   borderlength_mat <span class='op'>=</span> <span class='cn'>NULL</span>,
   ssdmat <span class='op'>=</span> <span class='cn'>NULL</span>,
   constraint <span class='op'>=</span> <span class='cn'>NULL</span>,
@@ -163,7 +175,7 @@ using Markov chain Monte Carlo methods coupled with simulated annealing.</p>
   maxiterrsg <span class='op'>=</span> <span class='fl'>5000</span>,
   adapt_lambda <span class='op'>=</span> <span class='cn'>FALSE</span>,
   adapt_eprob <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  contiguitymap <span class='op'>=</span> <span class='st'>"rooks"</span>,
+  <span class='va'>contiguitymap</span>,
   exact_mh <span class='op'>=</span> <span class='cn'>FALSE</span>,
   savename <span class='op'>=</span> <span class='cn'>NULL</span>,
   verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
@@ -179,9 +191,19 @@ using Markov chain Monte Carlo methods coupled with simulated annealing.</p>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>adjobj</th>
-      <td><p>An adjacency matrix, list, or object of class
+      <th>adj</th>
+      <td><p>adjacency matrix, list, or object of class
 "SpatialPolygonsDataFrame."</p></td>
+    </tr>
+    <tr>
+      <th>adjobj</th>
+      <td><p>Deprecated, use adj. An adjacency matrix, list, or object of class
+"SpatialPolygonsDataFrame."</p></td>
+    </tr>
+    <tr>
+      <th>total_pop</th>
+      <td><p>A vector containing the populations of each geographic
+unit</p></td>
     </tr>
     <tr>
       <th>popvec</th>
@@ -194,8 +216,15 @@ unit</p></td>
 <code>NULL</code>.</p></td>
     </tr>
     <tr>
-      <th>initcds</th>
+      <th>init_plan</th>
       <td><p>A vector containing the congressional district labels
+of each geographic unit. The default is <code>NULL</code>. If not provided,
+random and contiguous congressional district assignments will be generated
+using <code>redist.rsg</code>.</p></td>
+    </tr>
+    <tr>
+      <th>initcds</th>
+      <td><p>Deprecated, use init_plan. A vector containing the congressional district labels
 of each geographic unit. The default is <code>NULL</code>. If not provided,
 random and contiguous congressional district assignments will be generated
 using <code>redist.rsg</code>.</p></td>
@@ -227,15 +256,27 @@ each iteration of the algorihtm. The number of swaps each iteration is
 equal to Pois(<code>lambda</code>) + 1. The default is <code>0</code>.</p></td>
     </tr>
     <tr>
-      <th>popcons</th>
+      <th>pop_tol</th>
       <td><p>The strength of the hard population
+constraint. <code>pop_tol</code> = 0.05 means that any proposed swap that
+brings a district more than 5% away from population parity will be
+rejected. The default is <code>NULL</code>.</p></td>
+    </tr>
+    <tr>
+      <th>popcons</th>
+      <td><p>Deprecated, use pop_tol. The strength of the hard population
 constraint. <code>popcons</code> = 0.05 means that any proposed swap that
 brings a district more than 5% away from population parity will be
 rejected. The default is <code>NULL</code>.</p></td>
     </tr>
     <tr>
-      <th>grouppopvec</th>
+      <th>group_pop</th>
       <td><p>A vector of populations for some sub-group of
+interest. The default is <code>NULL</code>.</p></td>
+    </tr>
+    <tr>
+      <th>grouppopvec</th>
+      <td><p>Deprecated, use group_pop. A vector of populations for some sub-group of
 interest. The default is <code>NULL</code>.</p></td>
     </tr>
     <tr>
@@ -244,8 +285,12 @@ interest. The default is <code>NULL</code>.</p></td>
 The default is <code>NULL</code>.</p></td>
     </tr>
     <tr>
-      <th>countymembership</th>
+      <th>counties</th>
       <td><p>A vector of county membership assignments. The default is <code>NULL</code>.</p></td>
+    </tr>
+    <tr>
+      <th>countymembership</th>
+      <td><p>Deprecated, use counties. A vector of county membership assignments. The default is <code>NULL</code>.</p></td>
     </tr>
     <tr>
       <th>borderlength_mat</th>
