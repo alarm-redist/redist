@@ -17,7 +17,7 @@
 #'
 #' The first two columns of the data frame will be \code{draw}, a factor indexing
 #' the simulation draw, and \code{district}, an integer indexing the districts
-#' within a plan. The data frame will therefore have \code{n_sims*n_distr} rows.
+#' within a plan. The data frame will therefore have \code{n_sims*ndists} rows.
 #' As a data frame, the usual \code{\link{dplyr}} methods will work.
 #'
 #' Other useful methods for \code{redist_plans} objects:
@@ -49,20 +49,20 @@ new_redist_plans = function(plans, map, algorithm, wgt, resampled=TRUE, ...) {
     stopifnot(n_sims >= 1)
 
     n_prec = nrow(plans)
-    n_distr = attr(map, "n_distr")
+    ndists = attr(map, "ndists")
 
     prec_pop = map[[attr(map, "pop_col")]]
-    distr_pop = pop_tally(plans, prec_pop, n_distr)
+    distr_pop = pop_tally(plans, prec_pop, ndists)
 
     attr_names = c("redist_attr", "plans", "algorithm", "wgt", "resampled",
-                   "merge_idx", "pop", names(list(...)))
+                   "merge_idx", "prec_pop", names(list(...)))
 
-    structure(tibble::tibble(draw = rep(as.factor(1:n_sims), each=n_distr),
-                             district = rep(1:n_distr, n_sims),
-                             pop = as.numeric(distr_pop)),
+    structure(tibble::tibble(draw = rep(as.factor(1:n_sims), each=ndists),
+                             district = rep(1:ndists, n_sims),
+                             total_pop = as.numeric(distr_pop)),
               plans=plans, algorithm=algorithm, wgt=wgt,
               resampled=resampled, merge_idx=attr(map, "merge_idx"),
-              pop=prec_pop, redist_attr=attr_names, ...,
+              prec_pop=prec_pop, redist_attr=attr_names, ...,
               class=c("redist_plans", "tbl_df", "tbl", "data.frame"))
 }
 
@@ -205,8 +205,8 @@ dplyr_row_slice.redist_plans = function(data, i, ...) {
     if ("district" %in% colnames(y)) {
         distrs = table(as.integer(y$district))
         n_draws = length(draws_left)
-        n_distr = max(plans_m[,1])
-        if (!all.equal(range(distrs), rep(n_draws, 2)) || length(distrs) != n_distr)
+        ndists = max(plans_m[,1])
+        if (!all.equal(range(distrs), rep(n_draws, 2)) || length(distrs) != ndists)
             warning("Some districts may have been dropped. ",
                     "This will prevent summary statistics from working correctly.\n",
                     "To avoid this message, coerce using `as_tibble`.")
@@ -274,7 +274,7 @@ print.redist_plans = function(x, ...) {
 #' @concept plot
 #' @export
 plot.redist_plans = function(x, ..., type="hist") {
-    get(paste0("plot_", type))(x, ...)
+    get(paste0("redist.plot.", type))(x, ...)
 }
 
 #' Plot a histogram of a summary statistic
@@ -284,12 +284,22 @@ plot.redist_plans = function(x, ..., type="hist") {
 #'
 #' @param x the \code{redist_plans} object.
 #' @param qty \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the statistic.
-#' @param bins the number of bins to use in the histogram
+#' @param bins the number of bins to use in the histogram. Defaults to Freedman-Diaconis rule.
 #' @param ... passed on to \code{\link[ggplot2]{geom_histogram}}
 #'
 #' @concept plot
 #' @export
-plot_hist = function(x, qty, bins=ceiling(sqrt(nrow(x))*1.5), ...) {
+redist.plot.hist = function(x, qty, bins=NULL, ...) {
+    if (is.null(bins)) {
+        val = rlang::eval_tidy(enquo(qty), x)
+        n = length(val)
+        iqr = IQR(val)
+        if (iqr > 0)
+            bins = max(round(diff(range(val)) / (2 * iqr / n^(1/3))), 3)
+        else
+            bins = 3
+    }
+
     p = ggplot(subset_sampled(x), aes({{ qty }})) +
         ggplot2::geom_histogram(..., bins=bins) +
         labs(y="Number of plans", color="Plan")
@@ -299,11 +309,11 @@ plot_hist = function(x, qty, bins=ceiling(sqrt(nrow(x))*1.5), ...) {
     p
 }
 
-#' @rdname plot_hist
+#' @rdname redist.plot.hist
 #' @export
 hist.redist_plans = function(x, qty, ...) {
     qty = rlang::enquo(qty)
-    plot_hist(x, !!qty, ...)
+    redist.plot.hist(x, !!qty, ...)
 }
 
 #' Plot box and whisker plots for each district
@@ -322,7 +332,7 @@ hist.redist_plans = function(x, qty, ...) {
 #'
 #' @concept plot
 #' @export
-plot_distr_qtys = function(x, qty, sort="asc", ...) {
+redist.plot.distr_qtys = function(x, qty, sort="asc", ...) {
     if (isFALSE(sort) || sort == "none") {
         x = dplyr::group_by(x, .data$draw) %>%
             dplyr::mutate(.distr_no = as.factor(.data$district))
@@ -355,7 +365,7 @@ plot_distr_qtys = function(x, qty, sort="asc", ...) {
 #'
 #' @concept plot
 #' @export
-plot_plan = function(x, draw, geom) {
+redist.plot.plan = function(x, draw, geom) {
     stopifnot(inherits(x, "redist_plans"))
     stopifnot()
 

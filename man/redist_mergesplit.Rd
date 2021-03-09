@@ -8,7 +8,7 @@ redist_mergesplit(
   map,
   n_sims,
   warmup = floor(n_sims/2),
-  init = NULL,
+  init_plan = NULL,
   counties = NULL,
   compactness = 1,
   constraints = list(),
@@ -25,7 +25,7 @@ redist_mergesplit(
 
 \item{warmup}{The number of warmup samples to discard.}
 
-\item{init}{The initial state of the map. If not provided, will default to
+\item{init_plan}{The initial state of the map. If not provided, will default to
 the reference map of the \code{map} object.}
 
 \item{counties}{A vector containing county (or other administrative or
@@ -115,7 +115,7 @@ home address.
 \dontrun{
 data(fl25)
 
-fl_map = redist_map(fl25, n_distr=3, pop_tol=0.1)
+fl_map = redist_map(fl25, ndists=3, pop_tol=0.1)
 
 sampled_basic = redist_mergesplit(fl_map, 10000)
 

@@ -9,7 +9,7 @@
 # constructors and reconstructors
 
 # Main internal constructor
-new_redist_map = function(data, adj, n_distr, pop_bounds, pop_col="pop",
+new_redist_map = function(data, adj, ndists, pop_bounds, pop_col="pop",
                           adj_col="adj", add_adj=TRUE, existing_col=NULL) {
     if (add_adj) {
         stopifnot(!is.null(adj))
@@ -17,12 +17,12 @@ new_redist_map = function(data, adj, n_distr, pop_bounds, pop_col="pop",
         data[[adj_col]] = adj
     }
 
-    stopifnot(is.integer(n_distr))
+    stopifnot(is.integer(ndists))
     stopifnot(is.numeric(pop_bounds))
     stopifnot(length(pop_bounds) == 3)
 
     data = reconstruct.redist_map(data)
-    attr(data, "n_distr") = n_distr
+    attr(data, "ndists") = ndists
     attr(data, "pop_bounds") = pop_bounds
     attr(data, "pop_col") = pop_col
     attr(data, "adj_col") = adj_col
@@ -49,7 +49,7 @@ validate_redist_map = function(data, check_contig=T) {
     }
 
     stopifnot(!is.null(attr(data, "pop_col")))
-    stopifnot(!is.null(attr(data, "n_distr")))
+    stopifnot(!is.null(attr(data, "ndists")))
 
     pop_bounds = attr(data, "pop_bounds")
     stopifnot(!is.null(pop_bounds))
@@ -77,9 +77,9 @@ reconstruct.redist_map = function(data, old) {
 
         if (isTRUE((exist_col <- attr(old, "existing_col")) %in% colnames(data))) {
             attr(data, "existing_col") = exist_col
-            attr(data, "n_distr") = length(unique(data[[exist_col]]))
+            attr(data, "ndists") = length(unique(data[[exist_col]]))
         } else {
-            attr(data, "n_distr") = attr(old, "n_distr")
+            attr(data, "ndists") = attr(old, "ndists")
         }
 
         attr(data, "pop_bounds") = attr(old, "pop_bounds")
@@ -111,32 +111,32 @@ reconstruct.redist_map = function(data, old) {
 #' @param ... column elements to be bound into a \code{redist_map} object or a
 #'   single \code{list} or \code{data.frame}.  These will be passed on to the
 #'   \code{\link{tibble}} constructor.
-#' @param n_distr \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the integer number of
+#' @param ndists \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the integer number of
 #'   districts to partition the map into
 #' @param pop_tol \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the population tolerance.
 #'   The percentage deviation from the average population will be constrained to
 #'   be no more than this number.
 #' @param pop_bounds \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} more specific
 #'   population bounds, in the form of \code{c(lower, target, upper)}.
-#' @param pop_col \code{\link[tidyr:tidyr_tidy_select]{<tidy-select>}} the name of the population
-#'   vector column.
+#' @param total_pop \code{\link[tidyr:tidyr_tidy_select]{<tidy-select>}} the vector
+#'   of precinct populations. Defaults to the \code{pop} column, if one exists.
 #' @param adj the adjacency graph for the object. Defaults to being computed
 #'     from the data if it is coercible to a shapefile.
 #' @param adj_col the name of the adjacency graph column
-#' @param existing_col \code{\link[tidyr:tidyr_tidy_select]{<tidy-select>}} the name of a column
-#'   with existing district assignment
+#' @param existing_plan \code{\link[tidyr:tidyr_tidy_select]{<tidy-select>}} the
+#'   existing district assignment.
 #' @param planarize a number, indicating the CRS to project the shapefile to if
 #'   it is latitude-longitude based. Set to NULL to avoid planarizing.
 #'
 #' @examples
-#' d = redist_map(fl25, n_distr=3, pop_tol=0.05)
+#' d = redist_map(fl25, ndists=3, pop_tol=0.05)
 #' dplyr::filter(d, pop >= 10e3)
 #'
 #' @concept prepare
 #' @md
 #' @export
-redist_map = function(..., n_distr=NULL, pop_tol=0.01, pop_bounds=NULL, pop_col="pop",
-                      adj=NULL, adj_col="adj", existing_col=NULL, planarize=3857) {
+redist_map = function(..., ndists=NULL, pop_tol=0.01, pop_bounds=NULL, total_pop="pop",
+                      adj=NULL, adj_col="adj", existing_plan=NULL, planarize=3857) {
     x = tibble(...)
     is_sf = any(vapply(x, function(x) inherits(x, "sfc"), TRUE))
     if (is_sf) {
@@ -160,23 +160,24 @@ redist_map = function(..., n_distr=NULL, pop_tol=0.01, pop_bounds=NULL, pop_col=
 
     if (is_sf && is.null(adj)) {
         if (!is.null(x[[adj_col]]))
-            stop("Column `", adj_col, "` already present in data. Specify an alternate adj column.")
+            stop("Column `", adj_col, "` already present in data. ",
+                 "Specify an alternate adj column.")
 
         adj = redist.adjacency(x)
     }
 
-    pop_col = names(tidyselect::eval_select(rlang::enquo(pop_col), x))
-    existing_col = names(tidyselect::eval_select(rlang::enquo(existing_col), x))
+    pop_col = names(tidyselect::eval_select(rlang::enquo(total_pop), x))
+    existing_col = names(tidyselect::eval_select(rlang::enquo(existing_plan), x))
     if (length(existing_col) == 0)
         existing_col = NULL
 
-    if (is.null(n_distr))  {
+    if (is.null(ndists))  {
         if (!is.null(existing_col))
-            n_distr = length(unique(x[[existing_col]]))
+            ndists = length(unique(x[[existing_col]]))
         else
-            stop("Must specify `n_distr` if `existing_col` is not supplied")
+            stop("Must specify `ndists` if `existing_plan` is not supplied")
     } else {
-        n_distr = as.integer(rlang::eval_tidy(rlang::enquo(n_distr), x))
+        ndists = as.integer(rlang::eval_tidy(rlang::enquo(ndists), x))
     }
 
     pop_tol = rlang::eval_tidy(rlang::enquo(pop_tol), x)
@@ -185,7 +186,7 @@ redist_map = function(..., n_distr=NULL, pop_tol=0.01, pop_bounds=NULL, pop_col=
         stopifnot(!is.null(pop_tol))
         stopifnot(pop_tol > 0)
 
-        target = sum(x[[pop_col]]) / n_distr
+        target = sum(x[[pop_col]]) / ndists
         pop_bounds = target * c(1 - pop_tol, 1, 1 + pop_tol)
     } else {
         pop_bounds = rlang::eval_tidy(rlang::enquo(pop_bounds), x)
@@ -193,7 +194,7 @@ redist_map = function(..., n_distr=NULL, pop_tol=0.01, pop_bounds=NULL, pop_col=
 
 
     validate_redist_map(
-        new_redist_map(x, adj, n_distr, pop_bounds, pop_col, adj_col,
+        new_redist_map(x, adj, ndists, pop_bounds, pop_col, adj_col,
                    add_adj=T, existing_col)
     )
 }
@@ -261,12 +262,12 @@ dplyr_row_slice.redist_map = function(data, i, ...) {
     gr_col = attr(data, "adj_col")
     y[[gr_col]] = redist.reduce.adjacency(data[[gr_col]], keep_rows=i)
 
-    # fix n_distr if existing_col exists
+    # fix ndists if existing_col exists
     exist_col = attr(data, "existing_col")
-    new_distr = attr(data, "n_distr")
+    new_distr = attr(data, "ndists")
     if (!is.null(exist_col))
         new_distr = length(unique(y[[exist_col]]))
-    attr(y, "n_distr") = new_distr
+    attr(y, "ndists") = new_distr
 
     # fix merge_idx
     merge_idx = attr(data, "merge_idx")
@@ -314,7 +315,7 @@ print.redist_map = function(x, ...) {
                   " units and ", ncol(x), " fields")
 
     bounds = attr(x, "pop_bounds")
-    cli::cat_line("To be partitioned into ", attr(x, "n_distr"),
+    cli::cat_line("To be partitioned into ", attr(x, "ndists"),
                   " districts with population between ",
                   format(bounds[2], nsmall=0, big.mark=","), " - ",
                   format(100 - 100*bounds[1]/bounds[2], nsmall=1), "% and ",
@@ -366,7 +367,7 @@ print.redist_map = function(x, ...) {
 #'
 #' @examples
 #' data(fl25)
-#' d = redist_map(fl25, n_distr=3, pop_tol=0.05)
+#' d = redist_map(fl25, ndists=3, pop_tol=0.05)
 #' plot(d)
 #' plot(d, edges=FALSE)
 #' plot(d, BlackPop/pop)
@@ -381,10 +382,10 @@ plot.redist_map = function(x, y, ...) {
     if (missing(y)) {
         existing = get_existing(x)
         if (!is.null(existing)) {
-            redist.map(x, get_adj(x), district_membership=existing, ...) +
+            redist.map(x, get_adj(x), plan=existing, ...) +
                 ggplot2::theme_void()
         } else {
-            redist.map(x, get_adj(x), district_membership=NULL, ...) +
+            redist.map(x, get_adj(x), plan=NULL, ...) +
                 ggplot2::theme_void()
         }
     } else {

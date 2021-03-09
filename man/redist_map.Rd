@@ -7,13 +7,13 @@
 \usage{
 redist_map(
   ...,
-  n_distr = NULL,
+  ndists = NULL,
   pop_tol = 0.01,
   pop_bounds = NULL,
-  pop_col = "pop",
+  total_pop = "pop",
   adj = NULL,
   adj_col = "adj",
-  existing_col = NULL,
+  existing_plan = NULL,
   planarize = 3857
 )
 
@@ -24,7 +24,7 @@ as_redist_map(x)
 single \code{list} or \code{data.frame}.  These will be passed on to the
 \code{\link{tibble}} constructor.}
 
-\item{n_distr}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the integer number of
+\item{ndists}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the integer number of
 districts to partition the map into}
 
 \item{pop_tol}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the population tolerance.
@@ -34,16 +34,16 @@ be no more than this number.}
 \item{pop_bounds}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} more specific
 population bounds, in the form of \code{c(lower, target, upper)}.}
 
-\item{pop_col}{\code{\link[tidyr:tidyr_tidy_select]{<tidy-select>}} the name of the population
-vector column.}
+\item{total_pop}{\code{\link[tidyr:tidyr_tidy_select]{<tidy-select>}} the vector
+of precinct populations. Defaults to the \code{pop} column, if one exists.}
 
 \item{adj}{the adjacency graph for the object. Defaults to being computed
 from the data if it is coercible to a shapefile.}
 
 \item{adj_col}{the name of the adjacency graph column}
 
-\item{existing_col}{\code{\link[tidyr:tidyr_tidy_select]{<tidy-select>}} the name of a column
-with existing district assignment}
+\item{existing_plan}{\code{\link[tidyr:tidyr_tidy_select]{<tidy-select>}} the
+existing district assignment.}
 
 \item{planarize}{a number, indicating the CRS to project the shapefile to if
 it is latitude-longitude based. Set to NULL to avoid planarizing.}
@@ -72,7 +72,7 @@ Other useful methods for \code{redist_map} objects:
 }
 }
 \examples{
-d = redist_map(fl25, n_distr=3, pop_tol=0.05)
+d = redist_map(fl25, ndists=3, pop_tol=0.05)
 dplyr::filter(d, pop >= 10e3)
 
 }

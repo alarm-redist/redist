@@ -174,7 +174,6 @@ redist.map <- function(shp = NULL, adj = NULL, adjacency, plan = NULL,
 #' @param fill A numeric/integer vector with values to color the plot with. Optional.
 #' @param fill_label A string title of plot. Defaults to empty string. Optional.
 #' @param title A string title of plot. Defaults to empty string. Optional.
-#' @param limit_colors A length two string vector with two colors, either hex or ggplot color names.
 #' @param grad Number of colors to make a gradient with. Accepts values of 1 or 2.
 #' @param lwd Line width. Defaults to 0
 #'
@@ -195,7 +194,7 @@ redist.map <- function(shp = NULL, adj = NULL, adjacency, plan = NULL,
 #' @concept plot
 #' @export
 redist.choropleth <- function(shp, fill = NULL, fill_label = "", title = "",
-                              limit_colors = NULL, grad = 1, lwd = 0) {
+                              grad = 1, lwd = 0) {
 
     # Check inputs
     if(missing(shp)) {
@@ -208,7 +207,7 @@ redist.choropleth <- function(shp, fill = NULL, fill_label = "", title = "",
     }
 
     fill <- rlang::eval_tidy(rlang::enquo(fill), shp)
-    if (!is.numeric(fill) && inherits(shp, "redist_map")) {
+    if (!is.null(fill) && !is.numeric(fill) && inherits(shp, "redist_map")) {
         fill = as.factor(color_graph(get_adj(shp), as.integer(as.factor(fill))))
     }
 
@@ -220,28 +219,8 @@ redist.choropleth <- function(shp, fill = NULL, fill_label = "", title = "",
 
     if (!is.null(fill)) {
         if (is.numeric(fill)) {
-            l1 <- min(fill, na.rm=T)
-            l2 <- max(fill, na.rm=T)
-            mp <- mean(fill, na.rm=T)
-
-            if (l1 >= 0 & l2 <= 1) {
-                l1 <- 0
-                l2 <- 1
-                mp <- 0.5
-            }
-
-            if (is.null(limit_colors)) {
-                limit_colors <- c('#ffffff', '#08306b')
-            }
-
-            if (grad == 1) {
-                plot <- plot +
-                    scale_fill_gradient(low = limit_colors[1], high = limit_colors[2],
-                                        limits = c(l1, l2))
-            } else if (grad == 2) {
-                plot <- plot +
-                    scale_fill_gradient2(low = limit_colors[1], high = limit_colors[3],
-                                         midpoint = mp, mid = limit_colors[2], limits = c(l1, l2))
+            if (min(fill, na.rm=T) >= 0 & max(fill, na.rm=T) <= 1) {
+                plot <- plot + lims(fill=c(0, 1))
             }
         } else {
             PAL = c("#6D9537", "#364B7F", "#DCAD35", "#9A9BB9", "#2A4E45", "#7F4E28")

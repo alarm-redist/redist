@@ -143,7 +143,7 @@ home address.
 \dontrun{
 data(fl25)
 
-fl_map = redist_map(fl25, n_distr=3, pop_tol=0.1)
+fl_map = redist_map(fl25, ndists=3, pop_tol=0.1)
 
 sampled_basic = redist_smc(fl_map, 10000)
 
