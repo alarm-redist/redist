@@ -8,10 +8,10 @@ redist.run.enumpart(
   ordered_path,
   out_path,
   ndists = 2,
-  ndist,
   all = TRUE,
   n = NULL,
-  options = NULL
+  options = NULL,
+  ndist
 )
 }
 \arguments{
@@ -21,14 +21,14 @@ redist.run.enumpart(
 
 \item{ndists}{number of districts to enumerate}
 
-\item{ndist}{Deprecated, use ndists. number of districts to enumerate}
-
 \item{all}{boolean. TRUE outputs all districts. FALSE samples n districts.}
 
 \item{n}{integer. Number of districts to output if all is FALSE. Returns 
 districts selected from uniform random distribution.}
 
 \item{options}{Additional enumpart arguments. Not recommended for use.}
+
+\item{ndist}{Deprecated, use ndists. number of districts to enumerate}
 }
 \value{
 0 on success

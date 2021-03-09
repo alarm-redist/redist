@@ -6,53 +6,43 @@
 \usage{
 redist.findparams(
   adj,
-  adjobj,
   total_pop,
-  popvec,
   nsims,
   ndists = NULL,
-  initcds,
   init_plan = NULL,
   adapt_lambda = FALSE,
   adapt_eprob = FALSE,
   params,
   ssdmat = NULL,
   group_pop = NULL,
-  grouppopvec,
   counties = NULL,
-  countymembership,
   nstartval_store = 1,
   maxdist_startval = 100,
   maxiterrsg = 5000,
   report_all = TRUE,
   parallel = FALSE,
   ncores = NULL,
-  nthreads,
   log = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  adjobj,
+  popvec,
+  initcds,
+  grouppopvec,
+  countymembership,
+  nthreads
 )
 }
 \arguments{
 \item{adj}{An adjacency matrix, list, or object of class
 "SpatialPolygonsDataFrame."}
 
-\item{adjobj}{Deprecated, use adj. An adjacency matrix, list, or object of class
-"SpatialPolygonsDataFrame."}
-
 \item{total_pop}{A vector containing the populations of each
-geographic unit.}
-
-\item{popvec}{Deprecated, use total_pop. A vector containing the populations of each
 geographic unit.}
 
 \item{nsims}{The number of simulations run before a save point.}
 
 \item{ndists}{The number of congressional districts.
 The default is \code{NULL}.}
-
-\item{initcds}{Deprecated, use init_plan. A vector containing the congressional district labels
-of each geographic unit. The default is \code{NULL}. If not provided, random
-and contiguous congressional district assignments will be generated using \code{redist.rsg}.}
 
 \item{init_plan}{A vector containing the congressional district labels
 of each geographic unit. The default is \code{NULL}. If not provided, random
@@ -75,13 +65,7 @@ units. The default is \code{NULL}.}
 \item{group_pop}{A vector of populations for some sub-group of
 interest. The default is \code{NULL}.}
 
-\item{grouppopvec}{A vector of populations for some sub-group of
-interest. The default is \code{NULL}.}
-
 \item{counties}{A vector of county membership assignments. The default is \code{NULL}.}
-
-\item{countymembership}{Deprecated, use counties.
-A vector of county membership assignments. The default is \code{NULL}.}
 
 \item{nstartval_store}{The number of maps to sample from the preprocessing chain
 for use as starting values in future simulations. Default is 1.}
@@ -101,14 +85,30 @@ Default is \code{FALSE}.}
 \item{ncores}{Number of parallel tasks to run, declared outside of the
 function. Default is \code{NULL}.}
 
-\item{nthreads}{Deprecated, use ncores. Number of parallel tasks to run, declared outside of the
-function. Default is \code{NULL}.}
-
 \item{log}{Whether to open a log to track progress for each parameter combination
 being tested. Default is FALSE.}
 
 \item{verbose}{Whether to print additional information about the tests.
 Default is \code{TRUE}.}
+
+\item{adjobj}{Deprecated, use adj. An adjacency matrix, list, or object of class
+"SpatialPolygonsDataFrame."}
+
+\item{popvec}{Deprecated, use total_pop. A vector containing the populations of each
+geographic unit.}
+
+\item{initcds}{Deprecated, use init_plan. A vector containing the congressional district labels
+of each geographic unit. The default is \code{NULL}. If not provided, random
+and contiguous congressional district assignments will be generated using \code{redist.rsg}.}
+
+\item{grouppopvec}{A vector of populations for some sub-group of
+interest. The default is \code{NULL}.}
+
+\item{countymembership}{Deprecated, use counties.
+A vector of county membership assignments. The default is \code{NULL}.}
+
+\item{nthreads}{Deprecated, use ncores. Number of parallel tasks to run, declared outside of the
+function. Default is \code{NULL}.}
 }
 \value{
 \code{redist.findparams} returns a print-out of summary statistics

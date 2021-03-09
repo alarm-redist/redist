@@ -36,19 +36,11 @@ combine.par.anneal <- function(a, b){
 #'
 #' @param adj adjacency matrix, list, or object of class
 #' "SpatialPolygonsDataFrame."
-#' @param adjobj Deprecated, use adj. An adjacency matrix, list, or object of class
-#' "SpatialPolygonsDataFrame."
 #' @param total_pop A vector containing the populations of each geographic
-#' unit
-#' @param popvec A vector containing the populations of each geographic
 #' unit
 #' @param ndists The numbe of congressional districts. The default is
 #' \code{NULL}.
 #' @param init_plan A vector containing the congressional district labels
-#' of each geographic unit. The default is \code{NULL}. If not provided,
-#' random and contiguous congressional district assignments will be generated
-#' using \code{redist.rsg}.
-#' @param initcds Deprecated, use init_plan. A vector containing the congressional district labels
 #' of each geographic unit. The default is \code{NULL}. If not provided,
 #' random and contiguous congressional district assignments will be generated
 #' using \code{redist.rsg}.
@@ -67,18 +59,11 @@ combine.par.anneal <- function(a, b){
 #' constraint. \code{pop_tol} = 0.05 means that any proposed swap that
 #' brings a district more than 5\% away from population parity will be
 #' rejected. The default is \code{NULL}.
-#' @param popcons Deprecated, use pop_tol. The strength of the hard population
-#' constraint. \code{popcons} = 0.05 means that any proposed swap that
-#' brings a district more than 5\% away from population parity will be
-#' rejected. The default is \code{NULL}.
 #' @param group_pop A vector of populations for some sub-group of
-#' interest. The default is \code{NULL}.
-#' @param grouppopvec Deprecated, use group_pop. A vector of populations for some sub-group of
 #' interest. The default is \code{NULL}.
 #' @param areasvec A vector of precinct areas for discrete Polsby-Popper.
 #' The default is \code{NULL}.
 #' @param counties A vector of county membership assignments. The default is \code{NULL}.
-#' @param countymembership Deprecated, use counties. A vector of county membership assignments. The default is \code{NULL}.
 #' @param borderlength_mat A matrix of border length distances, where
 #' the first two columns are the indices of precincts sharing a border and
 #' the third column is its distance. Default is \code{NULL}.
@@ -104,9 +89,6 @@ combine.par.anneal <- function(a, b){
 #' @param adapt_eprob Whether to adaptively tune the edgecut probability parameter so that the
 #' Metropolis-Hastings acceptance probability falls between 20\% and 40\%. Default is
 #' FALSE.
-#' @param contiguitymap Use queens or rooks distance criteria for generating an
-#' adjacency list from a "SpatialPolygonsDataFrame" data type.
-#' Default is "rooks".
 #' @param exact_mh Whether to use the approximate (0) or exact (1)
 #' Metropolis-Hastings ratio calculation for accept-reject rule. Default is FALSE.
 #' @param savename Filename to save simulations. Default is \code{NULL}.
@@ -119,20 +101,38 @@ combine.par.anneal <- function(a, b){
 #' @param dvote integer vector of votes for Democrats by precinct
 #' @param minorityprop numeric vector of targeted minority proportions for the top 
 #' districts with that proportion
+#' @param adjobj Deprecated, use adj. An adjacency matrix, list, or object of class
+#' "SpatialPolygonsDataFrame."
+#' @param popvec A vector containing the populations of each geographic
+#' unit
+#' @param initcds Deprecated, use init_plan. A vector containing the congressional district labels
+#' of each geographic unit. The default is \code{NULL}. If not provided,
+#' random and contiguous congressional district assignments will be generated
+#' using \code{redist.rsg}.
+#' @param popcons Deprecated, use pop_tol. The strength of the hard population
+#' constraint. \code{popcons} = 0.05 means that any proposed swap that
+#' brings a district more than 5\% away from population parity will be
+#' rejected. The default is \code{NULL}.
+#' @param grouppopvec Deprecated, use group_pop. A vector of populations for some sub-group of
+#' interest. The default is \code{NULL}.
+#' @param countymembership Deprecated, use counties. A vector of county membership assignments. The default is \code{NULL}.
+#' @param contiguitymap Deprecated. Use queens or rooks distance criteria for generating an
+#' adjacency list from a "SpatialPolygonsDataFrame" data type.
+#' Default is "rooks".
 #' 
 #' @export
-redist.mcmc.anneal <- function(adj, adjobj, 
-                               total_pop, popvec, 
+redist.mcmc.anneal <- function(adj, 
+                               total_pop, 
                                ndists = NULL,
-                               init_plan = NULL, initcds,
+                               init_plan = NULL, 
                                num_hot_steps = 40000, num_annealing_steps = 60000,
                                num_cold_steps = 20000,
                                eprob = 0.05,
                                lambda = 0, 
-                               pop_tol = NULL, popcons, 
-                               group_pop = NULL, grouppopvec,
+                               pop_tol = NULL,  
+                               group_pop = NULL, 
                                areasvec = NULL,
-                               counties = NULL, countymembership, 
+                               counties = NULL,  
                                borderlength_mat = NULL,
                                ssdmat = NULL,
                                constraint = NULL, constraintweights = NULL,
@@ -140,10 +140,12 @@ redist.mcmc.anneal <- function(adj, adjobj,
                                partisan_metric = "efficiency-gap",
                                rngseed = NULL, maxiterrsg = 5000,
                                adapt_lambda = FALSE, adapt_eprob = FALSE,
-                               contiguitymap, exact_mh = FALSE,
+                                exact_mh = FALSE,
                                savename = NULL, verbose = TRUE,
                                ncores = 1, tgt_min = 0.55, tgt_other = 0.25, rvote = NULL,
-                               dvote = NULL, minorityprop = NULL){
+                               dvote = NULL, minorityprop = NULL,
+                               adjobj, popvec, initcds, popcons, grouppopvec, countymembership,
+                               contiguitymap){
     
     if(!missing(adjobj)){
         .Deprecated(new = 'adj', old = 'adjobj')
@@ -1048,20 +1050,13 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #'
 #' @param adj adjacency matrix, list, or object of class
 #' "SpatialPolygonsDataFrame."
-#' @param adjobj Deprecated, use adj. An adjacency matrix, list, or object of class
-#' "SpatialPolygonsDataFrame."
 #' @param total_pop A vector containing the populations of each geographic
 #' unit
-#' @param popvec A vector containing the populations of each geographic
-#' unit
+#' 
 #' @param nsims The number of simulations run before a save point.
 #' @param ndists The numbe of congressional districts. The default is
 #' \code{NULL}.
 #' @param init_plan A vector containing the congressional district labels
-#' of each geographic unit. The default is \code{NULL}. If not provided,
-#' random and contiguous congressional district assignments will be generated
-#' using \code{redist.rsg}.
-#' @param initcds Deprecated, use init_plan. A vector containing the congressional district labels
 #' of each geographic unit. The default is \code{NULL}. If not provided,
 #' random and contiguous congressional district assignments will be generated
 #' using \code{redist.rsg}.
@@ -1081,18 +1076,11 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' constraint. \code{pop_tol} = 0.05 means that any proposed swap that
 #' brings a district more than 5\% away from population parity will be
 #' rejected. The default is \code{NULL}.
-#' @param popcons Deprecated, use pop_tol. The strength of the hard population
-#' constraint. \code{popcons} = 0.05 means that any proposed swap that
-#' brings a district more than 5\% away from population parity will be
-#' rejected. The default is \code{NULL}.
 #' @param group_pop A vector of populations for some sub-group of
-#' interest. The default is \code{NULL}.
-#' @param grouppopvec Deprecated, use group_pop. A vector of populations for some sub-group of
 #' interest. The default is \code{NULL}.
 #' @param areasvec A vector of precinct areas for discrete Polsby-Popper.
 #' The default is \code{NULL}.
 #' @param counties A vector of county membership assignments. The default is \code{NULL}.
-#' @param countymembership Deprecated, use counties. A vector of county membership assignments. The default is \code{NULL}.
 #' @param borderlength_mat A matrix of border length distances, where
 #' the first two columns are the indices of precincts sharing a border and
 #' the third column is its distance. Default is \code{NULL}.
@@ -1131,9 +1119,6 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' @param adapt_eprob Whether to adaptively tune the edgecut probability parameter so that the
 #' Metropolis-Hastings acceptance probability falls between 20\% and 40\%. Default is
 #' FALSE.
-#' @param contiguitymap Use queens or rooks distance criteria for generating an
-#' adjacency list from a "SpatialPolygonsDataFrame" data type.
-#' Default is "rooks".
 #' @param exact_mh Whether to use the approximate (0) or exact (1)
 #' Metropolis-Hastings ratio calculation for accept-reject rule. Default is FALSE.
 #' @param savename Filename to save simulations. Default is \code{NULL}.
@@ -1145,6 +1130,24 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' @param dvote integer vector of votes for Democrats by precinct
 #' @param minorityprop numeric vector of targeted minority proportions for the top 
 #' districts with that proportion
+#' @param adjobj Deprecated, use adj. An adjacency matrix, list, or object of class
+#' "SpatialPolygonsDataFrame."
+#' @param initcds Deprecated, use init_plan. A vector containing the congressional district labels
+#' of each geographic unit. The default is \code{NULL}. If not provided,
+#' random and contiguous congressional district assignments will be generated
+#' using \code{redist.rsg}.
+#' @param popvec Deprecated, use total_pop. A vector containing the populations of each geographic
+#' unit
+#' @param popcons Deprecated, use pop_tol. The strength of the hard population
+#' constraint. \code{popcons} = 0.05 means that any proposed swap that
+#' brings a district more than 5\% away from population parity will be
+#' rejected. The default is \code{NULL}.
+#' @param grouppopvec Deprecated, use group_pop. A vector of populations for some sub-group of
+#' interest. The default is \code{NULL}.
+#' @param countymembership Deprecated, use counties. A vector of county membership assignments. The default is \code{NULL}.
+#' @param contiguitymap Deprecated. Use queens or rooks distance criteria for generating an
+#' adjacency list from a "SpatialPolygonsDataFrame" data type.
+#' Default is "rooks".
 #'
 #' @details This function allows users to simulate redistricting plans
 #' using Markov Chain Monte Carlo methods. Several constraints
@@ -1215,15 +1218,15 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' nsims = 10000)
 #' }
 #' @export
-redist.mcmc <- function(adj, adjobj, 
-                        total_pop, popvec, nsims, ndists = NULL, 
-                        init_plan = NULL, initcds,
+redist.mcmc <- function(adj,  
+                        total_pop,  nsims, ndists = NULL, 
+                        init_plan = NULL, 
                         loopscompleted = 0, nloop = 1, nthin = 1, eprob = 0.05,
                         lambda = 0, 
-                        pop_tol = NULL, popcons, 
-                        group_pop = NULL, grouppopvec,
+                        pop_tol = NULL,  
+                        group_pop = NULL, 
                         areasvec = NULL, 
-                        counties = NULL, countymembership,
+                        counties = NULL, 
                         borderlength_mat = NULL, ssdmat = NULL, temper = FALSE,
                         constraint = NULL, constraintweights = NULL,
                         compactness_metric = "fryer-holden",
@@ -1233,9 +1236,11 @@ redist.mcmc <- function(adj, adjobj,
                         betaweights = NULL, 
                         adjswaps = TRUE, rngseed = NULL, maxiterrsg = 5000,
                         adapt_lambda = FALSE, adapt_eprob = FALSE,
-                        contiguitymap, exact_mh = FALSE, savename = NULL,
+                        exact_mh = FALSE, savename = NULL,
                         verbose = TRUE, tgt_min = 0.55, tgt_other = 0.25,
-                        rvote = NULL, dvote = NULL, minorityprop = NULL){
+                        rvote = NULL, dvote = NULL, minorityprop = NULL,
+                        adjobj, popvec, initcds, popcons, grouppopvec, countymembership,
+                        contiguitymap){
     
     if(!missing(adjobj)){
         .Deprecated(new = 'adj', old = 'adjobj')

@@ -7,16 +7,16 @@
 #' @param shp  An sf object
 #' @param adj A zero-indexed adjacency list. Created with 
 #' \code{redist.adjacency} if not supplied.
-#' @param adjacency Deprecated, use adj. A zero-indexed adjacency list. Created with 
-#' \code{redist.adjacency} if not supplied.
 #' @param keep_rows row numbers of precincts to keep. Random submap selected if not supplied.
 #' @param total_pop numeric vector with one entry for the population of each precinct.
-#' @param population Deprecated, use total_pop. numeric vector with one entry for the population of each precinct.
 #' @param ndists integer, number of districts in whole map
-#' @param ndist Deprecated, use ndists. integer, number of districts in whole map
 #' @param pop_tol The strength of the hard population constraint.
-#' @param popcons Deprecated, use pop_tol. The strength of the hard population constraint.
 #' @param sub_ndists integer, number of districts in subset map
+#' @param adjacency Deprecated, use adj. A zero-indexed adjacency list. Created with 
+#' \code{redist.adjacency} if not supplied.
+#' @param population Deprecated, use total_pop. numeric vector with one entry for the population of each precinct.
+#' @param ndist Deprecated, use ndists. integer, number of districts in whole map
+#' @param popcons Deprecated, use pop_tol. The strength of the hard population constraint.
 #' @param subndist Deprecated, use sub_ndists. integer, number of districts in subset map
 #'
 #' @return a list containing the following components:
@@ -27,7 +27,9 @@
 #' \item{sub_pop_tol}{The new parity constraint for a subset.}
 #' @export
 #'
-redist.subset <- function(shp, adj, adjacency, keep_rows, total_pop, population, ndists, ndist, pop_tol, popcons, sub_ndists, subndist){
+redist.subset <- function(shp, adj,  
+                          keep_rows, total_pop,  ndists,  pop_tol,  sub_ndists, 
+                          adjacency, population, ndist, popcons, subndist){
   
   if(!missing(adjacency)){
     .Deprecated(new = 'adj', old = 'adjacency')

@@ -6,11 +6,11 @@
 #'
 #' @param tgt_min target group population for majority minority district
 #' @param group_pop A vector of populations for some subgroup of interest.
-#' @param grouppop Deprecated, use group_pop. A vector of populations for some subgroup of interest.
 #' @param total_pop A vector containing the populations of each geographic unit.
-#' @param fullpop Deprecated, use total_pop. A vector containing the populations of each geographic unit.
 #' @param ndists The number of congressional districts.
 #' @param nmmd The number of majority minority districts.
+#' @param grouppop Deprecated, use group_pop. A vector of populations for some subgroup of interest.
+#' @param fullpop Deprecated, use total_pop. A vector containing the populations of each geographic unit.
 #'
 #' @return numeric value to target
 #' @export
@@ -39,19 +39,20 @@ redist.find.target <- function(tgt_min, group_pop, grouppop, total_pop, fullpop,
 #' @param constraints Vector of constraints to include. Currently only 'vra' implemented.
 #' @param tgt_min Defaults to 0.55. If 'vra' included, the minority percent to encourage in each district.
 #' @param group_pop A vector of populations for some subgroup of interest.
-#' @param grouppop Deprecated, use group_pop. A vector of populations for some subgroup of interest.
 #' @param total_pop A vector containing the populations of each geographic unit.
-#' @param fullpop Deprecated, use total_pop. A vector containing the populations of each geographic unit.
 #' @param ndists The total number of districts.
 #' @param nmmd The number of majority minority districts to target for 'vra' constraint
 #' @param strength_vra The strength of the 'vra' constraint. Defaults to 2500.
 #' @param pow_vra  The exponent for the 'vra' constraint. Defaults to 1.5.
+#' @param grouppop Deprecated, use group_pop. A vector of populations for some subgroup of interest.
+#' @param fullpop Deprecated, use total_pop. A vector containing the populations of each geographic unit.
 #'
 #' @return list of lists for each constraint selected
 #' @export
 redist.constraint.helper <- function(constraints = 'vra', tgt_min = 0.55, 
-                                     group_pop, grouppop, total_pop, fullpop, ndists, nmmd, 
-                                     strength_vra = 2500, pow_vra = 1.5){
+                                     group_pop, total_pop, ndists, nmmd, 
+                                     strength_vra = 2500, pow_vra = 1.5,
+                                     grouppop, fullpop){
   
   if(!missing(grouppop)){
     group_pop <- grouppop

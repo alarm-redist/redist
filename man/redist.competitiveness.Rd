@@ -4,10 +4,10 @@
 \alias{redist.competitiveness}
 \title{Compute Competitiveness}
 \usage{
-redist.competitiveness(district_membership, rvote, dvote)
+redist.competitiveness(plans, rvote, dvote)
 }
 \arguments{
-\item{district_membership}{A numeric vector (if only one map) or matrix with one row 
+\item{plans}{A numeric vector (if only one map) or matrix with one row 
 for each precinct and one column for each map. Required.}
 
 \item{rvote}{A numeric vector with the Republican vote for each precinct.}

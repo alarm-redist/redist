@@ -6,24 +6,22 @@
 \usage{
 redist.enumpart(
   adj,
-  adjlist,
   unordered_path,
   ordered_path,
   out_path,
   ndists = 2,
-  ndist,
   all = TRUE,
   n = NULL,
   init = FALSE,
   read = TRUE,
   total_pop = NULL,
-  population
+  adjlist,
+  population,
+  ndist
 )
 }
 \arguments{
 \item{adj}{zero indexed adjacency list.}
-
-\item{adjlist}{Deprecated, use adj. zero indexed adjacency list}
 
 \item{unordered_path}{valid path to output the unordered adjacency map to}
 
@@ -32,8 +30,6 @@ redist.enumpart(
 \item{out_path}{Valid path to output the enumerated districts}
 
 \item{ndists}{number of districts to enumerate}
-
-\item{ndist}{number of districts to enumerate}
 
 \item{all}{boolean. TRUE outputs all districts. FALSE samples n districts.}
 
@@ -46,7 +42,11 @@ districts selected from uniform random distribution.}
 
 \item{total_pop}{Integer Vector. Defaults to NULL. If supplied, computes the parity.}
 
+\item{adjlist}{Deprecated, use adj. zero indexed adjacency list}
+
 \item{population}{Deprecated, use total_pop. Integer Vector. Defaults to NULL. If supplied, computes the parity.}
+
+\item{ndist}{Deprecated, use ndists. number of districts to enumerate}
 }
 \value{
 List with entries district_membership and parity.
