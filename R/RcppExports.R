@@ -9,6 +9,10 @@ collapse_adj <- function(graph, idxs) {
     .Call(`_redist_collapse_adj`, graph, idxs)
 }
 
+coarsen_adjacency <- function(adj, groups) {
+    .Call(`_redist_coarsen_adjacency`, adj, groups)
+}
+
 color_graph <- function(l, plan) {
     .Call(`_redist_color_graph`, l, plan)
 }
@@ -151,6 +155,10 @@ calc_polsbypopper <- function(new_cds, areas_vec, boundarylist_new, borderlength
 
 segregationcalc <- function(distmat, grouppop, fullpop) {
     .Call(`_redist_segregationcalc`, distmat, grouppop, fullpop)
+}
+
+reindex <- function(dm, nd) {
+    .Call(`_redist_reindex`, dm, nd)
 }
 
 plan_joint <- function(m1, m2, pop) {

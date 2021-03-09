@@ -5,7 +5,7 @@
 \alias{segregation_index}
 \title{Segregation index calculation for MCMC redistricting.}
 \usage{
-redist.segcalc(algout, grouppop, fullpop)
+redist.segcalc(plans, algout, group_pop, grouppop, total_pop, fullpop)
 
 segregation_index(
   map,
@@ -15,12 +15,19 @@ segregation_index(
 )
 }
 \arguments{
-\item{algout}{A matrix of congressional district assignments or a
+\item{plans}{A matrix of congressional district assignments or a
 redist object.}
 
-\item{grouppop}{A vector of populations for some subgroup of interest.}
+\item{algout}{Deprecated. Use plans. A matrix of congressional district assignments or a
+redist object.}
 
-\item{fullpop}{A vector containing the populations of each geographic unit.}
+\item{group_pop}{A vector of populations for some subgroup of interest.}
+
+\item{grouppop}{Deprecated. Use group_pop. A vector of populations for some subgroup of interest.}
+
+\item{total_pop}{A vector containign the populations of each geographic unit.}
+
+\item{fullpop}{Deprecated. Use total_pop. A vector containign the populations of each geographic unit.}
 
 \item{map}{a \code{\link{redist_map}} object}
 

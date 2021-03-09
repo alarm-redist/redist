@@ -5,7 +5,15 @@
 \alias{group_frac}
 \title{Calculate Group Percent by District}
 \usage{
-redist.group.percent(district_membership, group_pop, full_pop)
+redist.group.percent(
+  plans,
+  district_membership,
+  group_pop,
+  grouppop,
+  total_pop,
+  fullpop,
+  ncores = 1
+)
 
 group_frac(
   map,
@@ -15,21 +23,28 @@ group_frac(
 )
 }
 \arguments{
-\item{district_membership}{A matrix with one row
+\item{plans}{A matrix with one row
+for each precinct and one column for each map. Required.}
+
+\item{district_membership}{Deprecated, use plans. A matrix with one row
 for each precinct and one column for each map. Required.}
 
 \item{group_pop}{A numeric vector with the population of the group for every precinct.}
 
-\item{full_pop}{A numeric vector with the population for every precinct.}
+\item{grouppop}{Deprecated, use group_pop. A numeric vector with the population of the group for every precinct.}
+
+\item{total_pop}{A numeric vector with the population for every precinct.}
+
+\item{fullpop}{Deprecated, use total_pop. A numeric vector with the population for every precinct.}
+
+\item{ncores}{Number of cores to use for parallel computing. Default is 1.}
 
 \item{map}{a \code{\link{redist_map}} object}
 
 \item{.data}{a \code{\link{redist_plans}} object}
 }
 \value{
-A matrix with a row for each district and a column for each plan,
- with the entries representing the percentage of the group in that district,
- relative to the total population of the district.
+matrix with percent for each district
 }
 \description{
 \code{redist.group.percent} computes the percentage that a group makes up in
@@ -41,9 +56,9 @@ data("fl25")
 data(algdat)
 cd <- algdat.p10$cdmat[,1:5]
 
-redist.group.percent(district_membership = cd,
+redist.group.percent(plans = cd,
                     group_pop = fl25$BlackPop,
-                    full_pop = fl25$TotPop)
+                    total_pop = fl25$TotPop)
 }
 }
 \concept{analyze}

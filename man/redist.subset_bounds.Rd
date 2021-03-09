@@ -36,3 +36,4 @@ data(algdat.p10)
 subset = algdat.p10$cdmat[,1] \%in\% c(1, 2)
 redist.subset_bounds(fl25$TotPop, subset, 3, 2, 0.1)
 }
+\concept{prepare}

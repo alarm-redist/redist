@@ -19,8 +19,8 @@
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/yeti/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous" />
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
 
@@ -47,7 +47,7 @@
 
 
 <meta property="og:title" content="Compute Competitiveness — redist.competitiveness" />
-<meta property="og:description" content="Currently only implements the competitiveness function in equation (5) 
+<meta property="og:description" content="Currently only implements the competitiveness function in equation (5)
 of Cho &amp;amp; Liu 2016." />
 <meta property="og:image" content="/logo.png" />
 
@@ -81,7 +81,7 @@ of Cho &amp;amp; Liu 2016." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
       </span>
     </div>
 
@@ -104,9 +104,15 @@ of Cho &amp;amp; Liu 2016." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
+    </li>
+    <li>
       <a href="../articles/tidy-redist.html">Tidy `redist`</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -135,7 +141,7 @@ of Cho &amp;amp; Liu 2016." />
     </div>
 
     <div class="ref-description">
-    <p>Currently only implements the competitiveness function in equation (5) 
+    <p>Currently only implements the competitiveness function in equation (5)
 of Cho &amp; Liu 2016.</p>
     </div>
 
@@ -148,7 +154,7 @@ of Cho &amp; Liu 2016.</p>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>district_membership</th>
-      <td><p>A numeric vector (if only one map) or matrix with one row 
+      <td><p>A numeric vector (if only one map) or matrix with one row
 for each precinct and one column for each map. Required.</p></td>
     </tr>
     <tr>
@@ -176,8 +182,8 @@ for each precinct and one column for each map. Required.</p></td>
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"algdat.p10"</span><span class='op'>)</span>
-<span class='va'>comp</span> <span class='op'>&lt;-</span> <span class='fu'>redist.competitiveness</span><span class='op'>(</span><span class='va'>algdat.p10</span><span class='op'>$</span><span class='va'>cdmat</span>, 
-<span class='va'>algdat.p10</span><span class='op'>$</span><span class='va'>precinct.data</span><span class='op'>$</span><span class='va'>repvote</span>, 
+<span class='va'>comp</span> <span class='op'>&lt;-</span> <span class='fu'>redist.competitiveness</span><span class='op'>(</span><span class='va'>algdat.p10</span><span class='op'>$</span><span class='va'>cdmat</span>,
+<span class='va'>algdat.p10</span><span class='op'>$</span><span class='va'>precinct.data</span><span class='op'>$</span><span class='va'>repvote</span>,
 <span class='va'>algdat.p10</span><span class='op'>$</span><span class='va'>precinct.data</span><span class='op'>$</span><span class='va'>demvote</span><span class='op'>)</span>
 <span class='op'>}</span>
 </div></pre>

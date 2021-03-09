@@ -2,6 +2,7 @@ pandoc: 2.11.2
 pkgdown: 1.6.1
 pkgdown_sha: ~
 articles:
+  Intro-to-redist: Intro-to-redist.html
   tidy-redist: tidy-redist.html
-last_built: 2021-02-07T05:48Z
+last_built: 2021-03-09T18:06Z
 

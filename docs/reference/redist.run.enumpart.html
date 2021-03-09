@@ -19,8 +19,8 @@
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/yeti/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous" />
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
 
@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
       </span>
     </div>
 
@@ -103,9 +103,15 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
+    </li>
+    <li>
       <a href="../articles/tidy-redist.html">Tidy `redist`</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -140,12 +146,10 @@
     <pre class="usage"><span class='fu'>redist.run.enumpart</span><span class='op'>(</span>
   <span class='va'>ordered_path</span>,
   <span class='va'>out_path</span>,
-  ndist <span class='op'>=</span> <span class='fl'>2</span>,
+  ndists <span class='op'>=</span> <span class='fl'>2</span>,
+  <span class='va'>ndist</span>,
   all <span class='op'>=</span> <span class='cn'>TRUE</span>,
   n <span class='op'>=</span> <span class='cn'>NULL</span>,
-  weight_path <span class='op'>=</span> <span class='cn'>NULL</span>,
-  lower <span class='op'>=</span> <span class='cn'>NULL</span>,
-  upper <span class='op'>=</span> <span class='cn'>NULL</span>,
   options <span class='op'>=</span> <span class='cn'>NULL</span>
 <span class='op'>)</span></pre>
 
@@ -161,8 +165,12 @@
       <td><p>Valid path to output the enumerated districts</p></td>
     </tr>
     <tr>
-      <th>ndist</th>
+      <th>ndists</th>
       <td><p>number of districts to enumerate</p></td>
+    </tr>
+    <tr>
+      <th>ndist</th>
+      <td><p>Deprecated, use ndists. number of districts to enumerate</p></td>
     </tr>
     <tr>
       <th>all</th>
@@ -172,6 +180,10 @@
       <th>n</th>
       <td><p>integer. Number of districts to output if all is FALSE. Returns
 districts selected from uniform random distribution.</p></td>
+    </tr>
+    <tr>
+      <th>options</th>
+      <td><p>Additional enumpart arguments. Not recommended for use.</p></td>
     </tr>
     <tr>
       <th>weight_path</th>
@@ -185,10 +197,6 @@ vertex weights, to be used along with <code>lower</code> and <code>upper</code>.
     <tr>
       <th>upper</th>
       <td><p>An upper bound on each partition's total weight.</p></td>
-    </tr>
-    <tr>
-      <th>options</th>
-      <td><p>Additional enumpart arguments. Not recommended for use.</p></td>
     </tr>
     </table>
 

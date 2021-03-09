@@ -34,14 +34,21 @@ combine.par.anneal <- function(a, b){
 #' \code{redist.mcmc.anneal} simulates congressional redistricting plans
 #' using Markov chain Monte Carlo methods coupled with simulated annealing.
 #'
-#'
-#' @param adjobj An adjacency matrix, list, or object of class
+#' @param adj adjacency matrix, list, or object of class
 #' "SpatialPolygonsDataFrame."
+#' @param adjobj Deprecated, use adj. An adjacency matrix, list, or object of class
+#' "SpatialPolygonsDataFrame."
+#' @param total_pop A vector containing the populations of each geographic
+#' unit
 #' @param popvec A vector containing the populations of each geographic
 #' unit
 #' @param ndists The number of congressional districts. The default is
 #' \code{NULL}.
-#' @param initcds A vector containing the congressional district labels
+#' @param init_plan A vector containing the congressional district labels
+#' of each geographic unit. The default is \code{NULL}. If not provided,
+#' random and contiguous congressional district assignments will be generated
+#' using \code{redist.rsg}.
+#' @param initcds Deprecated, use init_plan. A vector containing the congressional district labels
 #' of each geographic unit. The default is \code{NULL}. If not provided,
 #' random and contiguous congressional district assignments will be generated
 #' using \code{redist.rsg}.
@@ -56,15 +63,22 @@ combine.par.anneal <- function(a, b){
 #' @param lambda The parameter determining the number of swaps to attempt
 #' each iteration of the algorihtm. The number of swaps each iteration is
 #' equal to Pois(\code{lambda}) + 1. The default is \code{0}.
-#' @param popcons The strength of the hard population
+#' @param pop_tol The strength of the hard population
+#' constraint. \code{pop_tol} = 0.05 means that any proposed swap that
+#' brings a district more than 5\% away from population parity will be
+#' rejected. The default is \code{NULL}.
+#' @param popcons Deprecated, use pop_tol. The strength of the hard population
 #' constraint. \code{popcons} = 0.05 means that any proposed swap that
 #' brings a district more than 5\% away from population parity will be
 #' rejected. The default is \code{NULL}.
-#' @param grouppopvec A vector of populations for some sub-group of
+#' @param group_pop A vector of populations for some sub-group of
+#' interest. The default is \code{NULL}.
+#' @param grouppopvec Deprecated, use group_pop. A vector of populations for some sub-group of
 #' interest. The default is \code{NULL}.
 #' @param areasvec A vector of precinct areas for discrete Polsby-Popper.
 #' The default is \code{NULL}.
-#' @param countymembership A vector of county membership assignments. The default is \code{NULL}.
+#' @param counties A vector of county membership assignments. The default is \code{NULL}.
+#' @param countymembership Deprecated, use counties. A vector of county membership assignments. The default is \code{NULL}.
 #' @param borderlength_mat A matrix of border length distances, where
 #' the first two columns are the indices of precincts sharing a border and
 #' the third column is its distance. Default is \code{NULL}.
@@ -108,24 +122,59 @@ combine.par.anneal <- function(a, b){
 #'
 #' @concept simulate
 #' @export
-redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
-                               initcds = NULL,
+redist.mcmc.anneal <- function(adj, adjobj,
+                               total_pop, popvec,
+                               ndists = NULL,
+                               init_plan = NULL, initcds,
                                num_hot_steps = 40000, num_annealing_steps = 60000,
                                num_cold_steps = 20000,
                                eprob = 0.05,
-                               lambda = 0, popcons = NULL, grouppopvec = NULL,
+                               lambda = 0,
+                               pop_tol = NULL, popcons,
+                               group_pop = NULL, grouppopvec,
                                areasvec = NULL,
-                               countymembership = NULL, borderlength_mat = NULL,
+                               counties = NULL, countymembership,
+                               borderlength_mat = NULL,
                                ssdmat = NULL,
                                constraint = NULL, constraintweights = NULL,
                                compactness_metric = "fryer-holden",
                                partisan_metric = "efficiency-gap",
                                rngseed = NULL, maxiterrsg = 5000,
                                adapt_lambda = FALSE, adapt_eprob = FALSE,
-                               contiguitymap = "rooks", exact_mh = FALSE,
+                               contiguitymap, exact_mh = FALSE,
                                savename = NULL, verbose = TRUE,
                                ncores = 1, tgt_min = 0.55, tgt_other = 0.25, rvote = NULL,
                                dvote = NULL, minorityprop = NULL){
+
+    if(!missing(adjobj)){
+        .Deprecated(new = 'adj', old = 'adjobj')
+        adj <- adjobj
+    }
+    if(!missing(popvec)){
+        .Deprecated(new = 'total_pop', old = 'popvec')
+        total_pop <- popvec
+    }
+    if(!missing(initcds)){
+        .Deprecated(new = 'init_plan', old = 'initcds')
+        init_plan <- initcds
+    }
+    if(!missing(popcons)){
+        .Deprecated(new = 'pop_tol', old = 'popcons')
+        pop_tol <- popcons
+    }
+    if(!missing(grouppopvec)){
+        .Deprecated(new = 'group_pop', old = grouppopvec)
+        group_pop <- grouppopvec
+    }
+    if(!missing(countymembership)){
+        .Deprecated(new = 'counties', old = 'countymembership')
+        counties <- countymembership
+    }
+
+    if(!missing(contiguitymap)){
+        .Deprecated(msg = 'contiguitymap has been deprecated. Rooks adjacency built with redist.adjacency().')
+    }
+    contiguitymap <- 'rooks'
 
     if(verbose){
         ## Initialize ##
@@ -140,13 +189,13 @@ redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
     ## --------------
     ## Initial checks
     ## --------------
-    if(missing(adjobj)){
+    if(missing(adj)){
         stop("Please supply adjacency matrix or list")
     }
-    if(missing(popvec)){
+    if(missing(total_pop)){
         stop("Please supply vector of geographic unit populations")
     }
-    if(is.null(ndists) & is.null(initcds)){
+    if(is.null(ndists) & is.null(init_plan)){
         stop("Please provide either the desired number of congressional districts
               or an initial set of congressional district assignments")
     }
@@ -185,11 +234,11 @@ redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
     ## Preprocessing data
     ## ------------------
     cat("Preprocessing data.\n\n")
-    preprocout <- redist.preproc(adjobj = adjobj, popvec = popvec,
-                                 initcds = initcds, ndists = ndists,
-                                 popcons = popcons,
-                                 countymembership = countymembership,
-                                 grouppopvec = grouppopvec,
+    preprocout <- redist.preproc(adj = adj, total_pop = total_pop,
+                                 init_plan = init_plan, ndists = ndists,
+                                 pop_tol = pop_tol,
+                                 counties = counties,
+                                 group_pop = group_pop,
                                  areasvec = areasvec,
                                  borderlength_mat = borderlength_mat,
                                  ssdmat = ssdmat,
@@ -221,12 +270,12 @@ redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
 
     cat("Starting swMH().\n")
     algout <- swMH(aList = preprocout$data$adjlist,
-                   cdvec = preprocout$data$initcds,
-                   cdorigvec = preprocout$data$initcds,
-                   popvec = preprocout$data$popvec,
-                   grouppopvec = preprocout$data$grouppopvec,
+                   cdvec = preprocout$data$init_plan,
+                   cdorigvec = preprocout$data$init_plan,
+                   popvec = preprocout$data$total_pop,
+                   grouppopvec = preprocout$data$group_pop,
                    areas_vec = preprocout$data$areasvec,
-                   county_membership = preprocout$data$countymembership,
+                   county_membership = preprocout$data$counties,
                    borderlength_mat = preprocout$data$borderlength_mat,
                    nsims = 100,
                    eprob = eprob,
@@ -281,7 +330,7 @@ redist.mcmc.anneal <- function(adjobj, popvec, ndists = NULL,
 #'
 #' @param file_name The file name to search for in current working directory.
 #'
-#' @concept simulate
+#' @concept post
 #' @export
 redist.combine.anneal <- function(file_name){
 
@@ -341,10 +390,10 @@ redist.combine.anneal <- function(file_name){
 
 }
 
-redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
-                           popcons = NULL,
-                           countymembership = NULL,
-                           grouppopvec = NULL,
+redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
+                           pop_tol = NULL,
+                           counties = NULL,
+                           group_pop = NULL,
                            areasvec = NULL,
                            borderlength_mat = NULL, ssdmat = NULL,
                            compactness_metric = NULL,
@@ -362,13 +411,13 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     #########################
     ## Inputs to function: ##
     #########################
-    ## adjobj - adjacency object of geographic units. Accepts adjlist or adjmat
-    ## popvec - population of each of the units
-    ## initcds - initial congressional units. Must be contiguous partitions. Default is NULL
+    ## adj - adjacency object of geographic units. Accepts adjlist or adjmat
+    ## total_pop - population of each of the units
+    ## init_plan - initial congressional units. Must be contiguous partitions. Default is NULL
     ## ndists - number of desired congressional units. Default is NULL
-    ## popcons - strength of hard population constraint. Defaulted to no
-    ##           constraint. popcons = 0.01 implies a 1% population constraint.
-    ## grouppopvec - vector of populations for a minority group. To be used
+    ## pop_tol - strength of hard population constraint. Defaulted to no
+    ##           constraint. pop_tol = 0.01 implies a 1% population constraint.
+    ## group_pop - vector of populations for a minority group. To be used
     ##               in conjunction with the segregation and vra M-H constraints
     ## ssdmat - matrix of squared distances between population units.
     ##          To be used when applying the compactness constraint.
@@ -394,10 +443,10 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     #######################
     ## Check missingness ##
     #######################
-    if(missing(adjobj)){
+    if(missing(adj)){
         stop("Please supply adjacency matrix or list")
     }
-    if(missing(popvec)){
+    if(missing(total_pop)){
         stop("Please supply vector of geographic unit populations")
     }
     if(!is.null(constraintweights)){
@@ -413,34 +462,34 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ############################################
     ## If not a list, convert adjlist to list ##
     ############################################
-    if(!is.list(adjobj)){
+    if(!is.list(adj)){
 
         ## If a matrix, check to see if adjacency matrix
-        if(is.matrix(adjobj)){
+        if(is.matrix(adj)){
 
             ## Is it square?
-            squaremat <- (nrow(adjobj) == ncol(adjobj))
+            squaremat <- (nrow(adj) == ncol(adj))
             ## All binary entries?
-            binary <- ((length(unique(c(adjobj))) == 2) &
-                           (sum(unique(c(adjobj)) %in% c(0, 1)) == 2))
+            binary <- ((length(unique(c(adj))) == 2) &
+                           (sum(unique(c(adj)) %in% c(0, 1)) == 2))
             ## Diagonal elements all 1?
-            diag <- (sum(diag(adjobj)) == nrow(adjobj))
+            diag <- (sum(diag(adj)) == nrow(adj))
             ## Symmetric?
-            symmetric <- isSymmetric(adjobj)
+            symmetric <- isSymmetric(adj)
 
             ## If all are true, change to adjlist and automatically zero-index
             if(squaremat & binary & diag & symmetric){
 
                 ## Initialize object
-                adjlist <- vector("list", nrow(adjobj))
+                adjlist <- vector("list", nrow(adj))
 
                 ## Loop through rows in matrix
-                for(i in 1:nrow(adjobj)){
+                for(i in 1:nrow(adj)){
 
                     ## Extract row
-                    adjvec <- adjobj[,i]
+                    adjvec <- adj[,i]
                     ## Find elements it is adjacent to
-                    inds <- which(adjobj == 1)
+                    inds <- which(adj == 1)
                     ## Remove self-adjacency
                     inds <- inds[inds != i,]
                     ## Zero-index
@@ -453,13 +502,13 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
             }else { ## If not valid adjacency matrix, throw error
                 stop("Please input valid adjacency matrix")
             }
-        }else if(class(adjobj) == "SpatialPolygonsDataFrame"){ ## shp object
+        }else if(class(adj) == "SpatialPolygonsDataFrame"){ ## shp object
 
             ## Distance criterion
             queens <- ifelse(contiguitymap == "rooks", FALSE, TRUE)
 
             ## Convert shp object to adjacency list
-            adjlist <- redist.adjacency(st_as_sf(adjobj))
+            adjlist <- redist.adjacency(st_as_sf(adj))
 
             ## Zero-index list
             for(i in 1:length(adjlist)){
@@ -474,12 +523,12 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
                  Polygons shp file")
         }
 
-    }else if('sf' %in% class(adjobj)){
-        adjlist <- redist.adjacency(adjobj)
+    }else if('sf' %in% class(adj)){
+        adjlist <- redist.adjacency(adj)
     }else{
 
         ## Rename adjacency object as list
-        adjlist <- adjobj
+        adjlist <- adj
 
         ## Is list zero-indexed?
         minlist <- min(unlist(adjlist))
@@ -502,14 +551,14 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ###################################################################
     ## Check whether initial partitions (if provided) are contiguous ##
     ###################################################################
-    if(!is.null(initcds)){
-        if(!is.na(initcds)[1]){
-            if(sum(is.na(initcds)) > 0){
-                stop("You have NA's in your congressional districts. Please check the provided initcds vector for NA entries.")
+    if(!is.null(init_plan)){
+        if(!is.na(init_plan)[1]){
+            if(sum(is.na(init_plan)) > 0){
+                stop("You have NA's in your congressional districts. Please check the provided init_plan vector for NA entries.")
             }
 
-            ndists <- length(unique(initcds))
-            divlist <- genAlConn(adjlist, initcds)
+            ndists <- length(unique(init_plan))
+            divlist <- genAlConn(adjlist, init_plan)
             ncontig <- countpartitions(divlist)
 
             if(ncontig != ndists){
@@ -524,12 +573,12 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ## If no initial congressional districts provided, use Random Seed and Grow ##
     ## (Chen and Rodden 2013) algorithm                                         ##
     ##############################################################################
-    if(is.null(initcds)){
+    if(is.null(init_plan)){
         ## Set up target pop, strength of constraint (5%)
-        if(is.null(popcons)){
-            popcons_rsg <- .05
+        if(is.null(pop_tol)){
+            pop_tol_rsg <- .05
         }else{
-            popcons_rsg <- popcons
+            pop_tol_rsg <- pop_tol
         }
 
         ## Print start
@@ -540,54 +589,54 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
         cat("Using redist.rsg() to generate starting values.\n\n", append= TRUE)
 
         ## Run the algorithm
-        initout <- redist.rsg(adj.list = adjlist,
-                              population = popvec,
+        initout <- redist.rsg(adj = adjlist,
+                              total_pop = total_pop,
                               ndists = ndists,
-                              thresh = popcons_rsg,
+                              pop_tol = pop_tol_rsg,
                               verbose = FALSE,
                               maxiter = maxiterrsg)
         ## Get initial cds
-        initcds <- initout$district_membership
+        init_plan <- initout$plan
     }
 
     ###########################################################
     ## Check other inputs to make sure they are right length ##
     ###########################################################
-    if((length(popvec) != length(adjlist)) | (sum(is.na(popvec)) > 0)){
+    if((length(total_pop) != length(adjlist)) | (sum(is.na(total_pop)) > 0)){
         stop("Each entry in adjacency list must have a corresponding entry
               in vector of populations")
     }
-    if((length(initcds) != length(adjlist)) | (sum(is.na(initcds)) > 0)){
+    if((length(init_plan) != length(adjlist)) | (sum(is.na(init_plan)) > 0)){
         stop("Each entry in adjacency list must have an initial congressional
              district assignment")
     }
-    if("segregation" %in% constraint & is.null(grouppopvec)){
+    if("segregation" %in% constraint & is.null(group_pop)){
         stop("If applying the segregation constraint, please provide a vector
              of subgroup populations")
     }
-    if("vra" %in% constraint & is.null(grouppopvec)){
+    if("vra" %in% constraint & is.null(group_pop)){
         stop("If applying the vra constraint, please provide a vector
              of subgroup populations")
     }
-    if("countysplit" %in% constraint & is.null(countymembership)){
+    if("countysplit" %in% constraint & is.null(counties)){
         stop("If applying the county split constraint, please provide a numeric vector indicating county membership.")
     }
-    if("segregation" %in% constraint & !(is.null(grouppopvec))){
-        if((length(grouppopvec) != length(adjlist)) |
-           (sum(is.na(grouppopvec)) > 0)){
+    if("segregation" %in% constraint & !(is.null(group_pop))){
+        if((length(group_pop) != length(adjlist)) |
+           (sum(is.na(group_pop)) > 0)){
             stop("If applying the segregation constraint, each entry in adjacency
               list must have corresponding entry in vector of group populations")
         }
     }
-    if("vra" %in% constraint & !(is.null(grouppopvec))){
-        if((length(grouppopvec) != length(adjlist)) |
-           (sum(is.na(grouppopvec)) > 0)){
+    if("vra" %in% constraint & !(is.null(group_pop))){
+        if((length(group_pop) != length(adjlist)) |
+           (sum(is.na(group_pop)) > 0)){
             stop("If applying the vra constraint, each entry in adjacency
               list must have corresponding entry in vector of group populations")
         }
     }
-    if("countysplit" %in% constraint & !is.null(countymembership)){
-        if(length(countymembership) != length(adjlist) | sum(is.na(countymembership)) > 0){
+    if("countysplit" %in% constraint & !is.null(counties)){
+        if(length(counties) != length(adjlist) | sum(is.na(counties)) > 0){
             stop("You do not have a county membership assigned for every unit.")
         }
     }
@@ -597,18 +646,18 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
             stop('You must provide an integer vector to rvote when using partisan constraint.')
         }
         if(is.null(dvote)){
-            stop('You must provide an integer vector to rvote when using partisan constraint.')
+            stop('You must provide an integer vector to dvote when using partisan constraint.')
         }
         if(length(rvote) != length(adjlist)){
-            stop("dvote must be an integer vector with corresponding entry for each entry in adjacency list")
+            stop("rvote must be an integer vector with corresponding entry for each entry in adjacency list")
         }
         if(length(dvote) != length(adjlist)){
             stop("dvote must be an integer vector with corresponding entry for each entry in adjacency list")
         }
-        if(!'integer' %in% class(rvote)){
+        if(!'integer' %in% class(rvote) & !'numeric' %in% class(rvote)){
             stop('rvote must be an integer vector.')
         }
-        if(!'integer' %in% class(dvote)){
+        if(!'integer' %in% class(dvote) & !'numeric' %in% class(dvote)){
             stop('dvote must be an integer vector.')
         }
         if(is.null(partisan_metric)){
@@ -638,10 +687,10 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ####################
     ## Zero-index cds ##
     ####################
-    if(min(initcds) != 0){
-        initcds <- initcds - min(initcds)
+    if(min(init_plan) != 0){
+        init_plan <- init_plan - min(init_plan)
     }
-    if(length(unique(initcds)) != (max(initcds) + 1)){
+    if(length(unique(init_plan)) != (max(init_plan) + 1)){
         stop("Need congressional assignment ids to be sequence increasing by 1")
     }
 
@@ -666,36 +715,36 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     ####################################################
     ## Calculate parity and population margin allowed ##
     ####################################################
-    dists <- length(unique(initcds))
-    if(is.null(popcons)){
-        popcons <- 100
+    dists <- length(unique(init_plan))
+    if(is.null(pop_tol)){
+        pop_tol <- 100
     }
 
     #####################################
-    ## Set grouppopvec if not provided ##
+    ## Set group_pop if not provided ##
     #####################################
-    if(is.null(grouppopvec)){
-        grouppopvec <- popvec
+    if(is.null(group_pop)){
+        group_pop <- total_pop
     }
 
     ## -------------------------------------
     ## Set county membership if not provided
     ## -------------------------------------
-    if(is.null(countymembership)){
-        countymembership <- c(0, 0, 0, 0)
+    if(is.null(counties)){
+        counties <- c(0, 0, 0, 0)
     }else{
-        if(is.factor(countymembership)){
-            countymembership <- as.numeric(countymembership)
+        if(is.factor(counties)){
+            counties <- as.numeric(counties)
         }
-        countymembership <- countymembership - min(countymembership)
+        counties <- counties - min(counties)
     }
 
     ################################
     ## Set ssdmat if not provided ##
     ################################
     if(is.null(ssdmat) & "compact" %in% constraint & "fryer-holden" %in% compactness_metric){
-        if(class(adjobj) == "SpatialPolygonsDataFrame"){
-            centroids <- coordinates(adjobj)
+        if(class(adj) == "SpatialPolygonsDataFrame"){
+            centroids <- coordinates(adj)
             ssdmat <- calcPWDh(centroids)
         }else{
             stop("Provide squared distances matrix if constraining compactness using the Fryer-Holden metric.")
@@ -808,16 +857,16 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
     preprocout <- list(
         data = list(
             adjlist = adjlist,
-            popvec = popvec,
-            initcds = initcds,
-            grouppopvec = grouppopvec,
+            total_pop = total_pop,
+            init_plan = init_plan,
+            group_pop = group_pop,
             areasvec = areasvec,
             borderlength_mat = borderlength_mat,
             ssdmat = ssdmat,
-            countymembership = countymembership
+            counties = counties
         ),
         params = list(
-            pctdistparity = popcons,
+            pctdistparity = pop_tol,
             dists = dists,
             beta = beta,
             temperbeta = temperbeta,
@@ -916,17 +965,17 @@ redist.preproc <- function(adjobj, popvec, initcds = NULL, ndists = NULL,
 #'
 #' ## Get an initial partition
 #' set.seed(1)
-#' initcds <- algdat.pfull$cdmat[,sample(1:ncol(algdat.pfull$cdmat), 1)]
+#' init_plan <- algdat.pfull$cdmat[,sample(1:ncol(algdat.pfull$cdmat), 1)]
 #'
 #' ## Run the algorithm
-#' alg_253 <- redist.mcmc(adjobj = algdat.pfull$adjlist,
-#' popvec = algdat.pfull$precinct.data$pop,
-#' initcds = initcds,
+#' alg_253 <- redist.mcmc(adj = algdat.pfull$adjlist,
+#' total_pop = algdat.pfull$precinct.data$pop,
+#' init_plan = init_plan,
 #' nsims = 10000, nloops = 2, savename = "test")
 #' out <- redist.combine(savename = "test", nloop = 2,
 #' nthin = 10)
 #' }
-#' @concept simulate
+#' @concept post
 #' @export
 redist.combine <- function(savename, nloop, nthin, temper = 0){
 
@@ -1001,15 +1050,22 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' \code{redist.mcmc} is used to simulate Congressional redistricting
 #' plans using Markov Chain Monte Carlo methods.
 #'
-#'
-#' @param adjobj An adjacency matrix, list, or object of class
+#' @param adj adjacency matrix, list, or object of class
 #' "SpatialPolygonsDataFrame."
+#' @param adjobj Deprecated, use adj. An adjacency matrix, list, or object of class
+#' "SpatialPolygonsDataFrame."
+#' @param total_pop A vector containing the populations of each geographic
+#' unit
 #' @param popvec A vector containing the populations of each geographic
 #' unit
 #' @param nsims The number of simulations run before a save point.
 #' @param ndists The number of congressional districts. The default is
 #' \code{NULL}.
-#' @param initcds A vector containing the congressional district labels
+#' @param init_plan A vector containing the congressional district labels
+#' of each geographic unit. The default is \code{NULL}. If not provided,
+#' random and contiguous congressional district assignments will be generated
+#' using \code{redist.rsg}.
+#' @param initcds Deprecated, use init_plan. A vector containing the congressional district labels
 #' of each geographic unit. The default is \code{NULL}. If not provided,
 #' random and contiguous congressional district assignments will be generated
 #' using \code{redist.rsg}.
@@ -1023,17 +1079,24 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' @param eprob The probability of keeping an edge connected. The
 #' default is \code{0.05}.
 #' @param lambda The parameter determining the number of swaps to attempt
-#' each iteration of the algorihtm. The number of swaps each iteration is
+#' each iteration of the algorithm. The number of swaps each iteration is
 #' equal to Pois(\code{lambda}) + 1. The default is \code{0}.
-#' @param popcons The strength of the hard population
+#' @param pop_tol The strength of the hard population
+#' constraint. \code{pop_tol} = 0.05 means that any proposed swap that
+#' brings a district more than 5\% away from population parity will be
+#' rejected. The default is \code{NULL}.
+#' @param popcons Deprecated, use pop_tol. The strength of the hard population
 #' constraint. \code{popcons} = 0.05 means that any proposed swap that
 #' brings a district more than 5\% away from population parity will be
 #' rejected. The default is \code{NULL}.
-#' @param grouppopvec A vector of populations for some sub-group of
+#' @param group_pop A vector of populations for some sub-group of
+#' interest. The default is \code{NULL}.
+#' @param grouppopvec Deprecated, use group_pop. A vector of populations for some sub-group of
 #' interest. The default is \code{NULL}.
 #' @param areasvec A vector of precinct areas for discrete Polsby-Popper.
 #' The default is \code{NULL}.
-#' @param countymembership A vector of county membership assignments. The default is \code{NULL}.
+#' @param counties A vector of county membership assignments. The default is \code{NULL}.
+#' @param countymembership Deprecated, use counties. A vector of county membership assignments. The default is \code{NULL}.
 #' @param borderlength_mat A matrix of border length distances, where
 #' the first two columns are the indices of precincts sharing a border and
 #' the third column is its distance. Default is \code{NULL}.
@@ -1047,8 +1110,8 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' @param constraintweights The weights to apply to each constraint. Should be a vector
 #' the same length as constraint. Default is NULL.
 #' @param compactness_metric The compactness metric to use when constraining on
-#' compactness. Default is \code{fryer-holden}, the other implemented option
-#' is \code{polsby-popper}.
+#' compactness. Default is \code{fryer-holden}, the other implemented options
+#' are \code{polsby-popper} and \code{edges-removed}.
 #' @param partisan_metric The partisan metric to use when constraining on partisan metrics.
 #' Only implemented is "efficiency-gap", the default.
 #' @param ssd_denom The normalizing constant for the sum-of-squared distance Fryer-Holden metric.
@@ -1099,7 +1162,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' \code{redist} is a list that contains the following components (the
 #' inclusion of some components is dependent on whether tempering
 #' techniques are used):
-#' \item{partitions}{Matrix of congressional district assignments generated by the
+#' \item{plans}{Matrix of congressional district assignments generated by the
 #' algorithm. Each row corresponds to a geographic unit, and each column
 #' corresponds to a simulation.}
 #' \item{distance_parity}{Vector containing the maximum distance from parity for
@@ -1147,20 +1210,25 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #'
 #' ## Get an initial partition
 #' set.seed(1)
-#' initcds <- algdat.pfull$cdmat[,sample(1:ncol(algdat.pfull$cdmat), 1)]
+#' init_plan <- algdat.pfull$cdmat[,sample(1:ncol(algdat.pfull$cdmat), 1)]
 #'
 #' ## Run the algorithm
 #' alg_253 <- redist.mcmc(adjobj = algdat.pfull$adjlist,
-#' popvec = algdat.pfull$precinct.data$pop,
-#' initcds = initcds,
+#' total_pop = algdat.pfull$precinct.data$pop,
+#' init_plan = init_plan,
 #' nsims = 10000)
 #' }
 #' @concept simulate
 #' @export
-redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
+redist.mcmc <- function(adj, adjobj,
+                        total_pop, popvec, nsims, ndists = NULL,
+                        init_plan = NULL, initcds,
                         loopscompleted = 0, nloop = 1, nthin = 1, eprob = 0.05,
-                        lambda = 0, popcons = NULL, grouppopvec = NULL,
-                        areasvec = NULL, countymembership = NULL,
+                        lambda = 0,
+                        pop_tol = NULL, popcons,
+                        group_pop = NULL, grouppopvec,
+                        areasvec = NULL,
+                        counties = NULL, countymembership,
                         borderlength_mat = NULL, ssdmat = NULL, temper = FALSE,
                         constraint = NULL, constraintweights = NULL,
                         compactness_metric = "fryer-holden",
@@ -1170,10 +1238,41 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                         betaweights = NULL,
                         adjswaps = TRUE, rngseed = NULL, maxiterrsg = 5000,
                         adapt_lambda = FALSE, adapt_eprob = FALSE,
-                        contiguitymap = "rooks", exact_mh = FALSE, savename = NULL,
+                        contiguitymap, exact_mh = FALSE, savename = NULL,
                         verbose = TRUE, tgt_min = 0.55, tgt_other = 0.25,
-                        rvote = NULL, dvote = NULL, minorityprop = NULL
-){
+                        rvote = NULL, dvote = NULL, minorityprop = NULL){
+
+    if(!missing(adjobj)){
+        .Deprecated(new = 'adj', old = 'adjobj')
+        adj <- adjobj
+    }
+    if(!missing(popvec)){
+        .Deprecated(new = 'total_pop', old = 'popvec')
+        total_pop <- popvec
+    }
+    if(!missing(initcds)){
+        .Deprecated(new = 'init_plan', old = 'initcds')
+        init_plan <- initcds
+    }
+    if(!missing(popcons)){
+        .Deprecated(new = 'pop_tol', old = 'popcons')
+        pop_tol <- popcons
+    }
+    if(!missing(grouppopvec)){
+        .Deprecated(new = 'group_pop', old = grouppopvec)
+        group_pop <- grouppopvec
+    }
+    if(!missing(countymembership)){
+        .Deprecated(new = 'counties', old = 'countymembership')
+        counties <- countymembership
+    }
+
+    if(!missing(contiguitymap)){
+        .Deprecated(msg = 'contiguitymap has been deprecated. Rooks adjacency built with redist.adjacency().')
+    }
+    contiguitymap <- 'rooks'
+
+
 
     if(verbose){
         ## Initialize ##
@@ -1188,16 +1287,16 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
     ##########################
     ## Is anything missing? ##
     ##########################
-    if(missing(adjobj)){
+    if(missing(adj)){
         stop("Please supply adjacency matrix or list")
     }
-    if(missing(popvec)){
+    if(missing(total_pop)){
         stop("Please supply vector of geographic unit populations")
     }
     if(missing(nsims)){
         stop("Please supply number of simulations to run algorithm")
     }
-    if(is.null(ndists) & is.null(initcds)){
+    if(is.null(ndists) & is.null(init_plan)){
         stop("Please provide either the desired number of congressional districts
               or an initial set of congressional district assignments")
     }
@@ -1239,11 +1338,11 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
     ## Preprocess data ##
     #####################
     cat("Preprocessing data.\n\n")
-    preprocout <- redist.preproc(adjobj = adjobj, popvec = popvec,
-                                 initcds = initcds, ndists = ndists,
-                                 popcons = popcons,
-                                 countymembership = countymembership,
-                                 grouppopvec = grouppopvec,
+    preprocout <- redist.preproc(adj = adj, total_pop = total_pop,
+                                 init_plan = init_plan, ndists = ndists,
+                                 pop_tol = pop_tol,
+                                 counties = counties,
+                                 group_pop = group_pop,
                                  areasvec = areasvec,
                                  borderlength_mat = borderlength_mat,
                                  ssdmat = ssdmat,
@@ -1322,7 +1421,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
                 rm(list = "algout")
 
             }else{
-                cds <- preprocout$data$initcds
+                cds <- preprocout$data$init_plan
             }
 
         }
@@ -1330,11 +1429,11 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
         ## Run algorithm
         algout <- swMH(aList = preprocout$data$adjlist,
                        cdvec = cds,
-                       cdorigvec = preprocout$data$initcds,
-                       popvec = preprocout$data$popvec,
-                       grouppopvec = preprocout$data$grouppopvec,
+                       cdorigvec = preprocout$data$init_plan,
+                       popvec = preprocout$data$total_pop,
+                       grouppopvec = preprocout$data$group_pop,
                        areas_vec = preprocout$data$areasvec,
-                       county_membership = preprocout$data$countymembership,
+                       county_membership = preprocout$data$counties,
                        borderlength_mat = preprocout$data$borderlength_mat,
                        nsims = nsims,
                        eprob = eprob,
@@ -1486,15 +1585,15 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
 #'
 #' ## Get an initial partition
 #' set.seed(1)
-#' initcds <- algdat.p20$cdmat[,sample(1:ncol(algdat.p20$cdmat), 1)]
+#' init_plan <- algdat.p20$cdmat[,sample(1:ncol(algdat.p20$cdmat), 1)]
 #'
 #' ## Vector of beta weights
 #' betaweights <- rep(NA, 10); for(i in 1:10){betaweights[i] <- 4^i}
 #'
 #' ## Run simulations - tempering population constraint
-#' alg_253_20_st <- redist.mcmc(adjobj = algdat.p20$adjlist,
-#' popvec = algdat.p20$precinct.data$pop,
-#' initcds = initcds, nsims = 10000, constraint = 'population',
+#' alg_253_20_st <- redist.mcmc(adj = algdat.p20$adjlist,
+#' total_pop = algdat.p20$precinct.data$pop,
+#' init_plan = init_plan, nsims = 10000, constraint = 'population',
 #' constraintweights = 5.4,
 #' betaweights = betaweights, temper = 1)
 #'
@@ -1505,7 +1604,7 @@ redist.mcmc <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
 #' targetbeta = 1,
 #' targetpop = .2, temper = 1)
 #' }
-#' @concept simulate
+#' @concept post
 #' @export
 redist.ipw <- function(algout,
                        resampleconstraint = c("pop", "compact",
@@ -1582,27 +1681,22 @@ redist.ipw <- function(algout,
 #' @param \dots additional arguments
 #' @export
 as.matrix.redist = function(x, ...) {
-    x$cdvec
+    x$plans
 }
 
 #' @method print redist
 #' @importFrom utils str
 #' @export
 print.redist = function(x, ...) {
-    if('partitions' %in% names(x)){
-        cat(ncol(x$partitions), 'sampled plans with', length(unique(x$partitions[,1])), 'districts from a',
-            nrow(x$partitions), 'unit map, drawn\n using',
-            'Markov chain Monte Carlo')
-
-    } else{
-    cat(x$nsims, " sampled plans with ", max(x$cdvec[,1]), " districts from a ",
-        length(x$aList), "-unit map, drawn\n using ",
+    cat(x$nsims, " sampled plans with ",
+        ifelse(x$algorithm == 'mcmc', max(x$plans[,1]) + 1, max(x$plans[,1])),
+        " districts from a ",
+        length(x$adj), "-unit map, drawn\n using ",
         c(mcmc="Markov chain Monte Carlo",
           smc="Sequential Monte Carlo")[x$algorithm], sep="")
     if (x$pct_dist_parity < 1)
         cat(" and a ", 100*x$pct_dist_parity, "% population constraint.\n", sep="")
     else
         cat(".\n")
-    cat(str(x$cdvec))
-    }
+    cat(str(x$plans))
 }

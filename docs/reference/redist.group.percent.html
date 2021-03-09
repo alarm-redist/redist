@@ -19,8 +19,8 @@
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/yeti/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous" />
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
 
@@ -81,7 +81,7 @@ each district across a matrix of maps." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
       </span>
     </div>
 
@@ -104,9 +104,15 @@ each district across a matrix of maps." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
+    </li>
+    <li>
       <a href="../articles/tidy-redist.html">Tidy `redist`</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -139,7 +145,15 @@ each district across a matrix of maps." />
 each district across a matrix of maps.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.group.percent</span><span class='op'>(</span><span class='va'>district_membership</span>, <span class='va'>group_pop</span>, <span class='va'>full_pop</span><span class='op'>)</span>
+    <pre class="usage"><span class='fu'>redist.group.percent</span><span class='op'>(</span>
+  <span class='va'>plans</span>,
+  <span class='va'>district_membership</span>,
+  <span class='va'>group_pop</span>,
+  <span class='va'>grouppop</span>,
+  <span class='va'>total_pop</span>,
+  <span class='va'>fullpop</span>,
+  ncores <span class='op'>=</span> <span class='fl'>1</span>
+<span class='op'>)</span>
 
 <span class='fu'>group_frac</span><span class='op'>(</span>
   <span class='va'>map</span>,
@@ -152,8 +166,13 @@ each district across a matrix of maps.</p>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>district_membership</th>
+      <th>plans</th>
       <td><p>A matrix with one row
+for each precinct and one column for each map. Required.</p></td>
+    </tr>
+    <tr>
+      <th>district_membership</th>
+      <td><p>Deprecated, use plans. A matrix with one row
 for each precinct and one column for each map. Required.</p></td>
     </tr>
     <tr>
@@ -161,8 +180,20 @@ for each precinct and one column for each map. Required.</p></td>
       <td><p>A numeric vector with the population of the group for every precinct.</p></td>
     </tr>
     <tr>
-      <th>full_pop</th>
+      <th>grouppop</th>
+      <td><p>Deprecated, use group_pop. A numeric vector with the population of the group for every precinct.</p></td>
+    </tr>
+    <tr>
+      <th>total_pop</th>
       <td><p>A numeric vector with the population for every precinct.</p></td>
+    </tr>
+    <tr>
+      <th>fullpop</th>
+      <td><p>Deprecated, use total_pop. A numeric vector with the population for every precinct.</p></td>
+    </tr>
+    <tr>
+      <th>ncores</th>
+      <td><p>Number of cores to use for parallel computing. Default is 1.</p></td>
     </tr>
     <tr>
       <th>map</th>
@@ -176,9 +207,7 @@ for each precinct and one column for each map. Required.</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A matrix with a row for each district and a column for each plan,
- with the entries representing the percentage of the group in that district,
- relative to the total population of the district.</p>
+    <p>matrix with percent for each district</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
@@ -186,9 +215,9 @@ for each precinct and one column for each map. Required.</p></td>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>algdat</span><span class='op'>)</span>
 <span class='va'>cd</span> <span class='op'>&lt;-</span> <span class='va'>algdat.p10</span><span class='op'>$</span><span class='va'>cdmat</span><span class='op'>[</span>,<span class='fl'>1</span><span class='op'>:</span><span class='fl'>5</span><span class='op'>]</span>
 
-<span class='fu'>redist.group.percent</span><span class='op'>(</span>district_membership <span class='op'>=</span> <span class='va'>cd</span>,
-                    grouppop <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>BlackPop</span>,
-                    fullpop <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>TotPop</span><span class='op'>)</span>
+<span class='fu'>redist.group.percent</span><span class='op'>(</span>plans <span class='op'>=</span> <span class='va'>cd</span>,
+                    group_pop <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>BlackPop</span>,
+                    total_pop <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>TotPop</span><span class='op'>)</span>
 <span class='op'>}</span>
 </div></pre>
   </div>

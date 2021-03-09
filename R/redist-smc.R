@@ -13,7 +13,7 @@
 #' boundary constraints.
 #'
 #' This function draws nearly-independent samples from a specific target measure,
-#' controlled by the \code{popcons}, \code{compactness}, \code{constraints}, and
+#' controlled by the \code{pop_tol}, \code{compactness}, \code{constraints}, and
 #' \code{constraint_fn} parameters.
 #'
 #' Key to ensuring good performance is monitoring the efficiency of the resampling
@@ -58,10 +58,12 @@
 #'   * \code{incumbents}, a vector of precinct indices, one for each incumbent's
 #'   home address.
 #'
-#'
-#' @param adjobj An adjacency matrix, list, or object of class
+#' @param adj An adjacency matrix, list, or object of class
 #' "SpatialPolygonsDataFrame."
-#' @param popvec A vector containing the populations of each geographic unit.
+#' @param adjobj Deprecated, use adj. An adjacency matrix, list, or object of class
+#' "SpatialPolygonsDataFrame."
+#' @param total_pop A vector containing the populations of each geographic unit.
+#' @param popvec Deprecated, use total_pop. A vector containing the populations of each geographic unit.
 #' @param nsims The number of samples to draw.
 #' @param ndists The number of districts in each redistricting plan.
 #' @param counties A vector containing county (or other administrative or
@@ -69,6 +71,10 @@
 #' to the number of counties.  If provided, the algorithm will only generate
 #' maps which split up to \code{ndists-1} counties.  If no county-split
 #' constraint is desired, this parameter should be left blank.
+#' @param pop_tol The desired population constraint.  All sampled districts
+#' will have a deviation from the target district size no more than this value
+#' in percentage terms, i.e., \code{pop_tol=0.01} will ensure districts have
+#' populations within 1% of the target population.
 #' @param popcons The desired population constraint.  All sampled districts
 #' will have a deviation from the target district size no more than this value
 #' in percentage terms, i.e., \code{popcons=0.01} will ensure districts have
@@ -117,7 +123,7 @@
 #' \item{compactness}{The compactness constraint.}
 #' \item{counties}{The computed constraint options list (see above).}
 #' \item{maxdev}{The maximum population deviation of each sample.}
-#' \item{popvec}{The provided vector of unit populations.}
+#' \item{total_pop}{The provided vector of unit populations.}
 #' \item{counties}{The provided county vector.}
 #' \item{adapt_k_thresh}{The provided control parameter.}
 #' \item{seq_alpha}{The provided control vector.}
@@ -130,10 +136,10 @@
 #' @examples \dontrun{
 #' data(algdat.p10)
 #' sampled_basic = redist.smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,
-#'                            nsims=10000, ndists=3, popcons=0.1)
+#'                            nsims=10000, ndists=3, pop_tol=0.1)
 #'
 #' sampled_constr = redist.smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,
-#'                             nsims=10000, ndists=3, popcons=0.1,
+#'                             nsims=10000, ndists=3, pop_tol=0.1,
 #'                             constraints=list(
 #'                                 status_quo = list(strength=10, current=algdat.p10$cdmat[,1234]),
 #'                                 incumbency = lsit(strength=1000, incumbents=c(3, 6, 25))
@@ -143,20 +149,35 @@
 #' @concept simulate
 #' @md
 #' @export
-redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
-                      popcons=0.01, compactness=1, constraints=list(),
-                      resample=TRUE, pop_bounds=NULL,
+redist.smc = function(adj, adjobj, total_pop, popvec, nsims, ndists, counties=NULL,
+                      pop_tol = 0.01, popcons, compactness=1,
+                      constraints=list(),
+                      resample=TRUE,
                       constraint_fn=function(m) rep(0, ncol(m)),
                       adapt_k_thresh=0.975, seq_alpha=0.2+0.2*compactness,
                       truncate=(compactness != 1),
                       trunc_fn=function(x) pmin(x, 0.01*nsims^0.4),
                       pop_temper=max(0.1/seq_alpha, 0.3), verbose=TRUE, silent=FALSE) {
-    V = length(popvec)
+    if(!missing(adjobj)){
+        .Deprecated(new = 'adj', old = 'adjobj')
+        adj <- adjobj
+    }
+    if(!missing(popvec)){
+        .Deprecated(new = 'total_pop', old = 'popvec')
+        total_pop <- popvec
+    }
+    if(!missing(popcons)){
+        .Deprecated(new = 'pop_tol', old = 'popcons')
+        pop_tol <- popcons
+    }
 
-    if (missing(adjobj)) stop("Please supply adjacency matrix or list")
-    if (missing(popvec)) stop("Please supply vector of geographic unit populations")
+
+    V = length(total_pop)
+
+    if (missing(adj)) stop("Please supply adjacency matrix or list")
+    if (missing(total_pop)) stop("Please supply vector of geographic unit populations")
     if (missing(nsims)) stop("Please supply number of simulations to run algorithm")
-    if (popcons <= 0) stop("Population constraint must be positive")
+    if (pop_tol <= 0) stop("Population constraint must be positive")
     if (compactness < 0) stop("Compactness parameter must be non-negative")
     if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
         stop("`adapt_k_thresh` parameter must lie in [0, 1].")
@@ -188,21 +209,21 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
 
     # Other constraints
     if (is.null(constraints$status_quo))
-        constraints$status_quo = list(strength=0, current=rep(1, length(popvec)))
+        constraints$status_quo = list(strength=0, current=rep(1, length(total_pop)))
     if (is.null(constraints$vra))
         constraints$vra = list(strength=0, tgt_vra_min=0.55, tgt_vra_other=0.25,
-                               pow_vra=1.5, min_pop=rep(0, length(popvec)))
+                               pow_vra=1.5, min_pop=rep(0, length(total_pop)))
     if (is.null(constraints$incumbency))
         constraints$incumbency = list(strength=0, incumbents=integer())
 
-    if (length(constraints$vra$min_pop) != length(popvec))
+    if (length(constraints$vra$min_pop) != length(total_pop))
         stop("Length of minority population vector must match the number of units.")
     if (min(constraints$status_quo$current) == 0)
         constraints$status_quo$current = constraints$status_quo$current + 1
     n_current = max(constraints$status_quo$current)
 
     # sanity-check everything
-    preproc = redist.preproc(adjobj, popvec, rep(0, V), ndists, popcons,
+    preproc = redist.preproc(adj, total_pop, rep(0, V), ndists, pop_tol,
                              temper="none", constraint="none")
     adjlist = preproc$data$adjlist
     class(adjlist) = "list"
@@ -212,15 +233,14 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
     if (silent) verbosity = 0
 
     lp = rep(0, nsims)
-    maps = smc_plans(nsims, adjlist, counties, popvec, ndists, pop_bounds[2],
-                     pop_bounds[1], pop_bounds[3], compactness,
+    maps = smc_plans(nsims, adjlist, counties, total_pop, ndists, pop_tol, compactness,
                      constraints$status_quo$strength, constraints$status_quo$current, n_current,
                      constraints$vra$strength, constraints$vra$tgt_vra_min,
                      constraints$vra$tgt_vra_other, constraints$vra$pow_vra, constraints$vra$min_pop,
                      constraints$incumbency$strength, constraints$incumbency$incumbents,
                      lp, adapt_k_thresh, seq_alpha, pop_temper, verbosity);
 
-    dev = max_dev(maps, popvec, ndists)
+    dev = max_dev(maps, total_pop, ndists)
     maps = maps
 
     lr = -lp + constraint_fn(maps)
@@ -241,17 +261,17 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
     }
 
     algout = list(
-        aList = adjlist,
-        cdvec = maps,
+        adj = adjlist,
+        plans = maps,
         wgt = wgt,
         orig_wgt = orig_wgt,
         nsims = nsims,
         n_eff = n_eff,
-        pct_dist_parity = popcons,
+        pct_dist_parity = pop_tol,
         compactness = compactness,
         constraints = constraints,
         maxdev = dev,
-        popvec = popvec,
+        total_pop = total_pop,
         counties = if (max(counties)==1) NULL else counties,
         adapt_k_thresh = adapt_k_thresh,
         seq_alpha = seq_alpha,
@@ -275,6 +295,7 @@ redist.smc = function(adjobj, popvec, nsims, ndists, counties=NULL,
 #' @returns A two-element vector of the form [lower, upper] containing
 #' the importance sampling confidence interval.
 #'
+#' @concept post
 #' @export
 redist.smc_is_ci = function(x, wgt, conf=0.99) {
     wgt = wgt / sum(wgt)
@@ -302,6 +323,7 @@ redist.smc_is_ci = function(x, wgt, conf=0.99) {
 #' @return a 3-element numeric vector of the form \code{c(lower, target, upper)},
 #' which can be used inside \code{\link{redist.smc}}.
 #'
+#' @concept prepare
 #' @examples
 #' data("fl25")
 #' data(algdat.p10)

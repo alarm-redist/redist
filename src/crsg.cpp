@@ -167,7 +167,7 @@ List crsg(List adj_list,
       // implies threshold too strong for this random seed
       if(pop_dist.size() == 0){
         List result;
-        result["district_membership"] = NumericVector::get_na();
+        result["plan"] = NumericVector::get_na();
         result["district_list"] = NumericVector::get_na();
         result["district_pop"] = NumericVector::get_na();
         return(result);
@@ -325,7 +325,7 @@ List crsg(List adj_list,
     iter++;
     if(iter > maxiter){
       List result;
-      result["district_membership"] = NumericVector::get_na();
+      result["plan"] = NumericVector::get_na();
       result["district_list"] = NumericVector::get_na();
       result["district_pop"] = NumericVector::get_na();
       return(result);
@@ -338,7 +338,7 @@ List crsg(List adj_list,
   // member_plist - List of length #districts with precinct ID's
   // district_pop - vector of length #districts with district populations
   List result;
-  result["district_membership"] = dist_assignment;
+  result["plan"] = dist_assignment;
   result["district_list"] = member_plist;
   result["district_pop"] = district_pop;
   return(result);

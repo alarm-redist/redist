@@ -19,8 +19,8 @@
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/yeti/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous" />
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
 
@@ -47,10 +47,10 @@
 
 
 <meta property="og:title" content="Identify Cores of a District (Heuristic) — redist.identify.cores" />
-<meta property="og:description" content="Creates a grouping ID to unite geographies and perform analysis on a smaller set of
-precincts. Given a k, it identifies all precincts within k edges of another district
-on a graph. Each precinct within k of another district gets it own group. Connected
-components more than k away are givent the same grouping variable." />
+<meta property="og:description" content="Creates a grouping ID to unite geographies and perform analysis on a smaller
+set of precincts. It identifies all precincts more than within edges
+of a district district border Each precinct more than within of
+another district gets it own group." />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -83,7 +83,7 @@ components more than k away are givent the same grouping variable." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
       </span>
     </div>
 
@@ -106,9 +106,15 @@ components more than k away are givent the same grouping variable." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
+    </li>
+    <li>
       <a href="../articles/tidy-redist.html">Tidy `redist`</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -137,16 +143,18 @@ components more than k away are givent the same grouping variable." />
     </div>
 
     <div class="ref-description">
-    <p>Creates a grouping ID to unite geographies and perform analysis on a smaller set of
-precincts. Given a k, it identifies all precincts within k edges of another district
-on a graph. Each precinct within k of another district gets it own group. Connected
-components more than k away are givent the same grouping variable.</p>
+    <p>Creates a grouping ID to unite geographies and perform analysis on a smaller
+set of precincts. It identifies all precincts more than <code>within</code> edges
+of a district district border Each precinct more than <code>within</code> of
+another district gets it own group.</p>
     </div>
 
     <pre class="usage"><span class='fu'>redist.identify.cores</span><span class='op'>(</span>
+  <span class='va'>adj</span>,
   <span class='va'>adjacency</span>,
+  <span class='va'>plan</span>,
   <span class='va'>district_membership</span>,
-  k <span class='op'>=</span> <span class='fl'>1</span>,
+  within <span class='op'>=</span> <span class='fl'>1</span>,
   focus <span class='op'>=</span> <span class='cn'>NULL</span>,
   simplify <span class='op'>=</span> <span class='cn'>TRUE</span>
 <span class='op'>)</span>
@@ -157,16 +165,25 @@ components more than k away are givent the same grouping variable.</p>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>adjacency</th>
-      <td><p>A zero indexed adjacency list.</p></td>
+      <th>adj</th>
+      <td><p>zero indexed adjacency list.</p></td>
     </tr>
     <tr>
-      <th>district_membership</th>
+      <th>adjacency</th>
+      <td><p>Deprecated, use adj. A zero indexed adjacency list.</p></td>
+    </tr>
+    <tr>
+      <th>plan</th>
       <td><p>An integer vector or matrix column of district assignments.</p></td>
     </tr>
     <tr>
-      <th>k</th>
-      <td><p>Number of steps to check for. Defaults to 1.</p></td>
+      <th>district_membership</th>
+      <td><p>Deprecated, use plan. An integer vector or matrix column of district assignments.</p></td>
+    </tr>
+    <tr>
+      <th>within</th>
+      <td><p>the core is defined to be at least this number of steps within
+district boundaries</p></td>
     </tr>
     <tr>
       <th>focus</th>
@@ -180,16 +197,11 @@ components more than k away are givent the same grouping variable.</p>
       <th>.data</th>
       <td><p>a <code><a href='redist_map.html'>redist_map</a></code> object</p></td>
     </tr>
-    <tr>
-      <th>within</th>
-      <td><p>the core is defined to be at least this number of steps within
-district boundaries</p></td>
-    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>integer vector if simplify is false. Otherwise returns a tibble with the grouping 
+    <p>integer vector if simplify is false. Otherwise returns a tibble with the grouping
 variable and additional information.</p>
 
   </div>

@@ -33,6 +33,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// coarsen_adjacency
+List coarsen_adjacency(List adj, IntegerVector groups);
+RcppExport SEXP _redist_coarsen_adjacency(SEXP adjSEXP, SEXP groupsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type adj(adjSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type groups(groupsSEXP);
+    rcpp_result_gen = Rcpp::wrap(coarsen_adjacency(adj, groups));
+    return rcpp_result_gen;
+END_RCPP
+}
 // color_graph
 IntegerVector color_graph(List l, IntegerVector plan);
 RcppExport SEXP _redist_color_graph(SEXP lSEXP, SEXP planSEXP) {
@@ -526,6 +538,18 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type grouppop(grouppopSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type fullpop(fullpopSEXP);
     rcpp_result_gen = Rcpp::wrap(segregationcalc(distmat, grouppop, fullpop));
+    return rcpp_result_gen;
+END_RCPP
+}
+// reindex
+IntegerMatrix reindex(IntegerMatrix dm, int nd);
+RcppExport SEXP _redist_reindex(SEXP dmSEXP, SEXP ndSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type dm(dmSEXP);
+    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
+    rcpp_result_gen = Rcpp::wrap(reindex(dm, nd));
     return rcpp_result_gen;
 END_RCPP
 }

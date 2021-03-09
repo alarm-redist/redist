@@ -19,8 +19,8 @@
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/yeti/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous" />
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
 
@@ -48,7 +48,7 @@
 
 <meta property="og:title" content="Subset a shp — redist.subset" />
 <meta property="og:description" content="Subsets a shp object along with its adjacency. Useful for running smaller analyses
-on pairs of districts. Provide population, ndist, popcons, and subndist to get proper
+on pairs of districts. Provide population, ndists, pop_tol, and sub_ndists to get proper
 population parity constraints on subsets." />
 <meta property="og:image" content="/logo.png" />
 
@@ -82,7 +82,7 @@ population parity constraints on subsets." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
       </span>
     </div>
 
@@ -105,9 +105,15 @@ population parity constraints on subsets." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
+    </li>
+    <li>
       <a href="../articles/tidy-redist.html">Tidy `redist`</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -137,11 +143,24 @@ population parity constraints on subsets." />
 
     <div class="ref-description">
     <p>Subsets a shp object along with its adjacency. Useful for running smaller analyses
-on pairs of districts. Provide population, ndist, popcons, and subndist to get proper
+on pairs of districts. Provide population, ndists, pop_tol, and sub_ndists to get proper
 population parity constraints on subsets.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.subset</span><span class='op'>(</span><span class='va'>shp</span>, <span class='va'>adjacency</span>, <span class='va'>keep_rows</span>, <span class='va'>population</span>, <span class='va'>ndist</span>, <span class='va'>popcons</span>, <span class='va'>subndist</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>redist.subset</span><span class='op'>(</span>
+  <span class='va'>shp</span>,
+  <span class='va'>adj</span>,
+  <span class='va'>adjacency</span>,
+  <span class='va'>keep_rows</span>,
+  <span class='va'>total_pop</span>,
+  <span class='va'>population</span>,
+  <span class='va'>ndists</span>,
+  <span class='va'>ndist</span>,
+  <span class='va'>pop_tol</span>,
+  <span class='va'>popcons</span>,
+  <span class='va'>sub_ndists</span>,
+  <span class='va'>subndist</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -151,8 +170,13 @@ population parity constraints on subsets.</p>
       <td><p>An sf object</p></td>
     </tr>
     <tr>
-      <th>adjacency</th>
+      <th>adj</th>
       <td><p>A zero-indexed adjacency list. Created with
+<code>redist.adjacency</code> if not supplied.</p></td>
+    </tr>
+    <tr>
+      <th>adjacency</th>
+      <td><p>Deprecated, use adj. A zero-indexed adjacency list. Created with
 <code>redist.adjacency</code> if not supplied.</p></td>
     </tr>
     <tr>
@@ -160,20 +184,36 @@ population parity constraints on subsets.</p>
       <td><p>row numbers of precincts to keep. Random submap selected if not supplied.</p></td>
     </tr>
     <tr>
-      <th>population</th>
+      <th>total_pop</th>
       <td><p>numeric vector with one entry for the population of each precinct.</p></td>
     </tr>
     <tr>
-      <th>ndist</th>
+      <th>population</th>
+      <td><p>Deprecated, use total_pop. numeric vector with one entry for the population of each precinct.</p></td>
+    </tr>
+    <tr>
+      <th>ndists</th>
       <td><p>integer, number of districts in whole map</p></td>
     </tr>
     <tr>
-      <th>popcons</th>
+      <th>ndist</th>
+      <td><p>Deprecated, use ndists. integer, number of districts in whole map</p></td>
+    </tr>
+    <tr>
+      <th>pop_tol</th>
       <td><p>The strength of the hard population constraint.</p></td>
     </tr>
     <tr>
-      <th>subndist</th>
+      <th>popcons</th>
+      <td><p>Deprecated, use pop_tol. The strength of the hard population constraint.</p></td>
+    </tr>
+    <tr>
+      <th>sub_ndists</th>
       <td><p>integer, number of districts in subset map</p></td>
+    </tr>
+    <tr>
+      <th>subndist</th>
+      <td><p>Deprecated, use sub_ndists. integer, number of districts in subset map</p></td>
     </tr>
     </table>
 
@@ -181,10 +221,10 @@ population parity constraints on subsets.</p>
 
     <p>a list containing the following components:</p>
 <dt>shp</dt><dd><p>The subsetted shp object</p></dd>
-<dt>adjacency</dt><dd><p>The subsetted adjacency list for shp</p></dd>
+<dt>adj</dt><dd><p>The subsetted adjacency list for shp</p></dd>
 <dt>keep_rows</dt><dd><p>The indices of the rows kept.</p></dd>
-<dt>subndist</dt><dd><p>The number of districts in the subset.</p></dd>
-<dt>subpopcons</dt><dd><p>The new parity constraint for a subset.</p></dd>
+<dt>sub_ndists</dt><dd><p>The number of districts in the subset.</p></dd>
+<dt>sub_pop_tol</dt><dd><p>The new parity constraint for a subset.</p></dd>
 
 
   </div>

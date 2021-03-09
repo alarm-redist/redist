@@ -19,8 +19,8 @@
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/yeti/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous" />
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
 
@@ -83,7 +83,7 @@ boundary constraints." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
       </span>
     </div>
 
@@ -106,9 +106,15 @@ boundary constraints." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
+    </li>
+    <li>
       <a href="../articles/tidy-redist.html">Tidy `redist`</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -152,9 +158,10 @@ boundary constraints.</p>
   resample <span class='op'>=</span> <span class='cn'>TRUE</span>,
   constraint_fn <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>m</span><span class='op'>)</span> <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fl'>0</span>, <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span><span class='op'>(</span><span class='va'>m</span><span class='op'>)</span><span class='op'>)</span>,
   adapt_k_thresh <span class='op'>=</span> <span class='fl'>0.975</span>,
-  seq_alpha <span class='op'>=</span> <span class='fl'>0.2</span> <span class='op'>+</span> <span class='fl'>0.2</span> <span class='op'>*</span> <span class='va'>compactness</span>,
+  seq_alpha <span class='op'>=</span> <span class='fl'>0.2</span> <span class='op'>+</span> <span class='fl'>0.3</span> <span class='op'>*</span> <span class='va'>compactness</span>,
   truncate <span class='op'>=</span> <span class='op'>(</span><span class='va'>compactness</span> <span class='op'>!=</span> <span class='fl'>1</span><span class='op'>)</span>,
   trunc_fn <span class='op'>=</span> <span class='va'>redist_quantile_trunc</span>,
+  pop_temper <span class='op'>=</span> <span class='fl'>0</span>,
   verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
   silent <span class='op'>=</span> <span class='cn'>FALSE</span>
 <span class='op'>)</span></pre>
@@ -223,8 +230,13 @@ Truncation only applied if <code>resample=TRUE</code>.</p></td>
     <tr>
       <th>trunc_fn</th>
       <td><p>A function which takes in a vector of weights and returns
-a truncated vector. The default will generally work OK, but consider manual
-truncation.</p></td>
+a truncated vector. If <code><a href='https://mc-stan.org/loo/reference/loo.html'>loo</a></code> package is installed (strongly
+recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
+rather than naive truncation.</p></td>
+    </tr>
+    <tr>
+      <th>pop_temper</th>
+      <td><p>The strength of the automatic population tempering.</p></td>
     </tr>
     <tr>
       <th>verbose</th>
@@ -269,12 +281,13 @@ districts.</p></li>
 <li><p><code>current</code>, a vector containing district assignments for
 the current map.</p></li>
 </ul></li>
-<li><p><code>vra</code>: a list with five entries:</p><ul>
+<li><p><code>vra</code>: a list with five entries, which may be set up using
+<code><a href='redist.constraint.helper.html'>redist.constraint.helper</a></code>:</p><ul>
 <li><p><code>strength</code>, a number controlling the strength of the Voting Rights Act
 (VRA) constraint, with higher values prioritizing majority-minority districts
 over other considerations.</p></li>
 <li><p><code>tgt_vra_min</code>, the target percentage of minority voters in minority
-copportunity districts. Defaults to 0.55.</p></li>
+opportunity districts. Defaults to 0.55.</p></li>
 <li><p><code>tgt_vra_other</code> The target percentage of minority voters in other
 districts. Defaults to 0.25, but should be set to reflect the total minority
 population in the state.</p></li>

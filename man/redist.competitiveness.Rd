@@ -10,7 +10,7 @@ redist.competitiveness(district_membership, rvote, dvote)
 competitiveness(map, rvote, dvote, .data = get0(".", parent.frame()))
 }
 \arguments{
-\item{district_membership}{A numeric vector (if only one map) or matrix with one row 
+\item{district_membership}{A numeric vector (if only one map) or matrix with one row
 for each precinct and one column for each map. Required.}
 
 \item{rvote}{A numeric vector with the Republican vote for each precinct.}
@@ -25,14 +25,14 @@ for each precinct and one column for each map. Required.}
 Numeric vector with competitiveness scores
 }
 \description{
-Currently only implements the competitiveness function in equation (5) 
+Currently only implements the competitiveness function in equation (5)
 of Cho & Liu 2016.
 }
 \examples{
 \dontrun{
 data("algdat.p10")
-comp <- redist.competitiveness(algdat.p10$cdmat, 
-algdat.p10$precinct.data$repvote, 
+comp <- redist.competitiveness(algdat.p10$cdmat,
+algdat.p10$precinct.data$repvote,
 algdat.p10$precinct.data$demvote)
 }
 }

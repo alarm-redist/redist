@@ -7,12 +7,10 @@
 redist.run.enumpart(
   ordered_path,
   out_path,
-  ndist = 2,
+  ndists = 2,
+  ndist,
   all = TRUE,
   n = NULL,
-  weight_path = NULL,
-  lower = NULL,
-  upper = NULL,
   options = NULL
 )
 }
@@ -21,12 +19,16 @@ redist.run.enumpart(
 
 \item{out_path}{Valid path to output the enumerated districts}
 
-\item{ndist}{number of districts to enumerate}
+\item{ndists}{number of districts to enumerate}
+
+\item{ndist}{Deprecated, use ndists. number of districts to enumerate}
 
 \item{all}{boolean. TRUE outputs all districts. FALSE samples n districts.}
 
 \item{n}{integer. Number of districts to output if all is FALSE. Returns
 districts selected from uniform random distribution.}
+
+\item{options}{Additional enumpart arguments. Not recommended for use.}
 
 \item{weight_path}{A path (not including ".dat") to a space-delimited file containing a vector of
 vertex weights, to be used along with \code{lower} and \code{upper}.}
@@ -34,8 +36,6 @@ vertex weights, to be used along with \code{lower} and \code{upper}.}
 \item{lower}{A lower bound on each partition's total weight, implemented by rejection sampling.}
 
 \item{upper}{An upper bound on each partition's total weight.}
-
-\item{options}{Additional enumpart arguments. Not recommended for use.}
 }
 \value{
 0 on success

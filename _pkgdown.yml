@@ -1,29 +1,42 @@
+template:
+  params:
+    bootswatch: yeti
 reference:
-- contents:
-  - redist-package
-- title: Prepare
-  desc: Helper functions to prepare a redistricting simulation.
-- contents:
-  - redist_map
-  - has_concept("prepare")
-- title: Simulate
-  desc: Core functions to perform a redistricting simulation.
+- title: "Simulation Algorithm Implementations"
+  desc: "Core functions to perform a redistricting simulation"
 - contents:
   - redist_smc
   - redist.mcmc
+  - redist_mergesplit
   - has_concept("simulate")
-- title: Analyze
-  desc: Functions to analyze the results of a redistricting simulation.
+- title: "Analysis Functions"
+  desc: "Functions for analyzing simulation outputs"
 - contents:
+  - redist_plans
   - has_concept("analyze")
-- title: Visualize
-  desc: Functions to plot redistricting plans and the results of a simulation.
+- title: "Setup Helpers"
+  desc: "Functions that help prepare data and select constraints"
 - contents:
-  - has_concept("visualize")
-- title: Enumerate
-  desc: Functions to help enumerate all possible redistricting plans.
+  - redist_map
+  - has_concept("prepare")
+- title: "Plotting Tools"
+  desc: "Functions for creating plots and maps"
+- contents:
+  - has_concept("plot")
+- title: "Data"
+  desc: "Data included to help demonstrate capabilities"
+- contents:
+  - has_concept("data")
+- title: "Post Processing Helpers"
+  desc: "Functions that help setup outputs for easier use"
+- contents:
+  - has_concept("post")
+- title: "Enumeration Tools"
+  desc: "Functions for more involved enumeration choices"
 - contents:
   - has_concept("enumerate")
-- title: Other Functions
+- title: "Miscellaneous"
+  desc: "Other functions"
 - contents:
-  - lacks_concepts(c("prepare", "simulate", "analyze", "visualize", "enumerate"))
+  - redist-package
+  - lacks_concepts(c("prepare", "simulate", "analyze", "plot", "enumerate", "data", "post"))

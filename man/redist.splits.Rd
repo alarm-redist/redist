@@ -5,12 +5,15 @@
 \alias{county_splits}
 \title{Count County Splits}
 \usage{
-redist.splits(district_membership, counties)
+redist.splits(plans, district_membership, counties)
 
 county_splits(map, counties, .data = get0(".", parent.frame()))
 }
 \arguments{
-\item{district_membership}{A numeric vector (if only one map) or matrix with one row
+\item{plans}{A numeric vector (if only one map) or matrix with one row
+for each precinct and one column for each map. Required.}
+
+\item{district_membership}{Deprecated, use plans. A numeric vector (if only one map) or matrix with one row
 for each precinct and one column for each map. Required.}
 
 \item{counties}{A vector of county names or county ids.}

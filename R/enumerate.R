@@ -22,20 +22,23 @@ list_to_mat <- function(A){
 #' numbers of geographic units per district, as well as population parity
 #' requirements.
 #'
-#' @usage redist.enumerate(adjobj,
-#' ndists = 2, popvec = NULL, nconstraintlow = NULL,
-#' nconstrainthigh = NULL, popcons = NULL, contiguitymap = "rooks")
-#'
-#' @param adjobj An adjacency list, matrix, or object of class
+#' @param adj An adjacency list, matrix, or object of class
+#' \code{SpatialPolygonsDataFrame}.
+#' @param adjobj Deprecated, use adj. An adjacency list, matrix, or object of class
 #' \code{SpatialPolygonsDataFrame}.
 #' @param ndists The desired number of congressional districts. The default is 2.
-#' @param popvec A vector of geographic unit populations. The default is
+#' @param total_pop A vector of geographic unit populations. The default is
 #' \code{NULL}.
+#' @param popvec Deprecated, use total_pop. A vector of geographic unit populations.
 #' @param nconstraintlow Lower bound for number of geographic units to include in
 #' a district. The default is \code{NULL}.
 #' @param nconstrainthigh Lower bound for number of geographic units to include
 #' in a district. The default is \code{NULL}.
-#' @param popcons The strength of the hard population constraint.
+#' @param pop_tol The strength of the hard population constraint.
+#' \code{pop_tol} = 0.05 means that any proposed swap that brings a district more
+#' than 5\% away from population parity will be rejected. The default is
+#' \code{NULL}.
+#' @param popcons Deprecated, use pop_tol. The strength of the hard population constraint.
 #' \code{popcons} = 0.05 means that any proposed swap that brings a district more
 #' than 5\% away from population parity will be rejected. The default is
 #' \code{NULL}.
@@ -67,16 +70,34 @@ list_to_mat <- function(A){
 #' }
 #' @concept enumerate
 #' @export
-redist.enumerate <- function(adjobj,
+redist.enumerate <- function(adj, adjobj,
                              ndists = 2,
-                             popvec = NULL,
+                             total_pop = NULL,
+                             popvec,
                              nconstraintlow = NULL,
                              nconstrainthigh = NULL,
-                             popcons = NULL,
+                             pop_tol = NULL,
+                             popcons,
                              contiguitymap = "rooks"){
+    .Deprecated(new = 'redist.enumpart')
+
+
+    if(!missing(adjobj)){
+        adj <- adjobj
+        .Deprecated(new = 'adj', old = 'adjobj')
+    }
+    if(!missing(popvec)){
+        total_pop <- popvec
+        .Deprecated(new = 'total_pop', old = 'popvec')
+    }
+    if(!missing(popcons)){
+        pop_tol <- popcons
+        .Deprecated(old = 'popcons', new = 'pop_tol')
+    }
+
 
     ## Warnings
-    if(is.null(popvec) & !is.null(popcons)){
+    if(is.null(total_pop) & !is.null(pop_tol)){
         stop("If constraining on population, please provide a vector of populations for geographic units.")
     }
     if(!(contiguitymap %in% c("queens", "rooks"))){
@@ -87,34 +108,34 @@ redist.enumerate <- function(adjobj,
     ## If not a list, convert adjlist to list ##
     ############################################
     ## NOTE - FOR ENUMERATION, WE WANT ONE-INDEXING VERSUS ZERO-INDEXING
-    if(!is.list(adjobj)){
+    if(!is.list(adj)){
 
         ## If a matrix, check to see if adjacency matrix
-        if(is.matrix(adjobj)){
+        if(is.matrix(adj)){
 
             ## Is it square?
-            squaremat <- (nrow(adjobj) == ncol(adjobj))
+            squaremat <- (nrow(adj) == ncol(adj))
             ## All binary entries?
-            binary <- ((length(unique(c(adjobj))) == 2) &
-                           (sum(unique(c(adjobj)) %in% c(0, 1)) == 2))
+            binary <- ((length(unique(c(adj))) == 2) &
+                           (sum(unique(c(adj)) %in% c(0, 1)) == 2))
             ## Diagonal elements all 1?
-            diag <- (sum(diag(adjobj)) == nrow(adjobj))
+            diag <- (sum(diag(adj)) == nrow(adj))
             ## Symmetric?
-            symmetric <- isSymmetric(adjobj)
+            symmetric <- isSymmetric(adj)
 
             ## If all are true, change to adjlist and automatically zero-index
             if(squaremat & binary & diag & symmetric){
 
                 ## Initialize object
-                adjlist <- vector("list", nrow(adjobj))
+                adjlist <- vector("list", nrow(adj))
 
                 ## Loop through rows in matrix
-                for(i in 1:nrow(adjobj)){
+                for(i in 1:nrow(adj)){
 
                     ## Extract row
-                    adjvec <- adjobj[,i]
+                    adjvec <- adj[,i]
                     ## Find elements it is adjacent to
-                    inds <- which(adjobj == 1)
+                    inds <- which(adj == 1)
                     ## Remove self-adjacency
                     inds <- inds[inds != i,]
                     ## Put in adjlist
@@ -125,13 +146,13 @@ redist.enumerate <- function(adjobj,
             }else { ## If not valid adjacency matrix, throw error
                 stop("Please input valid adjacency matrix")
             }
-        }else if(class(adjobj) == "SpatialPolygonsDataFrame"){ ## shp object
+        }else if(class(adj) == "SpatialPolygonsDataFrame"){ ## shp object
 
             ## Distance criterion
             queens <- ifelse(contiguitymap == "rooks", FALSE, TRUE)
 
             ## Convert shp object to adjacency list
-            adjlist <- redist.adjacency(st_as_sf(adjobj))
+            adjlist <- redist.adjacency(st_as_sf(adj))
 
             ## Change class to list
             class(adjlist) <- "list"
@@ -144,7 +165,7 @@ redist.enumerate <- function(adjobj,
     }else{
 
         ## Rename adjacency object as list
-        adjlist <- adjobj
+        adjlist <- adj
 
         ## Is list zero-indexed?
         minlist <- min(unlist(adjlist))
@@ -173,27 +194,27 @@ redist.enumerate <- function(adjobj,
     adjListLength <- length(adjlist)
 
     ## Set population constraint ##
-    if(!is.null(popcons)){
-        parity <- sum(popvec) / ndists
-        popConstraintLow <- parity - popcons * parity
-        popConstraintHigh <- parity + popcons * parity
+    if(!is.null(pop_tol)){
+        parity <- sum(total_pop) / ndists
+        popConstraintLow <- parity - total_pop * parity
+        popConstraintHigh <- parity + total_pop * parity
     }
-    if(is.null(popcons)){
-        if(!is.null(popvec)){
-            popConstraintLow <- min(popvec)
-            popConstraintHigh <- sum(popvec)
+    if(is.null(total_pop)){
+        if(!is.null(total_pop)){
+            popConstraintLow <- min(total_pop)
+            popConstraintHigh <- sum(total_pop)
         }else{
-            popVec <- rep(1,adjListLength)
+            total_pop <- rep(1,adjListLength)
             popConstraintLow <- 1
             popConstraintHigh <- adjListLength
         }
     }
 
     ## If there is no pop vector,
-    ## Default popvec to vector of 1's,
+    ## Default total_pop to vector of 1's,
     ## and default popConstraintLow and popConstraintHigh to 1 and adjListLength respectively
-    if(is.null(popvec)){
-        popvec <- rep(1,adjListLength)
+    if(is.null(total_pop)){
+        total_pop <- rep(1,adjListLength)
         popConstraintLow <- 1
         popConstraintHigh <- adjListLength
     }
@@ -212,7 +233,7 @@ redist.enumerate <- function(adjobj,
     ## Run the cpp function and return the output
     out <- cppGeneratePartitions(adjlist,
                                  ndists,
-                                 popvec,
+                                 total_pop,
                                  nconstraintlow,
                                  nconstrainthigh,
                                  popConstraintLow,
@@ -225,24 +246,29 @@ redist.enumerate <- function(adjobj,
 #'
 #' \code{redist.samplepart} uses a spanning tree method to randomly sample
 #' redistricting plans.
-#'
-#' @usage redist.samplepart(adjobj, ndists, popvec, pop_filter, pop_constraint,
-#' contiguitymap, nsamp, n_cores)
-#'
-#' @param adjobj An adjacency list, matrix, or object of class
+#' @param adj An adjacency list, matrix, or object of class
+#' \code{SpatialPolygonsDataFrame}.
+#' @param adjobj Deprecated, use adj. An adjacency list, matrix, or object of class
 #' \code{SpatialPolygonsDataFrame}.
 #' @param ndists The desired number of congressional districts
-#' @param popvec Population vector for adjacency object. Provide if
+#' @param total_pop Population vector for adjacency object. Provide if
+#' filtering by population
+#' @param popvec Deprecated, use total_pop. Population vector for adjacency object. Provide if
 #' filtering by population
 #' @param pop_filter Boolean. Whether or not to filter on population parity.
 #' Default is FALSE.
-#' @param pop_constraint Strength of population filter if filtering on
+#' @param pop_tol Strength of population filter if filtering on
+#' distance to parity.
+#' @param pop_constraint Deprecated, use pop_tol. Strength of population filter if filtering on
 #' distance to parity.
 #' @param contiguitymap Use queens or rooks distance criteria for generating an
 #' adjacency list from a "SpatialPolygonsDataFrame" data type.
 #' Default is "rooks".
-#' @param nsamp Number of samples to draw. Default is 1000.
-#' @param n_cores Number of cores to parallelize over for parity calculation and
+#' @param nsims Number of samples to draw. Default is 1000.
+#' @param nsamp Deprecated, use nsims. Number of samples to draw. Default is 1000.
+#' @param ncores Number of cores to parallelize over for parity calculation and
+#' compactness calculation. Default is 1.
+#' @param n_cores Deprecated, use ncores. Number of cores to parallelize over for parity calculation and
 #' compactness calculation. Default is 1.
 #'
 #' @return \code{redist.samplepart} returns a list where the first entry is the
@@ -250,20 +276,41 @@ redist.enumerate <- function(adjobj,
 #' possible redistricting plans from the implied spanning tree.
 #' @export
 #' @importFrom parallel mclapply
-redist.samplepart <- function(adjobj, ndists, popvec = NULL,
-                              pop_filter = FALSE, pop_constraint = .5,
-                              contiguitymap = "rooks", nsamp = 1000,
-                              n_cores = 1){
+redist.samplepart <- function(adj, adjobj, ndists, total_pop = NULL, popvec,
+                              pop_filter = FALSE, pop_tol = 0.5, pop_constraint,
+                              contiguitymap = "rooks", nsims = 1000, nsamp,
+                              ncores = 1, n_cores){
+
+    if(!missing(adjobj)){
+        adj <- adjobj
+        .Deprecated(new = 'adj', old = 'adjobj')
+    }
+    if(!missing(popvec)){
+        total_pop <- popvec
+        .Deprecated(new = 'total_pop', old = 'popvec')
+    }
+    if(!missing(pop_constraint)){
+        pop_tol <- pop_constraint
+        .Deprecated(new = 'pop_tol', old = 'pop_constraint')
+    }
+    if(!missing(nsamp)){
+        nsims <- nsamp
+        .Deprecated(new = 'nsims', old = 'nsamp')
+    }
+    if(!missing(n_cores)){
+        ncores <- n_cores
+        .Deprecated(new = 'ncores', old = 'n_cores')
+    }
 
     ## if(compact_filter & !inherits(adjobj, "SpatialPolygonsDataFrame")){
     ##     stop("If filtering on compactness, adjobj must be of class SpatialPolygonsDataFrame.")
     ## }
-    if(pop_filter & is.null(popvec)){
+    if(pop_filter & is.null(total_pop)){
         stop("If filtering on population, you must provide a vector of populations
 for each geographic unit.")
     }
-    if(!is.null(popvec)){
-        if(pop_filter & sum(is.na(popvec)) > 0){
+    if(!is.null(total_pop)){
+        if(pop_filter & sum(is.na(total_pop)) > 0){
             stop("You have NAs in your vector of geographic unit populations.")
         }
     }
@@ -272,34 +319,34 @@ for each geographic unit.")
     ## If not a list, convert adjlist to list
     ## --------------------------------------
     ## NOTE - FOR ENUMERATION, WE WANT ONE-INDEXING VERSUS ZERO-INDEXING
-    if(!is.list(adjobj)){
+    if(!is.list(adj)){
 
         ## If a matrix, check to see if adjacency matrix
-        if(is.matrix(adjobj)){
+        if(is.matrix(adj)){
 
             ## Is it square?
-            squaremat <- (nrow(adjobj) == ncol(adjobj))
+            squaremat <- (nrow(adj) == ncol(adj))
             ## All binary entries?
-            binary <- ((length(unique(c(adjobj))) == 2) &
-                           (sum(unique(c(adjobj)) %in% c(0, 1)) == 2))
+            binary <- ((length(unique(c(adj))) == 2) &
+                           (sum(unique(c(adj)) %in% c(0, 1)) == 2))
             ## Diagonal elements all 1?
-            diag <- (sum(diag(adjobj)) == nrow(adjobj))
+            diag <- (sum(diag(adj)) == nrow(adj))
             ## Symmetric?
-            symmetric <- isSymmetric(adjobj)
+            symmetric <- isSymmetric(adj)
 
             ## If all are true, change to adjlist and automatically zero-index
             if(squaremat & binary & diag & symmetric){
 
                 ## Initialize object
-                adjlist <- vector("list", nrow(adjobj))
+                adjlist <- vector("list", nrow(adj))
 
                 ## Loop through rows in matrix
-                for(i in 1:nrow(adjobj)){
+                for(i in 1:nrow(adj)){
 
                     ## Extract row
-                    adjvec <- adjobj[,i]
+                    adjvec <- adj[,i]
                     ## Find elements it is adjacent to
-                    inds <- which(adjobj == 1)
+                    inds <- which(adj == 1)
                     ## Remove self-adjacency
                     inds <- inds[inds != i,]
                     ## Zero-index
@@ -312,13 +359,13 @@ for each geographic unit.")
             }else { ## If not valid adjacency matrix, throw error
                 stop("Please input valid adjacency matrix")
             }
-        }else if(class(adjobj) == "SpatialPolygonsDataFrame"){ ## shp object
+        }else if(class(adj) == "SpatialPolygonsDataFrame"){ ## shp object
 
             ## Distance criterion
             queens <- ifelse(contiguitymap == "rooks", FALSE, TRUE)
 
             ## Convert shp object to adjacency list
-            adjlist <- redist.adjacency(adjobj)
+            adjlist <- redist.adjacency(adj)
 
             ## Zero-index list
             for(i in 1:length(adjlist)){
@@ -336,7 +383,7 @@ for each geographic unit.")
     }else{
 
         ## Rename adjacency object as list
-        adjlist <- adjobj
+        adjlist <- adj
 
         ## Is list zero-indexed?
         minlist <- min(unlist(adjlist))
@@ -355,7 +402,7 @@ for each geographic unit.")
         }
 
     }
-    if(pop_filter & length(popvec) != length(adjlist)){
+    if(pop_filter & length(total_pop) != length(adjlist)){
         stop("Your population vector does not contain an entry for every unit.")
     }
 
@@ -366,8 +413,8 @@ for each geographic unit.")
     cat("Sampling partitions using spanning tree method.\n")
     enum_out <- sample_partition(
         aList = adjlist, aMat = list_to_mat(adjlist),
-        num_partitions = ndists, num_samples = nsamp,
-        threads = n_cores
+        num_partitions = ndists, num_samples = nsims,
+        threads = ncores
     )
 
     ## --------------
@@ -381,9 +428,9 @@ for each geographic unit.")
                 targ <- sum(pops) / length(unique(part))
                 tab <- tapply(pops, part, sum)
                 return(max(abs((tab/targ - 1))))
-            }, mc.cores = n_cores)
+            }, mc.cores = ncores)
         )
-        inds_pop <- which(popdist <= pop_constraint)
+        inds_pop <- which(popdist <= pop_tol)
         ## if(!compact_filter){
             inds_sub <- inds_pop
         ## }

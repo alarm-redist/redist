@@ -23,4 +23,4 @@ Plots a boxplot of a quantity of interest across districts, with districts
 optionally sorted by this quantity. Adds reference points for each reference
 plan, if applicable.
 }
-\concept{visualize}
+\concept{plot}

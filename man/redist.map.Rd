@@ -6,8 +6,10 @@
 \usage{
 redist.map(
   shp = NULL,
-  adjacency = NULL,
-  district_membership = NULL,
+  adj = NULL,
+  adjacency,
+  plan = NULL,
+  district_membership,
   centroids = TRUE,
   edges = TRUE,
   boundaries = TRUE,
@@ -18,10 +20,16 @@ redist.map(
 \arguments{
 \item{shp}{A SpatialPolygonsDataFrame or sf object. Required.}
 
-\item{adjacency}{A zero-indexed adjacency list. Created with redist.adjacency
+\item{adj}{A zero-indexed adjacency list. Created with redist.adjacency
 if not supplied. Default is NULL.}
 
-\item{district_membership}{A numeric vector with one row for each precinct in shp.
+\item{adjacency}{Deprecated, use adj. A zero-indexed adjacency list. Created with redist.adjacency
+if not supplied. Default is NULL.}
+
+\item{plan}{A numeric vector with one entry for each precinct in shp.
+Used to color the districts. Default is \code{NULL}.  Optional.}
+
+\item{district_membership}{Deprecated, use plan. A numeric vector with one row for each precinct in shp.
 Used to color the districts. Default is \code{NULL}.  Optional.}
 
 \item{centroids}{A logical indicating if centroids should be plotted. Default is \code{TRUE}.}
@@ -46,8 +54,8 @@ library(redist)
 data("fl25")
 data("algdat.p10")
 cds <- algdat.p10$cdmat[,100]
-redist.map(shp = fl25, district_membership = cds)
+redist.map(shp = fl25, plan = cds)
 }
 
 }
-\concept{visualize}
+\concept{plot}

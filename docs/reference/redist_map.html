@@ -19,8 +19,8 @@
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/yeti/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous" />
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
 
@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
       </span>
     </div>
 
@@ -103,9 +103,15 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
+    </li>
+    <li>
       <a href="../articles/tidy-redist.html">Tidy `redist`</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -143,8 +149,8 @@
   pop_tol <span class='op'>=</span> <span class='fl'>0.01</span>,
   pop_bounds <span class='op'>=</span> <span class='cn'>NULL</span>,
   pop_col <span class='op'>=</span> <span class='st'>"pop"</span>,
-  graph <span class='op'>=</span> <span class='cn'>NULL</span>,
-  graph_col <span class='op'>=</span> <span class='st'>"graph"</span>,
+  adj <span class='op'>=</span> <span class='cn'>NULL</span>,
+  adj_col <span class='op'>=</span> <span class='st'>"adj"</span>,
   existing_col <span class='op'>=</span> <span class='cn'>NULL</span>,
   planarize <span class='op'>=</span> <span class='fl'>3857</span>
 <span class='op'>)</span>
@@ -182,12 +188,12 @@ population bounds, in the form of <code><a href='https://rdrr.io/r/base/c.html'>
 vector column.</p></td>
     </tr>
     <tr>
-      <th>graph</th>
+      <th>adj</th>
       <td><p>the adjacency graph for the object. Defaults to being computed
 from the data if it is coercible to a shapefile.</p></td>
     </tr>
     <tr>
-      <th>graph_col</th>
+      <th>adj_col</th>
       <td><p>the name of the adjacency graph column</p></td>
     </tr>
     <tr>
@@ -219,7 +225,7 @@ also adjust.  Subsetting with <code><a href='https://rdrr.io/r/base/Extract.html
 graphs or attributes.</p>
 <p>Other useful methods for <code>redist_map</code> objects:</p><ul>
 <li><p><code><a href='merge_by.html'>merge_by</a></code></p></li>
-<li><p><code><a href='get_graph.html'>get_graph</a></code></p></li>
+<li><p><code><a href='get_adj.html'>get_adj</a></code></p></li>
 <li><p><code><a href='plot.redist_map.html'>plot.redist_map</a></code></p></li>
 </ul>
 
@@ -227,21 +233,10 @@ graphs or attributes.</p>
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='va'>d</span> <span class='op'>=</span> <span class='fu'>redist_map</span><span class='op'>(</span><span class='va'>fl25</span>, n_distr<span class='op'>=</span><span class='fl'>3</span>, pop_tol<span class='op'>=</span><span class='fl'>0.05</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; <span class='warning'>Warning: Missing CRS, assuming NAD83 (4269).</span></div><div class='output co'>#&gt; <span class='message'>Projecting to CRS 3857</span></div><div class='input'><span class='fu'>dplyr</span><span class='fu'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/filter.html'>filter</a></span><span class='op'>(</span><span class='va'>d</span>, <span class='va'>pop</span> <span class='op'>&gt;=</span> <span class='fl'>10e3</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; A redist_map object with 5 units and 13 fields
-#&gt; To be partitioned into 3 districts with population between 58,347.67 - 5.0% and 58,347.67 + 5.0%
-#&gt; With geometry:
-#&gt;     bbox:           xmin: -9107951 ymin: 3047341 xmax: -9065127 ymax: 3085829
-#&gt;     projected CRS:  WGS 84 / Pseudo-Mercator
-#&gt; <span style='color: #949494;'># A tibble: 5 x 13</span><span>
-#&gt;   geoid10   pop   vap obama mccain TotPop BlackPop HispPop   VAP BlackVAP
-#&gt; </span><span style='color: #BCBCBC;'>*</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;chr&gt;</span><span>   </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #BCBCBC;'>1</span><span> 2519.0… </span><span style='text-decoration: underline;'>15</span><span>993 </span><span style='text-decoration: underline;'>12</span><span>379   647   </span><span style='text-decoration: underline;'>1</span><span>522  </span><span style='text-decoration: underline;'>15</span><span>993      863    </span><span style='text-decoration: underline;'>1</span><span>980 </span><span style='text-decoration: underline;'>12</span><span>379      582
-#&gt; </span><span style='color: #BCBCBC;'>2</span><span> 2396.0… </span><span style='text-decoration: underline;'>12</span><span>853  </span><span style='text-decoration: underline;'>8</span><span>965   640   </span><span style='text-decoration: underline;'>1</span><span>027  </span><span style='text-decoration: underline;'>12</span><span>853     </span><span style='text-decoration: underline;'>2</span><span>368    </span><span style='text-decoration: underline;'>3</span><span>860  </span><span style='text-decoration: underline;'>8</span><span>965     </span><span style='text-decoration: underline;'>1</span><span>468
-#&gt; </span><span style='color: #BCBCBC;'>3</span><span> 2515.0… </span><span style='text-decoration: underline;'>22</span><span>218 </span><span style='text-decoration: underline;'>14</span><span>513   506    641  </span><span style='text-decoration: underline;'>22</span><span>218     </span><span style='text-decoration: underline;'>5</span><span>911    </span><span style='text-decoration: underline;'>8</span><span>800 </span><span style='text-decoration: underline;'>14</span><span>513     </span><span style='text-decoration: underline;'>3</span><span>417
-#&gt; </span><span style='color: #BCBCBC;'>4</span><span> 2525.0… </span><span style='text-decoration: underline;'>16</span><span>734 </span><span style='text-decoration: underline;'>14</span><span>720   826   </span><span style='text-decoration: underline;'>1</span><span>414  </span><span style='text-decoration: underline;'>16</span><span>734      197     791 </span><span style='text-decoration: underline;'>14</span><span>720      155
-#&gt; </span><span style='color: #BCBCBC;'>5</span><span> 1246.0… </span><span style='text-decoration: underline;'>12</span><span>289  </span><span style='text-decoration: underline;'>7</span><span>734   366    271  </span><span style='text-decoration: underline;'>12</span><span>289     </span><span style='text-decoration: underline;'>1</span><span>693    </span><span style='text-decoration: underline;'>9</span><span>773  </span><span style='text-decoration: underline;'>7</span><span>734     </span><span style='text-decoration: underline;'>1</span><span>062
-#&gt; </span><span style='color: #949494;'># … with 3 more variables: HispVAP </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span style='color: #949494;'>, geometry </span><span style='color: #949494;font-style: italic;'>&lt;POLYGON [m]&gt;</span><span style='color: #949494;'>, graph </span><span style='color: #949494;font-style: italic;'>&lt;list&gt;</span><span></div><div class='input'>
-</div></span></pre>
+</div><div class='output co'>#&gt; <span class='warning'>Warning: 'adjacency' is deprecated.</span>
+#&gt; <span class='warning'>Use 'adj' instead.</span>
+#&gt; <span class='warning'>See help("Deprecated")</span></div><div class='output co'>#&gt; <span class='error'>Error in class(keep_rows) %in% c("numeric", "integer"): argument "keep_rows" is missing, with no default</span></div><div class='input'>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
