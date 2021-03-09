@@ -60,10 +60,7 @@
 #'
 #' @param adj An adjacency matrix, list, or object of class
 #' "SpatialPolygonsDataFrame."
-#' @param adjobj Deprecated, use adj. An adjacency matrix, list, or object of class
-#' "SpatialPolygonsDataFrame."
 #' @param total_pop A vector containing the populations of each geographic unit.
-#' @param popvec Deprecated, use total_pop. A vector containing the populations of each geographic unit.
 #' @param nsims The number of samples to draw.
 #' @param ndists The number of districts in each redistricting plan.
 #' @param counties A vector containing county (or other administrative or
@@ -75,11 +72,6 @@
 #' will have a deviation from the target district size no more than this value
 #' in percentage terms, i.e., \code{pop_tol=0.01} will ensure districts have
 #' populations within 1% of the target population.
-#' @param popcons The desired population constraint.  All sampled districts
-#' will have a deviation from the target district size no more than this value
-#' in percentage terms, i.e., \code{popcons=0.01} will ensure districts have
-#' populations within 1% of the target population.  Also see \code{pop_bounds}
-#' below for a way to specify more precise bounds.
 #' @param compactness Controls the compactness of the generated districts, with
 #' higher values preferring more compact districts. Must be nonnegative. See the
 #' 'Details' section for more information, and computational considerations.
@@ -110,6 +102,13 @@
 #' @param verbose Whether to print out intermediate information while sampling.
 #'   Recommended.
 #' @param silent Whether to supress all diagnostic information.
+#' @param adjobj Deprecated, use adj. An adjacency matrix, list, or object of class
+#' "SpatialPolygonsDataFrame."
+#' @param popvec Deprecated, use total_pop. A vector containing the populations of each geographic unit.
+#' @param popcons The desired population constraint.  All sampled districts
+#' will have a deviation from the target district size no more than this value
+#' in percentage terms, i.e., \code{popcons=0.01} will ensure districts have
+#' populations within 1% of the target population.
 #'
 #' @return \code{redist.smc} returns an object of class \code{redist}, which
 #' is a list containing the following components:
@@ -149,24 +148,25 @@
 #' @concept simulate
 #' @md
 #' @export
-redist.smc = function(adj, adjobj, total_pop, popvec, nsims, ndists, counties=NULL,
-                      pop_tol = 0.01, popcons, compactness=1,
+redist.smc = function(adj, total_pop, nsims, ndists, counties=NULL,
+                      pop_tol = 0.01, pop_bounds=NULL, compactness=1,
                       constraints=list(),
                       resample=TRUE,
                       constraint_fn=function(m) rep(0, ncol(m)),
                       adapt_k_thresh=0.975, seq_alpha=0.2+0.2*compactness,
                       truncate=(compactness != 1),
                       trunc_fn=function(x) pmin(x, 0.01*nsims^0.4),
-                      pop_temper=max(0.1/seq_alpha, 0.3), verbose=TRUE, silent=FALSE) {
-    if(!missing(adjobj)){
+                      pop_temper=max(0.1/seq_alpha, 0.3), verbose=TRUE, silent=FALSE,
+                      adjobj, popvec, popcons) {
+    if (!missing(adjobj)) {
         .Deprecated(new = 'adj', old = 'adjobj')
         adj <- adjobj
     }
-    if(!missing(popvec)){
+    if (!missing(popvec)) {
         .Deprecated(new = 'total_pop', old = 'popvec')
         total_pop <- popvec
     }
-    if(!missing(popcons)){
+    if (!missing(popcons)) {
         .Deprecated(new = 'pop_tol', old = 'popcons')
         pop_tol <- popcons
     }
@@ -203,8 +203,8 @@ redist.smc = function(adj, adjobj, total_pop, popvec, nsims, ndists, counties=NU
         if (!all(diff(pop_bounds) > 0))
             stop("`pop_bounds` must satisfy lower < target < upper.")
     } else {
-        target = sum(popvec) / ndists
-        pop_bounds = target * c(1 - popcons, 1, 1 + popcons)
+        target = sum(total_pop) / ndists
+        pop_bounds = target * c(1 - pop_tol, 1, 1 + pop_tol)
     }
 
     # Other constraints
@@ -233,7 +233,8 @@ redist.smc = function(adj, adjobj, total_pop, popvec, nsims, ndists, counties=NU
     if (silent) verbosity = 0
 
     lp = rep(0, nsims)
-    maps = smc_plans(nsims, adjlist, counties, total_pop, ndists, pop_tol, compactness,
+    maps = smc_plans(nsims, adjlist, counties, total_pop, ndists, pop_bounds[2],
+                     pop_bounds[1], pop_bounds[3], compactness,
                      constraints$status_quo$strength, constraints$status_quo$current, n_current,
                      constraints$vra$strength, constraints$vra$tgt_vra_min,
                      constraints$vra$tgt_vra_other, constraints$vra$pow_vra, constraints$vra$min_pop,
@@ -311,12 +312,12 @@ redist.smc_is_ci = function(x, wgt, conf=0.99) {
 #' in \code{\link{redist.smc}}, that ensures that samples of plans built from
 #' parts of a map will still satisfy the overall population constraint.
 #'
-#' @param pop a numeric vector containing the population of every precinct in
+#' @param total_pop a numeric vector containing the population of every precinct in
 #'   the full map.
 #' @param subset an indexing vector for the subset of the map that will be
 #'   studied or resampled.  Often this will take the form \code{current_plan
 #'   \%in\% c(1, 3, 7)}, where 1, 3, and 7 are the study districts.
-#' @param n_distr the number of districts in the overall map.
+#' @param ndists the number of districts in the overall map.
 #' @param sub_distr the number of districts in the map subset.
 #' @param tol the overall population tolerance that must be met.
 #'
@@ -324,19 +325,21 @@ redist.smc_is_ci = function(x, wgt, conf=0.99) {
 #' which can be used inside \code{\link{redist.smc}}.
 #'
 #' @concept prepare
+#' @export
+#'
 #' @examples
 #' data("fl25")
 #' data(algdat.p10)
 #'
 #' subset = algdat.p10$cdmat[,1] %in% c(1, 2)
 #' redist.subset_bounds(fl25$TotPop, subset, 3, 2, 0.1)
-redist.subset_bounds = function(pop, subset, n_distr, sub_distr, tol=0.01) {
-    if (sub_distr >= n_distr)
+redist.subset_bounds = function(total_pop, subset, ndists, sub_distr, tol=0.01) {
+    if (sub_distr >= ndists)
         warning("Same or greater number of districts in the map subset.")
-    overall_target = sum(pop) / n_distr
+    overall_target = sum(total_pop) / ndists
     lower = overall_target * (1 - tol)
     upper = overall_target * (1 + tol)
-    target = sum(pop[subset]) / sub_distr
+    target = sum(total_pop[subset]) / sub_distr
 
     c(ceiling(lower), target, floor(upper))
 }

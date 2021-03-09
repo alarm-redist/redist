@@ -7,7 +7,6 @@
 #'
 #'
 #' @importFrom  patchwork wrap_plots plot_layout
-#' @importFrom viridis scale_color_viridis
 #' @importFrom dplyr summarize
 #' @importFrom ggplot2 geom_text theme_bw
 #' @importFrom stats cmdscale kmeans
@@ -43,7 +42,7 @@ redist.plot.varinfo <- function(plans, group_pop, total_pop, shp){
     theme_bw() +
     labs(x = '', y = '', color = 'Minority\nPercent') +
     geom_text(data = sub, aes(label = id), color = 'red') +
-    viridis::scale_color_viridis()
+    ggplot2::scale_color_viridis_c()
 
 
   ratio <- group_pop/total_pop

@@ -143,7 +143,7 @@
     <p><code>redist.parity</code> computes the population parity of a matrix of maps.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.parity</span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>district_membership</span>, <span class='va'>total_pop</span>, <span class='va'>population</span>, ncores <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>redist.parity</span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>total_pop</span>, ncores <span class='op'>=</span> <span class='fl'>1</span>, <span class='va'>district_membership</span>, <span class='va'>population</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -154,21 +154,21 @@
 map. Required.</p></td>
     </tr>
     <tr>
-      <th>district_membership</th>
-      <td><p>Deprecated, use plans. A matrix with one row for
-each precinct and one column for each map. Required.</p></td>
-    </tr>
-    <tr>
       <th>total_pop</th>
       <td><p>A numeric vector with the population for every precinct.</p></td>
     </tr>
     <tr>
-      <th>population</th>
-      <td><p>Deprecated, use total_pop. A numeric vector with the population for every precinct.</p></td>
-    </tr>
-    <tr>
       <th>ncores</th>
       <td><p>Number of cores to use for parallel computing. Default is 1.</p></td>
+    </tr>
+    <tr>
+      <th>district_membership</th>
+      <td><p>Deprecated, use plans. A matrix with one row
+for each precinct and one column for each map. Required.</p></td>
+    </tr>
+    <tr>
+      <th>population</th>
+      <td><p>Deprecated, use total_pop. A numeric vector with the population for every precinct.</p></td>
     </tr>
     </table>
 

@@ -13,8 +13,6 @@
 #'
 #' @param plans A numeric vector (if only one map) or matrix with one row
 #' for each precinct and one column for each map. Required.
-#' @param district_membership Deprecated, use plans. A numeric vector (if only one map) or matrix with one row
-#' for each precinct and one column for each map. Required.
 #' @param measure A vector with a string for each measure desired from list "DSeats", "DVS", "EffGap",
 #' "EffGapEqPop", "TauGap", "MeanMedian", "Bias", "BiasV", "Declination",
 #' "Responsiveness", and "LopsidedWins". Use "all" to get all metrics.
@@ -28,6 +26,10 @@
 #' @param respV A value between 0 and 1 to compute responsiveness at. Only used with option "Responsiveness". Defaults to 0.5.
 #' @param bandwidth A value between 0 and 1 for computing responsiveness. Only used with option "Responsiveness." Defaults to 0.01.
 #' @param ncores Number of cores to use for parallel computing. Default is 1.
+#' @param district_membership Deprecated, use plans. A numeric vector (if only one map) or matrix with one row
+#' for each precinct and one column for each map. Required.
+#'
+#'
 #' @details This function computes specified compactness scores for a map.  If
 #' there is more than one precinct specified for a map, it aggregates to the district level
 #' and computes one score.

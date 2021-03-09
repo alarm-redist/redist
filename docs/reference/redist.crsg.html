@@ -149,18 +149,18 @@ Rodden (2013).</p>
 
     <pre class="usage"><span class='fu'>redist.crsg</span><span class='op'>(</span>
   <span class='va'>adj</span>,
-  <span class='va'>adj.list</span>,
   <span class='va'>total_pop</span>,
-  <span class='va'>population</span>,
   <span class='va'>shp</span>,
+  <span class='va'>ndists</span>,
+  <span class='va'>pop_tol</span>,
+  verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  maxiter <span class='op'>=</span> <span class='fl'>5000</span>,
+  <span class='va'>adj.list</span>,
+  <span class='va'>population</span>,
   <span class='va'>area</span>,
   <span class='va'>x_center</span>,
   <span class='va'>y_center</span>,
-  <span class='va'>ndists</span>,
-  <span class='va'>pop_tol</span>,
-  <span class='va'>thresh</span>,
-  verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  maxiter <span class='op'>=</span> <span class='fl'>5000</span>
+  <span class='va'>thresh</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -173,26 +173,51 @@ Each list element is an integer vector indicating which precincts that precinct
 is adjacent to.  It is assumed that precinct numbers start at 0.</p></td>
     </tr>
     <tr>
-      <th>adj.list</th>
-      <td><p>Deprecated, use adj. List of length N, where N is the number of precincts.
-Each list element is an integer vector indicating which precincts that precinct
-is adjacent to.  It is assumed that precinct numbers start at 0.</p></td>
-    </tr>
-    <tr>
       <th>total_pop</th>
       <td><p>numeric vector of length N, where N is the number of precincts.
 Each element lists the population total of the corresponding precinct, and is
 used to enforce pop_tol constraints.</p></td>
     </tr>
     <tr>
+      <th>shp</th>
+      <td><p>An sf dataframe to compute area and centroids with.</p></td>
+    </tr>
+    <tr>
+      <th>ndists</th>
+      <td><p>integer, the number of districts we want to partition the
+precincts into.</p></td>
+    </tr>
+    <tr>
+      <th>pop_tol</th>
+      <td><p>numeric, indicating how close district population targets have
+to be to the target population before algorithm converges.  pop_tol=0.05 for
+example means that all districts must be between 0.95 and 1.05 times the size
+of target.pop in population size.</p></td>
+    </tr>
+    <tr>
+      <th>verbose</th>
+      <td><p>boolean, indicating whether the time to run the algorithm is
+printed.</p></td>
+    </tr>
+    <tr>
+      <th>maxiter</th>
+      <td><p>integer, indicating maximum number of iterations to attempt
+before convergence to population constraint fails.  If it fails once, it will
+use a different set of start values and try again.  If it fails again,
+redist.rsg() returns an object of all NAs, indicating that use of more
+iterations may be advised. Default is 5000.</p></td>
+    </tr>
+    <tr>
+      <th>adj.list</th>
+      <td><p>Deprecated, use adj. List of length N, where N is the number of precincts.
+Each list element is an integer vector indicating which precincts that precinct
+is adjacent to.  It is assumed that precinct numbers start at 0.</p></td>
+    </tr>
+    <tr>
       <th>population</th>
       <td><p>Deprecated, use total_pop. numeric vector of length N, where N is the number of precincts.
 Each element lists the population total of the corresponding precinct, and is
 used to enforce population constraints.</p></td>
-    </tr>
-    <tr>
-      <th>shp</th>
-      <td><p>An sf dataframe to compute area and centroids with.</p></td>
     </tr>
     <tr>
       <th>area</th>
@@ -212,36 +237,11 @@ Each element is the y coordinate of the geographic centroid of the corresponding
 precinct.</p></td>
     </tr>
     <tr>
-      <th>ndists</th>
-      <td><p>integer, the number of districts we want to partition the
-precincts into.</p></td>
-    </tr>
-    <tr>
-      <th>pop_tol</th>
-      <td><p>numeric, indicating how close district population targets have
-to be to the target population before algorithm converges.  pop_tol=0.05 for
-example means that all districts must be between 0.95 and 1.05 times the size
-of target.pop in population size.</p></td>
-    </tr>
-    <tr>
       <th>thresh</th>
       <td><p>Deprecated, use pop_tol. numeric, indicating how close district population targets have
 to be to the target population before algorithm converges.  thresh=0.05 for
 example means that all districts must be between 0.95 and 1.05 times the size
 of target.pop in population size.</p></td>
-    </tr>
-    <tr>
-      <th>verbose</th>
-      <td><p>boolean, indicating whether the time to run the algorithm is
-printed.</p></td>
-    </tr>
-    <tr>
-      <th>maxiter</th>
-      <td><p>integer, indicating maximum number of iterations to attempt
-before convergence to population constraint fails.  If it fails once, it will
-use a different set of start values and try again.  If it fails again,
-redist.rsg() returns an object of all NAs, indicating that use of more
-iterations may be advised. Default is 5000.</p></td>
     </tr>
     </table>
 

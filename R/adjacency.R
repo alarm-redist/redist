@@ -64,8 +64,8 @@ redist.adjacency <- function(shp, plan, district_membership){
 #' Tool to help reduce adjacency lists for analyzing subsets of maps.
 #'
 #' @param adj A zero-indexed adjacency list. Required.
-#' @param adjacency  Deprecated. Use adj. A zero-indexed adjacency list.
 #' @param keep_rows row numbers of precincts to keep
+#' @param adjacency  Deprecated. Use adj. A zero-indexed adjacency list.
 #'
 #' @return zero indexed adjacency list with max value length(keep_rows) - 1
 #'
@@ -76,7 +76,7 @@ redist.adjacency <- function(shp, plan, district_membership){
 #' data("algdat.p10")
 #' redist.reduce.adjacency(algdat.p10$adjlist, c(2, 3, 4, 6, 21))
 #' }
-redist.reduce.adjacency <- function(adj, adjacency, keep_rows){
+redist.reduce.adjacency <- function(adj, keep_rows, adjacency) {
     if (!missing(adjacency)) {
         adj <- adjacency
         .Deprecated('adj', old = 'adjacency')
@@ -101,17 +101,18 @@ redist.reduce.adjacency <- function(adj, adjacency, keep_rows){
     reduce_adj(adj, prec_map, length(keep_rows))
 }
 
+
 #' Coarsen Adjacency List
 #'
 #' @param adj A zero-indexed adjacency list. Required.
-#' @param adjacency Deperecated -- use adj. A zero-indexed adjacency list
 #' @param groups integer vector of elements of adjacency to group
+#' @param adjacency Deperecated -- use adj. A zero-indexed adjacency list
 #'
 #' @return adjacency list coarsened
 #'
 #' @concept prepare
 #' @export
-redist.coarsen.adjacency <- function(adj, adjacency, groups) {
+redist.coarsen.adjacency <- function(adj, groups, adjacency) {
     if (!missing(adjacency)) {
         .Deprecated('adj',  old = 'adjacency')
         adj <- adjacency
@@ -132,5 +133,5 @@ redist.coarsen.adjacency <- function(adj, adjacency, groups) {
 
     groups <- as.integer(groups)
 
-    return(coarsen_adjacency(adj, groups))
+    coarsen_adjacency(adj, groups)
 }

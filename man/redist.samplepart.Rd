@@ -6,17 +6,17 @@
 \usage{
 redist.samplepart(
   adj,
-  adjobj,
   ndists,
   total_pop = NULL,
-  popvec,
   pop_filter = FALSE,
   pop_tol = 0.5,
+  nsims = 1000,
+  ncores = 1,
+  adjobj,
+  popvec,
   pop_constraint,
   contiguitymap = "rooks",
-  nsims = 1000,
   nsamp,
-  ncores = 1,
   n_cores
 )
 }
@@ -24,15 +24,9 @@ redist.samplepart(
 \item{adj}{An adjacency list, matrix, or object of class
 \code{SpatialPolygonsDataFrame}.}
 
-\item{adjobj}{Deprecated, use adj. An adjacency list, matrix, or object of class
-\code{SpatialPolygonsDataFrame}.}
-
 \item{ndists}{The desired number of congressional districts}
 
 \item{total_pop}{Population vector for adjacency object. Provide if
-filtering by population}
-
-\item{popvec}{Deprecated, use total_pop. Population vector for adjacency object. Provide if
 filtering by population}
 
 \item{pop_filter}{Boolean. Whether or not to filter on population parity.
@@ -41,6 +35,17 @@ Default is FALSE.}
 \item{pop_tol}{Strength of population filter if filtering on
 distance to parity.}
 
+\item{nsims}{Number of samples to draw. Default is 1000.}
+
+\item{ncores}{Number of cores to parallelize over for parity calculation and
+compactness calculation. Default is 1.}
+
+\item{adjobj}{Deprecated, use adj. An adjacency list, matrix, or object of class
+\code{SpatialPolygonsDataFrame}.}
+
+\item{popvec}{Deprecated, use total_pop. Population vector for adjacency object. Provide if
+filtering by population}
+
 \item{pop_constraint}{Deprecated, use pop_tol. Strength of population filter if filtering on
 distance to parity.}
 
@@ -48,12 +53,7 @@ distance to parity.}
 adjacency list from a "SpatialPolygonsDataFrame" data type.
 Default is "rooks".}
 
-\item{nsims}{Number of samples to draw. Default is 1000.}
-
 \item{nsamp}{Deprecated, use nsims. Number of samples to draw. Default is 1000.}
-
-\item{ncores}{Number of cores to parallelize over for parity calculation and
-compactness calculation. Default is 1.}
 
 \item{n_cores}{Deprecated, use ncores. Number of cores to parallelize over for parity calculation and
 compactness calculation. Default is 1.}

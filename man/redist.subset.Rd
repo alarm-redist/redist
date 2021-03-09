@@ -7,15 +7,15 @@
 redist.subset(
   shp,
   adj,
-  adjacency,
   keep_rows,
   total_pop,
-  population,
   ndists,
-  ndist,
   pop_tol,
-  popcons,
   sub_ndists,
+  adjacency,
+  population,
+  ndist,
+  popcons,
   subndist
 )
 }
@@ -25,24 +25,24 @@ redist.subset(
 \item{adj}{A zero-indexed adjacency list. Created with
 \code{redist.adjacency} if not supplied.}
 
-\item{adjacency}{Deprecated, use adj. A zero-indexed adjacency list. Created with
-\code{redist.adjacency} if not supplied.}
-
 \item{keep_rows}{row numbers of precincts to keep. Random submap selected if not supplied.}
 
 \item{total_pop}{numeric vector with one entry for the population of each precinct.}
 
-\item{population}{Deprecated, use total_pop. numeric vector with one entry for the population of each precinct.}
-
 \item{ndists}{integer, number of districts in whole map}
-
-\item{ndist}{Deprecated, use ndists. integer, number of districts in whole map}
 
 \item{pop_tol}{The strength of the hard population constraint.}
 
-\item{popcons}{Deprecated, use pop_tol. The strength of the hard population constraint.}
-
 \item{sub_ndists}{integer, number of districts in subset map}
+
+\item{adjacency}{Deprecated, use adj. A zero-indexed adjacency list. Created with
+\code{redist.adjacency} if not supplied.}
+
+\item{population}{Deprecated, use total_pop. numeric vector with one entry for the population of each precinct.}
+
+\item{ndist}{Deprecated, use ndists. integer, number of districts in whole map}
+
+\item{popcons}{Deprecated, use pop_tol. The strength of the hard population constraint.}
 
 \item{subndist}{Deprecated, use sub_ndists. integer, number of districts in subset map}
 }

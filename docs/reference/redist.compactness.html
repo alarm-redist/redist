@@ -152,15 +152,15 @@ and the log of the Spanning Trees.</p>
     <pre class="usage"><span class='fu'>redist.compactness</span><span class='op'>(</span>
   shp <span class='op'>=</span> <span class='cn'>NULL</span>,
   <span class='va'>plans</span>,
-  <span class='va'>district_membership</span>,
   measure <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"PolsbyPopper"</span><span class='op'>)</span>,
-  <span class='va'>population</span>,
   total_pop <span class='op'>=</span> <span class='cn'>NULL</span>,
   adj <span class='op'>=</span> <span class='cn'>NULL</span>,
-  <span class='va'>adjacency</span>,
   nloop <span class='op'>=</span> <span class='fl'>1</span>,
   ncores <span class='op'>=</span> <span class='fl'>1</span>,
-  counties <span class='op'>=</span> <span class='cn'>NULL</span>
+  counties <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>district_membership</span>,
+  <span class='va'>population</span>,
+  <span class='va'>adjacency</span>
 <span class='op'>)</span>
 
 <span class='fu'>distr_compactness</span><span class='op'>(</span>
@@ -184,21 +184,11 @@ and "logSpanningTree" with adjacency provided.</p></td>
 for each precinct and one column for each map. Required.</p></td>
     </tr>
     <tr>
-      <th>district_membership</th>
-      <td><p>Deprecated. Use plans. A numeric vector (if only one map) or matrix with one row
-for each precinct and one column for each map. Required.</p></td>
-    </tr>
-    <tr>
       <th>measure</th>
       <td><p>A vector with a string for each measure desired. "PolsbyPopper",
 "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden",
 "EdgesRemoved", and "logSpanningTree" are implemented. Defaults to "PolsbyPopper". Use "all" to
 return all implemented measures.</p></td>
-    </tr>
-    <tr>
-      <th>population</th>
-      <td><p>Deprecated. Use total_pop. A numeric vector with the population for every observation. Is
-only necessary when "FryerHolden" is used for measure. Defaults to NULL.</p></td>
     </tr>
     <tr>
       <th>total_pop</th>
@@ -208,11 +198,6 @@ only necessary when "FryerHolden" is used for measure. Defaults to NULL.</p></td
     <tr>
       <th>adj</th>
       <td><p>A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
-Created with <code>redist.adjacency</code> if not supplied and needed. Default is NULL.</p></td>
-    </tr>
-    <tr>
-      <th>adjacency</th>
-      <td><p>Deprecated. Use adj. A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
 Created with <code>redist.adjacency</code> if not supplied and needed. Default is NULL.</p></td>
     </tr>
     <tr>
@@ -227,6 +212,21 @@ and the column number if multiple maps given.</p></td>
     <tr>
       <th>counties</th>
       <td><p>A numeric vector from 1:ncounties corresponding to counties. Required for "logSpanningTree".</p></td>
+    </tr>
+    <tr>
+      <th>district_membership</th>
+      <td><p>Deprecated. Use plans. A numeric vector (if only one map) or matrix with one row
+for each precinct and one column for each map. Required.</p></td>
+    </tr>
+    <tr>
+      <th>population</th>
+      <td><p>Deprecated. Use total_pop. A numeric vector with the population for every observation. Is
+only necessary when "FryerHolden" is used for measure. Defaults to NULL.</p></td>
+    </tr>
+    <tr>
+      <th>adjacency</th>
+      <td><p>Deprecated. Use adj. A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
+Created with <code>redist.adjacency</code> if not supplied and needed. Default is NULL.</p></td>
     </tr>
     <tr>
       <th>map</th>
@@ -251,6 +251,7 @@ each specified measure, and a column that specifies the map number.</p>
     <p>This function computes specified compactness scores for a map.  If
 there is more than one shape specified for a single district, it combines
 them, if necessary, and computes one score for each district.</p>
+
 <p>Polsby-Popper is computed as $$\frac{4*\pi*A(d)}{P(d)^2}$$ where A is the area
 function, the district is d, and P is the perimeter function.</p>
 <p>Schwartzberg is computed as $$\frac{P(d)}{2*\pi*\sqrt{\frac{A(d)}{\pi}}}$$

@@ -21,7 +21,8 @@ test_that("enumpart can sample without constraints", {
     sample_path = file.path(dir, "sample.dat")
     if (file.exists(sample_path)) file.remove(sample_path)
 
-    redist.run.enumpart(file.path(dir, "ordered"), file.path(dir, "sample"), ndist=3, all=F, n=10)
+    redist.run.enumpart(file.path(dir, "ordered"), file.path(dir, "sample"),
+                        ndists=3, all=F, n=10)
     m = matrix(scan(file.path(dir, "sample.dat")), nrow=25)
 
     expect_equal(dim(m), c(25, 10))
@@ -33,7 +34,7 @@ test_that("enumpart can sample with unit count constraints", {
     if (file.exists(sample_path)) file.remove(sample_path)
 
     redist.run.enumpart(file.path(dir, "ordered"), file.path(dir, "sample"),
-                        ndist=3, all=F, n=100, lower=4, upper=16)
+                        ndists=3, all=F, n=100, lower=4, upper=16)
     m = matrix(scan(sample_path), nrow=25)
 
     expect_equal(dim(m), c(25, 100))
@@ -50,7 +51,7 @@ test_that("enumpart can sample with population constraints", {
     write(pop, file.path(dir, "pop.dat"), ncolumns=length(pop))
     target = sum(pop) / 3
     redist.run.enumpart(file.path(dir, "ordered"), file.path(dir, "sample"),
-                        ndist=3, all=T, lower=round(target*0.9), upper=round(target*1.1),
+                        ndists=3, all=T, lower=round(target*0.9), upper=round(target*1.1),
                         weight_path=file.path(dir, "pop"))
     m = matrix(scan(sample_path), nrow=25)
 

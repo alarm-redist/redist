@@ -6,12 +6,12 @@
 #' another district gets it own group.
 #'
 #' @param adj zero indexed adjacency list.
-#' @param adjacency Deprecated, use adj. A zero indexed adjacency list.
 #' @param plan An integer vector or matrix column of district assignments.
-#' @param district_membership Deprecated, use plan. An integer vector or matrix column of district assignments.
 #' @param within Number of steps to check for. Defaults to 1.
 #' @param focus Optional. Integer. A single district to focus on.
 #' @param simplify Optional. Logical. Whether to return extra information or just grouping ID.
+#' @param adjacency Deprecated, use adj. A zero indexed adjacency list.
+#' @param district_membership Deprecated, use plan. An integer vector or matrix column of district assignments.
 #'
 #' @return integer vector if simplify is false. Otherwise returns a tibble with the grouping
 #' variable and additional information.

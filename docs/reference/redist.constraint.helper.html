@@ -147,13 +147,13 @@
   constraints <span class='op'>=</span> <span class='st'>"vra"</span>,
   tgt_min <span class='op'>=</span> <span class='fl'>0.55</span>,
   <span class='va'>group_pop</span>,
-  <span class='va'>grouppop</span>,
   <span class='va'>total_pop</span>,
-  <span class='va'>fullpop</span>,
   <span class='va'>ndists</span>,
   <span class='va'>nmmd</span>,
   strength_vra <span class='op'>=</span> <span class='fl'>2500</span>,
-  pow_vra <span class='op'>=</span> <span class='fl'>1.5</span>
+  pow_vra <span class='op'>=</span> <span class='fl'>1.5</span>,
+  <span class='va'>grouppop</span>,
+  <span class='va'>fullpop</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -172,16 +172,8 @@
       <td><p>A vector of populations for some subgroup of interest.</p></td>
     </tr>
     <tr>
-      <th>grouppop</th>
-      <td><p>Deprecated, use group_pop. A vector of populations for some subgroup of interest.</p></td>
-    </tr>
-    <tr>
       <th>total_pop</th>
       <td><p>A vector containing the populations of each geographic unit.</p></td>
-    </tr>
-    <tr>
-      <th>fullpop</th>
-      <td><p>Deprecated, use total_pop. A vector containing the populations of each geographic unit.</p></td>
     </tr>
     <tr>
       <th>ndists</th>
@@ -198,6 +190,14 @@
     <tr>
       <th>pow_vra</th>
       <td><p>The exponent for the 'vra' constraint. Defaults to 1.5.</p></td>
+    </tr>
+    <tr>
+      <th>grouppop</th>
+      <td><p>Deprecated, use group_pop. A vector of populations for some subgroup of interest.</p></td>
+    </tr>
+    <tr>
+      <th>fullpop</th>
+      <td><p>Deprecated, use total_pop. A vector containing the populations of each geographic unit.</p></td>
     </tr>
     </table>
 

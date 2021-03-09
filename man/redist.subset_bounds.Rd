@@ -4,17 +4,17 @@
 \alias{redist.subset_bounds}
 \title{Calculate Population Bounds for a Subset of a Map}
 \usage{
-redist.subset_bounds(pop, subset, n_distr, sub_distr, tol = 0.01)
+redist.subset_bounds(total_pop, subset, ndists, sub_distr, tol = 0.01)
 }
 \arguments{
-\item{pop}{a numeric vector containing the population of every precinct in
+\item{total_pop}{a numeric vector containing the population of every precinct in
 the full map.}
 
 \item{subset}{an indexing vector for the subset of the map that will be
 studied or resampled.  Often this will take the form \code{current_plan
 \%in\% c(1, 3, 7)}, where 1, 3, and 7 are the study districts.}
 
-\item{n_distr}{the number of districts in the overall map.}
+\item{ndists}{the number of districts in the overall map.}
 
 \item{sub_distr}{the number of districts in the map subset.}
 

@@ -6,13 +6,13 @@
 \usage{
 redist.enumerate(
   adj,
-  adjobj,
   ndists = 2,
   total_pop = NULL,
-  popvec,
   nconstraintlow = NULL,
   nconstrainthigh = NULL,
   pop_tol = NULL,
+  adjobj,
+  popvec,
   popcons,
   contiguitymap = "rooks"
 )
@@ -21,15 +21,10 @@ redist.enumerate(
 \item{adj}{An adjacency list, matrix, or object of class
 \code{SpatialPolygonsDataFrame}.}
 
-\item{adjobj}{Deprecated, use adj. An adjacency list, matrix, or object of class
-\code{SpatialPolygonsDataFrame}.}
-
 \item{ndists}{The desired number of congressional districts. The default is 2.}
 
 \item{total_pop}{A vector of geographic unit populations. The default is
 \code{NULL}.}
-
-\item{popvec}{Deprecated, use total_pop. A vector of geographic unit populations.}
 
 \item{nconstraintlow}{Lower bound for number of geographic units to include in
 a district. The default is \code{NULL}.}
@@ -41,6 +36,11 @@ in a district. The default is \code{NULL}.}
 \code{pop_tol} = 0.05 means that any proposed swap that brings a district more
 than 5\% away from population parity will be rejected. The default is
 \code{NULL}.}
+
+\item{adjobj}{Deprecated, use adj. An adjacency list, matrix, or object of class
+\code{SpatialPolygonsDataFrame}.}
+
+\item{popvec}{Deprecated, use total_pop. A vector of geographic unit populations.}
 
 \item{popcons}{Deprecated, use pop_tol. The strength of the hard population constraint.
 \code{popcons} = 0.05 means that any proposed swap that brings a district more

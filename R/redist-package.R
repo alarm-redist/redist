@@ -54,7 +54,7 @@
 #' @importFrom doParallel registerDoParallel
 #' @importFrom foreach foreach %dopar%
 #' @importFrom grDevices dev.off pdf
-#' @importFrom stats median runif quantile qnorm
+#' @importFrom stats median runif quantile qnorm IQR
 #' @importFrom magrittr %>%
 #' @importFrom dplyr n dplyr_row_slice dplyr_col_modify dplyr_reconstruct .data
 #' @importFrom rlang :=
