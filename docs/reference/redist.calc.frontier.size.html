@@ -47,8 +47,7 @@
 
 
 <meta property="og:title" content="Calculate Frontier Size — redist.calc.frontier.size" />
-<meta property="og:description" content="Calculate Frontier Size
-Calculate Frontier Size" />
+<meta property="og:description" content="Calculate Frontier Size" />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -136,18 +135,15 @@ Calculate Frontier Size" />
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Calculate Frontier Size</h1>
-    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/enum_old.R'><code>R/enum_old.R</code></a>, <a href='https://github.com/kosukeimai/redist/blob/master/R/enumpart.R'><code>R/enumpart.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/enumpart.R'><code>R/enumpart.R</code></a></small>
     <div class="hidden name"><code>redist.calc.frontier.size.Rd</code></div>
     </div>
 
     <div class="ref-description">
     <p>Calculate Frontier Size</p>
-<p>Calculate Frontier Size</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.calc.frontier.size</span><span class='op'>(</span><span class='va'>ordered_path</span><span class='op'>)</span>
-
-<span class='fu'>redist.calc.frontier.size</span><span class='op'>(</span><span class='va'>ordered_path</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>redist.calc.frontier.size</span><span class='op'>(</span><span class='va'>ordered_path</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -167,22 +163,9 @@ Calculate Frontier Size" />
 <li><p>sequencenumeric vector, lists out all sizes for every frontier</p></li>
 </ul>
 
-<p>List, four objects</p><ul>
-<li><p>maxnumeric, maximum frontier size</p></li>
-<li><p>averagenumeric, average frontier size</p></li>
-<li><p>average_sqnumeric, average((frontier size)^2)</p></li>
-<li><p>sequencenumeric vector, lists out all sizes for every frontier</p></li>
-</ul>
-
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
-<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
-<span class='va'>adj</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.adjacency.html'>redist.adjacency</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
-<span class='fu'><a href='redist.prep.enumpart.html'>redist.prep.enumpart</a></span><span class='op'>(</span><span class='va'>adj</span>, <span class='st'>'unordered'</span>, <span class='st'>'ordered'</span><span class='op'>)</span>
-<span class='fu'>redist.calc.frontier.size</span><span class='op'>(</span><span class='st'>'ordered'</span><span class='op'>)</span>
-<span class='op'>}</span>
-<span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
 <span class='va'>adj</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.adjacency.html'>redist.adjacency</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
 <span class='fu'><a href='redist.prep.enumpart.html'>redist.prep.enumpart</a></span><span class='op'>(</span><span class='va'>adj</span>, <span class='st'>'unordered'</span>, <span class='st'>'ordered'</span><span class='op'>)</span>

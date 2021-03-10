@@ -1,4 +1,4 @@
-##############################################
+
 ## Author: Cory McCartan
 ## Institution: Harvard University
 ## Date Created: 2021/01/28

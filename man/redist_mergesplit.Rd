@@ -6,8 +6,8 @@
 \usage{
 redist_mergesplit(
   map,
-  n_sims,
-  warmup = floor(n_sims/2),
+  nsims,
+  warmup = floor(nsims/2),
   init_plan = NULL,
   counties = NULL,
   compactness = 1,
@@ -21,7 +21,7 @@ redist_mergesplit(
 \arguments{
 \item{map}{A \code{\link{redist_map}} object.}
 
-\item{n_sims}{The number of samples to draw, including warmup.}
+\item{nsims}{The number of samples to draw, including warmup.}
 
 \item{warmup}{The number of warmup samples to discard.}
 
@@ -68,8 +68,7 @@ but not identical to those used in the references.
 }
 \details{
 This function draws samples from a specific target measure, controlled by the
-\code{popcons}, \code{compactness}, \code{constraints}, and
-\code{constraint_fn} parameters.
+\code{compactness}, \code{constraints}, and \code{constraint_fn} parameters.
 
 Higher values of \code{compactness} sample more compact districts;
 setting this parameter to 1 is computationally efficient and generates nicely

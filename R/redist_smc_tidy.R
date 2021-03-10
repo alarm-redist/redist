@@ -62,7 +62,7 @@
 #'
 #'
 #' @param map A \code{\link{redist_map}} object.
-#' @param n_sims The number of samples to draw.
+#' @param nsims The number of samples to draw.
 #' @param counties A vector containing county (or other administrative or
 #' geographic unit) labels for each unit, which may be integers ranging from 1
 #' to the number of counties, or a factor or character vector.  If provided, the
@@ -120,7 +120,7 @@
 #' @concept simulate
 #' @md
 #' @export
-redist_smc = function(map, n_sims, counties=NULL, compactness=1, constraints=list(),
+redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list(),
                       resample=TRUE, constraint_fn=function(m) rep(0, ncol(m)),
                       adapt_k_thresh=0.975, seq_alpha=0.2+0.3*compactness,
                       truncate=(compactness != 1), trunc_fn=redist_quantile_trunc,
@@ -134,8 +134,8 @@ redist_smc = function(map, n_sims, counties=NULL, compactness=1, constraints=lis
         stop("`adapt_k_thresh` parameter must lie in [0, 1].")
     if (seq_alpha <= 0 | seq_alpha > 1)
         stop("`seq_alpha` parameter must lie in (0, 1].")
-    if (n_sims < 1)
-        stop("`n_sims` must be positive.")
+    if (nsims < 1)
+        stop("`nsims` must be positive.")
 
     counties = rlang::eval_tidy(rlang::enquo(counties), map)
     if (is.null(counties)) {
@@ -173,8 +173,8 @@ redist_smc = function(map, n_sims, counties=NULL, compactness=1, constraints=lis
     pop = map[[attr(map, "pop_col")]]
     ndists = attr(map, "ndists")
 
-    lp = rep(0, n_sims)
-    plans = smc_plans(n_sims, adj, counties, pop, ndists, pop_bounds[2],
+    lp = rep(0, nsims)
+    plans = smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],
                       pop_bounds[1], pop_bounds[3], compactness,
                       constraints$status_quo$strength, constraints$status_quo$current, n_current,
                       constraints$vra$strength, constraints$vra$tgt_vra_min,
@@ -201,10 +201,10 @@ redist_smc = function(map, n_sims, counties=NULL, compactness=1, constraints=lis
         n_eff = length(mod_wgt) * mean(mod_wgt)^2 / mean(mod_wgt^2)
         mod_wgt = mod_wgt / sum(mod_wgt)
 
-        plans = plans[, sample(n_sims, n_sims, replace=T, prob=mod_wgt)]
+        plans = plans[, sample(nsims, nsims, replace=T, prob=mod_wgt)]
     }
 
-    if (n_eff/n_sims <= 0.05)
+    if (n_eff/nsims <= 0.05)
         warning("Less than 5% resampling efficiency. Consider weakening constraints and/or adjusting `seq_alpha`.")
 
     new_redist_plans(plans, map, "smc", wgt, resample,

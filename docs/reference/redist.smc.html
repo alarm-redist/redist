@@ -165,7 +165,7 @@ boundary constraints.</p>
   seq_alpha <span class='op'>=</span> <span class='fl'>0.2</span> <span class='op'>+</span> <span class='fl'>0.2</span> <span class='op'>*</span> <span class='va'>compactness</span>,
   truncate <span class='op'>=</span> <span class='op'>(</span><span class='va'>compactness</span> <span class='op'>!=</span> <span class='fl'>1</span><span class='op'>)</span>,
   trunc_fn <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span> <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>pmin</a></span><span class='op'>(</span><span class='va'>x</span>, <span class='fl'>0.01</span> <span class='op'>*</span> <span class='va'>nsims</span><span class='op'>^</span><span class='fl'>0.4</span><span class='op'>)</span>,
-  pop_temper <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>max</a></span><span class='op'>(</span><span class='fl'>0.1</span><span class='op'>/</span><span class='va'>seq_alpha</span>, <span class='fl'>0.3</span><span class='op'>)</span>,
+  pop_temper <span class='op'>=</span> <span class='fl'>0</span>,
   verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
   silent <span class='op'>=</span> <span class='cn'>FALSE</span>,
   <span class='va'>adjobj</span>,

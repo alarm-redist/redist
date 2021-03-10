@@ -20,7 +20,7 @@ redist.smc(
   seq_alpha = 0.2 + 0.2 * compactness,
   truncate = (compactness != 1),
   trunc_fn = function(x) pmin(x, 0.01 * nsims^0.4),
-  pop_temper = max(0.1/seq_alpha, 0.3),
+  pop_temper = 0,
   verbose = TRUE,
   silent = FALSE,
   adjobj,

@@ -6,7 +6,7 @@
 \usage{
 redist_smc(
   map,
-  n_sims,
+  nsims,
   counties = NULL,
   compactness = 1,
   constraints = list(),
@@ -24,7 +24,7 @@ redist_smc(
 \arguments{
 \item{map}{A \code{\link{redist_map}} object.}
 
-\item{n_sims}{The number of samples to draw.}
+\item{nsims}{The number of samples to draw.}
 
 \item{counties}{A vector containing county (or other administrative or
 geographic unit) labels for each unit, which may be integers ranging from 1

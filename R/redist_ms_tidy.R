@@ -14,8 +14,7 @@
 #' but not identical to those used in the references.
 #'
 #' This function draws samples from a specific target measure, controlled by the
-#' \code{popcons}, \code{compactness}, \code{constraints}, and
-#' \code{constraint_fn} parameters.
+#' \code{compactness}, \code{constraints}, and \code{constraint_fn} parameters.
 #'
 #' Higher values of \code{compactness} sample more compact districts;
 #' setting this parameter to 1 is computationally efficient and generates nicely
@@ -51,7 +50,7 @@
 #'
 #'
 #' @param map A \code{\link{redist_map}} object.
-#' @param n_sims The number of samples to draw, including warmup.
+#' @param nsims The number of samples to draw, including warmup.
 #' @param warmup The number of warmup samples to discard.
 #' @param init_plan The initial state of the map. If not provided, will default to
 #'   the reference map of the \code{map} object.
@@ -102,7 +101,7 @@
 #' @concept simulate
 #' @md
 #' @export
-redist_mergesplit = function(map, n_sims, warmup=floor(n_sims/2),
+redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
                              init_plan=NULL, counties=NULL, compactness=1,
                              constraints=list(), constraint_fn=function(m) rep(0, ncol(m)),
                              adapt_k_thresh=0.975, verbose=TRUE, silent=FALSE) {
@@ -114,8 +113,8 @@ redist_mergesplit = function(map, n_sims, warmup=floor(n_sims/2),
     if (compactness < 0) stop("Compactness parameter must be non-negative")
     if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
         stop("`adapt_k_thresh` parameter must lie in [0, 1].")
-    if (n_sims < 1)
-        stop("`n_sims` must be positive.")
+    if (nsims < 1)
+        stop("`nsims` must be positive.")
 
     if (is.null(init_plan)) init_plan = as.integer(as.factor(get_existing(map)))
     if (is.null(init_plan)) stop("Must provide an initial map.")
@@ -157,7 +156,7 @@ redist_mergesplit = function(map, n_sims, warmup=floor(n_sims/2),
     pop_bounds = attr(map, "pop_bounds")
     pop = map[[attr(map, "pop_col")]]
 
-    plans = ms_plans(n_sims, adj, init_plan, counties, pop, ndists, pop_bounds[2],
+    plans = ms_plans(nsims, adj, init_plan, counties, pop, ndists, pop_bounds[2],
                      pop_bounds[1], pop_bounds[3], compactness,
                      constraints$status_quo$strength, constraints$status_quo$current, n_current,
                      constraints$vra$strength, constraints$vra$tgt_vra_min,
@@ -166,7 +165,7 @@ redist_mergesplit = function(map, n_sims, warmup=floor(n_sims/2),
                      adapt_k_thresh, verbosity)
 
     new_redist_plans(plans[,-1:-warmup], map, "mergesplit",
-                     rep(1, n_sims - warmup), FALSE,
+                     rep(1, nsims - warmup), FALSE,
                      compactness = compactness,
                      constraints = constraints,
                      adapt_k_thresh = adapt_k_thresh)

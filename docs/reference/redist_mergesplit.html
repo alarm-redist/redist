@@ -153,8 +153,8 @@ but not identical to those used in the references.</p>
 
     <pre class="usage"><span class='fu'>redist_mergesplit</span><span class='op'>(</span>
   <span class='va'>map</span>,
-  <span class='va'>n_sims</span>,
-  warmup <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Round.html'>floor</a></span><span class='op'>(</span><span class='va'>n_sims</span><span class='op'>/</span><span class='fl'>2</span><span class='op'>)</span>,
+  <span class='va'>nsims</span>,
+  warmup <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Round.html'>floor</a></span><span class='op'>(</span><span class='va'>nsims</span><span class='op'>/</span><span class='fl'>2</span><span class='op'>)</span>,
   init_plan <span class='op'>=</span> <span class='cn'>NULL</span>,
   counties <span class='op'>=</span> <span class='cn'>NULL</span>,
   compactness <span class='op'>=</span> <span class='fl'>1</span>,
@@ -173,7 +173,7 @@ but not identical to those used in the references.</p>
       <td><p>A <code><a href='redist_map.html'>redist_map</a></code> object.</p></td>
     </tr>
     <tr>
-      <th>n_sims</th>
+      <th>nsims</th>
       <td><p>The number of samples to draw, including warmup.</p></td>
     </tr>
     <tr>
@@ -235,8 +235,7 @@ Recommended.</p></td>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>This function draws samples from a specific target measure, controlled by the
-<code>popcons</code>, <code>compactness</code>, <code>constraints</code>, and
-<code>constraint_fn</code> parameters.</p>
+<code>compactness</code>, <code>constraints</code>, and <code>constraint_fn</code> parameters.</p>
 <p>Higher values of <code>compactness</code> sample more compact districts;
 setting this parameter to 1 is computationally efficient and generates nicely
 compact districts.</p>
