@@ -156,7 +156,7 @@ redist.smc = function(adj, total_pop, nsims, ndists, counties=NULL,
                       adapt_k_thresh=0.975, seq_alpha=0.2+0.2*compactness,
                       truncate=(compactness != 1),
                       trunc_fn=function(x) pmin(x, 0.01*nsims^0.4),
-                      pop_temper=max(0.1/seq_alpha, 0.3), verbose=TRUE, silent=FALSE,
+                      pop_temper=0, verbose=TRUE, silent=FALSE,
                       adjobj, popvec, popcons) {
     if (!missing(adjobj)) {
         .Deprecated(new = 'adj', old = 'adjobj')
