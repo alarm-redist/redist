@@ -205,7 +205,7 @@ redist.choropleth <- function(shp, fill = NULL, fill_label = "", title = "",
     } else if(!('sf' %in% class(shp))) {
         stop('Please provide "shp" as a SpatialPolygonsDataFrame or sf object.')
     }
-
+    
     fill <- rlang::eval_tidy(rlang::enquo(fill), shp)
     if (!is.null(fill) && !is.numeric(fill) && inherits(shp, "redist_map")) {
         fill = as.factor(color_graph(get_adj(shp), as.integer(as.factor(fill))))
