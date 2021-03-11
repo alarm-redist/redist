@@ -6,6 +6,8 @@ language:
 cache: packages
 sudo: required
 
+r: 4.0.4
+
 compiler:
     - clang
     - gcc
