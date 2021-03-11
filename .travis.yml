@@ -1,9 +1,12 @@
 language:
     - r
     - cpp
+    - python
 
 cache: packages
 sudo: required
+
+r: 4.0.4
 
 compiler:
     - clang
@@ -15,6 +18,7 @@ before_install:
   - chmod 755 ./travis-tool.sh
   - ./travis-tool.sh install_aptget r-cran-rmpi
   - sudo apt-get install --yes protobuf-compiler libudunits2-dev libproj-dev libgeos-dev libgdal-dev libxpm-dev libprotobuf-dev libjq-dev
+  - sudo apt-get install python3
 
 env:
   global:
