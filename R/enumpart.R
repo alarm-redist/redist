@@ -19,12 +19,12 @@ redist.init.enumpart <- function(){
   # Update makefile to direct to library only if Windows
   if(Sys.info()[['sysname']] == 'Windows'){
     makecontent <- readLines(system.file('enumpart/Makefile', package = 'redist'))
-    makecontent[7] <-"\tg++ enumpart.cpp SAPPOROBDD/bddc.o SAPPOROBDD/BDD.o SAPPOROBDD/ZBDD.o -o enumpart -I$(TDZDD_DIR) -std=c++11 -O3 -DB_64 -DNDEBUG -lpsapi"
+    makecontent[7] <- "\tg++ enumpart.cpp SAPPOROBDD/bddc.o SAPPOROBDD/BDD.o SAPPOROBDD/ZBDD.o -o enumpart -I$(TDZDD_DIR) -std=c++11 -O3 -DB_64 -DNDEBUG -lpsapi"
     writeLines(text = makecontent, con = system.file('enumpart/Makefile', package = 'redist'))
   }
 
   servr::make(dir = system.file('enumpart', package = 'redist'), verbose = FALSE)
-  sys::exec_wait('python3', args= c('-m', 'pip', 'install', 'networkx', '--user'))
+  sys::exec_wait('python', args= c('-m', 'pip', 'install', 'networkx', '--user'))
   return(0)
 }
 
@@ -77,7 +77,7 @@ redist.prep.enumpart <- function(adj, unordered_path, ordered_path, adjlist){
                      col_names = FALSE)
 
   ## Order edges
-  res <- sys::exec_wait('python3',
+  res <- sys::exec_wait('python',
                         args = system.file('python/ndscut.py', package = 'redist'),
                         std_in = paste0(unordered_path, '.dat'),
                         std_out = paste0(ordered_path, '.dat'))
@@ -113,8 +113,8 @@ redist.prep.enumpart <- function(adj, unordered_path, ordered_path, adjlist){
 #' redist.run.enumpart(ordered_path = '../ordered', out_path = '../enumerated')
 #' }
 redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
-                                all = TRUE, n  = NULL, weight_path=NULL,
-                                lower=NULL, upper=NULL, options = NULL, ndist){
+                                all = TRUE, n  = NULL, weight_path = NULL,
+                                lower = NULL, upper = NULL, options = NULL, ndist){
 
   if(!missing(ndist)){
     ndists <- ndist
@@ -129,15 +129,20 @@ redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
       if (all) {
           options <- c('-k', ndists, '-comp', '-allsols')
       } else{
-          if (is.null(n))
-              stop('n must be specified when all is FALSE.')
+          if (is.null(n)) {
+            stop('n must be specified when all is FALSE.')
+          }
           options <- c('-k', ndists, '-comp', '-sample', n)
       }
   }
 
-  if (!is.null(lower)) options = c(options, "-lower", as.character(lower))
-  if (!is.null(upper)) options = c(options, "-upper", as.character(upper))
-
+  if (!is.null(lower)) {
+    options <-  c(options, "-lower", as.character(lower))
+  } 
+  if (!is.null(upper)) {
+    options = c(options, "-upper", as.character(upper))
+  }
+  
   if (is.null(weight_path)) {
       options <- c(paste0(ordered_path, '.dat'), options)
   } else {
@@ -145,12 +150,15 @@ redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
   }
 
   ## Run enumpart
-  res <- sys::exec_wait(system.file('enumpart/enumpart', package = 'redist'),
+  res <- sys::exec_wait(paste0(system.file('enumpart', package = 'redist'), '/enumpart'),
                  args = options,
                  std_out = paste0(out_path, '.dat'), std_err = TRUE)
 
   return(res)
 }
+
+
+
 
 #' Read Results from enumpart
 #'

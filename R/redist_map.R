@@ -390,7 +390,7 @@ plot.redist_map = function(x, y, ...) {
                 ggplot2::theme_void()
         }
     } else {
-        redist.choropleth(x, !!rlang::enquo(y), ...)
+        redist.choropleth(shp = x, fill = !!rlang::enquo(y), ...)
     }
 }
 
