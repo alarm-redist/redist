@@ -1,20 +1,21 @@
 #' Compute Competitiveness
-#' 
-#' Currently only implements the competitiveness function in equation (5) 
+#'
+#' Currently only implements the competitiveness function in equation (5)
 #' of Cho & Liu 2016.
 #'
 #'
-#' @param plans A numeric vector (if only one map) or matrix with one row 
+#' @param plans A numeric vector (if only one map) or matrix with one row
 #' for each precinct and one column for each map. Required.
 #' @param rvote A numeric vector with the Republican vote for each precinct.
 #' @param dvote A numeric vector with the Democratic vote for each precinct.
 #' @return Numeric vector with competitiveness scores
-#' @export 
+#' @export
 #'
+#' @concept analyze
 #' @examples \dontrun{
 #' data("algdat.p10")
-#' comp <- redist.competitiveness(algdat.p10$cdmat, 
-#' algdat.p10$precinct.data$repvote, 
+#' comp <- redist.competitiveness(algdat.p10$cdmat,
+#' algdat.p10$precinct.data$repvote,
 #' algdat.p10$precinct.data$demvote)
 #' }
 redist.competitiveness <- function(plans, rvote, dvote){

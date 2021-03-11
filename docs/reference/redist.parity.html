@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
       </span>
     </div>
 
@@ -88,7 +88,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -105,6 +105,9 @@
     <li>
       <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
     </li>
+    <li>
+      <a href="../articles/tidy-redist.html">Tidy `redist`</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -114,7 +117,7 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/kosukeimai/redist/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -140,23 +143,32 @@
     <p><code>redist.parity</code> computes the population parity of a matrix of maps.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.parity</span><span class='op'>(</span><span class='va'>district_membership</span>, <span class='va'>population</span>, ncores <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>redist.parity</span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>total_pop</span>, ncores <span class='op'>=</span> <span class='fl'>1</span>, <span class='va'>district_membership</span>, <span class='va'>population</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>district_membership</th>
-      <td><p>A matrix with one row 
-for each precinct and one column for each map. Required.</p></td>
+      <th>plans</th>
+      <td><p>A matrix with one row for each precinct and one column for each
+map. Required.</p></td>
     </tr>
     <tr>
-      <th>population</th>
+      <th>total_pop</th>
       <td><p>A numeric vector with the population for every precinct.</p></td>
     </tr>
     <tr>
       <th>ncores</th>
       <td><p>Number of cores to use for parallel computing. Default is 1.</p></td>
+    </tr>
+    <tr>
+      <th>district_membership</th>
+      <td><p>Deprecated, use plans. A matrix with one row
+for each precinct and one column for each map. Required.</p></td>
+    </tr>
+    <tr>
+      <th>population</th>
+      <td><p>Deprecated, use total_pop. A numeric vector with the population for every precinct.</p></td>
     </tr>
     </table>
 
@@ -175,7 +187,7 @@ for each precinct and one column for each map. Required.</p></td>
 
       <footer>
       <div class="copyright">
-  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Alexander Tarr, Jun Kawahara, Kosuke Imai.</p>
+  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Jun Kawahara, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">

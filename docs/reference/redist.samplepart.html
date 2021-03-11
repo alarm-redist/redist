@@ -81,7 +81,7 @@ redistricting plans." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
       </span>
     </div>
 
@@ -89,7 +89,7 @@ redistricting plans." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -106,6 +106,9 @@ redistricting plans." />
     <li>
       <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
     </li>
+    <li>
+      <a href="../articles/tidy-redist.html">Tidy `redist`</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -115,7 +118,7 @@ redistricting plans." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/kosukeimai/redist/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -142,14 +145,27 @@ redistricting plans." />
 redistricting plans.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.samplepart</span><span class='op'>(</span><span class='va'>adjobj</span>, <span class='va'>ndists</span>, <span class='va'>popvec</span>, <span class='va'>pop_filter</span>, <span class='va'>pop_constraint</span>,
-<span class='va'>contiguitymap</span>, <span class='va'>nsamp</span>, <span class='va'>n_cores</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>redist.samplepart</span><span class='op'>(</span>
+  <span class='va'>adj</span>,
+  <span class='va'>ndists</span>,
+  total_pop <span class='op'>=</span> <span class='cn'>NULL</span>,
+  pop_filter <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  pop_tol <span class='op'>=</span> <span class='fl'>0.5</span>,
+  nsims <span class='op'>=</span> <span class='fl'>1000</span>,
+  ncores <span class='op'>=</span> <span class='fl'>1</span>,
+  <span class='va'>adjobj</span>,
+  <span class='va'>popvec</span>,
+  <span class='va'>pop_constraint</span>,
+  contiguitymap <span class='op'>=</span> <span class='st'>"rooks"</span>,
+  <span class='va'>nsamp</span>,
+  <span class='va'>n_cores</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>adjobj</th>
+      <th>adj</th>
       <td><p>An adjacency list, matrix, or object of class
 <code>SpatialPolygonsDataFrame</code>.</p></td>
     </tr>
@@ -158,7 +174,7 @@ redistricting plans.</p>
       <td><p>The desired number of congressional districts</p></td>
     </tr>
     <tr>
-      <th>popvec</th>
+      <th>total_pop</th>
       <td><p>Population vector for adjacency object. Provide if
 filtering by population</p></td>
     </tr>
@@ -168,8 +184,32 @@ filtering by population</p></td>
 Default is FALSE.</p></td>
     </tr>
     <tr>
-      <th>pop_constraint</th>
+      <th>pop_tol</th>
       <td><p>Strength of population filter if filtering on
+distance to parity.</p></td>
+    </tr>
+    <tr>
+      <th>nsims</th>
+      <td><p>Number of samples to draw. Default is 1000.</p></td>
+    </tr>
+    <tr>
+      <th>ncores</th>
+      <td><p>Number of cores to parallelize over for parity calculation and
+compactness calculation. Default is 1.</p></td>
+    </tr>
+    <tr>
+      <th>adjobj</th>
+      <td><p>Deprecated, use adj. An adjacency list, matrix, or object of class
+<code>SpatialPolygonsDataFrame</code>.</p></td>
+    </tr>
+    <tr>
+      <th>popvec</th>
+      <td><p>Deprecated, use total_pop. Population vector for adjacency object. Provide if
+filtering by population</p></td>
+    </tr>
+    <tr>
+      <th>pop_constraint</th>
+      <td><p>Deprecated, use pop_tol. Strength of population filter if filtering on
 distance to parity.</p></td>
     </tr>
     <tr>
@@ -180,11 +220,11 @@ Default is "rooks".</p></td>
     </tr>
     <tr>
       <th>nsamp</th>
-      <td><p>Number of samples to draw. Default is 1000.</p></td>
+      <td><p>Deprecated, use nsims. Number of samples to draw. Default is 1000.</p></td>
     </tr>
     <tr>
       <th>n_cores</th>
-      <td><p>Number of cores to parallelize over for parity calculation and
+      <td><p>Deprecated, use ncores. Number of cores to parallelize over for parity calculation and
 compactness calculation. Default is 1.</p></td>
     </tr>
     </table>
@@ -206,7 +246,7 @@ possible redistricting plans from the implied spanning tree.</p>
 
       <footer>
       <div class="copyright">
-  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Alexander Tarr, Jun Kawahara, Kosuke Imai.</p>
+  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Jun Kawahara, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">

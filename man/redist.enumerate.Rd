@@ -59,7 +59,7 @@ the first geographic unit.
 \description{
 \code{redist.enumerate} uses a spanning-tree method to fully enumerate all
 valid redistricting plans with $n$ districts given a set of geographic units.
-\code{redist.enumerate} also allows suers to implement minimum and maximum
+\code{redist.enumerate} also allows users to implement minimum and maximum
 numbers of geographic units per district, as well as population parity
 requirements.
 }
@@ -84,3 +84,4 @@ Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte
 Carlo." Working Paper. Available at
 \url{http://imai.princeton.edu/research/files/redist.pdf}.
 }
+\concept{enumerate}

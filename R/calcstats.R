@@ -115,7 +115,7 @@
 
 ##         stat_out[[ind]] <- f
 ##         ind <- ind + 1
-        
+
 ##     }
 
 ##     ## Close seats
@@ -139,7 +139,7 @@
 ##     ## Partisan Symmetry - simple
 ##     if("ps_simple" %in% stats){
 ##         cat("Calculating partisan symmetry by seats-votes inversion.\n")
-        
+
 ##         ## Set up swing
 ##         statebase <- sum(group1vote) /
 ##             (sum(group1vote) + sum(group2vote))
@@ -167,7 +167,7 @@
 
 ##         stat_out[[ind]] <- unlist(ps)
 ##         ind <- ind + 1
-        
+
 ##     }
 
 ##     ## Efficiency gap
@@ -186,7 +186,7 @@
 
 ##         stat_out[[ind]] <- unlist(egap)
 ##         ind <- ind + 1
-        
+
 ##     }
 
 ##     ## Partisan symmetry - full distribution
@@ -252,10 +252,10 @@
 
 ##     stats <- stats[match(c("ec", "mc", "ps_simple", "eg", "ps_full"), stats)]
 ##     stats <- stats[!is.na(stats)]
-    
+
 ##     names(stat_out) <- stats
 ##     return(stat_out)
-    
+
 ## }
 
 ## #' Polsby-Popper calculation for MCMC
@@ -267,7 +267,7 @@
 ##     if(min(unlist(adj_list)) == 1){
 ##         adj_list <- lapply(adj_list, function(x){x-1})
 ##     }
-##     partitions <- algout$partitions    
+##     partitions <- algout$partitions
 ##     cds_unique <- unique(partitions[,1])
 
 ##     store_pp <- matrix(NA, nsims, 3)
@@ -289,7 +289,7 @@
 ##     }
 
 ##     return(store_pp)
-    
+
 ## }
 
 ## #' Reock calculation for MCMC
@@ -319,7 +319,7 @@
 ##     }
 
 ##     return(store_reock)
-    
+
 ## }
 
 ## #' Diagnostic plotting functionality for MCMC redistricting.
@@ -405,7 +405,7 @@
 ##     if(plot == "gelmanrubin" & !(class(sumstat) %in% c("list", "mcmc.list"))){
 ##         stop("If generating a Gelman-Rubin plot, please provide an object of class list or mcmc.list")
 ##     }
-    
+
 ##     ########################
 ##     ## Create mcmc object ##
 ##     ########################
@@ -414,12 +414,12 @@
 ##     }else if(class(sumstat) == "list"){
 ##         for(i in 1:length(sumstat)){
 ##             sumstat[[i]] <- mcmc(sumstat[[i]])
-##         }       
+##         }
 ##         segout <- mcmc.list(sumstat)
 ##     }else if(class(sumstat) %in% c("mcmc", "mcmc.list")){
 ##         segout <- sumstat
 ##     }
-    
+
 ##     ## Logit transform
 ##     if(logit){
 ##         if(class(segout) == "mcmc"){
@@ -530,6 +530,7 @@
 #' algdat.pfull$precinct.data$repvote,
 #' algdat.pfull$precinct.data$pop)
 #' }
+#' @concept analyze
 #' @export
 redist.segcalc <- function(plans,
                            group_pop,
@@ -550,7 +551,7 @@ redist.segcalc <- function(plans,
         total_pop <- fullpop
         .Deprecated(new = 'total_pop', old = 'fullpop')
     }
-    
+
     ## Warnings
     if(missing(plans) | !(class(plans) %in% c("data.frame", "matrix", "redist"))){
         stop("Please provide either a redist object or a proper matrix of congessional districts")
@@ -567,7 +568,7 @@ the segregation index")
     if(class(plans) == "redist"){
         plans <- plans$plans
     }
-    
+
     if(!((nrow(plans) == length(group_pop)) &
              (length(group_pop) == length(total_pop)) &
                  (length(total_pop) == nrow(plans)))){
@@ -581,6 +582,6 @@ the segregation index")
 
     ## Return
     return(seg.out)
-    
+
 }
-    
+

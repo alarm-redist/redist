@@ -14,7 +14,7 @@ before_install:
   - curl -OL http://raw.github.com/craigcitro/r-travis/master/scripts/travis-tool.sh
   - chmod 755 ./travis-tool.sh
   - ./travis-tool.sh install_aptget r-cran-rmpi
-  - sudo apt-get install --yes libudunits2-dev libproj-dev libgeos-dev libgdal-dev libxpm-dev
+  - sudo apt-get install --yes libudunits2-dev libproj-dev libgeos-dev libgdal-dev libxpm-dev libprotobuf-dev
 
 env:
   global:

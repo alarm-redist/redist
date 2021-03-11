@@ -10,6 +10,7 @@ redist.map(
   plan = NULL,
   centroids = TRUE,
   edges = TRUE,
+  boundaries = TRUE,
   drop = FALSE,
   title = "",
   adjacency,
@@ -19,24 +20,26 @@ redist.map(
 \arguments{
 \item{shp}{A SpatialPolygonsDataFrame or sf object. Required.}
 
-\item{adj}{A zero-indexed adjacency list. Created with redist.adjacency 
+\item{adj}{A zero-indexed adjacency list. Created with redist.adjacency
 if not supplied. Default is NULL.}
 
-\item{plan}{A numeric vector with one entry for each precinct in shp. 
+\item{plan}{A numeric vector with one entry for each precinct in shp.
 Used to color the districts. Default is \code{NULL}.  Optional.}
 
 \item{centroids}{A logical indicating if centroids should be plotted. Default is \code{TRUE}.}
 
 \item{edges}{A logical indicating if edges should connect adjacent centroids. Default is \code{TRUE}.}
 
+\item{boundaries}{A logical indicating if precinct boundaries should be plotted.}
+
 \item{drop}{A logical indicating if edges that cross districts should be dropped. Default is \code{FALSE}.}
 
 \item{title}{A string title of plot. Defaults to empty string. Optional.}
 
-\item{adjacency}{Deprecated, use adj. A zero-indexed adjacency list. Created with redist.adjacency 
+\item{adjacency}{Deprecated, use adj. A zero-indexed adjacency list. Created with redist.adjacency
 if not supplied. Default is NULL.}
 
-\item{district_membership}{Deprecated, use plan. A numeric vector with one row for each precinct in shp. 
+\item{district_membership}{Deprecated, use plan. A numeric vector with one row for each precinct in shp.
 Used to color the districts. Default is \code{NULL}.  Optional.}
 }
 \value{
@@ -55,3 +58,4 @@ redist.map(shp = fl25, plan = cds)
 }
 
 }
+\concept{plot}

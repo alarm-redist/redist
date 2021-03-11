@@ -29,6 +29,7 @@
 #' Massey, Douglas and Nancy Denton. (1987) "The Dimensions of Social Segregation".
 #' Social Forces.
 #'
+#' @concept data
 #' @examples \dontrun{
 #' data(algdat.pfull)
 #' }
@@ -67,6 +68,7 @@ NULL
 #' Massey, Douglas and Nancy Denton. (1987) "The Dimensions of Social Segregation".
 #' Social Forces.
 #'
+#' @concept data
 #' @examples \dontrun{
 #' data(algdat.p10)
 #' }
@@ -105,6 +107,7 @@ NULL
 #' Massey, Douglas and Nancy Denton. (1987) "The Dimensions of Social Segregation".
 #' Social Forces.
 #'
+#' @concept data
 #' @examples \dontrun{
 #' data(algdat.p20)
 #' }
@@ -116,7 +119,7 @@ NULL
 #'
 #' @name fl25
 #' @usage data("fl25")
-#' @format sf data.frame containing columns for useful data related to the 
+#' @format sf data.frame containing columns for useful data related to the
 #' redistricting process, subsetted from real data in Florida, and sf geometry column.
 #' \describe{
 #' \item{\code{geoid}}{ Contains unique identifier for each precinct which can be matched to the full Florida dataset.}
@@ -132,11 +135,12 @@ NULL
 #' \item{\code{HispVAP}}{ Contains the voting age population of hispanic constituents of each precinct.}
 #' \item{\code{geometry}}{ Contains sf geometry of each precinct.}
 #' }
-#' 
+#'
 #' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander Tarr.
 #' (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte Carlo."
 #' Working Paper. Available at
 #' \url{http://imai.princeton.edu/research/files/redist.pdf}.
+#' @concept data
 #' @examples \dontrun{
 #' data(fl25)
 #' }
@@ -148,7 +152,7 @@ NULL
 #'
 #' @name fl70
 #' @usage data("fl70")
-#' @format sf data.frame containing columns for useful data related to the 
+#' @format sf data.frame containing columns for useful data related to the
 #' redistricting process, subsetted from real data in Florida, and sf geometry column.
 #' \describe{
 #' \item{\code{geoid}}{ Contains unique identifier for each precinct which can be matched to the full Florida dataset.}
@@ -164,11 +168,12 @@ NULL
 #' \item{\code{HispVAP}}{ Contains the voting age population of hispanic constituents of each precinct.}
 #' \item{\code{geometry}}{ Contains sf geometry of each precinct.}
 #' }
-#' 
+#'
 #' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander Tarr.
 #' (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte Carlo."
 #' Working Paper. Available at
 #' \url{http://imai.princeton.edu/research/files/redist.pdf}.
+#' @concept data
 #' @examples \dontrun{
 #' data(fl70)
 #' }
@@ -180,7 +185,7 @@ NULL
 #'
 #' @name fl250
 #' @usage data("fl250")
-#' @format sf data.frame containing columns for useful data related to the 
+#' @format sf data.frame containing columns for useful data related to the
 #' redistricting process, subsetted from real data in Florida, and sf geometry column.
 #' \describe{
 #' \item{\code{geoid}}{ Contains unique identifier for each precinct which can be matched to the full Florida dataset.}
@@ -196,12 +201,45 @@ NULL
 #' \item{\code{HispVAP}}{ Contains the voting age population of hispanic constituents of each precinct.}
 #' \item{\code{geometry}}{ Contains sf geometry of each precinct.}
 #' }
-#' 
+#'
 #' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander Tarr.
 #' (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte Carlo."
 #' Working Paper. Available at
 #' \url{http://imai.princeton.edu/research/files/redist.pdf}.
+#' @concept data
 #' @examples \dontrun{
 #' data(fl250)
+#' }
+NULL
+
+#' East Texas Precinct File
+#'
+#' This data contains geographic and demographic information on 3,138 precincts
+#' from the eastern portion of the state of Texas.
+#'
+#' @name east_tx
+#' @usage data(east_tx)
+#' @format sf tibble containing columns for useful data related to the
+#' redistricting process, subsetted from real data in Florida, and sf geometry column.
+#' \describe{
+#' \item{\code{county}}{The FIPS code for the county containing the precinct.}
+#' \item{\code{id}}{A unique FIPS-like identifier for the precinct.}
+#' \item{\code{geometry}}{The sf geometry column containing the geographic information.}
+#' \item{\code{cd}}{The current congressional district assignment.}
+#' \item{\code{pop}}{The total population of the precinct, according to the 2010 Census.}
+#' \item{\code{black}}{The non-Hispanic Black population of the precinct.}
+#' \item{\code{hisp}}{The Hispanic population (of any race) of the precinct.}
+#' \item{\code{white}}{The non-Hispanic white population of the precinct.}
+#' \item{\code{vap}}{The voting-age population of the precinct.}
+#' \item{\code{bvap}}{The Black voting-age population of the precinct.}
+#' \item{\code{hvap}}{The Hispanic voting-age population of the precinct.}
+#' \item{\code{wvap}}{The white voting-age population of the precinct.}
+#' \item{\code{dem}}{Number of votes for Hillary Clinton in the precinct in 2016.}
+#' \item{\code{gop}}{Number of votes for Donald Trump in the precinct in 2016.}
+#' }
+#'
+#' @concept data
+#' @examples \dontrun{
+#' data(east_tx)
 #' }
 NULL

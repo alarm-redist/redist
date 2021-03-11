@@ -49,12 +49,13 @@
 #' distances <- redist.distances(district_membership = algdat.p10$cdmat)
 #' distances$Hamming[1:5,1:5]
 #' }
+#' @concept analyze
 #' @export
 redist.distances <- function(plans, measure = "Hamming",
-                             ncores = 1, total_pop = NULL, 
+                             ncores = 1, total_pop = NULL,
                              district_membership, pop) {
-    
-    
+
+
     if(!missing(pop)){
         total_pop <- pop
         .Deprecated(new = 'total_pop', old = 'pop')
@@ -63,7 +64,7 @@ redist.distances <- function(plans, measure = "Hamming",
         plans <- district_membership
         .Deprecated('plans')
     }
-    
+
 
     supported = c("all", "Hamming", "Manhattan", "Euclidean", "variation of information")
     # fuzzy matching

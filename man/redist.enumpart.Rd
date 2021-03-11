@@ -12,6 +12,9 @@ redist.enumpart(
   ndists = 2,
   all = TRUE,
   n = NULL,
+  weight_path = NULL,
+  lower = NULL,
+  upper = NULL,
   init = FALSE,
   read = TRUE,
   total_pop = NULL,
@@ -33,8 +36,15 @@ redist.enumpart(
 
 \item{all}{boolean. TRUE outputs all districts. FALSE samples n districts.}
 
-\item{n}{integer. Number of districts to output if all is FALSE. Returns 
+\item{n}{integer. Number of districts to output if all is FALSE. Returns
 districts selected from uniform random distribution.}
+
+\item{weight_path}{A path (not including ".dat") to a space-delimited file containing a vector of
+vertex weights, to be used along with \code{lower} and \code{upper}.}
+
+\item{lower}{A lower bound on each partition's total weight, implemented by rejection sampling.}
+
+\item{upper}{An upper bound on each partition's total weight.}
 
 \item{init}{Runs redist.init.enumpart. Defaults to false. Should be run on first use.}
 
@@ -54,3 +64,4 @@ List with entries district_membership and parity.
 \description{
 Single function for standard enumeration analysis.
 }
+\concept{enumerate}

@@ -19,3 +19,4 @@ ggplot
 \description{
 Majority Minority Plots
 }
+\concept{plot}

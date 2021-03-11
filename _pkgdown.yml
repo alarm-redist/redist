@@ -3,81 +3,40 @@ template:
     bootswatch: yeti
 reference:
 - title: "Simulation Algorithm Implementations"
-  desc: "Functions for approximating values at different levels of geography"
+  desc: "Core functions to perform a redistricting simulation"
 - contents:
-  - redist.crsg
-  - redist.enumpart
+  - redist_smc
   - redist.mcmc
-  - redist.mcmc.anneal
-  - redist.mcmc.mpi 
-  - redist.rsg
-  - redist.smc
+  - redist_mergesplit
+  - has_concept("simulate")
 - title: "Analysis Functions"
   desc: "Functions for analyzing simulation outputs"
 - contents:
-  - redist.compactness
-  - redist.competitiveness
-  - redist.distances
-  - redist.group.percent
-  - redist.metrics
-  - redist.parity
-  - redist.splits
+  - redist_plans
+  - has_concept("analyze")
 - title: "Setup Helpers"
   desc: "Functions that help prepare data and select constraints"
 - contents:
-  - redist.adjacency
-  - redist.calc.frontier.size
-  - redist.coarsen.adjacency
-  - redist.constraint.helper
-  - redist.county.id
-  - redist.county.relabel
-  - redist.find.target
-  - redist.findparams
-  - redist.identify.cores
-  - redist.reduce.adjacency
-  - redist.segcalc
-  - redist.subset
+  - redist_map
+  - has_concept("prepare")
 - title: "Plotting Tools"
   desc: "Functions for creating plots and maps"
 - contents:
-  - redist.choropleth
-  - redist.diagplot
-  - redist.majmin.plot
-  - redist.map
-  - redist.varinfo.plot
+  - has_concept("plot")
 - title: "Data"
   desc: "Data included to help demonstrate capabilities"
 - contents:
-  - algdat.p10
-  - algdat.p20
-  - algdat.pfull
-  - fl25
-  - fl70
-  - fl250
+  - has_concept("data")
 - title: "Post Processing Helpers"
   desc: "Functions that help setup outputs for easier use"
 - contents:
-  - redist.combine
-  - redist.combine.anneal
-  - redist.combine.mpi
-  - redist.ipw
-  - redist.smc_is_ci
-  - redist.uncoarsen
+  - has_concept("post")
 - title: "Enumeration Tools"
   desc: "Functions for more involved enumeration choices"
 - contents:
-  - redist.enumerate
-  - redist.init.enumpart
-  - redist.prep.enumpart
-  - redist.run.enumpart
-  - redist.read.enumpart
-- title: "Misc."
-  desc: "Functions that don't quite fit clean categories"
+  - has_concept("enumerate")
+- title: "Miscellaneous"
+  desc: "Other functions"
 - contents:
-  - as.matrix.redist
-  - preproc.adj
-  - preproc.shp
-  - redist.random.subgraph
-  - redist.reindex
-  - redist.samplepart
   - redist-package
+  - lacks_concepts(c("prepare", "simulate", "analyze", "plot", "enumerate", "data", "post"))

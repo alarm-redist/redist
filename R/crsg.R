@@ -2,7 +2,7 @@
 #'
 #' \code{redist.crsg} generates redistricting plans using a random seed a grow
 #' algorithm.  This is the compact districting algorithm described in Chen and
-#' Rodden (2013).  
+#' Rodden (2013).
 #'
 #' @param adj List of length N, where N is the number of precincts.
 #' Each list element is an integer vector indicating which precincts that precinct
@@ -30,7 +30,7 @@
 #' @param population  Deprecated, use total_pop. numeric vector of length N, where N is the number of precincts.
 #' Each element lists the population total of the corresponding precinct, and is
 #' used to enforce population constraints.
-#' @param area Deprecated, use shp. numeric vector of length N, where N is the number of precincts. Each 
+#' @param area Deprecated, use shp. numeric vector of length N, where N is the number of precincts. Each
 #' element is the area of the corresponding precinct.
 #' @param x_center Deprecated, use shp. numeric vector of length N, where N is the number of precincts.
 #' Each element is the x coordinate of the geographic centroid of the corresponding
@@ -54,7 +54,7 @@
 #' population totals of the respective districts.}
 #' }
 #'
-#' 
+#'
 #' @references Jowei Chen and Jonathan Rodden (2013) ``Unintentional
 #' Gerrymandering: Political Geography and Electoral Bias in Legislatures.''
 #' Quarterly Journal of Political Science. 8(3): 239-269.
@@ -68,21 +68,12 @@
 #' redist.crsg(adj = adj, total_pop = fl25$pop, area = area,
 #' x_center = centers[,1], y_center = centers[,2], ndists = 2, pop_tol = .1)
 #' }
+#' @concept simulate
 #' @export
-redist.crsg <- function(adj,
-                        total_pop,
-                       shp, 
-                       ndists,
-                       pop_tol,
-                       verbose = TRUE,
-                       maxiter = 5000,
-                       adj.list,
-                       population,
-                       area,
-                       x_center,
-                       y_center,
-                       thresh){
-  
+redist.crsg <- function(adj, total_pop, shp,  ndists, pop_tol, verbose = TRUE,
+                        maxiter = 5000, adj.list, population, area, x_center,
+                        y_center, thresh){
+
   if(!missing(adj.list)){
     .Deprecated('adj',  old = 'adj.list')
       adj <- adj.list
@@ -104,45 +95,44 @@ redist.crsg <- function(adj,
   if(!missing(y_center)){
     .Deprecated(msg = 'Please provide an argument to shp, not y_center.')
   }
-  
+
   if(missing(shp)){
     stop('An argument to shp is now required.')
   }
-  
+
   suppressWarnings(coords <- st_coordinates(st_centroid(shp)))
   x_center <- coords[,1]
   y_center <- coords[,2]
   area <- st_area(shp)
-  
-  
-  
+
+
   if(verbose){
     divider <- c(paste(rep("=", 20), sep = "", collapse = ""), "\n")
-    
+
     cat("\n")
     cat(divider)
     cat("redist.crsg(): Automated Redistricting Starts\n\n")
   }
-  
+
   target.pop <- sum(total_pop) / ndists
-  
+
   # Main call to function - unlike rsg, uses RcppExporting not direct .Call
   time <- system.time(ret <- crsg(adj_list = adj,
                                   population = total_pop,
-                                  area = area, 
+                                  area = area,
                                   x_center = x_center,
                                   y_center = y_center,
                                   Ndistrict = ndists,
                                   target_pop = target.pop,
                                   thresh = pop_tol,
                                   maxiter = maxiter))
-  
+
   ## Make another call if NA, but beware this may be due to maxiter.
   ## This could also be if there are no valid moves.
   if(is.na(ret$plan[1])){
     time <- system.time(ret <- crsg(adj_list = adj,
                                     population = total_pop,
-                                    area = area, 
+                                    area = area,
                                     x_center = x_center,
                                     y_center = y_center,
                                     Ndistrict = ndists,
@@ -150,19 +140,19 @@ redist.crsg <- function(adj,
                                     thresh = pop_tol,
                                     maxiter = maxiter))
   }
-  
- 
+
+
   if(is.na(ret$plan[1])){
-    
+
     warning("redist.crsg() failed to return a valid partition. Try increasing maxiter")
-    
+
   }
-  
+
   if(verbose){
     cat(paste("\n\t", ndists, " districts built using ",
               length(adj), " precincts in ",
               round(time[3], digits=2), " seconds...\n\n", sep = ""), append = TRUE)
   }
-  
-  return(ret) 
+
+  return(ret)
 }

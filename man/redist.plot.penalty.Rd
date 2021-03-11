@@ -21,7 +21,7 @@ redist.plot.penalty(
 
 \item{pow_vra}{double, exponent of the VRA constraint.}
 
-\item{limits}{Whether to limit y axis to 0,500. Default is TRUE for 
+\item{limits}{Whether to limit y axis to 0,500. Default is TRUE for
 comparability across values.}
 }
 \value{
@@ -34,3 +34,4 @@ Plots the shape of the VRA Gibbs penalty
 redist.plot.penalty()
 
 }
+\concept{prepare}

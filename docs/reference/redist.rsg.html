@@ -83,7 +83,7 @@ redistricting routines in this package." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
       </span>
     </div>
 
@@ -91,7 +91,7 @@ redistricting routines in this package." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -108,6 +108,9 @@ redistricting routines in this package." />
     <li>
       <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
     </li>
+    <li>
+      <a href="../articles/tidy-redist.html">Tidy `redist`</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -117,7 +120,7 @@ redistricting routines in this package." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/kosukeimai/redist/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -146,21 +149,30 @@ Rodden (2013).  The algorithm can provide start values for the other
 redistricting routines in this package.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.rsg</span><span class='op'>(</span><span class='va'>adj.list</span>, <span class='va'>population</span>, <span class='va'>ndists</span>, <span class='va'>thresh</span>,
-verbose <span class='op'>=</span> <span class='cn'>TRUE</span>, maxiter<span class='op'>=</span><span class='fl'>5000</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>redist.rsg</span><span class='op'>(</span>
+  <span class='va'>adj</span>,
+  <span class='va'>total_pop</span>,
+  <span class='va'>ndists</span>,
+  <span class='va'>pop_tol</span>,
+  verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  maxiter <span class='op'>=</span> <span class='fl'>5000</span>,
+  <span class='va'>adj.list</span>,
+  <span class='va'>population</span>,
+  <span class='va'>thresh</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>adj.list</th>
+      <th>adj</th>
       <td><p>List of length N, where N is the number of precincts.
 Each list element is an integer vector indicating which precincts that precinct
 is adjacent to.  It is assumed that precinct numbers start at 0.</p></td>
     </tr>
     <tr>
-      <th>population</th>
-      <td><p>numeric vector of list N, where N is the number of precincts.
+      <th>total_pop</th>
+      <td><p>numeric vector of length N, where N is the number of precincts.
 Each element lists the population total of the corresponding precinct, and is
 used to enforce population constraints.</p></td>
     </tr>
@@ -170,7 +182,7 @@ used to enforce population constraints.</p></td>
 precincts into.</p></td>
     </tr>
     <tr>
-      <th>thresh</th>
+      <th>pop_tol</th>
       <td><p>numeric, indicating how close district population targets have
 to be to the target population before algorithm converges.  thresh=0.05 for
 example means that all districts must be between 0.95 and 1.05 times the size
@@ -189,13 +201,32 @@ use a different set of start values and try again.  If it fails again,
 redist.rsg() returns an object of all NAs, indicating that use of more
 iterations may be advised.</p></td>
     </tr>
+    <tr>
+      <th>adj.list</th>
+      <td><p>Deprecated, use adj. List of length N, where N is the number of precincts.
+Each list element is an integer vector indicating which precincts that precinct
+is adjacent to.  It is assumed that precinct numbers start at 0.</p></td>
+    </tr>
+    <tr>
+      <th>population</th>
+      <td><p>Deprecated, use total_pop. numeric vector of list N, where N is the number of precincts.
+Each element lists the population total of the corresponding precinct, and is
+used to enforce population constraints.</p></td>
+    </tr>
+    <tr>
+      <th>thresh</th>
+      <td><p>Deprecated, use pop_tol. numeric, indicating how close district population targets have
+to be to the target population before algorithm converges.  thresh=0.05 for
+example means that all districts must be between 0.95 and 1.05 times the size
+of target.pop in population size.</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>list, containing three objects containing the completed redistricting
 plan.</p><ul>
-<li><p><code>district_membership</code>  A vector of length N, indicating the
+<li><p><code>plan</code>  A vector of length N, indicating the
 district membership of each precinct.</p></li>
 <li><p><code>district_list</code>  A list of length Ndistrict.  Each list contains a
 vector of the precincts in the respective district.</p></li>
@@ -224,13 +255,14 @@ Quarterly Journal of Political Science. 8(3): 239-269.</p>
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'>### Real data example from test set</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"algdat.pfull"</span><span class='op'>)</span>
-<span class='va'>res</span> <span class='op'>&lt;-</span> <span class='fu'>redist.rsg</span><span class='op'>(</span><span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>adjlist</span>, <span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>precinct.data</span><span class='op'>$</span><span class='va'>pop</span>, <span class='fl'>3</span>, <span class='fl'>0.05</span><span class='op'>)</span>
+<span class='va'>res</span> <span class='op'>&lt;-</span> <span class='fu'>redist.rsg</span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>adjlist</span>, total_pop <span class='op'>=</span> <span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>precinct.data</span><span class='op'>$</span><span class='va'>pop</span>, 
+ ndists <span class='op'>=</span> <span class='fl'>3</span>, pop_tol <span class='op'>=</span> <span class='fl'>0.05</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; 
 #&gt; ==================== 
 #&gt; redist.rsg(): Automated Redistricting Starts
 #&gt; 
 #&gt; 
-#&gt; 	3 districts built using 25 precincts in 0 seconds...
+#&gt; 	3 districts built using 25 precincts in 0.01 seconds...
 #&gt; </div><div class='input'>
 <span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
 <span class='co'>### Example that generates test data from a square map with equal population</span>
@@ -272,7 +304,7 @@ Quarterly Journal of Political Science. 8(3): 239-269.</p>
 
       <footer>
       <div class="copyright">
-  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Alexander Tarr, Jun Kawahara, Kosuke Imai.</p>
+  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Jun Kawahara, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">

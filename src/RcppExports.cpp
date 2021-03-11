@@ -9,15 +9,27 @@
 using namespace Rcpp;
 
 // reduce_adj
-List reduce_adj(List adj_list, IntegerVector prec_keep, IntegerVector prec_idx);
-RcppExport SEXP _redist_reduce_adj(SEXP adj_listSEXP, SEXP prec_keepSEXP, SEXP prec_idxSEXP) {
+List reduce_adj(List adj_list, IntegerVector prec_map, int n_keep);
+RcppExport SEXP _redist_reduce_adj(SEXP adj_listSEXP, SEXP prec_mapSEXP, SEXP n_keepSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< List >::type adj_list(adj_listSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type prec_keep(prec_keepSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type prec_idx(prec_idxSEXP);
-    rcpp_result_gen = Rcpp::wrap(reduce_adj(adj_list, prec_keep, prec_idx));
+    Rcpp::traits::input_parameter< IntegerVector >::type prec_map(prec_mapSEXP);
+    Rcpp::traits::input_parameter< int >::type n_keep(n_keepSEXP);
+    rcpp_result_gen = Rcpp::wrap(reduce_adj(adj_list, prec_map, n_keep));
+    return rcpp_result_gen;
+END_RCPP
+}
+// collapse_adj
+Graph collapse_adj(List graph, const arma::uvec& idxs);
+RcppExport SEXP _redist_collapse_adj(SEXP graphSEXP, SEXP idxsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type graph(graphSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type idxs(idxsSEXP);
+    rcpp_result_gen = Rcpp::wrap(collapse_adj(graph, idxs));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -30,6 +42,18 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< List >::type adj(adjSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type groups(groupsSEXP);
     rcpp_result_gen = Rcpp::wrap(coarsen_adjacency(adj, groups));
+    return rcpp_result_gen;
+END_RCPP
+}
+// color_graph
+IntegerVector color_graph(List l, IntegerVector plan);
+RcppExport SEXP _redist_color_graph(SEXP lSEXP, SEXP planSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type l(lSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type plan(planSEXP);
+    rcpp_result_gen = Rcpp::wrap(color_graph(l, plan));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -224,16 +248,87 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// prec_cooccur
+arma::mat prec_cooccur(arma::umat m, arma::uvec idxs);
+RcppExport SEXP _redist_prec_cooccur(SEXP mSEXP, SEXP idxsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::umat >::type m(mSEXP);
+    Rcpp::traits::input_parameter< arma::uvec >::type idxs(idxsSEXP);
+    rcpp_result_gen = Rcpp::wrap(prec_cooccur(m, idxs));
+    return rcpp_result_gen;
+END_RCPP
+}
+// group_pct
+NumericMatrix group_pct(arma::umat m, arma::vec group_pop, arma::vec total_pop, int n_distr);
+RcppExport SEXP _redist_group_pct(SEXP mSEXP, SEXP group_popSEXP, SEXP total_popSEXP, SEXP n_distrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::umat >::type m(mSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type group_pop(group_popSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type total_pop(total_popSEXP);
+    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
+    rcpp_result_gen = Rcpp::wrap(group_pct(m, group_pop, total_pop, n_distr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// pop_tally
+NumericMatrix pop_tally(arma::umat districts, arma::vec pop, int n_distr);
+RcppExport SEXP _redist_pop_tally(SEXP districtsSEXP, SEXP popSEXP, SEXP n_distrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::umat >::type districts(districtsSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
+    rcpp_result_gen = Rcpp::wrap(pop_tally(districts, pop, n_distr));
+    return rcpp_result_gen;
+END_RCPP
+}
 // max_dev
-NumericVector max_dev(const arma::umat& districts, const arma::uvec& pop, int n_distr);
+NumericVector max_dev(const arma::umat districts, const arma::vec pop, int n_distr);
 RcppExport SEXP _redist_max_dev(SEXP districtsSEXP, SEXP popSEXP, SEXP n_distrSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::umat& >::type districts(districtsSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< const arma::umat >::type districts(districtsSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type pop(popSEXP);
     Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
     rcpp_result_gen = Rcpp::wrap(max_dev(districts, pop, n_distr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ms_plans
+arma::umat ms_plans(int N, List l, const arma::uvec init, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double target, double lower, double upper, double rho, double beta_sq, const arma::uvec& current, int n_current, double beta_vra, double tgt_min, double tgt_other, double pow_vra, const arma::uvec& min_pop, double beta_inc, const arma::uvec& incumbents, double thresh, int verbosity);
+RcppExport SEXP _redist_ms_plans(SEXP NSEXP, SEXP lSEXP, SEXP initSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP beta_sqSEXP, SEXP currentSEXP, SEXP n_currentSEXP, SEXP beta_vraSEXP, SEXP tgt_minSEXP, SEXP tgt_otherSEXP, SEXP pow_vraSEXP, SEXP min_popSEXP, SEXP beta_incSEXP, SEXP incumbentsSEXP, SEXP threshSEXP, SEXP verbositySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< List >::type l(lSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec >::type init(initSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
+    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< double >::type rho(rhoSEXP);
+    Rcpp::traits::input_parameter< double >::type beta_sq(beta_sqSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type current(currentSEXP);
+    Rcpp::traits::input_parameter< int >::type n_current(n_currentSEXP);
+    Rcpp::traits::input_parameter< double >::type beta_vra(beta_vraSEXP);
+    Rcpp::traits::input_parameter< double >::type tgt_min(tgt_minSEXP);
+    Rcpp::traits::input_parameter< double >::type tgt_other(tgt_otherSEXP);
+    Rcpp::traits::input_parameter< double >::type pow_vra(pow_vraSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type min_pop(min_popSEXP);
+    Rcpp::traits::input_parameter< double >::type beta_inc(beta_incSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type incumbents(incumbentsSEXP);
+    Rcpp::traits::input_parameter< double >::type thresh(threshSEXP);
+    Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
+    rcpp_result_gen = Rcpp::wrap(ms_plans(N, l, init, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_inc, incumbents, thresh, verbosity));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -458,6 +553,43 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// plan_joint
+NumericMatrix plan_joint(IntegerVector m1, IntegerVector m2, NumericVector pop);
+RcppExport SEXP _redist_plan_joint(SEXP m1SEXP, SEXP m2SEXP, SEXP popSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type m1(m1SEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type m2(m2SEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type pop(popSEXP);
+    rcpp_result_gen = Rcpp::wrap(plan_joint(m1, m2, pop));
+    return rcpp_result_gen;
+END_RCPP
+}
+// renumber_matrix
+IntegerMatrix renumber_matrix(IntegerMatrix plans, IntegerVector renumb);
+RcppExport SEXP _redist_renumber_matrix(SEXP plansSEXP, SEXP renumbSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type plans(plansSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type renumb(renumbSEXP);
+    rcpp_result_gen = Rcpp::wrap(renumber_matrix(plans, renumb));
+    return rcpp_result_gen;
+END_RCPP
+}
+// best_renumber
+int best_renumber(IntegerMatrix combn, NumericMatrix joint);
+RcppExport SEXP _redist_best_renumber(SEXP combnSEXP, SEXP jointSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type combn(combnSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type joint(jointSEXP);
+    rcpp_result_gen = Rcpp::wrap(best_renumber(combn, joint));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rsg
 List rsg(List adj_list, NumericVector population, int Ndistrict, double target_pop, double thresh, int maxiter);
 RcppExport SEXP _redist_rsg(SEXP adj_listSEXP, SEXP populationSEXP, SEXP NdistrictSEXP, SEXP target_popSEXP, SEXP threshSEXP, SEXP maxiterSEXP) {
@@ -475,8 +607,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // smc_plans
-arma::umat smc_plans(int N, List l, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double tol, double gamma, double beta_sq, const arma::uvec& current, int n_current, double beta_vra, double tgt_min, double tgt_other, double pow_vra, const arma::uvec& min_pop, double beta_inc, const arma::uvec& incumbents, arma::vec& lp, double thresh, double alpha, int verbosity);
-RcppExport SEXP _redist_smc_plans(SEXP NSEXP, SEXP lSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP tolSEXP, SEXP gammaSEXP, SEXP beta_sqSEXP, SEXP currentSEXP, SEXP n_currentSEXP, SEXP beta_vraSEXP, SEXP tgt_minSEXP, SEXP tgt_otherSEXP, SEXP pow_vraSEXP, SEXP min_popSEXP, SEXP beta_incSEXP, SEXP incumbentsSEXP, SEXP lpSEXP, SEXP threshSEXP, SEXP alphaSEXP, SEXP verbositySEXP) {
+arma::umat smc_plans(int N, List l, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double target, double lower, double upper, double rho, double beta_sq, const arma::uvec& current, int n_current, double beta_vra, double tgt_min, double tgt_other, double pow_vra, const arma::uvec& min_pop, double beta_inc, const arma::uvec& incumbents, arma::vec& lp, double thresh, double alpha, double pop_temper, int verbosity);
+RcppExport SEXP _redist_smc_plans(SEXP NSEXP, SEXP lSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP beta_sqSEXP, SEXP currentSEXP, SEXP n_currentSEXP, SEXP beta_vraSEXP, SEXP tgt_minSEXP, SEXP tgt_otherSEXP, SEXP pow_vraSEXP, SEXP min_popSEXP, SEXP beta_incSEXP, SEXP incumbentsSEXP, SEXP lpSEXP, SEXP threshSEXP, SEXP alphaSEXP, SEXP pop_temperSEXP, SEXP verbositySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -485,8 +617,10 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
     Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
     Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
-    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
+    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< double >::type rho(rhoSEXP);
     Rcpp::traits::input_parameter< double >::type beta_sq(beta_sqSEXP);
     Rcpp::traits::input_parameter< const arma::uvec& >::type current(currentSEXP);
     Rcpp::traits::input_parameter< int >::type n_current(n_currentSEXP);
@@ -500,8 +634,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::vec& >::type lp(lpSEXP);
     Rcpp::traits::input_parameter< double >::type thresh(threshSEXP);
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< double >::type pop_temper(pop_temperSEXP);
     Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
-    rcpp_result_gen = Rcpp::wrap(smc_plans(N, l, counties, pop, n_distr, tol, gamma, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_inc, incumbents, lp, thresh, alpha, verbosity));
+    rcpp_result_gen = Rcpp::wrap(smc_plans(N, l, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_inc, incumbents, lp, thresh, alpha, pop_temper, verbosity));
     return rcpp_result_gen;
 END_RCPP
 }

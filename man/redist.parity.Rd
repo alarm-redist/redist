@@ -7,14 +7,14 @@
 redist.parity(plans, total_pop, ncores = 1, district_membership, population)
 }
 \arguments{
-\item{plans}{A matrix with one row 
-for each precinct and one column for each map. Required.}
+\item{plans}{A matrix with one row for each precinct and one column for each
+map. Required.}
 
 \item{total_pop}{A numeric vector with the population for every precinct.}
 
 \item{ncores}{Number of cores to use for parallel computing. Default is 1.}
 
-\item{district_membership}{Deprecated, use plans. A matrix with one row 
+\item{district_membership}{Deprecated, use plans. A matrix with one row
 for each precinct and one column for each map. Required.}
 
 \item{population}{Deprecated, use total_pop. A numeric vector with the population for every precinct.}
@@ -25,3 +25,4 @@ numeric vector with the population parity for each column
 \description{
 \code{redist.parity} computes the population parity of a matrix of maps.
 }
+\concept{analyze}
