@@ -88,7 +88,7 @@ redist.diagplot <- function(sumstat,
   if(missing(sumstat)){
     stop("Please provide a vector or list of summary statistics to the function")
   }
-  if(!(class(sumstat) %in% c("numeric", "list", "mcmc", "mcmc.list"))){
+  if(!(class(sumstat) %in% c('integer', "numeric", "list", "mcmc", "mcmc.list"))){
     stop("Please provide either a numeric vector, list, or mcmc object")
   }
   if(!(plot %in% c("trace", "autocorr", "densplot",
