@@ -1,4 +1,4 @@
-testthat::skip_on_travis()
+testthat::skip(message = 'skip enumpart')
 if (!file.exists(system.file('enumpart/enumpart.exe', package = 'redist'))) {
     redist.init.enumpart()
 }
