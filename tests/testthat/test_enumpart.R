@@ -1,5 +1,3 @@
-context("ZDD Enumeration")
-
 if (!file.exists(system.file("enumpart/enumpart", package="redist"))) {
     redist.init.enumpart()
 }
