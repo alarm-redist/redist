@@ -1,0 +1,14 @@
+data(fl25)
+adj <- redist.adjacency(fl25)
+test_that("crsg works", {
+  set.seed(1)
+  out <- redist.crsg(adj = adj, total_pop = fl25$pop, pop_tol = 0.1, ndists = 3, 
+                     shp = fl25, verbose = FALSE)
+  expected <- list(plan = c(0L, 1L, 1L, 1L, 2L, 1L, 2L, 2L, 0L, 2L, 2L, 0L, 
+                            0L, 0L, 0L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 1L, 2L, 2L), 
+                   district_list = list(c(12L, 14L, 13L, 11L, 8L, 0L), 
+                                        c(18L, 19L, 1L, 16L, 15L, 17L, 20L, 3L, 22L, 2L, 5L), 
+                                        c(4L, 23L, 6L, 7L, 21L, 24L, 9L, 10L)), 
+                   district_pop = c(58683, 52653, 63707))
+  expect_equal(out, expected)
+})
