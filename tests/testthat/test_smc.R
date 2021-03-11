@@ -1,6 +1,3 @@
-context("Sequential Monte Carlo")
-
-
 test_that("SMC runs without errors", {
     N = 20
     expect_silent({
