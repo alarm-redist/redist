@@ -1,5 +1,3 @@
-context("Metrics and Measurements")
-
 test_that("Pairwise distances are computed correctly", {
     dist_m = list(
         Hamming=c(0, 2, 4, 2, 0, 2, 4, 2, 0),
