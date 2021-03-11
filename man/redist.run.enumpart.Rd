@@ -10,12 +10,15 @@ redist.run.enumpart(
   ndists = 2,
   all = TRUE,
   n = NULL,
+  weight_path = NULL,
+  lower = NULL,
+  upper = NULL,
   options = NULL,
   ndist
 )
 }
 \arguments{
-\item{ordered_path}{Path used in redist.prep.enumpart}
+\item{ordered_path}{Path used in redist.prep.enumpart (not including ".dat")}
 
 \item{out_path}{Valid path to output the enumerated districts}
 
@@ -23,8 +26,15 @@ redist.run.enumpart(
 
 \item{all}{boolean. TRUE outputs all districts. FALSE samples n districts.}
 
-\item{n}{integer. Number of districts to output if all is FALSE. Returns 
+\item{n}{integer. Number of districts to output if all is FALSE. Returns
 districts selected from uniform random distribution.}
+
+\item{weight_path}{A path (not including ".dat") to a space-delimited file containing a vector of
+vertex weights, to be used along with \code{lower} and \code{upper}.}
+
+\item{lower}{A lower bound on each partition's total weight, implemented by rejection sampling.}
+
+\item{upper}{An upper bound on each partition's total weight.}
 
 \item{options}{Additional enumpart arguments. Not recommended for use.}
 
@@ -43,6 +53,7 @@ redist.run.enumpart(ordered_path = '../ordered', out_path = '../enumerated')
 }
 \references{
 Benjamin Fifield, Kosuke Imai, Jun Kawahara, and Christopher T Kenny.
-"The Essential Role of Empirical Validation in Legislative Redistricting Simulation." 
+"The Essential Role of Empirical Validation in Legislative Redistricting Simulation."
 Forthcoming, Statistics and Public Policy.
 }
+\concept{enumerate}

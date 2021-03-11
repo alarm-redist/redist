@@ -73,3 +73,4 @@ distances$Hamming[1:5,1:5]
 \references{
 Cover, T. M. and Thomas, J. A. (2006). \emph{Elements of information theory.} John Wiley & Sons, 2 edition.
 }
+\concept{analyze}

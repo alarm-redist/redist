@@ -11,8 +11,8 @@ redist.adjacency(shp, plan, district_membership)
 
 \item{plan}{A numeric vector (if only one map) or matrix with one row}
 
-\item{district_membership}{Deprecated -- Use plan. A numeric vector (if only one map) or matrix with one row. 
-for each precinct and one column for each map. Optional. Checks for contiguity within 
+\item{district_membership}{Deprecated -- Use plan. A numeric vector (if only one map) or matrix with one row.
+for each precinct and one column for each map. Optional. Checks for contiguity within
 districts if provided.}
 }
 \value{

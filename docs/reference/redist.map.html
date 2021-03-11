@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
       </span>
     </div>
 
@@ -88,7 +88,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -105,6 +105,9 @@
     <li>
       <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
     </li>
+    <li>
+      <a href="../articles/tidy-redist.html">Tidy `redist`</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -114,7 +117,7 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/kosukeimai/redist/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -142,12 +145,15 @@
 
     <pre class="usage"><span class='fu'>redist.map</span><span class='op'>(</span>
   shp <span class='op'>=</span> <span class='cn'>NULL</span>,
-  adjacency <span class='op'>=</span> <span class='cn'>NULL</span>,
-  district_membership <span class='op'>=</span> <span class='cn'>NULL</span>,
+  adj <span class='op'>=</span> <span class='cn'>NULL</span>,
+  plan <span class='op'>=</span> <span class='cn'>NULL</span>,
   centroids <span class='op'>=</span> <span class='cn'>TRUE</span>,
   edges <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  boundaries <span class='op'>=</span> <span class='cn'>TRUE</span>,
   drop <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  title <span class='op'>=</span> <span class='st'>""</span>
+  title <span class='op'>=</span> <span class='st'>""</span>,
+  <span class='va'>adjacency</span>,
+  <span class='va'>district_membership</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -158,13 +164,13 @@
       <td><p>A SpatialPolygonsDataFrame or sf object. Required.</p></td>
     </tr>
     <tr>
-      <th>adjacency</th>
-      <td><p>A zero-indexed adjacency list. Created with redist.adjacency 
+      <th>adj</th>
+      <td><p>A zero-indexed adjacency list. Created with redist.adjacency
 if not supplied. Default is NULL.</p></td>
     </tr>
     <tr>
-      <th>district_membership</th>
-      <td><p>A numeric vector with one row for each precinct in shp. 
+      <th>plan</th>
+      <td><p>A numeric vector with one entry for each precinct in shp.
 Used to color the districts. Default is <code>NULL</code>.  Optional.</p></td>
     </tr>
     <tr>
@@ -176,12 +182,26 @@ Used to color the districts. Default is <code>NULL</code>.  Optional.</p></td>
       <td><p>A logical indicating if edges should connect adjacent centroids. Default is <code>TRUE</code>.</p></td>
     </tr>
     <tr>
+      <th>boundaries</th>
+      <td><p>A logical indicating if precinct boundaries should be plotted.</p></td>
+    </tr>
+    <tr>
       <th>drop</th>
       <td><p>A logical indicating if edges that cross districts should be dropped. Default is <code>FALSE</code>.</p></td>
     </tr>
     <tr>
       <th>title</th>
       <td><p>A string title of plot. Defaults to empty string. Optional.</p></td>
+    </tr>
+    <tr>
+      <th>adjacency</th>
+      <td><p>Deprecated, use adj. A zero-indexed adjacency list. Created with redist.adjacency
+if not supplied. Default is NULL.</p></td>
+    </tr>
+    <tr>
+      <th>district_membership</th>
+      <td><p>Deprecated, use plan. A numeric vector with one row for each precinct in shp.
+Used to color the districts. Default is <code>NULL</code>.  Optional.</p></td>
     </tr>
     </table>
 
@@ -195,7 +215,7 @@ Used to color the districts. Default is <code>NULL</code>.  Optional.</p></td>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"fl25"</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"algdat.p10"</span><span class='op'>)</span>
 <span class='va'>cds</span> <span class='op'>&lt;-</span> <span class='va'>algdat.p10</span><span class='op'>$</span><span class='va'>cdmat</span><span class='op'>[</span>,<span class='fl'>100</span><span class='op'>]</span>
-<span class='fu'>redist.map</span><span class='op'>(</span>shp <span class='op'>=</span> <span class='va'>fl25</span>, district_membership <span class='op'>=</span> <span class='va'>cds</span><span class='op'>)</span>
+<span class='fu'>redist.map</span><span class='op'>(</span>shp <span class='op'>=</span> <span class='va'>fl25</span>, plan <span class='op'>=</span> <span class='va'>cds</span><span class='op'>)</span>
 <span class='op'>}</span>
 
 </div></pre>
@@ -210,7 +230,7 @@ Used to color the districts. Default is <code>NULL</code>.  Optional.</p></td>
 
       <footer>
       <div class="copyright">
-  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Alexander Tarr, Jun Kawahara, Kosuke Imai.</p>
+  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Jun Kawahara, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">

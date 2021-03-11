@@ -22,7 +22,7 @@ redist.subset(
 \arguments{
 \item{shp}{An sf object}
 
-\item{adj}{A zero-indexed adjacency list. Created with 
+\item{adj}{A zero-indexed adjacency list. Created with
 \code{redist.adjacency} if not supplied.}
 
 \item{keep_rows}{row numbers of precincts to keep. Random submap selected if not supplied.}
@@ -35,7 +35,7 @@ redist.subset(
 
 \item{sub_ndists}{integer, number of districts in subset map}
 
-\item{adjacency}{Deprecated, use adj. A zero-indexed adjacency list. Created with 
+\item{adjacency}{Deprecated, use adj. A zero-indexed adjacency list. Created with
 \code{redist.adjacency} if not supplied.}
 
 \item{population}{Deprecated, use total_pop. numeric vector with one entry for the population of each precinct.}
@@ -56,6 +56,7 @@ a list containing the following components:
 }
 \description{
 Subsets a shp object along with its adjacency. Useful for running smaller analyses
-on pairs of districts. Provide population, ndists, pop_tol, and sub_ndists to get proper 
+on pairs of districts. Provide population, ndists, pop_tol, and sub_ndists to get proper
 population parity constraints on subsets.
 }
+\concept{prepare}

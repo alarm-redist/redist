@@ -33,7 +33,8 @@ redist.find.target(
 numeric value to target
 }
 \description{
-Given a percent goal for majority minority districts, this computes the average 
-value of minority in non-majority minority districts. This value is "tgt_other" 
+Given a percent goal for majority minority districts, this computes the average
+value of minority in non-majority minority districts. This value is "tgt_other"
 in \code{redist.mcmc} and \code{redist.smc}.
 }
+\concept{prepare}

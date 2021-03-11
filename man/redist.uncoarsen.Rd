@@ -21,3 +21,4 @@ After a cores analysis or other form of coarsening, sometimes you need
 to be at the original geography level to be comparable. This takes in a
 coarsened matrix and uncoarsens it to the original level
 }
+\concept{post}

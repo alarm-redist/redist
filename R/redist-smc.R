@@ -16,6 +16,13 @@
 #' controlled by the \code{pop_tol}, \code{compactness}, \code{constraints}, and
 #' \code{constraint_fn} parameters.
 #'
+#' Key to ensuring good performance is monitoring the efficiency of the resampling
+#' process at each SMC stage.  Unless \code{silent=F}, this function will print
+#' out the effective sample size of each resampling step to allow the user to
+#' monitor the efficiency.  If \code{verbose=T} the function will also print
+#' out information on the \eqn{k_i} values automatically chosen and the
+#' acceptance rate (based on the population constraint) at each step.
+#'
 #' Higher values of \code{compactness} sample more compact districts;
 #' setting this parameter to 1 is computationally efficient and generates nicely
 #' compact districts.  Values of other than 1 may lead to highly variable
@@ -24,7 +31,7 @@
 #' is used, a specific truncation function should probably be chosen by the user.
 #'
 #' The \code{constraints} parameter allows the user to apply several common
-#' redistricting contraints without implementing them by hand. This parameter
+#' redistricting constraints without implementing them by hand. This parameter
 #' is a list, which may contain any of the following named entries:
 #' * \code{status_quo}: a list with two entries:
 #'   * \code{strength}, a number controlling the tendency of the generated districts
@@ -37,7 +44,7 @@
 #'   (VRA) constraint, with higher values prioritizing majority-minority districts
 #'   over other considerations.
 #'   * \code{tgt_vra_min}, the target percentage of minority voters in minority
-#'   copportunity districts. Defaults to 0.55.
+#'   opportunity districts. Defaults to 0.55.
 #'   * \code{tgt_vra_other} The target percentage of minority voters in other
 #'   districts. Defaults to 0.25, but should be set to reflect the total minority
 #'   population in the state.
@@ -73,6 +80,10 @@
 #' @param resample Whether to perform a final resampling step so that the
 #' generated plans can be used immediately.  Set this to \code{FALSE} to perform
 #' direct importance sampling estimates, or to adjust the weights manually.
+#' @param pop_bounds A numeric vector with three elements \code{c(lower, target, upper)}
+#' providing more precise population bounds for the algorithm. Districts
+#' will have population between \code{lower} and \code{upper}, with a goal of
+#' \code{target}.  If set, overrides \code{popcons}.
 #' @param constraint_fn A function which takes in a matrix where each column is
 #'  a redistricting plan and outputs a vector of log-weights, which will be
 #'  added the the final weights.
@@ -87,6 +98,7 @@
 #' final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.
 #' @param trunc_fn A function which takes in a vector of weights and returns
 #' a truncated vector. Recommended to specify this manually if truncating weights.
+#' @param pop_temper The strength of the automatic population tempering.
 #' @param verbose Whether to print out intermediate information while sampling.
 #'   Recommended.
 #' @param silent Whether to supress all diagnostic information.
@@ -133,33 +145,33 @@
 #'                             ))
 #' }
 #'
+#' @concept simulate
 #' @md
-#' @importFrom stats qnorm
 #' @export
 redist.smc = function(adj, total_pop, nsims, ndists, counties=NULL,
-                      pop_tol = 0.01, compactness=1,
+                      pop_tol = 0.01, pop_bounds=NULL, compactness=1,
                       constraints=list(),
                       resample=TRUE,
                       constraint_fn=function(m) rep(0, ncol(m)),
-                      adapt_k_thresh=0.95, seq_alpha=0.1+0.2*compactness,
+                      adapt_k_thresh=0.975, seq_alpha=0.2+0.2*compactness,
                       truncate=(compactness != 1),
                       trunc_fn=function(x) pmin(x, 0.01*nsims^0.4),
-                      verbose=TRUE, silent=FALSE,
+                      pop_temper=0, verbose=TRUE, silent=FALSE,
                       adjobj, popvec, popcons) {
-    if(!missing(adjobj)){
+    if (!missing(adjobj)) {
         .Deprecated(new = 'adj', old = 'adjobj')
         adj <- adjobj
     }
-    if(!missing(popvec)){
+    if (!missing(popvec)) {
         .Deprecated(new = 'total_pop', old = 'popvec')
         total_pop <- popvec
     }
-    if(!missing(popcons)){
+    if (!missing(popcons)) {
         .Deprecated(new = 'pop_tol', old = 'popcons')
         pop_tol <- popcons
     }
-    
-    
+
+
     V = length(total_pop)
 
     if (missing(adj)) stop("Please supply adjacency matrix or list")
@@ -174,9 +186,26 @@ redist.smc = function(adj, total_pop, nsims, ndists, counties=NULL,
     if (nsims < 1)
         stop("`nsims` must be positive.")
 
-    if (is.null(counties)) counties = rep(1, V)
-    if (length(unique(counties)) != max(counties))
-        stop("County numbers must run from 1 to n_county with no interruptions.")
+    if (is.null(counties)) {
+        counties = rep(1, V)
+    } else {
+        if (length(unique(counties)) != max(counties))
+            stop("County numbers must run from 1 to n_county with no interruptions.")
+
+        # handle discontinuous counties
+        counties = redist.county.relabel(adjobj, counties)
+    }
+
+    # Population bounds
+    if (!is.null(pop_bounds)) {
+        if (length(pop_bounds) != 3)
+            stop("`pop_bounds` must be of the form c(lower, target, upper).")
+        if (!all(diff(pop_bounds) > 0))
+            stop("`pop_bounds` must satisfy lower < target < upper.")
+    } else {
+        target = sum(total_pop) / ndists
+        pop_bounds = target * c(1 - pop_tol, 1, 1 + pop_tol)
+    }
 
     # Other constraints
     if (is.null(constraints$status_quo))
@@ -204,12 +233,13 @@ redist.smc = function(adj, total_pop, nsims, ndists, counties=NULL,
     if (silent) verbosity = 0
 
     lp = rep(0, nsims)
-    maps = smc_plans(nsims, adjlist, counties, total_pop, ndists, pop_tol, compactness,
+    maps = smc_plans(nsims, adjlist, counties, total_pop, ndists, pop_bounds[2],
+                     pop_bounds[1], pop_bounds[3], compactness,
                      constraints$status_quo$strength, constraints$status_quo$current, n_current,
                      constraints$vra$strength, constraints$vra$tgt_vra_min,
                      constraints$vra$tgt_vra_other, constraints$vra$pow_vra, constraints$vra$min_pop,
                      constraints$incumbency$strength, constraints$incumbency$incumbents,
-                     lp, adapt_k_thresh, seq_alpha, verbosity);
+                     lp, adapt_k_thresh, seq_alpha, pop_temper, verbosity);
 
     dev = max_dev(maps, total_pop, ndists)
     maps = maps
@@ -217,14 +247,14 @@ redist.smc = function(adj, total_pop, nsims, ndists, counties=NULL,
     lr = -lp + constraint_fn(maps)
     wgt = exp(lr - mean(lr))
     wgt = wgt / mean(wgt)
-    orig_wgt = wgt 
+    orig_wgt = wgt
     if (truncate)
         wgt = trunc_fn(wgt)
     wgt = wgt/sum(wgt)
     n_eff = length(wgt) * mean(wgt)^2 / mean(wgt^2)
 
     if (n_eff/nsims <= 0.05)
-        warning("Less than 5% efficiency. Consider weakening constraints and/or adjusting `seq_alpha`.")
+        warning("Less than 5% resampling efficiency. Consider weakening constraints and/or adjusting `seq_alpha`.")
 
     if (resample) {
         maps = maps[, sample(nsims, nsims, replace=T, prob=wgt)]
@@ -266,10 +296,50 @@ redist.smc = function(adj, total_pop, nsims, ndists, counties=NULL,
 #' @returns A two-element vector of the form [lower, upper] containing
 #' the importance sampling confidence interval.
 #'
+#' @concept post
 #' @export
 redist.smc_is_ci = function(x, wgt, conf=0.99) {
     wgt = wgt / sum(wgt)
     mu = sum(x*wgt)
     sig = sqrt(sum((x - mu)^2 * wgt^2))
     mu + qnorm(c((1-conf)/2, 1-(1-conf)/2))*sig
+}
+
+
+#' Calculate Population Bounds for a Subset of a Map
+#'
+#' Creates a 3-element vector, suitable for the precise population constraints
+#' in \code{\link{redist.smc}}, that ensures that samples of plans built from
+#' parts of a map will still satisfy the overall population constraint.
+#'
+#' @param total_pop a numeric vector containing the population of every precinct in
+#'   the full map.
+#' @param subset an indexing vector for the subset of the map that will be
+#'   studied or resampled.  Often this will take the form \code{current_plan
+#'   \%in\% c(1, 3, 7)}, where 1, 3, and 7 are the study districts.
+#' @param ndists the number of districts in the overall map.
+#' @param sub_distr the number of districts in the map subset.
+#' @param tol the overall population tolerance that must be met.
+#'
+#' @return a 3-element numeric vector of the form \code{c(lower, target, upper)},
+#' which can be used inside \code{\link{redist.smc}}.
+#'
+#' @concept prepare
+#' @export
+#'
+#' @examples
+#' data("fl25")
+#' data(algdat.p10)
+#'
+#' subset = algdat.p10$cdmat[,1] %in% c(1, 2)
+#' redist.subset_bounds(fl25$TotPop, subset, 3, 2, 0.1)
+redist.subset_bounds = function(total_pop, subset, ndists, sub_distr, tol=0.01) {
+    if (sub_distr >= ndists)
+        warning("Same or greater number of districts in the map subset.")
+    overall_target = sum(total_pop) / ndists
+    lower = overall_target * (1 - tol)
+    upper = overall_target * (1 + tol)
+    target = sum(total_pop[subset]) / sub_distr
+
+    c(ceiling(lower), target, floor(upper))
 }

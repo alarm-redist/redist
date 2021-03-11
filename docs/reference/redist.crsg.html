@@ -82,7 +82,7 @@ Rodden (2013)." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
       </span>
     </div>
 
@@ -90,7 +90,7 @@ Rodden (2013)." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -107,6 +107,9 @@ Rodden (2013)." />
     <li>
       <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
     </li>
+    <li>
+      <a href="../articles/tidy-redist.html">Tidy `redist`</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -116,7 +119,7 @@ Rodden (2013)." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/kosukeimai/redist/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -145,48 +148,39 @@ Rodden (2013).</p>
     </div>
 
     <pre class="usage"><span class='fu'>redist.crsg</span><span class='op'>(</span>
+  <span class='va'>adj</span>,
+  <span class='va'>total_pop</span>,
+  <span class='va'>shp</span>,
+  <span class='va'>ndists</span>,
+  <span class='va'>pop_tol</span>,
+  verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  maxiter <span class='op'>=</span> <span class='fl'>5000</span>,
   <span class='va'>adj.list</span>,
   <span class='va'>population</span>,
   <span class='va'>area</span>,
   <span class='va'>x_center</span>,
   <span class='va'>y_center</span>,
-  <span class='va'>ndists</span>,
-  <span class='va'>thresh</span>,
-  verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  maxiter <span class='op'>=</span> <span class='fl'>5000</span>
+  <span class='va'>thresh</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>adj.list</th>
+      <th>adj</th>
       <td><p>List of length N, where N is the number of precincts.
 Each list element is an integer vector indicating which precincts that precinct
 is adjacent to.  It is assumed that precinct numbers start at 0.</p></td>
     </tr>
     <tr>
-      <th>population</th>
+      <th>total_pop</th>
       <td><p>numeric vector of length N, where N is the number of precincts.
 Each element lists the population total of the corresponding precinct, and is
-used to enforce population constraints.</p></td>
+used to enforce pop_tol constraints.</p></td>
     </tr>
     <tr>
-      <th>area</th>
-      <td><p>numeric vector of length N, where N is the number of precincts. Each 
-element is the area of the corresponding precinct.</p></td>
-    </tr>
-    <tr>
-      <th>x_center</th>
-      <td><p>numeric vector of length N, where N is the number of precincts.
-Each element is the x coordinate of the geographic centroid of the corresponding
-precinct.</p></td>
-    </tr>
-    <tr>
-      <th>y_center</th>
-      <td><p>numeric vector of length N, where N is the number of precincts.
-Each element is the y coordinate of the geographic centroid of the corresponding
-precinct.</p></td>
+      <th>shp</th>
+      <td><p>An sf dataframe to compute area and centroids with.</p></td>
     </tr>
     <tr>
       <th>ndists</th>
@@ -194,9 +188,9 @@ precinct.</p></td>
 precincts into.</p></td>
     </tr>
     <tr>
-      <th>thresh</th>
+      <th>pop_tol</th>
       <td><p>numeric, indicating how close district population targets have
-to be to the target population before algorithm converges.  thresh=0.05 for
+to be to the target population before algorithm converges.  pop_tol=0.05 for
 example means that all districts must be between 0.95 and 1.05 times the size
 of target.pop in population size.</p></td>
     </tr>
@@ -213,13 +207,49 @@ use a different set of start values and try again.  If it fails again,
 redist.rsg() returns an object of all NAs, indicating that use of more
 iterations may be advised. Default is 5000.</p></td>
     </tr>
+    <tr>
+      <th>adj.list</th>
+      <td><p>Deprecated, use adj. List of length N, where N is the number of precincts.
+Each list element is an integer vector indicating which precincts that precinct
+is adjacent to.  It is assumed that precinct numbers start at 0.</p></td>
+    </tr>
+    <tr>
+      <th>population</th>
+      <td><p>Deprecated, use total_pop. numeric vector of length N, where N is the number of precincts.
+Each element lists the population total of the corresponding precinct, and is
+used to enforce population constraints.</p></td>
+    </tr>
+    <tr>
+      <th>area</th>
+      <td><p>Deprecated, use shp. numeric vector of length N, where N is the number of precincts. Each
+element is the area of the corresponding precinct.</p></td>
+    </tr>
+    <tr>
+      <th>x_center</th>
+      <td><p>Deprecated, use shp. numeric vector of length N, where N is the number of precincts.
+Each element is the x coordinate of the geographic centroid of the corresponding
+precinct.</p></td>
+    </tr>
+    <tr>
+      <th>y_center</th>
+      <td><p>Deprecated, use shp. numeric vector of length N, where N is the number of precincts.
+Each element is the y coordinate of the geographic centroid of the corresponding
+precinct.</p></td>
+    </tr>
+    <tr>
+      <th>thresh</th>
+      <td><p>Deprecated, use pop_tol. numeric, indicating how close district population targets have
+to be to the target population before algorithm converges.  thresh=0.05 for
+example means that all districts must be between 0.95 and 1.05 times the size
+of target.pop in population size.</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>list, containing three objects containing the completed redistricting
 plan.</p><ul>
-<li><p><code>district_membership</code>  A vector of length N, indicating the
+<li><p><code>plan</code>  A vector of length N, indicating the
 district membership of each precinct.</p></li>
 <li><p><code>district_list</code>  A list of length Ndistrict.  Each list contains a
 vector of the precincts in the respective district.</p></li>
@@ -239,8 +269,8 @@ Quarterly Journal of Political Science. 8(3): 239-269.</p>
 <span class='va'>adj</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.adjacency.html'>redist.adjacency</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
 <span class='va'>area</span> <span class='op'>&lt;-</span> <span class='fu'>sf</span><span class='fu'>::</span><span class='fu'><a href='https://r-spatial.github.io/sf/reference/geos_measures.html'>st_area</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
 <span class='va'>centers</span> <span class='op'>&lt;-</span> <span class='fu'>sf</span><span class='fu'>::</span><span class='fu'><a href='https://r-spatial.github.io/sf/reference/st_coordinates.html'>st_coordinates</a></span><span class='op'>(</span><span class='fu'>sf</span><span class='fu'>::</span><span class='fu'><a href='https://r-spatial.github.io/sf/reference/geos_unary.html'>st_centroid</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span><span class='op'>)</span>
-<span class='fu'>redist.crsg</span><span class='op'>(</span>adj.list <span class='op'>=</span> <span class='va'>adj</span>, population <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>, area <span class='op'>=</span> <span class='va'>area</span>,
-x_center <span class='op'>=</span> <span class='va'>centers</span><span class='op'>[</span>,<span class='fl'>1</span><span class='op'>]</span>, y_center <span class='op'>=</span> <span class='va'>centers</span><span class='op'>[</span>,<span class='fl'>2</span><span class='op'>]</span>, ndists <span class='op'>=</span> <span class='fl'>2</span>, thresh <span class='op'>=</span> <span class='fl'>.1</span><span class='op'>)</span>
+<span class='fu'>redist.crsg</span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>adj</span>, total_pop <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>, area <span class='op'>=</span> <span class='va'>area</span>,
+x_center <span class='op'>=</span> <span class='va'>centers</span><span class='op'>[</span>,<span class='fl'>1</span><span class='op'>]</span>, y_center <span class='op'>=</span> <span class='va'>centers</span><span class='op'>[</span>,<span class='fl'>2</span><span class='op'>]</span>, ndists <span class='op'>=</span> <span class='fl'>2</span>, pop_tol <span class='op'>=</span> <span class='fl'>.1</span><span class='op'>)</span>
 <span class='op'>}</span>
 </div></pre>
   </div>
@@ -254,7 +284,7 @@ x_center <span class='op'>=</span> <span class='va'>centers</span><span class='o
 
       <footer>
       <div class="copyright">
-  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Alexander Tarr, Jun Kawahara, Kosuke Imai.</p>
+  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Jun Kawahara, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">

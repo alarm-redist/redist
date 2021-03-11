@@ -11,14 +11,16 @@ redist.smc(
   ndists,
   counties = NULL,
   pop_tol = 0.01,
+  pop_bounds = NULL,
   compactness = 1,
   constraints = list(),
   resample = TRUE,
   constraint_fn = function(m) rep(0, ncol(m)),
-  adapt_k_thresh = 0.95,
-  seq_alpha = 0.1 + 0.2 * compactness,
+  adapt_k_thresh = 0.975,
+  seq_alpha = 0.2 + 0.2 * compactness,
   truncate = (compactness != 1),
   trunc_fn = function(x) pmin(x, 0.01 * nsims^0.4),
+  pop_temper = 0,
   verbose = TRUE,
   silent = FALSE,
   adjobj,
@@ -46,6 +48,11 @@ constraint is desired, this parameter should be left blank.}
 will have a deviation from the target district size no more than this value
 in percentage terms, i.e., \code{pop_tol=0.01} will ensure districts have
 populations within 1\% of the target population.}
+
+\item{pop_bounds}{A numeric vector with three elements \code{c(lower, target, upper)}
+providing more precise population bounds for the algorithm. Districts
+will have population between \code{lower} and \code{upper}, with a goal of
+\code{target}.  If set, overrides \code{popcons}.}
 
 \item{compactness}{Controls the compactness of the generated districts, with
 higher values preferring more compact districts. Must be nonnegative. See the
@@ -76,6 +83,8 @@ final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.}
 
 \item{trunc_fn}{A function which takes in a vector of weights and returns
 a truncated vector. Recommended to specify this manually if truncating weights.}
+
+\item{pop_temper}{The strength of the automatic population tempering.}
 
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}
@@ -122,6 +131,13 @@ This function draws nearly-independent samples from a specific target measure,
 controlled by the \code{pop_tol}, \code{compactness}, \code{constraints}, and
 \code{constraint_fn} parameters.
 
+Key to ensuring good performance is monitoring the efficiency of the resampling
+process at each SMC stage.  Unless \code{silent=F}, this function will print
+out the effective sample size of each resampling step to allow the user to
+monitor the efficiency.  If \code{verbose=T} the function will also print
+out information on the \eqn{k_i} values automatically chosen and the
+acceptance rate (based on the population constraint) at each step.
+
 Higher values of \code{compactness} sample more compact districts;
 setting this parameter to 1 is computationally efficient and generates nicely
 compact districts.  Values of other than 1 may lead to highly variable
@@ -130,7 +146,7 @@ importance sampling weights.  By default these weights are truncated at
 is used, a specific truncation function should probably be chosen by the user.
 
 The \code{constraints} parameter allows the user to apply several common
-redistricting contraints without implementing them by hand. This parameter
+redistricting constraints without implementing them by hand. This parameter
 is a list, which may contain any of the following named entries:
 \itemize{
 \item \code{status_quo}: a list with two entries:
@@ -147,7 +163,7 @@ the current map.
 (VRA) constraint, with higher values prioritizing majority-minority districts
 over other considerations.
 \item \code{tgt_vra_min}, the target percentage of minority voters in minority
-copportunity districts. Defaults to 0.55.
+opportunity districts. Defaults to 0.55.
 \item \code{tgt_vra_other} The target percentage of minority voters in other
 districts. Defaults to 0.25, but should be set to reflect the total minority
 population in the state.
@@ -184,3 +200,4 @@ sampled_constr = redist.smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,
 McCartan, C., & Imai, K. (2020). Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans.
 Available at \url{https://imai.fas.harvard.edu/research/files/SMCredist.pdf}.
 }
+\concept{simulate}

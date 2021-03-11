@@ -9,7 +9,6 @@ redist.choropleth(
   fill = NULL,
   fill_label = "",
   title = "",
-  limit_colors = NULL,
   grad = 1,
   lwd = 0
 )
@@ -22,8 +21,6 @@ redist.choropleth(
 \item{fill_label}{A string title of plot. Defaults to empty string. Optional.}
 
 \item{title}{A string title of plot. Defaults to empty string. Optional.}
-
-\item{limit_colors}{A length two string vector with two colors, either hex or ggplot color names.}
 
 \item{grad}{Number of colors to make a gradient with. Accepts values of 1 or 2.}
 
@@ -42,9 +39,10 @@ normalize data to avoid absolute values, in most use cases.
 \examples{
 \dontrun{
 data("fl25")
-redist.choropleth(shp = fl25, fill = fl25$BlackPop/fl25$TotPop)
+redist.choropleth(shp = fl25, fill = BlackPop/TotPop)
 DVS <- fl25$obama/(fl25$mccain+fl25$obama)
 redist.choropleth(shp = fl25, fill = DVS, limit_colors = c('red', 'blue'))
 }
 
 }
+\concept{plot}

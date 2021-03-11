@@ -19,3 +19,4 @@ adjacency list coarsened
 \description{
 Coarsen Adjacency List
 }
+\concept{prepare}

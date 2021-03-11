@@ -25,3 +25,4 @@ data("algdat.p10")
 redist.reduce.adjacency(algdat.p10$adjlist, c(2, 3, 4, 6, 21))
 }
 }
+\concept{prepare}

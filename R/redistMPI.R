@@ -16,12 +16,12 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
     }else{
         fname <- paste0("log", procID, "_", params$savename)
     }
-    
+
     if(params$verbose){
         sink(fname)
         ## Initialize ##
         divider <- c(paste(rep("=", 20), sep = "", collapse = ""), "\n")
-        
+
         cat("\n", append = TRUE)
         cat(divider, append = TRUE)
         cat("redist.mcmc.mpi(): Automated Redistricting Simulation Using
@@ -129,7 +129,7 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
     }
 
     nthin <- params$nthin
-    
+
     ## Run redist preprocessing function
     preprocout <- redist.preproc(adj = adj, total_pop = total_pop,
                                  init_plan = init_plan, ndists = ndists,
@@ -150,27 +150,27 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
 
     ## Set betas - if tempering, modified later
     beta <- params$beta
-    
+
     weightpop <- preprocout$params$weightpop
     weightcompact <- preprocout$params$weightcompact
     weightvra <- preprocout$params$weightvra
     weightsimilar <- preprocout$params$weightsimilar
     weightcountysplit <- preprocout$params$weightcountysplit
     temper <- "parallel"
-    
+
     ## Find procID involved in swaps (non-adjacent only)
     if(!adjswaps){
         swapIts <- which(swaps == procID, arr.ind = TRUE)[,2]
     }
-    
+
     ## Set seed before first iteration of algorithm if provided by user
     if(!is.null(rngseed) & is.numeric(rngseed)){
         set.seed(rngseed)
     }
-    
+
     ## Get starting loop value
     loopstart <- loopscompleted + 1
-    
+
     for(i in loopstart:nloop){
 
         if(adjswaps){
@@ -187,54 +187,54 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
 
         ## Get initial partition
         if(i > loopstart){
-            
+
             cds <- algout$partitions[,nsims]
-            
+
             if(temper == "parallel"){
                 beta <- algout$beta_sequence[nsims]
             }
-            
+
             if(!is.null(rngseed) & is.numeric(rngseed)){
                 .Random.seed <- algout$randseed
             }
 
             rm(list = "algout")
             algout <- list()
-                        
-        } else{ 
-            
+
+        } else{
+
             ## Reload the data if restarting
             if(loopstart > 1){
-                
+
                 ## Load the data
                 load(paste(savename,"_proc", procID, "_loop", i - 1, ".RData", sep = ""))
-                
+
                 ## Load the temperature adjacency matrix (need to specify WD)
                 load(paste0(savename,"_tempadjMat.RData"))
                 tempadj <- tempadjMat[nrow(tempadjMat),]
-                
+
                 ## Load the swapping schedule (need to specify WD)
                 load(paste0(savename,"_swaps.RData"))
-                
+
                 ## Stop if number of simulations per loop is different
                 if(nsims != ncol(algout[[1]])){
                     stop("Please specify the same number of simulations per
                loop across all loops")
                 }
-                
+
                 cds <- algout$partitions[,nsims]
-                
+
                 if(temper == "parallel"){
                     beta <- algout$beta_sequence[nsims]
                 }
-                
+
                 if(!is.null(rngseed) & is.numeric(rngseed)){
                     .Random.seed <- algout$randseed
                 }
 
                 rm(list = "algout")
                 algout <- list()
-                                
+
             }else{
                 cds <- preprocout$data$init_plan
                 ## Initialize algout object (for use in ecutsAppend)
@@ -244,9 +244,9 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
                   tempadjMat <- tempadj
                 }
             }
-            
-        } 
-        
+
+        }
+
         #######################
         ## Run the algorithm ##
         #######################
@@ -283,13 +283,13 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
                          adapt_eprob = 0,
                          adapt_lambda = 0,
                          compactness_measure = compactness_metric)
-            
+
             ## Combine data
             algout <- ecutsAppend(algout,temp)
-            
+
             ## Get temperature
             beta <- temp$beta_sequence[nsimsAdj[j]]
-            
+
             ## Get likelihood
             like <- temp$energy_psi[nsimsAdj[j]]
             ## Use MPI to exchange swap information
@@ -315,7 +315,7 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
                     ## Receive commands (blocking)
                     likePart <- Rmpi::mpi.recv.Robj(partner,tag=1)
                     betaPart <- Rmpi::mpi.recv.Robj(partner,tag=2)
-                    
+
                     ## Higher ranked process communicates random
                     ## draw to lower ranked process
                     if(partner < procID){
@@ -324,8 +324,8 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
                     }else{
                         accept <- Rmpi::mpi.recv.Robj(partner,tag=3)
                     }
-                    
-                    ## Compute acceptance probability (for now, population only)                    
+
+                    ## Compute acceptance probability (for now, population only)
                     cat("Components of likelihood:\n", append = TRUE)
                     cat("like =", like, "\n", append = TRUE)
                     cat("beta =", beta, "\n", append = TRUE)
@@ -337,11 +337,11 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
                     x_like <- -1 * beta * like
                     y_like <- -1 * betaPart * likePart
                     prob <- exp(a_like + b_like - x_like - y_like)
-                    
+
                     if(prob > accept){
                         ## Exchange temperature values
                         beta <- betaPart
-                        
+
                         ## Adjust temperature adjacency list
                         tempadj[tempvra:(tempvra+1)] <- tempadj[(tempvra+1):tempvra]
                         ## Send temperature adjacency list
@@ -371,7 +371,7 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
                     ## Receive commands (blocking)
                     likePart <- Rmpi::mpi.recv.Robj(partner[j],tag=1)
                     betaPart <- Rmpi::mpi.recv.Robj(partner[j],tag=2)
-                    
+
                     ## Higher ranked process communicates random
                     ## draw to lower ranked process
                     if(partner[j] < procID){
@@ -381,7 +381,7 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
                     else{
                         accept <- Rmpi::mpi.recv.Robj(partner[j],tag=3)
                     }
-                    
+
                     ## Compute acceptance probability
                     a_like <- -1 * betaPart * like
                     b_like <- -1 * beta * likePart
@@ -396,7 +396,7 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
             }
             ## Update inputs to swMH
             cds <- temp$partitions[,nsimsAdj[j]]
-            
+
             ## Update tempadjMat
             if(adjswaps){
               ## Update temperature adjacency matrix
@@ -404,9 +404,9 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
             }
             ## End loop over j
         }
-        
+
         class(algout) <- "redist"
-        
+
         ## Save random number state if setting the seed
         if(!is.null(rngseed)){
             algout$randseed <- .Random.seed
@@ -414,16 +414,16 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
 
         ## Save output
         if(nloop > 1){
-            save(algout, file = paste(savename, "_proc", procID,"_loop", 
+            save(algout, file = paste(savename, "_proc", procID,"_loop",
                                       i, ".RData", sep = ""))
           ## Save temperature adjacency matrix
           if(adjswaps){
               save(tempadjMat, file = paste0(savename, "_tempadjMat.RData"))
           }
-          
+
           ## Save swaps
           save(swaps,file = paste0(savename, "_swaps.RData"))
-          
+
         }else if(!is.null(savename)){
             save(algout, file = paste(savename, "_chain",
                              algout$beta_sequence[nsims],
@@ -431,7 +431,7 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
         }
         ## End loop over i
     }
-    
+
     ###############################
     ## Combine and save the data ##
     ###############################
@@ -445,11 +445,11 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
             save(algout, file = paste(savename, ".RData", sep = ""))
         }
     }
-    
+
     if(params$verbose){
         cat("\n", append = TRUE)
         cat(divider, append = TRUE)
-        
+
         cat("redist.mcmc.mpi() simulations finished.\n", append = TRUE)
         sink()
     }
@@ -529,15 +529,16 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
 #' out <- redist.combine.mpi(savename = "test", nloop = 2,
 #' nthin = 10, tempadj = tempAdjMat)
 #' }
+#' @concept post
 #' @export
 redist.combine.mpi <- function(savename, nloop, nthin, tempadj){
-    
+
     ##############################
     ## Set up container objects ##
     ##############################
     load(paste(savename, "_proc", tempadj[1], "_loop1.RData", sep = ""))
     names_obj <- names(algout)
-    
+
     ## Create containers
     nr <- nrow(algout$partitions)
     nc <- ncol(algout$partitions)
@@ -547,10 +548,10 @@ redist.combine.mpi <- function(savename, nloop, nthin, tempadj){
     for(i in 1:length(veclist)){
         veclist[[i]] <- rep(NA, (nc * nloop / nthin))
     }
-    
+
     ## Indices for thinning
     indthin <- which((1:nc) %% nthin == 0)
-    
+
     ####################################
     ## Combine data in multiple loops ##
     ####################################
@@ -561,7 +562,7 @@ redist.combine.mpi <- function(savename, nloop, nthin, tempadj){
         load(paste(savename, "_proc", tempadj[1], "_loop", i, ".RData", sep = ""))
 
         ind <- ((i - 1) * (nc / nthin) + 1):(i * (nc / nthin))
-        
+
         ## Store objects together
         for(j in 1:length(algout)){
             if(j == 1){
@@ -570,9 +571,9 @@ redist.combine.mpi <- function(savename, nloop, nthin, tempadj){
                 veclist[[j-1]][ind] <- algout[[j]][indthin]
             }
         }
-        
+
     }
-    
+
     #################################
     ## Store data in algout object ##
     #################################
@@ -586,17 +587,17 @@ redist.combine.mpi <- function(savename, nloop, nthin, tempadj){
     }
     names(algout) <- names_obj
 
-    
+
     #########################
     ## Set class of object ##
     #########################
     class(algout) <- "redist"
-    
+
     #################
     ## Save object ##
     #################
     save(algout, file = paste(savename, ".RData", sep = ""))
-    
+
 }
 
 ecutsAppend <- function(algout,ndata){
@@ -699,8 +700,8 @@ ecutsAppend <- function(algout,ndata){
 #' interest. The default is \code{NULL}.
 #' @param countymembership Deprecated, use counties. A vector of county membership assignments. The default is \code{NULL}.
 #' @param contiguitymap Use queens or rooks distance criteria for generating an
-#' adjacency list from a "SpatialPolygonsDataFrame" data type. Default is "rooks". 
-#' 
+#' adjacency list from a "SpatialPolygonsDataFrame" data type. Default is "rooks".
+#'
 #'
 #' @details This function allows users to simulate redistricting plans
 #' using Markov Chain Monte Carlo methods. Several constraints
@@ -747,6 +748,7 @@ ecutsAppend <- function(algout,ndata){
 #' Carlo." Working Paper. Available at
 #' \url{http://imai.princeton.edu/research/files/redist.pdf}.
 #'
+#' @concept simulate
 #' @examples
 #' \dontrun{
 #' data(algdat.pfull)
@@ -764,16 +766,16 @@ ecutsAppend <- function(algout,ndata){
 #' nsims = 10000, savename = "test")
 #' }
 #' @export
-redist.mcmc.mpi <- function(adj,  
-                            total_pop,  nsims, ndists = NA, 
-                            init_plan = NULL, 
+redist.mcmc.mpi <- function(adj,
+                            total_pop,  nsims, ndists = NA,
+                            init_plan = NULL,
                             loopscompleted = 0, nloop = 1, nthin = 1,
                             eprob = 0.05,
-                            lambda = 0, 
-                            pop_tol = NA,  
-                            group_pop = NA, 
+                            lambda = 0,
+                            pop_tol = NA,
+                            group_pop = NA,
                             areasvec = NA,
-                            counties = NA, 
+                            counties = NA,
                             borderlength_mat = NA,
                             ssdmat = NA, compactness_metric = "fryer-holden", rngseed = NA,
                             constraint = NA, constraintweights = NA,
@@ -807,21 +809,21 @@ redist.mcmc.mpi <- function(adj,
     .Deprecated(new = 'counties', old = 'countymembership')
     counties <- countymembership
   }
-  
+
   if(!missing(contiguitymap)){
     .Deprecated(msg = 'contiguitymap has been deprecated. Rooks adjacency built with redist.adjacency().')
   }
   contiguitymap <- 'rooks'
-  
+
     ## Check if Rmpi library is installed
     if (!requireNamespace("Rmpi", quietly = TRUE)) {
         stop("You must install package 'Rmpi' to use this function. Please install it if you wish to continue."
             ,call. = FALSE)
     }
-    
+
     ## ## Load Rmpi library
-    ## if (!is.loaded("mpi_initialize")) { 
-    ##     library("Rmpi") 
+    ## if (!is.loaded("mpi_initialize")) {
+    ##     library("Rmpi")
     ## }
 
     ##########################
@@ -843,7 +845,7 @@ redist.mcmc.mpi <- function(adj,
     if(nloop > 1 & missing(savename)){
         stop("Please supply save directory if saving simulations at checkpoints")
     }
-    
+
     ###################
     ## Preprocessing ##
     ###################
@@ -854,7 +856,7 @@ redist.mcmc.mpi <- function(adj,
     if(nrow.init < betaseqlength){
         init_plan <- rbind(init_plan,matrix(NA,betaseqlength-nrow.init,ncol.init))
     }
-    
+
     ## Generate temperature sequence (power law)
     temp <- rep(NA, betaseqlength)
     for(i in 1:betaseqlength){
@@ -862,7 +864,7 @@ redist.mcmc.mpi <- function(adj,
     }
     beta <- temp/0.9
     target.beta <- beta[1]
-  
+
     ## Generate swapping sequence
     if(adjswaps){
         swaps <- matrix(NA,1,nsims*(nloop-loopscompleted))
@@ -882,7 +884,7 @@ redist.mcmc.mpi <- function(adj,
             }
         }
     }
-    
+
     ## Create parameters list to distribute across nodes
     params <- expand.grid(nsims = nsims,nloop = nloop,eprob = eprob,
                           ndists = ndists,lambda = lambda,pop_tol = pop_tol,
@@ -895,37 +897,37 @@ redist.mcmc.mpi <- function(adj,
                           contiguitymap = contiguitymap,verbose = verbose,
                           loopscompleted = loopscompleted,rngseed = rngseed,
                           savename = savename, stringsAsFactors = FALSE)
-    
+
     ##################
     ## Spawn Slaves ##
     ##################
     ## Note this will not work on Windows platform
     Rmpi::mpi.spawn.Rslaves(nslaves = betaseqlength)
-    
+
     ## Get processor ID for each slave
     Rmpi::mpi.bcast.cmd(procID <- Rmpi::mpi.comm.rank())
-    
+
     #########################
     ## Send Data to Slaves ##
     #########################
     ## Swapping Schedule
     Rmpi::mpi.bcast.Robj2slave(swaps)
-    
+
     ## Temperature adjacency
     if(adjswaps){
         Rmpi::mpi.bcast.Robj2slave(tempadj)
     }
-    
+
     ## Adjacency Object
     Rmpi::mpi.bcast.Robj2slave(adj)
-    
+
     ## Population Vector
     Rmpi::mpi.bcast.Robj2slave(total_pop)
-    
+
     ## Initial Plans
     init_plan <- split(init_plan, f=1:nrow(init_plan))
     Rmpi::mpi.scatter.Robj2slave(init_plan)
-    
+
     ## Group population vector
     Rmpi::mpi.bcast.Robj2slave(group_pop)
 
@@ -937,27 +939,27 @@ redist.mcmc.mpi <- function(adj,
 
     ## Border distance matrix
     Rmpi::mpi.bcast.Robj2slave(borderlength_mat)
-    
+
     ## Squared-distance matrix
     Rmpi::mpi.bcast.Robj2slave(ssdmat)
-    
+
     ## Parameters List
     params <- split(params, f=1:nrow(params))
     Rmpi::mpi.scatter.Robj2slave(params)
-    
+
     ## Send ecutsMPI function to slaves
     Rmpi::mpi.bcast.Robj2slave(ecutsMPI)
-    
+
     ## Send ecutsAppend function to slaves
     Rmpi::mpi.bcast.Robj2slave(ecutsAppend)
-    
+
     ## Execute ecutsMPI program on each slave
     Rmpi::mpi.bcast.cmd(ecutsMPI(procID, params, adj, total_pop, init_plan, swaps))
-    
+
     ## Close slaves
     Rmpi::mpi.close.Rslaves()
-    
+
     ## Terminate MPI processes and close R
     Rmpi::mpi.quit()
-  
+
 }

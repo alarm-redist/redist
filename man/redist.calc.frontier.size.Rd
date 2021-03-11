@@ -29,3 +29,4 @@ redist.prep.enumpart(adj, 'unordered', 'ordered')
 redist.calc.frontier.size('ordered')
 }
 }
+\concept{enumerate}

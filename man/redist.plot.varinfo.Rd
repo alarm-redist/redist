@@ -21,3 +21,4 @@ patchworked ggplot
 \description{
 Static Variation of Information Plot
 }
+\concept{plot}

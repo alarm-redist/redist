@@ -4,7 +4,7 @@
 \alias{fl25}
 \title{Florida 25 Precinct File}
 \format{
-sf data.frame containing columns for useful data related to the 
+sf data.frame containing columns for useful data related to the
 redistricting process, subsetted from real data in Florida, and sf geometry column.
 \describe{
 \item{\code{geoid}}{ Contains unique identifier for each precinct which can be matched to the full Florida dataset.}
@@ -38,3 +38,4 @@ Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander Tarr.
 Working Paper. Available at
 \url{http://imai.princeton.edu/research/files/redist.pdf}.
 }
+\concept{data}

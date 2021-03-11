@@ -82,7 +82,7 @@ redistricting plan." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
       </span>
     </div>
 
@@ -90,7 +90,7 @@ redistricting plan." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -107,6 +107,9 @@ redistricting plan." />
     <li>
       <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
     </li>
+    <li>
+      <a href="../articles/tidy-redist.html">Tidy `redist`</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -116,7 +119,7 @@ redistricting plan." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/kosukeimai/redist/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -134,7 +137,7 @@ redistricting plan." />
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Segregation index calculation for MCMC redistricting.</h1>
-    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/calcstats.R'><code>R/calcstats.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/calcstats.R'><code>R/calcstats.R</code></a>, <a href='https://github.com/kosukeimai/redist/blob/master/R/tidy.R'><code>R/tidy.R</code></a></small>
     <div class="hidden name"><code>redist.segcalc.Rd</code></div>
     </div>
 
@@ -144,23 +147,51 @@ Massey \&amp; Denton 1987 for more details) for a specified subgroup under any
 redistricting plan.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.segcalc</span><span class='op'>(</span><span class='va'>algout</span>, <span class='va'>grouppop</span>, <span class='va'>fullpop</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>redist.segcalc</span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>group_pop</span>, <span class='va'>total_pop</span>, <span class='va'>algout</span>, <span class='va'>grouppop</span>, <span class='va'>fullpop</span><span class='op'>)</span>
+
+<span class='fu'>segregation_index</span><span class='op'>(</span>
+  <span class='va'>map</span>,
+  <span class='va'>group_pop</span>,
+  total_pop <span class='op'>=</span> <span class='va'>map</span><span class='op'>[[</span><span class='fu'><a href='https://rdrr.io/r/base/attr.html'>attr</a></span><span class='op'>(</span><span class='va'>map</span>, <span class='st'>"pop_col"</span><span class='op'>)</span><span class='op'>]</span><span class='op'>]</span>,
+  .data <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/exists.html'>get0</a></span><span class='op'>(</span><span class='st'>"."</span>, <span class='fu'><a href='https://rdrr.io/r/base/sys.parent.html'>parent.frame</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>algout</th>
+      <th>plans</th>
       <td><p>A matrix of congressional district assignments or a
 redist object.</p></td>
     </tr>
     <tr>
-      <th>grouppop</th>
+      <th>group_pop</th>
       <td><p>A vector of populations for some subgroup of interest.</p></td>
     </tr>
     <tr>
-      <th>fullpop</th>
+      <th>total_pop</th>
       <td><p>A vector containign the populations of each geographic unit.</p></td>
+    </tr>
+    <tr>
+      <th>algout</th>
+      <td><p>Deprecated. Use plans. A matrix of congressional district assignments or a
+redist object.</p></td>
+    </tr>
+    <tr>
+      <th>grouppop</th>
+      <td><p>Deprecated. Use group_pop. A vector of populations for some subgroup of interest.</p></td>
+    </tr>
+    <tr>
+      <th>fullpop</th>
+      <td><p>Deprecated. Use total_pop. A vector containign the populations of each geographic unit.</p></td>
+    </tr>
+    <tr>
+      <th>map</th>
+      <td><p>a <code><a href='redist_map.html'>redist_map</a></code> object</p></td>
+    </tr>
+    <tr>
+      <th>.data</th>
+      <td><p>a <code><a href='redist_plans.html'>redist_plans</a></code> object</p></td>
     </tr>
     </table>
 
@@ -211,7 +242,7 @@ initcds <span class='op'>=</span> <span class='va'>initcds</span>, nsims <span c
 
       <footer>
       <div class="copyright">
-  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Alexander Tarr, Jun Kawahara, Kosuke Imai.</p>
+  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Jun Kawahara, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">

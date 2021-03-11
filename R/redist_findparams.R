@@ -11,7 +11,7 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
                      ssdmat, group_pop, counties, names, maxiterrsg, report_all,
                      adapt_lambda, adapt_eprob,
                      nstartval_store, maxdist_startval, logarg){
-    
+
     ## Get this iteration
     p_sub <- params %>% dplyr::slice(i)
     if(logarg){
@@ -20,7 +20,7 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
         cat(c(p_sub))
         cat("\n")
     }
-    
+
     ## Set parameter values
     if("eprob" %in% names){
         eprob <- p_sub$eprob
@@ -80,7 +80,7 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
                        group_pop = group_pop,
                        counties = counties, #ctk-cran-note
                        init_plan = init_plan, eprob = eprob, lambda = lambda,
-                       popcons = popcons, 
+                       popcons = popcons,
                        constraint = constraintvec,
                        constraintweights = weightvec, #ctk-cran-note
                        maxiterrsg = maxiterrsg,
@@ -108,7 +108,7 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
         }
         startval <- as.matrix(startval)
     }
-    
+
     ## Get quantiles
     quant <- floor(nsims / 4)
     q1 <- 1:quant
@@ -234,7 +234,7 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
     if(logarg){
         sink()
     }
-    
+
     return(list(printout = out, startval = startval))
 
 }
@@ -270,7 +270,7 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
 #' @param nstartval_store The number of maps to sample from the preprocessing chain
 #' for use as starting values in future simulations. Default is 1.
 #' @param maxdist_startval The maximum distance from the starting map that
-#' sampled maps should be. Default is 100 (no restriction). 
+#' sampled maps should be. Default is 100 (no restriction).
 #' @param maxiterrsg Maximum number of iterations for random seed-and-grow
 #' algorithm to generate starting values. Default is 5000.
 #' @param report_all Whether to report all summary statistics for each set of
@@ -307,9 +307,9 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
 #' Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte
 #' Carlo." Working Paper. Available at
 #' \url{http://imai.princeton.edu/research/files/redist.pdf}.
-#' 
+#'
 #' @importFrom dplyr slice
-#' 
+#'
 #' @examples \dontrun{
 #' data(algdat.pfull)
 #'
@@ -327,28 +327,28 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
 #' total_pop = algdat.pfull$precinct.data$pop,
 #' init_plan = initcds, nsims = 10000, params = params)
 #' }
+#' @concept prepare
 #' @export
-redist.findparams <- function(adj,  
-                              total_pop,  
-                              nsims, ndists = NULL, 
+redist.findparams <- function(adj,
+                              total_pop,
+                              nsims, ndists = NULL,
                               init_plan = NULL,
                               adapt_lambda = FALSE, adapt_eprob = FALSE,
-                              params, ssdmat = NULL, 
-                              group_pop = NULL, 
-                              counties = NULL, 
+                              params, ssdmat = NULL,
+                              group_pop = NULL,
+                              counties = NULL,
                               nstartval_store = 1, maxdist_startval = 100,
                               maxiterrsg = 5000, report_all = TRUE,
-                              parallel = FALSE, 
-                              ncores = NULL, 
+                              parallel = FALSE,
+                              ncores = NULL,
                               log = FALSE, verbose = TRUE,
                               adjobj,
                               popvec,
-                              initcds, 
+                              initcds,
                               grouppopvec,
                               countymembership,
                               nthreads){
-    
-    
+
     if(!missing(adjobj)){
         .Deprecated(new = 'adj', old = 'adjobj')
         adj <- adjobj
@@ -407,7 +407,7 @@ redist.findparams <- function(adj,
     if(sum("eprob" %in% names & adapt_eprob) > 0){
         warning("You have specified a grid of eprob values to search and set `adapt_eprob` to TRUE. Setting `adapt_eprob` to FALSE.")
         adapt_eprob <- FALSE
-    }    
+    }
     if("weight_segregation" %in% names & is.null(group_pop)){
         stop("If constraining on segregation, please provide a vector of group population.")
     }
@@ -422,7 +422,7 @@ redist.findparams <- function(adj,
     }
 
     if(parallel){ ## Parallel
-        
+
         ## Check to see if threads declared
         if(is.null(ncores)){
             stop("If parallelizing, please declare the number of threads")
@@ -434,7 +434,7 @@ redist.findparams <- function(adj,
                 "## Parallelizing over", ncores, "processors\n",
                 "## -----------------------------\n\n", sep = " "))
         }
-        
+
         ## Set parallel environment
         if(verbose){
             cl <- makeCluster(ncores, outfile = "")
@@ -442,7 +442,7 @@ redist.findparams <- function(adj,
             cl <- makeCluster(ncores)
         }
         registerDoParallel(cl)
-        
+
         ## Execute foreach loop
         ret <- foreach(i = 1:trials, .verbose = verbose) %dopar% {
 
@@ -451,10 +451,10 @@ redist.findparams <- function(adj,
                             ssdmat, group_pop, counties, names, maxiterrsg, report_all,
                             adapt_lambda, adapt_eprob,
                             nstartval_store, maxdist_startval, log)
-            
+
             ## Return values
             return(out)
-            
+
         }
 
         printout <- c()
@@ -469,7 +469,7 @@ redist.findparams <- function(adj,
         ## Create container for report
         printout <- c()
         startval <- vector(mode = "list", length = trials)
-        
+
         ## Start loop over parameter values
         for(i in 1:trials){
 
@@ -478,13 +478,13 @@ redist.findparams <- function(adj,
                             ssdmat, group_pop, counties, names, maxiterrsg, report_all,
                             adapt_lambda, adapt_eprob,
                             nstartval_store, maxdist_startval, log)
-            
+
             ## Add to printout
             printout <- paste(printout, out$printout)
             startval[[i]] <- out$startval
-            
+
         }
-        
+
     }
 
     if(parallel){
