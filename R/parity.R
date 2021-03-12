@@ -27,13 +27,11 @@ redist.parity <- function(plans, total_pop, ncores=1, district_membership, popul
     if (!any(class(total_pop) %in% c('numeric', 'integer'))) {
         stop('Please provide "total_pop" as a numeric vector.')
     }
-
-    if (!any(class(plans) %in% c('numeric', 'matrix'))) {
-        stop('Please provide "plans" as a matrix.')
-    }
-
     if (!is.matrix(plans)) {
         plans <- matrix(plans, ncol=1)
+    }
+    if (!any(class(plans) %in% c('numeric', 'matrix'))) {
+        stop('Please provide "plans" as a matrix.')
     }
 
     if (length(total_pop) != nrow(plans)) {
