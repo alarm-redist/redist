@@ -42,7 +42,8 @@ redist.parity <- function(plans, total_pop, ncores=1, district_membership, popul
 
     # parallielze as in fastLink package to avoid Windows/unix issues
     N = ncol(plans)
-    nc <- min(ncores, floor(N/2))
+    nc <- min(ncores, max(1, floor(N/2)))
+
     if (nc == 1){
         `%oper%` <- `%do%`
     } else {
@@ -55,7 +56,8 @@ redist.parity <- function(plans, total_pop, ncores=1, district_membership, popul
     if (min(plans[,1]) == 0)
         plans = plans + 1
     n_distr = max(plans[,1])
-
+    
+    
     chunks = split(1:N, rep(1:nc, each=ceiling(N/nc))[1:N])
     out = foreach(map=chunks, .combine = "c") %oper% {
         max_dev(plans[, map, drop=F], total_pop, n_distr)
