@@ -145,6 +145,14 @@ biasatv <- function(dvs, v, nd) {
     .Call(`_redist_biasatv`, dvs, v, nd)
 }
 
+RankedMarginalDev <- function(dvs) {
+    .Call(`_redist_RankedMarginalDev`, dvs)
+}
+
+smoothseat <- function(dvs, nd) {
+    .Call(`_redist_smoothseat`, dvs, nd)
+}
+
 minkowski <- function(v, m, p) {
     .Call(`_redist_minkowski`, v, m, p)
 }

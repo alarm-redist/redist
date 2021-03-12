@@ -7,7 +7,6 @@
 \usage{
 redist.metrics(
   plans,
-  district_membership,
   measure = "DSeats",
   rvote,
   dvote,
@@ -16,7 +15,8 @@ redist.metrics(
   respV = 0.5,
   bandwidth = 0.01,
   nloop = 1,
-  ncores = 1
+  ncores = 1,
+  district_membership
 )
 
 partisan_metrics(
@@ -32,12 +32,9 @@ partisan_metrics(
 \item{plans}{A numeric vector (if only one map) or matrix with one row
 for each precinct and one column for each map. Required.}
 
-\item{district_membership}{Deprecated, use plans. A numeric vector (if only one map) or matrix with one row
-for each precinct and one column for each map. Required.}
-
 \item{measure}{A vector with a string for each measure desired from list "DSeats", "DVS", "EffGap",
 "EffGapEqPop", "TauGap", "MeanMedian", "Bias", "BiasV", "Declination",
-"Responsiveness", and "LopsidedWins". Use "all" to get all metrics.
+"Responsiveness", "LopsidedWins", "RankedMarginal", and "SmoothedSeat". Use "all" to get all metrics.
 "Dseats" and "DVS" are always computed, so it is recommended to always return those values.}
 
 \item{rvote}{A numeric vector with the Republican vote for each precinct.}
@@ -56,6 +53,9 @@ for each precinct and one column for each map. Required.}
 and the column number if multiple maps given.}
 
 \item{ncores}{Number of cores to use for parallel computing. Default is 1.}
+
+\item{district_membership}{Deprecated, use plans. A numeric vector (if only one map) or matrix with one row
+for each precinct and one column for each map. Required.}
 
 \item{map}{a \code{\link{redist_map}} object}
 
