@@ -51,9 +51,9 @@ Creates a map with optional graph overlay
 \examples{
 \dontrun{
 library(redist)
-data("fl25")
-data("algdat.p10")
-cds <- algdat.p10$cdmat[,100]
+data('fl25')
+data('algdat.p10')
+cds <- algdat.p10$cdmat[, 100]
 redist.map(shp = fl25, plan = cds)
 }
 

@@ -21,7 +21,7 @@ umat ms_plans(int N, List l, const uvec init, const uvec &counties, const uvec &
               double beta_vra, double tgt_min, double tgt_other,
               double pow_vra, const uvec &min_pop,
               double beta_inc, const uvec &incumbents,
-              double thresh, int verbosity) {
+              double thresh, int k, int verbosity) {
     Graph g = list_to_graph(l);
     Multigraph cg = county_graph(g, counties);
     int V = g.size();
@@ -42,8 +42,9 @@ umat ms_plans(int N, List l, const uvec init, const uvec &counties, const uvec &
     }
 
     // find k and multipliers
-    int k;
-    adapt_ms_parameters(g, n_distr, k, thresh, tol, init, counties, cg, pop, target);
+    if (k <= 0) {
+        adapt_ms_parameters(g, n_distr, k, thresh, tol, init, counties, cg, pop, target);
+    }
     if (verbosity >= 2)
         Rcout << "Using k = " << k << "\n";
 

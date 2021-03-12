@@ -105,9 +105,6 @@
     <li>
       <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
     </li>
-    <li>
-      <a href="../articles/tidy-redist.html">Tidy `redist`</a>
-    </li>
   </ul>
 </li>
 <li>
@@ -164,7 +161,7 @@
       <th>...</th>
       <td><p>column elements to be bound into a <code>redist_map</code> object or a
 single <code>list</code> or <code>data.frame</code>.  These will be passed on to the
-<code>tibble</code> constructor.</p></td>
+<code><a href='https://r-spatial.github.io/sf/reference/tibble.html'>tibble</a></code> constructor.</p></td>
     </tr>
     <tr>
       <th>ndists</th>
@@ -214,7 +211,7 @@ it is latitude-longitude based. Set to NULL to avoid planarizing.</p></td>
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>A <code>redist_map</code> object is a <code>tibble</code> which contains an
+    <p>A <code>redist_map</code> object is a <code><a href='https://r-spatial.github.io/sf/reference/tibble.html'>tibble</a></code> which contains an
 adjacency list and additional information about the number of districts and
 population bounds.  It supports all of the <code>dplyr</code> generics, and will
 adjust the adjacency list and attributes according to these functions; i.e.,

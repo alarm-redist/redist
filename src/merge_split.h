@@ -21,7 +21,7 @@ arma::umat ms_plans(int N, List l, const arma::uvec init, const arma::uvec &coun
                     double upper, double rho, double beta_sq, const arma::uvec &current,
                     int n_current, double beta_vra, double tgt_min, double tgt_other,
                     double pow_vra, const arma::uvec &min_pop, double beta_inc,
-                    const arma::uvec &incumbents, double thresh, int verbosity);
+                    const arma::uvec &incumbents, double thresh, int k, int verbosity);
 
 /*
  * Add specific constraint weights & return the cumulative weight vector

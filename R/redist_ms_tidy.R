@@ -71,6 +71,8 @@
 #' value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if
 #' the algorithm does not appear to be sampling from the target distribution.
 #' Must be between 0 and 1.
+#' @param k The number of edges to consider cutting after drawing a spanning
+#'   tree. Should be selected automatically in nearly all cases.
 #' @param verbose Whether to print out intermediate information while sampling.
 #'   Recommended.
 #' @param silent Whether to suppress all diagnostic information.
@@ -104,7 +106,7 @@
 redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
                              init_plan=NULL, counties=NULL, compactness=1,
                              constraints=list(), constraint_fn=function(m) rep(0, ncol(m)),
-                             adapt_k_thresh=0.975, verbose=TRUE, silent=FALSE) {
+                             adapt_k_thresh=0.975, k=NULL, verbose=TRUE, silent=FALSE) {
     map = validate_redist_map(map)
     V = nrow(map)
     adj = get_adj(map)
@@ -152,6 +154,7 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
     verbosity = 1
     if (verbose) verbosity = 3
     if (silent) verbosity = 0
+    if (is.null(k)) k = 0
 
     pop_bounds = attr(map, "pop_bounds")
     pop = map[[attr(map, "pop_col")]]
@@ -162,7 +165,7 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
                      constraints$vra$strength, constraints$vra$tgt_vra_min,
                      constraints$vra$tgt_vra_other, constraints$vra$pow_vra, constraints$vra$min_pop,
                      constraints$incumbency$strength, constraints$incumbency$incumbents,
-                     adapt_k_thresh, verbosity)
+                     adapt_k_thresh, k, verbosity)
 
     new_redist_plans(plans[,-1:-warmup], map, "mergesplit",
                      rep(1, nsims - warmup), FALSE,

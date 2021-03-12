@@ -14,6 +14,7 @@ redist_mergesplit(
   constraints = list(),
   constraint_fn = function(m) rep(0, ncol(m)),
   adapt_k_thresh = 0.975,
+  k = NULL,
   verbose = TRUE,
   silent = FALSE
 )
@@ -49,6 +50,9 @@ added the the final weights.}
 value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if
 the algorithm does not appear to be sampling from the target distribution.
 Must be between 0 and 1.}
+
+\item{k}{The number of edges to consider cutting after drawing a spanning
+tree. Should be selected automatically in nearly all cases.}
 
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}
