@@ -35,7 +35,7 @@ for each precinct and one column for each map. Required.}
 
 \item{measure}{A vector with a string for each measure desired. "PolsbyPopper",
 "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden",
-"EdgesRemoved", and "logSpanningTree" are implemented. Defaults to "PolsbyPopper". Use "all" to
+"EdgesRemoved", "FracKept", and "logSpanningTree" are implemented. Defaults to "PolsbyPopper". Use "all" to
 return all implemented measures.}
 
 \item{total_pop}{A numeric vector with the population for every observation. Is
@@ -113,6 +113,10 @@ smallest calculated numerator.
 The log spanning tree measure is the log number of spanning trees.
 
 The edges removed measure is number of egdes removed from the underlying adjacency graph.
+A smaller number of edges removed is more compact.
+
+The fraction kept measure is the fraction of edges that were not removed from the 
+ underlying adjacency graph. This takes values 0 - 1, where 1 is more compact.
 }
 \examples{
 \dontrun{

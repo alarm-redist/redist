@@ -87,6 +87,8 @@ BiasV is the Partisan Bias computed at value V.
 Declination is the value of declination at 0.5.
 Responsiveness is the responsiveness at the user-supplied value with the user-supplied bandwidth.
 LopsidedWins computed the Lopsided Outcomes value, but does not produce a test statistic.
+RankedMarginal computes the Ranked Marginal Deviation (0-1, smaller is better).
+SmoothedSeat computes the Smoothed Seat Count Deviation (0-1, smaller is better).
 }
 \examples{
 \dontrun{
@@ -106,5 +108,9 @@ Election Law Journal: Rules, Politics, and Policy. Pp. 39-57.http://doi.org/10.1
 
 Samuel S.-H. Wang. 2016. "Three Tests for Practical Evaluation of Partisan Gerrymandering."
 Stanford Law Review, 68, Pp. 1263 - 1321.
+
+Gregory Herschlag, Han Sung Kang, Justin Luo, Christy Vaughn Graves, Sachet Bangia, 
+Robert Ravier & Jonathan C. Mattingly (2020) Quantifying Gerrymandering in North Carolina, 
+Statistics and Public Policy, 7:1, 30-38, DOI: 10.1080/2330443X.2020.1796400
 }
 \concept{analyze}
