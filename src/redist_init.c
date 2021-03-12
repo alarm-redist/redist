@@ -38,7 +38,7 @@ extern SEXP _redist_lopsidedwins(SEXP, SEXP, SEXP);
 extern SEXP _redist_max_dev(SEXP, SEXP, SEXP);
 extern SEXP _redist_meanmedian(SEXP);
 extern SEXP _redist_minkowski(SEXP, SEXP, SEXP);
-extern SEXP _redist_ms_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _redist_ms_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_n_removed(SEXP, SEXP, SEXP);
 extern SEXP _redist_plan_joint(SEXP, SEXP, SEXP);
 extern SEXP _redist_pop_tally(SEXP, SEXP, SEXP);
@@ -89,7 +89,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_max_dev",               (DL_FUNC) &_redist_max_dev,                3},
     {"_redist_meanmedian",            (DL_FUNC) &_redist_meanmedian,             1},
     {"_redist_minkowski",             (DL_FUNC) &_redist_minkowski,              3},
-    {"_redist_ms_plans",              (DL_FUNC) &_redist_ms_plans,              22},
+    {"_redist_ms_plans",              (DL_FUNC) &_redist_ms_plans,              23},
     {"_redist_n_removed",             (DL_FUNC) &_redist_n_removed,              3},
     {"_redist_plan_joint",            (DL_FUNC) &_redist_plan_joint,             3},
     {"_redist_pop_tally",             (DL_FUNC) &_redist_pop_tally,              3},

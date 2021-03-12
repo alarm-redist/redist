@@ -109,9 +109,6 @@ but not identical to those used in the references." />
     <li>
       <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
     </li>
-    <li>
-      <a href="../articles/tidy-redist.html">Tidy `redist`</a>
-    </li>
   </ul>
 </li>
 <li>
@@ -161,6 +158,7 @@ but not identical to those used in the references.</p>
   constraints <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>,
   constraint_fn <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>m</span><span class='op'>)</span> <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fl'>0</span>, <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span><span class='op'>(</span><span class='va'>m</span><span class='op'>)</span><span class='op'>)</span>,
   adapt_k_thresh <span class='op'>=</span> <span class='fl'>0.975</span>,
+  k <span class='op'>=</span> <span class='cn'>NULL</span>,
   verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
   silent <span class='op'>=</span> <span class='cn'>FALSE</span>
 <span class='op'>)</span></pre>
@@ -216,6 +214,11 @@ added the the final weights.</p></td>
 value <code>k_i</code> for each splitting iteration. Set to 0.9999 or 1 if
 the algorithm does not appear to be sampling from the target distribution.
 Must be between 0 and 1.</p></td>
+    </tr>
+    <tr>
+      <th>k</th>
+      <td><p>The number of edges to consider cutting after drawing a spanning
+tree. Should be selected automatically in nearly all cases.</p></td>
     </tr>
     <tr>
       <th>verbose</th>

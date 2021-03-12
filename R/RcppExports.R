@@ -89,8 +89,8 @@ max_dev <- function(districts, pop, n_distr) {
     .Call(`_redist_max_dev`, districts, pop, n_distr)
 }
 
-ms_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_inc, incumbents, thresh, verbosity) {
-    .Call(`_redist_ms_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_inc, incumbents, thresh, verbosity)
+ms_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_inc, incumbents, thresh, k, verbosity) {
+    .Call(`_redist_ms_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_inc, incumbents, thresh, k, verbosity)
 }
 
 agg_p2d <- function(dm, vote, nd) {
