@@ -279,7 +279,7 @@ number_by = function(data, x, desc=F) {
 #'
 #' @concept analyze
 #' @export
-distr_compactness = function(map, measure="EdgesRemoved", .data=get0(".", parent.frame()), ...) {
+distr_compactness = function(map, measure="FracKept", .data=get0(".", parent.frame()), ...) {
     if (!inherits(.data, "redist_plans"))
         stop("Must provide `.data` if not called within a pipe")
 
