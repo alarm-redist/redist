@@ -499,6 +499,29 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// RankedMarginalDev
+NumericVector RankedMarginalDev(NumericMatrix dvs);
+RcppExport SEXP _redist_RankedMarginalDev(SEXP dvsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type dvs(dvsSEXP);
+    rcpp_result_gen = Rcpp::wrap(RankedMarginalDev(dvs));
+    return rcpp_result_gen;
+END_RCPP
+}
+// smoothseat
+NumericVector smoothseat(NumericMatrix dvs, int nd);
+RcppExport SEXP _redist_smoothseat(SEXP dvsSEXP, SEXP ndSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type dvs(dvsSEXP);
+    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
+    rcpp_result_gen = Rcpp::wrap(smoothseat(dvs, nd));
+    return rcpp_result_gen;
+END_RCPP
+}
 // minkowski
 NumericVector minkowski(IntegerVector v, IntegerMatrix m, int p);
 RcppExport SEXP _redist_minkowski(SEXP vSEXP, SEXP mSEXP, SEXP pSEXP) {

@@ -20,7 +20,7 @@
 #' for each precinct and one column for each map. Required.
 #' @param measure A vector with a string for each measure desired. "PolsbyPopper",
 #' "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden",
-#' "EdgesRemoved", and "logSpanningTree" are implemented. Defaults to "PolsbyPopper". Use "all" to
+#' "EdgesRemoved", "FracKept", and "logSpanningTree" are implemented. Defaults to "PolsbyPopper". Use "all" to
 #' return all implemented measures.
 #' @param total_pop A numeric vector with the population for every observation. Is
 #' only necessary when "FryerHolden" is used for measure. Defaults to NULL.
@@ -73,6 +73,10 @@
 #' The log spanning tree measure is the log number of spanning trees.
 #'
 #' The edges removed measure is number of egdes removed from the underlying adjacency graph.
+#' A smaller number of edges removed is more compact.
+#' 
+#' The fraction kept measure is the fraction of edges that were not removed from the 
+#'  underlying adjacency graph. This takes values 0 - 1, where 1 is more compact.
 #'
 #' @return A tibble with a column that specifies the district, a column for
 #' each specified measure, and a column that specifies the map number.
@@ -171,9 +175,15 @@ redist.compactness <- function(shp = NULL,
   }
 
   if(measure == "all"){
-    measure <-  c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden", "EdgesRemoved", "logSpanningTree")
+    measure <-  c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", 
+                  "Reock", "BoyceClark", "FryerHolden", "EdgesRemoved", 'FracKept', 
+                  "logSpanningTree")
   }
-  match.arg(arg = measure,several.ok = TRUE, choices = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden", "EdgesRemoved", "logSpanningTree"))
+  
+  match.arg(arg = measure, several.ok = TRUE, 
+            choices = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", 
+                        "Reock", "BoyceClark", "FryerHolden", "EdgesRemoved", 
+                        'FracKept', "logSpanningTree"))
 
   if('FryerHolden' %in% measure & is.null(total_pop)) {
     stop('Please provide a "total_pop" argument when FryerHolden is specified.')
@@ -222,6 +232,7 @@ redist.compactness <- function(shp = NULL,
                  BoyceClark = rep(NA_real_, nd*nmap),
                  FryerHolden = rep(NA_real_, nd*nmap),
                  EdgesRemoved = rep(NA_real_, nd*nmap),
+                 FracKept = rep(NA_real_, nd*nmap),
                  logSpanningTree = rep(NA_real_, nd*nmap),
                  nloop = nloop) %>%
     dplyr::select(all_of(c("districts", measure)), all_of(measure), nloop)
@@ -314,66 +325,6 @@ redist.compactness <- function(shp = NULL,
     }
     comp[,2:(nm+1)] <- results
 
-    # legacy version
-    # for(map in 1:nmap){
-    #   for (i in 1:nd){
-    #     united <- st_union(shp[district_membership[, map] == dists[i],])
-    #     area <- st_area(united)
-    #
-    #     if(is.null(st_crs(united$EPSG))||is.na(st_is_longlat(united))){
-    #       perim <- sum(st_length(st_cast(st_cast(united, 'POLYGON'),'LINESTRING')))
-    #     } else if (st_is_longlat(united)){
-    #       perim <- sum(st_length(united))
-    #     } else {
-    #       perim <- sum(st_perimeter(united))
-    #     }
-    #
-    #     if('PolsbyPopper' %in% measure){
-    #       comp[['PolsbyPopper']][i + nd*(map-1)] <- 4*pi*(area)/(perim)^2
-    #     }
-    #
-    #     if('Schwartzberg' %in% measure){
-    #       comp[['Schwartzberg']][i + nd*(map-1)] <- (perim/(2*pi*sqrt(area/pi)))
-    #     }
-    #
-    #     if('LengthWidth' %in% measure){
-    #       bbox <- st_bbox(united)
-    #       ratio <- unname((bbox$xmax - bbox$xmin)/(bbox$ymax - bbox$ymin))
-    #       comp[['LengthWidth']][i+ nd*(map-1)] <- ifelse(ratio>1, 1/ratio, ratio)
-    #     }
-    #
-    #     if('ConvexHull' %in% measure){
-    #       cvh <- st_area(st_convex_hull(united))
-    #       comp[['ConvexHull']][i+ nd*(map-1)] <- area/cvh
-    #     }
-    #
-    #     if('Reock' %in% measure){
-    #       mbc <- st_area(st_minimum_bounding_circle(united))
-    #       comp[['Reock']][i+ nd*(map-1)] <- area/mbc
-    #     }
-    #
-    #     if('BoyceClark' %in% measure){
-    #       suppressWarnings(center <- st_centroid(united))
-    #       suppressWarnings(if(!st_within(united,center,sparse=F)[[1]]){
-    #         center <- st_point_on_surface(united)
-    #       })
-    #       center <- st_coordinates(center)
-    #       bbox <- st_bbox(united)
-    #       max_dist <- sqrt((bbox$ymax-bbox$ymin)^2+(bbox$xmax-bbox$xmin)^2)
-    #       st_crs(united) <- NA
-    #
-    #       x_list <- center[1] + max_dist*cos(seq(0,15)*pi/8)
-    #       y_list <- center[2] + max_dist*sin(seq(0,15)*pi/8)
-    #       radials <- rep(NA_real_, 16)
-    #       for(angle in 1:16){
-    #         line <- data.frame(x = c(x_list[angle],center[1]), y = c(y_list[angle], center[2])) %>%
-    #           st_as_sf(coords = c('x','y'))  %>% st_coordinates() %>% st_linestring()
-    #         radials[angle] <- max(0, dist(st_intersection(line, united)))
-    #       }
-    #       comp[['BoyceClark']][i+ nd*(map-1)] <- 1 - (sum(abs(radials/sum(radials)*100-6.25))/200)
-    #     }
-    #   }
-    # }
   }
 
   if('FryerHolden' %in% measure){
@@ -396,7 +347,8 @@ redist.compactness <- function(shp = NULL,
 
 
 
-  if(('EdgesRemoved' %in% measure ||'logSpanningTree' %in% measure) & is.null(adj)){
+  if(('EdgesRemoved' %in% measure ||'logSpanningTree' %in% measure) || 
+     'FracKept' %in% measure & is.null(adj)){
     adj <- redist.adjacency(shp)
   }
 
@@ -411,6 +363,13 @@ redist.compactness <- function(shp = NULL,
     comp[['EdgesRemoved']] <- rep(n_removed(g = adj,
                                             districts = plans,
                                             n_distr = nd), each = nd)
+  }
+  
+  if('FracKept' %in% measure){
+    comp[['FracKept']] <- 1 -  rep(n_removed(g = adj,
+                                             districts = plans,
+                                             n_distr = nd), each = nd)/
+      (length(unlist(adj))/2)
   }
 
   # Return results

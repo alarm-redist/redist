@@ -7,7 +7,6 @@
 \usage{
 redist.metrics(
   plans,
-  district_membership,
   measure = "DSeats",
   rvote,
   dvote,
@@ -16,7 +15,8 @@ redist.metrics(
   respV = 0.5,
   bandwidth = 0.01,
   nloop = 1,
-  ncores = 1
+  ncores = 1,
+  district_membership
 )
 
 partisan_metrics(
@@ -32,12 +32,9 @@ partisan_metrics(
 \item{plans}{A numeric vector (if only one map) or matrix with one row
 for each precinct and one column for each map. Required.}
 
-\item{district_membership}{Deprecated, use plans. A numeric vector (if only one map) or matrix with one row
-for each precinct and one column for each map. Required.}
-
 \item{measure}{A vector with a string for each measure desired from list "DSeats", "DVS", "EffGap",
 "EffGapEqPop", "TauGap", "MeanMedian", "Bias", "BiasV", "Declination",
-"Responsiveness", and "LopsidedWins". Use "all" to get all metrics.
+"Responsiveness", "LopsidedWins", "RankedMarginal", and "SmoothedSeat". Use "all" to get all metrics.
 "Dseats" and "DVS" are always computed, so it is recommended to always return those values.}
 
 \item{rvote}{A numeric vector with the Republican vote for each precinct.}
@@ -56,6 +53,9 @@ for each precinct and one column for each map. Required.}
 and the column number if multiple maps given.}
 
 \item{ncores}{Number of cores to use for parallel computing. Default is 1.}
+
+\item{district_membership}{Deprecated, use plans. A numeric vector (if only one map) or matrix with one row
+for each precinct and one column for each map. Required.}
 
 \item{map}{a \code{\link{redist_map}} object}
 
@@ -87,6 +87,8 @@ BiasV is the Partisan Bias computed at value V.
 Declination is the value of declination at 0.5.
 Responsiveness is the responsiveness at the user-supplied value with the user-supplied bandwidth.
 LopsidedWins computed the Lopsided Outcomes value, but does not produce a test statistic.
+RankedMarginal computes the Ranked Marginal Deviation (0-1, smaller is better).
+SmoothedSeat computes the Smoothed Seat Count Deviation (0-1, smaller is better).
 }
 \examples{
 \dontrun{
@@ -106,5 +108,9 @@ Election Law Journal: Rules, Politics, and Policy. Pp. 39-57.http://doi.org/10.1
 
 Samuel S.-H. Wang. 2016. "Three Tests for Practical Evaluation of Partisan Gerrymandering."
 Stanford Law Review, 68, Pp. 1263 - 1321.
+
+Gregory Herschlag, Han Sung Kang, Justin Luo, Christy Vaughn Graves, Sachet Bangia, 
+Robert Ravier & Jonathan C. Mattingly (2020) Quantifying Gerrymandering in North Carolina, 
+Statistics and Public Policy, 7:1, 30-38, DOI: 10.1080/2330443X.2020.1796400
 }
 \concept{analyze}
