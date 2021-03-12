@@ -21,7 +21,7 @@ redist.compactness(
 
 distr_compactness(
   map,
-  measure = "EdgesRemoved",
+  measure = "FracKept",
   .data = get0(".", parent.frame()),
   ...
 )
@@ -110,12 +110,13 @@ index, for any map, the sum of these values should be used as the numerator.
 The denominator can be calculated from the full enumeration of districts as the
 smallest calculated numerator.
 
-The log spanning tree measure is the log number of spanning trees.
+The log spanning tree measure is the logarithm of the product of the
+number of spanning trees which can be drawn on each district.
 
 The edges removed measure is number of egdes removed from the underlying adjacency graph.
 A smaller number of edges removed is more compact.
 
-The fraction kept measure is the fraction of edges that were not removed from the 
+The fraction kept measure is the fraction of edges that were not removed from the
  underlying adjacency graph. This takes values 0 - 1, where 1 is more compact.
 }
 \examples{

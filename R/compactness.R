@@ -70,12 +70,13 @@
 #' The denominator can be calculated from the full enumeration of districts as the
 #' smallest calculated numerator.
 #'
-#' The log spanning tree measure is the log number of spanning trees.
+#' The log spanning tree measure is the logarithm of the product of the
+#' number of spanning trees which can be drawn on each district.
 #'
 #' The edges removed measure is number of egdes removed from the underlying adjacency graph.
 #' A smaller number of edges removed is more compact.
-#' 
-#' The fraction kept measure is the fraction of edges that were not removed from the 
+#'
+#' The fraction kept measure is the fraction of edges that were not removed from the
 #'  underlying adjacency graph. This takes values 0 - 1, where 1 is more compact.
 #'
 #' @return A tibble with a column that specifies the district, a column for
@@ -175,14 +176,14 @@ redist.compactness <- function(shp = NULL,
   }
 
   if(measure == "all"){
-    measure <-  c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", 
-                  "Reock", "BoyceClark", "FryerHolden", "EdgesRemoved", 'FracKept', 
+    measure <-  c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull",
+                  "Reock", "BoyceClark", "FryerHolden", "EdgesRemoved", 'FracKept',
                   "logSpanningTree")
   }
-  
-  match.arg(arg = measure, several.ok = TRUE, 
-            choices = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull", 
-                        "Reock", "BoyceClark", "FryerHolden", "EdgesRemoved", 
+
+  match.arg(arg = measure, several.ok = TRUE,
+            choices = c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull",
+                        "Reock", "BoyceClark", "FryerHolden", "EdgesRemoved",
                         'FracKept', "logSpanningTree"))
 
   if('FryerHolden' %in% measure & is.null(total_pop)) {
@@ -347,8 +348,8 @@ redist.compactness <- function(shp = NULL,
 
 
 
-  if(('EdgesRemoved' %in% measure ||'logSpanningTree' %in% measure) || 
-     'FracKept' %in% measure & is.null(adj)){
+  if (measure %in% c('EdgesRemoved', 'logSpanningTree', 'FracKept') &&
+      is.null(adj)) {
     adj <- redist.adjacency(shp)
   }
 
@@ -364,7 +365,7 @@ redist.compactness <- function(shp = NULL,
                                             districts = plans,
                                             n_distr = nd), each = nd)
   }
-  
+
   if('FracKept' %in% measure){
     comp[['FracKept']] <- 1 -  rep(n_removed(g = adj,
                                              districts = plans,
