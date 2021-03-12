@@ -2,7 +2,7 @@
 ## Author: Christopher T Kenny
 ## Institution: Harvard University
 ## Date Created: 2020/07/15
-## Date Modified: 2020/08/19
+## Date Modified: 2021/03/11
 ## Purpose: R function to compute gerrymandering metrics
 ########################################################
 
@@ -15,7 +15,7 @@
 #' for each precinct and one column for each map. Required.
 #' @param measure A vector with a string for each measure desired from list "DSeats", "DVS", "EffGap",
 #' "EffGapEqPop", "TauGap", "MeanMedian", "Bias", "BiasV", "Declination",
-#' "Responsiveness", and "LopsidedWins". Use "all" to get all metrics.
+#' "Responsiveness", "LopsidedWins", "RankedMarginal", and "SmoothedSeat". Use "all" to get all metrics.
 #' "Dseats" and "DVS" are always computed, so it is recommended to always return those values.
 #' @param rvote A numeric vector with the Republican vote for each precinct.
 #' @param dvote A numeric vector with the Democratic vote for each precinct.
@@ -45,6 +45,8 @@
 #' Declination is the value of declination at 0.5.
 #' Responsiveness is the responsiveness at the user-supplied value with the user-supplied bandwidth.
 #' LopsidedWins computed the Lopsided Outcomes value, but does not produce a test statistic.
+#' RankedMarginal computes the Ranked Marginal Deviation (0-1, smaller is better).
+#' SmoothedSeat computes the Smoothed Seat Count Deviation (0-1, smaller is better).
 #'
 #' @return A tibble with  a column for each specified measure and
 #' a column that specifies the map number.
@@ -69,16 +71,21 @@
 #'
 #' Samuel S.-H. Wang. 2016. "Three Tests for Practical Evaluation of Partisan Gerrymandering."
 #' Stanford Law Review, 68, Pp. 1263 - 1321.
+#' 
+#' Gregory Herschlag, Han Sung Kang, Justin Luo, Christy Vaughn Graves, Sachet Bangia, 
+#' Robert Ravier & Jonathan C. Mattingly (2020) Quantifying Gerrymandering in North Carolina, 
+#' Statistics and Public Policy, 7:1, 30-38, DOI: 10.1080/2330443X.2020.1796400
 #'
 #' @concept analyze
 #' @export
-redist.metrics <- function(plans, district_membership,
+redist.metrics <- function(plans, 
                            measure = "DSeats",
                            rvote, dvote,
                            tau = 1, biasV = 0.5,
                            respV = 0.5, bandwidth = 0.01,
                            nloop = 1,
-                           ncores = 1){
+                           ncores = 1,
+                           district_membership){
 
   if(!missing(district_membership)){
     .Deprecated(new = 'plans', old = 'district_membership')
@@ -88,7 +95,7 @@ redist.metrics <- function(plans, district_membership,
   # All measures available:
   all_measures <- c("DSeats", "DVS", "EffGap", "EffGapEqPop", "TauGap",
                     "MeanMedian", "Bias", "BiasV", "Declination", "Responsiveness",
-                    "LopsidedWins")
+                    "LopsidedWins", "RankedMarginal", "SmoothedSeat")
 
   # Check Inputs
   if("all" %in% measure){
@@ -174,6 +181,8 @@ redist.metrics <- function(plans, district_membership,
                  Declination = rep(NA_real_, nd*nmap),
                  Responsiveness = rep(NA_real_, nd*nmap),
                  LopsidedWins = rep(NA_real_, nd*nmap),
+                 RankedMarginal = rep(NA_real_, nd*nmap),
+                 SmoothedSeat = rep(NA_real_, nd*nmap),
                  nloop = nloop) %>%
     dplyr::select(all_of(c("districts", measure)), nloop)
 
@@ -219,6 +228,14 @@ redist.metrics <- function(plans, district_membership,
   if("LopsidedWins" %in% measure){
     lw <- lopsidedwins(dvs = dvs, dseat_vec = dseat_vec, nd = nd)
     metrics[["LopsidedWins"]] <- rep(lw, each = nd)
+  }
+  if('RankedMarginal' %in% measure){
+    RMDev <- RankedMarginalDev(dvs = dvs)
+    metrics[["RankedMarginal"]] <- rep(RMDev, each = nd)
+  }
+  if('SmoothedSeat' %in% measure){
+    SSCD <- smoothseat(dvs = dvs, nd = nd)
+    metrics[['SmoothedSeat']] <- rep(SSCD, each = nd)
   }
 
   # Return computed results

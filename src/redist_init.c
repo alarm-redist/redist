@@ -4,8 +4,8 @@
 #include <R_ext/Rdynload.h>
 
 /* FIXME: 
-   Check these declarations against the C/Fortran source code.
-*/
+ Check these declarations against the C/Fortran source code.
+ */
 
 /* .Call calls */
 extern SEXP _redist_agg_p2d(SEXP, SEXP, SEXP);
@@ -43,6 +43,7 @@ extern SEXP _redist_n_removed(SEXP, SEXP, SEXP);
 extern SEXP _redist_plan_joint(SEXP, SEXP, SEXP);
 extern SEXP _redist_pop_tally(SEXP, SEXP, SEXP);
 extern SEXP _redist_prec_cooccur(SEXP, SEXP);
+extern SEXP _redist_RankedMarginalDev(SEXP);
 extern SEXP _redist_reduce_adj(SEXP, SEXP, SEXP);
 extern SEXP _redist_reindex(SEXP, SEXP);
 extern SEXP _redist_renumber_matrix(SEXP, SEXP);
@@ -51,6 +52,7 @@ extern SEXP _redist_rsg(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_sample_partition(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_segregationcalc(SEXP, SEXP, SEXP);
 extern SEXP _redist_smc_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _redist_smoothseat(SEXP, SEXP);
 extern SEXP _redist_splits(SEXP, SEXP);
 extern SEXP _redist_swMH(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_talisman(SEXP, SEXP, SEXP, SEXP);
@@ -94,6 +96,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_plan_joint",            (DL_FUNC) &_redist_plan_joint,             3},
     {"_redist_pop_tally",             (DL_FUNC) &_redist_pop_tally,              3},
     {"_redist_prec_cooccur",          (DL_FUNC) &_redist_prec_cooccur,           2},
+    {"_redist_RankedMarginalDev",     (DL_FUNC) &_redist_RankedMarginalDev,      1},
     {"_redist_reduce_adj",            (DL_FUNC) &_redist_reduce_adj,             3},
     {"_redist_reindex",               (DL_FUNC) &_redist_reindex,                2},
     {"_redist_renumber_matrix",       (DL_FUNC) &_redist_renumber_matrix,        2},
@@ -102,6 +105,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_sample_partition",      (DL_FUNC) &_redist_sample_partition,       5},
     {"_redist_segregationcalc",       (DL_FUNC) &_redist_segregationcalc,        3},
     {"_redist_smc_plans",             (DL_FUNC) &_redist_smc_plans,             24},
+    {"_redist_smoothseat",            (DL_FUNC) &_redist_smoothseat,             2},
     {"_redist_splits",                (DL_FUNC) &_redist_splits,                 2},
     {"_redist_swMH",                  (DL_FUNC) &_redist_swMH,                  40},
     {"_redist_talisman",              (DL_FUNC) &_redist_talisman,               4},
