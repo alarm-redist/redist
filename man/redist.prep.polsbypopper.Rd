@@ -24,6 +24,10 @@ Prep Polsby Popper Perimeter Dataframe
 }
 \examples{
 \dontrun{
-
+data(fl25)
+data("algdat.p10")
+adj <- redist.adjacency(fl25)
+plans <- algdat.p10$cdmat
+perim_df <- redist.prep.polsbypopper(shp = fl25, adj = adj)
 }
 }
