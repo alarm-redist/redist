@@ -434,7 +434,11 @@ redist.compactness <- function(shp = NULL,
 #'
 #' @importFrom sf st_buffer st_is_valid st_geometry<- 
 #' @examples \dontrun{
-#' 
+#' data(fl25)
+#' data("algdat.p10")
+#' adj <- redist.adjacency(fl25)
+#' plans <- algdat.p10$cdmat
+#' perim_df <- redist.prep.polsbypopper(shp = fl25, adj = adj)
 #' }
 redist.prep.polsbypopper <- function(shp, adj, perim_path, ncores = 1){
   
@@ -493,4 +497,4 @@ redist.prep.polsbypopper <- function(shp, adj, perim_path, ncores = 1){
 
 
 utils::globalVariables(c("i", "j", "edge", "origin", "perim_full", "perim_adj",
-                         "perim_boundary", "X1", ".", "touching"))
+                         "perim_boundary", "X1", ".", "touching", 'from'))
