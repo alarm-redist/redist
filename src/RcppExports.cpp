@@ -535,6 +535,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// polsbypopper
+NumericMatrix polsbypopper(IntegerVector from, IntegerVector to, NumericVector area, NumericVector perimeter, IntegerMatrix dm, int nd);
+RcppExport SEXP _redist_polsbypopper(SEXP fromSEXP, SEXP toSEXP, SEXP areaSEXP, SEXP perimeterSEXP, SEXP dmSEXP, SEXP ndSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type from(fromSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type to(toSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type area(areaSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type perimeter(perimeterSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type dm(dmSEXP);
+    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
+    rcpp_result_gen = Rcpp::wrap(polsbypopper(from, to, area, perimeter, dm, nd));
+    return rcpp_result_gen;
+END_RCPP
+}
 // calc_polsbypopper
 double calc_polsbypopper(arma::uvec new_cds, arma::vec areas_vec, arma::vec boundarylist_new, arma::mat borderlength_mat, arma::vec pop_vec, List aList, bool discrete);
 RcppExport SEXP _redist_calc_polsbypopper(SEXP new_cdsSEXP, SEXP areas_vecSEXP, SEXP boundarylist_newSEXP, SEXP borderlength_matSEXP, SEXP pop_vecSEXP, SEXP aListSEXP, SEXP discreteSEXP) {

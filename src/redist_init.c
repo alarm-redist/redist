@@ -41,6 +41,7 @@ extern SEXP _redist_minkowski(SEXP, SEXP, SEXP);
 extern SEXP _redist_ms_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_n_removed(SEXP, SEXP, SEXP);
 extern SEXP _redist_plan_joint(SEXP, SEXP, SEXP);
+extern SEXP _redist_polsbypopper(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_pop_tally(SEXP, SEXP, SEXP);
 extern SEXP _redist_prec_cooccur(SEXP, SEXP);
 extern SEXP _redist_RankedMarginalDev(SEXP);
@@ -94,6 +95,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_ms_plans",              (DL_FUNC) &_redist_ms_plans,              23},
     {"_redist_n_removed",             (DL_FUNC) &_redist_n_removed,              3},
     {"_redist_plan_joint",            (DL_FUNC) &_redist_plan_joint,             3},
+    {"_redist_polsbypopper",          (DL_FUNC) &_redist_polsbypopper,           6},
     {"_redist_pop_tally",             (DL_FUNC) &_redist_pop_tally,              3},
     {"_redist_prec_cooccur",          (DL_FUNC) &_redist_prec_cooccur,           2},
     {"_redist_RankedMarginalDev",     (DL_FUNC) &_redist_RankedMarginalDev,      1},

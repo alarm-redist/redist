@@ -14,6 +14,9 @@ redist.compactness(
   nloop = 1,
   ncores = 1,
   counties = NULL,
+  ppRcpp,
+  perim_path,
+  perim_df,
   district_membership,
   population,
   adjacency
@@ -41,8 +44,9 @@ return all implemented measures.}
 \item{total_pop}{A numeric vector with the population for every observation. Is
 only necessary when "FryerHolden" is used for measure. Defaults to NULL.}
 
-\item{adj}{A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
-Created with \code{redist.adjacency} if not supplied and needed. Default is NULL.}
+\item{adj}{A zero-indexed adjacency list. Only used for "PolsbyPopper",
+EdgesRemoved" and "logSpanningTree". Created with \code{redist.adjacency} if not 
+supplied and needed. Default is NULL.}
 
 \item{nloop}{A numeric to specify loop number. Defaults to 1 if only one map provided
 and the column number if multiple maps given.}
@@ -50,6 +54,16 @@ and the column number if multiple maps given.}
 \item{ncores}{Number of cores to use for parallel computing. Default is 1.}
 
 \item{counties}{A numeric vector from 1:ncounties corresponding to counties. Required for "logSpanningTree".}
+
+\item{ppRcpp}{Boolean, whether to run Polsby Popper using Rcpp. 
+It has a higher upfront cost, but quickly becomes faster. 
+Becomes TRUE if ncol(district_membership > 8) and not manually set.}
+
+\item{perim_path}{it checks for an Rds, if no rds exists at the path, 
+it creates an rds with borders and saves it. 
+This can be created in advance with \code{redist.prep.polsbypopper}.}
+
+\item{perim_df}{A dataframe output from \code{redist.prep.polsbypopper}}
 
 \item{district_membership}{Deprecated. Use plans. A numeric vector (if only one map) or matrix with one row
 for each precinct and one column for each map. Required.}
@@ -121,17 +135,11 @@ The fraction kept measure is the fraction of edges that were not removed from th
 }
 \examples{
 \dontrun{
-library(sf)
-library(lwgeom)
-library(redist)
-library(tidyverse)
-#Create (or load) a shapefile, in this case the unit square
-box <-  rbind(c(0,0), c(1,0), c(1,1), c(0,1), c(0,0)) \%>\% list() \%>\%
-st_polygon() \%>\% st_sfc() \%>\% st_as_sf()
-# Index the congressional districts
-box <- box \%>\% mutate(cds = 1, pop = 10)
-# Run redist.compactness
-redist.compactness(box, "cds", "pop")
+data("fl25")
+data("algdat.p10")
+
+redist.compactness(shp = fl25, district_membership = algdat.p10$cdmat[,1:3], 
+measure = c('PolsbyPopper', 'EdgesRemoved'))
 }
 
 }
