@@ -45,13 +45,13 @@ NumericMatrix group_pct(arma::umat m, arma::vec group_pop, arma::vec total_pop, 
  * Compute the deviation from the equal population constraint.
  */
 // [[Rcpp::export]]
-NumericMatrix pop_tally(arma::umat districts, arma::vec pop, int n_distr);
+NumericMatrix pop_tally(IntegerMatrix districts, arma::vec pop, int n_distr);
 
 /*
  * Compute the maximum deviation from the equal population constraint.
  */
 // [[Rcpp::export]]
-NumericVector max_dev(const arma::umat districts, const arma::vec pop, int n_distr);
+NumericVector max_dev(const IntegerMatrix districts, const arma::vec pop, int n_distr);
 
 /*
  * Calculate the deviation for cutting at every edge in a spanning tree.
