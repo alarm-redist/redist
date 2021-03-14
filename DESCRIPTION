@@ -66,7 +66,7 @@ Suggests:
     spdep
 LinkingTo: Rcpp, RcppArmadillo, RcppEigen, BH
 License: GPL (>= 2)
-SystemRequirements: gmp, libxml2, python
+SystemRequirements: OpenMPI, gmp, libxml2, python
 Packaged: 2015-06-03 18:32:00 UTC; benfifield
 NeedsCompilation: yes
 BugReports: https://github.com/kosukeimai/redist/issues
