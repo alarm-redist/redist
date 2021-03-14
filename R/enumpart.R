@@ -24,7 +24,13 @@ redist.init.enumpart <- function(){
   }
 
   servr::make(dir = system.file('enumpart', package = 'redist'), verbose = FALSE)
-  sys::exec_wait('python3', args= c('-m', 'pip', 'install', 'networkx', '--user'))
+  
+  if(Sys.info()[['sysname']] == 'Windows'){
+    sys::exec_wait('python', args= c('-m', 'pip', 'install', 'networkx', '--user'))
+  } else {
+    sys::exec_wait('python3', args= c('-m', 'pip', 'install', 'networkx', '--user'))
+  }
+
   return(0)
 }
 
@@ -77,10 +83,18 @@ redist.prep.enumpart <- function(adj, unordered_path, ordered_path, adjlist){
                      col_names = FALSE)
 
   ## Order edges
-  res <- sys::exec_wait('python3',
-                        args = system.file('python/ndscut.py', package = 'redist'),
-                        std_in = paste0(unordered_path, '.dat'),
-                        std_out = paste0(ordered_path, '.dat'))
+  
+  if(Sys.info()[['sysname']] == 'Windows'){
+    res <- sys::exec_wait('python',
+                          args = system.file('python/ndscut.py', package = 'redist'),
+                          std_in = paste0(unordered_path, '.dat'),
+                          std_out = paste0(ordered_path, '.dat'))
+  } else {
+    res <- sys::exec_wait('python3',
+                          args = system.file('python/ndscut.py', package = 'redist'),
+                          std_in = paste0(unordered_path, '.dat'),
+                          std_out = paste0(ordered_path, '.dat'))
+  }
 
   return(res)
 }
