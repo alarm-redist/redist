@@ -160,7 +160,7 @@ NumericVector max_dev(const IntegerMatrix districts, const vec pop, int n_distr)
     for (int j = 0; j < n_distr; j++) {
         for (int i = 0; i < N; i++) {
             if (abs(dev(j, i)) > res(i))
-                res(i) = abs(dev(j, i));
+                res(i) = std::fabs(dev(j, i));
         }
     }
 
