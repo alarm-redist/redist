@@ -14,7 +14,7 @@
 #'
 #' @concept analyze
 #' @export
-redist.parity <- function(plans, total_pop, ncores=1, district_membership, population) {
+redist.parity <- function(plans, total_pop, ncores = 1, district_membership, population) {
     if (!missing(population)) {
         .Deprecated(new = 'total_pop', old = 'population')
         total_pop <- population
@@ -38,7 +38,7 @@ redist.parity <- function(plans, total_pop, ncores=1, district_membership, popul
         stop('Arguments "plans" and "total_pop" do not have same number of precincts.')
     }
 
-    # parallielze as in fastLink package to avoid Windows/unix issues
+    # parallelize as in fastLink package to avoid Windows/unix issues
     N = ncol(plans)
     nc <- min(ncores, max(1, floor(N/2)))
 

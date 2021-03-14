@@ -1,4 +1,5 @@
 test_that("Pairwise distances are computed correctly", {
+    set.seed(1, kind = "Mersenne-Twister", normal.kind = "Inversion")
     dist_m = list(
         Hamming=c(0, 2, 4, 2, 0, 2, 4, 2, 0),
         Manhattan=c(0, 4, 6, 4, 0, 2, 6, 2, 0),
@@ -7,7 +8,7 @@ test_that("Pairwise distances are computed correctly", {
         VI=c(0, 0.843773942032667, 1.34244720438262, 0.843773942032667, 0,
                     0.550888899101157, 1.34244720438262, 0.550888899101157, 0)
         )
-    res = redist.distances(algdat.p10$cdmat[,1:3], measure="all", total_pop = pop)
+    res = redist.distances(algdat.p10$cdmat[,1:3], measure = "all", total_pop = pop)
 
     expect_equal(as.numeric(res$Hamming), dist_m$Hamming)
     expect_equal(as.numeric(res$Manhattan), dist_m$Manhattan)

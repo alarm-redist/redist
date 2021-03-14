@@ -3,4 +3,4 @@ g = algdat.p10$adjlist
 pop = algdat.p10$precinct.data$pop
 
 
-RNGkind()
+RNGkind("Mersenne-Twister", "Inversion", "Rejection" )

@@ -1,7 +1,7 @@
 data(fl25)
 adj <- redist.adjacency(fl25)
 test_that("rsg works", {
-  set.seed(1)
+  set.seed(1, kind = "Mersenne-Twister", normal.kind = "Inversion")
   out <- redist.rsg(adj = adj, total_pop = fl25$pop, pop_tol = 0.1, ndists = 3,
                     verbose = FALSE)
   expected <- list(plan = c(0L, 0L, 0L, 0L, 1L, 2L, 1L, 1L, 2L, 1L, 2L, 2L, 
