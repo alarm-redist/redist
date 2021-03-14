@@ -2,7 +2,7 @@ data(fl25)
 adj <- redist.adjacency(fl25)
 
 test_that("mcmc works", {
-  set.seed(1)
+  set.seed(1, kind = "Mersenne-Twister", normal.kind = "Inversion")
   out <- redist.mcmc(adj = adj, total_pop = fl25$pop,
                      nsims = 10, ndists = 3, verbose = FALSE)
   expected <- structure(c(0, 0, 0, 0, 1, 2, 1, 1, 2, 1, 2, 2, 2, 2, 2, 0, 0, 
