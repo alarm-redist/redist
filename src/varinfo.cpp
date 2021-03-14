@@ -25,7 +25,7 @@ double var_info(IntegerVector m1, IntegerVector m2, NumericVector pop) {
         }
     }
 
-    if (fabs(varinf) <= 1e-9)
+    if (std::fabs(varinf) <= 1e-9)
         varinf = 0;
     return varinf;
 }
