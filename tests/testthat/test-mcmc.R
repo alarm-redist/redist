@@ -1,20 +1,13 @@
 test_that("mcmc works", {
   set.seed(1, kind = "Mersenne-Twister", normal.kind = "Inversion")
-  out <- redist.mcmc(adj = adj, total_pop = pop,
-                     nsims = 10, ndists = 3, verbose = FALSE)
-  expected <- structure(c(0, 0, 0, 0, 1, 2, 1, 1, 2, 1, 2, 2, 2, 2, 2, 0, 0,
-                          0, 0, 0, 0, 1, 2, 1, 1, 2, 0, 0, 0, 1, 2, 1, 1, 2, 1, 2, 2, 2,
-                          2, 2, 0, 0, 0, 0, 0, 0, 1, 2, 1, 1, 2, 2, 0, 0, 1, 2, 1, 1, 2,
-                          1, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 1, 2, 1, 1, 2, 0, 0, 0, 1,
-                          2, 1, 1, 2, 1, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 1, 2, 1, 1, 2,
-                          0, 0, 0, 1, 2, 1, 1, 2, 1, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0,
-                          2, 1, 1, 2, 0, 0, 0, 1, 2, 1, 1, 2, 1, 2, 2, 2, 2, 2, 0, 0, 0,
-                          0, 1, 0, 1, 2, 1, 1, 2, 0, 0, 0, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2,
-                          2, 0, 0, 0, 0, 1, 0, 1, 2, 1, 1, 2, 0, 0, 0, 1, 2, 1, 1, 2, 1,
-                          1, 2, 2, 2, 2, 0, 0, 0, 0, 1, 2, 1, 2, 1, 1, 2, 0, 0, 0, 1, 2,
-                          1, 1, 2, 1, 1, 2, 2, 2, 2, 0, 0, 0, 0, 1, 0, 1, 2, 1, 1, 2, 0,
-                          0, 0, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 2, 0, 0, 0, 0, 1, 2, 1, 2,
-                          1, 1), .Dim = c(25L, 10L))
+  
+  nsims <- 10
+  out <- redist.mcmc(adj = adj, total_pop = pop, init_plan = algdat.p10$cdmat[,1],
+                     nsims = nsims, ndists = 3, verbose = FALSE, pop_tol = 0.1)
+  par <- redist.parity(out$plans, total_pop = pop)
+  
+  expect_equal(out$nsims, nsims)
+  expect_equal(range(out$plans), c(0, 2))
+  expect_true(all(par <= 0.1))
 
-  expect_equal(out$plans, expected)
 })
