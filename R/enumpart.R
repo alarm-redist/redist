@@ -24,7 +24,7 @@ redist.init.enumpart <- function(){
   }
 
   servr::make(dir = system.file('enumpart', package = 'redist'), verbose = FALSE)
-  sys::exec_wait('python', args= c('-m', 'pip', 'install', 'networkx', '--user'))
+  sys::exec_wait('python3', args= c('-m', 'pip', 'install', 'networkx', '--user'))
   return(0)
 }
 
@@ -77,7 +77,7 @@ redist.prep.enumpart <- function(adj, unordered_path, ordered_path, adjlist){
                      col_names = FALSE)
 
   ## Order edges
-  res <- sys::exec_wait('python',
+  res <- sys::exec_wait('python3',
                         args = system.file('python/ndscut.py', package = 'redist'),
                         std_in = paste0(unordered_path, '.dat'),
                         std_out = paste0(ordered_path, '.dat'))
@@ -138,11 +138,11 @@ redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
 
   if (!is.null(lower)) {
     options <-  c(options, "-lower", as.character(lower))
-  } 
+  }
   if (!is.null(upper)) {
     options = c(options, "-upper", as.character(upper))
   }
-  
+
   if (is.null(weight_path)) {
       options <- c(paste0(ordered_path, '.dat'), options)
   } else {
