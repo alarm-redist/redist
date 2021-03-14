@@ -15,7 +15,7 @@ test_that('enumpart preparation runs correctly', {
         22, 5, 25, 22, 25, 5, 24, 22, 24, 24, 25
     )
 
-    redist.prep.enumpart(adj = g,
+    redist.prep.enumpart(adj = adj,
                          unordered_path = file.path(dir, 'unordered'),
                          ordered_path = file.path(dir, 'ordered'))
     expect_equal(scan(file.path(dir, 'ordered.dat')), expected)
