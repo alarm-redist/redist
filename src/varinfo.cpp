@@ -21,11 +21,11 @@ double var_info(IntegerVector m1, IntegerVector m2, NumericVector pop) {
         for (int j = 0; j < k; j++) {
             double jo = joint(i, j);
             if (jo < 1) continue;
-            varinf -= (jo / total_pop) * (2*log(jo) - log(p1[i]) - log(p2[j]));
+            varinf -= (jo / total_pop) * (2.0*log(jo) - log(p1[i]) - log(p2[j]));
         }
     }
 
-    if (abs(varinf) <= 1e-9)
+    if (fabs(varinf) <= 1e-9)
         varinf = 0;
     return varinf;
 }
