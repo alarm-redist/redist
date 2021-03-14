@@ -161,6 +161,10 @@ polsbypopper <- function(from, to, area, perimeter, dm, nd) {
     .Call(`_redist_polsbypopper`, from, to, area, perimeter, dm, nd)
 }
 
+closest_adj_pop <- function(adj, i_dist, g_prop) {
+    .Call(`_redist_closest_adj_pop`, adj, i_dist, g_prop)
+}
+
 calc_polsbypopper <- function(new_cds, areas_vec, boundarylist_new, borderlength_mat, pop_vec, aList, discrete = FALSE) {
     .Call(`_redist_calc_polsbypopper`, new_cds, areas_vec, boundarylist_new, borderlength_mat, pop_vec, aList, discrete)
 }

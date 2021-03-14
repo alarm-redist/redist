@@ -1,6 +1,9 @@
-#include <Rcpp.h>
-#include "shatter_search.h"
+#include <RcppArmadillo.h>
+#include "redist_types.h"
 #include "distance_helpers.h"
+#include "make_swaps_helper.h"
+#include "constraint_calc_helper.h"
+#include "shatter_search.h"
 using namespace Rcpp;
 
 // [[Rcpp::export]]
@@ -23,9 +26,11 @@ List crsg(List adj_list,
   List member_plist(n_prec);
   IntegerVector prec(n_prec), mp_i, mp_j, adj_i, adj_j;
   IntegerVector empty_vec = IntegerVector::create(NA_INTEGER);
-  bool pop_swap, no_ij, to_next;
+  bool pop_swap, no_ij, to_next, cont_swap;
   int size = 0;
   int HPP, LPP;
+  NumericVector new_dist_assignment(n_prec);
+  List alConnected;
   
   
   // Step 1
@@ -180,18 +185,18 @@ List crsg(List adj_list,
 
       // Step 3B
       mp_i = member_plist[i_dist];
-      IntegerVector contiguity(mp_i.size());
+      IntegerVector swappable(mp_i.size());
       for(i = 0; i < mp_i.size(); i++){
         adj_i = adj_list[mp_i[i]];
         if(can_swap(adj_list, mp_i[i], j_dist, dist_assignment)){
-          contiguity[i] = shatter_search(adj_list, mp_i[i], i_dist, member_plist[i_dist], dist_assignment);
+          swappable[i] = 1;
         }
       }
       
-      IntegerVector swap_candidates(sum(contiguity));
+      IntegerVector swap_candidates(sum(swappable));
       j = 0;
       for(i = 0; i < mp_i.size(); i++){
-        if(contiguity[i] == 1){
+        if(swappable[i] == 1){
           swap_candidates[j] = mp_i[i];
           j++;
         }
@@ -217,8 +222,15 @@ List crsg(List adj_list,
         pop_swap = ((district_pop[j_dist] + population[prec_swap]) < HPP) &
           ((district_pop[i_dist] - population[prec_swap]) > LPP );
         
+        
+        // Check contiguity here:
+        new_dist_assignment = as<NumericVector>(clone(dist_assignment));
+        new_dist_assignment(prec_swap) = (double)j_dist;
+        alConnected = genAlConn(adj_list, new_dist_assignment);
+        cont_swap = countpartitions(alConnected) == Ndistrict;
+        
         to_next = TRUE;
-        while(!pop_swap & to_next){
+        while(!(pop_swap && cont_swap) && to_next){
           // If there are at least two choices proceed as normal
           if(dist.size() > 1){
             swap_candidates.erase(which_max(dist));
@@ -226,7 +238,16 @@ List crsg(List adj_list,
             prec_swap = swap_candidates[which_max(dist)];
             pop_swap = ((district_pop[j_dist] + population[prec_swap]) < HPP) &
               ((district_pop[i_dist] - population[prec_swap]) > LPP );
-            if(pop_swap){//exp
+            
+            if(pop_swap){
+              new_dist_assignment = as<NumericVector>(clone(dist_assignment));
+              new_dist_assignment(prec_swap) = (double)j_dist;
+              alConnected = genAlConn(adj_list, new_dist_assignment);
+              cont_swap = countpartitions(alConnected) == Ndistrict;
+            }
+            
+            
+            if(pop_swap & cont_swap){//exp
               no_ij = FALSE;
               to_next = FALSE;
             }
@@ -237,7 +258,16 @@ List crsg(List adj_list,
               ((district_pop[i_dist] - population[prec_swap]) > LPP );
             to_next = FALSE;
             // If it won't work move to next pair ij
-            if(!pop_swap){
+            if(pop_swap){
+              new_dist_assignment = as<NumericVector>(clone(dist_assignment));
+              new_dist_assignment(prec_swap) = (double)j_dist;
+              alConnected = genAlConn(adj_list, new_dist_assignment);
+              cont_swap = countpartitions(alConnected) == Ndistrict;
+            }
+            
+            to_next = FALSE;
+            // If it won't work move to next pair ij
+            if(!( pop_swap & cont_swap  )){
               no_ij = TRUE;
               i_vec.erase(which_max(pop_dist));
               j_vec.erase(which_max(pop_dist));

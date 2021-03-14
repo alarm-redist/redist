@@ -1,9 +1,12 @@
 #ifndef CRSG_H
 #define CRSG_H
 
-#include <Rcpp.h>
-#include "shatter_search.h"
+#include <RcppArmadillo.h>
+#include "redist_types.h"
 #include "distance_helpers.h"
+#include "make_swaps_helper.h"
+#include "constraint_calc_helper.h"
+#include "shatter_search.h"
 using namespace Rcpp;
 
 List crsg(List adj_list,
