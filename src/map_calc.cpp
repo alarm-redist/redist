@@ -132,9 +132,9 @@ NumericMatrix group_pct(umat m, vec group_pop, vec total_pop, int n_distr) {
  * Compute the deviation from the equal population constraint.
  */
 // TESTED
-NumericMatrix pop_tally(umat districts, vec pop, int n_distr) {
-    int N = districts.n_cols;
-    int V = districts.n_rows;
+NumericMatrix pop_tally(IntegerMatrix districts, vec pop, int n_distr) {
+    int N = districts.ncol();
+    int V = districts.nrow();
 
     NumericMatrix tally(n_distr, N);
     for (int i = 0; i < N; i++) {
@@ -151,8 +151,8 @@ NumericMatrix pop_tally(umat districts, vec pop, int n_distr) {
  * Compute the maximum deviation from the equal population constraint.
  */
 // TESTED
-NumericVector max_dev(const umat districts, const vec pop, int n_distr) {
-    int N = districts.n_cols;
+NumericVector max_dev(const IntegerMatrix districts, const vec pop, int n_distr) {
+    int N = districts.ncol();
     double target_pop = sum(pop) / n_distr;
 
     NumericMatrix dev = pop_tally(districts, pop, n_distr) / target_pop - 1.0;
