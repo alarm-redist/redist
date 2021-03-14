@@ -16,12 +16,12 @@ test_that("Pairwise distances are computed correctly", {
     expect_equal(as.numeric(res$VI), dist_m$VI)
 })
 
-test_that("Population parity is computed correctly", {
+test_that("Population parity is computed correctly inside max_dev", {
     dev = c(0.066166599064, 0.036345355141, 0.036345355141,
             0.022645864159, 0.008523619910, 0.052398553498,
             0.095142336454, 0.094822415063, 0.095913575521, 0.075832795370)
 
-    res = redist.parity(algdat.p10$cdmat[,1:10], algdat.p10$precinct.data$pop)
+    res = max_dev(algdat.p10$cdmat[,1:10], algdat.p10$precinct.data$pop, 3)
     expect_equal(res, dev, tolerance=2e-5)
 })
 
