@@ -178,7 +178,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         }
         // `lower_s` now contains the population of the newly-split district
         pop_left_new(i) = pop_left(idx) - lower_s;
-        double pop_pen = sqrt(n_distr - 2) * log(abs(lower_s - target)/target);
+        double pop_pen = sqrt(n_distr - 2) * log(std::fabs(lower_s - target)/target);
         log_temper_new(i) = log_temper(idx) - pop_temper*pop_pen;
 
         lp_new(i) = lp(idx) + inc_lp - pop_temper*pop_pen;
@@ -244,8 +244,8 @@ double cut_districts(Tree &ust, int k, int root, subview_col<uword> &districts,
     for (int i = 0; i < V; i++) {
         if (districts(i) != distr_root || i == root) continue;
         double below = pop_below.at(i);
-        double dev1 = std::abs(below - target);
-        double dev2 = std::abs(total_pop - below - target);
+        double dev1 = std::fabs(below - target);
+        double dev2 = std::fabs(total_pop - below - target);
         if (dev1 < dev2) {
             candidates.push_back(i);
             deviances.push_back(dev1);
@@ -260,7 +260,7 @@ double cut_districts(Tree &ust, int k, int root, subview_col<uword> &districts,
 
     int idx = rint(k);
     idx = select_k(deviances, idx + 1);
-    int cut_at = std::abs(candidates[idx]);
+    int cut_at = std::fabs(candidates[idx]);
     // reject sample
     if (!is_ok[idx]) return 0.0;
 
