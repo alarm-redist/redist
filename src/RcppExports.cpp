@@ -551,6 +551,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// closest_adj_pop
+int closest_adj_pop(IntegerVector adj, int i_dist, NumericVector g_prop);
+RcppExport SEXP _redist_closest_adj_pop(SEXP adjSEXP, SEXP i_distSEXP, SEXP g_propSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type adj(adjSEXP);
+    Rcpp::traits::input_parameter< int >::type i_dist(i_distSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type g_prop(g_propSEXP);
+    rcpp_result_gen = Rcpp::wrap(closest_adj_pop(adj, i_dist, g_prop));
+    return rcpp_result_gen;
+END_RCPP
+}
 // calc_polsbypopper
 double calc_polsbypopper(arma::uvec new_cds, arma::vec areas_vec, arma::vec boundarylist_new, arma::mat borderlength_mat, arma::vec pop_vec, List aList, bool discrete);
 RcppExport SEXP _redist_calc_polsbypopper(SEXP new_cdsSEXP, SEXP areas_vecSEXP, SEXP boundarylist_newSEXP, SEXP borderlength_matSEXP, SEXP pop_vecSEXP, SEXP aListSEXP, SEXP discreteSEXP) {
