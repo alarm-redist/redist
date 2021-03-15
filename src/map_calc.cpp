@@ -56,8 +56,8 @@ double eval_vra(const subview_col<uword> &districts, int distr, double tgt_min,
                 double tgt_other, double pow_vra, const uvec &pop, const uvec &min_pop) {
     uvec idxs = find(districts == distr);
     double frac = ((double) sum(min_pop(idxs))) / sum(pop(idxs));
-    return std::pow(std::abs(frac - tgt_min), pow_vra) *
-        std::pow(std::abs(frac - tgt_other), pow_vra);
+    return std::pow(std::fabs(frac - tgt_min), pow_vra) *
+        std::pow(std::fabs(frac - tgt_other), pow_vra);
 }
 
 /*
@@ -159,7 +159,7 @@ NumericVector max_dev(const IntegerMatrix districts, const vec pop, int n_distr)
     NumericVector res(N);
     for (int j = 0; j < n_distr; j++) {
         for (int i = 0; i < N; i++) {
-            if (abs(dev(j, i)) > res(i))
+            if (std::fabs(dev(j, i)) > res(i))
                 res(i) = std::fabs(dev(j, i));
         }
     }
@@ -181,8 +181,8 @@ std::vector<double> tree_dev(Tree &ust, int root, const uvec &pop,
     std::vector<double> devs(V-1);
     for (int i = 0; i < V; i++) {
         if (i == root) continue;
-        devs.at(idx) = std::min(std::abs(pop_below.at(i) - target),
-                std::abs(total_pop - pop_below[i] - target)) / target;
+        devs.at(idx) = std::min(std::fabs(pop_below.at(i) - target),
+                std::fabs(total_pop - pop_below[i] - target)) / target;
         idx++;
     }
 
