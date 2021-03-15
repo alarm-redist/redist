@@ -336,7 +336,7 @@ List swMH(List aList,
 				   minorityprop,
 				   compactness_measure,
 				   partisan_measure,
-				   g = g);
+				   g);
 
     }while(as<int>(swap_partitions["goodprop"]) == 0);
 
