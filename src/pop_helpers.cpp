@@ -11,14 +11,14 @@ int closest_adj_pop(IntegerVector adj,
   }
   
   // inits 
-  double min_distance = abs( g_prop(i_dist) - g_prop(adj(0)) ); 
+  double min_distance = fabs( g_prop(i_dist) - g_prop(adj(0)) ); 
   int min_district = adj[0];
   int curr_distance;
   
   
   // loop
   for(int j = 1; j < adj.size(); j++){
-    curr_distance = abs( g_prop(i_dist) - g_prop(adj(j)) );
+    curr_distance = fabs( g_prop(i_dist) - g_prop(adj(j)) );
     if(min_distance > curr_distance){
       min_distance = curr_distance;
       min_district = adj[j];
