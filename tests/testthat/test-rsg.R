@@ -2,11 +2,10 @@ test_that("rsg works", {
   set.seed(1, kind = "Mersenne-Twister", normal.kind = "Inversion")
   out <- redist.rsg(adj = adj, total_pop = pop, pop_tol = 0.1, ndists = 3,
                     verbose = FALSE)
-  expected <- list(plan = c(0L, 0L, 0L, 0L, 1L, 2L, 1L, 1L, 2L, 1L, 2L, 2L,
-                2L, 2L, 2L, 0L, 0L, 0L, 0L, 0L, 0L, 1L, 0L, 1L, 1L),
-       district_list = list(
-                  c(17L, 15L, 16L, 0L, 3L, 20L, 2L, 19L, 18L, 1L, 22L),
-                  c(6L, 4L, 24L, 23L, 21L, 7L, 9L), c(14L, 12L, 11L, 10L, 13L, 8L, 5L)),
-       district_pop = c(59739, 57131, 58173))
-  expect_equal(out, expected)
+  
+  par <- redist.parity(out$plan, total_pop = pop)
+  
+  expect_equal(range(out$plan), c(0,2))
+  expect_true(par <= 0.1)
+  expect_true(all(names(out) %in% c('plan', 'district_list', 'district_pop')))
 })

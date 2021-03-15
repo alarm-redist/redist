@@ -14,6 +14,7 @@ extern SEXP _redist_bias(SEXP, SEXP);
 extern SEXP _redist_biasatv(SEXP, SEXP, SEXP);
 extern SEXP _redist_calc_polsbypopper(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_calcPWDh(SEXP);
+extern SEXP _redist_closest_adj_pop(SEXP, SEXP, SEXP);
 extern SEXP _redist_coarsen_adjacency(SEXP, SEXP);
 extern SEXP _redist_collapse_adj(SEXP, SEXP);
 extern SEXP _redist_color_graph(SEXP, SEXP);
@@ -68,6 +69,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_biasatv",               (DL_FUNC) &_redist_biasatv,                3},
     {"_redist_calc_polsbypopper",     (DL_FUNC) &_redist_calc_polsbypopper,      7},
     {"_redist_calcPWDh",              (DL_FUNC) &_redist_calcPWDh,               1},
+    {"_redist_closest_adj_pop",       (DL_FUNC) &_redist_closest_adj_pop,        3},
     {"_redist_coarsen_adjacency",     (DL_FUNC) &_redist_coarsen_adjacency,      2},
     {"_redist_collapse_adj",          (DL_FUNC) &_redist_collapse_adj,           2},
     {"_redist_color_graph",           (DL_FUNC) &_redist_color_graph,            2},
