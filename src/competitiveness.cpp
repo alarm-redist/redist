@@ -11,13 +11,13 @@ NumericVector talisman(NumericMatrix dvs, double nd, double alpha = 1, double be
     for(int r = 0; r < dvs.nrow(); r++){
       curr = dvs(r,c);
       // Handle Tp
-      Tp += abs(0.5 - curr);
+      Tp += fabs(0.5 - curr);
       // Handle Te
       if(curr < 0.5){
         Br += 1.0;
       }
     }
-    Te = abs(Br/nd - 0.5);
+    Te = fabs(Br/nd - 0.5);
     Tp = Tp/nd;
     
     comp(c) = Tp * (1.0 + alpha * Te); 
