@@ -71,9 +71,6 @@
 <li>
       <a href="articles/Intro-to-redist.html">Intro-to-redist</a>
     </li>
-    <li>
-      <a href="articles/tidy-redist.html">Tidy `redist`</a>
-    </li>
   </ul>
 </li>
 <li>
@@ -298,9 +295,9 @@
 <span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> Time is <span class="va">$(</span><span class="fu">date</span><span class="va">)</span></span>
 <span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> SLURM_NODES are <span class="va">$(</span><span class="bu">echo</span> <span class="va">${SLURM_NODELIST})</span></span>
 <span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">'-------------------------------'</span></span>
-<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> -e <span class="st">'\n\n'</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="at">-e</span> <span class="st">'\n\n'</span></span>
 <span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a><span class="ex">mpiexec</span> -np 1 R --no-save <span class="op">&lt;</span> [scriptname here].R</span></code></pre></div>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a><span class="ex">mpiexec</span> <span class="at">-np</span> 1 R <span class="at">--no-save</span> <span class="op">&lt;</span> [scriptname here].R</span></code></pre></div>
 </div>
 </div>
 <div id="20-population-constraint-and-compactness-constraint-using-annealing" class="section level2">
@@ -377,7 +374,7 @@
 <span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> Time is <span class="va">$(</span><span class="fu">date</span><span class="va">)</span></span>
 <span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> SLURM_NODES are <span class="va">$(</span><span class="bu">echo</span> <span class="va">${SLURM_NODELIST})</span></span>
 <span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">'-------------------------------'</span></span>
-<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> -e <span class="st">'\n\n'</span></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="at">-e</span> <span class="st">'\n\n'</span></span>
 <span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a><span class="ex">srun</span> Rscript ../[scriptname here].R</span></code></pre></div>
 </div>
