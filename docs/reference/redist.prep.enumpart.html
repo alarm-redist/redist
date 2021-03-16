@@ -88,7 +88,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -111,7 +111,7 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/kosukeimai/redist/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -137,7 +137,7 @@
     <p>Prepares a run of the enumpart algorithm by ordering edges</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.prep.enumpart</span>(<span class='kw'>adjlist</span>, <span class='kw'>unordered_path</span>, <span class='kw'>ordered_path</span>)</pre>
+    <pre class="usage"><span class='fu'>redist.prep.enumpart</span><span class='op'>(</span><span class='va'>adjlist</span>, <span class='va'>unordered_path</span>, <span class='va'>ordered_path</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -166,11 +166,11 @@
 Forthcoming, Statistics and Public Policy.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='st'>"algdat.p10"</span>)
-<span class='fu'>redist.prep.enumpart</span>(adjlist = <span class='kw'>algdat.p10</span><span class='op'>$</span><span class='kw'>adjlist</span>, unordered_path = <span class='st'>'../unordered'</span>, 
-ordered_path = <span class='st'>'../ordered'</span>)
-}
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"algdat.p10"</span><span class='op'>)</span>
+<span class='fu'>redist.prep.enumpart</span><span class='op'>(</span>adjlist <span class='op'>=</span> <span class='va'>algdat.p10</span><span class='op'>$</span><span class='va'>adjlist</span>, unordered_path <span class='op'>=</span> <span class='st'>'../unordered'</span>, 
+ordered_path <span class='op'>=</span> <span class='st'>'../ordered'</span><span class='op'>)</span>
+<span class='op'>}</span>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -183,11 +183,11 @@ ordered_path = <span class='st'>'../ordered'</span>)
 
       <footer>
       <div class="copyright">
-  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Alexander Tarr, Jun Kawahara, Kosuke Imai.</p>
+  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Jun Kawahara, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
