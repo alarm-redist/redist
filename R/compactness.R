@@ -44,8 +44,13 @@
 #' is the shorter of the maximum x distance and the maximum y distance. Width is 
 #' the longer of the two values.
 #' 
-#' The Reock score is computed as \deqn{\frac{A(d)}{A(CVH)}} where A is the area
-#' function, d is the district, and CVH is the convex hull of the district.
+#' The Convex Hull score is computed as \deqn{\frac{A(d)}{A(CVH)}} where A is the area
+#' function, d is the district, and CVH is the convex hull of the district. All 
+#' values are between 0 and 1, where where larger values are more compact.
+#' 
+#' The Reock score is computed as \deqn{\frac{A(d)}{A(MBC)}} where A is the area
+#' function, d is the district, and MBC is the minimum bounding circle of the 
+#' district. All values are between 0 and 1, where larger values are more compact.
 #' 
 #' The Boyce Clark Index is computed as \deqn{1 - \sum_{1}^{16}\{\frac{|\frac{r_i}{\sum_ir_i}*100-6.25 |\}}{200}}.
 #' The \eqn{r_i} are the distances of the 16 radii computed from the geometric 
