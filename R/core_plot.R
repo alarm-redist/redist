@@ -8,7 +8,6 @@
 #' @return ggplot
 #' @export
 #' @concept plot
-#' 
 redist.plot.cores <- function(shp, plan, core) {
   if (missing(shp)) {
     stop('Please provide an argument to shp.')
@@ -48,5 +47,3 @@ redist.plot.cores <- function(shp, plan, core) {
     theme_void() + 
     theme(legend.position = 'bottom')
 }
-
-redist.plot.cores(shp, shp$cd, shp$core)
