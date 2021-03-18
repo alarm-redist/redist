@@ -667,7 +667,7 @@ List make_swaps(List boundary_cc,
                                            true,
                                            pop_vec,
                                            ssdmat,
-                                           ndists = ndists,
+                                           ndists,
                                            g,
                                            ssd_denominator);
 

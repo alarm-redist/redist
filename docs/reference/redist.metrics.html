@@ -144,7 +144,6 @@ set of maps.</p>
 
     <pre class="usage"><span class='fu'>redist.metrics</span><span class='op'>(</span>
   <span class='va'>plans</span>,
-  <span class='va'>district_membership</span>,
   measure <span class='op'>=</span> <span class='st'>"DSeats"</span>,
   <span class='va'>rvote</span>,
   <span class='va'>dvote</span>,
@@ -153,7 +152,8 @@ set of maps.</p>
   respV <span class='op'>=</span> <span class='fl'>0.5</span>,
   bandwidth <span class='op'>=</span> <span class='fl'>0.01</span>,
   nloop <span class='op'>=</span> <span class='fl'>1</span>,
-  ncores <span class='op'>=</span> <span class='fl'>1</span>
+  ncores <span class='op'>=</span> <span class='fl'>1</span>,
+  <span class='va'>district_membership</span>
 <span class='op'>)</span>
 
 <span class='fu'>partisan_metrics</span><span class='op'>(</span>
@@ -174,15 +174,10 @@ set of maps.</p>
 for each precinct and one column for each map. Required.</p></td>
     </tr>
     <tr>
-      <th>district_membership</th>
-      <td><p>Deprecated, use plans. A numeric vector (if only one map) or matrix with one row
-for each precinct and one column for each map. Required.</p></td>
-    </tr>
-    <tr>
       <th>measure</th>
       <td><p>A vector with a string for each measure desired from list "DSeats", "DVS", "EffGap",
 "EffGapEqPop", "TauGap", "MeanMedian", "Bias", "BiasV", "Declination",
-"Responsiveness", and "LopsidedWins". Use "all" to get all metrics.
+"Responsiveness", "LopsidedWins", "RankedMarginal", and "SmoothedSeat". Use "all" to get all metrics.
 "Dseats" and "DVS" are always computed, so it is recommended to always return those values.</p></td>
     </tr>
     <tr>
@@ -219,6 +214,11 @@ and the column number if multiple maps given.</p></td>
       <td><p>Number of cores to use for parallel computing. Default is 1.</p></td>
     </tr>
     <tr>
+      <th>district_membership</th>
+      <td><p>Deprecated, use plans. A numeric vector (if only one map) or matrix with one row
+for each precinct and one column for each map. Required.</p></td>
+    </tr>
+    <tr>
       <th>map</th>
       <td><p>a <code><a href='redist_map.html'>redist_map</a></code> object</p></td>
     </tr>
@@ -251,7 +251,9 @@ Bias is the Partisan Bias computed at 0.5.
 BiasV is the Partisan Bias computed at value V.
 Declination is the value of declination at 0.5.
 Responsiveness is the responsiveness at the user-supplied value with the user-supplied bandwidth.
-LopsidedWins computed the Lopsided Outcomes value, but does not produce a test statistic.</p>
+LopsidedWins computed the Lopsided Outcomes value, but does not produce a test statistic.
+RankedMarginal computes the Ranked Marginal Deviation (0-1, smaller is better).
+SmoothedSeat computes the Smoothed Seat Count Deviation (0-1, smaller is better).</p>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
     <p>Jonathan N. Katz, Gary King, and Elizabeth Rosenblatt. 2020.
@@ -261,6 +263,9 @@ American Political Science Review, 114, 1, Pp. 164-178.</p>
 Election Law Journal: Rules, Politics, and Policy. Pp. 39-57.http://doi.org/10.1089/elj.2017.0447</p>
 <p>Samuel S.-H. Wang. 2016. "Three Tests for Practical Evaluation of Partisan Gerrymandering."
 Stanford Law Review, 68, Pp. 1263 - 1321.</p>
+<p>Gregory Herschlag, Han Sung Kang, Justin Luo, Christy Vaughn Graves, Sachet Bangia, 
+Robert Ravier &amp; Jonathan C. Mattingly (2020) Quantifying Gerrymandering in North Carolina, 
+Statistics and Public Policy, 7:1, 30-38, DOI: 10.1080/2330443X.2020.1796400</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>

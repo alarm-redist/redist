@@ -161,7 +161,7 @@
       <th>...</th>
       <td><p>column elements to be bound into a <code>redist_map</code> object or a
 single <code>list</code> or <code>data.frame</code>.  These will be passed on to the
-<code><a href='https://r-spatial.github.io/sf/reference/tibble.html'>tibble</a></code> constructor.</p></td>
+<code>tibble</code> constructor.</p></td>
     </tr>
     <tr>
       <th>ndists</th>
@@ -211,7 +211,7 @@ it is latitude-longitude based. Set to NULL to avoid planarizing.</p></td>
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>A <code>redist_map</code> object is a <code><a href='https://r-spatial.github.io/sf/reference/tibble.html'>tibble</a></code> which contains an
+    <p>A <code>redist_map</code> object is a <code>tibble</code> which contains an
 adjacency list and additional information about the number of districts and
 population bounds.  It supports all of the <code>dplyr</code> generics, and will
 adjust the adjacency list and attributes according to these functions; i.e.,
@@ -232,9 +232,9 @@ graphs or attributes.</p>
 <span class='va'>d</span> <span class='op'>=</span> <span class='fu'>redist_map</span><span class='op'>(</span><span class='va'>fl25</span>, ndists<span class='op'>=</span><span class='fl'>3</span>, pop_tol<span class='op'>=</span><span class='fl'>0.05</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; <span class='warning'>Warning: Missing CRS, assuming NAD83 (4269).</span></div><div class='output co'>#&gt; <span class='message'>Projecting to CRS 3857</span></div><div class='input'><span class='fu'>dplyr</span><span class='fu'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/filter.html'>filter</a></span><span class='op'>(</span><span class='va'>d</span>, <span class='va'>pop</span> <span class='op'>&gt;=</span> <span class='fl'>10e3</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; A redist_map object with 5 units and 13 fields
-#&gt; To be partitioned into 3 districts with population between 58,348 - 5.0% and 58,348 + 5.0%
+#&gt; To be partitioned into 3 districts with population between 58,347.67 - 5.0% and 58,347.67 + 5.0%
 #&gt; With geometry:
-#&gt;     bbox:           xmin: -9108000 ymin: 3047000 xmax: -9065000 ymax: 3086000
+#&gt;     bbox:           xmin: -9107951 ymin: 3047341 xmax: -9065127 ymax: 3085829
 #&gt;     projected CRS:  WGS 84 / Pseudo-Mercator
 #&gt; <span style='color: #949494;'># A tibble: 5 x 13</span><span>
 #&gt;   geoid10    pop   vap obama mccain TotPop BlackPop HispPop   VAP BlackVAP
@@ -244,7 +244,7 @@ graphs or attributes.</p>
 #&gt; </span><span style='color: #BCBCBC;'>3</span><span> 2515.0_0 </span><span style='text-decoration: underline;'>22</span><span>218 </span><span style='text-decoration: underline;'>14</span><span>513   506    641  </span><span style='text-decoration: underline;'>22</span><span>218     </span><span style='text-decoration: underline;'>5</span><span>911    </span><span style='text-decoration: underline;'>8</span><span>800 </span><span style='text-decoration: underline;'>14</span><span>513     </span><span style='text-decoration: underline;'>3</span><span>417
 #&gt; </span><span style='color: #BCBCBC;'>4</span><span> 2525.0_0 </span><span style='text-decoration: underline;'>16</span><span>734 </span><span style='text-decoration: underline;'>14</span><span>720   826   </span><span style='text-decoration: underline;'>1</span><span>414  </span><span style='text-decoration: underline;'>16</span><span>734      197     791 </span><span style='text-decoration: underline;'>14</span><span>720      155
 #&gt; </span><span style='color: #BCBCBC;'>5</span><span> 1246.0_0 </span><span style='text-decoration: underline;'>12</span><span>289  </span><span style='text-decoration: underline;'>7</span><span>734   366    271  </span><span style='text-decoration: underline;'>12</span><span>289     </span><span style='text-decoration: underline;'>1</span><span>693    </span><span style='text-decoration: underline;'>9</span><span>773  </span><span style='text-decoration: underline;'>7</span><span>734     </span><span style='text-decoration: underline;'>1</span><span>062
-#&gt; </span><span style='color: #949494;'># … with 3 more variables: HispVAP &lt;dbl&gt;, geometry &lt;POLYGON [m]&gt;, adj &lt;list&gt;</span><span></div><div class='input'>
+#&gt; </span><span style='color: #949494;'># ... with 3 more variables: HispVAP &lt;dbl&gt;, geometry &lt;POLYGON [m]&gt;, adj &lt;list&gt;</span><span></div><div class='input'>
 </div></span></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

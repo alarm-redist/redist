@@ -71,7 +71,7 @@ combine.par.anneal <- function(a, b){
 #' units. The default is \code{NULL}.
 #' @param constraint Which constraint to apply. Accepts any combination of \code{compact},
 #' \code{segregation}, \code{vra}, \code{population}, \code{similarity}, \code{partisan},
-#' \code{minority} or \code{none}
+#' \code{minority}, \code{countysplit}, or \code{none}
 #' (no constraint applied). The default is NULL.
 #' @param constraintweights The weights to apply to each constraint. Should be a vector
 #' the same length as constraint. Default is NULL.
@@ -1093,7 +1093,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' @param temper Whether to use simulated tempering algorithm. Default is FALSE.
 #' @param constraint Which constraint to apply. Accepts any combination of \code{compact},
 #' \code{segregation}, \code{vra}, \code{population}, \code{similarity}, \code{partisan},
-#' \code{minority} or \code{none}
+#' \code{minority}, \code{countysplit}, or \code{none}
 #' (no constraint applied). The default is NULL.
 #' @param constraintweights The weights to apply to each constraint. Should be a vector
 #' the same length as constraint. Default is NULL.
