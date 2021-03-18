@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Find Majority Minority Remainder — redist.find.target • redist</title>
+<title>Sink Plans to 1:ndists — redist.sink.plan • redist</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,10 +46,8 @@
 
 
 
-<meta property="og:title" content="Find Majority Minority Remainder — redist.find.target" />
-<meta property="og:description" content="Given a percent goal for majority minority districts, this computes the average
-value of minority in non-majority minority districts. This value is &quot;tgt_other&quot;
-in redist.mcmc and redist.smc." />
+<meta property="og:title" content="Sink Plans to 1:ndists — redist.sink.plan" />
+<meta property="og:description" content="Takes a plan and renumbers it to be from 1:ndists" />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -136,64 +134,42 @@ in redist.mcmc and redist.smc." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Find Majority Minority Remainder</h1>
-    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/findtarget.R'><code>R/findtarget.R</code></a></small>
-    <div class="hidden name"><code>redist.find.target.Rd</code></div>
+    <h1>Sink Plans to 1:ndists</h1>
+    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/reindex.R'><code>R/reindex.R</code></a></small>
+    <div class="hidden name"><code>redist.sink.plan.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Given a percent goal for majority minority districts, this computes the average
-value of minority in non-majority minority districts. This value is "tgt_other"
-in <code>redist.mcmc</code> and <code>redist.smc</code>.</p>
+    <p>Takes a plan and renumbers it to be from 1:ndists</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.find.target</span><span class='op'>(</span>
-  <span class='va'>tgt_min</span>,
-  <span class='va'>group_pop</span>,
-  <span class='va'>grouppop</span>,
-  <span class='va'>total_pop</span>,
-  <span class='va'>fullpop</span>,
-  <span class='va'>ndists</span>,
-  <span class='va'>nmmd</span>
-<span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>redist.sink.plan</span><span class='op'>(</span><span class='va'>plan</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>tgt_min</th>
-      <td><p>target group population for majority minority district</p></td>
-    </tr>
-    <tr>
-      <th>group_pop</th>
-      <td><p>A vector of populations for some subgroup of interest.</p></td>
-    </tr>
-    <tr>
-      <th>grouppop</th>
-      <td><p>Deprecated, use group_pop. A vector of populations for some subgroup of interest.</p></td>
-    </tr>
-    <tr>
-      <th>total_pop</th>
-      <td><p>A vector containing the populations of each geographic unit.</p></td>
-    </tr>
-    <tr>
-      <th>fullpop</th>
-      <td><p>Deprecated, use total_pop. A vector containing the populations of each geographic unit.</p></td>
-    </tr>
-    <tr>
-      <th>ndists</th>
-      <td><p>The number of congressional districts.</p></td>
-    </tr>
-    <tr>
-      <th>nmmd</th>
-      <td><p>The number of majority minority districts.</p></td>
+      <th>plan</th>
+      <td><p>vector of assignments, required.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>numeric value to target</p>
+    <p>A vector with an ID that corresponds from 1:ndistss</p>
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>algdat.p10</span><span class='op'>)</span>
+<span class='va'>plan</span> <span class='op'>&lt;-</span> <span class='va'>algdat.p10</span><span class='op'>$</span><span class='va'>cdmat</span><span class='op'>[</span>,<span class='fl'>1</span><span class='op'>]</span>
+<span class='co'># Subset based on something:</span>
+ <span class='va'>plan</span> <span class='op'>&lt;-</span> <span class='va'>plan</span><span class='op'>[</span><span class='va'>plan</span><span class='op'>!=</span><span class='fl'>2</span><span class='op'>]</span>
+ <span class='va'>plan</span> <span class='op'>&lt;-</span> <span class='fu'>redist.sink.plan</span><span class='op'>(</span><span class='va'>plan</span><span class='op'>)</span>
+ <span class='co'># Now plan can be used with redist.mcmc()</span>
+ <span class='va'>plan</span>
+<span class='op'>}</span>
+
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
