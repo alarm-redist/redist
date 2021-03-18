@@ -22,28 +22,26 @@ redist.plot.cores <- function(shp, plan, core) {
   shp$plan <- plan
   shp$core <- core
 
-  suppressMessages(
   shp_un <- shp %>%
-    group_by(plan) %>%
-    summarize(geometry = st_union(geometry),
-              .groups = 'drop'))
+      group_by(plan) %>%
+      summarize(geometry = st_union(geometry),
+                .groups = 'drop') %>%
+      suppressMessages()
 
-  suppressMessages(
   shp_cores <- shp %>%
-    group_by(plan, core) %>%
-    summarize(
-      ct = n(),
-      geometry = st_union(geometry),
-      .groups = 'drop'
-    ) %>%
-    mutate(ct = ifelse(ct == 1, NA_integer_, ct)))
+      group_by(plan, core) %>%
+      summarize(ct = n(),
+                geometry = st_union(geometry),
+                .groups = 'drop') %>%
+      mutate(ct = ifelse(ct == 1, NA_integer_, ct)) %>%
+      suppressMessages()
 
   shp_cores %>%
     ggplot() +
-    geom_sf(aes(fill = ct)) +
-    scale_fill_distiller(direction = 1, na.value = 'white') +
+    geom_sf(aes(fill = .data$ct)) +
+    ggplot2::scale_fill_distiller(direction = 1, na.value = 'white') +
     geom_sf(fill = NA, data = shp_un, color = 'black', lwd = 2) +
     labs(fill = 'Number of Units in Core') +
-    theme_void() + 
+    theme_void() +
     theme(legend.position = 'bottom')
 }
