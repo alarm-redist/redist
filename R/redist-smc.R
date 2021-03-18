@@ -193,7 +193,8 @@ redist.smc = function(adj, total_pop, nsims, ndists, counties=NULL,
             stop("County numbers must run from 1 to n_county with no interruptions.")
 
         # handle discontinuous counties
-        counties = redist.county.relabel(adjobj, counties)
+        counties = redist.county.relabel(adj, counties)
+        counties <- redist.county.id(counties)
     }
 
     # Population bounds

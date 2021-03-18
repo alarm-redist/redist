@@ -413,7 +413,6 @@ redist.compactness <- function(shp = NULL,
   }
 
   if('FracKept' %in% measure){
-    print(length(unlist(adj)))
     comp[['FracKept']] <- 1 -  rep(n_removed(g = adj,
                                              districts = plans,
                                              n_distr = nd), each = nd)/

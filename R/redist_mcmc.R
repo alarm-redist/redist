@@ -38,7 +38,7 @@ combine.par.anneal <- function(a, b){
 #' "SpatialPolygonsDataFrame."
 #' @param total_pop A vector containing the populations of each geographic
 #' unit
-#' @param ndists The numbe of congressional districts. The default is
+#' @param ndists The number of congressional districts. The default is
 #' \code{NULL}.
 #' @param init_plan A vector containing the congressional district labels
 #' of each geographic unit. The default is \code{NULL}. If not provided,

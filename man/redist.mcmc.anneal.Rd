@@ -53,7 +53,7 @@ redist.mcmc.anneal(
 \item{total_pop}{A vector containing the populations of each geographic
 unit}
 
-\item{ndists}{The numbe of congressional districts. The default is
+\item{ndists}{The number of congressional districts. The default is
 \code{NULL}.}
 
 \item{init_plan}{A vector containing the congressional district labels
