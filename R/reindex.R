@@ -39,3 +39,38 @@ redist.reindex <- function(plans, district_membership){
   # reindex!
   return(reindex(dm = plans, nd = nd))
 }
+
+
+#' Sink Plans to 1:ndists
+#'
+#' Takes a plan and renumbers it to be from 1:ndists
+#'
+#' @param plan vector of assignments, required.
+#'
+#' @return A vector with an ID that corresponds from 1:ndistss
+#'
+#' @concept prepare
+#' @export
+#' @examples \dontrun{
+#' data(algdat.p10)
+#' plan <- algdat.p10$cdmat[,1]
+#' # Subset based on something:
+#'  plan <- plan[plan!=2]
+#'  plan <- redist.sink.plan(plan)
+#'  # Now plan can be used with redist.mcmc()
+#'  plan
+#' }
+#'
+redist.sink.plan <- function(plan){
+  if(class(plan) %in% c('character', 'numeric','integer')){
+    uc <- unique(sort(plan))
+    plan_id <- rep(0, length(plan))
+    for(i in 1:length(plan)){
+      plan_id[i] <- which(uc == plan[i])
+    }
+  } else{
+    stop('Please provide "plan" as a  numeric or integer vector.')
+  }
+  
+  return(plan_id)
+}

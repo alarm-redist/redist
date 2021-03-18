@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>SMC Redistricting Sampler — redist_smc • redist</title>
+<title>Merge-Split/Recombination MCMC Redistricting Sampler — redist.mergesplit • redist</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,11 +46,12 @@
 
 
 
-<meta property="og:title" content="SMC Redistricting Sampler — redist_smc" />
-<meta property="og:description" content="redist_smc uses a Sequential Monte Carlo algorithm to
-generate nearly independent congressional or legislative redistricting
-plans according to contiguity, population, compactness, and administrative
-boundary constraints." />
+<meta property="og:title" content="Merge-Split/Recombination MCMC Redistricting Sampler — redist.mergesplit" />
+<meta property="og:description" content="redist.mergesplit uses a Markov Chain Monte Carlo algorithm to
+generate congressional or legislative redistricting plans according to
+contiguity, population, compactness, and administrative boundary constraints.
+The MCMC proposal is the same as is used in the SMC sampler; it is similar
+but not identical to those used in the references." />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -137,31 +138,33 @@ boundary constraints." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>SMC Redistricting Sampler</h1>
-    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/redist_smc_tidy.R'><code>R/redist_smc_tidy.R</code></a></small>
-    <div class="hidden name"><code>redist_smc.Rd</code></div>
+    <h1>Merge-Split/Recombination MCMC Redistricting Sampler</h1>
+    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/redist_ms.R'><code>R/redist_ms.R</code></a></small>
+    <div class="hidden name"><code>redist.mergesplit.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p><code>redist_smc</code> uses a Sequential Monte Carlo algorithm to
-generate nearly independent congressional or legislative redistricting
-plans according to contiguity, population, compactness, and administrative
-boundary constraints.</p>
+    <p><code>redist.mergesplit</code> uses a Markov Chain Monte Carlo algorithm to
+generate congressional or legislative redistricting plans according to
+contiguity, population, compactness, and administrative boundary constraints.
+The MCMC proposal is the same as is used in the SMC sampler; it is similar
+but not identical to those used in the references.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist_smc</span><span class='op'>(</span>
-  <span class='va'>map</span>,
+    <pre class="usage"><span class='fu'>redist.mergesplit</span><span class='op'>(</span>
+  <span class='va'>adj</span>,
+  <span class='va'>total_pop</span>,
   <span class='va'>nsims</span>,
-  counties <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>ndists</span>,
+  pop_tol <span class='op'>=</span> <span class='fl'>0.01</span>,
+  warmup <span class='op'>=</span> <span class='fl'>0</span>,
+  <span class='va'>init_plan</span>,
+  <span class='va'>counties</span>,
   compactness <span class='op'>=</span> <span class='fl'>1</span>,
   constraints <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>,
-  resample <span class='op'>=</span> <span class='cn'>TRUE</span>,
   constraint_fn <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>m</span><span class='op'>)</span> <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fl'>0</span>, <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span><span class='op'>(</span><span class='va'>m</span><span class='op'>)</span><span class='op'>)</span>,
   adapt_k_thresh <span class='op'>=</span> <span class='fl'>0.975</span>,
-  seq_alpha <span class='op'>=</span> <span class='fl'>0.2</span> <span class='op'>+</span> <span class='fl'>0.3</span> <span class='op'>*</span> <span class='va'>compactness</span>,
-  truncate <span class='op'>=</span> <span class='op'>(</span><span class='va'>compactness</span> <span class='op'>!=</span> <span class='fl'>1</span><span class='op'>)</span>,
-  trunc_fn <span class='op'>=</span> <span class='va'>redist_quantile_trunc</span>,
-  pop_temper <span class='op'>=</span> <span class='fl'>0</span>,
+  k <span class='op'>=</span> <span class='cn'>NULL</span>,
   verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
   silent <span class='op'>=</span> <span class='cn'>FALSE</span>
 <span class='op'>)</span></pre>
@@ -170,12 +173,31 @@ boundary constraints.</p>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>map</th>
-      <td><p>A <code><a href='redist_map.html'>redist_map</a></code> object.</p></td>
+      <th>adj</th>
+      <td><p>adjacency matrix, list, or object of class
+"SpatialPolygonsDataFrame."</p></td>
+    </tr>
+    <tr>
+      <th>total_pop</th>
+      <td><p>A vector containing the populations of each geographic
+unit</p></td>
     </tr>
     <tr>
       <th>nsims</th>
-      <td><p>The number of samples to draw.</p></td>
+      <td><p>The number of samples to draw, including warmup.</p></td>
+    </tr>
+    <tr>
+      <th>ndists</th>
+      <td><p>The number of congressional districts.</p></td>
+    </tr>
+    <tr>
+      <th>warmup</th>
+      <td><p>The number of warmup samples to discard. Defaults to 0.</p></td>
+    </tr>
+    <tr>
+      <th>init_plan</th>
+      <td><p>The initial state of the map. If not provided, it defaults to
+<code>redist.smc</code> to build one plan.</p></td>
     </tr>
     <tr>
       <th>counties</th>
@@ -197,12 +219,6 @@ higher values preferring more compact districts. Must be nonnegative. See the
 See the 'Details' section for more information.</p></td>
     </tr>
     <tr>
-      <th>resample</th>
-      <td><p>Whether to perform a final resampling step so that the
-generated plans can be used immediately.  Set this to <code>FALSE</code> to perform
-direct importance sampling estimates, or to adjust the weights manually.</p></td>
-    </tr>
-    <tr>
       <th>constraint_fn</th>
       <td><p>A function which takes in a matrix where each column is
 a redistricting plan and outputs a vector of log-weights, which will be
@@ -216,27 +232,9 @@ the algorithm does not appear to be sampling from the target distribution.
 Must be between 0 and 1.</p></td>
     </tr>
     <tr>
-      <th>seq_alpha</th>
-      <td><p>The amount to adjust the weights by at each resampling step;
-higher values prefer exploitation, while lower values prefer exploration.
-Must be between 0 and 1.</p></td>
-    </tr>
-    <tr>
-      <th>truncate</th>
-      <td><p>Whether to truncate the importance sampling weights at the
-final step by <code>trunc_fn</code>.  Recommended if <code>compactness</code> is not 1.
-Truncation only applied if <code>resample=TRUE</code>.</p></td>
-    </tr>
-    <tr>
-      <th>trunc_fn</th>
-      <td><p>A function which takes in a vector of weights and returns
-a truncated vector. If <code><a href='https://mc-stan.org/loo/reference/loo.html'>loo</a></code> package is installed (strongly
-recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
-rather than naive truncation.</p></td>
-    </tr>
-    <tr>
-      <th>pop_temper</th>
-      <td><p>The strength of the automatic population tempering.</p></td>
+      <th>k</th>
+      <td><p>The number of edges to consider cutting after drawing a spanning
+tree. Should be selected automatically in nearly all cases.</p></td>
     </tr>
     <tr>
       <th>verbose</th>
@@ -251,26 +249,15 @@ Recommended.</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p><code>redist_smc</code> returns an object of class
-<code><a href='redist_plans.html'>redist_plans</a></code> containing the simulated plans.</p>
+    <p><code>redist.mergesplit</code> returns an object of class list containing the
+simulated plans.</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>This function draws nearly-independent samples from a specific target measure,
-controlled by the <code>popcons</code>, <code>compactness</code>, <code>constraints</code>, and
-<code>constraint_fn</code> parameters.</p>
-<p>Key to ensuring good performance is monitoring the efficiency of the resampling
-process at each SMC stage.  Unless <code>silent=F</code>, this function will print
-out the effective sample size of each resampling step to allow the user to
-monitor the efficiency.  If <code>verbose=T</code> the function will also print
-out information on the \(k_i\) values automatically chosen and the
-acceptance rate (based on the population constraint) at each step.</p>
+    <p>This function draws samples from a specific target measure, controlled by the
+<code>compactness</code>, <code>constraints</code>, and <code>constraint_fn</code> parameters.</p>
 <p>Higher values of <code>compactness</code> sample more compact districts;
 setting this parameter to 1 is computationally efficient and generates nicely
-compact districts.  Values of other than 1 may lead to highly variable
-importance sampling weights.  By default these weights are truncated using
-<code><a href='redist_quantile_trunc.html'>redist_quantile_trunc</a></code> to stabilize the resulting estimates, but
-if truncation is used, a specific truncation function should probably be
-chosen by the user.</p>
+compact districts.</p>
 <p>The <code>constraints</code> parameter allows the user to apply several common
 redistricting constraints without implementing them by hand. This parameter
 is a list, which may contain any of the following named entries:</p><ul>
@@ -281,8 +268,7 @@ districts.</p></li>
 <li><p><code>current</code>, a vector containing district assignments for
 the current map.</p></li>
 </ul></li>
-<li><p><code>vra</code>: a list with five entries, which may be set up using
-<code><a href='redist.constraint.helper.html'>redist.constraint.helper</a></code>:</p><ul>
+<li><p><code>vra</code>: a list with five entries:</p><ul>
 <li><p><code>strength</code>, a number controlling the strength of the Voting Rights Act
 (VRA) constraint, with higher values prioritizing majority-minority districts
 over other considerations.</p></li>
@@ -306,22 +292,22 @@ home address.</p></li>
 
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
-    <p>McCartan, C., &amp; Imai, K. (2020). Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans.
-Available at <a href='https://imai.fas.harvard.edu/research/files/SMCredist.pdf'>https://imai.fas.harvard.edu/research/files/SMCredist.pdf</a>.</p>
+    <p>Carter, D., Herschlag, G., Hunter, Z., and Mattingly, J. (2019). A
+merge-split proposal for reversible Monte Carlo Markov chain sampling of
+redistricting plans. arXiv preprint arXiv:1911.01503.</p>
+<p>DeFord, D., Duchin, M., and Solomon, J. (2019). Recombination: A family of
+Markov chains for redistricting. arXiv preprint arXiv:1911.05725.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
-
-<span class='va'>fl_map</span> <span class='op'>=</span> <span class='fu'><a href='redist_map.html'>redist_map</a></span><span class='op'>(</span><span class='va'>fl25</span>, ndists<span class='op'>=</span><span class='fl'>3</span>, pop_tol<span class='op'>=</span><span class='fl'>0.1</span><span class='op'>)</span>
-
-<span class='va'>sampled_basic</span> <span class='op'>=</span> <span class='fu'>redist_smc</span><span class='op'>(</span><span class='va'>fl_map</span>, <span class='fl'>10000</span><span class='op'>)</span>
-
-<span class='va'>sampled_constr</span> <span class='op'>=</span> <span class='fu'>redist_smc</span><span class='op'>(</span><span class='va'>fl_map</span>, <span class='fl'>10000</span>, constraints<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>
-                                incumbency <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>strength<span class='op'>=</span><span class='fl'>1000</span>, incumbents<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>6</span>, <span class='fl'>25</span><span class='op'>)</span><span class='op'>)</span>
-                            <span class='op'>)</span><span class='op'>)</span>
 <span class='op'>}</span>
-
+<span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
+<span class='va'>adj</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.adjacency.html'>redist.adjacency</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
+<span class='va'>out</span> <span class='op'>&lt;-</span> <span class='fu'>redist.mergesplit</span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>adj</span>, total_pop <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>, 
+                         nsims <span class='op'>=</span> <span class='fl'>5</span>, ndists <span class='op'>=</span> <span class='fl'>3</span>, pop_tol <span class='op'>=</span> <span class='fl'>0.1</span><span class='op'>)</span>
+<span class='op'>}</span>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
