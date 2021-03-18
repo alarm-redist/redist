@@ -4,12 +4,12 @@
 \alias{plot.redist_map}
 \title{Plot a \code{redist_map}}
 \usage{
-\method{plot}{redist_map}(x, y, ...)
+\method{plot}{redist_map}(x, val, ...)
 }
 \arguments{
 \item{x}{the \code{redist_map} object}
 
-\item{y}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the optional value to use to
+\item{val}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the optional value to use to
 color the units. If absent, \code{\link{redist.map}} will be called;
 otherwise \code{\link{redist.choropleth}} will be called.}
 

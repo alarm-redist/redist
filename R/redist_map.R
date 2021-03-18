@@ -361,7 +361,7 @@ print.redist_map = function(x, ...) {
 #' Plot a \code{redist_map}
 #'
 #' @param x the \code{redist_map} object
-#' @param y \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the optional value to use to
+#' @param val \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the optional value to use to
 #'   color the units. If absent, \code{\link{redist.map}} will be called;
 #'   otherwise \code{\link{redist.choropleth}} will be called.
 #' @param ... passed on to underlying functions
@@ -377,10 +377,10 @@ print.redist_map = function(x, ...) {
 #' @concept prepare
 #' @concept plot
 #' @export
-plot.redist_map = function(x, y, ...) {
+plot.redist_map = function(x, val, ...) {
     if (!inherits(x, "sf")) stop("Plotting requires a shapefile.")
 
-    if (missing(y)) {
+    if (missing(val)) {
         existing = get_existing(x)
         if (!is.null(existing)) {
             redist.map(x, get_adj(x), plan=existing, ...) +
@@ -390,7 +390,7 @@ plot.redist_map = function(x, y, ...) {
                 ggplot2::theme_void()
         }
     } else {
-        redist.choropleth(shp = x, fill = !!rlang::enquo(y), ...)
+        redist.choropleth(shp = x, fill = !!rlang::enquo(val), ...)
     }
 }
 
