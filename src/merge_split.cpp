@@ -53,6 +53,7 @@ umat ms_plans(int N, List l, const uvec init, const uvec &counties, const uvec &
     int refresh = std::max(N / 20, 1);
     int n_accept = 0;
     for (int i = 1; i < N; i++) {
+        R_CheckUserInterrupt();
         districts.col(i) = districts.col(i - 1); // copy over old map
 
         // make the proposal

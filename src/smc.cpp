@@ -48,6 +48,7 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     cum_wgt.fill(1.0 / N);
     cum_wgt = cumsum(cum_wgt);
     for (int ctr = 1; ctr < n_distr; ctr++) {
+        R_CheckUserInterrupt();
         if (verbosity >= 1)
             Rcout << "Making split " << ctr << " of " << n_distr-1 << "\n";
 

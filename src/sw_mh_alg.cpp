@@ -490,6 +490,7 @@ List swMH(List aList,
 
     // Print Progress
     if(k % nsims_10pct == 0){
+      R_CheckUserInterrupt();
       Rcout << (double)k / nsims_10pct * 10 << " percent done." << std::endl;
       if(adapt_lambda == 1){
 	Rcout << "Lambda: " << lambda << std::endl;
