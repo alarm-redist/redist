@@ -89,13 +89,13 @@
 
       
 
-      </header><script src="tidy-redist_files/header-attrs-2.6.6/header-attrs.js"></script><div class="row">
+      </header><script src="tidy-redist_files/header-attrs-2.7/header-attrs.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Tidy <code>redist</code>
 </h1>
             
-            <h4 class="date">2021-03-09</h4>
+            <h4 class="date">2021-03-17</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/kosukeimai/redist/blob/master/vignettes/tidy-redist.Rmd"><code>vignettes/tidy-redist.Rmd</code></a></small>
       <div class="hidden name"><code>tidy-redist.Rmd</code></div>
@@ -195,10 +195,10 @@
 <p>Behind the scenes, <code>redist</code> has adjusted the adjacency graph to remove the precincts that were filtered away. It has also adjusted the number of districts and the population bounds.</p>
 <p>We can easily plot this new map, either by congressional district or by any other quantity of interest.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://r-spatial.github.io/sf/reference/plot.html">plot</a></span><span class="op">(</span><span class="va">houston_area</span>, edges<span class="op">=</span><span class="cn">F</span>, centroids<span class="op">=</span><span class="cn">F</span><span class="op">)</span> <span class="co"># hide the hundreds of graph edges and vertices</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">houston_area</span>, edges<span class="op">=</span><span class="cn">F</span>, centroids<span class="op">=</span><span class="cn">F</span><span class="op">)</span> <span class="co"># hide the hundreds of graph edges and vertices</span></code></pre></div>
 <p><img src="tidy-redist_files/figure-html/unnamed-chunk-4-1.png" width="700"></p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://r-spatial.github.io/sf/reference/plot.html">plot</a></span><span class="op">(</span><span class="va">houston_area</span>, <span class="va">hisp</span><span class="op">/</span><span class="va">pop</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">houston_area</span>, <span class="va">hisp</span><span class="op">/</span><span class="va">pop</span><span class="op">)</span></code></pre></div>
 <p><img src="tidy-redist_files/figure-html/unnamed-chunk-4-2.png" width="700"></p>
 </div>
 <div id="merging" class="section level2">
@@ -230,7 +230,7 @@
 <span class="co">#&gt; 9    29 201    695465  66741 531650  81193 469405  46629 341966  69148  92027</span>
 <span class="co">#&gt; # … with 4 more variables: gop &lt;int&gt;, id &lt;chr&gt;, geometry &lt;GEOMETRY [m]&gt;,</span>
 <span class="co">#&gt; #   adj &lt;list&gt;</span>
-<span class="fu"><a href="https://r-spatial.github.io/sf/reference/plot.html">plot</a></span><span class="op">(</span><span class="va">houston_counties</span>, <span class="va">hisp</span><span class="op">/</span><span class="va">pop</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">houston_counties</span>, <span class="va">hisp</span><span class="op">/</span><span class="va">pop</span><span class="op">)</span></code></pre></div>
 <p><img src="tidy-redist_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
 <p>We specify <code>drop_geom=FALSE</code> so that the shapefile geometries are also merged. Since this is a time-consuming process and is not necessary for redistricting analysis, by default <code><a href="../reference/merge_by.html">merge_by()</a></code> drops the shapefile geometry.</p>
 <p>If more fine-grained control is needed than is provided by <code><a href="../reference/merge_by.html">merge_by()</a></code>, you can always use <code><a href="https://dplyr.tidyverse.org/reference/group_by.html">group_by()</a></code> and <code><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize()</a></code>, which will still make the appropriate modifications to the adjacency graph.</p>
@@ -262,7 +262,7 @@
 <span class="co">#&gt; 10     2       10   1656    52   136  1137  1337    45   115   929   514   240</span>
 <span class="co">#&gt; # … with 465 more rows, and 4 more variables: county &lt;chr&gt;, id &lt;chr&gt;,</span>
 <span class="co">#&gt; #   geometry &lt;GEOMETRY [m]&gt;, adj &lt;list&gt;</span>
-<span class="fu"><a href="https://r-spatial.github.io/sf/reference/plot.html">plot</a></span><span class="op">(</span><span class="va">houston_cores</span>, centroids<span class="op">=</span><span class="cn">F</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">houston_cores</span>, centroids<span class="op">=</span><span class="cn">F</span><span class="op">)</span></code></pre></div>
 <p><img src="tidy-redist_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
 </div>
 </div>
@@ -277,15 +277,15 @@
 <span class="co">#&gt; Sampling 100 475-unit maps with 6 districts and population between 663313 and 733136.</span>
 <span class="co">#&gt; Ensuring no more than 5 splits of the 6 administrative units.</span>
 <span class="co">#&gt; Making split 1 of 5</span>
-<span class="co">#&gt; Resampling effective sample size: 97.6 (97.6% efficiency).</span>
+<span class="co">#&gt; Resampling effective sample size: 97.2 (97.2% efficiency).</span>
 <span class="co">#&gt; Making split 2 of 5</span>
-<span class="co">#&gt; Resampling effective sample size: 96.5 (96.5% efficiency).</span>
+<span class="co">#&gt; Resampling effective sample size: 98.2 (98.2% efficiency).</span>
 <span class="co">#&gt; Making split 3 of 5</span>
-<span class="co">#&gt; Resampling effective sample size: 93.4 (93.4% efficiency).</span>
+<span class="co">#&gt; Resampling effective sample size: 94.9 (94.9% efficiency).</span>
 <span class="co">#&gt; Making split 4 of 5</span>
-<span class="co">#&gt; Resampling effective sample size: 92.4 (92.4% efficiency).</span>
+<span class="co">#&gt; Resampling effective sample size: 93.0 (93.0% efficiency).</span>
 <span class="co">#&gt; Making split 5 of 5</span>
-<span class="co">#&gt; Resampling effective sample size: 95.2 (95.2% efficiency).</span>
+<span class="co">#&gt; Resampling effective sample size: 92.6 (92.6% efficiency).</span>
 <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">houston_plans</span><span class="op">)</span>
 <span class="co">#&gt; 100 sampled plans and 1 reference plan with 6 districts from a 475-unit map,</span>
 <span class="co">#&gt;   drawn using Sequential Monte Carlo</span>
@@ -301,10 +301,10 @@
 <span class="co">#&gt;  4 &lt;ref&gt;        4    690022</span>
 <span class="co">#&gt;  5 &lt;ref&gt;        5    701696</span>
 <span class="co">#&gt;  6 &lt;ref&gt;        6    695465</span>
-<span class="co">#&gt;  7 1            1    665633</span>
-<span class="co">#&gt;  8 1            2    724768</span>
-<span class="co">#&gt;  9 1            3    723278</span>
-<span class="co">#&gt; 10 1            4    718261</span>
+<span class="co">#&gt;  7 1            1    702778</span>
+<span class="co">#&gt;  8 1            2    683952</span>
+<span class="co">#&gt;  9 1            3    693833</span>
+<span class="co">#&gt; 10 1            4    718925</span>
 <span class="co">#&gt; # … with 596 more rows</span></code></pre></div>
 <p>Since district numbers in simulated plans are by and large random, we often want to renumber the simulated districts to match the district numbers in the original plan, something which is easily accomplished by the function <code><a href="../reference/match_numbers.html">match_numbers()</a></code>:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
@@ -324,10 +324,10 @@
 <span class="co">#&gt;  4 &lt;ref&gt; 18          690022       1    </span>
 <span class="co">#&gt;  5 &lt;ref&gt; 22          701696       1    </span>
 <span class="co">#&gt;  6 &lt;ref&gt; 29          695465       1    </span>
-<span class="co">#&gt;  7 1     22          665633       0.541</span>
-<span class="co">#&gt;  8 1     18          724768       0.541</span>
-<span class="co">#&gt;  9 1     9           723278       0.541</span>
-<span class="co">#&gt; 10 1     7           718261       0.541</span>
+<span class="co">#&gt;  7 1     29          702778       0.509</span>
+<span class="co">#&gt;  8 1     2           683952       0.509</span>
+<span class="co">#&gt;  9 1     18          693833       0.509</span>
+<span class="co">#&gt; 10 1     9           718925       0.509</span>
 <span class="co">#&gt; # … with 596 more rows</span></code></pre></div>
 <p>This function also creates a new column, which records, for each plan, the fraction of the total population which lives in the same district under the reference plan.</p>
 <p>We can then easily add summary statistics for each district. The <code><a href="../reference/redist.compactness.html">distr_compactness()</a></code> and <code><a href="../reference/redist.group.percent.html">group_frac()</a></code> functions will implicitly reference the simulated plans matrix when called inside <code><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate()</a></code>.</p>
@@ -347,16 +347,16 @@
 <span class="co">#&gt; # A tibble: 606 x 9</span>
 <span class="co">#&gt;    draw  district total_pop pop_overlap  comp pct_hisp pct_black pct_white</span>
 <span class="co">#&gt;    &lt;fct&gt; &lt;ord&gt;        &lt;dbl&gt;       &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;</span>
-<span class="co">#&gt;  1 &lt;ref&gt; 2           705967       1       874    0.273    0.0907     0.548</span>
-<span class="co">#&gt;  2 &lt;ref&gt; 7           699765       1       874    0.271    0.107      0.509</span>
-<span class="co">#&gt;  3 &lt;ref&gt; 9           697970       1       874    0.340    0.382      0.139</span>
-<span class="co">#&gt;  4 &lt;ref&gt; 18          690022       1       874    0.344    0.405      0.201</span>
-<span class="co">#&gt;  5 &lt;ref&gt; 22          701696       1       874    0.223    0.119      0.482</span>
-<span class="co">#&gt;  6 &lt;ref&gt; 29          695465       1       874    0.729    0.0993     0.147</span>
-<span class="co">#&gt;  7 1     22          665633       0.541   370    0.311    0.196      0.432</span>
-<span class="co">#&gt;  8 1     18          724768       0.541   370    0.285    0.163      0.449</span>
-<span class="co">#&gt;  9 1     9           723278       0.541   370    0.343    0.278      0.252</span>
-<span class="co">#&gt; 10 1     7           718261       0.541   370    0.417    0.176      0.318</span>
+<span class="co">#&gt;  1 &lt;ref&gt; 2           705967       1     0.319    0.273    0.0907     0.548</span>
+<span class="co">#&gt;  2 &lt;ref&gt; 7           699765       1     0.319    0.271    0.107      0.509</span>
+<span class="co">#&gt;  3 &lt;ref&gt; 9           697970       1     0.319    0.340    0.382      0.139</span>
+<span class="co">#&gt;  4 &lt;ref&gt; 18          690022       1     0.319    0.344    0.405      0.201</span>
+<span class="co">#&gt;  5 &lt;ref&gt; 22          701696       1     0.319    0.223    0.119      0.482</span>
+<span class="co">#&gt;  6 &lt;ref&gt; 29          695465       1     0.319    0.729    0.0993     0.147</span>
+<span class="co">#&gt;  7 1     29          702778       0.509 0.664    0.432    0.240      0.298</span>
+<span class="co">#&gt;  8 1     2           683952       0.509 0.664    0.309    0.115      0.468</span>
+<span class="co">#&gt;  9 1     18          693833       0.509 0.664    0.359    0.260      0.259</span>
+<span class="co">#&gt; 10 1     9           718925       0.509 0.664    0.378    0.228      0.319</span>
 <span class="co">#&gt; # … with 596 more rows, and 1 more variable: pct_min &lt;dbl&gt;</span></code></pre></div>
 <p>If we wanted, we could sort and number districts according to one of these statistics using the <code><a href="../reference/number_by.html">number_by()</a></code> function.</p>
 <p>From there, it’s easy to summarize summary statistics by plan.</p>
@@ -375,12 +375,12 @@
 <span class="co">#&gt;    draw  n_black n_hisp n_coalition</span>
 <span class="co">#&gt;    &lt;fct&gt;   &lt;int&gt;  &lt;int&gt;       &lt;int&gt;</span>
 <span class="co">#&gt;  1 &lt;ref&gt;       0      1           4</span>
-<span class="co">#&gt;  2 1           0      1           6</span>
+<span class="co">#&gt;  2 1           0      0           6</span>
 <span class="co">#&gt;  3 2           0      1           6</span>
 <span class="co">#&gt;  4 3           0      1           6</span>
 <span class="co">#&gt;  5 4           0      1           6</span>
 <span class="co">#&gt;  6 5           0      1           6</span>
-<span class="co">#&gt;  7 6           0      1           6</span>
+<span class="co">#&gt;  7 6           0      0           6</span>
 <span class="co">#&gt;  8 7           0      1           6</span>
 <span class="co">#&gt;  9 8           0      1           6</span>
 <span class="co">#&gt; 10 9           0      1           6</span>
@@ -388,14 +388,14 @@
 <p>And <code>redist</code> provides several useful plotting functions. By default, <code>plot</code> calls <code>hist</code>, which makes a histogram of a quantity of interest along with a reference line for each reference plan.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># ggplots with nice defaults and labels</span>
-<span class="fu"><a href="https://r-spatial.github.io/sf/reference/plot.html">plot</a></span><span class="op">(</span><span class="va">min_distr</span>, <span class="va">n_coalition</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">min_distr</span>, <span class="va">n_coalition</span><span class="op">)</span></code></pre></div>
 <p><img src="tidy-redist_files/figure-html/unnamed-chunk-11-1.png" width="700"></p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://r-spatial.github.io/sf/reference/plot.html">plot</a></span><span class="op">(</span><span class="va">houston_plans</span>, <span class="va">pct_hisp</span>, type<span class="op">=</span><span class="st">"distr_qtys"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">houston_plans</span>, <span class="va">pct_hisp</span>, type<span class="op">=</span><span class="st">"distr_qtys"</span><span class="op">)</span></code></pre></div>
 <p><img src="tidy-redist_files/figure-html/unnamed-chunk-11-2.png" width="700"></p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># don't sort; use existing district numbers</span>
-<span class="fu"><a href="https://r-spatial.github.io/sf/reference/plot.html">plot</a></span><span class="op">(</span><span class="va">houston_plans</span>, <span class="va">pct_hisp</span>, sort<span class="op">=</span><span class="cn">F</span>, type<span class="op">=</span><span class="st">"distr_qtys"</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">houston_plans</span>, <span class="va">pct_hisp</span>, sort<span class="op">=</span><span class="cn">F</span>, type<span class="op">=</span><span class="st">"distr_qtys"</span><span class="op">)</span></code></pre></div>
 <p><img src="tidy-redist_files/figure-html/unnamed-chunk-11-3.png" width="700"></p>
 <p>We can also re-index the plans back to the original, un-merged map.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
@@ -408,18 +408,18 @@
 <span class="co">#&gt; # A tibble: 606 x 9</span>
 <span class="co">#&gt;    draw  district total_pop pop_overlap  comp pct_hisp pct_black pct_white</span>
 <span class="co">#&gt;    &lt;fct&gt; &lt;ord&gt;        &lt;dbl&gt;       &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;</span>
-<span class="co">#&gt;  1 &lt;ref&gt; 2           705967       1       874    0.273    0.0907     0.548</span>
-<span class="co">#&gt;  2 &lt;ref&gt; 7           699765       1       874    0.271    0.107      0.509</span>
-<span class="co">#&gt;  3 &lt;ref&gt; 9           697970       1       874    0.340    0.382      0.139</span>
-<span class="co">#&gt;  4 &lt;ref&gt; 18          690022       1       874    0.344    0.405      0.201</span>
-<span class="co">#&gt;  5 &lt;ref&gt; 22          701696       1       874    0.223    0.119      0.482</span>
-<span class="co">#&gt;  6 &lt;ref&gt; 29          695465       1       874    0.729    0.0993     0.147</span>
-<span class="co">#&gt;  7 1     22          665633       0.541   370    0.311    0.196      0.432</span>
-<span class="co">#&gt;  8 1     18          724768       0.541   370    0.285    0.163      0.449</span>
-<span class="co">#&gt;  9 1     9           723278       0.541   370    0.343    0.278      0.252</span>
-<span class="co">#&gt; 10 1     7           718261       0.541   370    0.417    0.176      0.318</span>
+<span class="co">#&gt;  1 &lt;ref&gt; 2           705967       1     0.319    0.273    0.0907     0.548</span>
+<span class="co">#&gt;  2 &lt;ref&gt; 7           699765       1     0.319    0.271    0.107      0.509</span>
+<span class="co">#&gt;  3 &lt;ref&gt; 9           697970       1     0.319    0.340    0.382      0.139</span>
+<span class="co">#&gt;  4 &lt;ref&gt; 18          690022       1     0.319    0.344    0.405      0.201</span>
+<span class="co">#&gt;  5 &lt;ref&gt; 22          701696       1     0.319    0.223    0.119      0.482</span>
+<span class="co">#&gt;  6 &lt;ref&gt; 29          695465       1     0.319    0.729    0.0993     0.147</span>
+<span class="co">#&gt;  7 1     29          702778       0.509 0.664    0.432    0.240      0.298</span>
+<span class="co">#&gt;  8 1     2           683952       0.509 0.664    0.309    0.115      0.468</span>
+<span class="co">#&gt;  9 1     18          693833       0.509 0.664    0.359    0.260      0.259</span>
+<span class="co">#&gt; 10 1     9           718925       0.509 0.664    0.378    0.228      0.319</span>
 <span class="co">#&gt; # … with 596 more rows, and 1 more variable: pct_min &lt;dbl&gt;</span>
-<span class="fu"><a href="https://r-spatial.github.io/sf/reference/plot.html">plot</a></span><span class="op">(</span><span class="va">houston_orig_plans</span>, type<span class="op">=</span><span class="st">"plan"</span>, draw<span class="op">=</span><span class="fl">5</span>, geom<span class="op">=</span><span class="va">houston_area</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">houston_orig_plans</span>, type<span class="op">=</span><span class="st">"plan"</span>, draw<span class="op">=</span><span class="fl">5</span>, geom<span class="op">=</span><span class="va">houston_area</span><span class="op">)</span></code></pre></div>
 <p><img src="tidy-redist_files/figure-html/unnamed-chunk-12-1.png" width="700"></p>
 </div>
 <div id="all-together" class="section level1">
@@ -438,7 +438,7 @@
     <span class="fu"><a href="../reference/match_numbers.html">match_numbers</a></span><span class="op">(</span><span class="va">houston</span><span class="op">$</span><span class="va">cd</span><span class="op">)</span> <span class="op">%&gt;%</span>
     <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>pct_hisp <span class="op">=</span> <span class="fu"><a href="../reference/redist.group.percent.html">group_frac</a></span><span class="op">(</span><span class="va">houston</span>, <span class="va">hvap</span>, <span class="va">vap</span><span class="op">)</span><span class="op">)</span>
 
-<span class="fu"><a href="https://r-spatial.github.io/sf/reference/plot.html">plot</a></span><span class="op">(</span><span class="va">houston_plans</span>, <span class="va">pct_hisp</span>, type<span class="op">=</span><span class="st">"distr_qtys"</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">houston_plans</span>, <span class="va">pct_hisp</span>, type<span class="op">=</span><span class="st">"distr_qtys"</span><span class="op">)</span></code></pre></div>
 <p><img src="tidy-redist_files/figure-html/unnamed-chunk-13-1.png" width="700"></p>
 </div>
 <div class="footnotes">
