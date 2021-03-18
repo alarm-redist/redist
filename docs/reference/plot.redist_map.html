@@ -105,6 +105,9 @@
     <li>
       <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
     </li>
+    <li>
+      <a href="../articles/tidy-redist.html">Tidy `redist`</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -141,7 +144,7 @@
     </div>
 
     <pre class="usage"><span class='co'># S3 method for redist_map</span>
-<span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>y</span>, <span class='va'>...</span><span class='op'>)</span></pre>
+<span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='va'>x</span>, val <span class='op'>=</span> <span class='cn'>NULL</span>, <span class='va'>...</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -151,7 +154,7 @@
       <td><p>the <code>redist_map</code> object</p></td>
     </tr>
     <tr>
-      <th>y</th>
+      <th>val</th>
       <td><p><code><a href='https://dplyr.tidyverse.org/reference/dplyr_data_masking.html'>&lt;data-masking&gt;</a></code> the optional value to use to
 color the units. If absent, <code><a href='redist.map.html'>redist.map</a></code> will be called;
 otherwise <code><a href='redist.choropleth.html'>redist.choropleth</a></code> will be called.</p></td>

@@ -7,12 +7,12 @@
 \usage{
 redist.identify.cores(
   adj,
-  adjacency,
   plan,
-  district_membership,
   within = 1,
   focus = NULL,
-  simplify = TRUE
+  simplify = TRUE,
+  adjacency,
+  district_membership
 )
 
 make_cores(.data = get0(".", parent.frame()), within = 1, focus = NULL)
@@ -20,11 +20,7 @@ make_cores(.data = get0(".", parent.frame()), within = 1, focus = NULL)
 \arguments{
 \item{adj}{zero indexed adjacency list.}
 
-\item{adjacency}{Deprecated, use adj. A zero indexed adjacency list.}
-
 \item{plan}{An integer vector or matrix column of district assignments.}
-
-\item{district_membership}{Deprecated, use plan. An integer vector or matrix column of district assignments.}
 
 \item{within}{the core is defined to be at least this number of steps within
 district boundaries}
@@ -32,6 +28,10 @@ district boundaries}
 \item{focus}{Optional. Integer. A single district to focus on.}
 
 \item{simplify}{Optional. Logical. Whether to return extra information or just grouping ID.}
+
+\item{adjacency}{Deprecated, use adj. A zero indexed adjacency list.}
+
+\item{district_membership}{Deprecated, use plan. An integer vector or matrix column of district assignments.}
 
 \item{.data}{a \code{\link{redist_map}} object}
 }

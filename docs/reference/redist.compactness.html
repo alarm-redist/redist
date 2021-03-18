@@ -108,6 +108,9 @@ and the log of the Spanning Trees." />
     <li>
       <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
     </li>
+    <li>
+      <a href="../articles/tidy-redist.html">Tidy `redist`</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -276,8 +279,12 @@ where A is the area function, the district is d, and P is the perimeter function
 <p>The Length Width ratio is computed as $$\frac{length}{width}$$ where length
 is the shorter of the maximum x distance and the maximum y distance. Width is
 the longer of the two values.</p>
-<p>The Reock score is computed as $$\frac{A(d)}{A(CVH)}$$ where A is the area
-function, d is the district, and CVH is the convex hull of the district.</p>
+<p>The Convex Hull score is computed as $$\frac{A(d)}{A(CVH)}$$ where A is the area
+function, d is the district, and CVH is the convex hull of the district. All 
+values are between 0 and 1, where where larger values are more compact.</p>
+<p>The Reock score is computed as $$\frac{A(d)}{A(MBC)}$$ where A is the area
+function, d is the district, and MBC is the minimum bounding circle of the 
+district. All values are between 0 and 1, where larger values are more compact.</p>
 <p>The Boyce Clark Index is computed as $$1 - \sum_{1}^{16}\{\frac{|\frac{r_i}{\sum_ir_i}*100-6.25 |\}}{200}$$.
 The \(r_i\) are the distances of the 16 radii computed from the geometric
 centroid of the shape to the most outward point of the shape that intersects

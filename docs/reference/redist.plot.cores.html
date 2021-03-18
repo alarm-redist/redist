@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Identify Cores of a District (Heuristic) — redist.identify.cores • redist</title>
+<title>Plot Cores — redist.plot.cores • redist</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,11 +46,8 @@
 
 
 
-<meta property="og:title" content="Identify Cores of a District (Heuristic) — redist.identify.cores" />
-<meta property="og:description" content="Creates a grouping ID to unite geographies and perform analysis on a smaller
-set of precincts. It identifies all precincts more than within edges
-of a district district border Each precinct more than within of
-another district gets it own group." />
+<meta property="og:title" content="Plot Cores — redist.plot.cores" />
+<meta property="og:description" content="Plot Cores" />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -137,72 +134,38 @@ another district gets it own group." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Identify Cores of a District (Heuristic)</h1>
-    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/cores.R'><code>R/cores.R</code></a>, <a href='https://github.com/kosukeimai/redist/blob/master/R/tidy.R'><code>R/tidy.R</code></a></small>
-    <div class="hidden name"><code>redist.identify.cores.Rd</code></div>
+    <h1>Plot Cores</h1>
+    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/core_plot.R'><code>R/core_plot.R</code></a></small>
+    <div class="hidden name"><code>redist.plot.cores.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Creates a grouping ID to unite geographies and perform analysis on a smaller
-set of precincts. It identifies all precincts more than <code>within</code> edges
-of a district district border Each precinct more than <code>within</code> of
-another district gets it own group.</p>
+    <p>Plot Cores</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.identify.cores</span><span class='op'>(</span>
-  <span class='va'>adj</span>,
-  <span class='va'>plan</span>,
-  within <span class='op'>=</span> <span class='fl'>1</span>,
-  focus <span class='op'>=</span> <span class='cn'>NULL</span>,
-  simplify <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  <span class='va'>adjacency</span>,
-  <span class='va'>district_membership</span>
-<span class='op'>)</span>
-
-<span class='fu'>make_cores</span><span class='op'>(</span>.data <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/exists.html'>get0</a></span><span class='op'>(</span><span class='st'>"."</span>, <span class='fu'><a href='https://rdrr.io/r/base/sys.parent.html'>parent.frame</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>, within <span class='op'>=</span> <span class='fl'>1</span>, focus <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>redist.plot.cores</span><span class='op'>(</span><span class='va'>shp</span>, <span class='va'>plan</span>, <span class='va'>core</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>adj</th>
-      <td><p>zero indexed adjacency list.</p></td>
+      <th>shp</th>
+      <td><p>A SpatialPolygonsDataFrame or sf object. Required.</p></td>
     </tr>
     <tr>
       <th>plan</th>
-      <td><p>An integer vector or matrix column of district assignments.</p></td>
+      <td><p>A numeric vector with one entry for each precinct in shp.
+Used to color the districts. Required.</p></td>
     </tr>
     <tr>
-      <th>within</th>
-      <td><p>the core is defined to be at least this number of steps within
-district boundaries</p></td>
-    </tr>
-    <tr>
-      <th>focus</th>
-      <td><p>Optional. Integer. A single district to focus on.</p></td>
-    </tr>
-    <tr>
-      <th>simplify</th>
-      <td><p>Optional. Logical. Whether to return extra information or just grouping ID.</p></td>
-    </tr>
-    <tr>
-      <th>adjacency</th>
-      <td><p>Deprecated, use adj. A zero indexed adjacency list.</p></td>
-    </tr>
-    <tr>
-      <th>district_membership</th>
-      <td><p>Deprecated, use plan. An integer vector or matrix column of district assignments.</p></td>
-    </tr>
-    <tr>
-      <th>.data</th>
-      <td><p>a <code><a href='redist_map.html'>redist_map</a></code> object</p></td>
+      <th>core</th>
+      <td><p>Required. integer vector produced by <code><a href='redist.identify.cores.html'>redist.identify.cores()</a></code>.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>integer vector if simplify is false. Otherwise returns a tibble with the grouping
-variable and additional information.</p>
+    <p>ggplot</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

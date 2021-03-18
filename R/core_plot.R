@@ -33,7 +33,7 @@ redist.plot.cores <- function(shp, plan, core) {
       summarize(ct = n(),
                 geometry = st_union(geometry),
                 .groups = 'drop') %>%
-      mutate(ct = ifelse(ct == 1, NA_integer_, ct)) %>%
+      mutate(ct = ifelse(.data$ct == 1, NA_integer_, .data$ct)) %>%
       suppressMessages()
 
   shp_cores %>%

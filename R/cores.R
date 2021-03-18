@@ -20,8 +20,8 @@
 #'
 #' @concept prepare
 #' @export
-redist.identify.cores <- function(adj, adjacency, plan, district_membership,
-                                  within = 1, focus = NULL, simplify = TRUE){
+redist.identify.cores <- function(adj, plan, within = 1, focus = NULL, simplify = TRUE,
+                                  adjacency, district_membership){
   if(!missing(adjacency)){
     adj <- adjacency
     .Deprecated(new = 'adj', old = 'adjacency')

@@ -4,7 +4,7 @@
 \alias{plot.redist_map}
 \title{Plot a \code{redist_map}}
 \usage{
-\method{plot}{redist_map}(x, val, ...)
+\method{plot}{redist_map}(x, val = NULL, ...)
 }
 \arguments{
 \item{x}{the \code{redist_map} object}

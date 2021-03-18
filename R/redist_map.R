@@ -377,10 +377,11 @@ print.redist_map = function(x, ...) {
 #' @concept prepare
 #' @concept plot
 #' @export
-plot.redist_map = function(x, val, ...) {
+plot.redist_map = function(x, val=NULL, ...) {
     if (!inherits(x, "sf")) stop("Plotting requires a shapefile.")
 
-    if (missing(val)) {
+    val = rlang::enquo(val)
+    if (rlang::quo_is_null(val)) {
         existing = get_existing(x)
         if (!is.null(existing)) {
             redist.map(x, get_adj(x), plan=existing, ...) +
@@ -390,7 +391,7 @@ plot.redist_map = function(x, val, ...) {
                 ggplot2::theme_void()
         }
     } else {
-        redist.choropleth(shp = x, fill = !!rlang::enquo(val), ...)
+        redist.choropleth(shp = x, fill = !!val, ...)
     }
 }
 
