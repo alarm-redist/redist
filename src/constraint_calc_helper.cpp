@@ -1011,7 +1011,7 @@ List calc_psipartisan(arma::vec current_dists,
   return out;
 }
 
-// Function to calculate the direct limiting constraint
+
 // Function to calculate the direct limiting constraint
 List calc_psiminority(arma::vec current_dists,
                       arma::vec new_dists,
@@ -1021,8 +1021,8 @@ List calc_psiminority(arma::vec current_dists,
                       NumericVector minorityprop){
 
   int nminority = minorityprop.size();
-  double psi_old;
-  double psi_new;
+  double psi_old = 0.0;
+  double psi_new = 0.0;
   
   
   NumericVector mins_curr(ndists);
@@ -1063,6 +1063,79 @@ List calc_psiminority(arma::vec current_dists,
   List out;
   out["minority_new_psi"] = psi_new;
   out["minority_old_psi"] = psi_old;
+  
+  return out;
+}
+
+// Function to calculate the direct limiting constraint
+List calc_psihinge(arma::vec current_dists,
+                      arma::vec new_dists,
+                      NumericVector pops,
+                      NumericVector grouppop,
+                      int ndists,
+                      NumericVector minorityprop){
+  
+  int nminority = minorityprop.size();
+  double psi_old = 0.0;
+  double psi_new = 0.0;
+  double tgt_old, tgt_new, diff_old, diff_new, diff_old_check, diff_new_check;
+  
+  
+  NumericVector mins_curr(ndists);
+  NumericVector mins_new(ndists);
+  NumericVector pops_curr(ndists);
+  NumericVector pops_new(ndists);
+  
+  // Step 1: Aggregate to District Level Pops
+  for(int r = 0; r < current_dists.size(); r++){
+    //current
+    mins_curr(current_dists(r)) += grouppop(r);
+    pops_curr(current_dists(r)) += pops(r);
+    // new
+    mins_new(new_dists(r)) += grouppop(r);
+    pops_new(new_dists(r)) += pops(r);
+  }
+  
+  // Step 2: Get sort proportions
+  NumericVector minprop_curr(ndists);
+  NumericVector minprop_new(ndists);
+  
+  for(int i = 0; i < ndists; i++){
+    minprop_curr(i) = mins_curr(i)/pops_curr(i);
+    minprop_new(i) = mins_new(i)/pops_new(i);
+  }
+  
+  
+  // Estimate psi
+  for(int i = 0; i < ndists; i++){
+    diff_old = 1;
+    diff_new = 1;
+    
+    for(int j = 0; j < nminority; j++){
+      diff_old_check = std::fabs(minorityprop(j) - minprop_curr(i));
+      diff_new_check = std::fabs(minorityprop(j) - minprop_new(i));
+      
+      if(diff_new_check <= diff_new){
+        diff_new = diff_new_check;
+        tgt_new = minorityprop(j);
+      }
+      if(diff_old_check <= diff_old){
+        diff_old = diff_old_check;
+        tgt_old = minorityprop(j);
+      }
+      
+    }
+    
+      psi_old += std::sqrt(std::max(0.0, tgt_old - minprop_curr(i)));
+      psi_new += std::sqrt(std::max(0.0, tgt_new - minprop_new(i)));
+  }
+
+  
+  
+  // Create return object
+  List out;
+  out["hinge_new_psi"] = psi_new;
+  out["hinge_old_psi"] = psi_old;
   
   return out;
 }
