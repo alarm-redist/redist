@@ -15,3 +15,4 @@ Meta
 .Rproj.user
 src/redist.dll
 inst/enumpart/enumpart.exe
+src-i386/
