@@ -13,3 +13,5 @@ doc
 docs/articles/*_cache/*
 Meta
 .Rproj.user
+src/redist.dll
+inst/enumpart/enumpart.exe
