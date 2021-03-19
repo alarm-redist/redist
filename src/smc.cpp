@@ -18,6 +18,7 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                double beta_sq, const uvec &current, int n_current,
                double beta_vra, double tgt_min, double tgt_other,
                double pow_vra, const uvec &min_pop,
+               double beta_vra_hinge, const vec &tgts_min,
                double beta_inc, const uvec &incumbents,
                vec &lp, double thresh,
                double alpha, double pop_temper, int verbosity) {
@@ -48,7 +49,6 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     cum_wgt.fill(1.0 / N);
     cum_wgt = cumsum(cum_wgt);
     for (int ctr = 1; ctr < n_distr; ctr++) {
-        R_CheckUserInterrupt();
         if (verbosity >= 1)
             Rcout << "Making split " << ctr << " of " << n_distr-1 << "\n";
 
@@ -67,6 +67,7 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
         cum_wgt = get_wgts(districts, n_distr, ctr, alpha, lp, pop,
                            beta_sq, current, n_current,
                            beta_vra, tgt_min, tgt_other, pow_vra, min_pop,
+                           beta_vra_hinge, tgts_min,
                            beta_inc, incumbents, verbosity);
 
         Rcpp::checkUserInterrupt();
@@ -93,6 +94,7 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr,
              double beta_sq, const uvec &current, int n_current,
              double beta_vra, double tgt_min, double tgt_other,
              double pow_vra, const uvec &min_pop,
+             double beta_vra_hinge, const vec &tgts_min,
              double beta_inc, const uvec &incumbents, int verbosity) {
     int V = districts.n_rows;
     int N = districts.n_cols;
@@ -104,7 +106,9 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr,
         if (beta_vra != 0)
             lp[i] += beta_vra * eval_vra(districts.col(i), distr_ctr, tgt_min,
                                          tgt_other, pow_vra, pop, min_pop);
-
+        if (beta_vra_hinge != 0)
+            lp[i] += beta_vra_hinge * eval_vra_hinge(districts.col(i), distr_ctr,
+                                                     tgts_min, pop, min_pop);
         if (beta_inc != 0)
             lp[i] += beta_inc * eval_inc(districts.col(i), distr_ctr, incumbents);
     }

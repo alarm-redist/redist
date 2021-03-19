@@ -89,8 +89,8 @@ max_dev <- function(districts, pop, n_distr) {
     .Call(`_redist_max_dev`, districts, pop, n_distr)
 }
 
-ms_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_inc, incumbents, thresh, k, verbosity) {
-    .Call(`_redist_ms_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_inc, incumbents, thresh, k, verbosity)
+ms_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_vra_hinge, tgts_min, beta_inc, incumbents, thresh, k, verbosity) {
+    .Call(`_redist_ms_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_vra_hinge, tgts_min, beta_inc, incumbents, thresh, k, verbosity)
 }
 
 agg_p2d <- function(dm, vote, nd) {
@@ -193,8 +193,8 @@ rsg <- function(adj_list, population, Ndistrict, target_pop, thresh, maxiter) {
     .Call(`_redist_rsg`, adj_list, population, Ndistrict, target_pop, thresh, maxiter)
 }
 
-smc_plans <- function(N, l, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_inc, incumbents, lp, thresh, alpha, pop_temper = 0.1, verbosity = 1L) {
-    .Call(`_redist_smc_plans`, N, l, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_inc, incumbents, lp, thresh, alpha, pop_temper, verbosity)
+smc_plans <- function(N, l, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_vra_hinge, tgts_min, beta_inc, incumbents, lp, thresh, alpha, pop_temper = 0.1, verbosity = 1L) {
+    .Call(`_redist_smc_plans`, N, l, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_vra_hinge, tgts_min, beta_inc, incumbents, lp, thresh, alpha, pop_temper, verbosity)
 }
 
 sample_partition <- function(aList, aMat, num_partitions, num_samples, threads = 1L) {

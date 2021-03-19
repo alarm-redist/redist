@@ -22,6 +22,11 @@ double sq_entropy(const subview_col<uword> &districts, const uvec &current,
  */
 double eval_vra(const subview_col<uword> &districts, int distr, double tgt_min,
                 double tgt_other, double pow_vra, const uvec &pop, const uvec &min_pop);
+/*
+ * Compute the new, hinge VRA penalty for district `distr`
+ */
+double eval_vra_hinge(const subview_col<uword> &districts, int distr,
+                      const vec &tgts_min, const uvec &pop, const uvec &min_pop);
 
 /*
  * Compute the incumbent-preserving penalty for district `distr`

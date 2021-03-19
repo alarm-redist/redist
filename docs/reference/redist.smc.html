@@ -108,6 +108,9 @@ boundary constraints." />
     <li>
       <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
     </li>
+    <li>
+      <a href="../articles/tidy-redist.html">Tidy `redist`</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -336,7 +339,23 @@ districts.</p></li>
 <li><p><code>current</code>, a vector containing district assignments for
 the current map.</p></li>
 </ul></li>
-<li><p><code>vra</code>: a list with five entries:</p><ul>
+<li><p><code>vra</code>: a list with three entries:</p><ul>
+<li><p><code>strength</code>, a number controlling the strength of the Voting Rights Act
+(VRA) constraint, with higher values prioritizing majority-minority districts
+over other considerations.</p></li>
+<li><p><code>tgts_min</code>, the target percentage(s) of minority voters in minority
+opportunity districts. Defaults to <code><a href='https://rdrr.io/r/base/c.html'>c(0.55)</a></code>.</p></li>
+<li><p><code>min_pop</code>, A vector containing the minority population of each
+geographic unit.</p></li>
+</ul></li>
+<li><p><code>incumbency</code>: a list with two entries:</p><ul>
+<li><p><code>strength</code>, a number controlling the tendency of the generated districts
+to avoid pairing up incumbents.</p></li>
+<li><p><code>incumbents</code>, a vector of precinct indices, one for each incumbent's
+home address.</p></li>
+</ul></li>
+<li><p><code>vra_old</code>: a list with five entries, which may be set up using
+<code><a href='redist.constraint.helper.html'>redist.constraint.helper</a></code>:</p><ul>
 <li><p><code>strength</code>, a number controlling the strength of the Voting Rights Act
 (VRA) constraint, with higher values prioritizing majority-minority districts
 over other considerations.</p></li>
@@ -350,14 +369,23 @@ minority percentage; higher values are more tolerant. Defaults to 1.5</p></li>
 <li><p><code>min_pop</code>, A vector containing the minority population of each
 geographic unit.</p></li>
 </ul></li>
-<li><p><code>incumbency</code>: a list with two entries:</p><ul>
-<li><p><code>strength</code>, a number controlling the tendency of the generated districts
-to avoid pairing up incumbents.</p></li>
-<li><p><code>incumbents</code>, a vector of precinct indices, one for each incumbent's
-home address.</p></li>
-</ul></li>
 </ul>
 
+<p>All constraints are fed into a Gibbs measure, with coefficients on each
+constraint set by the corresponding <code>strength</code> parameters.
+The <code>status_quo</code> constraint adds a term measuring the variation of
+information distance between the plan and the reference, rescaled to [0, 1].
+The <code>vra</code> constraint takes a list of target minority percentages. It
+matches each district to its nearest target percentage, and then applies a
+penalty of the form \(\sqrt{max(0, tgt - minpct)}\), summing across
+districts. This penalizes districts which are below their target population.
+The <code>incumbency</code> constraint adds a term counting the number of districts
+containing paired-up incumbents.
+The <code>vra_old</code> constraint adds a term of the form
+\((|tgtvramin-minpct||tgtvraother-minpct|)^{powvra})\), which
+encourages districts to have minority percentages near either <code>tgt_vra_min</code>
+or <code>tgt_vra_other</code>. This can be visualized with
+<code><a href='redist.plot.penalty.html'>redist.plot.penalty</a></code>.</p>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
     <p>McCartan, C., &amp; Imai, K. (2020). Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans.

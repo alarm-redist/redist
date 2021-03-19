@@ -20,6 +20,7 @@ umat ms_plans(int N, List l, const uvec init, const uvec &counties, const uvec &
               double beta_sq, const uvec &current, int n_current,
               double beta_vra, double tgt_min, double tgt_other,
               double pow_vra, const uvec &min_pop,
+              double beta_vra_hinge, const vec &tgts_min,
               double beta_inc, const uvec &incumbents,
               double thresh, int k, int verbosity) {
     Graph g = list_to_graph(l);
@@ -53,7 +54,6 @@ umat ms_plans(int N, List l, const uvec init, const uvec &counties, const uvec &
     int refresh = std::max(N / 20, 1);
     int n_accept = 0;
     for (int i = 1; i < N; i++) {
-        R_CheckUserInterrupt();
         districts.col(i) = districts.col(i - 1); // copy over old map
 
         // make the proposal
@@ -87,10 +87,12 @@ umat ms_plans(int N, List l, const uvec init, const uvec &counties, const uvec &
         prop_lp -= calc_gibbs_tgt(districts.col(i), n_distr, V, distr_1, distr_2,
                                   pop, beta_sq, current, n_current, beta_vra,
                                   tgt_min, tgt_other, pow_vra, min_pop,
+                                  beta_vra_hinge, tgts_min,
                                   beta_inc, incumbents);
         prop_lp += calc_gibbs_tgt(districts.col(i-1), n_distr, V, distr_1, distr_2,
                                   pop, beta_sq, current, n_current, beta_vra,
                                   tgt_min, tgt_other, pow_vra, min_pop,
+                                  beta_vra_hinge, tgts_min,
                                   beta_inc, incumbents);
 
         double alpha = exp(prop_lp);
@@ -123,6 +125,7 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
                       const uvec &current, int n_current,
                       double beta_vra, double tgt_min, double tgt_other,
                       double pow_vra, const uvec &min_pop,
+                      double beta_vra_hinge, const vec &tgts_min,
                       double beta_inc, const uvec &incumbents) {
     double log_tgt = 0;
 
@@ -136,7 +139,11 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
             eval_vra(plan, distr_1, tgt_min, tgt_other, pow_vra, pop, min_pop) +
             eval_vra(plan, distr_2, tgt_min, tgt_other, pow_vra, pop, min_pop)
         );
-
+    if (beta_vra_hinge != 0)
+        log_tgt += beta_vra_hinge * (
+            eval_vra_hinge(plan, distr_1, tgts_min, pop, min_pop) +
+            eval_vra_hinge(plan, distr_2, tgts_min, pop, min_pop)
+        );
     if (beta_inc != 0)
         log_tgt += beta_inc * (
             eval_inc(plan, distr_1, incumbents) +

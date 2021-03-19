@@ -40,7 +40,20 @@
 #'   districts.
 #'   * \code{current}, a vector containing district assignments for
 #'   the current map.
-#' * \code{vra}: a list with five entries, which may be set up using
+#' * \code{vra}: a list with three entries:
+#'   * \code{strength}, a number controlling the strength of the Voting Rights Act
+#'   (VRA) constraint, with higher values prioritizing majority-minority districts
+#'   over other considerations.
+#'   * \code{tgts_min}, the target percentage(s) of minority voters in minority
+#'   opportunity districts. Defaults to \code{c(0.55)}.
+#'   * \code{min_pop}, A vector containing the minority population of each
+#'   geographic unit.
+#' * \code{incumbency}: a list with two entries:
+#'   * \code{strength}, a number controlling the tendency of the generated districts
+#'   to avoid pairing up incumbents.
+#'   * \code{incumbents}, a vector of precinct indices, one for each incumbent's
+#'   home address.
+#' * \code{vra_old}: a list with five entries, which may be set up using
 #'   \code{\link{redist.constraint.helper}}:
 #'   * \code{strength}, a number controlling the strength of the Voting Rights Act
 #'   (VRA) constraint, with higher values prioritizing majority-minority districts
@@ -54,11 +67,22 @@
 #'   minority percentage; higher values are more tolerant. Defaults to 1.5
 #'   * \code{min_pop}, A vector containing the minority population of each
 #'   geographic unit.
-#' * \code{incumbency}: a list with two entries:
-#'   * \code{strength}, a number controlling the tendency of the generated districts
-#'   to avoid pairing up incumbents.
-#'   * \code{incumbents}, a vector of precinct indices, one for each incumbent's
-#'   home address.
+#'
+#' All constraints are fed into a Gibbs measure, with coefficients on each
+#' constraint set by the corresponding \code{strength} parameters.
+#' The \code{status_quo} constraint adds a term measuring the variation of
+#' information distance between the plan and the reference, rescaled to \[0, 1\].
+#' The \code{vra} constraint takes a list of target minority percentages. It
+#' matches each district to its nearest target percentage, and then applies a
+#' penalty of the form \eqn{\sqrt{max(0, tgt - minpct)}}, summing across
+#' districts. This penalizes districts which are below their target population.
+#' The \code{incumbency} constraint adds a term counting the number of districts
+#' containing paired-up incumbents.
+#' The \code{vra_old} constraint adds a term of the form
+#' \eqn{(|tgtvramin-minpct||tgtvraother-minpct|)^{powvra})}, which
+#' encourages districts to have minority percentages near either \code{tgt_vra_min}
+#' or \code{tgt_vra_other}. This can be visualized with
+#' \code{\link{redist.plot.penalty}}.
 #'
 #'
 #' @param map A \code{\link{redist_map}} object.
@@ -151,18 +175,8 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
     }
 
     # Other constraints
-    if (is.null(constraints$status_quo))
-        constraints$status_quo = list(strength=0, current=rep(1, V))
-    if (is.null(constraints$vra))
-        constraints$vra = list(strength=0, tgt_vra_min=0.55, tgt_vra_other=0.25,
-                               pow_vra=1.5, min_pop=rep(0, V))
-    if (is.null(constraints$incumbency))
-        constraints$incumbency = list(strength=0, incumbents=integer())
-
-    if (length(constraints$vra$min_pop) != V)
-        stop("Length of minority population vector must match the number of units.")
-    if (min(constraints$status_quo$current) == 0)
-        constraints$status_quo$current = constraints$status_quo$current + 1
+    proc = process_smc_ms_constr(constraints, V)
+    constraints = proc$constraints
     n_current = max(constraints$status_quo$current)
 
     verbosity = 1
@@ -177,8 +191,9 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
     plans = smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],
                       pop_bounds[1], pop_bounds[3], compactness,
                       constraints$status_quo$strength, constraints$status_quo$current, n_current,
-                      constraints$vra$strength, constraints$vra$tgt_vra_min,
-                      constraints$vra$tgt_vra_other, constraints$vra$pow_vra, constraints$vra$min_pop,
+                      constraints$vra_old$strength, constraints$vra_old$tgt_vra_min,
+                      constraints$vra_old$tgt_vra_other, constraints$vra_old$pow_vra, proc$min_pop,
+                      constraints$vra$strength, constraints$vra$tgts_min,
                       constraints$incumbency$strength, constraints$incumbency$incumbents,
                       lp, adapt_k_thresh, seq_alpha, pop_temper, verbosity);
 
@@ -214,6 +229,46 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
                      adapt_k_thresh = adapt_k_thresh,
                      seq_alpha = seq_alpha,
                      pop_temper = pop_temper)
+}
+
+
+# Helper constraint processor.
+# Constraint defaults contained HERE.
+#
+# @param constraints passed into `redist_smc` or `redist_ms`
+#
+# @return a list with new `constraints` and a minority population vector `min_pop`
+process_smc_ms_constr = function(constraints, V) {
+    defaults = list(
+        status_quo = list(strength=0, current=rep(1, V)),
+        vra = list(strength=0, tgts_min=0.55, min_pop=NULL),
+        vra_old = list(strength=0, tgt_vra_min=0.55, tgt_vra_other=0.25,
+                       pow_vra=1.5, min_pop=NULL),
+        incumbency = list(strength=0, incumbents=integer())
+    )
+
+    for (type in constraints) {
+        for (el in constraints[[type]]) {
+            defaults[[type]][[el]] = constraints[[type]][[el]]
+        }
+    }
+
+    if (min(defaults$status_quo$current) == 0)
+        defaults$status_quo$current = defaults$status_quo$current + 1
+
+    min_pop = rep(0, V)
+    if (defaults$vra$strength > 0) {
+        if (defaults$vra_old$strength > 0)
+            stop("Specify one of `vra` or `vra_old` constraints, not both")
+        min_pop = defaults$vra$min_pop
+    } else if (defaults$vra_old$strength > 0) {
+        min_pop = defaults$vra_old$min_pop
+    }
+    if (length(min_pop) != V)
+        stop("Length of minority population vector must match the number of units.")
+
+    list(constraints = defaults,
+         min_pop = min_pop)
 }
 
 #' Helper function to truncate importance weights

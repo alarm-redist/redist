@@ -4,16 +4,18 @@
 \alias{plot.redist_map}
 \title{Plot a \code{redist_map}}
 \usage{
-\method{plot}{redist_map}(x, val = NULL, ...)
+\method{plot}{redist_map}(x, fill = NULL, ...)
 }
 \arguments{
 \item{x}{the \code{redist_map} object}
 
-\item{val}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the optional value to use to
-color the units. If absent, \code{\link{redist.map}} will be called;
-otherwise \code{\link{redist.choropleth}} will be called.}
+\item{fill}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} If absent,
+\code{\link{redist.map}} will be called; if present, will be used to color
+the map units using \code{\link{redist.choropleth}}. If using data masking,
+may need to explicitly name argument \code{fill=...} to avoid S3 generic
+issues.}
 
-\item{...}{passed on to underlying functions}
+\item{...}{passed on to the underlying functions.}
 }
 \description{
 Plot a \code{redist_map}
