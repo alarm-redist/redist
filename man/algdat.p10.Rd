@@ -29,6 +29,10 @@ partitions of the 25 precincts into three contiguous congressional districts,
 conditional on the congressional districts falling within 10\% of population
 parity.
 }
+\details{
+The cdmat entry is very important, as it is the full enumeration of possible districts
+within 10\% population parity, useful for initial validation exercises.
+}
 \examples{
 \dontrun{
 data(algdat.p10)

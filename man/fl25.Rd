@@ -2,7 +2,7 @@
 % Please edit documentation in R/data.R
 \name{fl25}
 \alias{fl25}
-\title{Florida 25 Precinct File}
+\title{Florida 25 Precinct Shape File}
 \format{
 sf data.frame containing columns for useful data related to the
 redistricting process, subsetted from real data in Florida, and sf geometry column.
@@ -26,6 +26,11 @@ data("fl25")
 }
 \description{
 This data set contains the 25 Precinct shapefile and related data for each precinct.
+}
+\details{
+It is a random subset of Florida's precincts, introduced by Fifield et al. (2020).
+This shape file is the corresponding geography for the algdat data included within the package.
+This is generally useful for demonstrating basic algorithms locally.
 }
 \examples{
 \dontrun{
