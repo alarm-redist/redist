@@ -29,7 +29,21 @@
 #'   districts.
 #'   * \code{current}, a vector containing district assignments for
 #'   the current map.
-#' * \code{vra}: a list with five entries:
+#' * \code{vra}: a list with three entries:
+#'   * \code{strength}, a number controlling the strength of the Voting Rights Act
+#'   (VRA) constraint, with higher values prioritizing majority-minority districts
+#'   over other considerations.
+#'   * \code{tgts_min}, the target percentage(s) of minority voters in minority
+#'   opportunity districts. Defaults to \code{c(0.55)}.
+#'   * \code{min_pop}, A vector containing the minority population of each
+#'   geographic unit.
+#' * \code{incumbency}: a list with two entries:
+#'   * \code{strength}, a number controlling the tendency of the generated districts
+#'   to avoid pairing up incumbents.
+#'   * \code{incumbents}, a vector of precinct indices, one for each incumbent's
+#'   home address.
+#' * \code{vra_old}: a list with five entries, which may be set up using
+#'   \code{\link{redist.constraint.helper}}:
 #'   * \code{strength}, a number controlling the strength of the Voting Rights Act
 #'   (VRA) constraint, with higher values prioritizing majority-minority districts
 #'   over other considerations.
@@ -42,18 +56,32 @@
 #'   minority percentage; higher values are more tolerant. Defaults to 1.5
 #'   * \code{min_pop}, A vector containing the minority population of each
 #'   geographic unit.
-#' * \code{incumbency}: a list with two entries:
-#'   * \code{strength}, a number controlling the tendency of the generated districts
-#'   to avoid pairing up incumbents.
-#'   * \code{incumbents}, a vector of precinct indices, one for each incumbent's
-#'   home address.
+#'
+#' All constraints are fed into a Gibbs measure, with coefficients on each
+#' constraint set by the corresponding \code{strength} parameters.
+#' The \code{status_quo} constraint adds a term measuring the variation of
+#' information distance between the plan and the reference, rescaled to \[0, 1\].
+#' The \code{vra} constraint takes a list of target minority percentages. It
+#' matches each district to its nearest target percentage, and then applies a
+#' penalty of the form \eqn{\sqrt{max(0, tgt - minpct)}}, summing across
+#' districts. This penalizes districts which are below their target population.
+#' The \code{incumbency} constraint adds a term counting the number of districts
+#' containing paired-up incumbents.
+#' The \code{vra_old} constraint adds a term of the form
+#' \eqn{(|tgtvramin-minpct||tgtvraother-minpct|)^{powvra})}, which
+#' encourages districts to have minority percentages near either \code{tgt_vra_min}
+#' or \code{tgt_vra_other}. This can be visualized with
+#' \code{\link{redist.plot.penalty}}.
+#'
 #'
 #'
 #' @param map A \code{\link{redist_map}} object.
 #' @param nsims The number of samples to draw, including warmup.
 #' @param warmup The number of warmup samples to discard.
 #' @param init_plan The initial state of the map. If not provided, will default to
-#'   the reference map of the \code{map} object.
+#'   the reference map of the \code{map} object, or if none exists, will sample
+#'   a random initial state using \code{\link{redist_smc}}. You can also request
+#'   a random initial state by setting \code{init_plan="sample"}.
 #' @param counties A vector containing county (or other administrative or
 #' geographic unit) labels for each unit, which may be integers ranging from 1
 #' to the number of counties, or a factor or character vector.  If provided, the
@@ -77,7 +105,7 @@
 #'   Recommended.
 #' @param silent Whether to suppress all diagnostic information.
 #'
-#' @return \code{redist_smc} returns an object of class
+#' @return \code{redist_mergesplit} returns an object of class
 #'   \code{\link{redist_plans}} containing the simulated plans.
 #'
 #' @references
@@ -119,7 +147,9 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
         stop("`nsims` must be positive.")
 
     if (is.null(init_plan)) init_plan = as.integer(as.factor(get_existing(map)))
-    if (is.null(init_plan)) stop("Must provide an initial map.")
+    if (is.null(init_plan) || init_plan == "sample") {
+        init_plan = redist_smc(map, nsims, counties, resample=FALSE, silent=TRUE)$plans
+    }
     stopifnot(length(init_plan) == V)
     stopifnot(max(init_plan) == ndists)
 
@@ -137,18 +167,8 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
     }
 
     # Other constraints
-    if (is.null(constraints$status_quo))
-        constraints$status_quo = list(strength=0, current=rep(1, V))
-    if (is.null(constraints$vra))
-        constraints$vra = list(strength=0, tgt_vra_min=0.55, tgt_vra_other=0.25,
-                               pow_vra=1.5, min_pop=rep(0, V))
-    if (is.null(constraints$incumbency))
-        constraints$incumbency = list(strength=0, incumbents=integer())
-
-    if (length(constraints$vra$min_pop) != V)
-        stop("Length of minority population vector must match the number of units.")
-    if (min(constraints$status_quo$current) == 0)
-        constraints$status_quo$current = constraints$status_quo$current + 1
+    proc = process_smc_ms_constr(constraints, V)
+    constraints = proc$constraints
     n_current = max(constraints$status_quo$current)
 
     verbosity = 1
@@ -162,8 +182,9 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
     plans = ms_plans(nsims, adj, init_plan, counties, pop, ndists, pop_bounds[2],
                      pop_bounds[1], pop_bounds[3], compactness,
                      constraints$status_quo$strength, constraints$status_quo$current, n_current,
-                     constraints$vra$strength, constraints$vra$tgt_vra_min,
-                     constraints$vra$tgt_vra_other, constraints$vra$pow_vra, constraints$vra$min_pop,
+                     constraints$vra_old$strength, constraints$vra_old$tgt_vra_min,
+                     constraints$vra_old$tgt_vra_other, constraints$vra_old$pow_vra, proc$min_pop,
+                     constraints$vra$strength, constraints$vra$tgts_min,
                      constraints$incumbency$strength, constraints$incumbency$incumbents,
                      adapt_k_thresh, k, verbosity)
 

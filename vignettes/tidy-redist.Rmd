@@ -66,7 +66,7 @@ We can easily plot this new map, either by congressional district or by any
 other quantity of interest.
 ```{r}
 plot(houston_area, edges=F, centroids=F) # hide the hundreds of graph edges and vertices
-plot(houston_area, hisp/pop)
+plot(houston_area, fill=hisp/pop)
 ```
 
 ## Merging
@@ -80,7 +80,7 @@ congressional districts, if they are provided, to avoid erasing these lines.
 houston_counties = houston_area %>%
     merge_by(county, drop_geom=FALSE)
 print(houston_counties)
-plot(houston_counties, hisp/pop)
+plot(houston_counties, fill=hisp/pop)
 ```
 
 We specify `drop_geom=FALSE` so that the shapefile geometries are also merged.
@@ -159,17 +159,17 @@ calls `hist`, which makes a histogram of a quantity of interest along with
 a reference line for each reference plan.
 ```{r}
 # ggplots with nice defaults and labels
-plot(min_distr, n_coalition)
-plot(houston_plans, pct_hisp, type="distr_qtys")
+hist(min_distr, n_coalition)
+redist.plot.distr_qtys(houston_plans, pct_hisp)
 # don't sort; use existing district numbers
-plot(houston_plans, pct_hisp, sort=F, type="distr_qtys")
+redist.plot.distr_qtys(houston_plans, pct_hisp, sort=F)
 ```
 
 We can also re-index the plans back to the original, un-merged map.
 ```{r}
 houston_orig_plans = pullback(houston_plans)
 print(houston_orig_plans)
-plot(houston_orig_plans, type="plan", draw=5, geom=houston_area)
+redist.plot.plan(houston_orig_plans, draw=5, geom=houston_area)
 ```
 
 # All Together
@@ -186,5 +186,5 @@ houston_plans = redist_smc(houston, 100, counties=county, silent=T) %>%
     match_numbers(houston$cd) %>%
     mutate(pct_hisp = group_frac(houston, hvap, vap))
 
-plot(houston_plans, pct_hisp, type="distr_qtys")
+redist.plot.distr_qtys(houston_plans, pct_hisp)
 ```

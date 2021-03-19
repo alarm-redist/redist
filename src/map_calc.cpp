@@ -50,7 +50,7 @@ double sq_entropy(const subview_col<uword> &districts, const uvec &current,
 }
 
 /*
- * Compute the VRA penalty for district `distr`
+ * Compute the old VRA penalty for district `distr`
  */
 double eval_vra(const subview_col<uword> &districts, int distr, double tgt_min,
                 double tgt_other, double pow_vra, const uvec &pop, const uvec &min_pop) {
@@ -58,6 +58,28 @@ double eval_vra(const subview_col<uword> &districts, int distr, double tgt_min,
     double frac = ((double) sum(min_pop(idxs))) / sum(pop(idxs));
     return std::pow(std::fabs(frac - tgt_min), pow_vra) *
         std::pow(std::fabs(frac - tgt_other), pow_vra);
+}
+
+/*
+ * Compute the new, hinge VRA penalty for district `distr`
+ */
+double eval_vra_hinge(const subview_col<uword> &districts, int distr,
+                      const vec &tgts_min, const uvec &pop, const uvec &min_pop) {
+    uvec idxs = find(districts == distr);
+    double frac = ((double) sum(min_pop(idxs))) / sum(pop(idxs));
+    // figure out which to compare it to
+    double target;
+    double diff = 1;
+    int n_tgt = tgts_min.size();
+    for (int i = 0; i < n_tgt; i++) {
+        double new_diff = std::fabs(tgts_min[i] - frac);
+        if (new_diff <= diff) {
+            diff = new_diff;
+            target = tgts_min[i];
+        }
+    }
+
+    return std::sqrt(std::max(0.0, target - frac));
 }
 
 /*

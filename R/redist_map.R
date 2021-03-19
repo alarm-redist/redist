@@ -361,10 +361,12 @@ print.redist_map = function(x, ...) {
 #' Plot a \code{redist_map}
 #'
 #' @param x the \code{redist_map} object
-#' @param val \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the optional value to use to
-#'   color the units. If absent, \code{\link{redist.map}} will be called;
-#'   otherwise \code{\link{redist.choropleth}} will be called.
-#' @param ... passed on to underlying functions
+#' @param fill \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} If absent,
+#'   \code{\link{redist.map}} will be called; if present, will be used to color
+#'   the map units using \code{\link{redist.choropleth}}. If using data masking,
+#'   may need to explicitly name argument \code{fill=...} to avoid S3 generic
+#'   issues.
+#' @param ... passed on to the underlying functions.
 #'
 #' @examples
 #' data(fl25)
@@ -377,11 +379,11 @@ print.redist_map = function(x, ...) {
 #' @concept prepare
 #' @concept plot
 #' @export
-plot.redist_map = function(x, val=NULL, ...) {
+plot.redist_map = function(x, fill=NULL, ...) {
     if (!inherits(x, "sf")) stop("Plotting requires a shapefile.")
 
-    val = rlang::enquo(val)
-    if (rlang::quo_is_null(val)) {
+    fill = rlang::enquo(fill)
+    if (rlang::quo_is_null(fill)) {
         existing = get_existing(x)
         if (!is.null(existing)) {
             redist.map(x, get_adj(x), plan=existing, ...) +
@@ -391,7 +393,7 @@ plot.redist_map = function(x, val=NULL, ...) {
                 ggplot2::theme_void()
         }
     } else {
-        redist.choropleth(shp = x, fill = !!val, ...)
+        fill_name = rlang::quo_text(fill)
+        redist.choropleth(shp = x, fill = !!fill, fill_label=fill_name, ...)
     }
 }
-

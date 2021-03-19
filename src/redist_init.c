@@ -4,8 +4,8 @@
 #include <R_ext/Rdynload.h>
 
 /* FIXME: 
- Check these declarations against the C/Fortran source code.
- */
+   Check these declarations against the C/Fortran source code.
+*/
 
 /* .Call calls */
 extern SEXP _redist_agg_p2d(SEXP, SEXP, SEXP);
@@ -39,7 +39,7 @@ extern SEXP _redist_lopsidedwins(SEXP, SEXP, SEXP);
 extern SEXP _redist_max_dev(SEXP, SEXP, SEXP);
 extern SEXP _redist_meanmedian(SEXP);
 extern SEXP _redist_minkowski(SEXP, SEXP, SEXP);
-extern SEXP _redist_ms_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _redist_ms_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_n_removed(SEXP, SEXP, SEXP);
 extern SEXP _redist_plan_joint(SEXP, SEXP, SEXP);
 extern SEXP _redist_polsbypopper(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -53,7 +53,7 @@ extern SEXP _redist_responsiveness(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_rsg(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_sample_partition(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_segregationcalc(SEXP, SEXP, SEXP);
-extern SEXP _redist_smc_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _redist_smc_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_smoothseat(SEXP, SEXP);
 extern SEXP _redist_splits(SEXP, SEXP);
 extern SEXP _redist_swMH(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -94,7 +94,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_max_dev",               (DL_FUNC) &_redist_max_dev,                3},
     {"_redist_meanmedian",            (DL_FUNC) &_redist_meanmedian,             1},
     {"_redist_minkowski",             (DL_FUNC) &_redist_minkowski,              3},
-    {"_redist_ms_plans",              (DL_FUNC) &_redist_ms_plans,              23},
+    {"_redist_ms_plans",              (DL_FUNC) &_redist_ms_plans,              25},
     {"_redist_n_removed",             (DL_FUNC) &_redist_n_removed,              3},
     {"_redist_plan_joint",            (DL_FUNC) &_redist_plan_joint,             3},
     {"_redist_polsbypopper",          (DL_FUNC) &_redist_polsbypopper,           6},
@@ -108,7 +108,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_rsg",                   (DL_FUNC) &_redist_rsg,                    6},
     {"_redist_sample_partition",      (DL_FUNC) &_redist_sample_partition,       5},
     {"_redist_segregationcalc",       (DL_FUNC) &_redist_segregationcalc,        3},
-    {"_redist_smc_plans",             (DL_FUNC) &_redist_smc_plans,             24},
+    {"_redist_smc_plans",             (DL_FUNC) &_redist_smc_plans,             26},
     {"_redist_smoothseat",            (DL_FUNC) &_redist_smoothseat,             2},
     {"_redist_splits",                (DL_FUNC) &_redist_splits,                 2},
     {"_redist_swMH",                  (DL_FUNC) &_redist_swMH,                  40},

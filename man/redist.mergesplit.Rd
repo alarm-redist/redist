@@ -33,6 +33,11 @@ unit}
 
 \item{ndists}{The number of congressional districts.}
 
+\item{pop_tol}{The desired population constraint.  All sampled districts
+will have a deviation from the target district size no more than this value
+in percentage terms, i.e., \code{pop_tol=0.01} will ensure districts have
+populations within 1\% of the target population.}
+
 \item{warmup}{The number of warmup samples to discard. Defaults to 0.}
 
 \item{init_plan}{The initial state of the map. If not provided, it defaults to
@@ -99,7 +104,25 @@ districts.
 \item \code{current}, a vector containing district assignments for
 the current map.
 }
-\item \code{vra}: a list with five entries:
+\item \code{vra}: a list with three entries:
+\itemize{
+\item \code{strength}, a number controlling the strength of the Voting Rights Act
+(VRA) constraint, with higher values prioritizing majority-minority districts
+over other considerations.
+\item \code{tgts_min}, the target percentage(s) of minority voters in minority
+opportunity districts. Defaults to \code{c(0.55)}.
+\item \code{min_pop}, A vector containing the minority population of each
+geographic unit.
+}
+\item \code{incumbency}: a list with two entries:
+\itemize{
+\item \code{strength}, a number controlling the tendency of the generated districts
+to avoid pairing up incumbents.
+\item \code{incumbents}, a vector of precinct indices, one for each incumbent's
+home address.
+}
+\item \code{vra_old}: a list with five entries, which may be set up using
+\code{\link{redist.constraint.helper}}:
 \itemize{
 \item \code{strength}, a number controlling the strength of the Voting Rights Act
 (VRA) constraint, with higher values prioritizing majority-minority districts
@@ -114,14 +137,23 @@ minority percentage; higher values are more tolerant. Defaults to 1.5
 \item \code{min_pop}, A vector containing the minority population of each
 geographic unit.
 }
-\item \code{incumbency}: a list with two entries:
-\itemize{
-\item \code{strength}, a number controlling the tendency of the generated districts
-to avoid pairing up incumbents.
-\item \code{incumbents}, a vector of precinct indices, one for each incumbent's
-home address.
 }
-}
+
+All constraints are fed into a Gibbs measure, with coefficients on each
+constraint set by the corresponding \code{strength} parameters.
+The \code{status_quo} constraint adds a term measuring the variation of
+information distance between the plan and the reference, rescaled to [0, 1].
+The \code{vra} constraint takes a list of target minority percentages. It
+matches each district to its nearest target percentage, and then applies a
+penalty of the form \eqn{\sqrt{max(0, tgt - minpct)}}, summing across
+districts. This penalizes districts which are below their target population.
+The \code{incumbency} constraint adds a term counting the number of districts
+containing paired-up incumbents.
+The \code{vra_old} constraint adds a term of the form
+\eqn{(|tgtvramin-minpct||tgtvraother-minpct|)^{powvra})}, which
+encourages districts to have minority percentages near either \code{tgt_vra_min}
+or \code{tgt_vra_other}. This can be visualized with
+\code{\link{redist.plot.penalty}}.
 }
 \examples{
 \dontrun{
@@ -130,7 +162,7 @@ data(fl25)
 \dontrun{
 data(fl25)
 adj <- redist.adjacency(fl25)
-out <- redist.mergesplit(adj = adj, total_pop = fl25$pop, 
+out <- redist.mergesplit(adj = adj, total_pop = fl25$pop,
                          nsims = 5, ndists = 3, pop_tol = 0.1)
 }
 }
