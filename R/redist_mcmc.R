@@ -71,7 +71,7 @@ combine.par.anneal <- function(a, b){
 #' units. The default is \code{NULL}.
 #' @param constraint Which constraint to apply. Accepts any combination of \code{compact},
 #' \code{segregation}, \code{vra}, \code{population}, \code{similarity}, \code{partisan},
-#' \code{minority}, \code{countysplit}, or \code{none}
+#' \code{minority}, \code{hinge}, \code{countysplit}, or \code{none}
 #' (no constraint applied). The default is NULL.
 #' @param constraintweights The weights to apply to each constraint. Should be a vector
 #' the same length as constraint. Default is NULL.
@@ -269,6 +269,7 @@ redist.mcmc.anneal <- function(adj,
     weightcountysplit <- preprocout$params$weightcountysplit
     weightpartisan <- preprocout$params$weightpartisan
     weightminority <- preprocout$params$weightminority
+    weighthinge <- preprocout$params$weighthinge
 
     cat("Starting swMH().\n")
     algout <- swMH(aList = preprocout$data$adjlist,
@@ -295,6 +296,7 @@ redist.mcmc.anneal <- function(adj,
                    weight_countysplit = weightcountysplit,
                    weight_partisan = weightpartisan,
                    weight_minority = weightminority,
+                   weight_hinge = weighthinge,
                    adapt_beta = "annealing",
                    adjswap = preprocout$params$adjswaps,
                    exact_mh = exact_mh,
@@ -439,6 +441,8 @@ redist.combine.anneal <- function(file_name){
 #' partisan constraint for each accepted redistricting plan.}
 #' \item{constraint_minority}{A vector containing the value of the
 #' minority constraint for each accepted redistricting plan.}
+#' \item{constraint_hinge}{A vector containing the value of the
+#' hinge constraint for each accepted redistricting plan.}
 #' \item{beta_sequence}{A vector containing the value of beta for each iteration
 #' of the algorithm. Returned when tempering is being used.}
 #' \item{mhdecisions_beta}{A vector specifying whether a proposed beta value was
@@ -588,7 +592,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' @param temper Whether to use simulated tempering algorithm. Default is FALSE.
 #' @param constraint Which constraint to apply. Accepts any combination of \code{compact},
 #' \code{segregation}, \code{vra}, \code{population}, \code{similarity}, \code{partisan},
-#' \code{minority}, \code{countysplit}, or \code{none}
+#' \code{minority}, \code{hinge}, \code{countysplit}, or \code{none}
 #' (no constraint applied). The default is NULL.
 #' @param constraintweights The weights to apply to each constraint. Should be a vector
 #' the same length as constraint. Default is NULL.
@@ -685,6 +689,8 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' partisan constraint for each accepted redistricting plan.}
 #' \item{constraint_minority}{A vector containing the value of the
 #' minority constraint for each accepted redistricting plan.}
+#' \item{constraint_hinge}{A vector containing the value of the
+#' hinge constraint for each accepted redistricting plan.}
 #' \item{beta_sequence}{A vector containing the value of beta for each iteration
 #' of the algorithm. Returned when tempering is being used.}
 #' \item{mhdecisions_beta}{A vector specifying whether a proposed beta value was
@@ -870,6 +876,7 @@ redist.mcmc <- function(adj,
     weightcountysplit <- preprocout$params$weightcountysplit
     weightpartisan <- preprocout$params$weightpartisan
     weightminority <- preprocout$params$weightminority
+    weighthinge <- preprocout$params$weighthinge
 
     ## Get starting loop value
     loopstart <- loopscompleted + 1
@@ -952,6 +959,7 @@ redist.mcmc <- function(adj,
                        weight_countysplit = weightcountysplit,
                        weight_partisan = weightpartisan,
                        weight_minority = weightminority,
+                       weight_hinge = weighthinge,
                        adapt_beta = preprocout$params$temperbeta,
                        adjswap = preprocout$params$adjswaps,
                        exact_mh = exact_mh,
@@ -1059,6 +1067,8 @@ redist.mcmc <- function(adj,
 #' partisan constraint for each accepted redistricting plan.}
 #' \item{constraint_minority}{A vector containing the value of the
 #' minority constraint for each accepted redistricting plan.}
+#' \item{constraint_hinge}{A vector containing the value of the
+#' hinge constraint for each accepted redistricting plan.}
 #' \item{beta_sequence}{A vector containing the value of beta for each iteration
 #' of the algorithm. Returned when tempering is being used.}
 #' \item{mhdecisions_beta}{A vector specifying whether a proposed beta value was

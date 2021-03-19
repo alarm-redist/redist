@@ -110,7 +110,7 @@ units. The default is \code{NULL}.}
 
 \item{constraint}{Which constraint to apply. Accepts any combination of \code{compact},
 \code{segregation}, \code{vra}, \code{population}, \code{similarity}, \code{partisan},
-\code{minority}, \code{countysplit}, or \code{none}
+\code{minority}, \code{hinge}, \code{countysplit}, or \code{none}
 (no constraint applied). The default is NULL.}
 
 \item{constraintweights}{The weights to apply to each constraint. Should be a vector
@@ -227,6 +227,8 @@ constraint for each accepted redistricting plan.}
 partisan constraint for each accepted redistricting plan.}
 \item{constraint_minority}{A vector containing the value of the
 minority constraint for each accepted redistricting plan.}
+\item{constraint_hinge}{A vector containing the value of the
+hinge constraint for each accepted redistricting plan.}
 \item{beta_sequence}{A vector containing the value of beta for each iteration
 of the algorithm. Returned when tempering is being used.}
 \item{mhdecisions_beta}{A vector specifying whether a proposed beta value was

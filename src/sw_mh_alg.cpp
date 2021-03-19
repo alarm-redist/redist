@@ -78,6 +78,7 @@ List swMH(List aList,
 	  double weight_countysplit = 0.0,
 	  double weight_partisan = 0.0,
 	  double weight_minority = 0.0,
+	  double weight_hinge = 0.0,
 	  std::string adapt_beta = "none",
 	  int adjswap = 1,
 	  int exact_mh = 0,
@@ -223,6 +224,7 @@ List swMH(List aList,
   NumericVector psicountysplit_store(nsims);
   NumericVector psipartisan_store(nsims);
   NumericVector psiminority_store(nsims);
+  NumericVector psihinge_store(nsims);
 
   // Store value of p, lambda, weights for all simulations
   NumericVector pparam_store(nsims);
@@ -328,6 +330,7 @@ List swMH(List aList,
 				   weight_countysplit,
 				   weight_partisan,
 				   weight_minority,
+				   weight_hinge,
 				   ssd_denom,
 				   tgt_min,
 				   tgt_other,
@@ -390,6 +393,9 @@ List swMH(List aList,
       if(weight_minority != 0.0){
         psiminority_store[k] = swap_partitions["minority_new_psi"];
       }
+      if(weight_hinge != 0.0){
+        psihinge_store[k] = swap_partitions["hinge_new_psi"];
+      }
     }else{
       energy_store[k] = swap_partitions["energy_old"];
       if(weight_population != 0.0){
@@ -415,6 +421,9 @@ List swMH(List aList,
       }
       if(weight_minority != 0.0){
         psiminority_store[k] = swap_partitions["minority_old_psi"];
+      }
+      if(weight_hinge != 0.0){
+        psihinge_store[k] = swap_partitions["hinge_old_psi"];
       }
     }
 
@@ -571,6 +580,7 @@ List swMH(List aList,
     out["constraint_countysplit"] = psicountysplit_store;
     out["constraint_partisan"] = psipartisan_store;
     out["constraint_minority"] = psiminority_store;
+    out["constraint_hinge"] = psihinge_store;
     out["boundary_partitions"] = boundarypartitions_store;
     out["boundaryratio"] = boundaryratio_store;
     if(adapt_beta == "tempering"){
@@ -600,6 +610,7 @@ List swMH(List aList,
     out["constraint_countysplit"] = psicountysplit_store[k-1];
     out["constraint_partisan"] = psipartisan_store[k-1];
     out["constraint_minority"] = psiminority_store[k-1];
+    out["constraint_hinge"] = psihinge_store[k-1];
     out["boundary_partitions"] = boundarypartitions_store[k-1];
     out["boundaryratio"] = boundaryratio_store[k-1];
     if(adapt_eprob == 1){

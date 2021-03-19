@@ -66,6 +66,12 @@ Rcpp::List calc_psiminority(arma::vec current_dists,
                       Rcpp::NumericVector grouppop,
                       int ndists,
                       Rcpp::NumericVector minorityprop);
+Rcpp::List calc_psihinge(arma::vec current_dists,
+                            arma::vec new_dists,
+                            Rcpp::NumericVector pops,
+                            Rcpp::NumericVector grouppop,
+                            int ndists,
+                            Rcpp::NumericVector minorityprop);
 
 #endif
 
