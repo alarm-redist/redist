@@ -27,6 +27,10 @@ This data set contains demographic and geographic information about 25
 contiguous precincts in the state of Florida. The data lists all possible
 partitions of the 25 precincts into three contiguous congressional districts.
 }
+\details{
+The cdmat entry is very important, as it is the full enumeration of possible districts
+with no population constraint, useful for initial validation exercises.
+}
 \examples{
 \dontrun{
 data(algdat.pfull)
