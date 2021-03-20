@@ -238,7 +238,10 @@ match_numbers = function(data, plan, col="pop_overlap") {
     data = set_plan_matrix(data, renumb_mat)
     data$district = factor(levels(plan)[renumb], levels(plan), ordered=TRUE)
 
-    data
+    orig_groups = dplyr::group_vars(data)
+    dplyr::group_by(data, .data$draw) %>%
+        dplyr::arrange(.data$district, .by_group=TRUE) %>%
+        dplyr::group_by(dplyr::across(dplyr::all_of(orig_groups)))
 }
 
 #' Renumber districts to match a quantity of interest
@@ -283,6 +286,10 @@ distr_compactness = function(map, measure="FracKept", .data=get0(".", parent.fra
     if (!inherits(.data, "redist_plans"))
         stop("Must provide `.data` if not called within a pipe")
 
+    # districts not in ascending order
+    if (length(unique(diff(as.integer(iowa_plans$district)))) != 2)
+        warning("Districts not sorted in ascending order; output may be incorrect.")
+
     redist.compactness(shp=map, plans=get_plan_matrix(.data), measure=measure,
                        total_pop=map[[attr(map, "pop_col")]],
                        adj=get_adj(map), ...)[[measure]]
@@ -299,6 +306,10 @@ group_frac = function(map, group_pop, total_pop=map[[attr(map, "pop_col")]],
                           .data=get0(".", parent.frame())) {
     if (!inherits(.data, "redist_plans"))
         stop("Must provide `.data` if not called within a pipe")
+
+    # districts not in ascending order
+    if (length(unique(diff(as.integer(iowa_plans$district)))) != 2)
+        warning("Districts not sorted in ascending order; output may be incorrect.")
 
     group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
     total_pop = rlang::eval_tidy(rlang::enquo(total_pop), map)
