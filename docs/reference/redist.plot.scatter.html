@@ -149,7 +149,7 @@
     <p>Makes a scatterplot of two quantities of interest across districts or plans.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.plot.scatter</span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>x</span>, <span class='va'>y</span>, <span class='va'>...</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>redist.plot.scatter</span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>x</span>, <span class='va'>y</span>, <span class='va'>...</span>, bigger <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -171,6 +171,10 @@ quantity to plot on the vertical axis.</p></td>
     <tr>
       <th>...</th>
       <td><p>passed on to <code><a href='https://ggplot2.tidyverse.org/reference/geom_point.html'>geom_point</a></code>.</p></td>
+    </tr>
+    <tr>
+      <th>bigger</th>
+      <td><p>if TRUE, make the point corresponding to the reference plan larger.</p></td>
     </tr>
     </table>
 
