@@ -24,7 +24,6 @@ Depends:
     R (>= 3.5.0)
 Imports:
     Rcpp (>= 0.11.0),
-    sp,
     sf,
     coda,
     parallel,
@@ -33,12 +32,9 @@ Imports:
     lwgeom,
     dplyr (>= 1.0.0),
     ggplot2,
-    scales,
-    magrittr,
     readr,
     servr,
     sys,
-    tibble,
     rlang,
     vctrs,
     tidyselect,

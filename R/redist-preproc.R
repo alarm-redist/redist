@@ -364,7 +364,8 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
   ################################
   if(is.null(ssdmat) & "compact" %in% constraint & "fryer-holden" %in% compactness_metric){
     if(class(adj) == "SpatialPolygonsDataFrame"){
-      centroids <- coordinates(adj)
+      adj <- sf::st_as_sf(adj)
+      centroids <- sf::st_coordinates(sf::st_centroid(adj))
       ssdmat <- calcPWDh(centroids)
     }else{
       stop("Provide squared distances matrix if constraining compactness using the Fryer-Holden metric.")

@@ -27,7 +27,7 @@ new_redist_plans = function(plans, map, algorithm, wgt, resampled=TRUE, ...) {
     attr_names = c("redist_attr", "plans", "algorithm", "wgt", "resampled",
                    "merge_idx", "prec_pop", names(list(...)))
 
-    structure(tibble::tibble(draw = rep(as.factor(1:n_sims), each=ndists),
+    structure(tibble(draw = rep(as.factor(1:n_sims), each=ndists),
                              district = rep(1:ndists, n_sims),
                              total_pop = as.numeric(distr_pop)),
               plans=plans, algorithm=algorithm, wgt=wgt,
