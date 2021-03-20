@@ -96,6 +96,9 @@ redistricting routines in this package." />
   </a>
 </li>
 <li>
+  <a href="../articles/redist.html">Get started</a>
+</li>
+<li>
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
@@ -107,6 +110,9 @@ redistricting routines in this package." />
   <ul class="dropdown-menu" role="menu">
     <li>
       <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
+    </li>
+    <li>
+      <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
     </li>
     <li>
       <a href="../articles/tidy-redist.html">Tidy `redist`</a>
@@ -262,10 +268,7 @@ Quarterly Journal of Political Science. 8(3): 239-269.</p>
 </div><div class='output co'>#&gt; 
 #&gt; ==================== 
 #&gt; redist.rsg(): Automated Redistricting Starts
-#&gt; 
-#&gt; 
-#&gt; 	3 districts built using 25 precincts in 0 seconds...
-#&gt; </div><div class='input'>
+#&gt; </div><div class='output co'>#&gt; <span class='error'>Error in system.time(ret &lt;- .Call("_redist_rsg", PACKAGE = "redist", adj,     total_pop, ndists, target.pop, pop_tol, as.integer(maxiter))): object 'fl25_graph' not found</span></div><div class='output co'>#&gt; <span class='message'>Timing stopped at: 0 0 0</span></div><div class='input'>
 <span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
 <span class='co'>### Example that generates test data from a square map with equal population</span>
 <span class='va'>districts</span>

@@ -288,8 +288,9 @@ print.redist_plans = function(x, ...) {
 #'
 #' @param x the \code{redist_plans} object.
 #' @param ... passed on to the underlying function
-#' @param type the name of the plotting function to use. Will have \code{plot_},
-#' prepended to it; e.g., use \code{type="plan"} to call \code{plot_plan()}.
+#' @param type the name of the plotting function to use. Will have
+#'   \code{redist.plot.}, prepended to it; e.g., use \code{type="plans"} to call
+#'   \code{\link{redist.plot.plans()}}.
 #'
 #' @concept plot
 #' @export
@@ -380,30 +381,41 @@ redist.plot.distr_qtys = function(x, qty, sort="asc", ...) {
 #' Plot a district assignment
 #'
 #' @param x a \code{redist_plans} object.
-#' @param draw the plan to plot. Will match the \code{draw} column of \code{x}.
+#' @param draws the plan(s) to plot. Will match the \code{draw} column of \code{x}.
 #' @param geom the geometry to use
 #'
 #' @concept plot
 #' @export
-redist.plot.plan = function(x, draw, geom) {
+redist.plot.plans = function(x, draws, geom) {
     stopifnot(inherits(x, "redist_plans"))
     stopifnot()
 
-    draw_idx = match(as.character(draw), levels(x$draw))
-    distr_assign = get_plan_matrix(x)[,draw_idx]
-    if (inherits(geom, "redist_map")) {
-        distr_colors = as.factor(color_graph(get_adj(geom), distr_assign))
-    } else {
-        distr_colors = as.factor(distr_assign)
+    plot_single = function(draw) {
+        draw_idx = match(as.character(draw), levels(x$draw))
+        distr_assign = get_plan_matrix(x)[,draw_idx]
+        if (inherits(geom, "redist_map")) {
+            distr_colors = as.factor(color_graph(get_adj(geom), distr_assign))
+        } else {
+            distr_colors = as.factor(distr_assign)
+        }
+
+        PAL = c("#6D9537", "#364B6F", "#E59A20", "#9A9BB9", "#2A4E45")
+        title = if (suppressWarnings(is.na(as.numeric(draw)))) draw else paste0("Plan #", draw)
+        sf::st_sf(geom) %>%
+            dplyr::ungroup() %>%
+            dplyr::mutate(District = distr_colors) %>%
+        ggplot(aes(fill=.data$District)) +
+            ggplot2::geom_sf(size=0) +
+            ggplot2::guides(fill=FALSE) +
+            ggplot2::scale_fill_manual(values=PAL) +
+            ggplot2::labs(title=title) +
+            theme_void()
     }
 
-    PAL = c("#6D9537", "#364B6F", "#E59A20", "#9A9BB9", "#2A4E45")
-    sf::st_sf(geom) %>%
-        dplyr::ungroup() %>%
-        dplyr::mutate(District = distr_colors) %>%
-    ggplot(aes(fill=.data$District)) +
-        ggplot2::geom_sf(size=0) +
-        ggplot2::guides(fill=FALSE) +
-        ggplot2::scale_fill_manual(values=PAL) +
-        theme_void()
+    if (length(draws) == 1) {
+        plot_single(draws)
+    } else {
+        plots = lapply(draws, plot_single)
+        patchwork::wrap_plots(plots)
+    }
 }
