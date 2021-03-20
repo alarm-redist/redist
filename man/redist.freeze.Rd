@@ -14,7 +14,7 @@ freeze(freeze_row, adj, plan, .data = get0(".", parent.frame()))
 
 \item{plan}{Recommended, whether to create separate groups by district.}
 
-\item{freeze_row}{Required, logical vector where TRUE freezes and FALSE lets a precinct 
+\item{freeze_row}{Required, logical vector where TRUE freezes and FALSE lets a precinct
 stay free or a vector of indices to freeze}
 
 \item{.data}{a \code{\link{redist_map}} object}
@@ -26,10 +26,11 @@ integer vector to group by
 Freeze Parts of a Map
 }
 \examples{
-  data(fl25)
-  data(algdat.p10)
-adj <- redist.adjacency(fl25)
-freeze_id <- redist.freeze(adj = adj, plan = algdat.p10$cdmat[, 1], 
-freeze_row =  (2 == algdat.p10$cdmat[, 1]))
+data(fl25)
+data(fl25_enum)
+data(fl25_adj)
+plan = fl25_enum$plans[, 5118]
+freeze_id <- redist.freeze(adj = fl25_adj, plan = plan,
+                           freeze_row = (plan == 2))
 }
 \concept{prepare}

@@ -290,7 +290,7 @@ print.redist_plans = function(x, ...) {
 #' @param ... passed on to the underlying function
 #' @param type the name of the plotting function to use. Will have
 #'   \code{redist.plot.}, prepended to it; e.g., use \code{type="plans"} to call
-#'   \code{\link{redist.plot.plans()}}.
+#'   \code{\link{redist.plot.plans}}.
 #'
 #' @concept plot
 #' @export
