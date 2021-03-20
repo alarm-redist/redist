@@ -151,7 +151,7 @@ with a reference line for each reference plan, if applicable." />
 with a reference line for each reference plan, if applicable.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.plot.hist</span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>qty</span>, bins <span class='op'>=</span> <span class='cn'>NULL</span>, <span class='va'>...</span><span class='op'>)</span>
+    <pre class="usage"><span class='fu'>redist.plot.hist</span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>qty</span>, bins <span class='op'>=</span> <span class='cn'>NULL</span>, <span class='va'>...</span><span class='op'>)</span>
 
 <span class='co'># S3 method for redist_plans</span>
 <span class='fu'><a href='https://rdrr.io/r/graphics/hist.html'>hist</a></span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>qty</span>, <span class='va'>...</span><span class='op'>)</span></pre>
@@ -160,7 +160,7 @@ with a reference line for each reference plan, if applicable.</p>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>x</th>
+      <th>plans</th>
       <td><p>the <code>redist_plans</code> object.</p></td>
     </tr>
     <tr>
@@ -177,7 +177,22 @@ with a reference line for each reference plan, if applicable.</p>
     </tr>
     </table>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
+    <p>A ggplot</p>
+
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://dplyr.tidyverse.org'>dplyr</a></span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>iowa</span><span class='op'>)</span>
+
+<span class='va'>iowa</span> <span class='op'>=</span> <span class='fu'><a href='redist_map.html'>redist_map</a></span><span class='op'>(</span><span class='va'>iowa</span>, existing_plan<span class='op'>=</span><span class='va'>cd</span>, pop_tol<span class='op'>=</span><span class='fl'>0.05</span><span class='op'>)</span>
+<span class='va'>plans</span> <span class='op'>=</span> <span class='fu'><a href='redist_smc.html'>redist_smc</a></span><span class='op'>(</span><span class='va'>iowa</span>, nsims<span class='op'>=</span><span class='fl'>100</span>, silent<span class='op'>=</span><span class='cn'>TRUE</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+    <span class='fu'><a href='add_reference.html'>add_reference</a></span><span class='op'>(</span><span class='va'>iowa</span><span class='op'>$</span><span class='va'>cd</span><span class='op'>)</span>
+<span class='fu'><a href='https://dplyr.tidyverse.org/reference/group_by.html'>group_by</a></span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>draw</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+    <span class='fu'><a href='https://dplyr.tidyverse.org/reference/summarise.html'>summarize</a></span><span class='op'>(</span>pop_dev <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>max</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/MathFun.html'>abs</a></span><span class='op'>(</span><span class='va'>total_pop</span> <span class='op'>/</span> <span class='fu'><a href='https://rdrr.io/r/base/mean.html'>mean</a></span><span class='op'>(</span><span class='va'>total_pop</span><span class='op'>)</span> <span class='op'>-</span> <span class='fl'>1</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+    <span class='fu'>redist.plot.hist</span><span class='op'>(</span><span class='va'>pop_dev</span><span class='op'>)</span>
+</div><div class='img'><img src='redist.plot.hist-1.png' alt='' width='700' height='433' /></div><div class='input'>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

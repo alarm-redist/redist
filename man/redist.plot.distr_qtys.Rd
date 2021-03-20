@@ -4,10 +4,10 @@
 \alias{redist.plot.distr_qtys}
 \title{Plot box and whisker plots for each district}
 \usage{
-redist.plot.distr_qtys(x, qty, sort = "asc", ...)
+redist.plot.distr_qtys(plans, qty, sort = "asc", ...)
 }
 \arguments{
-\item{x}{the \code{redist_plans} object.}
+\item{plans}{the \code{redist_plans} object.}
 
 \item{qty}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the
 quantity of interest.}
@@ -18,9 +18,24 @@ quantity of interest.}
 
 \item{...}{passed on to \code{\link[ggplot2]{geom_boxplot}}}
 }
+\value{
+A ggplot
+}
 \description{
 Plots a boxplot of a quantity of interest across districts, with districts
 optionally sorted by this quantity. Adds reference points for each reference
 plan, if applicable.
+}
+\examples{
+library(dplyr)
+data(iowa)
+
+iowa = redist_map(iowa, existing_plan=cd, pop_tol=0.05)
+plans = redist_smc(iowa, nsims=100, silent=TRUE) \%>\%
+    add_reference(iowa$cd)
+plans \%>\%
+    mutate(pct_dem = group_frac(iowa, dem_08, tot_08)) \%>\%
+    redist.plot.distr_qtys(pct_dem)
+
 }
 \concept{plot}
