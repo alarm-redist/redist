@@ -261,14 +261,17 @@ Quarterly Journal of Political Science. 8(3): 239-269.</p>
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'>### Real data example from test set</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
-<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_enum</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_adj</span><span class='op'>)</span>
 
-<span class='va'>res</span> <span class='op'>&lt;-</span> <span class='fu'>redist.rsg</span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>fl25_graph</span>, total_pop <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>,
+<span class='va'>res</span> <span class='op'>&lt;-</span> <span class='fu'>redist.rsg</span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>fl25_adj</span>, total_pop <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>,
  ndists <span class='op'>=</span> <span class='fl'>3</span>, pop_tol <span class='op'>=</span> <span class='fl'>0.05</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; 
 #&gt; ==================== 
 #&gt; redist.rsg(): Automated Redistricting Starts
-#&gt; </div><div class='output co'>#&gt; <span class='error'>Error in system.time(ret &lt;- .Call("_redist_rsg", PACKAGE = "redist", adj,     total_pop, ndists, target.pop, pop_tol, as.integer(maxiter))): object 'fl25_graph' not found</span></div><div class='output co'>#&gt; <span class='message'>Timing stopped at: 0 0 0</span></div><div class='input'>
+#&gt; 
+#&gt; 
+#&gt; 	3 districts built using 25 precincts in 0 seconds...
+#&gt; </div><div class='input'>
 <span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
 <span class='co'>### Example that generates test data from a square map with equal population</span>
 <span class='va'>districts</span>

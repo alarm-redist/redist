@@ -126,7 +126,7 @@ This function allows users to test multiple parameter settings of
 \dontrun{
 data(fl25)
 data(fl25_enum)
-data(fl25_graph)
+data(fl25_adj)
 
 ## Get an initial partition
 init_plan <- fl25_enum$plans[, 5118]
@@ -134,7 +134,7 @@ init_plan <- fl25_enum$plans[, 5118]
 params <- expand.grid(eprob = c(.01, .05, .1))
 
 ## Run the algorithm
-redist.findparams(adj = fl25_graph, total_pop = fl25$pop,
+redist.findparams(adj = fl25_adj, total_pop = fl25$pop,
                   init_plan = init_plan, nsims = 10000, params = params)
 }
 }

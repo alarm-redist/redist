@@ -25,7 +25,7 @@ Prep Polsby Popper Perimeter Dataframe
 \examples{
 \dontrun{
 data(fl25)
-data(fl25_enum)
-perim_df <- redist.prep.polsbypopper(shp = fl25, adj = fl25_graph)
+data(fl25_adj)
+perim_df <- redist.prep.polsbypopper(shp = fl25, adj = fl25_adj)
 }
 }

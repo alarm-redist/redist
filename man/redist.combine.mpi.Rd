@@ -62,7 +62,7 @@ This function allows users to combine multiple successive runs of
 \dontrun{
 data(fl25)
 data(fl25_enum)
-data(fl25_graph)
+data(fl25_adj)
 
 ## Code to run the simulations in Figure 4 in Fifield, Higgins, Imai and
 ## Tarr (2015)
@@ -71,7 +71,7 @@ data(fl25_graph)
 init_plan <- fl25_enum$plans[, 5118]
 
 ## Run the algorithm
-redist.mcmc.mpi(adj = fl25_graph, total_pop = fl25$pop,
+redist.mcmc.mpi(adj = fl25_adj, total_pop = fl25$pop,
                 init_plan = init_plan, nsims = 10000, nloops = 2, savename = "test")
 out <- redist.combine.mpi(savename = "test", nloop = 2,
                           nthin = 10, tempadj = tempAdjMat)

@@ -74,8 +74,8 @@ intractable, necessitating the use of the MCMC-based methods implemented in
 }
 \examples{
 \dontrun{
-data(fl25_graph)
-test <- redist.enumerate(adj = fl25_graph)
+data(fl25_adj)
+test <- redist.enumerate(adj = fl25_adj)
 }
 }
 \references{

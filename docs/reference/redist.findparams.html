@@ -330,7 +330,7 @@ Carlo." Working Paper. Available at
     <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_enum</span><span class='op'>)</span>
-<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_graph</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_adj</span><span class='op'>)</span>
 
 <span class='co'>## Get an initial partition</span>
 <span class='va'>init_plan</span> <span class='op'>&lt;-</span> <span class='va'>fl25_enum</span><span class='op'>$</span><span class='va'>plans</span><span class='op'>[</span>, <span class='fl'>5118</span><span class='op'>]</span>
@@ -338,7 +338,7 @@ Carlo." Working Paper. Available at
 <span class='va'>params</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/expand.grid.html'>expand.grid</a></span><span class='op'>(</span>eprob <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>.01</span>, <span class='fl'>.05</span>, <span class='fl'>.1</span><span class='op'>)</span><span class='op'>)</span>
 
 <span class='co'>## Run the algorithm</span>
-<span class='fu'>redist.findparams</span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>fl25_graph</span>, total_pop <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>,
+<span class='fu'>redist.findparams</span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>fl25_adj</span>, total_pop <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>,
                   init_plan <span class='op'>=</span> <span class='va'>init_plan</span>, nsims <span class='op'>=</span> <span class='fl'>10000</span>, params <span class='op'>=</span> <span class='va'>params</span><span class='op'>)</span>
 <span class='op'>}</span>
 </div></pre>
