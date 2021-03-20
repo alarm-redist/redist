@@ -2,7 +2,7 @@
 title: "MPI / Slurm Sample Scripts"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{mpi-slurm}
+  %\VignetteIndexEntry{MPI / Slurm Sample Scripts}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
