@@ -1,0 +1,19 @@
+---
+title: "Map Pre-processing for Special Constraints"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Map Pre-processing for Special Constraints}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(redist)
+```

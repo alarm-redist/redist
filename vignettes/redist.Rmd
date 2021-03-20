@@ -11,6 +11,373 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 ```
 
+The `redist` package provides algorithms and tools for scalable and replicable
+redistricting analyses. This vignette introduces the package by way of an
+analysis of redistricting in the state of Iowa, which can broken down into four
+distinct steps:
+
+1. [Compiling, cleaning, and preparing the data](#prepare)
+2. [Defining the redistricting problem](#define)
+3. [Simulating redistricting plans](#simulate)
+4. [Analyzing the simulated plans](#analyze)
+
+First, however, a brief overview of the package itself.
 ```{r setup, message=FALSE}
 library(redist)
+library(dplyr)
+library(ggplot2)
 ```
+
+# The `redist` package {#package}
+To install `redist`, follow the instructions in the
+[README](../index.html#installation-instructions).
+
+For more information on package components, check out the 
+[full documentation](../reference/index.html).
+
+## Algorithms
+The package contains a variety of redistricting simulation and enumeration
+algorithms.  Generally you will use one of the following three algorithms:
+
+- `redist_smc()`, the recommended algorithm for most purposes.^[from 
+[Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans](https://arxiv.org/pdf/2008.06131.pdf)]
+- `redist_mergesplit()`, a MCMC version of the SMC proposal.^[based on Carter,
+D., Herschlag, G., Hunter, Z., and Mattingly, J. (2019). A merge-split proposal
+for reversible Monte Carlo Markov chain sampling of redistricting plans. arXiv
+preprint arXiv:1911.01503.]
+- `redist.mcmc()`, another MCMC algorithm which uses more local proposals.^[from 
+[Automated Redistricting Simulation Using Markov Chain Monte Carlo](https://doi.org/10.1080/10618600.2020.1739532) *Journal of Computational and Graphical Statistics*]
+
+The other algorithms are
+
+- `redist.enumpart()` for efficient enumeration of small maps.^[from
+[The Essential Role of Empirical Validation in Legislative Redistricting Simulation](https://imai.fas.harvard.edu/research/files/enumerate.pdf)]
+- `redist.rsg()` and `redist.crsg()`, which do not sample from a known target
+distribution.^[from Jowei Chen and Jonathan Rodden (2013) 
+“Unintentional Gerrymandering: Political Geography and Electoral Bias in
+Legislatures.” Quarterly Journal of Political Science. 8(3): 239-269.]
+
+## Data
+The package comes with several built-in datasets, which may be useful in 
+exploring the package's functionality and in becoming familiar with algorithmic
+redistricting:
+
+- [`iowa`](../reference/iowa.html) (used in this vignette).
+- [`fl25`](../reference/fl25.html), a 25-precinct subset of the state of Florida.
+- [`fl25_enum`](../reference/fl25_enum.html), containing all possible sets of three districts drawn on the
+25-precinct Florida map.
+- [`fl70`](../reference/fl70.html), a 70-precinct subset of the state of Florida.
+- [`fl250`](../reference/fl250.html), a 250-precinct subset of the state of Florida.
+
+
+# Compiling, cleaning, and preparing the data {#prepare}
+The most time-consuming part of a redistricting analysis, like most data
+analyses, is collecting and cleaning the necessary data. For redistricting,
+this data includes geographic shapefiles for precincts and existing legislative 
+district plans, precinct- or block-level demographic information from the Census,
+and precinct-level political data. These data generally come from different 
+sources, and may not fully overlap with each other, further complicating the
+problem.
+
+`redist` is not focused on this data collection process.  The 
+[`geomander`](https://christopherkenny.github.io/geomander/) package contains
+many helpful functions for compiling these data, and fixing problems in
+geographic data.
+
+Sources for precinct-level geographic and political information include the
+[MIT Election Lab](https://electionlab.mit.edu/data), the 
+[Census](https://www.census.gov/programs-surveys/decennial-census/about/rdo.html),
+the [Redistricting Data Hub](https://redistrictingdatahub.org/),
+the [Voting and Election Science Team](https://dataverse.harvard.edu/dataverse/electionscience),
+the [Harvard Election Data Archive](https://dataverse.harvard.edu/dataverse/eda),
+the [Metric Geometry and Gerrymandering Group](https://github.com/mggg-states),
+and some state websites.
+
+## Iowa
+
+For this analysis of Iowa, we'll use the data included in the package, which
+was compiled from the Census and the Harvard Election Data Archive. It contains,
+for each county, the total population and voting-age population by race, as
+well as the number of votes for President in 2008. The `geometry` column 
+contains the geographic [shapefile information](https://r-spatial.github.io/sf/).
+```{r}
+data(iowa)
+print(iowa)
+```
+
+# Defining the redistricting problem {#define}
+A redistricting problem is defined by the map of the precincts, the number
+of contiguous districts to divide the precincts into, the level of population 
+parity to enforce, and any other necessary constraints that must be imposed.
+
+## Determining the relevant constraints
+In Iowa, congressional districts are constructed not out of precincts but out
+of the state's 99 counties, and in the 2010 redistricting cycle, Iowa was
+apportioned four congressional districts, down one from the 2000 cycle.
+Chapter 42 of the Iowa Code provides guidance on the other constraints imposed on
+the redistricting process (our emphasis added):
+
+> **42.4 Redistricting standards.**
+>
+> ...
+>
+> 1.b. Congressional districts shall each have a population *as nearly equal as
+> practicable* to the ideal district population, derived as prescribed in paragraph
+> “a” of this subsection. No congressional district shall have a population which
+> varies by more than *one percent from the applicable ideal district population*,
+> except as necessary to comply with Article III, section 37 of the Constitution
+> of the State of Iowa.
+>
+> ...
+>
+> 3\. Districts shall be composed of convenient *contiguous territory*. Areas which
+> meet only at the points of adjoining corners are not contiguous.
+>
+> 4\. Districts shall be *reasonably compact* in form, to the extent consistent
+> with the standards established by subsections 1, 2, and 3. In general,
+> reasonably compact districts are those which are square, rectangular, or
+> hexagonal in shape, and not irregularly shaped, to the extent permitted by
+> natural or political boundaries....
+>
+> 5\. No district shall be drawn for the purpose of favoring a political party,
+> incumbent legislator or member of Congress, or other person or group, or for the
+> purpose of augmenting or diluting the voting strength of a language or racial
+> minority group. In establishing districts, *no use shall be made* of any of the
+> following data:
+>
+> a. Addresses of incumbent legislators or members of Congress.
+> b. Political affiliations of registered voters.
+> c. Previous election results.
+> d. Demographic information, other than population head counts, except as required by
+> the Constitution and the laws of the United States.
+
+The section goes on to provide two specific measures of compactness that should be
+used to compare districts, one of which is the total perimeter of all districts. 
+If the total perimeter is small, then the districts relatively compact.
+
+Contiguity of districts and no reliance on partisan or demographic data 
+are built-in to `redist`.  We'll look at how to specify the desired population
+deviation (no more than 1% by law) in the next section, and discuss compactness
+in the [simiulation section](#simulate).
+
+## Setting up the problem in `redist`
+In `redist`, a basic redistricting problem is defined by an object of type
+`redist_map`, which can be constructed using the eponymous function.  The user
+must provide a vector of population counts (defaults to the `pop` column, if
+one exists) and the desired population parity, and the number of districts.
+The latter can be inferred if a reference redistricting plan exists.  For Iowa,
+we'll use the adopted 2010 plan as a reference.
+
+```{r}
+iowa_map = redist_map(iowa, existing_plan=cd, pop_tol=0.01)
+print(iowa_map)
+```
+
+This looks much the same as `iowa` itself, but metadata has been added,
+and there's a new column, `adj`.
+
+## Adjacency-based redistricting
+All redistricting algorithms operate on an _adjacency graph_, which is
+constructed from the actual precinct or county geography. In the adjacency graph,
+every precinct or county is a node, and two nodes are connected by an edge
+if the corresponding precincts are geographically adjacent.^[for `redist`'s
+purposes, adjacency requires that two regions touch at more than just one point
+or corner.] Creating a contiguous set of districts as part of a redistricting
+plan then corresponds to creating a
+[_partition_](https://en.wikipedia.org/wiki/Graph_partition) of the adjacency
+graph.
+
+The `redist_map()` function automatically computes the adjacency graph from the
+provided shapefile (though one can be provided directly as well), and stores it
+in the `adj` column as an _adjacency list_, which is, for each precinct, a list
+of neighboring precincts. As part of this process, the adjacency graph is 
+checked for global contiguity (no islands), which is necessary for the
+redistricting algorithms to function properly.
+
+We can visualize the adjacency graph by plotting the `redist_map` object.
+```{r iowa-adj}
+plot(iowa_map)
+```
+
+## Pre-processing
+Often, we want to only analyze a portion of a map, or hold some districts fixed
+while others are re-simulated.  We may also want to implement a status-quo-type
+constraint that encourages simulated districts to be close to a reference plan.
+This can be accomplished by freezing the "cores" of each district.
+
+All of these operations fall under the umbrella of map pre-processing, and
+`redist` is well-equipped to handle them.  You can use familiar `dplyr` verbs
+like `filter()` and `summarize()`, along with new `redist` operations like
+`freeze()`, `make_cores()`, and `merge_by()`, to operate on `redist_map` objects. 
+The package will make the appropriate modifications to the geometry and
+adjacency graph in the background.  
+
+The [map pre-processing vignette](map-preproc.html) contains more information
+and examples about these operations.
+
+## Exploring the geography
+To get a feel for the demographic and political geography of the state, we'll
+make some plots from the `iowa_map` object. We see that the state is mostly
+rural and white, with Polk county (Des Moines) the largest and densest.
+Politically, most counties are relatively balanced between Democrats and
+Republicans (at least in the '08 election), though there is a rough east-west
+gradient.
+
+```{r iowa-chloro, message=FALSE}
+areas = as.numeric(units::set_units(sf::st_area(iowa_map$geometry), mi^2))
+plot(iowa_map, fill = pop / areas) + 
+    scale_fill_viridis_c(name="Population density (people / sq. mi)", 
+                         trans="sqrt")
+plot(iowa_map, fill = dem_08 / tot_08) +
+    scale_fill_gradient2(name="Pct. Democratic '08",  midpoint=0.5)
+plot(iowa_map, fill = wvap / vap) +
+    scale_fill_viridis_c()
+```
+
+
+# Simulating redistricting plans {#simulate}
+The crux of a redistricting analysis is actually simulating new redistricting
+plans.  As discussed above, `redist` provides several algorithms for performing
+this simulation, and each has its own advantages and incorporates a different
+set of constraints. Here, we'll demonstrate use of the `redist_smc()` algorithm,
+a Sequential Monte Carlo (SMC)-based procedure which is the recommended choice for
+most redistricting analyses.
+
+SMC creates plans directly, by drawing district boundaries one at a time, as
+illustrated below.
+
+![](../reference/figures/smc-schematic.png)
+
+Because of the way districts are drawn in SMC, the generated districts are
+relatively compact by default.  This can be further controlled by the 
+`compactness` parameter (although `compactness=1` is particularly
+computationally convenient).
+
+To simulate, we call `redist_smc()` on our `redist_map` object.
+
+```{r}
+iowa_plans = redist_smc(iowa_map, nsims=1000, compactness=1)
+```
+
+By default, `redist_smc()` prints a good deal of diagnostic information.  While
+verbose, it is important to monitor this output to ensure the algorithm is
+working properly.  The key number to keep an eye on is the _resampling effective
+sample size_/_resampling efficiency_. This number should be as close to the
+nominal sample size (100%) as possible, and values less than 5--10% generally
+indicate problems---constraints which are too strong or difficult to satisfy.
+Here, the resampling efficiencies are above 90% at each stage, which is 
+excellent.
+
+The output from the algorithm is a `redist_plans` object, which stores a matrix
+of district assignments for each precinct and simulated plans, and a table of 
+summary statistics for each district and simulated plan.
+
+```{r}
+print(iowa_plans)
+```
+
+We can explore specific simulated plans with `redist.plot.plans()`.
+
+```{r ia-sim-plans}
+redist.plot.plans(iowa_plans, draws=1:6, geom=iowa_map)
+```
+
+# Analyzing the simulated plans {#analyze}
+A `redist_plans` object, the output of a sampling algorithm, links a matrix
+of precinct assignments to a table of district statistics, and this linkage 
+makes analyzing the output a breeze.
+
+The first step is generally to add a reference plan to a set of redistricting
+plans so that the reference can be compared to the simulated baseline. In
+problems with a small (generally fewer than 7) number of districts, it may 
+also be possible to renumber the simulated districts (which have random numbers
+in general) to match the reference plan as closely as possible. This adds a
+`pop_overlap` column which measures how much of the population is in the
+same district in both a given plan and the reference plan.
+```{r}
+iowa_plans = add_reference(iowa_plans, iowa_map$cd, "2010 Adopted") %>%
+    match_numbers(iowa_map$cd)
+print(iowa_plans)
+```
+
+Then we can add summary statistics by district, using `redist`'s analysis
+functions.  Here, we'll compute the population deviation, the perimeter-based
+compactness measure related to the Iowa Code's redistricting requirements, and
+the fraction of minority voters and two-party Democratic vote share by district.
+
+```{r}
+target_pop = sum(iowa_map$pop) / 4
+county_perims = redist.prep.polsbypopper(iowa_map, iowa_map$adj)
+
+iowa_plans = iowa_plans %>%
+    mutate(pop_dev = abs(total_pop / target_pop - 1),
+           comp = distr_compactness(iowa_map, "PolsbyPopper", perim_df=county_perims),
+           pct_min = group_frac(iowa_map, vap - wvap, vap),
+           pct_dem = group_frac(iowa_map, dem_08, dem_08 + rep_08))
+print(iowa_plans)
+```
+
+From there, it's quick to turn these into plan-level summary statistics.
+
+```{r}
+plan_sum = group_by(iowa_plans, draw) %>%
+    summarize(max_dev = max(pop_dev),
+              avg_comp = mean(comp),
+              max_pct_min = max(pct_min),
+              dem_distr = sum(pct_dem > 0.5))
+print(plan_sum)
+```
+
+These tables of statistics are easily plotted using existing libraries like
+`ggplot2`, but `redist` provides a number of helpful plotting functions that
+automate some common tasks, like adding a reference line for the reference plan.
+The output of these functions is a `ggplot` object, allowing for further 
+customization.
+
+```{r dev-comp-plot}
+library(patchwork)
+
+hist(plan_sum, max_dev) + hist(iowa_plans, comp) +
+    plot_layout(guides="collect")
+```
+
+We can see that the adopted plan has nearly complete population parity, and
+that its districts are roughly as compact on average as those simulated by
+the SMC algorithm.
+
+One of the most common, and useful, plots, for studying the partisan
+characteristics of a plan, is to plot the fraction of a group (or party) within
+each district, and compare to the reference plan. Generally, we would first 
+sort the districts by this quantity first, to make the numbers line up, but
+here we've already renumbered the districts to match the reference plan as
+closely as possible.
+
+```{r signature}
+redist.plot.distr_qtys(iowa_plans, pct_dem, sort=FALSE, size=0.5)
+```
+
+We see that districts 1 and 2 look normal, but it appears that, relative to
+our ensemble, district 4 (NW Iowa) is more Democratic, and district 3 (SW Iowa,
+Des Moines) is less Democratic. However, the reference plan does not appear to
+be a complete outlier. 
+
+We might also want to look at how the Democratic fraction in each district
+compares to the fraction of minority voters. We can make a scatterplot of
+districts, and overlay the reference districts, using `redist.plot.scatter`.
+We'll also color by the district number (higher numbers are in lighter colors).
+
+Once again, we see that while district 1 and 2 of the reference plan look
+normal, district has a lower number of Democrats and minority voters than would
+otherwise be expected. 
+
+```{r scatter}
+pal = scales::viridis_pal()(5)[-1]
+redist.plot.scatter(iowa_plans, pct_min, pct_dem, 
+                    color=pal[subset_sampled(iowa_plans)$district]) +
+    scale_color_manual(values="black")
+```
+
+From here, it is easy to keep exploring, using the functionality of
+`redist_plans` and the built-in plotting functions. More complex model-based
+analyses could also be performed using the district-level or plan-level
+statistics.

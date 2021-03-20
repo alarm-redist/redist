@@ -64,7 +64,10 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
+      <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
+    </li>
+    <li>
+      <a href="../articles/mcmc.html">Redistricting with MCMC and RSG</a>
     </li>
     <li>
       <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
@@ -108,13 +111,408 @@
 
     
     
+<p>The <code>redist</code> package provides algorithms and tools for scalable and replicable redistricting analyses. This vignette introduces the package by way of an analysis of redistricting in the state of Iowa, which can broken down into four distinct steps:</p>
+<ol style="list-style-type: decimal">
+<li><a href="#prepare">Compiling, cleaning, and preparing the data</a></li>
+<li><a href="#define">Defining the redistricting problem</a></li>
+<li><a href="#simulate">Simulating redistricting plans</a></li>
+<li><a href="#analyze">Analyzing the simulated plans</a></li>
+</ol>
+<p>First, however, a brief overview of the package itself.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">redist</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">redist</span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org">dplyr</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org">ggplot2</a></span><span class="op">)</span></code></pre></div>
+<div id="package" class="section level1">
+<h1 class="hasAnchor">
+<a href="#package" class="anchor"></a>The <code>redist</code> package</h1>
+<p>To install <code>redist</code>, follow the instructions in the <a href="../index.html#installation-instructions">README</a>.</p>
+<p>For more information on package components, check out the <a href="../reference/index.html">full documentation</a>.</p>
+<div id="algorithms" class="section level2">
+<h2 class="hasAnchor">
+<a href="#algorithms" class="anchor"></a>Algorithms</h2>
+<p>The package contains a variety of redistricting simulation and enumeration algorithms. Generally you will use one of the following three algorithms:</p>
+<ul>
+<li>
+<code><a href="../reference/redist_smc.html">redist_smc()</a></code>, the recommended algorithm for most purposes.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>
+</li>
+<li>
+<code><a href="../reference/redist_mergesplit.html">redist_mergesplit()</a></code>, a MCMC version of the SMC proposal.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>
+</li>
+<li>
+<code><a href="../reference/redist.mcmc.html">redist.mcmc()</a></code>, another MCMC algorithm which uses more local proposals.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>
+</li>
+</ul>
+<p>The other algorithms are</p>
+<ul>
+<li>
+<code><a href="../reference/redist.enumpart.html">redist.enumpart()</a></code> for efficient enumeration of small maps.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>
+</li>
+<li>
+<code><a href="../reference/redist.rsg.html">redist.rsg()</a></code> and <code><a href="../reference/redist.crsg.html">redist.crsg()</a></code>, which do not sample from a known target distribution.<a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a>
+</li>
+</ul>
+</div>
+<div id="data" class="section level2">
+<h2 class="hasAnchor">
+<a href="#data" class="anchor"></a>Data</h2>
+<p>The package comes with several built-in datasets, which may be useful in exploring the package’s functionality and in becoming familiar with algorithmic redistricting:</p>
+<ul>
+<li>
+<a href="../reference/iowa.html"><code>iowa</code></a> (used in this vignette).</li>
+<li>
+<a href="../reference/fl25.html"><code>fl25</code></a>, a 25-precinct subset of the state of Florida.</li>
+<li>
+<a href="../reference/fl25_enum.html"><code>fl25_enum</code></a>, containing all possible sets of three districts drawn on the 25-precinct Florida map.</li>
+<li>
+<a href="../reference/fl70.html"><code>fl70</code></a>, a 70-precinct subset of the state of Florida.</li>
+<li>
+<a href="../reference/fl250.html"><code>fl250</code></a>, a 250-precinct subset of the state of Florida.</li>
+</ul>
+</div>
+</div>
+<div id="prepare" class="section level1">
+<h1 class="hasAnchor">
+<a href="#prepare" class="anchor"></a>Compiling, cleaning, and preparing the data</h1>
+<p>The most time-consuming part of a redistricting analysis, like most data analyses, is collecting and cleaning the necessary data. For redistricting, this data includes geographic shapefiles for precincts and existing legislative district plans, precinct- or block-level demographic information from the Census, and precinct-level political data. These data generally come from different sources, and may not fully overlap with each other, further complicating the problem.</p>
+<p><code>redist</code> is not focused on this data collection process. The <a href="https://christopherkenny.github.io/geomander/"><code>geomander</code></a> package contains many helpful functions for compiling these data, and fixing problems in geographic data.</p>
+<p>Sources for precinct-level geographic and political information include the <a href="https://electionlab.mit.edu/data">MIT Election Lab</a>, the <a href="https://www.census.gov/programs-surveys/decennial-census/about/rdo.html">Census</a>, the <a href="https://redistrictingdatahub.org/">Redistricting Data Hub</a>, the <a href="https://dataverse.harvard.edu/dataverse/electionscience">Voting and Election Science Team</a>, the <a href="https://dataverse.harvard.edu/dataverse/eda">Harvard Election Data Archive</a>, the <a href="https://github.com/mggg-states">Metric Geometry and Gerrymandering Group</a>, and some state websites.</p>
+<div id="iowa" class="section level2">
+<h2 class="hasAnchor">
+<a href="#iowa" class="anchor"></a>Iowa</h2>
+<p>For this analysis of Iowa, we’ll use the data included in the package, which was compiled from the Census and the Harvard Election Data Archive. It contains, for each county, the total population and voting-age population by race, as well as the number of votes for President in 2008. The <code>geometry</code> column contains the geographic <a href="https://r-spatial.github.io/sf/">shapefile information</a>.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span>
+<span class="co">#&gt; Simple feature collection with 99 features and 14 fields</span>
+<span class="co">#&gt; geometry type:  MULTIPOLYGON</span>
+<span class="co">#&gt; dimension:      XY</span>
+<span class="co">#&gt; bbox:           xmin: 4081849 ymin: 2879102 xmax: 5834228 ymax: 4024957</span>
+<span class="co">#&gt; projected CRS:  NAD83(HARN) / Iowa North (ftUS)</span>
+<span class="co">#&gt; First 10 features:</span>
+<span class="co">#&gt;     fips       name cd    pop  white black hisp    vap  wvap bvap hvap tot_08</span>
+<span class="co">#&gt; 1  19001      Adair  3   7682   7507    11  101   5957  5860    5   53   4053</span>
+<span class="co">#&gt; 2  19003      Adams  3   4029   3922     8   37   3180  3109    6   22   2206</span>
+<span class="co">#&gt; 3  19005  Allamakee  1  14330  13325   109  757  11020 10430   82  425   7059</span>
+<span class="co">#&gt; 4  19007  Appanoose  2  12887  12470    55  181   9993  9745   40   99   6176</span>
+<span class="co">#&gt; 5  19009    Audubon  4   6119   6007     9   37   4780  4714    5   27   3435</span>
+<span class="co">#&gt; 6  19011     Benton  1  26076  25387    93  275  19430 19068   49  155  13712</span>
+<span class="co">#&gt; 7  19013 Black Hawk  1 131090 109968 11493 4907 102594 89541 7677 2865  64775</span>
+<span class="co">#&gt; 8  19015      Boone  4  26306  25194   202  505  20027 19448  103  260  13929</span>
+<span class="co">#&gt; 9  19017     Bremer  1  24276  23459   186  239  18763 18242  155  137  12871</span>
+<span class="co">#&gt; 10 19019   Buchanan  1  20958  20344    59  243  15282 14979   32  128  10338</span>
+<span class="co">#&gt;    dem_08 rep_08                       geometry</span>
+<span class="co">#&gt; 1    1924   2060 MULTIPOLYGON (((4592338 328...</span>
+<span class="co">#&gt; 2    1118   1046 MULTIPOLYGON (((4528041 315...</span>
+<span class="co">#&gt; 3    3971   2965 MULTIPOLYGON (((5422507 401...</span>
+<span class="co">#&gt; 4    2970   3086 MULTIPOLYGON (((5032545 306...</span>
+<span class="co">#&gt; 5    1739   1634 MULTIPOLYGON (((4487363 341...</span>
+<span class="co">#&gt; 6    7058   6447 MULTIPOLYGON (((5246216 357...</span>
+<span class="co">#&gt; 7   39184  24662 MULTIPOLYGON (((5175640 369...</span>
+<span class="co">#&gt; 8    7356   6293 MULTIPOLYGON (((4741174 354...</span>
+<span class="co">#&gt; 9    6940   5741 MULTIPOLYGON (((5174636 379...</span>
+<span class="co">#&gt; 10   6050   4139 MULTIPOLYGON (((5302846 370...</span></code></pre></div>
+</div>
+</div>
+<div id="define" class="section level1">
+<h1 class="hasAnchor">
+<a href="#define" class="anchor"></a>Defining the redistricting problem</h1>
+<p>A redistricting problem is defined by the map of the precincts, the number of contiguous districts to divide the precincts into, the level of population parity to enforce, and any other necessary constraints that must be imposed.</p>
+<div id="determining-the-relevant-constraints" class="section level2">
+<h2 class="hasAnchor">
+<a href="#determining-the-relevant-constraints" class="anchor"></a>Determining the relevant constraints</h2>
+<p>In Iowa, congressional districts are constructed not out of precincts but out of the state’s 99 counties, and in the 2010 redistricting cycle, Iowa was apportioned four congressional districts, down one from the 2000 cycle. Chapter 42 of the Iowa Code provides guidance on the other constraints imposed on the redistricting process (our emphasis added):</p>
+<blockquote>
+<p><strong>42.4 Redistricting standards.</strong></p>
+<p>…</p>
+<p>1.b. Congressional districts shall each have a population <em>as nearly equal as practicable</em> to the ideal district population, derived as prescribed in paragraph “a” of this subsection. No congressional district shall have a population which varies by more than <em>one percent from the applicable ideal district population</em>, except as necessary to comply with Article III, section 37 of the Constitution of the State of Iowa.</p>
+<p>…</p>
+<p>3. Districts shall be composed of convenient <em>contiguous territory</em>. Areas which meet only at the points of adjoining corners are not contiguous.</p>
+<p>4. Districts shall be <em>reasonably compact</em> in form, to the extent consistent with the standards established by subsections 1, 2, and 3. In general, reasonably compact districts are those which are square, rectangular, or hexagonal in shape, and not irregularly shaped, to the extent permitted by natural or political boundaries….</p>
+<p>5. No district shall be drawn for the purpose of favoring a political party, incumbent legislator or member of Congress, or other person or group, or for the purpose of augmenting or diluting the voting strength of a language or racial minority group. In establishing districts, <em>no use shall be made</em> of any of the following data:</p>
+<ol style="list-style-type: lower-alpha">
+<li>Addresses of incumbent legislators or members of Congress.</li>
+<li>Political affiliations of registered voters.</li>
+<li>Previous election results.</li>
+<li>Demographic information, other than population head counts, except as required by the Constitution and the laws of the United States.</li>
+</ol>
+</blockquote>
+<p>The section goes on to provide two specific measures of compactness that should be used to compare districts, one of which is the total perimeter of all districts. If the total perimeter is small, then the districts relatively compact.</p>
+<p>Contiguity of districts and no reliance on partisan or demographic data are built-in to <code>redist</code>. We’ll look at how to specify the desired population deviation (no more than 1% by law) in the next section, and discuss compactness in the <a href="#simulate">simiulation section</a>.</p>
+</div>
+<div id="setting-up-the-problem-in-redist" class="section level2">
+<h2 class="hasAnchor">
+<a href="#setting-up-the-problem-in-redist" class="anchor"></a>Setting up the problem in <code>redist</code>
+</h2>
+<p>In <code>redist</code>, a basic redistricting problem is defined by an object of type <code>redist_map</code>, which can be constructed using the eponymous function. The user must provide a vector of population counts (defaults to the <code>pop</code> column, if one exists) and the desired population parity, and the number of districts. The latter can be inferred if a reference redistricting plan exists. For Iowa, we’ll use the adopted 2010 plan as a reference.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">iowa_map</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan<span class="op">=</span><span class="va">cd</span>, pop_tol<span class="op">=</span><span class="fl">0.01</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span>
+<span class="co">#&gt; A redist_map object with 99 units and 16 fields</span>
+<span class="co">#&gt; To be partitioned into 4 districts with population between 761,588.8 - 1.0% and 761,588.8 + 1.0%</span>
+<span class="co">#&gt; With geometry:</span>
+<span class="co">#&gt;     bbox:           xmin: 4081849 ymin: 2879102 xmax: 5834228 ymax: 4024957</span>
+<span class="co">#&gt;     projected CRS:  NAD83(HARN) / Iowa North (ftUS)</span>
+<span class="co">#&gt; # A tibble: 99 x 16</span>
+<span class="co">#&gt;    fips  name       cd    pop  white black  hisp    vap  wvap  bvap  hvap tot_08</span>
+<span class="co">#&gt;  * &lt;chr&gt; &lt;chr&gt;   &lt;int&gt;  &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 19001 Adair       3   7682   7507    11   101   5957  5860     5    53   4053</span>
+<span class="co">#&gt;  2 19003 Adams       3   4029   3922     8    37   3180  3109     6    22   2206</span>
+<span class="co">#&gt;  3 19005 Allama…     1  14330  13325   109   757  11020 10430    82   425   7059</span>
+<span class="co">#&gt;  4 19007 Appano…     2  12887  12470    55   181   9993  9745    40    99   6176</span>
+<span class="co">#&gt;  5 19009 Audubon     4   6119   6007     9    37   4780  4714     5    27   3435</span>
+<span class="co">#&gt;  6 19011 Benton      1  26076  25387    93   275  19430 19068    49   155  13712</span>
+<span class="co">#&gt;  7 19013 Black …     1 131090 109968 11493  4907 102594 89541  7677  2865  64775</span>
+<span class="co">#&gt;  8 19015 Boone       4  26306  25194   202   505  20027 19448   103   260  13929</span>
+<span class="co">#&gt;  9 19017 Bremer      1  24276  23459   186   239  18763 18242   155   137  12871</span>
+<span class="co">#&gt; 10 19019 Buchan…     1  20958  20344    59   243  15282 14979    32   128  10338</span>
+<span class="co">#&gt; # … with 89 more rows, and 4 more variables: dem_08 &lt;dbl&gt;, rep_08 &lt;dbl&gt;,</span>
+<span class="co">#&gt; #   geometry &lt;MULTIPOLYGON [US_survey_foot]&gt;, adj &lt;list&gt;</span></code></pre></div>
+<p>This looks much the same as <code>iowa</code> itself, but metadata has been added, and there’s a new column, <code>adj</code>.</p>
+</div>
+<div id="adjacency-based-redistricting" class="section level2">
+<h2 class="hasAnchor">
+<a href="#adjacency-based-redistricting" class="anchor"></a>Adjacency-based redistricting</h2>
+<p>All redistricting algorithms operate on an <em>adjacency graph</em>, which is constructed from the actual precinct or county geography. In the adjacency graph, every precinct or county is a node, and two nodes are connected by an edge if the corresponding precincts are geographically adjacent.<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a> Creating a contiguous set of districts as part of a redistricting plan then corresponds to creating a <a href="https://en.wikipedia.org/wiki/Graph_partition"><em>partition</em></a> of the adjacency graph.</p>
+<p>The <code><a href="../reference/redist_map.html">redist_map()</a></code> function automatically computes the adjacency graph from the provided shapefile (though one can be provided directly as well), and stores it in the <code>adj</code> column as an <em>adjacency list</em>, which is, for each precinct, a list of neighboring precincts. As part of this process, the adjacency graph is checked for global contiguity (no islands), which is necessary for the redistricting algorithms to function properly.</p>
+<p>We can visualize the adjacency graph by plotting the <code>redist_map</code> object.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span></code></pre></div>
+<p><img src="redist_files/figure-html/iowa-adj-1.png" width="700"></p>
+</div>
+<div id="pre-processing" class="section level2">
+<h2 class="hasAnchor">
+<a href="#pre-processing" class="anchor"></a>Pre-processing</h2>
+<p>Often, we want to only analyze a portion of a map, or hold some districts fixed while others are re-simulated. We may also want to implement a status-quo-type constraint that encourages simulated districts to be close to a reference plan. This can be accomplished by freezing the “cores” of each district.</p>
+<p>All of these operations fall under the umbrella of map pre-processing, and <code>redist</code> is well-equipped to handle them. You can use familiar <code>dplyr</code> verbs like <code><a href="https://dplyr.tidyverse.org/reference/filter.html">filter()</a></code> and <code><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize()</a></code>, along with new <code>redist</code> operations like <code><a href="../reference/redist.freeze.html">freeze()</a></code>, <code><a href="../reference/redist.identify.cores.html">make_cores()</a></code>, and <code><a href="../reference/merge_by.html">merge_by()</a></code>, to operate on <code>redist_map</code> objects. The package will make the appropriate modifications to the geometry and adjacency graph in the background.</p>
+<p>The <a href="map-preproc.html">map pre-processing vignette</a> contains more information and examples about these operations.</p>
+</div>
+<div id="exploring-the-geography" class="section level2">
+<h2 class="hasAnchor">
+<a href="#exploring-the-geography" class="anchor"></a>Exploring the geography</h2>
+<p>To get a feel for the demographic and political geography of the state, we’ll make some plots from the <code>iowa_map</code> object. We see that the state is mostly rural and white, with Polk county (Des Moines) the largest and densest. Politically, most counties are relatively balanced between Democrats and Republicans (at least in the ’08 election), though there is a rough east-west gradient.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">areas</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html">as.numeric</a></span><span class="op">(</span><span class="fu">units</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/units/man/units.html">set_units</a></span><span class="op">(</span><span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/geos_measures.html">st_area</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">$</span><span class="va">geometry</span><span class="op">)</span>, <span class="va">mi</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">iowa_map</span>, fill <span class="op">=</span> <span class="va">pop</span> <span class="op">/</span> <span class="va">areas</span><span class="op">)</span> <span class="op">+</span> 
+    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html">scale_fill_viridis_c</a></span><span class="op">(</span>name<span class="op">=</span><span class="st">"Population density (people / sq. mi)"</span>, 
+                         trans<span class="op">=</span><span class="st">"sqrt"</span><span class="op">)</span></code></pre></div>
+<p><img src="redist_files/figure-html/iowa-chloro-1.png" width="700"></p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">iowa_map</span>, fill <span class="op">=</span> <span class="va">dem_08</span> <span class="op">/</span> <span class="va">tot_08</span><span class="op">)</span> <span class="op">+</span>
+    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html">scale_fill_gradient2</a></span><span class="op">(</span>name<span class="op">=</span><span class="st">"Pct. Democratic '08"</span>,  midpoint<span class="op">=</span><span class="fl">0.5</span><span class="op">)</span></code></pre></div>
+<p><img src="redist_files/figure-html/iowa-chloro-2.png" width="700"></p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">iowa_map</span>, fill <span class="op">=</span> <span class="va">wvap</span> <span class="op">/</span> <span class="va">vap</span><span class="op">)</span> <span class="op">+</span>
+    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html">scale_fill_viridis_c</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
+<p><img src="redist_files/figure-html/iowa-chloro-3.png" width="700"></p>
+</div>
+</div>
+<div id="simulate" class="section level1">
+<h1 class="hasAnchor">
+<a href="#simulate" class="anchor"></a>Simulating redistricting plans</h1>
+<p>The crux of a redistricting analysis is actually simulating new redistricting plans. As discussed above, <code>redist</code> provides several algorithms for performing this simulation, and each has its own advantages and incorporates a different set of constraints. Here, we’ll demonstrate use of the <code><a href="../reference/redist_smc.html">redist_smc()</a></code> algorithm, a Sequential Monte Carlo (SMC)-based procedure which is the recommended choice for most redistricting analyses.</p>
+<p>SMC creates plans directly, by drawing district boundaries one at a time, as illustrated below.</p>
+<p><img src="../reference/figures/smc-schematic.png"></p>
+<p>Because of the way districts are drawn in SMC, the generated districts are relatively compact by default. This can be further controlled by the <code>compactness</code> parameter (although <code>compactness=1</code> is particularly computationally convenient).</p>
+<p>To simulate, we call <code><a href="../reference/redist_smc.html">redist_smc()</a></code> on our <code>redist_map</code> object.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">iowa_plans</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">iowa_map</span>, nsims<span class="op">=</span><span class="fl">1000</span>, compactness<span class="op">=</span><span class="fl">1</span><span class="op">)</span>
+<span class="co">#&gt; SEQUENTIAL MONTE CARLO</span>
+<span class="co">#&gt; Sampling 1000 99-unit maps with 4 districts and population between 753973 and 769205.</span>
+<span class="co">#&gt; Making split 1 of 3</span>
+<span class="co">#&gt; Using k = 2</span>
+<span class="co">#&gt; Iteration    100 / 1000</span>
+<span class="co">#&gt; Iteration    200 / 1000</span>
+<span class="co">#&gt; Iteration    300 / 1000</span>
+<span class="co">#&gt; Iteration    400 / 1000</span>
+<span class="co">#&gt; Iteration    500 / 1000</span>
+<span class="co">#&gt; Iteration    600 / 1000</span>
+<span class="co">#&gt; Iteration    700 / 1000</span>
+<span class="co">#&gt; Iteration    800 / 1000</span>
+<span class="co">#&gt; Iteration    900 / 1000</span>
+<span class="co">#&gt; Iteration   1000 / 1000</span>
+<span class="co">#&gt; 14.4% acceptance rate.</span>
+<span class="co">#&gt; Resampling effective sample size: 982.1 (98.2% efficiency).</span>
+<span class="co">#&gt; Making split 2 of 3</span>
+<span class="co">#&gt; Using k = 2</span>
+<span class="co">#&gt; Iteration    100 / 1000</span>
+<span class="co">#&gt; Iteration    200 / 1000</span>
+<span class="co">#&gt; Iteration    300 / 1000</span>
+<span class="co">#&gt; Iteration    400 / 1000</span>
+<span class="co">#&gt; Iteration    500 / 1000</span>
+<span class="co">#&gt; Iteration    600 / 1000</span>
+<span class="co">#&gt; Iteration    700 / 1000</span>
+<span class="co">#&gt; Iteration    800 / 1000</span>
+<span class="co">#&gt; Iteration    900 / 1000</span>
+<span class="co">#&gt; Iteration   1000 / 1000</span>
+<span class="co">#&gt; 13.4% acceptance rate.</span>
+<span class="co">#&gt; Resampling effective sample size: 966.2 (96.6% efficiency).</span>
+<span class="co">#&gt; Making split 3 of 3</span>
+<span class="co">#&gt; Using k = 2</span>
+<span class="co">#&gt; Iteration    100 / 1000</span>
+<span class="co">#&gt; Iteration    200 / 1000</span>
+<span class="co">#&gt; Iteration    300 / 1000</span>
+<span class="co">#&gt; Iteration    400 / 1000</span>
+<span class="co">#&gt; Iteration    500 / 1000</span>
+<span class="co">#&gt; Iteration    600 / 1000</span>
+<span class="co">#&gt; Iteration    700 / 1000</span>
+<span class="co">#&gt; Iteration    800 / 1000</span>
+<span class="co">#&gt; Iteration    900 / 1000</span>
+<span class="co">#&gt; Iteration   1000 / 1000</span>
+<span class="co">#&gt; 4.7% acceptance rate.</span>
+<span class="co">#&gt; Resampling effective sample size: 961.7 (96.2% efficiency).</span></code></pre></div>
+<p>By default, <code><a href="../reference/redist_smc.html">redist_smc()</a></code> prints a good deal of diagnostic information. While verbose, it is important to monitor this output to ensure the algorithm is working properly. The key number to keep an eye on is the <em>resampling effective sample size</em>/<em>resampling efficiency</em>. This number should be as close to the nominal sample size (100%) as possible, and values less than 5–10% generally indicate problems—constraints which are too strong or difficult to satisfy. Here, the resampling efficiencies are above 90% at each stage, which is excellent.</p>
+<p>The output from the algorithm is a <code>redist_plans</code> object, which stores a matrix of district assignments for each precinct and simulated plans, and a table of summary statistics for each district and simulated plan.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">iowa_plans</span><span class="op">)</span>
+<span class="co">#&gt; 1000 sampled plans with 4 districts from a 99-unit map,</span>
+<span class="co">#&gt;   drawn using Sequential Monte Carlo</span>
+<span class="co">#&gt; With plans resampled from weights</span>
+<span class="co">#&gt; Plans matrix: num [1:99, 1:1000] 4 4 1 2 3 1 1 4 1 1 ...</span>
+<span class="co">#&gt; # A tibble: 4,000 x 3</span>
+<span class="co">#&gt;    draw  district total_pop</span>
+<span class="co">#&gt;  * &lt;fct&gt;    &lt;int&gt;     &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 1            1    762178</span>
+<span class="co">#&gt;  2 1            2    763190</span>
+<span class="co">#&gt;  3 1            3    766664</span>
+<span class="co">#&gt;  4 1            4    754323</span>
+<span class="co">#&gt;  5 2            1    765163</span>
+<span class="co">#&gt;  6 2            2    767311</span>
+<span class="co">#&gt;  7 2            3    759326</span>
+<span class="co">#&gt;  8 2            4    754555</span>
+<span class="co">#&gt;  9 3            1    766525</span>
+<span class="co">#&gt; 10 3            2    758971</span>
+<span class="co">#&gt; # … with 3,990 more rows</span></code></pre></div>
+<p>We can explore specific simulated plans with <code><a href="../reference/redist.plot.plans.html">redist.plot.plans()</a></code>.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/redist.plot.plans.html">redist.plot.plans</a></span><span class="op">(</span><span class="va">iowa_plans</span>, draws<span class="op">=</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span>, geom<span class="op">=</span><span class="va">iowa_map</span><span class="op">)</span></code></pre></div>
+<p><img src="redist_files/figure-html/ia-sim-plans-1.png" width="700"></p>
+</div>
+<div id="analyze" class="section level1">
+<h1 class="hasAnchor">
+<a href="#analyze" class="anchor"></a>Analyzing the simulated plans</h1>
+<p>A <code>redist_plans</code> object, the output of a sampling algorithm, links a matrix of precinct assignments to a table of district statistics, and this linkage makes analyzing the output a breeze.</p>
+<p>The first step is generally to add a reference plan to a set of redistricting plans so that the reference can be compared to the simulated baseline. In problems with a small (generally fewer than 7) number of districts, it may also be possible to renumber the simulated districts (which have random numbers in general) to match the reference plan as closely as possible. This adds a <code>pop_overlap</code> column which measures how much of the population is in the same district in both a given plan and the reference plan.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">iowa_plans</span> <span class="op">=</span> <span class="fu"><a href="../reference/add_reference.html">add_reference</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">iowa_map</span><span class="op">$</span><span class="va">cd</span>, <span class="st">"2010 Adopted"</span><span class="op">)</span> <span class="op">%&gt;%</span>
+    <span class="fu"><a href="../reference/match_numbers.html">match_numbers</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">$</span><span class="va">cd</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">iowa_plans</span><span class="op">)</span>
+<span class="co">#&gt; 1000 sampled plans and 1 reference plan with 4 districts from a 99-unit map,</span>
+<span class="co">#&gt;   drawn using Sequential Monte Carlo</span>
+<span class="co">#&gt; With plans resampled from weights</span>
+<span class="co">#&gt; Plans matrix: int [1:99, 1:1001] 3 3 1 2 4 1 1 4 1 1 ...</span>
+<span class="co">#&gt; # A tibble: 4,004 x 4</span>
+<span class="co">#&gt;    draw         district total_pop pop_overlap</span>
+<span class="co">#&gt;    &lt;fct&gt;        &lt;ord&gt;        &lt;dbl&gt;       &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 2010 Adopted 1           761548       1    </span>
+<span class="co">#&gt;  2 2010 Adopted 2           761624       1    </span>
+<span class="co">#&gt;  3 2010 Adopted 3           761612       1    </span>
+<span class="co">#&gt;  4 2010 Adopted 4           761571       1    </span>
+<span class="co">#&gt;  5 1            1           762178       0.837</span>
+<span class="co">#&gt;  6 1            2           763190       0.837</span>
+<span class="co">#&gt;  7 1            3           754323       0.837</span>
+<span class="co">#&gt;  8 1            4           766664       0.837</span>
+<span class="co">#&gt;  9 2            1           765163       0.561</span>
+<span class="co">#&gt; 10 2            2           754555       0.561</span>
+<span class="co">#&gt; # … with 3,994 more rows</span></code></pre></div>
+<p>Then we can add summary statistics by district, using <code>redist</code>’s analysis functions. Here, we’ll compute the population deviation, the perimeter-based compactness measure related to the Iowa Code’s redistricting requirements, and the fraction of minority voters and two-party Democratic vote share by district.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">target_pop</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">$</span><span class="va">pop</span><span class="op">)</span> <span class="op">/</span> <span class="fl">4</span>
+<span class="va">county_perims</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist.prep.polsbypopper.html">redist.prep.polsbypopper</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">iowa_map</span><span class="op">$</span><span class="va">adj</span><span class="op">)</span>
+<span class="co">#&gt; Linking to GEOS 3.9.0, GDAL 3.2.1, PROJ 7.2.1</span>
+<span class="co">#&gt; Linking to liblwgeom 3.0.0beta1 r16016, GEOS 3.9.0, PROJ 7.2.1</span>
+
+<span class="va">iowa_plans</span> <span class="op">=</span> <span class="va">iowa_plans</span> <span class="op">%&gt;%</span>
+    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>pop_dev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html">abs</a></span><span class="op">(</span><span class="va">total_pop</span> <span class="op">/</span> <span class="va">target_pop</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span>,
+           comp <span class="op">=</span> <span class="fu"><a href="../reference/redist.compactness.html">distr_compactness</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="st">"PolsbyPopper"</span>, perim_df<span class="op">=</span><span class="va">county_perims</span><span class="op">)</span>,
+           pct_min <span class="op">=</span> <span class="fu"><a href="../reference/redist.group.percent.html">group_frac</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">vap</span> <span class="op">-</span> <span class="va">wvap</span>, <span class="va">vap</span><span class="op">)</span>,
+           pct_dem <span class="op">=</span> <span class="fu"><a href="../reference/redist.group.percent.html">group_frac</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">dem_08</span>, <span class="va">dem_08</span> <span class="op">+</span> <span class="va">rep_08</span><span class="op">)</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">iowa_plans</span><span class="op">)</span>
+<span class="co">#&gt; 1000 sampled plans and 1 reference plan with 4 districts from a 99-unit map,</span>
+<span class="co">#&gt;   drawn using Sequential Monte Carlo</span>
+<span class="co">#&gt; With plans resampled from weights</span>
+<span class="co">#&gt; Plans matrix: int [1:99, 1:1001] 3 3 1 2 4 1 1 4 1 1 ...</span>
+<span class="co">#&gt; # A tibble: 4,004 x 8</span>
+<span class="co">#&gt;    draw         district total_pop pop_overlap   pop_dev  comp pct_min pct_dem</span>
+<span class="co">#&gt;    &lt;fct&gt;        &lt;ord&gt;        &lt;dbl&gt;       &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 2010 Adopted 1           761548       1     0.0000535 0.302  0.0737   0.592</span>
+<span class="co">#&gt;  2 2010 Adopted 2           761624       1     0.0000463 0.360  0.0968   0.579</span>
+<span class="co">#&gt;  3 2010 Adopted 3           761612       1     0.0000305 0.529  0.114    0.531</span>
+<span class="co">#&gt;  4 2010 Adopted 4           761571       1     0.0000233 0.522  0.0788   0.491</span>
+<span class="co">#&gt;  5 1            1           762178       0.837 0.000774  0.484  0.0674   0.595</span>
+<span class="co">#&gt;  6 1            2           763190       0.837 0.00210   0.282  0.102    0.573</span>
+<span class="co">#&gt;  7 1            3           754323       0.837 0.00954   0.395  0.120    0.549</span>
+<span class="co">#&gt;  8 1            4           766664       0.837 0.00666   0.321  0.0737   0.475</span>
+<span class="co">#&gt;  9 2            1           765163       0.561 0.00469   0.285  0.0839   0.564</span>
+<span class="co">#&gt; 10 2            2           754555       0.561 0.00924   0.349  0.0863   0.612</span>
+<span class="co">#&gt; # … with 3,994 more rows</span></code></pre></div>
+<p>From there, it’s quick to turn these into plan-level summary statistics.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">plan_sum</span> <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html">group_by</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">draw</span><span class="op">)</span> <span class="op">%&gt;%</span>
+    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize</a></span><span class="op">(</span>max_dev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html">max</a></span><span class="op">(</span><span class="va">pop_dev</span><span class="op">)</span>,
+              avg_comp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="va">comp</span><span class="op">)</span>,
+              max_pct_min <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html">max</a></span><span class="op">(</span><span class="va">pct_min</span><span class="op">)</span>,
+              dem_distr <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">pct_dem</span> <span class="op">&gt;</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">plan_sum</span><span class="op">)</span>
+<span class="co">#&gt; 1000 sampled plans and 1 reference plan with 4 districts from a 99-unit map,</span>
+<span class="co">#&gt;   drawn using Sequential Monte Carlo</span>
+<span class="co">#&gt; With plans resampled from weights</span>
+<span class="co">#&gt; Plans matrix: int [1:99, 1:1001] 3 3 1 2 4 1 1 4 1 1 ...</span>
+<span class="co">#&gt; # A tibble: 1,001 x 5</span>
+<span class="co">#&gt;    draw           max_dev avg_comp max_pct_min dem_distr</span>
+<span class="co">#&gt;    &lt;fct&gt;            &lt;dbl&gt;    &lt;dbl&gt;       &lt;dbl&gt;     &lt;int&gt;</span>
+<span class="co">#&gt;  1 2010 Adopted 0.0000535    0.428       0.114         3</span>
+<span class="co">#&gt;  2 1            0.00954      0.371       0.120         3</span>
+<span class="co">#&gt;  3 2            0.00924      0.336       0.119         3</span>
+<span class="co">#&gt;  4 3            0.00932      0.364       0.118         3</span>
+<span class="co">#&gt;  5 4            0.00992      0.261       0.129         4</span>
+<span class="co">#&gt;  6 5            0.00878      0.382       0.104         3</span>
+<span class="co">#&gt;  7 6            0.00911      0.435       0.125         3</span>
+<span class="co">#&gt;  8 7            0.00698      0.323       0.122         3</span>
+<span class="co">#&gt;  9 8            0.00853      0.289       0.110         4</span>
+<span class="co">#&gt; 10 9            0.00725      0.382       0.120         3</span>
+<span class="co">#&gt; # … with 991 more rows</span></code></pre></div>
+<p>These tables of statistics are easily plotted using existing libraries like <code>ggplot2</code>, but <code>redist</code> provides a number of helpful plotting functions that automate some common tasks, like adding a reference line for the reference plan. The output of these functions is a <code>ggplot</code> object, allowing for further customization.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com">patchwork</a></span><span class="op">)</span>
+
+<span class="fu"><a href="https://rdrr.io/r/graphics/hist.html">hist</a></span><span class="op">(</span><span class="va">plan_sum</span>, <span class="va">max_dev</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/graphics/hist.html">hist</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">comp</span><span class="op">)</span> <span class="op">+</span>
+    <span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_layout.html">plot_layout</a></span><span class="op">(</span>guides<span class="op">=</span><span class="st">"collect"</span><span class="op">)</span></code></pre></div>
+<p><img src="redist_files/figure-html/dev-comp-plot-1.png" width="700"></p>
+<p>We can see that the adopted plan has nearly complete population parity, and that its districts are roughly as compact on average as those simulated by the SMC algorithm.</p>
+<p>One of the most common, and useful, plots, for studying the partisan characteristics of a plan, is to plot the fraction of a group (or party) within each district, and compare to the reference plan. Generally, we would first sort the districts by this quantity first, to make the numbers line up, but here we’ve already renumbered the districts to match the reference plan as closely as possible.</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/redist.plot.distr_qtys.html">redist.plot.distr_qtys</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">pct_dem</span>, sort<span class="op">=</span><span class="cn">FALSE</span>, size<span class="op">=</span><span class="fl">0.5</span><span class="op">)</span></code></pre></div>
+<p><img src="redist_files/figure-html/signature-1.png" width="700"></p>
+<p>We see that districts 1 and 2 look normal, but it appears that, relative to our ensemble, district 4 (NW Iowa) is more Democratic, and district 3 (SW Iowa, Des Moines) is less Democratic. However, the reference plan does not appear to be a complete outlier.</p>
+<p>We might also want to look at how the Democratic fraction in each district compares to the fraction of minority voters. We can make a scatterplot of districts, and overlay the reference districts, using <code>redist.plot.scatter</code>. We’ll also color by the district number (higher numbers are in lighter colors).</p>
+<p>Once again, we see that while district 1 and 2 of the reference plan look normal, district has a lower number of Democrats and minority voters than would otherwise be expected.</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">pal</span> <span class="op">=</span> <span class="fu">scales</span><span class="fu">::</span><span class="fu"><a href="https://scales.r-lib.org//reference/viridis_pal.html">viridis_pal</a></span><span class="op">(</span><span class="op">)</span><span class="op">(</span><span class="fl">5</span><span class="op">)</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span><span class="op">]</span>
+<span class="fu"><a href="../reference/redist.plot.scatter.html">redist.plot.scatter</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">pct_min</span>, <span class="va">pct_dem</span>, 
+                    color<span class="op">=</span><span class="va">pal</span><span class="op">[</span><span class="fu"><a href="../reference/subset_sampled.html">subset_sampled</a></span><span class="op">(</span><span class="va">iowa_plans</span><span class="op">)</span><span class="op">$</span><span class="va">district</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span>
+    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html">scale_color_manual</a></span><span class="op">(</span>values<span class="op">=</span><span class="st">"black"</span><span class="op">)</span></code></pre></div>
+<p><img src="redist_files/figure-html/scatter-1.png" width="700"></p>
+<p>From here, it is easy to keep exploring, using the functionality of <code>redist_plans</code> and the built-in plotting functions. More complex model-based analyses could also be performed using the district-level or plan-level statistics.</p>
+</div>
+<div class="footnotes">
+<hr>
+<ol>
+<li id="fn1"><p>from <a href="https://arxiv.org/pdf/2008.06131.pdf">Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans</a><a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>based on Carter, D., Herschlag, G., Hunter, Z., and Mattingly, J. (2019). A merge-split proposal for reversible Monte Carlo Markov chain sampling of redistricting plans. arXiv preprint arXiv:1911.01503.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>from <a href="https://doi.org/10.1080/10618600.2020.1739532">Automated Redistricting Simulation Using Markov Chain Monte Carlo</a> <em>Journal of Computational and Graphical Statistics</em><a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>from <a href="https://imai.fas.harvard.edu/research/files/enumerate.pdf">The Essential Role of Empirical Validation in Legislative Redistricting Simulation</a><a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>from Jowei Chen and Jonathan Rodden (2013) “Unintentional Gerrymandering: Political Geography and Electoral Bias in Legislatures.” Quarterly Journal of Political Science. 8(3): 239-269.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+<li id="fn6"><p>for <code>redist</code>’s purposes, adjacency requires that two regions touch at more than just one point or corner.<a href="#fnref6" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
 
-      </div>
+        <nav id="toc" data-toggle="toc"><h2 data-toc-skip>Contents</h2>
+    </nav>
+</div>
 
 </div>
 
