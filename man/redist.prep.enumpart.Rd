@@ -23,8 +23,9 @@ Prepares a run of the enumpart algorithm by ordering edges
 }
 \examples{
 \dontrun{
-data(fl25_graph)
-redist.prep.enumpart(adj = fl25_graph, unordered_path = '../unordered',
+data(fl25)
+adj <- redist.adjacency(fl25)
+redist.prep.enumpart(adj = adj, unordered_path = '../unordered',
                      ordered_path = '../ordered')
 }
 }

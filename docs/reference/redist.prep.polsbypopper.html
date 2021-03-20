@@ -180,8 +180,8 @@ and "logSpanningTree" with adjacency provided.</p></td>
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
-<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_enum</span><span class='op'>)</span>
-<span class='va'>perim_df</span> <span class='op'>&lt;-</span> <span class='fu'>redist.prep.polsbypopper</span><span class='op'>(</span>shp <span class='op'>=</span> <span class='va'>fl25</span>, adj <span class='op'>=</span> <span class='va'>fl25_graph</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_adj</span><span class='op'>)</span>
+<span class='va'>perim_df</span> <span class='op'>&lt;-</span> <span class='fu'>redist.prep.polsbypopper</span><span class='op'>(</span>shp <span class='op'>=</span> <span class='va'>fl25</span>, adj <span class='op'>=</span> <span class='va'>fl25_adj</span><span class='op'>)</span>
 <span class='op'>}</span>
 </div></pre>
   </div>

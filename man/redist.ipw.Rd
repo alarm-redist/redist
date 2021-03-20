@@ -81,7 +81,7 @@ sample is representative of a random sample from the uniform distribution.
 \dontrun{
 data(fl25)
 data(fl25_enum)
-data(fl25_graph)
+data(fl25_adj)
 
 ## Code to run the simulations in Figure 4 of Fifield, Higgins,
 ## Imai and Tarr (2015)
@@ -93,7 +93,7 @@ init_plan <- fl25_enum$plans[, 5118]
 betaweights <- rep(NA, 10); for(i in 1:10){betaweights[i] <- 4^i}
 
 ## Run simulations - tempering population constraint
-alg_253_20_st <- redist.mcmc(adj = fl25_graph, total_pop = fl25$pop,
+alg_253_20_st <- redist.mcmc(adj = fl25_adj, total_pop = fl25$pop,
                              init_plan = init_plan, nsims = 10000,
                              constraint = 'population', constraintweights = 5.4,
                              betaweights = betaweights, temper = 1)

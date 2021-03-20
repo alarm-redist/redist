@@ -211,13 +211,13 @@ or \code{tgt_vra_other}. This can be visualized with
 \examples{
 \dontrun{
 data(fl25)
-data(fl25_graph)
+data(fl25_adj)
 data(fl25_enum)
 
-sampled_basic = redist.smc(fl25_graph, fl25$pop,
+sampled_basic = redist.smc(fl25_adj, fl25$pop,
                            nsims=10000, ndists=3, pop_tol=0.1)
 
-sampled_constr = redist.smc(fl25_graph, fl25$pop,
+sampled_constr = redist.smc(fl25_adj, fl25$pop,
                             nsims=10000, ndists=3, pop_tol=0.1,
                             constraints=list(
                                 status_quo = list(strength=10, current=fl25_enum$plans[,5118]),
