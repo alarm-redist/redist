@@ -5,12 +5,12 @@
 \alias{hist.redist_plans}
 \title{Plot a histogram of a summary statistic}
 \usage{
-redist.plot.hist(x, qty, bins = NULL, ...)
+redist.plot.hist(plans, qty, bins = NULL, ...)
 
 \method{hist}{redist_plans}(x, qty, ...)
 }
 \arguments{
-\item{x}{the \code{redist_plans} object.}
+\item{plans}{the \code{redist_plans} object.}
 
 \item{qty}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the statistic.}
 
@@ -18,8 +18,23 @@ redist.plot.hist(x, qty, bins = NULL, ...)
 
 \item{...}{passed on to \code{\link[ggplot2]{geom_histogram}}}
 }
+\value{
+A ggplot
+}
 \description{
 Plots a histogram of a statistic of a \code{\link{redist_plans}} object,
 with a reference line for each reference plan, if applicable.
+}
+\examples{
+library(dplyr)
+data(iowa)
+
+iowa = redist_map(iowa, existing_plan=cd, pop_tol=0.05)
+plans = redist_smc(iowa, nsims=100, silent=TRUE) \%>\%
+    add_reference(iowa$cd)
+group_by(plans, draw) \%>\%
+    summarize(pop_dev = max(abs(total_pop / mean(total_pop) - 1))) \%>\%
+    redist.plot.hist(pop_dev)
+
 }
 \concept{plot}

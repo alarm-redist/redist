@@ -97,17 +97,36 @@ reconstruct.redist_plans = function(data, old) {
 #' * \code{\link{as.matrix.redist_plans}}
 #' * \code{\link{plot.redist_plans}}
 #'
-#' @param plans a matrix with \code{n_precinct} columns and \code{n_sims} rows
+#' @param plans a matrix with \code{n_precinct} columns and \code{n_sims} rows,
+#'   or a single vector of precinct assignments.
 #' @param map a \code{\link{redist_map}} object
 #' @param algorithm the algorithm used to generate the plans (usually "smc" or "mcmc")
+#' @param wgt the weights to use, if any.
 #' @param ... Other named attributes to set
 #'
+#' @returns a new \code{redist_plans} object.
+#'
+#' @examples
+#' data(iowa)
+#'
+#' iowa = redist_map(iowa, existing_plan=cd, pop_tol=0.05)
+#' rsg_plan = redist.rsg(iowa$adj, iowa$pop, ndists=4, pop_tol=0.05)$plan
+#' redist_plans(rsg_plan, iowa, "rsg")
+#'
 #' @concept analyze
-#' @md
-redist_plans = function(plans, map, algorithm, ...) {
+#' @export
+redist_plans = function(plans, map, algorithm, wgt=NULL, ...) {
+    if (is.numeric(plans) && length(plans) == nrow(map)) {
+        plans = matrix(as.integer(plans), ncol=1)
+    }
+    stopifnot(is.matrix(plans))
     stopifnot(nrow(plans) == nrow(map))
-    obj = new_redist_plans(plans, map, algorithm, wgt=rep(1, ncol(plans)),
-                           resampled=TRUE, ...)
+    stopifnot(inherits(map, "redist_map"))
+
+    if (min(plans) == 0L) plans = plans + 1L
+
+    obj = new_redist_plans(plans, map, algorithm, wgt=wgt,
+                           resampled=FALSE, ...)
     validate_redist_plans(obj)
 }
 
@@ -257,25 +276,29 @@ print.redist_plans = function(x, ...) {
         cat(cli::pluralize("and {n_ref} reference plan{?s} "))
     if (ncol(plans_m) == 0) return(invisible(x))
 
+    alg_name = c(mcmc="Markov chain Monte Carlo",
+                 smc="Sequential Monte Carlo",
+                 mergesplit="Merge-split Markov chain Monte Carlo",
+                 rsg="random seed-and-grow",
+                 crsg="compact random seed-and-grow",
+                 enumpart="Enumpart",
+                 shortburst="short bursts")[attr(x, "algorithm")]
+    if (is.na(alg_name)) alg_name = "an unknown algorithm"
+
     cli::cat_line("with ", max(plans_m[,1]), " districts from a ",
-        nrow(plans_m), "-unit map,\n  drawn using ",
-        c(mcmc="Markov chain Monte Carlo",
-          smc="Sequential Monte Carlo",
-          mergesplit="Merge-split Markov chain Monte Carlo",
-          rsg="random seed-and-grow",
-          crsg="compact random seed-and-grow",
-          enumpart="Enumpart",
-          shortburst="short bursts")[attr(x, "algorithm")])
+        nrow(plans_m), "-unit map,\n  drawn using ", alg_name)
 
     merge_idx = attr(x, "merge_idx")
     if (!is.null(merge_idx))
         cli::cat_line("Merged from another map with reindexing:",
                       utils::capture.output(str(merge_idx, vec.len=2)))
 
-    if (attr(x, "resampled"))
-        cli::cat_line("With plans resampled from weights")
-    else
-        cli::cat_line("With plans not resampled from weights")
+    if (!is.null(attr(x, "wgt"))) {
+        if (attr(x, "resampled"))
+            cli::cat_line("With plans resampled from weights")
+        else
+            cli::cat_line("With plans not resampled from weights")
+    }
 
     cli::cat_line("Plans matrix:", utils::capture.output(str(plans_m, give.attr=F)))
 
@@ -303,16 +326,31 @@ plot.redist_plans = function(x, ..., type="hist") {
 #' Plots a histogram of a statistic of a \code{\link{redist_plans}} object,
 #' with a reference line for each reference plan, if applicable.
 #'
-#' @param x the \code{redist_plans} object.
+#' @param plans the \code{redist_plans} object.
 #' @param qty \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the statistic.
 #' @param bins the number of bins to use in the histogram. Defaults to Freedman-Diaconis rule.
 #' @param ... passed on to \code{\link[ggplot2]{geom_histogram}}
 #'
+#' @returns A ggplot
+#'
+#' @examples
+#' library(dplyr)
+#' data(iowa)
+#'
+#' iowa = redist_map(iowa, existing_plan=cd, pop_tol=0.05)
+#' plans = redist_smc(iowa, nsims=100, silent=TRUE) %>%
+#'     add_reference(iowa$cd)
+#' group_by(plans, draw) %>%
+#'     summarize(pop_dev = max(abs(total_pop / mean(total_pop) - 1))) %>%
+#'     redist.plot.hist(pop_dev)
+#'
 #' @concept plot
 #' @export
-redist.plot.hist = function(x, qty, bins=NULL, ...) {
+redist.plot.hist = function(plans, qty, bins=NULL, ...) {
+    stopifnot(inherits(plans, "redist_plans"))
+
     if (is.null(bins)) {
-        val = rlang::eval_tidy(rlang::enquo(qty), x)
+        val = rlang::eval_tidy(rlang::enquo(qty), plans)
         n = length(val)
         iqr = IQR(val)
         if (iqr > 0)
@@ -321,12 +359,13 @@ redist.plot.hist = function(x, qty, bins=NULL, ...) {
             bins = 3
     }
 
-    p = ggplot(subset_sampled(x), aes({{ qty }})) +
+    p = ggplot(subset_sampled(plans), aes({{ qty }})) +
         ggplot2::geom_histogram(..., bins=bins) +
-        labs(y="Number of plans", color="Plan")
-    if (get_n_ref(x) > 0)
-        p = p + ggplot2::geom_vline(aes(xintercept={{ qty }}, color=.data$draw),
-                                    data=subset_ref(x))
+        labs(y="Number of plans")
+    if (get_n_ref(plans) > 0)
+        p = p + labs(color="Plan") +
+            ggplot2::geom_vline(aes(xintercept={{ qty }}, color=.data$draw),
+                                data=subset_ref(plans))
     p
 }
 
@@ -337,62 +376,182 @@ hist.redist_plans = function(x, qty, ...) {
     redist.plot.hist(x, !!qty, ...)
 }
 
+#' Scatter plot of plan summary statistics
+#'
+#' Makes a scatterplot of two quantities of interest across districts or plans.
+#'
+#' @param plans the \code{redist_plans} object.
+#' @param x \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the
+#'   quantity to plot on the horizontal axis.
+#' @param y \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the
+#'   quantity to plot on the vertical axis.
+#' @param ... passed on to \code{\link[ggplot2:geom_point]{geom_point}}.
+#' @param bigger if TRUE, make the point corresponding to the reference plan larger.
+#'
+#' @returns A ggplot
+#'
+#' @examples
+#' library(dplyr)
+#' data(iowa)
+#'
+#' iowa = redist_map(iowa, existing_plan=cd, pop_tol=0.05)
+#' plans = redist_smc(iowa, nsims=100, silent=TRUE) %>%
+#'     add_reference(iowa$cd)
+#' plans %>%
+#'     mutate(comp = distr_compactness(iowa)) %>%
+#'     group_by(draw) %>%
+#'     summarize(pop_dev = max(abs(total_pop / mean(total_pop) - 1)),
+#'               comp = comp[1]) %>%
+#'     redist.plot.scatter(pop_dev, comp)
+#'
+#' @concept plot
+#' @export
+redist.plot.scatter = function(plans, x, y, ..., bigger=TRUE) {
+    stopifnot(inherits(plans, "redist_plans"))
+
+    p = ggplot(subset_sampled(plans), aes(x={{ x }}, y={{ y }})) +
+        ggplot2::geom_point(...)
+    if (get_n_ref(plans) > 0) {
+        p = p + labs(color="Plan")
+        if (bigger) {
+            p = p + ggplot2::geom_point(aes(color=.data$draw), shape=15,
+                                        size=3, data=subset_ref(plans))
+        } else {
+            p = p + ggplot2::geom_point(aes(color=.data$draw), shape=15,
+                                        data=subset_ref(plans))
+        }
+    }
+
+    p
+}
+
 #' Plot box and whisker plots for each district
 #'
 #' Plots a boxplot of a quantity of interest across districts, with districts
 #' optionally sorted by this quantity. Adds reference points for each reference
 #' plan, if applicable.
 #'
-#' @param x the \code{redist_plans} object.
+#' @param plans the \code{redist_plans} object.
 #' @param qty \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the
 #'   quantity of interest.
 #' @param sort set to \code{"asc"} to sort districts in ascending order of
 #'   \code{qty} (the default), \code{"desc"} for descending order, or
 #'   \code{FALSE} or \code{"none"} for no sorting.
+#' @param geom the geom to use in plotting the simulated districts: either
+#'   \code{"jitter"} or \code{"boxplot"}
+#' @param color_thresh if a number, the threshold to use in coloring the points.
+#'   Plans with quantities of interest above the threshold will be colored
+#'   differently than plans below the threshold.
 #' @param ... passed on to \code{\link[ggplot2]{geom_boxplot}}
+#'
+#' @returns A ggplot
+#'
+#' @examples
+#' library(dplyr)
+#' data(iowa)
+#'
+#' iowa = redist_map(iowa, existing_plan=cd, pop_tol=0.05)
+#' plans = redist_smc(iowa, nsims=100, silent=TRUE) %>%
+#'     add_reference(iowa$cd)
+#' plans %>%
+#'     mutate(pct_dem = group_frac(iowa, dem_08, tot_08)) %>%
+#'     redist.plot.distr_qtys(pct_dem)
 #'
 #' @concept plot
 #' @export
-redist.plot.distr_qtys = function(x, qty, sort="asc", ...) {
+redist.plot.distr_qtys = function(plans, qty, sort="asc", geom="jitter",
+                                  color_thresh=NULL, ...) {
+    stopifnot(inherits(plans, "redist_plans"))
+
     if (isFALSE(sort) || sort == "none") {
-        x = dplyr::group_by(x, .data$draw) %>%
+        plans = dplyr::group_by(plans, .data$draw) %>%
             dplyr::mutate(.distr_no = as.factor(.data$district))
     } else {
         ord = if (sort == "asc") 1  else if (sort == "desc") -1 else
             stop("`sort` not recognized: ", sort)
-        x = dplyr::group_by(x, .data$draw) %>%
+        plans = dplyr::group_by(plans, .data$draw) %>%
             dplyr::mutate(.distr_no = as.factor(rank(ord * {{ qty }})))
     }
 
-    p = ggplot(subset_sampled(x), aes(.data$.distr_no, {{ qty }})) +
-        ggplot2::geom_boxplot(..., outlier.size=1)
+    if (is.null(color_thresh)) {
+        p = ggplot(subset_sampled(plans), aes(.data$.distr_no, {{ qty }}))
+    } else {
+        stopifnot(is.numeric(color_thresh))
+        p = ggplot(subset_sampled(plans), aes(.data$.distr_no, {{ qty }},
+                                              color = {{ qty }} >= color_thresh)) +
+            guides(color=FALSE)
+    }
+
+    if (geom == "jitter") {
+        p = p + ggplot2::geom_jitter(...)
+    } else if (geom == "boxplot") {
+        p = p + ggplot2::geom_boxplot(..., outlier.size=1)
+    } else {
+        stop('`geom` must be either "jitter" or "boxplot"')
+    }
 
     if (isFALSE(sort) || sort == "none")
-        p = p + labs(x="District", color="Plan", shape="Plan")
+        p = p + labs(x="District")
     else
-        p = p + labs(x="Ordered district", color="Plan", shape="Plan")
+        p = p + labs(x="Ordered district")
 
-    if (get_n_ref(x) > 0)
-        p = p + ggplot2::geom_point(aes(color=.data$draw, shape=.data$draw), size=2, data=subset_ref(x))
+    if (get_n_ref(plans) > 0) {
+        if (is.null(color_thresh)) {
+            p = p + labs(color="Plan", shape="Plan")
+            if (geom == "jitter") {
+                p = p + ggplot2::geom_segment(aes(as.integer(.data$.distr_no)-0.5,
+                                                  xend=as.integer(.data$.distr_no)+0.5,
+                                                  yend={{ qty }},
+                                                  color=.data$draw),
+                             data=subset_ref(plans), size=1.2)
+            } else {
+                p = p + ggplot2::geom_point(aes(color=.data$draw), shape=15,
+                                            size=2, data=subset_ref(plans))
+            }
+        } else {
+            if (geom == "jitter") {
+                p = p + labs(lty="Plan") +
+                    ggplot2::geom_segment(aes(as.integer(.data$.distr_no)-0.5,
+                                              xend=as.integer(.data$.distr_no)+0.5,
+                                              yend={{ qty }},
+                                              lty=.data$draw),
+                                          data=subset_ref(plans),
+                                          size=1.2, color="black")
+            } else {
+                p = p + labs(shape="Plan") +
+                    ggplot2::geom_point(aes(shape=.data$draw), color="black",
+                                        size=2, data=subset_ref(plans))
+            }
+        }
+    }
 
     p
 }
 
 #' Plot a district assignment
 #'
-#' @param x a \code{redist_plans} object.
+#' @param plans a \code{redist_plans} object.
 #' @param draws the plan(s) to plot. Will match the \code{draw} column of \code{x}.
 #' @param geom the geometry to use
 #'
+#' @returns A ggplot
+#'
+#' @examples
+#' library(dplyr)
+#' data(iowa)
+#'
+#' iowa = redist_map(iowa, existing_plan=cd, pop_tol=0.05)
+#' plans = redist_smc(iowa, nsims=100, silent=TRUE)
+#' redist.plot.plans(plans, c(1, 2, 3, 4), iowa)
+#'
 #' @concept plot
 #' @export
-redist.plot.plans = function(x, draws, geom) {
-    stopifnot(inherits(x, "redist_plans"))
-    stopifnot()
+redist.plot.plans = function(plans, draws, geom) {
+    stopifnot(inherits(plans, "redist_plans"))
 
     plot_single = function(draw) {
-        draw_idx = match(as.character(draw), levels(x$draw))
-        distr_assign = get_plan_matrix(x)[,draw_idx]
+        draw_idx = match(as.character(draw), levels(plans$draw))
+        distr_assign = get_plan_matrix(plans)[, draw_idx]
         if (inherits(geom, "redist_map")) {
             distr_colors = as.factor(color_graph(get_adj(geom), distr_assign))
         } else {

@@ -4,16 +4,28 @@
 \alias{redist.plot.plans}
 \title{Plot a district assignment}
 \usage{
-redist.plot.plans(x, draws, geom)
+redist.plot.plans(plans, draws, geom)
 }
 \arguments{
-\item{x}{a \code{redist_plans} object.}
+\item{plans}{a \code{redist_plans} object.}
 
 \item{draws}{the plan(s) to plot. Will match the \code{draw} column of \code{x}.}
 
 \item{geom}{the geometry to use}
 }
+\value{
+A ggplot
+}
 \description{
 Plot a district assignment
+}
+\examples{
+library(dplyr)
+data(iowa)
+
+iowa = redist_map(iowa, existing_plan=cd, pop_tol=0.05)
+plans = redist_smc(iowa, nsims=100, silent=TRUE)
+redist.plot.plans(plans, c(1, 2, 3, 4), iowa)
+
 }
 \concept{plot}

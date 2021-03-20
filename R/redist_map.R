@@ -126,7 +126,7 @@ reconstruct.redist_map = function(data, old) {
 #' @param existing_plan \code{\link[tidyr:tidyr_tidy_select]{<tidy-select>}} the
 #'   existing district assignment.
 #' @param planarize a number, indicating the CRS to project the shapefile to if
-#'   it is latitude-longitude based. Set to NULL to avoid planarizing.
+#'   it is latitude-longitude based. Set to NULL or FALSE to avoid planarizing.
 #'
 #' @examples
 #' data(fl25)
@@ -149,7 +149,7 @@ redist_map = function(..., ndists=NULL, pop_tol=0.01, pop_bounds=NULL, total_pop
         }
 
         if (isTRUE(sf::st_is_longlat(sf::st_geometry(x)))) {
-            if (!is.null(planarize)) {
+            if (!is.null(planarize) && !isFALSE(planarize)) {
                 message("Projecting to CRS ", planarize)
                 x = sf::st_transform(x, planarize)
             } else {
