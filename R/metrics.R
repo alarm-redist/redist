@@ -51,9 +51,7 @@
 #' @return A tibble with  a column for each specified measure and
 #' a column that specifies the map number.
 #'
-#' @importFrom tibble tibble
-#' @importFrom dplyr select
-#' @importFrom magrittr %>%
+#' @importFrom dplyr select %>% tibble
 #'
 #' @examples \dontrun{
 #' data(fl25)
