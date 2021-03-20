@@ -17,6 +17,8 @@ redist.plot.hist(plans, qty, bins = NULL, ...)
 \item{bins}{the number of bins to use in the histogram. Defaults to Freedman-Diaconis rule.}
 
 \item{...}{passed on to \code{\link[ggplot2]{geom_histogram}}}
+
+\item{x}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the statistic.}
 }
 \value{
 A ggplot
