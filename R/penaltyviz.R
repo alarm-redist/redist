@@ -1,6 +1,13 @@
 #' Visualize VRA Penalty
 #'
-#' Plots the shape of the VRA Gibbs penalty
+#' Plots the shape of the VRA Gibbs penalty.
+#' 
+#' This function allows you to plot the un-exponentiated VRA Gibbs penalty implmented sa
+#' `vra` within MCMC and `vra_old` within Merge-Split and SMC. The function takes two key inputs,
+#' `tgt_min` and `tgt_other` which center the minimum penalty spots. A higher y-value 
+#' indicates a higher penalty and incentivizes moving towards a spot with a lower y-value.
+#' The x-axis indicates the group population proportion in a given district. The default
+#' indicates the default settings within \code{redist.smc()}.
 #'
 #' @param tgt_min double, defaults to 0.55. The minority target percent.
 #' @param tgt_other double, defaults to 0.25. The other group target percent.

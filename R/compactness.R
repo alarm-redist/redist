@@ -51,18 +51,21 @@
 #'
 #'
 #' Polsby-Popper is computed as \deqn{\frac{4*\pi*A(d)}{P(d)^2}} where A is the area
-#' function, the district is d, and P is the perimeter function.
+#' function, the district is d, and P is the perimeter function. All  values are between
+#' 0 and 1, where larger values are more compact.
 #'
 #' Schwartzberg is computed as \deqn{\frac{P(d)}{2*\pi*\sqrt{\frac{A(d)}{\pi}}}}
 #' where A is the area function, the district is d, and P is the perimeter function.
+#' All  values are between 0 and 1, where larger values are more compact.
 #'
 #' The Length Width ratio is computed as \deqn{\frac{length}{width}} where length
 #' is the shorter of the maximum x distance and the maximum y distance. Width is
-#' the longer of the two values.
+#' the longer of the two values. All  values are between 0 and 1, where larger
+#' values are more compact.
 #'
 #' The Convex Hull score is computed as \deqn{\frac{A(d)}{A(CVH)}} where A is the area
 #' function, d is the district, and CVH is the convex hull of the district. All
-#' values are between 0 and 1, where where larger values are more compact.
+#' values are between 0 and 1, where larger values are more compact.
 #'
 #' The Reock score is computed as \deqn{\frac{A(d)}{A(MBC)}} where A is the area
 #' function, d is the district, and MBC is the minimum bounding circle of the
@@ -73,7 +76,8 @@
 #' centroid of the shape to the most outward point of the shape that intersects
 #' the radii, if the centroid is contained within the shape.  If the centroid
 #' lies outside of the shape, a point on the surface is used, which will naturally
-#' incur a penalty to the score.
+#' incur a penalty to the score. All  values are between 0 and 1,
+#' where larger values are more compact.
 #'
 #' The Fryer Holden score for each district is computed with \deqn{Pop\odot D(precinct)^2},
 #' where \eqn{Pop} is the population product matrix.  Each element is the
@@ -81,12 +85,13 @@
 #' where the matrix is the distance between each precinct.  To fully compute this
 #' index, for any map, the sum of these values should be used as the numerator.
 #' The denominator can be calculated from the full enumeration of districts as the
-#' smallest calculated numerator.
+#' smallest calculated numerator. This produces very large numbers, where smaller
+#' values are more compact.
 #'
 #' The log spanning tree measure is the logarithm of the product of the
 #' number of spanning trees which can be drawn on each district.
 #'
-#' The edges removed measure is number of egdes removed from the underlying adjacency graph.
+#' The edges removed measure is number of edges removed from the underlying adjacency graph.
 #' A smaller number of edges removed is more compact.
 #'
 #' The fraction kept measure is the fraction of edges that were not removed from the

@@ -95,7 +95,7 @@
       <h1 data-toc-skip>Tidy <code>redist</code>
 </h1>
             
-            <h4 class="date">2021-03-18</h4>
+            <h4 class="date">2021-03-19</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/kosukeimai/redist/blob/master/vignettes/tidy-redist.Rmd"><code>vignettes/tidy-redist.Rmd</code></a></small>
       <div class="hidden name"><code>tidy-redist.Rmd</code></div>
@@ -116,24 +116,24 @@
 <span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span><span class="op">(</span><span class="va">east_tx</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">east_tx</span><span class="op">)</span>
 <span class="co">#&gt; Simple feature collection with 3138 features and 13 fields</span>
-<span class="co">#&gt; geometry type:  MULTIPOLYGON</span>
-<span class="co">#&gt; dimension:      XY</span>
-<span class="co">#&gt; bbox:           xmin: -414696.7 ymin: 310898.7 xmax: 237123.4 ymax: 993178.7</span>
-<span class="co">#&gt; projected CRS:  NAD83 / Conus Albers</span>
+<span class="co">#&gt; Geometry type: MULTIPOLYGON</span>
+<span class="co">#&gt; Dimension:     XY</span>
+<span class="co">#&gt; Bounding box:  xmin: -414696.7 ymin: 310898.7 xmax: 237123.4 ymax: 993178.7</span>
+<span class="co">#&gt; Projected CRS: NAD83 / Conus Albers</span>
 <span class="co">#&gt; # A tibble: 3,138 x 14</span>
 <span class="co">#&gt;    county id                        geometry    cd   pop black  hisp white   vap</span>
 <span class="co">#&gt;    &lt;chr&gt;  &lt;chr&gt;           &lt;MULTIPOLYGON [m]&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;</span>
-<span class="co">#&gt;  1 029    48029… (((-225344.9 724204.5, -22…    28   355    29   127   178   291</span>
-<span class="co">#&gt;  2 029    48029… (((-221901.9 718229.7, -22…    28   153    31    87    20    29</span>
-<span class="co">#&gt;  3 029    48029… (((-221901.2 716816.7, -22…    28   958   164   297   440   643</span>
-<span class="co">#&gt;  4 029    48029… (((-225942 703767.3, -2256…    28  3895   174  1126  2528  2931</span>
-<span class="co">#&gt;  5 029    48029… (((-224111.1 703124.3, -22…    28  1588    40   371  1165  1227</span>
-<span class="co">#&gt;  6 029    48029… (((-229268.4 701654.1, -22…    28   328     3    93   230   276</span>
-<span class="co">#&gt;  7 029    48029… (((-226356.7 715765.3, -22…    28  7499  2274  3220  1581  4829</span>
-<span class="co">#&gt;  8 029    48029… (((-224091.7 715995.9, -22…    28    10     1     3     6     8</span>
-<span class="co">#&gt;  9 029    48029… (((-231919.2 706761.5, -23…    28  1087   251   655   157   787</span>
-<span class="co">#&gt; 10 029    48029… (((-217227.7 710079.4, -21…    28    54     7     8    39    45</span>
-<span class="co">#&gt; # … with 3,128 more rows, and 5 more variables: bvap &lt;dbl&gt;, hvap &lt;dbl&gt;,</span>
+<span class="co">#&gt;  1 029    48029~ (((-225344.9 724204.5, -22~    28   355    29   127   178   291</span>
+<span class="co">#&gt;  2 029    48029~ (((-221901.9 718229.7, -22~    28   153    31    87    20    29</span>
+<span class="co">#&gt;  3 029    48029~ (((-221901.2 716816.7, -22~    28   958   164   297   440   643</span>
+<span class="co">#&gt;  4 029    48029~ (((-225942 703767.3, -2256~    28  3895   174  1126  2528  2931</span>
+<span class="co">#&gt;  5 029    48029~ (((-224111.1 703124.3, -22~    28  1588    40   371  1165  1227</span>
+<span class="co">#&gt;  6 029    48029~ (((-229268.4 701654.1, -22~    28   328     3    93   230   276</span>
+<span class="co">#&gt;  7 029    48029~ (((-226356.7 715765.3, -22~    28  7499  2274  3220  1581  4829</span>
+<span class="co">#&gt;  8 029    48029~ (((-224091.7 715995.9, -22~    28    10     1     3     6     8</span>
+<span class="co">#&gt;  9 029    48029~ (((-231919.2 706761.5, -23~    28  1087   251   655   157   787</span>
+<span class="co">#&gt; 10 029    48029~ (((-217227.7 710079.4, -21~    28    54     7     8    39    45</span>
+<span class="co">#&gt; # ... with 3,128 more rows, and 5 more variables: bvap &lt;dbl&gt;, hvap &lt;dbl&gt;,</span>
 <span class="co">#&gt; #   wvap &lt;dbl&gt;, dem &lt;int&gt;, gop &lt;int&gt;</span></code></pre></div>
 </div>
 <div id="specifying-the-redistricting-problem" class="section level1">
@@ -152,17 +152,17 @@
 <span class="co">#&gt; # A tibble: 3,138 x 15</span>
 <span class="co">#&gt;    county id                        geometry    cd   pop black  hisp white   vap</span>
 <span class="co">#&gt;  * &lt;chr&gt;  &lt;chr&gt;           &lt;MULTIPOLYGON [m]&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;</span>
-<span class="co">#&gt;  1 029    48029… (((-225344.9 724204.5, -22…    28   355    29   127   178   291</span>
-<span class="co">#&gt;  2 029    48029… (((-221901.9 718229.7, -22…    28   153    31    87    20    29</span>
-<span class="co">#&gt;  3 029    48029… (((-221901.2 716816.7, -22…    28   958   164   297   440   643</span>
-<span class="co">#&gt;  4 029    48029… (((-225942 703767.3, -2256…    28  3895   174  1126  2528  2931</span>
-<span class="co">#&gt;  5 029    48029… (((-224111.1 703124.3, -22…    28  1588    40   371  1165  1227</span>
-<span class="co">#&gt;  6 029    48029… (((-229268.4 701654.1, -22…    28   328     3    93   230   276</span>
-<span class="co">#&gt;  7 029    48029… (((-226356.7 715765.3, -22…    28  7499  2274  3220  1581  4829</span>
-<span class="co">#&gt;  8 029    48029… (((-224091.7 715995.9, -22…    28    10     1     3     6     8</span>
-<span class="co">#&gt;  9 029    48029… (((-231919.2 706761.5, -23…    28  1087   251   655   157   787</span>
-<span class="co">#&gt; 10 029    48029… (((-217227.7 710079.4, -21…    28    54     7     8    39    45</span>
-<span class="co">#&gt; # … with 3,128 more rows, and 6 more variables: bvap &lt;dbl&gt;, hvap &lt;dbl&gt;,</span>
+<span class="co">#&gt;  1 029    48029~ (((-225344.9 724204.5, -22~    28   355    29   127   178   291</span>
+<span class="co">#&gt;  2 029    48029~ (((-221901.9 718229.7, -22~    28   153    31    87    20    29</span>
+<span class="co">#&gt;  3 029    48029~ (((-221901.2 716816.7, -22~    28   958   164   297   440   643</span>
+<span class="co">#&gt;  4 029    48029~ (((-225942 703767.3, -2256~    28  3895   174  1126  2528  2931</span>
+<span class="co">#&gt;  5 029    48029~ (((-224111.1 703124.3, -22~    28  1588    40   371  1165  1227</span>
+<span class="co">#&gt;  6 029    48029~ (((-229268.4 701654.1, -22~    28   328     3    93   230   276</span>
+<span class="co">#&gt;  7 029    48029~ (((-226356.7 715765.3, -22~    28  7499  2274  3220  1581  4829</span>
+<span class="co">#&gt;  8 029    48029~ (((-224091.7 715995.9, -22~    28    10     1     3     6     8</span>
+<span class="co">#&gt;  9 029    48029~ (((-231919.2 706761.5, -23~    28  1087   251   655   157   787</span>
+<span class="co">#&gt; 10 029    48029~ (((-217227.7 710079.4, -21~    28    54     7     8    39    45</span>
+<span class="co">#&gt; # ... with 3,128 more rows, and 6 more variables: bvap &lt;dbl&gt;, hvap &lt;dbl&gt;,</span>
 <span class="co">#&gt; #   wvap &lt;dbl&gt;, dem &lt;int&gt;, gop &lt;int&gt;, adj &lt;list&gt;</span></code></pre></div>
 <p>Our original shapefile stored its geographic information in terms of latitude and longitude. While common, this can cause problems for some of the geographic operations used in the analysis process, so by default <code><a href="../reference/redist_map.html">redist_map()</a></code> will reproject the shapefile geometry to a new coordinate system. Whether to do this and which coordinate system to use can be controlled using the <code>planarize</code> argument.</p>
 <div id="subsetting" class="section level2">
@@ -180,17 +180,17 @@
 <span class="co">#&gt; # A tibble: 937 x 15</span>
 <span class="co">#&gt;    county id                        geometry    cd   pop black  hisp white   vap</span>
 <span class="co">#&gt;  * &lt;chr&gt;  &lt;chr&gt;           &lt;MULTIPOLYGON [m]&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;</span>
-<span class="co">#&gt;  1 039    48039… (((56463.9 723325.4, 57312…    22  9997  2808  1031  2925  6940</span>
-<span class="co">#&gt;  2 039    48039… (((73701.52 703342.2, 7408…    22  3653   190  1061  2257  2718</span>
-<span class="co">#&gt;  3 039    48039… (((69637.14 720067.7, 7093…    22  7263   591  1516  4691  4927</span>
-<span class="co">#&gt;  4 039    48039… (((62778.08 723607.8, 6330…    22  5196   488  2015  2381  3828</span>
-<span class="co">#&gt;  5 039    48039… (((63199.55 720686.6, 6644…    22  7303  1969  1761  2976  4991</span>
-<span class="co">#&gt;  6 039    48039… (((68047.92 724871.3, 6910…    22  3791   188  1466  2006  2770</span>
-<span class="co">#&gt;  7 039    48039… (((67244.84 719969, 67228.…    22  4816   541  1594  2454  3308</span>
-<span class="co">#&gt;  8 039    48039… (((59370.14 715476.7, 5943…    22  5541   220  1501  3668  4165</span>
-<span class="co">#&gt;  9 039    48039… (((55768.81 696116.4, 5564…    22  3947   282  1073  1979  2883</span>
-<span class="co">#&gt; 10 039    48039… (((68627.5 711720.8, 69270…    22  6124   118  2131  3773  4463</span>
-<span class="co">#&gt; # … with 927 more rows, and 6 more variables: bvap &lt;dbl&gt;, hvap &lt;dbl&gt;,</span>
+<span class="co">#&gt;  1 039    48039~ (((56463.9 723325.4, 57312~    22  9997  2808  1031  2925  6940</span>
+<span class="co">#&gt;  2 039    48039~ (((73701.52 703342.2, 7408~    22  3653   190  1061  2257  2718</span>
+<span class="co">#&gt;  3 039    48039~ (((69637.14 720067.7, 7093~    22  7263   591  1516  4691  4927</span>
+<span class="co">#&gt;  4 039    48039~ (((62778.08 723607.8, 6330~    22  5196   488  2015  2381  3828</span>
+<span class="co">#&gt;  5 039    48039~ (((63199.55 720686.6, 6644~    22  7303  1969  1761  2976  4991</span>
+<span class="co">#&gt;  6 039    48039~ (((68047.92 724871.3, 6910~    22  3791   188  1466  2006  2770</span>
+<span class="co">#&gt;  7 039    48039~ (((67244.84 719969, 67228.~    22  4816   541  1594  2454  3308</span>
+<span class="co">#&gt;  8 039    48039~ (((59370.14 715476.7, 5943~    22  5541   220  1501  3668  4165</span>
+<span class="co">#&gt;  9 039    48039~ (((55768.81 696116.4, 5564~    22  3947   282  1073  1979  2883</span>
+<span class="co">#&gt; 10 039    48039~ (((68627.5 711720.8, 69270~    22  6124   118  2131  3773  4463</span>
+<span class="co">#&gt; # ... with 927 more rows, and 6 more variables: bvap &lt;dbl&gt;, hvap &lt;dbl&gt;,</span>
 <span class="co">#&gt; #   wvap &lt;dbl&gt;, dem &lt;int&gt;, gop &lt;int&gt;, adj &lt;list&gt;</span></code></pre></div>
 <p>Behind the scenes, <code>redist</code> has adjusted the adjacency graph to remove the precincts that were filtered away. It has also adjusted the number of districts and the population bounds.</p>
 <p>We can easily plot this new map, either by congressional district or by any other quantity of interest.</p>
@@ -228,7 +228,7 @@
 <span class="co">#&gt; 7    22 157    439645  53664  99248 192082 309208  36848  63714 142711  73263</span>
 <span class="co">#&gt; 8    22 201    105397  13045  33105  45417  77620   9176  21728  36830  14781</span>
 <span class="co">#&gt; 9    29 201    695465  66741 531650  81193 469405  46629 341966  69148  92027</span>
-<span class="co">#&gt; # … with 4 more variables: gop &lt;int&gt;, id &lt;chr&gt;, geometry &lt;GEOMETRY [m]&gt;,</span>
+<span class="co">#&gt; # ... with 4 more variables: gop &lt;int&gt;, id &lt;chr&gt;, geometry &lt;GEOMETRY [m]&gt;,</span>
 <span class="co">#&gt; #   adj &lt;list&gt;</span>
 <span class="fu"><a href="https://r-spatial.github.io/sf/reference/plot.html">plot</a></span><span class="op">(</span><span class="va">houston_counties</span>, fill<span class="op">=</span><span class="va">hisp</span><span class="op">/</span><span class="va">pop</span><span class="op">)</span></code></pre></div>
 <p><img src="tidy-redist_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
@@ -260,7 +260,7 @@
 <span class="co">#&gt;  8     2        8   5394   437  1096  3608  3996   302   678  2854   831  1558</span>
 <span class="co">#&gt;  9     2        9    678    23   139   354   641    23   119   343    50    15</span>
 <span class="co">#&gt; 10     2       10   1656    52   136  1137  1337    45   115   929   514   240</span>
-<span class="co">#&gt; # … with 465 more rows, and 4 more variables: county &lt;chr&gt;, id &lt;chr&gt;,</span>
+<span class="co">#&gt; # ... with 465 more rows, and 4 more variables: county &lt;chr&gt;, id &lt;chr&gt;,</span>
 <span class="co">#&gt; #   geometry &lt;GEOMETRY [m]&gt;, adj &lt;list&gt;</span>
 <span class="fu"><a href="https://r-spatial.github.io/sf/reference/plot.html">plot</a></span><span class="op">(</span><span class="va">houston_cores</span>, centroids<span class="op">=</span><span class="cn">F</span><span class="op">)</span></code></pre></div>
 <p><img src="tidy-redist_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
@@ -277,15 +277,15 @@
 <span class="co">#&gt; Sampling 100 475-unit maps with 6 districts and population between 663313 and 733136.</span>
 <span class="co">#&gt; Ensuring no more than 5 splits of the 6 administrative units.</span>
 <span class="co">#&gt; Making split 1 of 5</span>
-<span class="co">#&gt; Resampling effective sample size: 97.8 (97.8% efficiency).</span>
+<span class="co">#&gt; Resampling effective sample size: 97.7 (97.7% efficiency).</span>
 <span class="co">#&gt; Making split 2 of 5</span>
-<span class="co">#&gt; Resampling effective sample size: 96.6 (96.6% efficiency).</span>
+<span class="co">#&gt; Resampling effective sample size: 97.6 (97.6% efficiency).</span>
 <span class="co">#&gt; Making split 3 of 5</span>
-<span class="co">#&gt; Resampling effective sample size: 92.5 (92.5% efficiency).</span>
+<span class="co">#&gt; Resampling effective sample size: 95.8 (95.8% efficiency).</span>
 <span class="co">#&gt; Making split 4 of 5</span>
-<span class="co">#&gt; Resampling effective sample size: 91.1 (91.1% efficiency).</span>
+<span class="co">#&gt; Resampling effective sample size: 95.3 (95.3% efficiency).</span>
 <span class="co">#&gt; Making split 5 of 5</span>
-<span class="co">#&gt; Resampling effective sample size: 89.5 (89.5% efficiency).</span>
+<span class="co">#&gt; Resampling effective sample size: 96.2 (96.2% efficiency).</span>
 <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">houston_plans</span><span class="op">)</span>
 <span class="co">#&gt; 100 sampled plans and 1 reference plan with 6 districts from a 475-unit map,</span>
 <span class="co">#&gt;   drawn using Sequential Monte Carlo</span>
@@ -301,11 +301,11 @@
 <span class="co">#&gt;  4 &lt;ref&gt;        4    690022</span>
 <span class="co">#&gt;  5 &lt;ref&gt;        5    701696</span>
 <span class="co">#&gt;  6 &lt;ref&gt;        6    695465</span>
-<span class="co">#&gt;  7 1            1    730206</span>
-<span class="co">#&gt;  8 1            2    679980</span>
-<span class="co">#&gt;  9 1            3    704523</span>
-<span class="co">#&gt; 10 1            4    711698</span>
-<span class="co">#&gt; # … with 596 more rows</span></code></pre></div>
+<span class="co">#&gt;  7 1            1    712023</span>
+<span class="co">#&gt;  8 1            2    701730</span>
+<span class="co">#&gt;  9 1            3    718233</span>
+<span class="co">#&gt; 10 1            4    698472</span>
+<span class="co">#&gt; # ... with 596 more rows</span></code></pre></div>
 <p>Since district numbers in simulated plans are by and large random, we often want to renumber the simulated districts to match the district numbers in the original plan, something which is easily accomplished by the function <code><a href="../reference/match_numbers.html">match_numbers()</a></code>:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">houston_plans</span> <span class="op">=</span> <span class="fu"><a href="../reference/match_numbers.html">match_numbers</a></span><span class="op">(</span><span class="va">houston_plans</span>, <span class="va">houston_cores</span><span class="op">$</span><span class="va">cd</span><span class="op">)</span>
@@ -324,11 +324,11 @@
 <span class="co">#&gt;  4 &lt;ref&gt; 18          690022       1    </span>
 <span class="co">#&gt;  5 &lt;ref&gt; 22          701696       1    </span>
 <span class="co">#&gt;  6 &lt;ref&gt; 29          695465       1    </span>
-<span class="co">#&gt;  7 1     18          730206       0.499</span>
-<span class="co">#&gt;  8 1     29          679980       0.499</span>
-<span class="co">#&gt;  9 1     2           704523       0.499</span>
-<span class="co">#&gt; 10 1     9           711698       0.499</span>
-<span class="co">#&gt; # … with 596 more rows</span></code></pre></div>
+<span class="co">#&gt;  7 1     7           712023       0.639</span>
+<span class="co">#&gt;  8 1     2           701730       0.639</span>
+<span class="co">#&gt;  9 1     22          718233       0.639</span>
+<span class="co">#&gt; 10 1     29          698472       0.639</span>
+<span class="co">#&gt; # ... with 596 more rows</span></code></pre></div>
 <p>This function also creates a new column, which records, for each plan, the fraction of the total population which lives in the same district under the reference plan.</p>
 <p>We can then easily add summary statistics for each district. The <code><a href="../reference/redist.compactness.html">distr_compactness()</a></code> and <code><a href="../reference/redist.group.percent.html">group_frac()</a></code> functions will implicitly reference the simulated plans matrix when called inside <code><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate()</a></code>.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
@@ -353,11 +353,11 @@
 <span class="co">#&gt;  4 &lt;ref&gt; 18          690022       1     0.319    0.344    0.405      0.201</span>
 <span class="co">#&gt;  5 &lt;ref&gt; 22          701696       1     0.319    0.223    0.119      0.482</span>
 <span class="co">#&gt;  6 &lt;ref&gt; 29          695465       1     0.319    0.729    0.0993     0.147</span>
-<span class="co">#&gt;  7 1     18          730206       0.499 0.671    0.410    0.223      0.302</span>
-<span class="co">#&gt;  8 1     29          679980       0.499 0.671    0.359    0.128      0.411</span>
-<span class="co">#&gt;  9 1     2           704523       0.499 0.671    0.345    0.256      0.282</span>
-<span class="co">#&gt; 10 1     9           711698       0.499 0.671    0.299    0.278      0.347</span>
-<span class="co">#&gt; # … with 596 more rows, and 1 more variable: pct_min &lt;dbl&gt;</span></code></pre></div>
+<span class="co">#&gt;  7 1     7           712023       0.639 0.709    0.296    0.196      0.437</span>
+<span class="co">#&gt;  8 1     2           701730       0.639 0.709    0.331    0.134      0.419</span>
+<span class="co">#&gt;  9 1     22          718233       0.639 0.709    0.370    0.390      0.115</span>
+<span class="co">#&gt; 10 1     29          698472       0.639 0.709    0.312    0.149      0.450</span>
+<span class="co">#&gt; # ... with 596 more rows, and 1 more variable: pct_min &lt;dbl&gt;</span></code></pre></div>
 <p>If we wanted, we could sort and number districts according to one of these statistics using the <code><a href="../reference/number_by.html">number_by()</a></code> function.</p>
 <p>From there, it’s easy to summarize summary statistics by plan.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
@@ -377,14 +377,14 @@
 <span class="co">#&gt;  1 &lt;ref&gt;       0      1           4</span>
 <span class="co">#&gt;  2 1           0      1           6</span>
 <span class="co">#&gt;  3 2           0      1           6</span>
-<span class="co">#&gt;  4 3           0      0           6</span>
+<span class="co">#&gt;  4 3           0      1           6</span>
 <span class="co">#&gt;  5 4           0      1           6</span>
 <span class="co">#&gt;  6 5           0      1           6</span>
 <span class="co">#&gt;  7 6           0      1           6</span>
-<span class="co">#&gt;  8 7           0      1           6</span>
+<span class="co">#&gt;  8 7           0      0           6</span>
 <span class="co">#&gt;  9 8           0      1           6</span>
 <span class="co">#&gt; 10 9           0      1           6</span>
-<span class="co">#&gt; # … with 91 more rows</span></code></pre></div>
+<span class="co">#&gt; # ... with 91 more rows</span></code></pre></div>
 <p>And <code>redist</code> provides several useful plotting functions. By default, <code>plot</code> calls <code>hist</code>, which makes a histogram of a quantity of interest along with a reference line for each reference plan.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># ggplots with nice defaults and labels</span>
@@ -414,11 +414,11 @@
 <span class="co">#&gt;  4 &lt;ref&gt; 18          690022       1     0.319    0.344    0.405      0.201</span>
 <span class="co">#&gt;  5 &lt;ref&gt; 22          701696       1     0.319    0.223    0.119      0.482</span>
 <span class="co">#&gt;  6 &lt;ref&gt; 29          695465       1     0.319    0.729    0.0993     0.147</span>
-<span class="co">#&gt;  7 1     18          730206       0.499 0.671    0.410    0.223      0.302</span>
-<span class="co">#&gt;  8 1     29          679980       0.499 0.671    0.359    0.128      0.411</span>
-<span class="co">#&gt;  9 1     2           704523       0.499 0.671    0.345    0.256      0.282</span>
-<span class="co">#&gt; 10 1     9           711698       0.499 0.671    0.299    0.278      0.347</span>
-<span class="co">#&gt; # … with 596 more rows, and 1 more variable: pct_min &lt;dbl&gt;</span>
+<span class="co">#&gt;  7 1     7           712023       0.639 0.709    0.296    0.196      0.437</span>
+<span class="co">#&gt;  8 1     2           701730       0.639 0.709    0.331    0.134      0.419</span>
+<span class="co">#&gt;  9 1     22          718233       0.639 0.709    0.370    0.390      0.115</span>
+<span class="co">#&gt; 10 1     29          698472       0.639 0.709    0.312    0.149      0.450</span>
+<span class="co">#&gt; # ... with 596 more rows, and 1 more variable: pct_min &lt;dbl&gt;</span>
 <span class="fu"><a href="../reference/redist.plot.plan.html">redist.plot.plan</a></span><span class="op">(</span><span class="va">houston_orig_plans</span>, draw<span class="op">=</span><span class="fl">5</span>, geom<span class="op">=</span><span class="va">houston_area</span><span class="op">)</span></code></pre></div>
 <p><img src="tidy-redist_files/figure-html/unnamed-chunk-12-1.png" width="700"></p>
 </div>

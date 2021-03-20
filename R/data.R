@@ -30,12 +30,14 @@
 #' }
 NULL
 
-#' Florida 25 Precinct File
+
+#' Florida 25 Precinct Shape File
 #'
 #' This data set contains the 25-precinct shapefile and related data for each precinct.
 #' All possible partitions of the 25 precincts into three contiguous
 #' congressional districts are stored in \code{\link{fl25_enum}}, and the
 #' corresponding adjacency graph is stored in \code{\link{fl25_graph}}.
+#' This is generally useful for demonstrating basic algorithms locally.
 #'
 #' @name fl25
 #' @usage data("fl25")
@@ -90,9 +92,12 @@ NULL
 
 
 
-#' Florida 70 Precinct File
+#' Florida 70 Precinct Shape File
 #'
 #' This data set contains the 70 Precinct shapefile and related data for each precinct.
+#'
+#' It is a random 70 precinct connected subset from Florida's precincts. This was introduced by
+#' <doi: 10.1080/2330443X.2020.1791773>
 #'
 #' @name fl70
 #' @usage data("fl70")
@@ -113,19 +118,21 @@ NULL
 #' \item{\code{geometry}}{ Contains sf geometry of each precinct.}
 #' }
 #'
-#' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander Tarr.
-#' (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte Carlo."
-#' Working Paper. Available at
-#' \url{http://imai.princeton.edu/research/files/redist.pdf}.
+#' @references Benjamin Fifield, Kosuke Imai, Jun Kawahara & Christopher T. Kenny (2020)
+#' The Essential Role of Empirical Validation in Legislative Redistricting Simulation,
+#' Statistics and Public Policy, 7:1, 52-68, DOI: 10.1080/2330443X.2020.1791773
 #' @concept data
 #' @examples \dontrun{
 #' data(fl70)
 #' }
 NULL
 
-#' Florida 250 Precinct File
+#' Florida 250 Precinct Shape File
 #'
 #' This data set contains the 250 Precinct shapefile and related data for each precinct.
+#'
+#' It is a random 70 precinct connected subset from Florida's precincts. This was introduced by
+#' <doi: 10.1080/2330443X.2020.1791773>
 #'
 #' @name fl250
 #' @usage data("fl250")
@@ -146,10 +153,9 @@ NULL
 #' \item{\code{geometry}}{ Contains sf geometry of each precinct.}
 #' }
 #'
-#' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander Tarr.
-#' (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte Carlo."
-#' Working Paper. Available at
-#' \url{http://imai.princeton.edu/research/files/redist.pdf}.
+#' @references Benjamin Fifield, Kosuke Imai, Jun Kawahara & Christopher T. Kenny (2020)
+#' The Essential Role of Empirical Validation in Legislative Redistricting Simulation,
+#' Statistics and Public Policy, 7:1, 52-68, DOI: 10.1080/2330443X.2020.1791773
 #' @concept data
 #' @examples \dontrun{
 #' data(fl250)

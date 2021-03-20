@@ -62,8 +62,8 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
       stop("If applying constraints or using simulated tempering, please set non-zero constraint by specifying the 'constraintweight' argument, and specify the names of the constraints in 'constraint'.")
     }
     if(any(!(constraint %in% c("compact", "vra", "segregation", "population",
-                               "similarity", "countysplit", "partisan", "minority")))){
-      stop("Please specify any combination of `compact`, `segregation`, vra`, `population`, `countysplit`, `similarity`, `partisan`, or `minority` for constraint")
+                               "similarity", "countysplit", "partisan", "minority", 'hinge')))){
+      stop("Please specify any combination of `compact`, `segregation`, vra`, `population`, `countysplit`, `similarity`, `partisan`, `minority`, `hinge` for constraint")
     }
   }
   
@@ -288,7 +288,19 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
     if(length(minorityprop) > ndists){
       stop('"minorityprop" has more entries than there will be districts.')
     }
-  } else {
+  } 
+  
+  if("hinge" %in% constraint){
+    if(!"numeric" %in% class(minorityprop)){
+      stop('"minorityprop" must be of type numeric.')
+    }
+    if(length(minorityprop) > ndists){
+      stop('"minorityprop" has more entries than there will be districts.')
+    }
+  } 
+  
+  
+  if (!any(c('hinge', 'minority') %in% constraint)) {
     minorityprop = 0 #init so it won't get mad in swMH input
   }
   
@@ -425,6 +437,11 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
   }else{
     weightminority <- 0
   }
+  if("hinge" %in% constraint){
+    weighthinge <- constraintweights[which(constraint == "hinge")]
+  }else{
+    weighthinge <- 0
+  }
   
   ###################################
   ## Check if betaspacing provided ##
@@ -489,6 +506,7 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
       weightcountysplit = weightcountysplit,
       weightpartisan = weightpartisan,
       weightminority = weightminority,
+      weighthinge = weighthinge,
       tgt_min = tgt_min,
       tgt_other = tgt_other,
       rvote = rvote,
