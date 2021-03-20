@@ -461,7 +461,7 @@ redist.combine.anneal <- function(file_name){
 #' \dontrun{
 #' data(fl25)
 #' data(fl25_enum)
-#' data(fl25_graph)
+#' data(fl25_adj)
 #'
 #' ## Code to run the simulations in Figure 4 in Fifield, Higgins,Imai and
 #' Tarr (2015)
@@ -470,7 +470,7 @@ redist.combine.anneal <- function(file_name){
 #' init_plan <- fl25_enum$plans[, 5118]
 #'
 #' ## Run the algorithm
-#' alg_253 <- redist.mcmc(adj = fl25_graph, total_pop = fl25$pop,
+#' alg_253 <- redist.mcmc(adj = fl25_adj, total_pop = fl25$pop,
 #'                        init_plan = init_plan, nsims = 10000,
 #'                        loops = 2, savename = "test")
 #' out <- redist.combine(savename = "test", nloop = 2, nthin = 10)
@@ -709,7 +709,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' \dontrun{
 #' data(fl25)
 #' data(fl25_enum)
-#' data(fl25_graph)
+#' data(fl25_adj)
 #'
 #' ## Code to run the simulations in Figure 4 in Fifield, Higgins,Imai and
 #' Tarr (2015)
@@ -718,7 +718,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' init_plan <- fl25_enum$plans[, 5118]
 #'
 #' ## Run the algorithm
-#' alg_253 <- redist.mcmc(adj = fl25_Graph, total_pop = fl25$pop,
+#' alg_253 <- redist.mcmc(adj = fl25_adj, total_pop = fl25$pop,
 #'                        init_plan = init_plan, nsims = 10000,
 #'                        loops = 2, savename = "test")
 #' }
@@ -1091,7 +1091,7 @@ redist.mcmc <- function(adj,
 #' @examples \dontrun{
 #' data(fl25)
 #' data(fl25_enum)
-#' data(fl25_graph)
+#' data(fl25_adj)
 #'
 #' ## Code to run the simulations in Figure 4 of Fifield, Higgins,
 #' ## Imai and Tarr (2015)
@@ -1103,7 +1103,7 @@ redist.mcmc <- function(adj,
 #' betaweights <- rep(NA, 10); for(i in 1:10){betaweights[i] <- 4^i}
 #'
 #' ## Run simulations - tempering population constraint
-#' alg_253_20_st <- redist.mcmc(adj = fl25_graph, total_pop = fl25$pop,
+#' alg_253_20_st <- redist.mcmc(adj = fl25_adj, total_pop = fl25$pop,
 #'                              init_plan = init_plan, nsims = 10000,
 #'                              constraint = 'population', constraintweights = 5.4,
 #'                              betaweights = betaweights, temper = 1)
