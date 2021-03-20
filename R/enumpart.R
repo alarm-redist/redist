@@ -53,8 +53,9 @@ redist.init.enumpart <- function(){
 #' Forthcoming, Statistics and Public Policy.
 #' @concept enumerate
 #' @examples \dontrun{
-#' data(fl25_graph)
-#' redist.prep.enumpart(adj = fl25_graph, unordered_path = '../unordered',
+#' data(fl25)
+#' adj <- redist.adjacency(fl25)
+#' redist.prep.enumpart(adj = adj, unordered_path = '../unordered',
 #'                      ordered_path = '../ordered')
 #' }
 redist.prep.enumpart <- function(adj, unordered_path, ordered_path, adjlist){

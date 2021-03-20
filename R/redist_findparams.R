@@ -313,7 +313,7 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
 #' @examples \dontrun{
 #' data(fl25)
 #' data(fl25_enum)
-#' data(fl25_graph)
+#' data(fl25_adj)
 #'
 #' ## Get an initial partition
 #' init_plan <- fl25_enum$plans[, 5118]
@@ -321,7 +321,7 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
 #' params <- expand.grid(eprob = c(.01, .05, .1))
 #'
 #' ## Run the algorithm
-#' redist.findparams(adj = fl25_graph, total_pop = fl25$pop,
+#' redist.findparams(adj = fl25_adj, total_pop = fl25$pop,
 #'                   init_plan = init_plan, nsims = 10000, params = params)
 #' }
 #' @concept prepare
