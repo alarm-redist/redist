@@ -140,7 +140,7 @@ add_reference = function(plans, ref_plan, name="<ref>") {
     fct_levels = c(name, levels(plans$draw))
     new_draw = rep(factor(fct_levels, levels=fct_levels), each=ndists)
     x = dplyr::bind_rows(
-            tibble::tibble(district = 1:ndists,
+            tibble(district = 1:ndists,
                            total_pop = as.numeric(distr_pop)),
             plans[,-1] # 1 is 'draw' by defn
         ) %>%
@@ -423,7 +423,7 @@ imp_confint = function(x, conf=0.95, .data=get0(".", parent.frame())) {
     y = rlang::eval_tidy(rlang::enquo(x), .data)
     ci = redist.smc_is_ci(y, get_plan_weights(.data), conf)
 
-    tibble::tibble("{{ x }}" := mean(y),
+    tibble("{{ x }}" := mean(y),
                    "{{ x }}_lower" := ci[1],
                    "{{ x }}_upper" := ci[2])
 }
