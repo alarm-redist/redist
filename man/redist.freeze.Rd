@@ -5,17 +5,19 @@
 \alias{freeze}
 \title{Freeze Parts of a Map}
 \usage{
-redist.freeze(adj, plan, freeze_row)
+redist.freeze(adj, freeze_row, plan = rep(1, length(adj)))
 
-freeze(freeze_row, adj, plan, .data = get0(".", parent.frame()))
+freeze(freeze_row, plan, .data = get0(".", parent.frame()))
 }
 \arguments{
 \item{adj}{Required, zero indexed adjacency list.}
 
-\item{plan}{Recommended, whether to create separate groups by district.}
+\item{freeze_row}{Required, logical vector where TRUE freezes and FALSE lets
+a precinct stay free or a vector of indices to freeze}
 
-\item{freeze_row}{Required, logical vector where TRUE freezes and FALSE lets a precinct
-stay free or a vector of indices to freeze}
+\item{plan}{A vector of district assignments, which if provided will create
+separate groups by district. Recommended. In \code{freeze} defaults to the
+existing plan, if one exists.}
 
 \item{.data}{a \code{\link{redist_map}} object}
 }
@@ -30,7 +32,7 @@ data(fl25)
 data(fl25_enum)
 data(fl25_adj)
 plan = fl25_enum$plans[, 5118]
-freeze_id <- redist.freeze(adj = fl25_adj, plan = plan,
-                           freeze_row = (plan == 2))
+freeze_id <- redist.freeze(adj = fl25_adj, freeze_row = (plan == 2),
+                           plan = plan)
 }
 \concept{prepare}

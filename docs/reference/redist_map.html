@@ -210,7 +210,7 @@ existing district assignment.</p></td>
     <tr>
       <th>planarize</th>
       <td><p>a number, indicating the CRS to project the shapefile to if
-it is latitude-longitude based. Set to NULL to avoid planarizing.</p></td>
+it is latitude-longitude based. Set to NULL or FALSE to avoid planarizing.</p></td>
     </tr>
     <tr>
       <th>x</th>
@@ -241,9 +241,9 @@ graphs or attributes.</p>
 <span class='va'>d</span> <span class='op'>=</span> <span class='fu'>redist_map</span><span class='op'>(</span><span class='va'>fl25</span>, ndists<span class='op'>=</span><span class='fl'>3</span>, pop_tol<span class='op'>=</span><span class='fl'>0.05</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; <span class='warning'>Warning: Missing CRS, assuming NAD83 (4269).</span></div><div class='output co'>#&gt; <span class='message'>Projecting to CRS 3857</span></div><div class='input'><span class='fu'>dplyr</span><span class='fu'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/filter.html'>filter</a></span><span class='op'>(</span><span class='va'>d</span>, <span class='va'>pop</span> <span class='op'>&gt;=</span> <span class='fl'>10e3</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; A redist_map object with 5 units and 13 fields
-#&gt; To be partitioned into 3 districts with population between 58,347.67 - 5.0% and 58,347.67 + 5.0%
+#&gt; To be partitioned into 3 districts with population between 58,348 - 5.0% and 58,348 + 5.0%
 #&gt; With geometry:
-#&gt;     bbox:           xmin: -9107951 ymin: 3047341 xmax: -9065127 ymax: 3085829
+#&gt;     bbox:           xmin: -9108000 ymin: 3047000 xmax: -9065000 ymax: 3086000
 #&gt;     projected CRS:  WGS 84 / Pseudo-Mercator
 #&gt; <span style='color: #949494;'># A tibble: 5 x 13</span><span>
 #&gt;   geoid10    pop   vap obama mccain TotPop BlackPop HispPop   VAP BlackVAP
