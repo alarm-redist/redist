@@ -87,11 +87,12 @@ iowa_plans = redist_smc(iowa_map, nsims=250, verbose=FALSE) %>%
 #> Sampling 250 99-unit maps with 4 districts and population between 761513 and 761665.
 #> Making split 1 of 3
 #> Warning: maximum hit; falling back to naive k estimator.
-#> Resampling effective sample size: 246.4 (98.6% efficiency).
+#> Resampling effective sample size: 246.0 (98.4% efficiency).
 #> Making split 2 of 3
-#> Resampling effective sample size: 240.2 (96.1% efficiency).
+#> Resampling effective sample size: 240.6 (96.2% efficiency).
 #> Making split 3 of 3
-#> Resampling effective sample size: 246.8 (98.7% efficiency).
+#> Warning: maximum hit; falling back to naive k estimator.
+#> Resampling effective sample size: 247.1 (98.9% efficiency).
 ```
 
 After generating plans, you can use `redist`’s plotting functions to
@@ -109,16 +110,13 @@ redist.plot.plans(iowa_plans, draws=c("2010 adopted plan", "1", "2", "3"),
 ![](man/figures/README-readme-plot-1.png)<!-- -->
 
 ``` r
-dev_plot = iowa_plans %>%
-    group_by(draw) %>%
-    summarize(`Population deviation` = max(abs(total_pop/mean(total_pop) - 1))) %>%
-    hist(`Population deviation`) 
-comp_plot = iowa_plans %>%
+dev_comp = iowa_plans %>%
     mutate(comp = distr_compactness(iowa_map)) %>%
     group_by(draw) %>%
-    summarize(Compactness = comp[1]) %>%
-    hist(Compactness)
-dev_plot + comp_plot + 
+    summarize(`Population deviation` = max(abs(total_pop/mean(total_pop) - 1)),
+              Compactness = comp[1])
+
+hist(dev_comp, `Population deviation`) + hist(dev_comp, Compactness) +
     plot_layout(guides="collect") +
     plot_annotation(title="Simulated plan characteristics")
 ```
@@ -126,13 +124,21 @@ dev_plot + comp_plot +
 ![](man/figures/README-readme-plot-2.png)<!-- -->
 
 ``` r
-iowa_plans %>%
-    mutate(`Democratic vote` = group_frac(iowa_map, dem_08, tot_08)) %>%
-    redist.plot.distr_qtys(`Democratic vote`) +
-    labs(title="Democratic vote share by district")
+redist.plot.scatter(dev_comp, `Population deviation`, Compactness) +
+    labs(title="Population deviation and compactness by plan")
 ```
 
 ![](man/figures/README-readme-plot-3.png)<!-- -->
+
+``` r
+iowa_plans %>%
+    mutate(`Democratic vote` = group_frac(iowa_map, dem_08, tot_08)) %>%
+    redist.plot.distr_qtys(`Democratic vote`, size=0.5, color_thresh=0.5) +
+    scale_color_manual(values=c("tomato2", "dodgerblue")) +
+    labs(title="Democratic vote share by district")
+```
+
+![](man/figures/README-readme-plot-4.png)<!-- -->
 
 A more detailed introduction to redistricting methods and the package
 can be found in the [Get Started](articles/redist.html) page. The

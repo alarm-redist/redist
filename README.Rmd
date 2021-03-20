@@ -85,22 +85,21 @@ library(patchwork) # for plotting
 redist.plot.plans(iowa_plans, draws=c("2010 adopted plan", "1", "2", "3"),
                   geom=iowa_map)
 
-dev_plot = iowa_plans %>%
-    group_by(draw) %>%
-    summarize(`Population deviation` = max(abs(total_pop/mean(total_pop) - 1))) %>%
-    hist(`Population deviation`) 
-comp_plot = iowa_plans %>%
+dev_comp = iowa_plans %>%
     mutate(comp = distr_compactness(iowa_map)) %>%
     group_by(draw) %>%
-    summarize(Compactness = comp[1]) %>%
-    hist(Compactness)
-dev_plot + comp_plot + 
+    summarize(`Population deviation` = max(abs(total_pop/mean(total_pop) - 1)),
+              Compactness = comp[1])
+
+hist(dev_comp, `Population deviation`) + hist(dev_comp, Compactness) +
     plot_layout(guides="collect") +
     plot_annotation(title="Simulated plan characteristics")
-
+redist.plot.scatter(dev_comp, `Population deviation`, Compactness) +
+    labs(title="Population deviation and compactness by plan")
 iowa_plans %>%
     mutate(`Democratic vote` = group_frac(iowa_map, dem_08, tot_08)) %>%
-    redist.plot.distr_qtys(`Democratic vote`) +
+    redist.plot.distr_qtys(`Democratic vote`, size=0.5, color_thresh=0.5) +
+    scale_color_manual(values=c("tomato2", "dodgerblue")) +
     labs(title="Democratic vote share by district")
 ```
 

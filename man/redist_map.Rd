@@ -46,7 +46,7 @@ from the data if it is coercible to a shapefile.}
 existing district assignment.}
 
 \item{planarize}{a number, indicating the CRS to project the shapefile to if
-it is latitude-longitude based. Set to NULL to avoid planarizing.}
+it is latitude-longitude based. Set to NULL or FALSE to avoid planarizing.}
 
 \item{x}{an object to be coerced}
 }
