@@ -1,8 +1,10 @@
 ---
 title: "MPI / Slurm Sample Scripts"
-output: 
-  md_document:
-    variant: gfm
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{mpi-slurm}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 # Usage Examples - 25 Precincts into 3 Districts
