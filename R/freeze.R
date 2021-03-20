@@ -18,7 +18,7 @@
 #' plan = fl25_enum$plans[, 5118]
 #' freeze_id <- redist.freeze(adj = fl25_adj, freeze_row = (plan == 2),
 #'                            plan = plan)
-redist.freeze <- function(adj, freeze_row, plan=rep(1, length(adj))){
+redist.freeze <- function(adj, freeze_row, plan = rep(1, length(adj))){
   if(missing(adj)){
     stop('Please provide an object to adj.')
   }
