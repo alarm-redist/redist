@@ -2,7 +2,7 @@
 % Please edit documentation in R/redist_plans.R
 \name{redist.plot.distr_qtys}
 \alias{redist.plot.distr_qtys}
-\title{Plot box and whisker plots for each district}
+\title{Plot quantities by district}
 \usage{
 redist.plot.distr_qtys(
   plans,

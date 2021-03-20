@@ -425,7 +425,7 @@ redist.plot.scatter = function(plans, x, y, ..., bigger=TRUE) {
     p
 }
 
-#' Plot box and whisker plots for each district
+#' Plot quantities by district
 #'
 #' Plots a boxplot of a quantity of interest across districts, with districts
 #' optionally sorted by this quantity. Adds reference points for each reference
