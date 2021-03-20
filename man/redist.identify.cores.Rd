@@ -36,13 +36,37 @@ district boundaries}
 \item{.data}{a \code{\link{redist_map}} object}
 }
 \value{
-integer vector if simplify is false. Otherwise returns a tibble with the grouping
-variable and additional information.
+integer vector (if simplify is false). Otherwise it returns a tibble with the grouping
+variable as \code{group_id} and additional information on connected components.
 }
 \description{
 Creates a grouping ID to unite geographies and perform analysis on a smaller
 set of precincts. It identifies all precincts more than \code{within} edges
-of a district district border Each precinct more than \code{within} of
-another district gets it own group.
+of a district district border. Each precinct more than \code{within} steps away from
+another district gets it own group. Some districts may have multiple, disconnected 
+components that make up the core, but each of these is assigned a separate grouping id so
+that a call to \code{sf::st_union()} would produce only connected pieces.
+}
+\details{
+This is a loose interpretation of the 
+\href{https://www.ncsl.org/research/redistricting/redistricting-criteria.aspx}{NCSL's summary} of 
+redistricting criteria to preserve the cores of prior districts. Using the adjacency
+graph for a given plan, it will locate the precincts on the boundary of the district, 
+within \code{within} steps of the edge. Each of these  is given their own group.
+Each remaining entry that is not near the boundary of the district is given an 
+id that can be used to group the remainder of the district by connected component. 
+This portion is deemed the core of the district.
+}
+\examples{
+data(fl250)
+adj <- redist.adjacency(fl250)
+plan <- redist.smc(adj = adj, total_pop = fl250$pop,
+                  nsims = 1, ndists = 4)$plans
+core <- redist.identify.cores(adj = adj, plan = plan)
+redist.plot.cores(shp = fl250, plan = plan, core = core)
+
+}
+\seealso{
+[redist.plot.cores()] for a plotting function
 }
 \concept{prepare}

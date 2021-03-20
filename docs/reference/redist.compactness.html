@@ -273,15 +273,18 @@ there is more than one shape specified for a single district, it combines
 them, if necessary, and computes one score for each district.</p>
 
 <p>Polsby-Popper is computed as $$\frac{4*\pi*A(d)}{P(d)^2}$$ where A is the area
-function, the district is d, and P is the perimeter function.</p>
+function, the district is d, and P is the perimeter function. All  values are between
+0 and 1, where larger values are more compact.</p>
 <p>Schwartzberg is computed as $$\frac{P(d)}{2*\pi*\sqrt{\frac{A(d)}{\pi}}}$$
-where A is the area function, the district is d, and P is the perimeter function.</p>
+where A is the area function, the district is d, and P is the perimeter function.
+All  values are between 0 and 1, where larger values are more compact.</p>
 <p>The Length Width ratio is computed as $$\frac{length}{width}$$ where length
 is the shorter of the maximum x distance and the maximum y distance. Width is
-the longer of the two values.</p>
+the longer of the two values. All  values are between 0 and 1, where larger
+values are more compact.</p>
 <p>The Convex Hull score is computed as $$\frac{A(d)}{A(CVH)}$$ where A is the area
 function, d is the district, and CVH is the convex hull of the district. All
-values are between 0 and 1, where where larger values are more compact.</p>
+values are between 0 and 1, where larger values are more compact.</p>
 <p>The Reock score is computed as $$\frac{A(d)}{A(MBC)}$$ where A is the area
 function, d is the district, and MBC is the minimum bounding circle of the
 district. All values are between 0 and 1, where larger values are more compact.</p>
@@ -290,17 +293,19 @@ The \(r_i\) are the distances of the 16 radii computed from the geometric
 centroid of the shape to the most outward point of the shape that intersects
 the radii, if the centroid is contained within the shape.  If the centroid
 lies outside of the shape, a point on the surface is used, which will naturally
-incur a penalty to the score.</p>
+incur a penalty to the score. All  values are between 0 and 1,
+where larger values are more compact.</p>
 <p>The Fryer Holden score for each district is computed with $$Pop\odot D(precinct)^2$$,
 where \(Pop\) is the population product matrix.  Each element is the
 product of the ith and jth precinct's populations.  D represents the distance,
 where the matrix is the distance between each precinct.  To fully compute this
 index, for any map, the sum of these values should be used as the numerator.
 The denominator can be calculated from the full enumeration of districts as the
-smallest calculated numerator.</p>
+smallest calculated numerator. This produces very large numbers, where smaller
+values are more compact.</p>
 <p>The log spanning tree measure is the logarithm of the product of the
 number of spanning trees which can be drawn on each district.</p>
-<p>The edges removed measure is number of egdes removed from the underlying adjacency graph.
+<p>The edges removed measure is number of edges removed from the underlying adjacency graph.
 A smaller number of edges removed is more compact.</p>
 <p>The fraction kept measure is the fraction of edges that were not removed from the
  underlying adjacency graph. This takes values 0 - 1, where 1 is more compact.</p>

@@ -4,8 +4,8 @@
 #include <R_ext/Rdynload.h>
 
 /* FIXME: 
-   Check these declarations against the C/Fortran source code.
-*/
+ Check these declarations against the C/Fortran source code.
+ */
 
 /* .Call calls */
 extern SEXP _redist_agg_p2d(SEXP, SEXP, SEXP);
@@ -56,7 +56,7 @@ extern SEXP _redist_segregationcalc(SEXP, SEXP, SEXP);
 extern SEXP _redist_smc_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_smoothseat(SEXP, SEXP);
 extern SEXP _redist_splits(SEXP, SEXP);
-extern SEXP _redist_swMH(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _redist_swMH(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_talisman(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_taugap(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_update_conncomp(SEXP, SEXP, SEXP);
@@ -111,7 +111,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_smc_plans",             (DL_FUNC) &_redist_smc_plans,             26},
     {"_redist_smoothseat",            (DL_FUNC) &_redist_smoothseat,             2},
     {"_redist_splits",                (DL_FUNC) &_redist_splits,                 2},
-    {"_redist_swMH",                  (DL_FUNC) &_redist_swMH,                  40},
+    {"_redist_swMH",                  (DL_FUNC) &_redist_swMH,                  41},
     {"_redist_talisman",              (DL_FUNC) &_redist_talisman,               4},
     {"_redist_taugap",                (DL_FUNC) &_redist_taugap,                 4},
     {"_redist_update_conncomp",       (DL_FUNC) &_redist_update_conncomp,        3},

@@ -2,7 +2,7 @@
 % Please edit documentation in R/data.R
 \name{fl25}
 \alias{fl25}
-\title{Florida 25 Precinct File}
+\title{Florida 25 Precinct Shape File}
 \format{
 sf data.frame containing columns for useful data related to the
 redistricting process, subsetted from real data in Florida, and sf geometry column.
@@ -29,6 +29,7 @@ This data set contains the 25-precinct shapefile and related data for each preci
 All possible partitions of the 25 precincts into three contiguous
 congressional districts are stored in \code{\link{fl25_enum}}, and the
 corresponding adjacency graph is stored in \code{\link{fl25_graph}}.
+This is generally useful for demonstrating basic algorithms locally.
 }
 \examples{
 \dontrun{
