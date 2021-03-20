@@ -8,36 +8,6 @@
 
 # constructors and reconstructors -----------------------------------------
 
-#' A set of redistricting plans
-#'
-#' A \code{redist_plans} object is essentially a data frame of summary
-#' information on each district and each plan, along with the matrix of district
-#' assignments and information about the simulation process used to generate the
-#' plans.
-#'
-#' The first two columns of the data frame will be \code{draw}, a factor indexing
-#' the simulation draw, and \code{district}, an integer indexing the districts
-#' within a plan. The data frame will therefore have \code{n_sims*ndists} rows.
-#' As a data frame, the usual \code{\link{dplyr}} methods will work.
-#'
-#' Other useful methods for \code{redist_plans} objects:
-#' * \code{\link{add_reference}}
-#' * \code{\link{pullback}}
-#' * \code{\link{number_by}}
-#' * \code{\link{match_numbers}}
-#' * \code{\link{prec_assignment}}
-#' * \code{\link{get_plan_matrix}}
-#' * \code{\link{get_plan_weights}}
-#' * \code{\link{get_sampling_info}}
-#' * \code{\link{subset_sampled}}
-#' * \code{\link{subset_ref}}
-#' * \code{\link{as.matrix.redist_plans}}
-#' * \code{\link{plot.redist_plans}}
-#'
-#' @name redist_plans
-#' @concept analyze
-#' @md
-NULL
 
 # plans has n_precinct columns and n_sims rows
 # map is a redist_map
@@ -70,6 +40,14 @@ validate_redist_plans = function(x) {
     stopifnot(names(x)[1] == "draw")
     stopifnot(is.factor(x$draw))
 
+    plan_m = attr(x, "plans")
+    stopifnot(!is.null(plan_m))
+
+    min_distr = apply(plan_m, 2, min)
+    max_distr = apply(plan_m, 2, max)
+    stopifnot(all(min_distr == 1))
+    stopifnot(all(diff(max_distr) == 0))
+
     x
 }
 
@@ -93,7 +71,45 @@ reconstruct.redist_plans = function(data, old) {
     data
 }
 
-
+#' A set of redistricting plans
+#'
+#' A \code{redist_plans} object is essentially a data frame of summary
+#' information on each district and each plan, along with the matrix of district
+#' assignments and information about the simulation process used to generate the
+#' plans.
+#'
+#' The first two columns of the data frame will be \code{draw}, a factor indexing
+#' the simulation draw, and \code{district}, an integer indexing the districts
+#' within a plan. The data frame will therefore have \code{n_sims*ndists} rows.
+#' As a data frame, the usual \code{\link{dplyr}} methods will work.
+#'
+#' Other useful methods for \code{redist_plans} objects:
+#' * \code{\link{add_reference}}
+#' * \code{\link{pullback}}
+#' * \code{\link{number_by}}
+#' * \code{\link{match_numbers}}
+#' * \code{\link{prec_assignment}}
+#' * \code{\link{get_plan_matrix}}
+#' * \code{\link{get_plan_weights}}
+#' * \code{\link{get_sampling_info}}
+#' * \code{\link{subset_sampled}}
+#' * \code{\link{subset_ref}}
+#' * \code{\link{as.matrix.redist_plans}}
+#' * \code{\link{plot.redist_plans}}
+#'
+#' @param plans a matrix with \code{n_precinct} columns and \code{n_sims} rows
+#' @param map a \code{\link{redist_map}} object
+#' @param algorithm the algorithm used to generate the plans (usually "smc" or "mcmc")
+#' @param ... Other named attributes to set
+#'
+#' @concept analyze
+#' @md
+redist_plans = function(plans, map, algorithm, ...) {
+    stopifnot(nrow(plans) == nrow(map))
+    obj = new_redist_plans(plans, map, algorithm, wgt=rep(1, ncol(plans)),
+                           resampled=TRUE, ...)
+    validate_redist_plans(obj)
+}
 
 
 # getters / setters ------------------------------------------------------------
@@ -245,7 +261,11 @@ print.redist_plans = function(x, ...) {
         nrow(plans_m), "-unit map,\n  drawn using ",
         c(mcmc="Markov chain Monte Carlo",
           smc="Sequential Monte Carlo",
-          mergesplit="Merge-split Markov chain Monte Carlo")[attr(x, "algorithm")])
+          mergesplit="Merge-split Markov chain Monte Carlo",
+          rsg="random seed-and-grow",
+          crsg="compact random seed-and-grow",
+          enumpart="Enumpart",
+          shortburst="short bursts")[attr(x, "algorithm")])
 
     merge_idx = attr(x, "merge_idx")
     if (!is.null(merge_idx))

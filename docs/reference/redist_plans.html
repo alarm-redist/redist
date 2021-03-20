@@ -149,7 +149,28 @@ assignments and information about the simulation process used to generate the
 plans.</p>
     </div>
 
+    <pre class="usage"><span class='fu'>redist_plans</span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>map</span>, <span class='va'>algorithm</span>, <span class='va'>...</span><span class='op'>)</span></pre>
 
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>plans</th>
+      <td><p>a matrix with <code>n_precinct</code> columns and <code>n_sims</code> rows</p></td>
+    </tr>
+    <tr>
+      <th>map</th>
+      <td><p>a <code><a href='redist_map.html'>redist_map</a></code> object</p></td>
+    </tr>
+    <tr>
+      <th>algorithm</th>
+      <td><p>the algorithm used to generate the plans (usually "smc" or "mcmc")</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>Other named attributes to set</p></td>
+    </tr>
+    </table>
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
