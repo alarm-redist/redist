@@ -1,8 +1,8 @@
 ---
-title: "Intro-to-redist"
+title: "Redistricting with MCMC and RSG"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Intro-to-redist}
+  %\VignetteIndexEntry{Redistricting with MCMC and RSG}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -10,13 +10,13 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>",
-  eval = FALSE
+  comment = "#>"
 )
 ```
 
-```{r setup}
+```{r setup, message=FALSE}
 library(redist)
+library(ggplot2)
 library(igraph)
 library(spdep)
 library(coda)
@@ -24,105 +24,14 @@ set.seed(1)
 ```
 
 
-The `redist` package is designed to allow for replicable redistricting simulations. The package comes loaded with data for simple testing and with functions to simulate redistricting and to run diagnostics on the redistricting plans created.  These data form the basis for small-scale validations of sampling methods in [Automated Redistricting Simulation Using Markov Chain Monte Carlo](https://imai.fas.harvard.edu/research/files/redist.pdf).  For larger scale validation, see [The Essential Role of Empirical Validation in Legislative Redistricting Simulation](https://imai.fas.harvard.edu/research/files/enumerate.pdf), which has additional methods which will be added to this package later in 2020.
-
-# Table of Contents {#top}
- * [Loading redist](#load)
- * [Included Data](#data)
- * [Adjacency-Based Redistricting](#adj)
- * [Redistricting with MCMC](#mcmc)
- * [Redistricting with MCMC using MPI](#mpi)
- * [Using Multiple Chains](#chains)
- * [Random Seed Growth](#rsg)
- * [Segregation Index](#seg)
- * [Diagnostic Plots](#diag)
-
-# Loading redist
-redist can be installed either from CRAN, for the stable version with:
-```{r, eval=F}
-install.packages('redist')
-```
-or from GitHub, which is updated more often:
-```{r, eval=F}
-devtools::install_github(repo = 'kosukeimai/redist', ref = 'master')
-```
-
-## Helpful Packages to be used with redist.
-This package is often used with a set of other packages:
-`sf` and `sp` are useful for working with shapefiles and can be loaded with:
-```{r}
-library(sf)
-library(sp)
-```
-For additional functions for working with the shapefiles, using `spdep` is recommended. This is also used with creating lists of which precincts are adjacent to other precincts. It can be loaded with:
-```{r}
-library(spdep)
-```
-For plotting maps and adjacency graphs, `ggplot2` and `igraph` are useful. The former allows for making ggplot maps, when used with `sf`.  These may be loaded with:
-```{r}
-library(igraph)
-library(ggplot2)
-```
-
-Additionally useful data manipulation tools for working with objects from the package are `dplyr` and `magrittr`.
-```{r}
-library(dplyr)
-library(magrittr)
-```
-
-
-# Included Data {#data}
-The package contains four datasets. The first three are `algdat.p10`, `algdat.p20`, and `algdat.pfull` which contain data for 25 continuous precincts within Florida when partitioned into three districts.  Respectively, these are those plans which fall within 10% population parity, 20% population parity, and all possible partitions. These are loaded in with the package and can be loaded as follows:
-```{r data}
-data("algdat.p10")
-data("algdat.p20")
-data("algdat.pfull")
-```
-
-Each algdat object is a list with five objects:
-```{r objects}
-names(algdat.p10)
-names(algdat.p20)
-names(algdat.pfull)
-```
-
-* adjlist - contains 25 adjacency lists as nb objects from package `spdep`
-
-* cdmat - contains all possible congressional districts under the population constraint for that object as a matrix
-
-* precinct.data - data frame with a row for each precinct with five columns: pop, demvote, repvote, blackpop, hispanicpop
-  * pop - the total population of the district
-  * demvote - the number of votes cast for Obama in the 2008 presidential election in that precinct
-  * repvote - the number of votes cast for John McCain in the 2008 presidental election in that precinct
-  * blackpop - the number of black individuals in that precinct
-  * hispanicpop - the number of hispanic individuals in that precinct
- 
-* segregation.index - the dissimilarity index of segregation for each plan (The Dimensions of Residential Segregation, Massey & Denton 1987).
-
-* distancemat - a symmetric matrix with the squared distance between two precincts as its entries
-
-The fourth data set is the sf dataframe, containing the shapes themselves for creating these objects. It can be called with:
-```{r}
-data("fl25")
-```
-
-From the head of the data, we can see this is a typical dataframe with a geometry column appended. See the [website for sf](https://r-spatial.github.io/sf/) for more information about this type of object.
-```{r}
-head(fl25)
-```
-Each column contains useful information for typical redistricting questions:
- * `geoid10` is a unique identifier.
- * `pop` is the population of the precinct.
- * `vap` is the voter age population.
- * `obama` is the vote count for Obama in the 2012 presidential election.
- * `mccain` is the vote count for McCain in the 2012 presidential election.
- * `TotPop` is identical to `pop`.
- * `BlackPop` is the number of black residents within the precinct.
- * `HispPop` is the number of Hispanic residents within the precinct.
- * `VAP` is identical to `vap`.
- * `BlackVAP` is the number of voter age black residents within the precinct.
- * `HispVAP` is the number of voter age hispanic residents within the precinct.
- * `geometry` contains the sf geometry.
+The `redist` package is designed to allow for replicable redistricting
+simulations. The package comes loaded with data for simple testing and with
+functions to simulate redistricting and to run diagnostics on the redistricting
+plans created.  These data form the basis for small-scale validations of
+sampling methods in 
+[Automated Redistricting Simulation Using Markov Chain Monte Carlo](https://imai.fas.harvard.edu/research/files/redist.pdf). 
+For larger scale validation, see 
+[The Essential Role of Empirical Validation in Legislative Redistricting Simulation](https://imai.fas.harvard.edu/research/files/enumerate.pdf).
 
 
 # Adjacency-Based Redistricting {#adj}
@@ -185,37 +94,29 @@ Each algorithm within the package maintains geographically contiguous districts.
 # Redistricting with MCMC {#mcmc}
 To begin running the MCMC algorithm, we have to provide some basic data. We provide the adjacency list to `adjobj`, a vector of populations to `popvec`, the number of districts as 3 to `ndists`, and choose to run 10000 simulations with `nsims`.  We can also save the output with `savename`. 
 ```{r include=F}
-alg_mcmc <- redist.mcmc(adj = algdat.pfull$adjlist,
-                        total_pop = algdat.pfull$precinct.data$pop,
-                        ndists = 3,
-                        nsims = 10000)
+alg_mcmc <- redist.mcmc(adj = adjlist, total_pop = fl25$pop,
+                        ndists = 3, nsims = 10000)
 ```
 ```{r eval=F}
-alg_mcmc <- redist.mcmc(adj = algdat.pfull$adjlist,
-                        total_pop = algdat.pfull$precinct.data$pop,
-                        ndists = 3,
-                        nsims = 10000,
-                        savename = "redist.mcmc")
+alg_mcmc <- redist.mcmc(adj = adjlist, total_pop = fl25$pop,
+                        ndists = 3, nsims = 10000, savename = "redist.mcmc")
 ```
 
 Note that we do not need to specify `ndists` when we supply a different argument, `initcds`, which is the set of districts to initialize to.  If we do not specific `initcds`, the [RSG](#rsg) function is run to initialize districts. When tuning parameters, the `initcds` argument may be useful for ensuring diverse starting positions for different chains, though this is not typically necessary.
 
 We can specify `initcds`, for example, as the first column of the full enumeration in `algdat.pfull`.
 ```{r}
-init_plan <- algdat.pfull$cdmat[,1]
+data(fl25_enum)
+init_plan <- fl25_enum$plans[, 1]
 ```
 
 ```{r include=FALSE}
-alg_mcmc <- redist.mcmc(adj = algdat.pfull$adjlist,
-                        total_pop = algdat.pfull$precinct.data$pop,
-                        init_plan = init_plan,
-                        nsims = 10000)
+alg_mcmc <- redist.mcmc(adj = adjlist, total_pop = fl25$pop,
+                        init_plan = init_plan, nsims = 10000)
 ```
 ```{r eval=FALSE}
-alg_mcmc <- redist.mcmc(adj = algdat.pfull$adjlist,
-                        total_pop = algdat.pfull$precinct.data$pop,
-                        init_plan = init_plan,
-                        nsims = 10000,
+alg_mcmc <- redist.mcmc(adj = adjlist, total_pop = fl25$pop,
+                        init_plan = init_plan, nsims = 10000,
                         savename = "redist.mcmc")
 ```
 
@@ -245,11 +146,8 @@ The additional outputs are useful for implementing the algorithm with constraint
 The running of this function is the same as in redist.mcmc, but it requires Rmpi installed.  
 ```{r, eval=F}
 library(Rmpi)
-redist.mcmc.mpi(adjobj = algdat.pfull$adjlist,
-                popvec = algdat.pfull$precinct.data$pop,
-                nsims = 10000, 
-                ndists = 3,
-                savename = "redist.mcmc.mpi")
+redist.mcmc.mpi(adjobj = adjlist, popvec = fl25$pop,
+                nsims = 10000,  ndists = 3, savename = "redist.mcmc.mpi")
 ```
 
 Outputs and usage are the same as in the [MCMC Section](#mcmc), but MPI will allow for much faster computation.
@@ -269,20 +167,16 @@ nsims <- 10000
 
 ```{r}
 mcmc_chains <- lapply(1:nchains, function(x){
-          redist.mcmc(adjobj = algdat.pfull$adjlist, 
-                      popvec = algdat.pfull$precinct.data$pop, 
-                      nsims = nsims,
-                      ndists = 3)
+          redist.mcmc(adjobj = adjlist,  popvec = fl25$pop, 
+                      nsims = nsims, ndists = 3)
 })
 ```
 
 In unix-based systems, this can be run considerably faster by running this in parallel.
 ```{r, eval=F}
 mcmc_chains <- parallel::mclapply(1:nchains, function(x){
-          redist.mcmc(adjobj = algdat.pfull$adjlist, 
-                      popvec = algdat.pfull$precinct.data$pop, 
-                      nsims = nsims,
-                      ndists = 3)
+          redist.mcmc(adjobj = adjlist,  popvec = fl25$pop, 
+                      nsims = nsims, ndists = 3)
 }, mc.set.seed = 1, mc.cores = parallel::detectCores())
 ```
 
@@ -293,11 +187,8 @@ This package also contains an implementation of Chen and Rodden's non-compact Ra
 
 The adjacency list, via `adj`, is created as in [Adjacency-Based Redistricting](#adj), `total_pop` is the population of the districts, `ndists` is the number of districts, and `pop_tol` is the allowed population parity.  A `pop_tol` of `0.05` allows for 5\% population parity. In easier redistricting questions, a small `maxiter` is typically sufficient, but in large maps, values may be closer to `50,000` to ensure that a solution is found.
 ```{r}
-rsg <- redist.rsg(adj = algdat.pfull$adjlist,
-                  total_pop = algdat.pfull$precinct.data$pop,
-                  ndists = 3,
-                  pop_tol = 0.05, 
-                  maxiter = 5000)
+rsg <- redist.rsg(adj = adjlist, total_pop = fl25$pop,
+                  ndists = 3, pop_tol = 0.05,  maxiter = 5000)
 ```
 The output of `redist.rsg` is a list with three objects. `district_membership` provides a numeric array with indices for which district each precinct belongs to.
 ```{r}
@@ -320,9 +211,8 @@ To evaluate redistricting plans, the `redist` package comes with the `redist.seg
 
 It takes three arguments, `algout`, which is a `redist` object from the various `mcmc` function or `rsg` function, `grouppop` which is the population of the group being used for comparison, and `fullpop` is the total population of the precinct.
 ```{r}
-seg <- redist.segcalc(algout = alg_mcmc, 
-                      group_pop = algdat.pfull$precinct.data$blackpop,
-                      total_pop = algdat.pfull$precinct.data$pop)
+seg <- redist.segcalc(algout = alg_mcmc, group_pop = fl25$BlackPop,
+                      total_pop = fl25$pop)
 ```
 
 This returns a numeric vector with the an entry for each district provided.
@@ -357,8 +247,8 @@ The final plot requires at least two chains.
 ```{r}
 seg_chains <- lapply(1:nchains, 
                      function(i){redist.segcalc(algout = mcmc_chains[[i]], 
-                                  group_pop = algdat.pfull$precinct.data$blackpop,
-                                  total_pop = algdat.pfull$precinct.data$pop)})
+                                  group_pop = fl25$BlackPop,
+                                  total_pop = fl25$pop)})
 
 redist.diagplot(seg_chains, plot = 'gelmanrubin')
 ```
