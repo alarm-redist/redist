@@ -98,6 +98,9 @@ that a call to sf::st_union() would produce only connected pieces." />
   </a>
 </li>
 <li>
+  <a href="../articles/redist.html">Get started</a>
+</li>
+<li>
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
@@ -109,6 +112,9 @@ that a call to sf::st_union() would produce only connected pieces." />
   <ul class="dropdown-menu" role="menu">
     <li>
       <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
+    </li>
+    <li>
+      <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
     </li>
     <li>
       <a href="../articles/tidy-redist.html">Tidy `redist`</a>
@@ -231,17 +237,16 @@ This portion is deemed the core of the district.</p>
 #&gt; Making split 1 of 3
 #&gt; Warning: maximum hit; falling back to naive k estimator.
 #&gt; Using k = 1
-#&gt; 50.0% acceptance rate.
+#&gt; 11.1% acceptance rate.
 #&gt; Resampling effective sample size: 1.0 (100.0% efficiency).
 #&gt; Making split 2 of 3
-#&gt; Warning: maximum hit; falling back to naive k estimator.
 #&gt; Using k = 1
-#&gt; 25.0% acceptance rate.
+#&gt; 33.3% acceptance rate.
 #&gt; Resampling effective sample size: 1.0 (100.0% efficiency).
 #&gt; Making split 3 of 3
 #&gt; Warning: maximum hit; falling back to naive k estimator.
 #&gt; Using k = 1
-#&gt; 7.1% acceptance rate.
+#&gt; 3.8% acceptance rate.
 #&gt; Resampling effective sample size: 1.0 (100.0% efficiency).</div><div class='input'><span class='va'>core</span> <span class='op'>&lt;-</span> <span class='fu'>redist.identify.cores</span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>adj</span>, plan <span class='op'>=</span> <span class='va'>plan</span><span class='op'>)</span>
 <span class='fu'><a href='redist.plot.cores.html'>redist.plot.cores</a></span><span class='op'>(</span>shp <span class='op'>=</span> <span class='va'>fl250</span>, plan <span class='op'>=</span> <span class='va'>plan</span>, core <span class='op'>=</span> <span class='va'>core</span><span class='op'>)</span>
 </div><div class='img'><img src='redist.identify.cores-1.png' alt='' width='700' height='433' /></div><div class='input'>

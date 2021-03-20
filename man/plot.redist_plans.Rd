@@ -11,8 +11,9 @@
 
 \item{...}{passed on to the underlying function}
 
-\item{type}{the name of the plotting function to use. Will have \code{plot_},
-prepended to it; e.g., use \code{type="plan"} to call \code{plot_plan()}.}
+\item{type}{the name of the plotting function to use. Will have
+\code{redist.plot.}, prepended to it; e.g., use \code{type="plans"} to call
+\code{\link{redist.plot.plans()}}.}
 }
 \description{
 Summary plots for \code{redist_plans}

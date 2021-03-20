@@ -10,7 +10,8 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  eval = FALSE
 )
 ```
 
@@ -183,7 +184,13 @@ Each algorithm within the package maintains geographically contiguous districts.
 
 # Redistricting with MCMC {#mcmc}
 To begin running the MCMC algorithm, we have to provide some basic data. We provide the adjacency list to `adjobj`, a vector of populations to `popvec`, the number of districts as 3 to `ndists`, and choose to run 10000 simulations with `nsims`.  We can also save the output with `savename`. 
-```{r}
+```{r include=F}
+alg_mcmc <- redist.mcmc(adj = algdat.pfull$adjlist,
+                        total_pop = algdat.pfull$precinct.data$pop,
+                        ndists = 3,
+                        nsims = 10000)
+```
+```{r eval=F}
 alg_mcmc <- redist.mcmc(adj = algdat.pfull$adjlist,
                         total_pop = algdat.pfull$precinct.data$pop,
                         ndists = 3,
@@ -198,7 +205,13 @@ We can specify `initcds`, for example, as the first column of the full enumerati
 init_plan <- algdat.pfull$cdmat[,1]
 ```
 
-```{r}
+```{r include=FALSE}
+alg_mcmc <- redist.mcmc(adj = algdat.pfull$adjlist,
+                        total_pop = algdat.pfull$precinct.data$pop,
+                        init_plan = init_plan,
+                        nsims = 10000)
+```
+```{r eval=FALSE}
 alg_mcmc <- redist.mcmc(adj = algdat.pfull$adjlist,
                         total_pop = algdat.pfull$precinct.data$pop,
                         init_plan = init_plan,

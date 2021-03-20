@@ -93,6 +93,9 @@
   </a>
 </li>
 <li>
+  <a href="../articles/redist.html">Get started</a>
+</li>
+<li>
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
@@ -104,6 +107,9 @@
   <ul class="dropdown-menu" role="menu">
     <li>
       <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
+    </li>
+    <li>
+      <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
     </li>
     <li>
       <a href="../articles/tidy-redist.html">Tidy `redist`</a>
@@ -164,7 +170,7 @@
       <th>...</th>
       <td><p>column elements to be bound into a <code>redist_map</code> object or a
 single <code>list</code> or <code>data.frame</code>.  These will be passed on to the
-<code>tibble</code> constructor.</p></td>
+<code><a href='https://tibble.tidyverse.org/reference/tibble.html'>tibble</a></code> constructor.</p></td>
     </tr>
     <tr>
       <th>ndists</th>
@@ -214,7 +220,7 @@ it is latitude-longitude based. Set to NULL to avoid planarizing.</p></td>
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>A <code>redist_map</code> object is a <code>tibble</code> which contains an
+    <p>A <code>redist_map</code> object is a <code><a href='https://tibble.tidyverse.org/reference/tibble.html'>tibble</a></code> which contains an
 adjacency list and additional information about the number of districts and
 population bounds.  It supports all of the <code>dplyr</code> generics, and will
 adjust the adjacency list and attributes according to these functions; i.e.,
@@ -247,7 +253,7 @@ graphs or attributes.</p>
 #&gt; </span><span style='color: #BCBCBC;'>3</span><span> 2515.0_0 </span><span style='text-decoration: underline;'>22</span><span>218 </span><span style='text-decoration: underline;'>14</span><span>513   506    641  </span><span style='text-decoration: underline;'>22</span><span>218     </span><span style='text-decoration: underline;'>5</span><span>911    </span><span style='text-decoration: underline;'>8</span><span>800 </span><span style='text-decoration: underline;'>14</span><span>513     </span><span style='text-decoration: underline;'>3</span><span>417
 #&gt; </span><span style='color: #BCBCBC;'>4</span><span> 2525.0_0 </span><span style='text-decoration: underline;'>16</span><span>734 </span><span style='text-decoration: underline;'>14</span><span>720   826   </span><span style='text-decoration: underline;'>1</span><span>414  </span><span style='text-decoration: underline;'>16</span><span>734      197     791 </span><span style='text-decoration: underline;'>14</span><span>720      155
 #&gt; </span><span style='color: #BCBCBC;'>5</span><span> 1246.0_0 </span><span style='text-decoration: underline;'>12</span><span>289  </span><span style='text-decoration: underline;'>7</span><span>734   366    271  </span><span style='text-decoration: underline;'>12</span><span>289     </span><span style='text-decoration: underline;'>1</span><span>693    </span><span style='text-decoration: underline;'>9</span><span>773  </span><span style='text-decoration: underline;'>7</span><span>734     </span><span style='text-decoration: underline;'>1</span><span>062
-#&gt; </span><span style='color: #949494;'># ... with 3 more variables: HispVAP &lt;dbl&gt;, geometry &lt;POLYGON [m]&gt;, adj &lt;list&gt;</span><span></div><div class='input'>
+#&gt; </span><span style='color: #949494;'># … with 3 more variables: HispVAP &lt;dbl&gt;, geometry &lt;POLYGON [m]&gt;, adj &lt;list&gt;</span><span></div><div class='input'>
 </div></span></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
