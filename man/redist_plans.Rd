@@ -3,6 +3,18 @@
 \name{redist_plans}
 \alias{redist_plans}
 \title{A set of redistricting plans}
+\usage{
+redist_plans(plans, map, algorithm, ...)
+}
+\arguments{
+\item{plans}{a matrix with \code{n_precinct} columns and \code{n_sims} rows}
+
+\item{map}{a \code{\link{redist_map}} object}
+
+\item{algorithm}{the algorithm used to generate the plans (usually "smc" or "mcmc")}
+
+\item{...}{Other named attributes to set}
+}
 \description{
 A \code{redist_plans} object is essentially a data frame of summary
 information on each district and each plan, along with the matrix of district
