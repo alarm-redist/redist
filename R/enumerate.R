@@ -66,8 +66,8 @@ list_to_mat <- function(A){
 #'
 #' @examples
 #' \dontrun{
-#' data(fl25_graph)
-#' test <- redist.enumerate(adj = fl25_graph)
+#' data(fl25_adj)
+#' test <- redist.enumerate(adj = fl25_adj)
 #' }
 #' @concept enumerate
 #' @export

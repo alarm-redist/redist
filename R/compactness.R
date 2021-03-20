@@ -446,8 +446,8 @@ redist.compactness <- function(shp = NULL,
 #' @importFrom sf st_buffer st_is_valid st_geometry<-
 #' @examples \dontrun{
 #' data(fl25)
-#' data(fl25_enum)
-#' perim_df <- redist.prep.polsbypopper(shp = fl25, adj = fl25_graph)
+#' data(fl25_adj)
+#' perim_df <- redist.prep.polsbypopper(shp = fl25, adj = fl25_adj)
 #' }
 redist.prep.polsbypopper <- function(shp, adj, perim_path, ncores = 1){
 
