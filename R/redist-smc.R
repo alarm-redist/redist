@@ -158,14 +158,17 @@
 #' Available at \url{https://imai.fas.harvard.edu/research/files/SMCredist.pdf}.
 #'
 #' @examples \dontrun{
-#' data(algdat.p10)
-#' sampled_basic = redist.smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,
+#' data(fl25)
+#' data(fl25_graph)
+#' data(fl25_enum)
+#'
+#' sampled_basic = redist.smc(fl25_graph, fl25$pop,
 #'                            nsims=10000, ndists=3, pop_tol=0.1)
 #'
-#' sampled_constr = redist.smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,
+#' sampled_constr = redist.smc(fl25_graph, fl25$pop,
 #'                             nsims=10000, ndists=3, pop_tol=0.1,
 #'                             constraints=list(
-#'                                 status_quo = list(strength=10, current=algdat.p10$cdmat[,1234]),
+#'                                 status_quo = list(strength=10, current=fl25_enum$plans[,5118]),
 #'                                 incumbency = lsit(strength=1000, incumbents=c(3, 6, 25))
 #'                             ))
 #' }
@@ -322,41 +325,3 @@ redist.smc_is_ci = function(x, wgt, conf=0.99) {
     mu + qnorm(c((1-conf)/2, 1-(1-conf)/2))*sig
 }
 
-
-#' Calculate Population Bounds for a Subset of a Map
-#'
-#' Creates a 3-element vector, suitable for the precise population constraints
-#' in \code{\link{redist.smc}}, that ensures that samples of plans built from
-#' parts of a map will still satisfy the overall population constraint.
-#'
-#' @param total_pop a numeric vector containing the population of every precinct in
-#'   the full map.
-#' @param subset an indexing vector for the subset of the map that will be
-#'   studied or resampled.  Often this will take the form \code{current_plan
-#'   \%in\% c(1, 3, 7)}, where 1, 3, and 7 are the study districts.
-#' @param ndists the number of districts in the overall map.
-#' @param sub_distr the number of districts in the map subset.
-#' @param tol the overall population tolerance that must be met.
-#'
-#' @return a 3-element numeric vector of the form \code{c(lower, target, upper)},
-#' which can be used inside \code{\link{redist.smc}}.
-#'
-#' @concept prepare
-#' @export
-#'
-#' @examples
-#' data("fl25")
-#' data(algdat.p10)
-#'
-#' subset = algdat.p10$cdmat[,1] %in% c(1, 2)
-#' redist.subset_bounds(fl25$TotPop, subset, 3, 2, 0.1)
-redist.subset_bounds = function(total_pop, subset, ndists, sub_distr, tol=0.01) {
-    if (sub_distr >= ndists)
-        warning("Same or greater number of districts in the map subset.")
-    overall_target = sum(total_pop) / ndists
-    lower = overall_target * (1 - tol)
-    upper = overall_target * (1 + tol)
-    target = sum(total_pop[subset]) / sub_distr
-
-    c(ceiling(lower), target, floor(upper))
-}

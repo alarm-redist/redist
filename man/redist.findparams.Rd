@@ -124,21 +124,18 @@ This function allows users to test multiple parameter settings of
 }
 \examples{
 \dontrun{
-data(algdat.pfull)
-
-## Code to run the simulations in Figure 4 in Fifield, Higgins, Imai and
-## Tarr (2015)
+data(fl25)
+data(fl25_enum)
+data(fl25_graph)
 
 ## Get an initial partition
-set.seed(1)
-initcds <- algdat.pfull$cdmat[,sample(1:ncol(algdat.pfull$cdmat), 1)]
+init_plan <- fl25_enum$plans[, 5118]
 
 params <- expand.grid(eprob = c(.01, .05, .1))
 
 ## Run the algorithm
-redist.findparams(adj = algdat.pfull$adjlist,
-total_pop = algdat.pfull$precinct.data$pop,
-init_plan = initcds, nsims = 10000, params = params)
+redist.findparams(adj = fl25_graph, total_pop = fl25$pop,
+                  init_plan = init_plan, nsims = 10000, params = params)
 }
 }
 \references{

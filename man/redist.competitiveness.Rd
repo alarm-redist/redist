@@ -30,10 +30,11 @@ of Cho & Liu 2016.
 }
 \examples{
 \dontrun{
-data("algdat.p10")
-comp <- redist.competitiveness(algdat.p10$cdmat,
-algdat.p10$precinct.data$repvote,
-algdat.p10$precinct.data$demvote)
+data(fl25)
+data(fl25_enum)
+
+plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
+comp <- redist.competitiveness(plans_05, fl25$mccain, fl25$obama)
 }
 }
 \concept{analyze}

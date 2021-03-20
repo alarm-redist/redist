@@ -45,7 +45,7 @@ return all implemented measures.}
 only necessary when "FryerHolden" is used for measure. Defaults to NULL.}
 
 \item{adj}{A zero-indexed adjacency list. Only used for "PolsbyPopper",
-EdgesRemoved" and "logSpanningTree". Created with \code{redist.adjacency} if not 
+EdgesRemoved" and "logSpanningTree". Created with \code{redist.adjacency} if not
 supplied and needed. Default is NULL.}
 
 \item{nloop}{A numeric to specify loop number. Defaults to 1 if only one map provided
@@ -55,12 +55,12 @@ and the column number if multiple maps given.}
 
 \item{counties}{A numeric vector from 1:ncounties corresponding to counties. Required for "logSpanningTree".}
 
-\item{ppRcpp}{Boolean, whether to run Polsby Popper using Rcpp. 
-It has a higher upfront cost, but quickly becomes faster. 
+\item{ppRcpp}{Boolean, whether to run Polsby Popper using Rcpp.
+It has a higher upfront cost, but quickly becomes faster.
 Becomes TRUE if ncol(district_membership > 8) and not manually set.}
 
-\item{perim_path}{it checks for an Rds, if no rds exists at the path, 
-it creates an rds with borders and saves it. 
+\item{perim_path}{it checks for an Rds, if no rds exists at the path,
+it creates an rds with borders and saves it.
 This can be created in advance with \code{redist.prep.polsbypopper}.}
 
 \item{perim_df}{A dataframe output from \code{redist.prep.polsbypopper}}
@@ -107,11 +107,11 @@ is the shorter of the maximum x distance and the maximum y distance. Width is
 the longer of the two values.
 
 The Convex Hull score is computed as \deqn{\frac{A(d)}{A(CVH)}} where A is the area
-function, d is the district, and CVH is the convex hull of the district. All 
+function, d is the district, and CVH is the convex hull of the district. All
 values are between 0 and 1, where where larger values are more compact.
 
 The Reock score is computed as \deqn{\frac{A(d)}{A(MBC)}} where A is the area
-function, d is the district, and MBC is the minimum bounding circle of the 
+function, d is the district, and MBC is the minimum bounding circle of the
 district. All values are between 0 and 1, where larger values are more compact.
 
 The Boyce Clark Index is computed as \deqn{1 - \sum_{1}^{16}\{\frac{|\frac{r_i}{\sum_ir_i}*100-6.25 |\}}{200}}.
@@ -140,10 +140,12 @@ The fraction kept measure is the fraction of edges that were not removed from th
 }
 \examples{
 \dontrun{
-data("fl25")
-data("algdat.p10")
+data(fl25)
+data(fl25_enum)
 
-redist.compactness(shp = fl25, district_membership = algdat.p10$cdmat[,1:3], 
+plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
+
+redist.compactness(shp = fl25, district_membership = plans_05[,1:3],
 measure = c('PolsbyPopper', 'EdgesRemoved'))
 }
 

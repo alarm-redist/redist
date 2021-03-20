@@ -75,8 +75,10 @@ redistricting routines in this package.
 }
 \examples{
 ### Real data example from test set
-data("algdat.pfull")
-res <- redist.rsg(adj = algdat.pfull$adjlist, total_pop = algdat.pfull$precinct.data$pop, 
+data(fl25)
+data(fl25_enum)
+
+res <- redist.rsg(adj = fl25_graph, total_pop = fl25$pop,
  ndists = 3, pop_tol = 0.05)
 
 \dontrun{

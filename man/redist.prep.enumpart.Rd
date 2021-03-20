@@ -23,9 +23,9 @@ Prepares a run of the enumpart algorithm by ordering edges
 }
 \examples{
 \dontrun{
-data("algdat.p10")
-redist.prep.enumpart(adj = algdat.p10$adjlist, unordered_path = '../unordered',
-ordered_path = '../ordered')
+data(fl25_graph)
+redist.prep.enumpart(adj = fl25_graph, unordered_path = '../unordered',
+                     ordered_path = '../ordered')
 }
 }
 \references{

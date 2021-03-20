@@ -10,11 +10,6 @@ test_that("SMC runs without errors", {
     expect_equal(range(res$plans), c(1, 3))
 })
 
-test_that("Subset population bounds are calculated correctly", {
-    bounds = redist.subset_bounds(pop, algdat.p10$cdmat[,1] %in% 1:2, 3, 2, 0.1)
-    expect_equal(bounds, c(52513, 56666, 64182))
-})
-
 test_that("Precise population bounds are enforced", {
     res = redist.smc(adj, pop, 20, 3, pop_bounds=c(52e3, 58e3, 60e3), silent=T)
     distr_pop = apply(res$plans, 2, function(x) tapply(pop, x, sum))

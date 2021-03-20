@@ -1,11 +1,9 @@
-data(fl25)
-data('algdat.p10')
-plans <- algdat.p10$cdmat[, 1:2]
+plans <- plans_10[, 1:2]
 
 test_that('compactness works', {
   comp <- redist.compactness(
     shp = fl25, plans = plans,
-    measure = 'all', total_pop = fl25$pop,
+    measure = 'all', total_pop = pop,
     counties = rep(1, 25)
   )
   expectation <- structure(list(

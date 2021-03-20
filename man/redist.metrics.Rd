@@ -92,10 +92,10 @@ SmoothedSeat computes the Smoothed Seat Count Deviation (0-1, smaller is better)
 }
 \examples{
 \dontrun{
-data("algdat.p10")
-dists <- algdat.p10$cdmat[,1:100]
-redist.metrics(dists, measure = 'all', rvote = algdat.p10$precinct.data$repvote,
-dvote = algdat.p10$precinct.data$demvote)
+data(fl25)
+data(fl25_enum)
+plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
+redist.metrics(plans_05, measure = 'all', rvote = fl25$mccain, dvote = fl25$obama)
 }
 }
 \references{
@@ -109,8 +109,8 @@ Election Law Journal: Rules, Politics, and Policy. Pp. 39-57.http://doi.org/10.1
 Samuel S.-H. Wang. 2016. "Three Tests for Practical Evaluation of Partisan Gerrymandering."
 Stanford Law Review, 68, Pp. 1263 - 1321.
 
-Gregory Herschlag, Han Sung Kang, Justin Luo, Christy Vaughn Graves, Sachet Bangia, 
-Robert Ravier & Jonathan C. Mattingly (2020) Quantifying Gerrymandering in North Carolina, 
+Gregory Herschlag, Han Sung Kang, Justin Luo, Christy Vaughn Graves, Sachet Bangia,
+Robert Ravier & Jonathan C. Mattingly (2020) Quantifying Gerrymandering in North Carolina,
 Statistics and Public Policy, 7:1, 30-38, DOI: 10.1080/2330443X.2020.1796400
 }
 \concept{analyze}

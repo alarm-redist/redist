@@ -45,24 +45,19 @@ redistricting plan.
 }
 \examples{
 \dontrun{
-data(algdat.pfull)
-
-## Code to run the simulations in Figure 4 of Fifield, Higgins,
-## Imai and Tarr (2015)
+data(fl25)
+data(fl25_enum)
+data(fl25_graph)
 
 ## Get an initial partition
-set.seed(1)
-initcds <- algdat.pfull$cdmat[,sample(1:ncol(algdat.pfull$cdmat), 1)]
+init_plan <- fl25_enum$plans[, 5118]
 
-## Run simulations
-alg_253 <- redist.mcmc(adjobj = algdat.pfull$adjlist,
-popvec = algdat.pfull$precinct.data$pop,
-initcds = initcds, nsims = 10000)
+## 25 precinct, three districts - no pop constraint ##
+alg_253 <- redist.mcmc(adj = fl25_graph, popvec = fl25$pop,
+                       initcds = init_plan, nsims = 10000)
 
 ## Get Republican Dissimilarity Index from simulations
-rep_dmi_253 <- redist.segcalc(alg_253,
-algdat.pfull$precinct.data$repvote,
-algdat.pfull$precinct.data$pop)
+rep_dmi_253 <- redist.segcalc(alg_253, fl25$mccain, fl25$pop)
 }
 }
 \references{

@@ -24,7 +24,7 @@ redist.init.enumpart <- function(){
   }
 
   servr::make(dir = system.file('enumpart', package = 'redist'), verbose = FALSE)
-  
+
   if(Sys.info()[['sysname']] == 'Windows'){
     sys::exec_wait('python', args= c('-m', 'pip', 'install', 'networkx', '--user'))
   } else {
@@ -53,9 +53,9 @@ redist.init.enumpart <- function(){
 #' Forthcoming, Statistics and Public Policy.
 #' @concept enumerate
 #' @examples \dontrun{
-#' data("algdat.p10")
-#' redist.prep.enumpart(adj = algdat.p10$adjlist, unordered_path = '../unordered',
-#' ordered_path = '../ordered')
+#' data(fl25_graph)
+#' redist.prep.enumpart(adj = fl25_graph, unordered_path = '../unordered',
+#'                      ordered_path = '../ordered')
 #' }
 redist.prep.enumpart <- function(adj, unordered_path, ordered_path, adjlist){
   if(!missing(adjlist)){
@@ -83,7 +83,7 @@ redist.prep.enumpart <- function(adj, unordered_path, ordered_path, adjlist){
                      col_names = FALSE)
 
   ## Order edges
-  
+
   if(Sys.info()[['sysname']] == 'Windows'){
     res <- sys::exec_wait('python',
                           args = system.file('python/ndscut.py', package = 'redist'),

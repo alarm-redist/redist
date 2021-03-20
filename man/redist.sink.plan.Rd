@@ -10,20 +10,20 @@ redist.sink.plan(plan)
 \item{plan}{vector of assignments, required.}
 }
 \value{
-A vector with an ID that corresponds from 1:ndistss
+A vector with an ID that corresponds from 1:ndists
 }
 \description{
 Takes a plan and renumbers it to be from 1:ndists
 }
 \examples{
 \dontrun{
-data(algdat.p10)
-plan <- algdat.p10$cdmat[,1]
+data(fl25_enum)
+plan <- fl25_enum$plans[, 5118]
 # Subset based on something:
- plan <- plan[plan!=2]
- plan <- redist.sink.plan(plan)
- # Now plan can be used with redist.mcmc()
- plan
+plan <- plan[plan!=2]
+plan <- redist.sink.plan(plan)
+# Now plan can be used with redist.mcmc()
+plan
 }
 
 }
