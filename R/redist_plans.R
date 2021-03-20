@@ -370,6 +370,7 @@ redist.plot.hist = function(plans, qty, bins=NULL, ...) {
 }
 
 #' @rdname redist.plot.hist
+#' @param x \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the statistic.
 #' @export
 hist.redist_plans = function(x, qty, ...) {
     qty = rlang::enquo(qty)
@@ -479,7 +480,7 @@ redist.plot.distr_qtys = function(plans, qty, sort="asc", geom="jitter",
         stopifnot(is.numeric(color_thresh))
         p = ggplot(subset_sampled(plans), aes(.data$.distr_no, {{ qty }},
                                               color = {{ qty }} >= color_thresh)) +
-            guides(color=FALSE)
+            ggplot2::guides(color=FALSE)
     }
 
     if (geom == "jitter") {
