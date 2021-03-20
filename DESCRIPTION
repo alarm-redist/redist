@@ -36,6 +36,9 @@ Imports:
     servr,
     sys,
     rlang,
+    vctrs,
+    tidyselect,
+    cli (>= 2.1.0),
     stringr,
     patchwork
 Suggests:
