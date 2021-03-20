@@ -2,7 +2,7 @@
 title: "Introduction to redist"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{redist}
+  %\VignetteIndexEntry{Introduction to redist}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
