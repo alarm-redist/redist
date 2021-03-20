@@ -4,7 +4,7 @@
 \alias{redist.plot.scatter}
 \title{Scatter plot of plan summary statistics}
 \usage{
-redist.plot.scatter(plans, x, y, ...)
+redist.plot.scatter(plans, x, y, ..., bigger = TRUE)
 }
 \arguments{
 \item{plans}{the \code{redist_plans} object.}
@@ -16,6 +16,8 @@ quantity to plot on the horizontal axis.}
 quantity to plot on the vertical axis.}
 
 \item{...}{passed on to \code{\link[ggplot2:geom_point]{geom_point}}.}
+
+\item{bigger}{if TRUE, make the point corresponding to the reference plan larger.}
 }
 \value{
 A ggplot

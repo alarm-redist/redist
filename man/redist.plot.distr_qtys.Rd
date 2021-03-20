@@ -4,7 +4,14 @@
 \alias{redist.plot.distr_qtys}
 \title{Plot box and whisker plots for each district}
 \usage{
-redist.plot.distr_qtys(plans, qty, sort = "asc", ...)
+redist.plot.distr_qtys(
+  plans,
+  qty,
+  sort = "asc",
+  geom = "jitter",
+  color_thresh = NULL,
+  ...
+)
 }
 \arguments{
 \item{plans}{the \code{redist_plans} object.}
@@ -15,6 +22,13 @@ quantity of interest.}
 \item{sort}{set to \code{"asc"} to sort districts in ascending order of
 \code{qty} (the default), \code{"desc"} for descending order, or
 \code{FALSE} or \code{"none"} for no sorting.}
+
+\item{geom}{the geom to use in plotting the simulated districts: either
+\code{"jitter"} or \code{"boxplot"}}
+
+\item{color_thresh}{if a number, the threshold to use in coloring the points.
+Plans with quantities of interest above the threshold will be colored
+differently than plans below the threshold.}
 
 \item{...}{passed on to \code{\link[ggplot2]{geom_boxplot}}}
 }

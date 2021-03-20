@@ -153,7 +153,14 @@ optionally sorted by this quantity. Adds reference points for each reference
 plan, if applicable.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.plot.distr_qtys</span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>qty</span>, sort <span class='op'>=</span> <span class='st'>"asc"</span>, <span class='va'>...</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>redist.plot.distr_qtys</span><span class='op'>(</span>
+  <span class='va'>plans</span>,
+  <span class='va'>qty</span>,
+  sort <span class='op'>=</span> <span class='st'>"asc"</span>,
+  geom <span class='op'>=</span> <span class='st'>"jitter"</span>,
+  color_thresh <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>...</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -172,6 +179,17 @@ quantity of interest.</p></td>
       <td><p>set to <code>"asc"</code> to sort districts in ascending order of
 <code>qty</code> (the default), <code>"desc"</code> for descending order, or
 <code>FALSE</code> or <code>"none"</code> for no sorting.</p></td>
+    </tr>
+    <tr>
+      <th>geom</th>
+      <td><p>the geom to use in plotting the simulated districts: either
+<code>"jitter"</code> or <code>"boxplot"</code></p></td>
+    </tr>
+    <tr>
+      <th>color_thresh</th>
+      <td><p>if a number, the threshold to use in coloring the points.
+Plans with quantities of interest above the threshold will be colored
+differently than plans below the threshold.</p></td>
     </tr>
     <tr>
       <th>...</th>
