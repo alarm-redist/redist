@@ -273,7 +273,7 @@
 <a href="#mpi" class="anchor"></a>Redistricting with MCMC using MPI</h1>
 <p>The running of this function is the same as in redist.mcmc, but it requires Rmpi installed.</p>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">Rmpi</span><span class="op">)</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="http://fisher.stats.uwo.ca/faculty/yu/Rmpi/">Rmpi</a></span><span class="op">)</span>
 <span class="fu"><a href="../reference/redist.mcmc.mpi.html">redist.mcmc.mpi</a></span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">algdat.pfull</span><span class="op">$</span><span class="va">adjlist</span>,
                 popvec <span class="op">=</span> <span class="va">algdat.pfull</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,
                 nsims <span class="op">=</span> <span class="fl">10000</span>, 
@@ -301,7 +301,7 @@
 <span class="op">}</span><span class="op">)</span></code></pre></div>
 <p>In unix-based systems, this can be run considerably faster by running this in parallel.</p>
 <div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">mcmc_chains</span> <span class="op">&lt;-</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/mclapply.html">mclapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">nchains</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">{</span>
+<code class="sourceCode R"><span class="va">mcmc_chains</span> <span class="op">&lt;-</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/mcdummies.html">mclapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">nchains</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">{</span>
           <span class="fu"><a href="../reference/redist.mcmc.html">redist.mcmc</a></span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">algdat.pfull</span><span class="op">$</span><span class="va">adjlist</span>, 
                       popvec <span class="op">=</span> <span class="va">algdat.pfull</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>, 
                       nsims <span class="op">=</span> <span class="va">nsims</span>,
