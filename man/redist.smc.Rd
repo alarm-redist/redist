@@ -210,14 +210,17 @@ or \code{tgt_vra_other}. This can be visualized with
 }
 \examples{
 \dontrun{
-data(algdat.p10)
-sampled_basic = redist.smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,
+data(fl25)
+data(fl25_graph)
+data(fl25_enum)
+
+sampled_basic = redist.smc(fl25_graph, fl25$pop,
                            nsims=10000, ndists=3, pop_tol=0.1)
 
-sampled_constr = redist.smc(algdat.p10$adjlist, algdat.p10$precinct.data$pop,
+sampled_constr = redist.smc(fl25_graph, fl25$pop,
                             nsims=10000, ndists=3, pop_tol=0.1,
                             constraints=list(
-                                status_quo = list(strength=10, current=algdat.p10$cdmat[,1234]),
+                                status_quo = list(strength=10, current=fl25_enum$plans[,5118]),
                                 incumbency = lsit(strength=1000, incumbents=c(3, 6, 25))
                             ))
 }

@@ -455,22 +455,21 @@ redist.combine.anneal <- function(file_name){
 #'
 #' @examples
 #' \dontrun{
-#' data(algdat.pfull)
+#' data(fl25)
+#' data(fl25_enum)
+#' data(fl25_graph)
 #'
 #' ## Code to run the simulations in Figure 4 in Fifield, Higgins,Imai and
 #' Tarr (2015)
 #'
 #' ## Get an initial partition
-#' set.seed(1)
-#' init_plan <- algdat.pfull$cdmat[,sample(1:ncol(algdat.pfull$cdmat), 1)]
+#' init_plan <- fl25_enum$plans[, 5118]
 #'
 #' ## Run the algorithm
-#' alg_253 <- redist.mcmc(adj = algdat.pfull$adjlist,
-#' total_pop = algdat.pfull$precinct.data$pop,
-#' init_plan = init_plan,
-#' nsims = 10000, nloops = 2, savename = "test")
-#' out <- redist.combine(savename = "test", nloop = 2,
-#' nthin = 10)
+#' alg_253 <- redist.mcmc(adj = fl25_graph, total_pop = fl25$pop,
+#'                        init_plan = init_plan, nsims = 10000,
+#'                        loops = 2, savename = "test")
+#' out <- redist.combine(savename = "test", nloop = 2, nthin = 10)
 #' }
 #' @concept post
 #' @export
@@ -702,19 +701,20 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #'
 #' @examples
 #' \dontrun{
-#' data(algdat.pfull)
-#' ## Code to run the simulations in Figure 4 in Fifield, Higgins,
-#' ## Imai and Tarr (2015)
+#' data(fl25)
+#' data(fl25_enum)
+#' data(fl25_graph)
+#'
+#' ## Code to run the simulations in Figure 4 in Fifield, Higgins,Imai and
+#' Tarr (2015)
 #'
 #' ## Get an initial partition
-#' set.seed(1)
-#' init_plan <- algdat.pfull$cdmat[,sample(1:ncol(algdat.pfull$cdmat), 1)]
+#' init_plan <- fl25_enum$plans[, 5118]
 #'
 #' ## Run the algorithm
-#' alg_253 <- redist.mcmc(adjobj = algdat.pfull$adjlist,
-#' total_pop = algdat.pfull$precinct.data$pop,
-#' init_plan = init_plan,
-#' nsims = 10000)
+#' alg_253 <- redist.mcmc(adj = fl25_Graph, total_pop = fl25$pop,
+#'                        init_plan = init_plan, nsims = 10000,
+#'                        loops = 2, savename = "test")
 #' }
 #' @concept simulate
 #' @export
@@ -860,7 +860,7 @@ redist.mcmc <- function(adj,
                                  dvote = dvote,
                                  minorityprop = minorityprop
                                  )
-    
+
     ## Set betas - if tempering, modified later
     weightpop <- preprocout$params$weightpop
     weightcompact <- preprocout$params$weightcompact
@@ -1079,31 +1079,29 @@ redist.mcmc <- function(adj,
 #' Journal of the American Statistical Association.
 #'
 #' @examples \dontrun{
-#' data(algdat.p20)
+#' data(fl25)
+#' data(fl25_enum)
+#' data(fl25_graph)
 #'
 #' ## Code to run the simulations in Figure 4 of Fifield, Higgins,
 #' ## Imai and Tarr (2015)
 #'
 #' ## Get an initial partition
-#' set.seed(1)
-#' init_plan <- algdat.p20$cdmat[,sample(1:ncol(algdat.p20$cdmat), 1)]
+#' init_plan <- fl25_enum$plans[, 5118]
 #'
 #' ## Vector of beta weights
 #' betaweights <- rep(NA, 10); for(i in 1:10){betaweights[i] <- 4^i}
 #'
 #' ## Run simulations - tempering population constraint
-#' alg_253_20_st <- redist.mcmc(adj = algdat.p20$adjlist,
-#' total_pop = algdat.p20$precinct.data$pop,
-#' init_plan = init_plan, nsims = 10000, constraint = 'population',
-#' constraintweights = 5.4,
-#' betaweights = betaweights, temper = 1)
+#' alg_253_20_st <- redist.mcmc(adj = fl25_graph, total_pop = fl25$pop,
+#'                              init_plan = init_plan, nsims = 10000,
+#'                              constraint = 'population', constraintweights = 5.4,
+#'                              betaweights = betaweights, temper = 1)
 #'
 #' ## Resample using inverse probability weighting.
 #' ## Target distance from parity is 20%
-#' alg_253_20_st <- redist.ipw(alg_253_20_st,
-#'    resampleconstraint = "pop",
-#' targetbeta = 1,
-#' targetpop = .2, temper = 1)
+#' alg_253_20_st <- redist.ipw(alg_253_20_st, resampleconstraint = "pop",
+#'                             targetbeta = 1, targetpop = .2, temper = 1)
 #' }
 #' @concept post
 #' @export

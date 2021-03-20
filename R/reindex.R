@@ -1,18 +1,18 @@
 #' Reorders district numbers
-#' 
-#' Ensures that for each column in the plans object, the first 
+#'
+#' Ensures that for each column in the plans object, the first
 #' district listed is 1, the second is 2, up to n districts. Assumes that all
 #' columns have the same number of districts as the first.
-#' @param plans A numeric vector (if only one map) or 
+#' @param plans A numeric vector (if only one map) or
 #' matrix with one row for each precinct and one column for each map.
-#' @param district_membership Deprecated, use plans. A numeric vector (if only one map) or 
+#' @param district_membership Deprecated, use plans. A numeric vector (if only one map) or
 #' matrix with one row for each precinct and one column for each map.
 #'
-#' @return integer matrix 
+#' @return integer matrix
 #' @export
 #'
 #' @examples \dontrun{
-#' cds <- matrix(c(rep(c(4L,5L,2L,1L,3L),5), 
+#' cds <- matrix(c(rep(c(4L,5L,2L,1L,3L),5),
 #' rep(c(5L,4L,3L,2L,1L),2), rep(c(4L,5L,2L,1L,3L),3)), nrow = 25)
 #' redist.reorder(cds)
 #' }
@@ -21,7 +21,7 @@ redist.reindex <- function(plans, district_membership){
     .Deprecated(new = 'plan', old = 'district_membership')
     plan <- district_membership
   }
-  
+
   # Check inputs
   if(missing(plans)){
     stop('"plans" is required.')
@@ -32,10 +32,10 @@ redist.reindex <- function(plans, district_membership){
   if(!('matrix' %in% class(plans))){
     stop('Please provide "plans" as a matrix.')
   }
-  
+
   # Prep objects for Rcpp
   nd <- length(unique(plans[,1]))
-  
+
   # reindex!
   return(reindex(dm = plans, nd = nd))
 }
@@ -47,18 +47,18 @@ redist.reindex <- function(plans, district_membership){
 #'
 #' @param plan vector of assignments, required.
 #'
-#' @return A vector with an ID that corresponds from 1:ndistss
+#' @return A vector with an ID that corresponds from 1:ndists
 #'
 #' @concept prepare
 #' @export
 #' @examples \dontrun{
-#' data(algdat.p10)
-#' plan <- algdat.p10$cdmat[,1]
+#' data(fl25_enum)
+#' plan <- fl25_enum$plans[, 5118]
 #' # Subset based on something:
-#'  plan <- plan[plan!=2]
-#'  plan <- redist.sink.plan(plan)
-#'  # Now plan can be used with redist.mcmc()
-#'  plan
+#' plan <- plan[plan!=2]
+#' plan <- redist.sink.plan(plan)
+#' # Now plan can be used with redist.mcmc()
+#' plan
 #' }
 #'
 redist.sink.plan <- function(plan){
@@ -71,6 +71,6 @@ redist.sink.plan <- function(plan){
   } else{
     stop('Please provide "plan" as a  numeric or integer vector.')
   }
-  
+
   return(plan_id)
 }

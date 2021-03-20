@@ -25,17 +25,17 @@
 #' @param total_pop A numeric vector with the population for every observation. Is
 #' only necessary when "FryerHolden" is used for measure. Defaults to NULL.
 #' @param adj A zero-indexed adjacency list. Only used for "PolsbyPopper",
-#' EdgesRemoved" and "logSpanningTree". Created with \code{redist.adjacency} if not 
-#' supplied and needed. Default is NULL. 
+#' EdgesRemoved" and "logSpanningTree". Created with \code{redist.adjacency} if not
+#' supplied and needed. Default is NULL.
 #' @param nloop A numeric to specify loop number. Defaults to 1 if only one map provided
 #' and the column number if multiple maps given.
 #' @param ncores Number of cores to use for parallel computing. Default is 1.
 #' @param counties A numeric vector from 1:ncounties corresponding to counties. Required for "logSpanningTree".
-#' @param ppRcpp Boolean, whether to run Polsby Popper using Rcpp. 
-#' It has a higher upfront cost, but quickly becomes faster. 
-#' Becomes TRUE if ncol(district_membership > 8) and not manually set. 
-#' @param perim_path it checks for an Rds, if no rds exists at the path, 
-#' it creates an rds with borders and saves it. 
+#' @param ppRcpp Boolean, whether to run Polsby Popper using Rcpp.
+#' It has a higher upfront cost, but quickly becomes faster.
+#' Becomes TRUE if ncol(district_membership > 8) and not manually set.
+#' @param perim_path it checks for an Rds, if no rds exists at the path,
+#' it creates an rds with borders and saves it.
 #' This can be created in advance with \code{redist.prep.polsbypopper}.
 #' @param perim_df A dataframe output from \code{redist.prep.polsbypopper}
 #' @param district_membership Deprecated. Use plans. A numeric vector (if only one map) or matrix with one row
@@ -61,11 +61,11 @@
 #' the longer of the two values.
 #'
 #' The Convex Hull score is computed as \deqn{\frac{A(d)}{A(CVH)}} where A is the area
-#' function, d is the district, and CVH is the convex hull of the district. All 
+#' function, d is the district, and CVH is the convex hull of the district. All
 #' values are between 0 and 1, where where larger values are more compact.
-#' 
+#'
 #' The Reock score is computed as \deqn{\frac{A(d)}{A(MBC)}} where A is the area
-#' function, d is the district, and MBC is the minimum bounding circle of the 
+#' function, d is the district, and MBC is the minimum bounding circle of the
 #' district. All values are between 0 and 1, where larger values are more compact.
 #'
 #' The Boyce Clark Index is computed as \deqn{1 - \sum_{1}^{16}\{\frac{|\frac{r_i}{\sum_ir_i}*100-6.25 |\}}{200}}.
@@ -133,10 +133,12 @@
 #' @concept analyze
 #' @examples
 #' \dontrun{
-#' data("fl25")
-#' data("algdat.p10")
-#' 
-#' redist.compactness(shp = fl25, district_membership = algdat.p10$cdmat[,1:3], 
+#' data(fl25)
+#' data(fl25_enum)
+#'
+#' plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
+#'
+#' redist.compactness(shp = fl25, district_membership = plans_05[,1:3],
 #' measure = c('PolsbyPopper', 'EdgesRemoved'))
 #' }
 #'
@@ -224,7 +226,7 @@ redist.compactness <- function(shp = NULL,
     plans <- as.matrix(plans)
   }
 
-  
+
   if(missing(ppRcpp)){
     if(ncol(plans) > 8){
       ppRcpp <- TRUE
@@ -232,15 +234,15 @@ redist.compactness <- function(shp = NULL,
       ppRcpp <- FALSE
     }
   }
-  
+
   nmap <-  ncol(plans)
   if(nmap!=1){
     nloop = rep(nloop + (1:ncol(plans)) - 1, each = nd)
   } else {
     nloop = rep(nloop, nd)
   }
-  
-  
+
+
   nc <- min(ncores, ncol(plans))
   if (nc == 1){
     `%oper%` <- `%do%`
@@ -265,35 +267,35 @@ redist.compactness <- function(shp = NULL,
                  logSpanningTree = rep(NA_real_, nd*nmap),
                  nloop = nloop) %>%
     dplyr::select(all_of(c("districts", measure)), all_of(measure), nloop)
-  
-  
+
+
 
   if('PolsbyPopper' %in% measure & ppRcpp){
     if(missing(perim_path) & missing(perim_df)){
       perim_df <- redist.prep.polsbypopper(shp = shp, adj = adj, ncores = ncores)
     }
-    
-    splits <- split(x = plans, 
-                    rep(1:nc, 
-                        each = ceiling(ncol(plans)/nc)*nrow(plans))[1:(ncol(plans)*nrow(plans))]) %>% 
+
+    splits <- split(x = plans,
+                    rep(1:nc,
+                        each = ceiling(ncol(plans)/nc)*nrow(plans))[1:(ncol(plans)*nrow(plans))]) %>%
       lapply(., FUN = function(x, r = nrow(plans)){matrix(data = x, nrow = r)})
-    
+
     result <- foreach(map = 1:nc, .combine = 'cbind', .packages = c('sf', 'lwgeom')) %oper% {
       polsbypopper(from = perim_df$origin, to = perim_df$touching, area = st_area(shp),
                    perimeter = perim_df$edge, dm = splits[[map]], nd = nd)
-    
+
     }
       comp[['PolsbyPopper']] <- c(result)
   }
-  
+
   # Compute Specified Scores for provided districts
   if(any(measure %in% c("Schwartzberg", "LengthWidth",
-                        "ConvexHull", "Reock", "BoyceClark"))| 
+                        "ConvexHull", "Reock", "BoyceClark"))|
      ('PolsbyPopper' %in% measure & !ppRcpp) ){
-      
+
     nm <- sum(measure %in% c("Schwartzberg", "LengthWidth",
                              "ConvexHull", "Reock", "BoyceClark"))
-    
+
     if('PolsbyPopper' %in% measure & !ppRcpp){
       nm <- nm + 1
     }
@@ -372,7 +374,7 @@ redist.compactness <- function(shp = NULL,
     } else {
       comp[,2:(nm+1)] <- results
     }
-    
+
   }
 
   if('FryerHolden' %in% measure){
@@ -436,29 +438,27 @@ redist.compactness <- function(shp = NULL,
 #' @return A perimeter dataframe
 #' @export
 #'
-#' @importFrom sf st_buffer st_is_valid st_geometry<- 
+#' @importFrom sf st_buffer st_is_valid st_geometry<-
 #' @examples \dontrun{
 #' data(fl25)
-#' data("algdat.p10")
-#' adj <- redist.adjacency(fl25)
-#' plans <- algdat.p10$cdmat
-#' perim_df <- redist.prep.polsbypopper(shp = fl25, adj = adj)
+#' data(fl25_enum)
+#' perim_df <- redist.prep.polsbypopper(shp = fl25, adj = fl25_graph)
 #' }
 redist.prep.polsbypopper <- function(shp, adj, perim_path, ncores = 1){
-  
+
   if(missing(shp)){
     stop('Please provide an argument to shp.')
   }
   if(missing(adj)){
     stop('Please provide an argument to adj.')
   }
-  
-  
+
+
   alist <- lapply(adj, function(x){x+1L})
   invalid <- which(!st_is_valid(shp))
   st_geometry(shp[invalid,]) <- st_geometry(st_buffer(shp[invalid,],0))
   suppressWarnings(perims <- st_perimeter(shp))
-  
+
   if (ncores == 1){
     `%oper%` <- `%do%`
   } else {
@@ -467,19 +467,19 @@ redist.prep.polsbypopper <- function(shp, adj, perim_path, ncores = 1){
     registerDoParallel(cl)
     on.exit(stopCluster(cl))
   }
-  perim_adj_df <- foreach(from = 1:length(alist), .combine = 'rbind', 
+  perim_adj_df <- foreach(from = 1:length(alist), .combine = 'rbind',
           .packages = c('sf', 'lwgeom')) %oper% {
             suppressWarnings(lines <- st_intersection(shp[from,], shp[alist[[from]],]))
             l_lines <- st_length(lines)
             data.frame(origin = from,
-                       touching = alist[[from]],                 
+                       touching = alist[[from]],
                        edge = as.vector(l_lines))
           }
-  perim_adj_df <- perim_adj_df %>% 
+  perim_adj_df <- perim_adj_df %>%
     filter(edge > 0)
-  
-  adj_boundary_lengths <- perim_adj_df %>% 
-    group_by(origin) %>% 
+
+  adj_boundary_lengths <- perim_adj_df %>%
+    group_by(origin) %>%
     summarize(perim_adj = sum(edge)) %>%
     mutate(perim_full = as.numeric(perims),
            perim_boundary = perim_full - perim_adj,
@@ -487,14 +487,14 @@ redist.prep.polsbypopper <- function(shp, adj, perim_path, ncores = 1){
     filter(perim_boundary > .001) %>%
     dplyr::select(X1, origin, perim_boundary) %>%
     rename(origin = X1, touching = origin, edge = perim_boundary)
-  
+
   perim_df <- bind_rows(perim_adj_df, adj_boundary_lengths) %>%
     arrange(origin, touching)
-  
+
   if(!missing(perim_path)){
     try(expr = { saveRDS(object = perim_df, file = perim_path) }, silent = TRUE)
   }
-  
+
   return(perim_df)
 }
 

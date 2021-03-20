@@ -65,9 +65,12 @@ the joint entropy and the mutual information (see references).
 }
 \examples{
 \dontrun{
-data("algdat.p10")
-distances <- redist.distances(district_membership = algdat.p10$cdmat)
-distances$Hamming[1:5,1:5]
+data(fl25)
+data(fl25_enum)
+
+plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
+distances <- redist.distances(plans_05)
+distances$Hamming[1:5, 1:5]
 }
 }
 \references{

@@ -47,7 +47,7 @@
 
 
 <meta property="og:title" content="Reorders district numbers — redist.reindex" />
-<meta property="og:description" content="Ensures that for each column in the plans object, the first 
+<meta property="og:description" content="Ensures that for each column in the plans object, the first
 district listed is 1, the second is 2, up to n districts. Assumes that all
 columns have the same number of districts as the first." />
 <meta property="og:image" content="/logo.png" />
@@ -142,7 +142,7 @@ columns have the same number of districts as the first." />
     </div>
 
     <div class="ref-description">
-    <p>Ensures that for each column in the plans object, the first 
+    <p>Ensures that for each column in the plans object, the first
 district listed is 1, the second is 2, up to n districts. Assumes that all
 columns have the same number of districts as the first.</p>
     </div>
@@ -154,12 +154,12 @@ columns have the same number of districts as the first.</p>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>plans</th>
-      <td><p>A numeric vector (if only one map) or 
+      <td><p>A numeric vector (if only one map) or
 matrix with one row for each precinct and one column for each map.</p></td>
     </tr>
     <tr>
       <th>district_membership</th>
-      <td><p>Deprecated, use plans. A numeric vector (if only one map) or 
+      <td><p>Deprecated, use plans. A numeric vector (if only one map) or
 matrix with one row for each precinct and one column for each map.</p></td>
     </tr>
     </table>
@@ -170,7 +170,7 @@ matrix with one row for each precinct and one column for each map.</p></td>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
-<span class='va'>cds</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>4L</span>,<span class='fl'>5L</span>,<span class='fl'>2L</span>,<span class='fl'>1L</span>,<span class='fl'>3L</span><span class='op'>)</span>,<span class='fl'>5</span><span class='op'>)</span>, 
+<span class='va'>cds</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>4L</span>,<span class='fl'>5L</span>,<span class='fl'>2L</span>,<span class='fl'>1L</span>,<span class='fl'>3L</span><span class='op'>)</span>,<span class='fl'>5</span><span class='op'>)</span>,
 <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>5L</span>,<span class='fl'>4L</span>,<span class='fl'>3L</span>,<span class='fl'>2L</span>,<span class='fl'>1L</span><span class='op'>)</span>,<span class='fl'>2</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>4L</span>,<span class='fl'>5L</span>,<span class='fl'>2L</span>,<span class='fl'>1L</span>,<span class='fl'>3L</span><span class='op'>)</span>,<span class='fl'>3</span><span class='op'>)</span><span class='op'>)</span>, nrow <span class='op'>=</span> <span class='fl'>25</span><span class='op'>)</span>
 <span class='fu'>redist.reorder</span><span class='op'>(</span><span class='va'>cds</span><span class='op'>)</span>
 <span class='op'>}</span>

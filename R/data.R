@@ -4,21 +4,16 @@
 #' This data set contains demographic and geographic information about 25
 #' contiguous precincts in the state of Florida. The data lists all possible
 #' partitions of the 25 precincts into three contiguous congressional districts.
+#' The 25-precinct shapefile may be found in \code{\link{fl25}}
 #'
-#' @name algdat.pfull
-#' @usage data("algdat.pfull")
-#' @format A list with five entries:
+#' @name fl25_enum
+#' @usage data("fl25_enum")
+#' @format A list with two entries:
 #' \describe{
-#' \item{\code{adjlist}}{An adjacency list for the 25 precincts.}
-#' \item{\code{cdmat}}{A matrix containing every partition of the 25 precincts
+#' \item{\code{plans}}{A matrix containing every partition of the 25 precincts
 #' into three contiguous congressional districts, with no population constraint.}
-#' \item{\code{precinct.data}}{A matrix containing demographic information for
-#' each of the 25 precincts.}
-#' \item{\code{segregation.index}}{A matrix containing the dissimilarity index of
-#' segregation (Massey and Denton 1987) for each congressional district map in
-#' \code{cdmat}.}
-#' \item{\code{distancemat}}{A square matrix containing the squared distance
-#' between the centroids of any two precincts.}
+#' \item{\code{pop_dev}}{A vector containing the maximum population deviation
+#' across the three districts for each plan.}
 #' }
 #'
 #' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander Tarr.
@@ -31,91 +26,16 @@
 #'
 #' @concept data
 #' @examples \dontrun{
-#' data(algdat.pfull)
-#' }
-NULL
-
-#' All Partitions of 25 Precincts into 3 Congressional Districts
-#' (10\% Population Constraint)
-#'
-#' This data set contains demographic and geographic information about 25
-#' contiguous precincts in the state of Florida. The data lists all possible
-#' partitions of the 25 precincts into three contiguous congressional districts,
-#' conditional on the congressional districts falling within 10\% of population
-#' parity.
-#'
-#' @name algdat.p10
-#' @usage data("algdat.p10")
-#' @format A list with five entries:
-#' \describe{
-#' \item{\code{adjlist}}{An adjacency list for the 25 precincts.}
-#' \item{\code{cdmat}}{A matrix containing every partition of the 25 precincts
-#' into three contiguous congressional districts, with no population constraint.}
-#' \item{\code{precinct.data}}{A matrix containing demographic information for
-#' each of the 25 precincts.}
-#' \item{\code{segregation.index}}{A matrix containing the dissimilarity index of
-#' segregation (Massey and Denton 1987) for each congressional district map in
-#' \code{cdmat}.}
-#' \item{\code{distancemat}}{A square matrix containing the squared distance
-#' between the centroids of any two precincts.}
-#' }
-#'
-#' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander Tarr.
-#' (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte Carlo."
-#' Working Paper. Available at
-#' \url{http://imai.princeton.edu/research/files/redist.pdf}.
-#'
-#' Massey, Douglas and Nancy Denton. (1987) "The Dimensions of Social Segregation".
-#' Social Forces.
-#'
-#' @concept data
-#' @examples \dontrun{
-#' data(algdat.p10)
-#' }
-NULL
-
-#' All Partitions of 25 Precincts into 3 Congressional Districts
-#' (20\% Population Constraint)
-#'
-#' This data set contains demographic and geographic information about 25
-#' contiguous precincts in the state of Florida. The data lists all possible
-#' partitions of the 25 precincts into three contiguous congressional districts,
-#' conditional on the congressional districts falling within 20\% of population
-#' parity.
-#'
-#' @name algdat.p20
-#' @usage data("algdat.p20")
-#' @format A list with five entries:
-#' \describe{
-#' \item{\code{adjlist}}{An adjacency list for the 25 precincts.}
-#' \item{\code{cdmat}}{A matrix containing every partition of the 25 precincts
-#' into three contiguous congressional districts, with no population constraint.}
-#' \item{\code{precinct.data}}{A matrix containing demographic information for
-#' each of the 25 precincts.}
-#' \item{\code{segregation.index}}{A matrix containing the dissimilarity index of
-#' segregation (Massey and Denton 1987) for each congressional district map in
-#' \code{cdmat}.}
-#' \item{\code{distancemat}}{A square matrix containing the squared distance
-#' between the centroids of any two precincts.}
-#' }
-#'
-#' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander Tarr.
-#' (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte Carlo."
-#' Working Paper. Available at
-#' \url{http://imai.princeton.edu/research/files/redist.pdf}.
-#'
-#' Massey, Douglas and Nancy Denton. (1987) "The Dimensions of Social Segregation".
-#' Social Forces.
-#'
-#' @concept data
-#' @examples \dontrun{
-#' data(algdat.p20)
+#' data(fl25_enum)
 #' }
 NULL
 
 #' Florida 25 Precinct File
 #'
-#' This data set contains the 25 Precinct shapefile and related data for each precinct.
+#' This data set contains the 25-precinct shapefile and related data for each precinct.
+#' All possible partitions of the 25 precincts into three contiguous
+#' congressional districts are stored in \code{\link{fl25_enum}}, and the
+#' corresponding adjacency graph is stored in \code{\link{fl25_graph}}.
 #'
 #' @name fl25
 #' @usage data("fl25")
@@ -145,6 +65,30 @@ NULL
 #' data(fl25)
 #' }
 NULL
+
+#' Florida 25 Precinct File
+#'
+#' This data set contains the 25-precinct shapefile and related data for each precinct.
+#' All possible partitions of the 25 precincts into three contiguous
+#' congressional districts are stored in \code{\link{fl25_enum}}, and the
+#' corresponding adjacency graph is stored in \code{\link{fl25_graph}}.
+#'
+#' @name fl25_graph
+#' @usage data("fl25_graph")
+#' @format A list storing the adjacency graph for the 25-precinct subset of Florida.
+#'
+#' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander Tarr.
+#' (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte Carlo."
+#' Working Paper. Available at
+#' \url{http://imai.princeton.edu/research/files/redist.pdf}.
+#' @concept data
+#' @examples \dontrun{
+#' data(fl25_graph)
+#' }
+NULL
+
+
+
 
 #' Florida 70 Precinct File
 #'
@@ -212,34 +156,34 @@ NULL
 #' }
 NULL
 
-#' East Texas Precinct File
+#' Iowa County File
 #'
-#' This data contains geographic and demographic information on 3,138 precincts
-#' from the eastern portion of the state of Texas.
+#' This data contains geographic and demographic information on the 99 counties
+#' of the state of Iowa.
 #'
-#' @name east_tx
-#' @usage data(east_tx)
+#' @name iowa
+#' @usage data("iowa")
 #' @format sf tibble containing columns for useful data related to the
 #' redistricting process, subsetted from real data in Florida, and sf geometry column.
 #' \describe{
-#' \item{\code{county}}{The FIPS code for the county containing the precinct.}
-#' \item{\code{id}}{A unique FIPS-like identifier for the precinct.}
-#' \item{\code{geometry}}{The sf geometry column containing the geographic information.}
+#' \item{\code{fips}}{The FIPS code for the county.}
 #' \item{\code{cd}}{The current congressional district assignment.}
 #' \item{\code{pop}}{The total population of the precinct, according to the 2010 Census.}
+#' \item{\code{white}}{The non-Hispanic white population of the precinct.}
 #' \item{\code{black}}{The non-Hispanic Black population of the precinct.}
 #' \item{\code{hisp}}{The Hispanic population (of any race) of the precinct.}
-#' \item{\code{white}}{The non-Hispanic white population of the precinct.}
 #' \item{\code{vap}}{The voting-age population of the precinct.}
+#' \item{\code{wvap}}{The white voting-age population of the precinct.}
 #' \item{\code{bvap}}{The Black voting-age population of the precinct.}
 #' \item{\code{hvap}}{The Hispanic voting-age population of the precinct.}
-#' \item{\code{wvap}}{The white voting-age population of the precinct.}
-#' \item{\code{dem}}{Number of votes for Hillary Clinton in the precinct in 2016.}
-#' \item{\code{gop}}{Number of votes for Donald Trump in the precinct in 2016.}
+#' \item{\code{tot_08}}{Number of total votes for president in the county in 2008.}
+#' \item{\code{dem_08}}{Number of votes for Barack Obama in 2008.}
+#' \item{\code{rep_08}}{Number of votes for John McCain in 2008.}
+#' \item{\code{geometry}}{The sf geometry column containing the geographic information.}
 #' }
 #'
 #' @concept data
-#' @examples \dontrun{
-#' data(east_tx)
-#' }
+#' @examples
+#' data(iowa)
+#' print(iowa)
 NULL

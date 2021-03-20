@@ -25,7 +25,10 @@ redistricting process, subsetted from real data in Florida, and sf geometry colu
 data("fl25")
 }
 \description{
-This data set contains the 25 Precinct shapefile and related data for each precinct.
+This data set contains the 25-precinct shapefile and related data for each precinct.
+All possible partitions of the 25 precincts into three contiguous
+congressional districts are stored in \code{\link{fl25_enum}}, and the
+corresponding adjacency graph is stored in \code{\link{fl25_graph}}.
 }
 \examples{
 \dontrun{

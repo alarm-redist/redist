@@ -202,19 +202,19 @@ Chain.
 }
 \examples{
 \dontrun{
-data(algdat.pfull)
-## Code to run the simulations in Figure 4 in Fifield, Higgins,
-## Imai and Tarr (2015)
+data(fl25)
+data(fl25_enum)
+data(fl25_graph)
+
+## Code to run the simulations in Figure 4 in Fifield, Higgins, Imai and
+## Tarr (2015)
 
 ## Get an initial partition
-set.seed(1)
-init_plan <- algdat.pfull$cdmat[,sample(1:ncol(algdat.pfull$cdmat), 1)]
+init_plan <- fl25_enum$plans[, 5118]
 
 ## Run the algorithm
-redist.mcmc.mpi(adj = algdat.pfull$adjlist,
-total_pop = algdat.pfull$precinct.data$pop,
-init_plan = init_plan,
-nsims = 10000, savename = "test")
+redist.mcmc.mpi(adj = fl25_graph, total_pop = fl25$pop,
+                init_plan = init_plan, nsims = 10000, savename = "test")
 }
 }
 \references{
