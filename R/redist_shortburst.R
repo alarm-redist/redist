@@ -54,7 +54,7 @@
 #' data(iowa)
 #'
 #' iowa_map = redist_map(iowa, existing_plan=cd, pop_tol=0.01)
-#' redist_shortburst(iowa_map, scorer_frackept(iowa_map), max_bursts=50)
+#' redist_shortburst(iowa_map, scorer_frac_kept(iowa_map), max_bursts=50)
 #' }
 #'
 #' @concept simulate
@@ -197,9 +197,10 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL, burst_size=10L,
 #' `score_fn`.
 #'
 #' Function details:
-#' - `scorer_frackept` returns the fraction of edges kept in each district.
+#'
+#' - `scorer_frac_kept` returns the fraction of edges kept in each district.
 #' Higher values mean more compactness.
-#' - `scorer_rank_pct` returns the `k`-th top group percentage across districts.
+#' - `scorer_group_pct` returns the `k`-th top group percentage across districts.
 #' For example, if the group is Democratic voters and `k=3`, then the function
 #' returns the 3rd-highest fraction of Democratic voters across all districts.
 #' Can be used to target `k` VRA districts or partisan gerrymanders.
@@ -209,12 +210,13 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL, burst_size=10L,
 #' @return A single numeric value, wherel larger values are better.
 #'
 #' @name scorers
+#' @md
 NULL
 
 #' @rdname scorers
 #'
 #' @export
-scorer_frackept = function(map) {
+scorer_frac_kept = function(map) {
     adj = get_adj(map)
     edges = sum(sapply(adj, length)) / 2
     ndists = attr(map, "ndists")
@@ -230,7 +232,7 @@ scorer_frackept = function(map) {
 #' @param total_pop A numeric vector with the population for every precinct.
 #'
 #' @export
-scorer_max_pct = function(map, group_pop, total_pop, k=1) {
+scorer_group_pct = function(map, group_pop, total_pop, k=1) {
     group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
     total_pop = rlang::eval_tidy(rlang::enquo(total_pop), map)
     ndists = attr(map, "ndists")

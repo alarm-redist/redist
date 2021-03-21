@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Scoring fuctions for `redist_shortburst` — scorers • redist</title>
+<title>Scoring fuctions for redist_shortburst — scorers • redist</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,9 +46,9 @@
 
 
 
-<meta property="og:title" content="Scoring fuctions for `redist_shortburst` — scorers" />
-<meta property="og:description" content="The output of these functions may be passed into `redist_shortburst()` as
-`score_fn`." />
+<meta property="og:title" content="Scoring fuctions for redist_shortburst — scorers" />
+<meta property="og:description" content="The output of these functions may be passed into redist_shortburst() as
+score_fn." />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -144,19 +144,19 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Scoring fuctions for `redist_shortburst`</h1>
+    <h1>Scoring fuctions for <code>redist_shortburst</code></h1>
     <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/redist_shortburst.R'><code>R/redist_shortburst.R</code></a></small>
     <div class="hidden name"><code>scorers.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>The output of these functions may be passed into `redist_shortburst()` as
-`score_fn`.</p>
+    <p>The output of these functions may be passed into <code><a href='redist_shortburst.html'>redist_shortburst()</a></code> as
+<code>score_fn</code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>scorer_frackept</span><span class='op'>(</span><span class='va'>map</span><span class='op'>)</span>
+    <pre class="usage"><span class='fu'>scorer_frac_kept</span><span class='op'>(</span><span class='va'>map</span><span class='op'>)</span>
 
-<span class='fu'>scorer_max_pct</span><span class='op'>(</span><span class='va'>map</span>, <span class='va'>group_pop</span>, <span class='va'>total_pop</span>, k <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span></pre>
+<span class='fu'>scorer_group_pct</span><span class='op'>(</span><span class='va'>map</span>, <span class='va'>group_pop</span>, <span class='va'>total_pop</span>, k <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -180,13 +180,15 @@
     <p>A single numeric value, wherel larger values are better.</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>Function details:
-- `scorer_frackept` returns the fraction of edges kept in each district.
-Higher values mean more compactness.
-- `scorer_rank_pct` returns the `k`-th top group percentage across districts.
-For example, if the group is Democratic voters and `k=3`, then the function
+    <p>Function details:</p><ul>
+<li><p><code>scorer_frac_kept</code> returns the fraction of edges kept in each district.
+Higher values mean more compactness.</p></li>
+<li><p><code>scorer_group_pct</code> returns the <code>k</code>-th top group percentage across districts.
+For example, if the group is Democratic voters and <code>k=3</code>, then the function
 returns the 3rd-highest fraction of Democratic voters across all districts.
-Can be used to target `k` VRA districts or partisan gerrymanders.</p>
+Can be used to target <code>k</code> VRA districts or partisan gerrymanders.</p></li>
+</ul>
+
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
