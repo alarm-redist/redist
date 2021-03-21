@@ -22,7 +22,9 @@ redist_shortburst(
 \arguments{
 \item{map}{A \code{\link{redist_map}} object.}
 
-\item{score_fn}{A function which takes}
+\item{score_fn}{A function which takes a matrix of plans and returns a score
+for each plan. Can also be a purrr-style anonymous function. See \code{\link{?scorers}}
+for some function factories for common scoring rules.}
 
 \item{stop_at}{a threshold to stop optimization at.}
 
@@ -77,6 +79,7 @@ data(iowa)
 
 iowa_map = redist_map(iowa, existing_plan=cd, pop_tol=0.01)
 redist_shortburst(iowa_map, scorer_frac_kept(iowa_map), max_bursts=50)
+redist_shortburst(iowa_map, ~ 1 - scorer_frac_kept(iowa_map)(.), max_bursts=50)
 }
 
 }

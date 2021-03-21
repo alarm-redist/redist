@@ -51,6 +51,9 @@ validate_redist_map = function(data, check_contig=T) {
     stopifnot(!is.null(attr(data, "pop_col")))
     stopifnot(!is.null(attr(data, "ndists")))
 
+    exist_col = attr(data, "existing_col")
+    if (!is.null(exist_col))  stopifnot(is.numeric(data[[exist_col]]))
+
     pop_bounds = attr(data, "pop_bounds")
     stopifnot(!is.null(pop_bounds))
     if (!all(diff(pop_bounds) > 0))

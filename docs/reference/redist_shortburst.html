@@ -186,7 +186,9 @@ Optimization by Short Bursts."</p>
     </tr>
     <tr>
       <th>score_fn</th>
-      <td><p>A function which takes</p></td>
+      <td><p>A function which takes a matrix of plans and returns a score
+for each plan. Can also be a purrr-style anonymous function. See <code><a href='scorers.html'>?scorers</a></code>
+for some function factories for common scoring rules.</p></td>
     </tr>
     <tr>
       <th>stop_at</th>
@@ -261,6 +263,7 @@ preprint arXiv:2011.02288.</p>
 
 <span class='va'>iowa_map</span> <span class='op'>=</span> <span class='fu'><a href='redist_map.html'>redist_map</a></span><span class='op'>(</span><span class='va'>iowa</span>, existing_plan<span class='op'>=</span><span class='va'>cd</span>, pop_tol<span class='op'>=</span><span class='fl'>0.01</span><span class='op'>)</span>
 <span class='fu'>redist_shortburst</span><span class='op'>(</span><span class='va'>iowa_map</span>, <span class='fu'><a href='scorers.html'>scorer_frac_kept</a></span><span class='op'>(</span><span class='va'>iowa_map</span><span class='op'>)</span>, max_bursts<span class='op'>=</span><span class='fl'>50</span><span class='op'>)</span>
+<span class='fu'>redist_shortburst</span><span class='op'>(</span><span class='va'>iowa_map</span>, <span class='op'>~</span> <span class='fl'>1</span> <span class='op'>-</span> <span class='fu'><a href='scorers.html'>scorer_frac_kept</a></span><span class='op'>(</span><span class='va'>iowa_map</span><span class='op'>)</span><span class='op'>(</span><span class='va'>.</span><span class='op'>)</span>, max_bursts<span class='op'>=</span><span class='fl'>50</span><span class='op'>)</span>
 <span class='op'>}</span>
 
 </div></pre>

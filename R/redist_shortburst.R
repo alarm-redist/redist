@@ -15,7 +15,9 @@
 #' Optimization by Short Bursts."
 #'
 #' @param map A \code{\link{redist_map}} object.
-#' @param score_fn A function which takes
+#' @param score_fn A function which takes a matrix of plans and returns a score
+#' for each plan. Can also be a purrr-style anonymous function. See [`?scorers`]
+#' for some function factories for common scoring rules.
 #' @param stop_at a threshold to stop optimization at.
 #' @param burst_size The size of each burst. 10 is recommended.
 #' @param max_bursts The maximum number of bursts to run before returning.
@@ -55,6 +57,7 @@
 #'
 #' iowa_map = redist_map(iowa, existing_plan=cd, pop_tol=0.01)
 #' redist_shortburst(iowa_map, scorer_frac_kept(iowa_map), max_bursts=50)
+#' redist_shortburst(iowa_map, ~ 1 - scorer_frac_kept(iowa_map)(.), max_bursts=50)
 #' }
 #'
 #' @concept simulate
@@ -72,6 +75,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL, burst_size=10L,
     burst_size = as.integer(burst_size)
     max_bursts = as.integer(max_bursts)
 
+    score_fn = rlang::as_closure(score_fn)
     stopifnot(is.function(score_fn))
     if (!is.numeric(stop_at)) {
         stop_at = if (maximize) Inf else -Inf
