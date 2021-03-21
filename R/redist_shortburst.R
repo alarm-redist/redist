@@ -18,10 +18,10 @@
 #' @param score_fn A function which takes a matrix of plans and returns a score
 #' for each plan. Can also be a purrr-style anonymous function. See [`?scorers`]
 #' for some function factories for common scoring rules.
-#' @param stop_at a threshold to stop optimization at.
+#' @param stop_at A threshold to stop optimization at.
 #' @param burst_size The size of each burst. 10 is recommended.
 #' @param max_bursts The maximum number of bursts to run before returning.
-#' @param maximize if \code{TRUE}, try to maximize the score; otherwise, try to
+#' @param maximize If \code{TRUE}, try to maximize the score; otherwise, try to
 #' minimize it.
 #' @param init_plan The initial state of the map. If not provided, will default to
 #'   the reference map of the \code{map} object, or if none exists, will sample
@@ -39,7 +39,7 @@
 #' value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if
 #' the algorithm does not appear to be sampling from the target distribution.
 #' Must be between 0 and 1.
-#' @param return_all whether to return all the
+#' @param return_all Whether to return all the
 #'   Recommended for monitoring purposes.
 #' @param verbose Whether to print out intermediate information while sampling.
 #'   Recommended for monitoring purposes.
