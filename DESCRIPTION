@@ -59,6 +59,8 @@ Suggests:
     graphics,
     methods,
     utils,
+    scales,
+    units,
     spdep
 LinkingTo: Rcpp, RcppArmadillo, RcppEigen, BH
 License: GPL (>= 2)
