@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Calculate Group Percent by District — redist.group.percent • redist</title>
+<title>Calculate Group Percent by District — group_frac • redist</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,7 +46,7 @@
 
 
 
-<meta property="og:title" content="Calculate Group Percent by District — redist.group.percent" />
+<meta property="og:title" content="Calculate Group Percent by District — group_frac" />
 <meta property="og:description" content="redist.group.percent computes the percentage that a group makes up in
 each district across a matrix of maps." />
 <meta property="og:image" content="/logo.png" />
@@ -145,7 +145,7 @@ each district across a matrix of maps." />
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Calculate Group Percent by District</h1>
-    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/group_percent.R'><code>R/group_percent.R</code></a>, <a href='https://github.com/kosukeimai/redist/blob/master/R/tidy.R'><code>R/tidy.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/tidy.R'><code>R/tidy.R</code></a>, <a href='https://github.com/kosukeimai/redist/blob/master/R/group_percent.R'><code>R/group_percent.R</code></a></small>
     <div class="hidden name"><code>redist.group.percent.Rd</code></div>
     </div>
 
@@ -154,7 +154,14 @@ each district across a matrix of maps." />
 each district across a matrix of maps.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.group.percent</span><span class='op'>(</span>
+    <pre class="usage"><span class='fu'>group_frac</span><span class='op'>(</span>
+  <span class='va'>map</span>,
+  <span class='va'>group_pop</span>,
+  total_pop <span class='op'>=</span> <span class='va'>map</span><span class='op'>[[</span><span class='fu'><a href='https://rdrr.io/r/base/attr.html'>attr</a></span><span class='op'>(</span><span class='va'>map</span>, <span class='st'>"pop_col"</span><span class='op'>)</span><span class='op'>]</span><span class='op'>]</span>,
+  .data <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/exists.html'>get0</a></span><span class='op'>(</span><span class='st'>"."</span>, <span class='fu'><a href='https://rdrr.io/r/base/sys.parent.html'>parent.frame</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>
+<span class='op'>)</span>
+
+<span class='fu'>redist.group.percent</span><span class='op'>(</span>
   <span class='va'>plans</span>,
   <span class='va'>group_pop</span>,
   <span class='va'>total_pop</span>,
@@ -162,22 +169,14 @@ each district across a matrix of maps.</p>
   <span class='va'>district_membership</span>,
   <span class='va'>grouppop</span>,
   <span class='va'>fullpop</span>
-<span class='op'>)</span>
-
-<span class='fu'>group_frac</span><span class='op'>(</span>
-  <span class='va'>map</span>,
-  <span class='va'>group_pop</span>,
-  total_pop <span class='op'>=</span> <span class='va'>map</span><span class='op'>[[</span><span class='fu'><a href='https://rdrr.io/r/base/attr.html'>attr</a></span><span class='op'>(</span><span class='va'>map</span>, <span class='st'>"pop_col"</span><span class='op'>)</span><span class='op'>]</span><span class='op'>]</span>,
-  .data <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/exists.html'>get0</a></span><span class='op'>(</span><span class='st'>"."</span>, <span class='fu'><a href='https://rdrr.io/r/base/sys.parent.html'>parent.frame</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>plans</th>
-      <td><p>A matrix with one row
-for each precinct and one column for each map. Required.</p></td>
+      <th>map</th>
+      <td><p>a <code><a href='redist_map.html'>redist_map</a></code> object</p></td>
     </tr>
     <tr>
       <th>group_pop</th>
@@ -186,6 +185,15 @@ for each precinct and one column for each map. Required.</p></td>
     <tr>
       <th>total_pop</th>
       <td><p>A numeric vector with the population for every precinct.</p></td>
+    </tr>
+    <tr>
+      <th>.data</th>
+      <td><p>a <code><a href='redist_plans.html'>redist_plans</a></code> object</p></td>
+    </tr>
+    <tr>
+      <th>plans</th>
+      <td><p>A matrix with one row
+for each precinct and one column for each map. Required.</p></td>
     </tr>
     <tr>
       <th>ncores</th>
@@ -203,14 +211,6 @@ for each precinct and one column for each map. Required.</p></td>
     <tr>
       <th>fullpop</th>
       <td><p>Deprecated, use total_pop. A numeric vector with the population for every precinct.</p></td>
-    </tr>
-    <tr>
-      <th>map</th>
-      <td><p>a <code><a href='redist_map.html'>redist_map</a></code> object</p></td>
-    </tr>
-    <tr>
-      <th>.data</th>
-      <td><p>a <code><a href='redist_plans.html'>redist_plans</a></code> object</p></td>
     </tr>
     </table>
 

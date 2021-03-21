@@ -143,6 +143,7 @@
 #'
 #' @concept simulate
 #' @md
+#' @order 1
 #' @export
 redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list(),
                       resample=TRUE, constraint_fn=function(m) rep(0, ncol(m)),

@@ -13,7 +13,7 @@
 redist.plot.majmin <- function(grouppercent, type = 'hist', title = ''){
 
   if(type == 'hist'){
-    mm <-  apply(grouppercent, 2, function(x){sum(x > 0.5)})
+    mm <- colSums(grouppercent > 0.5)
 
     p <- tibble(mm = mm) %>%
       ggplot(aes(x = mm)) +

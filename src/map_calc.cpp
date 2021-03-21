@@ -149,6 +149,40 @@ NumericMatrix group_pct(umat m, vec group_pop, vec total_pop, int n_distr) {
     return grp_distr;
 }
 
+/*
+ * Compute the percentage of `group` in each district, and return the `k`-th
+ * largest such value. Asummes `m` is 1-indexed.
+ */
+// [[Rcpp::export]]
+NumericVector group_pct_top_k(const IntegerMatrix m, const NumericVector group_pop,
+                              const NumericVector total_pop, int k, int n_distr) {
+    int v = m.nrow();
+    int n = m.ncol();
+    NumericVector out(n);
+
+    for (int i = 0; i < n; i++) {
+         std::vector<double> grp_distr(n_distr, 0.0);
+         std::vector<double> tot_distr(n_distr, 0.0);
+
+        for (int j = 0; j < v; j++) {
+            int distr = m(j, i) - 1;
+            grp_distr[distr] += group_pop[j];
+            tot_distr[distr] += total_pop[j];
+        }
+
+        for (int j = 0; j < n_distr; j++) {
+            grp_distr[j] /= tot_distr[j];
+        }
+
+        std::nth_element(grp_distr.begin(), grp_distr.begin() + k - 1,
+                         grp_distr.end(), std::greater<double>());
+
+        out[i] = grp_distr[k - 1];
+    }
+
+    return out;
+}
+
 
 /*
  * Compute the deviation from the equal population constraint.
@@ -211,4 +245,46 @@ std::vector<double> tree_dev(Tree &ust, int root, const uvec &pop,
     std::sort(devs.begin(), devs.end());
 
     return devs;
+}
+
+
+/*
+ * Column-wise maximum
+ */
+// [[Rcpp::export]]
+NumericVector colmax(const NumericMatrix x) {
+    int nrow = x.nrow();
+    int ncol = x.ncol();
+    NumericVector out(ncol);
+    for (int j = 0; j < ncol; j++) {
+        double best = x(0, j);
+        for (int i = 1; i < nrow; i++) {
+            if (x(i, j) > best) {
+                best = x(i, j);
+            }
+        }
+        out[j] = best;
+    }
+
+    return out;
+}
+/*
+ * Column-wise minimum
+ */
+// [[Rcpp::export]]
+NumericVector colmin(const NumericMatrix x) {
+    int nrow = x.nrow();
+    int ncol = x.ncol();
+    NumericVector out(ncol);
+    for (int j = 0; j < ncol; j++) {
+        double best = x(0, j);
+        for (int i = 1; i < nrow; i++) {
+            if (x(i, j) < best) {
+                best = x(i, j);
+            }
+        }
+        out[j] = best;
+    }
+
+    return out;
 }

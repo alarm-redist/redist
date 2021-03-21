@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Calculate compactness measures for a set of districts — redist.compactness • redist</title>
+<title>Calculate compactness measures for a set of districts — distr_compactness • redist</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,7 +46,7 @@
 
 
 
-<meta property="og:title" content="Calculate compactness measures for a set of districts — redist.compactness" />
+<meta property="og:title" content="Calculate compactness measures for a set of districts — distr_compactness" />
 <meta property="og:description" content="redist.compactness is used to compute different compactness statistics for a
 shapefile. It currently computes the Polsby-Popper, Schwartzberg score, Length-Width Ratio,
 Convex Hull score, Reock score, Boyce Clark Index, Fryer Holden score, Edges Removed number,
@@ -147,7 +147,7 @@ and the log of the Spanning Trees." />
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Calculate compactness measures for a set of districts</h1>
-    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/compactness.R'><code>R/compactness.R</code></a>, <a href='https://github.com/kosukeimai/redist/blob/master/R/tidy.R'><code>R/tidy.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/tidy.R'><code>R/tidy.R</code></a>, <a href='https://github.com/kosukeimai/redist/blob/master/R/compactness.R'><code>R/compactness.R</code></a></small>
     <div class="hidden name"><code>redist.compactness.Rd</code></div>
     </div>
 
@@ -158,7 +158,14 @@ Convex Hull score, Reock score, Boyce Clark Index, Fryer Holden score, Edges Rem
 and the log of the Spanning Trees.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.compactness</span><span class='op'>(</span>
+    <pre class="usage"><span class='fu'>distr_compactness</span><span class='op'>(</span>
+  <span class='va'>map</span>,
+  measure <span class='op'>=</span> <span class='st'>"FracKept"</span>,
+  .data <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/exists.html'>get0</a></span><span class='op'>(</span><span class='st'>"."</span>, <span class='fu'><a href='https://rdrr.io/r/base/sys.parent.html'>parent.frame</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>,
+  <span class='va'>...</span>
+<span class='op'>)</span>
+
+<span class='fu'>redist.compactness</span><span class='op'>(</span>
   shp <span class='op'>=</span> <span class='cn'>NULL</span>,
   <span class='va'>plans</span>,
   measure <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"PolsbyPopper"</span><span class='op'>)</span>,
@@ -173,18 +180,30 @@ and the log of the Spanning Trees.</p>
   <span class='va'>district_membership</span>,
   <span class='va'>population</span>,
   <span class='va'>adjacency</span>
-<span class='op'>)</span>
-
-<span class='fu'>distr_compactness</span><span class='op'>(</span>
-  <span class='va'>map</span>,
-  measure <span class='op'>=</span> <span class='st'>"FracKept"</span>,
-  .data <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/exists.html'>get0</a></span><span class='op'>(</span><span class='st'>"."</span>, <span class='fu'><a href='https://rdrr.io/r/base/sys.parent.html'>parent.frame</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>,
-  <span class='va'>...</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>map</th>
+      <td><p>a <code><a href='redist_map.html'>redist_map</a></code> object</p></td>
+    </tr>
+    <tr>
+      <th>measure</th>
+      <td><p>A vector with a string for each measure desired. "PolsbyPopper",
+"Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden",
+"EdgesRemoved", "FracKept", and "logSpanningTree" are implemented. Defaults to "PolsbyPopper". Use "all" to
+return all implemented measures.</p></td>
+    </tr>
+    <tr>
+      <th>.data</th>
+      <td><p>a <code><a href='redist_plans.html'>redist_plans</a></code> object</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>passed on to <code>redist.compactness</code></p></td>
+    </tr>
     <tr>
       <th>shp</th>
       <td><p>A SpatialPolygonsDataFrame or sf object. Required unless "EdgesRemoved"
@@ -194,13 +213,6 @@ and "logSpanningTree" with adjacency provided.</p></td>
       <th>plans</th>
       <td><p>A numeric vector (if only one map) or matrix with one row
 for each precinct and one column for each map. Required.</p></td>
-    </tr>
-    <tr>
-      <th>measure</th>
-      <td><p>A vector with a string for each measure desired. "PolsbyPopper",
-"Schwartzberg", "LengthWidth", "ConvexHull", "Reock", "BoyceClark", "FryerHolden",
-"EdgesRemoved", "FracKept", and "logSpanningTree" are implemented. Defaults to "PolsbyPopper". Use "all" to
-return all implemented measures.</p></td>
     </tr>
     <tr>
       <th>total_pop</th>
@@ -256,18 +268,6 @@ only necessary when "FryerHolden" is used for measure. Defaults to NULL.</p></td
       <th>adjacency</th>
       <td><p>Deprecated. Use adj. A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
 Created with <code>redist.adjacency</code> if not supplied and needed. Default is NULL.</p></td>
-    </tr>
-    <tr>
-      <th>map</th>
-      <td><p>a <code><a href='redist_map.html'>redist_map</a></code> object</p></td>
-    </tr>
-    <tr>
-      <th>.data</th>
-      <td><p>a <code><a href='redist_plans.html'>redist_plans</a></code> object</p></td>
-    </tr>
-    <tr>
-      <th>...</th>
-      <td><p>passed on to <code>redist.compactness</code></p></td>
     </tr>
     </table>
 

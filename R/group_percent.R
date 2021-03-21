@@ -13,7 +13,6 @@
 #' @param grouppop Deprecated, use group_pop. A numeric vector with the population of the group for every precinct.
 #' @param fullpop Deprecated, use total_pop. A numeric vector with the population for every precinct.
 #'
-#' @importFrom foreach %do% %dopar% foreach
 #' @return matrix with percent for each district
 #'
 #' @export
@@ -30,48 +29,39 @@
 #'                     total_pop = fl25$TotPop)
 #' }
 redist.group.percent <- function(plans, group_pop, total_pop, ncores = 1,
-                                 district_membership, grouppop, fullpop){
+                                 district_membership, grouppop, fullpop) {
 
-  if(!missing(district_membership)){
-    plans <- district_membership
-    .Deprecated(new = 'plans', old = 'district_membership')
-  }
-  if(!missing(grouppop)){
-    group_pop <- grouppop
-    .Deprecated(new = 'group_pop', old = 'grouppop')
-  }
-  if(!missing(fullpop)){
-    total_pop <- fullpop
-    .Deprecated(new = 'total_pop', old = 'fullpop')
-  }
+    if (!missing(district_membership)) {
+        plans <- district_membership
+        .Deprecated(new = 'plans', old = 'district_membership')
+    }
+    if (!missing(grouppop)) {
+        group_pop <- grouppop
+        .Deprecated(new = 'group_pop', old = 'grouppop')
+    }
+    if (!missing(fullpop)) {
+        total_pop <- fullpop
+        .Deprecated(new = 'total_pop', old = 'fullpop')
+    }
 
 
+    if (!any(class(total_pop) %in% c('numeric', 'integer')))
+        stop('Please provide "total_pop" as a numeric vector.')
+    if (!any(class(group_pop) %in% c('numeric', 'integer')))
+        stop('Please provide "groupop" as a numeric vector.')
 
-  if(!any(class(total_pop) %in% c('numeric', 'integer'))){
-    stop('Please provide "total_pop" as a numeric vector.')
-  }
-  if(!any(class(group_pop) %in% c('numeric', 'integer'))){
-    stop('Please provide "groupop" as a numeric vector.')
-  }
+    if (!any(class(plans) %in% c('integer', 'numeric', 'matrix')))
+        stop('Please provide "plans" as a matrix.')
 
-  if(!any(class(plans) %in% c('integer', 'numeric', 'matrix'))){
-    stop('Please provide "plans" as a matrix.')
-  }
+    if (!is.matrix(plans)) {
+        plans <- as.matrix(plans)
+    }
 
-  if(!is.matrix(plans)){
-    plans <- as.matrix(plans)
-  }
+    if (length(total_pop) != nrow(plans))
+        stop('Arguments "plans" and "total_pop" do not have same number of precincts.')
+    if (length(group_pop) != nrow(plans))
+        stop('Arguments "plans" and "group_pop" do not have same number of precincts.')
 
-  if(length(total_pop) != nrow(plans)){
-    stop('Arguments "plans" and "total_pop" do not have same number of precincts.')
-  }
-  if(length(group_pop) != nrow(plans)){
-    stop('Arguments "plans" and "group_pop" do not have same number of precincts.')
-  }
-
-  apply(plans, 2, function(x){
-    group_pop_g <- tapply(group_pop, x, sum)
-    dist_pop <- tapply(total_pop, x, sum)
-    return(group_pop_g/dist_pop)
-  })
+    ndists = max(plans[,1])
+    group_pct(plans, group_pop, total_pop, ndists)
 }

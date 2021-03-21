@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "smc_base.h"
 #include "tree_op.h"
 

@@ -353,7 +353,7 @@ void adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
     }
 
     if (k == k_max + 1) {
-        Rcout << "Warning: maximum hit; falling back to naive k estimator.\n";
+        Rcerr << "Warning: maximum hit; falling back to naive k estimator.\n";
         k = max_ok + 1;
     }
 }

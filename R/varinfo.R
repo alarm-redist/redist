@@ -17,7 +17,7 @@
 redist.plot.varinfo <- function(plans, group_pop, total_pop, shp){
   centers <- 5
   gp <- redist.group.percent(plans = plans, group_pop = group_pop, total_pop = total_pop)
-  pct_min <- apply(gp, 2, function(x){min(x)})
+  pct_min <- colmin(gp)
   dists <- redist.distances(plans, 'info', pop=group_pop)$VI
   mds <- cmdscale(dists)
   tb <- tibble(mds1 = mds[,1], mds2 = mds[,2],

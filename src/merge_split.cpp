@@ -313,7 +313,7 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
     }
 
     if (k == k_max + 1) {
-        Rcout << "Warning: maximum hit; falling back to naive k estimator.\n";
+        Rcerr << "Warning: maximum hit; falling back to naive k estimator.\n";
         k = max_ok + 1;
     }
 }
