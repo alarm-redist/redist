@@ -46,7 +46,7 @@ If no county-split constraint is desired, this parameter should be left blank.}
 
 \item{compactness}{Controls the compactness of the generated districts, with
 higher values preferring more compact districts. Must be nonnegative. See
-\code{\link{redist_mergsplit}} for more information.}
+\code{\link{redist_mergesplit}} for more information.}
 
 \item{adapt_k_thresh}{The threshold value used in the heuristic to select a
 value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if

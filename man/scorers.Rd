@@ -16,6 +16,8 @@ scorer_group_pct(map, group_pop, total_pop, k = 1)
 \item{group_pop}{A numeric vector with the population of the group for every precinct.}
 
 \item{total_pop}{A numeric vector with the population for every precinct.}
+
+\item{k}{the k-th from the top group fraction to return as the score.}
 }
 \value{
 A single numeric value, wherel larger values are better.

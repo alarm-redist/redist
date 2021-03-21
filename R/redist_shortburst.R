@@ -32,7 +32,7 @@
 #' If no county-split constraint is desired, this parameter should be left blank.
 #' @param compactness Controls the compactness of the generated districts, with
 #' higher values preferring more compact districts. Must be nonnegative. See
-#' \code{\link{redist_mergsplit}} for more information.
+#' \code{\link{redist_mergesplit}} for more information.
 #' @param adapt_k_thresh The threshold value used in the heuristic to select a
 #' value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if
 #' the algorithm does not appear to be sampling from the target distribution.
@@ -108,14 +108,15 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL, burst_size=10L,
     pop = map[[attr(map, "pop_col")]]
 
     # kind of hacky -- extract k=... from outupt
-    out = capture.output({
+    if (!requireNamespace("utils", quietly=TRUE)) stop()
+    out = utils::capture.output({
         x <- ms_plans(1, adj, init_plan, counties, pop, ndists, pop_bounds[2],
                       pop_bounds[1], pop_bounds[3], compactness,
                       0, rep(1, ndists), ndists, 0, 0, 0, 1, rep(0, V),
                       0, 0, 0, rep(1, ndists), adapt_k_thresh, 0L, verbosity=2)
     }, type="output")
     rm(x)
-    k = as.integer(na.omit(stringr::str_match(out, "Using k = (\\d+)")[,2]))
+    k = as.integer(stats::na.omit(stringr::str_match(out, "Using k = (\\d+)")[,2]))
 
     run_burst = function(init) {
         ms_plans(burst_size + 1L, adj, init, counties, pop, ndists,
@@ -230,6 +231,7 @@ scorer_frac_kept = function(map) {
 #'
 #' @param group_pop A numeric vector with the population of the group for every precinct.
 #' @param total_pop A numeric vector with the population for every precinct.
+#' @param k the k-th from the top group fraction to return as the score.
 #'
 #' @export
 scorer_group_pct = function(map, group_pop, total_pop, k=1) {
