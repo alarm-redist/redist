@@ -81,6 +81,7 @@ merge_by = function(.data, key, by_existing=TRUE, drop_geom=TRUE) {
 }
 
 #' @rdname redist.identify.cores
+#' @order 1
 #'
 #' @param .data a \code{\link{redist_map}} object
 #' @param within the core is defined to be at least this number of steps within
@@ -275,6 +276,7 @@ number_by = function(data, x, desc=F) {
 }
 
 #' @rdname redist.compactness
+#' @order 1
 #'
 #' @param map a \code{\link{redist_map}} object
 #' @param .data a \code{\link{redist_plans}} object
@@ -287,7 +289,7 @@ distr_compactness = function(map, measure="FracKept", .data=get0(".", parent.fra
         stop("Must provide `.data` if not called within a pipe")
 
     # districts not in ascending order
-    if (length(unique(diff(as.integer(iowa_plans$district)))) != 2)
+    if (length(unique(diff(as.integer(map$district)))) != 2)
         warning("Districts not sorted in ascending order; output may be incorrect.")
 
     redist.compactness(shp=map, plans=get_plan_matrix(.data), measure=measure,
@@ -296,6 +298,7 @@ distr_compactness = function(map, measure="FracKept", .data=get0(".", parent.fra
 }
 
 #' @rdname redist.group.percent
+#' @order 1
 #'
 #' @param map a \code{\link{redist_map}} object
 #' @param .data a \code{\link{redist_plans}} object
@@ -308,7 +311,7 @@ group_frac = function(map, group_pop, total_pop=map[[attr(map, "pop_col")]],
         stop("Must provide `.data` if not called within a pipe")
 
     # districts not in ascending order
-    if (length(unique(diff(as.integer(iowa_plans$district)))) != 2)
+    if (length(unique(diff(as.integer(map$district)))) != 2)
         warning("Districts not sorted in ascending order; output may be incorrect.")
 
     group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
@@ -318,6 +321,7 @@ group_frac = function(map, group_pop, total_pop=map[[attr(map, "pop_col")]],
 }
 
 #' @rdname redist.segcalc
+#' @order 1
 #'
 #' @param map a \code{\link{redist_map}} object
 #' @param .data a \code{\link{redist_plans}} object
@@ -337,6 +341,7 @@ segregation_index = function(map, group_pop, total_pop=map[[attr(map, "pop_col")
 }
 
 #' @rdname redist.metrics
+#' @order 1
 #'
 #' @param map a \code{\link{redist_map}} object
 #' @param .data a \code{\link{redist_plans}} object
@@ -356,6 +361,7 @@ partisan_metrics = function(map, measure, rvote, dvote, ...,
 }
 
 #' @rdname redist.competitiveness
+#' @order 1
 #'
 #' @param map a \code{\link{redist_map}} object
 #' @param .data a \code{\link{redist_plans}} object
@@ -373,6 +379,7 @@ competitiveness = function(map, rvote, dvote, .data=get0(".", parent.frame())) {
 }
 
 #' @rdname redist.splits
+#' @order 1
 #'
 #' @param map a \code{\link{redist_map}} object
 #' @param .data a \code{\link{redist_plans}} object
