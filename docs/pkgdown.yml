@@ -1,4 +1,4 @@
-pandoc: 2.11.2
+pandoc: 2.11.4
 pkgdown: 1.6.1
 pkgdown_sha: ~
 articles:
@@ -7,5 +7,5 @@ articles:
   mpi-slurm: mpi-slurm.html
   redist: redist.html
   tidy-redist: tidy-redist.html
-last_built: 2021-03-21T00:30Z
+last_built: 2021-03-21T01:12Z
 
