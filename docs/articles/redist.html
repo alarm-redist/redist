@@ -185,10 +185,10 @@
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span>
 <span class="co">#&gt; Simple feature collection with 99 features and 14 fields</span>
-<span class="co">#&gt; geometry type:  MULTIPOLYGON</span>
-<span class="co">#&gt; dimension:      XY</span>
-<span class="co">#&gt; bbox:           xmin: 4081849 ymin: 2879102 xmax: 5834228 ymax: 4024957</span>
-<span class="co">#&gt; projected CRS:  NAD83(HARN) / Iowa North (ftUS)</span>
+<span class="co">#&gt; Geometry type: MULTIPOLYGON</span>
+<span class="co">#&gt; Dimension:     XY</span>
+<span class="co">#&gt; Bounding box:  xmin: 4081849 ymin: 2879102 xmax: 5834228 ymax: 4024957</span>
+<span class="co">#&gt; Projected CRS: NAD83(HARN) / Iowa North (ftUS)</span>
 <span class="co">#&gt; First 10 features:</span>
 <span class="co">#&gt;     fips       name cd    pop  white black hisp    vap  wvap bvap hvap tot_08</span>
 <span class="co">#&gt; 1  19001      Adair  3   7682   7507    11  101   5957  5860    5   53   4053</span>
@@ -258,15 +258,15 @@
 <span class="co">#&gt;  * &lt;chr&gt; &lt;chr&gt;   &lt;int&gt;  &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;</span>
 <span class="co">#&gt;  1 19001 Adair       3   7682   7507    11   101   5957  5860     5    53   4053</span>
 <span class="co">#&gt;  2 19003 Adams       3   4029   3922     8    37   3180  3109     6    22   2206</span>
-<span class="co">#&gt;  3 19005 Allama…     1  14330  13325   109   757  11020 10430    82   425   7059</span>
-<span class="co">#&gt;  4 19007 Appano…     2  12887  12470    55   181   9993  9745    40    99   6176</span>
+<span class="co">#&gt;  3 19005 Allama~     1  14330  13325   109   757  11020 10430    82   425   7059</span>
+<span class="co">#&gt;  4 19007 Appano~     2  12887  12470    55   181   9993  9745    40    99   6176</span>
 <span class="co">#&gt;  5 19009 Audubon     4   6119   6007     9    37   4780  4714     5    27   3435</span>
 <span class="co">#&gt;  6 19011 Benton      1  26076  25387    93   275  19430 19068    49   155  13712</span>
-<span class="co">#&gt;  7 19013 Black …     1 131090 109968 11493  4907 102594 89541  7677  2865  64775</span>
+<span class="co">#&gt;  7 19013 Black ~     1 131090 109968 11493  4907 102594 89541  7677  2865  64775</span>
 <span class="co">#&gt;  8 19015 Boone       4  26306  25194   202   505  20027 19448   103   260  13929</span>
 <span class="co">#&gt;  9 19017 Bremer      1  24276  23459   186   239  18763 18242   155   137  12871</span>
-<span class="co">#&gt; 10 19019 Buchan…     1  20958  20344    59   243  15282 14979    32   128  10338</span>
-<span class="co">#&gt; # … with 89 more rows, and 4 more variables: dem_08 &lt;dbl&gt;, rep_08 &lt;dbl&gt;,</span>
+<span class="co">#&gt; 10 19019 Buchan~     1  20958  20344    59   243  15282 14979    32   128  10338</span>
+<span class="co">#&gt; # ... with 89 more rows, and 4 more variables: dem_08 &lt;dbl&gt;, rep_08 &lt;dbl&gt;,</span>
 <span class="co">#&gt; #   geometry &lt;MULTIPOLYGON [US_survey_foot]&gt;, adj &lt;list&gt;</span></code></pre></div>
 <p>This looks much the same as <code>iowa</code> itself, but metadata has been added, and there’s a new column, <code>adj</code>.</p>
 </div>
@@ -321,46 +321,103 @@
 <span class="co">#&gt; Sampling 1000 99-unit maps with 4 districts and population between 753973 and 769205.</span>
 <span class="co">#&gt; Making split 1 of 3</span>
 <span class="co">#&gt; Using k = 2</span>
-<span class="co">#&gt; Iteration    100 / 1000</span>
-<span class="co">#&gt; Iteration    200 / 1000</span>
-<span class="co">#&gt; Iteration    300 / 1000</span>
-<span class="co">#&gt; Iteration    400 / 1000</span>
-<span class="co">#&gt; Iteration    500 / 1000</span>
-<span class="co">#&gt; Iteration    600 / 1000</span>
-<span class="co">#&gt; Iteration    700 / 1000</span>
-<span class="co">#&gt; Iteration    800 / 1000</span>
-<span class="co">#&gt; Iteration    900 / 1000</span>
-<span class="co">#&gt; Iteration   1000 / 1000</span>
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
 <span class="co">#&gt; 14.2% acceptance rate.</span>
-<span class="co">#&gt; Resampling effective sample size: 982.0 (98.2% efficiency).</span>
+<span class="co">#&gt; Resampling effective sample size: 981.3 (98.1% efficiency).</span>
 <span class="co">#&gt; Making split 2 of 3</span>
 <span class="co">#&gt; Using k = 2</span>
-<span class="co">#&gt; Iteration    100 / 1000</span>
-<span class="co">#&gt; Iteration    200 / 1000</span>
-<span class="co">#&gt; Iteration    300 / 1000</span>
-<span class="co">#&gt; Iteration    400 / 1000</span>
-<span class="co">#&gt; Iteration    500 / 1000</span>
-<span class="co">#&gt; Iteration    600 / 1000</span>
-<span class="co">#&gt; Iteration    700 / 1000</span>
-<span class="co">#&gt; Iteration    800 / 1000</span>
-<span class="co">#&gt; Iteration    900 / 1000</span>
-<span class="co">#&gt; Iteration   1000 / 1000</span>
-<span class="co">#&gt; 14.0% acceptance rate.</span>
-<span class="co">#&gt; Resampling effective sample size: 968.1 (96.8% efficiency).</span>
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+<span class="co">#&gt; 13.2% acceptance rate.</span>
+<span class="co">#&gt; Resampling effective sample size: 962.8 (96.3% efficiency).</span>
 <span class="co">#&gt; Making split 3 of 3</span>
 <span class="co">#&gt; Using k = 2</span>
-<span class="co">#&gt; Iteration    100 / 1000</span>
-<span class="co">#&gt; Iteration    200 / 1000</span>
-<span class="co">#&gt; Iteration    300 / 1000</span>
-<span class="co">#&gt; Iteration    400 / 1000</span>
-<span class="co">#&gt; Iteration    500 / 1000</span>
-<span class="co">#&gt; Iteration    600 / 1000</span>
-<span class="co">#&gt; Iteration    700 / 1000</span>
-<span class="co">#&gt; Iteration    800 / 1000</span>
-<span class="co">#&gt; Iteration    900 / 1000</span>
-<span class="co">#&gt; Iteration   1000 / 1000</span>
-<span class="co">#&gt; 4.5% acceptance rate.</span>
-<span class="co">#&gt; Resampling effective sample size: 942.8 (94.3% efficiency).</span></code></pre></div>
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+
+<span class="co">#&gt; Warning in smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],</span>
+<span class="co">#&gt; pop_bounds[1], : printing of extremely long output is truncated</span>
+<span class="co">#&gt; 4.4% acceptance rate.</span>
+<span class="co">#&gt; Resampling effective sample size: 951.6 (95.2% efficiency).</span></code></pre></div>
 <p>By default, <code><a href="../reference/redist_smc.html">redist_smc()</a></code> prints a good deal of diagnostic information. While verbose, it is important to monitor this output to ensure the algorithm is working properly. The key number to keep an eye on is the <em>resampling effective sample size</em>/<em>resampling efficiency</em>. This number should be as close to the nominal sample size (100%) as possible, and values less than 5–10% generally indicate problems—constraints which are too strong or difficult to satisfy. Here, the resampling efficiencies are above 90% at each stage, which is excellent.</p>
 <p>The output from the algorithm is a <code>redist_plans</code> object, which stores a matrix of district assignments for each precinct and simulated plans, and a table of summary statistics for each district and simulated plan.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
@@ -368,21 +425,21 @@
 <span class="co">#&gt; 1000 sampled plans with 4 districts from a 99-unit map,</span>
 <span class="co">#&gt;   drawn using Sequential Monte Carlo</span>
 <span class="co">#&gt; With plans resampled from weights</span>
-<span class="co">#&gt; Plans matrix: num [1:99, 1:1000] 4 2 3 3 2 3 3 2 3 3 ...</span>
+<span class="co">#&gt; Plans matrix: num [1:99, 1:1000] 1 1 2 4 1 2 2 4 2 2 ...</span>
 <span class="co">#&gt; # A tibble: 4,000 x 3</span>
 <span class="co">#&gt;    draw  district total_pop</span>
 <span class="co">#&gt;  * &lt;fct&gt;    &lt;int&gt;     &lt;dbl&gt;</span>
-<span class="co">#&gt;  1 1            1    763218</span>
-<span class="co">#&gt;  2 1            2    756387</span>
-<span class="co">#&gt;  3 1            3    763161</span>
-<span class="co">#&gt;  4 1            4    763589</span>
-<span class="co">#&gt;  5 2            1    759389</span>
-<span class="co">#&gt;  6 2            2    763582</span>
-<span class="co">#&gt;  7 2            3    756599</span>
-<span class="co">#&gt;  8 2            4    766785</span>
-<span class="co">#&gt;  9 3            1    759570</span>
-<span class="co">#&gt; 10 3            2    764106</span>
-<span class="co">#&gt; # … with 3,990 more rows</span></code></pre></div>
+<span class="co">#&gt;  1 1            1    768677</span>
+<span class="co">#&gt;  2 1            2    756003</span>
+<span class="co">#&gt;  3 1            3    765685</span>
+<span class="co">#&gt;  4 1            4    755990</span>
+<span class="co">#&gt;  5 2            1    762804</span>
+<span class="co">#&gt;  6 2            2    759389</span>
+<span class="co">#&gt;  7 2            3    759189</span>
+<span class="co">#&gt;  8 2            4    764973</span>
+<span class="co">#&gt;  9 3            1    762804</span>
+<span class="co">#&gt; 10 3            2    766126</span>
+<span class="co">#&gt; # ... with 3,990 more rows</span></code></pre></div>
 <p>We can explore specific simulated plans with <code><a href="../reference/redist.plot.plans.html">redist.plot.plans()</a></code>.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/redist.plot.plans.html">redist.plot.plans</a></span><span class="op">(</span><span class="va">iowa_plans</span>, draws<span class="op">=</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span>, geom<span class="op">=</span><span class="va">iowa_map</span><span class="op">)</span></code></pre></div>
@@ -408,19 +465,23 @@
 <span class="co">#&gt;  2 2010 Adopted 2           761624       1    </span>
 <span class="co">#&gt;  3 2010 Adopted 3           761612       1    </span>
 <span class="co">#&gt;  4 2010 Adopted 4           761571       1    </span>
-<span class="co">#&gt;  5 1            1           763161       0.631</span>
-<span class="co">#&gt;  6 1            2           763218       0.631</span>
-<span class="co">#&gt;  7 1            3           763589       0.631</span>
-<span class="co">#&gt;  8 1            4           756387       0.631</span>
-<span class="co">#&gt;  9 2            1           759389       0.654</span>
-<span class="co">#&gt; 10 2            2           763582       0.654</span>
-<span class="co">#&gt; # … with 3,994 more rows</span></code></pre></div>
+<span class="co">#&gt;  5 1            1           756003       0.706</span>
+<span class="co">#&gt;  6 1            2           765685       0.706</span>
+<span class="co">#&gt;  7 1            3           755990       0.706</span>
+<span class="co">#&gt;  8 1            4           768677       0.706</span>
+<span class="co">#&gt;  9 2            1           759389       0.619</span>
+<span class="co">#&gt; 10 2            2           762804       0.619</span>
+<span class="co">#&gt; # ... with 3,994 more rows</span></code></pre></div>
 <p>Then we can add summary statistics by district, using <code>redist</code>’s analysis functions. Here, we’ll compute the population deviation, the perimeter-based compactness measure related to the Iowa Code’s redistricting requirements, and the fraction of minority voters and two-party Democratic vote share by district.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">target_pop</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">$</span><span class="va">pop</span><span class="op">)</span> <span class="op">/</span> <span class="fl">4</span>
 <span class="va">county_perims</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist.prep.polsbypopper.html">redist.prep.polsbypopper</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">iowa_map</span><span class="op">$</span><span class="va">adj</span><span class="op">)</span>
 <span class="co">#&gt; Linking to GEOS 3.9.0, GDAL 3.2.1, PROJ 7.2.1</span>
-<span class="co">#&gt; Linking to liblwgeom 3.0.0beta1 r16016, GEOS 3.9.0, PROJ 7.2.1</span>
+<span class="co">#&gt; Linking to liblwgeom 3.0.0beta1 r16016, GEOS 3.8.0, PROJ 6.3.1</span>
+<span class="co">#&gt; Warning in fun(libname, pkgname): GEOS versions differ: lwgeom has 3.8.0 sf has</span>
+<span class="co">#&gt; 3.9.0</span>
+<span class="co">#&gt; Warning in fun(libname, pkgname): PROJ versions differ: lwgeom has 6.3.1 sf has</span>
+<span class="co">#&gt; 7.2.1</span>
 
 <span class="va">iowa_plans</span> <span class="op">=</span> <span class="va">iowa_plans</span> <span class="op">%&gt;%</span>
     <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>pop_dev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html">abs</a></span><span class="op">(</span><span class="va">total_pop</span> <span class="op">/</span> <span class="va">target_pop</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span>,
@@ -439,13 +500,13 @@
 <span class="co">#&gt;  2 2010 Adopted 2           761624       1     0.0000463 0.360  0.0968   0.579</span>
 <span class="co">#&gt;  3 2010 Adopted 3           761612       1     0.0000305 0.529  0.114    0.531</span>
 <span class="co">#&gt;  4 2010 Adopted 4           761571       1     0.0000233 0.522  0.0788   0.491</span>
-<span class="co">#&gt;  5 1            1           763161       0.631 0.00206   0.318  0.0632   0.559</span>
-<span class="co">#&gt;  6 1            2           763218       0.631 0.00214   0.534  0.101    0.615</span>
-<span class="co">#&gt;  7 1            3           763589       0.631 0.00263   0.310  0.126    0.551</span>
-<span class="co">#&gt;  8 1            4           756387       0.631 0.00683   0.438  0.0729   0.464</span>
-<span class="co">#&gt;  9 2            1           759389       0.654 0.00289   0.432  0.0790   0.592</span>
-<span class="co">#&gt; 10 2            2           763582       0.654 0.00262   0.308  0.0763   0.542</span>
-<span class="co">#&gt; # … with 3,994 more rows</span></code></pre></div>
+<span class="co">#&gt;  5 1            1           756003       0.706 0.00733   0.643  0.0737   0.582</span>
+<span class="co">#&gt;  6 1            2           765685       0.706 0.00538   0.442  0.0979   0.599</span>
+<span class="co">#&gt;  7 1            3           755990       0.706 0.00735   0.422  0.116    0.551</span>
+<span class="co">#&gt;  8 1            4           768677       0.706 0.00931   0.564  0.0760   0.459</span>
+<span class="co">#&gt;  9 2            1           759389       0.619 0.00289   0.432  0.0790   0.592</span>
+<span class="co">#&gt; 10 2            2           762804       0.619 0.00160   0.423  0.0911   0.576</span>
+<span class="co">#&gt; # ... with 3,994 more rows</span></code></pre></div>
 <p>From there, it’s quick to turn these into plan-level summary statistics.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">plan_sum</span> <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html">group_by</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">draw</span><span class="op">)</span> <span class="op">%&gt;%</span>
@@ -462,16 +523,16 @@
 <span class="co">#&gt;    draw           max_dev avg_comp max_pct_min dem_distr</span>
 <span class="co">#&gt;    &lt;fct&gt;            &lt;dbl&gt;    &lt;dbl&gt;       &lt;dbl&gt;     &lt;int&gt;</span>
 <span class="co">#&gt;  1 2010 Adopted 0.0000535    0.428       0.114         3</span>
-<span class="co">#&gt;  2 1            0.00683      0.400       0.126         3</span>
-<span class="co">#&gt;  3 2            0.00682      0.402       0.121         3</span>
-<span class="co">#&gt;  4 3            0.00331      0.302       0.111         3</span>
-<span class="co">#&gt;  5 4            0.00721      0.425       0.128         3</span>
-<span class="co">#&gt;  6 5            0.00749      0.327       0.124         3</span>
-<span class="co">#&gt;  7 6            0.00934      0.464       0.116         3</span>
-<span class="co">#&gt;  8 7            0.00579      0.338       0.123         3</span>
-<span class="co">#&gt;  9 8            0.00758      0.445       0.128         3</span>
-<span class="co">#&gt; 10 9            0.00827      0.352       0.115         3</span>
-<span class="co">#&gt; # … with 991 more rows</span></code></pre></div>
+<span class="co">#&gt;  2 1            0.00931      0.518       0.116         3</span>
+<span class="co">#&gt;  3 2            0.00444      0.433       0.122         3</span>
+<span class="co">#&gt;  4 3            0.00697      0.360       0.117         3</span>
+<span class="co">#&gt;  5 4            0.00462      0.403       0.117         3</span>
+<span class="co">#&gt;  6 5            0.00667      0.269       0.117         3</span>
+<span class="co">#&gt;  7 6            0.00861      0.344       0.124         3</span>
+<span class="co">#&gt;  8 7            0.00857      0.425       0.139         3</span>
+<span class="co">#&gt;  9 8            0.00768      0.427       0.126         3</span>
+<span class="co">#&gt; 10 9            0.00984      0.425       0.109         3</span>
+<span class="co">#&gt; # ... with 991 more rows</span></code></pre></div>
 <p>These tables of statistics are easily plotted using existing libraries like <code>ggplot2</code>, but <code>redist</code> provides a number of helpful plotting functions that automate some common tasks, like adding a reference line for the reference plan. The output of these functions is a <code>ggplot</code> object, allowing for further customization.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com">patchwork</a></span><span class="op">)</span>
