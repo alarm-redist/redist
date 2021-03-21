@@ -4,8 +4,8 @@
 #include <R_ext/Rdynload.h>
 
 /* FIXME: 
- Check these declarations against the C/Fortran source code.
- */
+   Check these declarations against the C/Fortran source code.
+*/
 
 /* .Call calls */
 extern SEXP _redist_agg_p2d(SEXP, SEXP, SEXP);
@@ -17,6 +17,8 @@ extern SEXP _redist_calcPWDh(SEXP);
 extern SEXP _redist_closest_adj_pop(SEXP, SEXP, SEXP);
 extern SEXP _redist_coarsen_adjacency(SEXP, SEXP);
 extern SEXP _redist_collapse_adj(SEXP, SEXP);
+extern SEXP _redist_colmax(SEXP);
+extern SEXP _redist_colmin(SEXP);
 extern SEXP _redist_color_graph(SEXP, SEXP);
 extern SEXP _redist_contiguity(SEXP, SEXP);
 extern SEXP _redist_cores(SEXP, SEXP, SEXP, SEXP);
@@ -33,6 +35,7 @@ extern SEXP _redist_effgapEP(SEXP, SEXP, SEXP);
 extern SEXP _redist_findBoundary(SEXP, SEXP);
 extern SEXP _redist_genAlConn(SEXP, SEXP);
 extern SEXP _redist_group_pct(SEXP, SEXP, SEXP, SEXP);
+extern SEXP _redist_group_pct_top_k(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_hamming(SEXP, SEXP);
 extern SEXP _redist_log_st_map(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_lopsidedwins(SEXP, SEXP, SEXP);
@@ -72,6 +75,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_closest_adj_pop",       (DL_FUNC) &_redist_closest_adj_pop,        3},
     {"_redist_coarsen_adjacency",     (DL_FUNC) &_redist_coarsen_adjacency,      2},
     {"_redist_collapse_adj",          (DL_FUNC) &_redist_collapse_adj,           2},
+    {"_redist_colmax",                (DL_FUNC) &_redist_colmax,                 1},
+    {"_redist_colmin",                (DL_FUNC) &_redist_colmin,                 1},
     {"_redist_color_graph",           (DL_FUNC) &_redist_color_graph,            2},
     {"_redist_contiguity",            (DL_FUNC) &_redist_contiguity,             2},
     {"_redist_cores",                 (DL_FUNC) &_redist_cores,                  4},
@@ -88,6 +93,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_findBoundary",          (DL_FUNC) &_redist_findBoundary,           2},
     {"_redist_genAlConn",             (DL_FUNC) &_redist_genAlConn,              2},
     {"_redist_group_pct",             (DL_FUNC) &_redist_group_pct,              4},
+    {"_redist_group_pct_top_k",       (DL_FUNC) &_redist_group_pct_top_k,        5},
     {"_redist_hamming",               (DL_FUNC) &_redist_hamming,                2},
     {"_redist_log_st_map",            (DL_FUNC) &_redist_log_st_map,             4},
     {"_redist_lopsidedwins",          (DL_FUNC) &_redist_lopsidedwins,           3},

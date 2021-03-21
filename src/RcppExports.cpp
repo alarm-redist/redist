@@ -248,6 +248,43 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// group_pct_top_k
+NumericVector group_pct_top_k(const IntegerMatrix m, const NumericVector group_pop, const NumericVector total_pop, int k, int n_distr);
+RcppExport SEXP _redist_group_pct_top_k(SEXP mSEXP, SEXP group_popSEXP, SEXP total_popSEXP, SEXP kSEXP, SEXP n_distrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const IntegerMatrix >::type m(mSEXP);
+    Rcpp::traits::input_parameter< const NumericVector >::type group_pop(group_popSEXP);
+    Rcpp::traits::input_parameter< const NumericVector >::type total_pop(total_popSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
+    rcpp_result_gen = Rcpp::wrap(group_pct_top_k(m, group_pop, total_pop, k, n_distr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// colmax
+NumericVector colmax(const NumericMatrix x);
+RcppExport SEXP _redist_colmax(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const NumericMatrix >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(colmax(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// colmin
+NumericVector colmin(const NumericMatrix x);
+RcppExport SEXP _redist_colmin(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const NumericMatrix >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(colmin(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // prec_cooccur
 arma::mat prec_cooccur(arma::umat m, arma::uvec idxs);
 RcppExport SEXP _redist_prec_cooccur(SEXP mSEXP, SEXP idxsSEXP) {

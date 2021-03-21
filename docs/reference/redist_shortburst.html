@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Count County Splits — county_splits • redist</title>
+<title>Redistricting Optimization through Short Bursts — redist_shortburst • redist</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,8 +46,13 @@
 
 
 
-<meta property="og:title" content="Count County Splits — county_splits" />
-<meta property="og:description" content="Count County Splits" />
+<meta property="og:title" content="Redistricting Optimization through Short Bursts — redist_shortburst" />
+<meta property="og:description" content="This function uses redist_mergesplit() to optimize a redistrict plan
+according to a user-provided criteria. It does so by running the Markov chain
+for &quot;short bursts&quot; of usually 10 iterations, and then starting the chain anew
+from the best plan in the burst, according to the criteria. This implements
+the ideas in the below-referenced paper, &quot;Voting Rights, Markov Chains, and
+Optimization by Short Bursts.&quot;" />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -143,50 +148,122 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Count County Splits</h1>
-    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/tidy.R'><code>R/tidy.R</code></a>, <a href='https://github.com/kosukeimai/redist/blob/master/R/splits.R'><code>R/splits.R</code></a></small>
-    <div class="hidden name"><code>redist.splits.Rd</code></div>
+    <h1>Redistricting Optimization through Short Bursts</h1>
+    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/redist_shortburst.R'><code>R/redist_shortburst.R</code></a></small>
+    <div class="hidden name"><code>redist_shortburst.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Count County Splits</p>
+    <p>This function uses <code><a href='redist_mergesplit.html'>redist_mergesplit()</a></code> to optimize a redistrict plan
+according to a user-provided criteria. It does so by running the Markov chain
+for "short bursts" of usually 10 iterations, and then starting the chain anew
+from the best plan in the burst, according to the criteria. This implements
+the ideas in the below-referenced paper, "Voting Rights, Markov Chains, and
+Optimization by Short Bursts."</p>
     </div>
 
-    <pre class="usage"><span class='fu'>county_splits</span><span class='op'>(</span><span class='va'>map</span>, <span class='va'>counties</span>, .data <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/exists.html'>get0</a></span><span class='op'>(</span><span class='st'>"."</span>, <span class='fu'><a href='https://rdrr.io/r/base/sys.parent.html'>parent.frame</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
-
-<span class='fu'>redist.splits</span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>counties</span>, <span class='va'>district_membership</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>redist_shortburst</span><span class='op'>(</span>
+  <span class='va'>map</span>,
+  score_fn <span class='op'>=</span> <span class='cn'>NULL</span>,
+  stop_at <span class='op'>=</span> <span class='cn'>NULL</span>,
+  burst_size <span class='op'>=</span> <span class='fl'>10L</span>,
+  max_bursts <span class='op'>=</span> <span class='fl'>500L</span>,
+  maximize <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  init_plan <span class='op'>=</span> <span class='cn'>NULL</span>,
+  counties <span class='op'>=</span> <span class='cn'>NULL</span>,
+  compactness <span class='op'>=</span> <span class='fl'>1</span>,
+  adapt_k_thresh <span class='op'>=</span> <span class='fl'>0.975</span>,
+  return_all <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  verbose <span class='op'>=</span> <span class='cn'>TRUE</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>map</th>
-      <td><p>a <code><a href='redist_map.html'>redist_map</a></code> object</p></td>
+      <td><p>A <code><a href='redist_map.html'>redist_map</a></code> object.</p></td>
+    </tr>
+    <tr>
+      <th>score_fn</th>
+      <td><p>A function which takes</p></td>
+    </tr>
+    <tr>
+      <th>stop_at</th>
+      <td><p>a threshold to stop optimization at.</p></td>
+    </tr>
+    <tr>
+      <th>burst_size</th>
+      <td><p>The size of each burst. 10 is recommended.</p></td>
+    </tr>
+    <tr>
+      <th>max_bursts</th>
+      <td><p>The maximum number of bursts to run before returning.</p></td>
+    </tr>
+    <tr>
+      <th>maximize</th>
+      <td><p>if <code>TRUE</code>, try to maximize the score; otherwise, try to
+minimize it.</p></td>
+    </tr>
+    <tr>
+      <th>init_plan</th>
+      <td><p>The initial state of the map. If not provided, will default to
+the reference map of the <code>map</code> object, or if none exists, will sample
+a random initial state using <code><a href='redist_smc.html'>redist_smc</a></code>. You can also request
+a random initial state by setting <code>init_plan="sample"</code>.</p></td>
     </tr>
     <tr>
       <th>counties</th>
-      <td><p>A vector of county names or county ids.</p></td>
+      <td><p>A vector containing county (or other administrative or
+geographic unit) labels for each unit, which may be integers ranging from 1
+to the number of counties, or a factor or character vector.  If provided, the
+algorithm will only generate maps which split up to <code>ndists-1</code> counties.
+If no county-split constraint is desired, this parameter should be left blank.</p></td>
     </tr>
     <tr>
-      <th>.data</th>
-      <td><p>a <code><a href='redist_plans.html'>redist_plans</a></code> object</p></td>
+      <th>compactness</th>
+      <td><p>Controls the compactness of the generated districts, with
+higher values preferring more compact districts. Must be nonnegative. See
+<code>redist_mergsplit</code> for more information.</p></td>
     </tr>
     <tr>
-      <th>plans</th>
-      <td><p>A numeric vector (if only one map) or matrix with one row
-for each precinct and one column for each map. Required.</p></td>
+      <th>adapt_k_thresh</th>
+      <td><p>The threshold value used in the heuristic to select a
+value <code>k_i</code> for each splitting iteration. Set to 0.9999 or 1 if
+the algorithm does not appear to be sampling from the target distribution.
+Must be between 0 and 1.</p></td>
     </tr>
     <tr>
-      <th>district_membership</th>
-      <td><p>Deprecated, use plans. A numeric vector (if only one map) or matrix with one row
-for each precinct and one column for each map. Required.</p></td>
+      <th>return_all</th>
+      <td><p>whether to return all the
+Recommended for monitoring purposes.</p></td>
+    </tr>
+    <tr>
+      <th>verbose</th>
+      <td><p>Whether to print out intermediate information while sampling.
+Recommended for monitoring purposes.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>integer vector with one number for each map</p>
+    <p>a <code>redist_plans</code> object containing the final best plan
+(or the best plans after each burst, if <code>return_all=TRUE</code>.</p>
+    <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
+    <p>Cannon, S., Goldbloom-Helzner, A., Gupta, V., Matthews, J. N., &amp; Suwal, B.
+(2020). Voting Rights, Markov Chains, and Optimization by Short Bursts. arXiv
+preprint arXiv:2011.02288.</p>
+
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>iowa</span><span class='op'>)</span>
+
+<span class='va'>iowa_map</span> <span class='op'>=</span> <span class='fu'><a href='redist_map.html'>redist_map</a></span><span class='op'>(</span><span class='va'>iowa</span>, existing_plan<span class='op'>=</span><span class='va'>cd</span>, pop_tol<span class='op'>=</span><span class='fl'>0.01</span><span class='op'>)</span>
+<span class='fu'>redist_shortburst</span><span class='op'>(</span><span class='va'>iowa_map</span>, <span class='fu'><a href='scorers.html'>scorer_frackept</a></span><span class='op'>(</span><span class='va'>iowa_map</span><span class='op'>)</span>, max_bursts<span class='op'>=</span><span class='fl'>50</span><span class='op'>)</span>
+<span class='op'>}</span>
+
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

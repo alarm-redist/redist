@@ -73,6 +73,18 @@ calcPWDh <- function(x) {
     .Call(`_redist_calcPWDh`, x)
 }
 
+group_pct_top_k <- function(m, group_pop, total_pop, k, n_distr) {
+    .Call(`_redist_group_pct_top_k`, m, group_pop, total_pop, k, n_distr)
+}
+
+colmax <- function(x) {
+    .Call(`_redist_colmax`, x)
+}
+
+colmin <- function(x) {
+    .Call(`_redist_colmin`, x)
+}
+
 prec_cooccur <- function(m, idxs) {
     .Call(`_redist_prec_cooccur`, m, idxs)
 }

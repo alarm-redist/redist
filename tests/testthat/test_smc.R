@@ -1,9 +1,7 @@
 test_that("SMC runs without errors", {
     N = 20
-    expect_silent({
-        res = redist.smc(adj, pop, N, 3, pop_tol=0.1, silent=T)
-        NULL
-    })
+    res = redist.smc(adj, pop, N, 3, pop_tol=0.1, silent=T)
+
     expect_equal(res$nsims, N)
     expect_true(all(res$maxdev <= 0.1))
     expect_equal(res$wgt, rep(1, N)/N)

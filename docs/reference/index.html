@@ -168,7 +168,7 @@
       <tr>
         
         <td>
-          <p><code><a href="redist_smc.html">redist_smc()</a></code> </p>
+          <p><code><a href="redist_smc.html">redist_smc()</a></code> <code><a href="redist_smc.html">redist.smc()</a></code> </p>
         </td>
         <td><p>SMC Redistricting Sampler</p></td>
       </tr><tr>
@@ -180,7 +180,7 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="redist_mergesplit.html">redist_mergesplit()</a></code> </p>
+          <p><code><a href="redist_mergesplit.html">redist_mergesplit()</a></code> <code><a href="redist_mergesplit.html">redist.mergesplit()</a></code> </p>
         </td>
         <td><p>Merge-Split/Recombination MCMC Redistricting Sampler</p></td>
       </tr><tr>
@@ -210,21 +210,15 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.mergesplit.html">redist.mergesplit()</a></code> </p>
-        </td>
-        <td><p>Merge-Split/Recombination MCMC Redistricting Sampler</p></td>
-      </tr><tr>
-        
-        <td>
           <p><code><a href="redist.rsg.html">redist.rsg()</a></code> </p>
         </td>
         <td><p>Redistricting via Random Seed and Grow Algorithm</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.smc.html">redist.smc()</a></code> </p>
+          <p><code><a href="redist_shortburst.html">redist_shortburst()</a></code> </p>
         </td>
-        <td><p>SMC Redistricting Sampler</p></td>
+        <td><p>Redistricting Optimization through Short Bursts</p></td>
       </tr>
     </tbody><tbody>
       <tr>
@@ -301,13 +295,13 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.compactness.html">redist.compactness()</a></code> <code><a href="redist.compactness.html">distr_compactness()</a></code> </p>
+          <p><code><a href="redist.compactness.html">distr_compactness()</a></code> <code><a href="redist.compactness.html">redist.compactness()</a></code> </p>
         </td>
         <td><p>Calculate compactness measures for a set of districts</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.competitiveness.html">redist.competitiveness()</a></code> <code><a href="redist.competitiveness.html">competitiveness()</a></code> </p>
+          <p><code><a href="redist.competitiveness.html">competitiveness()</a></code> <code><a href="redist.competitiveness.html">redist.competitiveness()</a></code> </p>
         </td>
         <td><p>Compute Competitiveness</p></td>
       </tr><tr>
@@ -319,13 +313,13 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.group.percent.html">redist.group.percent()</a></code> <code><a href="redist.group.percent.html">group_frac()</a></code> </p>
+          <p><code><a href="redist.group.percent.html">group_frac()</a></code> <code><a href="redist.group.percent.html">redist.group.percent()</a></code> </p>
         </td>
         <td><p>Calculate Group Percent by District</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.metrics.html">redist.metrics()</a></code> <code><a href="redist.metrics.html">partisan_metrics()</a></code> </p>
+          <p><code><a href="redist.metrics.html">partisan_metrics()</a></code> <code><a href="redist.metrics.html">redist.metrics()</a></code> </p>
         </td>
         <td><p>Calculate gerrymandering metrics for a set of districts</p></td>
       </tr><tr>
@@ -337,13 +331,13 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.segcalc.html">redist.segcalc()</a></code> <code><a href="redist.segcalc.html">segregation_index()</a></code> </p>
+          <p><code><a href="redist.segcalc.html">segregation_index()</a></code> <code><a href="redist.segcalc.html">redist.segcalc()</a></code> </p>
         </td>
         <td><p>Segregation index calculation for MCMC redistricting.</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.splits.html">redist.splits()</a></code> <code><a href="redist.splits.html">county_splits()</a></code> </p>
+          <p><code><a href="redist.splits.html">county_splits()</a></code> <code><a href="redist.splits.html">redist.splits()</a></code> </p>
         </td>
         <td><p>Count County Splits</p></td>
       </tr><tr>
@@ -446,7 +440,7 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.identify.cores.html">redist.identify.cores()</a></code> <code><a href="redist.identify.cores.html">make_cores()</a></code> </p>
+          <p><code><a href="redist.identify.cores.html">make_cores()</a></code> <code><a href="redist.identify.cores.html">redist.identify.cores()</a></code> </p>
         </td>
         <td><p>Identify Cores of a District (Heuristic)</p></td>
       </tr><tr>
@@ -785,6 +779,12 @@
           <p><code><a href="redist_quantile_trunc.html">redist_quantile_trunc()</a></code> </p>
         </td>
         <td><p>Helper function to truncate importance weights</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="scorers.html">scorer_frackept()</a></code> <code><a href="scorers.html">scorer_max_pct()</a></code> </p>
+        </td>
+        <td><p>Scoring fuctions for `redist_shortburst`</p></td>
       </tr>
     </tbody>
     </table>

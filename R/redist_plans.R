@@ -43,8 +43,8 @@ validate_redist_plans = function(x) {
     plan_m = attr(x, "plans")
     stopifnot(!is.null(plan_m))
 
-    min_distr = apply(plan_m, 2, min)
-    max_distr = apply(plan_m, 2, max)
+    min_distr = colmin(plan_m)
+    max_distr = colmax(plan_m)
     stopifnot(all(min_distr == 1))
     stopifnot(all(diff(max_distr) == 0))
 
@@ -164,7 +164,8 @@ set_plan_matrix = function(x, mat) {
 get_plan_weights = function(plans) {
     stopifnot(inherits(plans, "redist_plans"))
     wgt = attr(plans, "wgt")
-    attr(wgt, "resampled") = attr(plans, "resampled")
+    if (!is.null(wgt))
+        attr(wgt, "resampled") = attr(plans, "resampled")
     wgt
 }
 

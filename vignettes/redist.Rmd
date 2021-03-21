@@ -54,6 +54,10 @@ The other algorithms are
 
 - `redist.enumpart()` for efficient enumeration of small maps.^[from
 [The Essential Role of Empirical Validation in Legislative Redistricting Simulation](https://imai.fas.harvard.edu/research/files/enumerate.pdf)]
+- `redist_shortburst()` for optimizing a plan according to a user-provided
+criterion.^[from Cannon, S., Goldbloom-Helzner, A., Gupta, V., Matthews, J. N.,
+& Suwal, B. (2020). Voting Rights, Markov Chains, and Optimization by Short
+Bursts. arXiv preprint arXiv:2011.02288.]
 - `redist.rsg()` and `redist.crsg()`, which do not sample from a known target
 distribution.^[from Jowei Chen and Jonathan Rodden (2013) 
 “Unintentional Gerrymandering: Political Geography and Electoral Bias in
@@ -307,7 +311,7 @@ functions.  Here, we'll compute the population deviation, the perimeter-based
 compactness measure related to the Iowa Code's redistricting requirements, and
 the fraction of minority voters and two-party Democratic vote share by district.
 
-```{r}
+```{r message=F}
 target_pop = sum(iowa_map$pop) / 4
 county_perims = redist.prep.polsbypopper(iowa_map, iowa_map$adj)
 

@@ -101,6 +101,8 @@
 #' Must be between 0 and 1.
 #' @param k The number of edges to consider cutting after drawing a spanning
 #'   tree. Should be selected automatically in nearly all cases.
+#' @param init_name a name for the initial plan, or \code{FALSE} to not include
+#' the initial plan in the output.
 #' @param verbose Whether to print out intermediate information while sampling.
 #'   Recommended.
 #' @param silent Whether to suppress all diagnostic information.
@@ -130,15 +132,19 @@
 #'
 #' @concept simulate
 #' @md
+#' @order 1
 #' @export
 redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
                              init_plan=NULL, counties=NULL, compactness=1,
                              constraints=list(), constraint_fn=function(m) rep(0, ncol(m)),
-                             adapt_k_thresh=0.975, k=NULL, verbose=TRUE, silent=FALSE) {
+                             adapt_k_thresh=0.975, k=NULL,
+                             init_name=if (is.null(init_plan)) NULL else "<ref>",
+                             verbose=TRUE, silent=FALSE) {
     map = validate_redist_map(map)
     V = nrow(map)
     adj = get_adj(map)
     ndists = attr(map, "ndists")
+    warmup = max(warmup, 1L)
 
     if (compactness < 0) stop("Compactness parameter must be non-negative")
     if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
@@ -147,8 +153,9 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
         stop("`nsims` must be positive.")
 
     if (is.null(init_plan)) init_plan = as.integer(as.factor(get_existing(map)))
-    if (is.null(init_plan) || init_plan == "sample") {
-        init_plan = redist_smc(map, nsims, counties, resample=FALSE, silent=TRUE)$plans
+    if (length(init_plan) == 0L || isTRUE(init_plan == "sample")) {
+        init_plan = as.integer(get_plan_matrix(
+            redist_smc(map, 1, counties, resample=FALSE, silent=TRUE)))
     }
     stopifnot(length(init_plan) == V)
     stopifnot(max(init_plan) == ndists)
@@ -179,8 +186,8 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
     pop_bounds = attr(map, "pop_bounds")
     pop = map[[attr(map, "pop_col")]]
 
-    plans = ms_plans(nsims, adj, init_plan, counties, pop, ndists, pop_bounds[2],
-                     pop_bounds[1], pop_bounds[3], compactness,
+    plans = ms_plans(nsims+1L, adj, init_plan, counties, pop, ndists,
+                     pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
                      constraints$status_quo$strength, constraints$status_quo$current, n_current,
                      constraints$vra_old$strength, constraints$vra_old$tgt_vra_min,
                      constraints$vra_old$tgt_vra_other, constraints$vra_old$pow_vra, proc$min_pop,
@@ -188,9 +195,13 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
                      constraints$incumbency$strength, constraints$incumbency$incumbents,
                      adapt_k_thresh, k, verbosity)
 
-    new_redist_plans(plans[,-1:-warmup], map, "mergesplit",
-                     rep(1, nsims - warmup), FALSE,
+    out = new_redist_plans(plans[,-1:-warmup], map, "mergesplit", NULL, FALSE,
                      compactness = compactness,
                      constraints = constraints,
                      adapt_k_thresh = adapt_k_thresh)
+    if (!is.null(init_name)) {
+        out = add_reference(out, init_plan, init_name)
+    }
+
+    out
 }
