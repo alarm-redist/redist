@@ -64,7 +64,10 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
+      <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
+    </li>
+    <li>
+      <a href="../articles/mcmc.html">Redistricting with MCMC and RSG</a>
     </li>
     <li>
       <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
@@ -141,8 +144,8 @@
 <p>Behind the scenes, <code>redist</code> has adjusted the adjacency graph to remove the precincts that were filtered away. It has also adjusted the number of districts and the population bounds.</p>
 <p>We can easily plot this new map, either by congressional district or by any other quantity of interest.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://r-spatial.github.io/sf/reference/plot.html">plot</a></span><span class="op">(</span><span class="va">houston_area</span>, edges<span class="op">=</span><span class="cn">F</span>, centroids<span class="op">=</span><span class="cn">F</span><span class="op">)</span> <span class="co"># hide the hundreds of graph edges and vertices</span>
-<span class="fu"><a href="https://r-spatial.github.io/sf/reference/plot.html">plot</a></span><span class="op">(</span><span class="va">houston_area</span>, fill<span class="op">=</span><span class="va">hisp</span><span class="op">/</span><span class="va">pop</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">houston_area</span>, edges<span class="op">=</span><span class="cn">F</span>, centroids<span class="op">=</span><span class="cn">F</span><span class="op">)</span> <span class="co"># hide the hundreds of graph edges and vertices</span>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">houston_area</span>, fill<span class="op">=</span><span class="va">hisp</span><span class="op">/</span><span class="va">pop</span><span class="op">)</span></code></pre></div>
 </div>
 <div id="merging" class="section level2">
 <h2 class="hasAnchor">
@@ -152,7 +155,7 @@
 <code class="sourceCode R"><span class="va">houston_counties</span> <span class="op">=</span> <span class="va">houston_area</span> <span class="op">%&gt;%</span>
     <span class="fu"><a href="../reference/merge_by.html">merge_by</a></span><span class="op">(</span><span class="va">county</span>, drop_geom<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">houston_counties</span><span class="op">)</span>
-<span class="fu"><a href="https://r-spatial.github.io/sf/reference/plot.html">plot</a></span><span class="op">(</span><span class="va">houston_counties</span>, fill<span class="op">=</span><span class="va">hisp</span><span class="op">/</span><span class="va">pop</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">houston_counties</span>, fill<span class="op">=</span><span class="va">hisp</span><span class="op">/</span><span class="va">pop</span><span class="op">)</span></code></pre></div>
 <p>We specify <code>drop_geom=FALSE</code> so that the shapefile geometries are also merged. Since this is a time-consuming process and is not necessary for redistricting analysis, by default <code><a href="../reference/merge_by.html">merge_by()</a></code> drops the shapefile geometry.</p>
 <p>If more fine-grained control is needed than is provided by <code><a href="../reference/merge_by.html">merge_by()</a></code>, you can always use <code><a href="https://dplyr.tidyverse.org/reference/group_by.html">group_by()</a></code> and <code><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize()</a></code>, which will still make the appropriate modifications to the adjacency graph.</p>
 <p>Another common use of <code><a href="../reference/merge_by.html">merge_by()</a></code> is for creating district “cores”: gluing precincts in the “core” of an area together, to ensure that they stay together throughout redistricting. This has the effect of imposing a status quo constraint when applied to existing districts. Here, any precincts that are not within 1 precinct of the district borders will be merged into the district cores.</p>
@@ -161,7 +164,7 @@
     <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>cd_cores <span class="op">=</span> <span class="fu"><a href="../reference/redist.identify.cores.html">make_cores</a></span><span class="op">(</span>within<span class="op">=</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span> 
     <span class="fu"><a href="../reference/merge_by.html">merge_by</a></span><span class="op">(</span><span class="va">cd_cores</span>, drop_geom<span class="op">=</span><span class="cn">F</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">houston_cores</span><span class="op">)</span>
-<span class="fu"><a href="https://r-spatial.github.io/sf/reference/plot.html">plot</a></span><span class="op">(</span><span class="va">houston_cores</span>, centroids<span class="op">=</span><span class="cn">F</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">houston_cores</span>, centroids<span class="op">=</span><span class="cn">F</span><span class="op">)</span></code></pre></div>
 </div>
 </div>
 <div id="simulating-and-analyzing-plans" class="section level1">
