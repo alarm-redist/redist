@@ -260,7 +260,7 @@ preprint arXiv:2011.02288.</p>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>iowa</span><span class='op'>)</span>
 
 <span class='va'>iowa_map</span> <span class='op'>=</span> <span class='fu'><a href='redist_map.html'>redist_map</a></span><span class='op'>(</span><span class='va'>iowa</span>, existing_plan<span class='op'>=</span><span class='va'>cd</span>, pop_tol<span class='op'>=</span><span class='fl'>0.01</span><span class='op'>)</span>
-<span class='fu'>redist_shortburst</span><span class='op'>(</span><span class='va'>iowa_map</span>, <span class='fu'><a href='scorers.html'>scorer_frackept</a></span><span class='op'>(</span><span class='va'>iowa_map</span><span class='op'>)</span>, max_bursts<span class='op'>=</span><span class='fl'>50</span><span class='op'>)</span>
+<span class='fu'>redist_shortburst</span><span class='op'>(</span><span class='va'>iowa_map</span>, <span class='fu'><a href='scorers.html'>scorer_frac_kept</a></span><span class='op'>(</span><span class='va'>iowa_map</span><span class='op'>)</span>, max_bursts<span class='op'>=</span><span class='fl'>50</span><span class='op'>)</span>
 <span class='op'>}</span>
 
 </div></pre>

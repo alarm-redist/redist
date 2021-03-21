@@ -76,7 +76,7 @@ Optimization by Short Bursts."
 data(iowa)
 
 iowa_map = redist_map(iowa, existing_plan=cd, pop_tol=0.01)
-redist_shortburst(iowa_map, scorer_frackept(iowa_map), max_bursts=50)
+redist_shortburst(iowa_map, scorer_frac_kept(iowa_map), max_bursts=50)
 }
 
 }

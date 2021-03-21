@@ -2,13 +2,13 @@
 % Please edit documentation in R/redist_shortburst.R
 \name{scorers}
 \alias{scorers}
-\alias{scorer_frackept}
-\alias{scorer_max_pct}
-\title{Scoring fuctions for `redist_shortburst`}
+\alias{scorer_frac_kept}
+\alias{scorer_group_pct}
+\title{Scoring fuctions for \code{redist_shortburst}}
 \usage{
-scorer_frackept(map)
+scorer_frac_kept(map)
 
-scorer_max_pct(map, group_pop, total_pop, k = 1)
+scorer_group_pct(map, group_pop, total_pop, k = 1)
 }
 \arguments{
 \item{map}{A \code{\link{redist_map}} object.}
@@ -21,15 +21,17 @@ scorer_max_pct(map, group_pop, total_pop, k = 1)
 A single numeric value, wherel larger values are better.
 }
 \description{
-The output of these functions may be passed into `redist_shortburst()` as
-`score_fn`.
+The output of these functions may be passed into \code{redist_shortburst()} as
+\code{score_fn}.
 }
 \details{
 Function details:
-- `scorer_frackept` returns the fraction of edges kept in each district.
+\itemize{
+\item \code{scorer_frac_kept} returns the fraction of edges kept in each district.
 Higher values mean more compactness.
-- `scorer_rank_pct` returns the `k`-th top group percentage across districts.
-For example, if the group is Democratic voters and `k=3`, then the function
+\item \code{scorer_group_pct} returns the \code{k}-th top group percentage across districts.
+For example, if the group is Democratic voters and \code{k=3}, then the function
 returns the 3rd-highest fraction of Democratic voters across all districts.
-Can be used to target `k` VRA districts or partisan gerrymanders.
+Can be used to target \code{k} VRA districts or partisan gerrymanders.
+}
 }
