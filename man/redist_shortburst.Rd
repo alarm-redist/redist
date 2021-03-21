@@ -26,13 +26,13 @@ redist_shortburst(
 for each plan. Can also be a purrr-style anonymous function. See \code{\link{?scorers}}
 for some function factories for common scoring rules.}
 
-\item{stop_at}{a threshold to stop optimization at.}
+\item{stop_at}{A threshold to stop optimization at.}
 
 \item{burst_size}{The size of each burst. 10 is recommended.}
 
 \item{max_bursts}{The maximum number of bursts to run before returning.}
 
-\item{maximize}{if \code{TRUE}, try to maximize the score; otherwise, try to
+\item{maximize}{If \code{TRUE}, try to maximize the score; otherwise, try to
 minimize it.}
 
 \item{init_plan}{The initial state of the map. If not provided, will default to
@@ -55,7 +55,7 @@ value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if
 the algorithm does not appear to be sampling from the target distribution.
 Must be between 0 and 1.}
 
-\item{return_all}{whether to return all the
+\item{return_all}{Whether to return all the
 Recommended for monitoring purposes.}
 
 \item{verbose}{Whether to print out intermediate information while sampling.
