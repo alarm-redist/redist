@@ -5,6 +5,8 @@ vignette: >
   %\VignetteIndexEntry{Introduction to redist}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+resource_files:
+  - images/smc-schematic.png
 ---
 
 ```{r, include = FALSE}
@@ -246,7 +248,7 @@ most redistricting analyses.
 SMC creates plans directly, by drawing district boundaries one at a time, as
 illustrated below.
 
-![](../reference/figures/smc-schematic.png)
+![](images/smc-schematic.png)
 
 Because of the way districts are drawn in SMC, the generated districts are
 relatively compact by default.  This can be further controlled by the 

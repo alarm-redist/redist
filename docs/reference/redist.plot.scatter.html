@@ -106,7 +106,10 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
+      <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
+    </li>
+    <li>
+      <a href="../articles/mcmc.html">Redistricting with MCMC and RSG</a>
     </li>
     <li>
       <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
@@ -195,8 +198,10 @@ quantity to plot on the vertical axis.</p></td>
     <span class='fu'><a href='https://dplyr.tidyverse.org/reference/summarise.html'>summarize</a></span><span class='op'>(</span>pop_dev <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>max</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/MathFun.html'>abs</a></span><span class='op'>(</span><span class='va'>total_pop</span> <span class='op'>/</span> <span class='fu'><a href='https://rdrr.io/r/base/mean.html'>mean</a></span><span class='op'>(</span><span class='va'>total_pop</span><span class='op'>)</span> <span class='op'>-</span> <span class='fl'>1</span><span class='op'>)</span><span class='op'>)</span>,
               comp <span class='op'>=</span> <span class='va'>comp</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
     <span class='fu'>redist.plot.scatter</span><span class='op'>(</span><span class='va'>pop_dev</span>, <span class='va'>comp</span><span class='op'>)</span>
-</div><div class='img'><img src='redist.plot.scatter-1.png' alt='' width='700' height='433' /></div><div class='input'>
-</div></pre>
+</div><div class='output co'>#&gt; <span class='error'>Error: Problem with `mutate()` input `comp`.</span>
+#&gt; <span class='error'><span style='color: #BB0000;'>x</span><span> object 'iowa_plans' not found</span>
+#&gt; <span class='error'></span><span style='color: #0000BB;'>ℹ</span><span> Input `comp` is `distr_compactness(iowa)`.</span></div><div class='input'>
+</div></span></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
