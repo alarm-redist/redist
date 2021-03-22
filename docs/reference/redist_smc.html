@@ -171,6 +171,7 @@ boundary constraints.</p>
   truncate <span class='op'>=</span> <span class='op'>(</span><span class='va'>compactness</span> <span class='op'>!=</span> <span class='fl'>1</span><span class='op'>)</span>,
   trunc_fn <span class='op'>=</span> <span class='va'>redist_quantile_trunc</span>,
   pop_temper <span class='op'>=</span> <span class='fl'>0</span>,
+  ref_name <span class='op'>=</span> <span class='cn'>NULL</span>,
   verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
   silent <span class='op'>=</span> <span class='cn'>FALSE</span>
 <span class='op'>)</span>
@@ -270,6 +271,12 @@ rather than naive truncation.</p></td>
     <tr>
       <th>pop_temper</th>
       <td><p>The strength of the automatic population tempering.</p></td>
+    </tr>
+    <tr>
+      <th>ref_name</th>
+      <td><p>a name for the existing plan, which will be added as a
+reference plan, or <code>FALSE</code> to not include the initial plan in the
+output. Defaults to the column name of the existing plan.</p></td>
     </tr>
     <tr>
       <th>verbose</th>

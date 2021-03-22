@@ -137,7 +137,9 @@
 <code class="sourceCode R"><span class="va">fl25</span><span class="op">$</span><span class="va">id</span> <span class="op">&lt;-</span> <span class="fl">1</span><span class="op">:</span><span class="fl">25</span>
 <span class="va">fl25</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">12</span>,<span class="fl">13</span>,<span class="fl">1</span>,<span class="fl">14</span>,<span class="fl">15</span><span class="op">)</span>,<span class="op">]</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> 
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html">geom_sf</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span>
-  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html">geom_sf_label</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>label <span class="op">=</span> <span class="va">id</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html">geom_sf_label</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>label <span class="op">=</span> <span class="va">id</span><span class="op">)</span><span class="op">)</span>
+<span class="co">#&gt; Warning in st_point_on_surface.sfc(sf::st_zm(x)): st_point_on_surface may not</span>
+<span class="co">#&gt; give correct results for longitude/latitude data</span></code></pre></div>
 <p><img src="mcmc_files/figure-html/unnamed-chunk-4-1.png" width="480"></p>
 <p>Then, the 15th precinct by this numbering is connected to 1, 13, and 14. So, the adjacency list would be 1,13,14. 12, for example, would not be on this list, as it does not share a portion of a side with precinct 25.</p>
 <p>To make an adjacency list, we may use the packages <code>spdep</code> with function <code>poly2nb</code>. We use this function with <code>queen = FALSE</code>, as we want the rooks adjacency, not the queens adjacency, which would allow for if only corners touch, like on a chess board.</p>
@@ -173,7 +175,7 @@
 <p>Note that we do not need to specify <code>ndists</code> when we supply a different argument, <code>initcds</code>, which is the set of districts to initialize to. If we do not specific <code>initcds</code>, the <a href="#rsg">RSG</a> function is run to initialize districts. When tuning parameters, the <code>initcds</code> argument may be useful for ensuring diverse starting positions for different chains, though this is not typically necessary.</p>
 <p>We can specify <code>initcds</code>, for example, as the first column of the full enumeration in <code>algdat.pfull</code>.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span><span class="op">(</span><span class="st">'fl25_enum'</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span><span class="op">(</span><span class="va">fl25_enum</span><span class="op">)</span>
 <span class="va">init_plan</span> <span class="op">&lt;-</span> <span class="va">fl25_enum</span><span class="op">$</span><span class="va">plans</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span></code></pre></div>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">alg_mcmc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.mcmc.html">redist.mcmc</a></span><span class="op">(</span>adj <span class="op">=</span> <span class="va">adjlist</span>, total_pop <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span>,
@@ -195,11 +197,11 @@
 <p>For simple runs of the algorithm, the most important pieces of the output are <code>plans</code> and <code>distance_parity</code>. The <code>plans</code> object is a matrix with <code>ndist</code> rows and <code>nsims</code> columns. Each column is one redistricting plan, where the numbers go from 0 to n-1, with each number represents the district assignment.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">alg_mcmc</span><span class="op">$</span><span class="va">plans</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span>
-<span class="co">#&gt;  [1] 0 1 2 2 2 2 2 2 0 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2</span></code></pre></div>
+<span class="co">#&gt;  [1] 0 1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1 2 2 2 2</span></code></pre></div>
 <p>The <code>distance_parity</code> output provides the population parity of the districts as an array with <code>nsims</code> entries.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">alg_mcmc</span><span class="op">$</span><span class="va">distance_parity</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>
-<span class="co">#&gt; [1] 1.305439</span></code></pre></div>
+<span class="co">#&gt; [1] 1.449798</span></code></pre></div>
 <p>The additional outputs are useful for implementing the algorithm with constraints.</p>
 <p><a href="#top">Back to top</a></p>
 </div>
@@ -208,7 +210,7 @@
 <a href="#mpi" class="anchor"></a>Redistricting with MCMC using MPI</h1>
 <p>The running of this function is the same as in redist.mcmc, but it requires Rmpi installed.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="http://fisher.stats.uwo.ca/faculty/yu/Rmpi/">Rmpi</a></span><span class="op">)</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">Rmpi</span><span class="op">)</span>
 <span class="fu"><a href="../reference/redist.mcmc.mpi.html">redist.mcmc.mpi</a></span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">adjlist</span>, popvec <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span>,
                 nsims <span class="op">=</span> <span class="fl">10000</span>,  ndists <span class="op">=</span> <span class="fl">3</span>, savename <span class="op">=</span> <span class="st">"redist.mcmc.mpi"</span><span class="op">)</span></code></pre></div>
 <p>Outputs and usage are the same as in the <a href="#mcmc">MCMC Section</a>, but MPI will allow for much faster computation.</p>
@@ -248,181 +250,181 @@
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Starting swMH().</span>
 <span class="co">#&gt; 10 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.964965</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.966967</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 20 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.961981</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.958479</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 30 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.963988</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.959987</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 40 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.95974</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.96124</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 50 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.961392</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.964593</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 60 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.96066</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.963327</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 70 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.961566</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 80 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.96087</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 90 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.960662</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 100 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.960596</span>
-<span class="co">#&gt; Warning: 'adjobj' is deprecated.</span>
-<span class="co">#&gt; Use 'adj' instead.</span>
-<span class="co">#&gt; See help("Deprecated")</span>
-
-<span class="co">#&gt; Warning: 'popvec' is deprecated.</span>
-<span class="co">#&gt; Use 'total_pop' instead.</span>
-<span class="co">#&gt; See help("Deprecated")</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; ==================== </span>
-<span class="co">#&gt; redist.mcmc(): Automated Redistricting Simulation Using</span>
-<span class="co">#&gt;          Markov Chain Monte Carlo</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; Preprocessing data.</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; ==================== </span>
-<span class="co">#&gt; Using redist.rsg() to generate starting values.</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; Starting swMH().</span>
-<span class="co">#&gt; 10 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.955956</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 20 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.96048</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 30 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.962654</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 40 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.96049</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 50 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.962593</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 60 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.962827</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 70 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.963566</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 80 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.964371</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 90 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.963663</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 100 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.963696</span>
-<span class="co">#&gt; Warning: 'adjobj' is deprecated.</span>
-<span class="co">#&gt; Use 'adj' instead.</span>
-<span class="co">#&gt; See help("Deprecated")</span>
-
-<span class="co">#&gt; Warning: 'popvec' is deprecated.</span>
-<span class="co">#&gt; Use 'total_pop' instead.</span>
-<span class="co">#&gt; See help("Deprecated")</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; ==================== </span>
-<span class="co">#&gt; redist.mcmc(): Automated Redistricting Simulation Using</span>
-<span class="co">#&gt;          Markov Chain Monte Carlo</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; Preprocessing data.</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; ==================== </span>
-<span class="co">#&gt; Using redist.rsg() to generate starting values.</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; Starting swMH().</span>
-<span class="co">#&gt; 10 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.958959</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 20 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.961481</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 30 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.964321</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 40 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.966992</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 50 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.967193</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 60 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.966994</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 70 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.966995</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 80 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.966371</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 90 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.965996</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 100 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.965597</span>
-<span class="co">#&gt; Warning: 'adjobj' is deprecated.</span>
-<span class="co">#&gt; Use 'adj' instead.</span>
-<span class="co">#&gt; See help("Deprecated")</span>
-
-<span class="co">#&gt; Warning: 'popvec' is deprecated.</span>
-<span class="co">#&gt; Use 'total_pop' instead.</span>
-<span class="co">#&gt; See help("Deprecated")</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; ==================== </span>
-<span class="co">#&gt; redist.mcmc(): Automated Redistricting Simulation Using</span>
-<span class="co">#&gt;          Markov Chain Monte Carlo</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; Preprocessing data.</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; ==================== </span>
-<span class="co">#&gt; Using redist.rsg() to generate starting values.</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; Starting swMH().</span>
-<span class="co">#&gt; 10 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.968969</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 20 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.965483</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 30 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.964655</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 40 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.963491</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 50 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.963993</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 60 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.962494</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; 70 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.96328</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.964281</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 80 percent done.</span>
 <span class="co">#&gt; Metropolis acceptance ratio: 0.96387</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 90 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.964218</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.963663</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 100 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.964896</span></code></pre></div>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.963296</span>
+<span class="co">#&gt; Warning: 'adjobj' is deprecated.</span>
+<span class="co">#&gt; Use 'adj' instead.</span>
+<span class="co">#&gt; See help("Deprecated")</span>
+
+<span class="co">#&gt; Warning: 'popvec' is deprecated.</span>
+<span class="co">#&gt; Use 'total_pop' instead.</span>
+<span class="co">#&gt; See help("Deprecated")</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; ==================== </span>
+<span class="co">#&gt; redist.mcmc(): Automated Redistricting Simulation Using</span>
+<span class="co">#&gt;          Markov Chain Monte Carlo</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Preprocessing data.</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; ==================== </span>
+<span class="co">#&gt; Using redist.rsg() to generate starting values.</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Starting swMH().</span>
+<span class="co">#&gt; 10 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.967968</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 20 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.971986</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 30 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.969657</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 40 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.969742</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 50 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.970394</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 60 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.970495</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 70 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.967853</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 80 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.966621</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 90 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.967107</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 100 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.966097</span>
+<span class="co">#&gt; Warning: 'adjobj' is deprecated.</span>
+<span class="co">#&gt; Use 'adj' instead.</span>
+<span class="co">#&gt; See help("Deprecated")</span>
+
+<span class="co">#&gt; Warning: 'popvec' is deprecated.</span>
+<span class="co">#&gt; Use 'total_pop' instead.</span>
+<span class="co">#&gt; See help("Deprecated")</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; ==================== </span>
+<span class="co">#&gt; redist.mcmc(): Automated Redistricting Simulation Using</span>
+<span class="co">#&gt;          Markov Chain Monte Carlo</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Preprocessing data.</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; ==================== </span>
+<span class="co">#&gt; Using redist.rsg() to generate starting values.</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Starting swMH().</span>
+<span class="co">#&gt; 10 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.953954</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 20 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.958979</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 30 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.955652</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 40 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.956989</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 50 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.958792</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 60 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.960993</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 70 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.960709</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 80 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.959995</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 90 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.959884</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 100 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.960696</span>
+<span class="co">#&gt; Warning: 'adjobj' is deprecated.</span>
+<span class="co">#&gt; Use 'adj' instead.</span>
+<span class="co">#&gt; See help("Deprecated")</span>
+
+<span class="co">#&gt; Warning: 'popvec' is deprecated.</span>
+<span class="co">#&gt; Use 'total_pop' instead.</span>
+<span class="co">#&gt; See help("Deprecated")</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; ==================== </span>
+<span class="co">#&gt; redist.mcmc(): Automated Redistricting Simulation Using</span>
+<span class="co">#&gt;          Markov Chain Monte Carlo</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Preprocessing data.</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; ==================== </span>
+<span class="co">#&gt; Using redist.rsg() to generate starting values.</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Starting swMH().</span>
+<span class="co">#&gt; 10 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.960961</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 20 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.96098</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 30 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.96032</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 40 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.96074</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 50 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.960392</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 60 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.960827</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 70 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.960137</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 80 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.95987</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 90 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.960662</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; 100 percent done.</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.960496</span></code></pre></div>
 <p>In unix-based systems, this can be run considerably faster by running this in parallel.</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">mcmc_chains</span> <span class="op">&lt;-</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/mcdummies.html">mclapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">nchains</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">{</span>
+<code class="sourceCode R"><span class="va">mcmc_chains</span> <span class="op">&lt;-</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/mclapply.html">mclapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">nchains</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">{</span>
           <span class="fu"><a href="../reference/redist.mcmc.html">redist.mcmc</a></span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">adjlist</span>,  popvec <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span>, 
                       nsims <span class="op">=</span> <span class="va">nsims</span>, ndists <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>
 <span class="op">}</span>, mc.set.seed <span class="op">=</span> <span class="fl">1</span>, mc.cores <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html">detectCores</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
@@ -445,22 +447,22 @@
 <p>The output of <code>redist.rsg</code> is a list with three objects. <code>district_membership</code> provides a numeric array with indices for which district each precinct belongs to.</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">rsg</span><span class="op">$</span><span class="va">plan</span>
-<span class="co">#&gt;  [1] 1 1 2 2 0 2 0 0 2 1 1 1 1 2 2 1 0 1 0 0 2 0 2 0 0</span></code></pre></div>
+<span class="co">#&gt;  [1] 0 0 0 0 1 2 1 1 2 1 1 0 0 2 2 2 2 2 0 0 2 0 2 1 0</span></code></pre></div>
 <p><code>district_list</code> will provide an alternate formulation of this with <code>ndists</code> arrays, indicating which precincts are in each district.</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">rsg</span><span class="op">$</span><span class="va">district_list</span>
 <span class="co">#&gt; [[1]]</span>
-<span class="co">#&gt; [1] 19  7  6 23  4 21 24 18 16</span>
+<span class="co">#&gt;  [1] 19  3 18  1 21  0 12  2 24 11</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; [[2]]</span>
-<span class="co">#&gt; [1]  0 12 11  1 10 17 15  9</span>
+<span class="co">#&gt; [1] 10  9  7  6  4 23</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; [[3]]</span>
-<span class="co">#&gt; [1]  5 22  2  8  3 13 14 20</span></code></pre></div>
+<span class="co">#&gt; [1] 14 13  8  5 22 20 17 15 16</span></code></pre></div>
 <p>Corresponding to this, <code>district_pop</code> will give the district population for each of the <code>ndists</code> districts.</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">rsg</span><span class="op">$</span><span class="va">district_pop</span>
-<span class="co">#&gt; [1] 59125 56965 58953</span></code></pre></div>
+<span class="co">#&gt; [1] 56287 59124 59632</span></code></pre></div>
 <p><a href="#top">Back to top</a></p>
 </div>
 <div id="seg" class="section level1">
@@ -469,7 +471,7 @@
 <p>To evaluate redistricting plans, the <code>redist</code> package comes with the <code>redist.segcalc</code> function. This computes the segregation index introduced in Massey and Denton 1987.</p>
 <p>It takes three arguments, <code>algout</code>, which is a <code>redist</code> object from the various <code>mcmc</code> function or <code>rsg</code> function, <code>grouppop</code> which is the population of the group being used for comparison, and <code>fullpop</code> is the total population of the precinct.</p>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">seg</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.segcalc.html">redist.segcalc</a></span><span class="op">(</span>algout <span class="op">=</span> <span class="va">alg_mcmc</span>, group_pop <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">BlackPop</span>,
+<code class="sourceCode R"><span class="va">seg</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/segregation_index.html">redist.segcalc</a></span><span class="op">(</span>algout <span class="op">=</span> <span class="va">alg_mcmc</span>, group_pop <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">BlackPop</span>,
                       total_pop <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span><span class="op">)</span>
 <span class="co">#&gt; Warning: 'algout' is deprecated.</span>
 <span class="co">#&gt; Use 'plans' instead.</span>
@@ -506,7 +508,7 @@
 <p>The final plot requires at least two chains.</p>
 <div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">seg_chains</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">nchains</span>, 
-                     <span class="kw">function</span><span class="op">(</span><span class="va">i</span><span class="op">)</span><span class="op">{</span><span class="fu"><a href="../reference/redist.segcalc.html">redist.segcalc</a></span><span class="op">(</span>algout <span class="op">=</span> <span class="va">mcmc_chains</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>, 
+                     <span class="kw">function</span><span class="op">(</span><span class="va">i</span><span class="op">)</span><span class="op">{</span><span class="fu"><a href="../reference/segregation_index.html">redist.segcalc</a></span><span class="op">(</span>algout <span class="op">=</span> <span class="va">mcmc_chains</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>, 
                                   group_pop <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">BlackPop</span>,
                                   total_pop <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span><span class="op">)</span><span class="op">}</span><span class="op">)</span>
 <span class="co">#&gt; Warning: 'algout' is deprecated.</span>

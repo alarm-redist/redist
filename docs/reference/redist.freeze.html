@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Freeze Parts of a Map — redist.freeze • redist</title>
+<title>Freeze Parts of a Map — freeze • redist</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,7 +46,7 @@
 
 
 
-<meta property="og:title" content="Freeze Parts of a Map — redist.freeze" />
+<meta property="og:title" content="Freeze Parts of a Map — freeze" />
 <meta property="og:description" content="Freeze Parts of a Map" />
 <meta property="og:image" content="/logo.png" />
 
@@ -152,17 +152,13 @@
     <p>Freeze Parts of a Map</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.freeze</span><span class='op'>(</span><span class='va'>adj</span>, <span class='va'>freeze_row</span>, plan <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fl'>1</span>, <span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span><span class='op'>(</span><span class='va'>adj</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
+    <pre class="usage"><span class='fu'>freeze</span><span class='op'>(</span><span class='va'>freeze_row</span>, <span class='va'>plan</span>, .data <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/exists.html'>get0</a></span><span class='op'>(</span><span class='st'>"."</span>, <span class='fu'><a href='https://rdrr.io/r/base/sys.parent.html'>parent.frame</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
 
-<span class='fu'>freeze</span><span class='op'>(</span><span class='va'>freeze_row</span>, <span class='va'>plan</span>, .data <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/exists.html'>get0</a></span><span class='op'>(</span><span class='st'>"."</span>, <span class='fu'><a href='https://rdrr.io/r/base/sys.parent.html'>parent.frame</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span></pre>
+<span class='fu'>redist.freeze</span><span class='op'>(</span><span class='va'>adj</span>, <span class='va'>freeze_row</span>, plan <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fl'>1</span>, <span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span><span class='op'>(</span><span class='va'>adj</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>adj</th>
-      <td><p>Required, zero indexed adjacency list.</p></td>
-    </tr>
     <tr>
       <th>freeze_row</th>
       <td><p>Required, logical vector where TRUE freezes and FALSE lets
@@ -177,6 +173,10 @@ existing plan, if one exists.</p></td>
     <tr>
       <th>.data</th>
       <td><p>a <code><a href='redist_map.html'>redist_map</a></code> object</p></td>
+    </tr>
+    <tr>
+      <th>adj</th>
+      <td><p>Required, zero indexed adjacency list.</p></td>
     </tr>
     </table>
 

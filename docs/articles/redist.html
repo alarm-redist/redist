@@ -193,28 +193,28 @@
 <span class="co">#&gt; bbox:           xmin: 4081849 ymin: 2879102 xmax: 5834228 ymax: 4024957</span>
 <span class="co">#&gt; projected CRS:  NAD83(HARN) / Iowa North (ftUS)</span>
 <span class="co">#&gt; First 10 features:</span>
-<span class="co">#&gt;     fips       name cd    pop  white black hisp    vap  wvap bvap hvap tot_08</span>
-<span class="co">#&gt; 1  19001      Adair  3   7682   7507    11  101   5957  5860    5   53   4053</span>
-<span class="co">#&gt; 2  19003      Adams  3   4029   3922     8   37   3180  3109    6   22   2206</span>
-<span class="co">#&gt; 3  19005  Allamakee  1  14330  13325   109  757  11020 10430   82  425   7059</span>
-<span class="co">#&gt; 4  19007  Appanoose  2  12887  12470    55  181   9993  9745   40   99   6176</span>
-<span class="co">#&gt; 5  19009    Audubon  4   6119   6007     9   37   4780  4714    5   27   3435</span>
-<span class="co">#&gt; 6  19011     Benton  1  26076  25387    93  275  19430 19068   49  155  13712</span>
-<span class="co">#&gt; 7  19013 Black Hawk  1 131090 109968 11493 4907 102594 89541 7677 2865  64775</span>
-<span class="co">#&gt; 8  19015      Boone  4  26306  25194   202  505  20027 19448  103  260  13929</span>
-<span class="co">#&gt; 9  19017     Bremer  1  24276  23459   186  239  18763 18242  155  137  12871</span>
-<span class="co">#&gt; 10 19019   Buchanan  1  20958  20344    59  243  15282 14979   32  128  10338</span>
-<span class="co">#&gt;    dem_08 rep_08                       geometry</span>
-<span class="co">#&gt; 1    1924   2060 MULTIPOLYGON (((4592338 328...</span>
-<span class="co">#&gt; 2    1118   1046 MULTIPOLYGON (((4528041 315...</span>
-<span class="co">#&gt; 3    3971   2965 MULTIPOLYGON (((5422507 401...</span>
-<span class="co">#&gt; 4    2970   3086 MULTIPOLYGON (((5032545 306...</span>
-<span class="co">#&gt; 5    1739   1634 MULTIPOLYGON (((4487363 341...</span>
-<span class="co">#&gt; 6    7058   6447 MULTIPOLYGON (((5246216 357...</span>
-<span class="co">#&gt; 7   39184  24662 MULTIPOLYGON (((5175640 369...</span>
-<span class="co">#&gt; 8    7356   6293 MULTIPOLYGON (((4741174 354...</span>
-<span class="co">#&gt; 9    6940   5741 MULTIPOLYGON (((5174636 379...</span>
-<span class="co">#&gt; 10   6050   4139 MULTIPOLYGON (((5302846 370...</span></code></pre></div>
+<span class="co">#&gt;     fips       name cd_2010    pop  white black hisp    vap  wvap bvap hvap</span>
+<span class="co">#&gt; 1  19001      Adair       3   7682   7507    11  101   5957  5860    5   53</span>
+<span class="co">#&gt; 2  19003      Adams       3   4029   3922     8   37   3180  3109    6   22</span>
+<span class="co">#&gt; 3  19005  Allamakee       1  14330  13325   109  757  11020 10430   82  425</span>
+<span class="co">#&gt; 4  19007  Appanoose       2  12887  12470    55  181   9993  9745   40   99</span>
+<span class="co">#&gt; 5  19009    Audubon       4   6119   6007     9   37   4780  4714    5   27</span>
+<span class="co">#&gt; 6  19011     Benton       1  26076  25387    93  275  19430 19068   49  155</span>
+<span class="co">#&gt; 7  19013 Black Hawk       1 131090 109968 11493 4907 102594 89541 7677 2865</span>
+<span class="co">#&gt; 8  19015      Boone       4  26306  25194   202  505  20027 19448  103  260</span>
+<span class="co">#&gt; 9  19017     Bremer       1  24276  23459   186  239  18763 18242  155  137</span>
+<span class="co">#&gt; 10 19019   Buchanan       1  20958  20344    59  243  15282 14979   32  128</span>
+<span class="co">#&gt;    tot_08 dem_08 rep_08                       geometry</span>
+<span class="co">#&gt; 1    4053   1924   2060 MULTIPOLYGON (((4592338 328...</span>
+<span class="co">#&gt; 2    2206   1118   1046 MULTIPOLYGON (((4528041 315...</span>
+<span class="co">#&gt; 3    7059   3971   2965 MULTIPOLYGON (((5422507 401...</span>
+<span class="co">#&gt; 4    6176   2970   3086 MULTIPOLYGON (((5032545 306...</span>
+<span class="co">#&gt; 5    3435   1739   1634 MULTIPOLYGON (((4487363 341...</span>
+<span class="co">#&gt; 6   13712   7058   6447 MULTIPOLYGON (((5246216 357...</span>
+<span class="co">#&gt; 7   64775  39184  24662 MULTIPOLYGON (((5175640 369...</span>
+<span class="co">#&gt; 8   13929   7356   6293 MULTIPOLYGON (((4741174 354...</span>
+<span class="co">#&gt; 9   12871   6940   5741 MULTIPOLYGON (((5174636 379...</span>
+<span class="co">#&gt; 10  10338   6050   4139 MULTIPOLYGON (((5302846 370...</span></code></pre></div>
 </div>
 </div>
 <div id="define" class="section level1">
@@ -249,7 +249,7 @@
 </h2>
 <p>In <code>redist</code>, a basic redistricting problem is defined by an object of type <code>redist_map</code>, which can be constructed using the eponymous function. The user must provide a vector of population counts (defaults to the <code>pop</code> column, if one exists) and the desired population parity, and the number of districts. The latter can be inferred if a reference redistricting plan exists. For Iowa, we’ll use the adopted 2010 plan as a reference.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">iowa_map</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan<span class="op">=</span><span class="va">cd</span>, pop_tol<span class="op">=</span><span class="fl">0.01</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">iowa_map</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan<span class="op">=</span><span class="va">cd_2010</span>, pop_tol<span class="op">=</span><span class="fl">0.01</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span>
 <span class="co">#&gt; A redist_map object with 99 units and 16 fields</span>
 <span class="co">#&gt; To be partitioned into 4 districts with population between 761,588.8 - 1.0% and 761,588.8 + 1.0%</span>
@@ -257,18 +257,18 @@
 <span class="co">#&gt;     bbox:           xmin: 4081849 ymin: 2879102 xmax: 5834228 ymax: 4024957</span>
 <span class="co">#&gt;     projected CRS:  NAD83(HARN) / Iowa North (ftUS)</span>
 <span class="co">#&gt; # A tibble: 99 x 16</span>
-<span class="co">#&gt;    fips  name       cd    pop  white black  hisp    vap  wvap  bvap  hvap tot_08</span>
+<span class="co">#&gt;    fips  name  cd_2010    pop  white black  hisp    vap  wvap  bvap  hvap tot_08</span>
 <span class="co">#&gt;  * &lt;chr&gt; &lt;chr&gt;   &lt;int&gt;  &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;</span>
 <span class="co">#&gt;  1 19001 Adair       3   7682   7507    11   101   5957  5860     5    53   4053</span>
 <span class="co">#&gt;  2 19003 Adams       3   4029   3922     8    37   3180  3109     6    22   2206</span>
-<span class="co">#&gt;  3 19005 Allama…     1  14330  13325   109   757  11020 10430    82   425   7059</span>
-<span class="co">#&gt;  4 19007 Appano…     2  12887  12470    55   181   9993  9745    40    99   6176</span>
-<span class="co">#&gt;  5 19009 Audubon     4   6119   6007     9    37   4780  4714     5    27   3435</span>
-<span class="co">#&gt;  6 19011 Benton      1  26076  25387    93   275  19430 19068    49   155  13712</span>
-<span class="co">#&gt;  7 19013 Black …     1 131090 109968 11493  4907 102594 89541  7677  2865  64775</span>
+<span class="co">#&gt;  3 19005 Alla…       1  14330  13325   109   757  11020 10430    82   425   7059</span>
+<span class="co">#&gt;  4 19007 Appa…       2  12887  12470    55   181   9993  9745    40    99   6176</span>
+<span class="co">#&gt;  5 19009 Audu…       4   6119   6007     9    37   4780  4714     5    27   3435</span>
+<span class="co">#&gt;  6 19011 Bent…       1  26076  25387    93   275  19430 19068    49   155  13712</span>
+<span class="co">#&gt;  7 19013 Blac…       1 131090 109968 11493  4907 102594 89541  7677  2865  64775</span>
 <span class="co">#&gt;  8 19015 Boone       4  26306  25194   202   505  20027 19448   103   260  13929</span>
-<span class="co">#&gt;  9 19017 Bremer      1  24276  23459   186   239  18763 18242   155   137  12871</span>
-<span class="co">#&gt; 10 19019 Buchan…     1  20958  20344    59   243  15282 14979    32   128  10338</span>
+<span class="co">#&gt;  9 19017 Brem…       1  24276  23459   186   239  18763 18242   155   137  12871</span>
+<span class="co">#&gt; 10 19019 Buch…       1  20958  20344    59   243  15282 14979    32   128  10338</span>
 <span class="co">#&gt; # … with 89 more rows, and 4 more variables: dem_08 &lt;dbl&gt;, rep_08 &lt;dbl&gt;,</span>
 <span class="co">#&gt; #   geometry &lt;MULTIPOLYGON [US_survey_foot]&gt;, adj &lt;list&gt;</span></code></pre></div>
 <p>This looks much the same as <code>iowa</code> itself, but metadata has been added, and there’s a new column, <code>adj</code>.</p>
@@ -287,7 +287,7 @@
 <h2 class="hasAnchor">
 <a href="#pre-processing" class="anchor"></a>Pre-processing</h2>
 <p>Often, we want to only analyze a portion of a map, or hold some districts fixed while others are re-simulated. We may also want to implement a status-quo-type constraint that encourages simulated districts to be close to a reference plan. This can be accomplished by freezing the “cores” of each district.</p>
-<p>All of these operations fall under the umbrella of map pre-processing, and <code>redist</code> is well-equipped to handle them. You can use familiar <code>dplyr</code> verbs like <code><a href="https://dplyr.tidyverse.org/reference/filter.html">filter()</a></code> and <code><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize()</a></code>, along with new <code>redist</code> operations like <code><a href="../reference/redist.freeze.html">freeze()</a></code>, <code><a href="../reference/make_cores.html">make_cores()</a></code>, and <code><a href="../reference/merge_by.html">merge_by()</a></code>, to operate on <code>redist_map</code> objects. The package will make the appropriate modifications to the geometry and adjacency graph in the background.</p>
+<p>All of these operations fall under the umbrella of map pre-processing, and <code>redist</code> is well-equipped to handle them. You can use familiar <code>dplyr</code> verbs like <code><a href="https://dplyr.tidyverse.org/reference/filter.html">filter()</a></code> and <code><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize()</a></code>, along with new <code>redist</code> operations like <code><a href="../reference/freeze.html">freeze()</a></code>, <code><a href="../reference/make_cores.html">make_cores()</a></code>, and <code><a href="../reference/merge_by.html">merge_by()</a></code>, to operate on <code>redist_map</code> objects. The package will make the appropriate modifications to the geometry and adjacency graph in the background.</p>
 <p>The <a href="map-preproc.html">map pre-processing vignette</a> contains more information and examples about these operations.</p>
 </div>
 <div id="exploring-the-geography" class="section level2">
@@ -334,8 +334,8 @@
 <span class="co">#&gt; Iteration    800 / 1000</span>
 <span class="co">#&gt; Iteration    900 / 1000</span>
 <span class="co">#&gt; Iteration   1000 / 1000</span>
-<span class="co">#&gt; 13.9% acceptance rate.</span>
-<span class="co">#&gt; Resampling effective sample size: 982.3 (98.2% efficiency).</span>
+<span class="co">#&gt; 14.1% acceptance rate.</span>
+<span class="co">#&gt; Resampling effective sample size: 981.2 (98.1% efficiency).</span>
 <span class="co">#&gt; Making split 2 of 3</span>
 <span class="co">#&gt; Using k = 2</span>
 <span class="co">#&gt; Iteration    100 / 1000</span>
@@ -348,8 +348,8 @@
 <span class="co">#&gt; Iteration    800 / 1000</span>
 <span class="co">#&gt; Iteration    900 / 1000</span>
 <span class="co">#&gt; Iteration   1000 / 1000</span>
-<span class="co">#&gt; 14.1% acceptance rate.</span>
-<span class="co">#&gt; Resampling effective sample size: 953.7 (95.4% efficiency).</span>
+<span class="co">#&gt; 13.7% acceptance rate.</span>
+<span class="co">#&gt; Resampling effective sample size: 960.5 (96.1% efficiency).</span>
 <span class="co">#&gt; Making split 3 of 3</span>
 <span class="co">#&gt; Using k = 2</span>
 <span class="co">#&gt; Iteration    100 / 1000</span>
@@ -362,30 +362,30 @@
 <span class="co">#&gt; Iteration    800 / 1000</span>
 <span class="co">#&gt; Iteration    900 / 1000</span>
 <span class="co">#&gt; Iteration   1000 / 1000</span>
-<span class="co">#&gt; 4.4% acceptance rate.</span>
-<span class="co">#&gt; Resampling effective sample size: 953.7 (95.4% efficiency).</span></code></pre></div>
+<span class="co">#&gt; 4.6% acceptance rate.</span>
+<span class="co">#&gt; Resampling effective sample size: 948.6 (94.9% efficiency).</span></code></pre></div>
 <p>By default, <code><a href="../reference/redist_smc.html">redist_smc()</a></code> prints a good deal of diagnostic information. While verbose, it is important to monitor this output to ensure the algorithm is working properly. The key number to keep an eye on is the <em>resampling effective sample size</em>/<em>resampling efficiency</em>. This number should be as close to the nominal sample size (100%) as possible, and values less than 5–10% generally indicate problems—constraints which are too strong or difficult to satisfy. Here, the resampling efficiencies are above 90% at each stage, which is excellent.</p>
-<p>The output from the algorithm is a <code>redist_plans</code> object, which stores a matrix of district assignments for each precinct and simulated plans, and a table of summary statistics for each district and simulated plan.</p>
+<p>The output from the algorithm is a <code>redist_plans</code> object, which stores a matrix of district assignments for each precinct and simulated plans, and a table of summary statistics for each district and simulated plan. The existing 2010 plan has also been automatically added as a reference plan. Additional reference or comparison plans may be added using <code><a href="../reference/add_reference.html">add_reference()</a></code>.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">iowa_plans</span><span class="op">)</span>
-<span class="co">#&gt; 1000 sampled plans with 4 districts from a 99-unit map,</span>
+<span class="co">#&gt; 1000 sampled plans and 1 reference plan with 4 districts from a 99-unit map,</span>
 <span class="co">#&gt;   drawn using Sequential Monte Carlo</span>
 <span class="co">#&gt; With plans resampled from weights</span>
-<span class="co">#&gt; Plans matrix: num [1:99, 1:1000] 1 1 3 1 3 4 3 2 4 4 ...</span>
-<span class="co">#&gt; # A tibble: 4,000 x 3</span>
-<span class="co">#&gt;    draw  district total_pop</span>
-<span class="co">#&gt;  * &lt;fct&gt;    &lt;int&gt;     &lt;dbl&gt;</span>
-<span class="co">#&gt;  1 1            1    756511</span>
-<span class="co">#&gt;  2 1            2    762438</span>
-<span class="co">#&gt;  3 1            3    760607</span>
-<span class="co">#&gt;  4 1            4    766799</span>
-<span class="co">#&gt;  5 2            1    756619</span>
-<span class="co">#&gt;  6 2            2    760868</span>
-<span class="co">#&gt;  7 2            3    763149</span>
-<span class="co">#&gt;  8 2            4    765719</span>
-<span class="co">#&gt;  9 3            1    766526</span>
-<span class="co">#&gt; 10 3            2    759601</span>
-<span class="co">#&gt; # … with 3,990 more rows</span></code></pre></div>
+<span class="co">#&gt; Plans matrix: num [1:99, 1:1001] 3 3 1 2 4 1 1 4 1 1 ...</span>
+<span class="co">#&gt; # A tibble: 4,004 x 3</span>
+<span class="co">#&gt;    draw    district total_pop</span>
+<span class="co">#&gt;    &lt;fct&gt;      &lt;int&gt;     &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 cd_2010        1    761548</span>
+<span class="co">#&gt;  2 cd_2010        2    761624</span>
+<span class="co">#&gt;  3 cd_2010        3    761612</span>
+<span class="co">#&gt;  4 cd_2010        4    761571</span>
+<span class="co">#&gt;  5 1              1    759658</span>
+<span class="co">#&gt;  6 1              2    759171</span>
+<span class="co">#&gt;  7 1              3    759309</span>
+<span class="co">#&gt;  8 1              4    768217</span>
+<span class="co">#&gt;  9 2              1    763427</span>
+<span class="co">#&gt; 10 2              2    759764</span>
+<span class="co">#&gt; # … with 3,994 more rows</span></code></pre></div>
 <p>We can explore specific simulated plans with <code><a href="../reference/redist.plot.plans.html">redist.plot.plans()</a></code>.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/redist.plot.plans.html">redist.plot.plans</a></span><span class="op">(</span><span class="va">iowa_plans</span>, draws<span class="op">=</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span>, geom<span class="op">=</span><span class="va">iowa_map</span><span class="op">)</span></code></pre></div>
@@ -395,36 +395,34 @@
 <h1 class="hasAnchor">
 <a href="#analyze" class="anchor"></a>Analyzing the simulated plans</h1>
 <p>A <code>redist_plans</code> object, the output of a sampling algorithm, links a matrix of precinct assignments to a table of district statistics, and this linkage makes analyzing the output a breeze.</p>
-<p>The first step is generally to add a reference plan to a set of redistricting plans so that the reference can be compared to the simulated baseline. In problems with a small (generally fewer than 7) number of districts, it may also be possible to renumber the simulated districts (which have random numbers in general) to match the reference plan as closely as possible. This adds a <code>pop_overlap</code> column which measures how much of the population is in the same district in both a given plan and the reference plan.</p>
+<p>In problems with a small (generally fewer than 7) number of districts, it may be possible to renumber the simulated districts (which have random numbers in general) to match the reference plan as closely as possible. This adds a <code>pop_overlap</code> column which measures how much of the population is in the same district in both a given plan and the reference plan.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">iowa_plans</span> <span class="op">=</span> <span class="fu"><a href="../reference/add_reference.html">add_reference</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">iowa_map</span><span class="op">$</span><span class="va">cd</span>, <span class="st">"2010 Adopted"</span><span class="op">)</span> <span class="op">%&gt;%</span>
-    <span class="fu"><a href="../reference/match_numbers.html">match_numbers</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">$</span><span class="va">cd</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">iowa_plans</span> <span class="op">=</span> <span class="fu"><a href="../reference/match_numbers.html">match_numbers</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">iowa_map</span><span class="op">$</span><span class="va">cd_2010</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">iowa_plans</span><span class="op">)</span>
 <span class="co">#&gt; 1000 sampled plans and 1 reference plan with 4 districts from a 99-unit map,</span>
 <span class="co">#&gt;   drawn using Sequential Monte Carlo</span>
 <span class="co">#&gt; With plans resampled from weights</span>
 <span class="co">#&gt; Plans matrix: int [1:99, 1:1001] 3 3 1 2 4 1 1 4 1 1 ...</span>
 <span class="co">#&gt; # A tibble: 4,004 x 4</span>
-<span class="co">#&gt;    draw         district total_pop pop_overlap</span>
-<span class="co">#&gt;    &lt;fct&gt;        &lt;ord&gt;        &lt;dbl&gt;       &lt;dbl&gt;</span>
-<span class="co">#&gt;  1 2010 Adopted 1           761548       1    </span>
-<span class="co">#&gt;  2 2010 Adopted 2           761624       1    </span>
-<span class="co">#&gt;  3 2010 Adopted 3           761612       1    </span>
-<span class="co">#&gt;  4 2010 Adopted 4           761571       1    </span>
-<span class="co">#&gt;  5 1            1           766799       0.670</span>
-<span class="co">#&gt;  6 1            2           756511       0.670</span>
-<span class="co">#&gt;  7 1            3           762438       0.670</span>
-<span class="co">#&gt;  8 1            4           760607       0.670</span>
-<span class="co">#&gt;  9 2            1           763149       0.658</span>
-<span class="co">#&gt; 10 2            2           760868       0.658</span>
+<span class="co">#&gt;    draw    district total_pop pop_overlap</span>
+<span class="co">#&gt;    &lt;fct&gt;   &lt;ord&gt;        &lt;dbl&gt;       &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 cd_2010 1           761548       1    </span>
+<span class="co">#&gt;  2 cd_2010 2           761624       1    </span>
+<span class="co">#&gt;  3 cd_2010 3           761612       1    </span>
+<span class="co">#&gt;  4 cd_2010 4           761571       1    </span>
+<span class="co">#&gt;  5 1       1           759171       0.489</span>
+<span class="co">#&gt;  6 1       2           759309       0.489</span>
+<span class="co">#&gt;  7 1       3           768217       0.489</span>
+<span class="co">#&gt;  8 1       4           759658       0.489</span>
+<span class="co">#&gt;  9 2       1           766153       0.694</span>
+<span class="co">#&gt; 10 2       2           763427       0.694</span>
 <span class="co">#&gt; # … with 3,994 more rows</span></code></pre></div>
 <p>Then we can add summary statistics by district, using <code>redist</code>’s analysis functions. Here, we’ll compute the population deviation, the perimeter-based compactness measure related to the Iowa Code’s redistricting requirements, and the fraction of minority voters and two-party Democratic vote share by district.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">target_pop</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">$</span><span class="va">pop</span><span class="op">)</span> <span class="op">/</span> <span class="fl">4</span>
-<span class="va">county_perims</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist.prep.polsbypopper.html">redist.prep.polsbypopper</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">iowa_map</span><span class="op">$</span><span class="va">adj</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">county_perims</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist.prep.polsbypopper.html">redist.prep.polsbypopper</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">iowa_map</span><span class="op">$</span><span class="va">adj</span><span class="op">)</span>
 
 <span class="va">iowa_plans</span> <span class="op">=</span> <span class="va">iowa_plans</span> <span class="op">%&gt;%</span>
-    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>pop_dev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html">abs</a></span><span class="op">(</span><span class="va">total_pop</span> <span class="op">/</span> <span class="va">target_pop</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span>,
+    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>pop_dev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html">abs</a></span><span class="op">(</span><span class="va">total_pop</span> <span class="op">/</span> <span class="fu"><a href="../reference/get_target.html">get_target</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span>,
            comp <span class="op">=</span> <span class="fu"><a href="../reference/distr_compactness.html">distr_compactness</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="st">"PolsbyPopper"</span>, perim_df<span class="op">=</span><span class="va">county_perims</span><span class="op">)</span>,
            pct_min <span class="op">=</span> <span class="fu"><a href="../reference/group_frac.html">group_frac</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">vap</span> <span class="op">-</span> <span class="va">wvap</span>, <span class="va">vap</span><span class="op">)</span>,
            pct_dem <span class="op">=</span> <span class="fu"><a href="../reference/group_frac.html">group_frac</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">dem_08</span>, <span class="va">dem_08</span> <span class="op">+</span> <span class="va">rep_08</span><span class="op">)</span><span class="op">)</span>
@@ -434,18 +432,18 @@
 <span class="co">#&gt; With plans resampled from weights</span>
 <span class="co">#&gt; Plans matrix: int [1:99, 1:1001] 3 3 1 2 4 1 1 4 1 1 ...</span>
 <span class="co">#&gt; # A tibble: 4,004 x 8</span>
-<span class="co">#&gt;    draw         district total_pop pop_overlap   pop_dev  comp pct_min pct_dem</span>
-<span class="co">#&gt;    &lt;fct&gt;        &lt;ord&gt;        &lt;dbl&gt;       &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;</span>
-<span class="co">#&gt;  1 2010 Adopted 1           761548       1     0.0000535 0.302  0.0737   0.592</span>
-<span class="co">#&gt;  2 2010 Adopted 2           761624       1     0.0000463 0.360  0.0968   0.579</span>
-<span class="co">#&gt;  3 2010 Adopted 3           761612       1     0.0000305 0.529  0.114    0.531</span>
-<span class="co">#&gt;  4 2010 Adopted 4           761571       1     0.0000233 0.522  0.0788   0.491</span>
-<span class="co">#&gt;  5 1            1           766799       0.670 0.00684   0.439  0.0798   0.588</span>
-<span class="co">#&gt;  6 1            2           756511       0.670 0.00667   0.301  0.0737   0.545</span>
-<span class="co">#&gt;  7 1            3           762438       0.670 0.00112   0.387  0.129    0.552</span>
-<span class="co">#&gt;  8 1            4           760607       0.670 0.00129   0.262  0.0813   0.507</span>
-<span class="co">#&gt;  9 2            1           763149       0.658 0.00205   0.381  0.0724   0.590</span>
-<span class="co">#&gt; 10 2            2           760868       0.658 0.000946  0.372  0.106    0.590</span>
+<span class="co">#&gt;    draw    district total_pop pop_overlap   pop_dev  comp pct_min pct_dem</span>
+<span class="co">#&gt;    &lt;fct&gt;   &lt;ord&gt;        &lt;dbl&gt;       &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 cd_2010 1           761548       1     0.0000535 0.302  0.0737   0.592</span>
+<span class="co">#&gt;  2 cd_2010 2           761624       1     0.0000463 0.360  0.0968   0.579</span>
+<span class="co">#&gt;  3 cd_2010 3           761612       1     0.0000305 0.529  0.114    0.531</span>
+<span class="co">#&gt;  4 cd_2010 4           761571       1     0.0000233 0.522  0.0788   0.491</span>
+<span class="co">#&gt;  5 1       1           759171       0.489 0.00317   0.545  0.0734   0.558</span>
+<span class="co">#&gt;  6 1       2           759309       0.489 0.00299   0.446  0.0928   0.615</span>
+<span class="co">#&gt;  7 1       3           768217       0.489 0.00870   0.333  0.123    0.561</span>
+<span class="co">#&gt;  8 1       4           759658       0.489 0.00254   0.356  0.0738   0.455</span>
+<span class="co">#&gt;  9 2       1           766153       0.694 0.00599   0.406  0.0648   0.589</span>
+<span class="co">#&gt; 10 2       2           763427       0.694 0.00241   0.223  0.105    0.592</span>
 <span class="co">#&gt; # … with 3,994 more rows</span></code></pre></div>
 <p>From there, it’s quick to turn these into plan-level summary statistics.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
@@ -460,18 +458,18 @@
 <span class="co">#&gt; With plans resampled from weights</span>
 <span class="co">#&gt; Plans matrix: int [1:99, 1:1001] 3 3 1 2 4 1 1 4 1 1 ...</span>
 <span class="co">#&gt; # A tibble: 1,001 x 5</span>
-<span class="co">#&gt;    draw           max_dev avg_comp max_pct_min dem_distr</span>
-<span class="co">#&gt;    &lt;fct&gt;            &lt;dbl&gt;    &lt;dbl&gt;       &lt;dbl&gt;     &lt;int&gt;</span>
-<span class="co">#&gt;  1 2010 Adopted 0.0000535    0.428       0.114         3</span>
-<span class="co">#&gt;  2 1            0.00684      0.347       0.129         4</span>
-<span class="co">#&gt;  3 2            0.00653      0.431       0.112         3</span>
-<span class="co">#&gt;  4 3            0.00708      0.321       0.122         3</span>
-<span class="co">#&gt;  5 4            0.00443      0.396       0.122         3</span>
-<span class="co">#&gt;  6 5            0.00691      0.461       0.129         3</span>
-<span class="co">#&gt;  7 6            0.00925      0.366       0.116         3</span>
-<span class="co">#&gt;  8 7            0.00995      0.363       0.121         3</span>
-<span class="co">#&gt;  9 8            0.00366      0.344       0.116         3</span>
-<span class="co">#&gt; 10 9            0.00642      0.292       0.126         3</span>
+<span class="co">#&gt;    draw      max_dev avg_comp max_pct_min dem_distr</span>
+<span class="co">#&gt;    &lt;fct&gt;       &lt;dbl&gt;    &lt;dbl&gt;       &lt;dbl&gt;     &lt;int&gt;</span>
+<span class="co">#&gt;  1 cd_2010 0.0000535    0.428       0.114         3</span>
+<span class="co">#&gt;  2 1       0.00870      0.420       0.123         3</span>
+<span class="co">#&gt;  3 2       0.00601      0.326       0.119         3</span>
+<span class="co">#&gt;  4 3       0.00914      0.336       0.117         3</span>
+<span class="co">#&gt;  5 4       0.00908      0.386       0.119         3</span>
+<span class="co">#&gt;  6 5       0.00654      0.288       0.122         3</span>
+<span class="co">#&gt;  7 6       0.00966      0.350       0.117         3</span>
+<span class="co">#&gt;  8 7       0.00633      0.442       0.117         3</span>
+<span class="co">#&gt;  9 8       0.00991      0.353       0.125         3</span>
+<span class="co">#&gt; 10 9       0.00783      0.442       0.130         3</span>
 <span class="co">#&gt; # … with 991 more rows</span></code></pre></div>
 <p>These tables of statistics are easily plotted using existing libraries like <code>ggplot2</code>, but <code>redist</code> provides a number of helpful plotting functions that automate some common tasks, like adding a reference line for the reference plan. The output of these functions is a <code>ggplot</code> object, allowing for further customization.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
