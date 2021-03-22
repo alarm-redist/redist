@@ -23,8 +23,8 @@ redist_shortburst(
 \item{map}{A \code{\link{redist_map}} object.}
 
 \item{score_fn}{A function which takes a matrix of plans and returns a score
-for each plan. Can also be a purrr-style anonymous function. See \code{\link{?scorers}}
-for some function factories for common scoring rules.}
+for each plan. Can also be a purrr-style anonymous function. See
+\code{\link[=scorers]{?scorers}} for some function factories for common scoring rules.}
 
 \item{stop_at}{A threshold to stop optimization at.}
 
