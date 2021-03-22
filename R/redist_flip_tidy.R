@@ -42,7 +42,7 @@
 #' 
 #' 
 #' @examples \dontrun{
-#'data(fl25)
+#' data(fl25)
 #' fl25_map <- redist_map(fl, ndists = 4, existing_plan = cd)
 #' sims <- redist_flip(map = fl25_map, nsims = 10)
 #' }

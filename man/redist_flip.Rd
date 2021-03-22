@@ -37,7 +37,8 @@ a random initial plan will be generated using \code{redist.smc}.}
 
 \item{group_pop}{A column in map containing group populations}
 
-\item{constraints}{a list of constraints to implement. Can be created with \code{\link{flip_constraint_helper}}}
+\item{constraints}{a list of constraints to implement. Can be created with 
+\code{flip_constraints_helper}}
 
 \item{eprob}{The probability of keeping an edge connected. The
 default is \code{0.05}.}
@@ -75,13 +76,15 @@ values adjacent to current constraint are proposed. The default is
 \item{verbose}{Whether to print initialization statement. Default is \code{TRUE}.}
 }
 \value{
-
+redist plans object
 }
 \description{
 Tidy Flip Markov Chain Monte Carlo
 }
 \examples{
 \dontrun{
-
+data(fl25)
+fl25_map <- redist_map(fl, ndists = 4, existing_plan = cd)
+sims <- redist_flip(map = fl25_map, nsims = 10)
 }
 }
