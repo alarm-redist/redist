@@ -7,7 +7,8 @@
 #' a random initial plan will be generated using \code{redist.smc}.
 #' @param counties A column in map containing county membership
 #' @param group_pop A column in map containing group populations
-#' @param constraints a list of constraints to implement. Can be created with \code{\link{flip_constraint_helper}}
+#' @param constraints a list of constraints to implement. Can be created with 
+#' \code{flip_constraints_helper}
 #' @param eprob The probability of keeping an edge connected. The
 #' default is \code{0.05}.
 #' @param lambda lambda The parameter determining the number of swaps to attempt
@@ -33,13 +34,17 @@
 #' \code{TRUE}.
 #' @param verbose Whether to print initialization statement. Default is \code{TRUE}.
 #'
-#' @return
+#' @return redist plans object
 #' @export
 #'
 #'
 #' @importFrom rlang eval_tidy enquo
+#' 
+#' 
 #' @examples \dontrun{
-#'
+#'data(fl25)
+#' fl25_map <- redist_map(fl, ndists = 4, existing_plan = cd)
+#' sims <- redist_flip(map = fl25_map, nsims = 10)
 #' }
 redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, constraints = list(),
                         eprob = 0.05, lambda = 0, temper = FALSE,
@@ -152,18 +157,18 @@ redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, const
     betaweights = betaweights,
     adjswaps = adjswaps,
     maxiterrsg = 1,
-    contiguitymap = contiguitymap,
+    contiguitymap = 'rooks',
     tgt_min = pre_pre_proc$vra$target_min,
     tgt_other = pre_pre_proc$vra$target_other,
     rvote = pre_pre_proc$partisan$rvote,
     dvote = pre_pre_proc$partisan$dvote,
-    minorityprop = minorityprop
+    minorityprop = pre_pre_proc$hinge$minorityprop
   )
 
   if (verbose) {
     cat('Starting swMH().\n')
   }
-  algout <- redist:::swMH(
+  algout <- swMH(
     aList = preprocout$data$adjlist,
     cdvec = preprocout$data$init_plan,
     cdorigvec = preprocout$data$init_plan,
