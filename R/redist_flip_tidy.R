@@ -42,7 +42,7 @@
 #'
 #'
 #' @importFrom rlang eval_tidy enquo
-#'
+#' @importFrom dplyr bind_cols
 #'
 #' @examples \dontrun{
 #' data(fl25)
