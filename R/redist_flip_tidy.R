@@ -7,7 +7,7 @@
 #' a random initial plan will be generated using \code{redist.smc}.
 #' @param counties A column in map containing county membership
 #' @param group_pop A column in map containing group populations
-#' @param constraints a list of constraints to implement. Can be created with 
+#' @param constraints a list of constraints to implement. Can be created with
 #' \code{flip_constraints_helper}
 #' @param eprob The probability of keeping an edge connected. The
 #' default is \code{0.05}.
@@ -32,6 +32,9 @@
 #' @param adjswaps Flag to restrict swaps of beta so that only
 #' values adjacent to current constraint are proposed. The default is
 #' \code{TRUE}.
+#' @param init_name a name for the initial plan, or \code{FALSE} to not include
+#'   the initial plan in the output.  Defaults to the column name of the
+#'   existing plan, or "\code{<init>}" if the initial plan is sampled.
 #' @param verbose Whether to print initialization statement. Default is \code{TRUE}.
 #'
 #' @return redist plans object
@@ -39,8 +42,8 @@
 #'
 #'
 #' @importFrom rlang eval_tidy enquo
-#' 
-#' 
+#'
+#'
 #' @examples \dontrun{
 #' data(fl25)
 #' fl25_map <- redist_map(fl, ndists = 4, existing_plan = cd)
@@ -50,7 +53,7 @@ redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, const
                         eprob = 0.05, lambda = 0, temper = FALSE,
                         betaseq = 'powerlaw', betaseqlength = 10, betaweights = NULL,
                         adapt_lambda = FALSE, adapt_eprob = FALSE, exact_mh = FALSE,
-                        adjswaps = TRUE, verbose = TRUE) {
+                        adjswaps = TRUE, init_name=NULL, verbose = TRUE) {
   if (verbose) {
     ## Initialize ##
     divider <- c(paste(rep('=', 20), sep = '', collapse = ''), '\n')
@@ -86,7 +89,7 @@ redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, const
     }
   }
 
-
+  exist_name = attr(map, "existing_col")
   if (missing(init_plan)) {
     init_plan <- get_existing(map)
 
@@ -101,7 +104,9 @@ redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, const
         silent = TRUE
       ), type = "message"))
       init_plan <- init_plan$plans
+      if (is.null(init_name)) init_name = "<init>"
     } else {
+      if (is.null(init_name)) init_name = exist_name
       init_plan <- redist.sink.plan(plan = init_plan)
       components <- contiguity(adj, init_plan)
       if (any(components > 1)) {
@@ -231,20 +236,24 @@ redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, const
     boundary_ratio = rep(algout$boundary_partitions, each = ndists)
   )
   add_tb <- tibble(
-  constraint_pop = rep(algout$constraint_pop, each = ndists),
-  constraint_compact = rep(algout$constraint_compact, each = ndists),
-  constraint_segregation = rep(algout$constraint_segregation, each = ndists),
-  constraint_vra = rep(algout$constraint_vra, each = ndists),
-  constraint_similar = rep(algout$constraint_similar, each = ndists),
-  constraint_countysplit = rep(algout$constraint_countysplit, each = ndists),
-  constraint_partisan = rep(algout$constraint_partisan, each = ndists),
-  constraint_minority = rep(algout$constraint_minority, each = ndists),
-  constraint_hinge = rep(algout$constraint_hinge, each = ndists))
-  
-  add_tb <- add_tb %>% select(names(add_tb)[apply(add_tb, 2, function(x){!all(x == 0)})])
-  
-  out <- out %>% bind_cols(add_tb)
-  
+    constraint_pop = rep(algout$constraint_pop, each = ndists),
+    constraint_compact = rep(algout$constraint_compact, each = ndists),
+    constraint_segregation = rep(algout$constraint_segregation, each = ndists),
+    constraint_vra = rep(algout$constraint_vra, each = ndists),
+    constraint_similar = rep(algout$constraint_similar, each = ndists),
+    constraint_countysplit = rep(algout$constraint_countysplit, each = ndists),
+    constraint_partisan = rep(algout$constraint_partisan, each = ndists),
+    constraint_minority = rep(algout$constraint_minority, each = ndists),
+    constraint_hinge = rep(algout$constraint_hinge, each = ndists)
+  )
+
+  keep_names = names(add_tb)[apply(add_tb, 2, function(x){!all(x == 0)})]
+  out <- dplyr::bind_cols(out, select(add_tb, keep_names))
+
+  if (!is.null(init_name) && !isFALSE(init_name)) {
+    out <- add_reference(out, init_plan, init_name)
+  }
+
   return(out)
 }
 
