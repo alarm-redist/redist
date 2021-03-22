@@ -152,18 +152,15 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
     if (nsims < 1)
         stop("`nsims` must be positive.")
 
-    if (isFALSE(init_name)) {
-        init_name = NULL
-    } else if (is.null(init_name) && !is.null(init_plan)) {
-        exist_name = attr(map, "existing_col")
-        init_name = if (!is.null(exist_name)) exist_name else "<init>"
+    exist_name = attr(map, "existing_col")
+    if (is.null(init_plan) && !is.null(exist_name)) {
+        init_plan = as.integer(as.factor(get_existing(map)))
+        if (is.null(init_name)) init_name = exist_name
     }
-
-    if (is.null(init_plan)) init_plan = as.integer(as.factor(get_existing(map)))
     if (length(init_plan) == 0L || isTRUE(init_plan == "sample")) {
         init_plan = as.integer(get_plan_matrix(
             redist_smc(map, 1, counties, resample=FALSE, silent=TRUE)))
-        if (!is.null(init_name)) init_name = "<init>"
+        if (is.null(init_name)) init_name = "<init>"
     }
     stopifnot(length(init_plan) == V)
     stopifnot(max(init_plan) == ndists)
@@ -208,7 +205,7 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
                      constraints = constraints,
                      adapt_k_thresh = adapt_k_thresh)
 
-    if (!is.null(init_name)) {
+    if (!is.null(init_name) && !isFALSE(init_name)) {
         out = add_reference(out, init_plan, init_name)
     }
 

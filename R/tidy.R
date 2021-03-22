@@ -159,7 +159,9 @@ add_reference = function(plans, ref_plan, name=NULL) {
         ) %>%
         dplyr::mutate(draw = new_draw, .before="district")
 
-    attr(plans, "wgt") = c(0, get_plan_weights(plans))
+    exist_wgts = get_plan_weights(plans)
+    if (!is.null(exist_wgts))
+        attr(plans, "wgt") = c(0, exist_wgts)
 
     reconstruct.redist_plans(x, set_plan_matrix(plans, plan_m))
 }
