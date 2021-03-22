@@ -94,7 +94,7 @@ redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, const
     init_plan <- get_existing(map)
 
     if (is.null(init_plan)) {
-      invisible(capture.output(init_plan <- redist.smc(
+      invisible(utils::capture.output(init_plan <- redist.smc(
         adj = adj,
         total_pop = total_pop,
         nsims = 1,
