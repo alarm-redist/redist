@@ -309,7 +309,7 @@ redist.compactness <- function(shp = NULL,
       ret <- matrix(nrow = nd, ncol = nm)
       for (i in 1:nd){
         col <- 1
-        united <- st_union(shp[plans[, map] == dists[i],])
+        united <- suppressMessages(st_union(shp[plans[, map] == dists[i],]))
         area <- st_area(united)
 
         if(is.null(st_crs(united$EPSG))||is.na(st_is_longlat(united))){
@@ -351,9 +351,9 @@ redist.compactness <- function(shp = NULL,
 
         if('BoyceClark' %in% measure){
           suppressWarnings(center <- st_centroid(united))
-          suppressWarnings(if(!st_within(united,center,sparse=F)[[1]]){
-            center <- st_point_on_surface(united)
-          })
+          suppressMessages(suppressWarnings(if(!st_within(united,center,sparse=F)[[1]]){
+            suppressWarnings(center <- st_point_on_surface(united))
+          }))
           center <- st_coordinates(center)
           bbox <- st_bbox(united)
           max_dist <- sqrt((bbox$ymax-bbox$ymin)^2+(bbox$xmax-bbox$xmin)^2)
