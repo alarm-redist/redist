@@ -43,6 +43,7 @@
 #'
 #' @importFrom rlang eval_tidy enquo
 #' @importFrom dplyr bind_cols
+#' @importFrom utils capture.output
 #'
 #' @examples \dontrun{
 #' data(fl25)
@@ -94,7 +95,7 @@ redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, const
     init_plan <- get_existing(map)
 
     if (is.null(init_plan)) {
-      invisible(utils::capture.output(init_plan <- redist.smc(
+      invisible(capture.output(init_plan <- redist.smc(
         adj = adj,
         total_pop = total_pop,
         nsims = 1,
@@ -284,7 +285,7 @@ process_flip_constr <- function(constraints, group_pop, counties) {
     minority = list(weight = 0, minorityprop = 0.55, group_pop = group_pop),
     similarity = list(weight = 0),
     partisan = list(weight = 0, rvote = 0, dvote = 0, metric = 'efficiency-gap'),
-    segregation = list(weight = 0, group_pop)
+    segregation = list(weight = 0, group_pop = group_pop)
   )
 
   for (type in names(constraints)) {
