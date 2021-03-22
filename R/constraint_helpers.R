@@ -25,7 +25,7 @@
 #' @param minorityprop minority proportions to target. Used by minority and hinge.Defaults to c(0.55) if none specified.
 #'
 #' @return list with an entry for each constraint usable with redist_flip()
-#' @export 
+#' @export
 #'
 #' @examples \dontrun{
 #' data(iowa)
@@ -128,6 +128,7 @@ flip_constraints_helper <- function(map,
     if (is.null(counties)) {
       stop('column matching counties could not be found in object map.')
     } else {
+      adj = get_adj(map)
       counties <- redist.county.id(counties)
       components <- contiguity(adj, counties)
       if (any(components > 1)) {
@@ -190,7 +191,7 @@ flip_constraints_helper <- function(map,
       stop('Please provide an argument to dvote with constraint partisan.')
     }
 
-    match.args(partisan_metric, c('proportional-representation', 'efficiency-gap'))
+    match.arg(partisan_metric, c('proportional-representation', 'efficiency-gap'))
 
     constraints_list$partisan$metric <- partisan_metric
   }
