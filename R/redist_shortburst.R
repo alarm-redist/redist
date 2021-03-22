@@ -16,8 +16,8 @@
 #'
 #' @param map A \code{\link{redist_map}} object.
 #' @param score_fn A function which takes a matrix of plans and returns a score
-#' for each plan. Can also be a purrr-style anonymous function. See [`?scorers`]
-#' for some function factories for common scoring rules.
+#' for each plan. Can also be a purrr-style anonymous function. See
+#' [`?scorers`][scorers] for some function factories for common scoring rules.
 #' @param stop_at A threshold to stop optimization at.
 #' @param burst_size The size of each burst. 10 is recommended.
 #' @param max_bursts The maximum number of bursts to run before returning.
