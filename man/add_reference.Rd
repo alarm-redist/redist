@@ -4,7 +4,7 @@
 \alias{add_reference}
 \title{Add a reference plan to a set of plans}
 \usage{
-add_reference(plans, ref_plan, name = "<ref>")
+add_reference(plans, ref_plan, name = NULL)
 }
 \arguments{
 \item{plans}{a \code{redist_plans} object}
@@ -12,7 +12,8 @@ add_reference(plans, ref_plan, name = "<ref>")
 \item{ref_plan}{an integer vector containing the reference plan. It will be
 renumbered to 1..\code{ndists}.}
 
-\item{name}{a human-readable name for the referece plan.}
+\item{name}{a human-readable name for the referece plan. Defaults to the
+name of \code{ref_plan}.}
 }
 \value{
 a modified \code{redist_plans} object containing the reference plan

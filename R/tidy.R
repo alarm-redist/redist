@@ -111,18 +111,28 @@ make_cores = function(.data=get0(".", parent.frame()), within=1, focus=NULL) {
 #' @param plans a \code{redist_plans} object
 #' @param ref_plan an integer vector containing the reference plan. It will be
 #' renumbered to 1..\code{ndists}.
-#' @param name a human-readable name for the referece plan.
+#' @param name a human-readable name for the referece plan. Defaults to the
+#' name of \code{ref_plan}.
 #'
 #' @returns a modified \code{redist_plans} object containing the reference plan
 #' @concept analyze
 #' @export
-add_reference = function(plans, ref_plan, name="<ref>") {
+add_reference = function(plans, ref_plan, name=NULL) {
     stopifnot(inherits(plans, "redist_plans"))
-    stopifnot(is.character(name))
 
     plan_m = get_plan_matrix(plans)
     stopifnot(is.numeric(ref_plan))
     stopifnot(length(ref_plan) == nrow(plan_m))
+
+    if (is.null(name)) {
+        ref_str = deparse(substitute(ref_plan))
+        if (stringr::str_detect(ref_str, "$"))
+            name = strsplit(ref_str, "$", fixed=TRUE)[[1]][2]
+        else
+            name = ref_str
+    } else {
+        stopifnot(is.character(name))
+    }
 
     ref_plan = as.integer(as.factor(ref_plan))
     ndists = max(ref_plan)
@@ -138,6 +148,8 @@ add_reference = function(plans, ref_plan, name="<ref>") {
         distr_pop = pop_tally(matrix(ref_plan, ncol=1), prec_pop, ndists)
     else
         distr_pop = rep(NA_real_, ndists)
+
+    if (name %in% levels(plans$draw)) stop("Reference plan name already exists")
     fct_levels = c(name, levels(plans$draw))
     new_draw = rep(factor(fct_levels, levels=fct_levels), each=ndists)
     x = dplyr::bind_rows(
@@ -289,7 +301,7 @@ distr_compactness = function(map, measure="FracKept", .data=get0(".", parent.fra
         stop("Must provide `.data` if not called within a pipe")
 
     # districts not in ascending order
-    if (length(unique(diff(as.integer(map$district)))) != 2)
+    if (length(unique(diff(as.integer(.data$district)))) != 2)
         warning("Districts not sorted in ascending order; output may be incorrect.")
 
     redist.compactness(shp=map, plans=get_plan_matrix(.data), measure=measure,
@@ -311,7 +323,7 @@ group_frac = function(map, group_pop, total_pop=map[[attr(map, "pop_col")]],
         stop("Must provide `.data` if not called within a pipe")
 
     # districts not in ascending order
-    if (length(unique(diff(as.integer(map$district)))) != 2)
+    if (length(unique(diff(as.integer(.data$district)))) != 2)
         warning("Districts not sorted in ascending order; output may be incorrect.")
 
     group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
@@ -337,7 +349,8 @@ segregation_index = function(map, group_pop, total_pop=map[[attr(map, "pop_col")
     total_pop = rlang::eval_tidy(rlang::enquo(total_pop), map)
     plan_m = get_plan_matrix(.data)
     rep(as.numeric(redist.segcalc(plans=plan_m, group_pop=group_pop,
-                                  total_pop=total_pop)), each=max(plan_m[,1]))
+                                  total_pop=total_pop)),
+        each=attr(map, "ndists"))
 }
 
 #' @rdname redist.metrics
@@ -354,10 +367,14 @@ partisan_metrics = function(map, measure, rvote, dvote, ...,
     if (!inherits(.data, "redist_plans"))
         stop("Must provide `.data` if not called within a pipe")
 
+    # districts not in ascending order
+    if (length(unique(diff(as.integer(.data$district)))) != 2)
+        warning("Districts not sorted in ascending order; output may be incorrect.")
+
     rvote = rlang::eval_tidy(rlang::enquo(rvote), map)
     dvote = rlang::eval_tidy(rlang::enquo(dvote), map)
     as.numeric(redist.metrics(plans=get_plan_matrix(.data), measure=measure,
-                              rvote=rvote, dvote=dvote, ...))
+                              rvote=rvote, dvote=dvote, ...)[[measure]])
 }
 
 #' @rdname redist.competitiveness
@@ -374,8 +391,9 @@ competitiveness = function(map, rvote, dvote, .data=get0(".", parent.frame())) {
 
     rvote = rlang::eval_tidy(rlang::enquo(rvote), map)
     dvote = rlang::eval_tidy(rlang::enquo(dvote), map)
-    as.numeric(redist.competitiveness(plans=get_plan_matrix(.data),
-                                      rvote=rvote, dvote=dvote))
+    rep(redist.competitiveness(plans=get_plan_matrix(.data),
+                               rvote=rvote, dvote=dvote),
+        each = attr(map, "ndists"))
 }
 
 #' @rdname redist.splits
@@ -391,7 +409,8 @@ county_splits = function(map, counties, .data=get0(".", parent.frame())) {
         stop("Must provide `.data` if not called within a pipe")
 
     counties = rlang::eval_tidy(rlang::enquo(counties), map)
-    as.numeric(redist.splits(plans=get_plan_matrix(.data), counties=counties))
+    rep(redist.splits(plans=get_plan_matrix(.data), counties=counties),
+        each = attr(map, "ndists"))
 }
 
 

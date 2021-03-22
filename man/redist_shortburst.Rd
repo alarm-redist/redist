@@ -77,7 +77,7 @@ Optimization by Short Bursts."
 \dontrun{
 data(iowa)
 
-iowa_map = redist_map(iowa, existing_plan=cd, pop_tol=0.01)
+iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.01)
 redist_shortburst(iowa_map, scorer_frac_kept(iowa_map), max_bursts=50)
 redist_shortburst(iowa_map, ~ 1 - scorer_frac_kept(iowa_map)(.), max_bursts=50)
 }

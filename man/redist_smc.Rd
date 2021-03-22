@@ -18,6 +18,7 @@ redist_smc(
   truncate = (compactness != 1),
   trunc_fn = redist_quantile_trunc,
   pop_temper = 0,
+  ref_name = NULL,
   verbose = TRUE,
   silent = FALSE
 )
@@ -91,6 +92,10 @@ recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
 rather than naive truncation.}
 
 \item{pop_temper}{The strength of the automatic population tempering.}
+
+\item{ref_name}{a name for the existing plan, which will be added as a
+reference plan, or \code{FALSE} to not include the initial plan in the
+output. Defaults to the column name of the existing plan.}
 
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}

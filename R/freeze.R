@@ -60,6 +60,7 @@ redist.freeze <- function(adj, freeze_row, plan = rep(1, length(adj))){
 }
 
 #' @rdname redist.freeze
+#' @order 1
 #'
 #' @param .data a \code{\link{redist_map}} object
 #'

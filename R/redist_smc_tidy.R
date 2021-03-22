@@ -118,6 +118,9 @@
 #' recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
 #' rather than naive truncation.
 #' @param pop_temper The strength of the automatic population tempering.
+#' @param ref_name a name for the existing plan, which will be added as a
+#'   reference plan, or \code{FALSE} to not include the initial plan in the
+#'   output. Defaults to the column name of the existing plan.
 #' @param verbose Whether to print out intermediate information while sampling.
 #'   Recommended.
 #' @param silent Whether to suppress all diagnostic information.
@@ -149,7 +152,7 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
                       resample=TRUE, constraint_fn=function(m) rep(0, ncol(m)),
                       adapt_k_thresh=0.975, seq_alpha=0.2+0.3*compactness,
                       truncate=(compactness != 1), trunc_fn=redist_quantile_trunc,
-                      pop_temper=0, verbose=TRUE, silent=FALSE) {
+                      pop_temper=0, ref_name=NULL, verbose=TRUE, silent=FALSE) {
     map = validate_redist_map(map)
     V = nrow(map)
     adj = get_adj(map)
@@ -223,13 +226,21 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
     if (n_eff/nsims <= 0.05)
         warning("Less than 5% resampling efficiency. Consider weakening constraints and/or adjusting `seq_alpha`.")
 
-    new_redist_plans(plans, map, "smc", wgt, resample,
+    out = new_redist_plans(plans, map, "smc", wgt, resample,
                      n_eff = n_eff,
                      compactness = compactness,
                      constraints = constraints,
                      adapt_k_thresh = adapt_k_thresh,
                      seq_alpha = seq_alpha,
                      pop_temper = pop_temper)
+
+    exist_name = attr(map, "existing_col")
+    if (!is.null(exist_name) && !isFALSE(ref_name)) {
+        ref_name = if (!is.null(ref_name)) ref_name else exist_name
+        out = add_reference(out, map[[exist_name]], ref_name)
+    }
+
+    out
 }
 
 

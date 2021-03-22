@@ -169,10 +169,10 @@ NULL
 #' @name iowa
 #' @usage data("iowa")
 #' @format sf tibble containing columns for useful data related to the
-#' redistricting process, subsetted from real data in Florida, and sf geometry column.
+#'   redistricting process
 #' \describe{
 #' \item{\code{fips}}{The FIPS code for the county.}
-#' \item{\code{cd}}{The current congressional district assignment.}
+#' \item{\code{cd_2010}}{The 2010 congressional district assignments.}
 #' \item{\code{pop}}{The total population of the precinct, according to the 2010 Census.}
 #' \item{\code{white}}{The non-Hispanic white population of the precinct.}
 #' \item{\code{black}}{The non-Hispanic Black population of the precinct.}
