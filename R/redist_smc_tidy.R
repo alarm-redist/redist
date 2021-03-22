@@ -248,8 +248,8 @@ process_smc_ms_constr = function(constraints, V) {
         incumbency = list(strength=0, incumbents=integer())
     )
 
-    for (type in constraints) {
-        for (el in constraints[[type]]) {
+    for (type in names(constraints)) {
+        for (el in names(constraints[[type]])) {
             defaults[[type]][[el]] = constraints[[type]][[el]]
         }
     }
