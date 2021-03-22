@@ -43,7 +43,8 @@
 #'
 #'
 #' @importFrom rlang eval_tidy enquo
-#'
+#' @importFrom dplyr bind_cols
+#' @importFrom utils capture.output
 #'
 #' @examples \dontrun{
 #' data(fl25)
@@ -54,7 +55,7 @@ redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, const
                         eprob = 0.05, lambda = 0, temper = FALSE,
                         betaseq = 'powerlaw', betaseqlength = 10, betaweights = NULL,
                         adapt_lambda = FALSE, adapt_eprob = FALSE, exact_mh = FALSE,
-                        adjswaps = TRUE, init_name=NULL, verbose = TRUE) {
+                        adjswaps = TRUE, init_name = NULL, verbose = TRUE) {
   if (verbose) {
     ## Initialize ##
     divider <- c(paste(rep('=', 20), sep = '', collapse = ''), '\n')
@@ -95,7 +96,7 @@ redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, const
     init_plan <- get_existing(map)
 
     if (is.null(init_plan)) {
-      invisible(utils::capture.output(init_plan <- redist.smc(
+      invisible(capture.output(init_plan <- redist.smc(
         adj = adj,
         total_pop = total_pop,
         nsims = 1,
@@ -103,7 +104,7 @@ redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, const
         counties = counties,
         pop_tol = pop_tol,
         silent = TRUE
-      ), type = "message"))
+      ), type = 'message'))
       init_plan <- init_plan$plans
       if (is.null(init_name)) init_name = "<init>"
     } else {
@@ -230,14 +231,14 @@ redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, const
     resampled = NULL,
     lambda = lambda,
     eprob = eprob,
-    adapt_eprob = adapt_eprob,
-    adapt_lambda = adapt_lambda
+    adapt_eprob = as.logical(adapt_eprob),
+    adapt_lambda = as.logical(adapt_lambda)
   ) %>% mutate(
     boundary_partitions = rep(algout$boundary_partitions, each = ndists),
     boundary_ratio = rep(algout$boundary_partitions, each = ndists)
   )
   add_tb <- tibble(
-    constraint_pop = rep(algout$constraint_pop, each = ndists),
+    constraint_population = rep(algout$constraint_pop, each = ndists),
     constraint_compact = rep(algout$constraint_compact, each = ndists),
     constraint_segregation = rep(algout$constraint_segregation, each = ndists),
     constraint_vra = rep(algout$constraint_vra, each = ndists),
@@ -248,12 +249,15 @@ redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, const
     constraint_hinge = rep(algout$constraint_hinge, each = ndists)
   )
 
-  keep_names = names(add_tb)[apply(add_tb, 2, function(x){!all(x == 0)})]
-  out <- dplyr::bind_cols(out, select(add_tb, keep_names))
+  add_tb <- add_tb %>% select(names(add_tb)[apply(add_tb, 2, function(x) {
+    !all(x == 0)
+  })])
+
+  out <- out %>% bind_cols(add_tb)
 
   if (!is.null(init_name) && !isFALSE(init_name)) {
-    out <- add_reference(out, init_plan, init_name)
-  }
+      out <- add_reference(out, init_plan, init_name)
+    }
 
   return(out)
 }
@@ -282,7 +286,7 @@ process_flip_constr <- function(constraints, group_pop, counties) {
     minority = list(weight = 0, minorityprop = 0.55, group_pop = group_pop),
     similarity = list(weight = 0),
     partisan = list(weight = 0, rvote = 0, dvote = 0, metric = 'efficiency-gap'),
-    segregation = list(weight = 0, group_pop)
+    segregation = list(weight = 0, group_pop = group_pop)
   )
 
   for (type in names(constraints)) {
