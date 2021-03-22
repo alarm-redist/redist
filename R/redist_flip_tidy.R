@@ -91,7 +91,7 @@ redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, const
     init_plan <- get_existing(map)
 
     if (is.null(init_plan)) {
-      init_plan <- redist.smc(
+      invisible(capture.output(init_plan <- redist.smc(
         adj = adj,
         total_pop = total_pop,
         nsims = 1,
@@ -99,7 +99,8 @@ redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, const
         counties = counties,
         pop_tol = pop_tol,
         silent = TRUE
-      )$plans
+      ), type = "message"))
+      init_plan <- init_plan$plans
     } else {
       init_plan <- redist.sink.plan(plan = init_plan)
       components <- contiguity(adj, init_plan)
@@ -206,7 +207,8 @@ redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, const
     tgt_other = pre_pre_proc$vra$target_other,
     rvote = preprocout$params$rvote,
     dvote = preprocout$params$dvote,
-    minorityprop = preprocout$params$minorityprop
+    minorityprop = preprocout$params$minorityprop,
+    verbose = as.logical(verbose)
   )
 
 
@@ -214,25 +216,36 @@ redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, const
     algout$plans <- ifelse(algout$plans == 0, ndists, algout$plans)
   }
 
-  new_redist_plans(
+  out <- new_redist_plans(
     plans = algout$plans,
     map = map,
     algorithm = 'mcmc',
     wgt = NULL,
-    resampled = NULL
+    resampled = NULL,
+    lambda = lambda,
+    eprob = eprob,
+    adapt_eprob = adapt_eprob,
+    adapt_lambda = adapt_lambda
   ) %>% mutate(
-    constraint_pop = rep(algout$constraint_pop, each = ndists),
-    constraint_compact = rep(algout$constraint_compact, each = ndists),
-    constraint_segregation = rep(algout$constraint_segregation, each = ndists),
-    constraint_vra = rep(algout$constraint_vra, each = ndists),
-    constraint_similar = rep(algout$constraint_similar, each = ndists),
-    constraint_countysplit = rep(algout$constraint_countysplit, each = ndists),
-    constraint_partisan = rep(algout$constraint_partisan, each = ndists),
-    constraint_minority = rep(algout$constraint_minority, each = ndists),
-    constraint_hinge = rep(algout$constraint_hinge, each = ndists),
     boundary_partitions = rep(algout$boundary_partitions, each = ndists),
     boundary_ratio = rep(algout$boundary_partitions, each = ndists)
   )
+  add_tb <- tibble(
+  constraint_pop = rep(algout$constraint_pop, each = ndists),
+  constraint_compact = rep(algout$constraint_compact, each = ndists),
+  constraint_segregation = rep(algout$constraint_segregation, each = ndists),
+  constraint_vra = rep(algout$constraint_vra, each = ndists),
+  constraint_similar = rep(algout$constraint_similar, each = ndists),
+  constraint_countysplit = rep(algout$constraint_countysplit, each = ndists),
+  constraint_partisan = rep(algout$constraint_partisan, each = ndists),
+  constraint_minority = rep(algout$constraint_minority, each = ndists),
+  constraint_hinge = rep(algout$constraint_hinge, each = ndists))
+  
+  add_tb <- add_tb %>% select(names(add_tb)[apply(add_tb, 2, function(x){!all(x == 0)})])
+  
+  out <- out %>% bind_cols(add_tb)
+  
+  return(out)
 }
 
 
@@ -262,8 +275,8 @@ process_flip_constr <- function(constraints, group_pop, counties) {
     segregation = list(weight = 0, group_pop)
   )
 
-  for (type in constraints) {
-    for (el in constraints[[type]]) {
+  for (type in names(constraints)) {
+    for (el in names(constraints[[type]])) {
       defaults[[type]][[el]] <- constraints[[type]][[el]]
     }
   }
