@@ -247,7 +247,6 @@ redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, const
     constraint_hinge = rep(algout$constraint_hinge, each = ndists)
   )
 
-  out <- dplyr::bind_cols(out, select(add_tb, keep_names))
   add_tb <- add_tb %>% select(names(add_tb)[apply(add_tb, 2, function(x) {
     !all(x == 0)
   })])
