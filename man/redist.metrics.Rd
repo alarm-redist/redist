@@ -88,7 +88,7 @@ Declination is the value of declination at 0.5.
 Responsiveness is the responsiveness at the user-supplied value with the user-supplied bandwidth.
 LopsidedWins computed the Lopsided Outcomes value, but does not produce a test statistic.
 RankedMarginal computes the Ranked Marginal Deviation (0-1, smaller is better).
-SmoothedSeat computes the Smoothed Seat Count Deviation (0-1, smaller is better).
+SmoothedSeat computes the Smoothed Seat Count Deviation (0-1, smaller is R Bias, bigger is D Bias).
 }
 \examples{
 \dontrun{
