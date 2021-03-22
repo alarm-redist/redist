@@ -209,10 +209,6 @@ smc_plans <- function(N, l, counties, pop, n_distr, target, lower, upper, rho, b
     .Call(`_redist_smc_plans`, N, l, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_vra_hinge, tgts_min, beta_inc, incumbents, lp, thresh, alpha, pop_temper, verbosity)
 }
 
-sample_partition <- function(aList, aMat, num_partitions, num_samples, threads = 1L) {
-    .Call(`_redist_sample_partition`, aList, aMat, num_partitions, num_samples, threads)
-}
-
 splits <- function(dm, community) {
     .Call(`_redist_splits`, dm, community)
 }

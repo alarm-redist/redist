@@ -130,7 +130,7 @@
 #' @importFrom sf st_cast st_bbox st_centroid st_within st_point_on_surface st_coordinates
 #' @importFrom sf st_linestring st_intersection st_area st_crs st_is_longlat st_length
 #' @importFrom sf st_convex_hull st_crs<- st_geometry st_distance st_union st_touches st_is_valid
-#' @importFrom lwgeom st_perimeter st_minimum_bounding_circle
+#' @importFrom lwgeom st_minimum_bounding_circle
 #' @importFrom dplyr select all_of arrange bind_rows rename summarize
 #' @importFrom stats dist
 #'
@@ -344,7 +344,9 @@ redist.compactness <- function(shp = NULL,
         }
 
         if('Reock' %in% measure){
-          mbc <- st_area(st_minimum_bounding_circle(united))
+          if (!requireNamespace("lwgeom", quietly=TRUE))
+            stop("Must install `lwgeom` to use 'Reock' measure.")
+          mbc <- st_area(lwgeom::st_minimum_bounding_circle(united))
           ret[i, col] <- area/mbc
           col <- col + 1
         }
@@ -502,6 +504,8 @@ redist.prep.polsbypopper <- function(shp, adj, perim_path, ncores = 1){
   return(perim_df)
 }
 
+# wrapper function
+st_perimeter = function(x)  st_length(st_cast(x, "MULTILINESTRING"))
 
 
 utils::globalVariables(c("i", "j", "edge", "origin", "perim_full", "perim_adj",

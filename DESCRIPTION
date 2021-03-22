@@ -24,45 +24,35 @@ Depends:
     R (>= 3.5.0)
 Imports:
     Rcpp (>= 0.11.0),
-    sf,
-    coda,
-    parallel,
-    doParallel,
-    foreach,
-    lwgeom,
-    dplyr (>= 1.0.0),
-    ggplot2,
-    readr,
-    servr,
-    sys,
     rlang,
     vctrs,
     tidyselect,
-    cli (>= 2.1.0),
     stringr,
+    dplyr (>= 1.0.0),
+    sf,
+    doParallel,
+    foreach,
+    servr,
+    sys,
+    coda,
+    ggplot2,
     patchwork
 Suggests:
     igraph,
-    testthat (>= 3.0.0),
+    lwgeom,
     withr,
     loo,
     Rmpi,
     knitr,
     rmarkdown,
-    shiny,
-    cluster,
-    ggiraph,
-    leaflet,
     tidyr,
     rmapshaper,
     gridExtra,
-    graphics,
-    methods,
-    utils,
     scales,
     units,
-    spdep
-LinkingTo: Rcpp, RcppArmadillo, RcppEigen, BH
+    spdep,
+    testthat (>= 3.0.0),
+LinkingTo: Rcpp, RcppArmadillo
 License: GPL (>= 2)
 SystemRequirements: OpenMPI, gmp, libxml2, python
 Packaged: 2015-06-03 18:32:00 UTC; benfifield

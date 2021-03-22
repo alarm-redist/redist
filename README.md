@@ -29,12 +29,12 @@ Authors:
     <christopherkenny@fas.harvard.edu>
 -   [Cory McCartan](https://corymccartan.github.io),
     <cmccartan@g.harvard.edu>
--   Alex Tarr, <atarr@princeton.edu>
 -   Jun Kawahara, <jkawahara@i.kyoto-u.ac.jp>
 -   [Kosuke Imai](https://imai.fas.harvard.edu), <imai@harvard.edu>
 
 Contributors:
 
+-   Alex Tarr, <atarr@princeton.edu>
 -   [Michael Higgins](http://www-personal.k-state.edu/~mikehiggins/),
     <mjh5@princeton.edu>
 
@@ -87,9 +87,9 @@ iowa_plans = redist_smc(iowa_map, nsims=250, verbose=FALSE)
 #> Making split 1 of 3
 #> Resampling effective sample size: 245.9 (98.4% efficiency).
 #> Making split 2 of 3
-#> Resampling effective sample size: 240.8 (96.3% efficiency).
+#> Resampling effective sample size: 243.3 (97.3% efficiency).
 #> Making split 3 of 3
-#> Resampling effective sample size: 246.2 (98.5% efficiency).
+#> Resampling effective sample size: 247.2 (98.9% efficiency).
 ```
 
 After generating plans, you can use `redist`’s plotting functions to

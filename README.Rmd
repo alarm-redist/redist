@@ -29,12 +29,12 @@ Authors:
 - [Ben Fifield](https://www.benfifield.com), <benfifield@gmail.com> (Maintainer) 
 - [Christopher T Kenny](https://www.christophertkenny.com), <christopherkenny@fas.harvard.edu> 
 - [Cory McCartan](https://corymccartan.github.io), <cmccartan@g.harvard.edu> 
-- Alex Tarr, <atarr@princeton.edu> 
 - Jun Kawahara, <jkawahara@i.kyoto-u.ac.jp> 
 - [Kosuke Imai](https://imai.fas.harvard.edu), <imai@harvard.edu>
  
 Contributors:
 
+- Alex Tarr, <atarr@princeton.edu> 
 - [Michael Higgins](http://www-personal.k-state.edu/~mikehiggins/), <mjh5@princeton.edu> 
 
 Papers:

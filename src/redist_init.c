@@ -4,8 +4,8 @@
 #include <R_ext/Rdynload.h>
 
 /* FIXME: 
- Check these declarations against the C/Fortran source code.
- */
+   Check these declarations against the C/Fortran source code.
+*/
 
 /* .Call calls */
 extern SEXP _redist_agg_p2d(SEXP, SEXP, SEXP);
@@ -54,7 +54,6 @@ extern SEXP _redist_reindex(SEXP, SEXP);
 extern SEXP _redist_renumber_matrix(SEXP, SEXP);
 extern SEXP _redist_responsiveness(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_rsg(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP _redist_sample_partition(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_segregationcalc(SEXP, SEXP, SEXP);
 extern SEXP _redist_smc_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_smoothseat(SEXP, SEXP);
@@ -112,7 +111,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_renumber_matrix",       (DL_FUNC) &_redist_renumber_matrix,        2},
     {"_redist_responsiveness",        (DL_FUNC) &_redist_responsiveness,         4},
     {"_redist_rsg",                   (DL_FUNC) &_redist_rsg,                    6},
-    {"_redist_sample_partition",      (DL_FUNC) &_redist_sample_partition,       5},
     {"_redist_segregationcalc",       (DL_FUNC) &_redist_segregationcalc,        3},
     {"_redist_smc_plans",             (DL_FUNC) &_redist_smc_plans,             26},
     {"_redist_smoothseat",            (DL_FUNC) &_redist_smoothseat,             2},

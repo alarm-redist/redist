@@ -237,6 +237,8 @@ match_numbers = function(data, plan, col="pop_overlap") {
     ndists = length(levels(plan))
     pop = attr(data, "prec_pop")
 
+    if (ndists > 6)
+        warning("`match_numers` may be extremely slow with more than 6 districts.")
     stopifnot(!is.null(pop))
     stopifnot(max(plan_mat[,1]) == ndists)
 
