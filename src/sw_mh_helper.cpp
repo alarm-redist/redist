@@ -209,7 +209,7 @@ List bsearch_boundary(List aList,
 
     // Begin while{} loop - run until q is empty
     while(q.size() > 0){
-
+      Rcpp::checkUserInterrupt();
       // Dequeue first element in queue
       u = q(0);
 
@@ -510,7 +510,8 @@ List make_swaps(List boundary_cc,
     int prop_cd;
     NumericVector prop_partitions;
     while(boundary_cc.size() > 0){
-
+      Rcpp::checkUserInterrupt();
+      
       // (1) - select a connected component from boundary_cc randomly
       arma::vec rand_sample_index = runif(1, 0, 1000000000);
       int sample_index = fmod(rand_sample_index(0), boundary_cc.size());
