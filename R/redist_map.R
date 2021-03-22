@@ -121,12 +121,12 @@ reconstruct.redist_map = function(data, old) {
 #'   be no more than this number.
 #' @param pop_bounds \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} more specific
 #'   population bounds, in the form of \code{c(lower, target, upper)}.
-#' @param total_pop \code{\link[tidyr:tidyr_tidy_select]{<tidy-select>}} the vector
+#' @param total_pop \code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the vector
 #'   of precinct populations. Defaults to the \code{pop} column, if one exists.
 #' @param adj the adjacency graph for the object. Defaults to being computed
 #'     from the data if it is coercible to a shapefile.
 #' @param adj_col the name of the adjacency graph column
-#' @param existing_plan \code{\link[tidyr:tidyr_tidy_select]{<tidy-select>}} the
+#' @param existing_plan \code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the
 #'   existing district assignment.
 #' @param planarize a number, indicating the CRS to project the shapefile to if
 #'   it is latitude-longitude based. Set to NULL or FALSE to avoid planarizing.

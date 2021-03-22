@@ -1,4 +1,14 @@
-#' Tidy Flip Markov Chain Monte Carlo
+#' 'Flip' Markov Chain Monte Carlo Redistricting Simulation
+#'
+#' \code{redist_flip} provides an improved interface to the methods in
+#' \code{\link{redist.mcmc}}.
+#'
+#' This function allows users to simulate redistricting plans
+#' using the Markov Chain Monte Carlo methods of Fifield et al. Several
+#' constraints corresponding to substantive requirements in the redistricting
+#' process are implemented, including population parity and geographic
+#' compactness. In addition, the function includes multiple-swap and simulated
+#' tempering functionality to improve the mixing of the Markov Chain.
 #'
 #' @param map A \code{\link{redist_map}} object.
 #' @param nsims The number of samples to draw.
@@ -37,10 +47,14 @@
 #'   existing plan, or "\code{<init>}" if the initial plan is sampled.
 #' @param verbose Whether to print initialization statement. Default is \code{TRUE}.
 #'
-#' @return redist plans object
+#' @return A \code{\link{redist_plans}} object containing the simulated plans.
 #' @concept simulate
 #' @export
 #'
+#' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander
+#' Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte
+#' Carlo." Working Paper. Available at
+#' \url{http://imai.princeton.edu/research/files/redist.pdf}.
 #'
 #' @importFrom rlang eval_tidy enquo
 #' @importFrom dplyr bind_cols

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Tidy Flip Markov Chain Monte Carlo — redist_flip • redist</title>
+<title>'Flip' Markov Chain Monte Carlo Redistricting Simulation — redist_flip • redist</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,8 +46,9 @@
 
 
 
-<meta property="og:title" content="Tidy Flip Markov Chain Monte Carlo — redist_flip" />
-<meta property="og:description" content="Tidy Flip Markov Chain Monte Carlo" />
+<meta property="og:title" content="'Flip' Markov Chain Monte Carlo Redistricting Simulation — redist_flip" />
+<meta property="og:description" content="redist_flip provides an improved interface to the methods in
+redist.mcmc." />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -143,13 +144,14 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Tidy Flip Markov Chain Monte Carlo</h1>
+    <h1>'Flip' Markov Chain Monte Carlo Redistricting Simulation</h1>
     <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/redist_flip_tidy.R'><code>R/redist_flip_tidy.R</code></a></small>
     <div class="hidden name"><code>redist_flip.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Tidy Flip Markov Chain Monte Carlo</p>
+    <p><code>redist_flip</code> provides an improved interface to the methods in
+<code><a href='redist.mcmc.html'>redist.mcmc</a></code>.</p>
     </div>
 
     <pre class="usage"><span class='fu'>redist_flip</span><span class='op'>(</span>
@@ -270,7 +272,21 @@ existing plan, or "<code>&lt;init&gt;</code>" if the initial plan is sampled.</p
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>redist plans object</p>
+    <p>A <code><a href='redist_plans.html'>redist_plans</a></code> object containing the simulated plans.</p>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>This function allows users to simulate redistricting plans
+using the Markov Chain Monte Carlo methods of Fifield et al. Several
+constraints corresponding to substantive requirements in the redistricting
+process are implemented, including population parity and geographic
+compactness. In addition, the function includes multiple-swap and simulated
+tempering functionality to improve the mixing of the Markov Chain.</p>
+    <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
+
+    <p>Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander
+Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte
+Carlo." Working Paper. Available at
+<a href='http://imai.princeton.edu/research/files/redist.pdf'>http://imai.princeton.edu/research/files/redist.pdf</a>.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>

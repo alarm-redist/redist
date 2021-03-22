@@ -42,7 +42,7 @@ is_const_rel = function(rel) {
 #' aggregate other data columns.
 #'
 #' @param .data a \code{\link{redist_map}} object
-#' @param key \code{\link[tidyr:tidyr_tidy_select]{<tidy-select>}} the column to merge by
+#' @param key \code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the column to merge by
 #' @param by_existing if an existing assignment is present, whether to also group by it
 #' @param drop_geom whether to drop the geometry column. Recommended, as
 #'   otherwise a costly geometric merge is required.
@@ -195,9 +195,14 @@ pullback = function(plans) {
 
 
 # helper function for match_numbers
-find_numbering = function(plan, ref, pop) {
+find_numbering = function(plan, ref, pop, force=FALSE) {
     joint = plan_joint(ref, plan, pop)
     opts = which(joint > 0, arr.ind=TRUE)
+    if (!force) {
+        n_combn = prod(sapply(split(opts[,2], opts[,1]), length))
+        if (!n_combn > 1e3)
+            stop("More than 1,000 renumbering options.")
+    }
     combn = as.matrix(expand.grid(split(opts[,2], opts[,1])))
     combn = combn[apply(combn, 1, anyDuplicated) == 0L, , drop=F]
     best_idx = best_renumber(combn, joint)
@@ -220,6 +225,8 @@ find_numbering = function(plan, ref, pop) {
 #'   with the reference plan: the fraction of the total population who are in
 #'   the same district under each plan and the reference plan. Set to
 #'   \code{NULL} if no column should be created.
+#' @param force if \code{TRUE}, force computation when there are more than 1,000
+#'   renumbering options in any plan.
 #'
 #' @returns a modified \code{redist_plans} object. New district numbers will be
 #' stored as an ordered factor variable in the \code{district} column. The
@@ -227,7 +234,7 @@ find_numbering = function(plan, ref, pop) {
 #'
 #' @concept analyze
 #' @export
-match_numbers = function(data, plan, col="pop_overlap") {
+match_numbers = function(data, plan, col="pop_overlap", force=FALSE) {
     stopifnot(inherits(data, "redist_plans"))
     stopifnot("district" %in% colnames(data))
 
@@ -243,7 +250,7 @@ match_numbers = function(data, plan, col="pop_overlap") {
     stopifnot(max(plan_mat[,1]) == ndists)
 
     # compute renumbering and extract info
-    best_renumb = apply(plan_mat, 2, find_numbering, as.integer(plan), pop)
+    best_renumb = apply(plan_mat, 2, find_numbering, as.integer(plan), pop, force)
     renumb = as.integer(vapply(best_renumb, function(x) x$renumb, integer(ndists)))
 
     if (!is.null(col))
