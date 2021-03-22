@@ -79,20 +79,17 @@ library(dplyr)
 data(iowa)
 
 # set a 0.01% population constraint
-iowa_map = redist_map(iowa, existing_plan=cd, pop_tol=0.0001)
+iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.0001)
 # simulate 250 plans using the SMC algorithm
-iowa_plans = redist_smc(iowa_map, nsims=250, verbose=FALSE) %>%
-    add_reference(iowa_map$cd, "2010 adopted plan")
+iowa_plans = redist_smc(iowa_map, nsims=250, verbose=FALSE)
 #> SEQUENTIAL MONTE CARLO
 #> Sampling 250 99-unit maps with 4 districts and population between 761513 and 761665.
 #> Making split 1 of 3
-#> Warning: maximum hit; falling back to naive k estimator.
-#> Resampling effective sample size: 246.0 (98.4% efficiency).
+#> Resampling effective sample size: 245.9 (98.4% efficiency).
 #> Making split 2 of 3
-#> Resampling effective sample size: 240.6 (96.2% efficiency).
+#> Resampling effective sample size: 240.8 (96.3% efficiency).
 #> Making split 3 of 3
-#> Warning: maximum hit; falling back to naive k estimator.
-#> Resampling effective sample size: 247.1 (98.9% efficiency).
+#> Resampling effective sample size: 246.2 (98.5% efficiency).
 ```
 
 After generating plans, you can use `redist`’s plotting functions to
@@ -103,7 +100,7 @@ ensemble.
 library(ggplot2)
 library(patchwork) # for plotting
 
-redist.plot.plans(iowa_plans, draws=c("2010 adopted plan", "1", "2", "3"),
+redist.plot.plans(iowa_plans, draws=c("cd_2010", "1", "2", "3"),
                   geom=iowa_map)
 ```
 
@@ -113,7 +110,7 @@ redist.plot.plans(iowa_plans, draws=c("2010 adopted plan", "1", "2", "3"),
 dev_comp = iowa_plans %>%
     mutate(comp = distr_compactness(iowa_map)) %>%
     group_by(draw) %>%
-    summarize(`Population deviation` = max(abs(total_pop/mean(total_pop) - 1)),
+    summarize(`Population deviation` = max(abs(total_pop/get_target(iowa_map) - 1)),
               Compactness = comp[1])
 
 hist(dev_comp, `Population deviation`) + hist(dev_comp, Compactness) +

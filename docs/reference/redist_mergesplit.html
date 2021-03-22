@@ -171,7 +171,7 @@ but not identical to those used in the references.</p>
   constraint_fn <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>m</span><span class='op'>)</span> <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fl'>0</span>, <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span><span class='op'>(</span><span class='va'>m</span><span class='op'>)</span><span class='op'>)</span>,
   adapt_k_thresh <span class='op'>=</span> <span class='fl'>0.975</span>,
   k <span class='op'>=</span> <span class='cn'>NULL</span>,
-  init_name <span class='op'>=</span> <span class='kw'>if</span> <span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/NULL.html'>is.null</a></span><span class='op'>(</span><span class='va'>init_plan</span><span class='op'>)</span><span class='op'>)</span> <span class='cn'>NULL</span> <span class='kw'>else</span> <span class='st'>"&lt;ref&gt;"</span>,
+  init_name <span class='op'>=</span> <span class='cn'>NULL</span>,
   verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
   silent <span class='op'>=</span> <span class='cn'>FALSE</span>
 <span class='op'>)</span>
@@ -256,7 +256,8 @@ tree. Should be selected automatically in nearly all cases.</p></td>
     <tr>
       <th>init_name</th>
       <td><p>a name for the initial plan, or <code>FALSE</code> to not include
-the initial plan in the output.</p></td>
+the initial plan in the output.  Defaults to the column name of the
+existing plan, or "<code>&lt;init&gt;</code>" if the initial plan is sampled.</p></td>
     </tr>
     <tr>
       <th>verbose</th>

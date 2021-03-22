@@ -21,6 +21,7 @@ redist_flip(
   adapt_eprob = FALSE,
   exact_mh = FALSE,
   adjswaps = TRUE,
+  init_name = NULL,
   verbose = TRUE
 )
 }
@@ -37,7 +38,7 @@ a random initial plan will be generated using \code{redist.smc}.}
 
 \item{group_pop}{A column in map containing group populations}
 
-\item{constraints}{a list of constraints to implement. Can be created with 
+\item{constraints}{a list of constraints to implement. Can be created with
 \code{flip_constraints_helper}}
 
 \item{eprob}{The probability of keeping an edge connected. The
@@ -72,6 +73,10 @@ Metropolis-Hastings ratio calculation for accept-reject rule. Default is FALSE.}
 \item{adjswaps}{Flag to restrict swaps of beta so that only
 values adjacent to current constraint are proposed. The default is
 \code{TRUE}.}
+
+\item{init_name}{a name for the initial plan, or \code{FALSE} to not include
+the initial plan in the output.  Defaults to the column name of the
+existing plan, or "\code{<init>}" if the initial plan is sampled.}
 
 \item{verbose}{Whether to print initialization statement. Default is \code{TRUE}.}
 }
