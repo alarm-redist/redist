@@ -9,7 +9,7 @@ merge_by(.data, key, by_existing = TRUE, drop_geom = TRUE)
 \arguments{
 \item{.data}{a \code{\link{redist_map}} object}
 
-\item{key}{\code{\link[tidyr:tidyr_tidy_select]{<tidy-select>}} the column to merge by}
+\item{key}{\code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the column to merge by}
 
 \item{by_existing}{if an existing assignment is present, whether to also group by it}
 

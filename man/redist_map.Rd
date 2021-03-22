@@ -34,7 +34,7 @@ be no more than this number.}
 \item{pop_bounds}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} more specific
 population bounds, in the form of \code{c(lower, target, upper)}.}
 
-\item{total_pop}{\code{\link[tidyr:tidyr_tidy_select]{<tidy-select>}} the vector
+\item{total_pop}{\code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the vector
 of precinct populations. Defaults to the \code{pop} column, if one exists.}
 
 \item{adj}{the adjacency graph for the object. Defaults to being computed
@@ -42,7 +42,7 @@ from the data if it is coercible to a shapefile.}
 
 \item{adj_col}{the name of the adjacency graph column}
 
-\item{existing_plan}{\code{\link[tidyr:tidyr_tidy_select]{<tidy-select>}} the
+\item{existing_plan}{\code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the
 existing district assignment.}
 
 \item{planarize}{a number, indicating the CRS to project the shapefile to if

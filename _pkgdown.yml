@@ -6,8 +6,9 @@ reference:
   desc: "Core functions to perform a redistricting simulation"
 - contents:
   - redist_smc
-  - redist.mcmc
+  - redist_flip
   - redist_mergesplit
+  - redist_shortburst
   - has_concept("simulate")
 - title: "Analysis Functions"
   desc: "Functions for analyzing simulation outputs"

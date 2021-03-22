@@ -4,7 +4,7 @@
 \alias{match_numbers}
 \title{Renumber districts to match an existing plan}
 \usage{
-match_numbers(data, plan, col = "pop_overlap")
+match_numbers(data, plan, col = "pop_overlap", force = FALSE)
 }
 \arguments{
 \item{data}{a \code{redist_plans} object}
@@ -16,6 +16,9 @@ for a reference plan), or an integer vector containing the plan itself.}
 with the reference plan: the fraction of the total population who are in
 the same district under each plan and the reference plan. Set to
 \code{NULL} if no column should be created.}
+
+\item{force}{if \code{TRUE}, force computation when there are more than 1,000
+renumbering options in any plan.}
 }
 \value{
 a modified \code{redist_plans} object. New district numbers will be

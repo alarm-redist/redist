@@ -2,7 +2,7 @@
 % Please edit documentation in R/redist_flip_tidy.R
 \name{redist_flip}
 \alias{redist_flip}
-\title{Tidy Flip Markov Chain Monte Carlo}
+\title{'Flip' Markov Chain Monte Carlo Redistricting Simulation}
 \usage{
 redist_flip(
   map,
@@ -81,10 +81,19 @@ existing plan, or "\code{<init>}" if the initial plan is sampled.}
 \item{verbose}{Whether to print initialization statement. Default is \code{TRUE}.}
 }
 \value{
-redist plans object
+A \code{\link{redist_plans}} object containing the simulated plans.
 }
 \description{
-Tidy Flip Markov Chain Monte Carlo
+\code{redist_flip} provides an improved interface to the methods in
+\code{\link{redist.mcmc}}.
+}
+\details{
+This function allows users to simulate redistricting plans
+using the Markov Chain Monte Carlo methods of Fifield et al. Several
+constraints corresponding to substantive requirements in the redistricting
+process are implemented, including population parity and geographic
+compactness. In addition, the function includes multiple-swap and simulated
+tempering functionality to improve the mixing of the Markov Chain.
 }
 \examples{
 \dontrun{
@@ -93,3 +102,10 @@ fl25_map <- redist_map(fl, ndists = 4, existing_plan = cd)
 sims <- redist_flip(map = fl25_map, nsims = 10)
 }
 }
+\references{
+Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander
+Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte
+Carlo." Working Paper. Available at
+\url{http://imai.princeton.edu/research/files/redist.pdf}.
+}
+\concept{simulate}

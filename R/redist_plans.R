@@ -170,6 +170,13 @@ get_plan_weights = function(plans) {
     wgt
 }
 
+#' @rdname get_plan_weights
+#' @param ... Ignored.
+#' @export
+weights.redist_plans = function(object, ...) {
+    get_plan_weights(object)
+}
+
 get_n_ref = function(x) {
     stopifnot(inherits(x, "redist_plans"))
     plans_m = get_plan_matrix(x)

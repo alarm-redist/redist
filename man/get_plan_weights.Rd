@@ -2,12 +2,17 @@
 % Please edit documentation in R/redist_plans.R
 \name{get_plan_weights}
 \alias{get_plan_weights}
+\alias{weights.redist_plans}
 \title{Extract the sampling weights from a redistricting simulation}
 \usage{
 get_plan_weights(plans)
+
+\method{weights}{redist_plans}(object, ...)
 }
 \arguments{
 \item{plans}{the \code{redist_plans} object}
+
+\item{...}{Ignored.}
 }
 \value{
 the weights, with an additional attribute \code{resampled}
