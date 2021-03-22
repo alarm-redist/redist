@@ -200,7 +200,7 @@ find_numbering = function(plan, ref, pop, force=FALSE) {
     opts = which(joint > 0, arr.ind=TRUE)
     if (!force) {
         n_combn = prod(sapply(split(opts[,2], opts[,1]), length))
-        if (!n_combn > 1e3)
+        if (n_combn > 1e3)
             stop("More than 1,000 renumbering options.")
     }
     combn = as.matrix(expand.grid(split(opts[,2], opts[,1])))
