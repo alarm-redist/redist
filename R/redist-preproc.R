@@ -111,20 +111,10 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
         stop("Please input valid adjacency matrix")
       }
     }else if(class(adj) == "SpatialPolygonsDataFrame"){ ## shp object
-      
-      ## Distance criterion
-      queens <- ifelse(contiguitymap == "rooks", FALSE, TRUE)
-      
+
       ## Convert shp object to adjacency list
       adjlist <- redist.adjacency(st_as_sf(adj))
       
-      ## Zero-index list
-      for(i in 1:length(adjlist)){
-        adjlist[[i]] <- adjlist[[i]] - 1
-      }
-      
-      ## Change class to list
-      class(adjlist) <- "list"
       
     }else{ ## If neither list, matrix, or shp, throw error
       stop("Please input an adjacency list, adjacency matrix, or Spatial
@@ -311,7 +301,7 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
     init_plan <- init_plan - min(init_plan)
   }
   if(length(unique(init_plan)) != (max(init_plan) + 1)){
-    stop("Need congressional assignment ids to be sequence increasing by 1")
+    stop("init_plan must be a sequence increasing by 1")
   }
   
   ## ------------------------------------
@@ -522,3 +512,4 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
   return(preprocout)
   
 }
+
