@@ -89,7 +89,8 @@ List swMH(List aList,
 	  double ssd_denom = 1.0,
 	  int num_hot_steps = 0,
 	  int num_annealing_steps = 0,
-	  int num_cold_steps = 0)
+	  int num_cold_steps = 0,
+	  bool verbose = true)
 {
 
   /* Inputs to function:
@@ -500,25 +501,30 @@ List swMH(List aList,
     // Print Progress
     if(k % nsims_10pct == 0){
       R_CheckUserInterrupt();
-      Rcout << (double)k / nsims_10pct * 10 << " percent done." << std::endl;
-      if(adapt_lambda == 1){
-	Rcout << "Lambda: " << lambda << std::endl;
+      
+      if(verbose){
+        Rcout << (double)k / nsims_10pct * 10 << " percent done." << std::endl;
+        if(adapt_lambda == 1){
+          Rcout << "Lambda: " << lambda << std::endl;
+        }
+        if(adapt_eprob == 1){
+          Rcout << "Edgecut Probability: " << eprob << std::endl;
+        }
+        Rcout << "Metropolis acceptance ratio: "<< (double)decision_counter / (k-1) << std::endl << std::endl;
       }
-      if(adapt_eprob == 1){
-	Rcout << "Edgecut Probability: " << eprob << std::endl;
-      }
-      Rcout << "Metropolis acceptance ratio: "<< (double)decision_counter / (k-1) << std::endl << std::endl;
     }
     if(adapt_beta == "annealing"){
-      if(k == start_anneal){
-	Rcout << "----------------------------" << std::endl;
-	Rcout << "-- Starting annealing stage." << std::endl;
-	Rcout << "----------------------------" << std::endl;
-      }
-      if(k == start_cold){
-	Rcout << "----------------------------------" << std::endl;
-	Rcout << "-- Simulating at cold temperature." << std::endl;
-	Rcout << "----------------------------------" << std::endl;
+      if(verbose){
+        if(k == start_anneal){
+          Rcout << "----------------------------" << std::endl;
+          Rcout << "-- Starting annealing stage." << std::endl;
+          Rcout << "----------------------------" << std::endl;
+        }
+        if(k == start_cold){
+          Rcout << "----------------------------------" << std::endl;
+          Rcout << "-- Simulating at cold temperature." << std::endl;
+          Rcout << "----------------------------------" << std::endl;
+        }
       }
     }
 
