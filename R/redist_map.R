@@ -252,6 +252,18 @@ get_existing = function(x) {
     if (is.null(exist_col)) NULL else x[[exist_col]]
 }
 
+#' Extract the target district population from a \code{redist_map} object
+#'
+#' @param x the \code{redist_map} object
+#' @returns a single numeric value, the target population
+#' @concept prepare
+#' @export
+get_target = function(x) {
+    stopifnot(inherits(x, "redist_map"))
+
+    attr(x, "pop_bounds")[2]
+}
+
 
 #######################
 # generics

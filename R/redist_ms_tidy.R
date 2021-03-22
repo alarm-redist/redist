@@ -102,7 +102,8 @@
 #' @param k The number of edges to consider cutting after drawing a spanning
 #'   tree. Should be selected automatically in nearly all cases.
 #' @param init_name a name for the initial plan, or \code{FALSE} to not include
-#' the initial plan in the output.
+#'   the initial plan in the output.  Defaults to the column name of the
+#'   existing plan, or "\code{<init>}" if the initial plan is sampled.
 #' @param verbose Whether to print out intermediate information while sampling.
 #'   Recommended.
 #' @param silent Whether to suppress all diagnostic information.
@@ -137,8 +138,7 @@
 redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
                              init_plan=NULL, counties=NULL, compactness=1,
                              constraints=list(), constraint_fn=function(m) rep(0, ncol(m)),
-                             adapt_k_thresh=0.975, k=NULL,
-                             init_name=if (is.null(init_plan)) NULL else "<ref>",
+                             adapt_k_thresh=0.975, k=NULL, init_name=NULL,
                              verbose=TRUE, silent=FALSE) {
     map = validate_redist_map(map)
     V = nrow(map)
@@ -152,10 +152,18 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
     if (nsims < 1)
         stop("`nsims` must be positive.")
 
+    if (isFALSE(init_name)) {
+        init_name = NULL
+    } else if (is.null(init_name) && !is.null(init_plan)) {
+        exist_name = attr(map, "existing_col")
+        init_name = if (!is.null(exist_name)) exist_name else "<init>"
+    }
+
     if (is.null(init_plan)) init_plan = as.integer(as.factor(get_existing(map)))
     if (length(init_plan) == 0L || isTRUE(init_plan == "sample")) {
         init_plan = as.integer(get_plan_matrix(
             redist_smc(map, 1, counties, resample=FALSE, silent=TRUE)))
+        if (!is.null(init_name)) init_name = "<init>"
     }
     stopifnot(length(init_plan) == V)
     stopifnot(max(init_plan) == ndists)
@@ -199,6 +207,7 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
                      compactness = compactness,
                      constraints = constraints,
                      adapt_k_thresh = adapt_k_thresh)
+
     if (!is.null(init_name)) {
         out = add_reference(out, init_plan, init_name)
     }

@@ -34,23 +34,25 @@ within a plan. The data frame will therefore have \code{n_sims*ndists} rows.
 As a data frame, the usual \code{\link{dplyr}} methods will work.
 
 Other useful methods for \code{redist_plans} objects:
-* \code{\link{add_reference}}
-* \code{\link{pullback}}
-* \code{\link{number_by}}
-* \code{\link{match_numbers}}
-* \code{\link{prec_assignment}}
-* \code{\link{get_plan_matrix}}
-* \code{\link{get_plan_weights}}
-* \code{\link{get_sampling_info}}
-* \code{\link{subset_sampled}}
-* \code{\link{subset_ref}}
-* \code{\link{as.matrix.redist_plans}}
-* \code{\link{plot.redist_plans}}
+\itemize{
+\item \code{\link{add_reference}}
+\item \code{\link{subset_sampled}}
+\item \code{\link{subset_ref}}
+\item \code{\link{pullback}}
+\item \code{\link{number_by}}
+\item \code{\link{match_numbers}}
+\item \code{\link{prec_assignment}}
+\item \code{\link{get_plan_matrix}}
+\item \code{\link{get_plan_weights}}
+\item \code{\link{get_sampling_info}}
+\item \code{\link{as.matrix.redist_plans}}
+\item \code{\link{plot.redist_plans}}
+}
 }
 \examples{
 data(iowa)
 
-iowa = redist_map(iowa, existing_plan=cd, pop_tol=0.05)
+iowa = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05)
 rsg_plan = redist.rsg(iowa$adj, iowa$pop, ndists=4, pop_tol=0.05)$plan
 redist_plans(rsg_plan, iowa, "rsg")
 

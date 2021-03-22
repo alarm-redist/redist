@@ -31,9 +31,8 @@ with a reference line for each reference plan, if applicable.
 library(dplyr)
 data(iowa)
 
-iowa = redist_map(iowa, existing_plan=cd, pop_tol=0.05)
-plans = redist_smc(iowa, nsims=100, silent=TRUE) \%>\%
-    add_reference(iowa$cd)
+iowa = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05)
+plans = redist_smc(iowa, nsims=100, silent=TRUE)
 group_by(plans, draw) \%>\%
     summarize(pop_dev = max(abs(total_pop / mean(total_pop) - 1))) \%>\%
     redist.plot.hist(pop_dev)

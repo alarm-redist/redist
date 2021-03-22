@@ -175,7 +175,7 @@ The latter can be inferred if a reference redistricting plan exists.  For Iowa,
 we'll use the adopted 2010 plan as a reference.
 
 ```{r}
-iowa_map = redist_map(iowa, existing_plan=cd, pop_tol=0.01)
+iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.01)
 print(iowa_map)
 ```
 
@@ -276,7 +276,9 @@ excellent.
 
 The output from the algorithm is a `redist_plans` object, which stores a matrix
 of district assignments for each precinct and simulated plans, and a table of 
-summary statistics for each district and simulated plan.
+summary statistics for each district and simulated plan. The existing 2010
+plan has also been automatically added as a reference plan.  Additional
+reference or comparison plans may be added using `add_reference()`.
 
 ```{r}
 print(iowa_plans)
@@ -293,16 +295,13 @@ A `redist_plans` object, the output of a sampling algorithm, links a matrix
 of precinct assignments to a table of district statistics, and this linkage 
 makes analyzing the output a breeze.
 
-The first step is generally to add a reference plan to a set of redistricting
-plans so that the reference can be compared to the simulated baseline. In
-problems with a small (generally fewer than 7) number of districts, it may 
-also be possible to renumber the simulated districts (which have random numbers
-in general) to match the reference plan as closely as possible. This adds a
-`pop_overlap` column which measures how much of the population is in the
-same district in both a given plan and the reference plan.
+In problems with a small (generally fewer than 7) number of districts, it may be
+possible to renumber the simulated districts (which have random numbers in
+general) to match the reference plan as closely as possible. This adds a
+`pop_overlap` column which measures how much of the population is in the same
+district in both a given plan and the reference plan.
 ```{r}
-iowa_plans = add_reference(iowa_plans, iowa_map$cd, "2010 Adopted") %>%
-    match_numbers(iowa_map$cd)
+iowa_plans = match_numbers(iowa_plans, iowa_map$cd_2010)
 print(iowa_plans)
 ```
 
@@ -312,11 +311,10 @@ compactness measure related to the Iowa Code's redistricting requirements, and
 the fraction of minority voters and two-party Democratic vote share by district.
 
 ```{r message=F}
-target_pop = sum(iowa_map$pop) / 4
 county_perims = redist.prep.polsbypopper(iowa_map, iowa_map$adj)
 
 iowa_plans = iowa_plans %>%
-    mutate(pop_dev = abs(total_pop / target_pop - 1),
+    mutate(pop_dev = abs(total_pop / get_target(iowa_map) - 1),
            comp = distr_compactness(iowa_map, "PolsbyPopper", perim_df=county_perims),
            pct_min = group_frac(iowa_map, vap - wvap, vap),
            pct_dem = group_frac(iowa_map, dem_08, dem_08 + rep_08))

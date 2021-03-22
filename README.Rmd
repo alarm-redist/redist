@@ -70,10 +70,9 @@ library(dplyr)
 data(iowa)
 
 # set a 0.01% population constraint
-iowa_map = redist_map(iowa, existing_plan=cd, pop_tol=0.0001)
+iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.0001)
 # simulate 250 plans using the SMC algorithm
-iowa_plans = redist_smc(iowa_map, nsims=250, verbose=FALSE) %>%
-    add_reference(iowa_map$cd, "2010 adopted plan")
+iowa_plans = redist_smc(iowa_map, nsims=250, verbose=FALSE)
 ```
 
 After generating plans, you can use `redist`'s plotting functions to study the
@@ -82,13 +81,13 @@ geographic and partisan characteristics of the simulated ensemble.
 library(ggplot2)
 library(patchwork) # for plotting
 
-redist.plot.plans(iowa_plans, draws=c("2010 adopted plan", "1", "2", "3"),
+redist.plot.plans(iowa_plans, draws=c("cd_2010", "1", "2", "3"),
                   geom=iowa_map)
 
 dev_comp = iowa_plans %>%
     mutate(comp = distr_compactness(iowa_map)) %>%
     group_by(draw) %>%
-    summarize(`Population deviation` = max(abs(total_pop/mean(total_pop) - 1)),
+    summarize(`Population deviation` = max(abs(total_pop/get_target(iowa_map) - 1)),
               Compactness = comp[1])
 
 hist(dev_comp, `Population deviation`) + hist(dev_comp, Compactness) +
