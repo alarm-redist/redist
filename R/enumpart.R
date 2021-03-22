@@ -79,9 +79,8 @@ redist.prep.enumpart <- function(adj, unordered_path, ordered_path, adjlist){
     }
   }
 
-  readr::write_delim(data.frame(adj_map),
-                     file = paste0(unordered_path,".dat"),
-                     col_names = FALSE)
+  write.table(data.frame(adj_map), file = paste0(unordered_path,".dat"),
+              quote=FALSE, row.names=FALSE, col.names=FALSE)
 
   ## Order edges
 
@@ -194,9 +193,12 @@ redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
 #' cds <- redist.read.enumpart(out_path = '../enumerated')
 #' }
 redist.read.enumpart <- function(out_path, skip = 0,  n_max = -1L){
-  sols <- readr::read_lines(paste0(out_path, ".dat"))#, skip = skip, n_max = n_max)
-  sols <- apply(do.call("cbind", strsplit(sols, " ")), 2, as.numeric)
-  return(sols)
+    out_path = paste0(out_path, ".dat")
+    rows = as.integer(system2("wc", args = c("-l", out_path, " | awk '{print $1}'"), stdout = TRUE))
+    cols = stringr::str_count(readLines(out_path, n=1), " ") + 1L
+    if (n_max <= 0L) n_max = rows
+    raw = scan(out_path, what=integer(0), skip=skip, nmax=n_max*cols)
+    matrix(raw, ncol=cols, byrow=TRUE)
 }
 
 

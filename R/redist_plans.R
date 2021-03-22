@@ -273,9 +273,17 @@ print.redist_plans = function(x, ...) {
     n_ref = get_n_ref(x)
     n_samp = ncol(plans_m) - n_ref
 
-    cat(cli::pluralize("{n_samp} sampled plan{?s} "))
-    if (n_ref > 0)
-        cat(cli::pluralize("and {n_ref} reference plan{?s} "))
+    if (n_samp == 1) {
+        cat("1 sampled plan ")
+    } else {
+        cat(n_samp, "sampled plans ")
+    }
+
+    if (n_ref == 1) {
+        cat("and 1 reference plan ")
+    } else if (n_ref > 1) {
+        cat("and", n_ref, "reference plans ")
+    }
     if (ncol(plans_m) == 0) return(invisible(x))
 
     alg_name = c(mcmc="Markov chain Monte Carlo",
@@ -287,22 +295,23 @@ print.redist_plans = function(x, ...) {
                  shortburst="short bursts")[attr(x, "algorithm")]
     if (is.na(alg_name)) alg_name = "an unknown algorithm"
 
-    cli::cat_line("with ", max(plans_m[,1]), " districts from a ",
-        nrow(plans_m), "-unit map,\n  drawn using ", alg_name)
+    cat("with ", max(plans_m[,1]), " districts from a ",
+        nrow(plans_m), "-unit map,\n  drawn using ", alg_name, "\n", sep="")
 
     merge_idx = attr(x, "merge_idx")
     if (!is.null(merge_idx))
-        cli::cat_line("Merged from another map with reindexing:",
-                      utils::capture.output(str(merge_idx, vec.len=2)))
+        cat("Merged from another map with reindexing:",
+            utils::capture.output(str(merge_idx, vec.len=2)), "\n", sep="")
 
     if (!is.null(attr(x, "wgt"))) {
         if (attr(x, "resampled"))
-            cli::cat_line("With plans resampled from weights")
+            cat("With plans resampled from weights\n")
         else
-            cli::cat_line("With plans not resampled from weights")
+            cat("With plans not resampled from weights\n")
     }
 
-    cli::cat_line("Plans matrix:", utils::capture.output(str(plans_m, give.attr=F)))
+    cat("Plans matrix:", utils::capture.output(str(plans_m, give.attr=F)),
+        "\n", sep="")
 
     utils::getS3method("print", "tbl")(x)
 

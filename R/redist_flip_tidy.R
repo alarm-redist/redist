@@ -38,6 +38,7 @@
 #' @param verbose Whether to print initialization statement. Default is \code{TRUE}.
 #'
 #' @return redist plans object
+#' @concept simulate
 #' @export
 #'
 #'

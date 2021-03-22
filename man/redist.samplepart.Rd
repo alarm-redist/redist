@@ -2,7 +2,7 @@
 % Please edit documentation in R/enumerate.R
 \name{redist.samplepart}
 \alias{redist.samplepart}
-\title{Sample partitions using spanning trees}
+\title{DEFUNCT: Sample partitions using spanning trees}
 \usage{
 redist.samplepart(
   adj,
@@ -65,5 +65,5 @@ possible redistricting plans from the implied spanning tree.
 }
 \description{
 \code{redist.samplepart} uses a spanning tree method to randomly sample
-redistricting plans.
+redistricting plans. DEFUNCT, use \code{\link{redist_smc}} instead.
 }

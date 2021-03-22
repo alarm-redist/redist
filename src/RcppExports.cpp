@@ -3,7 +3,6 @@
 
 #include "redist_types.h"
 #include <RcppArmadillo.h>
-#include <RcppEigen.h>
 #include <Rcpp.h>
 
 using namespace Rcpp;
@@ -731,21 +730,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type pop_temper(pop_temperSEXP);
     Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
     rcpp_result_gen = Rcpp::wrap(smc_plans(N, l, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_vra_hinge, tgts_min, beta_inc, incumbents, lp, thresh, alpha, pop_temper, verbosity));
-    return rcpp_result_gen;
-END_RCPP
-}
-// sample_partition
-List sample_partition(const std::vector<arma::vec> aList, const arma::mat aMat, const int num_partitions, const int num_samples, const int threads);
-RcppExport SEXP _redist_sample_partition(SEXP aListSEXP, SEXP aMatSEXP, SEXP num_partitionsSEXP, SEXP num_samplesSEXP, SEXP threadsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<arma::vec> >::type aList(aListSEXP);
-    Rcpp::traits::input_parameter< const arma::mat >::type aMat(aMatSEXP);
-    Rcpp::traits::input_parameter< const int >::type num_partitions(num_partitionsSEXP);
-    Rcpp::traits::input_parameter< const int >::type num_samples(num_samplesSEXP);
-    Rcpp::traits::input_parameter< const int >::type threads(threadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(sample_partition(aList, aMat, num_partitions, num_samples, threads));
     return rcpp_result_gen;
 END_RCPP
 }

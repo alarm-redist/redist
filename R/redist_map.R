@@ -327,29 +327,30 @@ summarise.redist_map = function(.data, ..., .groups=NULL) {
 #' @method print redist_map
 #' @export
 print.redist_map = function(x, ...) {
-    cli::cat_line("A redist_map object with ", nrow(x),
-                  " units and ", ncol(x), " fields")
+    cat("A redist_map object with", nrow(x), "units and", ncol(x), "fields\n")
 
     bounds = attr(x, "pop_bounds")
-    cli::cat_line("To be partitioned into ", attr(x, "ndists"),
-                  " districts with population between ",
-                  format(bounds[2], nsmall=0, big.mark=","), " - ",
-                  format(100 - 100*bounds[1]/bounds[2], nsmall=1), "% and ",
-                  format(bounds[2], nsmall=0, big.mark=","), " + ",
-                  format(100*bounds[3]/bounds[2] - 100, nsmall=1), "%")
+    cat("To be partitioned into ", attr(x, "ndists"),
+        " districts with population between ",
+        format(bounds[2], nsmall=0, big.mark=","), " - ",
+        format(100 - 100*bounds[1]/bounds[2], nsmall=1), "% and ",
+        format(bounds[2], nsmall=0, big.mark=","), " + ",
+        format(100*bounds[3]/bounds[2] - 100, nsmall=1), "%\n",
+        sep="")
 
     merge_idx = attr(x, "merge_idx")
     if (!is.null(merge_idx))
-        cli::cat_line("Merged from another map with reindexing:",
-                      utils::capture.output(str(merge_idx, vec.len=2)))
+        cat("Merged from another map with reindexing:",
+            utils::capture.output(str(merge_idx, vec.len=2)), "\n", sep="")
 
     if (inherits(x, "sf")) {
         geom = st_geometry(x)
 
-        cli::cat_line("With geometry:")
+        cat("With geometry:\n")
         bb = signif(attr(geom, "bbox"), options("digits")$digits)
-        cli::cat_line("    bbox:           ",
-                      paste(paste(names(bb), bb[], sep = ": "), collapse = " "))
+        cat("    bbox:           ",
+            paste(paste(names(bb), bb[], sep = ": "), collapse = " "),
+            "\n", sep="")
 
         crs = st_crs(geom)
         if (is.na(crs)) {
