@@ -9,7 +9,7 @@ redist_map(
   ...,
   existing_plan = NULL,
   ndists = NULL,
-  total_pop = NULL,
+  total_pop,
   pop_tol = 0.01,
   pop_bounds = NULL,
   adj = NULL,
@@ -32,7 +32,7 @@ for each row in the data. If no plan exists, set \code{ndists}.}
 districts to partition the map into. Must be specified if \code{existing_plan} is not supplied.}
 
 \item{total_pop}{\code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the vector
-of precinct populations.}
+of precinct populations. Required.}
 
 \item{pop_tol}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the population parity tolerance.
 The percentage deviation from the average population will be constrained to

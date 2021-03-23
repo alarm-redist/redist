@@ -120,7 +120,7 @@ reconstruct.redist_map = function(data, old) {
 #' @param ndists \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the integer number of
 #'   districts to partition the map into. Must be specified if `existing_plan` is not supplied.
 #' @param total_pop \code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the vector
-#'   of precinct populations. 
+#'   of precinct populations. Required.
 #' @param pop_tol \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the population parity tolerance.
 #'   The percentage deviation from the average population will be constrained to
 #'   be no more than this number.
@@ -147,7 +147,7 @@ reconstruct.redist_map = function(data, old) {
 #' @concept prepare
 #' @md
 #' @export
-redist_map = function(..., existing_plan=NULL, ndists=NULL, total_pop=NULL, 
+redist_map = function(..., existing_plan=NULL, ndists=NULL, total_pop, 
                       pop_tol=0.01, pop_bounds=NULL, 
                       adj=NULL, adj_col="adj", planarize=3857) {
     x = tibble(...)
@@ -179,8 +179,9 @@ redist_map = function(..., existing_plan=NULL, ndists=NULL, total_pop=NULL,
         adj = redist.adjacency(x)
     }
 
-    if (is.null(total_pop)) stop("Population values must be specified in `total_pop`.")
     pop_col = names(tidyselect::eval_select(rlang::enquo(total_pop), x))
+    if (length(pop_col) == 0) 
+        stop("Population variable must be specified in the `total_pop` argument.")
     existing_col = names(tidyselect::eval_select(rlang::enquo(existing_plan), x))
     if (length(existing_col) == 0)
         existing_col = NULL
