@@ -11,6 +11,7 @@ redist_flip(
   counties = NULL,
   group_pop,
   constraints = list(),
+  nthin = 1,
   eprob = 0.05,
   lambda = 0,
   temper = FALSE,
@@ -40,6 +41,9 @@ a random initial plan will be generated using \code{redist.smc}.}
 
 \item{constraints}{a list of constraints to implement. Can be created with
 \code{flip_constraints_helper}}
+
+\item{nthin}{The amount by which to thin the Markov Chain. The
+default is \code{1}.}
 
 \item{eprob}{The probability of keeping an edge connected. The
 default is \code{0.05}.}
@@ -97,9 +101,9 @@ tempering functionality to improve the mixing of the Markov Chain.
 }
 \examples{
 \dontrun{
-data(fl25)
-fl25_map <- redist_map(fl, ndists = 4, existing_plan = cd)
-sims <- redist_flip(map = fl25_map, nsims = 10)
+data(iowa)
+iowa_map <- redist_map(iowa, ndists = 4, existing_plan = cd_2010, total_pop = 'pop')
+sims <- redist_flip(map = iowa_map, nsims = 100)
 }
 }
 \references{
