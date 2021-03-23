@@ -84,18 +84,18 @@ merge_by = function(.data, key, by_existing=TRUE, drop_geom=TRUE) {
 #' @order 1
 #'
 #' @param .data a \code{\link{redist_map}} object
-#' @param within the core is defined to be at least this number of steps within
+#' @param boundary the core is defined to be at least this number of steps within
 #'   district boundaries
 #'
 #' @concept prepare
 #' @export
-make_cores = function(.data=get0(".", parent.frame()), within=1, focus=NULL) {
+make_cores = function(.data=get0(".", parent.frame()), boundary=1, focus=NULL) {
     if (!inherits(.data, "redist_map"))
         stop("Must provide `.data` if not called within a pipe")
 
     redist.identify.cores(adj=get_adj(.data),
                           plan=as.integer(as.factor(get_existing(.data))),
-                          within=within, focus=focus, simplify=TRUE)
+                          boundary=boundary, focus=focus, simplify=TRUE)
 }
 
 

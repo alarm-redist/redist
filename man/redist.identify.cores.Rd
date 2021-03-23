@@ -5,12 +5,12 @@
 \alias{redist.identify.cores}
 \title{Identify Cores of a District (Heuristic)}
 \usage{
-make_cores(.data = get0(".", parent.frame()), within = 1, focus = NULL)
+make_cores(.data = get0(".", parent.frame()), boundary = 1, focus = NULL)
 
 redist.identify.cores(
   adj,
   plan,
-  within = 1,
+  boundary = 1,
   focus = NULL,
   simplify = TRUE,
   adjacency,
@@ -20,7 +20,7 @@ redist.identify.cores(
 \arguments{
 \item{.data}{a \code{\link{redist_map}} object}
 
-\item{within}{Number of steps to check for. Defaults to 1.}
+\item{boundary}{Number of steps to check for. Defaults to 1.}
 
 \item{focus}{Optional. Integer. A single district to focus on.}
 
@@ -40,21 +40,23 @@ variable as \code{group_id} and additional information on connected components.
 }
 \description{
 Creates a grouping ID to unite geographies and perform analysis on a smaller
-set of precincts. It identifies all precincts more than \code{within} edges
-of a district district border. Each precinct more than \code{within} steps away from
-another district gets it own group. Some districts may have multiple, disconnected 
-components that make up the core, but each of these is assigned a separate grouping id so
-that a call to \code{sf::st_union()} would produce only connected pieces.
+set of precincts. It identifies all precincts more than \code{boundary} edges
+of a district district boundary. Each precinct more than \code{boundary}
+steps away from another district gets it own group. Some districts may have
+multiple, disconnected components that make up the core, but each of these is
+assigned a separate grouping id so that a call to \code{sf::st_union()} would
+produce only connected pieces.
 }
 \details{
-This is a loose interpretation of the 
-\href{https://www.ncsl.org/research/redistricting/redistricting-criteria.aspx}{NCSL's summary} of 
-redistricting criteria to preserve the cores of prior districts. Using the adjacency
-graph for a given plan, it will locate the precincts on the boundary of the district, 
-within \code{within} steps of the edge. Each of these  is given their own group.
-Each remaining entry that is not near the boundary of the district is given an 
-id that can be used to group the remainder of the district by connected component. 
-This portion is deemed the core of the district.
+This is a loose interpretation of the
+\href{https://www.ncsl.org/research/redistricting/redistricting-criteria.aspx}{NCSL's summary}
+of redistricting criteria to preserve the cores of prior districts. Using the
+adjacency graph for a given plan, it will locate the precincts on the
+boundary of the district, within \code{boundary} steps of the edge. Each of
+these  is given their own group. Each remaining entry that is not near the
+boundary of the district is given an id that can be used to group the
+remainder of the district by connected component. This portion is deemed the
+core of the district.
 }
 \examples{
 data(fl250)

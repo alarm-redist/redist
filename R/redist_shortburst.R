@@ -41,9 +41,10 @@
 #' Must be between 0 and 1.
 #' @param return_all Whether to return all the
 #'   Recommended for monitoring purposes.
-#' @param backend "mergesplit" or "flip" - which mcmc within the bursts.
+#' @param backend the MCMC algorithm to use within each burst, either
+#'   "mergesplit" or "flip".
 #' @param group_pop A column in map containing group populations for use with flip
-#' @param flip_lambda The parameter detmerining the number of swaps to attempt each iteration of flip mcmc. 
+#' @param flip_lambda The parameter detmerining the number of swaps to attempt each iteration of flip mcmc.
 #' The number of swaps each iteration is equal to Pois(lambda) + 1. The default is 0.
 #' @param flip_eprob  The probability of keeping an edge connected in flip mcmc. The default is 0.05.
 #' @param flip_constraints A list of constraints to use for flip mcmc. Can be created with
@@ -70,14 +71,14 @@
 #' @concept simulate
 #' @md
 #' @export
-redist_shortburst = function(map, score_fn=NULL, stop_at=NULL, burst_size = ifelse(backend == 'mergesplit', 10L, 50L),
+redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
+                             burst_size = ifelse(backend == 'mergesplit', 10L, 50L),
                              max_bursts=500L, maximize=TRUE, init_plan=NULL,
                              counties=NULL, compactness=1, adapt_k_thresh=0.975,
-                             return_all=TRUE, backend = 'mergesplit', group_pop,
+                             return_all=TRUE, backend="mergesplit", group_pop,
                              flip_lambda = 0, flip_eprob = 0.05, flip_constraints = list(),
                              verbose=TRUE) {
-    
-    match.arg(backend, c('flip', 'mergesplit'))
+
     map = validate_redist_map(map)
     V = nrow(map)
     adj = get_adj(map)
@@ -85,6 +86,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL, burst_size = ifel
 
     burst_size = as.integer(burst_size)
     max_bursts = as.integer(max_bursts)
+    match.arg(backend, c("flip", "mergesplit"))
 
     score_fn = rlang::as_closure(score_fn)
     stopifnot(is.function(score_fn))
@@ -134,19 +136,18 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL, burst_size = ifel
 
     pop = map[[attr(map, "pop_col")]]
 
-        
-    if(backend == 'mergesplit'){
-    # kind of hacky -- extract k=... from outupt
-    if (!requireNamespace("utils", quietly=TRUE)) stop()
-    out = utils::capture.output({
-        x <- ms_plans(1, adj, init_plan, counties, pop, ndists, pop_bounds[2],
-                      pop_bounds[1], pop_bounds[3], compactness,
-                      0, rep(1, ndists), ndists, 0, 0, 0, 1, rep(0, V),
-                      0, 0, 0, rep(1, ndists), adapt_k_thresh, 0L, verbosity=2)
-    }, type="output")
-    rm(x)
-    k = as.integer(stats::na.omit(stringr::str_match(out, "Using k = (\\d+)")[,2]))
-    
+
+    if (backend == "mergesplit") {
+        # kind of hacky -- extract k=... from outupt
+        if (!requireNamespace("utils", quietly=TRUE)) stop()
+        out = utils::capture.output({
+            x <- ms_plans(1, adj, init_plan, counties, pop, ndists, pop_bounds[2],
+                          pop_bounds[1], pop_bounds[3], compactness,
+                          0, rep(1, ndists), ndists, 0, 0, 0, 1, rep(0, V),
+                          0, 0, 0, rep(1, ndists), adapt_k_thresh, 0L, verbosity=2)
+        }, type="output")
+        rm(x)
+        k = as.integer(stats::na.omit(stringr::str_match(out, "Using k = (\\d+)")[,2]))
 
         run_burst = function(init) {
             ms_plans(burst_size + 1L, adj, init, counties, pop, ndists,
@@ -160,22 +161,22 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL, burst_size = ifel
         } else {
             group_pop <- eval_tidy(enquo(group_pop), map)
         }
-        
-        flip_constraints <- process_flip_constr(constraints = flip_constraints, 
-                                                group_pop = group_pop, 
+
+        flip_constraints <- process_flip_constr(constraints = flip_constraints,
+                                                group_pop = group_pop,
                                                 counties = counties)
-        
-        if(flip_eprob <= 0 || flip_eprob >= 1){
-            stop('flip_eprob must be in the interval (0, 1).')
+
+        if (flip_eprob <= 0 || flip_eprob >= 1) {
+            stop("flip_eprob must be in the interval (0, 1).")
         }
-        if(flip_lambda < 0){
-            stop('flip_lambda must be a nonnegative integer.')
+        if (flip_lambda < 0) {
+            stop("flip_lambda must be a nonnegative integer.")
         }
-        
+
         run_burst <- function(init){
-            skinny_flips(adj = adj, init_plan = init_plan, total_pop = pop, 
-                        pop_tol = pop_tol, nsims = burst_size, 
-                        eprob = flip_eprob, lambda = flip_lambda, 
+            skinny_flips(adj = adj, init_plan = init_plan, total_pop = pop,
+                        pop_tol = pop_tol, nsims = burst_size,
+                        eprob = flip_eprob, lambda = flip_lambda,
                         constraints = flip_constraints)
         }
     }
@@ -189,7 +190,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL, burst_size = ifel
     scores[1] = score_fn(out_mat[, 1, drop=FALSE])
 
     if (verbose) {
-        if(backend == 'mergesplit'){
+        if (backend == 'mergesplit') {
             cat("MERGE-SPLIT SHORT BURSTS\n")
         } else {
             cat('FLIP SHORT BURSTS\n')
@@ -199,6 +200,11 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL, burst_size = ifel
         cat("Burst  Improve?  Score\n")
     }
     report_int = round(max_bursts / 10)
+    improve_ch = sample(c("\U0001F973", "\U0001F600", "\U0001F60E",
+                           "\U0001F642", "\U0001F386", "\U0001F387",
+                           "\U0001F942", "\U0001F383", "\U0001FA85",
+                           "\U0001F4A5", "\U0001F389", "\U26C4", "\U0001F31F"))
+    improve_ct = 1L
     for (burst in 1:max_bursts) {
         plans = run_burst(out_mat[, burst])
         plan_scores = score_fn(plans)
@@ -217,12 +223,16 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL, burst_size = ifel
         if (condition) {
             out_mat[, burst+1L] = plans[, best_idx]
             scores[burst+1L] = best_score
-            if (verbose) cat(sprintf("% 5d     \U0001F600      %f\n", burst, best_score))
+            if (verbose) {
+                improve_ct = (improve_ct %% length(improve_ch)) + 1L
+                cat(sprintf("% 5d     %s     %f\n", burst,
+                            improve_ch[improve_ct], best_score))
+            }
         } else {
             out_mat[, burst+1L] = out_mat[, burst]
             scores[burst+1L] = prev_score
             if (verbose && burst %% report_int == 0)
-                cat(sprintf("% 5d     \U0001F622     %f\n", burst, prev_score))
+                cat(sprintf("% 5d            %f\n", burst, prev_score))
         }
 
 
@@ -240,9 +250,11 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL, burst_size = ifel
                            wgt=NULL, resampled=FALSE,
                            burst_size = burst_size,
                            n_bursts = burst,
+                           backend = backend,
                            converged = converged,
                            score_fn = deparse(substitute(score_fn)))
     out$score = rep(scores[out_idx], each=ndists)
+
     if (return_all) {
         out = add_reference(out, init_plan, "<init>")
         out$score[1:ndists] = scores[1]

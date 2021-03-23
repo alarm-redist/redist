@@ -77,8 +77,8 @@ redist.prep.enumpart <- function(adj, unordered_path, ordered_path, adjlist){
     }
   }
 
-  write.table(data.frame(adj_map), file = paste0(unordered_path,".dat"),
-              quote=FALSE, row.names=FALSE, col.names=FALSE)
+  utils::write.table(data.frame(adj_map), file = paste0(unordered_path,".dat"),
+                     quote=FALSE, row.names=FALSE, col.names=FALSE)
 
   ## Order edges
 
