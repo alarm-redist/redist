@@ -147,7 +147,8 @@ reconstruct.redist_map = function(data, old) {
 #' @concept prepare
 #' @md
 #' @export
-redist_map = function(..., existing_plan=NULL, ndists=NULL, pop_tol=0.01, pop_bounds=NULL, total_pop,
+redist_map = function(..., existing_plan=NULL, ndists=NULL, total_pop=NULL, 
+                      pop_tol=0.01, pop_bounds=NULL, 
                       adj=NULL, adj_col="adj", planarize=3857) {
     x = tibble(...)
     is_sf = any(vapply(x, function(x) inherits(x, "sfc"), TRUE))
@@ -178,6 +179,7 @@ redist_map = function(..., existing_plan=NULL, ndists=NULL, pop_tol=0.01, pop_bo
         adj = redist.adjacency(x)
     }
 
+    if (is.null(total_pop)) stop("Population values must be specified in `total_pop`.")
     pop_col = names(tidyselect::eval_select(rlang::enquo(total_pop), x))
     existing_col = names(tidyselect::eval_select(rlang::enquo(existing_plan), x))
     if (length(existing_col) == 0)

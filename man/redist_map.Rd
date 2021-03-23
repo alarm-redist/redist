@@ -9,9 +9,9 @@ redist_map(
   ...,
   existing_plan = NULL,
   ndists = NULL,
+  total_pop = NULL,
   pop_tol = 0.01,
   pop_bounds = NULL,
-  total_pop,
   adj = NULL,
   adj_col = "adj",
   planarize = 3857
@@ -31,15 +31,15 @@ for each row in the data. If no plan exists, set \code{ndists}.}
 \item{ndists}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the integer number of
 districts to partition the map into. Must be specified if \code{existing_plan} is not supplied.}
 
+\item{total_pop}{\code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the vector
+of precinct populations.}
+
 \item{pop_tol}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the population parity tolerance.
 The percentage deviation from the average population will be constrained to
 be no more than this number.}
 
 \item{pop_bounds}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} more specific
 population bounds, in the form of \code{c(lower, target, upper)}.}
-
-\item{total_pop}{\code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the vector
-of precinct populations.}
 
 \item{adj}{the adjacency graph for the object. Defaults to being computed
 from the data if it is coercible to a shapefile.}
