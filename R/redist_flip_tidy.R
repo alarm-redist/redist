@@ -60,9 +60,9 @@
 #' @importFrom utils capture.output
 #'
 #' @examples \dontrun{
-#' data(fl25)
-#' fl25_map <- redist_map(fl, ndists = 4, existing_plan = cd)
-#' sims <- redist_flip(map = fl25_map, nsims = 10)
+#' data(iowa)
+#' iowa_map <- redist_map(iowa, ndists = 4, existing_plan = cd_2010, total_pop = 'pop')
+#' sims <- redist_flip(map = iowa_map, nsims = 100)
 #' }
 redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, constraints = list(),
                         eprob = 0.05, lambda = 0, temper = FALSE,
