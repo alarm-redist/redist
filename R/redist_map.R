@@ -114,9 +114,12 @@ reconstruct.redist_map = function(data, old) {
 #' @param ... column elements to be bound into a \code{redist_map} object or a
 #'   single \code{list} or \code{data.frame}.  These will be passed on to the
 #'   \code{\link{tibble}} constructor.
+#' @param existing_plan \code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the
+#'   variable for existing district assignment, which gives a district number
+#'   for each row in the data. If no plan exists, set `ndists`.
 #' @param ndists \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the integer number of
-#'   districts to partition the map into
-#' @param pop_tol \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the population tolerance.
+#'   districts to partition the map into. Must be specified if `existing_plan` is not supplied.
+#' @param pop_tol \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the population parity tolerance.
 #'   The percentage deviation from the average population will be constrained to
 #'   be no more than this number.
 #' @param pop_bounds \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} more specific
@@ -126,21 +129,26 @@ reconstruct.redist_map = function(data, old) {
 #' @param adj the adjacency graph for the object. Defaults to being computed
 #'     from the data if it is coercible to a shapefile.
 #' @param adj_col the name of the adjacency graph column
-#' @param existing_plan \code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the
-#'   existing district assignment.
 #' @param planarize a number, indicating the CRS to project the shapefile to if
 #'   it is latitude-longitude based. Set to NULL or FALSE to avoid planarizing.
 #'
 #' @examples
+#' data(iowa)
 #' data(fl25)
-#' d = redist_map(fl25, ndists=3, pop_tol=0.05)
-#' dplyr::filter(d, pop >= 10e3)
+#' 
+#' 
+#' iowa_map = redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
+#' print(iowa_map)
+#' 
+#' fl_map = redist_map(fl25, ndists = 3, pop_tol = 0.05)
+#' dplyr::filter(fl_map, pop >= 10e3)
+#' 
 #'
 #' @concept prepare
 #' @md
 #' @export
-redist_map = function(..., ndists=NULL, pop_tol=0.01, pop_bounds=NULL, total_pop="pop",
-                      adj=NULL, adj_col="adj", existing_plan=NULL, planarize=3857) {
+redist_map = function(..., existing_plan=NULL, ndists=NULL, pop_tol=0.01, pop_bounds=NULL, total_pop="pop",
+                      adj=NULL, adj_col="adj", planarize=3857) {
     x = tibble(...)
     is_sf = any(vapply(x, function(x) inherits(x, "sfc"), TRUE))
     if (is_sf) {

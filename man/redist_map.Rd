@@ -7,13 +7,13 @@
 \usage{
 redist_map(
   ...,
+  existing_plan = NULL,
   ndists = NULL,
   pop_tol = 0.01,
   pop_bounds = NULL,
   total_pop = "pop",
   adj = NULL,
   adj_col = "adj",
-  existing_plan = NULL,
   planarize = 3857
 )
 
@@ -24,10 +24,14 @@ as_redist_map(x)
 single \code{list} or \code{data.frame}.  These will be passed on to the
 \code{\link{tibble}} constructor.}
 
-\item{ndists}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the integer number of
-districts to partition the map into}
+\item{existing_plan}{\code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the
+variable for existing district assignment, which gives a district number
+for each row in the data. If no plan exists, set \code{ndists}.}
 
-\item{pop_tol}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the population tolerance.
+\item{ndists}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the integer number of
+districts to partition the map into. Must be specified if \code{existing_plan} is not supplied.}
+
+\item{pop_tol}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the population parity tolerance.
 The percentage deviation from the average population will be constrained to
 be no more than this number.}
 
@@ -41,9 +45,6 @@ of precinct populations. Defaults to the \code{pop} column, if one exists.}
 from the data if it is coercible to a shapefile.}
 
 \item{adj_col}{the name of the adjacency graph column}
-
-\item{existing_plan}{\code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the
-existing district assignment.}
 
 \item{planarize}{a number, indicating the CRS to project the shapefile to if
 it is latitude-longitude based. Set to NULL or FALSE to avoid planarizing.}
@@ -72,9 +73,16 @@ Other useful methods for \code{redist_map} objects:
 }
 }
 \examples{
+data(iowa)
 data(fl25)
-d = redist_map(fl25, ndists=3, pop_tol=0.05)
-dplyr::filter(d, pop >= 10e3)
+
+
+iowa_map = redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
+print(iowa_map)
+
+fl_map = redist_map(fl25, ndists = 3, pop_tol = 0.05)
+dplyr::filter(fl_map, pop >= 10e3)
+
 
 }
 \concept{prepare}
