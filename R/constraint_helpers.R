@@ -195,4 +195,6 @@ flip_constraints_helper <- function(map,
 
     constraints_list$partisan$metric <- partisan_metric
   }
+  
+  return(constraints_list)
 }

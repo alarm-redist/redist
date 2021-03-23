@@ -8,7 +8,7 @@ redist_shortburst(
   map,
   score_fn = NULL,
   stop_at = NULL,
-  burst_size = 10L,
+  burst_size = ifelse(backend == "mergesplit", 10L, 50L),
   max_bursts = 500L,
   maximize = TRUE,
   init_plan = NULL,
@@ -16,6 +16,11 @@ redist_shortburst(
   compactness = 1,
   adapt_k_thresh = 0.975,
   return_all = TRUE,
+  backend = "mergesplit",
+  group_pop,
+  flip_lambda = 0,
+  flip_eprob = 0.05,
+  flip_constraints = list(),
   verbose = TRUE
 )
 }
