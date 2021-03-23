@@ -19,7 +19,7 @@
 #' for each plan. Can also be a purrr-style anonymous function. See
 #' [`?scorers`][scorers] for some function factories for common scoring rules.
 #' @param stop_at A threshold to stop optimization at.
-#' @param burst_size The size of each burst. 10 is recommended.
+#' @param burst_size The size of each burst. 10 is recommended for mergesplit and 50 for flip.
 #' @param max_bursts The maximum number of bursts to run before returning.
 #' @param maximize If \code{TRUE}, try to maximize the score; otherwise, try to
 #' minimize it.
@@ -41,6 +41,12 @@
 #' Must be between 0 and 1.
 #' @param return_all Whether to return all the
 #'   Recommended for monitoring purposes.
+#' @param backend "mergesplit" or "flip" - which mcmc within the bursts.
+#' @param flip_lambda The parameter detmerining the number of swaps to attempt each iteration of flip mcmc. 
+#' The number of swaps each iteration is equal to Pois(lambda) + 1. The default is 0.
+#' @param flip_eprob  The probability of keeping an edge connected in flip mcmc. The default is 0.05.
+#' @param flip_constraints A list of constraints to use for flip mcmc. Can be created with
+#' \code{flip_constraints_helper}. Defaults to an edges-removed compactness constraint with weight 0.6.
 #' @param verbose Whether to print out intermediate information while sampling.
 #'   Recommended for monitoring purposes.
 #'
@@ -63,10 +69,14 @@
 #' @concept simulate
 #' @md
 #' @export
-redist_shortburst = function(map, score_fn=NULL, stop_at=NULL, burst_size=10L,
+redist_shortburst = function(map, score_fn=NULL, stop_at=NULL, burst_size = ifelse(backend == 'mergesplit', 10L, 50L),
                              max_bursts=500L, maximize=TRUE, init_plan=NULL,
                              counties=NULL, compactness=1, adapt_k_thresh=0.975,
-                             return_all=TRUE, verbose=TRUE) {
+                             return_all=TRUE, backend = 'mergesplit', group_pop,
+                             flip_lambda = 0, flip_eprob = 0.05, flip_constraints = list(),
+                             verbose=TRUE) {
+    
+    match.arg(backend, c('flip', 'mergesplit'))
     map = validate_redist_map(map)
     V = nrow(map)
     adj = get_adj(map)
@@ -84,6 +94,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL, burst_size=10L,
     if (compactness < 0) stop("Compactness parameter must be non-negative")
     if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
         stop("`adapt_k_thresh` parameter must lie in [0, 1].")
+
     if (burst_size < 1 || max_bursts < 1)
         stop("`burst_size` and `max_bursts` must be positive.")
 
@@ -106,11 +117,24 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL, burst_size=10L,
                                   as.character(counties)) %>%
             as.factor() %>%
             as.integer()
+        if (any(component > 1)) {
+          warning('counties were not contiguous, expect additional splits.')
+        }
+    }
+    if(backend == 'mergesplit'){
+        pop_bounds = attr(map, "pop_bounds")
+    } else {
+        if ('pop_tol' %in% names(attributes(map))) {
+            pop_tol <- attr(map, 'pop_tol')
+        } else {
+            pop_tol <- attr(map, 'pop_bounds')[3] / attr(map, 'pop_bounds')[2] - 1
+        }
     }
 
-    pop_bounds = attr(map, "pop_bounds")
     pop = map[[attr(map, "pop_col")]]
 
+        
+    if(backend == 'mergesplit'){
     # kind of hacky -- extract k=... from outupt
     if (!requireNamespace("utils", quietly=TRUE)) stop()
     out = utils::capture.output({
@@ -121,13 +145,40 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL, burst_size=10L,
     }, type="output")
     rm(x)
     k = as.integer(stats::na.omit(stringr::str_match(out, "Using k = (\\d+)")[,2]))
+    
 
-    run_burst = function(init) {
-        ms_plans(burst_size + 1L, adj, init, counties, pop, ndists,
-                 pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
-                 0, rep(1, ndists), ndists, 0, 0, 0, 1, rep(0, V),
-                 0, 0, 0, rep(1, ndists), 1.0, k, verbosity=0)[, -1L]
+        run_burst = function(init) {
+            ms_plans(burst_size + 1L, adj, init, counties, pop, ndists,
+                     pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
+                     0, rep(1, ndists), ndists, 0, 0, 0, 1, rep(0, V),
+                     0, 0, 0, rep(1, ndists), 1.0, k, verbosity=0)[, -1L]
+        }
+    } else {
+        if (missing(group_pop)) {
+            group_pop <- rep(0, V)
+        } else {
+            group_pop <- eval_tidy(enquo(group_pop), map)
+        }
+        
+        flip_constraints <- process_flip_constr(constraints = flip_constraints, 
+                                                group_pop = group_pop, 
+                                                counties = counties)
+        
+        if(flip_eprob <= 0 || flip_eprob >= 1){
+            stop('flip_eprob must be in the interval (0, 1).')
+        }
+        if(flip_lambda < 0){
+            stop('flip_lambda must be a nonnegative integer.')
+        }
+        
+        run_burst <- function(init){
+            skinny_flips(adj = adj, init_plan = init_plan, total_pop = pop, 
+                        pop_tol = pop_tol, nsims = burst_size, 
+                        eprob = flip_eprob, lambda = flip_lambda, 
+                        constraints = flip_constraints)
+        }
     }
+
 
     burst = 1
     out_mat = matrix(0L, nrow=V, ncol=max_bursts+1)
@@ -137,7 +188,11 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL, burst_size=10L,
     scores[1] = score_fn(out_mat[, 1, drop=FALSE])
 
     if (verbose) {
-        cat("MERGE-SPLIT SHORT BURSTS\n")
+        if(backend == 'mergesplit'){
+            cat("MERGE-SPLIT SHORT BURSTS\n")
+        } else {
+            cat('FLIP SHORT BURSTS\n')
+        }
         cat("Sampling up to", max_bursts, "bursts of", burst_size,
             "iterations each.\n")
         cat("Burst  Improve?  Score\n")
@@ -161,12 +216,12 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL, burst_size=10L,
         if (condition) {
             out_mat[, burst+1L] = plans[, best_idx]
             scores[burst+1L] = best_score
-            if (verbose) cat(sprintf("% 5d     !      %f\n", burst, best_score))
+            if (verbose) cat(sprintf("% 5d     \U0001F600      %f\n", burst, best_score))
         } else {
             out_mat[, burst+1L] = out_mat[, burst]
             scores[burst+1L] = prev_score
             if (verbose && burst %% report_int == 0)
-                cat(sprintf("% 5d            %f\n", burst, prev_score))
+                cat(sprintf("% 5d     \U0001F622     %f\n", burst, prev_score))
         }
 
 

@@ -311,7 +311,8 @@ redist.mcmc.anneal <- function(adj,
                    minorityprop = preprocout$params$minorityprop,
                    num_hot_steps = num_hot_steps,
                    num_annealing_steps = num_annealing_steps,
-                   num_cold_steps = num_cold_steps)
+                   num_cold_steps = num_cold_steps,
+                   verbose = as.logical(verbose))
     class(algout) <- "redist"
 
     ## -------------------------
@@ -719,8 +720,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #'
 #' ## Run the algorithm
 #' alg_253 <- redist.mcmc(adj = fl25_adj, total_pop = fl25$pop,
-#'                        init_plan = init_plan, nsims = 10000,
-#'                        loops = 2, savename = "test")
+#'                        init_plan = init_plan, nsims = 10000)
 #' }
 #' @concept simulate
 #' @export
@@ -977,7 +977,8 @@ redist.mcmc <- function(adj,
                        tgt_other = tgt_other,
                        rvote = preprocout$params$rvote,
                        dvote = preprocout$params$dvote,
-                       minorityprop = preprocout$params$minorityprop)
+                       minorityprop = preprocout$params$minorityprop,
+                       verbose = as.logical(verbose))
 
         class(algout) <- "redist"
 
