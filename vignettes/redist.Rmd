@@ -47,7 +47,7 @@ algorithms.  Generally you will use one of the following three algorithms:
 D., Herschlag, G., Hunter, Z., and Mattingly, J. (2019). A merge-split proposal
 for reversible Monte Carlo Markov chain sampling of redistricting plans. arXiv
 preprint arXiv:1911.01503.]
-- `redist.mcmc()`, another MCMC algorithm which uses more local proposals.^[from 
+- `redist_flip()`, another MCMC algorithm which uses more local proposals.^[from 
 [Automated Redistricting Simulation Using Markov Chain Monte Carlo](https://doi.org/10.1080/10618600.2020.1739532) *Journal of Computational and Graphical Statistics*]
 
 The other algorithms are
