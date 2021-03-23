@@ -57,7 +57,6 @@
 #' \url{http://imai.princeton.edu/research/files/redist.pdf}.
 #'
 #' @importFrom rlang eval_tidy enquo
-#' @importFrom dplyr bind_cols
 #' @importFrom utils capture.output
 #'
 #' @examples \dontrun{
@@ -263,11 +262,8 @@ redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, const
     constraint_hinge = rep(algout$constraint_hinge, each = ndists)
   )
 
-  add_tb <- add_tb %>% select(names(add_tb)[apply(add_tb, 2, function(x) {
-    !all(x == 0)
-  })])
-
-  out <- out %>% bind_cols(add_tb)
+  names_tb = names(add_tb)[apply(add_tb, 2, function(x) !all(x == 0) )]
+  out <- dplyr::bind_cols(out, select(add_tb, all_of(names_tb)))
 
   if (!is.null(init_name) && !isFALSE(init_name)) {
       out <- add_reference(out, init_plan, init_name)

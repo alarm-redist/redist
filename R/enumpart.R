@@ -5,7 +5,6 @@
 #'
 #' @return 0 on success
 #' @export
-#' @importFrom servr make
 #' @references
 #' Benjamin Fifield, Kosuke Imai, Jun Kawahara, and Christopher T Kenny.
 #' "The Essential Role of Empirical Validation in Legislative Redistricting Simulation."
@@ -44,7 +43,6 @@ redist.init.enumpart <- function(){
 #'
 #' @return 0 on success
 #' @export
-#' @importFrom readr write_delim
 #' @importFrom sys exec_wait
 #'
 #' @references
@@ -182,7 +180,6 @@ redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
 #'
 #' @return district_membership matrix
 #' @export
-#' @importFrom readr read_lines
 #' @references
 #' Benjamin Fifield, Kosuke Imai, Jun Kawahara, and Christopher T Kenny.
 #' "The Essential Role of Empirical Validation in Legislative Redistricting Simulation."

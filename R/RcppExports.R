@@ -17,6 +17,14 @@ color_graph <- function(l, plan) {
     .Call(`_redist_color_graph`, l, plan)
 }
 
+polsbypopper <- function(from, to, area, perimeter, dm, nd) {
+    .Call(`_redist_polsbypopper`, from, to, area, perimeter, dm, nd)
+}
+
+schwartzberg <- function(from, to, area, perimeter, dm, nd) {
+    .Call(`_redist_schwartzberg`, from, to, area, perimeter, dm, nd)
+}
+
 talisman <- function(dvs, nd, alpha = 1, beta = 1) {
     .Call(`_redist_talisman`, dvs, nd, alpha, beta)
 }
@@ -167,10 +175,6 @@ smoothseat <- function(dvs, nd) {
 
 minkowski <- function(v, m, p) {
     .Call(`_redist_minkowski`, v, m, p)
-}
-
-polsbypopper <- function(from, to, area, perimeter, dm, nd) {
-    .Call(`_redist_polsbypopper`, from, to, area, perimeter, dm, nd)
 }
 
 closest_adj_pop <- function(adj, i_dist, g_prop) {

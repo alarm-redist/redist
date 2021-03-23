@@ -56,6 +56,38 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// polsbypopper
+NumericMatrix polsbypopper(IntegerVector from, IntegerVector to, NumericVector area, NumericVector perimeter, IntegerMatrix dm, int nd);
+RcppExport SEXP _redist_polsbypopper(SEXP fromSEXP, SEXP toSEXP, SEXP areaSEXP, SEXP perimeterSEXP, SEXP dmSEXP, SEXP ndSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type from(fromSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type to(toSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type area(areaSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type perimeter(perimeterSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type dm(dmSEXP);
+    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
+    rcpp_result_gen = Rcpp::wrap(polsbypopper(from, to, area, perimeter, dm, nd));
+    return rcpp_result_gen;
+END_RCPP
+}
+// schwartzberg
+NumericMatrix schwartzberg(IntegerVector from, IntegerVector to, NumericVector area, NumericVector perimeter, IntegerMatrix dm, int nd);
+RcppExport SEXP _redist_schwartzberg(SEXP fromSEXP, SEXP toSEXP, SEXP areaSEXP, SEXP perimeterSEXP, SEXP dmSEXP, SEXP ndSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type from(fromSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type to(toSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type area(areaSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type perimeter(perimeterSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type dm(dmSEXP);
+    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
+    rcpp_result_gen = Rcpp::wrap(schwartzberg(from, to, area, perimeter, dm, nd));
+    return rcpp_result_gen;
+END_RCPP
+}
 // talisman
 NumericVector talisman(NumericMatrix dvs, double nd, double alpha, double beta);
 RcppExport SEXP _redist_talisman(SEXP dvsSEXP, SEXP ndSEXP, SEXP alphaSEXP, SEXP betaSEXP) {
@@ -570,22 +602,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< IntegerMatrix >::type m(mSEXP);
     Rcpp::traits::input_parameter< int >::type p(pSEXP);
     rcpp_result_gen = Rcpp::wrap(minkowski(v, m, p));
-    return rcpp_result_gen;
-END_RCPP
-}
-// polsbypopper
-NumericMatrix polsbypopper(IntegerVector from, IntegerVector to, NumericVector area, NumericVector perimeter, IntegerMatrix dm, int nd);
-RcppExport SEXP _redist_polsbypopper(SEXP fromSEXP, SEXP toSEXP, SEXP areaSEXP, SEXP perimeterSEXP, SEXP dmSEXP, SEXP ndSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerVector >::type from(fromSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type to(toSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type area(areaSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type perimeter(perimeterSEXP);
-    Rcpp::traits::input_parameter< IntegerMatrix >::type dm(dmSEXP);
-    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
-    rcpp_result_gen = Rcpp::wrap(polsbypopper(from, to, area, perimeter, dm, nd));
     return rcpp_result_gen;
 END_RCPP
 }

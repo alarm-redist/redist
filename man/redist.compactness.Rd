@@ -61,7 +61,7 @@ and the column number if multiple maps given.}
 
 \item{counties}{A numeric vector from 1:ncounties corresponding to counties. Required for "logSpanningTree".}
 
-\item{ppRcpp}{Boolean, whether to run Polsby Popper using Rcpp.
+\item{ppRcpp}{Boolean, whether to run Polsby Popper and Schwartzberg using Rcpp.
 It has a higher upfront cost, but quickly becomes faster.
 Becomes TRUE if ncol(district_membership > 8) and not manually set.}
 

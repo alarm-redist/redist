@@ -31,7 +31,7 @@
 #' and the column number if multiple maps given.
 #' @param ncores Number of cores to use for parallel computing. Default is 1.
 #' @param counties A numeric vector from 1:ncounties corresponding to counties. Required for "logSpanningTree".
-#' @param ppRcpp Boolean, whether to run Polsby Popper using Rcpp.
+#' @param ppRcpp Boolean, whether to run Polsby Popper and Schwartzberg using Rcpp.
 #' It has a higher upfront cost, but quickly becomes faster.
 #' Becomes TRUE if ncol(district_membership > 8) and not manually set.
 #' @param perim_path it checks for an Rds, if no rds exists at the path,
@@ -130,7 +130,6 @@
 #' @importFrom sf st_cast st_bbox st_centroid st_within st_point_on_surface st_coordinates
 #' @importFrom sf st_linestring st_intersection st_area st_crs st_is_longlat st_length
 #' @importFrom sf st_convex_hull st_crs<- st_geometry st_distance st_union st_touches st_is_valid
-#' @importFrom lwgeom st_minimum_bounding_circle
 #' @importFrom dplyr select all_of arrange bind_rows rename summarize
 #' @importFrom stats dist
 #'
@@ -225,11 +224,10 @@ redist.compactness <- function(shp = NULL,
   dists <- sort(unique(c(plans)))
   nd <-  length(dists)
 
-
   if(!is.matrix(plans)){
     plans <- as.matrix(plans)
   }
-
+  V = nrow(plans)
 
   if(missing(ppRcpp)){
     if(ncol(plans) > 8){
@@ -274,37 +272,46 @@ redist.compactness <- function(shp = NULL,
 
 
 
-  if('PolsbyPopper' %in% measure & ppRcpp){
-    if(missing(perim_path) & missing(perim_df)){
+  splits <- split(x = plans, rep(1:nc, each = ceiling(nmap/nc)*V)[1:(nmap*V)]) %>%
+      lapply(., FUN = function(x, r = V) matrix(data = x, nrow = r))
+  if (ppRcpp && any(c("PolsbyPopper", "Schwartzberg") %in% measure)) {
+    if(missing(perim_path) & missing(perim_df)) {
       perim_df <- redist.prep.polsbypopper(shp = shp, adj = adj, ncores = ncores)
     }
 
-    splits <- split(x = plans,
-                    rep(1:nc,
-                        each = ceiling(ncol(plans)/nc)*nrow(plans))[1:(ncol(plans)*nrow(plans))]) %>%
-      lapply(., FUN = function(x, r = nrow(plans)){matrix(data = x, nrow = r)})
+    areas = st_area(shp)
 
-    result <- foreach(map = 1:nc, .combine = 'cbind', .packages = c('sf', 'lwgeom')) %oper% {
-      polsbypopper(from = perim_df$origin, to = perim_df$touching, area = st_area(shp),
-                   perimeter = perim_df$edge, dm = splits[[map]], nd = nd)
+    if ('PolsbyPopper' %in% measure) {
+      result <- foreach(map = 1:nc, .combine = 'cbind', .packages = c('sf')) %oper% {
+          polsbypopper(from = perim_df$origin, to = perim_df$touching, area = areas,
+                       perimeter = perim_df$edge, dm = splits[[map]], nd = nd)
 
-    }
+      }
       comp[['PolsbyPopper']] <- c(result)
+    }
+    if ('Schwartzberg' %in% measure) {
+      result <- foreach(map = 1:nc, .combine = 'cbind', .packages = c('sf')) %oper% {
+          schwartzberg(from = perim_df$origin, to = perim_df$touching, area = areas,
+                       perimeter = perim_df$edge, dm = splits[[map]], nd = nd)
+
+      }
+      comp[['Schwartzberg']] <- c(result)
+    }
   }
 
   # Compute Specified Scores for provided districts
-  if(any(measure %in% c("Schwartzberg", "LengthWidth",
-                        "ConvexHull", "Reock", "BoyceClark"))|
-     ('PolsbyPopper' %in% measure & !ppRcpp) ){
+  non_rcpp = measure %in% c("ConvexHull", "Reock", "BoyceClark")
+  slow_ver = c("Schwartzberg", 'PolsbyPopper') %in% measure
+  if (any(non_rcpp) || (any(slow_ver) && !ppRcpp)) {
 
-    nm <- sum(measure %in% c("Schwartzberg", "LengthWidth",
-                             "ConvexHull", "Reock", "BoyceClark"))
+    nm <- sum(non_rcpp)
 
-    if('PolsbyPopper' %in% measure & !ppRcpp){
-      nm <- nm + 1
+    if (any(slow_ver) & !ppRcpp) {
+      nm <- nm + sum(slow_ver)
     }
 
-
+    if ('Reock' %in% measure && !requireNamespace("lwgeom", quietly=TRUE))
+      stop("Must install `lwgeom` to use 'Reock' measure.")
     results <- foreach(map = 1:nmap, .combine = 'rbind', .packages = c('sf', 'lwgeom')) %oper% {
       ret <- matrix(nrow = nd, ncol = nm)
       for (i in 1:nd){
@@ -312,7 +319,7 @@ redist.compactness <- function(shp = NULL,
         united <- suppressMessages(st_union(shp[plans[, map] == dists[i],]))
         area <- st_area(united)
 
-        if(is.null(st_crs(united$EPSG))||is.na(st_is_longlat(united))){
+        if(is.null(st_crs(united$EPSG)) || is.na(st_is_longlat(united))){
           perim <- sum(st_length(st_cast(st_cast(united, 'POLYGON'),'LINESTRING')))
         } else if (st_is_longlat(united)){
           perim <- sum(st_length(united))
@@ -325,15 +332,8 @@ redist.compactness <- function(shp = NULL,
           col <- col + 1
         }
 
-        if('Schwartzberg' %in% measure){
+        if('Schwartzberg' %in% measure & !ppRcpp){
           ret[i, col] <- (perim/(2*pi*sqrt(area/pi)))
-          col <- col + 1
-        }
-
-        if('LengthWidth' %in% measure){
-          bbox <- st_bbox(united)
-          ratio <- unname((bbox$xmax - bbox$xmin)/(bbox$ymax - bbox$ymin))
-          ret[i, col] <- ifelse(ratio>1, 1/ratio, ratio)
           col <- col + 1
         }
 
@@ -344,8 +344,6 @@ redist.compactness <- function(shp = NULL,
         }
 
         if('Reock' %in% measure){
-          if (!requireNamespace("lwgeom", quietly=TRUE))
-            stop("Must install `lwgeom` to use 'Reock' measure.")
           mbc <- st_area(lwgeom::st_minimum_bounding_circle(united))
           ret[i, col] <- area/mbc
           col <- col + 1
@@ -375,12 +373,8 @@ redist.compactness <- function(shp = NULL,
       }
       return(ret)
     }
-    if('PolsbyPopper' %in% measure & ppRcpp){
-      comp[,3:(nm+2)] <- results
-    } else {
-      comp[,2:(nm+1)] <- results
-    }
 
+    comp[,(2+sum(slow_ver)):(nm+1+sum(slow_ver))] <- results
   }
 
   if('FryerHolden' %in% measure){
@@ -400,7 +394,20 @@ redist.compactness <- function(shp = NULL,
 
   }
 
-
+  if ('LengthWidth' %in% measure) {
+      bboxes = as.data.frame(do.call(rbind, lapply(iowa_map$geometry, st_bbox)))
+      result <- foreach(map = 1:nmap, .combine = 'cbind', .packages = c('sf')) %oper% {
+          out = numeric(nd)
+          for (i in 1:nd) {
+              idx = plans[, map] == dists[i]
+              xdiff = max(bboxes$xmax[idx]) - min(bboxes$xmin[idx])
+              ydiff = max(bboxes$ymax[idx]) - min(bboxes$ymin[idx])
+              out[i] <- if (xdiff < ydiff) xdiff/ydiff else ydiff/xdiff
+          }
+          out
+      }
+      comp[['LengthWidth']] <- c(result)
+  }
 
 
   if(any(measure %in% c('EdgesRemoved', 'logSpanningTree', 'FracKept')) & is.null(adj)){
@@ -466,23 +473,26 @@ redist.prep.polsbypopper <- function(shp, adj, perim_path, ncores = 1){
   suppressWarnings(perims <- st_perimeter(shp))
 
   if (ncores == 1){
-    `%oper%` <- `%do%`
+      perim_adj_df = do.call(rbind, lapply(seq_along(alist), function(from) {
+          suppressWarnings(lines <- st_intersection(shp[from,], shp[alist[[from]],]))
+          l_lines <- st_length(lines)
+          data.frame(origin = from,
+                     touching = alist[[from]],
+                     edge = as.vector(l_lines))
+      }))
   } else {
-    `%oper%` <- `%dopar%`
     cl <- makeCluster(ncores, setup_strategy = 'sequential')
     registerDoParallel(cl)
     on.exit(stopCluster(cl))
+    perim_adj_df <- foreach(from=1:length(alist), .combine='rbind', .packages='sf') %dopar% {
+        suppressWarnings(lines <- st_intersection(shp[from,], shp[alist[[from]],]))
+        l_lines <- st_length(lines)
+        data.frame(origin = from,
+                   touching = alist[[from]],
+                   edge = as.vector(l_lines))
+    }
   }
-  perim_adj_df <- foreach(from = 1:length(alist), .combine = 'rbind',
-          .packages = c('sf', 'lwgeom')) %oper% {
-            suppressWarnings(lines <- st_intersection(shp[from,], shp[alist[[from]],]))
-            l_lines <- st_length(lines)
-            data.frame(origin = from,
-                       touching = alist[[from]],
-                       edge = as.vector(l_lines))
-          }
-  perim_adj_df <- perim_adj_df %>%
-    filter(edge > 0)
+  perim_adj_df <- filter(perim_adj_df, edge > 0)
 
   adj_boundary_lengths <- perim_adj_df %>%
     group_by(origin) %>%
