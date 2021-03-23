@@ -177,6 +177,95 @@ redist.map <- function(shp = NULL, adj = NULL, plan = NULL, centroids = TRUE,
 }
 
 
+#' Plot a Map
+#'
+#' @param shp  A SpatialPolygonsDataFrame or sf object. Required.
+#' @param adj A zero-indexed adjacency list. Created with redist.adjacency
+#' if not supplied. Default is NULL.
+#' @param plan A numeric vector with one entry for each precinct in shp.
+#' Used to color the districts. Default is \code{NULL}.  Optional.
+#' @param boundaries A logical indicating if precinct boundaries should be plotted.
+#' @param title A string title of plot. Defaults to empty string. Optional.
+#'
+#' @return ggplot map
+#'
+#' @importFrom ggplot2 ggplot geom_sf theme_minimal theme labs aes theme_void
+#' @importFrom dplyr filter .data
+#' @importFrom sf st_centroid st_coordinates st_as_sf st_linestring st_sfc
+#'
+#' @examples
+#' \dontrun{
+#' data(iowa)
+#' redist.plot.plan(shp = iowa, plan = iowa$cd_2010)
+#' 
+#' iowa %>% redist_map(existing_plan = cd_2010) %>% redist.plot.plan(shp = ., plan = get_existing(.))
+#' }
+#'
+#' @concept plot
+#' @export
+redist.plot.plan <- function(shp, adj, plan = NULL, boundaries = TRUE, title = '') {
+
+  # Check inputs
+  if (missing(shp)) {
+    stop('Please provide an argument to "shp".')
+  }
+
+  if ('SpatialPolygonsDataFrame' %in% class(shp)) {
+    shp <- shp %>% st_as_sf()
+  } else if (!('sf' %in% class(shp))) {
+    stop('Please provide "shp" as a SpatialPolygonsDataFrame or sf object.')
+  }
+
+  if (!is.null(plan)) {
+    if (!any(class(plan) %in% c('numeric', 'integer', 'character'))) {
+      stop('Please provide "plan" as a vector.')
+    }
+    if (nrow(shp) != length(plan)) {
+      stop('Arguments "plan" and "shp" do not have same number of precincts.')
+    }
+  }
+
+  if (missing(adj)) {
+    adj <- redist.adjacency(shp)
+  }
+
+  # Create Plot
+  if (!is.null(plan)) {
+    if (inherits(shp, 'redist_map')) {
+      plan <- as.factor(plan)
+
+      plan <- as.factor(color_graph(adj, as.integer(plan)))
+
+
+      plot <- ggplot(shp) +
+        geom_sf(aes(fill = plan), size = 0.3 * boundaries, color = '#444444') +
+        theme_void() +
+        labs(fill = 'District Membership', title = title) +
+        theme(legend.position = 'bottom')
+
+
+      PAL <- c('#6D9537', '#364B7F', '#DCAD35', '#9A9BB9', '#2A4E45', '#7F4E28')
+      plot <- plot + ggplot2::guides(fill = FALSE) +
+        ggplot2::scale_fill_manual(values = PAL)
+    } else {
+      plot <- ggplot(shp) +
+        geom_sf(aes(fill = as.character(plan)), size = 0.3 * boundaries, color = '#444444') +
+        theme_void() +
+        labs(fill = 'District Membership', title = title) +
+        theme(legend.position = 'bottom')
+    }
+  } else {
+    plot <- ggplot(shp) +
+      geom_sf() +
+      theme_void() +
+      labs(title = title)
+  }
+
+  # return plot
+  return(plot)
+}
+
+
 #' Creates a Choropleth
 #'
 #' @details Creates a basic choropleth for a provided shp with value. Recommended to

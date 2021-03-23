@@ -9,7 +9,7 @@
 # constructors and reconstructors
 
 # Main internal constructor
-new_redist_map = function(data, adj, ndists, pop_bounds, pop_col="pop",
+new_redist_map = function(data, adj, ndists, pop_bounds, pop_tol, pop_col="pop",
                           adj_col="adj", add_adj=TRUE, existing_col=NULL) {
     if (add_adj) {
         stopifnot(!is.null(adj))
@@ -24,6 +24,7 @@ new_redist_map = function(data, adj, ndists, pop_bounds, pop_col="pop",
     data = reconstruct.redist_map(data)
     attr(data, "ndists") = ndists
     attr(data, "pop_bounds") = pop_bounds
+    attr(data, 'pop_tol') <- pop_tol
     attr(data, "pop_col") = pop_col
     attr(data, "adj_col") = adj_col
     attr(data, "existing_col") = existing_col
@@ -58,6 +59,9 @@ validate_redist_map = function(data, check_contig=T) {
     stopifnot(!is.null(pop_bounds))
     if (!all(diff(pop_bounds) > 0))
         stop("`pop_bounds` must satisfy lower < target < upper.")
+    
+    pop_tol <- attr(data, 'pop_tol')
+    stopifnot(!is.null(pop_tol))
 
     data
 }
@@ -86,6 +90,8 @@ reconstruct.redist_map = function(data, old) {
         }
 
         attr(data, "pop_bounds") = attr(old, "pop_bounds")
+        
+        attr(data, 'pop_tol') <- attr(old, 'pop_tol')
     }
 
     class(data) = c("redist_map", classes)
@@ -198,7 +204,7 @@ redist_map = function(..., ndists=NULL, pop_tol=0.01, pop_bounds=NULL, total_pop
 
 
     validate_redist_map(
-        new_redist_map(x, adj, ndists, pop_bounds, pop_col, adj_col,
+        new_redist_map(x, adj, ndists, pop_bounds, pop_tol, pop_col, adj_col,
                    add_adj=T, existing_col)
     )
 }

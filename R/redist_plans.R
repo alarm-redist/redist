@@ -170,6 +170,7 @@ get_plan_weights = function(plans) {
     wgt
 }
 
+#' @method weights redist_plans
 #' @rdname get_plan_weights
 #' @param ... Ignored.
 #' @export

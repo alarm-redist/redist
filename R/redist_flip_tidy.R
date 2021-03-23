@@ -19,6 +19,8 @@
 #' @param group_pop A column in map containing group populations
 #' @param constraints a list of constraints to implement. Can be created with
 #' \code{flip_constraints_helper}
+#' @param nthin The amount by which to thin the Markov Chain. The
+#' default is \code{1}.
 #' @param eprob The probability of keeping an edge connected. The
 #' default is \code{0.05}.
 #' @param lambda lambda The parameter determining the number of swaps to attempt
@@ -60,12 +62,12 @@
 #' @importFrom utils capture.output
 #'
 #' @examples \dontrun{
-#' data(fl25)
-#' fl25_map <- redist_map(fl, ndists = 4, existing_plan = cd)
-#' sims <- redist_flip(map = fl25_map, nsims = 10)
+#' data(iowa)
+#' iowa_map <- redist_map(iowa, ndists = 4, existing_plan = cd_2010, total_pop = 'pop')
+#' sims <- redist_flip(map = iowa_map, nsims = 100)
 #' }
 redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, constraints = list(),
-                        eprob = 0.05, lambda = 0, temper = FALSE,
+                        nthin = 1, eprob = 0.05, lambda = 0, temper = FALSE,
                         betaseq = 'powerlaw', betaseqlength = 10, betaweights = NULL,
                         adapt_lambda = FALSE, adapt_eprob = FALSE, exact_mh = FALSE,
                         adjswaps = TRUE, init_name = NULL, verbose = TRUE) {
@@ -84,6 +86,14 @@ redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, const
   total_pop <- map[[attr(map, 'pop_col')]]
   ndists <- attr(map, 'ndists')
 
+  if(!any(class(nthin) %in% c('numeric', 'integer'))){
+    stop('nthin must be an integer')
+  } else if (nthin < 1) {
+    stop('nthin must be a nonnegative integer.')
+  } else {
+    nthin <- as.integer(nthin)
+  }
+  
   if ('pop_tol' %in% names(attributes(map))) {
     pop_tol <- attr(map, 'pop_tol')
   } else if ('pop_bounds' %in% names(attributes(map))) {
@@ -198,7 +208,7 @@ redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, const
     areas_vec = preprocout$data$areasvec,
     county_membership = preprocout$data$counties,
     borderlength_mat = preprocout$data$borderlength_mat,
-    nsims = nsims,
+    nsims = nsims * nthin,
     eprob = eprob,
     pct_dist_parity = preprocout$params$pctdistparity,
     beta_sequence = preprocout$params$betaseq,
@@ -231,6 +241,9 @@ redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, const
     verbose = as.logical(verbose)
   )
 
+  if(nthin > 1){
+    algout <- redist.thin.chain(algout, thin = nthin)
+  }
 
   if (min(algout$plans) == 0) {
     algout$plans <- ifelse(algout$plans == 0, ndists, algout$plans)
