@@ -86,6 +86,7 @@ reconstruct.redist_map = function(data, old) {
         }
 
         attr(data, "pop_bounds") = attr(old, "pop_bounds")
+
     }
 
     class(data) = c("redist_map", classes)
@@ -276,6 +277,49 @@ get_target = function(x) {
 
     attr(x, "pop_bounds")[2]
 }
+
+#' Extract the population tolerance from a \code{redist_map} object
+#'
+#' @param map the \code{redist_map} object
+#'
+#' @return a single numeric value, the population tolerance
+#'
+#' @concept  prepare
+#' @export
+get_pop_tol <- function(map) {
+  stopifnot(inherits(map, 'redist_map'))
+
+  bot <- 1 - attr(map, 'pop_bounds')[1] / attr(map, 'pop_bounds')[2]
+  top <- attr(map, 'pop_bounds')[3] / attr(map, 'pop_bounds')[2] - 1
+
+  if (!isTRUE(all.equal(bot, top))) {
+    warning('Population bounds were not symmetric, using the smaller tolerance.')
+  }
+
+  return(min(bot, top))
+}
+
+#' Set the population tolerance from a \code{redist_map} object
+#'
+#' @param map the \code{redist_map} object
+#' @param pop_tol the population tolerance
+#'
+#' @return an updated redist_map object
+#'
+#' @concept  prepare
+#' @export
+set_pop_tol <- function(map, pop_tol) {
+  stopifnot(inherits(map, 'redist_map'))
+
+  target <- get_target(map)
+  bot <- (1 - pop_tol) * target
+  top <- (1 + pop_tol) * target
+
+  attr(map, 'pop_bounds') <- c(bot, target, top)
+
+  validate_redist_map(map, check_contig = FALSE)
+}
+
 
 
 #######################
