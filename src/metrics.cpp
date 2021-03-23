@@ -128,7 +128,7 @@ NumericVector taugap(double tau, NumericMatrix dvs, IntegerVector dseat_vec, int
 NumericVector meanmedian(NumericMatrix dvs){
   NumericVector mm = NumericVector(dvs.ncol());
   NumericVector med = NumericVector(dvs.ncol());
-  NumericVector col = dvs(_,1);
+  NumericVector col = dvs(_, 0);
   for(int c = 0; c < dvs.ncol(); c++){
     col = dvs(_,c);
    med(c) = median(col); 
