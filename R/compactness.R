@@ -300,7 +300,7 @@ redist.compactness <- function(shp = NULL,
   }
 
   # Compute Specified Scores for provided districts
-  non_rcpp = measure %in% c("ConvexHull", "Reock", "BoyceClark")
+  non_rcpp = c("ConvexHull", "Reock", "BoyceClark") %in% measure
   slow_ver = c("Schwartzberg", 'PolsbyPopper') %in% measure
   if (any(non_rcpp) || (any(slow_ver) && !ppRcpp)) {
 
@@ -310,12 +310,15 @@ redist.compactness <- function(shp = NULL,
       nm <- nm + sum(slow_ver)
     }
 
+    measures = c(c("ConvexHull", "Reock", "BoyceClark")[non_rcpp],
+                 c("Schwartzberg", 'PolsbyPopper')[slow_ver])
+
     if ('Reock' %in% measure && !requireNamespace("lwgeom", quietly=TRUE))
       stop("Must install `lwgeom` to use 'Reock' measure.")
     results <- foreach(map = 1:nmap, .combine = 'rbind', .packages = c('sf', 'lwgeom')) %oper% {
-      ret <- matrix(nrow = nd, ncol = nm)
+      ret <- as.data.frame(matrix(nrow = nd, ncol = nm))
+      colnames(ret) = measures
       for (i in 1:nd){
-        col <- 1
         united <- suppressMessages(st_union(shp[plans[, map] == dists[i],]))
         area <- st_area(united)
 
@@ -328,25 +331,21 @@ redist.compactness <- function(shp = NULL,
         }
 
         if('PolsbyPopper' %in% measure & !ppRcpp){
-          ret[i, col] <- 4*pi*(area)/(perim)^2
-          col <- col + 1
+          ret$PolsbyPopper[i] <- 4*pi*(area)/(perim)^2
         }
 
         if('Schwartzberg' %in% measure & !ppRcpp){
-          ret[i, col] <- (perim/(2*pi*sqrt(area/pi)))
-          col <- col + 1
+          ret$Schwartzberg[i] <- (perim/(2*pi*sqrt(area/pi)))
         }
 
         if('ConvexHull' %in% measure){
           cvh <- st_area(st_convex_hull(united))
-          ret[i, col] <- area/cvh
-          col <- col + 1
+          ret$ConvexHull[i] <- area/cvh
         }
 
         if('Reock' %in% measure){
           mbc <- st_area(lwgeom::st_minimum_bounding_circle(united))
-          ret[i, col] <- area/mbc
-          col <- col + 1
+          ret$Reock[i] <- area/mbc
         }
 
         if('BoyceClark' %in% measure){
@@ -367,14 +366,14 @@ redist.compactness <- function(shp = NULL,
               st_as_sf(coords = c('x','y'))  %>% st_coordinates() %>% st_linestring()
             radials[angle] <- max(0, dist(st_intersection(line, united)))
           }
-          ret[i, col] <- 1 - (sum(abs(radials/sum(radials)*100-6.25))/200)
-          col <- col + 1
+          ret$BoyceClark[i] <- 1 - (sum(abs(radials/sum(radials)*100-6.25))/200)
         }
       }
       return(ret)
     }
 
-    comp[,(2+sum(slow_ver)):(nm+1+sum(slow_ver))] <- results
+    for (m in measures)
+        comp[[m]] = results[[m]]
   }
 
   if('FryerHolden' %in% measure){
@@ -395,7 +394,7 @@ redist.compactness <- function(shp = NULL,
   }
 
   if ('LengthWidth' %in% measure) {
-      bboxes = as.data.frame(do.call(rbind, lapply(iowa_map$geometry, st_bbox)))
+      bboxes = as.data.frame(do.call(rbind, lapply(st_geometry(shp), st_bbox)))
       result <- foreach(map = 1:nmap, .combine = 'cbind', .packages = c('sf')) %oper% {
           out = numeric(nd)
           for (i in 1:nd) {
