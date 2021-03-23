@@ -15,7 +15,7 @@ as.matrix.redist = function(x, ...) {
 #' @export
 print.redist = function(x, ...) {
   cat(x$nsims, " sampled plans with ",
-      ifelse(x$algorithm == 'mcmc', max(x$plans[,1]) + 1, max(x$plans[,1])),
+      length(unique(x$plans[, 1])),
       " districts from a ",
       length(x$adj), "-unit map, drawn\n using ",
       c(mcmc="Markov chain Monte Carlo",
