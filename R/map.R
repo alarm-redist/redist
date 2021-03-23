@@ -29,14 +29,6 @@
 #' @importFrom dplyr filter .data
 #' @importFrom sf st_centroid st_coordinates st_as_sf st_linestring st_sfc
 #'
-#' @examples
-#' \dontrun{
-#' data(fl25)
-#' data(fl25_enum)
-#'
-#' cds <- fl25_enum$plans[, 5118]
-#' redist.map(shp = fl25, plan = cds)
-#' }
 #'
 #' @concept plot
 #' @export
@@ -339,11 +331,8 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
 #'
 #' @examples
 #' \dontrun{
-#' data(fl25)
-#' data(fl25_enum)
-#'
-#' cds <- fl25_enum$plans[, 5118]
-#' redist.map(shp = fl25, plan = cds)
+#' data(iowa)
+#' redist.plot.adj(shp = iowa, plan = iowa$cd_2010)
 #' }
 #'
 #' @concept plot
@@ -462,14 +451,6 @@ redist.plot.adj <- function(shp = NULL, adj = NULL, plan = NULL, centroids = TRU
 #' @importFrom ggplot2 ggplot geom_sf theme_minimal theme labs aes scale_fill_gradient2
 #' @importFrom ggplot2 theme_void scale_fill_gradient
 #' @importFrom dplyr filter .data
-#'
-#' @examples
-#' \dontrun{
-#' data('fl25')
-#' redist.choropleth(shp = fl25, fill = BlackPop / TotPop)
-#' DVS <- fl25$obama / (fl25$mccain + fl25$obama)
-#' redist.choropleth(shp = fl25, fill = DVS, limit_colors = c('red', 'blue'))
-#' }
 #'
 #' @concept plot
 #' @export

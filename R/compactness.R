@@ -276,7 +276,7 @@ redist.compactness <- function(shp = NULL,
       lapply(., FUN = function(x, r = V) matrix(data = x, nrow = r))
   if (ppRcpp && any(c("PolsbyPopper", "Schwartzberg") %in% measure)) {
     if(missing(perim_path) & missing(perim_df)) {
-      perim_df <- redist.prep.polsbypopper(shp = shp, adj = adj, ncores = ncores)
+      perim_df <- redist.prep.polsbypopper(shp = shp, ncores = ncores)
     }
 
     areas = st_area(shp)
@@ -451,7 +451,7 @@ redist.compactness <- function(shp = NULL,
 #' @return A perimeter dataframe
 #' @export
 #'
-#' @importFrom sf st_buffer st_is_valid st_geometry<- st_touches
+#' @importFrom sf st_buffer st_is_valid st_geometry<- st_touches st_transform
 #' @examples \dontrun{
 #' data(fl25)
 #' perim_df <- redist.prep.polsbypopper(shp = fl25)
