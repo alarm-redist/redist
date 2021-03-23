@@ -445,8 +445,14 @@ print.redist_map = function(x, ...) {
 #' data(fl25)
 #' d = redist_map(fl25, ndists=3, pop_tol=0.05)
 #' plot(d)
-#' plot(d, edges=FALSE)
 #' plot(d, BlackPop/pop)
+#'
+#' data(fl25_enum)
+#' fl25$dist <- fl25_enum$plans[, 5118]
+#' d <- redist_map(fl25, existing_plan = dist)
+#' plot(d)
+#'
+#'
 #'
 #' @method plot redist_map
 #' @concept prepare
@@ -459,14 +465,14 @@ plot.redist_map = function(x, fill=NULL, ...) {
     if (rlang::quo_is_null(fill)) {
         existing = get_existing(x)
         if (!is.null(existing)) {
-            redist.map(x, get_adj(x), plan=existing, ...) +
+            redist.plot.map(shp = x, adj = get_adj(x), plan=existing, ...) +
                 ggplot2::theme_void()
         } else {
-            redist.map(x, get_adj(x), plan=NULL, ...) +
+            redist.plot.adj(shp = x, adj = get_adj(x), ...) +
                 ggplot2::theme_void()
         }
     } else {
         fill_name = rlang::quo_text(fill)
-        redist.choropleth(shp = x, fill = !!fill, fill_label=fill_name, ...)
+        redist.plot.map(shp = x, fill = !!fill, fill_label=fill_name, ...)
     }
 }
