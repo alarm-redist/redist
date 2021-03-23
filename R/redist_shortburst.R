@@ -42,6 +42,7 @@
 #' @param return_all Whether to return all the
 #'   Recommended for monitoring purposes.
 #' @param backend "mergesplit" or "flip" - which mcmc within the bursts.
+#' @param group_pop A column in map containing group populations for use with flip
 #' @param flip_lambda The parameter detmerining the number of swaps to attempt each iteration of flip mcmc. 
 #' The number of swaps each iteration is equal to Pois(lambda) + 1. The default is 0.
 #' @param flip_eprob  The probability of keeping an edge connected in flip mcmc. The default is 0.05.

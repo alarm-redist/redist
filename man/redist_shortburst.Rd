@@ -65,6 +65,8 @@ Recommended for monitoring purposes.}
 
 \item{backend}{"mergesplit" or "flip" - which mcmc within the bursts.}
 
+\item{group_pop}{A column in map containing group populations for use with flip}
+
 \item{flip_lambda}{The parameter detmerining the number of swaps to attempt each iteration of flip mcmc.
 The number of swaps each iteration is equal to Pois(lambda) + 1. The default is 0.}
 
