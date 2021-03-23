@@ -49,7 +49,7 @@ Suggests:
     scales,
     units,
     spdep,
-    testthat (>= 3.0.0),
+    testthat (>= 3.0.0)
 LinkingTo: Rcpp, RcppArmadillo
 License: GPL (>= 2)
 SystemRequirements: OpenMPI, gmp, libxml2, python

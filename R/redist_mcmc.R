@@ -311,7 +311,8 @@ redist.mcmc.anneal <- function(adj,
                    minorityprop = preprocout$params$minorityprop,
                    num_hot_steps = num_hot_steps,
                    num_annealing_steps = num_annealing_steps,
-                   num_cold_steps = num_cold_steps)
+                   num_cold_steps = num_cold_steps,
+                   verbose = as.logical(verbose))
     class(algout) <- "redist"
 
     ## -------------------------
@@ -719,8 +720,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #'
 #' ## Run the algorithm
 #' alg_253 <- redist.mcmc(adj = fl25_adj, total_pop = fl25$pop,
-#'                        init_plan = init_plan, nsims = 10000,
-#'                        loops = 2, savename = "test")
+#'                        init_plan = init_plan, nsims = 10000)
 #' }
 #' @concept simulate
 #' @export
@@ -948,7 +948,7 @@ redist.mcmc <- function(adj,
                        areas_vec = preprocout$data$areasvec,
                        county_membership = preprocout$data$counties,
                        borderlength_mat = preprocout$data$borderlength_mat,
-                       nsims = nsims,
+                       nsims = nsims * nthin,
                        eprob = eprob,
                        pct_dist_parity = preprocout$params$pctdistparity,
                        beta_sequence = preprocout$params$betaseq,
@@ -977,7 +977,8 @@ redist.mcmc <- function(adj,
                        tgt_other = tgt_other,
                        rvote = preprocout$params$rvote,
                        dvote = preprocout$params$dvote,
-                       minorityprop = preprocout$params$minorityprop)
+                       minorityprop = preprocout$params$minorityprop,
+                       verbose = as.logical(verbose))
 
         class(algout) <- "redist"
 
@@ -1008,10 +1009,14 @@ redist.mcmc <- function(adj,
     }else if(!is.null(savename)){
         save(algout, file = paste(savename, ".RData", sep = ""))
     }
-
+    
     ## Examine the data
     if(nloop == 1){
-        return(algout)
+        if(nthin == 1){
+            return(algout)
+        } else {
+            return(redist.thin.chain(algout, thin = nthin))
+        }
     }
 
 }
@@ -1186,31 +1191,22 @@ redist.ipw <- function(algout,
 
 }
 
-####################################
-# S3 generics
 
-#' Extract the redistricting matrix from a \code{redist} object
-#' @method as.matrix redist
-#' @param x redist object
-#' @param \dots additional arguments
-#' @export
-as.matrix.redist = function(x, ...) {
-    x$plans
+redist.thin.chain <- function(algout, thin = 100){
+    inds <- seq(1, ncol(algout$plans), by = thin)
+    algout_new <- vector(mode = "list", length = length(algout))
+    for(i in 1:length(algout)){
+        
+        ## Subset the matrix first, then the vectors
+        if(i == 1){
+            algout_new[[i]] <- algout[[i]][,inds]
+        }else{
+            algout_new[[i]] <- algout[[i]][inds]
+        }
+        
+    }
+    names(algout_new) <- names(algout)
+    class(algout_new) <- "redist"
+    return(algout_new)
 }
 
-#' @method print redist
-#' @importFrom utils str
-#' @export
-print.redist = function(x, ...) {
-    cat(x$nsims, " sampled plans with ",
-        ifelse(x$algorithm == 'mcmc', max(x$plans[,1]) + 1, max(x$plans[,1])),
-        " districts from a ",
-        length(x$adj), "-unit map, drawn\n using ",
-        c(mcmc="Markov chain Monte Carlo",
-          smc="Sequential Monte Carlo")[x$algorithm], sep="")
-    if (x$pct_dist_parity < 1)
-        cat(" and a ", 100*x$pct_dist_parity, "% population constraint.\n", sep="")
-    else
-        cat(".\n")
-    cat(str(x$plans))
-}
