@@ -15,6 +15,10 @@
 #' @param init_plan A vector containing the congressional district labels
 #' of each geographic unit. The default is \code{NULL}. If not provided,
 #' a random initial plan will be generated using \code{redist.smc}.
+#' @param pop_tol The strength of the hard population
+#' constraint. \code{pop_tol} = 0.05 means that any proposed swap that
+#' brings a district more than 5\% away from population parity will be
+#' rejected. The default is \code{get_pop_tol(map)}.
 #' @param counties A column in map containing county membership
 #' @param group_pop A column in map containing group populations
 #' @param constraints a list of constraints to implement. Can be created with
@@ -66,7 +70,7 @@
 #' iowa_map <- redist_map(iowa, ndists = 4, existing_plan = cd_2010, total_pop = 'pop')
 #' sims <- redist_flip(map = iowa_map, nsims = 100)
 #' }
-redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, constraints = list(),
+redist_flip <- function(map, nsims, init_plan, pop_tol, counties = NULL, group_pop, constraints = list(),
                         nthin = 1, eprob = 0.05, lambda = 0, temper = FALSE,
                         betaseq = 'powerlaw', betaseqlength = 10, betaweights = NULL,
                         adapt_lambda = FALSE, adapt_eprob = FALSE, exact_mh = FALSE,
@@ -94,13 +98,11 @@ redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, const
     nthin <- as.integer(nthin)
   }
   
-  if ('pop_tol' %in% names(attributes(map))) {
-    pop_tol <- attr(map, 'pop_tol')
-  } else if ('pop_bounds' %in% names(attributes(map))) {
-    pop_tol <- attr(map, 'pop_bounds')[3] / attr(map, 'pop_bounds')[2] - 1
-  } else {
-    pop_tol <- 100
+  if(missing(pop_tol)){
+    pop_tol <- get_pop_tol(map)
   }
+  
+
 
   counties <- eval_tidy(enquo(counties), map)
   if (is.null(counties)) {

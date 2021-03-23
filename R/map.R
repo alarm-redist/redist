@@ -43,6 +43,7 @@
 redist.map <- function(shp = NULL, adj = NULL, plan = NULL, centroids = TRUE,
                        edges = TRUE, boundaries = TRUE, drop = FALSE,
                        title = '', adjacency, district_membership) {
+  .Deprecated(msg = 'Please use redist.plot.map or redist.plot.adj.')
   if (!missing(adjacency)) {
     .Deprecated(new = 'adj', old = 'adjacency')
     adj <- adjacency
@@ -179,11 +180,16 @@ redist.map <- function(shp = NULL, adj = NULL, plan = NULL, centroids = TRUE,
 
 #' Plot a Map
 #'
-#' @param shp  A SpatialPolygonsDataFrame or sf object. Required.
+#' Create a ggplot map. It fills by plan or argument fill. If both are supplied,
+#' plan is used as the color and fill as the alpha parameter.
+#'
+#' @param shp  A SpatialPolygonsDataFrame, sf object, or redist_map. Required.
 #' @param adj A zero-indexed adjacency list. Created with redist.adjacency
-#' if not supplied. Default is NULL.
+#' if not supplied and needed for coloring. Default is NULL.
 #' @param plan A numeric vector with one entry for each precinct in shp.
 #' Used to color the districts. Default is \code{NULL}.  Optional.
+#' @param fill A numeric/integer vector with values to color the plot with. Optional.
+#' @param fill_label A string title of plot. Defaults to empty string.
 #' @param boundaries A logical indicating if precinct boundaries should be plotted.
 #' @param title A string title of plot. Defaults to empty string. Optional.
 #'
@@ -196,14 +202,14 @@ redist.map <- function(shp = NULL, adj = NULL, plan = NULL, centroids = TRUE,
 #' @examples
 #' \dontrun{
 #' data(iowa)
-#' redist.plot.plan(shp = iowa, plan = iowa$cd_2010)
+#' redist.plot.map(shp = iowa, plan = iowa$cd_2010)
 #' 
-#' iowa %>% redist_map(existing_plan = cd_2010) %>% redist.plot.plan(shp = ., plan = get_existing(.))
+#' iowa %>% redist_map(existing_plan = cd_2010) %>% redist.plot.map(shp = ., plan = get_existing(.))
 #' }
 #'
 #' @concept plot
 #' @export
-redist.plot.plan <- function(shp, adj, plan = NULL, boundaries = TRUE, title = '') {
+redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '', boundaries = TRUE, title = '') {
 
   # Check inputs
   if (missing(shp)) {
@@ -216,6 +222,7 @@ redist.plot.plan <- function(shp, adj, plan = NULL, boundaries = TRUE, title = '
     stop('Please provide "shp" as a SpatialPolygonsDataFrame or sf object.')
   }
 
+  plan <- eval_tidy(enquo(plan), shp)
   if (!is.null(plan)) {
     if (!any(class(plan) %in% c('numeric', 'integer', 'character'))) {
       stop('Please provide "plan" as a vector.')
@@ -224,16 +231,13 @@ redist.plot.plan <- function(shp, adj, plan = NULL, boundaries = TRUE, title = '
       stop('Arguments "plan" and "shp" do not have same number of precincts.')
     }
   }
-
-  if (missing(adj)) {
-    adj <- redist.adjacency(shp)
-  }
+  fill <- eval_tidy(enquo(fill), shp)
 
   # Create Plot
   if (!is.null(plan)) {
-    if (inherits(shp, 'redist_map')) {
+    if (inherits(shp, 'redist_map') & is.null(fill)) {
       plan <- as.factor(plan)
-
+      adj <- get_adj(shp)
       plan <- as.factor(color_graph(adj, as.integer(plan)))
 
 
@@ -246,15 +250,65 @@ redist.plot.plan <- function(shp, adj, plan = NULL, boundaries = TRUE, title = '
 
       PAL <- c('#6D9537', '#364B7F', '#DCAD35', '#9A9BB9', '#2A4E45', '#7F4E28')
       plot <- plot + ggplot2::guides(fill = FALSE) +
-        ggplot2::scale_fill_manual(values = PAL)
-    } else {
+        ggplot2::scale_fill_manual(values = PAL) 
+    } else if(inherits(shp, 'redist_map')) {
+      plan <- as.factor(plan)
+      adj <- get_adj(shp)
+      plan <- as.factor(color_graph(adj, as.integer(plan)))
+      
+      if(max(fill, na.rm = TRUE) > 1){
+        fill <- fill/max(fill)
+      }
+      
       plot <- ggplot(shp) +
-        geom_sf(aes(fill = as.character(plan)), size = 0.3 * boundaries, color = '#444444') +
+        geom_sf(aes(fill = plan, alpha = fill), size = 0.3 * boundaries, color = '#444444') +
         theme_void() +
-        labs(fill = 'District Membership', title = title) +
+        labs(alpha = fill_label, title = title) +
         theme(legend.position = 'bottom')
+      
+      
+      PAL <- c('#6D9537', '#364B7F', '#DCAD35', '#9A9BB9', '#2A4E45', '#7F4E28')
+      plot <- plot + ggplot2::guides(fill = FALSE) +
+        ggplot2::scale_fill_manual(values = PAL)  +
+        ggplot2::scale_alpha_continuous(range = c(0,1))
+    } else {
+      if(is.null(fill)){ # plan but no fill
+        plot <- ggplot(shp) +
+          geom_sf(aes(fill = as.character(plan)), size = 0.3 * boundaries, color = '#444444') +
+          theme_void() +
+          labs(fill = 'District Membership', title = title) +
+          theme(legend.position = 'bottom')
+      } else { # plan and fill
+        if(max(fill, na.rm = TRUE) > 1){
+          fill <- fill/max(fill)
+        }
+        
+        plot <- ggplot(shp) +
+          geom_sf(aes(fill = as.character(plan), alpha = fill), size = 0.3 * boundaries, color = '#444444') +
+          theme_void() +
+          labs(fill = 'District Membership', alpha = fill_label, title = title) +
+          theme(legend.position = 'bottom')
+        
+        if (min(fill, na.rm = T) >= 0 & max(fill, na.rm = T) <= 1) {
+          plot <- plot + lims(alpha = c(0, 1))
+        }
+        
+      }
+
     }
-  } else {
+  } else if(!is.null(fill)){ # no plan but fill
+    plot <- plot <- ggplot(shp) +
+      geom_sf(aes(fill = fill), size = 0.3 * boundaries, color = '#444444') +
+      theme_void() +
+      labs(fill = fill_label, title = title) +
+      theme(legend.position = 'bottom')
+    
+    if(min(fill, na.rm = TRUE) >= 0 & max(fill, na.rm = TRUE) <= 1){
+      plot <- plot + scale_fill_gradient(low = '#ffffff', high = '#08306b',
+                          limits = c(0, 1))
+    }
+    
+  } else   {
     plot <- ggplot(shp) +
       geom_sf() +
       theme_void() +
@@ -264,6 +318,131 @@ redist.plot.plan <- function(shp, adj, plan = NULL, boundaries = TRUE, title = '
   # return plot
   return(plot)
 }
+
+#' Creates a Graph Overlay 
+#'
+#' @param shp  A SpatialPolygonsDataFrame or sf object. Required.
+#' @param adj A zero-indexed adjacency list. Created with redist.adjacency
+#' if not supplied. Default is NULL.
+#' @param plan A numeric vector with one entry for each precinct in shp.
+#' Used to remove edges that cross boundaries. Default is \code{NULL}.  Optional.
+#' @param centroids A logical indicating if centroids should be plotted. Default is \code{TRUE}.
+#' @param drop A logical indicating if edges that cross districts should be dropped. Default is \code{FALSE}.
+#' @param title A string title of plot. Defaults to empty string. Optional.
+#'
+#' @return ggplot map
+#'
+#' @importFrom ggplot2 ggplot geom_sf theme_minimal theme labs aes theme_void
+#' @importFrom dplyr filter .data
+#' @importFrom sf st_centroid st_coordinates st_as_sf st_linestring st_sfc
+#' @importFrom rlang eval_tidy enquo
+#'
+#' @examples
+#' \dontrun{
+#' data(fl25)
+#' data(fl25_enum)
+#'
+#' cds <- fl25_enum$plans[, 5118]
+#' redist.map(shp = fl25, plan = cds)
+#' }
+#'
+#' @concept plot
+#' @export
+redist.plot.adj <- function(shp = NULL, adj = NULL, plan = NULL, centroids = TRUE,
+                       drop = FALSE, title = '') {
+
+  # Check inputs
+  if (is.null(shp)) {
+    stop('Please provide an argument to "shp".')
+  }
+  
+  if ('SpatialPolygonsDataFrame' %in% class(shp)) {
+    shp <- shp %>% st_as_sf()
+  } else if (!('sf' %in% class(shp))) {
+    stop('Please provide "shp" as a SpatialPolygonsDataFrame or sf object.')
+  }
+  
+  plan <- eval_tidy(enquo(plan), shp)
+  if (!is.null(plan)) {
+    if (!any(class(plan) %in% c('numeric', 'integer', 'character'))) {
+      stop('Please provide "plan" as a vector.')
+    }
+    if (nrow(shp) != length(plan)) {
+      stop('Arguments "plan" and "shp" do not have same number of precincts.')
+    }
+  }
+  
+  if( inherits(shp, 'redist_map') ){
+    if(missing(adj)) {
+      adj <- get_adj(shp)
+    }
+  } else if (missing(adj)){
+    adj <- redist.adjacency(shp)
+  }
+
+  
+  if (drop & is.null(plan)) {
+    stop('drop is TRUE but no plan supplied')
+  }
+  
+  # Extract Centers
+    suppressWarnings(centers <- st_centroid(shp))
+    st_crs(centers) <- st_crs(shp)
+
+  
+  # Extract Edges
+  
+  nb <- lapply(adj, function(x) {
+    x + 1L
+  })
+
+    
+  edgedf <- tibble(
+    start = rep(1:length(nb), lengths(nb)),
+    finish = unlist(nb)
+  )
+  edgedf <- edgedf %>%
+    rowwise() %>%
+    mutate(i = min(start, finish), j = max(start, finish)) %>%
+    select(i, j)
+  edgedf <- edgedf[!duplicated(edgedf), ]
+  
+  edgedf <- edgedf %>%
+    rowwise() %>%
+    mutate(geometry = st_sfc(st_linestring(matrix(
+      c(
+        as.numeric(centers$geometry[[i]]),
+        as.numeric(centers$geometry[[j]])
+      ),
+      nrow = 2,
+      byrow = TRUE
+    ))))
+  
+  suppressWarnings(nb <- sf::st_as_sf(edgedf))
+  st_crs(nb) <- st_crs(shp)
+
+  
+  
+  # Drop Edges that cross District Boundaries
+  if (drop) {
+    nb <- nb %>%
+      filter(plan[i] == plan[j])
+  }
+  
+  # Create Plot
+  plot <- ggplot(nb) +
+    geom_sf() +
+    theme_void()
+  
+  if (centroids) {
+    plot <- plot + geom_sf(data = centers)
+  }
+  
+  # return plot
+  return(plot)
+}
+
+
 
 
 #' Creates a Choropleth
@@ -296,7 +475,7 @@ redist.plot.plan <- function(shp, adj, plan = NULL, boundaries = TRUE, title = '
 #' @export
 redist.choropleth <- function(shp, fill = NULL, fill_label = '', title = '',
                               grad = 1, lwd = 0) {
-
+  .Deprecated(new = 'redist.plot.map')
   # Check inputs
   if (missing(shp)) {
     stop('Please provide an argument to "shp".')

@@ -8,6 +8,7 @@ redist_flip(
   map,
   nsims,
   init_plan,
+  pop_tol,
   counties = NULL,
   group_pop,
   constraints = list(),
@@ -34,6 +35,11 @@ redist_flip(
 \item{init_plan}{A vector containing the congressional district labels
 of each geographic unit. The default is \code{NULL}. If not provided,
 a random initial plan will be generated using \code{redist.smc}.}
+
+\item{pop_tol}{The strength of the hard population
+constraint. \code{pop_tol} = 0.05 means that any proposed swap that
+brings a district more than 5\% away from population parity will be
+rejected. The default is \code{get_pop_tol(map)}.}
 
 \item{counties}{A column in map containing county membership}
 

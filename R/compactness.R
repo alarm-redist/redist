@@ -443,30 +443,33 @@ redist.compactness <- function(shp = NULL,
 #'
 #' @param shp A SpatialPolygonsDataFrame or sf object. Required unless "EdgesRemoved"
 #' and "logSpanningTree" with adjacency provided.
-#' @param adj Required, A zero-indexed adjacency list
+#' @param planarize a number, indicating the CRS to project the shapefile to if
+#'   it is latitude-longitude based. Set to FALSE to avoid planarizing.
 #' @param perim_path A path to save an Rds
 #' @param ncores the number of cores to parallelize over
 #'
 #' @return A perimeter dataframe
 #' @export
 #'
-#' @importFrom sf st_buffer st_is_valid st_geometry<-
+#' @importFrom sf st_buffer st_is_valid st_geometry<- st_touches
 #' @examples \dontrun{
 #' data(fl25)
-#' data(fl25_adj)
-#' perim_df <- redist.prep.polsbypopper(shp = fl25, adj = fl25_adj)
+#' perim_df <- redist.prep.polsbypopper(shp = fl25)
 #' }
-redist.prep.polsbypopper <- function(shp, adj, perim_path, ncores = 1){
+redist.prep.polsbypopper <- function(shp, planarize = 3857, perim_path, ncores = 1){
 
   if(missing(shp)){
     stop('Please provide an argument to shp.')
   }
-  if(missing(adj)){
-    stop('Please provide an argument to adj.')
+  
+  if(!is.null(st_crs(shp)) & is.numeric(planarize)){
+    shp <- st_transform(shp, planarize)
   }
+  
+  suppressMessages(alist <- st_relate(shp, pattern = "F***T****"))
 
 
-  alist <- lapply(adj, function(x){x+1L})
+  #alist <- lapply(adj, function(x){x+1L})
   invalid <- which(!st_is_valid(shp))
   st_geometry(shp[invalid,]) <- st_geometry(st_buffer(shp[invalid,],0))
   suppressWarnings(perims <- st_perimeter(shp))

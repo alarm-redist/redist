@@ -127,11 +127,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
     if(backend == 'mergesplit'){
         pop_bounds = attr(map, "pop_bounds")
     } else {
-        if ('pop_tol' %in% names(attributes(map))) {
-            pop_tol <- attr(map, 'pop_tol')
-        } else {
-            pop_tol <- attr(map, 'pop_bounds')[3] / attr(map, 'pop_bounds')[2] - 1
-        }
+        pop_tol <- get_pop_tol(map)
     }
 
     pop = map[[attr(map, "pop_col")]]

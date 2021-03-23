@@ -4,13 +4,14 @@
 \alias{redist.prep.polsbypopper}
 \title{Prep Polsby Popper Perimeter Dataframe}
 \usage{
-redist.prep.polsbypopper(shp, adj, perim_path, ncores = 1)
+redist.prep.polsbypopper(shp, planarize = 3857, perim_path, ncores = 1)
 }
 \arguments{
 \item{shp}{A SpatialPolygonsDataFrame or sf object. Required unless "EdgesRemoved"
 and "logSpanningTree" with adjacency provided.}
 
-\item{adj}{Required, A zero-indexed adjacency list}
+\item{planarize}{a number, indicating the CRS to project the shapefile to if
+it is latitude-longitude based. Set to FALSE to avoid planarizing.}
 
 \item{perim_path}{A path to save an Rds}
 
@@ -25,7 +26,6 @@ Prep Polsby Popper Perimeter Dataframe
 \examples{
 \dontrun{
 data(fl25)
-data(fl25_adj)
-perim_df <- redist.prep.polsbypopper(shp = fl25, adj = fl25_adj)
+perim_df <- redist.prep.polsbypopper(shp = fl25)
 }
 }
