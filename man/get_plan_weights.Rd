@@ -3,23 +3,23 @@
 \name{get_plan_weights}
 \alias{get_plan_weights}
 \alias{weights.redist_plans}
-\title{Extract the sampling weights from a redistricting simulation}
+\title{Extract the sampling weights from a redistricting simulation.}
 \usage{
 get_plan_weights(plans)
 
 \method{weights}{redist_plans}(object, ...)
 }
 \arguments{
-\item{plans}{the \code{redist_plans} object}
+\item{plans, object}{the \code{redist_plans} object}
 
 \item{...}{Ignored.}
 }
 \value{
-the weights, with an additional attribute \code{resampled}
-  indicating whether the plans have been resampled according to these
-  weights.
+A numeric vector of weights, with an additional attribute
+  \code{resampled} indicating whether the plans have been resampled according
+  to these weights.
 }
 \description{
-Extract the sampling weights from a redistricting simulation
+May be \code{NULL} if no weights exist (MCMC or optimization methods).
 }
 \concept{analyze}

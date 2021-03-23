@@ -146,19 +146,26 @@ get_plan_matrix = function(x) {
     stopifnot(inherits(x, "redist_plans"))
     attr(x, "plans")
 }
+#' @rdname get_plan_matrix
+#' @method as.matrix redist_plans
+#' @export
+as.matrix.redist_plans = function(x, ...) get_plan_matrix(x)
+
 # internal -- no check performed!
 set_plan_matrix = function(x, mat) {
     attr(x, "plans") = mat
     x
 }
 
-#' Extract the sampling weights from a redistricting simulation
+#' Extract the sampling weights from a redistricting simulation.
 #'
-#' @param plans the \code{redist_plans} object
+#' May be \code{NULL} if no weights exist (MCMC or optimization methods).
 #'
-#' @returns the weights, with an additional attribute \code{resampled}
-#'   indicating whether the plans have been resampled according to these
-#'   weights.
+#' @param plans,object the \code{redist_plans} object
+#'
+#' @returns A numeric vector of weights, with an additional attribute
+#'   \code{resampled} indicating whether the plans have been resampled according
+#'   to these weights.
 #'
 #' @concept analyze
 #' @export
@@ -170,9 +177,10 @@ get_plan_weights = function(plans) {
     wgt
 }
 
-#' @method weights redist_plans
 #' @rdname get_plan_weights
 #' @param ... Ignored.
+#' @importFrom stats weights
+#' @method weights redist_plans
 #' @export
 weights.redist_plans = function(object, ...) {
     get_plan_weights(object)
@@ -230,11 +238,6 @@ subset_ref = function(plans) {
 
 # generics ----------------------------------------------------------------
 
-
-#' @rdname get_plan_matrix
-#' @method as.matrix redist_plans
-#' @export
-as.matrix.redist_plans = function(x, ...) get_plan_matrix(x)
 
 #' @method dplyr_row_slice redist_plans
 #' @export

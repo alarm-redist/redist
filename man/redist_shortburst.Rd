@@ -63,7 +63,8 @@ Must be between 0 and 1.}
 \item{return_all}{Whether to return all the
 Recommended for monitoring purposes.}
 
-\item{backend}{"mergesplit" or "flip" - which mcmc within the bursts.}
+\item{backend}{the MCMC algorithm to use within each burst, either
+"mergesplit" or "flip".}
 
 \item{group_pop}{A column in map containing group populations for use with flip}
 

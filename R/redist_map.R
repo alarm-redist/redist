@@ -9,7 +9,7 @@
 # constructors and reconstructors
 
 # Main internal constructor
-new_redist_map = function(data, adj, ndists, pop_bounds, pop_tol, pop_col="pop",
+new_redist_map = function(data, adj, ndists, pop_bounds, pop_col="pop",
                           adj_col="adj", add_adj=TRUE, existing_col=NULL) {
     if (add_adj) {
         stopifnot(!is.null(adj))
@@ -24,7 +24,6 @@ new_redist_map = function(data, adj, ndists, pop_bounds, pop_tol, pop_col="pop",
     data = reconstruct.redist_map(data)
     attr(data, "ndists") = ndists
     attr(data, "pop_bounds") = pop_bounds
-    attr(data, 'pop_tol') <- pop_tol
     attr(data, "pop_col") = pop_col
     attr(data, "adj_col") = adj_col
     attr(data, "existing_col") = existing_col
@@ -59,9 +58,6 @@ validate_redist_map = function(data, check_contig=T) {
     stopifnot(!is.null(pop_bounds))
     if (!all(diff(pop_bounds) > 0))
         stop("`pop_bounds` must satisfy lower < target < upper.")
-    
-    pop_tol <- attr(data, 'pop_tol')
-    stopifnot(!is.null(pop_tol))
 
     data
 }
@@ -90,8 +86,6 @@ reconstruct.redist_map = function(data, old) {
         }
 
         attr(data, "pop_bounds") = attr(old, "pop_bounds")
-        
-        attr(data, 'pop_tol') <- attr(old, 'pop_tol')
     }
 
     class(data) = c("redist_map", classes)
@@ -120,20 +114,21 @@ reconstruct.redist_map = function(data, old) {
 #' @param ... column elements to be bound into a \code{redist_map} object or a
 #'   single \code{list} or \code{data.frame}.  These will be passed on to the
 #'   \code{\link{tibble}} constructor.
-#' @param ndists \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the integer number of
-#'   districts to partition the map into
+#' @param existing_plan \code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the
+#'   existing district assignment.
 #' @param pop_tol \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the population tolerance.
 #'   The percentage deviation from the average population will be constrained to
 #'   be no more than this number.
+#' @param total_pop \code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the vector
+#'   of precinct populations. Defaults to the \code{pop}, \code{population}, or
+#'   \code{total_pop} columns, if one exists.
+#' @param ndists \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the integer number of
+#'   districts to partition the map into. Must be specified if `existing_plan` is not supplied.
 #' @param pop_bounds \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} more specific
 #'   population bounds, in the form of \code{c(lower, target, upper)}.
-#' @param total_pop \code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the vector
-#'   of precinct populations. Defaults to the \code{pop} column, if one exists.
 #' @param adj the adjacency graph for the object. Defaults to being computed
 #'     from the data if it is coercible to a shapefile.
 #' @param adj_col the name of the adjacency graph column
-#' @param existing_plan \code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the
-#'   existing district assignment.
 #' @param planarize a number, indicating the CRS to project the shapefile to if
 #'   it is latitude-longitude based. Set to NULL or FALSE to avoid planarizing.
 #'
@@ -145,8 +140,10 @@ reconstruct.redist_map = function(data, old) {
 #' @concept prepare
 #' @md
 #' @export
-redist_map = function(..., ndists=NULL, pop_tol=0.01, pop_bounds=NULL, total_pop="pop",
-                      adj=NULL, adj_col="adj", existing_plan=NULL, planarize=3857) {
+redist_map = function(..., existing_plan=NULL, pop_tol=0.01,
+                      total_pop=c("pop", "population", "total_pop"),
+                      ndists=NULL, pop_bounds=NULL,
+                      adj=NULL, adj_col="adj", planarize=3857) {
     x = tibble(...)
     is_sf = any(vapply(x, function(x) inherits(x, "sfc"), TRUE))
     if (is_sf) {
@@ -176,7 +173,17 @@ redist_map = function(..., ndists=NULL, pop_tol=0.01, pop_bounds=NULL, total_pop
         adj = redist.adjacency(x)
     }
 
-    pop_col = names(tidyselect::eval_select(rlang::enquo(total_pop), x))
+    pop_col = names(x)[tidyselect::eval_select(rlang::enquo(total_pop), x,
+                                               strict=FALSE, allow_rename=FALSE)]
+    if (length(pop_col) == 0) {
+        stop("Population column `", total_pop, "` not found. ",
+             "Population must be specified in the `total_pop` argument.")
+    } else if (length(pop_col) > 1) {
+        pop_col = pop_col[1]
+        warning("Multiple potential population columns found, using `", pop_col,
+                "`.\nConsider specifying `total_pop` manually.")
+    }
+
     existing_col = names(tidyselect::eval_select(rlang::enquo(existing_plan), x))
     if (length(existing_col) == 0)
         existing_col = NULL
@@ -185,7 +192,7 @@ redist_map = function(..., ndists=NULL, pop_tol=0.01, pop_bounds=NULL, total_pop
         if (!is.null(existing_col))
             ndists = length(unique(x[[existing_col]]))
         else
-            stop("Must specify `ndists` if `existing_plan` is not supplied")
+            stop("Must specify `ndists` if `existing_plan` is not supplied.")
     } else {
         ndists = as.integer(rlang::eval_tidy(rlang::enquo(ndists), x))
     }
@@ -204,8 +211,8 @@ redist_map = function(..., ndists=NULL, pop_tol=0.01, pop_bounds=NULL, total_pop
 
 
     validate_redist_map(
-        new_redist_map(x, adj, ndists, pop_bounds, pop_tol, pop_col, adj_col,
-                   add_adj=T, existing_col)
+        new_redist_map(x, adj, ndists, pop_bounds, pop_col, adj_col,
+                       add_adj=T, existing_col)
     )
 }
 
