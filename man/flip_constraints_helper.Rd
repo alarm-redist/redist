@@ -69,7 +69,7 @@ Creates a constraints list for use with  \code{redist_flip}.
 \examples{
 \dontrun{
 data(iowa)
-iowa_map <- redist_map(iowa, existing_plan = cd_2010)
+iowa_map <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop)
 
 cons <- cons <- flip_constraints_helper(
   map = iowa_map, constraint = c('compact', 'vra'),

@@ -11,7 +11,7 @@ redist_map(
   ndists = NULL,
   pop_tol = 0.01,
   pop_bounds = NULL,
-  total_pop = "pop",
+  total_pop,
   adj = NULL,
   adj_col = "adj",
   planarize = 3857
@@ -39,7 +39,7 @@ be no more than this number.}
 population bounds, in the form of \code{c(lower, target, upper)}.}
 
 \item{total_pop}{\code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the vector
-of precinct populations. Defaults to the \code{pop} column, if one exists.}
+of precinct populations.}
 
 \item{adj}{the adjacency graph for the object. Defaults to being computed
 from the data if it is coercible to a shapefile.}
@@ -77,10 +77,10 @@ data(iowa)
 data(fl25)
 
 
-iowa_map = redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
+iowa_map = redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01, total_pop = pop)
 print(iowa_map)
 
-fl_map = redist_map(fl25, ndists = 3, pop_tol = 0.05)
+fl_map = redist_map(fl25, ndists = 3, pop_tol = 0.05, total_pop = pop)
 dplyr::filter(fl_map, pop >= 10e3)
 
 

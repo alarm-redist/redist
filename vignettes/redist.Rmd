@@ -175,7 +175,7 @@ The latter can be inferred if a reference redistricting plan exists.  For Iowa,
 we'll use the adopted 2010 plan as a reference.
 
 ```{r}
-iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.01)
+iowa_map = redist_map(iowa, existing_plan=cd_2010, total_pop=pop, pop_tol=0.01)
 print(iowa_map)
 ```
 

@@ -119,13 +119,13 @@ reconstruct.redist_map = function(data, old) {
 #'   for each row in the data. If no plan exists, set `ndists`.
 #' @param ndists \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the integer number of
 #'   districts to partition the map into. Must be specified if `existing_plan` is not supplied.
+#' @param total_pop \code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the vector
+#'   of precinct populations. 
 #' @param pop_tol \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the population parity tolerance.
 #'   The percentage deviation from the average population will be constrained to
 #'   be no more than this number.
 #' @param pop_bounds \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} more specific
 #'   population bounds, in the form of \code{c(lower, target, upper)}.
-#' @param total_pop \code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the vector
-#'   of precinct populations. Defaults to the \code{pop} column, if one exists.
 #' @param adj the adjacency graph for the object. Defaults to being computed
 #'     from the data if it is coercible to a shapefile.
 #' @param adj_col the name of the adjacency graph column
@@ -137,17 +137,17 @@ reconstruct.redist_map = function(data, old) {
 #' data(fl25)
 #' 
 #' 
-#' iowa_map = redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
+#' iowa_map = redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01, total_pop = pop)
 #' print(iowa_map)
 #' 
-#' fl_map = redist_map(fl25, ndists = 3, pop_tol = 0.05)
+#' fl_map = redist_map(fl25, ndists = 3, pop_tol = 0.05, total_pop = pop)
 #' dplyr::filter(fl_map, pop >= 10e3)
 #' 
 #'
 #' @concept prepare
 #' @md
 #' @export
-redist_map = function(..., existing_plan=NULL, ndists=NULL, pop_tol=0.01, pop_bounds=NULL, total_pop="pop",
+redist_map = function(..., existing_plan=NULL, ndists=NULL, pop_tol=0.01, pop_bounds=NULL, total_pop,
                       adj=NULL, adj_col="adj", planarize=3857) {
     x = tibble(...)
     is_sf = any(vapply(x, function(x) inherits(x, "sfc"), TRUE))
@@ -394,7 +394,7 @@ print.redist_map = function(x, ...) {
 #'
 #' @examples
 #' data(fl25)
-#' d = redist_map(fl25, ndists=3, pop_tol=0.05)
+#' d = redist_map(fl25, ndists=3, pop_tol=0.05, total_pop=pop)
 #' plot(d)
 #' plot(d, edges=FALSE)
 #' plot(d, BlackPop/pop)

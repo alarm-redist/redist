@@ -98,7 +98,7 @@ tempering functionality to improve the mixing of the Markov Chain.
 \examples{
 \dontrun{
 data(fl25)
-fl25_map <- redist_map(fl, ndists = 4, existing_plan = cd)
+fl25_map <- redist_map(fl, ndists = 4, existing_plan = cd, pop = "pop")
 sims <- redist_flip(map = fl25_map, nsims = 10)
 }
 }

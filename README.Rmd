@@ -70,7 +70,7 @@ library(dplyr)
 data(iowa)
 
 # set a 0.01% population constraint
-iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.0001)
+iowa_map = redist_map(iowa, existing_plan=cd_2010, total_pop=pop, pop_tol=0.0001)
 # simulate 250 plans using the SMC algorithm
 iowa_plans = redist_smc(iowa_map, nsims=250, verbose=FALSE)
 ```

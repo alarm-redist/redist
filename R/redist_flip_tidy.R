@@ -62,7 +62,7 @@
 #'
 #' @examples \dontrun{
 #' data(fl25)
-#' fl25_map <- redist_map(fl, ndists = 4, existing_plan = cd)
+#' fl25_map <- redist_map(fl, ndists = 4, existing_plan = cd, pop = "pop")
 #' sims <- redist_flip(map = fl25_map, nsims = 10)
 #' }
 redist_flip <- function(map, nsims, init_plan, counties = NULL, group_pop, constraints = list(),

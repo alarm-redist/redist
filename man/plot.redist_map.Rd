@@ -22,7 +22,7 @@ Plot a \code{redist_map}
 }
 \examples{
 data(fl25)
-d = redist_map(fl25, ndists=3, pop_tol=0.05)
+d = redist_map(fl25, ndists=3, pop_tol=0.05, total_pop=pop)
 plot(d)
 plot(d, edges=FALSE)
 plot(d, BlackPop/pop)

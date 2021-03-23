@@ -23,7 +23,7 @@ Plot a district assignment
 library(dplyr)
 data(iowa)
 
-iowa = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05)
+iowa = redist_map(iowa, existing_plan=cd_2010, total_pop=pop,  pop_tol=0.05)
 plans = redist_smc(iowa, nsims=100, silent=TRUE)
 redist.plot.plans(plans, c(1, 2, 3, 4), iowa)
 

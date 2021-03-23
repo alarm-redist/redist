@@ -31,7 +31,7 @@ with a reference line for each reference plan, if applicable.
 library(dplyr)
 data(iowa)
 
-iowa = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05)
+iowa = redist_map(iowa, existing_plan=cd_2010, total_pop=pop,  pop_tol=0.05)
 plans = redist_smc(iowa, nsims=100, silent=TRUE)
 group_by(plans, draw) \%>\%
     summarize(pop_dev = max(abs(total_pop / mean(total_pop) - 1))) \%>\%
