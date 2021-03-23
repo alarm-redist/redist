@@ -48,14 +48,4 @@ ggplot map
 \description{
 Creates a map with optional graph overlay
 }
-\examples{
-\dontrun{
-data(fl25)
-data(fl25_enum)
-
-cds <- fl25_enum$plans[, 5118]
-redist.map(shp = fl25, plan = cds)
-}
-
-}
 \concept{plot}

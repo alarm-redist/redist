@@ -36,11 +36,8 @@ Creates a Graph Overlay
 }
 \examples{
 \dontrun{
-data(fl25)
-data(fl25_enum)
-
-cds <- fl25_enum$plans[, 5118]
-redist.map(shp = fl25, plan = cds)
+data(iowa)
+redist.plot.adj(shp = iowa, plan = iowa$cd_2010)
 }
 
 }
