@@ -265,8 +265,7 @@ init_plan <- fl25_enum$plans[, 5118]
 
 ## Run the algorithm
 alg_253 <- redist.mcmc(adj = fl25_adj, total_pop = fl25$pop,
-                       init_plan = init_plan, nsims = 10000,
-                       loops = 2, savename = "test")
+                       init_plan = init_plan, nsims = 10000)
 }
 }
 \references{
