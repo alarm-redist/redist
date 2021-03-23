@@ -146,32 +146,27 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
     
   }
   
-  ###################################################################
-  ## Check whether initial partitions (if provided) are contiguous ##
-  ###################################################################
-  if(!is.null(init_plan)){
-    if(!is.na(init_plan)[1]){
-      if(sum(is.na(init_plan)) > 0){
-        stop("You have NA's in your congressional districts. Please check the provided init_plan vector for NA entries.")
-      }
-      
-      ndists <- length(unique(init_plan))
-      divlist <- genAlConn(adjlist, init_plan)
-      ncontig <- countpartitions(divlist)
-      
-      if(ncontig != ndists){
-        stop(paste("Your initial congressional districts have ", ndists,
-                   " unique districts but ",
-                   ncontig, " contigous connected components. Please provide a starting map with contigous districts.", sep = ""))
-      }
-    }
-  }
+
   
-  ##############################################################################
-  ## If no initial congressional districts provided, use Random Seed and Grow ##
-  ## (Chen and Rodden 2013) algorithm                                         ##
-  ##############################################################################
-  if(is.null(init_plan)){
+
+  
+  
+  if(is.null(init_plan) || isTRUE( 'smc' %in% init_plan)){
+    invisible(capture.output(init_plan <- redist.smc(
+      adj = adj,
+      total_pop = total_pop,
+      nsims = 1,
+      ndists = ndists,
+      pop_tol = ifelse(is.null(pop_tol), 0.05, pop_tol),
+      silent = TRUE
+    ), type = 'message'))
+    init_plan <- init_plan$plans
+  } else if(!is.null(init_plan) && 'rsg' %in% init_plan) {
+    ##############################################################################
+    ## If no init_plan == rsg, use Random Seed and Grow                         ##
+    ## (Chen and Rodden 2013) algorithm                                         ##
+    ##############################################################################
+    
     ## Set up target pop, strength of constraint (5%)
     if(is.null(pop_tol)){
       pop_tol_rsg <- .05
@@ -195,6 +190,26 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
                           maxiter = maxiterrsg)
     ## Get initial cds
     init_plan <- initout$plan
+    
+  } else {
+    ###################################################################
+    ## Check whether initial partitions (if provided) are contiguous ##
+    ###################################################################
+    if(!is.na(init_plan)[1]){
+      if(sum(is.na(init_plan)) > 0){
+        stop("You have NA's in your congressional districts. Please check the provided init_plan vector for NA entries.")
+      }
+      
+      ndists <- length(unique(init_plan))
+      divlist <- genAlConn(adjlist, init_plan)
+      ncontig <- countpartitions(divlist)
+      
+      if(ncontig != ndists){
+        stop(paste("Your initial congressional districts have ", ndists,
+                   " unique districts but ",
+                   ncontig, " contigous connected components. Please provide a starting map with contigous districts.", sep = ""))
+      }
+    }
   }
   
   ###########################################################

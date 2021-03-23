@@ -41,9 +41,9 @@ combine.par.anneal <- function(a, b){
 #' @param ndists The number of congressional districts. The default is
 #' \code{NULL}.
 #' @param init_plan A vector containing the congressional district labels
-#' of each geographic unit. The default is \code{NULL}. If not provided,
-#' random and contiguous congressional district assignments will be generated
-#' using \code{redist.rsg}.
+#' of each geographic unit. If not provided, random and contiguous congressional 
+#' district assignments will be generated using \code{redist.smc}. To use the old 
+#' behavior of generating with \code{redist.rsg}, provide init_plan = 'rsg'.
 #' @param num_hot_steps The number of steps to run the simulator at beta = 0.
 #' Default is 40000.
 #' @param num_annealing_steps The number of steps to run the simulator with
@@ -197,7 +197,7 @@ redist.mcmc.anneal <- function(adj,
     if(missing(total_pop)){
         stop("Please supply vector of geographic unit populations")
     }
-    if(is.null(ndists) & is.null(init_plan)){
+    if(is.null(ndists) & is.null(init_plan) || is.null(ndists) & is.character(init_plan) ){
         stop("Please provide either the desired number of congressional districts
               or an initial set of congressional district assignments")
     }
@@ -560,9 +560,9 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' @param ndists The number of congressional districts. The default is
 #' \code{NULL}.
 #' @param init_plan A vector containing the congressional district labels
-#' of each geographic unit. The default is \code{NULL}. If not provided,
-#' random and contiguous congressional district assignments will be generated
-#' using \code{redist.rsg}.
+#' of each geographic unit. If not provided, random and contiguous congressional 
+#' district assignments will be generated using \code{redist.smc}. To use the old 
+#' behavior of generating with \code{redist.rsg}, provide init_plan = 'rsg'.
 #' @param loopscompleted Number of save points reached by the
 #' algorithm. The default is \code{0}.
 #' @param nloop The total number of save points for the algorithm. The
@@ -721,6 +721,12 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' ## Run the algorithm
 #' alg_253 <- redist.mcmc(adj = fl25_adj, total_pop = fl25$pop,
 #'                        init_plan = init_plan, nsims = 10000)
+#'  
+#'  ## You can also let it find a plan on its own!
+#'  sims <- redist.mcmc(adj = fl25_adj, total_pop = fl25$pop,
+#'                        ndists = 3, nsims = 10000)
+#'  
+#'  
 #' }
 #' @concept simulate
 #' @export
@@ -802,7 +808,7 @@ redist.mcmc <- function(adj,
     if(missing(nsims)){
         stop("Please supply number of simulations to run algorithm")
     }
-    if(is.null(ndists) & is.null(init_plan)){
+    if(is.null(ndists) & is.null(init_plan) || is.null(ndists) & is.character(init_plan) ){
         stop("Please provide either the desired number of congressional districts
               or an initial set of congressional district assignments")
     }
