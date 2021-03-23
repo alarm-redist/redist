@@ -33,7 +33,7 @@ for each plan. Can also be a purrr-style anonymous function. See
 
 \item{stop_at}{A threshold to stop optimization at.}
 
-\item{burst_size}{The size of each burst. 10 is recommended.}
+\item{burst_size}{The size of each burst. 10 is recommended for mergesplit and 50 for flip.}
 
 \item{max_bursts}{The maximum number of bursts to run before returning.}
 
@@ -62,6 +62,16 @@ Must be between 0 and 1.}
 
 \item{return_all}{Whether to return all the
 Recommended for monitoring purposes.}
+
+\item{backend}{"mergesplit" or "flip" - which mcmc within the bursts.}
+
+\item{flip_lambda}{The parameter detmerining the number of swaps to attempt each iteration of flip mcmc.
+The number of swaps each iteration is equal to Pois(lambda) + 1. The default is 0.}
+
+\item{flip_eprob}{The probability of keeping an edge connected in flip mcmc. The default is 0.05.}
+
+\item{flip_constraints}{A list of constraints to use for flip mcmc. Can be created with
+\code{flip_constraints_helper}. Defaults to an edges-removed compactness constraint with weight 0.6.}
 
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended for monitoring purposes.}
