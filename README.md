@@ -70,7 +70,7 @@ remotes::install_github("kosukeimai/redist", dependencies=TRUE)
 
 A basic analysis has two steps. First, you define a redistricting plan
 using `redist_map`. Then you simulate plans using one of the algorithm
-functions: `redist_smc`, `redist.mcmc`, and `redist_mergesplit`.
+functions: `redist_smc`, `redist_flip`, and `redist_mergesplit`.
 
 ``` r
 library(redist)
@@ -85,11 +85,11 @@ iowa_plans = redist_smc(iowa_map, nsims=250, verbose=FALSE)
 #> SEQUENTIAL MONTE CARLO
 #> Sampling 250 99-unit maps with 4 districts and population between 761513 and 761665.
 #> Making split 1 of 3
-#> Resampling effective sample size: 245.9 (98.4% efficiency).
+#> Resampling effective sample size: 246.1 (98.4% efficiency).
 #> Making split 2 of 3
-#> Resampling effective sample size: 243.3 (97.3% efficiency).
+#> Resampling effective sample size: 244.2 (97.7% efficiency).
 #> Making split 3 of 3
-#> Resampling effective sample size: 247.2 (98.9% efficiency).
+#> Resampling effective sample size: 245.3 (98.1% efficiency).
 ```
 
 After generating plans, you can use `redist`’s plotting functions to

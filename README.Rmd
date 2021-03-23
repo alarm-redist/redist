@@ -62,7 +62,7 @@ remotes::install_github("kosukeimai/redist", dependencies=TRUE)
 ## Getting started
 A basic analysis has two steps. First, you define a redistricting plan
 using `redist_map`. Then you simulate plans using one of the algorithm
-functions: `redist_smc`, `redist.mcmc`, and `redist_mergesplit`.
+functions: `redist_smc`, `redist_flip`, and `redist_mergesplit`.
 ```{r message=FALSE}
 library(redist)
 library(dplyr)
