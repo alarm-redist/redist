@@ -40,10 +40,9 @@ redist.adjacency <- function(shp, plan, district_membership){
 
   # Check that no numbers are skipped
   # low resolution shp files may result in skips, this fixes most issues
-  skip <- !all(sort(unique(unlist(adj))) == 0:(nrow(shp)-1))
   correct_n <- nrow(shp) == length(unique(unlist(adj)))
 
-  if(skip){
+  if(!correct_n){
     warning('At least one precinct had no adjacent precincts.')
   }
 
