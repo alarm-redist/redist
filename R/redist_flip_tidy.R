@@ -223,6 +223,8 @@ redist_flip <- function(map, nsims, init_plan, pop_tol, counties = NULL, group_p
       components <- contiguity(adj, counties)
       if (any(components > 1)) {
         counties_smc <- redist.county.id(redist.county.relabel(adj, counties))
+      } else {
+        counties_smc <- counties
       }
       
       invisible(capture.output(init_plan <- redist.smc(
@@ -356,7 +358,7 @@ redist_flip <- function(map, nsims, init_plan, pop_tol, counties = NULL, group_p
   }
 
   if (min(algout$plans) == 0) {
-    algout$plans <- ifelse(algout$plans == 0, ndists, algout$plans)
+    algout$plans <- algout$plans + 1
   }
 
   out <- new_redist_plans(
