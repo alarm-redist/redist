@@ -475,27 +475,32 @@ redist.prep.polsbypopper <- function(shp, planarize = 3857, perim_path, ncores =
   suppressWarnings(perims <- st_perimeter(shp))
 
   if (ncores == 1){
-      perim_adj_df = do.call(rbind, lapply(seq_along(alist), function(from) {
-          suppressWarnings(lines <- st_intersection(shp[from,], shp[alist[[from]],]))
-          l_lines <- st_length(lines)
-          data.frame(origin = from,
-                     touching = alist[[from]],
-                     edge = as.vector(l_lines))
-      }))
+    `%oper%` <- `%do%`
   } else {
+    `%oper%` <- `%dopar%`
     cl <- makeCluster(ncores, setup_strategy = 'sequential')
     registerDoParallel(cl)
     on.exit(stopCluster(cl))
-    perim_adj_df <- foreach(from=1:length(alist), .combine='rbind', .packages='sf') %dopar% {
-        suppressWarnings(lines <- st_intersection(shp[from,], shp[alist[[from]],]))
-        l_lines <- st_length(lines)
-        data.frame(origin = from,
-                   touching = alist[[from]],
-                   edge = as.vector(l_lines))
-    }
   }
-  perim_adj_df <- filter(perim_adj_df, edge > 0)
+  
+  perim_adj_df <- foreach(from = 1:length(alist), .combine = 'rbind', .packages = 'sf') %oper% {
+                            suppressWarnings(lines <- st_intersection(shp[from,], shp[alist[[from]],]))
+                            l_lines <- st_length(lines)
+                            if(length(alist[[from]] > 0)){
+                              data.frame(origin = from,
+                                         touching = alist[[from]],
+                                         edge = as.vector(l_lines))
+                            } else {
+                              data.frame(origin = from, touching = NA, edge = -1)
+                            }
 
+                          }
+        
+  perim_adj_island <- perim_adj_df %>% filter(edge == -1) %>% mutate(edge = 0)
+  perim_adj_df <- perim_adj_df %>% filter(edge > 0) %>% rbind(perim_adj_island)
+  
+
+  
   adj_boundary_lengths <- perim_adj_df %>%
     group_by(origin) %>%
     summarize(perim_adj = sum(edge)) %>%
