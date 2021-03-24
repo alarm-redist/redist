@@ -21,6 +21,7 @@ redist.compactness(
   nloop = 1,
   ncores = 1,
   counties = NULL,
+  planarize = 3857,
   ppRcpp,
   perim_path,
   perim_df,
@@ -60,6 +61,9 @@ and the column number if multiple maps given.}
 \item{ncores}{Number of cores to use for parallel computing. Default is 1.}
 
 \item{counties}{A numeric vector from 1:ncounties corresponding to counties. Required for "logSpanningTree".}
+
+\item{planarize}{a number, indicating the CRS to project the shapefile to if
+it is latitude-longitude based. Set to FALSE to avoid planarizing.}
 
 \item{ppRcpp}{Boolean, whether to run Polsby Popper and Schwartzberg using Rcpp.
 It has a higher upfront cost, but quickly becomes faster.
