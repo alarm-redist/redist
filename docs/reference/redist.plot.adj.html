@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Extract the sampling weights from a redistricting simulation. — get_plan_weights • redist</title>
+<title>Creates a Graph Overlay — redist.plot.adj • redist</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,8 +46,8 @@
 
 
 
-<meta property="og:title" content="Extract the sampling weights from a redistricting simulation. — get_plan_weights" />
-<meta property="og:description" content="May be NULL if no weights exist (MCMC or optimization methods)." />
+<meta property="og:title" content="Creates a Graph Overlay — redist.plot.adj" />
+<meta property="og:description" content="Creates a Graph Overlay" />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -143,39 +143,66 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Extract the sampling weights from a redistricting simulation.</h1>
-    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/redist_plans.R'><code>R/redist_plans.R</code></a></small>
-    <div class="hidden name"><code>get_plan_weights.Rd</code></div>
+    <h1>Creates a Graph Overlay</h1>
+    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/map.R'><code>R/map.R</code></a></small>
+    <div class="hidden name"><code>redist.plot.adj.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>May be <code>NULL</code> if no weights exist (MCMC or optimization methods).</p>
+    <p>Creates a Graph Overlay</p>
     </div>
 
-    <pre class="usage"><span class='fu'>get_plan_weights</span><span class='op'>(</span><span class='va'>plans</span><span class='op'>)</span>
-
-<span class='co'># S3 method for redist_plans</span>
-<span class='fu'><a href='https://rdrr.io/r/stats/weights.html'>weights</a></span><span class='op'>(</span><span class='va'>object</span>, <span class='va'>...</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>redist.plot.adj</span><span class='op'>(</span>
+  shp <span class='op'>=</span> <span class='cn'>NULL</span>,
+  adj <span class='op'>=</span> <span class='cn'>NULL</span>,
+  plan <span class='op'>=</span> <span class='cn'>NULL</span>,
+  centroids <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  drop <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  title <span class='op'>=</span> <span class='st'>""</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>plans, object</th>
-      <td><p>the <code>redist_plans</code> object</p></td>
+      <th>shp</th>
+      <td><p>A SpatialPolygonsDataFrame or sf object. Required.</p></td>
     </tr>
     <tr>
-      <th>...</th>
-      <td><p>Ignored.</p></td>
+      <th>adj</th>
+      <td><p>A zero-indexed adjacency list. Created with redist.adjacency
+if not supplied. Default is NULL.</p></td>
+    </tr>
+    <tr>
+      <th>plan</th>
+      <td><p>A numeric vector with one entry for each precinct in shp.
+Used to remove edges that cross boundaries. Default is <code>NULL</code>.  Optional.</p></td>
+    </tr>
+    <tr>
+      <th>centroids</th>
+      <td><p>A logical indicating if centroids should be plotted. Default is <code>TRUE</code>.</p></td>
+    </tr>
+    <tr>
+      <th>drop</th>
+      <td><p>A logical indicating if edges that cross districts should be dropped. Default is <code>FALSE</code>.</p></td>
+    </tr>
+    <tr>
+      <th>title</th>
+      <td><p>A string title of plot. Defaults to empty string. Optional.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A numeric vector of weights, with an additional attribute
-  <code>resampled</code> indicating whether the plans have been resampled according
-  to these weights.</p>
+    <p>ggplot map</p>
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>iowa</span><span class='op'>)</span>
+<span class='fu'>redist.plot.adj</span><span class='op'>(</span>shp <span class='op'>=</span> <span class='va'>iowa</span>, plan <span class='op'>=</span> <span class='va'>iowa</span><span class='op'>$</span><span class='va'>cd_2010</span><span class='op'>)</span>
+<span class='op'>}</span>
+
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

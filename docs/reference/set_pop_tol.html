@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Extract the sampling weights from a redistricting simulation. — get_plan_weights • redist</title>
+<title>Set the population tolerance from a redist_map object — set_pop_tol • redist</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,8 +46,8 @@
 
 
 
-<meta property="og:title" content="Extract the sampling weights from a redistricting simulation. — get_plan_weights" />
-<meta property="og:description" content="May be NULL if no weights exist (MCMC or optimization methods)." />
+<meta property="og:title" content="Set the population tolerance from a redist_map object — set_pop_tol" />
+<meta property="og:description" content="Set the population tolerance from a redist_map object" />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -143,38 +143,33 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Extract the sampling weights from a redistricting simulation.</h1>
-    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/redist_plans.R'><code>R/redist_plans.R</code></a></small>
-    <div class="hidden name"><code>get_plan_weights.Rd</code></div>
+    <h1>Set the population tolerance from a <code>redist_map</code> object</h1>
+    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/redist_map.R'><code>R/redist_map.R</code></a></small>
+    <div class="hidden name"><code>set_pop_tol.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>May be <code>NULL</code> if no weights exist (MCMC or optimization methods).</p>
+    <p>Set the population tolerance from a <code>redist_map</code> object</p>
     </div>
 
-    <pre class="usage"><span class='fu'>get_plan_weights</span><span class='op'>(</span><span class='va'>plans</span><span class='op'>)</span>
-
-<span class='co'># S3 method for redist_plans</span>
-<span class='fu'><a href='https://rdrr.io/r/stats/weights.html'>weights</a></span><span class='op'>(</span><span class='va'>object</span>, <span class='va'>...</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>set_pop_tol</span><span class='op'>(</span><span class='va'>map</span>, <span class='va'>pop_tol</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>plans, object</th>
-      <td><p>the <code>redist_plans</code> object</p></td>
+      <th>map</th>
+      <td><p>the <code>redist_map</code> object</p></td>
     </tr>
     <tr>
-      <th>...</th>
-      <td><p>Ignored.</p></td>
+      <th>pop_tol</th>
+      <td><p>the population tolerance</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A numeric vector of weights, with an additional attribute
-  <code>resampled</code> indicating whether the plans have been resampled according
-  to these weights.</p>
+    <p>an updated redist_map object</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

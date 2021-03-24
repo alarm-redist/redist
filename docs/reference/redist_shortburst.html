@@ -166,7 +166,7 @@ Optimization by Short Bursts."</p>
   <span class='va'>map</span>,
   score_fn <span class='op'>=</span> <span class='cn'>NULL</span>,
   stop_at <span class='op'>=</span> <span class='cn'>NULL</span>,
-  burst_size <span class='op'>=</span> <span class='fl'>10L</span>,
+  burst_size <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/ifelse.html'>ifelse</a></span><span class='op'>(</span><span class='va'>backend</span> <span class='op'>==</span> <span class='st'>"mergesplit"</span>, <span class='fl'>10L</span>, <span class='fl'>50L</span><span class='op'>)</span>,
   max_bursts <span class='op'>=</span> <span class='fl'>500L</span>,
   maximize <span class='op'>=</span> <span class='cn'>TRUE</span>,
   init_plan <span class='op'>=</span> <span class='cn'>NULL</span>,
@@ -174,6 +174,11 @@ Optimization by Short Bursts."</p>
   compactness <span class='op'>=</span> <span class='fl'>1</span>,
   adapt_k_thresh <span class='op'>=</span> <span class='fl'>0.975</span>,
   return_all <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  backend <span class='op'>=</span> <span class='st'>"mergesplit"</span>,
+  <span class='va'>group_pop</span>,
+  flip_lambda <span class='op'>=</span> <span class='fl'>0</span>,
+  flip_eprob <span class='op'>=</span> <span class='fl'>0.05</span>,
+  flip_constraints <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>,
   verbose <span class='op'>=</span> <span class='cn'>TRUE</span>
 <span class='op'>)</span></pre>
 
@@ -196,7 +201,7 @@ for each plan. Can also be a purrr-style anonymous function. See
     </tr>
     <tr>
       <th>burst_size</th>
-      <td><p>The size of each burst. 10 is recommended.</p></td>
+      <td><p>The size of each burst. 10 is recommended for mergesplit and 50 for flip.</p></td>
     </tr>
     <tr>
       <th>max_bursts</th>
@@ -239,6 +244,29 @@ Must be between 0 and 1.</p></td>
       <th>return_all</th>
       <td><p>Whether to return all the
 Recommended for monitoring purposes.</p></td>
+    </tr>
+    <tr>
+      <th>backend</th>
+      <td><p>the MCMC algorithm to use within each burst, either
+"mergesplit" or "flip".</p></td>
+    </tr>
+    <tr>
+      <th>group_pop</th>
+      <td><p>A column in map containing group populations for use with flip</p></td>
+    </tr>
+    <tr>
+      <th>flip_lambda</th>
+      <td><p>The parameter detmerining the number of swaps to attempt each iteration of flip mcmc.
+The number of swaps each iteration is equal to Pois(lambda) + 1. The default is 0.</p></td>
+    </tr>
+    <tr>
+      <th>flip_eprob</th>
+      <td><p>The probability of keeping an edge connected in flip mcmc. The default is 0.05.</p></td>
+    </tr>
+    <tr>
+      <th>flip_constraints</th>
+      <td><p>A list of constraints to use for flip mcmc. Can be created with
+<code>flip_constraints_helper</code>. Defaults to an edges-removed compactness constraint with weight 0.6.</p></td>
     </tr>
     <tr>
       <th>verbose</th>

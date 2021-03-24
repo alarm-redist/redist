@@ -217,9 +217,9 @@ unit</p></td>
     <tr>
       <th>init_plan</th>
       <td><p>A vector containing the congressional district labels
-of each geographic unit. The default is <code>NULL</code>. If not provided,
-random and contiguous congressional district assignments will be generated
-using <code>redist.rsg</code>.</p></td>
+of each geographic unit. If not provided, random and contiguous congressional 
+district assignments will be generated using <code>redist.smc</code>. To use the old 
+behavior of generating with <code>redist.rsg</code>, provide init_plan = 'rsg'.</p></td>
     </tr>
     <tr>
       <th>num_hot_steps</th>
