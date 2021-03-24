@@ -3,7 +3,7 @@
 \name{distr_compactness}
 \alias{distr_compactness}
 \alias{redist.compactness}
-\title{Calculate compactness measures for a set of districts}
+\title{Calculate compactness measures for a set of plans}
 \usage{
 distr_compactness(
   map,

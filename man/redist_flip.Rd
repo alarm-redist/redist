@@ -34,12 +34,15 @@ redist_flip(
 
 \item{init_plan}{A vector containing the congressional district labels
 of each geographic unit. The default is \code{NULL}. If not provided,
-a random initial plan will be generated using \code{redist.smc}.}
+a random initial plan will be generated using \code{redist.smc}. You can also
+request to initialize using \code{redist.rsg} by supplying 'rsg', though this is
+not recommended behavior.}
 
 \item{pop_tol}{The strength of the hard population
 constraint. \code{pop_tol} = 0.05 means that any proposed swap that
-brings a district more than 5\% away from population parity will be
-rejected. The default is \code{get_pop_tol(map)}.}
+brings a district more than 5\\% away from population parity will be
+rejected. The default is \code{get_pop_tol(map)}. Providing an entry here ignores
+the \code{pop_tol} within the object provided to map.}
 
 \item{counties}{A column in map containing county membership}
 
@@ -55,7 +58,7 @@ default is \code{1}.}
 default is \code{0.05}.}
 
 \item{lambda}{lambda The parameter determining the number of swaps to attempt
-each iteration of the algorihtm. The number of swaps each iteration is
+each iteration of the algorithm. The number of swaps each iteration is
 equal to Pois(\code{lambda}) + 1. The default is \code{0}.}
 
 \item{temper}{Whether to use simulated tempering algorithm. Default is FALSE.}
@@ -63,7 +66,7 @@ equal to Pois(\code{lambda}) + 1. The default is \code{0}.}
 \item{betaseq}{Sequence of beta values for tempering. The default is
 \code{powerlaw} (see Fifield et. al (2020) for details).}
 
-\item{betaseqlength}{@param betaseqlength Length of beta sequence desired for
+\item{betaseqlength}{Length of beta sequence desired for
 tempering. The default is \code{10}.}
 
 \item{betaweights}{betaweights Sequence of weights for different values of
@@ -104,6 +107,124 @@ constraints corresponding to substantive requirements in the redistricting
 process are implemented, including population parity and geographic
 compactness. In addition, the function includes multiple-swap and simulated
 tempering functionality to improve the mixing of the Markov Chain.
+
+\code{redist_flip} allows for Gibbs constraints to be supplied via a list object
+passed to \code{constraints}. This is a change from the original \code{redist.mcmc}
+behavior to allow for a more straightforward function call when used within a pipe.
+A key difference between \code{redist_flip} and \code{redist.mcmc} is that
+\code{redist_flip} uses a small compactness constraint by default, as this improves
+the realism of the maps greatly and also leads to large speed improvements.
+(One of the most time consuming aspects of the mcmc/flip backend is checking for
+district shattering, which is slowed down even further by non-compact districts.
+As such, it is recommended that all flip simulations use at least a minimal compactness
+constraint, even if you weaken it from the default settings.) The default is
+a \code{compact} constraint using the \code{edges-removed} metric with a
+weight of 0.6. For very small maps (< 100 precincts), you will likely want to
+weaken (lower) this constraint, while for very large maps (> 5000 precincts),
+you will likely want to strengthen (increase) this constraint. Otherwise,
+for most maps, the default constraint should be a good starting place.
+
+\code{redist_flip} samples from a known target distribution which can be described
+using the \code{constraints}. We recommend setting up the constraints for
+\code{redist_flip} with \code{\link{flip_constraints_helper}} to ensure that
+you are supplying the exact information needed. As a quick shorthand, if you
+want to run a simulation with no constraints at all, you can use
+\code{flip_constraints_helper(map = map, constraint = NULL)} and pass this to
+\code{constraints}. The following describes the constraints available. The general
+advice is to set weights in a way that gets between 20\\% and 40\\% acceptance
+on average, though more tuning advice is available in the vignette on using
+mcmc methods.Having too small of an acceptance rate indicates that the weights
+within \code{constraints} are too large and will impact sampling efficiency.
+If the Metropolis Hastings acceptance rate is too large, this may impact the
+target distribution, but may be fine for general exploration of possible maps.
+
+There are currently 9 implemented constraint types, though `\code{compact} and
+\code{partisan} have sub-types which are specified via a character \code{metric}
+within their respective list objects. The constraints are as follows:
+\itemize{
+\item \code{compact} - biases the algorithm towards drawing more compact districts.
+This constraint uses \code{counties} when \code{log-st} is used.
+\itemize{
+\item weight - the coefficient to put on the Gibbs constraint
+\item metric - which metric to use. Must be one of \code{edges-removed} (the default),
+\code{polsby-popper}, \code{fryer-holden}, or \code{log-st}. Using Polsby Popper
+is generally not recommended, as \code{edges-removed} is faster and highly correlated.
+\code{log-st} can be used to match the target distribution of \code{redist_smc} or
+\code{redist_mergesplit}.
+\item areas - Only used with \code{polsby-popper} - A vector of precinct areas.
+\item borderlength_mat - Only used with \code{polsby-popper} - A matrix of precinct
+border lengths.
+\item ssdmat - Only used with \code{fryer-holden} - A matrix of squared distances between
+precinct centroids.
+\item ssd_denom - Only used with \code{fryer-holden} - a positive integer to use
+as the normalizing constant for the Relative Proximity Index.
+}
+\item \code{population} - A Gibbs constraint to complement the hard population
+constraint set by \code{pop_tol}. This penalizes moves which move away from smaller
+population parity deviations. It is very useful when an \code{init_plan} sits
+outside of the desired \code{pop_tol} but there are substantive reasons to use
+that plan. This constraint uses the input to \code{total_pop}.
+\itemize{
+\item weight - the coefficient to put on the Gibbs constraint
+}
+\item \code{countysplit} This is a Gibbs constraint to minimize county splits. Unlike
+SMC's county constraint, this allows for more than \code{ndists - 1} splits and
+does not require that counties are contiguous. This constraint uses the input
+to \code{counties}.
+\itemize{
+\item weight - the coefficient to put on the Gibbs constraint
+}
+\item \code{hinge} This uses the proportion of a group in a district and matches to the
+nearest target proportion, and then creates a penalty of
+\eqn{\sqrt{max(0, nearest.target - group.pct)}}. This is equivalent to the
+\code{vra-old} constraint in  \code{redist_smc}. This constraint uses the
+input to \code{group_pop}.
+\itemize{
+\item weight - the coefficient to put on the Gibbs constraint
+\item minorityprop - A numeric vector of minority proportions (between 0 and 1) which
+districts should aim to have
+}
+\item \code{vra} This takes two target proportions of the presence of a minority group
+within a district. \eqn{(|target.min - group.pct||target.other - group.pct|)^{1.5})}
+This is equivalent to the \code{vra-old} constraint in
+\code{redist_smc}. This constraint uses the input to \code{group_pop}.
+\itemize{
+\item weight - the coefficient to put on the Gibbs constraint
+\item target_min - the target minority percentage. Often, this is set to 0.55 to encourage
+minority majority districts.
+\item target_other - the target minority percentage for non majority minority districts.
+}
+\item \code{minority} This constraint sorts the districts by the proportion of a group in
+a district and compares the highest districts to the entries of minorityprop.
+This takes the form \eqn{\sum_{i=1}^{n} \sqrt{|group.pct(i) - minorityprop(i)| }} where n
+is the length of minorityprop input. This constraint uses the input to \code{group_pop}.
+\itemize{
+\item weight - the coefficient to put on the Gibbs constraint
+\item minorityprop - A numeric vector of minority proportions (between 0 and 1) which
+districts should aim to have
+}
+\item \code{similarity} This is a status-quo constraint which penalizes plans which
+are very different from the starting place. It is useful for local exploration.
+This constraint uses the input to \code{init_plan} to compare proposals.
+\itemize{
+\item weight - the coefficient to put on the Gibbs constraint
+}
+\item \code{partisan} This is a constraint which minimizes partisan bias, either as
+measured as the difference from proportional representation or as the magnitude of
+the efficiency gap.
+\itemize{
+\item weight - the coefficient to put on the Gibbs constraint
+\item rvote - An integer vector of votes for Republicans or other party
+\item dvote - An integer vector of votes for Democrats or other party
+\item metric - which metric to use. Must be one of \code{proportional-representation}
+or \code{efficiency-gap}.
+}
+\item \code{segregation} This constraint attempts to minimize the degree of dissimilarity
+between districts by group population. This constraint uses the input to \code{group_pop}.
+\itemize{
+\item weight - the coefficient to put on the Gibbs constraint
+}
+}
 }
 \examples{
 \dontrun{

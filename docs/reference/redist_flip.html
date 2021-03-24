@@ -158,9 +158,11 @@ redist.mcmc." />
   <span class='va'>map</span>,
   <span class='va'>nsims</span>,
   <span class='va'>init_plan</span>,
+  <span class='va'>pop_tol</span>,
   counties <span class='op'>=</span> <span class='cn'>NULL</span>,
   <span class='va'>group_pop</span>,
   constraints <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>,
+  nthin <span class='op'>=</span> <span class='fl'>1</span>,
   eprob <span class='op'>=</span> <span class='fl'>0.05</span>,
   lambda <span class='op'>=</span> <span class='fl'>0</span>,
   temper <span class='op'>=</span> <span class='cn'>FALSE</span>,
@@ -190,7 +192,17 @@ redist.mcmc." />
       <th>init_plan</th>
       <td><p>A vector containing the congressional district labels
 of each geographic unit. The default is <code>NULL</code>. If not provided,
-a random initial plan will be generated using <code>redist.smc</code>.</p></td>
+a random initial plan will be generated using <code>redist.smc</code>. You can also
+request to initialize using <code>redist.rsg</code> by supplying 'rsg', though this is
+not recommended behavior.</p></td>
+    </tr>
+    <tr>
+      <th>pop_tol</th>
+      <td><p>The strength of the hard population
+constraint. <code>pop_tol</code> = 0.05 means that any proposed swap that
+brings a district more than 5\<!-- % away from population parity will be -->
+rejected. The default is <code><a href='get_pop_tol.html'>get_pop_tol(map)</a></code>. Providing an entry here ignores
+the <code>pop_tol</code> within the object provided to map.</p></td>
     </tr>
     <tr>
       <th>counties</th>
@@ -206,6 +218,11 @@ a random initial plan will be generated using <code>redist.smc</code>.</p></td>
 <code>flip_constraints_helper</code></p></td>
     </tr>
     <tr>
+      <th>nthin</th>
+      <td><p>The amount by which to thin the Markov Chain. The
+default is <code>1</code>.</p></td>
+    </tr>
+    <tr>
       <th>eprob</th>
       <td><p>The probability of keeping an edge connected. The
 default is <code>0.05</code>.</p></td>
@@ -213,7 +230,7 @@ default is <code>0.05</code>.</p></td>
     <tr>
       <th>lambda</th>
       <td><p>lambda The parameter determining the number of swaps to attempt
-each iteration of the algorihtm. The number of swaps each iteration is
+each iteration of the algorithm. The number of swaps each iteration is
 equal to Pois(<code>lambda</code>) + 1. The default is <code>0</code>.</p></td>
     </tr>
     <tr>
@@ -227,7 +244,7 @@ equal to Pois(<code>lambda</code>) + 1. The default is <code>0</code>.</p></td>
     </tr>
     <tr>
       <th>betaseqlength</th>
-      <td><p>@param betaseqlength Length of beta sequence desired for
+      <td><p>Length of beta sequence desired for
 tempering. The default is <code>10</code>.</p></td>
     </tr>
     <tr>
@@ -281,6 +298,112 @@ constraints corresponding to substantive requirements in the redistricting
 process are implemented, including population parity and geographic
 compactness. In addition, the function includes multiple-swap and simulated
 tempering functionality to improve the mixing of the Markov Chain.</p>
+<p><code>redist_flip</code> allows for Gibbs constraints to be supplied via a list object
+passed to <code>constraints</code>. This is a change from the original <code>redist.mcmc</code>
+behavior to allow for a more straightforward function call when used within a pipe.
+A key difference between <code>redist_flip</code> and <code>redist.mcmc</code> is that
+<code>redist_flip</code> uses a small compactness constraint by default, as this improves
+the realism of the maps greatly and also leads to large speed improvements.
+(One of the most time consuming aspects of the mcmc/flip backend is checking for
+district shattering, which is slowed down even further by non-compact districts.
+As such, it is recommended that all flip simulations use at least a minimal compactness
+constraint, even if you weaken it from the default settings.) The default is
+a <code>compact</code> constraint using the <code>edges-removed</code> metric with a
+weight of 0.6. For very small maps (&lt; 100 precincts), you will likely want to
+weaken (lower) this constraint, while for very large maps (&gt; 5000 precincts),
+you will likely want to strengthen (increase) this constraint. Otherwise,
+for most maps, the default constraint should be a good starting place.</p>
+<p><code>redist_flip</code> samples from a known target distribution which can be described
+using the <code>constraints</code>. We recommend setting up the constraints for
+<code>redist_flip</code> with <code><a href='flip_constraints_helper.html'>flip_constraints_helper</a></code> to ensure that
+you are supplying the exact information needed. As a quick shorthand, if you
+want to run a simulation with no constraints at all, you can use
+<code><a href='flip_constraints_helper.html'>flip_constraints_helper(map = map, constraint = NULL)</a></code> and pass this to
+<code>constraints</code>. The following describes the constraints available. The general
+advice is to set weights in a way that gets between 20\<!-- % and 40\\% acceptance -->
+on average, though more tuning advice is available in the vignette on using
+mcmc methods.Having too small of an acceptance rate indicates that the weights
+within <code>constraints</code> are too large and will impact sampling efficiency.
+If the Metropolis Hastings acceptance rate is too large, this may impact the
+target distribution, but may be fine for general exploration of possible maps.</p>
+<p>There are currently 9 implemented constraint types, though `<code>compact</code> and
+<code>partisan</code> have sub-types which are specified via a character <code>metric</code>
+within their respective list objects. The constraints are as follows:</p><ul>
+<li><p><code>compact</code> - biases the algorithm towards drawing more compact districts.
+This constraint uses <code>counties</code> when <code>log-st</code> is used.</p><ul>
+<li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
+<li><p>metric - which metric to use. Must be one of <code>edges-removed</code> (the default),
+<code>polsby-popper</code>, <code>fryer-holden</code>, or <code>log-st</code>. Using Polsby Popper
+is generally not recommended, as <code>edges-removed</code> is faster and highly correlated.
+<code>log-st</code> can be used to match the target distribution of <code>redist_smc</code> or
+<code>redist_mergesplit</code>.</p></li>
+<li><p>areas - Only used with <code>polsby-popper</code> - A vector of precinct areas.</p></li>
+<li><p>borderlength_mat - Only used with <code>polsby-popper</code> - A matrix of precinct
+border lengths.</p></li>
+<li><p>ssdmat - Only used with <code>fryer-holden</code> - A matrix of squared distances between
+precinct centroids.</p></li>
+<li><p>ssd_denom - Only used with <code>fryer-holden</code> - a positive integer to use
+as the normalizing constant for the Relative Proximity Index.</p></li>
+</ul></li>
+<li><p><code>population</code> - A Gibbs constraint to complement the hard population
+constraint set by <code>pop_tol</code>. This penalizes moves which move away from smaller
+population parity deviations. It is very useful when an <code>init_plan</code> sits
+outside of the desired <code>pop_tol</code> but there are substantive reasons to use
+that plan. This constraint uses the input to <code>total_pop</code>.</p><ul>
+<li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
+</ul></li>
+<li><p><code>countysplit</code> This is a Gibbs constraint to minimize county splits. Unlike
+SMC's county constraint, this allows for more than <code>ndists - 1</code> splits and
+does not require that counties are contiguous. This constraint uses the input
+to <code>counties</code>.</p><ul>
+<li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
+</ul></li>
+<li><p><code>hinge</code> This uses the proportion of a group in a district and matches to the
+nearest target proportion, and then creates a penalty of
+\(\sqrt{max(0, nearest.target - group.pct)}\). This is equivalent to the
+<code>vra-old</code> constraint in  <code>redist_smc</code>. This constraint uses the
+input to <code>group_pop</code>.</p><ul>
+<li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
+<li><p>minorityprop - A numeric vector of minority proportions (between 0 and 1) which
+districts should aim to have</p></li>
+</ul></li>
+<li><p><code>vra</code> This takes two target proportions of the presence of a minority group
+within a district. \((|target.min - group.pct||target.other - group.pct|)^{1.5})\)
+This is equivalent to the <code>vra-old</code> constraint in
+<code>redist_smc</code>. This constraint uses the input to <code>group_pop</code>.</p><ul>
+<li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
+<li><p>target_min - the target minority percentage. Often, this is set to 0.55 to encourage
+minority majority districts.</p></li>
+<li><p>target_other - the target minority percentage for non majority minority districts.</p></li>
+</ul></li>
+<li><p><code>minority</code> This constraint sorts the districts by the proportion of a group in
+a district and compares the highest districts to the entries of minorityprop.
+This takes the form \(\sum_{i=1}^{n} \sqrt{|group.pct(i) - minorityprop(i)| }\) where n
+is the length of minorityprop input. This constraint uses the input to <code>group_pop</code>.</p><ul>
+<li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
+<li><p>minorityprop - A numeric vector of minority proportions (between 0 and 1) which
+districts should aim to have</p></li>
+</ul></li>
+<li><p><code>similarity</code> This is a status-quo constraint which penalizes plans which
+are very different from the starting place. It is useful for local exploration.
+This constraint uses the input to <code>init_plan</code> to compare proposals.</p><ul>
+<li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
+</ul></li>
+<li><p><code>partisan</code> This is a constraint which minimizes partisan bias, either as
+measured as the difference from proportional representation or as the magnitude of
+the efficiency gap.</p><ul>
+<li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
+<li><p>rvote - An integer vector of votes for Republicans or other party</p></li>
+<li><p>dvote - An integer vector of votes for Democrats or other party</p></li>
+<li><p>metric - which metric to use. Must be one of <code>proportional-representation</code>
+or <code>efficiency-gap</code>.</p></li>
+</ul></li>
+<li><p><code>segregation</code> This constraint attempts to minimize the degree of dissimilarity
+between districts by group population. This constraint uses the input to <code>group_pop</code>.</p><ul>
+<li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
+</ul></li>
+</ul>
+
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
     <p>Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander
@@ -290,9 +413,9 @@ Carlo." Working Paper. Available at
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
-<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
-<span class='va'>fl25_map</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist_map.html'>redist_map</a></span><span class='op'>(</span><span class='va'>fl</span>, ndists <span class='op'>=</span> <span class='fl'>4</span>, existing_plan <span class='op'>=</span> <span class='va'>cd</span><span class='op'>)</span>
-<span class='va'>sims</span> <span class='op'>&lt;-</span> <span class='fu'>redist_flip</span><span class='op'>(</span>map <span class='op'>=</span> <span class='va'>fl25_map</span>, nsims <span class='op'>=</span> <span class='fl'>10</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>iowa</span><span class='op'>)</span>
+<span class='va'>iowa_map</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist_map.html'>redist_map</a></span><span class='op'>(</span><span class='va'>iowa</span>, ndists <span class='op'>=</span> <span class='fl'>4</span>, existing_plan <span class='op'>=</span> <span class='va'>cd_2010</span>, total_pop <span class='op'>=</span> <span class='st'>'pop'</span><span class='op'>)</span>
+<span class='va'>sims</span> <span class='op'>&lt;-</span> <span class='fu'>redist_flip</span><span class='op'>(</span>map <span class='op'>=</span> <span class='va'>iowa_map</span>, nsims <span class='op'>=</span> <span class='fl'>100</span><span class='op'>)</span>
 <span class='op'>}</span>
 </div></pre>
   </div>
