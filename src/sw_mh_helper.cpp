@@ -397,7 +397,7 @@ List make_swaps(List boundary_cc,
                 NumericVector areas_vec,
                 arma::mat borderlength_mat,
                 NumericMatrix ssdmat,
-                NumericVector county_membership,
+                IntegerVector county_membership,
                 double minparity,
                 double maxparity,
                 int p,
@@ -674,6 +674,7 @@ List make_swaps(List boundary_cc,
                                            ssdmat,
                                            ndists,
                                            g,
+                                           as<arma::vec>(county_membership),
                                            ssd_denominator);
 
       compact_new_psi += as<double>(compact_constraint["compact_new_psi"]);

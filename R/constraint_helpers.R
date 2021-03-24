@@ -26,6 +26,7 @@
 #'
 #' @return list with an entry for each constraint usable with redist_flip()
 #' @export
+#' 
 #'
 #' @examples \dontrun{
 #' data(iowa)
@@ -50,14 +51,17 @@ flip_constraints_helper <- function(map,
                                     partisan_metric = 'efficiency-gap',
                                     rvote,
                                     dvote,
-                                    group_pop,
+                                    group_pop = NULL,
                                     target_min = 0.55,
                                     target_other = 0.25,
                                     minorityprop) {
   if (missing(map)) {
     stop('Please provide a redist_map object to map.')
   }
-
+  
+  group_pop <- eval_tidy(enquo(group_pop), map)
+  counties <- eval_tidy(enquo(counties), map)
+  
   constraints_list <- process_flip_constr(
     constraints = list(),
     group_pop = rep(0, nrow(map)),
@@ -73,11 +77,26 @@ flip_constraints_helper <- function(map,
   match.arg(constraint, choices = names(constraints_list), several.ok = TRUE)
 
   if (any(constraint %in% c('hinge', 'vra', 'segregation', 'minority'))) {
-    group_pop <- eval_tidy(enquo(group_pop), map)
     if (is.null(group_pop)) {
       stop('column matching group_pop could not be found in object map.')
     }
   }
+
+  if('countysplit' %in% constraint || ('compact' %in% constraint & compactness_metric == 'log-st')) {
+    if (is.null(counties)) {
+      stop('column matching counties could not be found in object map.')
+    } else {
+      adj = get_adj(map)
+      counties <- redist.county.id(counties)
+      components <- contiguity(adj, counties)
+      if (any(components > 1)) {
+        warning('counties are not contiguous. Expect additional splits.')
+        counties <- redist.county.id(redist.county.relabel(adj, counties))
+      }
+    }
+  }
+  
+  
 
   if (length(constraint) != length(constraintweight)) {
     stop('constraint and constraintweight must have the same number of entries.')
@@ -92,7 +111,7 @@ flip_constraints_helper <- function(map,
   if ('compact' %in% constraint) {
     constraints_list$compact$weight <- constraintweight[which(constraint == 'compact')]
 
-    match.arg(arg = compactness_metric, c('edges-removed', 'fryer-holden', 'polsby-popper'))
+    match.arg(arg = compactness_metric, c('edges-removed', 'fryer-holden', 'polsby-popper', 'log-st'))
 
     if (compactness_metric == 'fryer-holden') {
       if (missing(ssdmat)) {
@@ -123,19 +142,6 @@ flip_constraints_helper <- function(map,
 
   if ('countysplit' %in% constraint) {
     constraints_list$countysplit$weight <- constraintweight[which(constraint == 'countysplit')]
-    counties <- eval_tidy(enquo(counties), map)
-    if (is.null(counties)) {
-      stop('column matching counties could not be found in object map.')
-    } else {
-      adj = get_adj(map)
-      counties <- redist.county.id(counties)
-      components <- contiguity(adj, counties)
-      if (any(components > 1)) {
-        warning('counties are not contiguous. Expect additional splits.')
-        counties <- redist.county.id(redist.county.relabel(adj, counties))
-      }
-    }
-    constraints_list$countysplit$counties <- counties
   }
 
   if ('vra' %in% constraint) {
@@ -150,7 +156,6 @@ flip_constraints_helper <- function(map,
 
     constraints_list$vra$target_min <- target_min
     constraints_list$vra$target_other <- target_other
-    constraints_list$vra$group_pop <- group_pop
   }
 
 
@@ -161,7 +166,6 @@ flip_constraints_helper <- function(map,
     }
     constraints_list$minority$minorityprop <- minorityprop
 
-    constraints_list$minority$group_pop <- group_pop
   }
 
   if ('minority' %in% constraint) {
@@ -172,11 +176,9 @@ flip_constraints_helper <- function(map,
     }
     constraints_list$minority$minorityprop <- minorityprop
 
-    constraints_list$minority$group_pop <- group_pop
   }
   if ('segregation' %in% constraint) {
     constraints_list$segregation$weight <- constraintweight[which(constraint == 'segregation')]
-    constraints_list$segregation$group_pop <- group_pop
   }
   if ('similarity' %in% constraint) {
     constraints_list$similarity$weight <- constraintweight[which(constraint == 'similarity')]
@@ -194,6 +196,19 @@ flip_constraints_helper <- function(map,
 
     constraints_list$partisan$metric <- partisan_metric
   }
+  
+  if(is.null(counties)){
+    constraints_list$counties
+  } else {
+    constraints_list$counties <- counties
+  }
+
+  if(is.null(group_pop)){
+    constraints_list$group_pop <- rep(0, nrow(map))
+  } else {
+    constraints_list$group_pop <- group_pop
+  }
+  
   
   return(constraints_list)
 }

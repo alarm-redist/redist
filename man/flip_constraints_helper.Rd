@@ -17,7 +17,7 @@ flip_constraints_helper(
   partisan_metric = "efficiency-gap",
   rvote,
   dvote,
-  group_pop,
+  group_pop = NULL,
   target_min = 0.55,
   target_other = 0.25,
   minorityprop

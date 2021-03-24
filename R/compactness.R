@@ -7,7 +7,7 @@
 ##############################################
 
 
-#' Calculate compactness measures for a set of districts
+#' Calculate compactness measures for a set of plans
 #'
 #' \code{redist.compactness} is used to compute different compactness statistics for a
 #' shapefile. It currently computes the Polsby-Popper, Schwartzberg score, Length-Width Ratio,
@@ -256,7 +256,7 @@ redist.compactness <- function(shp = NULL,
   }
 
   # Initialize object
-  comp <- tibble(districts = rep(x = dists, nmap),
+  comp <- tibble(district = rep(x = dists, nmap),
                  PolsbyPopper = rep(NA_real_, nd*nmap),
                  Schwartzberg = rep(NA_real_, nd*nmap),
                  LengthWidth = rep(NA_real_, nd*nmap),
@@ -268,7 +268,7 @@ redist.compactness <- function(shp = NULL,
                  FracKept = rep(NA_real_, nd*nmap),
                  logSpanningTree = rep(NA_real_, nd*nmap),
                  nloop = nloop) %>%
-    dplyr::select(all_of(c("districts", measure)), all_of(measure), nloop)
+    dplyr::select(all_of(c("district", measure)), all_of(measure), nloop)
 
 
 

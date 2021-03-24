@@ -6,7 +6,7 @@ test_that('compactness works', {
     measure = 'all', total_pop = pop,
     counties = rep(1, 25)
   )
-  expectation <- structure(list(districts = c(1L, 2L, 3L, 1L, 2L, 3L), PolsbyPopper = c(
+  expectation <- structure(list(district = c(1L, 2L, 3L, 1L, 2L, 3L), PolsbyPopper = c(
     0.285408144266143,
     0.246155768275462, 0.335907604022625, 0.397299799481666, 0.246155768275462,
     0.234180177544589

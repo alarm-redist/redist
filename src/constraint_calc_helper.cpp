@@ -352,6 +352,31 @@ List er_compact(const Graph g, arma::vec new_dists, arma::vec current_dists, int
   return out;
 }
 
+//
+List log_st_compact(const Graph g, arma::vec new_dists, arma::vec current_dists, 
+                    arma::uvec counties, int ndists){
+  NumericVector lst;
+  int nprec = new_dists.size();
+  mat districts(nprec, 2, fill::zeros);
+  
+  
+  for(int r = 0; r < nprec; r++){
+    districts(r, 0) = new_dists(r);
+    districts(r, 1) = current_dists(r);
+  }
+  
+  umat udistricts = conv_to<umat>::from(districts);
+  
+  lst = log_st_map(g, udistricts, counties, ndists);
+  
+  List out;
+  out["lst_new"] = (double) lst[0];
+  out["lst_old"] = (double) lst[1];
+  
+  return out;
+  
+}
+
 
 // Function to calculate the strength of the beta constraint for population
 List calc_psipop(arma::vec current_dists,
@@ -421,9 +446,11 @@ List calc_psicompact(arma::vec current_dists,
 		     // For Fryer Holden
 		     NumericVector pops,
 		     NumericMatrix ssdmat,
-		     // For Edges Removed
+		     // For Edges Removed & log-st
 		     int ndists,
 		     const Graph &g,
+		     // For log-st
+		     arma::vec counties,
 		     // For Fryer Holden
 		     double denominator = 1.0){
 
@@ -493,6 +520,13 @@ List calc_psicompact(arma::vec current_dists,
     
     psi_new = as<double>(er_out["er_new"]);
     psi_old = as<double>(er_out["er_old"]);
+  } else {
+    
+    List lst_out = log_st_compact(g, new_dists, current_dists, conv_to<uvec>::from(counties), ndists);
+    
+    psi_new = as<double>(lst_out["lst_new"]);
+    psi_old = as<double>(lst_out["lst_old"]);
+    
   }
 
   // Create return object
