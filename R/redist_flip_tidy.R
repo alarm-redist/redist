@@ -90,18 +90,18 @@ redist_flip <- function(map, nsims, init_plan, pop_tol, counties = NULL, group_p
   total_pop <- map[[attr(map, 'pop_col')]]
   ndists <- attr(map, 'ndists')
 
-  if(!any(class(nthin) %in% c('numeric', 'integer'))){
+  if (!any(class(nthin) %in% c('numeric', 'integer'))) {
     stop('nthin must be an integer')
   } else if (nthin < 1) {
     stop('nthin must be a nonnegative integer.')
   } else {
     nthin <- as.integer(nthin)
   }
-  
-  if(missing(pop_tol)){
+
+  if (missing(pop_tol)) {
     pop_tol <- get_pop_tol(map)
   }
-  
+
 
 
   counties <- eval_tidy(enquo(counties), map)
@@ -116,7 +116,7 @@ redist_flip <- function(map, nsims, init_plan, pop_tol, counties = NULL, group_p
     }
   }
 
-  exist_name = attr(map, "existing_col")
+  exist_name <- attr(map, 'existing_col')
   if (missing(init_plan)) {
     init_plan <- get_existing(map)
 
@@ -131,9 +131,9 @@ redist_flip <- function(map, nsims, init_plan, pop_tol, counties = NULL, group_p
         silent = TRUE
       ), type = 'message'))
       init_plan <- init_plan$plans
-      if (is.null(init_name)) init_name = "<init>"
+      if (is.null(init_name)) init_name <- '<init>'
     } else {
-      if (is.null(init_name)) init_name = exist_name
+      if (is.null(init_name)) init_name <- exist_name
       init_plan <- redist.sink.plan(plan = init_plan)
       components <- contiguity(adj, init_plan)
       if (any(components > 1)) {
@@ -152,7 +152,11 @@ redist_flip <- function(map, nsims, init_plan, pop_tol, counties = NULL, group_p
 
   constraints_name <- names(pre_pre_proc)
   constraints_wt <- sapply(pre_pre_proc, function(x) {
-    x$weight
+    if (any(names(x) %in% c('weight'))) {
+      x$weight
+    } else {
+      0
+    }
   })
   if (all(constraints_wt == 0)) {
     constraints_name <- constraints_wt <- NULL
@@ -243,7 +247,7 @@ redist_flip <- function(map, nsims, init_plan, pop_tol, counties = NULL, group_p
     verbose = as.logical(verbose)
   )
 
-  if(nthin > 1){
+  if (nthin > 1) {
     algout <- redist.thin.chain(algout, thin = nthin)
   }
 
@@ -277,12 +281,12 @@ redist_flip <- function(map, nsims, init_plan, pop_tol, counties = NULL, group_p
     constraint_hinge = rep(algout$constraint_hinge, each = ndists)
   )
 
-  names_tb = names(add_tb)[apply(add_tb, 2, function(x) !all(x == 0) )]
+  names_tb <- names(add_tb)[apply(add_tb, 2, function(x) !all(x == 0))]
   out <- dplyr::bind_cols(out, select(add_tb, all_of(names_tb)))
 
   if (!is.null(init_name) && !isFALSE(init_name)) {
-      out <- add_reference(out, init_plan, init_name)
-    }
+    out <- add_reference(out, init_plan, init_name)
+  }
 
   return(out)
 }
@@ -302,7 +306,7 @@ process_flip_constr <- function(constraints, group_pop, counties) {
       ssdmat = matrix(1, 2, 2), ssd_denom = 1.0
     ),
     population = list(weight = 0),
-    countysplit = list(weight = 0, counties = counties),
+    countysplit = list(weight = 0),
     hinge = list(weight = 0, minorityprop = 0.55, group_pop = group_pop),
     vra = list(
       weight = 0, target_min = 0.55, target_other = 0.25,
@@ -311,7 +315,9 @@ process_flip_constr <- function(constraints, group_pop, counties) {
     minority = list(weight = 0, minorityprop = 0.55, group_pop = group_pop),
     similarity = list(weight = 0),
     partisan = list(weight = 0, rvote = 0, dvote = 0, metric = 'efficiency-gap'),
-    segregation = list(weight = 0, group_pop = group_pop)
+    segregation = list(weight = 0),
+    group_pop = group_pop,
+    counties = counties
   )
 
   for (type in names(constraints)) {

@@ -56,3 +56,20 @@ test_that('mcmc flip wrapper works',{
   sims <- redist_flip(map = fl25_map, nsims = 10)
   
 })
+
+
+test_that('log-st works',{
+  data(iowa)
+  
+  iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05, total_pop = pop)
+  
+  cons <- flip_constraints_helper(map = iowa_map, constraintweight = 1, 
+                                  compactness_metric = 'log-st', counties = name)
+  
+  test <- redist_flip(iowa_map, nsims = 10,  constraints = cons)
+  #comp <- redist.compactness(shp = iowa, plans = get_plan_matrix(test), measure = 'EdgesRemoved')
+  #comp %>% filter(district == 1) %>% ggplot(aes(x = nloop, y = EdgesRemoved)) + geom_point()
+  
+  expect_s3_class(test, 'data.frame')
+  
+})

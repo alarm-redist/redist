@@ -32,6 +32,7 @@ Rcpp::List calc_psicompact(arma::vec current_dists,
 			   Rcpp::NumericMatrix ssdmat,
 			   int ndists,
 			   const Graph &g,
+			   arma::vec counties,
 			   double denominator
 			   );
 Rcpp::List calc_psisegregation(arma::vec current_dists,
