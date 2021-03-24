@@ -31,6 +31,8 @@
 #' and the column number if multiple maps given.
 #' @param ncores Number of cores to use for parallel computing. Default is 1.
 #' @param counties A numeric vector from 1:ncounties corresponding to counties. Required for "logSpanningTree".
+#' @param planarize a number, indicating the CRS to project the shapefile to if
+#'   it is latitude-longitude based. Set to FALSE to avoid planarizing.
 #' @param ppRcpp Boolean, whether to run Polsby Popper and Schwartzberg using Rcpp.
 #' It has a higher upfront cost, but quickly becomes faster.
 #' Becomes TRUE if ncol(district_membership > 8) and not manually set.
@@ -150,7 +152,7 @@ redist.compactness <- function(shp = NULL,
                                plans,
                                measure = c("PolsbyPopper"),
                                total_pop = NULL, adj = NULL, nloop = 1,
-                               ncores = 1, counties = NULL,
+                               ncores = 1, counties = NULL, planarize = 3857,
                                ppRcpp, perim_path, perim_df,
                                district_membership, population, adjacency){
 
@@ -188,6 +190,11 @@ redist.compactness <- function(shp = NULL,
     stop('Please provide "plans" as a numeric vector or matrix.')
   }
 
+  
+  if(!is.null(st_crs(shp)) & is.numeric(planarize)){
+    shp <- st_transform(shp, planarize)
+  }
+  
   if("all" %in% measure){
     measure <-  c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull",
                   "Reock", "BoyceClark", "FryerHolden", "EdgesRemoved", 'FracKept',
@@ -497,7 +504,8 @@ redist.prep.polsbypopper <- function(shp, planarize = 3857, perim_path, ncores =
                           }
         
   perim_adj_island <- perim_adj_df %>% filter(edge == -1) %>% mutate(edge = 0)
-  perim_adj_df <- perim_adj_df %>% filter(edge > 0) %>% rbind(perim_adj_island)
+  perim_adj_df <- perim_adj_df %>% filter(edge > 0) %>% 
+    rbind(perim_adj_island)
   
 
   
@@ -512,7 +520,7 @@ redist.prep.polsbypopper <- function(shp, planarize = 3857, perim_path, ncores =
     rename(origin = X1, touching = origin, edge = perim_boundary)
 
   perim_df <- bind_rows(perim_adj_df, adj_boundary_lengths) %>%
-    arrange(origin, touching)
+    arrange(origin, touching) %>% filter(!is.na(touching))# %>% filter(touching > origin)
 
   if(!missing(perim_path)){
     try(expr = { saveRDS(object = perim_df, file = perim_path) }, silent = TRUE)
