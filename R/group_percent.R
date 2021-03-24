@@ -62,6 +62,10 @@ redist.group.percent <- function(plans, group_pop, total_pop, ncores = 1,
     if (length(group_pop) != nrow(plans))
         stop('Arguments "plans" and "group_pop" do not have same number of precincts.')
 
-    ndists <- length(unique(plans[, 1]))
+    ndists <- max(plans[, 1])
+    if(ndists ==  length(unique(plans[,1])) - 1 ){
+        plans <- plans + 1
+        ndists <- ndists + 1
+    }
     group_pct(plans, group_pop, total_pop, ndists)
 }
