@@ -195,7 +195,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
             "iterations each.\n")
         cat("Burst  Improve?  Score\n")
     }
-    report_int = round(max_bursts / 10)
+    report_int = max(round(max_bursts / 10), 1)
     improve_ch = sample(c("\U0001F973", "\U0001F600", "\U0001F60E",
                            "\U0001F642", "\U0001F386", "\U0001F387",
                            "\U0001F942", "\U0001F383", "\U0001FA85",
