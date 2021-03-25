@@ -10,15 +10,7 @@ redist.plot.adj(
   plan = NULL,
   centroids = TRUE,
   drop = FALSE,
-  title = ""
-)
-
-redist.plot.adj(
-  shp = NULL,
-  adj = NULL,
-  plan = NULL,
-  centroids = TRUE,
-  drop = FALSE,
+  plot_shp = TRUE,
   title = ""
 )
 }
@@ -35,24 +27,18 @@ Used to remove edges that cross boundaries. Default is \code{NULL}.  Optional.}
 
 \item{drop}{A logical indicating if edges that cross districts should be dropped. Default is \code{FALSE}.}
 
+\item{plot_shp}{A logical indicating if the shp should be plotted under the
+graph. Default is \code{TRUE}.}
+
 \item{title}{A string title of plot. Defaults to empty string. Optional.}
 }
 \value{
 ggplot map
-
-ggplot map
 }
 \description{
 Creates a Graph Overlay
-
-Creates a Graph Overlay
 }
 \examples{
-\dontrun{
-data(iowa)
-redist.plot.adj(shp = iowa, plan = iowa$cd_2010)
-}
-
 \dontrun{
 data(iowa)
 redist.plot.adj(shp = iowa, plan = iowa$cd_2010)

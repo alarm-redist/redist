@@ -13,16 +13,6 @@ redist.plot.map(
   boundaries = TRUE,
   title = ""
 )
-
-redist.plot.map(
-  shp,
-  adj,
-  plan = NULL,
-  fill = NULL,
-  fill_label = "",
-  boundaries = TRUE,
-  title = ""
-)
 }
 \arguments{
 \item{shp}{A SpatialPolygonsDataFrame, sf object, or redist_map. Required.}
@@ -43,24 +33,12 @@ Used to color the districts. Default is \code{NULL}.  Optional.}
 }
 \value{
 ggplot map
-
-ggplot map
 }
 \description{
 Create a ggplot map. It fills by plan or argument fill. If both are supplied,
 plan is used as the color and fill as the alpha parameter.
-
-Create a ggplot map. It fills by plan or argument fill. If both are supplied,
-plan is used as the color and fill as the alpha parameter.
 }
 \examples{
-\dontrun{
-data(iowa)
-redist.plot.map(shp = iowa, plan = iowa$cd_2010)
-
-iowa \%>\% redist_map(existing_plan = cd_2010) \%>\% redist.plot.map(shp = ., plan = get_existing(.))
-}
-
 \dontrun{
 data(iowa)
 redist.plot.map(shp = iowa, plan = iowa$cd_2010)

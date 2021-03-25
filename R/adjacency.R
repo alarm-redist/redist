@@ -42,8 +42,10 @@ redist.adjacency <- function(shp, plan, district_membership){
   # low resolution shp files may result in skips, this fixes most issues
   correct_n <- nrow(shp) == length(unique(unlist(adj)))
 
-  if(!correct_n){
+  if (!correct_n) {
     warning('At least one precinct had no adjacent precincts.')
+  } else if (any(contiguity(adj = adj, group = rep(1, length(adj))) > 1)) {
+    warning('All precincts have at least one neighbor, but the graph is disconnected.')
   }
 
 
