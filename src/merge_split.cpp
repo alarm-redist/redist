@@ -238,8 +238,14 @@ bool cut_districts_ms(Tree &ust, int k, int root, subview_col<uword> &districts,
     siblings->erase(siblings->begin()+j); // remove edge
     parent[cut_at] = -1;
 
-    assign_district(ust, districts, root, distr_1);
-    assign_district(ust, districts, cut_at, distr_2);
+    if (distr_root == distr_1) {
+        assign_district(ust, districts, root, distr_1);
+        assign_district(ust, districts, cut_at, distr_2);
+    } else {
+        assign_district(ust, districts, root, distr_2);
+        assign_district(ust, districts, cut_at, distr_1);
+    }
+
     return true;
 }
 
