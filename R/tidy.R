@@ -42,19 +42,24 @@ is_const_rel = function(rel) {
 #' aggregate other data columns.
 #'
 #' @param .data a \code{\link{redist_map}} object
-#' @param key \code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the column to merge by
+#' @param ... \code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the column(s) to merge by
 #' @param by_existing if an existing assignment is present, whether to also group by it
 #' @param drop_geom whether to drop the geometry column. Recommended, as
 #'   otherwise a costly geometric merge is required.
+#' @param collapse_chr if \code{TRUE}, preserve character columns by collapsing
+#'   their values. For example, a county name column in Iowa might be merged and
+#'   have entries such as "Cedar~Clinton~Des Moines". Set to \code{FALSE} to
+#'   drop character columns instead.
 #'
 #' @returns A merged \code{\link{redist_map}} object
 #'
 #' @concept prepare
 #' @export
-merge_by = function(.data, key, by_existing=TRUE, drop_geom=TRUE) {
+merge_by = function(.data, ..., by_existing=TRUE, drop_geom=TRUE, collapse_chr=TRUE) {
     .data = as_redist_map(.data)
 
-    key_val = rlang::eval_tidy(rlang::enquo(key), .data)
+    dots = rlang::enquos(...)
+    key_val = rlang::eval_tidy(dots[[1]], .data)
     pop_col = attr(.data, "pop_col")
 
     if (drop_geom)
@@ -62,20 +67,21 @@ merge_by = function(.data, key, by_existing=TRUE, drop_geom=TRUE) {
 
     col = attr(.data, "existing_col")
     unique_chr = function(x) paste(unique(x), collapse="~")
+    is_col_chr = if (collapse_chr) is.character else (function(x) FALSE)
     if (!is.null(col) && by_existing) {
-        dplyr::group_by(.data, dplyr::across(dplyr::all_of(col)), {{ key }}) %>%
+        dplyr::group_by(.data, dplyr::across(dplyr::all_of(col)), !!!dots) %>%
             dplyr::summarize(dplyr::across(where(is_prop),
                                            ~ weighted.mean(., w=.data[[pop_col]], na.rm=T)),
                              dplyr::across(where(is.numeric), sum, na.rm=T),
                              dplyr::across(where(is_const_rel(key_val)), ~ .[1]),
-                             dplyr::across(where(is.character), unique_chr))
+                             dplyr::across(where(is_col_chr), unique_chr))
     } else {
-        dplyr::group_by(.data, {{ key }}) %>%
+        dplyr::group_by(.data, !!!dots) %>%
             dplyr::summarize(dplyr::across(where(is_prop),
                                            ~ weighted.mean(., w=.data[[pop_col]], na.rm=T)),
                              dplyr::across(where(is.numeric), sum, na.rm=T),
                              dplyr::across(where(is_const_rel(key_val)), ~ .[1]),
-                             dplyr::across(where(is.character), unique_chr)) %>%
+                             dplyr::across(where(is_col_chr), unique_chr)) %>%
             `attr<-`("existing_col", NULL)
     }
 }

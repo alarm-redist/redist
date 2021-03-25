@@ -158,7 +158,7 @@ operation, modifying the adjacency graph as needed and attempting to properly
 aggregate other data columns.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>merge_by</span><span class='op'>(</span><span class='va'>.data</span>, <span class='va'>key</span>, by_existing <span class='op'>=</span> <span class='cn'>TRUE</span>, drop_geom <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>merge_by</span><span class='op'>(</span><span class='va'>.data</span>, <span class='va'>...</span>, by_existing <span class='op'>=</span> <span class='cn'>TRUE</span>, drop_geom <span class='op'>=</span> <span class='cn'>TRUE</span>, collapse_chr <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -168,8 +168,8 @@ aggregate other data columns.</p>
       <td><p>a <code><a href='redist_map.html'>redist_map</a></code> object</p></td>
     </tr>
     <tr>
-      <th>key</th>
-      <td><p><code><a href='https://dplyr.tidyverse.org/reference/dplyr_tidy_select.html'>&lt;tidy-select&gt;</a></code> the column to merge by</p></td>
+      <th>...</th>
+      <td><p><code><a href='https://dplyr.tidyverse.org/reference/dplyr_tidy_select.html'>&lt;tidy-select&gt;</a></code> the column(s) to merge by</p></td>
     </tr>
     <tr>
       <th>by_existing</th>
@@ -179,6 +179,13 @@ aggregate other data columns.</p>
       <th>drop_geom</th>
       <td><p>whether to drop the geometry column. Recommended, as
 otherwise a costly geometric merge is required.</p></td>
+    </tr>
+    <tr>
+      <th>collapse_chr</th>
+      <td><p>if <code>TRUE</code>, preserve character columns by collapsing
+their values. For example, a county name column in Iowa might be merged and
+have entries such as "Cedar~Clinton~Des Moines". Set to <code>FALSE</code> to
+drop character columns instead.</p></td>
     </tr>
     </table>
 

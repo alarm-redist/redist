@@ -12,6 +12,15 @@ redist.plot.adj(
   drop = FALSE,
   title = ""
 )
+
+redist.plot.adj(
+  shp = NULL,
+  adj = NULL,
+  plan = NULL,
+  centroids = TRUE,
+  drop = FALSE,
+  title = ""
+)
 }
 \arguments{
 \item{shp}{A SpatialPolygonsDataFrame or sf object. Required.}
@@ -30,11 +39,20 @@ Used to remove edges that cross boundaries. Default is \code{NULL}.  Optional.}
 }
 \value{
 ggplot map
+
+ggplot map
 }
 \description{
 Creates a Graph Overlay
+
+Creates a Graph Overlay
 }
 \examples{
+\dontrun{
+data(iowa)
+redist.plot.adj(shp = iowa, plan = iowa$cd_2010)
+}
+
 \dontrun{
 data(iowa)
 redist.plot.adj(shp = iowa, plan = iowa$cd_2010)

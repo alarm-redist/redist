@@ -439,6 +439,10 @@ print.redist_map = function(x, ...) {
 #'   the map units using \code{\link{redist.choropleth}}. If using data masking,
 #'   may need to explicitly name argument \code{fill=...} to avoid S3 generic
 #'   issues.
+#' @param by_distr if \code{TRUE} and \code{fill} is not missing and, color by
+#'   district and indicate the \code{fill} variable by shading.
+#' @param adj if \code{TRUE}, force plotting the adjacency graph. Overrides
+#'   \code{by_distr}.
 #' @param ... passed on to the underlying functions.
 #'
 #' @examples
@@ -458,13 +462,15 @@ print.redist_map = function(x, ...) {
 #' @concept prepare
 #' @concept plot
 #' @export
-plot.redist_map = function(x, fill=NULL, ...) {
-    if (!inherits(x, "sf")) stop("Plotting requires a shapefile.")
+plot.redist_map = function(x, fill=NULL, by_distr=FALSE, adj=FALSE, ...) {
+    if (!inherits(x, "sf"))
+        stop("Plotting requires a shapefile.\n  ",
+             "If you've just used `merge_by`, consider passing `drop_geom=FALSE`.")
 
     fill = rlang::enquo(fill)
     if (rlang::quo_is_null(fill)) {
         existing = get_existing(x)
-        if (!is.null(existing)) {
+        if (!is.null(existing) && isFALSE(adj)) {
             redist.plot.map(shp = x, adj = get_adj(x), plan=existing, ...) +
                 ggplot2::theme_void()
         } else {
@@ -473,6 +479,12 @@ plot.redist_map = function(x, fill=NULL, ...) {
         }
     } else {
         fill_name = rlang::quo_text(fill)
-        redist.plot.map(shp = x, fill = !!fill, fill_label=fill_name, ...)
+        existing = get_existing(x)
+        if (!is.null(existing) && isTRUE(by_distr)) {
+            redist.plot.map(shp = x, adj = get_adj(x), plan=existing,
+                            fill = !!fill, fill_label=fill_name, ...)
+        } else {
+            redist.plot.map(shp = x, fill = !!fill, fill_label=fill_name, ...)
+        }
     }
 }

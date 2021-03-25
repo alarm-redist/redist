@@ -12,6 +12,15 @@ redist.choropleth(
   grad = 1,
   lwd = 0
 )
+
+redist.choropleth(
+  shp,
+  fill = NULL,
+  fill_label = "",
+  title = "",
+  grad = 1,
+  lwd = 0
+)
 }
 \arguments{
 \item{shp}{A SpatialPolygonsDataFrame or sf object. Required.}
@@ -28,11 +37,18 @@ redist.choropleth(
 }
 \value{
 ggplot map
+
+ggplot map
 }
 \description{
 Creates a Choropleth
+
+Creates a Choropleth
 }
 \details{
+Creates a basic choropleth for a provided shp with value. Recommended to
+normalize data to avoid absolute values, in most use cases.
+
 Creates a basic choropleth for a provided shp with value. Recommended to
 normalize data to avoid absolute values, in most use cases.
 }
