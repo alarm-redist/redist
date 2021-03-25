@@ -175,9 +175,10 @@ redist_map = function(..., existing_plan=NULL, pop_tol=0.01,
     }
 
     pop_col = names(x)[tidyselect::eval_select(rlang::enquo(total_pop), x,
-                                               strict=FALSE, allow_rename=FALSE)]
+                                               strict=FALSE)]
     if (length(pop_col) == 0) {
-        stop("Population column `", total_pop, "` not found. ",
+        names = rlang::as_label(rlang::enquo(total_pop))
+        stop("Population column `", names, "` not found. ",
              "Population must be specified in the `total_pop` argument.")
     } else if (length(pop_col) > 1) {
         pop_col = pop_col[1]

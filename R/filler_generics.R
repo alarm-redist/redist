@@ -64,6 +64,12 @@ select.redist_map <- function(.data, ...) {
 }
 
 #' @export
+#' @importFrom dplyr rename
+rename.redist_map <- function(.data, ...) {
+    reconstruct.redist_map(NextMethod(), .data)
+}
+
+#' @export
 #' @importFrom dplyr slice
 slice.redist_map <- function(.data, ...) {
     reconstruct.redist_map(NextMethod(), .data)
@@ -147,6 +153,12 @@ right_join.redist_plans <- function(x, y, by = NULL, copy = FALSE, suffix = c(".
 #' @export
 #' @importFrom dplyr select
 select.redist_plans <- function(.data, ...) {
+    reconstruct.redist_plans(NextMethod(), .data)
+}
+
+#' @export
+#' @importFrom dplyr rename
+rename.redist_plans <- function(.data, ...) {
     reconstruct.redist_plans(NextMethod(), .data)
 }
 
