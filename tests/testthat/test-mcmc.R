@@ -67,9 +67,7 @@ test_that('log-st works',{
                                   compactness_metric = 'log-st', counties = name)
   
   test <- redist_flip(iowa_map, nsims = 10,  constraints = cons)
-  #comp <- redist.compactness(shp = iowa, plans = get_plan_matrix(test), measure = 'EdgesRemoved')
-  #comp %>% filter(district == 1) %>% ggplot(aes(x = nloop, y = EdgesRemoved)) + geom_point()
-  
+
   expect_s3_class(test, 'data.frame')
   
 })

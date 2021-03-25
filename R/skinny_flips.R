@@ -1,7 +1,7 @@
 #' Dangerous but Skinny Flip
 #' 
-#' Runs flip silently without checking inpuut quality for use within other contexts
-#' which already check things. It returns just a matrix of plans
+#' Runs flip silently without checking input quality for use within other contexts
+#' which already check things. It returns just a matrix of plans.
 #'
 #' @param adj zero indexed adjacency list
 #' @param init_plan initial plan
@@ -12,7 +12,9 @@
 #' @param lambda number of components to swap
 #' @param constraints constraint list
 #'
-#' @return matrix
+#' @return matrix  with 1 indexed plans
+#' 
+#' @noRd
 #' 
 skinny_flips <- function(adj, init_plan, total_pop, pop_tol, nsims, eprob, lambda, constraints){
   
@@ -57,5 +59,5 @@ skinny_flips <- function(adj, init_plan, total_pop, pop_tol, nsims, eprob, lambd
                  minorityprop = constraints$hinge$minorityprop,
                  verbose = FALSE)
 
-  return(algout$plans)
+  return(algout$plans + 1)
 }

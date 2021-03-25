@@ -174,6 +174,7 @@ and the log of the Spanning Trees.</p>
   nloop <span class='op'>=</span> <span class='fl'>1</span>,
   ncores <span class='op'>=</span> <span class='fl'>1</span>,
   counties <span class='op'>=</span> <span class='cn'>NULL</span>,
+  planarize <span class='op'>=</span> <span class='fl'>3857</span>,
   <span class='va'>ppRcpp</span>,
   <span class='va'>perim_path</span>,
   <span class='va'>perim_df</span>,
@@ -237,6 +238,11 @@ and the column number if multiple maps given.</p></td>
     <tr>
       <th>counties</th>
       <td><p>A numeric vector from 1:ncounties corresponding to counties. Required for "logSpanningTree".</p></td>
+    </tr>
+    <tr>
+      <th>planarize</th>
+      <td><p>a number, indicating the CRS to project the shapefile to if
+it is latitude-longitude based. Set to FALSE to avoid planarizing.</p></td>
     </tr>
     <tr>
       <th>ppRcpp</th>

@@ -49,11 +49,11 @@
 <meta property="og:title" content="Identify Cores of a District (Heuristic) — make_cores" />
 <meta property="og:description" content="Creates a grouping ID to unite geographies and perform analysis on a smaller
 set of precincts. It identifies all precincts more than boundary edges
-of a district district boundary. Each precinct more than boundary
-steps away from another district gets it own group. Some districts may have
-multiple, disconnected components that make up the core, but each of these is
-assigned a separate grouping id so that a call to sf::st_union() would
-produce only connected pieces." />
+of a district district boundary. Each contiguous group of precincts more than 
+boundary steps away from another district gets it own group. Some 
+districts may have multiple, disconnected components that make up the core, 
+but each of these is assigned a separate grouping id so that a call to 
+sf::st_union() would produce only connected pieces." />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -157,11 +157,11 @@ produce only connected pieces." />
     <div class="ref-description">
     <p>Creates a grouping ID to unite geographies and perform analysis on a smaller
 set of precincts. It identifies all precincts more than <code>boundary</code> edges
-of a district district boundary. Each precinct more than <code>boundary</code>
-steps away from another district gets it own group. Some districts may have
-multiple, disconnected components that make up the core, but each of these is
-assigned a separate grouping id so that a call to <code><a href='https://r-spatial.github.io/sf/reference/geos_combine.html'>sf::st_union()</a></code> would
-produce only connected pieces.</p>
+of a district district boundary. Each contiguous group of precincts more than 
+<code>boundary</code> steps away from another district gets it own group. Some 
+districts may have multiple, disconnected components that make up the core, 
+but each of these is assigned a separate grouping id so that a call to 
+<code><a href='https://r-spatial.github.io/sf/reference/geos_combine.html'>sf::st_union()</a></code> would produce only connected pieces.</p>
     </div>
 
     <pre class="usage"><span class='fu'>make_cores</span><span class='op'>(</span>.data <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/exists.html'>get0</a></span><span class='op'>(</span><span class='st'>"."</span>, <span class='fu'><a href='https://rdrr.io/r/base/sys.parent.html'>parent.frame</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>, boundary <span class='op'>=</span> <span class='fl'>1</span>, focus <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span>
