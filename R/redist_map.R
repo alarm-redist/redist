@@ -471,11 +471,9 @@ plot.redist_map = function(x, fill=NULL, by_distr=FALSE, adj=FALSE, ...) {
     if (rlang::quo_is_null(fill)) {
         existing = get_existing(x)
         if (!is.null(existing) && isFALSE(adj)) {
-            redist.plot.map(shp = x, adj = get_adj(x), plan=existing, ...) +
-                ggplot2::theme_void()
+            redist.plot.map(shp = x, adj = get_adj(x), plan=existing, ...)
         } else {
-            redist.plot.adj(shp = x, adj = get_adj(x), ...) +
-                ggplot2::theme_void()
+            redist.plot.adj(shp = x, adj = get_adj(x), ...)
         }
     } else {
         fill_name = rlang::quo_text(fill)

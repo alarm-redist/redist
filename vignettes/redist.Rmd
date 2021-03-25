@@ -201,8 +201,8 @@ checked for global contiguity (no islands), which is necessary for the
 redistricting algorithms to function properly.
 
 We can visualize the adjacency graph by plotting the `redist_map` object.
-```{r iowa-adj}
-plot(iowa_map, adj=T)
+```{r iowa-adj, fig.width=8}
+plot(iowa_map, adj=T) + plot(iowa_map)
 ```
 
 ## Pre-processing
@@ -236,8 +236,7 @@ plot(iowa_map, fill = pop / areas) +
                          trans="sqrt")
 plot(iowa_map, fill = dem_08 / tot_08) +
     scale_fill_gradient2(name="Pct. Democratic '08",  midpoint=0.5)
-plot(iowa_map, fill = wvap / vap) +
-    scale_fill_viridis_c()
+plot(iowa_map, fill = wvap / vap, by_distr = TRUE)
 ```
 
 
