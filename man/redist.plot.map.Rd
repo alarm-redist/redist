@@ -10,6 +10,7 @@ redist.plot.map(
   plan = NULL,
   fill = NULL,
   fill_label = "",
+  zoom_to = NULL,
   boundaries = TRUE,
   title = ""
 )
@@ -20,12 +21,17 @@ redist.plot.map(
 \item{adj}{A zero-indexed adjacency list. Created with redist.adjacency
 if not supplied and needed for coloring. Default is NULL.}
 
-\item{plan}{A numeric vector with one entry for each precinct in shp.
-Used to color the districts. Default is \code{NULL}.  Optional.}
+\item{plan}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} A numeric
+vector with one entry for each precinct in shp. Used to color the
+districts. Default is \code{NULL}.  Optional.}
 
-\item{fill}{A numeric/integer vector with values to color the plot with. Optional.}
+\item{fill}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} A
+numeric/integer vector with values to color the plot with. Optional.}
 
-\item{fill_label}{A string title of plot. Defaults to empty string.}
+\item{fill_label}{A string title of plot. Defaults to the empty string}
+
+\item{zoom_to}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} An
+indexing vector of units to zoom the map to.}
 
 \item{boundaries}{A logical indicating if precinct boundaries should be plotted.}
 
@@ -39,12 +45,11 @@ Create a ggplot map. It fills by plan or argument fill. If both are supplied,
 plan is used as the color and fill as the alpha parameter.
 }
 \examples{
-\dontrun{
 data(iowa)
 redist.plot.map(shp = iowa, plan = iowa$cd_2010)
 
-iowa \%>\% redist_map(existing_plan = cd_2010) \%>\% redist.plot.map(shp = ., plan = get_existing(.))
-}
+iowa_map = redist_map(iowa, existing_plan = cd_2010)
+redist.plot.map(iowa_map, fill=dem_08/tot_08, zoom_to=(cd_2010 == 1))
 
 }
 \concept{plot}
