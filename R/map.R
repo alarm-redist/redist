@@ -320,6 +320,8 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
 #' Used to remove edges that cross boundaries. Default is \code{NULL}.  Optional.
 #' @param centroids A logical indicating if centroids should be plotted. Default is \code{TRUE}.
 #' @param drop A logical indicating if edges that cross districts should be dropped. Default is \code{FALSE}.
+#' @param plot_shp A logical indicating if the shp should be plotted under the graph. 
+#' Default is \code{TRUE}.
 #' @param title A string title of plot. Defaults to empty string. Optional.
 #'
 #' @return ggplot map
@@ -338,7 +340,7 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
 #' @concept plot
 #' @export
 redist.plot.adj <- function(shp = NULL, adj = NULL, plan = NULL, centroids = TRUE,
-                       drop = FALSE, title = '') {
+                       drop = FALSE, plot_shp = TRUE, title = '') {
 
   # Check inputs
   if (is.null(shp)) {
@@ -419,9 +421,26 @@ redist.plot.adj <- function(shp = NULL, adj = NULL, plan = NULL, centroids = TRU
   }
   
   # Create Plot
-  plot <- ggplot(nb) +
-    geom_sf() +
-    theme_void()
+  if(plot_shp){
+    if(!is.null(plan)){
+      plot <- ggplot(shp) +
+        geom_sf(aes(fill = as.character(plan))) +
+        theme_void() +
+        theme(legend.position = 'none') + 
+        geom_sf(data = nb)
+    } else{
+      plot <- ggplot(shp) +
+        geom_sf() +
+        theme_void() +
+        geom_sf(data = nb)
+    }
+  } else {
+    plot <- ggplot(nb) +
+      geom_sf() +
+      theme_void()
+  }
+  
+
   
   if (centroids) {
     plot <- plot + geom_sf(data = centers)
