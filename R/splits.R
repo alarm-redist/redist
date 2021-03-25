@@ -42,7 +42,7 @@ redist.splits <- function(plans, counties, district_membership) {
     splits(plans, community = county_id)
 }
 
-#' Identify which counties re split by a plan
+#' Identify which counties are split by a plan
 #'
 #' @param plan A vector of precinct/unit assignments
 #' @param counties A vector of county names or county ids.

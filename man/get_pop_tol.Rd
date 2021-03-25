@@ -2,17 +2,25 @@
 % Please edit documentation in R/redist_map.R
 \name{get_pop_tol}
 \alias{get_pop_tol}
-\title{Extract the population tolerance from a \code{redist_map} object}
+\alias{set_pop_tol}
+\title{Get and set the population tolerance from a \code{redist_map} object}
 \usage{
 get_pop_tol(map)
+
+set_pop_tol(map, pop_tol)
 }
 \arguments{
-\item{map}{the \code{redist_map} object}
+\item{map}{the \code{\link{redist_map}} object}
+
+\item{pop_tol}{the population tolerance}
 }
 \value{
-a single numeric value, the population tolerance
+For \code{get_pop_tol}, a single numeric value, the population
+  tolerance
+
+For \code{seet_pop_tol}, an updated \code{\link{redist_map}} object
 }
 \description{
-Extract the population tolerance from a \code{redist_map} object
+Get and set the population tolerance from a \code{redist_map} object
 }
 \concept{prepare}

@@ -278,11 +278,12 @@ get_target = function(x) {
     attr(x, "pop_bounds")[2]
 }
 
-#' Extract the population tolerance from a \code{redist_map} object
+#' Get and set the population tolerance from a \code{redist_map} object
 #'
-#' @param map the \code{redist_map} object
+#' @param map the \code{\link{redist_map}} object
 #'
-#' @return a single numeric value, the population tolerance
+#' @return For \code{get_pop_tol}, a single numeric value, the population
+#'   tolerance
 #'
 #' @concept  prepare
 #' @export
@@ -299,12 +300,10 @@ get_pop_tol <- function(map) {
   return(min(bot, top))
 }
 
-#' Set the population tolerance from a \code{redist_map} object
-#'
-#' @param map the \code{redist_map} object
 #' @param pop_tol the population tolerance
 #'
-#' @return an updated redist_map object
+#' @rdname get_pop_tol
+#' @return For \code{seet_pop_tol}, an updated \code{\link{redist_map}} object
 #'
 #' @concept  prepare
 #' @export
