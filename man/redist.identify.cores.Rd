@@ -41,11 +41,11 @@ variable as \code{group_id} and additional information on connected components.
 \description{
 Creates a grouping ID to unite geographies and perform analysis on a smaller
 set of precincts. It identifies all precincts more than \code{boundary} edges
-of a district district boundary. Each precinct more than \code{boundary}
-steps away from another district gets it own group. Some districts may have
-multiple, disconnected components that make up the core, but each of these is
-assigned a separate grouping id so that a call to \code{sf::st_union()} would
-produce only connected pieces.
+of a district district boundary. Each contiguous group of precincts more than 
+\code{boundary} steps away from another district gets it own group. Some 
+districts may have multiple, disconnected components that make up the core, 
+but each of these is assigned a separate grouping id so that a call to 
+\code{sf::st_union()} would produce only connected pieces.
 }
 \details{
 This is a loose interpretation of the
