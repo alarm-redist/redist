@@ -4,7 +4,7 @@
 \alias{plot.redist_map}
 \title{Plot a \code{redist_map}}
 \usage{
-\method{plot}{redist_map}(x, fill = NULL, ...)
+\method{plot}{redist_map}(x, fill = NULL, by_distr = FALSE, adj = FALSE, ...)
 }
 \arguments{
 \item{x}{the \code{redist_map} object}
@@ -14,6 +14,12 @@
 the map units using \code{\link{redist.choropleth}}. If using data masking,
 may need to explicitly name argument \code{fill=...} to avoid S3 generic
 issues.}
+
+\item{by_distr}{if \code{TRUE} and \code{fill} is not missing and, color by
+district and indicate the \code{fill} variable by shading.}
+
+\item{adj}{if \code{TRUE}, force plotting the adjacency graph. Overrides
+\code{by_distr}.}
 
 \item{...}{passed on to the underlying functions.}
 }

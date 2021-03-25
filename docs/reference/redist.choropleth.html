@@ -47,7 +47,8 @@
 
 
 <meta property="og:title" content="Creates a Choropleth — redist.choropleth" />
-<meta property="og:description" content="Creates a Choropleth" />
+<meta property="og:description" content="Creates a Choropleth
+Creates a Choropleth" />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -150,9 +151,19 @@
 
     <div class="ref-description">
     <p>Creates a Choropleth</p>
+<p>Creates a Choropleth</p>
     </div>
 
     <pre class="usage"><span class='fu'>redist.choropleth</span><span class='op'>(</span>
+  <span class='va'>shp</span>,
+  fill <span class='op'>=</span> <span class='cn'>NULL</span>,
+  fill_label <span class='op'>=</span> <span class='st'>""</span>,
+  title <span class='op'>=</span> <span class='st'>""</span>,
+  grad <span class='op'>=</span> <span class='fl'>1</span>,
+  lwd <span class='op'>=</span> <span class='fl'>0</span>
+<span class='op'>)</span>
+
+<span class='fu'>redist.choropleth</span><span class='op'>(</span>
   <span class='va'>shp</span>,
   fill <span class='op'>=</span> <span class='cn'>NULL</span>,
   fill_label <span class='op'>=</span> <span class='st'>""</span>,
@@ -193,9 +204,12 @@
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>ggplot map</p>
+<p>ggplot map</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>Creates a basic choropleth for a provided shp with value. Recommended to
+normalize data to avoid absolute values, in most use cases.</p>
+<p>Creates a basic choropleth for a provided shp with value. Recommended to
 normalize data to avoid absolute values, in most use cases.</p>
 
   </div>

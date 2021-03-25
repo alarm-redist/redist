@@ -4,17 +4,22 @@
 \alias{merge_by}
 \title{Merge map units}
 \usage{
-merge_by(.data, key, by_existing = TRUE, drop_geom = TRUE)
+merge_by(.data, ..., by_existing = TRUE, drop_geom = TRUE, collapse_chr = TRUE)
 }
 \arguments{
 \item{.data}{a \code{\link{redist_map}} object}
 
-\item{key}{\code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the column to merge by}
+\item{...}{\code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the column(s) to merge by}
 
 \item{by_existing}{if an existing assignment is present, whether to also group by it}
 
 \item{drop_geom}{whether to drop the geometry column. Recommended, as
 otherwise a costly geometric merge is required.}
+
+\item{collapse_chr}{if \code{TRUE}, preserve character columns by collapsing
+their values. For example, a county name column in Iowa might be merged and
+have entries such as "Cedar~Clinton~Des Moines". Set to \code{FALSE} to
+drop character columns instead.}
 }
 \value{
 A merged \code{\link{redist_map}} object

@@ -16,6 +16,19 @@ redist.map(
   adjacency,
   district_membership
 )
+
+redist.map(
+  shp = NULL,
+  adj = NULL,
+  plan = NULL,
+  centroids = TRUE,
+  edges = TRUE,
+  boundaries = TRUE,
+  drop = FALSE,
+  title = "",
+  adjacency,
+  district_membership
+)
 }
 \arguments{
 \item{shp}{A SpatialPolygonsDataFrame or sf object. Required.}
@@ -44,8 +57,12 @@ Used to color the districts. Default is \code{NULL}.  Optional.}
 }
 \value{
 ggplot map
+
+ggplot map
 }
 \description{
+Creates a map with optional graph overlay
+
 Creates a map with optional graph overlay
 }
 \concept{plot}
