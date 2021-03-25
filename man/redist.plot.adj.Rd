@@ -11,6 +11,7 @@ redist.plot.adj(
   centroids = TRUE,
   drop = FALSE,
   plot_shp = TRUE,
+  zoom_to = NULL,
   title = ""
 )
 }
@@ -30,6 +31,9 @@ Used to remove edges that cross boundaries. Default is \code{NULL}.  Optional.}
 \item{plot_shp}{A logical indicating if the shp should be plotted under the
 graph. Default is \code{TRUE}.}
 
+\item{zoom_to}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} An
+indexing vector of units to zoom the map to.}
+
 \item{title}{A string title of plot. Defaults to empty string. Optional.}
 }
 \value{
@@ -39,10 +43,8 @@ ggplot map
 Creates a Graph Overlay
 }
 \examples{
-\dontrun{
 data(iowa)
 redist.plot.adj(shp = iowa, plan = iowa$cd_2010)
-}
 
 }
 \concept{plot}

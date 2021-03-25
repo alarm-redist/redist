@@ -164,11 +164,10 @@
     </tr>
     <tr>
       <th>fill</th>
-      <td><p><code><a href='https://dplyr.tidyverse.org/reference/dplyr_data_masking.html'>&lt;data-masking&gt;</a></code> If absent,
-<code><a href='redist.map.html'>redist.map</a></code> will be called; if present, will be used to color
-the map units using <code><a href='redist.choropleth.html'>redist.choropleth</a></code>. If using data masking,
-may need to explicitly name argument <code>fill=...</code> to avoid S3 generic
-issues.</p></td>
+      <td><p><code><a href='https://dplyr.tidyverse.org/reference/dplyr_data_masking.html'>&lt;data-masking&gt;</a></code> If
+present, will be used to color the map units. If using data masking, may
+need to explicitly name argument <code>fill=...</code> in non-interactive
+contexts to avoid S3 generic issues.</p></td>
     </tr>
     <tr>
       <th>by_distr</th>
@@ -182,7 +181,9 @@ district and indicate the <code>fill</code> variable by shading.</p></td>
     </tr>
     <tr>
       <th>...</th>
-      <td><p>passed on to the underlying functions.</p></td>
+      <td><p>passed on to <code><a href='redist.plot.map.html'>redist.plot.map</a></code> (or
+<code><a href='redist.plot.adj.html'>redist.plot.adj</a></code> if <code>adj=TRUE</code>). Useful parameters
+may include <code>zoom_to</code>, <code>boundaries</code>, and <code>title</code>.</p></td>
     </tr>
     </table>
 

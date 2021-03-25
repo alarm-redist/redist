@@ -9,11 +9,10 @@
 \arguments{
 \item{x}{the \code{redist_map} object}
 
-\item{fill}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} If absent,
-\code{\link{redist.map}} will be called; if present, will be used to color
-the map units using \code{\link{redist.choropleth}}. If using data masking,
-may need to explicitly name argument \code{fill=...} to avoid S3 generic
-issues.}
+\item{fill}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} If
+present, will be used to color the map units. If using data masking, may
+need to explicitly name argument \code{fill=...} in non-interactive
+contexts to avoid S3 generic issues.}
 
 \item{by_distr}{if \code{TRUE} and \code{fill} is not missing and, color by
 district and indicate the \code{fill} variable by shading.}
@@ -21,7 +20,9 @@ district and indicate the \code{fill} variable by shading.}
 \item{adj}{if \code{TRUE}, force plotting the adjacency graph. Overrides
 \code{by_distr}.}
 
-\item{...}{passed on to the underlying functions.}
+\item{...}{passed on to \code{\link{redist.plot.map}} (or
+\code{\link{redist.plot.adj}} if \code{adj=TRUE}). Useful parameters
+may include \code{zoom_to}, \code{boundaries}, and \code{title}.}
 }
 \description{
 Plot a \code{redist_map}

@@ -178,10 +178,14 @@ redist.map <- function(shp = NULL, adj = NULL, plan = NULL, centroids = TRUE,
 #' @param shp  A SpatialPolygonsDataFrame, sf object, or redist_map. Required.
 #' @param adj A zero-indexed adjacency list. Created with redist.adjacency
 #' if not supplied and needed for coloring. Default is NULL.
-#' @param plan A numeric vector with one entry for each precinct in shp.
-#' Used to color the districts. Default is \code{NULL}.  Optional.
-#' @param fill A numeric/integer vector with values to color the plot with. Optional.
-#' @param fill_label A string title of plot. Defaults to empty string.
+#' @param plan \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} A numeric
+#'   vector with one entry for each precinct in shp. Used to color the
+#'   districts. Default is \code{NULL}.  Optional.
+#' @param fill \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} A
+#'   numeric/integer vector with values to color the plot with. Optional.
+#' @param fill_label A string title of plot. Defaults to the empty string
+#' @param zoom_to \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} An
+#'   indexing vector of units to zoom the map to.
 #' @param boundaries A logical indicating if precinct boundaries should be plotted.
 #' @param title A string title of plot. Defaults to empty string. Optional.
 #'
@@ -192,17 +196,16 @@ redist.map <- function(shp = NULL, adj = NULL, plan = NULL, centroids = TRUE,
 #' @importFrom sf st_centroid st_coordinates st_as_sf st_linestring st_sfc
 #'
 #' @examples
-#' \dontrun{
 #' data(iowa)
 #' redist.plot.map(shp = iowa, plan = iowa$cd_2010)
 #'
-#' iowa %>% redist_map(existing_plan = cd_2010) %>% redist.plot.map(shp = ., plan = get_existing(.))
-#' }
+#' iowa_map = redist_map(iowa, existing_plan = cd_2010)
+#' redist.plot.map(iowa_map, fill=dem_08/tot_08, zoom_to=(cd_2010 == 1))
 #'
 #' @concept plot
 #' @export
-redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL,
-                            fill_label = '', boundaries = TRUE, title = '') {
+redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
+                            zoom_to = NULL, boundaries = TRUE, title = '') {
   # Check inputs
   if (missing(shp)) {
     stop('Please provide an argument to "shp".')
@@ -333,6 +336,13 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL,
       labs(title = title)
   }
 
+  zoom_to = eval_tidy(enquo(zoom_to), shp)
+  if (!is.null(zoom_to)) {
+      bbox = sf::st_bbox(sf::st_geometry(shp)[zoom_to])
+      plot <- plot + ggplot2::coord_sf(xlim=c(bbox$xmin, bbox$xmax),
+                                       ylim=c(bbox$ymin, bbox$ymax))
+  }
+
   # return plot
   return(plot)
 }
@@ -348,6 +358,8 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL,
 #' @param drop A logical indicating if edges that cross districts should be dropped. Default is \code{FALSE}.
 #' @param plot_shp A logical indicating if the shp should be plotted under the
 #'   graph. Default is \code{TRUE}.
+#' @param zoom_to \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} An
+#'   indexing vector of units to zoom the map to.
 #' @param title A string title of plot. Defaults to empty string. Optional.
 #'
 #' @return ggplot map
@@ -358,15 +370,13 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL,
 #' @importFrom rlang eval_tidy enquo
 #'
 #' @examples
-#' \dontrun{
 #' data(iowa)
 #' redist.plot.adj(shp = iowa, plan = iowa$cd_2010)
-#' }
 #'
 #' @concept plot
 #' @export
 redist.plot.adj <- function(shp = NULL, adj = NULL, plan = NULL, centroids = TRUE,
-                       drop = FALSE, plot_shp=TRUE, title = '') {
+                       drop = FALSE, plot_shp=TRUE, zoom_to=NULL, title = '') {
 
   # Check inputs
   if (is.null(shp)) {
@@ -468,6 +478,13 @@ redist.plot.adj <- function(shp = NULL, adj = NULL, plan = NULL, centroids = TRU
 
   if (centroids) {
     plot <- plot + geom_sf(data = centers)
+  }
+
+  zoom_to = eval_tidy(enquo(zoom_to), shp)
+  if (!is.null(zoom_to)) {
+      bbox = sf::st_bbox(sf::st_geometry(shp)[zoom_to])
+      plot <- plot + ggplot2::coord_sf(xlim=c(bbox$xmin, bbox$xmax),
+                                       ylim=c(bbox$ymin, bbox$ymax))
   }
 
   # return plot
