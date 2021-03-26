@@ -316,7 +316,7 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
     init_plan <- redist.sink.plan(init_plan) - 1
   }
   if(length(unique(init_plan)) != (max(init_plan) + 1)){
-    stop("init_plan must be a sequence increasing by 1")
+    stop("The district numbers in init_plan must be consecutive. For input `x`, consider transforming to `match(x, unique(x))` beforehand.")
   }
   
   ## ------------------------------------
@@ -362,6 +362,9 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
       counties <- as.numeric(counties)
     } else {
       counties <- redist.county.id(counties)
+    }
+    if(is.character(counties)){
+     stop("Vector of counties must be numeric or factor.")
     }
     counties <- counties - min(counties)
   }
