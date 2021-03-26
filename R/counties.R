@@ -2,6 +2,8 @@
 #'
 #' @param adj adjacency list
 #' @param counties character vector of county names
+#' @param simplify boolean - TRUE returns a numeric vector of ids, while FALSe 
+#' appends a number when there are multiple connected components.
 #' @param adjacency Deprecated, use adj. adjacency list
 #' 
 #' @return character vector of county names
@@ -17,7 +19,7 @@
 #' redist.relabel.counties(counties)
 #'
 #' }
-redist.county.relabel <- function(adj, counties, adjacency){
+redist.county.relabel <- function(adj, counties,  simplify = TRUE, adjacency){
 
   if(!missing(adjacency)){
     adj <- adjacency
@@ -52,8 +54,11 @@ redist.county.relabel <- function(adj, counties, adjacency){
     rowwise() %>%
     mutate(countiescomp = ifelse(comps > 1, paste0(counties, '-', comp), counties)) %>%
     ungroup()
-
-  return(component$countiescomp)
+  if(simplify){
+    return(redist.county.id(component$countiescomp))
+  } else{
+    return(component$countiescomp) 
+  }
 }
 
 

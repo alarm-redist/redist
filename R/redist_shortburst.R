@@ -273,10 +273,17 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
 #' For example, if the group is Democratic voters and `k=3`, then the function
 #' returns the 3rd-highest fraction of Democratic voters across all districts.
 #' Can be used to target `k` VRA districts or partisan gerrymanders.
+#' - `scorer_splits` returns the fraction of counties that are split within a plan.
+#' Higher values have more county splits.
+#' - `scorer_pop_dev` returns the maximum population deviation within a plan. Smaller
+#' values are closer to population parity.
+#' - `score_polsby_popper` returns the minimum Polsby Popper score within a plan.
+#' Higher scores means that the least compact district
 #'
 #' @param map A \code{\link{redist_map}} object.
 #'
-#' @return A single numeric value, wherel larger values are better.
+#' @return A single numeric value, where larger values are better for `frac_kept`, 
+#' `group_pct`, and `polsby_popper` and smaller values are better for `splits` and `pop_dev`.
 #'
 #' @name scorers
 #' @md
@@ -320,4 +327,51 @@ scorer_group_pct = function(map, group_pop, total_pop, k=1) {
             group_pct_top_k(plans, group_pop, total_pop, k, ndists)
         }
     }
+}
+
+#' @rdname scorers
+#'
+#' @param total_pop A numeric vector with the population for every precinct.
+#'
+#' @export
+scorer_pop_dev <- function(map, total_pop) {
+  total_pop <- rlang::eval_tidy(rlang::enquo(total_pop), map)
+  ndists <- attr(map, 'ndists')
+
+  function(plans) {
+    max_dev(plans, total_pop, ndists)
+  }
+}
+
+#' @rdname scorers
+#'
+#' @param counties A numeric vector with an integer from 1:n_counties
+#'
+#' @export
+scorer_frac_split <- function(map, counties) {
+  counties <- eval_tidy(enquo(counties))
+
+  function(plans) {
+    splits(plans, counties)
+  }
+}
+
+#' @rdname scorers
+#'
+#' @param perim_df perimeter distance dataframe from \code{\link{redist.prep.polsbypopper}}
+#' @param areas area of each precinct (ie \code{st_area(map)})
+#' @param m the m-th from the bottom Polsby Popper to return as the score. Defaults to 1,
+#' the minimum Polsby Popper score
+#'
+#' @export
+scorer_polsby_popper <- function(map, perim_df, areas, m = 1) {
+  ndists <- attr(map, 'ndists')
+  function(plans) {
+    pp <- polsbypopper(
+      from = perim_df$origin, to = perim_df$touching, area = areas,
+      perimeter = perim_df$edge, dm = plans, nd = ndists
+    )
+
+    k_smallest(x = pp, k = m)
+  }
 }

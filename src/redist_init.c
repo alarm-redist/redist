@@ -4,8 +4,8 @@
 #include <R_ext/Rdynload.h>
 
 /* FIXME: 
-   Check these declarations against the C/Fortran source code.
-*/
+ Check these declarations against the C/Fortran source code.
+ */
 
 /* .Call calls */
 extern SEXP _redist_agg_p2d(SEXP, SEXP, SEXP);
@@ -37,6 +37,8 @@ extern SEXP _redist_genAlConn(SEXP, SEXP);
 extern SEXP _redist_group_pct(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_group_pct_top_k(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_hamming(SEXP, SEXP);
+extern SEXP _redist_k_biggest(SEXP, SEXP);
+extern SEXP _redist_k_smallest(SEXP, SEXP);
 extern SEXP _redist_log_st_map(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_lopsidedwins(SEXP, SEXP, SEXP);
 extern SEXP _redist_max_dev(SEXP, SEXP, SEXP);
@@ -95,6 +97,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_group_pct",             (DL_FUNC) &_redist_group_pct,              4},
     {"_redist_group_pct_top_k",       (DL_FUNC) &_redist_group_pct_top_k,        5},
     {"_redist_hamming",               (DL_FUNC) &_redist_hamming,                2},
+    {"_redist_k_biggest",             (DL_FUNC) &_redist_k_biggest,              2},
+    {"_redist_k_smallest",            (DL_FUNC) &_redist_k_smallest,             2},
     {"_redist_log_st_map",            (DL_FUNC) &_redist_log_st_map,             4},
     {"_redist_lopsidedwins",          (DL_FUNC) &_redist_lopsidedwins,           3},
     {"_redist_max_dev",               (DL_FUNC) &_redist_max_dev,                3},
