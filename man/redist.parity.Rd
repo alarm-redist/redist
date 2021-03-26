@@ -25,8 +25,6 @@ for each precinct and one column for each map. Required.}
 \item{map}{a \code{\link{redist_map}} object}
 
 \item{.data}{a \code{\link{redist_plans}} object}
-
-\item{...}{passed on to \code{redist.compactness}}
 }
 \value{
 numeric vector with the population parity for each column

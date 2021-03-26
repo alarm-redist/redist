@@ -97,7 +97,7 @@ existing plan, or "\code{<init>}" if the initial plan is sampled.}
 A \code{\link{redist_plans}} object containing the simulated plans.
 }
 \description{
-\code{redist_flip} provides an improved interface to the methods in
+\code{redist_flip} provides a tidy interface to the methods in
 \code{\link{redist.mcmc}}.
 }
 \details{
