@@ -4,12 +4,15 @@
 \alias{redist.county.relabel}
 \title{Relabel Discontinuous Counties}
 \usage{
-redist.county.relabel(adj, counties, adjacency)
+redist.county.relabel(adj, counties, simplify = TRUE, adjacency)
 }
 \arguments{
 \item{adj}{adjacency list}
 
 \item{counties}{character vector of county names}
+
+\item{simplify}{boolean - TRUE returns a numeric vector of ids, while FALSe 
+appends a number when there are multiple connected components.}
 
 \item{adjacency}{Deprecated, use adj. adjacency list}
 }

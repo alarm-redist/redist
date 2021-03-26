@@ -4,11 +4,20 @@
 \alias{scorers}
 \alias{scorer_frac_kept}
 \alias{scorer_group_pct}
+\alias{scorer_pop_dev}
+\alias{scorer_frac_split}
+\alias{scorer_polsby_popper}
 \title{Scoring fuctions for \code{redist_shortburst}}
 \usage{
 scorer_frac_kept(map)
 
 scorer_group_pct(map, group_pop, total_pop, k = 1)
+
+scorer_pop_dev(map, total_pop)
+
+scorer_frac_split(map, counties)
+
+scorer_polsby_popper(map, perim_df, areas, m = 1)
 }
 \arguments{
 \item{map}{A \code{\link{redist_map}} object.}
@@ -18,9 +27,19 @@ scorer_group_pct(map, group_pop, total_pop, k = 1)
 \item{total_pop}{A numeric vector with the population for every precinct.}
 
 \item{k}{the k-th from the top group fraction to return as the score.}
+
+\item{counties}{A numeric vector with an integer from 1:n_counties}
+
+\item{perim_df}{perimeter distance dataframe from \code{\link{redist.prep.polsbypopper}}}
+
+\item{areas}{area of each precinct (ie \code{st_area(map)})}
+
+\item{m}{the m-th from the bottom Polsby Popper to return as the score. Defaults to 1,
+the minimum Polsby Popper score}
 }
 \value{
-A single numeric value, wherel larger values are better.
+A single numeric value, where larger values are better for \code{frac_kept},
+\code{group_pct}, and \code{polsby_popper} and smaller values are better for \code{splits} and \code{pop_dev}.
 }
 \description{
 The output of these functions may be passed into \code{redist_shortburst()} as
@@ -35,5 +54,11 @@ Higher values mean more compactness.
 For example, if the group is Democratic voters and \code{k=3}, then the function
 returns the 3rd-highest fraction of Democratic voters across all districts.
 Can be used to target \code{k} VRA districts or partisan gerrymanders.
+\item \code{scorer_splits} returns the fraction of counties that are split within a plan.
+Higher values have more county splits.
+\item \code{scorer_pop_dev} returns the maximum population deviation within a plan. Smaller
+values are closer to population parity.
+\item \code{score_polsby_popper} returns the minimum Polsby Popper score within a plan.
+Higher scores means that the least compact district
 }
 }

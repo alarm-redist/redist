@@ -152,7 +152,7 @@
     <p>Plot Cores</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.plot.cores</span><span class='op'>(</span><span class='va'>shp</span>, <span class='va'>plan</span>, <span class='va'>core</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>redist.plot.cores</span><span class='op'>(</span><span class='va'>shp</span>, plan <span class='op'>=</span> <span class='cn'>NULL</span>, core <span class='op'>=</span> <span class='cn'>NULL</span>, lwd <span class='op'>=</span> <span class='fl'>2</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -169,6 +169,10 @@ Used to color the districts. Required.</p></td>
     <tr>
       <th>core</th>
       <td><p>Required. integer vector produced by <code><a href='make_cores.html'>redist.identify.cores()</a></code>.</p></td>
+    </tr>
+    <tr>
+      <th>lwd</th>
+      <td><p>Line width. Defaults to 2.</p></td>
     </tr>
     </table>
 

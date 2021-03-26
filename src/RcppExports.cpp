@@ -713,6 +713,30 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// k_smallest
+NumericVector k_smallest(NumericMatrix x, int k);
+RcppExport SEXP _redist_k_smallest(SEXP xSEXP, SEXP kSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    rcpp_result_gen = Rcpp::wrap(k_smallest(x, k));
+    return rcpp_result_gen;
+END_RCPP
+}
+// k_biggest
+NumericVector k_biggest(NumericMatrix x, int k);
+RcppExport SEXP _redist_k_biggest(SEXP xSEXP, SEXP kSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    rcpp_result_gen = Rcpp::wrap(k_biggest(x, k));
+    return rcpp_result_gen;
+END_RCPP
+}
 // smc_plans
 arma::umat smc_plans(int N, List l, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double target, double lower, double upper, double rho, double beta_sq, const arma::uvec& current, int n_current, double beta_vra, double tgt_min, double tgt_other, double pow_vra, const arma::uvec& min_pop, double beta_vra_hinge, const arma::vec& tgts_min, double beta_inc, const arma::uvec& incumbents, arma::vec& lp, double thresh, double alpha, double pop_temper, int verbosity);
 RcppExport SEXP _redist_smc_plans(SEXP NSEXP, SEXP lSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP beta_sqSEXP, SEXP currentSEXP, SEXP n_currentSEXP, SEXP beta_vraSEXP, SEXP tgt_minSEXP, SEXP tgt_otherSEXP, SEXP pow_vraSEXP, SEXP min_popSEXP, SEXP beta_vra_hingeSEXP, SEXP tgts_minSEXP, SEXP beta_incSEXP, SEXP incumbentsSEXP, SEXP lpSEXP, SEXP threshSEXP, SEXP alphaSEXP, SEXP pop_temperSEXP, SEXP verbositySEXP) {

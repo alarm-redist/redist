@@ -152,7 +152,7 @@
     <p>Relabel Discontinuous Counties</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.county.relabel</span><span class='op'>(</span><span class='va'>adj</span>, <span class='va'>counties</span>, <span class='va'>adjacency</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>redist.county.relabel</span><span class='op'>(</span><span class='va'>adj</span>, <span class='va'>counties</span>, simplify <span class='op'>=</span> <span class='cn'>TRUE</span>, <span class='va'>adjacency</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -164,6 +164,11 @@
     <tr>
       <th>counties</th>
       <td><p>character vector of county names</p></td>
+    </tr>
+    <tr>
+      <th>simplify</th>
+      <td><p>boolean - TRUE returns a numeric vector of ids, while FALSe 
+appends a number when there are multiple connected components.</p></td>
     </tr>
     <tr>
       <th>adjacency</th>

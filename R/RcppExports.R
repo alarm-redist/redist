@@ -209,6 +209,14 @@ rsg <- function(adj_list, population, Ndistrict, target_pop, thresh, maxiter) {
     .Call(`_redist_rsg`, adj_list, population, Ndistrict, target_pop, thresh, maxiter)
 }
 
+k_smallest <- function(x, k = 1L) {
+    .Call(`_redist_k_smallest`, x, k)
+}
+
+k_biggest <- function(x, k = 1L) {
+    .Call(`_redist_k_biggest`, x, k)
+}
+
 smc_plans <- function(N, l, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_vra_hinge, tgts_min, beta_inc, incumbents, lp, thresh, alpha, pop_temper = 0.1, verbosity = 1L) {
     .Call(`_redist_smc_plans`, N, l, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_vra_hinge, tgts_min, beta_inc, incumbents, lp, thresh, alpha, pop_temper, verbosity)
 }

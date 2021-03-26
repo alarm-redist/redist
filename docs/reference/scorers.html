@@ -156,7 +156,13 @@ score_fn." />
 
     <pre class="usage"><span class='fu'>scorer_frac_kept</span><span class='op'>(</span><span class='va'>map</span><span class='op'>)</span>
 
-<span class='fu'>scorer_group_pct</span><span class='op'>(</span><span class='va'>map</span>, <span class='va'>group_pop</span>, <span class='va'>total_pop</span>, k <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span></pre>
+<span class='fu'>scorer_group_pct</span><span class='op'>(</span><span class='va'>map</span>, <span class='va'>group_pop</span>, <span class='va'>total_pop</span>, k <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span>
+
+<span class='fu'>scorer_pop_dev</span><span class='op'>(</span><span class='va'>map</span>, <span class='va'>total_pop</span><span class='op'>)</span>
+
+<span class='fu'>scorer_frac_split</span><span class='op'>(</span><span class='va'>map</span>, <span class='va'>counties</span><span class='op'>)</span>
+
+<span class='fu'>scorer_polsby_popper</span><span class='op'>(</span><span class='va'>map</span>, <span class='va'>perim_df</span>, <span class='va'>areas</span>, m <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -177,11 +183,29 @@ score_fn." />
       <th>k</th>
       <td><p>the k-th from the top group fraction to return as the score.</p></td>
     </tr>
+    <tr>
+      <th>counties</th>
+      <td><p>A numeric vector with an integer from 1:n_counties</p></td>
+    </tr>
+    <tr>
+      <th>perim_df</th>
+      <td><p>perimeter distance dataframe from <code><a href='redist.prep.polsbypopper.html'>redist.prep.polsbypopper</a></code></p></td>
+    </tr>
+    <tr>
+      <th>areas</th>
+      <td><p>area of each precinct (ie <code>st_area(map)</code>)</p></td>
+    </tr>
+    <tr>
+      <th>m</th>
+      <td><p>the m-th from the bottom Polsby Popper to return as the score. Defaults to 1,
+the minimum Polsby Popper score</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A single numeric value, wherel larger values are better.</p>
+    <p>A single numeric value, where larger values are better for <code>frac_kept</code>,
+<code>group_pct</code>, and <code>polsby_popper</code> and smaller values are better for <code>splits</code> and <code>pop_dev</code>.</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>Function details:</p><ul>
@@ -191,6 +215,12 @@ Higher values mean more compactness.</p></li>
 For example, if the group is Democratic voters and <code>k=3</code>, then the function
 returns the 3rd-highest fraction of Democratic voters across all districts.
 Can be used to target <code>k</code> VRA districts or partisan gerrymanders.</p></li>
+<li><p><code>scorer_splits</code> returns the fraction of counties that are split within a plan.
+Higher values have more county splits.</p></li>
+<li><p><code>scorer_pop_dev</code> returns the maximum population deviation within a plan. Smaller
+values are closer to population parity.</p></li>
+<li><p><code>score_polsby_popper</code> returns the minimum Polsby Popper score within a plan.
+Higher scores means that the least compact district</p></li>
 </ul>
 
 

@@ -313,7 +313,7 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
   ## Zero-index cds ##
   ####################
   if(min(init_plan) != 0){
-    init_plan <- init_plan - min(init_plan)
+    init_plan <- redist.sink.plan(init_plan) - 1
   }
   if(length(unique(init_plan)) != (max(init_plan) + 1)){
     stop("init_plan must be a sequence increasing by 1")
@@ -360,6 +360,8 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
   }else{
     if(is.factor(counties)){
       counties <- as.numeric(counties)
+    } else {
+      counties <- redist.county.id(counties)
     }
     counties <- counties - min(counties)
   }
