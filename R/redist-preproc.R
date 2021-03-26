@@ -324,16 +324,16 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
   ## ------------------------------------
   if("vra" %in% constraint){
     if(! 'numeric' %in% class(tgt_min)){
-      stop("Need tgt_min to be numeric.")
+      stop("Need vra constraint tgt_min to be numeric.")
     }
     if(! 'numeric' %in% class(tgt_other)){
-      stop("Need tgt_other to be numeric.")
+      stop("Need vra constraint tgt_other to be numeric.")
     }
     if(tgt_min < 0 | tgt_min > 1){
-      stop("Need 0 <= tgt_min <= 1.")
+      stop("Need vra constraint 0 <= tgt_min <= 1.")
     }
     if(tgt_other < 0 | tgt_other > 1){
-      stop("Need 0 <= tgt_other <= 1.")
+      stop("Need vra constraint 0 <= tgt_other <= 1.")
     }
   }
   

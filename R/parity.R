@@ -68,7 +68,6 @@ redist.parity <- function(plans, total_pop, ncores = 1, district_membership, pop
 #'
 #' @param map a \code{\link{redist_map}} object
 #' @param .data a \code{\link{redist_plans}} object
-#' @param ... passed on to \code{redist.compactness}
 #'
 #' @concept analyze
 #' @export

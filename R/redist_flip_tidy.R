@@ -1,6 +1,6 @@
 #' 'Flip' Markov Chain Monte Carlo Redistricting Simulation
 #'
-#' \code{redist_flip} provides an improved interface to the methods in
+#' \code{redist_flip} provides a tidy interface to the methods in
 #' \code{\link{redist.mcmc}}.
 #'
 #' This function allows users to simulate redistricting plans
