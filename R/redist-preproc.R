@@ -316,7 +316,7 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
     init_plan <- redist.sink.plan(init_plan) - 1
   }
   if(length(unique(init_plan)) != (max(init_plan) + 1)){
-    stop("The district numbers in init_plan must be consecutive. For input `x`, consider transforming to `match(x, unique(x))` beforehand.")
+    stop("The district numbers in init_plan must be consecutive. The input to `init_plan` could not be transformed using `redist.sink.plan()`.")
   }
   
   ## ------------------------------------
