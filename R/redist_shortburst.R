@@ -352,7 +352,7 @@ scorer_frac_split <- function(map, counties) {
   counties <- eval_tidy(enquo(counties))
 
   function(plans) {
-    splits(plans, counties)
+    splits(plans, counties)/length(unique(counties))
   }
 }
 
