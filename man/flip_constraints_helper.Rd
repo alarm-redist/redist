@@ -8,6 +8,7 @@ flip_constraints_helper(
   map,
   constraint = "compact",
   constraintweight = 0.6,
+  init_plan = NULL,
   compactness_metric = "edges-removed",
   areas,
   borderlength_mat,
@@ -32,6 +33,8 @@ Defaults to compact.}
 
 \item{constraintweight}{corresponding weights to use with constraint. Weights must be nonzero if provided. Defaults to
 a weak compactness constraint}
+
+\item{init_plan}{initial plan to use for the similarity constraint}
 
 \item{compactness_metric}{character with "edges-removed", "polsby-popper", or "fryer-holden". Default is edges-removed.}
 
