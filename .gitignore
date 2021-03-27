@@ -11,6 +11,7 @@ inst/enumpart/enumpart
 redist/tests/testthat/_snaps
 doc
 docs/articles/*_cache/*
+vignettes/*_cache/*
 Meta
 .Rproj.user
 src/redist.dll

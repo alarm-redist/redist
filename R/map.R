@@ -205,7 +205,7 @@ redist.map <- function(shp = NULL, adj = NULL, plan = NULL, centroids = TRUE,
 #' @concept plot
 #' @export
 redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
-                            zoom_to = NULL, boundaries = TRUE, title = '') {
+                            zoom_to=NULL, boundaries=is.null(fill), title='') {
   # Check inputs
   if (missing(shp)) {
     stop('Please provide an argument to "shp".')

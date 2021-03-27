@@ -68,6 +68,6 @@ double cut_districts(Tree &ust, int k, int root, subview_col<uword> &districts,
 void adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
                       double tol, const umat &districts, const uvec &counties,
                       Multigraph &cg, const uvec &pop,
-                      const vec &pop_left, double target);
+                      const vec &pop_left, double target, int verbosity);
 
 #endif

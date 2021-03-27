@@ -4,8 +4,8 @@
 #include <R_ext/Rdynload.h>
 
 /* FIXME: 
- Check these declarations against the C/Fortran source code.
- */
+   Check these declarations against the C/Fortran source code.
+*/
 
 /* .Call calls */
 extern SEXP _redist_agg_p2d(SEXP, SEXP, SEXP);
@@ -66,6 +66,7 @@ extern SEXP _redist_talisman(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_taugap(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_update_conncomp(SEXP, SEXP, SEXP);
 extern SEXP _redist_var_info_mat(SEXP, SEXP, SEXP);
+extern SEXP _redist_var_info_vec(SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
     {"_redist_agg_p2d",               (DL_FUNC) &_redist_agg_p2d,                3},
@@ -126,6 +127,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_taugap",                (DL_FUNC) &_redist_taugap,                 4},
     {"_redist_update_conncomp",       (DL_FUNC) &_redist_update_conncomp,        3},
     {"_redist_var_info_mat",          (DL_FUNC) &_redist_var_info_mat,           3},
+    {"_redist_var_info_vec",          (DL_FUNC) &_redist_var_info_vec,           3},
     {NULL, NULL, 0}
 };
 

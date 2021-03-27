@@ -85,8 +85,8 @@ reconstruct.redist_map = function(data, old) {
             attr(data, "ndists") = attr(old, "ndists")
         }
 
-        attr(data, "pop_bounds") = attr(old, "pop_bounds")
-
+        if (is.null(attr(data, "pop_bounds")))
+            attr(data, "pop_bounds") = attr(old, "pop_bounds")
     }
 
     class(data) = c("redist_map", classes)

@@ -104,7 +104,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
     if (is.null(init_plan)) init_plan = as.integer(as.factor(get_existing(map)))
     if (length(init_plan) == 0L || isTRUE(init_plan == "sample")) {
         init_plan = as.integer(get_plan_matrix(
-            redist_smc(map, 1, counties, resample=FALSE, silent=TRUE)))
+            redist_smc(map, 1, counties, resample=FALSE, ref_name=FALSE, silent=TRUE)))
     }
     stopifnot(length(init_plan) == V)
     stopifnot(max(init_plan) == ndists)
@@ -263,33 +263,51 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
 #' Scoring fuctions for `redist_shortburst`
 #'
 #' The output of these functions may be passed into `redist_shortburst()` as
-#' `score_fn`.
+#' `score_fn`.  Scoring functions have type `redist_scorer` and may be combined
+#' together using basic arithmetic operations.
 #'
 #' Function details:
 #'
-#' - `scorer_frac_kept` returns the fraction of edges kept in each district.
-#' Higher values mean more compactness.
 #' - `scorer_group_pct` returns the `k`-th top group percentage across districts.
 #' For example, if the group is Democratic voters and `k=3`, then the function
 #' returns the 3rd-highest fraction of Democratic voters across all districts.
 #' Can be used to target `k` VRA districts or partisan gerrymanders.
-#' - `scorer_splits` returns the fraction of counties that are split within a plan.
-#' Higher values have more county splits.
-#' - `scorer_pop_dev` returns the maximum population deviation within a plan. Smaller
-#' values are closer to population parity.
-#' - `score_polsby_popper` returns the minimum Polsby Popper score within a plan.
-#' Higher scores means that the least compact district
+#' - `scorer_pop_dev` returns the maximum population deviation within a plan.
+#' Smaller values are closer to population parity, so use `maximize=FALSE` with
+#' this scorer.
+#' - `scorer_splits` returns the fraction of counties that are split within a
+#' plan. Higher values have more county splits, so use `maximize=FALSE` with
+#' this scorer.
+#' - `scorer_frac_kept` returns the fraction of edges kept in each district.
+#' Higher values mean more compactness.
+#' - `scorer_polsby_popper` returns the `m`-th Polsby Popper score within a plan.
+#' Higher scores correspond to more compact districts.  Use `m=ndists/2` to
+#' target the median compactness, `m=1` to target the minimum compactness.
+#' - `scorer_status_quo` returns 1 - the rescaled variation of information
+#' distance betwen the plan and the `existing_plan`. Larger values indicate the
+#' plan is closer to the existing plan.
 #'
 #' @param map A \code{\link{redist_map}} object.
 #'
-#' @return A single numeric value, where larger values are better for `frac_kept`, 
+#' @return A scoring function of class `redist_scorer`. single numeric value, where larger values are better for `frac_kept`,
 #' `group_pct`, and `polsby_popper` and smaller values are better for `splits` and `pop_dev`.
 #'
+#' @examples
+#' data(iowa)
+#' iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05)
+#'
+#' scorer_frac_kept(iowa_map)
+#' scorer_status_quo(iowa_map)
+#' scorer_group_pct(iowa_map, dem_08, tot_08, k=2)
+#' 1.5*scorer_frac_kept(iowa_map) + 0.4*scorer_status_quo(iowa_map)
+#'
+#' @concept prepare
 #' @name scorers
 #' @md
 NULL
 
 #' @rdname scorers
+#' @order 4
 #'
 #' @export
 scorer_frac_kept = function(map) {
@@ -297,12 +315,15 @@ scorer_frac_kept = function(map) {
     edges = sum(sapply(adj, length)) / 2
     ndists = attr(map, "ndists")
 
-    function(plans) {
+    fn = function(plans) {
         (edges - n_removed(adj, plans, ndists)) / edges
     }
+    class(fn) = c("redist_scorer", "function")
+    fn
 }
 
 #' @rdname scorers
+#' @order 1
 #'
 #' @param group_pop A numeric vector with the population of the group for every precinct.
 #' @param total_pop A numeric vector with the population for every precinct.
@@ -310,40 +331,45 @@ scorer_frac_kept = function(map) {
 #'
 #' @export
 scorer_group_pct = function(map, group_pop, total_pop, k=1) {
-    group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
-    total_pop = rlang::eval_tidy(rlang::enquo(total_pop), map)
+    group_pop = eval_tidy(enquo(group_pop), map)
+    total_pop = eval_tidy(enquo(total_pop), map)
     ndists = attr(map, "ndists")
 
     if (k == 1) {
-        function(plans) {
+        fn = function(plans) {
             colmax(group_pct(plans, group_pop, total_pop, ndists))
         }
     } else if (k == ndists) {
-        function(plans) {
+        fn = function(plans) {
             colmin(group_pct(plans, group_pop, total_pop, ndists))
         }
     } else {
-        function(plans) {
+        fn = function(plans) {
             group_pct_top_k(plans, group_pop, total_pop, k, ndists)
         }
     }
+    class(fn) = c("redist_scorer", "function")
+    fn
 }
 
 #' @rdname scorers
-#'
-#' @param total_pop A numeric vector with the population for every precinct.
+#' @order 2
 #'
 #' @export
-scorer_pop_dev <- function(map, total_pop) {
-  total_pop <- rlang::eval_tidy(rlang::enquo(total_pop), map)
+scorer_pop_dev <- function(map) {
   ndists <- attr(map, 'ndists')
+  total_pop = map[[attr(map, "pop_col")]]
+  stopifnot(!is.null(total_pop))
 
-  function(plans) {
+  fn = function(plans) {
     max_dev(plans, total_pop, ndists)
   }
+  class(fn) <- c("redist_scorer", "function")
+  fn
 }
 
 #' @rdname scorers
+#' @order 3
 #'
 #' @param counties A numeric vector with an integer from 1:n_counties
 #'
@@ -351,12 +377,15 @@ scorer_pop_dev <- function(map, total_pop) {
 scorer_frac_split <- function(map, counties) {
   counties <- eval_tidy(enquo(counties))
 
-  function(plans) {
+  fn = function(plans) {
     splits(plans, counties)/length(unique(counties))
   }
+  class(fn) <- c("redist_scorer", "function")
+  fn
 }
 
 #' @rdname scorers
+#' @order 5
 #'
 #' @param perim_df perimeter distance dataframe from \code{\link{redist.prep.polsbypopper}}
 #' @param areas area of each precinct (ie \code{st_area(map)})
@@ -364,9 +393,12 @@ scorer_frac_split <- function(map, counties) {
 #' the minimum Polsby Popper score
 #'
 #' @export
-scorer_polsby_popper <- function(map, perim_df, areas, m = 1) {
+scorer_polsby_popper <- function(map, perim_df=NULL, areas=NULL, m = 1) {
   ndists <- attr(map, 'ndists')
-  function(plans) {
+  if (is.null(perim_df)) perim_df = redist.prep.polsbypopper(map)
+  if (is.null(areas)) areas = sf::st_area(sf::st_geometry(map))
+
+  fn = function(plans) {
     pp <- polsbypopper(
       from = perim_df$origin, to = perim_df$touching, area = areas,
       perimeter = perim_df$edge, dm = plans, nd = ndists
@@ -374,4 +406,80 @@ scorer_polsby_popper <- function(map, perim_df, areas, m = 1) {
 
     k_smallest(x = pp, k = m)
   }
+  class(fn) <- c("redist_scorer", "function")
+  fn
+}
+
+
+#' @rdname scorers
+#' @order 6
+#'
+#' @param existing_plan A vector containing the current plan.
+#'
+#' @export
+scorer_status_quo = function(map, existing_plan=get_existing(map)) {
+    exsiting_plan = eval_tidy(enquo(existing_plan), map)
+    pop = map[[attr(map, "pop_col")]]
+    ndists = attr(map, "ndists")
+
+    stopifnot(!is.null(existing_plan))
+    stopifnot(!is.null(pop))
+
+    fn = function(plans) {
+        1 - 0.5*var_info_vec(plans, existing_plan, pop) / log(ndists)
+    }
+    class(fn) = c("redist_scorer", "function")
+    fn
+}
+
+#' Scoring function arithmetic
+#'
+#' `redist_scorer` functions may be multiplied by constants and/or added
+#' together to form linear combinations.
+#'
+#' @name scorer-arith
+#' @concept prepare
+#' @md
+NULL
+
+#' @rdname scorer-arith
+#'
+#' @param x a numeric
+#' @param fn2 a `redist_scorer` function, from [`scorers`]
+#'
+#' @export
+`*.redist_scorer` = function(x, fn2) {
+    stopifnot(is.numeric(x))
+    rlang::fn_body(fn2) = rlang::expr({!!x * !!rlang::fn_body(fn2)})
+    fn2
+}
+
+#' @rdname scorer-arith
+#'
+#' @param fn1 a `redist_scorer` function, from [`scorers`]
+#' @param fn2 a `redist_scorer` function, from [`scorers`]
+#'
+#' @export
+`+.redist_scorer` = function(fn1, fn2) {
+    stopifnot(inherits(fn1, "redist_scorer"))
+    stopifnot(inherits(fn2, "redist_scorer"))
+
+    fn = function(plans) { fn1(plans) + fn2(plans) }
+    class(fn) = c("redist_scorer", "function")
+    fn
+}
+
+#' @rdname scorer-arith
+#'
+#' @param fn1 a `redist_scorer` function, from [`scorers`]
+#' @param fn2 a `redist_scorer` function, from [`scorers`]
+#'
+#' @export
+`-.redist_scorer` = function(fn1, fn2) {
+    stopifnot(inherits(fn1, "redist_scorer"))
+    stopifnot(inherits(fn2, "redist_scorer"))
+
+    fn = function(plans) { fn1(plans) - fn2(plans) }
+    class(fn) = c("redist_scorer", "function")
+    fn
 }

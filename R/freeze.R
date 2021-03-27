@@ -31,15 +31,15 @@ redist.freeze <- function(adj, freeze_row, plan = rep(1, length(adj))){
     stop('Please provide a vector to freeze_row.')
   }
 
-  if('numeric' %in% class(freeze_row) | 'integer' %in% class(freeze_row)){
+  if (is.numeric(freeze_row)) {
     if(max(freeze_row) < length(adj) & all(freeze_row > 0)){
       freeze_row <- 1:length(adj) %in% freeze_row
     }
-  } else if('logical' %in% class(freeze_row)){
-    if(length(freeze_row) != length(adj)){
+  } else if (is.logical(freeze_row)) {
+    if (length(freeze_row) != length(adj)) {
       stop('freeze_row is logical but does not match adj length.')
     }
-  }else {
+  } else {
     stop('freeze_row must be a logical vector or have numeric/integer indices.')
   }
 
@@ -78,7 +78,11 @@ freeze <- function(freeze_row, plan, .data=get0(".", parent.frame())) {
     if (isFALSE(plan) || is.null(plan))
         plan <- rep(1, length(adj))
 
-    freeze_row <- rlang::eval_tidy(rlang::enquo(freeze_row), .data)
+    freeze_row <- eval_tidy(enquo(freeze_row), .data)
+    if (is.logical(freeze_row[1]))
+        freeze_row = as.logical(freeze_row)
+    else
+        freeze_row = as.numeric(freeze_row)
 
     redist.freeze(adj = adj, freeze_row = freeze_row, plan = plan)
 }

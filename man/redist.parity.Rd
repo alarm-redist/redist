@@ -2,12 +2,12 @@
 % Please edit documentation in R/parity.R
 \name{redist.parity}
 \alias{redist.parity}
-\alias{parity}
+\alias{plan_parity}
 \title{Calculates Population Parity}
 \usage{
 redist.parity(plans, total_pop, ncores = 1, district_membership, population)
 
-parity(map, .data = get0(".", parent.frame()))
+plan_parity(map, .data = get0(".", parent.frame()), ...)
 }
 \arguments{
 \item{plans}{A matrix with one row for each precinct and one column for each
@@ -26,7 +26,7 @@ for each precinct and one column for each map. Required.}
 
 \item{.data}{a \code{\link{redist_plans}} object}
 
-\item{...}{passed on to \code{redist.compactness}}
+\item{...}{passed on to \code{redist.parity}}
 }
 \value{
 numeric vector with the population parity for each column
