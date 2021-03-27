@@ -3,9 +3,11 @@
 
 # **redist**: Simulation Methods for Legislative Redistricting
 
+<img src="man/figures/map_photo.jpg" style="width: 100%" />
+
 <!-- badges: start -->
 
-[![Build
+[![Build 
 Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist)
 [![CRAN\_Status\_Badge](https://www.r-pkg.org/badges/version-last-release/redist)](https://cran.r-project.org/package=redist)
 ![CRAN downloads](http://cranlogs.r-pkg.org/badges/grand-total/redist)
@@ -85,11 +87,12 @@ iowa_plans = redist_smc(iowa_map, nsims=250, verbose=FALSE)
 #> SEQUENTIAL MONTE CARLO
 #> Sampling 250 99-unit maps with 4 districts and population between 761513 and 761665.
 #> Making split 1 of 3
-#> Resampling effective sample size: 246.1 (98.4% efficiency).
+#> Note: maximum hit; falling back to naive k estimator.
+#> Resampling effective sample size: 245.9 (98.4% efficiency).
 #> Making split 2 of 3
-#> Resampling effective sample size: 244.2 (97.7% efficiency).
+#> Resampling effective sample size: 245.6 (98.3% efficiency).
 #> Making split 3 of 3
-#> Resampling effective sample size: 245.3 (98.1% efficiency).
+#> Resampling effective sample size: 246.8 (98.7% efficiency).
 ```
 
 After generating plans, you can use `redist`’s plotting functions to
