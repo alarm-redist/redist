@@ -9,8 +9,6 @@ redist_flip(
   nsims,
   init_plan,
   pop_tol,
-  counties = NULL,
-  group_pop,
   constraints = list(),
   nthin = 1,
   eprob = 0.05,
@@ -43,10 +41,6 @@ constraint. \code{pop_tol} = 0.05 means that any proposed swap that
 brings a district more than 5\\% away from population parity will be
 rejected. The default is \code{get_pop_tol(map)}. Providing an entry here ignores
 the \code{pop_tol} within the object provided to map.}
-
-\item{counties}{A column in map containing county membership}
-
-\item{group_pop}{A column in map containing group populations}
 
 \item{constraints}{a list of constraints to implement. Can be created with
 \code{flip_constraints_helper}}
@@ -97,7 +91,7 @@ existing plan, or "\code{<init>}" if the initial plan is sampled.}
 A \code{\link{redist_plans}} object containing the simulated plans.
 }
 \description{
-\code{redist_flip} provides an improved interface to the methods in
+\code{redist_flip} provides a tidy interface to the methods in
 \code{\link{redist.mcmc}}.
 }
 \details{
@@ -143,7 +137,6 @@ There are currently 9 implemented constraint types, though `\code{compact} and
 within their respective list objects. The constraints are as follows:
 \itemize{
 \item \code{compact} - biases the algorithm towards drawing more compact districts.
-This constraint uses \code{counties} when \code{log-st} is used.
 \itemize{
 \item weight - the coefficient to put on the Gibbs constraint
 \item metric - which metric to use. Must be one of \code{edges-removed} (the default),
@@ -169,16 +162,14 @@ that plan. This constraint uses the input to \code{total_pop}.
 }
 \item \code{countysplit} This is a Gibbs constraint to minimize county splits. Unlike
 SMC's county constraint, this allows for more than \code{ndists - 1} splits and
-does not require that counties are contiguous. This constraint uses the input
-to \code{counties}.
+does not require that counties are contiguous.
 \itemize{
 \item weight - the coefficient to put on the Gibbs constraint
 }
 \item \code{hinge} This uses the proportion of a group in a district and matches to the
 nearest target proportion, and then creates a penalty of
 \eqn{\sqrt{max(0, nearest.target - group.pct)}}. This is equivalent to the
-\code{vra-old} constraint in  \code{redist_smc}. This constraint uses the
-input to \code{group_pop}.
+\code{vra-old} constraint in  \code{redist_smc}.
 \itemize{
 \item weight - the coefficient to put on the Gibbs constraint
 \item minorityprop - A numeric vector of minority proportions (between 0 and 1) which
@@ -187,7 +178,7 @@ districts should aim to have
 \item \code{vra} This takes two target proportions of the presence of a minority group
 within a district. \eqn{(|target.min - group.pct||target.other - group.pct|)^{1.5})}
 This is equivalent to the \code{vra-old} constraint in
-\code{redist_smc}. This constraint uses the input to \code{group_pop}.
+\code{redist_smc}.
 \itemize{
 \item weight - the coefficient to put on the Gibbs constraint
 \item target_min - the target minority percentage. Often, this is set to 0.55 to encourage
@@ -197,7 +188,7 @@ minority majority districts.
 \item \code{minority} This constraint sorts the districts by the proportion of a group in
 a district and compares the highest districts to the entries of minorityprop.
 This takes the form \eqn{\sum_{i=1}^{n} \sqrt{|group.pct(i) - minorityprop(i)| }} where n
-is the length of minorityprop input. This constraint uses the input to \code{group_pop}.
+is the length of minorityprop input.
 \itemize{
 \item weight - the coefficient to put on the Gibbs constraint
 \item minorityprop - A numeric vector of minority proportions (between 0 and 1) which
@@ -205,7 +196,6 @@ districts should aim to have
 }
 \item \code{similarity} This is a status-quo constraint which penalizes plans which
 are very different from the starting place. It is useful for local exploration.
-This constraint uses the input to \code{init_plan} to compare proposals.
 \itemize{
 \item weight - the coefficient to put on the Gibbs constraint
 }
@@ -220,7 +210,7 @@ the efficiency gap.
 or \code{efficiency-gap}.
 }
 \item \code{segregation} This constraint attempts to minimize the degree of dissimilarity
-between districts by group population. This constraint uses the input to \code{group_pop}.
+between districts by group population.
 \itemize{
 \item weight - the coefficient to put on the Gibbs constraint
 }

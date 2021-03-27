@@ -9,6 +9,7 @@
 #' Defaults to compact.
 #' @param constraintweight corresponding weights to use with constraint. Weights must be nonzero if provided. Defaults to
 #' a weak compactness constraint
+#' @param init_plan initial plan to use for the similarity constraint
 #' @param compactness_metric character with "edges-removed", "polsby-popper", or "fryer-holden". Default is edges-removed.
 #' @param areas areas to use with compact:polsby-popper. Computed from map if not provided and needed.
 #' @param borderlength_mat border lengths to use with compact:polsby-popper.
@@ -42,6 +43,7 @@
 flip_constraints_helper <- function(map,
                                     constraint = 'compact',
                                     constraintweight = 0.6,
+                                    init_plan = NULL,
                                     compactness_metric = 'edges-removed',
                                     areas,
                                     borderlength_mat,
@@ -63,9 +65,7 @@ flip_constraints_helper <- function(map,
   counties <- eval_tidy(enquo(counties), map)
   
   constraints_list <- process_flip_constr(
-    constraints = list(),
-    group_pop = rep(0, nrow(map)),
-    counties = rep(1, nrow(map))
+    constraints = list(), nrow(map)
   )
 
   if (is.null(constraint)) {
@@ -96,6 +96,10 @@ flip_constraints_helper <- function(map,
     }
   }
   
+  init_plan <- eval_tidy(enquo(init_plan), map)
+  if('similarity' %in% constraint & is.null(init_plan)){
+    stop('Please provide an initial plan to `init_plan` for the similarity constraint.')
+  }
   
 
   if (length(constraint) != length(constraintweight)) {
@@ -103,9 +107,7 @@ flip_constraints_helper <- function(map,
   }
 
   constraints_list <- process_flip_constr(
-    constraints = list(),
-    group_pop = rep(0, nrow(map)),
-    counties = rep(1, nrow(map))
+    constraints = list(), nrow(map)
   )
 
   if ('compact' %in% constraint) {
@@ -130,7 +132,8 @@ flip_constraints_helper <- function(map,
       }
       constraints_list$compact$areas <- areas
       if (missing(borderlength_mat)) {
-        borderlength_mat <- as.matrix(redist.prep.polsbypopper(map, get_adj(map)))
+        perim_df <- redist.prep.polsbypopper(map)
+        borderlength_mat <- perim_df_2_borderlength_mat(n = nrow(map), perim_df = perim_df)
       }
       constraints_list$compact$borderlength_mat <- borderlength_mat
     }
@@ -182,6 +185,7 @@ flip_constraints_helper <- function(map,
   }
   if ('similarity' %in% constraint) {
     constraints_list$similarity$weight <- constraintweight[which(constraint == 'similarity')]
+    constraints_list$similarity$plan <- init_plan
   }
   if ('partisan' %in% constraint) {
     constraints_list$partisan$weight <- constraintweight[which(constraint == 'partisan')]
@@ -211,4 +215,28 @@ flip_constraints_helper <- function(map,
   
   
   return(constraints_list)
+}
+
+
+#' Convert perim_df to borderlength_mat
+#'
+#' @param n number of rows in the original object
+#' @param perim_df a perim_df from \code{redist.prep.polsbypopper}
+#'
+#' @noRd
+#' @return matrix for 
+perim_df_2_borderlength_mat <- function(n, perim_df) {
+  blm <- matrix(0, n, n)
+  
+  for (i in 1:nrow(perim_df)) {
+    if (perim_df$origin[i] == -1) {
+      blm[ perim_df$touching[i], perim_df$touching[i]] <- blm[perim_df$touching[i], perim_df$touching[i]] + perim_df$edge[i]
+    } else {
+      blm[perim_df$origin[i], perim_df$touching[i]] <-blm[perim_df$origin[i], perim_df$touching[i]] + perim_df$edge[i]
+      
+      blm[perim_df$touching[i], perim_df$origin[i]] <- blm[perim_df$touching[i], perim_df$origin[i]] + perim_df$edge[i]
+    }
+  }
+  
+  return(blm)
 }

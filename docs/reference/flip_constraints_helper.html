@@ -114,9 +114,6 @@
     <li>
       <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
     </li>
-    <li>
-      <a href="../articles/tidy-redist.html">Tidy `redist`</a>
-    </li>
   </ul>
 </li>
 <li>
@@ -156,6 +153,7 @@
   <span class='va'>map</span>,
   constraint <span class='op'>=</span> <span class='st'>"compact"</span>,
   constraintweight <span class='op'>=</span> <span class='fl'>0.6</span>,
+  init_plan <span class='op'>=</span> <span class='cn'>NULL</span>,
   compactness_metric <span class='op'>=</span> <span class='st'>"edges-removed"</span>,
   <span class='va'>areas</span>,
   <span class='va'>borderlength_mat</span>,
@@ -188,6 +186,10 @@ Defaults to compact.</p></td>
       <th>constraintweight</th>
       <td><p>corresponding weights to use with constraint. Weights must be nonzero if provided. Defaults to
 a weak compactness constraint</p></td>
+    </tr>
+    <tr>
+      <th>init_plan</th>
+      <td><p>initial plan to use for the similarity constraint</p></td>
     </tr>
     <tr>
       <th>compactness_metric</th>
