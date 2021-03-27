@@ -3,8 +3,6 @@
 
 # **redist**: Simulation Methods for Legislative Redistricting
 
-<img src="man/figures/map_photo.jpg" style="width: 100%" />
-
 <!-- badges: start -->
 
 [![Build 
@@ -13,7 +11,9 @@ Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://trav
 ![CRAN downloads](http://cranlogs.r-pkg.org/badges/grand-total/redist)
 <!-- badges: end -->
 
-<img src="man/figures/logo.png" align="right" height=128 />
+<img src="man/figures/map_photo.jpg" style="width: 100%" />
+
+<img src="man/figures/logo.png" align="right" height=128 style="margin-left: 4px;" />
 
 This R package enables researchers to sample redistricting plans from a
 pre-specified target distribution using Sequential Monte Carlo and
