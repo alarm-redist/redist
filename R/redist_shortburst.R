@@ -159,8 +159,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
         }
 
         flip_constraints <- process_flip_constr(constraints = flip_constraints,
-                                                group_pop = group_pop,
-                                                counties = counties)
+                                                nrow(map))
 
         if (flip_eprob <= 0 || flip_eprob >= 1) {
             stop("flip_eprob must be in the interval (0, 1).")

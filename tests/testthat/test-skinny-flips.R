@@ -1,6 +1,6 @@
 test_that("skinny flips works", {
   
-  cons <- process_flip_constr(list(), rep(0, 25), rep(1,25))
+  cons <- process_flip_constr(list(), 25)
   
   plans <- skinny_flips(adj = adj, init_plan = plans_10[, 1],
                total_pop = fl25$pop, pop_tol = 0.15,
