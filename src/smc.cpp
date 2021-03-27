@@ -54,7 +54,7 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
 
         // find k and multipliers
         adapt_parameters(g, k, lp, thresh, tol, districts, counties, cg, pop,
-                         pop_left, target);
+                         pop_left, target, verbosity);
 
         if (verbosity >= 3)
             Rcout << "Using k = " << k << "\n";
@@ -296,7 +296,7 @@ double cut_districts(Tree &ust, int k, int root, subview_col<uword> &districts,
 void adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
                       double tol, const umat &districts, const uvec &counties,
                       Multigraph &cg, const uvec &pop,
-                      const vec &pop_left, double target) {
+                      const vec &pop_left, double target, int verbosity) {
     // sample some spanning trees and compute deviances
     int V = g.size();
     int k_max = std::min(20 + ((int) std::sqrt(V)), V - 1); // heuristic
@@ -352,8 +352,8 @@ void adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
         if (sum_within / n_ok >= thresh) break;
     }
 
-    if (k == k_max + 1) {
-        Rcerr << "Warning: maximum hit; falling back to naive k estimator.\n";
+    if (k == k_max + 1 && verbosity >= 1) {
+        Rcout << "Note: maximum hit; falling back to naive k estimator.\n";
         k = max_ok + 1;
     }
 }

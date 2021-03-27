@@ -48,3 +48,20 @@ NumericVector var_info_mat(IntegerMatrix m, int i, NumericVector pop) {
 
     return out;
 }
+
+/*
+ * `m` has rows = precincts, cols = plans
+ * `ref` is the plan we want to compute distances to
+ * `pop` is population of precincts
+ */
+// [[Rcpp::export]]
+NumericVector var_info_vec(IntegerMatrix m, IntegerVector ref, NumericVector pop) {
+    int N = m.ncol();
+
+    NumericVector out(N);
+    for (int j = 0; j < N; j++) {
+        out[j] = var_info(ref, m(_, j), pop);
+    }
+
+    return out;
+}

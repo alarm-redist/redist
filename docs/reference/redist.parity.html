@@ -152,7 +152,9 @@
     <p><code>redist.parity</code> computes the population parity of a matrix of maps.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.parity</span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>total_pop</span>, ncores <span class='op'>=</span> <span class='fl'>1</span>, <span class='va'>district_membership</span>, <span class='va'>population</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>redist.parity</span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>total_pop</span>, ncores <span class='op'>=</span> <span class='fl'>1</span>, <span class='va'>district_membership</span>, <span class='va'>population</span><span class='op'>)</span>
+
+<span class='fu'>plan_parity</span><span class='op'>(</span><span class='va'>map</span>, .data <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/exists.html'>get0</a></span><span class='op'>(</span><span class='st'>"."</span>, <span class='fu'><a href='https://rdrr.io/r/base/sys.parent.html'>parent.frame</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>, <span class='va'>...</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -178,6 +180,18 @@ for each precinct and one column for each map. Required.</p></td>
     <tr>
       <th>population</th>
       <td><p>Deprecated, use total_pop. A numeric vector with the population for every precinct.</p></td>
+    </tr>
+    <tr>
+      <th>map</th>
+      <td><p>a <code><a href='redist_map.html'>redist_map</a></code> object</p></td>
+    </tr>
+    <tr>
+      <th>.data</th>
+      <td><p>a <code><a href='redist_plans.html'>redist_plans</a></code> object</p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>passed on to <code>redist.parity</code></p></td>
     </tr>
     </table>
 

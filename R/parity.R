@@ -54,8 +54,8 @@ redist.parity <- function(plans, total_pop, ncores = 1, district_membership, pop
     if (min(plans[,1]) == 0)
         plans = plans + 1
     n_distr = max(plans[,1])
-    
-    
+
+
     chunks = split(1:N, rep(1:nc, each=ceiling(N/nc))[1:N])
     out = foreach(map=chunks, .combine = "c") %oper% {
         max_dev(plans[, map, drop = FALSE], total_pop, n_distr)
@@ -68,19 +68,17 @@ redist.parity <- function(plans, total_pop, ncores = 1, district_membership, pop
 #'
 #' @param map a \code{\link{redist_map}} object
 #' @param .data a \code{\link{redist_plans}} object
-#' @param ... passed on to \code{redist.compactness}
+#' @param ... passed on to \code{redist.parity}
 #'
 #' @concept analyze
 #' @export
-parity <- function(map, .data = get0('.', parent.frame())) {
+plan_parity <- function(map, .data = get0('.', parent.frame()), ...) {
   if (!inherits(.data, 'redist_plans')) {
     stop('Must provide `.data` if not called within a pipe')
   }
   ndists <- attr(map, 'ndists')
   total_pop <- map[[attr(map, 'pop_col')]]
+  stopifnot(!is.null(total_pop))
 
-  return(rep(max_dev(get_plan_matrix(.data),
-    pop = total_pop,
-    n_distr = ndists
-  ), each = ndists))
+  rep(max_dev(get_plan_matrix(.data), total_pop, ndists), each = ndists)
 }

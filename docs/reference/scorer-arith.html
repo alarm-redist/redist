@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Articles • redist</title>
+<title>Scoring function arithmetic — scorer-arith • redist</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,7 +46,9 @@
 
 
 
-<meta property="og:title" content="Articles" />
+<meta property="og:title" content="Scoring function arithmetic — scorer-arith" />
+<meta property="og:description" content="redist_scorer functions may be multiplied by constants and/or added
+together to form linear combinations." />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -66,7 +68,7 @@
   </head>
 
   <body data-spy="scroll" data-target="#toc">
-    <div class="container template-article-index">
+    <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -113,6 +115,9 @@
     <li>
       <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
     </li>
+    <li>
+      <a href="../articles/tidy-redist.html">Tidy `redist`</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -139,24 +144,48 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>Articles</h1>
+    <h1>Scoring function arithmetic</h1>
+    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/redist_shortburst.R'><code>R/redist_shortburst.R</code></a></small>
+    <div class="hidden name"><code>scorer-arith.Rd</code></div>
     </div>
 
-    <div class="section ">
-      <h3>All vignettes</h3>
-      <p class="section-desc"></p>
-
-      <dl>
-        <dt><a href="map-preproc.html">Map Pre-processing for Special Constraints</a></dt>
-        <dd></dt>
-        <dt><a href="mcmc.html">Redistricting with MCMC and RSG</a></dt>
-        <dd></dt>
-        <dt><a href="mpi-slurm.html">MPI / Slurm Sample Scripts</a></dt>
-        <dd></dt>
-        <dt><a href="redist.html">Introduction to redist</a></dt>
-        <dd></dt>
-      </dl>
+    <div class="ref-description">
+    <p><code>redist_scorer</code> functions may be multiplied by constants and/or added
+together to form linear combinations.</p>
     </div>
+
+    <pre class="usage"># S3 method for redist_scorer
+*(x, fn2)
+
+# S3 method for redist_scorer
++(fn1, fn2)
+
+# S3 method for redist_scorer
+-(fn1, fn2)</pre>
+
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>x</th>
+      <td><p>a numeric</p></td>
+    </tr>
+    <tr>
+      <th>fn2</th>
+      <td><p>a `redist_scorer` function, from [`scorers`]</p></td>
+    </tr>
+    <tr>
+      <th>fn1</th>
+      <td><p>a `redist_scorer` function, from [`scorers`]</p></td>
+    </tr>
+    </table>
+
+
+  </div>
+  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
+    <nav id="toc" data-toggle="toc" class="sticky-top">
+      <h2 data-toc-skip>Contents</h2>
+    </nav>
   </div>
 </div>
 

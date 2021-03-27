@@ -233,3 +233,7 @@ var_info_mat <- function(m, i, pop) {
     .Call(`_redist_var_info_mat`, m, i, pop)
 }
 
+var_info_vec <- function(m, ref, pop) {
+    .Call(`_redist_var_info_vec`, m, ref, pop)
+}
+

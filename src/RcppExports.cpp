@@ -850,3 +850,16 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// var_info_vec
+NumericVector var_info_vec(IntegerMatrix m, IntegerVector ref, NumericVector pop);
+RcppExport SEXP _redist_var_info_vec(SEXP mSEXP, SEXP refSEXP, SEXP popSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type m(mSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type ref(refSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type pop(popSEXP);
+    rcpp_result_gen = Rcpp::wrap(var_info_vec(m, ref, pop));
+    return rcpp_result_gen;
+END_RCPP
+}

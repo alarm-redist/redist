@@ -18,11 +18,11 @@ redist.splits <- function(plans, counties, district_membership) {
     if (missing(plans)) {
         stop('Please provide an argument to plans.')
     }
-    if (!any(class(plans) %in% c('numeric', 'matrix'))) {
-        stop('Please provide "plans" as a matrix.')
-    }
     if (!is.matrix(plans)) {
         plans <- matrix(plans, ncol = 1)
+    }
+    if (!any(class(plans) %in% c('numeric', 'matrix'))) {
+        stop('Please provide "plans" as a matrix.')
     }
 
     if (missing(counties)) {

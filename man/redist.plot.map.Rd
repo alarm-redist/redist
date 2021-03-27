@@ -11,7 +11,7 @@ redist.plot.map(
   fill = NULL,
   fill_label = "",
   zoom_to = NULL,
-  boundaries = TRUE,
+  boundaries = is.null(fill),
   title = ""
 )
 }

@@ -72,9 +72,6 @@
     <li>
       <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
     </li>
-    <li>
-      <a href="../articles/tidy-redist.html">Tidy `redist`</a>
-    </li>
   </ul>
 </li>
 <li>
@@ -111,18 +108,292 @@
 
     
     
+<p>In redistricting analysis, it is often useful or necessary to analyze only a portion of a map, or hold some districts fixed while others are re-simulated. Other analyses might require a status-quo-type constraint that encourages simulated districts to be close to a reference plan.</p>
+<p>All of these requirements may be achieved through map pre-processing, and this vignette shows how to use <code>redist</code> to do so, using the Metropolitan King County Council districts as an example.</p>
+<div id="the-map" class="section level1">
+<h1 class="hasAnchor">
+<a href="#the-map" class="anchor"></a>The Map</h1>
+<p>King County is the most populous county in the state of Washington, and contains the city of Seattle. The nine members of the county council are elected from single-member districts which are redrawn every decade. According to the <a href="https://aqua.kingcounty.gov/council/clerk/code/03_Charter.htm">county charter</a>, the districts should be “drawn to produce districts with compact and contiguous territory, composed of economic and geographic units and approximately equal in population,” and should follow municipality lines as much as possible.</p>
+<p>The precinct data are available online, and contain population, presidential vote, city, and existing district information.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">redist</span><span class="op">)</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; Attaching package: 'redist'</span>
-<span class="co">#&gt; The following object is masked from 'package:stats':</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt;     filter</span></code></pre></div>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="http://tidyverse.tidyverse.org">tidyverse</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://scales.r-lib.org">scales</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com">patchwork</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">redist</span><span class="op">)</span>
+
+<span class="va">data_url</span> <span class="op">=</span> <span class="st">"https://github.com/CoryMcCartan/redist-data/raw/main/data/king_county.rds"</span>
+<span class="va">data_path</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html">tempfile</a></span><span class="op">(</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/download.file.html">download.file</a></span><span class="op">(</span><span class="va">data_url</span>, <span class="va">data_path</span><span class="op">)</span>
+<span class="va">king_shp</span> <span class="op">=</span> <span class="fu">read_rds</span><span class="op">(</span><span class="va">data_path</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">king_shp</span><span class="op">)</span>
+<span class="co">#&gt; Simple feature collection with 2562 features and 10 fields</span>
+<span class="co">#&gt; Attribute-geometry relationship: 3 constant, 5 aggregate, 2 identity</span>
+<span class="co">#&gt; geometry type:  MULTIPOLYGON</span>
+<span class="co">#&gt; dimension:      XY</span>
+<span class="co">#&gt; bbox:           xmin: 1217170 ymin: 31464.84 xmax: 1583214 ymax: 287944.6</span>
+<span class="co">#&gt; projected CRS:  NAD83(HARN) / Washington North (ftUS)</span>
+<span class="co">#&gt; # A tibble: 2,562 x 11</span>
+<span class="co">#&gt;    id     precinct    city     distr   pop   vap voters dem_08 rep_08 pct_water</span>
+<span class="co">#&gt;  * &lt;chr&gt;  &lt;chr&gt;       &lt;chr&gt;    &lt;int&gt; &lt;int&gt; &lt;int&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;     &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 333518 AUB 30-3518 AUB          7  1035   780    641    249    221   0      </span>
+<span class="co">#&gt;  2 331066 AUB 30-1066 AUB          7   588   466    372    172    123   0      </span>
+<span class="co">#&gt;  3 332446 PEGGY       UNINCORP     7  1290   950    763    339    262   0      </span>
+<span class="co">#&gt;  4 332573 AUB 30-2573 AUB          7   948   710    644    305    217   0      </span>
+<span class="co">#&gt;  5 333539 AUB 30-3539 AUB          7   663   486    419    188    156   0      </span>
+<span class="co">#&gt;  6 333538 AUB 30-3538 AUB          7  1214   892    716    328    240   0      </span>
+<span class="co">#&gt;  7 330045 AUB 47-0045 AUB          7   731   656    433    190    105   0.00538</span>
+<span class="co">#&gt;  8 330427 EXCALIBUR   UNINCORP     7   660   501    402    164    151   0.00689</span>
+<span class="co">#&gt;  9 333087 FED 30-3087 FED          7   820   645    453    223    124   0      </span>
+<span class="co">#&gt; 10 333238 FED 30-3238 FED          7   997   674    356    161     90   0      </span>
+<span class="co">#&gt; # … with 2,552 more rows, and 1 more variable:</span>
+<span class="co">#&gt; #   geometry &lt;MULTIPOLYGON [US_survey_foot]&gt;</span></code></pre></div>
+<p>There are 39 incorporated cities in King County, which together cover 19% of the population and 19% of the area of the county. The remainder is “unincorporated King County”. The county contains a significant amount of water, too, which complicates the drawing of districts; Vashon Island in the southwest part of the county is not connected to the rest of the county by land.</p>
+<p>We’ll start by looking at some maps of the county and the districts.</p>
+<p><img src="map-preproc_files/figure-html/water-plot-1.png" width="768"></p>
+<p><img src="map-preproc_files/figure-html/city-distr-plot-1.png" width="700"></p>
+</div>
+<div id="creating-the-redist_map-object" class="section level1">
+<h1 class="hasAnchor">
+<a href="#creating-the-redist_map-object" class="anchor"></a>Creating the <code>redist_map</code> object</h1>
+<p>The first step one in a <code>redist</code> analysis is creating the <code>redist_map</code> object, which stores the basic parameters of the redistricting problem. Among these parameters is the desired level of population parity. Here, we’ll compute the parity of the current set of districts, and ensure that all of our simulations do no worse.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">existing_parity</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist.parity.html">redist.parity</a></span><span class="op">(</span><span class="va">king_shp</span><span class="op">$</span><span class="va">distr</span>, <span class="va">king_shp</span><span class="op">$</span><span class="va">pop</span><span class="op">)</span>
+<span class="va">king</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">king_shp</span>, existing_plan<span class="op">=</span><span class="va">distr</span>, pop_tol<span class="op">=</span><span class="va">existing_parity</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">king</span><span class="op">)</span>
+<span class="co">#&gt; A redist_map object with 2562 units and 12 fields</span>
+<span class="co">#&gt; To be partitioned into 9 districts with population between 214,505.7 - 1.663204% and 214,505.7 + 1.663204%</span>
+<span class="co">#&gt; With geometry:</span>
+<span class="co">#&gt;     bbox:           xmin: 1217170 ymin: 31464.84 xmax: 1583214 ymax: 287944.6</span>
+<span class="co">#&gt;     projected CRS:  NAD83(HARN) / Washington North (ftUS)</span>
+<span class="co">#&gt; # A tibble: 2,562 x 12</span>
+<span class="co">#&gt;    id     precinct    city     distr   pop   vap voters dem_08 rep_08 pct_water</span>
+<span class="co">#&gt;  * &lt;chr&gt;  &lt;chr&gt;       &lt;chr&gt;    &lt;int&gt; &lt;int&gt; &lt;int&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;     &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 333518 AUB 30-3518 AUB          7  1035   780    641    249    221   0      </span>
+<span class="co">#&gt;  2 331066 AUB 30-1066 AUB          7   588   466    372    172    123   0      </span>
+<span class="co">#&gt;  3 332446 PEGGY       UNINCORP     7  1290   950    763    339    262   0      </span>
+<span class="co">#&gt;  4 332573 AUB 30-2573 AUB          7   948   710    644    305    217   0      </span>
+<span class="co">#&gt;  5 333539 AUB 30-3539 AUB          7   663   486    419    188    156   0      </span>
+<span class="co">#&gt;  6 333538 AUB 30-3538 AUB          7  1214   892    716    328    240   0      </span>
+<span class="co">#&gt;  7 330045 AUB 47-0045 AUB          7   731   656    433    190    105   0.00538</span>
+<span class="co">#&gt;  8 330427 EXCALIBUR   UNINCORP     7   660   501    402    164    151   0.00689</span>
+<span class="co">#&gt;  9 333087 FED 30-3087 FED          7   820   645    453    223    124   0      </span>
+<span class="co">#&gt; 10 333238 FED 30-3238 FED          7   997   674    356    161     90   0      </span>
+<span class="co">#&gt; # … with 2,552 more rows, and 2 more variables:</span>
+<span class="co">#&gt; #   geometry &lt;MULTIPOLYGON [US_survey_foot]&gt;, adj &lt;list&gt;</span></code></pre></div>
+<p>This <code>redist_map</code> object contains an adjacency graph for the county. We can explore this graph, and zoom in on the city of Seattle, using <code><a href="https://rdrr.io/r/graphics/plot.default.html">plot()</a></code>.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">king</span>, adj<span class="op">=</span><span class="cn">T</span>, centroids<span class="op">=</span><span class="cn">F</span>, zoom_to<span class="op">=</span><span class="op">(</span><span class="va">city</span> <span class="op">==</span> <span class="st">"SEA"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<p><img src="map-preproc_files/figure-html/king-adj-1.png" width="700"></p>
+</div>
+<div id="subsetting" class="section level1">
+<h1 class="hasAnchor">
+<a href="#subsetting" class="anchor"></a>Subsetting</h1>
+<p>Often, we wish to restrict our analysis to a part of a map or only a few of the districts. This is supported in <code>redist</code> using the <code><a href="https://dplyr.tidyverse.org/reference/filter.html">filter()</a></code> function from <a href="https://dplyr.tidyverse.org/"><code>dplyr</code></a>. The package’s version of <code><a href="https://dplyr.tidyverse.org/reference/filter.html">filter()</a></code> will automatically update the adjacency graph, the number of districts, and the relevant population bounds.</p>
+<div id="specific-districts" class="section level2">
+<h2 class="hasAnchor">
+<a href="#specific-districts" class="anchor"></a>Specific districts</h2>
+<p>Suppose we wanted to study districts 2, 4, and 8, which cover most of Seattle.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="va">king</span>, <span class="va">distr</span> <span class="op">%in%</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">4</span>, <span class="fl">8</span><span class="op">)</span><span class="op">)</span>
+<span class="co">#&gt; A redist_map object with 960 units and 12 fields</span>
+<span class="co">#&gt; To be partitioned into 3 districts with population between 213,049 - 0.9908519% and 213,049 + 2.358299%</span>
+<span class="co">#&gt; With geometry:</span>
+<span class="co">#&gt;     bbox:           xmin: 1217170 ymin: 120178.2 xmax: 1297890 ymax: 271519.8</span>
+<span class="co">#&gt;     projected CRS:  NAD83(HARN) / Washington North (ftUS)</span>
+<span class="co">#&gt; # A tibble: 960 x 12</span>
+<span class="co">#&gt;    id     precinct    city     distr   pop   vap voters dem_08 rep_08 pct_water</span>
+<span class="co">#&gt;  * &lt;chr&gt;  &lt;chr&gt;       &lt;chr&gt;    &lt;int&gt; &lt;int&gt; &lt;int&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;     &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 330374 DOLPHIN     UNINCORP     8   378   296    291    199     53     0.447</span>
+<span class="co">#&gt;  2 330236 BILOXI      UNINCORP     8   534   436    432    295     81     0.394</span>
+<span class="co">#&gt;  3 330370 DILWORTH    UNINCORP     8   536   424    420    299     66     0.293</span>
+<span class="co">#&gt;  4 331520 SEA 34-1520 SEA          8   407   316    312    237     49     0.398</span>
+<span class="co">#&gt;  5 333266 SEA 34-3266 SEA          8   601   495    246    160     31     0    </span>
+<span class="co">#&gt;  6 333265 SEA 34-3265 SEA          8   741   561    315    231     38     0    </span>
+<span class="co">#&gt;  7 331515 SEA 34-1515 SEA          8   524   418    353    276     34     0    </span>
+<span class="co">#&gt;  8 331512 SEA 34-1512 SEA          8   379   307    262    200     33     0    </span>
+<span class="co">#&gt;  9 331517 SEA 34-1517 SEA          8   353   295    239    193     17     0    </span>
+<span class="co">#&gt; 10 331519 SEA 34-1519 SEA          8   407   328    282    211     44     0    </span>
+<span class="co">#&gt; # … with 950 more rows, and 2 more variables:</span>
+<span class="co">#&gt; #   geometry &lt;MULTIPOLYGON [US_survey_foot]&gt;, adj &lt;list&gt;</span></code></pre></div>
+<p>Looking at the information in the header, and comparing it to the original <code>king</code> object, we see that the number of districts has been updated from 9 to 3, and the population tolerances have been updated from 214,506 ± 1.663% to 213,049 - 0.9909% and 213,049 + 2.358%. Not visible but equally important are the edits to the adjacency graph to reflect the new geometry of the map.</p>
+</div>
+<div id="dealing-with-water-and-islands" class="section level2">
+<h2 class="hasAnchor">
+<a href="#dealing-with-water-and-islands" class="anchor"></a>Dealing with water and islands</h2>
+<p>Another way we might want to subset would be to cut out the precincts which are just water, so that districts won’t unnecessarily cross bodies of water. Of course, we’ll have to ensure that Vashon Island is still connected to the mainland by at least one precinct. We’ll start by subsetting to the water precincts and ploting labels.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="va">king</span>, <span class="va">pct_water</span> <span class="op">&gt;=</span> <span class="fl">0.99</span>, <span class="va">pop</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu">geom_sf_text</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span>label<span class="op">=</span><span class="va">id</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<p><img src="map-preproc_files/figure-html/king-water-1.png" width="700"></p>
+<p>We see that by removing all water precincts except WVPS34, WVSP34, and WVPS30, we can maintain a connection between the island and the mainland (incidentally, the state ferry connecting the island to Seattle runs through these precincts).</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">water_prec</span> <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="va">king</span>, <span class="va">pct_water</span> <span class="op">&gt;=</span> <span class="fl">0.99</span>, <span class="va">pop</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="fu">pull</span><span class="op">(</span><span class="va">id</span><span class="op">)</span>
+<span class="va">water_prec</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html">setdiff</a></span><span class="op">(</span><span class="va">water_prec</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"WVPS34"</span>, <span class="st">"WVSP34"</span>, <span class="st">"WVPS30"</span><span class="op">)</span><span class="op">)</span>
+<span class="va">king_land</span> <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="va">king</span>, <span class="op">!</span><span class="op">(</span><span class="va">id</span> <span class="op">%in%</span> <span class="va">water_prec</span><span class="op">)</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">king_land</span><span class="op">)</span></code></pre></div>
+<p><img src="map-preproc_files/figure-html/king-land-1.png" width="700"></p>
+<p>Zooming in again to view the adjacency graph in the city of Seattle, we see that the graph has been appropriately edited to remove the water precincts.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">king_land</span>, adj<span class="op">=</span><span class="cn">T</span>, centroids<span class="op">=</span><span class="cn">F</span>, zoom_to<span class="op">=</span><span class="op">(</span><span class="va">city</span> <span class="op">==</span> <span class="st">"SEA"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<p><img src="map-preproc_files/figure-html/seattle-land-adj-1.png" width="700"></p>
+</div>
+</div>
+<div id="merging" class="section level1">
+<h1 class="hasAnchor">
+<a href="#merging" class="anchor"></a>Merging</h1>
+<p>Often, we want to merge some units together to form larger units, either to visualize or analyze at a coarser scale, or to ensure that the merged units are treated as one “block” in any redistricting algorithm. Merging units is a part of most map preprocessing workflows, and in <code>redist</code> is carried out by the <code><a href="../reference/merge_by.html">merge_by()</a></code> function, which works like a combination of the <code>group_by()</code> and <code>summarize()</code> verbs of <code>dplyr</code>.</p>
+<p>For example, we could merge our King County data by city.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/merge_by.html">merge_by</a></span><span class="op">(</span><span class="va">king_land</span>, <span class="va">city</span><span class="op">)</span>
+<span class="co">#&gt; A redist_map object with 60 units and 11 fields</span>
+<span class="co">#&gt; To be partitioned into 9 districts with population between 214,505.7 - 1.663204% and 214,505.7 + 1.663204%</span>
+<span class="co">#&gt; Merged from another map with reindexing: int [1:2542] 41 41 46 41 41 ...</span>
+<span class="co">#&gt; # A tibble: 60 x 11</span>
+<span class="co">#&gt; # Groups:   distr [9]</span>
+<span class="co">#&gt;    distr city  pct_water    pop    vap voters dem_08 rep_08 id    precinct adj  </span>
+<span class="co">#&gt;    &lt;int&gt; &lt;chr&gt;     &lt;dbl&gt;  &lt;int&gt;  &lt;int&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt;    &lt;lis&gt;</span>
+<span class="co">#&gt;  1     1 BOT     0        17090  13312 9.89e3  5259   3017  3332… BOT 01-… &lt;int…</span>
+<span class="co">#&gt;  2     1 KIR     0.0503    7036   5856 3.91e3  2191    947  3329… KIR 45-… &lt;int…</span>
+<span class="co">#&gt;  3     1 KMR     0.0128   20460  15787 1.30e4  7288   3476  3306… KMR 32-… &lt;int…</span>
+<span class="co">#&gt;  4     1 LFP     0.0281   12598   9975 9.46e3  6063   1992  3306… LFP 32-… &lt;int…</span>
+<span class="co">#&gt;  5     1 SEA     0.00845  72503  59161 4.79e4 34664   6527  3323… SEA 46-… &lt;int…</span>
+<span class="co">#&gt;  6     1 SHL     0.00447  53007  42873 3.43e4 20895   7184  3325… SHL 32-… &lt;int…</span>
+<span class="co">#&gt;  7     1 UNIN…   0.0536   24780  19208 1.54e4  8370   4440  3305… JEAN~CE… &lt;int…</span>
+<span class="co">#&gt;  8     1 WOD     0.00260   8059   6163 4.79e3  2480   1505  3327… WOD 45-… &lt;int…</span>
+<span class="co">#&gt;  9     2 SEA     0.0408  195293 162191 1.17e5 84203  10899  3318… SEA 43-… &lt;int…</span>
+<span class="co">#&gt; 10     2 UNIN…   0.0248   15645  11866 7.46e3  4654.  1211. 3309… RAINIER… &lt;int…</span>
+<span class="co">#&gt; # … with 50 more rows</span></code></pre></div>
+<p>Under the hood, <code><a href="../reference/merge_by.html">merge_by()</a></code> does several things. First, it groups the shapefile by the provided key or keys (here, <code>city</code>). By default it also groups by existing districts, so that the merged units will still follow district boundaries. Then for each remaining column, <code><a href="../reference/merge_by.html">merge_by()</a></code> tries to automatically summarize it. Most numeric columns are summed (but columns with percentage values are averaged), and most character columns are collapsed into summary variables. You can read more about the details of this process in <a href="../reference/merge_by.html">the documentation</a>. Finally, <code><a href="../reference/merge_by.html">merge_by()</a></code> makes the appropriate edits to the adjacency graph.</p>
+<p>Merging geographic shapefile units can be computationally intensive, and so by default <code><a href="../reference/merge_by.html">merge_by()</a></code> drops the geometry before merging. This is OK for analysis purposes, since all of the relevant adjacency information is still encoded in the graph. After analysis, you can use the <code><a href="../reference/pullback.html">pullback()</a></code> method to un-merge objects and restore plotting capability. However, should you want to preserve the geometry through merging, you can simply set <code>drop_geom=FALSE</code>.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">king_merged</span> <span class="op">=</span> <span class="fu"><a href="../reference/merge_by.html">merge_by</a></span><span class="op">(</span><span class="va">king_land</span>, <span class="va">city</span>, drop_geom<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">king_merged</span>, adj<span class="op">=</span><span class="cn">T</span><span class="op">)</span></code></pre></div>
+<p><img src="map-preproc_files/figure-html/merged-city-1.png" width="700"></p>
+<p>We will see more uses of <code><a href="../reference/merge_by.html">merge_by()</a></code> in the sections below.</p>
+</div>
+<div id="freezing" class="section level1">
+<h1 class="hasAnchor">
+<a href="#freezing" class="anchor"></a>Freezing</h1>
+<p>Sometimes, rather than completely remove a portion of a map, we want to freeze it in place, so that all of the units in that portion stay together in the same district. The reasons for doing this might vary, but include enforcing a county or administrative boundary split constraint, aiding in setting up Voting Rights Act constraints, or preparing a map to be optimized according to a set of criteria.</p>
+<p>In the context of King County Council seats, we might want to implement the requirement that districts follow municipal lines by ensuring that any sampled redistricting plans not split any municipalities which are not split by the existing plan. That way, the number of split municipalities in the set of sampled plans will be guaranteed to not exceed the number of existing splits.</p>
+<p>In <code>redist</code>, freezing is accomplished by using the <code><a href="../reference/freeze.html">freeze()</a></code> and <code><a href="../reference/merge_by.html">merge_by()</a></code> functions. The former takes in a description of the units which should be frozen, and groups them into contiguous chunks of frozen units, returning an indexing vector that uniquely identifies each group. Then <code><a href="../reference/merge_by.html">merge_by()</a></code> merges these groups together. We can use the <code><a href="../reference/county_splits.html">redist.splits()</a></code> function to count split municipalities, and the <code><a href="../reference/is_county_split.html">is_county_split()</a></code> function to identify split municipalities.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="fu"><a href="../reference/county_splits.html">redist.splits</a></span><span class="op">(</span><span class="va">king_land</span><span class="op">$</span><span class="va">distr</span>, <span class="va">king_land</span><span class="op">$</span><span class="va">city</span><span class="op">)</span>, <span class="st">"split cities\n"</span><span class="op">)</span>
+<span class="co">#&gt; 11 split cities</span>
+
+<span class="va">king_land</span> <span class="op">%&gt;%</span>
+    <span class="fu">mutate</span><span class="op">(</span>is_unsplit <span class="op">=</span> <span class="op">!</span><span class="fu"><a href="../reference/is_county_split.html">is_county_split</a></span><span class="op">(</span><span class="va">distr</span>, <span class="va">city</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">is_unsplit</span><span class="op">)</span></code></pre></div>
+<p><img src="map-preproc_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R">
+<span class="va">king_unsplit</span> <span class="op">=</span> <span class="va">king_land</span> <span class="op">%&gt;%</span>
+    <span class="fu">mutate</span><span class="op">(</span>unsplit_id <span class="op">=</span> <span class="fu"><a href="../reference/freeze.html">freeze</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="../reference/is_county_split.html">is_county_split</a></span><span class="op">(</span><span class="va">distr</span>, <span class="va">city</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
+    <span class="fu"><a href="../reference/merge_by.html">merge_by</a></span><span class="op">(</span><span class="va">unsplit_id</span>, <span class="va">city</span>, collapse_chr<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">king_unsplit</span><span class="op">)</span>
+<span class="co">#&gt; A redist_map object with 1969 units and 10 fields</span>
+<span class="co">#&gt; To be partitioned into 9 districts with population between 214,505.7 - 1.663204% and 214,505.7 + 1.663204%</span>
+<span class="co">#&gt; Merged from another map with reindexing: int [1:2542] 1410 1410 1414 1410 1410 ...</span>
+<span class="co">#&gt; # A tibble: 1,969 x 10</span>
+<span class="co">#&gt; # Groups:   distr, unsplit_id [1,952]</span>
+<span class="co">#&gt;    distr unsplit_id city  pct_water   pop   vap voters dem_08 rep_08 adj       </span>
+<span class="co">#&gt;    &lt;int&gt;      &lt;int&gt; &lt;chr&gt;     &lt;dbl&gt; &lt;int&gt; &lt;int&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt; &lt;list&gt;    </span>
+<span class="co">#&gt;  1     1         67 SEA     0        1227  1115    601    420     83 &lt;int [7]&gt; </span>
+<span class="co">#&gt;  2     1         68 SEA     0         663   533    467    359     46 &lt;int [6]&gt; </span>
+<span class="co">#&gt;  3     1         69 SEA     0         563   455    376    286     47 &lt;int [5]&gt; </span>
+<span class="co">#&gt;  4     1         70 SEA     0         369   298    248    190     28 &lt;int [5]&gt; </span>
+<span class="co">#&gt;  5     1         71 SEA     0         423   360    296    233     27 &lt;int [5]&gt; </span>
+<span class="co">#&gt;  6     1         72 SEA     0         580   488    406    310     47 &lt;int [6]&gt; </span>
+<span class="co">#&gt;  7     1        101 BOT     0       17090 13312   9894   5259   3017 &lt;int [13]&gt;</span>
+<span class="co">#&gt;  8     1        101 KMR     0.0128  20460 15787  12954   7288   3476 &lt;int [10]&gt;</span>
+<span class="co">#&gt;  9     1        101 LFP     0.0281  12598  9975   9465   6063   1992 &lt;int [4]&gt; </span>
+<span class="co">#&gt; 10     1        101 SHL     0.00447 53007 42873  34346  20895   7184 &lt;int [14]&gt;</span>
+<span class="co">#&gt; # … with 1,959 more rows</span></code></pre></div>
+<p>The plot above shows which cities will be frozen together so that they cannot be split. Notice that we merge by not just <code>unsplit_id</code> but also <code>city</code>, so that adjacent unsplit cities are not merged together. We also set <code>collapse_chr=FALSE</code> to drop the <code>id</code> and <code>precinct</code> columns, which become slightly unwieldy after a large merge.</p>
+<p>To see this in action, we’ll sample 50 redistricting plans using <code><a href="../reference/redist_smc.html">redist_smc()</a></code> on this partially frozen map. We’ll use <code><a href="../reference/pullback.html">pullback()</a></code> to then reconstruct the plan output of <code><a href="../reference/redist_smc.html">redist_smc()</a></code> so that it is congruous with the original geometry object, <code>king_land</code>.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">plans</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">king_unsplit</span>, <span class="fl">50</span>, silent<span class="op">=</span><span class="cn">T</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">plans</span><span class="op">)</span>
+<span class="co">#&gt; 50 sampled plans and 1 reference plan with 9 districts from a 1969-unit map,</span>
+<span class="co">#&gt;   drawn using Sequential Monte Carlo</span>
+<span class="co">#&gt; Merged from another map with reindexing: int [1:2542] 1410 1410 1414 1410 1410 ...</span>
+<span class="co">#&gt; With plans resampled from weights</span>
+<span class="co">#&gt; Plans matrix: num [1:1969, 1:51] 1 1 1 1 1 1 1 1 1 1 ...</span>
+<span class="co">#&gt; # A tibble: 459 x 3</span>
+<span class="co">#&gt;    draw  district total_pop</span>
+<span class="co">#&gt;    &lt;fct&gt;    &lt;int&gt;     &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 distr        1    215533</span>
+<span class="co">#&gt;  2 distr        2    210938</span>
+<span class="co">#&gt;  3 distr        3    213700</span>
+<span class="co">#&gt;  4 distr        4    215718</span>
+<span class="co">#&gt;  5 distr        5    216833</span>
+<span class="co">#&gt;  6 distr        6    213696</span>
+<span class="co">#&gt;  7 distr        7    214210</span>
+<span class="co">#&gt;  8 distr        8    212491</span>
+<span class="co">#&gt;  9 distr        9    217432</span>
+<span class="co">#&gt; 10 1            1    215674</span>
+<span class="co">#&gt; # … with 449 more rows</span>
+<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="fu"><a href="../reference/pullback.html">pullback</a></span><span class="op">(</span><span class="va">plans</span><span class="op">)</span><span class="op">)</span>
+<span class="co">#&gt; 50 sampled plans and 1 reference plan with 9 districts from a 2542-unit map,</span>
+<span class="co">#&gt;   drawn using Sequential Monte Carlo</span>
+<span class="co">#&gt; With plans resampled from weights</span>
+<span class="co">#&gt; Plans matrix: num [1:2542, 1:51] 7 7 7 7 7 7 7 7 7 7 ...</span>
+<span class="co">#&gt; # A tibble: 459 x 3</span>
+<span class="co">#&gt;    draw  district total_pop</span>
+<span class="co">#&gt;    &lt;fct&gt;    &lt;int&gt;     &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 distr        1    215533</span>
+<span class="co">#&gt;  2 distr        2    210938</span>
+<span class="co">#&gt;  3 distr        3    213700</span>
+<span class="co">#&gt;  4 distr        4    215718</span>
+<span class="co">#&gt;  5 distr        5    216833</span>
+<span class="co">#&gt;  6 distr        6    213696</span>
+<span class="co">#&gt;  7 distr        7    214210</span>
+<span class="co">#&gt;  8 distr        8    212491</span>
+<span class="co">#&gt;  9 distr        9    217432</span>
+<span class="co">#&gt; 10 1            1    215674</span>
+<span class="co">#&gt; # … with 449 more rows</span>
+<span class="fu"><a href="../reference/redist.plot.plans.html">redist.plot.plans</a></span><span class="op">(</span><span class="fu"><a href="../reference/pullback.html">pullback</a></span><span class="op">(</span><span class="va">plans</span><span class="op">)</span>, draws<span class="op">=</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, geom<span class="op">=</span><span class="va">king_land</span><span class="op">)</span></code></pre></div>
+<p><img src="map-preproc_files/figure-html/unsplit-plan-1.png" width="768"></p>
+<p>Notice how the <code>Merged from another map...</code> line disappears and the number of map units changes after using <code><a href="../reference/pullback.html">pullback()</a></code>. Notice also that each of the sampled plans completely preserves the municipalities which were frozen with <code><a href="../reference/freeze.html">freeze()</a></code> and <code><a href="../reference/merge_by.html">merge_by()</a></code>.</p>
+</div>
+<div id="district-cores" class="section level1">
+<h1 class="hasAnchor">
+<a href="#district-cores" class="anchor"></a>District Cores</h1>
+<p>A common requirement in redistricting is that districts after redistricting resemble the original districts, or <a href="https://www.ncsl.org/research/redistricting/redistricting-criteria.aspx">“preserve the cores” of previous districts</a>, to ensure relative continuity of representation. The <code>redist</code> package operationalizes this idea by explicitly constructing the cores of a set of districts with <code><a href="../reference/make_cores.html">make_cores()</a></code>, and merging them together with <code><a href="../reference/merge_by.html">merge_by()</a></code>.</p>
+<p>The idea for constructing district cores is to work inwards from district boundaries. First, we merge each district completely. Then, we un-freeze the precincts which lie along district boundaries. Then, we un-freeze the precincts which were unfrozen in the previous step. We repeat this process a user-specified number of times, leaving only the central “cores” of each district frozen. When it comes time to simulate, these cores will be assigned a district as a unit, preserving representation for all the people living in the core.</p>
+<p>The <code><a href="../reference/make_cores.html">make_cores()</a></code> function takes a <code>boundary</code> parameter which counts the number of these steps; <code>boundary=1</code> corresponds to un-freezing the precincts along the boundary only. This is often sufficient for a moderate-to-strong status quo constraint.</p>
+<p>For example, if we set <code>boundary=1</code> in King county, 82% of the population lives inside a district core, while with <code>boundary=2</code> that number drops to 58%.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">pop_inside_cores</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">boundary</span><span class="op">)</span> <span class="op">{</span>
+    <span class="va">king_land</span> <span class="op">%&gt;%</span>
+        <span class="fu">mutate</span><span class="op">(</span>core <span class="op">=</span> <span class="fu"><a href="../reference/make_cores.html">make_cores</a></span><span class="op">(</span>boundary<span class="op">=</span><span class="va">boundary</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
+        <span class="fu">group_by</span><span class="op">(</span><span class="va">core</span><span class="op">)</span> <span class="op">%&gt;%</span>
+        <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="fu">n</span><span class="op">(</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">2</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="co"># filter to cores only</span>
+        <span class="fu">pull</span><span class="op">(</span><span class="va">pop</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="va">sum</span>
+<span class="op">}</span>
+<span class="fu">pop_inside_cores</span><span class="op">(</span><span class="fl">1</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">king_land</span><span class="op">$</span><span class="va">pop</span><span class="op">)</span>
+<span class="co">#&gt; [1] 0.8254058</span>
+<span class="fu">pop_inside_cores</span><span class="op">(</span><span class="fl">2</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">king_land</span><span class="op">$</span><span class="va">pop</span><span class="op">)</span>
+<span class="co">#&gt; [1] 0.5845145</span></code></pre></div>
+<p>Here, we’ll use <code>boundary=1</code>. We can see how large areas inside each district are merged together after applying <code><a href="../reference/merge_by.html">merge_by()</a></code> to the generated cores.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">king_cores</span> <span class="op">=</span> <span class="va">king_land</span> <span class="op">%&gt;%</span>
+    <span class="fu">mutate</span><span class="op">(</span>core <span class="op">=</span> <span class="fu"><a href="../reference/make_cores.html">make_cores</a></span><span class="op">(</span>boundary<span class="op">=</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
+    <span class="fu"><a href="../reference/merge_by.html">merge_by</a></span><span class="op">(</span><span class="va">core</span>, drop_geom<span class="op">=</span><span class="cn">F</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">king_cores</span><span class="op">)</span></code></pre></div>
+<p><img src="map-preproc_files/figure-html/cores-1.png" width="700"></p>
+<p>If we sample redistrict plans from this modified map, we observe that the simulated plans generally follow the same location and shape as the original plan. Sampling is also faster, since there are fewer units in the map.</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">plans</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">king_cores</span>, <span class="fl">50</span>, silent<span class="op">=</span><span class="cn">T</span><span class="op">)</span>
+<span class="fu"><a href="../reference/redist.plot.plans.html">redist.plot.plans</a></span><span class="op">(</span><span class="va">plans</span>, draws<span class="op">=</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, geom<span class="op">=</span><span class="va">king_cores</span><span class="op">)</span></code></pre></div>
+<p><img src="map-preproc_files/figure-html/core-plans-1.png" width="700"></p>
+</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
 
-      </div>
+        <nav id="toc" data-toggle="toc"><h2 data-toc-skip>Contents</h2>
+    </nav>
+</div>
 
 </div>
 

@@ -74,14 +74,16 @@ merge_by = function(.data, ..., by_existing=TRUE, drop_geom=TRUE, collapse_chr=T
                                            ~ weighted.mean(., w=.data[[pop_col]], na.rm=T)),
                              dplyr::across(where(is.numeric), sum, na.rm=T),
                              dplyr::across(where(is_const_rel(key_val)), ~ .[1]),
-                             dplyr::across(where(is_col_chr), unique_chr))
+                             dplyr::across(where(is_col_chr), unique_chr),
+                             .groups="drop")
     } else {
         dplyr::group_by(.data, !!!dots) %>%
             dplyr::summarize(dplyr::across(where(is_prop),
                                            ~ weighted.mean(., w=.data[[pop_col]], na.rm=T)),
                              dplyr::across(where(is.numeric), sum, na.rm=T),
                              dplyr::across(where(is_const_rel(key_val)), ~ .[1]),
-                             dplyr::across(where(is_col_chr), unique_chr)) %>%
+                             dplyr::across(where(is_col_chr), unique_chr),
+                             .groups="drop") %>%
             `attr<-`("existing_col", NULL)
     }
 }
