@@ -9,6 +9,7 @@
 #' Defaults to compact.
 #' @param constraintweight corresponding weights to use with constraint. Weights must be nonzero if provided. Defaults to
 #' a weak compactness constraint
+#' @param init_plan initial plan to use for the similarity constraint
 #' @param compactness_metric character with "edges-removed", "polsby-popper", or "fryer-holden". Default is edges-removed.
 #' @param areas areas to use with compact:polsby-popper. Computed from map if not provided and needed.
 #' @param borderlength_mat border lengths to use with compact:polsby-popper.
@@ -42,6 +43,7 @@
 flip_constraints_helper <- function(map,
                                     constraint = 'compact',
                                     constraintweight = 0.6,
+                                    init_plan = NULL,
                                     compactness_metric = 'edges-removed',
                                     areas,
                                     borderlength_mat,
@@ -63,9 +65,7 @@ flip_constraints_helper <- function(map,
   counties <- eval_tidy(enquo(counties), map)
   
   constraints_list <- process_flip_constr(
-    constraints = list(),
-    group_pop = rep(0, nrow(map)),
-    counties = rep(1, nrow(map))
+    constraints = list(), nrow(map)
   )
 
   if (is.null(constraint)) {
@@ -96,6 +96,10 @@ flip_constraints_helper <- function(map,
     }
   }
   
+  init_plan <- eval_tidy(enquo(init_plan), map)
+  if('similarity' %in% constraint & is.null(init_plan)){
+    stop('Please provide an initial plan to `init_plan` for the similarity constraint.')
+  }
   
 
   if (length(constraint) != length(constraintweight)) {
@@ -103,9 +107,7 @@ flip_constraints_helper <- function(map,
   }
 
   constraints_list <- process_flip_constr(
-    constraints = list(),
-    group_pop = rep(0, nrow(map)),
-    counties = rep(1, nrow(map))
+    constraints = list(), nrow(map)
   )
 
   if ('compact' %in% constraint) {
@@ -183,6 +185,7 @@ flip_constraints_helper <- function(map,
   }
   if ('similarity' %in% constraint) {
     constraints_list$similarity$weight <- constraintweight[which(constraint == 'similarity')]
+    constraints_list$similarity$plan <- init_plan
   }
   if ('partisan' %in% constraint) {
     constraints_list$partisan$weight <- constraintweight[which(constraint == 'partisan')]

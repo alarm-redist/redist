@@ -21,7 +21,7 @@ skinny_flips <- function(adj, init_plan, total_pop, pop_tol, nsims, eprob, lambd
   
   algout <- swMH(aList = adj,
                  cdvec = init_plan,
-                 cdorigvec = init_plan,
+                 cdorigvec = constraints$similarity$plan,
                  popvec = total_pop,
                  grouppopvec = constraints$group_pop,
                  areas_vec = constraints$compact$areas,

@@ -44,7 +44,6 @@
 #' \code{partisan} have sub-types which are specified via a character \code{metric}
 #' within their respective list objects. The constraints are as follows:
 #' * \code{compact} - biases the algorithm towards drawing more compact districts. 
-#' This constraint uses \code{counties} when \code{log-st} is used. 
 #'   * weight - the coefficient to put on the Gibbs constraint
 #'   * metric - which metric to use. Must be one of \code{edges-removed} (the default),
 #'   \code{polsby-popper}, \code{fryer-holden}, or \code{log-st}. Using Polsby Popper 
@@ -66,21 +65,19 @@
 #'   * weight - the coefficient to put on the Gibbs constraint
 #' * \code{countysplit} This is a Gibbs constraint to minimize county splits. Unlike 
 #' SMC's county constraint, this allows for more than \code{ndists - 1} splits and
-#' does not require that counties are contiguous. This constraint uses the input 
-#' to \code{counties}.
+#' does not require that counties are contiguous.
 #'   * weight - the coefficient to put on the Gibbs constraint
 #' * \code{hinge} This uses the proportion of a group in a district and matches to the 
 #' nearest target proportion, and then creates a penalty of 
 #' \eqn{\sqrt{max(0, nearest.target - group.pct)}}. This is equivalent to the 
-#' \code{vra-old} constraint in  \code{redist_smc}. This constraint uses the 
-#' input to \code{group_pop}.
+#' \code{vra-old} constraint in  \code{redist_smc}.
 #'   * weight - the coefficient to put on the Gibbs constraint
 #'   * minorityprop - A numeric vector of minority proportions (between 0 and 1) which 
 #'   districts should aim to have
 #' * \code{vra} This takes two target proportions of the presence of a minority group
 #' within a district. \eqn{(|target.min - group.pct||target.other - group.pct|)^{1.5})}
 #' This is equivalent to the \code{vra-old} constraint in 
-#' \code{redist_smc}. This constraint uses the input to \code{group_pop}.
+#' \code{redist_smc}.
 #'   * weight - the coefficient to put on the Gibbs constraint
 #'   * target_min - the target minority percentage. Often, this is set to 0.55 to encourage
 #'   minority majority districts.
@@ -88,13 +85,12 @@
 #' * \code{minority} This constraint sorts the districts by the proportion of a group in
 #' a district and compares the highest districts to the entries of minorityprop.
 #' This takes the form \eqn{\sum_{i=1}^{n} \sqrt{|group.pct(i) - minorityprop(i)| }} where n 
-#' is the length of minorityprop input. This constraint uses the input to \code{group_pop}.
+#' is the length of minorityprop input.
 #'   * weight - the coefficient to put on the Gibbs constraint
 #'   * minorityprop - A numeric vector of minority proportions (between 0 and 1) which 
 #'   districts should aim to have
 #' * \code{similarity} This is a status-quo constraint which penalizes plans which 
 #' are very different from the starting place. It is useful for local exploration.
-#' This constraint uses the input to \code{init_plan} to compare proposals.
 #'   * weight - the coefficient to put on the Gibbs constraint
 #' * \code{partisan} This is a constraint which minimizes partisan bias, either as
 #' measured as the difference from proportional representation or as the magnitude of
@@ -105,7 +101,7 @@
 #'   * metric - which metric to use. Must be one of \code{proportional-representation}
 #'   or \code{efficiency-gap}.
 #' * \code{segregation} This constraint attempts to minimize the degree of dissimilarity
-#' between districts by group population. This constraint uses the input to \code{group_pop}.
+#' between districts by group population. 
 #'   * weight - the coefficient to put on the Gibbs constraint
 #'   
 #' 
@@ -123,8 +119,6 @@
 #' brings a district more than 5\% away from population parity will be
 #' rejected. The default is \code{get_pop_tol(map)}. Providing an entry here ignores
 #' the \code{pop_tol} within the object provided to map.
-#' @param counties A column in map containing county membership
-#' @param group_pop A column in map containing group populations
 #' @param constraints a list of constraints to implement. Can be created with
 #' \code{flip_constraints_helper}
 #' @param nthin The amount by which to thin the Markov Chain. The
@@ -174,7 +168,7 @@
 #' iowa_map <- redist_map(iowa, ndists = 4, existing_plan = cd_2010, total_pop = 'pop')
 #' sims <- redist_flip(map = iowa_map, nsims = 100)
 #' }
-redist_flip <- function(map, nsims, init_plan, pop_tol, counties = NULL, group_pop, constraints = list(),
+redist_flip <- function(map, nsims, init_plan, pop_tol, constraints = list(),
                         nthin = 1, eprob = 0.05, lambda = 0, temper = FALSE,
                         betaseq = 'powerlaw', betaseqlength = 10, betaweights = NULL,
                         adapt_lambda = FALSE, adapt_eprob = FALSE, exact_mh = FALSE,
@@ -188,74 +182,16 @@ redist_flip <- function(map, nsims, init_plan, pop_tol, counties = NULL, group_p
     cat('redist.mcmc(): Automated Redistricting Simulation Using
          Markov Chain Monte Carlo\n\n', append = TRUE)
   }
+  # process raw inputs
   nprec <- nrow(map)
   map <- validate_redist_map(map)
   adj <- get_adj(map)
   total_pop <- map[[attr(map, 'pop_col')]]
   ndists <- attr(map, 'ndists')
 
-  if (!any(class(nthin) %in% c('numeric', 'integer'))) {
-    stop('nthin must be an integer')
-  } else if (nthin < 1) {
-    stop('nthin must be a nonnegative integer.')
-  } else {
-    nthin <- as.integer(nthin)
-  }
-
-  if (missing(pop_tol)) {
-    pop_tol <- get_pop_tol(map)
-  }
-
-
-
-  counties <- eval_tidy(enquo(counties), map)
-  if (is.null(counties)) {
-    counties <- rep(1, length(adj))
-  } else {
-    counties <- redist.county.id(counties)
-  }
-
-  exist_name <- attr(map, 'existing_col')
-  if (missing(init_plan)) {
-    init_plan <- get_existing(map)
-
-    if (is.null(init_plan)) {
-      components <- contiguity(adj, counties)
-      if (any(components > 1)) {
-        counties_smc <- redist.county.id(redist.county.relabel(adj, counties))
-      } else {
-        counties_smc <- counties
-      }
-      
-      invisible(capture.output(init_plan <- redist.smc(
-        adj = adj,
-        total_pop = total_pop,
-        nsims = 1,
-        ndists = ndists,
-        counties = counties_smc,
-        pop_tol = pop_tol,
-        silent = TRUE
-      ), type = 'message'))
-      init_plan <- init_plan$plans
-      if (is.null(init_name)) init_name <- '<init>'
-    } else {
-      if (is.null(init_name)) init_name <- exist_name
-      init_plan <- redist.sink.plan(plan = init_plan)
-      components <- contiguity(adj, init_plan)
-      if (any(components > 1)) {
-        stop('init_plan does not point to a contiguous plan.')
-      }
-    }
-  }
-
-  if (missing(group_pop)) {
-    group_pop <- rep(0, nprec)
-  } else {
-    group_pop <- eval_tidy(enquo(group_pop), map)
-  }
-
-  pre_pre_proc <- process_flip_constr(constraints, group_pop, counties)
-
+  # process constraints  
+  pre_pre_proc <- process_flip_constr(constraints, nprec)
+  
   constraints_name <- names(pre_pre_proc)
   constraints_wt <- sapply(pre_pre_proc, function(x) {
     if (any(names(x) %in% c('weight'))) {
@@ -270,7 +206,57 @@ redist_flip <- function(map, nsims, init_plan, pop_tol, counties = NULL, group_p
     constraints_name <- constraints_name[constraints_wt != 0]
     constraints_wt <- constraints_wt[constraints_wt != 0]
   }
+  
+  
+  
+  if (!any(class(nthin) %in% c('numeric', 'integer'))) {
+    stop('nthin must be an integer')
+  } else if (nthin < 1) {
+    stop('nthin must be a nonnegative integer.')
+  } else {
+    nthin <- as.integer(nthin)
+  }
 
+  if (missing(pop_tol)) {
+    pop_tol <- get_pop_tol(map)
+  }
+
+  exist_name <- attr(map, 'existing_col')
+  if (missing(init_plan)) {
+    init_plan <- get_existing(map)
+
+    if (is.null(init_plan)) {
+      components <- contiguity(adj, pre_pre_proc$counties)
+      if (any(components > 1)) {
+        counties_smc <- redist.county.relabel(adj, pre_pre_proc$counties)
+      } else {
+        counties_smc <- pre_pre_proc$counties
+      }
+      
+      invisible(capture.output(init_plan <- redist.smc(
+        adj = adj,
+        total_pop = total_pop,
+        nsims = 1,
+        ndists = ndists,
+        counties = counties_smc,
+        pop_tol = pop_tol,
+        silent = TRUE
+      ), type = 'message'))
+      init_plan <- init_plan$plans
+      
+      if (is.null(init_name)) {
+        init_name <- '<init>'
+      }
+      
+    } else {
+      if (is.null(init_name)) init_name <- exist_name
+      init_plan <- redist.sink.plan(plan = init_plan)
+      components <- contiguity(adj, init_plan)
+      if (any(components > 1)) {
+        stop('init_plan does not point to a contiguous plan.')
+      }
+    }
+  }
 
   adapt_lambda <- as.integer(adapt_lambda)
   adapt_eprob <- as.integer(adapt_eprob)
@@ -285,8 +271,8 @@ redist_flip <- function(map, nsims, init_plan, pop_tol, counties = NULL, group_p
     init_plan = init_plan,
     ndists = ndists,
     pop_tol = pop_tol,
-    counties = counties,
-    group_pop = group_pop,
+    counties = pre_pre_proc$counties,
+    group_pop = pre_pre_proc$group_pop,
     areasvec = pre_pre_proc$compact$areasvec,
     borderlength_mat = pre_pre_proc$compact$borderlength_mat,
     ssdmat = pre_pre_proc$compact$ssdmat,
@@ -311,10 +297,12 @@ redist_flip <- function(map, nsims, init_plan, pop_tol, counties = NULL, group_p
   if (verbose) {
     cat('Starting swMH().\n')
   }
+  
+
   algout <- swMH(
     aList = preprocout$data$adjlist,
     cdvec = preprocout$data$init_plan,
-    cdorigvec = preprocout$data$init_plan,
+    cdorigvec = pre_pre_proc$similarity$plan,
     popvec = preprocout$data$total_pop,
     grouppopvec = preprocout$data$group_pop,
     areas_vec = preprocout$data$areasvec,
@@ -404,26 +392,26 @@ redist_flip <- function(map, nsims, init_plan, pop_tol, counties = NULL, group_p
 # @param constraints passed into `redist_flip`
 #
 # @return a list with new `constraints`
-process_flip_constr <- function(constraints, group_pop, counties) {
+process_flip_constr <- function(constraints, nprec) {
   defaults <- list(
     compact = list(
       weight = 0.6, metric = 'edges-removed',
-      areas = c(0, 0, 0, 0), borderlength_mat = matrix(0, 2, 2),
+      areas = rep(0, nprec), borderlength_mat = matrix(0, nprec, nprec),
       ssdmat = matrix(1, 2, 2), ssd_denom = 1.0
     ),
     population = list(weight = 0),
     countysplit = list(weight = 0),
-    hinge = list(weight = 0, minorityprop = 0.55, group_pop = group_pop),
+    hinge = list(weight = 0, minorityprop = 0.55, group_pop = rep(0, nprec)),
     vra = list(
       weight = 0, target_min = 0.55, target_other = 0.25,
-      pow_vra = 1.5, group_pop = group_pop
+      pow_vra = 1.5, group_pop = rep(0, nprec)
     ),
-    minority = list(weight = 0, minorityprop = 0.55, group_pop = group_pop),
-    similarity = list(weight = 0),
+    minority = list(weight = 0, minorityprop = 0.55, group_pop = rep(0, nprec)),
+    similarity = list(weight = 0, plan = rep(1, nprec)),
     partisan = list(weight = 0, rvote = 0, dvote = 0, metric = 'efficiency-gap'),
     segregation = list(weight = 0),
-    group_pop = group_pop,
-    counties = counties
+    group_pop = rep(0, nprec),
+    counties = rep(1, nprec)
   )
 
   for (type in names(constraints)) {

@@ -107,7 +107,7 @@ Note that we do not need to specify `ndists` when we supply a different argument
 We can specify `initcds`, for example, as the first column of the full enumeration in `algdat.pfull`.
 ```{r}
 data(fl25_enum)
-init_plan <- fl25_enum$plans[, 1]
+init_plan <- fl25_enum$plans[, 7173]
 ```
 
 ```{r include=FALSE}
@@ -165,10 +165,11 @@ nchains <- 4
 nsims <- 10000
 ```
 
+Herem we opt to intialize using the `RSG` algorithm, though the default is to use the `SMC` algorithm.
 ```{r}
 mcmc_chains <- lapply(1:nchains, function(x){
           redist.mcmc(adjobj = adjlist,  popvec = fl25$pop, 
-                      nsims = nsims, ndists = 3)
+                      nsims = nsims, init_plan = 'rsg', ndists = 3)
 })
 ```
 
