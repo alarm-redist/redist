@@ -6,18 +6,18 @@ output: github_document
 
 # **redist**: Simulation Methods for Legislative Redistricting 
 
-<img src="man/figures/map_photo.jpg" style="width: 100%" />
-
 <!-- badges: start -->
 [![Build Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist) [![CRAN_Status_Badge](https://www.r-pkg.org/badges/version-last-release/redist)](https://cran.r-project.org/package=redist) 
 ![CRAN downloads](http://cranlogs.r-pkg.org/badges/grand-total/redist)
 <!-- badges: end -->
 
+<img src="man/figures/map_photo.jpg" style="width: 100%" />
+
 ```{r, echo = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, fig.path = "man/figures/README-", comment = "#>")
 ```
 
-<img src="man/figures/logo.png" align="right" height=128 />
+<img src="man/figures/logo.png" align="right" height=128 style="margin-left: 4px;" />
 
 This R package enables researchers to sample redistricting plans from a
 pre-specified target distribution using Sequential Monte Carlo and Markov Chain
