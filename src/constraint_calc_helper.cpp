@@ -367,7 +367,7 @@ List log_st_compact(const Graph g, arma::vec new_dists, arma::vec current_dists,
   
   umat udistricts = conv_to<umat>::from(districts);
   
-  lst = log_st_map(g, udistricts, counties, ndists);
+  lst = log_st_map(g, udistricts, counties + 1, ndists);
   
   List out;
   out["lst_new"] = (double) lst[0];

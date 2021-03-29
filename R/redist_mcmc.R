@@ -235,7 +235,9 @@ redist.mcmc.anneal <- function(adj,
     ## ------------------
     ## Preprocessing data
     ## ------------------
-    cat("Preprocessing data.\n\n")
+    if(verbose){
+        cat("Preprocessing data.\n\n") 
+    }
     preprocout <- redist.preproc(adj = adj, total_pop = total_pop,
                                  init_plan = init_plan, ndists = ndists,
                                  pop_tol = pop_tol,
@@ -257,7 +259,8 @@ redist.mcmc.anneal <- function(adj,
                                  rvote = rvote,
                                  dvote = dvote,
                                  minorityprop = minorityprop,
-                                 partisan_metric = partisan_metric)
+                                 partisan_metric = partisan_metric,
+                                 verbose = verbose)
 
 
     ## Set betas - if tempering, modified later
@@ -270,8 +273,11 @@ redist.mcmc.anneal <- function(adj,
     weightpartisan <- preprocout$params$weightpartisan
     weightminority <- preprocout$params$weightminority
     weighthinge <- preprocout$params$weighthinge
-
-    cat("Starting swMH().\n")
+    
+    if(verbose){
+        cat("Starting swMH().\n")
+    }
+    
     algout <- swMH(aList = preprocout$data$adjlist,
                    cdvec = preprocout$data$init_plan,
                    cdorigvec = preprocout$data$init_plan,
@@ -852,7 +858,9 @@ redist.mcmc <- function(adj,
     #####################
     ## Preprocess data ##
     #####################
+    if(verbose){
     cat("Preprocessing data.\n\n")
+    }
     preprocout <- redist.preproc(adj = adj, 
                                  total_pop = total_pop,
                                  init_plan = init_plan, 
@@ -878,7 +886,8 @@ redist.mcmc <- function(adj,
                                  tgt_other = tgt_other,
                                  rvote = rvote,
                                  dvote = dvote,
-                                 minorityprop = minorityprop
+                                 minorityprop = minorityprop,
+                                 verbose = verbose
                                  )
 
     ## Set betas - if tempering, modified later
@@ -949,7 +958,9 @@ redist.mcmc <- function(adj,
         }
 
         ## Run algorithm
-        cat("Starting swMH().\n")
+        if(verbose){
+            cat("Starting swMH().\n")
+        }
         algout <- swMH(aList = preprocout$data$adjlist,
                        cdvec = cds,
                        cdorigvec = preprocout$data$init_plan,

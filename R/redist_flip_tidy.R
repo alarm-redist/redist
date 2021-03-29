@@ -160,6 +160,7 @@
 #' Carlo." Working Paper. Available at
 #' \url{http://imai.princeton.edu/research/files/redist.pdf}.
 #'
+#' @importFrom dplyr bind_cols
 #' @importFrom rlang eval_tidy enquo
 #' @importFrom utils capture.output
 #' @md
@@ -232,7 +233,6 @@ redist_flip <- function(map, nsims, init_plan, pop_tol, constraints = list(),
       } else {
         counties_smc <- pre_pre_proc$counties
       }
-      
       invisible(capture.output(init_plan <- redist.smc(
         adj = adj,
         total_pop = total_pop,
@@ -242,8 +242,8 @@ redist_flip <- function(map, nsims, init_plan, pop_tol, constraints = list(),
         pop_tol = pop_tol,
         silent = TRUE
       ), type = 'message'))
-      init_plan <- init_plan$plans
-      
+      init_plan <- init_plan$plans - 1L
+
       if (is.null(init_name)) {
         init_name <- '<init>'
       }
@@ -291,14 +291,19 @@ redist_flip <- function(map, nsims, init_plan, pop_tol, constraints = list(),
     tgt_other = pre_pre_proc$vra$target_other,
     rvote = pre_pre_proc$partisan$rvote,
     dvote = pre_pre_proc$partisan$dvote,
-    minorityprop = pre_pre_proc$hinge$minorityprop
+    minorityprop = pre_pre_proc$hinge$minorityprop,
+    verbose = verbose
   )
 
+  if(all(pre_pre_proc$similarity$plan == 1)){
+    pre_pre_proc$similarity$plan <- preprocout$data$init_plan
+  }
+  
   if (verbose) {
     cat('Starting swMH().\n')
   }
+  #return(list(pre_pre = pre_pre_proc, pre = preprocout))
   
-
   algout <- swMH(
     aList = preprocout$data$adjlist,
     cdvec = preprocout$data$init_plan,
@@ -306,7 +311,7 @@ redist_flip <- function(map, nsims, init_plan, pop_tol, constraints = list(),
     popvec = preprocout$data$total_pop,
     grouppopvec = preprocout$data$group_pop,
     areas_vec = preprocout$data$areasvec,
-    county_membership = preprocout$data$counties,
+    county_membership = pre_pre_proc$counties,
     borderlength_mat = preprocout$data$borderlength_mat,
     nsims = nsims * nthin,
     eprob = eprob,
@@ -357,9 +362,17 @@ redist_flip <- function(map, nsims, init_plan, pop_tol, constraints = list(),
     resampled = NULL,
     lambda = lambda,
     eprob = eprob,
+    pop_tol = pop_tol,
     adapt_eprob = as.logical(adapt_eprob),
     adapt_lambda = as.logical(adapt_lambda)
   ) %>% mutate(
+    distance_parity = rep(algout$distance_parity, each = ndists),
+    distance_original = rep(algout$distance_original, each = ndists),
+    mhdecisions = rep(algout$mhdecisions, each = ndists),
+    mhprob = rep(algout$mhprob, each = ndists),
+    pparam = rep(algout$pparam, each = ndists),
+    beta_sequence = rep(algout$beta_sequence, each = ndists),
+    energy_psi = rep(algout$energy_psi, each = ndists),
     boundary_partitions = rep(algout$boundary_partitions, each = ndists),
     boundary_ratio = rep(algout$boundary_partitions, each = ndists)
   )
@@ -374,9 +387,9 @@ redist_flip <- function(map, nsims, init_plan, pop_tol, constraints = list(),
     constraint_minority = rep(algout$constraint_minority, each = ndists),
     constraint_hinge = rep(algout$constraint_hinge, each = ndists)
   )
-
-  names_tb <- names(add_tb)[apply(add_tb, 2, function(x) !all(x == 0))]
-  out <- dplyr::bind_cols(out, select(add_tb, all_of(names_tb)))
+  
+  names_tb <- names(add_tb)[apply(add_tb, 2, function(x){ !all(x == 0) })]
+  out <- bind_cols(out, select(add_tb, all_of(names_tb)))
 
   if (!is.null(init_name) && !isFALSE(init_name)) {
     out <- add_reference(out, init_plan, init_name)
@@ -411,13 +424,20 @@ process_flip_constr <- function(constraints, nprec) {
     partisan = list(weight = 0, rvote = 0, dvote = 0, metric = 'efficiency-gap'),
     segregation = list(weight = 0),
     group_pop = rep(0, nprec),
-    counties = rep(1, nprec)
+    counties = rep(0, nprec)
   )
 
   for (type in names(constraints)) {
     for (el in names(constraints[[type]])) {
       defaults[[type]][[el]] <- constraints[[type]][[el]]
     }
+  }
+  
+  if(!is.null(constraints$counties)){
+    defaults$counties <- redist.county.id(constraints$counties) - 1
+  }
+  if(!is.null(constraints$group_pop)){
+    defaults$group_pop <- constraints$group_pop
   }
 
   # if(defaults$compact$weight > 0 & defaults$compact$metric == 'polsby-popper'){
