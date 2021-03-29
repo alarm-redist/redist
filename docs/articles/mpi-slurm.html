@@ -64,16 +64,16 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
+      <a href="../articles/glossary.html">Glossary of Key Redistricting Terms</a>
+    </li>
+    <li>
       <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
     </li>
     <li>
-      <a href="../articles/mcmc.html">Redistricting with MCMC and RSG</a>
+      <a href="../articles/mcmc.html">Redistricting with Flip MCMC</a>
     </li>
     <li>
       <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
-    </li>
-    <li>
-      <a href="../articles/tidy-redist.html">Tidy `redist`</a>
     </li>
   </ul>
 </li>
@@ -251,9 +251,9 @@
 <span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> Time is <span class="va">$(</span><span class="fu">date</span><span class="va">)</span></span>
 <span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> SLURM_NODES are <span class="va">$(</span><span class="bu">echo</span> <span class="va">${SLURM_NODELIST})</span></span>
 <span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">'-------------------------------'</span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="at">-e</span> <span class="st">'\n\n'</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> -e <span class="st">'\n\n'</span></span>
 <span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="ex">mpiexec</span> <span class="at">-np</span> 1 R <span class="at">--no-save</span> <span class="op">&lt;</span> [scriptname here].R</span></code></pre></div>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="ex">mpiexec</span> -np 1 R --no-save <span class="op">&lt;</span> [scriptname here].R</span></code></pre></div>
 </div>
 </div>
 <div id="population-constraint-and-compactness-constraint-using-annealing" class="section level2">
@@ -330,7 +330,7 @@
 <span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> Time is <span class="va">$(</span><span class="fu">date</span><span class="va">)</span></span>
 <span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> SLURM_NODES are <span class="va">$(</span><span class="bu">echo</span> <span class="va">${SLURM_NODELIST})</span></span>
 <span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">'-------------------------------'</span></span>
-<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="at">-e</span> <span class="st">'\n\n'</span></span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> -e <span class="st">'\n\n'</span></span>
 <span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a><span class="ex">srun</span> Rscript ../[scriptname here].R</span></code></pre></div>
 </div>

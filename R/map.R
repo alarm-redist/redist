@@ -331,8 +331,7 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
   } else   {
     plot <- ggplot(shp) +
       geom_sf() +
-      theme_void() +
-      labs(title = title)
+      theme_void() 
   }
 
   zoom_to = eval_tidy(enquo(zoom_to), shp)
@@ -342,6 +341,8 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
                                        ylim=c(bbox$ymin, bbox$ymax))
   }
 
+  
+  plot <- plot + labs(title = title)
   # return plot
   return(plot)
 }
@@ -388,12 +389,12 @@ redist.plot.adj <- function(shp = NULL, adj = NULL, plan = NULL, centroids = TRU
     stop('Please provide "shp" as a SpatialPolygonsDataFrame or sf object.')
   }
 
-  plan <- eval_tidy(enquo(plan), shp)
-  if (!is.null(plan)) {
-    if (!any(class(plan) %in% c('numeric', 'integer', 'character'))) {
+  plan_to_plot <- eval_tidy(enquo(plan), shp)
+  if (!is.null(plan_to_plot)) {
+    if (!any(class(plan_to_plot) %in% c('numeric', 'integer', 'character'))) {
       stop('Please provide "plan" as a vector.')
     }
-    if (nrow(shp) != length(plan)) {
+    if (nrow(shp) != length(plan_to_plot)) {
       stop('Arguments "plan" and "shp" do not have same number of precincts.')
     }
   }
@@ -452,31 +453,36 @@ redist.plot.adj <- function(shp = NULL, adj = NULL, plan = NULL, centroids = TRU
   # Drop Edges that cross District Boundaries
   if (drop) {
     nb <- nb %>%
-      filter(plan[i] == plan[j])
+      filter(plan_to_plot[i] == plan_to_plot[j])
   }
 
   # Create Plot
   if (plot_shp) {
       if(!is.null(plan)){
           plot <- ggplot(shp) +
-              geom_sf(aes(fill = as.character(plan)), size=0.1) +
+              geom_sf(aes(fill = as.character(plan_to_plot)), size = 0.1) +
               theme_void() +
               theme(legend.position = 'none') +
               geom_sf(data = nb)
       } else{
           plot <- ggplot(shp) +
-              geom_sf(size=0.1) +
+              geom_sf(size = 0.1) +
               theme_void() +
               geom_sf(data = nb)
       }
   } else {
       plot <- ggplot(nb) +
-          geom_sf() +
-          theme_void()
-  }
+        geom_sf() +
+        theme_void()
+    }
 
   if (centroids) {
-    plot <- plot + geom_sf(data = centers)
+    if(!is.null(plan) & !plot_shp){
+      plot <- plot + geom_sf(data = centers, aes(color = as.character(plan_to_plot)), size = 2) +
+        theme(legend.position = 'none')
+    } else {
+      plot <- plot + geom_sf(data = centers)
+    }
   }
 
   zoom_to = eval_tidy(enquo(zoom_to), shp)
@@ -486,6 +492,8 @@ redist.plot.adj <- function(shp = NULL, adj = NULL, plan = NULL, centroids = TRU
                                        ylim=c(bbox$ymin, bbox$ymax))
   }
 
+  
+  plot <- plot + labs(title = title)
   # return plot
   return(plot)
 }

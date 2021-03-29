@@ -13,7 +13,8 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
                            contiguitymap = "rooks", tgt_min = 0.55, tgt_other = 0.25,
                            rvote,
                            dvote,
-                           minorityprop = NULL
+                           minorityprop = NULL,
+                           verbose = TRUE
 ){
   
   #########################
@@ -177,10 +178,11 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
     ## Print start
     divider <- c(paste(rep("=", 20), sep = "", collapse = ""), "\n")
     
+    if(verbose){
     cat("\n", append = TRUE)
     cat(divider, append = TRUE)
     cat("Using redist.rsg() to generate starting values.\n\n", append= TRUE)
-    
+    }
     ## Run the algorithm
     initout <- redist.rsg(adj = adjlist,
                           total_pop = total_pop,

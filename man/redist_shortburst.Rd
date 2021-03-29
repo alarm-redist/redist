@@ -17,7 +17,6 @@ redist_shortburst(
   adapt_k_thresh = 0.975,
   return_all = TRUE,
   backend = "mergesplit",
-  group_pop,
   flip_lambda = 0,
   flip_eprob = 0.05,
   flip_constraints = list(),
@@ -65,8 +64,6 @@ Recommended for monitoring purposes.}
 
 \item{backend}{the MCMC algorithm to use within each burst, either
 "mergesplit" or "flip".}
-
-\item{group_pop}{A column in map containing group populations for use with flip}
 
 \item{flip_lambda}{The parameter detmerining the number of swaps to attempt each iteration of flip mcmc.
 The number of swaps each iteration is equal to Pois(lambda) + 1. The default is 0.}
