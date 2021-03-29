@@ -341,7 +341,7 @@ print.redist_plans = function(x, ...) {
 #' @export
 plot.redist_plans = function(x, ..., type="hist") {
     if (rlang::dots_n(...) == 0) {
-        ggplot(tibble(wgt=get_plan_weights(x)), aes(x=wgt)) +
+        ggplot(tibble(wgt=get_plan_weights(x)), aes(x=.data$wgt)) +
             geom_histogram() +
             ggplot2::scale_x_continuous(name="Weights", trans="log10") +
             ggplot2::labs(y=NULL, title="Plan weights")
