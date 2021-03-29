@@ -220,7 +220,7 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
         n_eff = length(mod_wgt) * mean(mod_wgt)^2 / mean(mod_wgt^2)
         mod_wgt = mod_wgt / sum(mod_wgt)
 
-        plans = plans[, sample(nsims, nsims, replace=T, prob=mod_wgt)]
+        plans = plans[, sample(nsims, nsims, replace=T, prob=mod_wgt), drop=FALSE]
     }
 
     if (n_eff/nsims <= 0.05)
@@ -255,7 +255,7 @@ process_smc_ms_constr = function(constraints, V) {
         status_quo = list(strength=0, current=rep(1, V)),
         vra = list(strength=0, tgts_min=0.55, min_pop=NULL),
         vra_old = list(strength=0, tgt_vra_min=0.55, tgt_vra_other=0.25,
-                       pow_vra=1.5, min_pop=NULL),
+                       pow_vra=1.5, min_pop=integer()),
         incumbency = list(strength=0, incumbents=integer())
     )
 

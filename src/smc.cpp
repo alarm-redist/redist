@@ -352,8 +352,10 @@ void adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
         if (sum_within / n_ok >= thresh) break;
     }
 
-    if (k == k_max + 1 && verbosity >= 1) {
-        Rcout << "Note: maximum hit; falling back to naive k estimator.\n";
+    if (k == k_max + 1) {
+        if (verbosity >= 1) {
+            Rcout << "Note: maximum hit; falling back to naive k estimator.\n";
+        }
         k = max_ok + 1;
     }
 }

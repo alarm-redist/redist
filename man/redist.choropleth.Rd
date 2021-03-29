@@ -36,4 +36,3 @@ Creates a Choropleth
 Creates a basic choropleth for a provided shp with value. Recommended to
 normalize data to avoid absolute values, in most use cases.
 }
-\concept{plot}
