@@ -47,7 +47,7 @@ library(redist)
 data_url = "https://github.com/CoryMcCartan/redist-data/raw/main/data/king_county.rds"
 data_path = tempfile()
 download.file(data_url, data_path)
-king_shp = read_rds(data_path)
+king_shp = readRDS(data_path)
 print(king_shp)
 ```
 
