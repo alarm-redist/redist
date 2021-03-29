@@ -149,13 +149,13 @@ precincts and ploting labels.
 plot(filter(king, pct_water >= 0.99, pop == 0)) + geom_sf_text(aes(label=id))
 ```
 
-We see that by removing all water precincts except WVPS34, WVSP34, and WVPS30,
-we can maintain a connection between the island and the mainland (incidentally,
-the state ferry connecting the island to Seattle runs through these precincts).
+We see that by removing all water precincts except WVPS34 and WVSP34, we can
+maintain a connection between the island and the mainland (incidentally, the
+state ferry connecting the island to Seattle runs through these precincts).
 
 ```{r king-land}
 water_prec = filter(king, pct_water >= 0.99, pop == 0) %>% pull(id)
-water_prec = setdiff(water_prec, c("WVPS34", "WVSP34", "WVPS30"))
+water_prec = setdiff(water_prec, c("WVPS34", "WVSP34"))
 king_land = filter(king, !(id %in% water_prec))
 plot(king_land)
 ```

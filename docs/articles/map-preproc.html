@@ -224,10 +224,10 @@
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="va">king</span>, <span class="va">pct_water</span> <span class="op">&gt;=</span> <span class="fl">0.99</span>, <span class="va">pop</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu">geom_sf_text</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span>label<span class="op">=</span><span class="va">id</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><img src="map-preproc_files/figure-html/king-water-1.png" width="700"></p>
-<p>We see that by removing all water precincts except WVPS34, WVSP34, and WVPS30, we can maintain a connection between the island and the mainland (incidentally, the state ferry connecting the island to Seattle runs through these precincts).</p>
+<p>We see that by removing all water precincts except WVPS34 and WVSP34, we can maintain a connection between the island and the mainland (incidentally, the state ferry connecting the island to Seattle runs through these precincts).</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">water_prec</span> <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="va">king</span>, <span class="va">pct_water</span> <span class="op">&gt;=</span> <span class="fl">0.99</span>, <span class="va">pop</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="fu">pull</span><span class="op">(</span><span class="va">id</span><span class="op">)</span>
-<span class="va">water_prec</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html">setdiff</a></span><span class="op">(</span><span class="va">water_prec</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"WVPS34"</span>, <span class="st">"WVSP34"</span>, <span class="st">"WVPS30"</span><span class="op">)</span><span class="op">)</span>
+<span class="va">water_prec</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html">setdiff</a></span><span class="op">(</span><span class="va">water_prec</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"WVPS34"</span>, <span class="st">"WVSP34"</span><span class="op">)</span><span class="op">)</span>
 <span class="va">king_land</span> <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="va">king</span>, <span class="op">!</span><span class="op">(</span><span class="va">id</span> <span class="op">%in%</span> <span class="va">water_prec</span><span class="op">)</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">king_land</span><span class="op">)</span></code></pre></div>
 <p><img src="map-preproc_files/figure-html/king-land-1.png" width="700"></p>
@@ -246,7 +246,7 @@
 <code class="sourceCode R"><span class="fu"><a href="../reference/merge_by.html">merge_by</a></span><span class="op">(</span><span class="va">king_land</span>, <span class="va">city</span><span class="op">)</span>
 <span class="co">#&gt; A redist_map object with 60 units and 11 fields</span>
 <span class="co">#&gt; To be partitioned into 9 districts with population between 214,505.7 - 1.663204% and 214,505.7 + 1.663204%</span>
-<span class="co">#&gt; Merged from another map with reindexing: int [1:2542] 41 41 46 41 41 ...</span>
+<span class="co">#&gt; Merged from another map with reindexing: int [1:2541] 41 41 46 41 41 ...</span>
 <span class="co">#&gt; # A tibble: 60 x 11</span>
 <span class="co">#&gt; # Groups:   distr [9]</span>
 <span class="co">#&gt;    distr city  pct_water    pop    vap voters dem_08 rep_08 id    precinct adj  </span>
@@ -290,11 +290,11 @@
     <span class="fu">mutate</span><span class="op">(</span>unsplit_id <span class="op">=</span> <span class="fu"><a href="../reference/freeze.html">freeze</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="../reference/is_county_split.html">is_county_split</a></span><span class="op">(</span><span class="va">distr</span>, <span class="va">city</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
     <span class="fu"><a href="../reference/merge_by.html">merge_by</a></span><span class="op">(</span><span class="va">unsplit_id</span>, <span class="va">city</span>, collapse_chr<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">king_unsplit</span><span class="op">)</span>
-<span class="co">#&gt; A redist_map object with 1969 units and 10 fields</span>
+<span class="co">#&gt; A redist_map object with 1968 units and 10 fields</span>
 <span class="co">#&gt; To be partitioned into 9 districts with population between 214,505.7 - 1.663204% and 214,505.7 + 1.663204%</span>
-<span class="co">#&gt; Merged from another map with reindexing: int [1:2542] 1410 1410 1414 1410 1410 ...</span>
-<span class="co">#&gt; # A tibble: 1,969 x 10</span>
-<span class="co">#&gt; # Groups:   distr, unsplit_id [1,952]</span>
+<span class="co">#&gt; Merged from another map with reindexing: int [1:2541] 1410 1410 1414 1410 1410 ...</span>
+<span class="co">#&gt; # A tibble: 1,968 x 10</span>
+<span class="co">#&gt; # Groups:   distr, unsplit_id [1,951]</span>
 <span class="co">#&gt;    distr unsplit_id city  pct_water   pop   vap voters dem_08 rep_08 adj       </span>
 <span class="co">#&gt;    &lt;int&gt;      &lt;int&gt; &lt;chr&gt;     &lt;dbl&gt; &lt;int&gt; &lt;int&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt; &lt;list&gt;    </span>
 <span class="co">#&gt;  1     1         67 SEA     0        1227  1115    601    420     83 &lt;int [7]&gt; </span>
@@ -307,17 +307,17 @@
 <span class="co">#&gt;  8     1        101 KMR     0.0128  20460 15787  12954   7288   3476 &lt;int [10]&gt;</span>
 <span class="co">#&gt;  9     1        101 LFP     0.0281  12598  9975   9465   6063   1992 &lt;int [4]&gt; </span>
 <span class="co">#&gt; 10     1        101 SHL     0.00447 53007 42873  34346  20895   7184 &lt;int [14]&gt;</span>
-<span class="co">#&gt; # … with 1,959 more rows</span></code></pre></div>
+<span class="co">#&gt; # … with 1,958 more rows</span></code></pre></div>
 <p>The plot above shows which cities will be frozen together so that they cannot be split. Notice that we merge by not just <code>unsplit_id</code> but also <code>city</code>, so that adjacent unsplit cities are not merged together. We also set <code>collapse_chr=FALSE</code> to drop the <code>id</code> and <code>precinct</code> columns, which become slightly unwieldy after a large merge.</p>
 <p>To see this in action, we’ll sample 50 redistricting plans using <code><a href="../reference/redist_smc.html">redist_smc()</a></code> on this partially frozen map. We’ll use <code><a href="../reference/pullback.html">pullback()</a></code> to then reconstruct the plan output of <code><a href="../reference/redist_smc.html">redist_smc()</a></code> so that it is congruous with the original geometry object, <code>king_land</code>.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">plans</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">king_unsplit</span>, <span class="fl">50</span>, silent<span class="op">=</span><span class="cn">T</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">plans</span><span class="op">)</span>
-<span class="co">#&gt; 50 sampled plans and 1 reference plan with 9 districts from a 1969-unit map,</span>
+<span class="co">#&gt; 50 sampled plans and 1 reference plan with 9 districts from a 1968-unit map,</span>
 <span class="co">#&gt;   drawn using Sequential Monte Carlo</span>
-<span class="co">#&gt; Merged from another map with reindexing: int [1:2542] 1410 1410 1414 1410 1410 ...</span>
+<span class="co">#&gt; Merged from another map with reindexing: int [1:2541] 1410 1410 1414 1410 1410 ...</span>
 <span class="co">#&gt; With plans resampled from weights</span>
-<span class="co">#&gt; Plans matrix: num [1:1969, 1:51] 1 1 1 1 1 1 1 1 1 1 ...</span>
+<span class="co">#&gt; Plans matrix: num [1:1968, 1:51] 1 1 1 1 1 1 1 1 1 1 ...</span>
 <span class="co">#&gt; # A tibble: 459 x 3</span>
 <span class="co">#&gt;    draw  district total_pop</span>
 <span class="co">#&gt;    &lt;fct&gt;    &lt;int&gt;     &lt;dbl&gt;</span>
@@ -330,13 +330,13 @@
 <span class="co">#&gt;  7 distr        7    214210</span>
 <span class="co">#&gt;  8 distr        8    212491</span>
 <span class="co">#&gt;  9 distr        9    217432</span>
-<span class="co">#&gt; 10 1            1    215674</span>
+<span class="co">#&gt; 10 1            1    212908</span>
 <span class="co">#&gt; # … with 449 more rows</span>
 <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="fu"><a href="../reference/pullback.html">pullback</a></span><span class="op">(</span><span class="va">plans</span><span class="op">)</span><span class="op">)</span>
-<span class="co">#&gt; 50 sampled plans and 1 reference plan with 9 districts from a 2542-unit map,</span>
+<span class="co">#&gt; 50 sampled plans and 1 reference plan with 9 districts from a 2541-unit map,</span>
 <span class="co">#&gt;   drawn using Sequential Monte Carlo</span>
 <span class="co">#&gt; With plans resampled from weights</span>
-<span class="co">#&gt; Plans matrix: num [1:2542, 1:51] 7 7 7 7 7 7 7 7 7 7 ...</span>
+<span class="co">#&gt; Plans matrix: num [1:2541, 1:51] 7 7 7 7 7 7 7 7 7 7 ...</span>
 <span class="co">#&gt; # A tibble: 459 x 3</span>
 <span class="co">#&gt;    draw  district total_pop</span>
 <span class="co">#&gt;    &lt;fct&gt;    &lt;int&gt;     &lt;dbl&gt;</span>
@@ -349,7 +349,7 @@
 <span class="co">#&gt;  7 distr        7    214210</span>
 <span class="co">#&gt;  8 distr        8    212491</span>
 <span class="co">#&gt;  9 distr        9    217432</span>
-<span class="co">#&gt; 10 1            1    215674</span>
+<span class="co">#&gt; 10 1            1    212908</span>
 <span class="co">#&gt; # … with 449 more rows</span>
 <span class="fu"><a href="../reference/redist.plot.plans.html">redist.plot.plans</a></span><span class="op">(</span><span class="fu"><a href="../reference/pullback.html">pullback</a></span><span class="op">(</span><span class="va">plans</span><span class="op">)</span>, draws<span class="op">=</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, geom<span class="op">=</span><span class="va">king_land</span><span class="op">)</span></code></pre></div>
 <p><img src="map-preproc_files/figure-html/unsplit-plan-1.png" width="768"></p>
@@ -373,7 +373,7 @@
 <span class="fu">pop_inside_cores</span><span class="op">(</span><span class="fl">1</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">king_land</span><span class="op">$</span><span class="va">pop</span><span class="op">)</span>
 <span class="co">#&gt; [1] 0.8254058</span>
 <span class="fu">pop_inside_cores</span><span class="op">(</span><span class="fl">2</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">king_land</span><span class="op">$</span><span class="va">pop</span><span class="op">)</span>
-<span class="co">#&gt; [1] 0.5845145</span></code></pre></div>
+<span class="co">#&gt; [1] 0.5909499</span></code></pre></div>
 <p>Here, we’ll use <code>boundary=1</code>. We can see how large areas inside each district are merged together after applying <code><a href="../reference/merge_by.html">merge_by()</a></code> to the generated cores.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">king_cores</span> <span class="op">=</span> <span class="va">king_land</span> <span class="op">%&gt;%</span>
@@ -384,6 +384,7 @@
 <p>If we sample redistrict plans from this modified map, we observe that the simulated plans generally follow the same location and shape as the original plan. Sampling is also faster, since there are fewer units in the map.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">plans</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">king_cores</span>, <span class="fl">50</span>, silent<span class="op">=</span><span class="cn">T</span><span class="op">)</span>
+<span class="co">#&gt; Note: maximum hit; falling back to naive k estimator.</span>
 <span class="fu"><a href="../reference/redist.plot.plans.html">redist.plot.plans</a></span><span class="op">(</span><span class="va">plans</span>, draws<span class="op">=</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, geom<span class="op">=</span><span class="va">king_cores</span><span class="op">)</span></code></pre></div>
 <p><img src="map-preproc_files/figure-html/core-plans-1.png" width="700"></p>
 </div>

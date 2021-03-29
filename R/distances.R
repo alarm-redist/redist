@@ -157,4 +157,24 @@ redist.distances <- function(plans, measure = "Hamming",
     return(distances)
 }
 
+#' @rdname redist.distances
+#' @order 1
+#'
+#' @param plans a \code{\link{redist_plans}} object.
+#'
+#' @returns \code{distance_matrix} returns a numeric distance matrix for the
+#'   chosen metric.
+#'
+#' @export
+plan_distances = function(plans, measure="variation of information", ncores=1) {
+    choices = c("variation of information", "Hamming", "Manhattan", "Euclidean")
+    measure = match.arg(measure, choices)
+    pop = attr(plans, "prec_pop")
+    if (is.null(pop))
+        stop("Precinct population must be stored in `prec_pop` attribute of `plans` object")
+
+    redist.distances(get_plan_matrix(plans), measure, ncores=ncores, total_pop=pop)[[1]]
+}
+
+
 utils::globalVariables(names = "map")

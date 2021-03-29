@@ -30,7 +30,6 @@
 #' @importFrom sf st_centroid st_coordinates st_as_sf st_linestring st_sfc
 #'
 #'
-#' @concept plot
 #' @export
 redist.map <- function(shp = NULL, adj = NULL, plan = NULL, centroids = TRUE,
                        edges = TRUE, boundaries = TRUE, drop = FALSE,
@@ -512,7 +511,6 @@ redist.plot.adj <- function(shp = NULL, adj = NULL, plan = NULL, centroids = TRU
 #' @importFrom ggplot2 theme_void scale_fill_gradient
 #' @importFrom dplyr filter .data
 #'
-#' @concept plot
 #' @export
 redist.choropleth <- function(shp, fill = NULL, fill_label = '', title = '',
                               grad = 1, lwd = 0) {

@@ -48,4 +48,3 @@ ggplot map
 \description{
 Creates a map with optional graph overlay
 }
-\concept{plot}
