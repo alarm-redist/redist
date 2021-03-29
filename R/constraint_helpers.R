@@ -192,10 +192,11 @@ flip_constraints_helper <- function(map,
     if (missing(rvote)) {
       stop('Please provide an argument to rvote with constraint partisan.')
     }
+    constraints_list$partisan$rvote <- rvote
     if (missing(dvote)) {
       stop('Please provide an argument to dvote with constraint partisan.')
     }
-
+    constraints_list$partisan$dvote <- dvote
     match.arg(partisan_metric, c('proportional-representation', 'efficiency-gap'))
 
     constraints_list$partisan$metric <- partisan_metric

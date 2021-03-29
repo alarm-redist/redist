@@ -21,7 +21,7 @@ redist_flip(
   adapt_eprob = FALSE,
   exact_mh = FALSE,
   adjswaps = TRUE,
-  init_name = FALSE,
+  init_name = NULL,
   verbose = TRUE
 )
 }

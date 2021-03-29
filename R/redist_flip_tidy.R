@@ -434,13 +434,10 @@ process_flip_constr <- function(constraints, nprec) {
   }
   
   if(!is.null(constraints$counties)){
-    defaults$counties <- constraints$counties
+    defaults$counties <- redist.county.id(constraints$counties) - 1
   }
   if(!is.null(constraints$group_pop)){
     defaults$group_pop <- constraints$group_pop
-  }
-  if(min(defaults$counties != 0)){
-    defaults$counties <- defaults$counties - 1
   }
 
   # if(defaults$compact$weight > 0 & defaults$compact$metric == 'polsby-popper'){
