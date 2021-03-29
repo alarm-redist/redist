@@ -90,7 +90,7 @@ utils::globalVariables(c('geometry', 'cluster', 'mds1', 'mds2', 'id', 'newcd'))
 #' prior, which is useful for when either `set1` or `set2` is small.
 #'
 #' @param plans a [redist_plans] object
-#' @param set1,set2 [`<data-masking>`][dplyr:dplyr_data_masking] indexing vectors
+#' @param set1,set2 [`<data-masking>`][dplyr::dplyr_data_masking] indexing vectors
 #'   for the plan draws to compare. Must be mutually exclusive.
 #' @param thresh the value to threshold the eigenvector at in determining the
 #'   relevant set of precincts for comparison.

@@ -9,7 +9,7 @@ compare_plans(plans, set1, set2, thresh = 0.1)
 \arguments{
 \item{plans}{a \link{redist_plans} object}
 
-\item{set1, set2}{\code{\link[=dplyr:dplyr_data_masking]{<data-masking>}} indexing vectors
+\item{set1, set2}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} indexing vectors
 for the plan draws to compare. Must be mutually exclusive.}
 
 \item{thresh}{the value to threshold the eigenvector at in determining the
