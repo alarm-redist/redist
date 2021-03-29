@@ -106,16 +106,16 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/glossary.html">Glossary of Key Redistricting Terms</a>
+    </li>
+    <li>
       <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
     </li>
     <li>
-      <a href="../articles/mcmc.html">Redistricting with MCMC and RSG</a>
+      <a href="../articles/mcmc.html">Redistricting with Flip MCMC</a>
     </li>
     <li>
       <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
-    </li>
-    <li>
-      <a href="../articles/tidy-redist.html">Tidy `redist`</a>
     </li>
   </ul>
 </li>
@@ -180,9 +180,9 @@
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>iowa</span><span class='op'>)</span>
 
 <span class='va'>iowa</span> <span class='op'>=</span> <span class='fu'><a href='redist_map.html'>redist_map</a></span><span class='op'>(</span><span class='va'>iowa</span>, existing_plan<span class='op'>=</span><span class='va'>cd_2010</span>, pop_tol<span class='op'>=</span><span class='fl'>0.05</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='error'>Error: </span></div><div class='input'><span class='va'>plans</span> <span class='op'>=</span> <span class='fu'><a href='redist_smc.html'>redist_smc</a></span><span class='op'>(</span><span class='va'>iowa</span>, nsims<span class='op'>=</span><span class='fl'>100</span>, silent<span class='op'>=</span><span class='cn'>TRUE</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='error'>Error in validate_redist_map(map): Not a `redist_map` object</span></div><div class='input'><span class='fu'>redist.plot.plans</span><span class='op'>(</span><span class='va'>plans</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>3</span>, <span class='fl'>4</span><span class='op'>)</span>, <span class='va'>iowa</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='error'>Error in stopifnot(inherits(plans, "redist_plans")): object 'plans' not found</span></div><div class='input'>
+<span class='va'>plans</span> <span class='op'>=</span> <span class='fu'><a href='redist_smc.html'>redist_smc</a></span><span class='op'>(</span><span class='va'>iowa</span>, nsims<span class='op'>=</span><span class='fl'>100</span>, silent<span class='op'>=</span><span class='cn'>TRUE</span><span class='op'>)</span>
+<span class='fu'>redist.plot.plans</span><span class='op'>(</span><span class='va'>plans</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>3</span>, <span class='fl'>4</span><span class='op'>)</span>, <span class='va'>iowa</span><span class='op'>)</span>
+</div><div class='img'><img src='redist.plot.plans-1.png' alt='' width='700' height='433' /></div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
