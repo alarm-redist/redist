@@ -17,6 +17,7 @@ knitr::opts_chunk$set(
 ```{r setup, message=FALSE}
 library(redist)
 library(ggplot2)
+library(dplyr)
 library(patchwork)
 # set seed for reproducability
 set.seed(1)
