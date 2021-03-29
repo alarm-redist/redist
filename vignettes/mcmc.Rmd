@@ -149,9 +149,9 @@ Now, this plan is incredibly non-compact, which can be an issue. However, we sho
 
 ```{r}
 sims_comp <- redist.mcmc(adj = adj, total_pop = iowa$pop, init_plan = iowa$cd_2010,
-                    nsims = 1000, pop_tol = 0.05,
-                    constraint = 'compact', constraintweights = 0.4,
-                    compactness_metric = 'edges-removed')
+                         nsims = 1000, pop_tol = 0.05,
+                         constraint = 'compact', constraintweights = 0.4,
+                         compactness_metric = 'edges-removed')
 ```
 
 The first arguments as the same, but this adds three key arguments. First, setting `constraint` to any combination of the nine implemented constraints allows us to specify the target distribution. Setting `constraintweights = 0.4` means that we want to put a relatively weak weight on the compactness, though a weak constraint still does a lot of work. There are four `compact` constraints implemented currently. The recommended is to use `edges-removed` because it can be calculated very quickly.
@@ -180,10 +180,10 @@ Here, we opt to initialize using the `RSG` algorithm, though the default is to u
 
 ```{r}
 flip_chains <- lapply(1:nchains, function(x){
-          redist.mcmc(adj = adj,  total_pop = iowa$pop, pop_tol = 0.05,
-                      nsims = nsims, init_plan = 'rsg', ndists = 4,
-                      constraint = 'compact', constraintweights = 0.4,
-                      compactness_metric = 'edges-removed', verbose = FALSE)
+  redist.mcmc(adj = adj,  total_pop = iowa$pop, pop_tol = 0.05,
+              nsims = nsims, init_plan = 'rsg', ndists = 4,
+              constraint = 'compact', constraintweights = 0.4,
+              compactness_metric = 'edges-removed', verbose = FALSE)
 })
 ```
 
@@ -191,8 +191,8 @@ In Unix-based systems, this can be run considerably faster by running this in pa
 
 ```{r, eval=F}
 mcmc_chains <- parallel::mclapply(1:nchains, function(x){
-          redist.mcmc(adjobj = adjlist,  popvec = fl25$pop, 
-                      nsims = nsims, ndists = 3)
+  redist.mcmc(adjobj = adjlist,  popvec = fl25$pop, 
+              nsims = nsims, ndists = 3)
 }, mc.set.seed = 1, mc.cores = parallel::detectCores())
 ```
 
@@ -244,7 +244,7 @@ This increases the acceptance ratio to near 100% again. The function `flip_const
 
 ```{r}
 cons <- flip_constraints_helper(map = iowa_map, constraint = c('compact', 'similarity'),
-                        constraintweight = c(0.6, 1), init_plan = cd_2010)
+                                constraintweight = c(0.6, 1), init_plan = cd_2010)
 ```
 
 From there, we can again pass this to `redist_flip`
@@ -320,8 +320,8 @@ As examples for the next two plots, we can use the example above which ran 4 cha
 ```{r}
 seg_chains <- lapply(1:nchains, 
                      function(i){redist.segcalc(algout = flip_chains[[i]], 
-                                  group_pop = iowa_map$rep_08,
-                                  total_pop = iowa_map$pop)})
+                                                group_pop = iowa_map$rep_08,
+                                                total_pop = iowa_map$pop)})
 ```
 
 -   Trace Plot
@@ -423,10 +423,10 @@ The other way to tune is to run a simulation with a kitchen sink type set up.
 
 ```{r}
 cons <- flip_constraints_helper(map = iowa_map,
-                    constraint = c('compact', 'population', 'partisan', 'countsplit'),
-                    constraintweight = c(0.25, 50, 10, 10),
-                    counties = name, 
-                    rvote = iowa$rep_08, dvote = iowa$dem_08)
+                                constraint = c('compact', 'population', 'partisan', 'countsplit'),
+                                constraintweight = c(0.25, 50, 10, 10),
+                                counties = name, 
+                                rvote = iowa$rep_08, dvote = iowa$dem_08)
 ```
 
 Then we can run this for a relatively small number of iterations.
@@ -439,10 +439,10 @@ Now, the interesting this here is that adding more constraints actually increase
 
 ```{r}
 cons <- flip_constraints_helper(map = iowa_map,
-                    constraint = c('compact', 'population', 'partisan', 'countsplit'),
-                    constraintweight = c(1.5, 100, 40, 20),
-                    counties = name, 
-                    rvote = iowa$rep_08, dvote = iowa$dem_08)
+                                constraint = c('compact', 'population', 'partisan', 'countsplit'),
+                                constraintweight = c(1.5, 100, 40, 20),
+                                counties = name, 
+                                rvote = iowa$rep_08, dvote = iowa$dem_08)
 sims <- redist_flip(iowa_map, 2000, constraints = cons)
 ```
 

@@ -17,6 +17,7 @@ knitr::opts_chunk$set(
 To set up this glossary, we load some example data which uses Iowa and its 2012-2021 congressional districts.
 
 ```{r}
+library(redist)
 data(iowa)
 iowa_map <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop)
 ```
@@ -29,19 +30,19 @@ iowa_map <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop)
 
 -   Example:
 
-    ```{r}
-    # Standard eval - 
-    adj <- redist.adjacency(shp = iowa)
-    # tidy eval - 
-    adj <- get_adj(iowa_map)
+```{r}
+# Standard eval - 
+adj <- redist.adjacency(shp = iowa)
+# tidy eval - 
+adj <- get_adj(iowa_map)
 
-    head(adj)
-    ```
+head(adj)
+```
 
-    ```{r}
-    # Plot it!
-    redist.plot.adj(shp = iowa_map)
-    ```
+```{r}
+# Plot it!
+redist.plot.adj(shp = iowa_map)
+```
 
 # ndists
 
@@ -51,12 +52,12 @@ iowa_map <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop)
 
 -   Example:
 
-    ```{r}
-    # Standard eval - 
-    ndists <- 4
-    # tidy eval - stored within redist_map object
-    attr(iowa_map, 'ndists')
-    ```
+```{r}
+# Standard eval - 
+ndists <- 4
+# tidy eval - stored within redist_map object
+attr(iowa_map, 'ndists')
+```
 
 # nsims
 
@@ -66,9 +67,9 @@ iowa_map <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop)
 
 -   Example:
 
-    ```{r}
-    nsims <- 100
-    ```
+```{r}
+nsims <- 100
+```
 
 # pop_tol
 
@@ -78,16 +79,16 @@ iowa_map <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop)
 
 -   Example:
 
-    ```{r}
-    # standard eval - 
-    pop_tol <- 0.01
+```{r}
+# standard eval - 
+pop_tol <- 0.01
 
-    # tidy eval - stored within redist_map object
-    # - getting
-    get_pop_tol(iowa_map)
-    # - setting
-    iowa_map <- set_pop_tol(iowa_map, pop_tol = 0.01)
-    ```
+# tidy eval - stored within redist_map object
+# - getting
+get_pop_tol(iowa_map)
+# - setting
+iowa_map <- set_pop_tol(iowa_map, pop_tol = 0.01)
+```
 
 # plan
 
@@ -97,11 +98,11 @@ iowa_map <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop)
 
 -   Example:
 
-    ```{r}
-    sim <- redist.rsg(adj = adj, total_pop = iowa$pop, ndists = 4, pop_tol = 0.01)
+```{r}
+sim <- redist.rsg(adj = adj, total_pop = iowa$pop, ndists = 4, pop_tol = 0.01)
 
-    head(sim$plan)
-    ```
+head(sim$plan)
+```
 
 # plans
 
@@ -111,15 +112,15 @@ iowa_map <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop)
 
 -   Example:
 
-    ```{r}
-    # standard eval -
-    sims <- redist.smc(adj = adj, total_pop = iowa$pop, nsims = 10, ndists = 4, silent = TRUE)
-    plans <- sims$plans
+```{r}
+# standard eval -
+sims <- redist.smc(adj = adj, total_pop = iowa$pop, nsims = 10, ndists = 4, silent = TRUE)
+plans <- sims$plans
 
-    # tidy eval - 
-    sims <- redist_smc(map = iowa_map, nsims = 10, silent = TRUE)
-    plans <- get_plan_matrix(sims)
-    ```
+# tidy eval - 
+sims <- redist_smc(map = iowa_map, nsims = 10, silent = TRUE)
+plans <- get_plan_matrix(sims)
+```
 
 # init_plan
 
@@ -129,13 +130,13 @@ iowa_map <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop)
 
 -   Example:
 
-    ```{r}
-    # standard eval - 
-    init_plan <- iowa$cd_2010
+```{r}
+# standard eval - 
+init_plan <- iowa$cd_2010
 
-    # tidy eval - stored within redist_map object
-    get_existing(iowa_map)
-    ```
+# tidy eval - stored within redist_map object
+get_existing(iowa_map)
+```
 
 # total_pop
 
@@ -171,10 +172,10 @@ iowa$white
 
 -   Example:
 
-    ```{r}
-    # tidy eval - stored in redist_map object
-    attr(iowa_map, 'pop_bounds')
-    ```
+```{r}
+# tidy eval - stored in redist_map object
+attr(iowa_map, 'pop_bounds')
+```
 
 # ncores
 
@@ -184,6 +185,6 @@ iowa$white
 
 -   Example:
 
-    ```{r}
+```{r}
 
-    ```
+```
