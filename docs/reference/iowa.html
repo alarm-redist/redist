@@ -107,16 +107,16 @@ of the state of Iowa." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/glossary.html">Glossary of Key Redistricting Terms</a>
+    </li>
+    <li>
       <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
     </li>
     <li>
-      <a href="../articles/mcmc.html">Redistricting with MCMC and RSG</a>
+      <a href="../articles/mcmc.html">Redistricting with Flip MCMC</a>
     </li>
     <li>
       <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
-    </li>
-    <li>
-      <a href="../articles/tidy-redist.html">Tidy `redist`</a>
     </li>
   </ul>
 </li>
@@ -183,33 +183,33 @@ of the state of Iowa.</p>
     <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>iowa</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>iowa</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; Simple feature collection with 99 features and 14 fields
-#&gt; Geometry type: MULTIPOLYGON
-#&gt; Dimension:     XY
-#&gt; Bounding box:  xmin: 4081849 ymin: 2879102 xmax: 5834228 ymax: 4024957
-#&gt; Projected CRS: NAD83(HARN) / Iowa North (ftUS)
+#&gt; geometry type:  MULTIPOLYGON
+#&gt; dimension:      XY
+#&gt; bbox:           xmin: 4081849 ymin: 2879102 xmax: 5834228 ymax: 4024957
+#&gt; projected CRS:  NAD83(HARN) / Iowa North (ftUS)
 #&gt; First 10 features:
-#&gt;     fips       name cd    pop  white black hisp    vap  wvap bvap hvap tot_08
-#&gt; 1  19001      Adair  3   7682   7507    11  101   5957  5860    5   53   4053
-#&gt; 2  19003      Adams  3   4029   3922     8   37   3180  3109    6   22   2206
-#&gt; 3  19005  Allamakee  1  14330  13325   109  757  11020 10430   82  425   7059
-#&gt; 4  19007  Appanoose  2  12887  12470    55  181   9993  9745   40   99   6176
-#&gt; 5  19009    Audubon  4   6119   6007     9   37   4780  4714    5   27   3435
-#&gt; 6  19011     Benton  1  26076  25387    93  275  19430 19068   49  155  13712
-#&gt; 7  19013 Black Hawk  1 131090 109968 11493 4907 102594 89541 7677 2865  64775
-#&gt; 8  19015      Boone  4  26306  25194   202  505  20027 19448  103  260  13929
-#&gt; 9  19017     Bremer  1  24276  23459   186  239  18763 18242  155  137  12871
-#&gt; 10 19019   Buchanan  1  20958  20344    59  243  15282 14979   32  128  10338
-#&gt;    dem_08 rep_08                       geometry
-#&gt; 1    1924   2060 MULTIPOLYGON (((4592338 328...
-#&gt; 2    1118   1046 MULTIPOLYGON (((4528041 315...
-#&gt; 3    3971   2965 MULTIPOLYGON (((5422507 401...
-#&gt; 4    2970   3086 MULTIPOLYGON (((5032545 306...
-#&gt; 5    1739   1634 MULTIPOLYGON (((4487363 341...
-#&gt; 6    7058   6447 MULTIPOLYGON (((5246216 357...
-#&gt; 7   39184  24662 MULTIPOLYGON (((5175640 369...
-#&gt; 8    7356   6293 MULTIPOLYGON (((4741174 354...
-#&gt; 9    6940   5741 MULTIPOLYGON (((5174636 379...
-#&gt; 10   6050   4139 MULTIPOLYGON (((5302846 370...</div></pre>
+#&gt;     fips       name cd_2010    pop  white black hisp    vap  wvap bvap hvap
+#&gt; 1  19001      Adair       3   7682   7507    11  101   5957  5860    5   53
+#&gt; 2  19003      Adams       3   4029   3922     8   37   3180  3109    6   22
+#&gt; 3  19005  Allamakee       1  14330  13325   109  757  11020 10430   82  425
+#&gt; 4  19007  Appanoose       2  12887  12470    55  181   9993  9745   40   99
+#&gt; 5  19009    Audubon       4   6119   6007     9   37   4780  4714    5   27
+#&gt; 6  19011     Benton       1  26076  25387    93  275  19430 19068   49  155
+#&gt; 7  19013 Black Hawk       1 131090 109968 11493 4907 102594 89541 7677 2865
+#&gt; 8  19015      Boone       4  26306  25194   202  505  20027 19448  103  260
+#&gt; 9  19017     Bremer       1  24276  23459   186  239  18763 18242  155  137
+#&gt; 10 19019   Buchanan       1  20958  20344    59  243  15282 14979   32  128
+#&gt;    tot_08 dem_08 rep_08                       geometry
+#&gt; 1    4053   1924   2060 MULTIPOLYGON (((4592338 328...
+#&gt; 2    2206   1118   1046 MULTIPOLYGON (((4528041 315...
+#&gt; 3    7059   3971   2965 MULTIPOLYGON (((5422507 401...
+#&gt; 4    6176   2970   3086 MULTIPOLYGON (((5032545 306...
+#&gt; 5    3435   1739   1634 MULTIPOLYGON (((4487363 341...
+#&gt; 6   13712   7058   6447 MULTIPOLYGON (((5246216 357...
+#&gt; 7   64775  39184  24662 MULTIPOLYGON (((5175640 369...
+#&gt; 8   13929   7356   6293 MULTIPOLYGON (((4741174 354...
+#&gt; 9   12871   6940   5741 MULTIPOLYGON (((5174636 379...
+#&gt; 10  10338   6050   4139 MULTIPOLYGON (((5302846 370...</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
