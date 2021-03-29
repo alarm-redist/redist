@@ -1,0 +1,16 @@
+---
+title: "Glossary of Key Redistricting Terms"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Glossary of Key Redistrictin Terms}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
