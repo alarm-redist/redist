@@ -2,7 +2,7 @@
 title: "Glossary of Key Redistricting Terms"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Glossary of Key Redistrictin Terms}
+  %\VignetteIndexEntry{Glossary of Key Redistricting Terms}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
