@@ -151,11 +151,6 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
                      0, 0, 0, rep(1, ndists), 1.0, k, verbosity=0)[, -1L]
         }
     } else {
-        if (missing(group_pop)) {
-            group_pop <- rep(0, V)
-        } else {
-            group_pop <- eval_tidy(enquo(group_pop), map)
-        }
 
         flip_constraints <- process_flip_constr(constraints = flip_constraints,
                                                 nrow(map))
