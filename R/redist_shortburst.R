@@ -161,7 +161,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
         if (flip_lambda < 0) {
             stop("flip_lambda must be a nonnegative integer.")
         }
-        
+
         if(all(flip_constraints$similarity$plan == 1)){
           if(min(init_plan) == 1){
             flip_constraints$similarity$plan <- init_plan - 1
@@ -294,6 +294,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
 #' `group_pct`, and `polsby_popper` and smaller values are better for `splits` and `pop_dev`.
 #'
 #' @examples
+#' \dontrun{
 #' data(iowa)
 #' iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05)
 #'
@@ -301,6 +302,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
 #' scorer_status_quo(iowa_map)
 #' scorer_group_pct(iowa_map, dem_08, tot_08, k=2)
 #' 1.5*scorer_frac_kept(iowa_map) + 0.4*scorer_status_quo(iowa_map)
+#' }
 #'
 #' @concept prepare
 #' @name scorers

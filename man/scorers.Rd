@@ -75,6 +75,7 @@ plan is closer to the existing plan.
 }
 }
 \examples{
+\dontrun{
 data(iowa)
 iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05)
 
@@ -82,6 +83,7 @@ scorer_frac_kept(iowa_map)
 scorer_status_quo(iowa_map)
 scorer_group_pct(iowa_map, dem_08, tot_08, k=2)
 1.5*scorer_frac_kept(iowa_map) + 0.4*scorer_status_quo(iowa_map)
+}
 
 }
 \concept{prepare}
