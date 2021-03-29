@@ -389,7 +389,7 @@ redist.segcalc <- function(plans,
     }
 
     ## Warnings
-    if(missing(plans) | !(class(plans) %in% c("data.frame", "matrix", "redist"))){
+    if(missing(plans) | !any(class(plans) %in% c("data.frame", "matrix", "redist"))){
         stop("Please provide either a redist object or a proper matrix of congessional districts")
     }
     if(missing(group_pop)){
@@ -401,7 +401,7 @@ the segregation index")
     }
 
     ## If redist object, get the partitions entry
-    if(class(plans) == "redist"){
+    if(all(class(plans) == 'redist')){
         plans <- plans$plans
     }
 

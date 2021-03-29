@@ -43,7 +43,6 @@
 #'   Recommended for monitoring purposes.
 #' @param backend the MCMC algorithm to use within each burst, either
 #'   "mergesplit" or "flip".
-#' @param group_pop A column in map containing group populations for use with flip
 #' @param flip_lambda The parameter detmerining the number of swaps to attempt each iteration of flip mcmc.
 #' The number of swaps each iteration is equal to Pois(lambda) + 1. The default is 0.
 #' @param flip_eprob  The probability of keeping an edge connected in flip mcmc. The default is 0.05.
@@ -75,7 +74,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
                              burst_size = ifelse(backend == 'mergesplit', 10L, 50L),
                              max_bursts=500L, maximize=TRUE, init_plan=NULL,
                              counties=NULL, compactness=1, adapt_k_thresh=0.975,
-                             return_all=TRUE, backend="mergesplit", group_pop,
+                             return_all=TRUE, backend="mergesplit",
                              flip_lambda = 0, flip_eprob = 0.05, flip_constraints = list(),
                              verbose=TRUE) {
 
@@ -167,9 +166,17 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
         if (flip_lambda < 0) {
             stop("flip_lambda must be a nonnegative integer.")
         }
+        
+        if(all(flip_constraints$similarity$plan == 1)){
+          if(min(init_plan) == 1){
+            flip_constraints$similarity$plan <- init_plan - 1
+          } else {
+            flip_constraints$similarity$plan <- init_plan
+          }
+        }
 
         run_burst <- function(init){
-            skinny_flips(adj = adj, init_plan = init_plan, total_pop = pop,
+            skinny_flips(adj = adj, init_plan = init, total_pop = pop,
                         pop_tol = pop_tol, nsims = burst_size,
                         eprob = flip_eprob, lambda = flip_lambda,
                         constraints = flip_constraints)
