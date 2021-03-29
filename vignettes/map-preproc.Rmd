@@ -37,9 +37,11 @@ The precinct data are available online, and contain population, presidential
 vote, city, and existing district information.
 
 ```{r setup, message=F}
-library(tidyverse)
+library(dplyr)
+library(ggplot2)
 library(scales)
 library(patchwork)
+
 library(redist)
 
 data_url = "https://github.com/CoryMcCartan/redist-data/raw/main/data/king_county.rds"
