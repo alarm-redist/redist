@@ -377,7 +377,7 @@ scorer_pop_dev <- function(map) {
 #' @param counties A numeric vector with an integer from 1:n_counties
 #'
 #' @export
-scorer_frac_split <- function(map, counties) {
+scorer_splits <- function(map, counties) {
   counties <- eval_tidy(enquo(counties))
 
   fn = function(plans) {
