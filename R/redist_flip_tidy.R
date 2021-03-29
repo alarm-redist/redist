@@ -231,7 +231,7 @@ redist_flip <- function(map, nsims, init_plan, pop_tol, constraints = list(),
       if (any(components > 1)) {
         counties_smc <- redist.county.relabel(adj, pre_pre_proc$counties)
       } else {
-        counties_smc <- pre_pre_proc$counties
+        counties_smc <- pre_pre_proc$counties + 1
       }
       invisible(capture.output(init_plan <- redist.smc(
         adj = adj,
