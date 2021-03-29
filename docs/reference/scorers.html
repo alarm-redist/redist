@@ -247,32 +247,32 @@ plan is closer to the existing plan.</p></li>
 #&gt; {
 #&gt;     (edges - n_removed(adj, plans, ndists))/edges
 #&gt; }
-#&gt; &lt;bytecode: 0x7f8718e98da8&gt;
-#&gt; &lt;environment: 0x7f8718e994e0&gt;
+#&gt; &lt;bytecode: 0x000000004b542450&gt;
+#&gt; &lt;environment: 0x000000004b53ed58&gt;
 #&gt; attr(,"class")
 #&gt; [1] "redist_scorer" "function"     </div><div class='input'><span class='fu'>scorer_status_quo</span><span class='op'>(</span><span class='va'>iowa_map</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; function (plans) 
 #&gt; {
 #&gt;     1 - 0.5 * var_info_vec(plans, existing_plan, pop)/log(ndists)
 #&gt; }
-#&gt; &lt;bytecode: 0x7f8718cf6f40&gt;
-#&gt; &lt;environment: 0x7f8718cf7758&gt;
+#&gt; &lt;bytecode: 0x000000004ac2fe20&gt;
+#&gt; &lt;environment: 0x000000004ac30638&gt;
 #&gt; attr(,"class")
 #&gt; [1] "redist_scorer" "function"     </div><div class='input'><span class='fu'>scorer_group_pct</span><span class='op'>(</span><span class='va'>iowa_map</span>, <span class='va'>dem_08</span>, <span class='va'>tot_08</span>, k<span class='op'>=</span><span class='fl'>2</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; function (plans) 
 #&gt; {
 #&gt;     group_pct_top_k(plans, group_pop, total_pop, k, ndists)
 #&gt; }
-#&gt; &lt;bytecode: 0x7f872164fc88&gt;
-#&gt; &lt;environment: 0x7f87216b0638&gt;
+#&gt; &lt;bytecode: 0x000000004bfe4668&gt;
+#&gt; &lt;environment: 0x000000004bfe10f8&gt;
 #&gt; attr(,"class")
 #&gt; [1] "redist_scorer" "function"     </div><div class='input'><span class='fl'>1.5</span><span class='op'>*</span><span class='fu'>scorer_frac_kept</span><span class='op'>(</span><span class='va'>iowa_map</span><span class='op'>)</span> <span class='op'>+</span> <span class='fl'>0.4</span><span class='op'>*</span><span class='fu'>scorer_status_quo</span><span class='op'>(</span><span class='va'>iowa_map</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; function (plans) 
 #&gt; {
 #&gt;     fn1(plans) + fn2(plans)
 #&gt; }
-#&gt; &lt;bytecode: 0x7f8721eaa8c8&gt;
-#&gt; &lt;environment: 0x7f8721eab0e0&gt;
+#&gt; &lt;bytecode: 0x000000004b7cb440&gt;
+#&gt; &lt;environment: 0x000000004b7cbc20&gt;
 #&gt; attr(,"class")
 #&gt; [1] "redist_scorer" "function"     </div><div class='input'>
 </div></pre>
