@@ -108,7 +108,8 @@
 #' 
 #'
 #' @param map A \code{\link{redist_map}} object.
-#' @param nsims The number of samples to draw.
+#' @param nsims The number of samples to draw, not including warmup.
+#' @param warmup The number of warmup samples to discard.
 #' @param init_plan A vector containing the congressional district labels
 #' of each geographic unit. The default is \code{NULL}. If not provided,
 #' a random initial plan will be generated using \code{redist.smc}. You can also
@@ -169,7 +170,7 @@
 #' iowa_map <- redist_map(iowa, ndists = 4, existing_plan = cd_2010, total_pop = 'pop')
 #' sims <- redist_flip(map = iowa_map, nsims = 100)
 #' }
-redist_flip <- function(map, nsims, init_plan, pop_tol, constraints = list(),
+redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints = list(),
                         nthin = 1, eprob = 0.05, lambda = 0, temper = FALSE,
                         betaseq = 'powerlaw', betaseqlength = 10, betaweights = NULL,
                         adapt_lambda = FALSE, adapt_eprob = FALSE, exact_mh = FALSE,
@@ -189,7 +190,7 @@ redist_flip <- function(map, nsims, init_plan, pop_tol, constraints = list(),
   adj <- get_adj(map)
   total_pop <- map[[attr(map, 'pop_col')]]
   ndists <- attr(map, 'ndists')
-
+  
   # process constraints  
   pre_pre_proc <- process_flip_constr(constraints, nprec)
   
@@ -313,7 +314,7 @@ redist_flip <- function(map, nsims, init_plan, pop_tol, constraints = list(),
     areas_vec = preprocout$data$areasvec,
     county_membership = pre_pre_proc$counties,
     borderlength_mat = preprocout$data$borderlength_mat,
-    nsims = nsims * nthin,
+    nsims = nsims * nthin + warmup,
     eprob = eprob,
     pct_dist_parity = preprocout$params$pctdistparity,
     beta_sequence = preprocout$params$betaseq,
@@ -346,14 +347,12 @@ redist_flip <- function(map, nsims, init_plan, pop_tol, constraints = list(),
     verbose = as.logical(verbose)
   )
 
-  if (nthin > 1) {
-    algout <- redist.thin.chain(algout, thin = nthin)
-  }
+  algout <- redist.warmup.chain(algout, warmup = warmup)
+  algout <- redist.thin.chain(algout, thin = nthin)
 
-  if (min(algout$plans) == 0) {
-    algout$plans <- algout$plans + 1
-  }
-
+  
+  algout$plans <- algout$plans + 1
+  
   out <- new_redist_plans(
     plans = algout$plans,
     map = map,
@@ -364,7 +363,9 @@ redist_flip <- function(map, nsims, init_plan, pop_tol, constraints = list(),
     eprob = eprob,
     pop_tol = pop_tol,
     adapt_eprob = as.logical(adapt_eprob),
-    adapt_lambda = as.logical(adapt_lambda)
+    adapt_lambda = as.logical(adapt_lambda),
+    warmup = warmup, 
+    nthin = nthin
   ) %>% mutate(
     distance_parity = rep(algout$distance_parity, each = ndists),
     distance_original = rep(algout$distance_original, each = ndists),

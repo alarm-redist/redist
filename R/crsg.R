@@ -145,6 +145,8 @@ redist.crsg <- function(adj, total_pop, shp,  ndists, pop_tol, verbose = TRUE,
 
     warning("redist.crsg() failed to return a valid partition. Try increasing maxiter")
 
+  } else {
+    ret$plan <- ret$plan + 1
   }
 
   if(verbose){
