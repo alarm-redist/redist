@@ -111,12 +111,227 @@
 
     
     
+<p>To set up this glossary, we load some example data which uses Iowa and its 2012-2021 congressional districts.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">redist</span><span class="op">)</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Attaching package: 'redist'</span>
+<span class="co">#&gt; The following object is masked from 'package:stats':</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt;     filter</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span>
+<span class="va">iowa_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan <span class="op">=</span> <span class="va">cd_2010</span>, total_pop <span class="op">=</span> <span class="va">pop</span><span class="op">)</span></code></pre></div>
+<div id="adj" class="section level1">
+<h1 class="hasAnchor">
+<a href="#adj" class="anchor"></a>adj</h1>
+<ul>
+<li><p>Definition: An adjacency list that is represented by a <code>list</code> with one entry for each redistricting unit in a map, where each entry is an <code>integer</code> vector of adjacent units.</p></li>
+<li><p>Deprecated alternative arguments: <code>adjacency</code>, <code>adj.list</code>, <code>adj.obj</code>, <code>adjlist</code></p></li>
+<li><p>Example:</p></li>
+</ul>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># Standard eval - </span>
+<span class="va">adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.adjacency.html">redist.adjacency</a></span><span class="op">(</span>shp <span class="op">=</span> <span class="va">iowa</span><span class="op">)</span>
+<span class="co"># tidy eval - </span>
+<span class="va">adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_adj.html">get_adj</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span>
 
+<span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">adj</span><span class="op">)</span>
+<span class="co">#&gt; [[1]]</span>
+<span class="co">#&gt; [1]  1 14 38 60 87</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; [[2]]</span>
+<span class="co">#&gt; [1]  0 14 68 86 87</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; [[3]]</span>
+<span class="co">#&gt; [1] 21 95</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; [[4]]</span>
+<span class="co">#&gt; [1] 25 67 92</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; [[5]]</span>
+<span class="co">#&gt; [1] 13 14 38 82</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; [[6]]</span>
+<span class="co">#&gt; [1]  6  9 47 56 85</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># Plot it!</span>
+<span class="fu"><a href="../reference/redist.plot.adj.html">redist.plot.adj</a></span><span class="op">(</span>shp <span class="op">=</span> <span class="va">iowa_map</span><span class="op">)</span></code></pre></div>
+<p><img src="glossary_files/figure-html/unnamed-chunk-4-1.png" width="700"></p>
+</div>
+<div id="ndists" class="section level1">
+<h1 class="hasAnchor">
+<a href="#ndists" class="anchor"></a>ndists</h1>
+<ul>
+<li><p>Definition: The number of districts in a plan, a positive <code>integer</code></p></li>
+<li><p>Deprecated alternative arguments: <code>Ndistrict</code>, <code>n_dists</code></p></li>
+<li><p>Example:</p></li>
+</ul>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># Standard eval - </span>
+<span class="va">ndists</span> <span class="op">&lt;-</span> <span class="fl">4</span>
+<span class="co"># tidy eval - stored within redist_map object</span>
+<span class="fu"><a href="https://rdrr.io/r/base/attr.html">attr</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="st">'ndists'</span><span class="op">)</span>
+<span class="co">#&gt; [1] 4</span></code></pre></div>
+</div>
+<div id="nsims" class="section level1">
+<h1 class="hasAnchor">
+<a href="#nsims" class="anchor"></a>nsims</h1>
+<ul>
+<li><p>Definition: The number of simulations to run. This is a positive <code>integer</code>.</p></li>
+<li><p>Deprecated alternative arguments: <code>nsamp</code></p></li>
+<li><p>Example:</p></li>
+</ul>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">nsims</span> <span class="op">&lt;-</span> <span class="fl">100</span></code></pre></div>
+</div>
+<div id="pop_tol" class="section level1">
+<h1 class="hasAnchor">
+<a href="#pop_tol" class="anchor"></a>pop_tol</h1>
+<ul>
+<li><p>Definition: The maximum symmetric deviation from perfect population parity allowed. This is a positive <code>numeric</code>.</p></li>
+<li><p>Deprecated alternative arguments: <code>thresh</code>, <code>popcons</code>, <code>pop_constraint</code></p></li>
+<li><p>Example:</p></li>
+</ul>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># standard eval - </span>
+<span class="va">pop_tol</span> <span class="op">&lt;-</span> <span class="fl">0.01</span>
+
+<span class="co"># tidy eval - stored within redist_map object</span>
+<span class="co"># - getting</span>
+<span class="fu"><a href="../reference/get_pop_tol.html">get_pop_tol</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span>
+<span class="co">#&gt; [1] 0.01</span>
+<span class="co"># - setting</span>
+<span class="va">iowa_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_pop_tol.html">set_pop_tol</a></span><span class="op">(</span><span class="va">iowa_map</span>, pop_tol <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span></code></pre></div>
+</div>
+<div id="plan" class="section level1">
+<h1 class="hasAnchor">
+<a href="#plan" class="anchor"></a>plan</h1>
+<ul>
+<li><p>Definition: A one-dimensional array of district assignments with one for each redistricting unit, typically numbered <code>1:ndists</code>, though sometimes <code>0:(ndists - 1)</code></p></li>
+<li><p>Deprecated alternative arguments: <code>district_membership</code></p></li>
+<li><p>Example:</p></li>
+</ul>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">sim</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.rsg.html">redist.rsg</a></span><span class="op">(</span>adj <span class="op">=</span> <span class="va">adj</span>, total_pop <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">pop</span>, ndists <span class="op">=</span> <span class="fl">4</span>, pop_tol <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; ==================== </span>
+<span class="co">#&gt; redist.rsg(): Automated Redistricting Starts</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt;  4 districts built using 99 precincts in 0.06 seconds...</span>
+
+<span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">sim</span><span class="op">$</span><span class="va">plan</span><span class="op">)</span>
+<span class="co">#&gt; [1] 3 3 1 2 3 1</span></code></pre></div>
+</div>
+<div id="plans" class="section level1">
+<h1 class="hasAnchor">
+<a href="#plans" class="anchor"></a>plans</h1>
+<ul>
+<li><p>Definition: A two-dimensional array of district assignments, where each column is a <code>plan</code>.</p></li>
+<li><p>Deprecated alternative arguments: <code>partitions</code>, <code>district_membership</code>, <code>districts</code>, <code>cdvec</code></p></li>
+<li><p>Example:</p></li>
+</ul>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># standard eval -</span>
+<span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_smc.html">redist.smc</a></span><span class="op">(</span>adj <span class="op">=</span> <span class="va">adj</span>, total_pop <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">pop</span>, nsims <span class="op">=</span> <span class="fl">10</span>, ndists <span class="op">=</span> <span class="fl">4</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="va">plans</span> <span class="op">&lt;-</span> <span class="va">sims</span><span class="op">$</span><span class="va">plans</span>
+
+<span class="co"># tidy eval - </span>
+<span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_smc.html">redist_smc</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span>, nsims <span class="op">=</span> <span class="fl">10</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="va">plans</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_plans_matrix.html">get_plans_matrix</a></span><span class="op">(</span><span class="va">sims</span><span class="op">)</span></code></pre></div>
+</div>
+<div id="init_plan" class="section level1">
+<h1 class="hasAnchor">
+<a href="#init_plan" class="anchor"></a>init_plan</h1>
+<ul>
+<li><p>Definition: The initial plan to start a Markov Chain Monte Carlo chain from. An integer vector with one entry for each redistricting unit.</p></li>
+<li><p>Deprecated alternative arguments: <code>initcds</code></p></li>
+<li><p>Example:</p></li>
+</ul>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># standard eval - </span>
+<span class="va">init_plan</span> <span class="op">&lt;-</span> <span class="va">iowa</span><span class="op">$</span><span class="va">cd_2010</span>
+
+<span class="co"># tidy eval - stored within redist_map object</span>
+<span class="fu"><a href="../reference/get_existing.html">get_existing</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span>
+<span class="co">#&gt;  [1] 3 3 1 2 4 1 1 4 1 1 4 4 4 4 3 2 4 4 4 2 4 1 2 4 3 2 2 1 2 4 1 4 1 4 4 3 4 4</span>
+<span class="co">#&gt; [39] 3 4 4 4 4 2 1 4 4 1 1 2 2 2 1 2 4 2 1 2 2 4 3 2 2 1 3 1 4 2 3 2 4 4 3 4 4 4</span>
+<span class="co">#&gt; [77] 3 3 1 3 4 2 4 4 4 1 3 3 2 2 3 2 2 4 4 1 4 1 4</span></code></pre></div>
+</div>
+<div id="total_pop" class="section level1">
+<h1 class="hasAnchor">
+<a href="#total_pop" class="anchor"></a>total_pop</h1>
+<ul>
+<li><p>Definition: A vector of non-negative <code>integer</code> entries with one per redistricting unit. The entries should reflect the total population within each unit.</p></li>
+<li><p>Deprecated alternative arguments: <code>pop</code>, <code>population</code>, <code>popvec</code>, <code>fullpop</code>, <code>fullpopvec</code></p></li>
+<li><p>Example:</p></li>
+</ul>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># standard eval</span>
+<span class="va">total_pop</span> <span class="op">&lt;-</span> <span class="va">iowa</span><span class="op">$</span><span class="va">pop</span>
+
+<span class="co"># tidy eval - a column within the redist_map object tracked by attributes</span>
+<span class="va">iowa_map</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/attr.html">attr</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="st">'pop_col'</span><span class="op">)</span><span class="op">]</span><span class="op">]</span>
+<span class="co">#&gt;  [1]   7682   4029  14330  12887   6119  26076 131090  26306  24276  20958</span>
+<span class="co">#&gt; [11]  20260  14867   9670  20816  13956  18499  44151  12072  12439   9286</span>
+<span class="co">#&gt; [21]  16667  18129  49116  17096  66135   8753   8457  17764  40325  16667</span>
+<span class="co">#&gt; [31]  93653  10302  20880  16303  10680   7441   9336  12453  10954  15673</span>
+<span class="co">#&gt; [41]  11341  17534  14928  20145   9566   9815   7089  16355  19848  36842</span>
+<span class="co">#&gt; [51]  16843 130882  20638  10511  15543  35862 211226  11387   8898  11581</span>
+<span class="co">#&gt; [61]  15679  22381  33309  40648  15059  10776   9243   7970  10740  42745</span>
+<span class="co">#&gt; [71]  14398   6462  15932   9421  24986   7310 430640  93158  18914   5131</span>
+<span class="co">#&gt; [81]  10350 165224  12167  33704  89542  17767   6317  12534   7570  35625</span>
+<span class="co">#&gt; [91]  46225  21704   6403  38013  10866  21056 102172   7598  13229</span></code></pre></div>
+</div>
+<div id="group_pop" class="section level1">
+<h1 class="hasAnchor">
+<a href="#group_pop" class="anchor"></a>group_pop</h1>
+<ul>
+<li><p>Definition: A vector of non-negative <code>integer</code> entries with one per redistricting unit. The entries should reflect a subgroup population of interest within each unit.</p></li>
+<li><p>Deprecated alternative arguments: <code>group_pop</code>, <code>grouppop</code>, <code>grouppopvec</code></p></li>
+<li><p>Example:</p></li>
+</ul>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">iowa</span><span class="op">$</span><span class="va">white</span>
+<span class="co">#&gt;  [1]   7507   3922  13325  12470   6007  25387 109968  25194  23459  20344</span>
+<span class="co">#&gt; [11]  13756  14552   9470  20119  13502  17897  40876  11553  12048   8208</span>
+<span class="co">#&gt; [21]  15843  17563  45454  12541  58630   8556   7946  17408  36059  16255</span>
+<span class="co">#&gt; [31]  86981   9319  19987  15443   9334   7123   9017  12190  10595  14344</span>
+<span class="co">#&gt; [41]  10744  16430  14532  18141   9314   9288   6907  15818  19223  35284</span>
+<span class="co">#&gt; [51]  14539 108767  19716  10286  15121  32833 188592   9309   8720  11267</span>
+<span class="co">#&gt; [61]  15233  21242  31834  31807  14390  10564   8904   7677  10265  34518</span>
+<span class="co">#&gt; [71]  13605   5937  14767   9108  23782   7043 347710  83609  17705   4966</span>
+<span class="co">#&gt; [81]  10031 136884  11763  30090  77812  14874   5872  12029   7373  31157</span>
+<span class="co">#&gt; [91]  44266  20114   6244  34210  10247  20153  79282   7335  11738</span></code></pre></div>
+</div>
+<div id="pop_bounds" class="section level1">
+<h1 class="hasAnchor">
+<a href="#pop_bounds" class="anchor"></a>pop_bounds</h1>
+<ul>
+<li><p>Definition: A three entry vector for asymmetric population parity control. The first entry is the lower bound for population, the second is the target population, and the third is the upper bound for population.</p></li>
+<li><p>Example:</p></li>
+</ul>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># tidy eval - stored in redist_map object</span>
+<span class="fu"><a href="https://rdrr.io/r/base/attr.html">attr</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="st">'pop_bounds'</span><span class="op">)</span>
+<span class="co">#&gt; [1] 753972.9 761588.8 769204.6</span></code></pre></div>
+</div>
+<div id="ncores" class="section level1">
+<h1 class="hasAnchor">
+<a href="#ncores" class="anchor"></a>ncores</h1>
+<ul>
+<li><p>Definition: The number of cores to use for parallel processes. A positive <code>integer</code>. <code>ncores = 1</code> indicates running in serial, while <code>ncores &gt; 1</code> indicates running in parallel.</p></li>
+<li><p>Deprecated alternative arguments: <code>ncores</code>, <code>nthreads</code>, <code>n_cores</code></p></li>
+<li><p>Example:</p></li>
+</ul>
+</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
 
-      </div>
+        <nav id="toc" data-toggle="toc"><h2 data-toc-skip>Contents</h2>
+    </nav>
+</div>
 
 </div>
 
