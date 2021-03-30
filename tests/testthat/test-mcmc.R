@@ -7,7 +7,7 @@ test_that("mcmc works", {
   par <- redist.parity(out$plans, total_pop = pop)
 
   expect_equal(out$nsims, nsims)
-  expect_equal(range(out$plans), c(0, 2))
+  expect_equal(range(out$plans), c(1, 3))
   expect_true(all(par <= 0.1))
 
 })
@@ -26,7 +26,7 @@ test_that("mcmc countysplit works", {
   par <- redist.parity(out$plans, total_pop = pop)
 
   expect_equal(out$nsims, nsims)
-  expect_equal(range(out$plans), c(0, 2))
+  expect_equal(range(out$plans), c(1, 3))
   expect_true(all(par <= 0.1))
 })
 
@@ -42,7 +42,7 @@ test_that("mcmc hinge works", {
   par <- redist.parity(out$plans, total_pop = pop)
 
   expect_equal(out$nsims, nsims)
-  expect_equal(range(out$plans), c(0, 2))
+  expect_equal(range(out$plans), c(1, 3))
   expect_true(all(par <= 0.1))
 
 })
@@ -54,6 +54,8 @@ test_that('mcmc flip wrapper works',{
   fl25_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
   
   sims <- redist_flip(map = fl25_map, nsims = 10)
+  
+  class
   
 })
 

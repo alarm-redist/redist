@@ -5,7 +5,7 @@ test_that("rsg works", {
   
   par <- redist.parity(out$plan, total_pop = pop)
   
-  expect_equal(range(out$plan), c(0,2))
+  expect_equal(range(out$plan), c(1,3))
   expect_true(par <= 0.1)
   expect_true(all(names(out) %in% c('plan', 'district_list', 'district_pop')))
 })
