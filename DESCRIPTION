@@ -49,6 +49,7 @@ Suggests:
     scales,
     units,
     spdep,
+    RSpectra,
     testthat (>= 3.0.0)
 LinkingTo: Rcpp, RcppArmadillo
 License: GPL (>= 2)

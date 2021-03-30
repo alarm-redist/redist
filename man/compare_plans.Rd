@@ -9,7 +9,7 @@ compare_plans(
   set1,
   set2,
   shp = NULL,
-  plot = "line",
+  plot = "fill",
   thresh = 0.1,
   labs = c("Set 1", "Set 2")
 )
