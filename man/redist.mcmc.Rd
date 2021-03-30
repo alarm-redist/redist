@@ -12,6 +12,7 @@ redist.mcmc(
   init_plan = NULL,
   loopscompleted = 0,
   nloop = 1,
+  warmup = 0,
   nthin = 1,
   eprob = 0.05,
   lambda = 0,
@@ -75,6 +76,8 @@ algorithm. The default is \code{0}.}
 \item{nloop}{The total number of save points for the algorithm. The
 default is \code{1}. Note that the total number of simulations run
 will be \code{nsims} * \code{nloop}. \code{savename} must be non-null.}
+
+\item{warmup}{The number of warmup samples to discard. The default is 0.}
 
 \item{nthin}{The amount by which to thin the Markov Chain. The
 default is \code{1}.}

@@ -29,7 +29,7 @@ redist_flip(
 \arguments{
 \item{map}{A \code{\link{redist_map}} object.}
 
-\item{nsims}{The number of samples to draw, including warmup.}
+\item{nsims}{The number of samples to draw, not including warmup.}
 
 \item{warmup}{The number of warmup samples to discard.}
 
