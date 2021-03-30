@@ -14,6 +14,13 @@ reference:
   desc: "Functions for analyzing simulation outputs"
 - contents:
   - redist_plans
+  - add_reference
+  - subset_sampled
+  - get_plans_matrix
+  - get_plans_weights
+  - number_by
+  - pullback
+  - match_numbers
   - has_concept("analyze")
 - title: "Setup Helpers"
   desc: "Functions that help prepare data and select constraints"

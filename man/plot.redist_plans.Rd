@@ -2,7 +2,7 @@
 % Please edit documentation in R/redist_plans.R
 \name{plot.redist_plans}
 \alias{plot.redist_plans}
-\title{Summary plots for \code{redist_plans}}
+\title{Summary plots for \code{\\link{redist_plans}}}
 \usage{
 \method{plot}{redist_plans}(x, ..., type = "hist")
 }
@@ -16,6 +16,7 @@
 \code{\link{redist.plot.plans}}.}
 }
 \description{
-Summary plots for \code{redist_plans}
+If no arguments are passed, defaults to plotting the sampling weights for
+the \code{\link{redist_plans}} object.
 }
 \concept{plot}

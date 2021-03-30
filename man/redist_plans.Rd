@@ -41,9 +41,11 @@ Other useful methods for \code{redist_plans} objects:
 \item \code{\link{pullback}}
 \item \code{\link{number_by}}
 \item \code{\link{match_numbers}}
+\item \code{\link{is_county_split}}
 \item \code{\link{prec_assignment}}
-\item \code{\link{get_plan_matrix}}
-\item \code{\link{get_plan_weights}}
+\item \code{\link{plan_distances}}
+\item \code{\link{get_plans_matrix}}
+\item \code{\link{get_plans_weights}}
 \item \code{\link{get_sampling_info}}
 \item \code{\link{as.matrix.redist_plans}}
 \item \code{\link{plot.redist_plans}}

@@ -80,5 +80,5 @@ plan_parity <- function(map, .data = get0('.', parent.frame()), ...) {
   total_pop <- map[[attr(map, 'pop_col')]]
   stopifnot(!is.null(total_pop))
 
-  rep(max_dev(get_plan_matrix(.data), total_pop, ndists), each = ndists)
+  rep(max_dev(get_plans_matrix(.data), total_pop, ndists), each = ndists)
 }

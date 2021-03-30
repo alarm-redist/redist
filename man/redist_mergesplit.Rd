@@ -27,7 +27,6 @@ redist.mergesplit(
   nsims,
   ndists,
   pop_tol = 0.01,
-  warmup = 0,
   init_plan,
   counties,
   compactness = 1,

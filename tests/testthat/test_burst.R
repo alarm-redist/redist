@@ -4,6 +4,6 @@ test_that("short bursts run and improve the score over time", {
     plans = redist_shortburst(iowa, scorer_frac_kept(iowa), max_bursts=20, verbose=F)
 
     expect_true(inherits(plans, "redist_plans"))
-    expect_equal(dim(get_plan_matrix(plans)), c(99, 21))
+    expect_equal(dim(get_plans_matrix(plans)), c(99, 21))
     expect_true(all(diff(plans$score) >= 0))
 })

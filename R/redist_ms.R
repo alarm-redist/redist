@@ -5,7 +5,6 @@
 #' "SpatialPolygonsDataFrame."
 #' @param total_pop A vector containing the populations of each geographic
 #' unit
-#' @param nsims The number of samples to draw, including warmup.
 #' @param ndists The number of congressional districts.
 #' @param pop_tol The desired population constraint.  All sampled districts
 #' will have a deviation from the target district size no more than this value
@@ -23,7 +22,7 @@
 #' out <- redist.mergesplit(adj = adj, total_pop = fl25$pop,
 #'                          nsims = 5, ndists = 3, pop_tol = 0.1)
 #' }
-redist.mergesplit <- function(adj, total_pop, nsims, ndists, pop_tol = 0.01, warmup = 0,
+redist.mergesplit <- function(adj, total_pop, nsims, ndists, pop_tol = 0.01,
                               init_plan, counties, compactness = 1,
                               constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
                               adapt_k_thresh = 0.975, k = NULL, verbose = TRUE, silent = FALSE) {

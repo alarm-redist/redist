@@ -128,7 +128,7 @@ make_cores = function(.data=get0(".", parent.frame()), boundary=1, focus=NULL) {
 add_reference = function(plans, ref_plan, name=NULL) {
     stopifnot(inherits(plans, "redist_plans"))
 
-    plan_m = get_plan_matrix(plans)
+    plan_m = get_plans_matrix(plans)
     stopifnot(is.numeric(ref_plan))
     stopifnot(length(ref_plan) == nrow(plan_m))
 
@@ -167,7 +167,7 @@ add_reference = function(plans, ref_plan, name=NULL) {
         ) %>%
         dplyr::mutate(draw = new_draw, .before="district")
 
-    exist_wgts = get_plan_weights(plans)
+    exist_wgts = get_plans_weights(plans)
     if (!is.null(exist_wgts))
         attr(plans, "wgt") = c(0, exist_wgts)
 
@@ -198,7 +198,7 @@ pullback = function(plans) {
 
     attr(plans, "merge_idx") = NULL
     attr(plans, "prec_pop") = NULL
-    set_plan_matrix(plans, get_plan_matrix(plans)[merge_idx,])
+    set_plan_matrix(plans, get_plans_matrix(plans)[merge_idx,])
 }
 
 
@@ -246,7 +246,7 @@ match_numbers = function(data, plan, col="pop_overlap", force=FALSE) {
     stopifnot(inherits(data, "redist_plans"))
     stopifnot("district" %in% colnames(data))
 
-    plan_mat = get_plan_matrix(data)
+    plan_mat = get_plans_matrix(data)
     if (is.character(plan)) plan = plan_mat[,plan]
     plan = factor(plan, ordered=TRUE)
     ndists = length(levels(plan))
@@ -297,7 +297,7 @@ number_by = function(data, x, desc=F) {
     stopifnot("district" %in% colnames(data))
 
     ord = 1 - 2*desc
-    m = get_plan_matrix(data)
+    m = get_plans_matrix(data)
     orig_groups = dplyr::group_vars(data)
     dplyr::group_by(data, .data$draw) %>%
         dplyr::mutate(district = rank(ord * {{ x }})) %>%
@@ -323,7 +323,7 @@ distr_compactness = function(map, measure="FracKept", .data=get0(".", parent.fra
     if (length(unique(diff(as.integer(.data$district)))) != 2)
         warning("Districts not sorted in ascending order; output may be incorrect.")
 
-    redist.compactness(shp=map, plans=get_plan_matrix(.data), measure=measure,
+    redist.compactness(shp=map, plans=get_plans_matrix(.data), measure=measure,
                        total_pop=map[[attr(map, "pop_col")]],
                        adj=get_adj(map), ...)[[measure]]
 }
@@ -347,7 +347,7 @@ group_frac = function(map, group_pop, total_pop=map[[attr(map, "pop_col")]],
 
     group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
     total_pop = rlang::eval_tidy(rlang::enquo(total_pop), map)
-    as.numeric(redist.group.percent(plans=get_plan_matrix(.data),
+    as.numeric(redist.group.percent(plans=get_plans_matrix(.data),
                                     group_pop=group_pop, total_pop=total_pop))
 }
 
@@ -366,7 +366,7 @@ segregation_index = function(map, group_pop, total_pop=map[[attr(map, "pop_col")
 
     group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
     total_pop = rlang::eval_tidy(rlang::enquo(total_pop), map)
-    plan_m = get_plan_matrix(.data)
+    plan_m = get_plans_matrix(.data)
     rep(as.numeric(redist.segcalc(plans=plan_m, group_pop=group_pop,
                                   total_pop=total_pop)),
         each=attr(map, "ndists"))
@@ -392,7 +392,7 @@ partisan_metrics = function(map, measure, rvote, dvote, ...,
 
     rvote = rlang::eval_tidy(rlang::enquo(rvote), map)
     dvote = rlang::eval_tidy(rlang::enquo(dvote), map)
-    as.numeric(redist.metrics(plans=get_plan_matrix(.data), measure=measure,
+    as.numeric(redist.metrics(plans=get_plans_matrix(.data), measure=measure,
                               rvote=rvote, dvote=dvote, ...)[[measure]])
 }
 
@@ -410,7 +410,7 @@ competitiveness = function(map, rvote, dvote, .data=get0(".", parent.frame())) {
 
     rvote = rlang::eval_tidy(rlang::enquo(rvote), map)
     dvote = rlang::eval_tidy(rlang::enquo(dvote), map)
-    rep(redist.competitiveness(plans=get_plan_matrix(.data),
+    rep(redist.competitiveness(plans=get_plans_matrix(.data),
                                rvote=rvote, dvote=dvote),
         each = attr(map, "ndists"))
 }
@@ -428,7 +428,7 @@ county_splits = function(map, counties, .data=get0(".", parent.frame())) {
         stop("Must provide `.data` if not called within a pipe")
 
     counties = rlang::eval_tidy(rlang::enquo(counties), map)
-    rep(redist.splits(plans=get_plan_matrix(.data), counties=counties),
+    rep(redist.splits(plans=get_plans_matrix(.data), counties=counties),
         each = attr(map, "ndists"))
 }
 
@@ -444,7 +444,7 @@ prec_assignment = function(prec, .data=get0(".", parent.frame())) {
     if (!inherits(.data, "redist_plans"))
         stop("Must provide `.data` if not called within a pipe")
 
-    assignment = get_plan_matrix(.data)[prec,]
+    assignment = get_plans_matrix(.data)[prec,]
     if ("district" %in% colnames(.data) && is.factor(.data$district)) {
         lev = levels(.data$district)
         assignment = factor(lev[assignment], lev, ordered=is.ordered(.data$district))
@@ -477,7 +477,7 @@ imp_confint = function(x, conf=0.95, .data=get0(".", parent.frame())) {
         stop("Must provide `.data` if not called within a pipe")
 
     y = rlang::eval_tidy(rlang::enquo(x), .data)
-    ci = redist.smc_is_ci(y, get_plan_weights(.data), conf)
+    ci = redist.smc_is_ci(y, get_plans_weights(.data), conf)
 
     tibble("{{ x }}" := mean(y),
                    "{{ x }}_lower" := ci[1],
