@@ -132,6 +132,7 @@
 #' @importFrom sf st_cast st_bbox st_centroid st_within st_point_on_surface st_coordinates
 #' @importFrom sf st_linestring st_intersection st_area st_crs st_is_longlat st_length
 #' @importFrom sf st_convex_hull st_crs<- st_geometry st_distance st_union st_touches st_is_valid
+#' @importFrom sf st_is_longlat
 #' @importFrom dplyr select all_of arrange bind_rows rename summarize
 #' @importFrom stats dist
 #'
@@ -191,9 +192,10 @@ redist.compactness <- function(shp = NULL,
   }
 
 
-  if(!is.null(st_crs(shp)) && is.numeric(planarize) &&
-     isTRUE(sf::st_is_longlat(sf::st_geometry(shp)))){
-    shp <- st_transform(shp, planarize)
+  if (isTRUE(st_is_longlat(st_geometry(x)))) {
+    if(!is.null(st_crs(shp)) & !is.null(planarize) && !isFALSE(planarize)){
+      shp <- st_transform(shp, planarize)
+    }
   }
 
   if("all" %in% measure){
@@ -470,9 +472,10 @@ redist.prep.polsbypopper <- function(shp, planarize = 3857, perim_path, ncores =
     stop('Please provide an argument to shp.')
   }
 
-  if(!is.null(st_crs(shp)) && is.numeric(planarize) &&
-     isTRUE(sf::st_is_longlat(sf::st_geometry(shp)))){
-    shp <- st_transform(shp, planarize)
+  if (isTRUE(st_is_longlat(st_geometry(x)))) {
+    if(!is.null(st_crs(shp)) & !is.null(planarize) && !isFALSE(planarize)){
+      shp <- st_transform(shp, planarize)
+    }
   }
 
   suppressMessages(alist <- st_relate(shp, pattern = "F***T****"))

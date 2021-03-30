@@ -4,10 +4,10 @@
 \alias{as.matrix.redist}
 \title{Extract the redistricting matrix from a \code{redist} object}
 \usage{
-\method{as.matrix}{redist}(plans, ...)
+\method{as.matrix}{redist}(x, ...)
 }
 \arguments{
-\item{plans}{redist object}
+\item{x}{redist object}
 
 \item{\dots}{additional arguments}
 }

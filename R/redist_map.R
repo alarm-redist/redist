@@ -433,7 +433,7 @@ print.redist_map = function(x, ...) {
 
 #' Plot a \code{redist_map}
 #'
-#' @param map the \code{redist_map} object
+#' @param x the \code{redist_map} object
 #' @param fill \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} If
 #'   present, will be used to color the map units. If using data masking, may
 #'   need to explicitly name argument \code{fill=...} in non-interactive
@@ -463,27 +463,27 @@ print.redist_map = function(x, ...) {
 #' @concept prepare
 #' @concept plot
 #' @export
-plot.redist_map = function(map, fill=NULL, by_distr=FALSE, adj=FALSE, ...) {
-    if (!inherits(map, "sf"))
+plot.redist_map = function(x, fill=NULL, by_distr=FALSE, adj=FALSE, ...) {
+    if (!inherits(x, "sf"))
         stop("Plotting requires a shapefile.\n  ",
              "If you've just used `merge_by`, consider passing `drop_geom=FALSE`.")
 
     fill = rlang::enquo(fill)
     if (rlang::quo_is_null(fill)) {
-        existing = get_existing(map)
+        existing = get_existing(x)
         if (!is.null(existing) && isFALSE(adj)) {
-            redist.plot.map(shp = map, adj = get_adj(map), plan=existing, ...)
+            redist.plot.map(shp = x, adj = get_adj(x), plan=existing, ...)
         } else {
-            redist.plot.adj(shp = map, adj = get_adj(map), ...)
+            redist.plot.adj(shp = x, adj = get_adj(x), ...)
         }
     } else {
         fill_name = rlang::quo_text(fill)
-        existing = get_existing(map)
+        existing = get_existing(x)
         if (!is.null(existing) && isTRUE(by_distr)) {
-            redist.plot.map(shp = map, adj = get_adj(map), plan=existing,
+            redist.plot.map(shp = x, adj = get_adj(x), plan=existing,
                             fill = !!fill, fill_label=fill_name, ...)
         } else {
-            redist.plot.map(shp = map, fill = !!fill, fill_label=fill_name, ...)
+            redist.plot.map(shp = x, fill = !!fill, fill_label=fill_name, ...)
         }
     }
 }
