@@ -192,7 +192,7 @@ redist.compactness <- function(shp = NULL,
   }
 
 
-  if (isTRUE(st_is_longlat(st_geometry(x)))) {
+  if (isTRUE(st_is_longlat(st_geometry(shp)))) {
     if(!is.null(st_crs(shp)) & !is.null(planarize) && !isFALSE(planarize)){
       shp <- st_transform(shp, planarize)
     }
@@ -472,7 +472,7 @@ redist.prep.polsbypopper <- function(shp, planarize = 3857, perim_path, ncores =
     stop('Please provide an argument to shp.')
   }
 
-  if (isTRUE(st_is_longlat(st_geometry(x)))) {
+  if (isTRUE(st_is_longlat(st_geometry(shp)))) {
     if(!is.null(st_crs(shp)) & !is.null(planarize) && !isFALSE(planarize)){
       shp <- st_transform(shp, planarize)
     }
