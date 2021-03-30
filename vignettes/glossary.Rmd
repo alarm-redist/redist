@@ -119,7 +119,7 @@ plans <- sims$plans
 
 # tidy eval - 
 sims <- redist_smc(map = iowa_map, nsims = 10, silent = TRUE)
-plans <- get_plan_matrix(sims)
+plans <- get_plans_matrix(sims)
 ```
 
 # init_plan
