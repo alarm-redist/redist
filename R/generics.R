@@ -3,11 +3,11 @@
 
 #' Extract the redistricting matrix from a \code{redist} object
 #' @method as.matrix redist
-#' @param x redist object
+#' @param plans redist object
 #' @param \dots additional arguments
 #' @export
-as.matrix.redist = function(x, ...) {
-  x$plans
+as.matrix.redist = function(plans, ...) {
+  plans$plans
 }
 
 #' @method print redist

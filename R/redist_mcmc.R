@@ -329,6 +329,7 @@ redist.mcmc.anneal <- function(adj,
     }
 
     ## Examine the data
+    algout$plans <- algout$plans + 1
     return(algout)
 
 }
@@ -564,7 +565,6 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' "SpatialPolygonsDataFrame."
 #' @param total_pop A vector containing the populations of each geographic
 #' unit
-#'
 #' @param nsims The number of simulations run before a save point.
 #' @param ndists The number of congressional districts. The default is
 #' \code{NULL}.
@@ -577,6 +577,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' @param nloop The total number of save points for the algorithm. The
 #' default is \code{1}. Note that the total number of simulations run
 #' will be \code{nsims} * \code{nloop}. \code{savename} must be non-null.
+#' @param warmup The number of warmup samples to discard. The default is 0.
 #' @param nthin The amount by which to thin the Markov Chain. The
 #' default is \code{1}.
 #' @param eprob The probability of keeping an edge connected. The
@@ -742,7 +743,8 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 redist.mcmc <- function(adj,
                         total_pop,  nsims, ndists = NULL,
                         init_plan = NULL,
-                        loopscompleted = 0, nloop = 1, nthin = 1, eprob = 0.05,
+                        loopscompleted = 0, nloop = 1, 
+                        warmup = 0, nthin = 1, eprob = 0.05,
                         lambda = 0,
                         pop_tol = NULL,
                         group_pop = NULL,
@@ -969,7 +971,7 @@ redist.mcmc <- function(adj,
                        areas_vec = preprocout$data$areasvec,
                        county_membership = preprocout$data$counties,
                        borderlength_mat = preprocout$data$borderlength_mat,
-                       nsims = nsims * nthin,
+                       nsims = nsims * nthin + warmup,
                        eprob = eprob,
                        pct_dist_parity = preprocout$params$pctdistparity,
                        beta_sequence = preprocout$params$betaseq,
@@ -1033,13 +1035,13 @@ redist.mcmc <- function(adj,
     
     ## Examine the data
     if(nloop == 1){
-        if(nthin == 1){
-            return(algout)
-        } else {
-            return(redist.thin.chain(algout, thin = nthin))
-        }
+        algout <- redist.warmup.chain(algout = algout, warmup = warmup)
+        algout <- redist.thin.chain(algout, thin = nthin)
     }
-
+    
+    algout$plans <- algout$plans + 1
+    
+    return(algout)
 }
 
 #' Inverse probability reweighting for MCMC Redistricting
@@ -1212,8 +1214,37 @@ redist.ipw <- function(algout,
 
 }
 
+redist.warmup.chain <- function(algout, warmup = 1){
+    if(warmup <= 0){
+        return(algout)
+    } 
+    inds <- 1:warmup
+    algout_new <- vector(mode = "list", length = length(algout))
+    for(i in 1:length(algout)){
+        
+        ## Subset the matrix first, then the vectors
+        if(i == 1){
+            algout_new[[i]] <- algout[[i]][,-inds]
+        } else if(length(algout[[i]]) == 1) {
+            algout_new[[i]] <- algout[[i]]
+        } else if(all(names(algout[[i]]) == 'adj')) {
+            algout_new[[i]] <- algout[[i]]
+        } else {
+            algout_new[[i]] <- algout[[i]][-inds]
+        }
+        
+    }
+    names(algout_new) <- names(algout)
+    class(algout_new) <- "redist"
+    return(algout_new)
+}
+
 
 redist.thin.chain <- function(algout, thin = 100){
+    if(thin <= 1){
+        return(algout)
+    }
+    
     inds <- seq(1, ncol(algout$plans), by = thin)
     algout_new <- vector(mode = "list", length = length(algout))
     for(i in 1:length(algout)){
@@ -1221,7 +1252,11 @@ redist.thin.chain <- function(algout, thin = 100){
         ## Subset the matrix first, then the vectors
         if(i == 1){
             algout_new[[i]] <- algout[[i]][,inds]
-        }else{
+        } else if(length(algout[[i]]) == 1) {
+            algout_new[[i]] <- algout[[i]]
+        } else if(all(names(algout[[i]]) == 'adj')) {
+            algout_new[[i]] <- algout[[i]]
+        } else {
             algout_new[[i]] <- algout[[i]][inds]
         }
         

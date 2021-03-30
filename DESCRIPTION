@@ -36,7 +36,8 @@ Imports:
     sys,
     coda,
     ggplot2,
-    patchwork
+    patchwork,
+    readr
 Suggests:
     igraph,
     lwgeom,
