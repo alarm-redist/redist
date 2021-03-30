@@ -144,7 +144,7 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
     V = nrow(map)
     adj = get_adj(map)
     ndists = attr(map, "ndists")
-    warmup = max(warmup, 1L)
+    warmup = max(warmup, 0L)
 
     if (compactness < 0) stop("Compactness parameter must be non-negative")
     if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
@@ -158,7 +158,7 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
         if (is.null(init_name)) init_name = exist_name
     }
     if (length(init_plan) == 0L || isTRUE(init_plan == "sample")) {
-        init_plan = as.integer(get_plan_matrix(
+        init_plan = as.integer(get_plans_matrix(
             redist_smc(map, 1, counties, resample=FALSE, ref_name=FALSE, silent=TRUE)))
         if (is.null(init_name)) init_name = "<init>"
     }
@@ -200,7 +200,7 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
                      constraints$incumbency$strength, constraints$incumbency$incumbents,
                      adapt_k_thresh, k, verbosity)
 
-    out = new_redist_plans(plans[,-1:-warmup], map, "mergesplit", NULL, FALSE,
+    out = new_redist_plans(plans[,-1:-(warmup+1)], map, "mergesplit", NULL, FALSE,
                      compactness = compactness,
                      constraints = constraints,
                      adapt_k_thresh = adapt_k_thresh)

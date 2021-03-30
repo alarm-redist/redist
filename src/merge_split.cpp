@@ -35,7 +35,7 @@ umat ms_plans(int N, List l, const uvec init, const uvec &counties, const uvec &
 
     if (verbosity >= 1) {
         Rcout << "MARKOV CHAIN MONTE CARLO\n";
-        Rcout << "Sampling " << N << " " << V << "-unit maps with " << n_distr
+        Rcout << "Sampling " << N-1 << " " << V << "-unit maps with " << n_distr
               << " districts and population between " << lower << " and " << upper << ".\n";
         if (cg.size() > 1)
             Rcout << "Ensuring no more than " << n_distr - 1 << " splits of the "
@@ -104,13 +104,13 @@ umat ms_plans(int N, List l, const uvec init, const uvec &counties, const uvec &
         }
 
         if (verbosity >= 2 && refresh > 0 && (i+1) % refresh == 0) {
-            Rprintf("Iteration %'6d / %'d\n", i+1, N);
+            Rprintf("Iteration %'6d / %'d\n", i+1, N-1);
         }
         Rcpp::checkUserInterrupt();
     }
 
     if (verbosity >= 1) {
-        Rprintf("Acceptance rate: %.1f%%.\n", (100.0 * n_accept) / N);
+        Rprintf("Acceptance rate: %.1f%%.\n", (100.0 * n_accept) / (N-1));
     }
 
     return districts;

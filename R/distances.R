@@ -173,7 +173,7 @@ plan_distances = function(plans, measure="variation of information", ncores=1) {
     if (is.null(pop))
         stop("Precinct population must be stored in `prec_pop` attribute of `plans` object")
 
-    redist.distances(get_plan_matrix(plans), measure, ncores=ncores, total_pop=pop)[[1]]
+    redist.distances(get_plans_matrix(plans), measure, ncores=ncores, total_pop=pop)[[1]]
 }
 
 

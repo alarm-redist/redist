@@ -90,9 +90,11 @@ reconstruct.redist_plans = function(data, old) {
 #' * \code{\link{pullback}}
 #' * \code{\link{number_by}}
 #' * \code{\link{match_numbers}}
+#' * \code{\link{is_county_split}}
 #' * \code{\link{prec_assignment}}
-#' * \code{\link{get_plan_matrix}}
-#' * \code{\link{get_plan_weights}}
+#' * \code{\link{plan_distances}}
+#' * \code{\link{get_plans_matrix}}
+#' * \code{\link{get_plans_weights}}
 #' * \code{\link{get_sampling_info}}
 #' * \code{\link{as.matrix.redist_plans}}
 #' * \code{\link{plot.redist_plans}}
@@ -142,14 +144,14 @@ redist_plans = function(plans, map, algorithm, wgt=NULL, ...) {
 #'
 #' @concept analyze
 #' @export
-get_plan_matrix = function(x) {
+get_plans_matrix = function(x) {
     stopifnot(inherits(x, "redist_plans"))
     attr(x, "plans")
 }
-#' @rdname get_plan_matrix
+#' @rdname get_plans_matrix
 #' @method as.matrix redist_plans
 #' @export
-as.matrix.redist_plans = function(x, ...) get_plan_matrix(x)
+as.matrix.redist_plans = function(x, ...) get_plans_matrix(x)
 
 # internal -- no check performed!
 set_plan_matrix = function(x, mat) {
@@ -169,7 +171,7 @@ set_plan_matrix = function(x, mat) {
 #'
 #' @concept analyze
 #' @export
-get_plan_weights = function(plans) {
+get_plans_weights = function(plans) {
     stopifnot(inherits(plans, "redist_plans"))
     wgt = attr(plans, "wgt")
     if (!is.null(wgt))
@@ -177,18 +179,18 @@ get_plan_weights = function(plans) {
     wgt
 }
 
-#' @rdname get_plan_weights
+#' @rdname get_plans_weights
 #' @param ... Ignored.
 #' @importFrom stats weights
 #' @method weights redist_plans
 #' @export
 weights.redist_plans = function(object, ...) {
-    get_plan_weights(object)
+    get_plans_weights(object)
 }
 
 get_n_ref = function(x) {
     stopifnot(inherits(x, "redist_plans"))
-    plans_m = get_plan_matrix(x)
+    plans_m = get_plans_matrix(x)
     if (is.null(colnames(plans_m))) 0 else sum(nchar(colnames(plans_m))>0)
 }
 
@@ -246,7 +248,7 @@ dplyr_row_slice.redist_plans = function(data, i, ...) {
 
     draws_left = unique(as.integer(data$draw[i]))
     y = vctrs::vec_slice(data, i)
-    plans_m = get_plan_matrix(data)
+    plans_m = get_plans_matrix(data)
 
     # if we don't have every district present in every row
     # this check is necessary but not sufficient for what we want
@@ -280,7 +282,7 @@ dplyr_reconstruct.redist_plans = function(data, template) {
 #' @importFrom utils str
 #' @export
 print.redist_plans = function(x, ...) {
-    plans_m = get_plan_matrix(x)
+    plans_m = get_plans_matrix(x)
     n_ref = get_n_ref(x)
     n_samp = ncol(plans_m) - n_ref
 
@@ -329,7 +331,10 @@ print.redist_plans = function(x, ...) {
     invisible(x)
 }
 
-#' Summary plots for \code{redist_plans}
+#' Summary plots for \code{\\link{redist_plans}}
+#'
+#' If no arguments are passed, defaults to plotting the sampling weights for
+#' the \code{\link{redist_plans}} object.
 #'
 #' @param x the \code{redist_plans} object.
 #' @param ... passed on to the underlying function
@@ -341,8 +346,14 @@ print.redist_plans = function(x, ...) {
 #' @export
 plot.redist_plans = function(x, ..., type="hist") {
     if (rlang::dots_n(...) == 0) {
-        ggplot(tibble(wgt=get_plan_weights(x)), aes(x=.data$wgt)) +
-            geom_histogram() +
+        wgts = get_plans_weights(subset_sampled(x))
+        n = length(wgts)
+        iqr = IQR(wgts)
+        bins = max(round(diff(range(wgts)) / (2 * iqr / n^(1/3))), 3)
+        if (iqr == 0) bins = 3
+
+        ggplot(NULL, aes(x=wgts)) +
+            geom_histogram(bins=bins) +
             ggplot2::scale_x_continuous(name="Weights", trans="log10") +
             ggplot2::labs(y=NULL, title="Plan weights")
     } else {
@@ -578,7 +589,7 @@ redist.plot.plans = function(plans, draws, geom) {
 
     plot_single = function(draw) {
         draw_idx = match(as.character(draw), levels(plans$draw))
-        distr_assign = get_plan_matrix(plans)[, draw_idx]
+        distr_assign = get_plans_matrix(plans)[, draw_idx]
         if (inherits(geom, "redist_map")) {
             distr_colors = as.factor(color_graph(get_adj(geom), distr_assign))
         } else {

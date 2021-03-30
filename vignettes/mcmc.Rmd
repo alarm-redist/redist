@@ -259,10 +259,10 @@ The output from `redist_flip` differs a bit from the output of `redist.mcmc`. It
 class(tidy_sims)
 ```
 
-To extract the plans, use `get_plan_matrix().`
+To extract the plans, use `get_plans_matrix().`
 
 ```{r}
-plans <- get_plan_matrix(tidy_sims)
+plans <- get_plans_matrix(tidy_sims)
 ```
 
 Alternatively, you can directly use functions on the `redist_plans` object. For example, if we want to measure the competitiveness of each plan:
@@ -290,7 +290,7 @@ When using the MCMC algorithms, there are various useful diagnostic plots. The `
 We use the dissimilarity index in Massey and Denton 1988 as a summary statistic for the following examples. This can be computed with `segregation_index` or `redist.segcalc`. In this case, we create a Republican dissimilarity index. We can work with two examples, the first is a single vector of the segregation index, while the second is a list of vectors, with one vector for each chain.
 
 ```{r}
-seg <- redist.segcalc(plans = get_plan_matrix(tidy_sims), 
+seg <- redist.segcalc(plans = get_plans_matrix(tidy_sims), 
                       group_pop = iowa_map$rep_08,
                       total_pop = iowa_map$pop)
 ```
@@ -378,8 +378,8 @@ mean(sims_new$mhdecisions, na.rm = TRUE)
 In this example, we've increased each of these. `lambda = 2`, up from its default of 0, while `eprob = 0.10`, up from its default of `0.05`. What's going on here can characterized fairly well by the Hamming distance between sequential runs.
 
 ```{r}
-dists <- redist.distances(plan = get_plan_matrix(sims))$Hamming
-dists_new <- redist.distances(plans = get_plan_matrix(sims_new))$Hamming
+dists <- redist.distances(plan = get_plans_matrix(sims))$Hamming
+dists_new <- redist.distances(plans = get_plans_matrix(sims_new))$Hamming
 adj_dists <- rep(NA_integer_, 2499)
 adj_dists_new <- rep(NA_integer_, 2499)
 for(i in 1:2499){
