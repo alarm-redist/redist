@@ -7,6 +7,7 @@
 redist_flip(
   map,
   nsims,
+  warmup = 0,
   init_plan,
   pop_tol,
   constraints = list(),
@@ -28,7 +29,9 @@ redist_flip(
 \arguments{
 \item{map}{A \code{\link{redist_map}} object.}
 
-\item{nsims}{The number of samples to draw.}
+\item{nsims}{The number of samples to draw, including warmup.}
+
+\item{warmup}{The number of warmup samples to discard.}
 
 \item{init_plan}{A vector containing the congressional district labels
 of each geographic unit. The default is \code{NULL}. If not provided,

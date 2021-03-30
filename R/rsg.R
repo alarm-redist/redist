@@ -165,6 +165,8 @@ redist.rsg <- function(adj,
 
         stop("redist.rsg() failed to return a valid partition. Try increasing maxiterrsg")
 
+    } else {
+        ret$plan <- ret$plan + 1
     }
 
     if(verbose){

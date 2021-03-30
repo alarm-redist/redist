@@ -185,17 +185,15 @@ redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
 #' "The Essential Role of Empirical Validation in Legislative Redistricting Simulation."
 #' Forthcoming, Statistics and Public Policy.
 #'
+#' @importFrom readr read_lines
 #' @concept enumerate
 #' @examples \dontrun{
 #' cds <- redist.read.enumpart(out_path = '../enumerated')
 #' }
 redist.read.enumpart <- function(out_path, skip = 0,  n_max = -1L){
-    out_path = paste0(out_path, ".dat")
-    rows = as.integer(system2("wc", args = c("-l", out_path, " | awk '{print $1}'"), stdout = TRUE))
-    cols = stringr::str_count(readLines(out_path, n=1), " ") + 1L
-    if (n_max <= 0L) n_max = rows
-    raw = scan(out_path, what=integer(0), skip=skip, nmax=n_max*cols)
-    matrix(raw, ncol=cols, byrow=TRUE)
+  sols <- read_lines(paste0(out_path, ".dat"), skip = skip, n_max = n_max)
+  sols <- apply(do.call("cbind", strsplit(sols, " ")), 2, as.numeric)
+  return(sols + 1L)
 }
 
 
@@ -343,7 +341,7 @@ redist.enumpart <- function(adj, unordered_path, ordered_path,
   }
 
   if(read){
-    cds <- redist.read.enumpart(out_path = out)
+    cds <- redist.read.enumpart(out_path = out_path)
     if(!is.null(total_pop)){
       par <- redist.parity(plans = cds, total_pop = total_pop)
     } else{
