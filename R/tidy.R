@@ -320,7 +320,7 @@ distr_compactness = function(map, measure="FracKept", .data=get0(".", parent.fra
         stop("Must provide `.data` if not called within a pipe")
 
     # districts not in ascending order
-    if (length(unique(diff(as.integer(.data$district)))) >= 2)
+    if (length(unique(diff(as.integer(.data$district)))) > 2)
         warning("Districts not sorted in ascending order; output may be incorrect.")
 
     redist.compactness(shp=map, plans=get_plans_matrix(.data), measure=measure,
@@ -342,7 +342,7 @@ group_frac = function(map, group_pop, total_pop=map[[attr(map, "pop_col")]],
         stop("Must provide `.data` if not called within a pipe")
 
     # districts not in ascending order
-    if (length(unique(diff(as.integer(.data$district)))) >= 2)
+    if (length(unique(diff(as.integer(.data$district)))) > 2)
         warning("Districts not sorted in ascending order; output may be incorrect.")
 
     group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
@@ -387,7 +387,7 @@ partisan_metrics = function(map, measure, rvote, dvote, ...,
         stop("Must provide `.data` if not called within a pipe")
 
     # districts not in ascending order
-    if (length(unique(diff(as.integer(.data$district)))) != 2)
+    if (length(unique(diff(as.integer(.data$district)))) > 2)
         warning("Districts not sorted in ascending order; output may be incorrect.")
 
     rvote = rlang::eval_tidy(rlang::enquo(rvote), map)
