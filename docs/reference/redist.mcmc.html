@@ -162,6 +162,7 @@ plans using Markov Chain Monte Carlo methods.</p>
   init_plan <span class='op'>=</span> <span class='cn'>NULL</span>,
   loopscompleted <span class='op'>=</span> <span class='fl'>0</span>,
   nloop <span class='op'>=</span> <span class='fl'>1</span>,
+  warmup <span class='op'>=</span> <span class='fl'>0</span>,
   nthin <span class='op'>=</span> <span class='fl'>1</span>,
   eprob <span class='op'>=</span> <span class='fl'>0.05</span>,
   lambda <span class='op'>=</span> <span class='fl'>0</span>,
@@ -241,6 +242,10 @@ algorithm. The default is <code>0</code>.</p></td>
       <td><p>The total number of save points for the algorithm. The
 default is <code>1</code>. Note that the total number of simulations run
 will be <code>nsims</code> * <code>nloop</code>. <code>savename</code> must be non-null.</p></td>
+    </tr>
+    <tr>
+      <th>warmup</th>
+      <td><p>The number of warmup samples to discard. The default is 0.</p></td>
     </tr>
     <tr>
       <th>nthin</th>

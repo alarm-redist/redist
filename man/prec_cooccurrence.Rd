@@ -4,13 +4,13 @@
 \alias{prec_cooccurrence}
 \title{Compute a matrix of precinct co-occurrences}
 \usage{
-prec_cooccurrence(plans, which, sampled_only = TRUE)
+prec_cooccurrence(plans, which = NULL, sampled_only = TRUE)
 }
 \arguments{
 \item{plans}{a \link{redist_plans} object.}
 
 \item{which}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} which plans to
-compute the co-occurrence over.}
+compute the co-occurrence over.  Defaults to all.}
 
 \item{sampled_only}{if \code{TRUE}, do not include reference plans.}
 }
