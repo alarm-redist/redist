@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Make a comparison between two sets of plans — compare_plans • redist</title>
+<title>Compute a matrix of precinct co-occurrences — prec_cooccurrence • redist</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,14 +46,10 @@
 
 
 
-<meta property="og:title" content="Make a comparison between two sets of plans — compare_plans" />
-<meta property="og:description" content="This function provides one way to identify the structural differences between
-two sets of redistricting plans. It operates by computing the precinct
-co-occurrence matrix (a symmetric matrix where the i,j-th entry is the
-fraction of plans where precinct i and j are in the same district) for each
-set, and then computing the first eigenvalue of the difference in these two
-matrices (in each direction). These eigenvalues identify the important parts
-of the map." />
+<meta property="og:title" content="Compute a matrix of precinct co-occurrences — prec_cooccurrence" />
+<meta property="og:description" content="For a map with n precincts Returns an n-by-n matrix, where each
+entry measures the fraction of the plans in which the row and column
+precincts were in the same district." />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -149,94 +145,40 @@ of the map." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Make a comparison between two sets of plans</h1>
-    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/classify_compare.R'><code>R/classify_compare.R</code></a></small>
-    <div class="hidden name"><code>compare_plans.Rd</code></div>
+    <h1>Compute a matrix of precinct co-occurrences</h1>
+    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/tidy.R'><code>R/tidy.R</code></a></small>
+    <div class="hidden name"><code>prec_cooccurrence.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>This function provides one way to identify the structural differences between
-two sets of redistricting plans. It operates by computing the precinct
-co-occurrence matrix (a symmetric matrix where the i,j-th entry is the
-fraction of plans where precinct i and j are in the same district) for each
-set, and then computing the first eigenvalue of the difference in these two
-matrices (in each direction). These eigenvalues identify the important parts
-of the map.</p>
+    <p>For a map with <code>n</code> precincts Returns an <code>n</code>-by-<code>n</code> matrix, where each
+entry measures the fraction of the plans in which the row and column
+precincts were in the same district.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>compare_plans</span><span class='op'>(</span>
-  <span class='va'>plans</span>,
-  <span class='va'>set1</span>,
-  <span class='va'>set2</span>,
-  shp <span class='op'>=</span> <span class='cn'>NULL</span>,
-  plot <span class='op'>=</span> <span class='st'>"fill"</span>,
-  thresh <span class='op'>=</span> <span class='fl'>0.1</span>,
-  labs <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Set 1"</span>, <span class='st'>"Set 2"</span><span class='op'>)</span>
-<span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>prec_cooccurrence</span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>which</span>, sampled_only <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>plans</th>
-      <td><p>a <a href='redist_plans.html'>redist_plans</a> object</p></td>
+      <td><p>a <a href='redist_plans.html'>redist_plans</a> object.</p></td>
     </tr>
     <tr>
-      <th>set1, set2</th>
-      <td><p><code><a href='https://dplyr.tidyverse.org/reference/dplyr_data_masking.html'>&lt;data-masking&gt;</a></code> indexing vectors
-for the plan draws to compare. Must be mutually exclusive.</p></td>
+      <th>which</th>
+      <td><p><code><a href='https://dplyr.tidyverse.org/reference/dplyr_data_masking.html'>&lt;data-masking&gt;</a></code> which plans to
+compute the co-occurrence over.</p></td>
     </tr>
     <tr>
-      <th>shp</th>
-      <td><p>a shapefile for plotting.</p></td>
-    </tr>
-    <tr>
-      <th>plot</th>
-      <td><p>If <code>plot="line"</code>, display a plot for each set showing the set of
-boundaries which most distinguish it from the other set (the squared
-differences in the eigenvector values across the boundary).  If
-<code>plot="fill"</code>, plot the eigenvector for each set as a choropleth. See below
-for more information.  Set to <code>FALSE</code> to disable plotting (or leave out
-<code>shp</code>).</p></td>
-    </tr>
-    <tr>
-      <th>thresh</th>
-      <td><p>the value to threshold the eigenvector at in determining the
-relevant set of precincts for comparison.</p></td>
-    </tr>
-    <tr>
-      <th>labs</th>
-      <td><p>the names of the panels in the plot.</p></td>
+      <th>sampled_only</th>
+      <td><p>if <code>TRUE</code>, do not include reference plans.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>If possible, makes a comparison plot according to <code>plot</code>. Otherwise
-returns the following list:</p>
-<dt>eigen1</dt><dd><p>A numeric vector containing the first eigenvector of
-<code>p1 - p2</code>, where <code>p1</code> and <code>p2</code> are the co-occurrence matrices
-for <code>set1</code> and <code>set2</code>, respectively.</p></dd>
-<dt>eigen2</dt><dd><p>A numeric vector containing the first eigenvector of
-<code>p2 - p1</code>, where <code>p1</code> and <code>p2</code> are the co-occurrence matrices
-for <code>set1</code> and <code>set2</code>, respectively.</p></dd>
-<dt>group_1a, group_1b</dt><dd><p>Lists of precincts. Compared to <code>set2</code>, in the
-<code>set1</code> plans these precincts were much more likely to be in separate
-districts. Computed by thresholding <code>eigen1</code> at <code>thresh</code>.</p></dd>
-<dt>group_2a, group_2b</dt><dd><p>Lists of precincts. Compared to <code>set1</code>, in the
-<code>set2</code> plans these precincts were much more likely to be in separate
-districts. Computed by thresholding <code>eigen2</code> at <code>thresh</code>.</p></dd>
-<dt>cooccur_sep_1</dt><dd><p>The difference in the average co-occurrence of precincts
-in <code>group_1a</code> and <code>group_1b</code> between <code>set2</code> and <code>set1</code>.
-Higher indicates better separation.</p></dd>
-<dt>cooccur_sep_2</dt><dd><p>The difference in the average co-occurrence of precincts
-in <code>group_2a</code> and <code>group_2b</code> between <code>set1</code> and <code>set2</code>.
-Higher indicates better separation.</p></dd>
-
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
-
-    <p>The co-occurence matrices are regularized with a \(Beta(1/ndists, 1-1/ndists)\)
-prior, which is useful for when either <code>set1</code> or <code>set2</code> is small.</p>
+    <p>a symmetric matrix the size of the number of precincts.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

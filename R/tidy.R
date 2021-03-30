@@ -320,7 +320,7 @@ distr_compactness = function(map, measure="FracKept", .data=get0(".", parent.fra
         stop("Must provide `.data` if not called within a pipe")
 
     # districts not in ascending order
-    if (length(unique(diff(as.integer(.data$district)))) != 2)
+    if (length(unique(diff(as.integer(.data$district)))) >= 2)
         warning("Districts not sorted in ascending order; output may be incorrect.")
 
     redist.compactness(shp=map, plans=get_plans_matrix(.data), measure=measure,
@@ -342,7 +342,7 @@ group_frac = function(map, group_pop, total_pop=map[[attr(map, "pop_col")]],
         stop("Must provide `.data` if not called within a pipe")
 
     # districts not in ascending order
-    if (length(unique(diff(as.integer(.data$district)))) != 2)
+    if (length(unique(diff(as.integer(.data$district)))) >= 2)
         warning("Districts not sorted in ascending order; output may be incorrect.")
 
     group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
@@ -451,6 +451,32 @@ prec_assignment = function(prec, .data=get0(".", parent.frame())) {
     }
 
     assignment
+}
+
+#' Compute a matrix of precinct co-occurrences
+#'
+#' For a map with `n` precincts Returns an `n`-by-`n` matrix, where each
+#' entry measures the fraction of the plans in which the row and column
+#' precincts were in the same district.
+#'
+#' @param plans a [redist_plans] object.
+#' @param which [`<data-masking>`][dplyr::dplyr_data_masking] which plans to
+#'   compute the co-occurrence over.  Defaults to all.
+#' @param sampled_only if `TRUE`, do not include reference plans.
+#'
+#' @return a symmetric matrix the size of the number of precincts.
+#'
+#' @concept analyze
+#' @md
+#' @export
+prec_cooccurrence = function(plans, which=NULL, sampled_only=TRUE) {
+    if (sampled_only)
+        plans = subset_sampled(plans)
+    which = eval_tidy(enquo(which), plans)
+    plan_m = get_plans_matrix(plans)
+    if (is.null(which))
+        which = seq_len(ncol(plan_m))
+    prec_cooccur(plan_m, which)
 }
 
 

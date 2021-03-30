@@ -304,8 +304,8 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
       adj <- get_adj(shp)
       nlevels <- length(unique(fill))
       fill <- as.factor(fill)
+      recolor <- TRUE
       if (nlevels > 6) {
-        recolor <- TRUE
         fill <- as.factor(color_graph(adj, as.integer(fill)))
       }
     }
@@ -331,7 +331,7 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
   } else   {
     plot <- ggplot(shp) +
       geom_sf() +
-      theme_void() 
+      theme_void()
   }
 
   zoom_to = eval_tidy(enquo(zoom_to), shp)
@@ -341,7 +341,7 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
                                        ylim=c(bbox$ymin, bbox$ymax))
   }
 
-  
+
   plot <- plot + labs(title = title)
   # return plot
   return(plot)
@@ -492,7 +492,7 @@ redist.plot.adj <- function(shp = NULL, adj = NULL, plan = NULL, centroids = TRU
                                        ylim=c(bbox$ymin, bbox$ymax))
   }
 
-  
+
   plot <- plot + labs(title = title)
   # return plot
   return(plot)
