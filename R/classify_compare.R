@@ -69,9 +69,14 @@ compare_plans = function(plans, set1, set2, shp=NULL, plot="line", thresh=0.1,
     p1 = (n1*prec_cooccur(pm, set1) + base_co) / (n1 + 1)
     p2 = (n2*prec_cooccur(pm, set2) + base_co) / (n2 + 1)
 
-    evecs = eigen(p1 - p2, symmetric=TRUE)$vectors
-    evec1 = evecs[, 1]
-    evec2 = evecs[, nrow(pm)]
+    if (requireNamespace("RSpectra", quietly=TRUE)) {
+        evec1 = RSpectra::eigs_sym(p1 - p2, 2, which="LA", tol=1e-6)$vectors[,1]
+        evec2 = RSpectra::eigs_sym(p2 - p1, 2, which="LA", tol=1e-6)$vectors[,1]
+    } else {
+        evecs = eigen(p1 - p2, symmetric=TRUE)$vectors
+        evec1 = evecs[, 1]
+        evec2 = evecs[, nrow(pm)]
+    }
 
     group_1a = which(evec1 >= thresh)
     group_1b = which(evec1 <= -thresh)
@@ -213,7 +218,7 @@ print.redist_classified = function(x, ...) {
     for (i in seq_len(n_split)) {
         split = x$splits[[i]]
         cat("Split ", i, ":\n", sep="")
-        cat("    ", names(split)[2], ": ",
+        cat("    ", names(split)[1], ": ",
             utils::capture.output(str(split[[1]], vec.len=3)), "\n", sep="")
         cat("    ", names(split)[2], ": ",
             utils::capture.output(str(split[[2]], vec.len=3)), "\n", sep="")
@@ -228,16 +233,18 @@ print.redist_classified = function(x, ...) {
 #' @param shp a shapefile or [redist_map] object.
 #' @param type either `"line"` or `"fill"`. Passed on to [compare_plans()] as
 #'   `plot`.
+#' @param which indices of the splits to plot. Defaults to all
 #' @param ... passed on to [compare_plans()]
 #'
 #' @concept analyze
 #' @md
 #' @export
-plot.redist_classified = function(x, plans, shp, type="line", ...) {
+plot.redist_classified = function(x, plans, shp, type="fill", which=NULL, ...) {
     stopifnot(inherits(plans, "redist_plans"))
     stopifnot(inherits(shp, "sf"))
 
-    plots = lapply(x$splits, function(split) {
+    if (is.null(which)) which = seq_along(x$splits)
+    plots = lapply(x$splits[which], function(split) {
         compare_plans(plans, split[[1]], split[[2]], shp, plot=type,
                       ..., labs=names(split))
     })
