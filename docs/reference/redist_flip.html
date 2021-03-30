@@ -157,6 +157,7 @@ redist.mcmc." />
     <pre class="usage"><span class='fu'>redist_flip</span><span class='op'>(</span>
   <span class='va'>map</span>,
   <span class='va'>nsims</span>,
+  warmup <span class='op'>=</span> <span class='fl'>0</span>,
   <span class='va'>init_plan</span>,
   <span class='va'>pop_tol</span>,
   constraints <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>,
@@ -184,7 +185,11 @@ redist.mcmc." />
     </tr>
     <tr>
       <th>nsims</th>
-      <td><p>The number of samples to draw.</p></td>
+      <td><p>The number of samples to draw, not including warmup.</p></td>
+    </tr>
+    <tr>
+      <th>warmup</th>
+      <td><p>The number of warmup samples to discard.</p></td>
     </tr>
     <tr>
       <th>init_plan</th>

@@ -4,14 +4,16 @@
 \alias{redist.plot.plans}
 \title{Plot a district assignment}
 \usage{
-redist.plot.plans(plans, draws, geom)
+redist.plot.plans(plans, draws, geom, qty = NULL)
 }
 \arguments{
 \item{plans}{a \code{redist_plans} object.}
 
 \item{draws}{the plan(s) to plot. Will match the \code{draw} column of \code{x}.}
 
-\item{geom}{the geometry to use}
+\item{geom}{the \code{redist_map} geometry to use}
+
+\item{qty}{the quantity to plot. Defaults to the district assignment.}
 }
 \value{
 A ggplot
