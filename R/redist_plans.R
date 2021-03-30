@@ -586,10 +586,12 @@ redist.plot.distr_qtys = function(plans, qty, sort="asc", geom="jitter",
 #' @export
 redist.plot.plans = function(plans, draws, geom) {
     stopifnot(inherits(plans, "redist_plans"))
+    m = get_plans_matrix(plans)
+    stopifnot(nrow(geom) == nrow(m))
 
     plot_single = function(draw) {
         draw_idx = match(as.character(draw), levels(plans$draw))
-        distr_assign = get_plans_matrix(plans)[, draw_idx]
+        distr_assign = m[, draw_idx]
         if (inherits(geom, "redist_map")) {
             distr_colors = as.factor(color_graph(get_adj(geom), distr_assign))
         } else {

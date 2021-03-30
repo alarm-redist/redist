@@ -4,7 +4,7 @@
 \alias{plot.redist_classified}
 \title{Plot a plan classification}
 \usage{
-\method{plot}{redist_classified}(x, plans, shp, type = "line", ...)
+\method{plot}{redist_classified}(x, plans, shp, type = "fill", which = NULL, ...)
 }
 \arguments{
 \item{x}{a \code{redist_classified} object, the output of \code{\link[=classify_plans]{classify_plans()}}.}
@@ -15,6 +15,8 @@
 
 \item{type}{either \code{"line"} or \code{"fill"}. Passed on to \code{\link[=compare_plans]{compare_plans()}} as
 \code{plot}.}
+
+\item{which}{indices of the splits to plot. Defaults to all}
 
 \item{...}{passed on to \code{\link[=compare_plans]{compare_plans()}}}
 }
