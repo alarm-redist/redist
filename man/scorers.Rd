@@ -3,7 +3,7 @@
 \name{scorer_group_pct}
 \alias{scorer_group_pct}
 \alias{scorer_pop_dev}
-\alias{scorer_frac_split}
+\alias{scorer_splits}
 \alias{scorer_frac_kept}
 \alias{scorer_polsby_popper}
 \alias{scorer_status_quo}
@@ -14,7 +14,7 @@ scorer_group_pct(map, group_pop, total_pop, k = 1)
 
 scorer_pop_dev(map)
 
-scorer_frac_split(map, counties)
+scorer_splits(map, counties)
 
 scorer_frac_kept(map)
 
