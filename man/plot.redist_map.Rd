@@ -4,10 +4,10 @@
 \alias{plot.redist_map}
 \title{Plot a \code{redist_map}}
 \usage{
-\method{plot}{redist_map}(x, fill = NULL, by_distr = FALSE, adj = FALSE, ...)
+\method{plot}{redist_map}(map, fill = NULL, by_distr = FALSE, adj = FALSE, ...)
 }
 \arguments{
-\item{x}{the \code{redist_map} object}
+\item{map}{the \code{redist_map} object}
 
 \item{fill}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} If
 present, will be used to color the map units. If using data masking, may
