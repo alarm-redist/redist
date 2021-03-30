@@ -570,7 +570,8 @@ redist.plot.distr_qtys = function(plans, qty, sort="asc", geom="jitter",
 #'
 #' @param plans a \code{redist_plans} object.
 #' @param draws the plan(s) to plot. Will match the \code{draw} column of \code{x}.
-#' @param geom the geometry to use
+#' @param geom the \code{redist_map} geometry to use
+#' @param qty the quantity to plot. Defaults to the district assignment.
 #'
 #' @returns A ggplot
 #'
@@ -584,31 +585,25 @@ redist.plot.distr_qtys = function(plans, qty, sort="asc", geom="jitter",
 #'
 #' @concept plot
 #' @export
-redist.plot.plans = function(plans, draws, geom) {
+redist.plot.plans = function(plans, draws, geom, qty=NULL) {
     stopifnot(inherits(plans, "redist_plans"))
     m = get_plans_matrix(plans)
     stopifnot(nrow(geom) == nrow(m))
 
     plot_single = function(draw) {
         draw_idx = match(as.character(draw), levels(plans$draw))
-        distr_assign = m[, draw_idx]
-        if (inherits(geom, "redist_map")) {
-            distr_colors = as.factor(color_graph(get_adj(geom), distr_assign))
+        lab = rlang::quo_text(enquo(qty))
+        title = if (suppressWarnings(is.na(as.numeric(draw)))) draw else paste0("Plan #", draw)
+
+        qty = eval_tidy(enquo(qty), plans)
+        if (is.null(qty)) {
+            qty = as.factor(m[, draw_idx])
         } else {
-            distr_colors = as.factor(distr_assign)
+            qty = qty[m[, draw_idx]]
         }
 
-        PAL = c("#6D9537", "#364B6F", "#E59A20", "#9A9BB9", "#2A4E45")
-        title = if (suppressWarnings(is.na(as.numeric(draw)))) draw else paste0("Plan #", draw)
-        sf::st_sf(geom) %>%
-            dplyr::ungroup() %>%
-            dplyr::mutate(District = distr_colors) %>%
-        ggplot(aes(fill=.data$District)) +
-            ggplot2::geom_sf(size=0) +
-            ggplot2::guides(fill=FALSE) +
-            ggplot2::scale_fill_manual(values=PAL) +
-            ggplot2::labs(title=title) +
-            theme_void()
+        redist.plot.map(geom, fill=qty, fill_label=lab) +
+            ggplot2::labs(title=title)
     }
 
     if (length(draws) == 1) {
