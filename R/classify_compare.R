@@ -50,7 +50,7 @@
 #' @md
 #' @concept analyze
 #' @export
-compare_plans = function(plans, set1, set2, shp=NULL, plot="line", thresh=0.1,
+compare_plans = function(plans, set1, set2, shp=NULL, plot="fill", thresh=0.1,
                          labs=c("Set 1", "Set 2")) {
     stopifnot(inherits(plans, "redist_plans"))
 
