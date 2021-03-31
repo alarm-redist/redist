@@ -19,7 +19,7 @@
 #' "Dseats" and "DVS" are always computed, so it is recommended to always return those values.
 #' @param rvote A numeric vector with the Republican vote for each precinct.
 #' @param dvote A numeric vector with the Democratic vote for each precinct.
-#' @param nloop A numeric to specify loop number. Defaults to 1 if only one map provided
+#' @param draw A numeric to specify loop number. Defaults to 1 if only one map provided
 #' and the column number if multiple maps given.
 #' @param tau A non-negative number for calculating Tau Gap. Only used with option "TauGap". Defaults to 1.
 #' @param biasV A value between 0 and 1 to compute bias at. Only used with option "BiasV". Defaults to 0.5.

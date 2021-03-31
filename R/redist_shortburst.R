@@ -100,14 +100,6 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
     if (burst_size < 1 || max_bursts < 1)
         stop("`burst_size` and `max_bursts` must be positive.")
 
-    if (is.null(init_plan)) init_plan = as.integer(as.factor(get_existing(map)))
-    if (length(init_plan) == 0L || isTRUE(init_plan == "sample")) {
-        init_plan = as.integer(get_plans_matrix(
-            redist_smc(map, 1, counties, resample=FALSE, ref_name=FALSE, silent=TRUE)))
-    }
-    stopifnot(length(init_plan) == V)
-    stopifnot(max(init_plan) == ndists)
-
     counties = rlang::eval_tidy(rlang::enquo(counties), map)
     if (is.null(counties)) {
         counties = rep(1, V)
@@ -120,9 +112,19 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
             as.factor() %>%
             as.integer()
         if (any(component > 1)) {
-          warning('counties were not contiguous, expect additional splits.')
+          warning('counties were not contiguous; expect additional splits.')
         }
     }
+
+    if (is.null(init_plan)) init_plan = as.integer(as.factor(get_existing(map)))
+    if (length(init_plan) == 0L || isTRUE(init_plan == "sample")) {
+        init_plan = as.integer(get_plans_matrix(
+            redist_smc(map, 1, counties, resample=FALSE, ref_name=FALSE, silent=TRUE)))
+    }
+    stopifnot(length(init_plan) == V)
+    stopifnot(max(init_plan) == ndists)
+
+
     if(backend == 'mergesplit'){
         pop_bounds = attr(map, "pop_bounds")
     } else {

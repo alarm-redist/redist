@@ -382,7 +382,7 @@ segregation_index = function(map, group_pop, total_pop=map[[attr(map, "pop_col")
 #' @concept analyze
 #' @export
 partisan_metrics = function(map, measure, rvote, dvote, ...,
-                          .data=get0(".", parent.frame())) {
+                            .data=get0(".", parent.frame())) {
     if (!inherits(.data, "redist_plans"))
         stop("Must provide `.data` if not called within a pipe")
 
