@@ -176,6 +176,9 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
                                   as.character(counties)) %>%
             as.factor() %>%
             as.integer()
+        if (any(component > 1)) {
+            warning('counties were not contiguous; expect additional splits.')
+        }
     }
 
     # Other constraints
