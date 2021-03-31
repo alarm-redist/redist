@@ -18,7 +18,7 @@ redist.compactness(
   measure = c("PolsbyPopper"),
   total_pop = NULL,
   adj = NULL,
-  nloop = 1,
+  draw = 1,
   ncores = 1,
   counties = NULL,
   planarize = 3857,
@@ -27,7 +27,8 @@ redist.compactness(
   perim_df,
   district_membership,
   population,
-  adjacency
+  adjacency,
+  nloop
 )
 }
 \arguments{
@@ -55,7 +56,7 @@ only necessary when "FryerHolden" is used for measure. Defaults to NULL.}
 EdgesRemoved" and "logSpanningTree". Created with \code{redist.adjacency} if not
 supplied and needed. Default is NULL.}
 
-\item{nloop}{A numeric to specify loop number. Defaults to 1 if only one map provided
+\item{draw}{A numeric to specify loop number. Defaults to 1 if only one map provided
 and the column number if multiple maps given.}
 
 \item{ncores}{Number of cores to use for parallel computing. Default is 1.}
@@ -83,6 +84,9 @@ only necessary when "FryerHolden" is used for measure. Defaults to NULL.}
 
 \item{adjacency}{Deprecated. Use adj. A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
 Created with \code{redist.adjacency} if not supplied and needed. Default is NULL.}
+
+\item{nloop}{Deprecated, use draw. A numeric to specify loop number. Defaults to 1 if only one map provided
+and the column number if multiple maps given.}
 }
 \value{
 A tibble with a column that specifies the district, a column for
