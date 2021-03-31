@@ -28,6 +28,8 @@
 #' @param ncores Number of cores to use for parallel computing. Default is 1.
 #' @param district_membership Deprecated, use plans. A numeric vector (if only one map) or matrix with one row
 #' for each precinct and one column for each map. Required.
+#' @param nloop Deprecated, use draw. A numeric to specify loop number. Defaults to 1 if only one map provided
+#' and the column number if multiple maps given.
 #'
 #'
 #' @details This function computes specified compactness scores for a map.  If
