@@ -27,7 +27,7 @@
 #' @param adj A zero-indexed adjacency list. Only used for "PolsbyPopper",
 #' EdgesRemoved" and "logSpanningTree". Created with \code{redist.adjacency} if not
 #' supplied and needed. Default is NULL.
-#' @param nloop A numeric to specify loop number. Defaults to 1 if only one map provided
+#' @param draw A numeric to specify loop number. Defaults to 1 if only one map provided
 #' and the column number if multiple maps given.
 #' @param ncores Number of cores to use for parallel computing. Default is 1.
 #' @param counties A numeric vector from 1:ncounties corresponding to counties. Required for "logSpanningTree".
@@ -46,6 +46,8 @@
 #' only necessary when "FryerHolden" is used for measure. Defaults to NULL.
 #' @param adjacency Deprecated. Use adj. A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
 #' Created with \code{redist.adjacency} if not supplied and needed. Default is NULL.
+#' @param nloop Deprecated, use draw. A numeric to specify loop number. Defaults to 1 if only one map provided
+#' and the column number if multiple maps given.
 #'
 #' @details This function computes specified compactness scores for a map.  If
 #' there is more than one shape specified for a single district, it combines
@@ -152,10 +154,10 @@
 redist.compactness <- function(shp = NULL,
                                plans,
                                measure = c("PolsbyPopper"),
-                               total_pop = NULL, adj = NULL, nloop = 1,
+                               total_pop = NULL, adj = NULL, draw = 1,
                                ncores = 1, counties = NULL, planarize = 3857,
                                ppRcpp, perim_path, perim_df,
-                               district_membership, population, adjacency){
+                               district_membership, population, adjacency, nloop){
 
   if(!missing(district_membership)){
     plans <- plans
@@ -168,6 +170,10 @@ redist.compactness <- function(shp = NULL,
   if(!missing(adjacency)){
     adj <- adjacency
     .Deprecated(new = 'adj', old = 'adjacency')
+  }
+  if(!missing(nloop)){
+    draw <- nloop
+    .Deprecated(new = 'draw', old = 'nloop')
   }
 
   # Check Inputs
@@ -218,8 +224,8 @@ redist.compactness <- function(shp = NULL,
       stop('Please provide "total_pop" as a numeric or integer.')
     }}
 
-  if(class(nloop) != 'numeric'){
-    stop('Please provide "nloop" as a numeric.')
+  if(class(draw) != 'numeric'){
+    stop('Please provide "draw" as a numeric.')
   }
 
   if(class(ncores) != 'numeric'){
@@ -249,9 +255,9 @@ redist.compactness <- function(shp = NULL,
 
   nmap <-  ncol(plans)
   if(nmap!=1){
-    nloop = rep(nloop + (1:ncol(plans)) - 1, each = nd)
+    draw = rep(draw + (1:ncol(plans)) - 1, each = nd)
   } else {
-    nloop = rep(nloop, nd)
+    draw = rep(draw, nd)
   }
 
 
@@ -277,8 +283,8 @@ redist.compactness <- function(shp = NULL,
                  EdgesRemoved = rep(NA_real_, nd*nmap),
                  FracKept = rep(NA_real_, nd*nmap),
                  logSpanningTree = rep(NA_real_, nd*nmap),
-                 nloop = nloop) %>%
-    dplyr::select(all_of(c("district", measure)), all_of(measure), nloop)
+                 draw = draw) %>%
+    dplyr::select(all_of(c("district", measure)), all_of(measure), draw)
 
 
 

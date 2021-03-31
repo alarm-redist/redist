@@ -39,7 +39,7 @@ test_that('compactness works', {
   ), logSpanningTree = c(
     12.6907185515128, 12.6907185515128, 12.6907185515128,
     12.6907185515128, 12.6907185515128, 12.6907185515128
-  ), nloop = c(
+  ), draw = c(
     1,
     1, 1, 2, 2, 2
   )), row.names = c(NA, -6L), class = c(

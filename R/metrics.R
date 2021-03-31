@@ -82,13 +82,18 @@ redist.metrics <- function(plans,
                            rvote, dvote,
                            tau = 1, biasV = 0.5,
                            respV = 0.5, bandwidth = 0.01,
-                           nloop = 1,
+                           draw = 1,
                            ncores = 1,
-                           district_membership){
+                           district_membership,
+                           nloop){
 
   if(!missing(district_membership)){
     .Deprecated(new = 'plans', old = 'district_membership')
     plans <- district_membership
+  }
+  if(!missing(nloop)){
+    draw <- nloop
+    .Deprecated(new = 'draw', old = 'nloop')
   }
 
   # All measures available:
@@ -138,8 +143,8 @@ redist.metrics <- function(plans,
     stop('dvote length and plans row dimension are not equal.')
   }
 
-  if(class(nloop) != 'numeric'){
-    stop('Please provide "nloop" as a numeric.')
+  if(class(draw) != 'numeric'){
+    stop('Please provide "draw" as a numeric.')
   }
 
   if(class(ncores) != 'numeric'){
@@ -163,9 +168,9 @@ redist.metrics <- function(plans,
 
   # Create return tibble:
   if(nmap!=1){
-    nloop = rep(nloop + (1:nmap) - 1, each = nd)
+    draw = rep(draw + (1:nmap) - 1, each = nd)
   } else {
-    nloop = rep(nloop, nd)
+    draw = rep(draw, nd)
   }
 
   metrics <- tibble(districts = rep(x = dists, nmap),
@@ -182,8 +187,8 @@ redist.metrics <- function(plans,
                  LopsidedWins = rep(NA_real_, nd*nmap),
                  RankedMarginal = rep(NA_real_, nd*nmap),
                  SmoothedSeat = rep(NA_real_, nd*nmap),
-                 nloop = nloop) %>%
-    dplyr::select(all_of(c("districts", measure)), nloop)
+                 draw = draw) %>%
+    dplyr::select(all_of(c("districts", measure)), draw)
 
   # Compute Metrics if desired:
   if("DSeats" %in% measure){
