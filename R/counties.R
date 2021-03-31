@@ -2,7 +2,7 @@
 #'
 #' @param adj adjacency list
 #' @param counties character vector of county names
-#' @param simplify boolean - TRUE returns a numeric vector of ids, while FALSe 
+#' @param simplify boolean - TRUE returns a numeric vector of ids, while FALSE 
 #' appends a number when there are multiple connected components.
 #' @param adjacency Deprecated, use adj. adjacency list
 #' 

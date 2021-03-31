@@ -107,7 +107,7 @@ redist.reduce.adjacency <- function(adj, keep_rows, adjacency) {
 #'
 #' @param adj A zero-indexed adjacency list. Required.
 #' @param groups integer vector of elements of adjacency to group
-#' @param adjacency Deperecated -- use adj. A zero-indexed adjacency list
+#' @param adjacency Deprecated -- use adj. A zero-indexed adjacency list
 #'
 #' @return adjacency list coarsened
 #'

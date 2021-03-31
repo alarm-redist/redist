@@ -16,7 +16,7 @@
 #' @param measure A vector with a string for each measure desired from list "DSeats", "DVS", "EffGap",
 #' "EffGapEqPop", "TauGap", "MeanMedian", "Bias", "BiasV", "Declination",
 #' "Responsiveness", "LopsidedWins", "RankedMarginal", and "SmoothedSeat". Use "all" to get all metrics.
-#' "Dseats" and "DVS" are always computed, so it is recommended to always return those values.
+#' "DSeats" and "DVS" are always computed, so it is recommended to always return those values.
 #' @param rvote A numeric vector with the Republican vote for each precinct.
 #' @param dvote A numeric vector with the Democratic vote for each precinct.
 #' @param draw A numeric to specify loop number. Defaults to 1 if only one map provided

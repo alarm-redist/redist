@@ -8,7 +8,7 @@
 #' matrices (in each direction). These eigenvalues identify the important parts
 #' of the map.
 #'
-#' The co-occurence matrices are regularized with a \eqn{Beta(1/ndists, 1-1/ndists)}
+#' The co-occurrence matrices are regularized with a \eqn{Beta(1/ndists, 1-1/ndists)}
 #' prior, which is useful for when either `set1` or `set2` is small.
 #'
 #' @param plans a [redist_plans] object

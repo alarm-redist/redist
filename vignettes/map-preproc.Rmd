@@ -145,7 +145,7 @@ Another way we might want to subset would be to cut out the precincts which are
 just water, so that districts won't unnecessarily cross bodies of water. Of
 course, we'll have to ensure that Vashon Island is still connected to the
 mainland by at least one precinct. We'll start by subsetting to the water
-precincts and ploting labels.
+precincts and plotting labels.
 
 ```{r king-water}
 plot(filter(king, pct_water >= 0.99, pop == 0)) + geom_sf_text(aes(label=id))

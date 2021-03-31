@@ -33,7 +33,7 @@
 #' algorithm will only generate maps which split up to \code{ndists-1} counties.
 #' If no county-split constraint is desired, this parameter should be left blank.
 #' @param compactness Controls the compactness of the generated districts, with
-#' higher values preferring more compact districts. Must be nonnegative. See
+#' higher values preferring more compact districts. Must be non-negative. See
 #' \code{\link{redist_mergesplit}} for more information.
 #' @param adapt_k_thresh The threshold value used in the heuristic to select a
 #' value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if
@@ -43,7 +43,7 @@
 #'   Recommended for monitoring purposes.
 #' @param backend the MCMC algorithm to use within each burst, either
 #'   "mergesplit" or "flip".
-#' @param flip_lambda The parameter detmerining the number of swaps to attempt each iteration of flip mcmc.
+#' @param flip_lambda The parameter determining the number of swaps to attempt each iteration of flip mcmc.
 #' The number of swaps each iteration is equal to Pois(lambda) + 1. The default is 0.
 #' @param flip_eprob  The probability of keeping an edge connected in flip mcmc. The default is 0.05.
 #' @param flip_constraints A list of constraints to use for flip mcmc. Can be created with
@@ -263,7 +263,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
 }
 
 
-#' Scoring fuctions for `redist_shortburst`
+#' Scoring functions for `redist_shortburst`
 #'
 #' The output of these functions may be passed into `redist_shortburst()` as
 #' `score_fn`.  Scoring functions have type `redist_scorer` and may be combined
@@ -287,7 +287,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
 #' Higher scores correspond to more compact districts.  Use `m=ndists/2` to
 #' target the median compactness, `m=1` to target the minimum compactness.
 #' - `scorer_status_quo` returns 1 - the rescaled variation of information
-#' distance betwen the plan and the `existing_plan`. Larger values indicate the
+#' distance between the plan and the `existing_plan`. Larger values indicate the
 #' plan is closer to the existing plan.
 #'
 #' @param map A \code{\link{redist_map}} object.
