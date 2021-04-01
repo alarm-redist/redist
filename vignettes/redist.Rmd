@@ -164,7 +164,7 @@ If the total perimeter is small, then the districts relatively compact.
 Contiguity of districts and no reliance on partisan or demographic data 
 are built-in to `redist`.  We'll look at how to specify the desired population
 deviation (no more than 1% by law) in the next section, and discuss compactness
-in the [simiulation section](#simulate).
+in the [simulation section](#simulate).
 
 ## Setting up the problem in `redist`
 In `redist`, a basic redistricting problem is defined by an object of type

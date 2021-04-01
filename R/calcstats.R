@@ -332,11 +332,11 @@
 #' @param plans A matrix of congressional district assignments or a
 #' redist object.
 #' @param group_pop A vector of populations for some subgroup of interest.
-#' @param total_pop A vector containign the populations of each geographic unit.
+#' @param total_pop A vector containing the populations of each geographic unit.
 #' @param algout Deprecated. Use plans. A matrix of congressional district assignments or a
 #' redist object.
 #' @param grouppop Deprecated. Use group_pop. A vector of populations for some subgroup of interest.
-#' @param fullpop Deprecated. Use total_pop. A vector containign the populations of each geographic unit.
+#' @param fullpop Deprecated. Use total_pop. A vector containing the populations of each geographic unit.
 #'
 #' @return \code{redist.segcalc} returns a vector where each entry is the
 #' dissimilarity index of segregation (Massey & Denton 1987) for each

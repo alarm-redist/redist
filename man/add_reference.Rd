@@ -12,7 +12,7 @@ add_reference(plans, ref_plan, name = NULL)
 \item{ref_plan}{an integer vector containing the reference plan. It will be
 renumbered to 1..\code{ndists}.}
 
-\item{name}{a human-readable name for the referece plan. Defaults to the
+\item{name}{a human-readable name for the reference plan. Defaults to the
 name of \code{ref_plan}.}
 }
 \value{

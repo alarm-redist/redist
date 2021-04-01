@@ -8,7 +8,7 @@
 \alias{scorer_polsby_popper}
 \alias{scorer_status_quo}
 \alias{scorers}
-\title{Scoring fuctions for \code{redist_shortburst}}
+\title{Scoring functions for \code{redist_shortburst}}
 \usage{
 scorer_group_pct(map, group_pop, total_pop, k = 1)
 
@@ -70,7 +70,7 @@ Higher values mean more compactness.
 Higher scores correspond to more compact districts.  Use \code{m=ndists/2} to
 target the median compactness, \code{m=1} to target the minimum compactness.
 \item \code{scorer_status_quo} returns 1 - the rescaled variation of information
-distance betwen the plan and the \code{existing_plan}. Larger values indicate the
+distance between the plan and the \code{existing_plan}. Larger values indicate the
 plan is closer to the existing plan.
 }
 }

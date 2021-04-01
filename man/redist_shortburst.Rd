@@ -51,7 +51,7 @@ algorithm will only generate maps which split up to \code{ndists-1} counties.
 If no county-split constraint is desired, this parameter should be left blank.}
 
 \item{compactness}{Controls the compactness of the generated districts, with
-higher values preferring more compact districts. Must be nonnegative. See
+higher values preferring more compact districts. Must be non-negative. See
 \code{\link{redist_mergesplit}} for more information.}
 
 \item{adapt_k_thresh}{The threshold value used in the heuristic to select a
@@ -65,7 +65,7 @@ Recommended for monitoring purposes.}
 \item{backend}{the MCMC algorithm to use within each burst, either
 "mergesplit" or "flip".}
 
-\item{flip_lambda}{The parameter detmerining the number of swaps to attempt each iteration of flip mcmc.
+\item{flip_lambda}{The parameter determining the number of swaps to attempt each iteration of flip mcmc.
 The number of swaps each iteration is equal to Pois(lambda) + 1. The default is 0.}
 
 \item{flip_eprob}{The probability of keeping an edge connected in flip mcmc. The default is 0.05.}

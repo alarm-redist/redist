@@ -35,7 +35,7 @@ redist.metrics(
 \item{measure}{A vector with a string for each measure desired from list "DSeats", "DVS", "EffGap",
 "EffGapEqPop", "TauGap", "MeanMedian", "Bias", "BiasV", "Declination",
 "Responsiveness", "LopsidedWins", "RankedMarginal", and "SmoothedSeat". Use "all" to get all metrics.
-"Dseats" and "DVS" are always computed, so it is recommended to always return those values.}
+"DSeats" and "DVS" are always computed, so it is recommended to always return those values.}
 
 \item{rvote}{A numeric vector with the Republican vote for each precinct.}
 
@@ -63,6 +63,9 @@ and the column number if multiple maps given.}
 
 \item{district_membership}{Deprecated, use plans. A numeric vector (if only one map) or matrix with one row
 for each precinct and one column for each map. Required.}
+
+\item{nloop}{Deprecated, use draw. A numeric to specify loop number. Defaults to 1 if only one map provided
+and the column number if multiple maps given.}
 }
 \value{
 A tibble with  a column for each specified measure and

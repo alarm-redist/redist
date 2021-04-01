@@ -74,7 +74,7 @@ Default is 20000.}
 default is \code{0.05}.}
 
 \item{lambda}{The parameter determining the number of swaps to attempt
-each iteration of the algorihtm. The number of swaps each iteration is
+each iteration of the algorithm. The number of swaps each iteration is
 equal to Pois(\code{lambda}) + 1. The default is \code{0}.}
 
 \item{pop_tol}{The strength of the hard population
