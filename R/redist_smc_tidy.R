@@ -259,7 +259,8 @@ process_smc_ms_constr = function(constraints, V) {
         vra = list(strength=0, tgts_min=0.55, min_pop=NULL),
         vra_old = list(strength=0, tgt_vra_min=0.55, tgt_vra_other=0.25,
                        pow_vra=1.5, min_pop=integer()),
-        incumbency = list(strength=0, incumbents=integer())
+        incumbency = list(strength=0, incumbents=integer()),
+        splits = list(strength=0)
     )
 
     for (type in names(constraints)) {

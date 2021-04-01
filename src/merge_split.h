@@ -23,6 +23,7 @@ arma::umat ms_plans(int N, List l, const arma::uvec init, const arma::uvec &coun
                     double pow_vra, const arma::uvec &min_pop,
                     double beta_vra_hinge, const arma::vec &tgts_min,
                     double beta_inc, const arma::uvec &incumbents,
+                    double beta_splits,
                     double thresh, int k, int verbosity);
 
 /*
@@ -34,7 +35,8 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
                       double beta_vra, double tgt_min, double tgt_other,
                       double pow_vra, const uvec &min_pop,
                       double beta_vra_hinge, const vec &tgts_min,
-                      double beta_inc, const uvec &incumbents);
+                      double beta_inc, const uvec &incumbents,
+                      double beta_counties, const uvec &counties, int n_cty);
 
 
 /*

@@ -148,6 +148,11 @@ to avoid pairing up incumbents.
 \item \code{incumbents}, a vector of precinct indices, one for each incumbent's
 home address.
 }
+\item \code{splits}: a list with one entry:
+\itemize{
+\item \code{strength}, a number controlling the tendency of the generated districts
+to avoid splitting counties.
+}
 \item \code{vra_old}: a list with five entries, which may be set up using
 \code{\link{redist.constraint.helper}}:
 \itemize{
@@ -175,7 +180,9 @@ matches each district to its nearest target percentage, and then applies a
 penalty of the form \eqn{\sqrt{max(0, tgt - minpct)}}, summing across
 districts. This penalizes districts which are below their target population.
 The \code{incumbency} constraint adds a term counting the number of districts
-containing paired-up incumbents.
+containing paired-up incumbents. The \code{splits} constraint adds a term
+counting the number of counties which contain precincts belonging to more
+than one district.
 The \code{vra_old} constraint adds a term of the form
 \eqn{(|tgtvramin-minpct||tgtvraother-minpct|)^{powvra})}, which
 encourages districts to have minority percentages near either \code{tgt_vra_min}

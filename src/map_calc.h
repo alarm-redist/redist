@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <set>
 #include "smc_base.h"
 #include "tree_op.h"
 
@@ -33,6 +34,12 @@ double eval_vra_hinge(const subview_col<uword> &districts, int distr,
  * Compute the incumbent-preserving penalty for district `distr`
  */
 double eval_inc(const subview_col<uword> &districts, int distr, const uvec &incumbents);
+
+/*
+ * Compute the county split penalty for district `distr`
+ */
+double eval_splits(const subview_col<uword> &districts, int distr,
+                   const uvec &counties, int n_cty);
 
 /*
  * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,
