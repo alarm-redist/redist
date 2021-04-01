@@ -604,7 +604,7 @@ redist.plot.plans = function(plans, draws, geom, qty=NULL) {
         lab = rlang::quo_text(enquo(qty))
         title = if (suppressWarnings(is.na(as.numeric(draw)))) draw else paste0("Plan #", draw)
 
-        qty = eval_tidy(enquo(qty), plans)
+        qty = eval_tidy(enquo(qty), plans[plans$draw == as.character(draw), ])
         if (is.null(qty)) {
             qty = as.factor(m[, draw_idx])
         } else {
