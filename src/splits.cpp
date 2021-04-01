@@ -10,7 +10,7 @@ IntegerVector splits(IntegerMatrix dm, IntegerVector community) {
   IntegerVector idx = seq_len(community.size())-1;
   IntegerVector temp;
   IntegerVector colc(dm.nrow());
-  
+
 // create indices for each community
   for(int i = 0; i < com_name.size(); i++){
     temp = idx[community == com_name(i)];
@@ -32,16 +32,3 @@ IntegerVector splits(IntegerMatrix dm, IntegerVector community) {
   }
   return ret;
 }
-
-
-
-/*** R
-d1 <- rep(c(1,1,2,2),4)
-d2 <- c(1,1,1,1,2,1,1,1,2,2,2,1,2,2,2,2)
-d3 <- c(rep(c(1,2,2,2),2), rep(c(1,1,2,2), 2))
-dm <- matrix(c(d1,d2,d3), nrow = 16)
-counties <- c(1,2,2,2,1,2,2,2,1,1,3,3,1,1,3,3)
-
-splits(dm, counties)
-#1,2,0
-*/

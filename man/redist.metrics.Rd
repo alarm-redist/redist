@@ -56,13 +56,13 @@ for each precinct and one column for each map. Required.}
 
 \item{bandwidth}{A value between 0 and 1 for computing responsiveness. Only used with option "Responsiveness." Defaults to 0.01.}
 
+\item{draw}{A numeric to specify loop number. Defaults to 1 if only one map provided
+and the column number if multiple maps given.}
+
 \item{ncores}{Number of cores to use for parallel computing. Default is 1.}
 
 \item{district_membership}{Deprecated, use plans. A numeric vector (if only one map) or matrix with one row
 for each precinct and one column for each map. Required.}
-
-\item{nloop}{A numeric to specify loop number. Defaults to 1 if only one map provided
-and the column number if multiple maps given.}
 }
 \value{
 A tibble with  a column for each specified measure and

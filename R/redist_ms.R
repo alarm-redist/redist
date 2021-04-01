@@ -106,6 +106,7 @@ redist.mergesplit <- function(adj, total_pop, nsims, ndists, pop_tol = 0.01,
     constraints$vra_old$tgt_vra_other, constraints$vra_old$pow_vra, proc$min_pop,
     constraints$vra$strength, constraints$vra$tgts_min,
     constraints$incumbency$strength, constraints$incumbency$incumbents,
+    constraints$splits$strength,
     adapt_k_thresh, k, verbosity
   )
 

@@ -172,9 +172,10 @@ set of maps.</p>
   biasV <span class='op'>=</span> <span class='fl'>0.5</span>,
   respV <span class='op'>=</span> <span class='fl'>0.5</span>,
   bandwidth <span class='op'>=</span> <span class='fl'>0.01</span>,
-  nloop <span class='op'>=</span> <span class='fl'>1</span>,
+  draw <span class='op'>=</span> <span class='fl'>1</span>,
   ncores <span class='op'>=</span> <span class='fl'>1</span>,
-  <span class='va'>district_membership</span>
+  <span class='va'>district_membership</span>,
+  <span class='va'>nloop</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -229,7 +230,7 @@ for each precinct and one column for each map. Required.</p></td>
       <td><p>A value between 0 and 1 for computing responsiveness. Only used with option "Responsiveness." Defaults to 0.01.</p></td>
     </tr>
     <tr>
-      <th>nloop</th>
+      <th>draw</th>
       <td><p>A numeric to specify loop number. Defaults to 1 if only one map provided
 and the column number if multiple maps given.</p></td>
     </tr>

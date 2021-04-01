@@ -42,6 +42,9 @@
 #'   to avoid pairing up incumbents.
 #'   * \code{incumbents}, a vector of precinct indices, one for each incumbent's
 #'   home address.
+#' * \code{splits}: a list with one entry:
+#'   * \code{strength}, a number controlling the tendency of the generated districts
+#'   to avoid splitting counties.
 #' * \code{vra_old}: a list with five entries, which may be set up using
 #'   \code{\link{redist.constraint.helper}}:
 #'   * \code{strength}, a number controlling the strength of the Voting Rights Act
@@ -66,7 +69,9 @@
 #' penalty of the form \eqn{\sqrt{max(0, tgt - minpct)}}, summing across
 #' districts. This penalizes districts which are below their target population.
 #' The \code{incumbency} constraint adds a term counting the number of districts
-#' containing paired-up incumbents.
+#' containing paired-up incumbents. The \code{splits} constraint adds a term
+#' counting the number of counties which contain precincts belonging to more
+#' than one district.
 #' The \code{vra_old} constraint adds a term of the form
 #' \eqn{(|tgtvramin-minpct||tgtvraother-minpct|)^{powvra})}, which
 #' encourages districts to have minority percentages near either \code{tgt_vra_min}
@@ -198,7 +203,7 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
                      constraints$vra_old$tgt_vra_other, constraints$vra_old$pow_vra, proc$min_pop,
                      constraints$vra$strength, constraints$vra$tgts_min,
                      constraints$incumbency$strength, constraints$incumbency$incumbents,
-                     adapt_k_thresh, k, verbosity)
+                     constraints$splits$strength, adapt_k_thresh, k, verbosity)
 
     out = new_redist_plans(plans[,-1:-(warmup+1)], map, "mergesplit", NULL, FALSE,
                      compactness = compactness,
