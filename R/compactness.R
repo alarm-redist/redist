@@ -246,7 +246,7 @@ redist.compactness <- function(shp = NULL,
   V = nrow(plans)
 
   if(missing(ppRcpp)){
-    if(ncol(plans) > 8 && missing(perim_path) && missing(perim_df)){
+    if(ncol(plans) > 8 || !missing(perim_path) || !missing(perim_df)){
       ppRcpp <- TRUE
     } else{
       ppRcpp <- FALSE
