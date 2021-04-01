@@ -63,22 +63,3 @@ redist.parity <- function(plans, total_pop, ncores = 1, district_membership, pop
 
     unlist(out)
 }
-
-#' @rdname redist.parity
-#'
-#' @param map a \code{\link{redist_map}} object
-#' @param .data a \code{\link{redist_plans}} object
-#' @param ... passed on to \code{redist.parity}
-#'
-#' @concept analyze
-#' @export
-plan_parity <- function(map, .data = get0('.', parent.frame()), ...) {
-  if (!inherits(.data, 'redist_plans')) {
-    stop('Must provide `.data` if not called within a pipe')
-  }
-  ndists <- attr(map, 'ndists')
-  total_pop <- map[[attr(map, 'pop_col')]]
-  stopifnot(!is.null(total_pop))
-
-  rep(max_dev(get_plans_matrix(.data), total_pop, ndists), each = ndists)
-}

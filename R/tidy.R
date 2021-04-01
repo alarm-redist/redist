@@ -306,6 +306,27 @@ number_by = function(data, x, desc=F) {
         dplyr::group_by(dplyr::across(dplyr::all_of(orig_groups)))
 }
 
+
+#' @rdname redist.parity
+#'
+#' @param map a \code{\link{redist_map}} object
+#' @param .data a \code{\link{redist_plans}} object
+#' @param ... passed on to \code{redist.parity}
+#'
+#' @concept analyze
+#' @export
+plan_parity <- function(map, .data = get0('.', parent.frame()), ...) {
+    if (!inherits(.data, 'redist_plans')) {
+        stop('Must provide `.data` if not called within a pipe')
+    }
+    idxs = unique(as.integer(dplyr::cur_data_all()$draw))
+    ndists = attr(map, 'ndists')
+    total_pop = map[[attr(map, 'pop_col')]]
+    stopifnot(!is.null(total_pop))
+
+    out = rep(max_dev(get_plans_matrix(.data)[, idxs, drop=F], total_pop, ndists), each = ndists)
+}
+
 #' @rdname redist.compactness
 #' @order 1
 #'
@@ -323,8 +344,9 @@ distr_compactness = function(map, measure="FracKept", .data=get0(".", parent.fra
     if (length(unique(diff(as.integer(.data$district)))) > 2)
         warning("Districts not sorted in ascending order; output may be incorrect.")
 
-    redist.compactness(shp=map, plans=get_plans_matrix(.data), measure=measure,
-                       total_pop=map[[attr(map, "pop_col")]],
+    idxs = unique(as.integer(dplyr::cur_data_all()$draw))
+    redist.compactness(shp=map, plans=get_plans_matrix(.data)[, idxs, drop=F],
+                       measure=measure, total_pop=map[[attr(map, "pop_col")]],
                        adj=get_adj(map), ...)[[measure]]
 }
 
@@ -345,9 +367,10 @@ group_frac = function(map, group_pop, total_pop=map[[attr(map, "pop_col")]],
     if (length(unique(diff(as.integer(.data$district)))) > 2)
         warning("Districts not sorted in ascending order; output may be incorrect.")
 
+    idxs = unique(as.integer(dplyr::cur_data_all()$draw))
     group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
     total_pop = rlang::eval_tidy(rlang::enquo(total_pop), map)
-    as.numeric(redist.group.percent(plans=get_plans_matrix(.data),
+    as.numeric(redist.group.percent(plans=get_plans_matrix(.data)[, idxs, drop=F],
                                     group_pop=group_pop, total_pop=total_pop))
 }
 
@@ -364,9 +387,10 @@ segregation_index = function(map, group_pop, total_pop=map[[attr(map, "pop_col")
     if (!inherits(.data, "redist_plans"))
         stop("Must provide `.data` if not called within a pipe")
 
+    idxs = unique(as.integer(dplyr::cur_data_all()$draw))
     group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
     total_pop = rlang::eval_tidy(rlang::enquo(total_pop), map)
-    plan_m = get_plans_matrix(.data)
+    plan_m = get_plans_matrix(.data)[, idxs, drop=F]
     rep(as.numeric(redist.segcalc(plans=plan_m, group_pop=group_pop,
                                   total_pop=total_pop)),
         each=attr(map, "ndists"))
@@ -390,10 +414,11 @@ partisan_metrics = function(map, measure, rvote, dvote, ...,
     if (length(unique(diff(as.integer(.data$district)))) > 2)
         warning("Districts not sorted in ascending order; output may be incorrect.")
 
+    idxs = unique(as.integer(dplyr::cur_data_all()$draw))
     rvote = rlang::eval_tidy(rlang::enquo(rvote), map)
     dvote = rlang::eval_tidy(rlang::enquo(dvote), map)
-    as.numeric(redist.metrics(plans=get_plans_matrix(.data), measure=measure,
-                              rvote=rvote, dvote=dvote, ...)[[measure]])
+    as.numeric(redist.metrics(plans=get_plans_matrix(.data)[, idxs, drop=F],
+                              measure=measure, rvote=rvote, dvote=dvote, ...)[[measure]])
 }
 
 #' @rdname redist.competitiveness
@@ -408,9 +433,10 @@ competitiveness = function(map, rvote, dvote, .data=get0(".", parent.frame())) {
     if (!inherits(.data, "redist_plans"))
         stop("Must provide `.data` if not called within a pipe")
 
+    idxs = unique(as.integer(dplyr::cur_data_all()$draw))
     rvote = rlang::eval_tidy(rlang::enquo(rvote), map)
     dvote = rlang::eval_tidy(rlang::enquo(dvote), map)
-    rep(redist.competitiveness(plans=get_plans_matrix(.data),
+    rep(redist.competitiveness(plans=get_plans_matrix(.data)[, idxs, drop=F],
                                rvote=rvote, dvote=dvote),
         each = attr(map, "ndists"))
 }
@@ -427,11 +453,25 @@ county_splits = function(map, counties, .data=get0(".", parent.frame())) {
     if (!inherits(.data, "redist_plans"))
         stop("Must provide `.data` if not called within a pipe")
 
+    idxs = unique(as.integer(dplyr::cur_data_all()$draw))
     counties = rlang::eval_tidy(rlang::enquo(counties), map)
-    rep(redist.splits(plans=get_plans_matrix(.data), counties=counties),
+    rep(redist.splits(plans=get_plans_matrix(.data)[, idxs, drop=F], counties=counties),
         each = attr(map, "ndists"))
 }
 
+
+#' Extract the last plan from a set of plans
+#'
+#' @param plans A \code{\link{redist_plans}} object
+#'
+#' @returns An integer vector containing the final plan assignment.
+#'
+#' @concept analyze
+#' @export
+last_plan = function(plans) {
+    plan_m = get_plans_matrix(plans)
+    plan_m[, ncol(plan_m)]
+}
 
 #' Extract the district assignments for a precinct across all simulated plans
 #'
@@ -444,7 +484,8 @@ prec_assignment = function(prec, .data=get0(".", parent.frame())) {
     if (!inherits(.data, "redist_plans"))
         stop("Must provide `.data` if not called within a pipe")
 
-    assignment = get_plans_matrix(.data)[prec,]
+    idxs = unique(as.integer(dplyr::cur_data_all()$draw))
+    assignment = get_plans_matrix(.data)[prec, idxs, drop=F]
     if ("district" %in% colnames(.data) && is.factor(.data$district)) {
         lev = levels(.data$district)
         assignment = factor(lev[assignment], lev, ordered=is.ordered(.data$district))
@@ -502,8 +543,9 @@ imp_confint = function(x, conf=0.95, .data=get0(".", parent.frame())) {
     if (!inherits(.data, "redist_plans"))
         stop("Must provide `.data` if not called within a pipe")
 
+    idxs = unique(as.integer(dplyr::cur_data_all()$draw))
     y = rlang::eval_tidy(rlang::enquo(x), .data)
-    ci = redist.smc_is_ci(y, get_plans_weights(.data), conf)
+    ci = redist.smc_is_ci(y, get_plans_weights(.data)[, idxs, drop=F], conf)
 
     tibble("{{ x }}" := mean(y),
                    "{{ x }}_lower" := ci[1],
