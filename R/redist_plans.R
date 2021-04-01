@@ -405,9 +405,9 @@ redist.plot.hist = function(plans, qty, bins=NULL, ...) {
 
     percent = function(x) sprintf("%1.0f%%", 100*x)
     p = ggplot(subset_sampled(plans), aes({{ qty }})) +
-        ggplot2::geom_histogram(aes(y = stat(density*width)), ...,
+        ggplot2::geom_histogram(aes(y = ggplot2::after_stat(density*width)), ...,
                                 boundary=0.5*is_int, bins=bins) +
-        ggplot2::scale_y_continuous(expand = expansion(mult = c(0, 0.05)),
+        ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0, 0.05)),
                                     labels = percent) +
         labs(y="Fraction of plans")
     if (get_n_ref(plans) > 0)
