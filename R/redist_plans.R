@@ -388,19 +388,28 @@ plot.redist_plans = function(x, ..., type="hist") {
 redist.plot.hist = function(plans, qty, bins=NULL, ...) {
     stopifnot(inherits(plans, "redist_plans"))
 
+    val = rlang::eval_tidy(rlang::enquo(qty), plans)
+    is_int = isTRUE(all.equal(as.integer(val), val))
     if (is.null(bins)) {
-        val = rlang::eval_tidy(rlang::enquo(qty), plans)
-        n = length(val)
-        iqr = IQR(val)
-        if (iqr > 0)
-            bins = max(round(diff(range(val)) / (2 * iqr / n^(1/3))), 3)
-        else
-            bins = 3
+        if (is_int) {
+            bins = diff(range(val))+1
+        } else { # Freedman-Diaconis
+            n = length(val)
+            iqr = IQR(val)
+            if (iqr > 0)
+                bins = max(round(diff(range(val)) / (2 * iqr / n^(1/3))), 3)
+            else
+                bins = 3
+        }
     }
 
+    percent = function(x) sprintf("%1.0f%%", 100*x)
     p = ggplot(subset_sampled(plans), aes({{ qty }})) +
-        ggplot2::geom_histogram(..., bins=bins) +
-        labs(y="Number of plans")
+        ggplot2::geom_histogram(aes(y = stat(density*width)), ...,
+                                boundary=0.5*is_int, bins=bins) +
+        ggplot2::scale_y_continuous(expand = expansion(mult = c(0, 0.05)),
+                                    labels = percent) +
+        labs(y="Fraction of plans")
     if (get_n_ref(plans) > 0)
         p = p + labs(color="Plan") +
             ggplot2::geom_vline(aes(xintercept={{ qty }}, color=.data$draw),
@@ -613,3 +622,5 @@ redist.plot.plans = function(plans, draws, geom, qty=NULL) {
         patchwork::wrap_plots(plots)
     }
 }
+
+utils::globalVariables(c("density", "width"))
