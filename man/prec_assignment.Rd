@@ -2,7 +2,7 @@
 % Please edit documentation in R/tidy.R
 \name{prec_assignment}
 \alias{prec_assignment}
-\title{Extract the district assignments for a precint across all simulated plans}
+\title{Extract the district assignments for a precinct across all simulated plans}
 \usage{
 prec_assignment(prec, .data = get0(".", parent.frame()))
 }
@@ -12,6 +12,6 @@ prec_assignment(prec, .data = get0(".", parent.frame()))
 \item{.data}{a \code{\link{redist_plans}} object}
 }
 \description{
-Extract the district assignments for a precint across all simulated plans
+Extract the district assignments for a precinct across all simulated plans
 }
 \concept{analyze}

@@ -33,7 +33,7 @@ variation of information. If not provided, equal population of precincts
 will be assumed, i.e. the VI will be computed with respect to the precincts
 themselves, and not the population.}
 
-\item{district_membership}{Depreacted, use plans. A matrix with one row for each precinct and one
+\item{district_membership}{Deprecated, use plans. A matrix with one row for each precinct and one
 column for each map. Required.}
 
 \item{pop}{The vector of precinct populations. Used only if computing

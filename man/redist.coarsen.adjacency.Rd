@@ -11,7 +11,7 @@ redist.coarsen.adjacency(adj, groups, adjacency)
 
 \item{groups}{integer vector of elements of adjacency to group}
 
-\item{adjacency}{Deperecated -- use adj. A zero-indexed adjacency list}
+\item{adjacency}{Deprecated -- use adj. A zero-indexed adjacency list}
 }
 \value{
 adjacency list coarsened

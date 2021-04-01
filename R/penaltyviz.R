@@ -2,7 +2,7 @@
 #'
 #' Plots the shape of the VRA Gibbs penalty.
 #' 
-#' This function allows you to plot the un-exponentiated VRA Gibbs penalty implmented sa
+#' This function allows you to plot the un-exponentiated VRA Gibbs penalty implemented as
 #' `vra` within MCMC and `vra_old` within Merge-Split and SMC. The function takes two key inputs,
 #' `tgt_min` and `tgt_other` which center the minimum penalty spots. A higher y-value 
 #' indicates a higher penalty and incentivizes moving towards a spot with a lower y-value.

@@ -119,7 +119,7 @@ make_cores = function(.data=get0(".", parent.frame()), boundary=1, focus=NULL) {
 #' @param plans a \code{redist_plans} object
 #' @param ref_plan an integer vector containing the reference plan. It will be
 #' renumbered to 1..\code{ndists}.
-#' @param name a human-readable name for the referece plan. Defaults to the
+#' @param name a human-readable name for the reference plan. Defaults to the
 #' name of \code{ref_plan}.
 #'
 #' @returns a modified \code{redist_plans} object containing the reference plan
@@ -433,7 +433,7 @@ county_splits = function(map, counties, .data=get0(".", parent.frame())) {
 }
 
 
-#' Extract the district assignments for a precint across all simulated plans
+#' Extract the district assignments for a precinct across all simulated plans
 #'
 #' @param prec the precinct number or ID
 #' @param .data a \code{\link{redist_plans}} object

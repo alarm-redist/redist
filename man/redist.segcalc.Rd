@@ -19,7 +19,7 @@ redist.segcalc(plans, group_pop, total_pop, algout, grouppop, fullpop)
 
 \item{group_pop}{A vector of populations for some subgroup of interest.}
 
-\item{total_pop}{A vector containign the populations of each geographic unit.}
+\item{total_pop}{A vector containing the populations of each geographic unit.}
 
 \item{.data}{a \code{\link{redist_plans}} object}
 
@@ -31,7 +31,7 @@ redist object.}
 
 \item{grouppop}{Deprecated. Use group_pop. A vector of populations for some subgroup of interest.}
 
-\item{fullpop}{Deprecated. Use total_pop. A vector containign the populations of each geographic unit.}
+\item{fullpop}{Deprecated. Use total_pop. A vector containing the populations of each geographic unit.}
 }
 \value{
 \code{redist.segcalc} returns a vector where each entry is the

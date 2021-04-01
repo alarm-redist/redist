@@ -53,7 +53,7 @@ combine.par.anneal <- function(a, b){
 #' @param eprob The probability of keeping an edge connected. The
 #' default is \code{0.05}.
 #' @param lambda The parameter determining the number of swaps to attempt
-#' each iteration of the algorihtm. The number of swaps each iteration is
+#' each iteration of the algorithm. The number of swaps each iteration is
 #' equal to Pois(\code{lambda}) + 1. The default is \code{0}.
 #' @param pop_tol The strength of the hard population
 #' constraint. \code{pop_tol} = 0.05 means that any proposed swap that

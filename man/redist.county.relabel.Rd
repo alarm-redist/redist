@@ -11,7 +11,7 @@ redist.county.relabel(adj, counties, simplify = TRUE, adjacency)
 
 \item{counties}{character vector of county names}
 
-\item{simplify}{boolean - TRUE returns a numeric vector of ids, while FALSe 
+\item{simplify}{boolean - TRUE returns a numeric vector of ids, while FALSE 
 appends a number when there are multiple connected components.}
 
 \item{adjacency}{Deprecated, use adj. adjacency list}
