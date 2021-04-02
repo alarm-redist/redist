@@ -54,7 +54,7 @@ Other useful methods for \code{redist_plans} objects:
 \examples{
 data(iowa)
 
-iowa = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05)
+iowa = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05, total_pop = pop)
 rsg_plan = redist.rsg(iowa$adj, iowa$pop, ndists=4, pop_tol=0.05)$plan
 redist_plans(rsg_plan, iowa, "rsg")
 

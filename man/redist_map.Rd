@@ -74,7 +74,7 @@ Other useful methods for \code{redist_map} objects:
 }
 \examples{
 data(fl25)
-d = redist_map(fl25, ndists=3, pop_tol=0.05)
+d = redist_map(fl25, ndists=3, pop_tol=0.05, total_pop = pop)
 dplyr::filter(d, pop >= 10e3)
 
 }

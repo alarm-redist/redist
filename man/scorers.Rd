@@ -77,7 +77,7 @@ plan is closer to the existing plan.
 \examples{
 \dontrun{
 data(iowa)
-iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05)
+iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05, total_pop = pop)
 
 scorer_frac_kept(iowa_map)
 scorer_status_quo(iowa_map)
