@@ -56,8 +56,10 @@ only necessary when "FryerHolden" is used for measure. Defaults to NULL.}
 EdgesRemoved" and "logSpanningTree". Created with \code{redist.adjacency} if not
 supplied and needed. Default is NULL.}
 
-\item{draw}{A numeric to specify loop number. Defaults to 1 if only one map provided
-and the column number if multiple maps given.}
+\item{draw}{A numeric to specify draw number. Defaults to 1 if only one map provided
+and the column number if multiple maps given. Can also take a factor input, which will become the 
+draw column in the output if its length matches the number of entries in plans. If the `plans` input
+is a `redist_plans` object, it extracts the `draw` identifier.}
 
 \item{ncores}{Number of cores to use for parallel computing. Default is 1.}
 

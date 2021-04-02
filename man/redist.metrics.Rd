@@ -3,7 +3,7 @@
 \name{partisan_metrics}
 \alias{partisan_metrics}
 \alias{redist.metrics}
-\title{Calculate gerrymandering metrics for a set of districts}
+\title{Calculate gerrymandering metrics for a set of plans}
 \usage{
 partisan_metrics(
   map,
@@ -56,8 +56,10 @@ for each precinct and one column for each map. Required.}
 
 \item{bandwidth}{A value between 0 and 1 for computing responsiveness. Only used with option "Responsiveness." Defaults to 0.01.}
 
-\item{draw}{A numeric to specify loop number. Defaults to 1 if only one map provided
-and the column number if multiple maps given.}
+\item{draw}{A numeric to specify draw number. Defaults to 1 if only one map provided
+and the column number if multiple maps given. Can also take a factor input, which will become the 
+draw column in the output if its length matches the number of entries in plans. If the `plans` input
+is a `redist_plans` object, it extracts the `draw` identifier.}
 
 \item{ncores}{Number of cores to use for parallel computing. Default is 1.}
 
