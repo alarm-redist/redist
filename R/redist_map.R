@@ -135,7 +135,7 @@ reconstruct.redist_map = function(data, old) {
 #'
 #' @examples
 #' data(fl25)
-#' d = redist_map(fl25, ndists=3, pop_tol=0.05)
+#' d = redist_map(fl25, ndists=3, pop_tol=0.05, total_pop = pop)
 #' dplyr::filter(d, pop >= 10e3)
 #'
 #' @concept prepare
