@@ -28,7 +28,8 @@
 #' EdgesRemoved" and "logSpanningTree". Created with \code{redist.adjacency} if not
 #' supplied and needed. Default is NULL.
 #' @param draw A numeric to specify loop number. Defaults to 1 if only one map provided
-#' and the column number if multiple maps given.
+#' and the column number if multiple maps given. Can also take a factor input, which will become the 
+#' draw column in the output if its length matches the number of entries in plans.
 #' @param ncores Number of cores to use for parallel computing. Default is 1.
 #' @param counties A numeric vector from 1:ncounties corresponding to counties. Required for "logSpanningTree".
 #' @param planarize a number, indicating the CRS to project the shapefile to if
@@ -160,7 +161,7 @@ redist.compactness <- function(shp = NULL,
                                district_membership, population, adjacency, nloop){
 
   if(!missing(district_membership)){
-    plans <- plans
+    plans <- district_membership
     .Deprecated(new = 'plans', old = 'district_membership')
   }
   if(!missing(population)){
@@ -177,29 +178,40 @@ redist.compactness <- function(shp = NULL,
   }
 
   # Check Inputs
-  if(is.null(shp)&is.null(adj)){
+  if (is.null(shp) & is.null(adj)) {
     stop('Please provide a shp or adj argument.')
   }
 
-  if(!is.null(shp)){
-    if('SpatialPolygonsDataFrame' %in% class(shp)){
-      shp <- shp %>%  st_as_sf()
-    } else if(!('sf' %in% class(shp))){
+  if (!is.null(shp)) {
+    if ('SpatialPolygonsDataFrame' %in% class(shp)) {
+      shp <- shp %>% st_as_sf()
+    } else if (!inherits(shp, 'sf')) {
       stop('Please provide "shp" as a SpatialPolygonsDataFrame or sf object.')
     }
   }
-
-  if(any(class(plans) == 'redist')){
+  
+  if (inherits(shp, 'redist_map') & missing(adj)) {
+    adj <- get_adj(shp)
+  }
+  
+  if (any(class(plans) == 'redist')) {
     plans <- plans$plans
   }
-
-  if(!any(class(plans) %in% c('numeric', 'integer', 'matrix'))){
+  
+  if (inherits(plans, 'redist_plans')) {
+    draw <- plans$draw
+    plans <- get_plans_matrix(plans)
+  }
+  
+  if (!is.numeric(plans)) {
     stop('Please provide "plans" as a numeric vector or matrix.')
   }
 
 
+
+
   if (isTRUE(st_is_longlat(st_geometry(shp)))) {
-    if(!is.null(st_crs(shp)) & !is.null(planarize) && !isFALSE(planarize)){
+    if (!is.null(st_crs(shp)) & !is.null(planarize) && !isFALSE(planarize)) {
       shp <- st_transform(shp, planarize)
     }
   }
@@ -224,11 +236,11 @@ redist.compactness <- function(shp = NULL,
       stop('Please provide "total_pop" as a numeric or integer.')
     }}
 
-  if(class(draw) != 'numeric'){
+  if(!is.numeric(draw) & !is.factor(draw)){
     stop('Please provide "draw" as a numeric.')
   }
 
-  if(class(ncores) != 'numeric'){
+  if(!is.numeric(ncores)){
     stop('Please provide "ncores" as a numeric.')
   }
   if(('logSpanningTree' %in% measure) & is.null(counties)){
@@ -253,13 +265,14 @@ redist.compactness <- function(shp = NULL,
     }
   }
 
-  nmap <-  ncol(plans)
-  if(nmap!=1){
-    draw = rep(draw + (1:ncol(plans)) - 1, each = nd)
-  } else {
-    draw = rep(draw, nd)
+  nmap <- ncol(plans)
+  if (!(is.factor(draw) && length(draw) == nd * nmap)) {
+    if (nmap != 1) {
+      draw <- rep(draw + (1:ncol(plans)) - 1, each = nd)
+    } else {
+      draw <- rep(draw, nd)
+    }
   }
-
 
   nc <- min(ncores, ncol(plans))
   if (nc == 1){
