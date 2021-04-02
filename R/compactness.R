@@ -27,9 +27,10 @@
 #' @param adj A zero-indexed adjacency list. Only used for "PolsbyPopper",
 #' EdgesRemoved" and "logSpanningTree". Created with \code{redist.adjacency} if not
 #' supplied and needed. Default is NULL.
-#' @param draw A numeric to specify loop number. Defaults to 1 if only one map provided
+#' @param draw A numeric to specify draw number. Defaults to 1 if only one map provided
 #' and the column number if multiple maps given. Can also take a factor input, which will become the 
-#' draw column in the output if its length matches the number of entries in plans.
+#' draw column in the output if its length matches the number of entries in plans. If the `plans` input
+#' is a `redist_plans` object, it extracts the `draw` identifier.
 #' @param ncores Number of cores to use for parallel computing. Default is 1.
 #' @param counties A numeric vector from 1:ncounties corresponding to counties. Required for "logSpanningTree".
 #' @param planarize a number, indicating the CRS to project the shapefile to if
