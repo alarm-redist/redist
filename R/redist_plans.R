@@ -396,7 +396,7 @@ redist.plot.hist = function(plans, qty, bins=NULL, ...) {
     is_int = isTRUE(all.equal(as.integer(val), val))
     if (is.null(bins)) {
         if (is_int) {
-            bins = diff(range(val))+1
+            bins = 2*diff(range(val)) + 1
         } else { # Freedman-Diaconis
             n = length(val)
             iqr = IQR(val)

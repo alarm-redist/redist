@@ -8,7 +8,7 @@
 redist_map(
   ...,
   existing_plan = NULL,
-  pop_tol = 0.01,
+  pop_tol = NULL,
   total_pop = c("pop", "population", "total_pop"),
   ndists = NULL,
   pop_bounds = NULL,
@@ -29,7 +29,8 @@ existing district assignment.}
 
 \item{pop_tol}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the population tolerance.
 The percentage deviation from the average population will be constrained to
-be no more than this number.}
+be no more than this number. If \code{existing_plan} is provided, defaults to
+the parity of that plan; otherwise, defaults to 0.01.}
 
 \item{total_pop}{\code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the vector
 of precinct populations. Defaults to the \code{pop}, \code{population}, or

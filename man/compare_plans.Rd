@@ -17,8 +17,8 @@ compare_plans(
 \arguments{
 \item{plans}{a \link{redist_plans} object}
 
-\item{set1, set2}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} indexing vectors
-for the plan draws to compare. Must be mutually exclusive.}
+\item{set2}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} indexing vectors
+for the plan draws to compare. Must be mutually exclusive with \code{set1}.}
 
 \item{shp}{a shapefile for plotting.}
 
@@ -33,6 +33,10 @@ for more information.  Set to \code{FALSE} to disable plotting (or leave out
 relevant set of precincts for comparison.}
 
 \item{labs}{the names of the panels in the plot.}
+
+\item{set}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} indexing vectors
+for the plan draws to compare.  Alternatively, a second \link{redist_plans}
+object to compare to.}
 }
 \value{
 If possible, makes a comparison plot according to \code{plot}. Otherwise
