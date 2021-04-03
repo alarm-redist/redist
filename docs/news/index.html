@@ -79,7 +79,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
       </span>
     </div>
 
@@ -124,7 +124,7 @@
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://github.com/kosukeimai/redist/">
+  <a href="https://github.com/alarm-redist/redist/">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -143,15 +143,40 @@
   <div class="col-md-9 contents">
     <div class="page-header">
       <h1 data-toc-skip>Changelog <small></small></h1>
-      <small>Source: <a href='https://github.com/kosukeimai/redist/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
+      <small>Source: <a href='https://github.com/alarm-redist/redist/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
+    <div id="redist-300" class="section level1">
+<h1 class="page-header" data-toc-text="3.0.0">
+<a href="#redist-300" class="anchor"></a>redist 3.0.0<small> Unreleased </small>
+</h1>
+<ul>
+<li>New tidy interface, including new <code>redist_map</code> and <code>redist_plans</code> objects</li>
+<li>Merge-split MCMC now available in <code><a href="../reference/redist_mergesplit.html">redist_mergesplit()</a></code>
+</li>
+<li>Short burst MCMC optimization now available in <code><a href="../reference/redist_shortburst.html">redist_shortburst()</a></code> along with scoring functions (<code><a href="../reference/scorer_group_pct.html">?scorers</a></code>)</li>
+<li>Improved Flip MCMC interface and performance improvements</li>
+<li>New support for larger simulation size limits</li>
+<li>Functions to freeze parts of a map and extract district cores</li>
+<li>New VRA constraint</li>
+<li>Many new plotting functions</li>
+<li>Consistent function and argument names</li>
+<li>New partisanship and compactness metrics</li>
+<li>Performance improvements to compactness calculations</li>
+<li>Plan comparison and classification in <code><a href="../reference/compare_plans.html">compare_plans()</a></code> and <code><a href="../reference/classify_plans.html">classify_plans()</a></code>
+</li>
+<li>New <code>iowa</code> dataset and cleaned-up package data</li>
+<li>New vignettes for redistricting analysis and workflows</li>
+<li>Various bug fixes</li>
+</ul>
+</div>
     <div id="redist-204" class="section level1">
 <h1 class="page-header" data-toc-text="2.0.4">
 <a href="#redist-204" class="anchor"></a>redist 2.0.4<small> Unreleased </small>
 </h1>
 <ul>
-<li>Added a <code>NEWS.md</code> file to track changes to the package.</li>
+<li>New <code>redist.subset</code> allows for easy subsetting of an adjacency graph</li>
+<li>Added a <code>NEWS.md</code> file to track changes to the package</li>
 </ul>
 </div>
   </div>
@@ -167,7 +192,7 @@
 
       <footer>
       <div class="copyright">
-  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Jun Kawahara, Kosuke Imai.</p>
+  <p>Developed by Christopher T. Kenny, Cory McCartan, Ben Fifield, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">

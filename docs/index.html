@@ -46,7 +46,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
       </span>
     </div>
 
@@ -91,7 +91,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/kosukeimai/redist/">
+  <a href="https://github.com/alarm-redist/redist/">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -119,21 +119,21 @@
 <p>Authors:</p>
 <ul>
 <li>
-<a href="https://www.benfifield.com">Ben Fifield</a>, <a href="mailto:benfifield@gmail.com" class="email">benfifield@gmail.com</a> (Maintainer)</li>
-<li>
-<a href="https://www.christophertkenny.com">Christopher T Kenny</a>, <a href="mailto:christopherkenny@fas.harvard.edu" class="email">christopherkenny@fas.harvard.edu</a>
-</li>
+<a href="https://www.christophertkenny.com">Christopher T Kenny</a>, <a href="mailto:christopherkenny@fas.harvard.edu" class="email">christopherkenny@fas.harvard.edu</a> (Maintainer)</li>
 <li>
 <a href="https://corymccartan.github.io">Cory McCartan</a>, <a href="mailto:cmccartan@g.harvard.edu" class="email">cmccartan@g.harvard.edu</a>
-</li>
-<li>Jun Kawahara, <a href="mailto:jkawahara@i.kyoto-u.ac.jp" class="email">jkawahara@i.kyoto-u.ac.jp</a>
 </li>
 <li>
 <a href="https://imai.fas.harvard.edu">Kosuke Imai</a>, <a href="mailto:imai@harvard.edu" class="email">imai@harvard.edu</a>
 </li>
+<li>
+<a href="https://www.benfifield.com">Ben Fifield</a>, <a href="mailto:benfifield@gmail.com" class="email">benfifield@gmail.com</a>
+</li>
 </ul>
 <p>Contributors:</p>
 <ul>
+<li>Jun Kawahara, <a href="mailto:jkawahara@i.kyoto-u.ac.jp" class="email">jkawahara@i.kyoto-u.ac.jp</a>
+</li>
 <li>Alex Tarr, <a href="mailto:atarr@princeton.edu" class="email">atarr@princeton.edu</a>
 </li>
 <li>
@@ -158,31 +158,31 @@
 <p>You can also install the most recent development version of <code>redist</code> using the `remotes`` package.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html">require</a></span><span class="op">(</span><span class="va"><a href="https://remotes.r-lib.org">remotes</a></span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span>
-<span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span><span class="op">(</span><span class="st">"kosukeimai/redist"</span>, dependencies<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span><span class="op">(</span><span class="st">"alarm-redist/redist"</span>, dependencies<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
 </div>
 <div id="getting-started" class="section level2">
 <h2 class="hasAnchor">
 <a href="#getting-started" class="anchor"></a>Getting started</h2>
 <p>A basic analysis has two steps. First, you define a redistricting plan using <code>redist_map</code>. Then you simulate plans using one of the algorithm functions: <code>redist_smc</code>, <code>redist_flip</code>, and <code>redist_mergesplit</code>.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">redist</span><span class="op">)</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://alarm-redist.github.io/redist/">redist</a></span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org">dplyr</a></span><span class="op">)</span>
 
 <span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span>
 
-<span class="co"># set a 0.01% population constraint</span>
-<span class="va">iowa_map</span> <span class="op">=</span> <span class="fu"><a href="reference/redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan<span class="op">=</span><span class="va">cd_2010</span>, pop_tol<span class="op">=</span><span class="fl">0.0001</span><span class="op">)</span>
+<span class="co"># set a 0.02% population constraint</span>
+<span class="va">iowa_map</span> <span class="op">=</span> <span class="fu"><a href="reference/redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan<span class="op">=</span><span class="va">cd_2010</span>, pop_tol<span class="op">=</span><span class="fl">0.0002</span>, total_pop <span class="op">=</span> <span class="va">pop</span><span class="op">)</span>
 <span class="co"># simulate 250 plans using the SMC algorithm</span>
 <span class="va">iowa_plans</span> <span class="op">=</span> <span class="fu"><a href="reference/redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">iowa_map</span>, nsims<span class="op">=</span><span class="fl">250</span>, verbose<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span>
 <span class="co">#&gt; SEQUENTIAL MONTE CARLO</span>
-<span class="co">#&gt; Sampling 250 99-unit maps with 4 districts and population between 761513 and 761665.</span>
+<span class="co">#&gt; Sampling 250 99-unit maps with 4 districts and population between 761436 and 761741.</span>
 <span class="co">#&gt; Making split 1 of 3</span>
-<span class="co">#&gt; Note: maximum hit; falling back to naive k estimator.</span>
-<span class="co">#&gt; Resampling effective sample size: 245.9 (98.4% efficiency).</span>
+<span class="co">#&gt; Resampling effective sample size: 246.3 (98.5% efficiency).</span>
 <span class="co">#&gt; Making split 2 of 3</span>
-<span class="co">#&gt; Resampling effective sample size: 245.6 (98.3% efficiency).</span>
+<span class="co">#&gt; Resampling effective sample size: 244.6 (97.8% efficiency).</span>
 <span class="co">#&gt; Making split 3 of 3</span>
-<span class="co">#&gt; Resampling effective sample size: 246.8 (98.7% efficiency).</span></code></pre></div>
+<span class="co">#&gt; Note: maximum hit; falling back to naive k estimator.</span>
+<span class="co">#&gt; Resampling effective sample size: 244.2 (97.7% efficiency).</span></code></pre></div>
 <p>After generating plans, you can use <code>redist</code>’s plotting functions to study the geographic and partisan characteristics of the simulated ensemble.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org">ggplot2</a></span><span class="op">)</span>
@@ -215,14 +215,6 @@
 <p><img src="reference/figures/README-readme-plot-4.png"><!-- --></p>
 <p>A more detailed introduction to redistricting methods and the package can be found in the <a href="articles/redist.html">Get Started</a> page. The package <a href="articles/">vignettes</a> contain more detailed information and guides to specific workflows.</p>
 </div>
-<div id="redist-in-the-news" class="section level2">
-<h2 class="hasAnchor">
-<a href="#redist-in-the-news" class="anchor"></a><code>redist</code> in the News</h2>
-<ul>
-<li><a href="https://www.r-bloggers.com/2021/02/some-computational-redistricting-methods-or-how-to-sniff-out-a-gerrymander-in-a-pinch/">New Mexico</a></li>
-<li><a href="https://www.benjaminsorensen.me/post/mt-redistricting/">Montana</a></li>
-</ul>
-</div>
 </div>
   </div>
 
@@ -232,9 +224,9 @@
 <ul class="list-unstyled">
 <li>Download from CRAN at <br><a href="https://cloud.r-project.org/package=redist">https://​cloud.r-project.org/​package=redist</a>
 </li>
-<li>Browse source code at <br><a href="https://github.com/kosukeimai/redist/">https://​github.com/​kosukeimai/​redist/​</a>
+<li>Browse source code at <br><a href="https://github.com/alarm-redist/redist/">https://​github.com/​alarm-redist/​redist/​</a>
 </li>
-<li>Report a bug at <br><a href="https://github.com/kosukeimai/redist/issues">https://​github.com/​kosukeimai/​redist/​issues</a>
+<li>Report a bug at <br><a href="https://github.com/alarm-redist/redist/issues">https://​github.com/​alarm-redist/​redist/​issues</a>
 </li>
 </ul>
 </div>
@@ -253,10 +245,9 @@
 <div class="developers">
 <h2>Developers</h2>
 <ul class="list-unstyled">
-<li>Ben Fifield <br><small class="roles"> Author, maintainer </small>  </li>
 <li>Christopher T. Kenny <br><small class="roles"> Author </small>  </li>
 <li>Cory McCartan <br><small class="roles"> Author </small>  </li>
-<li>Jun Kawahara <br><small class="roles"> Author </small>  </li>
+<li>Ben Fifield <br><small class="roles"> Author, maintainer </small>  </li>
 <li>Kosuke Imai <br><small class="roles"> Author </small>  </li>
 <li><a href="authors.html">All authors...</a></li>
 </ul>
@@ -274,7 +265,7 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Jun Kawahara, Kosuke Imai.</p>
+  <p>Developed by Christopher T. Kenny, Cory McCartan, Ben Fifield, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">
