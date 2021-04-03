@@ -45,7 +45,7 @@ data(fl25_enum)
 plan <- fl25_enum$plans[, 7241]
 adj <- redist.adjacency(fl25)
 set.seed(1)
-sims <- redist.mcmc(adj = adj, init_plan = plan, total_pop = fl25$pop, 
+sims <- redist.flip(adj = adj, init_plan = plan, total_pop = fl25$pop, 
                     nsims = 6, pop_tol = 0.10, 
                     constraint = 'compact', constraintweights = 0.02,
                     compactness_metric = 'edges-removed')
@@ -121,7 +121,7 @@ set.seed(1)
 In addition, we need population for each unit. We've included `iowa$pop` as the total population as of the 2010 Census. From there, we have the basic information that we need to run our first simulation. The below indicates that we are simulating 1000 plans (with `nsims`) for the state of Iowa that have at most a population parity deviation of 0.05 (with `pop_tol`).
 
 ```{r}
-sims <- redist.mcmc(adj = adj, total_pop = iowa$pop, init_plan = iowa$cd_2010,
+sims <- redist.flip(adj = adj, total_pop = iowa$pop, init_plan = iowa$cd_2010,
                     nsims = 1000, pop_tol = 0.05)
 ```
 
@@ -148,7 +148,7 @@ redist.plot.map(shp = iowa, plan = sims$plans[, 1000])
 Now, this plan is incredibly non-compact, which can be an issue. However, we should expect this type of outcome, as we didn't include a compactness constraint while simulating. Thus, the only things checked were contiguity and that no plan would be outside of the `pop_tol` set above. Since there are many more non-compact plans than compact plans in the space of all redistricting plans, we end up with highly non-compact districts. We can fix this by specifying a constraint, as below:
 
 ```{r}
-sims_comp <- redist.mcmc(adj = adj, total_pop = iowa$pop, init_plan = iowa$cd_2010,
+sims_comp <- redist.flip(adj = adj, total_pop = iowa$pop, init_plan = iowa$cd_2010,
                          nsims = 1000, pop_tol = 0.05,
                          constraint = 'compact', constraintweights = 0.4,
                          compactness_metric = 'edges-removed')
@@ -180,7 +180,7 @@ Here, we opt to initialize using the `RSG` algorithm, though the default is to u
 
 ```{r}
 flip_chains <- lapply(1:nchains, function(x){
-  redist.mcmc(adj = adj,  total_pop = iowa$pop, pop_tol = 0.05,
+  redist.flip(adj = adj,  total_pop = iowa$pop, pop_tol = 0.05,
               nsims = nsims, init_plan = 'rsg', ndists = 4,
               constraint = 'compact', constraintweights = 0.4,
               compactness_metric = 'edges-removed', verbose = FALSE)
@@ -191,7 +191,7 @@ In Unix-based systems, this can be run considerably faster by running this in pa
 
 ```{r, eval=F}
 mcmc_chains <- parallel::mclapply(1:nchains, function(x){
-  redist.mcmc(adjobj = adjlist,  popvec = fl25$pop, 
+  redist.flip(adjobj = adjlist,  popvec = fl25$pop, 
               nsims = nsims, ndists = 3)
 }, mc.set.seed = 1, mc.cores = parallel::detectCores())
 ```
@@ -226,7 +226,7 @@ Now, we can pass the `redist_map` object to `redist_flip` to begin simulating.
 tidy_sims <- iowa_map %>% redist_flip(nsims = 1000)
 ```
 
-This highlights a key difference between the `redist_flip` and `redist.mcmc` implementations: `redist_flip` appears to have a much lower acceptance rate, even though we didn't explicitly set any constraints. Why? `redist_flip`'s constraint includes a relatively weak compactness constraint by default because simulating compact maps is far more efficient and completely non-compact maps are not super useful for most purposes.
+This highlights a key difference between the `redist_flip` and `redist.flip` implementations: `redist_flip` appears to have a much lower acceptance rate, even though we didn't explicitly set any constraints. Why? `redist_flip`'s constraint includes a relatively weak compactness constraint by default because simulating compact maps is far more efficient and completely non-compact maps are not super useful for most purposes.
 
 You can override this using the `flip_constraints_helper()` function to set up a blank set of constraints.
 
@@ -253,7 +253,7 @@ From there, we can again pass this to `redist_flip`
 tidy_sims_sq_comp <- iowa_map %>% redist_flip(nsims = 1000, constraints = cons)
 ```
 
-The output from `redist_flip` differs a bit from the output of `redist.mcmc`. It outputs a `redist_plans` object.
+The output from `redist_flip` differs a bit from the output of `redist.flip`. It outputs a `redist_plans` object.
 
 ```{r}
 class(tidy_sims)
