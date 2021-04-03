@@ -56,8 +56,8 @@ compare_plans = function(plans, set1, set2, shp=NULL, plot="fill", thresh=0.1,
 
     set1 = eval_tidy(enquo(set1), plans)
     set2 = eval_tidy(enquo(set2), plans)
-    if (is.logical(set1)) set1 = which(set1)
-    if (is.logical(set2)) set2 = which(set2)
+    if (is.logical(set1)) set1 = unique(as.integer(plans$draw[set1]))
+    if (is.logical(set2)) set2 = unique(as.integer(plans$draw[set2]))
     if (length(intersect(set1, set2)) > 0)
         stop("`set1` and `set2` must be mutually exclusive.")
     n1 = length(set1)
@@ -65,7 +65,6 @@ compare_plans = function(plans, set1, set2, shp=NULL, plot="fill", thresh=0.1,
 
     pm = get_plans_matrix(plans)
     base_co = 1 / max(pm[, 1]) # baseline coccurence
-
     p1 = (n1*prec_cooccur(pm, set1) + base_co) / (n1 + 1)
     p2 = (n2*prec_cooccur(pm, set2) + base_co) / (n2 + 1)
 
@@ -110,7 +109,7 @@ compare_plans = function(plans, set1, set2, shp=NULL, plot="fill", thresh=0.1,
             make_plot = function(x, lab) {
                 ggplot(edges, aes(size=x)) +
                     geom_sf() +
-                    ggplot2::guides(size=F) +
+                    ggplot2::guides(size=FALSE) +
                     ggplot2::scale_size_continuous(range=c(0, 3)) +
                     labs(title=lab) +
                     theme_void()
@@ -123,7 +122,7 @@ compare_plans = function(plans, set1, set2, shp=NULL, plot="fill", thresh=0.1,
             make_plot = function(x, lab) {
                 ggplot(shp, aes(fill=x)) +
                     geom_sf(size=0) +
-                    ggplot2::guides(fill=F) +
+                    ggplot2::guides(fill=FALSE) +
                     labs(title=lab) +
                     theme_void()
             }
@@ -131,6 +130,8 @@ compare_plans = function(plans, set1, set2, shp=NULL, plot="fill", thresh=0.1,
             p2 = make_plot(evec2, labs[2])
 
             p1 + p2 + patchwork::plot_annotation(title="Eigenvectors")
+        } else {
+            out
         }
     } else {
         out

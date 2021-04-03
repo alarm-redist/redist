@@ -7,7 +7,7 @@ test_that('redist.metrics works', {
     rvote = fl25$mccain,
     dvote = fl25$obama
   )
-  expected <- structure(list(districts = c(1L, 2L, 3L, 1L, 2L, 3L), DSeats = c(
+  expected <- structure(list(district = c(1L, 2L, 3L, 1L, 2L, 3L), DSeats = c(
     0L,
     0L, 0L, 0L, 0L, 0L
   ), DVS = c(

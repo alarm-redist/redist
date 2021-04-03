@@ -111,7 +111,7 @@ reconstruct.redist_plans = function(data, old) {
 #' @examples
 #' data(iowa)
 #'
-#' iowa = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05)
+#' iowa = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05, total_pop = pop)
 #' rsg_plan = redist.rsg(iowa$adj, iowa$pop, ndists=4, pop_tol=0.05)$plan
 #' redist_plans(rsg_plan, iowa, "rsg")
 #'
@@ -267,6 +267,10 @@ dplyr_row_slice.redist_plans = function(data, i, ...) {
         y = set_plan_matrix(y, plans_m[,draws_left, drop=F])
     }
 
+    if(is.factor(y$draw)){
+    #    y$draw <- droplevels(y$draw)
+    }
+    
     y
 }
 
@@ -443,7 +447,7 @@ hist.redist_plans = function(x, qty, ...) {
 #' library(dplyr)
 #' data(iowa)
 #'
-#' iowa = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05)
+#' iowa = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05, total_pop = pop)
 #' plans = redist_smc(iowa, nsims=100, silent=TRUE)
 #' plans %>%
 #'     mutate(comp = distr_compactness(iowa)) %>%
@@ -498,7 +502,7 @@ redist.plot.scatter = function(plans, x, y, ..., bigger=TRUE) {
 #' library(dplyr)
 #' data(iowa)
 #'
-#' iowa = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05)
+#' iowa = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05, total_pop = pop)
 #' plans = redist_smc(iowa, nsims=100, silent=TRUE)
 #' plans %>%
 #'     mutate(pct_dem = group_frac(iowa, dem_08, tot_08)) %>%
@@ -588,7 +592,7 @@ redist.plot.distr_qtys = function(plans, qty, sort="asc", geom="jitter",
 #' library(dplyr)
 #' data(iowa)
 #'
-#' iowa = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05)
+#' iowa = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05, total_pop = pop)
 #' plans = redist_smc(iowa, nsims=100, silent=TRUE)
 #' redist.plot.plans(plans, c(1, 2, 3, 4), iowa)
 #'
