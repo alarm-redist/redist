@@ -456,7 +456,7 @@ redist.mcmc.anneal <- function(adj,
                                adjobj, popvec, initcds, popcons, grouppopvec, countymembership,
                                contiguitymap){
     .Deprecated(new = 'redist.flip.anneal', 
-                message = 'Please use `redist.flip.anneal` as there are now multiple mcmc algorithms within `redist`.')
+                msg = 'Please use `redist.flip.anneal` as there are now multiple mcmc algorithms within `redist`.')
     
     if(!missing(adjobj)){
         .Deprecated(new = 'adj', old = 'adjobj')
@@ -1570,7 +1570,7 @@ redist.mcmc <- function(adj,
                         contiguitymap){
     
     .Deprecated(new = 'redist.flip', 
-                message = 'Please use `redist.flip` as there are now multiple mcmc algorithms within `redist`.')
+                msg = 'Please use `redist.flip` as there are now multiple mcmc algorithms within `redist`.')
     
     
     if(!missing(adjobj)){

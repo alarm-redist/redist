@@ -241,7 +241,7 @@
 </ol>
 </blockquote>
 <p>The section goes on to provide two specific measures of compactness that should be used to compare districts, one of which is the total perimeter of all districts. If the total perimeter is small, then the districts relatively compact.</p>
-<p>Contiguity of districts and no reliance on partisan or demographic data are built-in to <code>redist</code>. We’ll look at how to specify the desired population deviation (no more than 1% by law) in the next section, and discuss compactness in the <a href="#simulate">simiulation section</a>.</p>
+<p>Contiguity of districts and no reliance on partisan or demographic data are built-in to <code>redist</code>. We’ll look at how to specify the desired population deviation (no more than 1% by law) in the next section, and discuss compactness in the <a href="#simulate">simulation section</a>.</p>
 </div>
 <div id="setting-up-the-problem-in-redist" class="section level2">
 <h2 class="hasAnchor">
@@ -249,7 +249,7 @@
 </h2>
 <p>In <code>redist</code>, a basic redistricting problem is defined by an object of type <code>redist_map</code>, which can be constructed using the eponymous function. The user must provide a vector of population counts (defaults to the <code>pop</code> column, if one exists) and the desired population parity, and the number of districts. The latter can be inferred if a reference redistricting plan exists. For Iowa, we’ll use the adopted 2010 plan as a reference.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">iowa_map</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan<span class="op">=</span><span class="va">cd_2010</span>, pop_tol<span class="op">=</span><span class="fl">0.01</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">iowa_map</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan<span class="op">=</span><span class="va">cd_2010</span>, pop_tol<span class="op">=</span><span class="fl">0.01</span>, total_pop <span class="op">=</span> <span class="va">pop</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span>
 <span class="co">#&gt; A redist_map object with 99 units and 16 fields</span>
 <span class="co">#&gt; To be partitioned into 4 districts with population between 761,588.8 - 1.0% and 761,588.8 + 1.0%</span>
@@ -435,12 +435,12 @@
 <span class="co">#&gt;  2 cd_2010        2    761624</span>
 <span class="co">#&gt;  3 cd_2010        3    761612</span>
 <span class="co">#&gt;  4 cd_2010        4    761571</span>
-<span class="co">#&gt;  5 1              1    760624</span>
-<span class="co">#&gt;  6 1              2    768331</span>
-<span class="co">#&gt;  7 1              3    759588</span>
-<span class="co">#&gt;  8 1              4    757812</span>
-<span class="co">#&gt;  9 2              1    758160</span>
-<span class="co">#&gt; 10 2              2    758342</span>
+<span class="co">#&gt;  5 1              1    767099</span>
+<span class="co">#&gt;  6 1              2    757125</span>
+<span class="co">#&gt;  7 1              3    761360</span>
+<span class="co">#&gt;  8 1              4    760771</span>
+<span class="co">#&gt;  9 2              1    765719</span>
+<span class="co">#&gt; 10 2              2    764909</span>
 <span class="co">#&gt; # ... with 3,994 more rows</span></code></pre></div>
 <p>We can explore specific simulated plans with <code><a href="../reference/redist.plot.plans.html">redist.plot.plans()</a></code>.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
@@ -466,12 +466,12 @@
 <span class="co">#&gt;  2 cd_2010 2           761624       1    </span>
 <span class="co">#&gt;  3 cd_2010 3           761612       1    </span>
 <span class="co">#&gt;  4 cd_2010 4           761571       1    </span>
-<span class="co">#&gt;  5 1       1           759588       0.751</span>
-<span class="co">#&gt;  6 1       2           768331       0.751</span>
-<span class="co">#&gt;  7 1       3           757812       0.751</span>
-<span class="co">#&gt;  8 1       4           760624       0.751</span>
-<span class="co">#&gt;  9 2       1           758342       0.669</span>
-<span class="co">#&gt; 10 2       2           768109       0.669</span>
+<span class="co">#&gt;  5 1       1           761360       0.526</span>
+<span class="co">#&gt;  6 1       2           767099       0.526</span>
+<span class="co">#&gt;  7 1       3           757125       0.526</span>
+<span class="co">#&gt;  8 1       4           760771       0.526</span>
+<span class="co">#&gt;  9 2       1           759108       0.620</span>
+<span class="co">#&gt; 10 2       2           764909       0.620</span>
 <span class="co">#&gt; # ... with 3,994 more rows</span></code></pre></div>
 <p>Then we can add summary statistics by district, using <code>redist</code>’s analysis functions. Here, we’ll compute the population deviation, the perimeter-based compactness measure related to the Iowa Code’s redistricting requirements, and the fraction of minority voters and two-party Democratic vote share by district.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
@@ -488,18 +488,18 @@
 <span class="co">#&gt; With plans resampled from weights</span>
 <span class="co">#&gt; Plans matrix: int [1:99, 1:1001] 3 3 1 2 4 1 1 4 1 1 ...</span>
 <span class="co">#&gt; # A tibble: 4,004 x 8</span>
-<span class="co">#&gt;    draw    district total_pop pop_overlap   pop_dev   comp pct_min pct_dem</span>
-<span class="co">#&gt;    &lt;fct&gt;   &lt;ord&gt;        &lt;dbl&gt;       &lt;dbl&gt;     &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;</span>
-<span class="co">#&gt;  1 cd_2010 1           761548       1     0.0000535 0.0517  0.0737   0.592</span>
-<span class="co">#&gt;  2 cd_2010 2           761624       1     0.0000463 0.0590  0.0968   0.579</span>
-<span class="co">#&gt;  3 cd_2010 3           761612       1     0.0000305 0.0868  0.114    0.531</span>
-<span class="co">#&gt;  4 cd_2010 4           761571       1     0.0000233 0.0896  0.0788   0.491</span>
-<span class="co">#&gt;  5 1       1           759588       0.751 0.00263   0.0608  0.0759   0.590</span>
-<span class="co">#&gt;  6 1       2           768331       0.751 0.00885   0.0550  0.0952   0.588</span>
-<span class="co">#&gt;  7 1       3           757812       0.751 0.00496   0.0588  0.115    0.551</span>
-<span class="co">#&gt;  8 1       4           760624       0.751 0.00127   0.0780  0.0768   0.461</span>
-<span class="co">#&gt;  9 2       1           758342       0.669 0.00426   0.0775  0.0791   0.591</span>
-<span class="co">#&gt; 10 2       2           768109       0.669 0.00856   0.0398  0.0847   0.568</span>
+<span class="co">#&gt;    draw    district total_pop pop_overlap   pop_dev  comp pct_min pct_dem</span>
+<span class="co">#&gt;    &lt;fct&gt;   &lt;ord&gt;        &lt;dbl&gt;       &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 cd_2010 1           761548       1     0.0000535 0.302  0.0737   0.592</span>
+<span class="co">#&gt;  2 cd_2010 2           761624       1     0.0000463 0.360  0.0968   0.579</span>
+<span class="co">#&gt;  3 cd_2010 3           761612       1     0.0000305 0.529  0.114    0.531</span>
+<span class="co">#&gt;  4 cd_2010 4           761571       1     0.0000233 0.522  0.0788   0.491</span>
+<span class="co">#&gt;  5 1       1           761360       0.526 0.000300  0.289  0.0597   0.567</span>
+<span class="co">#&gt;  6 1       2           767099       0.526 0.00724   0.395  0.101    0.607</span>
+<span class="co">#&gt;  7 1       3           757125       0.526 0.00586   0.528  0.124    0.554</span>
+<span class="co">#&gt;  8 1       4           760771       0.526 0.00107   0.428  0.0778   0.460</span>
+<span class="co">#&gt;  9 2       1           759108       0.620 0.00326   0.224  0.0860   0.568</span>
+<span class="co">#&gt; 10 2       2           764909       0.620 0.00436   0.475  0.0928   0.611</span>
 <span class="co">#&gt; # ... with 3,994 more rows</span></code></pre></div>
 <p>From there, it’s quick to turn these into plan-level summary statistics.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
@@ -516,16 +516,16 @@
 <span class="co">#&gt; # A tibble: 1,001 x 5</span>
 <span class="co">#&gt;    draw      max_dev avg_comp max_pct_min dem_distr</span>
 <span class="co">#&gt;    &lt;fct&gt;       &lt;dbl&gt;    &lt;dbl&gt;       &lt;dbl&gt;     &lt;int&gt;</span>
-<span class="co">#&gt;  1 cd_2010 0.0000535   0.0718       0.114         3</span>
-<span class="co">#&gt;  2 1       0.00885     0.0631       0.115         3</span>
-<span class="co">#&gt;  3 2       0.00856     0.0647       0.127         3</span>
-<span class="co">#&gt;  4 3       0.00772     0.0584       0.111         3</span>
-<span class="co">#&gt;  5 4       0.00750     0.0595       0.119         3</span>
-<span class="co">#&gt;  6 5       0.00740     0.0760       0.127         3</span>
-<span class="co">#&gt;  7 6       0.00289     0.0772       0.109         3</span>
-<span class="co">#&gt;  8 7       0.00931     0.0689       0.119         3</span>
-<span class="co">#&gt;  9 8       0.00767     0.0705       0.119         3</span>
-<span class="co">#&gt; 10 9       0.00861     0.0648       0.119         3</span>
+<span class="co">#&gt;  1 cd_2010 0.0000535    0.428       0.114         3</span>
+<span class="co">#&gt;  2 1       0.00724      0.410       0.124         3</span>
+<span class="co">#&gt;  3 2       0.00653      0.417       0.112         3</span>
+<span class="co">#&gt;  4 3       0.00978      0.352       0.129         3</span>
+<span class="co">#&gt;  5 4       0.00792      0.236       0.122         3</span>
+<span class="co">#&gt;  6 5       0.00289      0.459       0.109         3</span>
+<span class="co">#&gt;  7 6       0.00395      0.372       0.126         4</span>
+<span class="co">#&gt;  8 7       0.00609      0.367       0.120         3</span>
+<span class="co">#&gt;  9 8       0.00687      0.390       0.114         4</span>
+<span class="co">#&gt; 10 9       0.00910      0.408       0.119         3</span>
 <span class="co">#&gt; # ... with 991 more rows</span></code></pre></div>
 <p>These tables of statistics are easily plotted using existing libraries like <code>ggplot2</code>, but <code>redist</code> provides a number of helpful plotting functions that automate some common tasks, like adding a reference line for the reference plan. The output of these functions is a <code>ggplot</code> object, allowing for further customization.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
