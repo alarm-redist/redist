@@ -12,8 +12,11 @@
 #' prior, which is useful for when either `set1` or `set2` is small.
 #'
 #' @param plans a [redist_plans] object
-#' @param set1,set2 [`<data-masking>`][dplyr::dplyr_data_masking] indexing vectors
-#'   for the plan draws to compare. Must be mutually exclusive.
+#' @param set [`<data-masking>`][dplyr::dplyr_data_masking] indexing vectors
+#'   for the plan draws to compare.  Alternatively, a second [redist_plans]
+#'   object to compare to.
+#' @param set2 [`<data-masking>`][dplyr::dplyr_data_masking] indexing vectors
+#'   for the plan draws to compare. Must be mutually exclusive with `set1`.
 #' @param shp a shapefile for plotting.
 #' @param plot If `plot="line"`, display a plot for each set showing the set of
 #'   boundaries which most distinguish it from the other set (the squared
@@ -54,19 +57,38 @@ compare_plans = function(plans, set1, set2, shp=NULL, plot="fill", thresh=0.1,
                          labs=c("Set 1", "Set 2")) {
     stopifnot(inherits(plans, "redist_plans"))
 
-    set1 = eval_tidy(enquo(set1), plans)
-    set2 = eval_tidy(enquo(set2), plans)
-    if (is.logical(set1)) set1 = unique(as.integer(plans$draw[set1]))
-    if (is.logical(set2)) set2 = unique(as.integer(plans$draw[set2]))
-    if (length(intersect(set1, set2)) > 0)
-        stop("`set1` and `set2` must be mutually exclusive.")
-    n1 = length(set1)
-    n2 = length(set2)
+    if (!missing(set2)) {
+        set1 = eval_tidy(enquo(set1), plans)
+        set2 = eval_tidy(enquo(set2), plans)
+        if (is.logical(set1)) set1 = unique(as.integer(plans$draw[set1]))
+        if (is.logical(set2)) set2 = unique(as.integer(plans$draw[set2]))
+        if (length(intersect(set1, set2)) > 0)
+            stop("`set1` and `set2` must be mutually exclusive.")
+        n1 = length(set1)
+        n2 = length(set2)
 
-    pm = get_plans_matrix(plans)
-    base_co = 1 / max(pm[, 1]) # baseline coccurence
-    p1 = (n1*prec_cooccur(pm, set1) + base_co) / (n1 + 1)
-    p2 = (n2*prec_cooccur(pm, set2) + base_co) / (n2 + 1)
+        pm1 = get_plans_matrix(plans)
+        pm2 = pm1
+    } else  {
+        if (!inherits(set1, "redist_plans"))
+            stop("Must provide both `set1` and `set2` or",
+                 "provide `set1` as a `redist_plans` object.")
+
+
+        pm1 = get_plans_matrix(plans)
+        pm2 = get_plans_matrix(set1)
+        n1 = ncol(pm1)
+        n2 = ncol(pm2)
+        set1 = seq_len(n1)
+        set2 = seq_len(n2)
+
+        if (nrow(pm1) != nrow(pm2))
+            stop("Both sets of plans must use the same number of precincts.")
+    }
+
+    base_co = 1 / max(pm1[, 1]) # baseline coccurence
+    p1 = (n1*prec_cooccur(pm1, set1) + base_co) / (n1 + 1)
+    p2 = (n2*prec_cooccur(pm2, set2) + base_co) / (n2 + 1)
 
     if (requireNamespace("RSpectra", quietly=TRUE)) {
         evec1 = RSpectra::eigs_sym(p1 - p2, 2, which="LA", tol=1e-6)$vectors[,1]
@@ -74,7 +96,7 @@ compare_plans = function(plans, set1, set2, shp=NULL, plot="fill", thresh=0.1,
     } else {
         evecs = eigen(p1 - p2, symmetric=TRUE)$vectors
         evec1 = evecs[, 1]
-        evec2 = evecs[, nrow(pm)]
+        evec2 = evecs[, nrow(pm1)]
     }
 
     group_1a = which(evec1 >= thresh)
