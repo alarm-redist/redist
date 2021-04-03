@@ -135,7 +135,7 @@ reconstruct.redist_map = function(data, old) {
 #'
 #' @examples
 #' data(fl25)
-#' d = redist_map(fl25, ndists=3, pop_tol=0.05)
+#' d = redist_map(fl25, ndists=3, pop_tol=0.05, total_pop = pop)
 #' dplyr::filter(d, pop >= 10e3)
 #'
 #' @concept prepare
@@ -352,6 +352,12 @@ dplyr_row_slice.redist_map = function(data, i, ...) {
     bounds = attr(data, "pop_bounds")
     bounds[2] = sum(y[[attr(data, "pop_col")]]) / new_distr
     attr(y, "pop_bounds") = bounds
+    
+    if(bounds[1] > bounds[2] || bounds[3] < bounds[1]){
+      warning('Your subset was not based on districts. Please use `set_pop_tol(map)` 
+              to update your `redist_map` object or create a new `redist_map` 
+              object with the correct number of districts.')
+    }
 
     y
 }

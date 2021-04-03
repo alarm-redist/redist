@@ -6,7 +6,7 @@
 ## Purpose: R function to compute gerrymandering metrics
 ########################################################
 
-#' Calculate gerrymandering metrics for a set of districts
+#' Calculate gerrymandering metrics for a set of plans
 #'
 #' \code{redist.metrics} is used to compute different gerrymandering metrics for a
 #' set of maps.
@@ -19,8 +19,10 @@
 #' "DSeats" and "DVS" are always computed, so it is recommended to always return those values.
 #' @param rvote A numeric vector with the Republican vote for each precinct.
 #' @param dvote A numeric vector with the Democratic vote for each precinct.
-#' @param draw A numeric to specify loop number. Defaults to 1 if only one map provided
-#' and the column number if multiple maps given.
+#' @param draw A numeric to specify draw number. Defaults to 1 if only one map provided
+#' and the column number if multiple maps given. Can also take a factor input, which will become the 
+#' draw column in the output if its length matches the number of entries in plans. If the `plans` input
+#' is a `redist_plans` object, it extracts the `draw` identifier.
 #' @param tau A non-negative number for calculating Tau Gap. Only used with option "TauGap". Defaults to 1.
 #' @param biasV A value between 0 and 1 to compute bias at. Only used with option "BiasV". Defaults to 0.5.
 #' @param respV A value between 0 and 1 to compute responsiveness at. Only used with option "Responsiveness". Defaults to 0.5.
@@ -112,8 +114,13 @@ redist.metrics <- function(plans,
   if(any(class(plans) %in% 'redist')){
     plans <- plans$plans
   }
-
-  if(!any(class(plans) %in% c('numeric', 'integer', 'matrix'))){
+  
+  if (inherits(plans, 'redist_plans')) {
+    draw <- plans$draw
+    plans <- get_plans_matrix(plans)
+  }
+  
+  if(!is.numeric(plans)){
     stop('Please provide "plans" as a numeric vector or matrix.')
   }
   if(!is.matrix(plans)){
@@ -129,10 +136,10 @@ redist.metrics <- function(plans,
   if(any(is.na(dvote))){
     stop('NA value in argument to dvote.')
   }
-  if(!any(class(rvote) %in% c('numeric', 'integer'))){
+  if(!is.numeric(rvote)){
     stop('Please provide rvote as a numeric or integer vector.')
   }
-  if(!any(class(dvote) %in% c('numeric', 'integer'))){
+  if(!is.numeric(dvote)){
     stop('Please provide rvote as a numeric or integer vector.')
   }
 
@@ -145,20 +152,20 @@ redist.metrics <- function(plans,
     stop('dvote length and plans row dimension are not equal.')
   }
 
-  if(class(draw) != 'numeric'){
+  if(!is.numeric(draw) & !is.factor(draw)){
     stop('Please provide "draw" as a numeric.')
   }
 
-  if(class(ncores) != 'numeric'){
+  if(!is.numeric(ncores)){
     stop('Please provide "ncores" as a numeric.')
   }
 
 
   # Precompute a few useful variables
-  nd <- length(unique(plans[,1]))
+  nd <- length(unique(plans[, 1]))
   totvote <- sum(rvote) + sum(dvote)
   nmap <- ncol(plans)
-  dists <- sort(unique(plans[,1]))
+  dists <- sort(unique(plans[, 1]))
 
   # Aggregate to Precinct and get baseline DVS + Seats - compute here to avoid multiple computation
   rcounts <- agg_p2d(vote = rvote, dm = plans, nd = nd)
@@ -169,13 +176,15 @@ redist.metrics <- function(plans,
 
 
   # Create return tibble:
-  if(nmap!=1){
-    draw = rep(draw + (1:nmap) - 1, each = nd)
-  } else {
-    draw = rep(draw, nd)
+  if (!(is.factor(draw) && length(draw) == nd * nmap)) {
+    if (nmap != 1) {
+      draw <- rep(draw + (1:ncol(plans)) - 1, each = nd)
+    } else {
+      draw <- rep(draw, nd)
+    }
   }
 
-  metrics <- tibble(districts = rep(x = dists, nmap),
+  metrics <- tibble(district = rep(x = dists, nmap),
                  DSeats = rep(NA_real_, nd*nmap),
                  DVS = rep(NA_real_, nd*nmap),
                  EffGap = rep(NA_real_, nd*nmap),
@@ -190,7 +199,7 @@ redist.metrics <- function(plans,
                  RankedMarginal = rep(NA_real_, nd*nmap),
                  SmoothedSeat = rep(NA_real_, nd*nmap),
                  draw = draw) %>%
-    dplyr::select(all_of(c("districts", measure)), draw)
+    dplyr::select(all_of(c("district", measure)), draw)
 
   # Compute Metrics if desired:
   if("DSeats" %in% measure){

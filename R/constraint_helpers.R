@@ -31,7 +31,7 @@
 #'
 #' @examples \dontrun{
 #' data(iowa)
-#' iowa_map <- redist_map(iowa, existing_plan = cd_2010)
+#' iowa_map <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop)
 #' cons <- flip_constraints_helper(
 #'   map = iowa_map, constraint = c('compact', 'vra'),
 #'   constraintweight = c(0.05, 10), target_min = 0.05,
