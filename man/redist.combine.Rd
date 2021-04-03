@@ -2,7 +2,7 @@
 % Please edit documentation in R/redist_mcmc.R
 \name{redist.combine}
 \alias{redist.combine}
-\title{Combine successive runs of \code{redist.mcmc}}
+\title{Combine successive runs of \code{redist.flip}}
 \usage{
 redist.combine(savename, nloop, nthin, temper)
 }
@@ -61,12 +61,12 @@ is being used.}
 a redist object with entries combined
 }
 \description{
-\code{redist.combine} is used to combine successive runs of \code{redist.mcmc}
+\code{redist.combine} is used to combine successive runs of \code{redist.flip}
 into a single data object
 }
 \details{
 This function allows users to combine multiple successive runs of
-\code{redist.mcmc} into a single \code{redist} object for analysis.
+\code{redist.flip} into a single \code{redist} object for analysis.
 }
 \examples{
 \dontrun{
@@ -81,7 +81,7 @@ Tarr (2015)
 init_plan <- fl25_enum$plans[, 5118]
 
 ## Run the algorithm
-alg_253 <- redist.mcmc(adj = fl25_adj, total_pop = fl25$pop,
+alg_253 <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
                        init_plan = init_plan, nsims = 10000,
                        loops = 2, savename = "test")
 out <- redist.combine(savename = "test", nloop = 2, nthin = 10)

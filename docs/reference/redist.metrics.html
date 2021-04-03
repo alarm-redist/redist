@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Calculate gerrymandering metrics for a set of districts — partisan_metrics • redist</title>
+<title>Calculate gerrymandering metrics for a set of plans — partisan_metrics • redist</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,7 +46,7 @@
 
 
 
-<meta property="og:title" content="Calculate gerrymandering metrics for a set of districts — partisan_metrics" />
+<meta property="og:title" content="Calculate gerrymandering metrics for a set of plans — partisan_metrics" />
 <meta property="og:description" content="redist.metrics is used to compute different gerrymandering metrics for a
 set of maps." />
 <meta property="og:image" content="/logo.png" />
@@ -144,7 +144,7 @@ set of maps." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Calculate gerrymandering metrics for a set of districts</h1>
+    <h1>Calculate gerrymandering metrics for a set of plans</h1>
     <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/tidy.R'><code>R/tidy.R</code></a>, <a href='https://github.com/kosukeimai/redist/blob/master/R/metrics.R'><code>R/metrics.R</code></a></small>
     <div class="hidden name"><code>redist.metrics.Rd</code></div>
     </div>
@@ -231,8 +231,10 @@ for each precinct and one column for each map. Required.</p></td>
     </tr>
     <tr>
       <th>draw</th>
-      <td><p>A numeric to specify loop number. Defaults to 1 if only one map provided
-and the column number if multiple maps given.</p></td>
+      <td><p>A numeric to specify draw number. Defaults to 1 if only one map provided
+and the column number if multiple maps given. Can also take a factor input, which will become the 
+draw column in the output if its length matches the number of entries in plans. If the `plans` input
+is a `redist_plans` object, it extracts the `draw` identifier.</p></td>
     </tr>
     <tr>
       <th>ncores</th>
