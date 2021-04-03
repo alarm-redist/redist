@@ -30,8 +30,8 @@ Authors:
 
 - [Christopher T Kenny](https://www.christophertkenny.com), <christopherkenny@fas.harvard.edu> (Maintainer) 
 - [Cory McCartan](https://corymccartan.github.io), <cmccartan@g.harvard.edu> 
-- [Kosuke Imai](https://imai.fas.harvard.edu), <imai@harvard.edu>
 - [Ben Fifield](https://www.benfifield.com), <benfifield@gmail.com>
+- [Kosuke Imai](https://imai.fas.harvard.edu), <imai@harvard.edu>
  
 Contributors:
 
