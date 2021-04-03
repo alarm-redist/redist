@@ -29,8 +29,8 @@ Authors:
     <christopherkenny@fas.harvard.edu> (Maintainer)
 -   [Cory McCartan](https://corymccartan.github.io),
     <cmccartan@g.harvard.edu>
--   [Kosuke Imai](https://imai.fas.harvard.edu), <imai@harvard.edu>
 -   [Ben Fifield](https://www.benfifield.com), <benfifield@gmail.com>
+-   [Kosuke Imai](https://imai.fas.harvard.edu), <imai@harvard.edu>
 
 Contributors:
 
@@ -86,11 +86,12 @@ iowa_plans = redist_smc(iowa_map, nsims=250, verbose=FALSE)
 #> SEQUENTIAL MONTE CARLO
 #> Sampling 250 99-unit maps with 4 districts and population between 761513 and 761665.
 #> Making split 1 of 3
-#> Resampling effective sample size: 246.4 (98.6% efficiency).
+#> Note: maximum hit; falling back to naive k estimator.
+#> Resampling effective sample size: 246.0 (98.4% efficiency).
 #> Making split 2 of 3
-#> Resampling effective sample size: 233.1 (93.2% efficiency).
+#> Resampling effective sample size: 245.8 (98.3% efficiency).
 #> Making split 3 of 3
-#> Resampling effective sample size: 247.4 (99.0% efficiency).
+#> Resampling effective sample size: 246.4 (98.6% efficiency).
 ```
 
 After generating plans, you can use `redist`’s plotting functions to
