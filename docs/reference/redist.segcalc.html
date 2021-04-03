@@ -156,6 +156,7 @@ Massey \&amp; Denton 1987 for more details) for a specified subgroup under any
 redistricting plan.</p>
     </div>
 
+<<<<<<< HEAD
     <pre class="usage"><span class='fu'>segregation_index</span><span class='op'>(</span>
   <span class='va'>map</span>,
   <span class='va'>group_pop</span>,
@@ -164,6 +165,9 @@ redistricting plan.</p>
 <span class='op'>)</span>
 
 <span class='fu'>redist.segcalc</span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>group_pop</span>, <span class='va'>total_pop</span>, <span class='va'>algout</span>, <span class='va'>grouppop</span>, <span class='va'>fullpop</span><span class='op'>)</span></pre>
+=======
+    <pre class="usage"><span class='fu'>redist.segcalc</span><span class='op'>(</span><span class='va'>algout</span>, <span class='va'>grouppop</span>, <span class='va'>fullpop</span><span class='op'>)</span></pre>
+>>>>>>> base/master
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -220,6 +224,7 @@ Segregation". Social Forces.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<<<<<<< HEAD
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_enum</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_adj</span><span class='op'>)</span>
@@ -233,6 +238,26 @@ Segregation". Social Forces.</p>
 
 <span class='co'>## Get Republican Dissimilarity Index from simulations</span>
 <span class='va'>rep_dmi_253</span> <span class='op'>&lt;-</span> <span class='fu'>redist.segcalc</span><span class='op'>(</span><span class='va'>alg_253</span>, <span class='va'>fl25</span><span class='op'>$</span><span class='va'>mccain</span>, <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span><span class='op'>)</span>
+=======
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>algdat.pfull</span><span class='op'>)</span>
+
+<span class='co'>## Code to run the simulations in Figure 4 of Fifield, Higgins,</span>
+<span class='co'>## Imai and Tarr (2015)</span>
+
+<span class='co'>## Get an initial partition</span>
+<span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span><span class='op'>(</span><span class='fl'>1</span><span class='op'>)</span>
+<span class='va'>initcds</span> <span class='op'>&lt;-</span> <span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>cdmat</span><span class='op'>[</span>,<span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span><span class='op'>(</span><span class='fl'>1</span><span class='op'>:</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span><span class='op'>(</span><span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>cdmat</span><span class='op'>)</span>, <span class='fl'>1</span><span class='op'>)</span><span class='op'>]</span>
+
+<span class='co'>## Run simulations</span>
+<span class='va'>alg_253</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.mcmc.html'>redist.mcmc</a></span><span class='op'>(</span>adjobj <span class='op'>=</span> <span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>adjlist</span>,
+popvec <span class='op'>=</span> <span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>precinct.data</span><span class='op'>$</span><span class='va'>pop</span>,
+initcds <span class='op'>=</span> <span class='va'>initcds</span>, nsims <span class='op'>=</span> <span class='fl'>10000</span><span class='op'>)</span>
+
+<span class='co'>## Get Republican Dissimilarity Index from simulations</span>
+<span class='va'>rep_dmi_253</span> <span class='op'>&lt;-</span> <span class='fu'>redist.segcalc</span><span class='op'>(</span><span class='va'>alg_253</span>,
+<span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>precinct.data</span><span class='op'>$</span><span class='va'>repvote</span>,
+<span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>precinct.data</span><span class='op'>$</span><span class='va'>pop</span><span class='op'>)</span>
+>>>>>>> base/master
 <span class='op'>}</span>
 </div></pre>
   </div>

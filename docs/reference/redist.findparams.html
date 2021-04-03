@@ -154,6 +154,7 @@ redist.mcmc for a given map." />
 <code>redist.mcmc</code> for a given map.</p>
     </div>
 
+<<<<<<< HEAD
     <pre class="usage"><span class='fu'>redist.findparams</span><span class='op'>(</span>
   <span class='va'>adj</span>,
   <span class='va'>total_pop</span>,
@@ -181,6 +182,14 @@ redist.mcmc for a given map." />
   <span class='va'>countymembership</span>,
   <span class='va'>nthreads</span>
 <span class='op'>)</span></pre>
+=======
+    <pre class="usage"><span class='fu'>redist.findparams</span><span class='op'>(</span><span class='va'>adjobj</span>, <span class='va'>popvec</span>, <span class='va'>nsims</span>, ndists <span class='op'>=</span> <span class='cn'>NULL</span>, initcds <span class='op'>=</span> <span class='cn'>NULL</span>,
+adapt_lambda <span class='op'>=</span> <span class='cn'>FALSE</span>, adapt_eprob <span class='op'>=</span> <span class='cn'>FALSE</span>,
+<span class='va'>params</span>, ssdmat <span class='op'>=</span> <span class='cn'>NULL</span>, grouppopvec <span class='op'>=</span> <span class='cn'>NULL</span>, countymembership <span class='op'>=</span> <span class='cn'>NULL</span>,
+<span class='va'>nstartval_store</span>, <span class='va'>maxdist_startval</span>,
+maxiterrsg <span class='op'>=</span> <span class='fl'>5000</span>, report_all <span class='op'>=</span> <span class='cn'>TRUE</span>,
+parallel <span class='op'>=</span> <span class='cn'>FALSE</span>, nthreads <span class='op'>=</span> <span class='cn'>NULL</span>, log <span class='op'>=</span> <span class='cn'>FALSE</span>, verbose <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></pre>
+>>>>>>> base/master
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -331,18 +340,35 @@ Carlo." Working Paper. Available at
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<<<<<<< HEAD
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_enum</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_adj</span><span class='op'>)</span>
 
 <span class='co'>## Get an initial partition</span>
 <span class='va'>init_plan</span> <span class='op'>&lt;-</span> <span class='va'>fl25_enum</span><span class='op'>$</span><span class='va'>plans</span><span class='op'>[</span>, <span class='fl'>5118</span><span class='op'>]</span>
+=======
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>algdat.pfull</span><span class='op'>)</span>
+
+<span class='co'>## Code to run the simulations in Figure 4 in Fifield, Higgins, Imai and</span>
+<span class='co'>## Tarr (2015)</span>
+
+<span class='co'>## Get an initial partition</span>
+<span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span><span class='op'>(</span><span class='fl'>1</span><span class='op'>)</span>
+<span class='va'>initcds</span> <span class='op'>&lt;-</span> <span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>cdmat</span><span class='op'>[</span>,<span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span><span class='op'>(</span><span class='fl'>1</span><span class='op'>:</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span><span class='op'>(</span><span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>cdmat</span><span class='op'>)</span>, <span class='fl'>1</span><span class='op'>)</span><span class='op'>]</span>
+>>>>>>> base/master
 
 <span class='va'>params</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/expand.grid.html'>expand.grid</a></span><span class='op'>(</span>eprob <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>.01</span>, <span class='fl'>.05</span>, <span class='fl'>.1</span><span class='op'>)</span><span class='op'>)</span>
 
 <span class='co'>## Run the algorithm</span>
+<<<<<<< HEAD
 <span class='fu'>redist.findparams</span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>fl25_adj</span>, total_pop <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>,
                   init_plan <span class='op'>=</span> <span class='va'>init_plan</span>, nsims <span class='op'>=</span> <span class='fl'>10000</span>, params <span class='op'>=</span> <span class='va'>params</span><span class='op'>)</span>
+=======
+<span class='fu'>redist.findparams</span><span class='op'>(</span>adjobj <span class='op'>=</span> <span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>adjlist</span>,
+popvec <span class='op'>=</span> <span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>precinct.data</span><span class='op'>$</span><span class='va'>pop</span>,
+initcds <span class='op'>=</span> <span class='va'>initcds</span>, nsims <span class='op'>=</span> <span class='fl'>10000</span>, params <span class='op'>=</span> <span class='va'>params</span><span class='op'>)</span>
+>>>>>>> base/master
 <span class='op'>}</span>
 </div></pre>
   </div>

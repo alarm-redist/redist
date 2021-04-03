@@ -1,6 +1,17 @@
-#' Calculates Population Parity
+#' Calculates Maximum Deviation from Population Parity
 #'
-#' \code{redist.parity} computes the population parity of a matrix of maps.
+#' Computes the deviation from population parity from a plan.
+#' Higher values indicate that (at least) a single district in the map deviates
+#' from population parity. See Details.
+#'
+#' @details With a map with \code{pop} representing the populations of each district,
+#'  the deviation from population parity is given as \code{max(abs(pop - parity) / parity)}
+#'  where \code{parity = sum(pop)/length(pop)} is the population size for the
+#'  average district.
+#'  Therefore, the metric can be thought of as the maximum percent deviation from
+#'  equal population. For example, a value of 0.03 in this metric indicates that
+#'  all districts are within 3 percent of population parity.
+#'
 #' @param plans A matrix with one row for each precinct and one column for each
 #'   map. Required.
 #' @param total_pop A numeric vector with the population for every precinct.
