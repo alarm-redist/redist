@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
       </span>
     </div>
 
@@ -83,7 +83,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/kosukeimai/redist/">
+  <a href="https://github.com/alarm-redist/redist/">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -104,7 +104,7 @@
       <h1 data-toc-skip>Glossary of Key Redistricting Terms</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/kosukeimai/redist/blob/master/vignettes/glossary.Rmd"><code>vignettes/glossary.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/master/vignettes/glossary.Rmd"><code>vignettes/glossary.Rmd</code></a></small>
       <div class="hidden name"><code>glossary.Rmd</code></div>
 
     </div>
@@ -113,14 +113,15 @@
     
 <p>To set up this glossary, we load some example data which uses Iowa and its 2012-2021 congressional districts.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">redist</span><span class="op">)</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://alarm-redist.github.io/redist/">redist</a></span><span class="op">)</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Attaching package: 'redist'</span>
 <span class="co">#&gt; The following object is masked from 'package:stats':</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;     filter</span>
 <span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span>
-<span class="va">iowa_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan <span class="op">=</span> <span class="va">cd_2010</span>, total_pop <span class="op">=</span> <span class="va">pop</span><span class="op">)</span></code></pre></div>
+<span class="va">iowa_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan <span class="op">=</span> <span class="va">cd_2010</span>, total_pop <span class="op">=</span> <span class="va">pop</span><span class="op">)</span>
+<span class="co">#&gt; `pop_tol` calculated from existing plan is ≤0.1%</span></code></pre></div>
 <div id="adj" class="section level1">
 <h1 class="hasAnchor">
 <a href="#adj" class="anchor"></a>adj</h1>
@@ -199,7 +200,7 @@
 <span class="co"># tidy eval - stored within redist_map object</span>
 <span class="co"># - getting</span>
 <span class="fu"><a href="../reference/get_pop_tol.html">get_pop_tol</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span>
-<span class="co">#&gt; [1] 0.01</span>
+<span class="co">#&gt; [1] 5.350657e-05</span>
 <span class="co"># - setting</span>
 <span class="va">iowa_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_pop_tol.html">set_pop_tol</a></span><span class="op">(</span><span class="va">iowa_map</span>, pop_tol <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span></code></pre></div>
 </div>
@@ -218,10 +219,10 @@
 <span class="co">#&gt; redist.rsg(): Automated Redistricting Starts</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;  4 districts built using 99 precincts in 0.12 seconds...</span>
+<span class="co">#&gt;  4 districts built using 99 precincts in 0.04 seconds...</span>
 
 <span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">sim</span><span class="op">$</span><span class="va">plan</span><span class="op">)</span>
-<span class="co">#&gt; [1] 3 3 4 2 3 1</span></code></pre></div>
+<span class="co">#&gt; [1] 2 2 3 2 2 4</span></code></pre></div>
 </div>
 <div id="plans" class="section level1">
 <h1 class="hasAnchor">
@@ -338,7 +339,7 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Jun Kawahara, Kosuke Imai.</p>
+  <p>Developed by Christopher T. Kenny, Cory McCartan, Ben Fifield, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">

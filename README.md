@@ -87,11 +87,11 @@ iowa_plans = redist_smc(iowa_map, nsims=250, verbose=FALSE)
 #> Sampling 250 99-unit maps with 4 districts and population between 761513 and 761665.
 #> Making split 1 of 3
 #> Note: maximum hit; falling back to naive k estimator.
-#> Resampling effective sample size: 246.0 (98.4% efficiency).
+#> Resampling effective sample size: 246.1 (98.4% efficiency).
 #> Making split 2 of 3
-#> Resampling effective sample size: 245.8 (98.3% efficiency).
+#> Resampling effective sample size: 245.7 (98.3% efficiency).
 #> Making split 3 of 3
-#> Resampling effective sample size: 246.4 (98.6% efficiency).
+#> Resampling effective sample size: 246.7 (98.7% efficiency).
 ```
 
 After generating plans, you can use `redist`’s plotting functions to
@@ -132,7 +132,7 @@ redist.plot.scatter(dev_comp, `Population deviation`, Compactness) +
 ``` r
 iowa_plans %>%
     mutate(`Democratic vote` = group_frac(iowa_map, dem_08, tot_08)) %>%
-    redist.plot.distr_qtys(`Democratic vote`, size=0.5, color_thresh=0.5) +
+    plot(`Democratic vote`, size=0.5, color_thresh=0.5) +
     scale_color_manual(values=c("tomato2", "dodgerblue")) +
     labs(title="Democratic vote share by district")
 ```

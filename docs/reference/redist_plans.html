@@ -83,7 +83,7 @@ plans." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
       </span>
     </div>
 
@@ -128,7 +128,7 @@ plans." />
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://github.com/kosukeimai/redist/">
+  <a href="https://github.com/alarm-redist/redist/">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -147,7 +147,7 @@ plans." />
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>A set of redistricting plans</h1>
-    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/redist_plans.R'><code>R/redist_plans.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/alarm-redist/redist/blob/master/R/redist_plans.R'><code>R/redist_plans.R</code></a></small>
     <div class="hidden name"><code>redist_plans.Rd</code></div>
     </div>
 
@@ -223,29 +223,18 @@ As a data frame, the usual <code><a href='https://dplyr.tidyverse.org/reference/
 #&gt; redist.rsg(): Automated Redistricting Starts
 #&gt; 
 #&gt; 
-#&gt; 	4 districts built using 99 precincts in 0.01 seconds...
+#&gt; 	4 districts built using 99 precincts in 0.02 seconds...
 #&gt; </div><div class='input'><span class='fu'>redist_plans</span><span class='op'>(</span><span class='va'>rsg_plan</span>, <span class='va'>iowa</span>, <span class='st'>"rsg"</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; 1 sampled plan with 4 districts from a 99-unit map,
 #&gt;   drawn using random seed-and-grow
-<<<<<<< HEAD
-#&gt; Plans matrix: int [1:99, 1] 1 1 2 3 1 3 3 4 2 3 ...
+#&gt; Plans matrix: int [1:99, 1] 2 2 4 3 2 1 3 4 1 3 ...
 #&gt; <span style='color: #949494;'># A tibble: 4 x 3</span><span>
 #&gt;   draw  district total_pop
 #&gt; </span><span style='color: #BCBCBC;'>*</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;fct&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;int&gt;</span><span>     </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #BCBCBC;'>1</span><span> 1            1    </span><span style='text-decoration: underline;'>738</span><span>453
-#&gt; </span><span style='color: #BCBCBC;'>2</span><span> 1            2    </span><span style='text-decoration: underline;'>765</span><span>964
-#&gt; </span><span style='color: #BCBCBC;'>3</span><span> 1            3    </span><span style='text-decoration: underline;'>784</span><span>801
-#&gt; </span><span style='color: #BCBCBC;'>4</span><span> 1            4    </span><span style='text-decoration: underline;'>757</span><span>137</div><div class='input'>
-=======
-#&gt; Plans matrix: int [1:99, 1] 3 2 1 2 3 1 1 1 4 1 ...
-#&gt; <span style='color: #949494;'># A tibble: 4 x 3</span><span>
-#&gt;   draw  district total_pop
-#&gt; </span><span style='color: #BCBCBC;'>*</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;fct&gt;</span><span>    </span><span style='color: #949494;font-style: italic;'>&lt;int&gt;</span><span>     </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #BCBCBC;'>1</span><span> 1            1    </span><span style='text-decoration: underline;'>735</span><span>800
-#&gt; </span><span style='color: #BCBCBC;'>2</span><span> 1            2    </span><span style='text-decoration: underline;'>745</span><span>063
-#&gt; </span><span style='color: #BCBCBC;'>3</span><span> 1            3    </span><span style='text-decoration: underline;'>780</span><span>796
-#&gt; </span><span style='color: #BCBCBC;'>4</span><span> 1            4    </span><span style='text-decoration: underline;'>784</span><span>696</div><div class='input'>
->>>>>>> f62c3ae7b649efd417c06a4c6e591736e3351b82
+#&gt; </span><span style='color: #BCBCBC;'>1</span><span> 1            1    </span><span style='text-decoration: underline;'>784</span><span>069
+#&gt; </span><span style='color: #BCBCBC;'>2</span><span> 1            2    </span><span style='text-decoration: underline;'>775</span><span>988
+#&gt; </span><span style='color: #BCBCBC;'>3</span><span> 1            3    </span><span style='text-decoration: underline;'>732</span><span>153
+#&gt; </span><span style='color: #BCBCBC;'>4</span><span> 1            4    </span><span style='text-decoration: underline;'>754</span><span>145</div><div class='input'>
 </div></span></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -258,7 +247,7 @@ As a data frame, the usual <code><a href='https://dplyr.tidyverse.org/reference/
 
       <footer>
       <div class="copyright">
-  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Jun Kawahara, Kosuke Imai.</p>
+  <p>Developed by Christopher T. Kenny, Cory McCartan, Ben Fifield, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">

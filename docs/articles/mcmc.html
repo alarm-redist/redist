@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
       </span>
     </div>
 
@@ -83,7 +83,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/kosukeimai/redist/">
+  <a href="https://github.com/alarm-redist/redist/">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -104,7 +104,7 @@
       <h1 data-toc-skip>Redistricting with Flip MCMC</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/kosukeimai/redist/blob/master/vignettes/mcmc.Rmd"><code>vignettes/mcmc.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/master/vignettes/mcmc.Rmd"><code>vignettes/mcmc.Rmd</code></a></small>
       <div class="hidden name"><code>mcmc.Rmd</code></div>
 
     </div>
@@ -112,7 +112,7 @@
     
     
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">redist</span><span class="op">)</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://alarm-redist.github.io/redist/">redist</a></span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org">ggplot2</a></span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org">dplyr</a></span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com">patchwork</a></span><span class="op">)</span>
@@ -332,7 +332,7 @@
 <span class="op">}</span><span class="op">)</span></code></pre></div>
 <p>In Unix-based systems, this can be run considerably faster by running this in parallel.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">mcmc_chains</span> <span class="op">&lt;-</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/mcdummies.html">mclapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">nchains</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">{</span>
+<code class="sourceCode R"><span class="va">mcmc_chains</span> <span class="op">&lt;-</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/mclapply.html">mclapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">nchains</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">{</span>
   <span class="fu"><a href="../reference/redist.mcmc.html">redist.flip</a></span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">adjlist</span>,  popvec <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span>, 
               nsims <span class="op">=</span> <span class="va">nsims</span>, ndists <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>
 <span class="op">}</span>, mc.set.seed <span class="op">=</span> <span class="fl">1</span>, mc.cores <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html">detectCores</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
@@ -348,8 +348,8 @@
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span></code></pre></div>
 <p>Rather than building the adjacency graph manually, here we can set this up using <code>redist_map</code> which will build it an add it as a column.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">iowa_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan <span class="op">=</span> <span class="va">cd_2010</span><span class="op">)</span></code></pre></div>
-<p>This defaults to setting <code>pop_tol = 0.01</code>. While this is generally a good population parity tolerance for most simulations, be careful when using the default within <code>flip</code>. If your starting partition sits outside of that population deviation, <code>flip</code> may take a <strong>very, very</strong> long time to find a valid partition to flip.</p>
+<code class="sourceCode R"><span class="va">iowa_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan <span class="op">=</span> <span class="va">cd_2010</span>, pop_tol<span class="op">=</span><span class="fl">0.01</span><span class="op">)</span></code></pre></div>
+<p>We set a population tolerance of 1%. While this is generally a good population parity tolerance for most simulations, be careful when using the default within <code>flip</code>. If your starting partition sits outside of that population deviation, <code>flip</code> may take a <strong>very, very</strong> long time to find a valid partition to flip.</p>
 <p>Now, we can pass the <code>redist_map</code> object to <code>redist_flip</code> to begin simulating.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">tidy_sims</span> <span class="op">&lt;-</span> <span class="va">iowa_map</span> <span class="op">%&gt;%</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span>nsims <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span>
@@ -794,7 +794,7 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Jun Kawahara, Kosuke Imai.</p>
+  <p>Developed by Christopher T. Kenny, Cory McCartan, Ben Fifield, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">

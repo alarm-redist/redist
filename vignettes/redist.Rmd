@@ -356,7 +356,7 @@ here we've already renumbered the districts to match the reference plan as
 closely as possible.
 
 ```{r signature}
-redist.plot.distr_qtys(iowa_plans, pct_dem, sort=FALSE, size=0.5)
+plot(iowa_plans, pct_dem, sort=FALSE, size=0.5)
 ```
 
 We see that districts 1 and 2 look normal, but it appears that, relative to
