@@ -152,6 +152,35 @@ compare_plans = function(plans, set1, set2, shp=NULL, plot="fill", thresh=0.1,
             p2 = make_plot(evec2, labs[2])
 
             p1 + p2 + patchwork::plot_annotation(title="Eigenvectors")
+        } else if (plot == 'adj') {
+            if(!inherits(shp, 'redist_map')){
+                adj <- redist.adjacency(shp)
+            } else {
+                adj <- get_adj(shp)
+            }
+            
+            edge_cntr <- edge_center_df(shp, adj)
+            nb <- edge_cntr$nb
+            
+            nb <- nb %>% mutate(
+            wgt1 = (evec1[.data$i] - evec1[.data$j])^2,
+            wgt2 = (evec2[.data$j] - evec2[.data$i])^2
+            )
+            
+            make_plot = function(x, lab) {
+                ggplot(nb, aes(size = x, color = x)) +
+                    geom_sf() +
+                    ggplot2::guides(size = FALSE, color = FALSE) +
+                    ggplot2::scale_size_continuous(range=c(0, 3)) +
+                    ggplot2::scale_colour_fermenter(palette = 'RdPu') +
+                    labs(title=lab) +
+                    theme_void() + 
+                    geom_sf(data = shp, size = .05, color = 'black', fill = NA)
+            }
+            p1 = make_plot(nb$wgt1, labs[1])
+            p2 = make_plot(nb$wgt2, labs[2])
+            
+            p1 + p2 + patchwork::plot_annotation(title="Adjacency")
         } else {
             out
         }
