@@ -108,7 +108,7 @@ double eval_splits(const subview_col<uword> &districts, int distr,
     }
 
     for (int i = 0; i < V; i++) {
-        county_dist[i].insert(districts[i]);
+        county_dist[counties[i]-1].insert(districts[i]);
     }
 
     int splits = 0;
