@@ -119,7 +119,8 @@ reconstruct.redist_map = function(data, old) {
 #'   existing district assignment.
 #' @param pop_tol \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the population tolerance.
 #'   The percentage deviation from the average population will be constrained to
-#'   be no more than this number.
+#'   be no more than this number. If `existing_plan` is provided, defaults to
+#'   the parity of that plan; otherwise, defaults to 0.01.
 #' @param total_pop \code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the vector
 #'   of precinct populations. Defaults to the \code{pop}, \code{population}, or
 #'   \code{total_pop} columns, if one exists.
@@ -141,7 +142,7 @@ reconstruct.redist_map = function(data, old) {
 #' @concept prepare
 #' @md
 #' @export
-redist_map = function(..., existing_plan=NULL, pop_tol=0.01,
+redist_map = function(..., existing_plan=NULL, pop_tol=NULL,
                       total_pop=c("pop", "population", "total_pop"),
                       ndists=NULL, pop_bounds=NULL,
                       adj=NULL, adj_col="adj", planarize=3857) {
@@ -199,7 +200,17 @@ redist_map = function(..., existing_plan=NULL, pop_tol=0.01,
         ndists = as.integer(rlang::eval_tidy(rlang::enquo(ndists), x))
     }
 
-    pop_tol = rlang::eval_tidy(rlang::enquo(pop_tol), x)
+    pop_tol = eval_tidy(enquo(pop_tol), x)
+    if (is.null(pop_tol)) {
+        if (!is.null(existing_col)) {
+            pop_tol = redist.parity(x[[existing_col]], x[[pop_col]])
+            if (pop_tol <= 0.001)
+                message("`pop_tol` calculated from existing plan is ≤0.1%")
+        } else {
+            pop_tol = 0.01
+            warning("`pop_tol` not provided; defaulting to 1%")
+        }
+    }
 
     if (is.null(pop_bounds)) {
         stopifnot(!is.null(pop_tol))
@@ -352,10 +363,10 @@ dplyr_row_slice.redist_map = function(data, i, ...) {
     bounds = attr(data, "pop_bounds")
     bounds[2] = sum(y[[attr(data, "pop_col")]]) / new_distr
     attr(y, "pop_bounds") = bounds
-    
+
     if(bounds[1] > bounds[2] || bounds[3] < bounds[1]){
-      warning('Your subset was not based on districts. Please use `set_pop_tol(map)` 
-              to update your `redist_map` object or create a new `redist_map` 
+      warning('Your subset was not based on districts. Please use `set_pop_tol(map)`
+              to update your `redist_map` object or create a new `redist_map`
               object with the correct number of districts.')
     }
 
