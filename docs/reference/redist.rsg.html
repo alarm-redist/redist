@@ -158,6 +158,7 @@ Rodden (2013).  The algorithm can provide start values for the other
 redistricting routines in this package.</p>
     </div>
 
+<<<<<<< HEAD
     <pre class="usage"><span class='fu'>redist.rsg</span><span class='op'>(</span>
   <span class='va'>adj</span>,
   <span class='va'>total_pop</span>,
@@ -169,6 +170,10 @@ redistricting routines in this package.</p>
   <span class='va'>population</span>,
   <span class='va'>thresh</span>
 <span class='op'>)</span></pre>
+=======
+    <pre class="usage"><span class='fu'>redist.rsg</span><span class='op'>(</span><span class='va'>adj.list</span>, <span class='va'>population</span>, <span class='va'>ndists</span>, <span class='va'>thresh</span>,
+verbose <span class='op'>=</span> <span class='cn'>TRUE</span>, maxiter<span class='op'>=</span><span class='fl'>5000</span><span class='op'>)</span></pre>
+>>>>>>> base/master
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -263,11 +268,16 @@ Quarterly Journal of Political Science. 8(3): 239-269.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'>### Real data example from test set</span>
+<<<<<<< HEAD
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_adj</span><span class='op'>)</span>
 
 <span class='va'>res</span> <span class='op'>&lt;-</span> <span class='fu'>redist.rsg</span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>fl25_adj</span>, total_pop <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>,
  ndists <span class='op'>=</span> <span class='fl'>3</span>, pop_tol <span class='op'>=</span> <span class='fl'>0.05</span><span class='op'>)</span>
+=======
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"algdat.pfull"</span><span class='op'>)</span>
+<span class='va'>res</span> <span class='op'>&lt;-</span> <span class='fu'>redist.rsg</span><span class='op'>(</span><span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>adjlist</span>, <span class='va'>algdat.pfull</span><span class='op'>$</span><span class='va'>precinct.data</span><span class='op'>$</span><span class='va'>pop</span>, <span class='fl'>3</span>, <span class='fl'>0.05</span><span class='op'>)</span>
+>>>>>>> base/master
 </div><div class='output co'>#&gt; 
 #&gt; ==================== 
 #&gt; redist.rsg(): Automated Redistricting Starts

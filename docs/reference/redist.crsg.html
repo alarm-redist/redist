@@ -157,6 +157,7 @@ Rodden (2013).</p>
     </div>
 
     <pre class="usage"><span class='fu'>redist.crsg</span><span class='op'>(</span>
+<<<<<<< HEAD
   <span class='va'>adj</span>,
   <span class='va'>total_pop</span>,
   <span class='va'>shp</span>,
@@ -164,12 +165,21 @@ Rodden (2013).</p>
   <span class='va'>pop_tol</span>,
   verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
   maxiter <span class='op'>=</span> <span class='fl'>5000</span>,
+=======
+>>>>>>> base/master
   <span class='va'>adj.list</span>,
   <span class='va'>population</span>,
   <span class='va'>area</span>,
   <span class='va'>x_center</span>,
   <span class='va'>y_center</span>,
+<<<<<<< HEAD
   <span class='va'>thresh</span>
+=======
+  <span class='va'>ndists</span>,
+  <span class='va'>thresh</span>,
+  verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  maxiter <span class='op'>=</span> <span class='fl'>5000</span>
+>>>>>>> base/master
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -278,7 +288,12 @@ Quarterly Journal of Political Science. 8(3): 239-269.</p>
 <span class='va'>adj</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.adjacency.html'>redist.adjacency</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
 <span class='va'>area</span> <span class='op'>&lt;-</span> <span class='fu'>sf</span><span class='fu'>::</span><span class='fu'><a href='https://r-spatial.github.io/sf/reference/geos_measures.html'>st_area</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
 <span class='va'>centers</span> <span class='op'>&lt;-</span> <span class='fu'>sf</span><span class='fu'>::</span><span class='fu'><a href='https://r-spatial.github.io/sf/reference/st_coordinates.html'>st_coordinates</a></span><span class='op'>(</span><span class='fu'>sf</span><span class='fu'>::</span><span class='fu'><a href='https://r-spatial.github.io/sf/reference/geos_unary.html'>st_centroid</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span><span class='op'>)</span>
+<<<<<<< HEAD
 <span class='fu'>redist.crsg</span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>adj</span>, total_pop <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>, shp <span class='op'>=</span> <span class='va'>fl25</span>, ndists <span class='op'>=</span> <span class='fl'>2</span>, pop_tol <span class='op'>=</span> <span class='fl'>.1</span><span class='op'>)</span>
+=======
+<span class='fu'>redist.crsg</span><span class='op'>(</span>adj.list <span class='op'>=</span> <span class='va'>adj</span>, population <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>, area <span class='op'>=</span> <span class='va'>area</span>,
+x_center <span class='op'>=</span> <span class='va'>centers</span><span class='op'>[</span>,<span class='fl'>1</span><span class='op'>]</span>, y_center <span class='op'>=</span> <span class='va'>centers</span><span class='op'>[</span>,<span class='fl'>2</span><span class='op'>]</span>, ndists <span class='op'>=</span> <span class='fl'>2</span>, thresh <span class='op'>=</span> <span class='fl'>.1</span><span class='op'>)</span>
+>>>>>>> base/master
 <span class='op'>}</span>
 </div></pre>
   </div>

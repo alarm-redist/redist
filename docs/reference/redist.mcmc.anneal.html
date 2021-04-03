@@ -155,34 +155,56 @@ using Markov chain Monte Carlo methods coupled with simulated annealing.</p>
     </div>
 
     <pre class="usage"><span class='fu'>redist.mcmc.anneal</span><span class='op'>(</span>
+<<<<<<< HEAD
   <span class='va'>adj</span>,
   <span class='va'>total_pop</span>,
   ndists <span class='op'>=</span> <span class='cn'>NULL</span>,
   init_plan <span class='op'>=</span> <span class='cn'>NULL</span>,
+=======
+  <span class='va'>adjobj</span>,
+  <span class='va'>popvec</span>,
+  ndists <span class='op'>=</span> <span class='cn'>NULL</span>,
+  initcds <span class='op'>=</span> <span class='cn'>NULL</span>,
+>>>>>>> base/master
   num_hot_steps <span class='op'>=</span> <span class='fl'>40000</span>,
   num_annealing_steps <span class='op'>=</span> <span class='fl'>60000</span>,
   num_cold_steps <span class='op'>=</span> <span class='fl'>20000</span>,
   eprob <span class='op'>=</span> <span class='fl'>0.05</span>,
   lambda <span class='op'>=</span> <span class='fl'>0</span>,
+<<<<<<< HEAD
   pop_tol <span class='op'>=</span> <span class='cn'>NULL</span>,
   group_pop <span class='op'>=</span> <span class='cn'>NULL</span>,
   areasvec <span class='op'>=</span> <span class='cn'>NULL</span>,
   counties <span class='op'>=</span> <span class='cn'>NULL</span>,
+=======
+  popcons <span class='op'>=</span> <span class='cn'>NULL</span>,
+  grouppopvec <span class='op'>=</span> <span class='cn'>NULL</span>,
+  areasvec <span class='op'>=</span> <span class='cn'>NULL</span>,
+  countymembership <span class='op'>=</span> <span class='cn'>NULL</span>,
+>>>>>>> base/master
   borderlength_mat <span class='op'>=</span> <span class='cn'>NULL</span>,
   ssdmat <span class='op'>=</span> <span class='cn'>NULL</span>,
   constraint <span class='op'>=</span> <span class='cn'>NULL</span>,
   constraintweights <span class='op'>=</span> <span class='cn'>NULL</span>,
   compactness_metric <span class='op'>=</span> <span class='st'>"fryer-holden"</span>,
+<<<<<<< HEAD
   partisan_metric <span class='op'>=</span> <span class='st'>"efficiency-gap"</span>,
+=======
+>>>>>>> base/master
   rngseed <span class='op'>=</span> <span class='cn'>NULL</span>,
   maxiterrsg <span class='op'>=</span> <span class='fl'>5000</span>,
   adapt_lambda <span class='op'>=</span> <span class='cn'>FALSE</span>,
   adapt_eprob <span class='op'>=</span> <span class='cn'>FALSE</span>,
+<<<<<<< HEAD
+=======
+  contiguitymap <span class='op'>=</span> <span class='st'>"rooks"</span>,
+>>>>>>> base/master
   exact_mh <span class='op'>=</span> <span class='cn'>FALSE</span>,
   savename <span class='op'>=</span> <span class='cn'>NULL</span>,
   verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
   ncores <span class='op'>=</span> <span class='fl'>1</span>,
   tgt_min <span class='op'>=</span> <span class='fl'>0.55</span>,
+<<<<<<< HEAD
   tgt_other <span class='op'>=</span> <span class='fl'>0.25</span>,
   rvote <span class='op'>=</span> <span class='cn'>NULL</span>,
   dvote <span class='op'>=</span> <span class='cn'>NULL</span>,
@@ -194,6 +216,9 @@ using Markov chain Monte Carlo methods coupled with simulated annealing.</p>
   <span class='va'>grouppopvec</span>,
   <span class='va'>countymembership</span>,
   <span class='va'>contiguitymap</span>
+=======
+  tgt_other <span class='op'>=</span> <span class='fl'>0.25</span>
+>>>>>>> base/master
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>

@@ -205,7 +205,7 @@ redist_map = function(..., existing_plan=NULL, pop_tol=NULL,
         if (!is.null(existing_col)) {
             pop_tol = redist.parity(x[[existing_col]], x[[pop_col]])
             if (pop_tol <= 0.001)
-                message("`pop_tol` calculated from existing plan is ≤0.1%")
+                message("`pop_tol` calculated from existing plan is \u22640.1%")
         } else {
             pop_tol = 0.01
             warning("`pop_tol` not provided; defaulting to 1%")

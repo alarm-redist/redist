@@ -12,7 +12,7 @@
 #' prior, which is useful for when either `set1` or `set2` is small.
 #'
 #' @param plans a [redist_plans] object
-#' @param set [`<data-masking>`][dplyr::dplyr_data_masking] indexing vectors
+#' @param set1 [`<data-masking>`][dplyr::dplyr_data_masking] indexing vectors
 #'   for the plan draws to compare.  Alternatively, a second [redist_plans]
 #'   object to compare to.
 #' @param set2 [`<data-masking>`][dplyr::dplyr_data_masking] indexing vectors

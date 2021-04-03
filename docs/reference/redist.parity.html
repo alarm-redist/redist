@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Calculates Population Parity — redist.parity • redist</title>
+<title>Calculates Maximum Deviation from Population Parity — redist.parity • redist</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,8 +46,10 @@
 
 
 
-<meta property="og:title" content="Calculates Population Parity — redist.parity" />
-<meta property="og:description" content="redist.parity computes the population parity of a matrix of maps." />
+<meta property="og:title" content="Calculates Maximum Deviation from Population Parity — redist.parity" />
+<meta property="og:description" content="Computes the deviation from population parity from a plan.
+Higher values indicate that (at least) a single district in the map deviates
+from population parity. See Details." />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -80,7 +82,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
       </span>
     </div>
 
@@ -125,7 +127,7 @@
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://github.com/kosukeimai/redist/">
+  <a href="https://github.com/alarm-redist/redist/">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -143,13 +145,15 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Calculates Population Parity</h1>
-    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/parity.R'><code>R/parity.R</code></a>, <a href='https://github.com/kosukeimai/redist/blob/master/R/tidy.R'><code>R/tidy.R</code></a></small>
+    <h1>Calculates Maximum Deviation from Population Parity</h1>
+    <small class="dont-index">Source: <a href='https://github.com/alarm-redist/redist/blob/master/R/parity.R'><code>R/parity.R</code></a>, <a href='https://github.com/alarm-redist/redist/blob/master/R/tidy.R'><code>R/tidy.R</code></a></small>
     <div class="hidden name"><code>redist.parity.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p><code>redist.parity</code> computes the population parity of a matrix of maps.</p>
+    <p>Computes the deviation from population parity from a plan.
+Higher values indicate that (at least) a single district in the map deviates
+from population parity. See Details.</p>
     </div>
 
     <pre class="usage"><span class='fu'>redist.parity</span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>total_pop</span>, ncores <span class='op'>=</span> <span class='fl'>1</span>, <span class='va'>district_membership</span>, <span class='va'>population</span><span class='op'>)</span>
@@ -198,6 +202,15 @@ for each precinct and one column for each map. Required.</p></td>
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>numeric vector with the population parity for each column</p>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>With a map with <code>pop</code> representing the populations of each district,
+ the deviation from population parity is given as <code><a href='https://rdrr.io/r/base/Extremes.html'>max(abs(pop - parity) / parity)</a></code>
+ where <code>parity = sum(pop)/length(pop)</code> is the population size for the
+ average district.
+ Therefore, the metric can be thought of as the maximum percent deviation from
+ equal population. For example, a value of 0.03 in this metric indicates that
+ all districts are within 3 percent of population parity.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -210,7 +223,7 @@ for each precinct and one column for each map. Required.</p></td>
 
       <footer>
       <div class="copyright">
-  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Jun Kawahara, Kosuke Imai.</p>
+  <p>Developed by Christopher T. Kenny, Cory McCartan, Ben Fifield, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">

@@ -86,7 +86,7 @@ of the map." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
       </span>
     </div>
 
@@ -131,7 +131,7 @@ of the map." />
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://github.com/kosukeimai/redist/">
+  <a href="https://github.com/alarm-redist/redist/">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -150,7 +150,7 @@ of the map." />
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Make a comparison between two sets of plans</h1>
-    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/classify_compare.R'><code>R/classify_compare.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/alarm-redist/redist/blob/master/R/classify_compare.R'><code>R/classify_compare.R</code></a></small>
     <div class="hidden name"><code>compare_plans.Rd</code></div>
     </div>
 
@@ -182,6 +182,12 @@ of the map.</p>
       <td><p>a <a href='redist_plans.html'>redist_plans</a> object</p></td>
     </tr>
     <tr>
+      <th>set1</th>
+      <td><p><code><a href='https://dplyr.tidyverse.org/reference/dplyr_data_masking.html'>&lt;data-masking&gt;</a></code> indexing vectors
+for the plan draws to compare.  Alternatively, a second <a href='redist_plans.html'>redist_plans</a>
+object to compare to.</p></td>
+    </tr>
+    <tr>
       <th>set2</th>
       <td><p><code><a href='https://dplyr.tidyverse.org/reference/dplyr_data_masking.html'>&lt;data-masking&gt;</a></code> indexing vectors
 for the plan draws to compare. Must be mutually exclusive with <code>set1</code>.</p></td>
@@ -207,12 +213,6 @@ relevant set of precincts for comparison.</p></td>
     <tr>
       <th>labs</th>
       <td><p>the names of the panels in the plot.</p></td>
-    </tr>
-    <tr>
-      <th>set</th>
-      <td><p><code><a href='https://dplyr.tidyverse.org/reference/dplyr_data_masking.html'>&lt;data-masking&gt;</a></code> indexing vectors
-for the plan draws to compare.  Alternatively, a second <a href='redist_plans.html'>redist_plans</a>
-object to compare to.</p></td>
     </tr>
     </table>
 
@@ -255,7 +255,7 @@ prior, which is useful for when either <code>set1</code> or <code>set2</code> is
 
       <footer>
       <div class="copyright">
-  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Jun Kawahara, Kosuke Imai.</p>
+  <p>Developed by Christopher T. Kenny, Cory McCartan, Ben Fifield, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">

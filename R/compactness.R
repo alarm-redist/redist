@@ -28,7 +28,7 @@
 #' EdgesRemoved" and "logSpanningTree". Created with \code{redist.adjacency} if not
 #' supplied and needed. Default is NULL.
 #' @param draw A numeric to specify draw number. Defaults to 1 if only one map provided
-#' and the column number if multiple maps given. Can also take a factor input, which will become the 
+#' and the column number if multiple maps given. Can also take a factor input, which will become the
 #' draw column in the output if its length matches the number of entries in plans. If the `plans` input
 #' is a `redist_plans` object, it extracts the `draw` identifier.
 #' @param ncores Number of cores to use for parallel computing. Default is 1.
@@ -190,20 +190,20 @@ redist.compactness <- function(shp = NULL,
       stop('Please provide "shp" as a SpatialPolygonsDataFrame or sf object.')
     }
   }
-  
+
   if (inherits(shp, 'redist_map') & missing(adj)) {
     adj <- get_adj(shp)
   }
-  
+
   if (any(class(plans) == 'redist')) {
     plans <- plans$plans
   }
-  
+
   if (inherits(plans, 'redist_plans')) {
     draw <- plans$draw
     plans <- get_plans_matrix(plans)
   }
-  
+
   if (!is.numeric(plans)) {
     stop('Please provide "plans" as a numeric vector or matrix.')
   }
