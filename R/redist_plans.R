@@ -270,7 +270,7 @@ dplyr_row_slice.redist_plans = function(data, i, ...) {
     if(is.factor(y$draw)){
     #    y$draw <- droplevels(y$draw)
     }
-    
+
     y
 }
 
@@ -303,7 +303,7 @@ print.redist_plans = function(x, ...) {
     }
     if (ncol(plans_m) == 0) return(invisible(x))
 
-    alg_name = c(mcmc="Markov chain Monte Carlo",
+    alg_name = c(mcmc="Flip Markov chain Monte Carlo",
                  smc="Sequential Monte Carlo",
                  mergesplit="Merge-split Markov chain Monte Carlo",
                  rsg="random seed-and-grow",
