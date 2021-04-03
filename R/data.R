@@ -184,6 +184,7 @@ NULL
 #' \item{\code{tot_08}}{Number of total votes for president in the county in 2008.}
 #' \item{\code{dem_08}}{Number of votes for Barack Obama in 2008.}
 #' \item{\code{rep_08}}{Number of votes for John McCain in 2008.}
+#' \item{\code{region}}{The 28E agency regions for counties.}
 #' \item{\code{geometry}}{The sf geometry column containing the geographic information.}
 #' }
 #'

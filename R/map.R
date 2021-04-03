@@ -412,43 +412,10 @@ redist.plot.adj <- function(shp = NULL, adj = NULL, plan = NULL, centroids = TRU
     stop('drop is TRUE but no plan supplied')
   }
 
-  # Extract Centers
-    suppressWarnings(centers <- st_centroid(shp))
-    st_crs(centers) <- st_crs(shp)
+  edge_cntr <- edge_center_df(shp, adj)
 
-
-  # Extract Edges
-
-  nb <- lapply(adj, function(x) {
-    x + 1L
-  })
-
-
-  edgedf <- tibble(
-    start = rep(1:length(nb), lengths(nb)),
-    finish = unlist(nb)
-  )
-  edgedf <- edgedf %>%
-    rowwise() %>%
-    mutate(i = min(start, finish), j = max(start, finish)) %>%
-    select(i, j)
-  edgedf <- edgedf[!duplicated(edgedf), ]
-
-  edgedf <- edgedf %>%
-    rowwise() %>%
-    mutate(geometry = st_sfc(st_linestring(matrix(
-      c(
-        as.numeric(centers$geometry[[i]]),
-        as.numeric(centers$geometry[[j]])
-      ),
-      nrow = 2,
-      byrow = TRUE
-    ))))
-
-  suppressWarnings(nb <- sf::st_as_sf(edgedf))
-  st_crs(nb) <- st_crs(shp)
-
-
+  nb <- edge_cntr$nb
+  centers <- edge_cntr$centers
 
   # Drop Edges that cross District Boundaries
   if (drop) {
@@ -558,5 +525,48 @@ redist.choropleth <- function(shp, fill = NULL, fill_label = '', title = '',
 
   return(plot)
 }
+
+
+edge_center_df <- function(shp, adj){
+  # Extract Centers
+  suppressWarnings(centers <- st_centroid(shp))
+  st_crs(centers) <- st_crs(shp)
+  
+  
+  # Extract Edges
+  
+  nb <- lapply(adj, function(x) {
+    x + 1L
+  })
+  
+  
+  edgedf <- tibble(
+    start = rep(1:length(nb), lengths(nb)),
+    finish = unlist(nb)
+  )
+  edgedf <- edgedf %>%
+    rowwise() %>%
+    mutate(i = min(start, finish), j = max(start, finish)) %>%
+    select(i, j)
+  edgedf <- edgedf[!duplicated(edgedf), ]
+  
+  edgedf <- edgedf %>%
+    rowwise() %>%
+    mutate(geometry = st_sfc(st_linestring(matrix(
+      c(
+        as.numeric(centers$geometry[[i]]),
+        as.numeric(centers$geometry[[j]])
+      ),
+      nrow = 2,
+      byrow = TRUE
+    ))))
+  
+  suppressWarnings(nb <- sf::st_as_sf(edgedf))
+  suppressWarnings(st_crs(nb) <- st_crs(shp))
+  
+  return(list(nb = nb, centers = centers))
+}
+
+
 
 globalVariables(c('start', 'finish'))
