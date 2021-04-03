@@ -28,14 +28,14 @@ various summary statistics and plotting functionality are also included.
 
 Authors: 
 
-- [Ben Fifield](https://www.benfifield.com), <benfifield@gmail.com> (Maintainer) 
-- [Christopher T Kenny](https://www.christophertkenny.com), <christopherkenny@fas.harvard.edu> 
+- [Christopher T Kenny](https://www.christophertkenny.com), <christopherkenny@fas.harvard.edu> (Maintainer) 
 - [Cory McCartan](https://corymccartan.github.io), <cmccartan@g.harvard.edu> 
-- Jun Kawahara, <jkawahara@i.kyoto-u.ac.jp> 
 - [Kosuke Imai](https://imai.fas.harvard.edu), <imai@harvard.edu>
+- [Ben Fifield](https://www.benfifield.com), <benfifield@gmail.com>
  
 Contributors:
 
+- Jun Kawahara, <jkawahara@i.kyoto-u.ac.jp> 
 - Alex Tarr, <atarr@princeton.edu> 
 - [Michael Higgins](http://www-personal.k-state.edu/~mikehiggins/), <mjh5@princeton.edu> 
 
@@ -58,7 +58,7 @@ install.packages("redist")
 You can also install the most recent development version of `redist` using the `remotes`` package. 
 ```{r eval=FALSE} 
 if (!require(remotes)) install.packages("remotes")
-remotes::install_github("kosukeimai/redist", dependencies=TRUE)
+remotes::install_github("alarm-redist/redist", dependencies=TRUE)
 ```   
 
 ## Getting started

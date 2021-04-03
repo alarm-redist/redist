@@ -5,7 +5,7 @@
 
 <!-- badges: start -->
 
-[![Build 
+[![Build
 Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist)
 [![CRAN\_Status\_Badge](https://www.r-pkg.org/badges/version-last-release/redist)](https://cran.r-project.org/package=redist)
 ![CRAN downloads](http://cranlogs.r-pkg.org/badges/grand-total/redist)
@@ -25,17 +25,16 @@ functionality are also included.
 
 Authors:
 
--   [Ben Fifield](https://www.benfifield.com), <benfifield@gmail.com>
-    (Maintainer)
 -   [Christopher T Kenny](https://www.christophertkenny.com),
-    <christopherkenny@fas.harvard.edu>
+    <christopherkenny@fas.harvard.edu> (Maintainer)
 -   [Cory McCartan](https://corymccartan.github.io),
     <cmccartan@g.harvard.edu>
--   Jun Kawahara, <jkawahara@i.kyoto-u.ac.jp>
 -   [Kosuke Imai](https://imai.fas.harvard.edu), <imai@harvard.edu>
+-   [Ben Fifield](https://www.benfifield.com), <benfifield@gmail.com>
 
 Contributors:
 
+-   Jun Kawahara, <jkawahara@i.kyoto-u.ac.jp>
 -   Alex Tarr, <atarr@princeton.edu>
 -   [Michael Higgins](http://www-personal.k-state.edu/~mikehiggins/),
     <mjh5@princeton.edu>
@@ -65,7 +64,7 @@ using the \`remotes\`\` package.
 
 ``` r
 if (!require(remotes)) install.packages("remotes")
-remotes::install_github("kosukeimai/redist", dependencies=TRUE)
+remotes::install_github("alarm-redist/redist", dependencies=TRUE)
 ```
 
 ## Getting started
@@ -81,18 +80,17 @@ library(dplyr)
 data(iowa)
 
 # set a 0.01% population constraint
-iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.0001)
+iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.0001, total_pop = pop)
 # simulate 250 plans using the SMC algorithm
 iowa_plans = redist_smc(iowa_map, nsims=250, verbose=FALSE)
 #> SEQUENTIAL MONTE CARLO
 #> Sampling 250 99-unit maps with 4 districts and population between 761513 and 761665.
 #> Making split 1 of 3
-#> Note: maximum hit; falling back to naive k estimator.
-#> Resampling effective sample size: 245.9 (98.4% efficiency).
+#> Resampling effective sample size: 246.4 (98.6% efficiency).
 #> Making split 2 of 3
-#> Resampling effective sample size: 245.6 (98.3% efficiency).
+#> Resampling effective sample size: 233.1 (93.2% efficiency).
 #> Making split 3 of 3
-#> Resampling effective sample size: 246.8 (98.7% efficiency).
+#> Resampling effective sample size: 247.4 (99.0% efficiency).
 ```
 
 After generating plans, you can use `redist`’s plotting functions to
@@ -144,9 +142,3 @@ A more detailed introduction to redistricting methods and the package
 can be found in the [Get Started](articles/redist.html) page. The
 package [vignettes](articles/) contain more detailed information and
 guides to specific workflows.
-
-## `redist` in the News
-
--   [New
-    Mexico](https://www.r-bloggers.com/2021/02/some-computational-redistricting-methods-or-how-to-sniff-out-a-gerrymander-in-a-pinch/)
--   [Montana](https://www.benjaminsorensen.me/post/mt-redistricting/)
