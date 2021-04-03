@@ -381,6 +381,7 @@ scorer_pop_dev <- function(map) {
 #' @export
 scorer_splits <- function(map, counties) {
   counties <- eval_tidy(enquo(counties), map)
+  counties <- as.integer(as.factor(counties))
 
   fn = function(plans) {
     splits(plans, counties)/length(unique(counties))

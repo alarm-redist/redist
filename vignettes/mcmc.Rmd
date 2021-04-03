@@ -211,10 +211,13 @@ data(iowa)
 Rather than building the adjacency graph manually, here we can set this up using `redist_map` which will build it an add it as a column.
 
 ```{r}
-iowa_map <- redist_map(iowa, existing_plan = cd_2010)
+iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol=0.01)
 ```
 
-This defaults to setting `pop_tol = 0.01`. While this is generally a good population parity tolerance for most simulations, be careful when using the default within `flip`. If your starting partition sits outside of that population deviation, `flip` may take a **very, very** long time to find a valid partition to flip.
+We set a population tolerance of 1%. While this is generally a good population
+parity tolerance for most simulations, be careful when using the default within
+`flip`. If your starting partition sits outside of that population deviation,
+`flip` may take a **very, very** long time to find a valid partition to flip.
 
 ```{r, include = FALSE}
 set.seed(2)

@@ -134,7 +134,7 @@ add_reference = function(plans, ref_plan, name=NULL) {
 
     if (is.null(name)) {
         ref_str = deparse(substitute(ref_plan))
-        if (stringr::str_detect(ref_str, "$"))
+        if (stringr::str_detect(ref_str, stringr::fixed("$")))
             name = strsplit(ref_str, "$", fixed=TRUE)[[1]][2]
         else
             name = ref_str
