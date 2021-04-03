@@ -348,7 +348,7 @@ print.redist_plans = function(x, ...) {
 #'
 #' @concept plot
 #' @export
-plot.redist_plans = function(x, ..., type="hist") {
+plot.redist_plans = function(x, ..., type="distr_qtys") {
     if (rlang::dots_n(...) == 0) {
         wgts = get_plans_weights(subset_sampled(x))
         n = length(wgts)

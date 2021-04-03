@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
       </span>
     </div>
 
@@ -83,7 +83,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/kosukeimai/redist/">
+  <a href="https://github.com/alarm-redist/redist/">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -104,7 +104,7 @@
       <h1 data-toc-skip>MPI / Slurm Sample Scripts</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/kosukeimai/redist/blob/master/vignettes/mpi-slurm.Rmd"><code>vignettes/mpi-slurm.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/master/vignettes/mpi-slurm.Rmd"><code>vignettes/mpi-slurm.Rmd</code></a></small>
       <div class="hidden name"><code>mpi-slurm.Rmd</code></div>
 
     </div>
@@ -119,7 +119,7 @@
 <a href="#no-population-constraint" class="anchor"></a>No Population Constraint</h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">## Load data</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">redist</span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://alarm-redist.github.io/redist/">redist</a></span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span><span class="op">(</span><span class="va">algdat.pfull</span><span class="op">)</span>
 
 <span class="co">## Run the simulations</span>
@@ -251,9 +251,9 @@
 <span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> Time is <span class="va">$(</span><span class="fu">date</span><span class="va">)</span></span>
 <span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> SLURM_NODES are <span class="va">$(</span><span class="bu">echo</span> <span class="va">${SLURM_NODELIST})</span></span>
 <span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">'-------------------------------'</span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="at">-e</span> <span class="st">'\n\n'</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> -e <span class="st">'\n\n'</span></span>
 <span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="ex">mpiexec</span> <span class="at">-np</span> 1 R <span class="at">--no-save</span> <span class="op">&lt;</span> [scriptname here].R</span></code></pre></div>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="ex">mpiexec</span> -np 1 R --no-save <span class="op">&lt;</span> [scriptname here].R</span></code></pre></div>
 </div>
 </div>
 <div id="population-constraint-and-compactness-constraint-using-annealing" class="section level2">
@@ -330,7 +330,7 @@
 <span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> Time is <span class="va">$(</span><span class="fu">date</span><span class="va">)</span></span>
 <span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> SLURM_NODES are <span class="va">$(</span><span class="bu">echo</span> <span class="va">${SLURM_NODELIST})</span></span>
 <span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">'-------------------------------'</span></span>
-<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="at">-e</span> <span class="st">'\n\n'</span></span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> -e <span class="st">'\n\n'</span></span>
 <span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a><span class="ex">srun</span> Rscript ../[scriptname here].R</span></code></pre></div>
 </div>
@@ -349,7 +349,7 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Jun Kawahara, Kosuke Imai.</p>
+  <p>Developed by Christopher T. Kenny, Cory McCartan, Ben Fifield, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">
