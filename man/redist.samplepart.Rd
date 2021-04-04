@@ -2,33 +2,60 @@
 % Please edit documentation in R/enumerate.R
 \name{redist.samplepart}
 \alias{redist.samplepart}
-\title{Sample partitions using spanning trees}
+\title{DEFUNCT: Sample partitions using spanning trees}
 \usage{
-redist.samplepart(adjobj, ndists, popvec, pop_filter, pop_constraint,
-contiguitymap, nsamp, n_cores)
+redist.samplepart(
+  adj,
+  ndists,
+  total_pop = NULL,
+  pop_filter = FALSE,
+  pop_tol = 0.5,
+  nsims = 1000,
+  ncores = 1,
+  adjobj,
+  popvec,
+  pop_constraint,
+  contiguitymap = "rooks",
+  nsamp,
+  n_cores
+)
 }
 \arguments{
-\item{adjobj}{An adjacency list, matrix, or object of class
+\item{adj}{An adjacency list, matrix, or object of class
 \code{SpatialPolygonsDataFrame}.}
 
 \item{ndists}{The desired number of congressional districts}
 
-\item{popvec}{Population vector for adjacency object. Provide if
+\item{total_pop}{Population vector for adjacency object. Provide if
 filtering by population}
 
 \item{pop_filter}{Boolean. Whether or not to filter on population parity.
 Default is FALSE.}
 
-\item{pop_constraint}{Strength of population filter if filtering on
+\item{pop_tol}{Strength of population filter if filtering on
+distance to parity.}
+
+\item{nsims}{Number of samples to draw. Default is 1000.}
+
+\item{ncores}{Number of cores to parallelize over for parity calculation and
+compactness calculation. Default is 1.}
+
+\item{adjobj}{Deprecated, use adj. An adjacency list, matrix, or object of class
+\code{SpatialPolygonsDataFrame}.}
+
+\item{popvec}{Deprecated, use total_pop. Population vector for adjacency object. Provide if
+filtering by population}
+
+\item{pop_constraint}{Deprecated, use pop_tol. Strength of population filter if filtering on
 distance to parity.}
 
 \item{contiguitymap}{Use queens or rooks distance criteria for generating an
 adjacency list from a "SpatialPolygonsDataFrame" data type.
 Default is "rooks".}
 
-\item{nsamp}{Number of samples to draw. Default is 1000.}
+\item{nsamp}{Deprecated, use nsims. Number of samples to draw. Default is 1000.}
 
-\item{n_cores}{Number of cores to parallelize over for parity calculation and
+\item{n_cores}{Deprecated, use ncores. Number of cores to parallelize over for parity calculation and
 compactness calculation. Default is 1.}
 }
 \value{
@@ -38,5 +65,5 @@ possible redistricting plans from the implied spanning tree.
 }
 \description{
 \code{redist.samplepart} uses a spanning tree method to randomly sample
-redistricting plans.
+redistricting plans. DEFUNCT, use \code{\link{redist_smc}} instead.
 }

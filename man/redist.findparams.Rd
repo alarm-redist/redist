@@ -4,18 +4,39 @@
 \alias{redist.findparams}
 \title{Run parameter testing for \code{redist.mcmc}}
 \usage{
-redist.findparams(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
-adapt_lambda = FALSE, adapt_eprob = FALSE,
-params, ssdmat = NULL, grouppopvec = NULL, countymembership = NULL,
-nstartval_store, maxdist_startval,
-maxiterrsg = 5000, report_all = TRUE,
-parallel = FALSE, nthreads = NULL, log = FALSE, verbose = TRUE)
+redist.findparams(
+  adj,
+  total_pop,
+  nsims,
+  ndists = NULL,
+  init_plan = NULL,
+  adapt_lambda = FALSE,
+  adapt_eprob = FALSE,
+  params,
+  ssdmat = NULL,
+  group_pop = NULL,
+  counties = NULL,
+  nstartval_store = 1,
+  maxdist_startval = 100,
+  maxiterrsg = 5000,
+  report_all = TRUE,
+  parallel = FALSE,
+  ncores = NULL,
+  log = FALSE,
+  verbose = TRUE,
+  adjobj,
+  popvec,
+  initcds,
+  grouppopvec,
+  countymembership,
+  nthreads
+)
 }
 \arguments{
-\item{adjobj}{An adjacency matrix, list, or object of class
+\item{adj}{An adjacency matrix, list, or object of class
 "SpatialPolygonsDataFrame."}
 
-\item{popvec}{A vector containing the populations of each
+\item{total_pop}{A vector containing the populations of each
 geographic unit.}
 
 \item{nsims}{The number of simulations run before a save point.}
@@ -23,7 +44,7 @@ geographic unit.}
 \item{ndists}{The number of congressional districts.
 The default is \code{NULL}.}
 
-\item{initcds}{A vector containing the congressional district labels
+\item{init_plan}{A vector containing the congressional district labels
 of each geographic unit. The default is \code{NULL}. If not provided, random
 and contiguous congressional district assignments will be generated using \code{redist.rsg}.}
 
@@ -41,10 +62,10 @@ FALSE.}
 \item{ssdmat}{A matrix of squared distances between geographic
 units. The default is \code{NULL}.}
 
-\item{grouppopvec}{A vector of populations for some sub-group of
+\item{group_pop}{A vector of populations for some sub-group of
 interest. The default is \code{NULL}.}
 
-\item{countymembership}{A vector of county membership assignments. The default is \code{NULL}.}
+\item{counties}{A vector of county membership assignments. The default is \code{NULL}.}
 
 \item{nstartval_store}{The number of maps to sample from the preprocessing chain
 for use as starting values in future simulations. Default is 1.}
@@ -61,7 +82,7 @@ parameter values. Default is \code{TRUE}.}
 \item{parallel}{Whether to run separate parameter settings in parallel.
 Default is \code{FALSE}.}
 
-\item{nthreads}{Number of parallel tasks to run, declared outside of the
+\item{ncores}{Number of parallel tasks to run, declared outside of the
 function. Default is \code{NULL}.}
 
 \item{log}{Whether to open a log to track progress for each parameter combination
@@ -69,6 +90,25 @@ being tested. Default is FALSE.}
 
 \item{verbose}{Whether to print additional information about the tests.
 Default is \code{TRUE}.}
+
+\item{adjobj}{Deprecated, use adj. An adjacency matrix, list, or object of class
+"SpatialPolygonsDataFrame."}
+
+\item{popvec}{Deprecated, use total_pop. A vector containing the populations of each
+geographic unit.}
+
+\item{initcds}{Deprecated, use init_plan. A vector containing the congressional district labels
+of each geographic unit. The default is \code{NULL}. If not provided, random
+and contiguous congressional district assignments will be generated using \code{redist.rsg}.}
+
+\item{grouppopvec}{A vector of populations for some sub-group of
+interest. The default is \code{NULL}.}
+
+\item{countymembership}{Deprecated, use counties.
+A vector of county membership assignments. The default is \code{NULL}.}
+
+\item{nthreads}{Deprecated, use ncores. Number of parallel tasks to run, declared outside of the
+function. Default is \code{NULL}.}
 }
 \value{
 \code{redist.findparams} returns a print-out of summary statistics
@@ -84,21 +124,18 @@ This function allows users to test multiple parameter settings of
 }
 \examples{
 \dontrun{
-data(algdat.pfull)
-
-## Code to run the simulations in Figure 4 in Fifield, Higgins, Imai and
-## Tarr (2015)
+data(fl25)
+data(fl25_enum)
+data(fl25_adj)
 
 ## Get an initial partition
-set.seed(1)
-initcds <- algdat.pfull$cdmat[,sample(1:ncol(algdat.pfull$cdmat), 1)]
+init_plan <- fl25_enum$plans[, 5118]
 
 params <- expand.grid(eprob = c(.01, .05, .1))
 
 ## Run the algorithm
-redist.findparams(adjobj = algdat.pfull$adjlist,
-popvec = algdat.pfull$precinct.data$pop,
-initcds = initcds, nsims = 10000, params = params)
+redist.findparams(adj = fl25_adj, total_pop = fl25$pop,
+                  init_plan = init_plan, nsims = 10000, params = params)
 }
 }
 \references{
@@ -107,3 +144,4 @@ Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte
 Carlo." Working Paper. Available at
 \url{http://imai.princeton.edu/research/files/redist.pdf}.
 }
+\concept{prepare}

@@ -50,14 +50,36 @@ double sq_entropy(const subview_col<uword> &districts, const uvec &current,
 }
 
 /*
- * Compute the VRA penalty for district `distr`
+ * Compute the old VRA penalty for district `distr`
  */
 double eval_vra(const subview_col<uword> &districts, int distr, double tgt_min,
                 double tgt_other, double pow_vra, const uvec &pop, const uvec &min_pop) {
     uvec idxs = find(districts == distr);
     double frac = ((double) sum(min_pop(idxs))) / sum(pop(idxs));
-    return std::pow(std::abs(frac - tgt_min), pow_vra) *
-        std::pow(std::abs(frac - tgt_other), pow_vra);
+    return std::pow(std::fabs(frac - tgt_min), pow_vra) *
+        std::pow(std::fabs(frac - tgt_other), pow_vra);
+}
+
+/*
+ * Compute the new, hinge VRA penalty for district `distr`
+ */
+double eval_vra_hinge(const subview_col<uword> &districts, int distr,
+                      const vec &tgts_min, const uvec &pop, const uvec &min_pop) {
+    uvec idxs = find(districts == distr);
+    double frac = ((double) sum(min_pop(idxs))) / sum(pop(idxs));
+    // figure out which to compare it to
+    double target;
+    double diff = 1;
+    int n_tgt = tgts_min.size();
+    for (int i = 0; i < n_tgt; i++) {
+        double new_diff = std::fabs(tgts_min[i] - frac);
+        if (new_diff <= diff) {
+            diff = new_diff;
+            target = tgts_min[i];
+        }
+    }
+
+    return std::sqrt(std::max(0.0, target - frac));
 }
 
 /*
@@ -74,41 +96,156 @@ double eval_inc(const subview_col<uword> &districts, int distr, const uvec &incu
     return inc_in_distr;
 }
 
+/*
+ * Compute the county split penalty for district `distr`
+ */
+double eval_splits(const subview_col<uword> &districts, int distr,
+                   const uvec &counties, int n_cty) {
+    std::vector<std::set<int>> county_dist(n_cty);
+    int V = counties.size();
+    for (int i = 0; i < n_cty; i++) {
+        county_dist[i] = std::set<int>();
+    }
+
+    for (int i = 0; i < V; i++) {
+        county_dist[counties[i]-1].insert(districts[i]);
+    }
+
+    int splits = 0;
+    for (int i = 0; i < n_cty; i++) {
+        int cty_n_distr = county_dist[i].size();
+        if (cty_n_distr > 1)
+            splits++;
+    }
+
+    return splits;
+}
+
+/*
+ * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,
+ * given a collection of plans
+ */
+mat prec_cooccur(umat m, uvec idxs) {
+    int v = m.n_rows;
+    int n = idxs.n_elem;
+    mat out(v, v);
+
+    for (int i = 0; i < v; i++) {
+        out(i, i) = 1;
+        for (int j = 0; j < i; j++) {
+            double shared = 0;
+            for (int k = 0; k < n; k++) {
+                shared += m(i, idxs[k]-1) == m(j, idxs[k]-1);
+            }
+            shared /= n;
+            out(i, j) = shared;
+            out(j, i) = shared;
+        }
+    }
+
+    return out;
+}
+
+/*
+ * Compute the percentage of `group` in each district. Asummes `m` is 1-indexed.
+ */
+NumericMatrix group_pct(umat m, vec group_pop, vec total_pop, int n_distr) {
+    int v = m.n_rows;
+    int n = m.n_cols;
+
+    NumericMatrix grp_distr(n_distr, n);
+    NumericMatrix tot_distr(n_distr, n);
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < v; j++) {
+            int distr = m(j, i) - 1;
+            grp_distr(distr, i) += group_pop[j];
+            tot_distr(distr, i) += total_pop[j];
+        }
+    }
+
+    // divide
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n_distr; j++) {
+            grp_distr(j, i) /= tot_distr(j, i);
+        }
+    }
+
+    return grp_distr;
+}
+
+/*
+ * Compute the percentage of `group` in each district, and return the `k`-th
+ * largest such value. Asummes `m` is 1-indexed.
+ */
+// [[Rcpp::export]]
+NumericVector group_pct_top_k(const IntegerMatrix m, const NumericVector group_pop,
+                              const NumericVector total_pop, int k, int n_distr) {
+    int v = m.nrow();
+    int n = m.ncol();
+    NumericVector out(n);
+
+    for (int i = 0; i < n; i++) {
+         std::vector<double> grp_distr(n_distr, 0.0);
+         std::vector<double> tot_distr(n_distr, 0.0);
+
+        for (int j = 0; j < v; j++) {
+            int distr = m(j, i) - 1;
+            grp_distr[distr] += group_pop[j];
+            tot_distr[distr] += total_pop[j];
+        }
+
+        for (int j = 0; j < n_distr; j++) {
+            grp_distr[j] /= tot_distr[j];
+        }
+
+        std::nth_element(grp_distr.begin(), grp_distr.begin() + k - 1,
+                         grp_distr.end(), std::greater<double>());
+
+        out[i] = grp_distr[k - 1];
+    }
+
+    return out;
+}
+
 
 /*
  * Compute the deviation from the equal population constraint.
  */
 // TESTED
-NumericMatrix pop_dev(const umat &districts, const uvec &pop, int n_distr) {
-    int N = districts.n_cols;
-    int V = districts.n_rows;
-    double target_pop = sum(pop) / n_distr;
-    NumericMatrix dev(n_distr, N);
+NumericMatrix pop_tally(IntegerMatrix districts, vec pop, int n_distr) {
+    int N = districts.ncol();
+    int V = districts.nrow();
+
+    NumericMatrix tally(n_distr, N);
     for (int i = 0; i < N; i++) {
-        std::vector<double> accuml(n_distr);
         for (int j = 0; j < V; j++) {
             int d = districts(j, i) - 1; // districts are 1-indexed
-            accuml.at(d) += pop(j) / target_pop;
-        }
-        for (int d = 0; d < n_distr; d++) {
-            dev(d,i) = abs(accuml[d]-1);
+            tally(d, i) = tally(d, i) + pop(j);
         }
     }
-    return dev;
+
+    return tally;
 }
 
 /*
  * Compute the maximum deviation from the equal population constraint.
  */
 // TESTED
-NumericVector max_dev(const umat &districts, const uvec &pop, int n_distr) {
-    int N = districts.n_cols;
-    NumericMatrix dev = pop_dev(districts, pop, n_distr);
-    NumericVector max_d(N);
-    for (int i = 0; i < N; i++) {
-        max_d(i) = max(dev(_, i));
+NumericVector max_dev(const IntegerMatrix districts, const vec pop, int n_distr) {
+    int N = districts.ncol();
+    double target_pop = sum(pop) / n_distr;
+
+    NumericMatrix dev = pop_tally(districts, pop, n_distr) / target_pop - 1.0;
+    NumericVector res(N);
+    for (int j = 0; j < n_distr; j++) {
+        for (int i = 0; i < N; i++) {
+            if (std::fabs(dev(j, i)) > res(i))
+                res(i) = std::fabs(dev(j, i));
+        }
     }
-    return max_d;
+
+    return res;
 }
 
 /*
@@ -125,12 +262,54 @@ std::vector<double> tree_dev(Tree &ust, int root, const uvec &pop,
     std::vector<double> devs(V-1);
     for (int i = 0; i < V; i++) {
         if (i == root) continue;
-        devs.at(idx) = std::min(std::abs(pop_below.at(i) - target),
-                std::abs(total_pop - pop_below[i] - target)) / target;
+        devs.at(idx) = std::min(std::fabs(pop_below.at(i) - target),
+                std::fabs(total_pop - pop_below[i] - target)) / target;
         idx++;
     }
 
     std::sort(devs.begin(), devs.end());
 
     return devs;
+}
+
+
+/*
+ * Column-wise maximum
+ */
+// [[Rcpp::export]]
+NumericVector colmax(const NumericMatrix x) {
+    int nrow = x.nrow();
+    int ncol = x.ncol();
+    NumericVector out(ncol);
+    for (int j = 0; j < ncol; j++) {
+        double best = x(0, j);
+        for (int i = 1; i < nrow; i++) {
+            if (x(i, j) > best) {
+                best = x(i, j);
+            }
+        }
+        out[j] = best;
+    }
+
+    return out;
+}
+/*
+ * Column-wise minimum
+ */
+// [[Rcpp::export]]
+NumericVector colmin(const NumericMatrix x) {
+    int nrow = x.nrow();
+    int ncol = x.ncol();
+    NumericVector out(ncol);
+    for (int j = 0; j < ncol; j++) {
+        double best = x(0, j);
+        for (int i = 1; i < nrow; i++) {
+            if (x(i, j) < best) {
+                best = x(i, j);
+            }
+        }
+        out[j] = best;
+    }
+
+    return out;
 }

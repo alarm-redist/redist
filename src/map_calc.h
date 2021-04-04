@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <set>
 #include "smc_base.h"
 #include "tree_op.h"
 
@@ -22,6 +24,11 @@ double sq_entropy(const subview_col<uword> &districts, const uvec &current,
  */
 double eval_vra(const subview_col<uword> &districts, int distr, double tgt_min,
                 double tgt_other, double pow_vra, const uvec &pop, const uvec &min_pop);
+/*
+ * Compute the new, hinge VRA penalty for district `distr`
+ */
+double eval_vra_hinge(const subview_col<uword> &districts, int distr,
+                      const vec &tgts_min, const uvec &pop, const uvec &min_pop);
 
 /*
  * Compute the incumbent-preserving penalty for district `distr`
@@ -29,15 +36,35 @@ double eval_vra(const subview_col<uword> &districts, int distr, double tgt_min,
 double eval_inc(const subview_col<uword> &districts, int distr, const uvec &incumbents);
 
 /*
+ * Compute the county split penalty for district `distr`
+ */
+double eval_splits(const subview_col<uword> &districts, int distr,
+                   const uvec &counties, int n_cty);
+
+/*
+ * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,
+ * given a collection of plans
+ */
+// [[Rcpp::export]]
+arma::mat prec_cooccur(arma::umat m, arma::uvec idxs);
+
+/*
+ * Compute the percentage of `group` in each district. Asummes `m` is 1-indexed.
+ */
+// [[Rcpp::export]]
+NumericMatrix group_pct(arma::umat m, arma::vec group_pop, arma::vec total_pop, int n_distr);
+
+/*
  * Compute the deviation from the equal population constraint.
  */
-NumericMatrix pop_dev(const umat &districts, const subview_col<uword> &pop, int n_distr);
+// [[Rcpp::export]]
+NumericMatrix pop_tally(IntegerMatrix districts, arma::vec pop, int n_distr);
 
 /*
  * Compute the maximum deviation from the equal population constraint.
  */
 // [[Rcpp::export]]
-NumericVector max_dev(const arma::umat &districts, const arma::uvec &pop, int n_distr);
+NumericVector max_dev(const IntegerMatrix districts, const arma::vec pop, int n_distr);
 
 /*
  * Calculate the deviation for cutting at every edge in a spanning tree.

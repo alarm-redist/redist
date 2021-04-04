@@ -12,25 +12,29 @@
  * Main entry point.
  *
  * Sample `N` redistricting plans on map `g`, ensuring that the maximum
- * population deviation is within `tol`
+ * population deviation is between `lower` and `upper` (and ideally `target`)
  */
 // [[Rcpp::export]]
 arma::umat smc_plans(int N, List l, const arma::uvec &counties,
-                     const arma::uvec &pop, int n_distr, double tol, double gamma,
+                     const arma::uvec &pop, int n_distr, double target,
+                     double lower, double upper, double rho,
                      double beta_sq, const arma::uvec &current, int n_current,
                      double beta_vra, double tgt_min, double tgt_other,
                      double pow_vra, const arma::uvec &min_pop,
+                     double beta_vra_hinge, const arma::vec &tgts_min,
                      double beta_inc, const arma::uvec &incumbents,
                      arma::vec &lp, double thresh,
-                     double alpha, int verbosity=1);
+                     double alpha, double pop_temper=0.1, int verbosity=1);
 
 /*
- * Split off a piece from each map in `districts`, keeping deviation within `tol`
+ * Split off a piece from each map in `districts`,
+ * keeping deviation between `lower` and `upper`
  */
 void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 const uvec &pop, umat &districts, vec &cum_wgt, vec &lp,
-                vec &pop_left, int n_distr, int dist_ctr, double distr_pop,
-                double tol, double gamma, int k, int verbosity);
+                vec &pop_left, vec &log_temper, double pop_temper, int n_distr,
+                int dist_ctr, double lower, double upper, double target,
+                double rho, int k, int verbosity);
 
 
 /*
@@ -41,7 +45,8 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr,
              double beta_sq, const uvec &current, int n_current,
              double beta_vra, double tgt_min, double tgt_other,
              double pow_vra, const uvec &min_pop,
-             double beta_inc, const uvec &incumbents);
+             double beta_vra_hinge, const vec &tgts_min,
+             double beta_inc, const uvec &incumbents, int verbosity);
 
 /*
  * Split a map into two pieces with population lying between `lower` and `upper`
@@ -63,6 +68,6 @@ double cut_districts(Tree &ust, int k, int root, subview_col<uword> &districts,
 void adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
                       double tol, const umat &districts, const uvec &counties,
                       Multigraph &cg, const uvec &pop,
-                      const vec &pop_left, double target);
+                      const vec &pop_left, double target, int verbosity);
 
 #endif

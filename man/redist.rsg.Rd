@@ -4,22 +4,31 @@
 \alias{redist.rsg}
 \title{Redistricting via Random Seed and Grow Algorithm}
 \usage{
-redist.rsg(adj.list, population, ndists, thresh,
-verbose = TRUE, maxiter=5000)
+redist.rsg(
+  adj,
+  total_pop,
+  ndists,
+  pop_tol,
+  verbose = TRUE,
+  maxiter = 5000,
+  adj.list,
+  population,
+  thresh
+)
 }
 \arguments{
-\item{adj.list}{List of length N, where N is the number of precincts.
+\item{adj}{List of length N, where N is the number of precincts.
 Each list element is an integer vector indicating which precincts that precinct
 is adjacent to.  It is assumed that precinct numbers start at 0.}
 
-\item{population}{numeric vector of list N, where N is the number of precincts.
+\item{total_pop}{numeric vector of length N, where N is the number of precincts.
 Each element lists the population total of the corresponding precinct, and is
 used to enforce population constraints.}
 
 \item{ndists}{integer, the number of districts we want to partition the
 precincts into.}
 
-\item{thresh}{numeric, indicating how close district population targets have
+\item{pop_tol}{numeric, indicating how close district population targets have
 to be to the target population before algorithm converges.  thresh=0.05 for
 example means that all districts must be between 0.95 and 1.05 times the size
 of target.pop in population size.}
@@ -32,12 +41,25 @@ before convergence to population constraint fails.  If it fails once, it will
 use a different set of start values and try again.  If it fails again,
 redist.rsg() returns an object of all NAs, indicating that use of more
 iterations may be advised.}
+
+\item{adj.list}{Deprecated, use adj. List of length N, where N is the number of precincts.
+Each list element is an integer vector indicating which precincts that precinct
+is adjacent to.  It is assumed that precinct numbers start at 0.}
+
+\item{population}{Deprecated, use total_pop. numeric vector of list N, where N is the number of precincts.
+Each element lists the population total of the corresponding precinct, and is
+used to enforce population constraints.}
+
+\item{thresh}{Deprecated, use pop_tol. numeric, indicating how close district population targets have
+to be to the target population before algorithm converges.  thresh=0.05 for
+example means that all districts must be between 0.95 and 1.05 times the size
+of target.pop in population size.}
 }
 \value{
 list, containing three objects containing the completed redistricting
 plan.
 \itemize{
-\item{\code{district_membership}}{  A vector of length N, indicating the
+\item{\code{plan}}{  A vector of length N, indicating the
 district membership of each precinct.}
 \item{\code{district_list}}{  A list of length Ndistrict.  Each list contains a
 vector of the precincts in the respective district.}
@@ -53,8 +75,11 @@ redistricting routines in this package.
 }
 \examples{
 ### Real data example from test set
-data("algdat.pfull")
-res <- redist.rsg(algdat.pfull$adjlist, algdat.pfull$precinct.data$pop, 3, 0.05)
+data(fl25)
+data(fl25_adj)
+
+res <- redist.rsg(adj = fl25_adj, total_pop = fl25$pop,
+ ndists = 3, pop_tol = 0.05)
 
 \dontrun{
 ### Example that generates test data from a square map with equal population
@@ -106,3 +131,4 @@ James Lo, \email{jameslo@princeton.edu}
 Alexander Tarr, Department of Electrical Engineering, Princeton University
 \email{atarr@princeton.edu}
 }
+\concept{simulate}

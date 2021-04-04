@@ -19,8 +19,8 @@
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/yeti/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous" />
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
 
@@ -84,7 +84,7 @@ implemented." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
       </span>
     </div>
 
@@ -97,6 +97,9 @@ implemented." />
   </a>
 </li>
 <li>
+  <a href="../articles/redist.html">Get started</a>
+</li>
+<li>
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
@@ -107,14 +110,26 @@ implemented." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
+      <a href="../articles/glossary.html">Glossary of Key Redistricting Terms</a>
+    </li>
+    <li>
+      <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
+    </li>
+    <li>
+      <a href="../articles/mcmc.html">Redistricting with Flip MCMC</a>
+    </li>
+    <li>
+      <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://github.com/kosukeimai/redist/">
+  <a href="https://github.com/alarm-redist/redist/">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -133,7 +148,7 @@ implemented." />
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Inverse probability reweighting for MCMC Redistricting</h1>
-    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/redist.R'><code>R/redist.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/alarm-redist/redist/blob/master/R/redist_mcmc.R'><code>R/redist_mcmc.R</code></a></small>
     <div class="hidden name"><code>redist.ipw.Rd</code></div>
     </div>
 
@@ -145,7 +160,9 @@ population parity, geographic compactness, or other constraints are
 implemented.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.ipw</span><span class='op'>(</span><span class='va'>algout</span>, targetpop <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>redist.ipw</span><span class='op'>(</span><span class='va'>algout</span>,
+resampleconstraint <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"pop"</span>, <span class='st'>"compact"</span>, <span class='st'>"segregation"</span>, <span class='st'>"similar"</span><span class='op'>)</span>,
+<span class='va'>targetbeta</span>, targetpop <span class='op'>=</span> <span class='cn'>NULL</span>, temper <span class='op'>=</span> <span class='fl'>0</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -155,20 +172,34 @@ implemented.</p>
       <td><p>An object of class "redist".</p></td>
     </tr>
     <tr>
+      <th>resampleconstraint</th>
+      <td><p>The constraint implemented in the simulations: one
+of "pop", "compact", "segregation", or "similar".</p></td>
+    </tr>
+    <tr>
+      <th>targetbeta</th>
+      <td><p>The target value of the constraint.</p></td>
+    </tr>
+    <tr>
       <th>targetpop</th>
       <td><p>The desired level of population parity. <code>targetpop</code> =
 0.01 means that the desired distance from population parity is 1%. The
 default is <code>NULL</code>.</p></td>
+    </tr>
+    <tr>
+      <th>temper</th>
+      <td><p>A flag for whether simulated tempering was used to improve the
+mixing of the Markov Chain. The default is <code>1</code>.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p><code>redist.ipw</code> returns an object of class "redist". The object
-<code>redist</code> is a list that contains the folowing components (the
+<code>redist</code> is a list that contains the following components (the
 inclusion of some components is dependent on whether tempering
 techniques are used):</p>
-<dt>partitions</dt><dd><p>Matrix of congressional district assignments generated by the
+<dt>plans</dt><dd><p>Matrix of congressional district assignments generated by the
 algorithm. Each row corresponds to a geographic unit, and each column
 corresponds to a simulation.</p></dd>
 <dt>distance_parity</dt><dd><p>Vector containing the maximum distance from parity for
@@ -183,10 +214,18 @@ simulation, which dictates the number of swaps attempted.</p></dd>
 constraint for each accepted redistricting plan.</p></dd>
 <dt>constraint_compact</dt><dd><p>A vector containing the value of the compactness
 constraint for each accepted redistricting plan.</p></dd>
-<dt>constraint_vra</dt><dd><p>A vector containing the value of the
-vra constraint for each accepted redistricting plan.</p></dd>
+<dt>constraint_segregation</dt><dd><p>A vector containing the value of the
+segregation constraint for each accepted redistricting plan.</p></dd>
 <dt>constraint_similar</dt><dd><p>A vector containing the value of the similarity
 constraint for each accepted redistricting plan.</p></dd>
+<dt>constraint_vra</dt><dd><p>A vector containing the value of the
+vra constraint for each accepted redistricting plan.</p></dd>
+<dt>constraint_partisan</dt><dd><p>A vector containing the value of the
+partisan constraint for each accepted redistricting plan.</p></dd>
+<dt>constraint_minority</dt><dd><p>A vector containing the value of the
+minority constraint for each accepted redistricting plan.</p></dd>
+<dt>constraint_hinge</dt><dd><p>A vector containing the value of the
+hinge constraint for each accepted redistricting plan.</p></dd>
 <dt>beta_sequence</dt><dd><p>A vector containing the value of beta for each iteration
 of the algorithm. Returned when tempering is being used.</p></dd>
 <dt>mhdecisions_beta</dt><dd><p>A vector specifying whether a proposed beta value was
@@ -215,28 +254,29 @@ Journal of the American Statistical Association.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
-<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>algdat.p20</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_enum</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_adj</span><span class='op'>)</span>
 
 <span class='co'>## Code to run the simulations in Figure 4 of Fifield, Higgins,</span>
 <span class='co'>## Imai and Tarr (2015)</span>
 
 <span class='co'>## Get an initial partition</span>
-<span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span><span class='op'>(</span><span class='fl'>1</span><span class='op'>)</span>
-<span class='va'>initcds</span> <span class='op'>&lt;-</span> <span class='va'>algdat.p20</span><span class='op'>$</span><span class='va'>cdmat</span><span class='op'>[</span>,<span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span><span class='op'>(</span><span class='fl'>1</span><span class='op'>:</span><span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span><span class='op'>(</span><span class='va'>algdat.p20</span><span class='op'>$</span><span class='va'>cdmat</span><span class='op'>)</span>, <span class='fl'>1</span><span class='op'>)</span><span class='op'>]</span>
+<span class='va'>init_plan</span> <span class='op'>&lt;-</span> <span class='va'>fl25_enum</span><span class='op'>$</span><span class='va'>plans</span><span class='op'>[</span>, <span class='fl'>5118</span><span class='op'>]</span>
 
 <span class='co'>## Vector of beta weights</span>
 <span class='va'>betaweights</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='cn'>NA</span>, <span class='fl'>10</span><span class='op'>)</span>; <span class='kw'>for</span><span class='op'>(</span><span class='va'>i</span> <span class='kw'>in</span> <span class='fl'>1</span><span class='op'>:</span><span class='fl'>10</span><span class='op'>)</span><span class='op'>{</span><span class='va'>betaweights</span><span class='op'>[</span><span class='va'>i</span><span class='op'>]</span> <span class='op'>&lt;-</span> <span class='fl'>4</span><span class='op'>^</span><span class='va'>i</span><span class='op'>}</span>
 
 <span class='co'>## Run simulations - tempering population constraint</span>
-<span class='va'>alg_253_20_st</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.mcmc.html'>redist.mcmc</a></span><span class='op'>(</span>adjobj <span class='op'>=</span> <span class='va'>algdat.p20</span><span class='op'>$</span><span class='va'>adjlist</span>,
-popvec <span class='op'>=</span> <span class='va'>algdat.p20</span><span class='op'>$</span><span class='va'>precinct.data</span><span class='op'>$</span><span class='va'>pop</span>,
-initcds <span class='op'>=</span> <span class='va'>initcds</span>, nsims <span class='op'>=</span> <span class='fl'>10000</span>, betapop <span class='op'>=</span> <span class='op'>-</span><span class='fl'>5.4</span>,
-betaweights <span class='op'>=</span> <span class='va'>betaweights</span>, temperbetapop <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span>
+<span class='va'>alg_253_20_st</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.mcmc.html'>redist.mcmc</a></span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>fl25_adj</span>, total_pop <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>,
+                             init_plan <span class='op'>=</span> <span class='va'>init_plan</span>, nsims <span class='op'>=</span> <span class='fl'>10000</span>,
+                             constraint <span class='op'>=</span> <span class='st'>'population'</span>, constraintweights <span class='op'>=</span> <span class='fl'>5.4</span>,
+                             betaweights <span class='op'>=</span> <span class='va'>betaweights</span>, temper <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span>
 
 <span class='co'>## Resample using inverse probability weighting.</span>
 <span class='co'>## Target distance from parity is 20%</span>
-<span class='va'>alg_253_20_st</span> <span class='op'>&lt;-</span> <span class='fu'>redist.ipw</span><span class='op'>(</span><span class='va'>alg_253_20_st</span>, targetpop <span class='op'>=</span> <span class='fl'>.2</span><span class='op'>)</span>
-
+<span class='va'>alg_253_20_st</span> <span class='op'>&lt;-</span> <span class='fu'>redist.ipw</span><span class='op'>(</span><span class='va'>alg_253_20_st</span>, resampleconstraint <span class='op'>=</span> <span class='st'>"pop"</span>,
+                            targetbeta <span class='op'>=</span> <span class='fl'>1</span>, targetpop <span class='op'>=</span> <span class='fl'>.2</span>, temper <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span>
 <span class='op'>}</span>
 </div></pre>
   </div>
@@ -250,7 +290,7 @@ betaweights <span class='op'>=</span> <span class='va'>betaweights</span>, tempe
 
       <footer>
       <div class="copyright">
-  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Jun Kawahara, Kosuke Imai.</p>
+  <p>Developed by Christopher T. Kenny, Cory McCartan, Ben Fifield, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">

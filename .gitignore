@@ -7,7 +7,13 @@
 .DS_Store
 .Rhistory
 inst/doc
+inst/enumpart/enumpart
+redist/tests/testthat/_snaps
 doc
+docs/articles/*_cache/*
+vignettes/*_cache/*
 Meta
-docs
 .Rproj.user
+src/redist.dll
+inst/enumpart/enumpart.exe
+src-i386/
