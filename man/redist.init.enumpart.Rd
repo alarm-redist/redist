@@ -10,7 +10,7 @@ redist.init.enumpart()
 0 on success
 }
 \description{
-This ensures that the enumerate partitions programs is prepared to run. 
+This ensures that the enumerate partitions programs is prepared to run.
 This must be run once per install of the redist package.
 }
 \examples{
@@ -20,6 +20,7 @@ redist.init.enumpart()
 }
 \references{
 Benjamin Fifield, Kosuke Imai, Jun Kawahara, and Christopher T Kenny.
-"The Essential Role of Empirical Validation in Legislative Redistricting Simulation." 
+"The Essential Role of Empirical Validation in Legislative Redistricting Simulation."
 Forthcoming, Statistics and Public Policy.
 }
+\concept{enumerate}

@@ -1,7 +1,11 @@
-pandoc: 2.11.4
+pandoc: 2.11.2
 pkgdown: 1.6.1
 pkgdown_sha: ~
 articles:
-  Intro-to-redist: Intro-to-redist.html
-last_built: 2021-03-16T02:15Z
+  glossary: glossary.html
+  map-preproc: map-preproc.html
+  mcmc: mcmc.html
+  mpi-slurm: mpi-slurm.html
+  redist: redist.html
+last_built: 2021-04-03T21:12Z
 

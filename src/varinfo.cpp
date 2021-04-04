@@ -21,11 +21,11 @@ double var_info(IntegerVector m1, IntegerVector m2, NumericVector pop) {
         for (int j = 0; j < k; j++) {
             double jo = joint(i, j);
             if (jo < 1) continue;
-            varinf -= (jo / total_pop) * (2*log(jo) - log(p1[i]) - log(p2[j]));
+            varinf -= (jo / total_pop) * (2.0*log(jo) - log(p1[i]) - log(p2[j]));
         }
     }
 
-    if (abs(varinf) <= 1e-9)
+    if (std::fabs(varinf) <= 1e-9)
         varinf = 0;
     return varinf;
 }
@@ -44,6 +44,23 @@ NumericVector var_info_mat(IntegerMatrix m, int i, NumericVector pop) {
     NumericVector out(N);
     for (int j = 0; j < i; j++) {
         out[j] = var_info(m(_, i), m(_, j), pop);
+    }
+
+    return out;
+}
+
+/*
+ * `m` has rows = precincts, cols = plans
+ * `ref` is the plan we want to compute distances to
+ * `pop` is population of precincts
+ */
+// [[Rcpp::export]]
+NumericVector var_info_vec(IntegerMatrix m, IntegerVector ref, NumericVector pop) {
+    int N = m.ncol();
+
+    NumericVector out(N);
+    for (int j = 0; j < N; j++) {
+        out[j] = var_info(ref, m(_, j), pop);
     }
 
     return out;

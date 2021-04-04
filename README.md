@@ -1,39 +1,55 @@
-# redist: Simulation Methods for Legislative Redistricting
 
-<!-- badges: start --> 
-[![Build Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist)
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+# **redist**: Simulation Methods for Legislative Redistricting
+
+<!-- badges: start -->
+
+[![Build
+Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist)
 [![CRAN\_Status\_Badge](https://www.r-pkg.org/badges/version-last-release/redist)](https://cran.r-project.org/package=redist)
 ![CRAN downloads](http://cranlogs.r-pkg.org/badges/grand-total/redist)
 <!-- badges: end -->
 
-This R package enables researchers to sample redistricting plans from a pre-specified
-    target distribution using Sequential Monte Carlo and Markov Chain Monte Carlo
-    algorithms.  The package allows for the implementation of various constraints in
-    the redistricting process such as geographic compactness and population parity
-    requirements. Tools for analysis such as computation of various summary statistics
-    and plotting functionality are also included. The package implements methods
-    described in Fifield, Higgins, Imai and Tarr (2020) <doi: 10.1080/10618600.2020.1739532>,
-    Fifield, Imai, Kawahara, and Kenny (2020) <doi: 10.1080/2330443X.2020.1791773>,
-    and McCartan and Imai (2020) <arXiv: 2008.06131>.
+<img src="man/figures/map_photo.jpg" style="width: 100%" />
 
-Authors: 
- * [Ben Fifield](https://www.benfifield.com), <benfifield@gmail.com> (Maintainer) 
- * [Christopher T Kenny](https://www.christophertkenny.com), <christopherkenny@fas.harvard.edu> 
- * Cory McCartan, <cmccartan@g.harvard.edu> 
- * Alex Tarr, <atarr@princeton.edu> 
- * Jun Kawahara, <jkawahara@i.kyoto-u.ac.jp> 
- * [Kosuke Imai](https://imai.fas.harvard.edu), <imai@harvard.edu>
- 
+<img src="man/figures/logo.png" align="right" height=128 style="margin-left: 4px;" />
+
+This R package enables researchers to sample redistricting plans from a
+pre-specified target distribution using Sequential Monte Carlo and
+Markov Chain Monte Carlo algorithms. The package allows for the
+implementation of various constraints in the redistricting process such
+as geographic compactness and population parity requirements. Tools for
+analysis such as computation of various summary statistics and plotting
+functionality are also included.
+
+Authors:
+
+-   [Christopher T Kenny](https://www.christophertkenny.com),
+    <christopherkenny@fas.harvard.edu> (Maintainer)
+-   [Cory McCartan](https://corymccartan.github.io),
+    <cmccartan@g.harvard.edu>
+-   [Ben Fifield](https://www.benfifield.com), <benfifield@gmail.com>
+-   [Kosuke Imai](https://imai.fas.harvard.edu), <imai@harvard.edu>
+
 Contributors:
- * [Michael Higgins](http://www-personal.k-state.edu/~mikehiggins/), <mjh5@princeton.edu> 
+
+-   Jun Kawahara, <jkawahara@i.kyoto-u.ac.jp>
+-   Alex Tarr, <atarr@princeton.edu>
+-   [Michael Higgins](http://www-personal.k-state.edu/~mikehiggins/),
+    <mjh5@princeton.edu>
 
 Papers:
-  * [Automated Redistricting Simulation Using Markov Chain Monte
-Carlo](https://doi.org/10.1080/10618600.2020.1739532) *Journal of Computational and Graphical Statistics*
-  * [The Essential Role of Empirical Validation in Legislative Redistricting
-Simulation](https://doi.org/10.1080/2330443X.2020.1791773) *Statistics and Public Policy*  Vol. 7, No. 1, pp. 52-68.
-  * [Sequential Monte Carlo for Sampling Balanced and Compact Redistricting
-Plans](https://arxiv.org/pdf/2008.06131.pdf)
+
+-   [Automated Redistricting Simulation Using Markov Chain Monte
+    Carlo](https://doi.org/10.1080/10618600.2020.1739532) *Journal of
+    Computational and Graphical Statistics*
+-   [The Essential Role of Empirical Validation in Legislative
+    Redistricting
+    Simulation](https://doi.org/10.1080/2330443X.2020.1791773)
+    *Statistics and Public Policy* Vol. 7, No. 1, pp. 52-68.
+-   [Sequential Monte Carlo for Sampling Balanced and Compact
+    Redistricting Plans](https://arxiv.org/pdf/2008.06131.pdf)
 
 ## Installation Instructions
 
@@ -44,242 +60,86 @@ install.packages("redist")
 ```
 
 You can also install the most recent development version of `redist`
-using the `devtools` package. First you have to install `devtools` using
-the following code. Note that you only have to do this once:
+using the \`remotes\`\` package.
 
 ``` r
-if(!require(devtools)) install.packages("devtools")
+if (!require(remotes)) install.packages("remotes")
+remotes::install_github("alarm-redist/redist", dependencies=TRUE)
 ```
 
-Then, load `devtools` and use the function `install_github()` to install
-`redist`:
+## Getting started
+
+A basic analysis has two steps. First, you define a redistricting plan
+using `redist_map`. Then you simulate plans using one of the algorithm
+functions: `redist_smc`, `redist_flip`, and `redist_mergesplit`.
 
 ``` r
-library(devtools)
-install_github("kosukeimai/redist",dependencies=TRUE)
-```
-
-# Usage Examples - 25 Precincts into 3 Districts
-
-## No Population Constraint
-
-``` r
-## Load data
 library(redist)
-data(algdat.pfull)
+library(dplyr)
 
-## Run the simulations
-mcmc.out <- redist.mcmc(adjobj = algdat.pfull$adjlist,
-                        popvec = algdat.pfull$precinct.data$pop,
-                        nsims = 10000,
-                        ndists = 3)
+data(iowa)
+
+# set a 0.01% population constraint
+iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.0001, total_pop = pop)
+# simulate 250 plans using the SMC algorithm
+iowa_plans = redist_smc(iowa_map, nsims=250, verbose=FALSE)
+#> SEQUENTIAL MONTE CARLO
+#> Sampling 250 99-unit maps with 4 districts and population between 761513 and 761665.
+#> Making split 1 of 3
+#> Note: maximum hit; falling back to naive k estimator.
+#> Resampling effective sample size: 246.1 (98.4% efficiency).
+#> Making split 2 of 3
+#> Resampling effective sample size: 245.7 (98.3% efficiency).
+#> Making split 3 of 3
+#> Resampling effective sample size: 246.7 (98.7% efficiency).
 ```
 
-## 20% Population Constraint
+After generating plans, you can use `redist`’s plotting functions to
+study the geographic and partisan characteristics of the simulated
+ensemble.
 
 ``` r
-## Load data
-data(algdat.p20)
+library(ggplot2)
+library(patchwork) # for plotting
 
-## -----------------------------------------------
-## Run mcmc algorithm - hard population constraint
-## (reject any sample where population parity > 20%)
-## -----------------------------------------------
-mcmc.out <- redist.mcmc(adjobj = algdat.p20$adjlist,
-                        popvec = algdat.p20$precinct.data$pop,
-                        nsims = 10000,
-                        popcons = .2,
-                        ndists = 3)
-
-## ---------------------------------------------------------------------
-## Run mcmc algorithm - draws from gibbs defined by distance from parity
-## (Run with no tempering)
-## ---------------------------------------------------------------------
-mcmc.out.gb <- redist.mcmc(adjobj = algdat.p20$adjlist,
-                           popvec = algdat.p20$precinct.data$pop,
-                           ndists = 3,
-                           nsims = 10000,
-                           constraint = "population",
-                           constraintweights = 5.4)
-## Reweight draws back to the uniform distribution
-mcmc.out.gb <- redist.ipw(mcmc.out.gb, targetpop = .2)
-
-## ---------------------------------------------------------------------
-## Run mcmc algorithm - draws from gibbs defined by distance from parity
-## (Run with simulated tempering, betas power law sequence of length 10
-## from 0 to 1)
-## Also including optional beta weights, to upweight prob of transitions
-## to colder temperatures
-## ---------------------------------------------------------------------
-betaweights <- rep(NA, 10); for(i in 1:10){betaweights[i] <- 2^i}
-mcmc.out.st <- redist.mcmc(adjobj = algdat.p20$adjlist,
-                           popvec = algdat.p20$precinct.data$pop,
-                           ndists = 3,
-                           nsims = 10000,
-                           constraint = "population",
-                           constraintweights = 5.4,
-                           temper = TRUE,
-                           betaweights = betaweights)
-mcmc.out.st <- redist.ipw(mcmc.out.st, targetpop = .2)
+redist.plot.plans(iowa_plans, draws=c("cd_2010", "1", "2", "3"),
+                  geom=iowa_map)
 ```
 
-## 20% Population Constraint and Compactness Constraint
+![](man/figures/README-readme-plot-1.png)<!-- -->
 
 ``` r
-## ----------------------------------------------------------
-## Constrain on population and compactness with tempering,
-## weight on population = 5.4 while weight on compactness = 3
-## Also specifying argument for ssdmat, the distance matrix
-## ----------------------------------------------------------
-mcmc.out.st.multiple <- redist.mcmc(adjobj = algdat.p20$adjlist,
-                                    popvec = algdat.p20$precinct.data$pop,
-                                    ndists = 3,
-                                    nsims = 10000,
-                                    constraint = c("population", "compact"),
-                                    constraintweights = c(5.4, 3),
-                                    ssdmat = algdat.p20$distancemat,
-                                    temper = TRUE,
-                                    betaweights = betaweights)
-mcmc.out.st <- redist.ipw(mcmc.out.st.multiple, targetpop = .2)
+dev_comp = iowa_plans %>%
+    mutate(comp = distr_compactness(iowa_map)) %>%
+    group_by(draw) %>%
+    summarize(`Population deviation` = max(abs(total_pop/get_target(iowa_map) - 1)),
+              Compactness = comp[1])
+
+hist(dev_comp, `Population deviation`) + hist(dev_comp, Compactness) +
+    plot_layout(guides="collect") +
+    plot_annotation(title="Simulated plan characteristics")
 ```
 
-## 20% Population Constraint and Compactness Constraint, using MPI
+![](man/figures/README-readme-plot-2.png)<!-- -->
 
 ``` r
-## ----------------------------------------------------------
-## Constrain on population and compactness with parallel tempering,
-## weight on population = 5.4 while weight on compactness = 3
-## Also specifying argument for ssdmat, the distance matrix.
-## In addition, specifying a 20-beta tempering ladder.
-## Save file as "redist_mpi.RData"
-## ----------------------------------------------------------
-redist.mcmc.mpi(
-  adjobj = algdat.p20$adjlist,
-  popvec = algdat.p20$precinct.data$pop,
-  ndists = 3,
-  nsims = 10000,
-  constraint = c("population", "compact"),
-  constraintweights = c(5.4, 3),
-  ssdmat = algdat.p20$distancemat,
-  betaseqlength = 20,
-  savename = "redist_mpi",
-  verbose = TRUE
-)
-
-## Note that reweighting using redist.ipw() currently
-## has to happen in a separate analysis file after
-## redist.mcmc.mpi() is run and the output file is saved. 
-## We will change this in a future release to run the 
-## inverse probability reweighting inside of
-## redist.mcmc.mpi().
+redist.plot.scatter(dev_comp, `Population deviation`, Compactness) +
+    labs(title="Population deviation and compactness by plan")
 ```
 
-### A Sample slurm Script for Submitting MPI Jobs
-
-``` bash
-## ----------------------------------------------------------
-## Sample slurm script for submitting an R script using 
-## redist.mcmc.mpi(). Set ntasks equal to the length of the
-## beta sequence ladder plus one extra core.
-## ----------------------------------------------------------
-
-#!/usr/bin/env bash
-#SBATCH --ntasks=21
-#SBATCH --cpus-per-task=1
-#SBATCH -t 02:00:00
-#SBATCH -J [jobname here]
-#SBATCH -o log.%j
-#SBATCH --mail-type=begin
-#SBATCH --mail-type=end
-
-echo '-------------------------------'
-cd ${SLURM_SUBMIT_DIR}
-echo ${SLURM_SUBMIT_DIR}
-echo Running on host $(hostname)
-echo Time is $(date)
-echo SLURM_NODES are $(echo ${SLURM_NODELIST})
-echo '-------------------------------'
-echo -e '\n\n'
-
-mpiexec -np 1 R --no-save < [scriptname here].R
-```
-
-## 20% Population Constraint and Compactness Constraint, using Annealing
+![](man/figures/README-readme-plot-3.png)<!-- -->
 
 ``` r
-## ----------------------------------------------------------
-## Constrain on population and compactness with annealing,
-## weight on population = 5.4 while weight on compactness = 3
-## Also specifying argument for ssdmat, the distance matrix.
-## In addition, specifying a 20-beta tempering ladder.
-## Save file as "redist_anneal_[t].RData", where t is the
-## SLURM array number. 
-## 
-## In addition, we no longer specify a "sims" argument. 
-## This temperature schedule involves simulating at the "hot"
-## temperature (beta = 0) for 500 steps ("num_hot_steps"),
-## then taking a linear annealing temperature schedule for
-## 2000 steps ("num_annealing_steps"), and finally simulating
-## at the cold temperature (beta = 1) for 500 steps ("num_cold_steps").
-## Finally, we take the last draw of the algorithm and store it as output.
-## ----------------------------------------------------------
-
-t <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
-
-redist.mcmc.anneal(
-  adjobj = algdat.p20$adjlist,
-  popvec = algdat.p20$precinct.data$pop,
-  ndists = 3,
-  num_hot_steps = 500, num_annealing_steps = 2000, num_cold_steps = 500,
-  constraint = c("population", "compact"),
-  constraintweights = c(5.4, 3),
-  ssdmat = algdat.p20$distancemat,
-  savename = paste0("redist_anneal_", t)
-)
-
-## ----------------------------------------------------
-## Note that reweighting using redist.ipw() currently
-## has to happen in a separate analysis file after
-## redist.mcmc.anneal() is run and the output file is saved. 
-## Below is sample code for combining multiple runs of
-## redist.mcmc.anneal() back together, which should be run 
-## in a separate script. We can then run redist.ipw()
-## on the combined simulations.
-## ----------------------------------------------------
-setwd("[directory with files]")
-algout <- redist.combine.anneal("redist_anneal_")
-algout_rw <- redist.ipw(algout, targetpop = .2)
+iowa_plans %>%
+    mutate(`Democratic vote` = group_frac(iowa_map, dem_08, tot_08)) %>%
+    plot(`Democratic vote`, size=0.5, color_thresh=0.5) +
+    scale_color_manual(values=c("tomato2", "dodgerblue")) +
+    labs(title="Democratic vote share by district")
 ```
 
-### A Sample slurm Script for Submitting Annealing Jobs
+![](man/figures/README-readme-plot-4.png)<!-- -->
 
-``` bash
-## ----------------------------------------------------------
-## Sample slurm script for submitting an R script using 
-## redist.mcmc.anneal(). Set array equal to the number
-## of desired draws, although your slurm setup may cap
-## the number of array jobs you can run at once. Here,
-## we are requesting 1000 simulations.
-## ----------------------------------------------------------
-
-#!/usr/bin/env bash
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=1
-#SBATCH -t 02:00:00
-#SBATCH -J [jobname here]
-#SBATCH -o log.%j
-#SBATCH --mail-type=begin
-#SBATCH --mail-type=end
-#SBATCH --array=1-1000
-
-echo '-------------------------------'
-cd ${SLURM_SUBMIT_DIR}
-echo ${SLURM_SUBMIT_DIR}
-echo Running on host $(hostname)
-echo Time is $(date)
-echo SLURM_NODES are $(echo ${SLURM_NODELIST})
-echo '-------------------------------'
-echo -e '\n\n'
-
-srun Rscript ../[scriptname here].R
-```
+A more detailed introduction to redistricting methods and the package
+can be found in the [Get Started](articles/redist.html) page. The
+package [vignettes](articles/) contain more detailed information and
+guides to specific workflows.

@@ -36,58 +36,54 @@
 #'
 #' @examples
 #' \dontrun{
-#' data(algdat.pfull)
+#' data(fl25)
+#' data(fl25_enum)
+#' data(fl25_adj)
 #'
 #' ## Get an initial partition
-#' set.seed(1)
-#' initcds <- algdat.pfull$cdmat[,sample(1:ncol(algdat.pfull$cdmat), 1)]
+#' init_plan <- fl25_enum$plans[, 5118]
 #'
 #' ## 25 precinct, three districts - no pop constraint ##
-#' alg_253 <- redist.mcmc(adjobj = algdat.pfull$adjlist,
-#' popvec = algdat.pfull$precinct.data$pop,
-#' initcds = initcds,nsims = 10000)
+#' alg_253 <- redist.mcmc(adj = fl25_adj, popvec = fl25$pop,
+#'                        initcds = init_plan, nsims = 10000)
 #'
 #' ## Get Republican Dissimilarity Index from simulations
-#' rep_dmi_253 <- redist.segcalc(alg_253,
-#' algdat.pfull$precinct.data$repvote,
-#' algdat.pfull$precinct.data$pop)
+#' rep_dmi_253 <- redist.segcalc(alg_253, fl25$mccain, fl25$pop)
 #'
 #' ## Generate diagnostic plots
 #' redist.diagplot(rep_dmi_253, plot = "trace")
 #' redist.diagplot(rep_dmi_253, plot = "autocorr")
 #' redist.diagplot(rep_dmi_253, plot = "densplot")
 #' redist.diagplot(rep_dmi_253, plot = "mean")
-#' 
+#'
 #' ## Gelman Rubin needs two chains, so we run a second
-#' alg_253_2 <- redist.mcmc(adjobj = algdat.pfull$adjlist,
-#' popvec = algdat.pfull$precinct.data$pop,
-#' initcds = initcds,nsims = 10000)
-#' 
-#' rep_dmi_253_2 <- redist.segcalc(alg_253_2,
-#' algdat.pfull$precinct.data$repvote,
-#' algdat.pfull$precinct.data$pop)
-#' 
+#' alg_253_2 <- redist.mcmc(adjobj = fl25_adj,
+#' popvec = fl25$pop,
+#' initcds = init_plan, nsims = 10000)
+#'
+#' rep_dmi_253_2 <- redist.segcalc(alg_253_2, fl25$mccain, fl25$pop)
+#'
 #' ## Make a list out of the objects:
 #' rep_dmi_253_list <- list(rep_dmi_253, rep_dmi_253_2)
-#' 
-#' 
+#'
 #' ## Generate Gelman Rubin diagnostic plot
 #' redist.diagplot(sumstat = rep_dmi_253_list, plot = 'gelmanrubin')
 #' }
+#' @concept plot
 #' @export
 redist.diagplot <- function(sumstat,
                             plot = c("trace", "autocorr", "densplot",
                                      "mean", "gelmanrubin"),
                             logit = FALSE, savename = NULL
 ){
-  
+
   ##############
   ## Warnings ##
   ##############
   if(missing(sumstat)){
     stop("Please provide a vector or list of summary statistics to the function")
   }
-  if(!(class(sumstat) %in% c("numeric", "list", "mcmc", "mcmc.list"))){
+  if(!(class(sumstat) %in% c('integer', "numeric", "list", "mcmc", "mcmc.list"))){
     stop("Please provide either a numeric vector, list, or mcmc object")
   }
   if(!(plot %in% c("trace", "autocorr", "densplot",
@@ -97,7 +93,7 @@ redist.diagplot <- function(sumstat,
   if(plot == "gelmanrubin" & !(class(sumstat) %in% c("list", "mcmc.list"))){
     stop("If generating a Gelman-Rubin plot, please provide an object of class list or mcmc.list")
   }
-  
+
   ########################
   ## Create mcmc object ##
   ########################
@@ -106,12 +102,12 @@ redist.diagplot <- function(sumstat,
   }else if(class(sumstat) == "list"){
     for(i in 1:length(sumstat)){
       sumstat[[i]] <- mcmc(sumstat[[i]])
-    }       
+    }
     segout <- mcmc.list(sumstat)
   }else if(class(sumstat) %in% c("mcmc", "mcmc.list")){
     segout <- sumstat
   }
-  
+
   ## Logit transform
   if(logit){
     if(class(segout) == "mcmc"){
@@ -122,7 +118,7 @@ redist.diagplot <- function(sumstat,
       }
     }
   }
-  
+
   ##################
   ## Create plots ##
   ##################
@@ -171,5 +167,5 @@ redist.diagplot <- function(sumstat,
       dev.off()
     }
   }
-  
+
 }

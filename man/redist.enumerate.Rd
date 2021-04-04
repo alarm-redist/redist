@@ -4,17 +4,26 @@
 \alias{redist.enumerate}
 \title{Exact Redistricting Plan Enumerator}
 \usage{
-redist.enumerate(adjobj,
-ndists = 2, popvec = NULL, nconstraintlow = NULL,
-nconstrainthigh = NULL, popcons = NULL, contiguitymap = "rooks")
+redist.enumerate(
+  adj,
+  ndists = 2,
+  total_pop = NULL,
+  nconstraintlow = NULL,
+  nconstrainthigh = NULL,
+  pop_tol = NULL,
+  adjobj,
+  popvec,
+  popcons,
+  contiguitymap = "rooks"
+)
 }
 \arguments{
-\item{adjobj}{An adjacency list, matrix, or object of class
+\item{adj}{An adjacency list, matrix, or object of class
 \code{SpatialPolygonsDataFrame}.}
 
 \item{ndists}{The desired number of congressional districts. The default is 2.}
 
-\item{popvec}{A vector of geographic unit populations. The default is
+\item{total_pop}{A vector of geographic unit populations. The default is
 \code{NULL}.}
 
 \item{nconstraintlow}{Lower bound for number of geographic units to include in
@@ -23,7 +32,17 @@ a district. The default is \code{NULL}.}
 \item{nconstrainthigh}{Lower bound for number of geographic units to include
 in a district. The default is \code{NULL}.}
 
-\item{popcons}{The strength of the hard population constraint.
+\item{pop_tol}{The strength of the hard population constraint.
+\code{pop_tol} = 0.05 means that any proposed swap that brings a district more
+than 5\% away from population parity will be rejected. The default is
+\code{NULL}.}
+
+\item{adjobj}{Deprecated, use adj. An adjacency list, matrix, or object of class
+\code{SpatialPolygonsDataFrame}.}
+
+\item{popvec}{Deprecated, use total_pop. A vector of geographic unit populations.}
+
+\item{popcons}{Deprecated, use pop_tol. The strength of the hard population constraint.
 \code{popcons} = 0.05 means that any proposed swap that brings a district more
 than 5\% away from population parity will be rejected. The default is
 \code{NULL}.}
@@ -40,7 +59,7 @@ the first geographic unit.
 \description{
 \code{redist.enumerate} uses a spanning-tree method to fully enumerate all
 valid redistricting plans with $n$ districts given a set of geographic units.
-\code{redist.enumerate} also allows suers to implement minimum and maximum
+\code{redist.enumerate} also allows users to implement minimum and maximum
 numbers of geographic units per district, as well as population parity
 requirements.
 }
@@ -55,8 +74,8 @@ intractable, necessitating the use of the MCMC-based methods implemented in
 }
 \examples{
 \dontrun{
-data(algdat.pfull)
-test <- redist.enumerate(adjobj = algdat.pfull$adjlist)
+data(fl25_adj)
+test <- redist.enumerate(adj = fl25_adj)
 }
 }
 \references{
@@ -65,3 +84,4 @@ Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte
 Carlo." Working Paper. Available at
 \url{http://imai.princeton.edu/research/files/redist.pdf}.
 }
+\concept{enumerate}

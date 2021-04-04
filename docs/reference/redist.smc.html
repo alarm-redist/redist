@@ -19,8 +19,8 @@
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/yeti/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous" />
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
 
@@ -83,7 +83,7 @@ boundary constraints." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
       </span>
     </div>
 
@@ -96,6 +96,9 @@ boundary constraints." />
   </a>
 </li>
 <li>
+  <a href="../articles/redist.html">Get started</a>
+</li>
+<li>
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
@@ -106,9 +109,21 @@ boundary constraints." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
+      <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
+    </li>
+    <li>
+      <a href="../articles/mcmc.html">Redistricting with MCMC and RSG</a>
+    </li>
+    <li>
+      <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
+    </li>
+    <li>
+      <a href="../articles/tidy-redist.html">Tidy `redist`</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -144,34 +159,57 @@ boundary constraints.</p>
     </div>
 
     <pre class="usage"><span class='fu'>redist.smc</span><span class='op'>(</span>
+<<<<<<< HEAD
+  <span class='va'>adj</span>,
+  <span class='va'>total_pop</span>,
+  <span class='va'>nsims</span>,
+  <span class='va'>ndists</span>,
+  counties <span class='op'>=</span> <span class='cn'>NULL</span>,
+  pop_tol <span class='op'>=</span> <span class='fl'>0.01</span>,
+  pop_bounds <span class='op'>=</span> <span class='cn'>NULL</span>,
+=======
   <span class='va'>adjobj</span>,
   <span class='va'>popvec</span>,
   <span class='va'>nsims</span>,
   <span class='va'>ndists</span>,
   counties <span class='op'>=</span> <span class='cn'>NULL</span>,
   popcons <span class='op'>=</span> <span class='fl'>0.01</span>,
+>>>>>>> base/master
   compactness <span class='op'>=</span> <span class='fl'>1</span>,
   constraints <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='op'>)</span>,
   resample <span class='op'>=</span> <span class='cn'>TRUE</span>,
   constraint_fn <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>m</span><span class='op'>)</span> <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fl'>0</span>, <span class='fu'><a href='https://rdrr.io/r/base/nrow.html'>ncol</a></span><span class='op'>(</span><span class='va'>m</span><span class='op'>)</span><span class='op'>)</span>,
+<<<<<<< HEAD
+  adapt_k_thresh <span class='op'>=</span> <span class='fl'>0.975</span>,
+  seq_alpha <span class='op'>=</span> <span class='fl'>0.2</span> <span class='op'>+</span> <span class='fl'>0.2</span> <span class='op'>*</span> <span class='va'>compactness</span>,
+  truncate <span class='op'>=</span> <span class='op'>(</span><span class='va'>compactness</span> <span class='op'>!=</span> <span class='fl'>1</span><span class='op'>)</span>,
+  trunc_fn <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span> <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>pmin</a></span><span class='op'>(</span><span class='va'>x</span>, <span class='fl'>0.01</span> <span class='op'>*</span> <span class='va'>nsims</span><span class='op'>^</span><span class='fl'>0.4</span><span class='op'>)</span>,
+  pop_temper <span class='op'>=</span> <span class='fl'>0</span>,
+  verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  silent <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  <span class='va'>adjobj</span>,
+  <span class='va'>popvec</span>,
+  <span class='va'>popcons</span>
+=======
   adapt_k_thresh <span class='op'>=</span> <span class='fl'>0.95</span>,
   seq_alpha <span class='op'>=</span> <span class='fl'>0.1</span> <span class='op'>+</span> <span class='fl'>0.2</span> <span class='op'>*</span> <span class='va'>compactness</span>,
   truncate <span class='op'>=</span> <span class='op'>(</span><span class='va'>compactness</span> <span class='op'>!=</span> <span class='fl'>1</span><span class='op'>)</span>,
   trunc_fn <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span> <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>pmin</a></span><span class='op'>(</span><span class='va'>x</span>, <span class='fl'>0.01</span> <span class='op'>*</span> <span class='va'>nsims</span><span class='op'>^</span><span class='fl'>0.4</span><span class='op'>)</span>,
   verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
   silent <span class='op'>=</span> <span class='cn'>FALSE</span>
+>>>>>>> base/master
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>adjobj</th>
+      <th>adj</th>
       <td><p>An adjacency matrix, list, or object of class
 "SpatialPolygonsDataFrame."</p></td>
     </tr>
     <tr>
-      <th>popvec</th>
+      <th>total_pop</th>
       <td><p>A vector containing the populations of each geographic unit.</p></td>
     </tr>
     <tr>
@@ -191,11 +229,18 @@ maps which split up to <code>ndists-1</code> counties.  If no county-split
 constraint is desired, this parameter should be left blank.</p></td>
     </tr>
     <tr>
-      <th>popcons</th>
+      <th>pop_tol</th>
       <td><p>The desired population constraint.  All sampled districts
 will have a deviation from the target district size no more than this value
-in percentage terms, i.e., <code>popcons=0.01</code> will ensure districts have
+in percentage terms, i.e., <code>pop_tol=0.01</code> will ensure districts have
 populations within 1% of the target population.</p></td>
+    </tr>
+    <tr>
+      <th>pop_bounds</th>
+      <td><p>A numeric vector with three elements <code><a href='https://rdrr.io/r/base/c.html'>c(lower, target, upper)</a></code>
+providing more precise population bounds for the algorithm. Districts
+will have population between <code>lower</code> and <code>upper</code>, with a goal of
+<code>target</code>.  If set, overrides <code>popcons</code>.</p></td>
     </tr>
     <tr>
       <th>compactness</th>
@@ -244,6 +289,10 @@ final step by <code>trunc_fn</code>.  Recommended if <code>compactness</code> is
 a truncated vector. Recommended to specify this manually if truncating weights.</p></td>
     </tr>
     <tr>
+      <th>pop_temper</th>
+      <td><p>The strength of the automatic population tempering.</p></td>
+    </tr>
+    <tr>
       <th>verbose</th>
       <td><p>Whether to print out intermediate information while sampling.
 Recommended.</p></td>
@@ -251,6 +300,22 @@ Recommended.</p></td>
     <tr>
       <th>silent</th>
       <td><p>Whether to supress all diagnostic information.</p></td>
+    </tr>
+    <tr>
+      <th>adjobj</th>
+      <td><p>Deprecated, use adj. An adjacency matrix, list, or object of class
+"SpatialPolygonsDataFrame."</p></td>
+    </tr>
+    <tr>
+      <th>popvec</th>
+      <td><p>Deprecated, use total_pop. A vector containing the populations of each geographic unit.</p></td>
+    </tr>
+    <tr>
+      <th>popcons</th>
+      <td><p>The desired population constraint.  All sampled districts
+will have a deviation from the target district size no more than this value
+in percentage terms, i.e., <code>popcons=0.01</code> will ensure districts have
+populations within 1% of the target population.</p></td>
     </tr>
     </table>
 
@@ -268,7 +333,7 @@ and each column is a sample.</p></dd>
 <dt>compactness</dt><dd><p>The compactness constraint.</p></dd>
 <dt>counties</dt><dd><p>The computed constraint options list (see above).</p></dd>
 <dt>maxdev</dt><dd><p>The maximum population deviation of each sample.</p></dd>
-<dt>popvec</dt><dd><p>The provided vector of unit populations.</p></dd>
+<dt>total_pop</dt><dd><p>The provided vector of unit populations.</p></dd>
 <dt>counties</dt><dd><p>The provided county vector.</p></dd>
 <dt>adapt_k_thresh</dt><dd><p>The provided control parameter.</p></dd>
 <dt>seq_alpha</dt><dd><p>The provided control vector.</p></dd>
@@ -277,8 +342,14 @@ and each column is a sample.</p></dd>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>This function draws nearly-independent samples from a specific target measure,
-controlled by the <code>popcons</code>, <code>compactness</code>, <code>constraints</code>, and
+controlled by the <code>pop_tol</code>, <code>compactness</code>, <code>constraints</code>, and
 <code>constraint_fn</code> parameters.</p>
+<p>Key to ensuring good performance is monitoring the efficiency of the resampling
+process at each SMC stage.  Unless <code>silent=F</code>, this function will print
+out the effective sample size of each resampling step to allow the user to
+monitor the efficiency.  If <code>verbose=T</code> the function will also print
+out information on the \(k_i\) values automatically chosen and the
+acceptance rate (based on the population constraint) at each step.</p>
 <p>Higher values of <code>compactness</code> sample more compact districts;
 setting this parameter to 1 is computationally efficient and generates nicely
 compact districts.  Values of other than 1 may lead to highly variable
@@ -286,7 +357,7 @@ importance sampling weights.  By default these weights are truncated at
 <code>nsims^0.04 / 100</code> to stabilize the resulting estimates, but if truncation
 is used, a specific truncation function should probably be chosen by the user.</p>
 <p>The <code>constraints</code> parameter allows the user to apply several common
-redistricting contraints without implementing them by hand. This parameter
+redistricting constraints without implementing them by hand. This parameter
 is a list, which may contain any of the following named entries:</p><ul>
 <li><p><code>status_quo</code>: a list with two entries:</p><ul>
 <li><p><code>strength</code>, a number controlling the tendency of the generated districts
@@ -295,17 +366,12 @@ districts.</p></li>
 <li><p><code>current</code>, a vector containing district assignments for
 the current map.</p></li>
 </ul></li>
-<li><p><code>vra</code>: a list with five entries:</p><ul>
+<li><p><code>vra</code>: a list with three entries:</p><ul>
 <li><p><code>strength</code>, a number controlling the strength of the Voting Rights Act
 (VRA) constraint, with higher values prioritizing majority-minority districts
 over other considerations.</p></li>
-<li><p><code>tgt_vra_min</code>, the target percentage of minority voters in minority
-copportunity districts. Defaults to 0.55.</p></li>
-<li><p><code>tgt_vra_other</code> The target percentage of minority voters in other
-districts. Defaults to 0.25, but should be set to reflect the total minority
-population in the state.</p></li>
-<li><p><code>pow_vra</code>, which controls the allowed deviation from the target
-minority percentage; higher values are more tolerant. Defaults to 1.5</p></li>
+<li><p><code>tgts_min</code>, the target percentage(s) of minority voters in minority
+opportunity districts. Defaults to <code><a href='https://rdrr.io/r/base/c.html'>c(0.55)</a></code>.</p></li>
 <li><p><code>min_pop</code>, A vector containing the minority population of each
 geographic unit.</p></li>
 </ul></li>
@@ -315,8 +381,38 @@ to avoid pairing up incumbents.</p></li>
 <li><p><code>incumbents</code>, a vector of precinct indices, one for each incumbent's
 home address.</p></li>
 </ul></li>
+<li><p><code>vra_old</code>: a list with five entries, which may be set up using
+<code><a href='redist.constraint.helper.html'>redist.constraint.helper</a></code>:</p><ul>
+<li><p><code>strength</code>, a number controlling the strength of the Voting Rights Act
+(VRA) constraint, with higher values prioritizing majority-minority districts
+over other considerations.</p></li>
+<li><p><code>tgt_vra_min</code>, the target percentage of minority voters in minority
+opportunity districts. Defaults to 0.55.</p></li>
+<li><p><code>tgt_vra_other</code> The target percentage of minority voters in other
+districts. Defaults to 0.25, but should be set to reflect the total minority
+population in the state.</p></li>
+<li><p><code>pow_vra</code>, which controls the allowed deviation from the target
+minority percentage; higher values are more tolerant. Defaults to 1.5</p></li>
+<li><p><code>min_pop</code>, A vector containing the minority population of each
+geographic unit.</p></li>
+</ul></li>
 </ul>
 
+<p>All constraints are fed into a Gibbs measure, with coefficients on each
+constraint set by the corresponding <code>strength</code> parameters.
+The <code>status_quo</code> constraint adds a term measuring the variation of
+information distance between the plan and the reference, rescaled to [0, 1].
+The <code>vra</code> constraint takes a list of target minority percentages. It
+matches each district to its nearest target percentage, and then applies a
+penalty of the form \(\sqrt{max(0, tgt - minpct)}\), summing across
+districts. This penalizes districts which are below their target population.
+The <code>incumbency</code> constraint adds a term counting the number of districts
+containing paired-up incumbents.
+The <code>vra_old</code> constraint adds a term of the form
+\((|tgtvramin-minpct||tgtvraother-minpct|)^{powvra})\), which
+encourages districts to have minority percentages near either <code>tgt_vra_min</code>
+or <code>tgt_vra_other</code>. This can be visualized with
+<code><a href='redist.plot.penalty.html'>redist.plot.penalty</a></code>.</p>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
     <p>McCartan, C., &amp; Imai, K. (2020). Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans.
@@ -324,6 +420,19 @@ Available at <a href='https://imai.fas.harvard.edu/research/files/SMCredist.pdf'
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<<<<<<< HEAD
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_adj</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_enum</span><span class='op'>)</span>
+
+<span class='va'>sampled_basic</span> <span class='op'>=</span> <span class='fu'>redist.smc</span><span class='op'>(</span><span class='va'>fl25_adj</span>, <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>,
+                           nsims<span class='op'>=</span><span class='fl'>10000</span>, ndists<span class='op'>=</span><span class='fl'>3</span>, pop_tol<span class='op'>=</span><span class='fl'>0.1</span><span class='op'>)</span>
+
+<span class='va'>sampled_constr</span> <span class='op'>=</span> <span class='fu'>redist.smc</span><span class='op'>(</span><span class='va'>fl25_adj</span>, <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>,
+                            nsims<span class='op'>=</span><span class='fl'>10000</span>, ndists<span class='op'>=</span><span class='fl'>3</span>, pop_tol<span class='op'>=</span><span class='fl'>0.1</span>,
+                            constraints<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>
+                                status_quo <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>strength<span class='op'>=</span><span class='fl'>10</span>, current<span class='op'>=</span><span class='va'>fl25_enum</span><span class='op'>$</span><span class='va'>plans</span><span class='op'>[</span>,<span class='fl'>5118</span><span class='op'>]</span><span class='op'>)</span>,
+=======
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>algdat.p10</span><span class='op'>)</span>
 <span class='va'>sampled_basic</span> <span class='op'>=</span> <span class='fu'>redist.smc</span><span class='op'>(</span><span class='va'>algdat.p10</span><span class='op'>$</span><span class='va'>adjlist</span>, <span class='va'>algdat.p10</span><span class='op'>$</span><span class='va'>precinct.data</span><span class='op'>$</span><span class='va'>pop</span>,
                            nsims<span class='op'>=</span><span class='fl'>10000</span>, ndists<span class='op'>=</span><span class='fl'>3</span>, popcons<span class='op'>=</span><span class='fl'>0.1</span><span class='op'>)</span>
@@ -332,6 +441,7 @@ Available at <a href='https://imai.fas.harvard.edu/research/files/SMCredist.pdf'
                             nsims<span class='op'>=</span><span class='fl'>10000</span>, ndists<span class='op'>=</span><span class='fl'>3</span>, popcons<span class='op'>=</span><span class='fl'>0.1</span>,
                             constraints<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>
                                 status_quo <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>strength<span class='op'>=</span><span class='fl'>10</span>, current<span class='op'>=</span><span class='va'>algdat.p10</span><span class='op'>$</span><span class='va'>cdmat</span><span class='op'>[</span>,<span class='fl'>1234</span><span class='op'>]</span><span class='op'>)</span>,
+>>>>>>> base/master
                                 incumbency <span class='op'>=</span> <span class='fu'>lsit</span><span class='op'>(</span>strength<span class='op'>=</span><span class='fl'>1000</span>, incumbents<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>6</span>, <span class='fl'>25</span><span class='op'>)</span><span class='op'>)</span>
                             <span class='op'>)</span><span class='op'>)</span>
 <span class='op'>}</span>

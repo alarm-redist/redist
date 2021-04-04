@@ -3,11 +3,105 @@
 
 #include "redist_types.h"
 #include <RcppArmadillo.h>
-#include <RcppEigen.h>
 #include <Rcpp.h>
 
 using namespace Rcpp;
 
+// reduce_adj
+List reduce_adj(List adj_list, IntegerVector prec_map, int n_keep);
+RcppExport SEXP _redist_reduce_adj(SEXP adj_listSEXP, SEXP prec_mapSEXP, SEXP n_keepSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type adj_list(adj_listSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type prec_map(prec_mapSEXP);
+    Rcpp::traits::input_parameter< int >::type n_keep(n_keepSEXP);
+    rcpp_result_gen = Rcpp::wrap(reduce_adj(adj_list, prec_map, n_keep));
+    return rcpp_result_gen;
+END_RCPP
+}
+// collapse_adj
+Graph collapse_adj(List graph, const arma::uvec& idxs);
+RcppExport SEXP _redist_collapse_adj(SEXP graphSEXP, SEXP idxsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type graph(graphSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type idxs(idxsSEXP);
+    rcpp_result_gen = Rcpp::wrap(collapse_adj(graph, idxs));
+    return rcpp_result_gen;
+END_RCPP
+}
+// coarsen_adjacency
+List coarsen_adjacency(List adj, IntegerVector groups);
+RcppExport SEXP _redist_coarsen_adjacency(SEXP adjSEXP, SEXP groupsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type adj(adjSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type groups(groupsSEXP);
+    rcpp_result_gen = Rcpp::wrap(coarsen_adjacency(adj, groups));
+    return rcpp_result_gen;
+END_RCPP
+}
+// color_graph
+IntegerVector color_graph(List l, IntegerVector plan);
+RcppExport SEXP _redist_color_graph(SEXP lSEXP, SEXP planSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type l(lSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type plan(planSEXP);
+    rcpp_result_gen = Rcpp::wrap(color_graph(l, plan));
+    return rcpp_result_gen;
+END_RCPP
+}
+// polsbypopper
+NumericMatrix polsbypopper(IntegerVector from, IntegerVector to, NumericVector area, NumericVector perimeter, IntegerMatrix dm, int nd);
+RcppExport SEXP _redist_polsbypopper(SEXP fromSEXP, SEXP toSEXP, SEXP areaSEXP, SEXP perimeterSEXP, SEXP dmSEXP, SEXP ndSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type from(fromSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type to(toSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type area(areaSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type perimeter(perimeterSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type dm(dmSEXP);
+    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
+    rcpp_result_gen = Rcpp::wrap(polsbypopper(from, to, area, perimeter, dm, nd));
+    return rcpp_result_gen;
+END_RCPP
+}
+// schwartzberg
+NumericMatrix schwartzberg(IntegerVector from, IntegerVector to, NumericVector area, NumericVector perimeter, IntegerMatrix dm, int nd);
+RcppExport SEXP _redist_schwartzberg(SEXP fromSEXP, SEXP toSEXP, SEXP areaSEXP, SEXP perimeterSEXP, SEXP dmSEXP, SEXP ndSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type from(fromSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type to(toSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type area(areaSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type perimeter(perimeterSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type dm(dmSEXP);
+    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
+    rcpp_result_gen = Rcpp::wrap(schwartzberg(from, to, area, perimeter, dm, nd));
+    return rcpp_result_gen;
+END_RCPP
+}
+// talisman
+NumericVector talisman(NumericMatrix dvs, double nd, double alpha, double beta);
+RcppExport SEXP _redist_talisman(SEXP dvsSEXP, SEXP ndSEXP, SEXP alphaSEXP, SEXP betaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type dvs(dvsSEXP);
+    Rcpp::traits::input_parameter< double >::type nd(ndSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< double >::type beta(betaSEXP);
+    rcpp_result_gen = Rcpp::wrap(talisman(dvs, nd, alpha, beta));
+    return rcpp_result_gen;
+END_RCPP
+}
 // genAlConn
 List genAlConn(List aList, NumericVector cds);
 RcppExport SEXP _redist_genAlConn(SEXP aListSEXP, SEXP cdsSEXP) {
@@ -29,6 +123,45 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< List >::type fullList(fullListSEXP);
     Rcpp::traits::input_parameter< List >::type conList(conListSEXP);
     rcpp_result_gen = Rcpp::wrap(findBoundary(fullList, conList));
+    return rcpp_result_gen;
+END_RCPP
+}
+// contiguity
+IntegerVector contiguity(List adj, IntegerVector group);
+RcppExport SEXP _redist_contiguity(SEXP adjSEXP, SEXP groupSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type adj(adjSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type group(groupSEXP);
+    rcpp_result_gen = Rcpp::wrap(contiguity(adj, group));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cores
+List cores(List adj, IntegerVector dm, int k, List cd_within_k);
+RcppExport SEXP _redist_cores(SEXP adjSEXP, SEXP dmSEXP, SEXP kSEXP, SEXP cd_within_kSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type adj(adjSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type dm(dmSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< List >::type cd_within_k(cd_within_kSEXP);
+    rcpp_result_gen = Rcpp::wrap(cores(adj, dm, k, cd_within_k));
+    return rcpp_result_gen;
+END_RCPP
+}
+// update_conncomp
+IntegerVector update_conncomp(IntegerVector dm, IntegerVector kvec, List adj);
+RcppExport SEXP _redist_update_conncomp(SEXP dmSEXP, SEXP kvecSEXP, SEXP adjSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type dm(dmSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type kvec(kvecSEXP);
+    Rcpp::traits::input_parameter< List >::type adj(adjSEXP);
+    rcpp_result_gen = Rcpp::wrap(update_conncomp(dm, kvec, adj));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -146,16 +279,128 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// group_pct_top_k
+NumericVector group_pct_top_k(const IntegerMatrix m, const NumericVector group_pop, const NumericVector total_pop, int k, int n_distr);
+RcppExport SEXP _redist_group_pct_top_k(SEXP mSEXP, SEXP group_popSEXP, SEXP total_popSEXP, SEXP kSEXP, SEXP n_distrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const IntegerMatrix >::type m(mSEXP);
+    Rcpp::traits::input_parameter< const NumericVector >::type group_pop(group_popSEXP);
+    Rcpp::traits::input_parameter< const NumericVector >::type total_pop(total_popSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
+    rcpp_result_gen = Rcpp::wrap(group_pct_top_k(m, group_pop, total_pop, k, n_distr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// colmax
+NumericVector colmax(const NumericMatrix x);
+RcppExport SEXP _redist_colmax(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const NumericMatrix >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(colmax(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// colmin
+NumericVector colmin(const NumericMatrix x);
+RcppExport SEXP _redist_colmin(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const NumericMatrix >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(colmin(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// prec_cooccur
+arma::mat prec_cooccur(arma::umat m, arma::uvec idxs);
+RcppExport SEXP _redist_prec_cooccur(SEXP mSEXP, SEXP idxsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::umat >::type m(mSEXP);
+    Rcpp::traits::input_parameter< arma::uvec >::type idxs(idxsSEXP);
+    rcpp_result_gen = Rcpp::wrap(prec_cooccur(m, idxs));
+    return rcpp_result_gen;
+END_RCPP
+}
+// group_pct
+NumericMatrix group_pct(arma::umat m, arma::vec group_pop, arma::vec total_pop, int n_distr);
+RcppExport SEXP _redist_group_pct(SEXP mSEXP, SEXP group_popSEXP, SEXP total_popSEXP, SEXP n_distrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::umat >::type m(mSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type group_pop(group_popSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type total_pop(total_popSEXP);
+    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
+    rcpp_result_gen = Rcpp::wrap(group_pct(m, group_pop, total_pop, n_distr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// pop_tally
+NumericMatrix pop_tally(IntegerMatrix districts, arma::vec pop, int n_distr);
+RcppExport SEXP _redist_pop_tally(SEXP districtsSEXP, SEXP popSEXP, SEXP n_distrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type districts(districtsSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
+    rcpp_result_gen = Rcpp::wrap(pop_tally(districts, pop, n_distr));
+    return rcpp_result_gen;
+END_RCPP
+}
 // max_dev
-NumericVector max_dev(const arma::umat& districts, const arma::uvec& pop, int n_distr);
+NumericVector max_dev(const IntegerMatrix districts, const arma::vec pop, int n_distr);
 RcppExport SEXP _redist_max_dev(SEXP districtsSEXP, SEXP popSEXP, SEXP n_distrSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::umat& >::type districts(districtsSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< const IntegerMatrix >::type districts(districtsSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type pop(popSEXP);
     Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
     rcpp_result_gen = Rcpp::wrap(max_dev(districts, pop, n_distr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ms_plans
+arma::umat ms_plans(int N, List l, const arma::uvec init, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double target, double lower, double upper, double rho, double beta_sq, const arma::uvec& current, int n_current, double beta_vra, double tgt_min, double tgt_other, double pow_vra, const arma::uvec& min_pop, double beta_vra_hinge, const arma::vec& tgts_min, double beta_inc, const arma::uvec& incumbents, double beta_splits, double thresh, int k, int verbosity);
+RcppExport SEXP _redist_ms_plans(SEXP NSEXP, SEXP lSEXP, SEXP initSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP beta_sqSEXP, SEXP currentSEXP, SEXP n_currentSEXP, SEXP beta_vraSEXP, SEXP tgt_minSEXP, SEXP tgt_otherSEXP, SEXP pow_vraSEXP, SEXP min_popSEXP, SEXP beta_vra_hingeSEXP, SEXP tgts_minSEXP, SEXP beta_incSEXP, SEXP incumbentsSEXP, SEXP beta_splitsSEXP, SEXP threshSEXP, SEXP kSEXP, SEXP verbositySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< List >::type l(lSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec >::type init(initSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
+    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< double >::type rho(rhoSEXP);
+    Rcpp::traits::input_parameter< double >::type beta_sq(beta_sqSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type current(currentSEXP);
+    Rcpp::traits::input_parameter< int >::type n_current(n_currentSEXP);
+    Rcpp::traits::input_parameter< double >::type beta_vra(beta_vraSEXP);
+    Rcpp::traits::input_parameter< double >::type tgt_min(tgt_minSEXP);
+    Rcpp::traits::input_parameter< double >::type tgt_other(tgt_otherSEXP);
+    Rcpp::traits::input_parameter< double >::type pow_vra(pow_vraSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type min_pop(min_popSEXP);
+    Rcpp::traits::input_parameter< double >::type beta_vra_hinge(beta_vra_hingeSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type tgts_min(tgts_minSEXP);
+    Rcpp::traits::input_parameter< double >::type beta_inc(beta_incSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type incumbents(incumbentsSEXP);
+    Rcpp::traits::input_parameter< double >::type beta_splits(beta_splitsSEXP);
+    Rcpp::traits::input_parameter< double >::type thresh(threshSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
+    rcpp_result_gen = Rcpp::wrap(ms_plans(N, l, init, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_vra_hinge, tgts_min, beta_inc, incumbents, beta_splits, thresh, k, verbosity));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -325,6 +570,29 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// RankedMarginalDev
+NumericVector RankedMarginalDev(NumericMatrix dvs);
+RcppExport SEXP _redist_RankedMarginalDev(SEXP dvsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type dvs(dvsSEXP);
+    rcpp_result_gen = Rcpp::wrap(RankedMarginalDev(dvs));
+    return rcpp_result_gen;
+END_RCPP
+}
+// smoothseat
+NumericVector smoothseat(NumericMatrix dvs, int nd);
+RcppExport SEXP _redist_smoothseat(SEXP dvsSEXP, SEXP ndSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type dvs(dvsSEXP);
+    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
+    rcpp_result_gen = Rcpp::wrap(smoothseat(dvs, nd));
+    return rcpp_result_gen;
+END_RCPP
+}
 // minkowski
 NumericVector minkowski(IntegerVector v, IntegerMatrix m, int p);
 RcppExport SEXP _redist_minkowski(SEXP vSEXP, SEXP mSEXP, SEXP pSEXP) {
@@ -335,6 +603,19 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< IntegerMatrix >::type m(mSEXP);
     Rcpp::traits::input_parameter< int >::type p(pSEXP);
     rcpp_result_gen = Rcpp::wrap(minkowski(v, m, p));
+    return rcpp_result_gen;
+END_RCPP
+}
+// closest_adj_pop
+int closest_adj_pop(IntegerVector adj, int i_dist, NumericVector g_prop);
+RcppExport SEXP _redist_closest_adj_pop(SEXP adjSEXP, SEXP i_distSEXP, SEXP g_propSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type adj(adjSEXP);
+    Rcpp::traits::input_parameter< int >::type i_dist(i_distSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type g_prop(g_propSEXP);
+    rcpp_result_gen = Rcpp::wrap(closest_adj_pop(adj, i_dist, g_prop));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -368,6 +649,55 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// reindex
+IntegerMatrix reindex(IntegerMatrix dm, int nd);
+RcppExport SEXP _redist_reindex(SEXP dmSEXP, SEXP ndSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type dm(dmSEXP);
+    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
+    rcpp_result_gen = Rcpp::wrap(reindex(dm, nd));
+    return rcpp_result_gen;
+END_RCPP
+}
+// plan_joint
+NumericMatrix plan_joint(IntegerVector m1, IntegerVector m2, NumericVector pop);
+RcppExport SEXP _redist_plan_joint(SEXP m1SEXP, SEXP m2SEXP, SEXP popSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type m1(m1SEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type m2(m2SEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type pop(popSEXP);
+    rcpp_result_gen = Rcpp::wrap(plan_joint(m1, m2, pop));
+    return rcpp_result_gen;
+END_RCPP
+}
+// renumber_matrix
+IntegerMatrix renumber_matrix(IntegerMatrix plans, IntegerVector renumb);
+RcppExport SEXP _redist_renumber_matrix(SEXP plansSEXP, SEXP renumbSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type plans(plansSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type renumb(renumbSEXP);
+    rcpp_result_gen = Rcpp::wrap(renumber_matrix(plans, renumb));
+    return rcpp_result_gen;
+END_RCPP
+}
+// best_renumber
+int best_renumber(IntegerMatrix combn, NumericMatrix joint);
+RcppExport SEXP _redist_best_renumber(SEXP combnSEXP, SEXP jointSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type combn(combnSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type joint(jointSEXP);
+    rcpp_result_gen = Rcpp::wrap(best_renumber(combn, joint));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rsg
 List rsg(List adj_list, NumericVector population, int Ndistrict, double target_pop, double thresh, int maxiter);
 RcppExport SEXP _redist_rsg(SEXP adj_listSEXP, SEXP populationSEXP, SEXP NdistrictSEXP, SEXP target_popSEXP, SEXP threshSEXP, SEXP maxiterSEXP) {
@@ -384,9 +714,33 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// k_smallest
+NumericVector k_smallest(NumericMatrix x, int k);
+RcppExport SEXP _redist_k_smallest(SEXP xSEXP, SEXP kSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    rcpp_result_gen = Rcpp::wrap(k_smallest(x, k));
+    return rcpp_result_gen;
+END_RCPP
+}
+// k_biggest
+NumericVector k_biggest(NumericMatrix x, int k);
+RcppExport SEXP _redist_k_biggest(SEXP xSEXP, SEXP kSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    rcpp_result_gen = Rcpp::wrap(k_biggest(x, k));
+    return rcpp_result_gen;
+END_RCPP
+}
 // smc_plans
-arma::umat smc_plans(int N, List l, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double tol, double gamma, double beta_sq, const arma::uvec& current, int n_current, double beta_vra, double tgt_min, double tgt_other, double pow_vra, const arma::uvec& min_pop, double beta_inc, const arma::uvec& incumbents, arma::vec& lp, double thresh, double alpha, int verbosity);
-RcppExport SEXP _redist_smc_plans(SEXP NSEXP, SEXP lSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP tolSEXP, SEXP gammaSEXP, SEXP beta_sqSEXP, SEXP currentSEXP, SEXP n_currentSEXP, SEXP beta_vraSEXP, SEXP tgt_minSEXP, SEXP tgt_otherSEXP, SEXP pow_vraSEXP, SEXP min_popSEXP, SEXP beta_incSEXP, SEXP incumbentsSEXP, SEXP lpSEXP, SEXP threshSEXP, SEXP alphaSEXP, SEXP verbositySEXP) {
+arma::umat smc_plans(int N, List l, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double target, double lower, double upper, double rho, double beta_sq, const arma::uvec& current, int n_current, double beta_vra, double tgt_min, double tgt_other, double pow_vra, const arma::uvec& min_pop, double beta_vra_hinge, const arma::vec& tgts_min, double beta_inc, const arma::uvec& incumbents, arma::vec& lp, double thresh, double alpha, double pop_temper, int verbosity);
+RcppExport SEXP _redist_smc_plans(SEXP NSEXP, SEXP lSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP beta_sqSEXP, SEXP currentSEXP, SEXP n_currentSEXP, SEXP beta_vraSEXP, SEXP tgt_minSEXP, SEXP tgt_otherSEXP, SEXP pow_vraSEXP, SEXP min_popSEXP, SEXP beta_vra_hingeSEXP, SEXP tgts_minSEXP, SEXP beta_incSEXP, SEXP incumbentsSEXP, SEXP lpSEXP, SEXP threshSEXP, SEXP alphaSEXP, SEXP pop_temperSEXP, SEXP verbositySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -395,8 +749,10 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
     Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
     Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
-    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    Rcpp::traits::input_parameter< double >::type gamma(gammaSEXP);
+    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< double >::type rho(rhoSEXP);
     Rcpp::traits::input_parameter< double >::type beta_sq(beta_sqSEXP);
     Rcpp::traits::input_parameter< const arma::uvec& >::type current(currentSEXP);
     Rcpp::traits::input_parameter< int >::type n_current(n_currentSEXP);
@@ -405,34 +761,34 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type tgt_other(tgt_otherSEXP);
     Rcpp::traits::input_parameter< double >::type pow_vra(pow_vraSEXP);
     Rcpp::traits::input_parameter< const arma::uvec& >::type min_pop(min_popSEXP);
+    Rcpp::traits::input_parameter< double >::type beta_vra_hinge(beta_vra_hingeSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type tgts_min(tgts_minSEXP);
     Rcpp::traits::input_parameter< double >::type beta_inc(beta_incSEXP);
     Rcpp::traits::input_parameter< const arma::uvec& >::type incumbents(incumbentsSEXP);
     Rcpp::traits::input_parameter< arma::vec& >::type lp(lpSEXP);
     Rcpp::traits::input_parameter< double >::type thresh(threshSEXP);
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< double >::type pop_temper(pop_temperSEXP);
     Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
-    rcpp_result_gen = Rcpp::wrap(smc_plans(N, l, counties, pop, n_distr, tol, gamma, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_inc, incumbents, lp, thresh, alpha, verbosity));
+    rcpp_result_gen = Rcpp::wrap(smc_plans(N, l, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_vra_hinge, tgts_min, beta_inc, incumbents, lp, thresh, alpha, pop_temper, verbosity));
     return rcpp_result_gen;
 END_RCPP
 }
-// sample_partition
-List sample_partition(const std::vector<arma::vec> aList, const arma::mat aMat, const int num_partitions, const int num_samples, const int threads);
-RcppExport SEXP _redist_sample_partition(SEXP aListSEXP, SEXP aMatSEXP, SEXP num_partitionsSEXP, SEXP num_samplesSEXP, SEXP threadsSEXP) {
+// splits
+IntegerVector splits(IntegerMatrix dm, IntegerVector community);
+RcppExport SEXP _redist_splits(SEXP dmSEXP, SEXP communitySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<arma::vec> >::type aList(aListSEXP);
-    Rcpp::traits::input_parameter< const arma::mat >::type aMat(aMatSEXP);
-    Rcpp::traits::input_parameter< const int >::type num_partitions(num_partitionsSEXP);
-    Rcpp::traits::input_parameter< const int >::type num_samples(num_samplesSEXP);
-    Rcpp::traits::input_parameter< const int >::type threads(threadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(sample_partition(aList, aMat, num_partitions, num_samples, threads));
+    Rcpp::traits::input_parameter< IntegerMatrix >::type dm(dmSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type community(communitySEXP);
+    rcpp_result_gen = Rcpp::wrap(splits(dm, community));
     return rcpp_result_gen;
 END_RCPP
 }
 // swMH
-List swMH(List aList, NumericVector cdvec, NumericVector cdorigvec, NumericVector popvec, NumericVector grouppopvec, NumericVector areas_vec, NumericVector county_membership, arma::mat borderlength_mat, int nsims, double eprob, double pct_dist_parity, NumericVector beta_sequence, NumericVector beta_weights, NumericMatrix ssdmat, double tgt_min, double tgt_other, int lambda, double beta, double weight_population, double weight_compact, double weight_vra, double weight_similar, double weight_countysplit, std::string adapt_beta, int adjswap, int exact_mh, int adapt_eprob, int adapt_lambda, std::string compactness_measure, double ssd_denom, int num_hot_steps, int num_annealing_steps, int num_cold_steps);
-RcppExport SEXP _redist_swMH(SEXP aListSEXP, SEXP cdvecSEXP, SEXP cdorigvecSEXP, SEXP popvecSEXP, SEXP grouppopvecSEXP, SEXP areas_vecSEXP, SEXP county_membershipSEXP, SEXP borderlength_matSEXP, SEXP nsimsSEXP, SEXP eprobSEXP, SEXP pct_dist_paritySEXP, SEXP beta_sequenceSEXP, SEXP beta_weightsSEXP, SEXP ssdmatSEXP, SEXP tgt_minSEXP, SEXP tgt_otherSEXP, SEXP lambdaSEXP, SEXP betaSEXP, SEXP weight_populationSEXP, SEXP weight_compactSEXP, SEXP weight_vraSEXP, SEXP weight_similarSEXP, SEXP weight_countysplitSEXP, SEXP adapt_betaSEXP, SEXP adjswapSEXP, SEXP exact_mhSEXP, SEXP adapt_eprobSEXP, SEXP adapt_lambdaSEXP, SEXP compactness_measureSEXP, SEXP ssd_denomSEXP, SEXP num_hot_stepsSEXP, SEXP num_annealing_stepsSEXP, SEXP num_cold_stepsSEXP) {
+List swMH(List aList, NumericVector cdvec, NumericVector cdorigvec, NumericVector popvec, NumericVector grouppopvec, NumericVector areas_vec, IntegerVector county_membership, arma::mat borderlength_mat, int nsims, double eprob, double pct_dist_parity, NumericVector beta_sequence, NumericVector beta_weights, NumericMatrix ssdmat, double tgt_min, double tgt_other, IntegerVector rvote, IntegerVector dvote, NumericVector minorityprop, int lambda, double beta, double weight_population, double weight_compact, double weight_segregation, double weight_vra, double weight_similar, double weight_countysplit, double weight_partisan, double weight_minority, double weight_hinge, std::string adapt_beta, int adjswap, int exact_mh, int adapt_eprob, int adapt_lambda, std::string compactness_measure, std::string partisan_measure, double ssd_denom, int num_hot_steps, int num_annealing_steps, int num_cold_steps, bool verbose);
+RcppExport SEXP _redist_swMH(SEXP aListSEXP, SEXP cdvecSEXP, SEXP cdorigvecSEXP, SEXP popvecSEXP, SEXP grouppopvecSEXP, SEXP areas_vecSEXP, SEXP county_membershipSEXP, SEXP borderlength_matSEXP, SEXP nsimsSEXP, SEXP eprobSEXP, SEXP pct_dist_paritySEXP, SEXP beta_sequenceSEXP, SEXP beta_weightsSEXP, SEXP ssdmatSEXP, SEXP tgt_minSEXP, SEXP tgt_otherSEXP, SEXP rvoteSEXP, SEXP dvoteSEXP, SEXP minoritypropSEXP, SEXP lambdaSEXP, SEXP betaSEXP, SEXP weight_populationSEXP, SEXP weight_compactSEXP, SEXP weight_segregationSEXP, SEXP weight_vraSEXP, SEXP weight_similarSEXP, SEXP weight_countysplitSEXP, SEXP weight_partisanSEXP, SEXP weight_minoritySEXP, SEXP weight_hingeSEXP, SEXP adapt_betaSEXP, SEXP adjswapSEXP, SEXP exact_mhSEXP, SEXP adapt_eprobSEXP, SEXP adapt_lambdaSEXP, SEXP compactness_measureSEXP, SEXP partisan_measureSEXP, SEXP ssd_denomSEXP, SEXP num_hot_stepsSEXP, SEXP num_annealing_stepsSEXP, SEXP num_cold_stepsSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -442,7 +798,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type popvec(popvecSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type grouppopvec(grouppopvecSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type areas_vec(areas_vecSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type county_membership(county_membershipSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type county_membership(county_membershipSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type borderlength_mat(borderlength_matSEXP);
     Rcpp::traits::input_parameter< int >::type nsims(nsimsSEXP);
     Rcpp::traits::input_parameter< double >::type eprob(eprobSEXP);
@@ -452,24 +808,33 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericMatrix >::type ssdmat(ssdmatSEXP);
     Rcpp::traits::input_parameter< double >::type tgt_min(tgt_minSEXP);
     Rcpp::traits::input_parameter< double >::type tgt_other(tgt_otherSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type rvote(rvoteSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type dvote(dvoteSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type minorityprop(minoritypropSEXP);
     Rcpp::traits::input_parameter< int >::type lambda(lambdaSEXP);
     Rcpp::traits::input_parameter< double >::type beta(betaSEXP);
     Rcpp::traits::input_parameter< double >::type weight_population(weight_populationSEXP);
     Rcpp::traits::input_parameter< double >::type weight_compact(weight_compactSEXP);
+    Rcpp::traits::input_parameter< double >::type weight_segregation(weight_segregationSEXP);
     Rcpp::traits::input_parameter< double >::type weight_vra(weight_vraSEXP);
     Rcpp::traits::input_parameter< double >::type weight_similar(weight_similarSEXP);
     Rcpp::traits::input_parameter< double >::type weight_countysplit(weight_countysplitSEXP);
+    Rcpp::traits::input_parameter< double >::type weight_partisan(weight_partisanSEXP);
+    Rcpp::traits::input_parameter< double >::type weight_minority(weight_minoritySEXP);
+    Rcpp::traits::input_parameter< double >::type weight_hinge(weight_hingeSEXP);
     Rcpp::traits::input_parameter< std::string >::type adapt_beta(adapt_betaSEXP);
     Rcpp::traits::input_parameter< int >::type adjswap(adjswapSEXP);
     Rcpp::traits::input_parameter< int >::type exact_mh(exact_mhSEXP);
     Rcpp::traits::input_parameter< int >::type adapt_eprob(adapt_eprobSEXP);
     Rcpp::traits::input_parameter< int >::type adapt_lambda(adapt_lambdaSEXP);
     Rcpp::traits::input_parameter< std::string >::type compactness_measure(compactness_measureSEXP);
+    Rcpp::traits::input_parameter< std::string >::type partisan_measure(partisan_measureSEXP);
     Rcpp::traits::input_parameter< double >::type ssd_denom(ssd_denomSEXP);
     Rcpp::traits::input_parameter< int >::type num_hot_steps(num_hot_stepsSEXP);
     Rcpp::traits::input_parameter< int >::type num_annealing_steps(num_annealing_stepsSEXP);
     Rcpp::traits::input_parameter< int >::type num_cold_steps(num_cold_stepsSEXP);
-    rcpp_result_gen = Rcpp::wrap(swMH(aList, cdvec, cdorigvec, popvec, grouppopvec, areas_vec, county_membership, borderlength_mat, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, tgt_min, tgt_other, lambda, beta, weight_population, weight_compact, weight_vra, weight_similar, weight_countysplit, adapt_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, compactness_measure, ssd_denom, num_hot_steps, num_annealing_steps, num_cold_steps));
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(swMH(aList, cdvec, cdorigvec, popvec, grouppopvec, areas_vec, county_membership, borderlength_mat, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, tgt_min, tgt_other, rvote, dvote, minorityprop, lambda, beta, weight_population, weight_compact, weight_segregation, weight_vra, weight_similar, weight_countysplit, weight_partisan, weight_minority, weight_hinge, adapt_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, compactness_measure, partisan_measure, ssd_denom, num_hot_steps, num_annealing_steps, num_cold_steps, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -483,6 +848,19 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type i(iSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type pop(popSEXP);
     rcpp_result_gen = Rcpp::wrap(var_info_mat(m, i, pop));
+    return rcpp_result_gen;
+END_RCPP
+}
+// var_info_vec
+NumericVector var_info_vec(IntegerMatrix m, IntegerVector ref, NumericVector pop);
+RcppExport SEXP _redist_var_info_vec(SEXP mSEXP, SEXP refSEXP, SEXP popSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type m(mSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type ref(refSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type pop(popSEXP);
+    rcpp_result_gen = Rcpp::wrap(var_info_vec(m, ref, pop));
     return rcpp_result_gen;
 END_RCPP
 }

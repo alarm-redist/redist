@@ -22,3 +22,4 @@ the importance sampling confidence interval.
 Builds a confidence interval for a quantity of interest,
 given importance sampling weights.
 }
+\concept{post}

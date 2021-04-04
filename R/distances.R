@@ -1,6 +1,7 @@
 #' Compute Distance between Partitions
 #'
-#' @param district_membership A matrix with one row for each precinct and one
+#'
+#' @param plans A matrix with one row for each precinct and one
 #' column for each map. Required.
 #' @param measure String vector indicating which distances to compute. Implemented
 #' currently are "Hamming", "Manhattan", "Euclidean", and "variation of information",
@@ -8,6 +9,12 @@
 #' any unique substring is enough, e.g. "ham" for Hamming, or "info" for
 #' variation of information.
 #' @param ncores Number of cores to use for parallel computing. Default is 1.
+#' @param total_pop The vector of precinct populations. Used only if computing
+#'   variation of information. If not provided, equal population of precincts
+#'   will be assumed, i.e. the VI will be computed with respect to the precincts
+#'   themselves, and not the population.
+#' @param district_membership Deprecated, use plans. A matrix with one row for each precinct and one
+#' column for each map. Required.
 #' @param pop The vector of precinct populations. Used only if computing
 #'   variation of information. If not provided, equal population of precincts
 #'   will be assumed, i.e. the VI will be computed with respect to the precincts
@@ -38,13 +45,29 @@
 #' Cover, T. M. and Thomas, J. A. (2006). \emph{Elements of information theory.} John Wiley & Sons, 2 edition.
 #'
 #' @examples \dontrun{
-#' data("algdat.p10")
-#' distances <- redist.distances(district_membership = algdat.p10$cdmat)
-#' distances$Hamming[1:5,1:5]
+#' data(fl25)
+#' data(fl25_enum)
+#'
+#' plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
+#' distances <- redist.distances(plans_05)
+#' distances$Hamming[1:5, 1:5]
 #' }
+#' @concept analyze
 #' @export
-redist.distances <- function(district_membership, measure = "Hamming",
-                             ncores = 1, pop=NULL) {
+redist.distances <- function(plans, measure = "Hamming",
+                             ncores = 1, total_pop = NULL,
+                             district_membership, pop) {
+
+
+    if(!missing(pop)){
+        total_pop <- pop
+        .Deprecated(new = 'total_pop', old = 'pop')
+    }
+    if(!missing(district_membership)){
+        plans <- district_membership
+        .Deprecated('plans')
+    }
+
 
     supported = c("all", "Hamming", "Manhattan", "Euclidean", "variation of information")
     # fuzzy matching
@@ -60,7 +83,7 @@ redist.distances <- function(district_membership, measure = "Hamming",
     done <- 0
 
     # parallel setup
-    nc <- min(ncores, ncol(district_membership))
+    nc <- min(ncores, ncol(plans))
     if (nc == 1) {
         `%oper%` <- `%do%`
     } else {
@@ -72,8 +95,8 @@ redist.distances <- function(district_membership, measure = "Hamming",
 
     # Compute Hamming Distance Metric
     if ("Hamming" %in% measure) {
-        ham <- foreach(map = 1:ncol(district_membership), .combine = "cbind") %oper% {
-            hamming(v = district_membership[,map], m = district_membership)
+        ham <- foreach(map = 1:ncol(plans), .combine = "cbind") %oper% {
+            hamming(v = plans[,map], m = plans)
         }
         colnames(ham) <- NULL
 
@@ -85,8 +108,8 @@ redist.distances <- function(district_membership, measure = "Hamming",
 
     # Compute Manhattan Distance Metric
     if ("Manhattan" %in% measure) {
-        man <- foreach(map = 1:ncol(district_membership), .combine = "cbind") %oper% {
-            minkowski(v = district_membership[,map], m = district_membership, p = 1)
+        man <- foreach(map = 1:ncol(plans), .combine = "cbind") %oper% {
+            minkowski(v = plans[,map], m = plans, p = 1)
         }
         colnames(man) <- NULL
 
@@ -97,8 +120,8 @@ redist.distances <- function(district_membership, measure = "Hamming",
 
     # Compute Euclidean Distance Metric
     if ("Euclidean" %in% measure) {
-        euc <- foreach(map = 1:ncol(district_membership), .combine = "cbind") %oper% {
-            minkowski(v = district_membership[,map], m = district_membership, p = 2)
+        euc <- foreach(map = 1:ncol(plans), .combine = "cbind") %oper% {
+            minkowski(v = plans[,map], m = plans, p = 2)
         }
         colnames(euc) <- NULL
 
@@ -108,19 +131,19 @@ redist.distances <- function(district_membership, measure = "Hamming",
     }
 
     if ("variation of information" %in% measure) {
-        if (is.null(pop)) {
+        if (is.null(total_pop)) {
             warning("Population not provided, using default of equal population.")
-            pop = rep(1, nrow(district_membership))
+            total_pop = rep(1, nrow(plans))
         }
-        if (length(pop) != nrow(district_membership))
+        if (length(total_pop) != nrow(plans))
             stop("Mismatch: length of population vector does not match the number of precincts.")
 
         # 1-index in preparation
-        if (min(district_membership) == 0)
-            district_membership = district_membership + 1
+        if (min(plans) == 0)
+            plans = plans + 1
 
-        vi = foreach(map = 1:ncol(district_membership), .combine = "cbind") %oper% {
-            var_info_mat(district_membership, map-1, pop) # 0-index
+        vi = foreach(map = 1:ncol(plans), .combine = "cbind") %oper% {
+            var_info_mat(plans, map-1, total_pop) # 0-index
         }
         colnames(vi) <- NULL
         # copy over other half of matrix; we only computed upper triangle
@@ -133,5 +156,25 @@ redist.distances <- function(district_membership, measure = "Hamming",
 
     return(distances)
 }
+
+#' @rdname redist.distances
+#' @order 1
+#'
+#' @param plans a \code{\link{redist_plans}} object.
+#'
+#' @returns \code{distance_matrix} returns a numeric distance matrix for the
+#'   chosen metric.
+#'
+#' @export
+plan_distances = function(plans, measure="variation of information", ncores=1) {
+    choices = c("variation of information", "Hamming", "Manhattan", "Euclidean")
+    measure = match.arg(measure, choices)
+    pop = attr(plans, "prec_pop")
+    if (is.null(pop))
+        stop("Precinct population must be stored in `prec_pop` attribute of `plans` object")
+
+    redist.distances(get_plans_matrix(plans), measure, ncores=ncores, total_pop=pop)[[1]]
+}
+
 
 utils::globalVariables(names = "map")
