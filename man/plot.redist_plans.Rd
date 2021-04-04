@@ -4,7 +4,7 @@
 \alias{plot.redist_plans}
 \title{Summary plots for \code{\\link{redist_plans}}}
 \usage{
-\method{plot}{redist_plans}(x, ..., type = "hist")
+\method{plot}{redist_plans}(x, ..., type = "distr_qtys")
 }
 \arguments{
 \item{x}{the \code{redist_plans} object.}

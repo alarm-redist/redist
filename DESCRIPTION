@@ -3,9 +3,9 @@ Version: 3.0.0
 Date: 2021-04-02
 Title: Simulation Methods for Legislative Redistricting
 Authors@R: c(
-    person("Christopher T.", "Kenny", email = "christopherkenny@fas.harvard.edu", role = "aut"),
+    person("Christopher T.", "Kenny", email = "christopherkenny@fas.harvard.edu", role = "aut", "cre"),
     person("Cory", "McCartan", email = "cmccartan@g.harvard.edu", role = "aut"),
-    person("Ben", "Fifield", email = "benfifield@gmail.com", role = c("aut", "cre")),
+    person("Ben", "Fifield", email = "benfifield@gmail.com", role = c("aut")),
     person("Kosuke", "Imai", email = "imai@harvard.edu", role = "aut"),
     person("Jun", "Kawahara", email = "jkawahara@i.kyoto-u.ac.jp", role = "ctb"),
     person("Alexander", "Tarr", email = "atarr@princeton.edu", role = "ctb"),
