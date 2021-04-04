@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - edgecut
   pull_request:
 
 name: R-CMD-check
