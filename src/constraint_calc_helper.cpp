@@ -8,6 +8,9 @@
 
 // Header files
 #include <RcppArmadillo.h>
+#include "redist_types.h"
+#include "kirchhoff.h"
+#include "tree_op.h"
 
 using namespace Rcpp;
 
@@ -326,6 +329,55 @@ List pp_compact(arma::uvec new_cds,
 
 }
 
+// Edges Removed Measure
+List er_compact(const Graph g, arma::vec new_dists, arma::vec current_dists, int ndists){
+  NumericVector er;
+  int nprec = new_dists.size();
+  mat districts(nprec, 2, fill::zeros);
+  
+  
+  for(int r = 0; r < nprec; r++){
+    districts(r, 0) = new_dists(r);
+    districts(r, 1) = current_dists(r);
+  }
+  
+  umat udistricts = conv_to<umat>::from(districts);
+  
+  er = n_removed(g, udistricts, ndists);
+  
+  List out;
+  out["er_new"] = (double) er[0];
+  out["er_old"] = (double) er[1];
+  
+  return out;
+}
+
+//
+List log_st_compact(const Graph g, arma::vec new_dists, arma::vec current_dists, 
+                    arma::uvec counties, int ndists){
+  NumericVector lst;
+  int nprec = new_dists.size();
+  mat districts(nprec, 2, fill::zeros);
+  
+  
+  for(int r = 0; r < nprec; r++){
+    districts(r, 0) = new_dists(r);
+    districts(r, 1) = current_dists(r);
+  }
+  
+  umat udistricts = conv_to<umat>::from(districts);
+  
+  lst = log_st_map(g, udistricts, counties + 1, ndists);
+  
+  List out;
+  out["lst_new"] = (double) lst[0];
+  out["lst_old"] = (double) lst[1];
+  
+  return out;
+  
+}
+
+
 // Function to calculate the strength of the beta constraint for population
 List calc_psipop(arma::vec current_dists,
 		 arma::vec new_dists,
@@ -394,6 +446,12 @@ List calc_psicompact(arma::vec current_dists,
 		     // For Fryer Holden
 		     NumericVector pops,
 		     NumericMatrix ssdmat,
+		     // For Edges Removed & log-st
+		     int ndists,
+		     const Graph &g,
+		     // For log-st
+		     arma::vec counties,
+		     // For Fryer Holden
 		     double denominator = 1.0){
 
   /* Inputs to function:
@@ -423,37 +481,52 @@ List calc_psicompact(arma::vec current_dists,
   }
 
   // Loop over the congressional districts
-  for(int i = 0; i < distswitch.size(); i++){
-
-    // Initialize objects
-    arma::uvec new_cds = find(new_dists == distswitch(i));
-    arma::uvec current_cds = find(current_dists == distswitch(i));
-
-    if(measure == "fryer-holden"){
-
-      List fh_out = fh_compact(new_cds, current_cds, pops, ssdmat, denominator);
-
-      // Add to psi
-      psi_new += as<double>(fh_out["ssd_new"]);
-      psi_old += as<double>(fh_out["ssd_old"]);
-
-    }else if(measure == "polsby-popper"){
-
-      List pp_out = pp_compact(new_cds, current_cds,
-			       as<arma::vec>(areas_vec),
-			       as<arma::vec>(boundarylist_new),
-			       as<arma::vec>(boundarylist_current),
-			       borderlength_mat,
-			       pops,
-			       aList,
-			       discrete);
-
-      // Add to psi
-      psi_new += as<double>(pp_out["pp_new"]);
-      psi_old += as<double>(pp_out["pp_old"]);
-
+  if(measure == "fryer-holden"|| measure == "polsby-popper"){
+    for(int i = 0; i < distswitch.size(); i++){
+      
+      // Initialize objects
+      arma::uvec new_cds = find(new_dists == distswitch(i));
+      arma::uvec current_cds = find(current_dists == distswitch(i));
+      
+      if(measure == "fryer-holden"){
+        
+        List fh_out = fh_compact(new_cds, current_cds, pops, ssdmat, denominator);
+        
+        // Add to psi
+        psi_new += as<double>(fh_out["ssd_new"]);
+        psi_old += as<double>(fh_out["ssd_old"]);
+        
+      }else if(measure == "polsby-popper"){
+        
+        List pp_out = pp_compact(new_cds, current_cds,
+                                 as<arma::vec>(areas_vec),
+                                 as<arma::vec>(boundarylist_new),
+                                 as<arma::vec>(boundarylist_current),
+                                 borderlength_mat,
+                                 pops,
+                                 aList,
+                                 discrete);
+        
+        // Add to psi
+        psi_new += as<double>(pp_out["pp_new"]);
+        psi_old += as<double>(pp_out["pp_old"]);
+        
+      } 
+      
     }
-
+  } else if(measure == "edges-removed"){
+    
+    List er_out = er_compact(g, new_dists, current_dists, ndists);
+    
+    psi_new = as<double>(er_out["er_new"]);
+    psi_old = as<double>(er_out["er_old"]);
+  } else {
+    
+    List lst_out = log_st_compact(g, new_dists, current_dists, conv_to<uvec>::from(counties), ndists);
+    
+    psi_new = as<double>(lst_out["lst_new"]);
+    psi_old = as<double>(lst_out["lst_old"]);
+    
   }
 
   // Create return object
@@ -467,30 +540,109 @@ List calc_psicompact(arma::vec current_dists,
 
 // Function to constrain by segregating a group
 List calc_psisegregation(arma::vec current_dists,
+                         arma::vec new_dists,
+                         NumericVector pops,
+                         NumericVector distswitch,
+                         NumericVector grouppop)
+{
+  
+  /* Inputs to function:
+   current_dists: vector of the current cong district assignments
+   new_dists: vector of the new cong district assignments
+   pops: vector of district populations
+   beta_segregation: strength of the beta constraint
+   distswitch: vector containing the old district, and the proposed new district
+   grouppop: vector of subgroup district populations
+   */
+  
+  // Initialize psi values
+  double psi_new = 0.0;
+  double psi_old = 0.0;
+  
+  // Initialize denominator
+  int T = sum(pops);
+  double pAll = (double)sum(grouppop) / T;
+  double denom = (double)2 * T * pAll * (1 - pAll);
+  
+  // Loop over congressional districts
+  for(int i = 0; i < distswitch.size(); i++){
+    
+    // Initialize objects
+    int oldpopall = 0;
+    int newpopall = 0;
+    int oldpopgroup = 0;
+    int newpopgroup = 0;
+    arma::uvec new_cds = find(new_dists == distswitch(i));
+    arma::uvec current_cds = find(current_dists == distswitch(i));
+    
+    // Segregation for proposed assignments
+    for(int j = 0; j < new_cds.size(); j++){
+      newpopall += pops(new_cds(j));
+      newpopgroup += grouppop(new_cds(j));
+    }
+    
+    // Segregation for current assignments
+    for(int j = 0; j < current_cds.size(); j++){
+      oldpopall += pops(current_cds(j));
+      oldpopgroup += grouppop(current_cds(j));
+    }
+    
+    // Calculate proportions
+    // Rcout << "old population group " << oldpopgroup << std::endl;
+    // Rcout << "old population all " << oldpopall << std::endl;
+    double oldgroupprop = (double)oldpopgroup / oldpopall;
+    // Rcout << "old proportion group " << oldgroupprop << std::endl;
+    double newgroupprop = (double)newpopgroup / newpopall;
+    
+    // Get dissimilarity index
+    psi_new += (double)(newpopall * std::abs(newgroupprop - pAll));
+    psi_old += (double)(oldpopall * std::abs(oldgroupprop - pAll));
+    
+  }
+  
+  // Standardize psi
+  psi_new = (double)psi_new / denom;
+  psi_old = (double)psi_old / denom;
+  
+  // Create return object
+  List out;
+  out["segregation_new_psi"] = psi_new;
+  out["segregation_old_psi"] = psi_old;
+  
+  return out;
+  
+}
+
+// Function to constrain by segregating a group
+List calc_psivra(arma::vec current_dists,
 			 arma::vec new_dists,
 			 NumericVector pops,
 			 NumericVector distswitch,
-			 NumericVector grouppop)
+			 NumericVector grouppop,
+			 double tgt_min,
+			 double tgt_other)
 {
 
   /* Inputs to function:
      current_dists: vector of the current cong district assignments
      new_dists: vector of the new cong district assignments
      pops: vector of district populations
-     beta_segregation: strength of the beta constraint
+     beta_vra: strength of the beta constraint
      distswitch: vector containing the old district, and the proposed new district
      grouppop: vector of subgroup district populations
 
   */
+  // constants
+  double pow_vra = 1.5;
 
   // Initialize psi values
   double psi_new = 0.0;
   double psi_old = 0.0;
 
   // Initialize denominator
-  int T = sum(pops);
-  double pAll = (double)sum(grouppop) / T;
-  double denom = (double)2 * T * pAll * (1 - pAll);
+  //int T = sum(pops);
+  //double pAll = (double)sum(grouppop) / T;
+  //double denom = (double)2 * T * pAll * (1 - pAll);
 
   // Loop over congressional districts
   for(int i = 0; i < distswitch.size(); i++){
@@ -503,13 +655,13 @@ List calc_psisegregation(arma::vec current_dists,
     arma::uvec new_cds = find(new_dists == distswitch(i));
     arma::uvec current_cds = find(current_dists == distswitch(i));
 
-    // Segregation for proposed assignments
+    // vra for proposed assignments
     for(int j = 0; j < new_cds.size(); j++){
       newpopall += pops(new_cds(j));
       newpopgroup += grouppop(new_cds(j));
     }
 
-    // Segregation for current assignments
+    // vra for current assignments
     for(int j = 0; j < current_cds.size(); j++){
       oldpopall += pops(current_cds(j));
       oldpopgroup += grouppop(current_cds(j));
@@ -523,19 +675,20 @@ List calc_psisegregation(arma::vec current_dists,
     double newgroupprop = (double)newpopgroup / newpopall;
 
     // Get dissimilarity index
-    psi_new += (double)(newpopall * std::abs(newgroupprop - pAll));
-    psi_old += (double)(oldpopall * std::abs(oldgroupprop - pAll));
+    //psi_new += (double)(newpopall * std::abs(newgroupprop - pAll));
+    //psi_old += (double)(oldpopall * std::abs(oldgroupprop - pAll));
+    
+    psi_new += (double)(std::pow(std::abs(newgroupprop - tgt_min),pow_vra)*
+      std::pow(std::abs(newgroupprop - tgt_other),pow_vra));
+    psi_old += (double)(std::pow(std::abs(oldgroupprop - tgt_min),pow_vra)*
+      std::pow(std::abs(oldgroupprop - tgt_other),pow_vra));
 
   }
 
-  // Standardize psi
-  psi_new = (double)psi_new / denom;
-  psi_old = (double)psi_old / denom;
-
   // Create return object
   List out;
-  out["segregation_new_psi"] = psi_new;
-  out["segregation_old_psi"] = psi_old;
+  out["vra_new_psi"] = psi_new;
+  out["vra_old_psi"] = psi_old;
 
   return out;
 
@@ -628,7 +781,7 @@ List calc_psicounty(arma::vec current_dists,
   */
 
   // Get unique county labels
-  int i; int j; int k; int pop;
+  int i; int j; int pop;
   arma::vec unique_county = unique(county_assignments);
   arma::vec pop_county(unique_county.n_elem);
   arma::uvec inds;
@@ -799,3 +952,224 @@ List calc_psicounty(arma::vec current_dists,
 
 }
 
+
+
+// Function to constrain by segregating a group
+List calc_psipartisan(arma::vec current_dists,
+                 arma::vec new_dists,
+                 IntegerVector rvote,
+                 IntegerVector dvote,
+                 std::string measure,
+                 int ndists){
+  double psi_new, psi_old;
+  double totvote = (double)sum(rvote) + (double)sum(dvote);
+  
+  if(measure == "efficiency-gap"){
+  // Step 1: Aggregate to District Level Votes
+  IntegerMatrix rcounts(ndists, 2);
+  IntegerMatrix dcounts(ndists, 2);
+  
+  for(int r = 0; r < current_dists.size(); r++){
+    //current
+    rcounts(current_dists(r)-1, 0) += rvote(r);
+    dcounts(current_dists(r)-1, 1) += dvote(r);
+    // new
+    rcounts(new_dists(r)-1, 1) += rvote(r);
+    dcounts(new_dists(r)-1, 1) += dvote(r);
+  }
+  // Step 2: Compute Wasted Votes
+  IntegerMatrix rwaste(ndists, 2);
+  IntegerMatrix dwaste(ndists, 2);
+  int minwin;
+  IntegerVector netwaste(2);
+  
+  for(int c = 0; c < 2; c++){
+    for(int r = 0; r < ndists; r++){
+      minwin = floor((dcounts(r,c) + rcounts(r,c))/2.0)+1;
+      if(dcounts(r,c) > rcounts(r,c)){
+        dwaste(r,c) += (dcounts(r,c) - minwin);
+        rwaste(r,c) += rcounts(r,c);
+      } else{
+        dwaste(r,c) += dcounts(r,c);
+        rwaste(r,c) += (rcounts(r,c) - minwin);
+      }
+    }
+  }
+  
+  netwaste = colSums(dwaste) - colSums(rwaste);
+  
+  psi_old = std::abs((double)netwaste(0)/totvote);
+  psi_new = std::abs((double)netwaste(1)/totvote);
+  
+} else if(measure == "proportional-representation"){
+  // Step 1: Aggregate to District Level Votes
+  IntegerMatrix rcounts(ndists, 2);
+  IntegerMatrix dcounts(ndists, 2);
+  
+  for(int r = 0; r < current_dists.size(); r++){
+    //current
+    rcounts(current_dists(r)-1, 0) += rvote(r);
+    dcounts(current_dists(r)-1, 1) += dvote(r);
+    // new
+    rcounts(new_dists(r)-1, 1) += rvote(r);
+    dcounts(new_dists(r)-1, 1) += dvote(r);
+  }
+  
+  // Step 2: Calculate the target Dem percent
+  double target = (double)sum(dvote)/(totvote);
+  
+  
+  // Step 3: Calculate Number of Dem Seats
+  double actual_new = 0.0;
+  double actual_old = 0.0;
+  for(int d = 0; d < ndists; d++){
+    if(dcounts(d, 0) > rcounts(d, 0)){
+      actual_old += 1.0;
+    }
+    if(dcounts(d, 1) > rcounts(d, 1)){
+      actual_new += 1.0;
+    }
+  }
+  
+  // Step 4: Create psi
+  psi_old = actual_old/(double)ndists;
+  psi_new = actual_new/(double)ndists;
+}
+  
+  
+  // Create return object
+  List out;
+  out["partisan_new_psi"] = std::abs(psi_new);
+  out["partisan_old_psi"] = std::abs(psi_old);
+  
+  return out;
+}
+
+
+// Function to calculate the direct limiting constraint
+List calc_psiminority(arma::vec current_dists,
+                      arma::vec new_dists,
+                      NumericVector pops,
+                      NumericVector grouppop,
+                      int ndists,
+                      NumericVector minorityprop){
+
+  int nminority = minorityprop.size();
+  double psi_old = 0.0;
+  double psi_new = 0.0;
+  
+  
+  NumericVector mins_curr(ndists);
+  NumericVector mins_new(ndists);
+  NumericVector pops_curr(ndists);
+  NumericVector pops_new(ndists);
+
+  // Step 1: Aggregate to District Level Pops
+  for(int r = 0; r < current_dists.size(); r++){
+    //current
+    mins_curr(current_dists(r)) += grouppop(r);
+    pops_curr(current_dists(r)) += pops(r);
+    // new
+    mins_new(new_dists(r)) += grouppop(r);
+    pops_new(new_dists(r)) += pops(r);
+  }
+
+  // Step 2: Get sort proportions
+  NumericVector minprop_curr(ndists);
+  NumericVector minprop_new(ndists);
+  
+  for(int i = 0; i < ndists; i++){
+    minprop_curr(i) = mins_curr(i)/pops_curr(i);
+    minprop_new(i) = mins_new(i)/pops_new(i);
+  }
+  
+  minprop_curr.sort(TRUE);
+  minprop_new.sort(TRUE);
+
+  // Estimate psi
+  for(int i = 0; i < nminority; i++){
+    psi_old += std::sqrt(std::abs(minprop_curr(i) - minorityprop(i)));
+    psi_new += std::sqrt(std::abs(minprop_new(i) - minorityprop(i)));
+  }
+  
+
+  // Create return object
+  List out;
+  out["minority_new_psi"] = psi_new;
+  out["minority_old_psi"] = psi_old;
+  
+  return out;
+}
+
+// Function to calculate the direct limiting constraint
+List calc_psihinge(arma::vec current_dists,
+                      arma::vec new_dists,
+                      NumericVector pops,
+                      NumericVector grouppop,
+                      int ndists,
+                      NumericVector minorityprop){
+  
+  int nminority = minorityprop.size();
+  double psi_old = 0.0;
+  double psi_new = 0.0;
+  double tgt_old, tgt_new, diff_old, diff_new, diff_old_check, diff_new_check;
+  
+  
+  NumericVector mins_curr(ndists);
+  NumericVector mins_new(ndists);
+  NumericVector pops_curr(ndists);
+  NumericVector pops_new(ndists);
+  
+  // Step 1: Aggregate to District Level Pops
+  for(int r = 0; r < current_dists.size(); r++){
+    //current
+    mins_curr(current_dists(r)) += grouppop(r);
+    pops_curr(current_dists(r)) += pops(r);
+    // new
+    mins_new(new_dists(r)) += grouppop(r);
+    pops_new(new_dists(r)) += pops(r);
+  }
+  
+  // Step 2: Get sort proportions
+  NumericVector minprop_curr(ndists);
+  NumericVector minprop_new(ndists);
+  
+  for(int i = 0; i < ndists; i++){
+    minprop_curr(i) = mins_curr(i)/pops_curr(i);
+    minprop_new(i) = mins_new(i)/pops_new(i);
+  }
+  
+  
+  // Estimate psi
+  for(int i = 0; i < ndists; i++){
+    diff_old = 1;
+    diff_new = 1;
+    
+    for(int j = 0; j < nminority; j++){
+      diff_old_check = std::fabs(minorityprop(j) - minprop_curr(i));
+      diff_new_check = std::fabs(minorityprop(j) - minprop_new(i));
+      
+      if(diff_new_check <= diff_new){
+        diff_new = diff_new_check;
+        tgt_new = minorityprop(j);
+      }
+      if(diff_old_check <= diff_old){
+        diff_old = diff_old_check;
+        tgt_old = minorityprop(j);
+      }
+      
+    }
+    
+      psi_old += std::sqrt(std::max(0.0, tgt_old - minprop_curr(i)));
+      psi_new += std::sqrt(std::max(0.0, tgt_new - minprop_new(i)));
+  }
+
+  
+  
+  // Create return object
+  List out;
+  out["hinge_new_psi"] = psi_new;
+  out["hinge_old_psi"] = psi_old;
+  
+  return out;
+}

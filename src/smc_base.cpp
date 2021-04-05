@@ -11,6 +11,26 @@ int rint(int max) {
     return std::floor(max * unif(generator));
 }
 
+/*
+ * Generate a random integer in [0, max) according to weights.
+ */
+int rint(int max, vec cum_wgts) {
+    int low = 0, high = max - 1;
+    double u = unif(generator);
+
+    if (cum_wgts[0] > u)
+        return 0;
+
+    while (high - low > 1) {
+        int midpt = std::ceil((high + low) / 2.0);
+        if (cum_wgts[midpt] <= u)
+            low = midpt;
+        else
+            high = midpt;
+    }
+
+    return high;
+}
 
 /*
  * Partition `x` and its indices `idxs` between `right` and `left` by `pivot`

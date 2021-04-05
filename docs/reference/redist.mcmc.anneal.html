@@ -19,8 +19,8 @@
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/yeti/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous" />
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
 
@@ -81,7 +81,7 @@ using Markov chain Monte Carlo methods coupled with simulated annealing." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.5</span>
       </span>
     </div>
 
@@ -89,9 +89,12 @@ using Markov chain Monte Carlo methods coupled with simulated annealing." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
+</li>
+<li>
+  <a href="../articles/redist.html">Get started</a>
 </li>
 <li>
   <a href="../reference/index.html">Reference</a>
@@ -104,15 +107,27 @@ using Markov chain Monte Carlo methods coupled with simulated annealing." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
+      <a href="../articles/glossary.html">Glossary of Key Redistricting Terms</a>
+    </li>
+    <li>
+      <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
+    </li>
+    <li>
+      <a href="../articles/mcmc.html">Redistricting with Flip MCMC</a>
+    </li>
+    <li>
+      <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/kosukeimai/redist/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -130,7 +145,7 @@ using Markov chain Monte Carlo methods coupled with simulated annealing." />
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>MCMC Redistricting Simulator using Simulated Annealing</h1>
-    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/redist.R'><code>R/redist.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/redist_mcmc.R'><code>R/redist_mcmc.R</code></a></small>
     <div class="hidden name"><code>redist.mcmc.anneal.Rd</code></div>
     </div>
 
@@ -139,41 +154,97 @@ using Markov chain Monte Carlo methods coupled with simulated annealing." />
 using Markov chain Monte Carlo methods coupled with simulated annealing.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.mcmc.anneal</span>(<span class='kw'>adjobj</span>, <span class='kw'>popvec</span>, <span class='kw'>ndists</span>,
-<span class='kw'>initcds</span>, <span class='kw'>num_hot_steps</span>, <span class='kw'>num_annealing_steps</span>,
-<span class='kw'>num_cold_steps</span>,
-<span class='kw'>eprob</span>, <span class='kw'>lambda</span>, <span class='kw'>popcons</span>, <span class='kw'>grouppopvec</span>,
-<span class='kw'>areasvec</span>, <span class='kw'>countymembership</span>, <span class='kw'>borderlength_mat</span>,
-<span class='kw'>ssdmat</span>, <span class='kw'>constraint</span>, <span class='kw'>constraintweights</span>,
-<span class='kw'>compactness_metric</span>, <span class='kw'>rngseed</span>, <span class='kw'>maxiterrsg</span>,
-<span class='kw'>adapt_lambda</span>, <span class='kw'>adapt_eprob</span>,
-<span class='kw'>contiguitymap</span>, <span class='kw'>exact_mh</span>,
-<span class='kw'>savename</span>, <span class='kw'>verbose</span>, <span class='kw'>ncores</span>)</pre>
+    <pre class="usage"><span class='fu'>redist.mcmc.anneal</span><span class='op'>(</span>
+<<<<<<< HEAD
+  <span class='va'>adj</span>,
+  <span class='va'>total_pop</span>,
+  ndists <span class='op'>=</span> <span class='cn'>NULL</span>,
+  init_plan <span class='op'>=</span> <span class='cn'>NULL</span>,
+=======
+  <span class='va'>adjobj</span>,
+  <span class='va'>popvec</span>,
+  ndists <span class='op'>=</span> <span class='cn'>NULL</span>,
+  initcds <span class='op'>=</span> <span class='cn'>NULL</span>,
+>>>>>>> base/master
+  num_hot_steps <span class='op'>=</span> <span class='fl'>40000</span>,
+  num_annealing_steps <span class='op'>=</span> <span class='fl'>60000</span>,
+  num_cold_steps <span class='op'>=</span> <span class='fl'>20000</span>,
+  eprob <span class='op'>=</span> <span class='fl'>0.05</span>,
+  lambda <span class='op'>=</span> <span class='fl'>0</span>,
+<<<<<<< HEAD
+  pop_tol <span class='op'>=</span> <span class='cn'>NULL</span>,
+  group_pop <span class='op'>=</span> <span class='cn'>NULL</span>,
+  areasvec <span class='op'>=</span> <span class='cn'>NULL</span>,
+  counties <span class='op'>=</span> <span class='cn'>NULL</span>,
+=======
+  popcons <span class='op'>=</span> <span class='cn'>NULL</span>,
+  grouppopvec <span class='op'>=</span> <span class='cn'>NULL</span>,
+  areasvec <span class='op'>=</span> <span class='cn'>NULL</span>,
+  countymembership <span class='op'>=</span> <span class='cn'>NULL</span>,
+>>>>>>> base/master
+  borderlength_mat <span class='op'>=</span> <span class='cn'>NULL</span>,
+  ssdmat <span class='op'>=</span> <span class='cn'>NULL</span>,
+  constraint <span class='op'>=</span> <span class='cn'>NULL</span>,
+  constraintweights <span class='op'>=</span> <span class='cn'>NULL</span>,
+  compactness_metric <span class='op'>=</span> <span class='st'>"fryer-holden"</span>,
+<<<<<<< HEAD
+  partisan_metric <span class='op'>=</span> <span class='st'>"efficiency-gap"</span>,
+=======
+>>>>>>> base/master
+  rngseed <span class='op'>=</span> <span class='cn'>NULL</span>,
+  maxiterrsg <span class='op'>=</span> <span class='fl'>5000</span>,
+  adapt_lambda <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  adapt_eprob <span class='op'>=</span> <span class='cn'>FALSE</span>,
+<<<<<<< HEAD
+=======
+  contiguitymap <span class='op'>=</span> <span class='st'>"rooks"</span>,
+>>>>>>> base/master
+  exact_mh <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  savename <span class='op'>=</span> <span class='cn'>NULL</span>,
+  verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  ncores <span class='op'>=</span> <span class='fl'>1</span>,
+  tgt_min <span class='op'>=</span> <span class='fl'>0.55</span>,
+<<<<<<< HEAD
+  tgt_other <span class='op'>=</span> <span class='fl'>0.25</span>,
+  rvote <span class='op'>=</span> <span class='cn'>NULL</span>,
+  dvote <span class='op'>=</span> <span class='cn'>NULL</span>,
+  minorityprop <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>adjobj</span>,
+  <span class='va'>popvec</span>,
+  <span class='va'>initcds</span>,
+  <span class='va'>popcons</span>,
+  <span class='va'>grouppopvec</span>,
+  <span class='va'>countymembership</span>,
+  <span class='va'>contiguitymap</span>
+=======
+  tgt_other <span class='op'>=</span> <span class='fl'>0.25</span>
+>>>>>>> base/master
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>adjobj</th>
-      <td><p>An adjacency matrix, list, or object of class
+      <th>adj</th>
+      <td><p>adjacency matrix, list, or object of class
 "SpatialPolygonsDataFrame."</p></td>
     </tr>
     <tr>
-      <th>popvec</th>
+      <th>total_pop</th>
       <td><p>A vector containing the populations of each geographic
 unit</p></td>
     </tr>
     <tr>
       <th>ndists</th>
-      <td><p>The numbe of congressional districts. The default is
+      <td><p>The number of congressional districts. The default is
 <code>NULL</code>.</p></td>
     </tr>
     <tr>
-      <th>initcds</th>
+      <th>init_plan</th>
       <td><p>A vector containing the congressional district labels
-of each geographic unit. The default is <code>NULL</code>. If not provided,
-random and contiguous congressional district assignments will be generated
-using <code>redist.rsg</code>.</p></td>
+of each geographic unit. If not provided, random and contiguous congressional 
+district assignments will be generated using <code>redist.smc</code>. To use the old 
+behavior of generating with <code>redist.rsg</code>, provide init_plan = 'rsg'.</p></td>
     </tr>
     <tr>
       <th>num_hot_steps</th>
@@ -197,19 +268,19 @@ default is <code>0.05</code>.</p></td>
     </tr>
     <tr>
       <th>lambda</th>
-      <td><p>The parameter detmerining the number of swaps to attempt
-each iteration fo the algoirhtm. The number of swaps each iteration is
+      <td><p>The parameter determining the number of swaps to attempt
+each iteration of the algorithm. The number of swaps each iteration is
 equal to Pois(<code>lambda</code>) + 1. The default is <code>0</code>.</p></td>
     </tr>
     <tr>
-      <th>popcons</th>
+      <th>pop_tol</th>
       <td><p>The strength of the hard population
-constraint. <code>popcons</code> = 0.05 means that any proposed swap that
+constraint. <code>pop_tol</code> = 0.05 means that any proposed swap that
 brings a district more than 5% away from population parity will be
 rejected. The default is <code>NULL</code>.</p></td>
     </tr>
     <tr>
-      <th>grouppopvec</th>
+      <th>group_pop</th>
       <td><p>A vector of populations for some sub-group of
 interest. The default is <code>NULL</code>.</p></td>
     </tr>
@@ -219,7 +290,7 @@ interest. The default is <code>NULL</code>.</p></td>
 The default is <code>NULL</code>.</p></td>
     </tr>
     <tr>
-      <th>countymembership</th>
+      <th>counties</th>
       <td><p>A vector of county membership assignments. The default is <code>NULL</code>.</p></td>
     </tr>
     <tr>
@@ -236,7 +307,8 @@ units. The default is <code>NULL</code>.</p></td>
     <tr>
       <th>constraint</th>
       <td><p>Which constraint to apply. Accepts any combination of <code>compact</code>,
-<code>segregation</code>, <code>population</code>, <code>similarity</code>, or <code>none</code>
+<code>segregation</code>, <code>vra</code>, <code>population</code>, <code>similarity</code>, <code>partisan</code>,
+<code>minority</code>, <code>hinge</code>, <code>countysplit</code>, or <code>none</code>
 (no constraint applied). The default is NULL.</p></td>
     </tr>
     <tr>
@@ -247,8 +319,13 @@ the same length as constraint. Default is NULL.</p></td>
     <tr>
       <th>compactness_metric</th>
       <td><p>The compactness metric to use when constraining on
-compactness. Default is <code>fryer-holden</code>, the other implemented option
-is <code>polsby-popper</code>.</p></td>
+compactness. Default is <code>fryer-holden</code>, the other implemented options
+are <code>polsby-popper</code> and <code>edges-removed</code>.</p></td>
+    </tr>
+    <tr>
+      <th>partisan_metric</th>
+      <td><p>The partisan metric to use when constraining on partisan metrics.
+Only implemented are "efficiency-gap" (default) and "proportional-representation".</p></td>
     </tr>
     <tr>
       <th>rngseed</th>
@@ -272,12 +349,6 @@ Metropolis-Hastings acceptance probability falls between 20% and 40%. Default is
 FALSE.</p></td>
     </tr>
     <tr>
-      <th>contiguitymap</th>
-      <td><p>Use queens or rooks distance criteria for generating an
-adjacency list from a "SpatialPolygonsDataFrame" data type.
-Default is "rooks".</p></td>
-    </tr>
-    <tr>
       <th>exact_mh</th>
       <td><p>Whether to use the approximate (0) or exact (1)
 Metropolis-Hastings ratio calculation for accept-reject rule. Default is FALSE.</p></td>
@@ -295,6 +366,66 @@ Default is <code>TRUE</code>.</p></td>
       <th>ncores</th>
       <td><p>The number of cores available to parallelize over. Default is 1.</p></td>
     </tr>
+    <tr>
+      <th>tgt_min</th>
+      <td><p>The majority minority target percent as a decimal. Default is 0.55.</p></td>
+    </tr>
+    <tr>
+      <th>tgt_other</th>
+      <td><p>The remaining target percent as a decimal. Default is 0.25.</p></td>
+    </tr>
+    <tr>
+      <th>rvote</th>
+      <td><p>integer vector of votes for Republicans by precinct</p></td>
+    </tr>
+    <tr>
+      <th>dvote</th>
+      <td><p>integer vector of votes for Democrats by precinct</p></td>
+    </tr>
+    <tr>
+      <th>minorityprop</th>
+      <td><p>numeric vector of targeted minority proportions for the top
+districts with that proportion</p></td>
+    </tr>
+    <tr>
+      <th>adjobj</th>
+      <td><p>Deprecated, use adj. An adjacency matrix, list, or object of class
+"SpatialPolygonsDataFrame."</p></td>
+    </tr>
+    <tr>
+      <th>popvec</th>
+      <td><p>A vector containing the populations of each geographic
+unit</p></td>
+    </tr>
+    <tr>
+      <th>initcds</th>
+      <td><p>Deprecated, use init_plan. A vector containing the congressional district labels
+of each geographic unit. The default is <code>NULL</code>. If not provided,
+random and contiguous congressional district assignments will be generated
+using <code>redist.rsg</code>.</p></td>
+    </tr>
+    <tr>
+      <th>popcons</th>
+      <td><p>Deprecated, use pop_tol. The strength of the hard population
+constraint. <code>popcons</code> = 0.05 means that any proposed swap that
+brings a district more than 5% away from population parity will be
+rejected. The default is <code>NULL</code>.</p></td>
+    </tr>
+    <tr>
+      <th>grouppopvec</th>
+      <td><p>Deprecated, use group_pop. A vector of populations for some sub-group of
+interest. The default is <code>NULL</code>.</p></td>
+    </tr>
+    <tr>
+      <th>countymembership</th>
+      <td><p>Deprecated, use counties. A vector of county membership assignments. The default is <code>NULL</code>.</p></td>
+    </tr>
+    <tr>
+      <th>contiguitymap</th>
+      <td><p>Deprecated. Use queens or rooks distance criteria for generating an
+adjacency list from a "SpatialPolygonsDataFrame" data type.
+Default is "rooks".</p></td>
+    </tr>
     </table>
 
 
@@ -309,11 +440,11 @@ Default is <code>TRUE</code>.</p></td>
 
       <footer>
       <div class="copyright">
-  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Alexander Tarr, Jun Kawahara, Kosuke Imai.</p>
+  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Jun Kawahara, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

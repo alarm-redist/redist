@@ -1,0 +1,190 @@
+---
+title: "Glossary of Key Redistricting Terms"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Glossary of Key Redistricting Terms}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+To set up this glossary, we load some example data which uses Iowa and its 2012-2021 congressional districts.
+
+```{r}
+library(redist)
+data(iowa)
+iowa_map <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop)
+```
+
+# adj
+
+-   Definition: An adjacency list that is represented by a `list` with one entry for each redistricting unit in a map, where each entry is an `integer` vector of adjacent units.
+
+-   Deprecated alternative arguments: `adjacency`, `adj.list`, `adj.obj`, `adjlist`
+
+-   Example:
+
+```{r}
+# Standard eval - 
+adj <- redist.adjacency(shp = iowa)
+# tidy eval - 
+adj <- get_adj(iowa_map)
+
+head(adj)
+```
+
+```{r}
+# Plot it!
+redist.plot.adj(shp = iowa_map)
+```
+
+# ndists
+
+-   Definition: The number of districts in a plan, a positive `integer`
+
+-   Deprecated alternative arguments: `Ndistrict`, `n_dists`
+
+-   Example:
+
+```{r}
+# Standard eval - 
+ndists <- 4
+# tidy eval - stored within redist_map object
+attr(iowa_map, 'ndists')
+```
+
+# nsims
+
+-   Definition: The number of simulations to run. This is a positive `integer`.
+
+-   Deprecated alternative arguments: `nsamp`
+
+-   Example:
+
+```{r}
+nsims <- 100
+```
+
+# pop_tol
+
+-   Definition: The maximum symmetric deviation from perfect population parity allowed. This is a positive `numeric`.
+
+-   Deprecated alternative arguments: `thresh`, `popcons`, `pop_constraint`
+
+-   Example:
+
+```{r}
+# standard eval - 
+pop_tol <- 0.01
+
+# tidy eval - stored within redist_map object
+# - getting
+get_pop_tol(iowa_map)
+# - setting
+iowa_map <- set_pop_tol(iowa_map, pop_tol = 0.01)
+```
+
+# plan
+
+-   Definition: A one-dimensional array of district assignments with one for each redistricting unit, typically numbered `1:ndists`, though sometimes `0:(ndists - 1)`
+
+-   Deprecated alternative arguments: `district_membership`
+
+-   Example:
+
+```{r}
+sim <- redist.rsg(adj = adj, total_pop = iowa$pop, ndists = 4, pop_tol = 0.01)
+
+head(sim$plan)
+```
+
+# plans
+
+-   Definition: A two-dimensional array of district assignments, where each column is a `plan`.
+
+-   Deprecated alternative arguments: `partitions`, `district_membership`, `districts`, `cdvec`
+
+-   Example:
+
+```{r}
+# standard eval -
+sims <- redist.smc(adj = adj, total_pop = iowa$pop, nsims = 10, ndists = 4, silent = TRUE)
+plans <- sims$plans
+
+# tidy eval - 
+sims <- redist_smc(map = iowa_map, nsims = 10, silent = TRUE)
+plans <- get_plans_matrix(sims)
+```
+
+# init_plan
+
+-   Definition: The initial plan to start a Markov Chain Monte Carlo chain from. An integer vector with one entry for each redistricting unit.
+
+-   Deprecated alternative arguments: `initcds`
+
+-   Example:
+
+```{r}
+# standard eval - 
+init_plan <- iowa$cd_2010
+
+# tidy eval - stored within redist_map object
+get_existing(iowa_map)
+```
+
+# total_pop
+
+-   Definition: A vector of non-negative `integer` entries with one per redistricting unit. The entries should reflect the total population within each unit.
+
+-   Deprecated alternative arguments: `pop`, `population`, `popvec`, `fullpop`, `fullpopvec`
+
+-   Example:
+
+```{r}
+# standard eval
+total_pop <- iowa$pop
+
+# tidy eval - a column within the redist_map object tracked by attributes
+iowa_map[[attr(iowa_map, 'pop_col')]]
+```
+
+# group_pop
+
+-   Definition: A vector of non-negative `integer` entries with one per redistricting unit. The entries should reflect a subgroup population of interest within each unit.
+
+-   Deprecated alternative arguments: `group_pop`, `grouppop`, `grouppopvec`
+
+-   Example:
+
+```{r}
+iowa$white
+```
+
+# pop_bounds
+
+-   Definition: A three entry vector for asymmetric population parity control. The first entry is the lower bound for population, the second is the target population, and the third is the upper bound for population.
+
+-   Example:
+
+```{r}
+# tidy eval - stored in redist_map object
+attr(iowa_map, 'pop_bounds')
+```
+
+# ncores
+
+-   Definition: The number of cores to use for parallel processes. A positive `integer`. `ncores = 1` indicates running in serial, while `ncores > 1` indicates running in parallel.
+
+-   Deprecated alternative arguments: `ncores`, `nthreads`, `n_cores`
+
+-   Example:
+
+```{r}
+
+```

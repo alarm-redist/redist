@@ -1,6 +1,11 @@
-pandoc: '2.6'
-pkgdown: 1.6.0
+pandoc: 2.11.2
+pkgdown: 1.6.1
 pkgdown_sha: ~
-articles: []
-last_built: 2020-09-10T16:00Z
+articles:
+  glossary: glossary.html
+  map-preproc: map-preproc.html
+  mcmc: mcmc.html
+  mpi-slurm: mpi-slurm.html
+  redist: redist.html
+last_built: 2021-04-03T21:12Z
 

@@ -120,7 +120,7 @@ NumericVector taugap(double tau, NumericMatrix dvs, IntegerVector dseat_vec, int
   for(int i =0; i < dseat_share.size(); i++){
     dseat_share(i) = dseat_vec(i)/(double) nd;
   }
-
+  
   return -2*(temp +.5 - dseat_share);
 }
 
@@ -128,10 +128,10 @@ NumericVector taugap(double tau, NumericMatrix dvs, IntegerVector dseat_vec, int
 NumericVector meanmedian(NumericMatrix dvs){
   NumericVector mm = NumericVector(dvs.ncol());
   NumericVector med = NumericVector(dvs.ncol());
-  NumericVector col = dvs(_,1);
+  NumericVector col = dvs(_, 0);
   for(int c = 0; c < dvs.ncol(); c++){
     col = dvs(_,c);
-   med(c) = median(col); 
+    med(c) = median(col); 
   }
   mm = colMeans(dvs) - med;
   return mm;
@@ -216,7 +216,7 @@ NumericVector responsiveness(NumericMatrix dvs, double v, int nd, double bandwid
   
   NumericVector seat_right = (NumericVector)dseatsDVS(dvs_right)/(double)nd;
   NumericVector seat_left = (NumericVector)dseatsDVS(dvs_left)/(double)nd;
-
+  
   return (seat_right - seat_left)/bandwidth;
 }
 
@@ -240,3 +240,45 @@ NumericVector biasatv(NumericMatrix dvs, double v, int nd){
   return (seat_dshift - seat_rshift)/2;
 }
 
+// [[Rcpp::export]]
+NumericVector RankedMarginalDev(NumericMatrix dvs){
+  NumericMatrix dvs_sort = 100.0 * dvs;
+  NumericVector curr_col(dvs_sort.nrow());
+  NumericVector out(dvs_sort.ncol());
+  
+  for(int c = 0; c < dvs_sort.ncol(); c++){
+    curr_col = dvs_sort(_,c);
+    curr_col = curr_col.sort();
+    dvs_sort(_,c) = curr_col;
+  } 
+  
+  NumericVector rms = rowMeans(dvs_sort);
+  
+  for(int c = 0; c < dvs_sort.ncol(); c++){
+    curr_col = dvs_sort(_,c);
+    out(c) = sum(pow(curr_col - rms, 2.0));
+  } 
+  
+  
+  return out;
+}
+
+// [[Rcpp::export]]
+NumericVector smoothseat(NumericMatrix dvs, int nd) {
+  NumericVector sscd(dvs.ncol());
+  double mindem, minrep, curr;
+  for(int c = 0; c < dvs.ncol(); c++){
+    mindem = 1.0;
+    minrep = 0.0;
+    for(int r = 0; r < dvs.nrow(); r++){
+      curr = (double) dvs(r,c);
+      if(dvs(r,c) >= 0.5){
+        mindem = std::min<double>(mindem, curr);
+      } else{
+        minrep = std::max<double>(minrep, curr);
+      }
+    }
+    sscd(c) = (0.5 - (1.0 - mindem))/(minrep - (1.0 - mindem));
+  }
+  return sscd;
+}

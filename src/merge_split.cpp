@@ -30,7 +30,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
 
     umat districts(V, N, fill::zeros);
     districts.col(0) = init;
-    
+
     Rcpp::IntegerVector mh_decisions(N - 1);
 
     double tol = std::max(target - lower, upper - target) / target;
@@ -118,7 +118,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     if (verbosity >= 1) {
         Rprintf("Acceptance rate: %.1f%%.\n", (100.0 * n_accept) / (N-1));
     }
-    
+
     Rcpp::List out;
     out["plans"] = districts;
     out["mhdecisions"] = mh_decisions;

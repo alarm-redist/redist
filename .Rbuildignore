@@ -6,6 +6,7 @@ README.Rmd
 \.DS_Store
 \.\.Rcheck
 builder.sh
+^.*\.o
 ^doc$
 ^Meta$
 ^_pkgdown\.yml$

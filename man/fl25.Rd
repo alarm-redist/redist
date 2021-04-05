@@ -2,9 +2,9 @@
 % Please edit documentation in R/data.R
 \name{fl25}
 \alias{fl25}
-\title{Florida 25 Precinct File}
+\title{Florida 25 Precinct Shape File}
 \format{
-sf data.frame containing columns for useful data related to the 
+sf data.frame containing columns for useful data related to the
 redistricting process, subsetted from real data in Florida, and sf geometry column.
 \describe{
 \item{\code{geoid}}{ Contains unique identifier for each precinct which can be matched to the full Florida dataset.}
@@ -25,7 +25,11 @@ redistricting process, subsetted from real data in Florida, and sf geometry colu
 data("fl25")
 }
 \description{
-This data set contains the 25 Precinct shapefile and related data for each precinct.
+This data set contains the 25-precinct shapefile and related data for each precinct.
+All possible partitions of the 25 precincts into three contiguous
+congressional districts are stored in \code{\link{fl25_enum}}, and the
+corresponding adjacency graph is stored in \code{\link{fl25_adj}}.
+This is generally useful for demonstrating basic algorithms locally.
 }
 \examples{
 \dontrun{
@@ -38,3 +42,4 @@ Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander Tarr.
 Working Paper. Available at
 \url{http://imai.princeton.edu/research/files/redist.pdf}.
 }
+\concept{data}

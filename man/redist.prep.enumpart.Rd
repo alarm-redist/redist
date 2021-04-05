@@ -4,14 +4,16 @@
 \alias{redist.prep.enumpart}
 \title{Prepares a run of the enumpart algorithm by ordering edges}
 \usage{
-redist.prep.enumpart(adjlist, unordered_path, ordered_path)
+redist.prep.enumpart(adj, unordered_path, ordered_path, adjlist)
 }
 \arguments{
-\item{adjlist}{zero indexed adjacency list}
+\item{adj}{zero indexed adjacency list}
 
 \item{unordered_path}{valid path to output the unordered adjacency map to}
 
 \item{ordered_path}{valid path to output the ordered adjacency map to}
+
+\item{adjlist}{Deprecated, use adj. zero indexed adjacency list}
 }
 \value{
 0 on success
@@ -21,13 +23,15 @@ Prepares a run of the enumpart algorithm by ordering edges
 }
 \examples{
 \dontrun{
-data("algdat.p10")
-redist.prep.enumpart(adjlist = algdat.p10$adjlist, unordered_path = '../unordered', 
-ordered_path = '../ordered')
+data(fl25)
+adj <- redist.adjacency(fl25)
+redist.prep.enumpart(adj = adj, unordered_path = '../unordered',
+                     ordered_path = '../ordered')
 }
 }
 \references{
 Benjamin Fifield, Kosuke Imai, Jun Kawahara, and Christopher T Kenny.
-"The Essential Role of Empirical Validation in Legislative Redistricting Simulation." 
+"The Essential Role of Empirical Validation in Legislative Redistricting Simulation."
 Forthcoming, Statistics and Public Policy.
 }
+\concept{enumerate}

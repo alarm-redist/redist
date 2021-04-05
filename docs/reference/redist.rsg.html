@@ -19,8 +19,8 @@
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/yeti/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous" />
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
 
@@ -83,7 +83,7 @@ redistricting routines in this package." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
       </span>
     </div>
 
@@ -91,9 +91,12 @@ redistricting routines in this package." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
+</li>
+<li>
+  <a href="../articles/redist.html">Get started</a>
 </li>
 <li>
   <a href="../reference/index.html">Reference</a>
@@ -106,15 +109,27 @@ redistricting routines in this package." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/Intro-to-redist.html">Intro-to-redist</a>
+      <a href="../articles/glossary.html">Glossary of Key Redistricting Terms</a>
+    </li>
+    <li>
+      <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
+    </li>
+    <li>
+      <a href="../articles/mcmc.html">Redistricting with Flip MCMC</a>
+    </li>
+    <li>
+      <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
     </li>
   </ul>
+</li>
+<li>
+  <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://github.com/kosukeimai/redist/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+  <a href="https://github.com/alarm-redist/redist/">
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -132,7 +147,7 @@ redistricting routines in this package." />
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Redistricting via Random Seed and Grow Algorithm</h1>
-    <small class="dont-index">Source: <a href='https://github.com/kosukeimai/redist/blob/master/R/rsg.R'><code>R/rsg.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/alarm-redist/redist/blob/master/R/rsg.R'><code>R/rsg.R</code></a></small>
     <div class="hidden name"><code>redist.rsg.Rd</code></div>
     </div>
 
@@ -143,21 +158,30 @@ Rodden (2013).  The algorithm can provide start values for the other
 redistricting routines in this package.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.rsg</span>(<span class='kw'>adj.list</span>, <span class='kw'>population</span>, <span class='kw'>ndists</span>, <span class='kw'>thresh</span>,
-verbose = <span class='fl'>TRUE</span>, maxiter=<span class='fl'>5000</span>)</pre>
+    <pre class="usage"><span class='fu'>redist.rsg</span><span class='op'>(</span>
+  <span class='va'>adj</span>,
+  <span class='va'>total_pop</span>,
+  <span class='va'>ndists</span>,
+  <span class='va'>pop_tol</span>,
+  verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  maxiter <span class='op'>=</span> <span class='fl'>5000</span>,
+  <span class='va'>adj.list</span>,
+  <span class='va'>population</span>,
+  <span class='va'>thresh</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>adj.list</th>
+      <th>adj</th>
       <td><p>List of length N, where N is the number of precincts.
 Each list element is an integer vector indicating which precincts that precinct
 is adjacent to.  It is assumed that precinct numbers start at 0.</p></td>
     </tr>
     <tr>
-      <th>population</th>
-      <td><p>numeric vector of list N, where N is the number of precincts.
+      <th>total_pop</th>
+      <td><p>numeric vector of length N, where N is the number of precincts.
 Each element lists the population total of the corresponding precinct, and is
 used to enforce population constraints.</p></td>
     </tr>
@@ -167,7 +191,7 @@ used to enforce population constraints.</p></td>
 precincts into.</p></td>
     </tr>
     <tr>
-      <th>thresh</th>
+      <th>pop_tol</th>
       <td><p>numeric, indicating how close district population targets have
 to be to the target population before algorithm converges.  thresh=0.05 for
 example means that all districts must be between 0.95 and 1.05 times the size
@@ -186,13 +210,32 @@ use a different set of start values and try again.  If it fails again,
 redist.rsg() returns an object of all NAs, indicating that use of more
 iterations may be advised.</p></td>
     </tr>
+    <tr>
+      <th>adj.list</th>
+      <td><p>Deprecated, use adj. List of length N, where N is the number of precincts.
+Each list element is an integer vector indicating which precincts that precinct
+is adjacent to.  It is assumed that precinct numbers start at 0.</p></td>
+    </tr>
+    <tr>
+      <th>population</th>
+      <td><p>Deprecated, use total_pop. numeric vector of list N, where N is the number of precincts.
+Each element lists the population total of the corresponding precinct, and is
+used to enforce population constraints.</p></td>
+    </tr>
+    <tr>
+      <th>thresh</th>
+      <td><p>Deprecated, use pop_tol. numeric, indicating how close district population targets have
+to be to the target population before algorithm converges.  thresh=0.05 for
+example means that all districts must be between 0.95 and 1.05 times the size
+of target.pop in population size.</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>list, containing three objects containing the completed redistricting
 plan.</p><ul>
-<li><p><code>district_membership</code>  A vector of length N, indicating the
+<li><p><code>plan</code>  A vector of length N, indicating the
 district membership of each precinct.</p></li>
 <li><p><code>district_list</code>  A list of length Ndistrict.  Each list contains a
 vector of the precincts in the respective district.</p></li>
@@ -208,20 +251,23 @@ Quarterly Journal of Political Science. 8(3): 239-269.</p>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
     <p>Benjamin Fifield, Department of Politics, Princeton University
-<a href='mailto:bfifield@princeton.edu'>bfifield@princeton.edu</a>, <a href='http://www.benfifield.com'>http://www.benfifield.com</a></p>
+<a href='mailto:benfifield@gmail.com'>benfifield@gmail.com</a>, <a href='https://www.benfifield.com/'>https://www.benfifield.com/</a></p>
 <p>Michael Higgins, Department of Statistics, Kansas State University
 <a href='mailto:mikehiggins@k-state.edu'>mikehiggins@k-state.edu</a>,
-<a href='http://www-personal.ksu.edu/~mikehiggins/'>http://www-personal.ksu.edu/~mikehiggins/</a></p>
+<a href='http://www-personal.k-state.edu/~mikehiggins/'>http://www-personal.k-state.edu/~mikehiggins/</a></p>
 <p>Kosuke Imai, Department of Politics, Princeton University
-<a href='mailto:kimai@princeton.edu'>kimai@princeton.edu</a>, <a href='http://imai.princeton.edu'>http://imai.princeton.edu</a></p>
+<a href='mailto:imai@harvard.edu'>imai@harvard.edu</a>, <a href='http://imai.fas.harvard.edu'>http://imai.fas.harvard.edu</a></p>
 <p>James Lo, <a href='mailto:jameslo@princeton.edu'>jameslo@princeton.edu</a></p>
 <p>Alexander Tarr, Department of Electrical Engineering, Princeton University
 <a href='mailto:atarr@princeton.edu'>atarr@princeton.edu</a></p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'>### Real data example from test set</span>
-<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='st'>"algdat.pfull"</span>)
-<span class='kw'>res</span> <span class='op'>&lt;-</span> <span class='fu'>redist.rsg</span>(<span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>adjlist</span>, <span class='kw'>algdat.pfull</span><span class='op'>$</span><span class='kw'>precinct.data</span><span class='op'>$</span><span class='kw'>pop</span>, <span class='fl'>3</span>, <span class='fl'>0.05</span>)
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_adj</span><span class='op'>)</span>
+
+<span class='va'>res</span> <span class='op'>&lt;-</span> <span class='fu'>redist.rsg</span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>fl25_adj</span>, total_pop <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>,
+ ndists <span class='op'>=</span> <span class='fl'>3</span>, pop_tol <span class='op'>=</span> <span class='fl'>0.05</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; 
 #&gt; ==================== 
 #&gt; redist.rsg(): Automated Redistricting Starts
@@ -229,34 +275,34 @@ Quarterly Journal of Political Science. 8(3): 239-269.</p>
 #&gt; 
 #&gt; 	3 districts built using 25 precincts in 0 seconds...
 #&gt; </div><div class='input'>
-<span class='co'>if</span> (<span class='fl'>FALSE</span>) {
+<span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
 <span class='co'>### Example that generates test data from a square map with equal population</span>
-<span class='kw'>districts</span>
+<span class='va'>districts</span>
 <span class='co'>### Number of precincts is Nrows*Ncols</span>
 <span class='co'>### getTest() outputs an adjacency list out of specified rows and columns</span>
 
-<span class='kw'>genTest</span> <span class='op'>&lt;-</span> <span class='fu'>function</span>(<span class='kw'>Nrows</span>,<span class='kw'>Ncols</span>){
-<span class='kw'>NN</span> <span class='op'>&lt;-</span> <span class='kw'>Nrows</span> <span class='op'>*</span> <span class='kw'>Ncols</span>
-<span class='kw'>geog</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span>(<span class='fl'>NA</span>,nrow=<span class='kw'>Nrows</span><span class='op'>+</span><span class='fl'>2</span>, ncol=<span class='kw'>Ncols</span><span class='op'>+</span><span class='fl'>2</span>)
-<span class='kw'>geog</span>[<span class='fl'>2</span><span class='op'>:</span>(<span class='kw'>Nrows</span><span class='op'>+</span><span class='fl'>1</span>), <span class='fl'>2</span><span class='op'>:</span>(<span class='kw'>Ncols</span><span class='op'>+</span><span class='fl'>1</span>)] <span class='op'>&lt;-</span> <span class='fl'>0</span><span class='op'>:</span>(<span class='kw'>NN</span><span class='op'>-</span><span class='fl'>1</span>)
+<span class='va'>genTest</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>Nrows</span>,<span class='va'>Ncols</span><span class='op'>)</span><span class='op'>{</span>
+<span class='va'>NN</span> <span class='op'>&lt;-</span> <span class='va'>Nrows</span> <span class='op'>*</span> <span class='va'>Ncols</span>
+<span class='va'>geog</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/matrix.html'>matrix</a></span><span class='op'>(</span><span class='cn'>NA</span>,nrow<span class='op'>=</span><span class='va'>Nrows</span><span class='op'>+</span><span class='fl'>2</span>, ncol<span class='op'>=</span><span class='va'>Ncols</span><span class='op'>+</span><span class='fl'>2</span><span class='op'>)</span>
+<span class='va'>geog</span><span class='op'>[</span><span class='fl'>2</span><span class='op'>:</span><span class='op'>(</span><span class='va'>Nrows</span><span class='op'>+</span><span class='fl'>1</span><span class='op'>)</span>, <span class='fl'>2</span><span class='op'>:</span><span class='op'>(</span><span class='va'>Ncols</span><span class='op'>+</span><span class='fl'>1</span><span class='op'>)</span><span class='op'>]</span> <span class='op'>&lt;-</span> <span class='fl'>0</span><span class='op'>:</span><span class='op'>(</span><span class='va'>NN</span><span class='op'>-</span><span class='fl'>1</span><span class='op'>)</span>
 
-<span class='kw'>adj.list</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/vector.html'>vector</a></span>(<span class='st'>"list"</span>, <span class='kw'>NN</span>)
+<span class='va'>adj.list</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/vector.html'>vector</a></span><span class='op'>(</span><span class='st'>"list"</span>, <span class='va'>NN</span><span class='op'>)</span>
 
-<span class='co'>for</span>(<span class='kw'>i</span> <span class='co'>in</span> <span class='fl'>2</span><span class='op'>:</span>(<span class='kw'>Nrows</span><span class='op'>+</span><span class='fl'>1</span>)){
-    <span class='co'>for</span>(<span class='kw'>j</span> <span class='co'>in</span> <span class='fl'>2</span><span class='op'>:</span>(<span class='kw'>Ncols</span><span class='op'>+</span><span class='fl'>1</span>)){
-        <span class='kw'>adj.list</span>[[ <span class='kw'>geog</span>[<span class='kw'>i</span>,<span class='kw'>j</span>] <span class='op'>+</span> <span class='fl'>1</span> ]] <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='kw'>geog</span>[<span class='kw'>i</span><span class='op'>-</span><span class='fl'>1</span>,<span class='kw'>j</span>],<span class='kw'>geog</span>[<span class='kw'>i</span><span class='op'>+</span><span class='fl'>1</span>,<span class='kw'>j</span>],<span class='kw'>geog</span>[<span class='kw'>i</span>,<span class='kw'>j</span><span class='op'>-</span><span class='fl'>1</span>],<span class='kw'>geog</span>[<span class='kw'>i</span>,<span class='kw'>j</span><span class='op'>+</span><span class='fl'>1</span>])
-    }
-}
-<span class='kw'>adj.list</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/lapply.html'>lapply</a></span>(<span class='kw'>adj.list</span>, <span class='kw'>na.omit</span>)
-<span class='kw'>adj.list</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/lapply.html'>lapply</a></span>(<span class='kw'>adj.list</span>, <span class='kw'>as.numeric</span>)
-<span class='fu'><a href='https://rdrr.io/r/base/function.html'>return</a></span>(<span class='kw'>adj.list</span>)
-}
+<span class='kw'>for</span><span class='op'>(</span><span class='va'>i</span> <span class='kw'>in</span> <span class='fl'>2</span><span class='op'>:</span><span class='op'>(</span><span class='va'>Nrows</span><span class='op'>+</span><span class='fl'>1</span><span class='op'>)</span><span class='op'>)</span><span class='op'>{</span>
+    <span class='kw'>for</span><span class='op'>(</span><span class='va'>j</span> <span class='kw'>in</span> <span class='fl'>2</span><span class='op'>:</span><span class='op'>(</span><span class='va'>Ncols</span><span class='op'>+</span><span class='fl'>1</span><span class='op'>)</span><span class='op'>)</span><span class='op'>{</span>
+        <span class='va'>adj.list</span><span class='op'>[[</span> <span class='va'>geog</span><span class='op'>[</span><span class='va'>i</span>,<span class='va'>j</span><span class='op'>]</span> <span class='op'>+</span> <span class='fl'>1</span> <span class='op'>]</span><span class='op'>]</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='va'>geog</span><span class='op'>[</span><span class='va'>i</span><span class='op'>-</span><span class='fl'>1</span>,<span class='va'>j</span><span class='op'>]</span>,<span class='va'>geog</span><span class='op'>[</span><span class='va'>i</span><span class='op'>+</span><span class='fl'>1</span>,<span class='va'>j</span><span class='op'>]</span>,<span class='va'>geog</span><span class='op'>[</span><span class='va'>i</span>,<span class='va'>j</span><span class='op'>-</span><span class='fl'>1</span><span class='op'>]</span>,<span class='va'>geog</span><span class='op'>[</span><span class='va'>i</span>,<span class='va'>j</span><span class='op'>+</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>)</span>
+    <span class='op'>}</span>
+<span class='op'>}</span>
+<span class='va'>adj.list</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/lapply.html'>lapply</a></span><span class='op'>(</span><span class='va'>adj.list</span>, <span class='va'>na.omit</span><span class='op'>)</span>
+<span class='va'>adj.list</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/lapply.html'>lapply</a></span><span class='op'>(</span><span class='va'>adj.list</span>, <span class='va'>as.numeric</span><span class='op'>)</span>
+<span class='kw'><a href='https://rdrr.io/r/base/function.html'>return</a></span><span class='op'>(</span><span class='va'>adj.list</span><span class='op'>)</span>
+<span class='op'>}</span>
 
 <span class='co'>### Generate a 100x100 precinct map and redistrict it into 10 districts</span>
-<span class='kw'>adj.list</span> <span class='op'>&lt;-</span> <span class='fu'>genTest</span>(<span class='fl'>100</span>,<span class='fl'>100</span>)
-<span class='kw'>population</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span>(<span class='fl'>300</span>,<span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span>(<span class='kw'>adj.list</span>))
-<span class='kw'>tmp</span> <span class='op'>&lt;-</span> <span class='fu'>redist.rsg</span>(<span class='kw'>adj.list</span>, <span class='kw'>population</span>, <span class='fl'>10</span>, <span class='fl'>0.05</span>)
-}
+<span class='va'>adj.list</span> <span class='op'>&lt;-</span> <span class='fu'>genTest</span><span class='op'>(</span><span class='fl'>100</span>,<span class='fl'>100</span><span class='op'>)</span>
+<span class='va'>population</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/rep.html'>rep</a></span><span class='op'>(</span><span class='fl'>300</span>,<span class='fu'><a href='https://rdrr.io/r/base/length.html'>length</a></span><span class='op'>(</span><span class='va'>adj.list</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>tmp</span> <span class='op'>&lt;-</span> <span class='fu'>redist.rsg</span><span class='op'>(</span><span class='va'>adj.list</span>, <span class='va'>population</span>, <span class='fl'>10</span>, <span class='fl'>0.05</span><span class='op'>)</span>
+<span class='op'>}</span>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -269,11 +315,11 @@ Quarterly Journal of Political Science. 8(3): 239-269.</p>
 
       <footer>
       <div class="copyright">
-  <p>Developed by Ben Fifield, Christopher T. Kenny, Cory McCartan, Alexander Tarr, Jun Kawahara, Kosuke Imai.</p>
+  <p>Developed by Christopher T. Kenny, Cory McCartan, Ben Fifield, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
