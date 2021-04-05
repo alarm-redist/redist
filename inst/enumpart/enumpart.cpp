@@ -124,6 +124,67 @@ int translateVertex(int v, const Graph& g)
     return vn;
 }
 
+/*
+ * Check whether partition meets weight bounds
+ * Author: Cory McCartan
+ */
+bool check_print(const std::set<int>& s, const Graph& g, int k,
+                 const std::vector<unsigned int> weights, int lower, int upper) {
+    // convert to list of assignments (copied from OutputDistrict)
+    std::vector<int> vec;
+    for (std::set<int>::const_reverse_iterator itor = s.rbegin();
+         itor != s.rend(); ++itor) {
+        vec.push_back(g.edgeSize() - *itor); // 0-origin edge list
+    }
+
+    const int n = g.vertexSize();;
+    std::vector<int> verarray(n + 1);
+
+    for (int i = 1; i <= n; ++i) {
+        verarray[i] = i + n;
+    }
+
+    for (size_t i = 0; i < vec.size(); ++i) {
+        const Graph::EdgeInfo& edge = g.edgeInfo(vec[i]);
+        int c1 = verarray[translateVertex(edge.v1, g)];
+        int c2 = verarray[translateVertex(edge.v2, g)];
+        if (c1 > c2) {
+            std::swap(c1, c2);
+        }
+        Replace(verarray, n, c2, c1);
+    }
+
+    // Aggregate by component
+    std::vector<unsigned int> aggr(k, 0);
+    int count = 0;
+    for (int i = 1; i <= n; ++i) {
+        if (verarray[i] > n) {
+            Replace(verarray, n, verarray[i], count);
+            ++count;
+        }
+        aggr[verarray[i]] += weights[i-1];
+        // early exit
+        if (aggr[verarray[i]] > upper) return false;
+    }
+
+    // check bounds
+    for (int i = 0; i < k; i++) {
+        if (aggr[i] < lower || aggr[i] > upper) return false;
+    }
+
+    // if reached here we're OK
+    for (int i = 1; i <= n; ++i) {
+        std::cout << verarray[i];
+        if (i < n) {
+            std::cout << " ";
+        }
+    }
+    std::cout << std::endl;
+
+    return true;
+}
+
+
 void OutputDistrict(const std::vector<int>& vec, const Graph& graph)
 {
     const int n = graph.vertexSize();;
@@ -297,6 +358,9 @@ int main(int argc, char *argv[]) {
         }
 
         std::vector<unsigned int> weight_list;
+        if (!opt["readfile"] && weightFileName.empty() && !zddFileName.empty())
+            weightFileName = zddFileName;
+
         if (weightFileName.empty()) {
             for (int jj = 0; jj < m; ++jj) {
                 weight_list.push_back(1);
@@ -312,6 +376,9 @@ int main(int argc, char *argv[]) {
                 weight_list.push_back(c);
             }
         }
+        // negative => not binding
+        int lower = -2;
+        int upper = -1;
 
         DdStructure<2> dd;
         ZBDD dd_s;
@@ -360,33 +427,31 @@ int main(int argc, char *argv[]) {
                     sum += weight_list[i];
                 }
                 double ratio = optDouble["ratio"];
-                int lower = static_cast<int>(floor(static_cast<double>(sum) /
+                lower = static_cast<int>(floor(static_cast<double>(sum) /
                                         (ratio * (k - 1) + 1)));
-                int upper = static_cast<int>(ceil(ratio * static_cast<double>(sum) /
+                upper = static_cast<int>(ceil(ratio * static_cast<double>(sum) /
                                              (ratio + (k - 1))));
                 std::cerr << "lower = " << lower << ", upper = " << upper << std::endl;
-                ComponentRatioSpec crspec(g, weight_list,
-                                          lower, upper,
-                                          ratio,
-                                          opt["noloop"], !opt["nola"]);
+                //ComponentRatioSpec crspec(g, weight_list,
+                //                          lower, upper,
+                //                          ratio,
+                //                          opt["noloop"], !opt["nola"]);
 
                 //dd = DdStructure<2>(crspec);
                 //dd.zddReduce();
                 //dd.zddSubset(gpspec);
 
                 //dd = DdStructure<2>(zddIntersection(gpspec, crspec));
-                dd.zddSubset(crspec);
-                dd.zddReduce();
-            } else {
-                if (opt["lower"] || opt["upper"]) {
-                    int lower = (opt["lower"] ? optNum["lower"] : 0);
-                    int upper = (opt["upper"] ? optNum["upper"] : INT_MAX);
-                    ComponentWeightSpec cwspec(g, weight_list,
-                                               lower, upper,
-                                               opt["noloop"], !opt["nola"]);
-                    dd.zddSubset(cwspec);
-                    dd.zddReduce();
-                }
+                //dd.zddSubset(crspec);
+                //dd.zddReduce();
+            } else if (opt["lower"] || opt["upper"]) {
+                lower = (opt["lower"] ? optNum["lower"] : 0);
+                upper = (opt["upper"] ? optNum["upper"] : INT_MAX);
+                //ComponentWeightSpec cwspec(g, weight_list,
+                //                           lower, upper,
+                //                           opt["noloop"], !opt["nola"]);
+                //dd.zddSubset(cwspec);
+                //dd.zddReduce();
             }
         }
 
@@ -394,6 +459,8 @@ int main(int argc, char *argv[]) {
                 << std::setprecision(10)
                 << dd.evaluate(ZddCardinality<double>())
                 << "\n";
+
+        mh << "lower = " << lower << ", upper = " << upper << "\n";
 
         if (opt["count"]) {
             MessageHandler mh;
@@ -405,6 +472,7 @@ int main(int argc, char *argv[]) {
         if (opt["zdd"]) dd.dumpDot(std::cout, "ZDD");
         if (opt["export"]) dd.dumpSapporo(std::cout);
 
+        bool check_flag = lower > 0 && upper > lower && opt["comp"];
         if (opt["solutions"] || opt["allsols"]) {
             int count = optNum["solutions"];
             if (opt["allsols"]) {
@@ -413,7 +481,13 @@ int main(int argc, char *argv[]) {
 
             for (DdStructure<2>::const_iterator t = dd.begin(); t != dd.end();
                     ++t) {
-                PrintEdgeSet(*t, g, opt["comp"]);
+                // check bounds if necessary
+                if (check_flag) {
+                    bool ok = check_print(*t, g, k, weight_list, lower, upper);
+                    if (!ok) continue;
+                } else {
+                    PrintEdgeSet(*t, g, opt["comp"]);
+                }
 
                 //EdgeDecorator edges(n, *t);
                 //g.dump(std::cout, edges);
@@ -433,21 +507,6 @@ int main(int argc, char *argv[]) {
 
             ZBDD_CountMap cmap;
             BigInteger bi = ZBDD_CountSolutions(dd_s, &cmap);
-            //std::cerr << "solutions = " << z.Card() << " " <<  << std::endl;
-
-            //for (int i = 1; i <= (int)bi; ++i) {
-            //    std::set<bddvar> s;
-            //    ZBDD_GetIthSet(z, BigInteger(i), cmap, &s);
-            //    std::set<bddvar>::iterator itor = s.begin();
-            //    std::vector<int> v;
-            //    for ( ; itor != s.end(); ++itor) {
-            //        v.push_back(n - *itor + 1);
-            //    }
-            //    for (int i = (int)v.size() - 1; i >= 0; --i) {
-            //        std::cerr << v[i] << " ";
-            //    }
-            //    std::cerr << std::endl;
-            //}
 
             BigIntegerRandom random;
             for (int i = 0; i < sampleNum; ++i) {
@@ -458,7 +517,14 @@ int main(int argc, char *argv[]) {
                 for ( ; itor != s.end(); ++itor) {
                     r.insert(*itor);
                 }
-                PrintEdgeSet(r, g, opt["comp"]);
+
+                // check bounds if necessary
+                if (check_flag) {
+                    bool ok = check_print(r, g, k, weight_list, lower, upper);
+                    if (!ok) i--;
+                } else {
+                    PrintEdgeSet(r, g, opt["comp"]);
+                }
             }
 
         } else if (opt["sample-old"]) {
@@ -476,7 +542,7 @@ int main(int argc, char *argv[]) {
             std::seed_seq seq(std::begin(seed_data), std::end(seed_data));
             std::mt19937 engine(seq);
 
-            std::uniform_real_distribution<double> dis(0.0, 1.0);  
+            std::uniform_real_distribution<double> dis(0.0, 1.0);
             for (int i = 0; i < sampleNum; ++i) {
                 std::set<int> edgeSet;
                 NodeId node = dd.root();

@@ -4,24 +4,48 @@
 \alias{redist.mcmc.mpi}
 \title{MCMC Redistricting Simulator using MPI}
 \usage{
-redist.mcmc.mpi(adjobj, popvec, nsims, ndists = NA, initcds = NULL,
-loopscompleted = 0, nloop = 1, nthin = 1,
-eprob = 0.05,
-lambda = 0, popcons = NA, grouppopvec = NA,
-areasvec = NA, countymembership = NA,
-borderlength_mat = NA, ssdmat = NA,
-compactness_metric = "fryer-holden", rngseed = NA,
-constraint = NA, constraintweights = NA,
-betaseq = "powerlaw",
-betaseqlength = 10, adjswaps = TRUE,
-freq = 100, savename = NA, maxiterrsg = 5000,
-contiguitymap = "rooks", verbose = FALSE)
+redist.mcmc.mpi(
+  adj,
+  total_pop,
+  nsims,
+  ndists = NA,
+  init_plan = NULL,
+  loopscompleted = 0,
+  nloop = 1,
+  nthin = 1,
+  eprob = 0.05,
+  lambda = 0,
+  pop_tol = NA,
+  group_pop = NA,
+  areasvec = NA,
+  counties = NA,
+  borderlength_mat = NA,
+  ssdmat = NA,
+  compactness_metric = "fryer-holden",
+  rngseed = NA,
+  constraint = NA,
+  constraintweights = NA,
+  betaseq = "powerlaw",
+  betaseqlength = 10,
+  adjswaps = TRUE,
+  freq = 100,
+  savename = NA,
+  maxiterrsg = 5000,
+  verbose = FALSE,
+  adjobj,
+  popvec,
+  initcds,
+  popcons,
+  grouppopvec,
+  countymembership,
+  contiguitymap
+)
 }
 \arguments{
-\item{adjobj}{An adjacency matrix, list, or object of class
+\item{adj}{An adjacency matrix, list, or object of class
 "SpatialPolygonsDataFrame."}
 
-\item{popvec}{A vector containing the populations of each geographic
+\item{total_pop}{A vector containing the populations of each geographic
 unit.}
 
 \item{nsims}{The number of simulations run before a save point.}
@@ -29,7 +53,7 @@ unit.}
 \item{ndists}{The number of congressional districts. The default is
 \code{NULL}.}
 
-\item{initcds}{A vector containing the congressional district labels
+\item{init_plan}{A vector containing the congressional district labels
 of each geographic unit. The default is \code{NULL}. If not provided, random
 and contiguous congressional district assignments will be generated using
 \code{redist.rsg}.}
@@ -51,18 +75,18 @@ is \code{0.05}.}
 each iteration of the algorithm. The number of swaps each iteration is
 equal to Pois(\code{lambda}) + 1. The default is \code{0}.}
 
-\item{popcons}{The strength of the hard population
-constraint. \code{popcons} = 0.05 means that any proposed swap that
+\item{pop_tol}{The strength of the hard population
+constraint. \code{pop_tol} = 0.05 means that any proposed swap that
 brings a district more than 5\% away from population parity will be
 rejected. The default is \code{NULL}.}
 
-\item{grouppopvec}{A vector of populations for some sub-group of
+\item{group_pop}{A vector of populations for some sub-group of
 interest. The default is \code{NULL}.}
 
 \item{areasvec}{A vector of precinct areas for discrete Polsby-Popper.
 The default is \code{NULL}.}
 
-\item{countymembership}{A vector of county membership assignments. The default is \code{NULL}.}
+\item{counties}{A vector of county membership assignments. The default is \code{NULL}.}
 
 \item{borderlength_mat}{A matrix of border length distances, where
 the first two columns are the indices of precincts sharing a border and
@@ -79,7 +103,7 @@ is \code{polsby-popper}.}
 simulations. Default is \code{NULL}.}
 
 \item{constraint}{Which constraint to apply. Accepts any combination of \code{compact},
-\code{segregation}, \code{population}, \code{similarity}, or \code{none}
+\code{vra}, \code{population}, \code{similarity}, or \code{none}
 (no constraint applied). The default is NULL.}
 
 \item{constraintweights}{The weights to apply to each constraint. Should be a vector
@@ -103,15 +127,36 @@ iterations}
 \item{maxiterrsg}{Maximum number of iterations for random seed-and-grow
 algorithm to generate starting values. Default is 5000.}
 
-\item{contiguitymap}{Use queens or rooks distance criteria for generating an
-adjacency list from a "SpatialPolygonsDataFrame" data type. Default is "rooks".}
-
 \item{verbose}{Whether to print initialization statement. Default is
 \code{TRUE}.}
+
+\item{adjobj}{Deprecated, use adj. An adjacency matrix, list, or object of class
+"SpatialPolygonsDataFrame."}
+
+\item{popvec}{Deprecated, use total_pop. A vector containing the populations of each geographic
+unit.}
+
+\item{initcds}{Deprecated, use init_plan. A vector containing the congressional district labels
+of each geographic unit. The default is \code{NULL}. If not provided, random
+and contiguous congressional district assignments will be generated using
+\code{redist.rsg}.}
+
+\item{popcons}{Deprecated, use pop_tol. The strength of the hard population
+constraint. \code{popcons} = 0.05 means that any proposed swap that
+brings a district more than 5\% away from population parity will be
+rejected. The default is \code{NULL}.}
+
+\item{grouppopvec}{Deprecated, use group_pop. A vector of populations for some sub-group of
+interest. The default is \code{NULL}.}
+
+\item{countymembership}{Deprecated, use counties. A vector of county membership assignments. The default is \code{NULL}.}
+
+\item{contiguitymap}{Use queens or rooks distance criteria for generating an
+adjacency list from a "SpatialPolygonsDataFrame" data type. Default is "rooks".}
 }
 \value{
 \code{redist.mcmc.mpi} returns an object of class "redist". The object
-\code{redist} is a list that contains the folowing components (the
+\code{redist} is a list that contains the following components (the
 inclusion of some components is dependent on whether tempering
 techniques are used):
 \item{partitions}{Matrix of congressional district assignments generated by the
@@ -129,8 +174,8 @@ simulation, which dictates the number of swaps attempted.}
 constraint for each accepted redistricting plan.}
 \item{constraint_compact}{A vector containing the value of the compactness
 constraint for each accepted redistricting plan.}
-\item{constraint_segregation}{A vector containing the value of the
-segregation constraint for each accepted redistricting plan.}
+\item{constraint_vra}{A vector containing the value of the
+vra constraint for each accepted redistricting plan.}
 \item{constraint_similar}{A vector containing the value of the similarity
 constraint for each accepted redistricting plan.}
 \item{beta_sequence}{A vector containing the value of beta for each iteration
@@ -149,7 +194,7 @@ plans using Markov Chain Monte Carlo methods.
 \details{
 This function allows users to simulate redistricting plans
 using Markov Chain Monte Carlo methods. Several constraints
-correspoding to substantive requirements in the redistricting process
+corresponding to substantive requirements in the redistricting process
 are implemented, including population parity and geographic
 compactness. In addition, the function includes multiple-swap and
 parallel tempering functionality in MPI to improve the mixing of the Markov
@@ -157,19 +202,19 @@ Chain.
 }
 \examples{
 \dontrun{
-data(algdat.pfull)
-## Code to run the simulations in Figure 4 in Fifield, Higgins,
-## Imai and Tarr (2015)
+data(fl25)
+data(fl25_enum)
+data(fl25_adj)
+
+## Code to run the simulations in Figure 4 in Fifield, Higgins, Imai and
+## Tarr (2015)
 
 ## Get an initial partition
-set.seed(1)
-initcds <- algdat.pfull$cdmat[,sample(1:ncol(algdat.pfull$cdmat), 1)]
+init_plan <- fl25_enum$plans[, 5118]
 
 ## Run the algorithm
-redist.mcmc.mpi(adjobj = algdat.pfull$adjlist,
-popvec = algdat.pfull$precinct.data$pop,
-initcds = initcds,
-nsims = 10000, savename = "test")
+redist.mcmc.mpi(adj = fl25_adj, total_pop = fl25$pop,
+                init_plan = init_plan, nsims = 10000, savename = "test")
 }
 }
 \references{
@@ -178,3 +223,4 @@ Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte
 Carlo." Working Paper. Available at
 \url{http://imai.princeton.edu/research/files/redist.pdf}.
 }
+\concept{simulate}

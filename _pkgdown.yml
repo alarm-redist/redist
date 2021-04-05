@@ -1,0 +1,50 @@
+template:
+  params:
+    bootswatch: yeti
+reference:
+- title: "Simulation Algorithm Implementations"
+  desc: "Core functions to perform a redistricting simulation"
+- contents:
+  - redist_smc
+  - redist_flip
+  - redist_mergesplit
+  - redist_shortburst
+  - has_concept("simulate")
+- title: "Analysis Functions"
+  desc: "Functions for analyzing simulation outputs"
+- contents:
+  - redist_plans
+  - add_reference
+  - subset_sampled
+  - get_plans_matrix
+  - get_plans_weights
+  - number_by
+  - pullback
+  - match_numbers
+  - has_concept("analyze")
+- title: "Setup Helpers"
+  desc: "Functions that help prepare data and select constraints"
+- contents:
+  - redist_map
+  - has_concept("prepare")
+- title: "Plotting Tools"
+  desc: "Functions for creating plots and maps"
+- contents:
+  - has_concept("plot")
+- title: "Data"
+  desc: "Data included to help demonstrate capabilities"
+- contents:
+  - has_concept("data")
+- title: "Post Processing Helpers"
+  desc: "Functions that help setup outputs for easier use"
+- contents:
+  - has_concept("post")
+- title: "Enumeration Tools"
+  desc: "Functions for more involved enumeration choices"
+- contents:
+  - has_concept("enumerate")
+- title: "Miscellaneous"
+  desc: "Other functions"
+- contents:
+  - redist-package
+  - lacks_concepts(c("prepare", "simulate", "analyze", "plot", "enumerate", "data", "post"))

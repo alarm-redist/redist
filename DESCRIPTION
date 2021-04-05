@@ -1,16 +1,16 @@
 Package: redist
-Version: 2.0.0
-Date: 2020-09-09
+Version: 3.0.0
+Date: 2021-04-02
 Title: Simulation Methods for Legislative Redistricting
 Authors@R: c(
-    person("Ben", "Fifield", email = "benfifield@gmail.com", role = "aut"),
-    person("Christopher T.", "Kenny", email = "christopherkenny@fas.harvard.edu", role = "aut"),
+    person("Christopher T.", "Kenny", email = "christopherkenny@fas.harvard.edu", role = c("aut", "cre")),
     person("Cory", "McCartan", email = "cmccartan@g.harvard.edu", role = "aut"),
-    person("Alexander", "Tarr", email = "atarr@princeton.edu", role = "aut"),
-    person("Michael", "Higgins", email = "mikehiggins@k-state.edu", role = "ctb"),
-    person("Jun", "Kawahara", email = "jkawahara@i.kyoto-u.ac.jp", role = "aut"),
-    person("Kosuke", "Imai", email = "imai@harvard.edu", role = c("aut", "cre")))
-Maintainer: Ben Fifield <benfifield@gmail.com>
+    person("Ben", "Fifield", email = "benfifield@gmail.com", role = "aut"),
+    person("Kosuke", "Imai", email = "imai@harvard.edu", role = "aut"),
+    person("Jun", "Kawahara", email = "jkawahara@i.kyoto-u.ac.jp", role = "ctb"),
+    person("Alexander", "Tarr", email = "atarr@princeton.edu", role = "ctb"),
+    person("Michael", "Higgins", email = "mikehiggins@k-state.edu", role = "ctb"))
+Maintainer: Christopher T. Kenny <christopherkenny@fas.harvard.edu>
 Description: Enables researchers to sample redistricting plans from a pre-specified
     target distribution using Sequential Monte Carlo and Markov Chain Monte Carlo
     algorithms.  The package allows for the implementation of various constraints in
@@ -19,39 +19,47 @@ Description: Enables researchers to sample redistricting plans from a pre-specif
     and plotting functionality are also included. The package implements methods
     described in Fifield, Higgins, Imai and Tarr (2020) <doi: 10.1080/10618600.2020.1739532>,
     Fifield, Imai, Kawahara, and Kenny (2020) <doi: 10.1080/2330443X.2020.1791773>,
-    and McCartan and Imai (2020) <https://imai.fas.harvard.edu/research/files/SMCredist.pdf>.
+    and McCartan and Imai (2020) <arXiv: 2008.06131>.
 Depends:
     R (>= 3.5.0)
 Imports:
     Rcpp (>= 0.11.0),
-    spdep,
-    sp,
+    rlang,
+    vctrs,
+    tidyselect,
+    stringr,
+    dplyr (>= 1.0.0),
     sf,
-    coda,
-    parallel,
     doParallel,
     foreach,
-    lwgeom,
-    dplyr,
-    ggplot2,
-    magrittr,
-    readr,
     servr,
     sys,
-    tibble,
-    stringr
+    coda,
+    ggplot2,
+    patchwork,
+    readr
 Suggests:
-    testthat,
+    igraph,
+    lwgeom,
+    withr,
+    loo,
     Rmpi,
     knitr,
     rmarkdown,
-    igraph
-LinkingTo: Rcpp, RcppArmadillo, RcppEigen, BH
+    rmapshaper,
+    scales,
+    units,
+    spdep,
+    RSpectra,
+    testthat (>= 3.0.0)
+LinkingTo: Rcpp, RcppArmadillo
 License: GPL (>= 2)
-SystemRequirements: gmp, libxml2, python
+SystemRequirements: OpenMPI, gmp, libxml2, python
 Packaged: 2015-06-03 18:32:00 UTC; benfifield
 NeedsCompilation: yes
-BugReports: https://github.com/kosukeimai/redist/issues
+BugReports: https://github.com/alarm-redist/redist/issues
+URL: https://alarm-redist.github.io/redist/
 RoxygenNote: 7.1.1
 VignetteBuilder: knitr
 Encoding: UTF-8
+Config/testthat/edition: 3

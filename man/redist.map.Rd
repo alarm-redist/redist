@@ -6,40 +6,45 @@
 \usage{
 redist.map(
   shp = NULL,
-  district_membership = NULL,
+  adj = NULL,
+  plan = NULL,
   centroids = TRUE,
   edges = TRUE,
+  boundaries = TRUE,
   drop = FALSE,
-  title = ""
+  title = "",
+  adjacency,
+  district_membership
 )
 }
 \arguments{
 \item{shp}{A SpatialPolygonsDataFrame or sf object. Required.}
 
-\item{district_membership}{A numeric vector with one row for each precinct in shp. 
+\item{adj}{A zero-indexed adjacency list. Created with redist.adjacency
+if not supplied. Default is NULL.}
+
+\item{plan}{A numeric vector with one entry for each precinct in shp.
 Used to color the districts. Default is \code{NULL}.  Optional.}
 
 \item{centroids}{A logical indicating if centroids should be plotted. Default is \code{TRUE}.}
 
 \item{edges}{A logical indicating if edges should connect adjacent centroids. Default is \code{TRUE}.}
 
+\item{boundaries}{A logical indicating if precinct boundaries should be plotted.}
+
 \item{drop}{A logical indicating if edges that cross districts should be dropped. Default is \code{FALSE}.}
 
 \item{title}{A string title of plot. Defaults to empty string. Optional.}
+
+\item{adjacency}{Deprecated, use adj. A zero-indexed adjacency list. Created with redist.adjacency
+if not supplied. Default is NULL.}
+
+\item{district_membership}{Deprecated, use plan. A numeric vector with one row for each precinct in shp.
+Used to color the districts. Default is \code{NULL}.  Optional.}
 }
 \value{
 ggplot map
 }
 \description{
 Creates a map with optional graph overlay
-}
-\examples{
-\dontrun{
-library(redist)
-data("fl25")
-data("algdat.p10")
-cds <- algdat.p10$cdmat[,100]
-redist.map(shp = fl25, district_membership = cds)
-}
-
 }

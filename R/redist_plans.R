@@ -247,7 +247,7 @@ subset_ref = function(plans) {
 get_mh_acceptance_rate <- function(plans){
     stopifnot(inherits(plans, "redist_plans"))
     alg <- attr(plans, 'algorithm')
-    
+
     if( alg %in% c('flip', 'mergesplit')){
         attr(plans, 'mh_acceptance')
     } else {

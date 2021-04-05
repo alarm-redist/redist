@@ -25,7 +25,7 @@
 redist.mergesplit <- function(adj, total_pop, nsims, ndists, pop_tol = 0.01,
                               init_plan, counties, compactness = 1,
                               constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
-                              adapt_k_thresh = 0.975, k = NULL, verbose = TRUE, 
+                              adapt_k_thresh = 0.975, k = NULL, verbose = TRUE,
                               silent = FALSE) {
   if (missing(adj)) {
     stop('Please provide an argument to adj.')

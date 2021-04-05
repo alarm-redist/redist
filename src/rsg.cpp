@@ -1,5 +1,6 @@
 
 #include <RcppArmadillo.h>
+#include "redist_types.h"
 #include "make_swaps_helper.h"
 #include "sw_mh_helper.h"
 #include "constraint_calc_helper.h"
@@ -192,7 +193,7 @@ List rsg(List adj_list,
 	  iter++;
 	  if(iter > maxiter){
 	    List result;
-	    result["district_membership"] = NumericVector::get_na();
+	    result["plan"] = NumericVector::get_na();
 	    result["district_list"] = NumericVector::get_na();
 	    result["district_pop"] = NumericVector::get_na();
 	    return(result);
@@ -205,7 +206,7 @@ List rsg(List adj_list,
 	// member_plist - List of length #districts with precinct ID's
 	// district_pop - vector of length #districts with district populations
 	List result;
-	result["district_membership"] = member_dvec;
+	result["plan"] = member_dvec;
 	result["district_list"] = member_plist;
 	result["district_pop"] = district_pop;
 

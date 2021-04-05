@@ -7,11 +7,11 @@
 ##          get estimates of performance
 #############################################
 
-run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
-                     ssdmat, grouppopvec, countymembership, names, maxiterrsg, report_all,
+run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
+                     ssdmat, group_pop, counties, names, maxiterrsg, report_all,
                      adapt_lambda, adapt_eprob,
                      nstartval_store, maxdist_startval, logarg){
-    
+
     ## Get this iteration
     p_sub <- params %>% dplyr::slice(i)
     if(logarg){
@@ -20,7 +20,7 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
         cat(c(p_sub))
         cat("\n")
     }
-    
+
     ## Set parameter values
     if("eprob" %in% names){
         eprob <- p_sub$eprob
@@ -75,12 +75,12 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
     }
 
     ## Run siulations
-    out <- redist.mcmc(adjobj = adjobj, popvec = popvec, nsims = nsims,
+    out <- redist.mcmc(adj = adj, total_pop = total_pop, nsims = nsims,
                        ndists = ndists, ssdmat = ssdmat,
-                       grouppopvec = grouppopvec,
-                       countymembership = countymembership, #ctk-cran-note
-                       initcds = initcds, eprob = eprob, lambda = lambda,
-                       popcons = popcons, 
+                       group_pop = group_pop,
+                       counties = counties, #ctk-cran-note
+                       init_plan = init_plan, eprob = eprob, lambda = lambda,
+                       popcons = popcons,
                        constraint = constraintvec,
                        constraintweights = weightvec, #ctk-cran-note
                        maxiterrsg = maxiterrsg,
@@ -108,7 +108,7 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
         }
         startval <- as.matrix(startval)
     }
-    
+
     ## Get quantiles
     quant <- floor(nsims / 4)
     q1 <- 1:quant
@@ -139,10 +139,10 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
     q4_dist_median <- round(median(out$distance_original[q4]), digits = 3)
 
     ## Share of counties split
-    if(!is.null(countymembership)){
+    if(!is.null(counties)){
         ncounties_split <- unlist(lapply(1:nsims, function(x){
             cd_assign <- out$partitions[,x]
-            return(sum(tapply(cd_assign, countymembership, function(y){ifelse(length(unique(y)) > 1, 1, 0)})))
+            return(sum(tapply(cd_assign, counties, function(y){ifelse(length(unique(y)) > 1, 1, 0)})))
         }))
         starting_county_split <- ncounties_split[1]
         q1_countysplit_median <- median(ncounties_split[q1])
@@ -211,7 +211,7 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
                   q3_dist_median, q4_dist_median, sep = " "),
             "\n")
     }
-    if(!is.null(countymembership)){
+    if(!is.null(counties)){
         if("countysplit" %in% constraintvec | report_all == TRUE){
             out <- paste0(
                 out,
@@ -234,7 +234,7 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
     if(logarg){
         sink()
     }
-    
+
     return(list(printout = out, startval = startval))
 
 }
@@ -244,21 +244,14 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 #' \code{redist.findparams} is used to find optimal parameter values of
 #' \code{redist.mcmc} for a given map.
 #'
-#' @usage redist.findparams(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
-#' adapt_lambda = FALSE, adapt_eprob = FALSE,
-#' params, ssdmat = NULL, grouppopvec = NULL, countymembership = NULL,
-#' nstartval_store, maxdist_startval,
-#' maxiterrsg = 5000, report_all = TRUE,
-#' parallel = FALSE, nthreads = NULL, log = FALSE, verbose = TRUE)
-#'
-#' @param adjobj An adjacency matrix, list, or object of class
+#' @param adj An adjacency matrix, list, or object of class
 #' "SpatialPolygonsDataFrame."
-#' @param popvec A vector containing the populations of each
+#' @param total_pop A vector containing the populations of each
 #' geographic unit.
 #' @param nsims The number of simulations run before a save point.
 #' @param ndists The number of congressional districts.
 #' The default is \code{NULL}.
-#' @param initcds A vector containing the congressional district labels
+#' @param init_plan A vector containing the congressional district labels
 #' of each geographic unit. The default is \code{NULL}. If not provided, random
 #' and contiguous congressional district assignments will be generated using \code{redist.rsg}.
 #' @param adapt_lambda Whether to adaptively tune the lambda parameter so that the Metropolis-Hastings
@@ -271,25 +264,38 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 #' \code{lambda}, \code{popcons}, \code{beta}, and \code{constraint}.
 #' @param ssdmat A matrix of squared distances between geographic
 #' units. The default is \code{NULL}.
-#' @param grouppopvec A vector of populations for some sub-group of
+#' @param group_pop A vector of populations for some sub-group of
 #' interest. The default is \code{NULL}.
-#' @param countymembership A vector of county membership assignments. The default is \code{NULL}.
+#' @param counties A vector of county membership assignments. The default is \code{NULL}.
 #' @param nstartval_store The number of maps to sample from the preprocessing chain
 #' for use as starting values in future simulations. Default is 1.
 #' @param maxdist_startval The maximum distance from the starting map that
-#' sampled maps should be. Default is 100 (no restriction). 
+#' sampled maps should be. Default is 100 (no restriction).
 #' @param maxiterrsg Maximum number of iterations for random seed-and-grow
 #' algorithm to generate starting values. Default is 5000.
 #' @param report_all Whether to report all summary statistics for each set of
 #' parameter values. Default is \code{TRUE}.
 #' @param parallel Whether to run separate parameter settings in parallel.
 #' Default is \code{FALSE}.
-#' @param nthreads Number of parallel tasks to run, declared outside of the
+#' @param ncores  Number of parallel tasks to run, declared outside of the
 #' function. Default is \code{NULL}.
 #' @param log Whether to open a log to track progress for each parameter combination
 #' being tested. Default is FALSE.
 #' @param verbose Whether to print additional information about the tests.
 #' Default is \code{TRUE}.
+#' @param adjobj Deprecated, use adj. An adjacency matrix, list, or object of class
+#' "SpatialPolygonsDataFrame."
+#' @param popvec Deprecated, use total_pop. A vector containing the populations of each
+#' geographic unit.
+#' @param initcds Deprecated, use init_plan. A vector containing the congressional district labels
+#' of each geographic unit. The default is \code{NULL}. If not provided, random
+#' and contiguous congressional district assignments will be generated using \code{redist.rsg}.
+#' @param grouppopvec A vector of populations for some sub-group of
+#' interest. The default is \code{NULL}.
+#' @param countymembership Deprecated, use counties.
+#' A vector of county membership assignments. The default is \code{NULL}.
+#' @param nthreads Deprecated, use ncores. Number of parallel tasks to run, declared outside of the
+#' function. Default is \code{NULL}.
 #'
 #' @details This function allows users to test multiple parameter settings of
 #' \code{redist.mcmc} in preparation for a longer run for analysis.
@@ -301,34 +307,69 @@ run_sims <- function(i, params, adjobj, popvec, nsims, ndists, initcds,
 #' Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte
 #' Carlo." Working Paper. Available at
 #' \url{http://imai.princeton.edu/research/files/redist.pdf}.
-#' 
-#' @importFrom dplyr slice
-#' 
-#' @examples \dontrun{
-#' data(algdat.pfull)
 #'
-#' ## Code to run the simulations in Figure 4 in Fifield, Higgins, Imai and
-#' ## Tarr (2015)
+#' @importFrom dplyr slice
+#'
+#' @examples \dontrun{
+#' data(fl25)
+#' data(fl25_enum)
+#' data(fl25_adj)
 #'
 #' ## Get an initial partition
-#' set.seed(1)
-#' initcds <- algdat.pfull$cdmat[,sample(1:ncol(algdat.pfull$cdmat), 1)]
+#' init_plan <- fl25_enum$plans[, 5118]
 #'
 #' params <- expand.grid(eprob = c(.01, .05, .1))
 #'
 #' ## Run the algorithm
-#' redist.findparams(adjobj = algdat.pfull$adjlist,
-#' popvec = algdat.pfull$precinct.data$pop,
-#' initcds = initcds, nsims = 10000, params = params)
+#' redist.findparams(adj = fl25_adj, total_pop = fl25$pop,
+#'                   init_plan = init_plan, nsims = 10000, params = params)
 #' }
+#' @concept prepare
 #' @export
-redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NULL,
+redist.findparams <- function(adj,
+                              total_pop,
+                              nsims, ndists = NULL,
+                              init_plan = NULL,
                               adapt_lambda = FALSE, adapt_eprob = FALSE,
-                              params, ssdmat = NULL, grouppopvec = NULL,
-                              countymembership = NULL, 
+                              params, ssdmat = NULL,
+                              group_pop = NULL,
+                              counties = NULL,
                               nstartval_store = 1, maxdist_startval = 100,
                               maxiterrsg = 5000, report_all = TRUE,
-                              parallel = FALSE, nthreads = NULL, log = FALSE, verbose = TRUE){
+                              parallel = FALSE,
+                              ncores = NULL,
+                              log = FALSE, verbose = TRUE,
+                              adjobj,
+                              popvec,
+                              initcds,
+                              grouppopvec,
+                              countymembership,
+                              nthreads){
+
+    if(!missing(adjobj)){
+        .Deprecated(new = 'adj', old = 'adjobj')
+        adj <- adjobj
+    }
+    if(!missing(popvec)){
+        .Deprecated(new = 'total_pop', old = 'popvec')
+        total_pop <- popvec
+    }
+    if(!missing(initcds)){
+        .Deprecated(new = 'init_plan', old = 'initcds')
+        init_plan <- initcds
+    }
+    if(!missing(grouppopvec)){
+        .Deprecated(new = 'group_pop', old = 'grouppopvec')
+        group_pop <- grouppopvec
+    }
+    if(!missing(countymembership)){
+        .Deprecated(new = 'counties', old = 'countymembership')
+        counties <- countymembership
+    }
+    if(!missing(nthreads)){
+        .Deprecated(new = 'ncores', old = 'nthreads')
+        ncores <- nthreads
+    }
 
     ## Get number of trial parameter values to test
     trials <- nrow(params)
@@ -349,12 +390,12 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
         stop(paste(invalid_name, "is not a valid params input. Please see documentation.\n", sep = " "))
     }
 
-    ## Check ndists, initcds
-    if(is.null(ndists) & is.null(initcds)){
-        stop("Please either supply a vector of starting congressional district assignments in `initcds' or a target number of congressional districts in `ndists`")
+    ## Check ndists, init_plan
+    if(is.null(ndists) & is.null(init_plan)){
+        stop("Please either supply a vector of starting congressional district assignments in `init_plan' or a target number of congressional districts in `ndists`")
     }
-    if(!is.null(initcds)){
-        ndists <- length(unique(initcds))
+    if(!is.null(init_plan)){
+        ndists <- length(unique(init_plan))
     }
     if(sum("lambda" %in% names & adapt_lambda) > 0){
         warning("You have specified a grid of lambda values to search and set `adapt_lambda` to TRUE. Setting `adapt_lambda` to FALSE.")
@@ -363,54 +404,54 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
     if(sum("eprob" %in% names & adapt_eprob) > 0){
         warning("You have specified a grid of eprob values to search and set `adapt_eprob` to TRUE. Setting `adapt_eprob` to FALSE.")
         adapt_eprob <- FALSE
-    }    
-    if("weight_segregation" %in% names & is.null(grouppopvec)){
+    }
+    if("weight_segregation" %in% names & is.null(group_pop)){
         stop("If constraining on segregation, please provide a vector of group population.")
     }
     if("weight_compact" %in% names & is.null(ssdmat)){
         stop("If constraining on compactness, please provide a distances matrix.")
     }
-    if("weight_similarity" %in% names & is.null(initcds)){
+    if("weight_similarity" %in% names & is.null(init_plan)){
         stop("If constraining on similarity, please provide a vector of initial congressional district assignments.")
     }
-    if("weight_countysplit" %in% names & is.null(countymembership)){
+    if("weight_countysplit" %in% names & is.null(counties)){
         stop("If constraining the number of county splits, please provide a vector of county assignments.")
     }
 
     if(parallel){ ## Parallel
-        
+
         ## Check to see if threads declared
-        if(is.null(nthreads)){
+        if(is.null(ncores)){
             stop("If parallelizing, please declare the number of threads")
         }
 
         ## Statement initializing parallelization
         if(verbose){
             cat(paste("## -----------------------------\n",
-                "## Parallelizing over", nthreads, "processors\n",
+                "## Parallelizing over", ncores, "processors\n",
                 "## -----------------------------\n\n", sep = " "))
         }
-        
+
         ## Set parallel environment
         if(verbose){
-            cl <- makeCluster(nthreads, outfile = "")
+            cl <- makeCluster(ncores, outfile = "")
         }else{
-            cl <- makeCluster(nthreads)
+            cl <- makeCluster(ncores)
         }
         registerDoParallel(cl)
-        
+
         ## Execute foreach loop
         ret <- foreach(i = 1:trials, .verbose = verbose) %dopar% {
 
             ## Run simulations
-            out <- run_sims(i, params, adjobj, popvec, nsims, ndists, initcds,
-                            ssdmat, grouppopvec, countymembership, names, maxiterrsg, report_all,
+            out <- run_sims(i, params, adj, total_pop, nsims, ndists, init_plan,
+                            ssdmat, group_pop, counties, names, maxiterrsg, report_all,
                             adapt_lambda, adapt_eprob,
                             nstartval_store, maxdist_startval, log)
-            
+
             ## Return values
             return(out)
-            
+
         }
 
         printout <- c()
@@ -425,22 +466,22 @@ redist.findparams <- function(adjobj, popvec, nsims, ndists = NULL, initcds = NU
         ## Create container for report
         printout <- c()
         startval <- vector(mode = "list", length = trials)
-        
+
         ## Start loop over parameter values
         for(i in 1:trials){
 
             ## Run simulations
-            out <- run_sims(i = i, params = params, adjobj, popvec, nsims, ndists, initcds,
-                            ssdmat, grouppopvec, countymembership, names, maxiterrsg, report_all,
+            out <- run_sims(i = i, params = params, adj, total_pop, nsims, ndists, init_plan,
+                            ssdmat, group_pop, counties, names, maxiterrsg, report_all,
                             adapt_lambda, adapt_eprob,
                             nstartval_store, maxdist_startval, log)
-            
+
             ## Add to printout
             printout <- paste(printout, out$printout)
             startval[[i]] <- out$startval
-            
+
         }
-        
+
     }
 
     if(parallel){
