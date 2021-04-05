@@ -1,5 +1,6 @@
 data(fl25)
 data(fl25_enum)
+data(iowa)
 adj = list(1L:14L, c(0L, 3L, 15L, 16L, 17L, 18L, 19L, 20L, 21L), c(0L, 3L, 5L, 20L, 22L),
            c(0L, 1L, 2L, 20L), c(0L, 6L, 21L, 23L, 24L), c(0L, 2L, 8L, 22L), c(0L, 4L, 7L),
            c(0L, 6L, 9L), c(0L, 5L, 13L), c(0L, 7L, 10L), c(0L, 9L, 11L), c(0L, 10L, 12L),
