@@ -164,15 +164,15 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
             stop("flip_lambda must be a nonnegative integer.")
         }
 
-        if(all(flip_constraints$similarity$plan == 1)){
-          if(min(init_plan) == 1){
+        if (all(flip_constraints$similarity$plan == 1)) {
+          if (min(init_plan) == 1) {
             flip_constraints$similarity$plan <- init_plan - 1
           } else {
             flip_constraints$similarity$plan <- init_plan
           }
         }
 
-        run_burst <- function(init){
+        run_burst <- function(init) {
             skinny_flips(adj = adj, init_plan = init, total_pop = pop,
                         pop_tol = pop_tol, nsims = burst_size,
                         eprob = flip_eprob, lambda = flip_lambda,
@@ -202,7 +202,8 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
     improve_ch = sample(c("\U0001F973", "\U0001F600", "\U0001F60E",
                            "\U0001F642", "\U0001F386", "\U0001F387",
                            "\U0001F942", "\U0001F383", "\U0001FA85",
-                           "\U0001F4A5", "\U0001F389", "\U26C4", "\U0001F31F"))
+                           "\U0001F4A5", "\U0001F389", "\U26C4",
+                          "\U0001F31F", "\U0001F308"))
     improve_ct = 1L
     for (burst in 1:max_bursts) {
         plans = run_burst(out_mat[, burst])
