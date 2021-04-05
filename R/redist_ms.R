@@ -25,7 +25,8 @@
 redist.mergesplit <- function(adj, total_pop, nsims, ndists, pop_tol = 0.01,
                               init_plan, counties, compactness = 1,
                               constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
-                              adapt_k_thresh = 0.975, k = NULL, verbose = TRUE, silent = FALSE) {
+                              adapt_k_thresh = 0.975, k = NULL, verbose = TRUE,
+                              silent = FALSE) {
   if (missing(adj)) {
     stop('Please provide an argument to adj.')
   }
@@ -98,8 +99,8 @@ redist.mergesplit <- function(adj, total_pop, nsims, ndists, pop_tol = 0.01,
   }
 
   # Create plans
-  plans <- ms_plans(
-    nsims, adj, init_plan, counties, total_pop, ndists, pop_bounds[2],
+  algout <- ms_plans(
+    nsims + 1L, adj, init_plan, counties, total_pop, ndists, pop_bounds[2],
     pop_bounds[1], pop_bounds[3], compactness,
     constraints$status_quo$strength, constraints$status_quo$current, n_current,
     constraints$vra_old$strength, constraints$vra_old$tgt_vra_min,
@@ -112,7 +113,7 @@ redist.mergesplit <- function(adj, total_pop, nsims, ndists, pop_tol = 0.01,
 
 
   out <- list(
-    plans = plans,
+    plans = algout$plans[, -1],
     adj = adj,
     nsims = nsims,
     compactness = compactness,
@@ -120,6 +121,7 @@ redist.mergesplit <- function(adj, total_pop, nsims, ndists, pop_tol = 0.01,
     total_pop = total_pop,
     counties = counties,
     adapt_k_thresh = adapt_k_thresh,
+    mhdecisions = algout$mhdecisions,
     algorithm = 'mergesplit'
   )
   return(out)

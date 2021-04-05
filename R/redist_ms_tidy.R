@@ -200,7 +200,7 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
     pop_bounds = attr(map, "pop_bounds")
     pop = map[[attr(map, "pop_col")]]
 
-    plans = ms_plans(nsims+1L, adj, init_plan, counties, pop, ndists,
+    algout = ms_plans(nsims+1L, adj, init_plan, counties, pop, ndists,
                      pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
                      constraints$status_quo$strength, constraints$status_quo$current, n_current,
                      constraints$vra_old$strength, constraints$vra_old$tgt_vra_min,
@@ -209,10 +209,16 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
                      constraints$incumbency$strength, constraints$incumbency$incumbents,
                      constraints$splits$strength, adapt_k_thresh, k, verbosity)
 
+    plans <- algout$plans
+
     out = new_redist_plans(plans[,-1:-(warmup+1)], map, "mergesplit", NULL, FALSE,
                      compactness = compactness,
                      constraints = constraints,
-                     adapt_k_thresh = adapt_k_thresh)
+                     adapt_k_thresh = adapt_k_thresh,
+                     mh_acceptance = mean(algout$mhdecisions)) %>% mutate(
+                         mhdecisions = rep(algout$mhdecisions[-(1:(warmup))], each = ndists)
+                     )
+
 
     if (!is.null(init_name) && !isFALSE(init_name)) {
         out = add_reference(out, init_plan, init_name)

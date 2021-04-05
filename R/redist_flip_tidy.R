@@ -9,74 +9,74 @@
 #' process are implemented, including population parity and geographic
 #' compactness. In addition, the function includes multiple-swap and simulated
 #' tempering functionality to improve the mixing of the Markov Chain.
-#' 
-#' \code{redist_flip} allows for Gibbs constraints to be supplied via a list object 
+#'
+#' \code{redist_flip} allows for Gibbs constraints to be supplied via a list object
 #' passed to \code{constraints}. This is a change from the original \code{redist.mcmc}
 #' behavior to allow for a more straightforward function call when used within a pipe.
-#' A key difference between \code{redist_flip} and \code{redist.mcmc} is that 
+#' A key difference between \code{redist_flip} and \code{redist.mcmc} is that
 #' \code{redist_flip} uses a small compactness constraint by default, as this improves
 #' the realism of the maps greatly and also leads to large speed improvements.
 #' (One of the most time consuming aspects of the mcmc/flip backend is checking for
 #' district shattering, which is slowed down even further by non-compact districts.
-#' As such, it is recommended that all flip simulations use at least a minimal compactness 
+#' As such, it is recommended that all flip simulations use at least a minimal compactness
 #' constraint, even if you weaken it from the default settings.) The default is
-#' a \code{compact} constraint using the \code{edges-removed} metric with a 
-#' weight of 0.6. For very small maps (< 100 precincts), you will likely want to 
-#' weaken (lower) this constraint, while for very large maps (> 5000 precincts), 
-#' you will likely want to strengthen (increase) this constraint. Otherwise, 
-#' for most maps, the default constraint should be a good starting place.  
-#' 
+#' a \code{compact} constraint using the \code{edges-removed} metric with a
+#' weight of 0.6. For very small maps (< 100 precincts), you will likely want to
+#' weaken (lower) this constraint, while for very large maps (> 5000 precincts),
+#' you will likely want to strengthen (increase) this constraint. Otherwise,
+#' for most maps, the default constraint should be a good starting place.
+#'
 #' \code{redist_flip} samples from a known target distribution which can be described
 #' using the \code{constraints}. We recommend setting up the constraints for
-#' \code{redist_flip} with \code{\link{flip_constraints_helper}} to ensure that 
+#' \code{redist_flip} with \code{\link{flip_constraints_helper}} to ensure that
 #' you are supplying the exact information needed. As a quick shorthand, if you
 #' want to run a simulation with no constraints at all, you can use
-#' \code{flip_constraints_helper(map = map, constraint = NULL)} and pass this to 
+#' \code{flip_constraints_helper(map = map, constraint = NULL)} and pass this to
 #' \code{constraints}. The following describes the constraints available. The general
-#' advice is to set weights in a way that gets between 20\% and 40\% acceptance 
-#' on average, though more tuning advice is available in the vignette on using 
+#' advice is to set weights in a way that gets between 20\% and 40\% acceptance
+#' on average, though more tuning advice is available in the vignette on using
 #' mcmc methods.Having too small of an acceptance rate indicates that the weights
 #' within \code{constraints} are too large and will impact sampling efficiency.
-#' If the Metropolis Hastings acceptance rate is too large, this may impact the 
+#' If the Metropolis Hastings acceptance rate is too large, this may impact the
 #' target distribution, but may be fine for general exploration of possible maps.
-#' 
-#' There are currently 9 implemented constraint types, though `\code{compact} and 
+#'
+#' There are currently 9 implemented constraint types, though `\code{compact} and
 #' \code{partisan} have sub-types which are specified via a character \code{metric}
 #' within their respective list objects. The constraints are as follows:
-#' * \code{compact} - biases the algorithm towards drawing more compact districts. 
+#' * \code{compact} - biases the algorithm towards drawing more compact districts.
 #'   * weight - the coefficient to put on the Gibbs constraint
 #'   * metric - which metric to use. Must be one of \code{edges-removed} (the default),
-#'   \code{polsby-popper}, \code{fryer-holden}, or \code{log-st}. Using Polsby Popper 
-#'   is generally not recommended, as \code{edges-removed} is faster and highly correlated. 
+#'   \code{polsby-popper}, \code{fryer-holden}, or \code{log-st}. Using Polsby Popper
+#'   is generally not recommended, as \code{edges-removed} is faster and highly correlated.
 #'   \code{log-st} can be used to match the target distribution of \code{redist_smc} or
 #'   \code{redist_mergesplit}.
 #'   * areas - Only used with \code{polsby-popper} - A vector of precinct areas.
-#'   * borderlength_mat - Only used with \code{polsby-popper} - A matrix of precinct 
+#'   * borderlength_mat - Only used with \code{polsby-popper} - A matrix of precinct
 #'   border lengths.
 #'   * ssdmat - Only used with \code{fryer-holden} - A matrix of squared distances between
-#'   precinct centroids. 
-#'   * ssd_denom - Only used with \code{fryer-holden} - a positive integer to use 
+#'   precinct centroids.
+#'   * ssd_denom - Only used with \code{fryer-holden} - a positive integer to use
 #'   as the normalizing constant for the Relative Proximity Index.
-#' * \code{population} - A Gibbs constraint to complement the hard population 
+#' * \code{population} - A Gibbs constraint to complement the hard population
 #' constraint set by \code{pop_tol}. This penalizes moves which move away from smaller
-#' population parity deviations. It is very useful when an \code{init_plan} sits 
-#' outside of the desired \code{pop_tol} but there are substantive reasons to use 
+#' population parity deviations. It is very useful when an \code{init_plan} sits
+#' outside of the desired \code{pop_tol} but there are substantive reasons to use
 #' that plan. This constraint uses the input to \code{total_pop}.
 #'   * weight - the coefficient to put on the Gibbs constraint
-#' * \code{countysplit} This is a Gibbs constraint to minimize county splits. Unlike 
+#' * \code{countysplit} This is a Gibbs constraint to minimize county splits. Unlike
 #' SMC's county constraint, this allows for more than \code{ndists - 1} splits and
 #' does not require that counties are contiguous.
 #'   * weight - the coefficient to put on the Gibbs constraint
-#' * \code{hinge} This uses the proportion of a group in a district and matches to the 
-#' nearest target proportion, and then creates a penalty of 
-#' \eqn{\sqrt{max(0, nearest.target - group.pct)}}. This is equivalent to the 
+#' * \code{hinge} This uses the proportion of a group in a district and matches to the
+#' nearest target proportion, and then creates a penalty of
+#' \eqn{\sqrt{max(0, nearest.target - group.pct)}}. This is equivalent to the
 #' \code{vra-old} constraint in  \code{redist_smc}.
 #'   * weight - the coefficient to put on the Gibbs constraint
-#'   * minorityprop - A numeric vector of minority proportions (between 0 and 1) which 
+#'   * minorityprop - A numeric vector of minority proportions (between 0 and 1) which
 #'   districts should aim to have
 #' * \code{vra} This takes two target proportions of the presence of a minority group
 #' within a district. \eqn{(|target.min - group.pct||target.other - group.pct|)^{1.5})}
-#' This is equivalent to the \code{vra-old} constraint in 
+#' This is equivalent to the \code{vra-old} constraint in
 #' \code{redist_smc}.
 #'   * weight - the coefficient to put on the Gibbs constraint
 #'   * target_min - the target minority percentage. Often, this is set to 0.55 to encourage
@@ -84,12 +84,12 @@
 #'   * target_other - the target minority percentage for non majority minority districts.
 #' * \code{minority} This constraint sorts the districts by the proportion of a group in
 #' a district and compares the highest districts to the entries of minorityprop.
-#' This takes the form \eqn{\sum_{i=1}^{n} \sqrt{|group.pct(i) - minorityprop(i)| }} where n 
+#' This takes the form \eqn{\sum_{i=1}^{n} \sqrt{|group.pct(i) - minorityprop(i)| }} where n
 #' is the length of minorityprop input.
 #'   * weight - the coefficient to put on the Gibbs constraint
-#'   * minorityprop - A numeric vector of minority proportions (between 0 and 1) which 
+#'   * minorityprop - A numeric vector of minority proportions (between 0 and 1) which
 #'   districts should aim to have
-#' * \code{similarity} This is a status-quo constraint which penalizes plans which 
+#' * \code{similarity} This is a status-quo constraint which penalizes plans which
 #' are very different from the starting place. It is useful for local exploration.
 #'   * weight - the coefficient to put on the Gibbs constraint
 #' * \code{partisan} This is a constraint which minimizes partisan bias, either as
@@ -101,11 +101,11 @@
 #'   * metric - which metric to use. Must be one of \code{proportional-representation}
 #'   or \code{efficiency-gap}.
 #' * \code{segregation} This constraint attempts to minimize the degree of dissimilarity
-#' between districts by group population. 
+#' between districts by group population.
 #'   * weight - the coefficient to put on the Gibbs constraint
-#'   
-#' 
-#' 
+#'
+#'
+#'
 #'
 #' @param map A \code{\link{redist_map}} object.
 #' @param nsims The number of samples to draw, not including warmup.
@@ -190,10 +190,10 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
   adj <- get_adj(map)
   total_pop <- map[[attr(map, 'pop_col')]]
   ndists <- attr(map, 'ndists')
-  
-  # process constraints  
+
+  # process constraints
   pre_pre_proc <- process_flip_constr(constraints, nprec)
-  
+
   constraints_name <- names(pre_pre_proc)
   constraints_wt <- sapply(pre_pre_proc, function(x) {
     if (any(names(x) %in% c('weight'))) {
@@ -208,9 +208,9 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
     constraints_name <- constraints_name[constraints_wt != 0]
     constraints_wt <- constraints_wt[constraints_wt != 0]
   }
-  
-  
-  
+
+
+
   if (!any(class(nthin) %in% c('numeric', 'integer'))) {
     stop('nthin must be an integer')
   } else if (nthin < 1) {
@@ -248,7 +248,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
       if (is.null(init_name)) {
         init_name <- '<init>'
       }
-      
+
     } else {
       if (is.null(init_name)) init_name <- exist_name
       init_plan <- redist.sink.plan(plan = init_plan)
@@ -299,12 +299,12 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
   if(all(pre_pre_proc$similarity$plan == 1)){
     pre_pre_proc$similarity$plan <- preprocout$data$init_plan
   }
-  
+
   if (verbose) {
     cat('Starting swMH().\n')
   }
   #return(list(pre_pre = pre_pre_proc, pre = preprocout))
-  
+
   algout <- swMH(
     aList = preprocout$data$adjlist,
     cdvec = preprocout$data$init_plan,
@@ -350,13 +350,13 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
   algout <- redist.warmup.chain(algout, warmup = warmup)
   algout <- redist.thin.chain(algout, thin = nthin)
 
-  
+
   algout$plans <- algout$plans + 1
-  
+
   out <- new_redist_plans(
     plans = algout$plans,
     map = map,
-    algorithm = 'mcmc',
+    algorithm = 'flip',
     wgt = NULL,
     resampled = NULL,
     lambda = lambda,
@@ -364,8 +364,9 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
     pop_tol = pop_tol,
     adapt_eprob = as.logical(adapt_eprob),
     adapt_lambda = as.logical(adapt_lambda),
-    warmup = warmup, 
-    nthin = nthin
+    warmup = warmup,
+    nthin = nthin,
+    mh_acceptance = mean(algout$mhdecisions)
   ) %>% mutate(
     distance_parity = rep(algout$distance_parity, each = ndists),
     distance_original = rep(algout$distance_original, each = ndists),
@@ -388,7 +389,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
     constraint_minority = rep(algout$constraint_minority, each = ndists),
     constraint_hinge = rep(algout$constraint_hinge, each = ndists)
   )
-  
+
   names_tb <- names(add_tb)[apply(add_tb, 2, function(x){ !all(x == 0) })]
   out <- bind_cols(out, select(add_tb, all_of(names_tb)))
 
@@ -433,7 +434,7 @@ process_flip_constr <- function(constraints, nprec) {
       defaults[[type]][[el]] <- constraints[[type]][[el]]
     }
   }
-  
+
   if(!is.null(constraints$counties)){
     defaults$counties <- redist.county.id(constraints$counties) - 1
   }
