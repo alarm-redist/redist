@@ -15,7 +15,7 @@
  * Sample `N` redistricting plans on map `g`, ensuring that the maximum
  * population deviation is between `lower` and `upper` (and ideally `target`)
  */
-umat ms_plans(int N, List l, const uvec init, const uvec &counties, const uvec &pop,
+Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const uvec &pop,
               int n_distr, double target, double lower, double upper, double rho,
               double beta_sq, const uvec &current, int n_current,
               double beta_vra, double tgt_min, double tgt_other,
@@ -30,6 +30,8 @@ umat ms_plans(int N, List l, const uvec init, const uvec &counties, const uvec &
 
     umat districts(V, N, fill::zeros);
     districts.col(0) = init;
+
+    Rcpp::IntegerVector mh_decisions(N - 1);
 
     double tol = std::max(target - lower, upper - target) / target;
 
@@ -101,8 +103,10 @@ umat ms_plans(int N, List l, const uvec init, const uvec &counties, const uvec &
         if (alpha >= 1 || unif(generator) <= alpha) { // ACCEPT
             n_accept++;
             // map already stored in districts.col(i);
+            mh_decisions(i - 1) = 1;
         } else { // REJECT
             districts.col(i) = districts.col(i - 1); // copy over old map
+            mh_decisions(i - 1) = 0;
         }
 
         if (verbosity >= 2 && refresh > 0 && (i+1) % refresh == 0) {
@@ -115,7 +119,11 @@ umat ms_plans(int N, List l, const uvec init, const uvec &counties, const uvec &
         Rprintf("Acceptance rate: %.1f%%.\n", (100.0 * n_accept) / (N-1));
     }
 
-    return districts;
+    Rcpp::List out;
+    out["plans"] = districts;
+    out["mhdecisions"] = mh_decisions;
+
+    return out;
 }
 
 

@@ -150,7 +150,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
             ms_plans(burst_size + 1L, adj, init, counties, pop, ndists,
                      pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
                      0, rep(1, ndists), ndists, 0, 0, 0, 1, rep(0, V),
-                     0, 0, 0, rep(1, ndists), 0, 1.0, k, verbosity=0)[, -1L]
+                     0, 0, 0, rep(1, ndists), 0, 1.0, k, verbosity=0)$plans[, -1L]
         }
     } else {
 
