@@ -369,7 +369,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // ms_plans
-arma::umat ms_plans(int N, List l, const arma::uvec init, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double target, double lower, double upper, double rho, double beta_sq, const arma::uvec& current, int n_current, double beta_vra, double tgt_min, double tgt_other, double pow_vra, const arma::uvec& min_pop, double beta_vra_hinge, const arma::vec& tgts_min, double beta_inc, const arma::uvec& incumbents, double beta_splits, double thresh, int k, int verbosity);
+Rcpp::List ms_plans(int N, List l, const arma::uvec init, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double target, double lower, double upper, double rho, double beta_sq, const arma::uvec& current, int n_current, double beta_vra, double tgt_min, double tgt_other, double pow_vra, const arma::uvec& min_pop, double beta_vra_hinge, const arma::vec& tgts_min, double beta_inc, const arma::uvec& incumbents, double beta_splits, double thresh, int k, int verbosity);
 RcppExport SEXP _redist_ms_plans(SEXP NSEXP, SEXP lSEXP, SEXP initSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP beta_sqSEXP, SEXP currentSEXP, SEXP n_currentSEXP, SEXP beta_vraSEXP, SEXP tgt_minSEXP, SEXP tgt_otherSEXP, SEXP pow_vraSEXP, SEXP min_popSEXP, SEXP beta_vra_hingeSEXP, SEXP tgts_minSEXP, SEXP beta_incSEXP, SEXP incumbentsSEXP, SEXP beta_splitsSEXP, SEXP threshSEXP, SEXP kSEXP, SEXP verbositySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

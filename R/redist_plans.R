@@ -236,7 +236,24 @@ subset_ref = function(plans) {
     dplyr::filter(plans, as.integer(.data$draw) <= n_ref)
 }
 
+#' Extract the Metropolis Hastings Acceptance Rate
+#'
+#' @param plans the \code{redist_plans} object
+#'
+#' @returns a numeric acceptance rate
+#'
+#' @concept simulate
+#' @export
+get_mh_acceptance_rate <- function(plans){
+    stopifnot(inherits(plans, "redist_plans"))
+    alg <- attr(plans, 'algorithm')
 
+    if( alg %in% c('flip', 'mergesplit')){
+        attr(plans, 'mh_acceptance')
+    } else {
+        NA_real_
+    }
+}
 
 # generics ----------------------------------------------------------------
 
