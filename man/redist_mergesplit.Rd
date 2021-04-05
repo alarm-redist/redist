@@ -53,8 +53,10 @@ a random initial state by setting \code{init_plan="sample"}.}
 \item{counties}{A vector containing county (or other administrative or
 geographic unit) labels for each unit, which may be integers ranging from 1
 to the number of counties, or a factor or character vector.  If provided, the
-algorithm will only generate maps which split up to \code{ndists-1} counties.
-If no county-split constraint is desired, this parameter should be left blank.}
+algorithm will generate maps tend to follow county lines.  You may combine this
+with a Gibbs constraint on the number of county splits using the
+\code{constraints} parameter; see below. If no county-split considerations
+are desired, this parameter should be left blank.}
 
 \item{compactness}{Controls the compactness of the generated districts, with
 higher values preferring more compact districts. Must be nonnegative. See the
@@ -109,7 +111,9 @@ simulated plans.
 generate congressional or legislative redistricting plans according to
 contiguity, population, compactness, and administrative boundary constraints.
 The MCMC proposal is the same as is used in the SMC sampler; it is similar
-but not identical to those used in the references.
+but not identical to those used in the references.  1-level hierarchical
+Merge-split is supported through the \code{counties} parameter; unlike in
+the SMC algorithm, this does not guarantee a maximum number of county splits.
 }
 \details{
 This function draws samples from a specific target measure, controlled by the
