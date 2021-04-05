@@ -11,7 +11,9 @@
 #' generate congressional or legislative redistricting plans according to
 #' contiguity, population, compactness, and administrative boundary constraints.
 #' The MCMC proposal is the same as is used in the SMC sampler; it is similar
-#' but not identical to those used in the references.
+#' but not identical to those used in the references.  1-level hierarchical
+#' Merge-split is supported through the \code{counties} parameter; unlike in
+#' the SMC algorithm, this does not guarantee a maximum number of county splits.
 #'
 #' This function draws samples from a specific target measure, controlled by the
 #' \code{compactness}, \code{constraints}, and \code{constraint_fn} parameters.
@@ -90,8 +92,10 @@
 #' @param counties A vector containing county (or other administrative or
 #' geographic unit) labels for each unit, which may be integers ranging from 1
 #' to the number of counties, or a factor or character vector.  If provided, the
-#' algorithm will only generate maps which split up to \code{ndists-1} counties.
-#' If no county-split constraint is desired, this parameter should be left blank.
+#' algorithm will generate maps tend to follow county lines.  You may combine this
+#' with a Gibbs constraint on the number of county splits using the
+#' \code{constraints} parameter; see below. If no county-split considerations
+#' are desired, this parameter should be left blank.
 #' @param compactness Controls the compactness of the generated districts, with
 #' higher values preferring more compact districts. Must be nonnegative. See the
 #' 'Details' section for more information, and computational considerations.
@@ -158,6 +162,7 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
         stop("`nsims` must be positive.")
 
     exist_name = attr(map, "existing_col")
+    counties = rlang::eval_tidy(rlang::enquo(counties), map)
     if (is.null(init_plan) && !is.null(exist_name)) {
         init_plan = as.integer(as.factor(get_existing(map)))
         if (is.null(init_name)) init_name = exist_name
@@ -170,7 +175,6 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
     stopifnot(length(init_plan) == V)
     stopifnot(max(init_plan) == ndists)
 
-    counties = rlang::eval_tidy(rlang::enquo(counties), map)
     if (is.null(counties)) {
         counties = rep(1, V)
     } else {
