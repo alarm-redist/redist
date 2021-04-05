@@ -16,7 +16,7 @@
  * population deviation is between `lower` and `upper` (and ideally `target`)
  */
 // [[Rcpp::export]]
-arma::umat ms_plans(int N, List l, const arma::uvec init, const arma::uvec &counties,
+Rcpp::List ms_plans(int N, List l, const arma::uvec init, const arma::uvec &counties,
                     const arma::uvec &pop, int n_distr, double target, double lower,
                     double upper, double rho, double beta_sq, const arma::uvec &current,
                     int n_current, double beta_vra, double tgt_min, double tgt_other,
