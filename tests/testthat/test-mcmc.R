@@ -52,24 +52,22 @@ test_that('mcmc flip wrapper works',{
   data(fl25)
   nsims <- 10
   fl25_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
-  
+
   sims <- redist_flip(map = fl25_map, nsims = 10)
-  
+
   class
-  
+
 })
 
 
 test_that('log-st works',{
-  data(iowa)
-  
   iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05, total_pop = pop)
-  
-  cons <- flip_constraints_helper(map = iowa_map, constraintweight = 1, 
+
+  cons <- flip_constraints_helper(map = iowa_map, constraintweight = 1,
                                   compactness_metric = 'log-st', counties = name)
-  
+
   test <- redist_flip(iowa_map, nsims = 10,  constraints = cons)
 
   expect_s3_class(test, 'data.frame')
-  
+
 })
