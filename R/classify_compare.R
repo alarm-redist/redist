@@ -50,6 +50,7 @@
 #'   Higher indicates better separation.}
 #'
 #' @examples
+#' data(iowa)
 #' iowa_map = redist_map(iowa, ndists=4, pop_tol=0.05)
 #' plans1 = redist_smc(iowa_map, 100, silent=T)
 #' plans2 = redist_mergesplit(iowa_map, 100, silent=T)
