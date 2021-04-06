@@ -191,6 +191,12 @@ existing plan, if one exists.</p></td>
 <span class='va'>plan</span> <span class='op'>=</span> <span class='va'>fl25_enum</span><span class='op'>$</span><span class='va'>plans</span><span class='op'>[</span>, <span class='fl'>5118</span><span class='op'>]</span>
 <span class='va'>freeze_id</span> <span class='op'>&lt;-</span> <span class='fu'>redist.freeze</span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>fl25_adj</span>, freeze_row <span class='op'>=</span> <span class='op'>(</span><span class='va'>plan</span> <span class='op'>==</span> <span class='fl'>2</span><span class='op'>)</span>,
                            plan <span class='op'>=</span> <span class='va'>plan</span><span class='op'>)</span>
+<span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>                      
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>iowa</span><span class='op'>)</span>
+<span class='va'>map</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist_map.html'>redist_map</a></span><span class='op'>(</span><span class='va'>iowa</span>, existing_plan <span class='op'>=</span> <span class='va'>cd_2010</span>, pop_tol <span class='op'>=</span> <span class='fl'>0.02</span><span class='op'>)</span>
+<span class='va'>map</span> <span class='op'>&lt;-</span> <span class='va'>map</span> <span class='op'>%&gt;%</span> <span class='fu'><a href='merge_by.html'>merge_by</a></span><span class='op'>(</span><span class='fu'>freeze</span><span class='op'>(</span><span class='va'>cd_2010</span> <span class='op'>==</span> <span class='fl'>1</span><span class='op'>)</span><span class='op'>)</span>
+<span class='op'>}</span>                                                     
+                           
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
