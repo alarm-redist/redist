@@ -23,6 +23,9 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
               double beta_vra_hinge, const vec &tgts_min,
               double beta_inc, const uvec &incumbents, double beta_splits,
               double thresh, int k, int verbosity) {
+    // re-seed MT
+    generator.seed((int) Rcpp::sample(INT_MAX, 1)[0]);
+
     Graph g = list_to_graph(l);
     Multigraph cg = county_graph(g, counties);
     int V = g.size();

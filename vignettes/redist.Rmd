@@ -11,6 +11,7 @@ resource_files:
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+set.seed(5118)
 ```
 
 The `redist` package provides algorithms and tools for scalable and replicable
