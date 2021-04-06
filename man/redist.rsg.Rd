@@ -117,7 +117,7 @@ Quarterly Journal of Political Science. 8(3): 239-269.
 }
 \author{
 Benjamin Fifield, Department of Politics, Princeton University
-\email{benfifield@gmail.com}, \url{https://www.benfifield.com/}
+\email{benfifield@gmail.com}, \url{https://benfifield.com/}
 
 Michael Higgins, Department of Statistics, Kansas State University
 \email{mikehiggins@k-state.edu},
