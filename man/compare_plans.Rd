@@ -76,8 +76,8 @@ prior, which is useful for when either \code{set1} or \code{set2} is small.
 \examples{
 data(iowa)
 iowa_map = redist_map(iowa, ndists=4, pop_tol=0.05)
-plans1 = redist_smc(iowa_map, 100, silent=T)
-plans2 = redist_mergesplit(iowa_map, 100, silent=T)
+plans1 = redist_smc(iowa_map, 100, silent=TRUE)
+plans2 = redist_mergesplit(iowa_map, 100, silent=TRUE)
 compare_plans(plans1, plans2, shp=iowa_map)
 compare_plans(plans2, as.integer(draw) <= 20,
               as.integer(draw) > 20, shp=iowa_map, plot="line")
