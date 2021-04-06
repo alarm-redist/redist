@@ -12,6 +12,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+set.seed(5118)
 ```
 
 In redistricting analysis, it is often useful or necessary to analyze only a

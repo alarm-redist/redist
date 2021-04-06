@@ -5,6 +5,7 @@
 #include <vector>
 #include <random>
 #include <iostream>
+#include <limits>
 #include <RcppArmadillo.h>
 #include "redist_types.h"
 

@@ -15,6 +15,7 @@ output: github_document
 
 ```{r, echo = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, fig.path = "man/figures/README-", comment = "#>")
+set.seed(5118)
 ```
 
 <img src="man/figures/logo.png" align="right" height=128 style="margin-left: 4px;" />

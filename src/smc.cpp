@@ -22,6 +22,9 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                double beta_inc, const uvec &incumbents,
                vec &lp, double thresh,
                double alpha, double pop_temper, int verbosity) {
+    // re-seed MT
+    generator.seed((int) Rcpp::sample(INT_MAX, 1)[0]);
+
     Graph g = list_to_graph(l);
     Multigraph cg = county_graph(g, counties);
     int V = g.size();
