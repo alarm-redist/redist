@@ -652,4 +652,4 @@ redist.plot.plans = function(plans, draws, geom, qty=NULL) {
     }
 }
 
-utils::globalVariables(c("density", "width"))
+utils::globalVariables(c("density", "width", "total_pop"))
