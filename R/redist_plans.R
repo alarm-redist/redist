@@ -355,7 +355,8 @@ print.redist_plans = function(x, ...) {
 #' Summary plots for \code{\\link{redist_plans}}
 #'
 #' If no arguments are passed, defaults to plotting the sampling weights for
-#' the \code{\link{redist_plans}} object.
+#' the \code{\link{redist_plans}} object. If no weights exist, plots district
+#' populations.
 #'
 #' @param x the \code{redist_plans} object.
 #' @param ... passed on to the underlying function
@@ -368,6 +369,8 @@ print.redist_plans = function(x, ...) {
 plot.redist_plans = function(x, ..., type="distr_qtys") {
     if (rlang::dots_n(...) == 0) {
         wgts = get_plans_weights(subset_sampled(x))
+        if (is.null(wgts))
+            return(redist.plot.distr_qtys(x, total_pop, size=0.1))
         n = length(wgts)
         iqr = IQR(wgts)
         bins = max(round(diff(range(wgts)) / (2 * iqr / n^(1/3))), 3)
@@ -408,9 +411,11 @@ plot.redist_plans = function(x, ..., type="distr_qtys") {
 #' @export
 redist.plot.hist = function(plans, qty, bins=NULL, ...) {
     stopifnot(inherits(plans, "redist_plans"))
+    if (missing(qty))
+        stop("Must provide a quantity to make the histogram from.")
 
     val = rlang::eval_tidy(rlang::enquo(qty), plans)
-    is_int = isTRUE(all.equal(as.integer(val), val))
+    is_int = isTRUE(all.equal(as.integer(val), val)) && diff(range(val)) <= 100
     if (is.null(bins)) {
         if (is_int) {
             bins = 2*diff(range(val)) + 1
@@ -442,6 +447,8 @@ redist.plot.hist = function(plans, qty, bins=NULL, ...) {
 #' @param x \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the statistic.
 #' @export
 hist.redist_plans = function(x, qty, ...) {
+    if (missing(qty))
+        stop("Must provide a quantity to make the histogram from.")
     qty = rlang::enquo(qty)
     redist.plot.hist(x, !!qty, ...)
 }

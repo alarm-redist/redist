@@ -332,6 +332,8 @@ void adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
             distr_ok(n_ok) += 1.0 / N_adapt;
         if (n_ok > max_ok && n_ok < k_max)
             max_ok = n_ok;
+
+        Rcpp::checkUserInterrupt();
     }
 
     // For each k, compute pr(selected edge within top k),
@@ -352,7 +354,7 @@ void adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
         if (sum_within / n_ok >= thresh) break;
     }
 
-    if (k == k_max + 1) {
+    if (k >= k_max) {
         if (verbosity >= 1) {
             Rcout << "Note: maximum hit; falling back to naive k estimator.\n";
         }
