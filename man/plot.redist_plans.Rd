@@ -17,6 +17,7 @@
 }
 \description{
 If no arguments are passed, defaults to plotting the sampling weights for
-the \code{\link{redist_plans}} object.
+the \code{\link{redist_plans}} object. If no weights exist, plots district
+populations.
 }
 \concept{plot}

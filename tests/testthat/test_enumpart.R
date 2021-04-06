@@ -1,4 +1,6 @@
-testthat::skip_on_ci()
+skip_on_ci()
+skip_on_cran()
+
 if (!(file.exists(system.file("enumpart/enumpart", package="redist")) ||
     file.exists(system.file('enumpart/enumpart.exe', package = 'redist')))) {
     redist.init.enumpart()
@@ -39,7 +41,7 @@ test_that('enumpart can sample without constraints', {
 
 test_that('enumpart can read in data', {
     full <- redist.read.enumpart(out_path = file.path(dir, 'sample'))
-    
+
     expect_equal(nrow(full), 25)
     expect_equal(ncol(full), 10)
     expect_equal(range(full), c(1, 3))
@@ -47,18 +49,18 @@ test_that('enumpart can read in data', {
 
 test_that('enumpart can read in partial data', {
     full <- redist.read.enumpart(out_path = file.path(dir, 'sample'))
-    
-    samp <- redist.read.enumpart(out_path = file.path(dir, 'sample'), 
+
+    samp <- redist.read.enumpart(out_path = file.path(dir, 'sample'),
                                  skip = 5)
-    
+
     expect_equal(nrow(samp), 25)
     expect_equal(ncol(samp), 5)
     expect_equal(range(samp), c(1, 3))
     expect_true(all(full[, 6:10] == samp))
-    
-    samp <- redist.read.enumpart(out_path = file.path(dir, 'sample'), 
+
+    samp <- redist.read.enumpart(out_path = file.path(dir, 'sample'),
                                  n_max = 8)
-    
+
     expect_equal(nrow(samp), 25)
     expect_equal(ncol(samp), 8)
     expect_equal(range(samp), c(1, 3))
