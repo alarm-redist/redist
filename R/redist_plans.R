@@ -415,15 +415,16 @@ redist.plot.hist = function(plans, qty, bins=NULL, ...) {
         stop("Must provide a quantity to make the histogram from.")
 
     val = rlang::eval_tidy(rlang::enquo(qty), plans)
-    is_int = isTRUE(all.equal(as.integer(val), val)) && diff(range(val)) <= 100
+    rg = diff(range(val, na.rm=T))
+    is_int = isTRUE(all.equal(as.integer(val), val)) && rg <= 100
     if (is.null(bins)) {
         if (is_int) {
-            bins = 2*diff(range(val)) + 1
+            bins = 2*rg + 1
         } else { # Freedman-Diaconis
             n = length(val)
-            iqr = IQR(val)
+            iqr = IQR(val, na.rm=T)
             if (iqr > 0)
-                bins = max(round(diff(range(val)) / (2 * iqr / n^(1/3))), 3)
+                bins = max(round(rg / (2 * iqr / n^(1/3))), 3)
             else
                 bins = 3
         }
