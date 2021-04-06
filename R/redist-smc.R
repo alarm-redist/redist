@@ -159,15 +159,17 @@ redist.smc = function(adj, total_pop, nsims, ndists, counties=NULL,
     maps = maps
 
     lr = -lp + constraint_fn(maps)
-    wgt = exp(lr - mean(lr))
-    wgt = wgt / mean(wgt)
+    wgt = exp(lr - mean(lr, na.rm=T))
+    wgt = wgt / mean(wgt, na.rm=T)
     orig_wgt = wgt
     if (truncate)
         wgt = trunc_fn(wgt)
-    wgt = wgt/sum(wgt)
-    n_eff = length(wgt) * mean(wgt)^2 / mean(wgt^2)
+    wgt = wgt/sum(wgt, na.rm=T)
+    n_eff = length(wgt) * mean(wgt, na.rm=T)^2 / mean(wgt^2, na.rm=T)
+    if (is.nan(n_eff))
+        warning("Some invalid plans were generated.")
 
-    if (n_eff/nsims <= 0.05)
+    if (!is.nan(n_eff) && n_eff/nsims <= 0.05)
         warning("Less than 5% resampling efficiency. Consider weakening constraints and/or adjusting `seq_alpha`.")
 
     if (resample) {
