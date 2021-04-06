@@ -9,11 +9,12 @@
 Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist)
 [![CRAN\_Status\_Badge](https://www.r-pkg.org/badges/version-last-release/redist)](https://cran.r-project.org/package=redist)
 ![CRAN downloads](http://cranlogs.r-pkg.org/badges/grand-total/redist)
+
 <!-- badges: end -->
 
-<img src="man/figures/map_photo.jpg" style="width: 100%" />
+<img src="man/figures/map_photo.jpg" style="width: 100%"/>
 
-<img src="man/figures/logo.png" align="right" height=128 style="margin-left: 4px;" />
+<img src="man/figures/logo.png" align="right" height="128" style="margin-left: 4px;"/>
 
 This R package enables researchers to sample redistricting plans from a
 pre-specified target distribution using Sequential Monte Carlo and
@@ -86,12 +87,11 @@ iowa_plans = redist_smc(iowa_map, nsims=250, verbose=FALSE)
 #> SEQUENTIAL MONTE CARLO
 #> Sampling 250 99-unit maps with 4 districts and population between 761513 and 761665.
 #> Making split 1 of 3
-#> Note: maximum hit; falling back to naive k estimator.
-#> Resampling effective sample size: 246.1 (98.4% efficiency).
+#> Resampling effective sample size: 246.3 (98.5% efficiency).
 #> Making split 2 of 3
-#> Resampling effective sample size: 245.7 (98.3% efficiency).
+#> Resampling effective sample size: 234.2 (93.7% efficiency).
 #> Making split 3 of 3
-#> Resampling effective sample size: 246.7 (98.7% efficiency).
+#> Resampling effective sample size: 247.0 (98.8% efficiency).
 ```
 
 After generating plans, you can use `redist`’s plotting functions to
@@ -143,3 +143,15 @@ A more detailed introduction to redistricting methods and the package
 can be found in the [Get Started](articles/redist.html) page. The
 package [vignettes](articles/) contain more detailed information and
 guides to specific workflows.
+
+## Recommended Workflows
+
+In some cases, there are two functions with the same purpose that
+operate on different inputs. For most users, we recommend working with
+the versions that operate on `redist_map` and `redist_plan` objects.
+
+| Recommended         | Alternate Options   | Notes                           |
+|---------------------|---------------------|---------------------------------|
+| `redist_smc`        | `redist.smc`        |                                 |
+| `redist_mergesplit` | `redist.mergesplit` |                                 |
+| `redist_flip`       | `redist.flip`       | (Formerly called `redist.mcmc`) |
