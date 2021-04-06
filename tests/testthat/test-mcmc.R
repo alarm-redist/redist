@@ -21,13 +21,13 @@ test_that("mcmc countysplit works", {
 
   nsims <- 10
   out <- redist.flip(adj = adj, total_pop = pop, init_plan = plans_10[, 1],
-                     nsims = nsims, ndists = 3, verbose = FALSE, pop_tol = 0.1,
+                     nsims = nsims, ndists = 3, verbose = FALSE, pop_tol = 0.2,
                      counties = cty, constraint = 'countysplit', constraintweights = 5)
   par <- redist.parity(out$plans, total_pop = pop)
 
   expect_equal(out$nsims, nsims)
   expect_equal(range(out$plans), c(1, 3))
-  expect_true(all(par <= 0.1))
+  expect_true(all(par <= 0.2))
 })
 
 
