@@ -16,6 +16,7 @@ test_that("County constraint works", {
 })
 
 test_that("Not egregiously incorrect sampling accuracy (5-prec)", {
+    skip_on_cran()
     g = list(c(1L, 4L), c(0L, 2L, 4L), c(1L, 3L, 4L), c(2L, 4L), c(0L, 1L, 2L, 3L))
     g_pop = c(2, 1, 1, 1, 1)
     out = redist.smc(g, g_pop, 20e3, 2, pop_tol=0.5, compactness=0,
@@ -29,6 +30,7 @@ test_that("Not egregiously incorrect sampling accuracy (5-prec)", {
 })
 
 test_that("Not egregiously incorrect sampling accuracy (25-prec)", {
+    skip_on_cran()
     ref_plans = plans_10[, redist.parity(plans_10, pop) <= 0.01]
     log_st_ref = round(log_st_map(adj, ref_plans, rep(1L, 25), 3L), 5)
 
