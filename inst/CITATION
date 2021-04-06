@@ -2,12 +2,12 @@ citHeader("To cite redist in publications use:")
 
 citEntry(entry = "misc",
 	 title = "{redist}: Simulation Methods for Legislative Redistricting", 
-	 author = personList(as.person("Ben Fifield"), as.person("Christopher T. Kenny"), as.person("Cory McCartan"), 
-	 as.person("Alexander Tarr"), as.person("Kosuke Imai")), 
+	 author = personList(as.person("Christopher T. Kenny"), as.person("Cory McCartan"), as.person("Ben Fifield"),
+	 as.person("Kosuke Imai")), 
 	 howpublished = "Available at The Comprehensive R Archive Network (CRAN)", 
-	 year = "2020",
+	 year = "2021",
 	 url = "https://CRAN.R-project.org/package=redist",
-	 textVersion = paste("Ben Fifield, Christopher T. Kenny, Cory McCartan, Alexander Tarr, and Kosuke Imai (2020).",
+	 textVersion = paste(" Christopher T. Kenny, Cory McCartan, Ben Fifield, and Kosuke Imai (2021).",
 	 	             "redist: Simulation Methods for Legislative Redistricting.",
 			     "Available at The Comprehensive R Archive Network (CRAN).",
 			     "URL https://CRAN.R-project.org/package=redist.")
