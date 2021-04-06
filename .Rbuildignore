@@ -14,3 +14,4 @@ builder.sh
 ^pkgdown$
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^cran-comments\.md$
