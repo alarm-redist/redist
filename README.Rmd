@@ -1,24 +1,31 @@
 ---
 output: github_document
+editor_options: 
+  markdown: 
+    wrap: 80
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# **redist**: Simulation Methods for Legislative Redistricting 
+# **redist**: Simulation Methods for Legislative Redistricting
 
 <!-- badges: start -->
-[![Build Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist) [![CRAN_Status_Badge](https://www.r-pkg.org/badges/version-last-release/redist)](https://cran.r-project.org/package=redist) 
+
+[![Build
+Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist)
+[![CRAN_Status_Badge](https://www.r-pkg.org/badges/version-last-release/redist)](https://cran.r-project.org/package=redist)
 ![CRAN downloads](http://cranlogs.r-pkg.org/badges/grand-total/redist)
+
 <!-- badges: end -->
 
-<img src="man/figures/map_photo.jpg" style="width: 100%" />
+<img src="man/figures/map_photo.jpg" style="width: 100%"/>
 
 ```{r, echo = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, fig.path = "man/figures/README-", comment = "#>")
 set.seed(5118)
 ```
 
-<img src="man/figures/logo.png" align="right" height=128 style="margin-left: 4px;" />
+<img src="man/figures/logo.png" align="right" height="128" style="margin-left: 4px;"/>
 
 This R package enables researchers to sample redistricting plans from a
 pre-specified target distribution using Sequential Monte Carlo and Markov Chain
@@ -27,45 +34,58 @@ constraints in the redistricting process such as geographic compactness and
 population parity requirements. Tools for analysis such as computation of
 various summary statistics and plotting functionality are also included.
 
-Authors: 
+Authors:
 
-- [Christopher T Kenny](https://www.christophertkenny.com), <christopherkenny@fas.harvard.edu> (Maintainer) 
-- [Cory McCartan](https://corymccartan.github.io), <cmccartan@g.harvard.edu> 
-- [Ben Fifield](https://www.benfifield.com), <benfifield@gmail.com>
-- [Kosuke Imai](https://imai.fas.harvard.edu), <imai@harvard.edu>
- 
+-   [Christopher T Kenny](https://www.christophertkenny.com),
+    [christopherkenny\@fas.harvard.edu](mailto:christopherkenny@fas.harvard.edu)
+    (Maintainer)
+-   [Cory McCartan](https://corymccartan.github.io),
+    [cmccartan\@g.harvard.edu](mailto:cmccartan@g.harvard.edu)
+-   [Ben Fifield](https://www.benfifield.com),
+    [benfifield\@gmail.com](mailto:benfifield@gmail.com)
+-   [Kosuke Imai](https://imai.fas.harvard.edu),
+    [imai\@harvard.edu](mailto:imai@harvard.edu)
+
 Contributors:
 
-- Jun Kawahara, <jkawahara@i.kyoto-u.ac.jp> 
-- Alex Tarr, <atarr@princeton.edu> 
-- [Michael Higgins](http://www-personal.k-state.edu/~mikehiggins/), <mjh5@princeton.edu> 
+-   Jun Kawahara, [jkawahara\@i.kyoto-u.ac.jp](mailto:jkawahara@i.kyoto-u.ac.jp)
+-   Alex Tarr, [atarr\@princeton.edu](mailto:atarr@princeton.edu)
+-   [Michael Higgins](http://www-personal.k-state.edu/~mikehiggins/),
+    [mjh5\@princeton.edu](mailto:mjh5@princeton.edu)
 
 Papers:
 
-- [Automated Redistricting Simulation Using Markov Chain Monte
-Carlo](https://doi.org/10.1080/10618600.2020.1739532) *Journal of Computational and Graphical Statistics*
-- [The Essential Role of Empirical Validation in Legislative Redistricting
-Simulation](https://doi.org/10.1080/2330443X.2020.1791773) *Statistics and Public Policy*  Vol. 7, No. 1, pp. 52-68.
-- [Sequential Monte Carlo for Sampling Balanced and Compact Redistricting
-Plans](https://arxiv.org/pdf/2008.06131.pdf)
-
+-   [Automated Redistricting Simulation Using Markov Chain Monte
+    Carlo](https://doi.org/10.1080/10618600.2020.1739532) *Journal of
+    Computational and Graphical Statistics*
+-   [The Essential Role of Empirical Validation in Legislative Redistricting
+    Simulation](https://doi.org/10.1080/2330443X.2020.1791773) *Statistics and
+    Public Policy* Vol. 7, No. 1, pp. 52-68.
+-   [Sequential Monte Carlo for Sampling Balanced and Compact Redistricting
+    Plans](https://arxiv.org/pdf/2008.06131.pdf)
 
 ## Installation Instructions
+
 `redist` is available on CRAN and can be installed using:
+
 ```{r eval = FALSE}
 install.packages("redist")
 ```
 
-You can also install the most recent development version of `redist` using the `remotes`` package. 
-```{r eval=FALSE} 
+You can also install the most recent development version of `redist` using the
+\`remotes\`\` package.
+
+```{r eval=FALSE}
 if (!require(remotes)) install.packages("remotes")
 remotes::install_github("alarm-redist/redist", dependencies=TRUE)
-```   
+```
 
 ## Getting started
-A basic analysis has two steps. First, you define a redistricting plan
-using `redist_map`. Then you simulate plans using one of the algorithm
-functions: `redist_smc`, `redist_flip`, and `redist_mergesplit`.
+
+A basic analysis has two steps. First, you define a redistricting plan using
+`redist_map`. Then you simulate plans using one of the algorithm functions:
+`redist_smc`, `redist_flip`, and `redist_mergesplit`.
+
 ```{r message=FALSE}
 library(redist)
 library(dplyr)
@@ -80,6 +100,7 @@ iowa_plans = redist_smc(iowa_map, nsims=250, verbose=FALSE)
 
 After generating plans, you can use `redist`'s plotting functions to study the
 geographic and partisan characteristics of the simulated ensemble.
+
 ```{r readme-plot}
 library(ggplot2)
 library(patchwork) # for plotting
@@ -106,6 +127,18 @@ iowa_plans %>%
 ```
 
 A more detailed introduction to redistricting methods and the package can be
-found in the [Get Started](articles/redist.html) page. The package 
+found in the [Get Started](articles/redist.html) page. The package
 [vignettes](articles/) contain more detailed information and guides to specific
 workflows.
+
+## Recommended Workflows
+
+In some cases, there are two functions with the same purpose that operate on
+different inputs. For most users, we recommend working with the versions that
+operate on `redist_map` and `redist_plan` objects.
+
+| Recommended         | Alternate Options   | Notes                           |
+|---------------------|---------------------|---------------------------------|
+| `redist_smc`        | `redist.smc`        |                                 |
+| `redist_mergesplit` | `redist.mergesplit` |                                 |
+| `redist_flip`       | `redist.flip`       | (Formerly called `redist.mcmc`) |
