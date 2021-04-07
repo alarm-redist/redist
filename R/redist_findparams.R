@@ -239,10 +239,10 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
 
 }
 
-#' Run parameter testing for \code{redist.mcmc}
+#' Run parameter testing for \code{redist.flip}
 #'
 #' \code{redist.findparams} is used to find optimal parameter values of
-#' \code{redist.mcmc} for a given map.
+#' \code{redist.flip} for a given map.
 #'
 #' @param adj An adjacency matrix, list, or object of class
 #' "SpatialPolygonsDataFrame."
@@ -285,7 +285,7 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
 #' Default is \code{TRUE}.
 #'
 #' @details This function allows users to test multiple parameter settings of
-#' \code{redist.mcmc} in preparation for a longer run for analysis.
+#' \code{redist.flip} in preparation for a longer run for analysis.
 #'
 #' @return \code{redist.findparams} returns a print-out of summary statistics
 #' about each parameter setting.

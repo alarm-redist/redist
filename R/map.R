@@ -162,8 +162,9 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
 
     if(is.numeric(fill) && min(fill, na.rm = TRUE) >= 0 &&
            max(fill, na.rm = TRUE) <= 1){
-      plot <- plot + scale_fill_gradient(low = '#ffffff', high = '#08306b',
-                          limits = c(0, 1))
+        plot <- plot + ggplot2::scale_fill_gradient(low = '#ffffff',
+                                                    high = '#08306b',
+                                                    limits = c(0, 1))
     }
 
   } else   {

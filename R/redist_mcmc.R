@@ -511,7 +511,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 
 #' Flip MCMC Redistricting Simulator
 #'
-#' \code{redist.mcmc} is used to simulate Congressional redistricting
+#' \code{redist.flip} is used to simulate Congressional redistricting
 #' plans using Markov Chain Monte Carlo methods.
 #'
 #' @param adj adjacency matrix, list, or object of class
@@ -605,7 +605,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' simulated tempering functionality to improve the mixing of the Markov
 #' Chain.
 #'
-#' @return \code{redist.mcmc} returns an object of class "redist". The object
+#' @return \code{redist.flip} returns an object of class "redist". The object
 #' \code{redist} is a list that contains the following components (the
 #' inclusion of some components is dependent on whether tempering
 #' techniques are used):

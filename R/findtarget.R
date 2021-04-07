@@ -2,7 +2,7 @@
 #'
 #' Given a percent goal for majority minority districts, this computes the average
 #' value of minority in non-majority minority districts. This value is "tgt_other"
-#' in \code{redist.mcmc} and \code{redist.smc}.
+#' in \code{redist.flip} and \code{redist.smc}.
 #'
 #' @param tgt_min target group population for majority minority district
 #' @param group_pop A vector of populations for some subgroup of interest.

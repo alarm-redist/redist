@@ -1,7 +1,7 @@
 #' 'Flip' Markov Chain Monte Carlo Redistricting Simulation
 #'
 #' \code{redist_flip} provides a tidy interface to the methods in
-#' \code{\link{redist.mcmc}}.
+#' \code{\link{redist.flip}}.
 #'
 #' This function allows users to simulate redistricting plans
 #' using the Markov Chain Monte Carlo methods of Fifield et al. Several
@@ -11,12 +11,12 @@
 #' tempering functionality to improve the mixing of the Markov Chain.
 #'
 #' \code{redist_flip} allows for Gibbs constraints to be supplied via a list object
-#' passed to \code{constraints}. This is a change from the original \code{redist.mcmc}
+#' passed to \code{constraints}. This is a change from the original \code{redist.flip}
 #' behavior to allow for a more straightforward function call when used within a pipe.
-#' A key difference between \code{redist_flip} and \code{redist.mcmc} is that
+#' A key difference between \code{redist_flip} and \code{redist.flip} is that
 #' \code{redist_flip} uses a small compactness constraint by default, as this improves
 #' the realism of the maps greatly and also leads to large speed improvements.
-#' (One of the most time consuming aspects of the mcmc/flip backend is checking for
+#' (One of the most time consuming aspects of the flip MCMC backend is checking for
 #' district shattering, which is slowed down even further by non-compact districts.
 #' As such, it is recommended that all flip simulations use at least a minimal compactness
 #' constraint, even if you weaken it from the default settings.) The default is
@@ -35,7 +35,7 @@
 #' \code{constraints}. The following describes the constraints available. The general
 #' advice is to set weights in a way that gets between 20\% and 40\% acceptance
 #' on average, though more tuning advice is available in the vignette on using
-#' mcmc methods.Having too small of an acceptance rate indicates that the weights
+#' MCMC methods.Having too small of an acceptance rate indicates that the weights
 #' within \code{constraints} are too large and will impact sampling efficiency.
 #' If the Metropolis Hastings acceptance rate is too large, this may impact the
 #' target distribution, but may be fine for general exploration of possible maps.
@@ -103,8 +103,6 @@
 #' * \code{segregation} This constraint attempts to minimize the degree of dissimilarity
 #' between districts by group population.
 #'   * weight - the coefficient to put on the Gibbs constraint
-#'
-#'
 #'
 #'
 #' @param map A \code{\link{redist_map}} object.
@@ -181,7 +179,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
 
     cat('\n', append = TRUE)
     cat(divider, append = TRUE)
-    cat('redist.mcmc(): Automated Redistricting Simulation Using
+    cat('redist.flip(): Automated Redistricting Simulation Using
          Markov Chain Monte Carlo\n\n', append = TRUE)
   }
   # process raw inputs

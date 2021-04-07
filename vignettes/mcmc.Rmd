@@ -322,7 +322,7 @@ As examples for the next two plots, we can use the example above which ran 4 cha
 
 ```{r}
 seg_chains <- lapply(1:nchains, 
-                     function(i){redist.segcalc(algout = flip_chains[[i]], 
+                     function(i){redist.segcalc(plans = flip_chains[[i]], 
                                                 group_pop = iowa_map$rep_08,
                                                 total_pop = iowa_map$pop)})
 ```

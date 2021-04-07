@@ -169,7 +169,7 @@ Default is \code{TRUE}.}
 districts with that proportion}
 }
 \value{
-\code{redist.mcmc} returns an object of class "redist". The object
+\code{redist.flip} returns an object of class "redist". The object
 \code{redist} is a list that contains the following components (the
 inclusion of some components is dependent on whether tempering
 techniques are used):
@@ -210,7 +210,7 @@ probability for each iteration of the algorithm. Returned when tempering
 is being used.}
 }
 \description{
-\code{redist.mcmc} is used to simulate Congressional redistricting
+\code{redist.flip} is used to simulate Congressional redistricting
 plans using Markov Chain Monte Carlo methods.
 }
 \details{

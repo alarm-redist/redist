@@ -4,7 +4,7 @@
 \alias{redist.reindex}
 \title{Reorders district numbers}
 \usage{
-redist.reindex(plansp)
+redist.reindex(plans)
 }
 \arguments{
 \item{plans}{A numeric vector (if only one map) or
