@@ -5,8 +5,6 @@
 #' columns have the same number of districts as the first.
 #' @param plans A numeric vector (if only one map) or
 #' matrix with one row for each precinct and one column for each map.
-#' @param district_membership Deprecated, use plans. A numeric vector (if only one map) or
-#' matrix with one row for each precinct and one column for each map.
 #'
 #' @return integer matrix
 #' @export
@@ -16,12 +14,7 @@
 #' rep(c(5L,4L,3L,2L,1L),2), rep(c(4L,5L,2L,1L,3L),3)), nrow = 25)
 #' redist.reorder(cds)
 #' }
-redist.reindex <- function(plans, district_membership){
-  if(!missing(district_membership)){
-    .Deprecated(new = 'plan', old = 'district_membership')
-    plan <- district_membership
-  }
-
+redist.reindex <- function(plansp){
   # Check inputs
   if(missing(plans)){
     stop('"plans" is required.')

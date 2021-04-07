@@ -12,9 +12,7 @@ redist.constraint.helper(
   ndists,
   nmmd,
   strength_vra = 2500,
-  pow_vra = 1.5,
-  grouppop,
-  fullpop
+  pow_vra = 1.5
 )
 }
 \arguments{
@@ -33,10 +31,6 @@ redist.constraint.helper(
 \item{strength_vra}{The strength of the 'vra' constraint. Defaults to 2500.}
 
 \item{pow_vra}{The exponent for the 'vra' constraint. Defaults to 1.5.}
-
-\item{grouppop}{Deprecated, use group_pop. A vector of populations for some subgroup of interest.}
-
-\item{fullpop}{Deprecated, use total_pop. A vector containing the populations of each geographic unit.}
 }
 \value{
 list of lists for each constraint selected

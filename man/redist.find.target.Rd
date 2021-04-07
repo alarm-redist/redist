@@ -4,26 +4,14 @@
 \alias{redist.find.target}
 \title{Find Majority Minority Remainder}
 \usage{
-redist.find.target(
-  tgt_min,
-  group_pop,
-  grouppop,
-  total_pop,
-  fullpop,
-  ndists,
-  nmmd
-)
+redist.find.target(tgt_min, group_pop, total_pop, ndists, nmmd)
 }
 \arguments{
 \item{tgt_min}{target group population for majority minority district}
 
 \item{group_pop}{A vector of populations for some subgroup of interest.}
 
-\item{grouppop}{Deprecated, use group_pop. A vector of populations for some subgroup of interest.}
-
 \item{total_pop}{A vector containing the populations of each geographic unit.}
-
-\item{fullpop}{Deprecated, use total_pop. A vector containing the populations of each geographic unit.}
 
 \item{ndists}{The number of congressional districts.}
 

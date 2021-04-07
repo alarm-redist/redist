@@ -4,13 +4,10 @@
 \alias{redist.reindex}
 \title{Reorders district numbers}
 \usage{
-redist.reindex(plans, district_membership)
+redist.reindex(plansp)
 }
 \arguments{
 \item{plans}{A numeric vector (if only one map) or
-matrix with one row for each precinct and one column for each map.}
-
-\item{district_membership}{Deprecated, use plans. A numeric vector (if only one map) or
 matrix with one row for each precinct and one column for each map.}
 }
 \value{

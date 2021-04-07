@@ -23,13 +23,7 @@ redist.findparams(
   parallel = FALSE,
   ncores = NULL,
   log = FALSE,
-  verbose = TRUE,
-  adjobj,
-  popvec,
-  initcds,
-  grouppopvec,
-  countymembership,
-  nthreads
+  verbose = TRUE
 )
 }
 \arguments{
@@ -90,25 +84,6 @@ being tested. Default is FALSE.}
 
 \item{verbose}{Whether to print additional information about the tests.
 Default is \code{TRUE}.}
-
-\item{adjobj}{Deprecated, use adj. An adjacency matrix, list, or object of class
-"SpatialPolygonsDataFrame."}
-
-\item{popvec}{Deprecated, use total_pop. A vector containing the populations of each
-geographic unit.}
-
-\item{initcds}{Deprecated, use init_plan. A vector containing the congressional district labels
-of each geographic unit. The default is \code{NULL}. If not provided, random
-and contiguous congressional district assignments will be generated using \code{redist.rsg}.}
-
-\item{grouppopvec}{A vector of populations for some sub-group of
-interest. The default is \code{NULL}.}
-
-\item{countymembership}{Deprecated, use counties.
-A vector of county membership assignments. The default is \code{NULL}.}
-
-\item{nthreads}{Deprecated, use ncores. Number of parallel tasks to run, declared outside of the
-function. Default is \code{NULL}.}
 }
 \value{
 \code{redist.findparams} returns a print-out of summary statistics
