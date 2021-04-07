@@ -7,15 +7,7 @@
 \usage{
 make_cores(.data = get0(".", parent.frame()), boundary = 1, focus = NULL)
 
-redist.identify.cores(
-  adj,
-  plan,
-  boundary = 1,
-  focus = NULL,
-  simplify = TRUE,
-  adjacency,
-  district_membership
-)
+redist.identify.cores(adj, plan, boundary = 1, focus = NULL, simplify = TRUE)
 }
 \arguments{
 \item{.data}{a \code{\link{redist_map}} object}
@@ -29,10 +21,6 @@ redist.identify.cores(
 \item{plan}{An integer vector or matrix column of district assignments.}
 
 \item{simplify}{Optional. Logical. Whether to return extra information or just grouping ID.}
-
-\item{adjacency}{Deprecated, use adj. A zero indexed adjacency list.}
-
-\item{district_membership}{Deprecated, use plan. An integer vector or matrix column of district assignments.}
 }
 \value{
 integer vector (if simplify is false). Otherwise it returns a tibble with the grouping
@@ -41,10 +29,10 @@ variable as \code{group_id} and additional information on connected components.
 \description{
 Creates a grouping ID to unite geographies and perform analysis on a smaller
 set of precincts. It identifies all precincts more than \code{boundary} edges
-of a district district boundary. Each contiguous group of precincts more than 
-\code{boundary} steps away from another district gets it own group. Some 
-districts may have multiple, disconnected components that make up the core, 
-but each of these is assigned a separate grouping id so that a call to 
+of a district district boundary. Each contiguous group of precincts more than
+\code{boundary} steps away from another district gets it own group. Some
+districts may have multiple, disconnected components that make up the core,
+but each of these is assigned a separate grouping id so that a call to
 \code{sf::st_union()} would produce only connected pieces.
 }
 \details{

@@ -39,7 +39,6 @@ redist.init.enumpart <- function(){
 #' @param adj zero indexed adjacency list
 #' @param unordered_path valid path to output the unordered adjacency map to
 #' @param ordered_path valid path to output the ordered adjacency map to
-#' @param adjlist Deprecated, use adj. zero indexed adjacency list
 #'
 #' @return 0 on success
 #' @export
@@ -56,12 +55,7 @@ redist.init.enumpart <- function(){
 #' redist.prep.enumpart(adj = adj, unordered_path = '../unordered',
 #'                      ordered_path = '../ordered')
 #' }
-redist.prep.enumpart <- function(adj, unordered_path, ordered_path, adjlist){
-  if(!missing(adjlist)){
-    adj <- adjlist
-    .Deprecated(new = 'adj', old = 'adjlist')
-  }
-
+redist.prep.enumpart <- function(adj, unordered_path, ordered_path){
   # Return the list to 1 indexing
   adj <- lapply(adj, function(x){x+1})
 
@@ -110,7 +104,6 @@ redist.prep.enumpart <- function(adj, unordered_path, ordered_path, adjlist){
 #' @param lower A lower bound on each partition's total weight, implemented by rejection sampling.
 #' @param upper An upper bound on each partition's total weight.
 #' @param options Additional enumpart arguments. Not recommended for use.
-#' @param ndist Deprecated, use ndists. number of districts to enumerate
 #'
 #' @references
 #' Benjamin Fifield, Kosuke Imai, Jun Kawahara, and Christopher T Kenny.
@@ -126,13 +119,7 @@ redist.prep.enumpart <- function(adj, unordered_path, ordered_path, adjlist){
 #' }
 redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
                                 all = TRUE, n  = NULL, weight_path = NULL,
-                                lower = NULL, upper = NULL, options = NULL, ndist){
-
-  if(!missing(ndist)){
-    ndists <- ndist
-    .Deprecated(new = 'ndists', old = 'ndist')
-  }
-
+                                lower = NULL, upper = NULL, options = NULL){
   ndists <- as.integer(ndists)
   n <- as.integer(n)
 
@@ -294,9 +281,6 @@ redist.calc.frontier.size <- function(ordered_path){
 #' @param init Runs redist.init.enumpart. Defaults to false. Should be run on first use.
 #' @param read boolean. Defaults to TRUE. reads
 #' @param total_pop Integer Vector. Defaults to NULL. If supplied, computes the parity.
-#' @param adjlist Deprecated, use adj. zero indexed adjacency list
-#' @param ndist Deprecated, use ndists. number of districts to enumerate
-#' @param population Deprecated, use total_pop. Integer Vector. Defaults to NULL. If supplied, computes the parity.
 #'
 #' @return List with entries district_membership and parity.
 #'
@@ -305,23 +289,7 @@ redist.calc.frontier.size <- function(ordered_path){
 redist.enumpart <- function(adj, unordered_path, ordered_path,
                             out_path, ndists = 2, all = TRUE, n = NULL,
                             weight_path=NULL, lower=NULL, upper=NULL,
-                            init = FALSE, read = TRUE,
-                            total_pop = NULL, adjlist,  population, ndist){
-
-  if(!missing(ndist)){
-    ndists <- ndist
-    .Deprecated(new = 'ndists', old = 'ndist')
-  }
-  if(!missing(population)){
-    total_pop <- population
-    .Deprecated(new = 'total_pop', old = 'population')
-  }
-  if(!missing(adjlist)){
-    adj <- adjlist
-    .Deprecated(new = 'adj', old = 'adjlist')
-  }
-
-
+                            init = FALSE, read = TRUE, total_pop = NULL){
   if(init){
     redist.init.enumpart()
   }

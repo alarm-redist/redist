@@ -17,10 +17,7 @@ redist.enumpart(
   upper = NULL,
   init = FALSE,
   read = TRUE,
-  total_pop = NULL,
-  adjlist,
-  population,
-  ndist
+  total_pop = NULL
 )
 }
 \arguments{
@@ -51,12 +48,6 @@ vertex weights, to be used along with \code{lower} and \code{upper}.}
 \item{read}{boolean. Defaults to TRUE. reads}
 
 \item{total_pop}{Integer Vector. Defaults to NULL. If supplied, computes the parity.}
-
-\item{adjlist}{Deprecated, use adj. zero indexed adjacency list}
-
-\item{population}{Deprecated, use total_pop. Integer Vector. Defaults to NULL. If supplied, computes the parity.}
-
-\item{ndist}{Deprecated, use ndists. number of districts to enumerate}
 }
 \value{
 List with entries district_membership and parity.

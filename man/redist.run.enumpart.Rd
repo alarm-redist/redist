@@ -13,8 +13,7 @@ redist.run.enumpart(
   weight_path = NULL,
   lower = NULL,
   upper = NULL,
-  options = NULL,
-  ndist
+  options = NULL
 )
 }
 \arguments{
@@ -37,8 +36,6 @@ vertex weights, to be used along with \code{lower} and \code{upper}.}
 \item{upper}{An upper bound on each partition's total weight.}
 
 \item{options}{Additional enumpart arguments. Not recommended for use.}
-
-\item{ndist}{Deprecated, use ndists. number of districts to enumerate}
 }
 \value{
 0 on success
