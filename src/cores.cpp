@@ -1,5 +1,4 @@
-#include <Rcpp.h>
-using namespace Rcpp;
+#include "smc_base.h"
 
 // [[Rcpp::export]]
 List cores(List adj, IntegerVector dm, int k, List cd_within_k) {
@@ -8,8 +7,8 @@ List cores(List adj, IntegerVector dm, int k, List cd_within_k) {
   IntegerVector conncomp(dm.size());
   int d;
   IntegerVector tempcdk, tempcdj;
-  
-  
+
+
   // Step 1: ID border precincts
   for(int i = 0; i < dm.size(); i++){
     d = 0;
@@ -21,9 +20,9 @@ List cores(List adj, IntegerVector dm, int k, List cd_within_k) {
       if(d > 0){
         kvec(i) = 1;
       }
-    } 
+    }
   }
-  
+
   // Step 2: Identify k = 2,...,K precincts
   if(k > 1){
     for(int curr = 1; curr < k ; curr++){
@@ -42,8 +41,8 @@ List cores(List adj, IntegerVector dm, int k, List cd_within_k) {
 
     }
   }
-  
-  
+
+
   // Updated Step 3: Idnetify connected components for k = 0 precincts
   IntegerVector dist_lookup = sort_unique(dm);
   IntegerVector dist_cc(dist_lookup.size());
@@ -55,10 +54,10 @@ List cores(List adj, IntegerVector dm, int k, List cd_within_k) {
       // grab next connected component
       currcd = dm(i);
       idx = match(currcd, dist_lookup)(0) - 1;
-      dist_cc(idx) ++;  
+      dist_cc(idx) ++;
       cc = dist_cc(idx);
       conncomp(i) = cc;
-      
+
       // Now loop through friends
       temp = adj(i);
       reservoir = IntegerVector(0);
@@ -68,9 +67,9 @@ List cores(List adj, IntegerVector dm, int k, List cd_within_k) {
           reservoir.push_back(temp(j));
           conncomp(temp(j)) = cc;
           s++;
-        } 
+        }
       }
-      
+
       if(s > 0){
         r = 0;
         while(r < s){
@@ -80,14 +79,14 @@ List cores(List adj, IntegerVector dm, int k, List cd_within_k) {
               reservoir.push_back(temp(j));
               conncomp(temp(j)) = cc;
               s++;
-            } 
+            }
           }
           r++;
         }
       }
     }
   }
-  
+
   // (Bonus) Step 4: Identify all cds within k:
   List adj_within_k = clone(cd_within_k);
   IntegerVector curradj;
@@ -108,7 +107,7 @@ List cores(List adj, IntegerVector dm, int k, List cd_within_k) {
     }
     adj_within_k(i) = clone(reservoir);
   }
-  
+
   // Transform those into congressional districts
   for(int i = 0; i < dm.size(); i++){
     curradj = adj_within_k(i);
@@ -118,14 +117,14 @@ List cores(List adj, IntegerVector dm, int k, List cd_within_k) {
     }
     cd_within_k(i) = unique(reservoir);
   }
-  
-  
+
+
   List ret;
   ret["dm"] = dm;
   ret["k"] = kvec;
   ret["conncomp"] = conncomp;
   ret["cd_within_k"] = cd_within_k;
-  
+
   return ret;
 }
 
@@ -144,10 +143,10 @@ IntegerVector update_conncomp(IntegerVector dm, IntegerVector kvec, List adj){
       // grab next connected component
       currcd = dm(i);
       idx = match(currcd, dist_lookup)(0) - 1;
-      dist_cc(idx) ++;  
+      dist_cc(idx) ++;
       cc = dist_cc(idx);
       conncomp(i) = cc;
-      
+
       // Now loop through friends
       temp = adj(i);
       reservoir = IntegerVector(0);
@@ -157,9 +156,9 @@ IntegerVector update_conncomp(IntegerVector dm, IntegerVector kvec, List adj){
           reservoir.push_back(temp(j));
           conncomp(temp(j)) = cc;
           s++;
-        } 
+        }
       }
-      
+
       if(s > 0){
         r = 0;
         while(r < s){
@@ -169,14 +168,14 @@ IntegerVector update_conncomp(IntegerVector dm, IntegerVector kvec, List adj){
               reservoir.push_back(temp(j));
               conncomp(temp(j)) = cc;
               s++;
-            } 
+            }
           }
           r++;
         }
       }
     }
   }
-    
+
 
   return conncomp;
 }

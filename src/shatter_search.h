@@ -1,7 +1,7 @@
+#include "smc_base.h"
+
 #ifndef SHATTER_SEARCH_H
 #define SHATTER_SEARCH_H
-#include <Rcpp.h>
-using namespace Rcpp;
 
 int shatter_search(List adj_list,
                    int p,
@@ -15,12 +15,10 @@ int shatter_search(List adj_list,
 
 #ifndef CAN_SWAP_H
 #define CAN_SWAP_H
-#include <Rcpp.h>
-using namespace Rcpp;
 
-bool can_swap(List adj_list, 
-                   int p, 
-                   int j_dist, 
+bool can_swap(List adj_list,
+                   int p,
+                   int j_dist,
                    IntegerVector dist_assignment);
 
 

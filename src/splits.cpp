@@ -1,5 +1,4 @@
-#include <Rcpp.h>
-using namespace Rcpp;
+#include "smc_base.h"
 
 // [[Rcpp::export]]
 IntegerVector splits(IntegerMatrix dm, IntegerVector community) {

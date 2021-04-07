@@ -1,10 +1,8 @@
 #ifndef SMC_BASE_H
 #define SMC_BASE_H
 
-#include <stdlib.h>
 #include <vector>
 #include <random>
-#include <iostream>
 #include <limits>
 #include <RcppArmadillo.h>
 #include "redist_types.h"

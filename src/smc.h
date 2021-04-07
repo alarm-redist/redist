@@ -1,7 +1,7 @@
+#pragma once
 #ifndef SMC_H
 #define SMC_H
 
-#include <math.h>
 #include "smc_base.h"
 #include "wilson.h"
 #include "tree_op.h"

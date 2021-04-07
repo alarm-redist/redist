@@ -1,6 +1,4 @@
 #include "tree_op.h"
-#include <Rcpp.h>
-using namespace Rcpp;
 
 // [[Rcpp::export]]
 List reduce_adj(List adj_list, IntegerVector prec_map, int n_keep) {

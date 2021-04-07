@@ -1,5 +1,4 @@
-#include <RcppArmadillo.h>
-using namespace Rcpp;
+#include "smc_base.h"
 
 // [[Rcpp::export]]
 IntegerMatrix agg_p2d(IntegerMatrix dm, IntegerVector vote, int nd) {
@@ -16,7 +15,7 @@ IntegerMatrix agg_p2d(IntegerMatrix dm, IntegerVector vote, int nd) {
 // [[Rcpp::export]]
 IntegerVector dseats(IntegerMatrix dm, IntegerMatrix dcounts, IntegerMatrix rcounts, int nd){
   IntegerVector dseats(dm.ncol());
-  
+
   for(int c = 0; c < dcounts.ncol(); c++){
     for(int r = 0; r < dcounts.nrow(); r++){
       if(dcounts(r,c) >= rcounts(r,c)){
@@ -24,7 +23,7 @@ IntegerVector dseats(IntegerMatrix dm, IntegerMatrix dcounts, IntegerMatrix rcou
       }
     }
   }
-  
+
   return dseats;
 }
 
@@ -44,7 +43,7 @@ IntegerVector dseatsDVS(NumericMatrix dvs){
 // [[Rcpp::export]]
 NumericMatrix DVS(IntegerMatrix dcounts, IntegerMatrix rcounts){
   NumericMatrix mat = NumericMatrix(dcounts.nrow(), dcounts.ncol());
-  
+
   for(int c = 0; c < mat.ncol(); c++){
     for(int r = 0; r < mat.nrow(); r++){
       mat(r,c) = (double)dcounts(r,c)/(dcounts(r,c)+rcounts(r,c));
@@ -70,7 +69,7 @@ NumericVector effgapEP(NumericMatrix dvs, IntegerVector dseat_vec, int nd){
 // [[Rcpp::export]]
 NumericVector effgap(IntegerMatrix dcounts, IntegerMatrix rcounts, int totvote){
   NumericVector eg(dcounts.ncol());
-  
+
   IntegerMatrix dwaste(dcounts.nrow(), dcounts.ncol());
   IntegerMatrix rwaste(rcounts.nrow(), rcounts.ncol());
   int minwin;
@@ -86,14 +85,14 @@ NumericVector effgap(IntegerMatrix dcounts, IntegerMatrix rcounts, int totvote){
       }
     }
   }
-  
+
   IntegerVector netwaste(dcounts.ncol());
   netwaste = colSums(dwaste) - colSums(rwaste);
-  
+
   for(int i = 0; i < netwaste.size(); i++){
     eg[i] = netwaste[i]/(double)totvote;
   }
-  
+
   return eg;
 }
 
@@ -114,13 +113,13 @@ NumericVector taugap(double tau, NumericMatrix dvs, IntegerVector dseat_vec, int
       expr(r,c) = ei_mat(r,c)*pow(ai_mat(r,c)*ei_mat(r,c), tau+1);
     }
   }
-  
+
   NumericVector temp = colSums(expr)/2;
   NumericVector dseat_share = NumericVector(dseat_vec.size());
   for(int i =0; i < dseat_share.size(); i++){
     dseat_share(i) = dseat_vec(i)/(double) nd;
   }
-  
+
   return -2*(temp +.5 - dseat_share);
 }
 
@@ -131,7 +130,7 @@ NumericVector meanmedian(NumericMatrix dvs){
   NumericVector col = dvs(_, 0);
   for(int c = 0; c < dvs.ncol(); c++){
     col = dvs(_,c);
-    med(c) = median(col); 
+    med(c) = median(col);
   }
   mm = colMeans(dvs) - med;
   return mm;
@@ -145,19 +144,19 @@ NumericVector bias(NumericMatrix dvs, int nd){
       dvs_sw(r,c) += sw(c);
     }
   }
-  
+
   IntegerVector newseats = dseatsDVS(dvs_sw);
   NumericVector seatshare = (NumericVector) newseats/nd;
   NumericVector bias = seatshare - 0.5;
-  
+
   return bias;
 }
 
 // [[Rcpp::export]]
 NumericVector declination(NumericMatrix dvs, IntegerVector dseat_vec, int nd){
-  NumericVector Dwin = NumericVector(dvs.ncol()); 
+  NumericVector Dwin = NumericVector(dvs.ncol());
   NumericVector Rwin = NumericVector(dvs.ncol());
-  
+
   for(int c = 0; c < dvs.ncol(); c++){
     for(int r = 0; r < dvs.nrow(); r++){
       if(dvs(r,c) >= .5){
@@ -171,17 +170,17 @@ NumericVector declination(NumericMatrix dvs, IntegerVector dseat_vec, int nd){
     Dwin(i) = Dwin(i)/dseat_vec(i);
     Rwin(i) = Rwin(i)/(nd-dseat_vec(i));
   }
-  
+
   NumericVector dseatshare = (NumericVector)dseat_vec/(double)nd;
-  
+
   return ((Dwin-.5)/dseatshare)-((0.5-Rwin)/(1-dseatshare));
 }
 
 // [[Rcpp::export]]
 NumericVector lopsidedwins(NumericMatrix dvs, IntegerVector dseat_vec, int nd){
-  NumericVector Dwin = NumericVector(dvs.ncol()); 
+  NumericVector Dwin = NumericVector(dvs.ncol());
   NumericVector Rwin = NumericVector(dvs.ncol());
-  
+
   for(int c = 0; c < dvs.ncol(); c++){
     for(int r = 0; r < dvs.nrow(); r++){
       if(dvs(r,c) >= .5){
@@ -195,7 +194,7 @@ NumericVector lopsidedwins(NumericMatrix dvs, IntegerVector dseat_vec, int nd){
     Dwin(i) = Dwin(i)/dseat_vec(i);
     Rwin(i) = Rwin(i)/(nd-dseat_vec(i));
   }
-  
+
   return Dwin + Rwin - 1.0;
 }
 
@@ -206,17 +205,17 @@ NumericVector responsiveness(NumericMatrix dvs, double v, int nd, double bandwid
   NumericVector left = (v - (bandwidth/2.0)) - colMeans(dvs);
   NumericMatrix dvs_right = clone(dvs);
   NumericMatrix dvs_left = clone(dvs);
-  
+
   for(int c = 0; c < dvs.ncol(); c++){
     for(int r = 0; r < dvs.nrow(); r++){
       dvs_right(r,c) += right(c);
       dvs_left(r,c) += left(c);
     }
   }
-  
+
   NumericVector seat_right = (NumericVector)dseatsDVS(dvs_right)/(double)nd;
   NumericVector seat_left = (NumericVector)dseatsDVS(dvs_left)/(double)nd;
-  
+
   return (seat_right - seat_left)/bandwidth;
 }
 
@@ -226,17 +225,17 @@ NumericVector biasatv(NumericMatrix dvs, double v, int nd){
   NumericVector rshift = (1-v) - colMeans(dvs);
   NumericMatrix dvs_dshift = clone(dvs);
   NumericMatrix dvs_rshift = clone(dvs);
-  
+
   for(int c = 0; c < dvs.ncol(); c++){
     for(int r = 0; r < dvs.nrow(); r++){
       dvs_dshift(r,c) += dshift(c);
       dvs_rshift(r,c) += rshift(c);
     }
   }
-  
+
   NumericVector seat_dshift = (NumericVector)dseatsDVS(dvs_dshift)/(double)nd;
   NumericVector seat_rshift = 1.0 - (NumericVector)dseatsDVS(dvs_rshift)/(double)nd;
-  
+
   return (seat_dshift - seat_rshift)/2;
 }
 
@@ -245,21 +244,21 @@ NumericVector RankedMarginalDev(NumericMatrix dvs){
   NumericMatrix dvs_sort = 100.0 * dvs;
   NumericVector curr_col(dvs_sort.nrow());
   NumericVector out(dvs_sort.ncol());
-  
+
   for(int c = 0; c < dvs_sort.ncol(); c++){
     curr_col = dvs_sort(_,c);
     curr_col = curr_col.sort();
     dvs_sort(_,c) = curr_col;
-  } 
-  
+  }
+
   NumericVector rms = rowMeans(dvs_sort);
-  
+
   for(int c = 0; c < dvs_sort.ncol(); c++){
     curr_col = dvs_sort(_,c);
     out(c) = sum(pow(curr_col - rms, 2.0));
-  } 
-  
-  
+  }
+
+
   return out;
 }
 

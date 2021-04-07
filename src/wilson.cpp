@@ -2,6 +2,38 @@
 #include "tree_op.h"
 
 /*
+ * Random walk along `g` from `root` until something in `visited` is hit
+ */
+// TESTED
+std::vector<int> walk_until(const Graph &g, int root,
+                            const std::vector<bool> &visited,
+                            const std::vector<bool> &ignore,
+                            const uvec &counties);
+
+/*
+ * Erase loops in `path` that would be created by adding `proposal` to path
+ */
+void loop_erase(std::vector<int> &path, int proposal);
+
+/*
+ * Random walk along `g` from `root` until something in `visited` is hit
+ */
+// TESTED
+std::vector<std::vector<int>> walk_until_cty(Multigraph &mg, int root,
+                                             const std::vector<bool> &visited,
+                                             const std::vector<bool> &ignore);
+
+/*
+ * Erase loops in `path` that would be created by adding `proposal` to path
+ */
+// TESTED
+void loop_erase_cty(std::vector<std::vector<int>> &path, int proposal, int root);
+
+
+
+
+
+/*
  * Sample a uniform spanning tree using Wilson's algorithm
  */
 // TESTED

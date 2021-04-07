@@ -1,5 +1,4 @@
-#include <Rcpp.h>
-using namespace Rcpp;
+#include "smc_base.h"
 
 // [[Rcpp::export]]
 IntegerMatrix reindex(IntegerMatrix dm, int nd) {
@@ -7,7 +6,7 @@ IntegerMatrix reindex(IntegerMatrix dm, int nd) {
   IntegerVector dict = seq_len(nd);
   int i = 0;
   IntegerVector iv(1);
-  
+
   IntegerVector colc(dm.nrow());
   for(int c = 0; c < ordered.ncol(); c++){
     dict = rep(0, nd);

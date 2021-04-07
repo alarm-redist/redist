@@ -1,7 +1,6 @@
 #ifndef MERGESPLIT_H
 #define MERGESPLIT_H
 
-#include <math.h>
 #include "smc_base.h"
 #include "wilson.h"
 #include "tree_op.h"
