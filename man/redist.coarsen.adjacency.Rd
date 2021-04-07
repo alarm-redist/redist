@@ -4,14 +4,12 @@
 \alias{redist.coarsen.adjacency}
 \title{Coarsen Adjacency List}
 \usage{
-redist.coarsen.adjacency(adj, groups, adjacency)
+redist.coarsen.adjacency(adj, groups)
 }
 \arguments{
 \item{adj}{A zero-indexed adjacency list. Required.}
 
 \item{groups}{integer vector of elements of adjacency to group}
-
-\item{adjacency}{Deprecated -- use adj. A zero-indexed adjacency list}
 }
 \value{
 adjacency list coarsened

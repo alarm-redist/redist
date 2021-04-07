@@ -4,20 +4,7 @@
 \alias{redist.subset}
 \title{Subset a shp}
 \usage{
-redist.subset(
-  shp,
-  adj,
-  keep_rows,
-  total_pop,
-  ndists,
-  pop_tol,
-  sub_ndists,
-  adjacency,
-  population,
-  ndist,
-  popcons,
-  subndist
-)
+redist.subset(shp, adj, keep_rows, total_pop, ndists, pop_tol, sub_ndists)
 }
 \arguments{
 \item{shp}{An sf object}
@@ -34,17 +21,6 @@ redist.subset(
 \item{pop_tol}{The strength of the hard population constraint.}
 
 \item{sub_ndists}{integer, number of districts in subset map}
-
-\item{adjacency}{Deprecated, use adj. A zero-indexed adjacency list. Created with
-\code{redist.adjacency} if not supplied.}
-
-\item{population}{Deprecated, use total_pop. numeric vector with one entry for the population of each precinct.}
-
-\item{ndist}{Deprecated, use ndists. integer, number of districts in whole map}
-
-\item{popcons}{Deprecated, use pop_tol. The strength of the hard population constraint.}
-
-\item{subndist}{Deprecated, use sub_ndists. integer, number of districts in subset map}
 }
 \value{
 a list containing the following components:

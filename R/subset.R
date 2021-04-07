@@ -12,12 +12,6 @@
 #' @param ndists integer, number of districts in whole map
 #' @param pop_tol The strength of the hard population constraint.
 #' @param sub_ndists integer, number of districts in subset map
-#' @param adjacency Deprecated, use adj. A zero-indexed adjacency list. Created with
-#' \code{redist.adjacency} if not supplied.
-#' @param population Deprecated, use total_pop. numeric vector with one entry for the population of each precinct.
-#' @param ndist Deprecated, use ndists. integer, number of districts in whole map
-#' @param popcons Deprecated, use pop_tol. The strength of the hard population constraint.
-#' @param subndist Deprecated, use sub_ndists. integer, number of districts in subset map
 #'
 #' @return a list containing the following components:
 #' \item{shp}{The subsetted shp object}
@@ -28,31 +22,8 @@
 #'
 #' @concept prepare
 #' @export
-redist.subset <- function(shp, adj, keep_rows, total_pop, ndists, pop_tol, sub_ndists,
-                          adjacency, population, ndist, popcons, subndist) {
-
-    if (!missing(adjacency)) {
-        .Deprecated(new = 'adj', old = 'adjacency')
-        adj <- adjacency
-    }
-    if (!missing(population)) {
-        .Deprecated(new = 'total_pop', old = 'population')
-        total_pop <- population
-    }
-    if (!missing(ndist)) {
-        .Deprecated(new = 'ndists', old = 'ndist')
-        ndists <- ndist
-    }
-    if (!missing(popcons)) {
-        .Deprecated(new = 'pop_tol', old = 'popcons')
-        pop_tol <- popcons
-    }
-    if (!missing(subndist)) {
-        .Deprecated(new = 'sub_ndists', old = 'subndist')
-        sub_ndists <- subndist
-    }
-
-
+redist.subset <- function(shp, adj, keep_rows, total_pop, ndists,
+                          pop_tol, sub_ndists) {
     if (missing(shp)) {
         stop('Please provide an argument to "shp". ',
              'Use redist.reduce.adjacency to subset adjacency lists.')

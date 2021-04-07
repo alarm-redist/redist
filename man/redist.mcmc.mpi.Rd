@@ -31,14 +31,7 @@ redist.mcmc.mpi(
   freq = 100,
   savename = NA,
   maxiterrsg = 5000,
-  verbose = FALSE,
-  adjobj,
-  popvec,
-  initcds,
-  popcons,
-  grouppopvec,
-  countymembership,
-  contiguitymap
+  verbose = FALSE
 )
 }
 \arguments{
@@ -129,30 +122,6 @@ algorithm to generate starting values. Default is 5000.}
 
 \item{verbose}{Whether to print initialization statement. Default is
 \code{TRUE}.}
-
-\item{adjobj}{Deprecated, use adj. An adjacency matrix, list, or object of class
-"SpatialPolygonsDataFrame."}
-
-\item{popvec}{Deprecated, use total_pop. A vector containing the populations of each geographic
-unit.}
-
-\item{initcds}{Deprecated, use init_plan. A vector containing the congressional district labels
-of each geographic unit. The default is \code{NULL}. If not provided, random
-and contiguous congressional district assignments will be generated using
-\code{redist.rsg}.}
-
-\item{popcons}{Deprecated, use pop_tol. The strength of the hard population
-constraint. \code{popcons} = 0.05 means that any proposed swap that
-brings a district more than 5\% away from population parity will be
-rejected. The default is \code{NULL}.}
-
-\item{grouppopvec}{Deprecated, use group_pop. A vector of populations for some sub-group of
-interest. The default is \code{NULL}.}
-
-\item{countymembership}{Deprecated, use counties. A vector of county membership assignments. The default is \code{NULL}.}
-
-\item{contiguitymap}{Use queens or rooks distance criteria for generating an
-adjacency list from a "SpatialPolygonsDataFrame" data type. Default is "rooks".}
 }
 \value{
 \code{redist.mcmc.mpi} returns an object of class "redist". The object
