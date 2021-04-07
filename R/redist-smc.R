@@ -20,7 +20,7 @@
 #' @param pop_bounds A numeric vector with three elements \code{c(lower, target, upper)}
 #' providing more precise population bounds for the algorithm. Districts
 #' will have population between \code{lower} and \code{upper}, with a goal of
-#' \code{target}.  If set, overrides \code{popcons}.
+#' \code{target}.  If set, overrides \code{pop_tol}.
 #'
 #' @return \code{redist.smc} returns an object of class \code{redist}, which
 #' is a list containing the following components:

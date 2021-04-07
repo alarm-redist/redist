@@ -80,7 +80,7 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
                        group_pop = group_pop,
                        counties = counties, #ctk-cran-note
                        init_plan = init_plan, eprob = eprob, lambda = lambda,
-                       popcons = popcons,
+                       pop_tol = popcons,
                        constraint = constraintvec,
                        constraintweights = weightvec, #ctk-cran-note
                        maxiterrsg = maxiterrsg,

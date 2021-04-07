@@ -13,7 +13,7 @@
 #' boundary constraints.
 #'
 #' This function draws nearly-independent samples from a specific target measure,
-#' controlled by the \code{popcons}, \code{compactness}, \code{constraints}, and
+#' controlled by the \code{pop_tol}, \code{compactness}, \code{constraints}, and
 #' \code{constraint_fn} parameters.
 #'
 #' Key to ensuring good performance is monitoring the efficiency of the resampling

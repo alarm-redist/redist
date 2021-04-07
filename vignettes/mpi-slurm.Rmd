@@ -31,18 +31,18 @@ data(algdat.p20)
 ## Run mcmc algorithm - hard population constraint
 ## (reject any sample where population parity > 20%)
 ## -----------------------------------------------
-mcmc.out <- redist.mcmc(adjobj = algdat.p20$adjlist,
-                        popvec = algdat.p20$precinct.data$pop,
+mcmc.out <- redist.flip(adj = algdat.p20$adjlist,
+                        total_pop = algdat.p20$precinct.data$pop,
                         nsims = 10000,
-                        popcons = .2,
+                        pop_tol = 0.2,
                         ndists = 3)
 
 ## ---------------------------------------------------------------------
 ## Run mcmc algorithm - draws from gibbs defined by distance from parity
 ## (Run with no tempering)
 ## ---------------------------------------------------------------------
-mcmc.out.gb <- redist.mcmc(adjobj = algdat.p20$adjlist,
-                           popvec = algdat.p20$precinct.data$pop,
+mcmc.out.gb <- redist.flilp(adj = algdat.p20$adjlist,
+                           total_pop = algdat.p20$precinct.data$pop,
                            ndists = 3,
                            nsims = 10000,
                            constraint = "population",

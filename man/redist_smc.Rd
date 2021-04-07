@@ -114,7 +114,7 @@ populations within 1\% of the target population.}
 \item{pop_bounds}{A numeric vector with three elements \code{c(lower, target, upper)}
 providing more precise population bounds for the algorithm. Districts
 will have population between \code{lower} and \code{upper}, with a goal of
-\code{target}.  If set, overrides \code{popcons}.}
+\code{target}.  If set, overrides \code{pop_tol}.}
 }
 \value{
 \code{redist_smc} returns an object of class
@@ -146,7 +146,7 @@ boundary constraints.
 }
 \details{
 This function draws nearly-independent samples from a specific target measure,
-controlled by the \code{popcons}, \code{compactness}, \code{constraints}, and
+controlled by the \code{pop_tol}, \code{compactness}, \code{constraints}, and
 \code{constraint_fn} parameters.
 
 Key to ensuring good performance is monitoring the efficiency of the resampling
