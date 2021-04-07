@@ -1,4 +1,4 @@
-# redist 3.0.0
+# redist 3.0.1
 
 * New tidy interface, including new `redist_map` and `redist_plans` objects
 * Merge-split MCMC now available in `redist_mergesplit()`

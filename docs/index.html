@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Simulation Methods for Legislative Redistricting • redist</title>
+<title>An R package for legislative redistricting • redist</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
 <link rel="apple-touch-icon" type="image/png" sizes="180x180" href="apple-touch-icon.png">
@@ -17,16 +17,9 @@
 <script src="bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
-<script src="pkgdown.js"></script><meta property="og:title" content="Simulation Methods for Legislative Redistricting">
-<meta property="og:description" content="Enables researchers to sample redistricting plans from a pre-specified
-    target distribution using Sequential Monte Carlo and Markov Chain Monte Carlo
-    algorithms.  The package allows for the implementation of various constraints in
-    the redistricting process such as geographic compactness and population parity
-    requirements. Tools for analysis such as computation of various summary statistics
-    and plotting functionality are also included. The package implements methods
-    described in Fifield, Higgins, Imai and Tarr (2020) &lt;doi: 10.1080/10618600.2020.1739532&gt;,
-    Fifield, Imai, Kawahara, and Kenny (2020) &lt;doi: 10.1080/2330443X.2020.1791773&gt;,
-    and McCartan and Imai (2020) &lt;arXiv: 2008.06131&gt;.">
+<script src="pkgdown.js"></script><meta property="og:title" content="An R package for legislative redistricting">
+<meta property="og:description" content="This R package enables researchers to sample redistricting plans from a pre-specified target distribution using Sequential Monte Carlo and Markov Chain Monte Carlo algorithms. The package supports various constraints in the redistricting process, such as geographic compactness and population parity requirements. Tools for analysis, including computation of various summary statistics and plotting functionality, are also included.
+">
 <meta property="og:image" content="/logo.png">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -46,7 +39,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.1</span>
       </span>
     </div>
 
@@ -85,8 +78,22 @@
     </li>
   </ul>
 </li>
-<li>
-  <a href="news/index.html">Changelog</a>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    News
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+<li class="dropdown-header">Releases</li>
+    <li>
+      <a href="https://alarm-redist.github.io/posts/2021-04-02-redist-300/">redist 3.0</a>
+    </li>
+    <li class="divider">
+    <li>
+      <a href="news/index.html">Changelog</a>
+    </li>
+  </ul>
 </li>
       </ul>
 <ul class="nav navbar-nav navbar-right">
@@ -113,9 +120,10 @@
 <a href="#redist-simulation-methods-for-legislative-redistricting" class="anchor"></a><strong>redist</strong>: Simulation Methods for Legislative Redistricting</h1></div>
 <!-- badges: start -->
 
+<!-- badges: end -->
 <p><img src="reference/figures/map_photo.jpg" style="width: 100%"></p>
 <p><img src="reference/figures/logo.png" align="right" height="128" style="margin-left: 4px;"></p>
-<p>This R package enables researchers to sample redistricting plans from a pre-specified target distribution using Sequential Monte Carlo and Markov Chain Monte Carlo algorithms. The package allows for the implementation of various constraints in the redistricting process such as geographic compactness and population parity requirements. Tools for analysis such as computation of various summary statistics and plotting functionality are also included.</p>
+<p>This R package enables researchers to sample redistricting plans from a pre-specified target distribution using Sequential Monte Carlo and Markov Chain Monte Carlo algorithms. The package supports various constraints in the redistricting process, such as geographic compactness and population parity requirements. Tools for analysis, including computation of various summary statistics and plotting functionality, are also included.</p>
 <p>Authors:</p>
 <ul>
 <li>
@@ -124,7 +132,7 @@
 <a href="https://corymccartan.github.io">Cory McCartan</a>, <a href="mailto:cmccartan@g.harvard.edu" class="email">cmccartan@g.harvard.edu</a>
 </li>
 <li>
-<a href="https://www.benfifield.com">Ben Fifield</a>, <a href="mailto:benfifield@gmail.com" class="email">benfifield@gmail.com</a>
+<a href="https://benfifield.com">Ben Fifield</a>, <a href="mailto:benfifield@gmail.com" class="email">benfifield@gmail.com</a>
 </li>
 <li>
 <a href="https://imai.fas.harvard.edu">Kosuke Imai</a>, <a href="mailto:imai@harvard.edu" class="email">imai@harvard.edu</a>
@@ -180,9 +188,9 @@
 <span class="co">#&gt; Note: maximum hit; falling back to naive k estimator.</span>
 <span class="co">#&gt; Resampling effective sample size: 246.1 (98.4% efficiency).</span>
 <span class="co">#&gt; Making split 2 of 3</span>
-<span class="co">#&gt; Resampling effective sample size: 245.7 (98.3% efficiency).</span>
+<span class="co">#&gt; Resampling effective sample size: 246.2 (98.5% efficiency).</span>
 <span class="co">#&gt; Making split 3 of 3</span>
-<span class="co">#&gt; Resampling effective sample size: 246.7 (98.7% efficiency).</span></code></pre></div>
+<span class="co">#&gt; Resampling effective sample size: 244.3 (97.7% efficiency).</span></code></pre></div>
 <p>After generating plans, you can use <code>redist</code>’s plotting functions to study the geographic and partisan characteristics of the simulated ensemble.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org">ggplot2</a></span><span class="op">)</span>
@@ -213,7 +221,36 @@
     <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html">scale_color_manual</a></span><span class="op">(</span>values<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"tomato2"</span>, <span class="st">"dodgerblue"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>
     <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">labs</a></span><span class="op">(</span>title<span class="op">=</span><span class="st">"Democratic vote share by district"</span><span class="op">)</span></code></pre></div>
 <p><img src="reference/figures/README-readme-plot-4.png"><!-- --></p>
-<p>A more detailed introduction to redistricting methods and the package can be found in the <a href="articles/redist.html">Get Started</a> page. The package <a href="articles/">vignettes</a> contain more detailed information and guides to specific workflows.</p>
+<p>A more detailed introduction to redistricting methods and the package can be found in the <a href="https://alarm-redist.github.io/redist/articles/redist.html">Get Started</a> page. The package <a href="https://alarm-redist.github.io/redist/articles/">vignettes</a> contain more detailed information and guides to specific workflows.</p>
+</div>
+<div id="recommended-workflows" class="section level2">
+<h2 class="hasAnchor">
+<a href="#recommended-workflows" class="anchor"></a>Recommended Workflows</h2>
+<p>In some cases, there are two functions with the same purpose that operate on different inputs. For most users, we recommend working with the versions that operate on <code>redist_map</code> and <code>redist_plan</code> objects.</p>
+<table class="table">
+<thead><tr class="header">
+<th>Recommended</th>
+<th>Alternate Options</th>
+<th>Notes</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>redist_smc</code></td>
+<td><code>redist.smc</code></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><code>redist_mergesplit</code></td>
+<td><code>redist.mergesplit</code></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><code>redist_flip</code></td>
+<td><code>redist.flip</code></td>
+<td>(Formerly called <code>redist.mcmc</code>)</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
   </div>
@@ -227,6 +264,8 @@
 <li>Browse source code at <br><a href="https://github.com/alarm-redist/redist/">https://​github.com/​alarm-redist/​redist/​</a>
 </li>
 <li>Report a bug at <br><a href="https://github.com/alarm-redist/redist/issues">https://​github.com/​alarm-redist/​redist/​issues</a>
+</li>
+<li>ALARM Project at <br><a href="https://alarm-redist.github.io/">https://​alarm-redist.github.io/​</a>
 </li>
 </ul>
 </div>
@@ -245,9 +284,9 @@
 <div class="developers">
 <h2>Developers</h2>
 <ul class="list-unstyled">
-<li>Christopher T. Kenny <br><small class="roles"> Author </small>  </li>
+<li>Christopher T. Kenny <br><small class="roles"> Author, maintainer </small>  </li>
 <li>Cory McCartan <br><small class="roles"> Author </small>  </li>
-<li>Ben Fifield <br><small class="roles"> Author, maintainer </small>  </li>
+<li>Ben Fifield <br><small class="roles"> Author </small>  </li>
 <li>Kosuke Imai <br><small class="roles"> Author </small>  </li>
 <li><a href="authors.html">All authors...</a></li>
 </ul>

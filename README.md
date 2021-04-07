@@ -18,11 +18,11 @@ Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://trav
 
 This R package enables researchers to sample redistricting plans from a
 pre-specified target distribution using Sequential Monte Carlo and
-Markov Chain Monte Carlo algorithms. The package allows for the
-implementation of various constraints in the redistricting process such
-as geographic compactness and population parity requirements. Tools for
-analysis such as computation of various summary statistics and plotting
-functionality are also included.
+Markov Chain Monte Carlo algorithms. The package supports various
+constraints in the redistricting process, such as geographic compactness
+and population parity requirements. Tools for analysis, including
+computation of various summary statistics and plotting functionality,
+are also included.
 
 Authors:
 
@@ -30,7 +30,7 @@ Authors:
     <christopherkenny@fas.harvard.edu> (Maintainer)
 -   [Cory McCartan](https://corymccartan.github.io),
     <cmccartan@g.harvard.edu>
--   [Ben Fifield](https://www.benfifield.com), <benfifield@gmail.com>
+-   [Ben Fifield](https://benfifield.com), <benfifield@gmail.com>
 -   [Kosuke Imai](https://imai.fas.harvard.edu), <imai@harvard.edu>
 
 Contributors:
@@ -87,11 +87,12 @@ iowa_plans = redist_smc(iowa_map, nsims=250, verbose=FALSE)
 #> SEQUENTIAL MONTE CARLO
 #> Sampling 250 99-unit maps with 4 districts and population between 761513 and 761665.
 #> Making split 1 of 3
-#> Resampling effective sample size: 246.3 (98.5% efficiency).
+#> Note: maximum hit; falling back to naive k estimator.
+#> Resampling effective sample size: 246.1 (98.4% efficiency).
 #> Making split 2 of 3
-#> Resampling effective sample size: 234.2 (93.7% efficiency).
+#> Resampling effective sample size: 246.2 (98.5% efficiency).
 #> Making split 3 of 3
-#> Resampling effective sample size: 247.0 (98.8% efficiency).
+#> Resampling effective sample size: 244.3 (97.7% efficiency).
 ```
 
 After generating plans, you can use `redist`’s plotting functions to
@@ -140,9 +141,11 @@ iowa_plans %>%
 ![](man/figures/README-readme-plot-4.png)<!-- -->
 
 A more detailed introduction to redistricting methods and the package
-can be found in the [Get Started](articles/redist.html) page. The
-package [vignettes](articles/) contain more detailed information and
-guides to specific workflows.
+can be found in the [Get
+Started](https://alarm-redist.github.io/redist/articles/redist.html)
+page. The package
+[vignettes](https://alarm-redist.github.io/redist/articles/) contain
+more detailed information and guides to specific workflows.
 
 ## Recommended Workflows
 
