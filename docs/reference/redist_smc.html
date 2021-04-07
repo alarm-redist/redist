@@ -323,7 +323,7 @@ populations within 1% of the target population.</p></td>
       <td><p>A numeric vector with three elements <code><a href='https://rdrr.io/r/base/c.html'>c(lower, target, upper)</a></code>
 providing more precise population bounds for the algorithm. Districts
 will have population between <code>lower</code> and <code>upper</code>, with a goal of
-<code>target</code>.  If set, overrides <code>popcons</code>.</p></td>
+<code>target</code>.  If set, overrides <code>pop_tol</code>.</p></td>
     </tr>
     </table>
 
@@ -352,7 +352,7 @@ and each column is a sample.</p></dd>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>This function draws nearly-independent samples from a specific target measure,
-controlled by the <code>popcons</code>, <code>compactness</code>, <code>constraints</code>, and
+controlled by the <code>pop_tol</code>, <code>compactness</code>, <code>constraints</code>, and
 <code>constraint_fn</code> parameters.</p>
 <p>Key to ensuring good performance is monitoring the efficiency of the resampling
 process at each SMC stage.  Unless <code>silent=F</code>, this function will print
