@@ -44,7 +44,7 @@ data(fl25_adj)
 init_plan <- fl25_enum$plans[, 5118]
 
 ## 25 precinct, three districts - no pop constraint ##
-alg_253 <- redist.mcmc(adj = fl25_adj, popvec = fl25$pop,
+alg_253 <- redist.flip(adj = fl25_adj, popvec = fl25$pop,
                        initcds = init_plan, nsims = 10000)
 
 ## Get Republican Dissimilarity Index from simulations
@@ -57,7 +57,7 @@ redist.diagplot(rep_dmi_253, plot = "densplot")
 redist.diagplot(rep_dmi_253, plot = "mean")
 
 ## Gelman Rubin needs two chains, so we run a second
-alg_253_2 <- redist.mcmc(adjobj = fl25_adj,
+alg_253_2 <- redist.flip(adjobj = fl25_adj,
 popvec = fl25$pop,
 initcds = init_plan, nsims = 10000)
 

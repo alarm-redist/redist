@@ -75,7 +75,7 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
     }
 
     ## Run siulations
-    out <- redist.mcmc(adj = adj, total_pop = total_pop, nsims = nsims,
+    out <- redist.flip(adj = adj, total_pop = total_pop, nsims = nsims,
                        ndists = ndists, ssdmat = ssdmat,
                        group_pop = group_pop,
                        counties = counties, #ctk-cran-note
@@ -328,7 +328,7 @@ redist.findparams <- function(adj, total_pop,
     ## Starting statement
     if(verbose){
         cat(paste("## ------------------------------\n",
-            "## redist.findparams(): Parameter tuning for redist.mcmc()\n",
+            "## redist.findparams(): Parameter tuning for redist.flip()\n",
             "## Searching over", trials, "parameter combinations\n",
             "## ------------------------------\n\n", sep = " "))
     }

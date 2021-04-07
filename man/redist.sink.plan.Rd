@@ -22,7 +22,7 @@ plan <- fl25_enum$plans[, 5118]
 # Subset based on something:
 plan <- plan[plan!=2]
 plan <- redist.sink.plan(plan)
-# Now plan can be used with redist.mcmc()
+# Now plan can be used with redist.flip()
 plan
 }
 

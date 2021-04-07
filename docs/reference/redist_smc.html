@@ -83,7 +83,7 @@ boundary constraints." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.0.9000</span>
       </span>
     </div>
 
@@ -208,10 +208,7 @@ boundary constraints.</p>
   trunc_fn <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span> <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>pmin</a></span><span class='op'>(</span><span class='va'>x</span>, <span class='fl'>0.01</span> <span class='op'>*</span> <span class='va'>nsims</span><span class='op'>^</span><span class='fl'>0.4</span><span class='op'>)</span>,
   pop_temper <span class='op'>=</span> <span class='fl'>0</span>,
   verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  silent <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  <span class='va'>adjobj</span>,
-  <span class='va'>popvec</span>,
-  <span class='va'>popcons</span>
+  silent <span class='op'>=</span> <span class='cn'>FALSE</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -327,22 +324,6 @@ populations within 1% of the target population.</p></td>
 providing more precise population bounds for the algorithm. Districts
 will have population between <code>lower</code> and <code>upper</code>, with a goal of
 <code>target</code>.  If set, overrides <code>popcons</code>.</p></td>
-    </tr>
-    <tr>
-      <th>adjobj</th>
-      <td><p>Deprecated, use adj. An adjacency matrix, list, or object of class
-"SpatialPolygonsDataFrame."</p></td>
-    </tr>
-    <tr>
-      <th>popvec</th>
-      <td><p>Deprecated, use total_pop. A vector containing the populations of each geographic unit.</p></td>
-    </tr>
-    <tr>
-      <th>popcons</th>
-      <td><p>The desired population constraint.  All sampled districts
-will have a deviation from the target district size no more than this value
-in percentage terms, i.e., <code>popcons=0.01</code> will ensure districts have
-populations within 1% of the target population.</p></td>
     </tr>
     </table>
 

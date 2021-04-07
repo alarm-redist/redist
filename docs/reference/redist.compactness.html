@@ -83,7 +83,7 @@ and the log of the Spanning Trees." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.0.9000</span>
       </span>
     </div>
 
@@ -191,11 +191,7 @@ and the log of the Spanning Trees.</p>
   planarize <span class='op'>=</span> <span class='fl'>3857</span>,
   <span class='va'>ppRcpp</span>,
   <span class='va'>perim_path</span>,
-  <span class='va'>perim_df</span>,
-  <span class='va'>district_membership</span>,
-  <span class='va'>population</span>,
-  <span class='va'>adjacency</span>,
-  <span class='va'>nloop</span>
+  <span class='va'>perim_df</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -276,26 +272,6 @@ This can be created in advance with <code>redist.prep.polsbypopper</code>.</p></
     <tr>
       <th>perim_df</th>
       <td><p>A dataframe output from <code>redist.prep.polsbypopper</code></p></td>
-    </tr>
-    <tr>
-      <th>district_membership</th>
-      <td><p>Deprecated. Use plans. A numeric vector (if only one map) or matrix with one row
-for each precinct and one column for each map. Required.</p></td>
-    </tr>
-    <tr>
-      <th>population</th>
-      <td><p>Deprecated. Use total_pop. A numeric vector with the population for every observation. Is
-only necessary when "FryerHolden" is used for measure. Defaults to NULL.</p></td>
-    </tr>
-    <tr>
-      <th>adjacency</th>
-      <td><p>Deprecated. Use adj. A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
-Created with <code>redist.adjacency</code> if not supplied and needed. Default is NULL.</p></td>
-    </tr>
-    <tr>
-      <th>nloop</th>
-      <td><p>Deprecated, use draw. A numeric to specify loop number. Defaults to 1 if only one map provided
-and the column number if multiple maps given.</p></td>
     </tr>
     </table>
 

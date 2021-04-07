@@ -81,7 +81,7 @@ each district across a matrix of maps." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.0.9000</span>
       </span>
     </div>
 
@@ -175,15 +175,7 @@ each district across a matrix of maps.</p>
   .data <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/exists.html'>get0</a></span><span class='op'>(</span><span class='st'>"."</span>, <span class='fu'><a href='https://rdrr.io/r/base/sys.parent.html'>parent.frame</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>
 <span class='op'>)</span>
 
-<span class='fu'>redist.group.percent</span><span class='op'>(</span>
-  <span class='va'>plans</span>,
-  <span class='va'>group_pop</span>,
-  <span class='va'>total_pop</span>,
-  ncores <span class='op'>=</span> <span class='fl'>1</span>,
-  <span class='va'>district_membership</span>,
-  <span class='va'>grouppop</span>,
-  <span class='va'>fullpop</span>
-<span class='op'>)</span></pre>
+<span class='fu'>redist.group.percent</span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>group_pop</span>, <span class='va'>total_pop</span>, ncores <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -212,19 +204,6 @@ for each precinct and one column for each map. Required.</p></td>
     <tr>
       <th>ncores</th>
       <td><p>Number of cores to use for parallel computing. Default is 1.</p></td>
-    </tr>
-    <tr>
-      <th>district_membership</th>
-      <td><p>Deprecated, use plans. A matrix with one row
-for each precinct and one column for each map. Required.</p></td>
-    </tr>
-    <tr>
-      <th>grouppop</th>
-      <td><p>Deprecated, use group_pop. A numeric vector with the population of the group for every precinct.</p></td>
-    </tr>
-    <tr>
-      <th>fullpop</th>
-      <td><p>Deprecated, use total_pop. A numeric vector with the population for every precinct.</p></td>
     </tr>
     </table>
 
