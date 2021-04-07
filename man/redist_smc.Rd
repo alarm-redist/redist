@@ -41,10 +41,7 @@ redist.smc(
   trunc_fn = function(x) pmin(x, 0.01 * nsims^0.4),
   pop_temper = 0,
   verbose = TRUE,
-  silent = FALSE,
-  adjobj,
-  popvec,
-  popcons
+  silent = FALSE
 )
 }
 \arguments{
@@ -118,16 +115,6 @@ populations within 1\% of the target population.}
 providing more precise population bounds for the algorithm. Districts
 will have population between \code{lower} and \code{upper}, with a goal of
 \code{target}.  If set, overrides \code{popcons}.}
-
-\item{adjobj}{Deprecated, use adj. An adjacency matrix, list, or object of class
-"SpatialPolygonsDataFrame."}
-
-\item{popvec}{Deprecated, use total_pop. A vector containing the populations of each geographic unit.}
-
-\item{popcons}{The desired population constraint.  All sampled districts
-will have a deviation from the target district size no more than this value
-in percentage terms, i.e., \code{popcons=0.01} will ensure districts have
-populations within 1\% of the target population.}
 }
 \value{
 \code{redist_smc} returns an object of class

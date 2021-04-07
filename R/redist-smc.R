@@ -21,13 +21,6 @@
 #' providing more precise population bounds for the algorithm. Districts
 #' will have population between \code{lower} and \code{upper}, with a goal of
 #' \code{target}.  If set, overrides \code{popcons}.
-#' @param adjobj Deprecated, use adj. An adjacency matrix, list, or object of class
-#' "SpatialPolygonsDataFrame."
-#' @param popvec Deprecated, use total_pop. A vector containing the populations of each geographic unit.
-#' @param popcons The desired population constraint.  All sampled districts
-#' will have a deviation from the target district size no more than this value
-#' in percentage terms, i.e., \code{popcons=0.01} will ensure districts have
-#' populations within 1% of the target population.
 #'
 #' @return \code{redist.smc} returns an object of class \code{redist}, which
 #' is a list containing the following components:
@@ -78,22 +71,7 @@ redist.smc = function(adj, total_pop, nsims, ndists, counties=NULL,
                       adapt_k_thresh=0.975, seq_alpha=0.2+0.2*compactness,
                       truncate=(compactness != 1),
                       trunc_fn=function(x) pmin(x, 0.01*nsims^0.4),
-                      pop_temper=0, verbose=TRUE, silent=FALSE,
-                      adjobj, popvec, popcons) {
-    if (!missing(adjobj)) {
-        .Deprecated(new = 'adj', old = 'adjobj')
-        adj <- adjobj
-    }
-    if (!missing(popvec)) {
-        .Deprecated(new = 'total_pop', old = 'popvec')
-        total_pop <- popvec
-    }
-    if (!missing(popcons)) {
-        .Deprecated(new = 'pop_tol', old = 'popcons')
-        pop_tol <- popcons
-    }
-
-
+                      pop_temper=0, verbose=TRUE, silent=FALSE) {
     V = length(total_pop)
 
     if (missing(adj)) stop("Please supply adjacency matrix or list")
