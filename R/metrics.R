@@ -20,7 +20,7 @@
 #' @param rvote A numeric vector with the Republican vote for each precinct.
 #' @param dvote A numeric vector with the Democratic vote for each precinct.
 #' @param draw A numeric to specify draw number. Defaults to 1 if only one map provided
-#' and the column number if multiple maps given. Can also take a factor input, which will become the 
+#' and the column number if multiple maps given. Can also take a factor input, which will become the
 #' draw column in the output if its length matches the number of entries in plans. If the `plans` input
 #' is a `redist_plans` object, it extracts the `draw` identifier.
 #' @param tau A non-negative number for calculating Tau Gap. Only used with option "TauGap". Defaults to 1.
@@ -28,10 +28,6 @@
 #' @param respV A value between 0 and 1 to compute responsiveness at. Only used with option "Responsiveness". Defaults to 0.5.
 #' @param bandwidth A value between 0 and 1 for computing responsiveness. Only used with option "Responsiveness." Defaults to 0.01.
 #' @param ncores Number of cores to use for parallel computing. Default is 1.
-#' @param district_membership Deprecated, use plans. A numeric vector (if only one map) or matrix with one row
-#' for each precinct and one column for each map. Required.
-#' @param nloop Deprecated, use draw. A numeric to specify loop number. Defaults to 1 if only one map provided
-#' and the column number if multiple maps given.
 #'
 #'
 #' @details This function computes specified compactness scores for a map.  If
@@ -81,24 +77,9 @@
 #'
 #' @concept analyze
 #' @export
-redist.metrics <- function(plans,
-                           measure = "DSeats",
-                           rvote, dvote,
-                           tau = 1, biasV = 0.5,
-                           respV = 0.5, bandwidth = 0.01,
-                           draw = 1,
-                           ncores = 1,
-                           district_membership,
-                           nloop){
-
-  if(!missing(district_membership)){
-    .Deprecated(new = 'plans', old = 'district_membership')
-    plans <- district_membership
-  }
-  if(!missing(nloop)){
-    draw <- nloop
-    .Deprecated(new = 'draw', old = 'nloop')
-  }
+redist.metrics <- function(plans, measure = "DSeats", rvote, dvote,
+                           tau = 1, biasV = 0.5, respV = 0.5, bandwidth = 0.01,
+                           draw = 1, ncores = 1){
 
   # All measures available:
   all_measures <- c("DSeats", "DVS", "EffGap", "EffGapEqPop", "TauGap",
@@ -114,12 +95,12 @@ redist.metrics <- function(plans,
   if(any(class(plans) %in% 'redist')){
     plans <- plans$plans
   }
-  
+
   if (inherits(plans, 'redist_plans')) {
     draw <- plans$draw
     plans <- get_plans_matrix(plans)
   }
-  
+
   if(!is.numeric(plans)){
     stop('Please provide "plans" as a numeric vector or matrix.')
   }

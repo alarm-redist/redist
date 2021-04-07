@@ -42,14 +42,6 @@
 #' it creates an rds with borders and saves it.
 #' This can be created in advance with \code{redist.prep.polsbypopper}.
 #' @param perim_df A dataframe output from \code{redist.prep.polsbypopper}
-#' @param district_membership Deprecated. Use plans. A numeric vector (if only one map) or matrix with one row
-#' for each precinct and one column for each map. Required.
-#' @param population Deprecated. Use total_pop. A numeric vector with the population for every observation. Is
-#' only necessary when "FryerHolden" is used for measure. Defaults to NULL.
-#' @param adjacency Deprecated. Use adj. A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
-#' Created with \code{redist.adjacency} if not supplied and needed. Default is NULL.
-#' @param nloop Deprecated, use draw. A numeric to specify loop number. Defaults to 1 if only one map provided
-#' and the column number if multiple maps given.
 #'
 #' @details This function computes specified compactness scores for a map.  If
 #' there is more than one shape specified for a single district, it combines
@@ -158,26 +150,7 @@ redist.compactness <- function(shp = NULL,
                                measure = c("PolsbyPopper"),
                                total_pop = NULL, adj = NULL, draw = 1,
                                ncores = 1, counties = NULL, planarize = 3857,
-                               ppRcpp, perim_path, perim_df,
-                               district_membership, population, adjacency, nloop){
-
-  if(!missing(district_membership)){
-    plans <- district_membership
-    .Deprecated(new = 'plans', old = 'district_membership')
-  }
-  if(!missing(population)){
-    total_pop <- population
-    .Deprecated(new = 'total_pop', old = 'population')
-  }
-  if(!missing(adjacency)){
-    adj <- adjacency
-    .Deprecated(new = 'adj', old = 'adjacency')
-  }
-  if(!missing(nloop)){
-    draw <- nloop
-    .Deprecated(new = 'draw', old = 'nloop')
-  }
-
+                               ppRcpp, perim_path, perim_df){
   # Check Inputs
   if (is.null(shp) & is.null(adj)) {
     stop('Please provide a shp or adj argument.')
