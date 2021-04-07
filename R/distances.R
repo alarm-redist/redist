@@ -13,12 +13,6 @@
 #'   variation of information. If not provided, equal population of precincts
 #'   will be assumed, i.e. the VI will be computed with respect to the precincts
 #'   themselves, and not the population.
-#' @param district_membership Deprecated, use plans. A matrix with one row for each precinct and one
-#' column for each map. Required.
-#' @param pop The vector of precinct populations. Used only if computing
-#'   variation of information. If not provided, equal population of precincts
-#'   will be assumed, i.e. the VI will be computed with respect to the precincts
-#'   themselves, and not the population.
 #'
 #' @details
 #' Hamming distance measures the number of different precinct assignments
@@ -55,19 +49,7 @@
 #' @concept analyze
 #' @export
 redist.distances <- function(plans, measure = "Hamming",
-                             ncores = 1, total_pop = NULL,
-                             district_membership, pop) {
-
-
-    if(!missing(pop)){
-        total_pop <- pop
-        .Deprecated(new = 'total_pop', old = 'pop')
-    }
-    if(!missing(district_membership)){
-        plans <- district_membership
-        .Deprecated('plans')
-    }
-
+                             ncores = 1, total_pop = NULL) {
 
     supported = c("all", "Hamming", "Manhattan", "Euclidean", "variation of information")
     # fuzzy matching
