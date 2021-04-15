@@ -16,3 +16,4 @@ builder.sh
 ^\.Rproj\.user$
 ^cran-comments\.md$
 ^CRAN-RELEASE$
+^R/dev_helpers\.R$
