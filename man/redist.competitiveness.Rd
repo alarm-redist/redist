@@ -5,7 +5,7 @@
 \alias{redist.competitiveness}
 \title{Compute Competitiveness}
 \usage{
-competitiveness(map, rvote, dvote, .data = get_cur_plans())
+competitiveness(map, rvote, dvote, .data = cur_plans())
 
 redist.competitiveness(plans, rvote, dvote)
 }

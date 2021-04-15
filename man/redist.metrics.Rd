@@ -5,7 +5,7 @@
 \alias{redist.metrics}
 \title{Calculate gerrymandering metrics for a set of plans}
 \usage{
-partisan_metrics(map, measure, rvote, dvote, ..., .data = get_cur_plans())
+partisan_metrics(map, measure, rvote, dvote, ..., .data = cur_plans())
 
 redist.metrics(
   plans,

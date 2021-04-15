@@ -5,7 +5,7 @@
 \alias{redist.compactness}
 \title{Calculate compactness measures for a set of plans}
 \usage{
-distr_compactness(map, measure = "FracKept", .data = get_cur_plans(), ...)
+distr_compactness(map, measure = "FracKept", .data = cur_plans(), ...)
 
 redist.compactness(
   shp = NULL,

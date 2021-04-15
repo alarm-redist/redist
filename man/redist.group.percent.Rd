@@ -9,7 +9,7 @@ group_frac(
   map,
   group_pop,
   total_pop = map[[attr(map, "pop_col")]],
-  .data = get_cur_plans()
+  .data = cur_plans()
 )
 
 redist.group.percent(

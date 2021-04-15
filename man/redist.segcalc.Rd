@@ -9,7 +9,7 @@ segregation_index(
   map,
   group_pop,
   total_pop = map[[attr(map, "pop_col")]],
-  .data = get_cur_plans()
+  .data = cur_plans()
 )
 
 redist.segcalc(plans, group_pop, total_pop, algout, grouppop, fullpop)

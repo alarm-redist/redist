@@ -5,7 +5,7 @@
 \alias{redist.splits}
 \title{Count County Splits}
 \usage{
-county_splits(map, counties, .data = get_cur_plans())
+county_splits(map, counties, .data = cur_plans())
 
 redist.splits(plans, counties, district_membership)
 }
