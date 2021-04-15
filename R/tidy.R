@@ -97,15 +97,16 @@ merge_by = function(.data, ..., by_existing=TRUE, drop_geom=TRUE, collapse_chr=T
 #'
 #' @concept prepare
 #' @export
-make_cores = function(.data=get_cur_plans(), boundary=1, focus=NULL) {
-    if (!inherits(.data, "redist_map"))
-        stop("Must provide `.data` if not called within a pipe")
+make_cores = function(.data=get_cur_df(), boundary=1, focus=NULL) {
+    if (is.null(.data))
+        stop('Must provide `.data` if not called within a dplyr verb')
+    if (!inherits(.data, 'redist_map'))
+        stop('`.data` must be a `redist_map` object')
 
     redist.identify.cores(adj=get_adj(.data),
                           plan=as.integer(as.factor(get_existing(.data))),
                           boundary=boundary, focus=focus, simplify=TRUE)
 }
-
 
 
 # redist_plans functions ----
@@ -310,10 +311,13 @@ number_by = function(data, x, desc=F) {
 #' Helper function to get current plans object
 #' Traverses call stack to find plans object passed to dplyr verbs
 #' @noRd
-get_cur_plans = function() {
+get_cur_df = function() {
     dplyr_funcs = c(mutate.redist_plans, transmute.redist_plans,
                     summarise.redist_plans, filter.redist_plans,
-                    arrange.redist_plans)
+                    arrange.redist_plans,
+                    mutate.redist_map, transmute.redist_map,
+                    summarise.redist_map, filter.redist_map,
+                    arrange.redist_map)
     calls = sys.calls()
     frames = sys.frames()
     for (i in rev(seq_along(calls))) {
@@ -349,7 +353,7 @@ check_tidy_types = function(map, .data) {
 #'
 #' @concept analyze
 #' @export
-plan_parity <- function(map, .data = get_cur_plans(), ...) {
+plan_parity <- function(map, .data = get_cur_df(), ...) {
     check_tidy_types(map, .data)
     idxs = unique(as.integer(.data$draw))
     ndists = attr(map, 'ndists')
@@ -369,7 +373,7 @@ plan_parity <- function(map, .data = get_cur_plans(), ...) {
 #'
 #' @concept analyze
 #' @export
-distr_compactness = function(map, measure="FracKept", .data=get_cur_plans(), ...) {
+distr_compactness = function(map, measure="FracKept", .data=get_cur_df(), ...) {
     check_tidy_types(map, .data)
 
     # districts not in ascending order
@@ -391,7 +395,7 @@ distr_compactness = function(map, measure="FracKept", .data=get_cur_plans(), ...
 #' @concept analyze
 #' @export
 group_frac = function(map, group_pop, total_pop=map[[attr(map, "pop_col")]],
-                          .data=get_cur_plans()) {
+                          .data=get_cur_df()) {
     check_tidy_types(map, .data)
     # districts not in ascending order
     if (length(unique(diff(as.integer(.data$district)))) > 2)
@@ -413,7 +417,7 @@ group_frac = function(map, group_pop, total_pop=map[[attr(map, "pop_col")]],
 #' @concept analyze
 #' @export
 segregation_index = function(map, group_pop, total_pop=map[[attr(map, "pop_col")]],
-                          .data=get_cur_plans()) {
+                          .data=get_cur_df()) {
     check_tidy_types(map, .data)
     idxs = unique(as.integer(.data$draw))
     group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
@@ -434,7 +438,7 @@ segregation_index = function(map, group_pop, total_pop=map[[attr(map, "pop_col")
 #' @concept analyze
 #' @export
 partisan_metrics = function(map, measure, rvote, dvote, ...,
-                            .data=get_cur_plans()) {
+                            .data=get_cur_df()) {
     check_tidy_types(map, .data)
     # districts not in ascending order
     if (length(unique(diff(as.integer(.data$district)))) > 2)
@@ -455,7 +459,7 @@ partisan_metrics = function(map, measure, rvote, dvote, ...,
 #'
 #' @concept analyze
 #' @export
-competitiveness = function(map, rvote, dvote, .data=get_cur_plans()) {
+competitiveness = function(map, rvote, dvote, .data=get_cur_df()) {
     check_tidy_types(map, .data)
     idxs = unique(as.integer(.data$draw))
     rvote = rlang::eval_tidy(rlang::enquo(rvote), map)
@@ -473,7 +477,7 @@ competitiveness = function(map, rvote, dvote, .data=get_cur_plans()) {
 #'
 #' @concept analyze
 #' @export
-county_splits = function(map, counties, .data=get_cur_plans()) {
+county_splits = function(map, counties, .data=get_cur_df()) {
     check_tidy_types(map, .data)
     idxs = unique(as.integer(.data$draw))
     counties = rlang::eval_tidy(rlang::enquo(counties), map)
@@ -502,7 +506,7 @@ last_plan = function(plans) {
 #'
 #' @concept analyze
 #' @export
-prec_assignment = function(prec, .data=get_cur_plans()) {
+prec_assignment = function(prec, .data=get_cur_df()) {
     if (is.null(.data))
         stop('Must provide `.data` if not called within a dplyr verb')
     if (!inherits(.data, 'redist_plans'))
@@ -563,7 +567,7 @@ prec_cooccurrence = function(plans, which=NULL, sampled_only=TRUE) {
 #'
 #' @concept analyze
 #' @export
-imp_confint = function(x, conf=0.95, .data=get_cur_plans()) {
+imp_confint = function(x, conf=0.95, .data=get_cur_df()) {
     if (is.null(.data))
         stop('Must provide `.data` if not called within a dplyr verb')
     if (!inherits(.data, 'redist_plans'))
