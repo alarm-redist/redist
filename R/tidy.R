@@ -309,6 +309,7 @@ number_by = function(data, x, desc=F) {
 
 #' Helper function to get current plans object
 #' Traverses call stack to find plans object passed to dplyr verbs
+#' @noRd
 get_cur_plans = function() {
     dplyr_funcs = c(mutate.redist_plans, transmute.redist_plans,
                     summarise.redist_plans, filter.redist_plans,
@@ -329,6 +330,7 @@ get_cur_plans = function() {
 }
 
 #' Helper function to check types for tidy wrappers
+#' @noRd
 check_tidy_types = function(map, .data) {
     if (!inherits(map, 'redist_map'))
         stop('`.data` must be a `redist_map` object')
