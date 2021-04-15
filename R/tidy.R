@@ -97,7 +97,7 @@ merge_by = function(.data, ..., by_existing=TRUE, drop_geom=TRUE, collapse_chr=T
 #'
 #' @concept prepare
 #' @export
-make_cores = function(.data=get0(".", parent.frame()), boundary=1, focus=NULL) {
+make_cores = function(.data=get_cur_plans(), boundary=1, focus=NULL) {
     if (!inherits(.data, "redist_map"))
         stop("Must provide `.data` if not called within a pipe")
 
@@ -307,6 +307,38 @@ number_by = function(data, x, desc=F) {
 }
 
 
+#' Helper function to get current plans object
+#' Traverses call stack to find plans object passed to dplyr verbs
+get_cur_plans = function() {
+    dplyr_funcs = c(mutate.redist_plans, transmute.redist_plans,
+                    summarise.redist_plans, filter.redist_plans,
+                    arrange.redist_plans)
+    calls = sys.calls()
+    frames = sys.frames()
+    for (i in rev(seq_along(calls))) {
+        call = calls[[i]]
+        frame = frames[[i]]
+        if (is.null(rlang::call_name(call))) next
+        if (any(vapply(dplyr_funcs,
+                       function(x) identical(x, rlang::call_fn(call, frame)),
+                       logical(1)))) {
+            return(rlang::env_get(frame, ".data"))
+        }
+    }
+    return(NULL)
+}
+
+#' Helper function to check types for tidy wrappers
+check_tidy_types = function(map, .data) {
+    if (!inherits(map, 'redist_map'))
+        stop('`.data` must be a `redist_map` object')
+    if (is.null(.data))
+        stop('Must provide `.data` if not called within a dplyr verb')
+    if (!inherits(.data, 'redist_plans'))
+        stop('`.data` must be a `redist_plans` object')
+}
+
+
 #' @rdname redist.parity
 #'
 #' @param map a \code{\link{redist_map}} object
@@ -315,16 +347,15 @@ number_by = function(data, x, desc=F) {
 #'
 #' @concept analyze
 #' @export
-plan_parity <- function(map, .data = get0('.', parent.frame()), ...) {
-    if (!inherits(.data, 'redist_plans')) {
-        stop('Must provide `.data` if not called within a pipe')
-    }
-    idxs = unique(as.integer(dplyr::cur_data_all()$draw))
+plan_parity <- function(map, .data = get_cur_plans(), ...) {
+    check_tidy_types(map, .data)
+    idxs = unique(as.integer(.data$draw))
     ndists = attr(map, 'ndists')
     total_pop = map[[attr(map, 'pop_col')]]
     stopifnot(!is.null(total_pop))
 
-    out = rep(max_dev(get_plans_matrix(.data)[, idxs, drop=F], total_pop, ndists), each = ndists)
+    rep(max_dev(get_plans_matrix(.data)[, idxs, drop=F], total_pop, ndists),
+        each = ndists)
 }
 
 #' @rdname redist.compactness
@@ -336,15 +367,14 @@ plan_parity <- function(map, .data = get0('.', parent.frame()), ...) {
 #'
 #' @concept analyze
 #' @export
-distr_compactness = function(map, measure="FracKept", .data=get0(".", parent.frame()), ...) {
-    if (!inherits(.data, "redist_plans"))
-        stop("Must provide `.data` if not called within a pipe")
+distr_compactness = function(map, measure="FracKept", .data=get_cur_plans(), ...) {
+    check_tidy_types(map, .data)
 
     # districts not in ascending order
     if (length(unique(diff(as.integer(.data$district)))) > 2)
         warning("Districts not sorted in ascending order; output may be incorrect.")
 
-    idxs = unique(as.integer(dplyr::cur_data_all()$draw))
+    idxs = unique(as.integer(.data$draw))
     redist.compactness(shp=map, plans=get_plans_matrix(.data)[, idxs, drop=F],
                        measure=measure, total_pop=map[[attr(map, "pop_col")]],
                        adj=get_adj(map), ...)[[measure]]
@@ -359,15 +389,13 @@ distr_compactness = function(map, measure="FracKept", .data=get0(".", parent.fra
 #' @concept analyze
 #' @export
 group_frac = function(map, group_pop, total_pop=map[[attr(map, "pop_col")]],
-                          .data=get0(".", parent.frame())) {
-    if (!inherits(.data, "redist_plans"))
-        stop("Must provide `.data` if not called within a pipe")
-
+                          .data=get_cur_plans()) {
+    check_tidy_types(map, .data)
     # districts not in ascending order
     if (length(unique(diff(as.integer(.data$district)))) > 2)
         warning("Districts not sorted in ascending order; output may be incorrect.")
 
-    idxs = unique(as.integer(dplyr::cur_data_all()$draw))
+    idxs = unique(as.integer(.data$draw))
     group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
     total_pop = rlang::eval_tidy(rlang::enquo(total_pop), map)
     as.numeric(redist.group.percent(plans=get_plans_matrix(.data)[, idxs, drop=F],
@@ -383,11 +411,9 @@ group_frac = function(map, group_pop, total_pop=map[[attr(map, "pop_col")]],
 #' @concept analyze
 #' @export
 segregation_index = function(map, group_pop, total_pop=map[[attr(map, "pop_col")]],
-                          .data=get0(".", parent.frame())) {
-    if (!inherits(.data, "redist_plans"))
-        stop("Must provide `.data` if not called within a pipe")
-
-    idxs = unique(as.integer(dplyr::cur_data_all()$draw))
+                          .data=get_cur_plans()) {
+    check_tidy_types(map, .data)
+    idxs = unique(as.integer(.data$draw))
     group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
     total_pop = rlang::eval_tidy(rlang::enquo(total_pop), map)
     plan_m = get_plans_matrix(.data)[, idxs, drop=F]
@@ -406,15 +432,13 @@ segregation_index = function(map, group_pop, total_pop=map[[attr(map, "pop_col")
 #' @concept analyze
 #' @export
 partisan_metrics = function(map, measure, rvote, dvote, ...,
-                            .data=get0(".", parent.frame())) {
-    if (!inherits(.data, "redist_plans"))
-        stop("Must provide `.data` if not called within a pipe")
-
+                            .data=get_cur_plans()) {
+    check_tidy_types(map, .data)
     # districts not in ascending order
     if (length(unique(diff(as.integer(.data$district)))) > 2)
         warning("Districts not sorted in ascending order; output may be incorrect.")
 
-    idxs = unique(as.integer(dplyr::cur_data_all()$draw))
+    idxs = unique(as.integer(.data$draw))
     rvote = rlang::eval_tidy(rlang::enquo(rvote), map)
     dvote = rlang::eval_tidy(rlang::enquo(dvote), map)
     as.numeric(redist.metrics(plans=get_plans_matrix(.data)[, idxs, drop=F],
@@ -429,11 +453,9 @@ partisan_metrics = function(map, measure, rvote, dvote, ...,
 #'
 #' @concept analyze
 #' @export
-competitiveness = function(map, rvote, dvote, .data=get0(".", parent.frame())) {
-    if (!inherits(.data, "redist_plans"))
-        stop("Must provide `.data` if not called within a pipe")
-
-    idxs = unique(as.integer(dplyr::cur_data_all()$draw))
+competitiveness = function(map, rvote, dvote, .data=get_cur_plans()) {
+    check_tidy_types(map, .data)
+    idxs = unique(as.integer(.data$draw))
     rvote = rlang::eval_tidy(rlang::enquo(rvote), map)
     dvote = rlang::eval_tidy(rlang::enquo(dvote), map)
     rep(redist.competitiveness(plans=get_plans_matrix(.data)[, idxs, drop=F],
@@ -449,11 +471,9 @@ competitiveness = function(map, rvote, dvote, .data=get0(".", parent.frame())) {
 #'
 #' @concept analyze
 #' @export
-county_splits = function(map, counties, .data=get0(".", parent.frame())) {
-    if (!inherits(.data, "redist_plans"))
-        stop("Must provide `.data` if not called within a pipe")
-
-    idxs = unique(as.integer(dplyr::cur_data_all()$draw))
+county_splits = function(map, counties, .data=get_cur_plans()) {
+    check_tidy_types(map, .data)
+    idxs = unique(as.integer(.data$draw))
     counties = rlang::eval_tidy(rlang::enquo(counties), map)
     rep(redist.splits(plans=get_plans_matrix(.data)[, idxs, drop=F], counties=counties),
         each = attr(map, "ndists"))
@@ -480,11 +500,13 @@ last_plan = function(plans) {
 #'
 #' @concept analyze
 #' @export
-prec_assignment = function(prec, .data=get0(".", parent.frame())) {
-    if (!inherits(.data, "redist_plans"))
-        stop("Must provide `.data` if not called within a pipe")
+prec_assignment = function(prec, .data=get_cur_plans()) {
+    if (is.null(.data))
+        stop('Must provide `.data` if not called within a dplyr verb')
+    if (!inherits(.data, 'redist_plans'))
+        stop('`.data` must be a `redist_plans` object')
 
-    idxs = unique(as.integer(dplyr::cur_data_all()$draw))
+    idxs = unique(as.integer(.data$draw))
     assignment = get_plans_matrix(.data)[prec, idxs, drop=F]
     if ("district" %in% colnames(.data) && is.factor(.data$district)) {
         lev = levels(.data$district)
@@ -539,11 +561,13 @@ prec_cooccurrence = function(plans, which=NULL, sampled_only=TRUE) {
 #'
 #' @concept analyze
 #' @export
-imp_confint = function(x, conf=0.95, .data=get0(".", parent.frame())) {
-    if (!inherits(.data, "redist_plans"))
-        stop("Must provide `.data` if not called within a pipe")
+imp_confint = function(x, conf=0.95, .data=get_cur_plans()) {
+    if (is.null(.data))
+        stop('Must provide `.data` if not called within a dplyr verb')
+    if (!inherits(.data, 'redist_plans'))
+        stop('`.data` must be a `redist_plans` object')
 
-    idxs = unique(as.integer(dplyr::cur_data_all()$draw))
+    idxs = unique(as.integer(.data$draw))
     y = rlang::eval_tidy(rlang::enquo(x), .data)
     ci = redist.smc_is_ci(y, get_plans_weights(.data)[, idxs, drop=F], conf)
 
