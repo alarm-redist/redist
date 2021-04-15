@@ -13,6 +13,11 @@ test_that("County constraint works", {
     plans = redist_smc(iowa_map, 50, counties=region, silent=TRUE)
     splits = redist.splits(as.matrix(plans), iowa_map$region)
     expect_true(all(splits <= 3L))
+
+    region2 = iowa$region
+    region2[25] = NA
+    expect_error(redist_smc(iowa_map, 50, counties=region2, silent=TRUE),
+                 "missing values")
 })
 
 test_that("Not egregiously incorrect sampling accuracy (5-prec)", {
