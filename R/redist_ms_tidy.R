@@ -178,6 +178,9 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
     if (is.null(counties)) {
         counties = rep(1, V)
     } else {
+        if (any(is.na(counties)))
+            stop("County vector must not contain missing values.")
+
         # handle discontinuous counties
         component = contiguity(adj, as.integer(as.factor(counties)))
         counties = dplyr::if_else(component > 1,
