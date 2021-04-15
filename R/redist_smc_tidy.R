@@ -169,6 +169,9 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
     if (is.null(counties)) {
         counties = rep(1, V)
     } else {
+        if (any(is.na(counties)))
+            stop("County vector must not contain missing values.")
+
         # handle discontinuous counties
         component = contiguity(adj, as.integer(as.factor(counties)))
         counties = dplyr::if_else(component > 1,
