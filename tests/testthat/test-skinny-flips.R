@@ -7,7 +7,8 @@ test_that("skinny flips works", {
                nsims = 5, eprob = 0.05, lambda = 1, constraints = cons)
   
   
-  expect_true(class(plans)[1] ==  "matrix" & class(plans)[2] == "array" )
+  expect_true("matrix" %in% class(plans))
   expect_true(min(plans) == 1)
   
 })
+  
