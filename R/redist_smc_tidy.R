@@ -182,6 +182,7 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
     }
 
     # Other constraints
+    constraints = eval_tidy(enquo(constraints), map)
     proc = process_smc_ms_constr(constraints, V)
     constraints = proc$constraints
     n_current = max(constraints$status_quo$current)

@@ -188,6 +188,7 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
     }
 
     # Other constraints
+    constraints = eval_tidy(enquo(constraints), map)
     proc = process_smc_ms_constr(constraints, V)
     constraints = proc$constraints
     n_current = max(constraints$status_quo$current)
