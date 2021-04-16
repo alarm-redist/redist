@@ -18,12 +18,12 @@
 #' plan = fl25_enum$plans[, 5118]
 #' freeze_id <- redist.freeze(adj = fl25_adj, freeze_row = (plan == 2),
 #'                            plan = plan)
-#' \dontrun{                      
+#' \dontrun{
 #' data(iowa)
 #' map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.02)
 #' map <- map %>% merge_by(freeze(cd_2010 == 1))
-#' }                                                     
-#'                            
+#' }
+#'
 redist.freeze <- function(adj, freeze_row, plan = rep(1, length(adj))){
   if(missing(adj)){
     stop('Please provide an object to adj.')
@@ -72,9 +72,11 @@ redist.freeze <- function(adj, freeze_row, plan = rep(1, length(adj))){
 #'
 #' @concept prepare
 #' @export
-freeze <- function(freeze_row, plan, .data=get0(".", parent.frame())) {
-    if (!inherits(.data, "redist_map"))
-        stop("Must provide `.data` if not called within a pipe")
+freeze <- function(freeze_row, plan, .data=cur_map()) {
+    if (is.null(.data))
+        stop('Must provide `.data` if not called within a dplyr verb')
+    if (!inherits(.data, 'redist_map'))
+        stop('`.data` must be a `redist_map` object')
     if (missing(freeze_row))
         stop('Please provide an argument to freeze_row.')
 
