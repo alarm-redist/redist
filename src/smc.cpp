@@ -186,7 +186,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         }
         // `lower_s` now contains the population of the newly-split district
         pop_left_new(i) = pop_left(idx) - lower_s;
-        double pop_pen = sqrt(n_distr - 2) * log(std::fabs(lower_s - target)/target);
+        double pop_pen = sqrt((double) n_distr - 2) * log(std::fabs(lower_s - target)/target);
         log_temper_new(i) = log_temper(idx) - pop_temper*pop_pen;
 
         lp_new(i) = lp(idx) + inc_lp - pop_temper*pop_pen;
@@ -302,9 +302,9 @@ void adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
                       const vec &pop_left, double target, int verbosity) {
     // sample some spanning trees and compute deviances
     int V = g.size();
-    int k_max = std::min(20 + ((int) std::sqrt(V)), V - 1); // heuristic
+    int k_max = std::min(20 + ((int) std::sqrt((double)V)), V - 1); // heuristic
     int N_max = districts.n_cols;
-    int N_adapt = std::min((int) std::floor(4000.0 / sqrt(V)), N_max);
+    int N_adapt = std::min((int) std::floor(4000.0 / sqrt((double)V)), N_max);
 
     std::vector<std::vector<double>> devs;
     vec distr_ok(k_max+1, fill::zeros);
