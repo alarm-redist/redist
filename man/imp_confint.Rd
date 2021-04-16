@@ -4,7 +4,7 @@
 \alias{imp_confint}
 \title{Confidence Intervals for Importance Sampling Estimates}
 \usage{
-imp_confint(x, conf = 0.95, .data = get0(".", parent.frame()))
+imp_confint(x, conf = 0.95, .data = cur_plans())
 }
 \arguments{
 \item{x}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the vector to

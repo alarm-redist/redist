@@ -5,7 +5,7 @@
 \alias{redist.identify.cores}
 \title{Identify Cores of a District (Heuristic)}
 \usage{
-make_cores(.data = get0(".", parent.frame()), boundary = 1, focus = NULL)
+make_cores(.data = cur_map(), boundary = 1, focus = NULL)
 
 redist.identify.cores(
   adj,
