@@ -352,6 +352,11 @@ print.redist_plans = function(x, ...) {
     invisible(x)
 }
 
+# helper: TRUE if `x is constant within `grps`
+is_const_num = function(x, grps) {
+    all(tapply(x, grps, FUN=function(y) diff(range(y)) == 0))
+}
+
 #' Summary plots for \code{\\link{redist_plans}}
 #'
 #' If no arguments are passed, defaults to plotting the sampling weights for
@@ -412,7 +417,7 @@ plot.redist_plans = function(x, ..., type="distr_qtys") {
 redist.plot.hist = function(plans, qty, bins=NULL, ...) {
     stopifnot(inherits(plans, "redist_plans"))
     if (missing(qty))
-        stop("Must provide a quantity to make the histogram from.")
+        stop("Must provide a quantity to make the histogram from.", call.=FALSE)
 
     val = rlang::eval_tidy(rlang::enquo(qty), plans)
     rg = diff(range(val, na.rm=T))
@@ -422,6 +427,9 @@ redist.plot.hist = function(plans, qty, bins=NULL, ...) {
             bins = 2*rg + 1
         } else { # Freedman-Diaconis
             n = length(val)
+            if (is_const_num(val, plans$draw)) {
+                n = n / nrow(get_plans_matrix(plans))
+            }
             iqr = IQR(val, na.rm=T)
             if (iqr > 0)
                 bins = max(round(rg / (2 * iqr / n^(1/3))), 3)
@@ -449,7 +457,7 @@ redist.plot.hist = function(plans, qty, bins=NULL, ...) {
 #' @export
 hist.redist_plans = function(x, qty, ...) {
     if (missing(qty))
-        stop("Must provide a quantity to make the histogram from.")
+        stop("Must provide a quantity to make the histogram from.", call.=FALSE)
     qty = rlang::enquo(qty)
     redist.plot.hist(x, !!qty, ...)
 }
@@ -546,7 +554,15 @@ redist.plot.distr_qtys = function(plans, qty, sort="asc", geom="jitter",
         ord = if (sort == "asc") 1  else if (sort == "desc") -1 else
             stop("`sort` not recognized: ", sort)
         plans = dplyr::group_by(plans, .data$draw) %>%
-            dplyr::mutate(.distr_no = as.factor(rank(ord * {{ qty }})))
+            dplyr::mutate(.distr_no = as.factor(rank(ord * {{ qty }},
+                                                     ties.method="first")))
+    }
+
+    val = eval_tidy(enquo(qty), plans)
+    if (is_const_num(val, plans$draw)) {
+        warning("`", rlang::as_label(enquo(qty)),
+                "` is constant across districts. ",
+                "Consider using `hist()` instead.", call.=FALSE)
     }
 
     if (is.null(color_thresh)) {
