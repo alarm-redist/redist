@@ -434,6 +434,7 @@ scorer_status_quo = function(map, existing_plan=get_existing(map)) {
 
     stopifnot(!is.null(existing_plan))
     stopifnot(!is.null(pop))
+    stopifnot(ndists = length(unique(existing_plan)))
 
     fn = function(plans) {
         1 - 0.5*var_info_vec(plans, existing_plan, pop) / log(ndists)
