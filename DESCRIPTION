@@ -40,6 +40,7 @@ Imports:
     readr
 Suggests:
     igraph,
+    s2,
     lwgeom,
     withr,
     loo,
