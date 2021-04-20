@@ -212,6 +212,9 @@ redist.compactness <- function(shp = NULL,
 
 
   if (isTRUE(st_is_longlat(st_geometry(shp)))) {
+    if (!requireNamespace("s2", quietly=TRUE))
+      stop("Must install `s2` to use longitude-latitude coordinate projections.")
+
     if (!is.null(st_crs(shp)) & !is.null(planarize) && !isFALSE(planarize)) {
       shp <- st_transform(shp, planarize)
     }
@@ -354,10 +357,8 @@ redist.compactness <- function(shp = NULL,
 
         if(is.null(st_crs(united$EPSG)) || is.na(st_is_longlat(united))){
           perim <- sum(st_length(st_cast(st_cast(united, 'POLYGON'),'LINESTRING')))
-        } else if (st_is_longlat(united)){
-          perim <- sum(st_length(united))
         } else {
-          perim <- sum(st_perimeter(united))
+          perim <- sum(st_length(st_cast(united, "MULTILINESTRING")))
         }
 
         if('PolsbyPopper' %in% measure & !ppRcpp){
