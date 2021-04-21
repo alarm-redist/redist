@@ -4,7 +4,7 @@
 \alias{prec_assignment}
 \title{Extract the district assignments for a precinct across all simulated plans}
 \usage{
-prec_assignment(prec, .data = get0(".", parent.frame()))
+prec_assignment(prec, .data = cur_plans())
 }
 \arguments{
 \item{prec}{the precinct number or ID}

@@ -53,13 +53,16 @@ redist.mergesplit <- function(adj, total_pop, nsims, ndists, pop_tol = 0.01,
   }
 
   if (missing(counties)) {
-    counties <- rep(1, V)
+      counties <- rep(1, V)
   } else {
-    if (max(contiguity(adj = adj, group = redist.county.id(counties))) > 1) {
-      warning('Counties were not continuous. Additional county splits are expected.')
-      counties <- redist.county.relabel(adj = adj, counties = counties)
-      counties <- redist.county.id(counties = counties)
-    }
+      if (any(is.na(counties)))
+          stop("County vector must not contain missing values.")
+      if (max(contiguity(adj = adj, group = redist.county.id(counties))) > 1) {
+          warning('Counties were not continuous. Additional county splits are expected.')
+
+          counties <- redist.county.relabel(adj = adj, counties = counties)
+          counties <- redist.county.id(counties = counties)
+      }
   }
 
   # Other constraints

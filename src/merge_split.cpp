@@ -278,7 +278,7 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
     // sample some spanning trees and compute deviances
     int V = g.size();
     int k_max = std::min(20 + ((int) std::sqrt(V)), V - 1); // heuristic
-    int N_adapt = (int) std::floor(4000.0 / sqrt(V));
+    int N_adapt = (int) std::floor(4000.0 / sqrt((double) V));
 
     std::vector<std::vector<double>> devs;
     vec distr_ok(k_max+1, fill::zeros);

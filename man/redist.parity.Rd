@@ -7,7 +7,7 @@
 \usage{
 redist.parity(plans, total_pop, ncores = 1)
 
-plan_parity(map, .data = get0(".", parent.frame()), ...)
+plan_parity(map, .data = cur_plans(), ...)
 }
 \arguments{
 \item{plans}{A matrix with one row for each precinct and one column for each

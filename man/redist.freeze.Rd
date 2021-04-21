@@ -5,7 +5,7 @@
 \alias{redist.freeze}
 \title{Freeze Parts of a Map}
 \usage{
-freeze(freeze_row, plan, .data = get0(".", parent.frame()))
+freeze(freeze_row, plan, .data = cur_map())
 
 redist.freeze(adj, freeze_row, plan = rep(1, length(adj)))
 }
@@ -34,11 +34,11 @@ data(fl25_adj)
 plan = fl25_enum$plans[, 5118]
 freeze_id <- redist.freeze(adj = fl25_adj, freeze_row = (plan == 2),
                            plan = plan)
-\dontrun{                      
+\dontrun{
 data(iowa)
 map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.02)
 map <- map \%>\% merge_by(freeze(cd_2010 == 1))
-}                                                     
-                           
+}
+
 }
 \concept{prepare}

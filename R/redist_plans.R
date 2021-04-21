@@ -284,8 +284,8 @@ dplyr_row_slice.redist_plans = function(data, i, ...) {
         y = set_plan_matrix(y, plans_m[,draws_left, drop=F])
     }
 
-    if(is.factor(y$draw)){
-    #    y$draw <- droplevels(y$draw)
+    if (is.factor(y$draw)) {
+        y$draw <- droplevels(y$draw)
     }
 
     y

@@ -91,6 +91,8 @@ redist.smc = function(adj, total_pop, nsims, ndists, counties=NULL,
     } else {
         if (length(unique(counties)) != max(counties))
             stop("County numbers must run from 1 to n_county with no interruptions.")
+        if (any(is.na(counties)))
+            stop("County vector must not contain missing values.")
 
         # handle discontinuous counties
         counties = redist.county.relabel(adj, counties)

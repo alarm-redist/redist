@@ -1,5 +1,8 @@
 # redist 3.1.0
 
+# redist 3.0.2
+* Fix bugs (#60, #61)
+
 # redist 3.0.1
 
 * New tidy interface, including new `redist_map` and `redist_plans` objects
