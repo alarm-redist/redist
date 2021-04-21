@@ -64,6 +64,7 @@ redist.plot.interactive = function(map, fill=NULL,
             else
                 limits = dplyr::coalesce(limits, range(fill, na.rm=TRUE))
             fill = (fill - limits[1]) / diff(limits)
+
             iplot = leaflet::addPolygons(iplot, weight=1, fillOpacity=0.8, opacity=0.5,
                                          fillColor = pal(fill), color=pal(fill),
                                          options=leaflet::leafletOptions(pane="polygons"))

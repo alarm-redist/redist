@@ -280,6 +280,9 @@ redist.plot.distr_qtys = function(plans, qty, sort="asc", geom="jitter",
 #' @param draws the plan(s) to plot. Will match the \code{draw} column of \code{x}.
 #' @param geom the \code{redist_map} geometry to use
 #' @param qty the quantity to plot. Defaults to the district assignment.
+#' @param interactive if \code{TRUE}, show an interactive map in the viewer
+#'   rather than a static map. Only uses the first element of \code{draws}
+#' @param ... additional arguments passed to the plotting functions.
 #'
 #' @returns A ggplot
 #'
@@ -293,10 +296,25 @@ redist.plot.distr_qtys = function(plans, qty, sort="asc", geom="jitter",
 #'
 #' @concept plot
 #' @export
-redist.plot.plans = function(plans, draws, geom, qty=NULL) {
+redist.plot.plans = function(plans, draws, geom, qty=NULL, interactive=FALSE, ...) {
     stopifnot(inherits(plans, "redist_plans"))
     m = get_plans_matrix(plans)
     stopifnot(nrow(geom) == nrow(m))
+
+    if (interactive) {
+        if (length(draws) > 1)
+            warning("Only first of `draws` plotted when `interactive=TRUE`")
+
+        draw = draws[1]
+        draw_idx = match(as.character(draw), levels(plans$draw))
+        qty = eval_tidy(enquo(qty), plans[plans$draw == as.character(draw), ])
+        if (is.null(qty)) {
+            qty = as.factor(m[, draw_idx])
+        } else {
+            qty = qty[m[, draw_idx]]
+        }
+        return(redist.plot.interactive(geom, fill=qty, ...))
+    }
 
     plot_single = function(draw) {
         draw_idx = match(as.character(draw), levels(plans$draw))
@@ -310,7 +328,7 @@ redist.plot.plans = function(plans, draws, geom, qty=NULL) {
             qty = qty[m[, draw_idx]]
         }
 
-        redist.plot.map(geom, fill=qty, fill_label=lab) +
+        redist.plot.map(geom, fill=qty, fill_label=lab, ...) +
             ggplot2::labs(title=title)
     }
 
