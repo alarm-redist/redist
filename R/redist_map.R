@@ -459,9 +459,13 @@ print.redist_map = function(x, ...) {
 #'   district and indicate the \code{fill} variable by shading.
 #' @param adj if \code{TRUE}, force plotting the adjacency graph. Overrides
 #'   \code{by_distr}.
+#' @param interactive if \code{TRUE}, show an interactive map in the viewer
+#'   rather than a static map. Ignores \code{adj} and \code{by_distr}.
 #' @param ... passed on to \code{\link{redist.plot.map}} (or
-#'   \code{\link{redist.plot.adj}} if \code{adj=TRUE}). Useful parameters
-#'   may include \code{zoom_to}, \code{boundaries}, and \code{title}.
+#'   \code{\link{redist.plot.adj}} if \code{adj=TRUE}, or
+#'   \code{\link{redist.plot.interactive}} if \code{interactive=TRUE}).
+#'   Useful parameters may include \code{zoom_to}, \code{boundaries}, and
+#'   \code{title}.
 #'
 #' @examples
 #' data(fl25)
@@ -480,14 +484,21 @@ print.redist_map = function(x, ...) {
 #' @concept prepare
 #' @concept plot
 #' @export
-plot.redist_map = function(x, fill=NULL, by_distr=FALSE, adj=FALSE, ...) {
+plot.redist_map = function(x, fill=NULL, by_distr=FALSE, adj=FALSE,
+                           interactive=FALSE, ...) {
     if (!inherits(x, "sf"))
         stop("Plotting requires a shapefile.\n  ",
              "If you've just used `merge_by`, consider passing `drop_geom=FALSE`.")
 
+    if (interactive) {
+        if (adj) warning("`adj` ignored when `interactive=TRUE`")
+        if (by_distr) warning("`by_distr` ignored when `interactive=TRUE`")
+        return(redist.plot.interactive(x, !!enquo(fill), ...))
+    }
+
     fill = rlang::enquo(fill)
+    existing = get_existing(x)
     if (rlang::quo_is_null(fill)) {
-        existing = get_existing(x)
         if (!is.null(existing) && isFALSE(adj)) {
             redist.plot.map(shp = x, adj = get_adj(x), plan=existing, ...)
         } else {
@@ -495,7 +506,6 @@ plot.redist_map = function(x, fill=NULL, by_distr=FALSE, adj=FALSE, ...) {
         }
     } else {
         fill_name = rlang::quo_text(fill)
-        existing = get_existing(x)
         if (!is.null(existing) && isTRUE(by_distr)) {
             redist.plot.map(shp = x, adj = get_adj(x), plan=existing,
                             fill = !!fill, fill_label=fill_name, ...)

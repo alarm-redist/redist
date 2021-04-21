@@ -42,6 +42,7 @@ Suggests:
     igraph,
     lwgeom,
     withr,
+    leaflet,
     loo,
     Rmpi,
     knitr,
