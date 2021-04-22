@@ -129,9 +129,9 @@ redist.smc = function(adj, total_pop, nsims, ndists, counties=NULL,
     maps = smc_plans(nsims, adjlist, counties, total_pop, ndists, pop_bounds[2],
                      pop_bounds[1], pop_bounds[3], compactness,
                      constraints$status_quo$strength, constraints$status_quo$current, n_current,
-                     constraints$vra_old$strength, constraints$vra_old$tgt_vra_min,
-                     constraints$vra_old$tgt_vra_other, constraints$vra_old$pow_vra, proc$min_pop,
-                     constraints$vra$strength, constraints$vra$tgts_min,
+                     constraints$vra$strength, constraints$vra$tgt_vra_min,
+                     constraints$vra$tgt_vra_other, constraints$vra$pow_vra, proc$min_pop,
+                     constraints$hinge$strength, constraints$hinge$tgts_min,
                      constraints$incumbency$strength, constraints$incumbency$incumbents,
                      lp, adapt_k_thresh, seq_alpha, pop_temper, verbosity);
 

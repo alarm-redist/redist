@@ -278,12 +278,12 @@ process_smc_ms_constr = function(constraints, V) {
         defaults$status_quo$current = defaults$status_quo$current + 1
 
     min_pop = rep(0, V)
-    if (defaults$vra$strength > 0) {
-        if (defaults$vra_old$strength > 0)
+    if (defaults$hinge$strength > 0) {
+        if (defaults$vra$strength > 0)
             stop("Specify one of `vra` or `vra_old` constraints, not both")
+        min_pop = defaults$hinge$min_pop
+    } else if (defaults$vra$strength > 0) {
         min_pop = defaults$vra$min_pop
-    } else if (defaults$vra_old$strength > 0) {
-        min_pop = defaults$vra_old$min_pop
     }
     if (length(min_pop) != V)
         stop("Length of minority population vector must match the number of units.")
