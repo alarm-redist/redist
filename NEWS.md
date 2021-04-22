@@ -1,5 +1,5 @@
 # redist 3.0.2
-* Fix bugs (#60, #61)
+* Fix bugs (#60, #61, #62, #70, #71, #72), including s2 compatibility, Solaris fixes, and improved dplyr verb robustness.
 
 # redist 3.0.1
 
