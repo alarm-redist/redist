@@ -23,7 +23,7 @@
 #' @param return_all if `TRUE` return all sampled plans; otherwise, just return
 #'   the final plan from each chain.
 #'
-#' @returns A [redist_plans] object with all of the simulated plans, and an
+#' @returns A [`redist_plans`] object with all of the simulated plans, and an
 #'   additional `chain` column indicating the chain the plan was drawn from.
 #'
 #' @inherit redist_mergesplit references

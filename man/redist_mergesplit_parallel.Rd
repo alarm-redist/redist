@@ -86,7 +86,7 @@ Recommended.}
 \item{silent}{Whether to suppress all diagnostic information.}
 }
 \value{
-A \link{redist_plans} object with all of the simulated plans, and an
+A \code{\link{redist_plans}} object with all of the simulated plans, and an
 additional \code{chain} column indicating the chain the plan was drawn from.
 }
 \description{
