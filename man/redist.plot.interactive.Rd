@@ -8,7 +8,8 @@ redist.plot.interactive(
   map,
   fill = NULL,
   scale = ggplot2::scale_fill_viridis_c,
-  limits = NULL
+  limits = NULL,
+  useGL = TRUE
 )
 }
 \arguments{
@@ -20,6 +21,9 @@ present, will be used to color the map units.}
 \item{scale}{the color scale to use, for numeric \code{fill}.}
 
 \item{limits}{the color scale limits. Defaults to the range of the data.}
+
+\item{useGL}{if \code{TRUE} and \coce{leafgl} is installed, use WebGL for
+faster plotting.}
 }
 \value{
 a Leaflet object
@@ -28,4 +32,8 @@ a Leaflet object
 Plots an interactive Leaflet map of a \code{\link{redist_map}} object,
 optionally colored by a quantity of interest. May also be accessed by setting
 \code{interactive=TRUE} in \code{\link{plot.redist_map}}.
+}
+\details{
+If \code{leafgl} is installed, will use its faster rendering functions to
+plot the map, which may be useful for larger maps.
 }

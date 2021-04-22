@@ -43,6 +43,7 @@ Suggests:
     lwgeom,
     withr,
     leaflet,
+    leafgl,
     loo,
     Rmpi,
     knitr,
