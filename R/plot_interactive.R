@@ -12,7 +12,7 @@
 #'   present, will be used to color the map units.
 #' @param scale the color scale to use, for numeric \code{fill}.
 #' @param limits the color scale limits. Defaults to the range of the data.
-#' @param useGL if \code{TRUE} and \coce{leafgl} is installed, use WebGL for
+#' @param useGL if \code{TRUE} and \code{leafgl} is installed, use WebGL for
 #'   faster plotting.
 #'
 #' @returns a Leaflet object
@@ -20,7 +20,7 @@
 #' @export
 redist.plot.interactive = function(map, fill=NULL,
                                    scale=ggplot2::scale_fill_viridis_c,
-                                   limits=NULL, useGL=TRUE) {
+                                   limits=NULL, useGL=FALSE) {
     if (!requireNamespace("leaflet", quietly=TRUE))
         stop("Package `leaflet` required for interactive plotting.\n",
              "Recommend `leafgl` as well, for faster plotting.")
@@ -45,8 +45,8 @@ redist.plot.interactive = function(map, fill=NULL,
                 suppressWarnings()
         }
     } else {
-        add_poly = function(...) {
-            leaflet::addPolygons(..., data=leaflet::getMapData(iplot),
+        add_poly = function(map, ...) {
+            leaflet::addPolygons(map, ..., data=leaflet::getMapData(iplot),
                                  options=leaflet::leafletOptions(pane="polygons"))
         }
     }

@@ -9,7 +9,7 @@ redist.plot.interactive(
   fill = NULL,
   scale = ggplot2::scale_fill_viridis_c,
   limits = NULL,
-  useGL = TRUE
+  useGL = FALSE
 )
 }
 \arguments{
@@ -22,7 +22,7 @@ present, will be used to color the map units.}
 
 \item{limits}{the color scale limits. Defaults to the range of the data.}
 
-\item{useGL}{if \code{TRUE} and \coce{leafgl} is installed, use WebGL for
+\item{useGL}{if \code{TRUE} and \code{leafgl} is installed, use WebGL for
 faster plotting.}
 }
 \value{
