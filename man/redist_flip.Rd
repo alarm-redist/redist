@@ -171,8 +171,7 @@ does not require that counties are contiguous.
 }
 \item \code{hinge} This uses the proportion of a group in a district and matches to the
 nearest target proportion, and then creates a penalty of
-\eqn{\sqrt{max(0, nearest.target - group.pct)}}. This is equivalent to the
-\code{vra-old} constraint in  \code{redist_smc}.
+\eqn{\sqrt{max(0, nearest.target - group.pct)}}.
 \itemize{
 \item weight - the coefficient to put on the Gibbs constraint
 \item minorityprop - A numeric vector of minority proportions (between 0 and 1) which
@@ -180,8 +179,6 @@ districts should aim to have
 }
 \item \code{vra} This takes two target proportions of the presence of a minority group
 within a district. \eqn{(|target.min - group.pct||target.other - group.pct|)^{1.5})}
-This is equivalent to the \code{vra-old} constraint in
-\code{redist_smc}.
 \itemize{
 \item weight - the coefficient to put on the Gibbs constraint
 \item target_min - the target minority percentage. Often, this is set to 0.55 to encourage
