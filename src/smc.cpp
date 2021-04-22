@@ -150,6 +150,8 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     vec log_temper_new(N);
 
     int refresh = N / 10; // how often to print update statements
+    int reject_check_int = 20; // aftr how many rejections to check for interrupts
+    int reject_ct = 0;
     double iter = 0; // how many actual iterations
     for (int i = 0; i < N; i++, iter++) {
         // resample
@@ -165,8 +167,10 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         // bad sample; try again
         if (!std::isfinite(inc_lp)) {
             i--;
+            if (++reject_ct % reject_check_int == 0) Rcpp::checkUserInterrupt();
             continue;
         }
+        reject_ct = 0;
 
         if (rho != 1) {
             double log_st = 0;
