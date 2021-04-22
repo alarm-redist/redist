@@ -253,7 +253,7 @@ redist.compactness <- function(shp = NULL,
     `%oper%` <- `%do%`
   } else {
     `%oper%` <- `%dopar%`
-    cl <- makeCluster(nc, setup_strategy = 'sequential')
+    cl <- makeCluster(nc, setup_strategy = 'sequential', methods=FALSE)
     registerDoParallel(cl)
     on.exit(stopCluster(cl))
   }
@@ -483,7 +483,7 @@ redist.prep.polsbypopper <- function(shp, planarize = 3857, perim_path, ncores =
     `%oper%` <- `%do%`
   } else {
     `%oper%` <- `%dopar%`
-    cl <- makeCluster(ncores, setup_strategy = 'sequential')
+    cl <- makeCluster(ncores, setup_strategy = 'sequential', methods=FALSE)
     registerDoParallel(cl)
     on.exit(stopCluster(cl))
   }

@@ -45,7 +45,7 @@ redist.parity <- function(plans, total_pop, ncores = 1) {
         `%oper%` <- `%do%`
     } else {
         `%oper%` <- `%dopar%`
-        cl <- makeCluster(nc, setup_strategy = 'sequential')
+        cl <- makeCluster(nc, setup_strategy = 'sequential', methods=FALSE)
         registerDoParallel(cl)
         on.exit(stopCluster(cl))
     }
