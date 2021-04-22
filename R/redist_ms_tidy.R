@@ -217,13 +217,14 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
     plans <- algout$plans
     acceptances = as.logical(algout$mhdecisions)
 
-    out = new_redist_plans(plans[,-1:-(warmup+1)], map, "mergesplit", NULL, FALSE,
-                     compactness = compactness,
-                     constraints = constraints,
-                     adapt_k_thresh = adapt_k_thresh,
-                     mh_acceptance = mean(acceptances))
+    out = new_redist_plans(plans[, -1:-(warmup+1), drop=FALSE],
+                           map, "mergesplit", NULL, FALSE,
+                           compactness = compactness,
+                           constraints = constraints,
+                           adapt_k_thresh = adapt_k_thresh,
+                           mh_acceptance = mean(acceptances))
 
-    if(warmup == 0){
+    if (warmup == 0) {
         out <- out %>% mutate(mcmc_accept = rep(acceptances, each = ndists))
     } else {
         out <- out %>% mutate(mcmc_accept = rep(acceptances[-seq_len(warmup)], each = ndists))
