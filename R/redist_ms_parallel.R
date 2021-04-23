@@ -138,7 +138,7 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
 
     each_len = if (return_all) nsims - warmup else 1
     plans = foreach(chain=seq_len(chains), .combine=cbind,
-                    .export=c("ms_plans", "_redist_ms_plans")) %dopar% {
+                    .packages="redist") %dopar% {
         algout = ms_plans(nsims+1L, adj, init_plans[, chain], counties, pop, ndists,
                           pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
                           constraints$status_quo$strength, constraints$status_quo$current, n_current,
