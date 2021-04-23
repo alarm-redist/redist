@@ -196,7 +196,7 @@ double split_map_ms(const Graph &g, const uvec &counties, Multigraph &cg,
     }
 
     int root;
-    ust = sample_sub_ust(g, ust, V, root, ignore, counties, cg);
+    ust = sample_sub_ust(g, ust, V, root, ignore, pop, lower, upper, counties, cg);
     if (ust.size() == 0) return -log(0.0);
 
     // set `lower` as a way to return population of new district
@@ -280,6 +280,9 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
     int k_max = std::min(20 + ((int) std::sqrt(V)), V - 1); // heuristic
     int N_adapt = (int) std::floor(4000.0 / sqrt((double) V));
 
+    double lower = target * (1 - tol);
+    double upper = target * (1 + tol);
+
     std::vector<std::vector<double>> devs;
     vec distr_ok(k_max+1, fill::zeros);
     int root;
@@ -300,7 +303,7 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
             }
         }
 
-        ust = sample_sub_ust(g, ust, V, root, ignore, counties, cg);
+        ust = sample_sub_ust(g, ust, V, root, ignore, pop, lower, upper, counties, cg);
         if (ust.size() == 0) {
             i--;
             continue;

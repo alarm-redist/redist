@@ -25,6 +25,7 @@ int rnbor(const Graph &g, int vtx) {
 
 /*
  * Make a county graph from a precinct graph and list of counties
+ * County graph is list of list of 3: <cty of nbor, index of vtx, index of nbor>
  */
 // TESTED
 Multigraph county_graph(const Graph &g, const uvec &counties) {

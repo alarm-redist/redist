@@ -13,6 +13,8 @@ test_that("County constraint works", {
     plans = redist_smc(iowa_map, 50, counties=region, silent=TRUE)
     splits = redist.splits(as.matrix(plans), iowa_map$region)
     expect_true(all(splits <= 3L))
+    expect_true(all(apply(get_plans_matrix(plans), 2,
+                          function(x) all(contiguity(iowa_map$adj, x) == 1))))
 
     region2 = iowa$region
     region2[25] = NA
@@ -22,6 +24,8 @@ test_that("County constraint works", {
 
 test_that("Not egregiously incorrect sampling accuracy (5-prec)", {
     skip_on_cran()
+    set.seed(1935)
+
     g = list(c(1L, 4L), c(0L, 2L, 4L), c(1L, 3L, 4L), c(2L, 4L), c(0L, 1L, 2L, 3L))
     g_pop = c(2, 1, 1, 1, 1)
     out = redist.smc(g, g_pop, 20e3, 2, pop_tol=0.5, compactness=0,
@@ -36,10 +40,12 @@ test_that("Not egregiously incorrect sampling accuracy (5-prec)", {
 
 test_that("Not egregiously incorrect sampling accuracy (25-prec)", {
     skip_on_cran()
+    set.seed(1935)
+
     ref_plans = plans_10[, redist.parity(plans_10, pop) <= 0.01]
     log_st_ref = round(log_st_map(adj, ref_plans, rep(1L, 25), 3L), 5)
 
-    out = redist.smc(adj, pop, 5000, 3L, pop_tol=0.01, compactness=0,
+    out = redist.smc(adj, pop, 6000, 3L, pop_tol=0.01, compactness=0,
                      adapt_k_thresh=0.99, seq_alpha=0.2, resample=F, silent=T)
     log_st = round(log_st_map(adj, out$plans, rep(1L, 25), 3L), 5)
     types = match(log_st, log_st_ref)
