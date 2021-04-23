@@ -1,0 +1,26 @@
+language:
+    - r
+    - cpp
+
+cache: packages
+sudo: required
+
+compiler:
+    - clang
+    - gcc
+    - g++
+
+before_install:
+  - curl -OL http://raw.github.com/craigcitro/r-travis/master/scripts/travis-tool.sh
+  - chmod 755 ./travis-tool.sh
+  - ./travis-tool.sh install_aptget r-cran-rmpi
+  - sudo apt-get install --yes libudunits2-dev libproj-dev libgeos-dev libgdal-dev libxpm-dev
+
+env:
+  global:
+    - CRAN: http://cran.rstudio.com
+
+notifications:
+  email:
+    on_success: change
+    on_failure: change
