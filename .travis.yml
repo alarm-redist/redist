@@ -19,6 +19,7 @@ before_install:
 env:
   global:
     - CRAN: http://cran.rstudio.com
+    - _R_CHECK_FORCE_SUGGESTS_: false
 
 notifications:
   email:
