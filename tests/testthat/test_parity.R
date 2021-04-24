@@ -1,5 +1,4 @@
 test_that("parity works", {
-
   out <- redist.parity(plans = plans_10[, 1:3],
                        total_pop = pop)
 
@@ -8,6 +7,7 @@ test_that("parity works", {
 })
 
 test_that("parallel parity works", {
+    skip_on_os("windows")
     out1 <- redist.parity(plans=plans_10[, 1:600], total_pop=pop, ncores=1)
     out2 <- redist.parity(plans=plans_10[, 1:600], total_pop=pop, ncores=2)
 
