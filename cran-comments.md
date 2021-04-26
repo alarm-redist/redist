@@ -7,17 +7,11 @@
 
 ## R CMD check results
 
-0 errors | 0 warnings | 1 notes
-
-    installed size is  7.1Mb
-    sub-directories of 1Mb or more:
-      enumpart   2.0Mb
-      libs       2.5Mb
+0 errors | 0 warnings | 0 notes
 
 ## Reverse Dependencies
 There are no reverse dependencies to check.
 
 ## Additional Notes:
-* This is to fix the CRAN check issues with version 3.0.1. In particular, the OGR error in building vignettes is fixed by downgrading the PROJ string that was included in the data with the package. The tests are now properly backwards compatible with changes in matrices. The Solaris compiler issues were resovled by clarifying some C++ types that were ambiguous.
-
-* On some builds, we are getting a NOTE that the installed directory is 6 or more Mbs.
+* This addresses the Solaris build issue by downgrading the PROJ/gdal within included data by several versions. RHub cannot support the full set of necessary packages for checking, so we have thinned out the packages to test and readded them as necessary for submission. Additionally, we have checked on a very old version of Ubuntu with identical PROJ/gdal setting to what Solaris has on CRAN. To the best of our knowledge, this should work, but if not, is there any way to ignore Solaris builds as long as it has no warnings or checks on the standard Linux/Windows/macOS builds?
+* Removed extra file that caused build failure.
