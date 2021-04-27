@@ -143,7 +143,7 @@ reconstruct.redist_map = function(data, old) {
 #' @md
 #' @export
 redist_map = function(..., existing_plan=NULL, pop_tol=NULL,
-                      total_pop=c("pop", "population", "total_pop"),
+                      total_pop=c("pop", "population", "total_pop", "POP100"),
                       ndists=NULL, pop_bounds=NULL,
                       adj=NULL, adj_col="adj", planarize=3857) {
     x = tibble(...)
@@ -165,14 +165,6 @@ redist_map = function(..., existing_plan=NULL, pop_tol=NULL,
                         "which may cause problems with geometric operations")
             }
         }
-    }
-
-    if (is_sf && is.null(adj)) {
-        if (!is.null(x[[adj_col]]))
-            stop("Column `", adj_col, "` already present in data. ",
-                 "Specify an alternate adj column.")
-
-        adj = redist.adjacency(x)
     }
 
     pop_col = names(x)[tidyselect::eval_select(rlang::enquo(total_pop), x,
@@ -222,6 +214,13 @@ redist_map = function(..., existing_plan=NULL, pop_tol=NULL,
         pop_bounds = rlang::eval_tidy(rlang::enquo(pop_bounds), x)
     }
 
+    if (is_sf && is.null(adj)) {
+        if (!is.null(x[[adj_col]]))
+            stop("Column `", adj_col, "` already present in data. ",
+                 "Specify an alternate adj column.")
+
+        adj = redist.adjacency(x)
+    }
 
     validate_redist_map(
         new_redist_map(x, adj, ndists, pop_bounds, pop_col, adj_col,

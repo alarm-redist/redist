@@ -9,7 +9,7 @@ redist_map(
   ...,
   existing_plan = NULL,
   pop_tol = NULL,
-  total_pop = c("pop", "population", "total_pop"),
+  total_pop = c("pop", "population", "total_pop", "POP100"),
   ndists = NULL,
   pop_bounds = NULL,
   adj = NULL,

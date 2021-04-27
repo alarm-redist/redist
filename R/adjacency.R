@@ -11,7 +11,7 @@
 #' @export
 redist.adjacency <- function(shp, plan){
   # Check input
-  if(!any(c('sf','SpatialPolygonsDataFrame') %in% class(shp))){
+  if (!any(c('sf','SpatialPolygonsDataFrame') %in% class(shp))) {
     stop('Please provide "shp" as an sf or sp object.')
   }
 
@@ -20,7 +20,7 @@ redist.adjacency <- function(shp, plan){
   adj <- suppressMessages(st_relate(shp, shp, pattern = "F***1****"))
   # items contained entirely within ~ even if validly 'rooks' adjacent ~ do not meet this, you need:
   withinadj <- suppressMessages(st_relate(x = shp, pattern = "2121**2*2"))
-  adj <- lapply(1:nrow(shp), function(x){c(adj[[x]], withinadj[[x]])})
+  adj <- lapply(1:nrow(shp), function(x) c(adj[[x]], withinadj[[x]]))
 
   # Check for zero indexing
   zero <- min(unlist(adj)) == 0
@@ -42,9 +42,9 @@ redist.adjacency <- function(shp, plan){
   }
 
 
-  if(!missing(plan)){
+  if (!missing(plan)) {
     cont <- contiguity(adj, plan)
-    if(any(cont > 1 )){
+    if (any(cont > 1)) {
       warning(paste0('District', unique(plan[cont>1]), ' was not contiguous.'))
     }
   }
