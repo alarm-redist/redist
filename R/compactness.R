@@ -147,7 +147,7 @@
 #'
 #' plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
 #'
-#' redist.compactness(shp = fl25, district_membership = plans_05[,1:3],
+#' redist.compactness(shp = fl25, plans = plans_05[,1:3],
 #' measure = c('PolsbyPopper', 'EdgesRemoved'))
 #'
 #' @export redist.compactness

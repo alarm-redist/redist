@@ -4,9 +4,13 @@
 \alias{redist.ipw}
 \title{Inverse probability reweighting for MCMC Redistricting}
 \usage{
-redist.ipw(algout,
-resampleconstraint = c("pop", "compact", "segregation", "similar"),
-targetbeta, targetpop = NULL, temper = 0)
+redist.ipw(
+  algout,
+  resampleconstraint = c("pop", "compact", "segregation", "similar"),
+  targetbeta,
+  targetpop = NULL,
+  temper = 0
+)
 }
 \arguments{
 \item{algout}{An object of class "redist".}
@@ -90,18 +94,18 @@ data(fl25_adj)
 init_plan <- fl25_enum$plans[, 5118]
 
 ## Vector of beta weights
-betaweights <- rep(NA, 10); for(i in 1:10){betaweights[i] <- 4^i}
+betaweights <- 4^{1:10}
 
 ## Run simulations - tempering population constraint
 alg_253_20_st <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
                              init_plan = init_plan, nsims = 10000,
                              constraint = 'population', constraintweights = 5.4,
-                             betaweights = betaweights, temper = 1)
+                             betaweights = betaweights, temper = TRUE)
 
 ## Resample using inverse probability weighting.
 ## Target distance from parity is 20\%
-alg_253_20_st <- redist.ipw(alg_253_20_st, resampleconstraint = "pop",
-                            targetbeta = 1, targetpop = .2, temper = 1)
+alg_253_20_st_2 <- redist.ipw(alg_253_20_st, resampleconstraint = "pop",
+                            targetbeta = 1, targetpop = .2, temper = TRUE)
 }
 }
 \references{
