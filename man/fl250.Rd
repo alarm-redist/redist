@@ -29,16 +29,15 @@ This data set contains the 250 Precinct shapefile and related data for each prec
 }
 \details{
 It is a random 70 precinct connected subset from Florida's precincts. This was introduced by
-<doi: 10.1080/2330443X.2020.1791773>
+<doi:10.1080/2330443X.2020.1791773>
 }
 \examples{
-\dontrun{
 data(fl250)
-}
+
 }
 \references{
 Benjamin Fifield, Kosuke Imai, Jun Kawahara & Christopher T. Kenny (2020)
 The Essential Role of Empirical Validation in Legislative Redistricting Simulation,
-Statistics and Public Policy, 7:1, 52-68, DOI: 10.1080/2330443X.2020.1791773
+Statistics and Public Policy, 7:1, 52-68, doi:10.1080/2330443X.2020.1791773
 }
 \concept{data}

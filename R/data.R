@@ -25,9 +25,9 @@
 #' Social Forces.
 #'
 #' @concept data
-#' @examples \dontrun{
+#' @examples 
 #' data(fl25_enum)
-#' }
+#' 
 NULL
 
 
@@ -63,9 +63,9 @@ NULL
 #' Working Paper. Available at
 #' \url{http://imai.princeton.edu/research/files/redist.pdf}.
 #' @concept data
-#' @examples \dontrun{
+#' @examples 
 #' data(fl25)
-#' }
+#' 
 NULL
 
 #' Florida 25 Precinct File
@@ -83,9 +83,9 @@ NULL
 #' Working Paper. Available at
 #' \url{http://imai.princeton.edu/research/files/redist.pdf}.
 #' @concept data
-#' @examples \dontrun{
+#' @examples 
 #' data(fl25_adj)
-#' }
+#' 
 NULL
 
 
@@ -96,7 +96,7 @@ NULL
 #' This data set contains the 70 Precinct shapefile and related data for each precinct.
 #'
 #' It is a random 70 precinct connected subset from Florida's precincts. This was introduced by
-#' <doi: 10.1080/2330443X.2020.1791773>
+#' <doi:10.1080/2330443X.2020.1791773>
 #'
 #' @name fl70
 #' @usage data("fl70")
@@ -119,11 +119,11 @@ NULL
 #'
 #' @references Benjamin Fifield, Kosuke Imai, Jun Kawahara & Christopher T. Kenny (2020)
 #' The Essential Role of Empirical Validation in Legislative Redistricting Simulation,
-#' Statistics and Public Policy, 7:1, 52-68, DOI: 10.1080/2330443X.2020.1791773
+#' Statistics and Public Policy, 7:1, 52-68, doi:10.1080/2330443X.2020.1791773
 #' @concept data
-#' @examples \dontrun{
+#' @examples 
 #' data(fl70)
-#' }
+#' 
 NULL
 
 #' Florida 250 Precinct Shape File
@@ -131,7 +131,7 @@ NULL
 #' This data set contains the 250 Precinct shapefile and related data for each precinct.
 #'
 #' It is a random 70 precinct connected subset from Florida's precincts. This was introduced by
-#' <doi: 10.1080/2330443X.2020.1791773>
+#' <doi:10.1080/2330443X.2020.1791773>
 #'
 #' @name fl250
 #' @usage data("fl250")
@@ -154,11 +154,11 @@ NULL
 #'
 #' @references Benjamin Fifield, Kosuke Imai, Jun Kawahara & Christopher T. Kenny (2020)
 #' The Essential Role of Empirical Validation in Legislative Redistricting Simulation,
-#' Statistics and Public Policy, 7:1, 52-68, DOI: 10.1080/2330443X.2020.1791773
+#' Statistics and Public Policy, 7:1, 52-68, doi:10.1080/2330443X.2020.1791773
 #' @concept data
-#' @examples \dontrun{
+#' @examples
 #' data(fl250)
-#' }
+#' 
 NULL
 
 #' Iowa County File

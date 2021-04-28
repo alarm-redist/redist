@@ -35,7 +35,7 @@
 #' Convergence Diagnosis and Output Analysis for MCMC." R News.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' data(fl25)
 #' data(fl25_enum)
 #' data(fl25_adj)
@@ -44,8 +44,8 @@
 #' init_plan <- fl25_enum$plans[, 5118]
 #'
 #' ## 25 precinct, three districts - no pop constraint ##
-#' alg_253 <- redist.mcmc(adj = fl25_adj, popvec = fl25$pop,
-#'                        initcds = init_plan, nsims = 10000)
+#' alg_253 <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
+#'                        init_plan = init_plan, nsims = 10000)
 #'
 #' ## Get Republican Dissimilarity Index from simulations
 #' rep_dmi_253 <- redist.segcalc(alg_253, fl25$mccain, fl25$pop)
@@ -57,9 +57,9 @@
 #' redist.diagplot(rep_dmi_253, plot = "mean")
 #'
 #' ## Gelman Rubin needs two chains, so we run a second
-#' alg_253_2 <- redist.mcmc(adjobj = fl25_adj,
-#' popvec = fl25$pop,
-#' initcds = init_plan, nsims = 10000)
+#' alg_253_2 <- redist.flip(adj = fl25_adj,
+#' total_pop = fl25$pop,
+#' init_plan = init_plan, nsims = 10000)
 #'
 #' rep_dmi_253_2 <- redist.segcalc(alg_253_2, fl25$mccain, fl25$pop)
 #'

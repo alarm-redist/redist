@@ -327,7 +327,7 @@ redist.flip.anneal <- function(adj,
     ## Combine and save the data
     ## -------------------------
     if(!is.null(savename)){
-        saveRDS(algout, file = paste0(savename, ".RData"))
+        saveRDS(algout, file = paste0(savename, ".rds"))
     }
 
     ## Examine the data
@@ -637,7 +637,7 @@ redist.mcmc.anneal <- function(adj,
     ## Combine and save the data
     ## -------------------------
     if(!is.null(savename)){
-        saveRDS(algout, file = paste0(savename, ".RData"))
+        saveRDS(algout, file = paste0(savename, ".rds"))
     }
     
     ## Examine the data
@@ -723,7 +723,7 @@ redist.combine.anneal <- function(file_name){
 #'
 #' @usage redist.combine(savename, nloop, nthin, temper)
 #'
-#' @param savename The name (without the loop or \code{.RData} suffix)
+#' @param savename The name (without the loop or \code{.rds} suffix)
 #' of the saved simulations.
 #' @param nloop The number of loops being combined. Savename must be non-null.
 #' @param nthin How much to thin the simulations being combined.
@@ -792,6 +792,7 @@ redist.combine.anneal <- function(file_name){
 #' init_plan <- fl25_enum$plans[, 5118]
 #'
 #' ## Run the algorithm
+#' set.seed(1)
 #' temp <- tempdir()
 #' alg_253 <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
 #'                        init_plan = init_plan, nsims = 10000,
@@ -804,7 +805,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
     ##############################
     ## Set up container objects ##
     ##############################
-    algout <- readRDS(paste0(savename, "_loop1.RData"))
+    algout <- readRDS(paste0(savename, "_loop1.rds"))
     names_obj <- names(algout)
 
     ## Create containers
@@ -827,7 +828,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
     for(i in 1:nloop){
 
         ## Load data
-        algout <- readRDS(paste0(savename, "_loop", i, ".RData"))
+        algout <- readRDS(paste0(savename, "_loop", i, ".rds"))
 
         ind <- ((i - 1) * (nc / nthin) + 1):(i * (nc / nthin))
 
@@ -863,7 +864,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
     #################
     ## Save object ##
     #################
-    saveRDS(algout, file = paste0(savename, ".RData"))
+    saveRDS(algout, file = paste0(savename, ".rds"))
 
     return(algout)
 }
@@ -1241,7 +1242,7 @@ redist.flip <- function(adj,
             if(loopstart > 1){
 
                 ## Load the data
-                algout <- readRDS(paste0(savename, "_loop", i - 1, ".RData"))
+                algout <- readRDS(paste0(savename, "_loop", i - 1, ".rds"))
 
                 ## Stop if number of simulations per loop is different
                 if(nsims != ncol(algout[[1]])){
@@ -1320,7 +1321,7 @@ redist.flip <- function(adj,
 
         ## Save output
         if(nloop > 1){
-            saveRDS(algout, file = paste0(savename, "_loop", i, ".RData"))
+            saveRDS(algout, file = paste0(savename, "_loop", i, ".rds"))
         }
 
     }
@@ -1338,7 +1339,7 @@ redist.flip <- function(adj,
                        nthin = nthin,
                        temper = temperflag)
     }else if(!is.null(savename)){
-        saveRDS(algout, file = paste0(savename, ".RData"))
+        saveRDS(algout, file = paste0(savename, ".rds"))
     }
     
     ## Examine the data
@@ -1714,7 +1715,7 @@ redist.mcmc <- function(adj,
             if(loopstart > 1){
                 
                 ## Load the data
-                algout <- readRDS(paste0(savename, "_loop", i - 1, ".RData"))
+                algout <- readRDS(paste0(savename, "_loop", i - 1, ".rds"))
                 
                 ## Stop if number of simulations per loop is different
                 if(nsims != ncol(algout[[1]])){
@@ -1793,7 +1794,7 @@ redist.mcmc <- function(adj,
         
         ## Save output
         if(nloop > 1){
-            saveRDS(algout, file = paste0(savename, "_loop", i, ".RData"))
+            saveRDS(algout, file = paste0(savename, "_loop", i, ".rds"))
         }
         
     }
@@ -1811,7 +1812,7 @@ redist.mcmc <- function(adj,
                        nthin = nthin,
                        temper = temperflag)
     }else if(!is.null(savename)){
-        saveRDS(algout, file = paste0(savename, ".RData"))
+        saveRDS(algout, file = paste0(savename, ".rds"))
     }
     
     ## Examine the data
@@ -1917,7 +1918,7 @@ redist.mcmc <- function(adj,
 #' betaweights <- rep(NA, 10); for(i in 1:10){betaweights[i] <- 4^i}
 #'
 #' ## Run simulations - tempering population constraint
-#' alg_253_20_st <- redist.mcmc(adj = fl25_adj, total_pop = fl25$pop,
+#' alg_253_20_st <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
 #'                              init_plan = init_plan, nsims = 10000,
 #'                              constraint = 'population', constraintweights = 5.4,
 #'                              betaweights = betaweights, temper = 1)

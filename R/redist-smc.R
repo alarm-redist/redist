@@ -63,7 +63,7 @@
 #'                             nsims=10000, ndists=3, pop_tol=0.1,
 #'                             constraints=list(
 #'                                 status_quo = list(strength=10, current=fl25_enum$plans[,5118]),
-#'                                 incumbency = lsit(strength=1000, incumbents=c(3, 6, 25))
+#'                                 incumbency = list(strength=100, incumbents=c(3, 6, 25))
 #'                             ))
 #' }
 #'

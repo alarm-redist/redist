@@ -23,9 +23,8 @@ partitions of the 25 precincts into three contiguous congressional districts.
 The 25-precinct shapefile may be found in \code{\link{fl25}}
 }
 \examples{
-\dontrun{
 data(fl25_enum)
-}
+
 }
 \references{
 Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander Tarr.

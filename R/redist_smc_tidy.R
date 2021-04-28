@@ -132,7 +132,8 @@
 #' McCartan, C., & Imai, K. (2020). Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans.
 #' Available at \url{https://imai.fas.harvard.edu/research/files/SMCredist.pdf}.
 #'
-#' @examples \dontrun{
+#' @examples \donttest{
+#' set.seed(1)
 #' data(fl25)
 #'
 #' fl_map = redist_map(fl25, ndists=3, pop_tol=0.1)
@@ -140,7 +141,7 @@
 #' sampled_basic = redist_smc(fl_map, 10000)
 #'
 #' sampled_constr = redist_smc(fl_map, 10000, constraints=list(
-#'                                 incumbency = list(strength=1000, incumbents=c(3, 6, 25))
+#'                                 incumbency = list(strength=100, incumbents=c(3, 6, 25))
 #'                             ))
 #' }
 #'

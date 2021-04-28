@@ -7,7 +7,7 @@
 redist.combine(savename, nloop, nthin, temper)
 }
 \arguments{
-\item{savename}{The name (without the loop or \code{.RData} suffix)
+\item{savename}{The name (without the loop or \code{.rds} suffix)
 of the saved simulations.}
 
 \item{nloop}{The number of loops being combined. Savename must be non-null.}
@@ -80,6 +80,7 @@ data(fl25_adj)
 init_plan <- fl25_enum$plans[, 5118]
 
 ## Run the algorithm
+set.seed(1)
 temp <- tempdir()
 alg_253 <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
                        init_plan = init_plan, nsims = 10000,
