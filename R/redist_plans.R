@@ -302,6 +302,7 @@ dplyr_reconstruct.redist_plans = function(data, template) {
 
 #' Print method for redist_plans
 #' @param x redist_plans object
+#' @param \dots additional arguments
 #' @method print redist_plans
 #' @importFrom utils str
 #' @return prints to console

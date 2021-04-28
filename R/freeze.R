@@ -12,6 +12,8 @@
 #' @export
 #' @concept prepare
 #' @examples
+#' library(redist)
+#' library(dplyr)
 #' data(fl25)
 #' data(fl25_enum)
 #' data(fl25_adj)
@@ -21,7 +23,7 @@
 #' 
 #' data(iowa)
 #' map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.02)
-#' map <- map %>% merge_by(freeze(cd_2010 == 1))
+#' map <- map %>% merge_by(freeze(cd_2010 == 1, .data = .))
 #'
 redist.freeze <- function(adj, freeze_row, plan = rep(1, length(adj))){
   if(missing(adj)){

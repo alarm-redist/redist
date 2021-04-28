@@ -8,6 +8,8 @@
 }
 \arguments{
 \item{x}{redist object}
+
+\item{\dots}{additional arguments}
 }
 \value{
 prints to console

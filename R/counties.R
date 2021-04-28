@@ -14,8 +14,10 @@
 #' @export
 #' @examples
 #' set.seed(2)
+#' data(fl25)
+#' data(fl25_adj)
 #' counties <- sample(c(rep('a', 20), rep('b', 5)))
-#' redist.relabel.counties(counties)
+#' redist.county.relabel(fl25_adj, counties)
 #'
 redist.county.relabel <- function(adj, counties,  simplify = TRUE, adjacency){
 

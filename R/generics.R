@@ -13,6 +13,7 @@ as.matrix.redist = function(x, ...) {
 
 #' Print legacy redist objects
 #' @param x redist object
+#' @param \dots additional arguments
 #' @method print redist
 #' @importFrom utils str
 #' @return prints to console

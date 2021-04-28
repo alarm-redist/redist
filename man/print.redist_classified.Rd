@@ -8,6 +8,8 @@
 }
 \arguments{
 \item{x}{redist_classified object}
+
+\item{\dots}{additional arguments}
 }
 \value{
 prints to console

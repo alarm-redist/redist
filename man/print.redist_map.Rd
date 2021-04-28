@@ -8,6 +8,8 @@
 }
 \arguments{
 \item{x}{redist_map}
+
+\item{\dots}{additional argumentss}
 }
 \value{
 Prints to console and returns input redist_map

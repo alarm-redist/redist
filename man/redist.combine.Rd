@@ -74,17 +74,17 @@ data(fl25)
 data(fl25_enum)
 data(fl25_adj)
 
-## Code to run the simulations in Figure 4 in Fifield, Higgins,Imai and
-Tarr (2015)
+## Code to run the simulations in Figure 4 in Fifield, Higgins,Imai and Tarr (2015)
 
 ## Get an initial partition
 init_plan <- fl25_enum$plans[, 5118]
 
 ## Run the algorithm
+temp <- tempdir()
 alg_253 <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
                        init_plan = init_plan, nsims = 10000,
-                       loops = 2, savename = "test")
-out <- redist.combine(savename = "test", nloop = 2, nthin = 10)
+                       nloop = 2, savename = paste0(temp, "/test"))
+out <- redist.combine(savename = paste0(temp, "/test"), nloop = 2, nthin = 10)
 }
 }
 \references{

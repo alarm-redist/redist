@@ -24,6 +24,6 @@ columns have the same number of districts as the first.
 \examples{
 cds <- matrix(c(rep(c(4L,5L,2L,1L,3L),5),
 rep(c(5L,4L,3L,2L,1L),2), rep(c(4L,5L,2L,1L,3L),3)), nrow = 25)
-redist.reorder(cds)
+redist.reindex(cds)
 
 }
