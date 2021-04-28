@@ -72,13 +72,6 @@ even with these methods, full redistricting problems quickly become
 intractable, necessitating the use of the MCMC-based methods implemented in
 \code{redist.mcmc}.
 }
-\examples{
-\donttest{
-# Not run as test -- deprecated -- use redist.enumpart 
-data(fl25_adj)
-test <- redist.enumerate(adj = fl25_adj)
-}
-}
 \references{
 Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander
 Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte

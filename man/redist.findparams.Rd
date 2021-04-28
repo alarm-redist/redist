@@ -2,7 +2,7 @@
 % Please edit documentation in R/redist_findparams.R
 \name{redist.findparams}
 \alias{redist.findparams}
-\title{Run parameter testing for \code{redist.mcmc}}
+\title{Run parameter testing for \code{redist.flip}}
 \usage{
 redist.findparams(
   adj,
@@ -57,7 +57,7 @@ FALSE.}
 
 \item{params}{A matrix of parameter values to test, such as the output of
 \code{expand.grid}. Parameters accepted for \code{params} include \code{eprob},
-\code{lambda}, \code{popcons}, \code{beta}, and \code{constraint}.}
+\code{lambda}, \code{pop_tol}, \code{beta}, and \code{constraint}.}
 
 \item{ssdmat}{A matrix of squared distances between geographic
 units. The default is \code{NULL}.}
@@ -116,11 +116,11 @@ about each parameter setting.
 }
 \description{
 \code{redist.findparams} is used to find optimal parameter values of
-\code{redist.mcmc} for a given map.
+\code{redist.flip} for a given map.
 }
 \details{
 This function allows users to test multiple parameter settings of
-\code{redist.mcmc} in preparation for a longer run for analysis.
+\code{redist.flip} in preparation for a longer run for analysis.
 }
 \examples{
 \donttest{

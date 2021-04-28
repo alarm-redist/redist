@@ -64,12 +64,6 @@ list_to_mat <- function(A){
 #' Carlo." Working Paper. Available at
 #' \url{http://imai.princeton.edu/research/files/redist.pdf}.
 #'
-#' @examples
-#' \donttest{
-#' # Not run as test -- deprecated -- use redist.enumpart 
-#' data(fl25_adj)
-#' test <- redist.enumerate(adj = fl25_adj)
-#' }
 #' @concept enumerate
 #' @export
 redist.enumerate <- function(adj,
