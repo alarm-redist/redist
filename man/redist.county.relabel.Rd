@@ -23,12 +23,9 @@ character vector of county names
 Relabel Discontinuous Counties
 }
 \examples{
-\dontrun{
-
 set.seed(2)
 counties <- sample(c(rep('a', 20), rep('b', 5)))
 redist.relabel.counties(counties)
 
-}
 }
 \concept{prepare}

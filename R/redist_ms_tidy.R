@@ -128,7 +128,7 @@
 #' DeFord, D., Duchin, M., and Solomon, J. (2019). Recombination: A family of
 #' Markov chains for redistricting. arXiv preprint arXiv:1911.05725.
 #'
-#' @examples \dontrun{
+#' @examples \donttest{
 #' data(fl25)
 #'
 #' fl_map = redist_map(fl25, ndists=3, pop_tol=0.1)

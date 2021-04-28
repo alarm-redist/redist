@@ -51,7 +51,7 @@
 #' McCartan, C., & Imai, K. (2020). Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans.
 #' Available at \url{https://imai.fas.harvard.edu/research/files/SMCredist.pdf}.
 #'
-#' @examples \dontrun{
+#' @examples \donttest{
 #' data(fl25)
 #' data(fl25_adj)
 #' data(fl25_enum)

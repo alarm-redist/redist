@@ -20,9 +20,7 @@ zero indexed adjacency list with max value length(keep_rows) - 1
 Tool to help reduce adjacency lists for analyzing subsets of maps.
 }
 \examples{
-\dontrun{
 data(fl25_adj)
 redist.reduce.adjacency(fl25_adj, c(2, 3, 4, 6, 21))
-}
 }
 \concept{prepare}

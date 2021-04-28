@@ -120,6 +120,8 @@ combine.par.anneal <- function(a, b){
 #' adjacency list from a "SpatialPolygonsDataFrame" data type.
 #' Default is "rooks".
 #'
+#' @return list of class redist
+#'
 #' @concept simulate
 #' @export
 redist.flip.anneal <- function(adj,
@@ -779,7 +781,7 @@ redist.combine.anneal <- function(file_name){
 #' @return  a redist object with entries combined
 #' 
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' data(fl25)
 #' data(fl25_enum)
 #' data(fl25_adj)
@@ -1028,7 +1030,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' \url{http://imai.princeton.edu/research/files/redist.pdf}.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' data(fl25)
 #' data(fl25_enum)
 #' data(fl25_adj)
@@ -1517,7 +1519,7 @@ redist.flip <- function(adj,
 #' \url{http://imai.princeton.edu/research/files/redist.pdf}.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' data(fl25)
 #' data(fl25_enum)
 #' data(fl25_adj)
@@ -1929,7 +1931,7 @@ redist.mcmc <- function(adj,
 #' when Fractions of Missing Information are Modest: the SIR Algorithm."
 #' Journal of the American Statistical Association.
 #'
-#' @examples \dontrun{
+#' @examples \donttest{
 #' data(fl25)
 #' data(fl25_enum)
 #' data(fl25_adj)

@@ -220,11 +220,10 @@ between districts by group population.
 }
 }
 \examples{
-\dontrun{
 data(iowa)
-iowa_map <- redist_map(iowa, ndists = 4, existing_plan = cd_2010, total_pop = pop)
+iowa_map <- redist_map(iowa, ndists = 4, existing_plan = cd_2010, total_pop = pop, pop_tol = 0.01)
 sims <- redist_flip(map = iowa_map, nsims = 100)
-}
+
 }
 \references{
 Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander

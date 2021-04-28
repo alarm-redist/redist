@@ -90,13 +90,10 @@ algorithm.  This is the compact districting algorithm described in Chen and
 Rodden (2013).
 }
 \examples{
-\dontrun{
 data("fl25")
 adj <- redist.adjacency(fl25)
-area <- sf::st_area(fl25)
-centers <- sf::st_coordinates(sf::st_centroid(fl25))
 redist.crsg(adj = adj, total_pop = fl25$pop, shp = fl25, ndists = 2, pop_tol = .1)
-}
+
 }
 \references{
 Jowei Chen and Jonathan Rodden (2013) ``Unintentional

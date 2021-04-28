@@ -310,7 +310,7 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
 #'
 #' @importFrom dplyr slice
 #'
-#' @examples \dontrun{
+#' @examples \donttest{
 #' data(fl25)
 #' data(fl25_enum)
 #' data(fl25_adj)

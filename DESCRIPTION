@@ -1,6 +1,6 @@
 Package: redist
-Version: 3.0.4
-Date: 2021-04-24
+Version: 3.0.5
+Date: 2021-04-28
 Title: Simulation Methods for Legislative Redistricting
 Authors@R: c(
     person("Christopher T.", "Kenny", email = "christopherkenny@fas.harvard.edu", role = c("aut", "cre")),
@@ -17,9 +17,9 @@ Description: Enables researchers to sample redistricting plans from a pre-specif
     the redistricting process such as geographic compactness and population parity
     requirements. Tools for analysis such as computation of various summary statistics
     and plotting functionality are also included. The package implements methods
-    described in Fifield, Higgins, Imai and Tarr (2020) <doi: 10.1080/10618600.2020.1739532>,
-    Fifield, Imai, Kawahara, and Kenny (2020) <doi: 10.1080/2330443X.2020.1791773>,
-    and McCartan and Imai (2020) <arXiv: 2008.06131>.
+    described in Fifield, Higgins, Imai and Tarr (2020) <doi:10.1080/10618600.2020.1739532>,
+    Fifield, Imai, Kawahara, and Kenny (2020) <doi:10.1080/2330443X.2020.1791773>,
+    and McCartan and Imai (2020) <arXiv:2008.06131>.
 Depends:
     R (>= 3.5.0)
 Imports:

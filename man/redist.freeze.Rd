@@ -34,11 +34,10 @@ data(fl25_adj)
 plan = fl25_enum$plans[, 5118]
 freeze_id <- redist.freeze(adj = fl25_adj, freeze_row = (plan == 2),
                            plan = plan)
-\dontrun{
+
 data(iowa)
 map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.02)
 map <- map \%>\% merge_by(freeze(cd_2010 == 1))
-}
 
 }
 \concept{prepare}

@@ -356,7 +356,7 @@ simulated tempering functionality to improve the mixing of the Markov
 Chain.
 }
 \examples{
-\dontrun{
+\donttest{
 data(fl25)
 data(fl25_enum)
 data(fl25_adj)
@@ -378,7 +378,7 @@ alg_253 <- redist.mcmc(adj = fl25_adj, total_pop = fl25$pop,
  
 }
 
-\dontrun{
+\donttest{
 data(fl25)
 data(fl25_enum)
 data(fl25_adj)

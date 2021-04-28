@@ -214,6 +214,9 @@ interest. The default is \code{NULL}.}
 adjacency list from a "SpatialPolygonsDataFrame" data type.
 Default is "rooks".}
 }
+\value{
+list of class redist
+}
 \description{
 \code{redist.flip.anneal} simulates congressional redistricting plans
 using Markov chain Monte Carlo methods coupled with simulated annealing.

@@ -75,7 +75,7 @@ plan is closer to the existing plan.
 }
 }
 \examples{
-\dontrun{
+\donttest{
 data(iowa)
 iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05, total_pop = pop)
 

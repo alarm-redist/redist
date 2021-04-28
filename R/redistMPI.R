@@ -512,6 +512,7 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
 #'
 #' @examples
 #' \dontrun{
+#' # Cannot run on machines without Rmpi
 #' data(fl25)
 #' data(fl25_enum)
 #' data(fl25_adj)
@@ -750,6 +751,7 @@ ecutsAppend <- function(algout,ndata){
 #' @concept simulate
 #' @examples
 #' \dontrun{
+#' # Cannot run on machines without Rmpi
 #' data(fl25)
 #' data(fl25_enum)
 #' data(fl25_adj)

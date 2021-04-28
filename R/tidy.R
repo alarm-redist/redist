@@ -523,7 +523,7 @@ last_plan = function(plans) {
 #'
 #' @param prec the precinct number or ID
 #' @param .data a \code{\link{redist_plans}} object
-#'
+#' @return integer vector, a row from a plans matrix
 #' @concept analyze
 #' @export
 prec_assignment = function(prec, .data=cur_plans()) {

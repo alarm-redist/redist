@@ -253,7 +253,7 @@ sampled_constr = redist_smc(fl_map, 10000, constraints=list(
                             ))
 }
 
-\dontrun{
+\donttest{
 data(fl25)
 data(fl25_adj)
 data(fl25_enum)

@@ -44,7 +44,7 @@ Massey \& Denton 1987 for more details) for a specified subgroup under any
 redistricting plan.
 }
 \examples{
-\dontrun{
+\donttest{
 data(fl25)
 data(fl25_enum)
 data(fl25_adj)

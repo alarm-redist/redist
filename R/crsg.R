@@ -60,13 +60,10 @@
 #' Quarterly Journal of Political Science. 8(3): 239-269.
 #'
 #' @examples
-#' \dontrun{
 #' data("fl25")
 #' adj <- redist.adjacency(fl25)
-#' area <- sf::st_area(fl25)
-#' centers <- sf::st_coordinates(sf::st_centroid(fl25))
 #' redist.crsg(adj = adj, total_pop = fl25$pop, shp = fl25, ndists = 2, pop_tol = .1)
-#' }
+#'
 #' @concept simulate
 #' @export
 redist.crsg <- function(adj, total_pop, shp,  ndists, pop_tol, verbose = TRUE,

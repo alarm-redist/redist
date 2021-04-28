@@ -16,15 +16,14 @@ A vector with an ID that corresponds from 1:ndists
 Takes a plan and renumbers it to be from 1:ndists
 }
 \examples{
-\dontrun{
 data(fl25_enum)
 plan <- fl25_enum$plans[, 5118]
 # Subset based on something:
 plan <- plan[plan!=2]
 plan <- redist.sink.plan(plan)
-# Now plan can be used with redist.mcmc()
+# Now plan can be used with redist.flip()
 plan
-}
+
 
 }
 \concept{prepare}

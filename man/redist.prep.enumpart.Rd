@@ -23,10 +23,11 @@ Prepares a run of the enumpart algorithm by ordering edges
 }
 \examples{
 \dontrun{
+temp <- tempdir()
 data(fl25)
 adj <- redist.adjacency(fl25)
-redist.prep.enumpart(adj = adj, unordered_path = '../unordered',
-                     ordered_path = '../ordered')
+redist.prep.enumpart(adj = adj, unordered_path = paste0(temp, '/unordered'),
+                     ordered_path = paste0(temp, '/ordered'))
 }
 }
 \references{

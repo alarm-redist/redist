@@ -142,7 +142,6 @@
 #'
 #' @concept analyze
 #' @examples
-#' \dontrun{
 #' data(fl25)
 #' data(fl25_enum)
 #'
@@ -150,7 +149,6 @@
 #'
 #' redist.compactness(shp = fl25, district_membership = plans_05[,1:3],
 #' measure = c('PolsbyPopper', 'EdgesRemoved'))
-#' }
 #'
 #' @export redist.compactness
 redist.compactness <- function(shp = NULL,
@@ -483,10 +481,10 @@ redist.compactness <- function(shp = NULL,
 #' @export
 #'
 #' @importFrom sf st_buffer st_is_valid st_geometry<- st_touches st_transform
-#' @examples \dontrun{
+#' @examples 
 #' data(fl25)
 #' perim_df <- redist.prep.polsbypopper(shp = fl25)
-#' }
+#' 
 redist.prep.polsbypopper <- function(shp, planarize = 3857, perim_path, ncores = 1){
 
   if(missing(shp)){

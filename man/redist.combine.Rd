@@ -69,7 +69,7 @@ This function allows users to combine multiple successive runs of
 \code{redist.flip} into a single \code{redist} object for analysis.
 }
 \examples{
-\dontrun{
+\donttest{
 data(fl25)
 data(fl25_enum)
 data(fl25_adj)

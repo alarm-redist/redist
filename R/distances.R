@@ -44,14 +44,14 @@
 #' @references
 #' Cover, T. M. and Thomas, J. A. (2006). \emph{Elements of information theory.} John Wiley & Sons, 2 edition.
 #'
-#' @examples \dontrun{
+#' @examples
 #' data(fl25)
 #' data(fl25_enum)
 #'
 #' plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
 #' distances <- redist.distances(plans_05)
 #' distances$Hamming[1:5, 1:5]
-#' }
+#' 
 #' @concept analyze
 #' @export
 redist.distances <- function(plans, measure = "Hamming",

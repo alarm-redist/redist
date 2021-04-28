@@ -18,11 +18,10 @@
 #' plan = fl25_enum$plans[, 5118]
 #' freeze_id <- redist.freeze(adj = fl25_adj, freeze_row = (plan == 2),
 #'                            plan = plan)
-#' \dontrun{
+#' 
 #' data(iowa)
 #' map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.02)
 #' map <- map %>% merge_by(freeze(cd_2010 == 1))
-#' }
 #'
 redist.freeze <- function(adj, freeze_row, plan = rep(1, length(adj))){
   if(missing(adj)){

@@ -165,11 +165,11 @@
 #' @importFrom rlang eval_tidy enquo
 #' @importFrom utils capture.output
 #' @md
-#' @examples \dontrun{
+#' @examples
 #' data(iowa)
-#' iowa_map <- redist_map(iowa, ndists = 4, existing_plan = cd_2010, total_pop = pop)
+#' iowa_map <- redist_map(iowa, ndists = 4, existing_plan = cd_2010, total_pop = pop, pop_tol = 0.01)
 #' sims <- redist_flip(map = iowa_map, nsims = 100)
-#' }
+#' 
 redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints = list(),
                         nthin = 1, eprob = 0.05, lambda = 0, temper = FALSE,
                         betaseq = 'powerlaw', betaseqlength = 10, betaweights = NULL,

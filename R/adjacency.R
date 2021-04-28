@@ -73,10 +73,9 @@ redist.adjacency <- function(shp, plan, district_membership){
 #' @concept prepare
 #' @export
 #'
-#' @examples \dontrun{
+#' @examples 
 #' data(fl25_adj)
 #' redist.reduce.adjacency(fl25_adj, c(2, 3, 4, 6, 21))
-#' }
 redist.reduce.adjacency <- function(adj, keep_rows, adjacency) {
     if (!missing(adjacency)) {
         adj <- adjacency

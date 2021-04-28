@@ -149,7 +149,6 @@ The fraction kept measure is the fraction of edges that were not removed from th
  underlying adjacency graph. This takes values 0 - 1, where 1 is more compact.
 }
 \examples{
-\dontrun{
 data(fl25)
 data(fl25_enum)
 
@@ -157,7 +156,6 @@ plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
 
 redist.compactness(shp = fl25, district_membership = plans_05[,1:3],
 measure = c('PolsbyPopper', 'EdgesRemoved'))
-}
 
 }
 \references{

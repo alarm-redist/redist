@@ -12,13 +12,11 @@
 #'
 #' @concept prepare
 #' @export
-#' @examples \dontrun{
-#'
+#' @examples
 #' set.seed(2)
 #' counties <- sample(c(rep('a', 20), rep('b', 5)))
 #' redist.relabel.counties(counties)
 #'
-#' }
 redist.county.relabel <- function(adj, counties,  simplify = TRUE, adjacency){
 
   if(!missing(adjacency)){
@@ -70,11 +68,10 @@ redist.county.relabel <- function(adj, counties,  simplify = TRUE, adjacency){
 #'
 #' @concept prepare
 #' @export
-#' @examples \dontrun{
+#' @examples
 #' set.seed(2)
 #' counties <- sample(c(rep('a', 20), rep('b', 5)))
 #' redist.county.id(counties)
-#' }
 #'
 redist.county.id <- function(counties){
   if(class(counties) %in% c('character', 'numeric','integer')){

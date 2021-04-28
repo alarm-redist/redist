@@ -134,6 +134,8 @@ reconstruct.redist_map = function(data, old) {
 #' @param planarize a number, indicating the CRS to project the shapefile to if
 #'   it is latitude-longitude based. Set to NULL or FALSE to avoid planarizing.
 #'
+#' @return A redist_map object
+#'
 #' @examples
 #' data(fl25)
 #' d = redist_map(fl25, ndists=3, pop_tol=0.05, total_pop = pop)
@@ -397,8 +399,10 @@ summarise.redist_map = function(.data, ..., .groups=NULL) {
     reconstruct.redist_map(ret, .data)
 }
 
-
+#' Generic to print redist_map
+#' @param x redist_map
 #' @method print redist_map
+#' @return Prints to console and returns input redist_map
 #' @export
 print.redist_map = function(x, ...) {
     cat("A redist_map object with", nrow(x), "units and", ncol(x), "fields\n")
@@ -475,7 +479,7 @@ print.redist_map = function(x, ...) {
 #' plot(d)
 #'
 #'
-#'
+#' @return ggplot2 object
 #' @method plot redist_map
 #' @concept prepare
 #' @concept plot

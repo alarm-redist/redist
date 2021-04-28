@@ -18,6 +18,8 @@ get_plans_weights(plans)
 A numeric vector of weights, with an additional attribute
   \code{resampled} indicating whether the plans have been resampled according
   to these weights.
+
+numeric vector
 }
 \description{
 May be \code{NULL} if no weights exist (MCMC or optimization methods).

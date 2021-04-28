@@ -351,7 +351,7 @@
 #' Segregation". Social Forces.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' data(fl25)
 #' data(fl25_enum)
 #' data(fl25_adj)

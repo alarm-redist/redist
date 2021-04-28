@@ -16,11 +16,9 @@ A vector with an ID that corresponds from 1:n counties
 Create County IDs
 }
 \examples{
-\dontrun{
 set.seed(2)
 counties <- sample(c(rep('a', 20), rep('b', 5)))
 redist.county.id(counties)
-}
 
 }
 \concept{prepare}

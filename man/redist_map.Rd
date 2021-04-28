@@ -52,6 +52,9 @@ it is latitude-longitude based. Set to NULL or FALSE to avoid planarizing.}
 
 \item{x}{an object to be coerced}
 }
+\value{
+A redist_map object
+}
 \description{
 Sets up a redistricting problem.
 }

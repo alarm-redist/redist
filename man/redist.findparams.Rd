@@ -123,7 +123,7 @@ This function allows users to test multiple parameter settings of
 \code{redist.mcmc} in preparation for a longer run for analysis.
 }
 \examples{
-\dontrun{
+\donttest{
 data(fl25)
 data(fl25_enum)
 data(fl25_adj)

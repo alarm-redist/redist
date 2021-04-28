@@ -8,6 +8,7 @@
 #' data("fl25")
 #' preproc.shp(fl25)
 #' }
+#' @noRd
 preproc.shp <- function(shp){
   if(!is.null(shp)){  
     if('SpatialPolygonsDataFrame' %in% class(shp)){
@@ -30,6 +31,8 @@ preproc.shp <- function(shp){
 #' data("fl25")
 #' preproc.adj(fl25,NULL)
 #' }
+#' 
+#' @noRd
 preproc.adj <- function(shp, adj){
   if(is.null(adj)){
     adj <- redist.adjacency(shp)

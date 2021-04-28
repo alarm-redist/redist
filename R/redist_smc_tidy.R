@@ -296,5 +296,11 @@ process_smc_ms_constr = function(constraints, V) {
 #'
 #' @param x the weights
 #'
+#' @return numeric vector
+#'
 #' @export
+#' 
+#' @examples 
+#' redist_quantile_trunc(c(1,2,3,4))
+#' 
 redist_quantile_trunc = function(x) pmin(x, quantile(x, 1 - length(x)^(-0.5)))
