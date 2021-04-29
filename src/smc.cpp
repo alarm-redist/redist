@@ -195,9 +195,9 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         // `lower_s` now contains the population of the newly-split district
         pop_left_new(i) = pop_left(idx) - lower_s;
         double pop_pen = sqrt((double) n_distr - 2) * log(std::fabs(lower_s - target)/target);
-        log_temper_new(i) = log_temper(idx) - pop_temper*pop_pen;
+        log_temper_new(i) = log_temper(idx) + pop_temper*pop_pen;
 
-        lp_new(i) = lp(idx) + inc_lp - pop_temper*pop_pen;
+        lp_new(i) = lp(idx) + inc_lp + pop_temper*pop_pen;
 
         if (verbosity >= 2 && refresh > 0 && (i+1) % refresh == 0) {
             Rprintf("Iteration %'6d / %'d\n", i+1, N);
