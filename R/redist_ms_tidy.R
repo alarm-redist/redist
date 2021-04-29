@@ -204,6 +204,10 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
 
     pop_bounds = attr(map, "pop_bounds")
     pop = map[[attr(map, "pop_col")]]
+    if (any(pop >= get_target(map)))
+        stop("Units ", which(pop >= get_target(map)),
+             " have population larger than the district target.\n",
+             "Redistricting impossible.")
 
     algout = ms_plans(nsims+1L, adj, init_plan, counties, pop, ndists,
                      pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,

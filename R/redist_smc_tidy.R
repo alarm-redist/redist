@@ -198,6 +198,10 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
     pop_bounds = attr(map, "pop_bounds")
     pop = map[[attr(map, "pop_col")]]
     ndists = attr(map, "ndists")
+    if (any(pop >= get_target(map)))
+        stop("Units ", which(pop >= get_target(map)),
+             " have population larger than the district target.\n",
+             "Redistricting impossible.")
 
     lp = rep(0, nsims)
     plans = smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],

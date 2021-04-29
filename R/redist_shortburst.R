@@ -136,6 +136,10 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
     }
 
     pop = map[[attr(map, "pop_col")]]
+    if (any(pop >= get_target(map)))
+        stop("Units ", which(pop >= get_target(map)),
+             " have population larger than the district target.\n",
+             "Redistricting impossible.")
 
 
     if (backend == "mergesplit") {

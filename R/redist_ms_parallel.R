@@ -114,6 +114,10 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
 
     pop_bounds = attr(map, "pop_bounds")
     pop = map[[attr(map, "pop_col")]]
+    if (any(pop >= get_target(map)))
+        stop("Units ", which(pop >= get_target(map)),
+             " have population larger than the district target.\n",
+             "Redistricting impossible.")
 
     # kind of hacky -- extract k=... from outupt
     if (!requireNamespace("utils", quietly=TRUE)) stop()
