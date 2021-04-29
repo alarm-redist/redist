@@ -78,7 +78,7 @@ redist.plot.hist = function(plans, qty, bins=NULL, ...) {
     is_int = isTRUE(all.equal(as.integer(val), val)) && rg <= 100
     if (is.null(bins)) {
         if (is_int) {
-            bins = 2*rg + 1
+            bins = 3*rg + 1
         } else { # Freedman-Diaconis
             n = length(val)
             if (is_const_num(val, plans$draw)) {
