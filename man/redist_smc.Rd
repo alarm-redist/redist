@@ -51,29 +51,32 @@ redist.smc(
 
 \item{counties}{A vector containing county (or other administrative or
 geographic unit) labels for each unit, which may be integers ranging from 1
-to the number of counties, or a factor or character vector.  If provided, the
-algorithm will only generate maps which split up to \code{ndists-1} counties.
-If no county-split constraint is desired, this parameter should be left blank.}
+to the number of counties, or a factor or character vector.  If provided,
+the algorithm will only generate maps which split up to \code{ndists-1}
+counties. If no county-split constraint is desired, this parameter should
+be left blank.}
 
 \item{compactness}{Controls the compactness of the generated districts, with
-higher values preferring more compact districts. Must be nonnegative. See the
-'Details' section for more information, and computational considerations.}
+higher values preferring more compact districts. Must be nonnegative. See
+the 'Details' section for more information, and computational
+considerations.}
 
 \item{constraints}{A list containing information on constraints to implement.
 See the 'Details' section for more information.}
 
 \item{resample}{Whether to perform a final resampling step so that the
-generated plans can be used immediately.  Set this to \code{FALSE} to perform
-direct importance sampling estimates, or to adjust the weights manually.}
+generated plans can be used immediately.  Set this to \code{FALSE} to
+perform direct importance sampling estimates, or to adjust the weights
+manually.}
 
 \item{constraint_fn}{A function which takes in a matrix where each column is
 a redistricting plan and outputs a vector of log-weights, which will be
 added the the final weights.}
 
 \item{adapt_k_thresh}{The threshold value used in the heuristic to select a
-value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if
-the algorithm does not appear to be sampling from the target distribution.
-Must be between 0 and 1.}
+value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if the
+algorithm does not appear to be sampling from the target distribution. Must
+be between 0 and 1.}
 
 \item{seq_alpha}{The amount to adjust the weights by at each resampling step;
 higher values prefer exploitation, while lower values prefer exploration.
@@ -83,12 +86,14 @@ Must be between 0 and 1.}
 final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.
 Truncation only applied if \code{resample=TRUE}.}
 
-\item{trunc_fn}{A function which takes in a vector of weights and returns
-a truncated vector. If \code{\link[loo]{loo}} package is installed (strongly
+\item{trunc_fn}{A function which takes in a vector of weights and returns a
+truncated vector. If \code{\link[loo]{loo}} package is installed (strongly
 recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
 rather than naive truncation.}
 
-\item{pop_temper}{The strength of the automatic population tempering.}
+\item{pop_temper}{The strength of the automatic population tempering. Try
+values of 0.01-0.05 to start if the algorithm gets stuck on the final few
+splits.}
 
 \item{ref_name}{a name for the existing plan, which will be added as a
 reference plan, or \code{FALSE} to not include the initial plan in the

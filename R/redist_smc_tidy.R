@@ -89,36 +89,41 @@
 #' @param map A \code{\link{redist_map}} object.
 #' @param nsims The number of samples to draw.
 #' @param counties A vector containing county (or other administrative or
-#' geographic unit) labels for each unit, which may be integers ranging from 1
-#' to the number of counties, or a factor or character vector.  If provided, the
-#' algorithm will only generate maps which split up to \code{ndists-1} counties.
-#' If no county-split constraint is desired, this parameter should be left blank.
+#'   geographic unit) labels for each unit, which may be integers ranging from 1
+#'   to the number of counties, or a factor or character vector.  If provided,
+#'   the algorithm will only generate maps which split up to \code{ndists-1}
+#'   counties. If no county-split constraint is desired, this parameter should
+#'   be left blank.
 #' @param compactness Controls the compactness of the generated districts, with
-#' higher values preferring more compact districts. Must be nonnegative. See the
-#' 'Details' section for more information, and computational considerations.
+#'   higher values preferring more compact districts. Must be nonnegative. See
+#'   the 'Details' section for more information, and computational
+#'   considerations.
 #' @param constraints A list containing information on constraints to implement.
-#' See the 'Details' section for more information.
+#'   See the 'Details' section for more information.
 #' @param resample Whether to perform a final resampling step so that the
-#' generated plans can be used immediately.  Set this to \code{FALSE} to perform
-#' direct importance sampling estimates, or to adjust the weights manually.
+#'   generated plans can be used immediately.  Set this to \code{FALSE} to
+#'   perform direct importance sampling estimates, or to adjust the weights
+#'   manually.
 #' @param constraint_fn A function which takes in a matrix where each column is
 #'  a redistricting plan and outputs a vector of log-weights, which will be
 #'  added the the final weights.
 #' @param adapt_k_thresh The threshold value used in the heuristic to select a
-#' value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if
-#' the algorithm does not appear to be sampling from the target distribution.
-#' Must be between 0 and 1.
+#'   value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if the
+#'   algorithm does not appear to be sampling from the target distribution. Must
+#'   be between 0 and 1.
 #' @param seq_alpha The amount to adjust the weights by at each resampling step;
-#' higher values prefer exploitation, while lower values prefer exploration.
-#' Must be between 0 and 1.
+#'   higher values prefer exploitation, while lower values prefer exploration.
+#'   Must be between 0 and 1.
 #' @param truncate Whether to truncate the importance sampling weights at the
-#' final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.
-#' Truncation only applied if \code{resample=TRUE}.
-#' @param trunc_fn A function which takes in a vector of weights and returns
-#' a truncated vector. If \code{\link[loo]{loo}} package is installed (strongly
-#' recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
-#' rather than naive truncation.
-#' @param pop_temper The strength of the automatic population tempering.
+#'   final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.
+#'   Truncation only applied if \code{resample=TRUE}.
+#' @param trunc_fn A function which takes in a vector of weights and returns a
+#'   truncated vector. If \code{\link[loo]{loo}} package is installed (strongly
+#'   recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
+#'   rather than naive truncation.
+#' @param pop_temper The strength of the automatic population tempering. Try
+#'   values of 0.01-0.05 to start if the algorithm gets stuck on the final few
+#'   splits.
 #' @param ref_name a name for the existing plan, which will be added as a
 #'   reference plan, or \code{FALSE} to not include the initial plan in the
 #'   output. Defaults to the column name of the existing plan.
