@@ -376,6 +376,7 @@ alg_253 <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
  
  
 }
+
 }
 \references{
 Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander

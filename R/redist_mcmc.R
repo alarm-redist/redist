@@ -1050,6 +1050,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #'  
 #'  
 #' }
+#' 
 #' @concept simulate
 #' @export
 redist.flip <- function(adj,
@@ -1899,31 +1900,19 @@ redist.mcmc <- function(adj,
 #' when Fractions of Missing Information are Modest: the SIR Algorithm."
 #' Journal of the American Statistical Association.
 #'
-#' @examples \donttest{
-#' data(fl25)
-#' data(fl25_enum)
-#' data(fl25_adj)
+#' @examples 
+#' \donttest{
+#' data(iowa)
+#' adj <- redist.adjacency(iowa)
+#' init_plan <- iowa$cd_2010
+#'alg <- redist.flip(adj = adj, total_pop = iowa$pop,
+#'                   init_plan = init_plan, nsims = 1000,
+#'                   constraint = 'population', constraintweights = 5.4)
 #'
-#' ## Code to run the simulations in Figure 4 of Fifield, Higgins,
-#' ## Imai and Tarr (2015)
-#'
-#' ## Get an initial partition
-#' init_plan <- fl25_enum$plans[, 5118]
-#'
-#' ## Vector of beta weights
-#' betaweights <- 4^{1:10}
-#'
-#' ## Run simulations - tempering population constraint
-#' set.seed(1)
-#' alg_253_20_st <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
-#'                              init_plan = init_plan, nsims = 10000,
-#'                              constraint = 'population', constraintweights = 5.4,
-#'                              betaweights = betaweights, temper = TRUE)
-#'
-#' ## Resample using inverse probability weighting.
-#' ## Target distance from parity is 20%
-#' alg_253_20_st_ipw <- redist.ipw(alg_253_20_st, resampleconstraint = "pop",
-#'                             targetbeta = 1, targetpop = .2, temper = 1)
+#' alg_ipw <- redist.ipw(algout = alg, 
+#'                      resampleconstraint = 'pop', 
+#'                      targetbeta = 1,
+#'                      targetpop = 0.05)
 #' }
 #' 
 #' @concept post
