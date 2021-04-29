@@ -48,6 +48,7 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     lp.fill(0.0);
 
     int k;
+    double min_eff = 1.0;
     vec cum_wgt(N);
     cum_wgt.fill(1.0 / N);
     cum_wgt = cumsum(cum_wgt);
@@ -71,12 +72,17 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                            beta_sq, current, n_current,
                            beta_vra, tgt_min, tgt_other, pow_vra, min_pop,
                            beta_vra_hinge, tgts_min,
-                           beta_inc, incumbents, verbosity);
+                           beta_inc, incumbents, min_eff, verbosity);
 
         Rcpp::checkUserInterrupt();
     }
 
     lp = lp - log_temper;
+
+    // check efficiency
+    if (min_eff <= 0.05) {
+        Rcerr << "Warning: bottleneck detected. Sample may not be diverse.\n";
+    }
 
     // Set final district label to n_distr rather than 0
     for (int i = 0; i < N; i++) {
@@ -98,7 +104,8 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr,
              double beta_vra, double tgt_min, double tgt_other,
              double pow_vra, const uvec &min_pop,
              double beta_vra_hinge, const vec &tgts_min,
-             double beta_inc, const uvec &incumbents, int verbosity) {
+             double beta_inc, const uvec &incumbents,
+             double &min_eff, int verbosity) {
     int V = districts.n_rows;
     int N = districts.n_cols;
 
@@ -121,10 +128,14 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr,
         lp = lp * (1 - alpha);
     vec cuml_wgt = cumsum(wgt);
 
+    double neff = cuml_wgt[N-1] * cuml_wgt[N-1]  / sum(square(wgt));
     if (verbosity >= 1) {
-        double neff = cuml_wgt[N-1] * cuml_wgt[N-1]  / sum(square(wgt));
         Rprintf("Resampling effective sample size: %.1f (%.1f%% efficiency).\n", neff, 100*neff/N);
     }
+    if (neff/N < min_eff) {
+        min_eff = neff / N;
+    }
+
 
     return cuml_wgt / cuml_wgt[N-1];
 }
