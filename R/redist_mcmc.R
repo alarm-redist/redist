@@ -1914,6 +1914,7 @@ redist.mcmc <- function(adj,
 #' betaweights <- 4^{1:10}
 #'
 #' ## Run simulations - tempering population constraint
+#' set.seed(1)
 #' alg_253_20_st <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
 #'                              init_plan = init_plan, nsims = 10000,
 #'                              constraint = 'population', constraintweights = 5.4,
@@ -1921,9 +1922,10 @@ redist.mcmc <- function(adj,
 #'
 #' ## Resample using inverse probability weighting.
 #' ## Target distance from parity is 20%
-#' alg_253_20_st_2 <- redist.ipw(alg_253_20_st, resampleconstraint = "pop",
-#'                             targetbeta = 1, targetpop = .2, temper = TRUE)
+#' alg_253_20_st_ipw <- redist.ipw(alg_253_20_st, resampleconstraint = "pop",
+#'                             targetbeta = 1, targetpop = .2, temper = 1)
 #' }
+#' 
 #' @concept post
 #' @export
 redist.ipw <- function(algout,
@@ -1978,10 +1980,13 @@ redist.ipw <- function(algout,
         ## Subset the matrix first, then the vectors
         if(i == 1){
             algout_new[[i]] <- algout[[i]][,inds]
-        }else{
+        } else if(length(algout[[i]]) == 1) {
+            algout_new[[i]] <- algout[[i]]
+        } else if(all(names(algout[[i]]) == 'adj')) {
+            algout_new[[i]] <- algout[[i]]
+        } else {
             algout_new[[i]] <- algout[[i]][inds]
         }
-
     }
     names(algout_new) <- names(algout)
 

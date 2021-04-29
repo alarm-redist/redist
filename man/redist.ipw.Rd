@@ -97,6 +97,7 @@ init_plan <- fl25_enum$plans[, 5118]
 betaweights <- 4^{1:10}
 
 ## Run simulations - tempering population constraint
+set.seed(1)
 alg_253_20_st <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
                              init_plan = init_plan, nsims = 10000,
                              constraint = 'population', constraintweights = 5.4,
@@ -104,9 +105,10 @@ alg_253_20_st <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
 
 ## Resample using inverse probability weighting.
 ## Target distance from parity is 20\%
-alg_253_20_st_2 <- redist.ipw(alg_253_20_st, resampleconstraint = "pop",
-                            targetbeta = 1, targetpop = .2, temper = TRUE)
+alg_253_20_st_ipw <- redist.ipw(alg_253_20_st, resampleconstraint = "pop",
+                            targetbeta = 1, targetpop = .2, temper = 1)
 }
+
 }
 \references{
 Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander
