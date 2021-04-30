@@ -1,7 +1,7 @@
 #' Pick One Plan from Many Plans
 #'
 #' @param plans a redist_plans object
-#' @param map 
+#' @param map a redist_map object
 #' @param counties A column in map with county names. Defaults to NULL and will 
 #' assume each row in map is its own county if left NULL
 #' @param comp A column in plans with compactness. Defaults to NULL and will 
@@ -32,7 +32,7 @@ pick_a_plan <- function(plans, map, counties = NULL, comp = NULL, maximize_comp 
   plans <- subset_sampled(plans = plans)
   map <- validate_redist_map(data = map)
   
-  comp <- eval_tidy(comp, map)
+  comp <- eval_tidy(enquo(comp), map)
   if(is.null(comp)){
     comp <- redist.compactness(adj = get_adj(map), plans = get_plans_matrix(plans), 
                                measure = 'FracKept')$FracKept
@@ -41,7 +41,7 @@ pick_a_plan <- function(plans, map, counties = NULL, comp = NULL, maximize_comp 
   plans <- plans %>% mutate(compactness = comp, 
                             parity = plan_parity(map))
   
-  counties <- eval_tidy(counties, map)
+  counties <- eval_tidy(enquo(counties), map)
   if(!is.null(counties)){
     plans <- plans %>% mutate(splits = county_splits(map, counties))
   } else {
@@ -87,16 +87,20 @@ pick_a_plan <- function(plans, map, counties = NULL, comp = NULL, maximize_comp 
 #' @examples
 #' data(iowa)
 #' map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01, total_pop = pop)
+#' plan <- get_plans_matrix(redist_smc(map, 1))[,2]
 #' local <- persily(plan = plan, map = map, counties = region)
 #' 
 persily <- function(plan, map, counties = NULL){
-  par <- redist.parity(plan, total_pop = map[[attr(map, 'pop_col')]])
   
+  counties <- eval_tidy(enquo(counties), map)
   cons <- flip_constraints_helper(map = map, init_plan = plan,  
                                   constraint = c('compact', 'similarity', 'population', 'countysplit'),
                                   counties = counties,
                                   constraintweight = c(0.1, 10, 10, 10))
-  set_pop_tol(map, 2*par)
+  
+  par <- redist.parity(plan, total_pop = map[[attr(map, 'pop_col')]])
+  map <- set_pop_tol(map, 2*par)
+
   bursts <- redist_shortburst(map, score_fn = (scorer_frac_kept(map = map) - scorer_pop_dev(map = map) -
                                                  scorer_splits(map = map, counties = counties) + 
                                                  scorer_status_quo(map = map, existing_plan = plan)), 
