@@ -16,7 +16,7 @@ pick_a_plan(
 \arguments{
 \item{plans}{a redist_plans object}
 
-\item{map}{}
+\item{map}{a redist_map object}
 
 \item{counties}{A column in map with county names. Defaults to NULL and will 
 assume each row in map is its own county if left NULL}
