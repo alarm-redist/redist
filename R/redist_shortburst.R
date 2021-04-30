@@ -451,6 +451,7 @@ scorer_status_quo = function(map, existing_plan=get_existing(map)) {
 #' @name scorer-arith
 #' @concept prepare
 #' @md
+#' @returns function of class redist_scorer
 NULL
 
 #' @rdname scorer-arith
