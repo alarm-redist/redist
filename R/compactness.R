@@ -162,6 +162,13 @@ redist.compactness <- function(shp = NULL,
     } else if (!inherits(shp, 'sf')) {
       stop('Please provide "shp" as a SpatialPolygonsDataFrame or sf object.')
     }
+    
+    
+    if (isTRUE(st_is_longlat(st_geometry(shp)))) {
+      if (!is.null(st_crs(shp)) & !is.null(planarize) && !isFALSE(planarize)) {
+        shp <- st_transform(shp, planarize)
+      }
+    }
   }
 
   if (inherits(shp, 'redist_map') & missing(adj)) {
@@ -183,12 +190,6 @@ redist.compactness <- function(shp = NULL,
 
 
 
-
-  if (isTRUE(st_is_longlat(st_geometry(shp)))) {
-    if (!is.null(st_crs(shp)) & !is.null(planarize) && !isFALSE(planarize)) {
-      shp <- st_transform(shp, planarize)
-    }
-  }
 
   if("all" %in% measure){
     measure <-  c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull",
