@@ -43,7 +43,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
         Rcout << "Sampling " << N-1 << " " << V << "-unit maps with " << n_distr
               << " districts and population between " << lower << " and " << upper << ".\n";
         if (cg.size() > 1)
-            Rcout << "Ensuring no more than " << n_distr - 1 << " splits of the "
+            Rcout << "Sampling hierarchically with respect to the "
                   << cg.size() << " administrative units.\n";
     }
 
