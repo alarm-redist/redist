@@ -16,6 +16,12 @@
 #' @param chains the number of parallel chains to run. Each chain will have
 #'   `nsims` draws. If `init_plan` is sampled, each chain will be initialized
 #'   with its own sampled plan.
+#' @param init_plan The initial state of the map, provided as a single vector
+#'   to be shared across all chains, or a matrix with `chains` columns.
+#'   If not provided, will default to the reference map of the map object, or if
+#'   none exists, will sample a random initial state using redist_smc. You can
+#'   also request a random initial state for each chain by setting
+#'   init_plan="sample".
 #' @param ncores the number of parallel processes to run. Defaults to the
 #'   maximum available.
 #' @param cl_type the cluster type (see [makeCluster()]). Safest is `"PSOCK"`,
@@ -66,7 +72,13 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
         else
             init_names = rep(init_name, chains)
     } else if (!is.null(init_plan)) {
-        init_plans = matrix(rep(as.integer(init_plan), chains), ncol=chains)
+        if (is.matrix(init_plan)) {
+            stopifnot(ncol(init_plan) == chains)
+            init_plans = init_plan
+        } else {
+            init_plans = matrix(rep(as.integer(init_plan), chains), ncol=chains)
+        }
+
         if (is.null(init_name))
             init_names = rep(exist_name, chains)
         else

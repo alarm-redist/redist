@@ -35,10 +35,12 @@ with its own sampled plan.}
 
 \item{warmup}{The number of warmup samples to discard.}
 
-\item{init_plan}{The initial state of the map. If not provided, will default to
-the reference map of the \code{map} object, or if none exists, will sample
-a random initial state using \code{\link{redist_smc}}. You can also request
-a random initial state by setting \code{init_plan="sample"}.}
+\item{init_plan}{The initial state of the map, provided as a single vector
+to be shared across all chains, or a matrix with \code{chains} columns.
+If not provided, will default to the reference map of the map object, or if
+none exists, will sample a random initial state using redist_smc. You can
+also request a random initial state for each chain by setting
+init_plan="sample".}
 
 \item{counties}{A vector containing county (or other administrative or
 geographic unit) labels for each unit, which may be integers ranging from 1
