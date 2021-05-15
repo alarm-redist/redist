@@ -1,3 +1,7 @@
+# redist 3.0.7
+* All redist 3.0.2 changes
+* Various changes to come in line with new CRAN policies since initial submission
+
 # redist 3.0.2
 * Fix bugs (#60, #61, #62, #70, #71, #72), including s2 compatibility, Solaris fixes, and improved dplyr verb robustness.
 
