@@ -4,7 +4,7 @@ OPT = -O3 -DB_64 -I.
 all: enumpart
 
 enumpart: enumpart.cpp GraphPartitionSpec.hpp GraphPartitionSpecL31.hpp BigInteger.hpp RandomSample.hpp testGP.hpp SAPPOROBDD/bddc.o SAPPOROBDD/BDD.o SAPPOROBDD/ZBDD.o
-	g++ enumpart.cpp SAPPOROBDD/bddc.o SAPPOROBDD/BDD.o SAPPOROBDD/ZBDD.o -o enumpart -I$(TDZDD_DIR) -std=c++11 -O3 -DB_64 -DNDEBUG -lpsapi
+	g++ enumpart.cpp SAPPOROBDD/bddc.o SAPPOROBDD/BDD.o SAPPOROBDD/ZBDD.o -o enumpart -I$(TDZDD_DIR) -std=c++11 -O3 -DB_64 -DNDEBUG
 
 enumpart-debug: enumpart.cpp GraphPartitionSpec.hpp GraphPartitionSpecL31.hpp testGP.hpp
 	g++ enumpart.cpp -o enumpart-debug -I$(TDZDD_DIR) -DDEBUG
