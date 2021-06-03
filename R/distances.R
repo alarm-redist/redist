@@ -158,5 +158,44 @@ plan_distances = function(plans, measure="variation of information", ncores=1) {
     redist.distances(get_plans_matrix(plans), measure, ncores=ncores, total_pop=pop)[[1]]
 }
 
+#' Calculate the diversity of a set of plans
+#'
+#' Returns the off-diagonal elements of the variation of information distance
+#' matrix for a sample of plans, which can be used as a diagnostic measure to
+#' assess the diversity of a set of plans. If there are many values close to zero,
+#' then the sample has many similar plans and may not be a good approximation
+#' to the target distribution.
+#'
+#' @param plans a \code{\link{redist_plans}} object.
+#' @param n_max the maximum number of plans to sample in computing the
+#'   distances. Larger numbers will have less sampling error but will require
+#'   more computation time.
+#' @param ncores the number of cores to use in computing the distances.
+#'
+#' @return A numeric vector of off-diagonal variation of information distances.
+#'
+#' @examples
+#' data(iowa)
+#' ia <- redist_map(iowa, existing_plan=cd_2010, pop_tol=0.01)
+#' plans <- redist_smc(ia, 100, silent=T)
+#' hist(plans_diversity(plans))
+#'
+#' @concept analyze
+#' @export
+plans_diversity = function(plans, n_max=100, ncores=1) {
+    m = get_plans_matrix(plans)
+    n_eval = min(n_max, ncol(m))
+    idx = sample.int(ncol(m), n_eval, replace=FALSE)
+
+    ndists = max(m[, 1])
+    pop = attr(plans, "prec_pop")
+    if (is.null(pop))
+        stop("Precinct population must be stored in `prec_pop` attribute of `plans` object")
+
+    dists = redist.distances(m[, idx], "variation of information",
+                             ncores=ncores, total_pop=pop)$VI
+    0.5 * dists[upper.tri(dists)] / log(ndists)
+}
+
 
 utils::globalVariables(names = "map")

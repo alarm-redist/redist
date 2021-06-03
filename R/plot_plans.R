@@ -32,7 +32,7 @@ plot.redist_plans = function(x, ..., type="distr_qtys") {
             return(redist.plot.distr_qtys(x, total_pop, size=0.1))
         n = length(wgts)
         iqr = IQR(wgts)
-        bins = max(round(diff(range(wgts)) / (2 * iqr / n^(1/3))), 3)
+        bins = min(max(round(diff(range(wgts)) / (2 * iqr / n^(1/3))), 3), 100)
         if (iqr == 0) bins = 3
 
         ggplot(NULL, aes(x=wgts)) +
