@@ -240,7 +240,7 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
         plans = plans[, sample(nsims, nsims, replace=T, prob=mod_wgt), drop=FALSE]
     }
 
-    if (n_eff/nsims <= 0.05)
+    if (!is.nan(n_eff) && n_eff/nsims <= 0.05)
         warning("Less than 5% resampling efficiency. Consider weakening constraints and/or adjusting `seq_alpha`.")
 
     out = new_redist_plans(plans, map, "smc", wgt, resample,
