@@ -18,10 +18,10 @@ pick_a_plan(
 
 \item{map}{a redist_map object}
 
-\item{counties}{A column in map with county names. Defaults to NULL and will 
+\item{counties}{A column in map with county names. Defaults to NULL and will
 assume each row in map is its own county if left NULL}
 
-\item{comp}{A column in plans with compactness. Defaults to NULL and will 
+\item{comp}{A column in plans with compactness. Defaults to NULL and will
 calculate FracKept if left NULL}
 
 \item{maximize_comp}{Should comp be maximized? Defaults to TRUE.}

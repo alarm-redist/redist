@@ -17,7 +17,7 @@ persily(plan, map, counties = NULL)
 a redist_plans object with one plan
 }
 \description{
-Searches the local area for a combination of minimizing county splits, compactness, 
+Searches the local area for a combination of minimizing county splits, compactness,
 population parity, and keeping close to the original plan
 }
 \examples{
