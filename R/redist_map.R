@@ -396,6 +396,53 @@ summarise.redist_map = function(.data, ..., .groups=NULL) {
     reconstruct.redist_map(ret, .data)
 }
 
+#' @export
+#' @importFrom dplyr rename
+rename.redist_map <- function(.data, ...) {
+    ret = NextMethod()
+
+    cols = tidyselect::eval_rename(rlang::expr(c(...)), .data)
+    if (!is.na(colnum <- match(attr(.data, "adj_col"), names(.data)[cols]))) {
+        attr(.data, "adj_col") = names(cols)[colnum]
+    }
+    if (!is.na(colnum <- match(attr(.data, "pop_col"), names(.data)[cols]))) {
+        attr(.data, "pop_col") = names(cols)[colnum]
+    }
+    if (!is.na(colnum <- match(attr(.data, "existing_col"), names(.data)[cols]))) {
+        attr(.data, "existing_col") = names(cols)[colnum]
+    }
+
+    reconstruct.redist_map(ret, .data)
+}
+
+#' @export
+#' @importFrom dplyr select
+select.redist_map <- function(.data, ...) {
+    ret = NextMethod()
+
+    cols = tidyselect::eval_select(rlang::expr(c(...)), .data)
+    if (!is.na(colnum <- match(attr(.data, "adj_col"), names(.data)[cols]))) {
+        attr(.data, "adj_col") = names(cols)[colnum]
+    } else {
+        stop("Must keep `", attr(.data, "adj_col"), "` column, ",
+             "or convert to a tibble with `as_tibble()`.")
+    }
+    if (!is.na(colnum <- match(attr(.data, "pop_col"), names(.data)[cols]))) {
+        attr(.data, "pop_col") = names(cols)[colnum]
+    } else {
+        stop("Must keep `", attr(.data, "pop_col"), "` column, ",
+             "or convert to a tibble with `as_tibble()`.")
+    }
+    if (!is.na(colnum <- match(attr(.data, "existing_col"), names(.data)[cols]))) {
+        attr(.data, "existing_col") = names(cols)[colnum]
+    } else {
+        stop("Must keep `", attr(.data, "existing_col"), "` column, ",
+             "or convert to a tibble with `as_tibble()`.")
+    }
+
+    reconstruct.redist_map(ret, .data)
+}
+
 
 #' @method print redist_map
 #' @export
