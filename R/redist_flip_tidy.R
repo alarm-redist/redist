@@ -187,7 +187,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
   ndists <- attr(map, 'ndists')
 
   if (any(total_pop >= get_target(map)))
-      stop("Units ", which(pop >= get_target(map)),
+      stop("Units ", which(total_pop >= get_target(map)),
            " have population larger than the district target.\n",
            "Redistricting impossible.")
 

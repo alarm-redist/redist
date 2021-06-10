@@ -177,7 +177,7 @@ plan_distances = function(plans, measure="variation of information", ncores=1) {
 #' @examples
 #' data(iowa)
 #' ia <- redist_map(iowa, existing_plan=cd_2010, pop_tol=0.01)
-#' plans <- redist_smc(ia, 100, silent=T)
+#' plans <- redist_smc(ia, 100, silent=TRUE)
 #' hist(plans_diversity(plans))
 #'
 #' @concept analyze
