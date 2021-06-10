@@ -52,7 +52,7 @@ pick_a_plan <- function(plans, map, counties = NULL, comp = NULL,
   orig_rows <- prior_rows <- nrow(plans)
   while (prior_rows > 0.05 * orig_rows) {
 
-    plans <- plans %>% filter(.data$parity <= quantile(parity, cut_point))
+    plans <- plans %>% filter(.data$parity <= quantile(.data$parity, cut_point))
 
     if (maximize_comp) {
       plans <- plans %>% filter(.data$compactness >= quantile(comp, 1 - cut_point))

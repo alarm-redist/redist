@@ -126,7 +126,9 @@ compare_plans = function(plans, set1, set2, shp=NULL, plot="fill", thresh=0.1,
 
     if (inherits(shp, "sf")) {
         if (plot == "line") {
-            edges = dplyr::select(shp, attr(shp, "sf_column")) %>%
+            edges = dplyr::as_tibble(shp) %>%
+                sf::st_as_sf() %>%
+                dplyr::select(attr(shp, "sf_column")) %>%
                 sf::st_intersection() %>%
                 dplyr::as_tibble() %>%
                 dplyr::filter(.data$n.overlaps == 2) %>%

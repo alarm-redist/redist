@@ -52,7 +52,7 @@ validate_redist_plans = function(x) {
 }
 
 reconstruct.redist_plans = function(data, old) {
-    if (colnames(data)[1] != "draw")
+    if (!("draw" %in% colnames(data)))
         return(data)
 
     if (!missing(old)) {
@@ -191,7 +191,9 @@ weights.redist_plans = function(object, ...) {
 get_n_ref = function(x) {
     stopifnot(inherits(x, "redist_plans"))
     plans_m = get_plans_matrix(x)
-    if (is.null(colnames(plans_m))) 0 else sum(nchar(colnames(plans_m))>0)
+    if (is.null(colnames(plans_m))) return(0)
+    refs = which(nchar(colnames(plans_m)) > 0)
+    length(unique(colnames(plans_m)[refs]))
 }
 
 #' Extract the sampling information from a redistricting simulation
@@ -263,7 +265,9 @@ get_mh_acceptance_rate <- function(plans){
 dplyr_row_slice.redist_plans = function(data, i, ...) {
     if (is.logical(i)) i = which(i)
 
-    draws_left = unique(as.integer(data$draw[i]))
+    draws = rle(as.integer(data$draw))
+    draws$values = seq_along(draws$values)
+    draws_left = unique(inverse.rle(draws)[i])
     y = vctrs::vec_slice(data, i)
     plans_m = get_plans_matrix(data)
 
@@ -271,9 +275,8 @@ dplyr_row_slice.redist_plans = function(data, i, ...) {
     # this check is necessary but not sufficient for what we want
     if ("district" %in% colnames(y)) {
         distrs = table(as.integer(y$district))
-        n_draws = length(draws_left)
         ndists = max(plans_m[,1])
-        if (!all.equal(range(distrs), rep(n_draws, 2)) || length(distrs) != ndists)
+        if (any(distrs != distrs[1]) || length(distrs) != ndists)
             warning("Some districts may have been dropped. ",
                     "This will prevent summary statistics from working correctly.\n",
                     "To avoid this message, coerce using `as_tibble`.")
@@ -281,7 +284,7 @@ dplyr_row_slice.redist_plans = function(data, i, ...) {
 
     if (length(draws_left) != ncol(plans_m)) {
         attr(y, "wgt") = attr(y, "wgt")[draws_left]
-        y = set_plan_matrix(y, plans_m[,draws_left, drop=F])
+        y = set_plan_matrix(y, plans_m[, draws_left, drop=F])
     }
 
     if (is.factor(y$draw)) {
@@ -296,6 +299,64 @@ dplyr_row_slice.redist_plans = function(data, i, ...) {
 #' @export
 dplyr_reconstruct.redist_plans = function(data, template) {
     reconstruct.redist_plans(data, template)
+}
+
+#' Combine multiple sets of redistricting plans
+#'
+#' Only works when all the sets are compatible---generated from the same map,
+#' with the same number of districts.  Sets of plans will be indexed by the
+#' `chain` column.
+#'
+#' @param ... The [`redist_plans`] objects to combine.  If named arguments are
+#' provided, the names will be used in the `chain` column; otherwise, numbers
+#' will be used for the `chain` column.
+#' @param deparse.level Ignored.
+#'
+#' @return A new [`redist_plans`] object.
+#'
+#' @md
+#' @concept analyze
+#' @export
+rbind.redist_plans = function(..., deparse.level=1) {
+    objs = rlang::list2(...)
+    n_obj = length(objs)
+    if (n_obj == 1) return(objs[[1]])
+
+    # check types
+    n_prec = nrow(get_plans_matrix(objs[[1]]))
+    prec_pop = attr(objs[[1]], "prec_pop")
+    constr = attr(objs[[1]], "constraints")
+    resamp = attr(objs[[1]], "resampled")
+    comp = attr(objs[[1]], "compactness")
+    for (i in 2:n_obj) {
+        if (nrow(get_plans_matrix(objs[[i]])) != n_prec)
+            stop("Number of precincts must match for all sets of plans.")
+        if (!identical(attr(objs[[i]], "prec_pop"), prec_pop))
+            stop("Precinct populations must match for all sets of plans.")
+        if (attr(objs[[i]], "resampled") != resamp)
+            stop("Some sets of plans are resampled while others are not.")
+        if (attr(objs[[i]], "compactness") != comp) {
+            warning("Compactness values differ across sets of plans.")
+            comp = NA
+        }
+        if (!identical(attr(objs[[i]], "constraints"), constr)) {
+            warning("Constraints do not match for all sets of plans.")
+            constr = NA
+        }
+    }
+
+    ret = bind_rows(lapply(objs, dplyr::as_tibble), .id="chain")
+    ret = reconstruct.redist_plans(ret, objs[[1]])
+    attr(ret, "adapt_k_thresh") = NA
+    attr(ret, "seq_alpha") = NA
+    attr(ret, "pop_temper") = NA
+    attr(ret, "compactness") = comp
+    attr(ret, "constraints") = constr
+    attr(ret, "plans") = do.call(cbind, lapply(objs, function(x) get_plans_matrix(x)))
+    attr(ret, "wgt") = do.call(c, lapply(objs, function(x) get_plans_weights(x)))
+    attr(ret, "n_eff") = sum(do.call(c, lapply(objs, function(x) attr(x, "n_eff"))))
+
+    ret
 }
 
 

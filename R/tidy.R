@@ -209,7 +209,7 @@ add_reference = function(plans, ref_plan, name=NULL) {
     x = dplyr::bind_rows(
             tibble(district = 1:ndists,
                            total_pop = as.numeric(distr_pop)),
-            plans[,-1] # 1 is 'draw' by defn
+            plans[, -match("draw", names(plans))]
         ) %>%
         dplyr::mutate(draw = new_draw, .before="district")
 
