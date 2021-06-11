@@ -30,9 +30,8 @@ test_that("Not egregiously incorrect sampling accuracy (5-prec)", {
     g_pop = c(2, 1, 1, 1, 1)
     out = redist.smc(g, g_pop, 20e3, 2, pop_tol=0.5, compactness=0,
                      adapt_k_thresh=1, resample=F, silent=T)
-    bad_plans = which(is.nan(out$orig_wgt))
-    types = apply(out$plans[,-bad_plans], 2, function(x) 1L + (x[1] == x[2]))
-    wgts = out$orig_wgt[-bad_plans]
+    types = apply(out$plans, 2, function(x) 1L + (x[1] == x[2]))
+    wgts = out$orig_wgt
     avg = weighted.mean(types, wgts)
     se = sqrt(sum((types - avg)^2 * (wgts / sum(wgts))^2))
     expect_true(abs(avg - 1.5)/se <= 5)
