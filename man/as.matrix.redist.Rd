@@ -11,6 +11,9 @@
 
 \item{\dots}{additional arguments}
 }
+\value{
+matrix of district assignments
+}
 \description{
 Extract the redistricting matrix from a \code{redist} object
 }

@@ -195,7 +195,7 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
             }
 
             if(!is.null(rngseed) & is.numeric(rngseed)){
-                .Random.seed <- algout$randseed
+                set.seed(algout$randseed)
             }
 
             rm(list = "algout")
@@ -229,7 +229,7 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
                 }
 
                 if(!is.null(rngseed) & is.numeric(rngseed)){
-                    .Random.seed <- algout$randseed
+                    set.seed(algout$randseed)
                 }
 
                 rm(list = "algout")
@@ -409,7 +409,7 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
 
         ## Save random number state if setting the seed
         if(!is.null(rngseed)){
-            algout$randseed <- .Random.seed
+            algout$randseed <- .Random.seed[3]
         }
 
         ## Save output
@@ -512,6 +512,7 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
 #'
 #' @examples
 #' \dontrun{
+#' # Cannot run on machines without Rmpi
 #' data(fl25)
 #' data(fl25_enum)
 #' data(fl25_adj)
@@ -733,6 +734,7 @@ ecutsAppend <- function(algout,ndata){
 #' @concept simulate
 #' @examples
 #' \dontrun{
+#' # Cannot run on machines without Rmpi
 #' data(fl25)
 #' data(fl25_enum)
 #' data(fl25_adj)

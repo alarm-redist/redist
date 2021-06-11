@@ -59,7 +59,7 @@
 #' (2020). Voting Rights, Markov Chains, and Optimization by Short Bursts. arXiv
 #' preprint arXiv:2011.02288.
 #'
-#' @examples \dontrun{
+#' @examples \donttest{
 #' data(iowa)
 #'
 #' iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.01)
@@ -304,7 +304,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
 #' `group_pct`, and `polsby_popper` and smaller values are better for `splits` and `pop_dev`.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' data(iowa)
 #' iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05, total_pop = pop)
 #'
@@ -455,6 +455,7 @@ scorer_status_quo = function(map, existing_plan=get_existing(map)) {
 #' @name scorer-arith
 #' @concept prepare
 #' @md
+#' @returns function of class redist_scorer
 NULL
 
 #' @rdname scorer-arith

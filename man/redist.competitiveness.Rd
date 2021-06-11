@@ -29,12 +29,11 @@ Currently only implements the competitiveness function in equation (5)
 of Cho & Liu 2016.
 }
 \examples{
-\dontrun{
 data(fl25)
 data(fl25_enum)
 
 plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
 comp <- redist.competitiveness(plans_05, fl25$mccain, fl25$obama)
-}
+
 }
 \concept{analyze}

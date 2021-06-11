@@ -20,6 +20,9 @@
 
 \item{...}{passed on to \code{\link[=compare_plans]{compare_plans()}}}
 }
+\value{
+ggplot comparison plot
+}
 \description{
 Plot a plan classification
 }

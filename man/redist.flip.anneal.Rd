@@ -139,6 +139,9 @@ Default is \code{TRUE}.}
 \item{minorityprop}{numeric vector of targeted minority proportions for the top
 districts with that proportion}
 }
+\value{
+list of class redist
+}
 \description{
 \code{redist.flip.anneal} simulates congressional redistricting plans
 using Markov chain Monte Carlo methods coupled with simulated annealing.

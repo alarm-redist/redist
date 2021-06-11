@@ -15,6 +15,9 @@
 \code{redist.plot.}, prepended to it; e.g., use \code{type="plans"} to call
 \code{\link{redist.plot.plans}}.}
 }
+\value{
+ggplot
+}
 \description{
 If no arguments are passed, defaults to plotting the sampling weights for
 the \code{\link{redist_plans}} object. If no weights exist, plots district

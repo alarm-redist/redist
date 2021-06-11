@@ -20,6 +20,9 @@
 
 \item{fn1}{a `redist_scorer` function, from [`scorers`]}
 }
+\value{
+function of class redist_scorer
+}
 \description{
 \code{redist_scorer} functions may be multiplied by constants and/or added
 together to form linear combinations.

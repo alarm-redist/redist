@@ -971,11 +971,11 @@ List calc_psipartisan(arma::vec current_dists,
   
   for(int r = 0; r < current_dists.size(); r++){
     //current
-    rcounts(current_dists(r)-1, 0) += rvote(r);
-    dcounts(current_dists(r)-1, 1) += dvote(r);
+    rcounts(current_dists(r), 0) += rvote(r);
+    dcounts(current_dists(r), 1) += dvote(r);
     // new
-    rcounts(new_dists(r)-1, 1) += rvote(r);
-    dcounts(new_dists(r)-1, 1) += dvote(r);
+    rcounts(new_dists(r), 1) += rvote(r);
+    dcounts(new_dists(r), 1) += dvote(r);
   }
   // Step 2: Compute Wasted Votes
   IntegerMatrix rwaste(ndists, 2);

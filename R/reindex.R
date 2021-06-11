@@ -9,11 +9,11 @@
 #' @return integer matrix
 #' @export
 #'
-#' @examples \dontrun{
+#' @examples
 #' cds <- matrix(c(rep(c(4L,5L,2L,1L,3L),5),
 #' rep(c(5L,4L,3L,2L,1L),2), rep(c(4L,5L,2L,1L,3L),3)), nrow = 25)
 #' redist.reorder(cds)
-#' }
+#' 
 redist.reindex <- function(plans){
   # Check inputs
   if(missing(plans)){
@@ -44,7 +44,7 @@ redist.reindex <- function(plans){
 #'
 #' @concept prepare
 #' @export
-#' @examples \dontrun{
+#' @examples
 #' data(fl25_enum)
 #' plan <- fl25_enum$plans[, 5118]
 #' # Subset based on something:
@@ -52,7 +52,7 @@ redist.reindex <- function(plans){
 #' plan <- redist.sink.plan(plan)
 #' # Now plan can be used with redist.flip()
 #' plan
-#' }
+#'
 #'
 redist.sink.plan <- function(plan){
   if(class(plan) %in% c('character', 'numeric','integer')){

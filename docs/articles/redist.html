@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.7</span>
       </span>
     </div>
 
@@ -112,7 +112,7 @@
 
       
 
-      </header><script src="redist_files/header-attrs-2.7/header-attrs.js"></script><div class="row">
+      </header><script src="redist_files/header-attrs-2.8/header-attrs.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Introduction to redist</h1>
@@ -301,7 +301,7 @@
 <h2 class="hasAnchor">
 <a href="#pre-processing" class="anchor"></a>Pre-processing</h2>
 <p>Often, we want to only analyze a portion of a map, or hold some districts fixed while others are re-simulated. We may also want to implement a status-quo-type constraint that encourages simulated districts to be close to a reference plan. This can be accomplished by freezing the “cores” of each district.</p>
-<p>All of these operations fall under the umbrella of map pre-processing, and <code>redist</code> is well-equipped to handle them. You can use familiar <code>dplyr</code> verbs like <code><a href="https://dplyr.tidyverse.org/reference/filter.html">filter()</a></code> and <code><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize()</a></code>, along with new <code>redist</code> operations like <code><a href="../reference/freeze.html">freeze()</a></code>, <code><a href="../reference/make_cores.html">make_cores()</a></code>, and <code><a href="../reference/merge_by.html">merge_by()</a></code>, to operate on <code>redist_map</code> objects. The package will make the appropriate modifications to the geometry and adjacency graph in the background.</p>
+<p>All of these operations fall under the umbrella of map pre-processing, and <code>redist</code> is well-equipped to handle them. You can use familiar <code>dplyr</code> verbs like <code><a href="https://rdrr.io/pkg/dplyr/man/filter.html">filter()</a></code> and <code><a href="https://rdrr.io/pkg/dplyr/man/summarise.html">summarize()</a></code>, along with new <code>redist</code> operations like <code><a href="../reference/freeze.html">freeze()</a></code>, <code><a href="../reference/make_cores.html">make_cores()</a></code>, and <code><a href="../reference/merge_by.html">merge_by()</a></code>, to operate on <code>redist_map</code> objects. The package will make the appropriate modifications to the geometry and adjacency graph in the background.</p>
 <p>The <a href="map-preproc.html">map pre-processing vignette</a> contains more information and examples about these operations.</p>
 </div>
 <div id="exploring-the-geography" class="section level2">
@@ -435,7 +435,7 @@
 <code class="sourceCode R"><span class="va">county_perims</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist.prep.polsbypopper.html">redist.prep.polsbypopper</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">iowa_map</span><span class="op">$</span><span class="va">adj</span><span class="op">)</span>
 
 <span class="va">iowa_plans</span> <span class="op">=</span> <span class="va">iowa_plans</span> <span class="op">%&gt;%</span>
-    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>pop_dev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html">abs</a></span><span class="op">(</span><span class="va">total_pop</span> <span class="op">/</span> <span class="fu"><a href="../reference/get_target.html">get_target</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span>,
+    <span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/mutate.html">mutate</a></span><span class="op">(</span>pop_dev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html">abs</a></span><span class="op">(</span><span class="va">total_pop</span> <span class="op">/</span> <span class="fu"><a href="../reference/get_target.html">get_target</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span>,
            comp <span class="op">=</span> <span class="fu"><a href="../reference/distr_compactness.html">distr_compactness</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="st">"PolsbyPopper"</span>, perim_df<span class="op">=</span><span class="va">county_perims</span><span class="op">)</span>,
            pct_min <span class="op">=</span> <span class="fu"><a href="../reference/group_frac.html">group_frac</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">vap</span> <span class="op">-</span> <span class="va">wvap</span>, <span class="va">vap</span><span class="op">)</span>,
            pct_dem <span class="op">=</span> <span class="fu"><a href="../reference/group_frac.html">group_frac</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">dem_08</span>, <span class="va">dem_08</span> <span class="op">+</span> <span class="va">rep_08</span><span class="op">)</span><span class="op">)</span>
@@ -460,8 +460,8 @@
 <span class="co">#&gt; # … with 3,994 more rows</span></code></pre></div>
 <p>From there, it’s quick to turn these into plan-level summary statistics.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">plan_sum</span> <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html">group_by</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">draw</span><span class="op">)</span> <span class="op">%&gt;%</span>
-    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize</a></span><span class="op">(</span>max_dev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html">max</a></span><span class="op">(</span><span class="va">pop_dev</span><span class="op">)</span>,
+<code class="sourceCode R"><span class="va">plan_sum</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/group_by.html">group_by</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">draw</span><span class="op">)</span> <span class="op">%&gt;%</span>
+    <span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/summarise.html">summarize</a></span><span class="op">(</span>max_dev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html">max</a></span><span class="op">(</span><span class="va">pop_dev</span><span class="op">)</span>,
               avg_comp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="va">comp</span><span class="op">)</span>,
               max_pct_min <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html">max</a></span><span class="op">(</span><span class="va">pct_min</span><span class="op">)</span>,
               dem_distr <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">pct_dem</span> <span class="op">&gt;</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span>

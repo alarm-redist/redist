@@ -29,6 +29,9 @@ rather than a static map. Ignores \code{adj} and \code{by_distr}.}
 Useful parameters may include \code{zoom_to}, \code{boundaries}, and
 \code{title}.}
 }
+\value{
+ggplot2 object
+}
 \description{
 Plot a \code{redist_map}
 }
@@ -42,7 +45,6 @@ data(fl25_enum)
 fl25$dist <- fl25_enum$plans[, 5118]
 d <- redist_map(fl25, existing_plan = dist)
 plot(d)
-
 
 
 }

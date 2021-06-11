@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.7</span>
       </span>
     </div>
 
@@ -112,7 +112,7 @@
 
       
 
-      </header><script src="mcmc_files/header-attrs-2.7/header-attrs.js"></script><div class="row">
+      </header><script src="mcmc_files/header-attrs-2.8/header-attrs.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Redistricting with Flip MCMC</h1>
@@ -502,7 +502,7 @@
 <p>Alternatively, you can directly use functions on the <code>redist_plans</code> object. For example, if we want to measure the competitiveness of each plan:</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">tidy_sims</span> <span class="op">&lt;-</span> <span class="va">tidy_sims</span> <span class="op">%&gt;%</span> 
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>competitiveness <span class="op">=</span> <span class="fu"><a href="../reference/competitiveness.html">competitiveness</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span>, rvote <span class="op">=</span> <span class="va">rep_08</span>, dvote <span class="op">=</span> <span class="va">dem_08</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+  <span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/mutate.html">mutate</a></span><span class="op">(</span>competitiveness <span class="op">=</span> <span class="fu"><a href="../reference/competitiveness.html">competitiveness</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span>, rvote <span class="op">=</span> <span class="va">rep_08</span>, dvote <span class="op">=</span> <span class="va">dem_08</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">tidy_sims</span> <span class="op">%&gt;%</span> 
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">competitiveness</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>
@@ -654,7 +654,7 @@
   <span class="va">adj_dists</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">dists</span><span class="op">[</span><span class="va">i</span>, <span class="va">i</span> <span class="op">+</span> <span class="fl">1</span><span class="op">]</span>
   <span class="va">adj_dists_new</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">dists_new</span><span class="op">[</span><span class="va">i</span>, <span class="va">i</span> <span class="op">+</span> <span class="fl">1</span><span class="op">]</span>
 <span class="op">}</span>
-<span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span>Hamming <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">adj_dists</span>, <span class="va">adj_dists_new</span><span class="op">)</span>, 
+<span class="fu"><a href="https://rdrr.io/pkg/tibble/man/tibble.html">tibble</a></span><span class="op">(</span>Hamming <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">adj_dists</span>, <span class="va">adj_dists_new</span><span class="op">)</span>, 
        `lambda/eprob` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="st">'0/0.05'</span>, <span class="fl">2499</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="st">'2/0.10'</span>, <span class="fl">2499</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span> 
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> 
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_density.html">geom_density</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Hamming</span>, color <span class="op">=</span> <span class="va">`lambda/eprob`</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> 
@@ -669,10 +669,10 @@
 <p>Sometimes a starting map sits in a neighborhood of maps that isn’t very conducive to using it as a starting point. This is most often characterized by running a single iteration that runs (seemingly) forever. A typical fix for this is to weaken the population tolerance and use a Gibbs constraint to pull the simulations back into the target range. I’ve done this for the tuning example, even though it’s unnecessary.</p>
 <p>After simulating, if there is a hard constraint to consider, we can check the parities:</p>
 <div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">sims</span> <span class="op">&lt;-</span> <span class="va">sims</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>par <span class="op">=</span> <span class="fu"><a href="../reference/redist.parity.html">plan_parity</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">sims</span> <span class="op">&lt;-</span> <span class="va">sims</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/mutate.html">mutate</a></span><span class="op">(</span>par <span class="op">=</span> <span class="fu"><a href="../reference/redist.parity.html">plan_parity</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p>And then we can subset to the correct space.</p>
 <div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">sims</span> <span class="op">&lt;-</span> <span class="va">sims</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="va">par</span> <span class="op">&lt;=</span> <span class="fl">0.01</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">sims</span> <span class="op">&lt;-</span> <span class="va">sims</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/filter.html">filter</a></span><span class="op">(</span><span class="va">par</span> <span class="op">&lt;=</span> <span class="fl">0.01</span><span class="op">)</span></code></pre></div>
 <p>With the right set of parameters, this will lead to a reasonable set of simulations. In this case, we end up with about 10% of the simulations when using a soft constraint, which is not uncommon. In general, you want to aim for as low as a hard population parity as possible, while using a strong weight on the Gibbs population when the hard constraint is above what’s necessary. This helps maximize the efficiency of your simulations, while allowing for additional movement between neighborhoods of valid plans.</p>
 </div>
 <div id="balancing-multiple-constraints" class="section level2">
@@ -699,34 +699,34 @@
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Starting swMH().</span>
 <span class="co">#&gt; 10 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.849246</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.894472</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 20 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.862155</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.917293</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 30 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.87813</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.928214</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 40 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.881101</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.922403</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 50 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.877878</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.926927</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 60 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.873228</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.922435</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 70 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.87777</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.920658</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 80 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.88055</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.921826</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 90 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.882713</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.924402</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 100 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.88094</span></code></pre></div>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.924962</span></code></pre></div>
 <p>Now, the interesting this here is that adding more constraints actually increased the acceptance probability. This is because correlated constraints can guide the algorithm towards high probability neighborhoods where there are multiple maps which could be considered! To address this, we might want to increase the constraint weight slightly across the board. Had the weights been far too low, we might lower them, particularly on constraints that we are not too worried about.</p>
 <div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">cons</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flip_constraints_helper.html">flip_constraints_helper</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span>,
@@ -744,45 +744,45 @@
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Starting swMH().</span>
 <span class="co">#&gt; 10 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.18593</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.59799</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 20 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.137845</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.593985</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 30 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.131886</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.57596</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 40 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.158949</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.555695</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 50 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.181181</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.555556</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 60 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.154295</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.559633</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 70 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.142244</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.563974</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 80 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.13571</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.555347</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 90 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.139522</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.545303</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 100 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.14057</span></code></pre></div>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.535768</span></code></pre></div>
 <p>For example, this new set of constraints might be a good place to simulate at.</p>
 <p>Notably, the process of tuning should be guided by the constraint outputs and their relative values. The average compactness value of edges removed that we’re constraining on has a summary like the following:</p>
 <div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">sims</span><span class="op">$</span><span class="va">constraint_compact</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's </span>
-<span class="co">#&gt;   66.00   66.00   66.00   68.71   70.00   94.00       4</span></code></pre></div>
+<span class="co">#&gt;   66.00   80.00   88.00   87.54   94.00  110.00       4</span></code></pre></div>
 <p>The population constraint can be summarized as:</p>
 <div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">sims</span><span class="op">$</span><span class="va">constraint_population</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="co">#&gt;     Min.  1st Qu.   Median     Mean  3rd Qu.     Max.     NA's </span>
-<span class="co">#&gt; 0.000055 0.014977 0.022121 0.019121 0.023430 0.027085        4</span></code></pre></div>
+<span class="co">#&gt; 0.000055 0.009544 0.015342 0.014546 0.019650 0.027775        4</span></code></pre></div>
 <p>These are measured on completely different scales, so it shouldn’t be surprising that population has a much higher weight. This is a constant difficulty in tuning, as the total number of edges on a graph or the volatility of the population isn’t something that’s easily standardized and transferred between maps, unfortunately.</p>
 <p><a href="#top">Back to top</a></p>
 </div>

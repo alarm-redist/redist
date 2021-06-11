@@ -65,10 +65,10 @@ redist.adjacency <- function(shp, plan){
 #' @concept prepare
 #' @export
 #'
-#' @examples \dontrun{
+#' @examples
 #' data(fl25_adj)
 #' redist.reduce.adjacency(fl25_adj, c(2, 3, 4, 6, 21))
-#' }
+#' 
 redist.reduce.adjacency <- function(adj, keep_rows) {
     # Check inputs:
     if (!(class(keep_rows) %in% c('numeric', 'integer'))) {

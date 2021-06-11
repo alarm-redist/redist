@@ -141,7 +141,7 @@ redist_plans = function(plans, map, algorithm, wgt=NULL, ...) {
 #'
 #' @param x the \code{redist_plans} object
 #' @param ... ignored
-#'
+#' @return matrix
 #' @concept analyze
 #' @export
 get_plans_matrix = function(x) {
@@ -150,6 +150,7 @@ get_plans_matrix = function(x) {
 }
 #' @rdname get_plans_matrix
 #' @method as.matrix redist_plans
+#' @return matrix
 #' @export
 as.matrix.redist_plans = function(x, ...) get_plans_matrix(x)
 
@@ -183,6 +184,7 @@ get_plans_weights = function(plans) {
 #' @param ... Ignored.
 #' @importFrom stats weights
 #' @method weights redist_plans
+#' @return numeric vector
 #' @export
 weights.redist_plans = function(object, ...) {
     get_plans_weights(object)
@@ -362,6 +364,7 @@ rbind.redist_plans = function(..., deparse.level=1) {
 
 #' @method print redist_plans
 #' @importFrom utils str
+#' @return prints to console
 #' @export
 print.redist_plans = function(x, ...) {
     plans_m = get_plans_matrix(x)
@@ -412,4 +415,3 @@ print.redist_plans = function(x, ...) {
 
     invisible(x)
 }
-

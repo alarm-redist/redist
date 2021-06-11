@@ -51,7 +51,7 @@ FALSE.}
 
 \item{params}{A matrix of parameter values to test, such as the output of
 \code{expand.grid}. Parameters accepted for \code{params} include \code{eprob},
-\code{lambda}, \code{popcons}, \code{beta}, and \code{constraint}.}
+\code{lambda}, \code{pop_tol}, \code{beta}, and \code{constraint}.}
 
 \item{ssdmat}{A matrix of squared distances between geographic
 units. The default is \code{NULL}.}
@@ -98,7 +98,7 @@ This function allows users to test multiple parameter settings of
 \code{redist.flip} in preparation for a longer run for analysis.
 }
 \examples{
-\dontrun{
+\donttest{
 data(fl25)
 data(fl25_enum)
 data(fl25_adj)

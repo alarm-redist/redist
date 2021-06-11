@@ -17,6 +17,7 @@ news:
  releases:
  - text: "redist 3.0"
    href: https://alarm-redist.github.io/posts/2021-04-02-redist-300/
+ cran_dates: false
 reference:
 - title: "Simulation Algorithm Implementations"
   desc: "Core functions to perform a redistricting simulation"

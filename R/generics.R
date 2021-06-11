@@ -5,13 +5,19 @@
 #' @method as.matrix redist
 #' @param x redist object
 #' @param \dots additional arguments
+#' @return matrix of district assignments
 #' @export
 as.matrix.redist = function(x, ...) {
   x$plans
 }
 
+#' Print legacy redist objects
+#' @param x redist object
+#' @param \dots additional arguments
 #' @method print redist
 #' @importFrom utils str
+#' @return prints to console
+#'
 #' @export
 print.redist = function(x, ...) {
   cat(x$nsims, " sampled plans with ",
