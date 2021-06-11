@@ -14,7 +14,7 @@
 #' rep(c(5L,4L,3L,2L,1L),2), rep(c(4L,5L,2L,1L,3L),3)), nrow = 25)
 #' redist.reorder(cds)
 #' 
-redist.reindex <- function(plans){
+redist.reorder <- function(plans){
   # Check inputs
   if(missing(plans)){
     stop('"plans" is required.')
