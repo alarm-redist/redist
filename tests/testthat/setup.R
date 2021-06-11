@@ -10,4 +10,4 @@ adj = list(1L:14L, c(0L, 3L, 15L, 16L, 17L, 18L, 19L, 20L, 21L), c(0L, 3L, 5L, 2
 pop = fl25$pop
 plans_10 = fl25_enum$plans[, fl25_enum$pop_dev <= 0.10]
 
-RNGkind("Mersenne-Twister", "Inversion", "Rejection" )
+sf::sf_use_s2(TRUE) # for sf 1.0

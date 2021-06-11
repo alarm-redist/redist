@@ -234,7 +234,8 @@ or \code{tgt_vra_other}. This can be visualized with
 \code{\link{redist.plot.penalty}}.
 }
 \examples{
-\dontrun{
+\donttest{
+set.seed(1)
 data(fl25)
 
 fl_map = redist_map(fl25, ndists=3, pop_tol=0.1)
@@ -242,11 +243,11 @@ fl_map = redist_map(fl25, ndists=3, pop_tol=0.1)
 sampled_basic = redist_smc(fl_map, 10000)
 
 sampled_constr = redist_smc(fl_map, 10000, constraints=list(
-                                incumbency = list(strength=1000, incumbents=c(3, 6, 25))
+                                incumbency = list(strength=100, incumbents=c(3, 6, 25))
                             ))
 }
 
-\dontrun{
+\donttest{
 data(fl25)
 data(fl25_adj)
 data(fl25_enum)
@@ -258,7 +259,7 @@ sampled_constr = redist.smc(fl25_adj, fl25$pop,
                             nsims=10000, ndists=3, pop_tol=0.1,
                             constraints=list(
                                 status_quo = list(strength=10, current=fl25_enum$plans[,5118]),
-                                incumbency = lsit(strength=1000, incumbents=c(3, 6, 25))
+                                incumbency = list(strength=100, incumbents=c(3, 6, 25))
                             ))
 }
 

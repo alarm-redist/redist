@@ -64,34 +64,6 @@
 #' res <- redist.rsg(adj = fl25_adj, total_pop = fl25$pop,
 #'  ndists = 3, pop_tol = 0.05)
 #'
-#' \dontrun{
-#' ### Example that generates test data from a square map with equal population
-#' districts
-#' ### Number of precincts is Nrows*Ncols
-#' ### getTest() outputs an adjacency list out of specified rows and columns
-#'
-#' genTest <- function(Nrows,Ncols){
-#' NN <- Nrows * Ncols
-#' geog <- matrix(NA,nrow=Nrows+2, ncol=Ncols+2)
-#' geog[2:(Nrows+1), 2:(Ncols+1)] <- 0:(NN-1)
-#'
-#' adj.list <- vector("list", NN)
-#'
-#' for(i in 2:(Nrows+1)){
-#'     for(j in 2:(Ncols+1)){
-#'         adj.list[[ geog[i,j] + 1 ]] <- c(geog[i-1,j],geog[i+1,j],geog[i,j-1],geog[i,j+1])
-#'     }
-#' }
-#' adj.list <- lapply(adj.list, na.omit)
-#' adj.list <- lapply(adj.list, as.numeric)
-#' return(adj.list)
-#' }
-#'
-#' ### Generate a 100x100 precinct map and redistrict it into 10 districts
-#' adj.list <- genTest(100,100)
-#' population <- rep(300,length(adj.list))
-#' tmp <- redist.rsg(adj.list, population, 10, 0.05)
-#' }
 #' @concept simulate
 #' @export
 redist.rsg <- function(adj, total_pop, ndists, pop_tol,

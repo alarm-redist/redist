@@ -83,12 +83,11 @@ as the "Gerrymandering Index" and is sometimes presented as this value divided b
 SmoothedSeat computes the Smoothed Seat Count Deviation (0-1, smaller is R Bias, bigger is D Bias).
 }
 \examples{
-\dontrun{
 data(fl25)
 data(fl25_enum)
 plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
 redist.metrics(plans_05, measure = 'all', rvote = fl25$mccain, dvote = fl25$obama)
-}
+
 }
 \references{
 Jonathan N. Katz, Gary King, and Elizabeth Rosenblatt. 2020.

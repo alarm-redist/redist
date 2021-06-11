@@ -272,7 +272,12 @@ classify_plans = function(dist_mat, k=8, method="complete") {
 }
 
 
+#' Print redist_classified objects
 #' @export
+#' @param x redist_classified object
+#' @param \dots additional arguments 
+#' @return prints to console
+#'
 print.redist_classified = function(x, ...) {
     n_split = length(x$splits)
     cat(length(x$groups), "plans classified into", n_split+1L, "groups.\n")
@@ -298,6 +303,8 @@ print.redist_classified = function(x, ...) {
 #'   `plot`.
 #' @param which indices of the splits to plot. Defaults to all
 #' @param ... passed on to [compare_plans()]
+#'
+#' @return ggplot comparison plot
 #'
 #' @concept analyze
 #' @md

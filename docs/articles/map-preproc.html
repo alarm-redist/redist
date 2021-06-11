@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.7</span>
       </span>
     </div>
 
@@ -112,7 +112,7 @@
 
       
 
-      </header><script src="map-preproc_files/header-attrs-2.7/header-attrs.js"></script><div class="row">
+      </header><script src="map-preproc_files/header-attrs-2.8/header-attrs.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Map Pre-processing for Special Constraints</h1>
@@ -140,7 +140,7 @@
 
 <span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://alarm-redist.github.io/redist/">redist</a></span><span class="op">)</span>
 
-<span class="va">data_url</span> <span class="op">=</span> <span class="st">"https://github.com/CoryMcCartan/redist-data/raw/main/data/king_county.rds"</span>
+<span class="va">data_url</span> <span class="op">=</span> <span class="st">"https://github.com/alarm-redist/redist-data/raw/main/data/king_county.rds"</span>
 <span class="va">data_path</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html">tempfile</a></span><span class="op">(</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/utils/download.file.html">download.file</a></span><span class="op">(</span><span class="va">data_url</span>, <span class="va">data_path</span><span class="op">)</span>
 <span class="va">king_shp</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html">readRDS</a></span><span class="op">(</span><span class="va">data_path</span><span class="op">)</span>
@@ -207,13 +207,13 @@
 <div id="subsetting" class="section level1">
 <h1 class="hasAnchor">
 <a href="#subsetting" class="anchor"></a>Subsetting</h1>
-<p>Often, we wish to restrict our analysis to a part of a map or only a few of the districts. This is supported in <code>redist</code> using the <code><a href="https://dplyr.tidyverse.org/reference/filter.html">filter()</a></code> function from <a href="https://dplyr.tidyverse.org/"><code>dplyr</code></a>. The package’s version of <code><a href="https://dplyr.tidyverse.org/reference/filter.html">filter()</a></code> will automatically update the adjacency graph, the number of districts, and the relevant population bounds.</p>
+<p>Often, we wish to restrict our analysis to a part of a map or only a few of the districts. This is supported in <code>redist</code> using the <code><a href="https://rdrr.io/pkg/dplyr/man/filter.html">filter()</a></code> function from <a href="https://dplyr.tidyverse.org/"><code>dplyr</code></a>. The package’s version of <code><a href="https://rdrr.io/pkg/dplyr/man/filter.html">filter()</a></code> will automatically update the adjacency graph, the number of districts, and the relevant population bounds.</p>
 <div id="specific-districts" class="section level2">
 <h2 class="hasAnchor">
 <a href="#specific-districts" class="anchor"></a>Specific districts</h2>
 <p>Suppose we wanted to study districts 2, 4, and 8, which cover most of Seattle.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="va">king</span>, <span class="va">distr</span> <span class="op">%in%</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">4</span>, <span class="fl">8</span><span class="op">)</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/filter.html">filter</a></span><span class="op">(</span><span class="va">king</span>, <span class="va">distr</span> <span class="op">%in%</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">4</span>, <span class="fl">8</span><span class="op">)</span><span class="op">)</span>
 <span class="co">#&gt; A redist_map object with 960 units and 12 fields</span>
 <span class="co">#&gt; To be partitioned into 3 districts with population between 213,049 - 0.9908519% and 213,049 + 2.358299%</span>
 <span class="co">#&gt; With geometry:</span>
@@ -241,19 +241,19 @@
 <a href="#dealing-with-water-and-islands" class="anchor"></a>Dealing with water and islands</h2>
 <p>Another way we might want to subset would be to cut out the precincts which are just water, so that districts won’t unnecessarily cross bodies of water. Of course, we’ll have to ensure that Vashon Island is still connected to the mainland by at least one precinct. We’ll start by subsetting to the water precincts and plotting labels.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="va">king</span>, <span class="va">pct_water</span> <span class="op">&gt;=</span> <span class="fl">0.99</span>, <span class="va">pop</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html">geom_sf_text</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>label<span class="op">=</span><span class="va">id</span><span class="op">)</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/filter.html">filter</a></span><span class="op">(</span><span class="va">king</span>, <span class="va">pct_water</span> <span class="op">&gt;=</span> <span class="fl">0.99</span>, <span class="va">pop</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html">geom_sf_text</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>label<span class="op">=</span><span class="va">id</span><span class="op">)</span><span class="op">)</span>
 <span class="co">#&gt; Warning in dplyr_row_slice.redist_map(.data, loc, preserve = .preserve): Your subset was not based on districts. Please use `set_pop_tol(map)`</span>
 <span class="co">#&gt;               to update your `redist_map` object or create a new `redist_map`</span>
 <span class="co">#&gt;               object with the correct number of districts.</span></code></pre></div>
 <p><img src="map-preproc_files/figure-html/king-water-1.png" width="700"></p>
 <p>We see that by removing all water precincts except WVPS34 and WVSP34, we can maintain a connection between the island and the mainland (incidentally, the state ferry connecting the island to Seattle runs through these precincts).</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">water_prec</span> <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="va">king</span>, <span class="va">pct_water</span> <span class="op">&gt;=</span> <span class="fl">0.99</span>, <span class="va">pop</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/pull.html">pull</a></span><span class="op">(</span><span class="va">id</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">water_prec</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/filter.html">filter</a></span><span class="op">(</span><span class="va">king</span>, <span class="va">pct_water</span> <span class="op">&gt;=</span> <span class="fl">0.99</span>, <span class="va">pop</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/pull.html">pull</a></span><span class="op">(</span><span class="va">id</span><span class="op">)</span>
 <span class="co">#&gt; Warning in dplyr_row_slice.redist_map(.data, loc, preserve = .preserve): Your subset was not based on districts. Please use `set_pop_tol(map)`</span>
 <span class="co">#&gt;               to update your `redist_map` object or create a new `redist_map`</span>
 <span class="co">#&gt;               object with the correct number of districts.</span>
 <span class="va">water_prec</span> <span class="op">=</span> <span class="fu"><a href="https://generics.r-lib.org/reference/setops.html">setdiff</a></span><span class="op">(</span><span class="va">water_prec</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"WVPS34"</span>, <span class="st">"WVSP34"</span><span class="op">)</span><span class="op">)</span>
-<span class="va">king_land</span> <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="va">king</span>, <span class="op">!</span><span class="op">(</span><span class="va">id</span> <span class="op">%in%</span> <span class="va">water_prec</span><span class="op">)</span><span class="op">)</span>
+<span class="va">king_land</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/filter.html">filter</a></span><span class="op">(</span><span class="va">king</span>, <span class="op">!</span><span class="op">(</span><span class="va">id</span> <span class="op">%in%</span> <span class="va">water_prec</span><span class="op">)</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">king_land</span><span class="op">)</span></code></pre></div>
 <p><img src="map-preproc_files/figure-html/king-land-1.png" width="700"></p>
 <p>Zooming in again to view the adjacency graph in the city of Seattle, we see that the graph has been appropriately edited to remove the water precincts.</p>
@@ -265,7 +265,7 @@
 <div id="merging" class="section level1">
 <h1 class="hasAnchor">
 <a href="#merging" class="anchor"></a>Merging</h1>
-<p>Often, we want to merge some units together to form larger units, either to visualize or analyze at a coarser scale, or to ensure that the merged units are treated as one “block” in any redistricting algorithm. Merging units is a part of most map preprocessing workflows, and in <code>redist</code> is carried out by the <code><a href="../reference/merge_by.html">merge_by()</a></code> function, which works like a combination of the <code><a href="https://dplyr.tidyverse.org/reference/group_by.html">group_by()</a></code> and <code><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize()</a></code> verbs of <code>dplyr</code>.</p>
+<p>Often, we want to merge some units together to form larger units, either to visualize or analyze at a coarser scale, or to ensure that the merged units are treated as one “block” in any redistricting algorithm. Merging units is a part of most map preprocessing workflows, and in <code>redist</code> is carried out by the <code><a href="../reference/merge_by.html">merge_by()</a></code> function, which works like a combination of the <code><a href="https://rdrr.io/pkg/dplyr/man/group_by.html">group_by()</a></code> and <code><a href="https://rdrr.io/pkg/dplyr/man/summarise.html">summarize()</a></code> verbs of <code>dplyr</code>.</p>
 <p>For example, we could merge our King County data by city.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/merge_by.html">merge_by</a></span><span class="op">(</span><span class="va">king_land</span>, <span class="va">city</span><span class="op">)</span>
@@ -305,13 +305,13 @@
 <span class="co">#&gt; 11 split cities</span>
 
 <span class="va">king_land</span> <span class="op">%&gt;%</span>
-    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>is_unsplit <span class="op">=</span> <span class="op">!</span><span class="fu"><a href="../reference/is_county_split.html">is_county_split</a></span><span class="op">(</span><span class="va">distr</span>, <span class="va">city</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
+    <span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/mutate.html">mutate</a></span><span class="op">(</span>is_unsplit <span class="op">=</span> <span class="op">!</span><span class="fu"><a href="../reference/is_county_split.html">is_county_split</a></span><span class="op">(</span><span class="va">distr</span>, <span class="va">city</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">is_unsplit</span><span class="op">)</span></code></pre></div>
 <p><img src="map-preproc_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R">
 <span class="va">king_unsplit</span> <span class="op">=</span> <span class="va">king_land</span> <span class="op">%&gt;%</span>
-    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>unsplit_id <span class="op">=</span> <span class="fu"><a href="../reference/freeze.html">freeze</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="../reference/is_county_split.html">is_county_split</a></span><span class="op">(</span><span class="va">distr</span>, <span class="va">city</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
+    <span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/mutate.html">mutate</a></span><span class="op">(</span>unsplit_id <span class="op">=</span> <span class="fu"><a href="../reference/freeze.html">freeze</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="../reference/is_county_split.html">is_county_split</a></span><span class="op">(</span><span class="va">distr</span>, <span class="va">city</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
     <span class="fu"><a href="../reference/merge_by.html">merge_by</a></span><span class="op">(</span><span class="va">unsplit_id</span>, <span class="va">city</span>, collapse_chr<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span><span class="va">king_unsplit</span><span class="op">)</span>
 <span class="co">#&gt; A redist_map object with 1968 units and 10 fields</span>
@@ -388,10 +388,10 @@
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">pop_inside_cores</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">boundary</span><span class="op">)</span> <span class="op">{</span>
     <span class="va">king_land</span> <span class="op">%&gt;%</span>
-        <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>core <span class="op">=</span> <span class="fu"><a href="../reference/make_cores.html">make_cores</a></span><span class="op">(</span>boundary<span class="op">=</span><span class="va">boundary</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
-        <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html">group_by</a></span><span class="op">(</span><span class="va">core</span><span class="op">)</span> <span class="op">%&gt;%</span>
-        <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html">n</a></span><span class="op">(</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">2</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="co"># filter to cores only</span>
-        <span class="fu"><a href="https://dplyr.tidyverse.org/reference/pull.html">pull</a></span><span class="op">(</span><span class="va">pop</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="va">sum</span>
+        <span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/mutate.html">mutate</a></span><span class="op">(</span>core <span class="op">=</span> <span class="fu"><a href="../reference/make_cores.html">make_cores</a></span><span class="op">(</span>boundary<span class="op">=</span><span class="va">boundary</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
+        <span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/group_by.html">group_by</a></span><span class="op">(</span><span class="va">core</span><span class="op">)</span> <span class="op">%&gt;%</span>
+        <span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/filter.html">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/context.html">n</a></span><span class="op">(</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">2</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="co"># filter to cores only</span>
+        <span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/pull.html">pull</a></span><span class="op">(</span><span class="va">pop</span><span class="op">)</span> <span class="op">%&gt;%</span> <span class="va">sum</span>
 <span class="op">}</span>
 <span class="fu">pop_inside_cores</span><span class="op">(</span><span class="fl">1</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">king_land</span><span class="op">$</span><span class="va">pop</span><span class="op">)</span>
 <span class="co">#&gt; Warning in dplyr_row_slice.redist_map(.data, loc, preserve = .preserve): Your subset was not based on districts. Please use `set_pop_tol(map)`</span>
@@ -406,7 +406,7 @@
 <p>Here, we’ll use <code>boundary=1</code>. We can see how large areas inside each district are merged together after applying <code><a href="../reference/merge_by.html">merge_by()</a></code> to the generated cores.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">king_cores</span> <span class="op">=</span> <span class="va">king_land</span> <span class="op">%&gt;%</span>
-    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>core <span class="op">=</span> <span class="fu"><a href="../reference/make_cores.html">make_cores</a></span><span class="op">(</span>boundary<span class="op">=</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
+    <span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/mutate.html">mutate</a></span><span class="op">(</span>core <span class="op">=</span> <span class="fu"><a href="../reference/make_cores.html">make_cores</a></span><span class="op">(</span>boundary<span class="op">=</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
     <span class="fu"><a href="../reference/merge_by.html">merge_by</a></span><span class="op">(</span><span class="va">core</span>, drop_geom<span class="op">=</span><span class="cn">F</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">king_cores</span><span class="op">)</span></code></pre></div>
 <p><img src="map-preproc_files/figure-html/cores-1.png" width="700"></p>

@@ -7,7 +7,7 @@
 redist.combine(savename, nloop, nthin, temper)
 }
 \arguments{
-\item{savename}{The name (without the loop or \code{.RData} suffix)
+\item{savename}{The name (without the loop or \code{.rds} suffix)
 of the saved simulations.}
 
 \item{nloop}{The number of loops being combined. Savename must be non-null.}
@@ -69,22 +69,23 @@ This function allows users to combine multiple successive runs of
 \code{redist.flip} into a single \code{redist} object for analysis.
 }
 \examples{
-\dontrun{
+\donttest{
 data(fl25)
 data(fl25_enum)
 data(fl25_adj)
 
-## Code to run the simulations in Figure 4 in Fifield, Higgins,Imai and
-Tarr (2015)
+## Code to run the simulations in Figure 4 in Fifield, Higgins,Imai and Tarr (2015)
 
 ## Get an initial partition
 init_plan <- fl25_enum$plans[, 5118]
 
 ## Run the algorithm
+set.seed(1)
+temp <- tempdir()
 alg_253 <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
                        init_plan = init_plan, nsims = 10000,
-                       loops = 2, savename = "test")
-out <- redist.combine(savename = "test", nloop = 2, nthin = 10)
+                       nloop = 2, savename = paste0(temp, "/test"))
+out <- redist.combine(savename = paste0(temp, "/test"), nloop = 2, nthin = 10)
 }
 }
 \references{

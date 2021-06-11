@@ -195,7 +195,7 @@ or \code{tgt_vra_other}. This can be visualized with
 \code{\link{redist.plot.penalty}}.
 }
 \examples{
-\dontrun{
+\donttest{
 data(fl25)
 
 fl_map = redist_map(fl25, ndists=3, pop_tol=0.1)
@@ -207,12 +207,11 @@ sampled_constr = redist_mergesplit(fl_map, 10000, constraints=list(
                  ))
 }
 
-\dontrun{
 data(fl25)
 adj <- redist.adjacency(fl25)
 out <- redist.mergesplit(adj = adj, total_pop = fl25$pop,
                          nsims = 5, ndists = 3, pop_tol = 0.1)
-}
+
 }
 \references{
 Carter, D., Herschlag, G., Hunter, Z., and Mattingly, J. (2019). A

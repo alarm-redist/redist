@@ -59,8 +59,8 @@ unit}
 \code{NULL}.}
 
 \item{init_plan}{A vector containing the congressional district labels
-of each geographic unit. If not provided, random and contiguous congressional
-district assignments will be generated using \code{redist.smc}. To use the old
+of each geographic unit. If not provided, random and contiguous congressional 
+district assignments will be generated using \code{redist.smc}. To use the old 
 behavior of generating with \code{redist.rsg}, provide init_plan = 'rsg'.}
 
 \item{loopscompleted}{Number of save points reached by the
@@ -169,7 +169,7 @@ Default is \code{TRUE}.}
 districts with that proportion}
 }
 \value{
-\code{redist.flip} returns an object of class "redist". The object
+\code{redist.mcmc} returns an object of class "redist". The object
 \code{redist} is a list that contains the following components (the
 inclusion of some components is dependent on whether tempering
 techniques are used):
@@ -210,7 +210,7 @@ probability for each iteration of the algorithm. Returned when tempering
 is being used.}
 }
 \description{
-\code{redist.flip} is used to simulate Congressional redistricting
+\code{redist.mcmc} is used to simulate Congressional redistricting
 plans using Markov Chain Monte Carlo methods.
 }
 \details{
@@ -223,13 +223,12 @@ simulated tempering functionality to improve the mixing of the Markov
 Chain.
 }
 \examples{
-\dontrun{
+\donttest{
 data(fl25)
 data(fl25_enum)
 data(fl25_adj)
 
-## Code to run the simulations in Figure 4 in Fifield, Higgins,Imai and
-Tarr (2015)
+## Code to run the simulations in Figure 4 in Fifield, Higgins, Imai and Tarr (2015)
 
 ## Get an initial partition
 init_plan <- fl25_enum$plans[, 5118]
@@ -237,13 +236,14 @@ init_plan <- fl25_enum$plans[, 5118]
 ## Run the algorithm
 alg_253 <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
                        init_plan = init_plan, nsims = 10000)
-
+ 
  ## You can also let it find a plan on its own!
  sims <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
                        ndists = 3, nsims = 10000)
-
-
+ 
+ 
 }
+
 }
 \references{
 Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander

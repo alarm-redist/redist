@@ -13,9 +13,8 @@ congressional districts are stored in \code{\link{fl25_enum}}, and the
 corresponding adjacency graph is stored in \code{\link{fl25_adj}}.
 }
 \examples{
-\dontrun{
 data(fl25_adj)
-}
+
 }
 \references{
 Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander Tarr.

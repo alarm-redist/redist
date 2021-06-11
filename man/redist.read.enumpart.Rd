@@ -21,7 +21,8 @@ Read Results from enumpart
 }
 \examples{
 \dontrun{
-cds <- redist.read.enumpart(out_path = '../enumerated')
+temp <- tempdir()
+cds <- redist.read.enumpart(out_path = paste0(temp,'/enumerated'))
 }
 }
 \references{

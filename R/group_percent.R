@@ -14,7 +14,7 @@
 #' @export
 #' @concept analyze
 #'
-#' @examples \dontrun{
+#' @examples
 #' data(fl25)
 #' data(fl25_enum)
 #'
@@ -23,7 +23,7 @@
 #' redist.group.percent(plans = cd,
 #'                     group_pop = fl25$BlackPop,
 #'                     total_pop = fl25$TotPop)
-#' }
+#'
 redist.group.percent <- function(plans, group_pop, total_pop, ncores = 1) {
 
     if (!any(class(total_pop) %in% c('numeric', 'integer')))

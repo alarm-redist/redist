@@ -89,7 +89,7 @@ the ideas in the below-referenced paper, "Voting Rights, Markov Chains, and
 Optimization by Short Bursts."
 }
 \examples{
-\dontrun{
+\donttest{
 data(iowa)
 
 iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.01)

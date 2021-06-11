@@ -50,10 +50,11 @@ redist.init.enumpart <- function(){
 #' Forthcoming, Statistics and Public Policy.
 #' @concept enumerate
 #' @examples \dontrun{
+#' temp <- tempdir()
 #' data(fl25)
 #' adj <- redist.adjacency(fl25)
-#' redist.prep.enumpart(adj = adj, unordered_path = '../unordered',
-#'                      ordered_path = '../ordered')
+#' redist.prep.enumpart(adj = adj, unordered_path = paste0(temp, '/unordered'),
+#'                      ordered_path = paste0(temp, '/ordered'))
 #' }
 redist.prep.enumpart <- function(adj, unordered_path, ordered_path){
   # Return the list to 1 indexing
@@ -115,7 +116,9 @@ redist.prep.enumpart <- function(adj, unordered_path, ordered_path){
 #' @concept enumerate
 #'
 #' @examples \dontrun{
-#' redist.run.enumpart(ordered_path = '../ordered', out_path = '../enumerated')
+#' temp <- tempdir()
+#' redist.run.enumpart(ordered_path = paste0(temp, '/ordered'), 
+#' out_path = paste0(temp, '/enumerated'))
 #' }
 redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
                                 all = TRUE, n  = NULL, weight_path = NULL,
@@ -175,7 +178,8 @@ redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
 #' @importFrom readr read_lines
 #' @concept enumerate
 #' @examples \dontrun{
-#' cds <- redist.read.enumpart(out_path = '../enumerated')
+#' temp <- tempdir()
+#' cds <- redist.read.enumpart(out_path = paste0(temp,'/enumerated'))
 #' }
 redist.read.enumpart <- function(out_path, skip = 0,  n_max = -1L){
   sols <- read_lines(paste0(out_path, ".dat"), skip = skip, n_max = n_max)

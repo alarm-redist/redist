@@ -32,9 +32,8 @@ corresponding adjacency graph is stored in \code{\link{fl25_adj}}.
 This is generally useful for demonstrating basic algorithms locally.
 }
 \examples{
-\dontrun{
 data(fl25)
-}
+
 }
 \references{
 Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander Tarr.

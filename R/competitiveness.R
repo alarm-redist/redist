@@ -12,13 +12,13 @@
 #' @export
 #'
 #' @concept analyze
-#' @examples \dontrun{
+#' @examples 
 #' data(fl25)
 #' data(fl25_enum)
 #'
 #' plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
 #' comp <- redist.competitiveness(plans_05, fl25$mccain, fl25$obama)
-#' }
+#' 
 redist.competitiveness <- function(plans, rvote, dvote){
   # dont just copy this
   dvs <- redist.metrics(plans = plans, "DVS", rvote, dvote)

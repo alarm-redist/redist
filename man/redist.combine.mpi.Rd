@@ -60,6 +60,7 @@ This function allows users to combine multiple successive runs of
 }
 \examples{
 \dontrun{
+# Cannot run on machines without Rmpi
 data(fl25)
 data(fl25_enum)
 data(fl25_adj)

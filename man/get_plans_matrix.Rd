@@ -14,6 +14,11 @@ get_plans_matrix(x)
 
 \item{...}{ignored}
 }
+\value{
+matrix
+
+matrix
+}
 \description{
 Extract the matrix of district assignments from a redistricting simulation
 }

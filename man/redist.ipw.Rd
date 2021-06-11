@@ -4,9 +4,13 @@
 \alias{redist.ipw}
 \title{Inverse probability reweighting for MCMC Redistricting}
 \usage{
-redist.ipw(algout,
-resampleconstraint = c("pop", "compact", "segregation", "similar"),
-targetbeta, targetpop = NULL, temper = 0)
+redist.ipw(
+  algout,
+  resampleconstraint = c("pop", "compact", "segregation", "similar"),
+  targetbeta,
+  targetpop = NULL,
+  temper = 0
+)
 }
 \arguments{
 \item{algout}{An object of class "redist".}
@@ -78,31 +82,20 @@ techniques reweights and resamples redistricting plans so that the resulting
 sample is representative of a random sample from the uniform distribution.
 }
 \examples{
-\dontrun{
-data(fl25)
-data(fl25_enum)
-data(fl25_adj)
+\donttest{
+data(iowa)
+adj <- redist.adjacency(iowa)
+init_plan <- iowa$cd_2010
+alg <- redist.flip(adj = adj, total_pop = iowa$pop,
+                  init_plan = init_plan, nsims = 1000,
+                  constraint = 'population', constraintweights = 5.4)
 
-## Code to run the simulations in Figure 4 of Fifield, Higgins,
-## Imai and Tarr (2015)
-
-## Get an initial partition
-init_plan <- fl25_enum$plans[, 5118]
-
-## Vector of beta weights
-betaweights <- rep(NA, 10); for(i in 1:10){betaweights[i] <- 4^i}
-
-## Run simulations - tempering population constraint
-alg_253_20_st <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
-                             init_plan = init_plan, nsims = 10000,
-                             constraint = 'population', constraintweights = 5.4,
-                             betaweights = betaweights, temper = 1)
-
-## Resample using inverse probability weighting.
-## Target distance from parity is 20\%
-alg_253_20_st <- redist.ipw(alg_253_20_st, resampleconstraint = "pop",
-                            targetbeta = 1, targetpop = .2, temper = 1)
+alg_ipw <- redist.ipw(algout = alg, 
+                     resampleconstraint = 'pop', 
+                     targetbeta = 1,
+                     targetpop = 0.05)
 }
+
 }
 \references{
 Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander

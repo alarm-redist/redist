@@ -50,8 +50,8 @@ unit}
 \code{NULL}.}
 
 \item{init_plan}{A vector containing the congressional district labels
-of each geographic unit. If not provided, random and contiguous congressional
-district assignments will be generated using \code{redist.smc}. To use the old
+of each geographic unit. If not provided, random and contiguous congressional 
+district assignments will be generated using \code{redist.smc}. To use the old 
 behavior of generating with \code{redist.rsg}, provide init_plan = 'rsg'.}
 
 \item{num_hot_steps}{The number of steps to run the simulator at beta = 0.
@@ -138,6 +138,9 @@ Default is \code{TRUE}.}
 
 \item{minorityprop}{numeric vector of targeted minority proportions for the top
 districts with that proportion}
+}
+\value{
+list of class redist
 }
 \description{
 \code{redist.flip.anneal} simulates congressional redistricting plans

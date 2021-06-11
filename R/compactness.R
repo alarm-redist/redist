@@ -134,15 +134,13 @@
 #'
 #' @concept analyze
 #' @examples
-#' \dontrun{
 #' data(fl25)
 #' data(fl25_enum)
 #'
 #' plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
 #'
-#' redist.compactness(shp = fl25, district_membership = plans_05[,1:3],
+#' redist.compactness(shp = fl25, plans = plans_05[,1:3],
 #' measure = c('PolsbyPopper', 'EdgesRemoved'))
-#' }
 #'
 #' @export redist.compactness
 redist.compactness <- function(shp = NULL,
@@ -162,8 +160,8 @@ redist.compactness <- function(shp = NULL,
     } else if (!inherits(shp, 'sf')) {
       stop('Please provide "shp" as a SpatialPolygonsDataFrame or sf object.')
     }
-    
-    
+
+
     if (isTRUE(st_is_longlat(st_geometry(shp)))) {
       if (!is.null(st_crs(shp)) & !is.null(planarize) && !isFALSE(planarize)) {
         shp <- st_transform(shp, planarize)
@@ -190,6 +188,16 @@ redist.compactness <- function(shp = NULL,
 
 
 
+  if(!is.null(shp)){
+    if (isTRUE(st_is_longlat(st_geometry(shp)))) {
+      if (!requireNamespace("s2", quietly=TRUE))
+        stop("Must install `s2` to use longitude-latitude coordinate projections.")
+      
+      if (!is.null(st_crs(shp)) & !is.null(planarize) && !isFALSE(planarize)) {
+        shp <- st_transform(shp, planarize)
+      }
+    }
+  }
 
   if("all" %in% measure){
     measure <-  c("PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull",
@@ -328,10 +336,8 @@ redist.compactness <- function(shp = NULL,
 
         if(is.null(st_crs(united$EPSG)) || is.na(st_is_longlat(united))){
           perim <- sum(st_length(st_cast(st_cast(united, 'POLYGON'),'LINESTRING')))
-        } else if (st_is_longlat(united)){
-          perim <- sum(st_length(united))
         } else {
-          perim <- sum(st_perimeter(united))
+          perim <- sum(st_length(st_cast(united, "MULTILINESTRING")))
         }
 
         if('PolsbyPopper' %in% measure & !ppRcpp){
@@ -456,10 +462,10 @@ redist.compactness <- function(shp = NULL,
 #' @export
 #'
 #' @importFrom sf st_buffer st_is_valid st_geometry<- st_touches st_transform
-#' @examples \dontrun{
+#' @examples
 #' data(fl25)
 #' perim_df <- redist.prep.polsbypopper(shp = fl25)
-#' }
+#'
 redist.prep.polsbypopper <- function(shp, planarize = 3857, perim_path, ncores = 1){
 
   if(missing(shp)){

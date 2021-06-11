@@ -34,10 +34,10 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
         lambda <- 0
     }
 
-    if(!("popcons" %in% names)){
-        popcons <- 100
+    if(!("pop_tol" %in% names)){
+        pop_tol <- 100
     }else{
-        popcons <- p_sub$popcons
+        pop_tol <- p_sub$pop_tol
     }
 
     ## Set constraints
@@ -78,11 +78,11 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
     out <- redist.flip(adj = adj, total_pop = total_pop, nsims = nsims,
                        ndists = ndists, ssdmat = ssdmat,
                        group_pop = group_pop,
-                       counties = counties, #ctk-cran-note
+                       counties = counties,
                        init_plan = init_plan, eprob = eprob, lambda = lambda,
-                       pop_tol = popcons,
+                       pop_tol = pop_tol,
                        constraint = constraintvec,
-                       constraintweights = weightvec, #ctk-cran-note
+                       constraintweights = weightvec,
                        maxiterrsg = maxiterrsg,
                        adapt_lambda = adapt_lambda,
                        adapt_eprob = adapt_eprob)
@@ -101,10 +101,10 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
         cat(paste0("No maps available under parameter set ", i, ".\n"))
         startval <- NULL
     }else{
-        startval <- matrix(NA, nrow(out$partitions), nstartval_store)
+        startval <- matrix(NA, nrow(out$plans), nstartval_store)
         for(i in 1:nstartval_store){
             sub <- inds[inds > cuts[i] & inds <= cuts[i+1]]
-            startval[,i] <- out$partitions[,sample(sub, 1)]
+            startval[,i] <- out$plans[,sample(sub, 1)]
         }
         startval <- as.matrix(startval)
     }
@@ -141,7 +141,7 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
     ## Share of counties split
     if(!is.null(counties)){
         ncounties_split <- unlist(lapply(1:nsims, function(x){
-            cd_assign <- out$partitions[,x]
+            cd_assign <- out$plans[,x]
             return(sum(tapply(cd_assign, counties, function(y){ifelse(length(unique(y)) > 1, 1, 0)})))
         }))
         starting_county_split <- ncounties_split[1]
@@ -168,8 +168,8 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
     }else{
         out <- paste0(out, "## Final adaptive lambda = ", final_lambda, "\n")
     }
-    if(popcons != 100){
-        out <- paste0(out, "## Hard population constraint = ", popcons, "\n")
+    if(pop_tol != 100){
+        out <- paste0(out, "## Hard population constraint = ", pop_tol, "\n")
     }else{
         out <- paste0(out, "## No hard population constraint applied\n")
     }
@@ -261,7 +261,7 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
 #' FALSE.
 #' @param params A matrix of parameter values to test, such as the output of
 #' \code{expand.grid}. Parameters accepted for \code{params} include \code{eprob},
-#' \code{lambda}, \code{popcons}, \code{beta}, and \code{constraint}.
+#' \code{lambda}, \code{pop_tol}, \code{beta}, and \code{constraint}.
 #' @param ssdmat A matrix of squared distances between geographic
 #' units. The default is \code{NULL}.
 #' @param group_pop A vector of populations for some sub-group of
@@ -297,7 +297,7 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
 #'
 #' @importFrom dplyr slice
 #'
-#' @examples \dontrun{
+#' @examples \donttest{
 #' data(fl25)
 #' data(fl25_enum)
 #' data(fl25_adj)
@@ -334,7 +334,7 @@ redist.findparams <- function(adj, total_pop,
     }
 
     ## Get parameters in params
-    valid_names <- c("eprob", "lambda", "popcons", "weight_compact", "weight_population", "weight_segregation", "weight_similarity", "weight_countysplit")
+    valid_names <- c("eprob", "lambda", "pop_tol", "weight_compact", "weight_population", "weight_segregation", "weight_similarity", "weight_countysplit")
     names <- names(params)
     if(sum(names %in% valid_names) < length(names)){
         invalid_name <- names[!(names %in% valid_names)]
@@ -443,4 +443,3 @@ redist.findparams <- function(adj, total_pop,
     return(list(diagnostics = printout, startvals = startval))
 
 }
-
