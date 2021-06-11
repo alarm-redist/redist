@@ -188,13 +188,14 @@ redist.compactness <- function(shp = NULL,
 
 
 
-
-  if (isTRUE(st_is_longlat(st_geometry(shp)))) {
-    if (!requireNamespace("s2", quietly=TRUE))
-      stop("Must install `s2` to use longitude-latitude coordinate projections.")
-
-    if (!is.null(st_crs(shp)) & !is.null(planarize) && !isFALSE(planarize)) {
-      shp <- st_transform(shp, planarize)
+  if(!is.null(shp)){
+    if (isTRUE(st_is_longlat(st_geometry(shp)))) {
+      if (!requireNamespace("s2", quietly=TRUE))
+        stop("Must install `s2` to use longitude-latitude coordinate projections.")
+      
+      if (!is.null(st_crs(shp)) & !is.null(planarize) && !isFALSE(planarize)) {
+        shp <- st_transform(shp, planarize)
+      }
     }
   }
 

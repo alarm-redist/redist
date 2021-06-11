@@ -18,12 +18,7 @@
 #' counties <- sample(c(rep('a', 20), rep('b', 5)))
 #' redist.county.relabel(fl25_adj, counties)
 #'
-redist.county.relabel <- function(adj, counties,  simplify = TRUE, adjacency){
-
-  if(!missing(adjacency)){
-    adj <- adjacency
-    .Deprecated(new = 'adj', old = 'adjacency')
-  }
+redist.county.relabel <- function(adj, counties,  simplify = TRUE){
 
   if(missing(adj)){
     stop('Please provide an argument to adj.')

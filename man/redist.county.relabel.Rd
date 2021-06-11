@@ -4,7 +4,7 @@
 \alias{redist.county.relabel}
 \title{Relabel Discontinuous Counties}
 \usage{
-redist.county.relabel(adj, counties, simplify = TRUE, adjacency)
+redist.county.relabel(adj, counties, simplify = TRUE)
 }
 \arguments{
 \item{adj}{adjacency list}
