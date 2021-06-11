@@ -446,6 +446,9 @@ select.redist_map <- function(.data, ...) {
 }
 
 
+#' Generic to print redist_map
+#' @param x redist_map
+#' @param \dots additional argumentss
 #' @method print redist_map
 #' @return Prints to console and returns input redist_map
 #' @export

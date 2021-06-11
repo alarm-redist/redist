@@ -20,5 +20,6 @@ Tool to help reduce adjacency lists for analyzing subsets of maps.
 \examples{
 data(fl25_adj)
 redist.reduce.adjacency(fl25_adj, c(2, 3, 4, 6, 21))
+
 }
 \concept{prepare}
