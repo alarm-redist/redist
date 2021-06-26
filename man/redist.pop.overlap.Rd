@@ -24,12 +24,14 @@ matrix with length(unique(plan_old)) rows and length(unique(plan_new))
 \description{
 This implements Crespin's 2005 measure of district continuity, as applied to 
 the geographies represented by a plan, typically precincts or voting districts.
+This implementation assumes none of the precincts in plan_old or plan_new are 
+split.
 }
 \examples{
-set.seed(1)
+set.seed(5)
 data(iowa)
 iowa_map <- redist_map(iowa, total_pop = pop, pop_tol = 0.01, ndists = 4)
-plans <- redist_plans(iowa_map, 2)
+plans <- redist_smc(iowa_map, 2)
 plans_mat <- get_plans_matrix(plans)
 ov <- redist.pop.overlap(plans_mat[,1], plans_mat[,2], iowa_map)
 round(ov, 2)
