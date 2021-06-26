@@ -21,10 +21,10 @@
 #' Michael Crespin, Political Analysis (2005) 13(3): 253-260
 #'
 #' @examples
-#' set.seed(1)
+#' set.seed(5)
 #' data(iowa)
 #' iowa_map <- redist_map(iowa, total_pop = pop, pop_tol = 0.01, ndists = 4)
-#' plans <- redist_plans(iowa_map, 2)
+#' plans <- redist_smc(iowa_map, 2)
 #' plans_mat <- get_plans_matrix(plans)
 #' ov <- redist.pop.overlap(plans_mat[,1], plans_mat[,2], iowa_map)
 #' round(ov, 2)
