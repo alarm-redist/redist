@@ -7,7 +7,7 @@
 redist.dist.pop.overlap(plan_old, plan_new, total_pop, normalize_rows = TRUE)
 }
 \arguments{
-\item{plan_old}{The reference plan to compare against}
+\item{plan_old}{The reference or original plan to compare against}
 
 \item{plan_new}{The new plan to compare to the reference plan}
 
