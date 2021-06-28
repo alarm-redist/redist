@@ -39,6 +39,7 @@
 #' plan_5 <- get_plans_matrix(redist_smc(iowa_map_5, 1))
 #' ov4_5 <- redist.dist.pop.overlap(plans_mat[, 1], plan_5, iowa_map)
 #' round(ov4_5, 2)
+#' 
 redist.dist.pop.overlap <- function(plan_old, plan_new, total_pop, normalize_rows = TRUE) {
   if (missing(plan_old)) {
     stop('Please pass an argument to `plan_old`.')
@@ -106,6 +107,7 @@ redist.dist.pop.overlap <- function(plan_old, plan_new, total_pop, normalize_row
 #' ov_vec <- redist.prec.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map)
 #' redist.prec.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map,  weighting = 's', 
 #' normalize = FALSE, index_only = TRUE)
+#' 
 redist.prec.pop.overlap <- function(plan_old, plan_new, total_pop, weighting = 's', 
                                     normalize = TRUE, index_only = FALSE, return_mat = FALSE) {
   

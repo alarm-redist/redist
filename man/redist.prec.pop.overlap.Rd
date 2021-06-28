@@ -51,4 +51,5 @@ plans_mat <- get_plans_matrix(plans)
 ov_vec <- redist.prec.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map)
 redist.prec.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map,  weighting = 's', 
 normalize = FALSE, index_only = TRUE)
+
 }
