@@ -202,6 +202,7 @@ double split_map_ms(const Graph &g, const uvec &counties, Multigraph &cg,
     // set `lower` as a way to return population of new district
     bool success = cut_districts_ms(ust, k, root, districts, distr_1, distr_2,
                                     pop, total_pop, lower, upper, target);
+    Rcpp::checkUserInterrupt();
     if (!success) return -log(0.0); // reject sample
 
     return orig_lb - log_boundary(g, districts, distr_1, distr_2);
