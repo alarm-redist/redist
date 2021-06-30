@@ -58,15 +58,19 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     select_pair(n_distr, g, init, distr_1, distr_2);
     int refresh = std::max(N / 20, 1);
     int n_accept = 0;
+    int reject_ct;
     for (int i = 1; i < N; i++) {
         districts.col(i) = districts.col(i - 1); // copy over old map
 
         // make the proposal
         double prop_lp = 0.0;
+        reject_ct = 0;
         do {
             select_pair(n_distr, g, districts.col(i), distr_1, distr_2);
             prop_lp = split_map_ms(g, counties, cg, districts.col(i), distr_1,
                                    distr_2, pop, lower, upper, target, k);
+            if (reject_ct % 200 == 0) Rcpp::checkUserInterrupt();
+            reject_ct++;
         } while (!std::isfinite(prop_lp));
 
         // tau calculations
@@ -202,7 +206,7 @@ double split_map_ms(const Graph &g, const uvec &counties, Multigraph &cg,
     // set `lower` as a way to return population of new district
     bool success = cut_districts_ms(ust, k, root, districts, distr_1, distr_2,
                                     pop, total_pop, lower, upper, target);
-    Rcpp::checkUserInterrupt();
+
     if (!success) return -log(0.0); // reject sample
 
     return orig_lb - log_boundary(g, districts, distr_1, distr_2);
