@@ -41,8 +41,8 @@ combine.par.anneal <- function(a, b){
 #' @param ndists The number of congressional districts. The default is
 #' \code{NULL}.
 #' @param init_plan A vector containing the congressional district labels
-#' of each geographic unit. If not provided, random and contiguous congressional 
-#' district assignments will be generated using \code{redist.smc}. To use the old 
+#' of each geographic unit. If not provided, random and contiguous congressional
+#' district assignments will be generated using \code{redist.smc}. To use the old
 #' behavior of generating with \code{redist.rsg}, provide init_plan = 'rsg'.
 #' @param num_hot_steps The number of steps to run the simulator at beta = 0.
 #' Default is 40000.
@@ -190,7 +190,7 @@ redist.flip.anneal <- function(adj,
     ## Preprocessing data
     ## ------------------
     if(verbose){
-        cat("Preprocessing data.\n\n") 
+        cat("Preprocessing data.\n\n")
     }
     preprocout <- redist.preproc(adj = adj, total_pop = total_pop,
                                  init_plan = init_plan, ndists = ndists,
@@ -227,11 +227,11 @@ redist.flip.anneal <- function(adj,
     weightpartisan <- preprocout$params$weightpartisan
     weightminority <- preprocout$params$weightminority
     weighthinge <- preprocout$params$weighthinge
-    
+
     if(verbose){
         cat("Starting swMH().\n")
     }
-    
+
     algout <- swMH(aList = preprocout$data$adjlist,
                    cdvec = preprocout$data$init_plan,
                    cdorigvec = preprocout$data$init_plan,
@@ -461,7 +461,7 @@ redist.combine.anneal <- function(file_name){
 #' \url{http://imai.princeton.edu/research/files/redist.pdf}.
 #'
 #' @return  a redist object with entries combined
-#' 
+#'
 #' @examples
 #' \donttest{
 #' data(fl25)
@@ -564,8 +564,8 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' @param ndists The number of congressional districts. The default is
 #' \code{NULL}.
 #' @param init_plan A vector containing the congressional district labels
-#' of each geographic unit. If not provided, random and contiguous congressional 
-#' district assignments will be generated using \code{redist.smc}. To use the old 
+#' of each geographic unit. If not provided, random and contiguous congressional
+#' district assignments will be generated using \code{redist.smc}. To use the old
 #' behavior of generating with \code{redist.rsg}, provide init_plan = 'rsg'.
 #' @param loopscompleted Number of save points reached by the
 #' algorithm. The default is \code{0}.
@@ -707,20 +707,20 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' ## Run the algorithm
 #' alg_253 <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
 #'                        init_plan = init_plan, nsims = 10000)
-#'  
+#'
 #'  ## You can also let it find a plan on its own!
 #'  sims <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
 #'                        ndists = 3, nsims = 10000)
-#'  
-#'  
+#'
+#'
 #' }
-#' 
+#'
 #' @concept simulate
 #' @export
 redist.flip <- function(adj,
                         total_pop,  nsims, ndists = NULL,
                         init_plan = NULL,
-                        loopscompleted = 0, nloop = 1, 
+                        loopscompleted = 0, nloop = 1,
                         warmup = 0, nthin = 1, eprob = 0.05,
                         lambda = 0,
                         pop_tol = NULL,
@@ -808,9 +808,9 @@ redist.flip <- function(adj,
     if(verbose){
     cat("Preprocessing data.\n\n")
     }
-    preprocout <- redist.preproc(adj = adj, 
+    preprocout <- redist.preproc(adj = adj,
                                  total_pop = total_pop,
-                                 init_plan = init_plan, 
+                                 init_plan = init_plan,
                                  ndists = ndists,
                                  pop_tol = pop_tol,
                                  counties = counties,
@@ -821,12 +821,12 @@ redist.flip <- function(adj,
                                  compactness_metric = compactness_metric,
                                  partisan_metric = partisan_metric,
                                  temper = temper,
-                                 constraint = constraint, 
+                                 constraint = constraint,
                                  constraintweights = constraintweights,
-                                 betaseq = betaseq, 
+                                 betaseq = betaseq,
                                  betaseqlength = betaseqlength,
                                  betaweights = betaweights,
-                                 adjswaps = adjswaps, 
+                                 adjswaps = adjswaps,
                                  maxiterrsg = maxiterrsg,
                                  contiguitymap = contiguitymap,
                                  tgt_min = tgt_min,
@@ -974,15 +974,15 @@ redist.flip <- function(adj,
     }else if(!is.null(savename)){
         saveRDS(algout, file = paste0(savename, ".rds"))
     }
-    
+
     ## Examine the data
     if(nloop == 1){
         algout <- redist.warmup.chain(algout = algout, warmup = warmup)
         algout <- redist.thin.chain(algout, thin = nthin)
     }
-    
+
     algout$plans <- algout$plans + 1
-    
+
     return(algout)
 }
 
@@ -1059,7 +1059,7 @@ redist.flip <- function(adj,
 #' when Fractions of Missing Information are Modest: the SIR Algorithm."
 #' Journal of the American Statistical Association.
 #'
-#' @examples 
+#' @examples
 #' \donttest{
 #' data(iowa)
 #' adj <- redist.adjacency(iowa)
@@ -1068,12 +1068,12 @@ redist.flip <- function(adj,
 #'                   init_plan = init_plan, nsims = 1000,
 #'                   constraint = 'population', constraintweights = 5.4)
 #'
-#' alg_ipw <- redist.ipw(algout = alg, 
-#'                      resampleconstraint = 'pop', 
+#' alg_ipw <- redist.ipw(algout = alg,
+#'                      resampleconstraint = 'pop',
 #'                      targetbeta = 1,
 #'                      targetpop = 0.05)
 #' }
-#' 
+#'
 #' @concept post
 #' @export
 redist.ipw <- function(algout,
@@ -1147,11 +1147,11 @@ redist.ipw <- function(algout,
 redist.warmup.chain <- function(algout, warmup = 1){
     if(warmup <= 0){
         return(algout)
-    } 
+    }
     inds <- 1:warmup
     algout_new <- vector(mode = "list", length = length(algout))
     for(i in 1:length(algout)){
-        
+
         ## Subset the matrix first, then the vectors
         if(i == 1){
             algout_new[[i]] <- algout[[i]][,-inds]
@@ -1162,7 +1162,7 @@ redist.warmup.chain <- function(algout, warmup = 1){
         } else {
             algout_new[[i]] <- algout[[i]][-inds]
         }
-        
+
     }
     names(algout_new) <- names(algout)
     class(algout_new) <- "redist"
@@ -1174,22 +1174,22 @@ redist.thin.chain <- function(algout, thin = 100){
     if(thin <= 1){
         return(algout)
     }
-    
+
     inds <- seq(1, ncol(algout$plans), by = thin)
     algout_new <- vector(mode = "list", length = length(algout))
     for(i in 1:length(algout)){
-        
+
         ## Subset the matrix first, then the vectors
         if(i == 1){
             algout_new[[i]] <- algout[[i]][,inds]
         } else if(length(algout[[i]]) == 1) {
             algout_new[[i]] <- algout[[i]]
-        } else if(all(names(algout[[i]]) == 'adj')) {
+        } else if(!is.null(names(algout[[i]])) & all(names(algout[[i]]) == 'adj')) {
             algout_new[[i]] <- algout[[i]]
         } else {
             algout_new[[i]] <- algout[[i]][inds]
         }
-        
+
     }
     names(algout_new) <- names(algout)
     class(algout_new) <- "redist"
