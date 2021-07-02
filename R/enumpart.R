@@ -59,6 +59,9 @@ redist.init.enumpart <- function(){
 redist.prep.enumpart <- function(adj, unordered_path, ordered_path){
   # Return the list to 1 indexing
   adj <- lapply(adj, function(x){x+1})
+  
+  # Remove any duplicates:
+  adj <- lapply(adj, unique)
 
   ## Sink
   adj_map <- c()
