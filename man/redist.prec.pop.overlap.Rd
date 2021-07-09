@@ -23,17 +23,17 @@ redist.prec.pop.overlap(
 object and will use the population in that object. If nothing is provided, it weights
 all entries in plan equally.}
 
-\item{weighting}{Should weighting be done by sum of populations `'s'`, mean of 
+\item{weighting}{Should weighting be done by sum of populations `'s'`, mean of
 populations `'m'`, geometric mean of populations `'g'`, or none `'n'`}
 
 \item{normalize}{Should entries be normalized by the total population}
 
-\item{index_only}{Default is FALSE. TRUE returns only one numeric index, the 
-mean of the upper triangle of the matrix, under the weighting and normalization  
+\item{index_only}{Default is FALSE. TRUE returns only one numeric index, the
+mean of the upper triangle of the matrix, under the weighting and normalization
 chosen.}
 
 \item{return_mat}{Defaults to FALSE, where it returns the summary by row. If
-TRUE returns matrix with length(plan_old) rows and columns. Ignored if 
+TRUE returns matrix with length(plan_old) rows and columns. Ignored if
 index_only = TRUE.}
 }
 \value{
@@ -49,7 +49,7 @@ iowa_map <- redist_map(iowa, total_pop = pop, pop_tol = 0.01, ndists = 4)
 plans <- redist_smc(iowa_map, 2, silent = TRUE)
 plans_mat <- get_plans_matrix(plans)
 ov_vec <- redist.prec.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map)
-redist.prec.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map,  weighting = 's', 
+redist.prec.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map,  weighting = 's',
 normalize = FALSE, index_only = TRUE)
 
 }

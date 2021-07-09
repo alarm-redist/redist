@@ -39,7 +39,8 @@ round(ov, 2)
 ov_col <- redist.dist.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map, normalize_rows = FALSE)
 round(ov_col, 2)
 
-ov_un_norm <- redist.dist.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map, normalize_rows = NULL)
+ov_un_norm <- redist.dist.pop.overlap(plans_mat[, 1], plans_mat[, 2],
+iowa_map, normalize_rows = NULL)
 round(ov_un_norm, 2)
 
 iowa_map_5 <- iowa_map <- redist_map(iowa, total_pop = pop, pop_tol = 0.01, ndists = 5)

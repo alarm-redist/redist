@@ -59,8 +59,8 @@ unit}
 \code{NULL}.}
 
 \item{init_plan}{A vector containing the congressional district labels
-of each geographic unit. If not provided, random and contiguous congressional 
-district assignments will be generated using \code{redist.smc}. To use the old 
+of each geographic unit. If not provided, random and contiguous congressional
+district assignments will be generated using \code{redist.smc}. To use the old
 behavior of generating with \code{redist.rsg}, provide init_plan = 'rsg'.}
 
 \item{loopscompleted}{Number of save points reached by the
@@ -236,12 +236,12 @@ init_plan <- fl25_enum$plans[, 5118]
 ## Run the algorithm
 alg_253 <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
                        init_plan = init_plan, nsims = 10000)
- 
+
  ## You can also let it find a plan on its own!
  sims <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
                        ndists = 3, nsims = 10000)
- 
- 
+
+
 }
 
 }

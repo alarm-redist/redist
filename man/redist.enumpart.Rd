@@ -47,7 +47,7 @@ vertex weights, to be used along with \code{lower} and \code{upper}.}
 
 \item{read}{boolean. Defaults to TRUE. reads}
 
-\item{total_pop}{Integer Vector. Defaults to NULL. If supplied, computes the parity.}
+\item{total_pop}{the vector of precinct populations}
 }
 \value{
 List with entries district_membership and parity.

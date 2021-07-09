@@ -32,14 +32,15 @@
 #' ov_col <- redist.dist.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map, normalize_rows = FALSE)
 #' round(ov_col, 2)
 #'
-#' ov_un_norm <- redist.dist.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map, normalize_rows = NULL)
+#' ov_un_norm <- redist.dist.pop.overlap(plans_mat[, 1], plans_mat[, 2],
+#' iowa_map, normalize_rows = NULL)
 #' round(ov_un_norm, 2)
 #'
 #' iowa_map_5 <- iowa_map <- redist_map(iowa, total_pop = pop, pop_tol = 0.01, ndists = 5)
 #' plan_5 <- get_plans_matrix(redist_smc(iowa_map_5, 1))
 #' ov4_5 <- redist.dist.pop.overlap(plans_mat[, 1], plan_5, iowa_map)
 #' round(ov4_5, 2)
-#' 
+#'
 redist.dist.pop.overlap <- function(plan_old, plan_new, total_pop, normalize_rows = TRUE) {
   if (missing(plan_old)) {
     stop('Please pass an argument to `plan_old`.')
@@ -85,14 +86,14 @@ redist.dist.pop.overlap <- function(plan_old, plan_new, total_pop, normalize_row
 #' @param total_pop The total population by precinct This can also take a redist_map
 #' object and will use the population in that object. If nothing is provided, it weights
 #' all entries in plan equally.
-#' @param weighting Should weighting be done by sum of populations `'s'`, mean of 
+#' @param weighting Should weighting be done by sum of populations `'s'`, mean of
 #' populations `'m'`, geometric mean of populations `'g'`, or none `'n'`
 #' @param normalize Should entries be normalized by the total population
-#' @param index_only Default is FALSE. TRUE returns only one numeric index, the 
-#' mean of the upper triangle of the matrix, under the weighting and normalization  
+#' @param index_only Default is FALSE. TRUE returns only one numeric index, the
+#' mean of the upper triangle of the matrix, under the weighting and normalization
 #' chosen.
 #' @param return_mat Defaults to FALSE, where it returns the summary by row. If
-#' TRUE returns matrix with length(plan_old) rows and columns. Ignored if 
+#' TRUE returns matrix with length(plan_old) rows and columns. Ignored if
 #' index_only = TRUE.
 #'
 #' @return numeric vector with length(plan_old) entries
@@ -105,14 +106,14 @@ redist.dist.pop.overlap <- function(plan_old, plan_new, total_pop, normalize_row
 #' plans <- redist_smc(iowa_map, 2, silent = TRUE)
 #' plans_mat <- get_plans_matrix(plans)
 #' ov_vec <- redist.prec.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map)
-#' redist.prec.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map,  weighting = 's', 
+#' redist.prec.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map,  weighting = 's',
 #' normalize = FALSE, index_only = TRUE)
-#' 
-redist.prec.pop.overlap <- function(plan_old, plan_new, total_pop, weighting = 's', 
+#'
+redist.prec.pop.overlap <- function(plan_old, plan_new, total_pop, weighting = 's',
                                     normalize = TRUE, index_only = FALSE, return_mat = FALSE) {
-  
+
   weighting <- match.arg(weighting, choices = c('s','m','g','n'))
-  
+
   if (missing(plan_old)) {
     stop('Please pass an argument to `plan_old`.')
   } else {
@@ -129,7 +130,7 @@ redist.prec.pop.overlap <- function(plan_old, plan_new, total_pop, weighting = '
   }
 
   nprec <- length(plan_old)
-  
+
   if (missing(total_pop)) {
     total_pop <- rep(1L, nprec)
   } else {
@@ -137,9 +138,9 @@ redist.prec.pop.overlap <- function(plan_old, plan_new, total_pop, weighting = '
       total_pop <- total_pop[[attr(total_pop, 'pop_col')]]
     }
   }
-  
+
   total_pop <- matrix(total_pop, nrow = length(total_pop))
-  
+
   if (weighting == 's') { # weight by sum of ith and jth pop
     cmat <- matrix(rep(total_pop, nprec), ncol = nprec)
     rmat <- t(cmat)
@@ -162,11 +163,11 @@ redist.prec.pop.overlap <- function(plan_old, plan_new, total_pop, weighting = '
   if (normalize) {
     wted_mat <- wted_mat / sum(total_pop)
   }
-  
+
   if (index_only) {
     return(mean(wted_mat[upper.tri(wted_mat)]))
   }
-  
+
   if (return_mat) {
     return(wted_mat)
   }

@@ -30,6 +30,14 @@ redist.init.enumpart <- function(){
     sys::exec_wait('python3', args= c('-m', 'pip', 'install', 'networkx', '--user'))
   }
 
+
+  # Necessary to avoid bad CRAN submissions:
+  if(Sys.info()[['sysname']] == 'Windows'){
+    makecontent <- readLines(system.file('enumpart/Makefile', package = 'redist'))
+    makecontent[7] <- "\tg++ enumpart.cpp SAPPOROBDD/bddc.o SAPPOROBDD/BDD.o SAPPOROBDD/ZBDD.o -o enumpart -I$(TDZDD_DIR) -std=c++11 -O3 -DB_64 -DNDEBUG"
+    writeLines(text = makecontent, con = system.file('enumpart/Makefile', package = 'redist'))
+  }
+
   return(0)
 }
 
@@ -39,6 +47,10 @@ redist.init.enumpart <- function(){
 #' @param adj zero indexed adjacency list
 #' @param unordered_path valid path to output the unordered adjacency map to
 #' @param ordered_path valid path to output the ordered adjacency map to
+#' @param weight_path A path (not including ".dat") to store a space-delimited
+#' file containing a vector of vertex weights. Only supply with total_pop.
+#' @param total_pop the vector of precinct populations. Only supply with weight_path
+#'
 #'
 #' @return 0 on success
 #' @export
@@ -56,10 +68,20 @@ redist.init.enumpart <- function(){
 #' redist.prep.enumpart(adj = adj, unordered_path = paste0(temp, '/unordered'),
 #'                      ordered_path = paste0(temp, '/ordered'))
 #' }
-redist.prep.enumpart <- function(adj, unordered_path, ordered_path){
+redist.prep.enumpart <- function(adj, unordered_path, ordered_path,
+                                 weight_path = NULL, total_pop = NULL){
+
+  if (is.null(weight_path) & !is.null(total_pop)) {
+    stop('`weight_path` not null, but `total_pop` is. Provide both or none.')
+  }
+  if (!is.null(weight_path) & is.null(total_pop)) {
+    stop('`total_pop` not null, but `weight_path` is. Provide both or none.')
+  }
+
+
   # Return the list to 1 indexing
   adj <- lapply(adj, function(x){x+1})
-  
+
   # Remove any duplicates:
   adj <- lapply(adj, unique)
 
@@ -92,6 +114,11 @@ redist.prep.enumpart <- function(adj, unordered_path, ordered_path){
                           std_out = paste0(ordered_path, '.dat'))
   }
 
+  if (!is.null(weight_path)) {
+    utils::write.table(t(total_pop), file = paste0(weight_path,".dat"),
+                       quote=FALSE, row.names=FALSE, col.names=FALSE)
+  }
+
   return(res)
 }
 
@@ -120,7 +147,7 @@ redist.prep.enumpart <- function(adj, unordered_path, ordered_path){
 #'
 #' @examples \dontrun{
 #' temp <- tempdir()
-#' redist.run.enumpart(ordered_path = paste0(temp, '/ordered'), 
+#' redist.run.enumpart(ordered_path = paste0(temp, '/ordered'),
 #' out_path = paste0(temp, '/enumerated'))
 #' }
 redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
@@ -287,7 +314,7 @@ redist.calc.frontier.size <- function(ordered_path){
 #' @param upper An upper bound on each partition's total weight.
 #' @param init Runs redist.init.enumpart. Defaults to false. Should be run on first use.
 #' @param read boolean. Defaults to TRUE. reads
-#' @param total_pop Integer Vector. Defaults to NULL. If supplied, computes the parity.
+#' @param total_pop the vector of precinct populations
 #'
 #' @return List with entries district_membership and parity.
 #'
@@ -303,7 +330,9 @@ redist.enumpart <- function(adj, unordered_path, ordered_path,
 
   prep <- redist.prep.enumpart(adj = adj,
                                unordered_path = unordered_path,
-                               ordered_path = ordered_path)
+                               ordered_path = ordered_path,
+                               weight_path = weight_path,
+                               total_pop = total_pop)
   if(!prep){
     run <- redist.run.enumpart(ordered_path = ordered_path,
                                out_path = out_path,
