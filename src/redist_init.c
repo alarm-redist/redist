@@ -3,9 +3,9 @@
 #include <stdlib.h> // for NULL
 #include <R_ext/Rdynload.h>
 
-/* FIXME: 
-   Check these declarations against the C/Fortran source code.
-*/
+/* FIXME:
+ Check these declarations against the C/Fortran source code.
+ */
 
 /* .Call calls */
 extern SEXP _redist_agg_p2d(SEXP, SEXP, SEXP);
@@ -27,6 +27,7 @@ extern SEXP _redist_cppGeneratePartitions(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SE
 extern SEXP _redist_crsg(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_declination(SEXP, SEXP, SEXP);
 extern SEXP _redist_dist_dist_diff(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _redist_dist_cty_splits(SEXP, SEXP, SEXP);
 extern SEXP _redist_dseats(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_dseatsDVS(SEXP);
 extern SEXP _redist_DVS(SEXP, SEXP);
@@ -88,6 +89,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_crsg",                  (DL_FUNC) &_redist_crsg,                   9},
     {"_redist_declination",           (DL_FUNC) &_redist_declination,            3},
     {"_redist_dist_dist_diff",        (DL_FUNC) &_redist_dist_dist_diff,         7},
+    {"_redist_dist_cty_splits",       (DL_FUNC) &_redist_dist_cty_splits,        3},
     {"_redist_dseats",                (DL_FUNC) &_redist_dseats,                 4},
     {"_redist_dseatsDVS",             (DL_FUNC) &_redist_dseatsDVS,              1},
     {"_redist_DVS",                   (DL_FUNC) &_redist_DVS,                    2},

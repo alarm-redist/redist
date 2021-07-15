@@ -7,6 +7,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // reduce_adj
 List reduce_adj(List adj_list, IntegerVector prec_map, int n_keep);
 RcppExport SEXP _redist_reduce_adj(SEXP adj_listSEXP, SEXP prec_mapSEXP, SEXP n_keepSEXP) {
@@ -783,6 +788,19 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< IntegerMatrix >::type dm(dmSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type community(communitySEXP);
     rcpp_result_gen = Rcpp::wrap(splits(dm, community));
+    return rcpp_result_gen;
+END_RCPP
+}
+// dist_cty_splits
+IntegerMatrix dist_cty_splits(IntegerMatrix dm, IntegerVector community, int nd);
+RcppExport SEXP _redist_dist_cty_splits(SEXP dmSEXP, SEXP communitySEXP, SEXP ndSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type dm(dmSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type community(communitySEXP);
+    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
+    rcpp_result_gen = Rcpp::wrap(dist_cty_splits(dm, community, nd));
     return rcpp_result_gen;
 END_RCPP
 }
