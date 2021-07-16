@@ -29,9 +29,11 @@ for the plan draws to compare. Must be mutually exclusive with \code{set1}.}
 \item{plot}{If \code{plot="line"}, display a plot for each set showing the set of
 boundaries which most distinguish it from the other set (the squared
 differences in the eigenvector values across the boundary).  If
-\code{plot="fill"}, plot the eigenvector for each set as a choropleth. See below
-for more information.  Set to \code{FALSE} to disable plotting (or leave out
-\code{shp}).}
+\code{plot="fill"}, plot the eigenvector for each set as a choropleth. If \code{plot = 'adj'},
+plot the shows the adjacency graph edges which most distinguish it from the other set.
+The adj option is a different graphical option of the same information as the line
+option. See below for more information.  Set to \code{FALSE} to disable plotting
+(or leave out \code{shp}).}
 
 \item{thresh}{the value to threshold the eigenvector at in determining the
 relevant set of precincts for comparison.}
