@@ -65,9 +65,18 @@ is_county_split = function(plan, counties) {
 #'
 #' @concept analyze
 #' @export
+#'
+#' @examples
+#' data(iowa)
+#' ia <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop, pop_tol = 0.01)
+#' plans <- redist_smc(ia, 50, silent = TRUE)
+#' splits <- redist.district.splits(plans, ia$region)
 redist.district.splits <- function(plans, counties) {
     if (missing(plans)) {
         stop('Please provide an argument to plans.')
+    }
+    if (inherits(plans, 'redist_plans')) {
+        plans <- get_plans_matrix(plans)
     }
     if (!is.matrix(plans)) {
         plans <- matrix(plans, ncol = 1)
@@ -80,12 +89,8 @@ redist.district.splits <- function(plans, counties) {
         stop('Please provide an argument to counties.')
     }
     if (class(counties) %in% c('character', 'numeric', 'integer')) {
-        uc <- unique(sort(counties))
-        county_id <- rep(0, nrow(plans))
-        for (i in 1:nrow(plans)) {
-            county_id[i] <- which(uc == counties[i])
-        }
-    } else{
+        county_id <- redist.county.id(counties)
+    } else {
         stop('Please provide "counties" as a character, numeric, or integer vector.')
     }
 

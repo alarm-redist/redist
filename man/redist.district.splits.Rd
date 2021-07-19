@@ -20,4 +20,10 @@ Counts the total number of counties that are found within a district.
 This does not subtract out the number of counties that are found completely
 within a district.
 }
+\examples{
+data(iowa)
+ia <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop, pop_tol = 0.01)
+plans <- redist_smc(ia, 50, silent = TRUE)
+splits <- redist.district.splits(plans, ia$region)
+}
 \concept{analyze}
