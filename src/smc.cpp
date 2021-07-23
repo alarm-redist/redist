@@ -281,11 +281,11 @@ double cut_districts(Tree &ust, int k, int root, subview_col<uword> &districts,
         if (dev1 < dev2) {
             candidates.push_back(i);
             deviances.push_back(dev1);
-            is_ok.push_back(lower <= below && below <= upper);
+            is_ok.push_back(lower < below && below < upper);
         } else {
             candidates.push_back(-i);
             deviances.push_back(dev2);
-            is_ok.push_back(lower <= total_pop - below && total_pop - below <= upper);
+            is_ok.push_back(lower < total_pop - below && total_pop - below < upper);
         }
     }
     if ((int) candidates.size() < k) return 0.0;
