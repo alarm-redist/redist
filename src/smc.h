@@ -24,7 +24,7 @@ arma::umat smc_plans(int N, List l, const arma::uvec &counties,
                      double beta_vra_hinge, const arma::vec &tgts_min,
                      double beta_inc, const arma::uvec &incumbents,
                      arma::vec &lp, double thresh,
-                     double alpha, double pop_temper=0.1, int verbosity=1);
+                     double alpha, double pop_temper=0.1, double final_infl=1.0, int verbosity=1);
 
 /*
  * Split off a piece from each map in `districts`,

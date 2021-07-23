@@ -3,9 +3,9 @@
 #include <stdlib.h> // for NULL
 #include <R_ext/Rdynload.h>
 
-/* FIXME:
- Check these declarations against the C/Fortran source code.
- */
+/* FIXME: 
+   Check these declarations against the C/Fortran source code.
+*/
 
 /* .Call calls */
 extern SEXP _redist_agg_p2d(SEXP, SEXP, SEXP);
@@ -26,8 +26,8 @@ extern SEXP _redist_countpartitions(SEXP);
 extern SEXP _redist_cppGeneratePartitions(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_crsg(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_declination(SEXP, SEXP, SEXP);
-extern SEXP _redist_dist_dist_diff(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_dist_cty_splits(SEXP, SEXP, SEXP);
+extern SEXP _redist_dist_dist_diff(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_dseats(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_dseatsDVS(SEXP);
 extern SEXP _redist_DVS(SEXP, SEXP);
@@ -59,7 +59,7 @@ extern SEXP _redist_responsiveness(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_rsg(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_schwartzberg(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_segregationcalc(SEXP, SEXP, SEXP);
-extern SEXP _redist_smc_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _redist_smc_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_smoothseat(SEXP, SEXP);
 extern SEXP _redist_splits(SEXP, SEXP);
 extern SEXP _redist_swMH(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -88,8 +88,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_cppGeneratePartitions", (DL_FUNC) &_redist_cppGeneratePartitions,  7},
     {"_redist_crsg",                  (DL_FUNC) &_redist_crsg,                   9},
     {"_redist_declination",           (DL_FUNC) &_redist_declination,            3},
-    {"_redist_dist_dist_diff",        (DL_FUNC) &_redist_dist_dist_diff,         7},
     {"_redist_dist_cty_splits",       (DL_FUNC) &_redist_dist_cty_splits,        3},
+    {"_redist_dist_dist_diff",        (DL_FUNC) &_redist_dist_dist_diff,         7},
     {"_redist_dseats",                (DL_FUNC) &_redist_dseats,                 4},
     {"_redist_dseatsDVS",             (DL_FUNC) &_redist_dseatsDVS,              1},
     {"_redist_DVS",                   (DL_FUNC) &_redist_DVS,                    2},
@@ -121,7 +121,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_rsg",                   (DL_FUNC) &_redist_rsg,                    6},
     {"_redist_schwartzberg",          (DL_FUNC) &_redist_schwartzberg,           6},
     {"_redist_segregationcalc",       (DL_FUNC) &_redist_segregationcalc,        3},
-    {"_redist_smc_plans",             (DL_FUNC) &_redist_smc_plans,             26},
+    {"_redist_smc_plans",             (DL_FUNC) &_redist_smc_plans,             27},
     {"_redist_smoothseat",            (DL_FUNC) &_redist_smoothseat,             2},
     {"_redist_splits",                (DL_FUNC) &_redist_splits,                 2},
     {"_redist_swMH",                  (DL_FUNC) &_redist_swMH,                  42},

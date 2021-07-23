@@ -124,6 +124,9 @@
 #' @param pop_temper The strength of the automatic population tempering. Try
 #'   values of 0.01-0.05 to start if the algorithm gets stuck on the final few
 #'   splits.
+#' @param final_infl A multiplier for the population constraint on the final
+#'   iteration. Used to loosen the constraint when the sampler is getting stuck
+#'   on the final split.
 #' @param ref_name a name for the existing plan, which will be added as a
 #'   reference plan, or \code{FALSE} to not include the initial plan in the
 #'   output. Defaults to the column name of the existing plan.
@@ -159,7 +162,7 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
                       resample=TRUE, constraint_fn=function(m) rep(0, ncol(m)),
                       adapt_k_thresh=0.975, seq_alpha=0.2+0.3*compactness,
                       truncate=(compactness != 1), trunc_fn=redist_quantile_trunc,
-                      pop_temper=0, ref_name=NULL, verbose=TRUE, silent=FALSE) {
+                      pop_temper=0, final_infl=1, ref_name=NULL, verbose=TRUE, silent=FALSE) {
     map = validate_redist_map(map)
     V = nrow(map)
     adj = get_adj(map)
@@ -217,7 +220,7 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
                       constraints$vra$tgt_vra_other, constraints$vra$pow_vra, proc$min_pop,
                       constraints$hinge$strength, constraints$hinge$tgts_min,
                       constraints$incumbency$strength, constraints$incumbency$incumbents,
-                      lp, adapt_k_thresh, seq_alpha, pop_temper, verbosity);
+                      lp, adapt_k_thresh, seq_alpha, pop_temper, final_infl, verbosity);
 
 
     lr = -lp + constraint_fn(plans)
@@ -311,8 +314,8 @@ process_smc_ms_constr = function(constraints, V) {
 #' @return numeric vector
 #'
 #' @export
-#' 
-#' @examples 
+#'
+#' @examples
 #' redist_quantile_trunc(c(1,2,3,4))
-#' 
+#'
 redist_quantile_trunc = function(x) pmin(x, quantile(x, 1 - length(x)^(-0.5)))

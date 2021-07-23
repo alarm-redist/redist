@@ -18,6 +18,7 @@ redist_smc(
   truncate = (compactness != 1),
   trunc_fn = redist_quantile_trunc,
   pop_temper = 0,
+  final_infl = 1,
   ref_name = NULL,
   verbose = TRUE,
   silent = FALSE
@@ -94,6 +95,10 @@ rather than naive truncation.}
 \item{pop_temper}{The strength of the automatic population tempering. Try
 values of 0.01-0.05 to start if the algorithm gets stuck on the final few
 splits.}
+
+\item{final_infl}{A multiplier for the population constraint on the final
+iteration. Used to loosen the constraint when the sampler is getting stuck
+on the final split.}
 
 \item{ref_name}{a name for the existing plan, which will be added as a
 reference plan, or \code{FALSE} to not include the initial plan in the

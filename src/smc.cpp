@@ -21,7 +21,7 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                double beta_vra_hinge, const vec &tgts_min,
                double beta_inc, const uvec &incumbents,
                vec &lp, double thresh,
-               double alpha, double pop_temper, int verbosity) {
+               double alpha, double pop_temper, double final_infl, int verbosity) {
     // re-seed MT
     generator.seed((int) Rcpp::sample(INT_MAX, 1)[0]);
 
@@ -64,6 +64,10 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
             Rcout << "Using k = " << k << "\n";
 
         // perform resampling/drawing
+        if (ctr == n_distr - 1) {
+            lower = target - (target - lower) * final_infl;
+            upper = target + (upper - target) * final_infl;
+        }
         split_maps(g, counties, cg, pop, districts, cum_wgt, lp, pop_left, log_temper,
                    pop_temper, n_distr, ctr, lower, upper, target, rho, k, verbosity);
 
