@@ -54,3 +54,35 @@ IntegerMatrix dist_cty_splits(IntegerMatrix dm, IntegerVector community, int nd)
   }
   return ret;
 }
+
+
+// [[Rcpp::export]]
+IntegerVector cty_splits(IntegerMatrix dm, IntegerVector community, int nd) {
+  IntegerVector ret(dm.ncol());
+  IntegerVector com_name = sort_unique(community);
+  int nc = com_name.size();
+  IntegerMatrix com_found(nc, nd);
+  IntegerVector mid;
+
+  // by column (aka map)
+  for(int c = 0; c < dm.ncol(); c++){
+    com_found = IntegerMatrix(nc, nd);
+    // by district
+    for(int d = 0; d < nd; d++){
+      // across all rows
+      for(int r = 0; r < dm.nrow(); r++){
+        if (dm(r,c) == d) {
+          com_found(community(r), d) = 1;
+        }
+      }
+    }
+
+    mid = rowSums(com_found);
+    for(int q = 0; q < mid.size(); q++){
+      if (mid(q) > 2) {
+        ret(c)++;
+      }
+    }
+  }
+  return ret;
+}
