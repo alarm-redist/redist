@@ -312,6 +312,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
 #' scorer_status_quo(iowa_map)
 #' scorer_group_pct(iowa_map, dem_08, tot_08, k=2)
 #' 1.5*scorer_frac_kept(iowa_map) + 0.4*scorer_status_quo(iowa_map)
+#' 1.5*scorer_frac_kept(iowa_map) + scorer_frac_kept(iowa_map)*scorer_status_quo(iowa_map)
 #' }
 #'
 #' @concept prepare
@@ -460,13 +461,21 @@ NULL
 
 #' @rdname scorer-arith
 #'
-#' @param x a numeric
+#' @param x a numeric or a `redist_scorer` function, from [`scorers`]
 #' @param fn2 a `redist_scorer` function, from [`scorers`]
 #'
 #' @export
 `*.redist_scorer` = function(x, fn2) {
-    stopifnot(is.numeric(x))
-    rlang::fn_body(fn2) = rlang::expr({!!x * !!rlang::fn_body(fn2)})
+    stopifnot(is.numeric(x) || inherits(x, "redist_scorer"))
+    stopifnot(inherits(fn2, "redist_scorer"))
+
+    if (is.numeric(x)) {
+      rlang::fn_body(fn2) = rlang::expr({!!x * !!rlang::fn_body(fn2)})
+    } else {
+      fn2 = function(plans) { x(plans) * fn2(plans) }
+      class(fn2) = c("redist_scorer", "function")
+    }
+
     fn2
 }
 
