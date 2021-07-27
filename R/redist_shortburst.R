@@ -471,12 +471,13 @@ NULL
 
     if (is.numeric(x)) {
       rlang::fn_body(fn2) = rlang::expr({!!x * !!rlang::fn_body(fn2)})
+      return(fn2)
     } else {
-      fn2 = function(plans) { x(plans) * fn2(plans) }
-      class(fn2) = c("redist_scorer", "function")
+      fn = function(plans) { x(plans) * fn2(plans) }
+      class(fn) = c("redist_scorer", "function")
     }
 
-    fn2
+    fn
 }
 
 #' @rdname scorer-arith
