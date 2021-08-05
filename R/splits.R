@@ -101,9 +101,7 @@ redist.district.splits <- function(plans, counties) {
 
 #' Counts the Number of Counties Split Between 3 or More Districts
 #'
-#' Counts the total number of counties that are found within a district.
-#' This does not subtract out the number of counties that are found completely
-#' within a district.
+#' Counts the total number of counties that are split across more than 2 districts.
 #'
 #' @param plans A numeric vector (if only one map) or matrix with one row
 #' for each precinct and one column for each map. Required.
