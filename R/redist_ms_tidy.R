@@ -47,6 +47,9 @@
 #' * \code{splits}: a list with one entry:
 #'   * \code{strength}, a number controlling the tendency of the generated districts
 #'   to avoid splitting counties.
+#' * \code{fractures}: a list with one entry:
+#'   * \code{strength}, a number controlling the tendency of the generated districts
+#'   to avoid fracturing counties.
 #' * \code{vra}: a list with five entries, which may be set up using
 #'   \code{\link{redist.constraint.helper}}:
 #'   * \code{strength}, a number controlling the strength of the Voting Rights Act
