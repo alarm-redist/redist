@@ -321,7 +321,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
 NULL
 
 #' @rdname scorers
-#' @order 4
+#' @order 5
 #'
 #' @export
 scorer_frac_kept = function(map) {
@@ -400,7 +400,24 @@ scorer_splits <- function(map, counties) {
 }
 
 #' @rdname scorers
-#' @order 5
+#' @order 4
+#'
+#' @param counties A numeric vector with an integer from 1:n_counties
+#'
+#' @export
+scorer_fractures <- function(map, counties) {
+  counties <- eval_tidy(enquo(counties), map)
+  counties <- as.integer(as.factor(counties))
+
+  fn = function(plans) {
+    cty_splits(plans, counties)/length(unique(counties))
+  }
+  class(fn) <- c("redist_scorer", "function")
+  fn
+}
+
+#' @rdname scorers
+#' @order 6
 #'
 #' @param perim_df perimeter distance dataframe from \code{\link{redist.prep.polsbypopper}}
 #' @param areas area of each precinct (ie \code{st_area(map)})
@@ -427,7 +444,7 @@ scorer_polsby_popper <- function(map, perim_df=NULL, areas=NULL, m = 1) {
 
 
 #' @rdname scorers
-#' @order 6
+#' @order 7
 #'
 #' @param existing_plan A vector containing the current plan.
 #'
