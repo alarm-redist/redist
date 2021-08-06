@@ -84,7 +84,7 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
 
       PAL <- c('#6D9537', '#364B7F', '#DCAD35', '#9A9BB9', '#2A4E45', '#7F4E28')
       if (ndists > 6) {
-          plot <- plot + ggplot2::guides(fill = FALSE) +
+          plot <- plot + ggplot2::guides(fill = 'none') +
             ggplot2::scale_fill_manual(values = PAL)
       } else {
           plot <- plot + ggplot2::scale_fill_manual(values = PAL)
@@ -108,7 +108,7 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
 
 
       PAL <- c('#6D9537', '#364B7F', '#DCAD35', '#9A9BB9', '#2A4E45', '#7F4E28')
-      plot <- plot + ggplot2::guides(fill = FALSE) +
+      plot <- plot + ggplot2::guides(fill = 'none') +
         ggplot2::scale_fill_manual(values = PAL)  +
         ggplot2::scale_alpha_continuous(range = c(0,1))
     } else {
@@ -156,7 +156,7 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
 
     if (recolor) {
       PAL <- c('#6D9537', '#364B7F', '#DCAD35', '#9A9BB9', '#2A4E45', '#7F4E28')
-      plot <- plot + ggplot2::guides(fill = FALSE) +
+      plot <- plot + ggplot2::guides(fill = 'none') +
         ggplot2::scale_fill_manual(values = PAL)
     }
 

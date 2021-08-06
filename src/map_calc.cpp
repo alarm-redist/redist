@@ -122,6 +122,31 @@ double eval_splits(const subview_col<uword> &districts, int distr,
 }
 
 /*
+ * Compute the county split penalty for district `distr`
+ */
+double eval_fractures(const subview_col<uword> &districts, int distr,
+                   const uvec &counties, int n_cty) {
+    std::vector<std::set<int>> county_dist(n_cty);
+    int V = counties.size();
+    for (int i = 0; i < n_cty; i++) {
+        county_dist[i] = std::set<int>();
+    }
+
+    for (int i = 0; i < V; i++) {
+        county_dist[counties[i]-1].insert(districts[i]);
+    }
+
+    int splits = 0;
+    for (int i = 0; i < n_cty; i++) {
+        int cty_n_distr = county_dist[i].size();
+        if (cty_n_distr > 1)
+            splits++;
+    }
+
+    return splits;
+}
+
+/*
  * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,
  * given a collection of plans
  */

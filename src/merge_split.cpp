@@ -22,7 +22,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
               double pow_vra, const uvec &min_pop,
               double beta_vra_hinge, const vec &tgts_min,
               double beta_inc, const uvec &incumbents, double beta_splits,
-              double thresh, int k, int verbosity) {
+              double beta_fractures, double thresh, int k, int verbosity) {
     // re-seed MT
     generator.seed((int) Rcpp::sample(INT_MAX, 1)[0]);
 
@@ -98,13 +98,13 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
                                   tgt_min, tgt_other, pow_vra, min_pop,
                                   beta_vra_hinge, tgts_min,
                                   beta_inc, incumbents,
-                                  beta_splits, counties, n_cty);
+                                  beta_splits, beta_fractures, counties, n_cty);
         prop_lp += calc_gibbs_tgt(districts.col(i-1), n_distr, V, distr_1, distr_2,
                                   pop, beta_sq, current, n_current, beta_vra,
                                   tgt_min, tgt_other, pow_vra, min_pop,
                                   beta_vra_hinge, tgts_min,
                                   beta_inc, incumbents,
-                                  beta_splits, counties, n_cty);
+                                  beta_splits, beta_fractures, counties, n_cty);
 
         double alpha = exp(prop_lp);
         if (alpha >= 1 || unif(generator) <= alpha) { // ACCEPT
@@ -144,7 +144,8 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
                       double pow_vra, const uvec &min_pop,
                       double beta_vra_hinge, const vec &tgts_min,
                       double beta_inc, const uvec &incumbents,
-                      double beta_splits, const uvec &counties, int n_cty) {
+                      double beta_splits, double beta_fractures,
+                      const uvec &counties, int n_cty) {
     double log_tgt = 0;
 
     if (beta_sq != 0)
@@ -171,6 +172,11 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
         log_tgt += beta_splits * (
             eval_splits(plan, distr_1, counties, n_cty) +
             eval_splits(plan, distr_2, counties, n_cty)
+        );
+    if (beta_fractures != 0)
+        log_tgt += beta_splits * (
+            eval_fractures(plan, distr_1, counties, n_cty) +
+                eval_fractures(plan, distr_2, counties, n_cty)
         );
 
     return log_tgt;

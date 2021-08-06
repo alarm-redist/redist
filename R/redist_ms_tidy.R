@@ -216,7 +216,8 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
                      constraints$vra$tgt_vra_other, constraints$vra$pow_vra, proc$min_pop,
                      constraints$hinge$strength, constraints$hinge$tgts_min,
                      constraints$incumbency$strength, constraints$incumbency$incumbents,
-                     constraints$splits$strength, adapt_k_thresh, k, verbosity)
+                     constraints$splits$strength, constraints$fractures$strength,
+                     adapt_k_thresh, k, verbosity)
 
     plans <- algout$plans
     acceptances = as.logical(algout$mhdecisions)

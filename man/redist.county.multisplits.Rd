@@ -16,9 +16,7 @@ for each precinct and one column for each map. Required.}
 integer matrix where each district is a
 }
 \description{
-Counts the total number of counties that are found within a district.
-This does not subtract out the number of counties that are found completely
-within a district.
+Counts the total number of counties that are split across more than 2 districts.
 }
 \examples{
 data(iowa)
