@@ -56,7 +56,7 @@ redist.parity <- function(plans, total_pop, ncores = 1) {
 
 
     chunks = split(1:N, rep(1:nc, each=ceiling(N/nc))[1:N])
-    out = foreach(map=chunks, .combine = "c", .export = c('max_dev', '_redist_max_dev')) %oper% {
+    out = foreach(map=chunks, .combine = "c") %oper% {
         max_dev(plans[, map, drop = FALSE], total_pop, n_distr)
     }
 
