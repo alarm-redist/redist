@@ -137,7 +137,8 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
         x <- ms_plans(1, adj, init_plans[,1], counties, pop, ndists, pop_bounds[2],
                       pop_bounds[1], pop_bounds[3], compactness,
                       0, rep(1, ndists), ndists, 0, 0, 0, 1, rep(0, V),
-                      0, 0, 0, rep(1, ndists), 0, adapt_k_thresh, 0L, verbosity=2)
+                      0, 0, 0, rep(1, ndists), 0, beta_fractures = 0, adapt_k_thresh,
+                      0L, verbosity=2)
     }, type="output")
     rm(x)
     k = as.integer(stats::na.omit(stringr::str_match(out, "Using k = (\\d+)")[,2]))
@@ -153,23 +154,32 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
     on.exit(stopCluster(cl))
 
     each_len = if (return_all) nsims - warmup else 1
-    plans = foreach(chain=seq_len(chains), .combine=cbind) %dopar% {
+    plans = foreach(chain=seq_len(chains), .combine=cbind, .packages = 'redist') %dopar% {
         if (!silent) cat("Starting chain ", chain, "\n", sep="")
-        algout = ms_plans(nsims+1L, adj, init_plans[, chain], counties, pop, ndists,
-                          pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
-                          constraints$status_quo$strength, constraints$status_quo$current, n_current,
-                          constraints$vra$strength, constraints$vra$tgt_vra_min,
-                          constraints$vra$tgt_vra_other, constraints$vra$pow_vra, proc$min_pop,
-                          constraints$hinge$strength, constraints$hinge$tgts_min,
-                          constraints$incumbency$strength, constraints$incumbency$incumbents,
-                          constraints$splits$strength, constraints$fractures$strength,
-                          adapt_k_thresh, k, verbosity)
+        algout = ms_plans(N = nsims+1L, l = adj, init = init_plans[, chain],
+                          counties = counties, pop = pop, n_distr = ndists,
+                          target = pop_bounds[2], lower = pop_bounds[1],
+                          upper = pop_bounds[3], rho = compactness,
+                          beta_sq = constraints$status_quo$strength,
+                          current = constraints$status_quo$current,
+                          n_current =  n_current,
+                          beta_vra = constraints$vra$strength,
+                          tgt_min = constraints$vra$tgt_vra_min,
+                          tgt_other = constraints$vra$tgt_vra_other,
+                          pow_vra = constraints$vra$pow_vra,
+                          min_pop = proc$min_pop,
+                          beta_vra_hinge = constraints$hinge$strength,
+                          tgts_min = constraints$hinge$tgts_min,
+                          beta_inc = constraints$incumbency$strength,
+                          incumbents = constraints$incumbency$incumbents,
+                          beta_splits = constraints$splits$strength,
+                          beta_fractures = constraints$fractures$strength,
+                          thresh = adapt_k_thresh, k = k, verbosity=verbosity)
         if (return_all)
             algout$plans[, -1:-(warmup+1L), drop=FALSE]
         else
             algout$plans[, nsims+1L, drop=FALSE]
     }
-
     out = new_redist_plans(plans, map, "mergesplit", NULL, FALSE,
                            compactness = compactness,
                            constraints = constraints,

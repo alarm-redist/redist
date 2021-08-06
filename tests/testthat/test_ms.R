@@ -12,7 +12,6 @@ test_that("redist.mergesplit works", {
 })
 
 test_that("redist_mergesplit_parallel works", {
-    skip_on_os("windows")
     data(fl25)
     fl_map = redist_map(fl25, ndists=3, pop_tol=0.1)
 
