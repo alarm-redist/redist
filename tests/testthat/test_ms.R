@@ -3,7 +3,7 @@ test_that("redist.mergesplit works", {
 
   nsims <- 10
   out <- redist.mergesplit(adj = adj, total_pop = pop, init_plan = plans_10[, 1],
-                     nsims = nsims, ndists = 3, verbose = FALSE, pop_tol = 0.1)
+                     nsims = nsims, ndists = 3, silent = TRUE, pop_tol = 0.1)
   par <- redist.parity(out$plans, total_pop = pop)
 
   expect_equal(out$nsims, nsims)
@@ -14,7 +14,7 @@ test_that("redist.mergesplit works", {
 test_that("redist_mergesplit_parallel works", {
   skip_on_os('windows')
     data(fl25)
-    fl_map = redist_map(fl25, ndists=3, pop_tol=0.1)
+    fl_map = redist_map(fl25, ndists=3, pop_tol=0.1) %>% suppressMessages()
 
     N = 20
     chains = 3

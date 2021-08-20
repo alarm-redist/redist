@@ -78,6 +78,13 @@ redist.mergesplit <- function(adj, total_pop, nsims, ndists, pop_tol = 0.01,
 
   target <- sum(total_pop) / ndists
   pop_bounds <- target * c(1 - pop_tol, 1, 1 + pop_tol)
+  init_pop = pop_tally(matrix(init_plan, ncol=1), total_pop, ndists)
+  if (any(init_pop < pop_bounds[1]) | any(init_pop > pop_bounds[3]))
+      stop("Provided initialization does not meet population bounds.")
+  if (any(total_pop >= target))
+      stop("Units ", which(total_pop >= target),
+           " have population larger than the district target.\n",
+           "Redistricting impossible.")
 
   if (missing(init_plan)) {
     init_plan <- redist.smc(
