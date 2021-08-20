@@ -1,10 +1,11 @@
 plans <- plans_10[, 1:2]
 
 test_that('compactness works', {
+  capture.output(
   comp <- redist.compactness(
     shp = fl25, plans = plans,
     measure = 'all', total_pop = pop, planarize = FALSE,
-    counties = rep(1, 25)
+    counties = rep(1, 25))
   )
   expected <- structure(list(district = c(1L, 2L, 3L, 1L, 2L, 3L), PolsbyPopper = c(
       0.28558422246899, 0.245854953175331, 0.336597469649693,

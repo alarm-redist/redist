@@ -17,9 +17,11 @@ test_that('enumpart preparation runs correctly', {
         22, 5, 25, 22, 25, 5, 24, 22, 24, 24, 25
     )
 
+    capture.output(
     redist.prep.enumpart(adj = adj,
                          unordered_path = file.path(dir, 'unordered'),
                          ordered_path = file.path(dir, 'ordered'))
+    )
     expect_equal(scan(file.path(dir, 'ordered.dat')), expected)
 })
 
@@ -28,10 +30,11 @@ test_that('enumpart can sample without constraints', {
     if (file.exists(sample_path)) {
         file.remove(sample_path)
     }
+    capture.output(
     redist.run.enumpart(
         ordered_path = file.path(dir, 'ordered'),
         out_path = file.path(dir, 'sample'),
-        ndists = 3, all = F, n = 10
+        ndists = 3, all = F, n = 10)
     )
     m <- matrix(scan(file.path(dir, 'sample.dat')), nrow = 25)
 
@@ -40,7 +43,9 @@ test_that('enumpart can sample without constraints', {
 })
 
 test_that('enumpart can read in data', {
+    capture.output(
     full <- redist.read.enumpart(out_path = file.path(dir, 'sample'))
+    )
 
     expect_equal(nrow(full), 25)
     expect_equal(ncol(full), 10)
@@ -74,9 +79,10 @@ test_that('enumpart can sample with unit count constraints', {
         file.remove(sample_path)
     }
 
+    capture.output(
     redist.run.enumpart(file.path(dir, 'ordered'), file.path(dir, 'sample'),
                         ndists = 3,
-                        all = F, n = 100, lower = 4, upper = 16
+                        all = F, n = 100, lower = 4, upper = 16)
     )
     m <- matrix(scan(sample_path), nrow = 25)
 
@@ -93,9 +99,10 @@ test_that('enumpart can sample with population constraints', {
 
     write(pop, file.path(dir, 'pop.dat'), ncolumns = length(pop))
     target <- sum(pop) / 3
+    capture.output(
     redist.run.enumpart(file.path(dir, 'ordered'), file.path(dir, 'sample'),
                         ndists = 3, all = T, lower = round(target * 0.9), upper = round(target * 1.1),
-                        weight_path = file.path(dir, 'pop')
+                        weight_path = file.path(dir, 'pop'))
     )
     m <- matrix(scan(sample_path), nrow = 25)
 
