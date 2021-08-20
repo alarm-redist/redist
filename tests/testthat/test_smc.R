@@ -22,6 +22,20 @@ test_that("County constraint works", {
                  "missing values")
 })
 
+test_that("Single-precinct counties work", {
+    bb <- sf::st_sfc(sf::st_polygon(list(rbind(c(0,0), c(1,0), c(1,1), c(0,0)))))
+    grid <- sf::st_make_grid(bb, n = 4)
+    tb <- sf::st_as_sf(grid) %>%
+        rename(geometry = x) %>%
+        mutate(pop = 1, counties = row_number())
+    box_map <- redist_map(tb, ndists = 4, pop_tol = 0.25, total_pop = pop) %>%
+        suppressWarnings() %>%
+        suppressMessages()
+
+    test <- redist_smc(box_map, 10, counties=counties, silent=TRUE)
+    expect_s3_class(test, "redist_plans")
+})
+
 test_that("Not egregiously incorrect sampling accuracy (5-prec)", {
     skip_on_cran()
     set.seed(1935)

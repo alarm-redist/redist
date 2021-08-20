@@ -117,6 +117,8 @@ Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
     std::vector<int> cty_parent(n_county);
     tree_pop(cty_tree, counties[root] - 1, county_pop, cty_pop_below, cty_parent);
     for (int i = 0; i < n_county; i++) {
+        int n_vtx = county_members[i].size();
+        if (n_vtx <= 1) continue;
         // check child counties
         int children = cty_tree[i].size();
         int split_ub = cty_pop_below[i];
@@ -137,8 +139,6 @@ Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
         // impossible for this county to need to be split
         if (cty_pop_below[i] >= 0 && (miss_first && miss_second)) {
             // fill in with a dummy tree
-            int n_vtx = county_members[i].size();
-            if (n_vtx <= 1) continue;
             remaining -= n_vtx - 1; // already visited county root
             int cty_root = -1;
             for (int j = 0; j < n_vtx; j++) {
@@ -159,7 +159,7 @@ Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
     }
 
     // Generate tree within each county
-    do {
+    while (remaining > 0) {
         int add = rvtx(visited, V, remaining);
         // random walk from `add` until we hit the path
         std::vector<int> path = walk_until(g, add, visited, ignore, counties);
@@ -175,7 +175,7 @@ Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
             // reverse path so that arrows point away from root
             tree.at(path[i+1]).push_back(path[i]);
         }
-    } while (remaining > 0);
+    }
 
     return tree;
 }
