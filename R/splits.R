@@ -97,3 +97,48 @@ redist.district.splits <- function(plans, counties) {
 
     dist_cty_splits(plans - 1, community = county_id - 1, length(unique(plans[, 1])))
 }
+
+
+#' Counts the Number of Counties Split Between 3 or More Districts
+#'
+#' Counts the total number of counties that are split across more than 2 districts.
+#'
+#' @param plans A numeric vector (if only one map) or matrix with one row
+#' for each precinct and one column for each map. Required.
+#' @param counties A vector of county names or county ids.
+#'
+#' @return integer matrix where each district is a
+#'
+#' @concept analyze
+#' @export
+#'
+#' @examples
+#' data(iowa)
+#' ia <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop, pop_tol = 0.01)
+#' plans <- redist_smc(ia, 50, silent = TRUE)
+#' splits <- redist.county.multisplits(plans, ia$region)
+redist.county.multisplits <- function(plans, counties) {
+    if (missing(plans)) {
+        stop('Please provide an argument to plans.')
+    }
+    if (inherits(plans, 'redist_plans')) {
+        plans <- get_plans_matrix(plans)
+    }
+    if (!is.matrix(plans)) {
+        plans <- matrix(plans, ncol = 1)
+    }
+    if (!any(class(plans) %in% c('numeric', 'matrix'))) {
+        stop('Please provide "plans" as a matrix.')
+    }
+
+    if (missing(counties)) {
+        stop('Please provide an argument to counties.')
+    }
+    if (class(counties) %in% c('character', 'numeric', 'integer')) {
+        county_id <- redist.county.id(counties)
+    } else {
+        stop('Please provide "counties" as a character, numeric, or integer vector.')
+    }
+
+    cty_splits(plans - 1, community = county_id - 1, length(unique(plans[, 1])))
+}

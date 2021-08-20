@@ -157,6 +157,11 @@ home address.
 \item \code{strength}, a number controlling the tendency of the generated districts
 to avoid splitting counties.
 }
+\item \code{fractures}: a list with one entry:
+\itemize{
+\item \code{strength}, a number controlling the tendency of the generated districts
+to avoid fracturing counties.
+}
 \item \code{vra}: a list with five entries, which may be set up using
 \code{\link{redist.constraint.helper}}:
 \itemize{

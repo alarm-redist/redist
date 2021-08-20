@@ -109,8 +109,8 @@ max_dev <- function(districts, pop, n_distr) {
     .Call(`_redist_max_dev`, districts, pop, n_distr)
 }
 
-ms_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_vra_hinge, tgts_min, beta_inc, incumbents, beta_splits, thresh, k, verbosity) {
-    .Call(`_redist_ms_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_vra_hinge, tgts_min, beta_inc, incumbents, beta_splits, thresh, k, verbosity)
+ms_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_vra_hinge, tgts_min, beta_inc, incumbents, beta_splits, beta_fractures, thresh, k, verbosity) {
+    .Call(`_redist_ms_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_vra_hinge, tgts_min, beta_inc, incumbents, beta_splits, beta_fractures, thresh, k, verbosity)
 }
 
 agg_p2d <- function(dm, vote, nd) {
@@ -227,6 +227,10 @@ splits <- function(dm, community) {
 
 dist_cty_splits <- function(dm, community, nd) {
     .Call(`_redist_dist_cty_splits`, dm, community, nd)
+}
+
+cty_splits <- function(dm, community, nd) {
+    .Call(`_redist_cty_splits`, dm, community, nd)
 }
 
 swMH <- function(aList, cdvec, cdorigvec, popvec, grouppopvec, areas_vec, county_membership, borderlength_mat, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, tgt_min, tgt_other, rvote, dvote, minorityprop, lambda = 0L, beta = 0.0, weight_population = 0.0, weight_compact = 0.0, weight_segregation = 0.0, weight_vra = 0.0, weight_similar = 0.0, weight_countysplit = 0.0, weight_partisan = 0.0, weight_minority = 0.0, weight_hinge = 0.0, adapt_beta = "none", adjswap = 1L, exact_mh = 0L, adapt_eprob = 0L, adapt_lambda = 0L, compactness_measure = "fryer-holden", partisan_measure = "efficiency-gap", ssd_denom = 1.0, num_hot_steps = 0L, num_annealing_steps = 0L, num_cold_steps = 0L, verbose = TRUE) {

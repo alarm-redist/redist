@@ -149,7 +149,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
             x <- ms_plans(1, adj, init_plan, counties, pop, ndists, pop_bounds[2],
                           pop_bounds[1], pop_bounds[3], compactness,
                           0, rep(1, ndists), ndists, 0, 0, 0, 1, rep(0, V),
-                          0, 0, 0, rep(1, ndists), 0, adapt_k_thresh, 0L, verbosity=2)
+                          0, 0, 0, rep(1, ndists), 0, 0, adapt_k_thresh, 0L, verbosity=2)
         }, type="output")
         rm(x)
         k = as.integer(stats::na.omit(stringr::str_match(out, "Using k = (\\d+)")[,2]))
@@ -158,7 +158,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
             ms_plans(burst_size + 1L, adj, init, counties, pop, ndists,
                      pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
                      0, rep(1, ndists), ndists, 0, 0, 0, 1, rep(0, V),
-                     0, 0, 0, rep(1, ndists), 0, 1.0, k, verbosity=0)$plans[, -1L]
+                     0, 0, 0, rep(1, ndists), 0, 0, 1.0, k, verbosity=0)$plans[, -1L]
         }
     } else {
         flip_constraints <- process_flip_constr(constraints = flip_constraints,
@@ -312,6 +312,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
 #' scorer_status_quo(iowa_map)
 #' scorer_group_pct(iowa_map, dem_08, tot_08, k=2)
 #' 1.5*scorer_frac_kept(iowa_map) + 0.4*scorer_status_quo(iowa_map)
+#' 1.5*scorer_frac_kept(iowa_map) + scorer_frac_kept(iowa_map)*scorer_status_quo(iowa_map)
 #' }
 #'
 #' @concept prepare
@@ -320,7 +321,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
 NULL
 
 #' @rdname scorers
-#' @order 4
+#' @order 5
 #'
 #' @export
 scorer_frac_kept = function(map) {
@@ -399,7 +400,24 @@ scorer_splits <- function(map, counties) {
 }
 
 #' @rdname scorers
-#' @order 5
+#' @order 4
+#'
+#' @param counties A numeric vector with an integer from 1:n_counties
+#'
+#' @export
+scorer_fractures <- function(map, counties) {
+  counties <- eval_tidy(enquo(counties), map)
+  counties <- as.integer(as.factor(counties))
+
+  fn = function(plans) {
+    cty_splits(plans, counties)/length(unique(counties))
+  }
+  class(fn) <- c("redist_scorer", "function")
+  fn
+}
+
+#' @rdname scorers
+#' @order 6
 #'
 #' @param perim_df perimeter distance dataframe from \code{\link{redist.prep.polsbypopper}}
 #' @param areas area of each precinct (ie \code{st_area(map)})
@@ -426,7 +444,7 @@ scorer_polsby_popper <- function(map, perim_df=NULL, areas=NULL, m = 1) {
 
 
 #' @rdname scorers
-#' @order 6
+#' @order 7
 #'
 #' @param existing_plan A vector containing the current plan.
 #'
@@ -460,14 +478,23 @@ NULL
 
 #' @rdname scorer-arith
 #'
-#' @param x a numeric
+#' @param x a numeric or a `redist_scorer` function, from [`scorers`]
 #' @param fn2 a `redist_scorer` function, from [`scorers`]
 #'
 #' @export
 `*.redist_scorer` = function(x, fn2) {
-    stopifnot(is.numeric(x))
-    rlang::fn_body(fn2) = rlang::expr({!!x * !!rlang::fn_body(fn2)})
-    fn2
+    stopifnot(is.numeric(x) || inherits(x, "redist_scorer"))
+    stopifnot(inherits(fn2, "redist_scorer"))
+
+    if (is.numeric(x)) {
+      rlang::fn_body(fn2) = rlang::expr({!!x * !!rlang::fn_body(fn2)})
+      return(fn2)
+    } else {
+      fn = function(plans) { x(plans) * fn2(plans) }
+      class(fn) = c("redist_scorer", "function")
+    }
+
+    fn
 }
 
 #' @rdname scorer-arith

@@ -14,7 +14,7 @@
 \method{-}{redist_scorer}(fn1, fn2)
 }
 \arguments{
-\item{x}{a numeric}
+\item{x}{a numeric or a `redist_scorer` function, from [`scorers`]}
 
 \item{fn2}{a `redist_scorer` function, from [`scorers`]}
 

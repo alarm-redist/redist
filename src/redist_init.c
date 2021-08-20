@@ -25,6 +25,7 @@ extern SEXP _redist_cores(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_countpartitions(SEXP);
 extern SEXP _redist_cppGeneratePartitions(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_crsg(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _redist_cty_splits(SEXP, SEXP, SEXP);
 extern SEXP _redist_declination(SEXP, SEXP, SEXP);
 extern SEXP _redist_dist_cty_splits(SEXP, SEXP, SEXP);
 extern SEXP _redist_dist_dist_diff(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -45,7 +46,7 @@ extern SEXP _redist_lopsidedwins(SEXP, SEXP, SEXP);
 extern SEXP _redist_max_dev(SEXP, SEXP, SEXP);
 extern SEXP _redist_meanmedian(SEXP);
 extern SEXP _redist_minkowski(SEXP, SEXP, SEXP);
-extern SEXP _redist_ms_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _redist_ms_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_n_removed(SEXP, SEXP, SEXP);
 extern SEXP _redist_plan_joint(SEXP, SEXP, SEXP);
 extern SEXP _redist_polsbypopper(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -87,6 +88,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_countpartitions",       (DL_FUNC) &_redist_countpartitions,        1},
     {"_redist_cppGeneratePartitions", (DL_FUNC) &_redist_cppGeneratePartitions,  7},
     {"_redist_crsg",                  (DL_FUNC) &_redist_crsg,                   9},
+    {"_redist_cty_splits",            (DL_FUNC) &_redist_cty_splits,             3},
     {"_redist_declination",           (DL_FUNC) &_redist_declination,            3},
     {"_redist_dist_cty_splits",       (DL_FUNC) &_redist_dist_cty_splits,        3},
     {"_redist_dist_dist_diff",        (DL_FUNC) &_redist_dist_dist_diff,         7},
@@ -107,7 +109,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_max_dev",               (DL_FUNC) &_redist_max_dev,                3},
     {"_redist_meanmedian",            (DL_FUNC) &_redist_meanmedian,             1},
     {"_redist_minkowski",             (DL_FUNC) &_redist_minkowski,              3},
-    {"_redist_ms_plans",              (DL_FUNC) &_redist_ms_plans,              26},
+    {"_redist_ms_plans",              (DL_FUNC) &_redist_ms_plans,              27},
     {"_redist_n_removed",             (DL_FUNC) &_redist_n_removed,              3},
     {"_redist_plan_joint",            (DL_FUNC) &_redist_plan_joint,             3},
     {"_redist_polsbypopper",          (DL_FUNC) &_redist_polsbypopper,           6},

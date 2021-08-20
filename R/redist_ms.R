@@ -21,7 +21,7 @@
 #' adj <- redist.adjacency(fl25)
 #' out <- redist.mergesplit(adj = adj, total_pop = fl25$pop,
 #'                          nsims = 5, ndists = 3, pop_tol = 0.1)
-#' 
+#'
 redist.mergesplit <- function(adj, total_pop, nsims, ndists, pop_tol = 0.01,
                               init_plan, counties, compactness = 1,
                               constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
@@ -110,7 +110,7 @@ redist.mergesplit <- function(adj, total_pop, nsims, ndists, pop_tol = 0.01,
     constraints$vra$tgt_vra_other, constraints$vra$pow_vra, proc$min_pop,
     constraints$hinge$strength, constraints$hinge$tgts_min,
     constraints$incumbency$strength, constraints$incumbency$incumbents,
-    constraints$splits$strength,
+    constraints$splits$strength, constraints$fractures$strength,
     adapt_k_thresh, k, verbosity
   )
 
