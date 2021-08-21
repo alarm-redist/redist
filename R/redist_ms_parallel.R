@@ -173,7 +173,7 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
                           beta_inc = constraints$incumbency$strength,
                           incumbents = constraints$incumbency$incumbents,
                           beta_splits = constraints$splits$strength,
-                          beta_fractures = constraints$fractures$strength,
+                          beta_fractures = constraints$multisplits$strength,
                           thresh = adapt_k_thresh, k = k, verbosity=verbosity)
         if (return_all)
             algout$plans[, -1:-(warmup+1L), drop=FALSE]

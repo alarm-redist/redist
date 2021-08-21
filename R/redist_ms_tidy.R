@@ -47,9 +47,9 @@
 #' * \code{splits}: a list with one entry:
 #'   * \code{strength}, a number controlling the tendency of the generated districts
 #'   to avoid splitting counties.
-#' * \code{fractures}: a list with one entry:
+#' * \code{multisplits}: a list with one entry:
 #'   * \code{strength}, a number controlling the tendency of the generated districts
-#'   to avoid fracturing counties.
+#'   to avoid splitting counties multiple times.
 #' * \code{vra}: a list with five entries, which may be set up using
 #'   \code{\link{redist.constraint.helper}}:
 #'   * \code{strength}, a number controlling the strength of the Voting Rights Act
@@ -219,7 +219,7 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
                      constraints$vra$tgt_vra_other, constraints$vra$pow_vra, proc$min_pop,
                      constraints$hinge$strength, constraints$hinge$tgts_min,
                      constraints$incumbency$strength, constraints$incumbency$incumbents,
-                     constraints$splits$strength, constraints$fractures$strength,
+                     constraints$splits$strength, constraints$multisplits$strength,
                      adapt_k_thresh, k, verbosity)
 
     plans <- algout$plans

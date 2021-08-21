@@ -20,6 +20,7 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                double pow_vra, const uvec &min_pop,
                double beta_vra_hinge, const vec &tgts_min,
                double beta_inc, const uvec &incumbents,
+               double beta_fractures,
                vec &lp, double thresh,
                double alpha, double pop_temper, int verbosity) {
     // re-seed MT
@@ -31,6 +32,7 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     umat districts(V, N, fill::zeros);
     double total_pop = sum(pop);
     double tol = std::max(target - lower, upper - target) / target;
+    int n_cty = max(counties);
 
     if (verbosity >= 1) {
         Rcout << "SEQUENTIAL MONTE CARLO\n";
@@ -72,7 +74,8 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                            beta_sq, current, n_current,
                            beta_vra, tgt_min, tgt_other, pow_vra, min_pop,
                            beta_vra_hinge, tgts_min,
-                           beta_inc, incumbents, min_eff, verbosity);
+                           beta_inc, incumbents, beta_fractures, counties, n_cty,
+                           min_eff, verbosity);
 
         Rcpp::checkUserInterrupt();
     }
@@ -105,6 +108,7 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr,
              double pow_vra, const uvec &min_pop,
              double beta_vra_hinge, const vec &tgts_min,
              double beta_inc, const uvec &incumbents,
+             double beta_fractures, const uvec &counties, int n_cty,
              double &min_eff, int verbosity) {
     int V = districts.n_rows;
     int N = districts.n_cols;
@@ -121,6 +125,10 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr,
                                                      tgts_min, pop, min_pop);
         if (beta_inc != 0)
             lp[i] += beta_inc * eval_inc(districts.col(i), distr_ctr, incumbents);
+        if (beta_fractures != 0)
+            lp += beta_fractures * (
+                eval_fractures(districts.col(i), distr_ctr, counties, n_cty)
+            );
     }
 
     vec wgt = exp(-alpha * lp);

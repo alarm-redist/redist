@@ -174,7 +174,7 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
             eval_splits(plan, distr_2, counties, n_cty)
         );
     if (beta_fractures != 0)
-        log_tgt += beta_splits * (
+        log_tgt += beta_fractures * (
             eval_fractures(plan, distr_1, counties, n_cty) +
                 eval_fractures(plan, distr_2, counties, n_cty)
         );

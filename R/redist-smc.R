@@ -133,6 +133,7 @@ redist.smc = function(adj, total_pop, nsims, ndists, counties=NULL,
                      constraints$vra$tgt_vra_other, constraints$vra$pow_vra, proc$min_pop,
                      constraints$hinge$strength, constraints$hinge$tgts_min,
                      constraints$incumbency$strength, constraints$incumbency$incumbents,
+                     constraints$multisplits$strength,
                      lp, adapt_k_thresh, seq_alpha, pop_temper, verbosity);
 
     dev = max_dev(maps, total_pop, ndists)
