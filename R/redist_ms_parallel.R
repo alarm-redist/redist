@@ -126,6 +126,9 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
 
     pop_bounds = attr(map, "pop_bounds")
     pop = map[[attr(map, "pop_col")]]
+    init_pop = pop_tally(init_plans, pop, ndists)
+    if (any(init_pop < pop_bounds[1]) | any(init_pop > pop_bounds[3]))
+        stop("Provided initialization does not meet population bounds.")
     if (any(pop >= get_target(map)))
         stop("Units ", which(pop >= get_target(map)),
              " have population larger than the district target.\n",

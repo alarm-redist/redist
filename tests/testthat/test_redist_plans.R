@@ -1,5 +1,5 @@
 test_that("constructor works", {
-    fl = redist_map(fl25, ndists=3, pop_tol=0.1)
+    fl = redist_map(fl25, ndists=3, pop_tol=0.1) %>% suppressMessages()
     x = redist_plans(plans_10, fl, "enumpart")
     expect_s3_class(x, "redist_plans")
     expect_s3_class(x, "tbl")
@@ -11,7 +11,7 @@ test_that("constructor works", {
 })
 
 test_that("add_reference works", {
-    fl = redist_map(fl25, ndists=3, pop_tol=0.1)
+    fl = redist_map(fl25, ndists=3, pop_tol=0.1) %>% suppressMessages()
     x = redist_plans(plans_10, fl, "enumpart") %>%
         add_reference(plans_10[,1])
     expect_s3_class(x, "redist_plans")
@@ -22,7 +22,7 @@ test_that("add_reference works", {
 })
 
 test_that("subsetting works", {
-    fl = redist_map(fl25, ndists=3, pop_tol=0.1)
+    fl = redist_map(fl25, ndists=3, pop_tol=0.1) %>% suppressMessages()
     x = redist_plans(plans_10, fl, "enumpart") %>%
         add_reference(plans_10[,1])
     x_samp = subset_sampled(x)
@@ -32,7 +32,7 @@ test_that("subsetting works", {
 })
 
 test_that("plotting works", {
-    fl = redist_map(fl25, ndists=3, pop_tol=0.1)
+    fl = redist_map(fl25, ndists=3, pop_tol=0.1) %>% suppressMessages()
     x = redist_plans(plans_10, fl, "enumpart") %>%
         add_reference(plans_10[,1])
     out = plot(x)
@@ -42,23 +42,24 @@ test_that("plotting works", {
 })
 
 test_that("get_mh_acceptance_rate works", {
-  iowa_map <- redist_map(iowa, pop_tol = 0.01, existing_plan = cd_2010)
+    iowa_map <- redist_map(iowa, pop_tol = 0.01, existing_plan = cd_2010)
 
-  # should exist and be number
-  out <- redist_flip(iowa_map, nsims = 5, verbose = FALSE)
-  mh <- get_mh_acceptance_rate(out)
-  expect_true(is.numeric(mh))
-  expect_true(mh >= 0)
+    # should exist and be number
+    capture.output(
+    out <- redist_flip(iowa_map, nsims = 5, verbose = FALSE)
+    )
+    mh <- get_mh_acceptance_rate(out)
+    expect_true(is.numeric(mh))
+    expect_true(mh >= 0)
 
-  out <- redist_mergesplit(iowa_map, nsims = 5, silent = TRUE)
-  mh <- get_mh_acceptance_rate(out)
-  expect_true(is.numeric(mh))
-  expect_true(mh >= 0)
+    out <- redist_mergesplit(iowa_map, nsims = 5, silent = TRUE)
+    mh <- get_mh_acceptance_rate(out)
+    expect_true(is.numeric(mh))
+    expect_true(mh >= 0)
 
-  # should return NA_real_
-  out <- redist_smc(iowa_map, nsims = 5, silent = TRUE)
-  mh <- get_mh_acceptance_rate(out)
-  expect_true(is.na(mh))
-  expect_true(is.numeric(mh))
-
+    # should return NA_real_
+    out <- redist_smc(iowa_map, nsims = 5, silent = TRUE)
+    mh <- get_mh_acceptance_rate(out)
+    expect_true(is.na(mh))
+    expect_true(is.numeric(mh))
 })

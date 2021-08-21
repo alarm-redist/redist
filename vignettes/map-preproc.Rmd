@@ -94,7 +94,7 @@ ggplot(cities) +
     geom_sf_text(aes(label=distr), size=10, fontface="bold", color="#000000aa",
                  data=districts) +
     scale_alpha_manual(values=c(0, 0.8)) +
-    guides(fill=F, alpha=F) +
+    guides(fill="none", alpha="none") +
     labs(title="Cities with Council District Overlays") + 
     theme_void()
 ```
