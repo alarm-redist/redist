@@ -18,6 +18,7 @@
 arma::umat smc_plans(int N, List l, const arma::uvec &counties,
                      const arma::uvec &pop, int n_distr, double target,
                      double lower, double upper, double rho,
+                     arma::umat districts, int n_drawn, int n_steps,
                      double beta_sq, const arma::uvec &current, int n_current,
                      double beta_vra, double tgt_min, double tgt_other,
                      double pow_vra, const arma::uvec &min_pop,
@@ -41,7 +42,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
 /*
  * Add specific constraint weights & return the cumulative weight vector
  */
-vec get_wgts(const umat &districts, int n_distr, int distr_ctr,
+vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
              double alpha, vec &lp, const uvec &pop,
              double beta_sq, const uvec &current, int n_current,
              double beta_vra, double tgt_min, double tgt_other,

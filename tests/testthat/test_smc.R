@@ -70,6 +70,33 @@ test_that("Not egregiously incorrect sampling accuracy (25-prec)", {
     expect_true(all(abs(zscores) <= 6))
 })
 
+test_that("Partial sampling works accurately", {
+    skip_on_cran()
+    set.seed(1935)
+
+    ref_plans = plans_10[, redist.parity(plans_10, pop) <= 0.01]
+    log_st_ref = round(log_st_map(adj, ref_plans, rep(1L, 25), 3L), 5)
+
+    out1 = redist_smc(set_pop_tol(fl_map, 0.01), 2000, compactness=0,
+                      n_steps=1, adapt_k_thresh=0.99, seq_alpha=0.3,
+                      resample=T, silent=T) %>%
+        suppressWarnings() # efficiency
+    out2 = redist_smc(set_pop_tol(fl_map, 0.01), 2000, compactness=0,
+                      init_particles=as.matrix(out1),
+                      adapt_k_thresh=0.99, seq_alpha=0.3, resample=F, silent=T) %>%
+        suppressWarnings() # efficiency
+    log_st = round(log_st_map(adj, as.matrix(out2), rep(1L, 25), 3L), 5)
+    types = match(log_st, log_st_ref)
+
+    wgts = weights(out2)
+    avgs = sapply(seq_along(log_st_ref), function(i) weighted.mean(types==i, wgts))
+    ses = sapply(seq_along(log_st_ref), function(i) {
+        sqrt(sum(((types==i) - avgs[i])^2 * (wgts / sum(wgts))^2))
+    })
+    zscores = (avgs - (1/length(log_st_ref))) / ses
+    expect_true(all(abs(zscores) <= 6.5))
+})
+
 test_that("Precise population bounds are enforced", {
     map2 = fl_map
     attr(map2, "pop_bounds") = c(52e3, 58e3, 60e3)

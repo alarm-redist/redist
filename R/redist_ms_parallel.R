@@ -88,8 +88,8 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
         if (!silent) cat("Sampling initial plans with SMC")
         init_plans = get_plans_matrix(
             redist_smc(map, chains, counties, compactness, constraints,
-                       TRUE, constraint_fn, adapt_k_thresh, ref_name=FALSE,
-                       verbose=verbose, silent=silent))
+                       TRUE, constraint_fn, adapt_k_thresh=adapt_k_thresh,
+                       ref_name=FALSE, verbose=verbose, silent=silent))
         if (is.null(init_name))
             init_names = paste0("<init> ", seq_len(chains))
         else
@@ -186,6 +186,7 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
     out = new_redist_plans(plans, map, "mergesplit", NULL, FALSE,
                            compactness = compactness,
                            constraints = constraints,
+                           ndists = ndists,
                            adapt_k_thresh = adapt_k_thresh) %>%
         mutate(chain = rep(seq_len(chains), each=each_len*ndists))
 

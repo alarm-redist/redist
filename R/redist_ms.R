@@ -230,6 +230,7 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
 
     out = new_redist_plans(plans[, -1:-(warmup+1), drop=FALSE],
                            map, "mergesplit", NULL, FALSE,
+                           ndists = ndists,
                            compactness = compactness,
                            constraints = constraints,
                            adapt_k_thresh = adapt_k_thresh,

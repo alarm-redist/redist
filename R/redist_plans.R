@@ -14,18 +14,25 @@
 # algorithm is one of "smc" or "mcmc"
 # wgt is the weights before any resampling or truncation
 # ... will depend on the algorithm
-new_redist_plans = function(plans, map, algorithm, wgt, resampled=TRUE, ...) {
+new_redist_plans = function(plans, map, algorithm, wgt, resampled=TRUE, ndists=FALSE, ...) {
     n_sims = ncol(plans)
     stopifnot(n_sims >= 1)
 
     n_prec = nrow(plans)
-    ndists = attr(map, "ndists")
+    map_dists = attr(map, "ndists")
+    partial = ndists < map_dists
 
     prec_pop = map[[attr(map, "pop_col")]]
-    distr_pop = pop_tally(plans, prec_pop, ndists)
+    if (!partial) {
+        distr_pop = pop_tally(plans, prec_pop, ndists)
+    } else {
+        pl_tmp = plans
+        pl_tmp[pl_tmp == 0L] = ndists
+        distr_pop = pop_tally(pl_tmp, prec_pop, ndists)
+    }
 
     attr_names = c("redist_attr", "plans", "algorithm", "wgt", "resampled",
-                   "merge_idx", "prec_pop", names(list(...)))
+                   "ndists", "merge_idx", "prec_pop", names(list(...)))
 
     structure(tibble(draw = rep(as.factor(1:n_sims), each=ndists),
                              district = rep(1:ndists, n_sims),
@@ -327,6 +334,7 @@ rbind.redist_plans = function(..., deparse.level=1) {
     # check types
     n_prec = nrow(get_plans_matrix(objs[[1]]))
     prec_pop = attr(objs[[1]], "prec_pop")
+    ndists = attr(objs[[1]], "ndists")
     constr = attr(objs[[1]], "constraints")
     resamp = attr(objs[[1]], "resampled")
     comp = attr(objs[[1]], "compactness")
@@ -335,6 +343,8 @@ rbind.redist_plans = function(..., deparse.level=1) {
             stop("Number of precincts must match for all sets of plans.")
         if (!identical(attr(objs[[i]], "prec_pop"), prec_pop))
             stop("Precinct populations must match for all sets of plans.")
+        if (!identical(attr(objs[[i]], "ndists"), ndists))
+            stop("Number of districts must match for all sets of plans.")
         if (attr(objs[[i]], "resampled") != resamp)
             stop("Some sets of plans are resampled while others are not.")
         if (attr(objs[[i]], "compactness") != comp) {
@@ -354,6 +364,8 @@ rbind.redist_plans = function(..., deparse.level=1) {
     attr(ret, "pop_temper") = NA
     attr(ret, "compactness") = comp
     attr(ret, "constraints") = constr
+    attr(ret, "ndists") = ndists
+    attr(ret, "prec_pop") = prec_pop
     attr(ret, "plans") = do.call(cbind, lapply(objs, function(x) get_plans_matrix(x)))
     attr(ret, "wgt") = do.call(c, lapply(objs, function(x) get_plans_weights(x)))
     attr(ret, "n_eff") = sum(do.call(c, lapply(objs, function(x) attr(x, "n_eff"))))

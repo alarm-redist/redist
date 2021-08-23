@@ -355,6 +355,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
     algorithm = 'flip',
     wgt = NULL,
     resampled = NULL,
+    ndists = ndists,
     lambda = lambda,
     eprob = eprob,
     pop_tol = pop_tol,

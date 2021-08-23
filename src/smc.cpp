@@ -15,6 +15,7 @@
  */
 umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                int n_distr, double target, double lower, double upper, double rho,
+               umat districts, int n_drawn, int n_steps,
                double beta_sq, const uvec &current, int n_current,
                double beta_vra, double tgt_min, double tgt_other,
                double pow_vra, const uvec &min_pop,
@@ -29,22 +30,43 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     Graph g = list_to_graph(l);
     Multigraph cg = county_graph(g, counties);
     int V = g.size();
-    umat districts(V, N, fill::zeros);
+    if (districts.n_rows != V || districts.n_cols != N)
+        throw std::range_error("Initialization districts have wrong dimensions.");
     double total_pop = sum(pop);
     double tol = std::max(target - lower, upper - target) / target;
     int n_cty = max(counties);
 
     if (verbosity >= 1) {
         Rcout << "SEQUENTIAL MONTE CARLO\n";
-        Rcout << "Sampling " << N << " " << V << "-unit maps with " << n_distr
-              << " districts and population between " << lower << " and " << upper << ".\n";
+        Rcout << "Sampling " << N << " " << V << "-unit ";
+        if (n_drawn + n_steps + 1 == n_distr) {
+            Rcout << "maps with " << n_distr << " districts and population between "
+                << lower << " and " << upper << ".\n";
+        } else {
+            Rcout << "partial maps of " << n_drawn + n_steps + 1
+                << " districts and population between "
+                << lower << " and " << upper << ".\n";
+        }
         if (cg.size() > 1)
             Rcout << "Ensuring no more than " << n_distr - 1 << " splits of the "
                   << cg.size() << " administrative units.\n";
     }
 
     vec pop_left(N);
-    pop_left.fill(total_pop);
+    if (n_drawn == 0) {
+        pop_left.fill(total_pop);
+    } else {
+        // compute population not assigned (i.e., in district '0')
+        pop_left.fill(0.0);
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < V; j++) {
+                if (districts(j, i) == 0) {
+                    pop_left[i] += pop[j];
+                }
+            }
+        }
+    }
+
     vec log_temper(N);
     log_temper.fill(0.0);
     lp.fill(0.0);
@@ -54,9 +76,9 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     vec cum_wgt(N);
     cum_wgt.fill(1.0 / N);
     cum_wgt = cumsum(cum_wgt);
-    for (int ctr = 1; ctr < n_distr; ctr++) {
+    for (int ctr = n_drawn + 1; ctr <= n_drawn + n_steps; ctr++) {
         if (verbosity >= 1)
-            Rcout << "Making split " << ctr << " of " << n_distr-1 << "\n";
+            Rcout << "Making split " << ctr - n_drawn << " of " << n_steps << "\n";
 
         // find k and multipliers
         adapt_parameters(g, k, lp, thresh, tol, districts, counties, cg, pop,
@@ -66,7 +88,8 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
             Rcout << "Using k = " << k << "\n";
 
         // perform resampling/drawing
-        if (ctr == n_distr - 1) {
+        bool final = ctr == n_drawn + n_steps;
+        if (final) {
             lower = target - (target - lower) * final_infl;
             upper = target + (upper - target) * final_infl;
         }
@@ -74,7 +97,7 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                    pop_temper, n_distr, ctr, lower, upper, target, rho, k, verbosity);
 
         // compute weights for next step
-        cum_wgt = get_wgts(districts, n_distr, ctr, alpha, lp, pop,
+        cum_wgt = get_wgts(districts, n_distr, ctr, final, alpha, lp, pop,
                            beta_sq, current, n_current,
                            beta_vra, tgt_min, tgt_other, pow_vra, min_pop,
                            beta_vra_hinge, tgts_min,
@@ -91,10 +114,12 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
         Rcerr << "Warning: bottleneck detected. Sample may not be diverse.\n";
     }
 
-    // Set final district label to n_distr rather than 0
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < V; j++) {
-            districts(j, i) = districts(j, i) == 0 ? n_distr : districts(j, i);
+    if (n_drawn + n_steps + 1 == n_distr) {
+        // Set final district label to n_distr rather than 0
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < V; j++) {
+                districts(j, i) = districts(j, i) == 0 ? n_distr : districts(j, i);
+            }
         }
     }
 
@@ -105,7 +130,7 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
 /*
  * Add specific constraint weights & return the cumulative weight vector
  */
-vec get_wgts(const umat &districts, int n_distr, int distr_ctr,
+vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
              double alpha, vec &lp, const uvec &pop,
              double beta_sq, const uvec &current, int n_current,
              double beta_vra, double tgt_min, double tgt_other,
@@ -136,7 +161,7 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr,
     }
 
     vec wgt = exp(-alpha * lp);
-    if (distr_ctr < n_distr - 1) // not the last iteration
+    if (!final) // not the last iteration
         lp = lp * (1 - alpha);
     vec cuml_wgt = cumsum(wgt);
 

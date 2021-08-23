@@ -163,6 +163,7 @@
 #' @export
 redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list(),
                       resample=TRUE, constraint_fn=function(m) rep(0, ncol(m)),
+                      init_particles=NULL, n_steps=NULL,
                       adapt_k_thresh=0.975, seq_alpha=0.2+0.3*compactness,
                       truncate=(compactness != 1), trunc_fn=redist_quantile_trunc,
                       pop_temper=0, final_infl=1, ref_name=NULL, verbose=TRUE, silent=FALSE) {
@@ -215,9 +216,27 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
              " have population larger than the district target.\n",
              "Redistricting impossible.")
 
+    # handle particle inits
+    if (is.null(init_particles)) {
+        init_particles = matrix(0L, nrow=V, ncol=nsims)
+        n_drawn = 0L
+    } else {
+        stopifnot(nrow(init_particles) == V)
+        stopifnot(ncol(init_particles) == nsims)
+        n_drawn = as.integer(max(init_particles[, 1]))
+    }
+    if (is.null(n_steps)) {
+        n_steps = attr(map, "ndists") - n_drawn - 1L
+    }
+    final_dists = n_drawn + n_steps + 1L
+    if (final_dists > ndists) {
+        stop("Too many districts already drawn to take ", n_steps, " steps.")
+    }
+
     lp = rep(0, nsims)
     plans = smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],
                       pop_bounds[1], pop_bounds[3], compactness,
+                      init_particles, n_drawn, n_steps,
                       constraints$status_quo$strength, constraints$status_quo$current, n_current,
                       constraints$vra$strength, constraints$vra$tgt_vra_min,
                       constraints$vra$tgt_vra_other, constraints$vra$pow_vra, proc$min_pop,
@@ -251,15 +270,16 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
         warning("Less than 5% resampling efficiency. Consider weakening constraints and/or adjusting `seq_alpha`.")
 
     out = new_redist_plans(plans, map, "smc", wgt, resample,
-                     n_eff = n_eff,
-                     compactness = compactness,
-                     constraints = constraints,
-                     adapt_k_thresh = adapt_k_thresh,
-                     seq_alpha = seq_alpha,
-                     pop_temper = pop_temper)
+                           n_eff = n_eff,
+                           compactness = compactness,
+                           constraints = constraints,
+                           ndists = final_dists,
+                           adapt_k_thresh = adapt_k_thresh,
+                           seq_alpha = seq_alpha,
+                           pop_temper = pop_temper)
 
     exist_name = attr(map, "existing_col")
-    if (!is.null(exist_name) && !isFALSE(ref_name)) {
+    if (!is.null(exist_name) && !isFALSE(ref_name) && ndists == final_dists) {
         ref_name = if (!is.null(ref_name)) ref_name else exist_name
         out = add_reference(out, map[[exist_name]], ref_name)
     }
