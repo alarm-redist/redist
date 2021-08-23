@@ -173,6 +173,8 @@ make_cores = function(.data=cur_map(), boundary=1, focus=NULL) {
 #' @export
 add_reference = function(plans, ref_plan, name=NULL) {
     stopifnot(inherits(plans, "redist_plans"))
+    if (isTRUE(attr(plans, "partial")))
+        stop("Reference plans not supported for partial plans objects.")
 
     plan_m = get_plans_matrix(plans)
     stopifnot(is.numeric(ref_plan))

@@ -110,6 +110,14 @@
 #' @param constraint_fn A function which takes in a matrix where each column is
 #'  a redistricting plan and outputs a vector of log-weights, which will be
 #'  added the the final weights.
+#' @param init_particles A matrix of partial plans to begin sampling from. For
+#'  advanced use only.  The matrix must have \code{nsims} columns and a row for
+#'  every precinct. It is important to ensure that the existing districts meet
+#'  contiguity and population constraints, or there may be major issues when
+#'  sampling.
+#' @param n_steps How many steps to run the SMC algorithm for.
+#'   Each step splits off a new district. Defaults to all remaining districts.
+#'   If fewer than the number of remaining splits, reference plans are disabled.
 #' @param adapt_k_thresh The threshold value used in the heuristic to select a
 #'   value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if the
 #'   algorithm does not appear to be sampling from the target distribution. Must

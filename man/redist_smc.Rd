@@ -12,6 +12,8 @@ redist_smc(
   constraints = list(),
   resample = TRUE,
   constraint_fn = function(m) rep(0, ncol(m)),
+  init_particles = NULL,
+  n_steps = NULL,
   adapt_k_thresh = 0.975,
   seq_alpha = 0.2 + 0.3 * compactness,
   truncate = (compactness != 1),
@@ -51,6 +53,16 @@ manually.}
 \item{constraint_fn}{A function which takes in a matrix where each column is
 a redistricting plan and outputs a vector of log-weights, which will be
 added the the final weights.}
+
+\item{init_particles}{A matrix of partial plans to begin sampling from. For
+advanced use only.  The matrix must have \code{nsims} columns and a row for
+every precinct. It is important to ensure that the existing districts meet
+contiguity and population constraints, or there may be major issues when
+sampling.}
+
+\item{n_steps}{How many steps to run the SMC algorithm for.
+Each step splits off a new district. Defaults to all remaining districts.
+If fewer than the number of remaining splits, reference plans are disabled.}
 
 \item{adapt_k_thresh}{The threshold value used in the heuristic to select a
 value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if the
