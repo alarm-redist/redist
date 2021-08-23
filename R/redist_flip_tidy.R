@@ -107,7 +107,7 @@
 #' @param warmup The number of warmup samples to discard.
 #' @param init_plan A vector containing the congressional district labels
 #' of each geographic unit. The default is \code{NULL}. If not provided,
-#' a random initial plan will be generated using \code{redist.smc}. You can also
+#' a random initial plan will be generated using \code{redist_smc}. You can also
 #' request to initialize using \code{redist.rsg} by supplying 'rsg', though this is
 #' not recommended behavior.
 #' @param pop_tol The strength of the hard population
@@ -234,16 +234,12 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
       } else {
         counties_smc <- pre_pre_proc$counties + 1
       }
-      invisible(capture.output(init_plan <- redist.smc(
-        adj = adj,
-        total_pop = total_pop,
+      invisible(capture.output(init_plan <- redist_smc(map,
         nsims = 1,
-        ndists = ndists,
         counties = counties_smc,
-        pop_tol = pop_tol,
         silent = TRUE
       ), type = 'message'))
-      init_plan <- init_plan$plans - 1L
+      init_plan <- as.matrix(init_plan) - 1L
 
       if (is.null(init_name)) {
         init_name <- '<init>'

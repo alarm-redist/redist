@@ -42,7 +42,7 @@ combine.par.anneal <- function(a, b){
 #' \code{NULL}.
 #' @param init_plan A vector containing the congressional district labels
 #' of each geographic unit. If not provided, random and contiguous congressional
-#' district assignments will be generated using \code{redist.smc}. To use the old
+#' district assignments will be generated using \code{redist_smc}. To use the old
 #' behavior of generating with \code{redist.rsg}, provide init_plan = 'rsg'.
 #' @param num_hot_steps The number of steps to run the simulator at beta = 0.
 #' Default is 40000.
@@ -565,7 +565,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' \code{NULL}.
 #' @param init_plan A vector containing the congressional district labels
 #' of each geographic unit. If not provided, random and contiguous congressional
-#' district assignments will be generated using \code{redist.smc}. To use the old
+#' district assignments will be generated using \code{redist_smc}. To use the old
 #' behavior of generating with \code{redist.rsg}, provide init_plan = 'rsg'.
 #' @param loopscompleted Number of save points reached by the
 #' algorithm. The default is \code{0}.
