@@ -48,9 +48,8 @@ core of the district.
 }
 \examples{
 data(fl250)
-adj <- redist.adjacency(fl250)
-plan <- redist.smc(adj = adj, total_pop = fl250$pop,
-                  nsims = 1, ndists = 4)$plans
+fl250_map = redist_map(fl250, ndists=4, pop_tol=0.01)
+plan <- as.matrix(redist.smc(fl250_map))
 core <- redist.identify.cores(adj = adj, plan = plan)
 redist.plot.cores(shp = fl250, plan = plan, core = core)
 

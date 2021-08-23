@@ -323,3 +323,25 @@ process_smc_ms_constr = function(constraints, V) {
 #' redist_quantile_trunc(c(1,2,3,4))
 #'
 redist_quantile_trunc = function(x) pmin(x, quantile(x, 1 - length(x)^(-0.5)))
+
+#' Confidence Intervals for Importance Sampling Estimates
+#'
+#' Builds a confidence interval for a quantity of interest,
+#' given importance sampling weights.
+#'
+#' @param x A numeric vector containing the quantity of interest
+#' @param wgt A numeric vector containing the nonnegative importance weights.
+#'   Will be normalized automatically.
+#' @param conf The confidence level for the interval.
+#'
+#' @returns A two-element vector of the form [lower, upper] containing
+#' the importance sampling confidence interval.
+#'
+#' @concept post
+#' @export
+redist.smc_is_ci = function(x, wgt, conf=0.99) {
+    wgt = wgt / sum(wgt)
+    mu = sum(x*wgt)
+    sig = sqrt(sum((x - mu)^2 * wgt^2))
+    mu + qnorm(c((1-conf)/2, 1-(1-conf)/2))*sig
+}
