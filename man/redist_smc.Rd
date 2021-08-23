@@ -125,7 +125,7 @@ will have population between \code{lower} and \code{upper}, with a goal of
 \code{redist_smc} returns an object of class
 \code{\link{redist_plans}} containing the simulated plans.
 
-\code{redist.smc} returns an object of class \code{redist}, which
+\code{redist.smc} (Deprecated) returns an object of class \code{redist}, which
 is a list containing the following components:
 \item{aList}{The adjacency list used to sample}
 \item{cdvec}{The matrix of sampled plans. Each row is a geographical unit,

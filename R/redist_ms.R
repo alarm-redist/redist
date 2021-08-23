@@ -11,7 +11,7 @@
 #' in percentage terms, i.e., \code{pop_tol=0.01} will ensure districts have
 #' populations within 1% of the target population.
 #'
-#' @return \code{redist.mergesplit} returns an object of class list containing the
+#' @return \code{redist.mergesplit} (Deprecated) returns an object of class list containing the
 #' simulated plans.
 #'
 #' @export

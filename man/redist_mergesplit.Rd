@@ -103,7 +103,7 @@ populations within 1\% of the target population.}
 \code{redist_mergesplit} returns an object of class
 \code{\link{redist_plans}} containing the simulated plans.
 
-\code{redist.mergesplit} returns an object of class list containing the
+\code{redist.mergesplit} (Deprecated) returns an object of class list containing the
 simulated plans.
 }
 \description{

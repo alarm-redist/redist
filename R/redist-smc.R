@@ -22,7 +22,7 @@
 #' will have population between \code{lower} and \code{upper}, with a goal of
 #' \code{target}.  If set, overrides \code{pop_tol}.
 #'
-#' @return \code{redist.smc} returns an object of class \code{redist}, which
+#' @return \code{redist.smc} (Deprecated) returns an object of class \code{redist}, which
 #' is a list containing the following components:
 #' \item{aList}{The adjacency list used to sample}
 #' \item{cdvec}{The matrix of sampled plans. Each row is a geographical unit,
