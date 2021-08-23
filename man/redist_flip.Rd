@@ -35,7 +35,7 @@ redist_flip(
 
 \item{init_plan}{A vector containing the congressional district labels
 of each geographic unit. The default is \code{NULL}. If not provided,
-a random initial plan will be generated using \code{redist.smc}. You can also
+a random initial plan will be generated using \code{redist_smc}. You can also
 request to initialize using \code{redist.rsg} by supplying 'rsg', though this is
 not recommended behavior.}
 

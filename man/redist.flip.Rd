@@ -60,7 +60,7 @@ unit}
 
 \item{init_plan}{A vector containing the congressional district labels
 of each geographic unit. If not provided, random and contiguous congressional
-district assignments will be generated using \code{redist.smc}. To use the old
+district assignments will be generated using \code{redist_smc}. To use the old
 behavior of generating with \code{redist.rsg}, provide init_plan = 'rsg'.}
 
 \item{loopscompleted}{Number of save points reached by the
