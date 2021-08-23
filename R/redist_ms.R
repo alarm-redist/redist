@@ -27,6 +27,7 @@ redist.mergesplit <- function(adj, total_pop, nsims, ndists, pop_tol = 0.01,
                               constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
                               adapt_k_thresh = 0.975, k = NULL, verbose = TRUE,
                               silent = FALSE) {
+  .Deprecated("redist_mergesplit")
   if (missing(adj)) {
     stop('Please provide an argument to adj.')
   }
@@ -77,15 +78,8 @@ redist.mergesplit <- function(adj, total_pop, nsims, ndists, pop_tol = 0.01,
   if (is.null(k)) k <- 0
 
   if (missing(init_plan)) {
-    init_plan <- redist.smc(
-      adj = adj,
-      total_pop = total_pop,
-      nsims = 1,
-      ndists = ndists,
-      counties = counties,
-      pop_tol = pop_tol,
-      silent = TRUE
-    )$plans
+      init_plan <- as.matrix(redist.smc(map, nsims = 1,
+                                        counties = counties, silent = TRUE))
   } else {
     if (length(init_plan) != V) {
       stop('init_plan must have one entry for each unit.')

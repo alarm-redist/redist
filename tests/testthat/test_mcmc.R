@@ -56,10 +56,9 @@ test_that("mcmc hinge works", {
 test_that('mcmc flip wrapper works',{
   data(fl25)
   nsims <- 10
-  fl25_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1) %>% suppressMessages()
 
   capture.output(
-  sims <- redist_flip(map = fl25_map, nsims = 10)
+  sims <- redist_flip(map = fl_map, nsims = 10)
   )
 
   expect_s3_class(sims, "redist_plans")
