@@ -130,7 +130,7 @@ compare_plans = function(plans, set1, set2, shp=NULL, plot="fill", thresh=0.1,
         if (plot == "line") {
             edges = dplyr::as_tibble(shp) %>%
                 sf::st_as_sf() %>%
-                dplyr::select(attr(shp, "sf_column")) %>%
+                dplyr::select(geometry=attr(shp, "sf_column")) %>%
                 sf::st_intersection() %>%
                 dplyr::as_tibble() %>%
                 dplyr::filter(.data$n.overlaps == 2) %>%
@@ -138,7 +138,7 @@ compare_plans = function(plans, set1, set2, shp=NULL, plot="fill", thresh=0.1,
                               to = sapply(.data$origins, function(x) x[2]),
                               wgt1 = (evec1[.data$from] - evec1[.data$to])^2,
                               wgt2 = (evec2[.data$from] - evec2[.data$to])^2) %>%
-                dplyr::filter(sf::st_dimension(sf::st_geometry(.)) == 1) %>%
+                dplyr::filter(sf::st_dimension(.data$geometry) == 1) %>%
                 sf::st_as_sf()
 
             make_plot = function(x, lab) {
