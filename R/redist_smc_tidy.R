@@ -67,6 +67,9 @@
 #'   minority percentage; higher values are more tolerant. Defaults to 1.5
 #'   * \code{min_pop}, A vector containing the minority population of each
 #'   geographic unit.
+#' * \code{multisplits}: a list with one entry:
+#'   * \code{strength}, a number controlling the tendency of the generated districts
+#'   to avoid splitting counties multiple times.
 #'
 #' All constraints are fed into a Gibbs measure, with coefficients on each
 #' constraint set by the corresponding \code{strength} parameters.
@@ -220,8 +223,8 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
                       constraints$vra$tgt_vra_other, constraints$vra$pow_vra, proc$min_pop,
                       constraints$hinge$strength, constraints$hinge$tgts_min,
                       constraints$incumbency$strength, constraints$incumbency$incumbents,
+                      constraints$multisplits$strength,
                       lp, adapt_k_thresh, seq_alpha, pop_temper, final_infl, verbosity);
-
 
     lr = -lp + constraint_fn(plans)
     wgt = exp(lr - mean(lr))
@@ -279,7 +282,7 @@ process_smc_ms_constr = function(constraints, V) {
                    pow_vra=1.5, min_pop=integer()),
         incumbency = list(strength=0, incumbents=integer()),
         splits = list(strength=0),
-        fractures = list(strength=0)
+        multisplits = list(strength=0)
     )
 
     for (type in names(constraints)) {

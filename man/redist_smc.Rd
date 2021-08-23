@@ -219,6 +219,11 @@ minority percentage; higher values are more tolerant. Defaults to 1.5
 \item \code{min_pop}, A vector containing the minority population of each
 geographic unit.
 }
+\item \code{multisplits}: a list with one entry:
+\itemize{
+\item \code{strength}, a number controlling the tendency of the generated districts
+to avoid splitting counties multiple times.
+}
 }
 
 All constraints are fed into a Gibbs measure, with coefficients on each

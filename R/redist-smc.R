@@ -133,19 +133,20 @@ redist.smc = function(adj, total_pop, nsims, ndists, counties=NULL,
                      constraints$vra$tgt_vra_other, constraints$vra$pow_vra, proc$min_pop,
                      constraints$hinge$strength, constraints$hinge$tgts_min,
                      constraints$incumbency$strength, constraints$incumbency$incumbents,
-                     lp, adapt_k_thresh, seq_alpha, pop_temper, verbosity);
+                     constraints$multisplits$strength,
+                     lp, adapt_k_thresh, seq_alpha, pop_temper, 1, verbosity);
 
     dev = max_dev(maps, total_pop, ndists)
     maps = maps
 
     lr = -lp + constraint_fn(maps)
-    wgt = exp(lr - mean(lr, na.rm=T))
-    wgt = wgt / mean(wgt, na.rm=T)
+    wgt = exp(lr - mean(lr, na.rm=TRUE))
+    wgt = wgt / mean(wgt, na.rm=TRUE)
     orig_wgt = wgt
     if (truncate)
         wgt = trunc_fn(wgt)
-    wgt = wgt/sum(wgt, na.rm=T)
-    n_eff = length(wgt) * mean(wgt, na.rm=T)^2 / mean(wgt^2, na.rm=T)
+    wgt = wgt/sum(wgt, na.rm=TRUE)
+    n_eff = length(wgt) * mean(wgt, na.rm=TRUE)^2 / mean(wgt^2, na.rm=TRUE)
     if (is.nan(n_eff))
         warning("Some invalid plans were generated.")
 
@@ -153,7 +154,7 @@ redist.smc = function(adj, total_pop, nsims, ndists, counties=NULL,
         warning("Less than 5% resampling efficiency. Consider weakening constraints and/or adjusting `seq_alpha`.")
 
     if (resample) {
-        maps = maps[, sample(nsims, nsims, replace=T, prob=wgt)]
+        maps = maps[, sample(nsims, nsims, replace=TRUE, prob=wgt)]
         wgt = rep(1/nsims, nsims)
     }
 
