@@ -82,7 +82,7 @@ Rodden (2013)." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.0.9000</span>
       </span>
     </div>
 
@@ -177,13 +177,7 @@ Rodden (2013).</p>
   <span class='va'>ndists</span>,
   <span class='va'>pop_tol</span>,
   verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  maxiter <span class='op'>=</span> <span class='fl'>5000</span>,
-  <span class='va'>adj.list</span>,
-  <span class='va'>population</span>,
-  <span class='va'>area</span>,
-  <span class='va'>x_center</span>,
-  <span class='va'>y_center</span>,
-  <span class='va'>thresh</span>
+  maxiter <span class='op'>=</span> <span class='fl'>5000</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -230,42 +224,6 @@ use a different set of start values and try again.  If it fails again,
 redist.rsg() returns an object of all NAs, indicating that use of more
 iterations may be advised. Default is 5000.</p></td>
     </tr>
-    <tr>
-      <th>adj.list</th>
-      <td><p>Deprecated, use adj. List of length N, where N is the number of precincts.
-Each list element is an integer vector indicating which precincts that precinct
-is adjacent to.  It is assumed that precinct numbers start at 0.</p></td>
-    </tr>
-    <tr>
-      <th>population</th>
-      <td><p>Deprecated, use total_pop. numeric vector of length N, where N is the number of precincts.
-Each element lists the population total of the corresponding precinct, and is
-used to enforce population constraints.</p></td>
-    </tr>
-    <tr>
-      <th>area</th>
-      <td><p>Deprecated, use shp. numeric vector of length N, where N is the number of precincts. Each
-element is the area of the corresponding precinct.</p></td>
-    </tr>
-    <tr>
-      <th>x_center</th>
-      <td><p>Deprecated, use shp. numeric vector of length N, where N is the number of precincts.
-Each element is the x coordinate of the geographic centroid of the corresponding
-precinct.</p></td>
-    </tr>
-    <tr>
-      <th>y_center</th>
-      <td><p>Deprecated, use shp. numeric vector of length N, where N is the number of precincts.
-Each element is the y coordinate of the geographic centroid of the corresponding
-precinct.</p></td>
-    </tr>
-    <tr>
-      <th>thresh</th>
-      <td><p>Deprecated, use pop_tol. numeric, indicating how close district population targets have
-to be to the target population before algorithm converges.  thresh=0.05 for
-example means that all districts must be between 0.95 and 1.05 times the size
-of target.pop in population size.</p></td>
-    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
@@ -287,29 +245,13 @@ Gerrymandering: Political Geography and Electoral Bias in Legislatures.''
 Quarterly Journal of Political Science. 8(3): 239-269.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"fl25"</span><span class='op'>)</span>
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"fl25"</span><span class='op'>)</span>
 <span class='va'>adj</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.adjacency.html'>redist.adjacency</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
+<span class='va'>area</span> <span class='op'>&lt;-</span> <span class='fu'>sf</span><span class='fu'>::</span><span class='fu'><a href='https://r-spatial.github.io/sf/reference/geos_measures.html'>st_area</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
+<span class='va'>centers</span> <span class='op'>&lt;-</span> <span class='fu'>sf</span><span class='fu'>::</span><span class='fu'><a href='https://r-spatial.github.io/sf/reference/st_coordinates.html'>st_coordinates</a></span><span class='op'>(</span><span class='fu'>sf</span><span class='fu'>::</span><span class='fu'><a href='https://r-spatial.github.io/sf/reference/geos_unary.html'>st_centroid</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span><span class='op'>)</span>
 <span class='fu'>redist.crsg</span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>adj</span>, total_pop <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>, shp <span class='op'>=</span> <span class='va'>fl25</span>, ndists <span class='op'>=</span> <span class='fl'>2</span>, pop_tol <span class='op'>=</span> <span class='fl'>.1</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; 
-#&gt; ==================== 
-#&gt; redist.crsg(): Automated Redistricting Starts
-#&gt; 
-#&gt; 
-#&gt; 	2 districts built using 25 precincts in 0 seconds...
-#&gt; </div><div class='output co'>#&gt; $plan
-#&gt;  [1] 2 2 2 2 1 2 1 1 2 1 1 1 1 2 1 2 2 2 1 1 2 1 2 1 1
-#&gt; 
-#&gt; $district_list
-#&gt; $district_list[[1]]
-#&gt;  [1]  9 10 18  7 19  4 24  6 21 12 23 11 14
-#&gt; 
-#&gt; $district_list[[2]]
-#&gt;  [1] 22  8  5 16  1 15 20 17 13  2  3  0
-#&gt; 
-#&gt; 
-#&gt; $district_pop
-#&gt; [1] 82525 92518
-#&gt; </div><div class='input'>
+<span class='op'>}</span>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

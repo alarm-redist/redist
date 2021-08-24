@@ -5,23 +5,16 @@
 #' columns have the same number of districts as the first.
 #' @param plans A numeric vector (if only one map) or
 #' matrix with one row for each precinct and one column for each map.
-#' @param district_membership Deprecated, use plans. A numeric vector (if only one map) or
-#' matrix with one row for each precinct and one column for each map.
 #'
 #' @return integer matrix
 #' @export
 #'
-#' @examples 
+#' @examples
 #' cds <- matrix(c(rep(c(4L,5L,2L,1L,3L),5),
 #' rep(c(5L,4L,3L,2L,1L),2), rep(c(4L,5L,2L,1L,3L),3)), nrow = 25)
-#' redist.reindex(cds)
-#'
-redist.reindex <- function(plans, district_membership){
-  if(!missing(district_membership)){
-    .Deprecated(new = 'plan', old = 'district_membership')
-    plan <- district_membership
-  }
-
+#' redist.reorder(cds)
+#' 
+redist.reorder <- function(plans){
   # Check inputs
   if(missing(plans)){
     stop('"plans" is required.')
@@ -51,7 +44,7 @@ redist.reindex <- function(plans, district_membership){
 #'
 #' @concept prepare
 #' @export
-#' @examples 
+#' @examples
 #' data(fl25_enum)
 #' plan <- fl25_enum$plans[, 5118]
 #' # Subset based on something:
@@ -59,7 +52,7 @@ redist.reindex <- function(plans, district_membership){
 #' plan <- redist.sink.plan(plan)
 #' # Now plan can be used with redist.flip()
 #' plan
-#' 
+#'
 #'
 redist.sink.plan <- function(plan){
   if(class(plan) %in% c('character', 'numeric','integer')){

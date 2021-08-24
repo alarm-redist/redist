@@ -1,7 +1,6 @@
 #ifndef MERGESPLIT_H
 #define MERGESPLIT_H
 
-#include <math.h>
 #include "smc_base.h"
 #include "wilson.h"
 #include "tree_op.h"
@@ -23,7 +22,7 @@ Rcpp::List ms_plans(int N, List l, const arma::uvec init, const arma::uvec &coun
                     double pow_vra, const arma::uvec &min_pop,
                     double beta_vra_hinge, const arma::vec &tgts_min,
                     double beta_inc, const arma::uvec &incumbents,
-                    double beta_splits,
+                    double beta_splits, double beta_fractures,
                     double thresh, int k, int verbosity);
 
 /*
@@ -36,7 +35,8 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
                       double pow_vra, const uvec &min_pop,
                       double beta_vra_hinge, const vec &tgts_min,
                       double beta_inc, const uvec &incumbents,
-                      double beta_counties, const uvec &counties, int n_cty);
+                      double beta_counties, double beta_fractures,
+                      const uvec &counties, int n_cty);
 
 
 /*

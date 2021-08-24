@@ -90,8 +90,8 @@ alg <- redist.flip(adj = adj, total_pop = iowa$pop,
                   init_plan = init_plan, nsims = 1000,
                   constraint = 'population', constraintweights = 5.4)
 
-alg_ipw <- redist.ipw(algout = alg, 
-                     resampleconstraint = 'pop', 
+alg_ipw <- redist.ipw(algout = alg,
+                     resampleconstraint = 'pop',
                      targetbeta = 1,
                      targetpop = 0.05)
 }

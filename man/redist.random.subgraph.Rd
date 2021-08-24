@@ -4,7 +4,7 @@
 \alias{redist.random.subgraph}
 \title{Return a random subgraph of a shape}
 \usage{
-redist.random.subgraph(shp, n, adj = NULL, adjacency)
+redist.random.subgraph(shp, n, adj = NULL)
 }
 \arguments{
 \item{shp}{sf object or SpatialPolygonsDataFrame}
@@ -12,8 +12,6 @@ redist.random.subgraph(shp, n, adj = NULL, adjacency)
 \item{n}{number of edges to sample. n must be a positive integer.}
 
 \item{adj}{Optional. zero indexed adjacency list.}
-
-\item{adjacency}{Deprecated, use adj. Optional. zero indexed adjacency list.}
 }
 \value{
 sf dataframe with n rows

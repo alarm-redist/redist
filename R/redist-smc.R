@@ -20,16 +20,9 @@
 #' @param pop_bounds A numeric vector with three elements \code{c(lower, target, upper)}
 #' providing more precise population bounds for the algorithm. Districts
 #' will have population between \code{lower} and \code{upper}, with a goal of
-#' \code{target}.  If set, overrides \code{popcons}.
-#' @param adjobj Deprecated, use adj. An adjacency matrix, list, or object of class
-#' "SpatialPolygonsDataFrame."
-#' @param popvec Deprecated, use total_pop. A vector containing the populations of each geographic unit.
-#' @param popcons The desired population constraint.  All sampled districts
-#' will have a deviation from the target district size no more than this value
-#' in percentage terms, i.e., \code{popcons=0.01} will ensure districts have
-#' populations within 1% of the target population.
+#' \code{target}.  If set, overrides \code{pop_tol}.
 #'
-#' @return \code{redist.smc} returns an object of class \code{redist}, which
+#' @return \code{redist.smc} (Deprecated) returns an object of class \code{redist}, which
 #' is a list containing the following components:
 #' \item{aList}{The adjacency list used to sample}
 #' \item{cdvec}{The matrix of sampled plans. Each row is a geographical unit,
@@ -51,22 +44,6 @@
 #' McCartan, C., & Imai, K. (2020). Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans.
 #' Available at \url{https://imai.fas.harvard.edu/research/files/SMCredist.pdf}.
 #'
-#' @examples \donttest{
-#' data(fl25)
-#' data(fl25_adj)
-#' data(fl25_enum)
-#'
-#' sampled_basic = redist.smc(fl25_adj, fl25$pop,
-#'                            nsims=10000, ndists=3, pop_tol=0.1)
-#'
-#' sampled_constr = redist.smc(fl25_adj, fl25$pop,
-#'                             nsims=10000, ndists=3, pop_tol=0.1,
-#'                             constraints=list(
-#'                                 status_quo = list(strength=10, current=fl25_enum$plans[,5118]),
-#'                                 incumbency = list(strength=100, incumbents=c(3, 6, 25))
-#'                             ))
-#' }
-#'
 #' @concept simulate
 #' @md
 #' @export
@@ -78,22 +55,8 @@ redist.smc = function(adj, total_pop, nsims, ndists, counties=NULL,
                       adapt_k_thresh=0.975, seq_alpha=0.2+0.2*compactness,
                       truncate=(compactness != 1),
                       trunc_fn=function(x) pmin(x, 0.01*nsims^0.4),
-                      pop_temper=0, verbose=TRUE, silent=FALSE,
-                      adjobj, popvec, popcons) {
-    if (!missing(adjobj)) {
-        .Deprecated(new = 'adj', old = 'adjobj')
-        adj <- adjobj
-    }
-    if (!missing(popvec)) {
-        .Deprecated(new = 'total_pop', old = 'popvec')
-        total_pop <- popvec
-    }
-    if (!missing(popcons)) {
-        .Deprecated(new = 'pop_tol', old = 'popcons')
-        pop_tol <- popcons
-    }
-
-
+                      pop_temper=0, verbose=TRUE, silent=FALSE) {
+    .Deprecated("redist_smc")
     V = length(total_pop)
 
     if (missing(adj)) stop("Please supply adjacency matrix or list")
@@ -151,23 +114,24 @@ redist.smc = function(adj, total_pop, nsims, ndists, counties=NULL,
     maps = smc_plans(nsims, adjlist, counties, total_pop, ndists, pop_bounds[2],
                      pop_bounds[1], pop_bounds[3], compactness,
                      constraints$status_quo$strength, constraints$status_quo$current, n_current,
-                     constraints$vra_old$strength, constraints$vra_old$tgt_vra_min,
-                     constraints$vra_old$tgt_vra_other, constraints$vra_old$pow_vra, proc$min_pop,
-                     constraints$vra$strength, constraints$vra$tgts_min,
+                     constraints$vra$strength, constraints$vra$tgt_vra_min,
+                     constraints$vra$tgt_vra_other, constraints$vra$pow_vra, proc$min_pop,
+                     constraints$hinge$strength, constraints$hinge$tgts_min,
                      constraints$incumbency$strength, constraints$incumbency$incumbents,
+                     constraints$multisplits$strength,
                      lp, adapt_k_thresh, seq_alpha, pop_temper, verbosity);
 
     dev = max_dev(maps, total_pop, ndists)
     maps = maps
 
     lr = -lp + constraint_fn(maps)
-    wgt = exp(lr - mean(lr, na.rm=T))
-    wgt = wgt / mean(wgt, na.rm=T)
+    wgt = exp(lr - mean(lr, na.rm=TRUE))
+    wgt = wgt / mean(wgt, na.rm=TRUE)
     orig_wgt = wgt
     if (truncate)
         wgt = trunc_fn(wgt)
-    wgt = wgt/sum(wgt, na.rm=T)
-    n_eff = length(wgt) * mean(wgt, na.rm=T)^2 / mean(wgt^2, na.rm=T)
+    wgt = wgt/sum(wgt, na.rm=TRUE)
+    n_eff = length(wgt) * mean(wgt, na.rm=TRUE)^2 / mean(wgt^2, na.rm=TRUE)
     if (is.nan(n_eff))
         warning("Some invalid plans were generated.")
 
@@ -175,7 +139,7 @@ redist.smc = function(adj, total_pop, nsims, ndists, counties=NULL,
         warning("Less than 5% resampling efficiency. Consider weakening constraints and/or adjusting `seq_alpha`.")
 
     if (resample) {
-        maps = maps[, sample(nsims, nsims, replace=T, prob=wgt)]
+        maps = maps[, sample(nsims, nsims, replace=TRUE, prob=wgt)]
         wgt = rep(1/nsims, nsims)
     }
 

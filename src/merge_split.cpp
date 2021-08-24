@@ -22,7 +22,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
               double pow_vra, const uvec &min_pop,
               double beta_vra_hinge, const vec &tgts_min,
               double beta_inc, const uvec &incumbents, double beta_splits,
-              double thresh, int k, int verbosity) {
+              double beta_fractures, double thresh, int k, int verbosity) {
     // re-seed MT
     generator.seed((int) Rcpp::sample(INT_MAX, 1)[0]);
 
@@ -43,7 +43,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
         Rcout << "Sampling " << N-1 << " " << V << "-unit maps with " << n_distr
               << " districts and population between " << lower << " and " << upper << ".\n";
         if (cg.size() > 1)
-            Rcout << "Ensuring no more than " << n_distr - 1 << " splits of the "
+            Rcout << "Sampling hierarchically with respect to the "
                   << cg.size() << " administrative units.\n";
     }
 
@@ -58,15 +58,19 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     select_pair(n_distr, g, init, distr_1, distr_2);
     int refresh = std::max(N / 20, 1);
     int n_accept = 0;
+    int reject_ct;
     for (int i = 1; i < N; i++) {
         districts.col(i) = districts.col(i - 1); // copy over old map
 
         // make the proposal
         double prop_lp = 0.0;
+        reject_ct = 0;
         do {
             select_pair(n_distr, g, districts.col(i), distr_1, distr_2);
             prop_lp = split_map_ms(g, counties, cg, districts.col(i), distr_1,
                                    distr_2, pop, lower, upper, target, k);
+            if (reject_ct % 200 == 0) Rcpp::checkUserInterrupt();
+            reject_ct++;
         } while (!std::isfinite(prop_lp));
 
         // tau calculations
@@ -94,13 +98,13 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
                                   tgt_min, tgt_other, pow_vra, min_pop,
                                   beta_vra_hinge, tgts_min,
                                   beta_inc, incumbents,
-                                  beta_splits, counties, n_cty);
+                                  beta_splits, beta_fractures, counties, n_cty);
         prop_lp += calc_gibbs_tgt(districts.col(i-1), n_distr, V, distr_1, distr_2,
                                   pop, beta_sq, current, n_current, beta_vra,
                                   tgt_min, tgt_other, pow_vra, min_pop,
                                   beta_vra_hinge, tgts_min,
                                   beta_inc, incumbents,
-                                  beta_splits, counties, n_cty);
+                                  beta_splits, beta_fractures, counties, n_cty);
 
         double alpha = exp(prop_lp);
         if (alpha >= 1 || unif(generator) <= alpha) { // ACCEPT
@@ -140,7 +144,8 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
                       double pow_vra, const uvec &min_pop,
                       double beta_vra_hinge, const vec &tgts_min,
                       double beta_inc, const uvec &incumbents,
-                      double beta_splits, const uvec &counties, int n_cty) {
+                      double beta_splits, double beta_fractures,
+                      const uvec &counties, int n_cty) {
     double log_tgt = 0;
 
     if (beta_sq != 0)
@@ -167,6 +172,11 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
         log_tgt += beta_splits * (
             eval_splits(plan, distr_1, counties, n_cty) +
             eval_splits(plan, distr_2, counties, n_cty)
+        );
+    if (beta_fractures != 0)
+        log_tgt += beta_fractures * (
+            eval_fractures(plan, distr_1, counties, n_cty) +
+                eval_fractures(plan, distr_2, counties, n_cty)
         );
 
     return log_tgt;
@@ -196,12 +206,13 @@ double split_map_ms(const Graph &g, const uvec &counties, Multigraph &cg,
     }
 
     int root;
-    ust = sample_sub_ust(g, ust, V, root, ignore, counties, cg);
+    ust = sample_sub_ust(g, ust, V, root, ignore, pop, lower, upper, counties, cg);
     if (ust.size() == 0) return -log(0.0);
 
     // set `lower` as a way to return population of new district
     bool success = cut_districts_ms(ust, k, root, districts, distr_1, distr_2,
                                     pop, total_pop, lower, upper, target);
+
     if (!success) return -log(0.0); // reject sample
 
     return orig_lb - log_boundary(g, districts, distr_1, distr_2);
@@ -280,6 +291,9 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
     int k_max = std::min(20 + ((int) std::sqrt(V)), V - 1); // heuristic
     int N_adapt = (int) std::floor(4000.0 / sqrt((double) V));
 
+    double lower = target * (1 - tol);
+    double upper = target * (1 + tol);
+
     std::vector<std::vector<double>> devs;
     vec distr_ok(k_max+1, fill::zeros);
     int root;
@@ -300,7 +314,7 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
             }
         }
 
-        ust = sample_sub_ust(g, ust, V, root, ignore, counties, cg);
+        ust = sample_sub_ust(g, ust, V, root, ignore, pop, lower, upper, counties, cg);
         if (ust.size() == 0) {
             i--;
             continue;

@@ -42,6 +42,12 @@ double eval_splits(const subview_col<uword> &districts, int distr,
                    const uvec &counties, int n_cty);
 
 /*
+ * Compute the county fracture penalty for district `distr`
+ */
+double eval_fractures(const subview_col<uword> &districts, int distr,
+                      const uvec &counties, int n_cty);
+
+/*
  * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,
  * given a collection of plans
  */

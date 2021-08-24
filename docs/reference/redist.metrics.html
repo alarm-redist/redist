@@ -81,7 +81,7 @@ set of maps." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.0.9000</span>
       </span>
     </div>
 
@@ -168,7 +168,14 @@ set of maps." />
 set of maps.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>partisan_metrics</span><span class='op'>(</span><span class='va'>map</span>, <span class='va'>measure</span>, <span class='va'>rvote</span>, <span class='va'>dvote</span>, <span class='va'>...</span>, .data <span class='op'>=</span> <span class='fu'>cur_plans</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>
+    <pre class="usage"><span class='fu'>partisan_metrics</span><span class='op'>(</span>
+  <span class='va'>map</span>,
+  <span class='va'>measure</span>,
+  <span class='va'>rvote</span>,
+  <span class='va'>dvote</span>,
+  <span class='va'>...</span>,
+  .data <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/exists.html'>get0</a></span><span class='op'>(</span><span class='st'>"."</span>, <span class='fu'><a href='https://rdrr.io/r/base/sys.parent.html'>parent.frame</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>
+<span class='op'>)</span>
 
 <span class='fu'>redist.metrics</span><span class='op'>(</span>
   <span class='va'>plans</span>,
@@ -180,9 +187,7 @@ set of maps.</p>
   respV <span class='op'>=</span> <span class='fl'>0.5</span>,
   bandwidth <span class='op'>=</span> <span class='fl'>0.01</span>,
   draw <span class='op'>=</span> <span class='fl'>1</span>,
-  ncores <span class='op'>=</span> <span class='fl'>1</span>,
-  <span class='va'>district_membership</span>,
-  <span class='va'>nloop</span>
+  ncores <span class='op'>=</span> <span class='fl'>1</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -239,23 +244,13 @@ for each precinct and one column for each map. Required.</p></td>
     <tr>
       <th>draw</th>
       <td><p>A numeric to specify draw number. Defaults to 1 if only one map provided
-and the column number if multiple maps given. Can also take a factor input, which will become the 
+and the column number if multiple maps given. Can also take a factor input, which will become the
 draw column in the output if its length matches the number of entries in plans. If the `plans` input
 is a `redist_plans` object, it extracts the `draw` identifier.</p></td>
     </tr>
     <tr>
       <th>ncores</th>
       <td><p>Number of cores to use for parallel computing. Default is 1.</p></td>
-    </tr>
-    <tr>
-      <th>district_membership</th>
-      <td><p>Deprecated, use plans. A numeric vector (if only one map) or matrix with one row
-for each precinct and one column for each map. Required.</p></td>
-    </tr>
-    <tr>
-      <th>nloop</th>
-      <td><p>Deprecated, use draw. A numeric to specify loop number. Defaults to 1 if only one map provided
-and the column number if multiple maps given.</p></td>
     </tr>
     </table>
 
@@ -296,27 +291,13 @@ Robert Ravier &amp; Jonathan C. Mattingly (2020) Quantifying Gerrymandering in N
 Statistics and Public Policy, 7:1, 30-38, DOI: 10.1080/2330443X.2020.1796400</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_enum</span><span class='op'>)</span>
 <span class='va'>plans_05</span> <span class='op'>&lt;-</span> <span class='va'>fl25_enum</span><span class='op'>$</span><span class='va'>plans</span><span class='op'>[</span>, <span class='va'>fl25_enum</span><span class='op'>$</span><span class='va'>pop_dev</span> <span class='op'>&lt;=</span> <span class='fl'>0.05</span><span class='op'>]</span>
 <span class='fu'>redist.metrics</span><span class='op'>(</span><span class='va'>plans_05</span>, measure <span class='op'>=</span> <span class='st'>'all'</span>, rvote <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>mccain</span>, dvote <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>obama</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 576 x 15</span><span>
-#&gt;    district DSeats   DVS EffGap EffGapEqPop TauGap MeanMedian   Bias  BiasV
-#&gt;       </span><span style='color: #949494;font-style: italic;'>&lt;int&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;int&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>       </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>      </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #BCBCBC;'> 1</span><span>        1      0 0.371  0.371      -</span><span style='color: #BB0000;'>0.350</span><span> -</span><span style='color: #BB0000;'>0.915</span><span>  -</span><span style='color: #BB0000;'>0.017</span><span style='color: #BB0000;text-decoration: underline;'>5</span><span>    0.167  0.167
-#&gt; </span><span style='color: #BCBCBC;'> 2</span><span>        2      0 0.462  0.371      -</span><span style='color: #BB0000;'>0.350</span><span> -</span><span style='color: #BB0000;'>0.915</span><span>  -</span><span style='color: #BB0000;'>0.017</span><span style='color: #BB0000;text-decoration: underline;'>5</span><span>    0.167  0.167
-#&gt; </span><span style='color: #BCBCBC;'> 3</span><span>        3      0 0.443  0.371      -</span><span style='color: #BB0000;'>0.350</span><span> -</span><span style='color: #BB0000;'>0.915</span><span>  -</span><span style='color: #BB0000;'>0.017</span><span style='color: #BB0000;text-decoration: underline;'>5</span><span>    0.167  0.167
-#&gt; </span><span style='color: #BCBCBC;'> 4</span><span>        1      0 0.376  0.371      -</span><span style='color: #BB0000;'>0.348</span><span> -</span><span style='color: #BB0000;'>0.917</span><span>  -</span><span style='color: #BB0000;'>0.018</span><span style='color: #BB0000;text-decoration: underline;'>6</span><span>    0.167  0.167
-#&gt; </span><span style='color: #BCBCBC;'> 5</span><span>        2      0 0.453  0.371      -</span><span style='color: #BB0000;'>0.348</span><span> -</span><span style='color: #BB0000;'>0.917</span><span>  -</span><span style='color: #BB0000;'>0.018</span><span style='color: #BB0000;text-decoration: underline;'>6</span><span>    0.167  0.167
-#&gt; </span><span style='color: #BCBCBC;'> 6</span><span>        3      0 0.443  0.371      -</span><span style='color: #BB0000;'>0.348</span><span> -</span><span style='color: #BB0000;'>0.917</span><span>  -</span><span style='color: #BB0000;'>0.018</span><span style='color: #BB0000;text-decoration: underline;'>6</span><span>    0.167  0.167
-#&gt; </span><span style='color: #BCBCBC;'> 7</span><span>        1      0 0.378  0.371      -</span><span style='color: #BB0000;'>0.347</span><span> -</span><span style='color: #BB0000;'>0.913</span><span>   0.000</span><span style='text-decoration: underline;'>757</span><span> -</span><span style='color: #BB0000;'>0.167</span><span> -</span><span style='color: #BB0000;'>0.167</span><span>
-#&gt; </span><span style='color: #BCBCBC;'> 8</span><span>        2      0 0.469  0.371      -</span><span style='color: #BB0000;'>0.347</span><span> -</span><span style='color: #BB0000;'>0.913</span><span>   0.000</span><span style='text-decoration: underline;'>757</span><span> -</span><span style='color: #BB0000;'>0.167</span><span> -</span><span style='color: #BB0000;'>0.167</span><span>
-#&gt; </span><span style='color: #BCBCBC;'> 9</span><span>        3      0 0.423  0.371      -</span><span style='color: #BB0000;'>0.347</span><span> -</span><span style='color: #BB0000;'>0.913</span><span>   0.000</span><span style='text-decoration: underline;'>757</span><span> -</span><span style='color: #BB0000;'>0.167</span><span> -</span><span style='color: #BB0000;'>0.167</span><span>
-#&gt; </span><span style='color: #BCBCBC;'>10</span><span>        1      0 0.378  0.371      -</span><span style='color: #BB0000;'>0.348</span><span> -</span><span style='color: #BB0000;'>0.917</span><span>  -</span><span style='color: #BB0000;'>0.008</span><span style='color: #BB0000;text-decoration: underline;'>79</span><span>   0.167  0.167
-#&gt; </span><span style='color: #949494;'># … with 566 more rows, and 6 more variables: Declination &lt;dbl&gt;,</span><span>
-#&gt; </span><span style='color: #949494;'>#   Responsiveness &lt;dbl&gt;, LopsidedWins &lt;dbl&gt;, RankedMarginal &lt;dbl&gt;,</span><span>
-#&gt; </span><span style='color: #949494;'>#   SmoothedSeat &lt;dbl&gt;, draw &lt;dbl&gt;</span><span></div><div class='input'>
-</div></span></pre>
+<span class='op'>}</span>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

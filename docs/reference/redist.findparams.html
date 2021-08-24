@@ -81,7 +81,7 @@ redist.flip for a given map." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.0.9000</span>
       </span>
     </div>
 
@@ -187,13 +187,7 @@ redist.flip for a given map." />
   parallel <span class='op'>=</span> <span class='cn'>FALSE</span>,
   ncores <span class='op'>=</span> <span class='cn'>NULL</span>,
   log <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  <span class='va'>adjobj</span>,
-  <span class='va'>popvec</span>,
-  <span class='va'>initcds</span>,
-  <span class='va'>grouppopvec</span>,
-  <span class='va'>countymembership</span>,
-  <span class='va'>nthreads</span>
+  verbose <span class='op'>=</span> <span class='cn'>TRUE</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -239,7 +233,7 @@ FALSE.</p></td>
       <th>params</th>
       <td><p>A matrix of parameter values to test, such as the output of
 <code>expand.grid</code>. Parameters accepted for <code>params</code> include <code>eprob</code>,
-<code>lambda</code>, <code>pop_tol</code>, <code>beta</code>, and <code>constraint</code>.</p></td>
+<code>lambda</code>, <code>popcons</code>, <code>beta</code>, and <code>constraint</code>.</p></td>
     </tr>
     <tr>
       <th>ssdmat</th>
@@ -295,37 +289,6 @@ being tested. Default is FALSE.</p></td>
       <td><p>Whether to print additional information about the tests.
 Default is <code>TRUE</code>.</p></td>
     </tr>
-    <tr>
-      <th>adjobj</th>
-      <td><p>Deprecated, use adj. An adjacency matrix, list, or object of class
-"SpatialPolygonsDataFrame."</p></td>
-    </tr>
-    <tr>
-      <th>popvec</th>
-      <td><p>Deprecated, use total_pop. A vector containing the populations of each
-geographic unit.</p></td>
-    </tr>
-    <tr>
-      <th>initcds</th>
-      <td><p>Deprecated, use init_plan. A vector containing the congressional district labels
-of each geographic unit. The default is <code>NULL</code>. If not provided, random
-and contiguous congressional district assignments will be generated using <code>redist.rsg</code>.</p></td>
-    </tr>
-    <tr>
-      <th>grouppopvec</th>
-      <td><p>A vector of populations for some sub-group of
-interest. The default is <code>NULL</code>.</p></td>
-    </tr>
-    <tr>
-      <th>countymembership</th>
-      <td><p>Deprecated, use counties.
-A vector of county membership assignments. The default is <code>NULL</code>.</p></td>
-    </tr>
-    <tr>
-      <th>nthreads</th>
-      <td><p>Deprecated, use ncores. Number of parallel tasks to run, declared outside of the
-function. Default is <code>NULL</code>.</p></td>
-    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
@@ -344,7 +307,7 @@ Carlo." Working Paper. Available at
 <a href='http://imai.princeton.edu/research/files/redist.pdf'>http://imai.princeton.edu/research/files/redist.pdf</a>.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'># \donttest{</span>
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_enum</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_adj</span><span class='op'>)</span>
@@ -357,279 +320,7 @@ Carlo." Working Paper. Available at
 <span class='co'>## Run the algorithm</span>
 <span class='fu'>redist.findparams</span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>fl25_adj</span>, total_pop <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>,
                   init_plan <span class='op'>=</span> <span class='va'>init_plan</span>, nsims <span class='op'>=</span> <span class='fl'>10000</span>, params <span class='op'>=</span> <span class='va'>params</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; ## ------------------------------
-#&gt;  ## redist.findparams(): Parameter tuning for redist.flip()
-#&gt;  ## Searching over 3 parameter combinations
-#&gt;  ## ------------------------------
-#&gt; 
-#&gt; 
-#&gt; ==================== 
-#&gt; redist.flip(): Automated Redistricting Simulation Using
-#&gt;          Markov Chain Monte Carlo
-#&gt; 
-#&gt; Preprocessing data.
-#&gt; 
-#&gt; Starting swMH().
-#&gt; 10 percent done.
-#&gt; Metropolis acceptance ratio: 0.990991
-#&gt; 
-#&gt; 20 percent done.
-#&gt; Metropolis acceptance ratio: 0.991496
-#&gt; 
-#&gt; 30 percent done.
-#&gt; Metropolis acceptance ratio: 0.99133
-#&gt; 
-#&gt; 40 percent done.
-#&gt; Metropolis acceptance ratio: 0.992748
-#&gt; 
-#&gt; 50 percent done.
-#&gt; Metropolis acceptance ratio: 0.992999
-#&gt; 
-#&gt; 60 percent done.
-#&gt; Metropolis acceptance ratio: 0.993332
-#&gt; 
-#&gt; 70 percent done.
-#&gt; Metropolis acceptance ratio: 0.993571
-#&gt; 
-#&gt; 80 percent done.
-#&gt; Metropolis acceptance ratio: 0.993749
-#&gt; 
-#&gt; 90 percent done.
-#&gt; Metropolis acceptance ratio: 0.993444
-#&gt; 
-#&gt; 100 percent done.
-#&gt; Metropolis acceptance ratio: 0.993299
-#&gt; 
-#&gt; 
-#&gt; ==================== 
-#&gt; redist.flip(): Automated Redistricting Simulation Using
-#&gt;          Markov Chain Monte Carlo
-#&gt; 
-#&gt; Preprocessing data.
-#&gt; 
-#&gt; Starting swMH().
-#&gt; 10 percent done.
-#&gt; Metropolis acceptance ratio: 0.968969
-#&gt; 
-#&gt; 20 percent done.
-#&gt; Metropolis acceptance ratio: 0.966483
-#&gt; 
-#&gt; 30 percent done.
-#&gt; Metropolis acceptance ratio: 0.963655
-#&gt; 
-#&gt; 40 percent done.
-#&gt; Metropolis acceptance ratio: 0.96174
-#&gt; 
-#&gt; 50 percent done.
-#&gt; Metropolis acceptance ratio: 0.960392
-#&gt; 
-#&gt; 60 percent done.
-#&gt; Metropolis acceptance ratio: 0.961994
-#&gt; 
-#&gt; 70 percent done.
-#&gt; Metropolis acceptance ratio: 0.961852
-#&gt; 
-#&gt; 80 percent done.
-#&gt; Metropolis acceptance ratio: 0.96212
-#&gt; 
-#&gt; 90 percent done.
-#&gt; Metropolis acceptance ratio: 0.96244
-#&gt; 
-#&gt; 100 percent done.
-#&gt; Metropolis acceptance ratio: 0.961896
-#&gt; 
-#&gt; 
-#&gt; ==================== 
-#&gt; redist.flip(): Automated Redistricting Simulation Using
-#&gt;          Markov Chain Monte Carlo
-#&gt; 
-#&gt; Preprocessing data.
-#&gt; 
-#&gt; Starting swMH().
-#&gt; 10 percent done.
-#&gt; Metropolis acceptance ratio: 0.927928
-#&gt; 
-#&gt; 20 percent done.
-#&gt; Metropolis acceptance ratio: 0.927964
-#&gt; 
-#&gt; 30 percent done.
-#&gt; Metropolis acceptance ratio: 0.922641
-#&gt; 
-#&gt; 40 percent done.
-#&gt; Metropolis acceptance ratio: 0.923981
-#&gt; 
-#&gt; 50 percent done.
-#&gt; Metropolis acceptance ratio: 0.925785
-#&gt; 
-#&gt; 60 percent done.
-#&gt; Metropolis acceptance ratio: 0.925654
-#&gt; 
-#&gt; 70 percent done.
-#&gt; Metropolis acceptance ratio: 0.92699
-#&gt; 
-#&gt; 80 percent done.
-#&gt; Metropolis acceptance ratio: 0.925491
-#&gt; 
-#&gt; 90 percent done.
-#&gt; Metropolis acceptance ratio: 0.925658
-#&gt; 
-#&gt; 100 percent done.
-#&gt; Metropolis acceptance ratio: 0.925993
-#&gt; 
-#&gt;  ## -------------------------------------
-#&gt;  ## -------------------------------------
-#&gt;  ## Parameter Values for Simulation 1 
-#&gt; ## Edgecut probability = 0.01
-#&gt; ## Lambda = 0
-#&gt; ## No hard population constraint applied
-#&gt; ## Not setting any soft constraints
-#&gt; ## -------------------------------------
-#&gt; ## Diagnostics:
-#&gt; ## Metropolis-Hastings Acceptance Ratio = 0.993
-#&gt; ## Mean population parity distance = 0.826
-#&gt; ## Median population parity distance = 0.82
-#&gt; ## Population parity range = 0.009 1.85
-#&gt; ## MCMC Iteration quantiles of population parity median = 0.946 0.718 0.804 0.803
-#&gt; 
-#&gt; ## Mean share of geographies equal to initial assignment = 0.344
-#&gt; ## Median share of geographies equal to initial assignment = 0.32
-#&gt; ## Range of share of geographies equal to initial assignment = 0 0.96
-#&gt; ## MCMC Iteration quantiles of geography distance to initial assignment = 0.24 0.4 0.38 0.28
-#&gt; ## -------------------------------------
-#&gt; ## -------------------------------------
-#&gt; 
-#&gt;  ## -------------------------------------
-#&gt;  ## -------------------------------------
-#&gt;  ## Parameter Values for Simulation 1 
-#&gt; ## Edgecut probability = 0.05
-#&gt; ## Lambda = 0
-#&gt; ## No hard population constraint applied
-#&gt; ## Not setting any soft constraints
-#&gt; ## -------------------------------------
-#&gt; ## Diagnostics:
-#&gt; ## Metropolis-Hastings Acceptance Ratio = 0.962
-#&gt; ## Mean population parity distance = 0.816
-#&gt; ## Median population parity distance = 0.814
-#&gt; ## Population parity range = 0.013 1.956
-#&gt; ## MCMC Iteration quantiles of population parity median = 0.824 0.738 0.779 0.896
-#&gt; 
-#&gt; ## Mean share of geographies equal to initial assignment = 0.333
-#&gt; ## Median share of geographies equal to initial assignment = 0.32
-#&gt; ## Range of share of geographies equal to initial assignment = 0 0.96
-#&gt; ## MCMC Iteration quantiles of geography distance to initial assignment = 0.36 0.36 0.32 0.2
-#&gt; ## -------------------------------------
-#&gt; ## -------------------------------------
-#&gt; 
-#&gt;  ## -------------------------------------
-#&gt;  ## -------------------------------------
-#&gt;  ## Parameter Values for Simulation 1 
-#&gt; ## Edgecut probability = 0.1
-#&gt; ## Lambda = 0
-#&gt; ## No hard population constraint applied
-#&gt; ## Not setting any soft constraints
-#&gt; ## -------------------------------------
-#&gt; ## Diagnostics:
-#&gt; ## Metropolis-Hastings Acceptance Ratio = 0.926
-#&gt; ## Mean population parity distance = 0.823
-#&gt; ## Median population parity distance = 0.814
-#&gt; ## Population parity range = 0.017 1.917
-#&gt; ## MCMC Iteration quantiles of population parity median = 0.755 0.829 0.766 0.889
-#&gt; 
-#&gt; ## Mean share of geographies equal to initial assignment = 0.356
-#&gt; ## Median share of geographies equal to initial assignment = 0.36
-#&gt; ## Range of share of geographies equal to initial assignment = 0 0.96
-#&gt; ## MCMC Iteration quantiles of geography distance to initial assignment = 0.28 0.36 0.36 0.4
-#&gt; ## -------------------------------------
-#&gt; ## -------------------------------------
-#&gt; </div><div class='output co'>#&gt; $diagnostics
-#&gt; [1] " ## -------------------------------------\n ## -------------------------------------\n ## Parameter Values for Simulation 1 \n## Edgecut probability = 0.01\n## Lambda = 0\n## No hard population constraint applied\n## Not setting any soft constraints\n## -------------------------------------\n## Diagnostics:\n## Metropolis-Hastings Acceptance Ratio = 0.993\n## Mean population parity distance = 0.826\n## Median population parity distance = 0.82\n## Population parity range = 0.009 1.85\n## MCMC Iteration quantiles of population parity median = 0.946 0.718 0.804 0.803\n\n## Mean share of geographies equal to initial assignment = 0.344\n## Median share of geographies equal to initial assignment = 0.32\n## Range of share of geographies equal to initial assignment = 0 0.96\n## MCMC Iteration quantiles of geography distance to initial assignment = 0.24 0.4 0.38 0.28\n## -------------------------------------\n## -------------------------------------\n\n ## -------------------------------------\n ## -------------------------------------\n ## Parameter Values for Simulation 1 \n## Edgecut probability = 0.05\n## Lambda = 0\n## No hard population constraint applied\n## Not setting any soft constraints\n## -------------------------------------\n## Diagnostics:\n## Metropolis-Hastings Acceptance Ratio = 0.962\n## Mean population parity distance = 0.816\n## Median population parity distance = 0.814\n## Population parity range = 0.013 1.956\n## MCMC Iteration quantiles of population parity median = 0.824 0.738 0.779 0.896\n\n## Mean share of geographies equal to initial assignment = 0.333\n## Median share of geographies equal to initial assignment = 0.32\n## Range of share of geographies equal to initial assignment = 0 0.96\n## MCMC Iteration quantiles of geography distance to initial assignment = 0.36 0.36 0.32 0.2\n## -------------------------------------\n## -------------------------------------\n\n ## -------------------------------------\n ## -------------------------------------\n ## Parameter Values for Simulation 1 \n## Edgecut probability = 0.1\n## Lambda = 0\n## No hard population constraint applied\n## Not setting any soft constraints\n## -------------------------------------\n## Diagnostics:\n## Metropolis-Hastings Acceptance Ratio = 0.926\n## Mean population parity distance = 0.823\n## Median population parity distance = 0.814\n## Population parity range = 0.017 1.917\n## MCMC Iteration quantiles of population parity median = 0.755 0.829 0.766 0.889\n\n## Mean share of geographies equal to initial assignment = 0.356\n## Median share of geographies equal to initial assignment = 0.36\n## Range of share of geographies equal to initial assignment = 0 0.96\n## MCMC Iteration quantiles of geography distance to initial assignment = 0.28 0.36 0.36 0.4\n## -------------------------------------\n## -------------------------------------\n\n"
-#&gt; 
-#&gt; $startvals
-#&gt; $startvals[[1]]
-#&gt;       [,1]
-#&gt;  [1,]    3
-#&gt;  [2,]    3
-#&gt;  [3,]    3
-#&gt;  [4,]    3
-#&gt;  [5,]    1
-#&gt;  [6,]    1
-#&gt;  [7,]    1
-#&gt;  [8,]    1
-#&gt;  [9,]    1
-#&gt; [10,]    1
-#&gt; [11,]    1
-#&gt; [12,]    1
-#&gt; [13,]    1
-#&gt; [14,]    1
-#&gt; [15,]    1
-#&gt; [16,]    1
-#&gt; [17,]    2
-#&gt; [18,]    1
-#&gt; [19,]    3
-#&gt; [20,]    3
-#&gt; [21,]    1
-#&gt; [22,]    3
-#&gt; [23,]    1
-#&gt; [24,]    1
-#&gt; [25,]    1
-#&gt; 
-#&gt; $startvals[[2]]
-#&gt;       [,1]
-#&gt;  [1,]    3
-#&gt;  [2,]    1
-#&gt;  [3,]    3
-#&gt;  [4,]    1
-#&gt;  [5,]    3
-#&gt;  [6,]    3
-#&gt;  [7,]    3
-#&gt;  [8,]    3
-#&gt;  [9,]    3
-#&gt; [10,]    3
-#&gt; [11,]    3
-#&gt; [12,]    2
-#&gt; [13,]    2
-#&gt; [14,]    3
-#&gt; [15,]    2
-#&gt; [16,]    1
-#&gt; [17,]    1
-#&gt; [18,]    1
-#&gt; [19,]    1
-#&gt; [20,]    3
-#&gt; [21,]    3
-#&gt; [22,]    3
-#&gt; [23,]    3
-#&gt; [24,]    3
-#&gt; [25,]    3
-#&gt; 
-#&gt; $startvals[[3]]
-#&gt;       [,1]
-#&gt;  [1,]    1
-#&gt;  [2,]    3
-#&gt;  [3,]    1
-#&gt;  [4,]    1
-#&gt;  [5,]    1
-#&gt;  [6,]    2
-#&gt;  [7,]    1
-#&gt;  [8,]    1
-#&gt;  [9,]    2
-#&gt; [10,]    1
-#&gt; [11,]    1
-#&gt; [12,]    2
-#&gt; [13,]    2
-#&gt; [14,]    2
-#&gt; [15,]    2
-#&gt; [16,]    1
-#&gt; [17,]    1
-#&gt; [18,]    1
-#&gt; [19,]    1
-#&gt; [20,]    3
-#&gt; [21,]    1
-#&gt; [22,]    3
-#&gt; [23,]    2
-#&gt; [24,]    3
-#&gt; [25,]    3
-#&gt; 
-#&gt; </div><div class='input'><span class='co'># }</span>
+<span class='op'>}</span>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

@@ -41,10 +41,7 @@ redist.smc(
   trunc_fn = function(x) pmin(x, 0.01 * nsims^0.4),
   pop_temper = 0,
   verbose = TRUE,
-  silent = FALSE,
-  adjobj,
-  popvec,
-  popcons
+  silent = FALSE
 )
 }
 \arguments{
@@ -54,29 +51,32 @@ redist.smc(
 
 \item{counties}{A vector containing county (or other administrative or
 geographic unit) labels for each unit, which may be integers ranging from 1
-to the number of counties, or a factor or character vector.  If provided, the
-algorithm will only generate maps which split up to \code{ndists-1} counties.
-If no county-split constraint is desired, this parameter should be left blank.}
+to the number of counties, or a factor or character vector.  If provided,
+the algorithm will only generate maps which split up to \code{ndists-1}
+counties. If no county-split constraint is desired, this parameter should
+be left blank.}
 
 \item{compactness}{Controls the compactness of the generated districts, with
-higher values preferring more compact districts. Must be nonnegative. See the
-'Details' section for more information, and computational considerations.}
+higher values preferring more compact districts. Must be nonnegative. See
+the 'Details' section for more information, and computational
+considerations.}
 
 \item{constraints}{A list containing information on constraints to implement.
 See the 'Details' section for more information.}
 
 \item{resample}{Whether to perform a final resampling step so that the
-generated plans can be used immediately.  Set this to \code{FALSE} to perform
-direct importance sampling estimates, or to adjust the weights manually.}
+generated plans can be used immediately.  Set this to \code{FALSE} to
+perform direct importance sampling estimates, or to adjust the weights
+manually.}
 
 \item{constraint_fn}{A function which takes in a matrix where each column is
 a redistricting plan and outputs a vector of log-weights, which will be
 added the the final weights.}
 
 \item{adapt_k_thresh}{The threshold value used in the heuristic to select a
-value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if
-the algorithm does not appear to be sampling from the target distribution.
-Must be between 0 and 1.}
+value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if the
+algorithm does not appear to be sampling from the target distribution. Must
+be between 0 and 1.}
 
 \item{seq_alpha}{The amount to adjust the weights by at each resampling step;
 higher values prefer exploitation, while lower values prefer exploration.
@@ -86,12 +86,14 @@ Must be between 0 and 1.}
 final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.
 Truncation only applied if \code{resample=TRUE}.}
 
-\item{trunc_fn}{A function which takes in a vector of weights and returns
-a truncated vector. If \code{\link[loo]{loo}} package is installed (strongly
+\item{trunc_fn}{A function which takes in a vector of weights and returns a
+truncated vector. If \code{\link[loo]{loo}} package is installed (strongly
 recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
 rather than naive truncation.}
 
-\item{pop_temper}{The strength of the automatic population tempering.}
+\item{pop_temper}{The strength of the automatic population tempering. Try
+values of 0.01-0.05 to start if the algorithm gets stuck on the final few
+splits.}
 
 \item{ref_name}{a name for the existing plan, which will be added as a
 reference plan, or \code{FALSE} to not include the initial plan in the
@@ -117,23 +119,13 @@ populations within 1\% of the target population.}
 \item{pop_bounds}{A numeric vector with three elements \code{c(lower, target, upper)}
 providing more precise population bounds for the algorithm. Districts
 will have population between \code{lower} and \code{upper}, with a goal of
-\code{target}.  If set, overrides \code{popcons}.}
-
-\item{adjobj}{Deprecated, use adj. An adjacency matrix, list, or object of class
-"SpatialPolygonsDataFrame."}
-
-\item{popvec}{Deprecated, use total_pop. A vector containing the populations of each geographic unit.}
-
-\item{popcons}{The desired population constraint.  All sampled districts
-will have a deviation from the target district size no more than this value
-in percentage terms, i.e., \code{popcons=0.01} will ensure districts have
-populations within 1\% of the target population.}
+\code{target}.  If set, overrides \code{pop_tol}.}
 }
 \value{
 \code{redist_smc} returns an object of class
 \code{\link{redist_plans}} containing the simulated plans.
 
-\code{redist.smc} returns an object of class \code{redist}, which
+\code{redist.smc} (Deprecated) returns an object of class \code{redist}, which
 is a list containing the following components:
 \item{aList}{The adjacency list used to sample}
 \item{cdvec}{The matrix of sampled plans. Each row is a geographical unit,
@@ -159,7 +151,7 @@ boundary constraints.
 }
 \details{
 This function draws nearly-independent samples from a specific target measure,
-controlled by the \code{popcons}, \code{compactness}, \code{constraints}, and
+controlled by the \code{pop_tol}, \code{compactness}, \code{constraints}, and
 \code{constraint_fn} parameters.
 
 Key to ensuring good performance is monitoring the efficiency of the resampling
@@ -189,11 +181,11 @@ districts.
 \item \code{current}, a vector containing district assignments for
 the current map.
 }
-\item \code{vra}: a list with three entries:
+\item \code{hinge}: a list with three entries:
 \itemize{
-\item \code{strength}, a number controlling the strength of the Voting Rights Act
-(VRA) constraint, with higher values prioritizing majority-minority districts
-over other considerations.
+\item \code{strength}, a number controlling the strength of the constraint, with
+higher values prioritizing districts with group populations at least
+\code{tgts_min} over other considerations.
 \item \code{tgts_min}, the target percentage(s) of minority voters in minority
 opportunity districts. Defaults to \code{c(0.55)}.
 \item \code{min_pop}, A vector containing the minority population of each
@@ -206,7 +198,7 @@ to avoid pairing up incumbents.
 \item \code{incumbents}, a vector of precinct indices, one for each incumbent's
 home address.
 }
-\item \code{vra_old}: a list with five entries, which may be set up using
+\item \code{vra}: a list with five entries, which may be set up using
 \code{\link{redist.constraint.helper}}:
 \itemize{
 \item \code{strength}, a number controlling the strength of the Voting Rights Act
@@ -222,19 +214,25 @@ minority percentage; higher values are more tolerant. Defaults to 1.5
 \item \code{min_pop}, A vector containing the minority population of each
 geographic unit.
 }
+\item \code{multisplits}: a list with one entry:
+\itemize{
+\item \code{strength}, a number controlling the tendency of the generated districts
+to avoid splitting counties multiple times.
+}
 }
 
 All constraints are fed into a Gibbs measure, with coefficients on each
 constraint set by the corresponding \code{strength} parameters.
+The strength can be any real number, with zero corresponding to no constraint.
 The \code{status_quo} constraint adds a term measuring the variation of
 information distance between the plan and the reference, rescaled to [0, 1].
-The \code{vra} constraint takes a list of target minority percentages. It
+The \code{hinge} constraint takes a list of target minority percentages. It
 matches each district to its nearest target percentage, and then applies a
 penalty of the form \eqn{\sqrt{max(0, tgt - minpct)}}, summing across
 districts. This penalizes districts which are below their target population.
 The \code{incumbency} constraint adds a term counting the number of districts
 containing paired-up incumbents.
-The \code{vra_old} constraint adds a term of the form
+The \code{vra} constraint  (not recommended) adds a term of the form
 \eqn{(|tgtvramin-minpct||tgtvraother-minpct|)^{powvra})}, which
 encourages districts to have minority percentages near either \code{tgt_vra_min}
 or \code{tgt_vra_other}. This can be visualized with
@@ -250,22 +248,6 @@ fl_map = redist_map(fl25, ndists=3, pop_tol=0.1)
 sampled_basic = redist_smc(fl_map, 10000)
 
 sampled_constr = redist_smc(fl_map, 10000, constraints=list(
-                                incumbency = list(strength=100, incumbents=c(3, 6, 25))
-                            ))
-}
-
-\donttest{
-data(fl25)
-data(fl25_adj)
-data(fl25_enum)
-
-sampled_basic = redist.smc(fl25_adj, fl25$pop,
-                           nsims=10000, ndists=3, pop_tol=0.1)
-
-sampled_constr = redist.smc(fl25_adj, fl25$pop,
-                            nsims=10000, ndists=3, pop_tol=0.1,
-                            constraints=list(
-                                status_quo = list(strength=10, current=fl25_enum$plans[,5118]),
                                 incumbency = list(strength=100, incumbents=c(3, 6, 25))
                             ))
 }

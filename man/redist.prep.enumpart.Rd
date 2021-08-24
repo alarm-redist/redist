@@ -4,7 +4,13 @@
 \alias{redist.prep.enumpart}
 \title{Prepares a run of the enumpart algorithm by ordering edges}
 \usage{
-redist.prep.enumpart(adj, unordered_path, ordered_path, adjlist)
+redist.prep.enumpart(
+  adj,
+  unordered_path,
+  ordered_path,
+  weight_path = NULL,
+  total_pop = NULL
+)
 }
 \arguments{
 \item{adj}{zero indexed adjacency list}
@@ -13,7 +19,10 @@ redist.prep.enumpart(adj, unordered_path, ordered_path, adjlist)
 
 \item{ordered_path}{valid path to output the ordered adjacency map to}
 
-\item{adjlist}{Deprecated, use adj. zero indexed adjacency list}
+\item{weight_path}{A path (not including ".dat") to store a space-delimited
+file containing a vector of vertex weights. Only supply with total_pop.}
+
+\item{total_pop}{the vector of precinct populations. Only supply with weight_path}
 }
 \value{
 0 on success

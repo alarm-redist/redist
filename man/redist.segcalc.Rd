@@ -12,7 +12,7 @@ segregation_index(
   .data = cur_plans()
 )
 
-redist.segcalc(plans, group_pop, total_pop, algout, grouppop, fullpop)
+redist.segcalc(plans, group_pop, total_pop)
 }
 \arguments{
 \item{map}{a \code{\link{redist_map}} object}
@@ -25,13 +25,6 @@ redist.segcalc(plans, group_pop, total_pop, algout, grouppop, fullpop)
 
 \item{plans}{A matrix of congressional district assignments or a
 redist object.}
-
-\item{algout}{Deprecated. Use plans. A matrix of congressional district assignments or a
-redist object.}
-
-\item{grouppop}{Deprecated. Use group_pop. A vector of populations for some subgroup of interest.}
-
-\item{fullpop}{Deprecated. Use total_pop. A vector containing the populations of each geographic unit.}
 }
 \value{
 \code{redist.segcalc} returns a vector where each entry is the

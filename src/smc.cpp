@@ -20,6 +20,7 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                double pow_vra, const uvec &min_pop,
                double beta_vra_hinge, const vec &tgts_min,
                double beta_inc, const uvec &incumbents,
+               double beta_fractures,
                vec &lp, double thresh,
                double alpha, double pop_temper, int verbosity) {
     // re-seed MT
@@ -31,6 +32,7 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     umat districts(V, N, fill::zeros);
     double total_pop = sum(pop);
     double tol = std::max(target - lower, upper - target) / target;
+    int n_cty = max(counties);
 
     if (verbosity >= 1) {
         Rcout << "SEQUENTIAL MONTE CARLO\n";
@@ -48,6 +50,7 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     lp.fill(0.0);
 
     int k;
+    double min_eff = 1.0;
     vec cum_wgt(N);
     cum_wgt.fill(1.0 / N);
     cum_wgt = cumsum(cum_wgt);
@@ -71,12 +74,18 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                            beta_sq, current, n_current,
                            beta_vra, tgt_min, tgt_other, pow_vra, min_pop,
                            beta_vra_hinge, tgts_min,
-                           beta_inc, incumbents, verbosity);
+                           beta_inc, incumbents, beta_fractures, counties, n_cty,
+                           min_eff, verbosity);
 
         Rcpp::checkUserInterrupt();
     }
 
     lp = lp - log_temper;
+
+    // check efficiency
+    if (min_eff <= 0.05) {
+        Rcerr << "Warning: bottleneck detected. Sample may not be diverse.\n";
+    }
 
     // Set final district label to n_distr rather than 0
     for (int i = 0; i < N; i++) {
@@ -98,7 +107,9 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr,
              double beta_vra, double tgt_min, double tgt_other,
              double pow_vra, const uvec &min_pop,
              double beta_vra_hinge, const vec &tgts_min,
-             double beta_inc, const uvec &incumbents, int verbosity) {
+             double beta_inc, const uvec &incumbents,
+             double beta_fractures, const uvec &counties, int n_cty,
+             double &min_eff, int verbosity) {
     int V = districts.n_rows;
     int N = districts.n_cols;
 
@@ -114,6 +125,10 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr,
                                                      tgts_min, pop, min_pop);
         if (beta_inc != 0)
             lp[i] += beta_inc * eval_inc(districts.col(i), distr_ctr, incumbents);
+        if (beta_fractures != 0)
+            lp += beta_fractures * (
+                eval_fractures(districts.col(i), distr_ctr, counties, n_cty)
+            );
     }
 
     vec wgt = exp(-alpha * lp);
@@ -121,10 +136,14 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr,
         lp = lp * (1 - alpha);
     vec cuml_wgt = cumsum(wgt);
 
+    double neff = cuml_wgt[N-1] * cuml_wgt[N-1]  / sum(square(wgt));
     if (verbosity >= 1) {
-        double neff = cuml_wgt[N-1] * cuml_wgt[N-1]  / sum(square(wgt));
         Rprintf("Resampling effective sample size: %.1f (%.1f%% efficiency).\n", neff, 100*neff/N);
     }
+    if (neff/N < min_eff) {
+        min_eff = neff / N;
+    }
+
 
     return cuml_wgt / cuml_wgt[N-1];
 }
@@ -150,6 +169,8 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     vec log_temper_new(N);
 
     int refresh = N / 10; // how often to print update statements
+    int reject_check_int = 20; // aftr how many rejections to check for interrupts
+    int reject_ct = 0;
     double iter = 0; // how many actual iterations
     for (int i = 0; i < N; i++, iter++) {
         // resample
@@ -158,15 +179,21 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         double lower_s = std::max(lower, pop_left(idx) - new_size * upper);
         double upper_s = std::min(upper, pop_left(idx) - new_size * lower);
 
-        // split
+        if (lower_s >= upper_s) {
+            i--;
+            if (++reject_ct % reject_check_int == 0) Rcpp::checkUserInterrupt();
+            continue;
+        }
         double inc_lp = split_map(g, counties, cg, districts_new.col(i), dist_ctr,
                                   pop, pop_left(idx), lower_s, upper_s, target, k);
 
         // bad sample; try again
         if (!std::isfinite(inc_lp)) {
             i--;
+            if (++reject_ct % reject_check_int == 0) Rcpp::checkUserInterrupt();
             continue;
         }
+        reject_ct = 0;
 
         if (rho != 1) {
             double log_st = 0;
@@ -186,10 +213,11 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         }
         // `lower_s` now contains the population of the newly-split district
         pop_left_new(i) = pop_left(idx) - lower_s;
-        double pop_pen = sqrt((double) n_distr - 2) * log(std::fabs(lower_s - target)/target);
-        log_temper_new(i) = log_temper(idx) - pop_temper*pop_pen;
+        double dev = std::fabs(lower_s - target)/target;
+        double pop_pen = sqrt((double) n_distr - 2) * log(1e-12 + dev);
+        log_temper_new(i) = log_temper(idx) + pop_temper*pop_pen;
 
-        lp_new(i) = lp(idx) + inc_lp - pop_temper*pop_pen;
+        lp_new(i) = lp(idx) + inc_lp + pop_temper*pop_pen;
 
         if (verbosity >= 2 && refresh > 0 && (i+1) % refresh == 0) {
             Rprintf("Iteration %'6d / %'d\n", i+1, N);
@@ -219,7 +247,7 @@ double split_map(const Graph &g, const uvec &counties, Multigraph &cg,
     for (int i = 0; i < V; i++) ignore[i] = districts(i) != 0;
 
     int root;
-    ust = sample_sub_ust(g, ust, V, root, ignore, counties, cg);
+    ust = sample_sub_ust(g, ust, V, root, ignore, pop, lower, upper, counties, cg);
     if (ust.size() == 0) return -log(0.0);
 
     // set `lower` as a way to return population of new district
@@ -227,7 +255,7 @@ double split_map(const Graph &g, const uvec &counties, Multigraph &cg,
                           lower, upper, target);
     if (lower == 0) return -log(0.0); // reject sample
 
-    return log_boundary(g, districts, 0, dist_ctr) - log((double)k);
+    return log_boundary(g, districts, 0, dist_ctr) - log((double) k);
 }
 
 
@@ -306,12 +334,16 @@ void adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
     int N_max = districts.n_cols;
     int N_adapt = std::min((int) std::floor(4000.0 / sqrt((double)V)), N_max);
 
+    double lower = target * (1 - tol);
+    double upper = target * (1 + tol);
+
     std::vector<std::vector<double>> devs;
     vec distr_ok(k_max+1, fill::zeros);
     int root;
     int max_ok = 0;
     std::vector<bool> ignore(V);
-    for (int i = 0, idx = 0; i < N_max && idx < N_adapt; i++, idx++) {
+    int idx = 0;
+    for (int i = 0; i < N_max && idx < N_adapt; i++, idx++) {
         if (std::isinf(lp(i))) { // skip if not valid
             idx--;
             continue;
@@ -319,7 +351,7 @@ void adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
 
         Tree ust = init_tree(V);
         for (int j = 0; j < V; j++) ignore[j] = districts(j, i) != 0;
-        ust = sample_sub_ust(g, ust, V, root, ignore, counties, cg);
+        ust = sample_sub_ust(g, ust, V, root, ignore, pop, lower, upper, counties, cg);
         if (ust.size() == 0) {
             idx--;
             continue;
@@ -339,6 +371,7 @@ void adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
         Rcpp::checkUserInterrupt();
     }
 
+    if (idx < N_adapt) N_adapt = idx; // if rejected too many in last step
     // For each k, compute pr(selected edge within top k),
     // among maps where valid edge was selected
     uvec idxs(N_adapt);

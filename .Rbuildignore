@@ -6,7 +6,7 @@ README.Rmd
 \.DS_Store
 \.\.Rcheck
 builder.sh
-^.*\.o
+^.*\.o$
 ^doc$
 ^Meta$
 ^_pkgdown\.yml$
@@ -17,3 +17,4 @@ builder.sh
 ^cran-comments\.md$
 ^CRAN-RELEASE$
 ^R/dev_helpers\.R$
+^inst/enumpart/enumpart\.exe$

@@ -82,7 +82,7 @@ population parity constraints on subsets." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.0.9000</span>
       </span>
     </div>
 
@@ -170,20 +170,7 @@ on pairs of districts. Provide population, ndists, pop_tol, and sub_ndists to ge
 population parity constraints on subsets.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.subset</span><span class='op'>(</span>
-  <span class='va'>shp</span>,
-  <span class='va'>adj</span>,
-  <span class='va'>keep_rows</span>,
-  <span class='va'>total_pop</span>,
-  <span class='va'>ndists</span>,
-  <span class='va'>pop_tol</span>,
-  <span class='va'>sub_ndists</span>,
-  <span class='va'>adjacency</span>,
-  <span class='va'>population</span>,
-  <span class='va'>ndist</span>,
-  <span class='va'>popcons</span>,
-  <span class='va'>subndist</span>
-<span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>redist.subset</span><span class='op'>(</span><span class='va'>shp</span>, <span class='va'>adj</span>, <span class='va'>keep_rows</span>, <span class='va'>total_pop</span>, <span class='va'>ndists</span>, <span class='va'>pop_tol</span>, <span class='va'>sub_ndists</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -216,27 +203,6 @@ population parity constraints on subsets.</p>
     <tr>
       <th>sub_ndists</th>
       <td><p>integer, number of districts in subset map</p></td>
-    </tr>
-    <tr>
-      <th>adjacency</th>
-      <td><p>Deprecated, use adj. A zero-indexed adjacency list. Created with
-<code>redist.adjacency</code> if not supplied.</p></td>
-    </tr>
-    <tr>
-      <th>population</th>
-      <td><p>Deprecated, use total_pop. numeric vector with one entry for the population of each precinct.</p></td>
-    </tr>
-    <tr>
-      <th>ndist</th>
-      <td><p>Deprecated, use ndists. integer, number of districts in whole map</p></td>
-    </tr>
-    <tr>
-      <th>popcons</th>
-      <td><p>Deprecated, use pop_tol. The strength of the hard population constraint.</p></td>
-    </tr>
-    <tr>
-      <th>subndist</th>
-      <td><p>Deprecated, use sub_ndists. integer, number of districts in subset map</p></td>
     </tr>
     </table>
 

@@ -83,7 +83,7 @@ and the log of the Spanning Trees." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.0.9000</span>
       </span>
     </div>
 
@@ -172,7 +172,12 @@ Convex Hull score, Reock score, Boyce Clark Index, Fryer Holden score, Edges Rem
 and the log of the Spanning Trees.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>distr_compactness</span><span class='op'>(</span><span class='va'>map</span>, measure <span class='op'>=</span> <span class='st'>"FracKept"</span>, .data <span class='op'>=</span> <span class='fu'>cur_plans</span><span class='op'>(</span><span class='op'>)</span>, <span class='va'>...</span><span class='op'>)</span>
+    <pre class="usage"><span class='fu'>distr_compactness</span><span class='op'>(</span>
+  <span class='va'>map</span>,
+  measure <span class='op'>=</span> <span class='st'>"FracKept"</span>,
+  .data <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/exists.html'>get0</a></span><span class='op'>(</span><span class='st'>"."</span>, <span class='fu'><a href='https://rdrr.io/r/base/sys.parent.html'>parent.frame</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>,
+  <span class='va'>...</span>
+<span class='op'>)</span>
 
 <span class='fu'>redist.compactness</span><span class='op'>(</span>
   shp <span class='op'>=</span> <span class='cn'>NULL</span>,
@@ -186,11 +191,7 @@ and the log of the Spanning Trees.</p>
   planarize <span class='op'>=</span> <span class='fl'>3857</span>,
   <span class='va'>ppRcpp</span>,
   <span class='va'>perim_path</span>,
-  <span class='va'>perim_df</span>,
-  <span class='va'>district_membership</span>,
-  <span class='va'>population</span>,
-  <span class='va'>adjacency</span>,
-  <span class='va'>nloop</span>
+  <span class='va'>perim_df</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -272,26 +273,6 @@ This can be created in advance with <code>redist.prep.polsbypopper</code>.</p></
       <th>perim_df</th>
       <td><p>A dataframe output from <code>redist.prep.polsbypopper</code></p></td>
     </tr>
-    <tr>
-      <th>district_membership</th>
-      <td><p>Deprecated. Use plans. A numeric vector (if only one map) or matrix with one row
-for each precinct and one column for each map. Required.</p></td>
-    </tr>
-    <tr>
-      <th>population</th>
-      <td><p>Deprecated. Use total_pop. A numeric vector with the population for every observation. Is
-only necessary when "FryerHolden" is used for measure. Defaults to NULL.</p></td>
-    </tr>
-    <tr>
-      <th>adjacency</th>
-      <td><p>Deprecated. Use adj. A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
-Created with <code>redist.adjacency</code> if not supplied and needed. Default is NULL.</p></td>
-    </tr>
-    <tr>
-      <th>nloop</th>
-      <td><p>Deprecated, use draw. A numeric to specify loop number. Defaults to 1 if only one map provided
-and the column number if multiple maps given.</p></td>
-    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
@@ -363,26 +344,17 @@ Apportionment. Midwest Journal of Political Science, 5(1), 70-74.</p>
 of Compactness. Minnesota Law Review. 1701.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_enum</span><span class='op'>)</span>
 
 <span class='va'>plans_05</span> <span class='op'>&lt;-</span> <span class='va'>fl25_enum</span><span class='op'>$</span><span class='va'>plans</span><span class='op'>[</span>, <span class='va'>fl25_enum</span><span class='op'>$</span><span class='va'>pop_dev</span> <span class='op'>&lt;=</span> <span class='fl'>0.05</span><span class='op'>]</span>
 
-<span class='fu'>redist.compactness</span><span class='op'>(</span>shp <span class='op'>=</span> <span class='va'>fl25</span>, plans <span class='op'>=</span> <span class='va'>plans_05</span><span class='op'>[</span>,<span class='fl'>1</span><span class='op'>:</span><span class='fl'>3</span><span class='op'>]</span>,
+<span class='fu'>redist.compactness</span><span class='op'>(</span>shp <span class='op'>=</span> <span class='va'>fl25</span>, district_membership <span class='op'>=</span> <span class='va'>plans_05</span><span class='op'>[</span>,<span class='fl'>1</span><span class='op'>:</span><span class='fl'>3</span><span class='op'>]</span>,
 measure <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>'PolsbyPopper'</span>, <span class='st'>'EdgesRemoved'</span><span class='op'>)</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='message'>Linking to GEOS 3.9.0, GDAL 3.2.1, PROJ 7.2.1</span></div><div class='output co'>#&gt; <span class='message'>Linking to liblwgeom 3.0.0beta1 r16016, GEOS 3.9.0, PROJ 7.2.1</span></div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 9 x 4</span><span>
-#&gt;   district PolsbyPopper EdgesRemoved  draw
-#&gt;      </span><span style='color: #949494;font-style: italic;'>&lt;int&gt;</span><span>        </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>        </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #BCBCBC;'>1</span><span>        1        0.397           32     1
-#&gt; </span><span style='color: #BCBCBC;'>2</span><span>        2        0.246           32     1
-#&gt; </span><span style='color: #BCBCBC;'>3</span><span>        3        0.235           32     1
-#&gt; </span><span style='color: #BCBCBC;'>4</span><span>        1        0.284           44     2
-#&gt; </span><span style='color: #BCBCBC;'>5</span><span>        2        0.127           44     2
-#&gt; </span><span style='color: #BCBCBC;'>6</span><span>        3        0.235           44     2
-#&gt; </span><span style='color: #BCBCBC;'>7</span><span>        1        0.371           32     3
-#&gt; </span><span style='color: #BCBCBC;'>8</span><span>        2        0.234           32     3
-#&gt; </span><span style='color: #BCBCBC;'>9</span><span>        3        0.207           32     3</div><div class='input'>
-</div></span></pre>
+<span class='op'>}</span>
+
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

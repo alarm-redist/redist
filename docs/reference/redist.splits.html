@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.0.9000</span>
       </span>
     </div>
 
@@ -166,9 +166,9 @@
     <p>Count County Splits</p>
     </div>
 
-    <pre class="usage"><span class='fu'>county_splits</span><span class='op'>(</span><span class='va'>map</span>, <span class='va'>counties</span>, .data <span class='op'>=</span> <span class='fu'>cur_plans</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>
+    <pre class="usage"><span class='fu'>county_splits</span><span class='op'>(</span><span class='va'>map</span>, <span class='va'>counties</span>, .data <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/exists.html'>get0</a></span><span class='op'>(</span><span class='st'>"."</span>, <span class='fu'><a href='https://rdrr.io/r/base/sys.parent.html'>parent.frame</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>
 
-<span class='fu'>redist.splits</span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>counties</span>, <span class='va'>district_membership</span><span class='op'>)</span></pre>
+<span class='fu'>redist.splits</span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>counties</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -188,11 +188,6 @@
     <tr>
       <th>plans</th>
       <td><p>A numeric vector (if only one map) or matrix with one row
-for each precinct and one column for each map. Required.</p></td>
-    </tr>
-    <tr>
-      <th>district_membership</th>
-      <td><p>Deprecated, use plans. A numeric vector (if only one map) or matrix with one row
 for each precinct and one column for each map. Required.</p></td>
     </tr>
     </table>

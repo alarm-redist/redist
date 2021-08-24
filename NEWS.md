@@ -1,6 +1,4 @@
-# redist 3.0.7
-* All redist 3.0.2 changes
-* Various changes to come in line with new CRAN policies since initial submission
+# redist 3.1.0
 
 # redist 3.0.2
 * Fix bugs (#60, #61, #62, #70, #71, #72), including s2 compatibility, Solaris fixes, and improved dplyr verb robustness.
@@ -9,12 +7,12 @@
 
 * New tidy interface, including new `redist_map` and `redist_plans` objects
 * Merge-split MCMC now available in `redist_mergesplit()`
-* Short burst MCMC optimization now available in `redist_shortburst()` along 
+* Short burst MCMC optimization now available in `redist_shortburst()` along
   with scoring functions (`?scorers`)
 * Improved Flip MCMC interface and performance improvements
 * New support for larger simulation size limits
 * Functions to freeze parts of a map and extract district cores
-* New VRA constraint 
+* New VRA constraint
 * Many new plotting functions
 * Consistent function and argument names
 * New partisanship and compactness metrics

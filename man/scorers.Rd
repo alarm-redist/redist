@@ -4,6 +4,7 @@
 \alias{scorer_group_pct}
 \alias{scorer_pop_dev}
 \alias{scorer_splits}
+\alias{scorer_fractures}
 \alias{scorer_frac_kept}
 \alias{scorer_polsby_popper}
 \alias{scorer_status_quo}
@@ -15,6 +16,8 @@ scorer_group_pct(map, group_pop, total_pop, k = 1)
 scorer_pop_dev(map)
 
 scorer_splits(map, counties)
+
+scorer_fractures(map, counties)
 
 scorer_frac_kept(map)
 
@@ -83,6 +86,7 @@ scorer_frac_kept(iowa_map)
 scorer_status_quo(iowa_map)
 scorer_group_pct(iowa_map, dem_08, tot_08, k=2)
 1.5*scorer_frac_kept(iowa_map) + 0.4*scorer_status_quo(iowa_map)
+1.5*scorer_frac_kept(iowa_map) + scorer_frac_kept(iowa_map)*scorer_status_quo(iowa_map)
 }
 
 }

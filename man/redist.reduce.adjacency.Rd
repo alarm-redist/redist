@@ -4,14 +4,12 @@
 \alias{redist.reduce.adjacency}
 \title{Reduce Adjacency List}
 \usage{
-redist.reduce.adjacency(adj, keep_rows, adjacency)
+redist.reduce.adjacency(adj, keep_rows)
 }
 \arguments{
 \item{adj}{A zero-indexed adjacency list. Required.}
 
 \item{keep_rows}{row numbers of precincts to keep}
-
-\item{adjacency}{Deprecated. Use adj. A zero-indexed adjacency list.}
 }
 \value{
 zero indexed adjacency list with max value length(keep_rows) - 1
@@ -22,5 +20,6 @@ Tool to help reduce adjacency lists for analyzing subsets of maps.
 \examples{
 data(fl25_adj)
 redist.reduce.adjacency(fl25_adj, c(2, 3, 4, 6, 21))
+
 }
 \concept{prepare}

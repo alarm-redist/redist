@@ -1,19 +1,17 @@
-#include <Rcpp.h>
-using namespace Rcpp;
-
+#include "smc_base.h"
 
 // [[Rcpp::export]]
 List coarsen_adjacency(List adj, IntegerVector groups) {
   List adjclean = clone(adj);
   IntegerVector temp(0);
   IntegerVector temp2;
-  
-  
+
+
   List fill = no_init(max(groups) + 1);
   for(int f = 0; f < fill.size(); f++){
     fill(f) = clone(temp);
   }
-  
+
   for(int i = 0;  i < adj.size(); i++){
     temp = adjclean(i);
     for(int j = 0; j < temp.size(); j++){
@@ -21,8 +19,8 @@ List coarsen_adjacency(List adj, IntegerVector groups) {
     }
     adjclean(i) = temp;
   }
-  
-  
+
+
   for(int f = 0; f < fill.size(); f++){
     temp = fill(f);
       for(int i = 0;  i < adj.size(); i++){
@@ -33,7 +31,7 @@ List coarsen_adjacency(List adj, IntegerVector groups) {
       }
     fill(f) = temp;
   }
-  
+
   for(int f = 0; f < fill.size(); f++){
     temp = fill(f);
     for(int j = 0; j < temp.size(); j++){
@@ -44,7 +42,7 @@ List coarsen_adjacency(List adj, IntegerVector groups) {
     }
     fill(f) = temp;
   }
-  
+
   return fill;
 }
 

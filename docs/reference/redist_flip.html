@@ -48,7 +48,7 @@
 
 <meta property="og:title" content="'Flip' Markov Chain Monte Carlo Redistricting Simulation — redist_flip" />
 <meta property="og:description" content="redist_flip provides a tidy interface to the methods in
-redist.mcmc." />
+redist.flip." />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -81,7 +81,7 @@ redist.mcmc." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.0.9000</span>
       </span>
     </div>
 
@@ -165,7 +165,7 @@ redist.mcmc." />
 
     <div class="ref-description">
     <p><code>redist_flip</code> provides a tidy interface to the methods in
-<code><a href='redist.mcmc.html'>redist.mcmc</a></code>.</p>
+<code><a href='redist.flip.html'>redist.flip</a></code>.</p>
     </div>
 
     <pre class="usage"><span class='fu'>redist_flip</span><span class='op'>(</span>
@@ -308,12 +308,12 @@ process are implemented, including population parity and geographic
 compactness. In addition, the function includes multiple-swap and simulated
 tempering functionality to improve the mixing of the Markov Chain.</p>
 <p><code>redist_flip</code> allows for Gibbs constraints to be supplied via a list object
-passed to <code>constraints</code>. This is a change from the original <code>redist.mcmc</code>
+passed to <code>constraints</code>. This is a change from the original <code>redist.flip</code>
 behavior to allow for a more straightforward function call when used within a pipe.
-A key difference between <code>redist_flip</code> and <code>redist.mcmc</code> is that
+A key difference between <code>redist_flip</code> and <code>redist.flip</code> is that
 <code>redist_flip</code> uses a small compactness constraint by default, as this improves
 the realism of the maps greatly and also leads to large speed improvements.
-(One of the most time consuming aspects of the mcmc/flip backend is checking for
+(One of the most time consuming aspects of the flip MCMC backend is checking for
 district shattering, which is slowed down even further by non-compact districts.
 As such, it is recommended that all flip simulations use at least a minimal compactness
 constraint, even if you weaken it from the default settings.) The default is
@@ -331,7 +331,7 @@ want to run a simulation with no constraints at all, you can use
 <code>constraints</code>. The following describes the constraints available. The general
 advice is to set weights in a way that gets between 20\<!-- % and 40\\% acceptance -->
 on average, though more tuning advice is available in the vignette on using
-mcmc methods.Having too small of an acceptance rate indicates that the weights
+MCMC methods.Having too small of an acceptance rate indicates that the weights
 within <code>constraints</code> are too large and will impact sampling efficiency.
 If the Metropolis Hastings acceptance rate is too large, this may impact the
 target distribution, but may be fine for general exploration of possible maps.</p>
@@ -417,47 +417,11 @@ Carlo." Working Paper. Available at
 <a href='http://imai.princeton.edu/research/files/redist.pdf'>http://imai.princeton.edu/research/files/redist.pdf</a>.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>iowa</span><span class='op'>)</span>
-<span class='va'>iowa_map</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist_map.html'>redist_map</a></span><span class='op'>(</span><span class='va'>iowa</span>, ndists <span class='op'>=</span> <span class='fl'>4</span>, existing_plan <span class='op'>=</span> <span class='va'>cd_2010</span>, total_pop <span class='op'>=</span> <span class='va'>pop</span>, pop_tol <span class='op'>=</span> <span class='fl'>0.01</span><span class='op'>)</span>
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>iowa</span><span class='op'>)</span>
+<span class='va'>iowa_map</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist_map.html'>redist_map</a></span><span class='op'>(</span><span class='va'>iowa</span>, ndists <span class='op'>=</span> <span class='fl'>4</span>, existing_plan <span class='op'>=</span> <span class='va'>cd_2010</span>, total_pop <span class='op'>=</span> <span class='va'>pop</span><span class='op'>)</span>
 <span class='va'>sims</span> <span class='op'>&lt;-</span> <span class='fu'>redist_flip</span><span class='op'>(</span>map <span class='op'>=</span> <span class='va'>iowa_map</span>, nsims <span class='op'>=</span> <span class='fl'>100</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; 
-#&gt; ==================== 
-#&gt; redist.mcmc(): Automated Redistricting Simulation Using
-#&gt;          Markov Chain Monte Carlo
-#&gt; 
-#&gt; Preprocessing data.
-#&gt; 
-#&gt; Starting swMH().
-#&gt; 10 percent done.
-#&gt; Metropolis acceptance ratio: 0.444444
-#&gt; 
-#&gt; 20 percent done.
-#&gt; Metropolis acceptance ratio: 0.368421
-#&gt; 
-#&gt; 30 percent done.
-#&gt; Metropolis acceptance ratio: 0.37931
-#&gt; 
-#&gt; 40 percent done.
-#&gt; Metropolis acceptance ratio: 0.512821
-#&gt; 
-#&gt; 50 percent done.
-#&gt; Metropolis acceptance ratio: 0.489796
-#&gt; 
-#&gt; 60 percent done.
-#&gt; Metropolis acceptance ratio: 0.508475
-#&gt; 
-#&gt; 70 percent done.
-#&gt; Metropolis acceptance ratio: 0.507246
-#&gt; 
-#&gt; 80 percent done.
-#&gt; Metropolis acceptance ratio: 0.493671
-#&gt; 
-#&gt; 90 percent done.
-#&gt; Metropolis acceptance ratio: 0.516854
-#&gt; 
-#&gt; 100 percent done.
-#&gt; Metropolis acceptance ratio: 0.484848
-#&gt; </div><div class='input'>
+<span class='op'>}</span>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

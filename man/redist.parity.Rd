@@ -5,7 +5,7 @@
 \alias{plan_parity}
 \title{Calculates Maximum Deviation from Population Parity}
 \usage{
-redist.parity(plans, total_pop, ncores = 1, district_membership, population)
+redist.parity(plans, total_pop, ncores = 1)
 
 plan_parity(map, .data = cur_plans(), ...)
 }
@@ -16,11 +16,6 @@ map. Required.}
 \item{total_pop}{A numeric vector with the population for every precinct.}
 
 \item{ncores}{Number of cores to use for parallel computing. Default is 1.}
-
-\item{district_membership}{Deprecated, use plans. A matrix with one row
-for each precinct and one column for each map. Required.}
-
-\item{population}{Deprecated, use total_pop. A numeric vector with the population for every precinct.}
 
 \item{map}{a \code{\link{redist_map}} object}
 

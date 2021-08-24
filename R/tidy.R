@@ -28,11 +28,12 @@ get_cur_df = function(dplyr_funcs) {
 
 #' Helper function to get current map object
 #' @noRd
-cur_map = function(verbs=c("mutate", "summarize", "filter",
-                           "arrange", "transmute")) {
+cur_map = function(verbs=c("mutate", "summarize", "merge_by",
+                           "filter", "arrange", "transmute")) {
     get_cur_df(list(mutate=mutate.redist_map,
                     transmute=transmute.redist_map,
                     summarize=summarise.redist_map,
+                    merge_by=merge_by,
                     filter=filter.redist_map,
                     arrange=arrange.redist_map)[verbs])
 }
@@ -208,7 +209,7 @@ add_reference = function(plans, ref_plan, name=NULL) {
     x = dplyr::bind_rows(
             tibble(district = 1:ndists,
                            total_pop = as.numeric(distr_pop)),
-            plans[,-1] # 1 is 'draw' by defn
+            plans[, -match("draw", names(plans))]
         ) %>%
         dplyr::mutate(draw = new_draw, .before="district")
 

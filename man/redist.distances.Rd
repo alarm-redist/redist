@@ -7,14 +7,7 @@
 \usage{
 plan_distances(plans, measure = "variation of information", ncores = 1)
 
-redist.distances(
-  plans,
-  measure = "Hamming",
-  ncores = 1,
-  total_pop = NULL,
-  district_membership,
-  pop
-)
+redist.distances(plans, measure = "Hamming", ncores = 1, total_pop = NULL)
 }
 \arguments{
 \item{plans}{A matrix with one row for each precinct and one
@@ -29,14 +22,6 @@ variation of information.}
 \item{ncores}{Number of cores to use for parallel computing. Default is 1.}
 
 \item{total_pop}{The vector of precinct populations. Used only if computing
-variation of information. If not provided, equal population of precincts
-will be assumed, i.e. the VI will be computed with respect to the precincts
-themselves, and not the population.}
-
-\item{district_membership}{Deprecated, use plans. A matrix with one row for each precinct and one
-column for each map. Required.}
-
-\item{pop}{The vector of precinct populations. Used only if computing
 variation of information. If not provided, equal population of precincts
 will be assumed, i.e. the VI will be computed with respect to the precincts
 themselves, and not the population.}

@@ -103,7 +103,7 @@ populations within 1\% of the target population.}
 \code{redist_mergesplit} returns an object of class
 \code{\link{redist_plans}} containing the simulated plans.
 
-\code{redist.mergesplit} returns an object of class list containing the
+\code{redist.mergesplit} (Deprecated) returns an object of class list containing the
 simulated plans.
 }
 \description{
@@ -135,7 +135,7 @@ districts.
 \item \code{current}, a vector containing district assignments for
 the current map.
 }
-\item \code{vra}: a list with three entries:
+\item \code{hinge}: a list with three entries:
 \itemize{
 \item \code{strength}, a number controlling the strength of the Voting Rights Act
 (VRA) constraint, with higher values prioritizing majority-minority districts
@@ -157,7 +157,12 @@ home address.
 \item \code{strength}, a number controlling the tendency of the generated districts
 to avoid splitting counties.
 }
-\item \code{vra_old}: a list with five entries, which may be set up using
+\item \code{multisplits}: a list with one entry:
+\itemize{
+\item \code{strength}, a number controlling the tendency of the generated districts
+to avoid splitting counties multiple times.
+}
+\item \code{vra}: a list with five entries, which may be set up using
 \code{\link{redist.constraint.helper}}:
 \itemize{
 \item \code{strength}, a number controlling the strength of the Voting Rights Act
@@ -177,9 +182,10 @@ geographic unit.
 
 All constraints are fed into a Gibbs measure, with coefficients on each
 constraint set by the corresponding \code{strength} parameters.
+The strength can be any real number, with zero corresponding to no constraint.
 The \code{status_quo} constraint adds a term measuring the variation of
 information distance between the plan and the reference, rescaled to [0, 1].
-The \code{vra} constraint takes a list of target minority percentages. It
+The \code{hinge} constraint takes a list of target minority percentages. It
 matches each district to its nearest target percentage, and then applies a
 penalty of the form \eqn{\sqrt{max(0, tgt - minpct)}}, summing across
 districts. This penalizes districts which are below their target population.
@@ -187,7 +193,7 @@ The \code{incumbency} constraint adds a term counting the number of districts
 containing paired-up incumbents. The \code{splits} constraint adds a term
 counting the number of counties which contain precincts belonging to more
 than one district.
-The \code{vra_old} constraint adds a term of the form
+The \code{vra} constraint (not recommended) adds a term of the form
 \eqn{(|tgtvramin-minpct||tgtvraother-minpct|)^{powvra})}, which
 encourages districts to have minority percentages near either \code{tgt_vra_min}
 or \code{tgt_vra_other}. This can be visualized with
@@ -205,11 +211,6 @@ sampled_constr = redist_mergesplit(fl_map, 10000, constraints=list(
                      incumbency = list(strength=1000, incumbents=c(3, 6, 25))
                  ))
 }
-
-data(fl25)
-adj <- redist.adjacency(fl25)
-out <- redist.mergesplit(adj = adj, total_pop = fl25$pop,
-                         nsims = 5, ndists = 3, pop_tol = 0.1)
 
 }
 \references{

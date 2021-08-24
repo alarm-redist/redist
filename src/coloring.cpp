@@ -17,8 +17,10 @@ bool deg_sort(const std::pair<int, int> &a, const std::pair<int, int> &b) {
 IntegerVector color_graph(List l, IntegerVector plan) {
     int n_distr = max(plan);
     int V = l.size();
+    Rcout << "A\n";
     std::vector<std::set<int>> dist_gr = get_plan_graph(l, V, plan, n_distr);
     std::vector<std::pair<int, int>> degs(n_distr);
+    Rcout << "B\n";
 
     // iterate from largest to smallest degree
     for (int i = 0; i < n_distr; i++) {
@@ -30,6 +32,7 @@ IntegerVector color_graph(List l, IntegerVector plan) {
     int colors = 4;
     color[degs[0].first] = 1; // first color
     for (int i = 1; i < n_distr; i++) {
+        Rcout << i << "\n";
         int curr = degs[i].first;
         std::vector<bool> seen(colors);
         std::set<int> nbors = dist_gr[curr];
@@ -43,6 +46,7 @@ IntegerVector color_graph(List l, IntegerVector plan) {
         if (idx == seen.end()) colors++;
         color[curr] = idx - seen.begin() + 1;
     }
+
 
     IntegerVector out(V);
     for (int i = 0; i < V; i++) {

@@ -12,15 +12,7 @@ group_frac(
   .data = cur_plans()
 )
 
-redist.group.percent(
-  plans,
-  group_pop,
-  total_pop,
-  ncores = 1,
-  district_membership,
-  grouppop,
-  fullpop
-)
+redist.group.percent(plans, group_pop, total_pop, ncores = 1)
 }
 \arguments{
 \item{map}{a \code{\link{redist_map}} object}
@@ -35,13 +27,6 @@ redist.group.percent(
 for each precinct and one column for each map. Required.}
 
 \item{ncores}{Number of cores to use for parallel computing. Default is 1.}
-
-\item{district_membership}{Deprecated, use plans. A matrix with one row
-for each precinct and one column for each map. Required.}
-
-\item{grouppop}{Deprecated, use group_pop. A numeric vector with the population of the group for every precinct.}
-
-\item{fullpop}{Deprecated, use total_pop. A numeric vector with the population for every precinct.}
 }
 \value{
 matrix with percent for each district

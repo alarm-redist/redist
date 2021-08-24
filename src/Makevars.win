@@ -1,4 +1,4 @@
 ## Use the R_HOME indirection to support installations of multiple R version
-PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS) -DARMA_64BIT_WORD=1 #-O3
+PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS) -DARMA_64BIT_WORD=1 -g0 #-O3
 PKG_LIBS = `$(R_HOME)/bin/Rscript.exe -e "Rcpp:::LdFlags()"` $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) $(SHLIB_OPENMP_CXXFLAGS)
 CXX_STD = CXX11

@@ -16,25 +16,13 @@
 #'   map. Required.
 #' @param total_pop A numeric vector with the population for every precinct.
 #' @param ncores Number of cores to use for parallel computing. Default is 1.
-#' @param district_membership Deprecated, use plans. A matrix with one row
-#' for each precinct and one column for each map. Required.
-#' @param population Deprecated, use total_pop. A numeric vector with the population for every precinct.
 #'
 #' @importFrom foreach %do% %dopar% foreach
 #' @return numeric vector with the population parity for each column
 #'
 #' @concept analyze
 #' @export
-redist.parity <- function(plans, total_pop, ncores = 1, district_membership, population) {
-    if (!missing(population)) {
-        .Deprecated(new = 'total_pop', old = 'population')
-        total_pop <- population
-    }
-    if (!missing(district_membership)) {
-        .Deprecated(new = 'plans', old = 'district_membership')
-        plans <- district_membership
-    }
-
+redist.parity <- function(plans, total_pop, ncores = 1) {
     if (!any(class(total_pop) %in% c('numeric', 'integer'))) {
         stop('Please provide "total_pop" as a numeric vector.')
     }
@@ -57,7 +45,7 @@ redist.parity <- function(plans, total_pop, ncores = 1, district_membership, pop
         `%oper%` <- `%do%`
     } else {
         `%oper%` <- `%dopar%`
-        cl <- makeCluster(nc, setup_strategy = 'sequential')
+        cl <- makeCluster(nc, setup_strategy = 'sequential', methods=FALSE)
         registerDoParallel(cl)
         on.exit(stopCluster(cl))
     }

@@ -2,6 +2,8 @@
 *.o
 *.rds
 *.tmp
+*.gch
+*.pch
 /redist/R/RcppExports.R
 /redist/src/RcppExports.cpp
 .DS_Store

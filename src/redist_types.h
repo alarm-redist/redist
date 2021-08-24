@@ -1,7 +1,7 @@
+#pragma once
 #ifndef TYPES_H
 #define TYPES_H
 
-#include <stdlib.h>
 #include <vector>
 
 // [[Rcpp::depends(RcppArmadillo)]]

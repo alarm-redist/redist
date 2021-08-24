@@ -21,9 +21,11 @@
 #' @param plot If `plot="line"`, display a plot for each set showing the set of
 #'   boundaries which most distinguish it from the other set (the squared
 #'   differences in the eigenvector values across the boundary).  If
-#'   `plot="fill"`, plot the eigenvector for each set as a choropleth. See below
-#'   for more information.  Set to `FALSE` to disable plotting (or leave out
-#'   `shp`).
+#'   `plot="fill"`, plot the eigenvector for each set as a choropleth. If `plot = 'adj'`,
+#'   plot the shows the adjacency graph edges which most distinguish it from the other set.
+#'   The adj option is a different graphical option of the same information as the line
+#'   option. See below for more information.  Set to `FALSE` to disable plotting
+#'   (or leave out `shp`).
 #' @param thresh the value to threshold the eigenvector at in determining the
 #'   relevant set of precincts for comparison.
 #' @param labs the names of the panels in the plot.
@@ -126,7 +128,9 @@ compare_plans = function(plans, set1, set2, shp=NULL, plot="fill", thresh=0.1,
 
     if (inherits(shp, "sf")) {
         if (plot == "line") {
-            edges = dplyr::select(shp, attr(shp, "sf_column")) %>%
+            edges = dplyr::as_tibble(shp) %>%
+                sf::st_as_sf() %>%
+                dplyr::select(geometry=attr(shp, "sf_column")) %>%
                 sf::st_intersection() %>%
                 dplyr::as_tibble() %>%
                 dplyr::filter(.data$n.overlaps == 2) %>%
@@ -140,7 +144,7 @@ compare_plans = function(plans, set1, set2, shp=NULL, plot="fill", thresh=0.1,
             make_plot = function(x, lab) {
                 ggplot(edges, aes(size=x)) +
                     geom_sf() +
-                    ggplot2::guides(size=FALSE) +
+                    ggplot2::guides(size='none') +
                     ggplot2::scale_size_continuous(range=c(0, 3)) +
                     labs(title=lab) +
                     theme_void()
@@ -153,7 +157,7 @@ compare_plans = function(plans, set1, set2, shp=NULL, plot="fill", thresh=0.1,
             make_plot = function(x, lab) {
                 ggplot(shp, aes(fill=x)) +
                     geom_sf(size=0) +
-                    ggplot2::guides(fill=FALSE) +
+                    ggplot2::guides(fill='none') +
                     labs(title=lab) +
                     theme_void()
             }
@@ -179,7 +183,7 @@ compare_plans = function(plans, set1, set2, shp=NULL, plot="fill", thresh=0.1,
             make_plot = function(x, lab) {
                 ggplot(nb, aes(size = x, color = x)) +
                     geom_sf() +
-                    ggplot2::guides(size = FALSE, color = FALSE) +
+                    ggplot2::guides(size = 'none', color = 'none') +
                     ggplot2::scale_size_continuous(range=c(0, 3)) +
                     ggplot2::scale_colour_fermenter(palette = 'RdPu') +
                     labs(title=lab) +
@@ -273,7 +277,7 @@ classify_plans = function(dist_mat, k=8, method="complete") {
 #' Print redist_classified objects
 #' @export
 #' @param x redist_classified object
-#' @param \dots additional arguments 
+#' @param \dots additional arguments
 #' @return prints to console
 #'
 print.redist_classified = function(x, ...) {

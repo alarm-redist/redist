@@ -83,7 +83,7 @@ boundary constraints." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.0.9000</span>
       </span>
     </div>
 
@@ -208,10 +208,7 @@ boundary constraints.</p>
   trunc_fn <span class='op'>=</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span> <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>pmin</a></span><span class='op'>(</span><span class='va'>x</span>, <span class='fl'>0.01</span> <span class='op'>*</span> <span class='va'>nsims</span><span class='op'>^</span><span class='fl'>0.4</span><span class='op'>)</span>,
   pop_temper <span class='op'>=</span> <span class='fl'>0</span>,
   verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  silent <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  <span class='va'>adjobj</span>,
-  <span class='va'>popvec</span>,
-  <span class='va'>popcons</span>
+  silent <span class='op'>=</span> <span class='cn'>FALSE</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -326,23 +323,7 @@ populations within 1% of the target population.</p></td>
       <td><p>A numeric vector with three elements <code><a href='https://rdrr.io/r/base/c.html'>c(lower, target, upper)</a></code>
 providing more precise population bounds for the algorithm. Districts
 will have population between <code>lower</code> and <code>upper</code>, with a goal of
-<code>target</code>.  If set, overrides <code>popcons</code>.</p></td>
-    </tr>
-    <tr>
-      <th>adjobj</th>
-      <td><p>Deprecated, use adj. An adjacency matrix, list, or object of class
-"SpatialPolygonsDataFrame."</p></td>
-    </tr>
-    <tr>
-      <th>popvec</th>
-      <td><p>Deprecated, use total_pop. A vector containing the populations of each geographic unit.</p></td>
-    </tr>
-    <tr>
-      <th>popcons</th>
-      <td><p>The desired population constraint.  All sampled districts
-will have a deviation from the target district size no more than this value
-in percentage terms, i.e., <code>popcons=0.01</code> will ensure districts have
-populations within 1% of the target population.</p></td>
+<code>target</code>.  If set, overrides <code>pop_tol</code>.</p></td>
     </tr>
     </table>
 
@@ -371,7 +352,7 @@ and each column is a sample.</p></dd>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>This function draws nearly-independent samples from a specific target measure,
-controlled by the <code>popcons</code>, <code>compactness</code>, <code>constraints</code>, and
+controlled by the <code>pop_tol</code>, <code>compactness</code>, <code>constraints</code>, and
 <code>constraint_fn</code> parameters.</p>
 <p>Key to ensuring good performance is monitoring the efficiency of the resampling
 process at each SMC stage.  Unless <code>silent=F</code>, this function will print
@@ -451,150 +432,33 @@ Available at <a href='https://imai.fas.harvard.edu/research/files/SMCredist.pdf'
 Available at <a href='https://imai.fas.harvard.edu/research/files/SMCredist.pdf'>https://imai.fas.harvard.edu/research/files/SMCredist.pdf</a>.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'># \donttest{</span>
-<span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span><span class='op'>(</span><span class='fl'>1</span><span class='op'>)</span>
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
 
 <span class='va'>fl_map</span> <span class='op'>=</span> <span class='fu'><a href='redist_map.html'>redist_map</a></span><span class='op'>(</span><span class='va'>fl25</span>, ndists<span class='op'>=</span><span class='fl'>3</span>, pop_tol<span class='op'>=</span><span class='fl'>0.1</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='message'>Projecting to CRS 3857</span></div><div class='input'>
-<span class='va'>sampled_basic</span> <span class='op'>=</span> <span class='fu'>redist_smc</span><span class='op'>(</span><span class='va'>fl_map</span>, <span class='fl'>10000</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; SEQUENTIAL MONTE CARLO
-#&gt; Sampling 10000 25-unit maps with 3 districts and population between 52512.9 and 64182.4.
-#&gt; Making split 1 of 2
-#&gt; Using k = 3
-#&gt; Iteration   1000 / 10000
-#&gt; Iteration   2000 / 10000
-#&gt; Iteration   3000 / 10000
-#&gt; Iteration   4000 / 10000
-#&gt; Iteration   5000 / 10000
-#&gt; Iteration   6000 / 10000
-#&gt; Iteration   7000 / 10000
-#&gt; Iteration   8000 / 10000
-#&gt; Iteration   9000 / 10000
-#&gt; Iteration  10000 / 10000
-#&gt; 21.7% acceptance rate.
-#&gt; Resampling effective sample size: 9942.2 (99.4% efficiency).
-#&gt; Making split 2 of 2
-#&gt; Using k = 2
-#&gt; Iteration   1000 / 10000
-#&gt; Iteration   2000 / 10000
-#&gt; Iteration   3000 / 10000
-#&gt; Iteration   4000 / 10000
-#&gt; Iteration   5000 / 10000
-#&gt; Iteration   6000 / 10000
-#&gt; Iteration   7000 / 10000
-#&gt; Iteration   8000 / 10000
-#&gt; Iteration   9000 / 10000
-#&gt; Iteration  10000 / 10000
-#&gt; 6.1% acceptance rate.
-#&gt; Resampling effective sample size: 9691.2 (96.9% efficiency).</div><div class='input'>
-<span class='va'>sampled_constr</span> <span class='op'>=</span> <span class='fu'>redist_smc</span><span class='op'>(</span><span class='va'>fl_map</span>, <span class='fl'>10000</span>, constraints<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>
-                                incumbency <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>strength<span class='op'>=</span><span class='fl'>100</span>, incumbents<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>6</span>, <span class='fl'>25</span><span class='op'>)</span><span class='op'>)</span>
-                            <span class='op'>)</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; SEQUENTIAL MONTE CARLO
-#&gt; Sampling 10000 25-unit maps with 3 districts and population between 52512.9 and 64182.4.
-#&gt; Making split 1 of 2
-#&gt; Using k = 3
-#&gt; Iteration   1000 / 10000
-#&gt; Iteration   2000 / 10000
-#&gt; Iteration   3000 / 10000
-#&gt; Iteration   4000 / 10000
-#&gt; Iteration   5000 / 10000
-#&gt; Iteration   6000 / 10000
-#&gt; Iteration   7000 / 10000
-#&gt; Iteration   8000 / 10000
-#&gt; Iteration   9000 / 10000
-#&gt; Iteration  10000 / 10000
-#&gt; 21.6% acceptance rate.
-#&gt; Resampling effective sample size: 1785.1 (17.9% efficiency).
-#&gt; Making split 2 of 2
-#&gt; Using k = 2
-#&gt; Iteration   1000 / 10000
-#&gt; Iteration   2000 / 10000
-#&gt; Iteration   3000 / 10000
-#&gt; Iteration   4000 / 10000
-#&gt; Iteration   5000 / 10000
-#&gt; Iteration   6000 / 10000
-#&gt; Iteration   7000 / 10000
-#&gt; Iteration   8000 / 10000
-#&gt; Iteration   9000 / 10000
-#&gt; Iteration  10000 / 10000
-#&gt; 7.5% acceptance rate.
-#&gt; Resampling effective sample size: 703.7 (7.0% efficiency).</div><div class='input'><span class='co'># }</span>
 
-<span class='co'># \donttest{</span>
+<span class='va'>sampled_basic</span> <span class='op'>=</span> <span class='fu'>redist_smc</span><span class='op'>(</span><span class='va'>fl_map</span>, <span class='fl'>10000</span><span class='op'>)</span>
+
+<span class='va'>sampled_constr</span> <span class='op'>=</span> <span class='fu'>redist_smc</span><span class='op'>(</span><span class='va'>fl_map</span>, <span class='fl'>10000</span>, constraints<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>
+                                incumbency <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>strength<span class='op'>=</span><span class='fl'>1000</span>, incumbents<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>6</span>, <span class='fl'>25</span><span class='op'>)</span><span class='op'>)</span>
+                            <span class='op'>)</span><span class='op'>)</span>
+<span class='op'>}</span>
+
+<span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_adj</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_enum</span><span class='op'>)</span>
 
 <span class='va'>sampled_basic</span> <span class='op'>=</span> <span class='fu'>redist.smc</span><span class='op'>(</span><span class='va'>fl25_adj</span>, <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>,
                            nsims<span class='op'>=</span><span class='fl'>10000</span>, ndists<span class='op'>=</span><span class='fl'>3</span>, pop_tol<span class='op'>=</span><span class='fl'>0.1</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; SEQUENTIAL MONTE CARLO
-#&gt; Sampling 10000 25-unit maps with 3 districts and population between 52512.9 and 64182.4.
-#&gt; Making split 1 of 2
-#&gt; Using k = 3
-#&gt; Iteration   1000 / 10000
-#&gt; Iteration   2000 / 10000
-#&gt; Iteration   3000 / 10000
-#&gt; Iteration   4000 / 10000
-#&gt; Iteration   5000 / 10000
-#&gt; Iteration   6000 / 10000
-#&gt; Iteration   7000 / 10000
-#&gt; Iteration   8000 / 10000
-#&gt; Iteration   9000 / 10000
-#&gt; Iteration  10000 / 10000
-#&gt; 21.6% acceptance rate.
-#&gt; Resampling effective sample size: 9961.7 (99.6% efficiency).
-#&gt; Making split 2 of 2
-#&gt; Using k = 3
-#&gt; Iteration   1000 / 10000
-#&gt; Iteration   2000 / 10000
-#&gt; Iteration   3000 / 10000
-#&gt; Iteration   4000 / 10000
-#&gt; Iteration   5000 / 10000
-#&gt; Iteration   6000 / 10000
-#&gt; Iteration   7000 / 10000
-#&gt; Iteration   8000 / 10000
-#&gt; Iteration   9000 / 10000
-#&gt; Iteration  10000 / 10000
-#&gt; 4.2% acceptance rate.
-#&gt; Resampling effective sample size: 9797.5 (98.0% efficiency).</div><div class='input'>
+
 <span class='va'>sampled_constr</span> <span class='op'>=</span> <span class='fu'>redist.smc</span><span class='op'>(</span><span class='va'>fl25_adj</span>, <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>,
                             nsims<span class='op'>=</span><span class='fl'>10000</span>, ndists<span class='op'>=</span><span class='fl'>3</span>, pop_tol<span class='op'>=</span><span class='fl'>0.1</span>,
                             constraints<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>
                                 status_quo <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>strength<span class='op'>=</span><span class='fl'>10</span>, current<span class='op'>=</span><span class='va'>fl25_enum</span><span class='op'>$</span><span class='va'>plans</span><span class='op'>[</span>,<span class='fl'>5118</span><span class='op'>]</span><span class='op'>)</span>,
-                                incumbency <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>strength<span class='op'>=</span><span class='fl'>100</span>, incumbents<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>6</span>, <span class='fl'>25</span><span class='op'>)</span><span class='op'>)</span>
+                                incumbency <span class='op'>=</span> <span class='fu'>lsit</span><span class='op'>(</span>strength<span class='op'>=</span><span class='fl'>1000</span>, incumbents<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>6</span>, <span class='fl'>25</span><span class='op'>)</span><span class='op'>)</span>
                             <span class='op'>)</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; SEQUENTIAL MONTE CARLO
-#&gt; Sampling 10000 25-unit maps with 3 districts and population between 52512.9 and 64182.4.
-#&gt; Making split 1 of 2
-#&gt; Using k = 3
-#&gt; Iteration   1000 / 10000
-#&gt; Iteration   2000 / 10000
-#&gt; Iteration   3000 / 10000
-#&gt; Iteration   4000 / 10000
-#&gt; Iteration   5000 / 10000
-#&gt; Iteration   6000 / 10000
-#&gt; Iteration   7000 / 10000
-#&gt; Iteration   8000 / 10000
-#&gt; Iteration   9000 / 10000
-#&gt; Iteration  10000 / 10000
-#&gt; 21.9% acceptance rate.
-#&gt; Resampling effective sample size: 1551.7 (15.5% efficiency).
-#&gt; Making split 2 of 2
-#&gt; Using k = 2
-#&gt; Iteration   1000 / 10000
-#&gt; Iteration   2000 / 10000
-#&gt; Iteration   3000 / 10000
-#&gt; Iteration   4000 / 10000
-#&gt; Iteration   5000 / 10000
-#&gt; Iteration   6000 / 10000
-#&gt; Iteration   7000 / 10000
-#&gt; Iteration   8000 / 10000
-#&gt; Iteration   9000 / 10000
-#&gt; Iteration  10000 / 10000
-#&gt; 6.7% acceptance rate.
-#&gt; Resampling effective sample size: 438.4 (4.4% efficiency).</div><div class='output co'>#&gt; <span class='warning'>Warning: Less than 5% resampling efficiency. Consider weakening constraints and/or adjusting `seq_alpha`.</span></div><div class='input'><span class='co'># }</span>
+<span class='op'>}</span>
 
 </div></pre>
   </div>

@@ -1,8 +1,7 @@
+#include "smc_base.h"
+
 #ifndef DISTANCE_H
 #define DISTANCE_H
-
-#include <Rcpp.h>
-using namespace Rcpp;
 
 double distance(double x1, double x2,
                 double y1, double y2);
@@ -13,32 +12,23 @@ double distance(double x1, double x2,
 #ifndef DISTANCE_MATRIX_H
 #define DISTANCE_MATRIX_H
 
-#include <Rcpp.h>
-using namespace Rcpp;
-
-NumericMatrix distance_matrix(NumericVector x, 
-                              NumericVector y); 
+NumericMatrix distance_matrix(NumericVector x,
+                              NumericVector y);
 
 #endif
 
 #ifndef CLOSEST_ADJ_H
 #define CLOSEST_ADJ_H
 
-#include <Rcpp.h>
-using namespace Rcpp;
-
 int closest_adj(IntegerVector adj,
                 int i_dist,
-                NumericVector x, 
+                NumericVector x,
                 NumericVector y);
-                
+
 #endif
 
 #ifndef DIST_DIST_DIFF_H
 #define DIST_DIST_DIFF_H
-
-#include <Rcpp.h>
-using namespace Rcpp;
 
 double dist_dist_diff(int p,
                       int i_dist,
@@ -47,5 +37,5 @@ double dist_dist_diff(int p,
                       NumericVector y_center,
                       NumericVector x,
                       NumericVector y);
-                      
+
 #endif

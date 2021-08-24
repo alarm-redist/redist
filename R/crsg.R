@@ -24,24 +24,6 @@
 #' use a different set of start values and try again.  If it fails again,
 #' redist.rsg() returns an object of all NAs, indicating that use of more
 #' iterations may be advised. Default is 5000.
-#' @param adj.list Deprecated, use adj. List of length N, where N is the number of precincts.
-#' Each list element is an integer vector indicating which precincts that precinct
-#' is adjacent to.  It is assumed that precinct numbers start at 0.
-#' @param population  Deprecated, use total_pop. numeric vector of length N, where N is the number of precincts.
-#' Each element lists the population total of the corresponding precinct, and is
-#' used to enforce population constraints.
-#' @param area Deprecated, use shp. numeric vector of length N, where N is the number of precincts. Each
-#' element is the area of the corresponding precinct.
-#' @param x_center Deprecated, use shp. numeric vector of length N, where N is the number of precincts.
-#' Each element is the x coordinate of the geographic centroid of the corresponding
-#' precinct.
-#' @param y_center Deprecated, use shp. numeric vector of length N, where N is the number of precincts.
-#' Each element is the y coordinate of the geographic centroid of the corresponding
-#' precinct.
-#' @param thresh  Deprecated, use pop_tol. numeric, indicating how close district population targets have
-#' to be to the target population before algorithm converges.  thresh=0.05 for
-#' example means that all districts must be between 0.95 and 1.05 times the size
-#' of target.pop in population size.
 #'
 #' @return list, containing three objects containing the completed redistricting
 #' plan.
@@ -67,32 +49,8 @@
 #' @concept simulate
 #' @export
 redist.crsg <- function(adj, total_pop, shp,  ndists, pop_tol, verbose = TRUE,
-                        maxiter = 5000, adj.list, population, area, x_center,
-                        y_center, thresh){
-
-  if(!missing(adj.list)){
-    .Deprecated('adj',  old = 'adj.list')
-      adj <- adj.list
-  }
-  if(!missing(population)){
-    .Deprecated(new = 'total_pop', old = 'population')
-    total_pop <- population
-  }
-  if(!missing(thresh)){
-    .Deprecated(new = 'pop_tol', old = 'thresh')
-    pop_tol <- thresh
-  }
-  if(!missing(x_center)){
-    .Deprecated(msg = 'Please provide an argument to shp, not x_center.')
-  }
-  if(!missing(area)){
-    .Deprecated(msg = 'Please provide an argument to shp, not area.')
-  }
-  if(!missing(y_center)){
-    .Deprecated(msg = 'Please provide an argument to shp, not y_center.')
-  }
-
-  if(missing(shp)){
+                        maxiter = 5000){
+  if (missing(shp)) {
     stop('An argument to shp is now required.')
   }
 

@@ -19,11 +19,7 @@ redist.compactness(
   planarize = 3857,
   ppRcpp,
   perim_path,
-  perim_df,
-  district_membership,
-  population,
-  adjacency,
-  nloop
+  perim_df
 )
 }
 \arguments{
@@ -72,18 +68,6 @@ it creates an rds with borders and saves it.
 This can be created in advance with \code{redist.prep.polsbypopper}.}
 
 \item{perim_df}{A dataframe output from \code{redist.prep.polsbypopper}}
-
-\item{district_membership}{Deprecated. Use plans. A numeric vector (if only one map) or matrix with one row
-for each precinct and one column for each map. Required.}
-
-\item{population}{Deprecated. Use total_pop. A numeric vector with the population for every observation. Is
-only necessary when "FryerHolden" is used for measure. Defaults to NULL.}
-
-\item{adjacency}{Deprecated. Use adj. A zero-indexed adjacency list. Only used for "EdgesRemoved" and "logSpanningTree".
-Created with \code{redist.adjacency} if not supplied and needed. Default is NULL.}
-
-\item{nloop}{Deprecated, use draw. A numeric to specify loop number. Defaults to 1 if only one map provided
-and the column number if multiple maps given.}
 }
 \value{
 A tibble with a column that specifies the district, a column for

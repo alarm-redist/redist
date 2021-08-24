@@ -82,7 +82,7 @@ from population parity. See Details." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.0.9000</span>
       </span>
     </div>
 
@@ -170,9 +170,9 @@ Higher values indicate that (at least) a single district in the map deviates
 from population parity. See Details.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.parity</span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>total_pop</span>, ncores <span class='op'>=</span> <span class='fl'>1</span>, <span class='va'>district_membership</span>, <span class='va'>population</span><span class='op'>)</span>
+    <pre class="usage"><span class='fu'>redist.parity</span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>total_pop</span>, ncores <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span>
 
-<span class='fu'>plan_parity</span><span class='op'>(</span><span class='va'>map</span>, .data <span class='op'>=</span> <span class='fu'>cur_plans</span><span class='op'>(</span><span class='op'>)</span>, <span class='va'>...</span><span class='op'>)</span></pre>
+<span class='fu'>plan_parity</span><span class='op'>(</span><span class='va'>map</span>, .data <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/exists.html'>get0</a></span><span class='op'>(</span><span class='st'>"."</span>, <span class='fu'><a href='https://rdrr.io/r/base/sys.parent.html'>parent.frame</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>, <span class='va'>...</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -189,15 +189,6 @@ map. Required.</p></td>
     <tr>
       <th>ncores</th>
       <td><p>Number of cores to use for parallel computing. Default is 1.</p></td>
-    </tr>
-    <tr>
-      <th>district_membership</th>
-      <td><p>Deprecated, use plans. A matrix with one row
-for each precinct and one column for each map. Required.</p></td>
-    </tr>
-    <tr>
-      <th>population</th>
-      <td><p>Deprecated, use total_pop. A numeric vector with the population for every precinct.</p></td>
     </tr>
     <tr>
       <th>map</th>

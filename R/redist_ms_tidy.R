@@ -31,7 +31,7 @@
 #'   districts.
 #'   * \code{current}, a vector containing district assignments for
 #'   the current map.
-#' * \code{vra}: a list with three entries:
+#' * \code{hinge}: a list with three entries:
 #'   * \code{strength}, a number controlling the strength of the Voting Rights Act
 #'   (VRA) constraint, with higher values prioritizing majority-minority districts
 #'   over other considerations.
@@ -47,7 +47,10 @@
 #' * \code{splits}: a list with one entry:
 #'   * \code{strength}, a number controlling the tendency of the generated districts
 #'   to avoid splitting counties.
-#' * \code{vra_old}: a list with five entries, which may be set up using
+#' * \code{multisplits}: a list with one entry:
+#'   * \code{strength}, a number controlling the tendency of the generated districts
+#'   to avoid splitting counties multiple times.
+#' * \code{vra}: a list with five entries, which may be set up using
 #'   \code{\link{redist.constraint.helper}}:
 #'   * \code{strength}, a number controlling the strength of the Voting Rights Act
 #'   (VRA) constraint, with higher values prioritizing majority-minority districts
@@ -64,9 +67,10 @@
 #'
 #' All constraints are fed into a Gibbs measure, with coefficients on each
 #' constraint set by the corresponding \code{strength} parameters.
+#' The strength can be any real number, with zero corresponding to no constraint.
 #' The \code{status_quo} constraint adds a term measuring the variation of
 #' information distance between the plan and the reference, rescaled to \[0, 1\].
-#' The \code{vra} constraint takes a list of target minority percentages. It
+#' The \code{hinge} constraint takes a list of target minority percentages. It
 #' matches each district to its nearest target percentage, and then applies a
 #' penalty of the form \eqn{\sqrt{max(0, tgt - minpct)}}, summing across
 #' districts. This penalizes districts which are below their target population.
@@ -74,7 +78,7 @@
 #' containing paired-up incumbents. The \code{splits} constraint adds a term
 #' counting the number of counties which contain precincts belonging to more
 #' than one district.
-#' The \code{vra_old} constraint adds a term of the form
+#' The \code{vra} constraint (not recommended) adds a term of the form
 #' \eqn{(|tgtvramin-minpct||tgtvraother-minpct|)^{powvra})}, which
 #' encourages districts to have minority percentages near either \code{tgt_vra_min}
 #' or \code{tgt_vra_other}. This can be visualized with
@@ -191,6 +195,7 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
     }
 
     # Other constraints
+    constraints = eval_tidy(enquo(constraints), map)
     proc = process_smc_ms_constr(constraints, V)
     constraints = proc$constraints
     n_current = max(constraints$status_quo$current)
@@ -202,26 +207,35 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
 
     pop_bounds = attr(map, "pop_bounds")
     pop = map[[attr(map, "pop_col")]]
+    init_pop = pop_tally(matrix(init_plan, ncol=1), pop, ndists)
+    if (any(init_pop < pop_bounds[1]) | any(init_pop > pop_bounds[3]))
+        stop("Provided initialization does not meet population bounds.")
+    if (any(pop >= get_target(map)))
+        stop("Units ", which(pop >= get_target(map)),
+             " have population larger than the district target.\n",
+             "Redistricting impossible.")
 
     algout = ms_plans(nsims+1L, adj, init_plan, counties, pop, ndists,
                      pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
                      constraints$status_quo$strength, constraints$status_quo$current, n_current,
-                     constraints$vra_old$strength, constraints$vra_old$tgt_vra_min,
-                     constraints$vra_old$tgt_vra_other, constraints$vra_old$pow_vra, proc$min_pop,
-                     constraints$vra$strength, constraints$vra$tgts_min,
+                     constraints$vra$strength, constraints$vra$tgt_vra_min,
+                     constraints$vra$tgt_vra_other, constraints$vra$pow_vra, proc$min_pop,
+                     constraints$hinge$strength, constraints$hinge$tgts_min,
                      constraints$incumbency$strength, constraints$incumbency$incumbents,
-                     constraints$splits$strength, adapt_k_thresh, k, verbosity)
+                     constraints$splits$strength, constraints$multisplits$strength,
+                     adapt_k_thresh, k, verbosity)
 
     plans <- algout$plans
     acceptances = as.logical(algout$mhdecisions)
 
-    out = new_redist_plans(plans[,-1:-(warmup+1)], map, "mergesplit", NULL, FALSE,
-                     compactness = compactness,
-                     constraints = constraints,
-                     adapt_k_thresh = adapt_k_thresh,
-                     mh_acceptance = mean(acceptances))
-    
-    if(warmup == 0){
+    out = new_redist_plans(plans[, -1:-(warmup+1), drop=FALSE],
+                           map, "mergesplit", NULL, FALSE,
+                           compactness = compactness,
+                           constraints = constraints,
+                           adapt_k_thresh = adapt_k_thresh,
+                           mh_acceptance = mean(acceptances))
+
+    if (warmup == 0) {
         out <- out %>% mutate(mcmc_accept = rep(acceptances, each = ndists))
     } else {
         out <- out %>% mutate(mcmc_accept = rep(acceptances[-seq_len(warmup)], each = ndists))

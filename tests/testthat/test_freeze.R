@@ -28,7 +28,7 @@ test_that("freeze works", {
   fl25$plan <- plans_10[,1]
   st_crs(fl25) <- 4269
 
-  flmap <- redist_map(fl25, existing_plan = plan)
+  flmap <- redist_map(fl25, existing_plan = plan) %>% suppressMessages()
   out <- flmap %>% freeze(plan == 2, .data = .)
 
   expected <- c(1L, 2L, 2L, 2L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 12L,

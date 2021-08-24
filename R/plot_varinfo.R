@@ -50,12 +50,12 @@ redist.plot.varinfo <- function(plans, group_pop, total_pop, shp){
       return(NULL)
     }
     shp$newcd  <- as.character(plans[,sub$id[x-1]])
-    shpdist <- shp %>% group_by(newcd) %>% summarize(geometry = st_union(geometry))
+    shpdist <- shp %>% group_by(newcd) %>% summarize(geometry = st_union(sf::st_geometry(geometry)))
     shp %>% ggplot() +
       geom_sf(aes(fill = ratio)) +
       labs(fill = 'Minority\nPercent', title = sub$id[x-1]) +
       theme_void() +
-      scale_fill_gradient(limits = c(0,1), low = '#ffffff', high = '#08306b') +
+      ggplot2::scale_fill_gradient(limits = c(0,1), low = '#ffffff', high = '#08306b') +
       geom_sf(data = shpdist, fill = NA, lwd = 1, color = 'orange')
   })
 

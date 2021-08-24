@@ -7,15 +7,7 @@
 \usage{
 make_cores(.data = cur_map(), boundary = 1, focus = NULL)
 
-redist.identify.cores(
-  adj,
-  plan,
-  boundary = 1,
-  focus = NULL,
-  simplify = TRUE,
-  adjacency,
-  district_membership
-)
+redist.identify.cores(adj, plan, boundary = 1, focus = NULL, simplify = TRUE)
 }
 \arguments{
 \item{.data}{a \code{\link{redist_map}} object}
@@ -29,10 +21,6 @@ redist.identify.cores(
 \item{plan}{An integer vector or matrix column of district assignments.}
 
 \item{simplify}{Optional. Logical. Whether to return extra information or just grouping ID.}
-
-\item{adjacency}{Deprecated, use adj. A zero indexed adjacency list.}
-
-\item{district_membership}{Deprecated, use plan. An integer vector or matrix column of district assignments.}
 }
 \value{
 integer vector (if simplify is false). Otherwise it returns a tibble with the grouping
@@ -41,10 +29,10 @@ variable as \code{group_id} and additional information on connected components.
 \description{
 Creates a grouping ID to unite geographies and perform analysis on a smaller
 set of precincts. It identifies all precincts more than \code{boundary} edges
-of a district district boundary. Each contiguous group of precincts more than 
-\code{boundary} steps away from another district gets it own group. Some 
-districts may have multiple, disconnected components that make up the core, 
-but each of these is assigned a separate grouping id so that a call to 
+of a district district boundary. Each contiguous group of precincts more than
+\code{boundary} steps away from another district gets it own group. Some
+districts may have multiple, disconnected components that make up the core,
+but each of these is assigned a separate grouping id so that a call to
 \code{sf::st_union()} would produce only connected pieces.
 }
 \details{
@@ -60,10 +48,9 @@ core of the district.
 }
 \examples{
 data(fl250)
-adj <- redist.adjacency(fl250)
-plan <- redist.smc(adj = adj, total_pop = fl250$pop,
-                  nsims = 1, ndists = 4)$plans
-core <- redist.identify.cores(adj = adj, plan = plan)
+fl250_map = redist_map(fl250, ndists=4, pop_tol=0.01)
+plan <- as.matrix(redist_smc(fl250_map, 20, silent=TRUE))
+core <- redist.identify.cores(adj = fl250_map$adj, plan = plan)
 redist.plot.cores(shp = fl250, plan = plan, core = core)
 
 }

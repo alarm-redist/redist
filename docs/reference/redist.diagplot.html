@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.0.9000</span>
       </span>
     </div>
 
@@ -217,7 +217,7 @@ using multiple sequences (with discussion)." Statistical Science.</p>
 Convergence Diagnosis and Output Analysis for MCMC." R News.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'># \donttest{</span>
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_enum</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_adj</span><span class='op'>)</span>
@@ -226,97 +226,23 @@ Convergence Diagnosis and Output Analysis for MCMC." R News.</p>
 <span class='va'>init_plan</span> <span class='op'>&lt;-</span> <span class='va'>fl25_enum</span><span class='op'>$</span><span class='va'>plans</span><span class='op'>[</span>, <span class='fl'>5118</span><span class='op'>]</span>
 
 <span class='co'>## 25 precinct, three districts - no pop constraint ##</span>
-<span class='va'>alg_253</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.mcmc.html'>redist.flip</a></span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>fl25_adj</span>, total_pop <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>,
-                       init_plan <span class='op'>=</span> <span class='va'>init_plan</span>, nsims <span class='op'>=</span> <span class='fl'>10000</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; 
-#&gt; ==================== 
-#&gt; redist.flip(): Automated Redistricting Simulation Using
-#&gt;          Markov Chain Monte Carlo
-#&gt; 
-#&gt; Preprocessing data.
-#&gt; 
-#&gt; Starting swMH().
-#&gt; 10 percent done.
-#&gt; Metropolis acceptance ratio: 0.968969
-#&gt; 
-#&gt; 20 percent done.
-#&gt; Metropolis acceptance ratio: 0.967484
-#&gt; 
-#&gt; 30 percent done.
-#&gt; Metropolis acceptance ratio: 0.966989
-#&gt; 
-#&gt; 40 percent done.
-#&gt; Metropolis acceptance ratio: 0.969242
-#&gt; 
-#&gt; 50 percent done.
-#&gt; Metropolis acceptance ratio: 0.968594
-#&gt; 
-#&gt; 60 percent done.
-#&gt; Metropolis acceptance ratio: 0.968328
-#&gt; 
-#&gt; 70 percent done.
-#&gt; Metropolis acceptance ratio: 0.96871
-#&gt; 
-#&gt; 80 percent done.
-#&gt; Metropolis acceptance ratio: 0.969871
-#&gt; 
-#&gt; 90 percent done.
-#&gt; Metropolis acceptance ratio: 0.969663
-#&gt; 
-#&gt; 100 percent done.
-#&gt; Metropolis acceptance ratio: 0.969597
-#&gt; </div><div class='input'>
+<span class='va'>alg_253</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.flip.html'>redist.flip</a></span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>fl25_adj</span>, popvec <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>,
+                       initcds <span class='op'>=</span> <span class='va'>init_plan</span>, nsims <span class='op'>=</span> <span class='fl'>10000</span><span class='op'>)</span>
+
 <span class='co'>## Get Republican Dissimilarity Index from simulations</span>
 <span class='va'>rep_dmi_253</span> <span class='op'>&lt;-</span> <span class='fu'><a href='segregation_index.html'>redist.segcalc</a></span><span class='op'>(</span><span class='va'>alg_253</span>, <span class='va'>fl25</span><span class='op'>$</span><span class='va'>mccain</span>, <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span><span class='op'>)</span>
 
 <span class='co'>## Generate diagnostic plots</span>
 <span class='fu'>redist.diagplot</span><span class='op'>(</span><span class='va'>rep_dmi_253</span>, plot <span class='op'>=</span> <span class='st'>"trace"</span><span class='op'>)</span>
-</div><div class='img'><img src='redist.diagplot-1.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'>redist.diagplot</span><span class='op'>(</span><span class='va'>rep_dmi_253</span>, plot <span class='op'>=</span> <span class='st'>"autocorr"</span><span class='op'>)</span>
-</div><div class='img'><img src='redist.diagplot-2.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'>redist.diagplot</span><span class='op'>(</span><span class='va'>rep_dmi_253</span>, plot <span class='op'>=</span> <span class='st'>"densplot"</span><span class='op'>)</span>
-</div><div class='img'><img src='redist.diagplot-3.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'>redist.diagplot</span><span class='op'>(</span><span class='va'>rep_dmi_253</span>, plot <span class='op'>=</span> <span class='st'>"mean"</span><span class='op'>)</span>
-</div><div class='img'><img src='redist.diagplot-4.png' alt='' width='700' height='433' /></div><div class='input'>
+<span class='fu'>redist.diagplot</span><span class='op'>(</span><span class='va'>rep_dmi_253</span>, plot <span class='op'>=</span> <span class='st'>"autocorr"</span><span class='op'>)</span>
+<span class='fu'>redist.diagplot</span><span class='op'>(</span><span class='va'>rep_dmi_253</span>, plot <span class='op'>=</span> <span class='st'>"densplot"</span><span class='op'>)</span>
+<span class='fu'>redist.diagplot</span><span class='op'>(</span><span class='va'>rep_dmi_253</span>, plot <span class='op'>=</span> <span class='st'>"mean"</span><span class='op'>)</span>
+
 <span class='co'>## Gelman Rubin needs two chains, so we run a second</span>
-<span class='va'>alg_253_2</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.mcmc.html'>redist.flip</a></span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>fl25_adj</span>,
-total_pop <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>,
-init_plan <span class='op'>=</span> <span class='va'>init_plan</span>, nsims <span class='op'>=</span> <span class='fl'>10000</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; 
-#&gt; ==================== 
-#&gt; redist.flip(): Automated Redistricting Simulation Using
-#&gt;          Markov Chain Monte Carlo
-#&gt; 
-#&gt; Preprocessing data.
-#&gt; 
-#&gt; Starting swMH().
-#&gt; 10 percent done.
-#&gt; Metropolis acceptance ratio: 0.961962
-#&gt; 
-#&gt; 20 percent done.
-#&gt; Metropolis acceptance ratio: 0.96098
-#&gt; 
-#&gt; 30 percent done.
-#&gt; Metropolis acceptance ratio: 0.962321
-#&gt; 
-#&gt; 40 percent done.
-#&gt; Metropolis acceptance ratio: 0.956739
-#&gt; 
-#&gt; 50 percent done.
-#&gt; Metropolis acceptance ratio: 0.957992
-#&gt; 
-#&gt; 60 percent done.
-#&gt; Metropolis acceptance ratio: 0.958493
-#&gt; 
-#&gt; 70 percent done.
-#&gt; Metropolis acceptance ratio: 0.960423
-#&gt; 
-#&gt; 80 percent done.
-#&gt; Metropolis acceptance ratio: 0.961495
-#&gt; 
-#&gt; 90 percent done.
-#&gt; Metropolis acceptance ratio: 0.962774
-#&gt; 
-#&gt; 100 percent done.
-#&gt; Metropolis acceptance ratio: 0.963396
-#&gt; </div><div class='input'>
+<span class='va'>alg_253_2</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.flip.html'>redist.flip</a></span><span class='op'>(</span>adjobj <span class='op'>=</span> <span class='va'>fl25_adj</span>,
+popvec <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>,
+initcds <span class='op'>=</span> <span class='va'>init_plan</span>, nsims <span class='op'>=</span> <span class='fl'>10000</span><span class='op'>)</span>
+
 <span class='va'>rep_dmi_253_2</span> <span class='op'>&lt;-</span> <span class='fu'><a href='segregation_index.html'>redist.segcalc</a></span><span class='op'>(</span><span class='va'>alg_253_2</span>, <span class='va'>fl25</span><span class='op'>$</span><span class='va'>mccain</span>, <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span><span class='op'>)</span>
 
 <span class='co'>## Make a list out of the objects:</span>
@@ -324,7 +250,7 @@ init_plan <span class='op'>=</span> <span class='va'>init_plan</span>, nsims <sp
 
 <span class='co'>## Generate Gelman Rubin diagnostic plot</span>
 <span class='fu'>redist.diagplot</span><span class='op'>(</span>sumstat <span class='op'>=</span> <span class='va'>rep_dmi_253_list</span>, plot <span class='op'>=</span> <span class='st'>'gelmanrubin'</span><span class='op'>)</span>
-</div><div class='img'><img src='redist.diagplot-5.png' alt='' width='700' height='433' /></div><div class='input'><span class='co'># }</span>
+<span class='op'>}</span>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

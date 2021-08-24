@@ -2,9 +2,6 @@
 #'
 #' @param shp A SpatialPolygonsDataFrame or sf object. Required.
 #' @param plan A numeric vector (if only one map) or matrix with one row
-#' @param district_membership Deprecated -- Use plan. A numeric vector (if only one map) or matrix with one row.
-#' for each precinct and one column for each map. Optional. Checks for contiguity within
-#' districts if provided.
 #'
 #' @return Adjacency list
 #' @description Creates an adjacency list that is zero indexed with no skips
@@ -12,13 +9,9 @@
 #'
 #' @importFrom sf st_relate
 #' @export
-redist.adjacency <- function(shp, plan, district_membership){
-  if(!missing(district_membership)){
-    plan <- district_membership
-    .Deprecated('plan')
-  }
+redist.adjacency <- function(shp, plan){
   # Check input
-  if(!any(c('sf','SpatialPolygonsDataFrame') %in% class(shp))){
+  if (!any(c('sf','SpatialPolygonsDataFrame') %in% class(shp))) {
     stop('Please provide "shp" as an sf or sp object.')
   }
 
@@ -27,7 +20,7 @@ redist.adjacency <- function(shp, plan, district_membership){
   adj <- suppressMessages(st_relate(shp, shp, pattern = "F***1****"))
   # items contained entirely within ~ even if validly 'rooks' adjacent ~ do not meet this, you need:
   withinadj <- suppressMessages(st_relate(x = shp, pattern = "2121**2*2"))
-  adj <- lapply(1:nrow(shp), function(x){c(adj[[x]], withinadj[[x]])})
+  adj <- lapply(1:nrow(shp), function(x) c(adj[[x]], withinadj[[x]]))
 
   # Check for zero indexing
   zero <- min(unlist(adj)) == 0
@@ -49,9 +42,9 @@ redist.adjacency <- function(shp, plan, district_membership){
   }
 
 
-  if(!missing(plan)){
+  if (!missing(plan)) {
     cont <- contiguity(adj, plan)
-    if(any(cont > 1 )){
+    if (any(cont > 1)) {
       warning(paste0('District', unique(plan[cont>1]), ' was not contiguous.'))
     }
   }
@@ -66,21 +59,17 @@ redist.adjacency <- function(shp, plan, district_membership){
 #'
 #' @param adj A zero-indexed adjacency list. Required.
 #' @param keep_rows row numbers of precincts to keep
-#' @param adjacency  Deprecated. Use adj. A zero-indexed adjacency list.
 #'
 #' @return zero indexed adjacency list with max value length(keep_rows) - 1
 #'
 #' @concept prepare
 #' @export
 #'
-#' @examples 
+#' @examples
 #' data(fl25_adj)
 #' redist.reduce.adjacency(fl25_adj, c(2, 3, 4, 6, 21))
-redist.reduce.adjacency <- function(adj, keep_rows, adjacency) {
-    if (!missing(adjacency)) {
-        adj <- adjacency
-        .Deprecated('adj', old = 'adjacency')
-    }
+#' 
+redist.reduce.adjacency <- function(adj, keep_rows) {
     # Check inputs:
     if (!(class(keep_rows) %in% c('numeric', 'integer'))) {
         stop('Please provide "keep_rows" as a numeric or integer vector.')
@@ -106,18 +95,12 @@ redist.reduce.adjacency <- function(adj, keep_rows, adjacency) {
 #'
 #' @param adj A zero-indexed adjacency list. Required.
 #' @param groups integer vector of elements of adjacency to group
-#' @param adjacency Deprecated -- use adj. A zero-indexed adjacency list
 #'
 #' @return adjacency list coarsened
 #'
 #' @concept prepare
 #' @export
-redist.coarsen.adjacency <- function(adj, groups, adjacency) {
-    if (!missing(adjacency)) {
-        .Deprecated('adj',  old = 'adjacency')
-        adj <- adjacency
-    }
-
+redist.coarsen.adjacency <- function(adj, groups) {
     if (min(unlist(adj)) != 0) {
         stop('Please provide "adj" as a 0-indexed list.')
     }

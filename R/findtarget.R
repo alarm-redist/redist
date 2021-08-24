@@ -2,31 +2,19 @@
 #'
 #' Given a percent goal for majority minority districts, this computes the average
 #' value of minority in non-majority minority districts. This value is "tgt_other"
-#' in \code{redist.mcmc} and \code{redist.smc}.
+#' in \code{redist.flip} and \code{redist_smc}.
 #'
 #' @param tgt_min target group population for majority minority district
 #' @param group_pop A vector of populations for some subgroup of interest.
 #' @param total_pop A vector containing the populations of each geographic unit.
 #' @param ndists The number of congressional districts.
 #' @param nmmd The number of majority minority districts.
-#' @param grouppop Deprecated, use group_pop. A vector of populations for some subgroup of interest.
-#' @param fullpop Deprecated, use total_pop. A vector containing the populations of each geographic unit.
 #'
 #' @return numeric value to target
 #'
 #' @concept prepare
 #' @export
-redist.find.target <- function(tgt_min, group_pop, grouppop, total_pop, fullpop, ndists, nmmd){
-  if(!missing(grouppop)){
-    group_pop <- grouppop
-    .Deprecated(new = 'group_pop', old = 'grouppop')
-  }
-  if(!missing(fullpop)){
-    total_pop <- fullpop
-    .Deprecated(new = 'total_pop', old = 'fullpop')
-  }
-
-
+redist.find.target <- function(tgt_min, group_pop, total_pop, ndists, nmmd){
   totpop <- sum(total_pop)
   targetpop <- totpop/ndists
   tmm <- nmmd*tgt_min*targetpop
@@ -46,8 +34,6 @@ redist.find.target <- function(tgt_min, group_pop, grouppop, total_pop, fullpop,
 #' @param nmmd The number of majority minority districts to target for 'vra' constraint
 #' @param strength_vra The strength of the 'vra' constraint. Defaults to 2500.
 #' @param pow_vra  The exponent for the 'vra' constraint. Defaults to 1.5.
-#' @param grouppop Deprecated, use group_pop. A vector of populations for some subgroup of interest.
-#' @param fullpop Deprecated, use total_pop. A vector containing the populations of each geographic unit.
 #'
 #' @return list of lists for each constraint selected
 #'
@@ -55,17 +41,7 @@ redist.find.target <- function(tgt_min, group_pop, grouppop, total_pop, fullpop,
 #' @export
 redist.constraint.helper <- function(constraints = 'vra', tgt_min = 0.55,
                                      group_pop, total_pop, ndists, nmmd,
-                                     strength_vra = 2500, pow_vra = 1.5,
-                                     grouppop, fullpop){
-
-  if(!missing(grouppop)){
-    group_pop <- grouppop
-    .Deprecated(new = 'group_pop', old = 'grouppop')
-  }
-  if(!missing(fullpop)){
-    total_pop <- fullpop
-    .Deprecated(new = 'total_pop', old = 'fullpop')
-  }
+                                     strength_vra = 2500, pow_vra = 1.5){
 
 
   ret <- list()

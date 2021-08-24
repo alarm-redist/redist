@@ -4,17 +4,7 @@
 \alias{redist.rsg}
 \title{Redistricting via Random Seed and Grow Algorithm}
 \usage{
-redist.rsg(
-  adj,
-  total_pop,
-  ndists,
-  pop_tol,
-  verbose = TRUE,
-  maxiter = 5000,
-  adj.list,
-  population,
-  thresh
-)
+redist.rsg(adj, total_pop, ndists, pop_tol, verbose = TRUE, maxiter = 5000)
 }
 \arguments{
 \item{adj}{List of length N, where N is the number of precincts.
@@ -41,19 +31,6 @@ before convergence to population constraint fails.  If it fails once, it will
 use a different set of start values and try again.  If it fails again,
 redist.rsg() returns an object of all NAs, indicating that use of more
 iterations may be advised.}
-
-\item{adj.list}{Deprecated, use adj. List of length N, where N is the number of precincts.
-Each list element is an integer vector indicating which precincts that precinct
-is adjacent to.  It is assumed that precinct numbers start at 0.}
-
-\item{population}{Deprecated, use total_pop. numeric vector of list N, where N is the number of precincts.
-Each element lists the population total of the corresponding precinct, and is
-used to enforce population constraints.}
-
-\item{thresh}{Deprecated, use pop_tol. numeric, indicating how close district population targets have
-to be to the target population before algorithm converges.  thresh=0.05 for
-example means that all districts must be between 0.95 and 1.05 times the size
-of target.pop in population size.}
 }
 \value{
 list, containing three objects containing the completed redistricting

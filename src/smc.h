@@ -1,7 +1,7 @@
+#pragma once
 #ifndef SMC_H
 #define SMC_H
 
-#include <math.h>
 #include "smc_base.h"
 #include "wilson.h"
 #include "tree_op.h"
@@ -23,6 +23,7 @@ arma::umat smc_plans(int N, List l, const arma::uvec &counties,
                      double pow_vra, const arma::uvec &min_pop,
                      double beta_vra_hinge, const arma::vec &tgts_min,
                      double beta_inc, const arma::uvec &incumbents,
+                     double beta_fractures,
                      arma::vec &lp, double thresh,
                      double alpha, double pop_temper=0.1, int verbosity=1);
 
@@ -46,7 +47,9 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr,
              double beta_vra, double tgt_min, double tgt_other,
              double pow_vra, const uvec &min_pop,
              double beta_vra_hinge, const vec &tgts_min,
-             double beta_inc, const uvec &incumbents, int verbosity);
+             double beta_inc, const uvec &incumbents,
+             double beta_fractures, const uvec &counties, int n_cty,
+             double &min_eff, int verbosity);
 
 /*
  * Split a map into two pieces with population lying between `lower` and `upper`

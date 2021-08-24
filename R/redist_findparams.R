@@ -78,7 +78,7 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
     out <- redist.flip(adj = adj, total_pop = total_pop, nsims = nsims,
                        ndists = ndists, ssdmat = ssdmat,
                        group_pop = group_pop,
-                       counties = counties, 
+                       counties = counties,
                        init_plan = init_plan, eprob = eprob, lambda = lambda,
                        pop_tol = pop_tol,
                        constraint = constraintvec,
@@ -283,19 +283,6 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
 #' being tested. Default is FALSE.
 #' @param verbose Whether to print additional information about the tests.
 #' Default is \code{TRUE}.
-#' @param adjobj Deprecated, use adj. An adjacency matrix, list, or object of class
-#' "SpatialPolygonsDataFrame."
-#' @param popvec Deprecated, use total_pop. A vector containing the populations of each
-#' geographic unit.
-#' @param initcds Deprecated, use init_plan. A vector containing the congressional district labels
-#' of each geographic unit. The default is \code{NULL}. If not provided, random
-#' and contiguous congressional district assignments will be generated using \code{redist.rsg}.
-#' @param grouppopvec A vector of populations for some sub-group of
-#' interest. The default is \code{NULL}.
-#' @param countymembership Deprecated, use counties.
-#' A vector of county membership assignments. The default is \code{NULL}.
-#' @param nthreads Deprecated, use ncores. Number of parallel tasks to run, declared outside of the
-#' function. Default is \code{NULL}.
 #'
 #' @details This function allows users to test multiple parameter settings of
 #' \code{redist.flip} in preparation for a longer run for analysis.
@@ -326,51 +313,15 @@ run_sims <- function(i, params, adj, total_pop, nsims, ndists, init_plan,
 #' }
 #' @concept prepare
 #' @export
-redist.findparams <- function(adj,
-                              total_pop,
-                              nsims, ndists = NULL,
-                              init_plan = NULL,
+redist.findparams <- function(adj, total_pop,
+                              nsims, ndists = NULL, init_plan = NULL,
                               adapt_lambda = FALSE, adapt_eprob = FALSE,
                               params, ssdmat = NULL,
-                              group_pop = NULL,
-                              counties = NULL,
+                              group_pop = NULL, counties = NULL,
                               nstartval_store = 1, maxdist_startval = 100,
                               maxiterrsg = 5000, report_all = TRUE,
-                              parallel = FALSE,
-                              ncores = NULL,
-                              log = FALSE, verbose = TRUE,
-                              adjobj,
-                              popvec,
-                              initcds,
-                              grouppopvec,
-                              countymembership,
-                              nthreads){
-
-    if(!missing(adjobj)){
-        .Deprecated(new = 'adj', old = 'adjobj')
-        adj <- adjobj
-    }
-    if(!missing(popvec)){
-        .Deprecated(new = 'total_pop', old = 'popvec')
-        total_pop <- popvec
-    }
-    if(!missing(initcds)){
-        .Deprecated(new = 'init_plan', old = 'initcds')
-        init_plan <- initcds
-    }
-    if(!missing(grouppopvec)){
-        .Deprecated(new = 'group_pop', old = 'grouppopvec')
-        group_pop <- grouppopvec
-    }
-    if(!missing(countymembership)){
-        .Deprecated(new = 'counties', old = 'countymembership')
-        counties <- countymembership
-    }
-    if(!missing(nthreads)){
-        .Deprecated(new = 'ncores', old = 'nthreads')
-        ncores <- nthreads
-    }
-
+                              parallel = FALSE, ncores = NULL,
+                              log = FALSE, verbose = TRUE){
     ## Get number of trial parameter values to test
     trials <- nrow(params)
 
@@ -492,4 +443,3 @@ redist.findparams <- function(adj,
     return(list(diagnostics = printout, startvals = startval))
 
 }
-

@@ -49,7 +49,7 @@
 <meta property="og:title" content="Find Majority Minority Remainder — redist.find.target" />
 <meta property="og:description" content="Given a percent goal for majority minority districts, this computes the average
 value of minority in non-majority minority districts. This value is &quot;tgt_other&quot;
-in redist.mcmc and redist.smc." />
+in redist.flip and redist.smc." />
 <meta property="og:image" content="/logo.png" />
 
 
@@ -82,7 +82,7 @@ in redist.mcmc and redist.smc." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.0.9000</span>
       </span>
     </div>
 
@@ -167,18 +167,10 @@ in redist.mcmc and redist.smc." />
     <div class="ref-description">
     <p>Given a percent goal for majority minority districts, this computes the average
 value of minority in non-majority minority districts. This value is "tgt_other"
-in <code>redist.mcmc</code> and <code>redist.smc</code>.</p>
+in <code>redist.flip</code> and <code>redist.smc</code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.find.target</span><span class='op'>(</span>
-  <span class='va'>tgt_min</span>,
-  <span class='va'>group_pop</span>,
-  <span class='va'>grouppop</span>,
-  <span class='va'>total_pop</span>,
-  <span class='va'>fullpop</span>,
-  <span class='va'>ndists</span>,
-  <span class='va'>nmmd</span>
-<span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>redist.find.target</span><span class='op'>(</span><span class='va'>tgt_min</span>, <span class='va'>group_pop</span>, <span class='va'>total_pop</span>, <span class='va'>ndists</span>, <span class='va'>nmmd</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -192,16 +184,8 @@ in <code>redist.mcmc</code> and <code>redist.smc</code>.</p>
       <td><p>A vector of populations for some subgroup of interest.</p></td>
     </tr>
     <tr>
-      <th>grouppop</th>
-      <td><p>Deprecated, use group_pop. A vector of populations for some subgroup of interest.</p></td>
-    </tr>
-    <tr>
       <th>total_pop</th>
       <td><p>A vector containing the populations of each geographic unit.</p></td>
-    </tr>
-    <tr>
-      <th>fullpop</th>
-      <td><p>Deprecated, use total_pop. A vector containing the populations of each geographic unit.</p></td>
     </tr>
     <tr>
       <th>ndists</th>

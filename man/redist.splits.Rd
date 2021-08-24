@@ -7,7 +7,7 @@
 \usage{
 county_splits(map, counties, .data = cur_plans())
 
-redist.splits(plans, counties, district_membership)
+redist.splits(plans, counties)
 }
 \arguments{
 \item{map}{a \code{\link{redist_map}} object}
@@ -17,9 +17,6 @@ redist.splits(plans, counties, district_membership)
 \item{.data}{a \code{\link{redist_plans}} object}
 
 \item{plans}{A numeric vector (if only one map) or matrix with one row
-for each precinct and one column for each map. Required.}
-
-\item{district_membership}{Deprecated, use plans. A numeric vector (if only one map) or matrix with one row
 for each precinct and one column for each map. Required.}
 }
 \value{

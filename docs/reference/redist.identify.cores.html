@@ -49,10 +49,10 @@
 <meta property="og:title" content="Identify Cores of a District (Heuristic) — make_cores" />
 <meta property="og:description" content="Creates a grouping ID to unite geographies and perform analysis on a smaller
 set of precincts. It identifies all precincts more than boundary edges
-of a district district boundary. Each contiguous group of precincts more than 
-boundary steps away from another district gets it own group. Some 
-districts may have multiple, disconnected components that make up the core, 
-but each of these is assigned a separate grouping id so that a call to 
+of a district district boundary. Each contiguous group of precincts more than
+boundary steps away from another district gets it own group. Some
+districts may have multiple, disconnected components that make up the core,
+but each of these is assigned a separate grouping id so that a call to
 sf::st_union() would produce only connected pieces." />
 <meta property="og:image" content="/logo.png" />
 
@@ -86,7 +86,7 @@ sf::st_union() would produce only connected pieces." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.0.9000</span>
       </span>
     </div>
 
@@ -171,24 +171,16 @@ sf::st_union() would produce only connected pieces." />
     <div class="ref-description">
     <p>Creates a grouping ID to unite geographies and perform analysis on a smaller
 set of precincts. It identifies all precincts more than <code>boundary</code> edges
-of a district district boundary. Each contiguous group of precincts more than 
-<code>boundary</code> steps away from another district gets it own group. Some 
-districts may have multiple, disconnected components that make up the core, 
-but each of these is assigned a separate grouping id so that a call to 
+of a district district boundary. Each contiguous group of precincts more than
+<code>boundary</code> steps away from another district gets it own group. Some
+districts may have multiple, disconnected components that make up the core,
+but each of these is assigned a separate grouping id so that a call to
 <code><a href='https://r-spatial.github.io/sf/reference/geos_combine.html'>sf::st_union()</a></code> would produce only connected pieces.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>make_cores</span><span class='op'>(</span>.data <span class='op'>=</span> <span class='fu'>cur_map</span><span class='op'>(</span><span class='op'>)</span>, boundary <span class='op'>=</span> <span class='fl'>1</span>, focus <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span>
+    <pre class="usage"><span class='fu'>make_cores</span><span class='op'>(</span>.data <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/exists.html'>get0</a></span><span class='op'>(</span><span class='st'>"."</span>, <span class='fu'><a href='https://rdrr.io/r/base/sys.parent.html'>parent.frame</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>, boundary <span class='op'>=</span> <span class='fl'>1</span>, focus <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span>
 
-<span class='fu'>redist.identify.cores</span><span class='op'>(</span>
-  <span class='va'>adj</span>,
-  <span class='va'>plan</span>,
-  boundary <span class='op'>=</span> <span class='fl'>1</span>,
-  focus <span class='op'>=</span> <span class='cn'>NULL</span>,
-  simplify <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  <span class='va'>adjacency</span>,
-  <span class='va'>district_membership</span>
-<span class='op'>)</span></pre>
+<span class='fu'>redist.identify.cores</span><span class='op'>(</span><span class='va'>adj</span>, <span class='va'>plan</span>, boundary <span class='op'>=</span> <span class='fl'>1</span>, focus <span class='op'>=</span> <span class='cn'>NULL</span>, simplify <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -216,14 +208,6 @@ but each of these is assigned a separate grouping id so that a call to
     <tr>
       <th>simplify</th>
       <td><p>Optional. Logical. Whether to return extra information or just grouping ID.</p></td>
-    </tr>
-    <tr>
-      <th>adjacency</th>
-      <td><p>Deprecated, use adj. A zero indexed adjacency list.</p></td>
-    </tr>
-    <tr>
-      <th>district_membership</th>
-      <td><p>Deprecated, use plan. An integer vector or matrix column of district assignments.</p></td>
     </tr>
     </table>
 
@@ -254,18 +238,18 @@ core of the district.</p>
 </div><div class='output co'>#&gt; SEQUENTIAL MONTE CARLO
 #&gt; Sampling 1 250-unit maps with 4 districts and population between 194829 and 198764.
 #&gt; Making split 1 of 3
-#&gt; Using k = 1
-#&gt; 5.0% acceptance rate.
-#&gt; Resampling effective sample size: 1.0 (100.0% efficiency).
-#&gt; Making split 2 of 3
 #&gt; Note: maximum hit; falling back to naive k estimator.
 #&gt; Using k = 1
-#&gt; 16.7% acceptance rate.
+#&gt; 20.0% acceptance rate.
+#&gt; Resampling effective sample size: 1.0 (100.0% efficiency).
+#&gt; Making split 2 of 3
+#&gt; Using k = 1
+#&gt; 11.1% acceptance rate.
 #&gt; Resampling effective sample size: 1.0 (100.0% efficiency).
 #&gt; Making split 3 of 3
 #&gt; Note: maximum hit; falling back to naive k estimator.
 #&gt; Using k = 1
-#&gt; 50.0% acceptance rate.
+#&gt; 14.3% acceptance rate.
 #&gt; Resampling effective sample size: 1.0 (100.0% efficiency).</div><div class='input'><span class='va'>core</span> <span class='op'>&lt;-</span> <span class='fu'>redist.identify.cores</span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>adj</span>, plan <span class='op'>=</span> <span class='va'>plan</span><span class='op'>)</span>
 <span class='fu'><a href='redist.plot.cores.html'>redist.plot.cores</a></span><span class='op'>(</span>shp <span class='op'>=</span> <span class='va'>fl250</span>, plan <span class='op'>=</span> <span class='va'>plan</span>, core <span class='op'>=</span> <span class='va'>core</span><span class='op'>)</span>
 </div><div class='img'><img src='redist.identify.cores-1.png' alt='' width='700' height='433' /></div><div class='input'>

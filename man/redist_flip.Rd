@@ -35,7 +35,7 @@ redist_flip(
 
 \item{init_plan}{A vector containing the congressional district labels
 of each geographic unit. The default is \code{NULL}. If not provided,
-a random initial plan will be generated using \code{redist.smc}. You can also
+a random initial plan will be generated using \code{redist_smc}. You can also
 request to initialize using \code{redist.rsg} by supplying 'rsg', though this is
 not recommended behavior.}
 
@@ -95,7 +95,7 @@ A \code{\link{redist_plans}} object containing the simulated plans.
 }
 \description{
 \code{redist_flip} provides a tidy interface to the methods in
-\code{\link{redist.mcmc}}.
+\code{\link{redist.flip}}.
 }
 \details{
 This function allows users to simulate redistricting plans
@@ -106,12 +106,12 @@ compactness. In addition, the function includes multiple-swap and simulated
 tempering functionality to improve the mixing of the Markov Chain.
 
 \code{redist_flip} allows for Gibbs constraints to be supplied via a list object
-passed to \code{constraints}. This is a change from the original \code{redist.mcmc}
+passed to \code{constraints}. This is a change from the original \code{redist.flip}
 behavior to allow for a more straightforward function call when used within a pipe.
-A key difference between \code{redist_flip} and \code{redist.mcmc} is that
+A key difference between \code{redist_flip} and \code{redist.flip} is that
 \code{redist_flip} uses a small compactness constraint by default, as this improves
 the realism of the maps greatly and also leads to large speed improvements.
-(One of the most time consuming aspects of the mcmc/flip backend is checking for
+(One of the most time consuming aspects of the flip MCMC backend is checking for
 district shattering, which is slowed down even further by non-compact districts.
 As such, it is recommended that all flip simulations use at least a minimal compactness
 constraint, even if you weaken it from the default settings.) The default is
@@ -130,7 +130,7 @@ want to run a simulation with no constraints at all, you can use
 \code{constraints}. The following describes the constraints available. The general
 advice is to set weights in a way that gets between 20\\% and 40\\% acceptance
 on average, though more tuning advice is available in the vignette on using
-mcmc methods.Having too small of an acceptance rate indicates that the weights
+MCMC methods.Having too small of an acceptance rate indicates that the weights
 within \code{constraints} are too large and will impact sampling efficiency.
 If the Metropolis Hastings acceptance rate is too large, this may impact the
 target distribution, but may be fine for general exploration of possible maps.
@@ -171,8 +171,7 @@ does not require that counties are contiguous.
 }
 \item \code{hinge} This uses the proportion of a group in a district and matches to the
 nearest target proportion, and then creates a penalty of
-\eqn{\sqrt{max(0, nearest.target - group.pct)}}. This is equivalent to the
-\code{vra-old} constraint in  \code{redist_smc}.
+\eqn{\sqrt{max(0, nearest.target - group.pct)}}.
 \itemize{
 \item weight - the coefficient to put on the Gibbs constraint
 \item minorityprop - A numeric vector of minority proportions (between 0 and 1) which
@@ -180,8 +179,6 @@ districts should aim to have
 }
 \item \code{vra} This takes two target proportions of the presence of a minority group
 within a district. \eqn{(|target.min - group.pct||target.other - group.pct|)^{1.5})}
-This is equivalent to the \code{vra-old} constraint in
-\code{redist_smc}.
 \itemize{
 \item weight - the coefficient to put on the Gibbs constraint
 \item target_min - the target minority percentage. Often, this is set to 0.55 to encourage

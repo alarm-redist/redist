@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.0.9000</span>
       </span>
     </div>
 
@@ -166,7 +166,7 @@
     <p>Prepares a run of the enumpart algorithm by ordering edges</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.prep.enumpart</span><span class='op'>(</span><span class='va'>adj</span>, <span class='va'>unordered_path</span>, <span class='va'>ordered_path</span>, <span class='va'>adjlist</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>redist.prep.enumpart</span><span class='op'>(</span><span class='va'>adj</span>, <span class='va'>unordered_path</span>, <span class='va'>ordered_path</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -183,10 +183,6 @@
       <th>ordered_path</th>
       <td><p>valid path to output the ordered adjacency map to</p></td>
     </tr>
-    <tr>
-      <th>adjlist</th>
-      <td><p>Deprecated, use adj. zero indexed adjacency list</p></td>
-    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
@@ -200,11 +196,10 @@ Forthcoming, Statistics and Public Policy.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
-<span class='va'>temp</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempdir</a></span><span class='op'>(</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
 <span class='va'>adj</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.adjacency.html'>redist.adjacency</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
-<span class='fu'>redist.prep.enumpart</span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>adj</span>, unordered_path <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span><span class='op'>(</span><span class='va'>temp</span>, <span class='st'>'/unordered'</span><span class='op'>)</span>,
-                     ordered_path <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span><span class='op'>(</span><span class='va'>temp</span>, <span class='st'>'/ordered'</span><span class='op'>)</span><span class='op'>)</span>
+<span class='fu'>redist.prep.enumpart</span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>adj</span>, unordered_path <span class='op'>=</span> <span class='st'>'../unordered'</span>,
+                     ordered_path <span class='op'>=</span> <span class='st'>'../ordered'</span><span class='op'>)</span>
 <span class='op'>}</span>
 </div></pre>
   </div>

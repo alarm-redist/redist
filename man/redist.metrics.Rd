@@ -17,9 +17,7 @@ redist.metrics(
   respV = 0.5,
   bandwidth = 0.01,
   draw = 1,
-  ncores = 1,
-  district_membership,
-  nloop
+  ncores = 1
 )
 }
 \arguments{
@@ -50,17 +48,11 @@ for each precinct and one column for each map. Required.}
 \item{bandwidth}{A value between 0 and 1 for computing responsiveness. Only used with option "Responsiveness." Defaults to 0.01.}
 
 \item{draw}{A numeric to specify draw number. Defaults to 1 if only one map provided
-and the column number if multiple maps given. Can also take a factor input, which will become the 
+and the column number if multiple maps given. Can also take a factor input, which will become the
 draw column in the output if its length matches the number of entries in plans. If the `plans` input
 is a `redist_plans` object, it extracts the `draw` identifier.}
 
 \item{ncores}{Number of cores to use for parallel computing. Default is 1.}
-
-\item{district_membership}{Deprecated, use plans. A numeric vector (if only one map) or matrix with one row
-for each precinct and one column for each map. Required.}
-
-\item{nloop}{Deprecated, use draw. A numeric to specify loop number. Defaults to 1 if only one map provided
-and the column number if multiple maps given.}
 }
 \value{
 A tibble with  a column for each specified measure and

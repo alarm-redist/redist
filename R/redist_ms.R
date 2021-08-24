@@ -11,22 +11,17 @@
 #' in percentage terms, i.e., \code{pop_tol=0.01} will ensure districts have
 #' populations within 1% of the target population.
 #'
-#' @return \code{redist.mergesplit} returns an object of class list containing the
+#' @return \code{redist.mergesplit} (Deprecated) returns an object of class list containing the
 #' simulated plans.
 #'
 #' @export
 #' @md
-#' @examples
-#' data(fl25)
-#' adj <- redist.adjacency(fl25)
-#' out <- redist.mergesplit(adj = adj, total_pop = fl25$pop,
-#'                          nsims = 5, ndists = 3, pop_tol = 0.1)
-#' 
 redist.mergesplit <- function(adj, total_pop, nsims, ndists, pop_tol = 0.01,
                               init_plan, counties, compactness = 1,
                               constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
                               adapt_k_thresh = 0.975, k = NULL, verbose = TRUE,
                               silent = FALSE) {
+  .Deprecated("redist_mergesplit")
   if (missing(adj)) {
     stop('Please provide an argument to adj.')
   }
@@ -76,19 +71,10 @@ redist.mergesplit <- function(adj, total_pop, nsims, ndists, pop_tol = 0.01,
   if (silent) verbosity <- 0
   if (is.null(k)) k <- 0
 
-  target <- sum(total_pop) / ndists
-  pop_bounds <- target * c(1 - pop_tol, 1, 1 + pop_tol)
-
   if (missing(init_plan)) {
-    init_plan <- redist.smc(
-      adj = adj,
-      total_pop = total_pop,
-      nsims = 1,
-      ndists = ndists,
-      counties = counties,
-      pop_tol = pop_tol,
-      silent = TRUE
-    )$plans
+      map = redist_map(pop=total_pop, adj=adj, pop_tol=pop_tol, ndists=ndists)
+      init_plan <- as.matrix(redist_smc(map, nsims = 1,
+                                        counties = counties, silent = TRUE))
   } else {
     if (length(init_plan) != V) {
       stop('init_plan must have one entry for each unit.')
@@ -101,16 +87,26 @@ redist.mergesplit <- function(adj, total_pop, nsims, ndists, pop_tol = 0.01,
     }
   }
 
+  target <- sum(total_pop) / ndists
+  pop_bounds <- target * c(1 - pop_tol, 1, 1 + pop_tol)
+  init_pop = pop_tally(matrix(init_plan, ncol=1), total_pop, ndists)
+  if (any(init_pop < pop_bounds[1]) | any(init_pop > pop_bounds[3]))
+      stop("Provided initialization does not meet population bounds.")
+  if (any(total_pop >= target))
+      stop("Units ", which(total_pop >= target),
+           " have population larger than the district target.\n",
+           "Redistricting impossible.")
+
   # Create plans
   algout <- ms_plans(
     nsims + 1L, adj, init_plan, counties, total_pop, ndists, pop_bounds[2],
     pop_bounds[1], pop_bounds[3], compactness,
     constraints$status_quo$strength, constraints$status_quo$current, n_current,
-    constraints$vra_old$strength, constraints$vra_old$tgt_vra_min,
-    constraints$vra_old$tgt_vra_other, constraints$vra_old$pow_vra, proc$min_pop,
-    constraints$vra$strength, constraints$vra$tgts_min,
+    constraints$vra$strength, constraints$vra$tgt_vra_min,
+    constraints$vra$tgt_vra_other, constraints$vra$pow_vra, proc$min_pop,
+    constraints$hinge$strength, constraints$hinge$tgts_min,
     constraints$incumbency$strength, constraints$incumbency$incumbents,
-    constraints$splits$strength,
+    constraints$splits$strength, constraints$multisplits$strength,
     adapt_k_thresh, k, verbosity
   )
 

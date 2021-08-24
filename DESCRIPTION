@@ -1,6 +1,6 @@
 Package: redist
-Version: 3.0.7
-Date: 2021-05-03
+Version: 3.1.0.9000
+Date: 2021-06-11
 Title: Simulation Methods for Legislative Redistricting
 Authors@R: c(
     person("Christopher T.", "Kenny", email = "christopherkenny@fas.harvard.edu", role = c("aut", "cre")),
@@ -43,6 +43,8 @@ Suggests:
     s2,
     lwgeom,
     withr,
+    leaflet,
+    leafgl,
     loo,
     Rmpi,
     knitr,

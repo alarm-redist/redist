@@ -16,7 +16,7 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
                            minorityprop = NULL,
                            verbose = TRUE
 ){
-  
+
   #########################
   ## Inputs to function: ##
   #########################
@@ -67,15 +67,15 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
       stop("Please specify any combination of `compact`, `segregation`, vra`, `population`, `countysplit`, `similarity`, `partisan`, `minority`, `hinge` for constraint")
     }
   }
-  
+
   ############################################
   ## If not a list, convert adjlist to list ##
   ############################################
   if(!is.list(adj)){
-    
+
     ## If a matrix, check to see if adjacency matrix
     if(is.matrix(adj)){
-      
+
       ## Is it square?
       squaremat <- (nrow(adj) == ncol(adj))
       ## All binary entries?
@@ -85,16 +85,16 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
       diag <- (sum(diag(adj)) == nrow(adj))
       ## Symmetric?
       symmetric <- isSymmetric(adj)
-      
+
       ## If all are true, change to adjlist and automatically zero-index
       if(squaremat & binary & diag & symmetric){
-        
+
         ## Initialize object
         adjlist <- vector("list", nrow(adj))
-        
+
         ## Loop through rows in matrix
         for(i in 1:nrow(adj)){
-          
+
           ## Extract row
           adjvec <- adj[,i]
           ## Find elements it is adjacent to
@@ -105,9 +105,9 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
           inds <- inds - 1
           ## Put in adjlist
           adjlist[[i]] <- inds
-          
+
         }
-        
+
       }else { ## If not valid adjacency matrix, throw error
         stop("Please input valid adjacency matrix")
       }
@@ -115,26 +115,26 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
 
       ## Convert shp object to adjacency list
       adjlist <- redist.adjacency(st_as_sf(adj))
-      
-      
+
+
     }else{ ## If neither list, matrix, or shp, throw error
       stop("Please input an adjacency list, adjacency matrix, or Spatial
                  Polygons shp file")
     }
-    
+
   }else if('sf' %in% class(adj)){
     adjlist <- redist.adjacency(adj)
   }else{
-    
+
     ## Rename adjacency object as list
     adjlist <- adj
-    
+
     ## Is list zero-indexed?
     minlist <- min(unlist(adjlist))
     maxlist <- max(unlist(adjlist))
     oneind <- (sum(minlist == 1, maxlist == length(adjlist)) == 2)
     zeroind <- (sum(minlist == 0, maxlist == (length(adjlist) - 1)) == 2)
-    
+
     if(oneind){
       ## Zero-index list
       for(i in 1:length(adjlist)){
@@ -144,40 +144,37 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
       ## if neither oneind or zeroind, then stop
       stop("Adjacency list must be one-indexed or zero-indexed")
     }
-    
+
   }
-  
 
-  
 
-  
-  
+
+
+
+
   if(is.null(init_plan) || isTRUE( 'smc' %in% init_plan)){
-    invisible(capture.output(init_plan <- redist.smc(
-      adj = adj,
-      total_pop = total_pop,
-      nsims = 1,
-      ndists = ndists,
-      pop_tol = ifelse(is.null(pop_tol), 0.05, pop_tol),
-      silent = TRUE
-    ), type = 'message'))
-    init_plan <- init_plan$plans
+      map = redist_map(pop=total_pop,  pop_tol=ifelse(is.null(pop_tol), 0.05, pop_tol),
+                       ndists=ndists,  adj=adj)
+    invisible(capture.output(
+        init_plan <- redist_smc(map, nsims = 1, silent = TRUE),
+        type = 'message'))
+    init_plan <- as.matrix(init_plan)[, 1]
   } else if(!is.null(init_plan) && 'rsg' %in% init_plan) {
     ##############################################################################
     ## If no init_plan == rsg, use Random Seed and Grow                         ##
     ## (Chen and Rodden 2013) algorithm                                         ##
     ##############################################################################
-    
+
     ## Set up target pop, strength of constraint (5%)
     if(is.null(pop_tol)){
       pop_tol_rsg <- .05
     }else{
       pop_tol_rsg <- pop_tol
     }
-    
+
     ## Print start
     divider <- c(paste(rep("=", 20), sep = "", collapse = ""), "\n")
-    
+
     if(verbose){
     cat("\n", append = TRUE)
     cat(divider, append = TRUE)
@@ -192,7 +189,7 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
                           maxiter = maxiterrsg)
     ## Get initial cds
     init_plan <- initout$plan
-    
+
   } else {
     ###################################################################
     ## Check whether initial partitions (if provided) are contiguous ##
@@ -201,11 +198,11 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
       if(sum(is.na(init_plan)) > 0){
         stop("You have NA's in your congressional districts. Please check the provided init_plan vector for NA entries.")
       }
-      
+
       ndists <- length(unique(init_plan))
       divlist <- genAlConn(adjlist, init_plan)
       ncontig <- countpartitions(divlist)
-      
+
       if(ncontig != ndists){
         stop(paste("Your initial congressional districts have ", ndists,
                    " unique districts but ",
@@ -213,7 +210,7 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
       }
     }
   }
-  
+
   ###########################################################
   ## Check other inputs to make sure they are right length ##
   ###########################################################
@@ -255,7 +252,7 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
       stop("You do not have a county membership assigned for every unit.")
     }
   }
-  
+
   if("partisan" %in% constraint){
     if(is.null(rvote)){
       stop('You must provide an integer vector to rvote when using partisan constraint.')
@@ -287,7 +284,7 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
     rvote <- c(0L,1L)
     dvote <- c(1L,0L)
   }
-  
+
   if("minority" %in% constraint){
     if(!"numeric" %in% class(minorityprop)){
       stop('"minorityprop" must be of type numeric.')
@@ -295,8 +292,8 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
     if(length(minorityprop) > ndists){
       stop('"minorityprop" has more entries than there will be districts.')
     }
-  } 
-  
+  }
+
   if("hinge" %in% constraint){
     if(!"numeric" %in% class(minorityprop)){
       stop('"minorityprop" must be of type numeric.')
@@ -304,13 +301,13 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
     if(length(minorityprop) > ndists){
       stop('"minorityprop" has more entries than there will be districts.')
     }
-  } 
-  
-  
+  }
+
+
   if (!any(c('hinge', 'minority') %in% constraint)) {
     minorityprop = 0 #init so it won't get mad in swMH input
   }
-  
+
   ####################
   ## Zero-index cds ##
   ####################
@@ -320,7 +317,7 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
   if(length(unique(init_plan)) != (max(init_plan) + 1)){
     stop("The district numbers in init_plan must be consecutive. The input to `init_plan` could not be transformed using `redist.sink.plan()`.")
   }
-  
+
   ## ------------------------------------
   ## Check VRA targets if necessary
   ## ------------------------------------
@@ -338,7 +335,7 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
       stop("Need vra constraint 0 <= tgt_other <= 1.")
     }
   }
-  
+
   ####################################################
   ## Calculate parity and population margin allowed ##
   ####################################################
@@ -346,14 +343,14 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
   if(is.null(pop_tol)){
     pop_tol <- 100
   }
-  
+
   #####################################
   ## Set group_pop if not provided ##
   #####################################
   if(is.null(group_pop)){
     group_pop <- total_pop
   }
-  
+
   ## -------------------------------------
   ## Set county membership if not provided
   ## -------------------------------------
@@ -370,7 +367,7 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
     }
     counties <- counties - min(counties)
   }
-  
+
   ################################
   ## Set ssdmat if not provided ##
   ################################
@@ -385,7 +382,7 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
   }else if(is.null(ssdmat)){
     ssdmat <- matrix(1, 2, 2)
   }
-  
+
   ## ------------------------------------
   ## Set Polsby-Popper compactness inputs
   ## ------------------------------------
@@ -399,16 +396,16 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
   }else{
     areasvec <- c(0, 0, 0, 0)
     borderlength_mat <- matrix(0, 2, 2)
-    
+
   }
-  
-  
+
+
   ########################
   ## Set up constraints ##
   ########################
   beta <- ifelse(is.null(constraint) | (temper %in% c(TRUE)), 0, 1)
   temperbeta <- ifelse(temper, "tempering", "none")
-  
+
   if("population" %in% constraint){
     weightpop <- constraintweights[which(constraint == "population")]
   }else{
@@ -439,7 +436,7 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
   }else{
     weightcountysplit <- 0
   }
-  
+
   if("partisan" %in% constraint){
     weightpartisan <- constraintweights[which(constraint == "partisan")]
   }else{
@@ -455,19 +452,19 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
   }else{
     weighthinge <- 0
   }
-  
+
   ###################################
   ## Check if betaspacing provided ##
   ###################################
   if("tempering" %in% temperbeta){
     if(betaseq[1] == "powerlaw"){
-      
+
       ## Generate power law sequence
       betaseq <- rep(NA, betaseqlength)
       for(i in 1:length(betaseq)){
         betaseq[i] <- (0.1^((i-1) / (length(betaseq) - 1)) - .1) / .9
       }
-      
+
     }else if(is.vector(betaseq)){
       betaseq <- betaseq
     }else if(!is.vector(betaseq) & betaseq[1] != "powerlaw"){
@@ -480,15 +477,15 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
     betaseq <- c(1, 1, 1, 1)
     betaweights <- c(1, 1, 1, 1)
   }
-  
+
   ## Reverse beta sequence
   betaseq <- rev(betaseq)
-  
+
   ########################################
   ## Convert adjacent swaps flag to 0/1 ##
   ########################################
   adjswaps <- adjswaps * 1
-  
+
   #################
   ## Return list ##
   #################
@@ -528,10 +525,10 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
       minorityprop = minorityprop
     )
   )
-  
+
   class(preprocout) <- "redist"
-  
+
   return(preprocout)
-  
+
 }
 
