@@ -4,7 +4,7 @@
 \alias{scorer_group_pct}
 \alias{scorer_pop_dev}
 \alias{scorer_splits}
-\alias{scorer_fractures}
+\alias{scorer_multisplits}
 \alias{scorer_frac_kept}
 \alias{scorer_polsby_popper}
 \alias{scorer_status_quo}
@@ -17,7 +17,7 @@ scorer_pop_dev(map)
 
 scorer_splits(map, counties)
 
-scorer_fractures(map, counties)
+scorer_multisplits(map, counties)
 
 scorer_frac_kept(map)
 
