@@ -18,7 +18,7 @@
 arma::umat smc_plans(int N, List l, const arma::uvec &counties,
                      const arma::uvec &pop, int n_distr, double target,
                      double lower, double upper, double rho,
-                     arma::umat districts, int n_drawn, int n_steps,
+                     arma::umat districts, int n_drawn, int n_steps, const arma::uvec boundary,
                      double beta_sq, const arma::uvec &current, int n_current,
                      double beta_vra, double tgt_min, double tgt_other,
                      double pow_vra, const arma::uvec &min_pop,
@@ -36,7 +36,8 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 const uvec &pop, umat &districts, vec &cum_wgt, vec &lp,
                 vec &pop_left, vec &log_temper, double pop_temper, int n_distr,
                 int dist_ctr, double lower, double upper, double target,
-                double rho, int k, bool check_both, int verbosity);
+                double rho, int k, bool check_both, const uvec boundary,
+                int verbosity);
 
 
 /*

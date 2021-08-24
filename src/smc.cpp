@@ -15,7 +15,7 @@
  */
 umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                int n_distr, double target, double lower, double upper, double rho,
-               umat districts, int n_drawn, int n_steps,
+               umat districts, int n_drawn, int n_steps, const uvec boundary,
                double beta_sq, const uvec &current, int n_current,
                double beta_vra, double tgt_min, double tgt_other,
                double pow_vra, const uvec &min_pop,
@@ -96,7 +96,7 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
         }
         split_maps(g, counties, cg, pop, districts, cum_wgt, lp, pop_left,
                    log_temper, pop_temper, n_distr, ctr, lower, upper, target,
-                   rho, k, check_both, verbosity);
+                   rho, k, check_both, boundary, verbosity);
 
         // compute weights for next step
         cum_wgt = get_wgts(districts, n_distr, ctr, final, alpha, lp, pop,
@@ -188,7 +188,8 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 const uvec &pop, umat &districts, vec &cum_wgt, vec &lp,
                 vec &pop_left, vec &log_temper, double pop_temper, int n_distr,
                 int dist_ctr, double lower, double upper, double target,
-                double rho, int k, bool check_both, int verbosity) {
+                double rho, int k, bool check_both, const uvec boundary,
+                int verbosity) {
     int V = districts.n_rows;
     int N = districts.n_cols;
     int new_size = n_distr - dist_ctr;
@@ -202,6 +203,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     int refresh = N / 10; // how often to print update statements
     int reject_check_int = 20; // aftr how many rejections to check for interrupts
     int reject_ct = 0;
+    bool check_boundary = boundary.size() > 0;
     double iter = 0; // how many actual iterations
     for (int i = 0; i < N; i++, iter++) {
         // resample
@@ -222,8 +224,19 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         double inc_lp = split_map(g, counties, cg, districts_new.col(i), dist_ctr,
                                   pop, pop_left(idx), lower_s, upper_s, target, k);
 
+        // check whether at least one precinct on the boundary remains unassigned
+        bool boundary_left = true;
+        if (check_boundary) {
+            boundary_left = false;
+            for (int j : boundary) {
+                if (districts_new(j, i) == 0) {
+                    boundary_left = true;
+                    break;
+                }
+            }
+        }
         // bad sample; try again
-        if (!std::isfinite(inc_lp)) {
+        if (!std::isfinite(inc_lp) || !boundary_left) {
             i--;
             if (++reject_ct % reject_check_int == 0) Rcpp::checkUserInterrupt();
             continue;

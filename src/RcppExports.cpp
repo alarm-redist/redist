@@ -745,8 +745,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // smc_plans
-arma::umat smc_plans(int N, List l, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double target, double lower, double upper, double rho, arma::umat districts, int n_drawn, int n_steps, double beta_sq, const arma::uvec& current, int n_current, double beta_vra, double tgt_min, double tgt_other, double pow_vra, const arma::uvec& min_pop, double beta_vra_hinge, const arma::vec& tgts_min, double beta_inc, const arma::uvec& incumbents, double beta_fractures, arma::vec& lp, double thresh, double alpha, double pop_temper, double final_infl, int verbosity);
-RcppExport SEXP _redist_smc_plans(SEXP NSEXP, SEXP lSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP districtsSEXP, SEXP n_drawnSEXP, SEXP n_stepsSEXP, SEXP beta_sqSEXP, SEXP currentSEXP, SEXP n_currentSEXP, SEXP beta_vraSEXP, SEXP tgt_minSEXP, SEXP tgt_otherSEXP, SEXP pow_vraSEXP, SEXP min_popSEXP, SEXP beta_vra_hingeSEXP, SEXP tgts_minSEXP, SEXP beta_incSEXP, SEXP incumbentsSEXP, SEXP beta_fracturesSEXP, SEXP lpSEXP, SEXP threshSEXP, SEXP alphaSEXP, SEXP pop_temperSEXP, SEXP final_inflSEXP, SEXP verbositySEXP) {
+arma::umat smc_plans(int N, List l, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double target, double lower, double upper, double rho, arma::umat districts, int n_drawn, int n_steps, const arma::uvec boundary, double beta_sq, const arma::uvec& current, int n_current, double beta_vra, double tgt_min, double tgt_other, double pow_vra, const arma::uvec& min_pop, double beta_vra_hinge, const arma::vec& tgts_min, double beta_inc, const arma::uvec& incumbents, double beta_fractures, arma::vec& lp, double thresh, double alpha, double pop_temper, double final_infl, int verbosity);
+RcppExport SEXP _redist_smc_plans(SEXP NSEXP, SEXP lSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP districtsSEXP, SEXP n_drawnSEXP, SEXP n_stepsSEXP, SEXP boundarySEXP, SEXP beta_sqSEXP, SEXP currentSEXP, SEXP n_currentSEXP, SEXP beta_vraSEXP, SEXP tgt_minSEXP, SEXP tgt_otherSEXP, SEXP pow_vraSEXP, SEXP min_popSEXP, SEXP beta_vra_hingeSEXP, SEXP tgts_minSEXP, SEXP beta_incSEXP, SEXP incumbentsSEXP, SEXP beta_fracturesSEXP, SEXP lpSEXP, SEXP threshSEXP, SEXP alphaSEXP, SEXP pop_temperSEXP, SEXP final_inflSEXP, SEXP verbositySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -762,6 +762,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::umat >::type districts(districtsSEXP);
     Rcpp::traits::input_parameter< int >::type n_drawn(n_drawnSEXP);
     Rcpp::traits::input_parameter< int >::type n_steps(n_stepsSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec >::type boundary(boundarySEXP);
     Rcpp::traits::input_parameter< double >::type beta_sq(beta_sqSEXP);
     Rcpp::traits::input_parameter< const arma::uvec& >::type current(currentSEXP);
     Rcpp::traits::input_parameter< int >::type n_current(n_currentSEXP);
@@ -781,7 +782,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type pop_temper(pop_temperSEXP);
     Rcpp::traits::input_parameter< double >::type final_infl(final_inflSEXP);
     Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
-    rcpp_result_gen = Rcpp::wrap(smc_plans(N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_vra_hinge, tgts_min, beta_inc, incumbents, beta_fractures, lp, thresh, alpha, pop_temper, final_infl, verbosity));
+    rcpp_result_gen = Rcpp::wrap(smc_plans(N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, boundary, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_vra_hinge, tgts_min, beta_inc, incumbents, beta_fractures, lp, thresh, alpha, pop_temper, final_infl, verbosity));
     return rcpp_result_gen;
 END_RCPP
 }

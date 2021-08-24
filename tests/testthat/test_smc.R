@@ -101,7 +101,18 @@ test_that("Partial sampling works with strange bounds", {
     bounds = sum(fl25$pop)*c(0.25, 0.3, 0.32)
     fl_map2 = redist_map(fl25, pop_bounds=bounds, ndists=4, adj=adj) %>%
         suppressMessages()
-    res = redist_smc(fl_map2, 10, n_steps=3)
+    res = redist_smc(fl_map2, 10, n_steps=2, silent=TRUE)
+    expect_s3_class(res, "redist_plans")
+})
+
+test_that("Open boundary rejection sampling works", {
+    iowa_map = redist_map(iowa, ndists=4, pop_tol=0.1)
+    open_idx = 79L # Poweshiek
+
+    expect_error(redist_smc(iowa_map, 5, boundary_precs=open_idx, silent=TRUE),
+                 "not available")
+    res = redist_smc(iowa_map, 500, n_steps=2, boundary_precs=open_idx, silent=TRUE)
+    expect_true(all(as.matrix(res)[open_idx,] == 0))
 })
 
 test_that("Precise population bounds are enforced", {

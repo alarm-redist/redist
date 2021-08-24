@@ -141,6 +141,9 @@
 #' @param ref_name a name for the existing plan, which will be added as a
 #'   reference plan, or \code{FALSE} to not include the initial plan in the
 #'   output. Defaults to the column name of the existing plan.
+#' @param boundary_precs precinct indices, at least one of which should be
+#'   left unassigned, when \code{n_steps} is fewer than the number of remaining
+#'   splits.
 #' @param verbose Whether to print out intermediate information while sampling.
 #'   Recommended.
 #' @param silent Whether to suppress all diagnostic information.
@@ -174,7 +177,8 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
                       init_particles=NULL, n_steps=NULL,
                       adapt_k_thresh=0.975, seq_alpha=0.2+0.3*compactness,
                       truncate=(compactness != 1), trunc_fn=redist_quantile_trunc,
-                      pop_temper=0, final_infl=1, ref_name=NULL, verbose=TRUE, silent=FALSE) {
+                      pop_temper=0, final_infl=1, ref_name=NULL,
+                      boundary_precs=NULL, verbose=TRUE, silent=FALSE) {
     map = validate_redist_map(map)
     V = nrow(map)
     adj = get_adj(map)
@@ -240,11 +244,19 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
     if (final_dists > ndists) {
         stop("Too many districts already drawn to take ", n_steps, " steps.")
     }
+    if (!is.null(boundary_precs)) {
+        if (final_dists == ndists)
+            stop("`boundary_precs` not available. Decrease `n_steps` to use.")
+        stopifnot(all(boundary_precs >= 1))
+        stopifnot(all(boundary_precs <= V))
+    } else {
+        boundary_precs = integer(0)
+    }
 
     lp = rep(0, nsims)
     plans = smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],
                       pop_bounds[1], pop_bounds[3], compactness,
-                      init_particles, n_drawn, n_steps,
+                      init_particles, n_drawn, n_steps, as.integer(boundary_precs) - 1L,
                       constraints$status_quo$strength, constraints$status_quo$current, n_current,
                       constraints$vra$strength, constraints$vra$tgt_vra_min,
                       constraints$vra$tgt_vra_other, constraints$vra$pow_vra, proc$min_pop,
