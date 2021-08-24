@@ -252,22 +252,6 @@ sampled_constr = redist_smc(fl_map, 10000, constraints=list(
                             ))
 }
 
-\donttest{
-data(fl25)
-data(fl25_adj)
-data(fl25_enum)
-
-sampled_basic = redist.smc(fl25_adj, fl25$pop,
-                           nsims=10000, ndists=3, pop_tol=0.1)
-
-sampled_constr = redist.smc(fl25_adj, fl25$pop,
-                            nsims=10000, ndists=3, pop_tol=0.1,
-                            constraints=list(
-                                status_quo = list(strength=10, current=fl25_enum$plans[,5118]),
-                                incumbency = list(strength=100, incumbents=c(3, 6, 25))
-                            ))
-}
-
 }
 \references{
 McCartan, C., & Imai, K. (2020). Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans.

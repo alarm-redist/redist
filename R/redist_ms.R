@@ -16,12 +16,6 @@
 #'
 #' @export
 #' @md
-#' @examples
-#' data(fl25)
-#' adj <- redist.adjacency(fl25)
-#' out <- redist.mergesplit(adj = adj, total_pop = fl25$pop,
-#'                          nsims = 5, ndists = 3, pop_tol = 0.1)
-#'
 redist.mergesplit <- function(adj, total_pop, nsims, ndists, pop_tol = 0.01,
                               init_plan, counties, compactness = 1,
                               constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
