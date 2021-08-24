@@ -97,6 +97,13 @@ test_that("Partial sampling works accurately", {
     expect_true(all(abs(zscores) <= 6.5))
 })
 
+test_that("Partial sampling works with strange bounds", {
+    bounds = sum(fl25$pop)*c(0.25, 0.3, 0.32)
+    fl_map2 = redist_map(fl25, pop_bounds=bounds, ndists=4, adj=adj) %>%
+        suppressMessages()
+    res = redist_smc(fl_map2, 10, n_steps=3)
+})
+
 test_that("Precise population bounds are enforced", {
     map2 = fl_map
     attr(map2, "pop_bounds") = c(52e3, 58e3, 60e3)

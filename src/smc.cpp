@@ -33,6 +33,7 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     if (districts.n_rows != V || districts.n_cols != N)
         throw std::range_error("Initialization districts have wrong dimensions.");
     double total_pop = sum(pop);
+    bool check_both = total_pop/n_distr > lower && total_pop/n_distr < upper;
     double tol = std::max(target - lower, upper - target) / target;
     int n_cty = max(counties);
 
@@ -93,8 +94,9 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
             lower = target - (target - lower) * final_infl;
             upper = target + (upper - target) * final_infl;
         }
-        split_maps(g, counties, cg, pop, districts, cum_wgt, lp, pop_left, log_temper,
-                   pop_temper, n_distr, ctr, lower, upper, target, rho, k, verbosity);
+        split_maps(g, counties, cg, pop, districts, cum_wgt, lp, pop_left,
+                   log_temper, pop_temper, n_distr, ctr, lower, upper, target,
+                   rho, k, check_both, verbosity);
 
         // compute weights for next step
         cum_wgt = get_wgts(districts, n_distr, ctr, final, alpha, lp, pop,
@@ -186,7 +188,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 const uvec &pop, umat &districts, vec &cum_wgt, vec &lp,
                 vec &pop_left, vec &log_temper, double pop_temper, int n_distr,
                 int dist_ctr, double lower, double upper, double target,
-                double rho, int k, int verbosity) {
+                double rho, int k, bool check_both, int verbosity) {
     int V = districts.n_rows;
     int N = districts.n_cols;
     int new_size = n_distr - dist_ctr;
@@ -205,8 +207,12 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         // resample
         int idx = rint(N, cum_wgt);
         districts_new.col(i) = districts.col(idx);
-        double lower_s = std::max(lower, pop_left(idx) - new_size * upper);
-        double upper_s = std::min(upper, pop_left(idx) - new_size * lower);
+        double lower_s = lower;
+        double upper_s = upper;
+        if (check_both) {
+            lower_s = std::max(lower, pop_left(idx) - new_size * upper);
+            upper_s = std::min(upper, pop_left(idx) - new_size * lower);
+        }
 
         if (lower_s >= upper_s) {
             i--;
