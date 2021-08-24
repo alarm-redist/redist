@@ -405,12 +405,12 @@ scorer_splits <- function(map, counties) {
 #' @param counties A numeric vector with an integer from 1:n_counties
 #'
 #' @export
-scorer_fractures <- function(map, counties) {
+scorer_multisplits <- function(map, counties) {
   counties <- eval_tidy(enquo(counties), map)
   counties <- as.integer(as.factor(counties))
 
   fn = function(plans) {
-    cty_splits(plans, counties)/length(unique(counties))
+    cty_splits(plans, counties, attr(map, 'ndists'))/length(unique(counties))
   }
   class(fn) <- c("redist_scorer", "function")
   fn
