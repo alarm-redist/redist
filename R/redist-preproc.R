@@ -158,7 +158,7 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
     invisible(capture.output(
         init_plan <- redist_smc(map, nsims = 1, silent = TRUE),
         type = 'message'))
-    init_plan <- as.matrix(init_plan)
+    init_plan <- as.matrix(init_plan)[, 1]
   } else if(!is.null(init_plan) && 'rsg' %in% init_plan) {
     ##############################################################################
     ## If no init_plan == rsg, use Random Seed and Grow                         ##

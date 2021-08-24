@@ -78,7 +78,8 @@ redist.mergesplit <- function(adj, total_pop, nsims, ndists, pop_tol = 0.01,
   if (is.null(k)) k <- 0
 
   if (missing(init_plan)) {
-      init_plan <- as.matrix(redist.smc(map, nsims = 1,
+      map = redist_map(pop=total_pop, adj=adj, pop_tol=pop_tol, ndists=ndists)
+      init_plan <- as.matrix(redist_smc(map, nsims = 1,
                                         counties = counties, silent = TRUE))
   } else {
     if (length(init_plan) != V) {

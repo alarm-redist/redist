@@ -36,8 +36,8 @@
 #' @examples
 #' data(fl250)
 #' fl250_map = redist_map(fl250, ndists=4, pop_tol=0.01)
-#' plan <- as.matrix(redist_smc(fl250_map, 20))
-#' core <- redist.identify.cores(adj = adj, plan = plan)
+#' plan <- as.matrix(redist_smc(fl250_map, 20, silent=TRUE))
+#' core <- redist.identify.cores(adj = fl250_map$adj, plan = plan)
 #' redist.plot.cores(shp = fl250, plan = plan, core = core)
 #'
 redist.identify.cores <- function(adj, plan, boundary = 1, focus = NULL,
