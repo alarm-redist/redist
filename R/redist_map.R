@@ -116,7 +116,7 @@ reconstruct.redist_map = function(data, old) {
 #'   single \code{list} or \code{data.frame}.  These will be passed on to the
 #'   \code{\link{tibble}} constructor.
 #' @param existing_plan \code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the
-#'   existing district assignment.
+#'   existing district assignment. Must be numeric or convertable to numeric.
 #' @param pop_tol \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the population tolerance.
 #'   The percentage deviation from the average population will be constrained to
 #'   be no more than this number. If `existing_plan` is provided, defaults to
@@ -182,10 +182,23 @@ redist_map = function(..., existing_plan=NULL, pop_tol=NULL,
     }
 
     existing_col = names(tidyselect::eval_select(rlang::enquo(existing_plan), x))
-    if (length(existing_col) == 0)
-        existing_col = NULL
+    if (length(existing_col) == 0) {
+      existing_col = NULL
+    } else {
+      if (!is.numeric(existing_col)) {
+        temp_col <- NULL
+        try({temp_col <- as.numeric(existing_col)})
+        if (!is.null(temp_col)) {
+          existing_col <- temp_col
+        } else {
+          stop('`existing_col` was not numeric and could not be converted to numeric.')
+        }
+      }
+    }
 
-    if (is.null(ndists))  {
+
+
+    if (is.null(ndists)) {
         if (!is.null(existing_col))
             ndists = length(unique(x[[existing_col]]))
         else
@@ -226,7 +239,7 @@ redist_map = function(..., existing_plan=NULL, pop_tol=NULL,
 
     validate_redist_map(
         new_redist_map(x, adj, ndists, pop_bounds, pop_col, adj_col,
-                       add_adj=T, existing_col)
+                       add_adj=TRUE, existing_col)
     )
 }
 
