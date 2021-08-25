@@ -138,7 +138,7 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr,
 
     double neff = cuml_wgt[N-1] * cuml_wgt[N-1]  / sum(square(wgt));
     if (verbosity >= 1) {
-        Rprintf("Resampling effective sample size: %.1f (%.1f%% efficiency).\n", neff, 100*neff/N);
+        Rcout << "Resampling effective sample size: " << neff << " (" << 100*neff/N <<  " efficiency)." << std::endl;
     }
     if (neff/N < min_eff) {
         min_eff = neff / N;
@@ -220,12 +220,12 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         lp_new(i) = lp(idx) + inc_lp + pop_temper*pop_pen;
 
         if (verbosity >= 2 && refresh > 0 && (i+1) % refresh == 0) {
-            Rprintf("Iteration %'6d / %'d\n", i+1, N);
+            Rcout << "Iteration " << i + 1 << "/" << N << std::endl;
             Rcpp::checkUserInterrupt();
         }
     }
     if (verbosity >= 2) {
-        Rprintf("%.1f%% acceptance rate.\n", 100.0 * N / iter);
+        Rcout <<  100.0 * N / iter << "% acceptance rate." << std::endl;
     }
 
     districts = districts_new;

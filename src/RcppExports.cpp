@@ -782,14 +782,16 @@ BEGIN_RCPP
 END_RCPP
 }
 // splits
-IntegerVector splits(IntegerMatrix dm, IntegerVector community);
-RcppExport SEXP _redist_splits(SEXP dmSEXP, SEXP communitySEXP) {
+IntegerVector splits(IntegerMatrix dm, IntegerVector community, int nd, int max_split);
+RcppExport SEXP _redist_splits(SEXP dmSEXP, SEXP communitySEXP, SEXP ndSEXP, SEXP max_splitSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< IntegerMatrix >::type dm(dmSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type community(communitySEXP);
-    rcpp_result_gen = Rcpp::wrap(splits(dm, community));
+    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
+    Rcpp::traits::input_parameter< int >::type max_split(max_splitSEXP);
+    rcpp_result_gen = Rcpp::wrap(splits(dm, community, nd, max_split));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -803,19 +805,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< IntegerVector >::type community(communitySEXP);
     Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
     rcpp_result_gen = Rcpp::wrap(dist_cty_splits(dm, community, nd));
-    return rcpp_result_gen;
-END_RCPP
-}
-// cty_splits
-IntegerVector cty_splits(IntegerMatrix dm, IntegerVector community, int nd);
-RcppExport SEXP _redist_cty_splits(SEXP dmSEXP, SEXP communitySEXP, SEXP ndSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerMatrix >::type dm(dmSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type community(communitySEXP);
-    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
-    rcpp_result_gen = Rcpp::wrap(cty_splits(dm, community, nd));
     return rcpp_result_gen;
 END_RCPP
 }

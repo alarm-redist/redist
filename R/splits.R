@@ -11,6 +11,9 @@ redist.splits <- function(plans, counties) {
     if (missing(plans)) {
         stop('Please provide an argument to plans.')
     }
+    if (inherits(plans, 'redist_plans')) {
+        plans <- get_plans_matrix(plans)
+    }
     if (!is.matrix(plans)) {
         plans <- matrix(plans, ncol = 1)
     }
@@ -32,7 +35,7 @@ redist.splits <- function(plans, counties) {
     }
 
 
-    splits(plans, community = county_id)
+    splits(plans, community = county_id, length(unique(plans[, 1])), 0)
 }
 
 #' Identify which counties are split by a plan
@@ -116,8 +119,8 @@ redist.district.splits <- function(plans, counties) {
 #' data(iowa)
 #' ia <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop, pop_tol = 0.01)
 #' plans <- redist_smc(ia, 50, silent = TRUE)
-#' splits <- redist.county.multisplits(plans, ia$region)
-redist.county.multisplits <- function(plans, counties) {
+#' splits <- redist.multisplits(plans, ia$region)
+redist.multisplits <- function(plans, counties) {
     if (missing(plans)) {
         stop('Please provide an argument to plans.')
     }
@@ -140,5 +143,5 @@ redist.county.multisplits <- function(plans, counties) {
         stop('Please provide "counties" as a character, numeric, or integer vector.')
     }
 
-    cty_splits(plans - 1, community = county_id - 1, length(unique(plans[, 1])))
+    splits(plans - 1, community = county_id - 1, length(unique(plans[, 1])), 2)
 }
