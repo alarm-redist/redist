@@ -47,7 +47,7 @@
 
 
 <meta property="og:title" content="Flip MCMC Redistricting Simulator — redist.flip" />
-<meta property="og:description" content="redist.flip is used to simulate Congressional redistricting
+<meta property="og:description" content="redist.mcmc is used to simulate Congressional redistricting
 plans using Markov Chain Monte Carlo methods." />
 <meta property="og:image" content="/logo.png" />
 
@@ -164,7 +164,7 @@ plans using Markov Chain Monte Carlo methods." />
     </div>
 
     <div class="ref-description">
-    <p><code>redist.flip</code> is used to simulate Congressional redistricting
+    <p><code>redist.mcmc</code> is used to simulate Congressional redistricting
 plans using Markov Chain Monte Carlo methods.</p>
     </div>
 
@@ -236,7 +236,7 @@ unit</p></td>
       <th>init_plan</th>
       <td><p>A vector containing the congressional district labels
 of each geographic unit. If not provided, random and contiguous congressional
-district assignments will be generated using <code>redist.smc</code>. To use the old
+district assignments will be generated using <code>redist_smc</code>. To use the old
 behavior of generating with <code>redist.rsg</code>, provide init_plan = 'rsg'.</p></td>
     </tr>
     <tr>
@@ -416,7 +416,7 @@ districts with that proportion</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p><code>redist.flip</code> returns an object of class "redist". The object
+    <p><code>redist.mcmc</code> returns an object of class "redist". The object
 <code>redist</code> is a list that contains the following components (the
 inclusion of some components is dependent on whether tempering
 techniques are used):</p>
@@ -473,13 +473,12 @@ Carlo." Working Paper. Available at
 <a href='http://imai.princeton.edu/research/files/redist.pdf'>http://imai.princeton.edu/research/files/redist.pdf</a>.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+    <pre class="examples"><div class='input'><span class='co'># \donttest{</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_enum</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_adj</span><span class='op'>)</span>
 
-<span class='co'>## Code to run the simulations in Figure 4 in Fifield, Higgins,Imai and</span>
-<span class='fu'>Tarr</span> <span class='op'>(</span><span class='fl'>2015</span><span class='op'>)</span>
+<span class='co'>## Code to run the simulations in Figure 4 in Fifield, Higgins, Imai and Tarr (2015)</span>
 
 <span class='co'>## Get an initial partition</span>
 <span class='va'>init_plan</span> <span class='op'>&lt;-</span> <span class='va'>fl25_enum</span><span class='op'>$</span><span class='va'>plans</span><span class='op'>[</span>, <span class='fl'>5118</span><span class='op'>]</span>
@@ -487,13 +486,88 @@ Carlo." Working Paper. Available at
 <span class='co'>## Run the algorithm</span>
 <span class='va'>alg_253</span> <span class='op'>&lt;-</span> <span class='fu'>redist.flip</span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>fl25_adj</span>, total_pop <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>,
                        init_plan <span class='op'>=</span> <span class='va'>init_plan</span>, nsims <span class='op'>=</span> <span class='fl'>10000</span><span class='op'>)</span>
-
+</div><div class='output co'>#&gt; 
+#&gt; ==================== 
+#&gt; redist.flip(): Automated Redistricting Simulation Using
+#&gt;          Markov Chain Monte Carlo
+#&gt; 
+#&gt; Preprocessing data.
+#&gt; 
+#&gt; Starting swMH().
+#&gt; 10 percent done.
+#&gt; Metropolis acceptance ratio: 0.962963
+#&gt; 
+#&gt; 20 percent done.
+#&gt; Metropolis acceptance ratio: 0.963982
+#&gt; 
+#&gt; 30 percent done.
+#&gt; Metropolis acceptance ratio: 0.966989
+#&gt; 
+#&gt; 40 percent done.
+#&gt; Metropolis acceptance ratio: 0.965241
+#&gt; 
+#&gt; 50 percent done.
+#&gt; Metropolis acceptance ratio: 0.964993
+#&gt; 
+#&gt; 60 percent done.
+#&gt; Metropolis acceptance ratio: 0.965661
+#&gt; 
+#&gt; 70 percent done.
+#&gt; Metropolis acceptance ratio: 0.966424
+#&gt; 
+#&gt; 80 percent done.
+#&gt; Metropolis acceptance ratio: 0.964621
+#&gt; 
+#&gt; 90 percent done.
+#&gt; Metropolis acceptance ratio: 0.96444
+#&gt; 
+#&gt; 100 percent done.
+#&gt; Metropolis acceptance ratio: 0.963496
+#&gt; </div><div class='input'>
  <span class='co'>## You can also let it find a plan on its own!</span>
  <span class='va'>sims</span> <span class='op'>&lt;-</span> <span class='fu'>redist.flip</span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>fl25_adj</span>, total_pop <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>,
                        ndists <span class='op'>=</span> <span class='fl'>3</span>, nsims <span class='op'>=</span> <span class='fl'>10000</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; 
+#&gt; ==================== 
+#&gt; redist.flip(): Automated Redistricting Simulation Using
+#&gt;          Markov Chain Monte Carlo
+#&gt; 
+#&gt; Preprocessing data.
+#&gt; 
+#&gt; Starting swMH().
+#&gt; 10 percent done.
+#&gt; Metropolis acceptance ratio: 0.967968
+#&gt; 
+#&gt; 20 percent done.
+#&gt; Metropolis acceptance ratio: 0.963482
+#&gt; 
+#&gt; 30 percent done.
+#&gt; Metropolis acceptance ratio: 0.966656
+#&gt; 
+#&gt; 40 percent done.
+#&gt; Metropolis acceptance ratio: 0.963241
+#&gt; 
+#&gt; 50 percent done.
+#&gt; Metropolis acceptance ratio: 0.962593
+#&gt; 
+#&gt; 60 percent done.
+#&gt; Metropolis acceptance ratio: 0.963994
+#&gt; 
+#&gt; 70 percent done.
+#&gt; Metropolis acceptance ratio: 0.964138
+#&gt; 
+#&gt; 80 percent done.
+#&gt; Metropolis acceptance ratio: 0.964246
+#&gt; 
+#&gt; 90 percent done.
+#&gt; Metropolis acceptance ratio: 0.963663
+#&gt; 
+#&gt; 100 percent done.
+#&gt; Metropolis acceptance ratio: 0.963796
+#&gt; </div><div class='input'>
 
+<span class='co'># }</span>
 
-<span class='op'>}</span>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.0.9000</span>
       </span>
     </div>
 
@@ -112,7 +112,7 @@
 
       
 
-      </header><script src="mcmc_files/header-attrs-2.8/header-attrs.js"></script><div class="row">
+      </header><script src="mcmc_files/header-attrs-2.9/header-attrs.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Redistricting with Flip MCMC</h1>
@@ -157,7 +157,7 @@
 <span class="va">plan</span> <span class="op">&lt;-</span> <span class="va">fl25_enum</span><span class="op">$</span><span class="va">plans</span><span class="op">[</span>, <span class="fl">7241</span><span class="op">]</span>
 <span class="va">adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.adjacency.html">redist.adjacency</a></span><span class="op">(</span><span class="va">fl25</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>
-<span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.mcmc.html">redist.flip</a></span><span class="op">(</span>adj <span class="op">=</span> <span class="va">adj</span>, init_plan <span class="op">=</span> <span class="va">plan</span>, total_pop <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span>, 
+<span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.flip.html">redist.flip</a></span><span class="op">(</span>adj <span class="op">=</span> <span class="va">adj</span>, init_plan <span class="op">=</span> <span class="va">plan</span>, total_pop <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span>, 
                     nsims <span class="op">=</span> <span class="fl">6</span>, pop_tol <span class="op">=</span> <span class="fl">0.10</span>, 
                     constraint <span class="op">=</span> <span class="st">'compact'</span>, constraintweights <span class="op">=</span> <span class="fl">0.02</span>,
                     compactness_metric <span class="op">=</span> <span class="st">'edges-removed'</span><span class="op">)</span>
@@ -225,7 +225,7 @@
 <code class="sourceCode R"><span class="va">adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.adjacency.html">redist.adjacency</a></span><span class="op">(</span>shp <span class="op">=</span> <span class="va">iowa</span>, plan <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">cd_2010</span><span class="op">)</span></code></pre></div>
 <p>In addition, we need population for each unit. We’ve included <code>iowa$pop</code> as the total population as of the 2010 Census. From there, we have the basic information that we need to run our first simulation. The below indicates that we are simulating 1000 plans (with <code>nsims</code>) for the state of Iowa that have at most a population parity deviation of 0.05 (with <code>pop_tol</code>).</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.mcmc.html">redist.flip</a></span><span class="op">(</span>adj <span class="op">=</span> <span class="va">adj</span>, total_pop <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">pop</span>, init_plan <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">cd_2010</span>,
+<code class="sourceCode R"><span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.flip.html">redist.flip</a></span><span class="op">(</span>adj <span class="op">=</span> <span class="va">adj</span>, total_pop <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">pop</span>, init_plan <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">cd_2010</span>,
                     nsims <span class="op">=</span> <span class="fl">1000</span>, pop_tol <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; ==================== </span>
@@ -279,7 +279,7 @@
 <p><img src="mcmc_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
 <p>Now, this plan is incredibly non-compact, which can be an issue. However, we should expect this type of outcome, as we didn’t include a compactness constraint while simulating. Thus, the only things checked were contiguity and that no plan would be outside of the <code>pop_tol</code> set above. Since there are many more non-compact plans than compact plans in the space of all redistricting plans, we end up with highly non-compact districts. We can fix this by specifying a constraint, as below:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">sims_comp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.mcmc.html">redist.flip</a></span><span class="op">(</span>adj <span class="op">=</span> <span class="va">adj</span>, total_pop <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">pop</span>, init_plan <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">cd_2010</span>,
+<code class="sourceCode R"><span class="va">sims_comp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.flip.html">redist.flip</a></span><span class="op">(</span>adj <span class="op">=</span> <span class="va">adj</span>, total_pop <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">pop</span>, init_plan <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">cd_2010</span>,
                          nsims <span class="op">=</span> <span class="fl">1000</span>, pop_tol <span class="op">=</span> <span class="fl">0.05</span>,
                          constraint <span class="op">=</span> <span class="st">'compact'</span>, constraintweights <span class="op">=</span> <span class="fl">0.4</span>,
                          compactness_metric <span class="op">=</span> <span class="st">'edges-removed'</span><span class="op">)</span>
@@ -339,15 +339,15 @@
 <p>Here, we opt to initialize using the <code>RSG</code> algorithm, though the default is to use the <code>SMC</code> algorithm. When we want to initialize without providing an initial partition, we need to specify the number of districts, <code>ndists</code>.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">flip_chains</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">nchains</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">{</span>
-  <span class="fu"><a href="../reference/redist.mcmc.html">redist.flip</a></span><span class="op">(</span>adj <span class="op">=</span> <span class="va">adj</span>,  total_pop <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">pop</span>, pop_tol <span class="op">=</span> <span class="fl">0.05</span>,
+  <span class="fu"><a href="../reference/redist.flip.html">redist.flip</a></span><span class="op">(</span>adj <span class="op">=</span> <span class="va">adj</span>,  total_pop <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">pop</span>, pop_tol <span class="op">=</span> <span class="fl">0.05</span>,
               nsims <span class="op">=</span> <span class="va">nsims</span>, init_plan <span class="op">=</span> <span class="st">'rsg'</span>, ndists <span class="op">=</span> <span class="fl">4</span>,
               constraint <span class="op">=</span> <span class="st">'compact'</span>, constraintweights <span class="op">=</span> <span class="fl">0.4</span>,
               compactness_metric <span class="op">=</span> <span class="st">'edges-removed'</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
 <span class="op">}</span><span class="op">)</span></code></pre></div>
 <p>In Unix-based systems, this can be run considerably faster by running this in parallel.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">mcmc_chains</span> <span class="op">&lt;-</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/mclapply.html">mclapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">nchains</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">{</span>
-  <span class="fu"><a href="../reference/redist.mcmc.html">redist.flip</a></span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">adjlist</span>,  popvec <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span>, 
+<code class="sourceCode R"><span class="va">mcmc_chains</span> <span class="op">&lt;-</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/mcdummies.html">mclapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">nchains</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">{</span>
+  <span class="fu"><a href="../reference/redist.flip.html">redist.flip</a></span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">adjlist</span>,  popvec <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span>, 
               nsims <span class="op">=</span> <span class="va">nsims</span>, ndists <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>
 <span class="op">}</span>, mc.set.seed <span class="op">=</span> <span class="fl">1</span>, mc.cores <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html">detectCores</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><a href="#top">Back to top</a></p>
@@ -369,7 +369,7 @@
 <code class="sourceCode R"><span class="va">tidy_sims</span> <span class="op">&lt;-</span> <span class="va">iowa_map</span> <span class="op">%&gt;%</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span>nsims <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; ==================== </span>
-<span class="co">#&gt; redist.mcmc(): Automated Redistricting Simulation Using</span>
+<span class="co">#&gt; redist.flip(): Automated Redistricting Simulation Using</span>
 <span class="co">#&gt;          Markov Chain Monte Carlo</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Preprocessing data.</span>
@@ -413,7 +413,7 @@
 <code class="sourceCode R"><span class="va">tidy_sims_no_comp</span> <span class="op">&lt;-</span> <span class="va">iowa_map</span> <span class="op">%&gt;%</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span>nsims <span class="op">=</span> <span class="fl">1000</span>, constraints <span class="op">=</span> <span class="va">cons</span><span class="op">)</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; ==================== </span>
-<span class="co">#&gt; redist.mcmc(): Automated Redistricting Simulation Using</span>
+<span class="co">#&gt; redist.flip(): Automated Redistricting Simulation Using</span>
 <span class="co">#&gt;          Markov Chain Monte Carlo</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Preprocessing data.</span>
@@ -457,7 +457,7 @@
 <code class="sourceCode R"><span class="va">tidy_sims_sq_comp</span> <span class="op">&lt;-</span> <span class="va">iowa_map</span> <span class="op">%&gt;%</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span>nsims <span class="op">=</span> <span class="fl">1000</span>, constraints <span class="op">=</span> <span class="va">cons</span><span class="op">)</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; ==================== </span>
-<span class="co">#&gt; redist.mcmc(): Automated Redistricting Simulation Using</span>
+<span class="co">#&gt; redist.flip(): Automated Redistricting Simulation Using</span>
 <span class="co">#&gt;          Markov Chain Monte Carlo</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Preprocessing data.</span>
@@ -502,7 +502,7 @@
 <p>Alternatively, you can directly use functions on the <code>redist_plans</code> object. For example, if we want to measure the competitiveness of each plan:</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">tidy_sims</span> <span class="op">&lt;-</span> <span class="va">tidy_sims</span> <span class="op">%&gt;%</span> 
-  <span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/mutate.html">mutate</a></span><span class="op">(</span>competitiveness <span class="op">=</span> <span class="fu"><a href="../reference/competitiveness.html">competitiveness</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span>, rvote <span class="op">=</span> <span class="va">rep_08</span>, dvote <span class="op">=</span> <span class="va">dem_08</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>competitiveness <span class="op">=</span> <span class="fu"><a href="../reference/competitiveness.html">competitiveness</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span>, rvote <span class="op">=</span> <span class="va">rep_08</span>, dvote <span class="op">=</span> <span class="va">dem_08</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">tidy_sims</span> <span class="op">%&gt;%</span> 
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">competitiveness</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>
@@ -543,24 +543,9 @@
 <p>As examples for the next two plots, we can use the example above which ran 4 chains. This is the same index, but computed for each chain.</p>
 <div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">seg_chains</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">nchains</span>, 
-                     <span class="kw">function</span><span class="op">(</span><span class="va">i</span><span class="op">)</span><span class="op">{</span><span class="fu"><a href="../reference/segregation_index.html">redist.segcalc</a></span><span class="op">(</span>algout <span class="op">=</span> <span class="va">flip_chains</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>, 
+                     <span class="kw">function</span><span class="op">(</span><span class="va">i</span><span class="op">)</span><span class="op">{</span><span class="fu"><a href="../reference/segregation_index.html">redist.segcalc</a></span><span class="op">(</span>plans <span class="op">=</span> <span class="va">flip_chains</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>, 
                                                 group_pop <span class="op">=</span> <span class="va">iowa_map</span><span class="op">$</span><span class="va">rep_08</span>,
-                                                total_pop <span class="op">=</span> <span class="va">iowa_map</span><span class="op">$</span><span class="va">pop</span><span class="op">)</span><span class="op">}</span><span class="op">)</span>
-<span class="co">#&gt; Warning: 'algout' is deprecated.</span>
-<span class="co">#&gt; Use 'plans' instead.</span>
-<span class="co">#&gt; See help("Deprecated")</span>
-
-<span class="co">#&gt; Warning: 'algout' is deprecated.</span>
-<span class="co">#&gt; Use 'plans' instead.</span>
-<span class="co">#&gt; See help("Deprecated")</span>
-
-<span class="co">#&gt; Warning: 'algout' is deprecated.</span>
-<span class="co">#&gt; Use 'plans' instead.</span>
-<span class="co">#&gt; See help("Deprecated")</span>
-
-<span class="co">#&gt; Warning: 'algout' is deprecated.</span>
-<span class="co">#&gt; Use 'plans' instead.</span>
-<span class="co">#&gt; See help("Deprecated")</span></code></pre></div>
+                                                total_pop <span class="op">=</span> <span class="va">iowa_map</span><span class="op">$</span><span class="va">pop</span><span class="op">)</span><span class="op">}</span><span class="op">)</span></code></pre></div>
 <ul>
 <li>Trace Plot</li>
 </ul>
@@ -589,7 +574,7 @@
 <span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span>,  nsims <span class="op">=</span> <span class="fl">2500</span><span class="op">)</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; ==================== </span>
-<span class="co">#&gt; redist.mcmc(): Automated Redistricting Simulation Using</span>
+<span class="co">#&gt; redist.flip(): Automated Redistricting Simulation Using</span>
 <span class="co">#&gt;          Markov Chain Monte Carlo</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Preprocessing data.</span>
@@ -654,7 +639,7 @@
   <span class="va">adj_dists</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">dists</span><span class="op">[</span><span class="va">i</span>, <span class="va">i</span> <span class="op">+</span> <span class="fl">1</span><span class="op">]</span>
   <span class="va">adj_dists_new</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">dists_new</span><span class="op">[</span><span class="va">i</span>, <span class="va">i</span> <span class="op">+</span> <span class="fl">1</span><span class="op">]</span>
 <span class="op">}</span>
-<span class="fu"><a href="https://rdrr.io/pkg/tibble/man/tibble.html">tibble</a></span><span class="op">(</span>Hamming <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">adj_dists</span>, <span class="va">adj_dists_new</span><span class="op">)</span>, 
+<span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span>Hamming <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">adj_dists</span>, <span class="va">adj_dists_new</span><span class="op">)</span>, 
        `lambda/eprob` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="st">'0/0.05'</span>, <span class="fl">2499</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="st">'2/0.10'</span>, <span class="fl">2499</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span> 
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> 
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_density.html">geom_density</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Hamming</span>, color <span class="op">=</span> <span class="va">`lambda/eprob`</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> 
@@ -669,10 +654,10 @@
 <p>Sometimes a starting map sits in a neighborhood of maps that isn’t very conducive to using it as a starting point. This is most often characterized by running a single iteration that runs (seemingly) forever. A typical fix for this is to weaken the population tolerance and use a Gibbs constraint to pull the simulations back into the target range. I’ve done this for the tuning example, even though it’s unnecessary.</p>
 <p>After simulating, if there is a hard constraint to consider, we can check the parities:</p>
 <div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">sims</span> <span class="op">&lt;-</span> <span class="va">sims</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/mutate.html">mutate</a></span><span class="op">(</span>par <span class="op">=</span> <span class="fu"><a href="../reference/redist.parity.html">plan_parity</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">sims</span> <span class="op">&lt;-</span> <span class="va">sims</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>par <span class="op">=</span> <span class="fu"><a href="../reference/redist.parity.html">plan_parity</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p>And then we can subset to the correct space.</p>
 <div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">sims</span> <span class="op">&lt;-</span> <span class="va">sims</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/filter.html">filter</a></span><span class="op">(</span><span class="va">par</span> <span class="op">&lt;=</span> <span class="fl">0.01</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">sims</span> <span class="op">&lt;-</span> <span class="va">sims</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="va">par</span> <span class="op">&lt;=</span> <span class="fl">0.01</span><span class="op">)</span></code></pre></div>
 <p>With the right set of parameters, this will lead to a reasonable set of simulations. In this case, we end up with about 10% of the simulations when using a soft constraint, which is not uncommon. In general, you want to aim for as low as a hard population parity as possible, while using a strong weight on the Gibbs population when the hard constraint is above what’s necessary. This helps maximize the efficiency of your simulations, while allowing for additional movement between neighborhoods of valid plans.</p>
 </div>
 <div id="balancing-multiple-constraints" class="section level2">
@@ -692,7 +677,7 @@
 <code class="sourceCode R"><span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="fl">2000</span>, constraints <span class="op">=</span> <span class="va">cons</span><span class="op">)</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; ==================== </span>
-<span class="co">#&gt; redist.mcmc(): Automated Redistricting Simulation Using</span>
+<span class="co">#&gt; redist.flip(): Automated Redistricting Simulation Using</span>
 <span class="co">#&gt;          Markov Chain Monte Carlo</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Preprocessing data.</span>
@@ -737,7 +722,7 @@
 <span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="fl">2000</span>, constraints <span class="op">=</span> <span class="va">cons</span><span class="op">)</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; ==================== </span>
-<span class="co">#&gt; redist.mcmc(): Automated Redistricting Simulation Using</span>
+<span class="co">#&gt; redist.flip(): Automated Redistricting Simulation Using</span>
 <span class="co">#&gt;          Markov Chain Monte Carlo</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Preprocessing data.</span>

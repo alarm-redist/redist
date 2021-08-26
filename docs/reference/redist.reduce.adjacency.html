@@ -186,10 +186,23 @@
     <p>zero indexed adjacency list with max value length(keep_rows) - 1</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
-<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_adj</span><span class='op'>)</span>
+    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25_adj</span><span class='op'>)</span>
 <span class='fu'>redist.reduce.adjacency</span><span class='op'>(</span><span class='va'>fl25_adj</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>2</span>, <span class='fl'>3</span>, <span class='fl'>4</span>, <span class='fl'>6</span>, <span class='fl'>21</span><span class='op'>)</span><span class='op'>)</span>
-<span class='op'>}</span>
+</div><div class='output co'>#&gt; [[1]]
+#&gt; [1] 2 4
+#&gt; 
+#&gt; [[2]]
+#&gt; [1] 2 3 4
+#&gt; 
+#&gt; [[3]]
+#&gt; [1] 0 1 4
+#&gt; 
+#&gt; [[4]]
+#&gt; [1] 1
+#&gt; 
+#&gt; [[5]]
+#&gt; [1] 0 1 2
+#&gt; </div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

@@ -245,13 +245,29 @@ Gerrymandering: Political Geography and Electoral Bias in Legislatures.''
 Quarterly Journal of Political Science. 8(3): 239-269.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
-<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"fl25"</span><span class='op'>)</span>
+    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"fl25"</span><span class='op'>)</span>
 <span class='va'>adj</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.adjacency.html'>redist.adjacency</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
-<span class='va'>area</span> <span class='op'>&lt;-</span> <span class='fu'>sf</span><span class='fu'>::</span><span class='fu'><a href='https://r-spatial.github.io/sf/reference/geos_measures.html'>st_area</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
-<span class='va'>centers</span> <span class='op'>&lt;-</span> <span class='fu'>sf</span><span class='fu'>::</span><span class='fu'><a href='https://r-spatial.github.io/sf/reference/st_coordinates.html'>st_coordinates</a></span><span class='op'>(</span><span class='fu'>sf</span><span class='fu'>::</span><span class='fu'><a href='https://r-spatial.github.io/sf/reference/geos_unary.html'>st_centroid</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span><span class='op'>)</span>
 <span class='fu'>redist.crsg</span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>adj</span>, total_pop <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>, shp <span class='op'>=</span> <span class='va'>fl25</span>, ndists <span class='op'>=</span> <span class='fl'>2</span>, pop_tol <span class='op'>=</span> <span class='fl'>.1</span><span class='op'>)</span>
-<span class='op'>}</span>
+</div><div class='output co'>#&gt; 
+#&gt; ==================== 
+#&gt; redist.crsg(): Automated Redistricting Starts
+#&gt; 
+#&gt; 
+#&gt; 	2 districts built using 25 precincts in 0 seconds...
+#&gt; </div><div class='output co'>#&gt; $plan
+#&gt;  [1] 2 2 2 2 1 2 1 1 2 1 1 1 1 2 1 2 2 2 1 1 2 1 2 1 1
+#&gt; 
+#&gt; $district_list
+#&gt; $district_list[[1]]
+#&gt;  [1]  9 10 11 24 12 14 18  7 19  6 21  4 23
+#&gt; 
+#&gt; $district_list[[2]]
+#&gt;  [1]  5 22  8 13  3 20  2 17 16  1 15  0
+#&gt; 
+#&gt; 
+#&gt; $district_pop
+#&gt; [1] 82525 92518
+#&gt; </div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
