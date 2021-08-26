@@ -182,27 +182,27 @@ redist_map = function(..., existing_plan=NULL, pop_tol=NULL,
     }
 
     existing_col = names(tidyselect::eval_select(rlang::enquo(existing_plan), x))
-    if (length(existing_col) == 0) {
+    if (length(existing_col) == 0)
       existing_col = NULL
-    } else {
-      if (!is.numeric(existing_col)) {
+
+    if (!is.null(existing_col)) {
+      if (!is.numeric(x[[existing_col]])) {
         temp_col <- NULL
-        try({temp_col <- as.numeric(existing_col)})
-        if (!is.null(temp_col)) {
-          existing_col <- temp_col
+        suppressWarnings({temp_col <- as.numeric(x[[existing_col]])})
+        if (!any(is.na(temp_col))) {
+          x[[existing_col]] <- temp_col
         } else {
           stop('`existing_col` was not numeric and could not be converted to numeric.')
         }
       }
     }
 
-
-
     if (is.null(ndists)) {
-        if (!is.null(existing_col))
+        if (!is.null(existing_col)) {
             ndists = length(unique(x[[existing_col]]))
-        else
-            stop("Must specify `ndists` if `existing_plan` is not supplied.")
+        } else {
+          stop("Must specify `ndists` if `existing_plan` is not supplied.")
+        }
     } else {
         ndists = as.integer(rlang::eval_tidy(rlang::enquo(ndists), x))
     }
