@@ -238,8 +238,8 @@ for each precinct and one column for each map. Required.</p></td>
       <th>draw</th>
       <td><p>A numeric to specify draw number. Defaults to 1 if only one map provided
 and the column number if multiple maps given. Can also take a factor input, which will become the
-draw column in the output if its length matches the number of entries in plans. If the `plans` input
-is a `redist_plans` object, it extracts the `draw` identifier.</p></td>
+draw column in the output if its length matches the number of entries in plans. If the <code>plans</code> input
+is a <code>redist_plans</code> object, it extracts the <code>draw</code> identifier.</p></td>
     </tr>
     <tr>
       <th>ncores</th>
@@ -255,21 +255,23 @@ a column that specifies the map number.</p>
 
     <p>This function computes specified compactness scores for a map.  If
 there is more than one precinct specified for a map, it aggregates to the district level
-and computes one score.</p>
-<p>DSeats is computed as the expected number of Democratic seats with no change in votes.
-DVS is the Democratic Vote Share, which is the two party vote share with Democratic votes as the numerator.
-EffGap is the Efficiency Gap, calculated with votes directly.
-EffGapEqPop is the Efficiency Gap under an Equal Population assumption, calculated with the DVS.
-TauGap is the Tau Gap, computed with the Equal Population assumption.
-MeanMedian is the Mean Median difference.
-Bias is the Partisan Bias computed at 0.5.
-BiasV is the Partisan Bias computed at value V.
-Declination is the value of declination at 0.5.
-Responsiveness is the responsiveness at the user-supplied value with the user-supplied bandwidth.
-LopsidedWins computed the Lopsided Outcomes value, but does not produce a test statistic.
-RankedMarginal computes the Ranked Marginal Deviation (0-1, smaller is better). This is also known
-as the "Gerrymandering Index" and is sometimes presented as this value divided by 10000.
-SmoothedSeat computes the Smoothed Seat Count Deviation (0-1, smaller is R Bias, bigger is D Bias).</p>
+and computes one score.</p><ul>
+<li><p>DSeats is computed as the expected number of Democratic seats with no change in votes.</p></li>
+<li><p>DVS is the Democratic Vote Share, which is the two party vote share with Democratic votes as the numerator.</p></li>
+<li><p>EffGap is the Efficiency Gap, calculated with votes directly.</p></li>
+<li><p>EffGapEqPop is the Efficiency Gap under an Equal Population assumption, calculated with the DVS.</p></li>
+<li><p>TauGap is the Tau Gap, computed with the Equal Population assumption.</p></li>
+<li><p>MeanMedian is the Mean Median difference.</p></li>
+<li><p>Bias is the Partisan Bias computed at 0.5.</p></li>
+<li><p>BiasV is the Partisan Bias computed at value V.</p></li>
+<li><p>Declination is the value of declination at 0.5.</p></li>
+<li><p>Responsiveness is the responsiveness at the user-supplied value with the user-supplied bandwidth.</p></li>
+<li><p>LopsidedWins computed the Lopsided Outcomes value, but does not produce a test statistic.</p></li>
+<li><p>RankedMarginal computes the Ranked Marginal Deviation (0-1, smaller is better). This is also known
+as the "Gerrymandering Index" and is sometimes presented as this value divided by 10000.</p></li>
+<li><p>SmoothedSeat computes the Smoothed Seat Count Deviation (0-1, smaller is R Bias, bigger is D Bias).</p></li>
+</ul>
+
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
     <p>Jonathan N. Katz, Gary King, and Elizabeth Rosenblatt. 2020.
