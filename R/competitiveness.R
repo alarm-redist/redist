@@ -13,8 +13,6 @@
 #' @return Numeric vector with competitiveness scores
 #' @export
 #'
-#' @details
-#'
 #' @concept analyze
 #' @examples
 #' data(fl25)
@@ -29,5 +27,5 @@ redist.competitiveness <- function(plans, rvote, dvote, alpha = 1, beta = 1){
   dcounts <- agg_p2d(vote = dvote, dm = plans, nd = nd)
   dseat_vec <- dseats(dm = plans, rcounts = rcounts, dcounts = dcounts, nd = nd)
   dvs <- DVS(dcounts = dcounts, rcounts = rcounts)
-    talisman(dvs = dvs, nd = nd, alpha = alpha, beta = beta)
+  talisman(dvs = dvs, nd = nd, alpha = alpha, beta = beta)
 }

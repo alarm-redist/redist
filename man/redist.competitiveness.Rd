@@ -32,9 +32,6 @@ Numeric vector with competitiveness scores
 Currently only implements the competitiveness function in equation (5)
 of Cho & Liu 2016.
 }
-\details{
-
-}
 \examples{
 data(fl25)
 data(fl25_enum)
