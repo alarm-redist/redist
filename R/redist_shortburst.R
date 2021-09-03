@@ -391,9 +391,9 @@ scorer_pop_dev <- function(map) {
 scorer_splits <- function(map, counties) {
   counties <- eval_tidy(enquo(counties), map)
   counties <- as.integer(as.factor(counties))
-  nd <- length(unique(plans[, 1]))
 
   fn = function(plans) {
+    nd <- length(unique(plans[, 1]))
     splits(plans, counties, nd, 1)/length(unique(counties))
   }
   class(fn) <- c("redist_scorer", "function")
