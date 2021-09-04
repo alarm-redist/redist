@@ -30,7 +30,7 @@ Authors:
     <christopherkenny@fas.harvard.edu> (Maintainer)
 -   [Cory McCartan](https://corymccartan.github.io),
     <cmccartan@g.harvard.edu>
--   [Ben Fifield](https://benfifield.com), <benfifield@gmail.com>
+-   [Ben Fifield](https://www.benfifield.com), <benfifield@gmail.com>
 -   [Kosuke Imai](https://imai.fas.harvard.edu), <imai@harvard.edu>
 
 Contributors:
@@ -88,11 +88,11 @@ iowa_plans = redist_smc(iowa_map, nsims=250, verbose=FALSE)
 #> Sampling 250 99-unit maps with 4 districts and population between 761513 and 761665.
 #> Making split 1 of 3
 #> Note: maximum hit; falling back to naive k estimator.
-#> Resampling effective sample size: 246.1 (98.4% efficiency).
+#> Resampling effective sample size: 246.051 (98.4206 efficiency).
 #> Making split 2 of 3
-#> Resampling effective sample size: 246.2 (98.5% efficiency).
+#> Resampling effective sample size: 245.859 (98.3437 efficiency).
 #> Making split 3 of 3
-#> Resampling effective sample size: 244.3 (97.7% efficiency).
+#> Resampling effective sample size: 246.756 (98.7022 efficiency).
 ```
 
 After generating plans, you can use `redist`’s plotting functions to
