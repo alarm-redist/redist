@@ -411,7 +411,7 @@ print.redist_plans = function(x, ...) {
             cat("With plans not resampled from weights\n")
     }
 
-    cat("Plans matrix:", utils::capture.output(str(plans_m, give.attr=F)),
+    cat("Plans matrix:", utils::capture.output(str(plans_m, give.attr=FALSE)),
         "\n", sep="")
 
     utils::getS3method("print", "tbl")(x)
