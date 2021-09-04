@@ -122,7 +122,7 @@ In addition, we need population for each unit. We've included `iowa$pop` as the 
 
 ```{r}
 sims <- redist.flip(adj = adj, total_pop = iowa$pop, init_plan = iowa$cd_2010,
-                    nsims = 1000, pop_tol = 0.05)
+                    nsims = 100, pop_tol = 0.05)
 ```
 
 The printed output can be silenced by setting `verbose = FALSE`, however it displays very important information. First, it displays when preprocessing begins and when the algorithm actually starts. Each 10% of the way through the `flip` algorithm, it outputs the current estimated Metropolis acceptance. Here, we've specified no Gibbs constraints, so the acceptance will always be near 100%.
@@ -149,7 +149,7 @@ Now, this plan is incredibly non-compact, which can be an issue. However, we sho
 
 ```{r}
 sims_comp <- redist.flip(adj = adj, total_pop = iowa$pop, init_plan = iowa$cd_2010,
-                         nsims = 1000, pop_tol = 0.05,
+                         nsims = 100, pop_tol = 0.05,
                          constraint = 'compact', constraintweights = 0.4,
                          compactness_metric = 'edges-removed')
 ```
@@ -173,7 +173,7 @@ On Windows and in smaller capacities, it is useful to run the algorithm within a
 ```{r}
 set.seed(1)
 nchains <- 4
-nsims <- 2000
+nsims <- 100
 ```
 
 Here, we opt to initialize using the `RSG` algorithm, though the default is to use the `SMC` algorithm. When we want to initialize without providing an initial partition, we need to specify the number of districts, `ndists`.
@@ -226,7 +226,7 @@ set.seed(2)
 Now, we can pass the `redist_map` object to `redist_flip` to begin simulating.
 
 ```{r sims}
-tidy_sims <- iowa_map %>% redist_flip(nsims = 1000)
+tidy_sims <- iowa_map %>% redist_flip(nsims = 100)
 ```
 
 This highlights a key difference between the `redist_flip` and `redist.flip` implementations: `redist_flip` appears to have a much lower acceptance rate, even though we didn't explicitly set any constraints. Why? `redist_flip`'s constraint includes a relatively weak compactness constraint by default because simulating compact maps is far more efficient and completely non-compact maps are not super useful for most purposes.
@@ -240,7 +240,7 @@ cons <- flip_constraints_helper(iowa_map, constraint = NULL)
 Then, you can pass this to `redist_flip`.
 
 ```{r}
-tidy_sims_no_comp <- iowa_map %>% redist_flip(nsims = 1000, constraints = cons)
+tidy_sims_no_comp <- iowa_map %>% redist_flip(nsims = 100, constraints = cons)
 ```
 
 This increases the acceptance ratio to near 100% again. The function `flip_constraints_helper()` is useful for setting up any constraints to be used with `redist_flip`. For example, if we want to set up a compactness constraint and a `similarity` constraint (which is the `flip` status quo constraint), we can do so as follows:
@@ -253,7 +253,7 @@ cons <- flip_constraints_helper(map = iowa_map, constraint = c('compact', 'simil
 From there, we can again pass this to `redist_flip`
 
 ```{r}
-tidy_sims_sq_comp <- iowa_map %>% redist_flip(nsims = 1000, constraints = cons)
+tidy_sims_sq_comp <- iowa_map %>% redist_flip(nsims = 100, constraints = cons)
 ```
 
 The output from `redist_flip` differs a bit from the output of `redist.flip`. It outputs a `redist_plans` object.
@@ -353,7 +353,7 @@ iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.02, total_pop 
 
 cons <- flip_constraints_helper(map = iowa_map, constraint = c('compact', 'population'),
                                 constraintweight = c(0.5, 100))
-sims <- redist_flip(map = iowa_map,  nsims = 2500)
+sims <- redist_flip(map = iowa_map,  nsims = 100)
 ```
 
 ## Acceptance Ratios
@@ -373,7 +373,7 @@ The goal is to generally have the Metropolis Hastings ratio lie between 20% and 
 `lambda` and `eprob` both control the amount of movement within `flip`. They can be very powerful things to increase. `lambda` defaults to 0, while `eprob` defaults to 0.05. Each of these parameters leads to fairly small movements between sequential iterations of the algorithm.
 
 ```{r}
-sims_new <- redist_flip(map = iowa_map, nsims = 2500, pop_tol = 0.02,
+sims_new <- redist_flip(map = iowa_map, nsims = 100, pop_tol = 0.02,
                         constraints = cons, eprob = 0.10, lambda = 2, verbose = FALSE)
 mean(sims_new$mhdecisions, na.rm = TRUE)
 ```
