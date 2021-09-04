@@ -1,3 +1,6 @@
+# redist 3.1.1
+* Fixes printing bug in `color_graph()`
+
 # redist 3.1.0
 * Removes prior deprecated functions and arguments
 * Fix bugs (#78, #81, #86)
