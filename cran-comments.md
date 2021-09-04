@@ -11,3 +11,7 @@
 
 ## Reverse Dependencies
 There are no reverse dependencies to check.
+
+## Additional Notes
+* Fixes URL redirects in readme and author sections of Rd files.
+* Decreases simulation sizes to lower check time.

@@ -142,7 +142,7 @@ dim(sims$plans)
 Checking the dimensions shows that each plan is saved as a column, where each row is a precinct. From this, we can extract a single plan as we would from a normal matrix, like below, where we plot the final simulated plan.
 
 ```{r}
-redist.plot.map(shp = iowa, plan = sims$plans[, 1000])
+redist.plot.map(shp = iowa, plan = sims$plans[, 100])
 ```
 
 Now, this plan is incredibly non-compact, which can be an issue. However, we should expect this type of outcome, as we didn't include a compactness constraint while simulating. Thus, the only things checked were contiguity and that no plan would be outside of the `pop_tol` set above. Since there are many more non-compact plans than compact plans in the space of all redistricting plans, we end up with highly non-compact districts. We can fix this by specifying a constraint, as below:
@@ -159,7 +159,7 @@ The first arguments as the same, but this adds three key arguments. First, setti
 If we plot the final map sampled from the above code, we can see that it is *far more* compact.
 
 ```{r}
-redist.plot.map(shp = iowa, plan = sims_comp$plans[, 1000])
+redist.plot.map(shp = iowa, plan = sims_comp$plans[, 100])
 ```
 
 [Back to top](#top)
@@ -435,7 +435,7 @@ cons <- flip_constraints_helper(map = iowa_map,
 Then we can run this for a relatively small number of iterations.
 
 ```{r}
-sims <- redist_flip(iowa_map, 2000, constraints = cons)
+sims <- redist_flip(iowa_map, 100, constraints = cons)
 ```
 
 Now, the interesting this here is that adding more constraints actually increased the acceptance probability. This is because correlated constraints can guide the algorithm towards high probability neighborhoods where there are multiple maps which could be considered! To address this, we might want to increase the constraint weight slightly across the board. Had the weights been far too low, we might lower them, particularly on constraints that we are not too worried about.
@@ -446,7 +446,7 @@ cons <- flip_constraints_helper(map = iowa_map,
                                 constraintweight = c(1.5, 100, 40, 20),
                                 counties = name, 
                                 rvote = iowa$rep_08, dvote = iowa$dem_08)
-sims <- redist_flip(iowa_map, 2000, constraints = cons)
+sims <- redist_flip(iowa_map, 100, constraints = cons)
 ```
 
 For example, this new set of constraints might be a good place to simulate at.
