@@ -1,5 +1,12 @@
 # redist 3.1.0
-
+* Removes prior deprecated functions and arguments
+* Fix bugs (#78, #81, #86)
+* Introduces `redist_mergesplit_parallel()`
+* Adds `rbind()` generic for `redist_plans` objects
+* Improves sampling speed for SMC and Merge-split with county constraint
+* Adds county split measures.
+* Adds population overlap measures for plan comparisons.
+* Deprecates `redist.smc()` in favor of `redist_smc()` and `redist.mergesplit()` in favor of `redist_mergesplit()`.
 # redist 3.0.2
 * Fix bugs (#60, #61, #62, #70, #71, #72), including s2 compatibility, Solaris fixes, and improved dplyr verb robustness.
 
