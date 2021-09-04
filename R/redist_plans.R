@@ -286,7 +286,7 @@ dplyr_row_slice.redist_plans = function(data, i, ...) {
 
     if (length(draws_left) != ncol(plans_m)) {
         attr(y, "wgt") = attr(y, "wgt")[draws_left]
-        y = set_plan_matrix(y, plans_m[, draws_left, drop=F])
+        y = set_plan_matrix(y, plans_m[, draws_left, drop=FALSE])
     }
 
     if (is.factor(y$draw)) {
