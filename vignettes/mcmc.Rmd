@@ -381,16 +381,16 @@ mean(sims_new$mhdecisions, na.rm = TRUE)
 In this example, we've increased each of these. `lambda = 2`, up from its default of 0, while `eprob = 0.10`, up from its default of `0.05`. What's going on here can characterized fairly well by the Hamming distance between sequential runs.
 
 ```{r}
-dists <- redist.distances(plan = get_plans_matrix(sims))$Hamming
+dists <- redist.distances(plans = get_plans_matrix(sims))$Hamming
 dists_new <- redist.distances(plans = get_plans_matrix(sims_new))$Hamming
-adj_dists <- rep(NA_integer_, 2499)
-adj_dists_new <- rep(NA_integer_, 2499)
-for(i in 1:2499){
+adj_dists <- rep(NA_integer_, 100)
+adj_dists_new <- rep(NA_integer_, 100)
+for(i in 1:100){
   adj_dists[i] <- dists[i, i + 1]
   adj_dists_new[i] <- dists_new[i, i + 1]
 }
 tibble(Hamming = c(adj_dists, adj_dists_new), 
-       `lambda/eprob` = c(rep('0/0.05', 2499), rep('2/0.10', 2499))) %>% 
+       `lambda/eprob` = c(rep('0/0.05', 100), rep('2/0.10', 100))) %>% 
   ggplot() + 
   geom_density(aes(x = Hamming, color = `lambda/eprob`)) + 
   theme_bw()
