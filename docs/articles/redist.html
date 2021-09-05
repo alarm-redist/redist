@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.1</span>
       </span>
     </div>
 
@@ -192,7 +192,7 @@
 <h1 class="hasAnchor">
 <a href="#prepare" class="anchor"></a>Compiling, cleaning, and preparing the data</h1>
 <p>The most time-consuming part of a redistricting analysis, like most data analyses, is collecting and cleaning the necessary data. For redistricting, this data includes geographic shapefiles for precincts and existing legislative district plans, precinct- or block-level demographic information from the Census, and precinct-level political data. These data generally come from different sources, and may not fully overlap with each other, further complicating the problem.</p>
-<p><code>redist</code> is not focused on this data collection process. The <a href="https://christopherkenny.github.io/geomander/"><code>geomander</code></a> package contains many helpful functions for compiling these data, and fixing problems in geographic data.</p>
+<p><code>redist</code> is not focused on this data collection process. The <a href="https://www.christophertkenny.com/geomander/"><code>geomander</code></a> package contains many helpful functions for compiling these data, and fixing problems in geographic data.</p>
 <p>Sources for precinct-level geographic and political information include the <a href="https://electionlab.mit.edu/data">MIT Election Lab</a>, the <a href="https://www.census.gov/programs-surveys/decennial-census/about/rdo.html">Census</a>, the <a href="https://redistrictingdatahub.org/">Redistricting Data Hub</a>, the <a href="https://dataverse.harvard.edu/dataverse/electionscience">Voting and Election Science Team</a>, the <a href="https://dataverse.harvard.edu/dataverse/eda">Harvard Election Data Archive</a>, the <a href="https://github.com/mggg-states">Metric Geometry and Gerrymandering Group</a>, and some state websites.</p>
 <div id="iowa" class="section level2">
 <h2 class="hasAnchor">
@@ -270,20 +270,20 @@
 <span class="co">#&gt; With geometry:</span>
 <span class="co">#&gt;     bbox:           xmin: 4081849 ymin: 2879102 xmax: 5834228 ymax: 4024957</span>
 <span class="co">#&gt;     projected CRS:  NAD83(HARN) / Iowa North (ftUS)</span>
-<span class="co">#&gt; # A tibble: 99 x 17</span>
+<span class="co">#&gt; # A tibble: 99 × 17</span>
 <span class="co">#&gt;    fips  name  cd_2010    pop  white black  hisp    vap  wvap  bvap  hvap tot_08</span>
 <span class="co">#&gt;  * &lt;chr&gt; &lt;chr&gt;   &lt;int&gt;  &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;</span>
 <span class="co">#&gt;  1 19001 Adair       3   7682   7507    11   101   5957  5860     5    53   4053</span>
 <span class="co">#&gt;  2 19003 Adams       3   4029   3922     8    37   3180  3109     6    22   2206</span>
-<span class="co">#&gt;  3 19005 Alla~       1  14330  13325   109   757  11020 10430    82   425   7059</span>
-<span class="co">#&gt;  4 19007 Appa~       2  12887  12470    55   181   9993  9745    40    99   6176</span>
-<span class="co">#&gt;  5 19009 Audu~       4   6119   6007     9    37   4780  4714     5    27   3435</span>
-<span class="co">#&gt;  6 19011 Bent~       1  26076  25387    93   275  19430 19068    49   155  13712</span>
-<span class="co">#&gt;  7 19013 Blac~       1 131090 109968 11493  4907 102594 89541  7677  2865  64775</span>
+<span class="co">#&gt;  3 19005 Alla…       1  14330  13325   109   757  11020 10430    82   425   7059</span>
+<span class="co">#&gt;  4 19007 Appa…       2  12887  12470    55   181   9993  9745    40    99   6176</span>
+<span class="co">#&gt;  5 19009 Audu…       4   6119   6007     9    37   4780  4714     5    27   3435</span>
+<span class="co">#&gt;  6 19011 Bent…       1  26076  25387    93   275  19430 19068    49   155  13712</span>
+<span class="co">#&gt;  7 19013 Blac…       1 131090 109968 11493  4907 102594 89541  7677  2865  64775</span>
 <span class="co">#&gt;  8 19015 Boone       4  26306  25194   202   505  20027 19448   103   260  13929</span>
-<span class="co">#&gt;  9 19017 Brem~       1  24276  23459   186   239  18763 18242   155   137  12871</span>
-<span class="co">#&gt; 10 19019 Buch~       1  20958  20344    59   243  15282 14979    32   128  10338</span>
-<span class="co">#&gt; # ... with 89 more rows, and 5 more variables: dem_08 &lt;dbl&gt;, rep_08 &lt;dbl&gt;,</span>
+<span class="co">#&gt;  9 19017 Brem…       1  24276  23459   186   239  18763 18242   155   137  12871</span>
+<span class="co">#&gt; 10 19019 Buch…       1  20958  20344    59   243  15282 14979    32   128  10338</span>
+<span class="co">#&gt; # … with 89 more rows, and 5 more variables: dem_08 &lt;dbl&gt;, rep_08 &lt;dbl&gt;,</span>
 <span class="co">#&gt; #   region &lt;chr&gt;, geometry &lt;MULTIPOLYGON [US_survey_foot]&gt;, adj &lt;list&gt;</span></code></pre></div>
 <p>This looks much the same as <code>iowa</code> itself, but metadata has been added, and there’s a new column, <code>adj</code>.</p>
 </div>
@@ -385,7 +385,7 @@
 <span class="co">#&gt;   drawn using Sequential Monte Carlo</span>
 <span class="co">#&gt; With plans resampled from weights</span>
 <span class="co">#&gt; Plans matrix: num [1:99, 1:1001] 3 3 1 2 4 1 1 4 1 1 ...</span>
-<span class="co">#&gt; # A tibble: 4,004 x 3</span>
+<span class="co">#&gt; # A tibble: 4,004 × 3</span>
 <span class="co">#&gt;    draw    district total_pop</span>
 <span class="co">#&gt;    &lt;fct&gt;      &lt;int&gt;     &lt;dbl&gt;</span>
 <span class="co">#&gt;  1 cd_2010        1    761548</span>
@@ -398,7 +398,7 @@
 <span class="co">#&gt;  8 1              4    768772</span>
 <span class="co">#&gt;  9 2              1    766133</span>
 <span class="co">#&gt; 10 2              2    761372</span>
-<span class="co">#&gt; # ... with 3,994 more rows</span></code></pre></div>
+<span class="co">#&gt; # … with 3,994 more rows</span></code></pre></div>
 <p>We can explore specific simulated plans with <code><a href="../reference/redist.plot.plans.html">redist.plot.plans()</a></code>.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/redist.plot.plans.html">redist.plot.plans</a></span><span class="op">(</span><span class="va">iowa_plans</span>, draws<span class="op">=</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span>, geom<span class="op">=</span><span class="va">iowa_map</span><span class="op">)</span></code></pre></div>
@@ -416,7 +416,7 @@
 <span class="co">#&gt;   drawn using Sequential Monte Carlo</span>
 <span class="co">#&gt; With plans resampled from weights</span>
 <span class="co">#&gt; Plans matrix: int [1:99, 1:1001] 3 3 1 2 4 1 1 4 1 1 ...</span>
-<span class="co">#&gt; # A tibble: 4,004 x 4</span>
+<span class="co">#&gt; # A tibble: 4,004 × 4</span>
 <span class="co">#&gt;    draw    district total_pop pop_overlap</span>
 <span class="co">#&gt;    &lt;fct&gt;   &lt;ord&gt;        &lt;dbl&gt;       &lt;dbl&gt;</span>
 <span class="co">#&gt;  1 cd_2010 1           761548       1    </span>
@@ -429,7 +429,7 @@
 <span class="co">#&gt;  8 1       4           766063       0.671</span>
 <span class="co">#&gt;  9 2       1           761372       0.765</span>
 <span class="co">#&gt; 10 2       2           754957       0.765</span>
-<span class="co">#&gt; # ... with 3,994 more rows</span></code></pre></div>
+<span class="co">#&gt; # … with 3,994 more rows</span></code></pre></div>
 <p>Then we can add summary statistics by district, using <code>redist</code>’s analysis functions. Here, we’ll compute the population deviation, the perimeter-based compactness measure related to the Iowa Code’s redistricting requirements, and the fraction of minority voters and two-party Democratic vote share by district.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">county_perims</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist.prep.polsbypopper.html">redist.prep.polsbypopper</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">iowa_map</span><span class="op">$</span><span class="va">adj</span><span class="op">)</span>
@@ -444,7 +444,7 @@
 <span class="co">#&gt;   drawn using Sequential Monte Carlo</span>
 <span class="co">#&gt; With plans resampled from weights</span>
 <span class="co">#&gt; Plans matrix: int [1:99, 1:1001] 3 3 1 2 4 1 1 4 1 1 ...</span>
-<span class="co">#&gt; # A tibble: 4,004 x 8</span>
+<span class="co">#&gt; # A tibble: 4,004 × 8</span>
 <span class="co">#&gt;    draw    district total_pop pop_overlap   pop_dev  comp pct_min pct_dem</span>
 <span class="co">#&gt;    &lt;fct&gt;   &lt;ord&gt;        &lt;dbl&gt;       &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;</span>
 <span class="co">#&gt;  1 cd_2010 1           761548       1     0.0000535 0.302  0.0737   0.592</span>
@@ -457,7 +457,7 @@
 <span class="co">#&gt;  8 1       4           766063       0.671 0.00587   0.279  0.0749   0.473</span>
 <span class="co">#&gt;  9 2       1           761372       0.765 0.000285  0.264  0.0670   0.593</span>
 <span class="co">#&gt; 10 2       2           754957       0.765 0.00871   0.262  0.0976   0.582</span>
-<span class="co">#&gt; # ... with 3,994 more rows</span></code></pre></div>
+<span class="co">#&gt; # … with 3,994 more rows</span></code></pre></div>
 <p>From there, it’s quick to turn these into plan-level summary statistics.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">plan_sum</span> <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html">group_by</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">draw</span><span class="op">)</span> <span class="op">%&gt;%</span>
@@ -470,7 +470,7 @@
 <span class="co">#&gt;   drawn using Sequential Monte Carlo</span>
 <span class="co">#&gt; With plans resampled from weights</span>
 <span class="co">#&gt; Plans matrix: int [1:99, 1:1001] 3 3 1 2 4 1 1 4 1 1 ...</span>
-<span class="co">#&gt; # A tibble: 1,001 x 5</span>
+<span class="co">#&gt; # A tibble: 1,001 × 5</span>
 <span class="co">#&gt;    draw      max_dev avg_comp max_pct_min dem_distr</span>
 <span class="co">#&gt;    &lt;fct&gt;       &lt;dbl&gt;    &lt;dbl&gt;       &lt;dbl&gt;     &lt;int&gt;</span>
 <span class="co">#&gt;  1 cd_2010 0.0000535    0.428       0.114         3</span>
@@ -483,7 +483,7 @@
 <span class="co">#&gt;  8 7       0.00652      0.460       0.129         3</span>
 <span class="co">#&gt;  9 8       0.00933      0.347       0.122         3</span>
 <span class="co">#&gt; 10 9       0.00671      0.406       0.109         3</span>
-<span class="co">#&gt; # ... with 991 more rows</span></code></pre></div>
+<span class="co">#&gt; # … with 991 more rows</span></code></pre></div>
 <p>These tables of statistics are easily plotted using existing libraries like <code>ggplot2</code>, but <code>redist</code> provides a number of helpful plotting functions that automate some common tasks, like adding a reference line for the reference plan. The output of these functions is a <code>ggplot</code> object, allowing for further customization.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com">patchwork</a></span><span class="op">)</span>

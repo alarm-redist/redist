@@ -82,7 +82,7 @@ together using basic arithmetic operations." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.1</span>
       </span>
     </div>
 
@@ -264,40 +264,40 @@ plan is closer to the existing plan.</p></li>
 #&gt; {
 #&gt;     (edges - n_removed(adj, plans, ndists))/edges
 #&gt; }
-#&gt; &lt;bytecode: 0x000000004bcbc530&gt;
-#&gt; &lt;environment: 0x00000000483d9750&gt;
+#&gt; &lt;bytecode: 0x7fd935394ba8&gt;
+#&gt; &lt;environment: 0x7fd94eee0ce8&gt;
 #&gt; attr(,"class")
 #&gt; [1] "redist_scorer" "function"     </div><div class='input'><span class='fu'>scorer_status_quo</span><span class='op'>(</span><span class='va'>iowa_map</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; function (plans) 
 #&gt; {
 #&gt;     1 - 0.5 * var_info_vec(plans, existing_plan, pop)/log(ndists)
 #&gt; }
-#&gt; &lt;bytecode: 0x000000004bcd5320&gt;
-#&gt; &lt;environment: 0x0000000048365308&gt;
+#&gt; &lt;bytecode: 0x7fd9353c2f60&gt;
+#&gt; &lt;environment: 0x7fd94f9f5558&gt;
 #&gt; attr(,"class")
 #&gt; [1] "redist_scorer" "function"     </div><div class='input'><span class='fu'>scorer_group_pct</span><span class='op'>(</span><span class='va'>iowa_map</span>, <span class='va'>dem_08</span>, <span class='va'>tot_08</span>, k<span class='op'>=</span><span class='fl'>2</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; function (plans) 
 #&gt; {
 #&gt;     group_pct_top_k(plans, group_pop, total_pop, k, ndists)
 #&gt; }
-#&gt; &lt;bytecode: 0x00000000482e22b8&gt;
-#&gt; &lt;environment: 0x00000000482df090&gt;
+#&gt; &lt;bytecode: 0x7fd94f843c80&gt;
+#&gt; &lt;environment: 0x7fd94f840630&gt;
 #&gt; attr(,"class")
 #&gt; [1] "redist_scorer" "function"     </div><div class='input'><span class='fl'>1.5</span><span class='op'>*</span><span class='fu'>scorer_frac_kept</span><span class='op'>(</span><span class='va'>iowa_map</span><span class='op'>)</span> <span class='op'>+</span> <span class='fl'>0.4</span><span class='op'>*</span><span class='fu'>scorer_status_quo</span><span class='op'>(</span><span class='va'>iowa_map</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; function (plans) 
 #&gt; {
 #&gt;     fn1(plans) + fn2(plans)
 #&gt; }
-#&gt; &lt;bytecode: 0x000000004bce0ac8&gt;
-#&gt; &lt;environment: 0x00000000481faa78&gt;
+#&gt; &lt;bytecode: 0x7fd9353cab38&gt;
+#&gt; &lt;environment: 0x7fd94c286910&gt;
 #&gt; attr(,"class")
 #&gt; [1] "redist_scorer" "function"     </div><div class='input'><span class='fl'>1.5</span><span class='op'>*</span><span class='fu'>scorer_frac_kept</span><span class='op'>(</span><span class='va'>iowa_map</span><span class='op'>)</span> <span class='op'>+</span> <span class='fu'>scorer_frac_kept</span><span class='op'>(</span><span class='va'>iowa_map</span><span class='op'>)</span><span class='op'>*</span><span class='fu'>scorer_status_quo</span><span class='op'>(</span><span class='va'>iowa_map</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; function (plans) 
 #&gt; {
 #&gt;     fn1(plans) + fn2(plans)
 #&gt; }
-#&gt; &lt;bytecode: 0x000000004bce0ac8&gt;
-#&gt; &lt;environment: 0x00000000481528d0&gt;
+#&gt; &lt;bytecode: 0x7fd9353cab38&gt;
+#&gt; &lt;environment: 0x7fd94cb36a08&gt;
 #&gt; attr(,"class")
 #&gt; [1] "redist_scorer" "function"     </div><div class='input'><span class='co'># }</span>
 
