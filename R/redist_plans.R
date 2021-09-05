@@ -14,7 +14,7 @@
 # algorithm is one of "smc" or "mcmc"
 # wgt is the weights before any resampling or truncation
 # ... will depend on the algorithm
-new_redist_plans = function(plans, map, algorithm, wgt, resampled=TRUE, ndists=FALSE, ...) {
+new_redist_plans = function(plans, map, algorithm, wgt, resampled=TRUE, ndists=attr(map, "ndists"), ...) {
     n_sims = ncol(plans)
     stopifnot(n_sims >= 1)
 
