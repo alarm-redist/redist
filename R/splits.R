@@ -35,7 +35,7 @@ redist.splits <- function(plans, counties) {
     }
 
 
-    splits(plans, community = county_id, length(unique(plans[, 1])), 1)
+    splits(plans - 1, community = county_id - 1, length(unique(plans[, 1])), 1)
 }
 
 #' Identify which counties are split by a plan
