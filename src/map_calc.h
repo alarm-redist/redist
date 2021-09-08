@@ -48,6 +48,12 @@ double eval_fractures(const subview_col<uword> &districts, int distr,
                       const uvec &counties, int n_cty);
 
 /*
+ * Compute the new, hinge VRA penalty for district `distr`
+ */
+double eval_party(const subview_col<uword> &districts, int distr,
+                      const vec &tgts_party, const uvec &rvote, const uvec &dvote);
+
+/*
  * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,
  * given a collection of plans
  */

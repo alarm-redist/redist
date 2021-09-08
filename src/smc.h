@@ -24,6 +24,8 @@ arma::umat smc_plans(int N, List l, const arma::uvec &counties,
                      double beta_vra_hinge, const arma::vec &tgts_min,
                      double beta_inc, const arma::uvec &incumbents,
                      double beta_fractures,
+                     double beta_party, const arma::vec &tgts_party,
+                     const arma::uvec &rvote, const arma::uvec &dvote,
                      arma::vec &lp, double thresh,
                      double alpha, double pop_temper=0.1, int verbosity=1);
 
@@ -49,6 +51,8 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr,
              double beta_vra_hinge, const vec &tgts_min,
              double beta_inc, const uvec &incumbents,
              double beta_fractures, const uvec &counties, int n_cty,
+             double beta_party, const vec &tgts_party,
+             const uvec &rvote, const uvec &dvote,
              double &min_eff, int verbosity);
 
 /*

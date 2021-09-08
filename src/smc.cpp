@@ -21,6 +21,8 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                double beta_vra_hinge, const vec &tgts_min,
                double beta_inc, const uvec &incumbents,
                double beta_fractures,
+               double beta_party, const vec &tgts_party,
+               const uvec &rvote, const uvec &dvote,
                vec &lp, double thresh,
                double alpha, double pop_temper, int verbosity) {
     // re-seed MT
@@ -74,7 +76,10 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                            beta_sq, current, n_current,
                            beta_vra, tgt_min, tgt_other, pow_vra, min_pop,
                            beta_vra_hinge, tgts_min,
-                           beta_inc, incumbents, beta_fractures, counties, n_cty,
+                           beta_inc, incumbents, beta_fractures,
+                           counties, n_cty,
+                           beta_party, tgts_party,
+                           rvote, dvote,
                            min_eff, verbosity);
 
         Rcpp::checkUserInterrupt();
@@ -109,6 +114,8 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr,
              double beta_vra_hinge, const vec &tgts_min,
              double beta_inc, const uvec &incumbents,
              double beta_fractures, const uvec &counties, int n_cty,
+             double beta_party, const vec &tgts_party,
+             const uvec &rvote, const uvec &dvote,
              double &min_eff, int verbosity) {
     int V = districts.n_rows;
     int N = districts.n_cols;
@@ -129,6 +136,9 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr,
             lp += beta_fractures * (
                 eval_fractures(districts.col(i), distr_ctr, counties, n_cty)
             );
+        if (beta_party != 0)
+            lp[i] += beta_party * eval_party(districts.col(i), distr_ctr,
+                                                     tgts_party, rvote, dvote);
     }
 
     vec wgt = exp(-alpha * lp);

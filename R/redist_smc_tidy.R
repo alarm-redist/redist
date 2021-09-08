@@ -221,6 +221,8 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
                       constraints$hinge$strength, constraints$hinge$tgts_min,
                       constraints$incumbency$strength, constraints$incumbency$incumbents,
                       constraints$multisplits$strength,
+                      constraints$party$strength, constraints$party$tgts_party,
+                      constraints$party$rvote, constraints$party$dvote,
                       lp, adapt_k_thresh, seq_alpha, pop_temper, verbosity);
 
 
@@ -280,7 +282,9 @@ process_smc_ms_constr = function(constraints, V) {
                    pow_vra=1.5, min_pop=integer()),
         incumbency = list(strength=0, incumbents=integer()),
         splits = list(strength=0),
-        multisplits = list(strength=0)
+        multisplits = list(strength=0),
+        party = list(strength = 0, tgts_party = 0.55,
+                     rvote = rep(1, V), dvote = rep(1, V))
     )
 
     for (type in names(constraints)) {
@@ -302,6 +306,12 @@ process_smc_ms_constr = function(constraints, V) {
     }
     if (length(min_pop) != V)
         stop("Length of minority population vector must match the number of units.")
+
+    if (length(defaults$party$rvote) != V)
+        stop("Length of `rvote` vector must match the number of units.")
+
+    if (length(defaults$party$dvote) != V)
+        stop("Length of `dvote` vector must match the number of units.")
 
     list(constraints = defaults,
          min_pop = min_pop)
