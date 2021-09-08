@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.1</span>
       </span>
     </div>
 
@@ -167,7 +167,7 @@
     </div>
 
     <pre class="usage"><span class='co'># S3 method for redist_map</span>
-<span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='va'>x</span>, fill <span class='op'>=</span> <span class='cn'>NULL</span>, by_distr <span class='op'>=</span> <span class='cn'>FALSE</span>, adj <span class='op'>=</span> <span class='cn'>FALSE</span>, <span class='va'>...</span><span class='op'>)</span></pre>
+<span class='fu'><a href='https://rdrr.io/r/graphics/plot.default.html'>plot</a></span><span class='op'>(</span><span class='va'>x</span>, fill <span class='op'>=</span> <span class='cn'>NULL</span>, by_distr <span class='op'>=</span> <span class='cn'>FALSE</span>, adj <span class='op'>=</span> <span class='cn'>FALSE</span>, interactive <span class='op'>=</span> <span class='cn'>FALSE</span>, <span class='va'>...</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -178,7 +178,7 @@
     </tr>
     <tr>
       <th>fill</th>
-      <td><p><code><a href='https://rdrr.io/pkg/dplyr/man/dplyr_data_masking.html'>&lt;data-masking&gt;</a></code> If
+      <td><p><code><a href='https://dplyr.tidyverse.org/reference/dplyr_data_masking.html'>&lt;data-masking&gt;</a></code> If
 present, will be used to color the map units. If using data masking, may
 need to explicitly name argument <code>fill=...</code> in non-interactive
 contexts to avoid S3 generic issues.</p></td>
@@ -194,10 +194,17 @@ district and indicate the <code>fill</code> variable by shading.</p></td>
 <code>by_distr</code>.</p></td>
     </tr>
     <tr>
+      <th>interactive</th>
+      <td><p>if <code>TRUE</code>, show an interactive map in the viewer
+rather than a static map. Ignores <code>adj</code> and <code>by_distr</code>.</p></td>
+    </tr>
+    <tr>
       <th>...</th>
       <td><p>passed on to <code><a href='redist.plot.map.html'>redist.plot.map</a></code> (or
-<code><a href='redist.plot.adj.html'>redist.plot.adj</a></code> if <code>adj=TRUE</code>). Useful parameters
-may include <code>zoom_to</code>, <code>boundaries</code>, and <code>title</code>.</p></td>
+<code><a href='redist.plot.adj.html'>redist.plot.adj</a></code> if <code>adj=TRUE</code>, or
+<code><a href='redist.plot.interactive.html'>redist.plot.interactive</a></code> if <code>interactive=TRUE</code>).
+Useful parameters may include <code>zoom_to</code>, <code>boundaries</code>, and
+<code>title</code>.</p></td>
     </tr>
     </table>
 

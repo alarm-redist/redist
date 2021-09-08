@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.1</span>
       </span>
     </div>
 
@@ -158,7 +158,7 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Plot a district assignment</h1>
-    <small class="dont-index">Source: <a href='https://github.com/alarm-redist/redist/blob/master/R/redist_plans.R'><code>R/redist_plans.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/alarm-redist/redist/blob/master/R/plot_plans.R'><code>R/plot_plans.R</code></a></small>
     <div class="hidden name"><code>redist.plot.plans.Rd</code></div>
     </div>
 
@@ -166,7 +166,7 @@
     <p>Plot a district assignment</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist.plot.plans</span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>draws</span>, <span class='va'>geom</span>, qty <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>redist.plot.plans</span><span class='op'>(</span><span class='va'>plans</span>, <span class='va'>draws</span>, <span class='va'>geom</span>, qty <span class='op'>=</span> <span class='cn'>NULL</span>, interactive <span class='op'>=</span> <span class='cn'>FALSE</span>, <span class='va'>...</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -186,6 +186,15 @@
     <tr>
       <th>qty</th>
       <td><p>the quantity to plot. Defaults to the district assignment.</p></td>
+    </tr>
+    <tr>
+      <th>interactive</th>
+      <td><p>if <code>TRUE</code>, show an interactive map in the viewer
+rather than a static map. Only uses the first element of <code>draws</code></p></td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td><p>additional arguments passed to the plotting functions.</p></td>
     </tr>
     </table>
 

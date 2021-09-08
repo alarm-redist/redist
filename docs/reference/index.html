@@ -79,7 +79,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.1</span>
       </span>
     </div>
 
@@ -245,6 +245,12 @@
           <p><code><a href="redist.rsg.html">redist.rsg()</a></code> </p>
         </td>
         <td><p>Redistricting via Random Seed and Grow Algorithm</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist_mergesplit_parallel.html">redist_mergesplit_parallel()</a></code> </p>
+        </td>
+        <td><p>Parallel Merge-Split/Recombination MCMC Redistricting Sampler</p></td>
       </tr>
     </tbody><tbody>
       <tr>
@@ -339,6 +345,12 @@
       </tr><tr>
         
         <td>
+          <p><code><a href="plans_diversity.html">plans_diversity()</a></code> </p>
+        </td>
+        <td><p>Calculate the diversity of a set of plans</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="plot.redist_classified.html">plot(<i>&lt;redist_classified&gt;</i>)</a></code> </p>
         </td>
         <td><p>Plot a plan classification</p></td>
@@ -354,6 +366,12 @@
           <p><code><a href="prec_cooccurrence.html">prec_cooccurrence()</a></code> </p>
         </td>
         <td><p>Compute a matrix of precinct co-occurrences</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="rbind.redist_plans.html">rbind(<i>&lt;redist_plans&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Combine multiple sets of redistricting plans</p></td>
       </tr><tr>
         
         <td>
@@ -375,6 +393,12 @@
       </tr><tr>
         
         <td>
+          <p><code><a href="redist.district.splits.html">redist.district.splits()</a></code> </p>
+        </td>
+        <td><p>Counts the Number of Counties within a District</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="redist.group.percent.html">group_frac()</a></code> <code><a href="redist.group.percent.html">redist.group.percent()</a></code> </p>
         </td>
         <td><p>Calculate Group Percent by District</p></td>
@@ -384,6 +408,12 @@
           <p><code><a href="redist.metrics.html">partisan_metrics()</a></code> <code><a href="redist.metrics.html">redist.metrics()</a></code> </p>
         </td>
         <td><p>Calculate gerrymandering metrics for a set of plans</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.multisplits.html">redist.multisplits()</a></code> </p>
+        </td>
+        <td><p>Counts the Number of Counties Split Between 3 or More Districts</p></td>
       </tr><tr>
         
         <td>
@@ -544,7 +574,7 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="scorers.html">scorer_group_pct()</a></code> <code><a href="scorers.html">scorer_pop_dev()</a></code> <code><a href="scorers.html">scorer_splits()</a></code> <code><a href="scorers.html">scorer_frac_kept()</a></code> <code><a href="scorers.html">scorer_polsby_popper()</a></code> <code><a href="scorers.html">scorer_status_quo()</a></code> </p>
+          <p><code><a href="scorers.html">scorer_group_pct()</a></code> <code><a href="scorers.html">scorer_pop_dev()</a></code> <code><a href="scorers.html">scorer_splits()</a></code> <code><a href="scorers.html">scorer_multisplits()</a></code> <code><a href="scorers.html">scorer_frac_kept()</a></code> <code><a href="scorers.html">scorer_polsby_popper()</a></code> <code><a href="scorers.html">scorer_status_quo()</a></code> </p>
         </td>
         <td><p>Scoring functions for <code>redist_shortburst</code></p></td>
       </tr>
@@ -814,21 +844,63 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="preproc.adj.html">preproc.adj()</a></code> </p>
+          <p><code><a href="persily.html">persily()</a></code> </p>
         </td>
-        <td><p>Preprocess adjacency arguments</p></td>
+        <td><p>Local Plan Optimization</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="preproc.shp.html">preproc.shp()</a></code> </p>
+          <p><code><a href="pick_a_plan.html">pick_a_plan()</a></code> </p>
         </td>
-        <td><p>Preprocess shapefile arguments</p></td>
+        <td><p>Pick One Plan from Many Plans</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="print.redist.html">print(<i>&lt;redist&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Print legacy redist objects</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="print.redist_classified.html">print(<i>&lt;redist_classified&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Print redist_classified objects</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="print.redist_map.html">print(<i>&lt;redist_map&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Generic to print redist_map</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="print.redist_plans.html">print(<i>&lt;redist_plans&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Print method for redist_plans</p></td>
       </tr><tr>
         
         <td>
           <p><code><a href="redist.adjacency.html">redist.adjacency()</a></code> </p>
         </td>
         <td><p>Adjacency List functionality for redist</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.dist.pop.overlap.html">redist.dist.pop.overlap()</a></code> </p>
+        </td>
+        <td><p>Compare the Population Overlap Across Plans at the District Level</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.plot.interactive.html">redist.plot.interactive()</a></code> </p>
+        </td>
+        <td><p>Display an interactive map</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="redist.prec.pop.overlap.html">redist.prec.pop.overlap()</a></code> </p>
+        </td>
+        <td><p>Compare the Population Overlap Across Plans at the Precinct Level</p></td>
       </tr><tr>
         
         <td>
@@ -844,7 +916,7 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="redist.reindex.html">redist.reindex()</a></code> </p>
+          <p><code><a href="redist.reorder.html">redist.reorder()</a></code> </p>
         </td>
         <td><p>Reorders district numbers</p></td>
       </tr><tr>

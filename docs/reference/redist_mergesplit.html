@@ -86,7 +86,7 @@ the SMC algorithm, this does not guarantee a maximum number of county splits." /
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.1</span>
       </span>
     </div>
 
@@ -314,7 +314,7 @@ populations within 1% of the target population.</p></td>
 
     <p><code>redist_mergesplit</code> returns an object of class
 <code><a href='redist_plans.html'>redist_plans</a></code> containing the simulated plans.</p>
-<p><code>redist.mergesplit</code> returns an object of class list containing the
+<p><code>redist.mergesplit</code> (Deprecated) returns an object of class list containing the
 simulated plans.</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
@@ -333,7 +333,7 @@ districts.</p></li>
 <li><p><code>current</code>, a vector containing district assignments for
 the current map.</p></li>
 </ul></li>
-<li><p><code>vra</code>: a list with three entries:</p><ul>
+<li><p><code>hinge</code>: a list with three entries:</p><ul>
 <li><p><code>strength</code>, a number controlling the strength of the Voting Rights Act
 (VRA) constraint, with higher values prioritizing majority-minority districts
 over other considerations.</p></li>
@@ -352,7 +352,11 @@ home address.</p></li>
 <li><p><code>strength</code>, a number controlling the tendency of the generated districts
 to avoid splitting counties.</p></li>
 </ul></li>
-<li><p><code>vra_old</code>: a list with five entries, which may be set up using
+<li><p><code>multisplits</code>: a list with one entry:</p><ul>
+<li><p><code>strength</code>, a number controlling the tendency of the generated districts
+to avoid splitting counties multiple times.</p></li>
+</ul></li>
+<li><p><code>vra</code>: a list with five entries, which may be set up using
 <code><a href='redist.constraint.helper.html'>redist.constraint.helper</a></code>:</p><ul>
 <li><p><code>strength</code>, a number controlling the strength of the Voting Rights Act
 (VRA) constraint, with higher values prioritizing majority-minority districts
@@ -371,9 +375,10 @@ geographic unit.</p></li>
 
 <p>All constraints are fed into a Gibbs measure, with coefficients on each
 constraint set by the corresponding <code>strength</code> parameters.
+The strength can be any real number, with zero corresponding to no constraint.
 The <code>status_quo</code> constraint adds a term measuring the variation of
 information distance between the plan and the reference, rescaled to [0, 1].
-The <code>vra</code> constraint takes a list of target minority percentages. It
+The <code>hinge</code> constraint takes a list of target minority percentages. It
 matches each district to its nearest target percentage, and then applies a
 penalty of the form \(\sqrt{max(0, tgt - minpct)}\), summing across
 districts. This penalizes districts which are below their target population.
@@ -381,7 +386,7 @@ The <code>incumbency</code> constraint adds a term counting the number of distri
 containing paired-up incumbents. The <code>splits</code> constraint adds a term
 counting the number of counties which contain precincts belonging to more
 than one district.
-The <code>vra_old</code> constraint adds a term of the form
+The <code>vra</code> constraint (not recommended) adds a term of the form
 \((|tgtvramin-minpct||tgtvraother-minpct|)^{powvra})\), which
 encourages districts to have minority percentages near either <code>tgt_vra_min</code>
 or <code>tgt_vra_other</code>. This can be visualized with
@@ -395,24 +400,64 @@ redistricting plans. arXiv preprint arXiv:1911.01503.</p>
 Markov chains for redistricting. arXiv preprint arXiv:1911.05725.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+    <pre class="examples"><div class='input'><span class='co'># \donttest{</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
 
 <span class='va'>fl_map</span> <span class='op'>=</span> <span class='fu'><a href='redist_map.html'>redist_map</a></span><span class='op'>(</span><span class='va'>fl25</span>, ndists<span class='op'>=</span><span class='fl'>3</span>, pop_tol<span class='op'>=</span><span class='fl'>0.1</span><span class='op'>)</span>
-
+</div><div class='output co'>#&gt; <span class='message'>Projecting to CRS 3857</span></div><div class='input'>
 <span class='va'>sampled_basic</span> <span class='op'>=</span> <span class='fu'>redist_mergesplit</span><span class='op'>(</span><span class='va'>fl_map</span>, <span class='fl'>10000</span><span class='op'>)</span>
-
+</div><div class='output co'>#&gt; MARKOV CHAIN MONTE CARLO
+#&gt; Sampling 10000 25-unit maps with 3 districts and population between 52512.9 and 64182.4.
+#&gt; Using k = 2
+#&gt; Iteration 500/10000
+#&gt; Iteration 1000/10000
+#&gt; Iteration 1500/10000
+#&gt; Iteration 2000/10000
+#&gt; Iteration 2500/10000
+#&gt; Iteration 3000/10000
+#&gt; Iteration 3500/10000
+#&gt; Iteration 4000/10000
+#&gt; Iteration 4500/10000
+#&gt; Iteration 5000/10000
+#&gt; Iteration 5500/10000
+#&gt; Iteration 6000/10000
+#&gt; Iteration 6500/10000
+#&gt; Iteration 7000/10000
+#&gt; Iteration 7500/10000
+#&gt; Iteration 8000/10000
+#&gt; Iteration 8500/10000
+#&gt; Iteration 9000/10000
+#&gt; Iteration 9500/10000
+#&gt; Iteration 10000/10000
+#&gt; Acceptance rate: 76.96</div><div class='input'>
 <span class='va'>sampled_constr</span> <span class='op'>=</span> <span class='fu'>redist_mergesplit</span><span class='op'>(</span><span class='va'>fl_map</span>, <span class='fl'>10000</span>, constraints<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>
                      incumbency <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>strength<span class='op'>=</span><span class='fl'>1000</span>, incumbents<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>6</span>, <span class='fl'>25</span><span class='op'>)</span><span class='op'>)</span>
                  <span class='op'>)</span><span class='op'>)</span>
-<span class='op'>}</span>
+</div><div class='output co'>#&gt; MARKOV CHAIN MONTE CARLO
+#&gt; Sampling 10000 25-unit maps with 3 districts and population between 52512.9 and 64182.4.
+#&gt; Using k = 3
+#&gt; Iteration 500/10000
+#&gt; Iteration 1000/10000
+#&gt; Iteration 1500/10000
+#&gt; Iteration 2000/10000
+#&gt; Iteration 2500/10000
+#&gt; Iteration 3000/10000
+#&gt; Iteration 3500/10000
+#&gt; Iteration 4000/10000
+#&gt; Iteration 4500/10000
+#&gt; Iteration 5000/10000
+#&gt; Iteration 5500/10000
+#&gt; Iteration 6000/10000
+#&gt; Iteration 6500/10000
+#&gt; Iteration 7000/10000
+#&gt; Iteration 7500/10000
+#&gt; Iteration 8000/10000
+#&gt; Iteration 8500/10000
+#&gt; Iteration 9000/10000
+#&gt; Iteration 9500/10000
+#&gt; Iteration 10000/10000
+#&gt; Acceptance rate: 83.46</div><div class='input'><span class='co'># }</span>
 
-<span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
-<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
-<span class='va'>adj</span> <span class='op'>&lt;-</span> <span class='fu'><a href='redist.adjacency.html'>redist.adjacency</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
-<span class='va'>out</span> <span class='op'>&lt;-</span> <span class='fu'>redist.mergesplit</span><span class='op'>(</span>adj <span class='op'>=</span> <span class='va'>adj</span>, total_pop <span class='op'>=</span> <span class='va'>fl25</span><span class='op'>$</span><span class='va'>pop</span>,
-                         nsims <span class='op'>=</span> <span class='fl'>5</span>, ndists <span class='op'>=</span> <span class='fl'>3</span>, pop_tol <span class='op'>=</span> <span class='fl'>0.1</span><span class='op'>)</span>
-<span class='op'>}</span>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

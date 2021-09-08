@@ -49,8 +49,8 @@ for each precinct and one column for each map. Required.}
 
 \item{draw}{A numeric to specify draw number. Defaults to 1 if only one map provided
 and the column number if multiple maps given. Can also take a factor input, which will become the
-draw column in the output if its length matches the number of entries in plans. If the `plans` input
-is a `redist_plans` object, it extracts the `draw` identifier.}
+draw column in the output if its length matches the number of entries in plans. If the \code{plans} input
+is a \code{redist_plans} object, it extracts the \code{draw} identifier.}
 
 \item{ncores}{Number of cores to use for parallel computing. Default is 1.}
 }
@@ -66,21 +66,22 @@ set of maps.
 This function computes specified compactness scores for a map.  If
 there is more than one precinct specified for a map, it aggregates to the district level
 and computes one score.
-
-DSeats is computed as the expected number of Democratic seats with no change in votes.
-DVS is the Democratic Vote Share, which is the two party vote share with Democratic votes as the numerator.
-EffGap is the Efficiency Gap, calculated with votes directly.
-EffGapEqPop is the Efficiency Gap under an Equal Population assumption, calculated with the DVS.
-TauGap is the Tau Gap, computed with the Equal Population assumption.
-MeanMedian is the Mean Median difference.
-Bias is the Partisan Bias computed at 0.5.
-BiasV is the Partisan Bias computed at value V.
-Declination is the value of declination at 0.5.
-Responsiveness is the responsiveness at the user-supplied value with the user-supplied bandwidth.
-LopsidedWins computed the Lopsided Outcomes value, but does not produce a test statistic.
-RankedMarginal computes the Ranked Marginal Deviation (0-1, smaller is better). This is also known
+\itemize{
+\item DSeats is computed as the expected number of Democratic seats with no change in votes.
+\item DVS is the Democratic Vote Share, which is the two party vote share with Democratic votes as the numerator.
+\item EffGap is the Efficiency Gap, calculated with votes directly.
+\item EffGapEqPop is the Efficiency Gap under an Equal Population assumption, calculated with the DVS.
+\item TauGap is the Tau Gap, computed with the Equal Population assumption.
+\item MeanMedian is the Mean Median difference.
+\item Bias is the Partisan Bias computed at 0.5.
+\item BiasV is the Partisan Bias computed at value V.
+\item Declination is the value of declination at 0.5.
+\item Responsiveness is the responsiveness at the user-supplied value with the user-supplied bandwidth.
+\item LopsidedWins computed the Lopsided Outcomes value, but does not produce a test statistic.
+\item RankedMarginal computes the Ranked Marginal Deviation (0-1, smaller is better). This is also known
 as the "Gerrymandering Index" and is sometimes presented as this value divided by 10000.
-SmoothedSeat computes the Smoothed Seat Count Deviation (0-1, smaller is R Bias, bigger is D Bias).
+\item SmoothedSeat computes the Smoothed Seat Count Deviation (0-1, smaller is R Bias, bigger is D Bias).
+}
 }
 \examples{
 data(fl25)

@@ -286,7 +286,7 @@ dplyr_row_slice.redist_plans = function(data, i, ...) {
 
     if (length(draws_left) != ncol(plans_m)) {
         attr(y, "wgt") = attr(y, "wgt")[draws_left]
-        y = set_plan_matrix(y, plans_m[, draws_left, drop=F])
+        y = set_plan_matrix(y, plans_m[, draws_left, drop=FALSE])
     }
 
     if (is.factor(y$draw)) {
@@ -411,7 +411,7 @@ print.redist_plans = function(x, ...) {
             cat("With plans not resampled from weights\n")
     }
 
-    cat("Plans matrix:", utils::capture.output(str(plans_m, give.attr=F)),
+    cat("Plans matrix:", utils::capture.output(str(plans_m, give.attr=FALSE)),
         "\n", sep="")
 
     utils::getS3method("print", "tbl")(x)

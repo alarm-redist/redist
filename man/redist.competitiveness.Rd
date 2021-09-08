@@ -7,7 +7,7 @@
 \usage{
 competitiveness(map, rvote, dvote, .data = cur_plans())
 
-redist.competitiveness(plans, rvote, dvote)
+redist.competitiveness(plans, rvote, dvote, alpha = 1, beta = 1)
 }
 \arguments{
 \item{map}{a \code{\link{redist_map}} object}
@@ -20,6 +20,10 @@ redist.competitiveness(plans, rvote, dvote)
 
 \item{plans}{A numeric vector (if only one map) or matrix with one row
 for each precinct and one column for each map. Required.}
+
+\item{alpha}{A numeric value for the alpha parameter for the talisman metric}
+
+\item{beta}{A numeric value for the beta parameter for the talisman metric}
 }
 \value{
 Numeric vector with competitiveness scores

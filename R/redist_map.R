@@ -116,7 +116,7 @@ reconstruct.redist_map = function(data, old) {
 #'   single \code{list} or \code{data.frame}.  These will be passed on to the
 #'   \code{\link{tibble}} constructor.
 #' @param existing_plan \code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the
-#'   existing district assignment.
+#'   existing district assignment. Must be numeric or convertable to numeric.
 #' @param pop_tol \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the population tolerance.
 #'   The percentage deviation from the average population will be constrained to
 #'   be no more than this number. If `existing_plan` is provided, defaults to
@@ -183,19 +183,32 @@ redist_map = function(..., existing_plan=NULL, pop_tol=NULL,
 
     existing_col = names(tidyselect::eval_select(rlang::enquo(existing_plan), x))
     if (length(existing_col) == 0)
-        existing_col = NULL
+      existing_col = NULL
 
-    if (is.null(ndists))  {
-        if (!is.null(existing_col))
+    if (!is.null(existing_col)) {
+      if (!is.numeric(x[[existing_col]])) {
+        temp_col <- NULL
+        suppressWarnings({temp_col <- as.numeric(x[[existing_col]])})
+        if (!any(is.na(temp_col))) {
+          x[[existing_col]] <- temp_col
+        } else {
+          stop('`existing_col` was not numeric and could not be converted to numeric.')
+        }
+      }
+    }
+
+    if (is.null(ndists)) {
+        if (!is.null(existing_col)) {
             ndists = length(unique(x[[existing_col]]))
-        else
-            stop("Must specify `ndists` if `existing_plan` is not supplied.")
+        } else {
+          stop("Must specify `ndists` if `existing_plan` is not supplied.")
+        }
     } else {
         ndists = as.integer(rlang::eval_tidy(rlang::enquo(ndists), x))
     }
 
     pop_tol = eval_tidy(enquo(pop_tol), x)
-    if (is.null(pop_tol)) {
+    if (is.null(pop_tol) && is.null(pop_bounds)) {
         if (!is.null(existing_col)) {
             pop_tol = redist.parity(x[[existing_col]], x[[pop_col]])
             if (pop_tol <= 0.001)
@@ -226,7 +239,7 @@ redist_map = function(..., existing_plan=NULL, pop_tol=NULL,
 
     validate_redist_map(
         new_redist_map(x, adj, ndists, pop_bounds, pop_col, adj_col,
-                       add_adj=T, existing_col)
+                       add_adj=TRUE, existing_col)
     )
 }
 

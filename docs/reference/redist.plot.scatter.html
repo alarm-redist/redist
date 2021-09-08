@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.1</span>
       </span>
     </div>
 
@@ -158,7 +158,7 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Scatter plot of plan summary statistics</h1>
-    <small class="dont-index">Source: <a href='https://github.com/alarm-redist/redist/blob/master/R/redist_plans.R'><code>R/redist_plans.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/alarm-redist/redist/blob/master/R/plot_plans.R'><code>R/plot_plans.R</code></a></small>
     <div class="hidden name"><code>redist.plot.scatter.Rd</code></div>
     </div>
 
@@ -177,12 +177,12 @@
     </tr>
     <tr>
       <th>x</th>
-      <td><p><code><a href='https://rdrr.io/pkg/dplyr/man/dplyr_data_masking.html'>&lt;data-masking&gt;</a></code> the
+      <td><p><code><a href='https://dplyr.tidyverse.org/reference/dplyr_data_masking.html'>&lt;data-masking&gt;</a></code> the
 quantity to plot on the horizontal axis.</p></td>
     </tr>
     <tr>
       <th>y</th>
-      <td><p><code><a href='https://rdrr.io/pkg/dplyr/man/dplyr_data_masking.html'>&lt;data-masking&gt;</a></code> the
+      <td><p><code><a href='https://dplyr.tidyverse.org/reference/dplyr_data_masking.html'>&lt;data-masking&gt;</a></code> the
 quantity to plot on the vertical axis.</p></td>
     </tr>
     <tr>
@@ -206,9 +206,9 @@ quantity to plot on the vertical axis.</p></td>
 <span class='va'>iowa</span> <span class='op'>=</span> <span class='fu'><a href='redist_map.html'>redist_map</a></span><span class='op'>(</span><span class='va'>iowa</span>, existing_plan<span class='op'>=</span><span class='va'>cd_2010</span>, pop_tol<span class='op'>=</span><span class='fl'>0.05</span>, total_pop <span class='op'>=</span> <span class='va'>pop</span><span class='op'>)</span>
 <span class='va'>plans</span> <span class='op'>=</span> <span class='fu'><a href='redist_smc.html'>redist_smc</a></span><span class='op'>(</span><span class='va'>iowa</span>, nsims<span class='op'>=</span><span class='fl'>100</span>, silent<span class='op'>=</span><span class='cn'>TRUE</span><span class='op'>)</span>
 <span class='va'>plans</span> <span class='op'>%&gt;%</span>
-    <span class='fu'><a href='https://rdrr.io/pkg/dplyr/man/mutate.html'>mutate</a></span><span class='op'>(</span>comp <span class='op'>=</span> <span class='fu'><a href='distr_compactness.html'>distr_compactness</a></span><span class='op'>(</span><span class='va'>iowa</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
-    <span class='fu'><a href='https://rdrr.io/pkg/dplyr/man/group_by.html'>group_by</a></span><span class='op'>(</span><span class='va'>draw</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
-    <span class='fu'><a href='https://rdrr.io/pkg/dplyr/man/summarise.html'>summarize</a></span><span class='op'>(</span>pop_dev <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>max</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/MathFun.html'>abs</a></span><span class='op'>(</span><span class='va'>total_pop</span> <span class='op'>/</span> <span class='fu'><a href='https://rdrr.io/r/base/mean.html'>mean</a></span><span class='op'>(</span><span class='va'>total_pop</span><span class='op'>)</span> <span class='op'>-</span> <span class='fl'>1</span><span class='op'>)</span><span class='op'>)</span>,
+    <span class='fu'><a href='https://dplyr.tidyverse.org/reference/mutate.html'>mutate</a></span><span class='op'>(</span>comp <span class='op'>=</span> <span class='fu'><a href='distr_compactness.html'>distr_compactness</a></span><span class='op'>(</span><span class='va'>iowa</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+    <span class='fu'><a href='https://dplyr.tidyverse.org/reference/group_by.html'>group_by</a></span><span class='op'>(</span><span class='va'>draw</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
+    <span class='fu'><a href='https://dplyr.tidyverse.org/reference/summarise.html'>summarize</a></span><span class='op'>(</span>pop_dev <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Extremes.html'>max</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/MathFun.html'>abs</a></span><span class='op'>(</span><span class='va'>total_pop</span> <span class='op'>/</span> <span class='fu'><a href='https://rdrr.io/r/base/mean.html'>mean</a></span><span class='op'>(</span><span class='va'>total_pop</span><span class='op'>)</span> <span class='op'>-</span> <span class='fl'>1</span><span class='op'>)</span><span class='op'>)</span>,
               comp <span class='op'>=</span> <span class='va'>comp</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>]</span><span class='op'>)</span> <span class='op'>%&gt;%</span>
     <span class='fu'>redist.plot.scatter</span><span class='op'>(</span><span class='va'>pop_dev</span>, <span class='va'>comp</span><span class='op'>)</span>
 </div><div class='img'><img src='redist.plot.scatter-1.png' alt='' width='700' height='433' /></div><div class='input'>

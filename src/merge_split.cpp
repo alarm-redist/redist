@@ -117,13 +117,13 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
         }
 
         if (verbosity >= 2 && refresh > 0 && (i+1) % refresh == 0) {
-            Rprintf("Iteration %'6d / %'d\n", i+1, N-1);
+            Rcout << "Iteration " << i+1 << "/" << N-1 << std::endl;
         }
         Rcpp::checkUserInterrupt();
     }
 
     if (verbosity >= 1) {
-        Rprintf("Acceptance rate: %.1f%%.\n", (100.0 * n_accept) / (N-1));
+        Rcout << "Acceptance rate: " << (100.0 * n_accept) / (N-1) << std::endl;
     }
 
     Rcpp::List out;

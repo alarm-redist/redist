@@ -80,7 +80,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.1</span>
       </span>
     </div>
 
@@ -279,7 +279,7 @@ Computed from map if not provided and needed.</p></td>
 <span class='fu'><a href='redist_flip.html'>redist_flip</a></span><span class='op'>(</span><span class='va'>iowa_map</span>, <span class='fl'>10</span>, constraints <span class='op'>=</span> <span class='va'>cons</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; 
 #&gt; ==================== 
-#&gt; redist.mcmc(): Automated Redistricting Simulation Using
+#&gt; redist.flip(): Automated Redistricting Simulation Using
 #&gt;          Markov Chain Monte Carlo
 #&gt; 
 #&gt; Preprocessing data.
@@ -317,23 +317,23 @@ Computed from map if not provided and needed.</p></td>
 #&gt; </div><div class='output co'>#&gt; 10 sampled plans and 1 reference plan with 4 districts from a 99-unit map,
 #&gt;   drawn using an unknown algorithm
 #&gt; Plans matrix: num [1:99, 1:11] 3 3 1 2 4 1 1 4 1 1 ...
-#&gt; <span style='color: #949494;'># A tibble: 44 x 14</span><span>
-#&gt;    draw   district total_pop distance_parity distance_origin… mhdecisions mhprob
-#&gt;    </span><span style='color: #949494;font-style: italic;'>&lt;fct&gt;</span><span>     </span><span style='color: #949494;font-style: italic;'>&lt;int&gt;</span><span>     </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>           </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>            </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>       </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>  </span><span style='color: #949494;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #BCBCBC;'> 1</span><span> cd_20…        1    </span><span style='text-decoration: underline;'>761</span><span>548        </span><span style='color: #BB0000;'>NA</span><span>                 </span><span style='color: #BB0000;'>NA</span><span>              </span><span style='color: #BB0000;'>NA</span><span> </span><span style='color: #BB0000;'>NA</span><span>    
-#&gt; </span><span style='color: #BCBCBC;'> 2</span><span> cd_20…        2    </span><span style='text-decoration: underline;'>761</span><span>624        </span><span style='color: #BB0000;'>NA</span><span>                 </span><span style='color: #BB0000;'>NA</span><span>              </span><span style='color: #BB0000;'>NA</span><span> </span><span style='color: #BB0000;'>NA</span><span>    
-#&gt; </span><span style='color: #BCBCBC;'> 3</span><span> cd_20…        3    </span><span style='text-decoration: underline;'>761</span><span>612        </span><span style='color: #BB0000;'>NA</span><span>                 </span><span style='color: #BB0000;'>NA</span><span>              </span><span style='color: #BB0000;'>NA</span><span> </span><span style='color: #BB0000;'>NA</span><span>    
-#&gt; </span><span style='color: #BCBCBC;'> 4</span><span> cd_20…        4    </span><span style='text-decoration: underline;'>761</span><span>571        </span><span style='color: #BB0000;'>NA</span><span>                 </span><span style='color: #BB0000;'>NA</span><span>              </span><span style='color: #BB0000;'>NA</span><span> </span><span style='color: #BB0000;'>NA</span><span>    
-#&gt; </span><span style='color: #BCBCBC;'> 5</span><span> 1             1    </span><span style='text-decoration: underline;'>761</span><span>548         0.008</span><span style='text-decoration: underline;'>07</span><span>            0.990           1  1.00 
-#&gt; </span><span style='color: #BCBCBC;'> 6</span><span> 1             2    </span><span style='text-decoration: underline;'>761</span><span>624         0.008</span><span style='text-decoration: underline;'>07</span><span>            0.990           1  1.00 
-#&gt; </span><span style='color: #BCBCBC;'> 7</span><span> 1             3    </span><span style='text-decoration: underline;'>767</span><span>731         0.008</span><span style='text-decoration: underline;'>07</span><span>            0.990           1  1.00 
-#&gt; </span><span style='color: #BCBCBC;'> 8</span><span> 1             4    </span><span style='text-decoration: underline;'>755</span><span>452         0.008</span><span style='text-decoration: underline;'>07</span><span>            0.990           1  1.00 
-#&gt; </span><span style='color: #BCBCBC;'> 9</span><span> 2             1    </span><span style='text-decoration: underline;'>761</span><span>548         0.008</span><span style='text-decoration: underline;'>06</span><span>            0.980           1  0.952
-#&gt; </span><span style='color: #BCBCBC;'>10</span><span> 2             2    </span><span style='text-decoration: underline;'>766</span><span>755         0.008</span><span style='text-decoration: underline;'>06</span><span>            0.980           1  0.952
-#&gt; </span><span style='color: #949494;'># … with 34 more rows, and 7 more variables: pparam &lt;dbl&gt;, beta_sequence &lt;dbl&gt;,</span><span>
-#&gt; </span><span style='color: #949494;'>#   energy_psi &lt;dbl&gt;, boundary_partitions &lt;dbl&gt;, boundary_ratio &lt;dbl&gt;,</span><span>
-#&gt; </span><span style='color: #949494;'>#   constraint_compact &lt;dbl&gt;, constraint_vra &lt;dbl&gt;</span><span></div><div class='input'>
-</div></span></pre>
+#&gt; <span style='color: #949494;'># A tibble: 44 × 14</span>
+#&gt;    draw    district total_pop distance_parity distance_origin… mhdecisions mhprob
+#&gt;    <span style='color: #949494; font-style: italic;'>&lt;fct&gt;</span>      <span style='color: #949494; font-style: italic;'>&lt;int&gt;</span>     <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>           <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>            <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>       <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>  <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>
+#&gt; <span style='color: #BCBCBC;'> 1</span> cd_2010        1    <span style='text-decoration: underline;'>761</span>548        <span style='color: #BB0000;'>NA</span>                 <span style='color: #BB0000;'>NA</span>              <span style='color: #BB0000;'>NA</span> <span style='color: #BB0000;'>NA</span>    
+#&gt; <span style='color: #BCBCBC;'> 2</span> cd_2010        2    <span style='text-decoration: underline;'>761</span>624        <span style='color: #BB0000;'>NA</span>                 <span style='color: #BB0000;'>NA</span>              <span style='color: #BB0000;'>NA</span> <span style='color: #BB0000;'>NA</span>    
+#&gt; <span style='color: #BCBCBC;'> 3</span> cd_2010        3    <span style='text-decoration: underline;'>761</span>612        <span style='color: #BB0000;'>NA</span>                 <span style='color: #BB0000;'>NA</span>              <span style='color: #BB0000;'>NA</span> <span style='color: #BB0000;'>NA</span>    
+#&gt; <span style='color: #BCBCBC;'> 4</span> cd_2010        4    <span style='text-decoration: underline;'>761</span>571        <span style='color: #BB0000;'>NA</span>                 <span style='color: #BB0000;'>NA</span>              <span style='color: #BB0000;'>NA</span> <span style='color: #BB0000;'>NA</span>    
+#&gt; <span style='color: #BCBCBC;'> 5</span> 1              1    <span style='text-decoration: underline;'>761</span>548         0.006<span style='text-decoration: underline;'>78</span>            0.990           1  0.952
+#&gt; <span style='color: #BCBCBC;'> 6</span> 1              2    <span style='text-decoration: underline;'>766</span>755         0.006<span style='text-decoration: underline;'>78</span>            0.990           1  0.952
+#&gt; <span style='color: #BCBCBC;'> 7</span> 1              3    <span style='text-decoration: underline;'>756</span>481         0.006<span style='text-decoration: underline;'>78</span>            0.990           1  0.952
+#&gt; <span style='color: #BCBCBC;'> 8</span> 1              4    <span style='text-decoration: underline;'>761</span>571         0.006<span style='text-decoration: underline;'>78</span>            0.990           1  0.952
+#&gt; <span style='color: #BCBCBC;'> 9</span> 2              1    <span style='text-decoration: underline;'>761</span>548         0.008<span style='text-decoration: underline;'>06</span>            0.980           1  1.00 
+#&gt; <span style='color: #BCBCBC;'>10</span> 2              2    <span style='text-decoration: underline;'>766</span>755         0.008<span style='text-decoration: underline;'>06</span>            0.980           1  1.00 
+#&gt; <span style='color: #949494;'># … with 34 more rows, and 7 more variables: pparam &lt;dbl&gt;, beta_sequence &lt;dbl&gt;,</span>
+#&gt; <span style='color: #949494;'>#   energy_psi &lt;dbl&gt;, boundary_partitions &lt;dbl&gt;, boundary_ratio &lt;dbl&gt;,</span>
+#&gt; <span style='color: #949494;'>#   constraint_compact &lt;dbl&gt;, constraint_vra &lt;dbl&gt;</span></div><div class='input'>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

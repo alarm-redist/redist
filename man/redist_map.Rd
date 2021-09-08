@@ -25,7 +25,7 @@ single \code{list} or \code{data.frame}.  These will be passed on to the
 \code{\link{tibble}} constructor.}
 
 \item{existing_plan}{\code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the
-existing district assignment.}
+existing district assignment. Must be numeric or convertable to numeric.}
 
 \item{pop_tol}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the population tolerance.
 The percentage deviation from the average population will be constrained to
