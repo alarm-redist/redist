@@ -149,8 +149,9 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
             lp[i] += beta_sq * sq_entropy(districts.col(i), current, distr_ctr,
                                           pop, n_distr, n_current, V);
         if (beta_vra != 0)
-            lp[i] += beta_vra * eval_vra(districts.col(i), distr_ctr, tgt_min,
-                                         tgt_other, pow_vra, pop, min_pop);
+            lp[i] += beta_vra * eval_compet(districts.col(i), distr_ctr, pop, min_pop);
+            //lp[i] += beta_vra * eval_vra(districts.col(i), distr_ctr, tgt_min,
+            //                             tgt_other, pow_vra, pop, min_pop);
         if (beta_vra_hinge != 0)
             lp[i] += beta_vra_hinge * eval_vra_hinge(districts.col(i), distr_ctr,
                                                      tgts_min, pop, min_pop);
