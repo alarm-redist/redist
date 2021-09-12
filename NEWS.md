@@ -1,3 +1,6 @@
+# redist 3.1.2
+* Fixes crash caused by `redist.splits()`
+
 # redist 3.1.1
 * Fixes printing bug in `color_graph()`
 

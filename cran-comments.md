@@ -13,5 +13,5 @@
 There are no reverse dependencies to check.
 
 ## Additional Notes
-* Fixes URL redirects in readme and author sections of Rd files.
-* Decreases simulation sizes to lower check time.
+* Fixes a bug in redist.splits() that should resolve the Solaris runtime issues.
+* No other changes since 3.1.2 submission failed due to URL for a website that was temporarily down (and is back up).
