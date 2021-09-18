@@ -1,3 +1,6 @@
+# redist 3.1.4
+* skip SMC test on Solaris
+
 # redist 3.1.2
 * Fixes crash caused by `redist.splits()`
 

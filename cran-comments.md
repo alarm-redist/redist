@@ -4,6 +4,7 @@
 * ubuntu 20.04 (on GitHub Actions), (devel and release)
 * windows-latest (on GitHub Actions), (release)
 * macOS-latest (on GitHub Actions), (release)
+* Oracle Solaris x86 32 bit, (release)
 
 ## R CMD check results
 
@@ -13,5 +14,4 @@
 There are no reverse dependencies to check.
 
 ## Additional Notes
-* Fixes a bug in redist.splits() that should resolve the Solaris runtime issues.
-* No other changes since 3.1.2 submission failed due to URL for a website that was temporarily down (and is back up).
+* Skips a single testthat test that is causing infinite run times on Solaris.
