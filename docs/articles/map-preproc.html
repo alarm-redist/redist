@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.4</span>
       </span>
     </div>
 
@@ -302,7 +302,7 @@
 <p>In <code>redist</code>, freezing is accomplished by using the <code><a href="../reference/freeze.html">freeze()</a></code> and <code><a href="../reference/merge_by.html">merge_by()</a></code> functions. The former takes in a description of the units which should be frozen, and groups them into contiguous chunks of frozen units, returning an indexing vector that uniquely identifies each group. Then <code><a href="../reference/merge_by.html">merge_by()</a></code> merges these groups together. We can use the <code><a href="../reference/county_splits.html">redist.splits()</a></code> function to count split municipalities, and the <code><a href="../reference/is_county_split.html">is_county_split()</a></code> function to identify split municipalities.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/cat.html">cat</a></span><span class="op">(</span><span class="fu"><a href="../reference/county_splits.html">redist.splits</a></span><span class="op">(</span><span class="va">king_land</span><span class="op">$</span><span class="va">distr</span>, <span class="va">king_land</span><span class="op">$</span><span class="va">city</span><span class="op">)</span>, <span class="st">"split cities\n"</span><span class="op">)</span>
-<span class="co">#&gt; 9 split cities</span>
+<span class="co">#&gt; 11 split cities</span>
 
 <span class="va">king_land</span> <span class="op">%&gt;%</span>
     <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>is_unsplit <span class="op">=</span> <span class="op">!</span><span class="fu"><a href="../reference/is_county_split.html">is_county_split</a></span><span class="op">(</span><span class="va">distr</span>, <span class="va">city</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
