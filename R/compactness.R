@@ -192,7 +192,7 @@ redist.compactness <- function(shp = NULL,
     if (isTRUE(st_is_longlat(st_geometry(shp)))) {
       if (!requireNamespace("s2", quietly=TRUE))
         stop("Must install `s2` to use longitude-latitude coordinate projections.")
-      
+
       if (!is.null(st_crs(shp)) & !is.null(planarize) && !isFALSE(planarize)) {
         shp <- st_transform(shp, planarize)
       }
@@ -360,7 +360,7 @@ redist.compactness <- function(shp = NULL,
 
         if('BoyceClark' %in% measure){
           suppressWarnings(center <- st_centroid(united))
-          suppressMessages(suppressWarnings(if(!st_within(united,center,sparse=F)[[1]]){
+          suppressMessages(suppressWarnings(if(!st_within(united,center,sparse=FALSE)[[1]]){
             suppressWarnings(center <- st_point_on_surface(united))
           }))
           center <- st_coordinates(center)

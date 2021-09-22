@@ -265,7 +265,7 @@ redist.calc.frontier.size <- function(ordered_path){
   lines_in <- readLines(paste0(ordered_path,'.dat'))
   n <- length(lines_in)
 
-  edges_unsort <- apply(stringr::str_split(string = lines_in, pattern = ' ', simplify = T),2, as.integer)
+  edges_unsort <- apply(stringr::str_split(string = lines_in, pattern = ' ', simplify = TRUE),2, as.integer)
   edges <- cbind(apply(edges_unsort,1,min), apply(edges_unsort,1,max))
 
   frontier_sizes <- rep(NA_real_, 1 +n)

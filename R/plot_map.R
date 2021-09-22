@@ -129,7 +129,7 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
           labs(fill = 'District Membership', alpha = fill_label, title = title) +
           theme(legend.position = 'bottom')
 
-        if (min(fill, na.rm = T) >= 0 & max(fill, na.rm = T) <= 1) {
+        if (min(fill, na.rm = TRUE) >= 0 & max(fill, na.rm = TRUE) <= 1) {
           plot <- plot + lims(alpha = c(0, 1))
         }
 

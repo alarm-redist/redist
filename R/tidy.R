@@ -69,9 +69,9 @@ is_contiguous = function(x) {
 
 ## merge helpers
 # checks if is a proportion/pct
-is_prop = function(x) is.double(x) && min(x, na.rm=T) >= 0 && max(x, na.rm=T) <= 1
+is_prop = function(x) is.double(x) && min(x, na.rm=TRUE) >= 0 && max(x, na.rm=TRUE) <= 1
 # checks if is not a  proportion/pct
-is_nonprop = function(x) is.numeric(x) && (min(x, na.rm=T) < 0 || max(x, na.rm=T) > 1)
+is_nonprop = function(x) is.numeric(x) && (min(x, na.rm=TRUE) < 0 || max(x, na.rm=TRUE) > 1)
 # checks if x is constant within levels of rel
 is_const_rel = function(rel) {
     function(x) {
@@ -116,16 +116,16 @@ merge_by = function(.data, ..., by_existing=TRUE, drop_geom=TRUE, collapse_chr=T
     if (!is.null(col) && by_existing) {
         dplyr::group_by(.data, dplyr::across(dplyr::all_of(col)), !!!dots) %>%
             dplyr::summarize(dplyr::across(where(is_prop),
-                                           ~ weighted.mean(., w=.data[[pop_col]], na.rm=T)),
-                             dplyr::across(where(is.numeric), sum, na.rm=T),
+                                           ~ weighted.mean(., w=.data[[pop_col]], na.rm=TRUE)),
+                             dplyr::across(where(is.numeric), sum, na.rm=TRUE),
                              dplyr::across(where(is_const_rel(key_val)), ~ .[1]),
                              dplyr::across(where(is_col_chr), unique_chr),
                              .groups="drop")
     } else {
         dplyr::group_by(.data, !!!dots) %>%
             dplyr::summarize(dplyr::across(where(is_prop),
-                                           ~ weighted.mean(., w=.data[[pop_col]], na.rm=T)),
-                             dplyr::across(where(is.numeric), sum, na.rm=T),
+                                           ~ weighted.mean(., w=.data[[pop_col]], na.rm=TRUE)),
+                             dplyr::across(where(is.numeric), sum, na.rm=TRUE),
                              dplyr::across(where(is_const_rel(key_val)), ~ .[1]),
                              dplyr::across(where(is_col_chr), unique_chr),
                              .groups="drop") %>%
@@ -258,7 +258,7 @@ find_numbering = function(plan, ref, pop, force=FALSE) {
             stop("More than 1,000 renumbering options.")
     }
     combn = as.matrix(expand.grid(split(opts[,2], opts[,1])))
-    combn = combn[apply(combn, 1, anyDuplicated) == 0L, , drop=F]
+    combn = combn[apply(combn, 1, anyDuplicated) == 0L, , drop=FALSE]
     best_idx = best_renumber(combn, joint)
 
     renumb = as.integer(combn[best_idx,])
@@ -338,7 +338,7 @@ match_numbers = function(data, plan, col="pop_overlap", force=FALSE) {
 #'
 #' @concept analyze
 #' @export
-number_by = function(data, x, desc=F) {
+number_by = function(data, x, desc=FALSE) {
     stopifnot(inherits(data, "redist_plans"))
     stopifnot("district" %in% colnames(data))
 
@@ -381,7 +381,7 @@ plan_parity <- function(map, .data = cur_plans(), ...) {
     total_pop = map[[attr(map, 'pop_col')]]
     stopifnot(!is.null(total_pop))
 
-    rep(max_dev(get_plans_matrix(.data)[, idxs, drop=F], total_pop, ndists),
+    rep(max_dev(get_plans_matrix(.data)[, idxs, drop=FALSE], total_pop, ndists),
         each = ndists)
 }
 
@@ -402,7 +402,7 @@ distr_compactness = function(map, measure="FracKept", .data=cur_plans(), ...) {
         warning("Districts not sorted in ascending order; output may be incorrect.")
 
     idxs = unique(as.integer(.data$draw))
-    redist.compactness(shp=map, plans=get_plans_matrix(.data)[, idxs, drop=F],
+    redist.compactness(shp=map, plans=get_plans_matrix(.data)[, idxs, drop=FALSE],
                        measure=measure, total_pop=map[[attr(map, "pop_col")]],
                        adj=get_adj(map), ...)[[measure]]
 }
@@ -425,7 +425,7 @@ group_frac = function(map, group_pop, total_pop=map[[attr(map, "pop_col")]],
     idxs = unique(as.integer(.data$draw))
     group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
     total_pop = rlang::eval_tidy(rlang::enquo(total_pop), map)
-    as.numeric(redist.group.percent(plans=get_plans_matrix(.data)[, idxs, drop=F],
+    as.numeric(redist.group.percent(plans=get_plans_matrix(.data)[, idxs, drop=FALSE],
                                     group_pop=group_pop, total_pop=total_pop))
 }
 
@@ -443,7 +443,7 @@ segregation_index = function(map, group_pop, total_pop=map[[attr(map, "pop_col")
     idxs = unique(as.integer(.data$draw))
     group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
     total_pop = rlang::eval_tidy(rlang::enquo(total_pop), map)
-    plan_m = get_plans_matrix(.data)[, idxs, drop=F]
+    plan_m = get_plans_matrix(.data)[, idxs, drop=FALSE]
     rep(as.numeric(redist.segcalc(plans=plan_m, group_pop=group_pop,
                                   total_pop=total_pop)),
         each=attr(map, "ndists"))
@@ -468,7 +468,7 @@ partisan_metrics = function(map, measure, rvote, dvote, ...,
     idxs = unique(as.integer(.data$draw))
     rvote = rlang::eval_tidy(rlang::enquo(rvote), map)
     dvote = rlang::eval_tidy(rlang::enquo(dvote), map)
-    as.numeric(redist.metrics(plans=get_plans_matrix(.data)[, idxs, drop=F],
+    as.numeric(redist.metrics(plans=get_plans_matrix(.data)[, idxs, drop=FALSE],
                               measure=measure, rvote=rvote, dvote=dvote, ...)[[measure]])
 }
 
@@ -485,7 +485,7 @@ competitiveness = function(map, rvote, dvote, .data=cur_plans()) {
     idxs = unique(as.integer(.data$draw))
     rvote = rlang::eval_tidy(rlang::enquo(rvote), map)
     dvote = rlang::eval_tidy(rlang::enquo(dvote), map)
-    rep(redist.competitiveness(plans=get_plans_matrix(.data)[, idxs, drop=F],
+    rep(redist.competitiveness(plans=get_plans_matrix(.data)[, idxs, drop=FALSE],
                                rvote=rvote, dvote=dvote),
         each = attr(map, "ndists"))
 }
@@ -502,7 +502,7 @@ county_splits = function(map, counties, .data=cur_plans()) {
     check_tidy_types(map, .data)
     idxs = unique(as.integer(.data$draw))
     counties = rlang::eval_tidy(rlang::enquo(counties), map)
-    rep(redist.splits(plans=get_plans_matrix(.data)[, idxs, drop=F], counties=counties),
+    rep(redist.splits(plans=get_plans_matrix(.data)[, idxs, drop=FALSE], counties=counties),
         each = attr(map, "ndists"))
 }
 
@@ -534,7 +534,7 @@ prec_assignment = function(prec, .data=cur_plans()) {
         stop('`.data` must be a `redist_plans` object')
 
     idxs = unique(as.integer(.data$draw))
-    assignment = get_plans_matrix(.data)[prec, idxs, drop=F]
+    assignment = get_plans_matrix(.data)[prec, idxs, drop=FALSE]
     if ("district" %in% colnames(.data) && is.factor(.data$district)) {
         lev = levels(.data$district)
         assignment = factor(lev[assignment], lev, ordered=is.ordered(.data$district))
@@ -596,7 +596,7 @@ imp_confint = function(x, conf=0.95, .data=cur_plans()) {
 
     idxs = unique(as.integer(.data$draw))
     y = rlang::eval_tidy(rlang::enquo(x), .data)
-    ci = redist.smc_is_ci(y, get_plans_weights(.data)[, idxs, drop=F], conf)
+    ci = redist.smc_is_ci(y, get_plans_weights(.data)[, idxs, drop=FALSE], conf)
 
     tibble("{{ x }}" := mean(y),
                    "{{ x }}_lower" := ci[1],
