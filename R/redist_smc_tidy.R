@@ -17,9 +17,9 @@
 #' \code{constraint_fn} parameters.
 #'
 #' Key to ensuring good performance is monitoring the efficiency of the resampling
-#' process at each SMC stage.  Unless \code{silent=F}, this function will print
+#' process at each SMC stage.  Unless \code{silent=FALSE}, this function will print
 #' out the effective sample size of each resampling step to allow the user to
-#' monitor the efficiency.  If \code{verbose=T} the function will also print
+#' monitor the efficiency.  If \code{verbose=TRUE} the function will also print
 #' out information on the \eqn{k_i} values automatically chosen and the
 #' acceptance rate (based on the population constraint) at each step.
 #'
@@ -242,7 +242,7 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
         n_eff = length(mod_wgt) * mean(mod_wgt)^2 / mean(mod_wgt^2)
         mod_wgt = mod_wgt / sum(mod_wgt)
 
-        plans = plans[, sample(nsims, nsims, replace=T, prob=mod_wgt), drop=FALSE]
+        plans = plans[, sample(nsims, nsims, replace=TRUE, prob=mod_wgt), drop=FALSE]
     }
 
     if (!is.nan(n_eff) && n_eff/nsims <= 0.05)

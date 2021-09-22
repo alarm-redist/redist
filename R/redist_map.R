@@ -31,7 +31,7 @@ new_redist_map = function(data, adj, ndists, pop_bounds, pop_col="pop",
     data
 }
 
-validate_redist_map = function(data, check_contig=T) {
+validate_redist_map = function(data, check_contig=TRUE) {
     if (!is.data.frame(data)) stop("Not a data frame")
     if (!inherits(data, "redist_map")) stop("Not a `redist_map` object")
 

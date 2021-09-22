@@ -45,7 +45,7 @@
 #' plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
 #' distances <- redist.distances(plans_05)
 #' distances$Hamming[1:5, 1:5]
-#' 
+#'
 #' @concept analyze
 #' @export
 redist.distances <- function(plans, measure = "Hamming",
@@ -53,7 +53,7 @@ redist.distances <- function(plans, measure = "Hamming",
 
     supported = c("all", "Hamming", "Manhattan", "Euclidean", "variation of information")
     # fuzzy matching
-    measure = supported[agrep(measure, supported, max.distance=0, ignore.case=T)]
+    measure = supported[agrep(measure, supported, max.distance=0, ignore.case=TRUE)]
     #check inputs
     if (measure == "all") {
         measure <- supported[-1] # all but 'all'
