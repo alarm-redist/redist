@@ -150,22 +150,29 @@ double eval_fractures(const subview_col<uword> &districts, int distr,
  * Compute the party penalty for district `distr`
  */
 double eval_party(const subview_col<uword> &districts, int distr,
-                      const vec &tgts_party, const uvec &rvote, const uvec &dvote) {
+                      const vec &tgts_party, const uvec &rvote,
+                      const uvec &dvote) {
+    double pow_party = 1.0;
+    // uvec idxs = find(districts == distr);
+    // double frac = ((double) sum(dvote(idxs))) / (sum(rvote(idxs)) + sum(dvote(idxs)));
+    // // figure out which to compare it to
+    // double target;
+    // double diff = 1;
+    // int n_tgt = tgts_party.size();
+    // for (int i = 0; i < n_tgt; i++) {
+    //     double new_diff = std::fabs(tgts_party[i] - frac);
+    //     if (new_diff <= diff) {
+    //         diff = new_diff;
+    //         target = tgts_party[i];
+    //     }
+    // }
+    //
+    // return std::sqrt(std::max(0.0, target - frac));
+
     uvec idxs = find(districts == distr);
     double frac = ((double) sum(dvote(idxs))) / (sum(rvote(idxs)) + sum(dvote(idxs)));
-    // figure out which to compare it to
-    double target;
-    double diff = 1;
-    int n_tgt = tgts_party.size();
-    for (int i = 0; i < n_tgt; i++) {
-        double new_diff = std::fabs(tgts_party[i] - frac);
-        if (new_diff <= diff) {
-            diff = new_diff;
-            target = tgts_party[i];
-        }
-    }
-
-    return std::sqrt(std::max(0.0, target - frac));
+    return std::pow(std::fabs(frac - 0.5), pow_party) *
+        std::pow(std::fabs(frac - 0.5), pow_party);
 }
 
 /*

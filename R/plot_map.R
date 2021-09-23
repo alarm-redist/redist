@@ -238,8 +238,8 @@ redist.plot.adj <- function(shp = NULL, adj = NULL, plan = NULL, centroids = TRU
     }
   }
 
-  if( inherits(shp, 'redist_map') ){
-    if(missing(adj)) {
+  if (inherits(shp, 'redist_map') ){
+    if (missing(adj)) {
       adj <- get_adj(shp)
     }
   } else if (missing(adj)){
@@ -304,10 +304,6 @@ redist.plot.adj <- function(shp = NULL, adj = NULL, plan = NULL, centroids = TRU
   return(plot)
 }
 
-
-
-
-
 edge_center_df <- function(shp, adj){
   # Extract Centers
   suppressWarnings(centers <- st_centroid(shp))
@@ -315,11 +311,9 @@ edge_center_df <- function(shp, adj){
 
 
   # Extract Edges
-
   nb <- lapply(adj, function(x) {
     x + 1L
   })
-
 
   edgedf <- tibble(
     start = rep(1:length(nb), lengths(nb)),
@@ -347,7 +341,5 @@ edge_center_df <- function(shp, adj){
 
   return(list(nb = nb, centers = centers))
 }
-
-
 
 globalVariables(c('start', 'finish'))
