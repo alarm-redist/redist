@@ -155,9 +155,9 @@ controlled by the \code{pop_tol}, \code{compactness}, \code{constraints}, and
 \code{constraint_fn} parameters.
 
 Key to ensuring good performance is monitoring the efficiency of the resampling
-process at each SMC stage.  Unless \code{silent=F}, this function will print
+process at each SMC stage.  Unless \code{silent=FALSE}, this function will print
 out the effective sample size of each resampling step to allow the user to
-monitor the efficiency.  If \code{verbose=T} the function will also print
+monitor the efficiency.  If \code{verbose=TRUE} the function will also print
 out information on the \eqn{k_i} values automatically chosen and the
 acceptance rate (based on the population constraint) at each step.
 
