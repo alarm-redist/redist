@@ -34,7 +34,7 @@ double eval_vra_hinge(const subview_col<uword> &districts, int distr,
  * Compute the old VRA penalty for district `distr`
  */
 double eval_compet(const subview_col<uword> &districts, int distr,
-                   const uvec &pop, const uvec &min_pop);
+                   const uvec &other_pop, const uvec &min_pop, double pow);
 
 /*
  * Compute the incumbent-preserving penalty for district `distr`

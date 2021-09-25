@@ -86,10 +86,10 @@ double eval_vra_hinge(const subview_col<uword> &districts, int distr,
  * Compute the old VRA penalty for district `distr`
  */
 double eval_compet(const subview_col<uword> &districts, int distr,
-                   const uvec &pop, const uvec &min_pop) {
+                   const uvec &other_pop, const uvec &min_pop, double pow) {
     uvec idxs = find(districts == distr);
-    double frac = ((double) sum(min_pop(idxs))) / sum(pop(idxs));
-    return std::fabs(frac - 0.5);
+    double frac = ((double) sum(min_pop(idxs))) / sum(other_pop(idxs));
+    return std::pow(std::fabs(frac - 0.5), pow);
 }
 
 /*

@@ -18,8 +18,9 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                umat districts, int n_drawn, int n_steps, const uvec boundary,
                double beta_sq, const uvec &current, int n_current,
                double beta_vra, double tgt_min, double tgt_other,
-               double pow_vra, const uvec &min_pop,
+               double pow_vra, const uvec &min_pop, const uvec &tot_pop,
                double beta_vra_hinge, const vec &tgts_min,
+               const uvec &min_pop2, const uvec &tot_pop2,
                double beta_inc, const uvec &incumbents,
                double beta_fractures,
                vec &lp, double thresh,
@@ -101,8 +102,8 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
         // compute weights for next step
         cum_wgt = get_wgts(districts, n_distr, ctr, final, alpha, lp, pop,
                            beta_sq, current, n_current,
-                           beta_vra, tgt_min, tgt_other, pow_vra, min_pop,
-                           beta_vra_hinge, tgts_min,
+                           beta_vra, tgt_min, tgt_other, pow_vra, min_pop, tot_pop,
+                           beta_vra_hinge, tgts_min, min_pop2, tot_pop2,
                            beta_inc, incumbents, beta_fractures, counties, n_cty,
                            min_eff, verbosity);
 
@@ -136,8 +137,9 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
              double alpha, vec &lp, const uvec &pop,
              double beta_sq, const uvec &current, int n_current,
              double beta_vra, double tgt_min, double tgt_other,
-             double pow_vra, const uvec &min_pop,
+             double pow_vra, const uvec &min_pop, const uvec &tot_pop,
              double beta_vra_hinge, const vec &tgts_min,
+             const uvec &min_pop2, const uvec &tot_pop2,
              double beta_inc, const uvec &incumbents,
              double beta_fractures, const uvec &counties, int n_cty,
              double &min_eff, int verbosity) {
@@ -149,12 +151,12 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
             lp[i] += beta_sq * sq_entropy(districts.col(i), current, distr_ctr,
                                           pop, n_distr, n_current, V);
         if (beta_vra != 0)
-            lp[i] += beta_vra * eval_compet(districts.col(i), distr_ctr, pop, min_pop);
+            lp[i] += beta_vra * eval_compet(districts.col(i), distr_ctr, tot_pop, min_pop, pow_vra);
             //lp[i] += beta_vra * eval_vra(districts.col(i), distr_ctr, tgt_min,
             //                             tgt_other, pow_vra, pop, min_pop);
         if (beta_vra_hinge != 0)
             lp[i] += beta_vra_hinge * eval_vra_hinge(districts.col(i), distr_ctr,
-                                                     tgts_min, pop, min_pop);
+                                                     tgts_min, tot_pop2, min_pop2);
         if (beta_inc != 0)
             lp[i] += beta_inc * eval_inc(districts.col(i), distr_ctr, incumbents);
 

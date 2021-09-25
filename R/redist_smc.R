@@ -258,9 +258,10 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
                       pop_bounds[1], pop_bounds[3], compactness,
                       init_particles, n_drawn, n_steps, as.integer(boundary_precs) - 1L,
                       constraints$status_quo$strength, constraints$status_quo$current, n_current,
-                      constraints$vra$strength, constraints$vra$tgt_vra_min,
-                      constraints$vra$tgt_vra_other, constraints$vra$pow_vra, proc$min_pop,
+                      constraints$compet$strength, 0.5, 0.5,
+                      constraints$compet$pow, constraints$compet$dem, constraints$compet$tot,
                       constraints$hinge$strength, constraints$hinge$tgts_min,
+                      constraints$hinge$min_pop, constraints$hinge$tot_pop,
                       constraints$incumbency$strength, constraints$incumbency$incumbents,
                       constraints$multisplits$strength,
                       lp, adapt_k_thresh, seq_alpha, pop_temper, final_infl, verbosity);
@@ -317,9 +318,8 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
 process_smc_ms_constr = function(constraints, V) {
     defaults = list(
         status_quo = list(strength=0, current=rep(1, V)),
-        hinge = list(strength=0, tgts_min=0.55, min_pop=NULL),
-        vra = list(strength=0, tgt_vra_min=0.55, tgt_vra_other=0.25,
-                   pow_vra=1.5, min_pop=integer()),
+        hinge = list(strength=0, tgts_min=0.55, min_pop=rep(0, V)),
+        compet = list(strength=0, pow=1, dem=integer(), tot=integer()),
         incumbency = list(strength=0, incumbents=integer()),
         splits = list(strength=0),
         multisplits = list(strength=0)
@@ -336,11 +336,11 @@ process_smc_ms_constr = function(constraints, V) {
 
     min_pop = rep(0, V)
     if (defaults$hinge$strength > 0) {
-        if (defaults$vra$strength > 0)
+        if (defaults$compet$strength > 0)
             stop("Specify one of `vra` or `vra_old` constraints, not both")
         min_pop = defaults$hinge$min_pop
-    } else if (defaults$vra$strength > 0) {
-        min_pop = defaults$vra$min_pop
+    } else if (defaults$compet$strength > 0) {
+        min_pop = defaults$compet$dem
     }
     if (length(min_pop) != V)
         stop("Length of minority population vector must match the number of units.")
