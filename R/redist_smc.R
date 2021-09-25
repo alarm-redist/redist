@@ -318,7 +318,7 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
 process_smc_ms_constr = function(constraints, V) {
     defaults = list(
         status_quo = list(strength=0, current=rep(1, V)),
-        hinge = list(strength=0, tgts_min=0.55, min_pop=rep(0, V)),
+        hinge = list(strength=0, tgts_min=0.55, min_pop=integer(), tot_pop=integer()),
         compet = list(strength=0, pow=1, dem=integer(), tot=integer()),
         incumbency = list(strength=0, incumbents=integer()),
         splits = list(strength=0),
