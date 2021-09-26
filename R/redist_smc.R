@@ -223,8 +223,8 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
     pop_bounds = attr(map, "pop_bounds")
     pop = map[[attr(map, "pop_col")]]
     ndists = attr(map, "ndists")
-    if (any(pop >= get_target(map)))
-        stop("Units ", which(pop >= get_target(map)),
+    if (any(pop >= pop_bounds[3]))
+        stop("Units ", which(pop >= pop_bounds[3]),
              " have population larger than the district target.\n",
              "Redistricting impossible.")
 
@@ -336,8 +336,8 @@ process_smc_ms_constr = function(constraints, V) {
 
     min_pop = rep(0, V)
     if (defaults$hinge$strength > 0) {
-        if (defaults$compet$strength > 0)
-            stop("Specify one of `vra` or `vra_old` constraints, not both")
+        #if (defaults$compet$strength > 0)
+        #    stop("Specify one of `vra` or `vra_old` constraints, not both")
         min_pop = defaults$hinge$min_pop
     } else if (defaults$compet$strength > 0) {
         min_pop = defaults$compet$dem
