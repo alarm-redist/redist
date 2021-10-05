@@ -8,6 +8,7 @@ redist.plot.wted.adj(
   shp = NULL,
   plans = NULL,
   counties = NULL,
+  ref = TRUE,
   adj = NULL,
   plot_shp = TRUE
 )
@@ -20,6 +21,8 @@ column indicates a plan and each}
 
 \item{counties}{unquoted name of a column in `shp` or a vector of county assignments. Subsets to
 edges which cross this boundary if supplied.}
+
+\item{ref}{Plot reference map? Defaults to TRUE which gets the existing plan from}
 
 \item{adj}{A zero-indexed adjacency list. Extracted from `shp` if `shp` is a `redist_map`.
 Otherwise created with redist.adjacency if not supplied. Default is NULL.}
