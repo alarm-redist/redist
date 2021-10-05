@@ -1,3 +1,6 @@
+# redist 3.1.5
+* skip SMC test on Linux
+
 # redist 3.1.4
 * skip SMC test on Solaris
 

@@ -14,4 +14,4 @@
 There are no reverse dependencies to check.
 
 ## Additional Notes
-* Skips a single testthat test that is causing infinite run times on Solaris.
+* Skips a test on Linux that seems to cause the noLD issue.

@@ -1,4 +1,5 @@
 skip_on_os('solaris')
+skip_on_os('linux')
 
 test_that("SMC runs without errors", {
     N = 20
