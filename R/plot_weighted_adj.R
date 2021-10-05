@@ -1,50 +1,94 @@
-redist.plot.wted.adj <- function(shp = NULL, adj = NULL, plans = NULL,
-                                 centroids = TRUE,
-                                 drop = FALSE,
-                                 plot_shp = TRUE) {
+#' Plot Weighted Border Adjacency
+#'
+#' Plots the weighted adjacency graph by how often precincts coocur. If an argument
+#' to counties is provided, it subsets the edges to plot to those that cross over the county boundary.
+#'
+#' @param shp A SpatialPolygonsDataFrame, sf object, or redist_map. Required.
+#' @param plans A `redist_plans` object or matrix of redistricting plans, where each
+#' column indicates a plan and each
+#' @param counties unquoted name of a column in `shp` or a vector of county assignments. Subsets to
+#' edges which cross this boundary if supplied.
+#' @param adj A zero-indexed adjacency list. Extracted from `shp` if `shp` is a `redist_map`.
+#' Otherwise created with redist.adjacency if not supplied. Default is NULL.
+#' @param plot_shp Should the shapes be plotted? Default is TRUE.
+#'
+#' @return ggplot
+#' @export
+#'
+#' @examples
+#' data(iowa)
+#' shp <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
+#' plans <- redist_smc(shp, 100)
+#' redist.plot.wted.adj(shp, plans = plans, counties = region)
+redist.plot.wted.adj <- function(shp = NULL, plans = NULL,
+                                 counties = NULL, adj = NULL, plot_shp = TRUE) {
 
-    # Check inputs ----
-    if (is.null(shp)) {
-        stop('Please provide an argument to `shp`.')
+  # Check inputs ----
+  if (is.null(shp)) {
+    stop("Please provide an argument to `shp`.")
+  }
+
+  if ("SpatialPolygonsDataFrame" %in% class(shp)) {
+    shp <- shp %>% st_as_sf()
+  } else if (!("sf" %in% class(shp))) {
+    stop("Please provide `shp` as a SpatialPolygonsDataFrame or sf object.")
+  }
+
+  if (is.null(plans)) {
+    stop("`plans` is required.")
+  } else if (inherits(plans, "redist_plans")) {
+    plans <- get_plans_matrix(plans)
+  }
+
+  if (inherits(shp, "redist_map")) {
+    if (missing(adj)) {
+      adj <- get_adj(shp)
     }
+  } else if (missing(adj)) {
+    adj <- redist.adjacency(shp)
+  }
 
-    if ('SpatialPolygonsDataFrame' %in% class(shp)) {
-        shp <- shp %>% st_as_sf()
-    } else if (!('sf' %in% class(shp))) {
-        stop('Please provide `shp` as a SpatialPolygonsDataFrame or sf object.')
-    }
+  counties <- rlang::eval_tidy(rlang::enquo(counties), shp)
 
-    if (is.null(plans)) {
-        stop('`plans` is required.')
-    } else if (inherits(plans, 'redist_plans')) {
-        plans <- get_plans_matrix(plans)
-    }
+  # Build the sf graph ----
+  edge_cntr <- edge_center_df(shp, adj)
+  nb <- edge_cntr$nb
+  # centers <- edge_cntr$centers
 
-    if (inherits(shp, 'redist_map') ){
-        if (missing(adj)) {
-            adj <- get_adj(shp)
-        }
-    } else if (missing(adj)){
-        adj <- redist.adjacency(shp)
-    }
+  # Create Plot ----
+  p <- ggplot() +
+    theme_void()
 
-    # Build the sf graph ----
-    edge_cntr <- edge_center_df(shp, adj)
-    nb <- edge_cntr$nb
-    centers <- edge_cntr$centers
+  if (plot_shp) {
+    p <- p +
+      geom_sf(data = shp, size = 0.1, fill = NA)
+  }
 
-    # Create Plot ----
-    plot <- ggplot() +
-        theme_void()
-
+  if (!is.null(counties)) {
     if (plot_shp) {
-        plot <- plot +
-            geom_sf(data = shp, size = 0.1)
+      cty <- shp %>%
+        mutate(counties_input = counties) %>%
+        group_by(counties_input) %>%
+        summarize(geometry = st_union(geometry))
+
+      p <- p +
+        geom_sf(data = cty, size = 0.5, fill = NA)
     }
 
-    # Add weighted adj
+    nb <- nb %>%
+      filter(counties[i] != counties[j])
+  }
 
+  # Add weighted adj ----
+  cooc <- prec_cooccur(plans, seq_len(ncol(plans)))
+  nb <- nb %>%
+    mutate(wt = cooc[i, j])
 
-    # return ----
-    plot
+  p <- p +
+    geom_sf(data = nb, aes(color = wt), lwd = 1) +
+    ggplot2::scale_color_distiller(palette = "Reds", direction = 1) +
+    labs(color = "Coocurrence\nProportion")
+
+  # return ----
+  p
 }
