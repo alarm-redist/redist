@@ -201,3 +201,20 @@ redist.muni.splits <- function(plans, munis) {
 
     splits(plans - 1, community = muni_id - 1, length(unique(plans[, 1])), 1)
 }
+
+#' @rdname redist.muni.splits
+#' @order 1
+#'
+#' @param map a \code{\link{redist_map}} object
+#' @param .data a \code{\link{redist_plans}} object
+#'
+#' @concept analyze
+#' @export
+muni_splits <- function(map, munis, .data = cur_plans()) {
+  check_tidy_types(map, .data)
+  idxs <- unique(as.integer(.data$draw))
+  munis <- rlang::eval_tidy(rlang::enquo(munis), map)
+  rep(redist.muni.splits(plans = get_plans_matrix(.data)[, idxs, drop = FALSE], counties = munis),
+    each = attr(map, 'ndists')
+  )
+}
