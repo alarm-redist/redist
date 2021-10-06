@@ -214,7 +214,7 @@ muni_splits <- function(map, munis, .data = cur_plans()) {
   check_tidy_types(map, .data)
   idxs <- unique(as.integer(.data$draw))
   munis <- rlang::eval_tidy(rlang::enquo(munis), map)
-  rep(redist.muni.splits(plans = get_plans_matrix(.data)[, idxs, drop = FALSE], counties = munis),
+  rep(redist.muni.splits(plans = get_plans_matrix(.data)[, idxs, drop = FALSE], munis = munis),
     each = attr(map, 'ndists')
   )
 }
