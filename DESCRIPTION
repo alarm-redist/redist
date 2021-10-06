@@ -37,7 +37,7 @@ Imports:
     coda,
     ggplot2,
     patchwork,
-    readr
+    readr (>= 2.0.0)
 Suggests:
     igraph,
     s2,
