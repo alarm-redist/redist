@@ -4,6 +4,7 @@
 * ubuntu 20.04 (on GitHub Actions), (devel and release)
 * windows-latest (on GitHub Actions), (release)
 * macOS-latest (on GitHub Actions), (release)
+* Oracle Solaris x86 32 bit, (release)
 
 ## R CMD check results
 
@@ -13,5 +14,4 @@
 There are no reverse dependencies to check.
 
 ## Additional Notes
-* Fixes URL redirects in readme and author sections of Rd files.
-* Decreases simulation sizes to lower check time.
+* Skips a test on Linux that seems to cause the noLD issue.
