@@ -135,7 +135,7 @@ and each column is a sample.}
 \item{nsims}{The number of plans sampled.}
 \item{pct_dist_parity}{The population constraint.}
 \item{compactness}{The compactness constraint.}
-\item{counties}{The computed constraint options list (see above).}
+\item{constraints}{The computed constraint options list (see above).}
 \item{maxdev}{The maximum population deviation of each sample.}
 \item{total_pop}{The provided vector of unit populations.}
 \item{counties}{The provided county vector.}
