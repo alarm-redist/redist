@@ -21,6 +21,7 @@ redist_smc(
   pop_temper = 0,
   final_infl = 1,
   ref_name = NULL,
+  boundary_precs = NULL,
   verbose = TRUE,
   silent = FALSE
 )
@@ -93,6 +94,10 @@ on the final split.}
 \item{ref_name}{a name for the existing plan, which will be added as a
 reference plan, or \code{FALSE} to not include the initial plan in the
 output. Defaults to the column name of the existing plan.}
+
+\item{boundary_precs}{precinct indices, at least one of which should be
+left unassigned, when \code{n_steps} is fewer than the number of remaining
+splits.}
 
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}
