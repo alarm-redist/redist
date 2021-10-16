@@ -133,7 +133,7 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr,
         if (beta_inc != 0)
             lp[i] += beta_inc * eval_inc(districts.col(i), distr_ctr, incumbents);
         if (beta_fractures != 0)
-            lp += beta_fractures * (
+            lp[i] += beta_fractures * (
                 eval_fractures(districts.col(i), distr_ctr, counties, n_cty)
             );
         if (beta_party != 0)
