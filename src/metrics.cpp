@@ -277,7 +277,7 @@ NumericVector smoothseat(NumericMatrix dvs, int nd) {
         minrep = std::max<double>(minrep, curr);
       }
     }
-    sscd(c) = (0.5 - (1.0 - mindem))/(minrep - (1.0 - mindem));
+    sscd(c) = (0.5 - (1.0 - mindem))/((1.0 - minrep) - (1.0 - mindem));
   }
   return sscd;
 }
