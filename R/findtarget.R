@@ -53,10 +53,10 @@ redist.constraint.helper <- function(constraints = 'vra', tgt_min = 0.55,
                        min_pop = group_pop,
                        tgt_vra_min = tgt_min,
                        tgt_vra_other = tgt_other,
-                       pow_vra = 1.5)
+                       pow_vra = pow_vra)
 
   }
-  return(ret)
+  ret
 }
 
 globalVariables(c('vra'))
