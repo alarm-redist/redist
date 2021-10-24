@@ -87,6 +87,13 @@ reconstruct.redist_map = function(data, old) {
 
         if (is.null(attr(data, "pop_bounds")))
             attr(data, "pop_bounds") = attr(old, "pop_bounds")
+
+        others <- setdiff(names(attributes(old)), names(attributes(data)))
+        if (length(others) > 1) {
+          for (i in seq_len(length(others))) {
+            attr(data, others[i]) <- attr(old, others[i])
+          }
+        }
     }
 
     class(data) = c("redist_map", classes)

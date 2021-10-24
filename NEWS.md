@@ -1,3 +1,9 @@
+# redist 3.1.7
+* Using `mutate()` on a `redist_map` no longer drops attributes.
+
+# redist 3.1.6
+* Utilities for using municipalities as well as counties in split calculations
+
 # redist 3.1.5
 * skip SMC test on Linux
 
