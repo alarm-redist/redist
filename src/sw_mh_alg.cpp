@@ -56,6 +56,7 @@ List swMH(List aList,
 	  NumericVector grouppopvec,
 	  NumericVector areas_vec,
 	  IntegerVector county_membership,
+	  IntegerVector cities,
 	  arma::mat borderlength_mat,
 	  int nsims,
 	  double eprob,
@@ -79,6 +80,7 @@ List swMH(List aList,
 	  double weight_partisan = 0.0,
 	  double weight_minority = 0.0,
 	  double weight_hinge = 0.0,
+	  double weight_qps = 0.0,
 	  std::string adapt_beta = "none",
 	  int adjswap = 1,
 	  int exact_mh = 0,
@@ -120,19 +122,19 @@ List swMH(List aList,
      beta_population: strength of constraint for achieving population parity.
 
      beta_compact: strength of constraint for achieving district compactness
-   
+
      beta_segregation: strength of constraint for packing group into district
 
      beta_vra: strength of constraint for packing group into district
 
      beta_similar: strength of constraint for examining plans similar to original district
-   
+
    beta_partisan: strength of constraint for minimizing partisan bias measure
 
      anneal_beta_population: flag for whether to anneal the beta pop parameter
 
      anneal_beta_compact: flag for whether to anneal the beta compactness parameter
-   
+
      anneal_beta_segregation: flag for whether to anneal the beta segregation parameter
 
      anneal_beta_vra: flag for whether to anneal the beta vra parameter
@@ -142,11 +144,11 @@ List swMH(List aList,
      adjswap: flag for whether to force algorithm to only do adjacent swaps
 
      exact_mh: flag for whether to calculate the exact metropolis-hastings w boundary correction
-   
+
    partisan_measure: string, only "efficiency-gap" implemented thus far
-   
+
    rvote: vote for Republicans (or Party A)
-   
+
    dvote: vote for Democrats (or Party B != A)
 
   */
@@ -226,6 +228,7 @@ List swMH(List aList,
   NumericVector psipartisan_store(nsims);
   NumericVector psiminority_store(nsims);
   NumericVector psihinge_store(nsims);
+  NumericVector psiqps_store(nsims);
 
   // Store value of p, lambda, weights for all simulations
   NumericVector pparam_store(nsims);
@@ -263,7 +266,7 @@ List swMH(List aList,
     Rcout << "-- Simulating at hot temperature." << std::endl;
     Rcout << "---------------------------------" << std::endl;
   }
-  
+
   Graph g = list_to_graph(aList);
   // Open the simulations
   while(k < nsims){
@@ -318,6 +321,7 @@ List swMH(List aList,
 				   borderlength_mat,
 				   ssdmat,
 				   county_membership,
+				   cities,
 				   min_parity,
 				   max_parity,
 				   p,
@@ -332,6 +336,7 @@ List swMH(List aList,
 				   weight_partisan,
 				   weight_minority,
 				   weight_hinge,
+				   weight_qps,
 				   ssd_denom,
 				   tgt_min,
 				   tgt_other,
@@ -397,6 +402,9 @@ List swMH(List aList,
       if(weight_hinge != 0.0){
         psihinge_store[k] = swap_partitions["hinge_new_psi"];
       }
+      if(weight_qps != 0.0){
+        psiqps_store[k] = swap_partitions["qps_new_psi"];
+      }
     }else{
       energy_store[k] = swap_partitions["energy_old"];
       if(weight_population != 0.0){
@@ -425,6 +433,9 @@ List swMH(List aList,
       }
       if(weight_hinge != 0.0){
         psihinge_store[k] = swap_partitions["hinge_old_psi"];
+      }
+      if(weight_qps != 0.0){
+        psiqps_store[k] = swap_partitions["qps_old_psi"];
       }
     }
 
@@ -501,7 +512,7 @@ List swMH(List aList,
     // Print Progress
     if(k % nsims_10pct == 0){
       R_CheckUserInterrupt();
-      
+
       if(verbose){
         Rcout << (double)k / nsims_10pct * 10 << " percent done." << std::endl;
         if(adapt_lambda == 1){
@@ -587,6 +598,7 @@ List swMH(List aList,
     out["constraint_partisan"] = psipartisan_store;
     out["constraint_minority"] = psiminority_store;
     out["constraint_hinge"] = psihinge_store;
+    out["constraint_qps"] = psiqps_store;
     out["boundary_partitions"] = boundarypartitions_store;
     out["boundaryratio"] = boundaryratio_store;
     if(adapt_beta == "tempering"){
@@ -617,6 +629,7 @@ List swMH(List aList,
     out["constraint_partisan"] = psipartisan_store[k-1];
     out["constraint_minority"] = psiminority_store[k-1];
     out["constraint_hinge"] = psihinge_store[k-1];
+    out["constraint_qps"] = psiqps_store[k-1];
     out["boundary_partitions"] = boundarypartitions_store[k-1];
     out["boundaryratio"] = boundaryratio_store[k-1];
     if(adapt_eprob == 1){

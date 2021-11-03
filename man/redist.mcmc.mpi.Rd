@@ -31,7 +31,8 @@ redist.mcmc.mpi(
   freq = 100,
   savename = NA,
   maxiterrsg = 5000,
-  verbose = FALSE
+  verbose = FALSE,
+  cities = NULL
 )
 }
 \arguments{

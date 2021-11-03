@@ -1,5 +1,5 @@
 #' Dangerous but Skinny Flip
-#' 
+#'
 #' Runs flip silently without checking input quality for use within other contexts
 #' which already check things. It returns just a matrix of plans.
 #'
@@ -13,12 +13,11 @@
 #' @param constraints constraint list
 #'
 #' @return matrix  with 1 indexed plans
-#' 
+#'
 #' @noRd
-#' 
+#'
 skinny_flips <- function(adj, init_plan, total_pop, pop_tol, nsims, eprob, lambda, constraints){
-  
-  
+
   algout <- swMH(aList = adj,
                  cdvec = init_plan,
                  cdorigvec = constraints$similarity$plan,
@@ -26,6 +25,7 @@ skinny_flips <- function(adj, init_plan, total_pop, pop_tol, nsims, eprob, lambd
                  grouppopvec = constraints$group_pop,
                  areas_vec = constraints$compact$areas,
                  county_membership = constraints$counties,
+                 cities = constraints$qps$cities,
                  borderlength_mat = constraints$compact$borderlength_mat,
                  nsims = nsims,
                  eprob = eprob,
@@ -44,6 +44,7 @@ skinny_flips <- function(adj, init_plan, total_pop, pop_tol, nsims, eprob, lambd
                  weight_partisan = constraints$partisan$weight,
                  weight_minority = constraints$minority$weight,
                  weight_hinge = constraints$hinge$weight,
+                 weight_qps = constraints$qps$weight,
                  adapt_beta = 'none',
                  adjswap = TRUE,
                  exact_mh = FALSE,
@@ -59,5 +60,5 @@ skinny_flips <- function(adj, init_plan, total_pop, pop_tol, nsims, eprob, lambd
                  minorityprop = constraints$hinge$minorityprop,
                  verbose = FALSE)
 
-  return(algout$plans + 1)
+  algout$plans + 1
 }

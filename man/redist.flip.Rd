@@ -43,7 +43,8 @@ redist.flip(
   tgt_other = 0.25,
   rvote = NULL,
   dvote = NULL,
-  minorityprop = NULL
+  minorityprop = NULL,
+  cities = NULL
 )
 }
 \arguments{
@@ -106,7 +107,7 @@ units. The default is \code{NULL}.}
 
 \item{constraint}{Which constraint to apply. Accepts any combination of \code{compact},
 \code{segregation}, \code{vra}, \code{population}, \code{similarity}, \code{partisan},
-\code{minority}, \code{hinge}, \code{countysplit}, or \code{none}
+\code{minority}, \code{hinge}, \code{countysplit}, \code{qps}, or \code{none}
 (no constraint applied). The default is NULL.}
 
 \item{constraintweights}{The weights to apply to each constraint. Should be a vector
@@ -167,6 +168,8 @@ Default is \code{TRUE}.}
 
 \item{minorityprop}{numeric vector of targeted minority proportions for the top
 districts with that proportion}
+
+\item{cities}{integer vector of cities for QPS constraint.}
 }
 \value{
 \code{redist.mcmc} returns an object of class "redist". The object
@@ -200,6 +203,8 @@ partisan constraint for each accepted redistricting plan.}
 minority constraint for each accepted redistricting plan.}
 \item{constraint_hinge}{A vector containing the value of the
 hinge constraint for each accepted redistricting plan.}
+\item{constraint_qps}{A vector containing the value of the
+QPS constraint for each accepted redistricting plan.}
 \item{beta_sequence}{A vector containing the value of beta for each iteration
 of the algorithm. Returned when tempering is being used.}
 \item{mhdecisions_beta}{A vector specifying whether a proposed beta value was

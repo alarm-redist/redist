@@ -63,7 +63,7 @@ Packaged: 2015-06-03 18:32:00 UTC; benfifield
 NeedsCompilation: yes
 BugReports: https://github.com/alarm-redist/redist/issues
 URL: https://alarm-redist.github.io/redist/
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 VignetteBuilder: knitr
 Encoding: UTF-8
 Config/testthat/edition: 3

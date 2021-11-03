@@ -35,6 +35,11 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
     if(is.na(counties)){
         counties <- NULL
     }
+  if (is.na(cities)) {
+    cities <- NULL
+  }
+
+
     if(is.na(areasvec)){
         areasvec <- NULL
     }
@@ -135,14 +140,15 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
                                  init_plan = init_plan, ndists = ndists,
                                  pop_tol = pop_tol,
                                  group_pop = group_pop,
-                                 areasvec = areasvec, #ctk-cran-note
-                                 borderlength_mat = borderlength_mat,#ctk-cran-note
-                                 counties = counties,#ctk-cran-note
+                                 areasvec = areasvec,
+                                 borderlength_mat = borderlength_mat,
+                                 counties = counties,
+                                 cities = cities,
                                  ssdmat = ssdmat,
-                                 compactness_metric = compactness_metric,#ctk-cran-note
+                                 compactness_metric = compactness_metric,
                                  temper = FALSE,
                                  constraint = constraint,
-                                 constraintweights = constraintweights,#ctk-cran-note
+                                 constraintweights = constraintweights,
                                  betaseq = NULL, betaweights = NULL,
                                  adjswaps = adjswaps,
                                  maxiterrsg = maxiterrsg,
@@ -156,6 +162,8 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
     weightvra <- preprocout$params$weightvra
     weightsimilar <- preprocout$params$weightsimilar
     weightcountysplit <- preprocout$params$weightcountysplit
+    weighthinge <- preprocout$params$weighthinge
+    weightqps <- preprocout$params$weightqps
     temper <- "parallel"
 
     ## Find procID involved in swaps (non-adjacent only)
@@ -263,6 +271,7 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
                          grouppopvec = preprocout$data$group_pop,
                          areas_vec = preprocout$data$areasvec,
                          county_membership = preprocout$data$counties,
+                         cities = preprocout$data$cities,
                          borderlength_mat = preprocout$data$borderlength_mat,
                          nsims = nsimsAdj[j],
                          eprob = eprob,
@@ -277,6 +286,8 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
                          weight_vra = weightvra,
                          weight_similar = weightsimilar,
                          weight_countysplit = weightcountysplit,
+                         weight_hinge = weighthinge,
+                         weight_qps = weightqps,
                          adapt_beta = "none",
                          adjswap = preprocout$params$adjswaps,
                          exact_mh = 0,
@@ -496,6 +507,8 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
 #' vra constraint for each accepted redistricting plan.}
 #' \item{constraint_similar}{A vector containing the value of the similarity
 #' constraint for each accepted redistricting plan.}
+#' \item{constraint_qps}{A vector containing the value of the
+#' QPS constraint for each accepted redistricting plan.}
 #' \item{beta_sequence}{A vector containing the value of beta for each iteration
 #' of the algorithm. Returned when tempering is being used.}
 #' \item{mhdecisions_beta}{A vector specifying whether a proposed beta value was
@@ -760,7 +773,8 @@ redist.mcmc.mpi <- function(adj, total_pop, nsims, ndists = NA,
                             constraint = NA, constraintweights = NA,
                             betaseq = "powerlaw", betaseqlength = 10,
                             adjswaps = TRUE, freq = 100, savename = NA,
-                            maxiterrsg = 5000, verbose = FALSE){
+                            maxiterrsg = 5000, verbose = FALSE,
+                            cities = NULL){
   contiguitymap <- 'rooks'
 
     ## Check if Rmpi library is installed

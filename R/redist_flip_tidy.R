@@ -172,12 +172,10 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
                         adjswaps = TRUE, init_name = NULL, verbose = TRUE) {
   if (verbose) {
     ## Initialize ##
-    divider <- c(paste(rep('=', 20), sep = '', collapse = ''), '\n')
-
-    cat('\n', append = TRUE)
-    cat(divider, append = TRUE)
-    cat('redist.flip(): Automated Redistricting Simulation Using
-         Markov Chain Monte Carlo\n\n', append = TRUE)
+    cli::rule(line = 2)
+    cli::rule(center = cli::col_red("redist.flip()"))
+    cli::rule(center = cli::col_red("Automated Redistricting Simulation Using Markov Chain Monte Carlo"))
+    cli::rule(line = 2)
   }
   # process raw inputs
   nprec <- nrow(map)
@@ -187,7 +185,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
   ndists <- attr(map, 'ndists')
 
   if (any(total_pop >= get_target(map)))
-      stop("Units ", which(total_pop >= get_target(map)),
+      cli::cli_abort("Units ", which(total_pop >= get_target(map)),
            " have population larger than the district target.\n",
            "Redistricting impossible.")
 
@@ -212,9 +210,9 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
 
 
   if (!any(class(nthin) %in% c('numeric', 'integer'))) {
-    stop('nthin must be an integer')
+    cli::cli_abort('nthin must be an integer')
   } else if (nthin < 1) {
-    stop('nthin must be a nonnegative integer.')
+    cli::cli_abort('nthin must be a nonnegative integer.')
   } else {
     nthin <- as.integer(nthin)
   }
@@ -250,7 +248,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
       init_plan <- redist.sink.plan(plan = init_plan)
       components <- contiguity(adj, init_plan)
       if (any(components > 1)) {
-        stop('init_plan does not point to a contiguous plan.')
+        cli::cli_abort('init_plan does not point to a contiguous plan.')
       }
     }
   }
@@ -260,8 +258,9 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
   exact_mh <- as.integer(exact_mh)
 
   if (verbose) {
-    cat('Preprocessing data.\n\n')
+    cli::cli_alert_info('Preprocessing data.')
   }
+
   preprocout <- redist.preproc(
     adj = adj,
     total_pop = total_pop,
@@ -269,6 +268,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
     ndists = ndists,
     pop_tol = pop_tol,
     counties = pre_pre_proc$counties,
+    cities = pre_pre_proc$qps$cities,
     group_pop = pre_pre_proc$group_pop,
     areasvec = pre_pre_proc$compact$areasvec,
     borderlength_mat = pre_pre_proc$compact$borderlength_mat,
@@ -297,7 +297,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
   }
 
   if (verbose) {
-    cat('Starting swMH().\n')
+    cli::cli_alert_info('Starting swMH().')
   }
   #return(list(pre_pre = pre_pre_proc, pre = preprocout))
 
@@ -309,6 +309,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
     grouppopvec = preprocout$data$group_pop,
     areas_vec = preprocout$data$areasvec,
     county_membership = pre_pre_proc$counties,
+    cities = preprocout$data$cities,
     borderlength_mat = preprocout$data$borderlength_mat,
     nsims = nsims * nthin + warmup,
     eprob = eprob,
@@ -327,6 +328,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
     weight_partisan = preprocout$params$weightpartisan,
     weight_minority = preprocout$params$weightminority,
     weight_hinge = preprocout$params$weighthinge,
+    weight_qps = preprocout$params$weightqps,
     adapt_beta = preprocout$params$temperbeta,
     adjswap = preprocout$params$adjswaps,
     exact_mh = exact_mh,
@@ -383,7 +385,8 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
     constraint_countysplit = rep(algout$constraint_countysplit, each = ndists),
     constraint_partisan = rep(algout$constraint_partisan, each = ndists),
     constraint_minority = rep(algout$constraint_minority, each = ndists),
-    constraint_hinge = rep(algout$constraint_hinge, each = ndists)
+    constraint_hinge = rep(algout$constraint_hinge, each = ndists),
+    constraint_qps = rep(algout$constraint_qps, each = ndists)
   )
 
   names_tb <- names(add_tb)[apply(add_tb, 2, function(x){ !all(x == 0) })]
@@ -393,7 +396,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
     out <- add_reference(out, init_plan, init_name)
   }
 
-  return(out)
+  out
 }
 
 
@@ -421,6 +424,7 @@ process_flip_constr <- function(constraints, nprec) {
     similarity = list(weight = 0, plan = rep(1, nprec)),
     partisan = list(weight = 0, rvote = 0, dvote = 0, metric = 'efficiency-gap'),
     segregation = list(weight = 0),
+    qps = list(weight = 0, cities = rep(0, nprec)),
     group_pop = rep(0, nprec),
     counties = rep(0, nprec)
   )
@@ -431,10 +435,10 @@ process_flip_constr <- function(constraints, nprec) {
     }
   }
 
-  if(!is.null(constraints$counties)){
+  if (!is.null(constraints$counties)) {
     defaults$counties <- redist.county.id(constraints$counties) - 1
   }
-  if(!is.null(constraints$group_pop)){
+  if (!is.null(constraints$group_pop)) {
     defaults$group_pop <- constraints$group_pop
   }
 
@@ -447,5 +451,5 @@ process_flip_constr <- function(constraints, nprec) {
   #   }
   # }
 
-  return(defaults)
+  defaults
 }
