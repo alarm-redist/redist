@@ -697,6 +697,7 @@ ecutsAppend <- function(algout,ndata){
 #' algorithm to generate starting values. Default is 5000.
 #' @param verbose Whether to print initialization statement. Default is
 #' \code{TRUE}.
+#' @param cities integer vector of cities for QPS constraint.
 #'
 #'
 #' @details This function allows users to simulate redistricting plans
