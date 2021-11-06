@@ -67,6 +67,8 @@ reconstruct.redist_map = function(data, old) {
 
     if (inherits(data, "grouped_df"))
         classes = c("grouped_df", classes)
+    if (inherits(data, "rowwise_df"))
+        classes = c("rowwise_df", classes)
     if (inherits(data, "sf"))
         classes = c("sf", classes)
 
