@@ -123,6 +123,8 @@ algorithm to generate starting values. Default is 5000.}
 
 \item{verbose}{Whether to print initialization statement. Default is
 \code{TRUE}.}
+
+\item{cities}{integer vector of cities for QPS constraint.}
 }
 \value{
 \code{redist.mcmc.mpi} returns an object of class "redist". The object
