@@ -7,12 +7,12 @@
 
 #' Redistricting Optimization through Short Bursts
 #'
-#' This function uses [redist_mergesplit()] to optimize a redistrict plan
-#' according to a user-provided criteria. It does so by running the Markov chain
-#' for "short bursts" of usually 10 iterations, and then starting the chain anew
-#' from the best plan in the burst, according to the criteria. This implements
-#' the ideas in the below-referenced paper, "Voting Rights, Markov Chains, and
-#' Optimization by Short Bursts."
+#' This function uses [redist_mergesplit()] or [redist_flip()] to optimize a
+#' redistrict plan according to a user-provided criteria. It does so by running
+#' the Markov chain for "short bursts" of usually 10 iterations, and then
+#' starting the chain anew from the best plan in the burst, according to the
+#' criteria. This implements the ideas in the below-referenced paper, "Voting
+#' Rights, Markov Chains, and Optimization by Short Bursts."
 #'
 #' @param map A \code{\link{redist_map}} object.
 #' @param score_fn A function which takes a matrix of plans and returns a score
@@ -205,9 +205,9 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
     }
     report_int = max(round(max_bursts / 10), 1)
     improve_ch = sample(c("\U0001F973", "\U0001F600", "\U0001F60E",
-                           "\U0001F642", "\U0001F386", "\U0001F387",
-                           "\U0001F942", "\U0001F383", "\U0001FA85",
-                           "\U0001F4A5", "\U0001F389", "\U26C4",
+                          "\U0001F642", "\U0001F386", "\U0001F387",
+                          "\U0001F942", "\U0001F383", "\U0001FA85",
+                          "\U0001F4A5", "\U0001F389", "\U26C4",
                           "\U0001F31F", "\U0001F308"))
     improve_ct = 1L
     for (burst in 1:max_bursts) {

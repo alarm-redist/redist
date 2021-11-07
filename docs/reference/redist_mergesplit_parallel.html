@@ -81,7 +81,7 @@ chains in parallel." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.7</span>
       </span>
     </div>
 
@@ -296,78 +296,13 @@ additional <code>chain</code> column indicating the chain the plan was drawn fro
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>This function draws samples from a specific target measure, controlled by the
-<code>compactness</code>, <code>constraints</code>, and <code>constraint_fn</code> parameters.</p>
+<code>map</code>, <code>compactness</code>, and <code>constraints</code> parameters.</p>
+<p>Key to ensuring good performance is monitoring the acceptance rate, which
+is reported at the sample level in the output. Users should also check the
+<code><a href='plans_diversity.html'>plans_diversity()</a></code> of the sample.</p>
 <p>Higher values of <code>compactness</code> sample more compact districts;
 setting this parameter to 1 is computationally efficient and generates nicely
 compact districts.</p>
-<p>The <code>constraints</code> parameter allows the user to apply several common
-redistricting constraints without implementing them by hand. This parameter
-is a list, which may contain any of the following named entries:</p><ul>
-<li><p><code>status_quo</code>: a list with two entries:</p><ul>
-<li><p><code>strength</code>, a number controlling the tendency of the generated districts
-to respect the status quo, with higher values preferring more similar
-districts.</p></li>
-<li><p><code>current</code>, a vector containing district assignments for
-the current map.</p></li>
-</ul></li>
-<li><p><code>hinge</code>: a list with three entries:</p><ul>
-<li><p><code>strength</code>, a number controlling the strength of the Voting Rights Act
-(VRA) constraint, with higher values prioritizing majority-minority districts
-over other considerations.</p></li>
-<li><p><code>tgts_min</code>, the target percentage(s) of minority voters in minority
-opportunity districts. Defaults to <code><a href='https://rdrr.io/r/base/c.html'>c(0.55)</a></code>.</p></li>
-<li><p><code>min_pop</code>, A vector containing the minority population of each
-geographic unit.</p></li>
-</ul></li>
-<li><p><code>incumbency</code>: a list with two entries:</p><ul>
-<li><p><code>strength</code>, a number controlling the tendency of the generated districts
-to avoid pairing up incumbents.</p></li>
-<li><p><code>incumbents</code>, a vector of precinct indices, one for each incumbent's
-home address.</p></li>
-</ul></li>
-<li><p><code>splits</code>: a list with one entry:</p><ul>
-<li><p><code>strength</code>, a number controlling the tendency of the generated districts
-to avoid splitting counties.</p></li>
-</ul></li>
-<li><p><code>multisplits</code>: a list with one entry:</p><ul>
-<li><p><code>strength</code>, a number controlling the tendency of the generated districts
-to avoid splitting counties multiple times.</p></li>
-</ul></li>
-<li><p><code>vra</code>: a list with five entries, which may be set up using
-<code><a href='redist.constraint.helper.html'>redist.constraint.helper</a></code>:</p><ul>
-<li><p><code>strength</code>, a number controlling the strength of the Voting Rights Act
-(VRA) constraint, with higher values prioritizing majority-minority districts
-over other considerations.</p></li>
-<li><p><code>tgt_vra_min</code>, the target percentage of minority voters in minority
-opportunity districts. Defaults to 0.55.</p></li>
-<li><p><code>tgt_vra_other</code> The target percentage of minority voters in other
-districts. Defaults to 0.25, but should be set to reflect the total minority
-population in the state.</p></li>
-<li><p><code>pow_vra</code>, which controls the allowed deviation from the target
-minority percentage; higher values are more tolerant. Defaults to 1.5</p></li>
-<li><p><code>min_pop</code>, A vector containing the minority population of each
-geographic unit.</p></li>
-</ul></li>
-</ul>
-
-<p>All constraints are fed into a Gibbs measure, with coefficients on each
-constraint set by the corresponding <code>strength</code> parameters.
-The strength can be any real number, with zero corresponding to no constraint.
-The <code>status_quo</code> constraint adds a term measuring the variation of
-information distance between the plan and the reference, rescaled to [0, 1].
-The <code>hinge</code> constraint takes a list of target minority percentages. It
-matches each district to its nearest target percentage, and then applies a
-penalty of the form \(\sqrt{max(0, tgt - minpct)}\), summing across
-districts. This penalizes districts which are below their target population.
-The <code>incumbency</code> constraint adds a term counting the number of districts
-containing paired-up incumbents. The <code>splits</code> constraint adds a term
-counting the number of counties which contain precincts belonging to more
-than one district.
-The <code>vra</code> constraint (not recommended) adds a term of the form
-\((|tgtvramin-minpct||tgtvraother-minpct|)^{powvra})\), which
-encourages districts to have minority percentages near either <code>tgt_vra_min</code>
-or <code>tgt_vra_other</code>. This can be visualized with
-<code><a href='redist.plot.penalty.html'>redist.plot.penalty</a></code>.</p>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
     <p>Carter, D., Herschlag, G., Hunter, Z., and Mattingly, J. (2019). A

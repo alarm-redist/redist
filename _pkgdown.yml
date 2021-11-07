@@ -26,6 +26,8 @@ reference:
   - redist_flip
   - redist_mergesplit
   - redist_shortburst
+  - redist_constr
+  - constraints
   - has_concept("simulate")
 - title: "Analysis Functions"
   desc: "Functions for analyzing simulation outputs"

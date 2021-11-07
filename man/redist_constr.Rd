@@ -4,7 +4,7 @@
 \alias{redist_constr}
 \title{Set up constraints for sampling}
 \usage{
-redist_constr(map)
+redist_constr(map = tibble())
 }
 \arguments{
 \item{map}{a \code{\link[=redist_map]{redist_map()}} object; the map that will be used in sampling}
@@ -19,10 +19,12 @@ constraint is specified as a function which scores a given plan. Higher
 scores are penalized and sampled less frequently.
 }
 \details{
-The \code{redist_constr} object keeps track of sampling constraints. Constraints
-may be added by using one of the following functions:
+The \code{redist_constr} object keeps track of sampling constraints in a nested list.
+You can view the exact structure of this list by calling \code{\link[=str]{str()}}.
+Constraints may be added by using one of the following functions:
 \itemize{
 \item \code{\link[=add_constr_compet]{add_constr_compet()}}
+\item \code{\link[=add_constr_custom]{add_constr_custom()}}
 \item \code{\link[=add_constr_grp_hinge]{add_constr_grp_hinge()}}
 \item \code{\link[=add_constr_grp_pow]{add_constr_grp_pow()}}
 \item \code{\link[=add_constr_incumbency]{add_constr_incumbency()}}
@@ -32,5 +34,11 @@ may be added by using one of the following functions:
 }
 
 More information about each constraint can be found on the relevant constraint page.
+}
+\examples{
+constr = redist_constr()
+constr = add_constr_splits(constr, strength=1.5)
+print(constr)
+
 }
 \concept{simulate}

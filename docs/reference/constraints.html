@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Sampling constraints — add_constr_status_quo • redist</title>
+<title>Sampling constraints — constraints • redist</title>
 
 <!-- favicons -->
 <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
@@ -46,7 +46,7 @@
 
 
 
-<meta property="og:title" content="Sampling constraints — add_constr_status_quo" />
+<meta property="og:title" content="Sampling constraints — constraints" />
 <meta property="og:description" content="The redist_smc() and redist_mergesplit() algorithms in this package allow
 for additional constraints on the redistricting process to be encoded in the
 target distribution for sampling. These functions are provided to specify
@@ -200,7 +200,9 @@ the data frame provided to <code><a href='redist_constr.html'>redist_constr()</a
 
 <span class='fu'>add_constr_splits</span><span class='op'>(</span><span class='va'>constr</span>, <span class='va'>strength</span><span class='op'>)</span>
 
-<span class='fu'>add_constr_multisplits</span><span class='op'>(</span><span class='va'>constr</span>, <span class='va'>strength</span><span class='op'>)</span></pre>
+<span class='fu'>add_constr_multisplits</span><span class='op'>(</span><span class='va'>constr</span>, <span class='va'>strength</span><span class='op'>)</span>
+
+<span class='fu'>add_constr_custom</span><span class='op'>(</span><span class='va'>constr</span>, <span class='va'>strength</span>, <span class='va'>fn</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -241,6 +243,10 @@ the data frame provided to <code><a href='redist_constr.html'>redist_constr()</a
       <th>incumbents</th>
       <td><p>A vector of precinct indicess for incumbents</p></td>
     </tr>
+    <tr>
+      <th>fn</th>
+      <td><p>A function</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
@@ -273,7 +279,31 @@ Values of <code>strength</code> should generally be small, given that the underl
 <p>The <code>multisplits</code> constraint adds a term counting the number of
 counties which are split twice or more.
 Values of <code>strength</code> should generally be small, given that the underlying values are counts.</p>
+<p>The <code>custom</code> constraint allows the user to specify their own constraint using
+a function which evaluates districts one at a time. The provided function
+<code>fn</code> should take two arguments: a vector describing the current plan
+assignment (which may be incomplete, in the case of SMC), and an integer
+describing the district which to evaluate. An example is provided below.
+The flexibility of this constraint comes with an additional computational
+cost, since the other constraints are written in C++ and so are more
+performant.</p>
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>iowa</span><span class='op'>)</span>
+<span class='va'>iowa_map</span> <span class='op'>=</span> <span class='fu'><a href='redist_map.html'>redist_map</a></span><span class='op'>(</span><span class='va'>iowa</span>, existing_plan<span class='op'>=</span><span class='va'>cd_2010</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span class='message'>`pop_tol` calculated from existing plan is ≤ 0.1%</span></div><div class='input'><span class='va'>constr</span> <span class='op'>=</span> <span class='fu'><a href='redist_constr.html'>redist_constr</a></span><span class='op'>(</span><span class='va'>iowa_map</span><span class='op'>)</span>
+<span class='va'>constr</span> <span class='op'>=</span> <span class='fu'>add_constr_splits</span><span class='op'>(</span><span class='va'>constr</span>, strength<span class='op'>=</span><span class='fl'>1.5</span><span class='op'>)</span>
+<span class='va'>constr</span> <span class='op'>=</span> <span class='fu'>add_constr_grp_hinge</span><span class='op'>(</span><span class='va'>constr</span>, strength<span class='op'>=</span><span class='fl'>100</span>,
+                              <span class='va'>dem_08</span>, <span class='va'>tot_08</span>, tgts_group<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.5</span>, <span class='fl'>0.6</span><span class='op'>)</span><span class='op'>)</span>
+<span class='co'># encourage districts to have the same number of counties</span>
+<span class='va'>constr</span> <span class='op'>=</span> <span class='fu'>add_constr_custom</span><span class='op'>(</span><span class='va'>constr</span>, strength<span class='op'>=</span><span class='fl'>1000</span>, fn<span class='op'>=</span><span class='kw'>function</span><span class='op'>(</span><span class='va'>plan</span>, <span class='va'>distr</span><span class='op'>)</span> <span class='op'>{</span>
+    <span class='fu'><a href='https://rdrr.io/r/base/MathFun.html'>abs</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/sum.html'>sum</a></span><span class='op'>(</span><span class='va'>plan</span> <span class='op'>==</span> <span class='va'>distr</span><span class='op'>)</span> <span class='op'>-</span> <span class='fl'>99</span><span class='op'>/</span><span class='fl'>4</span><span class='op'>)</span>
+<span class='op'>}</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>constr</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span class='message'>A <span style='color: #0000BB;'>&lt;redist_constr&gt;</span> object with 3 constraints</span></div><div class='output co'>#&gt; <span class='message'><span style='color: #00BBBB;'>•</span> A splits constraint of strength 1.5</span></div><div class='output co'>#&gt; <span class='message'><span style='color: #00BBBB;'>•</span> A (hinge-type) group share constraint of strength 100</span></div><div class='output co'>#&gt;     group_pop : num [1:99] 1924 1118 3971 2970 1739 ...
+#&gt;     total_pop : num [1:99] 4053 2206 7059 6176 3435 ...
+#&gt;     tgts_group: num [1:2] 0.5 0.6</div><div class='output co'>#&gt; <span class='message'><span style='color: #00BBBB;'>•</span> A custom constraint of strength 1000</span></div><div class='output co'>#&gt;     fn:function (plan, distr)  </div><div class='input'>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

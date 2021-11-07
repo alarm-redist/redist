@@ -108,6 +108,18 @@ test_that("Partial sampling works with strange bounds", {
     expect_s3_class(res, "redist_plans")
 })
 
+test_that("Additional constraints work", {
+    iowa_map = redist_map(iowa, ndists=4, pop_tol=0.05)
+
+    constr = redist_constr(iowa_map) %>%
+        add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) %>%
+        add_constr_grp_hinge(5, bvap+hvap, vap, c(0.5, 0)) %>%
+        add_constr_custom(1e5, function(plan, distr) plan[7] == 2)
+
+    plans = redist_smc(iowa_map, 100, constraints=constr, silent=TRUE)
+    expect_false(any(as.matrix(plans)[7,] == 2))
+})
+
 test_that("Precise population bounds are enforced", {
     map2 = fl_map
     attr(map2, "pop_bounds") = c(52e3, 58e3, 60e3)

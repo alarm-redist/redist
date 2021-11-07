@@ -230,12 +230,13 @@ add_reference = function(plans, ref_plan, name=NULL) {
 #' be compatible with the original set of units.
 #'
 #' @param plans a \code{redist_plans} object
+#' @param map optionally, a \code{redist_map} object, which will be used to set the new population vector
 #'
 #' @returns a new, re-indexed, \code{redist_plans} object
 #'
 #' @concept analyze
 #' @export
-pullback = function(plans) {
+pullback = function(plans, map=NULL) {
     stopifnot(inherits(plans, "redist_plans"))
 
     merge_idx = attr(plans, "merge_idx")
@@ -245,7 +246,12 @@ pullback = function(plans) {
     }
 
     attr(plans, "merge_idx") = NULL
-    attr(plans, "prec_pop") = NULL
+    if (inherits(NULL, "redist_map")) {
+        attr(plans, "prec_pop") = map[[attr(map, "pop")]]
+    } else {
+        attr(plans, "prec_pop") = NULL
+    }
+
     set_plan_matrix(plans, get_plans_matrix(plans)[merge_idx,])
 }
 
