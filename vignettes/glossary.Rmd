@@ -113,11 +113,6 @@ head(sim$plan)
 -   Example:
 
 ```{r}
-# standard eval -
-sims <- redist.smc(adj = adj, total_pop = iowa$pop, nsims = 10, ndists = 4, silent = TRUE)
-plans <- sims$plans
-
-# tidy eval - 
 sims <- redist_smc(map = iowa_map, nsims = 10, silent = TRUE)
 plans <- get_plans_matrix(sims)
 ```

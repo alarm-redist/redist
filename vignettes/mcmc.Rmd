@@ -90,7 +90,7 @@ However, with these strengths do come weaknesses. Like most Markov Chain Monte C
 
 One of the keys to ensuring good performance is the choice of initialization. In some cases, a starting point may be obvious, such as when you want to explore the local area around an existing map. If that's the use case, then it is straightforward to use that plan as the starting point. However, if the goal is to understand the larger space of possibilities, then starting from just one map can be misleading. Why? Since constraint tuning is not a perfect science, you could be setting the constraints too strong and, if that map is very good on some dimension, the `flip` algorithm may have difficulty getting away from that point without a very large number of iterations.
 
-Our implementation defaults to using the Sequential Monte Carlo (`SMC`)algorithm via `redist.smc()/redist_smc()` to create an initial partition of the districts, if no district is provided.
+Our implementation defaults to using the Sequential Monte Carlo (SMC) algorithm via `redist_smc()` to create an initial partition of the districts, if no district is provided.
 
 While the implementations of Random Seed and Grow (`RSG`) and Compact Random Seed and Grow (`CRSG`) via `redist.rsg()` and `redist.crsg` do not sample from a defined target distribution, they can serve as *useful* initializations for `flip` as they help provide a more diverse set of starting states. `SMC` is often faster and provides more theoretical guarantees, but tends to sample very compact districts, even when decreasing the compactness constraint. As such, when trying to decide if chains have likely converged or not, it can be misleading to only check chains that start from very compact states.
 
