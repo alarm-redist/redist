@@ -71,7 +71,7 @@
 #'   final step by `trunc_fn`.  Recommended if `compactness` is not 1.
 #'   Truncation only applied if `resample=TRUE`.
 #' @param trunc_fn A function which takes in a vector of weights and returns a
-#'   truncated vector. If the [loo] package is installed (strongly
+#'   truncated vector. If the [loo][loo::loo] package is installed (strongly
 #'   recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
 #'   rather than naive truncation.
 #' @param pop_temper The strength of the automatic population tempering. Try

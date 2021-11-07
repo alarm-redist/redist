@@ -65,6 +65,28 @@ hamming <- function(v, m) {
     .Call(`_redist_hamming`, v, m)
 }
 
+#' Hungarian Algorithm Solver
+#'
+#' Solves weighted bipartite matching problems (e.g., optimal matching of people to cars
+#' or optimal matching of students to colleges, etc...)
+#'
+#' @param costMatrix matrix giving cost of each possible pairing - can be rectangular
+#' @return List with cost and parings, pairings are given as an Nx2 matrix
+#' giving edges that are matched (1-indexed rather than 0-indexed as it will be returned to R)
+#' @export
+#' @details this is a copy/wrapper for the code developed by Cong Ma and made available
+#' as a github repository (mcximing/hungarian-algorithm-cpp). Code was
+#' changed to a header only file for use in other Rcpp packages.
+#' @examples
+#' cost <- rbind(c(1, 2, 0),
+#'               c(2, 0, 1),
+#'               c(1, 4, 19))
+#' soln <- HungarianSolver(cost)
+#' soln
+HungarianSolver <- function(costMatrix) {
+    .Call(`_redist_HungarianSolver`, costMatrix)
+}
+
 log_st_map <- function(g, districts, counties, n_distr) {
     .Call(`_redist_log_st_map`, g, districts, counties, n_distr)
 }

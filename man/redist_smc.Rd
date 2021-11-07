@@ -78,7 +78,7 @@ final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.
 Truncation only applied if \code{resample=TRUE}.}
 
 \item{trunc_fn}{A function which takes in a vector of weights and returns a
-truncated vector. If the \link{loo} package is installed (strongly
+truncated vector. If the \link[loo:loo]{loo} package is installed (strongly
 recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
 rather than naive truncation.}
 

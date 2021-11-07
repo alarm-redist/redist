@@ -43,6 +43,8 @@ add_constr_multisplits(constr, strength)
 add_constr_custom(constr, strength, fn)
 }
 \arguments{
+\item{constr}{A \code{\link[=redist_constr]{redist_constr()}} object}
+
 \item{strength}{The strength of the constraint. Higher values mean a more restrictive constraint.}
 
 \item{current}{The reference map for the status quo constraint.}

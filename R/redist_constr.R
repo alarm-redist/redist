@@ -167,6 +167,7 @@ add_to_constr = function(constr, name, new_constr) {
 #' cost, since the other constraints are written in C++ and so are more
 #' performant.
 #'
+#' @param constr A [redist_constr()] object
 #' @param strength The strength of the constraint. Higher values mean a more restrictive constraint.
 #'
 #' @examples
