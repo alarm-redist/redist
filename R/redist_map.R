@@ -457,11 +457,13 @@ select.redist_map <- function(.data, ...) {
         stop("Must keep `", attr(.data, "pop_col"), "` column, ",
              "or convert to a tibble with `as_tibble()`.")
     }
-    if (!is.na(colnum <- match(attr(.data, "existing_col"), names(.data)[cols]))) {
-        attr(.data, "existing_col") = names(cols)[colnum]
-    } else {
-        stop("Must keep `", attr(.data, "existing_col"), "` column, ",
-             "or convert to a tibble with `as_tibble()`.")
+    if (!is.null(exist_col <- attr(.data, "existing_col"))) {
+        if (!is.na(colnum <- match(exist_col, names(.data)[cols]))) {
+            attr(.data, "existing_col") = names(cols)[colnum]
+        } else {
+            stop("Must keep `", attr(.data, "existing_col"), "` column, ",
+                 "or convert to a tibble with `as_tibble()`.")
+        }
     }
 
     reconstruct.redist_map(ret, .data)
