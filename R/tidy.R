@@ -537,16 +537,27 @@ last_plan = function(plans) {
 
 #' Extract the district assignments for a precinct across all simulated plans
 #'
-#' @param prec the precinct number or ID
+#' @param prec the precinct number
 #' @param .data a \code{\link{redist_plans}} object
+#'
 #' @return integer vector, a row from a plans matrix
+#'
 #' @concept analyze
 #' @export
 prec_assignment = function(prec, .data=cur_plans()) {
     check_tidy_types(NULL, .data)
 
+    m = get_plans_matrix(.data)
+    if (is.integer(prec)) {
+        if (prec <= 0 || prec > nrow(m))
+            cli_abort(c("{.arg prec} out of bounds",
+                        "i"="There are {nrow(m)} precincts in these plans."))
+    } else {
+        cli_abort("{.arg prec} must be an integer index")
+    }
+
     idxs = unique(as.integer(.data$draw))
-    assignment = get_plans_matrix(.data)[prec, idxs, drop=FALSE]
+    assignment = m[prec, idxs, drop=FALSE]
     if ("district" %in% colnames(.data) && is.factor(.data$district)) {
         lev = levels(.data$district)
         assignment = factor(lev[assignment], lev, ordered=is.ordered(.data$district))

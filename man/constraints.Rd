@@ -118,7 +118,7 @@ performant.
 }
 \examples{
 data(iowa)
-iowa_map = redist_map(iowa, existing_plan=cd_2010)
+iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05)
 constr = redist_constr(iowa_map)
 constr = add_constr_splits(constr, strength=1.5)
 constr = add_constr_grp_hinge(constr, strength=100,
