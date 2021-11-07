@@ -313,9 +313,10 @@ match_numbers = function(data, plan, col="pop_overlap", force=FALSE) {
     pop = attr(data, "prec_pop")
 
     if (ndists > 6)
-        warning("`match_numers` may be extremely slow with more than 6 districts.")
-    stopifnot(!is.null(pop))
-    stopifnot(max(plan_mat[,1]) == ndists)
+        cli_warn("{.arg match_numers} may be extremely slow with more than 6 districts.")
+    if (is.null(pop)) cli_abort("{.field prec_pop} attribute in {.arg data} required.")
+    if (max(plan_mat[,1]) != ndists)
+        cli_abort("Can't match numbers on a subset of a {.cls redist_plans}")
 
     # compute renumbering and extract info
     best_renumb = apply(plan_mat, 2, find_numbering, as.integer(plan), pop, force)
@@ -393,7 +394,7 @@ plan_parity <- function(map, .data = cur_plans(), ...) {
     idxs = unique(as.integer(.data$draw))
     ndists = attr(map, "ndists")
     total_pop = map[[attr(map, "pop_col")]]
-    stopifnot(!is.null(total_pop))
+    if (is.null(total_pop)) cli_abort("Population vector missing from {.arg map}")
 
     rep(max_dev(get_plans_matrix(.data)[, idxs, drop=FALSE], total_pop, ndists),
         each = ndists)
