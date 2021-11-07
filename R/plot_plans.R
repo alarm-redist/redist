@@ -71,7 +71,7 @@ plot.redist_plans = function(x, ..., type="distr_qtys") {
 redist.plot.hist = function(plans, qty, bins=NULL, ...) {
     if (!inherits(plans, "redist_plans")) cli_abort("{.arg plans} must be a {.cls redist_plans}")
     if (missing(qty))
-        stop("Must provide a quantity to make the histogram from.", call.=FALSE)
+        cli_abort("Must provide a {.arg qty} to make the histogram from.")
 
     val = rlang::eval_tidy(rlang::enquo(qty), plans)
     rg = diff(range(val, na.rm=TRUE))
@@ -79,16 +79,12 @@ redist.plot.hist = function(plans, qty, bins=NULL, ...) {
     if (is.null(bins)) {
         if (is_int) {
             bins = 3*rg + 1
-        } else { # Freedman-Diaconis
+        } else {
             n = length(val)
             if (is_const_num(val, plans$draw)) {
                 n = n / nrow(get_plans_matrix(plans))
             }
-            iqr = IQR(val, na.rm=TRUE)
-            if (iqr > 0)
-                bins = max(round(rg / (2 * iqr / n^(1/3))), 3)
-            else
-                bins = 3
+            bins = ceiling(2.4 * n^(1/3)) # Modified Rice rule
         }
     }
 
@@ -111,7 +107,7 @@ redist.plot.hist = function(plans, qty, bins=NULL, ...) {
 #' @export
 hist.redist_plans = function(x, qty, ...) {
     if (missing(qty))
-        stop("Must provide a quantity to make the histogram from.", call.=FALSE)
+        cli_abort("Must provide a {.arg qty} to make the histogram from.")
     qty = rlang::enquo(qty)
     redist.plot.hist(x, !!qty, ...)
 }
@@ -206,7 +202,7 @@ redist.plot.distr_qtys = function(plans, qty, sort="asc", geom="jitter",
             dplyr::mutate(.distr_no = as.factor(.data$district))
     } else {
         ord = if (sort == "asc") 1  else if (sort == "desc") -1 else
-            stop("`sort` not recognized: ", sort)
+            cli_abort("{.arg sort} not recognized: {.code {sort}}")
         plans = dplyr::group_by(plans, .data$draw) %>%
             dplyr::mutate(.distr_no = as.factor(rank(ord * {{ qty }},
                                                      ties.method="first")))
@@ -221,7 +217,7 @@ redist.plot.distr_qtys = function(plans, qty, sort="asc", geom="jitter",
     if (is.null(color_thresh)) {
         p = ggplot(subset_sampled(plans), aes(.data$.distr_no, {{ qty }}))
     } else {
-        stopifnot(is.numeric(color_thresh))
+        if (!is.numeric(color_thresh)) cli_abort("{.arg color_thresh} must be numeric.")
         p = ggplot(subset_sampled(plans), aes(.data$.distr_no, {{ qty }},
                                               color = {{ qty }} >= color_thresh)) +
             ggplot2::guides(color="none")
@@ -232,7 +228,7 @@ redist.plot.distr_qtys = function(plans, qty, sort="asc", geom="jitter",
     } else if (geom == "boxplot") {
         p = p + ggplot2::geom_boxplot(..., outlier.size=1)
     } else {
-        stop('`geom` must be either "jitter" or "boxplot"')
+        cli_abort("{.arg geom} must be either \"jitter\" or \"boxplot\"")
     }
 
     if (isFALSE(sort) || sort == "none")
@@ -277,7 +273,7 @@ redist.plot.distr_qtys = function(plans, qty, sort="asc", geom="jitter",
 #'
 #' @param plans a \code{redist_plans} object.
 #' @param draws the plan(s) to plot. Will match the \code{draw} column of \code{x}.
-#' @param geom,shp the \code{redist_map} geometry to use (`shp` is deprecated).
+#' @param geom,shp the \code{redist_map} geometry to use (`geom` is deprecated).
 #' @param qty the quantity to plot. Defaults to the district assignment.
 #' @param interactive if \code{TRUE}, show an interactive map in the viewer
 #'   rather than a static map. Only uses the first element of \code{draws}
@@ -296,10 +292,14 @@ redist.plot.distr_qtys = function(plans, qty, sort="asc", geom="jitter",
 #' @concept plot
 #' @export
 redist.plot.plans = function(plans, draws, shp, qty=NULL, interactive=FALSE, ..., geom=NULL) {
-    if (!missing(geom)) .Deprecated("shp", old="geom")
+    if (!missing(geom)) {
+        .Deprecated("shp", old="geom")
+        if (missing(shp)) shp = geom
+    }
     if (!inherits(plans, "redist_plans")) cli_abort("{.arg plans} must be a {.cls redist_plans}")
     m = get_plans_matrix(plans)
-    stopifnot(nrow(geom) == nrow(m))
+    if (nrow(shp) != nrow(m))
+        cli_abort("{.arg plans} and {.arg shp} must have the same number of precincts.")
 
     if (interactive) {
         if (length(draws) > 1)
@@ -313,7 +313,7 @@ redist.plot.plans = function(plans, draws, shp, qty=NULL, interactive=FALSE, ...
         } else {
             qty = qty[m[, draw_idx]]
         }
-        return(redist.plot.interactive(geom, fill=qty, ...))
+        return(redist.plot.interactive(shp, fill=qty, ...))
     }
 
     plot_single = function(draw) {
@@ -328,7 +328,7 @@ redist.plot.plans = function(plans, draws, shp, qty=NULL, interactive=FALSE, ...
             qty = qty[m[, draw_idx]]
         }
 
-        redist.plot.map(geom, fill=qty, fill_label=lab, ...) +
+        redist.plot.map(shp, fill=qty, fill_label=lab, ...) +
             ggplot2::labs(title=title)
     }
 
