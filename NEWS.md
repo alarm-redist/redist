@@ -1,7 +1,7 @@
-# redist 3.1.7
-* Using `mutate()` on a `redist_map` no longer drops attributes.
-* Using `rowwise()` on a `redist_map` or `redist_plans` no longer converts to `tibble`.
-* `redist_flip` now sets the resampled attribute to FALSE to be consistent with `redist_mergesplit`.
+# redist 4.0.0
+* A new constraint interface that is more flexible and user friendly (see `redist_constr()` and `?constraints`)
+* Many, many bug fixes (see https://github.com/alarm-redist/redist/issues)
+* Remove deprecated functions
 
 # redist 3.1.6
 * Utilities for using municipalities as well as counties in split calculations
