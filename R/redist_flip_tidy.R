@@ -172,10 +172,10 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
                         adjswaps = TRUE, init_name = NULL, verbose = TRUE) {
   if (verbose) {
     ## Initialize ##
-    cli::rule(line = 2)
-    cli::rule(center = cli::col_red("redist.flip()"))
-    cli::rule(center = cli::col_red("Automated Redistricting Simulation Using Markov Chain Monte Carlo"))
-    cli::rule(line = 2)
+    cli::cli({
+    cli::cli_h1(cli::col_red("redist.flip()"))
+    cli::cli_h2(cli::col_red("Automated Redistricting Simulation Using Markov Chain Monte Carlo"))
+    })
   }
   # process raw inputs
   nprec <- nrow(map)
