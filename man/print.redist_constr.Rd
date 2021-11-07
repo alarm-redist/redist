@@ -4,12 +4,14 @@
 \alias{print.redist_constr}
 \title{Generic to print redist_constr}
 \usage{
-\method{print}{redist_constr}(x, header = TRUE, ...)
+\method{print}{redist_constr}(x, header = TRUE, details = TRUE, ...)
 }
 \arguments{
 \item{x}{redist_constr}
 
 \item{header}{if FALSE, then suppress introduction / header line}
+
+\item{details}{if FALSE, then suppress the details of each constraint}
 
 \item{\dots}{additional arguments}
 }

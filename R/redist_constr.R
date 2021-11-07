@@ -44,8 +44,9 @@ validate_redist_constr = function(constr) {
 #' constraint is specified as a function which scores a given plan. Higher
 #' scores are penalized and sampled less frequently.
 #'
-#' The `redist_constr` object keeps track of sampling constraints. Constraints
-#' may be added by using one of the following functions:
+#' The `redist_constr` object keeps track of sampling constraints in a nested list.
+#' You can view the exact structure of this list by calling [str()].
+#' Constraints may be added by using one of the following functions:
 #'
 #' `r paste0("* [", ls("package:redist")[grep("add_constr_", ls("package:redist"))], "()]", collapse="\n")`
 #'
@@ -55,10 +56,15 @@ validate_redist_constr = function(constr) {
 #'
 #' @returns a `redist_constr` object, which is just a list with a certain nested structure.
 #'
+#' @examples
+#' constr = redist_constr()
+#' constr = add_constr_splits(constr, strength=1.5)
+#' print(constr)
+#'
 #' @md
 #' @concept simulate
 #' @export
-redist_constr = function(map) {
+redist_constr = function(map=tibble()) {
     new_redist_constr(data=map)
 }
 
@@ -152,11 +158,36 @@ add_to_constr = function(constr, name, new_constr) {
 #' counties which are split twice or more.
 #' Values of `strength` should generally be small, given that the underlying values are counts.
 #'
+#' The `custom` constraint allows the user to specify their own constraint using
+#' a function which evaluates districts one at a time. The provided function
+#' `fn` should take two arguments: a vector describing the current plan
+#' assignment (which may be incomplete, in the case of SMC), and an integer
+#' describing the district which to evaluate. An example is provided below.
+#' The flexibility of this constraint comes with an additional computational
+#' cost, since the other constraints are written in C++ and so are more
+#' performant.
+#'
 #' @param strength The strength of the constraint. Higher values mean a more restrictive constraint.
-#' @param current The reference map for the status quo constraint.
+#'
+#' @examples
+#' data(iowa)
+#' iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05)
+#' constr = redist_constr(iowa_map)
+#' constr = add_constr_splits(constr, strength=1.5)
+#' constr = add_constr_grp_hinge(constr, strength=100,
+#'                               dem_08, tot_08, tgts_group=c(0.5, 0.6))
+#' # encourage districts to have the same number of counties
+#' constr = add_constr_custom(constr, strength=1000, fn=function(plan, distr) {
+#'     abs(sum(plan == distr) - 99/4)
+#' })
+#' print(constr)
 #'
 #' @md
 #' @concept simulate
+#' @name constraints
+NULL
+
+#' @param current The reference map for the status quo constraint.
 #' @rdname constraints
 #' @export
 add_constr_status_quo = function(constr, strength, current) {
@@ -282,7 +313,7 @@ add_constr_multisplits = function(constr, strength) {
     add_to_constr(constr, "multisplits", new_constr)
 }
 
-#' @param fn
+#' @param fn A function
 #' @rdname constraints
 #' @export
 add_constr_custom = function(constr, strength, fn) {
@@ -302,35 +333,57 @@ add_constr_custom = function(constr, strength, fn) {
 #' Generic to print redist_constr
 #' @param x redist_constr
 #' @param header if FALSE, then suppress introduction / header line
+#' @param details if FALSE, then suppress the details of each constraint
 #' @param \dots additional arguments
 #' @method print redist_constr
 #' @return Prints to console and returns input redist_constr
 #' @export
-print.redist_constr = function(x, header=TRUE, ...) {
+print.redist_constr = function(x, header=TRUE, details=TRUE, ...) {
     if (header)
         cli_text("A {.cls redist_constr} object with {length(x)} constraint{?s}")
+
+    print_constr = function(x) {
+        if (details) {
+            idx_strength = which(names(x) == "strength")
+            str(x[-idx_strength], no.list=T, comp.str="   ", give.attr=FALSE)
+        }
+    }
+
     x = unlist(x, recursive=FALSE)
     for (nm in names(x)) {
         if (startsWith(nm, "status_quo")) {
             cli::cli_bullets(c("*"="A status quo constraint of strength {x[[nm]]$strength}"))
+            print_constr(x[[nm]])
         } else if (startsWith(nm, "grp_pow")) {
             cli::cli_bullets(c("*"="A (power-type) group share constraint of strength {x[[nm]]$strength}"))
+            print_constr(x[[nm]])
         } else if (startsWith(nm, "grp_hinge")) {
             cli::cli_bullets(c("*"="A (hinge-type) group share constraint of strength {x[[nm]]$strength}"))
+            print_constr(x[[nm]])
         } else if (startsWith(nm, "compet")) {
             cli::cli_bullets(c("*"="A competitiveness constraint of strength {x[[nm]]$strength}"))
+            print_constr(x[[nm]])
         } else if (startsWith(nm, "incumbency")) {
             cli::cli_bullets(c("*"="An incumbency constraint of strength {x[[nm]]$strength}"))
+            print_constr(x[[nm]])
         } else if (startsWith(nm, "splits")) {
             cli::cli_bullets(c("*"="A splits constraint of strength {x[[nm]]$strength}"))
         } else if (startsWith(nm, "multisplits")) {
             cli::cli_bullets(c("*"="A multisplits constraint of strength {x[[nm]]$strength}"))
         } else if (startsWith(nm, "custom")) {
             cli::cli_bullets(c("*"="A custom constraint of strength {x[[nm]]$strength}"))
+            print_constr(x[[nm]])
         } else {
             cli::cli_bullets(c("*"="An unknown constraint {.var {nm}}"))
+            print_constr(x[[nm]])
         }
     }
+}
+
+#' @method str redist_constr
+#' @export
+str.redist_constr = function(object, give.attr=FALSE, ...) {
+    NextMethod("str", object, give.attr=give.attr, ...)
 }
 
 #' @method as.list redist_constr

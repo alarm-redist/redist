@@ -198,7 +198,7 @@ boundary constraints.</p>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>map</th>
-      <td><p>A <code><a href='redist_map.html'>redist_map</a></code> object.</p></td>
+      <td><p>A <code><a href='redist_map.html'>redist_map()</a></code> object.</p></td>
     </tr>
     <tr>
       <th>nsims</th>
@@ -223,7 +223,7 @@ considerations.</p></td>
     <tr>
       <th>constraints</th>
       <td><p>A <code><a href='redist_constr.html'>redist_constr()</a></code> object or a list containing
-information on sampling constraints. See constraints for more information.</p></td>
+information on sampling constraints. See <a href='constraints.html'>constraints</a> for more information.</p></td>
     </tr>
     <tr>
       <th>resample</th>
@@ -234,9 +234,9 @@ manually.</p></td>
     </tr>
     <tr>
       <th>constraint_fn</th>
-      <td><p>A function which takes in a matrix where each column is
-a redistricting plan and outputs a vector of log-weights, which will be
-added the the final weights.</p></td>
+      <td><p>(Deprecated) A function which takes in a matrix where
+each column is a redistricting plan and outputs a vector of log-weights,
+which will be added the the final weights.</p></td>
     </tr>
     <tr>
       <th>init_particles</th>
@@ -274,7 +274,7 @@ Truncation only applied if <code>resample=TRUE</code>.</p></td>
     <tr>
       <th>trunc_fn</th>
       <td><p>A function which takes in a vector of weights and returns a
-truncated vector. If <code><a href='https://mc-stan.org/loo/reference/loo.html'>loo</a></code> package is installed (strongly
+truncated vector. If the loo package is installed (strongly
 recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
 rather than naive truncation.</p></td>
     </tr>
@@ -310,25 +310,25 @@ Recommended.</p></td>
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p><code>redist_smc</code> returns an object of class
-<code><a href='redist_plans.html'>redist_plans</a></code> containing the simulated plans.</p>
+<code><a href='redist_plans.html'>redist_plans()</a></code> containing the simulated plans.</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>This function draws nearly-independent samples from a specific target measure,
-controlled by the <code>pop_tol</code>, <code>compactness</code>, <code>constraints</code>, and
-<code>constraint_fn</code> parameters.</p>
+controlled by the <code>map</code>, <code>compactness</code>, and <code>constraints</code> parameters.</p>
 <p>Key to ensuring good performance is monitoring the efficiency of the resampling
 process at each SMC stage.  Unless <code>silent=FALSE</code>, this function will print
 out the effective sample size of each resampling step to allow the user to
 monitor the efficiency.  If <code>verbose=TRUE</code> the function will also print
 out information on the \(k_i\) values automatically chosen and the
-acceptance rate (based on the population constraint) at each step.</p>
+acceptance rate (based on the population constraint) at each step.
+Users should also check the <code><a href='plans_diversity.html'>plans_diversity()</a></code> of the sample.</p>
 <p>Higher values of <code>compactness</code> sample more compact districts;
 setting this parameter to 1 is computationally efficient and generates nicely
 compact districts.  Values of other than 1 may lead to highly variable
-importance sampling weights.  By default these weights are truncated using
-<code><a href='redist_quantile_trunc.html'>redist_quantile_trunc</a></code> to stabilize the resulting estimates, but
-if truncation is used, a specific truncation function should probably be
-chosen by the user.</p>
+importance sampling weights.  In these cases, these weights are by default
+truncated using <code><a href='redist_quantile_trunc.html'>redist_quantile_trunc()</a></code> to stabilize the resulting
+estimates, but if truncation is used, a specific truncation function should
+probably be chosen by the user.</p>
     <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
     <p>McCartan, C., &amp; Imai, K. (2020). Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans.
@@ -336,7 +336,6 @@ Available at <a href='https://imai.fas.harvard.edu/research/files/SMCredist.pdf'
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># \donttest{</span>
-<span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span><span class='op'>(</span><span class='fl'>1</span><span class='op'>)</span>
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='va'>fl25</span><span class='op'>)</span>
 
 <span class='va'>fl_map</span> <span class='op'>=</span> <span class='fu'><a href='redist_map.html'>redist_map</a></span><span class='op'>(</span><span class='va'>fl25</span>, ndists<span class='op'>=</span><span class='fl'>3</span>, pop_tol<span class='op'>=</span><span class='fl'>0.1</span><span class='op'>)</span>
@@ -356,8 +355,8 @@ Available at <a href='https://imai.fas.harvard.edu/research/files/SMCredist.pdf'
 #&gt; Iteration 8000/10000
 #&gt; Iteration 9000/10000
 #&gt; Iteration 10000/10000
-#&gt; 21.6535% acceptance rate.
-#&gt; Resampling effective sample size: 9942.23 (99.4223% efficiency).
+#&gt; 21.6995% acceptance rate.
+#&gt; Resampling effective sample size: 9938.94 (99.3894% efficiency).
 #&gt; Making split 2 of 2
 #&gt; Using k = 2
 #&gt; Iteration 1000/10000
@@ -370,12 +369,41 @@ Available at <a href='https://imai.fas.harvard.edu/research/files/SMCredist.pdf'
 #&gt; Iteration 8000/10000
 #&gt; Iteration 9000/10000
 #&gt; Iteration 10000/10000
-#&gt; 6.0808% acceptance rate.
-#&gt; Resampling effective sample size: 9696.72 (96.9672% efficiency).</div><div class='input'>
-<span class='va'>sampled_constr</span> <span class='op'>=</span> <span class='fu'>redist_smc</span><span class='op'>(</span><span class='va'>fl_map</span>, <span class='fl'>10000</span>, constraints<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>
-                                incumbency <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span>strength<span class='op'>=</span><span class='fl'>100</span>, incumbents<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>6</span>, <span class='fl'>25</span><span class='op'>)</span><span class='op'>)</span>
-                            <span class='op'>)</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='error'>Error: <span style='color: #BCBCBC; font-weight: bold;'>Not a nested list</span></span></div><div class='input'><span class='co'># }</span>
+#&gt; 6.05129% acceptance rate.
+#&gt; Resampling effective sample size: 9699.71 (96.9971% efficiency).</div><div class='input'>
+<span class='va'>constr</span> <span class='op'>=</span> <span class='fu'><a href='redist_constr.html'>redist_constr</a></span><span class='op'>(</span><span class='va'>fl_map</span><span class='op'>)</span>
+<span class='va'>constr</span> <span class='op'>=</span> <span class='fu'><a href='constraints.html'>add_constr_incumbency</a></span><span class='op'>(</span><span class='va'>constr</span>, strength<span class='op'>=</span><span class='fl'>100</span>, incumbents<span class='op'>=</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>6</span>, <span class='fl'>25</span><span class='op'>)</span><span class='op'>)</span>
+<span class='va'>sampled_constr</span> <span class='op'>=</span> <span class='fu'>redist_smc</span><span class='op'>(</span><span class='va'>fl_map</span>, <span class='fl'>10000</span>, constraints<span class='op'>=</span><span class='va'>constr</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; SEQUENTIAL MONTE CARLO
+#&gt; Sampling 10000 25-unit maps with 3 districts and population between 52512.9 and 64182.4.
+#&gt; Making split 1 of 2
+#&gt; Using k = 3
+#&gt; Iteration 1000/10000
+#&gt; Iteration 2000/10000
+#&gt; Iteration 3000/10000
+#&gt; Iteration 4000/10000
+#&gt; Iteration 5000/10000
+#&gt; Iteration 6000/10000
+#&gt; Iteration 7000/10000
+#&gt; Iteration 8000/10000
+#&gt; Iteration 9000/10000
+#&gt; Iteration 10000/10000
+#&gt; 21.9149% acceptance rate.
+#&gt; Resampling effective sample size: 1829.09 (18.2909% efficiency).
+#&gt; Making split 2 of 2
+#&gt; Using k = 2
+#&gt; Iteration 1000/10000
+#&gt; Iteration 2000/10000
+#&gt; Iteration 3000/10000
+#&gt; Iteration 4000/10000
+#&gt; Iteration 5000/10000
+#&gt; Iteration 6000/10000
+#&gt; Iteration 7000/10000
+#&gt; Iteration 8000/10000
+#&gt; Iteration 9000/10000
+#&gt; Iteration 10000/10000
+#&gt; 7.71796% acceptance rate.
+#&gt; Resampling effective sample size: 688.953 (6.88953% efficiency).</div><div class='input'><span class='co'># }</span>
 
 </div></pre>
   </div>

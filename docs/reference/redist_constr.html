@@ -172,7 +172,7 @@ constraint is specified as a function which scores a given plan. Higher
 scores are penalized and sampled less frequently.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>redist_constr</span><span class='op'>(</span><span class='va'>map</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>redist_constr</span><span class='op'>(</span>map <span class='op'>=</span> <span class='fu'>tibble</span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -188,19 +188,27 @@ scores are penalized and sampled less frequently.</p>
     <p>a <code>redist_constr</code> object, which is just a list with a certain nested structure.</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>The <code>redist_constr</code> object keeps track of sampling constraints. Constraints
-may be added by using one of the following functions:</p><ul>
-<li><p>add_constr_compet()</p></li>
-<li><p>add_constr_grp_hinge()</p></li>
-<li><p>add_constr_grp_pow()</p></li>
-<li><p>add_constr_incumbency()</p></li>
-<li><p>add_constr_multisplits()</p></li>
-<li><p>add_constr_splits()</p></li>
-<li><p>add_constr_status_quo()</p></li>
+    <p>The <code>redist_constr</code> object keeps track of sampling constraints in a nested list.
+You can view the exact structure of this list by calling <code><a href='https://rdrr.io/r/utils/str.html'>str()</a></code>.
+Constraints may be added by using one of the following functions:</p><ul>
+<li><p><code><a href='constraints.html'>add_constr_compet()</a></code></p></li>
+<li><p><code><a href='constraints.html'>add_constr_custom()</a></code></p></li>
+<li><p><code><a href='constraints.html'>add_constr_grp_hinge()</a></code></p></li>
+<li><p><code><a href='constraints.html'>add_constr_grp_pow()</a></code></p></li>
+<li><p><code><a href='constraints.html'>add_constr_incumbency()</a></code></p></li>
+<li><p><code><a href='constraints.html'>add_constr_multisplits()</a></code></p></li>
+<li><p><code><a href='constraints.html'>add_constr_splits()</a></code></p></li>
+<li><p><code><a href='constraints.html'>add_constr_status_quo()</a></code></p></li>
 </ul>
 
 <p>More information about each constraint can be found on the relevant constraint page.</p>
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='va'>constr</span> <span class='op'>=</span> <span class='fu'>redist_constr</span><span class='op'>(</span><span class='op'>)</span>
+<span class='va'>constr</span> <span class='op'>=</span> <span class='fu'><a href='constraints.html'>add_constr_splits</a></span><span class='op'>(</span><span class='va'>constr</span>, strength<span class='op'>=</span><span class='fl'>1.5</span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>constr</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span class='message'>A <span style='color: #0000BB;'>&lt;redist_constr&gt;</span> object with 1 constraint</span></div><div class='output co'>#&gt; <span class='message'><span style='color: #00BBBB;'>•</span> A splits constraint of strength 1.5</span></div><div class='input'>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

@@ -26,7 +26,7 @@ redist_smc(
 )
 }
 \arguments{
-\item{map}{A \code{\link{redist_map}} object.}
+\item{map}{A \code{\link[=redist_map]{redist_map()}} object.}
 
 \item{nsims}{The number of samples to draw.}
 
@@ -50,9 +50,9 @@ generated plans can be used immediately.  Set this to \code{FALSE} to
 perform direct importance sampling estimates, or to adjust the weights
 manually.}
 
-\item{constraint_fn}{A function which takes in a matrix where each column is
-a redistricting plan and outputs a vector of log-weights, which will be
-added the the final weights.}
+\item{constraint_fn}{(Deprecated) A function which takes in a matrix where
+each column is a redistricting plan and outputs a vector of log-weights,
+which will be added the the final weights.}
 
 \item{init_particles}{A matrix of partial plans to begin sampling from. For
 advanced use only.  The matrix must have \code{nsims} columns and a row for
@@ -78,7 +78,7 @@ final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.
 Truncation only applied if \code{resample=TRUE}.}
 
 \item{trunc_fn}{A function which takes in a vector of weights and returns a
-truncated vector. If \code{\link[loo]{loo}} package is installed (strongly
+truncated vector. If the \link{loo} package is installed (strongly
 recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
 rather than naive truncation.}
 
@@ -101,7 +101,7 @@ Recommended.}
 }
 \value{
 \code{redist_smc} returns an object of class
-\code{\link{redist_plans}} containing the simulated plans.
+\code{\link[=redist_plans]{redist_plans()}} containing the simulated plans.
 }
 \description{
 \code{redist_smc} uses a Sequential Monte Carlo algorithm to
@@ -111,8 +111,7 @@ boundary constraints.
 }
 \details{
 This function draws nearly-independent samples from a specific target measure,
-controlled by the \code{pop_tol}, \code{compactness}, \code{constraints}, and
-\code{constraint_fn} parameters.
+controlled by the \code{map}, \code{compactness}, and \code{constraints} parameters.
 
 Key to ensuring good performance is monitoring the efficiency of the resampling
 process at each SMC stage.  Unless \code{silent=FALSE}, this function will print
@@ -120,27 +119,27 @@ out the effective sample size of each resampling step to allow the user to
 monitor the efficiency.  If \code{verbose=TRUE} the function will also print
 out information on the \eqn{k_i} values automatically chosen and the
 acceptance rate (based on the population constraint) at each step.
+Users should also check the \code{\link[=plans_diversity]{plans_diversity()}} of the sample.
 
 Higher values of \code{compactness} sample more compact districts;
 setting this parameter to 1 is computationally efficient and generates nicely
 compact districts.  Values of other than 1 may lead to highly variable
-importance sampling weights.  By default these weights are truncated using
-\code{\link{redist_quantile_trunc}} to stabilize the resulting estimates, but
-if truncation is used, a specific truncation function should probably be
-chosen by the user.
+importance sampling weights.  In these cases, these weights are by default
+truncated using \code{\link[=redist_quantile_trunc]{redist_quantile_trunc()}} to stabilize the resulting
+estimates, but if truncation is used, a specific truncation function should
+probably be chosen by the user.
 }
 \examples{
 \donttest{
-set.seed(1)
 data(fl25)
 
 fl_map = redist_map(fl25, ndists=3, pop_tol=0.1)
 
 sampled_basic = redist_smc(fl_map, 10000)
 
-sampled_constr = redist_smc(fl_map, 10000, constraints=list(
-                                incumbency = list(strength=100, incumbents=c(3, 6, 25))
-                            ))
+constr = redist_constr(fl_map)
+constr = add_constr_incumbency(constr, strength=100, incumbents=c(3, 6, 25))
+sampled_constr = redist_smc(fl_map, 10000, constraints=constr)
 }
 
 }

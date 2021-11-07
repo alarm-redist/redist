@@ -9,6 +9,18 @@ test_that("redist_mergesplit works", {
     expect_true(all(par <= 0.1))
 })
 
+test_that("Additional constraints work", {
+    iowa_map = redist_map(iowa, ndists=4, pop_tol=0.05)
+
+    constr = redist_constr(iowa_map) %>%
+        add_constr_grp_hinge(5, dem_08, tot_08, c(0.5, 0.6)) %>%
+        add_constr_grp_hinge(5, bvap+hvap, vap, c(0.5, 0)) %>%
+        add_constr_custom(1e5, function(plan, distr) plan[7] == 2)
+
+    plans = redist_mergesplit(iowa_map, 100, constraints=constr, silent=TRUE)
+    expect_false(any(as.matrix(plans)[7,] == 2))
+})
+
 test_that("redist_mergesplit_parallel works", {
     skip_on_os('windows')
     data(fl25)

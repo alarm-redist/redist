@@ -7,36 +7,36 @@
 
 #' SMC Redistricting Sampler
 #'
-#' \code{redist_smc} uses a Sequential Monte Carlo algorithm to
+#' `redist_smc` uses a Sequential Monte Carlo algorithm to
 #' generate nearly independent congressional or legislative redistricting
 #' plans according to contiguity, population, compactness, and administrative
 #' boundary constraints.
 #'
 #' This function draws nearly-independent samples from a specific target measure,
-#' controlled by the \code{pop_tol}, \code{compactness}, \code{constraints}, and
-#' \code{constraint_fn} parameters.
+#' controlled by the `map`, `compactness`, and `constraints` parameters.
 #'
 #' Key to ensuring good performance is monitoring the efficiency of the resampling
-#' process at each SMC stage.  Unless \code{silent=FALSE}, this function will print
+#' process at each SMC stage.  Unless `silent=FALSE`, this function will print
 #' out the effective sample size of each resampling step to allow the user to
-#' monitor the efficiency.  If \code{verbose=TRUE} the function will also print
+#' monitor the efficiency.  If `verbose=TRUE` the function will also print
 #' out information on the \eqn{k_i} values automatically chosen and the
 #' acceptance rate (based on the population constraint) at each step.
+#' Users should also check the [plans_diversity()] of the sample.
 #'
-#' Higher values of \code{compactness} sample more compact districts;
+#' Higher values of `compactness` sample more compact districts;
 #' setting this parameter to 1 is computationally efficient and generates nicely
 #' compact districts.  Values of other than 1 may lead to highly variable
-#' importance sampling weights.  By default these weights are truncated using
-#' \code{\link{redist_quantile_trunc}} to stabilize the resulting estimates, but
-#' if truncation is used, a specific truncation function should probably be
-#' chosen by the user.
+#' importance sampling weights.  In these cases, these weights are by default
+#' truncated using [redist_quantile_trunc()] to stabilize the resulting
+#' estimates, but if truncation is used, a specific truncation function should
+#' probably be chosen by the user.
 #'
-#' @param map A \code{\link{redist_map}} object.
+#' @param map A [redist_map()] object.
 #' @param nsims The number of samples to draw.
 #' @param counties A vector containing county (or other administrative or
 #'   geographic unit) labels for each unit, which may be integers ranging from 1
 #'   to the number of counties, or a factor or character vector.  If provided,
-#'   the algorithm will only generate maps which split up to \code{ndists-1}
+#'   the algorithm will only generate maps which split up to `ndists-1`
 #'   counties. If no county-split constraint is desired, this parameter should
 #'   be left blank.
 #' @param compactness Controls the compactness of the generated districts, with
@@ -46,14 +46,14 @@
 #' @param constraints A [redist_constr()] object or a list containing
 #'   information on sampling constraints. See [constraints] for more information.
 #' @param resample Whether to perform a final resampling step so that the
-#'   generated plans can be used immediately.  Set this to \code{FALSE} to
+#'   generated plans can be used immediately.  Set this to `FALSE` to
 #'   perform direct importance sampling estimates, or to adjust the weights
 #'   manually.
-#' @param constraint_fn A function which takes in a matrix where each column is
-#'  a redistricting plan and outputs a vector of log-weights, which will be
-#'  added the the final weights.
+#' @param constraint_fn (Deprecated) A function which takes in a matrix where
+#'   each column is a redistricting plan and outputs a vector of log-weights,
+#'   which will be added the the final weights.
 #' @param init_particles A matrix of partial plans to begin sampling from. For
-#'  advanced use only.  The matrix must have \code{nsims} columns and a row for
+#'  advanced use only.  The matrix must have `nsims` columns and a row for
 #'  every precinct. It is important to ensure that the existing districts meet
 #'  contiguity and population constraints, or there may be major issues when
 #'  sampling.
@@ -61,17 +61,17 @@
 #'   Each step splits off a new district. Defaults to all remaining districts.
 #'   If fewer than the number of remaining splits, reference plans are disabled.
 #' @param adapt_k_thresh The threshold value used in the heuristic to select a
-#'   value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if the
+#'   value `k_i` for each splitting iteration. Set to 0.9999 or 1 if the
 #'   algorithm does not appear to be sampling from the target distribution. Must
 #'   be between 0 and 1.
 #' @param seq_alpha The amount to adjust the weights by at each resampling step;
 #'   higher values prefer exploitation, while lower values prefer exploration.
 #'   Must be between 0 and 1.
 #' @param truncate Whether to truncate the importance sampling weights at the
-#'   final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.
-#'   Truncation only applied if \code{resample=TRUE}.
+#'   final step by `trunc_fn`.  Recommended if `compactness` is not 1.
+#'   Truncation only applied if `resample=TRUE`.
 #' @param trunc_fn A function which takes in a vector of weights and returns a
-#'   truncated vector. If \code{\link[loo]{loo}} package is installed (strongly
+#'   truncated vector. If the [loo] package is installed (strongly
 #'   recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
 #'   rather than naive truncation.
 #' @param pop_temper The strength of the automatic population tempering. Try
@@ -81,30 +81,29 @@
 #'   iteration. Used to loosen the constraint when the sampler is getting stuck
 #'   on the final split.
 #' @param ref_name a name for the existing plan, which will be added as a
-#'   reference plan, or \code{FALSE} to not include the initial plan in the
+#'   reference plan, or `FALSE` to not include the initial plan in the
 #'   output. Defaults to the column name of the existing plan.
 #' @param verbose Whether to print out intermediate information while sampling.
 #'   Recommended.
 #' @param silent Whether to suppress all diagnostic information.
 #'
-#' @return \code{redist_smc} returns an object of class
-#'   \code{\link{redist_plans}} containing the simulated plans.
+#' @return `redist_smc` returns an object of class
+#'   [redist_plans()] containing the simulated plans.
 #'
 #' @references
 #' McCartan, C., & Imai, K. (2020). Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans.
 #' Available at \url{https://imai.fas.harvard.edu/research/files/SMCredist.pdf}.
 #'
 #' @examples \donttest{
-#' set.seed(1)
 #' data(fl25)
 #'
 #' fl_map = redist_map(fl25, ndists=3, pop_tol=0.1)
 #'
 #' sampled_basic = redist_smc(fl_map, 10000)
 #'
-#' sampled_constr = redist_smc(fl_map, 10000, constraints=list(
-#'                                 incumbency = list(strength=100, incumbents=c(3, 6, 25))
-#'                             ))
+#' constr = redist_constr(fl_map)
+#' constr = add_constr_incumbency(constr, strength=100, incumbents=c(3, 6, 25))
+#' sampled_constr = redist_smc(fl_map, 10000, constraints=constr)
 #' }
 #'
 #' @concept simulate
