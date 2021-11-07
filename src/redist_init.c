@@ -9,7 +9,6 @@
 
 /* .Call calls */
 extern SEXP _redist_agg_p2d(SEXP, SEXP, SEXP);
-extern SEXP _redist_best_renumber(SEXP, SEXP);
 extern SEXP _redist_bias(SEXP, SEXP);
 extern SEXP _redist_biasatv(SEXP, SEXP, SEXP);
 extern SEXP _redist_calc_polsbypopper(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -61,6 +60,7 @@ extern SEXP _redist_schwartzberg(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_segregationcalc(SEXP, SEXP, SEXP);
 extern SEXP _redist_smc_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_smoothseat(SEXP, SEXP);
+extern SEXP _redist_solve_hungarian(SEXP);
 extern SEXP _redist_splits(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_swMH(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_talisman(SEXP, SEXP, SEXP, SEXP);
@@ -71,7 +71,6 @@ extern SEXP _redist_var_info_vec(SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
     {"_redist_agg_p2d",               (DL_FUNC) &_redist_agg_p2d,                3},
-    {"_redist_best_renumber",         (DL_FUNC) &_redist_best_renumber,          2},
     {"_redist_bias",                  (DL_FUNC) &_redist_bias,                   2},
     {"_redist_biasatv",               (DL_FUNC) &_redist_biasatv,                3},
     {"_redist_calc_polsbypopper",     (DL_FUNC) &_redist_calc_polsbypopper,      7},
@@ -123,6 +122,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_segregationcalc",       (DL_FUNC) &_redist_segregationcalc,        3},
     {"_redist_smc_plans",             (DL_FUNC) &_redist_smc_plans,             19},
     {"_redist_smoothseat",            (DL_FUNC) &_redist_smoothseat,             2},
+    {"_redist_solve_hungarian",       (DL_FUNC) &_redist_solve_hungarian,        1},
     {"_redist_splits",                (DL_FUNC) &_redist_splits,                 4},
     {"_redist_swMH",                  (DL_FUNC) &_redist_swMH,                  44},
     {"_redist_talisman",              (DL_FUNC) &_redist_talisman,               4},

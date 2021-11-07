@@ -679,15 +679,14 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// best_renumber
-int best_renumber(IntegerMatrix combn, NumericMatrix joint);
-RcppExport SEXP _redist_best_renumber(SEXP combnSEXP, SEXP jointSEXP) {
+// solve_hungarian
+IntegerMatrix solve_hungarian(NumericMatrix costMatrix);
+RcppExport SEXP _redist_solve_hungarian(SEXP costMatrixSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerMatrix >::type combn(combnSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type joint(jointSEXP);
-    rcpp_result_gen = Rcpp::wrap(best_renumber(combn, joint));
+    Rcpp::traits::input_parameter< NumericMatrix >::type costMatrix(costMatrixSEXP);
+    rcpp_result_gen = Rcpp::wrap(solve_hungarian(costMatrix));
     return rcpp_result_gen;
 END_RCPP
 }

@@ -107,7 +107,7 @@ merge_by = function(.data, ..., by_existing=TRUE, drop_geom=TRUE, collapse_chr=T
     key_val = rlang::eval_tidy(dots[[1]], .data)
     pop_col = attr(.data, "pop_col")
 
-    if (drop_geom && is(.data, "sf"))
+    if (drop_geom && methods::is(.data, "sf"))
         .data = sf::st_drop_geometry(.data)
 
     col = attr(.data, "existing_col")
@@ -263,28 +263,21 @@ pullback = function(plans, map=NULL) {
 
 
 # helper function for match_numbers
-find_numbering = function(plan, ref, pop, force=FALSE) {
+find_numbering = function(plan, ref, pop) {
     joint = plan_joint(ref, plan, pop)
-    opts = which(joint > 0, arr.ind=TRUE)
-    if (!force) {
-        n_combn = prod(sapply(split(opts[,2], opts[,1]), length))
-        if (n_combn > 1e3)
-            cli_abort("More than 1,000 renumbering options.")
-    }
-    combn = as.matrix(expand.grid(split(opts[,2], opts[,1])))
-    combn = combn[apply(combn, 1, anyDuplicated) == 0L, , drop=FALSE]
-    best_idx = best_renumber(combn, joint)
+    tot_pop = sum(pop)
 
-    renumb = as.integer(combn[best_idx,])
-    list(renumb = order(renumb),
-         shared = sum(diag(joint[, renumb])) / sum(pop))
+    renumb = solve_hungarian(1 - joint / tot_pop)[, 2]
+
+    list(renumb = renumb,
+         shared = sum(diag(joint[, renumb])) / tot_pop)
 }
 
 #' Renumber districts to match an existing plan
 #'
 #' District numbers in simulated plans are by and large random.  This
 #' function attempts to renumber the districts across all simulated plans to
-#' match the numbers in a provided plan.
+#' match the numbers in a provided plan, using the Hungarian algorithm.
 #'
 #' @param data a \code{redist_plans} object
 #' @param plan a character vector giving the name of the plan to match to (e.g.,
@@ -293,16 +286,22 @@ find_numbering = function(plan, ref, pop, force=FALSE) {
 #'   with the reference plan: the fraction of the total population who are in
 #'   the same district under each plan and the reference plan. Set to
 #'   \code{NULL} if no column should be created.
-#' @param force if \code{TRUE}, force computation when there are more than 1,000
 #'   renumbering options in any plan.
 #'
 #' @returns a modified \code{redist_plans} object. New district numbers will be
 #' stored as an ordered factor variable in the \code{district} column. The
 #' district numbers in the plan matrix will match the levels of this factor.
 #'
+#' @examples
+#' data(iowa)
+#'
+#' iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05)
+#' plans = redist_smc(iowa_map, 100, silent=TRUE)
+#' match_numbers(plans, "cd_2010")
+#'
 #' @concept analyze
 #' @export
-match_numbers = function(data, plan, col="pop_overlap", force=FALSE) {
+match_numbers = function(data, plan, col="pop_overlap") {
     if (!inherits(data, "redist_plans")) cli_abort("{.arg data} must be a {.cls redist_plans}")
     if (!"district" %in% colnames(data)) cli_abort("Missing {.field district} colun in {.arg data}")
 
@@ -312,14 +311,12 @@ match_numbers = function(data, plan, col="pop_overlap", force=FALSE) {
     ndists = length(levels(plan))
     pop = attr(data, "prec_pop")
 
-    if (ndists > 6)
-        cli_warn("{.arg match_numers} may be extremely slow with more than 6 districts.")
     if (is.null(pop)) cli_abort("{.field prec_pop} attribute in {.arg data} required.")
     if (max(plan_mat[,1]) != ndists)
         cli_abort("Can't match numbers on a subset of a {.cls redist_plans}")
 
     # compute renumbering and extract info
-    best_renumb = apply(plan_mat, 2, find_numbering, as.integer(plan), pop, force)
+    best_renumb = apply(plan_mat, 2, find_numbering, as.integer(plan), pop)
     renumb = as.integer(vapply(best_renumb, function(x) x$renumb, integer(ndists)))
 
     if (!is.null(col))
