@@ -193,6 +193,12 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
             [&] (List l) -> double {
                 return eval_multisplits(districts.col(i), distr_ctr, counties, n_cty);
             });
+
+        lp[i] += add_constraint("custom", constraints,
+            [&] (List l) -> double {
+                Function fn = l["fn"];
+                return as<NumericVector>(fn(districts.col(i), distr_ctr))[0];
+            });
     }
 
     vec wgt = exp(-alpha * lp);

@@ -282,6 +282,20 @@ add_constr_multisplits = function(constr, strength) {
     add_to_constr(constr, "multisplits", new_constr)
 }
 
+#' @param fn
+#' @rdname constraints
+#' @export
+add_constr_custom = function(constr, strength, fn) {
+    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
+
+    args = rlang::fn_fmls(fn)
+    if (length(args) != 2) cli_abort("Function must take two arguments.")
+
+    new_constr = list(strength=strength, fn=fn)
+    add_to_constr(constr, "custom", new_constr)
+}
+
 #######################
 # generics
 
@@ -311,6 +325,8 @@ print.redist_constr = function(x, header=TRUE, ...) {
             cli::cli_bullets(c("*"="A splits constraint of strength {x[[nm]]$strength}"))
         } else if (startsWith(nm, "multisplits")) {
             cli::cli_bullets(c("*"="A multisplits constraint of strength {x[[nm]]$strength}"))
+        } else if (startsWith(nm, "custom")) {
+            cli::cli_bullets(c("*"="A custom constraint of strength {x[[nm]]$strength}"))
         } else {
             cli::cli_bullets(c("*"="An unknown constraint {.var {nm}}"))
         }
