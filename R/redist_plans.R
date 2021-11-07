@@ -293,7 +293,7 @@ dplyr_row_slice.redist_plans = function(data, i, ...) {
         if (any(distrs != distrs[1]) || length(distrs) != ndists)
             cli_warn(c("Some districts may have been dropped. ",
                     "This will prevent summary statistics from working correctly.\n",
-                    "To avoid this message, coerce using `as_tibble`."))
+                    "To avoid this message, coerce using {.fn as_tibble()}."))
     }
 
     if (length(draws_left) != ncol(plans_m)) {
@@ -359,7 +359,7 @@ rbind.redist_plans = function(..., deparse.level=1) {
             }
         } else {
             if (!is.null(attr(objs[[i]], 'compactness'))) {
-                cli_warn('Some compactness values were non-NULL. Set to NA.')
+                cli_warn('Some compactness values were non-NULL. Set to {.val NA}.')
                 comp <- NA
             }
         }
