@@ -62,7 +62,7 @@ SystemRequirements: OpenMPI, gmp, libxml2, python, C++11
 Packaged: 2015-06-03 18:32:00 UTC; benfifield
 NeedsCompilation: yes
 BugReports: https://github.com/alarm-redist/redist/issues
-URL: https://alarm-redist.github.io/redist/
+URL: https://alarm-redist.github.io/redist/, https://github.com/alarm-redist/redist
 RoxygenNote: 7.1.2
 VignetteBuilder: knitr
 Encoding: UTF-8
