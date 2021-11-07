@@ -291,7 +291,7 @@ dplyr_row_slice.redist_plans = function(data, i, ...) {
         distrs = table(as.integer(y$district))
         ndists = max(plans_m[,1])
         if (any(distrs != distrs[1]) || length(distrs) != ndists)
-            warning("Some districts may have been dropped. ",
+            cli_warn("Some districts may have been dropped. ",
                     "This will prevent summary statistics from working correctly.\n",
                     "To avoid this message, coerce using `as_tibble`.")
     }
@@ -345,19 +345,26 @@ rbind.redist_plans = function(..., deparse.level=1) {
     comp = attr(objs[[1]], "compactness")
     for (i in 2:n_obj) {
         if (nrow(get_plans_matrix(objs[[i]])) != n_prec)
-            stop("Number of precincts must match for all sets of plans.")
+            cli_abort("Number of precincts must match for all sets of plans.")
         if (!identical(attr(objs[[i]], "prec_pop"), prec_pop))
-            stop("Precinct populations must match for all sets of plans.")
+            cli_abort("Precinct populations must match for all sets of plans.")
         if (!identical(attr(objs[[i]], "ndists"), ndists))
-            stop("Number of districts must match for all sets of plans.")
+            cli_abort("Number of districts must match for all sets of plans.")
         if (attr(objs[[i]], "resampled") != resamp)
-            stop("Some sets of plans are resampled while others are not.")
-        if (attr(objs[[i]], "compactness") != comp) {
-            warning("Compactness values differ across sets of plans.")
-            comp = NA
+            cli_abort("Some sets of plans are resampled while others are not.")
+        if (!is.null(comp)) {
+            if (attr(objs[[i]], "compactness") != comp) {
+                cli_warn("Compactness values differ across sets of plans.")
+                comp = NA
+            }
+        } else {
+            if (!is.null(attr(objs[[i]], 'compactness'))) {
+                cli_warn('Some compactness values were non-NULL. Set to NA.')
+                comp <- NA
+            }
         }
         if (!identical(attr(objs[[i]], "constraints"), constr)) {
-            warning("Constraints do not match for all sets of plans.")
+            cli_warn("Constraints do not match for all sets of plans.")
             constr = NA
         }
     }
