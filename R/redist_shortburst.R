@@ -148,8 +148,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
         out = utils::capture.output({
             x <- ms_plans(1, adj, init_plan, counties, pop, ndists, pop_bounds[2],
                           pop_bounds[1], pop_bounds[3], compactness,
-                          0, rep(1, ndists), ndists, 0, 0, 0, 1, rep(0, V),
-                          0, 0, 0, rep(1, ndists), 0, 0, adapt_k_thresh, 0L, verbosity=2)
+                          list(), adapt_k_thresh, 0L, verbosity=2)
         }, type="output")
         rm(x)
         k = as.integer(stats::na.omit(stringr::str_match(out, "Using k = (\\d+)")[,2]))
@@ -157,8 +156,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
         run_burst = function(init) {
             ms_plans(burst_size + 1L, adj, init, counties, pop, ndists,
                      pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
-                     0, rep(1, ndists), ndists, 0, 0, 0, 1, rep(0, V),
-                     0, 0, 0, rep(1, ndists), 0, 0, 1.0, k, verbosity=0)$plans[, -1L]
+                     list(), 1.0, k, verbosity=0)$plans[, -1L]
         }
     } else {
         flip_constraints <- process_flip_constr(constraints = flip_constraints,

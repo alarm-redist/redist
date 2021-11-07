@@ -49,6 +49,8 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
                                       adapt_k_thresh=0.975, k=NULL, ncores=NULL,
                                       cl_type="PSOCK", return_all=TRUE, init_name=NULL,
                                       verbose=TRUE, silent=FALSE) {
+    if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
+
     map = validate_redist_map(map)
     V = nrow(map)
     adj = get_adj(map)
@@ -88,7 +90,7 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
         if (!silent) cat("Sampling initial plans with SMC")
         init_plans = get_plans_matrix(
             redist_smc(map, chains, counties, compactness, constraints,
-                       TRUE, constraint_fn, adapt_k_thresh=adapt_k_thresh,
+                       resample=TRUE, adapt_k_thresh=adapt_k_thresh,
                        ref_name=FALSE, verbose=verbose, silent=silent))
         if (is.null(init_name))
             init_names = paste0("<init> ", seq_len(chains))
@@ -114,10 +116,10 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
     }
 
     # Other constraints
-    constraints = eval_tidy(enquo(constraints), map)
-    proc = process_smc_ms_constr(constraints, V)
-    constraints = proc$constraints
-    n_current = max(constraints$status_quo$current)
+    if (!inherits(constraints, "redist_constr")) {
+        constraints = new_redist_constr(eval_tidy(enquo(constraints), map))
+    }
+    constraints = as.list(constraints) # drop data attribute
 
     verbosity = 1
     if (verbose) verbosity = 3
@@ -138,9 +140,7 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
     if (!requireNamespace("utils", quietly=TRUE)) stop()
     out = utils::capture.output({
         x <- ms_plans(1, adj, init_plans[,1], counties, pop, ndists, pop_bounds[2],
-                      pop_bounds[1], pop_bounds[3], compactness,
-                      0, rep(1, ndists), ndists, 0, 0, 0, 1, rep(0, V),
-                      0, 0, 0, rep(1, ndists), 0, beta_fractures = 0, adapt_k_thresh,
+                      pop_bounds[1], pop_bounds[3], compactness, list(), adapt_k_thresh,
                       0L, verbosity=2)
     }, type="output")
     rm(x)
@@ -159,25 +159,9 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
     each_len = if (return_all) nsims - warmup else 1
     plans = foreach(chain=seq_len(chains), .combine=cbind) %dopar% {
         if (!silent) cat("Starting chain ", chain, "\n", sep="")
-        algout = ms_plans(N = nsims+1L, l = adj, init = init_plans[, chain],
-                          counties = counties, pop = pop, n_distr = ndists,
-                          target = pop_bounds[2], lower = pop_bounds[1],
-                          upper = pop_bounds[3], rho = compactness,
-                          beta_sq = constraints$status_quo$strength,
-                          current = constraints$status_quo$current,
-                          n_current =  n_current,
-                          beta_vra = constraints$vra$strength,
-                          tgt_min = constraints$vra$tgt_vra_min,
-                          tgt_other = constraints$vra$tgt_vra_other,
-                          pow_vra = constraints$vra$pow_vra,
-                          min_pop = proc$min_pop,
-                          beta_vra_hinge = constraints$hinge$strength,
-                          tgts_min = constraints$hinge$tgts_min,
-                          beta_inc = constraints$incumbency$strength,
-                          incumbents = constraints$incumbency$incumbents,
-                          beta_splits = constraints$splits$strength,
-                          beta_fractures = constraints$multisplits$strength,
-                          thresh = adapt_k_thresh, k = k, verbosity=verbosity)
+        algout = ms_plans(nsims+1L, adj, init_plans[, chain], counties, pop,
+                          ndists, pop_bounds[2], pop_bounds[1], pop_bounds[3],
+                          compactness, constraints, adapt_k_thresh, k, verbosity)
         if (return_all)
             algout$plans[, -1:-(warmup+1L), drop=FALSE]
         else

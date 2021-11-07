@@ -236,35 +236,6 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
 }
 
 
-# Helper constraint processor.
-# Constraint defaults contained HERE.
-#
-# @param constraints passed into `redist_smc` or `redist_ms`
-#
-# @return a list with new `constraints` and a minority population vector `min_pop`
-process_smc_ms_constr = function(constr, V) {
-    constr =
-    defaults = list(
-        status_quo = list(strength=0, current=rep(1, V)),
-        hinge = list(strength=0, tgts_min=0.55, min_pop=integer(), tot_pop=integer()),
-        compet = list(strength=0, pow=1, dem=integer(), tot=integer()),
-        incumbency = list(strength=0, incumbents=integer()),
-        splits = list(strength=0),
-        multisplits = list(strength=0),
-    )
-
-    for (type in names(constraints)) {
-        for (el in names(constraints[[type]])) {
-            defaults[[type]][[el]] = constraints[[type]][[el]]
-        }
-    }
-
-    if (min(defaults$status_quo$current) == 0)
-        defaults$status_quo$current = defaults$status_quo$current + 1
-
-    list(constraints = defaults)
-}
-
 #' Helper function to truncate importance weights
 #'
 #' Defined as \code{pmin(x, quantile(x, 1 - length(x)^(-0.5)))}

@@ -153,6 +153,8 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
                              constraints=list(), constraint_fn=function(m) rep(0, ncol(m)),
                              adapt_k_thresh=0.975, k=NULL, init_name=NULL,
                              verbose=TRUE, silent=FALSE) {
+    if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
+
     map = validate_redist_map(map)
     V = nrow(map)
     adj = get_adj(map)
@@ -195,10 +197,10 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
     }
 
     # Other constraints
-    constraints = eval_tidy(enquo(constraints), map)
-    proc = process_smc_ms_constr(constraints, V)
-    constraints = proc$constraints
-    n_current = max(constraints$status_quo$current)
+    if (!inherits(constraints, "redist_constr")) {
+        constraints = new_redist_constr(eval_tidy(enquo(constraints), map))
+    }
+    constraints = as.list(constraints) # drop data attribute
 
     verbosity = 1
     if (verbose) verbosity = 3
@@ -217,13 +219,7 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
 
     algout = ms_plans(nsims+1L, adj, init_plan, counties, pop, ndists,
                      pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
-                     constraints$status_quo$strength, constraints$status_quo$current, n_current,
-                     constraints$vra$strength, constraints$vra$tgt_vra_min,
-                     constraints$vra$tgt_vra_other, constraints$vra$pow_vra, proc$min_pop,
-                     constraints$hinge$strength, constraints$hinge$tgts_min,
-                     constraints$incumbency$strength, constraints$incumbency$incumbents,
-                     constraints$splits$strength, constraints$multisplits$strength,
-                     adapt_k_thresh, k, verbosity)
+                     constraints, adapt_k_thresh, k, verbosity)
 
     plans <- algout$plans
     acceptances = as.logical(algout$mhdecisions)

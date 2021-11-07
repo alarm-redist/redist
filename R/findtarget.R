@@ -42,21 +42,21 @@ redist.find.target <- function(tgt_min, group_pop, total_pop, ndists, nmmd){
 redist.constraint.helper <- function(constraints = 'vra', tgt_min = 0.55,
                                      group_pop, total_pop, ndists, nmmd,
                                      strength_vra = 2500, pow_vra = 1.5){
+    .Deprecated("redist_constr")
 
+    ret <- list()
 
-  ret <- list()
+    if('vra' %in% constraints){
+        tgt_other <- redist.find.target(tgt_min, group_pop, total_pop, ndists, nmmd)
 
-  if('vra' %in% constraints){
-    tgt_other <- redist.find.target(tgt_min, group_pop, total_pop, ndists, nmmd)
+        ret[['vra']] <- list(strength = strength_vra,
+                             min_pop = group_pop,
+                             tgt_vra_min = tgt_min,
+                             tgt_vra_other = tgt_other,
+                             pow_vra = pow_vra)
 
-    ret[['vra']] <- list(strength = strength_vra,
-                       min_pop = group_pop,
-                       tgt_vra_min = tgt_min,
-                       tgt_vra_other = tgt_other,
-                       pow_vra = pow_vra)
-
-  }
-  ret
+    }
+    ret
 }
 
 globalVariables(c('vra'))
