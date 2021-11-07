@@ -88,11 +88,11 @@ iowa_plans = redist_smc(iowa_map, nsims=250, verbose=FALSE)
 #> Sampling 250 99-unit maps with 4 districts and population between 761513 and 761665.
 #> Making split 1 of 3
 #> Note: maximum hit; falling back to naive k estimator.
-#> Resampling effective sample size: 246.051 (98.4206 efficiency).
+#> Resampling effective sample size: 246.051 (98.4206% efficiency).
 #> Making split 2 of 3
-#> Resampling effective sample size: 245.859 (98.3437 efficiency).
+#> Resampling effective sample size: 245.859 (98.3437% efficiency).
 #> Making split 3 of 3
-#> Resampling effective sample size: 246.756 (98.7022 efficiency).
+#> Resampling effective sample size: 246.756 (98.7022% efficiency).
 ```
 
 After generating plans, you can use `redist`’s plotting functions to
@@ -146,15 +146,3 @@ Started](https://alarm-redist.github.io/redist/articles/redist.html)
 page. The package
 [vignettes](https://alarm-redist.github.io/redist/articles/) contain
 more detailed information and guides to specific workflows.
-
-## Recommended Workflows
-
-In some cases, there are two functions with the same purpose that
-operate on different inputs. For most users, we recommend working with
-the versions that operate on `redist_map` and `redist_plan` objects.
-
-| Recommended         | Alternate Options   | Notes                           |
-|---------------------|---------------------|---------------------------------|
-| `redist_smc`        | `redist.smc`        |                                 |
-| `redist_mergesplit` | `redist.mergesplit` |                                 |
-| `redist_flip`       | `redist.flip`       | (Formerly called `redist.mcmc`) |
