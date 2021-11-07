@@ -36,7 +36,8 @@ redist.flip.anneal(
   tgt_other = 0.25,
   rvote = NULL,
   dvote = NULL,
-  minorityprop = NULL
+  minorityprop = NULL,
+  cities = NULL
 )
 }
 \arguments{
@@ -138,6 +139,8 @@ Default is \code{TRUE}.}
 
 \item{minorityprop}{numeric vector of targeted minority proportions for the top
 districts with that proportion}
+
+\item{cities}{integer vector of cities for QPS constraint.}
 }
 \value{
 list of class redist

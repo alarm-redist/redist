@@ -1,6 +1,6 @@
-#' Calculate Group Percent by District
+#' Calculate Group Proportion by District
 #'
-#' \code{redist.group.percent} computes the percentage that a group makes up in
+#' \code{redist.group.percent} computes the proportion that a group makes up in
 #' each district across a matrix of maps.
 #'
 #' @param plans A matrix with one row

@@ -4,5 +4,5 @@
 ld_ia = function() {
     data(iowa)
     ia <<- redist_map(iowa, existing_plan=cd_2010, pop_tol=0.01)
-    plans <<- redist_smc(ia, 100, silent=T)
+    plans <<- redist_smc(ia, 100, silent=TRUE)
 }

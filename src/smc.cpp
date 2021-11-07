@@ -15,15 +15,8 @@
  */
 umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                int n_distr, double target, double lower, double upper, double rho,
-               umat districts, int n_drawn, int n_steps, const uvec boundary,
-               double beta_sq, const uvec &current, int n_current,
-               double beta_vra, double tgt_min, double tgt_other,
-               double pow_vra, const uvec &min_pop, const uvec &tot_pop,
-               double beta_vra_hinge, const vec &tgts_min,
-               const uvec &min_pop2, const uvec &tot_pop2,
-               double beta_inc, const uvec &incumbents,
-               double beta_fractures,
-               vec &lp, double thresh,
+               umat districts, int n_drawn, int n_steps,
+               List constraints, vec &lp, double thresh,
                double alpha, double pop_temper, double final_infl, int verbosity) {
     // re-seed MT
     generator.seed((int) Rcpp::sample(INT_MAX, 1)[0]);
@@ -97,15 +90,11 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
         }
         split_maps(g, counties, cg, pop, districts, cum_wgt, lp, pop_left,
                    log_temper, pop_temper, n_distr, ctr, lower, upper, target,
-                   rho, k, check_both, boundary, verbosity);
+                   rho, k, check_both, verbosity);
 
         // compute weights for next step
         cum_wgt = get_wgts(districts, n_distr, ctr, final, alpha, lp, pop,
-                           beta_sq, current, n_current,
-                           beta_vra, tgt_min, tgt_other, pow_vra, min_pop, tot_pop,
-                           beta_vra_hinge, tgts_min, min_pop2, tot_pop2,
-                           beta_inc, incumbents, beta_fractures, counties, n_cty,
-                           min_eff, verbosity);
+                           constraints, counties, n_cty, min_eff, verbosity);
 
         Rcpp::checkUserInterrupt();
     }
@@ -131,38 +120,79 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
 
 
 /*
+ * Helper function to iterate over constraints and apply them
+ */
+double add_constraint(const std::string& name, List constraints,
+                      std::function<double(List)> fn_constr) {
+    if (!constraints.containsElementNamed(name.c_str())) return 0;
+
+    List constr = constraints[name];
+    double val = 0;
+    for (int i = 0; i < constr.size(); i++) {
+        List constr_inst = constr[i];
+        double strength = constr_inst["strength"];
+        if (strength != 0) {
+            val += strength * fn_constr(constr_inst);
+        }
+    }
+    return val;
+}
+
+/*
  * Add specific constraint weights & return the cumulative weight vector
  */
 vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
-             double alpha, vec &lp, const uvec &pop,
-             double beta_sq, const uvec &current, int n_current,
-             double beta_vra, double tgt_min, double tgt_other,
-             double pow_vra, const uvec &min_pop, const uvec &tot_pop,
-             double beta_vra_hinge, const vec &tgts_min,
-             const uvec &min_pop2, const uvec &tot_pop2,
-             double beta_inc, const uvec &incumbents,
-             double beta_fractures, const uvec &counties, int n_cty,
-             double &min_eff, int verbosity) {
+             double alpha, vec &lp, const uvec &pop, List constraints,
+             const uvec &counties, int n_cty, double &min_eff, int verbosity) {
     int V = districts.n_rows;
     int N = districts.n_cols;
 
     for (int i = 0; i < N; i++) {
-        if (beta_sq != 0)
-            lp[i] += beta_sq * sq_entropy(districts.col(i), current, distr_ctr,
-                                          pop, n_distr, n_current, V);
-        if (beta_vra != 0)
-            lp[i] += beta_vra * eval_compet(districts.col(i), distr_ctr, tot_pop, min_pop, pow_vra);
-            //lp[i] += beta_vra * eval_vra(districts.col(i), distr_ctr, tgt_min,
-            //                             tgt_other, pow_vra, pop, min_pop);
-        if (beta_vra_hinge != 0)
-            lp[i] += beta_vra_hinge * eval_vra_hinge(districts.col(i), distr_ctr,
-                                                     tgts_min, tot_pop2, min_pop2);
-        if (beta_inc != 0)
-            lp[i] += beta_inc * eval_inc(districts.col(i), distr_ctr, incumbents);
+        if (constraints.size() == 0) continue;
 
-        if (beta_fractures != 0)
-            lp += beta_fractures * eval_fractures(districts.col(i), distr_ctr,
-                                                  counties, n_cty);
+        lp[i] += add_constraint("status_quo", constraints,
+            [&] (List l) -> double {
+                return eval_sq_entropy(districts.col(i), as<uvec>(l["current"]),
+                                       distr_ctr, pop, n_distr,
+                                       as<int>(l["n_current"]), V);
+            });
+
+        lp[i] += add_constraint("grp_pow", constraints,
+            [&] (List l) -> double {
+                return eval_grp_pow(districts.col(i), distr_ctr,
+                                    as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]),
+                                    as<double>(l["tgt_group"]), as<double>(l["tgt_other"]),
+                                    as<double>(l["pow"]));
+            });
+
+        lp[i] += add_constraint("compet", constraints,
+            [&] (List l) -> double {
+                uvec dvote = l["dvote"];
+                uvec total = dvote + as<uvec>(l["rvote"]);
+                return eval_grp_pow(districts.col(i), distr_ctr,
+                                    dvote, total, 0.5, 0.5, as<double>(l["pow"]));
+            });
+
+        lp[i] += add_constraint("grp_hinge", constraints,
+            [&] (List l) -> double {
+                return eval_grp_hinge(districts.col(i), distr_ctr, as<vec>(l["tgts_group"]),
+                                      as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]));
+            });
+
+        lp[i] += add_constraint("incumbency", constraints,
+            [&] (List l) -> double {
+                return eval_inc(districts.col(i), distr_ctr, as<uvec>(l["incumbents"]));
+            });
+
+        lp[i] += add_constraint("splits", constraints,
+            [&] (List l) -> double {
+                return eval_splits(districts.col(i), distr_ctr, counties, n_cty);
+            });
+
+        lp[i] += add_constraint("multisplits", constraints,
+            [&] (List l) -> double {
+                return eval_multisplits(districts.col(i), distr_ctr, counties, n_cty);
+            });
     }
 
     vec wgt = exp(-alpha * lp);
@@ -172,7 +202,7 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
 
     double neff = cuml_wgt[N-1] * cuml_wgt[N-1]  / sum(square(wgt));
     if (verbosity >= 1) {
-        Rprintf("Resampling effective sample size: %.1f (%.1f%% efficiency).\n", neff, 100*neff/N);
+        Rcout << "Resampling effective sample size: " << neff << " (" << 100*neff/N <<  "% efficiency)." << std::endl;
     }
     if (neff/N < min_eff) {
         min_eff = neff / N;
@@ -191,8 +221,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 const uvec &pop, umat &districts, vec &cum_wgt, vec &lp,
                 vec &pop_left, vec &log_temper, double pop_temper, int n_distr,
                 int dist_ctr, double lower, double upper, double target,
-                double rho, int k, bool check_both, const uvec boundary,
-                int verbosity) {
+                double rho, int k, bool check_both, int verbosity) {
     int V = districts.n_rows;
     int N = districts.n_cols;
     int new_size = n_distr - dist_ctr;
@@ -206,7 +235,6 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     int refresh = N / 10; // how often to print update statements
     int reject_check_int = 20; // aftr how many rejections to check for interrupts
     int reject_ct = 0;
-    bool check_boundary = boundary.size() > 0;
     double iter = 0; // how many actual iterations
     for (int i = 0; i < N; i++, iter++) {
         // resample
@@ -227,19 +255,8 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         double inc_lp = split_map(g, counties, cg, districts_new.col(i), dist_ctr,
                                   pop, pop_left(idx), lower_s, upper_s, target, k);
 
-        // check whether at least one precinct on the boundary remains unassigned
-        bool boundary_left = true;
-        if (check_boundary) {
-            boundary_left = false;
-            for (int j : boundary) {
-                if (districts_new(j, i) == 0) {
-                    boundary_left = true;
-                    break;
-                }
-            }
-        }
         // bad sample; try again
-        if (!std::isfinite(inc_lp) || !boundary_left) {
+        if (!std::isfinite(inc_lp)) {
             i--;
             if (++reject_ct % reject_check_int == 0) Rcpp::checkUserInterrupt();
             continue;
@@ -271,12 +288,12 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         lp_new(i) = lp(idx) + inc_lp + pop_temper*pop_pen;
 
         if (verbosity >= 2 && refresh > 0 && (i+1) % refresh == 0) {
-            Rprintf("Iteration %'6d / %'d\n", i+1, N);
+            Rcout << "Iteration " << i + 1 << "/" << N << std::endl;
             Rcpp::checkUserInterrupt();
         }
     }
     if (verbosity >= 2) {
-        Rprintf("%.1f%% acceptance rate.\n", 100.0 * N / iter);
+        Rcout <<  100.0 * N / iter << "% acceptance rate." << std::endl;
     }
 
     districts = districts_new;

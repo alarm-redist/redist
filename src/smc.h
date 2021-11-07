@@ -2,6 +2,9 @@
 #ifndef SMC_H
 #define SMC_H
 
+#include <string>
+#include <functional>
+
 #include "smc_base.h"
 #include "wilson.h"
 #include "tree_op.h"
@@ -18,16 +21,10 @@
 arma::umat smc_plans(int N, List l, const arma::uvec &counties,
                      const arma::uvec &pop, int n_distr, double target,
                      double lower, double upper, double rho,
-                     arma::umat districts, int n_drawn, int n_steps, const arma::uvec boundary,
-                     double beta_sq, const arma::uvec &current, int n_current,
-                     double beta_vra, double tgt_min, double tgt_other,
-                     double pow_vra, const arma::uvec &min_pop, const arma::uvec &tot_pop,
-                     double beta_vra_hinge, const arma::vec &tgts_min,
-                     const arma::uvec &min_pop2, const arma::uvec &tot_pop2,
-                     double beta_inc, const arma::uvec &incumbents,
-                     double beta_fractures,
-                     arma::vec &lp, double thresh,
-                     double alpha, double pop_temper=0.1, double final_infl=1.0, int verbosity=1);
+                     arma::umat districts, int n_drawn, int n_steps,
+                     List constraints, arma::vec &lp, double thresh,
+                     double alpha, double pop_temper=0.1,
+                     double final_infl=1.0, int verbosity=1);
 
 /*
  * Split off a piece from each map in `districts`,
@@ -37,23 +34,15 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 const uvec &pop, umat &districts, vec &cum_wgt, vec &lp,
                 vec &pop_left, vec &log_temper, double pop_temper, int n_distr,
                 int dist_ctr, double lower, double upper, double target,
-                double rho, int k, bool check_both, const uvec boundary,
-                int verbosity);
+                double rho, int k, bool check_both, int verbosity);
 
 
 /*
  * Add specific constraint weights & return the cumulative weight vector
  */
 vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
-             double alpha, vec &lp, const uvec &pop,
-             double beta_sq, const uvec &current, int n_current,
-             double beta_vra, double tgt_min, double tgt_other,
-             double pow_vra, const uvec &min_pop, const uvec &tot_pop,
-             double beta_vra_hinge, const vec &tgts_min,
-             const uvec &min_pop2, const uvec &tot_pop2,
-             double beta_inc, const uvec &incumbents,
-             double beta_fractures, const uvec &counties, int n_cty,
-             double &min_eff, int verbosity);
+             double alpha, vec &lp, const uvec &pop, List constraints,
+             const uvec &counties, int n_cty, double &min_eff, int verbosity);
 
 /*
  * Split a map into two pieces with population lying between `lower` and `upper`

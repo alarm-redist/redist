@@ -28,8 +28,8 @@ double log_boundary(const Graph &g, const subview_col<uword> &districts,
 /*
  * Compute the status quo penalty for district `distr`
  */
-double sq_entropy(const subview_col<uword> &districts, const uvec &current,
-                  int distr, const uvec &pop, int n_distr, int n_current, int V) {
+double eval_sq_entropy(const subview_col<uword> &districts, const uvec &current,
+                       int distr, const uvec &pop, int n_distr, int n_current, int V) {
     double accuml = 0;
     for (int j = 1; j <= n_current; j++) { // 1-indexed districts
         double pop_overlap = 0;
@@ -50,32 +50,21 @@ double sq_entropy(const subview_col<uword> &districts, const uvec &current,
 }
 
 /*
- * Compute the old VRA penalty for district `distr`
+ * Compute the new, hinge group penalty for district `distr`
  */
-double eval_vra(const subview_col<uword> &districts, int distr, double tgt_min,
-                double tgt_other, double pow_vra, const uvec &pop, const uvec &min_pop) {
+double eval_grp_hinge(const subview_col<uword> &districts, int distr,
+                      const vec &tgts_grp, const uvec &grp_pop, const uvec &total_pop) {
     uvec idxs = find(districts == distr);
-    double frac = ((double) sum(min_pop(idxs))) / sum(pop(idxs));
-    return std::pow(std::fabs(frac - tgt_min), pow_vra) *
-        std::pow(std::fabs(frac - tgt_other), pow_vra);
-}
-
-/*
- * Compute the new, hinge VRA penalty for district `distr`
- */
-double eval_vra_hinge(const subview_col<uword> &districts, int distr,
-                      const vec &tgts_min, const uvec &pop, const uvec &min_pop) {
-    uvec idxs = find(districts == distr);
-    double frac = ((double) sum(min_pop(idxs))) / sum(pop(idxs));
+    double frac = ((double) sum(grp_pop(idxs))) / sum(total_pop(idxs));
     // figure out which to compare it to
     double target;
     double diff = 1;
-    int n_tgt = tgts_min.size();
+    int n_tgt = tgts_grp.size();
     for (int i = 0; i < n_tgt; i++) {
-        double new_diff = std::fabs(tgts_min[i] - frac);
+        double new_diff = std::fabs(tgts_grp[i] - frac);
         if (new_diff <= diff) {
             diff = new_diff;
-            target = tgts_min[i];
+            target = tgts_grp[i];
         }
     }
 
@@ -83,13 +72,14 @@ double eval_vra_hinge(const subview_col<uword> &districts, int distr,
 }
 
 /*
- * Compute the old VRA penalty for district `distr`
+ * Compute the power-based group penalty for district `distr`
  */
-double eval_compet(const subview_col<uword> &districts, int distr,
-                   const uvec &other_pop, const uvec &min_pop, double pow) {
+double eval_grp_pow(const subview_col<uword> &districts, int distr,
+                   const uvec &grp_pop, const uvec &total_pop,
+                   double tgt_grp, double tgt_other, double pow) {
     uvec idxs = find(districts == distr);
-    double frac = ((double) sum(min_pop(idxs))) / sum(other_pop(idxs));
-    return std::pow(std::fabs(frac - 0.5), pow);
+    double frac = ((double) sum(grp_pop(idxs))) / sum(total_pop(idxs));
+    return std::pow(std::fabs(frac - tgt_grp) * std::fabs(frac - tgt_other), pow);
 }
 
 /*
@@ -132,10 +122,10 @@ double eval_splits(const subview_col<uword> &districts, int distr,
 }
 
 /*
- * Compute the county fracture penalty for district `distr`
+ * Compute the county multisplit penalty for district `distr`
  */
-double eval_fractures(const subview_col<uword> &districts, int distr,
-                   const uvec &counties, int n_cty) {
+double eval_multisplits(const subview_col<uword> &districts, int distr,
+                        const uvec &counties, int n_cty) {
     std::vector<std::set<int>> county_dist(n_cty);
     int V = counties.size();
     for (int i = 0; i < n_cty; i++) {
@@ -155,6 +145,7 @@ double eval_fractures(const subview_col<uword> &districts, int distr,
 
     return fracts;
 }
+
 
 /*
  * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,

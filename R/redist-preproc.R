@@ -1,6 +1,7 @@
 redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
                            pop_tol = NULL,
                            counties = NULL,
+                           cities = NULL,
                            group_pop = NULL,
                            areasvec = NULL,
                            borderlength_mat = NULL, ssdmat = NULL,
@@ -63,8 +64,8 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
       stop("If applying constraints or using simulated tempering, please set non-zero constraint by specifying the 'constraintweight' argument, and specify the names of the constraints in 'constraint'.")
     }
     if(any(!(constraint %in% c("compact", "vra", "segregation", "population",
-                               "similarity", "countysplit", "partisan", "minority", 'hinge')))){
-      stop("Please specify any combination of `compact`, `segregation`, vra`, `population`, `countysplit`, `similarity`, `partisan`, `minority`, `hinge` for constraint")
+                               "similarity", "countysplit", "partisan", "minority", 'hinge', 'qps')))){
+      stop("Please specify any combination of `compact`, `segregation`, vra`, `population`, `countysplit`, `similarity`, `partisan`, `minority`, `hinge`, `qps` for constraint")
     }
   }
 
@@ -146,11 +147,6 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
     }
 
   }
-
-
-
-
-
 
   if(is.null(init_plan) || isTRUE( 'smc' %in% init_plan)){
       map = redist_map(pop=total_pop,  pop_tol=ifelse(is.null(pop_tol), 0.05, pop_tol),
@@ -250,6 +246,15 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
   if("countysplit" %in% constraint & !is.null(counties)){
     if(length(counties) != length(adjlist) | sum(is.na(counties)) > 0){
       stop("You do not have a county membership assigned for every unit.")
+    }
+  }
+
+  if("qps" %in% constraint) {
+    if (is.null(cities)) {
+      cli::cli_abort('`cities` cannot be NULL wihen using `qps` constraint.')
+    }
+    if (length(cities) != length(adjlist) || sum(is.na(cities)) > 0){
+      cli::cli_abort("You do not have a `cities` membership assigned for every unit.")
     }
   }
 
@@ -368,6 +373,11 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
     counties <- counties - min(counties)
   }
 
+  # Set city membership if note provided
+  if (is.null(cities)) {
+    cities <- c(0, 0, 0, 0)
+  }
+
   ################################
   ## Set ssdmat if not provided ##
   ################################
@@ -452,6 +462,12 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
   }else{
     weighthinge <- 0
   }
+  if('qps' %in% constraint){
+    weightqps <- constraintweights[which(constraint == "qps")]
+  }else{
+    weightqps <- 0
+  }
+
 
   ###################################
   ## Check if betaspacing provided ##
@@ -498,7 +514,8 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
       areasvec = areasvec,
       borderlength_mat = borderlength_mat,
       ssdmat = ssdmat,
-      counties = counties
+      counties = counties,
+      cities = cities
     ),
     params = list(
       pctdistparity = pop_tol,
@@ -517,6 +534,7 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
       weightpartisan = weightpartisan,
       weightminority = weightminority,
       weighthinge = weighthinge,
+      weightqps = weightqps,
       tgt_min = tgt_min,
       tgt_other = tgt_other,
       rvote = rvote,

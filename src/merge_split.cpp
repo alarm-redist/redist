@@ -17,12 +17,7 @@
  */
 Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const uvec &pop,
               int n_distr, double target, double lower, double upper, double rho,
-              double beta_sq, const uvec &current, int n_current,
-              double beta_vra, double tgt_min, double tgt_other,
-              double pow_vra, const uvec &min_pop,
-              double beta_vra_hinge, const vec &tgts_min,
-              double beta_inc, const uvec &incumbents, double beta_splits,
-              double beta_fractures, double thresh, int k, int verbosity) {
+              List constraints, double thresh, int k, int verbosity) {
     // re-seed MT
     generator.seed((int) Rcpp::sample(INT_MAX, 1)[0]);
 
@@ -94,17 +89,9 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
         // NOTE: different signs than above b/c of how Metropolis proposal has
         // transition ratio flipped relative to the target density ratio
         prop_lp -= calc_gibbs_tgt(districts.col(i), n_distr, V, distr_1, distr_2,
-                                  pop, beta_sq, current, n_current, beta_vra,
-                                  tgt_min, tgt_other, pow_vra, min_pop,
-                                  beta_vra_hinge, tgts_min,
-                                  beta_inc, incumbents,
-                                  beta_splits, beta_fractures, counties, n_cty);
+                                  pop, constraints, counties, n_cty);
         prop_lp += calc_gibbs_tgt(districts.col(i-1), n_distr, V, distr_1, distr_2,
-                                  pop, beta_sq, current, n_current, beta_vra,
-                                  tgt_min, tgt_other, pow_vra, min_pop,
-                                  beta_vra_hinge, tgts_min,
-                                  beta_inc, incumbents,
-                                  beta_splits, beta_fractures, counties, n_cty);
+                                  pop, constraints, counties, n_cty);
 
         double alpha = exp(prop_lp);
         if (alpha >= 1 || unif(generator) <= alpha) { // ACCEPT
@@ -117,13 +104,13 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
         }
 
         if (verbosity >= 2 && refresh > 0 && (i+1) % refresh == 0) {
-            Rprintf("Iteration %'6d / %'d\n", i+1, N-1);
+            Rcout << "Iteration " << i+1 << "/" << N-1 << std::endl;
         }
         Rcpp::checkUserInterrupt();
     }
 
     if (verbosity >= 1) {
-        Rprintf("Acceptance rate: %.1f%%.\n", (100.0 * n_accept) / (N-1));
+        Rcout << "Acceptance rate: " << (100.0 * n_accept) / (N-1) << std::endl;
     }
 
     Rcpp::List out;
@@ -135,49 +122,79 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
 
 
 /*
+ * Helper function to iterate over constraints and apply them
+ */
+double add_constraint(const std::string& name, List constraints,
+                      int distr_1, int distr_2,
+                      std::function<double(List, int)> fn_constr) {
+    if (!constraints.containsElementNamed(name.c_str())) return 0;
+
+    List constr = constraints[name];
+    double val = 0;
+    for (int i = 0; i < constr.size(); i++) {
+        List constr_inst = constr[i];
+        double strength = constr_inst["strength"];
+        if (strength != 0) {
+            val += strength * (
+                fn_constr(constr_inst, distr_1) +
+                fn_constr(constr_inst, distr_2)
+            );
+        }
+    }
+    return val;
+}
+
+/*
  * Add specific constraint weights & return the cumulative weight vector
  */
 double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
-                      int distr_1, int distr_2, const uvec &pop, double beta_sq,
-                      const uvec &current, int n_current,
-                      double beta_vra, double tgt_min, double tgt_other,
-                      double pow_vra, const uvec &min_pop,
-                      double beta_vra_hinge, const vec &tgts_min,
-                      double beta_inc, const uvec &incumbents,
-                      double beta_splits, double beta_fractures,
-                      const uvec &counties, int n_cty) {
+                      int distr_1, int distr_2, const uvec &pop,
+                      List constraints, const uvec &counties, int n_cty) {
+    if (constraints.size() == 0) return 0.0;
     double log_tgt = 0;
 
-    if (beta_sq != 0)
-        log_tgt += beta_sq * (
-            sq_entropy(plan, current, distr_1, pop, n_distr, n_current, V) +
-            sq_entropy(plan, current, distr_2, pop, n_distr, n_current, V)
-        );
-    if (beta_vra != 0)
-        log_tgt += beta_vra * (
-            eval_vra(plan, distr_1, tgt_min, tgt_other, pow_vra, pop, min_pop) +
-            eval_vra(plan, distr_2, tgt_min, tgt_other, pow_vra, pop, min_pop)
-        );
-    if (beta_vra_hinge != 0)
-        log_tgt += beta_vra_hinge * (
-            eval_vra_hinge(plan, distr_1, tgts_min, pop, min_pop) +
-            eval_vra_hinge(plan, distr_2, tgts_min, pop, min_pop)
-        );
-    if (beta_inc != 0)
-        log_tgt += beta_inc * (
-            eval_inc(plan, distr_1, incumbents) +
-            eval_inc(plan, distr_2, incumbents)
-        );
-    if (beta_splits != 0)
-        log_tgt += beta_splits * (
-            eval_splits(plan, distr_1, counties, n_cty) +
-            eval_splits(plan, distr_2, counties, n_cty)
-        );
-    if (beta_fractures != 0)
-        log_tgt += beta_fractures * (
-            eval_fractures(plan, distr_1, counties, n_cty) +
-                eval_fractures(plan, distr_2, counties, n_cty)
-        );
+    log_tgt += add_constraint("status_quo", constraints, distr_1, distr_2,
+        [&] (List l, int distr) -> double {
+            return eval_sq_entropy(plan, as<uvec>(l["current"]), distr,
+                                   pop, n_distr, as<int>(l["n_current"]), V);
+        });
+
+    log_tgt += add_constraint("grp_pow", constraints, distr_1, distr_2,
+        [&] (List l, int distr) -> double {
+            return eval_grp_pow(plan, distr, as<uvec>(l["group_pop"]),
+                                as<uvec>(l["total_pop"]), as<double>(l["tgt_group"]),
+                                as<double>(l["tgt_other"]), as<double>(l["pow"]));
+        });
+
+    log_tgt += add_constraint("compet", constraints, distr_1, distr_2,
+        [&] (List l, int distr) -> double {
+            uvec dvote = l["dvote"];
+            uvec total = dvote + as<uvec>(l["rvote"]);
+            return eval_grp_pow(plan, distr, dvote, total, 0.5, 0.5,
+                                as<double>(l["pow"]));
+        });
+
+    log_tgt += add_constraint("grp_hinge", constraints, distr_1, distr_2,
+        [&] (List l, int distr) -> double {
+            return eval_grp_hinge(plan, distr, as<vec>(l["tgts_group"]),
+                                  as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]));
+        });
+
+    log_tgt += add_constraint("incumbency", constraints, distr_1, distr_2,
+        [&] (List l, int distr) -> double {
+            return eval_inc(plan, distr, as<uvec>(l["incumbents"]));
+        });
+
+    log_tgt += add_constraint("splits", constraints, distr_1, distr_2,
+        [&] (List l, int distr) -> double {
+            return eval_splits(plan, distr, counties, n_cty);
+        });
+
+    log_tgt += add_constraint("multisplits", constraints, distr_1, distr_2,
+        [&] (List l, int distr) -> double {
+            return eval_multisplits(plan, distr, counties, n_cty);
+        });
+
 
     return log_tgt;
 }

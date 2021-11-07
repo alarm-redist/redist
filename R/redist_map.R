@@ -1,4 +1,4 @@
-
+##############################################
 ## Author: Cory McCartan
 ## Institution: Harvard University
 ## Date Created: 2021/01/28
@@ -31,7 +31,7 @@ new_redist_map = function(data, adj, ndists, pop_bounds, pop_col="pop",
     data
 }
 
-validate_redist_map = function(data, check_contig=T) {
+validate_redist_map = function(data, check_contig=TRUE) {
     if (!is.data.frame(data)) stop("Not a data frame")
     if (!inherits(data, "redist_map")) stop("Not a `redist_map` object")
 
@@ -67,6 +67,8 @@ reconstruct.redist_map = function(data, old) {
 
     if (inherits(data, "grouped_df"))
         classes = c("grouped_df", classes)
+    if (inherits(data, "rowwise_df"))
+        classes = c("rowwise_df", classes)
     if (inherits(data, "sf"))
         classes = c("sf", classes)
 
@@ -87,6 +89,13 @@ reconstruct.redist_map = function(data, old) {
 
         if (is.null(attr(data, "pop_bounds")))
             attr(data, "pop_bounds") = attr(old, "pop_bounds")
+
+        others <- setdiff(names(attributes(old)), names(attributes(data)))
+        if (length(others) > 1) {
+          for (i in seq_len(length(others))) {
+            attr(data, others[i]) <- attr(old, others[i])
+          }
+        }
     }
 
     class(data) = c("redist_map", classes)
@@ -116,7 +125,7 @@ reconstruct.redist_map = function(data, old) {
 #'   single \code{list} or \code{data.frame}.  These will be passed on to the
 #'   \code{\link{tibble}} constructor.
 #' @param existing_plan \code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the
-#'   existing district assignment.
+#'   existing district assignment. Must be numeric or convertable to numeric.
 #' @param pop_tol \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the population tolerance.
 #'   The percentage deviation from the average population will be constrained to
 #'   be no more than this number. If `existing_plan` is provided, defaults to
@@ -183,13 +192,26 @@ redist_map = function(..., existing_plan=NULL, pop_tol=NULL,
 
     existing_col = names(tidyselect::eval_select(rlang::enquo(existing_plan), x))
     if (length(existing_col) == 0)
-        existing_col = NULL
+      existing_col = NULL
 
-    if (is.null(ndists))  {
-        if (!is.null(existing_col))
+    if (!is.null(existing_col)) {
+      if (!is.numeric(x[[existing_col]])) {
+        temp_col <- NULL
+        suppressWarnings({temp_col <- as.numeric(x[[existing_col]])})
+        if (!any(is.na(temp_col))) {
+          x[[existing_col]] <- temp_col
+        } else {
+          stop('`existing_col` was not numeric and could not be converted to numeric.')
+        }
+      }
+    }
+
+    if (is.null(ndists)) {
+        if (!is.null(existing_col)) {
             ndists = length(unique(x[[existing_col]]))
-        else
-            stop("Must specify `ndists` if `existing_plan` is not supplied.")
+        } else {
+          stop("Must specify `ndists` if `existing_plan` is not supplied.")
+        }
     } else {
         ndists = as.integer(rlang::eval_tidy(rlang::enquo(ndists), x))
     }
@@ -226,7 +248,7 @@ redist_map = function(..., existing_plan=NULL, pop_tol=NULL,
 
     validate_redist_map(
         new_redist_map(x, adj, ndists, pop_bounds, pop_col, adj_col,
-                       add_adj=T, existing_col)
+                       add_adj=TRUE, existing_col)
     )
 }
 
@@ -448,7 +470,7 @@ select.redist_map <- function(.data, ...) {
 
 #' Generic to print redist_map
 #' @param x redist_map
-#' @param \dots additional argumentss
+#' @param \dots additional arguments
 #' @method print redist_map
 #' @return Prints to console and returns input redist_map
 #' @export

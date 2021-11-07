@@ -16,25 +16,21 @@ double log_boundary(const Graph &g, const subview_col<uword> &districts,
 /*
  * Compute the status quo penalty for district `distr`
  */
-double sq_entropy(const subview_col<uword> &districts, const uvec &current,
-                  int distr, const uvec &pop, int n_distr, int n_current, int V);
+double eval_sq_entropy(const subview_col<uword> &districts, const uvec &current,
+                       int distr, const uvec &pop, int n_distr, int n_current, int V);
 
-/*
- * Compute the VRA penalty for district `distr`
- */
-double eval_vra(const subview_col<uword> &districts, int distr, double tgt_min,
-                double tgt_other, double pow_vra, const uvec &pop, const uvec &min_pop);
 /*
  * Compute the new, hinge VRA penalty for district `distr`
  */
-double eval_vra_hinge(const subview_col<uword> &districts, int distr,
-                      const vec &tgts_min, const uvec &pop, const uvec &min_pop);
+double eval_grp_hinge(const subview_col<uword> &districts, int distr,
+                      const vec &tgts_grp, const uvec &grp_pop, const uvec &total_pop);
 
 /*
  * Compute the old VRA penalty for district `distr`
  */
-double eval_compet(const subview_col<uword> &districts, int distr,
-                   const uvec &other_pop, const uvec &min_pop, double pow);
+double eval_grp_pow(const subview_col<uword> &districts, int distr,
+                    const uvec &grp_pop, const uvec &total_pop,
+                    double tgt_grp, double tgt_other, double pow);
 
 /*
  * Compute the incumbent-preserving penalty for district `distr`
@@ -50,8 +46,9 @@ double eval_splits(const subview_col<uword> &districts, int distr,
 /*
  * Compute the county fracture penalty for district `distr`
  */
-double eval_fractures(const subview_col<uword> &districts, int distr,
-                      const uvec &counties, int n_cty);
+double eval_multisplits(const subview_col<uword> &districts, int distr,
+                        const uvec &counties, int n_cty);
+
 
 /*
  * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,

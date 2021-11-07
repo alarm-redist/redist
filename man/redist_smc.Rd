@@ -21,7 +21,6 @@ redist_smc(
   pop_temper = 0,
   final_infl = 1,
   ref_name = NULL,
-  boundary_precs = NULL,
   verbose = TRUE,
   silent = FALSE
 )
@@ -43,8 +42,8 @@ higher values preferring more compact districts. Must be nonnegative. See
 the 'Details' section for more information, and computational
 considerations.}
 
-\item{constraints}{A list containing information on constraints to implement.
-See the 'Details' section for more information.}
+\item{constraints}{A \code{\link[=redist_constr]{redist_constr()}} object or a list containing
+information on sampling constraints. See \link{constraints} for more information.}
 
 \item{resample}{Whether to perform a final resampling step so that the
 generated plans can be used immediately.  Set this to \code{FALSE} to
@@ -95,10 +94,6 @@ on the final split.}
 reference plan, or \code{FALSE} to not include the initial plan in the
 output. Defaults to the column name of the existing plan.}
 
-\item{boundary_precs}{precinct indices, at least one of which should be
-left unassigned, when \code{n_steps} is fewer than the number of remaining
-splits.}
-
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}
 
@@ -120,9 +115,9 @@ controlled by the \code{pop_tol}, \code{compactness}, \code{constraints}, and
 \code{constraint_fn} parameters.
 
 Key to ensuring good performance is monitoring the efficiency of the resampling
-process at each SMC stage.  Unless \code{silent=F}, this function will print
+process at each SMC stage.  Unless \code{silent=FALSE}, this function will print
 out the effective sample size of each resampling step to allow the user to
-monitor the efficiency.  If \code{verbose=T} the function will also print
+monitor the efficiency.  If \code{verbose=TRUE} the function will also print
 out information on the \eqn{k_i} values automatically chosen and the
 acceptance rate (based on the population constraint) at each step.
 
@@ -133,75 +128,6 @@ importance sampling weights.  By default these weights are truncated using
 \code{\link{redist_quantile_trunc}} to stabilize the resulting estimates, but
 if truncation is used, a specific truncation function should probably be
 chosen by the user.
-
-The \code{constraints} parameter allows the user to apply several common
-redistricting constraints without implementing them by hand. This parameter
-is a list, which may contain any of the following named entries:
-\itemize{
-\item \code{status_quo}: a list with two entries:
-\itemize{
-\item \code{strength}, a number controlling the tendency of the generated districts
-to respect the status quo, with higher values preferring more similar
-districts.
-\item \code{current}, a vector containing district assignments for
-the current map.
-}
-\item \code{hinge}: a list with three entries:
-\itemize{
-\item \code{strength}, a number controlling the strength of the constraint, with
-higher values prioritizing districts with group populations at least
-\code{tgts_min} over other considerations.
-\item \code{tgts_min}, the target percentage(s) of minority voters in minority
-opportunity districts. Defaults to \code{c(0.55)}.
-\item \code{min_pop}, A vector containing the minority population of each
-geographic unit.
-}
-\item \code{incumbency}: a list with two entries:
-\itemize{
-\item \code{strength}, a number controlling the tendency of the generated districts
-to avoid pairing up incumbents.
-\item \code{incumbents}, a vector of precinct indices, one for each incumbent's
-home address.
-}
-\item \code{vra}: a list with five entries, which may be set up using
-\code{\link{redist.constraint.helper}}:
-\itemize{
-\item \code{strength}, a number controlling the strength of the Voting Rights Act
-(VRA) constraint, with higher values prioritizing majority-minority districts
-over other considerations.
-\item \code{tgt_vra_min}, the target percentage of minority voters in minority
-opportunity districts. Defaults to 0.55.
-\item \code{tgt_vra_other} The target percentage of minority voters in other
-districts. Defaults to 0.25, but should be set to reflect the total minority
-population in the state.
-\item \code{pow_vra}, which controls the allowed deviation from the target
-minority percentage; higher values are more tolerant. Defaults to 1.5
-\item \code{min_pop}, A vector containing the minority population of each
-geographic unit.
-}
-\item \code{multisplits}: a list with one entry:
-\itemize{
-\item \code{strength}, a number controlling the tendency of the generated districts
-to avoid splitting counties multiple times.
-}
-}
-
-All constraints are fed into a Gibbs measure, with coefficients on each
-constraint set by the corresponding \code{strength} parameters.
-The strength can be any real number, with zero corresponding to no constraint.
-The \code{status_quo} constraint adds a term measuring the variation of
-information distance between the plan and the reference, rescaled to [0, 1].
-The \code{hinge} constraint takes a list of target minority percentages. It
-matches each district to its nearest target percentage, and then applies a
-penalty of the form \eqn{\sqrt{max(0, tgt - minpct)}}, summing across
-districts. This penalizes districts which are below their target population.
-The \code{incumbency} constraint adds a term counting the number of districts
-containing paired-up incumbents.
-The \code{vra} constraint  (not recommended) adds a term of the form
-\eqn{(|tgtvramin-minpct||tgtvraother-minpct|)^{powvra})}, which
-encourages districts to have minority percentages near either \code{tgt_vra_min}
-or \code{tgt_vra_other}. This can be visualized with
-\code{\link{redist.plot.penalty}}.
 }
 \examples{
 \donttest{

@@ -87,7 +87,7 @@ sources, and may not fully overlap with each other, further complicating the
 problem.
 
 `redist` is not focused on this data collection process.  The 
-[`geomander`](https://christopherkenny.github.io/geomander/) package contains
+[`geomander`](https://www.christophertkenny.com/geomander/) package contains
 many helpful functions for compiling these data, and fixing problems in
 geographic data.
 

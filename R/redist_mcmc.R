@@ -101,6 +101,7 @@ combine.par.anneal <- function(a, b){
 #' @param dvote integer vector of votes for Democrats by precinct
 #' @param minorityprop numeric vector of targeted minority proportions for the top
 #' districts with that proportion
+#' @param cities integer vector of cities for QPS constraint.
 #'
 #' @return list of class redist
 #'
@@ -128,7 +129,7 @@ redist.flip.anneal <- function(adj,
                                 exact_mh = FALSE,
                                savename = NULL, verbose = TRUE,
                                ncores = 1, tgt_min = 0.55, tgt_other = 0.25, rvote = NULL,
-                               dvote = NULL, minorityprop = NULL){
+                               dvote = NULL, minorityprop = NULL, cities = NULL){
 
     contiguitymap <- 'rooks'
 
@@ -196,6 +197,7 @@ redist.flip.anneal <- function(adj,
                                  init_plan = init_plan, ndists = ndists,
                                  pop_tol = pop_tol,
                                  counties = counties,
+                                 cities = cities,
                                  group_pop = group_pop,
                                  areasvec = areasvec,
                                  borderlength_mat = borderlength_mat,
@@ -227,6 +229,7 @@ redist.flip.anneal <- function(adj,
     weightpartisan <- preprocout$params$weightpartisan
     weightminority <- preprocout$params$weightminority
     weighthinge <- preprocout$params$weighthinge
+    weightqps <- preprocout$params$weightqps
 
     if(verbose){
         cat("Starting swMH().\n")
@@ -239,6 +242,7 @@ redist.flip.anneal <- function(adj,
                    grouppopvec = preprocout$data$group_pop,
                    areas_vec = preprocout$data$areasvec,
                    county_membership = preprocout$data$counties,
+                   cities = preprocout$data$cities,
                    borderlength_mat = preprocout$data$borderlength_mat,
                    nsims = 100,
                    eprob = eprob,
@@ -257,6 +261,7 @@ redist.flip.anneal <- function(adj,
                    weight_partisan = weightpartisan,
                    weight_minority = weightminority,
                    weight_hinge = weighthinge,
+                   weight_qps = weightqps,
                    adapt_beta = "annealing",
                    adjswap = preprocout$params$adjswaps,
                    exact_mh = exact_mh,
@@ -327,6 +332,8 @@ redist.flip.anneal <- function(adj,
 #' minority constraint for each accepted redistricting plan.}
 #' \item{constraint_hinge}{A vector containing the value of the
 #' hinge constraint for each accepted redistricting plan.}
+#' \item{constraint_qps}{A vector containing the value of the
+#' QPS constraint for each accepted redistricting plan.}
 #' \item{beta_sequence}{A vector containing the value of beta for each iteration
 #' of the algorithm. Returned when tempering is being used.}
 #' \item{mhdecisions_beta}{A vector specifying whether a proposed beta value was
@@ -446,6 +453,8 @@ redist.combine.anneal <- function(file_name){
 #' minority constraint for each accepted redistricting plan.}
 #' \item{constraint_hinge}{A vector containing the value of the
 #' hinge constraint for each accepted redistricting plan.}
+#' \item{constraint_qps}{A vector containing the value of the
+#' QPS constraint for each accepted redistricting plan.}
 #' \item{beta_sequence}{A vector containing the value of beta for each iteration
 #' of the algorithm. Returned when tempering is being used.}
 #' \item{mhdecisions_beta}{A vector specifying whether a proposed beta value was
@@ -597,7 +606,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' @param temper Whether to use simulated tempering algorithm. Default is FALSE.
 #' @param constraint Which constraint to apply. Accepts any combination of \code{compact},
 #' \code{segregation}, \code{vra}, \code{population}, \code{similarity}, \code{partisan},
-#' \code{minority}, \code{hinge}, \code{countysplit}, or \code{none}
+#' \code{minority}, \code{hinge}, \code{countysplit}, \code{qps}, or \code{none}
 #' (no constraint applied). The default is NULL.
 #' @param constraintweights The weights to apply to each constraint. Should be a vector
 #' the same length as constraint. Default is NULL.
@@ -638,6 +647,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' @param dvote integer vector of votes for Democrats by precinct
 #' @param minorityprop numeric vector of targeted minority proportions for the top
 #' districts with that proportion
+#' @param cities integer vector of cities for QPS constraint.
 #'
 #' @details This function allows users to simulate redistricting plans
 #' using Markov Chain Monte Carlo methods. Several constraints
@@ -678,6 +688,8 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' minority constraint for each accepted redistricting plan.}
 #' \item{constraint_hinge}{A vector containing the value of the
 #' hinge constraint for each accepted redistricting plan.}
+#' \item{constraint_qps}{A vector containing the value of the
+#' QPS constraint for each accepted redistricting plan.}
 #' \item{beta_sequence}{A vector containing the value of beta for each iteration
 #' of the algorithm. Returned when tempering is being used.}
 #' \item{mhdecisions_beta}{A vector specifying whether a proposed beta value was
@@ -738,7 +750,7 @@ redist.flip <- function(adj,
                         adapt_lambda = FALSE, adapt_eprob = FALSE,
                         exact_mh = FALSE, savename = NULL,
                         verbose = TRUE, tgt_min = 0.55, tgt_other = 0.25,
-                        rvote = NULL, dvote = NULL, minorityprop = NULL){
+                        rvote = NULL, dvote = NULL, minorityprop = NULL, cities = NULL){
 
     contiguitymap <- 'rooks'
 
@@ -814,6 +826,7 @@ redist.flip <- function(adj,
                                  ndists = ndists,
                                  pop_tol = pop_tol,
                                  counties = counties,
+                                 cities = cities,
                                  group_pop = group_pop,
                                  areasvec = areasvec,
                                  borderlength_mat = borderlength_mat,
@@ -847,6 +860,7 @@ redist.flip <- function(adj,
     weightpartisan <- preprocout$params$weightpartisan
     weightminority <- preprocout$params$weightminority
     weighthinge <- preprocout$params$weighthinge
+    weightqps <- preprocout$params$weightqps
 
     ## Get starting loop value
     loopstart <- loopscompleted + 1
@@ -912,6 +926,7 @@ redist.flip <- function(adj,
                        grouppopvec = preprocout$data$group_pop,
                        areas_vec = preprocout$data$areasvec,
                        county_membership = preprocout$data$counties,
+                       cities = preprocout$data$cities,
                        borderlength_mat = preprocout$data$borderlength_mat,
                        nsims = nsims * nthin + warmup,
                        eprob = eprob,
@@ -930,6 +945,7 @@ redist.flip <- function(adj,
                        weight_partisan = weightpartisan,
                        weight_minority = weightminority,
                        weight_hinge = weighthinge,
+                       weight_qps = weightqps,
                        adapt_beta = preprocout$params$temperbeta,
                        adjswap = preprocout$params$adjswaps,
                        exact_mh = exact_mh,
@@ -1040,6 +1056,8 @@ redist.flip <- function(adj,
 #' minority constraint for each accepted redistricting plan.}
 #' \item{constraint_hinge}{A vector containing the value of the
 #' hinge constraint for each accepted redistricting plan.}
+#' \item{constraint_qps}{A vector containing the value of the
+#' QPS constraint for each accepted redistricting plan.}
 #' \item{beta_sequence}{A vector containing the value of beta for each iteration
 #' of the algorithm. Returned when tempering is being used.}
 #' \item{mhdecisions_beta}{A vector specifying whether a proposed beta value was

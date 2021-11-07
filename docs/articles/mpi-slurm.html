@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.4</span>
       </span>
     </div>
 
@@ -112,7 +112,7 @@
 
       
 
-      </header><script src="mpi-slurm_files/header-attrs-2.8/header-attrs.js"></script><div class="row">
+      </header><script src="mpi-slurm_files/header-attrs-2.9/header-attrs.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>MPI / Slurm Sample Scripts</h1>
@@ -137,7 +137,7 @@
 <span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span><span class="op">(</span><span class="va">algdat.pfull</span><span class="op">)</span>
 
 <span class="co">## Run the simulations</span>
-<span class="va">mcmc.out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.mcmc.html">redist.mcmc</a></span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">algdat.pfull</span><span class="op">$</span><span class="va">adjlist</span>,
+<span class="va">mcmc.out</span> <span class="op">&lt;-</span> <span class="fu">redist.mcmc</span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">algdat.pfull</span><span class="op">$</span><span class="va">adjlist</span>,
                         popvec <span class="op">=</span> <span class="va">algdat.pfull</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,
                         nsims <span class="op">=</span> <span class="fl">10000</span>,
                         ndists <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></code></pre></div>
@@ -153,18 +153,18 @@
 <span class="co">## Run mcmc algorithm - hard population constraint</span>
 <span class="co">## (reject any sample where population parity &gt; 20%)</span>
 <span class="co">## -----------------------------------------------</span>
-<span class="va">mcmc.out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.mcmc.html">redist.mcmc</a></span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">adjlist</span>,
-                        popvec <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,
+<span class="va">mcmc.out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.flip.html">redist.flip</a></span><span class="op">(</span>adj <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">adjlist</span>,
+                        total_pop <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,
                         nsims <span class="op">=</span> <span class="fl">10000</span>,
-                        popcons <span class="op">=</span> <span class="fl">.2</span>,
+                        pop_tol <span class="op">=</span> <span class="fl">0.2</span>,
                         ndists <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>
 
 <span class="co">## ---------------------------------------------------------------------</span>
 <span class="co">## Run mcmc algorithm - draws from gibbs defined by distance from parity</span>
 <span class="co">## (Run with no tempering)</span>
 <span class="co">## ---------------------------------------------------------------------</span>
-<span class="va">mcmc.out.gb</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.mcmc.html">redist.mcmc</a></span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">adjlist</span>,
-                           popvec <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,
+<span class="va">mcmc.out.gb</span> <span class="op">&lt;-</span> <span class="fu">redist.flilp</span><span class="op">(</span>adj <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">adjlist</span>,
+                           total_pop <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,
                            ndists <span class="op">=</span> <span class="fl">3</span>,
                            nsims <span class="op">=</span> <span class="fl">10000</span>,
                            constraint <span class="op">=</span> <span class="st">"population"</span>,
@@ -180,7 +180,7 @@
 <span class="co">## to colder temperatures</span>
 <span class="co">## ---------------------------------------------------------------------</span>
 <span class="va">betaweights</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fl">10</span><span class="op">)</span>; <span class="kw">for</span><span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span><span class="op">{</span><span class="va">betaweights</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">2</span><span class="op">^</span><span class="va">i</span><span class="op">}</span>
-<span class="va">mcmc.out.st</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.mcmc.html">redist.mcmc</a></span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">adjlist</span>,
+<span class="va">mcmc.out.st</span> <span class="op">&lt;-</span> <span class="fu">redist.mcmc</span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">adjlist</span>,
                            popvec <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,
                            ndists <span class="op">=</span> <span class="fl">3</span>,
                            nsims <span class="op">=</span> <span class="fl">10000</span>,
@@ -199,7 +199,7 @@
 <span class="co">## weight on population = 5.4 while weight on compactness = 3</span>
 <span class="co">## Also specifying argument for ssdmat, the distance matrix</span>
 <span class="co">## ----------------------------------------------------------</span>
-<span class="va">mcmc.out.st.multiple</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.mcmc.html">redist.mcmc</a></span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">adjlist</span>,
+<span class="va">mcmc.out.st.multiple</span> <span class="op">&lt;-</span> <span class="fu">redist.mcmc</span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">adjlist</span>,
                                     popvec <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,
                                     ndists <span class="op">=</span> <span class="fl">3</span>,
                                     nsims <span class="op">=</span> <span class="fl">10000</span>,
@@ -265,9 +265,9 @@
 <span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> Time is <span class="va">$(</span><span class="fu">date</span><span class="va">)</span></span>
 <span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> SLURM_NODES are <span class="va">$(</span><span class="bu">echo</span> <span class="va">${SLURM_NODELIST})</span></span>
 <span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">'-------------------------------'</span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> -e <span class="st">'\n\n'</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="at">-e</span> <span class="st">'\n\n'</span></span>
 <span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="ex">mpiexec</span> -np 1 R --no-save <span class="op">&lt;</span> [scriptname here].R</span></code></pre></div>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="ex">mpiexec</span> <span class="at">-np</span> 1 R <span class="at">--no-save</span> <span class="op">&lt;</span> [scriptname here].R</span></code></pre></div>
 </div>
 </div>
 <div id="population-constraint-and-compactness-constraint-using-annealing" class="section level2">
@@ -293,7 +293,7 @@
 
 <span class="va">t</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html">Sys.getenv</a></span><span class="op">(</span><span class="st">"SLURM_ARRAY_TASK_ID"</span><span class="op">)</span><span class="op">)</span>
 
-<span class="fu"><a href="../reference/redist.mcmc.anneal.html">redist.mcmc.anneal</a></span><span class="op">(</span>
+<span class="fu">redist.mcmc.anneal</span><span class="op">(</span>
   adjobj <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">adjlist</span>,
   popvec <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,
   ndists <span class="op">=</span> <span class="fl">3</span>,
@@ -344,7 +344,7 @@
 <span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> Time is <span class="va">$(</span><span class="fu">date</span><span class="va">)</span></span>
 <span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> SLURM_NODES are <span class="va">$(</span><span class="bu">echo</span> <span class="va">${SLURM_NODELIST})</span></span>
 <span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">'-------------------------------'</span></span>
-<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> -e <span class="st">'\n\n'</span></span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="at">-e</span> <span class="st">'\n\n'</span></span>
 <span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a><span class="ex">srun</span> Rscript ../[scriptname here].R</span></code></pre></div>
 </div>

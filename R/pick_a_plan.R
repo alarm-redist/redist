@@ -86,11 +86,12 @@ pick_a_plan <- function(plans, map, counties = NULL, comp = NULL,
 #' @export
 #'
 #' @examples
+#' \donttest{
 #' data(iowa)
 #' map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01, total_pop = pop)
 #' plan <- get_plans_matrix(redist_smc(map, 1))[,2]
 #' local <- persily(plan = plan, map = map, counties = region)
-#'
+#' }
 persily <- function(plan, map, counties = NULL){
 
   counties <- eval_tidy(enquo(counties), map)

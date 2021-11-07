@@ -81,7 +81,7 @@ using Markov chain Monte Carlo methods coupled with simulated annealing." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.7</span>
       </span>
     </div>
 
@@ -200,7 +200,8 @@ using Markov chain Monte Carlo methods coupled with simulated annealing.</p>
   tgt_other <span class='op'>=</span> <span class='fl'>0.25</span>,
   rvote <span class='op'>=</span> <span class='cn'>NULL</span>,
   dvote <span class='op'>=</span> <span class='cn'>NULL</span>,
-  minorityprop <span class='op'>=</span> <span class='cn'>NULL</span>
+  minorityprop <span class='op'>=</span> <span class='cn'>NULL</span>,
+  cities <span class='op'>=</span> <span class='cn'>NULL</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -225,7 +226,7 @@ unit</p></td>
       <th>init_plan</th>
       <td><p>A vector containing the congressional district labels
 of each geographic unit. If not provided, random and contiguous congressional
-district assignments will be generated using <code>redist.smc</code>. To use the old
+district assignments will be generated using <code>redist_smc</code>. To use the old
 behavior of generating with <code>redist.rsg</code>, provide init_plan = 'rsg'.</p></td>
     </tr>
     <tr>
@@ -369,8 +370,15 @@ Default is <code>TRUE</code>.</p></td>
       <td><p>numeric vector of targeted minority proportions for the top
 districts with that proportion</p></td>
     </tr>
+    <tr>
+      <th>cities</th>
+      <td><p>integer vector of cities for QPS constraint.</p></td>
+    </tr>
     </table>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>list of class redist</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

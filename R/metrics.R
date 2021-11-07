@@ -34,20 +34,20 @@
 #' there is more than one precinct specified for a map, it aggregates to the district level
 #' and computes one score.
 #'
-#' DSeats is computed as the expected number of Democratic seats with no change in votes.
-#' DVS is the Democratic Vote Share, which is the two party vote share with Democratic votes as the numerator.
-#' EffGap is the Efficiency Gap, calculated with votes directly.
-#' EffGapEqPop is the Efficiency Gap under an Equal Population assumption, calculated with the DVS.
-#' TauGap is the Tau Gap, computed with the Equal Population assumption.
-#' MeanMedian is the Mean Median difference.
-#' Bias is the Partisan Bias computed at 0.5.
-#' BiasV is the Partisan Bias computed at value V.
-#' Declination is the value of declination at 0.5.
-#' Responsiveness is the responsiveness at the user-supplied value with the user-supplied bandwidth.
-#' LopsidedWins computed the Lopsided Outcomes value, but does not produce a test statistic.
-#' RankedMarginal computes the Ranked Marginal Deviation (0-1, smaller is better). This is also known
+#' - DSeats is computed as the expected number of Democratic seats with no change in votes.
+#' - DVS is the Democratic Vote Share, which is the two party vote share with Democratic votes as the numerator.
+#' - EffGap is the Efficiency Gap, calculated with votes directly.
+#' - EffGapEqPop is the Efficiency Gap under an Equal Population assumption, calculated with the DVS.
+#' - TauGap is the Tau Gap, computed with the Equal Population assumption.
+#' - MeanMedian is the Mean Median difference.
+#' - Bias is the Partisan Bias computed at 0.5.
+#' - BiasV is the Partisan Bias computed at value V.
+#' - Declination is the value of declination at 0.5.
+#' - Responsiveness is the responsiveness at the user-supplied value with the user-supplied bandwidth.
+#' - LopsidedWins computed the Lopsided Outcomes value, but does not produce a test statistic.
+#' - RankedMarginal computes the Ranked Marginal Deviation (0-1, smaller is better). This is also known
 #' as the "Gerrymandering Index" and is sometimes presented as this value divided by 10000.
-#' SmoothedSeat computes the Smoothed Seat Count Deviation (0-1, smaller is R Bias, bigger is D Bias).
+#' - SmoothedSeat computes the Smoothed Seat Count Deviation (0-1, smaller is R Bias, bigger is D Bias).
 #'
 #' @return A tibble with  a column for each specified measure and
 #' a column that specifies the map number.
@@ -59,7 +59,7 @@
 #' data(fl25_enum)
 #' plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
 #' redist.metrics(plans_05, measure = 'all', rvote = fl25$mccain, dvote = fl25$obama)
-#' 
+#'
 #' @references
 #' Jonathan N. Katz, Gary King, and Elizabeth Rosenblatt. 2020.
 #' Theoretical Foundations and Empirical Evaluations of Partisan Fairness in District-Based Democracies.
@@ -75,6 +75,7 @@
 #' Robert Ravier & Jonathan C. Mattingly (2020) Quantifying Gerrymandering in North Carolina,
 #' Statistics and Public Policy, 7:1, 30-38, DOI: 10.1080/2330443X.2020.1796400
 #'
+#' @md
 #' @concept analyze
 #' @export
 redist.metrics <- function(plans, measure = "DSeats", rvote, dvote,

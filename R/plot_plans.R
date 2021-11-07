@@ -74,7 +74,7 @@ redist.plot.hist = function(plans, qty, bins=NULL, ...) {
         stop("Must provide a quantity to make the histogram from.", call.=FALSE)
 
     val = rlang::eval_tidy(rlang::enquo(qty), plans)
-    rg = diff(range(val, na.rm=T))
+    rg = diff(range(val, na.rm=TRUE))
     is_int = isTRUE(all.equal(as.integer(val), val)) && rg <= 100
     if (is.null(bins)) {
         if (is_int) {
@@ -84,7 +84,7 @@ redist.plot.hist = function(plans, qty, bins=NULL, ...) {
             if (is_const_num(val, plans$draw)) {
                 n = n / nrow(get_plans_matrix(plans))
             }
-            iqr = IQR(val, na.rm=T)
+            iqr = IQR(val, na.rm=TRUE)
             if (iqr > 0)
                 bins = max(round(rg / (2 * iqr / n^(1/3))), 3)
             else

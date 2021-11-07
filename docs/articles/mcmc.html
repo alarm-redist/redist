@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.4</span>
       </span>
     </div>
 
@@ -112,7 +112,7 @@
 
       
 
-      </header><script src="mcmc_files/header-attrs-2.8/header-attrs.js"></script><div class="row">
+      </header><script src="mcmc_files/header-attrs-2.9/header-attrs.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Redistricting with Flip MCMC</h1>
@@ -157,7 +157,7 @@
 <span class="va">plan</span> <span class="op">&lt;-</span> <span class="va">fl25_enum</span><span class="op">$</span><span class="va">plans</span><span class="op">[</span>, <span class="fl">7241</span><span class="op">]</span>
 <span class="va">adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.adjacency.html">redist.adjacency</a></span><span class="op">(</span><span class="va">fl25</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>
-<span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.mcmc.html">redist.flip</a></span><span class="op">(</span>adj <span class="op">=</span> <span class="va">adj</span>, init_plan <span class="op">=</span> <span class="va">plan</span>, total_pop <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span>, 
+<span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.flip.html">redist.flip</a></span><span class="op">(</span>adj <span class="op">=</span> <span class="va">adj</span>, init_plan <span class="op">=</span> <span class="va">plan</span>, total_pop <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span>, 
                     nsims <span class="op">=</span> <span class="fl">6</span>, pop_tol <span class="op">=</span> <span class="fl">0.10</span>, 
                     constraint <span class="op">=</span> <span class="st">'compact'</span>, constraintweights <span class="op">=</span> <span class="fl">0.02</span>,
                     compactness_metric <span class="op">=</span> <span class="st">'edges-removed'</span><span class="op">)</span>
@@ -220,13 +220,13 @@
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span>
 <span class="fu"><a href="../reference/redist.plot.map.html">redist.plot.map</a></span><span class="op">(</span><span class="va">iowa</span>, plan <span class="op">=</span> <span class="va">cd_2010</span><span class="op">)</span></code></pre></div>
 <p><img src="mcmc_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
-<p>From there, we need to build an adjacency graph which identifies which counties are touching which other counties on a map. If you have an existing plan, it’s generally advised to supply this to the optional <code>plan</code> argument to ensure that the existing plan is a valid, connected plan. If you get a warning, the <a href="https://christopherkenny.github.io/geomander/">geomander R package</a> can help solve potential issues.</p>
+<p>From there, we need to build an adjacency graph which identifies which counties are touching which other counties on a map. If you have an existing plan, it’s generally advised to supply this to the optional <code>plan</code> argument to ensure that the existing plan is a valid, connected plan. If you get a warning, the <a href="https://www.christophertkenny.com/geomander/">geomander R package</a> can help solve potential issues.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.adjacency.html">redist.adjacency</a></span><span class="op">(</span>shp <span class="op">=</span> <span class="va">iowa</span>, plan <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">cd_2010</span><span class="op">)</span></code></pre></div>
 <p>In addition, we need population for each unit. We’ve included <code>iowa$pop</code> as the total population as of the 2010 Census. From there, we have the basic information that we need to run our first simulation. The below indicates that we are simulating 1000 plans (with <code>nsims</code>) for the state of Iowa that have at most a population parity deviation of 0.05 (with <code>pop_tol</code>).</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.mcmc.html">redist.flip</a></span><span class="op">(</span>adj <span class="op">=</span> <span class="va">adj</span>, total_pop <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">pop</span>, init_plan <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">cd_2010</span>,
-                    nsims <span class="op">=</span> <span class="fl">1000</span>, pop_tol <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.flip.html">redist.flip</a></span><span class="op">(</span>adj <span class="op">=</span> <span class="va">adj</span>, total_pop <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">pop</span>, init_plan <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">cd_2010</span>,
+                    nsims <span class="op">=</span> <span class="fl">100</span>, pop_tol <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; ==================== </span>
 <span class="co">#&gt; redist.flip(): Automated Redistricting Simulation Using</span>
@@ -236,34 +236,34 @@
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Starting swMH().</span>
 <span class="co">#&gt; 10 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.929293</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 1.11111</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 20 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.939698</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.947368</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 30 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.956522</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.965517</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 40 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.967419</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.974359</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 50 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.965932</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.979592</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 60 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.96828</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.949153</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 70 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.964235</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.956522</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 80 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.964956</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.936709</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 90 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.963293</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.921348</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 100 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.962963</span></code></pre></div>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.929293</span></code></pre></div>
 <p>The printed output can be silenced by setting <code>verbose = FALSE</code>, however it displays very important information. First, it displays when preprocessing begins and when the algorithm actually starts. Each 10% of the way through the <code>flip</code> algorithm, it outputs the current estimated Metropolis acceptance. Here, we’ve specified no Gibbs constraints, so the acceptance will always be near 100%.</p>
 <p>The output is an object of class <code>redist</code>.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -272,15 +272,15 @@
 <p>The <code>sims</code> object includes various pieces of information that were tracked while simulating, but we focus on <code>sims$plans</code>, which is a matrix that contains the plans.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/dim.html">dim</a></span><span class="op">(</span><span class="va">sims</span><span class="op">$</span><span class="va">plans</span><span class="op">)</span>
-<span class="co">#&gt; [1]   99 1000</span></code></pre></div>
+<span class="co">#&gt; [1]  99 100</span></code></pre></div>
 <p>Checking the dimensions shows that each plan is saved as a column, where each row is a precinct. From this, we can extract a single plan as we would from a normal matrix, like below, where we plot the final simulated plan.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/redist.plot.map.html">redist.plot.map</a></span><span class="op">(</span>shp <span class="op">=</span> <span class="va">iowa</span>, plan <span class="op">=</span> <span class="va">sims</span><span class="op">$</span><span class="va">plans</span><span class="op">[</span>, <span class="fl">1000</span><span class="op">]</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="../reference/redist.plot.map.html">redist.plot.map</a></span><span class="op">(</span>shp <span class="op">=</span> <span class="va">iowa</span>, plan <span class="op">=</span> <span class="va">sims</span><span class="op">$</span><span class="va">plans</span><span class="op">[</span>, <span class="fl">100</span><span class="op">]</span><span class="op">)</span></code></pre></div>
 <p><img src="mcmc_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
 <p>Now, this plan is incredibly non-compact, which can be an issue. However, we should expect this type of outcome, as we didn’t include a compactness constraint while simulating. Thus, the only things checked were contiguity and that no plan would be outside of the <code>pop_tol</code> set above. Since there are many more non-compact plans than compact plans in the space of all redistricting plans, we end up with highly non-compact districts. We can fix this by specifying a constraint, as below:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">sims_comp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.mcmc.html">redist.flip</a></span><span class="op">(</span>adj <span class="op">=</span> <span class="va">adj</span>, total_pop <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">pop</span>, init_plan <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">cd_2010</span>,
-                         nsims <span class="op">=</span> <span class="fl">1000</span>, pop_tol <span class="op">=</span> <span class="fl">0.05</span>,
+<code class="sourceCode R"><span class="va">sims_comp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.flip.html">redist.flip</a></span><span class="op">(</span>adj <span class="op">=</span> <span class="va">adj</span>, total_pop <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">pop</span>, init_plan <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">cd_2010</span>,
+                         nsims <span class="op">=</span> <span class="fl">100</span>, pop_tol <span class="op">=</span> <span class="fl">0.05</span>,
                          constraint <span class="op">=</span> <span class="st">'compact'</span>, constraintweights <span class="op">=</span> <span class="fl">0.4</span>,
                          compactness_metric <span class="op">=</span> <span class="st">'edges-removed'</span><span class="op">)</span>
 <span class="co">#&gt; </span>
@@ -292,38 +292,38 @@
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Starting swMH().</span>
 <span class="co">#&gt; 10 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.474747</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.333333</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 20 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.432161</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.315789</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 30 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.501672</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.310345</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 40 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.516291</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.410256</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 50 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.486974</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.530612</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 60 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.490818</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.542373</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 70 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.492132</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.565217</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 80 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.494368</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.56962</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 90 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.489433</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.573034</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 100 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.484484</span></code></pre></div>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.545455</span></code></pre></div>
 <p>The first arguments as the same, but this adds three key arguments. First, setting <code>constraint</code> to any combination of the nine implemented constraints allows us to specify the target distribution. Setting <code>constraintweights = 0.4</code> means that we want to put a relatively weak weight on the compactness, though a weak constraint still does a lot of work. There are four <code>compact</code> constraints implemented currently. The recommended is to use <code>edges-removed</code> because it can be calculated very quickly.</p>
 <p>If we plot the final map sampled from the above code, we can see that it is <em>far more</em> compact.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/redist.plot.map.html">redist.plot.map</a></span><span class="op">(</span>shp <span class="op">=</span> <span class="va">iowa</span>, plan <span class="op">=</span> <span class="va">sims_comp</span><span class="op">$</span><span class="va">plans</span><span class="op">[</span>, <span class="fl">1000</span><span class="op">]</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="../reference/redist.plot.map.html">redist.plot.map</a></span><span class="op">(</span>shp <span class="op">=</span> <span class="va">iowa</span>, plan <span class="op">=</span> <span class="va">sims_comp</span><span class="op">$</span><span class="va">plans</span><span class="op">[</span>, <span class="fl">100</span><span class="op">]</span><span class="op">)</span></code></pre></div>
 <p><img src="mcmc_files/figure-html/unnamed-chunk-12-1.png" width="700"></p>
 <p><a href="#top">Back to top</a></p>
 </div>
@@ -335,11 +335,11 @@
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>
 <span class="va">nchains</span> <span class="op">&lt;-</span> <span class="fl">4</span>
-<span class="va">nsims</span> <span class="op">&lt;-</span> <span class="fl">2000</span></code></pre></div>
+<span class="va">nsims</span> <span class="op">&lt;-</span> <span class="fl">100</span></code></pre></div>
 <p>Here, we opt to initialize using the <code>RSG</code> algorithm, though the default is to use the <code>SMC</code> algorithm. When we want to initialize without providing an initial partition, we need to specify the number of districts, <code>ndists</code>.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">flip_chains</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">nchains</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">{</span>
-  <span class="fu"><a href="../reference/redist.mcmc.html">redist.flip</a></span><span class="op">(</span>adj <span class="op">=</span> <span class="va">adj</span>,  total_pop <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">pop</span>, pop_tol <span class="op">=</span> <span class="fl">0.05</span>,
+  <span class="fu"><a href="../reference/redist.flip.html">redist.flip</a></span><span class="op">(</span>adj <span class="op">=</span> <span class="va">adj</span>,  total_pop <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">pop</span>, pop_tol <span class="op">=</span> <span class="fl">0.05</span>,
               nsims <span class="op">=</span> <span class="va">nsims</span>, init_plan <span class="op">=</span> <span class="st">'rsg'</span>, ndists <span class="op">=</span> <span class="fl">4</span>,
               constraint <span class="op">=</span> <span class="st">'compact'</span>, constraintweights <span class="op">=</span> <span class="fl">0.4</span>,
               compactness_metric <span class="op">=</span> <span class="st">'edges-removed'</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
@@ -347,7 +347,7 @@
 <p>In Unix-based systems, this can be run considerably faster by running this in parallel.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">mcmc_chains</span> <span class="op">&lt;-</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/mclapply.html">mclapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">nchains</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">{</span>
-  <span class="fu"><a href="../reference/redist.mcmc.html">redist.flip</a></span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">adjlist</span>,  popvec <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span>, 
+  <span class="fu"><a href="../reference/redist.flip.html">redist.flip</a></span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">adjlist</span>,  popvec <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span>, 
               nsims <span class="op">=</span> <span class="va">nsims</span>, ndists <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>
 <span class="op">}</span>, mc.set.seed <span class="op">=</span> <span class="fl">1</span>, mc.cores <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html">detectCores</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><a href="#top">Back to top</a></p>
@@ -366,132 +366,132 @@
 <p>We set a population tolerance of 1%. While this is generally a good population parity tolerance for most simulations, be careful when using the default within <code>flip</code>. If your starting partition sits outside of that population deviation, <code>flip</code> may take a <strong>very, very</strong> long time to find a valid partition to flip.</p>
 <p>Now, we can pass the <code>redist_map</code> object to <code>redist_flip</code> to begin simulating.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">tidy_sims</span> <span class="op">&lt;-</span> <span class="va">iowa_map</span> <span class="op">%&gt;%</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span>nsims <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">tidy_sims</span> <span class="op">&lt;-</span> <span class="va">iowa_map</span> <span class="op">%&gt;%</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span>nsims <span class="op">=</span> <span class="fl">100</span><span class="op">)</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; ==================== </span>
-<span class="co">#&gt; redist.mcmc(): Automated Redistricting Simulation Using</span>
+<span class="co">#&gt; redist.flip(): Automated Redistricting Simulation Using</span>
 <span class="co">#&gt;          Markov Chain Monte Carlo</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Preprocessing data.</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Starting swMH().</span>
 <span class="co">#&gt; 10 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.626263</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.777778</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 20 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.512563</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.736842</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 30 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.508361</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.655172</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 40 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.516291</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.615385</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 50 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.52505</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.673469</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 60 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.525876</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.661017</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 70 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.506438</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.637681</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 80 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.513141</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.632911</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 90 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.508343</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.651685</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 100 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.506507</span></code></pre></div>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.626263</span></code></pre></div>
 <p>This highlights a key difference between the <code>redist_flip</code> and <code>redist.flip</code> implementations: <code>redist_flip</code> appears to have a much lower acceptance rate, even though we didn’t explicitly set any constraints. Why? <code>redist_flip</code>’s constraint includes a relatively weak compactness constraint by default because simulating compact maps is far more efficient and completely non-compact maps are not super useful for most purposes.</p>
 <p>You can override this using the <code><a href="../reference/flip_constraints_helper.html">flip_constraints_helper()</a></code> function to set up a blank set of constraints.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">cons</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flip_constraints_helper.html">flip_constraints_helper</a></span><span class="op">(</span><span class="va">iowa_map</span>, constraint <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></code></pre></div>
 <p>Then, you can pass this to <code>redist_flip</code>.</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">tidy_sims_no_comp</span> <span class="op">&lt;-</span> <span class="va">iowa_map</span> <span class="op">%&gt;%</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span>nsims <span class="op">=</span> <span class="fl">1000</span>, constraints <span class="op">=</span> <span class="va">cons</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">tidy_sims_no_comp</span> <span class="op">&lt;-</span> <span class="va">iowa_map</span> <span class="op">%&gt;%</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span>nsims <span class="op">=</span> <span class="fl">100</span>, constraints <span class="op">=</span> <span class="va">cons</span><span class="op">)</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; ==================== </span>
-<span class="co">#&gt; redist.mcmc(): Automated Redistricting Simulation Using</span>
+<span class="co">#&gt; redist.flip(): Automated Redistricting Simulation Using</span>
 <span class="co">#&gt;          Markov Chain Monte Carlo</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Preprocessing data.</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Starting swMH().</span>
 <span class="co">#&gt; 10 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.949495</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 1.11111</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 20 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.939698</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 1.05263</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 30 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.93311</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.965517</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 40 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.929825</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.948718</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 50 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.931864</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.959184</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 60 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.9399</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.949153</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 70 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.944206</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.942029</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 80 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.949937</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.949367</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 90 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.951057</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.955056</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 100 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.953954</span></code></pre></div>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.939394</span></code></pre></div>
 <p>This increases the acceptance ratio to near 100% again. The function <code><a href="../reference/flip_constraints_helper.html">flip_constraints_helper()</a></code> is useful for setting up any constraints to be used with <code>redist_flip</code>. For example, if we want to set up a compactness constraint and a <code>similarity</code> constraint (which is the <code>flip</code> status quo constraint), we can do so as follows:</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">cons</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flip_constraints_helper.html">flip_constraints_helper</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span>, constraint <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">'compact'</span>, <span class="st">'similarity'</span><span class="op">)</span>,
                                 constraintweight <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.6</span>, <span class="fl">1</span><span class="op">)</span>, init_plan <span class="op">=</span> <span class="va">cd_2010</span><span class="op">)</span></code></pre></div>
 <p>From there, we can again pass this to <code>redist_flip</code></p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">tidy_sims_sq_comp</span> <span class="op">&lt;-</span> <span class="va">iowa_map</span> <span class="op">%&gt;%</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span>nsims <span class="op">=</span> <span class="fl">1000</span>, constraints <span class="op">=</span> <span class="va">cons</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">tidy_sims_sq_comp</span> <span class="op">&lt;-</span> <span class="va">iowa_map</span> <span class="op">%&gt;%</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span>nsims <span class="op">=</span> <span class="fl">100</span>, constraints <span class="op">=</span> <span class="va">cons</span><span class="op">)</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; ==================== </span>
-<span class="co">#&gt; redist.mcmc(): Automated Redistricting Simulation Using</span>
+<span class="co">#&gt; redist.flip(): Automated Redistricting Simulation Using</span>
 <span class="co">#&gt;          Markov Chain Monte Carlo</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Preprocessing data.</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Starting swMH().</span>
 <span class="co">#&gt; 10 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.606061</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.777778</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 20 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.572864</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.631579</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 30 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.588629</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.551724</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 40 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.536341</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.641026</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 50 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.513026</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.55102</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 60 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.495826</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.610169</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 70 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.486409</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.594203</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 80 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.480601</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.556962</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 90 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.489433</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.539326</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 100 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.500501</span></code></pre></div>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.545455</span></code></pre></div>
 <p>The output from <code>redist_flip</code> differs a bit from the output of <code>redist.flip</code>. It outputs a <code>redist_plans</code> object.</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/class.html">class</a></span><span class="op">(</span><span class="va">tidy_sims</span><span class="op">)</span>
@@ -502,7 +502,7 @@
 <p>Alternatively, you can directly use functions on the <code>redist_plans</code> object. For example, if we want to measure the competitiveness of each plan:</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">tidy_sims</span> <span class="op">&lt;-</span> <span class="va">tidy_sims</span> <span class="op">%&gt;%</span> 
-  <span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/mutate.html">mutate</a></span><span class="op">(</span>competitiveness <span class="op">=</span> <span class="fu"><a href="../reference/competitiveness.html">competitiveness</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span>, rvote <span class="op">=</span> <span class="va">rep_08</span>, dvote <span class="op">=</span> <span class="va">dem_08</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>competitiveness <span class="op">=</span> <span class="fu"><a href="../reference/competitiveness.html">competitiveness</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span>, rvote <span class="op">=</span> <span class="va">rep_08</span>, dvote <span class="op">=</span> <span class="va">dem_08</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">tidy_sims</span> <span class="op">%&gt;%</span> 
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">competitiveness</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>
@@ -543,24 +543,9 @@
 <p>As examples for the next two plots, we can use the example above which ran 4 chains. This is the same index, but computed for each chain.</p>
 <div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">seg_chains</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">nchains</span>, 
-                     <span class="kw">function</span><span class="op">(</span><span class="va">i</span><span class="op">)</span><span class="op">{</span><span class="fu"><a href="../reference/segregation_index.html">redist.segcalc</a></span><span class="op">(</span>algout <span class="op">=</span> <span class="va">flip_chains</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>, 
+                     <span class="kw">function</span><span class="op">(</span><span class="va">i</span><span class="op">)</span><span class="op">{</span><span class="fu"><a href="../reference/segregation_index.html">redist.segcalc</a></span><span class="op">(</span>plans <span class="op">=</span> <span class="va">flip_chains</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>, 
                                                 group_pop <span class="op">=</span> <span class="va">iowa_map</span><span class="op">$</span><span class="va">rep_08</span>,
-                                                total_pop <span class="op">=</span> <span class="va">iowa_map</span><span class="op">$</span><span class="va">pop</span><span class="op">)</span><span class="op">}</span><span class="op">)</span>
-<span class="co">#&gt; Warning: 'algout' is deprecated.</span>
-<span class="co">#&gt; Use 'plans' instead.</span>
-<span class="co">#&gt; See help("Deprecated")</span>
-
-<span class="co">#&gt; Warning: 'algout' is deprecated.</span>
-<span class="co">#&gt; Use 'plans' instead.</span>
-<span class="co">#&gt; See help("Deprecated")</span>
-
-<span class="co">#&gt; Warning: 'algout' is deprecated.</span>
-<span class="co">#&gt; Use 'plans' instead.</span>
-<span class="co">#&gt; See help("Deprecated")</span>
-
-<span class="co">#&gt; Warning: 'algout' is deprecated.</span>
-<span class="co">#&gt; Use 'plans' instead.</span>
-<span class="co">#&gt; See help("Deprecated")</span></code></pre></div>
+                                                total_pop <span class="op">=</span> <span class="va">iowa_map</span><span class="op">$</span><span class="va">pop</span><span class="op">)</span><span class="op">}</span><span class="op">)</span></code></pre></div>
 <ul>
 <li>Trace Plot</li>
 </ul>
@@ -586,51 +571,51 @@
 
 <span class="va">cons</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flip_constraints_helper.html">flip_constraints_helper</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span>, constraint <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">'compact'</span>, <span class="st">'population'</span><span class="op">)</span>,
                                 constraintweight <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">100</span><span class="op">)</span><span class="op">)</span>
-<span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span>,  nsims <span class="op">=</span> <span class="fl">2500</span><span class="op">)</span>
+<span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span>,  nsims <span class="op">=</span> <span class="fl">100</span><span class="op">)</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; ==================== </span>
-<span class="co">#&gt; redist.mcmc(): Automated Redistricting Simulation Using</span>
+<span class="co">#&gt; redist.flip(): Automated Redistricting Simulation Using</span>
 <span class="co">#&gt;          Markov Chain Monte Carlo</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Preprocessing data.</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Starting swMH().</span>
 <span class="co">#&gt; 10 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.345382</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.444444</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 20 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.324649</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.368421</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 30 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.313752</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.448276</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 40 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.31031</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.410256</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 50 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.293034</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.367347</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 60 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.284189</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.322034</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 70 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.275586</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.333333</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 80 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.28014</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.329114</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 90 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.280569</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.337079</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 100 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.280512</span></code></pre></div>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.323232</span></code></pre></div>
 <div id="acceptance-ratios" class="section level2">
 <h2 class="hasAnchor">
 <a href="#acceptance-ratios" class="anchor"></a>Acceptance Ratios</h2>
 <p>One of the first things to check when working with <code>flip</code> is the Metropolis Hastings ratio. It is printed to the console when <code>verbose = TRUE</code>. If you have silenced printing or warnings, the output saves the Metropolis Hastings decisions. You can check the acceptance ratio in a <code>redist_plans</code> object with</p>
 <div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="va">sims</span><span class="op">$</span><span class="va">mhdecisions</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
-<span class="co">#&gt; [1] 0.2804</span></code></pre></div>
+<span class="co">#&gt; [1] 0.32</span></code></pre></div>
 <p>Reference plans included in the object will not have an <code>mhdecision</code>, so you can remove them with <code>na.rm = TRUE</code>.</p>
 <p>The goal is to generally have the Metropolis Hastings ratio lie between 20% and 40%. If simulating with only a single parameter, the goal is generally to be near 40%, while with many parameters, you likely want to be near 20%. If over the course of many simulations you find yourself just above or just below, that probably isn’t a problem if the simulations are in the right probability space.</p>
 </div>
@@ -640,22 +625,22 @@
 </h2>
 <p><code>lambda</code> and <code>eprob</code> both control the amount of movement within <code>flip</code>. They can be very powerful things to increase. <code>lambda</code> defaults to 0, while <code>eprob</code> defaults to 0.05. Each of these parameters leads to fairly small movements between sequential iterations of the algorithm.</p>
 <div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">sims_new</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span>, nsims <span class="op">=</span> <span class="fl">2500</span>, pop_tol <span class="op">=</span> <span class="fl">0.02</span>,
+<code class="sourceCode R"><span class="va">sims_new</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span>, nsims <span class="op">=</span> <span class="fl">100</span>, pop_tol <span class="op">=</span> <span class="fl">0.02</span>,
                         constraints <span class="op">=</span> <span class="va">cons</span>, eprob <span class="op">=</span> <span class="fl">0.10</span>, lambda <span class="op">=</span> <span class="fl">2</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="va">sims_new</span><span class="op">$</span><span class="va">mhdecisions</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
-<span class="co">#&gt; [1] 0.1976</span></code></pre></div>
+<span class="co">#&gt; [1] 0.12</span></code></pre></div>
 <p>In this example, we’ve increased each of these. <code>lambda = 2</code>, up from its default of 0, while <code>eprob = 0.10</code>, up from its default of <code>0.05</code>. What’s going on here can characterized fairly well by the Hamming distance between sequential runs.</p>
 <div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">dists</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plan_distances.html">redist.distances</a></span><span class="op">(</span>plan <span class="op">=</span> <span class="fu"><a href="../reference/get_plans_matrix.html">get_plans_matrix</a></span><span class="op">(</span><span class="va">sims</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">Hamming</span>
+<code class="sourceCode R"><span class="va">dists</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plan_distances.html">redist.distances</a></span><span class="op">(</span>plans <span class="op">=</span> <span class="fu"><a href="../reference/get_plans_matrix.html">get_plans_matrix</a></span><span class="op">(</span><span class="va">sims</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">Hamming</span>
 <span class="va">dists_new</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plan_distances.html">redist.distances</a></span><span class="op">(</span>plans <span class="op">=</span> <span class="fu"><a href="../reference/get_plans_matrix.html">get_plans_matrix</a></span><span class="op">(</span><span class="va">sims_new</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">Hamming</span>
-<span class="va">adj_dists</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="cn">NA_integer_</span>, <span class="fl">2499</span><span class="op">)</span>
-<span class="va">adj_dists_new</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="cn">NA_integer_</span>, <span class="fl">2499</span><span class="op">)</span>
-<span class="kw">for</span><span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">2499</span><span class="op">)</span><span class="op">{</span>
+<span class="va">adj_dists</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="cn">NA_integer_</span>, <span class="fl">100</span><span class="op">)</span>
+<span class="va">adj_dists_new</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="cn">NA_integer_</span>, <span class="fl">100</span><span class="op">)</span>
+<span class="kw">for</span><span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">100</span><span class="op">)</span><span class="op">{</span>
   <span class="va">adj_dists</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">dists</span><span class="op">[</span><span class="va">i</span>, <span class="va">i</span> <span class="op">+</span> <span class="fl">1</span><span class="op">]</span>
   <span class="va">adj_dists_new</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">dists_new</span><span class="op">[</span><span class="va">i</span>, <span class="va">i</span> <span class="op">+</span> <span class="fl">1</span><span class="op">]</span>
 <span class="op">}</span>
-<span class="fu"><a href="https://rdrr.io/pkg/tibble/man/tibble.html">tibble</a></span><span class="op">(</span>Hamming <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">adj_dists</span>, <span class="va">adj_dists_new</span><span class="op">)</span>, 
-       `lambda/eprob` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="st">'0/0.05'</span>, <span class="fl">2499</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="st">'2/0.10'</span>, <span class="fl">2499</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span> 
+<span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span>Hamming <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">adj_dists</span>, <span class="va">adj_dists_new</span><span class="op">)</span>, 
+       `lambda/eprob` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="st">'0/0.05'</span>, <span class="fl">100</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="st">'2/0.10'</span>, <span class="fl">100</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span> 
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> 
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_density.html">geom_density</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">Hamming</span>, color <span class="op">=</span> <span class="va">`lambda/eprob`</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> 
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">theme_bw</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
@@ -669,10 +654,10 @@
 <p>Sometimes a starting map sits in a neighborhood of maps that isn’t very conducive to using it as a starting point. This is most often characterized by running a single iteration that runs (seemingly) forever. A typical fix for this is to weaken the population tolerance and use a Gibbs constraint to pull the simulations back into the target range. I’ve done this for the tuning example, even though it’s unnecessary.</p>
 <p>After simulating, if there is a hard constraint to consider, we can check the parities:</p>
 <div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">sims</span> <span class="op">&lt;-</span> <span class="va">sims</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/mutate.html">mutate</a></span><span class="op">(</span>par <span class="op">=</span> <span class="fu"><a href="../reference/redist.parity.html">plan_parity</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">sims</span> <span class="op">&lt;-</span> <span class="va">sims</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>par <span class="op">=</span> <span class="fu"><a href="../reference/redist.parity.html">plan_parity</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p>And then we can subset to the correct space.</p>
 <div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">sims</span> <span class="op">&lt;-</span> <span class="va">sims</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://rdrr.io/pkg/dplyr/man/filter.html">filter</a></span><span class="op">(</span><span class="va">par</span> <span class="op">&lt;=</span> <span class="fl">0.01</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">sims</span> <span class="op">&lt;-</span> <span class="va">sims</span> <span class="op">%&gt;%</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="va">par</span> <span class="op">&lt;=</span> <span class="fl">0.01</span><span class="op">)</span></code></pre></div>
 <p>With the right set of parameters, this will lead to a reasonable set of simulations. In this case, we end up with about 10% of the simulations when using a soft constraint, which is not uncommon. In general, you want to aim for as low as a hard population parity as possible, while using a strong weight on the Gibbs population when the hard constraint is above what’s necessary. This helps maximize the efficiency of your simulations, while allowing for additional movement between neighborhoods of valid plans.</p>
 </div>
 <div id="balancing-multiple-constraints" class="section level2">
@@ -689,44 +674,44 @@
                                 rvote <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">rep_08</span>, dvote <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">dem_08</span><span class="op">)</span></code></pre></div>
 <p>Then we can run this for a relatively small number of iterations.</p>
 <div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="fl">2000</span>, constraints <span class="op">=</span> <span class="va">cons</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="fl">100</span>, constraints <span class="op">=</span> <span class="va">cons</span><span class="op">)</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; ==================== </span>
-<span class="co">#&gt; redist.mcmc(): Automated Redistricting Simulation Using</span>
+<span class="co">#&gt; redist.flip(): Automated Redistricting Simulation Using</span>
 <span class="co">#&gt;          Markov Chain Monte Carlo</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Preprocessing data.</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Starting swMH().</span>
 <span class="co">#&gt; 10 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.894472</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 1</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 20 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.917293</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.947368</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 30 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.928214</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.931034</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 40 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.922403</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.948718</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 50 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.926927</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.918367</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 60 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.922435</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.932203</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 70 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.920658</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.927536</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 80 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.921826</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.924051</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 90 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.924402</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.932584</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 100 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.924962</span></code></pre></div>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.919192</span></code></pre></div>
 <p>Now, the interesting this here is that adding more constraints actually increased the acceptance probability. This is because correlated constraints can guide the algorithm towards high probability neighborhoods where there are multiple maps which could be considered! To address this, we might want to increase the constraint weight slightly across the board. Had the weights been far too low, we might lower them, particularly on constraints that we are not too worried about.</p>
 <div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">cons</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/flip_constraints_helper.html">flip_constraints_helper</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span>,
@@ -734,55 +719,55 @@
                                 constraintweight <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1.5</span>, <span class="fl">100</span>, <span class="fl">40</span>, <span class="fl">20</span><span class="op">)</span>,
                                 counties <span class="op">=</span> <span class="va">name</span>, 
                                 rvote <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">rep_08</span>, dvote <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">dem_08</span><span class="op">)</span>
-<span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="fl">2000</span>, constraints <span class="op">=</span> <span class="va">cons</span><span class="op">)</span>
+<span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="fl">100</span>, constraints <span class="op">=</span> <span class="va">cons</span><span class="op">)</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; ==================== </span>
-<span class="co">#&gt; redist.mcmc(): Automated Redistricting Simulation Using</span>
+<span class="co">#&gt; redist.flip(): Automated Redistricting Simulation Using</span>
 <span class="co">#&gt;          Markov Chain Monte Carlo</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Preprocessing data.</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Starting swMH().</span>
 <span class="co">#&gt; 10 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.59799</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.666667</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 20 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.593985</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.736842</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 30 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.57596</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.62069</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 40 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.555695</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.666667</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 50 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.555556</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.653061</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 60 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.559633</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.627119</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 70 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.563974</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.623188</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 80 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.555347</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.620253</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 90 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.545303</span>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.629213</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; 100 percent done.</span>
-<span class="co">#&gt; Metropolis acceptance ratio: 0.535768</span></code></pre></div>
+<span class="co">#&gt; Metropolis acceptance ratio: 0.636364</span></code></pre></div>
 <p>For example, this new set of constraints might be a good place to simulate at.</p>
 <p>Notably, the process of tuning should be guided by the constraint outputs and their relative values. The average compactness value of edges removed that we’re constraining on has a summary like the following:</p>
 <div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">sims</span><span class="op">$</span><span class="va">constraint_compact</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's </span>
-<span class="co">#&gt;   66.00   80.00   88.00   87.54   94.00  110.00       4</span></code></pre></div>
+<span class="co">#&gt;   84.00   86.00   88.00   89.46   92.00   96.00       4</span></code></pre></div>
 <p>The population constraint can be summarized as:</p>
 <div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/summary.html">summary</a></span><span class="op">(</span><span class="va">sims</span><span class="op">$</span><span class="va">constraint_population</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="co">#&gt;     Min.  1st Qu.   Median     Mean  3rd Qu.     Max.     NA's </span>
-<span class="co">#&gt; 0.000055 0.009544 0.015342 0.014546 0.019650 0.027775        4</span></code></pre></div>
+<span class="co">#&gt; 0.000055 0.008156 0.014755 0.013598 0.019441 0.026835        4</span></code></pre></div>
 <p>These are measured on completely different scales, so it shouldn’t be surprising that population has a much higher weight. This is a constant difficulty in tuning, as the total number of edges on a graph or the volatility of the population isn’t something that’s easily standardized and transferred between maps, unfortunately.</p>
 <p><a href="#top">Back to top</a></p>
 </div>

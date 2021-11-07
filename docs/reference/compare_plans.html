@@ -86,7 +86,7 @@ of the map." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.4</span>
       </span>
     </div>
 
@@ -215,9 +215,11 @@ for the plan draws to compare. Must be mutually exclusive with <code>set1</code>
       <td><p>If <code>plot="line"</code>, display a plot for each set showing the set of
 boundaries which most distinguish it from the other set (the squared
 differences in the eigenvector values across the boundary).  If
-<code>plot="fill"</code>, plot the eigenvector for each set as a choropleth. See below
-for more information.  Set to <code>FALSE</code> to disable plotting (or leave out
-<code>shp</code>).</p></td>
+<code>plot="fill"</code>, plot the eigenvector for each set as a choropleth. If <code>plot = 'adj'</code>,
+plot the shows the adjacency graph edges which most distinguish it from the other set.
+The adj option is a different graphical option of the same information as the line
+option. See below for more information.  Set to <code>FALSE</code> to disable plotting
+(or leave out <code>shp</code>).</p></td>
     </tr>
     <tr>
       <th>thresh</th>

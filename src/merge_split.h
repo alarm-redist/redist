@@ -17,26 +17,15 @@
 // [[Rcpp::export]]
 Rcpp::List ms_plans(int N, List l, const arma::uvec init, const arma::uvec &counties,
                     const arma::uvec &pop, int n_distr, double target, double lower,
-                    double upper, double rho, double beta_sq, const arma::uvec &current,
-                    int n_current, double beta_vra, double tgt_min, double tgt_other,
-                    double pow_vra, const arma::uvec &min_pop,
-                    double beta_vra_hinge, const arma::vec &tgts_min,
-                    double beta_inc, const arma::uvec &incumbents,
-                    double beta_splits, double beta_fractures,
+                    double upper, double rho, List constraints,
                     double thresh, int k, int verbosity);
 
 /*
  * Add specific constraint weights & return the cumulative weight vector
  */
 double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
-                      int distr_1, int distr_2, const uvec &pop, double beta_sq,
-                      const uvec &current, int n_current,
-                      double beta_vra, double tgt_min, double tgt_other,
-                      double pow_vra, const uvec &min_pop,
-                      double beta_vra_hinge, const vec &tgts_min,
-                      double beta_inc, const uvec &incumbents,
-                      double beta_counties, double beta_fractures,
-                      const uvec &counties, int n_cty);
+                      int distr_1, int distr_2, const uvec &pop,
+                      List constraints, const uvec &counties, int n_cty);
 
 
 /*

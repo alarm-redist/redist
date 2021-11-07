@@ -17,9 +17,9 @@
 #' \code{constraint_fn} parameters.
 #'
 #' Key to ensuring good performance is monitoring the efficiency of the resampling
-#' process at each SMC stage.  Unless \code{silent=F}, this function will print
+#' process at each SMC stage.  Unless \code{silent=FALSE}, this function will print
 #' out the effective sample size of each resampling step to allow the user to
-#' monitor the efficiency.  If \code{verbose=T} the function will also print
+#' monitor the efficiency.  If \code{verbose=TRUE} the function will also print
 #' out information on the \eqn{k_i} values automatically chosen and the
 #' acceptance rate (based on the population constraint) at each step.
 #'
@@ -30,64 +30,6 @@
 #' \code{\link{redist_quantile_trunc}} to stabilize the resulting estimates, but
 #' if truncation is used, a specific truncation function should probably be
 #' chosen by the user.
-#'
-#' The \code{constraints} parameter allows the user to apply several common
-#' redistricting constraints without implementing them by hand. This parameter
-#' is a list, which may contain any of the following named entries:
-#' * \code{status_quo}: a list with two entries:
-#'   * \code{strength}, a number controlling the tendency of the generated districts
-#'   to respect the status quo, with higher values preferring more similar
-#'   districts.
-#'   * \code{current}, a vector containing district assignments for
-#'   the current map.
-#' * \code{hinge}: a list with three entries:
-#'   * \code{strength}, a number controlling the strength of the constraint, with
-#'   higher values prioritizing districts with group populations at least
-#'   \code{tgts_min} over other considerations.
-#'   * \code{tgts_min}, the target percentage(s) of minority voters in minority
-#'   opportunity districts. Defaults to \code{c(0.55)}.
-#'   * \code{min_pop}, A vector containing the minority population of each
-#'   geographic unit.
-#' * \code{incumbency}: a list with two entries:
-#'   * \code{strength}, a number controlling the tendency of the generated districts
-#'   to avoid pairing up incumbents.
-#'   * \code{incumbents}, a vector of precinct indices, one for each incumbent's
-#'   home address.
-#' * \code{vra}: a list with five entries, which may be set up using
-#'   \code{\link{redist.constraint.helper}}:
-#'   * \code{strength}, a number controlling the strength of the Voting Rights Act
-#'   (VRA) constraint, with higher values prioritizing majority-minority districts
-#'   over other considerations.
-#'   * \code{tgt_vra_min}, the target percentage of minority voters in minority
-#'   opportunity districts. Defaults to 0.55.
-#'   * \code{tgt_vra_other} The target percentage of minority voters in other
-#'   districts. Defaults to 0.25, but should be set to reflect the total minority
-#'   population in the state.
-#'   * \code{pow_vra}, which controls the allowed deviation from the target
-#'   minority percentage; higher values are more tolerant. Defaults to 1.5
-#'   * \code{min_pop}, A vector containing the minority population of each
-#'   geographic unit.
-#' * \code{multisplits}: a list with one entry:
-#'   * \code{strength}, a number controlling the tendency of the generated districts
-#'   to avoid splitting counties multiple times.
-#'
-#' All constraints are fed into a Gibbs measure, with coefficients on each
-#' constraint set by the corresponding \code{strength} parameters.
-#' The strength can be any real number, with zero corresponding to no constraint.
-#' The \code{status_quo} constraint adds a term measuring the variation of
-#' information distance between the plan and the reference, rescaled to \[0, 1\].
-#' The \code{hinge} constraint takes a list of target minority percentages. It
-#' matches each district to its nearest target percentage, and then applies a
-#' penalty of the form \eqn{\sqrt{max(0, tgt - minpct)}}, summing across
-#' districts. This penalizes districts which are below their target population.
-#' The \code{incumbency} constraint adds a term counting the number of districts
-#' containing paired-up incumbents.
-#' The \code{vra} constraint  (not recommended) adds a term of the form
-#' \eqn{(|tgtvramin-minpct||tgtvraother-minpct|)^{powvra})}, which
-#' encourages districts to have minority percentages near either \code{tgt_vra_min}
-#' or \code{tgt_vra_other}. This can be visualized with
-#' \code{\link{redist.plot.penalty}}.
-#'
 #'
 #' @param map A \code{\link{redist_map}} object.
 #' @param nsims The number of samples to draw.
@@ -101,8 +43,8 @@
 #'   higher values preferring more compact districts. Must be nonnegative. See
 #'   the 'Details' section for more information, and computational
 #'   considerations.
-#' @param constraints A list containing information on constraints to implement.
-#'   See the 'Details' section for more information.
+#' @param constraints A [redist_constr()] object or a list containing
+#'   information on sampling constraints. See [constraints] for more information.
 #' @param resample Whether to perform a final resampling step so that the
 #'   generated plans can be used immediately.  Set this to \code{FALSE} to
 #'   perform direct importance sampling estimates, or to adjust the weights
@@ -141,9 +83,6 @@
 #' @param ref_name a name for the existing plan, which will be added as a
 #'   reference plan, or \code{FALSE} to not include the initial plan in the
 #'   output. Defaults to the column name of the existing plan.
-#' @param boundary_precs precinct indices, at least one of which should be
-#'   left unassigned, when \code{n_steps} is fewer than the number of remaining
-#'   splits.
 #' @param verbose Whether to print out intermediate information while sampling.
 #'   Recommended.
 #' @param silent Whether to suppress all diagnostic information.
@@ -178,25 +117,28 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
                       adapt_k_thresh=0.975, seq_alpha=0.2+0.3*compactness,
                       truncate=(compactness != 1), trunc_fn=redist_quantile_trunc,
                       pop_temper=0, final_infl=1, ref_name=NULL,
-                      boundary_precs=NULL, verbose=TRUE, silent=FALSE) {
+                      verbose=TRUE, silent=FALSE) {
+    if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
+
     map = validate_redist_map(map)
     V = nrow(map)
     adj = get_adj(map)
 
-    if (compactness < 0) stop("Compactness parameter must be non-negative")
+    if (compactness < 0)
+        cli_abort("{.arg compactness} must be non-negative")
     if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
-        stop("`adapt_k_thresh` parameter must lie in [0, 1].")
+        cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
     if (seq_alpha <= 0 | seq_alpha > 1)
-        stop("`seq_alpha` parameter must lie in (0, 1].")
+        cli_abort("{.arg seq_alpha} must lie in (0, 1].")
     if (nsims < 1)
-        stop("`nsims` must be positive.")
+        cli_abort("{.arg nsims} must be positive.")
 
     counties = rlang::eval_tidy(rlang::enquo(counties), map)
     if (is.null(counties)) {
         counties = rep(1, V)
     } else {
         if (any(is.na(counties)))
-            stop("County vector must not contain missing values.")
+            cli_abort("County vector must not contain missing values.")
 
         # handle discontinuous counties
         component = contiguity(adj, as.integer(as.factor(counties)))
@@ -206,15 +148,15 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
             as.factor() %>%
             as.integer()
         if (any(component > 1)) {
-            warning('counties were not contiguous; expect additional splits.')
+            cli_warn("Counties were not contiguous; expect additional splits.")
         }
     }
 
     # Other constraints
-    constraints = eval_tidy(enquo(constraints), map)
-    proc = process_smc_ms_constr(constraints, V)
-    constraints = proc$constraints
-    n_current = max(constraints$status_quo$current)
+    if (!inherits(constraints, "redist_constr")) {
+        constraints = new_redist_constr(eval_tidy(enquo(constraints), map))
+    }
+    constraints = as.list(constraints) # drop data attribute
 
     verbosity = 1
     if (verbose) verbosity = 3
@@ -224,9 +166,8 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
     pop = map[[attr(map, "pop_col")]]
     ndists = attr(map, "ndists")
     if (any(pop >= pop_bounds[3]))
-        stop("Units ", which(pop >= pop_bounds[3]),
-             " have population larger than the district target.\n",
-             "Redistricting impossible.")
+        cli_abort(c("Units {which(pop >= pop_bounds[3])} have population larger than the district target.",
+                    "x"="Redistricting impossible."))
 
     # handle particle inits
     if (is.null(init_particles)) {
@@ -242,28 +183,13 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
     }
     final_dists = n_drawn + n_steps + 1L
     if (final_dists > ndists) {
-        stop("Too many districts already drawn to take ", n_steps, " steps.")
-    }
-    if (!is.null(boundary_precs)) {
-        if (final_dists == ndists)
-            stop("`boundary_precs` not available. Decrease `n_steps` to use.")
-        stopifnot(all(boundary_precs >= 1))
-        stopifnot(all(boundary_precs <= V))
-    } else {
-        boundary_precs = integer(0)
+        cli_abort("Too many districts already drawn to take {n_steps} steps.")
     }
 
     lp = rep(0, nsims)
     plans = smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],
                       pop_bounds[1], pop_bounds[3], compactness,
-                      init_particles, n_drawn, n_steps, as.integer(boundary_precs) - 1L,
-                      constraints$status_quo$strength, constraints$status_quo$current, n_current,
-                      constraints$compet$strength, 0.5, 0.5,
-                      constraints$compet$pow, constraints$compet$dem, constraints$compet$tot,
-                      constraints$hinge$strength, constraints$hinge$tgts_min,
-                      constraints$hinge$min_pop, constraints$hinge$tot_pop,
-                      constraints$incumbency$strength, constraints$incumbency$incumbents,
-                      constraints$multisplits$strength,
+                      init_particles, n_drawn, n_steps, constraints,
                       lp, adapt_k_thresh, seq_alpha, pop_temper, final_infl, verbosity);
 
     lr = -lp + constraint_fn(plans)
@@ -284,11 +210,12 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
         n_eff = length(mod_wgt) * mean(mod_wgt)^2 / mean(mod_wgt^2)
         mod_wgt = mod_wgt / sum(mod_wgt)
 
-        plans = plans[, sample(nsims, nsims, replace=T, prob=mod_wgt), drop=FALSE]
+        plans = plans[, sample(nsims, nsims, replace=TRUE, prob=mod_wgt), drop=FALSE]
     }
 
     if (!is.nan(n_eff) && n_eff/nsims <= 0.05)
-        warning("Less than 5% resampling efficiency. Consider weakening constraints and/or adjusting `seq_alpha`.")
+        cli_warn(c("Less than 5% resampling efficiency.",
+                   ">"="Consider weakening constraints and/or adjusting {.arg seq_alpha}."))
 
     out = new_redist_plans(plans, map, "smc", wgt, resample,
                            n_eff = n_eff,
@@ -315,14 +242,15 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
 # @param constraints passed into `redist_smc` or `redist_ms`
 #
 # @return a list with new `constraints` and a minority population vector `min_pop`
-process_smc_ms_constr = function(constraints, V) {
+process_smc_ms_constr = function(constr, V) {
+    constr =
     defaults = list(
         status_quo = list(strength=0, current=rep(1, V)),
         hinge = list(strength=0, tgts_min=0.55, min_pop=integer(), tot_pop=integer()),
         compet = list(strength=0, pow=1, dem=integer(), tot=integer()),
         incumbency = list(strength=0, incumbents=integer()),
         splits = list(strength=0),
-        multisplits = list(strength=0)
+        multisplits = list(strength=0),
     )
 
     for (type in names(constraints)) {
@@ -334,19 +262,7 @@ process_smc_ms_constr = function(constraints, V) {
     if (min(defaults$status_quo$current) == 0)
         defaults$status_quo$current = defaults$status_quo$current + 1
 
-    min_pop = rep(0, V)
-    if (defaults$hinge$strength > 0) {
-        #if (defaults$compet$strength > 0)
-        #    stop("Specify one of `vra` or `vra_old` constraints, not both")
-        min_pop = defaults$hinge$min_pop
-    } else if (defaults$compet$strength > 0) {
-        min_pop = defaults$compet$dem
-    }
-    if (length(min_pop) != V)
-        stop("Length of minority population vector must match the number of units.")
-
-    list(constraints = defaults,
-         min_pop = min_pop)
+    list(constraints = defaults)
 }
 
 #' Helper function to truncate importance weights

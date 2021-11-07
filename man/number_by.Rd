@@ -4,7 +4,7 @@
 \alias{number_by}
 \title{Renumber districts to match a quantity of interest}
 \usage{
-number_by(data, x, desc = F)
+number_by(data, x, desc = FALSE)
 }
 \arguments{
 \item{data}{a \code{redist_plans} object}
