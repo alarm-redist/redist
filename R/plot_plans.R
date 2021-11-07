@@ -69,7 +69,7 @@ plot.redist_plans = function(x, ..., type="distr_qtys") {
 #' @concept plot
 #' @export
 redist.plot.hist = function(plans, qty, bins=NULL, ...) {
-    stopifnot(inherits(plans, "redist_plans"))
+    if (!inherits(plans, "redist_plans")) cli_abort("{.arg plans} must be a {.cls redist_plans}")
     if (missing(qty))
         stop("Must provide a quantity to make the histogram from.", call.=FALSE)
 
@@ -146,7 +146,7 @@ hist.redist_plans = function(x, qty, ...) {
 #' @concept plot
 #' @export
 redist.plot.scatter = function(plans, x, y, ..., bigger=TRUE) {
-    stopifnot(inherits(plans, "redist_plans"))
+    if (!inherits(plans, "redist_plans")) cli_abort("{.arg plans} must be a {.cls redist_plans}")
 
     p = ggplot(subset_sampled(plans), aes(x={{ x }}, y={{ y }})) +
         ggplot2::geom_point(...)
@@ -199,7 +199,7 @@ redist.plot.scatter = function(plans, x, y, ..., bigger=TRUE) {
 #' @export
 redist.plot.distr_qtys = function(plans, qty, sort="asc", geom="jitter",
                                   color_thresh=NULL, ...) {
-    stopifnot(inherits(plans, "redist_plans"))
+    if (!inherits(plans, "redist_plans")) cli_abort("{.arg plans} must be a {.cls redist_plans}")
 
     if (isFALSE(sort) || sort == "none") {
         plans = dplyr::group_by(plans, .data$draw) %>%
@@ -214,9 +214,8 @@ redist.plot.distr_qtys = function(plans, qty, sort="asc", geom="jitter",
 
     val = eval_tidy(enquo(qty), plans)
     if (is_const_num(val, plans$draw)) {
-        warning("`", rlang::as_label(enquo(qty)),
-                "` is constant across districts. ",
-                "Consider using `hist()` instead.", call.=FALSE)
+        cli_warn(c("{.arg {rlang::as_label(enquo(qty))}} is constant across districts. ",
+                   "Consider using {.fun hist} instead."))
     }
 
     if (is.null(color_thresh)) {
@@ -278,7 +277,7 @@ redist.plot.distr_qtys = function(plans, qty, sort="asc", geom="jitter",
 #'
 #' @param plans a \code{redist_plans} object.
 #' @param draws the plan(s) to plot. Will match the \code{draw} column of \code{x}.
-#' @param geom the \code{redist_map} geometry to use
+#' @param geom,shp the \code{redist_map} geometry to use (`shp` is deprecated).
 #' @param qty the quantity to plot. Defaults to the district assignment.
 #' @param interactive if \code{TRUE}, show an interactive map in the viewer
 #'   rather than a static map. Only uses the first element of \code{draws}
@@ -296,14 +295,15 @@ redist.plot.distr_qtys = function(plans, qty, sort="asc", geom="jitter",
 #'
 #' @concept plot
 #' @export
-redist.plot.plans = function(plans, draws, geom, qty=NULL, interactive=FALSE, ...) {
-    stopifnot(inherits(plans, "redist_plans"))
+redist.plot.plans = function(plans, draws, shp, qty=NULL, interactive=FALSE, ..., geom=NULL) {
+    if (!missing(geom)) .Deprecated("shp", old="geom")
+    if (!inherits(plans, "redist_plans")) cli_abort("{.arg plans} must be a {.cls redist_plans}")
     m = get_plans_matrix(plans)
     stopifnot(nrow(geom) == nrow(m))
 
     if (interactive) {
         if (length(draws) > 1)
-            warning("Only first of `draws` plotted when `interactive=TRUE`")
+            cli_warn("Only first of {.arg draws} plotted when {.arg interactive = TRUE}")
 
         draw = draws[1]
         draw_idx = match(as.character(draw), levels(plans$draw))

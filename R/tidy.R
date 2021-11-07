@@ -62,7 +62,7 @@ cur_plans = function(verbs=c("mutate", "summarize", "filter",
 #'
 #' @export
 is_contiguous = function(x) {
-    stopifnot(inherits(x, "redist_map"))
+    if (!inherits(x, "redist_map")) cli_abort("{.arg x} must be a {.cls redist_map}")
     all(contiguity(get_adj(x), rep(1, nrow(x))) == 1)
 }
 
@@ -144,12 +144,16 @@ merge_by = function(.data, ..., by_existing=TRUE, drop_geom=TRUE, collapse_chr=T
 #' @export
 make_cores = function(.data=cur_map(), boundary=1, focus=NULL) {
     if (is.null(.data))
-        stop('Must provide `.data` if not called within a dplyr verb')
-    if (!inherits(.data, 'redist_map'))
-        stop('`.data` must be a `redist_map` object')
+        cli_abort("Must provide {.arg .data} if not called within a {.pkg dplyr} verb")
+    if (!inherits(.data, "redist_map")) cli_abort("{.arg .data} must be a {.cls redist_map}")
+
+    existing = get_existing(.data)
+    if (is.null(existing))
+        cli_abort(c("No existing plan found from which to compute cores.",
+                    ">"="Add one using the {.arg existing_plan} argument to {.fun redist_map}"))
 
     redist.identify.cores(adj=get_adj(.data),
-                          plan=as.integer(as.factor(get_existing(.data))),
+                          plan=as.integer(as.factor(existing)),
                           boundary=boundary, focus=focus, simplify=TRUE)
 }
 
@@ -172,13 +176,14 @@ make_cores = function(.data=cur_map(), boundary=1, focus=NULL) {
 #' @concept analyze
 #' @export
 add_reference = function(plans, ref_plan, name=NULL) {
-    stopifnot(inherits(plans, "redist_plans"))
+    if (!inherits(plans, "redist_plans")) cli_abort("{.arg plans} must be a {.cls redist_plans}")
     if (isTRUE(attr(plans, "partial")))
-        stop("Reference plans not supported for partial plans objects.")
+        cli_abort("Reference plans not supported for partial plans objects.")
 
     plan_m = get_plans_matrix(plans)
-    stopifnot(is.numeric(ref_plan))
-    stopifnot(length(ref_plan) == nrow(plan_m))
+    if (!is.numeric(ref_plan)) cli_abort("{.arg ref_plan} must be numeric")
+    if (length(ref_plan) != nrow(plan_m))
+        cli_abort("{.arg ref_plan} must have the same number of precincts as {.arg plans}")
 
     if (is.null(name)) {
         ref_str = deparse(substitute(ref_plan))
@@ -187,12 +192,13 @@ add_reference = function(plans, ref_plan, name=NULL) {
         else
             name = ref_str
     } else {
-        stopifnot(is.character(name))
+        if (!is.character(name)) cli_abort("{.arg ref_plan} must be a {.cls chr}")
     }
 
     ref_plan = as.integer(as.factor(ref_plan))
     ndists = max(ref_plan)
-    stopifnot(ndists == max(plan_m[,1]))
+    if (ndists != max(plan_m[, 1]))
+        cli_abort("{.arg ref_plan} has a different number of districts than {.arg plans}")
 
     # first the matrix
     plan_m = cbind(ref_plan, plan_m)
@@ -205,7 +211,7 @@ add_reference = function(plans, ref_plan, name=NULL) {
     else
         distr_pop = rep(NA_real_, ndists)
 
-    if (name %in% levels(plans$draw)) stop("Reference plan name already exists")
+    if (name %in% levels(plans$draw)) cli_abort("Reference plan name already exists")
     fct_levels = c(name, levels(plans$draw))
     new_draw = rep(factor(fct_levels, levels=fct_levels), each=ndists)
     x = dplyr::bind_rows(
@@ -237,11 +243,11 @@ add_reference = function(plans, ref_plan, name=NULL) {
 #' @concept analyze
 #' @export
 pullback = function(plans, map=NULL) {
-    stopifnot(inherits(plans, "redist_plans"))
+    if (!inherits(plans, "redist_plans")) cli_abort("{.arg plans} must be a {.cls redist_plans}")
 
     merge_idx = attr(plans, "merge_idx")
     if (is.null(merge_idx)) {
-        warning("No merged indexing found.")
+        cli_warn("No merged indexing found.")
         return(plans)
     }
 
@@ -263,7 +269,7 @@ find_numbering = function(plan, ref, pop, force=FALSE) {
     if (!force) {
         n_combn = prod(sapply(split(opts[,2], opts[,1]), length))
         if (n_combn > 1e3)
-            stop("More than 1,000 renumbering options.")
+            cli_abort("More than 1,000 renumbering options.")
     }
     combn = as.matrix(expand.grid(split(opts[,2], opts[,1])))
     combn = combn[apply(combn, 1, anyDuplicated) == 0L, , drop=FALSE]
@@ -297,8 +303,8 @@ find_numbering = function(plan, ref, pop, force=FALSE) {
 #' @concept analyze
 #' @export
 match_numbers = function(data, plan, col="pop_overlap", force=FALSE) {
-    stopifnot(inherits(data, "redist_plans"))
-    stopifnot("district" %in% colnames(data))
+    if (!inherits(data, "redist_plans")) cli_abort("{.arg data} must be a {.cls redist_plans}")
+    if (!"district" %in% colnames(data)) cli_abort("Missing {.field district} colun in {.arg data}")
 
     plan_mat = get_plans_matrix(data)
     if (is.character(plan)) plan = plan_mat[,plan]
@@ -347,8 +353,8 @@ match_numbers = function(data, plan, col="pop_overlap", force=FALSE) {
 #' @concept analyze
 #' @export
 number_by = function(data, x, desc=FALSE) {
-    stopifnot(inherits(data, "redist_plans"))
-    stopifnot("district" %in% colnames(data))
+    if (!inherits(data, "redist_plans")) cli_abort("{.arg data} must be a {.cls redist_plans}")
+    if (!"district" %in% colnames(data)) cli_abort("Missing {.field district} colun in {.arg data}")
 
     ord = 1 - 2*desc
     m = get_plans_matrix(data)
@@ -365,12 +371,12 @@ number_by = function(data, x, desc=FALSE) {
 #' Helper function to check types for tidy wrappers
 #' @noRd
 check_tidy_types = function(map, .data) {
-    if (!inherits(map, 'redist_map'))
-        stop('`.data` must be a `redist_map` object')
+    if (!is.null(map) && !inherits(map, "redist_map"))
+        cli_abort("{.arg map} must be a {.cls redist_map}")
     if (is.null(.data))
-        stop('Must provide `.data` if not called within a dplyr verb')
-    if (!inherits(.data, 'redist_plans'))
-        stop('`.data` must be a `redist_plans` object')
+        cli_abort("Must provide {.arg .data} if not called within a {.pkg dplyr} verb")
+    if (!inherits(.data, "redist_plans"))
+        cli_abort("{.arg data} must be a {.cls redist_plans}")
 }
 
 
@@ -385,8 +391,8 @@ check_tidy_types = function(map, .data) {
 plan_parity <- function(map, .data = cur_plans(), ...) {
     check_tidy_types(map, .data)
     idxs = unique(as.integer(.data$draw))
-    ndists = attr(map, 'ndists')
-    total_pop = map[[attr(map, 'pop_col')]]
+    ndists = attr(map, "ndists")
+    total_pop = map[[attr(map, "pop_col")]]
     stopifnot(!is.null(total_pop))
 
     rep(max_dev(get_plans_matrix(.data)[, idxs, drop=FALSE], total_pop, ndists),
@@ -407,7 +413,7 @@ distr_compactness = function(map, measure="FracKept", .data=cur_plans(), ...) {
 
     # districts not in ascending order
     if (length(unique(diff(as.integer(.data$district)))) > 2)
-        warning("Districts not sorted in ascending order; output may be incorrect.")
+        cli_warn("Districts not sorted in ascending order; output may be incorrect.")
 
     idxs = unique(as.integer(.data$draw))
     redist.compactness(shp=map, plans=get_plans_matrix(.data)[, idxs, drop=FALSE],
@@ -428,7 +434,7 @@ group_frac = function(map, group_pop, total_pop=map[[attr(map, "pop_col")]],
     check_tidy_types(map, .data)
     # districts not in ascending order
     if (length(unique(diff(as.integer(.data$district)))) > 2)
-        warning("Districts not sorted in ascending order; output may be incorrect.")
+        cli_warn("Districts not sorted in ascending order; output may be incorrect.")
 
     idxs = unique(as.integer(.data$draw))
     group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
@@ -471,7 +477,7 @@ partisan_metrics = function(map, measure, rvote, dvote, ...,
     check_tidy_types(map, .data)
     # districts not in ascending order
     if (length(unique(diff(as.integer(.data$district)))) > 2)
-        warning("Districts not sorted in ascending order; output may be incorrect.")
+        cli_warn("Districts not sorted in ascending order; output may be incorrect.")
 
     idxs = unique(as.integer(.data$draw))
     rvote = rlang::eval_tidy(rlang::enquo(rvote), map)
@@ -536,10 +542,7 @@ last_plan = function(plans) {
 #' @concept analyze
 #' @export
 prec_assignment = function(prec, .data=cur_plans()) {
-    if (is.null(.data))
-        stop('Must provide `.data` if not called within a dplyr verb')
-    if (!inherits(.data, 'redist_plans'))
-        stop('`.data` must be a `redist_plans` object')
+    check_tidy_types(NULL, .data)
 
     idxs = unique(as.integer(.data$draw))
     assignment = get_plans_matrix(.data)[prec, idxs, drop=FALSE]
@@ -597,10 +600,7 @@ prec_cooccurrence = function(plans, which=NULL, sampled_only=TRUE) {
 #' @concept analyze
 #' @export
 imp_confint = function(x, conf=0.95, .data=cur_plans()) {
-    if (is.null(.data))
-        stop('Must provide `.data` if not called within a dplyr verb')
-    if (!inherits(.data, 'redist_plans'))
-        stop('`.data` must be a `redist_plans` object')
+    check_tidy_types(NULL, .data)
 
     idxs = unique(as.integer(.data$draw))
     y = rlang::eval_tidy(rlang::enquo(x), .data)
