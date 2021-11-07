@@ -291,9 +291,9 @@ dplyr_row_slice.redist_plans = function(data, i, ...) {
         distrs = table(as.integer(y$district))
         ndists = max(plans_m[,1])
         if (any(distrs != distrs[1]) || length(distrs) != ndists)
-            cli_warn("Some districts may have been dropped. ",
+            cli_warn(c("Some districts may have been dropped. ",
                     "This will prevent summary statistics from working correctly.\n",
-                    "To avoid this message, coerce using `as_tibble`.")
+                    "To avoid this message, coerce using `as_tibble`."))
     }
 
     if (length(draws_left) != ncol(plans_m)) {
