@@ -20,50 +20,50 @@
 #' plan = fl25_enum$plans[, 5118]
 #' freeze_id <- redist.freeze(adj = fl25_adj, freeze_row = (plan == 2),
 #'                            plan = plan)
-#' 
+#'
 #' data(iowa)
 #' map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.02)
 #' map <- map %>% merge_by(freeze(cd_2010 == 1, .data = .))
 #'
 redist.freeze <- function(adj, freeze_row, plan = rep(1, length(adj))){
-  if(missing(adj)){
-    stop('Please provide an object to adj.')
-  }
-
-  if(! 'list' %in% class(adj)){
-    stop('adj must be an adj list.')
-  }
-
-  if(missing(freeze_row)){
-    stop('Please provide a vector to freeze_row.')
-  }
-
-  if (is.numeric(freeze_row)) {
-    if(max(freeze_row) < length(adj) & all(freeze_row > 0)){
-      freeze_row <- 1:length(adj) %in% freeze_row
+    if (missing(adj)) {
+        cli_abort('Please provide an object to {.arg adj}.')
     }
-  } else if (is.logical(freeze_row)) {
-    if (length(freeze_row) != length(adj)) {
-      stop('freeze_row is logical but does not match adj length.')
+
+    if (!'list' %in% class(adj)) {
+        cli_abort('{.arg adj} must be an adjacency list.')
     }
-  } else {
-    stop('freeze_row must be a logical vector or have numeric/integer indices.')
-  }
 
-  tb <- tibble(plan = plan, freeze_row = freeze_row) %>%
-      group_by(plan, freeze_row) %>%
-      mutate(id = cur_group_id()) %>%
-      ungroup()
-  cont <- contiguity(adj = adj, group = tb$id)
-  tb <- tb %>% mutate(cont = cont) %>%
-      mutate(rn = row_number()) %>%
-      group_by(plan, cont, freeze_row) %>%
-      mutate(rn = ifelse(freeze_row, min(rn), rn)) %>%
-      ungroup() %>%
-      group_by(rn) %>%
-      mutate(gid = cur_group_id())
+    if (missing(freeze_row)) {
+        cli_abort('Please provide a vector to {.arg freeze_row}.')
+    }
 
-  return(tb$gid)
+    if (is.numeric(freeze_row)) {
+        if(max(freeze_row) < length(adj) & all(freeze_row > 0)){
+            freeze_row <- 1:length(adj) %in% freeze_row
+        }
+    } else if (is.logical(freeze_row)) {
+        if (length(freeze_row) != length(adj)) {
+            cli_abort('{.arg freeze_row} is logical but does not match {.arg adj} length.')
+        }
+    } else {
+        stop('{.arg freeze_row} must be a logical vector or have numeric/integer indices.')
+    }
+
+    tb <- tibble(plan = plan, freeze_row = freeze_row) %>%
+        group_by(plan, freeze_row) %>%
+        mutate(id = cur_group_id()) %>%
+        ungroup()
+    cont <- contiguity(adj = adj, group = tb$id)
+    tb <- tb %>% mutate(cont = cont) %>%
+        mutate(rn = row_number()) %>%
+        group_by(plan, cont, freeze_row) %>%
+        mutate(rn = ifelse(freeze_row, min(rn), rn)) %>%
+        ungroup() %>%
+        group_by(rn) %>%
+        mutate(gid = cur_group_id())
+
+    return(tb$gid)
 }
 
 #' @rdname redist.freeze
@@ -75,11 +75,11 @@ redist.freeze <- function(adj, freeze_row, plan = rep(1, length(adj))){
 #' @export
 freeze <- function(freeze_row, plan, .data=cur_map()) {
     if (is.null(.data))
-        stop('Must provide `.data` if not called within a dplyr verb')
-    if (!inherits(.data, 'redist_map'))
-        stop('`.data` must be a `redist_map` object')
+        cli_abort("Must provide {.arg .data} if not called within a {.pkg dplyr} verb")
+    if (!inherits(.data, "redist_map"))
+        cli_abort("{.arg .data} must be a {.cls redist_map}")
     if (missing(freeze_row))
-        stop('Please provide an argument to freeze_row.')
+        cli_abort("{.arg freeze_row} cannot be missing.")
 
     adj <- get_adj(.data)
     if (missing(plan))
