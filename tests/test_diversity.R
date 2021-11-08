@@ -1,4 +1,5 @@
 # Understand how VI scales -----
+if (FALSE) {
 
 library(sf)
 library(tidyverse)
@@ -43,3 +44,5 @@ tibble(size = size, n_distr = n_distr,
        min = min(div),
        max = max(div),
        mean = mean(div))
+
+}
