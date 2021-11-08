@@ -16,7 +16,7 @@
 # ... will depend on the algorithm
 new_redist_plans = function(plans, map, algorithm, wgt, resampled=TRUE, ndists=attr(map, "ndists"), ...) {
     n_sims = ncol(plans)
-    stopifnot(n_sims >= 1)
+    if (n_sims < 1) cli_abort("Need at least one simulation draw.")
 
     n_prec = nrow(plans)
     map_dists = attr(map, "ndists")
@@ -46,16 +46,16 @@ new_redist_plans = function(plans, map, algorithm, wgt, resampled=TRUE, ndists=a
 }
 
 validate_redist_plans = function(x) {
-    stopifnot(names(x)[1] == "draw")
-    stopifnot(is.factor(x$draw))
+    if (names(x)[1] != "draw") cli_abort("First column must be named \"{.field draw}\"")
+    if (!is.factor(x$draw)) cli_abort("{.field draw} column must be a factor")
 
     plan_m = attr(x, "plans")
-    stopifnot(!is.null(plan_m))
+    if (is.null(plan_m)) cli_abort("Missing plans matrix")
 
     min_distr = colmin(plan_m)
     max_distr = colmax(plan_m)
-    stopifnot(all(min_distr == 1))
-    stopifnot(all(diff(max_distr) == 0))
+    if (any(min_distr != 1) || any(diff(max_distr) != 0))
+        cli_abort("District numbers must start at 1 and run sequentially to the number of districts.")
 
     x
 }
@@ -134,9 +134,9 @@ redist_plans = function(plans, map, algorithm, wgt=NULL, ...) {
     if (is.numeric(plans) && length(plans) == nrow(map)) {
         plans = matrix(as.integer(plans), ncol=1)
     }
-    stopifnot(is.matrix(plans))
-    stopifnot(nrow(plans) == nrow(map))
-    stopifnot(inherits(map, "redist_map"))
+    if (!is.matrix(plans)) cli_abort("{.arg plans} must be a matrix.")
+    if (nrow(plans) != nrow(map)) cli_abort("{.arg plans} matrix must have as many rows as {.arg map} has precincts.")
+    if (!inherits(map, "redist_map")) cli_abort("{.arg map} must be a {.cls redist_map}")
 
     if (min(plans) == 0L) plans = plans + 1L
 
@@ -157,7 +157,7 @@ redist_plans = function(plans, map, algorithm, wgt=NULL, ...) {
 #' @concept analyze
 #' @export
 get_plans_matrix = function(x) {
-    stopifnot(inherits(x, "redist_plans"))
+    if (!inherits(x, "redist_plans")) cli_abort("Not a {.cls redist_plans}")
     attr(x, "plans")
 }
 #' @rdname get_plans_matrix
@@ -185,7 +185,7 @@ set_plan_matrix = function(x, mat) {
 #' @concept analyze
 #' @export
 get_plans_weights = function(plans) {
-    stopifnot(inherits(plans, "redist_plans"))
+    if (!inherits(plans, "redist_plans")) cli_abort("Not a {.cls redist_plans}")
     wgt = attr(plans, "wgt")
     if (!is.null(wgt))
         attr(wgt, "resampled") = attr(plans, "resampled")
@@ -203,7 +203,7 @@ weights.redist_plans = function(object, ...) {
 }
 
 get_n_ref = function(x) {
-    stopifnot(inherits(x, "redist_plans"))
+    if (!inherits(x, "redist_plans")) cli_abort("Not a {.cls redist_plans}")
     plans_m = get_plans_matrix(x)
     if (is.null(colnames(plans_m))) return(0)
     refs = which(nchar(colnames(plans_m)) > 0)
@@ -219,7 +219,7 @@ get_n_ref = function(x) {
 #' @concept simulate
 #' @export
 get_sampling_info = function(plans) {
-    stopifnot(inherits(plans, "redist_plans"))
+    if (!inherits(plans, "redist_plans")) cli_abort("Not a {.cls redist_plans}")
     all_attr = attributes(plans)
 
     all_attr$names = NULL
@@ -261,11 +261,11 @@ subset_ref = function(plans) {
 #' @concept simulate
 #' @export
 get_mh_acceptance_rate <- function(plans){
-    stopifnot(inherits(plans, "redist_plans"))
-    alg <- attr(plans, 'algorithm')
+    if (!inherits(plans, "redist_plans")) cli_abort("Not a {.cls redist_plans}")
+    alg <- attr(plans, "algorithm")
 
-    if( alg %in% c('flip', 'mergesplit')){
-        attr(plans, 'mh_acceptance')
+    if (alg %in% c("flip", "mergesplit")){
+        attr(plans, "mh_acceptance")
     } else {
         NA_real_
     }

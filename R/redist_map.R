@@ -17,9 +17,9 @@ new_redist_map = function(data, adj, ndists, pop_bounds, pop_col="pop",
         data[[adj_col]] = adj
     }
 
-    stopifnot(is.integer(ndists))
-    stopifnot(is.numeric(pop_bounds))
-    stopifnot(length(pop_bounds) == 3)
+    if (!is.integer(ndists)) cli_abort("{.arg ndists} must be an integer.")
+    if (!is.numeric(pop_bounds) || length(pop_bounds) != 3)
+        cli_abort("{.arg pop_bounds} must be a numeric vector of length 3.")
 
     data = reconstruct.redist_map(data)
     attr(data, "ndists") = ndists
@@ -32,32 +32,33 @@ new_redist_map = function(data, adj, ndists, pop_bounds, pop_col="pop",
 }
 
 validate_redist_map = function(data, check_contig=TRUE) {
-    if (!is.data.frame(data)) stop("Not a data frame")
-    if (!inherits(data, "redist_map")) stop("Not a `redist_map` object")
+    if (!is.data.frame(data)) cli_abort("Not a data frame")
+    if (!inherits(data, "redist_map")) cli_abort("Not a {.cls redist_map}")
 
     col = attr(data, "adj_col")
-    if (is.null(col)) stop("No adjacency graph column found")
+    if (is.null(col)) cli_abort("No adjacency graph column found")
     if (!is.list(data[[col]]))
-        stop("Adjacency graph column not a properly formatted adjacency list.")
+        cli_abort("Adjacency graph column not a properly formatted adjacency list.")
 
     if (check_contig && !is_contiguous(data)) {
         components = contiguity(get_adj(data), rep(1, nrow(data)))
         disconn = which(components != which.max(table(components)))
-        stop("Adjacency graph not contiguous.\n",
-             "Try manually editing the output of `redist.adjacency`.\n",
-             "Disconnected precincts: c(", paste0(disconn, collapse=", "), ")")
+        cli_abort(c("Adjacency graph not contiguous.",
+                    ">"="Try manually editing the output of {.fun redist.adjacency}.",
+                    "i"="Disconnected precincts: c({paste0(disconn, collapse=', ')})"))
     }
 
     stopifnot(!is.null(attr(data, "pop_col")))
     stopifnot(!is.null(attr(data, "ndists")))
 
     exist_col = attr(data, "existing_col")
-    if (!is.null(exist_col))  stopifnot(is.numeric(data[[exist_col]]))
+    if (!is.null(exist_col) && !is.numeric(data[[exist_col]]))
+        cli_abort("Existing plan {.field {exist_col}} must be a numeric vector.")
 
     pop_bounds = attr(data, "pop_bounds")
     stopifnot(!is.null(pop_bounds))
     if (!all(diff(pop_bounds) > 0))
-        stop("`pop_bounds` must satisfy lower < target < upper.")
+        cli_abort("{.arg pop_bounds} must satisfy lower < target < upper.")
 
     data
 }
@@ -163,7 +164,7 @@ redist_map = function(..., existing_plan=NULL, pop_tol=NULL,
         x = sf::st_sf(x)
 
         if (is.na(sf::st_crs(x))) {
-            warning("Missing CRS, assuming NAD83 (4269).")
+            cli_warn("Missing CRS, assuming NAD83 (4269).")
             sf::st_crs(x) = 4269
         }
 
@@ -172,8 +173,8 @@ redist_map = function(..., existing_plan=NULL, pop_tol=NULL,
                 message("Projecting to CRS ", planarize)
                 x = sf::st_transform(x, planarize)
             } else {
-                warning("Using latitude and longitude coordinates, ",
-                        "which may cause problems with geometric operations")
+                cli_warn("Using latitude and longitude coordinates,
+                          which may cause problems with geometric operations")
             }
         }
     }
@@ -182,35 +183,35 @@ redist_map = function(..., existing_plan=NULL, pop_tol=NULL,
                                                strict=FALSE)]
     if (length(pop_col) == 0) {
         names = rlang::as_label(rlang::enquo(total_pop))
-        stop("Population column `", names, "` not found. ",
-             "Population must be specified in the `total_pop` argument.")
+        cli_abort(c("Population column {.field {names}} not found.",
+                    ">"="Population must be specified in the {.arg total_pop} argument."))
     } else if (length(pop_col) > 1) {
         pop_col = pop_col[1]
-        warning("Multiple potential population columns found, using `", pop_col,
-                "`.\nConsider specifying `total_pop` manually.")
+        cli_warn(c("Multiple potential population columns found, using {.field {pop_col}}.",
+                   ">"="Consider specifying {.arg total_pop} manually."))
     }
 
     existing_col = names(tidyselect::eval_select(rlang::enquo(existing_plan), x))
     if (length(existing_col) == 0)
-      existing_col = NULL
+        existing_col = NULL
 
     if (!is.null(existing_col)) {
-      if (!is.numeric(x[[existing_col]])) {
-        temp_col <- NULL
-        suppressWarnings({temp_col <- as.numeric(x[[existing_col]])})
-        if (!any(is.na(temp_col))) {
-          x[[existing_col]] <- temp_col
-        } else {
-          stop('`existing_col` was not numeric and could not be converted to numeric.')
+        if (!is.numeric(x[[existing_col]])) {
+            temp_col <- NULL
+            suppressWarnings({temp_col <- as.numeric(x[[existing_col]])})
+            if (!any(is.na(temp_col))) {
+                x[[existing_col]] <- temp_col
+            } else {
+                cli_abort("Existing plan {.field {exist_col}} must be a numeric vector.")
+            }
         }
-      }
     }
 
     if (is.null(ndists)) {
         if (!is.null(existing_col)) {
             ndists = length(unique(x[[existing_col]]))
         } else {
-          stop("Must specify `ndists` if `existing_plan` is not supplied.")
+            cli_abort("Must specify {.arg ndists} if {.arg existing_plan} is not supplied.")
         }
     } else {
         ndists = as.integer(rlang::eval_tidy(rlang::enquo(ndists), x))
@@ -221,10 +222,10 @@ redist_map = function(..., existing_plan=NULL, pop_tol=NULL,
         if (!is.null(existing_col)) {
             pop_tol = redist.parity(x[[existing_col]], x[[pop_col]])
             if (pop_tol <= 0.001)
-                message("`pop_tol` calculated from existing plan is \u2264 0.1%")
+                cli_inform("{.arg pop_tol} calculated from existing plan is \u2264 0.1%")
         } else {
             pop_tol = 0.01
-            warning("`pop_tol` not provided; defaulting to 1%")
+            cli_warn("{.arg pop_tol} not provided; defaulting to 1.0%")
         }
     }
 
@@ -240,8 +241,8 @@ redist_map = function(..., existing_plan=NULL, pop_tol=NULL,
 
     if (is_sf && is.null(adj)) {
         if (!is.null(x[[adj_col]]))
-            stop("Column `", adj_col, "` already present in data. ",
-                 "Specify an alternate adj column.")
+            cli_abort(c("Column {.field adj_col} already present in data. ",
+                        ">"="Specify an alternate adj column."))
 
         adj = redist.adjacency(x)
     }
@@ -266,7 +267,7 @@ as_redist_map = function(x) {
 #' @concept prepare
 #' @export
 get_adj = function(x) {
-    stopifnot(inherits(x, "redist_map"))
+    if (!inherits(x, "redist_map")) cli_abort("Not a {.cls redist_map}")
 
     x[[attr(x, "adj_col")]]
 }
@@ -276,8 +277,9 @@ get_adj = function(x) {
 #' @returns the modified \code{redist_map} object (\code{set_adj})
 #' @export
 set_adj = function(x, adj) {
-    stopifnot(inherits(x, "redist_map"))
-    stopifnot(is.list(adj))
+    if (!inherits(x, "redist_map")) cli_abort("Not a {.cls redist_map}")
+    if (!is.list(adj)) cli_abort("{.arg adj} must be a list")
+
     # zero-index if need be
     if ((min_idx <- min(sapply(adj, min))) != 0) {
         adj = lapply(adj, function(x) x - min_idx)
@@ -295,7 +297,7 @@ set_adj = function(x, adj) {
 #' @concept prepare
 #' @export
 get_existing = function(x) {
-    stopifnot(inherits(x, "redist_map"))
+    if (!inherits(x, "redist_map")) cli_abort("Not a {.cls redist_map}")
 
     exist_col = attr(x, "existing_col")
     if (is.null(exist_col)) NULL else x[[exist_col]]
@@ -308,7 +310,7 @@ get_existing = function(x) {
 #' @concept prepare
 #' @export
 get_target = function(x) {
-    stopifnot(inherits(x, "redist_map"))
+    if (!inherits(x, "redist_map")) cli_abort("Not a {.cls redist_map}")
 
     attr(x, "pop_bounds")[2]
 }
@@ -323,16 +325,16 @@ get_target = function(x) {
 #' @concept  prepare
 #' @export
 get_pop_tol <- function(map) {
-  stopifnot(inherits(map, 'redist_map'))
+    if (!inherits(x, "redist_map")) cli_abort("Not a {.cls redist_map}")
 
-  bot <- 1 - attr(map, 'pop_bounds')[1] / attr(map, 'pop_bounds')[2]
-  top <- attr(map, 'pop_bounds')[3] / attr(map, 'pop_bounds')[2] - 1
+    bot <- 1 - attr(map, 'pop_bounds')[1] / attr(map, 'pop_bounds')[2]
+    top <- attr(map, 'pop_bounds')[3] / attr(map, 'pop_bounds')[2] - 1
 
-  if (!isTRUE(all.equal(bot, top))) {
-    warning('Population bounds were not symmetric, using the smaller tolerance.')
-  }
+    if (!isTRUE(all.equal(bot, top))) {
+        cli_warn('Population bounds were not symmetric, using the smaller tolerance.')
+    }
 
-  return(min(bot, top))
+    return(min(bot, top))
 }
 
 #' @param pop_tol the population tolerance
@@ -343,15 +345,15 @@ get_pop_tol <- function(map) {
 #' @concept  prepare
 #' @export
 set_pop_tol <- function(map, pop_tol) {
-  stopifnot(inherits(map, 'redist_map'))
+    if (!inherits(x, "redist_map")) cli_abort("Not a {.cls redist_map}")
 
-  target <- get_target(map)
-  bot <- (1 - pop_tol) * target
-  top <- (1 + pop_tol) * target
+    target <- get_target(map)
+    bot <- (1 - pop_tol) * target
+    top <- (1 + pop_tol) * target
 
-  attr(map, 'pop_bounds') <- c(bot, target, top)
+    attr(map, 'pop_bounds') <- c(bot, target, top)
 
-  validate_redist_map(map, check_contig = FALSE)
+    validate_redist_map(map, check_contig = FALSE)
 }
 
 
@@ -387,10 +389,11 @@ dplyr_row_slice.redist_map = function(data, i, ...) {
     bounds[2] = sum(y[[attr(data, "pop_col")]]) / new_distr
     attr(y, "pop_bounds") = bounds
 
-    if(bounds[1] > bounds[2] || bounds[3] < bounds[1]){
-      warning('Your subset was not based on districts. Please use `set_pop_tol(map)`
-              to update your `redist_map` object or create a new `redist_map`
-              object with the correct number of districts.')
+    if (bounds[1] > bounds[2] || bounds[3] < bounds[1]) {
+        cli_warn(c("Your subset was not based on districts.",
+                   ">"="Please use {.fn set_pop_tol} to update your
+                        {.cls redist_map} or create a new {.cls redist_map}
+                        with the correct number of districts."))
     }
 
     y
@@ -448,21 +451,21 @@ select.redist_map <- function(.data, ...) {
     if (!is.na(colnum <- match(attr(.data, "adj_col"), names(.data)[cols]))) {
         attr(.data, "adj_col") = names(cols)[colnum]
     } else {
-        stop("Must keep `", attr(.data, "adj_col"), "` column, ",
-             "or convert to a tibble with `as_tibble()`.")
+        cli_abort("Must keep {.field {attr(.data, 'adj_col')} column,
+                   or convert to a tibble with {.fun as_tibble}.")
     }
     if (!is.na(colnum <- match(attr(.data, "pop_col"), names(.data)[cols]))) {
         attr(.data, "pop_col") = names(cols)[colnum]
     } else {
-        stop("Must keep `", attr(.data, "pop_col"), "` column, ",
-             "or convert to a tibble with `as_tibble()`.")
+        cli_abort("Must keep {.field {attr(.data, 'pop_col')} column,
+                   or convert to a tibble with {.fun as_tibble}.")
     }
     if (!is.null(exist_col <- attr(.data, "existing_col"))) {
         if (!is.na(colnum <- match(exist_col, names(.data)[cols]))) {
             attr(.data, "existing_col") = names(cols)[colnum]
         } else {
-            stop("Must keep `", attr(.data, "existing_col"), "` column, ",
-                 "or convert to a tibble with `as_tibble()`.")
+            cli_abort("Must keep {.field {attr(.data, 'existing_col')} column,
+                       or convert to a tibble with {.fun as_tibble}.")
         }
     }
 
@@ -477,7 +480,7 @@ select.redist_map <- function(.data, ...) {
 #' @return Prints to console and returns input redist_map
 #' @export
 print.redist_map = function(x, ...) {
-    cat("A redist_map object with", nrow(x), "units and", ncol(x), "fields\n")
+    cli_text("A redist_map object with {nrow(x)} units and {ncol(x)} fields")
 
     bounds = attr(x, "pop_bounds")
     cat("To be partitioned into ", attr(x, "ndists"),
@@ -563,12 +566,13 @@ print.redist_map = function(x, ...) {
 plot.redist_map = function(x, fill=NULL, by_distr=FALSE, adj=FALSE,
                            interactive=FALSE, ...) {
     if (!inherits(x, "sf"))
-        stop("Plotting requires a shapefile.\n  ",
-             "If you've just used `merge_by`, consider passing `drop_geom=FALSE`.")
+        cli_abort(c("Plotting requires a shapefile.",
+                    ">"="If you've just used {.fun merge_by},
+                    consider passing {.arg drop_geom = FALSE}."))
 
     if (interactive) {
-        if (adj) warning("`adj` ignored when `interactive=TRUE`")
-        if (by_distr) warning("`by_distr` ignored when `interactive=TRUE`")
+        if (adj) cli_warn("{.arg adj} ignored when {.arg interactive = TRUE}")
+        if (by_distr) warning("{.arg by_distr} ignored when {.arg interactive = TRUE}")
         return(redist.plot.interactive(x, !!enquo(fill), ...))
     }
 
