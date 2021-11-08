@@ -325,7 +325,7 @@ get_target = function(x) {
 #' @concept  prepare
 #' @export
 get_pop_tol <- function(map) {
-    if (!inherits(x, "redist_map")) cli_abort("Not a {.cls redist_map}")
+    if (!inherits(map, "redist_map")) cli_abort("Not a {.cls redist_map}")
 
     bot <- 1 - attr(map, 'pop_bounds')[1] / attr(map, 'pop_bounds')[2]
     top <- attr(map, 'pop_bounds')[3] / attr(map, 'pop_bounds')[2] - 1
@@ -345,7 +345,7 @@ get_pop_tol <- function(map) {
 #' @concept  prepare
 #' @export
 set_pop_tol <- function(map, pop_tol) {
-    if (!inherits(x, "redist_map")) cli_abort("Not a {.cls redist_map}")
+    if (!inherits(map, "redist_map")) cli_abort("Not a {.cls redist_map}")
 
     target <- get_target(map)
     bot <- (1 - pop_tol) * target
