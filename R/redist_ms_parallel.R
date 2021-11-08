@@ -141,10 +141,14 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
     out = utils::capture.output({
         x <- ms_plans(1, adj, init_plans[,1], counties, pop, ndists, pop_bounds[2],
                       pop_bounds[1], pop_bounds[3], compactness, list(), adapt_k_thresh,
-                      0L, verbosity=2)
+                      0L, verbosity=3)
     }, type="output")
     rm(x)
     k = as.integer(stats::na.omit(stringr::str_match(out, "Using k = (\\d+)")[,2]))
+    if (length(k) == 0)
+        cli_abort(c("Adaptive {.var k} not found. This error should not happen.",
+                    ">"="Please file an issue at
+                        {.url https://github.com/alarm-redist/redist/issues/new}"))
 
     # set up parallel
     if (is.null(ncores)) ncores = parallel::detectCores()

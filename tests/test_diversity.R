@@ -2,7 +2,6 @@
 if (FALSE) {
 
 library(sf)
-library(tidyverse)
 
 
 make_map = function(size=4, n_distr=2) {
