@@ -2,10 +2,12 @@
 #ifndef SMC_H
 #define SMC_H
 
+#include "smc_base.h"
+
 #include <string>
 #include <functional>
+#include <cli/progress.h>
 
-#include "smc_base.h"
 #include "wilson.h"
 #include "tree_op.h"
 #include "map_calc.h"
@@ -42,7 +44,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
  */
 vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
              double alpha, vec &lp, const uvec &pop, List constraints,
-             const uvec &counties, int n_cty, double &min_eff, int verbosity);
+             const uvec &counties, int n_cty, int verbosity);
 
 /*
  * Split a map into two pieces with population lying between `lower` and `upper`

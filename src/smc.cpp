@@ -67,20 +67,23 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     lp.fill(0.0);
 
     int k;
-    double min_eff = 1.0;
     vec cum_wgt(N);
     cum_wgt.fill(1.0 / N);
     cum_wgt = cumsum(cum_wgt);
+    std::string bar_fmt = "Split [{cli::pb_current}/{cli::pb_total}] {cli::pb_bar} | ETA{cli::pb_eta}";
+    RObject bar = cli_progress_bar(n_steps, cli_config(false, bar_fmt.c_str()));
     for (int ctr = n_drawn + 1; ctr <= n_drawn + n_steps; ctr++) {
-        if (verbosity >= 1)
-            Rcout << "Making split " << ctr - n_drawn << " of " << n_steps << "\n";
+        if (verbosity >= 3) {
+            Rcout << "Making split " << ctr - n_drawn << " of " << n_steps;
+        }
 
         // find k and multipliers
         adapt_parameters(g, k, lp, thresh, tol, districts, counties, cg, pop,
                          pop_left, target, verbosity);
 
-        if (verbosity >= 3)
-            Rcout << "Using k = " << k << "\n";
+        if (verbosity >= 3) {
+            Rcout << " (using k = " << k << ")\n";
+        }
 
         // perform resampling/drawing
         bool final = ctr == n_drawn + n_steps;
@@ -94,17 +97,16 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
 
         // compute weights for next step
         cum_wgt = get_wgts(districts, n_distr, ctr, final, alpha, lp, pop,
-                           constraints, counties, n_cty, min_eff, verbosity);
+                           constraints, counties, n_cty, verbosity);
 
+        if (verbosity == 1 && CLI_SHOULD_TICK)
+            cli_progress_set(bar, ctr - n_drawn - 1);
         Rcpp::checkUserInterrupt();
     }
+    cli_progress_done(bar);
 
     lp = lp - log_temper;
 
-    // check efficiency
-    if (min_eff <= 0.05) {
-        Rcerr << "Warning: bottleneck detected. Sample may not be diverse.\n";
-    }
 
     if (n_drawn + n_steps + 1 == n_distr) {
         // Set final district label to n_distr rather than 0
@@ -143,7 +145,7 @@ double add_constraint(const std::string& name, List constraints,
  */
 vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
              double alpha, vec &lp, const uvec &pop, List constraints,
-             const uvec &counties, int n_cty, double &min_eff, int verbosity) {
+             const uvec &counties, int n_cty, int verbosity) {
     int V = districts.n_rows;
     int N = districts.n_cols;
 
@@ -207,13 +209,9 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
     vec cuml_wgt = cumsum(wgt);
 
     double neff = cuml_wgt[N-1] * cuml_wgt[N-1]  / sum(square(wgt));
-    if (verbosity >= 1) {
-        Rcout << "Resampling effective sample size: " << neff << " (" << 100*neff/N <<  "% efficiency)." << std::endl;
+    if (verbosity >= 3) {
+        Rcout << std::setprecision(3) << 100*neff/N <<  "% efficiency.\n";
     }
-    if (neff/N < min_eff) {
-        min_eff = neff / N;
-    }
-
 
     return cuml_wgt / cuml_wgt[N-1];
 }
@@ -238,10 +236,10 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     vec lp_new(N);
     vec log_temper_new(N);
 
-    int refresh = N / 10; // how often to print update statements
     int reject_check_int = 20; // aftr how many rejections to check for interrupts
     int reject_ct = 0;
     double iter = 0; // how many actual iterations
+    RObject bar = cli_progress_bar(N, cli_config(true));
     for (int i = 0; i < N; i++, iter++) {
         // resample
         int idx = rint(N, cum_wgt);
@@ -293,13 +291,15 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
 
         lp_new(i) = lp(idx) + inc_lp + pop_temper*pop_pen;
 
-        if (verbosity >= 2 && refresh > 0 && (i+1) % refresh == 0) {
-            Rcout << "Iteration " << i + 1 << "/" << N << std::endl;
+        if (verbosity >= 3 && CLI_SHOULD_TICK) {
+            cli_progress_set(bar, i);
             Rcpp::checkUserInterrupt();
         }
     }
-    if (verbosity >= 2) {
-        Rcout <<  100.0 * N / iter << "% acceptance rate." << std::endl;
+    cli_progress_done(bar);
+
+    if (verbosity >= 3) {
+        Rcout << "  " << std::setprecision(2) << 100.0 * N / iter << "% acceptance rate, ";
     }
 
     districts = districts_new;
@@ -465,7 +465,7 @@ void adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
     }
 
     if (k >= k_max) {
-        if (verbosity >= 1) {
+        if (verbosity >= 3) {
             Rcout << "Note: maximum hit; falling back to naive k estimator.\n";
         }
         k = max_ok + 1;

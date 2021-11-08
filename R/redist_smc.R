@@ -173,8 +173,10 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
         init_particles = matrix(0L, nrow=V, ncol=nsims)
         n_drawn = 0L
     } else {
-        stopifnot(nrow(init_particles) == V)
-        stopifnot(ncol(init_particles) == nsims)
+        if (nrow(init_particles) != V)
+            cli_abort("{.arg init_particles} must have as many rows as {.arg map} has precincts.")
+        if (ncol(init_particles) != nsims)
+            cli_abort("{.arg init_particles} must have {.arg nsims} columns.")
         n_drawn = as.integer(max(init_particles[, 1]))
     }
     if (is.null(n_steps)) {

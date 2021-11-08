@@ -34,4 +34,10 @@ int rint(int max, vec cum_wgts);
 // TESTED
 int select_k(std::vector<double> x, int k);
 
+/*
+ * Make a progress bar configuration with format string `fmt`
+ */
+List cli_config(bool clear = false,
+                const char * fmt = "{cli::pb_bar} {cli::pb_percent} | ETA:{cli::pb_eta}");
+
 #endif

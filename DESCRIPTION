@@ -56,7 +56,7 @@ Suggests:
     spdep,
     RSpectra,
     testthat (>= 3.0.0)
-LinkingTo: Rcpp, RcppArmadillo
+LinkingTo: Rcpp, RcppArmadillo, cli
 License: GPL (>= 2)
 SystemRequirements: OpenMPI, gmp, libxml2, python, C++11
 Packaged: 2015-06-03 18:32:00 UTC; benfifield
