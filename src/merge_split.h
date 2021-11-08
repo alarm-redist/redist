@@ -2,6 +2,10 @@
 #define MERGESPLIT_H
 
 #include "smc_base.h"
+
+#include <string>
+#include <cli/progress.h>
+
 #include "wilson.h"
 #include "tree_op.h"
 #include "map_calc.h"

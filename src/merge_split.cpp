@@ -46,14 +46,14 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     if (k <= 0) {
         adapt_ms_parameters(g, n_distr, k, thresh, tol, init, counties, cg, pop, target);
     }
-    if (verbosity >= 2)
+    if (verbosity >= 3)
         Rcout << "Using k = " << k << "\n";
 
     int distr_1, distr_2;
     select_pair(n_distr, g, init, distr_1, distr_2);
-    int refresh = std::max(N / 20, 1);
     int n_accept = 0;
     int reject_ct;
+    RObject bar = cli_progress_bar(N - 1, cli_config(false));
     for (int i = 1; i < N; i++) {
         districts.col(i) = districts.col(i - 1); // copy over old map
 
@@ -103,14 +103,15 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
             mh_decisions(i - 1) = 0;
         }
 
-        if (verbosity >= 2 && refresh > 0 && (i+1) % refresh == 0) {
-            Rcout << "Iteration " << i+1 << "/" << N-1 << std::endl;
+        if (verbosity >= 1 && CLI_SHOULD_TICK) {
+            cli_progress_set(bar, i - 1);
         }
         Rcpp::checkUserInterrupt();
     }
+    cli_progress_done(bar);
 
     if (verbosity >= 1) {
-        Rcout << "Acceptance rate: " << (100.0 * n_accept) / (N-1) << std::endl;
+        Rcout << "Acceptance rate: " << std::setprecision(2) << (100.0 * n_accept) / (N-1) << "%\n";
     }
 
     Rcpp::List out;
