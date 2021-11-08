@@ -107,7 +107,7 @@ merge_by = function(.data, ..., by_existing=TRUE, drop_geom=TRUE, collapse_chr=T
     key_val = rlang::eval_tidy(dots[[1]], .data)
     pop_col = attr(.data, "pop_col")
 
-    if (drop_geom && methods::is(.data, "sf"))
+    if (drop_geom && is(.data, "sf"))
         .data = sf::st_drop_geometry(.data)
 
     col = attr(.data, "existing_col")

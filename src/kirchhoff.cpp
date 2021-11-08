@@ -138,5 +138,5 @@ NumericVector n_removed(const Graph &g, const umat &districts, int n_distr) {
         n_rem[n] = removed;
     }
 
-    return n_rem;
+    return n_rem/2;
 }

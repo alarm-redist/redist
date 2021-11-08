@@ -11,7 +11,7 @@
 
 # internal constructor
 new_redist_constr = function(constr=list(), data=tibble()) {
-    class(constr) = c("redist_constr", "list")
+    constr = reconstruct.redist_constr(constr, NULL)
 
     if (length(constr) > 0) {
         if (is.null(names(constr))) cli_abort("Null names.")
@@ -27,7 +27,7 @@ new_redist_constr = function(constr=list(), data=tibble()) {
     stopifnot(is.data.frame(data))
     attr(constr, "data") = data
 
-    reconstruct.redist_constr(constr, NULL)
+    constr
 }
 
 validate_redist_constr = function(constr) {

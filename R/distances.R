@@ -162,9 +162,11 @@ plan_distances = function(plans, measure="variation of information", ncores=1) {
 #'
 #' Returns the off-diagonal elements of the variation of information distance
 #' matrix for a sample of plans, which can be used as a diagnostic measure to
-#' assess the diversity of a set of plans. If there are many values close to zero,
-#' then the sample has many similar plans and may not be a good approximation
-#' to the target distribution.
+#' assess the diversity of a set of plans. While the exact scale varies depending
+#' on the number of precicnts and districts, generally diversity is good if most
+#' of the values are greater than 0.5. Converseley, if there are many values
+#' close to zero, then the sample has many similar plans and may not be a good
+#' approximation to the target distribution.
 #'
 #' @param plans a \code{\link{redist_plans}} object.
 #' @param n_max the maximum number of plans to sample in computing the
@@ -194,7 +196,7 @@ plans_diversity = function(plans, n_max=100, ncores=1) {
 
     dists = redist.distances(m[, idx], "variation of information",
                              ncores=ncores, total_pop=pop)$VI
-    0.5 * dists[upper.tri(dists)] / log(ndists)
+    0.5 * dists[upper.tri(dists)]
 }
 
 

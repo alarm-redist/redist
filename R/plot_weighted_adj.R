@@ -70,7 +70,7 @@ redist.plot.wted.adj <- function(shp = NULL, plans = NULL, counties = NULL,
     if (!is.null(counties)) {
       cty <- shp %>%
         mutate(counties_input = counties) %>%
-        group_by(counties_input) %>%
+        group_by(.data$counties_input) %>%
         summarize(geometry = st_union(geometry))
 
       p <- p +
@@ -87,7 +87,7 @@ redist.plot.wted.adj <- function(shp = NULL, plans = NULL, counties = NULL,
 
         distr <- shp %>%
           mutate(ref_input = ref) %>%
-          group_by(ref_input) %>%
+          group_by(.data$ref_input) %>%
           summarize(geometry = st_union(geometry))
         p <- p +
           geom_sf(data = distr, size = 1, fill = NA)
@@ -96,7 +96,7 @@ redist.plot.wted.adj <- function(shp = NULL, plans = NULL, counties = NULL,
       if (length(ref == nrow(shp))) {
         distr <- shp %>%
           mutate(ref_input = ref) %>%
-          group_by(ref_input) %>%
+          group_by(.data$ref_input) %>%
           summarize(geometry = st_union(geometry))
         p <- p +
           geom_sf(data = distr, size = 1, fill = NA)
@@ -110,8 +110,8 @@ redist.plot.wted.adj <- function(shp = NULL, plans = NULL, counties = NULL,
     mutate(wt = cooc[i, j])
 
   p <- p +
-    geom_sf(data = nb, aes(color = wt), lwd = 1) +
-    ggplot2::scale_color_distiller(palette = 'Reds', direction = 1) +
+    geom_sf(data = nb, aes(color = nb$wt), lwd = 1) +
+    ggplot2::scale_color_distiller(palette = 'Reds', direction = -1) +
     labs(color = 'Coocurrence\nProportion')
 
   # return ----

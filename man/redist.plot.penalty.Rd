@@ -38,8 +38,4 @@ indicates a higher penalty and incentivizes moving towards a spot with a lower y
 The x-axis indicates the group population proportion in a given district. The default
 indicates the default settings within \code{redist_smc()}.
 }
-\examples{
-redist.plot.penalty()
-
-}
 \concept{prepare}

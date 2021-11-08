@@ -21,9 +21,11 @@ A numeric vector of off-diagonal variation of information distances.
 \description{
 Returns the off-diagonal elements of the variation of information distance
 matrix for a sample of plans, which can be used as a diagnostic measure to
-assess the diversity of a set of plans. If there are many values close to zero,
-then the sample has many similar plans and may not be a good approximation
-to the target distribution.
+assess the diversity of a set of plans. While the exact scale varies depending
+on the number of precicnts and districts, generally diversity is good if most
+of the values are greater than 0.5. Converseley, if there are many values
+close to zero, then the sample has many similar plans and may not be a good
+approximation to the target distribution.
 }
 \examples{
 data(iowa)
