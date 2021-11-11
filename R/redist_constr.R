@@ -195,10 +195,13 @@ add_constr_status_quo = function(constr, strength, current) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
     data = attr(constr, "data")
+    if (missing(current)) current = get_existing(data)
 
     new_constr = list(strength=strength,
                       current=eval_tidy(enquo(current), data))
-    stopifnot(length(new_constr$current) == nrow(data))
+    if (is.null(current) || length(new_constr$current) != nrow(data))
+        cli_abort("{.arg current} must be provided, and must have as many
+                  precincts as the {.cls redist_map}")
     new_constr$n_current = max(new_constr$current)
 
     add_to_constr(constr, "status_quo", new_constr)
