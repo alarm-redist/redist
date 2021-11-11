@@ -123,7 +123,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
     if (is.null(init_plan)) init_plan = as.integer(as.factor(get_existing(map)))
     if (length(init_plan) == 0L || isTRUE(init_plan == "sample")) {
         init_plan = as.integer(get_plans_matrix(
-            redist_smc(map, 1, counties, resample=FALSE, ref_name=FALSE, silent=TRUE)))
+            redist_smc(map, 10, counties, resample=FALSE, ref_name=FALSE, silent=TRUE))[, 1])
     }
     stopifnot(length(init_plan) == V)
     stopifnot(max(init_plan) == ndists)
