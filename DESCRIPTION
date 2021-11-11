@@ -38,7 +38,7 @@ Imports:
     ggplot2,
     patchwork,
     readr (>= 2.0.0),
-    cli
+    cli (>= 3.1.0)
 Suggests:
     igraph,
     s2,
