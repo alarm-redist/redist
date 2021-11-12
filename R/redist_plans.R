@@ -397,17 +397,12 @@ print.redist_plans = function(x, ...) {
     n_ref = get_n_ref(x)
     n_samp = ncol(plans_m) - n_ref
 
-    if (n_samp == 1) {
-        cat("1 sampled plan ")
-    } else {
-        cat(n_samp, "sampled plans ")
-    }
+    if (n_ref > 0)
+        cli_text("A {.cls redist_plans} containing {n_samp} sampled plan{?s} and
+                 {n_ref} reference plan{?s}")
+    else
+        cli_text("A {.cls redist_plans} containing {n_samp} sampled plan{?s}")
 
-    if (n_ref == 1) {
-        cat("and 1 reference plan ")
-    } else if (n_ref > 1) {
-        cat("and", n_ref, "reference plans ")
-    }
     if (ncol(plans_m) == 0) return(invisible(x))
 
     alg_name = c(mcmc="Flip Markov chain Monte Carlo",
@@ -419,8 +414,8 @@ print.redist_plans = function(x, ...) {
                  shortburst="short bursts")[attr(x, "algorithm")]
     if (is.na(alg_name)) alg_name = "an unknown algorithm"
 
-    cat("with ", max(plans_m[,1]), " districts from a ",
-        nrow(plans_m), "-unit map,\n  drawn using ", alg_name, "\n", sep="")
+    cli_text("Plans have {max(plans_m[,1])} districts from a {nrow(plans_m)}-unit map,
+             and were drawn using {alg_name}.")
 
     merge_idx = attr(x, "merge_idx")
     if (!is.null(merge_idx))

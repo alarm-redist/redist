@@ -344,7 +344,7 @@ add_constr_custom = function(constr, strength, fn) {
 #' @export
 print.redist_constr = function(x, header=TRUE, details=TRUE, ...) {
     if (header)
-        cli_text("A {.cls redist_constr} object with {length(x)} constraint{?s}")
+        cli_text("A {.cls redist_constr} with {length(x)} constraint{?s}")
 
     print_constr = function(x) {
         if (details) {

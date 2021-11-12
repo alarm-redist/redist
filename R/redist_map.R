@@ -480,7 +480,7 @@ select.redist_map <- function(.data, ...) {
 #' @return Prints to console and returns input redist_map
 #' @export
 print.redist_map = function(x, ...) {
-    cli_text("A redist_map object with {nrow(x)} units and {ncol(x)} fields")
+    cli_text("A {.cls redist_map} with {nrow(x)} units and {ncol(x)} fields")
 
     bounds = attr(x, "pop_bounds")
     cat("To be partitioned into ", attr(x, "ndists"),
