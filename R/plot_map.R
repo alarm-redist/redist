@@ -101,7 +101,8 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
       }
 
       plot <- ggplot(shp) +
-        geom_sf(aes(fill = plan, alpha = fill), size = 0.3 * boundaries, color = '#444444') +
+        geom_sf(aes(fill = plan, alpha = fill), size = 0.3 * boundaries,
+                color = if (boundaries) "#444444" else NA) +
         theme_void() +
         labs(alpha = fill_label, title = title) +
         theme(legend.position = 'bottom')
@@ -124,7 +125,8 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
         }
 
         plot <- ggplot(shp) +
-          geom_sf(aes(fill = as.character(plan), alpha = fill), size = 0.3 * boundaries, color = '#444444') +
+          geom_sf(aes(fill = as.character(plan), alpha = fill), size = 0.3 * boundaries,
+                  color = if (boundaries) "#444444" else NA) +
           theme_void() +
           labs(fill = 'District Membership', alpha = fill_label, title = title) +
           theme(legend.position = 'bottom')
@@ -149,7 +151,8 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
     }
 
     plot <- ggplot(shp) +
-      geom_sf(aes(fill = fill), size = 0.3 * boundaries, color = '#444444') +
+      geom_sf(aes(fill = fill), size = 0.3 * boundaries,
+              color = if (boundaries) "#444444" else NA) +
       theme_void() +
       labs(fill = fill_label, title = title) +
       theme(legend.position = 'bottom')
