@@ -431,7 +431,7 @@ redist.compactness <- function(shp = NULL,
   }
 
   if('EdgesRemoved' %in% measure){
-      cli_inform("An earlier bug incorrectly doubled the number of removed edges.",
+      cli_inform("An earlier bug incorrectly in {.pkg redist} doubled the number of removed edges. Current counts are correct.",
                  .frequency="once", .frequency_id="comp_nrem")
     comp[['EdgesRemoved']] <- rep(n_removed(g = adj,
                                             districts = plans,
@@ -439,7 +439,7 @@ redist.compactness <- function(shp = NULL,
   }
 
   if('FracKept' %in% measure){
-      cli_inform("An earlier bug incorrectly doubled the fraction of kept edges.",
+      cli_inform("An earlier bug incorrectly in {.pkg redist} doubled the number of removed edges. Current counts are correct.",
                  .frequency="once", .frequency_id="comp_kept")
     comp[['FracKept']] <- 1 -  rep(n_removed(g = adj,
                                              districts = plans,
