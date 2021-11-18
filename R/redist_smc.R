@@ -164,9 +164,12 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
     pop_bounds = attr(map, "pop_bounds")
     pop = map[[attr(map, "pop_col")]]
     ndists = attr(map, "ndists")
-    if (any(pop >= pop_bounds[3]))
-        cli_abort(c("Units {which(pop >= pop_bounds[3])} have population larger than the district target.",
+    if (any(pop >= pop_bounds[3])) {
+        too_big = as.character(which(pop >= pop_bounds[3]))
+        cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
+                    population larger than the district target.",
                     "x"="Redistricting impossible."))
+    }
 
     # handle particle inits
     if (is.null(init_particles)) {
