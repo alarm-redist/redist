@@ -101,9 +101,6 @@ redist.reduce.adjacency <- function(adj, keep_rows) {
 #' @concept prepare
 #' @export
 redist.coarsen.adjacency <- function(adj, groups) {
-    if (!(class(keep_rows) %in% c("numeric", "integer"))) {
-        cli_warn("{.arg keep_rows} must be a numeric or integer vector.")
-    }
     if (min(unlist(adj)) != 0) {
         cli_abort("{.arg adj} must be a 0-indexed list.")
     }
