@@ -396,7 +396,7 @@ scorer_splits <- function(map, counties) {
 
   fn = function(plans) {
     nd <- length(unique(plans[, 1]))
-    splits(plans, counties, nd, 1)/length(unique(counties))
+    splits(plans - 1, counties - 1, nd, 1)/length(unique(counties))
   }
   class(fn) <- c("redist_scorer", "function")
   fn
