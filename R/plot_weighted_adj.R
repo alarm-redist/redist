@@ -117,3 +117,35 @@ redist.plot.wted.adj <- function(shp = NULL, plans = NULL, counties = NULL,
   # return ----
   p
 }
+
+#' Create Weighted Adjacency Data
+#'
+#' @param map redist_map
+#' @param plans redist_plans
+#'
+#' @export
+#' @return tibble
+#'
+#' @examples
+#' data(iowa)
+#' shp <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
+#' plans <- redist_smc(shp, 100)
+#' redist.wted.adj(shp, plans = plans)
+redist.wted.adj <- function(map = NULL, plans = NULL) {
+
+  plans <- plans %>%
+      subset_sampled() %>%
+      get_plans_matrix()
+
+  adj <- get_adj(map)
+
+  edge_cntr <- edge_center_df(map, adj)
+  nb <- edge_cntr$nb
+
+  # Add weighted adj ----
+  cooc <- prec_cooccur(plans, seq_len(ncol(plans)))
+  nb <- nb %>%
+    mutate(wt = cooc[i, j])
+
+  nb
+}

@@ -11,4 +11,3 @@ pop = fl25$pop
 fl_map = redist_map(fl25, pop_tol=0.1, ndists=3, adj=adj) %>% suppressMessages()
 plans_10 = fl25_enum$plans[, fl25_enum$pop_dev <= 0.10]
 
-sf::sf_use_s2(TRUE) # for sf 1.0

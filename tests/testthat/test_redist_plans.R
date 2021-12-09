@@ -6,8 +6,8 @@ test_that("constructor works", {
     expect_true(is.matrix(as.matrix(x)))
     expect_equal(attr(x, "prec_pop"), fl25$pop)
     expect_null(weights(x))
-    expect_output(print(x), "drawn using Enumpart", fixed=T)
-    expect_output(print(x), "927 sampled plans with 3 districts", fixed=T)
+    expect_message(print(x), "drawn using Enumpart")
+    expect_message(print(x), "containing 927 sampled plans")
 })
 
 test_that("add_reference works", {
