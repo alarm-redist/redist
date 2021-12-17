@@ -93,6 +93,10 @@ double eval_inc(const subview_col<uword> &districts, int distr, const uvec &incu
             inc_in_distr++;
     }
 
+    if (inc_in_distr < 0.0) {
+        inc_in_distr = 0.0;
+    }
+
     return inc_in_distr;
 }
 
