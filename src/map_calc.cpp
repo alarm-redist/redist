@@ -89,7 +89,7 @@ double eval_inc(const subview_col<uword> &districts, int distr, const uvec &incu
     int n_inc = incumbents.size();
     double inc_in_distr = -1.0; // first incumbent doesn't count
     for (int i = 0; i < n_inc; i++) {
-        if (districts[incumbents[i]] == distr)
+        if (districts[incumbents[i] - 1] == distr)
             inc_in_distr++;
     }
 
