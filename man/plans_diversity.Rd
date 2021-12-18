@@ -4,10 +4,15 @@
 \alias{plans_diversity}
 \title{Calculate the diversity of a set of plans}
 \usage{
-plans_diversity(plans, n_max = 100, ncores = 1)
+plans_diversity(plans, total_pop, n_max = 100, ncores = 1)
 }
 \arguments{
 \item{plans}{a \code{\link{redist_plans}} object.}
+
+\item{total_pop}{The vector of precinct populations. Used only if computing
+variation of information. If not provided, equal population of precincts
+will be assumed, i.e. the VI will be computed with respect to the precincts
+themselves, and not the population.}
 
 \item{n_max}{the maximum number of plans to sample in computing the
 distances. Larger numbers will have less sampling error but will require
