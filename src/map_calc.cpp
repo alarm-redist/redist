@@ -233,11 +233,31 @@ double eval_segregation(const subview_col<uword> &districts, int distr,
  * Compute the qps penalty for district `distr`
  */
 double eval_qps(const subview_col<uword> &districts, int distr,
-                const uvec &total_pop, const uvec &cities, int n_city) {
+                const uvec &total_pop, const uvec &cities, int n_city,
+                int nd) {
 
     vec tally(n_city);
+    vec pj(n_city);
+    vec j(n_city);
+    vec sumpj(n_city);
 
-    return 0.0;
+    uvec idxs_d = find(districts == distr);
+    double pop = sum(total_pop(idxs_d));
+
+    for (int i = 0; i < n_city; i++){
+        uvec idxs = find(cities == (i + 1));
+        idxs = arma::intersect(idxs_d, idxs);
+        tally(i) = sum(total_pop(idxs));
+        if (tally(i) > 0) {
+            j(i) += 1;
+        }
+    }
+
+    pj = tally / pop;
+    sumpj = pj * (1.0 -  pj);
+    sumpj = sumpj / (double) nd;
+
+    return sum(sumpj) + log(sum(j));
 }
 
 /*
