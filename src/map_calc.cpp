@@ -150,6 +150,95 @@ double eval_multisplits(const subview_col<uword> &districts, int distr,
     return fracts;
 }
 
+/*
+ * Compute the Polsby Popper penalty for district `distr`
+ */
+double eval_polsby(const subview_col<uword> &districts, int distr,
+                   const ivec &from,
+                   const ivec &to,
+                   const vec &area,
+                   const vec &perimeter) {
+    uvec idxs = find(districts == distr);
+
+    double pi4 = 4.0 * 3.14159265;
+    double tot_area = sum(area(idxs));
+
+    double tot_perim = 0.0;
+
+    int ne = from.size();
+
+    uvec idx = find(to == distr);
+    for (int e = 0; e < idx.size(); e++) {
+        if(from(idx(e)) == -1) {
+            tot_perim += perimeter(idx(e));
+        } else {
+            if (districts(from(idx(e))) != distr) {
+                tot_perim += perimeter(idx(e));
+            }
+        }
+    }
+
+    double dist_peri2 = pow(tot_perim, 2.0);
+    return 1.0 - (pi4 * tot_area / dist_peri2);
+}
+
+/*
+ * Compute the Fryer-Holden penalty for district `distr`
+ */
+double eval_fry_hold(const subview_col<uword> &districts, int distr,
+                     const uvec &total_pop, mat ssdmat, double denominator = 1.0) {
+    uvec idxs = find(districts == distr);
+    double ssd = 0.0;
+
+    for (int i = 0; i < idxs.size() - 1; i++) {
+        for (int k = i + 1; k < idxs.size(); k++) {
+            ssd += (double) ssdmat(idxs(i), idxs(k)) * total_pop(idxs(i)) *
+                total_pop(idxs(k));
+        }
+    }
+
+    return ssd / denominator;
+}
+
+/*
+ * Compute the population penalty for district `distr`
+ */
+double eval_population(const subview_col<uword> &districts, int distr,
+                       const uvec &total_pop, double parity) {
+    uvec idxs = find(districts == distr);
+    double pop = sum(total_pop(idxs));
+
+    return std::pow(pop / parity - 1.0, 2.0);
+}
+
+
+/*
+ * Compute the segregation penalty for district `distr`
+ */
+double eval_segregation(const subview_col<uword> &districts, int distr,
+                        const uvec &grp_pop, const uvec &total_pop) {
+
+    int T = sum(total_pop);
+    double pAll = (double)sum(grp_pop) / T;
+    double denom = (double)2 * T * pAll * (1 - pAll);
+
+    uvec idxs = find(districts == distr);
+    double grp = sum(grp_pop(idxs));
+    double pop = sum(total_pop(idxs));
+
+    return (double)(pop * std::abs((grp / pop) - pAll) / denom);
+}
+
+/*
+ * Compute the qps penalty for district `distr`
+ */
+double eval_qps(const subview_col<uword> &districts, int distr,
+                const uvec &total_pop, const uvec &cities, int n_city) {
+
+    vec tally(n_city);
+
+    return 0.0;
+}
 
 /*
  * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,
