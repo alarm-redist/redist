@@ -1,4 +1,5 @@
 #include "map_calc.h"
+#include "kirchhoff.h"
 
 /*
  * Compute the logarithm of the graph theoretic length of the boundary between
@@ -259,6 +260,22 @@ double eval_qps(const subview_col<uword> &districts, int distr,
 
     return sum(sumpj) + log(sum(j));
 }
+
+/*
+ * Compute the log spanning tree penalty for district `distr`
+ */
+double eval_log_st(const subview_col<uword> &districts, const Graph g,
+                   arma::uvec counties, int ndists) {
+    return (double)log_st_map(g, districts, counties, ndists)[0];
+}
+
+/*
+ * Compute the log spanning tree penalty for district `distr`
+ */
+double eval_er(const subview_col<uword> &districts, const Graph g, int ndists) {
+    return (double)n_removed(g, districts, ndists)[0];
+}
+
 
 /*
  * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,
