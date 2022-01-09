@@ -22,6 +22,7 @@ skinny_flips <- function(adj, init_plan, total_pop, pop_tol, nsims, eprob, lambd
                  cdvec = init_plan,
                  cdorigvec = constraints$similarity$plan,
                  popvec = total_pop,
+                 constraints = list(),
                  grouppopvec = constraints$group_pop,
                  areas_vec = constraints$compact$areas,
                  county_membership = constraints$counties,

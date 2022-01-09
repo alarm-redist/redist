@@ -268,6 +268,7 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
                          cdvec = cds,
                          cdorigvec = preprocout$data$init_plan,
                          popvec = preprocout$data$total_pop,
+                         constraints = list(),
                          grouppopvec = preprocout$data$group_pop,
                          areas_vec = preprocout$data$areasvec,
                          county_membership = preprocout$data$counties,

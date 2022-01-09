@@ -306,6 +306,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
     cdvec = preprocout$data$init_plan,
     cdorigvec = pre_pre_proc$similarity$plan,
     popvec = preprocout$data$total_pop,
+    constraints = list(),
     grouppopvec = preprocout$data$group_pop,
     areas_vec = preprocout$data$areasvec,
     county_membership = pre_pre_proc$counties,
