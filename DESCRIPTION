@@ -55,7 +55,8 @@ Suggests:
     units,
     spdep,
     RSpectra,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    rstudioapi
 LinkingTo: Rcpp, RcppArmadillo, cli
 License: GPL (>= 2)
 SystemRequirements: OpenMPI, gmp, libxml2, python, C++11
