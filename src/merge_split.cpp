@@ -188,12 +188,12 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
 
     log_tgt += add_constraint("splits", constraints, distr_1, distr_2,
         [&] (List l, int distr) -> double {
-            return eval_splits(plan, distr, counties, n_cty);
+            return eval_splits(plan, distr, as<uvec>(l["admin"]), l["n"]);
         });
 
     log_tgt += add_constraint("multisplits", constraints, distr_1, distr_2,
         [&] (List l, int distr) -> double {
-            return eval_multisplits(plan, distr, counties, n_cty);
+            return eval_multisplits(plan, distr, as<uvec>(l["admin"]), l["n"]);
         });
 
     log_tgt += add_constraint("custom", constraints, distr_1, distr_2,

@@ -36,9 +36,9 @@ add_constr_compet(constr, strength, dvote, rvote, pow = 0.5)
 
 add_constr_incumbency(constr, strength, incumbents)
 
-add_constr_splits(constr, strength)
+add_constr_splits(constr, strength, admin)
 
-add_constr_multisplits(constr, strength)
+add_constr_multisplits(constr, strength, admin)
 
 add_constr_custom(constr, strength, fn)
 }

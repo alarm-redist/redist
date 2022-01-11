@@ -299,21 +299,40 @@ add_constr_incumbency = function(constr, strength, incumbents) {
 
 #' @rdname constraints
 #' @export
-add_constr_splits = function(constr, strength) {
+add_constr_splits = function(constr, strength, admin) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
+    data <- attr(constr, "data")
 
-    new_constr = list(strength=strength)
+    admin <- eval_tidy(enquo(admin), data)
+    if (any(is.na(admin))) {
+        cli_abort('{.arg admin} many not contain {.val NA}s.')
+    }
+    admin <- redist.sink.plan(admin)
+
+    new_constr = list(strength=strength,
+                      admin = admin,
+                      n = length(unique(admin)))
+
     add_to_constr(constr, "splits", new_constr)
 }
 
 #' @rdname constraints
 #' @export
-add_constr_multisplits = function(constr, strength) {
+add_constr_multisplits = function(constr, strength, admin) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
+    data <- attr(constr, "data")
 
-    new_constr = list(strength=strength)
+    admin <- eval_tidy(enquo(admin), data)
+    if (any(is.na(admin))) {
+        cli_abort('{.arg admin} many not contain {.val NA}s.')
+    }
+    admin <- redist.sink.plan(admin)
+
+    new_constr = list(strength=strength,
+                      admin = admin,
+                      n = length(unique(admin)))
     add_to_constr(constr, "multisplits", new_constr)
 }
 

@@ -188,12 +188,12 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
 
         lp[i] += add_constraint("splits", constraints,
             [&] (List l) -> double {
-                return eval_splits(districts.col(i), distr_ctr, counties, n_cty);
+                return eval_splits(districts.col(i), distr_ctr, as<uvec>(l["admin"]), l["n"]);
             });
 
         lp[i] += add_constraint("multisplits", constraints,
             [&] (List l) -> double {
-                return eval_multisplits(districts.col(i), distr_ctr, counties, n_cty);
+                return eval_multisplits(districts.col(i), distr_ctr, as<uvec>(l["admin"]), l["n"]);
             });
 
         lp[i] += add_constraint("custom", constraints,
