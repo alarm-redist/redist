@@ -23,7 +23,8 @@ redist_flip(
   exact_mh = FALSE,
   adjswaps = TRUE,
   init_name = NULL,
-  verbose = TRUE
+  verbose = TRUE,
+  cl = redist_cosntr()
 )
 }
 \arguments{
@@ -89,6 +90,8 @@ the initial plan in the output.  Defaults to the column name of the
 existing plan, or "\code{<init>}" if the initial plan is sampled.}
 
 \item{verbose}{Whether to print initialization statement. Default is \code{TRUE}.}
+
+\item{cl}{constraint list for testing}
 }
 \value{
 A \code{\link{redist_plans}} object containing the simulated plans.

@@ -9,6 +9,13 @@
 #ifndef SW_MH_HELPER_H
 #define SW_MH_HELPER_H
 
+#include <RcppArmadillo.h>
+#include "redist_types.h"
+#include "make_swaps_helper.h"
+#include "constraint_calc_helper.h"
+#include "map_calc.h"
+
+using namespace Rcpp;
 
 Rcpp::NumericVector init_pop(Rcpp::NumericVector popvec, arma::vec cds);
 Rcpp::List add_ties(Rcpp::List aList);
@@ -60,7 +67,11 @@ Rcpp::List changeBeta(arma::vec betavec,
 		      double beta,
 		      double constraint,
 		      Rcpp::NumericVector weights,
-		      int adjswap = 1);
+		      int adjswap);
+
+double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
+                      IntegerVector districts, NumericVector &psi_vec, const uvec &pop,
+                      List constraints);
 
 #endif
 

@@ -146,6 +146,7 @@
 #'   the initial plan in the output.  Defaults to the column name of the
 #'   existing plan, or "\code{<init>}" if the initial plan is sampled.
 #' @param verbose Whether to print initialization statement. Default is \code{TRUE}.
+#' @param cl constraint list for testing
 #'
 #' @return A \code{\link{redist_plans}} object containing the simulated plans.
 #' @concept simulate
@@ -169,7 +170,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
                         nthin = 1, eprob = 0.05, lambda = 0, temper = FALSE,
                         betaseq = 'powerlaw', betaseqlength = 10, betaweights = NULL,
                         adapt_lambda = FALSE, adapt_eprob = FALSE, exact_mh = FALSE,
-                        adjswaps = TRUE, init_name = NULL, verbose = TRUE) {
+                        adjswaps = TRUE, init_name = NULL, verbose = TRUE, cl = redist_cosntr()) {
   if (verbose) {
     ## Initialize ##
     cli::cli({
@@ -306,7 +307,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
     cdvec = preprocout$data$init_plan,
     cdorigvec = pre_pre_proc$similarity$plan,
     popvec = preprocout$data$total_pop,
-    constraints = list(),
+    constraints = as.list(cl),
     grouppopvec = preprocout$data$group_pop,
     areas_vec = preprocout$data$areasvec,
     county_membership = pre_pre_proc$counties,

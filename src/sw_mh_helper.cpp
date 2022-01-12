@@ -7,12 +7,7 @@
 /////////////////////////////////////
 
 // Header files
-#include <RcppArmadillo.h>
-#include "redist_types.h"
-#include "make_swaps_helper.h"
-#include "constraint_calc_helper.h"
-
-using namespace Rcpp;
+#include "sw_mh_helper.h"
 
 // Function to generate initial vector of populations
 NumericVector init_pop(NumericVector popvec,
@@ -477,6 +472,42 @@ List make_swaps(List boundary_cc,
   // Initialize metropolis-hastings probabilities
   double mh_prob = 1.0;
 
+  // constr-up
+  NumericVector old_psi = NumericVector::create(_["population"] = 0.0,
+                                                _["splits"] = 0.0,
+                                                _["multisplits"] = 0.0,
+                                                _["segregation"] = 0.0,
+                                                _["grp_pow"] = 0.0,
+                                                _["grp_hinge"] = 0.0,
+                                                _["compet"] = 0.0,
+                                                _["status_quo"] = 0.0,
+                                                _["incumbents"] = 0.0,
+                                                _["polsby"] = 0.0,
+                                                _["fry_hold"] = 0.0,
+                                                _["log_st"] = 0.0,
+                                                _["edges_removed"] = 0.0,
+                                                _["qps"] = 0.0,
+                                                _["custom"] = 0.0
+  );
+
+  NumericVector new_psi = NumericVector::create(_["population"] = 0.0,
+                                                _["splits"] = 0.0,
+                                                _["multisplits"] = 0.0,
+                                                _["segregation"] = 0.0,
+                                                _["grp_pow"] = 0.0,
+                                                _["grp_hinge"] = 0.0,
+                                                _["compet"] = 0.0,
+                                                _["status_quo"] = 0.0,
+                                                _["incumbents"] = 0.0,
+                                                _["polsby"] = 0.0,
+                                                _["fry_hold"] = 0.0,
+                                                _["log_st"] = 0.0,
+                                                _["edges_removed"] = 0.0,
+                                                _["qps"] = 0.0,
+                                                _["custom"] = 0.0
+  );
+
+
   double pop_new_psi = 0.0;
   double pop_old_psi = 0.0;
   double compact_new_psi = 0.0;
@@ -501,11 +532,16 @@ List make_swaps(List boundary_cc,
   // Number of unique congressional districts
   int ndists = max(cds_old) + 1;
   int n_city = max(cities) + 1;
+  int nprec = cds_old.size();
 
   // Break indicators
   int breakp = 0;
   int numaccept = 0;
   int goodprop = 0;
+
+  IntegerVector curr_cd_swaps(p);
+  IntegerVector prop_cd_swaps(p);
+  int n_swaps = 0;
 
   // Begin loop over p
   for(int i = 0; i < p; i++){
@@ -640,6 +676,8 @@ List make_swaps(List boundary_cc,
     NumericVector cd_pair(2);
     cd_pair(0) = curr_cd;
     cd_pair(1) = prop_cd;
+    curr_cd_swaps(i) = curr_cd;
+    prop_cd_swaps(i) = prop_cd;
 
     // Update metropolis-hastings probabilities
     mh_prob = update_mhprob(prop_partitions,
@@ -662,57 +700,58 @@ List make_swaps(List boundary_cc,
 
     if(weight_population != 0.0){
 
-      population_constraint = calc_psipop(cds_prop, cds_test, pop_vec, cd_pair);
+        population_constraint = calc_psipop(cds_prop, cds_test, pop_vec, cd_pair);
 
-      pop_new_psi += as<double>(population_constraint["pop_new_psi"]);
-      pop_old_psi += as<double>(population_constraint["pop_old_psi"]);
+        pop_new_psi += as<double>(population_constraint["pop_new_psi"]);
+        pop_old_psi += as<double>(population_constraint["pop_old_psi"]);
 
     }
     if(weight_compact != 0.0){
 
-      compact_constraint = calc_psicompact(cds_prop,
-                                           cds_test,
-                                           cd_pair,
-                                           compactness_measure,
-                                           aList,
-                                           areas_vec,
-                                           borderlength_mat,
-                                           true,
-                                           pop_vec,
-                                           ssdmat,
-                                           ndists,
-                                           g,
-                                           as<arma::vec>(county_membership),
-                                           ssd_denominator);
+        compact_constraint = calc_psicompact(cds_prop,
+                                             cds_test,
+                                             cd_pair,
+                                             compactness_measure,
+                                             aList,
+                                             areas_vec,
+                                             borderlength_mat,
+                                             true,
+                                             pop_vec,
+                                             ssdmat,
+                                             ndists,
+                                             g,
+                                             as<arma::vec>(county_membership),
+                                             ssd_denominator);
 
-      compact_new_psi += as<double>(compact_constraint["compact_new_psi"]);
-      compact_old_psi += as<double>(compact_constraint["compact_old_psi"]);
+        compact_new_psi += as<double>(compact_constraint["compact_new_psi"]);
+        compact_old_psi += as<double>(compact_constraint["compact_old_psi"]);
 
     }
     if(weight_segregation != 0.0){
 
-      segregation_constraint = calc_psisegregation(cds_prop, cds_test, pop_vec, cd_pair, group_pop_vec);
+        segregation_constraint = calc_psisegregation(cds_prop, cds_test, pop_vec, cd_pair, group_pop_vec);
 
-      segregation_new_psi += as<double>(segregation_constraint["segregation_new_psi"]);
-      segregation_old_psi += as<double>(segregation_constraint["segregation_old_psi"]);
+        segregation_new_psi += as<double>(segregation_constraint["segregation_new_psi"]);
+        segregation_old_psi += as<double>(segregation_constraint["segregation_old_psi"]);
 
     }
     if(weight_vra != 0.0){
 
-      vra_constraint = calc_psivra(cds_prop, cds_test, pop_vec, cd_pair, group_pop_vec, tgt_min, tgt_other);
+        vra_constraint = calc_psivra(cds_prop, cds_test, pop_vec, cd_pair, group_pop_vec, tgt_min, tgt_other);
 
-      vra_new_psi += as<double>(vra_constraint["vra_new_psi"]);
-      vra_old_psi += as<double>(vra_constraint["vra_old_psi"]);
+        vra_new_psi += as<double>(vra_constraint["vra_new_psi"]);
+        vra_old_psi += as<double>(vra_constraint["vra_old_psi"]);
 
     }
     if(weight_similar != 0.0){
 
-      similar_constraint = calc_psisimilar(cds_prop, cds_test, cds_orig, cd_pair);
+        similar_constraint = calc_psisimilar(cds_prop, cds_test, cds_orig, cd_pair);
 
-      similar_new_psi += as<double>(similar_constraint["similar_new_psi"]);
-      similar_old_psi += as<double>(similar_constraint["similar_old_psi"]);
+        similar_new_psi += as<double>(similar_constraint["similar_new_psi"]);
+        similar_old_psi += as<double>(similar_constraint["similar_old_psi"]);
 
     }
+
 
     // Update cd assignments and cd populations
     cds_prop = cds_test;
@@ -728,7 +767,37 @@ List make_swaps(List boundary_cc,
       break;
     }
 
+    n_swaps++;
+
+  } // end loop over p
+
+  // Now calculate target pieces:
+  IntegerVector swaps(2 * n_swaps);
+
+  for (int i = 0; i < n_swaps; i++) {
+      swaps(i) = curr_cd_swaps(i);
+      swaps(i + n_swaps) = prop_cd_swaps(i);
   }
+
+  swaps = sort_unique(swaps);
+
+  // make them 1 idxed
+  swaps = swaps + 1;
+
+  mat districts(cds_prop.size(), 2, fill::zeros);
+  for(int r = 0; r < nprec; r++){
+      districts(r, 0) = cds_prop(r) + 1;
+      districts(r, 1) = cds_old(r) + 1;
+  }
+  arma::umat udistricts = conv_to<umat>::from(districts);
+  arma::uvec pops = conv_to<arma::uvec>::from(as<arma::vec>(pop_vec));
+
+
+  double test_new_energy = calc_gibbs_tgt(udistricts.col(0), ndists, nprec, swaps,
+                                          new_psi, pops, constraints);
+  double test_old_energy = calc_gibbs_tgt(udistricts.col(1), ndists, nprec, swaps,
+                                          old_psi, pops, constraints);
+
 
   // County split metric
   if(weight_countysplit != 0.0){
@@ -868,6 +937,98 @@ int mh_decision(double mh_prob)
   return decision;
 
 }
+
+// Add constraints to match SMC and MS
+
+/*
+ * Helper function to iterate over constraints and apply them
+ */
+double add_constraint(const std::string& name, List constraints,
+                      IntegerVector districts, NumericVector &psi_vec,
+                      std::function<double(List, int)> fn_constr) {
+    if (!constraints.containsElementNamed(name.c_str())) return 0;
+
+    List constr = constraints[name];
+    double val = 0;
+    double psi = 0.0;
+    for (int i = 0; i < constr.size(); i++) {
+        List constr_inst = constr[i];
+        double strength = constr_inst["strength"];
+        if (strength != 0) {
+            for(int dist = 0; dist < districts.size(); dist++){
+                psi = fn_constr(constr_inst, districts(dist));
+                psi_vec[name] = psi + psi_vec[name];
+                val += strength * (psi);
+            }
+
+        }
+    }
+    return val;
+}
+
+/*
+ * Add specific constraint weights & return the cumulative weight vector
+ */
+double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
+                      IntegerVector districts, NumericVector &psi_vec, const uvec &pop,
+                      List constraints) {
+    if (constraints.size() == 0) return 0.0;
+    double log_tgt = 0;
+
+    log_tgt += add_constraint("status_quo", constraints, districts, psi_vec,
+                              [&] (List l, int distr) -> double {
+                                  return eval_sq_entropy(plan, as<uvec>(l["current"]), distr,
+                                                         pop, n_distr, as<int>(l["n_current"]), V);
+                              });
+
+    log_tgt += add_constraint("grp_pow", constraints, districts, psi_vec,
+                              [&] (List l, int distr) -> double {
+                                  return eval_grp_pow(plan, distr, as<uvec>(l["group_pop"]),
+                                                      as<uvec>(l["total_pop"]), as<double>(l["tgt_group"]),
+                                                      as<double>(l["tgt_other"]), as<double>(l["pow"]));
+                              });
+
+    log_tgt += add_constraint("compet", constraints, districts, psi_vec,
+                              [&] (List l, int distr) -> double {
+                                  uvec dvote = l["dvote"];
+                                  uvec total = dvote + as<uvec>(l["rvote"]);
+                                  return eval_grp_pow(plan, distr, dvote, total, 0.5, 0.5,
+                                                      as<double>(l["pow"]));
+                              });
+
+    log_tgt += add_constraint("grp_hinge", constraints, districts, psi_vec,
+                              [&] (List l, int distr) -> double {
+                                  return eval_grp_hinge(plan, distr, as<vec>(l["tgts_group"]),
+                                                        as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]));
+                              });
+
+    log_tgt += add_constraint("incumbency", constraints, districts, psi_vec,
+                              [&] (List l, int distr) -> double {
+                                  return eval_inc(plan, distr, as<uvec>(l["incumbents"]));
+                              });
+
+    log_tgt += add_constraint("splits", constraints, districts, psi_vec,
+                              [&] (List l, int distr) -> double {
+                                  return eval_splits(plan, distr, as<uvec>(l["admin"]), l["n"]);
+                              });
+
+    log_tgt += add_constraint("multisplits", constraints, districts, psi_vec,
+                              [&] (List l, int distr) -> double {
+                                  return eval_multisplits(plan, distr, as<uvec>(l["admin"]), l["n"]);
+                              });
+
+    log_tgt += add_constraint("custom", constraints, districts, psi_vec,
+                              [&] (List l, int distr) -> double {
+                                  Function fn = l["fn"];
+                                  return as<NumericVector>(fn(plan, distr))[0];
+                              });
+
+
+    return log_tgt;
+}
+
+
+
 
 // Function that applies the Geyer Thompson algorithm for simulated tempering
 List changeBeta(arma::vec betavec,
