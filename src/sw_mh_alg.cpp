@@ -231,6 +231,36 @@ List swMH(List aList,
     NumericVector psihinge_store(nsims);
     NumericVector psiqps_store(nsims);
 
+    // List psi_store = List::create(
+    //     _["population"] = clone(energy_store),
+    //     _["splits"] = clone(energy_store),
+    //     _["multisplits"] = clone(energy_store),
+    //     _["segregation"] = clone(energy_store),
+    //     _["grp_pow"] = clone(energy_store),
+    //     _["grp_hinge"] = clone(energy_store),
+    //     _["compet"] = clone(energy_store),
+    //     _["status_quo"] = clone(energy_store),
+    //     _["incumbents"] = clone(energy_store),
+    //     _["polsby"] = clone(energy_store),
+    //     _["fry_hold"] = clone(energy_store),
+    //     _["log_st"] = clone(energy_store),
+    //     _["edges_removed"] = clone(energy_store),
+    //     _["qps"] = clone(energy_store),
+    //     _["custom"] = clone(energy_store)
+    // );
+    NumericVector psi_upd;
+    CharacterVector psi_names = CharacterVector::create(
+        "population", "splits", "multisplits",
+        "segregation", "grp_pow", "grp_hinge",
+        "compet", "status_quo", "incumbents",
+        "polsby", "fry_hold", "log_st", "edges_removed",
+        "qps", "custom"
+    );
+
+    NumericMatrix psi_store(psi_names.size(), nsims);
+    rownames(psi_store) = psi_names;
+    std::string name;
+
     // Store value of p, lambda, weights for all simulations
     NumericVector pparam_store(nsims);
 
@@ -318,6 +348,7 @@ List swMH(List aList,
                                          popvec,
                                          district_pops,
                                          constraints,
+                                         psi_names,
                                          grouppopvec,
                                          areas_vec,
                                          borderlength_mat,
@@ -407,6 +438,10 @@ List swMH(List aList,
             if(weight_qps != 0.0){
                 psiqps_store[k] = swap_partitions["qps_new_psi"];
             }
+
+            psi_upd = swap_partitions["new_psi"];
+
+
         }else{
             energy_store[k] = swap_partitions["energy_old"];
             if(weight_population != 0.0){
@@ -439,6 +474,13 @@ List swMH(List aList,
             if(weight_qps != 0.0){
                 psiqps_store[k] = swap_partitions["qps_old_psi"];
             }
+
+            psi_upd = swap_partitions["new_psi"];
+        }
+
+        for (int r = 0; r < psi_names.length(); r++) {
+            name = psi_names(r);
+            psi_store(r, k) = psi_upd[name];
         }
 
         /////////////////////////////////////////////////////////////
@@ -645,6 +687,7 @@ List swMH(List aList,
     out["pct_dist_parity"] = pct_dist_parity;
     out["nsims"] = nsims;
     out["adj"] = aList;
+    out["psi_store"] = psi_store;
     return out;
 
 }

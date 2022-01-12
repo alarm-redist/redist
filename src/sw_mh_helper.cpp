@@ -389,6 +389,7 @@ List make_swaps(List boundary_cc,
                 NumericVector pop_vec,
                 NumericVector cd_pop_vec,
                 List constraints,
+                CharacterVector psi_names,
                 NumericVector group_pop_vec,
                 NumericVector areas_vec,
                 arma::mat borderlength_mat,
@@ -472,40 +473,10 @@ List make_swaps(List boundary_cc,
   // Initialize metropolis-hastings probabilities
   double mh_prob = 1.0;
 
-  // constr-up
-  NumericVector old_psi = NumericVector::create(_["population"] = 0.0,
-                                                _["splits"] = 0.0,
-                                                _["multisplits"] = 0.0,
-                                                _["segregation"] = 0.0,
-                                                _["grp_pow"] = 0.0,
-                                                _["grp_hinge"] = 0.0,
-                                                _["compet"] = 0.0,
-                                                _["status_quo"] = 0.0,
-                                                _["incumbents"] = 0.0,
-                                                _["polsby"] = 0.0,
-                                                _["fry_hold"] = 0.0,
-                                                _["log_st"] = 0.0,
-                                                _["edges_removed"] = 0.0,
-                                                _["qps"] = 0.0,
-                                                _["custom"] = 0.0
-  );
-
-  NumericVector new_psi = NumericVector::create(_["population"] = 0.0,
-                                                _["splits"] = 0.0,
-                                                _["multisplits"] = 0.0,
-                                                _["segregation"] = 0.0,
-                                                _["grp_pow"] = 0.0,
-                                                _["grp_hinge"] = 0.0,
-                                                _["compet"] = 0.0,
-                                                _["status_quo"] = 0.0,
-                                                _["incumbents"] = 0.0,
-                                                _["polsby"] = 0.0,
-                                                _["fry_hold"] = 0.0,
-                                                _["log_st"] = 0.0,
-                                                _["edges_removed"] = 0.0,
-                                                _["qps"] = 0.0,
-                                                _["custom"] = 0.0
-  );
+  NumericVector old_psi(psi_names.size());
+  old_psi.names() = psi_names;
+  NumericVector new_psi(psi_names.size());
+  new_psi.names() = psi_names;
 
 
   double pop_new_psi = 0.0;
@@ -762,12 +733,12 @@ List make_swaps(List boundary_cc,
       accepted_partitions.push_back(prop_partitions(j));
     }
 
+    n_swaps++;
+
     // If we get enough partitions
     if(breakp == 1){
       break;
     }
-
-    n_swaps++;
 
   } // end loop over p
 
@@ -792,12 +763,10 @@ List make_swaps(List boundary_cc,
   arma::umat udistricts = conv_to<umat>::from(districts);
   arma::uvec pops = conv_to<arma::uvec>::from(as<arma::vec>(pop_vec));
 
-
   double test_new_energy = calc_gibbs_tgt(udistricts.col(0), ndists, nprec, swaps,
                                           new_psi, pops, constraints);
   double test_old_energy = calc_gibbs_tgt(udistricts.col(1), ndists, nprec, swaps,
                                           old_psi, pops, constraints);
-
 
   // County split metric
   if(weight_countysplit != 0.0){
@@ -844,14 +813,15 @@ List make_swaps(List boundary_cc,
 
   // Multiply mh_prob by constraint values
   double energy_new = weight_population * pop_new_psi + weight_compact * compact_new_psi
-    + weight_segregation * segregation_new_psi + weight_vra * vra_new_psi + weight_similar * similar_new_psi
-    + weight_countysplit * countysplit_new_psi + weight_partisan * partisan_new_psi +
-    weight_minority * minority_new_psi + weight_hinge * hinge_new_psi + weight_qps * qps_new_psi;
-    double energy_old = weight_population * pop_old_psi + weight_compact * compact_old_psi
+      + weight_segregation * segregation_new_psi + weight_vra * vra_new_psi + weight_similar * similar_new_psi
+      + weight_countysplit * countysplit_new_psi + weight_partisan * partisan_new_psi +
+      weight_minority * minority_new_psi + weight_hinge * hinge_new_psi + weight_qps * qps_new_psi;
+  double energy_old = weight_population * pop_old_psi + weight_compact * compact_old_psi
       + weight_segregation * segregation_old_psi + weight_vra * vra_old_psi + weight_similar * similar_old_psi
       + weight_countysplit * countysplit_old_psi + weight_partisan * partisan_old_psi +
       weight_minority * minority_old_psi + weight_hinge * hinge_old_psi + weight_qps * qps_old_psi;
-      mh_prob = (double)mh_prob * exp(-1.0 * beta * (energy_new - energy_old));
+
+  mh_prob = (double)mh_prob * exp(-1.0 * beta * (energy_new - energy_old));
 
       // Create returned list
       List out;
@@ -901,10 +871,10 @@ List make_swaps(List boundary_cc,
         out["qps_new_psi"] = qps_new_psi;
         out["qps_old_psi"] = qps_old_psi;
       }
-
+      out["new_psi"] = new_psi;
+      out["old_psi"] = old_psi;
 
       return out;
-
 }
 
 // Function to accept or reject swaps
@@ -955,12 +925,11 @@ double add_constraint(const std::string& name, List constraints,
         List constr_inst = constr[i];
         double strength = constr_inst["strength"];
         if (strength != 0) {
-            for(int dist = 0; dist < districts.size(); dist++){
+            for (int dist = 0; dist < districts.size(); dist++) {
                 psi = fn_constr(constr_inst, districts(dist));
                 psi_vec[name] = psi + psi_vec[name];
                 val += strength * (psi);
             }
-
         }
     }
     return val;
