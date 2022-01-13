@@ -9,6 +9,12 @@
 \alias{add_constr_incumbency}
 \alias{add_constr_splits}
 \alias{add_constr_multisplits}
+\alias{add_constr_population}
+\alias{add_constr_segregation}
+\alias{add_constr_polsby}
+\alias{add_constr_fry_hold}
+\alias{add_constr_log_st}
+\alias{add_constr_edges_rem}
 \alias{add_constr_custom}
 \title{Sampling constraints}
 \usage{
@@ -40,6 +46,24 @@ add_constr_splits(constr, strength, admin)
 
 add_constr_multisplits(constr, strength, admin)
 
+add_constr_population(constr, strength)
+
+add_constr_segregation(constr, strength, group_pop, total_pop = NULL)
+
+add_constr_polsby(constr, strength, perim_df)
+
+add_constr_fry_hold(
+  constr,
+  strength,
+  total_pop = NULL,
+  ssdmat = NULL,
+  denominator = 1
+)
+
+add_constr_log_st(constr, strength, admin)
+
+add_constr_edges_rem(constr, strength)
+
 add_constr_custom(constr, strength, fn)
 }
 \arguments{
@@ -62,6 +86,10 @@ add_constr_custom(constr, strength, fn)
 \item{dvote, rvote}{A vector of Democratic or Republican vote counts}
 
 \item{incumbents}{A vector of precinct indicess for incumbents}
+
+\item{admin}{A vector indicating administrative unit membership}
+
+\item{perim_df}{A dataframe output from `redist.prep.polsbypopper`}
 
 \item{fn}{A function}
 }

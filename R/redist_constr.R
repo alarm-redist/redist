@@ -297,6 +297,7 @@ add_constr_incumbency = function(constr, strength, incumbents) {
     add_to_constr(constr, "incumbency", new_constr)
 }
 
+#' @param admin A vector indicating administrative unit membership
 #' @rdname constraints
 #' @export
 add_constr_splits = function(constr, strength, admin) {
@@ -305,6 +306,9 @@ add_constr_splits = function(constr, strength, admin) {
     data <- attr(constr, "data")
 
     admin <- eval_tidy(enquo(admin), data)
+    if (is.null(admin)) {
+        cli_abort('{.arg admin} may not be {.val NULL}.')
+    }
     if (any(is.na(admin))) {
         cli_abort('{.arg admin} many not contain {.val NA}s.')
     }
@@ -325,9 +329,13 @@ add_constr_multisplits = function(constr, strength, admin) {
     data <- attr(constr, "data")
 
     admin <- eval_tidy(enquo(admin), data)
+    if (is.null(admin)) {
+        cli_abort('{.arg admin} may not be {.val NULL}.')
+    }
     if (any(is.na(admin))) {
         cli_abort('{.arg admin} many not contain {.val NA}s.')
     }
+
     admin <- redist.sink.plan(admin)
 
     new_constr = list(strength=strength,
@@ -335,6 +343,118 @@ add_constr_multisplits = function(constr, strength, admin) {
                       n = length(unique(admin)))
     add_to_constr(constr, "multisplits", new_constr)
 }
+
+#' @rdname constraints
+#' @export
+add_constr_population <- function(constr, strength) {
+  if (!inherits(constr, 'redist_constr')) cli_abort('Not a {.cls redist_constr} object')
+  if (strength <= 0) cli_warn('Nonpositive strength may lead to unexpected results.')
+  data <- attr(constr, 'data')
+
+  new_constr <- list(strength = strength)
+  add_to_constr(constr, 'population', new_constr)
+}
+
+#' @rdname constraints
+#' @export
+add_constr_segregation <- function(constr, strength, group_pop, total_pop = NULL) {
+    if (!inherits(constr, 'redist_constr')) cli_abort('Not a {.cls redist_constr} object')
+    if (strength <= 0) cli_warn('Nonpositive strength may lead to unexpected results.')
+    data <- attr(constr, 'data')
+
+    new_constr <- list(strength = strength,
+                      group_pop = eval_tidy(enquo(group_pop), data),
+                      total_pop = eval_tidy(enquo(total_pop), data))
+    if (is.null(new_constr$total_pop)) {
+        if (!is.null(attr(data, "pop_col"))) {
+            new_constr$total_pop = data[[attr(data, "pop_col")]]
+        } else {
+            cli_abort("{.arg total_pop} missing.")
+        }
+    }
+    if (is.null(new_constr$group_pop)) {
+        cli_abort("{.arg group_pop} missing.")
+    }
+
+    stopifnot(length(new_constr$group_pop) == nrow(data))
+    stopifnot(length(new_constr$total_pop) == nrow(data))
+    add_to_constr(constr, 'segregation', new_constr)
+}
+
+#' @param perim_df A dataframe output from `redist.prep.polsbypopper`
+#' @rdname constraints
+#' @export
+add_constr_polsby <- function(constr, strength, perim_df) {
+    if (!inherits(constr, 'redist_constr')) cli_abort('Not a {.cls redist_constr} object')
+    if (strength <= 0) cli_warn('Nonpositive strength may lead to unexpected results.')
+    data <- attr(constr, 'data')
+
+    areas <- st_area(data)
+
+    new_constr <- list(strength = strength,
+                       from = perim_df$origin,
+                       to = perim_df$touching,
+                       area = areas,
+                       perimeter = perim_df$edge)
+
+    add_to_constr(constr, 'polsby', new_constr)
+}
+
+#' @rdname constraints
+#' @export
+add_constr_fry_hold <- function(constr, strength, total_pop = NULL, ssdmat = NULL, denominator = 1) {
+    if (!inherits(constr, 'redist_constr')) cli_abort('Not a {.cls redist_constr} object')
+    if (strength <= 0) cli_warn('Nonpositive strength may lead to unexpected results.')
+    data <- attr(constr, 'data')
+
+    total_pop <- eval_tidy(enquo(total_pop), data)
+    if (is.null(total_pop)) {
+        if (!is.null(attr(data, "pop_col"))) {
+            total_pop <- data[[attr(data, "pop_col")]]
+        } else {
+            cli_abort("{.arg total_pop} missing.")
+        }
+    }
+    if (is.null(ssdmat)) {
+        ssdmat <- calcPWDh(sf::st_coordinates(sf::st_centroid(data)))
+    }
+
+    new_constr <- list(strength = strength,
+                       total_pop = total_pop,
+                       ssdmat = ssdmat,
+                       denominator = denominator)
+
+
+    add_to_constr(constr, 'fry_hold', new_constr)
+}
+
+#' @rdname constraints
+#' @export
+add_constr_log_st <- function(constr, strength, admin) {
+    if (!inherits(constr, 'redist_constr')) cli_abort('Not a {.cls redist_constr} object')
+    if (strength <= 0) cli_warn('Nonpositive strength may lead to unexpected results.')
+    data <- attr(constr, 'data')
+
+    areas <- st_area(data)
+
+    new_constr <- list(strength = strength,
+                       admin = admin)
+
+    add_to_constr(constr, 'log_st', new_constr)
+}
+
+#' @rdname constraints
+#' @export
+add_constr_edges_rem <- function(constr, strength) {
+    if (!inherits(constr, 'redist_constr')) cli_abort('Not a {.cls redist_constr} object')
+    if (strength <= 0) cli_warn('Nonpositive strength may lead to unexpected results.')
+    data <- attr(constr, 'data')
+
+    new_constr <- list(strength = strength)
+
+    add_to_constr(constr, 'edges_removed', new_constr)
+}
+
 
 #' @param fn A function
 #' @rdname constraints

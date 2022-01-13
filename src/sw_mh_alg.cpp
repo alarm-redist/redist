@@ -225,7 +225,7 @@ List swMH(List aList,
     CharacterVector psi_names = CharacterVector::create(
         "population", "splits", "multisplits",
         "segregation", "grp_pow", "grp_hinge",
-        "compet", "status_quo", "incumbents",
+        "compet", "status_quo", "incumbency",
         "polsby", "fry_hold", "log_st", "edges_removed",
         "qps", "custom"
     );
@@ -324,6 +324,7 @@ List swMH(List aList,
                                          psi_names,
                                          min_parity,
                                          max_parity,
+                                         parity,
                                          p,
                                          eprob,
                                          beta,

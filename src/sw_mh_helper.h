@@ -35,6 +35,7 @@ Rcpp::List make_swaps(Rcpp::List boundary_cc,
 		      CharacterVector psi_names,
 		      double minparity,
 		      double maxparity,
+		      double parity,
 		      int p,
 		      double eprob,
 		      double beta,
@@ -48,8 +49,7 @@ Rcpp::List changeBeta(arma::vec betavec,
 
 double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
                       IntegerVector districts, NumericVector &psi_vec, const uvec &pop,
-                      const Graph &g,
-                      List constraints);
+                      double parity, const Graph &g, List constraints);
 
 #endif
 
