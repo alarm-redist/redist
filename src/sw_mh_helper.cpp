@@ -737,9 +737,9 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
     if (constraints.size() == 0) return 0.0;
     double log_tgt = 0;
 
-    log_tgt += add_constraint("population", constraints, districts, psi_vec,
+    log_tgt += add_constraint("pop_dev", constraints, districts, psi_vec,
                               [&] (List l, int distr) -> double {
-                                  return eval_population(plan, distr,
+                                  return eval_pop_dev(plan, distr,
                                                          pop, parity);
                               });
 

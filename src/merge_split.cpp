@@ -154,9 +154,9 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
     if (constraints.size() == 0) return 0.0;
     double log_tgt = 0;
 
-    log_tgt += add_constraint("population", constraints, distr_1, distr_2,
+    log_tgt += add_constraint("pop_dev", constraints, distr_1, distr_2,
                               [&] (List l, int distr) -> double {
-                                  return eval_population(plan, distr,
+                                  return eval_pop_dev(plan, distr,
                                                          pop, parity);
                               });
 
@@ -219,18 +219,6 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
                                   return eval_fry_hold(plan, distr, as<uvec>(l["total_pop"]),
                                                        as<mat>(l["ssdmat"]),
                                                        as<double>(l["denominator"]));
-                              });
-
-    log_tgt += add_constraint("log_st", constraints, distr_1, distr_2,
-                              [&] (List l, int distr) -> double {
-                                  return eval_log_st(plan, g,
-                                                     as<uvec>(l["admin"]),
-                                                     n_distr);
-                              });
-
-    log_tgt += add_constraint("edges_removed", constraints, distr_1, distr_2,
-                              [&] (List l, int distr) -> double {
-                                  return eval_er(plan, g, n_distr);
                               });
 
     log_tgt += add_constraint("qps", constraints, distr_1, distr_2,

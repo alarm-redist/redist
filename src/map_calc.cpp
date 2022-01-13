@@ -204,7 +204,7 @@ double eval_fry_hold(const subview_col<uword> &districts, int distr,
 /*
  * Compute the population penalty for district `distr`
  */
-double eval_population(const subview_col<uword> &districts, int distr,
+double eval_pop_dev(const subview_col<uword> &districts, int distr,
                        const uvec &total_pop, double parity) {
     uvec idxs = find(districts == distr);
     double pop = sum(total_pop(idxs));
@@ -220,8 +220,8 @@ double eval_segregation(const subview_col<uword> &districts, int distr,
                         const uvec &grp_pop, const uvec &total_pop) {
 
     int T = sum(total_pop);
-    double pAll = (double)sum(grp_pop) / T;
-    double denom = (double)2 * T * pAll * (1 - pAll);
+    double pAll = (double) sum(grp_pop) / T;
+    double denom = (double) 2.0 * T * pAll * (1 - pAll);
 
     uvec idxs = find(districts == distr);
     double grp = sum(grp_pop(idxs));

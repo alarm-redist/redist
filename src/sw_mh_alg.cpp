@@ -191,7 +191,7 @@ List swMH(List aList,
 
     NumericVector psi_upd;
     CharacterVector psi_names = CharacterVector::create(
-        "population", "splits", "multisplits",
+        "pop_dev", "splits", "multisplits",
         "segregation", "grp_pow", "grp_hinge",
         "compet", "status_quo", "incumbency",
         "polsby", "fry_hold", "log_st", "edges_removed",

@@ -346,13 +346,13 @@ add_constr_multisplits = function(constr, strength, admin) {
 
 #' @rdname constraints
 #' @export
-add_constr_population <- function(constr, strength) {
+add_constr_pop_dev <- function(constr, strength) {
   if (!inherits(constr, 'redist_constr')) cli_abort('Not a {.cls redist_constr} object')
   if (strength <= 0) cli_warn('Nonpositive strength may lead to unexpected results.')
   data <- attr(constr, 'data')
 
   new_constr <- list(strength = strength)
-  add_to_constr(constr, 'population', new_constr)
+  add_to_constr(constr, 'pop_dev', new_constr)
 }
 
 #' @rdname constraints
@@ -384,12 +384,20 @@ add_constr_segregation <- function(constr, strength, group_pop, total_pop = NULL
 #' @param perim_df A dataframe output from `redist.prep.polsbypopper`
 #' @rdname constraints
 #' @export
-add_constr_polsby <- function(constr, strength, perim_df) {
+add_constr_polsby <- function(constr, strength, perim_df = NULL) {
     if (!inherits(constr, 'redist_constr')) cli_abort('Not a {.cls redist_constr} object')
     if (strength <= 0) cli_warn('Nonpositive strength may lead to unexpected results.')
     data <- attr(constr, 'data')
 
-    areas <- st_area(data)
+    if (!inherits(data, 'sf')) {
+        cli_abort('Input to {.fun redist_constr} must be a {.cls sf} object.')
+    }
+
+    areas <- sf::st_area(data)
+
+    if (is.null(perim_df)) {
+        perim_df <- redist.prep.polsbypopper(data)
+    }
 
     new_constr <- list(strength = strength,
                        from = perim_df$origin,
@@ -430,14 +438,14 @@ add_constr_fry_hold <- function(constr, strength, total_pop = NULL, ssdmat = NUL
 
 #' @rdname constraints
 #' @export
-add_constr_log_st <- function(constr, strength, admin) {
+add_constr_log_st <- function(constr, strength, admin = NULL) {
     if (!inherits(constr, 'redist_constr')) cli_abort('Not a {.cls redist_constr} object')
     if (strength <= 0) cli_warn('Nonpositive strength may lead to unexpected results.')
     data <- attr(constr, 'data')
 
     admin <- eval_tidy(enquo(admin), data)
     if (is.null(admin)) {
-        cli_abort('{.arg admin} may not be {.val NULL}.')
+        admin <- rep(1, nrow(data))
     }
     if (any(is.na(admin))) {
         cli_abort('{.arg admin} many not contain {.val NA}s.')

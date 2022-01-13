@@ -67,7 +67,7 @@ double eval_fry_hold(const subview_col<uword> &districts, int distr,
 /*
  * Compute the population penalty for district `distr`
  */
-double eval_population(const subview_col<uword> &districts, int distr,
+double eval_pop_dev(const subview_col<uword> &districts, int distr,
                        const uvec &total_pop, double parity);
 
 /*

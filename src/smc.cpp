@@ -152,9 +152,9 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
     for (int i = 0; i < N; i++) {
         if (constraints.size() == 0) continue;
 
-        lp[i] += add_constraint("population", constraints,
+        lp[i] += add_constraint("pop_dev", constraints,
                                   [&] (List l) -> double {
-                                      return eval_population(districts.col(i), distr_ctr,
+                                      return eval_pop_dev(districts.col(i), distr_ctr,
                                                              pop, parity);
                                   });
 
@@ -222,18 +222,6 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
                                                            as<uvec>(l["total_pop"]),
                                                            as<mat>(l["ssdmat"]),
                                                            as<double>(l["denominator"]));
-                                  });
-
-        lp[i] += add_constraint("log_st", constraints,
-                                  [&] (List l) -> double {
-                                      return eval_log_st(districts.col(i), g,
-                                                         as<uvec>(l["admin"]),
-                                                         n_distr);
-                                  });
-
-        lp[i] += add_constraint("edges_removed", constraints,
-                                  [&] (List l) -> double {
-                                      return eval_er(districts.col(i), g, n_distr);
                                   });
 
         lp[i] += add_constraint("qps", constraints,
