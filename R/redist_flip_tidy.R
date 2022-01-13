@@ -110,11 +110,6 @@
 #' a random initial plan will be generated using \code{redist_smc}. You can also
 #' request to initialize using \code{redist.rsg} by supplying 'rsg', though this is
 #' not recommended behavior.
-#' @param pop_tol The strength of the hard population
-#' constraint. \code{pop_tol} = 0.05 means that any proposed swap that
-#' brings a district more than 5\% away from population parity will be
-#' rejected. The default is \code{get_pop_tol(map)}. Providing an entry here ignores
-#' the \code{pop_tol} within the object provided to map.
 #' @param constraints A `redist_constr` object.
 #' @param nthin The amount by which to thin the Markov Chain. The
 #' default is \code{1}.
@@ -161,10 +156,11 @@
 #' @md
 #' @examples
 #' data(iowa)
-#' iowa_map <- redist_map(iowa, ndists = 4, existing_plan = cd_2010, total_pop = pop, pop_tol = 0.01)
+#' iowa_map <- redist_map(iowa, ndists = 4, existing_plan = cd_2010, total_pop = pop)
 #' sims <- redist_flip(map = iowa_map, nsims = 100)
 #'
-redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints = redist_constr(),
+redist_flip <- function(map, nsims, warmup = 0, init_plan,
+                        constraints = redist_constr(map) %>% add_constr_edges_rem(0.4),
                         nthin = 1, eprob = 0.05, lambda = 0, temper = FALSE,
                         betaseq = 'powerlaw', betaseqlength = 10, betaweights = NULL,
                         adapt_lambda = FALSE, adapt_eprob = FALSE, exact_mh = FALSE,
@@ -172,7 +168,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
   if (verbose) {
     ## Initialize ##
     cli::cli({
-    cli::cli_h1(cli::col_red("redist.flip()"))
+    cli::cli_h1(cli::col_red("redist_flip()"))
     cli::cli_h2(cli::col_red("Automated Redistricting Simulation Using Markov Chain Monte Carlo"))
     })
   }
@@ -322,4 +318,212 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
   }
 
   out
+}
+
+
+#' Flip MCMC Redistricting Simulator using Simulated Annealing
+#'
+#' \code{redist_flip_anneal} simulates congressional redistricting plans
+#' using Markov chain Monte Carlo methods coupled with simulated annealing.
+#'
+#' @param map A \code{\link{redist_map}} object.
+#' @param nsims The number of samples to draw, not including warmup.
+#' @param warmup The number of warmup samples to discard.
+#' @param init_plan A vector containing the congressional district labels
+#' of each geographic unit. The default is \code{NULL}. If not provided,
+#' a random initial plan will be generated using \code{redist_smc}. You can also
+#' request to initialize using \code{redist.rsg} by supplying 'rsg', though this is
+#' not recommended behavior.
+#' @param constraints A `redist_constr` object.
+#' @param num_hot_steps The number of steps to run the simulator at beta = 0.
+#' Default is 40000.
+#' @param num_annealing_steps The number of steps to run the simulator with
+#' linearly changing beta schedule. Default is 60000
+#' @param num_cold_steps The number of steps to run the simulator at beta = 1.
+#' Default is 20000.
+#' @param eprob The probability of keeping an edge connected. The
+#' default is \code{0.05}.
+#' @param lambda The parameter determining the number of swaps to attempt
+#' each iteration of the algorithm. The number of swaps each iteration is
+#' equal to Pois(\code{lambda}) + 1. The default is \code{0}.
+#' @param adapt_lambda Whether to adaptively tune the lambda parameter so that the Metropolis-Hastings
+#' acceptance probability falls between 20\% and 40\%. Default is FALSE.
+#' @param adapt_eprob Whether to adaptively tune the edgecut probability parameter so that the
+#' Metropolis-Hastings acceptance probability falls between 20\% and 40\%. Default is
+#' FALSE.
+#' @param exact_mh Whether to use the approximate (0) or exact (1)
+#' Metropolis-Hastings ratio calculation for accept-reject rule. Default is FALSE.
+#' @param verbose Whether to print initialization statement.
+#' Default is \code{TRUE}.
+#'
+#' @return redist_plans
+#'
+#' @concept simulate
+#' @export
+redist_flip_anneal <- function(map, init_plan = NULL,
+                               constraints = redist_constr(),
+                               num_hot_steps = 40000,
+                               num_annealing_steps = 60000,
+                               num_cold_steps = 20000,
+                               eprob = 0.05,
+                               lambda = 0,
+                               maxiterrsg = 5000,
+                               adapt_lambda = FALSE,
+                               adapt_eprob = FALSE,
+                               exact_mh = FALSE,
+                               verbose = TRUE){
+
+    if (verbose) {
+        ## Initialize ##
+        cli::cli({
+            cli::cli_h1(cli::col_red("redist_flip_anneal()"))
+            cli::cli_h2(cli::col_red("Automated Redistricting Simulation Using Markov Chain Monte Carlo"))
+        })
+    }
+    # process raw inputs
+    nprec <- nrow(map)
+    map <- validate_redist_map(map)
+    adj <- get_adj(map)
+    total_pop <- map[[attr(map, 'pop_col')]]
+    ndists <- attr(map, 'ndists')
+
+    if (any(total_pop >= get_target(map))) {
+        cli::cli_abort("Units ", which(total_pop >= get_target(map)),
+                       " have population larger than the district target.\n",
+                       "Redistricting impossible.")
+        }
+
+    # process constraints
+    if (!inherits(constraints, 'redist_constr')) {
+        cli::cli_abort('Not a {.cls redist_constr} object.')
+    }
+
+
+    if (!any(class(nthin) %in% c('numeric', 'integer'))) {
+        cli::cli_abort('nthin must be an integer')
+    } else if (nthin < 1) {
+        cli::cli_abort('nthin must be a nonnegative integer.')
+    } else {
+        nthin <- as.integer(nthin)
+    }
+
+    if (missing(pop_tol)) {
+        pop_tol <- get_pop_tol(map)
+    }
+
+    exist_name <- attr(map, 'existing_col')
+    if (missing(init_plan)) {
+        init_plan <- get_existing(map)
+
+        if (is.null(init_plan)) {
+            invisible(capture.output(init_plan <- redist_smc(map,
+                                                             nsims = 1,
+                                                             silent = TRUE
+            ), type = 'message'))
+            init_plan <- as.matrix(init_plan) - 1L
+
+            if (is.null(init_name)) {
+                init_name <- '<init>'
+            }
+
+        } else {
+            if (is.null(init_name)) init_name <- exist_name
+            init_plan <- redist.sink.plan(plan = init_plan)
+            components <- contiguity(adj, init_plan)
+            if (any(components > 1)) {
+                cli::cli_abort('init_plan does not point to a contiguous plan.')
+            }
+        }
+    }
+
+    adapt_lambda <- as.integer(adapt_lambda)
+    adapt_eprob <- as.integer(adapt_eprob)
+    exact_mh <- as.integer(exact_mh)
+
+    if (verbose) {
+        cli::cli_alert_info('Preprocessing data.')
+    }
+
+    ## ------------------
+    ## Preprocessing data
+    ## ------------------
+    if(verbose){
+        cat("Preprocessing data.\n\n")
+    }
+    preprocout <- redist.preproc(adj = adj, total_pop = total_pop,
+                                 init_plan = init_plan, ndists = ndists,
+                                 pop_tol = pop_tol,
+                                 temper = FALSE,
+                                 betaseq = "powerlaw", betaseqlength = 10,
+                                 betaweights = NULL,
+                                 adjswaps = TRUE, maxiterrsg = maxiterrsg,
+                                 verbose = verbose)
+
+
+    if(verbose){
+        cat("Starting swMH().\n")
+    }
+
+    algout <- swMH(aList = preprocout$data$adjlist,
+                   cdvec = preprocout$data$init_plan,
+                   popvec = preprocout$data$total_pop,
+                   constraints = as.list(constraints),
+                   nsims = 100,
+                   eprob = eprob,
+                   pct_dist_parity = preprocout$params$pctdistparity,
+                   beta_sequence = preprocout$params$betaseq,
+                   beta_weights = preprocout$params$betaweights,
+                   ssdmat = preprocout$data$ssdmat,
+                   lambda = lambda,
+                   beta = 0,
+                   adapt_beta = "annealing",
+                   adjswap = preprocout$params$adjswaps,
+                   exact_mh = exact_mh,
+                   adapt_lambda = adapt_lambda,
+                   adapt_eprob = adapt_eprob,
+                   num_hot_steps = num_hot_steps,
+                   num_annealing_steps = num_annealing_steps,
+                   num_cold_steps = num_cold_steps,
+                   verbose = as.logical(verbose))
+
+    algout$plans <- algout$plans + 1
+
+
+    out <- new_redist_plans(
+        plans = algout$plans,
+        map = map,
+        algorithm = 'flip_anneal',
+        wgt = NULL,
+        resampled = FALSE,
+        ndists = ndists,
+        lambda = lambda,
+        eprob = eprob,
+        pop_tol = pop_tol,
+        adapt_eprob = as.logical(adapt_eprob),
+        adapt_lambda = as.logical(adapt_lambda),
+        warmup = warmup,
+        nthin = nthin,
+        mh_acceptance = mean(algout$mhdecisions)
+    ) %>% mutate(
+        distance_parity = rep(algout$distance_parity, each = ndists),
+        mhdecisions = rep(algout$mhdecisions, each = ndists),
+        mhprob = rep(algout$mhprob, each = ndists),
+        pparam = rep(algout$pparam, each = ndists),
+        beta_sequence = rep(algout$beta_sequence, each = ndists),
+        energy_psi = rep(algout$energy_psi, each = ndists),
+        boundary_partitions = rep(algout$boundary_partitions, each = ndists),
+        boundary_ratio = rep(algout$boundary_partitions, each = ndists)
+    )
+    add_tb <- apply(algout$psi_store, 1, function(x) rep(x, each = ndists)) %>%
+        dplyr::as_tibble() %>%
+        dplyr::rename_with(function(x) paste0('constraint_', x))
+
+    names_tb <- names(add_tb)[apply(add_tb, 2, function(x){ !all(x == 0) })]
+    out <- bind_cols(out, select(add_tb, all_of(names_tb)))
+
+    if (!is.null(init_name) && !isFALSE(init_name)) {
+        out <- add_reference(out, init_plan, init_name)
+    }
+
+    out
 }

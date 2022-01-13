@@ -43,12 +43,11 @@ The `redist` package is designed to allow for replicable redistricting simulatio
 data(fl25)
 data(fl25_enum)
 plan <- fl25_enum$plans[, 7241]
-adj <- redist.adjacency(fl25)
+fl_map <- redist_map(fl25, existing_plan = plan, pop_tol = 0.1, total_pop = pop)
+constr <- redist_constr(fl_map) %>% 
+    add_constr_edges_rem(0.02)
 set.seed(1)
-sims <- redist.flip(adj = adj, init_plan = plan, total_pop = fl25$pop, 
-                    nsims = 6, pop_tol = 0.10, 
-                    constraint = 'compact', constraintweights = 0.02,
-                    compactness_metric = 'edges-removed')
+sims <- redist.flip(fl_map, nsims = 6, constraints = constr)
 ```
 
 The `flip` algorithm is one of the more straightforward redistricting algorithms. Beginning with an initial partition of a graph, it proposes flipping a node from one partition to an adjacent partition. By checking that the proposed flip meets basic constraints, such as keeping partitions contiguous and staying within a certain population parity, it ensures that all proposed new partitions are also valid partitions. The implementation within `redist` is a bit more advanced that this, as it allows for multiple flips and rejecting valid partitions based on a Metropolis Hastings algorithm. The following walks through the basics of this algorithm to provide an introduction to using `flip` correctly and efficiently.
@@ -61,11 +60,11 @@ Suppose we are redistricting this small map above on the left. To use the `flip`
 
 ```{r, echo = FALSE}
 redist.plot.adj(shp = fl25, plan = plan, plot_shp = FALSE, title = 'Initialization') +
-  redist.plot.adj(shp = fl25, plan = sims$plans[, 1], plot_shp = FALSE, title = 'First Iteration') +
-  redist.plot.adj(shp = fl25, plan = sims$plans[, 2], plot_shp = FALSE, title = 'Second Iteration') +
-  redist.plot.adj(shp = fl25, plan = sims$plans[, 3], plot_shp = FALSE, title = 'Third Iteration') +
-  redist.plot.adj(shp = fl25, plan = sims$plans[, 4], plot_shp = FALSE, title = 'Fourth Iteration') +
-  redist.plot.adj(shp = fl25, plan = sims$plans[, 5], plot_shp = FALSE, title = 'Fifth Iteration')
+  redist.plot.adj(shp = fl25, plan = get_plans_matrix(sims)[, 1], plot_shp = FALSE, title = 'First Iteration') +
+  redist.plot.adj(shp = fl25, plan = get_plans_matrix(sims)[, 2], plot_shp = FALSE, title = 'Second Iteration') +
+  redist.plot.adj(shp = fl25, plan = get_plans_matrix(sims)[, 3], plot_shp = FALSE, title = 'Third Iteration') +
+  redist.plot.adj(shp = fl25, plan = get_plans_matrix(sims)[, 4], plot_shp = FALSE, title = 'Fourth Iteration') +
+  redist.plot.adj(shp = fl25, plan = get_plans_matrix(sims)[, 5], plot_shp = FALSE, title = 'Fifth Iteration')
 ```
 
 While this map is extremely small, the five iterations give a basic idea of what is going on behind the scenes. At each iteration, it searches the boundary for possible swaps, selects one, and then accepts or rejects the proposals. With very weak constraints, like those used to create the above example, almost every swap is accepted. Even then, though, it doesn't guarantee that some iterations won't repeat other plans sampled. In fact, in the above, the second iteration is the same plan as the initialization.
@@ -105,13 +104,11 @@ To begin running the MCMC algorithm, we have to provide some basic information, 
 ```{r}
 data(iowa)
 redist.plot.map(iowa, plan = cd_2010)
+map_ia <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05)
 ```
 
 From there, we need to build an adjacency graph which identifies which counties are touching which other counties on a map. If you have an existing plan, it's generally advised to supply this to the optional `plan` argument to ensure that the existing plan is a valid, connected plan. If you get a warning, the [geomander R package](https://www.christophertkenny.com/geomander/) can help solve potential issues.
 
-```{r}
-adj <- redist.adjacency(shp = iowa, plan = iowa$cd_2010)
-```
 
 ```{r seed, include = FALSE}
 # set the seed so that within the vignette the results don't change
@@ -121,8 +118,7 @@ set.seed(1)
 In addition, we need population for each unit. We've included `iowa$pop` as the total population as of the 2010 Census. From there, we have the basic information that we need to run our first simulation. The below indicates that we are simulating 1000 plans (with `nsims`) for the state of Iowa that have at most a population parity deviation of 0.05 (with `pop_tol`).
 
 ```{r}
-sims <- redist.flip(adj = adj, total_pop = iowa$pop, init_plan = iowa$cd_2010,
-                    nsims = 100, pop_tol = 0.05)
+sims <- redist_flip(map_ia, nsims = 100, pop_tol = 0.05)
 ```
 
 The printed output can be silenced by setting `verbose = FALSE`, however it displays very important information. First, it displays when preprocessing begins and when the algorithm actually starts. Each 10% of the way through the `flip` algorithm, it outputs the current estimated Metropolis acceptance. Here, we've specified no Gibbs constraints, so the acceptance will always be near 100%.
@@ -133,25 +129,24 @@ The output is an object of class `redist`.
 class(sims)
 ```
 
-The `sims` object includes various pieces of information that were tracked while simulating, but we focus on `sims$plans`, which is a matrix that contains the plans.
+The `sims` object includes various pieces of information that were tracked while simulating, but we focus on `get_plans_matrix(sims)`, which is a matrix that contains the plans.
 
 ```{r}
-dim(sims$plans)
+dim(get_plans_matrix(sims))
 ```
 
 Checking the dimensions shows that each plan is saved as a column, where each row is a precinct. From this, we can extract a single plan as we would from a normal matrix, like below, where we plot the final simulated plan.
 
 ```{r}
-redist.plot.map(shp = iowa, plan = sims$plans[, 100])
+redist.plot.map(shp = iowa, plan = get_plans_matrix(sims)[, 100])
 ```
 
 Now, this plan is incredibly non-compact, which can be an issue. However, we should expect this type of outcome, as we didn't include a compactness constraint while simulating. Thus, the only things checked were contiguity and that no plan would be outside of the `pop_tol` set above. Since there are many more non-compact plans than compact plans in the space of all redistricting plans, we end up with highly non-compact districts. We can fix this by specifying a constraint, as below:
 
 ```{r}
-sims_comp <- redist.flip(adj = adj, total_pop = iowa$pop, init_plan = iowa$cd_2010,
-                         nsims = 100, pop_tol = 0.05,
-                         constraint = 'compact', constraintweights = 0.4,
-                         compactness_metric = 'edges-removed')
+constr <- redist_constr(map_ia) %>% add_constr_edges_rem(0.4)
+
+sims_comp <- redist_flip(map_ia, sims = 100, constraints = constr)
 ```
 
 The first arguments as the same, but this adds three key arguments. First, setting `constraint` to any combination of the nine implemented constraints allows us to specify the target distribution. Setting `constraintweights = 0.4` means that we want to put a relatively weak weight on the compactness, though a weak constraint still does a lot of work. There are four `compact` constraints implemented currently. The recommended is to use `edges-removed` because it can be calculated very quickly.
@@ -159,7 +154,7 @@ The first arguments as the same, but this adds three key arguments. First, setti
 If we plot the final map sampled from the above code, we can see that it is *far more* compact.
 
 ```{r}
-redist.plot.map(shp = iowa, plan = sims_comp$plans[, 100])
+redist.plot.map(shp = iowa, plan = get_plans_matrix(sims_comp)[, 100])
 ```
 
 [Back to top](#top)
@@ -179,11 +174,11 @@ nsims <- 100
 Here, we opt to initialize using the `RSG` algorithm, though the default is to use the `SMC` algorithm. When we want to initialize without providing an initial partition, we need to specify the number of districts, `ndists`.
 
 ```{r}
+constr <- redist_constr(map_ia) %>% add_constr_edges_rem(0.4)
+
 flip_chains <- lapply(1:nchains, function(x){
-  redist.flip(adj = adj,  total_pop = iowa$pop, pop_tol = 0.05,
-              nsims = nsims, init_plan = 'rsg', ndists = 4,
-              constraint = 'compact', constraintweights = 0.4,
-              compactness_metric = 'edges-removed', verbose = FALSE)
+  redist_flip(map_ia, nsims = nsims, init_plan = 'rsg', ndists = 4,
+              constraints = constr, verbose = FALSE)
 })
 ```
 
@@ -191,8 +186,7 @@ In Unix-based systems, this can be run considerably faster by running this in pa
 
 ```{r, eval=F}
 mcmc_chains <- parallel::mclapply(1:nchains, function(x){
-  redist.flip(adjobj = adjlist,  popvec = fl25$pop, 
-              nsims = nsims, ndists = 3)
+  redist.flip(fl_map, nsims)
 }, mc.set.seed = 1, mc.cores = parallel::detectCores())
 ```
 
@@ -351,8 +345,10 @@ The following highlights some advice on how to tune `flip` to make it work for y
 data(iowa)
 iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.02, total_pop = pop)
 
-cons <- flip_constraints_helper(map = iowa_map, constraint = c('compact', 'population'),
-                                constraintweight = c(0.5, 100))
+cons <- redist_constr(iowa_map) %>% 
+    add_constr_edges_rem(0.5) %>% 
+    add_constr_population(100)
+
 sims <- redist_flip(map = iowa_map,  nsims = 100)
 ```
 
@@ -425,11 +421,11 @@ First, you might want to add one at a time, generally starting with the compactn
 The other way to tune is to run a simulation with a kitchen sink type set up.
 
 ```{r}
-cons <- flip_constraints_helper(map = iowa_map,
-                                constraint = c('compact', 'population', 'partisan', 'countsplit'),
-                                constraintweight = c(0.25, 50, 10, 10),
-                                counties = name, 
-                                rvote = iowa$rep_08, dvote = iowa$dem_08)
+cons <- redist_constr(iowa_map) %>% 
+    add_constr_edges_rem(0.25) %>% 
+    add_constr_population(50) %>% 
+    add_constr_compet(10, rvote = rep_08, dvote = dem_08) %>% 
+    add_constr_splits(10, admin = region)
 ```
 
 Then we can run this for a relatively small number of iterations.
@@ -441,11 +437,12 @@ sims <- redist_flip(iowa_map, 100, constraints = cons)
 Now, the interesting this here is that adding more constraints actually increased the acceptance probability. This is because correlated constraints can guide the algorithm towards high probability neighborhoods where there are multiple maps which could be considered! To address this, we might want to increase the constraint weight slightly across the board. Had the weights been far too low, we might lower them, particularly on constraints that we are not too worried about.
 
 ```{r}
-cons <- flip_constraints_helper(map = iowa_map,
-                                constraint = c('compact', 'population', 'partisan', 'countsplit'),
-                                constraintweight = c(1.5, 100, 40, 20),
-                                counties = name, 
-                                rvote = iowa$rep_08, dvote = iowa$dem_08)
+cons <- cons <- redist_constr(iowa_map) %>% 
+    add_constr_edges_rem(1.5) %>% 
+    add_constr_population(100) %>% 
+    add_constr_compet(40, rvote = rep_08, dvote = dem_08) %>% 
+    add_constr_splits(20, admin = region)
+
 sims <- redist_flip(iowa_map, 100, constraints = cons)
 ```
 
