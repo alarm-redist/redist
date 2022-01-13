@@ -34,6 +34,7 @@ extern SEXP _redist_max_dev(SEXP, SEXP, SEXP);
 extern SEXP _redist_ms_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_n_removed(SEXP, SEXP, SEXP);
 extern SEXP _redist_plan_joint(SEXP, SEXP, SEXP);
+extern SEXP _redist_polsbypopper(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_pop_tally(SEXP, SEXP, SEXP);
 extern SEXP _redist_prec_cooccur(SEXP, SEXP);
 extern SEXP _redist_reduce_adj(SEXP, SEXP, SEXP);
@@ -42,6 +43,7 @@ extern SEXP _redist_renumber_matrix(SEXP, SEXP);
 extern SEXP _redist_rsg(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_smc_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_solve_hungarian(SEXP);
+extern SEXP _redist_splits(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_swMH(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_update_conncomp(SEXP, SEXP, SEXP);
 extern SEXP _redist_var_info_mat(SEXP, SEXP, SEXP);
@@ -74,6 +76,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_ms_plans",              (DL_FUNC) &_redist_ms_plans,              14},
     {"_redist_n_removed",             (DL_FUNC) &_redist_n_removed,              3},
     {"_redist_plan_joint",            (DL_FUNC) &_redist_plan_joint,             3},
+    {"_redist_polsbypopper",          (DL_FUNC) &_redist_polsbypopper,           6},
     {"_redist_pop_tally",             (DL_FUNC) &_redist_pop_tally,              3},
     {"_redist_prec_cooccur",          (DL_FUNC) &_redist_prec_cooccur,           2},
     {"_redist_reduce_adj",            (DL_FUNC) &_redist_reduce_adj,             3},
@@ -82,6 +85,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_rsg",                   (DL_FUNC) &_redist_rsg,                    6},
     {"_redist_smc_plans",             (DL_FUNC) &_redist_smc_plans,             19},
     {"_redist_solve_hungarian",       (DL_FUNC) &_redist_solve_hungarian,        1},
+    {"_redist_splits",                (DL_FUNC) &_redist_splits,                 4},
     {"_redist_swMH",                  (DL_FUNC) &_redist_swMH,                  44},
     {"_redist_update_conncomp",       (DL_FUNC) &_redist_update_conncomp,        3},
     {"_redist_var_info_mat",          (DL_FUNC) &_redist_var_info_mat,           3},

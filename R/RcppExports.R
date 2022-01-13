@@ -17,6 +17,10 @@ color_graph <- function(l, plan) {
     .Call(`_redist_color_graph`, l, plan)
 }
 
+polsbypopper <- function(from, to, area, perimeter, dm, nd) {
+    .Call(`_redist_polsbypopper`, from, to, area, perimeter, dm, nd)
+}
+
 genAlConn <- function(aList, cds) {
     .Call(`_redist_genAlConn`, aList, cds)
 }
@@ -149,6 +153,10 @@ k_biggest <- function(x, k = 1L) {
 
 smc_plans <- function(N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, lp, thresh, alpha, pop_temper = 0.1, final_infl = 1.0, verbosity = 1L) {
     .Call(`_redist_smc_plans`, N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, lp, thresh, alpha, pop_temper, final_infl, verbosity)
+}
+
+splits <- function(dm, community, nd, max_split) {
+    .Call(`_redist_splits`, dm, community, nd, max_split)
 }
 
 dist_cty_splits <- function(dm, community, nd) {

@@ -61,6 +61,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// polsbypopper
+NumericMatrix polsbypopper(IntegerVector from, IntegerVector to, NumericVector area, NumericVector perimeter, IntegerMatrix dm, int nd);
+RcppExport SEXP _redist_polsbypopper(SEXP fromSEXP, SEXP toSEXP, SEXP areaSEXP, SEXP perimeterSEXP, SEXP dmSEXP, SEXP ndSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type from(fromSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type to(toSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type area(areaSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type perimeter(perimeterSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type dm(dmSEXP);
+    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
+    rcpp_result_gen = Rcpp::wrap(polsbypopper(from, to, area, perimeter, dm, nd));
+    return rcpp_result_gen;
+END_RCPP
+}
 // genAlConn
 List genAlConn(List aList, NumericVector cds);
 RcppExport SEXP _redist_genAlConn(SEXP aListSEXP, SEXP cdsSEXP) {
@@ -479,6 +495,20 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type final_infl(final_inflSEXP);
     Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
     rcpp_result_gen = Rcpp::wrap(smc_plans(N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, lp, thresh, alpha, pop_temper, final_infl, verbosity));
+    return rcpp_result_gen;
+END_RCPP
+}
+// splits
+IntegerVector splits(IntegerMatrix dm, IntegerVector community, int nd, int max_split);
+RcppExport SEXP _redist_splits(SEXP dmSEXP, SEXP communitySEXP, SEXP ndSEXP, SEXP max_splitSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type dm(dmSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type community(communitySEXP);
+    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
+    Rcpp::traits::input_parameter< int >::type max_split(max_splitSEXP);
+    rcpp_result_gen = Rcpp::wrap(splits(dm, community, nd, max_split));
     return rcpp_result_gen;
 END_RCPP
 }
