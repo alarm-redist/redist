@@ -2,7 +2,7 @@
 % Please edit documentation in R/redist_mcmc.R
 \name{redist.combine}
 \alias{redist.combine}
-\title{Combine successive runs of \code{redist.flip}}
+\title{(Deprecated) Combine successive runs of \code{redist.flip}}
 \usage{
 redist.combine(savename, nloop, nthin, temper)
 }

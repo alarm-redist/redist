@@ -17,7 +17,7 @@
 #include "constraint_calc_helper.h"
 #include "redist_analysis.h"
 #include "tree_op.h"
-
+#include <cli/progress.h>
 
 using namespace Rcpp;
 
@@ -171,6 +171,7 @@ List swMH(List aList,
     int z = 0;
     // For printing progress
     int nsims_10pct = ceil((double)nsims / 10);
+    double mha;
 
     // Store outputted congressional districts
     NumericMatrix cd_store;
@@ -238,6 +239,7 @@ List swMH(List aList,
         Rcout << "---------------------------------" << std::endl;
     }
 
+    RObject bar = cli_progress_bar(nsims, cli_config(false));
     Graph g = list_to_graph(aList);
     // Open the simulations
     while(k < nsims){
@@ -410,16 +412,24 @@ List swMH(List aList,
             R_CheckUserInterrupt();
 
             if(verbose){
-                Rcout << (double)k / nsims_10pct * 10 << " percent done." << std::endl;
+                // Rcout << (double)k / nsims_10pct * 10 << " percent done." << std::endl;
                 if(adapt_lambda == 1){
                     Rcout << "Lambda: " << lambda << std::endl;
                 }
                 if(adapt_eprob == 1){
                     Rcout << "Edgecut Probability: " << eprob << std::endl;
                 }
-                Rcout << "Metropolis acceptance ratio: "<< (double)decision_counter / (k-1) << std::endl << std::endl;
+                // Rcout << "Metropolis acceptance ratio: "<< (double)decision_counter / (k-1) << std::endl << std::endl;
+                mha = decision_counter / (k - 1);
+                cli_progress_set_format(bar, "{cli::pb_bar} {cli::pb_percent} | ETA: {cli::pb_eta} | MH Acceptance: %.2f", mha);
             }
         }
+
+        if (verbose && CLI_SHOULD_TICK) {
+            cli_progress_set(bar, k);
+        }
+
+
         if(adapt_beta == "annealing"){
             if(verbose){
                 if(k == start_anneal){
@@ -458,6 +468,7 @@ List swMH(List aList,
         }
 
     }
+    cli_progress_done(bar);
 
     // Get distance from parity of each partition
     NumericVector dist_parity_vec;

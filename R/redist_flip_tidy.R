@@ -198,9 +198,8 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
     nthin <- as.integer(nthin)
   }
 
-  if (missing(pop_tol)) {
-    pop_tol <- get_pop_tol(map)
-  }
+  pop_tol <- get_pop_tol(map)
+
 
   exist_name <- attr(map, 'existing_col')
   if (missing(init_plan)) {
@@ -407,9 +406,9 @@ redist_flip_anneal <- function(map, init_plan = NULL,
         nthin <- as.integer(nthin)
     }
 
-    if (missing(pop_tol)) {
-        pop_tol <- get_pop_tol(map)
-    }
+
+     pop_tol <- get_pop_tol(map)
+
 
     exist_name <- attr(map, 'existing_col')
     if (missing(init_plan)) {
