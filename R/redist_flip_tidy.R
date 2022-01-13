@@ -379,18 +379,9 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
     boundary_partitions = rep(algout$boundary_partitions, each = ndists),
     boundary_ratio = rep(algout$boundary_partitions, each = ndists)
   )
-  add_tb <- tibble(
-    constraint_population = rep(algout$constraint_pop, each = ndists),
-    constraint_compact = rep(algout$constraint_compact, each = ndists),
-    constraint_segregation = rep(algout$constraint_segregation, each = ndists),
-    constraint_vra = rep(algout$constraint_vra, each = ndists),
-    constraint_similar = rep(algout$constraint_similar, each = ndists),
-    constraint_countysplit = rep(algout$constraint_countysplit, each = ndists),
-    constraint_partisan = rep(algout$constraint_partisan, each = ndists),
-    constraint_minority = rep(algout$constraint_minority, each = ndists),
-    constraint_hinge = rep(algout$constraint_hinge, each = ndists),
-    constraint_qps = rep(algout$constraint_qps, each = ndists)
-  )
+  add_tb <- apply(algout$psi_store, 1, function(x) rep(x, each = ndists)) %>%
+      dplyr::as_tibble() %>%
+      dplyr::rename_with(function(x) paste0('constraint_', x))
 
   names_tb <- names(add_tb)[apply(add_tb, 2, function(x){ !all(x == 0) })]
   out <- bind_cols(out, select(add_tb, all_of(names_tb)))

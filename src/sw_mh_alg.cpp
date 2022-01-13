@@ -220,34 +220,7 @@ List swMH(List aList,
 
     // Store value of psi for all constraints
     NumericVector energy_store(nsims);
-    NumericVector psipop_store(nsims);
-    NumericVector psicompact_store(nsims);
-    NumericVector psisegregation_store(nsims);
-    NumericVector psivra_store(nsims);
-    NumericVector psisimilar_store(nsims);
-    NumericVector psicountysplit_store(nsims);
-    NumericVector psipartisan_store(nsims);
-    NumericVector psiminority_store(nsims);
-    NumericVector psihinge_store(nsims);
-    NumericVector psiqps_store(nsims);
 
-    // List psi_store = List::create(
-    //     _["population"] = clone(energy_store),
-    //     _["splits"] = clone(energy_store),
-    //     _["multisplits"] = clone(energy_store),
-    //     _["segregation"] = clone(energy_store),
-    //     _["grp_pow"] = clone(energy_store),
-    //     _["grp_hinge"] = clone(energy_store),
-    //     _["compet"] = clone(energy_store),
-    //     _["status_quo"] = clone(energy_store),
-    //     _["incumbents"] = clone(energy_store),
-    //     _["polsby"] = clone(energy_store),
-    //     _["fry_hold"] = clone(energy_store),
-    //     _["log_st"] = clone(energy_store),
-    //     _["edges_removed"] = clone(energy_store),
-    //     _["qps"] = clone(energy_store),
-    //     _["custom"] = clone(energy_store)
-    // );
     NumericVector psi_upd;
     CharacterVector psi_names = CharacterVector::create(
         "population", "splits", "multisplits",
@@ -349,35 +322,11 @@ List swMH(List aList,
                                          district_pops,
                                          constraints,
                                          psi_names,
-                                         grouppopvec,
-                                         areas_vec,
-                                         borderlength_mat,
-                                         ssdmat,
-                                         county_membership,
-                                         cities,
                                          min_parity,
                                          max_parity,
                                          p,
                                          eprob,
                                          beta,
-                                         weight_population,
-                                         weight_compact,
-                                         weight_segregation,
-                                         weight_vra,
-                                         weight_similar,
-                                         weight_countysplit,
-                                         weight_partisan,
-                                         weight_minority,
-                                         weight_hinge,
-                                         weight_qps,
-                                         ssd_denom,
-                                         tgt_min,
-                                         tgt_other,
-                                         rvote,
-                                         dvote,
-                                         minorityprop,
-                                         compactness_measure,
-                                         partisan_measure,
                                          g);
 
         }while(as<int>(swap_partitions["goodprop"]) == 0);
@@ -408,73 +357,9 @@ List swMH(List aList,
         // Store betas
         if(decision == 1){
             energy_store[k] = swap_partitions["energy_new"];
-            if(weight_population != 0.0){
-                psipop_store[k] = swap_partitions["pop_new_psi"];
-            }
-            if(weight_compact != 0.0){
-                psicompact_store[k] = swap_partitions["compact_new_psi"];
-            }
-            if(weight_segregation != 0.0){
-                psisegregation_store[k] = swap_partitions["segregation_new_psi"];
-            }
-            if(weight_vra != 0.0){
-                psivra_store[k] = swap_partitions["vra_new_psi"];
-            }
-            if(weight_similar != 0.0){
-                psisimilar_store[k] = swap_partitions["similar_new_psi"];
-            }
-            if(weight_countysplit != 0.0){
-                psicountysplit_store[k] = swap_partitions["countysplit_new_psi"];
-            }
-            if(weight_partisan != 0.0){
-                psipartisan_store[k] = swap_partitions["partisan_new_psi"];
-            }
-            if(weight_minority != 0.0){
-                psiminority_store[k] = swap_partitions["minority_new_psi"];
-            }
-            if(weight_hinge != 0.0){
-                psihinge_store[k] = swap_partitions["hinge_new_psi"];
-            }
-            if(weight_qps != 0.0){
-                psiqps_store[k] = swap_partitions["qps_new_psi"];
-            }
-
             psi_upd = swap_partitions["new_psi"];
-
-
         }else{
             energy_store[k] = swap_partitions["energy_old"];
-            if(weight_population != 0.0){
-                psipop_store[k] = swap_partitions["pop_old_psi"];
-            }
-            if(weight_compact != 0.0){
-                psicompact_store[k] = swap_partitions["compact_old_psi"];
-            }
-            if(weight_segregation != 0.0){
-                psisegregation_store[k] = swap_partitions["segregation_old_psi"];
-            }
-            if(weight_vra != 0.0){
-                psivra_store[k] = swap_partitions["vra_old_psi"];
-            }
-            if(weight_similar != 0.0){
-                psisimilar_store[k] = swap_partitions["similar_old_psi"];
-            }
-            if(weight_countysplit != 0.0){
-                psicountysplit_store[k] = swap_partitions["countysplit_old_psi"];
-            }
-            if(weight_partisan != 0.0){
-                psipartisan_store[k] = swap_partitions["partisan_old_psi"];
-            }
-            if(weight_minority != 0.0){
-                psiminority_store[k] = swap_partitions["minority_old_psi"];
-            }
-            if(weight_hinge != 0.0){
-                psihinge_store[k] = swap_partitions["hinge_old_psi"];
-            }
-            if(weight_qps != 0.0){
-                psiqps_store[k] = swap_partitions["qps_old_psi"];
-            }
-
             psi_upd = swap_partitions["new_psi"];
         }
 
@@ -633,27 +518,11 @@ List swMH(List aList,
         out["pparam"] = pparam_store;
         out["beta_sequence"] = betaseq_store;
         out["energy_psi"] = energy_store;
-        out["constraint_pop"] = psipop_store;
-        out["constraint_compact"] = psicompact_store;
-        out["constraint_segregation"] = psisegregation_store;
-        out["constraint_vra"] = psivra_store;
-        out["constraint_similar"] = psisimilar_store;
-        out["constraint_countysplit"] = psicountysplit_store;
-        out["constraint_partisan"] = psipartisan_store;
-        out["constraint_minority"] = psiminority_store;
-        out["constraint_hinge"] = psihinge_store;
-        out["constraint_qps"] = psiqps_store;
         out["boundary_partitions"] = boundarypartitions_store;
         out["boundaryratio"] = boundaryratio_store;
         if(adapt_beta == "tempering"){
             out["mhdecisions_beta"] = decision_betaseq_store;
             out["mhprob_beta"] = mhprob_betaseq_store;
-        }
-        if(adapt_eprob == 1){
-            out["final_eprob"] = eprob;
-        }
-        if(adapt_lambda == 1){
-            out["final_lambda"] = lambda;
         }
     }else{
         out["plans"] = cdvec;
@@ -664,25 +533,17 @@ List swMH(List aList,
         out["pparam"] = pparam_store[k-1];
         out["beta_sequence"] = betaseq_store[k-1];
         out["energy_psi"] = energy_store[k-1];
-        out["constraint_pop"] = psipop_store[k-1];
-        out["constraint_compact"] = psicompact_store[k-1];
-        out["constraint_segregation"] = psisegregation_store[k-1];
-        out["constraint_vra"] = psivra_store[k-1];
-        out["constraint_similar"] = psisimilar_store[k-1];
-        out["constraint_countysplit"] = psicountysplit_store[k-1];
-        out["constraint_partisan"] = psipartisan_store[k-1];
-        out["constraint_minority"] = psiminority_store[k-1];
-        out["constraint_hinge"] = psihinge_store[k-1];
-        out["constraint_qps"] = psiqps_store[k-1];
         out["boundary_partitions"] = boundarypartitions_store[k-1];
         out["boundaryratio"] = boundaryratio_store[k-1];
-        if(adapt_eprob == 1){
-            out["final_eprob"] = eprob;
-        }
-        if(adapt_lambda == 1){
-            out["final_lambda"] = lambda;
-        }
     }
+
+    if(adapt_eprob == 1){
+        out["final_eprob"] = eprob;
+    }
+    if(adapt_lambda == 1){
+        out["final_lambda"] = lambda;
+    }
+
     out["algorithm"] = "mcmc";
     out["pct_dist_parity"] = pct_dist_parity;
     out["nsims"] = nsims;
