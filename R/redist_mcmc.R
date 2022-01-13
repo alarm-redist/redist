@@ -44,6 +44,7 @@ combine.par.anneal <- function(a, b){
 #' of each geographic unit. If not provided, random and contiguous congressional
 #' district assignments will be generated using \code{redist_smc}. To use the old
 #' behavior of generating with \code{redist.rsg}, provide init_plan = 'rsg'.
+#' @param constraints A `redist_constr` list of constraints
 #' @param num_hot_steps The number of steps to run the simulator at beta = 0.
 #' Default is 40000.
 #' @param num_annealing_steps The number of steps to run the simulator with
@@ -111,6 +112,7 @@ redist.flip.anneal <- function(adj,
                                total_pop,
                                ndists = NULL,
                                init_plan = NULL,
+                               constraints = redist_constr(),
                                num_hot_steps = 40000, num_annealing_steps = 60000,
                                num_cold_steps = 20000,
                                eprob = 0.05,
@@ -130,8 +132,6 @@ redist.flip.anneal <- function(adj,
                                savename = NULL, verbose = TRUE,
                                ncores = 1, tgt_min = 0.55, tgt_other = 0.25, rvote = NULL,
                                dvote = NULL, minorityprop = NULL, cities = NULL){
-
-    contiguitymap <- 'rooks'
 
     if(verbose){
         ## Initialize ##
@@ -155,15 +155,6 @@ redist.flip.anneal <- function(adj,
     if(is.null(ndists) & is.null(init_plan) || is.null(ndists) & is.character(init_plan) ){
         stop("Please provide either the desired number of congressional districts
               or an initial set of congressional district assignments")
-    }
-    if(!(contiguitymap %in% c("queens", "rooks"))){
-        stop("Please supply `queens` or `rooks` for a distance criteria")
-    }
-    if(!is.null(constraint) & is.null(constraintweights)){
-        stop("Please provide a weight value in 'constraintweights' for each constraint specified in 'constraint'.")
-    }
-    if(!(compactness_metric %in% c("fryer-holden", "polsby-popper", "edges-removed"))){
-        stop("We only support 'fryer-holden', 'polsby-popper', or 'edges-removed' as compactness metrics.")
     }
 
     ## Set seed before first iteration of algorithm if provided by user
@@ -196,40 +187,14 @@ redist.flip.anneal <- function(adj,
     preprocout <- redist.preproc(adj = adj, total_pop = total_pop,
                                  init_plan = init_plan, ndists = ndists,
                                  pop_tol = pop_tol,
-                                 counties = counties,
-                                 cities = cities,
-                                 group_pop = group_pop,
-                                 areasvec = areasvec,
-                                 borderlength_mat = borderlength_mat,
-                                 ssdmat = ssdmat,
-                                 compactness_metric = compactness_metric,
                                  temper = FALSE,
                                  constraint = constraint,
                                  constraintweights = constraintweights,
                                  betaseq = "powerlaw", betaseqlength = 10,
                                  betaweights = NULL,
                                  adjswaps = TRUE, maxiterrsg = maxiterrsg,
-                                 contiguitymap = contiguitymap,
-                                 tgt_min = tgt_min,
-                                 tgt_other = tgt_other,
-                                 rvote = rvote,
-                                 dvote = dvote,
-                                 minorityprop = minorityprop,
-                                 partisan_metric = partisan_metric,
                                  verbose = verbose)
 
-
-    ## Set betas - if tempering, modified later
-    weightpop <- preprocout$params$weightpop
-    weightcompact <- preprocout$params$weightcompact
-    weightseg <- preprocout$params$weightseg
-    weightvra <- preprocout$params$weightvra
-    weightsimilar <- preprocout$params$weightsimilar
-    weightcountysplit <- preprocout$params$weightcountysplit
-    weightpartisan <- preprocout$params$weightpartisan
-    weightminority <- preprocout$params$weightminority
-    weighthinge <- preprocout$params$weighthinge
-    weightqps <- preprocout$params$weightqps
 
     if(verbose){
         cat("Starting swMH().\n")
@@ -237,14 +202,8 @@ redist.flip.anneal <- function(adj,
 
     algout <- swMH(aList = preprocout$data$adjlist,
                    cdvec = preprocout$data$init_plan,
-                   cdorigvec = preprocout$data$init_plan,
                    popvec = preprocout$data$total_pop,
-                   constraints = list(),
-                   grouppopvec = preprocout$data$group_pop,
-                   areas_vec = preprocout$data$areasvec,
-                   county_membership = preprocout$data$counties,
-                   cities = preprocout$data$cities,
-                   borderlength_mat = preprocout$data$borderlength_mat,
+                   constraints = as.list(constraints),
                    nsims = 100,
                    eprob = eprob,
                    pct_dist_parity = preprocout$params$pctdistparity,
@@ -253,28 +212,11 @@ redist.flip.anneal <- function(adj,
                    ssdmat = preprocout$data$ssdmat,
                    lambda = lambda,
                    beta = 0,
-                   weight_population = weightpop,
-                   weight_compact = weightcompact,
-                   weight_segregation = weightseg,
-                   weight_vra = weightvra,
-                   weight_similar = weightsimilar,
-                   weight_countysplit = weightcountysplit,
-                   weight_partisan = weightpartisan,
-                   weight_minority = weightminority,
-                   weight_hinge = weighthinge,
-                   weight_qps = weightqps,
                    adapt_beta = "annealing",
                    adjswap = preprocout$params$adjswaps,
                    exact_mh = exact_mh,
                    adapt_lambda = adapt_lambda,
                    adapt_eprob = adapt_eprob,
-                   compactness_measure = compactness_metric,
-                   partisan_measure = preprocout$params$partisan_metricpartisan_metric,
-                   tgt_min = tgt_min,
-                   tgt_other = tgt_other,
-                   rvote = preprocout$params$rvote,
-                   dvote = preprocout$params$dvote,
-                   minorityprop = preprocout$params$minorityprop,
                    num_hot_steps = num_hot_steps,
                    num_annealing_steps = num_annealing_steps,
                    num_cold_steps = num_cold_steps,
@@ -577,6 +519,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' of each geographic unit. If not provided, random and contiguous congressional
 #' district assignments will be generated using \code{redist_smc}. To use the old
 #' behavior of generating with \code{redist.rsg}, provide init_plan = 'rsg'.
+#' @param constraints A `redist_constr` list.
 #' @param loopscompleted Number of save points reached by the
 #' algorithm. The default is \code{0}.
 #' @param nloop The total number of save points for the algorithm. The
@@ -732,7 +675,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' @export
 redist.flip <- function(adj,
                         total_pop,  nsims, ndists = NULL,
-                        init_plan = NULL,
+                        init_plan = NULL, constraints = redist_constr(),
                         loopscompleted = 0, nloop = 1,
                         warmup = 0, nthin = 1, eprob = 0.05,
                         lambda = 0,
@@ -753,7 +696,6 @@ redist.flip <- function(adj,
                         verbose = TRUE, tgt_min = 0.55, tgt_other = 0.25,
                         rvote = NULL, dvote = NULL, minorityprop = NULL, cities = NULL){
 
-    contiguitymap <- 'rooks'
 
     if(verbose){
         ## Initialize ##
@@ -783,15 +725,6 @@ redist.flip <- function(adj,
     }
     if(nloop > 1 & missing(savename)){
         stop("Please supply save directory if saving simulations at checkpoints")
-    }
-    if(!(contiguitymap %in% c("queens", "rooks"))){
-        stop("Please supply `queens` or `rooks` for a distance criteria")
-    }
-    if(!is.null(constraint) & is.null(constraintweights)){
-        stop("Please provide a weight value in 'constraintweights' for each constraint specified in 'constraint'.")
-    }
-    if(!(compactness_metric %in% c("fryer-holden", "polsby-popper", 'edges-removed'))){
-        stop("We only support 'fryer-holden', 'polsby-popper', or 'edges-removed' as compactness metrics.")
     }
 
     ## Set seed before first iteration of algorithm if provided by user
@@ -826,42 +759,15 @@ redist.flip <- function(adj,
                                  init_plan = init_plan,
                                  ndists = ndists,
                                  pop_tol = pop_tol,
-                                 counties = counties,
-                                 cities = cities,
-                                 group_pop = group_pop,
-                                 areasvec = areasvec,
-                                 borderlength_mat = borderlength_mat,
-                                 ssdmat = ssdmat,
-                                 compactness_metric = compactness_metric,
-                                 partisan_metric = partisan_metric,
                                  temper = temper,
-                                 constraint = constraint,
-                                 constraintweights = constraintweights,
                                  betaseq = betaseq,
                                  betaseqlength = betaseqlength,
                                  betaweights = betaweights,
                                  adjswaps = adjswaps,
                                  maxiterrsg = maxiterrsg,
-                                 contiguitymap = contiguitymap,
-                                 tgt_min = tgt_min,
-                                 tgt_other = tgt_other,
-                                 rvote = rvote,
-                                 dvote = dvote,
-                                 minorityprop = minorityprop,
                                  verbose = verbose
                                  )
 
-    ## Set betas - if tempering, modified later
-    weightpop <- preprocout$params$weightpop
-    weightcompact <- preprocout$params$weightcompact
-    weightseg <- preprocout$params$weightseg
-    weightvra <- preprocout$params$weightvra
-    weightsimilar <- preprocout$params$weightsimilar
-    weightcountysplit <- preprocout$params$weightcountysplit
-    weightpartisan <- preprocout$params$weightpartisan
-    weightminority <- preprocout$params$weightminority
-    weighthinge <- preprocout$params$weighthinge
-    weightqps <- preprocout$params$weightqps
 
     ## Get starting loop value
     loopstart <- loopscompleted + 1
@@ -922,45 +828,20 @@ redist.flip <- function(adj,
         }
         algout <- swMH(aList = preprocout$data$adjlist,
                        cdvec = cds,
-                       cdorigvec = preprocout$data$init_plan,
                        popvec = preprocout$data$total_pop,
-                       constraints = list(),
-                       grouppopvec = preprocout$data$group_pop,
-                       areas_vec = preprocout$data$areasvec,
-                       county_membership = preprocout$data$counties,
-                       cities = preprocout$data$cities,
-                       borderlength_mat = preprocout$data$borderlength_mat,
+                       constraints = constraints,
                        nsims = nsims * nthin + warmup,
                        eprob = eprob,
                        pct_dist_parity = preprocout$params$pctdistparity,
                        beta_sequence = preprocout$params$betaseq,
                        beta_weights = preprocout$params$betaweights,
-                       ssdmat = preprocout$data$ssdmat,
                        lambda = lambda,
                        beta = preprocout$params$beta,
-                       weight_population = weightpop,
-                       weight_compact = weightcompact,
-                       weight_segregation = weightseg,
-                       weight_vra = weightvra,
-                       weight_similar = weightsimilar,
-                       weight_countysplit = weightcountysplit,
-                       weight_partisan = weightpartisan,
-                       weight_minority = weightminority,
-                       weight_hinge = weighthinge,
-                       weight_qps = weightqps,
                        adapt_beta = preprocout$params$temperbeta,
                        adjswap = preprocout$params$adjswaps,
                        exact_mh = exact_mh,
                        adapt_lambda = adapt_lambda,
                        adapt_eprob = adapt_eprob,
-                       compactness_measure = compactness_metric,
-                       partisan_measure = preprocout$params$partisan_metric,
-                       ssd_denom = ssd_denom,
-                       tgt_min = tgt_min,
-                       tgt_other = tgt_other,
-                       rvote = preprocout$params$rvote,
-                       dvote = preprocout$params$dvote,
-                       minorityprop = preprocout$params$minorityprop,
                        verbose = as.logical(verbose))
 
         class(algout) <- "redist"

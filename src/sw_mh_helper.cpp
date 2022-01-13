@@ -385,7 +385,6 @@ int draw_p(int lambda)
 List make_swaps(List boundary_cc,
                 List aList,
                 NumericVector cds_old,
-                NumericVector cds_orig,
                 NumericVector pop_vec,
                 NumericVector cd_pop_vec,
                 List constraints,
@@ -405,8 +404,6 @@ List make_swaps(List boundary_cc,
    aList: full adjacency list
 
    cds_old: Current cong district assignments
-
-   cds_orig: original cong district assignments. For similarity constraint
 
    pop_vec: unit populations
 

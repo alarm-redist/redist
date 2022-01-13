@@ -28,7 +28,6 @@ int draw_p(int lambda);
 Rcpp::List make_swaps(Rcpp::List boundary_cc,
 		      Rcpp::List aList,
 		      Rcpp::NumericVector cds_old,
-		      Rcpp::NumericVector cds_orig,
 		      Rcpp::NumericVector pop_vec,
 		      Rcpp::NumericVector cd_pop_vec,
 		      Rcpp::List constraints,

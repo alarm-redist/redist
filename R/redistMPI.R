@@ -139,20 +139,10 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
     preprocout <- redist.preproc(adj = adj, total_pop = total_pop,
                                  init_plan = init_plan, ndists = ndists,
                                  pop_tol = pop_tol,
-                                 group_pop = group_pop,
-                                 areasvec = areasvec,
-                                 borderlength_mat = borderlength_mat,
-                                 counties = counties,
-                                 cities = cities,
-                                 ssdmat = ssdmat,
-                                 compactness_metric = compactness_metric,
                                  temper = FALSE,
-                                 constraint = constraint,
-                                 constraintweights = constraintweights,
                                  betaseq = NULL, betaweights = NULL,
                                  adjswaps = adjswaps,
-                                 maxiterrsg = maxiterrsg,
-                                 contiguitymap = contiguitymap)
+                                 maxiterrsg = maxiterrsg)
 
     ## Set betas - if tempering, modified later
     beta <- params$beta
@@ -266,35 +256,20 @@ ecutsMPI <- function(procID = procID, params = params, adj = adj, total_pop = to
             ## Run algorithm
             temp <- swMH(aList = preprocout$data$adjlist,
                          cdvec = cds,
-                         cdorigvec = preprocout$data$init_plan,
                          popvec = preprocout$data$total_pop,
                          constraints = list(),
-                         grouppopvec = preprocout$data$group_pop,
-                         areas_vec = preprocout$data$areasvec,
-                         county_membership = preprocout$data$counties,
-                         cities = preprocout$data$cities,
-                         borderlength_mat = preprocout$data$borderlength_mat,
                          nsims = nsimsAdj[j],
                          eprob = eprob,
                          pct_dist_parity = preprocout$params$pctdistparity,
                          beta_sequence = preprocout$params$betaseq,
                          beta_weights = preprocout$params$betaweights,
-                         ssdmat = preprocout$data$ssdmat,
                          lambda = lambda,
                          beta = beta,
-                         weight_population = weightpop,
-                         weight_compact = weightcompact,
-                         weight_vra = weightvra,
-                         weight_similar = weightsimilar,
-                         weight_countysplit = weightcountysplit,
-                         weight_hinge = weighthinge,
-                         weight_qps = weightqps,
                          adapt_beta = "none",
                          adjswap = preprocout$params$adjswaps,
                          exact_mh = 0,
                          adapt_eprob = 0,
-                         adapt_lambda = 0,
-                         compactness_measure = compactness_metric)
+                         adapt_lambda = 0)
 
             ## Combine data
             algout <- ecutsAppend(algout,temp)

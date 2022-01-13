@@ -10,7 +10,7 @@ redist_flip(
   warmup = 0,
   init_plan,
   pop_tol,
-  constraints = list(),
+  constraints = redist_constr(),
   nthin = 1,
   eprob = 0.05,
   lambda = 0,
@@ -23,8 +23,7 @@ redist_flip(
   exact_mh = FALSE,
   adjswaps = TRUE,
   init_name = NULL,
-  verbose = TRUE,
-  cl = redist_cosntr()
+  verbose = TRUE
 )
 }
 \arguments{
@@ -46,8 +45,7 @@ brings a district more than 5\\% away from population parity will be
 rejected. The default is \code{get_pop_tol(map)}. Providing an entry here ignores
 the \code{pop_tol} within the object provided to map.}
 
-\item{constraints}{a list of constraints to implement. Can be created with
-\code{flip_constraints_helper}}
+\item{constraints}{A \code{redist_constr} object.}
 
 \item{nthin}{The amount by which to thin the Markov Chain. The
 default is \code{1}.}
@@ -90,8 +88,6 @@ the initial plan in the output.  Defaults to the column name of the
 existing plan, or "\code{<init>}" if the initial plan is sampled.}
 
 \item{verbose}{Whether to print initialization statement. Default is \code{TRUE}.}
-
-\item{cl}{constraint list for testing}
 }
 \value{
 A \code{\link{redist_plans}} object containing the simulated plans.

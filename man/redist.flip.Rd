@@ -10,6 +10,7 @@ redist.flip(
   nsims,
   ndists = NULL,
   init_plan = NULL,
+  constraints,
   loopscompleted = 0,
   nloop = 1,
   warmup = 0,
@@ -63,6 +64,8 @@ unit}
 of each geographic unit. If not provided, random and contiguous congressional
 district assignments will be generated using \code{redist_smc}. To use the old
 behavior of generating with \code{redist.rsg}, provide init_plan = 'rsg'.}
+
+\item{constraints}{A `redist_constr` list.}
 
 \item{loopscompleted}{Number of save points reached by the
 algorithm. The default is \code{0}.}

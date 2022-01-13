@@ -15,6 +15,7 @@
 \alias{add_constr_fry_hold}
 \alias{add_constr_log_st}
 \alias{add_constr_edges_rem}
+\alias{add_constr_qps}
 \alias{add_constr_custom}
 \title{Sampling constraints}
 \usage{
@@ -64,6 +65,8 @@ add_constr_log_st(constr, strength, admin)
 
 add_constr_edges_rem(constr, strength)
 
+add_constr_qps(constr, strength, cities, total_pop = NULL)
+
 add_constr_custom(constr, strength, fn)
 }
 \arguments{
@@ -90,6 +93,8 @@ add_constr_custom(constr, strength, fn)
 \item{admin}{A vector indicating administrative unit membership}
 
 \item{perim_df}{A dataframe output from `redist.prep.polsbypopper`}
+
+\item{cities}{A vector containing zero entries for non-cities and non-zero entries for each city for `qps`.}
 
 \item{fn}{A function}
 }

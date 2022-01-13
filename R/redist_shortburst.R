@@ -75,7 +75,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
                              max_bursts=500L, maximize=TRUE, init_plan=NULL,
                              counties=NULL, compactness=1, adapt_k_thresh=0.975,
                              return_all=TRUE, backend="mergesplit",
-                             flip_lambda = 0, flip_eprob = 0.05, flip_constraints = list(),
+                             flip_lambda = 0, flip_eprob = 0.05, flip_constraints = redist_constr(map),
                              verbose=TRUE) {
 
     map = validate_redist_map(map)
@@ -163,25 +163,16 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
                      list(), 1.0, k, verbosity=0)$plans[, -1L]
         }
     } else {
-        flip_constraints <- process_flip_constr(constraints = flip_constraints,
-                                                nrow(map))
+        if (!inherits(flip_constraints, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
 
         if (flip_eprob <= 0 || flip_eprob >= 1) {
-            stop("flip_eprob must be in the interval (0, 1).")
+            cli_abort("{.arg flip_eprob} must be in the interval (0, 1).")
         }
         if (flip_lambda < 0) {
-            stop("flip_lambda must be a nonnegative integer.")
+            cli_abort("{.arg flip_lambda} must be a nonnegative integer.")
         }
 
-        if (all(flip_constraints$similarity$plan == 1)) {
-          if (min(init_plan) == 1) {
-            flip_constraints$similarity$plan <- init_plan - 1
-          } else {
-            flip_constraints$similarity$plan <- init_plan
-          }
-        }
-
-        run_burst <- function(init) {
+         run_burst <- function(init) {
             skinny_flips(adj = adj, init_plan = init, total_pop = pop,
                         pop_tol = pop_tol, nsims = burst_size,
                         eprob = flip_eprob, lambda = flip_lambda,

@@ -435,7 +435,15 @@ add_constr_log_st <- function(constr, strength, admin) {
     if (strength <= 0) cli_warn('Nonpositive strength may lead to unexpected results.')
     data <- attr(constr, 'data')
 
-    areas <- st_area(data)
+    admin <- eval_tidy(enquo(admin), data)
+    if (is.null(admin)) {
+        cli_abort('{.arg admin} may not be {.val NULL}.')
+    }
+    if (any(is.na(admin))) {
+        cli_abort('{.arg admin} many not contain {.val NA}s.')
+    }
+
+    admin <- redist.sink.plan(admin)
 
     new_constr <- list(strength = strength,
                        admin = admin)
@@ -455,6 +463,20 @@ add_constr_edges_rem <- function(constr, strength) {
     add_to_constr(constr, 'edges_removed', new_constr)
 }
 
+#' @param cities A vector containing zero entries for non-cities and non-zero entries for each city for `qps`.
+#' @rdname constraints
+#' @export
+add_constr_qps <- function(constr, strength, cities, total_pop = NULL) {
+    if (!inherits(constr, 'redist_constr')) cli_abort('Not a {.cls redist_constr} object')
+    if (strength <= 0) cli_warn('Nonpositive strength may lead to unexpected results.')
+    data <- attr(constr, 'data')
+
+    new_constr <- list(strength = strength,
+                       cities = tidy_eval(enquo(cities), data))
+    new_constr$n_cty <- max(new_constr$cities) + 1
+
+    add_to_constr(constr, 'qps', new_constr)
+}
 
 #' @param fn A function
 #' @rdname constraints

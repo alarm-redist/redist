@@ -115,8 +115,7 @@
 #' brings a district more than 5\% away from population parity will be
 #' rejected. The default is \code{get_pop_tol(map)}. Providing an entry here ignores
 #' the \code{pop_tol} within the object provided to map.
-#' @param constraints a list of constraints to implement. Can be created with
-#' \code{flip_constraints_helper}
+#' @param constraints A `redist_constr` object.
 #' @param nthin The amount by which to thin the Markov Chain. The
 #' default is \code{1}.
 #' @param eprob The probability of keeping an edge connected. The
@@ -146,7 +145,6 @@
 #'   the initial plan in the output.  Defaults to the column name of the
 #'   existing plan, or "\code{<init>}" if the initial plan is sampled.
 #' @param verbose Whether to print initialization statement. Default is \code{TRUE}.
-#' @param cl constraint list for testing
 #'
 #' @return A \code{\link{redist_plans}} object containing the simulated plans.
 #' @concept simulate
@@ -166,11 +164,11 @@
 #' iowa_map <- redist_map(iowa, ndists = 4, existing_plan = cd_2010, total_pop = pop, pop_tol = 0.01)
 #' sims <- redist_flip(map = iowa_map, nsims = 100)
 #'
-redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints = list(),
+redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints = redist_constr(),
                         nthin = 1, eprob = 0.05, lambda = 0, temper = FALSE,
                         betaseq = 'powerlaw', betaseqlength = 10, betaweights = NULL,
                         adapt_lambda = FALSE, adapt_eprob = FALSE, exact_mh = FALSE,
-                        adjswaps = TRUE, init_name = NULL, verbose = TRUE, cl = redist_cosntr()) {
+                        adjswaps = TRUE, init_name = NULL, verbose = TRUE) {
   if (verbose) {
     ## Initialize ##
     cli::cli({
@@ -191,23 +189,9 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
            "Redistricting impossible.")
 
   # process constraints
-  pre_pre_proc <- process_flip_constr(constraints, nprec)
-
-  constraints_name <- names(pre_pre_proc)
-  constraints_wt <- sapply(pre_pre_proc, function(x) {
-    if (any(names(x) %in% c('weight'))) {
-      x$weight
-    } else {
-      0
-    }
-  })
-  if (all(constraints_wt == 0)) {
-    constraints_name <- constraints_wt <- NULL
-  } else {
-    constraints_name <- constraints_name[constraints_wt != 0]
-    constraints_wt <- constraints_wt[constraints_wt != 0]
+  if (!inherits(constraints, 'redist_constr')) {
+      cli::cli_abort('Not a {.cls redist_constr} object.')
   }
-
 
 
   if (!any(class(nthin) %in% c('numeric', 'integer'))) {
@@ -227,15 +211,8 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
     init_plan <- get_existing(map)
 
     if (is.null(init_plan)) {
-      components <- contiguity(adj, pre_pre_proc$counties)
-      if (any(components > 1)) {
-        counties_smc <- redist.county.relabel(adj, pre_pre_proc$counties)
-      } else {
-        counties_smc <- pre_pre_proc$counties + 1
-      }
       invisible(capture.output(init_plan <- redist_smc(map,
         nsims = 1,
-        counties = counties_smc,
         silent = TRUE
       ), type = 'message'))
       init_plan <- as.matrix(init_plan) - 1L
@@ -268,34 +245,14 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
     init_plan = init_plan,
     ndists = ndists,
     pop_tol = pop_tol,
-    counties = pre_pre_proc$counties,
-    cities = pre_pre_proc$qps$cities,
-    group_pop = pre_pre_proc$group_pop,
-    areasvec = pre_pre_proc$compact$areasvec,
-    borderlength_mat = pre_pre_proc$compact$borderlength_mat,
-    ssdmat = pre_pre_proc$compact$ssdmat,
-    compactness_metric = pre_pre_proc$compact$metric,
-    partisan_metric = pre_pre_proc$partisan$metric,
     temper = temper,
-    constraint = constraints_name,
-    constraintweights = constraints_wt,
     betaseq = betaseq,
     betaseqlength = betaseqlength,
     betaweights = betaweights,
     adjswaps = adjswaps,
     maxiterrsg = 1,
-    contiguitymap = 'rooks',
-    tgt_min = pre_pre_proc$vra$target_min,
-    tgt_other = pre_pre_proc$vra$target_other,
-    rvote = pre_pre_proc$partisan$rvote,
-    dvote = pre_pre_proc$partisan$dvote,
-    minorityprop = pre_pre_proc$hinge$minorityprop,
     verbose = verbose
   )
-
-  if(all(pre_pre_proc$similarity$plan == 1)){
-    pre_pre_proc$similarity$plan <- preprocout$data$init_plan
-  }
 
   if (verbose) {
     cli::cli_alert_info('Starting swMH().')
@@ -305,45 +262,20 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
   algout <- swMH(
     aList = preprocout$data$adjlist,
     cdvec = preprocout$data$init_plan,
-    cdorigvec = pre_pre_proc$similarity$plan,
     popvec = preprocout$data$total_pop,
-    constraints = as.list(cl),
-    grouppopvec = preprocout$data$group_pop,
-    areas_vec = preprocout$data$areasvec,
-    county_membership = pre_pre_proc$counties,
-    cities = preprocout$data$cities,
-    borderlength_mat = preprocout$data$borderlength_mat,
+    constraints = as.list(constraints),
     nsims = nsims * nthin + warmup,
     eprob = eprob,
     pct_dist_parity = preprocout$params$pctdistparity,
     beta_sequence = preprocout$params$betaseq,
     beta_weights = preprocout$params$betaweights,
-    ssdmat = preprocout$data$ssdmat,
     lambda = lambda,
     beta = preprocout$params$beta,
-    weight_population = preprocout$params$weightpop,
-    weight_compact = preprocout$params$weightcompact,
-    weight_segregation = preprocout$params$weightseg,
-    weight_vra = preprocout$params$weightvra,
-    weight_similar = preprocout$params$weightsimilar,
-    weight_countysplit = preprocout$params$weightcountysplit,
-    weight_partisan = preprocout$params$weightpartisan,
-    weight_minority = preprocout$params$weightminority,
-    weight_hinge = preprocout$params$weighthinge,
-    weight_qps = preprocout$params$weightqps,
     adapt_beta = preprocout$params$temperbeta,
     adjswap = preprocout$params$adjswaps,
     exact_mh = exact_mh,
     adapt_lambda = adapt_lambda,
     adapt_eprob = adapt_eprob,
-    compactness_measure = pre_pre_proc$compact$metric,
-    partisan_measure = preprocout$params$partisan_metric,
-    ssd_denom = pre_pre_proc$compact$ssd_denom,
-    tgt_min = pre_pre_proc$vra$target_min,
-    tgt_other = pre_pre_proc$vra$target_other,
-    rvote = preprocout$params$rvote,
-    dvote = preprocout$params$dvote,
-    minorityprop = preprocout$params$minorityprop,
     verbose = as.logical(verbose)
   )
 
@@ -370,7 +302,6 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan, pop_tol, constraints 
     mh_acceptance = mean(algout$mhdecisions)
   ) %>% mutate(
     distance_parity = rep(algout$distance_parity, each = ndists),
-    distance_original = rep(algout$distance_original, each = ndists),
     mhdecisions = rep(algout$mhdecisions, each = ndists),
     mhprob = rep(algout$mhprob, each = ndists),
     pparam = rep(algout$pparam, each = ndists),

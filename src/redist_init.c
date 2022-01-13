@@ -62,7 +62,7 @@ extern SEXP _redist_smc_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SE
 extern SEXP _redist_smoothseat(SEXP, SEXP);
 extern SEXP _redist_solve_hungarian(SEXP);
 extern SEXP _redist_splits(SEXP, SEXP, SEXP, SEXP);
-extern SEXP _redist_swMH(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _redist_swMH(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_talisman(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_taugap(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_update_conncomp(SEXP, SEXP, SEXP);
@@ -124,7 +124,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_smoothseat",            (DL_FUNC) &_redist_smoothseat,             2},
     {"_redist_solve_hungarian",       (DL_FUNC) &_redist_solve_hungarian,        1},
     {"_redist_splits",                (DL_FUNC) &_redist_splits,                 4},
-    {"_redist_swMH",                  (DL_FUNC) &_redist_swMH,                  45},
+    {"_redist_swMH",                  (DL_FUNC) &_redist_swMH,                  20},
     {"_redist_talisman",              (DL_FUNC) &_redist_talisman,               4},
     {"_redist_taugap",                (DL_FUNC) &_redist_taugap,                 4},
     {"_redist_update_conncomp",       (DL_FUNC) &_redist_update_conncomp,        3},

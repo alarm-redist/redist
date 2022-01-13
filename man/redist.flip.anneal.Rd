@@ -9,6 +9,7 @@ redist.flip.anneal(
   total_pop,
   ndists = NULL,
   init_plan = NULL,
+  constraints = redist_constr(),
   num_hot_steps = 40000,
   num_annealing_steps = 60000,
   num_cold_steps = 20000,
@@ -54,6 +55,8 @@ unit}
 of each geographic unit. If not provided, random and contiguous congressional
 district assignments will be generated using \code{redist_smc}. To use the old
 behavior of generating with \code{redist.rsg}, provide init_plan = 'rsg'.}
+
+\item{constraints}{A `redist_constr` list of constraints}
 
 \item{num_hot_steps}{The number of steps to run the simulator at beta = 0.
 Default is 40000.}

@@ -51,50 +51,24 @@ arma::uvec get_not_in(arma::uvec vec1, arma::uvec vec2){
 // [[Rcpp::export]]
 List swMH(List aList,
           NumericVector cdvec,
-          NumericVector cdorigvec,
           NumericVector popvec,
-          NumericVector grouppopvec,
-          NumericVector areas_vec,
-          IntegerVector county_membership,
-          IntegerVector cities,
-          arma::mat borderlength_mat,
           int nsims,
           List constraints,
           double eprob,
           double pct_dist_parity,
           NumericVector beta_sequence,
           NumericVector beta_weights,
-          NumericMatrix ssdmat,
-          double tgt_min,
-          double tgt_other,
-          IntegerVector rvote,
-          IntegerVector dvote,
-          NumericVector minorityprop,
           int lambda = 0,
           double beta = 0.0,
-          double weight_population = 0.0,
-          double weight_compact = 0.0,
-          double weight_segregation = 0.0,
-          double weight_vra = 0.0,
-          double weight_similar = 0.0,
-          double weight_countysplit = 0.0,
-          double weight_partisan = 0.0,
-          double weight_minority = 0.0,
-          double weight_hinge = 0.0,
-          double weight_qps = 0.0,
           std::string adapt_beta = "none",
           int adjswap = 1,
           int exact_mh = 0,
           int adapt_eprob = 0,
           int adapt_lambda = 0,
-          std::string compactness_measure = "fryer-holden",
-          std::string partisan_measure = "efficiency-gap",
-          double ssd_denom = 1.0,
           int num_hot_steps = 0,
           int num_annealing_steps = 0,
           int num_cold_steps = 0,
-          bool verbose = true)
-{
+          bool verbose = true) {
 
     /* Inputs to function:
      aList: adjacency list of geographic units
@@ -171,13 +145,6 @@ List swMH(List aList,
     if(min(cdvec) == 1){
         for(int i = 0; i < cdvec.size(); i++){
             cdvec(i)--;
-        }
-    }
-
-    // Preprocess vector of original congressional district assignments
-    if(min(cdorigvec) == 1){
-        for(int i = 0; i < cdorigvec.size(); i++){
-            cdorigvec(i)--;
         }
     }
 
@@ -317,7 +284,6 @@ List swMH(List aList,
             swap_partitions = make_swaps(boundary_partitions_list,
                                          aList,
                                          cdvec,
-                                         cdorigvec,
                                          popvec,
                                          district_pops,
                                          constraints,
@@ -495,16 +461,13 @@ List swMH(List aList,
 
     // Get distance from parity of each partition
     NumericVector dist_parity_vec;
-    NumericVector dist_orig_vec;
     if(adapt_beta != "annealing"){
         dist_parity_vec = distParity(cd_store, popvec);
-        dist_orig_vec = diff_origcds(cd_store, cdorigvec);
     }else{
         for(int i = 0; i < cdvec.size(); i++){
             cd_store[i] = cdvec(i);
         }
         dist_parity_vec = distParity(cd_store, popvec);
-        dist_orig_vec = diff_origcds(cd_store, popvec);
     }
 
 
@@ -513,7 +476,6 @@ List swMH(List aList,
     if(adapt_beta != "annealing"){
         out["plans"] = cd_store;
         out["distance_parity"] = dist_parity_vec;
-        out["distance_original"] = dist_orig_vec;
         out["mhdecisions"] = decision_store;
         out["mhprob"] = mhprob_store;
         out["pparam"] = pparam_store;
@@ -528,7 +490,6 @@ List swMH(List aList,
     }else{
         out["plans"] = cdvec;
         out["distance_parity"] = dist_parity_vec[0];
-        out["distance_original"] = dist_orig_vec[0];
         out["mhdecisions"] = decision_store[k-1];
         out["mhprob"] = mhprob_store[k-1];
         out["pparam"] = pparam_store[k-1];
