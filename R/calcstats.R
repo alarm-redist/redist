@@ -41,15 +41,14 @@
 #' @export
 redist.segcalc <- function(plans, group_pop, total_pop){
     ## Warnings
-    if(missing(plans) | !any(class(plans) %in% c("data.frame", "matrix", "redist"))){
-        stop("Please provide either a redist object or a proper matrix of congessional districts")
+    if (missing(plans)) {
+        cli_abort('Please provide a {.arg plans} input.')
     }
     if(missing(group_pop)){
-        stop("Please provide a vector of sub-group populations to ",
-             "calculate the segregation index")
+        cli_abort('Please provide a {.arg group_pop} vector.')
     }
     if(missing(total_pop)){
-        stop("Please provide a vector of populations for each geographic unit")
+        cli_abort('Please provide a {.arg total_pop} vector.')
     }
 
     ## If redist object, get the partitions entry
@@ -60,15 +59,11 @@ redist.segcalc <- function(plans, group_pop, total_pop){
     if(!((nrow(plans) == length(group_pop)) &
              (length(group_pop) == length(total_pop)) &
                  (length(total_pop) == nrow(plans)))){
-        stop("Please make sure there is a population entry for each geographic unit")
+        cli_abort("Please make sure there is a population entry for each geographic unit")
     }
 
-    ## Calculate dissimilarity index
-    seg.out <- segregationcalc(plans,
-                               group_pop,
-                               total_pop)
+    redistmetrics::seg_dissim(plans, shp = data.frame(), group_pop = group_pop,
+                              total_pop = total_pop)
 
-    ## Return
-    return(seg.out)
 
 }

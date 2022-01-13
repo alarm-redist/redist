@@ -456,9 +456,8 @@ segregation_index = function(map, group_pop, total_pop=map[[attr(map, "pop_col")
     group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
     total_pop = rlang::eval_tidy(rlang::enquo(total_pop), map)
     plan_m = get_plans_matrix(.data)[, idxs, drop=FALSE]
-    rep(as.numeric(redist.segcalc(plans=plan_m, group_pop=group_pop,
-                                  total_pop=total_pop)),
-        each=attr(map, "ndists"))
+    as.numeric(redist.segcalc(plans=plan_m, group_pop=group_pop,
+                                  total_pop=total_pop))
 }
 
 #' @rdname redist.metrics
@@ -497,9 +496,8 @@ competitiveness = function(map, rvote, dvote, .data=cur_plans()) {
     idxs = unique(as.integer(.data$draw))
     rvote = rlang::eval_tidy(rlang::enquo(rvote), map)
     dvote = rlang::eval_tidy(rlang::enquo(dvote), map)
-    rep(redist.competitiveness(plans=get_plans_matrix(.data)[, idxs, drop=FALSE],
-                               rvote=rvote, dvote=dvote),
-        each = attr(map, "ndists"))
+    redist.competitiveness(plans=get_plans_matrix(.data)[, idxs, drop=FALSE],
+                               rvote=rvote, dvote=dvote)
 }
 
 #' @rdname redist.splits
@@ -514,8 +512,7 @@ county_splits = function(map, counties, .data=cur_plans()) {
     check_tidy_types(map, .data)
     idxs = unique(as.integer(.data$draw))
     counties = rlang::eval_tidy(rlang::enquo(counties), map)
-    rep(redist.splits(plans=get_plans_matrix(.data)[, idxs, drop=FALSE], counties=counties),
-        each = attr(map, "ndists"))
+    redist.splits(plans=get_plans_matrix(.data)[, idxs, drop=FALSE], counties=counties)
 }
 
 

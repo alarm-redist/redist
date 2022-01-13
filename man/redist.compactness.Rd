@@ -138,9 +138,10 @@ data(fl25_enum)
 
 plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
 
-redist.compactness(shp = fl25, plans = plans_05[,1:3],
-measure = c('PolsbyPopper', 'EdgesRemoved'))
-
+redist.compactness(
+  shp = fl25, plans = plans_05[, 1:3],
+  measure = c('PolsbyPopper', 'EdgesRemoved')
+)
 }
 \references{
 Boyce, R., & Clark, W. 1964. The Concept of Shape in Geography.

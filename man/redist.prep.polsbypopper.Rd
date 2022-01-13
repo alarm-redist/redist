@@ -26,5 +26,4 @@ Prep Polsby Popper Perimeter Dataframe
 \examples{
 data(fl25)
 perim_df <- redist.prep.polsbypopper(shp = fl25)
-
 }

@@ -9,7 +9,7 @@
 #' @export
 redist.splits <- function(plans, counties) {
     if (missing(plans)) {
-        stop('Please provide an argument to plans.')
+        cli_abort('Please provide an argument to {.arg plans}.')
     }
     if (inherits(plans, 'redist_plans')) {
         plans <- get_plans_matrix(plans)
@@ -17,25 +17,17 @@ redist.splits <- function(plans, counties) {
     if (!is.matrix(plans)) {
         plans <- matrix(plans, ncol = 1)
     }
-    if (!any(class(plans) %in% c('numeric', 'matrix'))) {
-        stop('Please provide "plans" as a matrix.')
+    if (any(class(plans) %in% c('numeric', 'matrix'))) {
+        plans <- redist.reorder(plans)
     }
 
     if (missing(counties)) {
-        stop('Please provide an argument to counties.')
-    }
-    if (class(counties) %in% c('character', 'numeric', 'integer')) {
-        uc <- unique(sort(counties))
-        county_id <- rep(0, nrow(plans))
-        for (i in 1:nrow(plans)) {
-            county_id[i] <- which(uc == counties[i])
-        }
-    } else{
-        stop('Please provide "counties" as a character, numeric, or integer vector.')
+        cli_abort('Please provide an argument to {.arg counties}.')
     }
 
 
-    splits(plans - 1, community = county_id - 1, length(unique(plans[, 1])), 1)
+    redistmetrics::splits_admin(plans = plans, shp = data.frame(),
+                                admin = counties)
 }
 
 #' Identify which counties are split by a plan
@@ -122,7 +114,7 @@ redist.district.splits <- function(plans, counties) {
 #' splits <- redist.multisplits(plans, ia$region)
 redist.multisplits <- function(plans, counties) {
     if (missing(plans)) {
-        stop('Please provide an argument to plans.')
+        cli_abort('Please provide an argument to {.arg plans}.')
     }
     if (inherits(plans, 'redist_plans')) {
         plans <- get_plans_matrix(plans)
@@ -130,20 +122,16 @@ redist.multisplits <- function(plans, counties) {
     if (!is.matrix(plans)) {
         plans <- matrix(plans, ncol = 1)
     }
-    if (!any(class(plans) %in% c('numeric', 'matrix'))) {
-        stop('Please provide "plans" as a matrix.')
+    if (any(class(plans) %in% c('numeric', 'matrix'))) {
+        plans <- redist.reorder(plans)
     }
 
     if (missing(counties)) {
-        stop('Please provide an argument to counties.')
-    }
-    if (class(counties) %in% c('character', 'numeric', 'integer')) {
-        county_id <- redist.county.id(counties)
-    } else {
-        stop('Please provide "counties" as a character, numeric, or integer vector.')
+        cli_abort('Please provide an argument to {.arg counties}.')
     }
 
-    splits(plans - 1, community = county_id - 1, length(unique(plans[, 1])), 2)
+    redistmetrics::splits_multi(plans = plans, shp = data.frame(),
+                                admin = counties)
 }
 
 
@@ -157,7 +145,7 @@ redist.multisplits <- function(plans, counties) {
 #' for each precinct and one column for each map. Required.
 #' @param munis A vector of municipality names or ids.
 #'
-#' @return integer matrix where each district is a
+#' @return integer vector of length ndist by ncol(plans)
 #'
 #' @concept analyze
 #' @export
@@ -169,37 +157,8 @@ redist.multisplits <- function(plans, counties) {
 #' ia$region[1:10] <- NA
 #' splits <- redist.muni.splits(plans, ia$region)
 redist.muni.splits <- function(plans, munis) {
-    if (missing(plans)) {
-        stop('Please provide an argument to plans.')
-    }
-    if (inherits(plans, 'redist_plans')) {
-        plans <- get_plans_matrix(plans)
-    }
-    if (!is.matrix(plans)) {
-        plans <- matrix(plans, ncol = 1)
-    }
-    if (!any(class(plans) %in% c('numeric', 'matrix'))) {
-        stop('Please provide "plans" as a matrix.')
-    }
-
-    if (missing(munis)) {
-        stop('Please provide an argument to `munis`.')
-    }
-
-    plans <- plans[!is.na(munis), ]
-    munis <- munis[!is.na(munis)]
-    if (class(munis) %in% c('character', 'numeric', 'integer')) {
-        uc <- unique(sort(munis))
-        muni_id <- rep(0, nrow(plans))
-        for (i in 1:nrow(plans)) {
-            muni_id[i] <- which(uc == munis[i])
-        }
-    } else{
-        stop('Please provide `munis` as a character, numeric, or integer vector.')
-    }
-
-
-    splits(plans - 1, community = muni_id - 1, length(unique(plans[, 1])), 1)
+    redistmetrics::splits_sub_admin(plans = plans, shp = data.frame(),
+                                    sub_admin = munis)
 }
 
 #' @rdname redist.muni.splits
@@ -214,7 +173,5 @@ muni_splits <- function(map, munis, .data = cur_plans()) {
   check_tidy_types(map, .data)
   idxs <- unique(as.integer(.data$draw))
   munis <- rlang::eval_tidy(rlang::enquo(munis), map)
-  rep(redist.muni.splits(plans = get_plans_matrix(.data)[, idxs, drop = FALSE], munis = munis),
-    each = attr(map, 'ndists')
-  )
+  redist.muni.splits(plans = get_plans_matrix(.data)[, idxs, drop = FALSE], munis = munis)
 }

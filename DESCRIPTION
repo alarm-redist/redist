@@ -38,7 +38,8 @@ Imports:
     ggplot2,
     patchwork,
     readr (>= 2.0.0),
-    cli (>= 3.1.0)
+    cli (>= 3.1.0),
+    redistmetrics
 Suggests:
     igraph,
     s2,

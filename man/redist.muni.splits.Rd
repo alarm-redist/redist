@@ -20,7 +20,7 @@ redist.muni.splits(plans, munis)
 for each precinct and one column for each map. Required.}
 }
 \value{
-integer matrix where each district is a
+integer vector of length ndist by ncol(plans)
 }
 \description{
 Counts the total number of municpalities that are split.
