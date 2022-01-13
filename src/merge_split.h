@@ -28,8 +28,8 @@ Rcpp::List ms_plans(int N, List l, const arma::uvec init, const arma::uvec &coun
  * Add specific constraint weights & return the cumulative weight vector
  */
 double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
-                      int distr_1, int distr_2, const uvec &pop,
-                      List constraints, const uvec &counties, int n_cty);
+                      int distr_1, int distr_2, const uvec &pop, double parity,
+                      const Graph &g, List constraints);
 
 
 /*

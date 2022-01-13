@@ -96,8 +96,8 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                    rho, k, check_both, verbosity);
 
         // compute weights for next step
-        cum_wgt = get_wgts(districts, n_distr, ctr, final, alpha, lp, pop,
-                           constraints, counties, n_cty, verbosity);
+        cum_wgt = get_wgts(districts, n_distr, ctr, final, alpha, lp, pop, target,
+                           g, constraints, verbosity);
 
         if (verbosity == 1 && CLI_SHOULD_TICK)
             cli_progress_set(bar, ctr - n_drawn - 1);
@@ -144,13 +144,19 @@ double add_constraint(const std::string& name, List constraints,
  * Add specific constraint weights & return the cumulative weight vector
  */
 vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
-             double alpha, vec &lp, const uvec &pop, List constraints,
-             const uvec &counties, int n_cty, int verbosity) {
+             double alpha, vec &lp, const uvec &pop, double parity, const Graph g,
+             List constraints, int verbosity) {
     int V = districts.n_rows;
     int N = districts.n_cols;
 
     for (int i = 0; i < N; i++) {
         if (constraints.size() == 0) continue;
+
+        lp[i] += add_constraint("population", constraints,
+                                  [&] (List l) -> double {
+                                      return eval_population(districts.col(i), distr_ctr,
+                                                             pop, parity);
+                                  });
 
         lp[i] += add_constraint("status_quo", constraints,
             [&] (List l) -> double {
@@ -158,6 +164,12 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
                                        distr_ctr, pop, n_distr,
                                        as<int>(l["n_current"]), V);
             });
+
+        lp[i] += add_constraint("segregation", constraints,
+                                  [&] (List l) -> double {
+                                      return eval_segregation(districts.col(i), distr_ctr,
+                                                              as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]));
+                                  });
 
         lp[i] += add_constraint("grp_pow", constraints,
             [&] (List l) -> double {
@@ -195,6 +207,42 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
             [&] (List l) -> double {
                 return eval_multisplits(districts.col(i), distr_ctr, as<uvec>(l["admin"]), l["n"]);
             });
+
+        lp[i] += add_constraint("polsby", constraints,
+                                  [&] (List l) -> double {
+                                      return eval_polsby(districts.col(i), distr_ctr,
+                                                         as<ivec>(l["from"]),
+                                                         as<ivec>(l["to"]), as<vec>(l["area"]),
+                                                         as<vec>(l["perimeter"]));
+                                  });
+
+        lp[i] += add_constraint("fry_hold", constraints,
+                                  [&] (List l) -> double {
+                                      return eval_fry_hold(districts.col(i), distr_ctr,
+                                                           as<uvec>(l["total_pop"]),
+                                                           as<mat>(l["ssdmat"]),
+                                                           as<double>(l["denominator"]));
+                                  });
+
+        lp[i] += add_constraint("log_st", constraints,
+                                  [&] (List l) -> double {
+                                      return eval_log_st(districts.col(i), g,
+                                                         as<uvec>(l["admin"]),
+                                                         n_distr);
+                                  });
+
+        lp[i] += add_constraint("edges_removed", constraints,
+                                  [&] (List l) -> double {
+                                      return eval_er(districts.col(i), g, n_distr);
+                                  });
+
+        lp[i] += add_constraint("qps", constraints,
+                                  [&] (List l) -> double {
+                                      return eval_qps(districts.col(i), distr_ctr,
+                                                      as<uvec>(l["total_pop"]),
+                                                      as<uvec>(l["cities"]), as<int>(l["n_city"]),
+                                                      n_distr);
+                                  });
 
         lp[i] += add_constraint("custom", constraints,
             [&] (List l) -> double {

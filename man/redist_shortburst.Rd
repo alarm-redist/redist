@@ -19,7 +19,7 @@ redist_shortburst(
   backend = "mergesplit",
   flip_lambda = 0,
   flip_eprob = 0.05,
-  flip_constraints = list(),
+  flip_constraints = redist_constr(map),
   verbose = TRUE
 )
 }

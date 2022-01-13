@@ -43,8 +43,8 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
  * Add specific constraint weights & return the cumulative weight vector
  */
 vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
-             double alpha, vec &lp, const uvec &pop, List constraints,
-             const uvec &counties, int n_cty, int verbosity);
+             double alpha, vec &lp, const uvec &pop, double parity, const Graph g,
+             List constraints, int verbosity);
 
 /*
  * Split a map into two pieces with population lying between `lower` and `upper`

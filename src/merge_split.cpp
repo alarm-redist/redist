@@ -89,9 +89,9 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
         // NOTE: different signs than above b/c of how Metropolis proposal has
         // transition ratio flipped relative to the target density ratio
         prop_lp -= calc_gibbs_tgt(districts.col(i), n_distr, V, distr_1, distr_2,
-                                  pop, constraints, counties, n_cty);
+                                  pop, target, g, constraints);
         prop_lp += calc_gibbs_tgt(districts.col(i-1), n_distr, V, distr_1, distr_2,
-                                  pop, constraints, counties, n_cty);
+                                  pop, target, g, constraints);
 
         double alpha = exp(prop_lp);
         if (alpha >= 1 || unif(generator) <= alpha) { // ACCEPT
@@ -149,10 +149,16 @@ double add_constraint(const std::string& name, List constraints,
  * Add specific constraint weights & return the cumulative weight vector
  */
 double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
-                      int distr_1, int distr_2, const uvec &pop,
-                      List constraints, const uvec &counties, int n_cty) {
+                      int distr_1, int distr_2, const uvec &pop, double parity,
+                      const Graph &g, List constraints) {
     if (constraints.size() == 0) return 0.0;
     double log_tgt = 0;
+
+    log_tgt += add_constraint("population", constraints, distr_1, distr_2,
+                              [&] (List l, int distr) -> double {
+                                  return eval_population(plan, distr,
+                                                         pop, parity);
+                              });
 
     log_tgt += add_constraint("status_quo", constraints, distr_1, distr_2,
         [&] (List l, int distr) -> double {
@@ -175,6 +181,11 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
                                 as<double>(l["pow"]));
         });
 
+    log_tgt += add_constraint("segregation", constraints, distr_1, distr_2,
+                              [&] (List l, int distr) -> double {
+                                  return eval_segregation(plan, distr, as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]));
+                              });
+
     log_tgt += add_constraint("grp_hinge", constraints, distr_1, distr_2,
         [&] (List l, int distr) -> double {
             return eval_grp_hinge(plan, distr, as<vec>(l["tgts_group"]),
@@ -195,6 +206,39 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
         [&] (List l, int distr) -> double {
             return eval_multisplits(plan, distr, as<uvec>(l["admin"]), l["n"]);
         });
+
+    log_tgt += add_constraint("polsby", constraints, distr_1, distr_2,
+                              [&] (List l, int distr) -> double {
+                                  return eval_polsby(plan, distr, as<ivec>(l["from"]),
+                                                     as<ivec>(l["to"]), as<vec>(l["area"]),
+                                                     as<vec>(l["perimeter"]));
+                              });
+
+    log_tgt += add_constraint("fry_hold", constraints, distr_1, distr_2,
+                              [&] (List l, int distr) -> double {
+                                  return eval_fry_hold(plan, distr, as<uvec>(l["total_pop"]),
+                                                       as<mat>(l["ssdmat"]),
+                                                       as<double>(l["denominator"]));
+                              });
+
+    log_tgt += add_constraint("log_st", constraints, distr_1, distr_2,
+                              [&] (List l, int distr) -> double {
+                                  return eval_log_st(plan, g,
+                                                     as<uvec>(l["admin"]),
+                                                     n_distr);
+                              });
+
+    log_tgt += add_constraint("edges_removed", constraints, distr_1, distr_2,
+                              [&] (List l, int distr) -> double {
+                                  return eval_er(plan, g, n_distr);
+                              });
+
+    log_tgt += add_constraint("qps", constraints, distr_1, distr_2,
+                              [&] (List l, int distr) -> double {
+                                  return eval_qps(plan, distr, as<uvec>(l["total_pop"]),
+                                                  as<uvec>(l["cities"]), as<int>(l["n_city"]),
+                                                  n_distr);
+                              });
 
     log_tgt += add_constraint("custom", constraints, distr_1, distr_2,
         [&] (List l, int distr) -> double {
