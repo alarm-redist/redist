@@ -60,27 +60,6 @@ combine.par.anneal <- function(a, b){
 #' constraint. \code{pop_tol} = 0.05 means that any proposed swap that
 #' brings a district more than 5\% away from population parity will be
 #' rejected. The default is \code{NULL}.
-#' @param group_pop A vector of populations for some sub-group of
-#' interest. The default is \code{NULL}.
-#' @param areasvec A vector of precinct areas for discrete Polsby-Popper.
-#' The default is \code{NULL}.
-#' @param counties A vector of county membership assignments. The default is \code{NULL}.
-#' @param borderlength_mat A matrix of border length distances, where
-#' the first two columns are the indices of precincts sharing a border and
-#' the third column is its distance. Default is \code{NULL}.
-#' @param ssdmat A matrix of squared distances between geographic
-#' units. The default is \code{NULL}.
-#' @param constraint Which constraint to apply. Accepts any combination of \code{compact},
-#' \code{segregation}, \code{vra}, \code{population}, \code{similarity}, \code{partisan},
-#' \code{minority}, \code{hinge}, \code{countysplit}, or \code{none}
-#' (no constraint applied). The default is NULL.
-#' @param constraintweights The weights to apply to each constraint. Should be a vector
-#' the same length as constraint. Default is NULL.
-#' @param compactness_metric The compactness metric to use when constraining on
-#' compactness. Default is \code{fryer-holden}, the other implemented options
-#' are \code{polsby-popper} and \code{edges-removed}.
-#' @param partisan_metric The partisan metric to use when constraining on partisan metrics.
-#' Only implemented are "efficiency-gap" (default) and "proportional-representation".
 #' @param rngseed Allows the user to set the seed for the
 #' simulations. Default is \code{NULL}.
 #' @param maxiterrsg Maximum number of iterations for random seed-and-grow
@@ -95,14 +74,6 @@ combine.par.anneal <- function(a, b){
 #' @param savename Filename to save simulations. Default is \code{NULL}.
 #' @param verbose Whether to print initialization statement.
 #' Default is \code{TRUE}.
-#' @param ncores The number of cores available to parallelize over. Default is 1.
-#' @param tgt_min The majority minority target percent as a decimal. Default is 0.55.
-#' @param tgt_other The remaining target percent as a decimal. Default is 0.25.
-#' @param rvote integer vector of votes for Republicans by precinct
-#' @param dvote integer vector of votes for Democrats by precinct
-#' @param minorityprop numeric vector of targeted minority proportions for the top
-#' districts with that proportion
-#' @param cities integer vector of cities for QPS constraint.
 #'
 #' @return list of class redist
 #'
@@ -118,20 +89,10 @@ redist.flip.anneal <- function(adj,
                                eprob = 0.05,
                                lambda = 0,
                                pop_tol = NULL,
-                               group_pop = NULL,
-                               areasvec = NULL,
-                               counties = NULL,
-                               borderlength_mat = NULL,
-                               ssdmat = NULL,
-                               constraint = NULL, constraintweights = NULL,
-                               compactness_metric = "fryer-holden",
-                               partisan_metric = "efficiency-gap",
                                rngseed = NULL, maxiterrsg = 5000,
                                adapt_lambda = FALSE, adapt_eprob = FALSE,
-                                exact_mh = FALSE,
-                               savename = NULL, verbose = TRUE,
-                               ncores = 1, tgt_min = 0.55, tgt_other = 0.25, rvote = NULL,
-                               dvote = NULL, minorityprop = NULL, cities = NULL){
+                               exact_mh = FALSE,
+                               savename = NULL, verbose = TRUE){
 
     if(verbose){
         ## Initialize ##
@@ -446,7 +407,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
     nr <- nrow(algout$plans)
     nc <- ncol(algout$plans)
     plans <- matrix(NA, nrow = nr,
-                         ncol = (nc * nloop / nthin))
+                    ncol = (nc * nloop / nthin))
 
     veclist <- vector(mode = "list", length = length(algout)-1)
     for(i in 1:length(veclist)){
@@ -503,7 +464,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
     return(algout)
 }
 
-#' Flip MCMC Redistricting Simulator
+#' (Deprecated) Flip MCMC Redistricting Simulator
 #'
 #' \code{redist.mcmc} is used to simulate Congressional redistricting
 #' plans using Markov Chain Monte Carlo methods.
@@ -585,13 +546,6 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' @param savename Filename to save simulations. Default is \code{NULL}.
 #' @param verbose Whether to print initialization statement.
 #' Default is \code{TRUE}.
-#' @param tgt_min The majority minority target percent as a decimal. Default is 0.55.
-#' @param tgt_other The remaining target percent as a decimal. Default is 0.25.
-#' @param rvote integer vector of votes for Republicans by precinct
-#' @param dvote integer vector of votes for Democrats by precinct
-#' @param minorityprop numeric vector of targeted minority proportions for the top
-#' districts with that proportion
-#' @param cities integer vector of cities for QPS constraint.
 #'
 #' @details This function allows users to simulate redistricting plans
 #' using Markov Chain Monte Carlo methods. Several constraints
@@ -680,22 +634,14 @@ redist.flip <- function(adj,
                         warmup = 0, nthin = 1, eprob = 0.05,
                         lambda = 0,
                         pop_tol = NULL,
-                        group_pop = NULL,
-                        areasvec = NULL,
-                        counties = NULL,
-                        borderlength_mat = NULL, ssdmat = NULL, temper = FALSE,
-                        constraint = NULL, constraintweights = NULL,
-                        compactness_metric = "fryer-holden",
-                        partisan_metric = "efficiency-gap",
-                        ssd_denom = 1.0,
+                        temper = FALSE,
                         betaseq = "powerlaw", betaseqlength = 10,
                         betaweights = NULL,
                         adjswaps = TRUE, rngseed = NULL, maxiterrsg = 5000,
                         adapt_lambda = FALSE, adapt_eprob = FALSE,
                         exact_mh = FALSE, savename = NULL,
-                        verbose = TRUE, tgt_min = 0.55, tgt_other = 0.25,
-                        rvote = NULL, dvote = NULL, minorityprop = NULL, cities = NULL){
-
+                        verbose = TRUE) {
+    .Deprecated('redist_flip', msg = 'Please use `redist_flip`. This will be gone in 4.1.')
 
     if(verbose){
         ## Initialize ##
@@ -752,7 +698,7 @@ redist.flip <- function(adj,
     ## Preprocess data ##
     #####################
     if(verbose){
-    cat("Preprocessing data.\n\n")
+        cat("Preprocessing data.\n\n")
     }
     preprocout <- redist.preproc(adj = adj,
                                  total_pop = total_pop,
@@ -766,7 +712,7 @@ redist.flip <- function(adj,
                                  adjswaps = adjswaps,
                                  maxiterrsg = maxiterrsg,
                                  verbose = verbose
-                                 )
+    )
 
 
     ## Get starting loop value
