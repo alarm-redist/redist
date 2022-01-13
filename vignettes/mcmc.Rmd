@@ -43,6 +43,7 @@ The `redist` package is designed to allow for replicable redistricting simulatio
 data(fl25)
 data(fl25_enum)
 plan <- fl25_enum$plans[, 7241]
+fl_map$plan <- plan
 fl_map <- redist_map(fl25, existing_plan = plan, pop_tol = 0.1, total_pop = pop)
 constr <- redist_constr(fl_map) %>% 
     add_constr_edges_rem(0.02)
