@@ -13,13 +13,13 @@ redist_shortburst(
   maximize = TRUE,
   init_plan = NULL,
   counties = NULL,
+  constraints = redist_constr(map),
   compactness = 1,
   adapt_k_thresh = 0.975,
   return_all = TRUE,
   backend = "mergesplit",
   flip_lambda = 0,
   flip_eprob = 0.05,
-  flip_constraints = redist_constr(map),
   verbose = TRUE
 )
 }
@@ -50,6 +50,8 @@ to the number of counties, or a factor or character vector.  If provided, the
 algorithm will only generate maps which split up to \code{ndists-1} counties.
 If no county-split constraint is desired, this parameter should be left blank.}
 
+\item{constraints}{A \code{redist_constr} with Gibbs constraints.}
+
 \item{compactness}{Controls the compactness of the generated districts, with
 higher values preferring more compact districts. Must be non-negative. See
 \code{\link{redist_mergesplit}} for more information.}
@@ -69,9 +71,6 @@ Recommended for monitoring purposes.}
 The number of swaps each iteration is equal to Pois(lambda) + 1. The default is 0.}
 
 \item{flip_eprob}{The probability of keeping an edge connected in flip mcmc. The default is 0.05.}
-
-\item{flip_constraints}{A list of constraints to use for flip mcmc. Can be created with
-\code{flip_constraints_helper}. Defaults to an edges-removed compactness constraint with weight 0.6.}
 
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended for monitoring purposes.}

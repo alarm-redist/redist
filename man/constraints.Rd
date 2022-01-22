@@ -9,7 +9,7 @@
 \alias{add_constr_incumbency}
 \alias{add_constr_splits}
 \alias{add_constr_multisplits}
-\alias{add_constr_population}
+\alias{add_constr_pop_dev}
 \alias{add_constr_segregation}
 \alias{add_constr_polsby}
 \alias{add_constr_fry_hold}
@@ -47,11 +47,11 @@ add_constr_splits(constr, strength, admin)
 
 add_constr_multisplits(constr, strength, admin)
 
-add_constr_population(constr, strength)
+add_constr_pop_dev(constr, strength)
 
 add_constr_segregation(constr, strength, group_pop, total_pop = NULL)
 
-add_constr_polsby(constr, strength, perim_df)
+add_constr_polsby(constr, strength, perim_df = NULL)
 
 add_constr_fry_hold(
   constr,
@@ -61,7 +61,7 @@ add_constr_fry_hold(
   denominator = 1
 )
 
-add_constr_log_st(constr, strength, admin)
+add_constr_log_st(constr, strength, admin = NULL)
 
 add_constr_edges_rem(constr, strength)
 
