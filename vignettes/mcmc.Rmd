@@ -43,12 +43,12 @@ The `redist` package is designed to allow for replicable redistricting simulatio
 data(fl25)
 data(fl25_enum)
 plan <- fl25_enum$plans[, 7241]
-fl_map$plan <- plan
-fl_map <- redist_map(fl25, existing_plan = plan, pop_tol = 0.1, total_pop = pop)
+fl25$plan <- plan
+fl_map <- redist_map(fl25, existing_plan = plan, pop_tol = 0.2, total_pop = pop)
 constr <- redist_constr(fl_map) %>% 
     add_constr_edges_rem(0.02)
 set.seed(1)
-sims <- redist.flip(fl_map, nsims = 6, constraints = constr)
+sims <- redist_flip(map = fl_map, nsims = 6, constraints = constr)
 ```
 
 The `flip` algorithm is one of the more straightforward redistricting algorithms. Beginning with an initial partition of a graph, it proposes flipping a node from one partition to an adjacent partition. By checking that the proposed flip meets basic constraints, such as keeping partitions contiguous and staying within a certain population parity, it ensures that all proposed new partitions are also valid partitions. The implementation within `redist` is a bit more advanced that this, as it allows for multiple flips and rejecting valid partitions based on a Metropolis Hastings algorithm. The following walks through the basics of this algorithm to provide an introduction to using `flip` correctly and efficiently.
@@ -119,7 +119,7 @@ set.seed(1)
 In addition, we need population for each unit. We've included `iowa$pop` as the total population as of the 2010 Census. From there, we have the basic information that we need to run our first simulation. The below indicates that we are simulating 1000 plans (with `nsims`) for the state of Iowa that have at most a population parity deviation of 0.05 (with `pop_tol`).
 
 ```{r}
-sims <- redist_flip(map_ia, nsims = 100, pop_tol = 0.05)
+sims <- redist_flip(map_ia, nsims = 100)
 ```
 
 The printed output can be silenced by setting `verbose = FALSE`, however it displays very important information. First, it displays when preprocessing begins and when the algorithm actually starts. Each 10% of the way through the `flip` algorithm, it outputs the current estimated Metropolis acceptance. Here, we've specified no Gibbs constraints, so the acceptance will always be near 100%.
@@ -370,8 +370,8 @@ The goal is to generally have the Metropolis Hastings ratio lie between 20% and 
 `lambda` and `eprob` both control the amount of movement within `flip`. They can be very powerful things to increase. `lambda` defaults to 0, while `eprob` defaults to 0.05. Each of these parameters leads to fairly small movements between sequential iterations of the algorithm.
 
 ```{r}
-sims_new <- redist_flip(map = iowa_map, nsims = 100, pop_tol = 0.02,
-                        constraints = cons, eprob = 0.10, lambda = 2, verbose = FALSE)
+sims_new <- redist_flip(map = iowa_map, nsims = 100, constraints = cons, 
+                        eprob = 0.10, lambda = 2, verbose = FALSE)
 mean(sims_new$mhdecisions, na.rm = TRUE)
 ```
 

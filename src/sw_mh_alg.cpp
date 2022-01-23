@@ -420,7 +420,7 @@ List swMH(List aList,
                     Rcout << "Edgecut Probability: " << eprob << std::endl;
                 }
                 // Rcout << "Metropolis acceptance ratio: "<< (double)decision_counter / (k-1) << std::endl << std::endl;
-                mha = decision_counter / (k - 1);
+                mha = (double)decision_counter / (k);
                 cli_progress_set_format(bar, "{cli::pb_bar} {cli::pb_percent} | ETA: {cli::pb_eta} | MH Acceptance: %.2f", mha);
             }
         }
