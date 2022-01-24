@@ -111,39 +111,6 @@ Metropolis-Hastings ratio calculation for accept-reject rule. Default is FALSE.}
 
 \item{verbose}{Whether to print initialization statement.
 Default is \code{TRUE}.}
-
-\item{group_pop}{A vector of populations for some sub-group of
-interest. The default is \code{NULL}.}
-
-\item{areasvec}{A vector of precinct areas for discrete Polsby-Popper.
-The default is \code{NULL}.}
-
-\item{counties}{A vector of county membership assignments. The default is \code{NULL}.}
-
-\item{borderlength_mat}{A matrix of border length distances, where
-the first two columns are the indices of precincts sharing a border and
-the third column is its distance. Default is \code{NULL}.}
-
-\item{ssdmat}{A matrix of squared distances between geographic
-units. The default is \code{NULL}.}
-
-\item{constraint}{Which constraint to apply. Accepts any combination of \code{compact},
-\code{segregation}, \code{vra}, \code{population}, \code{similarity}, \code{partisan},
-\code{minority}, \code{hinge}, \code{countysplit}, \code{qps}, or \code{none}
-(no constraint applied). The default is NULL.}
-
-\item{constraintweights}{The weights to apply to each constraint. Should be a vector
-the same length as constraint. Default is NULL.}
-
-\item{compactness_metric}{The compactness metric to use when constraining on
-compactness. Default is \code{fryer-holden}, the other implemented options
-are \code{polsby-popper} and \code{edges-removed}.}
-
-\item{partisan_metric}{The partisan metric to use when constraining on partisan metrics.
-Only implemented is "efficiency-gap", the default.}
-
-\item{ssd_denom}{The normalizing constant for the sum-of-squared distance Fryer-Holden metric.
-Default is 1.0 (unnormalized).}
 }
 \value{
 \code{redist.mcmc} returns an object of class "redist". The object

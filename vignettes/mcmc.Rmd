@@ -147,7 +147,7 @@ Now, this plan is incredibly non-compact, which can be an issue. However, we sho
 ```{r}
 constr <- redist_constr(map_ia) %>% add_constr_edges_rem(0.4)
 
-sims_comp <- redist_flip(map_ia, sims = 100, constraints = constr)
+sims_comp <- redist_flip(map_ia, nsims = 100, constraints = constr)
 ```
 
 The first arguments as the same, but this adds three key arguments. First, setting `constraint` to any combination of the nine implemented constraints allows us to specify the target distribution. Setting `constraintweights = 0.4` means that we want to put a relatively weak weight on the compactness, though a weak constraint still does a lot of work. There are four `compact` constraints implemented currently. The recommended is to use `edges-removed` because it can be calculated very quickly.
@@ -172,13 +172,13 @@ nchains <- 4
 nsims <- 100
 ```
 
-Here, we opt to initialize using the `RSG` algorithm, though the default is to use the `SMC` algorithm. When we want to initialize without providing an initial partition, we need to specify the number of districts, `ndists`.
+Here, we opt to initialize using the `SMC` algorithm. When we want to initialize without providing an initial partition, we need to specify the number of districts, `ndists`.
 
 ```{r}
 constr <- redist_constr(map_ia) %>% add_constr_edges_rem(0.4)
-
+map_ia <- redist_map(iowa, ndists = 4, pop_tol = 0.05)
 flip_chains <- lapply(1:nchains, function(x){
-  redist_flip(map_ia, nsims = nsims, init_plan = 'rsg', ndists = 4,
+  redist_flip(map_ia, nsims = nsims,
               constraints = constr, verbose = FALSE)
 })
 ```
@@ -224,12 +224,12 @@ Now, we can pass the `redist_map` object to `redist_flip` to begin simulating.
 tidy_sims <- iowa_map %>% redist_flip(nsims = 100)
 ```
 
-This highlights a key difference between the `redist_flip` and `redist.flip` implementations: `redist_flip` appears to have a much lower acceptance rate, even though we didn't explicitly set any constraints. Why? `redist_flip`'s constraint includes a relatively weak compactness constraint by default because simulating compact maps is far more efficient and completely non-compact maps are not super useful for most purposes.
+This highlights a key difference between the `redist_flip` and `redist.flip` implementations: `redist_flip` appears to have a much lower acceptance rate, even though we didn't explicitly set any constraints. `redist_flip`'s constraint includes a relatively weak compactness constraint by default because simulating compact maps is far more efficient and completely non-compact maps are not super useful for most purposes.
 
-You can override this using the `flip_constraints_helper()` function to set up a blank set of constraints.
+You can override this by making a blank `redist_constr` object
 
 ```{r}
-cons <- flip_constraints_helper(iowa_map, constraint = NULL)
+cons <- redist_constr(iowa_map)
 ```
 
 Then, you can pass this to `redist_flip`.
@@ -237,21 +237,7 @@ Then, you can pass this to `redist_flip`.
 ```{r}
 tidy_sims_no_comp <- iowa_map %>% redist_flip(nsims = 100, constraints = cons)
 ```
-
-This increases the acceptance ratio to near 100% again. The function `flip_constraints_helper()` is useful for setting up any constraints to be used with `redist_flip`. For example, if we want to set up a compactness constraint and a `similarity` constraint (which is the `flip` status quo constraint), we can do so as follows:
-
-```{r}
-cons <- flip_constraints_helper(map = iowa_map, constraint = c('compact', 'similarity'),
-                                constraintweight = c(0.6, 1), init_plan = cd_2010)
-```
-
-From there, we can again pass this to `redist_flip`
-
-```{r}
-tidy_sims_sq_comp <- iowa_map %>% redist_flip(nsims = 100, constraints = cons)
-```
-
-The output from `redist_flip` differs a bit from the output of `redist.flip`. It outputs a `redist_plans` object.
+`redist_flip` outputs a `redist_plans` object.
 
 ```{r}
 class(tidy_sims)
@@ -317,7 +303,7 @@ As examples for the next two plots, we can use the example above which ran 4 cha
 
 ```{r}
 seg_chains <- lapply(1:nchains, 
-                     function(i){redist.segcalc(plans = flip_chains[[i]], 
+                     function(i){redist.segcalc(plans = get_plans_matrix(flip_chains[[i]]), 
                                                 group_pop = iowa_map$rep_08,
                                                 total_pop = iowa_map$pop)})
 ```
@@ -348,7 +334,7 @@ iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.02, total_pop 
 
 cons <- redist_constr(iowa_map) %>% 
     add_constr_edges_rem(0.5) %>% 
-    add_constr_population(100)
+    add_constr_pop_dev(100)
 
 sims <- redist_flip(map = iowa_map,  nsims = 100)
 ```
@@ -424,7 +410,7 @@ The other way to tune is to run a simulation with a kitchen sink type set up.
 ```{r}
 cons <- redist_constr(iowa_map) %>% 
     add_constr_edges_rem(0.25) %>% 
-    add_constr_population(50) %>% 
+    add_constr_pop_dev(50) %>% 
     add_constr_compet(10, rvote = rep_08, dvote = dem_08) %>% 
     add_constr_splits(10, admin = region)
 ```
@@ -440,7 +426,7 @@ Now, the interesting this here is that adding more constraints actually increase
 ```{r}
 cons <- cons <- redist_constr(iowa_map) %>% 
     add_constr_edges_rem(1.5) %>% 
-    add_constr_population(100) %>% 
+    add_constr_pop_dev(100) %>% 
     add_constr_compet(40, rvote = rep_08, dvote = dem_08) %>% 
     add_constr_splits(20, admin = region)
 
@@ -452,13 +438,13 @@ For example, this new set of constraints might be a good place to simulate at.
 Notably, the process of tuning should be guided by the constraint outputs and their relative values. The average compactness value of edges removed that we're constraining on has a summary like the following:
 
 ```{r}
-summary(sims$constraint_compact, na.rm = TRUE)
+summary(sims$constraint_edges_removed, na.rm = TRUE)
 ```
 
 The population constraint can be summarized as:
 
 ```{r}
-summary(sims$constraint_population, na.rm = TRUE)
+summary(sims$constraint_pop_dev, na.rm = TRUE)
 ```
 
 These are measured on completely different scales, so it shouldn't be surprising that population has a much higher weight. This is a constant difficulty in tuning, as the total number of edges on a graph or the volatility of the population isn't something that's easily standardized and transferred between maps, unfortunately.

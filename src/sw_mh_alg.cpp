@@ -148,6 +148,8 @@ List swMH(List aList,
         }
     }
 
+    NumericVector cdorigvec = clone(cdvec);
+
     // Get populations of districts
     NumericVector district_pops = init_pop(popvec, cdvec);
 
@@ -472,13 +474,16 @@ List swMH(List aList,
 
     // Get distance from parity of each partition
     NumericVector dist_parity_vec;
+    NumericVector dist_orig_vec;
     if(adapt_beta != "annealing"){
         dist_parity_vec = distParity(cd_store, popvec);
+        dist_orig_vec = diff_origcds(cd_store, cdorigvec);
     }else{
         for(int i = 0; i < cdvec.size(); i++){
             cd_store[i] = cdvec(i);
         }
         dist_parity_vec = distParity(cd_store, popvec);
+        dist_orig_vec = diff_origcds(cd_store, popvec);
     }
 
 
@@ -487,6 +492,7 @@ List swMH(List aList,
     if(adapt_beta != "annealing"){
         out["plans"] = cd_store;
         out["distance_parity"] = dist_parity_vec;
+        out["distance_original"] = dist_orig_vec;
         out["mhdecisions"] = decision_store;
         out["mhprob"] = mhprob_store;
         out["pparam"] = pparam_store;
@@ -501,6 +507,7 @@ List swMH(List aList,
     }else{
         out["plans"] = cdvec;
         out["distance_parity"] = dist_parity_vec[0];
+        out["distance_original"] = dist_orig_vec[0];
         out["mhdecisions"] = decision_store[k-1];
         out["mhprob"] = mhprob_store[k-1];
         out["pparam"] = pparam_store[k-1];

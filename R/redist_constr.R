@@ -174,7 +174,7 @@ add_to_constr = function(constr, name, new_constr) {
 #' data(iowa)
 #' iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05)
 #' constr = redist_constr(iowa_map)
-#' constr = add_constr_splits(constr, strength=1.5)
+#' constr = add_constr_splits(constr, strength=1.5, admin = name)
 #' constr = add_constr_grp_hinge(constr, strength=100,
 #'                               dem_08, tot_08, tgts_group=c(0.5, 0.6))
 #' # encourage districts to have the same number of counties

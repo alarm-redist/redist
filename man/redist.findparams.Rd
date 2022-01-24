@@ -5,10 +5,8 @@
 \title{Run parameter testing for \code{redist.flip}}
 \usage{
 redist.findparams(
-  adj,
-  total_pop,
+  map,
   nsims,
-  ndists = NULL,
   init_plan = NULL,
   adapt_lambda = FALSE,
   adapt_eprob = FALSE,
@@ -27,16 +25,9 @@ redist.findparams(
 )
 }
 \arguments{
-\item{adj}{An adjacency matrix, list, or object of class
-"SpatialPolygonsDataFrame."}
-
-\item{total_pop}{A vector containing the populations of each
-geographic unit.}
+\item{map}{A \code{\link{redist_map}} object.}
 
 \item{nsims}{The number of simulations run before a save point.}
-
-\item{ndists}{The number of congressional districts.
-The default is \code{NULL}.}
 
 \item{init_plan}{A vector containing the congressional district labels
 of each geographic unit. The default is \code{NULL}. If not provided, random
@@ -52,14 +43,6 @@ FALSE.}
 \item{params}{A matrix of parameter values to test, such as the output of
 \code{expand.grid}. Parameters accepted for \code{params} include \code{eprob},
 \code{lambda}, \code{pop_tol}, \code{beta}, and \code{constraint}.}
-
-\item{ssdmat}{A matrix of squared distances between geographic
-units. The default is \code{NULL}.}
-
-\item{group_pop}{A vector of populations for some sub-group of
-interest. The default is \code{NULL}.}
-
-\item{counties}{A vector of county membership assignments. The default is \code{NULL}.}
 
 \item{nstartval_store}{The number of maps to sample from the preprocessing chain
 for use as starting values in future simulations. Default is 1.}
@@ -91,7 +74,7 @@ about each parameter setting.
 }
 \description{
 \code{redist.findparams} is used to find optimal parameter values of
-\code{redist.flip} for a given map.
+\code{redist_flip} for a given map.
 }
 \details{
 This function allows users to test multiple parameter settings of

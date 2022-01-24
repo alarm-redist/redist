@@ -170,7 +170,6 @@ redist.flip.anneal <- function(adj,
                    pct_dist_parity = preprocout$params$pctdistparity,
                    beta_sequence = preprocout$params$betaseq,
                    beta_weights = preprocout$params$betaweights,
-                   ssdmat = preprocout$data$ssdmat,
                    lambda = lambda,
                    beta = 0,
                    adapt_beta = "annealing",
@@ -500,30 +499,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' constraint. \code{pop_tol} = 0.05 means that any proposed swap that
 #' brings a district more than 5\% away from population parity will be
 #' rejected. The default is \code{NULL}.
-#' @param group_pop A vector of populations for some sub-group of
-#' interest. The default is \code{NULL}.
-#' @param areasvec A vector of precinct areas for discrete Polsby-Popper.
-#' The default is \code{NULL}.
-#' @param counties A vector of county membership assignments. The default is \code{NULL}.
-#' @param borderlength_mat A matrix of border length distances, where
-#' the first two columns are the indices of precincts sharing a border and
-#' the third column is its distance. Default is \code{NULL}.
-#' @param ssdmat A matrix of squared distances between geographic
-#' units. The default is \code{NULL}.
 #' @param temper Whether to use simulated tempering algorithm. Default is FALSE.
-#' @param constraint Which constraint to apply. Accepts any combination of \code{compact},
-#' \code{segregation}, \code{vra}, \code{population}, \code{similarity}, \code{partisan},
-#' \code{minority}, \code{hinge}, \code{countysplit}, \code{qps}, or \code{none}
-#' (no constraint applied). The default is NULL.
-#' @param constraintweights The weights to apply to each constraint. Should be a vector
-#' the same length as constraint. Default is NULL.
-#' @param compactness_metric The compactness metric to use when constraining on
-#' compactness. Default is \code{fryer-holden}, the other implemented options
-#' are \code{polsby-popper} and \code{edges-removed}.
-#' @param partisan_metric The partisan metric to use when constraining on partisan metrics.
-#' Only implemented is "efficiency-gap", the default.
-#' @param ssd_denom The normalizing constant for the sum-of-squared distance Fryer-Holden metric.
-#' Default is 1.0 (unnormalized).
 #' @param betaseq Sequence of beta values for tempering. The default is
 #' \code{powerlaw} (see Fifield et. al (2015) for details).
 #' @param betaseqlength Length of beta sequence desired for

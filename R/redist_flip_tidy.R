@@ -156,7 +156,8 @@
 #' @md
 #' @examples
 #' data(iowa)
-#' iowa_map <- redist_map(iowa, ndists = 4, existing_plan = cd_2010, total_pop = pop)
+#' iowa_map <- redist_map(iowa, ndists = 4, existing_plan = cd_2010, total_pop = pop,
+#' pop_tol = 0.05)
 #' sims <- redist_flip(map = iowa_map, nsims = 100)
 #'
 redist_flip <- function(map, nsims, warmup = 0, init_plan,
@@ -252,7 +253,6 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
   if (verbose) {
     cli::cli_alert_info('Starting swMH().')
   }
-  #return(list(pre_pre = pre_pre_proc, pre = preprocout))
 
   algout <- swMH(
     aList = preprocout$data$adjlist,
@@ -281,30 +281,34 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
   algout$plans <- algout$plans + 1
 
   out <- new_redist_plans(
-    plans = algout$plans,
-    map = map,
-    algorithm = 'flip',
-    wgt = NULL,
-    resampled = FALSE,
-    ndists = ndists,
-    lambda = lambda,
-    eprob = eprob,
-    pop_tol = pop_tol,
-    adapt_eprob = as.logical(adapt_eprob),
-    adapt_lambda = as.logical(adapt_lambda),
-    warmup = warmup,
-    nthin = nthin,
-    mh_acceptance = mean(algout$mhdecisions)
-  ) %>% mutate(
-    distance_parity = rep(algout$distance_parity, each = ndists),
-    mhdecisions = rep(algout$mhdecisions, each = ndists),
-    mhprob = rep(algout$mhprob, each = ndists),
-    pparam = rep(algout$pparam, each = ndists),
-    beta_sequence = rep(algout$beta_sequence, each = ndists),
-    energy_psi = rep(algout$energy_psi, each = ndists),
-    boundary_partitions = rep(algout$boundary_partitions, each = ndists),
-    boundary_ratio = rep(algout$boundary_partitions, each = ndists)
-  )
+      plans = algout$plans,
+      map = map,
+      algorithm = 'flip',
+      wgt = NULL,
+      resampled = FALSE,
+      ndists = ndists,
+      lambda = lambda,
+      eprob = eprob,
+      pop_tol = pop_tol,
+      adapt_eprob = as.logical(adapt_eprob),
+      adapt_lambda = as.logical(adapt_lambda),
+      warmup = warmup,
+      nthin = nthin,
+      mh_acceptance = mean(algout$mhdecisions),
+      final_eprob = algout$final_eprob,
+      final_lambda = algout$final_lambda,
+      distance_original = algout$distance_original
+  ) %>%
+      mutate(
+          distance_parity = rep(algout$distance_parity, each = ndists),
+          mhdecisions = rep(algout$mhdecisions, each = ndists),
+          mhprob = rep(algout$mhprob, each = ndists),
+          pparam = rep(algout$pparam, each = ndists),
+          beta_sequence = rep(algout$beta_sequence, each = ndists),
+          energy_psi = rep(algout$energy_psi, each = ndists),
+          boundary_partitions = rep(algout$boundary_partitions, each = ndists),
+          boundary_ratio = rep(algout$boundary_partitions, each = ndists)
+      )
   add_tb <- apply(algout$psi_store, 1, function(x) rep(x, each = ndists)) %>%
       dplyr::as_tibble() %>%
       dplyr::rename_with(function(x) paste0('constraint_', x))
@@ -472,7 +476,6 @@ redist_flip_anneal <- function(map, init_plan = NULL,
                    pct_dist_parity = preprocout$params$pctdistparity,
                    beta_sequence = preprocout$params$betaseq,
                    beta_weights = preprocout$params$betaweights,
-                   ssdmat = preprocout$data$ssdmat,
                    lambda = lambda,
                    beta = 0,
                    adapt_beta = "annealing",
