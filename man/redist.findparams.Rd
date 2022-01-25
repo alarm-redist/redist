@@ -91,8 +91,10 @@ init_plan <- fl25_enum$plans[, 5118]
 
 params <- expand.grid(eprob = c(.01, .05, .1))
 
+# Make map
+map_fl <- redist_map(fl25, ndists = 3, pop_tol = 0.2)
 ## Run the algorithm
-redist.findparams(adj = fl25_adj, total_pop = fl25$pop,
+redist.findparams(map_fl,
                   init_plan = init_plan, nsims = 10000, params = params)
 }
 }
