@@ -27,12 +27,7 @@
 #' for most maps, the default constraint should be a good starting place.
 #'
 #' \code{redist_flip} samples from a known target distribution which can be described
-#' using the \code{constraints}. We recommend setting up the constraints for
-#' \code{redist_flip} with \code{\link{flip_constraints_helper}} to ensure that
-#' you are supplying the exact information needed. As a quick shorthand, if you
-#' want to run a simulation with no constraints at all, you can use
-#' \code{flip_constraints_helper(map = map, constraint = NULL)} and pass this to
-#' \code{constraints}. The following describes the constraints available. The general
+#' using the \code{constraints}. The following describes the constraints available. The general
 #' advice is to set weights in a way that gets between 20\% and 40\% acceptance
 #' on average, though more tuning advice is available in the vignette on using
 #' MCMC methods.Having too small of an acceptance rate indicates that the weights
@@ -297,7 +292,8 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
       mh_acceptance = mean(algout$mhdecisions),
       final_eprob = algout$final_eprob,
       final_lambda = algout$final_lambda,
-      distance_original = algout$distance_original
+      distance_original = algout$distance_original,
+      beta_sequence = algout$beta_sequence
   ) %>%
       mutate(
           distance_parity = rep(algout$distance_parity, each = ndists),
@@ -356,6 +352,8 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
 #' FALSE.
 #' @param exact_mh Whether to use the approximate (0) or exact (1)
 #' Metropolis-Hastings ratio calculation for accept-reject rule. Default is FALSE.
+#' @param maxiterrsg Maximum number of iterations for random seed-and-grow
+#' algorithm to generate starting values. Default is 5000.
 #' @param verbose Whether to print initialization statement.
 #' Default is \code{TRUE}.
 #'
@@ -363,17 +361,20 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
 #'
 #' @concept simulate
 #' @export
-redist_flip_anneal <- function(map, init_plan = NULL,
+redist_flip_anneal <- function(map,
+                               nsims,
+                               warmup = 0,
+                               init_plan = NULL,
                                constraints = redist_constr(),
                                num_hot_steps = 40000,
                                num_annealing_steps = 60000,
                                num_cold_steps = 20000,
                                eprob = 0.05,
                                lambda = 0,
-                               maxiterrsg = 5000,
                                adapt_lambda = FALSE,
                                adapt_eprob = FALSE,
                                exact_mh = FALSE,
+                               maxiterrsg = 5000,
                                verbose = TRUE){
 
     if (verbose) {

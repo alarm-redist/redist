@@ -244,6 +244,11 @@ run_sims <- function(i, params, map, nsims, init_plan,
 #' @param params A matrix of parameter values to test, such as the output of
 #' \code{expand.grid}. Parameters accepted for \code{params} include \code{eprob},
 #' \code{lambda}, \code{pop_tol}, \code{beta}, and \code{constraint}.
+#' @param ssdmat A matrix of squared distances between geographic
+#' units. The default is \code{NULL}.
+#' @param group_pop A vector of populations for some sub-group of
+#' interest. The default is \code{NULL}.
+#' @param counties A vector of county membership assignments. The default is \code{NULL}.
 #' @param nstartval_store The number of maps to sample from the preprocessing chain
 #' for use as starting values in future simulations. Default is 1.
 #' @param maxdist_startval The maximum distance from the starting map that

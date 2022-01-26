@@ -409,6 +409,8 @@ add_constr_polsby <- function(constr, strength, perim_df = NULL) {
 }
 
 #' @rdname constraints
+#' @param ssdmat Squared distance matrix for Fryer Holden constraint
+#' @param denominator Fryer Holden minimum value to normalize by. Default is 1 (no normalization).
 #' @export
 add_constr_fry_hold <- function(constr, strength, total_pop = NULL, ssdmat = NULL, denominator = 1) {
     if (!inherits(constr, 'redist_constr')) cli_abort('Not a {.cls redist_constr} object')

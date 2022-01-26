@@ -6,6 +6,8 @@
 \usage{
 redist_flip_anneal(
   map,
+  nsims,
+  warmup = 0,
   init_plan = NULL,
   constraints = redist_constr(),
   num_hot_steps = 40000,
@@ -13,15 +15,19 @@ redist_flip_anneal(
   num_cold_steps = 20000,
   eprob = 0.05,
   lambda = 0,
-  maxiterrsg = 5000,
   adapt_lambda = FALSE,
   adapt_eprob = FALSE,
   exact_mh = FALSE,
+  maxiterrsg = 5000,
   verbose = TRUE
 )
 }
 \arguments{
 \item{map}{A \code{\link{redist_map}} object.}
+
+\item{nsims}{The number of samples to draw, not including warmup.}
+
+\item{warmup}{The number of warmup samples to discard.}
 
 \item{init_plan}{A vector containing the congressional district labels
 of each geographic unit. The default is \code{NULL}. If not provided,
@@ -57,12 +63,11 @@ FALSE.}
 \item{exact_mh}{Whether to use the approximate (0) or exact (1)
 Metropolis-Hastings ratio calculation for accept-reject rule. Default is FALSE.}
 
+\item{maxiterrsg}{Maximum number of iterations for random seed-and-grow
+algorithm to generate starting values. Default is 5000.}
+
 \item{verbose}{Whether to print initialization statement.
 Default is \code{TRUE}.}
-
-\item{nsims}{The number of samples to draw, not including warmup.}
-
-\item{warmup}{The number of warmup samples to discard.}
 }
 \value{
 redist_plans

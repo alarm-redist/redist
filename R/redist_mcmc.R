@@ -817,7 +817,7 @@ redist.flip <- function(adj,
 #' population parity, geographic compactness, or other constraints are
 #' implemented.
 #'
-#' @param algout An object of class "redist".
+#' @param plans An object of class `redist_plans` from `redist_flip()`.
 #' @param resampleconstraint The constraint implemented in the simulations: one
 #' of "pop", "compact", "segregation", or "similar".
 #' @param targetbeta The target value of the constraint.
@@ -887,86 +887,70 @@ redist.flip <- function(adj,
 #' @examples
 #' \donttest{
 #' data(iowa)
-#' adj <- redist.adjacency(iowa)
-#' init_plan <- iowa$cd_2010
-#'alg <- redist.flip(adj = adj, total_pop = iowa$pop,
-#'                   init_plan = init_plan, nsims = 1000,
-#'                   constraint = 'population', constraintweights = 5.4)
+#' map_ia <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
+#' cons <- redist_constr(map_ia) %>% add_constr_pop_dev(strength = 5.4)
+#' alg <- redist_flip(map_ia, nsims = 500, constraints = cons)
 #'
-#' alg_ipw <- redist.ipw(algout = alg,
-#'                      resampleconstraint = 'pop',
+#' alg_ipw <- redist.ipw(plans = alg,
+#'                      resampleconstraint = 'pop_dev',
 #'                      targetbeta = 1,
 #'                      targetpop = 0.05)
 #' }
 #'
 #' @concept post
 #' @export
-redist.ipw <- function(algout,
-                       resampleconstraint = c("pop", "compact",
-                                              "segregation", "similar"),
+redist.ipw <- function(plans,
+                       resampleconstraint = c("pop_dev", "edges_removed",
+                                              "segregation", "status_quo"),
                        targetbeta,
                        targetpop = NULL,
                        temper = 0){
 
     ## Warnings:
-    if(missing(algout) | class(algout) != "redist"){
-        stop("Please provide a proper redist object")
+    if(missing(plans) | !inherits(plans, 'redist_plans')){
+        cli_abort("Please provide {.arg plans} as a {.cls redist_plans}.")
     }
+
+    plans_ref <- subset_ref(plans)
+    plans <- subset_sampled(plans)
+
     if(length(resampleconstraint)!=1){
-        stop("We currently only support one resamplingconstraint at a time.")
+        cli_abort("We currently only support one resamplingconstraint at a time.")
     }
-    if(!(resampleconstraint %in% c("pop", "compact", "segregation", "similar"))){
-        stop("We do not provide support for that constraint at this time")
+    if(!(resampleconstraint %in% c("pop_dev", "edges_removed", "segregation", "status_quo"))){
+        cli_abort("We do not provide support for that constraint at this time")
     }
     if(missing(targetbeta)){
-        stop("Please specify the target beta value")
+        cli_abort("Please specify the target beta value")
     }
 
     ## Get indices drawn under target beta if tempering
     if(temper == 1){
-        indbeta <- which(algout$beta_sequence == targetbeta)
+        indbeta <- which(plans$beta_sequence == targetbeta)
     }else{
-        indbeta <- 1:ncol(algout$plans)
+        indbeta <- seq_len(ncol(get_plans_matrix(plans)))
     }
 
     ## Get indices of draws that meet target population
     if(!is.null(targetpop)){
-        indpop <- which(algout$distance_parity <= targetpop)
+        indpop <- which(plans$distance_parity <= targetpop)
     }else{
-        indpop <- 1:ncol(algout$plans)
+        indpop <- seq_len(ncol(get_plans_matrix(plans)))
     }
 
     ## Get intersection of indices
     inds <- intersect(indpop, indbeta)
     ## Construct weights
-    psi <- algout[[paste0("constraint_", resampleconstraint)]][inds]
+    psi <- plans[[paste0("constraint_", resampleconstraint)]][inds]
     weights <- 1 / exp(targetbeta * psi)
 
     ## Resample indices
     inds <- sample(inds, length(inds), replace = TRUE, prob = weights)
+    ndists <- max(plans$district)
+    indx <- unlist(lapply(inds, function(x) {seq(ndists * (x - 1) + 1, ndists * x, by = 1)}))
 
     ## Subset the entire list
-    algout_new <- vector(mode = "list", length = length(algout))
-    for(i in 1:length(algout_new)){
-
-        ## Subset the matrix first, then the vectors
-        if(i == 1){
-            algout_new[[i]] <- algout[[i]][,inds]
-        } else if(length(algout[[i]]) == 1) {
-            algout_new[[i]] <- algout[[i]]
-        } else if(all(names(algout[[i]]) == 'adj')) {
-            algout_new[[i]] <- algout[[i]]
-        } else {
-            algout_new[[i]] <- algout[[i]][inds]
-        }
-    }
-    names(algout_new) <- names(algout)
-
-    ## Change class
-    class(algout_new) <- "redist"
-
-    return(algout_new)
-
+    plans %>% slice(indx)
 }
 
 redist.warmup.chain <- function(algout, warmup = 1){

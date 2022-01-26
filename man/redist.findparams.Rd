@@ -44,6 +44,14 @@ FALSE.}
 \code{expand.grid}. Parameters accepted for \code{params} include \code{eprob},
 \code{lambda}, \code{pop_tol}, \code{beta}, and \code{constraint}.}
 
+\item{ssdmat}{A matrix of squared distances between geographic
+units. The default is \code{NULL}.}
+
+\item{group_pop}{A vector of populations for some sub-group of
+interest. The default is \code{NULL}.}
+
+\item{counties}{A vector of county membership assignments. The default is \code{NULL}.}
+
 \item{nstartval_store}{The number of maps to sample from the preprocessing chain
 for use as starting values in future simulations. Default is 1.}
 

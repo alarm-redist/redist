@@ -5,15 +5,15 @@
 \title{Inverse probability reweighting for MCMC Redistricting}
 \usage{
 redist.ipw(
-  algout,
-  resampleconstraint = c("pop", "compact", "segregation", "similar"),
+  plans,
+  resampleconstraint = c("pop_dev", "edges_removed", "segregation", "status_quo"),
   targetbeta,
   targetpop = NULL,
   temper = 0
 )
 }
 \arguments{
-\item{algout}{An object of class "redist".}
+\item{plans}{An object of class `redist_plans` from `redist_flip()`.}
 
 \item{resampleconstraint}{The constraint implemented in the simulations: one
 of "pop", "compact", "segregation", or "similar".}
@@ -86,14 +86,12 @@ sample is representative of a random sample from the uniform distribution.
 \examples{
 \donttest{
 data(iowa)
-adj <- redist.adjacency(iowa)
-init_plan <- iowa$cd_2010
-alg <- redist.flip(adj = adj, total_pop = iowa$pop,
-                  init_plan = init_plan, nsims = 1000,
-                  constraint = 'population', constraintweights = 5.4)
+map_ia <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
+cons <- redist_constr(map_ia) \%>\% add_constr_pop_dev(strength = 5.4)
+alg <- redist_flip(map_ia, nsims = 500, constraints = cons)
 
-alg_ipw <- redist.ipw(algout = alg,
-                     resampleconstraint = 'pop',
+alg_ipw <- redist.ipw(plans = alg,
+                     resampleconstraint = 'pop_dev',
                      targetbeta = 1,
                      targetpop = 0.05)
 }

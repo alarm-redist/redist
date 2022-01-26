@@ -114,12 +114,7 @@ you will likely want to strengthen (increase) this constraint. Otherwise,
 for most maps, the default constraint should be a good starting place.
 
 \code{redist_flip} samples from a known target distribution which can be described
-using the \code{constraints}. We recommend setting up the constraints for
-\code{redist_flip} with \code{\link{flip_constraints_helper}} to ensure that
-you are supplying the exact information needed. As a quick shorthand, if you
-want to run a simulation with no constraints at all, you can use
-\code{flip_constraints_helper(map = map, constraint = NULL)} and pass this to
-\code{constraints}. The following describes the constraints available. The general
+using the \code{constraints}. The following describes the constraints available. The general
 advice is to set weights in a way that gets between 20\\% and 40\\% acceptance
 on average, though more tuning advice is available in the vignette on using
 MCMC methods.Having too small of an acceptance rate indicates that the weights
