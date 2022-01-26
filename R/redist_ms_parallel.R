@@ -182,7 +182,9 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
     })
 
     acceptances <- sapply(out_par, function(algout) {
-        if (warmup == 0) {
+        if (!return_all) {
+            as.logical(algout$mhdecisions[nsims])
+        } else if (warmup == 0) {
             as.logical(algout$mhdecisions)
         } else {
             as.logical(algout$mhdecisions[-seq_len(warmup)])

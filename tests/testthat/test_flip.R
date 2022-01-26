@@ -3,7 +3,7 @@ test_that("flip works", {
 
   capture.output(
   out <- redist_flip(fl_map, init_plan = plans_10[, 1],
-                     nsims = 10, verbose = FALSE, pop_tol = 0.1)
+                     nsims = 10, verbose = FALSE)
   )
   par <- redist.parity(get_plans_matrix(out), total_pop = pop)
 
@@ -27,7 +27,7 @@ test_that("flip countysplit works", {
 
   capture.output(
   out <- redist_flip(fl_map, init_plan = plans_10[, 1],
-                     nsims = 10, verbose = FALSE, pop_tol = 0.2)
+                     nsims = 10, verbose = FALSE)
   )
   par <- redist.parity(get_plans_matrix(out), total_pop = pop)
 
@@ -48,7 +48,7 @@ test_that("flip hinge works", {
 
   capture.output(
   out <- redist_flip(fl_map, init_plan = plans_10[, 1],
-                     nsims = 10, verbose = FALSE, pop_tol = 0.1,
+                     nsims = 10, verbose = FALSE,
                      constraints = cons)
   )
   par <- redist.parity(get_plans_matrix(out), total_pop = pop)
