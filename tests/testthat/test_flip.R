@@ -2,7 +2,7 @@ test_that("flip works", {
   set.seed(1, kind = "Mersenne-Twister", normal.kind = "Inversion")
 
   capture.output(
-  out <- redist_flip(fl_map, init_plan = plans_10[, 1],
+  out <- redist_flip(fl_map %>% set_pop_tol(0.2), init_plan = plans_10[, 1],
                      nsims = 10, verbose = FALSE)
   )
   par <- redist.parity(get_plans_matrix(out), total_pop = pop)
@@ -26,7 +26,7 @@ test_that("flip countysplit works", {
       )
 
   capture.output(
-  out <- redist_flip(fl_map, init_plan = plans_10[, 1],
+  out <- redist_flip(fl_map %>% set_pop_tol(0.2), init_plan = plans_10[, 1],
                      nsims = 10, verbose = FALSE)
   )
   par <- redist.parity(get_plans_matrix(out), total_pop = pop)
@@ -47,7 +47,7 @@ test_that("flip hinge works", {
       )
 
   capture.output(
-  out <- redist_flip(fl_map, init_plan = plans_10[, 1],
+  out <- redist_flip(fl_map %>% set_pop_tol(0.2), init_plan = plans_10[, 1],
                      nsims = 10, verbose = FALSE,
                      constraints = cons)
   )
@@ -60,7 +60,7 @@ test_that("flip hinge works", {
 
 test_that('flip flip wrapper works',{
   capture.output(
-  sims <- redist_flip(map = fl_map, nsims = 10)
+  sims <- redist_flip(map = fl_map %>% set_pop_tol(0.2), nsims = 10)
   )
 
   expect_s3_class(sims, "redist_plans")
