@@ -14,6 +14,7 @@
 #include "make_swaps_helper.h"
 #include "constraint_calc_helper.h"
 #include "map_calc.h"
+#include "mcmc_gibbs.h"
 
 using namespace Rcpp;
 
@@ -46,9 +47,4 @@ Rcpp::List changeBeta(arma::vec betavec,
 		      Rcpp::NumericVector weights,
 		      int adjswap);
 
-double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
-                      IntegerVector districts, NumericVector &psi_vec, const uvec &pop,
-                      double parity, const Graph &g, List constraints);
-
 #endif
-
