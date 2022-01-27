@@ -8,7 +8,7 @@ test_that("flip works", {
   par <- redist.parity(get_plans_matrix(out), total_pop = pop)
 
   expect_equal(range(get_plans_matrix(out)), c(1, 3))
-  expect_true(all(par <= 0.1))
+  expect_true(all(par <= 0.2))
 
 })
 
@@ -54,7 +54,7 @@ test_that("flip hinge works", {
   par <- redist.parity(get_plans_matrix(out), total_pop = pop)
 
   expect_equal(range(get_plans_matrix(out)), c(1, 3))
-  expect_true(all(par <= 0.1))
+  expect_true(all(par <= 0.2))
 })
 
 
