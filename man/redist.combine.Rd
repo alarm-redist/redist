@@ -84,9 +84,9 @@ init_plan <- fl25_enum$plans[, 5118]
 ## Run the algorithm
 set.seed(1)
 temp <- tempdir()
-alg_253 <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
-                       init_plan = init_plan, nsims = 10000,
-                       nloop = 2, savename = paste0(temp, "/test"))
+# alg_253 <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
+#                       init_plan = init_plan, nsims = 10000,
+#                       nloop = 2, savename = paste0(temp, "/test"))
 # out <- redist.combine(savename = paste0(temp, "/test"), nloop = 2, nthin = 10)
 }
 }
