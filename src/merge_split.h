@@ -10,6 +10,7 @@
 #include "tree_op.h"
 #include "map_calc.h"
 #include "kirchhoff.h"
+#include "mcmc_gibbs.h"
 
 /*
  * Main entry point.
