@@ -43,8 +43,10 @@ Constraints may be added by using one of the following functions:
 More information about each constraint can be found on the relevant constraint page.
 }
 \examples{
-constr = redist_constr()
-constr = add_constr_splits(constr, strength=1.5)
+data(iowa)
+map_ia <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
+constr = redist_constr(map_ia)
+constr = add_constr_splits(constr, strength=1.5, admin = region)
 print(constr)
 
 }

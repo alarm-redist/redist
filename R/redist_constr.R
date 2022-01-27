@@ -57,8 +57,10 @@ validate_redist_constr = function(constr) {
 #' @returns a `redist_constr` object, which is just a list with a certain nested structure.
 #'
 #' @examples
-#' constr = redist_constr()
-#' constr = add_constr_splits(constr, strength=1.5)
+#' data(iowa)
+#' map_ia <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
+#' constr = redist_constr(map_ia)
+#' constr = add_constr_splits(constr, strength=1.5, admin = region)
 #' print(constr)
 #'
 #' @md
@@ -482,7 +484,7 @@ add_constr_qps <- function(constr, strength, cities, total_pop = NULL) {
     data <- attr(constr, 'data')
 
     new_constr <- list(strength = strength,
-                       cities = tidy_eval(enquo(cities), data))
+                       cities = eval_tidy(enquo(cities), data))
     new_constr$n_cty <- max(new_constr$cities) + 1
 
     add_to_constr(constr, 'qps', new_constr)

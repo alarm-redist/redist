@@ -87,7 +87,8 @@ sample is representative of a random sample from the uniform distribution.
 \donttest{
 data(iowa)
 map_ia <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
-cons <- redist_constr(map_ia) \%>\% add_constr_pop_dev(strength = 5.4)
+cons <- redist_constr(map_ia)
+cons <- add_constr_pop_dev(cons, strength = 5.4)
 alg <- redist_flip(map_ia, nsims = 500, constraints = cons)
 
 alg_ipw <- redist.ipw(plans = alg,

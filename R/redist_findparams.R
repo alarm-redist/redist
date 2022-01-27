@@ -104,7 +104,7 @@ run_sims <- function(i, params, map, nsims, init_plan,
     q4 <- (3*quant + 1):nsims
 
     ## Check acceptance rate
-    mh_acceptance <- round(sum(out$mhdecisions, na.rm = TRUE) / length(na.omit(out$mhdecisions)),
+    mh_acceptance <- round(sum(out$mhdecisions, na.rm = TRUE) / length(stats::na.omit(out$mhdecisions)),
                            digits = 3)
 
     ## Check population parity
