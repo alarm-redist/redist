@@ -28,6 +28,7 @@ Constraints may be added by using one of the following functions:
 \item \code{\link[=add_constr_edges_rem]{add_constr_edges_rem()}}
 \item \code{\link[=add_constr_fry_hold]{add_constr_fry_hold()}}
 \item \code{\link[=add_constr_grp_hinge]{add_constr_grp_hinge()}}
+\item \code{\link[=add_constr_grp_iv_hinge]{add_constr_grp_iv_hinge()}}
 \item \code{\link[=add_constr_grp_pow]{add_constr_grp_pow()}}
 \item \code{\link[=add_constr_incumbency]{add_constr_incumbency()}}
 \item \code{\link[=add_constr_log_st]{add_constr_log_st()}}

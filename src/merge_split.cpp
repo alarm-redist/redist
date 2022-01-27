@@ -192,6 +192,12 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
                                   as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]));
         });
 
+    log_tgt += add_constraint("grp_inv_hinge", constraints, distr_1, distr_2,
+                              [&] (List l, int distr) -> double {
+                                  return eval_grp_hinge(plan, distr, as<vec>(l["tgts_group"]),
+                                                        as<uvec>(l["total_pop"]), as<uvec>(l["group_pop"]));
+                              });
+
     log_tgt += add_constraint("incumbency", constraints, distr_1, distr_2,
         [&] (List l, int distr) -> double {
             return eval_inc(plan, distr, as<uvec>(l["incumbents"]));

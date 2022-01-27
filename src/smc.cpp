@@ -193,6 +193,12 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
                                       as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]));
             });
 
+        lp[i] += add_constraint("grp_inv_hinge", constraints,
+                                [&] (List l) -> double {
+                                    return eval_grp_hinge(districts.col(i), distr_ctr, as<vec>(l["tgts_group"]),
+                                                          as<uvec>(l["total_pop"]), as<uvec>(l["group_pop"]));
+                                });
+
         lp[i] += add_constraint("incumbency", constraints,
             [&] (List l) -> double {
                 return eval_inc(districts.col(i), distr_ctr, as<uvec>(l["incumbents"]));

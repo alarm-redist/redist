@@ -267,6 +267,33 @@ add_constr_grp_hinge = function(constr, strength, group_pop, total_pop=NULL,
     add_to_constr(constr, "grp_hinge", new_constr)
 }
 
+
+#' @param tgts_group A vector of target group shares for the hinge-type constraint.
+#' @rdname constraints
+#' @export
+add_constr_grp_iv_hinge = function(constr, strength, group_pop, total_pop=NULL,
+                                tgts_group=c(0.55)) {
+    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
+    data = attr(constr, "data")
+
+    new_constr = list(strength=strength,
+                      group_pop=eval_tidy(enquo(group_pop), data),
+                      total_pop=eval_tidy(enquo(total_pop), data),
+                      tgts_group=tgts_group)
+    if (is.null(new_constr$total_pop)) {
+        if (!is.null(attr(data, "pop_col"))) {
+            new_constr$total_pop = data[[attr(data, "pop_col")]]
+        } else {
+            cli_abort("{.arg total_pop} missing.")
+        }
+    }
+
+    stopifnot(length(new_constr$group_pop) == nrow(data))
+    stopifnot(length(new_constr$total_pop) == nrow(data))
+
+    add_to_constr(constr, "grp_inv_hinge", new_constr)
+}
 #' @param dvote,rvote A vector of Democratic or Republican vote counts
 #' @rdname constraints
 #' @export

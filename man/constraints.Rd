@@ -5,6 +5,7 @@
 \alias{add_constr_status_quo}
 \alias{add_constr_grp_pow}
 \alias{add_constr_grp_hinge}
+\alias{add_constr_grp_iv_hinge}
 \alias{add_constr_compet}
 \alias{add_constr_incumbency}
 \alias{add_constr_splits}
@@ -32,6 +33,14 @@ add_constr_grp_pow(
 )
 
 add_constr_grp_hinge(
+  constr,
+  strength,
+  group_pop,
+  total_pop = NULL,
+  tgts_group = c(0.55)
+)
+
+add_constr_grp_iv_hinge(
   constr,
   strength,
   group_pop,
