@@ -392,7 +392,7 @@ redist.combine.anneal <- function(file_name){
 #' alg_253 <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
 #'                        init_plan = init_plan, nsims = 10000,
 #'                        nloop = 2, savename = paste0(temp, "/test"))
-#' out <- redist.combine(savename = paste0(temp, "/test"), nloop = 2, nthin = 10)
+#' # out <- redist.combine(savename = paste0(temp, "/test"), nloop = 2, nthin = 10)
 #' }
 #' @concept post
 #' @export
