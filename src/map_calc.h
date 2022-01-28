@@ -26,6 +26,12 @@ double eval_grp_hinge(const subview_col<uword> &districts, int distr,
                       const vec &tgts_grp, const uvec &grp_pop, const uvec &total_pop);
 
 /*
+ * Compute the new, hinge VRA penalty for district `distr`
+ */
+double eval_grp_inv_hinge(const subview_col<uword> &districts, int distr,
+                      const vec &tgts_grp, const uvec &grp_pop, const uvec &total_pop);
+
+/*
  * Compute the old VRA penalty for district `distr`
  */
 double eval_grp_pow(const subview_col<uword> &districts, int distr,

@@ -73,6 +73,28 @@ double eval_grp_hinge(const subview_col<uword> &districts, int distr,
 }
 
 /*
+ * Compute the new, hinge group penalty for district `distr`
+ */
+double eval_grp_inv_hinge(const subview_col<uword> &districts, int distr,
+                      const vec &tgts_grp, const uvec &grp_pop, const uvec &total_pop) {
+    uvec idxs = find(districts == distr);
+    double frac = ((double) sum(grp_pop(idxs))) / sum(total_pop(idxs));
+    // figure out which to compare it to
+    double target;
+    double diff = 1;
+    int n_tgt = tgts_grp.size();
+    for (int i = 0; i < n_tgt; i++) {
+        double new_diff = std::fabs(tgts_grp[i] - frac);
+        if (new_diff <= diff) {
+            diff = new_diff;
+            target = tgts_grp[i];
+        }
+    }
+
+    return std::sqrt(std::max(0.0, frac - target));
+}
+
+/*
  * Compute the power-based group penalty for district `distr`
  */
 double eval_grp_pow(const subview_col<uword> &districts, int distr,

@@ -70,8 +70,8 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
 
     log_tgt += add_constraint("grp_inv_hinge", constraints, districts, psi_vec,
                               [&] (List l, int distr) -> double {
-                                  return eval_grp_hinge(plan, distr, as<vec>(l["tgts_group"]),
-                                                        as<uvec>(l["total_pop"]), as<uvec>(l["group_pop"]));
+                                  return eval_grp_inv_hinge(plan, distr, as<vec>(l["tgts_group"]),
+                                                            as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]));
                               });
 
     log_tgt += add_constraint("compet", constraints, districts, psi_vec,
