@@ -13,6 +13,10 @@ coarsen_adjacency <- function(adj, groups) {
     .Call(`_redist_coarsen_adjacency`, adj, groups)
 }
 
+get_plan_graph <- function(l, V, plan, n_distr) {
+    .Call(`_redist_get_plan_graph`, l, V, plan, n_distr)
+}
+
 color_graph <- function(l, plan) {
     .Call(`_redist_color_graph`, l, plan)
 }

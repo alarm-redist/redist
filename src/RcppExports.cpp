@@ -49,6 +49,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// get_plan_graph
+std::vector<std::set<int>> get_plan_graph(List l, int V, IntegerVector plan, int n_distr);
+RcppExport SEXP _redist_get_plan_graph(SEXP lSEXP, SEXP VSEXP, SEXP planSEXP, SEXP n_distrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type l(lSEXP);
+    Rcpp::traits::input_parameter< int >::type V(VSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type plan(planSEXP);
+    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_plan_graph(l, V, plan, n_distr));
+    return rcpp_result_gen;
+END_RCPP
+}
 // color_graph
 IntegerVector color_graph(List l, IntegerVector plan);
 RcppExport SEXP _redist_color_graph(SEXP lSEXP, SEXP planSEXP) {

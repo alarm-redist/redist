@@ -3,7 +3,7 @@
 #include <stdlib.h> // for NULL
 #include <R_ext/Rdynload.h>
 
-/* FIXME: 
+/* FIXME:
    Check these declarations against the C/Fortran source code.
 */
 
@@ -34,6 +34,7 @@ extern SEXP _redist_effgap(SEXP, SEXP, SEXP);
 extern SEXP _redist_effgapEP(SEXP, SEXP, SEXP);
 extern SEXP _redist_findBoundary(SEXP, SEXP);
 extern SEXP _redist_genAlConn(SEXP, SEXP);
+extern SEXP _redist_get_plan_graph(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_group_pct(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_group_pct_top_k(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_hamming(SEXP, SEXP);
@@ -96,6 +97,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_effgapEP",              (DL_FUNC) &_redist_effgapEP,               3},
     {"_redist_findBoundary",          (DL_FUNC) &_redist_findBoundary,           2},
     {"_redist_genAlConn",             (DL_FUNC) &_redist_genAlConn,              2},
+    {"_redist_get_plan_graph",        (DL_FUNC) &_redist_get_plan_graph,         4},
     {"_redist_group_pct",             (DL_FUNC) &_redist_group_pct,              4},
     {"_redist_group_pct_top_k",       (DL_FUNC) &_redist_group_pct_top_k,        5},
     {"_redist_hamming",               (DL_FUNC) &_redist_hamming,                2},
