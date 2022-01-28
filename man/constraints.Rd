@@ -134,6 +134,11 @@ matches each district to its nearest target percentage, and then applies a
 penalty of the form \eqn{\sqrt{max(0, tgt - grouppct)}}, summing across
 districts. This penalizes districts which are below their target percentage.
 
+The \code{grp_inv_hinge} constraint takes a list of target group percentages. It
+matches each district to its nearest target percentage, and then applies a
+penalty of the form \eqn{\sqrt{max(0, grouppct - tgt)}}, summing across
+districts. This penalizes districts which are below their target percentage.
+
 The \code{grp_pow} constraint (for expert use) adds a term of the form
 \eqn{(|tgtgroup-grouppct||tgtother-grouppct|)^{pow})}, which
 encourages districts to have group shares near either \code{tgt_group}
@@ -154,6 +159,28 @@ Values of \code{strength} should generally be small, given that the underlying v
 The \code{multisplits} constraint adds a term counting the number of
 counties which are split twice or more.
 Values of \code{strength} should generally be small, given that the underlying values are counts.
+
+The \code{edges_rem} constraint adds a term counting the number of edges removed from the
+adjacency graph. This is only usable with \code{redist_flip()}, as other algorithms
+implicitly use this via the \code{compactness} parameter. Values of \code{strength} should
+generally be small, given that the underlying values are counts.
+
+The \code{log_st} constraint constraint adds a term counting the log number of spanning
+trees. This is only usable with \code{redist_flip()}, as other algorithms
+implicitly use this via the \code{compactness} parameter.
+
+The \code{polsby} constraint adds a term encouraging compactness as defined by the
+Polsby Popper metric. Values of \code{strength} may be of moderate size.
+
+The \code{fry_hold} constraint adds a term encouraging compactness as defined by the
+Fryer Holden metric. Values of \code{strength} should be extremely small, as the
+underlying values are massive whent the true minimum Fryer Holden dneominator is not known.
+
+The \code{segregation} constraint adds a term encouraging segregation among minority groups,
+as measured by the dissimilarity index.
+
+The \code{pop_dev} constraint adds a term encouraging plans to have smaller population deviations
+from the target population.
 
 The \code{custom} constraint allows the user to specify their own constraint using
 a function which evaluates districts one at a time. The provided function
