@@ -640,6 +640,8 @@ List make_swaps(List boundary_cc,
   // make them 1 idxed
   swaps = swaps + 1;
 
+  std::vector<int> swaps_v = as<std::vector<int>>(swaps);
+
   mat districts(cds_prop.size(), 2, fill::zeros);
   for(int r = 0; r < nprec; r++){
       districts(r, 0) = cds_prop(r) + 1;
@@ -649,9 +651,9 @@ List make_swaps(List boundary_cc,
   arma::uvec pops = conv_to<arma::uvec>::from(as<arma::vec>(pop_vec));
 
   // Multiply mh_prob by constraint values
-  double energy_new = calc_gibbs_tgt(udistricts.col(0), ndists, nprec, swaps,
+  double energy_new = calc_gibbs_tgt(udistricts.col(0), ndists, nprec, swaps_v,
                                      new_psi, pops, parity, g, constraints);
-  double energy_old = calc_gibbs_tgt(udistricts.col(1), ndists, nprec, swaps,
+  double energy_old = calc_gibbs_tgt(udistricts.col(1), ndists, nprec, swaps_v,
                                      old_psi, pops, parity, g, constraints);
 
   mh_prob = (double)mh_prob * exp(-1.0 * beta * (energy_new - energy_old));

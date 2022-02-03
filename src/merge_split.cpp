@@ -61,7 +61,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
         "qps", "custom"
     );
     NumericVector new_psi(psi_names.size());
-    IntegerVector distr_1_2;
+    std::vector<int> distr_1_2;
     new_psi.names() = psi_names;
     RObject bar = cli_progress_bar(N - 1, cli_config(false));
     for (int i = 1; i < N; i++) {
@@ -98,7 +98,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
         // add gibbs target
         // NOTE: different signs than above b/c of how Metropolis proposal has
         // transition ratio flipped relative to the target density ratio
-        distr_1_2 = IntegerVector::create(distr_1, distr_2);
+        distr_1_2 = {distr_1, distr_2};
 
         prop_lp -= calc_gibbs_tgt(districts.col(i), n_distr, V, distr_1_2, new_psi,
                                   pop, target, g, constraints);

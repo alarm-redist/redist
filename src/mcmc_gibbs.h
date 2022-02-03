@@ -7,11 +7,11 @@
 #include "map_calc.h"
 
 double add_constraint(const std::string& name, List constraints,
-                      IntegerVector districts, NumericVector &psi_vec,
+                      std::vector<int> districts, NumericVector &psi_vec,
                       std::function<double(List, int)> fn_constr);
 
 double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
-                      IntegerVector districts, NumericVector &psi_vec, const uvec &pop,
+                      std::vector<int> districts, NumericVector &psi_vec, const uvec &pop,
                       double parity, const Graph &g, List constraints);
 
 #endif

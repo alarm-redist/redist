@@ -4,7 +4,7 @@
  * Helper function to iterate over constraints and apply them
  */
 double add_constraint(const std::string& name, List constraints,
-                      IntegerVector districts, NumericVector &psi_vec,
+                      std::vector<int> districts, NumericVector &psi_vec,
                       std::function<double(List, int)> fn_constr) {
     if (!constraints.containsElementNamed(name.c_str())) return 0;
 
@@ -15,8 +15,8 @@ double add_constraint(const std::string& name, List constraints,
         List constr_inst = constr[i];
         double strength = constr_inst["strength"];
         if (strength != 0) {
-            for (int dist = 0; dist < districts.size(); dist++) {
-                psi = fn_constr(constr_inst, districts(dist));
+            for (int dist : districts) {
+                psi = fn_constr(constr_inst, dist);
                 psi_vec[name] = psi + psi_vec[name];
                 val += strength * (psi);
             }
@@ -29,7 +29,7 @@ double add_constraint(const std::string& name, List constraints,
  * Add specific constraint weights & return the cumulative weight vector
  */
 double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
-                      IntegerVector districts, NumericVector &psi_vec, const uvec &pop,
+                      std::vector<int> districts, NumericVector &psi_vec, const uvec &pop,
                       double parity, const Graph &g, List constraints) {
     if (constraints.size() == 0) return 0.0;
     double log_tgt = 0;
