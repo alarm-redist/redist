@@ -120,8 +120,9 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
         constraints = new_redist_constr(eval_tidy(enquo(constraints), map))
     }
     if (any(c('edges_removed', 'log_st') %in% names(constraints))) {
-        cli_warn('{.var edges_removed} or {.var log_st} constraint found in {.arg constraints}
-                 and will be ignored. Adjust using {.arg compactness} instead.')
+        cli_warn(c("{.var edges_removed} or {.var log_st} constraint found in
+           {.arg constraints} and will be ignored.",
+           ">"="Adjust using {.arg compactness} instead."))
     }
     if (any(c('poslby', 'fry_hold') %in% names(constraints)) && compactness == 1) {
         cli_warn('{.var polsby} or {.var fry_hold} constraint found in {.arg constraints}
