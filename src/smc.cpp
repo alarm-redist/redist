@@ -195,7 +195,7 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
 
         lp[i] += add_constraint("grp_inv_hinge", constraints,
                                 [&] (List l) -> double {
-                                    return eval_grp_inv_hinge(districts.col(i), distr_ctr, as<vec>(l["tgts_group"]),
+                                    return eval_grp_hinge(districts.col(i), distr_ctr, as<vec>(l["tgts_group"]),
                                                           as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]));
                                 });
 
