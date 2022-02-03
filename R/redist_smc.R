@@ -159,9 +159,9 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
         cli_warn('{.var edges_removed} or {.var log_st} constraint found in {.arg constraints}
                  and will be ignored. Adjust using {.arg compactness} instead.')
     }
-    if (any(c('poslby', 'fry_hold') %in% names(constraints)) & compactness != 1) {
+    if (any(c('poslby', 'fry_hold') %in% names(constraints)) && compactness == 1) {
         cli_warn('{.var polsby} or {.var fry_hold} constraint found in {.arg constraints}
-                 with {.arg compactness != 1). This may disrupt efficient sampling.')
+                 with {.arg compactness == 1). This may disrupt efficient sampling.')
     }
     constraints = as.list(constraints) # drop data attribute
 
