@@ -1,5 +1,0 @@
-Name: Add Custom Constraint
-Description: Inserts custom constraint at cursor position
-Binding: custom_constraint
-Interactive: false
-
