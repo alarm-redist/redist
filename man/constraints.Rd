@@ -5,10 +5,18 @@
 \alias{add_constr_status_quo}
 \alias{add_constr_grp_pow}
 \alias{add_constr_grp_hinge}
+\alias{add_constr_grp_inv_hinge}
 \alias{add_constr_compet}
 \alias{add_constr_incumbency}
 \alias{add_constr_splits}
 \alias{add_constr_multisplits}
+\alias{add_constr_pop_dev}
+\alias{add_constr_segregation}
+\alias{add_constr_polsby}
+\alias{add_constr_fry_hold}
+\alias{add_constr_log_st}
+\alias{add_constr_edges_rem}
+\alias{add_constr_qps}
 \alias{add_constr_custom}
 \title{Sampling constraints}
 \usage{
@@ -32,13 +40,41 @@ add_constr_grp_hinge(
   tgts_group = c(0.55)
 )
 
+add_constr_grp_inv_hinge(
+  constr,
+  strength,
+  group_pop,
+  total_pop = NULL,
+  tgts_group = c(0.55)
+)
+
 add_constr_compet(constr, strength, dvote, rvote, pow = 0.5)
 
 add_constr_incumbency(constr, strength, incumbents)
 
-add_constr_splits(constr, strength)
+add_constr_splits(constr, strength, admin)
 
-add_constr_multisplits(constr, strength)
+add_constr_multisplits(constr, strength, admin)
+
+add_constr_pop_dev(constr, strength)
+
+add_constr_segregation(constr, strength, group_pop, total_pop = NULL)
+
+add_constr_polsby(constr, strength, perim_df = NULL)
+
+add_constr_fry_hold(
+  constr,
+  strength,
+  total_pop = NULL,
+  ssdmat = NULL,
+  denominator = 1
+)
+
+add_constr_log_st(constr, strength, admin = NULL)
+
+add_constr_edges_rem(constr, strength)
+
+add_constr_qps(constr, strength, cities, total_pop = NULL)
 
 add_constr_custom(constr, strength, fn)
 }
@@ -62,6 +98,16 @@ add_constr_custom(constr, strength, fn)
 \item{dvote, rvote}{A vector of Democratic or Republican vote counts}
 
 \item{incumbents}{A vector of precinct indicess for incumbents}
+
+\item{admin}{A vector indicating administrative unit membership}
+
+\item{perim_df}{A dataframe output from `redist.prep.polsbypopper`}
+
+\item{ssdmat}{Squared distance matrix for Fryer Holden constraint}
+
+\item{denominator}{Fryer Holden minimum value to normalize by. Default is 1 (no normalization).}
+
+\item{cities}{A vector containing zero entries for non-cities and non-zero entries for each city for `qps`.}
 
 \item{fn}{A function}
 }
@@ -88,6 +134,11 @@ matches each district to its nearest target percentage, and then applies a
 penalty of the form \eqn{\sqrt{max(0, tgt - grouppct)}}, summing across
 districts. This penalizes districts which are below their target percentage.
 
+The \code{grp_inv_hinge} constraint takes a list of target group percentages. It
+matches each district to its nearest target percentage, and then applies a
+penalty of the form \eqn{\sqrt{max(0, grouppct - tgt)}}, summing across
+districts. This penalizes districts which are below their target percentage.
+
 The \code{grp_pow} constraint (for expert use) adds a term of the form
 \eqn{(|tgtgroup-grouppct||tgtother-grouppct|)^{pow})}, which
 encourages districts to have group shares near either \code{tgt_group}
@@ -109,6 +160,28 @@ The \code{multisplits} constraint adds a term counting the number of
 counties which are split twice or more.
 Values of \code{strength} should generally be small, given that the underlying values are counts.
 
+The \code{edges_rem} constraint adds a term counting the number of edges removed from the
+adjacency graph. This is only usable with \code{redist_flip()}, as other algorithms
+implicitly use this via the \code{compactness} parameter. Values of \code{strength} should
+generally be small, given that the underlying values are counts.
+
+The \code{log_st} constraint constraint adds a term counting the log number of spanning
+trees. This is only usable with \code{redist_flip()}, as other algorithms
+implicitly use this via the \code{compactness} parameter.
+
+The \code{polsby} constraint adds a term encouraging compactness as defined by the
+Polsby Popper metric. Values of \code{strength} may be of moderate size.
+
+The \code{fry_hold} constraint adds a term encouraging compactness as defined by the
+Fryer Holden metric. Values of \code{strength} should be extremely small, as the
+underlying values are massive whent the true minimum Fryer Holden dneominator is not known.
+
+The \code{segregation} constraint adds a term encouraging segregation among minority groups,
+as measured by the dissimilarity index.
+
+The \code{pop_dev} constraint adds a term encouraging plans to have smaller population deviations
+from the target population.
+
 The \code{custom} constraint allows the user to specify their own constraint using
 a function which evaluates districts one at a time. The provided function
 \code{fn} should take two arguments: a vector describing the current plan
@@ -122,7 +195,7 @@ performant.
 data(iowa)
 iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05)
 constr = redist_constr(iowa_map)
-constr = add_constr_splits(constr, strength=1.5)
+constr = add_constr_splits(constr, strength=1.5, admin = name)
 constr = add_constr_grp_hinge(constr, strength=100,
                               dem_08, tot_08, tgts_group=c(0.5, 0.6))
 # encourage districts to have the same number of counties

@@ -2,7 +2,7 @@
 % Please edit documentation in R/redist_mcmc.R
 \name{redist.combine.anneal}
 \alias{redist.combine.anneal}
-\title{redist.combine.anneal}
+\title{(Deprecated) redist.combine.anneal}
 \usage{
 redist.combine.anneal(file_name)
 }

@@ -10,6 +10,7 @@
 #include "tree_op.h"
 #include "map_calc.h"
 #include "kirchhoff.h"
+#include "mcmc_gibbs.h"
 
 /*
  * Main entry point.
@@ -23,13 +24,6 @@ Rcpp::List ms_plans(int N, List l, const arma::uvec init, const arma::uvec &coun
                     const arma::uvec &pop, int n_distr, double target, double lower,
                     double upper, double rho, List constraints,
                     double thresh, int k, int verbosity);
-
-/*
- * Add specific constraint weights & return the cumulative weight vector
- */
-double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
-                      int distr_1, int distr_2, const uvec &pop,
-                      List constraints, const uvec &counties, int n_cty);
 
 
 /*

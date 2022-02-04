@@ -2,7 +2,7 @@
 % Please edit documentation in R/redist_mcmc.R
 \name{redist.flip}
 \alias{redist.flip}
-\title{Flip MCMC Redistricting Simulator}
+\title{(Deprecated) Flip MCMC Redistricting Simulator}
 \usage{
 redist.flip(
   adj,
@@ -10,6 +10,7 @@ redist.flip(
   nsims,
   ndists = NULL,
   init_plan = NULL,
+  constraints = redist_constr(),
   loopscompleted = 0,
   nloop = 1,
   warmup = 0,
@@ -17,17 +18,7 @@ redist.flip(
   eprob = 0.05,
   lambda = 0,
   pop_tol = NULL,
-  group_pop = NULL,
-  areasvec = NULL,
-  counties = NULL,
-  borderlength_mat = NULL,
-  ssdmat = NULL,
   temper = FALSE,
-  constraint = NULL,
-  constraintweights = NULL,
-  compactness_metric = "fryer-holden",
-  partisan_metric = "efficiency-gap",
-  ssd_denom = 1,
   betaseq = "powerlaw",
   betaseqlength = 10,
   betaweights = NULL,
@@ -38,13 +29,7 @@ redist.flip(
   adapt_eprob = FALSE,
   exact_mh = FALSE,
   savename = NULL,
-  verbose = TRUE,
-  tgt_min = 0.55,
-  tgt_other = 0.25,
-  rvote = NULL,
-  dvote = NULL,
-  minorityprop = NULL,
-  cities = NULL
+  verbose = TRUE
 )
 }
 \arguments{
@@ -63,6 +48,8 @@ unit}
 of each geographic unit. If not provided, random and contiguous congressional
 district assignments will be generated using \code{redist_smc}. To use the old
 behavior of generating with \code{redist.rsg}, provide init_plan = 'rsg'.}
+
+\item{constraints}{A `redist_constr` list.}
 
 \item{loopscompleted}{Number of save points reached by the
 algorithm. The default is \code{0}.}
@@ -88,40 +75,7 @@ constraint. \code{pop_tol} = 0.05 means that any proposed swap that
 brings a district more than 5\% away from population parity will be
 rejected. The default is \code{NULL}.}
 
-\item{group_pop}{A vector of populations for some sub-group of
-interest. The default is \code{NULL}.}
-
-\item{areasvec}{A vector of precinct areas for discrete Polsby-Popper.
-The default is \code{NULL}.}
-
-\item{counties}{A vector of county membership assignments. The default is \code{NULL}.}
-
-\item{borderlength_mat}{A matrix of border length distances, where
-the first two columns are the indices of precincts sharing a border and
-the third column is its distance. Default is \code{NULL}.}
-
-\item{ssdmat}{A matrix of squared distances between geographic
-units. The default is \code{NULL}.}
-
 \item{temper}{Whether to use simulated tempering algorithm. Default is FALSE.}
-
-\item{constraint}{Which constraint to apply. Accepts any combination of \code{compact},
-\code{segregation}, \code{vra}, \code{population}, \code{similarity}, \code{partisan},
-\code{minority}, \code{hinge}, \code{countysplit}, \code{qps}, or \code{none}
-(no constraint applied). The default is NULL.}
-
-\item{constraintweights}{The weights to apply to each constraint. Should be a vector
-the same length as constraint. Default is NULL.}
-
-\item{compactness_metric}{The compactness metric to use when constraining on
-compactness. Default is \code{fryer-holden}, the other implemented options
-are \code{polsby-popper} and \code{edges-removed}.}
-
-\item{partisan_metric}{The partisan metric to use when constraining on partisan metrics.
-Only implemented is "efficiency-gap", the default.}
-
-\item{ssd_denom}{The normalizing constant for the sum-of-squared distance Fryer-Holden metric.
-Default is 1.0 (unnormalized).}
 
 \item{betaseq}{Sequence of beta values for tempering. The default is
 \code{powerlaw} (see Fifield et. al (2015) for details).}
@@ -157,19 +111,6 @@ Metropolis-Hastings ratio calculation for accept-reject rule. Default is FALSE.}
 
 \item{verbose}{Whether to print initialization statement.
 Default is \code{TRUE}.}
-
-\item{tgt_min}{The majority minority target percent as a decimal. Default is 0.55.}
-
-\item{tgt_other}{The remaining target percent as a decimal. Default is 0.25.}
-
-\item{rvote}{integer vector of votes for Republicans by precinct}
-
-\item{dvote}{integer vector of votes for Democrats by precinct}
-
-\item{minorityprop}{numeric vector of targeted minority proportions for the top
-districts with that proportion}
-
-\item{cities}{integer vector of cities for QPS constraint.}
 }
 \value{
 \code{redist.mcmc} returns an object of class "redist". The object

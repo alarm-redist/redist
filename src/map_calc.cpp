@@ -1,4 +1,5 @@
 #include "map_calc.h"
+#include "kirchhoff.h"
 
 /*
  * Compute the logarithm of the graph theoretic length of the boundary between
@@ -69,6 +70,28 @@ double eval_grp_hinge(const subview_col<uword> &districts, int distr,
     }
 
     return std::sqrt(std::max(0.0, target - frac));
+}
+
+/*
+ * Compute the new, hinge group penalty for district `distr`
+ */
+double eval_grp_inv_hinge(const subview_col<uword> &districts, int distr,
+                      const vec &tgts_grp, const uvec &grp_pop, const uvec &total_pop) {
+    uvec idxs = find(districts == distr);
+    double frac = ((double) sum(grp_pop(idxs))) / sum(total_pop(idxs));
+    // figure out which to compare it to
+    double target;
+    double diff = 1;
+    int n_tgt = tgts_grp.size();
+    for (int i = 0; i < n_tgt; i++) {
+        double new_diff = std::fabs(tgts_grp[i] - frac);
+        if (new_diff <= diff) {
+            diff = new_diff;
+            target = tgts_grp[i];
+        }
+    }
+
+    return std::sqrt(std::max(0.0, frac - target));
 }
 
 /*
@@ -148,6 +171,131 @@ double eval_multisplits(const subview_col<uword> &districts, int distr,
     }
 
     return fracts;
+}
+
+/*
+ * Compute the Polsby Popper penalty for district `distr`
+ */
+double eval_polsby(const subview_col<uword> &districts, int distr,
+                   const ivec &from,
+                   const ivec &to,
+                   const vec &area,
+                   const vec &perimeter) {
+    uvec idxs = find(districts == distr);
+
+    double pi4 = 4.0 * 3.14159265;
+    double tot_area = sum(area(idxs));
+
+    double tot_perim = 0.0;
+
+    int ne = from.size();
+
+    uvec idx = find(to == distr);
+    for (int e = 0; e < idx.size(); e++) {
+        if(from(idx(e)) == -1) {
+            tot_perim += perimeter(idx(e));
+        } else {
+            if (districts(from(idx(e))) != distr) {
+                tot_perim += perimeter(idx(e));
+            }
+        }
+    }
+
+    double dist_peri2 = pow(tot_perim, 2.0);
+    return 1.0 - (pi4 * tot_area / dist_peri2);
+}
+
+/*
+ * Compute the Fryer-Holden penalty for district `distr`
+ */
+double eval_fry_hold(const subview_col<uword> &districts, int distr,
+                     const uvec &total_pop, mat ssdmat, double denominator = 1.0) {
+    uvec idxs = find(districts == distr);
+    double ssd = 0.0;
+
+    for (int i = 0; i < idxs.size() - 1; i++) {
+        for (int k = i + 1; k < idxs.size(); k++) {
+            ssd += (double) ssdmat(idxs(i), idxs(k)) * total_pop(idxs(i)) *
+                total_pop(idxs(k));
+        }
+    }
+
+    return ssd / denominator;
+}
+
+/*
+ * Compute the population penalty for district `distr`
+ */
+double eval_pop_dev(const subview_col<uword> &districts, int distr,
+                       const uvec &total_pop, double parity) {
+    uvec idxs = find(districts == distr);
+    double pop = sum(total_pop(idxs));
+
+    return std::pow(pop / parity - 1.0, 2.0);
+}
+
+
+/*
+ * Compute the segregation penalty for district `distr`
+ */
+double eval_segregation(const subview_col<uword> &districts, int distr,
+                        const uvec &grp_pop, const uvec &total_pop) {
+
+    int T = sum(total_pop);
+    double pAll = (double) sum(grp_pop) / T;
+    double denom = (double) 2.0 * T * pAll * (1 - pAll);
+
+    uvec idxs = find(districts == distr);
+    double grp = sum(grp_pop(idxs));
+    double pop = sum(total_pop(idxs));
+
+    return (double)(pop * std::abs((grp / pop) - pAll) / denom);
+}
+
+/*
+ * Compute the qps penalty for district `distr`
+ */
+double eval_qps(const subview_col<uword> &districts, int distr,
+                const uvec &total_pop, const uvec &cities, int n_city,
+                int nd) {
+
+    vec tally(n_city);
+    vec pj(n_city);
+    vec j(n_city);
+    vec sumpj(n_city);
+
+    uvec idxs_d = find(districts == distr);
+    double pop = sum(total_pop(idxs_d));
+
+    for (int i = 0; i < n_city; i++){
+        uvec idxs = find(cities == (i + 1));
+        idxs = arma::intersect(idxs_d, idxs);
+        tally(i) = sum(total_pop(idxs));
+        if (tally(i) > 0) {
+            j(i) += 1;
+        }
+    }
+
+    pj = tally / pop;
+    sumpj = pj * (1.0 -  pj);
+    sumpj = sumpj / (double) nd;
+
+    return sum(sumpj) + log(sum(j));
+}
+
+/*
+ * Compute the log spanning tree penalty for district `distr`
+ */
+double eval_log_st(const subview_col<uword> &districts, const Graph g,
+                   arma::uvec counties, int ndists) {
+    return (double)log_st_map(g, districts, counties, ndists)[0];
+}
+
+/*
+ * Compute the log spanning tree penalty for district `distr`
+ */
+double eval_er(const subview_col<uword> &districts, const Graph g, int ndists) {
+    return (double)n_removed(g, districts, ndists)[0];
 }
 
 

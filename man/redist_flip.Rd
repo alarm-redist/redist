@@ -9,8 +9,7 @@ redist_flip(
   nsims,
   warmup = 0,
   init_plan,
-  pop_tol,
-  constraints = list(),
+  constraints = redist_constr(map) \%>\% add_constr_edges_rem(0.4),
   nthin = 1,
   eprob = 0.05,
   lambda = 0,
@@ -39,14 +38,7 @@ a random initial plan will be generated using \code{redist_smc}. You can also
 request to initialize using \code{redist.rsg} by supplying 'rsg', though this is
 not recommended behavior.}
 
-\item{pop_tol}{The strength of the hard population
-constraint. \code{pop_tol} = 0.05 means that any proposed swap that
-brings a district more than 5\\% away from population parity will be
-rejected. The default is \code{get_pop_tol(map)}. Providing an entry here ignores
-the \code{pop_tol} within the object provided to map.}
-
-\item{constraints}{a list of constraints to implement. Can be created with
-\code{flip_constraints_helper}}
+\item{constraints}{A \code{redist_constr} object.}
 
 \item{nthin}{The amount by which to thin the Markov Chain. The
 default is \code{1}.}
@@ -122,12 +114,7 @@ you will likely want to strengthen (increase) this constraint. Otherwise,
 for most maps, the default constraint should be a good starting place.
 
 \code{redist_flip} samples from a known target distribution which can be described
-using the \code{constraints}. We recommend setting up the constraints for
-\code{redist_flip} with \code{\link{flip_constraints_helper}} to ensure that
-you are supplying the exact information needed. As a quick shorthand, if you
-want to run a simulation with no constraints at all, you can use
-\code{flip_constraints_helper(map = map, constraint = NULL)} and pass this to
-\code{constraints}. The following describes the constraints available. The general
+using the \code{constraints}. The following describes the constraints available. The general
 advice is to set weights in a way that gets between 20\\% and 40\\% acceptance
 on average, though more tuning advice is available in the vignette on using
 MCMC methods.Having too small of an acceptance rate indicates that the weights
@@ -218,7 +205,8 @@ between districts by group population.
 }
 \examples{
 data(iowa)
-iowa_map <- redist_map(iowa, ndists = 4, existing_plan = cd_2010, total_pop = pop, pop_tol = 0.01)
+iowa_map <- redist_map(iowa, ndists = 4, existing_plan = cd_2010, total_pop = pop,
+pop_tol = 0.05)
 sims <- redist_flip(map = iowa_map, nsims = 100)
 
 }
