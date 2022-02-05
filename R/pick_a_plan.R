@@ -69,7 +69,7 @@ pick_a_plan <- function(plans, map, counties = NULL, comp = NULL,
 
   best_draw <- as.integer(plans$draw[which.min(plans$parity)])
 
-  return(get_plans_matrix(plans)[, best_draw])
+  get_plans_matrix(plans)[, best_draw]
 }
 
 
@@ -94,21 +94,21 @@ pick_a_plan <- function(plans, map, counties = NULL, comp = NULL,
 #' }
 persily <- function(plan, map, counties = NULL){
 
-  counties <- eval_tidy(enquo(counties), map)
-  cons <- flip_constraints_helper(map = map, init_plan = plan,
-                                  constraint = c('compact', 'similarity', 'population', 'countysplit'),
-                                  counties = counties,
-                                  constraintweight = c(0.1, 10, 10, 10))
+    counties <- eval_tidy(enquo(counties), map)
+    cons <- redist_constr(map) %>%
+        add_constr_edges_rem(strength = 0.1) %>%
+        add_constr_status_quo(strength = 10, current = plan) %>%
+        add_constr_pop_dev(strength = 10) %>%
+        add_constr_splits(strength = 10, admin = counties)
 
-  par <- redist.parity(plan, total_pop = map[[attr(map, 'pop_col')]])
-  map <- set_pop_tol(map, 2*par)
+    par <- redist.parity(plan, total_pop = map[[attr(map, 'pop_col')]])
+    map <- set_pop_tol(map, 2*par)
 
-  bursts <- redist_shortburst(map, score_fn = (scorer_frac_kept(map = map) - scorer_pop_dev(map = map) -
-                                                 scorer_splits(map = map, counties = counties) +
-                                                 scorer_status_quo(map = map, existing_plan = plan)),
-                              backend = 'flip',
-                              max_bursts = 100, flip_constraints = cons, return_all = FALSE)
-  return(bursts)
+    redist_shortburst(map, score_fn = (scorer_frac_kept(map = map) - scorer_pop_dev(map = map) -
+                                           scorer_splits(map = map, counties = counties) +
+                                           scorer_status_quo(map = map, existing_plan = plan)),
+                      backend = 'flip',
+                      max_bursts = 100, constraints = cons, return_all = FALSE)
 }
 
 

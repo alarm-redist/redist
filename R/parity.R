@@ -62,3 +62,86 @@ redist.parity <- function(plans, total_pop, ncores = 1) {
 
     unlist(out)
 }
+
+
+#' Calculates Sparse Population Moves to Minimize Population Deviation
+#'
+#' This function computes a minimal set of population moves (e.g., 5 people from
+#' district 1 to district 3) to maximally balance the population between
+#' districts. The moves are only allowed between districts that share the
+#' territory of a county, so that any boundary adjustments are guaranteed to
+#' preserve all unbroken county boundaries.
+#'
+#' @param map a [redist_map]
+#' @param plan an integer vector containing the plan to be balanced.
+#'   Tidy-evaluated.
+#' @param counties an optional vector of counties, whose boundaries will be
+#'   preserved. Tidy-evaluated.
+#' @param penalty the larger this value, the more to encourage sparsity.
+#'
+#' @returns a list with components:
+#' \describe{
+#'   \item{`moves`}{A tibble describing the population moves}
+#'   \item{`pop_old`}{The current district populations}
+#'   \item{`pop_new`}{The district populations after the moves}
+#' }
+#'
+#' @concept analyze
+#' @md
+#' @export
+min_move_parity = function(map, plan, counties=NULL, penalty=0.2) {
+    adj = get_adj(map)
+    V = length(adj)
+    nd = attr(map, "ndists")
+
+    plan = eval_tidy(enquo(plan), map)
+    if (!is.numeric(plan) && all(plan > 0) && length(plan) == V)
+        cli_abort("{.arg plan} must be a positive integer vector with one entry per precinct.")
+
+    if (missing(counties)) {
+        counties = rep(1L, V)
+    } else {
+        counties = as.integer(as.factor(eval_tidy(enquo(counties), map)))
+    }
+
+    distr_adj = get_plan_graph(adj, length(adj), plan, nd)
+    edges = do.call(rbind, lapply(seq_along(distr_adj), function(i) {
+        tibble(from=i, to=distr_adj[[i]] + 1L)
+    })) %>%
+        rowwise() %>%
+        filter(from < to,
+               any(unique(counties[plan == from]) %in% counties[plan == to])) %>%
+        ungroup()
+
+    n_edge = nrow(edges)
+    e_idx = as.matrix(mutate(edges, i = row_number()))
+    diff_mat = matrix(0, nrow=nd, ncol=n_edge)
+    diff_mat[e_idx[, -2]] = -1
+    diff_mat[e_idx[, -1]] = 1
+
+    pops = pop_tally(matrix(plan, ncol=1), map[[attr(map, "pop_col")]], nd)
+    discrep = pops - mean(pops)
+
+    fn_balance = function(move, alpha=0.1) {
+        sum(abs(discrep + diff_mat %*% move)) + alpha*sum(abs(move))
+    }
+    gr_balance = function(move, alpha=0.1) {
+        t(sign(discrep + diff_mat %*% move)) %*% diff_mat + alpha * sign(move)
+    }
+
+    res = optim(rep(0, n_edge), fn_balance, gr_balance, alpha=penalty,
+                method="BFGS", control=list(maxit=1e3, reltol=1e-9, abstol=1))
+
+    move = round(res$par)
+    pops_new = pops + diff_mat %*% move
+    from_old = edges$from
+    edges = mutate(edges,
+                   from = if_else(move < 0, to, from),
+                   to = if_else(move < 0, from_old, to),
+                   move = abs(move)) %>%
+        filter(move > 0)
+
+    list(moves = edges,
+         pop_old = pops[,1],
+         pop_new = pops_new[,1])
+}

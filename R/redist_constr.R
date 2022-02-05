@@ -57,8 +57,10 @@ validate_redist_constr = function(constr) {
 #' @returns a `redist_constr` object, which is just a list with a certain nested structure.
 #'
 #' @examples
-#' constr = redist_constr()
-#' constr = add_constr_splits(constr, strength=1.5)
+#' data(iowa)
+#' map_ia <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
+#' constr = redist_constr(map_ia)
+#' constr = add_constr_splits(constr, strength=1.5, admin = region)
 #' print(constr)
 #'
 #' @md
@@ -137,6 +139,11 @@ add_to_constr = function(constr, name, new_constr) {
 #' penalty of the form \eqn{\sqrt{max(0, tgt - grouppct)}}, summing across
 #' districts. This penalizes districts which are below their target percentage.
 #'
+#' The `grp_inv_hinge` constraint takes a list of target group percentages. It
+#' matches each district to its nearest target percentage, and then applies a
+#' penalty of the form \eqn{\sqrt{max(0, grouppct - tgt)}}, summing across
+#' districts. This penalizes districts which are below their target percentage.
+#'
 #' The `grp_pow` constraint (for expert use) adds a term of the form
 #' \eqn{(|tgtgroup-grouppct||tgtother-grouppct|)^{pow})}, which
 #' encourages districts to have group shares near either `tgt_group`
@@ -158,6 +165,28 @@ add_to_constr = function(constr, name, new_constr) {
 #' counties which are split twice or more.
 #' Values of `strength` should generally be small, given that the underlying values are counts.
 #'
+#' The `edges_rem` constraint adds a term counting the number of edges removed from the
+#' adjacency graph. This is only usable with `redist_flip()`, as other algorithms
+#' implicitly use this via the `compactness` parameter. Values of `strength` should
+#' generally be small, given that the underlying values are counts.
+#'
+#' The `log_st` constraint constraint adds a term counting the log number of spanning
+#' trees. This is only usable with `redist_flip()`, as other algorithms
+#' implicitly use this via the `compactness` parameter.
+#'
+#' The `polsby` constraint adds a term encouraging compactness as defined by the
+#' Polsby Popper metric. Values of `strength` may be of moderate size.
+#'
+#' The `fry_hold` constraint adds a term encouraging compactness as defined by the
+#' Fryer Holden metric. Values of `strength` should be extremely small, as the
+#' underlying values are massive whent the true minimum Fryer Holden dneominator is not known.
+#'
+#' The `segregation` constraint adds a term encouraging segregation among minority groups,
+#' as measured by the dissimilarity index.
+#'
+#' The `pop_dev` constraint adds a term encouraging plans to have smaller population deviations
+#' from the target population.
+#'
 #' The `custom` constraint allows the user to specify their own constraint using
 #' a function which evaluates districts one at a time. The provided function
 #' `fn` should take two arguments: a vector describing the current plan
@@ -174,7 +203,7 @@ add_to_constr = function(constr, name, new_constr) {
 #' data(iowa)
 #' iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05)
 #' constr = redist_constr(iowa_map)
-#' constr = add_constr_splits(constr, strength=1.5)
+#' constr = add_constr_splits(constr, strength=1.5, admin = name)
 #' constr = add_constr_grp_hinge(constr, strength=100,
 #'                               dem_08, tot_08, tgts_group=c(0.5, 0.6))
 #' # encourage districts to have the same number of counties
@@ -265,6 +294,33 @@ add_constr_grp_hinge = function(constr, strength, group_pop, total_pop=NULL,
     add_to_constr(constr, "grp_hinge", new_constr)
 }
 
+
+#' @param tgts_group A vector of target group shares for the hinge-type constraint.
+#' @rdname constraints
+#' @export
+add_constr_grp_inv_hinge = function(constr, strength, group_pop, total_pop=NULL,
+                                tgts_group=c(0.55)) {
+    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
+    data = attr(constr, "data")
+
+    new_constr = list(strength=strength,
+                      group_pop = eval_tidy(enquo(total_pop), data) - eval_tidy(enquo(group_pop), data),
+                      total_pop = eval_tidy(enquo(total_pop), data),
+                      tgts_group = 1 - tgts_group)
+    if (is.null(new_constr$total_pop)) {
+        if (!is.null(attr(data, "pop_col"))) {
+            new_constr$total_pop = data[[attr(data, "pop_col")]]
+        } else {
+            cli_abort("{.arg total_pop} missing.")
+        }
+    }
+
+    stopifnot(length(new_constr$group_pop) == nrow(data))
+    stopifnot(length(new_constr$total_pop) == nrow(data))
+
+    add_to_constr(constr, "grp_inv_hinge", new_constr)
+}
 #' @param dvote,rvote A vector of Democratic or Republican vote counts
 #' @rdname constraints
 #' @export
@@ -297,24 +353,195 @@ add_constr_incumbency = function(constr, strength, incumbents) {
     add_to_constr(constr, "incumbency", new_constr)
 }
 
+#' @param admin A vector indicating administrative unit membership
 #' @rdname constraints
 #' @export
-add_constr_splits = function(constr, strength) {
+add_constr_splits = function(constr, strength, admin) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
+    data <- attr(constr, "data")
 
-    new_constr = list(strength=strength)
+    admin <- eval_tidy(enquo(admin), data)
+    if (is.null(admin)) {
+        cli_abort('{.arg admin} may not be {.val NULL}.')
+    }
+    if (any(is.na(admin))) {
+        cli_abort('{.arg admin} many not contain {.val NA}s.')
+    }
+    admin <- redist.sink.plan(admin)
+
+    new_constr = list(strength=strength,
+                      admin = admin,
+                      n = length(unique(admin)))
+
     add_to_constr(constr, "splits", new_constr)
 }
 
 #' @rdname constraints
 #' @export
-add_constr_multisplits = function(constr, strength) {
+add_constr_multisplits = function(constr, strength, admin) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
+    data <- attr(constr, "data")
 
-    new_constr = list(strength=strength)
+    admin <- eval_tidy(enquo(admin), data)
+    if (is.null(admin)) {
+        cli_abort('{.arg admin} may not be {.val NULL}.')
+    }
+    if (any(is.na(admin))) {
+        cli_abort('{.arg admin} many not contain {.val NA}s.')
+    }
+
+    admin <- redist.sink.plan(admin)
+
+    new_constr = list(strength=strength,
+                      admin = admin,
+                      n = length(unique(admin)))
     add_to_constr(constr, "multisplits", new_constr)
+}
+
+#' @rdname constraints
+#' @export
+add_constr_pop_dev <- function(constr, strength) {
+  if (!inherits(constr, 'redist_constr')) cli_abort('Not a {.cls redist_constr} object')
+  if (strength <= 0) cli_warn('Nonpositive strength may lead to unexpected results.')
+  data <- attr(constr, 'data')
+
+  new_constr <- list(strength = strength)
+  add_to_constr(constr, 'pop_dev', new_constr)
+}
+
+#' @rdname constraints
+#' @export
+add_constr_segregation <- function(constr, strength, group_pop, total_pop = NULL) {
+    if (!inherits(constr, 'redist_constr')) cli_abort('Not a {.cls redist_constr} object')
+    if (strength <= 0) cli_warn('Nonpositive strength may lead to unexpected results.')
+    data <- attr(constr, 'data')
+
+    new_constr <- list(strength = strength,
+                      group_pop = eval_tidy(enquo(group_pop), data),
+                      total_pop = eval_tidy(enquo(total_pop), data))
+    if (is.null(new_constr$total_pop)) {
+        if (!is.null(attr(data, "pop_col"))) {
+            new_constr$total_pop = data[[attr(data, "pop_col")]]
+        } else {
+            cli_abort("{.arg total_pop} missing.")
+        }
+    }
+    if (is.null(new_constr$group_pop)) {
+        cli_abort("{.arg group_pop} missing.")
+    }
+
+    stopifnot(length(new_constr$group_pop) == nrow(data))
+    stopifnot(length(new_constr$total_pop) == nrow(data))
+    add_to_constr(constr, 'segregation', new_constr)
+}
+
+#' @param perim_df A dataframe output from `redist.prep.polsbypopper`
+#' @rdname constraints
+#' @export
+add_constr_polsby <- function(constr, strength, perim_df = NULL) {
+    if (!inherits(constr, 'redist_constr')) cli_abort('Not a {.cls redist_constr} object')
+    if (strength <= 0) cli_warn('Nonpositive strength may lead to unexpected results.')
+    data <- attr(constr, 'data')
+
+    if (!inherits(data, 'sf')) {
+        cli_abort('Input to {.fun redist_constr} must be a {.cls sf} object.')
+    }
+
+    areas <- sf::st_area(data)
+
+    if (is.null(perim_df)) {
+        perim_df <- redist.prep.polsbypopper(data)
+    }
+
+    new_constr <- list(strength = strength,
+                       from = perim_df$origin,
+                       to = perim_df$touching,
+                       area = areas,
+                       perimeter = perim_df$edge)
+
+    add_to_constr(constr, 'polsby', new_constr)
+}
+
+#' @rdname constraints
+#' @param ssdmat Squared distance matrix for Fryer Holden constraint
+#' @param denominator Fryer Holden minimum value to normalize by. Default is 1 (no normalization).
+#' @export
+add_constr_fry_hold <- function(constr, strength, total_pop = NULL, ssdmat = NULL, denominator = 1) {
+    if (!inherits(constr, 'redist_constr')) cli_abort('Not a {.cls redist_constr} object')
+    if (strength <= 0) cli_warn('Nonpositive strength may lead to unexpected results.')
+    data <- attr(constr, 'data')
+
+    total_pop <- eval_tidy(enquo(total_pop), data)
+    if (is.null(total_pop)) {
+        if (!is.null(attr(data, "pop_col"))) {
+            total_pop <- data[[attr(data, "pop_col")]]
+        } else {
+            cli_abort("{.arg total_pop} missing.")
+        }
+    }
+    if (is.null(ssdmat)) {
+        ssdmat <- calcPWDh(sf::st_coordinates(sf::st_centroid(data)))
+    }
+
+    new_constr <- list(strength = strength,
+                       total_pop = total_pop,
+                       ssdmat = ssdmat,
+                       denominator = denominator)
+
+
+    add_to_constr(constr, 'fry_hold', new_constr)
+}
+
+#' @rdname constraints
+#' @export
+add_constr_log_st <- function(constr, strength, admin = NULL) {
+    if (!inherits(constr, 'redist_constr')) cli_abort('Not a {.cls redist_constr} object')
+    if (strength <= 0) cli_warn('Nonpositive strength may lead to unexpected results.')
+    data <- attr(constr, 'data')
+
+    admin <- eval_tidy(enquo(admin), data)
+    if (is.null(admin)) {
+        admin <- rep(1, nrow(data))
+    }
+    if (any(is.na(admin))) {
+        cli_abort('{.arg admin} many not contain {.val NA}s.')
+    }
+
+    admin <- redist.sink.plan(admin)
+
+    new_constr <- list(strength = strength,
+                       admin = admin)
+
+    add_to_constr(constr, 'log_st', new_constr)
+}
+
+#' @rdname constraints
+#' @export
+add_constr_edges_rem <- function(constr, strength) {
+    if (!inherits(constr, 'redist_constr')) cli_abort('Not a {.cls redist_constr} object')
+    if (strength <= 0) cli_warn('Nonpositive strength may lead to unexpected results.')
+    data <- attr(constr, 'data')
+
+    new_constr <- list(strength = strength)
+
+    add_to_constr(constr, 'edges_removed', new_constr)
+}
+
+#' @param cities A vector containing zero entries for non-cities and non-zero entries for each city for `qps`.
+#' @rdname constraints
+#' @export
+add_constr_qps <- function(constr, strength, cities, total_pop = NULL) {
+    if (!inherits(constr, 'redist_constr')) cli_abort('Not a {.cls redist_constr} object')
+    if (strength <= 0) cli_warn('Nonpositive strength may lead to unexpected results.')
+    data <- attr(constr, 'data')
+
+    new_constr <- list(strength = strength,
+                       cities = eval_tidy(enquo(cities), data))
+    new_constr$n_cty <- max(new_constr$cities) + 1
+
+    add_to_constr(constr, 'qps', new_constr)
 }
 
 #' @param fn A function
@@ -364,6 +591,9 @@ print.redist_constr = function(x, header=TRUE, details=TRUE, ...) {
         } else if (startsWith(nm, "grp_hinge")) {
             cli::cli_bullets(c("*"="A (hinge-type) group share constraint of strength {x[[nm]]$strength}"))
             print_constr(x[[nm]])
+        } else if (startsWith(nm, "grp_inv_hinge")) {
+            cli::cli_bullets(c("*"="An (inverse-hinge-type) group share constraint of strength {x[[nm]]$strength}"))
+            print_constr(x[[nm]])
         } else if (startsWith(nm, "compet")) {
             cli::cli_bullets(c("*"="A competitiveness constraint of strength {x[[nm]]$strength}"))
             print_constr(x[[nm]])
@@ -376,6 +606,24 @@ print.redist_constr = function(x, header=TRUE, details=TRUE, ...) {
             cli::cli_bullets(c("*"="A multisplits constraint of strength {x[[nm]]$strength}"))
         } else if (startsWith(nm, "custom")) {
             cli::cli_bullets(c("*"="A custom constraint of strength {x[[nm]]$strength}"))
+            print_constr(x[[nm]])
+        } else if (startsWith(nm, "edges_rem")) {
+            cli::cli_bullets(c("*"="An (edges-removed-type) compactness constraint of strength {x[[nm]]$strength}"))
+            print_constr(x[[nm]])
+        } else if (startsWith(nm, "log_st")) {
+            cli::cli_bullets(c("*"="A (log-spanning-tree-type) compactness constraint of strength {x[[nm]]$strength}"))
+            print_constr(x[[nm]])
+        } else if (startsWith(nm, "polsby")) {
+            cli::cli_bullets(c("*"="A (Polsby-Popper-type) compactness constraint of strength {x[[nm]]$strength}"))
+            print_constr(x[[nm]])
+        } else if (startsWith(nm, "fry_hold")) {
+            cli::cli_bullets(c("*"="A (Fryer-Holden-type) compactness constraint of strength {x[[nm]]$strength}"))
+            print_constr(x[[nm]])
+        } else if (startsWith(nm, "pop_dev")) {
+            cli::cli_bullets(c("*"="A population deviation constraint of strength {x[[nm]]$strength}"))
+            print_constr(x[[nm]])
+        } else if (startsWith(nm, "segregation")) {
+            cli::cli_bullets(c("*"="A dissimilarity segregation constraint of strength {x[[nm]]$strength}"))
             print_constr(x[[nm]])
         } else {
             cli::cli_bullets(c("*"="An unknown constraint {.var {nm}}"))

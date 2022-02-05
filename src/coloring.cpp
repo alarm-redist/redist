@@ -5,6 +5,7 @@
 using namespace Rcpp;
 
 // forward declaration
+// [[Rcpp::export]]
 std::vector<std::set<int>> get_plan_graph(List l, int V,
                                           IntegerVector plan, int n_distr);
 
@@ -56,7 +57,7 @@ IntegerVector color_graph(List l, IntegerVector plan) {
 std::vector<std::set<int>> get_plan_graph(List l, int V,
                                           IntegerVector plan, int n_distr) {
     std::vector<std::set<int>> dist_gr;
-    for (int i = 0; i < V; i++) {
+    for (int i = 0; i < n_distr; i++) {
         dist_gr.push_back(std::set<int>());
     }
 

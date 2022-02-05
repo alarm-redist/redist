@@ -26,6 +26,12 @@ double eval_grp_hinge(const subview_col<uword> &districts, int distr,
                       const vec &tgts_grp, const uvec &grp_pop, const uvec &total_pop);
 
 /*
+ * Compute the new, hinge VRA penalty for district `distr`
+ */
+double eval_grp_inv_hinge(const subview_col<uword> &districts, int distr,
+                      const vec &tgts_grp, const uvec &grp_pop, const uvec &total_pop);
+
+/*
  * Compute the old VRA penalty for district `distr`
  */
 double eval_grp_pow(const subview_col<uword> &districts, int distr,
@@ -48,6 +54,51 @@ double eval_splits(const subview_col<uword> &districts, int distr,
  */
 double eval_multisplits(const subview_col<uword> &districts, int distr,
                         const uvec &counties, int n_cty);
+
+/*
+ * Compute the Polsby Popper penalty for district `distr`
+ */
+double eval_polsby(const subview_col<uword> &districts, int distr,
+            const ivec &from,
+            const ivec &to,
+            const vec &area,
+            const vec &perimeter);
+
+/*
+ * Compute the Fryer-Holden penalty for district `distr`
+ */
+double eval_fry_hold(const subview_col<uword> &districts, int distr,
+                     const uvec &total_pop, mat ssdmat, double denominator);
+
+/*
+ * Compute the population penalty for district `distr`
+ */
+double eval_pop_dev(const subview_col<uword> &districts, int distr,
+                       const uvec &total_pop, double parity);
+
+/*
+ * Compute the segregation penalty for district `distr`
+ */
+double eval_segregation(const subview_col<uword> &districts, int distr,
+                        const uvec &grp_pop, const uvec &total_pop);
+
+/*
+ * Compute the qps penalty for district `distr`
+ */
+double eval_qps(const subview_col<uword> &districts, int distr,
+                const uvec &total_pop, const uvec &cities, int n_city,
+                int nd);
+
+/*
+ * Compute the log spanning tree penalty for district `distr`
+ */
+double eval_log_st(const subview_col<uword> &districts, const Graph g,
+                   arma::uvec counties, int ndists);
+
+/*
+ * Compute the log spanning tree penalty for district `distr`
+ */
+double eval_er(const subview_col<uword> &districts, const Graph g, int ndists);
 
 
 /*

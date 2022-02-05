@@ -49,6 +49,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// get_plan_graph
+std::vector<std::set<int>> get_plan_graph(List l, int V, IntegerVector plan, int n_distr);
+RcppExport SEXP _redist_get_plan_graph(SEXP lSEXP, SEXP VSEXP, SEXP planSEXP, SEXP n_distrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type l(lSEXP);
+    Rcpp::traits::input_parameter< int >::type V(VSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type plan(planSEXP);
+    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_plan_graph(l, V, plan, n_distr));
+    return rcpp_result_gen;
+END_RCPP
+}
 // color_graph
 IntegerVector color_graph(List l, IntegerVector plan);
 RcppExport SEXP _redist_color_graph(SEXP lSEXP, SEXP planSEXP) {
@@ -526,56 +540,32 @@ BEGIN_RCPP
 END_RCPP
 }
 // swMH
-List swMH(List aList, NumericVector cdvec, NumericVector cdorigvec, NumericVector popvec, NumericVector grouppopvec, NumericVector areas_vec, IntegerVector county_membership, IntegerVector cities, arma::mat borderlength_mat, int nsims, double eprob, double pct_dist_parity, NumericVector beta_sequence, NumericVector beta_weights, NumericMatrix ssdmat, double tgt_min, double tgt_other, IntegerVector rvote, IntegerVector dvote, NumericVector minorityprop, int lambda, double beta, double weight_population, double weight_compact, double weight_segregation, double weight_vra, double weight_similar, double weight_countysplit, double weight_partisan, double weight_minority, double weight_hinge, double weight_qps, std::string adapt_beta, int adjswap, int exact_mh, int adapt_eprob, int adapt_lambda, std::string compactness_measure, std::string partisan_measure, double ssd_denom, int num_hot_steps, int num_annealing_steps, int num_cold_steps, bool verbose);
-RcppExport SEXP _redist_swMH(SEXP aListSEXP, SEXP cdvecSEXP, SEXP cdorigvecSEXP, SEXP popvecSEXP, SEXP grouppopvecSEXP, SEXP areas_vecSEXP, SEXP county_membershipSEXP, SEXP citiesSEXP, SEXP borderlength_matSEXP, SEXP nsimsSEXP, SEXP eprobSEXP, SEXP pct_dist_paritySEXP, SEXP beta_sequenceSEXP, SEXP beta_weightsSEXP, SEXP ssdmatSEXP, SEXP tgt_minSEXP, SEXP tgt_otherSEXP, SEXP rvoteSEXP, SEXP dvoteSEXP, SEXP minoritypropSEXP, SEXP lambdaSEXP, SEXP betaSEXP, SEXP weight_populationSEXP, SEXP weight_compactSEXP, SEXP weight_segregationSEXP, SEXP weight_vraSEXP, SEXP weight_similarSEXP, SEXP weight_countysplitSEXP, SEXP weight_partisanSEXP, SEXP weight_minoritySEXP, SEXP weight_hingeSEXP, SEXP weight_qpsSEXP, SEXP adapt_betaSEXP, SEXP adjswapSEXP, SEXP exact_mhSEXP, SEXP adapt_eprobSEXP, SEXP adapt_lambdaSEXP, SEXP compactness_measureSEXP, SEXP partisan_measureSEXP, SEXP ssd_denomSEXP, SEXP num_hot_stepsSEXP, SEXP num_annealing_stepsSEXP, SEXP num_cold_stepsSEXP, SEXP verboseSEXP) {
+List swMH(List aList, NumericVector cdvec, NumericVector popvec, int nsims, List constraints, double eprob, double pct_dist_parity, NumericVector beta_sequence, NumericVector beta_weights, int lambda, double beta, std::string adapt_beta, int adjswap, int exact_mh, int adapt_eprob, int adapt_lambda, int num_hot_steps, int num_annealing_steps, int num_cold_steps, bool verbose);
+RcppExport SEXP _redist_swMH(SEXP aListSEXP, SEXP cdvecSEXP, SEXP popvecSEXP, SEXP nsimsSEXP, SEXP constraintsSEXP, SEXP eprobSEXP, SEXP pct_dist_paritySEXP, SEXP beta_sequenceSEXP, SEXP beta_weightsSEXP, SEXP lambdaSEXP, SEXP betaSEXP, SEXP adapt_betaSEXP, SEXP adjswapSEXP, SEXP exact_mhSEXP, SEXP adapt_eprobSEXP, SEXP adapt_lambdaSEXP, SEXP num_hot_stepsSEXP, SEXP num_annealing_stepsSEXP, SEXP num_cold_stepsSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< List >::type aList(aListSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type cdvec(cdvecSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type cdorigvec(cdorigvecSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type popvec(popvecSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type grouppopvec(grouppopvecSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type areas_vec(areas_vecSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type county_membership(county_membershipSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type cities(citiesSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type borderlength_mat(borderlength_matSEXP);
     Rcpp::traits::input_parameter< int >::type nsims(nsimsSEXP);
+    Rcpp::traits::input_parameter< List >::type constraints(constraintsSEXP);
     Rcpp::traits::input_parameter< double >::type eprob(eprobSEXP);
     Rcpp::traits::input_parameter< double >::type pct_dist_parity(pct_dist_paritySEXP);
     Rcpp::traits::input_parameter< NumericVector >::type beta_sequence(beta_sequenceSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type beta_weights(beta_weightsSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type ssdmat(ssdmatSEXP);
-    Rcpp::traits::input_parameter< double >::type tgt_min(tgt_minSEXP);
-    Rcpp::traits::input_parameter< double >::type tgt_other(tgt_otherSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type rvote(rvoteSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type dvote(dvoteSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type minorityprop(minoritypropSEXP);
     Rcpp::traits::input_parameter< int >::type lambda(lambdaSEXP);
     Rcpp::traits::input_parameter< double >::type beta(betaSEXP);
-    Rcpp::traits::input_parameter< double >::type weight_population(weight_populationSEXP);
-    Rcpp::traits::input_parameter< double >::type weight_compact(weight_compactSEXP);
-    Rcpp::traits::input_parameter< double >::type weight_segregation(weight_segregationSEXP);
-    Rcpp::traits::input_parameter< double >::type weight_vra(weight_vraSEXP);
-    Rcpp::traits::input_parameter< double >::type weight_similar(weight_similarSEXP);
-    Rcpp::traits::input_parameter< double >::type weight_countysplit(weight_countysplitSEXP);
-    Rcpp::traits::input_parameter< double >::type weight_partisan(weight_partisanSEXP);
-    Rcpp::traits::input_parameter< double >::type weight_minority(weight_minoritySEXP);
-    Rcpp::traits::input_parameter< double >::type weight_hinge(weight_hingeSEXP);
-    Rcpp::traits::input_parameter< double >::type weight_qps(weight_qpsSEXP);
     Rcpp::traits::input_parameter< std::string >::type adapt_beta(adapt_betaSEXP);
     Rcpp::traits::input_parameter< int >::type adjswap(adjswapSEXP);
     Rcpp::traits::input_parameter< int >::type exact_mh(exact_mhSEXP);
     Rcpp::traits::input_parameter< int >::type adapt_eprob(adapt_eprobSEXP);
     Rcpp::traits::input_parameter< int >::type adapt_lambda(adapt_lambdaSEXP);
-    Rcpp::traits::input_parameter< std::string >::type compactness_measure(compactness_measureSEXP);
-    Rcpp::traits::input_parameter< std::string >::type partisan_measure(partisan_measureSEXP);
-    Rcpp::traits::input_parameter< double >::type ssd_denom(ssd_denomSEXP);
     Rcpp::traits::input_parameter< int >::type num_hot_steps(num_hot_stepsSEXP);
     Rcpp::traits::input_parameter< int >::type num_annealing_steps(num_annealing_stepsSEXP);
     Rcpp::traits::input_parameter< int >::type num_cold_steps(num_cold_stepsSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(swMH(aList, cdvec, cdorigvec, popvec, grouppopvec, areas_vec, county_membership, cities, borderlength_mat, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, tgt_min, tgt_other, rvote, dvote, minorityprop, lambda, beta, weight_population, weight_compact, weight_segregation, weight_vra, weight_similar, weight_countysplit, weight_partisan, weight_minority, weight_hinge, weight_qps, adapt_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, compactness_measure, partisan_measure, ssd_denom, num_hot_steps, num_annealing_steps, num_cold_steps, verbose));
+    rcpp_result_gen = Rcpp::wrap(swMH(aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parity, beta_sequence, beta_weights, lambda, beta, adapt_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, num_hot_steps, num_annealing_steps, num_cold_steps, verbose));
     return rcpp_result_gen;
 END_RCPP
 }

@@ -53,6 +53,16 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     select_pair(n_distr, g, init, distr_1, distr_2);
     int n_accept = 0;
     int reject_ct;
+    CharacterVector psi_names = CharacterVector::create(
+        "pop_dev", "splits", "multisplits",
+        "segregation", "grp_pow", "grp_hinge", "grp_inv_hinge",
+        "compet", "status_quo", "incumbency",
+        "polsby", "fry_hold", "log_st", "edges_removed",
+        "qps", "custom"
+    );
+    NumericVector new_psi(psi_names.size());
+    std::vector<int> distr_1_2;
+    new_psi.names() = psi_names;
     RObject bar = cli_progress_bar(N - 1, cli_config(false));
     for (int i = 1; i < N; i++) {
         districts.col(i) = districts.col(i - 1); // copy over old map
@@ -88,10 +98,12 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
         // add gibbs target
         // NOTE: different signs than above b/c of how Metropolis proposal has
         // transition ratio flipped relative to the target density ratio
-        prop_lp -= calc_gibbs_tgt(districts.col(i), n_distr, V, distr_1, distr_2,
-                                  pop, constraints, counties, n_cty);
-        prop_lp += calc_gibbs_tgt(districts.col(i-1), n_distr, V, distr_1, distr_2,
-                                  pop, constraints, counties, n_cty);
+        distr_1_2 = {distr_1, distr_2};
+
+        prop_lp -= calc_gibbs_tgt(districts.col(i), n_distr, V, distr_1_2, new_psi,
+                                  pop, target, g, constraints);
+        prop_lp += calc_gibbs_tgt(districts.col(i-1), n_distr, V, distr_1_2, new_psi,
+                                  pop, target, g, constraints);
 
         double alpha = exp(prop_lp);
         if (alpha >= 1 || unif(generator) <= alpha) { // ACCEPT
@@ -120,92 +132,6 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
 
     return out;
 }
-
-
-/*
- * Helper function to iterate over constraints and apply them
- */
-double add_constraint(const std::string& name, List constraints,
-                      int distr_1, int distr_2,
-                      std::function<double(List, int)> fn_constr) {
-    if (!constraints.containsElementNamed(name.c_str())) return 0;
-
-    List constr = constraints[name];
-    double val = 0;
-    for (int i = 0; i < constr.size(); i++) {
-        List constr_inst = constr[i];
-        double strength = constr_inst["strength"];
-        if (strength != 0) {
-            val += strength * (
-                fn_constr(constr_inst, distr_1) +
-                fn_constr(constr_inst, distr_2)
-            );
-        }
-    }
-    return val;
-}
-
-/*
- * Add specific constraint weights & return the cumulative weight vector
- */
-double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
-                      int distr_1, int distr_2, const uvec &pop,
-                      List constraints, const uvec &counties, int n_cty) {
-    if (constraints.size() == 0) return 0.0;
-    double log_tgt = 0;
-
-    log_tgt += add_constraint("status_quo", constraints, distr_1, distr_2,
-        [&] (List l, int distr) -> double {
-            return eval_sq_entropy(plan, as<uvec>(l["current"]), distr,
-                                   pop, n_distr, as<int>(l["n_current"]), V);
-        });
-
-    log_tgt += add_constraint("grp_pow", constraints, distr_1, distr_2,
-        [&] (List l, int distr) -> double {
-            return eval_grp_pow(plan, distr, as<uvec>(l["group_pop"]),
-                                as<uvec>(l["total_pop"]), as<double>(l["tgt_group"]),
-                                as<double>(l["tgt_other"]), as<double>(l["pow"]));
-        });
-
-    log_tgt += add_constraint("compet", constraints, distr_1, distr_2,
-        [&] (List l, int distr) -> double {
-            uvec dvote = l["dvote"];
-            uvec total = dvote + as<uvec>(l["rvote"]);
-            return eval_grp_pow(plan, distr, dvote, total, 0.5, 0.5,
-                                as<double>(l["pow"]));
-        });
-
-    log_tgt += add_constraint("grp_hinge", constraints, distr_1, distr_2,
-        [&] (List l, int distr) -> double {
-            return eval_grp_hinge(plan, distr, as<vec>(l["tgts_group"]),
-                                  as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]));
-        });
-
-    log_tgt += add_constraint("incumbency", constraints, distr_1, distr_2,
-        [&] (List l, int distr) -> double {
-            return eval_inc(plan, distr, as<uvec>(l["incumbents"]));
-        });
-
-    log_tgt += add_constraint("splits", constraints, distr_1, distr_2,
-        [&] (List l, int distr) -> double {
-            return eval_splits(plan, distr, counties, n_cty);
-        });
-
-    log_tgt += add_constraint("multisplits", constraints, distr_1, distr_2,
-        [&] (List l, int distr) -> double {
-            return eval_multisplits(plan, distr, counties, n_cty);
-        });
-
-    log_tgt += add_constraint("custom", constraints, distr_1, distr_2,
-        [&] (List l, int distr) -> double {
-            Function fn = l["fn"];
-            return as<NumericVector>(fn(plan, distr))[0];
-        });
-
-
-    return log_tgt;
-}
-
 
 /*
  * Split a map into two pieces with population lying between `lower` and `upper`

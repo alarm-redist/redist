@@ -25,10 +25,18 @@ Constraints may be added by using one of the following functions:
 \itemize{
 \item \code{\link[=add_constr_compet]{add_constr_compet()}}
 \item \code{\link[=add_constr_custom]{add_constr_custom()}}
+\item \code{\link[=add_constr_edges_rem]{add_constr_edges_rem()}}
+\item \code{\link[=add_constr_fry_hold]{add_constr_fry_hold()}}
 \item \code{\link[=add_constr_grp_hinge]{add_constr_grp_hinge()}}
+\item \code{\link[=add_constr_grp_inv_hinge]{add_constr_grp_inv_hinge()}}
 \item \code{\link[=add_constr_grp_pow]{add_constr_grp_pow()}}
 \item \code{\link[=add_constr_incumbency]{add_constr_incumbency()}}
+\item \code{\link[=add_constr_log_st]{add_constr_log_st()}}
 \item \code{\link[=add_constr_multisplits]{add_constr_multisplits()}}
+\item \code{\link[=add_constr_polsby]{add_constr_polsby()}}
+\item \code{\link[=add_constr_pop_dev]{add_constr_pop_dev()}}
+\item \code{\link[=add_constr_qps]{add_constr_qps()}}
+\item \code{\link[=add_constr_segregation]{add_constr_segregation()}}
 \item \code{\link[=add_constr_splits]{add_constr_splits()}}
 \item \code{\link[=add_constr_status_quo]{add_constr_status_quo()}}
 }
@@ -36,8 +44,10 @@ Constraints may be added by using one of the following functions:
 More information about each constraint can be found on the relevant constraint page.
 }
 \examples{
-constr = redist_constr()
-constr = add_constr_splits(constr, strength=1.5)
+data(iowa)
+map_ia <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
+constr = redist_constr(map_ia)
+constr = add_constr_splits(constr, strength=1.5, admin = region)
 print(constr)
 
 }

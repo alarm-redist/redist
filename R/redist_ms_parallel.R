@@ -119,6 +119,15 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
     if (!inherits(constraints, "redist_constr")) {
         constraints = new_redist_constr(eval_tidy(enquo(constraints), map))
     }
+    if (any(c('edges_removed', 'log_st') %in% names(constraints))) {
+        cli_warn(c("{.var edges_removed} or {.var log_st} constraint found in
+           {.arg constraints} and will be ignored.",
+           ">"="Adjust using {.arg compactness} instead."))
+    }
+    if (any(c('poslby', 'fry_hold') %in% names(constraints)) && compactness == 1) {
+        cli_warn('{.var polsby} or {.var fry_hold} constraint found in {.arg constraints}
+                 with {.arg compactness == 1). This may disrupt efficient sampling.')
+    }
     constraints = as.list(constraints) # drop data attribute
 
     verbosity = 1
@@ -161,22 +170,45 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
     on.exit(stopCluster(cl))
 
     each_len = if (return_all) nsims - warmup else 1
-    plans = foreach(chain=seq_len(chains), .combine=cbind) %dopar% {
+    out_par <- foreach(chain=seq_len(chains)) %dopar% {
         if (!silent) cat("Starting chain ", chain, "\n", sep="")
-        algout = ms_plans(nsims+1L, adj, init_plans[, chain], counties, pop,
-                          ndists, pop_bounds[2], pop_bounds[1], pop_bounds[3],
-                          compactness, constraints, adapt_k_thresh, k, verbosity)
-        if (return_all)
-            algout$plans[, -1:-(warmup+1L), drop=FALSE]
-        else
-            algout$plans[, nsims+1L, drop=FALSE]
+        ms_plans(nsims+1L, adj, init_plans[, chain], counties, pop,
+                 ndists, pop_bounds[2], pop_bounds[1], pop_bounds[3],
+                 compactness, constraints, adapt_k_thresh, k, verbosity)
     }
-    out = new_redist_plans(plans, map, "mergesplit", NULL, FALSE,
+
+    plans <- lapply(out_par, function(algout) {
+        if (return_all) {
+            algout$plans[, -1:-(warmup+1L), drop=FALSE]
+        } else {
+            algout$plans[, nsims+1L, drop=FALSE]
+        }
+    })
+    plans <- do.call('cbind', plans)
+
+    mh <- sapply(out_par, function(algout) {
+        mean(as.logical(algout$mhdecisions))
+    })
+
+    acceptances <- sapply(out_par, function(algout) {
+        if (!return_all) {
+            as.logical(algout$mhdecisions[nsims])
+        } else if (warmup == 0) {
+            as.logical(algout$mhdecisions)
+        } else {
+            as.logical(algout$mhdecisions[-seq_len(warmup)])
+        }
+    })
+
+    out = new_redist_plans(plans = plans, map = map, algorithm = "mergesplit",
+                           wgt = NULL, resampled = FALSE,
                            compactness = compactness,
                            constraints = constraints,
                            ndists = ndists,
-                           adapt_k_thresh = adapt_k_thresh) %>%
-        mutate(chain = rep(seq_len(chains), each=each_len*ndists))
+                           adapt_k_thresh = adapt_k_thresh,
+                           mh_acceptance = mh) %>%
+        mutate(chain = rep(seq_len(chains), each=each_len*ndists),
+               mcmc_accept = rep(acceptances, each = ndists))
 
     if (!is.null(init_names) && !isFALSE(init_name)) {
         if (all(init_names[1] == init_names)) {

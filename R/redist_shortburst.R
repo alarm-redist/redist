@@ -32,6 +32,7 @@
 #' to the number of counties, or a factor or character vector.  If provided, the
 #' algorithm will only generate maps which split up to \code{ndists-1} counties.
 #' If no county-split constraint is desired, this parameter should be left blank.
+#' @param constraints A `redist_constr` with Gibbs constraints.
 #' @param compactness Controls the compactness of the generated districts, with
 #' higher values preferring more compact districts. Must be non-negative. See
 #' \code{\link{redist_mergesplit}} for more information.
@@ -46,8 +47,6 @@
 #' @param flip_lambda The parameter determining the number of swaps to attempt each iteration of flip mcmc.
 #' The number of swaps each iteration is equal to Pois(lambda) + 1. The default is 0.
 #' @param flip_eprob  The probability of keeping an edge connected in flip mcmc. The default is 0.05.
-#' @param flip_constraints A list of constraints to use for flip mcmc. Can be created with
-#' \code{flip_constraints_helper}. Defaults to an edges-removed compactness constraint with weight 0.6.
 #' @param verbose Whether to print out intermediate information while sampling.
 #'   Recommended for monitoring purposes.
 #'
@@ -73,9 +72,10 @@
 redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
                              burst_size = ifelse(backend == 'mergesplit', 10L, 50L),
                              max_bursts=500L, maximize=TRUE, init_plan=NULL,
-                             counties=NULL, compactness=1, adapt_k_thresh=0.975,
+                             counties=NULL,  constraints = redist_constr(map),
+                             compactness=1, adapt_k_thresh=0.975,
                              return_all=TRUE, backend="mergesplit",
-                             flip_lambda = 0, flip_eprob = 0.05, flip_constraints = list(),
+                             flip_lambda = 0, flip_eprob = 0.05,
                              verbose=TRUE) {
 
     map = validate_redist_map(map)
@@ -141,6 +141,8 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
              " have population larger than the district target.\n",
              "Redistricting impossible.")
 
+    if (!inherits(constraints, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
+    constraints <- as.list(constraints)
 
     if (backend == "mergesplit") {
         # kind of hacky -- extract k=... from outupt
@@ -160,32 +162,22 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
         run_burst = function(init) {
             ms_plans(burst_size + 1L, adj, init, counties, pop, ndists,
                      pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
-                     list(), 1.0, k, verbosity=0)$plans[, -1L]
+                     constraints, 1.0, k, verbosity=0)$plans[, -1L]
         }
     } else {
-        flip_constraints <- process_flip_constr(constraints = flip_constraints,
-                                                nrow(map))
 
         if (flip_eprob <= 0 || flip_eprob >= 1) {
-            stop("flip_eprob must be in the interval (0, 1).")
+            cli_abort("{.arg flip_eprob} must be in the interval (0, 1).")
         }
         if (flip_lambda < 0) {
-            stop("flip_lambda must be a nonnegative integer.")
+            cli_abort("{.arg flip_lambda} must be a nonnegative integer.")
         }
 
-        if (all(flip_constraints$similarity$plan == 1)) {
-          if (min(init_plan) == 1) {
-            flip_constraints$similarity$plan <- init_plan - 1
-          } else {
-            flip_constraints$similarity$plan <- init_plan
-          }
-        }
-
-        run_burst <- function(init) {
+         run_burst <- function(init) {
             skinny_flips(adj = adj, init_plan = init, total_pop = pop,
                         pop_tol = pop_tol, nsims = burst_size,
                         eprob = flip_eprob, lambda = flip_lambda,
-                        constraints = flip_constraints)
+                        constraints = constraints)
         }
     }
 
