@@ -456,8 +456,9 @@ segregation_index = function(map, group_pop, total_pop=map[[attr(map, "pop_col")
     group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
     total_pop = rlang::eval_tidy(rlang::enquo(total_pop), map)
     plan_m = get_plans_matrix(.data)[, idxs, drop=FALSE]
-    as.numeric(redist.segcalc(plans=plan_m, group_pop=group_pop,
-                                  total_pop=total_pop))
+    rep(as.numeric(redist.segcalc(plans=plan_m, group_pop=group_pop,
+                                  total_pop=total_pop)),
+        each=attr(map, "ndists"))
 }
 
 #' @rdname redist.metrics

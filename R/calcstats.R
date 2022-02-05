@@ -31,39 +31,43 @@
 #' init_plan <- fl25_enum$plans[, 5118]
 #'
 #' ## 25 precinct, three districts - no pop constraint ##
-#' alg_253 <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
-#'                        init_plan = init_plan, nsims = 10000)
+#' alg_253 <- redist.flip(
+#'   adj = fl25_adj, total_pop = fl25$pop,
+#'   init_plan = init_plan, nsims = 10000
+#' )
 #'
 #' ## Get Republican Dissimilarity Index from simulations
 #' rep_dmi_253 <- redist.segcalc(alg_253, fl25$mccain, fl25$pop)
 #' }
 #' @concept analyze
 #' @export
-redist.segcalc <- function(plans, group_pop, total_pop){
-    ## Warnings
-    if (missing(plans)) {
-        cli_abort('Please provide a {.arg plans} input.')
-    }
-    if(missing(group_pop)){
-        cli_abort('Please provide a {.arg group_pop} vector.')
-    }
-    if(missing(total_pop)){
-        cli_abort('Please provide a {.arg total_pop} vector.')
-    }
+redist.segcalc <- function(plans, group_pop, total_pop) {
+  ## Warnings
+  if (missing(plans)) {
+    cli_abort('Please provide a {.arg plans} input.')
+  }
+  if (missing(group_pop)) {
+    cli_abort('Please provide a {.arg group_pop} vector.')
+  }
+  if (missing(total_pop)) {
+    cli_abort('Please provide a {.arg total_pop} vector.')
+  }
 
-    ## If redist object, get the partitions entry
-    if(all(class(plans) == 'redist')){
-        plans <- plans$plans
-    }
+  ## If redist object, get the partitions entry
+  if (all(class(plans) == 'redist')) {
+    plans <- plans$plans
+  }
 
-    if(!((nrow(plans) == length(group_pop)) &
-             (length(group_pop) == length(total_pop)) &
-                 (length(total_pop) == nrow(plans)))){
-        cli_abort("Please make sure there is a population entry for each geographic unit")
-    }
+  if (!((nrow(plans) == length(group_pop)) &
+    (length(group_pop) == length(total_pop)) &
+    (length(total_pop) == nrow(plans)))) {
+    cli_abort('Please make sure there is a population entry for each geographic unit')
+  }
 
-    redistmetrics::seg_dissim(plans, shp = data.frame(), group_pop = group_pop,
-                              total_pop = total_pop)
-
-
+  nd <- length(unique(plans[, 1]))
+  out <- redistmetrics::seg_dissim(plans,
+    shp = data.frame(), group_pop = group_pop,
+    total_pop = total_pop
+  )
+  out[seq(1, length(out), by = nd)]
 }
