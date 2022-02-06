@@ -76,7 +76,8 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
 
 
       plot <- ggplot(shp) +
-        geom_sf(aes(fill = plan), size = 0.3 * boundaries, color = '#444444') +
+        geom_sf(aes(fill = plan), lwd = 0.3 * boundaries,
+                color = if (boundaries) "#444444" else NA) +
         theme_void() +
         labs(fill = 'District', title = title) +
         theme(legend.position = 'bottom')
@@ -101,7 +102,7 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
       }
 
       plot <- ggplot(shp) +
-        geom_sf(aes(fill = plan, alpha = fill), size = 0.3 * boundaries,
+        geom_sf(aes(fill = plan, alpha = fill), lwd = 0.3 * boundaries,
                 color = if (boundaries) "#444444" else NA) +
         theme_void() +
         labs(alpha = fill_label, title = title) +
@@ -115,7 +116,8 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
     } else {
       if(is.null(fill)){ # plan but no fill
         plot <- ggplot(shp) +
-          geom_sf(aes(fill = as.character(plan)), size = 0.3 * boundaries, color = '#444444') +
+          geom_sf(aes(fill = as.character(plan)), lwd = 0.3 * boundaries,
+                  color = if (boundaries) "#444444" else NA) +
           theme_void() +
           labs(fill = 'District Membership', title = title) +
           theme(legend.position = 'bottom')
@@ -125,7 +127,7 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
         }
 
         plot <- ggplot(shp) +
-          geom_sf(aes(fill = as.character(plan), alpha = fill), size = 0.3 * boundaries,
+          geom_sf(aes(fill = as.character(plan), alpha = fill), lwd = 0.3 * boundaries,
                   color = if (boundaries) "#444444" else NA) +
           theme_void() +
           labs(fill = 'District Membership', alpha = fill_label, title = title) +
@@ -151,7 +153,7 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
     }
 
     plot <- ggplot(shp) +
-      geom_sf(aes(fill = fill), size = 0.3 * boundaries,
+      geom_sf(aes(fill = fill), lwd = 0.3 * boundaries,
               color = if (boundaries) "#444444" else NA) +
       theme_void() +
       labs(fill = fill_label, title = title) +
@@ -172,7 +174,7 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
 
   } else   {
     plot <- ggplot(shp) +
-      geom_sf() +
+      geom_sf(color = if (boundaries) "#444444" else NA) +
       theme_void()
   }
 
@@ -184,9 +186,7 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
   }
 
 
-  plot <- plot + labs(title = title)
-  # return plot
-  return(plot)
+  plot + labs(title = title)
 }
 
 #' Creates a Graph Overlay
