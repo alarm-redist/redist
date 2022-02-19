@@ -21,7 +21,8 @@ Description: Enables researchers to sample redistricting plans from a pre-specif
     Fifield, Imai, Kawahara, and Kenny (2020) <doi:10.1080/2330443X.2020.1791773>,
     and McCartan and Imai (2020) <arXiv:2008.06131>.
 Depends:
-    R (>= 3.5.0)
+    R (>= 3.5.0),
+    redistmetrics (>= 1.0.1) 
 Imports:
     Rcpp (>= 0.11.0),
     rlang,
