@@ -378,6 +378,75 @@ check_tidy_types = function(map, .data) {
 }
 
 
+#' Tally a variable by district
+#'
+#' @param map a `redist_map` object
+#' @param x a variable to tally. Tidy-evaluated.
+#' @param .data a `redist_plans` object
+#'
+#' @return a vector containing the tallied values by district and plan (column-major)
+#'
+#' @concept analyze
+#' @export
+tally_var <- function(map, x, .data = redist:::cur_plans()) {
+    check_tidy_types(map, .data)
+    if (length(unique(diff(as.integer(.data$district)))) > 2)
+        cli_warn("Districts not sorted in ascending order; output may be incorrect.")
+
+    idxs <- unique(as.integer(.data$draw))
+    x <- rlang::eval_tidy(rlang::enquo(x), map)
+    as.numeric(pop_tally(get_plans_matrix(.data)[, idxs, drop = FALSE],
+                         x, attr(map, "ndists")))
+}
+
+#' Average a variable by precinct
+#'
+#' Takes a column of a `redist_plans` object and averages it across a set of
+#' `draws` for each precinct.
+#'
+#' @param plans a `redist_plans` object
+#' @param x an expression to average. Tidy-evaluted in `plans`.
+#' @param draws which draws to average. `NULL` will average all draws, including
+#'   reference plans. The special value `NA` will average all sampled draws. An
+#'   integer or character vector indicating specific draws may also be provided.
+#'
+#' @return a vector of length matching the number of precincts, containing the average.
+#'
+#' @concept analyze
+#' @export
+avg_by_prec <- function(plans, x, draws=NA) {
+    plans_m = get_plans_matrix(plans)
+
+    n_ref = 0
+    # copied from get_n_ref()
+    if (!is.null(colnames(plans_m))) {
+        refs = which(nchar(colnames(plans_m)) > 0)
+        n_ref = length(unique(colnames(plans_m)[refs]))
+    }
+
+    if (is.null(draws)) {
+        draw_idx = seq_len(ncol(plans_m))
+    } else if (is.na(draws)) {
+        draw_idx = seq_len(ncol(plans_m))[-seq_len(n_ref)]
+    } else {
+        draw_idx = match(as.character(draws), levels(plans$draw))
+    }
+
+    plans = arrange(plans, as.integer(.data$draw), .data$district)
+    n_distr = max(plans_m[, draw_idx[1]])
+    m_val = matrix(rlang::eval_tidy(rlang::enquo(x), plans), nrow=n_distr)
+
+    plans_m = plans_m[, draw_idx, drop=FALSE]
+    m_val = m_val[, draw_idx, drop=FALSE]
+    m_prec = matrix(nrow = nrow(plans_m), ncol = ncol(plans_m))
+    for (i in seq_len(ncol(plans_m))) {
+        m_prec[, i] <- m_val[, i][plans_m[, i]]
+    }
+
+    rowMeans(m_prec)
+}
+
+
 #' @rdname redist.parity
 #'
 #' @param map a \code{\link{redist_map}} object
