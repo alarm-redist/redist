@@ -253,7 +253,7 @@ pullback = function(plans, map=NULL) {
 
     attr(plans, "merge_idx") = NULL
     if (inherits(map, "redist_map")) {
-        attr(plans, "prec_pop") = map[[attr(map, "pop")]]
+        attr(plans, "prec_pop") = map[[attr(map, "pop_col")]]
     } else {
         attr(plans, "prec_pop") = NULL
     }
