@@ -81,6 +81,15 @@ rowwise.redist_map <- function(x, ...) {
   reconstruct.redist_map(NextMethod(), x)
 }
 
+#' @export
+`[[<-.redist_map` <- function(x, i, value) {
+  reconstruct.redist_map(NextMethod(), x)
+}
+#' @export
+`$<-.redist_map` <- function(x, i, value) {
+  reconstruct.redist_map(NextMethod(), x)
+}
+
 # redist_plans generics ------------
 
 #' @export
