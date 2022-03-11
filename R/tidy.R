@@ -263,13 +263,12 @@ pullback = function(plans, map=NULL) {
 
 
 # helper function for match_numbers
-find_numbering = function(plan, ref, pop) {
+find_numbering = function(plan, ref, pop, tot_pop, seq_n) {
     joint = plan_joint(ref, plan, pop)
-    tot_pop = sum(pop)
 
     renumb = solve_hungarian(1 - joint / tot_pop)[, 2]
 
-    list(renumb = renumb,
+    list(renumb = match(seq_n, renumb),
          shared = sum(diag(joint[, renumb])) / tot_pop)
 }
 
@@ -316,7 +315,10 @@ match_numbers = function(data, plan, col="pop_overlap") {
         cli_abort("Can't match numbers on a subset of a {.cls redist_plans}")
 
     # compute renumbering and extract info
-    best_renumb = apply(plan_mat, 2, find_numbering, as.integer(plan), pop)
+    best_renumb = apply(plan_mat, 2, find_numbering,
+                        plan=as.integer(plan),
+                        pop=pop, tot_pop=sum(pop),
+                        seq_n=1:ndists)
     renumb = as.integer(vapply(best_renumb, function(x) x$renumb, integer(ndists)))
 
     if (!is.null(col))
