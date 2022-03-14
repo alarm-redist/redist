@@ -186,10 +186,11 @@ The \code{custom} constraint allows the user to specify their own constraint usi
 a function which evaluates districts one at a time. The provided function
 \code{fn} should take two arguments: a vector describing the current plan
 assignment (which may be incomplete, in the case of SMC), and an integer
-describing the district which to evaluate. An example is provided below.
-The flexibility of this constraint comes with an additional computational
-cost, since the other constraints are written in C++ and so are more
-performant.
+describing the district which to evaluate. The function should return a
+scalar value indicating the penalty to be applied to the district. An example
+is provided below. The flexibility of this constraint comes with an
+additional computational cost, since the other constraints are written in C++
+and so are more performant.
 }
 \examples{
 data(iowa)

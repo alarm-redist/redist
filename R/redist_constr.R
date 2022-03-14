@@ -191,10 +191,11 @@ add_to_constr = function(constr, name, new_constr) {
 #' a function which evaluates districts one at a time. The provided function
 #' `fn` should take two arguments: a vector describing the current plan
 #' assignment (which may be incomplete, in the case of SMC), and an integer
-#' describing the district which to evaluate. An example is provided below.
-#' The flexibility of this constraint comes with an additional computational
-#' cost, since the other constraints are written in C++ and so are more
-#' performant.
+#' describing the district which to evaluate. The function should return a
+#' scalar value indicating the penalty to be applied to the district. An example
+#' is provided below. The flexibility of this constraint comes with an
+#' additional computational cost, since the other constraints are written in C++
+#' and so are more performant.
 #'
 #' @param constr A [redist_constr()] object
 #' @param strength The strength of the constraint. Higher values mean a more restrictive constraint.
@@ -553,6 +554,19 @@ add_constr_custom = function(constr, strength, fn) {
 
     args = rlang::fn_fmls(fn)
     if (length(args) != 2) cli_abort("Function must take two arguments.")
+
+    if (!is.null(plan <- get_existing(attr(constr, "data")))) {
+        out = tryCatch(fn(plan, 1), error=function(e) {
+            cli_abort(c("Ran into an error testing custom constraint
+                        on the existing plan:",
+                        "x"=e$message))
+        })
+        if (!is.numeric(out) || length(out) != 1 || is.finite(out))
+            cli_abort(c("Evaluting custom constraint on the existing plan failed.",
+                        "*"="The constraint function should return a single scalar value.",
+                        "*"="Make sure that your constraint function tests all edge cases
+                             and never returns {.val {NA}} or {.val {Inf}}."))
+    }
 
     new_constr = list(strength=strength, fn=fn)
     add_to_constr(constr, "custom", new_constr)

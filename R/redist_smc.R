@@ -124,7 +124,7 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
     adj = get_adj(map)
 
     if (compactness < 0)
-        cli_abort("{.arg compactness} must be non-negative")
+        cli_abort("{.arg compactness} must be non-negative.")
     if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
         cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
     if (seq_alpha <= 0 | seq_alpha > 1)
@@ -209,6 +209,15 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
     wgt = exp(lr - mean(lr))
     wgt = wgt / mean(wgt)
     n_eff = length(wgt) * mean(wgt)^2 / mean(wgt^2)
+    if (any(is.na(lr))) {
+        cli_abort(c("Sampling probabilities have been corrupted.",
+                    "*"="Check that none of your constraint weights are too large.
+                         The output of constraint functions multiplied by the weight
+                         should generally fall in the -5 to 5 range.",
+                    "*"="If you are using custom constraints, make sure that your
+                         constraint function handles all edge cases and never returns
+                         {.val {NA}} or {.val {Inf}}"))
+    }
 
     if (resample) {
         if (!truncate) {
@@ -228,7 +237,12 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
 
     if (!is.nan(n_eff) && n_eff/nsims <= 0.05)
         cli_warn(c("Less than 5% resampling efficiency.",
-                   ">"="Consider weakening constraints and/or adjusting {.arg seq_alpha}."))
+                   "*"="Consider weakening or removing constraints.",
+                   "i"="If sampling efficiency drops precipitously in the final
+                        iterations, population balance is likely causing a bottleneck.
+                        Try increasing {.arg pop_temper} by 0.01.",
+                   "i"="If sampling efficiency declines steadily across iterations,
+                        adjusting {.arg seq_alpha} upward may help a bit."))
 
     out = new_redist_plans(plans, map, "smc", wgt, resample,
                            n_eff = n_eff,
