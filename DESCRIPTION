@@ -69,5 +69,4 @@ RoxygenNote: 7.1.2
 VignetteBuilder: knitr
 Encoding: UTF-8
 Config/testthat/edition: 3
-UseLTO: true
 LazyData: true

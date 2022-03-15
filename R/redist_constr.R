@@ -561,7 +561,7 @@ add_constr_custom = function(constr, strength, fn) {
                         on the existing plan:",
                         "x"=e$message))
         })
-        if (!is.numeric(out) || length(out) != 1 || is.finite(out))
+        if (!is.numeric(out) || length(out) != 1 || !is.finite(out))
             cli_abort(c("Evaluting custom constraint on the existing plan failed.",
                         "*"="The constraint function should return a single scalar value.",
                         "*"="Make sure that your constraint function tests all edge cases
