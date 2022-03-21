@@ -59,11 +59,14 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
     chains = as.integer(chains)
     stopifnot(chains > 1)
 
-    if (compactness < 0) stop("Compactness parameter must be non-negative")
+    if (compactness < 0)
+        cli_abort("{.arg compactness} must be non-negative.")
     if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
-        stop("`adapt_k_thresh` parameter must lie in [0, 1].")
+        cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
+    if (nsims <= warmup)
+        cli_abort("{.arg nsims} must be greater than {.arg warmup}.")
     if (nsims < 1)
-        stop("`nsims` must be positive.")
+        cli_abort("{.arg nsims} must be positive.")
 
     exist_name = attr(map, "existing_col")
     counties = rlang::eval_tidy(rlang::enquo(counties), map)
@@ -104,7 +107,7 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
         counties = rep(1, V)
     } else {
         if (any(is.na(counties)))
-            stop("County vector must not contain missing values.")
+            cli_abort("{.arg counties} must not contain missing values.")
 
         # handle discontinuous counties
         component = contiguity(adj, as.integer(as.factor(counties)))
@@ -139,11 +142,13 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
     pop = map[[attr(map, "pop_col")]]
     init_pop = pop_tally(init_plans, pop, ndists)
     if (any(init_pop < pop_bounds[1]) | any(init_pop > pop_bounds[3]))
-        stop("Provided initialization does not meet population bounds.")
-    if (any(pop >= get_target(map)))
-        stop("Units ", which(pop >= get_target(map)),
-             " have population larger than the district target.\n",
-             "Redistricting impossible.")
+        cli_abort("Provided initialization does not meet population bounds.")
+    if (any(pop >= get_target(map))) {
+        too_big = as.character(which(pop >= pop_bounds[3]))
+        cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
+                    population larger than the district target.",
+                    "x"="Redistricting impossible."))
+    }
 
     # kind of hacky -- extract k=... from outupt
     if (!requireNamespace("utils", quietly=TRUE)) stop()

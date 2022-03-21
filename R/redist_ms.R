@@ -105,6 +105,8 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
         cli_abort("{.arg compactness} must be non-negative.")
     if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
         cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
+    if (nsims <= warmup)
+        cli_abort("{.arg nsims} must be greater than {.arg warmup}.")
     if (nsims < 1)
         cli_abort("{.arg nsims} must be positive.")
 
