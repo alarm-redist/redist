@@ -157,7 +157,7 @@ redist.compactness <- function(shp = NULL,
 
   if (!is.null(shp)) {
     if ('SpatialPolygonsDataFrame' %in% class(shp)) {
-      shp <- shp %>% st_as_sf()
+      shp <- sf::st_as_sf(shp)
     } else if (!inherits(shp, 'sf')) {
       cli_abort('Please provide {.arg shp} as a SpatialPolygonsDataFrame or sf object.')
     }
@@ -183,21 +183,19 @@ redist.compactness <- function(shp = NULL,
     cli_abort('Please provide {.arg plans} as a numeric vector, matrix, or {.cls redist_plans}.')
   }
 
-  if ('all' %in% measure) {
-    measure <- c(
-      'PolsbyPopper', 'Schwartzberg', 'LengthWidth', 'ConvexHull',
-      'Reock', 'BoyceClark', 'FryerHolden', 'EdgesRemoved', 'FracKept',
-      'logSpanningTree'
+
+    possible_measures <- c(
+        'PolsbyPopper', 'Schwartzberg', 'LengthWidth', 'ConvexHull',
+        'Reock', 'BoyceClark', 'FryerHolden', 'EdgesRemoved', 'FracKept',
+        'logSpanningTree'
     )
+  if ('all' %in% measure) {
+    measure <- possible_measures
   }
 
   match.arg(
     arg = measure, several.ok = TRUE,
-    choices = c(
-      'PolsbyPopper', 'Schwartzberg', 'LengthWidth', 'ConvexHull',
-      'Reock', 'BoyceClark', 'FryerHolden', 'EdgesRemoved',
-      'FracKept', 'logSpanningTree'
-    )
+    choices = possible_measures
   )
 
   if ('FryerHolden' %in% measure & is.null(total_pop)) {
@@ -382,8 +380,9 @@ redist.compactness <- function(shp = NULL,
 #' @importFrom sf st_buffer st_is_valid st_geometry<- st_touches st_transform
 #' @examples
 #' data(fl25)
-#' perim_df <- redist.prep.polsbypopper(shp = fl25)
+#' perim_df <- redistmetrics::prep_perims(shp = fl25)
 redist.prep.polsbypopper <- function(shp, planarize = 3857, perim_path, ncores = 1) {
+.Deprecated(new = 'redistmetrics::prep_perims()')
   if (missing(shp)) {
     cli_abort('Please provide an argument to {.arg shp}.')
   }
@@ -392,7 +391,3 @@ redist.prep.polsbypopper <- function(shp, planarize = 3857, perim_path, ncores =
     ncores = ncores
   )
 }
-
-utils::globalVariables(c(
-  'i', 'j', '.'
-))

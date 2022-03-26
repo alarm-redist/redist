@@ -42,21 +42,11 @@
 #' @concept analyze
 #' @export
 redist.segcalc <- function(plans, group_pop, total_pop) {
-  ## Warnings
-  if (missing(plans)) {
-    cli_abort('Please provide a {.arg plans} input.')
-  }
-  if (missing(group_pop)) {
-    cli_abort('Please provide a {.arg group_pop} vector.')
-  }
-  if (missing(total_pop)) {
-    cli_abort('Please provide a {.arg total_pop} vector.')
-  }
 
-  ## If redist object, get the partitions entry
-  if (all(class(plans) == 'redist')) {
-    plans <- plans$plans
-  }
+    ## If redist object, get the partitions entry
+    if (all(class(plans) == 'redist')) {
+        plans <- plans$plans
+    }
 
   if (!((nrow(plans) == length(group_pop)) &
     (length(group_pop) == length(total_pop)) &
@@ -64,7 +54,7 @@ redist.segcalc <- function(plans, group_pop, total_pop) {
     cli_abort('Please make sure there is a population entry for each geographic unit')
   }
 
-  nd <- length(unique(plans[, 1]))
+  nd <- dplyr::n_distinct((plans[, 1]))
   out <- redistmetrics::seg_dissim(plans,
     shp = data.frame(), group_pop = group_pop,
     total_pop = total_pop

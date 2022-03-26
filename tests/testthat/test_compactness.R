@@ -54,7 +54,7 @@ test_that('compactness works', {
 
 
 test_that('test prep polsbypopper works', {
-  test <- redist.prep.polsbypopper(shp = fl25) %>% suppressWarnings()
+  test <- redist.prep.polsbypopper(shp = fl25, epsg = FALSE)
 
   expect_s3_class(test, class = 'data.frame')
 })
