@@ -253,7 +253,7 @@ Alternatively, you can directly use functions on the `redist_plans` object. For 
 
 ```{r}
 tidy_sims <- tidy_sims %>% 
-  mutate(competitiveness = competitiveness(map = iowa_map, rvote = rep_08, dvote = dem_08))
+  mutate(competitiveness = rep(competitiveness(map = iowa_map, rvote = rep_08, dvote = dem_08), each = 4))
 ```
 
 ```{r}
