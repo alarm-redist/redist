@@ -22,7 +22,8 @@
 #' comp <- redist.competitiveness(plans_05, fl25$mccain, fl25$obama)
 #'
 redist.competitiveness <- function(plans, rvote, dvote, alpha = 1, beta = 1){
-  redistmetrics::compet_talisman(plans = plans, shp = data.frame(),
-                                 rvote = rvote, dvote = dvote,
-                                 alpha = alpha, beta = beta)
+    nd <- length(unique(plans[, 1]))
+    redistmetrics::compet_talisman(plans = plans, shp = data.frame(),
+                                   rvote = rvote, dvote = dvote,
+                                   alpha = alpha, beta = beta)[seq(1, nd * ncol(plans), by = nd)]
 }

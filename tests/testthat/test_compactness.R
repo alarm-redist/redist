@@ -51,10 +51,3 @@ test_that('compactness works', {
 
   expect_equal(comp, expected, tolerance=1e-4)
 })
-
-
-test_that('test prep polsbypopper works', {
-  test <- redist.prep.polsbypopper(shp = fl25, epsg = FALSE)
-
-  expect_s3_class(test, class = 'data.frame')
-})
