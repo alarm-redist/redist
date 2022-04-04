@@ -58,7 +58,7 @@ Suggests:
     RSpectra,
     testthat (>= 3.0.0),
     rstudioapi
-LinkingTo: Rcpp, RcppArmadillo, cli
+LinkingTo: Rcpp, RcppArmadillo, cli, redistmetrics
 License: GPL (>= 2)
 SystemRequirements: OpenMPI, gmp, libxml2, python, C++11
 Packaged: 2015-06-03 18:32:00 UTC; benfifield
