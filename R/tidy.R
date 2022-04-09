@@ -278,9 +278,11 @@ find_numbering = function(plan, ref, pop, tot_pop) {
 #' function attempts to renumber the districts across all simulated plans to
 #' match the numbers in a provided plan, using the Hungarian algorithm.
 #'
-#' @param data a \code{redist_plans} object
+#' @param data a \code{redist_plans} object.
 #' @param plan a character vector giving the name of the plan to match to (e.g.,
 #'   for a reference plan), or an integer vector containing the plan itself.
+#' @param pop a vector of population counts. Should not be needed for most
+#'   \code{redist_plans} objects.
 #' @param col the name of a new column to store the vector of population overlap
 #'   with the reference plan: the fraction of the total population who are in
 #'   the same district under each plan and the reference plan. Set to
@@ -300,7 +302,7 @@ find_numbering = function(plan, ref, pop, tot_pop) {
 #'
 #' @concept analyze
 #' @export
-match_numbers = function(data, plan, col="pop_overlap") {
+match_numbers = function(data, plan, pop=attr(data, "prec_pop"), col="pop_overlap") {
     if (!inherits(data, "redist_plans")) cli_abort("{.arg data} must be a {.cls redist_plans}")
     if (!"district" %in% colnames(data)) cli_abort("Missing {.field district} colun in {.arg data}")
 
@@ -308,7 +310,7 @@ match_numbers = function(data, plan, col="pop_overlap") {
     if (is.character(plan)) plan = plan_mat[,plan]
     plan = factor(plan, ordered=TRUE)
     ndists = length(levels(plan))
-    pop = attr(data, "prec_pop")
+
 
     if (is.null(pop)) cli_abort("{.field prec_pop} attribute in {.arg data} required.")
     if (max(plan_mat[,1]) != ndists)

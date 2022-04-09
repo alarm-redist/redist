@@ -15,7 +15,7 @@ redist_mergesplit_parallel(
   compactness = 1,
   constraints = list(),
   constraint_fn = function(m) rep(0, ncol(m)),
-  adapt_k_thresh = 0.985,
+  adapt_k_thresh = 0.98,
   k = NULL,
   ncores = NULL,
   cl_type = "PSOCK",

@@ -14,7 +14,7 @@ redist_mergesplit(
   compactness = 1,
   constraints = list(),
   constraint_fn = function(m) rep(0, ncol(m)),
-  adapt_k_thresh = 0.985,
+  adapt_k_thresh = 0.98,
   k = NULL,
   init_name = NULL,
   verbose = TRUE,
