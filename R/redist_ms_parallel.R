@@ -74,12 +74,16 @@ redist_mergesplit_parallel = function(map, nsims, chains=1,
 
     exist_name = attr(map, "existing_col")
     counties = rlang::eval_tidy(rlang::enquo(counties), map)
-    if (is.null(init_plan) && !is.null(exist_name)) {
-        init_plans = matrix(rep(as.integer(as.factor(get_existing(map))), chains), ncol=chains)
-        if (is.null(init_name)) {
-            init_names = rep(exist_name, chains)
+    if (is.null(init_plan)) {
+        if (!is.null(exist_name)) {
+            init_plans = matrix(rep(as.integer(as.factor(get_existing(map))), chains), ncol=chains)
+            if (is.null(init_name)) {
+                init_names = rep(exist_name, chains)
+            } else {
+                init_names = rep(init_name, chains)
+            }
         } else {
-            init_names = rep(init_name, chains)
+            init_plan = "sample"
         }
     } else if (!is.null(init_plan)) {
         if (is.matrix(init_plan)) {
