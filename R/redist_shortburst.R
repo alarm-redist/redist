@@ -98,10 +98,10 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
 
     if (compactness < 0) stop("Compactness parameter must be non-negative")
     if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
-        stop("`adapt_k_thresh` parameter must lie in [0, 1].")
+        cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
 
     if (burst_size < 1 || max_bursts < 1)
-        stop("`burst_size` and `max_bursts` must be positive.")
+        cli_abort("{.arg burst_size} and {.arg max_bursts} must be positive.")
     if (thin < 1 || thin > max_bursts)
         cli_abort("{.arg thin} must be a positive integer, and no larger than {.arg max_bursts}.")
 
@@ -110,7 +110,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
         counties = rep(1, V)
     } else {
         if (any(is.na(counties)))
-            stop("County vector must not contain missing values.")
+            cli_abort("County vector must not contain missing values.")
 
         # handle discontinuous counties
         component = contiguity(adj, as.integer(as.factor(counties)))
@@ -121,7 +121,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
             as.integer()
 
         if (any(component > 1)) {
-            warning('counties were not contiguous; expect additional splits.')
+            cli_warn("Counties were not contiguous; expect additional splits.")
         }
     }
 
@@ -130,8 +130,14 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
         init_plan = as.integer(get_plans_matrix(
             redist_smc(map, 10, counties, resample=FALSE, ref_name=FALSE, silent=TRUE))[, 1])
     }
-    stopifnot(length(init_plan) == V)
-    stopifnot(max(init_plan) == ndists)
+
+    # check init
+    if (length(init_plan) != V)
+        cli_abort("{.arg init_plan} must be as long as the number of units as `map`.")
+    if (max(init_plan) != ndists)
+        cli_abort("{.arg init_plan} must have the same number of districts as `map`.")
+    if (any(contiguity(adj, init_plan) != 1))
+        cli_abort("{.arg init_plan} must have contiguous districts.")
 
 
     if (backend == 'mergesplit') {
@@ -141,10 +147,12 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
     }
 
     pop = map[[attr(map, "pop_col")]]
-    if (any(pop >= get_target(map)))
-        stop("Units ", which(pop >= get_target(map)),
-             " have population larger than the district target.\n",
-             "Redistricting impossible.")
+    if (any(pop >= get_target(map))) {
+        too_big = as.character(which(pop >= pop_bounds[3]))
+        cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
+                    population larger than the district target.",
+                    "x"="Redistricting impossible."))
+    }
 
     if (!inherits(constraints, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     constraints <- as.list(constraints)
