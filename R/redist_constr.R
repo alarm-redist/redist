@@ -31,7 +31,7 @@ new_redist_constr = function(constr=list(), data=tibble()) {
 }
 
 validate_redist_constr = function(constr) {
-    if (!is.list(constr)) stop("Not a list")
+    if (!is.list(constr)) cli_abort("Not a list")
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
 
     constr

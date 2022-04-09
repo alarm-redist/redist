@@ -25,11 +25,11 @@
 redist.subset <- function(shp, adj, keep_rows, total_pop, ndists,
                           pop_tol, sub_ndists) {
     if (missing(shp)) {
-        stop('Please provide an argument to "shp". ',
-             'Use redist.reduce.adjacency to subset adjacency lists.')
+        cli_abort(c("{.arg shp} is required.",
+                    "i"="Use {.fn redist.reduce.adjacency} to subset adjacency lists."))
     }
-    if (!('sf' %in% class(shp))) {
-        stop('Please provide "shp" as an sf object.')
+    if (!inherits(shp, "sf")) {
+        cli_abort("{.arg shp} must be an {.cls sf} object.")
     }
 
     if (missing(adj)) {

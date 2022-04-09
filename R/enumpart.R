@@ -71,13 +71,9 @@ redist.init.enumpart <- function(){
 redist.prep.enumpart <- function(adj, unordered_path, ordered_path,
                                  weight_path = NULL, total_pop = NULL){
 
-  if (is.null(weight_path) & !is.null(total_pop)) {
-    stop('`weight_path` not null, but `total_pop` is. Provide both or none.')
+  if (is.null(weight_path) + is.null(total_pop) == 1L) {
+    cli_abort("You must provide both of {.arg weight_path} and {.arg total_pop} or neither.")
   }
-  if (!is.null(weight_path) & is.null(total_pop)) {
-    stop('`total_pop` not null, but `weight_path` is. Provide both or none.')
-  }
-
 
   # Return the list to 1 indexing
   adj <- lapply(adj, function(x){x+1})
@@ -162,7 +158,7 @@ redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
           options <- c('-k', ndists, '-comp', '-allsols')
       } else{
           if (is.null(n)) {
-            stop('n must be specified when all is FALSE.')
+            cli_abort('{.arg n} must be specified when all is {.code FALSE}.')
           }
           options <- c('-k', ndists, '-comp', '-sample', n)
       }
