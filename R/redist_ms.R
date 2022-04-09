@@ -94,7 +94,7 @@
 redist_mergesplit = function(map, nsims, warmup=max(100, nsims %/% 2), thin=1L,
                              init_plan=NULL, counties=NULL, compactness=1,
                              constraints=list(), constraint_fn=function(m) rep(0, ncol(m)),
-                             adapt_k_thresh=0.985, k=NULL, init_name=NULL,
+                             adapt_k_thresh=0.98, k=NULL, init_name=NULL,
                              verbose=TRUE, silent=FALSE) {
     if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
 

@@ -47,7 +47,7 @@ redist_mergesplit_parallel = function(map, nsims, chains=1,
                                       warmup=max(100, nsims %/% 2), thin=1L,
                                       init_plan=NULL, counties=NULL, compactness=1,
                                       constraints=list(), constraint_fn=function(m) rep(0, ncol(m)),
-                                      adapt_k_thresh=0.985, k=NULL, ncores=NULL,
+                                      adapt_k_thresh=0.98, k=NULL, ncores=NULL,
                                       cl_type="PSOCK", return_all=TRUE, init_name=NULL,
                                       verbose=TRUE, silent=FALSE) {
     if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
@@ -76,10 +76,11 @@ redist_mergesplit_parallel = function(map, nsims, chains=1,
     counties = rlang::eval_tidy(rlang::enquo(counties), map)
     if (is.null(init_plan) && !is.null(exist_name)) {
         init_plans = matrix(rep(as.integer(as.factor(get_existing(map))), chains), ncol=chains)
-        if (is.null(init_name))
+        if (is.null(init_name)) {
             init_names = rep(exist_name, chains)
-        else
+        } else {
             init_names = rep(init_name, chains)
+        }
     } else if (!is.null(init_plan)) {
         if (is.matrix(init_plan)) {
             stopifnot(ncol(init_plan) == chains)
@@ -93,7 +94,7 @@ redist_mergesplit_parallel = function(map, nsims, chains=1,
         else
             init_names = rep(init_name, chains)
     }
-    if (length(init_plan) == 0L || isTRUE(init_plan == "sample")) {
+    if (isTRUE(init_plan == "sample")) {
         if (!silent) cat("Sampling initial plans with SMC")
         init_plans = get_plans_matrix(
             redist_smc(map, chains, counties, compactness, constraints,
