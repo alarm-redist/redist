@@ -50,6 +50,11 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
                                   return eval_multisplits(plan, distr, as<uvec>(l["admin"]), l["n"]);
                               });
 
+    log_tgt += add_constraint("total_splits", constraints, districts, psi_vec,
+                              [&] (List l, int distr) -> double {
+                                  return eval_total_splits(plan, distr, as<uvec>(l["admin"]));
+                              });
+
     log_tgt += add_constraint("segregation", constraints, districts, psi_vec,
                               [&] (List l, int distr) -> double {
                                   return eval_segregation(plan, distr, as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]));

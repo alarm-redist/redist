@@ -214,6 +214,11 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
                 return eval_multisplits(districts.col(i), distr_ctr, as<uvec>(l["admin"]), l["n"]);
             });
 
+        lp[i] += add_constraint("total_splits", constraints,
+            [&] (List l) -> double {
+                return eval_total_splits(districts.col(i), distr_ctr, as<uvec>(l["admin"]));
+            });
+
         lp[i] += add_constraint("polsby", constraints,
                                   [&] (List l) -> double {
                                       return eval_polsby(districts.col(i), distr_ctr,

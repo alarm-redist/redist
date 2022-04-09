@@ -142,7 +142,7 @@ add_to_constr = function(constr, name, new_constr) {
 #' The `grp_inv_hinge` constraint takes a list of target group percentages. It
 #' matches each district to its nearest target percentage, and then applies a
 #' penalty of the form \eqn{\sqrt{max(0, grouppct - tgt)}}, summing across
-#' districts. This penalizes districts which are below their target percentage.
+#' districts. This penalizes districts which are above their target percentage.
 #'
 #' The `grp_pow` constraint (for expert use) adds a term of the form
 #' \eqn{(|tgtgroup-grouppct||tgtother-grouppct|)^{pow})}, which
@@ -163,6 +163,9 @@ add_to_constr = function(constr, name, new_constr) {
 #'
 #' The `multisplits` constraint adds a term counting the number of
 #' counties which are split twice or more.
+#' Values of `strength` should generally be small, given that the underlying values are counts.
+#'
+#' The `total_splits` constraint adds a term counting the number of district-counties.
 #' Values of `strength` should generally be small, given that the underlying values are counts.
 #'
 #' The `edges_rem` constraint adds a term counting the number of edges removed from the
@@ -403,6 +406,30 @@ add_constr_multisplits = function(constr, strength, admin) {
 
 #' @rdname constraints
 #' @export
+add_constr_total_splits = function(constr, strength, admin) {
+    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
+    if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
+    data <- attr(constr, "data")
+
+    admin <- eval_tidy(enquo(admin), data)
+    if (is.null(admin)) {
+        cli_abort('{.arg admin} may not be {.val NULL}.')
+    }
+    if (any(is.na(admin))) {
+        cli_abort('{.arg admin} many not contain {.val NA}s.')
+    }
+
+    admin <- redist.sink.plan(admin)
+
+    new_constr = list(
+        strength=strength,
+        admin = admin
+    )
+    add_to_constr(constr, 'total_splits', new_constr)
+}
+
+#' @rdname constraints
+#' @export
 add_constr_pop_dev <- function(constr, strength) {
   if (!inherits(constr, 'redist_constr')) cli_abort('Not a {.cls redist_constr} object')
   if (strength <= 0) cli_warn('Nonpositive strength may lead to unexpected results.')
@@ -618,6 +645,8 @@ print.redist_constr = function(x, header=TRUE, details=TRUE, ...) {
             cli::cli_bullets(c("*"="A splits constraint of strength {x[[nm]]$strength}"))
         } else if (startsWith(nm, "multisplits")) {
             cli::cli_bullets(c("*"="A multisplits constraint of strength {x[[nm]]$strength}"))
+        } else if (startsWith(nm, "total_splits")) {
+            cli::cli_bullets(c("*"="A total splits constraint of strength {x[[nm]]$strength}"))
         } else if (startsWith(nm, "custom")) {
             cli::cli_bullets(c("*"="A custom constraint of strength {x[[nm]]$strength}"))
             print_constr(x[[nm]])

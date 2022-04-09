@@ -100,6 +100,12 @@ double eval_log_st(const subview_col<uword> &districts, const Graph g,
  */
 double eval_er(const subview_col<uword> &districts, const Graph g, int ndists);
 
+/*
+ * Compute the county split penalty for district `distr`
+ */
+double eval_total_splits(const subview_col<uword> &districts, int distr,
+                   const uvec &counties);
+
 
 /*
  * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,

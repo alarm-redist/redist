@@ -10,6 +10,7 @@
 \alias{add_constr_incumbency}
 \alias{add_constr_splits}
 \alias{add_constr_multisplits}
+\alias{add_constr_total_splits}
 \alias{add_constr_pop_dev}
 \alias{add_constr_segregation}
 \alias{add_constr_polsby}
@@ -55,6 +56,8 @@ add_constr_incumbency(constr, strength, incumbents)
 add_constr_splits(constr, strength, admin)
 
 add_constr_multisplits(constr, strength, admin)
+
+add_constr_total_splits(constr, strength, admin)
 
 add_constr_pop_dev(constr, strength)
 
@@ -137,7 +140,7 @@ districts. This penalizes districts which are below their target percentage.
 The \code{grp_inv_hinge} constraint takes a list of target group percentages. It
 matches each district to its nearest target percentage, and then applies a
 penalty of the form \eqn{\sqrt{max(0, grouppct - tgt)}}, summing across
-districts. This penalizes districts which are below their target percentage.
+districts. This penalizes districts which are above their target percentage.
 
 The \code{grp_pow} constraint (for expert use) adds a term of the form
 \eqn{(|tgtgroup-grouppct||tgtother-grouppct|)^{pow})}, which
@@ -158,6 +161,9 @@ Values of \code{strength} should generally be small, given that the underlying v
 
 The \code{multisplits} constraint adds a term counting the number of
 counties which are split twice or more.
+Values of \code{strength} should generally be small, given that the underlying values are counts.
+
+The \code{total_splits} constraint adds a term counting the number of district-counties.
 Values of \code{strength} should generally be small, given that the underlying values are counts.
 
 The \code{edges_rem} constraint adds a term counting the number of edges removed from the

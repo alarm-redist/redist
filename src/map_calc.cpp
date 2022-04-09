@@ -299,6 +299,15 @@ double eval_er(const subview_col<uword> &districts, const Graph g, int ndists) {
 }
 
 
+
+/*
+ * Compute the total splits penalty for district `distr`
+ */
+double eval_total_splits(const subview_col<uword> &districts, int distr, const uvec &counties) {
+    uvec idxs_d = find(districts == distr);
+    return size(unique(counties(idxs_d)))[0];
+}
+
 /*
  * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,
  * given a collection of plans
