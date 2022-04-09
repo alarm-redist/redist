@@ -302,7 +302,7 @@ find_numbering = function(plan, ref, pop, tot_pop) {
 #'
 #' @concept analyze
 #' @export
-match_numbers = function(data, plan, pop=attr(data, "prec_pop"), col="pop_overlap") {
+match_numbers = function(data, plan, total_pop=attr(data, "prec_pop"), col="pop_overlap") {
     if (!inherits(data, "redist_plans")) cli_abort("{.arg data} must be a {.cls redist_plans}")
     if (!"district" %in% colnames(data)) cli_abort("Missing {.field district} colun in {.arg data}")
 
@@ -312,14 +312,15 @@ match_numbers = function(data, plan, pop=attr(data, "prec_pop"), col="pop_overla
     ndists = length(levels(plan))
 
 
-    if (is.null(pop)) cli_abort("{.field prec_pop} attribute in {.arg data} required.")
+    if (is.null(total_pop))
+        cli_abort("Must provide {.arg total_pop} for this {.cls redist_plans} object.")
     if (max(plan_mat[,1]) != ndists)
         cli_abort("Can't match numbers on a subset of a {.cls redist_plans}")
 
     # compute renumbering and extract info
     best_renumb = apply(plan_mat, 2, find_numbering,
                         plan=as.integer(plan),
-                        pop=pop, tot_pop=sum(pop))
+                        pop=total_pop, tot_pop=sum(total_pop))
     renumb = as.integer(vapply(best_renumb, function(x) x$renumb, integer(ndists)))
 
     if (!is.null(col))
