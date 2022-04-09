@@ -6,10 +6,12 @@
 #include <string>
 #include <cli/progress.h>
 
+// [[Rcpp::depends(redistmetrics)]]
+
 #include "wilson.h"
 #include "tree_op.h"
 #include "map_calc.h"
-#include "kirchhoff.h"
+#include <redistmetrics/kirchhoff.h>
 #include "mcmc_gibbs.h"
 
 /*
