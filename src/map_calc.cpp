@@ -470,7 +470,7 @@ NumericVector max_dev(const IntegerMatrix districts, const vec pop, int n_distr)
 std::vector<double> tree_dev(Tree &ust, int root, const uvec &pop,
                              double total_pop, double target) {
     int V = pop.size();
-    std::vector<int> pop_below(V);
+    std::vector<int> pop_below(V, 0);
     std::vector<int> parent(V);
     tree_pop(ust, root, pop, pop_below, parent);
     // compile a list of candidate edges to cut

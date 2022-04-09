@@ -15,8 +15,9 @@ redist_shortburst(
   counties = NULL,
   constraints = redist_constr(map),
   compactness = 1,
-  adapt_k_thresh = 0.975,
+  adapt_k_thresh = 0.95,
   return_all = TRUE,
+  thin = 1L,
   backend = "mergesplit",
   flip_lambda = 0,
   flip_eprob = 0.05,
@@ -63,6 +64,9 @@ Must be between 0 and 1.}
 
 \item{return_all}{Whether to return all the
 Recommended for monitoring purposes.}
+
+\item{thin}{Save every \code{thin}-th sample. Defaults to no thinning (1). Ignored
+if \code{return_all=TRUE}.}
 
 \item{backend}{the MCMC algorithm to use within each burst, either
 "mergesplit" or "flip".}

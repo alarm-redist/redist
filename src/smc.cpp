@@ -465,6 +465,7 @@ void adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
     int max_ok = 0;
     std::vector<bool> ignore(V);
     int idx = 0;
+    int max_V = 0;
     for (int i = 0; i < N_max && idx < N_adapt; i++, idx++) {
         if (std::isinf(lp(i))) { // skip if not valid
             idx--;
@@ -472,7 +473,15 @@ void adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
         }
 
         Tree ust = init_tree(V);
-        for (int j = 0; j < V; j++) ignore[j] = districts(j, i) != 0;
+        int n_vtx = V;
+        for (int j = 0; j < V; j++) {
+            if (districts(j, i) != 0) {
+                ignore[j] = true;
+                n_vtx--;
+            }
+        }
+        if (n_vtx > max_V) max_V = n_vtx;
+
         ust = sample_sub_ust(g, ust, V, root, ignore, pop, lower, upper, counties, cg);
         if (ust.size() == 0) {
             idx--;
@@ -518,5 +527,7 @@ void adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
         }
         k = max_ok + 1;
     }
+
+    k = std::min(k, max_V - 1);
 }
 

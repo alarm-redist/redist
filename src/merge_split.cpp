@@ -260,19 +260,23 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
     int max_ok = 0;
     std::vector<bool> ignore(V);
     int distr_1, distr_2;
+    int max_V = 0;
     for (int i = 0; i < N_adapt; i++) {
         Tree ust = init_tree(V);
 
         double joint_pop = 0;
         select_pair(n_distr, g, plan, distr_1, distr_2);
+        int n_vtx = 0;
         for (int j = 0; j < V; j++) {
             if (plan(j) == distr_1 || plan(j) == distr_2) {
                 joint_pop += pop(j);
                 ignore[j] = false;
+                n_vtx++;
             } else {
                 ignore[j] = true;
             }
         }
+        if (n_vtx > max_V) max_V = n_vtx;
 
         ust = sample_sub_ust(g, ust, V, root, ignore, pop, lower, upper, counties, cg);
         if (ust.size() == 0) {
@@ -315,6 +319,8 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
         Rcerr << "Warning: maximum hit; falling back to naive k estimator.\n";
         k = max_ok + 1;
     }
+
+    k = std::min(k, max_V - 1);
 }
 
 /*
