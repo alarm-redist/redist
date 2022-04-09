@@ -113,7 +113,7 @@
 redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list(),
                       resample=TRUE, constraint_fn=function(m) rep(0, ncol(m)),
                       init_particles=NULL, n_steps=NULL,
-                      adapt_k_thresh=0.975, seq_alpha=0.2+0.3*compactness,
+                      adapt_k_thresh=0.985, seq_alpha=0.2+0.3*compactness,
                       truncate=(compactness != 1), trunc_fn=redist_quantile_trunc,
                       pop_temper=0, final_infl=1, ref_name=NULL,
                       verbose=TRUE, silent=FALSE) {
