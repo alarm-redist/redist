@@ -388,8 +388,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // ms_plans
-Rcpp::List ms_plans(int N, List l, const arma::uvec init, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double target, double lower, double upper, double rho, List constraints, double thresh, int k, int verbosity);
-RcppExport SEXP _redist_ms_plans(SEXP NSEXP, SEXP lSEXP, SEXP initSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP constraintsSEXP, SEXP threshSEXP, SEXP kSEXP, SEXP verbositySEXP) {
+Rcpp::List ms_plans(int N, List l, const arma::uvec init, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double target, double lower, double upper, double rho, List constraints, double thresh, int k, int thin, int verbosity);
+RcppExport SEXP _redist_ms_plans(SEXP NSEXP, SEXP lSEXP, SEXP initSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP constraintsSEXP, SEXP threshSEXP, SEXP kSEXP, SEXP thinSEXP, SEXP verbositySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -406,8 +406,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< List >::type constraints(constraintsSEXP);
     Rcpp::traits::input_parameter< double >::type thresh(threshSEXP);
     Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< int >::type thin(thinSEXP);
     Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
-    rcpp_result_gen = Rcpp::wrap(ms_plans(N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, thresh, k, verbosity));
+    rcpp_result_gen = Rcpp::wrap(ms_plans(N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, thresh, k, thin, verbosity));
     return rcpp_result_gen;
 END_RCPP
 }

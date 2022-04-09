@@ -23,7 +23,7 @@
 Rcpp::List ms_plans(int N, List l, const arma::uvec init, const arma::uvec &counties,
                     const arma::uvec &pop, int n_distr, double target, double lower,
                     double upper, double rho, List constraints,
-                    double thresh, int k, int verbosity);
+                    double thresh, int k, int thin, int verbosity);
 
 
 /*

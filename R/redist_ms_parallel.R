@@ -43,10 +43,11 @@
 #' @concept simulate
 #' @md
 #' @export
-redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2),
+redist_mergesplit_parallel = function(map, nsims, chains=1,
+                                      warmup=max(100, nsims %/% 2), thin=1L,
                                       init_plan=NULL, counties=NULL, compactness=1,
                                       constraints=list(), constraint_fn=function(m) rep(0, ncol(m)),
-                                      adapt_k_thresh=0.975, k=NULL, ncores=NULL,
+                                      adapt_k_thresh=0.985, k=NULL, ncores=NULL,
                                       cl_type="PSOCK", return_all=TRUE, init_name=NULL,
                                       verbose=TRUE, silent=FALSE) {
     if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
@@ -55,6 +56,7 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
     V = nrow(map)
     adj = get_adj(map)
     ndists = attr(map, "ndists")
+    thin = as.integer(thin)
 
     chains = as.integer(chains)
     stopifnot(chains > 1)
@@ -65,6 +67,8 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
         cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
     if (nsims <= warmup)
         cli_abort("{.arg nsims} must be greater than {.arg warmup}.")
+    if (thin < 1 || thin > nsims - warmup)
+        cli_abort("{.arg thin} must be a positive integer, and no larger than {.arg nsims - warmup}.")
     if (nsims < 1)
         cli_abort("{.arg nsims} must be positive.")
 
@@ -85,7 +89,7 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
         }
 
         if (is.null(init_name))
-            init_names = rep(exist_name, chains)
+            init_names = paste0("<init> ", seq_len(chains))
         else
             init_names = rep(init_name, chains)
     }
@@ -155,7 +159,7 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
     out = utils::capture.output({
         x <- ms_plans(1, adj, init_plans[,1], counties, pop, ndists, pop_bounds[2],
                       pop_bounds[1], pop_bounds[3], compactness, list(), adapt_k_thresh,
-                      0L, verbosity=3)
+                      0L, 1L, verbosity=3)
     }, type="output")
     rm(x)
     k = as.integer(stats::na.omit(stringr::str_match(out, "Using k = (\\d+)")[,2]))
@@ -174,34 +178,34 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
     registerDoParallel(cl)
     on.exit(stopCluster(cl))
 
-    each_len = if (return_all) nsims - warmup else 1
     out_par <- foreach(chain=seq_len(chains)) %dopar% {
         if (!silent) cat("Starting chain ", chain, "\n", sep="")
-        ms_plans(nsims+1L, adj, init_plans[, chain], counties, pop,
+        ms_plans(nsims, adj, init_plans[, chain], counties, pop,
                  ndists, pop_bounds[2], pop_bounds[1], pop_bounds[3],
-                 compactness, constraints, adapt_k_thresh, k, verbosity)
+                 compactness, constraints, adapt_k_thresh, k, thin, verbosity)
     }
 
+    warmup_idx = c(seq_len(1 + warmup %/% thin), nsims %/% thin + 2L)
     plans <- lapply(out_par, function(algout) {
         if (return_all) {
-            algout$plans[, -1:-(warmup+1L), drop=FALSE]
+            algout$plans[, -warmup_idx, drop=FALSE]
         } else {
             algout$plans[, nsims+1L, drop=FALSE]
         }
     })
+    each_len = ncol(plans[[1]])
     plans <- do.call('cbind', plans)
 
     mh <- sapply(out_par, function(algout) {
         mean(as.logical(algout$mhdecisions))
     })
 
+    warmup_idx = c(seq_len(warmup %/% thin), nsims %/% thin + 1L)
     acceptances <- sapply(out_par, function(algout) {
         if (!return_all) {
             as.logical(algout$mhdecisions[nsims])
-        } else if (warmup == 0) {
-            as.logical(algout$mhdecisions)
         } else {
-            as.logical(algout$mhdecisions[-seq_len(warmup)])
+            as.logical(algout$mhdecisions[-warmup_idx])
         }
     })
 

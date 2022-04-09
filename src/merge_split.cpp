@@ -11,13 +11,13 @@
 /*
  * Main entry point.
  *
- * USING MCMMC
+ * USING MCMC
  * Sample `N` redistricting plans on map `g`, ensuring that the maximum
  * population deviation is between `lower` and `upper` (and ideally `target`)
  */
 Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const uvec &pop,
               int n_distr, double target, double lower, double upper, double rho,
-              List constraints, double thresh, int k, int verbosity) {
+              List constraints, double thresh, int k, int thin, int verbosity) {
     // re-seed MT
     generator.seed((int) Rcpp::sample(INT_MAX, 1)[0]);
 
@@ -26,10 +26,12 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     int V = g.size();
     int n_cty = max(counties);
 
-    umat districts(V, N, fill::zeros);
+    int n_out = N/thin + 2;
+    umat districts(V, n_out, fill::zeros);
     districts.col(0) = init;
+    districts.col(1) = init;
 
-    Rcpp::IntegerVector mh_decisions(N - 1);
+    Rcpp::IntegerVector mh_decisions(N/thin + 1);
 
     double tol = std::max(target - lower, upper - target) / target;
 
@@ -64,15 +66,17 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     std::vector<int> distr_1_2;
     new_psi.names() = psi_names;
     RObject bar = cli_progress_bar(N - 1, cli_config(false));
+    int idx = 1;
     for (int i = 1; i < N; i++) {
-        districts.col(i) = districts.col(i - 1); // copy over old map
+        // copy old map to 'working' memory in `idx+1`
+        districts.col(idx+1) = districts.col(idx);
 
         // make the proposal
         double prop_lp = 0.0;
         reject_ct = 0;
         do {
-            select_pair(n_distr, g, districts.col(i), distr_1, distr_2);
-            prop_lp = split_map_ms(g, counties, cg, districts.col(i), distr_1,
+            select_pair(n_distr, g, districts.col(idx+1), distr_1, distr_2);
+            prop_lp = split_map_ms(g, counties, cg, districts.col(idx+1), distr_1,
                                    distr_2, pop, lower, upper, target, k);
             if (reject_ct % 200 == 0) Rcpp::checkUserInterrupt();
             reject_ct++;
@@ -82,15 +86,15 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
         if (rho != 1) {
             double log_st = 0;
             for (int j = 1; j <= n_cty; j++) {
-                log_st += log_st_distr(g, districts, counties, i-1, distr_1, j);
-                log_st += log_st_distr(g, districts, counties, i-1, distr_2, j);
-                log_st -= log_st_distr(g, districts, counties, i, distr_1, j);
-                log_st -= log_st_distr(g, districts, counties, i, distr_2, j);
+                log_st += log_st_distr(g, districts, counties, idx, distr_1, j);
+                log_st += log_st_distr(g, districts, counties, idx, distr_2, j);
+                log_st -= log_st_distr(g, districts, counties, idx+1, distr_1, j);
+                log_st -= log_st_distr(g, districts, counties, idx+1, distr_2, j);
             }
-            log_st += log_st_contr(g, districts, counties, n_cty, i-1, distr_1);
-            log_st += log_st_contr(g, districts, counties, n_cty, i-1, distr_2);
-            log_st -= log_st_contr(g, districts, counties, n_cty, i, distr_1);
-            log_st -= log_st_contr(g, districts, counties, n_cty, i, distr_2);
+            log_st += log_st_contr(g, districts, counties, n_cty, idx, distr_1);
+            log_st += log_st_contr(g, districts, counties, n_cty, idx, distr_2);
+            log_st -= log_st_contr(g, districts, counties, n_cty, idx+1, distr_1);
+            log_st -= log_st_contr(g, districts, counties, n_cty, idx+1, distr_2);
 
             prop_lp += (1 - rho) * log_st;
         }
@@ -100,23 +104,29 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
         // transition ratio flipped relative to the target density ratio
         distr_1_2 = {distr_1, distr_2};
 
-        prop_lp -= calc_gibbs_tgt(districts.col(i), n_distr, V, distr_1_2, new_psi,
+        prop_lp -= calc_gibbs_tgt(districts.col(idx+1), n_distr, V, distr_1_2, new_psi,
                                   pop, target, g, constraints);
-        prop_lp += calc_gibbs_tgt(districts.col(i-1), n_distr, V, distr_1_2, new_psi,
+        prop_lp += calc_gibbs_tgt(districts.col(idx), n_distr, V, distr_1_2, new_psi,
                                   pop, target, g, constraints);
 
         double alpha = exp(prop_lp);
         if (alpha >= 1 || unif(generator) <= alpha) { // ACCEPT
             n_accept++;
-            // map already stored in districts.col(i);
-            mh_decisions(i - 1) = 1;
+            districts.col(idx) = districts.col(idx+1); // copy over new map
+            mh_decisions(idx - 1) = 1;
         } else { // REJECT
-            districts.col(i) = districts.col(i - 1); // copy over old map
-            mh_decisions(i - 1) = 0;
+            districts.col(idx+1) = districts.col(idx); // copy over old map
+            mh_decisions(idx - 1) = 0;
         }
+
+        if (i % thin == 0) idx++;
 
         if (verbosity >= 1 && CLI_SHOULD_TICK) {
             cli_progress_set(bar, i - 1);
+        }
+        if (idx == n_out - 1) { // thin doesn't divide N and we are done early
+            cli_progress_set(bar, N);
+            break;
         }
         Rcpp::checkUserInterrupt();
     }
