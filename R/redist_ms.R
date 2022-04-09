@@ -28,7 +28,10 @@
 #'
 #' @param map A \code{\link{redist_map}} object.
 #' @param nsims The number of samples to draw, including warmup.
-#' @param warmup The number of warmup samples to discard.
+#' @param warmup The number of warmup samples to discard. Recommended to be at
+#'   least the first 20% of samples, and in any case no less than around 100
+#'   samples.
+#' @param thin Save every `thin`-th sample. Defaults to no thinning (1).
 #' @param init_plan The initial state of the map. If not provided, will default to
 #'   the reference map of the \code{map} object, or if none exists, will sample
 #'   a random initial state using \code{\link{redist_smc}}. You can also request
@@ -88,10 +91,10 @@
 #' @md
 #' @order 1
 #' @export
-redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
+redist_mergesplit = function(map, nsims, warmup=max(100, nsims %/% 2), thin=1L,
                              init_plan=NULL, counties=NULL, compactness=1,
                              constraints=list(), constraint_fn=function(m) rep(0, ncol(m)),
-                             adapt_k_thresh=0.975, k=NULL, init_name=NULL,
+                             adapt_k_thresh=0.985, k=NULL, init_name=NULL,
                              verbose=TRUE, silent=FALSE) {
     if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
 
@@ -100,6 +103,7 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
     adj = get_adj(map)
     ndists = attr(map, "ndists")
     warmup = max(warmup, 0L)
+    thin = as.integer(thin)
 
     if (compactness < 0)
         cli_abort("{.arg compactness} must be non-negative.")
@@ -107,6 +111,8 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
         cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
     if (nsims <= warmup)
         cli_abort("{.arg nsims} must be greater than {.arg warmup}.")
+    if (thin < 1 || thin > nsims - warmup)
+        cli_abort("{.arg thin} must be a positive integer, and no larger than {.arg nsims - warmup}.")
     if (nsims < 1)
         cli_abort("{.arg nsims} must be positive.")
 
@@ -115,6 +121,8 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
     if (is.null(init_plan) && !is.null(exist_name)) {
         init_plan = as.integer(as.factor(get_existing(map)))
         if (is.null(init_name)) init_name = exist_name
+    }  else if (!is.null(init_plan) && is.null(init_name)) {
+        init_name = "<init>"
     }
     if (length(init_plan) == 0L || isTRUE(init_plan == "sample")) {
         init_plan = as.integer(get_plans_matrix(
@@ -171,14 +179,15 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
                     "x"="Redistricting impossible."))
     }
 
-    algout = ms_plans(nsims+1L, adj, init_plan, counties, pop, ndists,
+    algout = ms_plans(nsims, adj, init_plan, counties, pop, ndists,
                      pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
-                     constraints, adapt_k_thresh, k, verbosity)
+                     constraints, adapt_k_thresh, k, thin, verbosity)
 
     plans <- algout$plans
     acceptances = as.logical(algout$mhdecisions)
 
-    out = new_redist_plans(plans[, -1:-(warmup+1), drop=FALSE],
+    warmup_idx = c(seq_len(1 + warmup %/% thin), ncol(plans))
+    out = new_redist_plans(plans[, -warmup_idx, drop=FALSE],
                            map, "mergesplit", NULL, FALSE,
                            ndists = ndists,
                            compactness = compactness,
@@ -186,11 +195,8 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
                            adapt_k_thresh = adapt_k_thresh,
                            mh_acceptance = mean(acceptances))
 
-    if (warmup == 0) {
-        out <- out %>% mutate(mcmc_accept = rep(acceptances, each = ndists))
-    } else {
-        out <- out %>% mutate(mcmc_accept = rep(acceptances[-seq_len(warmup)], each = ndists))
-    }
+    warmup_idx = c(seq_len(warmup %/% thin), length(acceptances))
+    out <- out %>% mutate(mcmc_accept = rep(acceptances[-warmup_idx], each = ndists))
 
 
     if (!is.null(init_name) && !isFALSE(init_name)) {
