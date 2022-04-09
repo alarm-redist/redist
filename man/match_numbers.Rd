@@ -17,14 +17,14 @@ match_numbers(
 \item{plan}{a character vector giving the name of the plan to match to (e.g.,
 for a reference plan), or an integer vector containing the plan itself.}
 
+\item{total_pop}{a vector of population counts. Should not be needed for most
+\code{redist_plans} objects.}
+
 \item{col}{the name of a new column to store the vector of population overlap
 with the reference plan: the fraction of the total population who are in
 the same district under each plan and the reference plan. Set to
 \code{NULL} if no column should be created.
 renumbering options in any plan.}
-
-\item{pop}{a vector of population counts. Should not be needed for most
-\code{redist_plans} objects.}
 }
 \value{
 a modified \code{redist_plans} object. New district numbers will be

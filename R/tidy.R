@@ -281,7 +281,7 @@ find_numbering = function(plan, ref, pop, tot_pop) {
 #' @param data a \code{redist_plans} object.
 #' @param plan a character vector giving the name of the plan to match to (e.g.,
 #'   for a reference plan), or an integer vector containing the plan itself.
-#' @param pop a vector of population counts. Should not be needed for most
+#' @param total_pop a vector of population counts. Should not be needed for most
 #'   \code{redist_plans} objects.
 #' @param col the name of a new column to store the vector of population overlap
 #'   with the reference plan: the fraction of the total population who are in
