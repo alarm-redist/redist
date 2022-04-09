@@ -129,8 +129,14 @@ redist_mergesplit = function(map, nsims, warmup=max(100, nsims %/% 2), thin=1L,
             redist_smc(map, 10, counties, resample=FALSE, ref_name=FALSE, silent=TRUE))[, 1])
         if (is.null(init_name)) init_name = "<init>"
     }
-    stopifnot(length(init_plan) == V)
-    stopifnot(max(init_plan) == ndists)
+
+    # check init
+    if (length(init_plan) != V)
+        cli_abort("{.arg init_plan} must be as long as the number of units as `map`.")
+    if (max(init_plan) != ndists)
+        cli_abort("{.arg init_plan} must have the same number of districts as `map`.")
+    if (any(contiguity(adj, init_plan) != 1))
+        cli_abort("{.arg init_plan} must have contiguous districts.")
 
     if (is.null(counties)) {
         counties = rep(1, V)
