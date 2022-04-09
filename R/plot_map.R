@@ -202,94 +202,89 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
 #'
 #' @concept plot
 #' @export
-redist.plot.adj <- function(shp = NULL, adj = NULL, plan = NULL, centroids = TRUE,
+redist.plot.adj <- function(adj = NULL, plan = NULL, centroids = TRUE,
                        drop = FALSE, plot_shp=TRUE, zoom_to=NULL, title = '') {
-
-  # Check inputs
-  if (is.null(shp)) {
-    stop('Please provide an argument to "shp".')
-  }
-
-  if ('SpatialPolygonsDataFrame' %in% class(shp)) {
-    shp <- shp %>% st_as_sf()
-  } else if (!('sf' %in% class(shp))) {
-    stop('Please provide "shp" as a SpatialPolygonsDataFrame or sf object.')
-  }
-
-  plan_to_plot <- eval_tidy(enquo(plan), shp)
-  if (!is.null(plan_to_plot)) {
-    if (!any(class(plan_to_plot) %in% c('numeric', 'integer', 'character'))) {
-      stop('Please provide "plan" as a vector.')
-    }
-    if (nrow(shp) != length(plan_to_plot)) {
-      stop('Arguments "plan" and "shp" do not have same number of precincts.')
-    }
-  }
-
-  if (inherits(shp, 'redist_map') ){
-    if (missing(adj)) {
-      adj <- get_adj(shp)
-    }
-  } else if (missing(adj)){
-    adj <- redist.adjacency(shp)
-  }
-
-
-  if (drop & is.null(plan)) {
-    stop('drop is TRUE but no plan supplied')
-  }
-
-  edge_cntr <- edge_center_df(shp, adj)
-
-  nb <- edge_cntr$nb
-  centers <- edge_cntr$centers
-
-  # Drop Edges that cross District Boundaries
-  if (drop) {
-    nb <- nb %>%
-      filter(plan_to_plot[i] == plan_to_plot[j])
-  }
-
-  # Create Plot
-  if (plot_shp) {
-      if(!is.null(plan)){
-          plot <- ggplot(shp) +
-              geom_sf(aes(fill = as.character(plan_to_plot)), size = 0.1) +
-              theme_void() +
-              theme(legend.position = 'none') +
-              geom_sf(data = nb)
-      } else{
-          plot <- ggplot(shp) +
-              geom_sf(size = 0.1) +
-              theme_void() +
-              geom_sf(data = nb)
-      }
-  } else {
-      plot <- ggplot(nb) +
-        geom_sf() +
-        theme_void()
+    if ('SpatialPolygonsDataFrame' %in% class(shp)) {
+        shp <- shp %>% st_as_sf()
+    } else if (!inherits(shp, "sf")) {
+        cli_abort('{.arg shp} must be a {.cls SpatialPolygonsDataFrame} or {.cls sf} object.')
     }
 
-  if (centroids) {
-    if(!is.null(plan) & !plot_shp){
-      plot <- plot + geom_sf(data = centers, aes(color = as.character(plan_to_plot)), size = 2) +
-        theme(legend.position = 'none')
+
+    plan_to_plot <- eval_tidy(enquo(plan), shp)
+    if (!is.null(plan_to_plot)) {
+        if (!is.numeric(plan_to_plot)) {
+            cli_abort("{.arg} plan must be a numeric vector.")
+        }
+        if (nrow(shp) != length(plan_to_plot)) {
+            cli_abort('{.arg plan} and {.arg shp} must have same number of precincts.')
+        }
+    }
+
+    if (inherits(shp, 'redist_map') ){
+        if (missing(adj)) {
+            adj <- get_adj(shp)
+        }
+    } else if (missing(adj)){
+        adj <- redist.adjacency(shp)
+    }
+
+
+    if (drop & is.null(plan)) {
+        cli_abort('{.arg drop} is {.code TRUE} but no plan supplied.')
+    }
+
+    edge_cntr <- edge_center_df(shp, adj)
+
+    nb <- edge_cntr$nb
+    centers <- edge_cntr$centers
+
+    # Drop Edges that cross District Boundaries
+    if (drop) {
+        nb <- nb %>%
+            filter(plan_to_plot[i] == plan_to_plot[j])
+    }
+
+    # Create Plot
+    if (plot_shp) {
+        if(!is.null(plan)){
+            plot <- ggplot(shp) +
+                geom_sf(aes(fill = as.character(plan_to_plot)), size = 0.1) +
+                theme_void() +
+                theme(legend.position = 'none') +
+                geom_sf(data = nb)
+        } else{
+            plot <- ggplot(shp) +
+                geom_sf(size = 0.1) +
+                theme_void() +
+                geom_sf(data = nb)
+        }
     } else {
-      plot <- plot + geom_sf(data = centers)
+        plot <- ggplot(nb) +
+            geom_sf() +
+            theme_void()
     }
-  }
 
-  zoom_to = eval_tidy(enquo(zoom_to), shp)
-  if (!is.null(zoom_to)) {
-      bbox = sf::st_bbox(sf::st_geometry(shp)[zoom_to])
-      plot <- plot + ggplot2::coord_sf(xlim=c(bbox$xmin, bbox$xmax),
-                                       ylim=c(bbox$ymin, bbox$ymax))
-  }
+    if (centroids) {
+        if(!is.null(plan) & !plot_shp){
+            plot <- plot + geom_sf(data = centers, aes(color = as.character(plan_to_plot)), size = 2) +
+                theme(legend.position = 'none')
+        } else {
+            plot <- plot + geom_sf(data = centers)
+        }
+    }
+
+    zoom_to = eval_tidy(enquo(zoom_to), shp)
+    if (!is.null(zoom_to)) {
+        bbox = sf::st_bbox(sf::st_geometry(shp)[zoom_to])
+        plot <- plot + ggplot2::coord_sf(xlim=c(bbox$xmin, bbox$xmax),
+                                         ylim=c(bbox$ymin, bbox$ymax))
+    }
 
 
-  plot <- plot + labs(title = title)
-  # return plot
-  return(plot)
+    plot <- plot + labs(title = title)
+    # return plot
+    return(plot)
 }
 
 edge_center_df <- function(shp, adj){
@@ -309,7 +304,7 @@ edge_center_df <- function(shp, adj){
   )
   edgedf <- edgedf %>%
     rowwise() %>%
-    mutate(i = min(start, finish), j = max(start, finish)) %>%
+    mutate(i = min(.data$start, .data$finish), j = max(.data$start, .data$finish)) %>%
     select(i, j)
   edgedf <- edgedf[!duplicated(edgedf), ]
 
@@ -329,5 +324,3 @@ edge_center_df <- function(shp, adj){
 
   return(list(nb = nb, centers = centers))
 }
-
-globalVariables(c('start', 'finish'))

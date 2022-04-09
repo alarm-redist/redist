@@ -5,7 +5,6 @@
 \title{Creates a Graph Overlay}
 \usage{
 redist.plot.adj(
-  shp = NULL,
   adj = NULL,
   plan = NULL,
   centroids = TRUE,
@@ -16,8 +15,6 @@ redist.plot.adj(
 )
 }
 \arguments{
-\item{shp}{A SpatialPolygonsDataFrame or sf object. Required.}
-
 \item{adj}{A zero-indexed adjacency list. Created with redist.adjacency
 if not supplied. Default is NULL.}
 
@@ -35,6 +32,8 @@ graph. Default is \code{TRUE}.}
 indexing vector of units to zoom the map to.}
 
 \item{title}{A string title of plot. Defaults to empty string. Optional.}
+
+\item{shp}{A SpatialPolygonsDataFrame or sf object. Required.}
 }
 \value{
 ggplot map

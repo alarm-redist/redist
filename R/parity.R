@@ -23,18 +23,18 @@
 #' @concept analyze
 #' @export
 redist.parity <- function(plans, total_pop, ncores = 1) {
-    if (!any(class(total_pop) %in% c('numeric', 'integer'))) {
-        stop('Please provide "total_pop" as a numeric vector.')
+    if (!is.numeric(total_pop)) {
+        cli_abort("{.arg total_pop} must be a numeric vector")
     }
     if (!is.matrix(plans)) {
         plans <- matrix(plans, ncol=1)
     }
-    if (!any(class(plans) %in% c('numeric', 'matrix'))) {
-        stop('Please provide "plans" as a matrix.')
+    if (!is.matrix(plans)) {
+        cli_abort("{.arg plans} must be a matrix")
     }
 
     if (length(total_pop) != nrow(plans)) {
-        stop('Arguments "plans" and "total_pop" do not have same number of precincts.')
+        cli_abort(".arg plans} and {.arg total_pop} must have same number of precincts.")
     }
 
     # parallelize as in fastLink package to avoid Windows/unix issues
