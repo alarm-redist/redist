@@ -47,13 +47,19 @@ double eval_inc(const subview_col<uword> &districts, int distr, const uvec &incu
  * Compute the county split penalty for district `distr`
  */
 double eval_splits(const subview_col<uword> &districts, int distr,
-                   const uvec &counties, int n_cty);
+                   const uvec &counties, int n_cty, bool smc);
 
 /*
  * Compute the county fracture penalty for district `distr`
  */
 double eval_multisplits(const subview_col<uword> &districts, int distr,
-                        const uvec &counties, int n_cty);
+                        const uvec &counties, int n_cty, bool smc);
+
+/*
+ * Compute the county split penalty for district `distr`
+ */
+double eval_total_splits(const subview_col<uword> &districts, int distr,
+                   const uvec &counties, int n_cty);
 
 /*
  * Compute the Polsby Popper penalty for district `distr`
@@ -100,11 +106,6 @@ double eval_log_st(const subview_col<uword> &districts, const Graph g,
  */
 double eval_er(const subview_col<uword> &districts, const Graph g, int ndists);
 
-/*
- * Compute the county split penalty for district `distr`
- */
-double eval_total_splits(const subview_col<uword> &districts, int distr,
-                   const uvec &counties);
 
 
 /*

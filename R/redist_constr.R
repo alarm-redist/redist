@@ -147,7 +147,9 @@ add_to_constr = function(constr, name, new_constr) {
 #' The `grp_pow` constraint (for expert use) adds a term of the form
 #' \eqn{(|tgtgroup-grouppct||tgtother-grouppct|)^{pow})}, which
 #' encourages districts to have group shares near either `tgt_group`
-#' or `tgt_other`.
+#' or `tgt_other`.  Values of `strength` depend heavily on the values of these
+#' parameters and especially the `pow` parameter; use [redist.plot.penalty()] to
+#' visualize the effect of the penalty and calibrate `strength` appropriately.
 #'
 #' The `compet` constraint encourages competitiveness by applying the `grp_pow`
 #' constraint with target percentages set to 50%. For convenience, it is
@@ -165,8 +167,10 @@ add_to_constr = function(constr, name, new_constr) {
 #' counties which are split twice or more.
 #' Values of `strength` should generally be small, given that the underlying values are counts.
 #'
-#' The `total_splits` constraint adds a term counting the number of district-counties.
-#' Values of `strength` should generally be small, given that the underlying values are counts.
+#' The `total_splits` constraint adds a term counting the total number of times
+#' each county is split, summed across counties (i.e., counting the number of
+#' excess district-county pairs). Values of `strength` should generally be
+#' small, given that the underlying values are counts.
 #'
 #' The `edges_rem` constraint adds a term counting the number of edges removed from the
 #' adjacency graph. This is only usable with `redist_flip()`, as other algorithms
@@ -193,12 +197,18 @@ add_to_constr = function(constr, name, new_constr) {
 #' The `custom` constraint allows the user to specify their own constraint using
 #' a function which evaluates districts one at a time. The provided function
 #' `fn` should take two arguments: a vector describing the current plan
-#' assignment (which may be incomplete, in the case of SMC), and an integer
-#' describing the district which to evaluate. The function should return a
-#' scalar value indicating the penalty to be applied to the district. An example
-#' is provided below. The flexibility of this constraint comes with an
-#' additional computational cost, since the other constraints are written in C++
-#' and so are more performant.
+#' assignment for each unit as its first argument, and an integer describing the
+#' district which to evaluate in the second argument. `which([plans == distr])`
+#' would give the indices of the units that are assigned to a district `distr`
+#' in any iteration. The function must return a single scalar for each plan -
+#' district combination, where a value of 0 indicates no penalty is applied. If
+#' users want to penalize an entire plan, they can have the penalty function
+#' return a scalar that does not depend on the district. It is important that
+#' `fn` not use information from precincts not included in `distr`, since in the
+#' case of SMC these precincts may not be assigned any district at all (`plan`
+#' will take the value of 0 for these precincts). The flexibility of this
+#' constraint comes with an additional computational cost, since the other
+#' constraints are written in C++ and so are more performant.
 #'
 #' @param constr A [redist_constr()] object
 #' @param strength The strength of the constraint. Higher values mean a more restrictive constraint.
@@ -212,6 +222,7 @@ add_to_constr = function(constr, name, new_constr) {
 #'                               dem_08, tot_08, tgts_group=c(0.5, 0.6))
 #' # encourage districts to have the same number of counties
 #' constr = add_constr_custom(constr, strength=1000, fn=function(plan, distr) {
+#'     # notice that we only use information on precincts in `distr`
 #'     abs(sum(plan == distr) - 99/4)
 #' })
 #' print(constr)
@@ -343,7 +354,10 @@ add_constr_compet = function(constr, strength, dvote, rvote, pow=0.5) {
     add_to_constr(constr, "compet", new_constr)
 }
 
-#' @param incumbents A vector of precinct indicess for incumbents
+#' @param incumbents A vector of unit indices for incumbents. For example, if
+#'   three incumbents live in the precincts that correspond to rows 1, 2, and
+#'   100 of your [redist_map], entering incumbents = c(1, 2, 100) would avoid
+#'   having two or more incumbents be in the same district.
 #' @rdname constraints
 #' @export
 add_constr_incumbency = function(constr, strength, incumbents) {
@@ -413,19 +427,18 @@ add_constr_total_splits = function(constr, strength, admin) {
 
     admin <- eval_tidy(enquo(admin), data)
     if (is.null(admin)) {
-        cli_abort('{.arg admin} may not be {.val NULL}.')
+        cli_abort("{.arg admin} may not be {.val NULL}.")
     }
     if (any(is.na(admin))) {
-        cli_abort('{.arg admin} many not contain {.val NA}s.')
+        cli_abort("{.arg admin} many not contain {.val NA}s.")
     }
 
     admin <- redist.sink.plan(admin)
 
-    new_constr = list(
-        strength=strength,
-        admin = admin
-    )
-    add_to_constr(constr, 'total_splits', new_constr)
+    new_constr = list(strength=strength,
+                      admin = admin,
+                      n = length(unique(admin)))
+    add_to_constr(constr, "total_splits", new_constr)
 }
 
 #' @rdname constraints
