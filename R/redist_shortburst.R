@@ -42,6 +42,8 @@
 #' Must be between 0 and 1.
 #' @param return_all Whether to return all the
 #'   Recommended for monitoring purposes.
+#' @param thin Save every `thin`-th sample. Defaults to no thinning (1). Ignored
+#'   if `return_all=TRUE`.
 #' @param backend the MCMC algorithm to use within each burst, either
 #'   "mergesplit" or "flip".
 #' @param flip_lambda The parameter determining the number of swaps to attempt each iteration of flip mcmc.
@@ -73,8 +75,8 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
                              burst_size = ifelse(backend == 'mergesplit', 10L, 50L),
                              max_bursts=500L, maximize=TRUE, init_plan=NULL,
                              counties=NULL,  constraints = redist_constr(map),
-                             compactness=1, adapt_k_thresh=0.975,
-                             return_all=TRUE, backend="mergesplit",
+                             compactness=1, adapt_k_thresh=0.95,
+                             return_all=TRUE, thin=1L, backend="mergesplit",
                              flip_lambda = 0, flip_eprob = 0.05,
                              verbose=TRUE) {
 
@@ -82,6 +84,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
     V = nrow(map)
     adj = get_adj(map)
     ndists = attr(map, "ndists")
+    thin = as.integer(thin)
 
     burst_size = as.integer(burst_size)
     max_bursts = as.integer(max_bursts)
@@ -99,6 +102,8 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
 
     if (burst_size < 1 || max_bursts < 1)
         stop("`burst_size` and `max_bursts` must be positive.")
+    if (thin < 1 || thin > max_bursts)
+        cli_abort("{.arg thin} must be a positive integer, and no larger than {.arg max_bursts}.")
 
     counties = rlang::eval_tidy(rlang::enquo(counties), map)
     if (is.null(counties)) {
@@ -150,7 +155,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
         out = utils::capture.output({
             x <- ms_plans(1, adj, init_plan, counties, pop, ndists, pop_bounds[2],
                           pop_bounds[1], pop_bounds[3], compactness,
-                          list(), adapt_k_thresh, 0L, verbosity=3)
+                          list(), adapt_k_thresh, 0L, 1L, verbosity=3)
         }, type="output")
         rm(x)
         k = as.integer(stats::na.omit(stringr::str_match(out, "Using k = (\\d+)")[,2]))
@@ -160,9 +165,9 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
                         {.url https://github.com/alarm-redist/redist/issues/new}"))
 
         run_burst = function(init) {
-            ms_plans(burst_size + 1L, adj, init, counties, pop, ndists,
+            ms_plans(burst_size, adj, init, counties, pop, ndists,
                      pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
-                     constraints, 1.0, k, verbosity=0)$plans[, -1L]
+                     constraints, 1.0, k, 1L, verbosity=0)$plans[, -1L]
         }
     } else {
 
@@ -183,11 +188,12 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
 
 
     burst = 1
-    out_mat = matrix(0L, nrow=V, ncol=max_bursts+1)
-    out_mat[, 1] = init_plan
+    n_out = max_bursts %/% thin
+    out_mat = matrix(0L, nrow=V, ncol=n_out)
+    cur_best = init_plan
 
-    scores = numeric(max_bursts+1)
-    scores[1] = score_fn(out_mat[, 1, drop=FALSE])
+    scores = numeric(n_out)
+    cur_best_score = score_fn(matrix(init_plan, ncol=1))
 
     if (verbose) {
         if (backend == 'mergesplit') {
@@ -206,46 +212,49 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
                           "\U0001F4A5", "\U0001F389", "\U26C4",
                           "\U0001F31F", "\U0001F308"))
     improve_ct = 1L
+    keep = seq_len(burst_size)
+    idx = 1L
     for (burst in 1:max_bursts) {
-        plans = run_burst(out_mat[, burst])
+        plans = run_burst(cur_best)[, keep]
         plan_scores = score_fn(plans)
 
-        prev_score = scores[burst]
         if (maximize) {
             best_idx = which.max(plan_scores)
             best_score = plan_scores[best_idx]
-            condition = best_score > prev_score
+            condition = best_score > cur_best_score
         } else {
             best_idx = which.min(plan_scores)
             best_score = plan_scores[best_idx]
-            condition = best_score < prev_score
+            condition = best_score < cur_best_score
         }
 
-        if (condition) {
-            out_mat[, burst+1L] = plans[, best_idx]
-            scores[burst+1L] = best_score
+        if (condition) { # improvement
+            cur_best = plans[, best_idx]
+            cur_best_score = best_score
             if (verbose) {
                 improve_ct = (improve_ct %% length(improve_ch)) + 1L
                 cat(sprintf("% 5d     %s     %f\n", burst,
-                            improve_ch[improve_ct], best_score))
+                            improve_ch[improve_ct], cur_best_score))
             }
-        } else {
-            out_mat[, burst+1L] = out_mat[, burst]
-            scores[burst+1L] = prev_score
-            if (verbose && burst %% report_int == 0)
-                cat(sprintf("% 5d            %f\n", burst, prev_score))
+        } else if (verbose && burst %% report_int == 0) {
+            cat(sprintf("% 5d            %f\n", burst, cur_best_score))
         }
 
+        if (burst %% thin == 0) {
+            idx = burst %/% thin
+            out_mat[, idx] = cur_best
+            scores[idx] = cur_best_score
 
-        if (maximize && scores[burst+1L] >= stop_at) break
-        if (!maximize && scores[burst+1L] <= stop_at) break
+            if (maximize && cur_best_score >= stop_at) break
+            if (!maximize && cur_best_score <= stop_at) break
+        }
     }
 
-    out_idx = if (return_all) 2:(burst+1L) else burst+1L
+    out_idx = if (return_all) seq_len(idx) else idx
     if (maximize)
-        converged = scores[burst+1L] >= stop_at
+        converged = cur_best_score >= stop_at
     else
-        converged = scores[burst+1L] <= stop_at
+        converged = cur_best_score <= stop_at
 
     out = new_redist_plans(out_mat[, out_idx, drop=FALSE], map, "shortburst",
                            wgt=NULL, resampled=FALSE,
