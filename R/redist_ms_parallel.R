@@ -116,7 +116,7 @@ redist_mergesplit_parallel = function(map, nsims, chains=1,
     if (max(init_plans) != ndists)
         cli_abort("{.arg init_plan} must have the same number of districts as `map`.")
     if (any(apply(init_plans, 2, function(x) contiguity(adj, x)) != 1))
-        cli_abort("{.arg init_plan} must have contiguous districts.")
+        cli_warn("{.arg init_plan} should have contiguous districts.")
 
     if (is.null(counties)) {
         counties = rep(1, V)

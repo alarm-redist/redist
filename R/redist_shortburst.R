@@ -138,7 +138,7 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
     if (max(init_plan) != ndists)
         cli_abort("{.arg init_plan} must have the same number of districts as `map`.")
     if (any(contiguity(adj, init_plan) != 1))
-        cli_abort("{.arg init_plan} must have contiguous districts.")
+        cli_warn("{.arg init_plan} should have contiguous districts.")
 
 
     if (backend == 'mergesplit') {
