@@ -202,7 +202,7 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
 #'
 #' @concept plot
 #' @export
-redist.plot.adj <- function(adj = NULL, plan = NULL, centroids = TRUE,
+redist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE,
                        drop = FALSE, plot_shp=TRUE, zoom_to=NULL, title = '') {
     if ('SpatialPolygonsDataFrame' %in% class(shp)) {
         shp <- shp %>% st_as_sf()
