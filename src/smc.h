@@ -13,7 +13,7 @@
 #include "wilson.h"
 #include "tree_op.h"
 #include "map_calc.h"
-#include <redistmetrics/kirchhoff.h>
+#include <kirchhoff_inline.h>
 
 /*
  * Main entry point.
