@@ -52,7 +52,7 @@ test_that("get_mh_acceptance_rate works", {
     expect_true(is.numeric(mh))
     expect_true(mh >= 0)
 
-    out <- redist_mergesplit(iowa_map, nsims = 5, silent = TRUE)
+    out <- redist_mergesplit(iowa_map, nsims = 5, warmup = 0, silent = TRUE)
     mh <- get_mh_acceptance_rate(out)
     expect_true(is.numeric(mh))
     expect_true(mh >= 0)

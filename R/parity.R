@@ -23,18 +23,18 @@
 #' @concept analyze
 #' @export
 redist.parity <- function(plans, total_pop, ncores = 1) {
-    if (!any(class(total_pop) %in% c('numeric', 'integer'))) {
-        stop('Please provide "total_pop" as a numeric vector.')
+    if (!is.numeric(total_pop)) {
+        cli_abort("{.arg total_pop} must be a numeric vector")
     }
     if (!is.matrix(plans)) {
         plans <- matrix(plans, ncol=1)
     }
-    if (!any(class(plans) %in% c('numeric', 'matrix'))) {
-        stop('Please provide "plans" as a matrix.')
+    if (!is.matrix(plans)) {
+        cli_abort("{.arg plans} must be a matrix")
     }
 
     if (length(total_pop) != nrow(plans)) {
-        stop('Arguments "plans" and "total_pop" do not have same number of precincts.')
+        cli_abort(".arg plans} and {.arg total_pop} must have same number of precincts.")
     }
 
     # parallelize as in fastLink package to avoid Windows/unix issues
@@ -109,8 +109,8 @@ min_move_parity = function(map, plan, counties=NULL, penalty=0.2) {
         tibble(from=i, to=distr_adj[[i]] + 1L)
     })) %>%
         rowwise() %>%
-        filter(from < to,
-               any(unique(counties[plan == from]) %in% counties[plan == to])) %>%
+        filter(.data$from < .data$to,
+               any(unique(counties[plan == .data$from]) %in% counties[plan == .data$to])) %>%
         ungroup()
 
     n_edge = nrow(edges)
@@ -136,10 +136,10 @@ min_move_parity = function(map, plan, counties=NULL, penalty=0.2) {
     pops_new = pops + diff_mat %*% move
     from_old = edges$from
     edges = mutate(edges,
-                   from = if_else(move < 0, to, from),
-                   to = if_else(move < 0, from_old, to),
+                   from = if_else(move < 0, .data$to, .data$from),
+                   to = if_else(move < 0, from_old, .data$to),
                    move = abs(move)) %>%
-        filter(move > 0)
+        filter(.data$move > 0)
 
     list(moves = edges,
          pop_old = pops[,1],

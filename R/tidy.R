@@ -252,8 +252,8 @@ pullback = function(plans, map=NULL) {
     }
 
     attr(plans, "merge_idx") = NULL
-    if (inherits(NULL, "redist_map")) {
-        attr(plans, "prec_pop") = map[[attr(map, "pop")]]
+    if (inherits(map, "redist_map")) {
+        attr(plans, "prec_pop") = map[[attr(map, "pop_col")]]
     } else {
         attr(plans, "prec_pop") = NULL
     }
@@ -263,9 +263,8 @@ pullback = function(plans, map=NULL) {
 
 
 # helper function for match_numbers
-find_numbering = function(plan, ref, pop) {
+find_numbering = function(plan, ref, pop, tot_pop) {
     joint = plan_joint(ref, plan, pop)
-    tot_pop = sum(pop)
 
     renumb = solve_hungarian(1 - joint / tot_pop)[, 2]
 
@@ -279,9 +278,11 @@ find_numbering = function(plan, ref, pop) {
 #' function attempts to renumber the districts across all simulated plans to
 #' match the numbers in a provided plan, using the Hungarian algorithm.
 #'
-#' @param data a \code{redist_plans} object
+#' @param data a \code{redist_plans} object.
 #' @param plan a character vector giving the name of the plan to match to (e.g.,
 #'   for a reference plan), or an integer vector containing the plan itself.
+#' @param total_pop a vector of population counts. Should not be needed for most
+#'   \code{redist_plans} objects.
 #' @param col the name of a new column to store the vector of population overlap
 #'   with the reference plan: the fraction of the total population who are in
 #'   the same district under each plan and the reference plan. Set to
@@ -301,7 +302,7 @@ find_numbering = function(plan, ref, pop) {
 #'
 #' @concept analyze
 #' @export
-match_numbers = function(data, plan, col="pop_overlap") {
+match_numbers = function(data, plan, total_pop=attr(data, "prec_pop"), col="pop_overlap") {
     if (!inherits(data, "redist_plans")) cli_abort("{.arg data} must be a {.cls redist_plans}")
     if (!"district" %in% colnames(data)) cli_abort("Missing {.field district} colun in {.arg data}")
 
@@ -309,14 +310,17 @@ match_numbers = function(data, plan, col="pop_overlap") {
     if (is.character(plan)) plan = plan_mat[,plan]
     plan = factor(plan, ordered=TRUE)
     ndists = length(levels(plan))
-    pop = attr(data, "prec_pop")
 
-    if (is.null(pop)) cli_abort("{.field prec_pop} attribute in {.arg data} required.")
+
+    if (is.null(total_pop))
+        cli_abort("Must provide {.arg total_pop} for this {.cls redist_plans} object.")
     if (max(plan_mat[,1]) != ndists)
         cli_abort("Can't match numbers on a subset of a {.cls redist_plans}")
 
     # compute renumbering and extract info
-    best_renumb = apply(plan_mat, 2, find_numbering, as.integer(plan), pop)
+    best_renumb = apply(plan_mat, 2, find_numbering,
+                        plan=as.integer(plan),
+                        pop=total_pop, tot_pop=sum(total_pop))
     renumb = as.integer(vapply(best_renumb, function(x) x$renumb, integer(ndists)))
 
     if (!is.null(col))
@@ -375,6 +379,75 @@ check_tidy_types = function(map, .data) {
         cli_abort("Must provide {.arg .data} if not called within a {.pkg dplyr} verb")
     if (!inherits(.data, "redist_plans"))
         cli_abort("{.arg data} must be a {.cls redist_plans}")
+}
+
+
+#' Tally a variable by district
+#'
+#' @param map a `redist_map` object
+#' @param x a variable to tally. Tidy-evaluated.
+#' @param .data a `redist_plans` object
+#'
+#' @return a vector containing the tallied values by district and plan (column-major)
+#'
+#' @concept analyze
+#' @export
+tally_var <- function(map, x, .data = redist:::cur_plans()) {
+    check_tidy_types(map, .data)
+    if (length(unique(diff(as.integer(.data$district)))) > 2)
+        cli_warn("Districts not sorted in ascending order; output may be incorrect.")
+
+    idxs <- unique(as.integer(.data$draw))
+    x <- rlang::eval_tidy(rlang::enquo(x), map)
+    as.numeric(pop_tally(get_plans_matrix(.data)[, idxs, drop = FALSE],
+                         x, attr(map, "ndists")))
+}
+
+#' Average a variable by precinct
+#'
+#' Takes a column of a `redist_plans` object and averages it across a set of
+#' `draws` for each precinct.
+#'
+#' @param plans a `redist_plans` object
+#' @param x an expression to average. Tidy-evaluted in `plans`.
+#' @param draws which draws to average. `NULL` will average all draws, including
+#'   reference plans. The special value `NA` will average all sampled draws. An
+#'   integer or character vector indicating specific draws may also be provided.
+#'
+#' @return a vector of length matching the number of precincts, containing the average.
+#'
+#' @concept analyze
+#' @export
+avg_by_prec <- function(plans, x, draws=NA) {
+    plans_m = get_plans_matrix(plans)
+
+    n_ref = 0
+    # copied from get_n_ref()
+    if (!is.null(colnames(plans_m))) {
+        refs = which(nchar(colnames(plans_m)) > 0)
+        n_ref = length(unique(colnames(plans_m)[refs]))
+    }
+
+    if (is.null(draws)) {
+        draw_idx = seq_len(ncol(plans_m))
+    } else if (is.na(draws)) {
+        draw_idx = seq_len(ncol(plans_m))[-seq_len(n_ref)]
+    } else {
+        draw_idx = match(as.character(draws), levels(plans$draw))
+    }
+
+    plans = arrange(plans, as.integer(.data$draw), .data$district)
+    n_distr = max(plans_m[, draw_idx[1]])
+    m_val = matrix(rlang::eval_tidy(rlang::enquo(x), plans), nrow=n_distr)
+
+    plans_m = plans_m[, draw_idx, drop=FALSE]
+    m_val = m_val[, draw_idx, drop=FALSE]
+    m_prec = matrix(nrow = nrow(plans_m), ncol = ncol(plans_m))
+    for (i in seq_len(ncol(plans_m))) {
+        m_prec[, i] <- m_val[, i][plans_m[, i]]
+    }
+
+    rowMeans(m_prec)
 }
 
 

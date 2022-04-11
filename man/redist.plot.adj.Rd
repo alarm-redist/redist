@@ -5,7 +5,7 @@
 \title{Creates a Graph Overlay}
 \usage{
 redist.plot.adj(
-  shp = NULL,
+  shp,
   adj = NULL,
   plan = NULL,
   centroids = TRUE,

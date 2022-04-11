@@ -124,26 +124,43 @@ double eval_inc(const subview_col<uword> &districts, int distr, const uvec &incu
     return inc_in_distr;
 }
 
-/*
- * Compute the county split penalty for district `distr`
- */
-double eval_splits(const subview_col<uword> &districts, int distr,
-                   const uvec &counties, int n_cty) {
+
+// helper function
+// calculates districts which appear in each county (but not zeros)
+std::vector<std::set<int>> calc_county_dist(const subview_col<uword> &districts,
+                                            const uvec &counties, int n_cty) {
     std::vector<std::set<int>> county_dist(n_cty);
     int V = counties.size();
     for (int i = 0; i < n_cty; i++) {
         county_dist[i] = std::set<int>();
     }
-
     for (int i = 0; i < V; i++) {
-        county_dist[counties[i]-1].insert(districts[i]);
+        if (districts[i] > 0) {
+            county_dist[counties[i]-1].insert(districts[i]);
+        }
     }
+    return county_dist;
+}
+
+/*
+ * Compute the county split penalty for district `distr`
+ */
+double eval_splits(const subview_col<uword> &districts, int distr,
+                   const uvec &counties, int n_cty, bool smc) {
+    std::vector<std::set<int>> county_dist = calc_county_dist(districts, counties, n_cty);
 
     int splits = 0;
     for (int i = 0; i < n_cty; i++) {
         int cty_n_distr = county_dist[i].size();
-        if (cty_n_distr > 1)
-            splits++;
+        // for SMC, just count the split when it crosses the threshold
+        // for MCMC there is no sequential nature, & the overcount will cancel
+        bool cond = smc ? cty_n_distr == 2 : cty_n_distr >= 2;
+        if (cond) {
+            auto search = county_dist[i].find(distr);
+            if (search != county_dist[i].end()) {
+                splits += smc ? 1.0 : 1.0 / cty_n_distr; // take care of MCMC overcount
+            }
+        }
     }
 
     return splits;
@@ -153,25 +170,46 @@ double eval_splits(const subview_col<uword> &districts, int distr,
  * Compute the county multisplit penalty for district `distr`
  */
 double eval_multisplits(const subview_col<uword> &districts, int distr,
-                        const uvec &counties, int n_cty) {
-    std::vector<std::set<int>> county_dist(n_cty);
-    int V = counties.size();
-    for (int i = 0; i < n_cty; i++) {
-        county_dist[i] = std::set<int>();
-    }
+                        const uvec &counties, int n_cty, bool smc) {
+    std::vector<std::set<int>> county_dist = calc_county_dist(districts, counties, n_cty);
 
-    for (int i = 0; i < V; i++) {
-        county_dist[counties[i]-1].insert(districts[i]);
-    }
-
-    int fracts = 0;
+    double splits = 0;
     for (int i = 0; i < n_cty; i++) {
         int cty_n_distr = county_dist[i].size();
-        if (cty_n_distr > 2)
-            fracts++;
+        // for SMC, just count the split when it crosses the threshold
+        // for MCMC there is no sequential nature, & the overcount will cancel
+        bool cond = smc ? cty_n_distr == 3 : cty_n_distr >= 3;
+        if (cond) {
+            auto search = county_dist[i].find(distr);
+            if (search != county_dist[i].end()) {
+                splits += smc ? 1.0 : 1.0 / cty_n_distr; // take care of MCMC overcount
+            }
+        }
     }
 
-    return fracts;
+    return splits;
+}
+
+/*
+ * Compute the total splits penalty for district `distr`
+ */
+double eval_total_splits(const subview_col<uword> &districts, int distr,
+                         const uvec &counties, int n_cty) {
+    std::vector<std::set<int>> county_dist = calc_county_dist(districts, counties, n_cty);
+
+    double splits = 0;
+    for (int i = 0; i < n_cty; i++) {
+        int cty_n_distr = county_dist[i].size();
+        // no over-counting since every split counts
+        if (cty_n_distr > 1) {
+            auto search = county_dist[i].find(distr);
+            if (search != county_dist[i].end()) {
+                splits += 1.0;
+            }
+        }
+    }
+
+    return splits;
 }
 
 /*
@@ -188,8 +226,6 @@ double eval_polsby(const subview_col<uword> &districts, int distr,
     double tot_area = sum(area(idxs));
 
     double tot_perim = 0.0;
-
-    int ne = from.size();
 
     uvec idx = find(to == distr);
     for (int e = 0; e < idx.size(); e++) {
@@ -289,15 +325,17 @@ double eval_qps(const subview_col<uword> &districts, int distr,
  */
 double eval_log_st(const subview_col<uword> &districts, const Graph g,
                    arma::uvec counties, int ndists) {
-    return (double)redistmetrics::log_st_map(g, districts, counties, ndists)[0];
+    return (double) redistmetrics::log_st_map(g, districts, counties, ndists)[0];
 }
 
 /*
- * Compute the log spanning tree penalty for district `distr`
+ * Compute the edges removed penalty for district `distr`
  */
 double eval_er(const subview_col<uword> &districts, const Graph g, int ndists) {
-    return (double)redistmetrics::n_removed(g, districts, ndists)[0];
+    return (double) redistmetrics::n_removed(g, districts, ndists)[0];
 }
+
+
 
 
 /*
@@ -433,7 +471,7 @@ NumericVector max_dev(const IntegerMatrix districts, const vec pop, int n_distr)
 std::vector<double> tree_dev(Tree &ust, int root, const uvec &pop,
                              double total_pop, double target) {
     int V = pop.size();
-    std::vector<int> pop_below(V);
+    std::vector<int> pop_below(V, 0);
     std::vector<int> parent(V);
     tree_pop(ust, root, pop, pop_below, parent);
     // compile a list of candidate edges to cut

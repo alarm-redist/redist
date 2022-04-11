@@ -141,14 +141,14 @@ plan_distances = function(plans, measure="variation of information", ncores=1) {
 #' approximation to the target distribution.
 #'
 #' @param plans a \code{\link{redist_plans}} object.
-#' @param total_pop The vector of precinct populations. Used only if computing
-#'   variation of information. If not provided, equal population of precincts
-#'   will be assumed, i.e. the VI will be computed with respect to the precincts
-#'   themselves, and not the population.
 #' @param n_max the maximum number of plans to sample in computing the
 #'   distances. Larger numbers will have less sampling error but will require
 #'   more computation time.
 #' @param ncores the number of cores to use in computing the distances.
+#' @param total_pop The vector of precinct populations. Used only if computing
+#'   variation of information. If not provided, equal population of precincts
+#'   will be assumed, i.e. the VI will be computed with respect to the precincts
+#'   themselves, and not the population.
 #'
 #' @return A numeric vector of off-diagonal variation of information distances.
 #'
@@ -160,25 +160,18 @@ plan_distances = function(plans, measure="variation of information", ncores=1) {
 #'
 #' @concept analyze
 #' @export
-plans_diversity = function(plans, total_pop, n_max=100, ncores=1) {
+plans_diversity = function(plans, n_max=100, ncores=1, total_pop=attr(plans, "prec_pop")) {
     m = get_plans_matrix(plans)
     n_eval = min(n_max, ncol(m))
     idx = sample.int(ncol(m), n_eval, replace=FALSE)
 
     ndists = max(m[, 1])
-    if (missing(total_pop)) {
-        pop = attr(plans, "prec_pop")
-    } else if (inherits(total_pop, 'redist_map')) {
-        pop <- total_pop[[attr(total_pop, 'pop_col')]]
-    } else {
-        pop <- total_pop
-    }
 
-    if (is.null(pop))
-        stop("Precinct population must be stored in `prec_pop` attribute of `plans` object")
+    if (is.null(total_pop))
+        cli_abort("Must provide {.arg total_pop} for this {.cls redist_plans} object.")
 
     dists = redist.distances(m[, idx], "variation of information",
-                             ncores=ncores, total_pop=pop)$VI
+                             ncores=ncores, total_pop=total_pop)$VI
     0.5 * dists[upper.tri(dists)]
 }
 

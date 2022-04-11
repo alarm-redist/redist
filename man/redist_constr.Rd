@@ -39,6 +39,7 @@ Constraints may be added by using one of the following functions:
 \item \code{\link[=add_constr_segregation]{add_constr_segregation()}}
 \item \code{\link[=add_constr_splits]{add_constr_splits()}}
 \item \code{\link[=add_constr_status_quo]{add_constr_status_quo()}}
+\item \code{\link[=add_constr_total_splits]{add_constr_total_splits()}}
 }
 
 More information about each constraint can be found on the relevant constraint page.

@@ -4,13 +4,21 @@
 \alias{match_numbers}
 \title{Renumber districts to match an existing plan}
 \usage{
-match_numbers(data, plan, col = "pop_overlap")
+match_numbers(
+  data,
+  plan,
+  total_pop = attr(data, "prec_pop"),
+  col = "pop_overlap"
+)
 }
 \arguments{
-\item{data}{a \code{redist_plans} object}
+\item{data}{a \code{redist_plans} object.}
 
 \item{plan}{a character vector giving the name of the plan to match to (e.g.,
 for a reference plan), or an integer vector containing the plan itself.}
+
+\item{total_pop}{a vector of population counts. Should not be needed for most
+\code{redist_plans} objects.}
 
 \item{col}{the name of a new column to store the vector of population overlap
 with the reference plan: the fraction of the total population who are in

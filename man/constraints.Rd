@@ -10,6 +10,7 @@
 \alias{add_constr_incumbency}
 \alias{add_constr_splits}
 \alias{add_constr_multisplits}
+\alias{add_constr_total_splits}
 \alias{add_constr_pop_dev}
 \alias{add_constr_segregation}
 \alias{add_constr_polsby}
@@ -56,6 +57,8 @@ add_constr_splits(constr, strength, admin)
 
 add_constr_multisplits(constr, strength, admin)
 
+add_constr_total_splits(constr, strength, admin)
+
 add_constr_pop_dev(constr, strength)
 
 add_constr_segregation(constr, strength, group_pop, total_pop = NULL)
@@ -97,7 +100,10 @@ add_constr_custom(constr, strength, fn)
 
 \item{dvote, rvote}{A vector of Democratic or Republican vote counts}
 
-\item{incumbents}{A vector of precinct indicess for incumbents}
+\item{incumbents}{A vector of unit indices for incumbents. For example, if
+three incumbents live in the precincts that correspond to rows 1, 2, and
+100 of your [redist_map], entering incumbents = c(1, 2, 100) would avoid
+having two or more incumbents be in the same district.}
 
 \item{admin}{A vector indicating administrative unit membership}
 
@@ -137,12 +143,14 @@ districts. This penalizes districts which are below their target percentage.
 The \code{grp_inv_hinge} constraint takes a list of target group percentages. It
 matches each district to its nearest target percentage, and then applies a
 penalty of the form \eqn{\sqrt{max(0, grouppct - tgt)}}, summing across
-districts. This penalizes districts which are below their target percentage.
+districts. This penalizes districts which are above their target percentage.
 
 The \code{grp_pow} constraint (for expert use) adds a term of the form
 \eqn{(|tgtgroup-grouppct||tgtother-grouppct|)^{pow})}, which
 encourages districts to have group shares near either \code{tgt_group}
-or \code{tgt_other}.
+or \code{tgt_other}.  Values of \code{strength} depend heavily on the values of these
+parameters and especially the \code{pow} parameter; use \code{\link[=redist.plot.penalty]{redist.plot.penalty()}} to
+visualize the effect of the penalty and calibrate \code{strength} appropriately.
 
 The \code{compet} constraint encourages competitiveness by applying the \code{grp_pow}
 constraint with target percentages set to 50\%. For convenience, it is
@@ -159,6 +167,11 @@ Values of \code{strength} should generally be small, given that the underlying v
 The \code{multisplits} constraint adds a term counting the number of
 counties which are split twice or more.
 Values of \code{strength} should generally be small, given that the underlying values are counts.
+
+The \code{total_splits} constraint adds a term counting the total number of times
+each county is split, summed across counties (i.e., counting the number of
+excess district-county pairs). Values of \code{strength} should generally be
+small, given that the underlying values are counts.
 
 The \code{edges_rem} constraint adds a term counting the number of edges removed from the
 adjacency graph. This is only usable with \code{redist_flip()}, as other algorithms
@@ -185,11 +198,18 @@ from the target population.
 The \code{custom} constraint allows the user to specify their own constraint using
 a function which evaluates districts one at a time. The provided function
 \code{fn} should take two arguments: a vector describing the current plan
-assignment (which may be incomplete, in the case of SMC), and an integer
-describing the district which to evaluate. An example is provided below.
-The flexibility of this constraint comes with an additional computational
-cost, since the other constraints are written in C++ and so are more
-performant.
+assignment for each unit as its first argument, and an integer describing the
+district which to evaluate in the second argument. \verb{which([plans == distr])}
+would give the indices of the units that are assigned to a district \code{distr}
+in any iteration. The function must return a single scalar for each plan -
+district combination, where a value of 0 indicates no penalty is applied. If
+users want to penalize an entire plan, they can have the penalty function
+return a scalar that does not depend on the district. It is important that
+\code{fn} not use information from precincts not included in \code{distr}, since in the
+case of SMC these precincts may not be assigned any district at all (\code{plan}
+will take the value of 0 for these precincts). The flexibility of this
+constraint comes with an additional computational cost, since the other
+constraints are written in C++ and so are more performant.
 }
 \examples{
 data(iowa)
@@ -200,6 +220,7 @@ constr = add_constr_grp_hinge(constr, strength=100,
                               dem_08, tot_08, tgts_group=c(0.5, 0.6))
 # encourage districts to have the same number of counties
 constr = add_constr_custom(constr, strength=1000, fn=function(plan, distr) {
+    # notice that we only use information on precincts in `distr`
     abs(sum(plan == distr) - 99/4)
 })
 print(constr)

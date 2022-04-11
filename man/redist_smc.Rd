@@ -14,7 +14,7 @@ redist_smc(
   constraint_fn = function(m) rep(0, ncol(m)),
   init_particles = NULL,
   n_steps = NULL,
-  adapt_k_thresh = 0.975,
+  adapt_k_thresh = 0.985,
   seq_alpha = 0.2 + 0.3 * compactness,
   truncate = (compactness != 1),
   trunc_fn = redist_quantile_trunc,

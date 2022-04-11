@@ -33,6 +33,7 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
                       double parity, const Graph &g, List constraints) {
     if (constraints.size() == 0) return 0.0;
     double log_tgt = 0;
+    double n_consider = (double) districts.size();
 
     log_tgt += add_constraint("pop_dev", constraints, districts, psi_vec,
                               [&] (List l, int distr) -> double {
@@ -42,12 +43,17 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
 
     log_tgt += add_constraint("splits", constraints, districts, psi_vec,
                               [&] (List l, int distr) -> double {
-                                  return eval_splits(plan, distr, as<uvec>(l["admin"]), l["n"]);
+                                  return eval_splits(plan, distr, as<uvec>(l["admin"]), l["n"], false);
                               });
 
     log_tgt += add_constraint("multisplits", constraints, districts, psi_vec,
                               [&] (List l, int distr) -> double {
-                                  return eval_multisplits(plan, distr, as<uvec>(l["admin"]), l["n"]);
+                                  return eval_multisplits(plan, distr, as<uvec>(l["admin"]), l["n"], false);
+                              });
+
+    log_tgt += add_constraint("total_splits", constraints, districts, psi_vec,
+                              [&] (List l, int distr) -> double {
+                                  return eval_total_splits(plan, distr, as<uvec>(l["admin"]), l["n"]);
                               });
 
     log_tgt += add_constraint("segregation", constraints, districts, psi_vec,
@@ -112,12 +118,12 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
                               [&] (List l, int distr) -> double {
                                   return eval_log_st(plan, g,
                                                      as<uvec>(l["admin"]),
-                                                     n_distr);
+                                                     n_distr) / n_consider;
                               });
 
     log_tgt += add_constraint("edges_removed", constraints, districts, psi_vec,
                               [&] (List l, int distr) -> double {
-                                  return eval_er(plan, g, n_distr);
+                                  return eval_er(plan, g, n_distr) / n_consider;
                               });
 
     log_tgt += add_constraint("qps", constraints, districts, psi_vec,

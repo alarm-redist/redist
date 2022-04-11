@@ -2,11 +2,14 @@ test_that("redist_mergesplit works", {
     set.seed(1, kind = "Mersenne-Twister", normal.kind = "Inversion")
 
     nsims <- 10
-    out <- redist_mergesplit(fl_map, nsims, init_plan=plans_10[, 1], silent=TRUE)
+    out <- redist_mergesplit(fl_map, nsims, nsims %/% 2, init_plan=plans_10[, 1], silent=TRUE)
     par <- redist.parity(as.matrix(out), total_pop = pop)
 
     expect_equal(range(as.matrix(out)), c(1, 3))
     expect_true(all(par <= 0.1))
+
+    out <- redist_mergesplit(fl_map, 20, 5, thin=4, init_plan=plans_10[, 1], silent=TRUE)
+    expect_equal(ncol(as.matrix(out)), 5L)
 })
 
 test_that("Additional constraints work", {
@@ -17,8 +20,8 @@ test_that("Additional constraints work", {
         add_constr_grp_hinge(5, bvap+hvap, vap, c(0.5, 0)) %>%
         add_constr_custom(1e5, function(plan, distr) plan[7] == 2)
 
-    plans = redist_mergesplit(iowa_map, 100, constraints=constr, silent=TRUE)
-    expect_false(any(as.matrix(plans)[7,] == 2))
+    plans = redist_mergesplit(iowa_map, 100, 20, constraints=constr, silent=TRUE)
+    expect_false(any(as.matrix(plans)[7, -1] == 2))
 })
 
 test_that("redist_mergesplit_parallel works", {
@@ -29,12 +32,12 @@ test_that("redist_mergesplit_parallel works", {
     N = 20
     chains = 3
 
-    pl1 = redist_mergesplit_parallel(fl_map, nsims=N, chains=chains, ncores=2,
-                                     silent=TRUE)
-    pl2 = redist_mergesplit_parallel(fl_map, nsims=N, chains=chains, ncores=2,
-                                     warmup=0, init_name=F, silent=TRUE)
-    pl3 = redist_mergesplit_parallel(fl_map, nsims=N, chains=chains, ncores=2,
-                                     return_all=F, init_name=F, silent=TRUE)
+    pl1 = redist_mergesplit_parallel(fl_map, nsims=N, warmup=N/2, chains=chains,
+                                     ncores=2, silent=TRUE)
+    pl2 = redist_mergesplit_parallel(fl_map, nsims=N, chains=chains,
+                                     ncores=2, warmup=0, init_name=F, silent=TRUE)
+    pl3 = redist_mergesplit_parallel(fl_map, nsims=N, warmup=N/2, chains=chains,
+                                     ncores=2, return_all=F, init_name=F, silent=TRUE)
 
     expect_equal(get_n_ref(pl1), chains)
     expect_equal(get_n_ref(pl2), 0)

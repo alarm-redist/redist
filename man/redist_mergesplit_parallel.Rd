@@ -8,13 +8,14 @@ redist_mergesplit_parallel(
   map,
   nsims,
   chains = 1,
-  warmup = floor(nsims/2),
+  warmup = max(100, nsims\%/\%2),
+  thin = 1L,
   init_plan = NULL,
   counties = NULL,
   compactness = 1,
   constraints = list(),
   constraint_fn = function(m) rep(0, ncol(m)),
-  adapt_k_thresh = 0.975,
+  adapt_k_thresh = 0.98,
   k = NULL,
   ncores = NULL,
   cl_type = "PSOCK",
@@ -33,7 +34,11 @@ redist_mergesplit_parallel(
 \code{nsims} draws. If \code{init_plan} is sampled, each chain will be initialized
 with its own sampled plan.}
 
-\item{warmup}{The number of warmup samples to discard.}
+\item{warmup}{The number of warmup samples to discard. Recommended to be at
+least the first 20\% of samples, and in any case no less than around 100
+samples.}
+
+\item{thin}{Save every \code{thin}-th sample. Defaults to no thinning (1).}
 
 \item{init_plan}{The initial state of the map, provided as a single vector
 to be shared across all chains, or a matrix with \code{chains} columns.

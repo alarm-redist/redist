@@ -5,8 +5,8 @@
 \title{Plot Weighted Border Adjacency}
 \usage{
 redist.plot.wted.adj(
-  shp = NULL,
-  plans = NULL,
+  shp,
+  plans,
   counties = NULL,
   ref = TRUE,
   adj = NULL,

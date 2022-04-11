@@ -26,7 +26,7 @@ NumericMatrix plan_joint(IntegerVector m1, IntegerVector m2, NumericVector pop) 
 IntegerMatrix renumber_matrix(IntegerMatrix plans, IntegerVector renumb) {
     int V = plans.nrow();
     int N = plans.ncol();
-    int n_distr = max(plans(_, 1));
+    int n_distr = max(plans(_, 0));
     IntegerMatrix out(V, N);
 
     for (int j = 0; j < N; j++) {

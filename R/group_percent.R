@@ -25,23 +25,19 @@
 #'                     total_pop = fl25$TotPop)
 #'
 redist.group.percent <- function(plans, group_pop, total_pop, ncores = 1) {
-
-    if (!any(class(total_pop) %in% c('numeric', 'integer')))
-        stop('Please provide "total_pop" as a numeric vector.')
-    if (!any(class(group_pop) %in% c('numeric', 'integer')))
-        stop('Please provide "groupop" as a numeric vector.')
-
-    if (!any(class(plans) %in% c('integer', 'numeric', 'matrix')))
-        stop('Please provide "plans" as a matrix.')
+    if (!is.numeric(group_pop) || !is.numeric(total_pop))
+        cli_abort("{.arg group_pop} and {.arg total_pop} must be numeric vectors.")
+    if (!is.matrix(plans))
+        cli_abort("{.arg plans} must be a matrix.")
 
     if (!is.matrix(plans)) {
         plans <- as.matrix(plans)
     }
 
     if (length(total_pop) != nrow(plans))
-        stop('Arguments "plans" and "total_pop" do not have same number of precincts.')
+        cli_abort("{.arg plans} and {.total_pop} must have the same number of precincts.")
     if (length(group_pop) != nrow(plans))
-        stop('Arguments "plans" and "group_pop" do not have same number of precincts.')
+        cli_abort("{.arg plans} and {.group_pop} must have the same number of precincts.")
 
     ndists <- max(plans[, 1])
     if(ndists ==  length(unique(plans[,1])) - 1 ){

@@ -4,21 +4,26 @@
 \alias{plans_diversity}
 \title{Calculate the diversity of a set of plans}
 \usage{
-plans_diversity(plans, total_pop, n_max = 100, ncores = 1)
+plans_diversity(
+  plans,
+  n_max = 100,
+  ncores = 1,
+  total_pop = attr(plans, "prec_pop")
+)
 }
 \arguments{
 \item{plans}{a \code{\link{redist_plans}} object.}
-
-\item{total_pop}{The vector of precinct populations. Used only if computing
-variation of information. If not provided, equal population of precincts
-will be assumed, i.e. the VI will be computed with respect to the precincts
-themselves, and not the population.}
 
 \item{n_max}{the maximum number of plans to sample in computing the
 distances. Larger numbers will have less sampling error but will require
 more computation time.}
 
 \item{ncores}{the number of cores to use in computing the distances.}
+
+\item{total_pop}{The vector of precinct populations. Used only if computing
+variation of information. If not provided, equal population of precincts
+will be assumed, i.e. the VI will be computed with respect to the precincts
+themselves, and not the population.}
 }
 \value{
 A numeric vector of off-diagonal variation of information distances.

@@ -21,27 +21,17 @@
 #' shp <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
 #' plans <- redist_smc(shp, 100)
 #' redist.plot.wted.adj(shp, plans = plans, counties = region)
-redist.plot.wted.adj <- function(shp = NULL, plans = NULL, counties = NULL,
+redist.plot.wted.adj <- function(shp, plans, counties = NULL,
                                  ref = TRUE, adj = NULL, plot_shp = TRUE) {
-
   # Check inputs ----
-  if (is.null(shp)) {
-    stop('Please provide an argument to `shp`.')
-  }
-
   if ('SpatialPolygonsDataFrame' %in% class(shp)) {
     shp <- shp %>% st_as_sf()
-  } else if (!('sf' %in% class(shp))) {
-    stop('Please provide `shp` as a SpatialPolygonsDataFrame or sf object.')
+  } else if (!inherits(shp, "sf")) {
+    cli_abort('{.arg shp} must be a {.cls SpatialPolygonsDataFrame} or {.cls sf} object.')
   }
 
-  if (is.null(plans)) {
-    stop('`plans` is required.')
-  } else if (inherits(plans, 'redist_plans')) {
-    plans <- plans %>%
-      subset_sampled() %>%
-      get_plans_matrix()
-  }
+  check_tidy_types(NULL, plans)
+  plans <-  get_plans_matrix(subset_sampled(plans))
 
   if (inherits(shp, 'redist_map')) {
     if (missing(adj)) {
@@ -66,7 +56,6 @@ redist.plot.wted.adj <- function(shp = NULL, plans = NULL, counties = NULL,
     p <- p +
       geom_sf(data = shp, size = 0.1, fill = NA)
 
-
     if (!is.null(counties)) {
       cty <- shp %>%
         mutate(counties_input = counties) %>%
@@ -79,7 +68,6 @@ redist.plot.wted.adj <- function(shp = NULL, plans = NULL, counties = NULL,
       nb <- nb %>%
         filter(counties[i] != counties[j])
     }
-
 
     if (is.logical(ref)) {
       if (ref) {
@@ -132,7 +120,6 @@ redist.plot.wted.adj <- function(shp = NULL, plans = NULL, counties = NULL,
 #' plans <- redist_smc(shp, 100)
 #' redist.wted.adj(shp, plans = plans)
 redist.wted.adj <- function(map = NULL, plans = NULL) {
-
   plans <- plans %>%
       subset_sampled() %>%
       get_plans_matrix()

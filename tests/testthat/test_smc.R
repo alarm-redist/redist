@@ -32,7 +32,7 @@ test_that("Single-precinct counties work", {
         suppressWarnings() %>%
         suppressMessages()
 
-    test <- redist_smc(box_map, 10, counties=counties, silent=TRUE)
+    test <- redist_smc(box_map, 50, counties=counties, silent=TRUE)
     expect_s3_class(test, "redist_plans")
 })
 

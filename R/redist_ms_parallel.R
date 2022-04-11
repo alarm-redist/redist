@@ -43,10 +43,11 @@
 #' @concept simulate
 #' @md
 #' @export
-redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2),
+redist_mergesplit_parallel = function(map, nsims, chains=1,
+                                      warmup=max(100, nsims %/% 2), thin=1L,
                                       init_plan=NULL, counties=NULL, compactness=1,
                                       constraints=list(), constraint_fn=function(m) rep(0, ncol(m)),
-                                      adapt_k_thresh=0.975, k=NULL, ncores=NULL,
+                                      adapt_k_thresh=0.98, k=NULL, ncores=NULL,
                                       cl_type="PSOCK", return_all=TRUE, init_name=NULL,
                                       verbose=TRUE, silent=FALSE) {
     if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
@@ -55,24 +56,35 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
     V = nrow(map)
     adj = get_adj(map)
     ndists = attr(map, "ndists")
+    thin = as.integer(thin)
 
     chains = as.integer(chains)
     stopifnot(chains > 1)
 
-    if (compactness < 0) stop("Compactness parameter must be non-negative")
+    if (compactness < 0)
+        cli_abort("{.arg compactness} must be non-negative.")
     if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
-        stop("`adapt_k_thresh` parameter must lie in [0, 1].")
+        cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
+    if (nsims <= warmup)
+        cli_abort("{.arg nsims} must be greater than {.arg warmup}.")
+    if (thin < 1 || thin > nsims - warmup)
+        cli_abort("{.arg thin} must be a positive integer, and no larger than {.arg nsims - warmup}.")
     if (nsims < 1)
-        stop("`nsims` must be positive.")
+        cli_abort("{.arg nsims} must be positive.")
 
     exist_name = attr(map, "existing_col")
     counties = rlang::eval_tidy(rlang::enquo(counties), map)
-    if (is.null(init_plan) && !is.null(exist_name)) {
-        init_plans = matrix(rep(as.integer(as.factor(get_existing(map))), chains), ncol=chains)
-        if (is.null(init_name))
-            init_names = rep(exist_name, chains)
-        else
-            init_names = rep(init_name, chains)
+    if (is.null(init_plan)) {
+        if (!is.null(exist_name)) {
+            init_plans = matrix(rep(as.integer(as.factor(get_existing(map))), chains), ncol=chains)
+            if (is.null(init_name)) {
+                init_names = rep(exist_name, chains)
+            } else {
+                init_names = rep(init_name, chains)
+            }
+        } else {
+            init_plan = "sample"
+        }
     } else if (!is.null(init_plan)) {
         if (is.matrix(init_plan)) {
             stopifnot(ncol(init_plan) == chains)
@@ -82,11 +94,11 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
         }
 
         if (is.null(init_name))
-            init_names = rep(exist_name, chains)
+            init_names = paste0("<init> ", seq_len(chains))
         else
             init_names = rep(init_name, chains)
     }
-    if (length(init_plan) == 0L || isTRUE(init_plan == "sample")) {
+    if (isTRUE(init_plan == "sample")) {
         if (!silent) cat("Sampling initial plans with SMC")
         init_plans = get_plans_matrix(
             redist_smc(map, chains, counties, compactness, constraints,
@@ -97,14 +109,20 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
         else
             init_names = paste(init_name, seq_len(chains))
     }
-    stopifnot(nrow(init_plans) == V)
-    stopifnot(max(init_plans) == ndists)
+
+    # check init
+    if (nrow(init_plans) != V)
+        cli_abort("{.arg init_plan} must be as long as the number of units as `map`.")
+    if (max(init_plans) != ndists)
+        cli_abort("{.arg init_plan} must have the same number of districts as `map`.")
+    if (any(apply(init_plans, 2, function(x) contiguity(adj, x)) != 1))
+        cli_warn("{.arg init_plan} should have contiguous districts.")
 
     if (is.null(counties)) {
         counties = rep(1, V)
     } else {
         if (any(is.na(counties)))
-            stop("County vector must not contain missing values.")
+            cli_abort("{.arg counties} must not contain missing values.")
 
         # handle discontinuous counties
         component = contiguity(adj, as.integer(as.factor(counties)))
@@ -139,18 +157,20 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
     pop = map[[attr(map, "pop_col")]]
     init_pop = pop_tally(init_plans, pop, ndists)
     if (any(init_pop < pop_bounds[1]) | any(init_pop > pop_bounds[3]))
-        stop("Provided initialization does not meet population bounds.")
-    if (any(pop >= get_target(map)))
-        stop("Units ", which(pop >= get_target(map)),
-             " have population larger than the district target.\n",
-             "Redistricting impossible.")
+        cli_abort("Provided initialization does not meet population bounds.")
+    if (any(pop >= get_target(map))) {
+        too_big = as.character(which(pop >= pop_bounds[3]))
+        cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
+                    population larger than the district target.",
+                    "x"="Redistricting impossible."))
+    }
 
     # kind of hacky -- extract k=... from outupt
     if (!requireNamespace("utils", quietly=TRUE)) stop()
     out = utils::capture.output({
         x <- ms_plans(1, adj, init_plans[,1], counties, pop, ndists, pop_bounds[2],
                       pop_bounds[1], pop_bounds[3], compactness, list(), adapt_k_thresh,
-                      0L, verbosity=3)
+                      0L, 1L, verbosity=3)
     }, type="output")
     rm(x)
     k = as.integer(stats::na.omit(stringr::str_match(out, "Using k = (\\d+)")[,2]))
@@ -169,34 +189,34 @@ redist_mergesplit_parallel = function(map, nsims, chains=1, warmup=floor(nsims/2
     registerDoParallel(cl)
     on.exit(stopCluster(cl))
 
-    each_len = if (return_all) nsims - warmup else 1
     out_par <- foreach(chain=seq_len(chains)) %dopar% {
         if (!silent) cat("Starting chain ", chain, "\n", sep="")
-        ms_plans(nsims+1L, adj, init_plans[, chain], counties, pop,
+        ms_plans(nsims, adj, init_plans[, chain], counties, pop,
                  ndists, pop_bounds[2], pop_bounds[1], pop_bounds[3],
-                 compactness, constraints, adapt_k_thresh, k, verbosity)
+                 compactness, constraints, adapt_k_thresh, k, thin, verbosity)
     }
 
+    warmup_idx = c(seq_len(1 + warmup %/% thin), nsims %/% thin + 2L)
     plans <- lapply(out_par, function(algout) {
         if (return_all) {
-            algout$plans[, -1:-(warmup+1L), drop=FALSE]
+            algout$plans[, -warmup_idx, drop=FALSE]
         } else {
             algout$plans[, nsims+1L, drop=FALSE]
         }
     })
+    each_len = ncol(plans[[1]])
     plans <- do.call('cbind', plans)
 
     mh <- sapply(out_par, function(algout) {
         mean(as.logical(algout$mhdecisions))
     })
 
+    warmup_idx = c(seq_len(warmup %/% thin), nsims %/% thin + 1L)
     acceptances <- sapply(out_par, function(algout) {
         if (!return_all) {
             as.logical(algout$mhdecisions[nsims])
-        } else if (warmup == 0) {
-            as.logical(algout$mhdecisions)
         } else {
-            as.logical(algout$mhdecisions[-seq_len(warmup)])
+            as.logical(algout$mhdecisions[-warmup_idx])
         }
     })
 

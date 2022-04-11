@@ -28,7 +28,10 @@
 #'
 #' @param map A \code{\link{redist_map}} object.
 #' @param nsims The number of samples to draw, including warmup.
-#' @param warmup The number of warmup samples to discard.
+#' @param warmup The number of warmup samples to discard. Recommended to be at
+#'   least the first 20% of samples, and in any case no less than around 100
+#'   samples.
+#' @param thin Save every `thin`-th sample. Defaults to no thinning (1).
 #' @param init_plan The initial state of the map. If not provided, will default to
 #'   the reference map of the \code{map} object, or if none exists, will sample
 #'   a random initial state using \code{\link{redist_smc}}. You can also request
@@ -88,10 +91,10 @@
 #' @md
 #' @order 1
 #' @export
-redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
+redist_mergesplit = function(map, nsims, warmup=max(100, nsims %/% 2), thin=1L,
                              init_plan=NULL, counties=NULL, compactness=1,
                              constraints=list(), constraint_fn=function(m) rep(0, ncol(m)),
-                             adapt_k_thresh=0.975, k=NULL, init_name=NULL,
+                             adapt_k_thresh=0.98, k=NULL, init_name=NULL,
                              verbose=TRUE, silent=FALSE) {
     if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
 
@@ -100,32 +103,46 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
     adj = get_adj(map)
     ndists = attr(map, "ndists")
     warmup = max(warmup, 0L)
+    thin = as.integer(thin)
 
-    if (compactness < 0) stop("Compactness parameter must be non-negative")
+    if (compactness < 0)
+        cli_abort("{.arg compactness} must be non-negative.")
     if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
-        stop("`adapt_k_thresh` parameter must lie in [0, 1].")
+        cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
+    if (nsims <= warmup)
+        cli_abort("{.arg nsims} must be greater than {.arg warmup}.")
+    if (thin < 1 || thin > nsims - warmup)
+        cli_abort("{.arg thin} must be a positive integer, and no larger than {.arg nsims - warmup}.")
     if (nsims < 1)
-        stop("`nsims` must be positive.")
+        cli_abort("{.arg nsims} must be positive.")
 
     exist_name = attr(map, "existing_col")
     counties = rlang::eval_tidy(rlang::enquo(counties), map)
     if (is.null(init_plan) && !is.null(exist_name)) {
         init_plan = as.integer(as.factor(get_existing(map)))
         if (is.null(init_name)) init_name = exist_name
+    }  else if (!is.null(init_plan) && is.null(init_name)) {
+        init_name = "<init>"
     }
     if (length(init_plan) == 0L || isTRUE(init_plan == "sample")) {
         init_plan = as.integer(get_plans_matrix(
             redist_smc(map, 10, counties, resample=FALSE, ref_name=FALSE, silent=TRUE))[, 1])
         if (is.null(init_name)) init_name = "<init>"
     }
-    stopifnot(length(init_plan) == V)
-    stopifnot(max(init_plan) == ndists)
+
+    # check init
+    if (length(init_plan) != V)
+        cli_abort("{.arg init_plan} must be as long as the number of units as `map`.")
+    if (max(init_plan) != ndists)
+        cli_abort("{.arg init_plan} must have the same number of districts as `map`.")
+    if (any(contiguity(adj, init_plan) != 1))
+        cli_warn("{.arg init_plan} should have contiguous districts.")
 
     if (is.null(counties)) {
         counties = rep(1, V)
     } else {
         if (any(is.na(counties)))
-            stop("County vector must not contain missing values.")
+            cli_abort("County vector must not contain missing values.")
 
         # handle discontinuous counties
         component = contiguity(adj, as.integer(as.factor(counties)))
@@ -160,20 +177,23 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
     pop = map[[attr(map, "pop_col")]]
     init_pop = pop_tally(matrix(init_plan, ncol=1), pop, ndists)
     if (any(init_pop < pop_bounds[1]) | any(init_pop > pop_bounds[3]))
-        stop("Provided initialization does not meet population bounds.")
-    if (any(pop >= get_target(map)))
-        stop("Units ", which(pop >= get_target(map)),
-             " have population larger than the district target.\n",
-             "Redistricting impossible.")
+        cli_abort("Provided initialization does not meet population bounds.")
+    if (any(pop >= get_target(map))) {
+        too_big = as.character(which(pop >= pop_bounds[3]))
+        cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
+                    population larger than the district target.",
+                    "x"="Redistricting impossible."))
+    }
 
-    algout = ms_plans(nsims+1L, adj, init_plan, counties, pop, ndists,
+    algout = ms_plans(nsims, adj, init_plan, counties, pop, ndists,
                      pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
-                     constraints, adapt_k_thresh, k, verbosity)
+                     constraints, adapt_k_thresh, k, thin, verbosity)
 
     plans <- algout$plans
     acceptances = as.logical(algout$mhdecisions)
 
-    out = new_redist_plans(plans[, -1:-(warmup+1), drop=FALSE],
+    warmup_idx = c(seq_len(1 + warmup %/% thin), ncol(plans))
+    out = new_redist_plans(plans[, -warmup_idx, drop=FALSE],
                            map, "mergesplit", NULL, FALSE,
                            ndists = ndists,
                            compactness = compactness,
@@ -181,11 +201,8 @@ redist_mergesplit = function(map, nsims, warmup=floor(nsims/2),
                            adapt_k_thresh = adapt_k_thresh,
                            mh_acceptance = mean(acceptances))
 
-    if (warmup == 0) {
-        out <- out %>% mutate(mcmc_accept = rep(acceptances, each = ndists))
-    } else {
-        out <- out %>% mutate(mcmc_accept = rep(acceptances[-seq_len(warmup)], each = ndists))
-    }
+    warmup_idx = c(seq_len(warmup %/% thin), length(acceptances))
+    out <- out %>% mutate(mcmc_accept = rep(acceptances[-warmup_idx], each = ndists))
 
 
     if (!is.null(init_name) && !isFALSE(init_name)) {

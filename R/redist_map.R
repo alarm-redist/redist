@@ -31,21 +31,24 @@ new_redist_map = function(data, adj, ndists, pop_bounds, pop_col="pop",
     data
 }
 
-validate_redist_map = function(data, check_contig=TRUE) {
-    if (!is.data.frame(data)) cli_abort("Not a data frame")
-    if (!inherits(data, "redist_map")) cli_abort("Not a {.cls redist_map}")
+validate_redist_map = function(data, check_contig=TRUE, call=parent.frame()) {
+    if (!inherits(data, "redist_map"))
+        cli_abort("Not a {.cls redist_map}", call=call)
+    if (!is.data.frame(data))
+        cli_abort("Not a data frame", call=call)
 
     col = attr(data, "adj_col")
-    if (is.null(col)) cli_abort("No adjacency graph column found")
+    if (is.null(col)) cli_abort("No adjacency graph column found.", call=call)
     if (!is.list(data[[col]]))
-        cli_abort("Adjacency graph column not a properly formatted adjacency list.")
+        cli_abort("Adjacency graph column must be a properly formatted adjacency list.", call=call)
 
     if (check_contig && !is_contiguous(data)) {
         components = contiguity(get_adj(data), rep(1, nrow(data)))
         disconn = which(components != which.max(table(components)))
         cli_abort(c("Adjacency graph not contiguous.",
                     ">"="Try manually editing the output of {.fun redist.adjacency}.",
-                    "i"="Disconnected precincts: c({paste0(disconn, collapse=', ')})"))
+                    "i"="Disconnected precincts: c({paste0(disconn, collapse=', ')})"),
+                  call=call)
     }
 
     stopifnot(!is.null(attr(data, "pop_col")))
@@ -53,12 +56,12 @@ validate_redist_map = function(data, check_contig=TRUE) {
 
     exist_col = attr(data, "existing_col")
     if (!is.null(exist_col) && !is.numeric(data[[exist_col]]))
-        cli_abort("Existing plan {.field {exist_col}} must be a numeric vector.")
+        cli_abort("Existing plan {.field {exist_col}} must be a numeric vector.", call=call)
 
     pop_bounds = attr(data, "pop_bounds")
     stopifnot(!is.null(pop_bounds))
     if (!all(diff(pop_bounds) > 0))
-        cli_abort("{.arg pop_bounds} must satisfy lower < target < upper.")
+        cli_abort("{.arg pop_bounds} must satisfy lower < target < upper.", call=call)
 
     data
 }
