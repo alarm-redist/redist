@@ -32,7 +32,7 @@ extern SEXP _redist_k_biggest(SEXP, SEXP);
 extern SEXP _redist_k_smallest(SEXP, SEXP);
 extern SEXP _redist_log_st_map(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_max_dev(SEXP, SEXP, SEXP);
-extern SEXP _redist_ms_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _redist_ms_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_n_removed(SEXP, SEXP, SEXP);
 extern SEXP _redist_plan_joint(SEXP, SEXP, SEXP);
 extern SEXP _redist_polsbypopper(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -75,7 +75,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_k_smallest",            (DL_FUNC) &_redist_k_smallest,             2},
     {"_redist_log_st_map",            (DL_FUNC) &_redist_log_st_map,             4},
     {"_redist_max_dev",               (DL_FUNC) &_redist_max_dev,                3},
-    {"_redist_ms_plans",              (DL_FUNC) &_redist_ms_plans,              14},
+    {"_redist_ms_plans",              (DL_FUNC) &_redist_ms_plans,              15},
     {"_redist_n_removed",             (DL_FUNC) &_redist_n_removed,              3},
     {"_redist_plan_joint",            (DL_FUNC) &_redist_plan_joint,             3},
     {"_redist_polsbypopper",          (DL_FUNC) &_redist_polsbypopper,           6},
