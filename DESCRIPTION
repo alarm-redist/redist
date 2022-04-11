@@ -39,7 +39,7 @@ Imports:
     patchwork,
     readr (>= 2.0.0),
     cli (>= 3.1.0),
-    redistmetrics (>= 1.0.1)
+    redistmetrics (>= 1.0.2)
 Suggests:
     igraph,
     s2,
