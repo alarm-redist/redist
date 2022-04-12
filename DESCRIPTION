@@ -21,14 +21,16 @@ Description: Enables researchers to sample redistricting plans from a pre-specif
     and McCartan and Imai (2020) <arXiv:2008.06131>.
 Depends:
     R (>= 3.5.0),
-    redistmetrics (>= 1.0.1) 
+    redistmetrics (>= 1.0.2) 
 Imports:
     Rcpp (>= 0.11.0),
     rlang,
+    cli (>= 3.1.0),
     vctrs,
     tidyselect,
     stringr,
     dplyr (>= 1.0.0),
+    readr (>= 2.0.0),
     sf,
     doParallel,
     foreach,
@@ -36,10 +38,7 @@ Imports:
     sys,
     coda,
     ggplot2,
-    patchwork,
-    readr (>= 2.0.0),
-    cli (>= 3.1.0),
-    redistmetrics (>= 1.0.2)
+    patchwork
 Suggests:
     igraph,
     s2,
