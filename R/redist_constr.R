@@ -581,8 +581,8 @@ add_constr_qps <- function(constr, strength, cities, total_pop = NULL) {
                        cities = eval_tidy(enquo(cities), data))
     new_constr$n_cty <- max(new_constr$cities) + 1
 
+    cli::cli_inform('The QPS constraint is not officially supported and may disappear.')
     add_to_constr(constr, 'qps', new_constr)
-    cli_inform('The QPS constraint is not officially supported and may disappear.')
 }
 
 #' @param fn A function
