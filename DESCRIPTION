@@ -38,7 +38,8 @@ Imports:
     ggplot2,
     patchwork,
     readr (>= 2.0.0),
-    cli (>= 3.1.0)
+    cli (>= 3.1.0),
+    redistmetrics (>= 1.0.2)
 Suggests:
     igraph,
     s2,
@@ -57,7 +58,7 @@ Suggests:
     RSpectra,
     testthat (>= 3.0.0),
     rstudioapi
-LinkingTo: Rcpp, RcppArmadillo, cli
+LinkingTo: Rcpp, RcppArmadillo, cli, redistmetrics
 License: GPL (>= 2)
 SystemRequirements: OpenMPI, gmp, libxml2, python, C++11
 Packaged: 2015-06-03 18:32:00 UTC; benfifield

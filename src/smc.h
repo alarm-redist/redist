@@ -2,6 +2,8 @@
 #ifndef SMC_H
 #define SMC_H
 
+// [[Rcpp::depends(redistmetrics)]]
+
 #include "smc_base.h"
 
 #include <string>
@@ -11,7 +13,7 @@
 #include "wilson.h"
 #include "tree_op.h"
 #include "map_calc.h"
-#include "kirchhoff.h"
+#include <kirchhoff_inline.h>
 
 /*
  * Main entry point.

@@ -64,24 +64,9 @@ redist.distances <- function(plans, measure = "Hamming",
     name <- c()
     done <- 0
 
-    # parallel setup
-    nc <- min(ncores, ncol(plans))
-    if (nc == 1) {
-        `%oper%` <- `%do%`
-    } else {
-        `%oper%` <- `%dopar%`
-        cl <- makeCluster(nc, setup_strategy = 'sequential', methods=FALSE)
-        registerDoParallel(cl)
-        on.exit(stopCluster(cl))
-    }
-
     # Compute Hamming Distance Metric
     if ("Hamming" %in% measure) {
-        ham <- foreach(map = 1:ncol(plans), .combine = "cbind") %oper% {
-            hamming(v = plans[,map], m = plans)
-        }
-        colnames(ham) <- NULL
-
+        ham <- redistmetrics::dist_ham(plans = plans, ncores = ncores)
         done = done + 1
         distances[[done]] <- ham
         names(distances)[done] <- "Hamming"
@@ -90,11 +75,7 @@ redist.distances <- function(plans, measure = "Hamming",
 
     # Compute Manhattan Distance Metric
     if ("Manhattan" %in% measure) {
-        man <- foreach(map = 1:ncol(plans), .combine = "cbind") %oper% {
-            minkowski(v = plans[,map], m = plans, p = 1)
-        }
-        colnames(man) <- NULL
-
+        man <- redistmetrics::dist_man(plans = plans, ncores = ncores)
         done = done + 1
         distances[[done]] <- man
         names(distances)[done] <- "Manhattan"
@@ -102,11 +83,7 @@ redist.distances <- function(plans, measure = "Hamming",
 
     # Compute Euclidean Distance Metric
     if ("Euclidean" %in% measure) {
-        euc <- foreach(map = 1:ncol(plans), .combine = "cbind") %oper% {
-            minkowski(v = plans[,map], m = plans, p = 2)
-        }
-        colnames(euc) <- NULL
-
+        euc <- redistmetrics::dist_euc(plans = plans, ncores = ncores)
         done = done + 1
         distances[[done]] <- euc
         names(distances)[done] <- "Euclidean"
@@ -114,29 +91,24 @@ redist.distances <- function(plans, measure = "Hamming",
 
     if ("variation of information" %in% measure) {
         if (is.null(total_pop)) {
-            warning("Population not provided, using default of equal population.")
+            cli_warn("{.arg total_pop} not provided, using default of equal population.")
             total_pop = rep(1, nrow(plans))
         }
         if (length(total_pop) != nrow(plans))
-            stop("Mismatch: length of population vector does not match the number of precincts.")
+            cli_abort("Mismatch: length of {.arg total_pop} does not match the number of precincts in {.arg plans}.")
 
         # 1-index in preparation
         if (min(plans) == 0)
             plans = plans + 1
 
-        vi = foreach(map = 1:ncol(plans), .combine = "cbind") %oper% {
-            var_info_mat(plans, map-1, total_pop) # 0-index
-        }
-        colnames(vi) <- NULL
-        # copy over other half of matrix; we only computed upper triangle
-        vi[lower.tri(vi)] = t(vi)[lower.tri(vi)]
+        vi <- redistmetrics::dist_info(plans = plans, shp = data.frame(), total_pop = total_pop)
 
         done = done + 1
         distances[[done]] <- vi
         names(distances)[done] <- "VI"
     }
 
-    return(distances)
+    distances
 }
 
 #' @rdname redist.distances

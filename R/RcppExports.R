@@ -25,14 +25,6 @@ polsbypopper <- function(from, to, area, perimeter, dm, nd) {
     .Call(`_redist_polsbypopper`, from, to, area, perimeter, dm, nd)
 }
 
-schwartzberg <- function(from, to, area, perimeter, dm, nd) {
-    .Call(`_redist_schwartzberg`, from, to, area, perimeter, dm, nd)
-}
-
-talisman <- function(dvs, nd, alpha = 1, beta = 1) {
-    .Call(`_redist_talisman`, dvs, nd, alpha, beta)
-}
-
 genAlConn <- function(aList, cds) {
     .Call(`_redist_genAlConn`, aList, cds)
 }
@@ -63,10 +55,6 @@ dist_dist_diff <- function(p, i_dist, j_dist, x_center, y_center, x, y) {
 
 cppGeneratePartitions <- function(adjList, numBlocks, popSizes, numConstraintLow, numConstraintHigh, popConstraintLow, popConstraintHigh) {
     .Call(`_redist_cppGeneratePartitions`, adjList, numBlocks, popSizes, numConstraintLow, numConstraintHigh, popConstraintLow, popConstraintHigh)
-}
-
-hamming <- function(v, m) {
-    .Call(`_redist_hamming`, v, m)
 }
 
 log_st_map <- function(g, districts, counties, n_distr) {
@@ -121,76 +109,8 @@ agg_p2d <- function(dm, vote, nd) {
     .Call(`_redist_agg_p2d`, dm, vote, nd)
 }
 
-dseats <- function(dm, dcounts, rcounts, nd) {
-    .Call(`_redist_dseats`, dm, dcounts, rcounts, nd)
-}
-
-dseatsDVS <- function(dvs) {
-    .Call(`_redist_dseatsDVS`, dvs)
-}
-
-DVS <- function(dcounts, rcounts) {
-    .Call(`_redist_DVS`, dcounts, rcounts)
-}
-
-effgapEP <- function(dvs, dseat_vec, nd) {
-    .Call(`_redist_effgapEP`, dvs, dseat_vec, nd)
-}
-
-effgap <- function(dcounts, rcounts, totvote) {
-    .Call(`_redist_effgap`, dcounts, rcounts, totvote)
-}
-
-taugap <- function(tau, dvs, dseat_vec, nd) {
-    .Call(`_redist_taugap`, tau, dvs, dseat_vec, nd)
-}
-
-meanmedian <- function(dvs) {
-    .Call(`_redist_meanmedian`, dvs)
-}
-
-bias <- function(dvs, nd) {
-    .Call(`_redist_bias`, dvs, nd)
-}
-
-declination <- function(dvs, dseat_vec, nd) {
-    .Call(`_redist_declination`, dvs, dseat_vec, nd)
-}
-
-lopsidedwins <- function(dvs, dseat_vec, nd) {
-    .Call(`_redist_lopsidedwins`, dvs, dseat_vec, nd)
-}
-
-responsiveness <- function(dvs, v, nd, bandwidth = .01) {
-    .Call(`_redist_responsiveness`, dvs, v, nd, bandwidth)
-}
-
-biasatv <- function(dvs, v, nd) {
-    .Call(`_redist_biasatv`, dvs, v, nd)
-}
-
-RankedMarginalDev <- function(dvs) {
-    .Call(`_redist_RankedMarginalDev`, dvs)
-}
-
-smoothseat <- function(dvs, nd) {
-    .Call(`_redist_smoothseat`, dvs, nd)
-}
-
-minkowski <- function(v, m, p) {
-    .Call(`_redist_minkowski`, v, m, p)
-}
-
 closest_adj_pop <- function(adj, i_dist, g_prop) {
     .Call(`_redist_closest_adj_pop`, adj, i_dist, g_prop)
-}
-
-calc_polsbypopper <- function(new_cds, areas_vec, boundarylist_new, borderlength_mat, pop_vec, aList, discrete = FALSE) {
-    .Call(`_redist_calc_polsbypopper`, new_cds, areas_vec, boundarylist_new, borderlength_mat, pop_vec, aList, discrete)
-}
-
-segregationcalc <- function(distmat, grouppop, fullpop) {
-    .Call(`_redist_segregationcalc`, distmat, grouppop, fullpop)
 }
 
 reindex <- function(dm, nd) {
