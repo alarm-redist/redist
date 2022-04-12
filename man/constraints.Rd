@@ -17,7 +17,6 @@
 \alias{add_constr_fry_hold}
 \alias{add_constr_log_st}
 \alias{add_constr_edges_rem}
-\alias{add_constr_qps}
 \alias{add_constr_custom}
 \title{Sampling constraints}
 \usage{
@@ -77,8 +76,6 @@ add_constr_log_st(constr, strength, admin = NULL)
 
 add_constr_edges_rem(constr, strength)
 
-add_constr_qps(constr, strength, cities, total_pop = NULL)
-
 add_constr_custom(constr, strength, fn)
 }
 \arguments{
@@ -112,8 +109,6 @@ having two or more incumbents be in the same district.}
 \item{ssdmat}{Squared distance matrix for Fryer Holden constraint}
 
 \item{denominator}{Fryer Holden minimum value to normalize by. Default is 1 (no normalization).}
-
-\item{cities}{A vector containing zero entries for non-cities and non-zero entries for each city for `qps`.}
 
 \item{fn}{A function}
 }

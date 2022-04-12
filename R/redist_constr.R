@@ -571,8 +571,7 @@ add_constr_edges_rem <- function(constr, strength) {
 }
 
 #' @param cities A vector containing zero entries for non-cities and non-zero entries for each city for `qps`.
-#' @rdname constraints
-#' @export
+#' @noRd
 add_constr_qps <- function(constr, strength, cities, total_pop = NULL) {
     if (!inherits(constr, 'redist_constr')) cli_abort('Not a {.cls redist_constr} object')
     if (strength <= 0) cli_warn('Nonpositive strength may lead to unexpected results.')
@@ -583,6 +582,7 @@ add_constr_qps <- function(constr, strength, cities, total_pop = NULL) {
     new_constr$n_cty <- max(new_constr$cities) + 1
 
     add_to_constr(constr, 'qps', new_constr)
+    cli_inform('The QPS constraint is not officially supported and may disappear.')
 }
 
 #' @param fn A function
