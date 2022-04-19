@@ -241,15 +241,19 @@ get_sampling_info = function(plans) {
 #' @concept analyze
 #' @export
 subset_sampled = function(plans) {
-    n_ref = get_n_ref(plans)
-    dplyr::filter(plans, as.integer(.data$draw) > n_ref)
+    plans_m = get_plans_matrix(plans)
+    if (is.null(colnames(plans_m))) return(plans)
+    refs = which(nchar(colnames(plans_m)) > 0)
+    dplyr::filter(plans, !as.integer(.data$draw) %in% refs)
 }
 
 #' @rdname subset_sampled
 #' @export
 subset_ref = function(plans) {
-    n_ref = get_n_ref(plans)
-    dplyr::filter(plans, as.integer(.data$draw) <= n_ref)
+    plans_m = get_plans_matrix(plans)
+    if (is.null(colnames(plans_m))) return(plans)
+    refs = which(nchar(colnames(plans_m)) > 0)
+    dplyr::filter(plans, as.integer(.data$draw) %in% refs)
 }
 
 #' Extract the Metropolis Hastings Acceptance Rate
