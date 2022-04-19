@@ -22,6 +22,12 @@ int rnbor(const Graph &g, int vtx);
 Multigraph county_graph(const Graph &g, const uvec &counties);
 
 /*
+ * Make the district adjacency graph for `plan` from the overall precinct graph `g`
+ */
+// TESTED
+Graph district_graph(const Graph &g, const uvec &plan, int nd);
+
+/*
  * Initialize empty multigraph structure on graph with `V` vertices
  */
 // TESTED

@@ -11,7 +11,6 @@ redist_smc(
   compactness = 1,
   constraints = list(),
   resample = TRUE,
-  constraint_fn = function(m) rep(0, ncol(m)),
   init_particles = NULL,
   n_steps = NULL,
   adapt_k_thresh = 0.985,
@@ -49,10 +48,6 @@ information on sampling constraints. See \link{constraints} for more information
 generated plans can be used immediately.  Set this to \code{FALSE} to
 perform direct importance sampling estimates, or to adjust the weights
 manually.}
-
-\item{constraint_fn}{(Deprecated) A function which takes in a matrix where
-each column is a redistricting plan and outputs a vector of log-weights,
-which will be added the the final weights.}
 
 \item{init_particles}{A matrix of partial plans to begin sampling from. For
 advanced use only.  The matrix must have \code{nsims} columns and a row for

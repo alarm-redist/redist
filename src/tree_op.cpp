@@ -48,6 +48,44 @@ Multigraph county_graph(const Graph &g, const uvec &counties) {
     return cg;
 }
 
+
+/*
+ * Make the district adjacency graph for `plan` from the overall precinct graph `g`
+ */
+// TESTED
+Graph district_graph(const Graph &g, const uvec &plan, int nd) {
+    int V = g.size();
+    std::vector<std::vector<bool>> gr_bool;
+    for (int i = 0; i < nd; i++) {
+        std::vector<bool> tmp(nd, false);
+        gr_bool.push_back(tmp);
+    }
+
+    for (int i = 0; i < V; i++) {
+        std::vector<int> nbors = g[i];
+        int dist_i = plan[i] - 1;
+        for (int nbor : nbors) {
+            int dist_j = plan[nbor] - 1;
+            if (dist_j != dist_i) {
+                gr_bool[dist_i][dist_j] = true;
+            }
+        }
+    }
+
+    Graph out;
+    for (int i = 0; i < nd; i++) {
+        std::vector<int> tmp;
+        for (int j = 0; j < nd; j++) {
+            if (gr_bool[i][j]) {
+                tmp.push_back(j);
+            }
+        }
+        out.push_back(tmp);
+    }
+
+    return out;
+}
+
 /*
  * Initialize empty multigraph structure on graph with `V` vertices
  */
