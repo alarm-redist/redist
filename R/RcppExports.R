@@ -155,8 +155,8 @@ k_biggest <- function(x, k = 1L) {
     .Call(`_redist_k_biggest`, x, k)
 }
 
-smc_plans <- function(N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, lp, thresh, alpha, pop_temper = 0.1, final_infl = 1.0, verbosity = 1L) {
-    .Call(`_redist_smc_plans`, N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, lp, thresh, alpha, pop_temper, final_infl, verbosity)
+smc_plans <- function(N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, control, verbosity = 1L) {
+    .Call(`_redist_smc_plans`, N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, control, verbosity)
 }
 
 splits <- function(dm, community, nd, max_split) {

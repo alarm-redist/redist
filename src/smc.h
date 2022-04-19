@@ -22,13 +22,10 @@
  * population deviation is between `lower` and `upper` (and ideally `target`)
  */
 // [[Rcpp::export]]
-arma::umat smc_plans(int N, List l, const arma::uvec &counties,
-                     const arma::uvec &pop, int n_distr, double target,
-                     double lower, double upper, double rho,
-                     arma::umat districts, int n_drawn, int n_steps,
-                     List constraints, arma::vec &lp, double thresh,
-                     double alpha, double pop_temper=0.1,
-                     double final_infl=1.0, int verbosity=1);
+List smc_plans(int N, List l, const arma::uvec &counties, const arma::uvec &pop,
+               int n_distr, double target, double lower, double upper, double rho,
+               arma::umat districts, int n_drawn, int n_steps,
+               List constraints, List control, int verbosity=1);
 
 /*
  * Split off a piece from each map in `districts`,

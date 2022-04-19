@@ -49,9 +49,6 @@
 #'   generated plans can be used immediately.  Set this to `FALSE` to
 #'   perform direct importance sampling estimates, or to adjust the weights
 #'   manually.
-#' @param constraint_fn (Deprecated) A function which takes in a matrix where
-#'   each column is a redistricting plan and outputs a vector of log-weights,
-#'   which will be added the the final weights.
 #' @param init_particles A matrix of partial plans to begin sampling from. For
 #'  advanced use only.  The matrix must have `nsims` columns and a row for
 #'  every precinct. It is important to ensure that the existing districts meet
@@ -111,14 +108,11 @@
 #' @order 1
 #' @export
 redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list(),
-                      resample=TRUE, constraint_fn=function(m) rep(0, ncol(m)),
-                      init_particles=NULL, n_steps=NULL,
+                      resample=TRUE, init_particles=NULL, n_steps=NULL,
                       adapt_k_thresh=0.985, seq_alpha=0.2+0.3*compactness,
                       truncate=(compactness != 1), trunc_fn=redist_quantile_trunc,
                       pop_temper=0, final_infl=1, ref_name=NULL,
                       verbose=TRUE, silent=FALSE) {
-    if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
-
     map = validate_redist_map(map)
     V = nrow(map)
     adj = get_adj(map)
@@ -199,13 +193,17 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
         cli_abort("Too many districts already drawn to take {n_steps} steps.")
     }
 
-    lp = rep(0, nsims)
-    plans = smc_plans(nsims, adj, counties, pop, ndists, pop_bounds[2],
-                      pop_bounds[1], pop_bounds[3], compactness,
-                      init_particles, n_drawn, n_steps, constraints,
-                      lp, adapt_k_thresh, seq_alpha, pop_temper, final_infl, verbosity);
+    control = list(adapt_k_thresh=adapt_k_thresh,
+                   seq_alpha=seq_alpha,
+                   pop_temper=pop_temper,
+                   final_infl=final_infl)
 
-    lr = -lp + constraint_fn(plans)
+    algout = smc_plans(nsims, adj, counties, pop, ndists,
+                       pop_bounds[2], pop_bounds[1], pop_bounds[3],
+                       compactness, init_particles, n_drawn, n_steps,
+                       constraints, control, verbosity)
+
+    lr = -algout$lp
     wgt = exp(lr - mean(lr))
     wgt = wgt / mean(wgt)
     n_eff = length(wgt) * mean(wgt)^2 / mean(wgt^2)
@@ -232,7 +230,7 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
         n_eff = length(mod_wgt) * mean(mod_wgt)^2 / mean(mod_wgt^2)
         mod_wgt = mod_wgt / sum(mod_wgt)
 
-        plans = plans[, sample(nsims, nsims, replace=TRUE, prob=mod_wgt), drop=FALSE]
+        algout$plans = algout$plans[, sample(nsims, nsims, replace=TRUE, prob=mod_wgt), drop=FALSE]
     }
 
     if (!is.nan(n_eff) && n_eff/nsims <= 0.05)
@@ -244,11 +242,11 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
                    "i"="If sampling efficiency declines steadily across iterations,
                         adjusting {.arg seq_alpha} upward may help a bit."))
 
-    out = new_redist_plans(plans, map, "smc", wgt, resample,
+    out = new_redist_plans(algout$plans, map, "smc", wgt, resample,
+                           ndists = final_dists,
                            n_eff = n_eff,
                            compactness = compactness,
                            constraints = constraints,
-                           ndists = final_dists,
                            adapt_k_thresh = adapt_k_thresh,
                            seq_alpha = seq_alpha,
                            pop_temper = pop_temper)

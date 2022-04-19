@@ -13,13 +13,18 @@
  * Sample `N` redistricting plans on map `g`, ensuring that the maximum
  * population deviation is between `lower` and `upper` (and ideally `target`)
  */
-umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
+List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                int n_distr, double target, double lower, double upper, double rho,
                umat districts, int n_drawn, int n_steps,
-               List constraints, vec &lp, double thresh,
-               double alpha, double pop_temper, double final_infl, int verbosity) {
-    // re-seed MT
+               List constraints, List control, int verbosity) {
+    // re-seed MT so that `set.seed()` works in R
     generator.seed((int) Rcpp::sample(INT_MAX, 1)[0]);
+
+    // unpack control params
+    double thresh = (double) control["adapt_k_thresh"];
+    double alpha = (double) control["seq_alpha"];
+    double pop_temper = (double) control["pop_temper"];
+    double final_infl = (double) control["final_infl"];
 
     Graph g = list_to_graph(l);
     Multigraph cg = county_graph(g, counties);
@@ -31,6 +36,7 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     double tol = std::max(target - lower, upper - target) / target;
 
     if (verbosity >= 1) {
+        Rcout.imbue(std::locale(""));
         Rcout << "SEQUENTIAL MONTE CARLO\n";
         Rcout << "Sampling " << N << " " << V << "-unit ";
         if (n_drawn + n_steps + 1 == n_distr) {
@@ -61,14 +67,13 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
         }
     }
 
-    vec log_temper(N);
-    log_temper.fill(0.0);
-    lp.fill(0.0);
+    vec log_temper(N, fill::zeros);
+    vec lp(N, fill::zeros);
 
     int k;
-    vec cum_wgt(N);
-    cum_wgt.fill(1.0 / N);
+    vec cum_wgt(N, fill::value(1.0 / N));
     cum_wgt = cumsum(cum_wgt);
+
     std::string bar_fmt = "Split [{cli::pb_current}/{cli::pb_total}] {cli::pb_bar} | ETA{cli::pb_eta}";
     RObject bar = cli_progress_bar(n_steps, cli_config(false, bar_fmt.c_str()));
     for (int ctr = n_drawn + 1; ctr <= n_drawn + n_steps; ctr++) {
@@ -116,7 +121,12 @@ umat smc_plans(int N, List l, const uvec &counties, const uvec &pop,
         }
     }
 
-    return districts;
+    List out = List::create(
+        _["plans"] = districts,
+        _["lp"] = lp
+    );
+
+    return out;
 }
 
 
@@ -523,7 +533,7 @@ void adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
 
     if (k >= k_max) {
         if (verbosity >= 3) {
-            Rcout << "Note: maximum hit; falling back to naive k estimator.\n";
+            Rcout << " [maximum hit; falling back to naive k estimator]";
         }
         k = max_ok + 1;
     }

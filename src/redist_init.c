@@ -42,7 +42,7 @@ extern SEXP _redist_reduce_adj(SEXP, SEXP, SEXP);
 extern SEXP _redist_reindex(SEXP, SEXP);
 extern SEXP _redist_renumber_matrix(SEXP, SEXP);
 extern SEXP _redist_rsg(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP _redist_smc_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _redist_smc_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_solve_hungarian(SEXP);
 extern SEXP _redist_splits(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_swMH(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -85,7 +85,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_reindex",               (DL_FUNC) &_redist_reindex,                2},
     {"_redist_renumber_matrix",       (DL_FUNC) &_redist_renumber_matrix,        2},
     {"_redist_rsg",                   (DL_FUNC) &_redist_rsg,                    6},
-    {"_redist_smc_plans",             (DL_FUNC) &_redist_smc_plans,             19},
+    {"_redist_smc_plans",             (DL_FUNC) &_redist_smc_plans,             15},
     {"_redist_solve_hungarian",       (DL_FUNC) &_redist_solve_hungarian,        1},
     {"_redist_splits",                (DL_FUNC) &_redist_splits,                 4},
     {"_redist_swMH",                  (DL_FUNC) &_redist_swMH,                  20},

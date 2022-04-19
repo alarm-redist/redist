@@ -485,8 +485,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // smc_plans
-arma::umat smc_plans(int N, List l, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double target, double lower, double upper, double rho, arma::umat districts, int n_drawn, int n_steps, List constraints, arma::vec& lp, double thresh, double alpha, double pop_temper, double final_infl, int verbosity);
-RcppExport SEXP _redist_smc_plans(SEXP NSEXP, SEXP lSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP districtsSEXP, SEXP n_drawnSEXP, SEXP n_stepsSEXP, SEXP constraintsSEXP, SEXP lpSEXP, SEXP threshSEXP, SEXP alphaSEXP, SEXP pop_temperSEXP, SEXP final_inflSEXP, SEXP verbositySEXP) {
+List smc_plans(int N, List l, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double target, double lower, double upper, double rho, arma::umat districts, int n_drawn, int n_steps, List constraints, List control, int verbosity);
+RcppExport SEXP _redist_smc_plans(SEXP NSEXP, SEXP lSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP districtsSEXP, SEXP n_drawnSEXP, SEXP n_stepsSEXP, SEXP constraintsSEXP, SEXP controlSEXP, SEXP verbositySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -503,13 +503,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type n_drawn(n_drawnSEXP);
     Rcpp::traits::input_parameter< int >::type n_steps(n_stepsSEXP);
     Rcpp::traits::input_parameter< List >::type constraints(constraintsSEXP);
-    Rcpp::traits::input_parameter< arma::vec& >::type lp(lpSEXP);
-    Rcpp::traits::input_parameter< double >::type thresh(threshSEXP);
-    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
-    Rcpp::traits::input_parameter< double >::type pop_temper(pop_temperSEXP);
-    Rcpp::traits::input_parameter< double >::type final_infl(final_inflSEXP);
+    Rcpp::traits::input_parameter< List >::type control(controlSEXP);
     Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
-    rcpp_result_gen = Rcpp::wrap(smc_plans(N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, lp, thresh, alpha, pop_temper, final_infl, verbosity));
+    rcpp_result_gen = Rcpp::wrap(smc_plans(N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, control, verbosity));
     return rcpp_result_gen;
 END_RCPP
 }
