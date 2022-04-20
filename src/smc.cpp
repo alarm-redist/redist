@@ -83,6 +83,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     std::vector<double> sd_labels(n_steps);
     std::vector<double> sd_lp(n_steps);
     std::vector<double> cor_labels(n_steps);
+    std::vector<std::vector<std::vector<double>>> adapt_devs(n_steps);
     vec cum_wgt(N, fill::value(1.0 / N));
     cum_wgt = cumsum(cum_wgt);
 
@@ -96,6 +97,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
         }
 
         // find k and multipliers
+        adapt_devs[i_split] =
         adapt_parameters(g, cut_k[i_split], lp, thresh, tol, districts,
                          counties, cg, pop, pop_left, target, verbosity);
         cut_k[i_split] = cut_k[i_split] + 1;
@@ -156,6 +158,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
         _["cor_labels"] = cor_labels,
         _["est_k"] = cut_k,
         _["step_n_eff"] = n_eff,
+        _["adapt_devs"] = adapt_devs,
         _["accept_rate"] = accept_rate
     );
 
@@ -527,7 +530,7 @@ double cut_districts(Tree &ust, int k, int root, subview_col<uword> &districts,
 /*
  * Choose k and multiplier for efficient, accurate sampling
  */
-void adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
+std::vector<std::vector<double>> adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
                       double tol, const umat &districts, const uvec &counties,
                       Multigraph &cg, const uvec &pop,
                       const vec &pop_left, double target, int verbosity) {
@@ -610,5 +613,7 @@ void adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
     }
 
     k = std::min(k, max_V - 1);
+
+    return devs;
 }
 

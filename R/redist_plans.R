@@ -181,7 +181,8 @@ set_plan_matrix = function(x, mat) {
 #'
 #' @returns A numeric vector of weights, with an additional attribute
 #'   \code{resampled} indicating whether the plans have been resampled according
-#'   to these weights.
+#'   to these weights. If weights have been resampled, this returns the weights
+#'   before resampling (i.e., they do not correspond to the resampled plans).
 #'
 #' @concept analyze
 #' @export

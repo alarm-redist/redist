@@ -269,6 +269,7 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
             sd_lp = algout$sd_lp,
             cor_labels = algout$cor_labels,
             log_labels = algout$log_labels,
+            adapt_devs = algout$adapt_devs,
             seq_alpha = seq_alpha,
             pop_temper = pop_temper
         )
