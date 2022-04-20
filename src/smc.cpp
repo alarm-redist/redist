@@ -24,6 +24,8 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     double thresh = (double) control["adapt_k_thresh"];
     double alpha = (double) control["seq_alpha"];
     double pop_temper = (double) control["pop_temper"];
+    double est_label_mult = (double) control["est_label_mult"];
+    bool adjust_labels = (bool) control["adjust_labels"];
     double final_infl = (double) control["final_infl"];
 
     Graph g = list_to_graph(l);
@@ -39,6 +41,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
         Rcout.imbue(std::locale(""));
         Rcout << "SEQUENTIAL MONTE CARLO\n";
         Rcout << "Sampling " << N << " " << V << "-unit ";
+        Rcout << std::fixed << std::setprecision(0);
         if (n_drawn + n_steps + 1 == n_distr) {
             Rcout << "maps with " << n_distr << " districts and population between "
                 << lower << " and " << upper << ".\n";
@@ -53,6 +56,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     }
 
     vec pop_left(N);
+    std::vector<Graph> dist_grs(N);
     if (n_drawn == 0) {
         pop_left.fill(total_pop);
     } else {
@@ -64,29 +68,40 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                     pop_left[i] += pop[j];
                 }
             }
+
+            dist_grs[i] = district_graph(g, districts.col(i), n_drawn+1);
         }
     }
 
     vec log_temper(N, fill::zeros);
+    vec log_labels(N, fill::zeros);
     vec lp(N, fill::zeros);
 
-    int k;
+    std::vector<int> cut_k(n_steps);
+    std::vector<double> n_eff(n_steps);
+    std::vector<double> accept_rate(n_steps);
+    std::vector<double> sd_labels(n_steps);
+    std::vector<double> sd_lp(n_steps);
+    std::vector<double> cor_labels(n_steps);
     vec cum_wgt(N, fill::value(1.0 / N));
     cum_wgt = cumsum(cum_wgt);
 
     std::string bar_fmt = "Split [{cli::pb_current}/{cli::pb_total}] {cli::pb_bar} | ETA{cli::pb_eta}";
     RObject bar = cli_progress_bar(n_steps, cli_config(false, bar_fmt.c_str()));
+    try {
     for (int ctr = n_drawn + 1; ctr <= n_drawn + n_steps; ctr++) {
+        int i_split = ctr - n_drawn - 1;
         if (verbosity >= 3) {
             Rcout << "Making split " << ctr - n_drawn << " of " << n_steps;
         }
 
         // find k and multipliers
-        adapt_parameters(g, k, lp, thresh, tol, districts, counties, cg, pop,
-                         pop_left, target, verbosity);
+        adapt_parameters(g, cut_k[i_split], lp, thresh, tol, districts,
+                         counties, cg, pop, pop_left, target, verbosity);
+        cut_k[i_split] = cut_k[i_split] + 1;
 
         if (verbosity >= 3) {
-            Rcout << " (using k = " << k << ")\n";
+            Rcout << " (using k = " << cut_k[i_split] << ")\n";
         }
 
         // perform resampling/drawing
@@ -96,16 +111,27 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
             upper = target + (upper - target) * final_infl;
         }
         split_maps(g, counties, cg, pop, districts, cum_wgt, lp, pop_left,
-                   log_temper, pop_temper, n_distr, ctr, lower, upper, target,
-                   rho, k, check_both, verbosity);
+                   log_temper, pop_temper, accept_rate[i_split],
+                   n_distr, ctr, dist_grs, log_labels, adjust_labels,
+                   est_label_mult, lower, upper, target,
+                   rho, cut_k[i_split], check_both, verbosity);
+
+        sd_labels[i_split] = stddev(log_labels);
+        cor_labels[i_split] = ((mat) cor(log_labels, lp - log_labels))(0, 0);
+        sd_lp[i_split] = stddev(lp - log_labels);
 
         // compute weights for next step
-        cum_wgt = get_wgts(districts, n_distr, ctr, final, alpha, lp, pop, target,
-                           g, constraints, verbosity);
+        cum_wgt = get_wgts(districts, n_distr, ctr, final, alpha, lp,
+                           n_eff[i_split], pop, target, g, constraints,
+                           verbosity);
 
         if (verbosity == 1 && CLI_SHOULD_TICK)
-            cli_progress_set(bar, ctr - n_drawn - 1);
+            cli_progress_set(bar, i_split);
         Rcpp::checkUserInterrupt();
+    } // end for
+    } catch (Rcpp::internal::InterruptedException e) {
+        cli_progress_done(bar);
+        return NULL;
     }
     cli_progress_done(bar);
 
@@ -123,7 +149,14 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
 
     List out = List::create(
         _["plans"] = districts,
-        _["lp"] = lp
+        _["lp"] = lp,
+        _["log_labels"] = log_labels,
+        _["sd_labels"] = sd_labels,
+        _["sd_lp"] = sd_lp,
+        _["cor_labels"] = cor_labels,
+        _["est_k"] = cut_k,
+        _["step_n_eff"] = n_eff,
+        _["accept_rate"] = accept_rate
     );
 
     return out;
@@ -153,13 +186,14 @@ double add_constraint(const std::string& name, List constraints,
  * Add specific constraint weights & return the cumulative weight vector
  */
 vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
-             double alpha, vec &lp, const uvec &pop, double parity, const Graph g,
+             double alpha, vec &lp, double &neff,
+             const uvec &pop, double parity, const Graph g,
              List constraints, int verbosity) {
     int V = districts.n_rows;
     int N = districts.n_cols;
 
+    if (constraints.size() > 0) {
     for (int i = 0; i < N; i++) {
-        if (constraints.size() == 0) continue;
 
         for (int j = distr_ctr; j <= distr_ctr + final; j++) {
             lp[i] += add_constraint("pop_dev", constraints,
@@ -259,16 +293,17 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
                     return as<NumericVector>(fn(districts.col(i), j))[0];
                 });
         }
-    }
+    } // for
+    } // if
 
     vec wgt = exp(-alpha * lp);
     if (!final) // not the last iteration
         lp = lp * (1 - alpha);
     vec cuml_wgt = cumsum(wgt);
 
-    double neff = cuml_wgt[N-1] * cuml_wgt[N-1]  / sum(square(wgt));
+    neff = cuml_wgt[N-1] * cuml_wgt[N-1]  / sum(square(wgt));
     if (verbosity >= 3) {
-        Rcout << std::setprecision(3) << 100*neff/N <<  "% efficiency.\n";
+        Rcout << std::setprecision(1) << 100*neff/N <<  "% efficiency.\n";
     }
 
     return cuml_wgt / cuml_wgt[N-1];
@@ -281,18 +316,25 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
  */
 void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 const uvec &pop, umat &districts, vec &cum_wgt, vec &lp,
-                vec &pop_left, vec &log_temper, double pop_temper, int n_distr,
-                int dist_ctr, double lower, double upper, double target,
+                vec &pop_left, vec &log_temper, double pop_temper,
+                double &accept_rate, int n_distr, int dist_ctr,
+                std::vector<Graph> &dist_grs, vec &log_labels, bool adjust_labels,
+                double est_label_mult, double lower, double upper, double target,
                 double rho, int k, bool check_both, int verbosity) {
     int V = districts.n_rows;
     int N = districts.n_cols;
     int new_size = n_distr - dist_ctr;
     int n_cty = max(counties);
+    // heuristic for how many iterations to use in estimating labels, adjusted by user factor
+    int n_est_label = std::floor((dist_ctr == n_distr-1 ? 250 : 80) *
+                                 (2 + std::sqrt(dist_ctr)) * est_label_mult);
 
     umat districts_new(V, N);
     vec pop_left_new(N);
     vec lp_new(N);
     vec log_temper_new(N);
+    vec log_labels_new(N);
+    std::vector<Graph> dist_grs_new(N);
 
     int reject_check_int = 20; // aftr how many rejections to check for interrupts
     int reject_ct = 0;
@@ -325,6 +367,31 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         }
         reject_ct = 0;
 
+        // make/update district graphs
+        if (adjust_labels) {
+            if (dist_ctr == 1) {
+                dist_grs_new[i] = init_tree(1);
+            } else {
+                dist_grs_new[i] = update_district_graph(g, dist_grs[idx],
+                                                        districts_new.col(i), dist_ctr);
+            }
+            if (dist_ctr == n_distr - 1) {
+                dist_grs_new[i] = update_district_graph(g, dist_grs_new[i],
+                                                        districts_new.col(i), dist_ctr+1, true);
+            }
+            // calculate label weight contribution
+            if (dist_ctr <= 2) {
+                log_labels_new[i] = 0.0;
+            } if (dist_ctr <= 13) {
+                log_labels_new[i] = log_labelings_exact(dist_grs_new[i]) - log_labels[idx];
+            } else {
+                log_labels_new[i] = log_labelings_IS(dist_grs_new[i], n_est_label) - log_labels[idx];
+            }
+        } else {
+            log_labels_new[i] = 0.0;
+        }
+
+        // handle log_st compactness calc when needed
         if (rho != 1) {
             double log_st = 0;
             for (int j = 1; j <= n_cty; j++) {
@@ -341,13 +408,14 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
 
             inc_lp += (1 - rho) * log_st;
         }
+
         // `lower_s` now contains the population of the newly-split district
         pop_left_new(i) = pop_left(idx) - lower_s;
         double dev = std::fabs(lower_s - target)/target;
         double pop_pen = sqrt((double) n_distr - 2) * log(1e-12 + dev);
         log_temper_new(i) = log_temper(idx) + pop_temper*pop_pen;
 
-        lp_new(i) = lp(idx) + inc_lp + pop_temper*pop_pen;
+        lp_new(i) = lp(idx) + inc_lp + log_labels_new[i] + pop_temper*pop_pen;
 
         if (verbosity >= 3 && CLI_SHOULD_TICK) {
             cli_progress_set(bar, i);
@@ -356,14 +424,17 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     }
     cli_progress_done(bar);
 
+    accept_rate = N / iter;
     if (verbosity >= 3) {
-        Rcout << "  " << std::setprecision(2) << 100.0 * N / iter << "% acceptance rate, ";
+        Rcout << "  " << std::setprecision(2) << 100.0 * accept_rate << "% acceptance rate, ";
     }
 
     districts = districts_new;
     pop_left = pop_left_new;
     lp = lp_new;
     log_temper = log_temper_new;
+    log_labels = log_labels_new;
+    dist_grs = dist_grs_new;
 }
 
 /*
@@ -380,14 +451,14 @@ double split_map(const Graph &g, const uvec &counties, Multigraph &cg,
 
     int root;
     ust = sample_sub_ust(g, ust, V, root, ignore, pop, lower, upper, counties, cg);
-    if (ust.size() == 0) return -log(0.0);
+    if (ust.size() == 0) return -std::log(0.0);
 
     // set `lower` as a way to return population of new district
     lower = cut_districts(ust, k, root, districts, dist_ctr, pop, total_pop,
                           lower, upper, target);
-    if (lower == 0) return -log(0.0); // reject sample
+    if (lower == 0) return -std::log(0.0); // reject sample
 
-    return log_boundary(g, districts, 0, dist_ctr) - log((double) k);
+    return log_boundary(g, districts, 0, dist_ctr);// - log((double) k); (k is constant)
 }
 
 
@@ -464,7 +535,7 @@ void adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
     int V = g.size();
     int k_max = std::min(20 + ((int) std::sqrt((double)V)), V - 1); // heuristic
     int N_max = districts.n_cols;
-    int N_adapt = std::min((int) std::floor(4000.0 / sqrt((double)V)), N_max);
+    int N_adapt = std::min(60 + (int) std::floor(5000.0 / sqrt((double)V)), N_max);
 
     double lower = target * (1 - tol);
     double upper = target * (1 + tol);

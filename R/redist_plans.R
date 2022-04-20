@@ -33,13 +33,14 @@ new_redist_plans = function(plans, map, algorithm, wgt, resampled=TRUE, ndists=a
         distr_pop = pop_tally(pl_tmp, prec_pop, ndists)
     }
 
-    attr_names = c("redist_attr", "plans", "algorithm", "wgt", "resampled",
-                   "ndists", "merge_idx", "prec_pop", names(list(...)))
+    attr_names = c("redist_attr", "plans", "ndists", "algorithm", "wgt",
+                   "resampled", "ndists", "merge_idx", "prec_pop",
+                   names(list(...)))
 
     structure(tibble(draw = rep(as.factor(1:n_sims), each=ndists),
                              district = rep(distr_range, n_sims),
                              total_pop = as.numeric(distr_pop)),
-              plans=plans, algorithm=algorithm, wgt=wgt,
+              plans=plans, ndists=ndists, algorithm=algorithm, wgt=wgt,
               resampled=resampled, merge_idx=attr(map, "merge_idx"),
               prec_pop=prec_pop, redist_attr=attr_names, ...,
               class=c("redist_plans", "tbl_df", "tbl", "data.frame"))

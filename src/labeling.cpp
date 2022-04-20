@@ -23,6 +23,7 @@ double log_labelings_exact(const Graph &g) {
         accuml += std::exp(xchild[i] - max_x);
     }
 
+    // TODO subtract lgamma(n+1)
     return std::log(accuml) + max_x;
 }
 
@@ -97,10 +98,10 @@ double log_labelings_IS(const Graph &g, int n) {
         double accuml = 0;
         int vtx;
         for (vtx = 0; vtx < V - 1; vtx++) {
-            accuml += weights.at(vtx);
+            accuml += weights[vtx];
             if (accuml >= idx) break;
         }
-        lp[i] = std::log(weights.at(vtx)) - log_tot_wgt;
+        lp[i] = std::log(weights[vtx]) - log_tot_wgt;
 
         visited[vtx] = true;
         std::vector<int> nbors = g[vtx];
@@ -116,23 +117,23 @@ double log_labelings_IS(const Graph &g, int n) {
             double accuml = 0;
             int vtx;
             for (int k = 0; k < V; k++) {
-                if (candidate.at(k)) {
+                if (candidate[k]) {
                     vtx = k;
-                    accuml += weights.at(vtx);
+                    accuml += weights[vtx];
                     if (accuml >= idx) break;
                 }
             }
             lp[i] += std::log(weights.at(vtx)) - std::log(n_cands);
 
-            candidate.at(vtx) = false;
-            visited.at(vtx) = true;
-            std::vector<int> nbors = g.at(vtx);
-            n_cands -= weights.at(vtx);
+            candidate[vtx] = false;
+            visited[vtx] = true;
+            std::vector<int> nbors = g[vtx];
+            n_cands -= weights[vtx];
             int n_nbors = nbors.size();
             for (int k = 0; k < n_nbors; k++) {
                 if (!visited.at(nbors[k]) && !candidate.at(nbors[k])) {
-                    n_cands += weights.at(nbors[k]);
-                    candidate.at(nbors[k]) = true;
+                    n_cands += weights[nbors[k]];
+                    candidate[nbors[k]] = true;
                 }
             }
         }
@@ -140,5 +141,6 @@ double log_labelings_IS(const Graph &g, int n) {
         if (lp[i] < min_lp) min_lp = lp[i];
     }
 
-    return std::log(sum(exp(min_lp - lp))) - min_lp;
+    // TODO subtract
+    return std::log(sum(exp(min_lp - lp))) - min_lp - std::log(n);
 }

@@ -48,7 +48,7 @@ test_that("Not egregiously incorrect sampling accuracy (5-prec)", {
     wgts = weights(out)
     avg = weighted.mean(types, wgts)
     se = sqrt(sum((types - avg)^2 * (wgts / sum(wgts))^2))
-    expect_true(abs(avg - 1.5)/se <= 5)
+    expect_true(abs(avg - 1.5)/se <= 3)
 })
 
 test_that("Not egregiously incorrect sampling accuracy (25-prec)", {
@@ -70,7 +70,7 @@ test_that("Not egregiously incorrect sampling accuracy (25-prec)", {
         sqrt(sum(((types==i) - avgs[i])^2 * (wgts / sum(wgts))^2))
     })
     zscores = (avgs - (1/length(log_st_ref))) / ses
-    expect_true(all(abs(zscores) <= 6))
+    expect_true(all(abs(zscores) <= 4))
 })
 
 test_that("Partial sampling works accurately", {

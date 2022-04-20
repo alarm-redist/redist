@@ -23,9 +23,17 @@ Multigraph county_graph(const Graph &g, const uvec &counties);
 
 /*
  * Make the district adjacency graph for `plan` from the overall precinct graph `g`
+ * if `zero`=false then ignore zeros, otherwise map them to `nd`
  */
 // TESTED
-Graph district_graph(const Graph &g, const uvec &plan, int nd);
+Graph district_graph(const Graph &g, const uvec &plan, int nd, bool zero=false);
+
+/*
+ * Update the district adjacency graph for `plan` with one new district
+ */
+// TESTED
+Graph update_district_graph(const Graph &g, Graph dist_g,
+                            const uvec &plan, int dist_ctr, bool zero=false);
 
 /*
  * Initialize empty multigraph structure on graph with `V` vertices

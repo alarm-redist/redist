@@ -7,13 +7,15 @@
 #include "smc_base.h"
 
 #include <string>
+#include <cmath>
 #include <functional>
 #include <cli/progress.h>
 
+#include <kirchhoff_inline.h>
 #include "wilson.h"
 #include "tree_op.h"
 #include "map_calc.h"
-#include <kirchhoff_inline.h>
+#include "labeling.h"
 
 /*
  * Main entry point.
@@ -33,8 +35,10 @@ List smc_plans(int N, List l, const arma::uvec &counties, const arma::uvec &pop,
  */
 void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 const uvec &pop, umat &districts, vec &cum_wgt, vec &lp,
-                vec &pop_left, vec &log_temper, double pop_temper, int n_distr,
-                int dist_ctr, double lower, double upper, double target,
+                vec &pop_left, vec &log_temper, double pop_temper,
+                double &accept_rate, int n_distr, int dist_ctr,
+                std::vector<Graph> &dist_grs, vec &log_labels, bool adjust_labels,
+                double est_label_mult, double lower, double upper, double target,
                 double rho, int k, bool check_both, int verbosity);
 
 
@@ -42,7 +46,8 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
  * Add specific constraint weights & return the cumulative weight vector
  */
 vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
-             double alpha, vec &lp, const uvec &pop, double parity, const Graph g,
+             double alpha, vec &lp, double &neff,
+             const uvec &pop, double parity, const Graph g,
              List constraints, int verbosity);
 
 /*

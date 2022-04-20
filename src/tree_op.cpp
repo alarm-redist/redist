@@ -53,7 +53,7 @@ Multigraph county_graph(const Graph &g, const uvec &counties) {
  * Make the district adjacency graph for `plan` from the overall precinct graph `g`
  */
 // TESTED
-Graph district_graph(const Graph &g, const uvec &plan, int nd) {
+Graph district_graph(const Graph &g, const uvec &plan, int nd, bool zero) {
     int V = g.size();
     std::vector<std::vector<bool>> gr_bool;
     for (int i = 0; i < nd; i++) {
@@ -64,8 +64,16 @@ Graph district_graph(const Graph &g, const uvec &plan, int nd) {
     for (int i = 0; i < V; i++) {
         std::vector<int> nbors = g[i];
         int dist_i = plan[i] - 1;
+        if (dist_i < 0) {
+            if (!zero) continue;
+            dist_i = nd - 1;
+        }
         for (int nbor : nbors) {
             int dist_j = plan[nbor] - 1;
+            if (dist_j < 0) {
+                if (!zero) continue;
+                dist_j = nd - 1;
+            }
             if (dist_j != dist_i) {
                 gr_bool[dist_i][dist_j] = true;
             }
@@ -85,6 +93,45 @@ Graph district_graph(const Graph &g, const uvec &plan, int nd) {
 
     return out;
 }
+
+/*
+ * Update the district adjacency graph for `plan` with one new district
+ */
+// TESTED
+Graph update_district_graph(const Graph &g, Graph dist_g,
+                            const uvec &plan, int dist_ctr, bool zero) {
+    int V = g.size();
+
+    std::vector<bool> seen(dist_ctr);
+    seen[dist_ctr-1] = true;
+    std::vector<int> tmp;
+    for (int i = 0; i < V; i++) {
+        std::vector<int> nbors = g[i];
+        int dist_i = plan[i] - 1;
+        if (dist_i < 0) {
+            if (!zero) continue;
+            dist_i = dist_ctr - 1;
+        }
+        if (dist_i != dist_ctr - 1) continue;
+
+        for (int nbor : nbors) {
+            int dist_j = plan[nbor] - 1;
+            if (dist_j < 0) {
+                if (!zero) continue;
+                dist_j = dist_ctr - 1;
+            }
+            if (!seen[dist_j]) {
+                seen[dist_j] = true;
+                dist_g[dist_j].push_back(dist_i);
+                tmp.push_back(dist_j);
+            }
+        }
+    }
+
+    dist_g.push_back(tmp);
+    return dist_g;
+}
+
 
 /*
  * Initialize empty multigraph structure on graph with `V` vertices

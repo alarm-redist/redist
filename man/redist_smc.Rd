@@ -19,7 +19,10 @@ redist_smc(
   trunc_fn = redist_quantile_trunc,
   pop_temper = 0,
   final_infl = 1,
+  est_label_mult = 1,
+  adjust_labels = FALSE,
   ref_name = NULL,
+  diagnostics = TRUE,
   verbose = TRUE,
   silent = FALSE
 )
@@ -85,9 +88,17 @@ splits.}
 iteration. Used to loosen the constraint when the sampler is getting stuck
 on the final split.}
 
+\item{est_label_mult}{A multiplier for the number of importance samples to
+use in estimating the number of ways to sequentially label the districts.
+Lower values increase speed at the cost of accuracy.  Only applied when
+there are more than 13 districts.}
+
 \item{ref_name}{a name for the existing plan, which will be added as a
 reference plan, or \code{FALSE} to not include the initial plan in the
 output. Defaults to the column name of the existing plan.}
+
+\item{diagnostics}{if \code{TRUE} (the default), save diagnostic information to
+the outputted \link{redist_plans} object.}
 
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}
@@ -95,8 +106,8 @@ Recommended.}
 \item{silent}{Whether to suppress all diagnostic information.}
 }
 \value{
-\code{redist_smc} returns an object of class
-\code{\link[=redist_plans]{redist_plans()}} containing the simulated plans.
+\code{redist_smc} returns a \link{redist_plans} object containing the simulated
+plans.
 }
 \description{
 \code{redist_smc} uses a Sequential Monte Carlo algorithm to

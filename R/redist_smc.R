@@ -77,15 +77,21 @@
 #' @param final_infl A multiplier for the population constraint on the final
 #'   iteration. Used to loosen the constraint when the sampler is getting stuck
 #'   on the final split.
+#' @param est_label_mult A multiplier for the number of importance samples to
+#'   use in estimating the number of ways to sequentially label the districts.
+#'   Lower values increase speed at the cost of accuracy.  Only applied when
+#'   there are more than 13 districts.
 #' @param ref_name a name for the existing plan, which will be added as a
 #'   reference plan, or `FALSE` to not include the initial plan in the
 #'   output. Defaults to the column name of the existing plan.
+#' @param diagnostics if `TRUE` (the default), save diagnostic information to
+#'   the outputted [redist_plans] object.
 #' @param verbose Whether to print out intermediate information while sampling.
 #'   Recommended.
 #' @param silent Whether to suppress all diagnostic information.
 #'
-#' @return `redist_smc` returns an object of class
-#'   [redist_plans()] containing the simulated plans.
+#' @return `redist_smc` returns a [redist_plans] object containing the simulated
+#'   plans.
 #'
 #' @references
 #' McCartan, C., & Imai, K. (2020). Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans.
@@ -111,8 +117,9 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
                       resample=TRUE, init_particles=NULL, n_steps=NULL,
                       adapt_k_thresh=0.985, seq_alpha=0.2+0.3*compactness,
                       truncate=(compactness != 1), trunc_fn=redist_quantile_trunc,
-                      pop_temper=0, final_infl=1, ref_name=NULL,
-                      verbose=TRUE, silent=FALSE) {
+                      pop_temper=0, final_infl=1,
+                      est_label_mult=1, adjust_labels=FALSE, ref_name=NULL,
+                      diagnostics=TRUE, verbose=TRUE, silent=FALSE) {
     map = validate_redist_map(map)
     V = nrow(map)
     adj = get_adj(map)
@@ -195,6 +202,8 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
 
     control = list(adapt_k_thresh=adapt_k_thresh,
                    seq_alpha=seq_alpha,
+                   est_label_mult=est_label_mult,
+                   adjust_labels=isTRUE(adjust_labels),
                    pop_temper=pop_temper,
                    final_infl=final_infl)
 
@@ -202,10 +211,14 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
                        pop_bounds[2], pop_bounds[1], pop_bounds[3],
                        compactness, init_particles, n_drawn, n_steps,
                        constraints, control, verbosity)
+    if (length(algout) == 0) {
+        cli::cli_process_done()
+        cli::cli_process_done()
+        return(invisible(NULL))
+    }
 
     lr = -algout$lp
     wgt = exp(lr - mean(lr))
-    wgt = wgt / mean(wgt)
     n_eff = length(wgt) * mean(wgt)^2 / mean(wgt^2)
     if (any(is.na(lr))) {
         cli_abort(c("Sampling probabilities have been corrupted.",
@@ -228,13 +241,15 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
             mod_wgt = trunc_fn(wgt)
         }
         n_eff = length(mod_wgt) * mean(mod_wgt)^2 / mean(mod_wgt^2)
-        mod_wgt = mod_wgt / sum(mod_wgt)
 
-        algout$plans = algout$plans[, sample(nsims, nsims, replace=TRUE, prob=mod_wgt), drop=FALSE]
+        rs_idx = sample(nsims, nsims, replace=TRUE, prob=mod_wgt)
+        algout$plans = algout$plans[, rs_idx, drop=FALSE]
+        algout$log_labels = algout$log_labels[rs_idx]
     }
 
     if (!is.nan(n_eff) && n_eff/nsims <= 0.05)
         cli_warn(c("Less than 5% resampling efficiency.",
+                   "*"="Increase the number of samples.",
                    "*"="Consider weakening or removing constraints.",
                    "i"="If sampling efficiency drops precipitously in the final
                         iterations, population balance is likely causing a bottleneck.
@@ -242,14 +257,29 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
                    "i"="If sampling efficiency declines steadily across iterations,
                         adjusting {.arg seq_alpha} upward may help a bit."))
 
+    l_diag = NULL
+    if (isTRUE(diagnostics)) {
+        l_diag = list(
+            n_eff = n_eff,
+            step_n_eff = algout$step_n_eff,
+            adapt_k_thresh = adapt_k_thresh,
+            est_k = algout$est_k,
+            accept_rate = algout$accept_rate,
+            sd_labels = algout$sd_labels,
+            sd_lp = algout$sd_lp,
+            cor_labels = algout$cor_labels,
+            log_labels = algout$log_labels,
+            seq_alpha = seq_alpha,
+            pop_temper = pop_temper
+        )
+    }
+
     out = new_redist_plans(algout$plans, map, "smc", wgt, resample,
                            ndists = final_dists,
                            n_eff = n_eff,
                            compactness = compactness,
                            constraints = constraints,
-                           adapt_k_thresh = adapt_k_thresh,
-                           seq_alpha = seq_alpha,
-                           pop_temper = pop_temper)
+                           diagnostics = l_diag)
 
     exist_name = attr(map, "existing_col")
     if (!is.null(exist_name) && !isFALSE(ref_name) && ndists == final_dists) {
