@@ -83,7 +83,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     std::vector<double> sd_labels(n_steps);
     std::vector<double> sd_lp(n_steps);
     std::vector<double> cor_labels(n_steps);
-    std::vector<std::vector<std::vector<double>>> adapt_devs(n_steps);
+    std::vector<vec> adapt_devs(n_steps);
     vec cum_wgt(N, fill::value(1.0 / N));
     cum_wgt = cumsum(cum_wgt);
 
@@ -100,7 +100,6 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
         adapt_devs[i_split] =
         adapt_parameters(g, cut_k[i_split], lp, thresh, tol, districts,
                          counties, cg, pop, pop_left, target, verbosity);
-        cut_k[i_split] = cut_k[i_split] + 1;
 
         if (verbosity >= 3) {
             Rcout << " (using k = " << cut_k[i_split] << ")\n";
@@ -530,7 +529,7 @@ double cut_districts(Tree &ust, int k, int root, subview_col<uword> &districts,
 /*
  * Choose k and multiplier for efficient, accurate sampling
  */
-std::vector<std::vector<double>> adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
+vec adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
                       double tol, const umat &districts, const uvec &counties,
                       Multigraph &cg, const uvec &pop,
                       const vec &pop_left, double target, int verbosity) {
@@ -575,7 +574,11 @@ std::vector<std::vector<double>> adapt_parameters(const Graph &g, int &k, const 
         devs.push_back(tree_dev(ust, root, pop, pop_left(i), target));
         int n_ok = 0;
         for (int j = 0; j < V-1; j++) {
-            n_ok += devs.at(idx).at(j) <= tol;
+            if (devs.at(idx).at(j) <= tol) { // sorted
+                n_ok++;
+            } else {
+                break;
+            }
         }
 
         if (n_ok <= k_max)
@@ -612,8 +615,8 @@ std::vector<std::vector<double>> adapt_parameters(const Graph &g, int &k, const 
         k = max_ok + 1;
     }
 
-    k = std::min(k, max_V - 1);
+    k = std::min(k + 1 - (distr_ok(k) > 0.99), max_V - 1);
 
-    return devs;
+    return distr_ok;
 }
 

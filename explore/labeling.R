@@ -14,7 +14,8 @@ renumb = apply(as.matrix(plans), 2, \(x) order(unique(x)))
 m_renumb = redist:::renumber_matrix(as.matrix(plans), renumb)
 
 smc_unlab = as.integer(as.factor(apply(m_renumb, 2, to_lbl)))
-plot(table(smc_unlab))
+x2 = table(smc_unlab)
+plot(x1)
 
 nlab = tibble(pl=smc_unlab, nlab=exp(attr(plans, "diagnostics")$log_labels)) %>%
     group_by(pl) %>%
@@ -27,9 +28,9 @@ log_st = tibble(pl=smc_unlab, log_st=by_plan(comp_log_st(plans, map))) %>%
     dplyr::pull(log_st)
 
 qplot(table(smc_unlab), 2*nlab)
-qplot(x1, table(smc_unlab), color=nlab)
-qplot(x1, table(smc_unlab), color=sqrt(log_st))
-qplot(log(x3)-log_st, log(x4)-log_st, color=sqrt(log_st))
+qplot(x1, x2, color=nlab)
+qplot(x1, x2, color=sqrt(log_st))
+qplot(log(x1)-log_st, log(x2)-log_st, color=sqrt(log_st))
 qplot(log(x3)-log_st, log(x6)-log_st, color=sqrt(log_st))
 #log_st[which(!duplicated(smc_unlab))]
 
