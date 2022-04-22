@@ -369,16 +369,14 @@ rbind.redist_plans = function(..., deparse.level=1) {
             }
         }
         if (!identical(attr(objs[[i]], "constraints"), constr)) {
-            cli_warn("Constraints do not match for all sets of plans.")
+            cli_inform("Constraints may not match for all sets of plans.")
             constr = NA
         }
     }
 
     ret = bind_rows(lapply(objs, dplyr::as_tibble), .id="chain")
+    ret$chain = as.integer(ret$chain)
     ret = reconstruct.redist_plans(ret, objs[[1]])
-    attr(ret, "adapt_k_thresh") = NA
-    attr(ret, "seq_alpha") = NA
-    attr(ret, "pop_temper") = NA
     attr(ret, "compactness") = comp
     attr(ret, "constraints") = constr
     attr(ret, "ndists") = ndists
