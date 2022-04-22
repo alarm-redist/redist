@@ -49,7 +49,7 @@ redist_mergesplit_parallel = function(map, nsims, chains=1,
                                       constraints=list(), constraint_fn=function(m) rep(0, ncol(m)),
                                       adapt_k_thresh=0.98, k=NULL, ncores=NULL,
                                       cl_type="PSOCK", return_all=TRUE, init_name=NULL,
-                                      verbose=TRUE, silent=FALSE) {
+                                      verbose=FALSE, silent=FALSE) {
     if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
 
     map = validate_redist_map(map)

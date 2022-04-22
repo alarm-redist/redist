@@ -21,7 +21,8 @@
 #' monitor the efficiency.  If `verbose=TRUE` the function will also print
 #' out information on the \eqn{k_i} values automatically chosen and the
 #' acceptance rate (based on the population constraint) at each step.
-#' Users should also check the [plans_diversity()] of the sample.
+#' Users should also check diagnostics of the sample by running
+#' \code{\link[=summary.redist_plans()]{summary()}}.
 #'
 #' Higher values of `compactness` sample more compact districts;
 #' setting this parameter to 1 is computationally efficient and generates nicely
@@ -107,6 +108,15 @@
 #' constr = redist_constr(fl_map)
 #' constr = add_constr_incumbency(constr, strength=100, incumbents=c(3, 6, 25))
 #' sampled_constr = redist_smc(fl_map, 10000, constraints=constr)
+#'
+#' # Parallel example on 4 cores
+#' library(doParallel)
+#' cl = makeCluster(4, methods=FALSE)
+#' registerDoParallel(cl)
+#' plans = foreach(seq_len(4), .combine=rbind, .packages="redist") %dopar% {
+#'     redist_smc(fl_map, 1000)
+#' }
+#' stopCluster(cl)
 #' }
 #'
 #' @concept simulate
@@ -230,7 +240,7 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
                          {.val {NA}} or {.val {Inf}}",
                     "*"="If you are not using any constraints, please call
                          {.code rlang::trace_back()} and file an issue at
-                         {.url https://github.com/alarm-redist/redist/issues}"))
+                         {.url https://github.com/alarm-redist/redist/issues/new}"))
     }
 
     n_unique = NA

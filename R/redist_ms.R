@@ -19,8 +19,9 @@
 #' \code{map}, \code{compactness}, and \code{constraints} parameters.
 #'
 #' Key to ensuring good performance is monitoring the acceptance rate, which
-#' is reported at the sample level in the output. Users should also check the
-#' [plans_diversity()] of the sample.
+#' is reported at the sample level in the output.
+#' Users should also check diagnostics of the sample by running
+#' \code{\link[=summary.redist_plans()]{summary()}}.
 #'
 #' Higher values of \code{compactness} sample more compact districts;
 #' setting this parameter to 1 is computationally efficient and generates nicely
@@ -95,7 +96,7 @@ redist_mergesplit = function(map, nsims, warmup=max(100, nsims %/% 2), thin=1L,
                              init_plan=NULL, counties=NULL, compactness=1,
                              constraints=list(), constraint_fn=function(m) rep(0, ncol(m)),
                              adapt_k_thresh=0.98, k=NULL, init_name=NULL,
-                             verbose=TRUE, silent=FALSE) {
+                             verbose=FALSE, silent=FALSE) {
     if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
 
     map = validate_redist_map(map)

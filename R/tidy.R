@@ -461,12 +461,11 @@ avg_by_prec <- function(plans, x, draws=NA) {
 #' @export
 plan_parity <- function(map, .data = cur_plans(), ...) {
     check_tidy_types(map, .data)
-    idxs = unique(as.integer(.data$draw))
     ndists = attr(map, "ndists")
     total_pop = map[[attr(map, "pop_col")]]
     if (is.null(total_pop)) cli_abort("Population vector missing from {.arg map}")
 
-    rep(max_dev(get_plans_matrix(.data)[, idxs, drop=FALSE], total_pop, ndists),
+    rep(max_dev(get_plans_matrix(.data), total_pop, ndists),
         each = ndists)
 }
 
