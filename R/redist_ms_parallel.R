@@ -205,7 +205,8 @@ redist_mergesplit_parallel = function(map, nsims, chains=1,
         }
     })
     each_len = ncol(plans[[1]])
-    plans <- do.call('cbind', plans)
+    plans <- do.call(cbind, plans)
+    storage.mode(plans) = "integer"
 
     mh <- sapply(out_par, function(algout) {
         mean(as.logical(algout$mhdecisions))

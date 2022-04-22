@@ -43,7 +43,7 @@ test_that("Not egregiously incorrect sampling accuracy (5-prec)", {
     g = list(c(1L, 4L), c(0L, 2L, 4L), c(1L, 3L, 4L), c(2L, 4L), c(0L, 1L, 2L, 3L))
     g_pop = c(2, 1, 1, 1, 1)
     map = redist_map(pop=g_pop, ndists=2, pop_tol=0.5, adj=g)
-    out = redist_smc(map, 20e3, compactness=0, adapt_k_thresh=1, resample=FALSE, silent=TRUE)
+    out = redist_smc(map, 20e3, compactness=0, adapt_k_thresh=0.99, resample=FALSE, silent=TRUE)
     types = apply(as.matrix(out), 2, function(x) 1L + (x[1] == x[2]))
     wgts = weights(out)
     avg = weighted.mean(types, wgts)
@@ -59,7 +59,7 @@ test_that("Not egregiously incorrect sampling accuracy (25-prec)", {
     log_st_ref = round(log_st_map(adj, ref_plans, rep(1L, 25), 3L), 5)
 
     out = redist_smc(set_pop_tol(fl_map, 0.01), 6000, compactness=0,
-                     adapt_k_thresh=0.99, seq_alpha=0.3, resample=FALSE, silent=TRUE) %>%
+                     adapt_k_thresh=1, seq_alpha=0.5, resample=FALSE, silent=TRUE) %>%
         suppressWarnings() # efficiency
     log_st = round(log_st_map(adj, as.matrix(out), rep(1L, 25), 3L), 5)
     types = match(log_st, log_st_ref)
@@ -80,13 +80,13 @@ test_that("Partial sampling works accurately", {
     ref_plans = plans_10[, redist.parity(plans_10, pop) <= 0.01]
     log_st_ref = round(log_st_map(adj, ref_plans, rep(1L, 25), 3L), 5)
 
-    out1 = redist_smc(set_pop_tol(fl_map, 0.01), 2000, compactness=0,
-                      n_steps=1, adapt_k_thresh=0.99, seq_alpha=0.3,
+    out1 = redist_smc(set_pop_tol(fl_map, 0.01), 3000, compactness=0,
+                      n_steps=1, adapt_k_thresh=1, seq_alpha=0.5,
                       resample=T, silent=T) %>%
         suppressWarnings() # efficiency
-    out2 = redist_smc(set_pop_tol(fl_map, 0.01), 2000, compactness=0,
+    out2 = redist_smc(set_pop_tol(fl_map, 0.01), 3000, compactness=0,
                       init_particles=as.matrix(out1),
-                      adapt_k_thresh=0.99, seq_alpha=0.3, resample=F, silent=T) %>%
+                      adapt_k_thresh=1, seq_alpha=0.5, resample=F, silent=T) %>%
         suppressWarnings() # efficiency
     log_st = round(log_st_map(adj, as.matrix(out2), rep(1L, 25), 3L), 5)
     types = match(log_st, log_st_ref)
@@ -97,7 +97,7 @@ test_that("Partial sampling works accurately", {
         sqrt(sum(((types==i) - avgs[i])^2 * (wgts / sum(wgts))^2))
     })
     zscores = (avgs - (1/length(log_st_ref))) / ses
-    expect_true(all(abs(zscores) <= 6.5))
+    expect_true(all(abs(zscores) <= 5.0))
 })
 
 test_that("Partial sampling works with strange bounds", {

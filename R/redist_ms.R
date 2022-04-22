@@ -189,11 +189,11 @@ redist_mergesplit = function(map, nsims, warmup=max(100, nsims %/% 2), thin=1L,
                      pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
                      constraints, adapt_k_thresh, k, thin, verbosity)
 
-    plans <- algout$plans
+    storage.mode(algout$plans) = "integer"
     acceptances = as.logical(algout$mhdecisions)
 
-    warmup_idx = c(seq_len(1 + warmup %/% thin), ncol(plans))
-    out = new_redist_plans(plans[, -warmup_idx, drop=FALSE],
+    warmup_idx = c(seq_len(1 + warmup %/% thin), ncol(algout$plans))
+    out = new_redist_plans(algout$plans[, -warmup_idx, drop=FALSE],
                            map, "mergesplit", NULL, FALSE,
                            ndists = ndists,
                            compactness = compactness,

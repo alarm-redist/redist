@@ -63,17 +63,9 @@ Graph district_graph(const Graph &g, const uvec &plan, int nd, bool zero) {
 
     for (int i = 0; i < V; i++) {
         std::vector<int> nbors = g[i];
-        int dist_i = plan[i] - 1;
-        if (dist_i < 0) {
-            if (!zero) continue;
-            dist_i = nd - 1;
-        }
+        int dist_i = plan[i] - 1 + zero;
         for (int nbor : nbors) {
-            int dist_j = plan[nbor] - 1;
-            if (dist_j < 0) {
-                if (!zero) continue;
-                dist_j = nd - 1;
-            }
+            int dist_j = plan[nbor] - 1 + zero;
             if (dist_j != dist_i) {
                 gr_bool[dist_i][dist_j] = true;
             }
@@ -99,36 +91,54 @@ Graph district_graph(const Graph &g, const uvec &plan, int nd, bool zero) {
  */
 // TESTED
 Graph update_district_graph(const Graph &g, Graph dist_g,
-                            const uvec &plan, int dist_ctr, bool zero) {
+                            const uvec &plan, int dist_ctr) {
     int V = g.size();
 
-    std::vector<bool> seen(dist_ctr);
-    seen[dist_ctr-1] = true;
-    std::vector<int> tmp;
+    std::vector<bool> seen_new(dist_ctr, false);
+    std::vector<bool> seen_zero(dist_ctr, true);
+    seen_new[dist_ctr-1] = true;
+    seen_new[0] = true;
+    for (int j : dist_g[0]) {
+        seen_zero[j] = false;
+    }
+
+    // add new edges from new->others
+    // and identify which districts still touch 0
+    dist_g[0].push_back(dist_ctr - 1);
+    dist_g.push_back(std::vector<int>({0}));
     for (int i = 0; i < V; i++) {
         std::vector<int> nbors = g[i];
-        int dist_i = plan[i] - 1;
-        if (dist_i < 0) {
-            if (!zero) continue;
-            dist_i = dist_ctr - 1;
-        }
-        if (dist_i != dist_ctr - 1) continue;
+        int dist_i = plan[i];
 
-        for (int nbor : nbors) {
-            int dist_j = plan[nbor] - 1;
-            if (dist_j < 0) {
-                if (!zero) continue;
-                dist_j = dist_ctr - 1;
+        if (dist_i == 0) {
+            for (int nbor : nbors) {
+                seen_zero[plan[nbor]] = true;
             }
-            if (!seen[dist_j]) {
-                seen[dist_j] = true;
-                dist_g[dist_j].push_back(dist_i);
-                tmp.push_back(dist_j);
+        } else if (dist_i == dist_ctr - 1) {
+            for (int nbor : nbors) {
+                int dist_j = plan[nbor];
+                if (!seen_new[dist_j]) {
+                    seen_new[dist_j] = true;
+                    dist_g[dist_j].push_back(dist_i);
+                    dist_g[dist_i].push_back(dist_j);
+                }
             }
         }
     }
 
-    dist_g.push_back(tmp);
+    // remove 0<->other that no longer exist
+    for (int i = 1; i < dist_ctr-1; i++) {
+        if (!seen_zero[i]) { // need to remove 0<->i
+            for (auto it = dist_g[0].begin(); it != dist_g[0].end(); ++it) {
+                if (*it == i) {
+                    dist_g[0].erase(it);
+                    break;
+                }
+            }
+            dist_g[i].erase(dist_g[i].begin()); // 0 is at the beginning always
+        }
+    }
+
     return dist_g;
 }
 

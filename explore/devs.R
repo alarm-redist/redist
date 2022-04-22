@@ -16,3 +16,5 @@ ggplot(aes(k, log(n_ok), color=iter, group=iter)) +
 
 filter(devs, iter==2, draw==8) %>%
     qplot(dev, data=.)
+
+str(get_sampling_info(plans))

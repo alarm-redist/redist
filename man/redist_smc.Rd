@@ -20,10 +20,10 @@ redist_smc(
   pop_temper = 0,
   final_infl = 1,
   est_label_mult = 1,
-  adjust_labels = FALSE,
+  adjust_labels = TRUE,
   ref_name = NULL,
   diagnostics = TRUE,
-  verbose = TRUE,
+  verbose = FALSE,
   silent = FALSE
 )
 }
@@ -63,9 +63,9 @@ Each step splits off a new district. Defaults to all remaining districts.
 If fewer than the number of remaining splits, reference plans are disabled.}
 
 \item{adapt_k_thresh}{The threshold value used in the heuristic to select a
-value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if the
-algorithm does not appear to be sampling from the target distribution. Must
-be between 0 and 1.}
+value \code{k_i} for each splitting iteration. Higher values are more accurate
+but may require more computation. Set to 1 for the most conservative
+sampling. Must be between 0 and 1.}
 
 \item{seq_alpha}{The amount to adjust the weights by at each resampling step;
 higher values prefer exploitation, while lower values prefer exploration.

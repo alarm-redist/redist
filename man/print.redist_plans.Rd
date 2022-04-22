@@ -2,18 +2,18 @@
 % Please edit documentation in R/redist_plans.R
 \name{print.redist_plans}
 \alias{print.redist_plans}
-\title{Print method for redist_plans}
+\title{Print method for \code{redist_plans}}
 \usage{
 \method{print}{redist_plans}(x, ...)
 }
 \arguments{
-\item{x}{redist_plans object}
+\item{x}{a [redist_plans] object}
 
-\item{\dots}{additional arguments}
+\item{\dots}{additional arguments (ignored)}
 }
 \value{
-prints to console
+The original object, invisibly.
 }
 \description{
-Print method for redist_plans
+Print method for \code{redist_plans}
 }

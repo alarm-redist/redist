@@ -38,7 +38,8 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 vec &pop_left, vec &log_temper, double pop_temper,
                 double &accept_rate, int n_distr, int dist_ctr,
                 std::vector<Graph> &dist_grs, vec &log_labels, bool adjust_labels,
-                double est_label_mult, double lower, double upper, double target,
+                double est_label_mult, int &n_unique,
+                double lower, double upper, double target,
                 double rho, int k, bool check_both, int verbosity);
 
 
@@ -67,7 +68,7 @@ double cut_districts(Tree &ust, int k, int root, subview_col<uword> &districts,
 /*
  * Choose k and multiplier for efficient, accurate sampling
  */
-vec adapt_parameters(const Graph &g, int &k, const vec &lp, double thresh,
+void adapt_parameters(const Graph &g, int &k, int last_k, const vec &lp, double thresh,
                       double tol, const umat &districts, const uvec &counties,
                       Multigraph &cg, const uvec &pop,
                       const vec &pop_left, double target, int verbosity);

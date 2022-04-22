@@ -140,6 +140,7 @@ redist_plans = function(plans, map, algorithm, wgt=NULL, ...) {
     if (!inherits(map, "redist_map")) cli_abort("{.arg map} must be a {.cls redist_map}")
 
     if (min(plans) == 0L) plans = plans + 1L
+    storage.mode(plans) = "integer"
 
     obj = new_redist_plans(plans, map, algorithm, wgt=wgt,
                            resampled=FALSE, ...)
@@ -391,17 +392,113 @@ rbind.redist_plans = function(..., deparse.level=1) {
 }
 
 
-#' Print method for redist_plans
-#' @param x redist_plans object
-#' @param \dots additional arguments
+#' Diagnostic information on sampled plans
+#'
+#' Currently only supported for [redist_smc()] output.
+#'
+#' @param object a [redist_plans] object
+#' @param \dots additional arguments (ignored)
+#'
+#' @method summary redist_plans
+#' @return A data frame containing diagnostic information, invisibly.
+#'
+#' @export
+summary.redist_plans = function(object, ...) {
+    algo = attr(object, "algorithm")
+    name = deparse(substitute(object))
+    if (algo == "smc") {
+        diagn = attr(object, "diagnostics")
+        plans_m = get_plans_matrix(object)
+        n_ref = get_n_ref(object)
+        n_samp = ncol(plans_m) - n_ref
+        n_distr = attr(object, "ndists")
+
+        fmt_comma = function(x) format(x, digits=0, big.mark=",")
+        cli_text("{.strong SMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
+                 districts on {fmt_comma(nrow(plans_m))} units")
+
+        est_div = plans_diversity(object)
+        div_rg = format(quantile(est_div, c(0.1, 0.9)), digits=2)
+        div_bad = (mean(est_div) <= 0.35) || (mean(est_div <= 0.05) > 0.2)
+        div_warn = if (div_bad) " [WARNING: LOW DIVERSITY]" else ""
+        cli_text("Plan diversity 80% range: {div_rg[1]} to {div_rg[2]}{.strong {div_warn}}")
+        cat("\n")
+
+        out = tibble(n_eff = c(diagn$step_n_eff, diagn$n_eff),
+                     eff = c(diagn$step_n_eff, diagn$n_eff)/n_samp,
+                     accept_rate = c(diagn$accept_rate, NA),
+                     sd_log_wgt = diagn$sd_lp,
+                     max_unique = diagn$unique_survive,
+                     est_k = c(diagn$est_k, NA))
+
+        tbl_print = as.data.frame(out)
+        min_n = max(0.05*n_samp, min(0.4*n_samp, 100))
+        bottlenecks = with(tbl_print, pmin(max_unique, n_eff) < min_n)
+        tbl_print$bottleneck = ifelse(bottlenecks, "     *     ", "")
+        tbl_print$n_eff = with(tbl_print,
+                str_glue("{fmt_comma(n_eff)} ({sprintf('%0.1f%%', 100*eff)})"))
+        tbl_print$eff = NULL
+        tbl_print$accept_rate = with(tbl_print, sprintf('%0.1f%%', 100*accept_rate))
+        max_pct = with(tbl_print, max_unique/(-n_samp * expm1(-1)))
+        tbl_print$max_unique = with(tbl_print,
+                str_glue("{fmt_comma(max_unique)} ({sprintf('%3.0f%%', 100*max_pct)})"))
+
+        colnames(tbl_print) = c("Eff. samples (%)", "Accept. rate",
+                                "Log weights s.d.", " Max. unique",
+                                "Est. k", "Bottleneck?")
+        rownames(tbl_print) = c(paste("Split", seq_len(n_distr-1)), "Final resample")
+
+        print(tbl_print, digits=2)
+        cat("\n")
+
+        cli::cli_li(cli::col_grey("
+            Watch out for low effective samples, very low acceptance rates (less than 1%),
+            large std. devs. of the log weights (more than 10 or so),
+            and low numbers of unique plans."))
+
+        if (div_bad) {
+            cli::cli_li("{.strong Low diversity:} Check for potential bottlenecks.
+                        Increase the number of samples.
+                        Examine the diversity plot with
+                        `hist(plans_diversity({name}), breaks=24)`.
+                        Consider weakening or removing constraints, or increasing
+                        the population tolerance. If the accpetance rate drops
+                        quickly in the final splits, try increasing
+                        {.arg pop_temper} by 0.01.")
+        }
+        if (any(bottlenecks)) {
+            cli::cli_li("{.strong Bottlenecks:} Consider weakening or removing
+                        constraints, or increasing the population tolerance.
+                        If the accpetance rate drops quickly in the final splits,
+                        try increasing {.arg pop_temper} by 0.01.
+                        To visualize what geographic areas may be causing problems,
+                        try running the following code. Highlighted areas are
+                        those that may be causing the bottleneck.")
+            code = str_glue("plot(<map object>, colMeans(as.matrix({name}) %in% c({paste(which(bottlenecks), collapse=', ')})))")
+            cli::cat_line("    ", cli::code_highlight(code, "Material"))
+        }
+    } else {
+        cli_abort("{.fn summary} is not supported for the {toupper(algo)} algorithm.")
+    }
+
+    invisible(out)
+}
+
+
+#' Print method for \code{redist_plans}
+#'
+#' @param x a [redist_plans] object
+#' @param \dots additional arguments (ignored)
+#'
 #' @method print redist_plans
-#' @importFrom utils str
-#' @return prints to console
+#' @return The original object, invisibly.
 #' @export
 print.redist_plans = function(x, ...) {
     plans_m = get_plans_matrix(x)
     n_ref = get_n_ref(x)
     n_samp = ncol(plans_m) - n_ref
+    nd = attr(x, "ndists")
+    if (is.null(nd)) nd = max(plans_m[,1])
 
     if (n_ref > 0)
         cli_text("A {.cls redist_plans} containing {n_samp} sampled plan{?s} and
@@ -420,7 +517,7 @@ print.redist_plans = function(x, ...) {
                  shortburst="short bursts")[attr(x, "algorithm")]
     if (is.na(alg_name)) alg_name = "an unknown algorithm"
 
-    cli_text("Plans have {max(plans_m[,1])} districts from a {nrow(plans_m)}-unit map,
+    cli_text("Plans have {nd} districts from a {nrow(plans_m)}-unit map,
              and were drawn using {alg_name}.")
 
     merge_idx = attr(x, "merge_idx")

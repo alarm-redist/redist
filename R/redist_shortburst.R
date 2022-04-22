@@ -265,6 +265,8 @@ redist_shortburst = function(map, score_fn=NULL, stop_at=NULL,
     else
         converged = cur_best_score <= stop_at
 
+    storage.mode(out_mat) = "integer"
+
     out = new_redist_plans(out_mat[, out_idx, drop=FALSE], map, "shortburst",
                            wgt=NULL, resampled=FALSE,
                            burst_size = burst_size,

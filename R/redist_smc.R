@@ -58,9 +58,9 @@
 #'   Each step splits off a new district. Defaults to all remaining districts.
 #'   If fewer than the number of remaining splits, reference plans are disabled.
 #' @param adapt_k_thresh The threshold value used in the heuristic to select a
-#'   value `k_i` for each splitting iteration. Set to 0.9999 or 1 if the
-#'   algorithm does not appear to be sampling from the target distribution. Must
-#'   be between 0 and 1.
+#'   value `k_i` for each splitting iteration. Higher values are more accurate
+#'   but may require more computation. Set to 1 for the most conservative
+#'   sampling. Must be between 0 and 1.
 #' @param seq_alpha The amount to adjust the weights by at each resampling step;
 #'   higher values prefer exploitation, while lower values prefer exploration.
 #'   Must be between 0 and 1.
@@ -118,8 +118,8 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
                       adapt_k_thresh=0.985, seq_alpha=0.2+0.3*compactness,
                       truncate=(compactness != 1), trunc_fn=redist_quantile_trunc,
                       pop_temper=0, final_infl=1,
-                      est_label_mult=1, adjust_labels=FALSE, ref_name=NULL,
-                      diagnostics=TRUE, verbose=TRUE, silent=FALSE) {
+                      est_label_mult=1, adjust_labels=TRUE, ref_name=NULL,
+                      diagnostics=TRUE, verbose=FALSE, silent=FALSE) {
     map = validate_redist_map(map)
     V = nrow(map)
     adj = get_adj(map)
@@ -193,7 +193,7 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
         n_drawn = as.integer(max(init_particles[, 1]))
     }
     if (is.null(n_steps)) {
-        n_steps = attr(map, "ndists") - n_drawn - 1L
+        n_steps = ndists - n_drawn - 1L
     }
     final_dists = n_drawn + n_steps + 1L
     if (final_dists > ndists) {
@@ -227,9 +227,13 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
                          should generally fall in the -5 to 5 range.",
                     "*"="If you are using custom constraints, make sure that your
                          constraint function handles all edge cases and never returns
-                         {.val {NA}} or {.val {Inf}}"))
+                         {.val {NA}} or {.val {Inf}}",
+                    "*"="If you are not using any constraints, please call
+                         {.code rlang::trace_back()} and file an issue at
+                         {.url https://github.com/alarm-redist/redist/issues}"))
     }
 
+    n_unique = NA
     if (resample) {
         if (!truncate) {
             mod_wgt = wgt
@@ -243,9 +247,11 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
         n_eff = length(mod_wgt) * mean(mod_wgt)^2 / mean(mod_wgt^2)
 
         rs_idx = sample(nsims, nsims, replace=TRUE, prob=mod_wgt)
+        n_unique = dplyr::n_distinct(rs_idx)
         algout$plans = algout$plans[, rs_idx, drop=FALSE]
         algout$log_labels = algout$log_labels[rs_idx]
     }
+    storage.mode(algout$plans) = "integer"
 
     if (!is.nan(n_eff) && n_eff/nsims <= 0.05)
         cli_warn(c("Less than 5% resampling efficiency.",
@@ -266,10 +272,10 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
             est_k = algout$est_k,
             accept_rate = algout$accept_rate,
             sd_labels = algout$sd_labels,
-            sd_lp = algout$sd_lp,
+            sd_lp = c(algout$sd_lp, sd(algout$lp)),
             cor_labels = algout$cor_labels,
             log_labels = algout$log_labels,
-            adapt_devs = algout$adapt_devs,
+            unique_survive = c(algout$unique_survive, n_unique),
             seq_alpha = seq_alpha,
             pop_temper = pop_temper
         )
