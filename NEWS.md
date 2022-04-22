@@ -1,6 +1,7 @@
 # redist 4.0.0
 * A new constraint interface that is more flexible and user friendly (see `redist_constr()` and `?constraints`)
-* Many, many bug fixes (see https://github.com/alarm-redist/redist/issues)
+* New diagnostic-checking function, `summary.redist_plans()`
+* Many bug fixes (see https://github.com/alarm-redist/redist/issues)
 * Remove deprecated functions
 * Update the SMC algorithm to include a missing correction factor for the number
 of ways to sequentially label districts. This factor should not have an effect
