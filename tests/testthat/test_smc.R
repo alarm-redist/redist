@@ -70,7 +70,7 @@ test_that("Not egregiously incorrect sampling accuracy (25-prec)", {
         sqrt(sum(((types==i) - avgs[i])^2 * (wgts / sum(wgts))^2))
     })
     zscores = (avgs - (1/length(log_st_ref))) / ses
-    expect_true(all(abs(zscores) <= 4))
+    expect_true(all(abs(zscores) <= 5))
 })
 
 test_that("Partial sampling works accurately", {

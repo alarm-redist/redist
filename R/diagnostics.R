@@ -77,7 +77,7 @@ summary.redist_plans = function(object, ...) {
 
         tbl_print = as.data.frame(out)
         min_n = max(0.05*n_samp, min(0.4*n_samp, 100))
-        bottlenecks = with(tbl_print, pmin(max_unique, n_eff) < min_n)
+        bottlenecks = dplyr::coalesce(with(tbl_print, pmin(max_unique, n_eff) < min_n), FALSE)
         tbl_print$bottleneck = ifelse(bottlenecks, "     *     ", "")
         tbl_print$n_eff = with(tbl_print,
                 str_glue("{fmt_comma(n_eff)} ({sprintf('%0.1f%%', 100*eff)})"))
