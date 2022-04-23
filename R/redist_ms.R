@@ -127,7 +127,7 @@ redist_mergesplit = function(map, nsims, warmup=max(100, nsims %/% 2), thin=1L,
     }
     if (length(init_plan) == 0L || isTRUE(init_plan == "sample")) {
         init_plan = as.integer(get_plans_matrix(
-            redist_smc(map, 10, counties, resample=FALSE, ref_name=FALSE, silent=TRUE))[, 1])
+            redist_smc(map, 10, counties, resample=FALSE, ref_name=FALSE, silent=TRUE, cores=1))[, 1])
         if (is.null(init_name)) init_name = "<init>"
     }
 

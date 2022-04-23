@@ -3,6 +3,7 @@
 
 #include "redist_types.h"
 #include <RcppArmadillo.h>
+#include <RcppThread.h>
 #include <Rcpp.h>
 
 using namespace Rcpp;

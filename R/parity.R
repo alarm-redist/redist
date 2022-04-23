@@ -37,30 +37,10 @@ redist.parity <- function(plans, total_pop, ncores = 1) {
         cli_abort(".arg plans} and {.arg total_pop} must have same number of precincts.")
     }
 
-    # parallelize as in fastLink package to avoid Windows/unix issues
-    N = ncol(plans)
-    nc <- min(ncores, max(1, floor(N/2)))
+    n_distr = attr(plans, "ndists")
+    if (is.null(n_distr)) n_distr = max(plans[,1])
 
-    if (nc == 1){
-        `%oper%` <- `%do%`
-    } else {
-        `%oper%` <- `%dopar%`
-        cl <- makeCluster(nc, setup_strategy = 'sequential', methods=FALSE)
-        registerDoParallel(cl)
-        on.exit(stopCluster(cl))
-    }
-
-    if (min(plans[,1]) == 0)
-        plans = plans + 1
-    n_distr = max(plans[,1])
-
-
-    chunks = split(1:N, rep(1:nc, each=ceiling(N/nc))[1:N])
-    out = foreach(map=chunks, .combine = "c") %oper% {
-        max_dev(plans[, map, drop = FALSE], total_pop, n_distr)
-    }
-
-    unlist(out)
+    max_dev(plans, total_pop, n_distr)
 }
 
 

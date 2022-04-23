@@ -1,10 +1,39 @@
 
 #' Diagnostic information on sampled plans
 #'
-#' Prints diagnostic information, which varies by algorithm.
-#' R-hat values are calculated after rank-normalization and folding.
-#' For summary statistics that vary across districts, R-hat is calculated for
-#' the first district only.
+#' Prints diagnostic information, which varies by algorithm. All algorithms
+#' compute the [plans_diversity()] of the samples.
+#'
+#' For SMC and MCMC, if there are multiple runs/chains, R-hat values will be
+#' computed for each summary statistic. These values should be close to 1.
+#' If they are not, then there is too much between-chain variation, indicating
+#' that there are not enough samples. R-hat values are calculated after
+#' rank-normalization and folding. For summary statistics that vary across
+#' districts, R-hat is calculated for the first district only.
+#'
+#' For SMC, diagnostics statistics include:
+#'
+#' * **Effective samples**: the effective sample size at each iteration, computed
+#' using the SMC weights. Larger is better. The percentage in parentheses is the
+#' ratio of the effective samples to the total samples.
+#' * **Acceptance rate**: the fractino of drawn spanning trees which yield a valid
+#' redistricting plan within the population tolerance. Very small values (< 1%)
+#' can indicate a bottleneck and may lead to a lack of diversity.
+#' * **Standard deviation of the log weights**: More variable weights (larger s.d.)
+#' indicate less efficient sampling. Values greater than 3 are likely problematic.
+#' * **Maximum unique plans:** an upper bound on the number of unique redistricting
+#' plans that survive each stage. The percentage in parentheses is the ratio of
+#' this number to expected number of unique plans under equal-probability
+#' multinomial resampling. Small values (< 100) indicate a bottleneck, which
+#' leads to a loss of sample diversity and a higher variance.
+#' * **Estimated `k` parameter**: How many spanning tree edges were considered for
+#' cutting at each split. Mostly informational, though large jumps may indicate
+#' a need to increase `adapt_k_thresh`.
+#' * **Bottleneck**: Will show an asterisk if a bottleneck appears likely, based on
+#' the values of the other statistics.
+#'
+#' In the event of problematic diagnostics, the function will provide
+#' suggestions for improvement.
 #'
 #' @param object a [redist_plans] object
 #' @param \dots additional arguments (ignored)
@@ -12,6 +41,13 @@
 #' @method summary redist_plans
 #' @return A data frame containing diagnostic information, invisibly.
 #'
+#' @example
+#' data(iowa)
+#' iowa_map = redist_map(iowa, ndists=4, pop_tol=0.1)
+#' plans = redist_smc(iowa_map, 100)
+#' summary(plans)
+#'
+#' @md
 #' @export
 summary.redist_plans = function(object, ...) {
     algo = attr(object, "algorithm")
@@ -87,10 +123,10 @@ summary.redist_plans = function(object, ...) {
         tbl_print$max_unique = with(tbl_print,
                 str_glue("{fmt_comma(max_unique)} ({sprintf('%3.0f%%', 100*max_pct)})"))
 
-        colnames(tbl_print) = c("Eff. samples (%)", "Accept. rate",
-                                "Log weights s.d.", " Max. unique",
+        colnames(tbl_print) = c("Eff. samples (%)", "Acc. rate",
+                                "Log wgt. sd", " Max. unique",
                                 "Est. k", "Bottleneck?")
-        rownames(tbl_print) = c(paste("Split", seq_len(n_distr-1)), "Final resample")
+        rownames(tbl_print) = c(paste("Split", seq_len(n_distr-1)), "Resample")
 
         if ("chain" %in% cols) cli::cli_alert_info("Sampling diagnostics shown for first SMC run only.")
         print(tbl_print, digits=2)
@@ -98,7 +134,7 @@ summary.redist_plans = function(object, ...) {
 
         cli::cli_li(cli::col_grey("
             Watch out for low effective samples, very low acceptance rates (less than 1%),
-            large std. devs. of the log weights (more than 10 or so),
+            large std. devs. of the log weights (more than 3 or so),
             and low numbers of unique plans.
             R-hat values for summary statistics should be between 1 and 1.05."))
 

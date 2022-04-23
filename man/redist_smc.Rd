@@ -11,6 +11,7 @@ redist_smc(
   compactness = 1,
   constraints = list(),
   resample = TRUE,
+  cores = 0L,
   init_particles = NULL,
   n_steps = NULL,
   adapt_k_thresh = 0.985,
@@ -51,6 +52,9 @@ information on sampling constraints. See \link{constraints} for more information
 generated plans can be used immediately.  Set this to \code{FALSE} to
 perform direct importance sampling estimates, or to adjust the weights
 manually.}
+
+\item{cores}{How many cores to use to parallelize plan generation. The
+default, 0, will use the number of available cores on the machine.}
 
 \item{init_particles}{A matrix of partial plans to begin sampling from. For
 advanced use only.  The matrix must have \code{nsims} columns and a row for

@@ -103,7 +103,7 @@ redist_mergesplit_parallel = function(map, nsims, chains=1,
         init_plans = get_plans_matrix(
             redist_smc(map, chains, counties, compactness, constraints,
                        resample=TRUE, adapt_k_thresh=adapt_k_thresh,
-                       ref_name=FALSE, verbose=verbose, silent=silent))
+                       ref_name=FALSE, verbose=verbose, silent=silent, cores=1))
         if (is.null(init_name))
             init_names = paste0("<init> ", seq_len(chains))
         else

@@ -3,13 +3,16 @@
 #define SMC_H
 
 // [[Rcpp::depends(redistmetrics)]]
+// [[Rcpp::depends(RcppThread)]]
 
 #include "smc_base.h"
 
 #include <string>
+#include <thread>
 #include <cmath>
 #include <functional>
 #include <cli/progress.h>
+#include <RcppThread.h>
 
 #include <kirchhoff_inline.h>
 #include "wilson.h"
@@ -40,7 +43,8 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 std::vector<Graph> &dist_grs, vec &log_labels, bool adjust_labels,
                 double est_label_mult, int &n_unique,
                 double lower, double upper, double target,
-                double rho, int k, bool check_both, int verbosity);
+                double rho, int k, bool check_both,
+                RcppThread::ThreadPool &pool, int verbosity);
 
 
 /*

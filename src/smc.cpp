@@ -7,6 +7,7 @@
 
 #include "smc.h"
 
+
 /*
  * Main entry point.
  *
@@ -27,6 +28,9 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     double est_label_mult = (double) control["est_label_mult"];
     bool adjust_labels = (bool) control["adjust_labels"];
     double final_infl = (double) control["final_infl"];
+    int cores = (int) control["cores"];
+    if (cores <= 0) cores = std::thread::hardware_concurrency();
+    if (cores == 1) cores = 0;
 
     Graph g = list_to_graph(l);
     Multigraph cg = county_graph(g, counties);
@@ -39,9 +43,9 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
 
     if (verbosity >= 1) {
         Rcout.imbue(std::locale(""));
+        Rcout << std::fixed << std::setprecision(0);
         Rcout << "SEQUENTIAL MONTE CARLO\n";
         Rcout << "Sampling " << N << " " << V << "-unit ";
-        Rcout << std::fixed << std::setprecision(0);
         if (n_drawn + n_steps + 1 == n_distr) {
             Rcout << "maps with " << n_distr << " districts and population between "
                 << lower << " and " << upper << ".\n";
@@ -53,6 +57,13 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
         if (cg.size() > 1)
             Rcout << "Ensuring no more than " << n_distr - 1 << " splits of the "
                   << cg.size() << " administrative units.\n";
+        if (verbosity >= 3) {
+            if (cores == 0) {
+                Rcout << "Using 1 core.\n";
+            } else {
+                Rcout << "Using " << cores << " cores.\n";
+            }
+        }
     }
 
     vec pop_left(N);
@@ -87,6 +98,8 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     vec cum_wgt(N, fill::value(1.0 / N));
     cum_wgt = cumsum(cum_wgt);
 
+    RcppThread::ThreadPool pool(cores);
+
     std::string bar_fmt = "Split [{cli::pb_current}/{cli::pb_total}] {cli::pb_bar} | ETA{cli::pb_eta}";
     RObject bar = cli_progress_bar(n_steps, cli_config(false, bar_fmt.c_str()));
     try {
@@ -115,7 +128,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                    log_temper, pop_temper, accept_rate[i_split],
                    n_distr, ctr, dist_grs, log_labels, adjust_labels,
                    est_label_mult, n_unique[i_split], lower, upper, target,
-                   rho, cut_k[i_split], check_both, verbosity);
+                   rho, cut_k[i_split], check_both, pool, verbosity);
 
         vec inc_only = lp - log_labels;
         sd_labels[i_split] = stddev(log_labels);
@@ -131,13 +144,21 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
 
         if (verbosity == 1 && CLI_SHOULD_TICK)
             cli_progress_set(bar, i_split);
-        Rcpp::checkUserInterrupt();
+        RcppThread::checkUserInterrupt();
     } // end for
     } catch (Rcpp::internal::InterruptedException e) {
+        RcppThread::Rcout << "AAAAAAA\n";
+        pool.join();
+        cli_progress_done(bar);
+        return NULL;
+    } catch (RcppThread::UserInterruptException e) {
+        RcppThread::Rcout << "BBBBBB\n";
+        pool.join();
         cli_progress_done(bar);
         return NULL;
     }
     cli_progress_done(bar);
+    pool.join();
 
     lp = lp - log_temper;
     if (n_steps < n_distr - 1) {
@@ -329,14 +350,15 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 std::vector<Graph> &dist_grs, vec &log_labels, bool adjust_labels,
                 double est_label_mult, int &n_unique,
                 double lower, double upper, double target,
-                double rho, int k, bool check_both, int verbosity) {
-    int V = districts.n_rows;
-    int N = districts.n_cols;
-    int new_size = n_distr - dist_ctr;
-    int n_cty = max(counties);
+                double rho, int k, bool check_both,
+                RcppThread::ThreadPool &pool, int verbosity) {
+    const int V = districts.n_rows;
+    const int N = districts.n_cols;
+    const int new_size = n_distr - dist_ctr;
+    const int n_cty = max(counties);
     // heuristic for how many iterations to use in estimating labels, adjusted by user factor
-    int n_est_label = std::floor((dist_ctr == n_distr-1 ? 250 : 80) *
-                                 (2 + std::sqrt(dist_ctr)) * est_label_mult);
+    const int n_est_label = std::floor((dist_ctr == n_distr-1 ? 250 : 80) *
+                                       (2 + std::sqrt(dist_ctr)) * est_label_mult);
 
     umat districts_new(V, N);
     vec pop_left_new(N);
@@ -344,40 +366,49 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     vec log_temper_new(N);
     vec log_labels_new(N);
     std::vector<Graph> dist_grs_new(N);
-    std::set<int> uniques;
+    uvec uniques(N);
 
-    int reject_check_int = 20; // aftr how many rejections to check for interrupts
-    int reject_ct = 0;
-    double iter = 0; // how many actual iterations
-    int n_inf = 0;
-    RObject bar = cli_progress_bar(N, cli_config(true));
-    for (int i = 0; i < N; i++, iter++) {
-        // resample
-        int idx = rint(N, cum_wgt);
-        districts_new.col(i) = districts.col(idx);
+    const int reject_check_int = 100; // check for interrupts every _ rejections
+    const int check_int = 50; // check for interrupts every _ iterations
+    uvec iters(N, fill::zeros); // how many actual iterations
+
+    RcppThread::ProgressBar bar(N, 1);
+    try {
+    pool.parallelFor(0, N, [&] (int i) {
+    // RcppThread::parallelFor(0, N, [&] (int i) {
+        int reject_ct = 0;
+        bool ok = false;
+        int idx;
+        double inc_lp;
         double lower_s = lower;
         double upper_s = upper;
-        if (check_both) {
-            lower_s = std::max(lower, pop_left(idx) - new_size * upper);
-            upper_s = std::min(upper, pop_left(idx) - new_size * lower);
-        }
+        while (!ok) {
+            // resample
+            idx = rint(N, cum_wgt);
+            districts_new.col(i) = districts.col(idx);
+            iters[i]++;
 
-        if (lower_s >= upper_s) {
-            i--;
-            if (++reject_ct % reject_check_int == 0) Rcpp::checkUserInterrupt();
-            continue;
-        }
-        double inc_lp = split_map(g, counties, cg, districts_new.col(i), dist_ctr,
-                                  pop, pop_left(idx), lower_s, upper_s, target, k);
+            if (check_both) {
+                lower_s = std::max(lower, pop_left(idx) - new_size * upper);
+                upper_s = std::min(upper, pop_left(idx) - new_size * lower);
+            }
 
-        // bad sample; try again
-        if (!std::isfinite(inc_lp)) {
-            i--;
-            if (++reject_ct % reject_check_int == 0) Rcpp::checkUserInterrupt();
-            continue;
+            if (lower_s >= upper_s) {
+                if (++reject_ct % reject_check_int == 0) RcppThread::checkUserInterrupt();
+                continue;
+            }
+            inc_lp = split_map(g, counties, cg, districts_new.col(i), dist_ctr,
+                               pop, pop_left(idx), lower_s, upper_s, target, k);
+
+            // bad sample; try again
+            if (!std::isfinite(inc_lp)) {
+                if (++reject_ct % reject_check_int == 0) RcppThread::checkUserInterrupt();
+                continue;
+            }
+
+            ok = true;
         }
-        reject_ct = 0;
-        uniques.emplace(idx);
+        uniques[i] = idx;
 
         // make/update district graphs
         if (adjust_labels) {
@@ -424,19 +455,26 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         // `lower_s` now contains the population of the newly-split district
         pop_left_new(i) = pop_left(idx) - lower_s;
         double dev = std::fabs(lower_s - target)/target;
-        double pop_pen = sqrt((double) n_distr - 2) * log(1e-12 + dev);
+        double pop_pen = std::sqrt((double) n_distr - 2) * std::log(1e-12 + dev);
         log_temper_new(i) = log_temper(idx) + pop_temper*pop_pen;
 
         lp_new(i) = lp(idx) + inc_lp + log_labels_new[i] - log_labels[idx] + pop_temper*pop_pen;
 
-        if (verbosity >= 3 && CLI_SHOULD_TICK) {
-            cli_progress_set(bar, i);
-            Rcpp::checkUserInterrupt();
+        if (verbosity >= 3) {
+            bar++;
         }
+        if (i % check_int == 0) {
+            RcppThread::checkUserInterrupt();
+        }
+    });
+    } catch (RcppThread::UserInterruptException e) {
+        RcppThread::Rcout << "CCCCC\n";
+        pool.join();
+        return;
     }
-    cli_progress_done(bar);
+    pool.wait();
 
-    accept_rate = N / iter;
+    accept_rate = N / (1.0 * sum(iters));
     if (verbosity >= 3) {
         Rcout << "  " << std::setprecision(2) << 100.0 * accept_rate << "% acceptance rate, ";
     }
@@ -447,7 +485,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     log_temper = log_temper_new;
     log_labels = log_labels_new;
     dist_grs = dist_grs_new;
-    n_unique = uniques.size();
+    n_unique = ((uvec) find_unique(uniques)).n_elem;
 }
 
 /*

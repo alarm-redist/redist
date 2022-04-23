@@ -50,6 +50,9 @@
 #'   generated plans can be used immediately.  Set this to `FALSE` to
 #'   perform direct importance sampling estimates, or to adjust the weights
 #'   manually.
+#' @param cores How many cores to use to parallelize plan generation. The
+#'   default, 0, will use the number of available cores on the machine as long
+#'   as `nsims` and the number of units is large enough.
 #' @param init_particles A matrix of partial plans to begin sampling from. For
 #'  advanced use only.  The matrix must have `nsims` columns and a row for
 #'  every precinct. It is important to ensure that the existing districts meet
@@ -124,7 +127,7 @@
 #' @order 1
 #' @export
 redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list(),
-                      resample=TRUE, init_particles=NULL, n_steps=NULL,
+                      resample=TRUE, cores=0L, init_particles=NULL, n_steps=NULL,
                       adapt_k_thresh=0.985, seq_alpha=0.2+0.3*compactness,
                       truncate=(compactness != 1), trunc_fn=redist_quantile_trunc,
                       pop_temper=0, final_infl=1,
@@ -210,12 +213,16 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
         cli_abort("Too many districts already drawn to take {n_steps} steps.")
     }
 
+    cores = as.integer(cores)
+    if (cores == 0 && (nsims <= 100 || length(adj) <= 200)) cores = 1L
+
     control = list(adapt_k_thresh=adapt_k_thresh,
                    seq_alpha=seq_alpha,
                    est_label_mult=est_label_mult,
                    adjust_labels=isTRUE(adjust_labels),
                    pop_temper=pop_temper,
-                   final_infl=final_infl)
+                   final_infl=final_infl,
+                   cores=as.integer(cores))
 
     algout = smc_plans(nsims, adj, counties, pop, ndists,
                        pop_bounds[2], pop_bounds[1], pop_bounds[3],
