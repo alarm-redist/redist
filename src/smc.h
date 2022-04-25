@@ -3,12 +3,10 @@
 #define SMC_H
 
 // [[Rcpp::depends(redistmetrics)]]
-// [[Rcpp::depends(RcppThread)]]
 
 #include "smc_base.h"
 
 #include <string>
-#include <thread>
 #include <cmath>
 #include <functional>
 #include <cli/progress.h>

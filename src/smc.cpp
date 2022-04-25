@@ -80,7 +80,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                 }
             }
 
-            dist_grs[i] = district_graph(g, districts.col(i), n_drawn+1);
+            dist_grs[i] = district_graph(g, districts.col(i), n_drawn+1, true);
         }
     }
 
@@ -144,21 +144,14 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
 
         if (verbosity == 1 && CLI_SHOULD_TICK)
             cli_progress_set(bar, i_split);
-        RcppThread::checkUserInterrupt();
+        Rcpp::checkUserInterrupt();
     } // end for
     } catch (Rcpp::internal::InterruptedException e) {
-        RcppThread::Rcout << "AAAAAAA\n";
-        pool.join();
-        cli_progress_done(bar);
-        return NULL;
-    } catch (RcppThread::UserInterruptException e) {
-        RcppThread::Rcout << "BBBBBB\n";
-        pool.join();
+        // RcppThread::Rcout << "AAAAAAA\n";
         cli_progress_done(bar);
         return NULL;
     }
     cli_progress_done(bar);
-    pool.join();
 
     lp = lp - log_temper;
     if (n_steps < n_distr - 1) {
@@ -368,15 +361,14 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     std::vector<Graph> dist_grs_new(N);
     uvec uniques(N);
 
-    const int reject_check_int = 100; // check for interrupts every _ rejections
-    const int check_int = 50; // check for interrupts every _ iterations
+    // const int reject_check_int = 100; // check for interrupts every _ rejections
+    // const int check_int = 50; // check for interrupts every _ iterations
     uvec iters(N, fill::zeros); // how many actual iterations
 
     RcppThread::ProgressBar bar(N, 1);
-    try {
     pool.parallelFor(0, N, [&] (int i) {
     // RcppThread::parallelFor(0, N, [&] (int i) {
-        int reject_ct = 0;
+        // int reject_ct = 0;
         bool ok = false;
         int idx;
         double inc_lp;
@@ -394,7 +386,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
             }
 
             if (lower_s >= upper_s) {
-                if (++reject_ct % reject_check_int == 0) RcppThread::checkUserInterrupt();
+                // if (++reject_ct % reject_check_int == 0) RcppThread::checkUserInterrupt();
                 continue;
             }
             inc_lp = split_map(g, counties, cg, districts_new.col(i), dist_ctr,
@@ -402,7 +394,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
 
             // bad sample; try again
             if (!std::isfinite(inc_lp)) {
-                if (++reject_ct % reject_check_int == 0) RcppThread::checkUserInterrupt();
+                // if (++reject_ct % reject_check_int == 0) RcppThread::checkUserInterrupt();
                 continue;
             }
 
@@ -463,15 +455,10 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         if (verbosity >= 3) {
             bar++;
         }
-        if (i % check_int == 0) {
-            RcppThread::checkUserInterrupt();
-        }
+        // if (i % check_int == 0) {
+        //     RcppThread::checkUserInterrupt();
+        // }
     });
-    } catch (RcppThread::UserInterruptException e) {
-        RcppThread::Rcout << "CCCCC\n";
-        pool.join();
-        return;
-    }
     pool.wait();
 
     accept_rate = N / (1.0 * sum(iters));
