@@ -201,7 +201,6 @@ redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
 #' "The Essential Role of Empirical Validation in Legislative Redistricting Simulation."
 #' Forthcoming, Statistics and Public Policy.
 #'
-#' @importFrom readr read_lines
 #' @concept enumerate
 #' @examples \dontrun{
 #' temp <- tempdir()
