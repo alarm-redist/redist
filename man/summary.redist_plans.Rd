@@ -51,3 +51,10 @@ the values of the other statistics.
 In the event of problematic diagnostics, the function will provide
 suggestions for improvement.
 }
+\examples{
+data(iowa)
+iowa_map = redist_map(iowa, ndists=4, pop_tol=0.1)
+plans = redist_smc(iowa_map, 100)
+summary(plans)
+
+}

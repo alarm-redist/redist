@@ -41,7 +41,7 @@
 #' @method summary redist_plans
 #' @return A data frame containing diagnostic information, invisibly.
 #'
-#' @example
+#' @examples
 #' data(iowa)
 #' iowa_map = redist_map(iowa, ndists=4, pop_tol=0.1)
 #' plans = redist_smc(iowa_map, 100)
