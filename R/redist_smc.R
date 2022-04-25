@@ -214,7 +214,7 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
     }
 
     cores = as.integer(cores)
-    if (cores == 0 && (nsims <= 100 || length(adj) <= 200)) cores = 1L
+    if (cores == 0 && (nsims/100 * length(adj)/200) < 20) cores = 1L
 
     control = list(adapt_k_thresh=adapt_k_thresh,
                    seq_alpha=seq_alpha,

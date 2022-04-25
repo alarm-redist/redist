@@ -37,8 +37,13 @@ redist.parity <- function(plans, total_pop, ncores = 1) {
         cli_abort(".arg plans} and {.arg total_pop} must have same number of precincts.")
     }
 
-    n_distr = attr(plans, "ndists")
-    if (is.null(n_distr)) n_distr = max(plans[,1])
+    rg = range(plans[, 1])
+    if (rg[1] == 0) {
+        plans = plans + 1
+        n_distr = rg[2] + 1
+    } else {
+        n_distr = rg[2]
+    }
 
     max_dev(plans, total_pop, n_distr)
 }

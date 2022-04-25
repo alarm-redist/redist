@@ -11,7 +11,7 @@ toc()
 
 cat("\n\nMULTIPLE THREADS:\n")
 tic()
-plans = redist_smc(ia, 5000, cores=2, verbose=T)
+plans = redist_smc(ia, 5000, cores=2, verbose=F)
 toc()
 
 summary(plans)
