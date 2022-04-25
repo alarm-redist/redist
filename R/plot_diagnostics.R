@@ -99,7 +99,7 @@ redist.diagplot <- function(sumstat, plot = c("trace", "autocorr", "densplot",
         segout <- coda::mcmc(sumstat)
     }else if(class(sumstat) == "list"){
         for(i in 1:length(sumstat)){
-            sumstat[[i]] <- mcmc(sumstat[[i]])
+            sumstat[[i]] <- coda::mcmc(sumstat[[i]])
         }
         segout <- coda::mcmc.list(sumstat)
     }else if(class(sumstat) %in% c("mcmc", "mcmc.list")){
