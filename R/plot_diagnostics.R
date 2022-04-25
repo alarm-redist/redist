@@ -151,7 +151,7 @@ redist.diagplot <- function(sumstat, plot = c("trace", "autocorr", "densplot",
         if(!is.null(savename)){
             pdf(file = paste(savename, ".pdf", sep = ""))
         }
-        cumuplot(segout, probs = .5, type = "l", lty = 1)
+        coda::cumuplot(segout, probs = .5, type = "l", lty = 1)
         if(!is.null(savename)){
             dev.off()
         }

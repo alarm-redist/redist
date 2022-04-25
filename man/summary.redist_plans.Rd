@@ -59,3 +59,4 @@ plans = redist_smc(iowa_map, 100)
 summary(plans)
 
 }
+\concept{analyze}

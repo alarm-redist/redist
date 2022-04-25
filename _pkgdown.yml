@@ -33,6 +33,7 @@ reference:
   desc: "Functions for analyzing simulation outputs"
 - contents:
   - redist_plans
+  - summary.redist_plans
   - add_reference
   - subset_sampled
   - get_plans_matrix

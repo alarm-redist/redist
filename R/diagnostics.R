@@ -48,6 +48,7 @@
 #' plans = redist_smc(iowa_map, 100)
 #' summary(plans)
 #'
+#' @concept analyze
 #' @md
 #' @export
 summary.redist_plans = function(object, ...) {

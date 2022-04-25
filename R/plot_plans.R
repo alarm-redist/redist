@@ -343,4 +343,47 @@ redist.plot.plans = function(plans, draws, shp, qty=NULL, interactive=FALSE, ...
     }
 }
 
+#' Make a traceplot for a summary statistic
+#'
+#' For a statistic in a \code{\link{redist_plans}} object,
+#' make a traceplot showing the evolution of the statistic over MCMC iterations.
+#'
+#' @param plans the \code{redist_plans} object.
+#' @param qty \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the statistic.
+#' @param district for \code{redist_plans} objects with multiple districts,
+#'   which \code{district} to subset to for plotting. Set to \code{NULL} to
+#'   perform no subsetting.
+#' @param ... passed on to \code{\link[ggplot2]{geom_line}}
+#'
+#' @returns A ggplot
+#'
+#' @examples
+#' library(dplyr)
+#' data(iowa)
+#'
+#' iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05)
+#' plans = redist_mergesplit_parallel(iowa_map, nsims=200, chains=2, silent=TRUE) %>%
+#'     mutate(dem = group_frac(iowa_map, dem_08, dem_08 + rep_08)) %>%
+#'     number_by(dem)
+#' redist.plot.trace(plans, pop_dev, district=1)
+#'
+#' @concept plot
+#' @export
+redist.plot.trace = function(plans, qty, district=1L, ...) {
+    plans = as.data.frame(plans) %>%
+        filter(!is.na(.data$chain)) %>%
+        mutate(chain = as.factor(.data$chain)) %>%
+        arrange(.data$draw)
+    if (!is.null(district) && "district" %in% names(plans)) {
+        plans = plans[plans$district == district, ]
+    }
+
+    plans = group_by(plans, .data$chain) %>%
+        mutate(.draw = seq_len(n()))
+
+    ggplot(plans, aes(.data$.draw, {{ qty }}, color=.data$chain)) +
+        geom_line(...) +
+        labs(x="Iteration", color="Chain")
+}
+
 utils::globalVariables(c("density", "width", "total_pop"))

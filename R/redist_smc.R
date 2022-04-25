@@ -239,16 +239,18 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
     if (ncores_runs > 1) {
         `%oper%` <- `%dopar%`
         if (!silent)
-            cl = makeCluster(ncores_runs, outfile="", methods=FALSE)
+            cl = makeCluster(ncores_runs, outfile="", methods=FALSE,
+                             useXDR=.Platform$endian != "little")
         else
-            cl = makeCluster(ncores_runs, methods=FALSE)
+            cl = makeCluster(ncores_runs, methods=FALSE,
+                             useXDR=.Platform$endian != "little")
         registerDoParallel(cl)
         on.exit(stopCluster(cl))
     } else {
         `%oper%` <- `%do%`
     }
 
-    all_out = foreach(chain=seq_len(runs)) %oper% {
+    all_out = foreach(chain=seq_len(runs), .inorder=FALSE) %oper% {
         run_verbosity = if (chain == 1) verbosity else 0
         algout = smc_plans(nsims, adj, counties, pop, ndists,
                            pop_bounds[2], pop_bounds[1], pop_bounds[3],
@@ -369,6 +371,78 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
 #'
 redist_quantile_trunc = function(x) pmin(x, quantile(x, 1 - length(x)^(-0.5)))
 
+
+#' Confidence Intervals for SMC Estimates
+#'
+#' Builds a confidence interval for a quantity of interest.
+#' If multiple runs are available, uses the between-run variation to estimate
+#' the standard error. If only one run is available, uses information on the SMC
+#' particle/plan genealogy to estimate the standard error, using the method of
+#' Lee & Whiteley (2018). The multiple-run estimator is more reliable and should
+#' be used when parallelism is available.  All reference plans are ignored.
+#'
+#' @param plans a [redist_plans] object.
+#' @param x the quantity to build an interval for. Tidy-evaluated within `plans`.
+#' @param district for [redist_plans] objects with multiple districts, which
+#'   `district` to subset to. Set to `NULL` to perform no subsetting.
+#' @param conf the desired confidence level.
+#'
+#' @references
+#' Lee, A., & Whiteley, N. (2018). Variance estimation in the particle filter.
+#' Biometrika, 105(3), 609-625.
+#'
+#' @return a vector of length 3: (lower, point estimate, upper).
+#'
+#' @examples
+#' library(dplyr)
+#' data(iowa)
+#'
+#' iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05)
+#' plans = redist_mergesplit_parallel(iowa_map, nsims=200, chains=2, silent=TRUE) %>%
+#'     mutate(dem = group_frac(iowa_map, dem_08, dem_08 + rep_08)) %>%
+#'     number_by(dem)
+#' redist_smc_ci(plans, dem)
+#'
+#' @md
+#' @concept analyze
+#' @export
+redist_smc_ci = function(plans, x, district=1L, conf=0.9) {
+    plans = subset_sampled(plans)
+    x = eval_tidy(enquo(x), plans)
+    if (!is.null(district))
+        x = x[plans$district == district]
+    N = length(x)
+    est = mean(x)
+
+    if ("chain" %in% names(plans)) { # multiple runs
+        chain = plans$chain[plans$district == district]
+        rhat = diag_rhat(x, chain)
+        if (is.finite(rhat) && rhat > 1.05) {
+            cli_warn(c("Runs have not converged for this statistic.",
+                       "i"="R-hat is {round(rhat, 3)}",
+                       ">"="Increase the number of samples."))
+        }
+        run_means = tapply(x, chain, mean) %>%
+            `names<-`(NULL)
+        std_err = sd(run_means)
+    } else {
+        ancestors = attr(plans, "diagnostics")[[1]]$ancestors
+        resid = x# - est
+        cross_fn = function(i, j) {
+            dplyr::if_else(ancestors[i] == ancestors[j], 0, resid[i]*resid[j])
+        }
+
+        cross_sum = sum(outer(seq_len(N), seq_len(N), cross_fn))
+        spl_exp = attr(plans, "ndists") - 2
+        std_err = sqrt(est^2 - (N/(N-1))^spl_exp * cross_sum / (N * (N-1)))
+    }
+
+    alpha = (1 - conf)/2
+
+    est + qt(c(alpha, 0.5, 1-alpha), df=N-1) * std_err
+}
+
+
 #' Confidence Intervals for Importance Sampling Estimates
 #'
 #' Builds a confidence interval for a quantity of interest,
@@ -385,7 +459,7 @@ redist_quantile_trunc = function(x) pmin(x, quantile(x, 1 - length(x)^(-0.5)))
 #' @concept post
 #' @export
 redist.smc_is_ci = function(x, wgt, conf=0.99) {
-    .Deprecated("redist.smc_ci")
+    .Deprecated("redist_smc_ci")
     wgt = wgt / sum(wgt)
     mu = sum(x*wgt)
     sig = sqrt(sum((x - mu)^2 * wgt^2))

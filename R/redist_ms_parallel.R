@@ -189,11 +189,12 @@ redist_mergesplit_parallel = function(map, nsims, chains=1,
     registerDoParallel(cl)
     on.exit(stopCluster(cl))
 
-    out_par <- foreach(chain=seq_len(chains)) %dopar% {
+    out_par <- foreach(chain=seq_len(chains), .inorder=FALSE) %dopar% {
         if (!silent) cat("Starting chain ", chain, "\n", sep="")
+        run_verbosity = if (chain == 1 || verbosity == 3) verbosity else 0
         ms_plans(nsims, adj, init_plans[, chain], counties, pop,
                  ndists, pop_bounds[2], pop_bounds[1], pop_bounds[3],
-                 compactness, constraints, adapt_k_thresh, k, thin, verbosity)
+                 compactness, constraints, adapt_k_thresh, k, thin, run_verbosity)
     }
 
     warmup_idx = c(seq_len(1 + warmup %/% thin), nsims %/% thin + 2L)
