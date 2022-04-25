@@ -8,8 +8,9 @@
 #' computed for each summary statistic. These values should be close to 1.
 #' If they are not, then there is too much between-chain variation, indicating
 #' that there are not enough samples. R-hat values are calculated after
-#' rank-normalization and folding. For summary statistics that vary across
-#' districts, R-hat is calculated for the first district only.
+#' rank-normalization and folding.  MCMC chains are split in half before R-hat
+#' is computed. For summary statistics that vary across districts, R-hat is
+#' calculated for the first district only.
 #'
 #' For SMC, diagnostics statistics include:
 #'
@@ -29,8 +30,8 @@
 #' * **Estimated `k` parameter**: How many spanning tree edges were considered for
 #' cutting at each split. Mostly informational, though large jumps may indicate
 #' a need to increase `adapt_k_thresh`.
-#' * **Bottleneck**: Will show an asterisk if a bottleneck appears likely, based on
-#' the values of the other statistics.
+#' * **Bottleneck**: An asterisk will appear in the right column if a bottleneck
+#' appears likely, based on the values of the other statistics.
 #'
 #' In the event of problematic diagnostics, the function will provide
 #' suggestions for improvement.
@@ -54,7 +55,7 @@ summary.redist_plans = function(object, ...) {
     name = deparse(substitute(object))
 
     object = subset_sampled(object)
-    diagn = attr(object, "diagnostics")
+    all_diagn = attr(object, "diagnostics")
     plans_m = get_plans_matrix(object)
     n_samp = ncol(plans_m)
     n_distr = attr(object, "ndists")
@@ -101,36 +102,50 @@ summary.redist_plans = function(object, ...) {
                 cli::cli_alert_danger("{.strong WARNING:} SMC runs have not converged.")
             }
             cat("\n")
+
         }
 
 
-        out = tibble(n_eff = c(diagn$step_n_eff, diagn$n_eff),
-                     eff = c(diagn$step_n_eff, diagn$n_eff)/n_samp,
-                     accept_rate = c(diagn$accept_rate, NA),
-                     sd_log_wgt = diagn$sd_lp,
-                     max_unique = diagn$unique_survive,
-                     est_k = c(diagn$est_k, NA))
+        run_dfs = list()
+        n_runs = length(all_diagn)
+        n_samp = n_samp / n_runs
+        warn_bottlenecks = FALSE
 
-        tbl_print = as.data.frame(out)
-        min_n = max(0.05*n_samp, min(0.4*n_samp, 100))
-        bottlenecks = dplyr::coalesce(with(tbl_print, pmin(max_unique, n_eff) < min_n), FALSE)
-        tbl_print$bottleneck = ifelse(bottlenecks, "     *     ", "")
-        tbl_print$n_eff = with(tbl_print,
-                str_glue("{fmt_comma(n_eff)} ({sprintf('%0.1f%%', 100*eff)})"))
-        tbl_print$eff = NULL
-        tbl_print$accept_rate = with(tbl_print, sprintf('%0.1f%%', 100*accept_rate))
-        max_pct = with(tbl_print, max_unique/(-n_samp * expm1(-1)))
-        tbl_print$max_unique = with(tbl_print,
-                str_glue("{fmt_comma(max_unique)} ({sprintf('%3.0f%%', 100*max_pct)})"))
+        for (i in seq_len(n_runs)) {
+            diagn = all_diagn[[i]]
 
-        colnames(tbl_print) = c("Eff. samples (%)", "Acc. rate",
-                                "Log wgt. sd", " Max. unique",
-                                "Est. k", "Bottleneck?")
-        rownames(tbl_print) = c(paste("Split", seq_len(n_distr-1)), "Resample")
+            run_dfs[[i]] = tibble(n_eff = c(diagn$step_n_eff, diagn$n_eff),
+                         eff = c(diagn$step_n_eff, diagn$n_eff)/n_samp,
+                         accept_rate = c(diagn$accept_rate, NA),
+                         sd_log_wgt = diagn$sd_lp,
+                         max_unique = diagn$unique_survive,
+                         est_k = c(diagn$est_k, NA))
 
-        if ("chain" %in% cols) cli::cli_alert_info("Sampling diagnostics shown for first SMC run only.")
-        print(tbl_print, digits=2)
-        cat("\n")
+            tbl_print = as.data.frame(run_dfs[[i]])
+            min_n = max(0.05*n_samp, min(0.4*n_samp, 100))
+            bottlenecks = dplyr::coalesce(with(tbl_print, pmin(max_unique, n_eff) < min_n), FALSE)
+            warn_bottlenecks = warn_bottlenecks || any(bottlenecks)
+            tbl_print$bottleneck = ifelse(bottlenecks, " * ", "")
+            tbl_print$n_eff = with(tbl_print,
+                    str_glue("{fmt_comma(n_eff)} ({sprintf('%0.1f%%', 100*eff)})"))
+            tbl_print$eff = NULL
+            tbl_print$accept_rate = with(tbl_print, sprintf('%0.1f%%', 100*accept_rate))
+            max_pct = with(tbl_print, max_unique/(-n_samp * expm1(-1)))
+            tbl_print$max_unique = with(tbl_print,
+                    str_glue("{fmt_comma(max_unique)} ({sprintf('%3.0f%%', 100*max_pct)})"))
+
+            names(tbl_print) = c("Eff. samples (%)", "Acc. rate",
+                                    "Log wgt. sd", " Max. unique",
+                                    "Est. k", "")
+            rownames(tbl_print) = c(paste("Split", seq_len(n_distr-1)), "Resample")
+
+            if ("chain" %in% cols) {
+                cli_text("Sampling diagnostics for SMC run {i} of {n_runs}")
+            }
+            print(tbl_print, digits=2)
+            cat("\n")
+        }
+        out = bind_rows(run_dfs)
 
         cli::cli_li(cli::col_grey("
             Watch out for low effective samples, very low acceptance rates (less than 1%),
@@ -153,15 +168,15 @@ summary.redist_plans = function(object, ...) {
                         If you are experiencing low plan diversity or bottlenecks as well,
                         address those issues first.")
         }
-        if (any(bottlenecks)) {
-            cli::cli_li("{.strong Bottlenecks:} Consider weakening or removing
+        if (warn_bottlenecks) {
+            cli::cli_li("(*) {.strong Bottlenecks found:} Consider weakening or removing
                         constraints, or increasing the population tolerance.
                         If the accpetance rate drops quickly in the final splits,
                         try increasing {.arg pop_temper} by 0.01.
                         To visualize what geographic areas may be causing problems,
                         try running the following code. Highlighted areas are
-                        those that may be causing the bottleneck.")
-            code = str_glue("plot(<map object>, colMeans(as.matrix({name}) %in% c({paste(which(bottlenecks), collapse=', ')})))")
+                        those that may be causing the bottleneck.\n\n")
+            code = str_glue("plot(<map object>, rowMeans(as.matrix({name})) == <bottleneck iteration>)")
             cli::cat_line("    ", cli::code_highlight(code, "Material"))
         }
     } else if (algo == "mergesplit") {
@@ -178,14 +193,21 @@ summary.redist_plans = function(object, ...) {
         cols = names(object)
         addl_cols = setdiff(cols, c("chain", "draw", "district", "total_pop", "mcmc_accept"))
         warn_converge = FALSE
-        if ("chain" %in% cols && length(addl_cols) > 0) {
+        if (length(addl_cols) > 0) {
             idx = seq_len(n_samp)
-            if ("district" %in% cols) idx = 1 + (idx - 1) * n_distr
+            if ("district" %in% cols) {
+                idx = 1 + (idx - 1) * n_distr
+            }
+            if ("chain" %in% cols) {
+                chain = object$chain
+            } else {
+                chain = rep(1, nrow(object))
+            }
 
             rhats = vapply(addl_cols, function(col) {
                 x = object[[col]][idx]
                 na_omit = !is.na(x)
-                diag_rhat(x[na_omit], object$chain[idx][na_omit])
+                diag_rhat(x[na_omit], chain[idx][na_omit], split=TRUE)
             }, numeric(1))
             names(rhats) = addl_cols
             cat("R-hat values for summary statistics:\n")
@@ -215,7 +237,7 @@ summary.redist_plans = function(object, ...) {
         }
         if (warn_converge) {
             cli::cli_li("{.strong Chain convergence:} Increase the number of samples.
-                        If you are experiencing low plan diversity, address that issues first.")
+                        If you are experiencing low plan diversity, address that issue first.")
         }
     } else {
         cli_abort("{.fn summary} is not supported for the {toupper(algo)} algorithm.")
@@ -240,7 +262,12 @@ diag_calc_rhat = function(x, grp) {
     sqrt((var_between / var_within + n - 1) / n)
 }
 
-diag_rhat = function(x, grp) {
+diag_rhat = function(x, grp, split=FALSE) {
+    if (split) {
+        lengths = rle(grp)$lengths
+        grp = grp + do.call(c, lapply(lengths, function(l) rep(c(0.0, 0.5), each=l/2)))
+    }
+
     max(diag_calc_rhat(diag_ranknorm(x), grp),
         diag_calc_rhat(diag_ranknorm(diag_fold(x)), grp))
 }

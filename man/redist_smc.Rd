@@ -11,11 +11,12 @@ redist_smc(
   compactness = 1,
   constraints = list(),
   resample = TRUE,
+  runs = 1L,
   cores = 0L,
   init_particles = NULL,
   n_steps = NULL,
   adapt_k_thresh = 0.985,
-  seq_alpha = 0.2 + 0.3 * compactness,
+  seq_alpha = 0.5,
   truncate = (compactness != 1),
   trunc_fn = redist_quantile_trunc,
   pop_temper = 0,
@@ -23,7 +24,6 @@ redist_smc(
   est_label_mult = 1,
   adjust_labels = TRUE,
   ref_name = NULL,
-  diagnostics = TRUE,
   verbose = FALSE,
   silent = FALSE
 )
@@ -53,9 +53,16 @@ generated plans can be used immediately.  Set this to \code{FALSE} to
 perform direct importance sampling estimates, or to adjust the weights
 manually.}
 
-\item{cores}{How many cores to use to parallelize plan generation. The
-default, 0, will use the number of available cores on the machine as long
-as \code{nsims} and the number of units is large enough.}
+\item{runs}{How many independent parallel runs to conduct. Each run will
+have \code{nsims} simulations. Multiple runs allows for estimation of simulation
+standard errors. Output will only be shown for the first run. For
+compatibility with MCMC methods, runs are identified with the \code{chain}
+column in the output.}
+
+\item{cores}{How many cores to use to parallelize plan generation within each
+run. The default, 0, will use the number of available cores on the machine
+as long as \code{nsims} and the number of units is large enough. If \code{runs>1}
+you will need to set this manually.}
 
 \item{init_particles}{A matrix of partial plans to begin sampling from. For
 advanced use only.  The matrix must have \code{nsims} columns and a row for
@@ -91,7 +98,8 @@ splits.}
 
 \item{final_infl}{A multiplier for the population constraint on the final
 iteration. Used to loosen the constraint when the sampler is getting stuck
-on the final split.}
+on the final split. \code{pop_temper} should be tried first, since using
+\code{final_infl} will actually change the target distribution.}
 
 \item{est_label_mult}{A multiplier for the number of importance samples to
 use in estimating the number of ways to sequentially label the districts.
@@ -101,9 +109,6 @@ there are more than 13 districts.}
 \item{ref_name}{a name for the existing plan, which will be added as a
 reference plan, or \code{FALSE} to not include the initial plan in the
 output. Defaults to the column name of the existing plan.}
-
-\item{diagnostics}{if \code{TRUE} (the default), save diagnostic information to
-the outputted \link{redist_plans} object.}
 
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}
@@ -153,14 +158,11 @@ constr = redist_constr(fl_map)
 constr = add_constr_incumbency(constr, strength=100, incumbents=c(3, 6, 25))
 sampled_constr = redist_smc(fl_map, 10000, constraints=constr)
 
-# Parallel example on 4 cores
-library(doParallel)
-cl = makeCluster(4, methods=FALSE)
-registerDoParallel(cl)
-plans = foreach(seq_len(4), .combine=rbind, .packages="redist") \%dopar\% {
-    redist_smc(fl_map, 1000)
-}
-stopCluster(cl)
+# Multiple parallel independent runs
+redist_smc(fl_map, 1000, runs=4)
+
+# One run with multiple cores
+redist_smc(fl_map, 1000, cores=2)
 }
 
 }

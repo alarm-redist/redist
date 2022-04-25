@@ -110,7 +110,6 @@ test_that('enumpart can sample with population constraints', {
     expect_equal(range(m), c(0, 2))
     # check component sizes
     dev <- redist.parity(m, pop)
-    print(round(dev, 2))
     expect_true(max(dev) <= 0.1)
 })
 

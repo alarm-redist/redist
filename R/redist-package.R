@@ -33,7 +33,6 @@
 #' @keywords package
 #' @import redistmetrics
 #' @importFrom Rcpp evalCpp
-#' @importFrom coda mcmc mcmc.list traceplot autocorr.plot densplot cumuplot gelman.plot
 #' @importFrom parallel makeCluster stopCluster
 #' @importFrom doParallel registerDoParallel
 #' @importFrom foreach foreach %dopar%

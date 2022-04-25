@@ -8,16 +8,18 @@ map = redist_map(shp, ndists=4, pop_tol=0.1)
 
 to_lbl = function(x) paste(x, collapse="")
 
-plans = redist_smc(map, 50e3, compactness=0, seq_alpha=0.5, adjust_labels=T, truncate=F, trunc_fn=NULL)
+plans = redist_smc(map, 100e3, compactness=0, n_runs=2, cores=3, seq_alpha=0.5,
+                   adapt_k_thresh=1.0, verbose=T, truncate=F, trunc_fn=NULL)
 
 renumb = apply(as.matrix(plans), 2, \(x) order(unique(x)))
 m_renumb = redist:::renumber_matrix(as.matrix(plans), renumb)
 
 smc_unlab = as.integer(as.factor(apply(m_renumb, 2, to_lbl)))
-x1 = table(smc_unlab)
+x1 = table(smc_unlab[1:100e3])
+x2 = table(smc_unlab[100e3 + 1:100e3])
 plot(x1)
 
-nlab = tibble(pl=smc_unlab, nlab=exp(attr(plans, "diagnostics")$log_labels)) %>%
+nlab = tibble(pl=smc_unlab, nlab=exp(attr(plans, "diagnostics")[[1]]$log_labels)) %>%
     group_by(pl) %>%
     summarize(nlab = mean(nlab)) %>%
     dplyr::pull(nlab)

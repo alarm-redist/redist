@@ -304,7 +304,7 @@ find_numbering = function(plan, ref, pop, tot_pop) {
 #' @export
 match_numbers = function(data, plan, total_pop=attr(data, "prec_pop"), col="pop_overlap") {
     if (!inherits(data, "redist_plans")) cli_abort("{.arg data} must be a {.cls redist_plans}")
-    if (!"district" %in% colnames(data)) cli_abort("Missing {.field district} colun in {.arg data}")
+    if (!"district" %in% names(data)) cli_abort("Missing {.field district} colun in {.arg data}")
 
     plan_mat = get_plans_matrix(data)
     if (is.character(plan)) plan = plan_mat[,plan]
@@ -356,7 +356,7 @@ match_numbers = function(data, plan, total_pop=attr(data, "prec_pop"), col="pop_
 #' @export
 number_by = function(data, x, desc=FALSE) {
     if (!inherits(data, "redist_plans")) cli_abort("{.arg data} must be a {.cls redist_plans}")
-    if (!"district" %in% colnames(data)) cli_abort("Missing {.field district} colun in {.arg data}")
+    if (!"district" %in% names(data)) cli_abort("Missing {.field district} colun in {.arg data}")
 
     ord = 1 - 2*desc
     m = get_plans_matrix(data)
@@ -617,7 +617,7 @@ prec_assignment = function(prec, .data=cur_plans()) {
     }
 
     assignment = m[prec, , drop=FALSE]
-    if ("district" %in% colnames(.data) && is.factor(.data$district)) {
+    if ("district" %in% names(.data) && is.factor(.data$district)) {
         lev = levels(.data$district)
         assignment = factor(lev[assignment], lev, ordered=is.ordered(.data$district))
     }

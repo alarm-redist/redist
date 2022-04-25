@@ -50,9 +50,15 @@
 #'   generated plans can be used immediately.  Set this to `FALSE` to
 #'   perform direct importance sampling estimates, or to adjust the weights
 #'   manually.
-#' @param cores How many cores to use to parallelize plan generation. The
-#'   default, 0, will use the number of available cores on the machine as long
-#'   as `nsims` and the number of units is large enough.
+#' @param runs How many independent parallel runs to conduct. Each run will
+#'   have `nsims` simulations. Multiple runs allows for estimation of simulation
+#'   standard errors. Output will only be shown for the first run. For
+#'   compatibility with MCMC methods, runs are identified with the `chain`
+#'   column in the output.
+#' @param cores How many cores to use to parallelize plan generation within each
+#'   run. The default, 0, will use the number of available cores on the machine
+#'   as long as `nsims` and the number of units is large enough. If `runs>1`
+#'   you will need to set this manually.
 #' @param init_particles A matrix of partial plans to begin sampling from. For
 #'  advanced use only.  The matrix must have `nsims` columns and a row for
 #'  every precinct. It is important to ensure that the existing districts meet
@@ -80,7 +86,8 @@
 #'   splits.
 #' @param final_infl A multiplier for the population constraint on the final
 #'   iteration. Used to loosen the constraint when the sampler is getting stuck
-#'   on the final split.
+#'   on the final split. `pop_temper` should be tried first, since using
+#'   `final_infl` will actually change the target distribution.
 #' @param est_label_mult A multiplier for the number of importance samples to
 #'   use in estimating the number of ways to sequentially label the districts.
 #'   Lower values increase speed at the cost of accuracy.  Only applied when
@@ -88,8 +95,6 @@
 #' @param ref_name a name for the existing plan, which will be added as a
 #'   reference plan, or `FALSE` to not include the initial plan in the
 #'   output. Defaults to the column name of the existing plan.
-#' @param diagnostics if `TRUE` (the default), save diagnostic information to
-#'   the outputted [redist_plans] object.
 #' @param verbose Whether to print out intermediate information while sampling.
 #'   Recommended.
 #' @param silent Whether to suppress all diagnostic information.
@@ -112,14 +117,11 @@
 #' constr = add_constr_incumbency(constr, strength=100, incumbents=c(3, 6, 25))
 #' sampled_constr = redist_smc(fl_map, 10000, constraints=constr)
 #'
-#' # Parallel example on 4 cores
-#' library(doParallel)
-#' cl = makeCluster(4, methods=FALSE)
-#' registerDoParallel(cl)
-#' plans = foreach(seq_len(4), .combine=rbind, .packages="redist") %dopar% {
-#'     redist_smc(fl_map, 1000)
-#' }
-#' stopCluster(cl)
+#' # Multiple parallel independent runs
+#' redist_smc(fl_map, 1000, runs=4)
+#'
+#' # One run with multiple cores
+#' redist_smc(fl_map, 1000, cores=2)
 #' }
 #'
 #' @concept simulate
@@ -127,12 +129,12 @@
 #' @order 1
 #' @export
 redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list(),
-                      resample=TRUE, cores=0L, init_particles=NULL, n_steps=NULL,
-                      adapt_k_thresh=0.985, seq_alpha=0.2+0.3*compactness,
+                      resample=TRUE, runs=1L, cores=0L, init_particles=NULL,
+                      n_steps=NULL, adapt_k_thresh=0.985, seq_alpha=0.5,
                       truncate=(compactness != 1), trunc_fn=redist_quantile_trunc,
-                      pop_temper=0, final_infl=1,
-                      est_label_mult=1, adjust_labels=TRUE, ref_name=NULL,
-                      diagnostics=TRUE, verbose=FALSE, silent=FALSE) {
+                      pop_temper=0, final_infl=1, est_label_mult=1,
+                      adjust_labels=TRUE, ref_name=NULL,
+                      verbose=FALSE, silent=FALSE) {
     map = validate_redist_map(map)
     V = nrow(map)
     adj = get_adj(map)
@@ -213,8 +215,17 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
         cli_abort("Too many districts already drawn to take {n_steps} steps.")
     }
 
-    cores = as.integer(cores)
-    if (cores == 0 && (nsims/100 * length(adj)/200) < 20) cores = 1L
+    # set up parallel
+    ncores_max = parallel::detectCores()
+    ncores_runs = min(ncores_max, runs)
+    ncores_per = as.integer(cores)
+    if (ncores_per == 0) {
+        if (nsims/100 * length(adj)/200 < 20) {
+            ncores_per = 1L
+        } else {
+            ncores_per = floor(ncores_max / ncores_runs)
+        }
+    }
 
     control = list(adapt_k_thresh=adapt_k_thresh,
                    seq_alpha=seq_alpha,
@@ -222,88 +233,116 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
                    adjust_labels=isTRUE(adjust_labels),
                    pop_temper=pop_temper,
                    final_infl=final_infl,
-                   cores=as.integer(cores))
+                   cores=as.integer(ncores_per))
 
-    algout = smc_plans(nsims, adj, counties, pop, ndists,
-                       pop_bounds[2], pop_bounds[1], pop_bounds[3],
-                       compactness, init_particles, n_drawn, n_steps,
-                       constraints, control, verbosity)
-    if (length(algout) == 0) {
-        cli::cli_process_done()
-        cli::cli_process_done()
-        return(invisible(NULL))
+
+    if (ncores_runs > 1) {
+        `%oper%` <- `%dopar%`
+        if (!silent)
+            cl = makeCluster(ncores_runs, outfile="", methods=FALSE)
+        else
+            cl = makeCluster(ncores_runs, methods=FALSE)
+        registerDoParallel(cl)
+        on.exit(stopCluster(cl))
+    } else {
+        `%oper%` <- `%do%`
     }
 
-    lr = -algout$lp
-    wgt = exp(lr - mean(lr))
-    n_eff = length(wgt) * mean(wgt)^2 / mean(wgt^2)
-    if (any(is.na(lr))) {
-        cli_abort(c("Sampling probabilities have been corrupted.",
-                    "*"="Check that none of your constraint weights are too large.
-                         The output of constraint functions multiplied by the weight
-                         should generally fall in the -5 to 5 range.",
-                    "*"="If you are using custom constraints, make sure that your
-                         constraint function handles all edge cases and never returns
-                         {.val {NA}} or {.val {Inf}}",
-                    "*"="If you are not using any constraints, please call
-                         {.code rlang::trace_back()} and file an issue at
-                         {.url https://github.com/alarm-redist/redist/issues/new}"))
-    }
-
-    n_unique = NA
-    if (resample) {
-        if (!truncate) {
-            mod_wgt = wgt
-        } else if (requireNamespace("loo", quietly=TRUE) && is.null(trunc_fn)) {
-            mod_wgt = wgt / sum(wgt)
-            mod_wgt = loo::weights.importance_sampling(
-                loo::psis(log(mod_wgt), r_eff=NA), log=FALSE)
-        } else {
-            mod_wgt = trunc_fn(wgt)
+    all_out = foreach(chain=seq_len(runs)) %oper% {
+        run_verbosity = if (chain == 1) verbosity else 0
+        algout = smc_plans(nsims, adj, counties, pop, ndists,
+                           pop_bounds[2], pop_bounds[1], pop_bounds[3],
+                           compactness, init_particles, n_drawn, n_steps,
+                           constraints, control, run_verbosity)
+        # handle interrupt
+        if (length(algout) == 0) {
+            cli::cli_process_done()
+            cli::cli_process_done()
         }
-        n_eff = length(mod_wgt) * mean(mod_wgt)^2 / mean(mod_wgt^2)
 
-        rs_idx = sample(nsims, nsims, replace=TRUE, prob=mod_wgt)
-        n_unique = dplyr::n_distinct(rs_idx)
-        algout$plans = algout$plans[, rs_idx, drop=FALSE]
-        algout$log_labels = algout$log_labels[rs_idx]
-    }
-    storage.mode(algout$plans) = "integer"
+        lr = -algout$lp
+        wgt = exp(lr - mean(lr))
+        n_eff = length(wgt) * mean(wgt)^2 / mean(wgt^2)
+        if (any(is.na(lr))) {
+            cli_abort(c("Sampling probabilities have been corrupted.",
+                        "*"="Check that none of your constraint weights are too large.
+                             The output of constraint functions multiplied by the weight
+                             should generally fall in the -5 to 5 range.",
+                        "*"="If you are using custom constraints, make sure that your
+                             constraint function handles all edge cases and never returns
+                             {.val {NA}} or {.val {Inf}}",
+                        "*"="If you are not using any constraints, please call
+                             {.code rlang::trace_back()} and file an issue at
+                             {.url https://github.com/alarm-redist/redist/issues/new}"))
+        }
 
-    if (!is.nan(n_eff) && n_eff/nsims <= 0.05)
-        cli_warn(c("Less than 5% resampling efficiency.",
-                   "*"="Increase the number of samples.",
-                   "*"="Consider weakening or removing constraints.",
-                   "i"="If sampling efficiency drops precipitously in the final
-                        iterations, population balance is likely causing a bottleneck.
-                        Try increasing {.arg pop_temper} by 0.01.",
-                   "i"="If sampling efficiency declines steadily across iterations,
-                        adjusting {.arg seq_alpha} upward may help a bit."))
+        n_unique = NA
+        if (resample) {
+            if (!truncate) {
+                mod_wgt = wgt
+            } else if (requireNamespace("loo", quietly=TRUE) && is.null(trunc_fn)) {
+                mod_wgt = wgt / sum(wgt)
+                mod_wgt = loo::weights.importance_sampling(
+                    loo::psis(log(mod_wgt), r_eff=NA), log=FALSE)
+            } else {
+                mod_wgt = trunc_fn(wgt)
+            }
+            n_eff = length(mod_wgt) * mean(mod_wgt)^2 / mean(mod_wgt^2)
 
-    l_diag = NULL
-    if (isTRUE(diagnostics)) {
-        l_diag = list(
+            rs_idx = sample(nsims, nsims, replace=TRUE, prob=mod_wgt)
+            n_unique = dplyr::n_distinct(rs_idx)
+            algout$plans = algout$plans[, rs_idx, drop=FALSE]
+            #algout$log_labels = algout$log_labels[rs_idx]
+            algout$ancestors = as.integer(algout$ancestors)[rs_idx]
+        }
+        storage.mode(algout$plans) = "integer"
+
+        if (!is.nan(n_eff) && n_eff/nsims <= 0.05)
+            cli_warn(c("Less than 5% resampling efficiency.",
+                       "*"="Increase the number of samples.",
+                       "*"="Consider weakening or removing constraints.",
+                       "i"="If sampling efficiency drops precipitously in the final
+                            iterations, population balance is likely causing a bottleneck.
+                            Try increasing {.arg pop_temper} by 0.01.",
+                       "i"="If sampling efficiency declines steadily across iterations,
+                            adjusting {.arg seq_alpha} upward may help a bit."))
+
+        algout$wgt = wgt
+
+        algout$l_diag = list(
             n_eff = n_eff,
             step_n_eff = algout$step_n_eff,
             adapt_k_thresh = adapt_k_thresh,
             est_k = algout$est_k,
             accept_rate = algout$accept_rate,
             sd_labels = algout$sd_labels,
-            sd_lp = c(algout$sd_lp, sd(algout$lp)),
+            sd_lp = c(algout$sd_lp, sd(lr)),
             cor_labels = algout$cor_labels,
-            log_labels = algout$log_labels,
+            #log_labels = algout$log_labels,
             unique_survive = c(algout$unique_survive, n_unique),
+            ancestors = algout$ancestors,
             seq_alpha = seq_alpha,
             pop_temper = pop_temper
         )
+
+        algout
     }
 
-    out = new_redist_plans(algout$plans, map, "smc", wgt, resample,
+    plans = do.call(cbind, lapply(all_out, function(x) x$plans))
+    wgt = do.call(c, lapply(all_out, function(x) x$wgt))
+    l_diag = lapply(all_out, function(x) x$l_diag)
+    n_dist_act = dplyr::n_distinct(plans[, 1]) # actual number (for partial plans)
+
+    out = new_redist_plans(plans, map, "smc", wgt, resample,
                            ndists = final_dists,
-                           n_eff = n_eff,
+                           n_eff = all_out[[1]]$n_eff,
                            compactness = compactness,
                            constraints = constraints,
                            diagnostics = l_diag)
+    if (runs > 1) {
+        out = mutate(out, chain = rep(seq_len(runs), each=n_dist_act*nsims)) %>%
+        dplyr::relocate(.data$chain, .after="draw")
+    }
 
     exist_name = attr(map, "existing_col")
     if (!is.null(exist_name) && !isFALSE(ref_name) && ndists == final_dists) {
@@ -346,6 +385,7 @@ redist_quantile_trunc = function(x) pmin(x, quantile(x, 1 - length(x)^(-0.5)))
 #' @concept post
 #' @export
 redist.smc_is_ci = function(x, wgt, conf=0.99) {
+    .Deprecated("redist.smc_ci")
     wgt = wgt / sum(wgt)
     mu = sum(x*wgt)
     sig = sqrt(sum((x - mu)^2 * wgt^2))

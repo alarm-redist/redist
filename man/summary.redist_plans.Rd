@@ -23,8 +23,9 @@ For SMC and MCMC, if there are multiple runs/chains, R-hat values will be
 computed for each summary statistic. These values should be close to 1.
 If they are not, then there is too much between-chain variation, indicating
 that there are not enough samples. R-hat values are calculated after
-rank-normalization and folding. For summary statistics that vary across
-districts, R-hat is calculated for the first district only.
+rank-normalization and folding.  MCMC chains are split in half before R-hat
+is computed. For summary statistics that vary across districts, R-hat is
+calculated for the first district only.
 
 For SMC, diagnostics statistics include:
 \itemize{
@@ -44,8 +45,8 @@ leads to a loss of sample diversity and a higher variance.
 \item \strong{Estimated \code{k} parameter}: How many spanning tree edges were considered for
 cutting at each split. Mostly informational, though large jumps may indicate
 a need to increase \code{adapt_k_thresh}.
-\item \strong{Bottleneck}: Will show an asterisk if a bottleneck appears likely, based on
-the values of the other statistics.
+\item \strong{Bottleneck}: An asterisk will appear in the right column if a bottleneck
+appears likely, based on the values of the other statistics.
 }
 
 In the event of problematic diagnostics, the function will provide

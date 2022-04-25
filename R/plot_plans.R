@@ -27,7 +27,7 @@ is_const_num = function(x, grps) {
 #' @export
 plot.redist_plans = function(x, ..., type="distr_qtys") {
     if (rlang::dots_n(...) == 0) {
-        wgts = get_plans_weights(subset_sampled(x))
+        wgts = get_plans_weights(subset_sampled(x, matrix=FALSE))
         if (is.null(wgts))
             return(redist.plot.distr_qtys(x, total_pop, size=0.1))
         n = length(wgts)
@@ -89,7 +89,7 @@ redist.plot.hist = function(plans, qty, bins=NULL, ...) {
     }
 
     percent = function(x) sprintf("%1.0f%%", 100*x)
-    p = ggplot(subset_sampled(plans), aes({{ qty }})) +
+    p = ggplot(subset_sampled(plans, matrix=FALSE), aes({{ qty }})) +
         ggplot2::geom_histogram(aes(y = ggplot2::after_stat(density*width)), ...,
                                 boundary=0.5*is_int, bins=bins) +
         ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0, 0.05)),
@@ -144,7 +144,7 @@ hist.redist_plans = function(x, qty, ...) {
 redist.plot.scatter = function(plans, x, y, ..., bigger=TRUE) {
     if (!inherits(plans, "redist_plans")) cli_abort("{.arg plans} must be a {.cls redist_plans}")
 
-    p = ggplot(subset_sampled(plans), aes(x={{ x }}, y={{ y }})) +
+    p = ggplot(subset_sampled(plans, matrix=FALSE), aes(x={{ x }}, y={{ y }})) +
         ggplot2::geom_point(...)
     if (get_n_ref(plans) > 0) {
         p = p + labs(color="Plan")
@@ -177,6 +177,7 @@ redist.plot.scatter = function(plans, x, y, ..., bigger=TRUE) {
 #' @param color_thresh if a number, the threshold to use in coloring the points.
 #'   Plans with quantities of interest above the threshold will be colored
 #'   differently than plans below the threshold.
+#' @param size The dot size for \code{geom="jitter"}.
 #' @param ... passed on to \code{\link[ggplot2]{geom_boxplot}}
 #'
 #' @returns A ggplot
@@ -194,7 +195,7 @@ redist.plot.scatter = function(plans, x, y, ..., bigger=TRUE) {
 #' @concept plot
 #' @export
 redist.plot.distr_qtys = function(plans, qty, sort="asc", geom="jitter",
-                                  color_thresh=NULL, ...) {
+                                  color_thresh=NULL, size=0.1, ...) {
     if (!inherits(plans, "redist_plans")) cli_abort("{.arg plans} must be a {.cls redist_plans}")
 
     if (isFALSE(sort) || sort == "none") {
@@ -214,17 +215,18 @@ redist.plot.distr_qtys = function(plans, qty, sort="asc", geom="jitter",
                    "Consider using {.fun hist} instead."))
     }
 
+    pl_samp = as.data.frame(subset_sampled(plans, matrix=FALSE))
     if (is.null(color_thresh)) {
-        p = ggplot(subset_sampled(plans), aes(.data$.distr_no, {{ qty }}))
+        p = ggplot(pl_samp, aes(.data$.distr_no, {{ qty }}))
     } else {
         if (!is.numeric(color_thresh)) cli_abort("{.arg color_thresh} must be numeric.")
-        p = ggplot(subset_sampled(plans), aes(.data$.distr_no, {{ qty }},
+        p = ggplot(pl_samp, aes(.data$.distr_no, {{ qty }},
                                               color = {{ qty }} >= color_thresh)) +
             ggplot2::guides(color="none")
     }
 
     if (geom == "jitter") {
-        p = p + ggplot2::geom_jitter(...)
+        p = p + ggplot2::geom_jitter(size=size, ...)
     } else if (geom == "boxplot") {
         p = p + ggplot2::geom_boxplot(..., outlier.size=1)
     } else {
@@ -237,6 +239,7 @@ redist.plot.distr_qtys = function(plans, qty, sort="asc", geom="jitter",
         p = p + labs(x="Ordered district")
 
     if (get_n_ref(plans) > 0) {
+        pl_ref = as.data.frame(subset_ref(plans, matrix=FALSE))
         if (is.null(color_thresh)) {
             p = p + labs(color="Plan", shape="Plan")
             if (geom == "jitter") {
@@ -244,7 +247,7 @@ redist.plot.distr_qtys = function(plans, qty, sort="asc", geom="jitter",
                                                   xend=as.integer(.data$.distr_no)+0.5,
                                                   yend={{ qty }},
                                                   color=.data$draw),
-                             data=subset_ref(plans), size=1.2)
+                             data=pl_ref, size=1.2)
             } else {
                 p = p + ggplot2::geom_point(aes(color=.data$draw), shape=15,
                                             size=2, data=subset_ref(plans))
@@ -256,12 +259,12 @@ redist.plot.distr_qtys = function(plans, qty, sort="asc", geom="jitter",
                                               xend=as.integer(.data$.distr_no)+0.5,
                                               yend={{ qty }},
                                               lty=.data$draw),
-                                          data=subset_ref(plans),
+                                          data=pl_ref,
                                           size=1.2, color="black")
             } else {
                 p = p + labs(shape="Plan") +
                     ggplot2::geom_point(aes(shape=.data$draw), color="black",
-                                        size=2, data=subset_ref(plans))
+                                        size=2, data=pl_ref)
             }
         }
     }

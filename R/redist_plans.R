@@ -62,7 +62,7 @@ validate_redist_plans = function(x) {
 }
 
 reconstruct.redist_plans = function(data, old) {
-    if (!("draw" %in% colnames(data)))
+    if (!("draw" %in% names(data)))
         return(data)
 
     if (!missing(old)) {
@@ -236,26 +236,52 @@ get_sampling_info = function(plans) {
 #' Subset to sampled or reference draws
 #'
 #' @param plans the \code{redist_plans} object
+#' @param matrix if \code{TRUE}, the default, also subset the plans matrix. If
+#'   the plans matrix is not needed, turning this off may save some time.
 #'
 #' @returns a \code{redist_plans} object, with only rows corresponding to
 #' simulated (or reference) draws remaining.
 #'
 #' @concept analyze
 #' @export
-subset_sampled = function(plans) {
+subset_sampled = function(plans, matrix=TRUE) {
     plans_m = get_plans_matrix(plans)
     if (is.null(colnames(plans_m))) return(plans)
-    refs = which(nchar(colnames(plans_m)) > 0)
-    dplyr::filter(plans, !as.integer(.data$draw) %in% refs)
+
+    nm_lengths = nchar(colnames(plans_m))
+    draw_ints = as.integer(plans$draw)
+    idxs = which(nm_lengths[draw_ints] == 0)
+
+    out = vctrs::vec_slice(plans, idxs)
+    out$draw <- droplevels(out$draw)
+
+    idxs = which(nm_lengths[unique(draw_ints)] == 0)
+    attr(out, "wgt") = attr(out, "wgt")[idxs]
+    if (isTRUE(matrix)) {
+        out = set_plan_matrix(out, plans_m[, idxs, drop=FALSE])
+    }
+
+    out
 }
 
 #' @rdname subset_sampled
 #' @export
-subset_ref = function(plans) {
+subset_ref = function(plans, matrix=TRUE) {
     plans_m = get_plans_matrix(plans)
     if (is.null(colnames(plans_m))) return(plans)
-    refs = which(nchar(colnames(plans_m)) > 0)
-    dplyr::filter(plans, as.integer(.data$draw) %in% refs)
+
+    nm_lengths = nchar(colnames(plans_m))
+    draw_ints = as.integer(plans$draw)
+    idxs = which(nm_lengths[draw_ints] > 0)
+
+    out = vctrs::vec_slice(plans, idxs)
+    out$draw <- droplevels(out$draw)
+
+    idxs = which(nm_lengths[unique(draw_ints)] > 0)
+    attr(out, "wgt") = attr(out, "wgt")[idxs]
+    out = set_plan_matrix(out, plans_m[, idxs, drop=FALSE])
+
+    out
 }
 
 #' Extract the Metropolis Hastings Acceptance Rate
@@ -381,6 +407,7 @@ rbind.redist_plans = function(..., deparse.level=1) {
     attr(ret, "constraints") = constr
     attr(ret, "ndists") = ndists
     attr(ret, "prec_pop") = prec_pop
+    attr(ret, "diagnostics") = do.call(c, lapply(objs, function(x) attr(x, "diagnostics")))
     attr(ret, "plans") = do.call(cbind, lapply(objs, function(x) get_plans_matrix(x)))
     attr(ret, "wgt") = do.call(c, lapply(objs, function(x) get_plans_weights(x)))
     attr(ret, "n_eff") = sum(do.call(c, lapply(objs, function(x) attr(x, "n_eff"))))

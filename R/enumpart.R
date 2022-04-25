@@ -208,10 +208,10 @@ redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
 #' cds <- redist.read.enumpart(out_path = paste0(temp,'/enumerated'))
 #' }
 redist.read.enumpart <- function(out_path, skip = 0,  n_max = -1L){
-  sols <- readr::read_lines(paste0(out_path, ".dat"), skip = skip,
-                            n_max = n_max, lazy = FALSE)
-  sols <- apply(do.call("cbind", strsplit(sols, " ")), 2, as.numeric)
-  return(sols + 1L)
+    sols <- readLines(paste0(out_path, ".dat"), n = n_max)
+    if (skip > 0) sols <- sols[-seq_len(skip)]
+    sols <- apply(do.call("cbind", strsplit(sols, " ")), 2, as.numeric)
+    return(sols + 1L)
 }
 
 

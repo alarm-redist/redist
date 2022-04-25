@@ -77,14 +77,14 @@ reconstruct.redist_map = function(data, old) {
         classes = c("sf", classes)
 
     if (!missing(old)) {
-        if (attr(old, "pop_col") %in% colnames(data))
+        if (attr(old, "pop_col") %in% names(data))
             attr(data, "pop_col") = attr(old, "pop_col")
-        if (attr(old, "adj_col") %in% colnames(data))
+        if (attr(old, "adj_col") %in% names(data))
             attr(data, "adj_col") = attr(old, "adj_col")
         if (is.null(attr(data, "merge_idx")))
             attr(data, "merge_idx") = attr(old, "merge_idx")
 
-        if (isTRUE((exist_col <- attr(old, "existing_col")) %in% colnames(data))) {
+        if (isTRUE((exist_col <- attr(old, "existing_col")) %in% names(data))) {
             attr(data, "existing_col") = exist_col
             attr(data, "ndists") = length(unique(data[[exist_col]]))
         } else {
@@ -416,7 +416,7 @@ summarise.redist_map = function(.data, ..., .groups=NULL) {
 
     # rebuild the graph if need be
     adj_col = attr(.data, "adj_col")
-    if (!(adj_col %in% colnames(ret))) {
+    if (!(adj_col %in% names(ret))) {
         ret[[adj_col]] = collapse_adj(get_adj(.data),
                                       dplyr::group_indices(.data) - 1)
     }

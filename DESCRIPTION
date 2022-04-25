@@ -30,17 +30,15 @@ Imports:
     tidyselect,
     stringr,
     dplyr (>= 1.0.0),
-    readr (>= 2.0.0),
     sf,
     doParallel,
     foreach,
     servr,
     sys,
-    coda,
     ggplot2,
     patchwork
 Suggests:
-    igraph,
+    coda,
     s2,
     lwgeom,
     withr,
@@ -53,7 +51,6 @@ Suggests:
     rmapshaper,
     scales,
     units,
-    spdep,
     RSpectra,
     testthat (>= 3.0.0),
     rstudioapi
