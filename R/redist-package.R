@@ -37,7 +37,7 @@
 #' @importFrom doParallel registerDoParallel
 #' @importFrom foreach foreach %dopar%
 #' @importFrom grDevices dev.off pdf
-#' @importFrom stats median runif quantile qnorm IQR optim
+#' @importFrom stats median runif quantile qnorm IQR optim sd qt var
 #' @importFrom utils str
 #' @importFrom dplyr n dplyr_row_slice dplyr_col_modify dplyr_reconstruct .data
 #' @importFrom cli cli_text cli_abort cli_warn cli_inform

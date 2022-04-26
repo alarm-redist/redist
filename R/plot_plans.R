@@ -365,7 +365,7 @@ redist.plot.plans = function(plans, draws, shp, qty=NULL, interactive=FALSE, ...
 #' plans = redist_mergesplit_parallel(iowa_map, nsims=200, chains=2, silent=TRUE) %>%
 #'     mutate(dem = group_frac(iowa_map, dem_08, dem_08 + rep_08)) %>%
 #'     number_by(dem)
-#' redist.plot.trace(plans, pop_dev, district=1)
+#' redist.plot.trace(plans, dem, district=1)
 #'
 #' @concept plot
 #' @export
@@ -382,8 +382,8 @@ redist.plot.trace = function(plans, qty, district=1L, ...) {
         mutate(.draw = seq_len(n()))
 
     ggplot(plans, aes(.data$.draw, {{ qty }}, color=.data$chain)) +
-        geom_line(...) +
-        labs(x="Iteration", color="Chain")
+        ggplot2::geom_line(...) +
+        ggplot2::labs(x="Iteration", color="Chain")
 }
 
 utils::globalVariables(c("density", "width", "total_pop"))

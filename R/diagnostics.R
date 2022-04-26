@@ -39,7 +39,6 @@
 #' @param object a [redist_plans] object
 #' @param \dots additional arguments (ignored)
 #'
-#' @method summary redist_plans
 #' @return A data frame containing diagnostic information, invisibly.
 #'
 #' @examples
@@ -48,6 +47,7 @@
 #' plans = redist_smc(iowa_map, 100)
 #' summary(plans)
 #'
+#' @method summary redist_plans
 #' @concept analyze
 #' @md
 #' @export

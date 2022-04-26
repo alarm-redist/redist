@@ -22,7 +22,6 @@ redist_smc(
   pop_temper = 0,
   final_infl = 1,
   est_label_mult = 1,
-  adjust_labels = TRUE,
   ref_name = NULL,
   verbose = FALSE,
   silent = FALSE
@@ -136,7 +135,7 @@ monitor the efficiency.  If \code{verbose=TRUE} the function will also print
 out information on the \eqn{k_i} values automatically chosen and the
 acceptance rate (based on the population constraint) at each step.
 Users should also check diagnostics of the sample by running
-\code{\link[=summary.redist_plans()]{summary()}}.
+\code{summary.redist_plans()}.
 
 Higher values of \code{compactness} sample more compact districts;
 setting this parameter to 1 is computationally efficient and generates nicely

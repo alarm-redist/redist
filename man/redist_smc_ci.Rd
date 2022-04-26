@@ -24,8 +24,9 @@ Builds a confidence interval for a quantity of interest.
 If multiple runs are available, uses the between-run variation to estimate
 the standard error. If only one run is available, uses information on the SMC
 particle/plan genealogy to estimate the standard error, using the method of
-Lee & Whiteley (2018). The multiple-run estimator is more reliable and should
-be used when parallelism is available.  All reference plans are ignored.
+Lee & Whiteley (2018). The multiple-run estimator is more reliable,
+especially for situations with many districts, and should be used when
+parallelism is available.  All reference plans are ignored.
 }
 \examples{
 library(dplyr)
@@ -41,5 +42,7 @@ redist_smc_ci(plans, dem)
 \references{
 Lee, A., & Whiteley, N. (2018). Variance estimation in the particle filter.
 Biometrika, 105(3), 609-625.
+Olsson, J., & Douc, R. (2019). Numerically stable online estimation of
+variance in particle filters. Bernoulli, 25(2), 1504-1535.
 }
 \concept{analyze}

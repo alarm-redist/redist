@@ -22,7 +22,7 @@
 #' out information on the \eqn{k_i} values automatically chosen and the
 #' acceptance rate (based on the population constraint) at each step.
 #' Users should also check diagnostics of the sample by running
-#' \code{\link[=summary.redist_plans()]{summary()}}.
+#' \code{summary.redist_plans()}.
 #'
 #' Higher values of `compactness` sample more compact districts;
 #' setting this parameter to 1 is computationally efficient and generates nicely
@@ -133,8 +133,7 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
                       n_steps=NULL, adapt_k_thresh=0.985, seq_alpha=0.5,
                       truncate=(compactness != 1), trunc_fn=redist_quantile_trunc,
                       pop_temper=0, final_infl=1, est_label_mult=1,
-                      adjust_labels=TRUE, ref_name=NULL,
-                      verbose=FALSE, silent=FALSE) {
+                      ref_name=NULL, verbose=FALSE, silent=FALSE) {
     map = validate_redist_map(map)
     V = nrow(map)
     adj = get_adj(map)
@@ -230,7 +229,7 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
     control = list(adapt_k_thresh=adapt_k_thresh,
                    seq_alpha=seq_alpha,
                    est_label_mult=est_label_mult,
-                   adjust_labels=isTRUE(adjust_labels),
+                   adjust_labels=isTRUE(getOption("redist.adjust_labels", TRUE)),
                    pop_temper=pop_temper,
                    final_infl=final_infl,
                    cores=as.integer(ncores_per))
@@ -378,8 +377,9 @@ redist_quantile_trunc = function(x) pmin(x, quantile(x, 1 - length(x)^(-0.5)))
 #' If multiple runs are available, uses the between-run variation to estimate
 #' the standard error. If only one run is available, uses information on the SMC
 #' particle/plan genealogy to estimate the standard error, using the method of
-#' Lee & Whiteley (2018). The multiple-run estimator is more reliable and should
-#' be used when parallelism is available.  All reference plans are ignored.
+#' Lee & Whiteley (2018). The multiple-run estimator is more reliable,
+#' especially for situations with many districts, and should be used when
+#' parallelism is available.  All reference plans are ignored.
 #'
 #' @param plans a [redist_plans] object.
 #' @param x the quantity to build an interval for. Tidy-evaluated within `plans`.
@@ -390,6 +390,8 @@ redist_quantile_trunc = function(x) pmin(x, quantile(x, 1 - length(x)^(-0.5)))
 #' @references
 #' Lee, A., & Whiteley, N. (2018). Variance estimation in the particle filter.
 #' Biometrika, 105(3), 609-625.
+#' Olsson, J., & Douc, R. (2019). Numerically stable online estimation of
+#' variance in particle filters. Bernoulli, 25(2), 1504-1535.
 #'
 #' @return a vector of length 3: (lower, point estimate, upper).
 #'
@@ -427,14 +429,8 @@ redist_smc_ci = function(plans, x, district=1L, conf=0.9) {
         std_err = sd(run_means)
     } else {
         ancestors = attr(plans, "diagnostics")[[1]]$ancestors
-        resid = x# - est
-        cross_fn = function(i, j) {
-            dplyr::if_else(ancestors[i] == ancestors[j], 0, resid[i]*resid[j])
-        }
-
-        cross_sum = sum(outer(seq_len(N), seq_len(N), cross_fn))
-        spl_exp = attr(plans, "ndists") - 2
-        std_err = sqrt(est^2 - (N/(N-1))^spl_exp * cross_sum / (N * (N-1)))
+        sum_inner = tapply(x - est, ancestors, sum)^2
+        std_err = sqrt(mean(sum_inner[as.character(ancestors)]) / N)
     }
 
     alpha = (1 - conf)/2

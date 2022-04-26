@@ -48,7 +48,7 @@ validate_redist_constr = function(constr) {
 #' You can view the exact structure of this list by calling [str()].
 #' Constraints may be added by using one of the following functions:
 #'
-#' `r paste0("* [", ls("package:redist")[grep("add_constr_", ls("package:redist"))], "()]", collapse="\n")`
+#' `r paste0("* [", setdiff(ls("package:redist")[grep("add_constr_", ls("package:redist"))], "add_constr_qps"), "()]", collapse="\n")`
 #'
 #' More information about each constraint can be found on the relevant constraint page.
 #'

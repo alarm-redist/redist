@@ -21,7 +21,7 @@
 #' Key to ensuring good performance is monitoring the acceptance rate, which
 #' is reported at the sample level in the output.
 #' Users should also check diagnostics of the sample by running
-#' \code{\link[=summary.redist_plans()]{summary()}}.
+#' \code{summary.redist_plans()}.
 #'
 #' Higher values of \code{compactness} sample more compact districts;
 #' setting this parameter to 1 is computationally efficient and generates nicely
