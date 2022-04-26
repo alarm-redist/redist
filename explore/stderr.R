@@ -6,7 +6,7 @@ data(iowa)
 
 ia = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.02)
 
-plans = redist_smc(ia, 2000, runs=8, seq_alpha=0.5, silent=F) %>%
+plans = redist_smc(ia, 500, runs=8, seq_alpha=0.5, silent=F) %>%
     mutate(dem = group_frac(ia, dem_08, dem_08 + rep_08),
            comp = distr_compactness(ia),
            splits = county_splits(ia, region)) %>%

@@ -28,6 +28,8 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     double est_label_mult = (double) control["est_label_mult"];
     bool adjust_labels = (bool) control["adjust_labels"];
     double final_infl = (double) control["final_infl"];
+    std::vector<int> lags = as<std::vector<int>>(control["lags"]);
+
     int cores = (int) control["cores"];
     if (cores <= 0) cores = std::thread::hardware_concurrency();
     if (cores == 1) cores = 0;
@@ -87,7 +89,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     vec log_temper(N, fill::zeros);
     vec log_labels(N, fill::zeros);
     vec lp(N, fill::zeros);
-    uvec ancestor(N, fill::zeros);
+    umat ancestors(N, lags.size(), fill::zeros);
 
     std::vector<int> cut_k(n_steps);
     std::vector<int> n_unique(n_steps);
@@ -127,8 +129,9 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
         }
         split_maps(g, counties, cg, pop, districts, cum_wgt, lp, pop_left,
                    log_temper, pop_temper, accept_rate[i_split],
-                   n_distr, ctr, dist_grs, log_labels, ancestor, adjust_labels,
-                   est_label_mult, n_unique[i_split], lower, upper, target,
+                   n_distr, ctr, dist_grs, log_labels, ancestors, lags,
+                   adjust_labels, est_label_mult, n_unique[i_split],
+                   lower, upper, target,
                    rho, cut_k[i_split], check_both, pool, verbosity);
 
         vec inc_only = lp - log_labels;
@@ -171,7 +174,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     List out = List::create(
         _["plans"] = districts,
         _["lp"] = lp,
-        _["ancestors"] = ancestor,
+        _["ancestors"] = ancestors,
         _["sd_labels"] = sd_labels,
         _["sd_lp"] = sd_lp,
         _["cor_labels"] = cor_labels,
@@ -341,8 +344,8 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 vec &pop_left, vec &log_temper, double pop_temper,
                 double &accept_rate, int n_distr, int dist_ctr,
                 std::vector<Graph> &dist_grs, vec &log_labels,
-                uvec &ancestor, bool adjust_labels,
-                double est_label_mult, int &n_unique,
+                umat &ancestors, const std::vector<int> &lags,
+                bool adjust_labels, double est_label_mult, int &n_unique,
                 double lower, double upper, double target,
                 double rho, int k, bool check_both,
                 RcppThread::ThreadPool &pool, int verbosity) {
@@ -350,6 +353,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     const int N = districts.n_cols;
     const int new_size = n_distr - dist_ctr;
     const int n_cty = max(counties);
+    const int n_lags = lags.size();
     // heuristic for how many iterations to use in estimating labels, adjusted by user factor
     const int n_est_label = std::floor((dist_ctr == n_distr-1 ? 250 : 80) *
                                        (2 + std::sqrt(dist_ctr)) * est_label_mult);
@@ -360,7 +364,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     vec log_temper_new(N);
     vec log_labels_new(N);
     std::vector<Graph> dist_grs_new(N);
-    uvec ancestor_new(N);
+    umat ancestors_new(N, n_lags);
     uvec uniques(N);
 
     const int reject_check_int = 100; // check for interrupts every _ rejections
@@ -402,10 +406,14 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
             ok = true;
         }
         uniques[i] = idx;
-        if (dist_ctr == 1) {
-            ancestor_new[i] = i;
-        } else {
-            ancestor_new[i] = ancestor[idx];
+
+        // save ancestors/lags
+        for (int j = 0; j < n_lags; j++) {
+            if (dist_ctr <= lags[j]) {
+                ancestors_new(i, j) = i;
+            } else {
+                ancestors_new(i, j) = ancestors(idx, j);
+            }
         }
 
         // make/update district graphs
@@ -476,7 +484,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     log_temper = log_temper_new;
     log_labels = log_labels_new;
     dist_grs = dist_grs_new;
-    ancestor = ancestor_new;
+    ancestors = ancestors_new;
     n_unique = ((uvec) find_unique(uniques)).n_elem;
 }
 

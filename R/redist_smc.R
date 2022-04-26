@@ -226,12 +226,14 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
         }
     }
 
+    lags = 1 + unique(round((ndists - 1)^0.8 * seq(0, 0.7, length.out=4)^0.9))
     control = list(adapt_k_thresh=adapt_k_thresh,
                    seq_alpha=seq_alpha,
                    est_label_mult=est_label_mult,
                    adjust_labels=isTRUE(getOption("redist.adjust_labels", TRUE)),
                    pop_temper=pop_temper,
                    final_infl=final_infl,
+                   lags=lags,
                    cores=as.integer(ncores_per))
 
 
@@ -295,7 +297,8 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
             n_unique = dplyr::n_distinct(rs_idx)
             algout$plans = algout$plans[, rs_idx, drop=FALSE]
             #algout$log_labels = algout$log_labels[rs_idx]
-            algout$ancestors = as.integer(algout$ancestors)[rs_idx]
+            algout$ancestors = algout$ancestors[rs_idx, , drop=FALSE]
+            storage.mode(algout$ancestors) = "integer"
         }
         storage.mode(algout$plans) = "integer"
 
@@ -383,10 +386,10 @@ redist_quantile_trunc = function(x) pmin(x, quantile(x, 1 - length(x)^(-0.5)))
 #' Builds a confidence interval for a quantity of interest.
 #' If multiple runs are available, uses the between-run variation to estimate
 #' the standard error. If only one run is available, uses information on the SMC
-#' particle/plan genealogy to estimate the standard error, using the method of
-#' Lee & Whiteley (2018). The multiple-run estimator is more reliable,
-#' especially for situations with many districts, and should be used when
-#' parallelism is available.  All reference plans are ignored.
+#' particle/plan genealogy to estimate the standard error, using a variant of
+#' the method of Olson & Douc (2019). The multiple-run estimator is more
+#' reliable, especially for situations with many districts, and should be used
+#' when parallelism is available.  All reference plans are ignored.
 #'
 #' @param plans a [redist_plans] object.
 #' @param x the quantity to build an interval for. Tidy-evaluated within `plans`.
@@ -399,6 +402,8 @@ redist_quantile_trunc = function(x) pmin(x, quantile(x, 1 - length(x)^(-0.5)))
 #' Biometrika, 105(3), 609-625.
 #' Olsson, J., & Douc, R. (2019). Numerically stable online estimation of
 #' variance in particle filters. Bernoulli, 25(2), 1504-1535.
+#' H. P. Chan and T. L. Lai. A general theory of particle filters in hidden
+#' Markov models and some applications. Ann. Statist., 41(6):2877–2904, 2013.
 #'
 #' @return a vector of length 3: (lower, point estimate, upper).
 #'
@@ -435,9 +440,11 @@ redist_smc_ci = function(plans, x, district=1L, conf=0.9) {
             `names<-`(NULL)
         std_err = sd(run_means)
     } else {
-        ancestors = attr(plans, "diagnostics")[[1]]$ancestors
-        sum_inner = tapply(x - est, ancestors, sum)^2
-        std_err = sqrt(mean(sum_inner[as.character(ancestors)]) / N)
+        std_errs = apply(attr(plans, "diagnostics")[[1]]$ancestors, 2, function(anc) {
+            sum_inner = tapply(x - est, anc, sum)^2
+            sqrt(mean(sum_inner[as.character(anc)]) / N)
+        })
+        std_err = quantile(std_errs, 0.75)
     }
 
     alpha = (1 - conf)/2
