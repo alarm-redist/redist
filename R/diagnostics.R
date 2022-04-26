@@ -77,9 +77,9 @@ summary.redist_plans = function(object, ...) {
     if (algo == "smc") {
         cli_text("{.strong SMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
                  districts on {fmt_comma(nrow(plans_m))} units")
-        cli_text("{.arg adapt_k_thresh}={format(all_diagn[[1]]$adapt_k_thresh, digits=3)} •
+        cli_text("{.arg adapt_k_thresh}={format(all_diagn[[1]]$adapt_k_thresh, digits=3)} \u2022
                  {.arg seq_alpha}={format(all_diagn[[1]]$seq_alpha, digits=2)}")
-        cli_text("{.arg est_label_mult}={format(all_diagn[[1]]$est_label_mult, digits=2)} •
+        cli_text("{.arg est_label_mult}={format(all_diagn[[1]]$est_label_mult, digits=2)} \u2022
                  {.arg pop_temper}={format(all_diagn[[1]]$pop_temper, digits=3)}")
         cat("\n")
 
