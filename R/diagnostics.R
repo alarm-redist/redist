@@ -62,7 +62,7 @@ summary.redist_plans = function(object, ...) {
     n_distr = attr(object, "ndists")
     if (is.null(n_distr)) n_distr = max(plans_m[,1])
 
-    fmt_comma = function(x) format(x, nsmall=0, big.mark=",")
+    fmt_comma = function(x) format(x, nsmall=0, digits=1, big.mark=",")
 
     prec_pop = attr(object, "prec_pop")
     if (is.null(prec_pop)) {
@@ -77,6 +77,10 @@ summary.redist_plans = function(object, ...) {
     if (algo == "smc") {
         cli_text("{.strong SMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
                  districts on {fmt_comma(nrow(plans_m))} units")
+        cli_text("{.arg adapt_k_thresh}={format(all_diagn[[1]]$adapt_k_thresh, digits=3)} •
+                 {.arg seq_alpha}={format(all_diagn[[1]]$seq_alpha, digits=2)} •
+                 {.arg pop_temper}={format(all_diagn[[1]]$pop_temper, digits=3)}")
+        cat("\n")
 
         cli_text("Plan diversity 80% range: {div_rg[1]} to {div_rg[2]}")
         if (div_bad) cli::cli_alert_danger("{.strong WARNING:} Low plan diversity")

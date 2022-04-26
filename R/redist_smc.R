@@ -249,6 +249,7 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
         `%oper%` <- `%do%`
     }
 
+    t1 = Sys.time()
     all_out = foreach(chain=seq_len(runs), .inorder=FALSE) %oper% {
         run_verbosity = if (chain == 1) verbosity else 0
         algout = smc_plans(nsims, adj, counties, pop, ndists,
@@ -327,6 +328,11 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
         )
 
         algout
+    }
+    if (verbosity >= 2) {
+        t2 = Sys.time()
+        cli_text("{format(nsims*runs, big.mark=',')} plans sampled in
+                 {format(t2-t1, digits=2)}")
     }
 
     plans = do.call(cbind, lapply(all_out, function(x) x$plans))
