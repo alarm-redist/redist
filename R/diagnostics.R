@@ -62,7 +62,7 @@ summary.redist_plans = function(object, ...) {
     n_distr = attr(object, "ndists")
     if (is.null(n_distr)) n_distr = max(plans_m[,1])
 
-    fmt_comma = function(x) format(x, digits=0, big.mark=",")
+    fmt_comma = function(x) format(x, nsmall=0, big.mark=",")
 
     prec_pop = attr(object, "prec_pop")
     if (is.null(prec_pop)) {

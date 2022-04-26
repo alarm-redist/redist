@@ -312,8 +312,8 @@ edge_center_df <- function(shp, adj){
     rowwise() %>%
     mutate(geometry = st_sfc(st_linestring(matrix(
       c(
-        as.numeric(sf::st_geometry(centers)[[i]]),
-        as.numeric(sf::st_geometry(centers)[[j]])
+        as.numeric(sf::st_geometry(centers)[[.data$i]]),
+        as.numeric(sf::st_geometry(centers)[[.data$j]])
       ),
       nrow = 2,
       byrow = TRUE

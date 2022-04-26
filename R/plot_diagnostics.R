@@ -95,9 +95,9 @@ redist.diagplot <- function(sumstat, plot = c("trace", "autocorr", "densplot",
     ########################
     ## Create mcmc object ##
     ########################
-    if(class(sumstat) == "numeric"){
+    if(class(sumstat)[1] == "numeric"){
         segout <- coda::mcmc(sumstat)
-    }else if(class(sumstat) == "list"){
+    }else if(class(sumstat)[1] == "list"){
         for(i in 1:length(sumstat)){
             sumstat[[i]] <- coda::mcmc(sumstat[[i]])
         }
@@ -108,9 +108,9 @@ redist.diagplot <- function(sumstat, plot = c("trace", "autocorr", "densplot",
 
     ## Logit transform
     if(logit){
-        if(class(segout) == "mcmc"){
+        if(class(segout)[1]== "mcmc"){
             segout <- log(segout / (1 - segout))
-        }else if(class(segout) == "mcmc.list"){
+        }else if(class(segout)[1] == "mcmc.list"){
             for(i in 1:length(segout)){
                 segout[[i]] <- log(segout[[i]] / (1 - segout[[i]]))
             }

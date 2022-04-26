@@ -158,7 +158,7 @@ constr = add_constr_incumbency(constr, strength=100, incumbents=c(3, 6, 25))
 sampled_constr = redist_smc(fl_map, 10000, constraints=constr)
 
 # Multiple parallel independent runs
-redist_smc(fl_map, 1000, runs=4)
+redist_smc(fl_map, 1000, runs=2)
 
 # One run with multiple cores
 redist_smc(fl_map, 1000, cores=2)
