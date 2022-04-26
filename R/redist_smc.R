@@ -315,6 +315,7 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
             n_eff = n_eff,
             step_n_eff = algout$step_n_eff,
             adapt_k_thresh = adapt_k_thresh,
+            est_label_mult = est_label_mult,
             est_k = algout$est_k,
             accept_rate = algout$accept_rate,
             sd_labels = algout$sd_labels,
