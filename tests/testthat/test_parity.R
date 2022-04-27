@@ -6,10 +6,3 @@ test_that("parity works", {
   expect_equal(out, expected = expected)
 })
 
-test_that("parallel parity works", {
-  skip_on_os('windows')
-    out1 <- redist.parity(plans=plans_10[, 1:600], total_pop=pop, ncores=1)
-    out2 <- redist.parity(plans=plans_10[, 1:600], total_pop=pop, ncores=2)
-
-    expect_equal(out1, out2)
-})
