@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <set>
+#include <RcppThread.h>
 #include "smc_base.h"
 #include "tree_op.h"
 
