@@ -29,6 +29,7 @@
 #' @param thresh the value to threshold the eigenvector at in determining the
 #'   relevant set of precincts for comparison.
 #' @param labs the names of the panels in the plot.
+#' @param cores the number of parallel cores to use.
 #'
 #' @return If possible, makes a comparison plot according to `plot`. Otherwise
 #'   returns the following list:
@@ -64,7 +65,7 @@
 #' @concept analyze
 #' @export
 compare_plans = function(plans, set1, set2, shp=NULL, plot="fill", thresh=0.1,
-                         labs=c("Set 1", "Set 2")) {
+                         labs=c("Set 1", "Set 2"), cores=1) {
     stopifnot(inherits(plans, "redist_plans"))
 
     if (!missing(set2)) {
@@ -98,8 +99,8 @@ compare_plans = function(plans, set1, set2, shp=NULL, plot="fill", thresh=0.1,
     }
 
     base_co = 1 / max(pm1[, 1]) # baseline coccurence
-    p1 = (n1*prec_cooccur(pm1, set1) + base_co) / (n1 + 1)
-    p2 = (n2*prec_cooccur(pm2, set2) + base_co) / (n2 + 1)
+    p1 = (n1*prec_cooccur(pm1, set1, cores) + base_co) / (n1 + 1)
+    p2 = (n2*prec_cooccur(pm2, set2, cores) + base_co) / (n2 + 1)
 
     if (requireNamespace("RSpectra", quietly=TRUE)) {
         evec1 = RSpectra::eigs_sym(p1 - p2, 2, which="LA", tol=1e-6)$vectors[,1]

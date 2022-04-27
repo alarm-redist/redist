@@ -340,12 +340,12 @@ double eval_er(const subview_col<uword> &districts, const Graph g, int ndists) {
  * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,
  * given a collection of plans
  */
-mat prec_cooccur(umat m, uvec idxs) {
+mat prec_cooccur(umat m, uvec idxs, int ncores) {
     int v = m.n_rows;
     int n = idxs.n_elem;
     mat out(v, v);
 
-    for (int i = 0; i < v; i++) {
+    RcppThread::parallelFor(0, v, [&] (int i) {
         out(i, i) = 1;
         for (int j = 0; j < i; j++) {
             double shared = 0;
@@ -356,7 +356,7 @@ mat prec_cooccur(umat m, uvec idxs) {
             out(i, j) = shared;
             out(j, i) = shared;
         }
-    }
+    }, ncores);
 
     return out;
 }

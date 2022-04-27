@@ -3,7 +3,7 @@
 #include <stdlib.h> // for NULL
 #include <R_ext/Rdynload.h>
 
-/* FIXME: 
+/* FIXME:
    Check these declarations against the C/Fortran source code.
 */
 
@@ -37,7 +37,7 @@ extern SEXP _redist_n_removed(SEXP, SEXP, SEXP);
 extern SEXP _redist_plan_joint(SEXP, SEXP, SEXP);
 extern SEXP _redist_polsbypopper(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_pop_tally(SEXP, SEXP, SEXP);
-extern SEXP _redist_prec_cooccur(SEXP, SEXP);
+extern SEXP _redist_prec_cooccur(SEXP, SEXP, SEXP);
 extern SEXP _redist_reduce_adj(SEXP, SEXP, SEXP);
 extern SEXP _redist_reindex(SEXP, SEXP);
 extern SEXP _redist_renumber_matrix(SEXP, SEXP);
@@ -47,7 +47,6 @@ extern SEXP _redist_solve_hungarian(SEXP);
 extern SEXP _redist_splits(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_swMH(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_update_conncomp(SEXP, SEXP, SEXP);
-extern SEXP _redist_var_info_mat(SEXP, SEXP, SEXP);
 extern SEXP _redist_var_info_vec(SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
@@ -80,7 +79,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_plan_joint",            (DL_FUNC) &_redist_plan_joint,             3},
     {"_redist_polsbypopper",          (DL_FUNC) &_redist_polsbypopper,           6},
     {"_redist_pop_tally",             (DL_FUNC) &_redist_pop_tally,              3},
-    {"_redist_prec_cooccur",          (DL_FUNC) &_redist_prec_cooccur,           2},
+    {"_redist_prec_cooccur",          (DL_FUNC) &_redist_prec_cooccur,           3},
     {"_redist_reduce_adj",            (DL_FUNC) &_redist_reduce_adj,             3},
     {"_redist_reindex",               (DL_FUNC) &_redist_reindex,                2},
     {"_redist_renumber_matrix",       (DL_FUNC) &_redist_renumber_matrix,        2},
@@ -90,7 +89,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_splits",                (DL_FUNC) &_redist_splits,                 4},
     {"_redist_swMH",                  (DL_FUNC) &_redist_swMH,                  20},
     {"_redist_update_conncomp",       (DL_FUNC) &_redist_update_conncomp,        3},
-    {"_redist_var_info_mat",          (DL_FUNC) &_redist_var_info_mat,           3},
     {"_redist_var_info_vec",          (DL_FUNC) &_redist_var_info_vec,           3},
     {NULL, NULL, 0}
 };

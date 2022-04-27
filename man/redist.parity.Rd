@@ -5,7 +5,7 @@
 \alias{plan_parity}
 \title{Calculates Maximum Deviation from Population Parity}
 \usage{
-redist.parity(plans, total_pop, ncores = 1)
+redist.parity(plans, total_pop)
 
 plan_parity(map, .data = cur_plans(), ...)
 }
@@ -14,8 +14,6 @@ plan_parity(map, .data = cur_plans(), ...)
 map. Required.}
 
 \item{total_pop}{A numeric vector with the population for every precinct.}
-
-\item{ncores}{Number of cores to use for parallel computing. Default is 1.}
 
 \item{map}{a \code{\link{redist_map}} object}
 

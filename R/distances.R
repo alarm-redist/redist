@@ -101,7 +101,7 @@ redist.distances <- function(plans, measure = "Hamming",
         if (min(plans) == 0)
             plans = plans + 1
 
-        vi <- redistmetrics::dist_info(plans = plans, shp = data.frame(), total_pop = total_pop)
+        vi <- redistmetrics::dist_info(plans, data.frame(), total_pop, ncores)
 
         done = done + 1
         distances[[done]] <- vi

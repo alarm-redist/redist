@@ -186,7 +186,7 @@ redist_mergesplit_parallel = function(map, nsims, chains=1,
         cl = makeCluster(ncores, setup_strategy="sequential", outfile="", methods=FALSE)
     else
         cl = makeCluster(ncores, setup_strategy="sequential", methods=FALSE)
-    registerDoParallel(cl)
+    doParallel::registerDoParallel(cl)
     on.exit(stopCluster(cl))
 
     out_par <- foreach(chain=seq_len(chains), .inorder=FALSE) %dopar% {

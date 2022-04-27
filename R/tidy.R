@@ -635,20 +635,21 @@ prec_assignment = function(prec, .data=cur_plans()) {
 #' @param which [`<data-masking>`][dplyr::dplyr_data_masking] which plans to
 #'   compute the co-occurrence over.  Defaults to all.
 #' @param sampled_only if `TRUE`, do not include reference plans.
+#' @param cores the number of parallel cores to use in the computation.
 #'
 #' @return a symmetric matrix the size of the number of precincts.
 #'
 #' @concept analyze
 #' @md
 #' @export
-prec_cooccurrence = function(plans, which=NULL, sampled_only=TRUE) {
+prec_cooccurrence = function(plans, which=NULL, sampled_only=TRUE, cores=1) {
     if (sampled_only)
         plans = subset_sampled(plans)
     which = eval_tidy(enquo(which), plans)
     plan_m = get_plans_matrix(plans)
     if (is.null(which))
         which = seq_len(ncol(plan_m))
-    prec_cooccur(plan_m, which)
+    prec_cooccur(plan_m, which, cores)
 }
 
 

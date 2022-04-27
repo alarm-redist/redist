@@ -34,8 +34,7 @@
 #' @import redistmetrics
 #' @importFrom Rcpp evalCpp
 #' @importFrom parallel makeCluster stopCluster
-#' @importFrom doParallel registerDoParallel
-#' @importFrom foreach foreach %dopar%
+#' @importFrom foreach foreach %dopar% %do%
 #' @importFrom grDevices dev.off pdf
 #' @importFrom stats median runif quantile qnorm IQR optim sd qt var
 #' @importFrom utils str

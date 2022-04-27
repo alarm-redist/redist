@@ -15,14 +15,12 @@
 #' @param plans A matrix with one row for each precinct and one column for each
 #'   map. Required.
 #' @param total_pop A numeric vector with the population for every precinct.
-#' @param ncores Number of cores to use for parallel computing. Default is 1.
 #'
-#' @importFrom foreach %do% %dopar% foreach
 #' @return numeric vector with the population parity for each column
 #'
 #' @concept analyze
 #' @export
-redist.parity <- function(plans, total_pop, ncores = 1) {
+redist.parity <- function(plans, total_pop) {
     if (!is.numeric(total_pop)) {
         cli_abort("{.arg total_pop} must be a numeric vector")
     }

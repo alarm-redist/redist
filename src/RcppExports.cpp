@@ -295,14 +295,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // prec_cooccur
-arma::mat prec_cooccur(arma::umat m, arma::uvec idxs);
-RcppExport SEXP _redist_prec_cooccur(SEXP mSEXP, SEXP idxsSEXP) {
+arma::mat prec_cooccur(arma::umat m, arma::uvec idxs, int ncores);
+RcppExport SEXP _redist_prec_cooccur(SEXP mSEXP, SEXP idxsSEXP, SEXP ncoresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::umat >::type m(mSEXP);
     Rcpp::traits::input_parameter< arma::uvec >::type idxs(idxsSEXP);
-    rcpp_result_gen = Rcpp::wrap(prec_cooccur(m, idxs));
+    Rcpp::traits::input_parameter< int >::type ncores(ncoresSEXP);
+    rcpp_result_gen = Rcpp::wrap(prec_cooccur(m, idxs, ncores));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -564,19 +565,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type num_cold_steps(num_cold_stepsSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
     rcpp_result_gen = Rcpp::wrap(swMH(aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parity, beta_sequence, beta_weights, lambda, beta, adapt_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, num_hot_steps, num_annealing_steps, num_cold_steps, verbose));
-    return rcpp_result_gen;
-END_RCPP
-}
-// var_info_mat
-NumericVector var_info_mat(IntegerMatrix m, int i, NumericVector pop);
-RcppExport SEXP _redist_var_info_mat(SEXP mSEXP, SEXP iSEXP, SEXP popSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerMatrix >::type m(mSEXP);
-    Rcpp::traits::input_parameter< int >::type i(iSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type pop(popSEXP);
-    rcpp_result_gen = Rcpp::wrap(var_info_mat(m, i, pop));
     return rcpp_result_gen;
 END_RCPP
 }

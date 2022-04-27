@@ -113,7 +113,7 @@ double eval_er(const subview_col<uword> &districts, const Graph g, int ndists);
  * given a collection of plans
  */
 // [[Rcpp::export]]
-arma::mat prec_cooccur(arma::umat m, arma::uvec idxs);
+arma::mat prec_cooccur(arma::umat m, arma::uvec idxs, int ncores=0);
 
 /*
  * Compute the percentage of `group` in each district. Asummes `m` is 1-indexed.
