@@ -370,6 +370,7 @@ redist.plot.plans = function(plans, draws, shp, qty=NULL, interactive=FALSE, ...
 #' @concept plot
 #' @export
 redist.plot.trace = function(plans, qty, district=1L, ...) {
+    if (!"chain" %in% names(plans)) plans$chain = 1
     plans = as.data.frame(plans) %>%
         filter(!is.na(.data$chain)) %>%
         mutate(chain = as.factor(.data$chain)) %>%
