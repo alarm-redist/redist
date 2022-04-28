@@ -191,23 +191,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// cppGeneratePartitions
-List cppGeneratePartitions(List adjList, int numBlocks, NumericVector popSizes, int numConstraintLow, int numConstraintHigh, double popConstraintLow, double popConstraintHigh);
-RcppExport SEXP _redist_cppGeneratePartitions(SEXP adjListSEXP, SEXP numBlocksSEXP, SEXP popSizesSEXP, SEXP numConstraintLowSEXP, SEXP numConstraintHighSEXP, SEXP popConstraintLowSEXP, SEXP popConstraintHighSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< List >::type adjList(adjListSEXP);
-    Rcpp::traits::input_parameter< int >::type numBlocks(numBlocksSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type popSizes(popSizesSEXP);
-    Rcpp::traits::input_parameter< int >::type numConstraintLow(numConstraintLowSEXP);
-    Rcpp::traits::input_parameter< int >::type numConstraintHigh(numConstraintHighSEXP);
-    Rcpp::traits::input_parameter< double >::type popConstraintLow(popConstraintLowSEXP);
-    Rcpp::traits::input_parameter< double >::type popConstraintHigh(popConstraintHighSEXP);
-    rcpp_result_gen = Rcpp::wrap(cppGeneratePartitions(adjList, numBlocks, popSizes, numConstraintLow, numConstraintHigh, popConstraintLow, popConstraintHigh));
-    return rcpp_result_gen;
-END_RCPP
-}
 // log_st_map
 NumericVector log_st_map(const Graph& g, const arma::umat& districts, const arma::uvec& counties, int n_distr);
 RcppExport SEXP _redist_log_st_map(SEXP gSEXP, SEXP districtsSEXP, SEXP countiesSEXP, SEXP n_distrSEXP) {
@@ -369,19 +352,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type thin(thinSEXP);
     Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
     rcpp_result_gen = Rcpp::wrap(ms_plans(N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, thresh, k, thin, verbosity));
-    return rcpp_result_gen;
-END_RCPP
-}
-// agg_p2d
-IntegerMatrix agg_p2d(IntegerMatrix dm, IntegerVector vote, int nd);
-RcppExport SEXP _redist_agg_p2d(SEXP dmSEXP, SEXP voteSEXP, SEXP ndSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerMatrix >::type dm(dmSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type vote(voteSEXP);
-    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
-    rcpp_result_gen = Rcpp::wrap(agg_p2d(dm, vote, nd));
     return rcpp_result_gen;
 END_RCPP
 }

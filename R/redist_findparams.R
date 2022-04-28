@@ -371,7 +371,7 @@ redist.findparams <- function(map,
         doParallel::registerDoParallel(cl)
 
         ## Execute foreach loop
-        ret <- foreach(i = 1:trials, .verbose = verbose) %dopar% {
+        ret <- foreach(i = 1:trials, .verbose = verbose) %dorng% {
 
             ## Run simulations
             run_sims(i, params, map, nsims, init_plan,

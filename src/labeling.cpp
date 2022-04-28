@@ -23,8 +23,7 @@ double log_labelings_exact(const Graph &g) {
         accuml += std::exp(xchild[i] - max_x);
     }
 
-    // TODO subtract lgamma(n+1)
-    return std::log(accuml) + max_x;
+    return std::log(accuml);
 }
 
 // recursion helper
@@ -141,6 +140,5 @@ double log_labelings_IS(const Graph &g, int n) {
         if (lp[i] < min_lp) min_lp = lp[i];
     }
 
-    // TODO subtract
-    return std::log(sum(exp(min_lp - lp))) - min_lp - std::log(n);
+    return std::log(sum(exp(min_lp - lp)));
 }

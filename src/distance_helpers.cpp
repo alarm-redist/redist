@@ -21,26 +21,26 @@ NumericMatrix distance_matrix(NumericVector x, NumericVector y) {
       out(c, r) = d;
     }
   }
-  
+
   return(out);
 }
 
 
 int closest_adj(IntegerVector adj,
                 int i_dist,
-                NumericVector x, 
+                NumericVector x,
                 NumericVector y){
-  
+
   if(adj.size() == 1){
     return adj[0];
   }
-  
-  // inits 
-  double min_distance = distance(x[i_dist], x[adj[0]], y[i_dist], y[adj[0]]); 
+
+  // inits
+  double min_distance = distance(x[i_dist], x[adj[0]], y[i_dist], y[adj[0]]);
   int min_district = adj[0];
   int curr_distance;
-  
-  
+
+
   // loop
   for(int j = 1; j < adj.size(); j++){
     curr_distance = distance(x[i_dist], x[adj[j]], y[i_dist], y[adj[j]]);
@@ -49,7 +49,7 @@ int closest_adj(IntegerVector adj,
       min_district = adj[j];
     }
   }
-  
+
   return min_district;
 }
 

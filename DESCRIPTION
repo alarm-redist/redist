@@ -33,6 +33,7 @@ Imports:
     sf,
     doParallel,
     foreach,
+    doRNG,
     servr,
     sys,
     ggplot2,

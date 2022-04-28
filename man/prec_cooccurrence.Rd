@@ -4,7 +4,7 @@
 \alias{prec_cooccurrence}
 \title{Compute a matrix of precinct co-occurrences}
 \usage{
-prec_cooccurrence(plans, which = NULL, sampled_only = TRUE, cores = 1)
+prec_cooccurrence(plans, which = NULL, sampled_only = TRUE, ncores = 1)
 }
 \arguments{
 \item{plans}{a \link{redist_plans} object.}
@@ -14,7 +14,7 @@ compute the co-occurrence over.  Defaults to all.}
 
 \item{sampled_only}{if \code{TRUE}, do not include reference plans.}
 
-\item{cores}{the number of parallel cores to use in the computation.}
+\item{ncores}{the number of parallel cores to use in the computation.}
 }
 \value{
 a symmetric matrix the size of the number of precincts.

@@ -58,7 +58,7 @@ ggplot(ses, aes(refs)) +
 
 
 res = map_dfr(cli::cli_progress_along(1:100), function(i) {
-    plans = redist_smc(ia, 1000, cores=4, seq_alpha=0.5, silent=T) %>%
+    plans = redist_smc(ia, 1000, ncores=4, seq_alpha=0.5, silent=T) %>%
         mutate(dem = group_frac(ia, dem_08, dem_08 + rep_08)) %>%
         number_by(dem)
 
@@ -97,7 +97,7 @@ if (FALSE) {
         tic()
         plans_smc = redist_smc(pa, 1000, counties=county,
                                pop_temper=0.01, seq_alpha=0.65,
-                               n_runs=4, cores=2, verbose=TRUE)
+                               n_runs=4, ncores=2, verbose=TRUE)
         toc()
 
         tic()

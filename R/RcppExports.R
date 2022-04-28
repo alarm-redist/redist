@@ -53,10 +53,6 @@ dist_dist_diff <- function(p, i_dist, j_dist, x_center, y_center, x, y) {
     .Call(`_redist_dist_dist_diff`, p, i_dist, j_dist, x_center, y_center, x, y)
 }
 
-cppGeneratePartitions <- function(adjList, numBlocks, popSizes, numConstraintLow, numConstraintHigh, popConstraintLow, popConstraintHigh) {
-    .Call(`_redist_cppGeneratePartitions`, adjList, numBlocks, popSizes, numConstraintLow, numConstraintHigh, popConstraintLow, popConstraintHigh)
-}
-
 log_st_map <- function(g, districts, counties, n_distr) {
     .Call(`_redist_log_st_map`, g, districts, counties, n_distr)
 }
@@ -103,10 +99,6 @@ max_dev <- function(districts, pop, n_distr) {
 
 ms_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, thresh, k, thin, verbosity) {
     .Call(`_redist_ms_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, thresh, k, thin, verbosity)
-}
-
-agg_p2d <- function(dm, vote, nd) {
-    .Call(`_redist_agg_p2d`, dm, vote, nd)
 }
 
 closest_adj_pop <- function(adj, i_dist, g_prop) {

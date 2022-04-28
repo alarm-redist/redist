@@ -55,7 +55,7 @@
 #'   standard errors. Output will only be shown for the first run. For
 #'   compatibility with MCMC methods, runs are identified with the `chain`
 #'   column in the output.
-#' @param cores How many cores to use to parallelize plan generation within each
+#' @param ncores How many cores to use to parallelize plan generation within each
 #'   run. The default, 0, will use the number of available cores on the machine
 #'   as long as `nsims` and the number of units is large enough. If `runs>1`
 #'   you will need to set this manually.
@@ -121,7 +121,7 @@
 #' redist_smc(fl_map, 1000, runs=2)
 #'
 #' # One run with multiple cores
-#' redist_smc(fl_map, 1000, cores=2)
+#' redist_smc(fl_map, 1000, ncores=2)
 #' }
 #'
 #' @concept simulate
@@ -129,7 +129,7 @@
 #' @order 1
 #' @export
 redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list(),
-                      resample=TRUE, runs=1L, cores=0L, init_particles=NULL,
+                      resample=TRUE, runs=1L, ncores=0L, init_particles=NULL,
                       n_steps=NULL, adapt_k_thresh=0.985, seq_alpha=0.5,
                       truncate=(compactness != 1), trunc_fn=redist_quantile_trunc,
                       pop_temper=0, final_infl=1, est_label_mult=1,
@@ -217,7 +217,7 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
     # set up parallel
     ncores_max = parallel::detectCores()
     ncores_runs = min(ncores_max, runs)
-    ncores_per = as.integer(cores)
+    ncores_per = as.integer(ncores)
     if (ncores_per == 0) {
         if (nsims/100 * length(adj)/200 < 20) {
             ncores_per = 1L
@@ -238,7 +238,7 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
 
 
     if (ncores_runs > 1) {
-        `%oper%` <- `%dopar%`
+        `%oper%` <- `%dorng%`
         if (!silent)
             cl = makeCluster(ncores_runs, outfile="", methods=FALSE,
                              useXDR=.Platform$endian != "little")

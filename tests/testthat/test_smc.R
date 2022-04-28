@@ -82,11 +82,11 @@ test_that("Partial sampling works accurately", {
 
     out1 = redist_smc(set_pop_tol(fl_map, 0.01), 3000, compactness=0,
                       n_steps=1, adapt_k_thresh=1, seq_alpha=0.5,
-                      resample=T, silent=T) %>%
+                      resample=TRUE, silent=TRUE) %>%
         suppressWarnings() # efficiency
     out2 = redist_smc(set_pop_tol(fl_map, 0.01), 3000, compactness=0,
                       init_particles=as.matrix(out1),
-                      adapt_k_thresh=1, seq_alpha=0.5, resample=F, silent=T) %>%
+                      adapt_k_thresh=1, seq_alpha=0.5, resample=F, silent=TRUE) %>%
         suppressWarnings() # efficiency
     log_st = round(log_st_map(adj, as.matrix(out2), rep(1L, 25), 3L), 5)
     types = match(log_st, log_st_ref)
@@ -136,3 +136,10 @@ test_that("SMC checks arguments", {
     expect_error(redist_smc(fl_map, 0), "positive")
 })
 
+test_that("Parallel runs are reproducible", {
+    set.seed(5118)
+    pl1 = redist_smc(fl_map, 100, runs=2, silent=TRUE)
+    set.seed(5118)
+    pl2 = redist_smc(fl_map, 100, runs=2, silent=TRUE)
+    expect_identical(pl1, pl2)
+})

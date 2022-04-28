@@ -8,7 +8,7 @@ map = redist_map(shp, ndists=4, pop_tol=0.1)
 
 to_lbl = function(x) paste(x, collapse="")
 
-plans = redist_smc(map, 100e3, compactness=0, n_runs=2, cores=3, seq_alpha=0.5,
+plans = redist_smc(map, 100e3, compactness=0, n_runs=2, ncores=3, seq_alpha=0.5,
                    adapt_k_thresh=1.0, verbose=T, truncate=F, trunc_fn=NULL)
 
 renumb = apply(as.matrix(plans), 2, \(x) order(unique(x)))

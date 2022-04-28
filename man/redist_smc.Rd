@@ -12,7 +12,7 @@ redist_smc(
   constraints = list(),
   resample = TRUE,
   runs = 1L,
-  cores = 0L,
+  ncores = 0L,
   init_particles = NULL,
   n_steps = NULL,
   adapt_k_thresh = 0.985,
@@ -58,7 +58,7 @@ standard errors. Output will only be shown for the first run. For
 compatibility with MCMC methods, runs are identified with the \code{chain}
 column in the output.}
 
-\item{cores}{How many cores to use to parallelize plan generation within each
+\item{ncores}{How many cores to use to parallelize plan generation within each
 run. The default, 0, will use the number of available cores on the machine
 as long as \code{nsims} and the number of units is large enough. If \code{runs>1}
 you will need to set this manually.}
@@ -161,7 +161,7 @@ sampled_constr = redist_smc(fl_map, 10000, constraints=constr)
 redist_smc(fl_map, 1000, runs=2)
 
 # One run with multiple cores
-redist_smc(fl_map, 1000, cores=2)
+redist_smc(fl_map, 1000, ncores=2)
 }
 
 }

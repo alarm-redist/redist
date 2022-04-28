@@ -3,6 +3,8 @@
 * New diagnostic-checking function, `summary.redist_plans()`
 * Many bug fixes (see https://github.com/alarm-redist/redist/issues)
 * Remove deprecated functions
+* Parallel computing support for the SMC algorithm, both within and across sampling runs
+* Reproducible parallelism across the package, via `doRNG`
 * Update the SMC algorithm to include a missing correction factor for the number
 of ways to sequentially label districts. This factor should not have an effect
 on substantive conclusions and summary statistics.
