@@ -445,7 +445,8 @@ print.redist_plans = function(x, ...) {
                  rsg="random seed-and-grow",
                  crsg="compact random seed-and-grow",
                  enumpart="Enumpart",
-                 shortburst="short bursts")[attr(x, "algorithm")]
+                 shortburst="short bursts",
+                 none="a custom collection")[attr(x, "algorithm")]
     if (is.na(alg_name)) alg_name = "an unknown algorithm"
 
     cli_text("Plans have {nd} districts from a {nrow(plans_m)}-unit map,

@@ -193,6 +193,9 @@ redist_map = function(..., existing_plan=NULL, pop_tol=NULL,
         cli_warn(c("Multiple potential population columns found, using {.field {pop_col}}.",
                    ">"="Consider specifying {.arg total_pop} manually."))
     }
+    if (any(is.na(x[[pop_col]]))) {
+        cli_abort("The population column {.field {pop_col}} must have no missing values.")
+    }
 
     existing_col = names(tidyselect::eval_select(rlang::enquo(existing_plan), x))
     if (length(existing_col) == 0)
