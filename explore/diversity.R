@@ -1,6 +1,4 @@
 # Understand how VI scales -----
-if (FALSE) {
-
 library(sf)
 
 
@@ -44,4 +42,3 @@ tibble(size = size, n_distr = n_distr,
        max = max(div),
        mean = mean(div))
 
-}

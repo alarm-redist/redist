@@ -101,7 +101,7 @@ redist.distances <- function(plans, measure = "Hamming",
         if (min(plans) == 0)
             plans = plans + 1
 
-        vi <- redistmetrics::dist_info(plans = plans, shp = data.frame(), total_pop = total_pop)
+        vi <- redistmetrics::dist_info(plans, data.frame(), total_pop, ncores)
 
         done = done + 1
         distances[[done]] <- vi
@@ -135,8 +135,8 @@ plan_distances = function(plans, measure="variation of information", ncores=1) {
 #' Returns the off-diagonal elements of the variation of information distance
 #' matrix for a sample of plans, which can be used as a diagnostic measure to
 #' assess the diversity of a set of plans. While the exact scale varies depending
-#' on the number of precicnts and districts, generally diversity is good if most
-#' of the values are greater than 0.5. Converseley, if there are many values
+#' on the number of precincts and districts, generally diversity is good if most
+#' of the values are greater than 0.5. Conversely, if there are many values
 #' close to zero, then the sample has many similar plans and may not be a good
 #' approximation to the target distribution.
 #'

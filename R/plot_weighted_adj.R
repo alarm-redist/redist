@@ -66,7 +66,7 @@ redist.plot.wted.adj <- function(shp, plans, counties = NULL,
         geom_sf(data = cty, size = 0.4, fill = NA)
 
       nb <- nb %>%
-        filter(counties[i] != counties[j])
+        filter(counties[.data$i] != counties[.data$j])
     }
 
     if (is.logical(ref)) {
@@ -95,7 +95,7 @@ redist.plot.wted.adj <- function(shp, plans, counties = NULL,
   # Add weighted adj ----
   cooc <- prec_cooccur(plans, seq_len(ncol(plans)))
   nb <- nb %>%
-    mutate(wt = cooc[i, j])
+    mutate(wt = cooc[.data$i, .data$j])
 
   p <- p +
     geom_sf(data = nb, aes(color = nb$wt), lwd = 1) +
@@ -132,7 +132,7 @@ redist.wted.adj <- function(map = NULL, plans = NULL) {
   # Add weighted adj ----
   cooc <- prec_cooccur(plans, seq_len(ncol(plans)))
   nb <- nb %>%
-    mutate(wt = cooc[i, j])
+    mutate(wt = cooc[.data$i, .data$j])
 
   nb
 }

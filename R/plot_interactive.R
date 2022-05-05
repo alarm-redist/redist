@@ -21,6 +21,7 @@
 redist.plot.interactive = function(map, fill=NULL,
                                    scale=ggplot2::scale_fill_viridis_c,
                                    limits=NULL, useGL=FALSE) {
+    .Deprecated()
     if (!requireNamespace("leaflet", quietly=TRUE))
         stop("Package `leaflet` required for interactive plotting.\n",
              "Recommend `leafgl` as well, for faster plotting.")

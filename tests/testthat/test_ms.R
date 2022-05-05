@@ -30,7 +30,7 @@ test_that("redist_mergesplit_parallel works", {
     fl_map = redist_map(fl25, ndists=3, pop_tol=0.1) %>% suppressMessages()
 
     N = 20
-    chains = 3
+    chains = 2
 
     pl1 = redist_mergesplit_parallel(fl_map, nsims=N, warmup=N/2, chains=chains,
                                      ncores=2, silent=TRUE)
@@ -46,4 +46,12 @@ test_that("redist_mergesplit_parallel works", {
     expect_equal(nrow(pl1), 3*chains*(N/2+1))
     expect_equal(nrow(pl2), 3*chains*N)
     expect_equal(nrow(pl3), 3*chains)
+})
+
+test_that("Parallel runs are reproducible", {
+    set.seed(5118)
+    pl1 = redist_mergesplit_parallel(fl_map, 100, warmup=50, chains=2, silent=TRUE)
+    set.seed(5118)
+    pl2 = redist_mergesplit_parallel(fl_map, 100, warmup=50, chains=2, silent=TRUE)
+    expect_identical(pl1, pl2)
 })

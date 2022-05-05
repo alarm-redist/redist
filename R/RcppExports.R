@@ -53,10 +53,6 @@ dist_dist_diff <- function(p, i_dist, j_dist, x_center, y_center, x, y) {
     .Call(`_redist_dist_dist_diff`, p, i_dist, j_dist, x_center, y_center, x, y)
 }
 
-cppGeneratePartitions <- function(adjList, numBlocks, popSizes, numConstraintLow, numConstraintHigh, popConstraintLow, popConstraintHigh) {
-    .Call(`_redist_cppGeneratePartitions`, adjList, numBlocks, popSizes, numConstraintLow, numConstraintHigh, popConstraintLow, popConstraintHigh)
-}
-
 log_st_map <- function(g, districts, counties, n_distr) {
     .Call(`_redist_log_st_map`, g, districts, counties, n_distr)
 }
@@ -85,8 +81,8 @@ colmin <- function(x) {
     .Call(`_redist_colmin`, x)
 }
 
-prec_cooccur <- function(m, idxs) {
-    .Call(`_redist_prec_cooccur`, m, idxs)
+prec_cooccur <- function(m, idxs, ncores = 0L) {
+    .Call(`_redist_prec_cooccur`, m, idxs, ncores)
 }
 
 group_pct <- function(m, group_pop, total_pop, n_distr) {
@@ -103,10 +99,6 @@ max_dev <- function(districts, pop, n_distr) {
 
 ms_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, thresh, k, thin, verbosity) {
     .Call(`_redist_ms_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, thresh, k, thin, verbosity)
-}
-
-agg_p2d <- function(dm, vote, nd) {
-    .Call(`_redist_agg_p2d`, dm, vote, nd)
 }
 
 closest_adj_pop <- function(adj, i_dist, g_prop) {
@@ -155,8 +147,8 @@ k_biggest <- function(x, k = 1L) {
     .Call(`_redist_k_biggest`, x, k)
 }
 
-smc_plans <- function(N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, lp, thresh, alpha, pop_temper = 0.1, final_infl = 1.0, verbosity = 1L) {
-    .Call(`_redist_smc_plans`, N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, lp, thresh, alpha, pop_temper, final_infl, verbosity)
+smc_plans <- function(N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, control, verbosity = 1L) {
+    .Call(`_redist_smc_plans`, N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, control, verbosity)
 }
 
 splits <- function(dm, community, nd, max_split) {
@@ -169,10 +161,6 @@ dist_cty_splits <- function(dm, community, nd) {
 
 swMH <- function(aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parity, beta_sequence, beta_weights, lambda = 0L, beta = 0.0, adapt_beta = "none", adjswap = 1L, exact_mh = 0L, adapt_eprob = 0L, adapt_lambda = 0L, num_hot_steps = 0L, num_annealing_steps = 0L, num_cold_steps = 0L, verbose = TRUE) {
     .Call(`_redist_swMH`, aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parity, beta_sequence, beta_weights, lambda, beta, adapt_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, num_hot_steps, num_annealing_steps, num_cold_steps, verbose)
-}
-
-var_info_mat <- function(m, i, pop) {
-    .Call(`_redist_var_info_mat`, m, i, pop)
 }
 
 var_info_vec <- function(m, ref, pop) {

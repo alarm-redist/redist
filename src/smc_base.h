@@ -1,6 +1,10 @@
 #ifndef SMC_BASE_H
 #define SMC_BASE_H
 
+#ifndef ARMA_NO_DEBUG
+#define ARMA_NO_DEBUG
+#endif
+
 #include <vector>
 #include <random>
 #include <limits>

@@ -36,8 +36,10 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     double tol = std::max(target - lower, upper - target) / target;
 
     if (verbosity >= 1) {
+        Rcout.imbue(std::locale(""));
         Rcout << "MARKOV CHAIN MONTE CARLO\n";
-        Rcout << "Sampling " << N-1 << " " << V << "-unit maps with " << n_distr
+        Rcout << std::fixed << std::setprecision(0);
+        Rcout << "Sampling " << N << " " << V << "-unit maps with " << n_distr
               << " districts and population between " << lower << " and " << upper << ".\n";
         if (cg.size() > 1)
             Rcout << "Sampling hierarchically with respect to the "

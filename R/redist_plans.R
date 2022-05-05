@@ -33,13 +33,14 @@ new_redist_plans = function(plans, map, algorithm, wgt, resampled=TRUE, ndists=a
         distr_pop = pop_tally(pl_tmp, prec_pop, ndists)
     }
 
-    attr_names = c("redist_attr", "plans", "algorithm", "wgt", "resampled",
-                   "ndists", "merge_idx", "prec_pop", names(list(...)))
+    attr_names = c("redist_attr", "plans", "ndists", "algorithm", "wgt",
+                   "resampled", "ndists", "merge_idx", "prec_pop",
+                   names(list(...)))
 
     structure(tibble(draw = rep(as.factor(1:n_sims), each=ndists),
                              district = rep(distr_range, n_sims),
                              total_pop = as.numeric(distr_pop)),
-              plans=plans, algorithm=algorithm, wgt=wgt,
+              plans=plans, ndists=ndists, algorithm=algorithm, wgt=wgt,
               resampled=resampled, merge_idx=attr(map, "merge_idx"),
               prec_pop=prec_pop, redist_attr=attr_names, ...,
               class=c("redist_plans", "tbl_df", "tbl", "data.frame"))
@@ -61,7 +62,7 @@ validate_redist_plans = function(x) {
 }
 
 reconstruct.redist_plans = function(data, old) {
-    if (!("draw" %in% colnames(data)))
+    if (!("draw" %in% names(data)))
         return(data)
 
     if (!missing(old)) {
@@ -139,6 +140,7 @@ redist_plans = function(plans, map, algorithm, wgt=NULL, ...) {
     if (!inherits(map, "redist_map")) cli_abort("{.arg map} must be a {.cls redist_map}")
 
     if (min(plans) == 0L) plans = plans + 1L
+    storage.mode(plans) = "integer"
 
     obj = new_redist_plans(plans, map, algorithm, wgt=wgt,
                            resampled=FALSE, ...)
@@ -180,7 +182,8 @@ set_plan_matrix = function(x, mat) {
 #'
 #' @returns A numeric vector of weights, with an additional attribute
 #'   \code{resampled} indicating whether the plans have been resampled according
-#'   to these weights.
+#'   to these weights. If weights have been resampled, this returns the weights
+#'   before resampling (i.e., they do not correspond to the resampled plans).
 #'
 #' @concept analyze
 #' @export
@@ -206,8 +209,7 @@ get_n_ref = function(x) {
     if (!inherits(x, "redist_plans")) cli_abort("Not a {.cls redist_plans}")
     plans_m = get_plans_matrix(x)
     if (is.null(colnames(plans_m))) return(0)
-    refs = which(nchar(colnames(plans_m)) > 0)
-    length(unique(colnames(plans_m)[refs]))
+    sum(nchar(colnames(plans_m)) > 0)
 }
 
 #' Extract the sampling information from a redistricting simulation
@@ -234,22 +236,52 @@ get_sampling_info = function(plans) {
 #' Subset to sampled or reference draws
 #'
 #' @param plans the \code{redist_plans} object
+#' @param matrix if \code{TRUE}, the default, also subset the plans matrix. If
+#'   the plans matrix is not needed, turning this off may save some time.
 #'
 #' @returns a \code{redist_plans} object, with only rows corresponding to
 #' simulated (or reference) draws remaining.
 #'
 #' @concept analyze
 #' @export
-subset_sampled = function(plans) {
-    n_ref = get_n_ref(plans)
-    dplyr::filter(plans, as.integer(.data$draw) > n_ref)
+subset_sampled = function(plans, matrix=TRUE) {
+    plans_m = get_plans_matrix(plans)
+    if (is.null(colnames(plans_m))) return(plans)
+
+    nm_lengths = nchar(colnames(plans_m))
+    draw_ints = as.integer(plans$draw)
+    idxs = which(nm_lengths[draw_ints] == 0)
+
+    out = vctrs::vec_slice(plans, idxs)
+    out$draw <- droplevels(out$draw)
+
+    idxs = which(nm_lengths[unique(draw_ints)] == 0)
+    attr(out, "wgt") = attr(out, "wgt")[idxs]
+    if (isTRUE(matrix)) {
+        out = set_plan_matrix(out, plans_m[, idxs, drop=FALSE])
+    }
+
+    out
 }
 
 #' @rdname subset_sampled
 #' @export
-subset_ref = function(plans) {
-    n_ref = get_n_ref(plans)
-    dplyr::filter(plans, as.integer(.data$draw) <= n_ref)
+subset_ref = function(plans, matrix=TRUE) {
+    plans_m = get_plans_matrix(plans)
+    if (is.null(colnames(plans_m))) return(plans)
+
+    nm_lengths = nchar(colnames(plans_m))
+    draw_ints = as.integer(plans$draw)
+    idxs = which(nm_lengths[draw_ints] > 0)
+
+    out = vctrs::vec_slice(plans, idxs)
+    out$draw <- droplevels(out$draw)
+
+    idxs = which(nm_lengths[unique(draw_ints)] > 0)
+    attr(out, "wgt") = attr(out, "wgt")[idxs]
+    out = set_plan_matrix(out, plans_m[, idxs, drop=FALSE])
+
+    out
 }
 
 #' Extract the Metropolis Hastings Acceptance Rate
@@ -363,20 +395,19 @@ rbind.redist_plans = function(..., deparse.level=1) {
             }
         }
         if (!identical(attr(objs[[i]], "constraints"), constr)) {
-            cli_warn("Constraints do not match for all sets of plans.")
+            cli_inform("Constraints may not match for all sets of plans.")
             constr = NA
         }
     }
 
     ret = bind_rows(lapply(objs, dplyr::as_tibble), .id="chain")
+    ret$chain = as.integer(ret$chain)
     ret = reconstruct.redist_plans(ret, objs[[1]])
-    attr(ret, "adapt_k_thresh") = NA
-    attr(ret, "seq_alpha") = NA
-    attr(ret, "pop_temper") = NA
     attr(ret, "compactness") = comp
     attr(ret, "constraints") = constr
     attr(ret, "ndists") = ndists
     attr(ret, "prec_pop") = prec_pop
+    attr(ret, "diagnostics") = do.call(c, lapply(objs, function(x) attr(x, "diagnostics")))
     attr(ret, "plans") = do.call(cbind, lapply(objs, function(x) get_plans_matrix(x)))
     attr(ret, "wgt") = do.call(c, lapply(objs, function(x) get_plans_weights(x)))
     attr(ret, "n_eff") = sum(do.call(c, lapply(objs, function(x) attr(x, "n_eff"))))
@@ -385,17 +416,20 @@ rbind.redist_plans = function(..., deparse.level=1) {
 }
 
 
-#' Print method for redist_plans
-#' @param x redist_plans object
-#' @param \dots additional arguments
+#' Print method for \code{redist_plans}
+#'
+#' @param x a [redist_plans] object
+#' @param \dots additional arguments (ignored)
+#'
 #' @method print redist_plans
-#' @importFrom utils str
-#' @return prints to console
+#' @return The original object, invisibly.
 #' @export
 print.redist_plans = function(x, ...) {
     plans_m = get_plans_matrix(x)
     n_ref = get_n_ref(x)
     n_samp = ncol(plans_m) - n_ref
+    nd = attr(x, "ndists")
+    if (is.null(nd)) nd = max(plans_m[,1])
 
     if (n_ref > 0)
         cli_text("A {.cls redist_plans} containing {n_samp} sampled plan{?s} and
@@ -411,10 +445,11 @@ print.redist_plans = function(x, ...) {
                  rsg="random seed-and-grow",
                  crsg="compact random seed-and-grow",
                  enumpart="Enumpart",
-                 shortburst="short bursts")[attr(x, "algorithm")]
+                 shortburst="short bursts",
+                 none="a custom collection")[attr(x, "algorithm")]
     if (is.na(alg_name)) alg_name = "an unknown algorithm"
 
-    cli_text("Plans have {max(plans_m[,1])} districts from a {nrow(plans_m)}-unit map,
+    cli_text("Plans have {nd} districts from a {nrow(plans_m)}-unit map,
              and were drawn using {alg_name}.")
 
     merge_idx = attr(x, "merge_idx")

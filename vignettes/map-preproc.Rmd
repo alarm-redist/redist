@@ -249,16 +249,16 @@ that adjacent unsplit cities are not merged together. We also set
 `collapse_chr=FALSE` to drop the `id` and `precinct` columns, which become
 slightly unwieldy after a large merge.
 
-To see this in action, we'll sample 50 redistricting plans using `redist_smc()`
+To see this in action, we'll sample 100 redistricting plans using `redist_smc()`
 on this partially frozen map.  We'll use `pullback()` to then reconstruct
 the plan output of `redist_smc()` so that it is congruous with the original
 geometry object, `king_land`.
 
 ```{r unsplit-plan, fig.width=8}
-plans = redist_smc(king_unsplit, 50, silent=T)
+plans = redist_smc(king_unsplit, 100, silent=T)
 print(plans)
 print(pullback(plans))
-redist.plot.plans(pullback(plans), draws=1:4, geom=king_land)
+redist.plot.plans(pullback(plans), draws=1:4, shp=king_land)
 ```
 
 Notice how the `Merged from another map...` line disappears and the number of
@@ -294,6 +294,7 @@ inside a district core, while with `boundary=2` that number drops to 58%.
 pop_inside_cores = function(boundary) {
     king_land %>%
         mutate(core = make_cores(boundary=boundary)) %>%
+        as_tibble() %>%
         group_by(core) %>%
         filter(n() > 2) %>% # filter to cores only
         pull(pop) %>% sum
@@ -317,7 +318,7 @@ simulated plans generally follow the same location and shape as the original
 plan. Sampling is also faster, since there are fewer units in the map.
 
 ```{r core-plans}
-plans = redist_smc(king_cores, 50, silent=T)
-redist.plot.plans(plans, draws=1:4, geom=king_cores)
+plans = redist_smc(king_cores, 100, silent=T)
+redist.plot.plans(plans, draws=1:4, shp=king_cores)
 ```
 

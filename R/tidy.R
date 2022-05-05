@@ -304,7 +304,7 @@ find_numbering = function(plan, ref, pop, tot_pop) {
 #' @export
 match_numbers = function(data, plan, total_pop=attr(data, "prec_pop"), col="pop_overlap") {
     if (!inherits(data, "redist_plans")) cli_abort("{.arg data} must be a {.cls redist_plans}")
-    if (!"district" %in% colnames(data)) cli_abort("Missing {.field district} colun in {.arg data}")
+    if (!"district" %in% names(data)) cli_abort("Missing {.field district} colun in {.arg data}")
 
     plan_mat = get_plans_matrix(data)
     if (is.character(plan)) plan = plan_mat[,plan]
@@ -356,7 +356,7 @@ match_numbers = function(data, plan, total_pop=attr(data, "prec_pop"), col="pop_
 #' @export
 number_by = function(data, x, desc=FALSE) {
     if (!inherits(data, "redist_plans")) cli_abort("{.arg data} must be a {.cls redist_plans}")
-    if (!"district" %in% colnames(data)) cli_abort("Missing {.field district} colun in {.arg data}")
+    if (!"district" %in% names(data)) cli_abort("Missing {.field district} colun in {.arg data}")
 
     ord = 1 - 2*desc
     m = get_plans_matrix(data)
@@ -397,9 +397,8 @@ tally_var <- function(map, x, .data = redist:::cur_plans()) {
     if (length(unique(diff(as.integer(.data$district)))) > 2)
         cli_warn("Districts not sorted in ascending order; output may be incorrect.")
 
-    idxs <- unique(as.integer(.data$draw))
     x <- rlang::eval_tidy(rlang::enquo(x), map)
-    as.numeric(pop_tally(get_plans_matrix(.data)[, idxs, drop = FALSE],
+    as.numeric(pop_tally(get_plans_matrix(.data),
                          x, attr(map, "ndists")))
 }
 
@@ -461,12 +460,11 @@ avg_by_prec <- function(plans, x, draws=NA) {
 #' @export
 plan_parity <- function(map, .data = cur_plans(), ...) {
     check_tidy_types(map, .data)
-    idxs = unique(as.integer(.data$draw))
     ndists = attr(map, "ndists")
     total_pop = map[[attr(map, "pop_col")]]
     if (is.null(total_pop)) cli_abort("Population vector missing from {.arg map}")
 
-    rep(max_dev(get_plans_matrix(.data)[, idxs, drop=FALSE], total_pop, ndists),
+    rep(max_dev(get_plans_matrix(.data), total_pop, ndists),
         each = ndists)
 }
 
@@ -486,8 +484,7 @@ distr_compactness = function(map, measure="FracKept", .data=cur_plans(), ...) {
     if (length(unique(diff(as.integer(.data$district)))) > 2)
         cli_warn("Districts not sorted in ascending order; output may be incorrect.")
 
-    idxs = unique(as.integer(.data$draw))
-    redist.compactness(shp=map, plans=get_plans_matrix(.data)[, idxs, drop=FALSE],
+    redist.compactness(shp=map, plans=get_plans_matrix(.data),
                        measure=measure, total_pop=map[[attr(map, "pop_col")]],
                        adj=get_adj(map), ...)[[measure]]
 }
@@ -507,10 +504,9 @@ group_frac = function(map, group_pop, total_pop=map[[attr(map, "pop_col")]],
     if (length(unique(diff(as.integer(.data$district)))) > 2)
         cli_warn("Districts not sorted in ascending order; output may be incorrect.")
 
-    idxs = unique(as.integer(.data$draw))
     group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
     total_pop = rlang::eval_tidy(rlang::enquo(total_pop), map)
-    as.numeric(redist.group.percent(plans=get_plans_matrix(.data)[, idxs, drop=FALSE],
+    as.numeric(redist.group.percent(plans=get_plans_matrix(.data),
                                     group_pop=group_pop, total_pop=total_pop))
 }
 
@@ -525,10 +521,9 @@ group_frac = function(map, group_pop, total_pop=map[[attr(map, "pop_col")]],
 segregation_index = function(map, group_pop, total_pop=map[[attr(map, "pop_col")]],
                           .data=cur_plans()) {
     check_tidy_types(map, .data)
-    idxs = unique(as.integer(.data$draw))
     group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
     total_pop = rlang::eval_tidy(rlang::enquo(total_pop), map)
-    plan_m = get_plans_matrix(.data)[, idxs, drop=FALSE]
+    plan_m = get_plans_matrix(.data)
     rep(as.numeric(redist.segcalc(plans=plan_m, group_pop=group_pop,
                                   total_pop=total_pop)),
         each=attr(map, "ndists"))
@@ -550,10 +545,9 @@ partisan_metrics = function(map, measure, rvote, dvote, ...,
     if (length(unique(diff(as.integer(.data$district)))) > 2)
         cli_warn("Districts not sorted in ascending order; output may be incorrect.")
 
-    idxs = unique(as.integer(.data$draw))
     rvote = rlang::eval_tidy(rlang::enquo(rvote), map)
     dvote = rlang::eval_tidy(rlang::enquo(dvote), map)
-    as.numeric(redist.metrics(plans=get_plans_matrix(.data)[, idxs, drop=FALSE],
+    as.numeric(redist.metrics(plans=get_plans_matrix(.data),
                               measure=measure, rvote=rvote, dvote=dvote, ...)[[measure]])
 }
 
@@ -567,10 +561,9 @@ partisan_metrics = function(map, measure, rvote, dvote, ...,
 #' @export
 competitiveness = function(map, rvote, dvote, .data=cur_plans()) {
     check_tidy_types(map, .data)
-    idxs = unique(as.integer(.data$draw))
     rvote = rlang::eval_tidy(rlang::enquo(rvote), map)
     dvote = rlang::eval_tidy(rlang::enquo(dvote), map)
-    redist.competitiveness(plans=get_plans_matrix(.data)[, idxs, drop=FALSE],
+    redist.competitiveness(plans=get_plans_matrix(.data),
                                rvote=rvote, dvote=dvote)
 }
 
@@ -584,9 +577,8 @@ competitiveness = function(map, rvote, dvote, .data=cur_plans()) {
 #' @export
 county_splits = function(map, counties, .data=cur_plans()) {
     check_tidy_types(map, .data)
-    idxs = unique(as.integer(.data$draw))
     counties = rlang::eval_tidy(rlang::enquo(counties), map)
-    redist.splits(plans=get_plans_matrix(.data)[, idxs, drop=FALSE], counties=counties)
+    redist.splits(plans=get_plans_matrix(.data), counties=counties)
 }
 
 
@@ -624,9 +616,8 @@ prec_assignment = function(prec, .data=cur_plans()) {
         cli_abort("{.arg prec} must be an integer index")
     }
 
-    idxs = unique(as.integer(.data$draw))
-    assignment = m[prec, idxs, drop=FALSE]
-    if ("district" %in% colnames(.data) && is.factor(.data$district)) {
+    assignment = m[prec, , drop=FALSE]
+    if ("district" %in% names(.data) && is.factor(.data$district)) {
         lev = levels(.data$district)
         assignment = factor(lev[assignment], lev, ordered=is.ordered(.data$district))
     }
@@ -644,20 +635,21 @@ prec_assignment = function(prec, .data=cur_plans()) {
 #' @param which [`<data-masking>`][dplyr::dplyr_data_masking] which plans to
 #'   compute the co-occurrence over.  Defaults to all.
 #' @param sampled_only if `TRUE`, do not include reference plans.
+#' @param ncores the number of parallel cores to use in the computation.
 #'
 #' @return a symmetric matrix the size of the number of precincts.
 #'
 #' @concept analyze
 #' @md
 #' @export
-prec_cooccurrence = function(plans, which=NULL, sampled_only=TRUE) {
+prec_cooccurrence = function(plans, which=NULL, sampled_only=TRUE, ncores=1) {
     if (sampled_only)
         plans = subset_sampled(plans)
     which = eval_tidy(enquo(which), plans)
     plan_m = get_plans_matrix(plans)
     if (is.null(which))
         which = seq_len(ncol(plan_m))
-    prec_cooccur(plan_m, which)
+    prec_cooccur(plan_m, which, ncores)
 }
 
 
@@ -682,9 +674,8 @@ prec_cooccurrence = function(plans, which=NULL, sampled_only=TRUE) {
 imp_confint = function(x, conf=0.95, .data=cur_plans()) {
     check_tidy_types(NULL, .data)
 
-    idxs = unique(as.integer(.data$draw))
     y = rlang::eval_tidy(rlang::enquo(x), .data)
-    ci = redist.smc_is_ci(y, get_plans_weights(.data)[, idxs, drop=FALSE], conf)
+    ci = redist.smc_is_ci(y, get_plans_weights(.data), conf)
 
     tibble("{{ x }}" := mean(y),
                    "{{ x }}_lower" := ci[1],

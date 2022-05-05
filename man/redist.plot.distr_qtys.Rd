@@ -10,6 +10,7 @@ redist.plot.distr_qtys(
   sort = "asc",
   geom = "jitter",
   color_thresh = NULL,
+  size = 0.1,
   ...
 )
 }
@@ -29,6 +30,8 @@ quantity of interest.}
 \item{color_thresh}{if a number, the threshold to use in coloring the points.
 Plans with quantities of interest above the threshold will be colored
 differently than plans below the threshold.}
+
+\item{size}{The dot size for \code{geom="jitter"}.}
 
 \item{...}{passed on to \code{\link[ggplot2]{geom_boxplot}}}
 }

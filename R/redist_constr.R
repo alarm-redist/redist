@@ -48,7 +48,7 @@ validate_redist_constr = function(constr) {
 #' You can view the exact structure of this list by calling [str()].
 #' Constraints may be added by using one of the following functions:
 #'
-#' `r paste0("* [", ls("package:redist")[grep("add_constr_", ls("package:redist"))], "()]", collapse="\n")`
+#' `r paste0("* [", setdiff(ls("package:redist")[grep("add_constr_", ls("package:redist"))], "add_constr_qps"), "()]", collapse="\n")`
 #'
 #' More information about each constraint can be found on the relevant constraint page.
 #'
@@ -581,7 +581,8 @@ add_constr_qps <- function(constr, strength, cities, total_pop = NULL) {
                        cities = eval_tidy(enquo(cities), data))
     new_constr$n_cty <- max(new_constr$cities) + 1
 
-    cli::cli_inform('The QPS constraint is not officially supported and may disappear.')
+    cli::cli_inform("The QPS constraint is not officially supported and may disappear.",
+                    .frequency="once")
     add_to_constr(constr, 'qps', new_constr)
 }
 

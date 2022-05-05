@@ -19,8 +19,9 @@
 #' \code{map}, \code{compactness}, and \code{constraints} parameters.
 #'
 #' Key to ensuring good performance is monitoring the acceptance rate, which
-#' is reported at the sample level in the output. Users should also check the
-#' [plans_diversity()] of the sample.
+#' is reported at the sample level in the output.
+#' Users should also check diagnostics of the sample by running
+#' \code{summary.redist_plans()}.
 #'
 #' Higher values of \code{compactness} sample more compact districts;
 #' setting this parameter to 1 is computationally efficient and generates nicely
@@ -95,7 +96,7 @@ redist_mergesplit = function(map, nsims, warmup=max(100, nsims %/% 2), thin=1L,
                              init_plan=NULL, counties=NULL, compactness=1,
                              constraints=list(), constraint_fn=function(m) rep(0, ncol(m)),
                              adapt_k_thresh=0.98, k=NULL, init_name=NULL,
-                             verbose=TRUE, silent=FALSE) {
+                             verbose=FALSE, silent=FALSE) {
     if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
 
     map = validate_redist_map(map)
@@ -126,7 +127,7 @@ redist_mergesplit = function(map, nsims, warmup=max(100, nsims %/% 2), thin=1L,
     }
     if (length(init_plan) == 0L || isTRUE(init_plan == "sample")) {
         init_plan = as.integer(get_plans_matrix(
-            redist_smc(map, 10, counties, resample=FALSE, ref_name=FALSE, silent=TRUE))[, 1])
+            redist_smc(map, 10, counties, resample=FALSE, ref_name=FALSE, silent=TRUE, ncores=1))[, 1])
         if (is.null(init_name)) init_name = "<init>"
     }
 
@@ -189,11 +190,11 @@ redist_mergesplit = function(map, nsims, warmup=max(100, nsims %/% 2), thin=1L,
                      pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
                      constraints, adapt_k_thresh, k, thin, verbosity)
 
-    plans <- algout$plans
+    storage.mode(algout$plans) = "integer"
     acceptances = as.logical(algout$mhdecisions)
 
-    warmup_idx = c(seq_len(1 + warmup %/% thin), ncol(plans))
-    out = new_redist_plans(plans[, -warmup_idx, drop=FALSE],
+    warmup_idx = c(seq_len(1 + warmup %/% thin), ncol(algout$plans))
+    out = new_redist_plans(algout$plans[, -warmup_idx, drop=FALSE],
                            map, "mergesplit", NULL, FALSE,
                            ndists = ndists,
                            compactness = compactness,

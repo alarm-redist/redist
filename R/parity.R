@@ -15,14 +15,12 @@
 #' @param plans A matrix with one row for each precinct and one column for each
 #'   map. Required.
 #' @param total_pop A numeric vector with the population for every precinct.
-#' @param ncores Number of cores to use for parallel computing. Default is 1.
 #'
-#' @importFrom foreach %do% %dopar% foreach
 #' @return numeric vector with the population parity for each column
 #'
 #' @concept analyze
 #' @export
-redist.parity <- function(plans, total_pop, ncores = 1) {
+redist.parity <- function(plans, total_pop) {
     if (!is.numeric(total_pop)) {
         cli_abort("{.arg total_pop} must be a numeric vector")
     }
@@ -37,30 +35,15 @@ redist.parity <- function(plans, total_pop, ncores = 1) {
         cli_abort(".arg plans} and {.arg total_pop} must have same number of precincts.")
     }
 
-    # parallelize as in fastLink package to avoid Windows/unix issues
-    N = ncol(plans)
-    nc <- min(ncores, max(1, floor(N/2)))
-
-    if (nc == 1){
-        `%oper%` <- `%do%`
-    } else {
-        `%oper%` <- `%dopar%`
-        cl <- makeCluster(nc, setup_strategy = 'sequential', methods=FALSE)
-        registerDoParallel(cl)
-        on.exit(stopCluster(cl))
-    }
-
-    if (min(plans[,1]) == 0)
+    rg = range(plans[, 1])
+    if (rg[1] == 0) {
         plans = plans + 1
-    n_distr = max(plans[,1])
-
-
-    chunks = split(1:N, rep(1:nc, each=ceiling(N/nc))[1:N])
-    out = foreach(map=chunks, .combine = "c") %oper% {
-        max_dev(plans[, map, drop = FALSE], total_pop, n_distr)
+        n_distr = rg[2] + 1
+    } else {
+        n_distr = rg[2]
     }
 
-    unlist(out)
+    max_dev(plans, total_pop, n_distr)
 }
 
 

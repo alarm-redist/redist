@@ -18,3 +18,4 @@ builder.sh
 ^R/dev_helpers\.R$
 ^inst/enumpart/enumpart\.exe$
 ^data-raw$
+^explore$

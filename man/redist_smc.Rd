@@ -11,17 +11,19 @@ redist_smc(
   compactness = 1,
   constraints = list(),
   resample = TRUE,
-  constraint_fn = function(m) rep(0, ncol(m)),
+  runs = 1L,
+  ncores = 0L,
   init_particles = NULL,
   n_steps = NULL,
   adapt_k_thresh = 0.985,
-  seq_alpha = 0.2 + 0.3 * compactness,
+  seq_alpha = 0.5,
   truncate = (compactness != 1),
   trunc_fn = redist_quantile_trunc,
   pop_temper = 0,
   final_infl = 1,
+  est_label_mult = 1,
   ref_name = NULL,
-  verbose = TRUE,
+  verbose = FALSE,
   silent = FALSE
 )
 }
@@ -50,9 +52,16 @@ generated plans can be used immediately.  Set this to \code{FALSE} to
 perform direct importance sampling estimates, or to adjust the weights
 manually.}
 
-\item{constraint_fn}{(Deprecated) A function which takes in a matrix where
-each column is a redistricting plan and outputs a vector of log-weights,
-which will be added the the final weights.}
+\item{runs}{How many independent parallel runs to conduct. Each run will
+have \code{nsims} simulations. Multiple runs allows for estimation of simulation
+standard errors. Output will only be shown for the first run. For
+compatibility with MCMC methods, runs are identified with the \code{chain}
+column in the output.}
+
+\item{ncores}{How many cores to use to parallelize plan generation within each
+run. The default, 0, will use the number of available cores on the machine
+as long as \code{nsims} and the number of units is large enough. If \code{runs>1}
+you will need to set this manually.}
 
 \item{init_particles}{A matrix of partial plans to begin sampling from. For
 advanced use only.  The matrix must have \code{nsims} columns and a row for
@@ -65,9 +74,9 @@ Each step splits off a new district. Defaults to all remaining districts.
 If fewer than the number of remaining splits, reference plans are disabled.}
 
 \item{adapt_k_thresh}{The threshold value used in the heuristic to select a
-value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if the
-algorithm does not appear to be sampling from the target distribution. Must
-be between 0 and 1.}
+value \code{k_i} for each splitting iteration. Higher values are more accurate
+but may require more computation. Set to 1 for the most conservative
+sampling. Must be between 0 and 1.}
 
 \item{seq_alpha}{The amount to adjust the weights by at each resampling step;
 higher values prefer exploitation, while lower values prefer exploration.
@@ -88,7 +97,13 @@ splits.}
 
 \item{final_infl}{A multiplier for the population constraint on the final
 iteration. Used to loosen the constraint when the sampler is getting stuck
-on the final split.}
+on the final split. \code{pop_temper} should be tried first, since using
+\code{final_infl} will actually change the target distribution.}
+
+\item{est_label_mult}{A multiplier for the number of importance samples to
+use in estimating the number of ways to sequentially label the districts.
+Lower values increase speed at the cost of accuracy.  Only applied when
+there are more than 13 districts.}
 
 \item{ref_name}{a name for the existing plan, which will be added as a
 reference plan, or \code{FALSE} to not include the initial plan in the
@@ -100,8 +115,8 @@ Recommended.}
 \item{silent}{Whether to suppress all diagnostic information.}
 }
 \value{
-\code{redist_smc} returns an object of class
-\code{\link[=redist_plans]{redist_plans()}} containing the simulated plans.
+\code{redist_smc} returns a \link{redist_plans} object containing the simulated
+plans.
 }
 \description{
 \code{redist_smc} uses a Sequential Monte Carlo algorithm to
@@ -119,7 +134,8 @@ out the effective sample size of each resampling step to allow the user to
 monitor the efficiency.  If \code{verbose=TRUE} the function will also print
 out information on the \eqn{k_i} values automatically chosen and the
 acceptance rate (based on the population constraint) at each step.
-Users should also check the \code{\link[=plans_diversity]{plans_diversity()}} of the sample.
+Users should also check diagnostics of the sample by running
+\code{summary.redist_plans()}.
 
 Higher values of \code{compactness} sample more compact districts;
 setting this parameter to 1 is computationally efficient and generates nicely
@@ -140,6 +156,12 @@ sampled_basic = redist_smc(fl_map, 10000)
 constr = redist_constr(fl_map)
 constr = add_constr_incumbency(constr, strength=100, incumbents=c(3, 6, 25))
 sampled_constr = redist_smc(fl_map, 10000, constraints=constr)
+
+# Multiple parallel independent runs
+redist_smc(fl_map, 1000, runs=2)
+
+# One run with multiple cores
+redist_smc(fl_map, 1000, ncores=2)
 }
 
 }

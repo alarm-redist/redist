@@ -5,12 +5,15 @@
 \alias{subset_ref}
 \title{Subset to sampled or reference draws}
 \usage{
-subset_sampled(plans)
+subset_sampled(plans, matrix = TRUE)
 
-subset_ref(plans)
+subset_ref(plans, matrix = TRUE)
 }
 \arguments{
 \item{plans}{the \code{redist_plans} object}
+
+\item{matrix}{if \code{TRUE}, the default, also subset the plans matrix. If
+the plans matrix is not needed, turning this off may save some time.}
 }
 \value{
 a \code{redist_plans} object, with only rows corresponding to

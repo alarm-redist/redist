@@ -11,7 +11,8 @@ compare_plans(
   shp = NULL,
   plot = "fill",
   thresh = 0.1,
-  labs = c("Set 1", "Set 2")
+  labs = c("Set 1", "Set 2"),
+  ncores = 1
 )
 }
 \arguments{
@@ -39,6 +40,8 @@ option. See below for more information.  Set to \code{FALSE} to disable plotting
 relevant set of precincts for comparison.}
 
 \item{labs}{the names of the panels in the plot.}
+
+\item{ncores}{the number of parallel cores to use.}
 }
 \value{
 If possible, makes a comparison plot according to \code{plot}. Otherwise

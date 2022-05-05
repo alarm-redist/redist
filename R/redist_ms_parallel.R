@@ -49,7 +49,7 @@ redist_mergesplit_parallel = function(map, nsims, chains=1,
                                       constraints=list(), constraint_fn=function(m) rep(0, ncol(m)),
                                       adapt_k_thresh=0.98, k=NULL, ncores=NULL,
                                       cl_type="PSOCK", return_all=TRUE, init_name=NULL,
-                                      verbose=TRUE, silent=FALSE) {
+                                      verbose=FALSE, silent=FALSE) {
     if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
 
     map = validate_redist_map(map)
@@ -103,7 +103,7 @@ redist_mergesplit_parallel = function(map, nsims, chains=1,
         init_plans = get_plans_matrix(
             redist_smc(map, chains, counties, compactness, constraints,
                        resample=TRUE, adapt_k_thresh=adapt_k_thresh,
-                       ref_name=FALSE, verbose=verbose, silent=silent))
+                       ref_name=FALSE, verbose=verbose, silent=silent, ncores=1))
         if (is.null(init_name))
             init_names = paste0("<init> ", seq_len(chains))
         else
@@ -186,14 +186,15 @@ redist_mergesplit_parallel = function(map, nsims, chains=1,
         cl = makeCluster(ncores, setup_strategy="sequential", outfile="", methods=FALSE)
     else
         cl = makeCluster(ncores, setup_strategy="sequential", methods=FALSE)
-    registerDoParallel(cl)
+    doParallel::registerDoParallel(cl)
     on.exit(stopCluster(cl))
 
-    out_par <- foreach(chain=seq_len(chains)) %dopar% {
+    out_par <- foreach(chain=seq_len(chains), .inorder=FALSE) %dorng% {
         if (!silent) cat("Starting chain ", chain, "\n", sep="")
+        run_verbosity = if (chain == 1 || verbosity == 3) verbosity else 0
         ms_plans(nsims, adj, init_plans[, chain], counties, pop,
                  ndists, pop_bounds[2], pop_bounds[1], pop_bounds[3],
-                 compactness, constraints, adapt_k_thresh, k, thin, verbosity)
+                 compactness, constraints, adapt_k_thresh, k, thin, run_verbosity)
     }
 
     warmup_idx = c(seq_len(1 + warmup %/% thin), nsims %/% thin + 2L)
@@ -205,7 +206,8 @@ redist_mergesplit_parallel = function(map, nsims, chains=1,
         }
     })
     each_len = ncol(plans[[1]])
-    plans <- do.call('cbind', plans)
+    plans <- do.call(cbind, plans)
+    storage.mode(plans) = "integer"
 
     mh <- sapply(out_par, function(algout) {
         mean(as.logical(algout$mhdecisions))

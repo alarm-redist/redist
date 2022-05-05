@@ -84,7 +84,7 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
       }else { ## If not valid adjacency matrix, throw error
         stop("Please input valid adjacency matrix")
       }
-    }else if(class(adj) == "SpatialPolygonsDataFrame"){ ## shp object
+    } else if (inherits(adj, "SpatialPolygonsDataFrame")) { ## shp object
 
       ## Convert shp object to adjacency list
       adjlist <- redist.adjacency(st_as_sf(adj))

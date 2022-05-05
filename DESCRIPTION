@@ -30,17 +30,16 @@ Imports:
     tidyselect,
     stringr,
     dplyr (>= 1.0.0),
-    readr (>= 2.0.0),
     sf,
     doParallel,
     foreach,
+    doRNG,
     servr,
     sys,
-    coda,
     ggplot2,
     patchwork
 Suggests:
-    igraph,
+    coda,
     s2,
     lwgeom,
     withr,
@@ -53,11 +52,10 @@ Suggests:
     rmapshaper,
     scales,
     units,
-    spdep,
     RSpectra,
     testthat (>= 3.0.0),
     rstudioapi
-LinkingTo: Rcpp, RcppArmadillo, cli, redistmetrics
+LinkingTo: Rcpp, RcppArmadillo, RcppThread, cli, redistmetrics
 License: GPL (>= 2)
 SystemRequirements: OpenMPI, gmp, libxml2, python, C++11
 Packaged: 2015-06-03 18:32:00 UTC; benfifield

@@ -10,21 +10,19 @@ double log_boundary(const Graph &g, const subview_col<uword> &districts,
                     int distr_root, int distr_other) {
     int V = g.size();
 
-    int count = 0; // number of cuttable edges to create eq-pop districts
+    double count = 0; // number of cuttable edges to create eq-pop districts
     for (int i = 0; i < V; i++) {
         std::vector<int> nbors = g[i];
-        int length = nbors.size();
         if (districts(i) != distr_root) continue; // same side of boundary as root
-        for (int j = 0; j < length; j++) {
-            int nbor = nbors[j];
+        for (int nbor : nbors) {
             if (districts(nbor) != distr_other)
                 continue;
             // otherwise, boundary with root -> ... -> i -> nbor
-            count++;
+            count += 1.0;
         }
     }
 
-    return log((double) count);
+    return std::log(count);
 }
 
 /*
@@ -342,12 +340,12 @@ double eval_er(const subview_col<uword> &districts, const Graph g, int ndists) {
  * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,
  * given a collection of plans
  */
-mat prec_cooccur(umat m, uvec idxs) {
+mat prec_cooccur(umat m, uvec idxs, int ncores) {
     int v = m.n_rows;
     int n = idxs.n_elem;
     mat out(v, v);
 
-    for (int i = 0; i < v; i++) {
+    RcppThread::parallelFor(0, v, [&] (int i) {
         out(i, i) = 1;
         for (int j = 0; j < i; j++) {
             double shared = 0;
@@ -358,7 +356,7 @@ mat prec_cooccur(umat m, uvec idxs) {
             out(i, j) = shared;
             out(j, i) = shared;
         }
-    }
+    }, ncores);
 
     return out;
 }

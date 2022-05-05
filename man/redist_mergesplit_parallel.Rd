@@ -21,7 +21,7 @@ redist_mergesplit_parallel(
   cl_type = "PSOCK",
   return_all = TRUE,
   init_name = NULL,
-  verbose = TRUE,
+  verbose = FALSE,
   silent = FALSE
 )
 }
@@ -105,8 +105,9 @@ This function draws samples from a specific target measure, controlled by the
 \code{map}, \code{compactness}, and \code{constraints} parameters.
 
 Key to ensuring good performance is monitoring the acceptance rate, which
-is reported at the sample level in the output. Users should also check the
-\code{\link[=plans_diversity]{plans_diversity()}} of the sample.
+is reported at the sample level in the output.
+Users should also check diagnostics of the sample by running
+\code{summary.redist_plans()}.
 
 Higher values of \code{compactness} sample more compact districts;
 setting this parameter to 1 is computationally efficient and generates nicely
