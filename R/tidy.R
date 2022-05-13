@@ -411,7 +411,8 @@ tally_var <- function(map, x, .data = redist:::cur_plans()) {
 #' @param x an expression to average. Tidy-evaluted in `plans`.
 #' @param draws which draws to average. `NULL` will average all draws, including
 #'   reference plans. The special value `NA` will average all sampled draws. An
-#'   integer or character vector indicating specific draws may also be provided.
+#'   integer, logical, or character vector indicating specific draws may also be
+#'   provided.
 #'
 #' @return a vector of length matching the number of precincts, containing the average.
 #'
@@ -429,8 +430,10 @@ avg_by_prec <- function(plans, x, draws=NA) {
 
     if (is.null(draws)) {
         draw_idx = seq_len(ncol(plans_m))
-    } else if (is.na(draws)) {
+    } else if (length(draws) == 1 && is.na(draws)) {
         draw_idx = seq_len(ncol(plans_m))[-seq_len(n_ref)]
+    } else if (is.logical(draws)) {
+        draw_idx = which(draws)
     } else {
         draw_idx = match(as.character(draws), levels(plans$draw))
     }
