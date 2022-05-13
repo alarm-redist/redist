@@ -13,7 +13,8 @@ avg_by_prec(plans, x, draws = NA)
 
 \item{draws}{which draws to average. `NULL` will average all draws, including
 reference plans. The special value `NA` will average all sampled draws. An
-integer or character vector indicating specific draws may also be provided.}
+integer, logical, or character vector indicating specific draws may also be
+provided.}
 }
 \value{
 a vector of length matching the number of precincts, containing the average.
