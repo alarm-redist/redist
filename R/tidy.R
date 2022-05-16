@@ -192,7 +192,7 @@ add_reference = function(plans, ref_plan, name=NULL) {
         else
             name = ref_str
     } else {
-        if (!is.character(name)) cli_abort("{.arg ref_plan} must be a {.cls chr}")
+        if (!is.character(name)) cli_abort("{.arg name} must be a {.cls chr}")
     }
 
     ref_plan = as.integer(as.factor(ref_plan))
