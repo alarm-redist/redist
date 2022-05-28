@@ -94,6 +94,12 @@ summary.redist_plans = function(object, ...) {
             idx = seq_len(n_samp)
             if ("district" %in% cols) idx = 1 + (idx - 1) * n_distr
 
+            const_cols = vapply(addl_cols, function(col) {
+                x = object[[col]][idx]
+                all(x == x[1])
+            }, numeric(1))
+            addl_cols = addl_cols[!const_cols]
+
             rhats = vapply(addl_cols, function(col) {
                 x = object[[col]][idx]
                 na_omit = !is.na(x)
