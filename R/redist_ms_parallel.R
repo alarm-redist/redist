@@ -192,9 +192,17 @@ redist_mergesplit_parallel = function(map, nsims, chains=1,
     out_par <- foreach(chain=seq_len(chains), .inorder=FALSE) %dorng% {
         if (!silent) cat("Starting chain ", chain, "\n", sep="")
         run_verbosity = if (chain == 1 || verbosity == 3) verbosity else 0
-        ms_plans(nsims, adj, init_plans[, chain], counties, pop,
-                 ndists, pop_bounds[2], pop_bounds[1], pop_bounds[3],
-                 compactness, constraints, adapt_k_thresh, k, thin, run_verbosity)
+        t1_run = Sys.time()
+        algout = ms_plans(nsims, adj, init_plans[, chain], counties, pop,
+                          ndists, pop_bounds[2], pop_bounds[1], pop_bounds[3],
+                          compactness, constraints, adapt_k_thresh, k, thin, run_verbosity)
+        t2_run = Sys.time()
+
+        algout$l_diag = list(
+            runtime = as.numeric(t2_run - t1_run, units="secs")
+        )
+
+        algout
     }
 
     warmup_idx = c(seq_len(1 + warmup %/% thin), nsims %/% thin + 2L)
@@ -212,6 +220,7 @@ redist_mergesplit_parallel = function(map, nsims, chains=1,
     mh <- sapply(out_par, function(algout) {
         mean(as.logical(algout$mhdecisions))
     })
+    l_diag <- lapply(out_par, function(algout) algout$l_diag)
 
     warmup_idx = c(seq_len(warmup %/% thin), nsims %/% thin + 1L)
     acceptances <- sapply(out_par, function(algout) {
@@ -222,13 +231,15 @@ redist_mergesplit_parallel = function(map, nsims, chains=1,
         }
     })
 
+
     out = new_redist_plans(plans = plans, map = map, algorithm = "mergesplit",
                            wgt = NULL, resampled = FALSE,
                            compactness = compactness,
                            constraints = constraints,
                            ndists = ndists,
                            adapt_k_thresh = adapt_k_thresh,
-                           mh_acceptance = mh) %>%
+                           mh_acceptance = mh,
+                           diagnostics = l_diag) %>%
         mutate(chain = rep(seq_len(chains), each=each_len*ndists),
                mcmc_accept = rep(acceptances, each = ndists))
 

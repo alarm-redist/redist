@@ -254,6 +254,8 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
     t1 = Sys.time()
     all_out = foreach(chain=seq_len(runs), .inorder=FALSE) %oper% {
         run_verbosity = if (chain == 1) verbosity else 0
+        t1_run = Sys.time()
+
         algout = smc_plans(nsims, adj, counties, pop, ndists,
                            pop_bounds[2], pop_bounds[1], pop_bounds[3],
                            compactness, init_particles, n_drawn, n_steps,
@@ -301,6 +303,7 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
             storage.mode(algout$ancestors) = "integer"
         }
         storage.mode(algout$plans) = "integer"
+        t2_run = Sys.time()
 
         if (!is.nan(n_eff) && n_eff/nsims <= 0.05)
             cli_warn(c("Less than 5% resampling efficiency.",
@@ -328,7 +331,8 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
             unique_survive = c(algout$unique_survive, n_unique),
             ancestors = algout$ancestors,
             seq_alpha = seq_alpha,
-            pop_temper = pop_temper
+            pop_temper = pop_temper,
+            runtime = as.numeric(t2_run - t1_run, units="secs")
         )
 
         algout
