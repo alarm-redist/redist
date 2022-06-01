@@ -4,10 +4,14 @@
 \alias{summary.redist_plans}
 \title{Diagnostic information on sampled plans}
 \usage{
-\method{summary}{redist_plans}(object, ...)
+\method{summary}{redist_plans}(object, district = 1L, ...)
 }
 \arguments{
 \item{object}{a \link{redist_plans} object}
+
+\item{district}{For R-hat values, which district to use for district-level
+summary statistics. We strongly recommend calling \code{match_numbers()} or
+\code{number_by()} before examining these district-level statistics.}
 
 \item{\dots}{additional arguments (ignored)}
 }

@@ -37,6 +37,9 @@
 #' suggestions for improvement.
 #'
 #' @param object a [redist_plans] object
+#' @param district For R-hat values, which district to use for district-level
+#'   summary statistics. We strongly recommend calling `match_numbers()` or
+#'   `number_by()` before examining these district-level statistics.
 #' @param \dots additional arguments (ignored)
 #'
 #' @return A data frame containing diagnostic information, invisibly.
@@ -51,7 +54,7 @@
 #' @concept analyze
 #' @md
 #' @export
-summary.redist_plans = function(object, ...) {
+summary.redist_plans = function(object, district=1L, ...) {
     algo = attr(object, "algorithm")
     name = deparse(substitute(object))
 
@@ -92,7 +95,7 @@ summary.redist_plans = function(object, ...) {
         warn_converge = FALSE
         if ("chain" %in% cols && length(addl_cols) > 0) {
             idx = seq_len(n_samp)
-            if ("district" %in% cols) idx = 1 + (idx - 1) * n_distr
+            if ("district" %in% cols) idx = as.integer(district) + (idx - 1) * n_distr
 
             const_cols = vapply(addl_cols, function(col) {
                 x = object[[col]][idx]
@@ -238,7 +241,10 @@ summary.redist_plans = function(object, ...) {
 
         cli::cli_li(cli::col_grey("
             Watch out for low acceptance rates (less than 10%).
-            R-hat values for summary statistics should be between 1 and 1.05."))
+            R-hat values for summary statistics should be between 1 and 1.05.
+            For district-level statistics (like district partisan leans), you
+            should call `match_numbers()` or `number_by()` before examining
+            the R-hat values."))
 
         if (div_bad) {
             cli::cli_li("{.strong Low diversity:} Increase the number of samples.
