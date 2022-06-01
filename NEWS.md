@@ -1,13 +1,25 @@
 # redist 4.0.0
-* A new constraint interface that is more flexible and user friendly (see `redist_constr()` and `?constraints`)
+* A new constraint interface that is more flexible, user friendly, and consistent 
+across algorithms (see `redist_constr()` and `?constraints`). For the first time,
+user-defined custom constraints are supported and integrated within all three 
+algorithms.
 * New diagnostic-checking function, `summary.redist_plans()`
-* Many bug fixes (see https://github.com/alarm-redist/redist/issues)
-* Remove deprecated functions
+* Summary statistics have been broken out into a new `redistmetrics` package
+This will speed up compilation time and also provides a cleaner, more extensible 
+interface for the implementation of additional metrics.
 * Parallel computing support for the SMC algorithm, both within and across sampling runs
-* Reproducible parallelism across the package, via `doRNG`
+* Reproducible across-run parallelism throughout the package, via `doRNG`
+* Much faster `match_numbers()` using the Hungarian method
+* Support for partial SMC simulations, where fewer districts are drawn than the 
+total number. Allows advanced users to manually combine partial runs to 
+form complete maps.
+* Improved algorithm reporting, including new progress bars and `cli` errors and 
+warnings throughout the package
 * Update the SMC algorithm to include a missing correction factor for the number
 of ways to sequentially label districts. This factor should not have an effect
 on substantive conclusions and summary statistics.
+* Remove deprecated functions
+* Many bug fixes (see https://github.com/alarm-redist/redist/issues)
 
 # redist 3.1.6
 * Utilities for using municipalities as well as counties in split calculations
