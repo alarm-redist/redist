@@ -5,7 +5,7 @@
 ## Purpose: redist functions for a tidy workflow
 ##############################################
 
-# tidy accessor/helper functons ----
+# tidy accessor/helper functions ----
 
 #' Helper function to get current plans/map objects
 #' Traverses call stack to find plans object passed to dplyr verbs

@@ -141,5 +141,12 @@ test_that("Parallel runs are reproducible", {
     pl1 = redist_smc(fl_map, 100, runs=2, silent=TRUE)
     set.seed(5118)
     pl2 = redist_smc(fl_map, 100, runs=2, silent=TRUE)
+
+    # runtime is the only thing that shouldn't be identical
+    for (i in 1:2) {
+        attr(pl1, "diagnostics")[[i]]$runtime = NULL
+        attr(pl2, "diagnostics")[[i]]$runtime = NULL
+    }
+
     expect_identical(pl1, pl2)
 })
