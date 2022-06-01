@@ -38,8 +38,12 @@
 #'   geographic unit) labels for each unit, which may be integers ranging from 1
 #'   to the number of counties, or a factor or character vector.  If provided,
 #'   the algorithm will only generate maps which split up to `ndists-1`
-#'   counties. If no county-split constraint is desired, this parameter should
-#'   be left blank.
+#'   counties. Even there are fewer counties than `ndists - 1`, the spanning
+#'   trees will change the results of the simulations. There is no strength
+#'   parameter associated with this constraint. To adjust the number of county
+#'   splits further, or to constrain a second type of administrative split,
+#'   consider using `add_constr_splits()`, `add_constr_multisplits()`, and
+#'   `add_constr_total_splits()`.
 #' @param compactness Controls the compactness of the generated districts, with
 #'   higher values preferring more compact districts. Must be nonnegative. See
 #'   the 'Details' section for more information, and computational
@@ -58,7 +62,9 @@
 #' @param ncores How many cores to use to parallelize plan generation within each
 #'   run. The default, 0, will use the number of available cores on the machine
 #'   as long as `nsims` and the number of units is large enough. If `runs>1`
-#'   you will need to set this manually.
+#'   you will need to set this manually. If more than one core is used, the
+#'   sampler output will not be fully reproducible with `set.seed()`. If full
+#'   reproducibility is desired, set `ncores=1`.
 #' @param init_particles A matrix of partial plans to begin sampling from. For
 #'  advanced use only.  The matrix must have `nsims` columns and a row for
 #'  every precinct. It is important to ensure that the existing districts meet

@@ -49,11 +49,12 @@ init_plan="sample".}
 
 \item{counties}{A vector containing county (or other administrative or
 geographic unit) labels for each unit, which may be integers ranging from 1
-to the number of counties, or a factor or character vector.  If provided, the
-algorithm will generate maps tend to follow county lines.  You may combine this
-with a Gibbs constraint on the number of county splits using the
-\code{constraints} parameter; see below. If no county-split considerations
-are desired, this parameter should be left blank.}
+to the number of counties, or a factor or character vector.  If provided,
+the algorithm will generate maps tend to follow county lines. There is no
+strength parameter associated with this constraint. To adjust the number of
+county splits further, or to constrain a second type of administrative
+split, consider using \code{add_constr_splits()}, \code{add_constr_multisplits()},
+and \code{add_constr_total_splits()}.}
 
 \item{compactness}{Controls the compactness of the generated districts, with
 higher values preferring more compact districts. Must be nonnegative. See the

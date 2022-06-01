@@ -38,12 +38,13 @@
 #'   a random initial state using \code{\link{redist_smc}}. You can also request
 #'   a random initial state by setting \code{init_plan="sample"}.
 #' @param counties A vector containing county (or other administrative or
-#' geographic unit) labels for each unit, which may be integers ranging from 1
-#' to the number of counties, or a factor or character vector.  If provided, the
-#' algorithm will generate maps tend to follow county lines.  You may combine this
-#' with a Gibbs constraint on the number of county splits using the
-#' \code{constraints} parameter; see below. If no county-split considerations
-#' are desired, this parameter should be left blank.
+#'   geographic unit) labels for each unit, which may be integers ranging from 1
+#'   to the number of counties, or a factor or character vector.  If provided,
+#'   the algorithm will generate maps tend to follow county lines. There is no
+#'   strength parameter associated with this constraint. To adjust the number of
+#'   county splits further, or to constrain a second type of administrative
+#'   split, consider using `add_constr_splits()`, `add_constr_multisplits()`,
+#'   and `add_constr_total_splits()`.
 #' @param compactness Controls the compactness of the generated districts, with
 #' higher values preferring more compact districts. Must be nonnegative. See the
 #' 'Details' section for more information, and computational considerations.
