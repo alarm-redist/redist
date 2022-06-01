@@ -1,8 +1,8 @@
 ---
-title: "Glossary of Key Redistricting Terms"
+title: "Common Arguments to `redist` Functions`
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Glossary of Key Redistricting Terms}
+  %\VignetteIndexEntry{Common Arguments to redist Functions}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -14,7 +14,6 @@ knitr::opts_chunk$set(
 )
 ```
 
-To set up this glossary, we load some example data which uses Iowa and its 2012-2021 congressional districts.
 
 ```{r}
 library(redist)
