@@ -55,6 +55,8 @@
 #' @md
 #' @export
 summary.redist_plans = function(object, district=1L, ...) {
+    cli::cli_process_done(done_class="") # in case an earlier
+
     algo = attr(object, "algorithm")
     name = deparse(substitute(object))
 
