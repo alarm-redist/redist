@@ -2,7 +2,7 @@
 title: "Common Arguments to `redist` Functions"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Common Arguments to redist Functions}
+  %\VignetteIndexEntry{Common Arguments to `redist` Functions}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 ```
 
 
-```{r}
+```{r message=FALSE}
 library(redist)
 data(iowa)
 iowa_map <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop)
