@@ -40,6 +40,10 @@
 #' @param district For R-hat values, which district to use for district-level
 #'   summary statistics. We strongly recommend calling `match_numbers()` or
 #'   `number_by()` before examining these district-level statistics.
+#' @param all_runs When there are multiple SMC runs, show detailed summary
+#'   statistics for all runs (the default), or only the first run?
+#' @param vi_max The maximum number of plans to sample in computing the pairwise
+#'   variation of information distance (sample diversity).
 #' @param \dots additional arguments (ignored)
 #'
 #' @return A data frame containing diagnostic information, invisibly.
@@ -54,7 +58,7 @@
 #' @concept analyze
 #' @md
 #' @export
-summary.redist_plans = function(object, district=1L, ...) {
+summary.redist_plans = function(object, district=1L, all_runs=TRUE, vi_max=100, ...) {
     cli::cli_process_done(done_class="") # in case an earlier
 
     algo = attr(object, "algorithm")
@@ -75,7 +79,7 @@ summary.redist_plans = function(object, district=1L, ...) {
                    ">"='Run `attr({name}, "prec_pop") <- <map object>$<pop column>` to fix.'))
         prec_pop = rep(1, nrow(plans_m))
     }
-    est_div = plans_diversity(object, total_pop=prec_pop)
+    est_div = plans_diversity(object, total_pop=prec_pop, n_max=vi_max)
     div_rg = format(quantile(est_div, c(0.1, 0.9)), digits=2)
     div_bad = (mean(est_div) <= 0.35) || (mean(est_div <= 0.05) > 0.2)
 
@@ -156,11 +160,13 @@ summary.redist_plans = function(object, district=1L, ...) {
                                     "Est. k", "")
             rownames(tbl_print) = c(paste("Split", seq_len(n_distr-1)), "Resample")
 
-            if ("chain" %in% cols) {
-                cli_text("Sampling diagnostics for SMC run {i} of {n_runs}")
+            if (i == 1 || isTRUE(all_runs)) {
+                if ("chain" %in% cols) {
+                    cli_text("Sampling diagnostics for SMC run {i} of {n_runs}")
+                }
+                print(tbl_print, digits=2)
+                cat("\n")
             }
-            print(tbl_print, digits=2)
-            cat("\n")
         }
         out = bind_rows(run_dfs)
 
