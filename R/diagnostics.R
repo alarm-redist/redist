@@ -101,7 +101,7 @@ summary.redist_plans = function(object, district=1L, ...) {
 
             const_cols = vapply(addl_cols, function(col) {
                 x = object[[col]][idx]
-                all(x == x[1])
+                all(is.na(x)) || all(x == x[1])
             }, numeric(1))
             addl_cols = addl_cols[!const_cols]
 
