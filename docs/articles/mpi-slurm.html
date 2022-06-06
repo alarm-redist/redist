@@ -26,6 +26,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -38,18 +40,12 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.0</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="../articles/redist.html">Get started</a>
 </li>
@@ -57,14 +53,14 @@
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
      
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/glossary.html">Glossary of Key Redistricting Terms</a>
+      <a href="../articles/common_args.html">Common Arguments to `redist` Functions</a>
     </li>
     <li>
       <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
@@ -78,7 +74,7 @@
   </ul>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     News
      
     <span class="caret"></span>
@@ -86,10 +82,11 @@
   <ul class="dropdown-menu" role="menu">
 <li class="dropdown-header">Releases</li>
     <li>
-      <a href="https://alarm-redist.github.io/posts/2021-04-02-redist-300/">redist 3.0</a>
+      <a href="https://alarm-redist.github.io/posts/2021-04-02-redist-300/" class="external-link">redist 3.0</a>
     </li>
     <li class="divider">
-    <li>
+    </li>
+<li>
       <a href="../news/index.html">Changelog</a>
     </li>
   </ul>
@@ -97,7 +94,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/alarm-redist/redist/">
+  <a href="https://github.com/alarm-redist/redist/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -112,29 +109,29 @@
 
       
 
-      </header><script src="mpi-slurm_files/header-attrs-2.9/header-attrs.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>MPI / Slurm Sample Scripts</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/master/vignettes/mpi-slurm.Rmd"><code>vignettes/mpi-slurm.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/HEAD/vignettes/mpi-slurm.Rmd" class="external-link"><code>vignettes/mpi-slurm.Rmd</code></a></small>
       <div class="hidden name"><code>mpi-slurm.Rmd</code></div>
 
     </div>
 
     
     
-<div id="usage-examples---25-precincts-into-3-districts" class="section level1">
-<h1 class="hasAnchor">
-<a href="#usage-examples---25-precincts-into-3-districts" class="anchor"></a>Usage Examples - 25 Precincts into 3 Districts</h1>
-<div id="no-population-constraint" class="section level2">
-<h2 class="hasAnchor">
-<a href="#no-population-constraint" class="anchor"></a>No Population Constraint</h2>
+<div class="section level2">
+<h2 id="usage-examples---25-precincts-into-3-districts">Usage Examples - 25 Precincts into 3 Districts<a class="anchor" aria-label="anchor" href="#usage-examples---25-precincts-into-3-districts"></a>
+</h2>
+<div class="section level3">
+<h3 id="no-population-constraint">No Population Constraint<a class="anchor" aria-label="anchor" href="#no-population-constraint"></a>
+</h3>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">## Load data</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://alarm-redist.github.io/redist/">redist</a></span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span><span class="op">(</span><span class="va">algdat.pfull</span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alarm-redist.github.io/redist/" class="external-link">redist</a></span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">algdat.pfull</span><span class="op">)</span>
 
 <span class="co">## Run the simulations</span>
 <span class="va">mcmc.out</span> <span class="op">&lt;-</span> <span class="fu">redist.mcmc</span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">algdat.pfull</span><span class="op">$</span><span class="va">adjlist</span>,
@@ -142,12 +139,12 @@
                         nsims <span class="op">=</span> <span class="fl">10000</span>,
                         ndists <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></code></pre></div>
 </div>
-<div id="population-constraint" class="section level2">
-<h2 class="hasAnchor">
-<a href="#population-constraint" class="anchor"></a>20% Population Constraint</h2>
+<div class="section level3">
+<h3 id="population-constraint">20% Population Constraint<a class="anchor" aria-label="anchor" href="#population-constraint"></a>
+</h3>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">## Load data</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span><span class="op">(</span><span class="va">algdat.p20</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">algdat.p20</span><span class="op">)</span>
 
 <span class="co">## -----------------------------------------------</span>
 <span class="co">## Run mcmc algorithm - hard population constraint</span>
@@ -179,7 +176,7 @@
 <span class="co">## Also including optional beta weights, to upweight prob of transitions</span>
 <span class="co">## to colder temperatures</span>
 <span class="co">## ---------------------------------------------------------------------</span>
-<span class="va">betaweights</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fl">10</span><span class="op">)</span>; <span class="kw">for</span><span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span><span class="op">{</span><span class="va">betaweights</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">2</span><span class="op">^</span><span class="va">i</span><span class="op">}</span>
+<span class="va">betaweights</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fl">10</span><span class="op">)</span>; <span class="kw">for</span><span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span><span class="op">{</span><span class="va">betaweights</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">2</span><span class="op">^</span><span class="va">i</span><span class="op">}</span>
 <span class="va">mcmc.out.st</span> <span class="op">&lt;-</span> <span class="fu">redist.mcmc</span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">adjlist</span>,
                            popvec <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,
                            ndists <span class="op">=</span> <span class="fl">3</span>,
@@ -190,9 +187,9 @@
                            betaweights <span class="op">=</span> <span class="va">betaweights</span><span class="op">)</span>
 <span class="va">mcmc.out.st</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.ipw.html">redist.ipw</a></span><span class="op">(</span><span class="va">mcmc.out.st</span>, targetpop <span class="op">=</span> <span class="fl">.2</span><span class="op">)</span></code></pre></div>
 </div>
-<div id="population-constraint-and-compactness-constraint" class="section level2">
-<h2 class="hasAnchor">
-<a href="#population-constraint-and-compactness-constraint" class="anchor"></a>20% Population Constraint and Compactness Constraint</h2>
+<div class="section level3">
+<h3 id="population-constraint-and-compactness-constraint">20% Population Constraint and Compactness Constraint<a class="anchor" aria-label="anchor" href="#population-constraint-and-compactness-constraint"></a>
+</h3>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">## ----------------------------------------------------------</span>
 <span class="co">## Constrain on population and compactness with tempering,</span>
@@ -203,16 +200,16 @@
                                     popvec <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,
                                     ndists <span class="op">=</span> <span class="fl">3</span>,
                                     nsims <span class="op">=</span> <span class="fl">10000</span>,
-                                    constraint <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"population"</span>, <span class="st">"compact"</span><span class="op">)</span>,
-                                    constraintweights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">5.4</span>, <span class="fl">3</span><span class="op">)</span>,
+                                    constraint <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"population"</span>, <span class="st">"compact"</span><span class="op">)</span>,
+                                    constraintweights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5.4</span>, <span class="fl">3</span><span class="op">)</span>,
                                     ssdmat <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">distancemat</span>,
                                     temper <span class="op">=</span> <span class="cn">TRUE</span>,
                                     betaweights <span class="op">=</span> <span class="va">betaweights</span><span class="op">)</span>
 <span class="va">mcmc.out.st</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.ipw.html">redist.ipw</a></span><span class="op">(</span><span class="va">mcmc.out.st.multiple</span>, targetpop <span class="op">=</span> <span class="fl">.2</span><span class="op">)</span></code></pre></div>
 </div>
-<div id="population-constraint-and-compactness-constraint-using-mpi" class="section level2">
-<h2 class="hasAnchor">
-<a href="#population-constraint-and-compactness-constraint-using-mpi" class="anchor"></a>20% Population Constraint and Compactness Constraint, using MPI</h2>
+<div class="section level3">
+<h3 id="population-constraint-and-compactness-constraint-using-mpi">20% Population Constraint and Compactness Constraint, using MPI<a class="anchor" aria-label="anchor" href="#population-constraint-and-compactness-constraint-using-mpi"></a>
+</h3>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">## ----------------------------------------------------------</span>
 <span class="co">## Constrain on population and compactness with parallel tempering,</span>
@@ -226,8 +223,8 @@
   popvec <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,
   ndists <span class="op">=</span> <span class="fl">3</span>,
   nsims <span class="op">=</span> <span class="fl">10000</span>,
-  constraint <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"population"</span>, <span class="st">"compact"</span><span class="op">)</span>,
-  constraintweights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">5.4</span>, <span class="fl">3</span><span class="op">)</span>,
+  constraint <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"population"</span>, <span class="st">"compact"</span><span class="op">)</span>,
+  constraintweights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5.4</span>, <span class="fl">3</span><span class="op">)</span>,
   ssdmat <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">distancemat</span>,
   betaseqlength <span class="op">=</span> <span class="fl">20</span>,
   savename <span class="op">=</span> <span class="st">"redist_mpi"</span>,
@@ -240,9 +237,9 @@
 <span class="co">## We will change this in a future release to run the </span>
 <span class="co">## inverse probability reweighting inside of</span>
 <span class="co">## redist.mcmc.mpi().</span></code></pre></div>
-<div id="a-sample-slurm-script-for-submitting-mpi-jobs" class="section level3">
-<h3 class="hasAnchor">
-<a href="#a-sample-slurm-script-for-submitting-mpi-jobs" class="anchor"></a>A Sample slurm Script for Submitting MPI Jobs</h3>
+<div class="section level4">
+<h4 id="a-sample-slurm-script-for-submitting-mpi-jobs">A Sample slurm Script for Submitting MPI Jobs<a class="anchor" aria-label="anchor" href="#a-sample-slurm-script-for-submitting-mpi-jobs"></a>
+</h4>
 <div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">## ----------------------------------------------------------</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">## Sample slurm script for submitting an R script using </span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">## redist.mcmc.mpi(). Set ntasks equal to the length of the</span></span>
@@ -270,9 +267,10 @@
 <span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="ex">mpiexec</span> <span class="at">-np</span> 1 R <span class="at">--no-save</span> <span class="op">&lt;</span> [scriptname here].R</span></code></pre></div>
 </div>
 </div>
-<div id="population-constraint-and-compactness-constraint-using-annealing" class="section level2">
-<h2 class="hasAnchor">
-<a href="#population-constraint-and-compactness-constraint-using-annealing" class="anchor"></a>20% Population Constraint and Compactness Constraint, using Annealing</h2>
+<div class="section level3">
+<h3 id="population-constraint-and-compactness-constraint-using-annealing">20% Population Constraint and Compactness Constraint, using
+Annealing<a class="anchor" aria-label="anchor" href="#population-constraint-and-compactness-constraint-using-annealing"></a>
+</h3>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">## ----------------------------------------------------------</span>
 <span class="co">## Constrain on population and compactness with annealing,</span>
@@ -291,17 +289,17 @@
 <span class="co">## Finally, we take the last draw of the algorithm and store it as output.</span>
 <span class="co">## ----------------------------------------------------------</span>
 
-<span class="va">t</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html">Sys.getenv</a></span><span class="op">(</span><span class="st">"SLURM_ARRAY_TASK_ID"</span><span class="op">)</span><span class="op">)</span>
+<span class="va">t</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"SLURM_ARRAY_TASK_ID"</span><span class="op">)</span><span class="op">)</span>
 
 <span class="fu">redist.mcmc.anneal</span><span class="op">(</span>
   adjobj <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">adjlist</span>,
   popvec <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,
   ndists <span class="op">=</span> <span class="fl">3</span>,
   num_hot_steps <span class="op">=</span> <span class="fl">500</span>, num_annealing_steps <span class="op">=</span> <span class="fl">2000</span>, num_cold_steps <span class="op">=</span> <span class="fl">500</span>,
-  constraint <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"population"</span>, <span class="st">"compact"</span><span class="op">)</span>,
-  constraintweights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">5.4</span>, <span class="fl">3</span><span class="op">)</span>,
+  constraint <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"population"</span>, <span class="st">"compact"</span><span class="op">)</span>,
+  constraintweights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5.4</span>, <span class="fl">3</span><span class="op">)</span>,
   ssdmat <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">distancemat</span>,
-  savename <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="st">"redist_anneal_"</span>, <span class="va">t</span><span class="op">)</span>
+  savename <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"redist_anneal_"</span>, <span class="va">t</span><span class="op">)</span>
 <span class="op">)</span>
 
 <span class="co">## ----------------------------------------------------</span>
@@ -313,12 +311,12 @@
 <span class="co">## in a separate script. We can then run redist.ipw()</span>
 <span class="co">## on the combined simulations.</span>
 <span class="co">## ----------------------------------------------------</span>
-<span class="fu"><a href="https://rdrr.io/r/base/getwd.html">setwd</a></span><span class="op">(</span><span class="st">"[directory with files]"</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/getwd.html" class="external-link">setwd</a></span><span class="op">(</span><span class="st">"[directory with files]"</span><span class="op">)</span>
 <span class="va">algout</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.combine.anneal.html">redist.combine.anneal</a></span><span class="op">(</span><span class="st">"redist_anneal_"</span><span class="op">)</span>
 <span class="va">algout_rw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.ipw.html">redist.ipw</a></span><span class="op">(</span><span class="va">algout</span>, targetpop <span class="op">=</span> <span class="fl">.2</span><span class="op">)</span></code></pre></div>
-<div id="a-sample-slurm-script-for-submitting-annealing-jobs" class="section level3">
-<h3 class="hasAnchor">
-<a href="#a-sample-slurm-script-for-submitting-annealing-jobs" class="anchor"></a>A Sample slurm Script for Submitting Annealing Jobs</h3>
+<div class="section level4">
+<h4 id="a-sample-slurm-script-for-submitting-annealing-jobs">A Sample slurm Script for Submitting Annealing Jobs<a class="anchor" aria-label="anchor" href="#a-sample-slurm-script-for-submitting-annealing-jobs"></a>
+</h4>
 <div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">## ----------------------------------------------------------</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">## Sample slurm script for submitting an R script using </span></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co">## redist.mcmc.anneal(). Set array equal to the number</span></span>
@@ -363,11 +361,13 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Christopher T. Kenny, Cory McCartan, Ben Fifield, Kosuke Imai.</p>
+  <p></p>
+<p>Developed by Christopher T. Kenny, Cory McCartan, Ben Fifield, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
 </div>
 
       </footer>
@@ -375,6 +375,8 @@
 
   
 
+
+  
 
   </body>
 </html>

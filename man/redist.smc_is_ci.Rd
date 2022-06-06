@@ -2,7 +2,7 @@
 % Please edit documentation in R/redist_smc.R
 \name{redist.smc_is_ci}
 \alias{redist.smc_is_ci}
-\title{Confidence Intervals for Importance Sampling Estimates}
+\title{(Deprecated) Confidence Intervals for Importance Sampling Estimates}
 \usage{
 redist.smc_is_ci(x, wgt, conf = 0.99)
 }

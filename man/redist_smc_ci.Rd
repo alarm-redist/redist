@@ -17,7 +17,11 @@ redist_smc_ci(plans, x, district = 1L, conf = 0.9)
 \item{conf}{the desired confidence level.}
 }
 \value{
-a vector of length 3: (lower, point estimate, upper).
+A tibble with three columns: \code{X}, \code{X_lower}, and
+\code{X_upper}, where \code{X} is the name of the vector of interest,
+containing the mean and confidence interval. When used inside
+\code{\link[dplyr:summarise]{summarize()}} this will create three columns in the
+output data.
 }
 \description{
 Builds a confidence interval for a quantity of interest.

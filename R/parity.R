@@ -69,6 +69,11 @@ redist.parity <- function(plans, total_pop) {
 #'   \item{`pop_new`}{The district populations after the moves}
 #' }
 #'
+#' @examples
+#' data(iowa)
+#' iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.01)
+#' min_move_parity(iowa_map, cd_2010)
+#'
 #' @concept analyze
 #' @md
 #' @export

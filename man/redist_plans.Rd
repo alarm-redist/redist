@@ -35,6 +35,7 @@ As a data frame, the usual \code{\link{dplyr}} methods will work.
 
 Other useful methods for \code{redist_plans} objects:
 \itemize{
+\item \code{\link{summary.redist_plans}}
 \item \code{\link{add_reference}}
 \item \code{\link{subset_sampled}}
 \item \code{\link{subset_ref}}

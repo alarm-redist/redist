@@ -10,6 +10,8 @@ interface for the implementation of additional metrics.
 * Parallel computing support for the SMC algorithm, both within and across sampling runs
 * Reproducible across-run parallelism throughout the package, via `doRNG`
 * Much faster `match_numbers()` using the Hungarian method
+* `min_move_parity()` calculates how much population needs to be moved between 
+districts in order to completely balance a redistricting plan.
 * Support for partial SMC simulations, where fewer districts are drawn than the 
 total number. Allows advanced users to manually combine partial runs to 
 form complete maps.

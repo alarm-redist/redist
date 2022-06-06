@@ -415,7 +415,11 @@ redist_quantile_trunc = function(x) pmin(x, quantile(x, 1 - length(x)^(-0.5)))
 #' H. P. Chan and T. L. Lai. A general theory of particle filters in hidden
 #' Markov models and some applications. Ann. Statist., 41(6):2877–2904, 2013.
 #'
-#' @return a vector of length 3: (lower, point estimate, upper).
+#' @return A tibble with three columns: \code{X}, \code{X_lower}, and
+#'   \code{X_upper}, where \code{X} is the name of the vector of interest,
+#'   containing the mean and confidence interval. When used inside
+#'   \code{\link[dplyr:summarise]{summarize()}} this will create three columns in the
+#'   output data.
 #'
 #' @examples
 #' library(dplyr)
@@ -432,6 +436,7 @@ redist_quantile_trunc = function(x) pmin(x, quantile(x, 1 - length(x)^(-0.5)))
 #' @export
 redist_smc_ci = function(plans, x, district=1L, conf=0.9) {
     plans = subset_sampled(plans)
+    x_orig = enquo(x)
     x = eval_tidy(enquo(x), plans)
     if (!is.null(district))
         x = x[plans$district == district]
@@ -458,12 +463,16 @@ redist_smc_ci = function(plans, x, district=1L, conf=0.9) {
     }
 
     alpha = (1 - conf)/2
+    ci = est + qt(c(alpha, 0.5, 1-alpha), df=N-1) * std_err
 
-    est + qt(c(alpha, 0.5, 1-alpha), df=N-1) * std_err
+    tibble("{{ x_orig }}" := ci[2],
+           "{{ x_orig }}_lower" := ci[1],
+           "{{ x_orig }}_upper" := ci[3])
+
 }
 
 
-#' Confidence Intervals for Importance Sampling Estimates
+#' (Deprecated) Confidence Intervals for Importance Sampling Estimates
 #'
 #' Builds a confidence interval for a quantity of interest,
 #' given importance sampling weights.

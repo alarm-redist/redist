@@ -25,7 +25,7 @@ knitr::opts_chunk$set(collapse = TRUE, fig.path = "man/figures/README-", comment
 set.seed(5118)
 ```
 
-<img src="man/figures/logo.png" align="right" height="128" style="margin-left: 4px;"/>
+<img src="man/figures/logo.png" align="right" style="height: 128px; margin-left: 4px;"/>
 
 This R package enables researchers to sample redistricting plans from a 
 pre-specified target distribution using Sequential Monte Carlo and Markov 

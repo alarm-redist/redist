@@ -32,4 +32,10 @@ districts. The moves are only allowed between districts that share the
 territory of a county, so that any boundary adjustments are guaranteed to
 preserve all unbroken county boundaries.
 }
+\examples{
+data(iowa)
+iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.01)
+min_move_parity(iowa_map, cd_2010)
+
+}
 \concept{analyze}

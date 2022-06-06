@@ -97,6 +97,7 @@ reconstruct.redist_plans = function(data, old) {
 #' As a data frame, the usual \code{\link{dplyr}} methods will work.
 #'
 #' Other useful methods for \code{redist_plans} objects:
+#' * \code{\link{summary.redist_plans}}
 #' * \code{\link{add_reference}}
 #' * \code{\link{subset_sampled}}
 #' * \code{\link{subset_ref}}

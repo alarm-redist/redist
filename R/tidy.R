@@ -654,33 +654,3 @@ prec_cooccurrence = function(plans, which=NULL, sampled_only=TRUE, ncores=1) {
         which = seq_len(ncol(plan_m))
     prec_cooccur(plan_m, which, ncores)
 }
-
-
-#' Confidence Intervals for Importance Sampling Estimates
-#'
-#' Builds a confidence interval for the mean of a vector of interest,
-#' given importance sampling weights.
-#'
-#' @param x \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the vector to
-#'   build importance sampling confidence intervals for.
-#' @param conf The confidence level for the intervals.
-#' @param .data a \code{\link{redist_plans}} object
-#'
-#' @returns A tibble with three columns: \code{X}, \code{X_lower}, and
-#'   \code{X_upper}, where \code{X} is the name of the vector of interest,
-#'   containing the mean and confidence interval. When used inside
-#'   \code{\link[dplyr:summarise]{summarize()}} this will create three columns in the
-#'   output data.
-#'
-#' @concept analyze
-#' @export
-imp_confint = function(x, conf=0.95, .data=cur_plans()) {
-    check_tidy_types(NULL, .data)
-
-    y = rlang::eval_tidy(rlang::enquo(x), .data)
-    ci = redist.smc_is_ci(y, get_plans_weights(.data), conf)
-
-    tibble("{{ x }}" := mean(y),
-                   "{{ x }}_lower" := ci[1],
-                   "{{ x }}_upper" := ci[2])
-}
