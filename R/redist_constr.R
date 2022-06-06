@@ -17,7 +17,7 @@ new_redist_constr = function(constr=list(), data=tibble()) {
         if (is.null(names(constr))) cli_abort("Null names.")
         if (any(names(constr) == "")) cli_abort("Empty names.")
         for (el in constr) {
-            if (class(el) != "list") cli_abort("Not a nested list")
+            if (!is.list(el)) cli_abort("Not a nested list")
             classes = vapply(el, class, character(1))
             if (length(classes) == 0 || any(classes != "list"))
                 cli_abort("Not a nested list")
