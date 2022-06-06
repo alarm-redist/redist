@@ -104,8 +104,10 @@ test_that("Partial sampling works with strange bounds", {
     bounds = sum(fl25$pop)*c(0.25, 0.3, 0.32)
     fl_map2 = redist_map(fl25, pop_bounds=bounds, ndists=4, adj=adj) %>%
         suppressMessages()
-    res = redist_smc(fl_map2, 10, n_steps=2, silent=TRUE)
+    res = redist_smc(fl_map2, 1000, n_steps=2, silent=TRUE)
     expect_s3_class(res, "redist_plans")
+    expect_true(all(res$total_pop[res$district > 0] > bounds[1]))
+    expect_true(all(res$total_pop[res$district > 0] < bounds[3]))
 })
 
 test_that("Additional constraints work", {

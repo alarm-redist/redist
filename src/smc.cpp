@@ -65,6 +65,12 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
             } else {
                 Rcout << "Using " << cores << " cores.\n";
             }
+
+            if (check_both) {
+                Rcout << "Using two-sided population checks.\n";
+            } else {
+                Rcout << "Using one-sided population checks.\n";
+            }
         }
     }
 
@@ -367,7 +373,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     umat ancestors_new(N, n_lags);
     uvec uniques(N);
 
-    const int reject_check_int = 100; // check for interrupts every _ rejections
+    const int reject_check_int = 200; // check for interrupts every _ rejections
     const int check_int = 50; // check for interrupts every _ iterations
     uvec iters(N, fill::zeros); // how many actual iterations
 
@@ -394,6 +400,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 RcppThread::checkUserInterrupt(++reject_ct % reject_check_int == 0);
                 continue;
             }
+            double old_lower = lower_s;
             inc_lp = split_map(g, counties, cg, districts_new.col(i), dist_ctr,
                                pop, pop_left(idx), lower_s, upper_s, target, k);
 
@@ -504,12 +511,15 @@ double split_map(const Graph &g, const uvec &counties, Multigraph &cg,
     ust = sample_sub_ust(g, ust, V, root, ignore, pop, lower, upper, counties, cg);
     if (ust.size() == 0) return -std::log(0.0);
 
-    // set `lower` as a way to return population of new district
-    lower = cut_districts(ust, k, root, districts, dist_ctr, pop, total_pop,
+    double new_pop = cut_districts(ust, k, root, districts, dist_ctr, pop, total_pop,
                           lower, upper, target);
-    if (lower == 0) return -std::log(0.0); // reject sample
 
-    return log_boundary(g, districts, 0, dist_ctr);// - log((double) k); (k is constant)
+    if (new_pop == 0) {
+        return -std::log(0.0); // reject sample
+    } else {
+        lower = new_pop;  // set `lower` as a way to return population of new district
+        return log_boundary(g, districts, 0, dist_ctr);// - log((double) k); (k is constant)
+    }
 }
 
 
@@ -531,9 +541,9 @@ double cut_districts(Tree &ust, int k, int root, subview_col<uword> &districts,
     std::vector<double> deviances; // how far from target pop.
     std::vector<bool> is_ok; // whether they meet constraints
     int distr_root = districts(root);
-    for (int i = 0; i < V; i++) {
-        if (districts(i) != distr_root || i == root) continue;
-        double below = pop_below.at(i);
+    for (int i = 1; i <= V; i++) { // 1-indexing here
+        if (districts(i - 1) != distr_root || i - 1 == root) continue;
+        double below = pop_below.at(i - 1);
         double dev1 = std::fabs(below - target);
         double dev2 = std::fabs(total_pop - below - target);
         if (dev1 < dev2) {
@@ -550,7 +560,7 @@ double cut_districts(Tree &ust, int k, int root, subview_col<uword> &districts,
 
     int idx = rint(k);
     idx = select_k(deviances, idx + 1);
-    int cut_at = std::fabs(candidates[idx]);
+    int cut_at = std::fabs(candidates[idx]) - 1;
     // reject sample
     if (!is_ok[idx]) return 0.0;
 
