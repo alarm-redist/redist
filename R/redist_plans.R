@@ -219,7 +219,7 @@ get_n_ref = function(x) {
 #'
 #' @returns a list of parameters and information about the sampling problem.
 #'
-#' @concept simulate
+#' @concept analysis
 #' @export
 get_sampling_info = function(plans) {
     if (!inherits(plans, "redist_plans")) cli_abort("Not a {.cls redist_plans}")
@@ -291,7 +291,7 @@ subset_ref = function(plans, matrix=TRUE) {
 #'
 #' @returns a numeric acceptance rate
 #'
-#' @concept simulate
+#' @concept analysis
 #' @export
 get_mh_acceptance_rate <- function(plans){
     if (!inherits(plans, "redist_plans")) cli_abort("Not a {.cls redist_plans}")
