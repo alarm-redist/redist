@@ -400,7 +400,6 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 RcppThread::checkUserInterrupt(++reject_ct % reject_check_int == 0);
                 continue;
             }
-            double old_lower = lower_s;
             inc_lp = split_map(g, counties, cg, districts_new.col(i), dist_ctr,
                                pop, pop_left(idx), lower_s, upper_s, target, k);
 
