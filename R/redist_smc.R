@@ -313,12 +313,12 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
 
         if (!is.nan(n_eff) && n_eff/nsims <= 0.05)
             cli_warn(c("Less than 5% resampling efficiency.",
-                "*" = "Increase the number of samples.",
-                "*" = "Consider weakening or removing constraints.",
-                "i" = "If sampling efficiency drops precipitously in the final
+                       "*" = "Increase the number of samples.",
+                       "*" = "Consider weakening or removing constraints.",
+                       "i" = "If sampling efficiency drops precipitously in the final
                             iterations, population balance is likely causing a bottleneck.
                             Try increasing {.arg pop_temper} by 0.01.",
-                "i" = "If sampling efficiency declines steadily across iterations,
+                       "i" = "If sampling efficiency declines steadily across iterations,
                             adjusting {.arg seq_alpha} upward may help a bit."))
 
         algout$wgt <- wgt
