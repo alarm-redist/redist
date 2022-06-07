@@ -61,11 +61,11 @@ install.packages("redist")
 ```
 
 You can also install the most recent development version of `redist`
-using the \`remotes\`\` package.
+(which is usually quite stable) using the \`remotes\`\` package.
 
 ``` r
 if (!require(remotes)) install.packages("remotes")
-remotes::install_github("alarm-redist/redist", dependencies=TRUE)
+remotes::install_github("alarm-redist/redist@dev", dependencies=TRUE)
 ```
 
 ## Getting started
