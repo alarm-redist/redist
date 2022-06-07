@@ -42,8 +42,8 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: rcmdcheck
-        env:
-          _R_CHECK_FORCE_SUGGESTS_: false
+          extra-packages: any::rcmdcheck, Rmpi=?ignore, rmapshaper=?ignore
 
       - uses: r-lib/actions/check-r-package@v2
+        env:
+          _R_CHECK_FORCE_SUGGESTS_: false
