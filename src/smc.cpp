@@ -158,7 +158,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     } // end for
     } catch (Rcpp::internal::InterruptedException e) {
         cli_progress_done(bar);
-        return NULL;
+        return R_NilValue;
     }
     cli_progress_done(bar);
 
