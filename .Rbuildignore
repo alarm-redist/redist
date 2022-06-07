@@ -17,3 +17,6 @@ builder.sh
 ^CRAN-RELEASE$
 ^R/dev_helpers\.R$
 ^inst/enumpart/enumpart\.exe$
+^data-raw$
+^explore$
+^\.github$
