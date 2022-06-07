@@ -1,4 +1,4 @@
-# THESE FILES NOT INCLUDED IN BUILDS
+# THIS FILE IS NOT INCLUDED IN BUILDS
 
 # call ld_ia() to create a redist_map and redist_plans object for Iowa
 ld_ia <- function() {
