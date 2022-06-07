@@ -19,3 +19,4 @@ builder.sh
 ^inst/enumpart/enumpart\.exe$
 ^data-raw$
 ^explore$
+^\.github$
