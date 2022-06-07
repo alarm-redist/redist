@@ -169,7 +169,7 @@ NULL
 #' @name iowa
 #' @usage data("iowa")
 #' @format sf tibble containing columns for useful data related to the
-#'   redistricting process
+#' redistricting process
 #' \describe{
 #' \item{\code{fips}}{The FIPS code for the county.}
 #' \item{\code{cd_2010}}{The 2010 congressional district assignments.}
@@ -205,7 +205,7 @@ NULL
 #' @name EPSG
 #' @usage data("EPSG")
 #' @format named list containing EPSG codes for each U.S. state. Codes are
-#'   indexed by state abbreviations.
+#' indexed by state abbreviations.
 #'
 #' @md
 #' @concept data

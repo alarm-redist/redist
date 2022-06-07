@@ -45,7 +45,7 @@
 #'
 #' ## 25 precinct, three districts - no pop constraint ##
 #' alg_253 <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
-#'                        init_plan = init_plan, nsims = 10000)
+#'     init_plan = init_plan, nsims = 10000)
 #'
 #' ## Get Republican Dissimilarity Index from simulations
 #' rep_dmi_253 <- redist.segcalc(alg_253, fl25$mccain, fl25$pop)
@@ -58,8 +58,8 @@
 #'
 #' ## Gelman Rubin needs two chains, so we run a second
 #' alg_253_2 <- redist.flip(adj = fl25_adj,
-#' total_pop = fl25$pop,
-#' init_plan = init_plan, nsims = 10000)
+#'     total_pop = fl25$pop,
+#'     init_plan = init_plan, nsims = 10000)
 #'
 #' rep_dmi_253_2 <- redist.segcalc(alg_253_2, fl25$mccain, fl25$pop)
 #'
@@ -67,25 +67,25 @@
 #' rep_dmi_253_list <- list(rep_dmi_253, rep_dmi_253_2)
 #'
 #' ## Generate Gelman Rubin diagnostic plot
-#' redist.diagplot(sumstat = rep_dmi_253_list, plot = 'gelmanrubin')
+#' redist.diagplot(sumstat = rep_dmi_253_list, plot = "gelmanrubin")
 #' }
 #' @concept plot
 #' @export
 redist.diagplot <- function(sumstat, plot = c("trace", "autocorr", "densplot",
-                                              "mean", "gelmanrubin"),
-                            logit = FALSE, savename = NULL){
-    if (!requireNamespace("coda", quietly=TRUE))
+                                "mean", "gelmanrubin"),
+                            logit = FALSE, savename = NULL) {
+    if (!requireNamespace("coda", quietly = TRUE))
         cli_abort(c("{.fn redist.diagplot} requires the {.pkg coda} package.",
-                    ">"='Install it with {.code install.packages("coda")}'))
+            ">" = 'Install it with {.code install.packages("coda")}'))
 
     ##############
     ## Warnings ##
     ##############
-    if(!(class(sumstat) %in% c("integer", "numeric", "list", "mcmc", "mcmc.list"))){
+    if (!(class(sumstat) %in% c("integer", "numeric", "list", "mcmc", "mcmc.list"))) {
         cli_abort("{.arg sumstat} should be either a numeric vector, list, or {.cls mcmc} object.")
     }
-    if(!(plot %in% c("trace", "autocorr", "densplot",
-                     "mean", "gelmanrubin"))){
+    if (!(plot %in% c("trace", "autocorr", "densplot",
+        "mean", "gelmanrubin"))) {
         cli_abort("Sorry. We don't currently support the {.value {plot}} diagnostic.")
     }
     if (plot == "gelmanrubin" & !inherits(sumstat, c("list", "mcmc.list"))) {
@@ -95,24 +95,24 @@ redist.diagplot <- function(sumstat, plot = c("trace", "autocorr", "densplot",
     ########################
     ## Create mcmc object ##
     ########################
-    if(class(sumstat)[1] == "numeric"){
+    if (class(sumstat)[1] == "numeric") {
         segout <- coda::mcmc(sumstat)
-    }else if(class(sumstat)[1] == "list"){
-        for(i in 1:length(sumstat)){
+    } else if (class(sumstat)[1] == "list") {
+        for (i in 1:length(sumstat)) {
             sumstat[[i]] <- coda::mcmc(sumstat[[i]])
         }
         segout <- coda::mcmc.list(sumstat)
-    }else if(class(sumstat) %in% c("mcmc", "mcmc.list")){
+    } else if (class(sumstat) %in% c("mcmc", "mcmc.list")) {
         segout <- sumstat
     }
 
     ## Logit transform
-    if(logit){
-        if(class(segout)[1]== "mcmc"){
-            segout <- log(segout / (1 - segout))
-        }else if(class(segout)[1] == "mcmc.list"){
-            for(i in 1:length(segout)){
-                segout[[i]] <- log(segout[[i]] / (1 - segout[[i]]))
+    if (logit) {
+        if (class(segout)[1] == "mcmc") {
+            segout <- log(segout/(1 - segout))
+        } else if (class(segout)[1] == "mcmc.list") {
+            for (i in 1:length(segout)) {
+                segout[[i]] <- log(segout[[i]]/(1 - segout[[i]]))
             }
         }
     }
@@ -120,48 +120,48 @@ redist.diagplot <- function(sumstat, plot = c("trace", "autocorr", "densplot",
     ##################
     ## Create plots ##
     ##################
-    if(plot == "trace"){
-        if(!is.null(savename)){
+    if (plot == "trace") {
+        if (!is.null(savename)) {
             pdf(file = paste(savename, ".pdf", sep = ""))
         }
         coda::traceplot(segout)
-        if(!is.null(savename)){
+        if (!is.null(savename)) {
             dev.off()
         }
     }
-    if(plot == "autocorr"){
-        if(!is.null(savename)){
+    if (plot == "autocorr") {
+        if (!is.null(savename)) {
             pdf(file = paste(savename, ".pdf", sep = ""))
         }
         coda::autocorr.plot(segout, lag.max = 50)
-        if(!is.null(savename)){
+        if (!is.null(savename)) {
             dev.off()
         }
     }
-    if(plot == "densplot"){
-        if(!is.null(savename)){
+    if (plot == "densplot") {
+        if (!is.null(savename)) {
             pdf(file = paste(savename, ".pdf", sep = ""))
         }
         coda::densplot(segout)
-        if(!is.null(savename)){
+        if (!is.null(savename)) {
             dev.off()
         }
     }
-    if(plot == "mean"){
-        if(!is.null(savename)){
+    if (plot == "mean") {
+        if (!is.null(savename)) {
             pdf(file = paste(savename, ".pdf", sep = ""))
         }
         coda::cumuplot(segout, probs = .5, type = "l", lty = 1)
-        if(!is.null(savename)){
+        if (!is.null(savename)) {
             dev.off()
         }
     }
-    if(plot == "gelmanrubin" & class(segout) == "mcmc.list"){
-        if(!is.null(savename)){
+    if (plot == "gelmanrubin" & class(segout) == "mcmc.list") {
+        if (!is.null(savename)) {
             pdf(file = paste(savename, ".pdf", sep = ""))
         }
         coda::gelman.plot(segout, transform = FALSE)
-        if(!is.null(savename)){
+        if (!is.null(savename)) {
             dev.off()
         }
     }

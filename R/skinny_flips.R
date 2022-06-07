@@ -16,25 +16,25 @@
 #'
 #' @noRd
 #'
-skinny_flips <- function(adj, init_plan, total_pop, pop_tol, nsims, eprob, lambda, constraints){
+skinny_flips <- function(adj, init_plan, total_pop, pop_tol, nsims, eprob, lambda, constraints) {
 
-  algout <- swMH(aList = adj,
-                 cdvec = init_plan,
-                 popvec = total_pop,
-                 constraints = as.list(constraints),
-                 nsims = nsims,
-                 eprob = eprob,
-                 pct_dist_parity = pop_tol,
-                 beta_sequence = c(1 ,1, 1, 1),
-                 beta_weights = c(1, 1, 1, 1),
-                 lambda = lambda,
-                 beta = 0,
-                 adapt_beta = 'none',
-                 adjswap = TRUE,
-                 exact_mh = FALSE,
-                 adapt_lambda = FALSE,
-                 adapt_eprob = FALSE,
-                 verbose = FALSE)
+    algout <- swMH(aList = adj,
+        cdvec = init_plan,
+        popvec = total_pop,
+        constraints = as.list(constraints),
+        nsims = nsims,
+        eprob = eprob,
+        pct_dist_parity = pop_tol,
+        beta_sequence = c(1, 1, 1, 1),
+        beta_weights = c(1, 1, 1, 1),
+        lambda = lambda,
+        beta = 0,
+        adapt_beta = "none",
+        adjswap = TRUE,
+        exact_mh = FALSE,
+        adapt_lambda = FALSE,
+        adapt_eprob = FALSE,
+        verbose = FALSE)
 
-  algout$plans + 1
+    algout$plans + 1
 }

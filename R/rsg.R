@@ -62,14 +62,14 @@
 #' data(fl25_adj)
 #'
 #' res <- redist.rsg(adj = fl25_adj, total_pop = fl25$pop,
-#'  ndists = 3, pop_tol = 0.05)
+#'     ndists = 3, pop_tol = 0.05)
 #'
 #' @concept simulate
 #' @export
 redist.rsg <- function(adj, total_pop, ndists, pop_tol,
-                       verbose = TRUE, maxiter=5000) {
+                       verbose = TRUE, maxiter = 5000) {
 
-    if(verbose){
+    if (verbose) {
         divider <- c(paste(rep("=", 20), sep = "", collapse = ""), "\n")
 
         cat("\n")
@@ -77,35 +77,35 @@ redist.rsg <- function(adj, total_pop, ndists, pop_tol,
         cat("redist.rsg(): Automated Redistricting Starts\n\n")
     }
 
-    target.pop <- sum(total_pop) / ndists
+    target.pop <- sum(total_pop)/ndists
 
     ## Main Call to Computation - if returning NA, break.
     ## If returning districts but not contiguous, repeat
     ## First attempt
-    time <- system.time(ret <- .Call('_redist_rsg',
-                                     PACKAGE = 'redist',
-                                     adj,
-                                     total_pop,
-                                     ndists,
-                                     target.pop,
-                                     pop_tol,
-                                     as.integer(maxiter)
-                                     ))
+    time <- system.time(ret <- .Call("_redist_rsg",
+        PACKAGE = "redist",
+        adj,
+        total_pop,
+        ndists,
+        target.pop,
+        pop_tol,
+        as.integer(maxiter)
+    ))
     ## Make another call if stuck, but only do one more try
     ## because maxiter might be too low
-    if(is.na(ret$plan[1])){
-        time <- system.time(ret <- .Call('_redist_rsg',
-                                         PACKAGE = 'redist',
-                                         adj,
-                                         total_pop,
-                                         ndists,
-                                         target.pop,
-                                         pop_tol,
-                                         as.integer(maxiter)
-                                         ))
+    if (is.na(ret$plan[1])) {
+        time <- system.time(ret <- .Call("_redist_rsg",
+            PACKAGE = "redist",
+            adj,
+            total_pop,
+            ndists,
+            target.pop,
+            pop_tol,
+            as.integer(maxiter)
+        ))
     }
 
-    if(is.na(ret$plan[1])){
+    if (is.na(ret$plan[1])) {
 
         stop("redist.rsg() failed to return a valid partition. Try increasing maxiterrsg")
 
@@ -113,13 +113,12 @@ redist.rsg <- function(adj, total_pop, ndists, pop_tol,
         ret$plan <- ret$plan + 1
     }
 
-    if(verbose){
+    if (verbose) {
         cat(paste("\n\t", ndists, " districts built using ",
-                  length(adj), " precincts in ",
-                  round(time[3], digits=2), " seconds...\n\n", sep = ""), append = TRUE)
+            length(adj), " precincts in ",
+            round(time[3], digits = 2), " seconds...\n\n", sep = ""), append = TRUE)
     }
 
     return(ret)
 
 }
-

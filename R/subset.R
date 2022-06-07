@@ -26,7 +26,7 @@ redist.subset <- function(shp, adj, keep_rows, total_pop, ndists,
                           pop_tol, sub_ndists) {
     if (missing(shp)) {
         cli_abort(c("{.arg shp} is required.",
-                    "i"="Use {.fn redist.reduce.adjacency} to subset adjacency lists."))
+            "i" = "Use {.fn redist.reduce.adjacency} to subset adjacency lists."))
     }
     if (!inherits(shp, "sf")) {
         cli_abort("{.arg shp} must be an {.cls sf} object.")
@@ -43,13 +43,13 @@ redist.subset <- function(shp, adj, keep_rows, total_pop, ndists,
 
     if (!missing(total_pop) &
         !missing(ndists) & !missing(pop_tol) & !missing(sub_ndists)) {
-        parpop <- sum(total_pop) / ndists
-        subparpop <- sum(total_pop[keep_rows]) / sub_ndists
+        parpop <- sum(total_pop)/ndists
+        subparpop <- sum(total_pop[keep_rows])/sub_ndists
         subdev <-
-            min(abs(subparpop - parpop * (1 - pop_tol)),
-                abs(subparpop - parpop * (1 + pop_tol)))
-        sub_pop_tol <- subdev / subparpop
-    } else{
+            min(abs(subparpop - parpop*(1 - pop_tol)),
+                abs(subparpop - parpop*(1 + pop_tol)))
+        sub_pop_tol <- subdev/subparpop
+    } else {
         sub_ndists <- NA_real_
         sub_pop_tol <- NA_real_
     }

@@ -34,7 +34,7 @@
 #' @param ncores Number of cores to use for parallel computing. Default is 1.
 #' @param counties A numeric vector from 1:ncounties corresponding to counties. Required for "logSpanningTree".
 #' @param planarize a number, indicating the CRS to project the shapefile to if
-#'   it is latitude-longitude based. Set to FALSE to avoid planarizing.
+#' it is latitude-longitude based. Set to FALSE to avoid planarizing.
 #' @param ppRcpp Boolean, whether to run Polsby Popper and Schwartzberg using Rcpp.
 #' It has a higher upfront cost, but quickly becomes faster.
 #' Becomes TRUE if ncol(district_membership > 8) and not manually set.
@@ -93,7 +93,7 @@
 #' A smaller number of edges removed is more compact.
 #'
 #' The fraction kept measure is the fraction of edges that were not removed from the
-#'  underlying adjacency graph. This takes values 0 - 1, where 1 is more compact.
+#' underlying adjacency graph. This takes values 0 - 1, where 1 is more compact.
 #'
 #' @return A tibble with a column that specifies the district, a column for
 #' each specified measure, and a column that specifies the map number.
@@ -140,230 +140,230 @@
 #' plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
 #'
 #' redist.compactness(
-#'   shp = fl25, plans = plans_05[, 1:3],
-#'   measure = c('PolsbyPopper', 'EdgesRemoved')
+#'     shp = fl25, plans = plans_05[, 1:3],
+#'     measure = c("PolsbyPopper", "EdgesRemoved")
 #' )
 #' @export redist.compactness
 redist.compactness <- function(shp = NULL,
                                plans,
-                               measure = c('PolsbyPopper'),
+                               measure = c("PolsbyPopper"),
                                total_pop = NULL, adj = NULL, draw = 1,
                                ncores = 1, counties = NULL, planarize = 3857,
                                ppRcpp, perim_path, perim_df) {
-  # Check Inputs
-  if (is.null(shp) & is.null(adj)) {
-    cli_abort('Please provide a {.arg shp} or {.arg adj} argument.')
-  }
-
-  if (!is.null(shp)) {
-    if ('SpatialPolygonsDataFrame' %in% class(shp)) {
-      shp <- sf::st_as_sf(shp)
-    } else if (!inherits(shp, 'sf')) {
-      cli_abort('Please provide {.arg shp} as a SpatialPolygonsDataFrame or sf object.')
+    # Check Inputs
+    if (is.null(shp) & is.null(adj)) {
+        cli_abort("Please provide a {.arg shp} or {.arg adj} argument.")
     }
 
+    if (!is.null(shp)) {
+        if ("SpatialPolygonsDataFrame" %in% class(shp)) {
+            shp <- sf::st_as_sf(shp)
+        } else if (!inherits(shp, "sf")) {
+            cli_abort("Please provide {.arg shp} as a SpatialPolygonsDataFrame or sf object.")
+        }
 
-    if (isTRUE(st_is_longlat(st_geometry(shp)))) {
-      if (!is.null(st_crs(shp)) & !is.null(planarize) && !isFALSE(planarize)) {
-        shp <- st_transform(shp, planarize)
-      }
+
+        if (isTRUE(st_is_longlat(st_geometry(shp)))) {
+            if (!is.null(st_crs(shp)) & !is.null(planarize) && !isFALSE(planarize)) {
+                shp <- st_transform(shp, planarize)
+            }
+        }
     }
-  }
 
-  if (inherits(shp, 'redist_map') & missing(adj)) {
-    adj <- get_adj(shp)
-  }
+    if (inherits(shp, "redist_map") & missing(adj)) {
+        adj <- get_adj(shp)
+    }
 
-  if (inherits(plans, 'redist_plans')) {
-    draw <- plans$draw
-    plans <- get_plans_matrix(plans)
-  }
+    if (inherits(plans, "redist_plans")) {
+        draw <- plans$draw
+        plans <- get_plans_matrix(plans)
+    }
 
-  if (!is.numeric(plans)) {
-    cli_abort('Please provide {.arg plans} as a numeric vector, matrix, or {.cls redist_plans}.')
-  }
+    if (!is.numeric(plans)) {
+        cli_abort("Please provide {.arg plans} as a numeric vector, matrix, or {.cls redist_plans}.")
+    }
 
 
     possible_measures <- c(
-        'PolsbyPopper', 'Schwartzberg', 'LengthWidth', 'ConvexHull',
-        'Reock', 'BoyceClark', 'FryerHolden', 'EdgesRemoved', 'FracKept',
-        'logSpanningTree'
+        "PolsbyPopper", "Schwartzberg", "LengthWidth", "ConvexHull",
+        "Reock", "BoyceClark", "FryerHolden", "EdgesRemoved", "FracKept",
+        "logSpanningTree"
     )
-  if ('all' %in% measure) {
-    measure <- possible_measures
-  }
-
-  match.arg(
-    arg = measure, several.ok = TRUE,
-    choices = possible_measures
-  )
-
-  if ('FryerHolden' %in% measure & is.null(total_pop)) {
-    cli_abort('Please provide a {.arg total_pop} argument when FryerHolden is specified.')
-  }
-
-  if ('FryerHolden' %in% measure) {
-    if (!any(class(total_pop) %in% c('numeric', 'integer'))) {
-      cli_abort('Please provide {.arg total_pop} as a numeric or integer.')
+    if ("all" %in% measure) {
+        measure <- possible_measures
     }
-  }
 
-  if (!is.numeric(draw) & !is.factor(draw)) {
-    cli_abort('Please provide {.arg draw} as a numeric or factor.')
-  }
+    match.arg(
+        arg = measure, several.ok = TRUE,
+        choices = possible_measures
+    )
 
-  if (!is.numeric(ncores)) {
-    cli_abort('Please provide "ncores" as a numeric.')
-  }
-  if (('logSpanningTree' %in% measure) & is.null(counties)) {
-    cli_abort('Please provide {.arg counties}.')
-  }
-
-
-  # Compute compactness scores
-  dists <- sort(unique(c(plans)))
-  nd <- length(dists)
-
-  if (!is.matrix(plans)) {
-    plans <- as.matrix(plans)
-  }
-  V <- nrow(plans)
-
-  if (missing(ppRcpp)) {
-    if (ncol(plans) > 8 || !missing(perim_path) || !missing(perim_df)) {
-      ppRcpp <- TRUE
-    } else {
-      ppRcpp <- FALSE
+    if ("FryerHolden" %in% measure & is.null(total_pop)) {
+        cli_abort("Please provide a {.arg total_pop} argument when FryerHolden is specified.")
     }
-  }
 
-  nmap <- ncol(plans)
-  if (!(is.factor(draw) && length(draw) == nd * nmap)) {
-    if (nmap != 1) {
-      draw <- rep(draw + (1:ncol(plans)) - 1, each = nd)
-    } else {
-      draw <- rep(draw, nd)
+    if ("FryerHolden" %in% measure) {
+        if (!any(class(total_pop) %in% c("numeric", "integer"))) {
+            cli_abort("Please provide {.arg total_pop} as a numeric or integer.")
+        }
     }
-  }
 
-  # Initialize object
-  comp <- tibble(
-    district = rep(x = dists, nmap),
-    PolsbyPopper = rep(NA_real_, nd * nmap),
-    Schwartzberg = rep(NA_real_, nd * nmap),
-    LengthWidth = rep(NA_real_, nd * nmap),
-    ConvexHull = rep(NA_real_, nd * nmap),
-    Reock = rep(NA_real_, nd * nmap),
-    BoyceClark = rep(NA_real_, nd * nmap),
-    FryerHolden = rep(NA_real_, nd * nmap),
-    EdgesRemoved = rep(NA_real_, nd * nmap),
-    FracKept = rep(NA_real_, nd * nmap),
-    logSpanningTree = rep(NA_real_, nd * nmap),
-    draw = draw
-  ) %>%
-    dplyr::select(all_of(c('district', measure)), all_of(measure), draw)
+    if (!is.numeric(draw) & !is.factor(draw)) {
+        cli_abort("Please provide {.arg draw} as a numeric or factor.")
+    }
 
-  # Compute Specified Scores for provided districts
-  if ('PolsbyPopper' %in% measure) {
-    comp$PolsbyPopper <- redistmetrics::comp_polsby(plans,
-      shp = shp,
-      use_Rcpp = ppRcpp,
-      perim_path = perim_path,
-      perim_df = perim_df,
-      epsg = planarize,
-      ncores = ncores
-    )
-  }
-
-  if ('Schwartzberg' %in% measure) {
-      cli_inform('{.pkg redist} 4.0.0 fixes a bug where Schwartzberg was reporting 1/Schwartzberg. Current values are correct.',
-                 .frequency = 'once', .frequency_id = 'schwartz'
-      )
-    comp$Schwartzberg <- redistmetrics::comp_schwartz(
-      plans = plans,
-      shp = shp,
-      use_Rcpp = ppRcpp,
-      perim_path = perim_path,
-      perim_df = perim_df,
-      epsg = planarize,
-      ncores = ncores
-    )
-  }
-
-  if ('ConvexHull' %in% measure) {
-    comp$ConvexHull <- redistmetrics::comp_ch(
-      plans = plans,
-      shp = shp,
-      epsg = planarize,
-      ncores = ncores
-    )
-  }
-
-  if ('Reock' %in% measure) {
-    comp$Reock <- redistmetrics::comp_reock(
-      plans = plans,
-      shp = shp,
-      epsg = planarize,
-      ncores = ncores
-    )
-  }
-
-  if ('BoyceClark' %in% measure) {
-    comp$BoyceClark <- redistmetrics::comp_bc(
-      plans = plans,
-      shp = shp,
-      epsg = planarize,
-      ncores = ncores
-    )
-  }
-
-  if ('FryerHolden' %in% measure) {
-    comp$FryerHolden <- redistmetrics::comp_fh(
-      plans = plans,
-      shp = shp,
-      total_pop = total_pop,
-      epsg = planarize,
-      ncores = ncores
-    )
-  }
-
-  if ('LengthWidth' %in% measure) {
-    comp$LengthWidth <- redistmetrics::comp_lw(
-      plans = plans,
-      shp = shp,
-      epsg = planarize,
-      ncores = ncores
-    )
-  }
+    if (!is.numeric(ncores)) {
+        cli_abort('Please provide "ncores" as a numeric.')
+    }
+    if (("logSpanningTree" %in% measure) & is.null(counties)) {
+        cli_abort("Please provide {.arg counties}.")
+    }
 
 
-  if (any(measure %in% c('EdgesRemoved', 'logSpanningTree', 'FracKept')) & is.null(adj)) {
-    adj <- redist.adjacency(shp)
-  }
+    # Compute compactness scores
+    dists <- sort(unique(c(plans)))
+    nd <- length(dists)
 
-  if ('logSpanningTree' %in% measure) {
-    comp$logSpanningTree <- redistmetrics::comp_log_st(plans, shp,
-      counties = counties,
-      adj = adj
-    )
-  }
+    if (!is.matrix(plans)) {
+        plans <- as.matrix(plans)
+    }
+    V <- nrow(plans)
 
-  if ('EdgesRemoved' %in% measure) {
-    cli_inform('An earlier bug incorrectly in {.pkg redist} doubled the number of removed edges. Current counts are correct.',
-      .frequency = 'once', .frequency_id = 'comp_nrem'
-    )
-    comp$EdgesRemoved <- redistmetrics::comp_edges_rem(plans, shp, adj = adj)
-  }
+    if (missing(ppRcpp)) {
+        if (ncol(plans) > 8 || !missing(perim_path) || !missing(perim_df)) {
+            ppRcpp <- TRUE
+        } else {
+            ppRcpp <- FALSE
+        }
+    }
 
-  if ('FracKept' %in% measure) {
-    cli_inform('An earlier bug incorrectly in {.pkg redist} doubled the number of removed edges. Current counts are correct.',
-      .frequency = 'once', .frequency_id = 'comp_kept'
-    )
-    comp$FracKept <- redistmetrics::comp_frac_kept(plans, shp, adj = adj)
-  }
+    nmap <- ncol(plans)
+    if (!(is.factor(draw) && length(draw) == nd*nmap)) {
+        if (nmap != 1) {
+            draw <- rep(draw + (1:ncol(plans)) - 1, each = nd)
+        } else {
+            draw <- rep(draw, nd)
+        }
+    }
 
-  # Return results
-  comp
+    # Initialize object
+    comp <- tibble(
+        district = rep(x = dists, nmap),
+        PolsbyPopper = rep(NA_real_, nd*nmap),
+        Schwartzberg = rep(NA_real_, nd*nmap),
+        LengthWidth = rep(NA_real_, nd*nmap),
+        ConvexHull = rep(NA_real_, nd*nmap),
+        Reock = rep(NA_real_, nd*nmap),
+        BoyceClark = rep(NA_real_, nd*nmap),
+        FryerHolden = rep(NA_real_, nd*nmap),
+        EdgesRemoved = rep(NA_real_, nd*nmap),
+        FracKept = rep(NA_real_, nd*nmap),
+        logSpanningTree = rep(NA_real_, nd*nmap),
+        draw = draw
+    ) %>%
+        dplyr::select(all_of(c("district", measure)), all_of(measure), draw)
+
+    # Compute Specified Scores for provided districts
+    if ("PolsbyPopper" %in% measure) {
+        comp$PolsbyPopper <- redistmetrics::comp_polsby(plans,
+            shp = shp,
+            use_Rcpp = ppRcpp,
+            perim_path = perim_path,
+            perim_df = perim_df,
+            epsg = planarize,
+            ncores = ncores
+        )
+    }
+
+    if ("Schwartzberg" %in% measure) {
+        cli_inform("{.pkg redist} 4.0.0 fixes a bug where Schwartzberg was reporting 1/Schwartzberg. Current values are correct.",
+            .frequency = "once", .frequency_id = "schwartz"
+        )
+        comp$Schwartzberg <- redistmetrics::comp_schwartz(
+            plans = plans,
+            shp = shp,
+            use_Rcpp = ppRcpp,
+            perim_path = perim_path,
+            perim_df = perim_df,
+            epsg = planarize,
+            ncores = ncores
+        )
+    }
+
+    if ("ConvexHull" %in% measure) {
+        comp$ConvexHull <- redistmetrics::comp_ch(
+            plans = plans,
+            shp = shp,
+            epsg = planarize,
+            ncores = ncores
+        )
+    }
+
+    if ("Reock" %in% measure) {
+        comp$Reock <- redistmetrics::comp_reock(
+            plans = plans,
+            shp = shp,
+            epsg = planarize,
+            ncores = ncores
+        )
+    }
+
+    if ("BoyceClark" %in% measure) {
+        comp$BoyceClark <- redistmetrics::comp_bc(
+            plans = plans,
+            shp = shp,
+            epsg = planarize,
+            ncores = ncores
+        )
+    }
+
+    if ("FryerHolden" %in% measure) {
+        comp$FryerHolden <- redistmetrics::comp_fh(
+            plans = plans,
+            shp = shp,
+            total_pop = total_pop,
+            epsg = planarize,
+            ncores = ncores
+        )
+    }
+
+    if ("LengthWidth" %in% measure) {
+        comp$LengthWidth <- redistmetrics::comp_lw(
+            plans = plans,
+            shp = shp,
+            epsg = planarize,
+            ncores = ncores
+        )
+    }
+
+
+    if (any(measure %in% c("EdgesRemoved", "logSpanningTree", "FracKept")) & is.null(adj)) {
+        adj <- redist.adjacency(shp)
+    }
+
+    if ("logSpanningTree" %in% measure) {
+        comp$logSpanningTree <- redistmetrics::comp_log_st(plans, shp,
+            counties = counties,
+            adj = adj
+        )
+    }
+
+    if ("EdgesRemoved" %in% measure) {
+        cli_inform("An earlier bug incorrectly in {.pkg redist} doubled the number of removed edges. Current counts are correct.",
+            .frequency = "once", .frequency_id = "comp_nrem"
+        )
+        comp$EdgesRemoved <- redistmetrics::comp_edges_rem(plans, shp, adj = adj)
+    }
+
+    if ("FracKept" %in% measure) {
+        cli_inform("An earlier bug incorrectly in {.pkg redist} doubled the number of removed edges. Current counts are correct.",
+            .frequency = "once", .frequency_id = "comp_kept"
+        )
+        comp$FracKept <- redistmetrics::comp_frac_kept(plans, shp, adj = adj)
+    }
+
+    # Return results
+    comp
 }
 
 
@@ -373,7 +373,7 @@ redist.compactness <- function(shp = NULL,
 #' @param shp A SpatialPolygonsDataFrame or sf object. Required unless "EdgesRemoved"
 #' and "logSpanningTree" with adjacency provided.
 #' @param planarize a number, indicating the CRS to project the shapefile to if
-#'   it is latitude-longitude based. Set to FALSE to avoid planarizing.
+#' it is latitude-longitude based. Set to FALSE to avoid planarizing.
 #' @param perim_path A path to save an Rds
 #' @param ncores the number of cores to parallelize over
 #'
@@ -385,12 +385,12 @@ redist.compactness <- function(shp = NULL,
 #' data(fl25)
 #' perim_df <- redistmetrics::prep_perims(shp = fl25)
 redist.prep.polsbypopper <- function(shp, planarize = 3857, perim_path, ncores = 1) {
-.Deprecated(new = 'redistmetrics::prep_perims()')
-  if (missing(shp)) {
-    cli_abort('Please provide an argument to {.arg shp}.')
-  }
-  redistmetrics::prep_perims(
-    shp = shp, epsg = planarize, perim_path = perim_path,
-    ncores = ncores
-  )
+    .Deprecated(new = "redistmetrics::prep_perims()")
+    if (missing(shp)) {
+        cli_abort("Please provide an argument to {.arg shp}.")
+    }
+    redistmetrics::prep_perims(
+        shp = shp, epsg = planarize, perim_path = perim_path,
+        ncores = ncores
+    )
 }

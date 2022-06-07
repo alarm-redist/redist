@@ -9,25 +9,25 @@
 #' @export
 redist.splits <- function(plans, counties) {
     if (missing(plans)) {
-        cli_abort('Please provide an argument to {.arg plans}.')
+        cli_abort("Please provide an argument to {.arg plans}.")
     }
-    if (inherits(plans, 'redist_plans')) {
+    if (inherits(plans, "redist_plans")) {
         plans <- get_plans_matrix(plans)
     }
     if (!is.matrix(plans)) {
         plans <- matrix(plans, ncol = 1)
     }
-    if (any(class(plans) %in% c('numeric', 'matrix'))) {
+    if (any(class(plans) %in% c("numeric", "matrix"))) {
         plans <- redist.reorder(plans)
     }
 
     if (missing(counties)) {
-        cli_abort('Please provide an argument to {.arg counties}.')
+        cli_abort("Please provide an argument to {.arg counties}.")
     }
 
 
     redistmetrics::splits_admin(plans = plans, shp = data.frame(),
-                                admin = counties)
+        admin = counties)
 }
 
 #' Identify which counties are split by a plan
@@ -36,13 +36,13 @@ redist.splits <- function(plans, counties) {
 #' @param counties A vector of county names or county ids.
 #'
 #' @return A logical vector which is \code{TRUE} for precincts belonging to
-#'   counties which are split
+#' counties which are split
 #'
 #' @concept analyze
 #' @export
-is_county_split = function(plan, counties) {
-    counties = as.integer(as.factor(counties))
-    (tapply(plan, counties, FUN=function(y) length(unique(y))) > 1)[counties]
+is_county_split <- function(plan, counties) {
+    counties <- as.integer(as.factor(counties))
+    (tapply(plan, counties, FUN = function(y) length(unique(y))) > 1)[counties]
 }
 
 
@@ -68,22 +68,22 @@ is_county_split = function(plan, counties) {
 #' splits <- redist.district.splits(plans, ia$region)
 redist.district.splits <- function(plans, counties) {
     if (missing(plans)) {
-        stop('Please provide an argument to plans.')
+        stop("Please provide an argument to plans.")
     }
-    if (inherits(plans, 'redist_plans')) {
+    if (inherits(plans, "redist_plans")) {
         plans <- get_plans_matrix(plans)
     }
     if (!is.matrix(plans)) {
         plans <- matrix(plans, ncol = 1)
     }
-    if (!any(class(plans) %in% c('numeric', 'matrix'))) {
+    if (!any(class(plans) %in% c("numeric", "matrix"))) {
         stop('Please provide "plans" as a matrix.')
     }
 
     if (missing(counties)) {
-        stop('Please provide an argument to counties.')
+        stop("Please provide an argument to counties.")
     }
-    if (class(counties) %in% c('character', 'numeric', 'integer')) {
+    if (class(counties) %in% c("character", "numeric", "integer")) {
         county_id <- redist.county.id(counties)
     } else {
         stop('Please provide "counties" as a character, numeric, or integer vector.')
@@ -114,24 +114,24 @@ redist.district.splits <- function(plans, counties) {
 #' splits <- redist.multisplits(plans, ia$region)
 redist.multisplits <- function(plans, counties) {
     if (missing(plans)) {
-        cli_abort('Please provide an argument to {.arg plans}.')
+        cli_abort("Please provide an argument to {.arg plans}.")
     }
-    if (inherits(plans, 'redist_plans')) {
+    if (inherits(plans, "redist_plans")) {
         plans <- get_plans_matrix(plans)
     }
     if (!is.matrix(plans)) {
         plans <- matrix(plans, ncol = 1)
     }
-    if (any(class(plans) %in% c('numeric', 'matrix'))) {
+    if (any(class(plans) %in% c("numeric", "matrix"))) {
         plans <- redist.reorder(plans)
     }
 
     if (missing(counties)) {
-        cli_abort('Please provide an argument to {.arg counties}.')
+        cli_abort("Please provide an argument to {.arg counties}.")
     }
 
     redistmetrics::splits_multi(plans = plans, shp = data.frame(),
-                                admin = counties)
+        admin = counties)
 }
 
 
@@ -158,7 +158,7 @@ redist.multisplits <- function(plans, counties) {
 #' splits <- redist.muni.splits(plans, ia$region)
 redist.muni.splits <- function(plans, munis) {
     redistmetrics::splits_sub_admin(plans = plans, shp = data.frame(),
-                                    sub_admin = munis)
+        sub_admin = munis)
 }
 
 #' @rdname redist.muni.splits
@@ -170,8 +170,8 @@ redist.muni.splits <- function(plans, munis) {
 #' @concept analyze
 #' @export
 muni_splits <- function(map, munis, .data = cur_plans()) {
-  check_tidy_types(map, .data)
-  idxs <- unique(as.integer(.data$draw))
-  munis <- rlang::eval_tidy(rlang::enquo(munis), map)
-  redist.muni.splits(plans = get_plans_matrix(.data)[, idxs, drop = FALSE], munis = munis)
+    check_tidy_types(map, .data)
+    idxs <- unique(as.integer(.data$draw))
+    munis <- rlang::eval_tidy(rlang::enquo(munis), map)
+    redist.muni.splits(plans = get_plans_matrix(.data)[, idxs, drop = FALSE], munis = munis)
 }

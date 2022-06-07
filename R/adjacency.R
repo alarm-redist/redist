@@ -9,9 +9,9 @@
 #'
 #' @importFrom sf st_relate
 #' @export
-redist.adjacency <- function(shp, plan){
+redist.adjacency <- function(shp, plan) {
     # Check input
-    if (!any(c("sf","SpatialPolygonsDataFrame") %in% class(shp))) {
+    if (!any(c("sf", "SpatialPolygonsDataFrame") %in% class(shp))) {
         cli_abort("{.arg shp} must be a {.cls sf} or {.cls sp} object")
     }
 
@@ -28,7 +28,7 @@ redist.adjacency <- function(shp, plan){
     # Make zero indexed if not
     min <- min(unlist(adj))
     if (!zero) {
-        adj <- lapply(adj, function(x){x-min})
+        adj <- lapply(adj, function(x) {x - min})
     }
 
     # Check that no numbers are skipped
@@ -82,8 +82,8 @@ redist.reduce.adjacency <- function(adj, keep_rows) {
     }
 
     # Prep objects for Rcpp
-    prec_map = rep(-1L, length(adj))
-    #prec_map[keep_rows] = order(keep_rows) - 1L
+    prec_map <- rep(-1L, length(adj))
+    # prec_map[keep_rows] = order(keep_rows) - 1L
     prec_map <- dplyr::coalesce(match(1:length(adj), keep_rows) - 1L, -1L)
 
     # Reduce!

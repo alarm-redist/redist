@@ -16,13 +16,13 @@
 #' @param adj A zero-indexed adjacency list. Created with redist.adjacency
 #' if not supplied and needed for coloring. Default is NULL.
 #' @param plan \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} A numeric
-#'   vector with one entry for each precinct in shp. Used to color the
-#'   districts. Default is \code{NULL}.  Optional.
+#' vector with one entry for each precinct in shp. Used to color the
+#' districts. Default is \code{NULL}.  Optional.
 #' @param fill \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} A
-#'   numeric/integer vector with values to color the plot with. Optional.
+#' numeric/integer vector with values to color the plot with. Optional.
 #' @param fill_label A string title of plot. Defaults to the empty string
 #' @param zoom_to \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} An
-#'   indexing vector of units to zoom the map to.
+#' indexing vector of units to zoom the map to.
 #' @param boundaries A logical indicating if precinct boundaries should be plotted.
 #' @param title A string title of plot. Defaults to empty string. Optional.
 #'
@@ -36,18 +36,18 @@
 #' data(iowa)
 #' redist.plot.map(shp = iowa, plan = iowa$cd_2010)
 #'
-#' iowa_map = redist_map(iowa, existing_plan = cd_2010)
-#' redist.plot.map(iowa_map, fill=dem_08/tot_08, zoom_to=(cd_2010 == 1))
+#' iowa_map <- redist_map(iowa, existing_plan = cd_2010)
+#' redist.plot.map(iowa_map, fill = dem_08/tot_08, zoom_to = (cd_2010 == 1))
 #'
 #' @concept plot
 #' @export
-redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
-                            zoom_to=NULL, boundaries=is.null(fill), title='') {
+redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = "",
+                            zoom_to = NULL, boundaries = is.null(fill), title = "") {
     # Check inputs
-    if ('SpatialPolygonsDataFrame' %in% class(shp)) {
+    if ("SpatialPolygonsDataFrame" %in% class(shp)) {
         shp <- shp %>% st_as_sf()
     } else if (!inherits(shp, "sf")) {
-        cli_abort('{.arg shp} must be a {.cls SpatialPolygonsDataFrame} or {.cls sf} object.')
+        cli_abort("{.arg shp} must be a {.cls SpatialPolygonsDataFrame} or {.cls sf} object.")
     }
 
     plan <- eval_tidy(enquo(plan), shp)
@@ -56,40 +56,40 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
             cli_abort("{.arg} plan must be a numeric vector.")
         }
         if (nrow(shp) != length(plan)) {
-            cli_abort('{.arg plan} and {.arg shp} must have same number of precincts.')
+            cli_abort("{.arg plan} and {.arg shp} must have same number of precincts.")
         }
     }
     fill <- eval_tidy(enquo(fill), shp)
 
     # Create Plot
     if (!is.null(plan)) {
-        if (inherits(shp, 'redist_map') & is.null(fill)) {
+        if (inherits(shp, "redist_map") & is.null(fill)) {
             plan <- as.factor(plan)
             adj <- get_adj(shp)
-            ndists = length(unique(plan))
+            ndists <- length(unique(plan))
             if (ndists > 6)
                 plan <- as.factor(color_graph(adj, as.integer(plan)))
 
 
             plot <- ggplot(shp) +
-                geom_sf(aes(fill = plan), lwd = 0.3 * boundaries,
-                        color = if (boundaries) "#444444" else NA) +
+                geom_sf(aes(fill = plan), lwd = 0.3*boundaries,
+                    color = if (boundaries) "#444444" else NA) +
                 theme_void() +
-                labs(fill = 'District', title = title) +
-                theme(legend.position = 'bottom')
+                labs(fill = "District", title = title) +
+                theme(legend.position = "bottom")
 
 
-            PAL <- c('#6D9537', '#364B7F', '#DCAD35', '#9A9BB9', '#2A4E45', '#7F4E28')
+            PAL <- c("#6D9537", "#364B7F", "#DCAD35", "#9A9BB9", "#2A4E45", "#7F4E28")
             if (ndists > 6) {
-                plot <- plot + ggplot2::guides(fill = 'none') +
+                plot <- plot + ggplot2::guides(fill = "none") +
                     ggplot2::scale_fill_manual(values = PAL)
             } else {
                 plot <- plot + ggplot2::scale_fill_manual(values = PAL)
             }
-        } else if (inherits(shp, 'redist_map')) {
+        } else if (inherits(shp, "redist_map")) {
             plan <- as.factor(plan)
             adj <- get_adj(shp)
-            ndists = length(unique(plan))
+            ndists <- length(unique(plan))
             if (ndists > 6) {
                 plan <- as.factor(color_graph(adj, as.integer(plan)))
             }
@@ -99,37 +99,37 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
             }
 
             plot <- ggplot(shp) +
-                geom_sf(aes(fill = plan, alpha = fill), lwd = 0.3 * boundaries,
-                        color = if (boundaries) "#444444" else NA) +
+                geom_sf(aes(fill = plan, alpha = fill), lwd = 0.3*boundaries,
+                    color = if (boundaries) "#444444" else NA) +
                 theme_void() +
                 labs(alpha = fill_label, title = title) +
-                theme(legend.position = 'bottom')
+                theme(legend.position = "bottom")
 
 
-            PAL <- c('#6D9537', '#364B7F', '#DCAD35', '#9A9BB9', '#2A4E45', '#7F4E28')
-            plot <- plot + ggplot2::guides(fill = 'none') +
+            PAL <- c("#6D9537", "#364B7F", "#DCAD35", "#9A9BB9", "#2A4E45", "#7F4E28")
+            plot <- plot + ggplot2::guides(fill = "none") +
                 ggplot2::scale_fill_manual(values = PAL)  +
-                ggplot2::guides(alpha="none")
+                ggplot2::guides(alpha = "none")
         } else {
-            if(is.null(fill)) { # plan but no fill
+            if (is.null(fill)) { # plan but no fill
                 plot <- ggplot(shp) +
-                    geom_sf(aes(fill = as.character(plan)), lwd = 0.3 * boundaries,
-                            color = if (boundaries) "#444444" else NA) +
+                    geom_sf(aes(fill = as.character(plan)), lwd = 0.3*boundaries,
+                        color = if (boundaries) "#444444" else NA) +
                     theme_void() +
-                    labs(fill = 'District Membership', title = title) +
-                    theme(legend.position = 'bottom')
+                    labs(fill = "District Membership", title = title) +
+                    theme(legend.position = "bottom")
             } else { # plan and fill
-                if(max(fill, na.rm = TRUE) > 1){
+                if (max(fill, na.rm = TRUE) > 1) {
                     fill <- fill/max(fill)
                 }
 
                 plot <- ggplot(shp) +
-                    geom_sf(aes(fill = as.character(plan), alpha = fill), lwd = 0.3 * boundaries,
-                            color = if (boundaries) "#444444" else NA) +
+                    geom_sf(aes(fill = as.character(plan), alpha = fill), lwd = 0.3*boundaries,
+                        color = if (boundaries) "#444444" else NA) +
                     theme_void() +
-                    labs(fill = 'District Membership', alpha = fill_label, title = title) +
-                    ggplot2::guides(alpha="none") +
-                    theme(legend.position = 'bottom')
+                    labs(fill = "District Membership", alpha = fill_label, title = title) +
+                    ggplot2::guides(alpha = "none") +
+                    theme(legend.position = "bottom")
             }
 
         }
@@ -146,15 +146,15 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
         }
 
         plot <- ggplot(shp) +
-            geom_sf(aes(fill = fill), lwd = 0.3 * boundaries,
-                    color = if (boundaries) "#444444" else NA) +
+            geom_sf(aes(fill = fill), lwd = 0.3*boundaries,
+                color = if (boundaries) "#444444" else NA) +
             theme_void() +
             labs(fill = fill_label, title = title) +
-            theme(legend.position = 'bottom')
+            theme(legend.position = "bottom")
 
         if (recolor) {
-            PAL <- c('#6D9537', '#364B7F', '#DCAD35', '#9A9BB9', '#2A4E45', '#7F4E28')
-            plot <- plot + ggplot2::guides(fill = 'none') +
+            PAL <- c("#6D9537", "#364B7F", "#DCAD35", "#9A9BB9", "#2A4E45", "#7F4E28")
+            plot <- plot + ggplot2::guides(fill = "none") +
                 ggplot2::scale_fill_manual(values = PAL)
         }
     } else {
@@ -163,11 +163,11 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
             theme_void()
     }
 
-    zoom_to = eval_tidy(enquo(zoom_to), shp)
+    zoom_to <- eval_tidy(enquo(zoom_to), shp)
     if (!is.null(zoom_to)) {
-        bbox = sf::st_bbox(sf::st_geometry(shp)[zoom_to])
-        plot <- plot + ggplot2::coord_sf(xlim=c(bbox$xmin, bbox$xmax),
-                                         ylim=c(bbox$ymin, bbox$ymax))
+        bbox <- sf::st_bbox(sf::st_geometry(shp)[zoom_to])
+        plot <- plot + ggplot2::coord_sf(xlim = c(bbox$xmin, bbox$xmax),
+            ylim = c(bbox$ymin, bbox$ymax))
     }
 
 
@@ -184,9 +184,9 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
 #' @param centroids A logical indicating if centroids should be plotted. Default is \code{TRUE}.
 #' @param drop A logical indicating if edges that cross districts should be dropped. Default is \code{FALSE}.
 #' @param plot_shp A logical indicating if the shp should be plotted under the
-#'   graph. Default is \code{TRUE}.
+#' graph. Default is \code{TRUE}.
 #' @param zoom_to \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} An
-#'   indexing vector of units to zoom the map to.
+#' indexing vector of units to zoom the map to.
 #' @param title A string title of plot. Defaults to empty string. Optional.
 #'
 #' @return ggplot map
@@ -203,11 +203,11 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = '',
 #' @concept plot
 #' @export
 redist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE,
-                       drop = FALSE, plot_shp=TRUE, zoom_to=NULL, title = '') {
-    if ('SpatialPolygonsDataFrame' %in% class(shp)) {
+                            drop = FALSE, plot_shp = TRUE, zoom_to = NULL, title = "") {
+    if ("SpatialPolygonsDataFrame" %in% class(shp)) {
         shp <- shp %>% st_as_sf()
     } else if (!inherits(shp, "sf")) {
-        cli_abort('{.arg shp} must be a {.cls SpatialPolygonsDataFrame} or {.cls sf} object.')
+        cli_abort("{.arg shp} must be a {.cls SpatialPolygonsDataFrame} or {.cls sf} object.")
     }
 
 
@@ -217,21 +217,21 @@ redist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE,
             cli_abort("{.arg} plan must be a numeric vector.")
         }
         if (nrow(shp) != length(plan_to_plot)) {
-            cli_abort('{.arg plan} and {.arg shp} must have same number of precincts.')
+            cli_abort("{.arg plan} and {.arg shp} must have same number of precincts.")
         }
     }
 
-    if (inherits(shp, 'redist_map') ){
+    if (inherits(shp, "redist_map")) {
         if (missing(adj)) {
             adj <- get_adj(shp)
         }
-    } else if (missing(adj)){
+    } else if (missing(adj)) {
         adj <- redist.adjacency(shp)
     }
 
 
     if (drop & is.null(plan)) {
-        cli_abort('{.arg drop} is {.code TRUE} but no plan supplied.')
+        cli_abort("{.arg drop} is {.code TRUE} but no plan supplied.")
     }
 
     edge_cntr <- edge_center_df(shp, adj)
@@ -247,13 +247,13 @@ redist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE,
 
     # Create Plot
     if (plot_shp) {
-        if(!is.null(plan)){
+        if (!is.null(plan)) {
             plot <- ggplot(shp) +
                 geom_sf(aes(fill = as.character(plan_to_plot)), size = 0.1) +
                 theme_void() +
-                theme(legend.position = 'none') +
+                theme(legend.position = "none") +
                 geom_sf(data = nb)
-        } else{
+        } else {
             plot <- ggplot(shp) +
                 geom_sf(size = 0.1) +
                 theme_void() +
@@ -266,19 +266,19 @@ redist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE,
     }
 
     if (centroids) {
-        if(!is.null(plan) & !plot_shp){
+        if (!is.null(plan) & !plot_shp) {
             plot <- plot + geom_sf(data = centers, aes(color = as.character(plan_to_plot)), size = 2) +
-                theme(legend.position = 'none')
+                theme(legend.position = "none")
         } else {
             plot <- plot + geom_sf(data = centers)
         }
     }
 
-    zoom_to = eval_tidy(enquo(zoom_to), shp)
+    zoom_to <- eval_tidy(enquo(zoom_to), shp)
     if (!is.null(zoom_to)) {
-        bbox = sf::st_bbox(sf::st_geometry(shp)[zoom_to])
-        plot <- plot + ggplot2::coord_sf(xlim=c(bbox$xmin, bbox$xmax),
-                                         ylim=c(bbox$ymin, bbox$ymax))
+        bbox <- sf::st_bbox(sf::st_geometry(shp)[zoom_to])
+        plot <- plot + ggplot2::coord_sf(xlim = c(bbox$xmin, bbox$xmax),
+            ylim = c(bbox$ymin, bbox$ymax))
     }
 
 
@@ -287,40 +287,40 @@ redist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE,
     return(plot)
 }
 
-edge_center_df <- function(shp, adj){
-  # Extract Centers
-  suppressWarnings(centers <- st_centroid(shp))
-  st_crs(centers) <- st_crs(shp)
+edge_center_df <- function(shp, adj) {
+    # Extract Centers
+    suppressWarnings(centers <- st_centroid(shp))
+    st_crs(centers) <- st_crs(shp)
 
 
-  # Extract Edges
-  nb <- lapply(adj, function(x) {
-    x + 1L
-  })
+    # Extract Edges
+    nb <- lapply(adj, function(x) {
+        x + 1L
+    })
 
-  edgedf <- tibble(
-    start = rep(1:length(nb), lengths(nb)),
-    finish = unlist(nb)
-  )
-  edgedf <- edgedf %>%
-    rowwise() %>%
-    mutate(i = min(.data$start, .data$finish), j = max(.data$start, .data$finish)) %>%
-    select(.data$i, .data$j)
-  edgedf <- edgedf[!duplicated(edgedf), ]
+    edgedf <- tibble(
+        start = rep(1:length(nb), lengths(nb)),
+        finish = unlist(nb)
+    )
+    edgedf <- edgedf %>%
+        rowwise() %>%
+        mutate(i = min(.data$start, .data$finish), j = max(.data$start, .data$finish)) %>%
+        select(.data$i, .data$j)
+    edgedf <- edgedf[!duplicated(edgedf), ]
 
-  edgedf <- edgedf %>%
-    rowwise() %>%
-    mutate(geometry = st_sfc(st_linestring(matrix(
-      c(
-        as.numeric(sf::st_geometry(centers)[[.data$i]]),
-        as.numeric(sf::st_geometry(centers)[[.data$j]])
-      ),
-      nrow = 2,
-      byrow = TRUE
-    ))))
+    edgedf <- edgedf %>%
+        rowwise() %>%
+        mutate(geometry = st_sfc(st_linestring(matrix(
+            c(
+                as.numeric(sf::st_geometry(centers)[[.data$i]]),
+                as.numeric(sf::st_geometry(centers)[[.data$j]])
+            ),
+            nrow = 2,
+            byrow = TRUE
+        ))))
 
-  suppressWarnings(nb <- sf::st_as_sf(edgedf))
-  suppressWarnings(st_crs(nb) <- st_crs(shp))
+    suppressWarnings(nb <- sf::st_as_sf(edgedf))
+    suppressWarnings(st_crs(nb) <- st_crs(shp))
 
-  return(list(nb = nb, centers = centers))
+    return(list(nb = nb, centers = centers))
 }

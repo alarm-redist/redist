@@ -21,8 +21,8 @@
 #' cd <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
 #'
 #' redist.group.percent(plans = cd,
-#'                     group_pop = fl25$BlackPop,
-#'                     total_pop = fl25$TotPop)
+#'     group_pop = fl25$BlackPop,
+#'     total_pop = fl25$TotPop)
 #'
 redist.group.percent <- function(plans, group_pop, total_pop, ncores = 1) {
     if (!is.numeric(group_pop) || !is.numeric(total_pop))
@@ -40,7 +40,7 @@ redist.group.percent <- function(plans, group_pop, total_pop, ncores = 1) {
         cli_abort("{.arg plans} and {.group_pop} must have the same number of precincts.")
 
     ndists <- max(plans[, 1])
-    if(ndists ==  length(unique(plans[,1])) - 1 ){
+    if (ndists ==  length(unique(plans[, 1])) - 1) {
         plans <- plans + 1
         ndists <- ndists + 1
     }

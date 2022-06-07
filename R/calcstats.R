@@ -32,8 +32,8 @@
 #'
 #' ## 25 precinct, three districts - no pop constraint ##
 #' alg_253 <- redist.flip(
-#'   adj = fl25_adj, total_pop = fl25$pop,
-#'   init_plan = init_plan, nsims = 10000
+#'     adj = fl25_adj, total_pop = fl25$pop,
+#'     init_plan = init_plan, nsims = 10000
 #' )
 #'
 #' ## Get Republican Dissimilarity Index from simulations
@@ -44,20 +44,20 @@
 redist.segcalc <- function(plans, group_pop, total_pop) {
 
     ## If redist object, get the partitions entry
-    if (all(class(plans) == 'redist')) {
+    if (all(class(plans) == "redist")) {
         plans <- plans$plans
     }
 
-  if (!((nrow(plans) == length(group_pop)) &
-    (length(group_pop) == length(total_pop)) &
-    (length(total_pop) == nrow(plans)))) {
-    cli_abort('Please make sure there is a population entry for each geographic unit')
-  }
+    if (!((nrow(plans) == length(group_pop)) &
+        (length(group_pop) == length(total_pop)) &
+        (length(total_pop) == nrow(plans)))) {
+        cli_abort("Please make sure there is a population entry for each geographic unit")
+    }
 
-  nd <- dplyr::n_distinct((plans[, 1]))
-  out <- redistmetrics::seg_dissim(plans,
-    shp = data.frame(), group_pop = group_pop,
-    total_pop = total_pop
-  )
-  out[seq(1, length(out), by = nd)]
+    nd <- dplyr::n_distinct((plans[, 1]))
+    out <- redistmetrics::seg_dissim(plans,
+        shp = data.frame(), group_pop = group_pop,
+        total_pop = total_pop
+    )
+    out[seq(1, length(out), by = nd)]
 }

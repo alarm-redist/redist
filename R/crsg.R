@@ -49,66 +49,66 @@
 #' @concept simulate
 #' @export
 redist.crsg <- function(adj, total_pop, shp,  ndists, pop_tol, verbose = TRUE,
-                        maxiter = 5000){
-  if (missing(shp)) {
-    stop('An argument to shp is now required.')
-  }
+                        maxiter = 5000) {
+    if (missing(shp)) {
+        stop("An argument to shp is now required.")
+    }
 
-  suppressWarnings(coords <- st_coordinates(st_centroid(shp)))
-  x_center <- coords[,1]
-  y_center <- coords[,2]
-  area <- st_area(shp)
+    suppressWarnings(coords <- st_coordinates(st_centroid(shp)))
+    x_center <- coords[, 1]
+    y_center <- coords[, 2]
+    area <- st_area(shp)
 
 
-  if(verbose){
-    divider <- c(paste(rep("=", 20), sep = "", collapse = ""), "\n")
+    if (verbose) {
+        divider <- c(paste(rep("=", 20), sep = "", collapse = ""), "\n")
 
-    cat("\n")
-    cat(divider)
-    cat("redist.crsg(): Automated Redistricting Starts\n\n")
-  }
+        cat("\n")
+        cat(divider)
+        cat("redist.crsg(): Automated Redistricting Starts\n\n")
+    }
 
-  target.pop <- sum(total_pop) / ndists
+    target.pop <- sum(total_pop)/ndists
 
-  # Main call to function - unlike rsg, uses RcppExporting not direct .Call
-  time <- system.time(ret <- crsg(adj_list = adj,
-                                  population = total_pop,
-                                  area = area,
-                                  x_center = x_center,
-                                  y_center = y_center,
-                                  Ndistrict = ndists,
-                                  target_pop = target.pop,
-                                  thresh = pop_tol,
-                                  maxiter = maxiter))
-
-  ## Make another call if NA, but beware this may be due to maxiter.
-  ## This could also be if there are no valid moves.
-  if(is.na(ret$plan[1])){
+    # Main call to function - unlike rsg, uses RcppExporting not direct .Call
     time <- system.time(ret <- crsg(adj_list = adj,
-                                    population = total_pop,
-                                    area = area,
-                                    x_center = x_center,
-                                    y_center = y_center,
-                                    Ndistrict = ndists,
-                                    target_pop = target.pop,
-                                    thresh = pop_tol,
-                                    maxiter = maxiter))
-  }
+        population = total_pop,
+        area = area,
+        x_center = x_center,
+        y_center = y_center,
+        Ndistrict = ndists,
+        target_pop = target.pop,
+        thresh = pop_tol,
+        maxiter = maxiter))
+
+    ## Make another call if NA, but beware this may be due to maxiter.
+    ## This could also be if there are no valid moves.
+    if (is.na(ret$plan[1])) {
+        time <- system.time(ret <- crsg(adj_list = adj,
+            population = total_pop,
+            area = area,
+            x_center = x_center,
+            y_center = y_center,
+            Ndistrict = ndists,
+            target_pop = target.pop,
+            thresh = pop_tol,
+            maxiter = maxiter))
+    }
 
 
-  if(is.na(ret$plan[1])){
+    if (is.na(ret$plan[1])) {
 
-    warning("redist.crsg() failed to return a valid partition. Try increasing maxiter")
+        warning("redist.crsg() failed to return a valid partition. Try increasing maxiter")
 
-  } else {
-    ret$plan <- ret$plan + 1
-  }
+    } else {
+        ret$plan <- ret$plan + 1
+    }
 
-  if(verbose){
-    cat(paste("\n\t", ndists, " districts built using ",
-              length(adj), " precincts in ",
-              round(time[3], digits=2), " seconds...\n\n", sep = ""), append = TRUE)
-  }
+    if (verbose) {
+        cat(paste("\n\t", ndists, " districts built using ",
+            length(adj), " precincts in ",
+            round(time[3], digits = 2), " seconds...\n\n", sep = ""), append = TRUE)
+    }
 
-  return(ret)
+    return(ret)
 }

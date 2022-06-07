@@ -7,9 +7,9 @@ make_epsg_table <- function() {
     state_regex <- paste0("(", paste0(datasets::state.name, collapse = "|"), ")")
     epsg_regex <- str_glue("NAD83(\\(HARN\\))? / {state_regex} ?[A-Za-z. ]*$")
     epsg_d <- filter(raw, (code > 2500L & code < 2900L) | (code > 3300L & code < 3400L),
-                     str_detect(note, epsg_regex)) %>%
+        str_detect(note, epsg_regex)) %>%
         mutate(state = str_match(note, epsg_regex)[, 3],
-               priority = str_detect(note, "HARN") + str_detect(note, "Central")) %>%
+            priority = str_detect(note, "HARN") + str_detect(note, "Central")) %>%
         group_by(state) %>%
         arrange(desc(priority)) %>%
         slice(1) %>%
@@ -23,6 +23,6 @@ make_epsg_table <- function() {
     codes
 }
 
-EPSG = make_epsg_table()
+EPSG <- make_epsg_table()
 
 usethis::use_data(EPSG, overwrite = TRUE)

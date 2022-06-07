@@ -5,15 +5,15 @@
 #' from population parity. See Details.
 #'
 #' @details With a map with \code{pop} representing the populations of each district,
-#'  the deviation from population parity is given as \code{max(abs(pop - parity) / parity)}
-#'  where \code{parity = sum(pop)/length(pop)} is the population size for the
-#'  average district.
-#'  Therefore, the metric can be thought of as the maximum percent deviation from
-#'  equal population. For example, a value of 0.03 in this metric indicates that
-#'  all districts are within 3 percent of population parity.
+#' the deviation from population parity is given as \code{max(abs(pop - parity) / parity)}
+#' where \code{parity = sum(pop)/length(pop)} is the population size for the
+#' average district.
+#' Therefore, the metric can be thought of as the maximum percent deviation from
+#' equal population. For example, a value of 0.03 in this metric indicates that
+#' all districts are within 3 percent of population parity.
 #'
 #' @param plans A matrix with one row for each precinct and one column for each
-#'   map. Required.
+#' map. Required.
 #' @param total_pop A numeric vector with the population for every precinct.
 #'
 #' @return numeric vector with the population parity for each column
@@ -25,7 +25,7 @@ redist.parity <- function(plans, total_pop) {
         cli_abort("{.arg total_pop} must be a numeric vector")
     }
     if (!is.matrix(plans)) {
-        plans <- matrix(plans, ncol=1)
+        plans <- matrix(plans, ncol = 1)
     }
     if (!is.matrix(plans)) {
         cli_abort("{.arg plans} must be a matrix")
@@ -35,12 +35,12 @@ redist.parity <- function(plans, total_pop) {
         cli_abort(".arg plans} and {.arg total_pop} must have same number of precincts.")
     }
 
-    rg = range(plans[, 1])
+    rg <- range(plans[, 1])
     if (rg[1] == 0) {
-        plans = plans + 1
-        n_distr = rg[2] + 1
+        plans <- plans + 1
+        n_distr <- rg[2] + 1
     } else {
-        n_distr = rg[2]
+        n_distr <- rg[2]
     }
 
     max_dev(plans, total_pop, n_distr)
@@ -57,79 +57,79 @@ redist.parity <- function(plans, total_pop) {
 #'
 #' @param map a [redist_map]
 #' @param plan an integer vector containing the plan to be balanced.
-#'   Tidy-evaluated.
+#' Tidy-evaluated.
 #' @param counties an optional vector of counties, whose boundaries will be
-#'   preserved. Tidy-evaluated.
+#' preserved. Tidy-evaluated.
 #' @param penalty the larger this value, the more to encourage sparsity.
 #'
 #' @returns a list with components:
 #' \describe{
-#'   \item{`moves`}{A tibble describing the population moves}
-#'   \item{`pop_old`}{The current district populations}
-#'   \item{`pop_new`}{The district populations after the moves}
+#' \item{`moves`}{A tibble describing the population moves}
+#' \item{`pop_old`}{The current district populations}
+#' \item{`pop_new`}{The district populations after the moves}
 #' }
 #'
 #' @examples
 #' data(iowa)
-#' iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.01)
+#' iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
 #' min_move_parity(iowa_map, cd_2010)
 #'
 #' @concept analyze
 #' @md
 #' @export
-min_move_parity = function(map, plan, counties=NULL, penalty=0.2) {
-    adj = get_adj(map)
-    V = length(adj)
-    nd = attr(map, "ndists")
+min_move_parity <- function(map, plan, counties = NULL, penalty = 0.2) {
+    adj <- get_adj(map)
+    V <- length(adj)
+    nd <- attr(map, "ndists")
 
-    plan = eval_tidy(enquo(plan), map)
+    plan <- eval_tidy(enquo(plan), map)
     if (!is.numeric(plan) && all(plan > 0) && length(plan) == V)
         cli_abort("{.arg plan} must be a positive integer vector with one entry per precinct.")
 
     if (missing(counties)) {
-        counties = rep(1L, V)
+        counties <- rep(1L, V)
     } else {
-        counties = as.integer(as.factor(eval_tidy(enquo(counties), map)))
+        counties <- as.integer(as.factor(eval_tidy(enquo(counties), map)))
     }
 
-    distr_adj = get_plan_graph(adj, length(adj), plan, nd)
-    edges = do.call(rbind, lapply(seq_along(distr_adj), function(i) {
-        tibble(from=i, to=distr_adj[[i]] + 1L)
+    distr_adj <- get_plan_graph(adj, length(adj), plan, nd)
+    edges <- do.call(rbind, lapply(seq_along(distr_adj), function(i) {
+        tibble(from = i, to = distr_adj[[i]] + 1L)
     })) %>%
         rowwise() %>%
         filter(.data$from < .data$to,
-               any(unique(counties[plan == .data$from]) %in% counties[plan == .data$to])) %>%
+            any(unique(counties[plan == .data$from]) %in% counties[plan == .data$to])) %>%
         ungroup()
 
-    n_edge = nrow(edges)
-    e_idx = as.matrix(mutate(edges, i = row_number()))
-    diff_mat = matrix(0, nrow=nd, ncol=n_edge)
-    diff_mat[e_idx[, -2]] = -1
-    diff_mat[e_idx[, -1]] = 1
+    n_edge <- nrow(edges)
+    e_idx <- as.matrix(mutate(edges, i = row_number()))
+    diff_mat <- matrix(0, nrow = nd, ncol = n_edge)
+    diff_mat[e_idx[, -2]] <- -1
+    diff_mat[e_idx[, -1]] <- 1
 
-    pops = pop_tally(matrix(plan, ncol=1), map[[attr(map, "pop_col")]], nd)
-    discrep = pops - mean(pops)
+    pops <- pop_tally(matrix(plan, ncol = 1), map[[attr(map, "pop_col")]], nd)
+    discrep <- pops - mean(pops)
 
-    fn_balance = function(move, alpha=0.1) {
+    fn_balance <- function(move, alpha = 0.1) {
         sum(abs(discrep + diff_mat %*% move)) + alpha*sum(abs(move))
     }
-    gr_balance = function(move, alpha=0.1) {
-        t(sign(discrep + diff_mat %*% move)) %*% diff_mat + alpha * sign(move)
+    gr_balance <- function(move, alpha = 0.1) {
+        t(sign(discrep + diff_mat %*% move)) %*% diff_mat + alpha*sign(move)
     }
 
-    res = optim(rep(0, n_edge), fn_balance, gr_balance, alpha=penalty,
-                method="BFGS", control=list(maxit=1e3, reltol=1e-9, abstol=1))
+    res <- optim(rep(0, n_edge), fn_balance, gr_balance, alpha = penalty,
+        method = "BFGS", control = list(maxit = 1e3, reltol = 1e-9, abstol = 1))
 
-    move = round(res$par)
-    pops_new = pops + diff_mat %*% move
-    from_old = edges$from
-    edges = mutate(edges,
-                   from = if_else(move < 0, .data$to, .data$from),
-                   to = if_else(move < 0, from_old, .data$to),
-                   move = abs(move)) %>%
+    move <- round(res$par)
+    pops_new <- pops + diff_mat %*% move
+    from_old <- edges$from
+    edges <- mutate(edges,
+        from = if_else(move < 0, .data$to, .data$from),
+        to = if_else(move < 0, from_old, .data$to),
+        move = abs(move)) %>%
         filter(.data$move > 0)
 
     list(moves = edges,
-         pop_old = pops[,1],
-         pop_new = pops_new[,1])
+        pop_old = pops[, 1],
+        pop_new = pops_new[, 1])
 }

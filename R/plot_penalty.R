@@ -22,29 +22,29 @@
 #'
 #' @importFrom ggplot2 lims labs geom_path
 redist.plot.penalty <- function(tgt_min = 0.55, tgt_other = 0.25,
-                                     strength_vra = 2500, pow_vra = 1.5, limits = TRUE){
+                                strength_vra = 2500, pow_vra = 1.5, limits = TRUE) {
 
     tb <- tibble(x = seq(0, 1, by = .001))
-    tb <- tb %>% mutate(y = strength_vra*(abs(x - tgt_min)^pow_vra)*(abs(x-tgt_other)^pow_vra))
+    tb <- tb %>% mutate(y = strength_vra*(abs(x - tgt_min)^pow_vra)*(abs(x - tgt_other)^pow_vra))
 
 
-    if(limits) {
+    if (limits) {
         ret <- tb %>% filter(y < 500) %>%
             ggplot(aes(x = x, y = y)) +
             geom_path() +
             theme_bw() +
-            lims(x = c(0,1), y = c(0,500)) +
-            labs(x = 'Group Population', y = 'Penalty Size')
+            lims(x = c(0, 1), y = c(0, 500)) +
+            labs(x = "Group Population", y = "Penalty Size")
     } else {
         ret <- tb %>%
             ggplot(aes(x = x, y = y)) +
             geom_path() +
             theme_bw() +
-            labs(x = 'Group Population', y = 'Penalty Size')
+            labs(x = "Group Population", y = "Penalty Size")
     }
 
 
     return(ret)
 }
 
-globalVariables(c('x', 'y'))
+globalVariables(c("x", "y"))

@@ -38,50 +38,50 @@
 #'
 #' @param object a [redist_plans] object
 #' @param district For R-hat values, which district to use for district-level
-#'   summary statistics. We strongly recommend calling `match_numbers()` or
-#'   `number_by()` before examining these district-level statistics.
+#' summary statistics. We strongly recommend calling `match_numbers()` or
+#' `number_by()` before examining these district-level statistics.
 #' @param all_runs When there are multiple SMC runs, show detailed summary
-#'   statistics for all runs (the default), or only the first run?
+#' statistics for all runs (the default), or only the first run?
 #' @param vi_max The maximum number of plans to sample in computing the pairwise
-#'   variation of information distance (sample diversity).
+#' variation of information distance (sample diversity).
 #' @param \dots additional arguments (ignored)
 #'
 #' @return A data frame containing diagnostic information, invisibly.
 #'
 #' @examples
 #' data(iowa)
-#' iowa_map = redist_map(iowa, ndists=4, pop_tol=0.1)
-#' plans = redist_smc(iowa_map, 100)
+#' iowa_map <- redist_map(iowa, ndists = 4, pop_tol = 0.1)
+#' plans <- redist_smc(iowa_map, 100)
 #' summary(plans)
 #'
 #' @method summary redist_plans
 #' @concept analyze
 #' @md
 #' @export
-summary.redist_plans = function(object, district=1L, all_runs=TRUE, vi_max=100, ...) {
-    cli::cli_process_done(done_class="") # in case an earlier
+summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max = 100, ...) {
+    cli::cli_process_done(done_class = "") # in case an earlier
 
-    algo = attr(object, "algorithm")
-    name = deparse(substitute(object))
+    algo <- attr(object, "algorithm")
+    name <- deparse(substitute(object))
 
-    object = subset_sampled(object)
-    all_diagn = attr(object, "diagnostics")
-    plans_m = get_plans_matrix(object)
-    n_samp = ncol(plans_m)
-    n_distr = attr(object, "ndists")
-    if (is.null(n_distr)) n_distr = max(plans_m[,1])
+    object <- subset_sampled(object)
+    all_diagn <- attr(object, "diagnostics")
+    plans_m <- get_plans_matrix(object)
+    n_samp <- ncol(plans_m)
+    n_distr <- attr(object, "ndists")
+    if (is.null(n_distr)) n_distr <- max(plans_m[, 1])
 
-    fmt_comma = function(x) format(x, nsmall=0, digits=1, big.mark=",")
+    fmt_comma <- function(x) format(x, nsmall = 0, digits = 1, big.mark = ",")
 
-    prec_pop = attr(object, "prec_pop")
+    prec_pop <- attr(object, "prec_pop")
     if (is.null(prec_pop)) {
         cli_warn(c("Precinct population missing; plan diversity estimates may be misleading.",
-                   ">"='Run `attr({name}, "prec_pop") <- <map object>$<pop column>` to fix.'))
-        prec_pop = rep(1, nrow(plans_m))
+            ">" = 'Run `attr({name}, "prec_pop") <- <map object>$<pop column>` to fix.'))
+        prec_pop <- rep(1, nrow(plans_m))
     }
-    est_div = plans_diversity(object, total_pop=prec_pop, n_max=vi_max)
-    div_rg = format(quantile(est_div, c(0.1, 0.9)), digits=2)
-    div_bad = (mean(est_div) <= 0.35) || (mean(est_div <= 0.05) > 0.2)
+    est_div <- plans_diversity(object, total_pop = prec_pop, n_max = vi_max)
+    div_rg <- format(quantile(est_div, c(0.1, 0.9)), digits = 2)
+    div_bad <- (mean(est_div) <= 0.35) || (mean(est_div <= 0.05) > 0.2)
 
     if (algo == "smc") {
         cli_text("{.strong SMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
@@ -96,30 +96,30 @@ summary.redist_plans = function(object, district=1L, all_runs=TRUE, vi_max=100, 
         if (div_bad) cli::cli_alert_danger("{.strong WARNING:} Low plan diversity")
         cat("\n")
 
-        cols = names(object)
-        addl_cols = setdiff(cols, c("chain", "draw", "district", "total_pop"))
-        warn_converge = FALSE
+        cols <- names(object)
+        addl_cols <- setdiff(cols, c("chain", "draw", "district", "total_pop"))
+        warn_converge <- FALSE
         if ("chain" %in% cols && length(addl_cols) > 0) {
-            idx = seq_len(n_samp)
-            if ("district" %in% cols) idx = as.integer(district) + (idx - 1) * n_distr
+            idx <- seq_len(n_samp)
+            if ("district" %in% cols) idx <- as.integer(district) + (idx - 1)*n_distr
 
-            const_cols = vapply(addl_cols, function(col) {
-                x = object[[col]][idx]
+            const_cols <- vapply(addl_cols, function(col) {
+                x <- object[[col]][idx]
                 all(is.na(x)) || all(x == x[1])
             }, numeric(1))
-            addl_cols = addl_cols[!const_cols]
+            addl_cols <- addl_cols[!const_cols]
 
-            rhats = vapply(addl_cols, function(col) {
-                x = object[[col]][idx]
-                na_omit = !is.na(x)
+            rhats <- vapply(addl_cols, function(col) {
+                x <- object[[col]][idx]
+                na_omit <- !is.na(x)
                 diag_rhat(x[na_omit], object$chain[idx][na_omit])
             }, numeric(1))
-            names(rhats) = addl_cols
+            names(rhats) <- addl_cols
             cat("R-hat values for summary statistics:\n")
             print(rhats)
 
             if (any(rhats >= 1.05)) {
-                warn_converge = TRUE
+                warn_converge <- TRUE
                 cli::cli_alert_danger("{.strong WARNING:} SMC runs have not converged.")
             }
             cat("\n")
@@ -127,48 +127,48 @@ summary.redist_plans = function(object, district=1L, all_runs=TRUE, vi_max=100, 
         }
 
 
-        run_dfs = list()
-        n_runs = length(all_diagn)
-        n_samp = n_samp / n_runs
-        warn_bottlenecks = FALSE
+        run_dfs <- list()
+        n_runs <- length(all_diagn)
+        n_samp <- n_samp/n_runs
+        warn_bottlenecks <- FALSE
 
         for (i in seq_len(n_runs)) {
-            diagn = all_diagn[[i]]
+            diagn <- all_diagn[[i]]
 
-            run_dfs[[i]] = tibble(n_eff = c(diagn$step_n_eff, diagn$n_eff),
-                         eff = c(diagn$step_n_eff, diagn$n_eff)/n_samp,
-                         accept_rate = c(diagn$accept_rate, NA),
-                         sd_log_wgt = diagn$sd_lp,
-                         max_unique = diagn$unique_survive,
-                         est_k = c(diagn$est_k, NA))
+            run_dfs[[i]] <- tibble(n_eff = c(diagn$step_n_eff, diagn$n_eff),
+                eff = c(diagn$step_n_eff, diagn$n_eff)/n_samp,
+                accept_rate = c(diagn$accept_rate, NA),
+                sd_log_wgt = diagn$sd_lp,
+                max_unique = diagn$unique_survive,
+                est_k = c(diagn$est_k, NA))
 
-            tbl_print = as.data.frame(run_dfs[[i]])
-            min_n = max(0.05*n_samp, min(0.4*n_samp, 100))
-            bottlenecks = dplyr::coalesce(with(tbl_print, pmin(max_unique, n_eff) < min_n), FALSE)
-            warn_bottlenecks = warn_bottlenecks || any(bottlenecks)
-            tbl_print$bottleneck = ifelse(bottlenecks, " * ", "")
-            tbl_print$n_eff = with(tbl_print,
-                    str_glue("{fmt_comma(n_eff)} ({sprintf('%0.1f%%', 100*eff)})"))
-            tbl_print$eff = NULL
-            tbl_print$accept_rate = with(tbl_print, sprintf('%0.1f%%', 100*accept_rate))
-            max_pct = with(tbl_print, max_unique/(-n_samp * expm1(-1)))
-            tbl_print$max_unique = with(tbl_print,
-                    str_glue("{fmt_comma(max_unique)} ({sprintf('%3.0f%%', 100*max_pct)})"))
+            tbl_print <- as.data.frame(run_dfs[[i]])
+            min_n <- max(0.05*n_samp, min(0.4*n_samp, 100))
+            bottlenecks <- dplyr::coalesce(with(tbl_print, pmin(max_unique, n_eff) < min_n), FALSE)
+            warn_bottlenecks <- warn_bottlenecks || any(bottlenecks)
+            tbl_print$bottleneck <- ifelse(bottlenecks, " * ", "")
+            tbl_print$n_eff <- with(tbl_print,
+                str_glue("{fmt_comma(n_eff)} ({sprintf('%0.1f%%', 100*eff)})"))
+            tbl_print$eff <- NULL
+            tbl_print$accept_rate <- with(tbl_print, sprintf("%0.1f%%", 100*accept_rate))
+            max_pct <- with(tbl_print, max_unique/(-n_samp*expm1(-1)))
+            tbl_print$max_unique <- with(tbl_print,
+                str_glue("{fmt_comma(max_unique)} ({sprintf('%3.0f%%', 100*max_pct)})"))
 
-            names(tbl_print) = c("Eff. samples (%)", "Acc. rate",
-                                    "Log wgt. sd", " Max. unique",
-                                    "Est. k", "")
-            rownames(tbl_print) = c(paste("Split", seq_len(n_distr-1)), "Resample")
+            names(tbl_print) <- c("Eff. samples (%)", "Acc. rate",
+                "Log wgt. sd", " Max. unique",
+                "Est. k", "")
+            rownames(tbl_print) <- c(paste("Split", seq_len(n_distr - 1)), "Resample")
 
             if (i == 1 || isTRUE(all_runs)) {
                 if ("chain" %in% cols) {
                     cli_text("Sampling diagnostics for SMC run {i} of {n_runs}")
                 }
-                print(tbl_print, digits=2)
+                print(tbl_print, digits = 2)
                 cat("\n")
             }
         }
-        out = bind_rows(run_dfs)
+        out <- bind_rows(run_dfs)
 
         cli::cli_li(cli::col_grey("
             Watch out for low effective samples, very low acceptance rates (less than 1%),
@@ -199,52 +199,52 @@ summary.redist_plans = function(object, district=1L, all_runs=TRUE, vi_max=100, 
                         To visualize what geographic areas may be causing problems,
                         try running the following code. Highlighted areas are
                         those that may be causing the bottleneck.\n\n")
-            code = str_glue("plot(<map object>, rowMeans(as.matrix({name})) == <bottleneck iteration>)")
+            code <- str_glue("plot(<map object>, rowMeans(as.matrix({name})) == <bottleneck iteration>)")
             cli::cat_line("    ", cli::code_highlight(code, "Material"))
         }
     } else if (algo == "mergesplit") {
         cli_text("{.strong Merge-Split MCMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
                  districts on {fmt_comma(nrow(plans_m))} units")
 
-        accept_rate = sprintf("%0.1f%%", 100*attr(object, "mh_acceptance"))
+        accept_rate <- sprintf("%0.1f%%", 100*attr(object, "mh_acceptance"))
         cli_text("Chain acceptance rate{?s}: {accept_rate}")
 
         cli_text("Plan diversity 80% range: {div_rg[1]} to {div_rg[2]}")
         if (div_bad) cli::cli_alert_danger("{.strong WARNING:} Low plan diversity")
         cat("\n")
 
-        cols = names(object)
-        addl_cols = setdiff(cols, c("chain", "draw", "district", "total_pop", "mcmc_accept"))
-        warn_converge = FALSE
+        cols <- names(object)
+        addl_cols <- setdiff(cols, c("chain", "draw", "district", "total_pop", "mcmc_accept"))
+        warn_converge <- FALSE
         if (length(addl_cols) > 0) {
-            idx = seq_len(n_samp)
+            idx <- seq_len(n_samp)
             if ("district" %in% cols) {
-                idx = 1 + (idx - 1) * n_distr
+                idx <- 1 + (idx - 1)*n_distr
             }
             if ("chain" %in% cols) {
-                chain = object$chain
+                chain <- object$chain
             } else {
-                chain = rep(1, nrow(object))
+                chain <- rep(1, nrow(object))
             }
 
-            rhats = vapply(addl_cols, function(col) {
-                x = object[[col]][idx]
-                na_omit = !is.na(x)
-                diag_rhat(x[na_omit], chain[idx][na_omit], split=TRUE)
+            rhats <- vapply(addl_cols, function(col) {
+                x <- object[[col]][idx]
+                na_omit <- !is.na(x)
+                diag_rhat(x[na_omit], chain[idx][na_omit], split = TRUE)
             }, numeric(1))
-            names(rhats) = addl_cols
+            names(rhats) <- addl_cols
             cat("R-hat values for summary statistics:\n")
             print(rhats)
 
-            out = tibble(stat=addl_cols, rhat=rhats)
+            out <- tibble(stat = addl_cols, rhat = rhats)
 
             if (any(rhats >= 1.05)) {
-                warn_converge = TRUE
+                warn_converge <- TRUE
                 cli::cli_alert_danger("{.strong WARNING:} Chains have not converged.")
             }
             cat("\n")
         } else {
-            out = NULL
+            out <- NULL
         }
 
         cli::cli_li(cli::col_grey("
@@ -273,25 +273,25 @@ summary.redist_plans = function(object, district=1L, all_runs=TRUE, vi_max=100, 
 }
 
 
-diag_fold = function(x) {
+diag_fold <- function(x) {
     abs(x - median(x))
 }
 
-diag_ranknorm = function(x) {
-    qnorm(rank(x)/(length(x)+1))
+diag_ranknorm <- function(x) {
+    qnorm(rank(x)/(length(x) + 1))
 }
 
-diag_calc_rhat = function(x, grp) {
-    n = mean(table(grp))
-    var_between = n * var(tapply(x, grp, mean))
-    var_within = mean(tapply(x, grp, var))
-    sqrt((var_between / var_within + n - 1) / n)
+diag_calc_rhat <- function(x, grp) {
+    n <- mean(table(grp))
+    var_between <- n*var(tapply(x, grp, mean))
+    var_within <- mean(tapply(x, grp, var))
+    sqrt((var_between/var_within + n - 1)/n)
 }
 
-diag_rhat = function(x, grp, split=FALSE) {
+diag_rhat <- function(x, grp, split = FALSE) {
     if (split) {
-        lengths = rle(grp)$lengths
-        grp = grp + do.call(c, lapply(lengths, function(l) rep(c(0.0, 0.5), each=l/2)))
+        lengths <- rle(grp)$lengths
+        grp <- grp + do.call(c, lapply(lengths, function(l) rep(c(0.0, 0.5), each = l/2)))
     }
 
     max(diag_calc_rhat(diag_ranknorm(x), grp),

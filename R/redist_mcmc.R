@@ -7,9 +7,9 @@
 ###########################################
 
 
-combine.par.anneal <- function(a, b){
+combine.par.anneal <- function(a, b) {
 
-    .Deprecated('rbind.redist_plans()')
+    .Deprecated("rbind.redist_plans()")
     ## Names of object
     name_out <- names(a)
 
@@ -17,10 +17,10 @@ combine.par.anneal <- function(a, b){
     output_obj <- vector(mode = "list", length = length(a))
 
     ## Combine plans
-    for(i in 1:length(a)){
-        if(i == i){
+    for (i in 1:length(a)) {
+        if (i == i) {
             output_obj[[i]] <- cbind(a[[i]], b[[i]])
-        }else{
+        } else {
             output_obj[[i]] <- c(a[[i]], b[[i]])
         }
     }
@@ -93,10 +93,10 @@ redist.flip.anneal <- function(adj,
                                rngseed = NULL, maxiterrsg = 5000,
                                adapt_lambda = FALSE, adapt_eprob = FALSE,
                                exact_mh = FALSE,
-                               savename = NULL, verbose = TRUE){
-    .Deprecated('redist_flip_anneal', msg = 'Please use `redist_flip_anneal. This is gone as of 4.1.')
+                               savename = NULL, verbose = TRUE) {
+    .Deprecated("redist_flip_anneal", msg = "Please use `redist_flip_anneal. This is gone as of 4.1.")
 
-    if(verbose){
+    if (verbose) {
         ## Initialize ##
         divider <- c(paste(rep("=", 20), sep = "", collapse = ""), "\n")
 
@@ -109,84 +109,84 @@ redist.flip.anneal <- function(adj,
     ## --------------
     ## Initial checks
     ## --------------
-    if(missing(adj)){
+    if (missing(adj)) {
         stop("Please supply adjacency matrix or list")
     }
-    if(missing(total_pop)){
+    if (missing(total_pop)) {
         stop("Please supply vector of geographic unit populations")
     }
-    if(is.null(ndists) & is.null(init_plan) || is.null(ndists) & is.character(init_plan) ){
+    if (is.null(ndists) & is.null(init_plan) || is.null(ndists) & is.character(init_plan)) {
         stop("Please provide either the desired number of congressional districts
               or an initial set of congressional district assignments")
     }
 
     ## Set seed before first iteration of algorithm if provided by user
-    if(!is.null(rngseed) & is.numeric(rngseed)){
+    if (!is.null(rngseed) & is.numeric(rngseed)) {
         set.seed(rngseed)
     }
 
-    if(adapt_lambda){
+    if (adapt_lambda) {
         adapt_lambda <- 1
-    }else{
+    } else {
         adapt_lambda <- 0
     }
-    if(adapt_eprob){
+    if (adapt_eprob) {
         adapt_eprob <- 1
-    }else{
+    } else {
         adapt_eprob <- 0
     }
-    if(exact_mh){
+    if (exact_mh) {
         exact_mh <- 1
-    }else{
+    } else {
         exact_mh <- 0
     }
 
     ## ------------------
     ## Preprocessing data
     ## ------------------
-    if(verbose){
+    if (verbose) {
         cat("Preprocessing data.\n\n")
     }
     preprocout <- redist.preproc(adj = adj, total_pop = total_pop,
-                                 init_plan = init_plan, ndists = ndists,
-                                 pop_tol = pop_tol,
-                                 temper = FALSE,
-                                 betaseq = "powerlaw", betaseqlength = 10,
-                                 betaweights = NULL,
-                                 adjswaps = TRUE, maxiterrsg = maxiterrsg,
-                                 verbose = verbose)
+        init_plan = init_plan, ndists = ndists,
+        pop_tol = pop_tol,
+        temper = FALSE,
+        betaseq = "powerlaw", betaseqlength = 10,
+        betaweights = NULL,
+        adjswaps = TRUE, maxiterrsg = maxiterrsg,
+        verbose = verbose)
 
 
-    if(verbose){
+    if (verbose) {
         cat("Starting swMH().\n")
     }
 
     algout <- swMH(aList = preprocout$data$adjlist,
-                   cdvec = preprocout$data$init_plan,
-                   popvec = preprocout$data$total_pop,
-                   constraints = as.list(constraints),
-                   nsims = 100,
-                   eprob = eprob,
-                   pct_dist_parity = preprocout$params$pctdistparity,
-                   beta_sequence = preprocout$params$betaseq,
-                   beta_weights = preprocout$params$betaweights,
-                   lambda = lambda,
-                   beta = 0,
-                   adapt_beta = "annealing",
-                   adjswap = preprocout$params$adjswaps,
-                   exact_mh = exact_mh,
-                   adapt_lambda = adapt_lambda,
-                   adapt_eprob = adapt_eprob,
-                   num_hot_steps = num_hot_steps,
-                   num_annealing_steps = num_annealing_steps,
-                   num_cold_steps = num_cold_steps,
-                   verbose = as.logical(verbose))
+        cdvec = preprocout$data$init_plan,
+        popvec = preprocout$data$total_pop,
+        constraints = as.list(constraints),
+        nsims = 100,
+        eprob = eprob,
+        pct_dist_parity = preprocout$params$pctdistparity,
+        beta_sequence = preprocout$params$betaseq,
+        beta_weights = preprocout$params$betaweights,
+        lambda = lambda,
+        beta = 0,
+        adapt_beta = "annealing",
+        adjswap = preprocout$params$adjswaps,
+        exact_mh = exact_mh,
+        adapt_lambda = adapt_lambda,
+        adapt_eprob = adapt_eprob,
+        num_hot_steps = num_hot_steps,
+        num_annealing_steps = num_annealing_steps,
+        num_cold_steps = num_cold_steps,
+        verbose = as.logical(verbose))
     class(algout) <- "redist"
 
     ## -------------------------
     ## Combine and save the data
     ## -------------------------
-    if(!is.null(savename)){
+    if (!is.null(savename)) {
         saveRDS(algout, file = paste0(savename, ".rds"))
     }
 
@@ -249,12 +249,12 @@ redist.flip.anneal <- function(adj,
 #'
 #' @concept post
 #' @export
-redist.combine.anneal <- function(file_name){
+redist.combine.anneal <- function(file_name) {
 
-    .Deprecated('rbind.redist_plans')
+    .Deprecated("rbind.redist_plans")
     ## List files
     fn <- list.files()[grep(file_name, list.files())]
-    if(length(fn) == 0){
+    if (length(fn) == 0) {
         stop("Can't find any files in current working directory with that name.")
     }
     load(fn[1])
@@ -265,24 +265,24 @@ redist.combine.anneal <- function(file_name){
     nc <- length(fn)
     plans <- matrix(NA, nrow = nr, ncol = nc)
 
-    veclist <- vector(mode = "list", length = length(algout)-1)
-    for(i in 1:length(veclist)){
+    veclist <- vector(mode = "list", length = length(algout) - 1)
+    for (i in 1:length(veclist)) {
         veclist[[i]] <- rep(NA, nc)
     }
 
     ## ------------
     ## Combine data
     ## ------------
-    for(i in 1:length(fn)){
+    for (i in 1:length(fn)) {
         ## Load data
         load(fn[i])
 
         ## Store objects together
-        for(j in 1:length(algout)){
-            if(j == 1){
+        for (j in 1:length(algout)) {
+            if (j == 1) {
                 plans[1:nr, i] <- algout$plans
-            }else{
-                veclist[[j-1]][i] <- algout[[j]]
+            } else {
+                veclist[[j - 1]][i] <- algout[[j]]
             }
         }
     }
@@ -291,11 +291,11 @@ redist.combine.anneal <- function(file_name){
     ## Store data in algout object
     ## ---------------------------
     algout <- vector(mode = "list", length = length(algout))
-    for(i in 1:length(algout)){
-        if(i == 1){
+    for (i in 1:length(algout)) {
+        if (i == 1) {
             algout[[i]] <- plans
-        }else{
-            algout[[i]] <- veclist[[i-1]]
+        } else {
+            algout[[i]] <- veclist[[i - 1]]
         }
     }
     names(algout) <- names_obj
@@ -390,14 +390,14 @@ redist.combine.anneal <- function(file_name){
 #' set.seed(1)
 #' temp <- tempdir()
 #' # alg_253 <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
-#' #                       init_plan = init_plan, nsims = 10000,
-#' #                       nloop = 2, savename = paste0(temp, "/test"))
+#' # init_plan = init_plan, nsims = 10000,
+#' # nloop = 2, savename = paste0(temp, "/test"))
 #' # out <- redist.combine(savename = paste0(temp, "/test"), nloop = 2, nthin = 10)
 #' }
 #' @concept post
 #' @export
-redist.combine <- function(savename, nloop, nthin, temper = 0){
-    .Deprecated('rbind.redist_plans')
+redist.combine <- function(savename, nloop, nthin, temper = 0) {
+    .Deprecated("rbind.redist_plans")
     ##############################
     ## Set up container objects ##
     ##############################
@@ -408,11 +408,11 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
     nr <- nrow(algout$plans)
     nc <- ncol(algout$plans)
     plans <- matrix(NA, nrow = nr,
-                    ncol = (nc * nloop / nthin))
+        ncol = (nc*nloop/nthin))
 
-    veclist <- vector(mode = "list", length = length(algout)-1)
-    for(i in 1:length(veclist)){
-        veclist[[i]] <- rep(NA, (nc * nloop / nthin))
+    veclist <- vector(mode = "list", length = length(algout) - 1)
+    for (i in 1:length(veclist)) {
+        veclist[[i]] <- rep(NA, (nc*nloop/nthin))
     }
 
     ## Indices for thinning
@@ -421,19 +421,19 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
     ####################################
     ## Combine data in multiple loops ##
     ####################################
-    for(i in 1:nloop){
+    for (i in 1:nloop) {
 
         ## Load data
         algout <- readRDS(paste0(savename, "_loop", i, ".rds"))
 
-        ind <- ((i - 1) * (nc / nthin) + 1):(i * (nc / nthin))
+        ind <- ((i - 1)*(nc/nthin) + 1):(i*(nc/nthin))
 
         ## Store objects together
-        for(j in 1:length(algout)){
-            if(j == 1){
-                plans[1:nr, ind] <- algout$plans[,indthin]
-            }else{
-                veclist[[j-1]][ind] <- algout[[j]][indthin]
+        for (j in 1:length(algout)) {
+            if (j == 1) {
+                plans[1:nr, ind] <- algout$plans[, indthin]
+            } else {
+                veclist[[j - 1]][ind] <- algout[[j]][indthin]
             }
         }
 
@@ -443,11 +443,11 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
     ## Store data in algout object ##
     #################################
     algout <- vector(mode = "list", length = length(algout))
-    for(i in 1:length(algout)){
-        if(i == 1){
+    for (i in 1:length(algout)) {
+        if (i == 1) {
             algout[[i]] <- plans
-        }else{
-            algout[[i]] <- veclist[[i-1]]
+        } else {
+            algout[[i]] <- veclist[[i - 1]]
         }
     }
     names(algout) <- names_obj
@@ -594,13 +594,11 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #'
 #' ## Run the algorithm
 #' alg_253 <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
-#'                        init_plan = init_plan, nsims = 10000)
+#'     init_plan = init_plan, nsims = 10000)
 #'
-#'  ## You can also let it find a plan on its own!
-#'  sims <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
-#'                        ndists = 3, nsims = 10000)
-#'
-#'
+#' ## You can also let it find a plan on its own!
+#' sims <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
+#'     ndists = 3, nsims = 10000)
 #' }
 #'
 #' @concept simulate
@@ -619,9 +617,9 @@ redist.flip <- function(adj,
                         adapt_lambda = FALSE, adapt_eprob = FALSE,
                         exact_mh = FALSE, savename = NULL,
                         verbose = TRUE) {
-    .Deprecated('redist_flip', msg = 'Please use `redist_flip`. This will be gone in 4.1.')
+    .Deprecated("redist_flip", msg = "Please use `redist_flip`. This will be gone in 4.1.")
 
-    if(verbose){
+    if (verbose) {
         ## Initialize ##
         divider <- c(paste(rep("=", 20), sep = "", collapse = ""), "\n")
 
@@ -634,62 +632,62 @@ redist.flip <- function(adj,
     ##########################
     ## Is anything missing? ##
     ##########################
-    if(missing(adj)){
+    if (missing(adj)) {
         stop("Please supply adjacency matrix or list")
     }
-    if(missing(total_pop)){
+    if (missing(total_pop)) {
         stop("Please supply vector of geographic unit populations")
     }
-    if(missing(nsims)){
+    if (missing(nsims)) {
         stop("Please supply number of simulations to run algorithm")
     }
-    if(is.null(ndists) & is.null(init_plan) || is.null(ndists) & is.character(init_plan) ){
+    if (is.null(ndists) & is.null(init_plan) || is.null(ndists) & is.character(init_plan)) {
         stop("Please provide either the desired number of congressional districts
               or an initial set of congressional district assignments")
     }
-    if(nloop > 1 & missing(savename)){
+    if (nloop > 1 & missing(savename)) {
         stop("Please supply save directory if saving simulations at checkpoints")
     }
 
     ## Set seed before first iteration of algorithm if provided by user
-    if(!is.null(rngseed) & is.numeric(rngseed)){
+    if (!is.null(rngseed) & is.numeric(rngseed)) {
         set.seed(rngseed)
     }
 
-    if(adapt_lambda){
+    if (adapt_lambda) {
         adapt_lambda <- 1
-    }else{
+    } else {
         adapt_lambda <- 0
     }
-    if(adapt_eprob){
+    if (adapt_eprob) {
         adapt_eprob <- 1
-    }else{
+    } else {
         adapt_eprob <- 0
     }
-    if(exact_mh){
+    if (exact_mh) {
         exact_mh <- 1
-    }else{
+    } else {
         exact_mh <- 0
     }
 
     #####################
     ## Preprocess data ##
     #####################
-    if(verbose){
+    if (verbose) {
         cat("Preprocessing data.\n\n")
     }
     preprocout <- redist.preproc(adj = adj,
-                                 total_pop = total_pop,
-                                 init_plan = init_plan,
-                                 ndists = ndists,
-                                 pop_tol = pop_tol,
-                                 temper = temper,
-                                 betaseq = betaseq,
-                                 betaseqlength = betaseqlength,
-                                 betaweights = betaweights,
-                                 adjswaps = adjswaps,
-                                 maxiterrsg = maxiterrsg,
-                                 verbose = verbose
+        total_pop = total_pop,
+        init_plan = init_plan,
+        ndists = ndists,
+        pop_tol = pop_tol,
+        temper = temper,
+        betaseq = betaseq,
+        betaseqlength = betaseqlength,
+        betaweights = betaweights,
+        adjswaps = adjswaps,
+        maxiterrsg = maxiterrsg,
+        verbose = verbose
     )
 
 
@@ -699,84 +697,84 @@ redist.flip <- function(adj,
     #######################
     ## Run the algorithm ##
     #######################
-    for(i in loopstart:nloop){
+    for (i in loopstart:nloop) {
         ## Get congressional districts, tempered beta values
-        if(i > loopstart){
-            cds <- algout$plans[,nsims]
+        if (i > loopstart) {
+            cds <- algout$plans[, nsims]
 
-            if(temper){
+            if (temper) {
                 beta <- algout$beta_sequence[nsims]
             }
 
-            if(!is.null(rngseed) & is.numeric(rngseed)){
+            if (!is.null(rngseed) & is.numeric(rngseed)) {
                 set.seed(algout$randseed)
             }
 
             rm(list = "algout")
 
-        } else{
+        } else {
 
             ## Reload the data if re-startomg
-            if(loopstart > 1){
+            if (loopstart > 1) {
 
                 ## Load the data
                 algout <- readRDS(paste0(savename, "_loop", i - 1, ".rds"))
 
                 ## Stop if number of simulations per loop is different
-                if(nsims != ncol(algout[[1]])){
+                if (nsims != ncol(algout[[1]])) {
                     stop("Please specify the same number of simulations per
                      loop across all loops")
                 }
 
-                cds <- algout$plans[,nsims]
+                cds <- algout$plans[, nsims]
 
-                if(temper){
+                if (temper) {
                     beta <- algout$beta_sequence[nsims]
                 }
 
-                if(!is.null(rngseed) & is.numeric(rngseed)){
+                if (!is.null(rngseed) & is.numeric(rngseed)) {
                     set.seed(algout$randseed)
                 }
 
                 rm(list = "algout")
 
-            }else{
+            } else {
                 cds <- preprocout$data$init_plan
             }
 
         }
 
         ## Run algorithm
-        if(verbose){
+        if (verbose) {
             cat("Starting swMH().\n")
         }
         algout <- swMH(aList = preprocout$data$adjlist,
-                       cdvec = cds,
-                       popvec = preprocout$data$total_pop,
-                       constraints = constraints,
-                       nsims = nsims * nthin + warmup,
-                       eprob = eprob,
-                       pct_dist_parity = preprocout$params$pctdistparity,
-                       beta_sequence = preprocout$params$betaseq,
-                       beta_weights = preprocout$params$betaweights,
-                       lambda = lambda,
-                       beta = preprocout$params$beta,
-                       adapt_beta = preprocout$params$temperbeta,
-                       adjswap = preprocout$params$adjswaps,
-                       exact_mh = exact_mh,
-                       adapt_lambda = adapt_lambda,
-                       adapt_eprob = adapt_eprob,
-                       verbose = as.logical(verbose))
+            cdvec = cds,
+            popvec = preprocout$data$total_pop,
+            constraints = constraints,
+            nsims = nsims*nthin + warmup,
+            eprob = eprob,
+            pct_dist_parity = preprocout$params$pctdistparity,
+            beta_sequence = preprocout$params$betaseq,
+            beta_weights = preprocout$params$betaweights,
+            lambda = lambda,
+            beta = preprocout$params$beta,
+            adapt_beta = preprocout$params$temperbeta,
+            adjswap = preprocout$params$adjswaps,
+            exact_mh = exact_mh,
+            adapt_lambda = adapt_lambda,
+            adapt_eprob = adapt_eprob,
+            verbose = as.logical(verbose))
 
         class(algout) <- "redist"
 
         ## Save random number state if setting the seed
-        if(!is.null(rngseed)){
+        if (!is.null(rngseed)) {
             algout$randseed <- .Random.seed[3]
         }
 
         ## Save output
-        if(nloop > 1){
+        if (nloop > 1) {
             saveRDS(algout, file = paste0(savename, "_loop", i, ".rds"))
         }
 
@@ -790,16 +788,16 @@ redist.flip <- function(adj,
     ###############################
     ## Combine and save the data ##
     ###############################
-    if(nloop > 1){
+    if (nloop > 1) {
         redist.combine(savename = savename, nloop = nloop,
-                       nthin = nthin,
-                       temper = temperflag)
-    }else if(!is.null(savename)){
+            nthin = nthin,
+            temper = temperflag)
+    } else if (!is.null(savename)) {
         saveRDS(algout, file = paste0(savename, ".rds"))
     }
 
     ## Examine the data
-    if(nloop == 1){
+    if (nloop == 1) {
         algout <- redist.warmup.chain(algout = algout, warmup = warmup)
         algout <- redist.thin.chain(algout, thin = nthin)
     }
@@ -893,49 +891,49 @@ redist.flip <- function(adj,
 #' alg <- redist_flip(map_ia, nsims = 500, constraints = cons)
 #'
 #' alg_ipw <- redist.ipw(plans = alg,
-#'                      resampleconstraint = 'pop_dev',
-#'                      targetbeta = 1,
-#'                      targetpop = 0.05)
+#'     resampleconstraint = "pop_dev",
+#'     targetbeta = 1,
+#'     targetpop = 0.05)
 #' }
 #'
 #' @concept post
 #' @export
 redist.ipw <- function(plans,
                        resampleconstraint = c("pop_dev", "edges_removed",
-                                              "segregation", "status_quo"),
+                           "segregation", "status_quo"),
                        targetbeta,
                        targetpop = NULL,
-                       temper = 0){
+                       temper = 0) {
 
     ## Warnings:
-    if(missing(plans) | !inherits(plans, 'redist_plans')){
+    if (missing(plans) | !inherits(plans, "redist_plans")) {
         cli_abort("Please provide {.arg plans} as a {.cls redist_plans}.")
     }
 
     plans_ref <- subset_ref(plans)
     plans <- subset_sampled(plans)
 
-    if(length(resampleconstraint)!=1){
+    if (length(resampleconstraint) != 1) {
         cli_abort("We currently only support one resamplingconstraint at a time.")
     }
-    if(!(resampleconstraint %in% c("pop_dev", "edges_removed", "segregation", "status_quo"))){
+    if (!(resampleconstraint %in% c("pop_dev", "edges_removed", "segregation", "status_quo"))) {
         cli_abort("We do not provide support for that constraint at this time")
     }
-    if(missing(targetbeta)){
+    if (missing(targetbeta)) {
         cli_abort("Please specify the target beta value")
     }
 
     ## Get indices drawn under target beta if tempering
-    if(temper == 1){
+    if (temper == 1) {
         indbeta <- which(plans$beta_sequence == targetbeta)
-    }else{
+    } else {
         indbeta <- seq_len(ncol(get_plans_matrix(plans)))
     }
 
     ## Get indices of draws that meet target population
-    if(!is.null(targetpop)){
+    if (!is.null(targetpop)) {
         indpop <- which(plans$distance_parity <= targetpop)
-    }else{
+    } else {
         indpop <- seq_len(ncol(get_plans_matrix(plans)))
     }
 
@@ -943,31 +941,31 @@ redist.ipw <- function(plans,
     inds <- intersect(indpop, indbeta)
     ## Construct weights
     psi <- plans[[paste0("constraint_", resampleconstraint)]][inds]
-    weights <- 1 / exp(targetbeta * psi)
+    weights <- 1/exp(targetbeta*psi)
 
     ## Resample indices
     inds <- sample(inds, length(inds), replace = TRUE, prob = weights)
     ndists <- max(plans$district)
-    indx <- unlist(lapply(inds, function(x) {seq(ndists * (x - 1) + 1, ndists * x, by = 1)}))
+    indx <- unlist(lapply(inds, function(x) {seq(ndists*(x - 1) + 1, ndists*x, by = 1)}))
 
     ## Subset the entire list
     plans %>% slice(indx)
 }
 
-redist.warmup.chain <- function(algout, warmup = 1){
-    if(warmup <= 0){
+redist.warmup.chain <- function(algout, warmup = 1) {
+    if (warmup <= 0) {
         return(algout)
     }
     inds <- 1:warmup
     algout_new <- vector(mode = "list", length = length(algout))
-    for(i in 1:length(algout)){
+    for (i in 1:length(algout)) {
 
         ## Subset the matrix first, then the vectors
-        if(i == 1){
-            algout_new[[i]] <- algout[[i]][,-inds]
-        } else if(length(algout[[i]]) == 1) {
+        if (i == 1) {
+            algout_new[[i]] <- algout[[i]][, -inds]
+        } else if (length(algout[[i]]) == 1) {
             algout_new[[i]] <- algout[[i]]
-        } else if(all(names(algout[[i]]) == 'adj')) {
+        } else if (all(names(algout[[i]]) == "adj")) {
             algout_new[[i]] <- algout[[i]]
         } else {
             algout_new[[i]] <- algout[[i]][-inds]
@@ -980,21 +978,21 @@ redist.warmup.chain <- function(algout, warmup = 1){
 }
 
 
-redist.thin.chain <- function(algout, thin = 100){
-    if(thin <= 1){
+redist.thin.chain <- function(algout, thin = 100) {
+    if (thin <= 1) {
         return(algout)
     }
 
     inds <- seq(1, ncol(algout$plans), by = thin)
     algout_new <- vector(mode = "list", length = length(algout))
-    for(i in 1:length(algout)){
+    for (i in 1:length(algout)) {
 
         ## Subset the matrix first, then the vectors
-        if(i == 1){
-            algout_new[[i]] <- algout[[i]][,inds]
-        } else if(length(algout[[i]]) == 1) {
+        if (i == 1) {
+            algout_new[[i]] <- algout[[i]][, inds]
+        } else if (length(algout[[i]]) == 1) {
             algout_new[[i]] <- algout[[i]]
-        } else if(!is.null(names(algout[[i]])) & all(names(algout[[i]]) == 'adj')) {
+        } else if (!is.null(names(algout[[i]])) & all(names(algout[[i]]) == "adj")) {
             algout_new[[i]] <- algout[[i]]
         } else {
             algout_new[[i]] <- algout[[i]][inds]
@@ -1005,4 +1003,3 @@ redist.thin.chain <- function(algout, thin = 100){
     class(algout_new) <- "redist"
     return(algout_new)
 }
-
