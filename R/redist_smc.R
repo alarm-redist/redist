@@ -251,7 +251,7 @@ redist_smc = function(map, nsims, counties=NULL, compactness=1, constraints=list
         else
             cl = makeCluster(ncores_runs, methods=FALSE,
                              useXDR=.Platform$endian != "little")
-        doParallel::registerDoParallel(cl)
+        doParallel::registerDoParallel(cl, cores=ncores_runs)
         on.exit(stopCluster(cl))
     } else {
         `%oper%` <- `%do%`
