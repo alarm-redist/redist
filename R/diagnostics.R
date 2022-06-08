@@ -197,7 +197,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
                         To visualize what geographic areas may be causing problems,
                         try running the following code. Highlighted areas are
                         those that may be causing the bottleneck.\n\n")
-            code <- str_glue("plot(<map object>, rowMeans(as.matrix({name})) == <bottleneck iteration>)")
+            code <- str_glue("plot(<map object>, rowMeans(as.matrix({name}) == <bottleneck iteration>))")
             cli::cat_line("    ", cli::code_highlight(code, "Material"))
         }
     } else if (algo == "mergesplit") {
