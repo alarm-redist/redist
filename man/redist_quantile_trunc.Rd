@@ -16,6 +16,6 @@ numeric vector
 Defined as \code{pmin(x, quantile(x, 1 - length(x)^(-0.5)))}
 }
 \examples{
-redist_quantile_trunc(c(1,2,3,4))
+redist_quantile_trunc(c(1, 2, 3, 4))
 
 }

@@ -187,7 +187,7 @@ init_plan <- fl25_enum$plans[, 5118]
 
 ## Run the algorithm
 redist.mcmc.mpi(adj = fl25_adj, total_pop = fl25$pop,
-                init_plan = init_plan, nsims = 10000, savename = "test")
+    init_plan = init_plan, nsims = 10000, savename = "test")
 }
 }
 \references{

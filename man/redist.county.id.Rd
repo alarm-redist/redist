@@ -17,7 +17,7 @@ Create County IDs
 }
 \examples{
 set.seed(2)
-counties <- sample(c(rep('a', 20), rep('b', 5)))
+counties <- sample(c(rep("a", 20), rep("b", 5)))
 redist.county.id(counties)
 
 }

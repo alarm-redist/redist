@@ -56,7 +56,7 @@ data(fl25)
 data(fl25_adj)
 
 res <- redist.rsg(adj = fl25_adj, total_pop = fl25$pop,
- ndists = 3, pop_tol = 0.05)
+    ndists = 3, pop_tol = 0.05)
 
 }
 \references{

@@ -92,9 +92,9 @@ cons <- add_constr_pop_dev(cons, strength = 5.4)
 alg <- redist_flip(map_ia, nsims = 500, constraints = cons)
 
 alg_ipw <- redist.ipw(plans = alg,
-                     resampleconstraint = 'pop_dev',
-                     targetbeta = 1,
-                     targetpop = 0.05)
+    resampleconstraint = "pop_dev",
+    targetbeta = 1,
+    targetpop = 0.05)
 }
 
 }

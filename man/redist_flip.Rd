@@ -127,7 +127,6 @@ There are currently 9 implemented constraint types, though `\code{compact} and
 within their respective list objects. The constraints are as follows:
 \itemize{
 \item \code{compact} - biases the algorithm towards drawing more compact districts.
-\itemize{
 \item weight - the coefficient to put on the Gibbs constraint
 \item metric - which metric to use. Must be one of \code{edges-removed} (the default),
 \code{polsby-popper}, \code{fryer-holden}, or \code{log-st}. Using Polsby Popper
@@ -141,72 +140,55 @@ border lengths.
 precinct centroids.
 \item ssd_denom - Only used with \code{fryer-holden} - a positive integer to use
 as the normalizing constant for the Relative Proximity Index.
-}
 \item \code{population} - A Gibbs constraint to complement the hard population
 constraint set by \code{pop_tol}. This penalizes moves which move away from smaller
 population parity deviations. It is very useful when an \code{init_plan} sits
 outside of the desired \code{pop_tol} but there are substantive reasons to use
 that plan. This constraint uses the input to \code{total_pop}.
-\itemize{
 \item weight - the coefficient to put on the Gibbs constraint
-}
 \item \code{countysplit} This is a Gibbs constraint to minimize county splits. Unlike
 SMC's county constraint, this allows for more than \code{ndists - 1} splits and
 does not require that counties are contiguous.
-\itemize{
 \item weight - the coefficient to put on the Gibbs constraint
-}
 \item \code{hinge} This uses the proportion of a group in a district and matches to the
 nearest target proportion, and then creates a penalty of
 \eqn{\sqrt{max(0, nearest.target - group.pct)}}.
-\itemize{
 \item weight - the coefficient to put on the Gibbs constraint
 \item minorityprop - A numeric vector of minority proportions (between 0 and 1) which
 districts should aim to have
-}
 \item \code{vra} This takes two target proportions of the presence of a minority group
 within a district. \eqn{(|target.min - group.pct||target.other - group.pct|)^{1.5})}
-\itemize{
 \item weight - the coefficient to put on the Gibbs constraint
 \item target_min - the target minority percentage. Often, this is set to 0.55 to encourage
 minority majority districts.
 \item target_other - the target minority percentage for non majority minority districts.
-}
 \item \code{minority} This constraint sorts the districts by the proportion of a group in
 a district and compares the highest districts to the entries of minorityprop.
 This takes the form \eqn{\sum_{i=1}^{n} \sqrt{|group.pct(i) - minorityprop(i)| }} where n
 is the length of minorityprop input.
-\itemize{
 \item weight - the coefficient to put on the Gibbs constraint
 \item minorityprop - A numeric vector of minority proportions (between 0 and 1) which
 districts should aim to have
-}
 \item \code{similarity} This is a status-quo constraint which penalizes plans which
 are very different from the starting place. It is useful for local exploration.
-\itemize{
 \item weight - the coefficient to put on the Gibbs constraint
-}
 \item \code{partisan} This is a constraint which minimizes partisan bias, either as
 measured as the difference from proportional representation or as the magnitude of
 the efficiency gap.
-\itemize{
 \item weight - the coefficient to put on the Gibbs constraint
 \item rvote - An integer vector of votes for Republicans or other party
 \item dvote - An integer vector of votes for Democrats or other party
 \item metric - which metric to use. Must be one of \code{proportional-representation}
 or \code{efficiency-gap}.
-}
 \item \code{segregation} This constraint attempts to minimize the degree of dissimilarity
 between districts by group population.
-\itemize{
 \item weight - the coefficient to put on the Gibbs constraint
-}
 }
 }
 \examples{
 data(iowa)
 iowa_map <- redist_map(iowa, ndists = 4, existing_plan = cd_2010, total_pop = pop,
-pop_tol = 0.05)
+    pop_tol = 0.05)
 sims <- redist_flip(map = iowa_map, nsims = 100)
 
 }

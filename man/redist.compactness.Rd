@@ -130,7 +130,7 @@ The edges removed measure is number of edges removed from the underlying adjacen
 A smaller number of edges removed is more compact.
 
 The fraction kept measure is the fraction of edges that were not removed from the
- underlying adjacency graph. This takes values 0 - 1, where 1 is more compact.
+underlying adjacency graph. This takes values 0 - 1, where 1 is more compact.
 }
 \examples{
 data(fl25)
@@ -139,8 +139,8 @@ data(fl25_enum)
 plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
 
 redist.compactness(
-  shp = fl25, plans = plans_05[, 1:3],
-  measure = c('PolsbyPopper', 'EdgesRemoved')
+    shp = fl25, plans = plans_05[, 1:3],
+    measure = c("PolsbyPopper", "EdgesRemoved")
 )
 }
 \references{

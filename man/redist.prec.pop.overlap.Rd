@@ -49,7 +49,7 @@ iowa_map <- redist_map(iowa, total_pop = pop, pop_tol = 0.01, ndists = 4)
 plans <- redist_smc(iowa_map, 2, silent = TRUE)
 plans_mat <- get_plans_matrix(plans)
 ov_vec <- redist.prec.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map)
-redist.prec.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map,  weighting = 's',
-normalize = FALSE, index_only = TRUE)
+redist.prec.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map,  weighting = "s",
+    normalize = FALSE, index_only = TRUE)
 
 }

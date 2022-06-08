@@ -47,8 +47,8 @@ init_plan <- fl25_enum$plans[, 5118]
 
 ## 25 precinct, three districts - no pop constraint ##
 alg_253 <- redist.flip(
-  adj = fl25_adj, total_pop = fl25$pop,
-  init_plan = init_plan, nsims = 10000
+    adj = fl25_adj, total_pop = fl25$pop,
+    init_plan = init_plan, nsims = 10000
 )
 
 ## Get Republican Dissimilarity Index from simulations

@@ -39,8 +39,8 @@ approximation to the target distribution.
 }
 \examples{
 data(iowa)
-ia <- redist_map(iowa, existing_plan=cd_2010, pop_tol=0.01)
-plans <- redist_smc(ia, 100, silent=TRUE)
+ia <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
+plans <- redist_smc(ia, 100, silent = TRUE)
 hist(plans_diversity(plans))
 
 }

@@ -16,7 +16,7 @@ set_pop_tol(map, pop_tol)
 }
 \value{
 For \code{get_pop_tol}, a single numeric value, the population
-  tolerance
+tolerance
 
 For \code{seet_pop_tol}, an updated \code{\link{redist_map}} object
 }

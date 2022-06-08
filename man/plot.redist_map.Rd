@@ -37,7 +37,7 @@ Plot a \code{redist_map}
 }
 \examples{
 data(fl25)
-d = redist_map(fl25, ndists=3, pop_tol=0.05)
+d <- redist_map(fl25, ndists = 3, pop_tol = 0.05)
 plot(d)
 plot(d, BlackPop/pop)
 
@@ -45,7 +45,6 @@ data(fl25_enum)
 fl25$dist <- fl25_enum$plans[, 5118]
 d <- redist_map(fl25, existing_plan = dist)
 plot(d)
-
 
 }
 \concept{plot}

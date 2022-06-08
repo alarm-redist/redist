@@ -208,13 +208,13 @@ constraints are written in C++ and so are more performant.
 }
 \examples{
 data(iowa)
-iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05)
-constr = redist_constr(iowa_map)
-constr = add_constr_splits(constr, strength=1.5, admin = name)
-constr = add_constr_grp_hinge(constr, strength=100,
-                              dem_08, tot_08, tgts_group=c(0.5, 0.6))
+iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05)
+constr <- redist_constr(iowa_map)
+constr <- add_constr_splits(constr, strength = 1.5, admin = name)
+constr <- add_constr_grp_hinge(constr, strength = 100,
+    dem_08, tot_08, tgts_group = c(0.5, 0.6))
 # encourage districts to have the same number of counties
-constr = add_constr_custom(constr, strength=1000, fn=function(plan, distr) {
+constr <- add_constr_custom(constr, strength = 1000, fn = function(plan, distr) {
     # notice that we only use information on precincts in `distr`
     abs(sum(plan == distr) - 99/4)
 })

@@ -103,7 +103,7 @@ params <- expand.grid(eprob = c(.01, .05, .1))
 map_fl <- redist_map(fl25, ndists = 3, pop_tol = 0.2)
 ## Run the algorithm
 redist.findparams(map_fl,
-                  init_plan = init_plan, nsims = 10000, params = params)
+    init_plan = init_plan, nsims = 10000, params = params)
 }
 }
 \references{

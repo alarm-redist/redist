@@ -39,8 +39,8 @@ match the numbers in a provided plan, using the Hungarian algorithm.
 \examples{
 data(iowa)
 
-iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05)
-plans = redist_smc(iowa_map, 100, silent=TRUE)
+iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05)
+plans <- redist_smc(iowa_map, 100, silent = TRUE)
 match_numbers(plans, "cd_2010")
 
 }

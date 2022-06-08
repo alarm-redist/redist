@@ -42,8 +42,8 @@ data(fl25_enum)
 cd <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
 
 redist.group.percent(plans = cd,
-                    group_pop = fl25$BlackPop,
-                    total_pop = fl25$TotPop)
+    group_pop = fl25$BlackPop,
+    total_pop = fl25$TotPop)
 
 }
 \concept{analyze}

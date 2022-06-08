@@ -117,8 +117,8 @@ compact districts.
 \examples{
 \dontrun{
 data(fl25)
-fl_map = redist_map(fl25, ndists=3, pop_tol=0.1)
-sampled = redist_mergesplit_parallel(fl_map, nsims=100, chains=100)
+fl_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
+sampled <- redist_mergesplit_parallel(fl_map, nsims = 100, chains = 100)
 }
 
 }

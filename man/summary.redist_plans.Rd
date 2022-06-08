@@ -64,8 +64,8 @@ suggestions for improvement.
 }
 \examples{
 data(iowa)
-iowa_map = redist_map(iowa, ndists=4, pop_tol=0.1)
-plans = redist_smc(iowa_map, 100)
+iowa_map <- redist_map(iowa, ndists = 4, pop_tol = 0.1)
+plans <- redist_smc(iowa_map, 100)
 summary(plans)
 
 }

@@ -31,11 +31,11 @@ from population parity. See Details.
 }
 \details{
 With a map with \code{pop} representing the populations of each district,
- the deviation from population parity is given as \code{max(abs(pop - parity) / parity)}
- where \code{parity = sum(pop)/length(pop)} is the population size for the
- average district.
- Therefore, the metric can be thought of as the maximum percent deviation from
- equal population. For example, a value of 0.03 in this metric indicates that
- all districts are within 3 percent of population parity.
+the deviation from population parity is given as \code{max(abs(pop - parity) / parity)}
+where \code{parity = sum(pop)/length(pop)} is the population size for the
+average district.
+Therefore, the metric can be thought of as the maximum percent deviation from
+equal population. For example, a value of 0.03 in this metric indicates that
+all districts are within 3 percent of population parity.
 }
 \concept{analyze}

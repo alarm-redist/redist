@@ -80,11 +80,11 @@ plan is closer to the existing plan.
 \examples{
 \donttest{
 data(iowa)
-iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05, total_pop = pop)
+iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05, total_pop = pop)
 
 scorer_frac_kept(iowa_map)
 scorer_status_quo(iowa_map)
-scorer_group_pct(iowa_map, dem_08, tot_08, k=2)
+scorer_group_pct(iowa_map, dem_08, tot_08, k = 2)
 1.5*scorer_frac_kept(iowa_map) + 0.4*scorer_status_quo(iowa_map)
 1.5*scorer_frac_kept(iowa_map) + scorer_frac_kept(iowa_map)*scorer_status_quo(iowa_map)
 }

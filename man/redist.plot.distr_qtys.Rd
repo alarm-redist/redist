@@ -47,8 +47,8 @@ plan, if applicable.
 library(dplyr)
 data(iowa)
 
-iowa = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05, total_pop = pop)
-plans = redist_smc(iowa, nsims=100, silent=TRUE)
+iowa <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05, total_pop = pop)
+plans <- redist_smc(iowa, nsims = 100, silent = TRUE)
 plans \%>\%
     mutate(pct_dem = group_frac(iowa, dem_08, tot_08)) \%>\%
     redist.plot.distr_qtys(pct_dem)

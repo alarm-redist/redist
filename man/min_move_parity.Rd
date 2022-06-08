@@ -34,7 +34,7 @@ preserve all unbroken county boundaries.
 }
 \examples{
 data(iowa)
-iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.01)
+iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
 min_move_parity(iowa_map, cd_2010)
 
 }
