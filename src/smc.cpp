@@ -223,10 +223,16 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
     int V = districts.n_rows;
     int N = districts.n_cols;
 
+    std::vector<int> distr_calc;
+    if (final) {
+        distr_calc = {distr_ctr, 0};
+    } else {
+        distr_calc = {distr_ctr};
+    }
+
     if (constraints.size() > 0) {
     for (int i = 0; i < N; i++) {
-
-        for (int j = distr_ctr; j <= distr_ctr + final; j++) {
+        for (int j : distr_calc) {
             lp[i] += add_constraint("pop_dev", constraints,
                                       [&] (List l) -> double {
                                           return eval_pop_dev(districts.col(i), j,
