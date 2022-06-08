@@ -81,7 +81,7 @@ redist.diagplot <- function(sumstat, plot = c("trace", "autocorr", "densplot",
     ##############
     ## Warnings ##
     ##############
-    if (!(class(sumstat) %in% c("integer", "numeric", "list", "mcmc", "mcmc.list"))) {
+    if (!inherits(sumstat, c("integer", "numeric", "list", "mcmc", "mcmc.list"))) {
         cli_abort("{.arg sumstat} should be either a numeric vector, list, or {.cls mcmc} object.")
     }
     if (!(plot %in% c("trace", "autocorr", "densplot",
@@ -95,22 +95,22 @@ redist.diagplot <- function(sumstat, plot = c("trace", "autocorr", "densplot",
     ########################
     ## Create mcmc object ##
     ########################
-    if (class(sumstat)[1] == "numeric") {
+    if (is.numeric(sumstat)) {
         segout <- coda::mcmc(sumstat)
-    } else if (class(sumstat)[1] == "list") {
+    } else if (is.list(sumstat)) {
         for (i in 1:length(sumstat)) {
             sumstat[[i]] <- coda::mcmc(sumstat[[i]])
         }
         segout <- coda::mcmc.list(sumstat)
-    } else if (class(sumstat) %in% c("mcmc", "mcmc.list")) {
+    } else if (inherits(sumstat, c("mcmc", "mcmc.list"))) {
         segout <- sumstat
     }
 
     ## Logit transform
     if (logit) {
-        if (class(segout)[1] == "mcmc") {
+        if (inherits(segout, "mcmc")) {
             segout <- log(segout/(1 - segout))
-        } else if (class(segout)[1] == "mcmc.list") {
+        } else if (inherits(segout, "mcmc.list")) {
             for (i in 1:length(segout)) {
                 segout[[i]] <- log(segout[[i]]/(1 - segout[[i]]))
             }
@@ -156,7 +156,7 @@ redist.diagplot <- function(sumstat, plot = c("trace", "autocorr", "densplot",
             dev.off()
         }
     }
-    if (plot == "gelmanrubin" & class(segout) == "mcmc.list") {
+    if (plot == "gelmanrubin" && inherits(segout, "mcmc.list")) {
         if (!is.null(savename)) {
             pdf(file = paste(savename, ".pdf", sep = ""))
         }
