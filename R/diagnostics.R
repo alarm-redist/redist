@@ -118,7 +118,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
             cat("R-hat values for summary statistics:\n")
             print(rhats)
 
-            if (any(rhats >= 1.05)) {
+            if (any(na.omit(rhats) >= 1.05)) {
                 warn_converge <- TRUE
                 cli::cli_alert_danger("{.strong WARNING:} SMC runs have not converged.")
             }
@@ -129,11 +129,11 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
 
         run_dfs <- list()
         n_runs <- length(all_diagn)
-        n_samp <- n_samp/n_runs
         warn_bottlenecks <- FALSE
 
         for (i in seq_len(n_runs)) {
             diagn <- all_diagn[[i]]
+            n_samp <- nrow(diagn$ancestors)
 
             run_dfs[[i]] <- tibble(n_eff = c(diagn$step_n_eff, diagn$n_eff),
                 eff = c(diagn$step_n_eff, diagn$n_eff)/n_samp,
@@ -161,9 +161,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
             rownames(tbl_print) <- c(paste("Split", seq_len(n_distr - 1)), "Resample")
 
             if (i == 1 || isTRUE(all_runs)) {
-                if ("chain" %in% cols) {
-                    cli_text("Sampling diagnostics for SMC run {i} of {n_runs}")
-                }
+                cli_text("Sampling diagnostics for SMC run {i} of {n_runs} ({fmt_comma(n_samp)} samples)")
                 print(tbl_print, digits = 2)
                 cat("\n")
             }
