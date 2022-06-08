@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_penalty.R
 \name{redist.plot.penalty}
 \alias{redist.plot.penalty}
-\title{Visualize Group Power Penalty}
+\title{(Deprecated) Visualize Group Power Penalty}
 \usage{
 redist.plot.penalty(
   tgt_min = 0.55,

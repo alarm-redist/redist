@@ -322,7 +322,7 @@ add_constr_grp_inv_hinge <- function(constr, strength, group_pop, total_pop = NU
     new_constr <- list(strength = strength,
         group_pop = eval_tidy(enquo(total_pop), data) - eval_tidy(enquo(group_pop), data),
         total_pop = eval_tidy(enquo(total_pop), data),
-        tgts_group = 1 - tgts_group)
+        tgts_group = tgts_group)
     if (is.null(new_constr$total_pop)) {
         if (!is.null(attr(data, "pop_col"))) {
             new_constr$total_pop <- data[[attr(data, "pop_col")]]
@@ -687,6 +687,60 @@ print.redist_constr <- function(x, header = TRUE, details = TRUE, ...) {
             print_constr(x[[nm]])
         }
     }
+}
+
+
+#' Visualize constraints
+#'
+#' @param x A [redist_constr] object.
+#' @param y Ignored.
+#' @param type What type of constraint to visualize. Currently supports only
+#' `"group"`, for visualizing constraint strength by group share.
+#' @param xlim Range of group shares to visualize.
+#' @param \dots additional arguments (ignored)
+#'
+#' @method plot redist_constr
+#' @return A ggplot object
+#'
+#' @export
+plot.redist_constr <- function(x, y, type="group", xlim=c(0, 1), ...) {
+    if (type != "group") cli_abort("Only {.arg type = \"group\"} is currently supported.")
+
+    out <- tibble(share = seq(xlim[1], xlim[2], by = .001),
+                  penalty = 0)
+
+    if ("grp_pow" %in% names(x)) {
+        for (obj in x$grp_pow) {
+            out$penalty = out$penalty + obj$strength * (
+                abs(out$share - obj$tgt_group) * abs(out$share - obj$tgt_other)
+                )^obj$pow
+        }
+    }
+
+    warn_multiple = FALSE
+    if ("grp_hinge" %in% names(x)) {
+        for (obj in x$grp_hinge) {
+            if (length(obj$tgts_group) > 1) warn_multiple = TRUE
+            out$penalty = out$penalty + obj$strength * sqrt(pmax(0.0, obj$tgts_group[1] - out$share))
+        }
+    }
+
+    if ("grp_inv_hinge" %in% names(x)) {
+        for (obj in x$grp_inv_hinge) {
+            if (length(obj$tgts_group) > 1) warn_multiple = TRUE
+            out$penalty = out$penalty + obj$strength * sqrt(pmax(0.0, out$share - obj$tgts_group[1]))
+        }
+    }
+
+    if (warn_multiple) {
+        cli_warn("Multiple group-share targets found; only plotting first.")
+    }
+
+    ggplot(out, aes(x=.data$share, y=.data$penalty)) +
+        geom_path() +
+        ggplot2::scale_x_continuous("Group share of district population",
+                                    labels=function(x) paste0(round(100*x), "%")) +
+        labs(y = "Penalty")
 }
 
 #' @method str redist_constr

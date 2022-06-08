@@ -1,4 +1,4 @@
-#' Visualize Group Power Penalty
+#' (Deprecated) Visualize Group Power Penalty
 #'
 #' Plots the shape of the [add_constr_grp_pow()] penalty.
 #'
@@ -23,6 +23,7 @@
 #' @importFrom ggplot2 lims labs geom_path
 redist.plot.penalty <- function(tgt_min = 0.55, tgt_other = 0.25,
                                 strength_vra = 2500, pow_vra = 1.5, limits = TRUE) {
+    .Deprecated("plot.redist_constr")
 
     tb <- tibble(x = seq(0, 1, by = .001))
     tb <- tb %>% mutate(y = strength_vra*(abs(x - tgt_min)^pow_vra)*(abs(x - tgt_other)^pow_vra))
