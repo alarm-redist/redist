@@ -183,10 +183,10 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
     if (is.null(ncores)) ncores <- parallel::detectCores()
     ncores <- min(ncores, chains)
     if (!silent)
-        cl <- makeCluster(ncores_runs, outfile = "", methods = FALSE,
+        cl <- makeCluster(ncores, outfile = "", methods = FALSE,
                           useXDR = .Platform$endian != "little")
     else
-        cl <- makeCluster(ncores_runs, methods = FALSE,
+        cl <- makeCluster(ncores, methods = FALSE,
                           useXDR = .Platform$endian != "little")
     doParallel::registerDoParallel(cl)
     on.exit(stopCluster(cl))
