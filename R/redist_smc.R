@@ -258,7 +258,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
     }
 
     t1 <- Sys.time()
-    all_out <- foreach(chain = seq_len(runs), .inorder = FALSE) %oper% {
+    all_out <- foreach(chain = seq_len(runs), .inorder = FALSE, .packages="redist") %oper% {
         run_verbosity <- if (chain == 1) verbosity else 0
         t1_run <- Sys.time()
 

@@ -183,13 +183,15 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
     if (is.null(ncores)) ncores <- parallel::detectCores()
     ncores <- min(ncores, chains)
     if (!silent)
-        cl <- makeCluster(ncores, setup_strategy = "sequential", outfile = "", methods = FALSE)
+        cl <- makeCluster(ncores_runs, outfile = "", methods = FALSE,
+                          useXDR = .Platform$endian != "little")
     else
-        cl <- makeCluster(ncores, setup_strategy = "sequential", methods = FALSE)
+        cl <- makeCluster(ncores_runs, methods = FALSE,
+                          useXDR = .Platform$endian != "little")
     doParallel::registerDoParallel(cl)
     on.exit(stopCluster(cl))
 
-    out_par <- foreach(chain = seq_len(chains), .inorder = FALSE) %dorng% {
+    out_par <- foreach(chain = seq_len(chains), .inorder = FALSE, .packages="redist") %dorng% {
         if (!silent) cat("Starting chain ", chain, "\n", sep = "")
         run_verbosity <- if (chain == 1 || verbosity == 3) verbosity else 0
         t1_run <- Sys.time()
