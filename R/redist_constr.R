@@ -586,6 +586,27 @@ add_constr_qps <- function(constr, strength, cities, total_pop = NULL) {
     add_to_constr(constr, "qps", new_constr)
 }
 
+# utilty functions for parsing ASTs
+find_env <- function(name, env = caller_env()) {
+    if (identical(env, empty_env())) {
+        NULL
+    } else if (env_has(env, name)) {
+        env
+    } else {
+        find_env(name, env_parent(env))
+    }
+}
+extract_vars = function(expr) {
+    if (rlang::is_syntactic_literal(expr)) {
+        NULL
+    } else if (rlang::is_symbol(expr)) {
+        rlang::as_string(expr)
+    } else if (rlang::is_call(expr)) {
+        c(rlang::as_string(expr[[1]]), unlist(sapply(expr[-1], extract_vars)))
+    }
+}
+
+
 #' @param fn A function
 #' @rdname constraints
 #' @export
@@ -594,7 +615,22 @@ add_constr_custom <- function(constr, strength, fn) {
     if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
 
     args <- rlang::fn_fmls(fn)
-    if (length(args) != 2) cli_abort("Function must take two arguments.")
+    if (length(args) != 2) cli_abort("Function must take exactly two arguments.")
+
+
+    constr_env = rlang::fn_env(fn)
+    # every symbol used in the function (except the 2 arguments)
+    var_names = setdiff(unique(extract_vars(rlang::fn_body(fn))), names(args))
+    for (nm in var_names) {
+        found = find_env(nm, constr_env)
+        if (!is.null(found) &&
+                !identical(found, rlang::base_env()) &&
+                !identical(found, constr_env) &&
+                !identical(found, rlang::pkg_env("redist"))) {
+            print(nm)
+            constr_env[[nm]] = get(nm, envir=found)
+        }
+    }
 
     if (!is.null(plan <- get_existing(attr(constr, "data")))) {
         out <- tryCatch(fn(plan, 1), error = function(e) {
