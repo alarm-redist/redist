@@ -38,20 +38,20 @@ IntegerMatrix renumber_matrix(IntegerMatrix plans, IntegerVector renumb) {
     return out;
 }
 
-//' Hungarian Algorithm Solver
-//'
-//' Wrapper code from Justin Silverman, 2019
-//'
-//' Solves weighted bipartite matching problems (e.g., optimal matching of people to cars
-//' or optimal matching of students to colleges, etc...)
-//'
-//' @param costMatrix matrix giving cost of each possible pairing - can be rectangular
-//' @return List with cost and parings, pairings are given as an Nx2 matrix
-//' giving edges that are matched (1-indexed rather than 0-indexed as it will be returned to R)
-//' @details this is a copy/wrapper for the code developed by Cong Ma and made available
-//' as a github repository (mcximing/hungarian-algorithm-cpp). Code was
-//' changed to a header only file for use in other Rcpp packages.
-//'
+// Hungarian Algorithm Solver
+//
+// Wrapper code from Justin Silverman, 2019
+//
+// Solves weighted bipartite matching problems (e.g., optimal matching of people to cars
+// or optimal matching of students to colleges, etc...)
+//
+// @param costMatrix matrix giving cost of each possible pairing - can be rectangular
+// @return List with cost and parings, pairings are given as an Nx2 matrix
+// giving edges that are matched (1-indexed rather than 0-indexed as it will be returned to R)
+// @details this is a copy/wrapper for the code developed by Cong Ma and made available
+// as a github repository (mcximing/hungarian-algorithm-cpp). Code was
+// changed to a header only file for use in other Rcpp packages.
+//
 // [[Rcpp::export]]
 IntegerMatrix solve_hungarian(NumericMatrix costMatrix) {
     int nr = costMatrix.nrow();

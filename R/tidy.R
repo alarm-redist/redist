@@ -408,7 +408,7 @@ tally_var <- function(map, x, .data = redist:::cur_plans()) {
 #' `draws` for each precinct.
 #'
 #' @param plans a `redist_plans` object
-#' @param x an expression to average. Tidy-evaluted in `plans`.
+#' @param x an expression to average. Tidy-evaluated in `plans`.
 #' @param draws which draws to average. `NULL` will average all draws, including
 #' reference plans. The special value `NA` will average all sampled draws. An
 #' integer, logical, or character vector indicating specific draws may also be

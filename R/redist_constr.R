@@ -186,7 +186,7 @@ add_to_constr <- function(constr, name, new_constr) {
 #'
 #' The `fry_hold` constraint adds a term encouraging compactness as defined by the
 #' Fryer Holden metric. Values of `strength` should be extremely small, as the
-#' underlying values are massive whent the true minimum Fryer Holden dneominator is not known.
+#' underlying values are massive when the true minimum Fryer Holden denominator is not known.
 #'
 #' The `segregation` constraint adds a term encouraging segregation among minority groups,
 #' as measured by the dissimilarity index.

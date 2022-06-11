@@ -320,7 +320,7 @@ redist.combine.anneal <- function(file_name) {
 #' of the saved simulations.
 #' @param nloop The number of loops being combined. Savename must be non-null.
 #' @param nthin How much to thin the simulations being combined.
-#' @param temper Wheterh simulated tempering was used (1) or not (0)
+#' @param temper Whether simulated tempering was used (1) or not (0)
 #' in the simulations. Default is 0.
 #'
 #' @details This function allows users to combine multiple successive runs of
