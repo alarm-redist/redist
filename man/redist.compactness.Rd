@@ -116,7 +116,7 @@ where larger values are more compact.
 
 The Fryer Holden score for each district is computed with \deqn{Pop\odot D(precinct)^2},
 where \eqn{Pop} is the population product matrix.  Each element is the
-product of the ith and jth precinct's populations.  D represents the distance,
+product of the i-th and j-th precinct's populations.  D represents the distance,
 where the matrix is the distance between each precinct.  To fully compute this
 index, for any map, the sum of these values should be used as the numerator.
 The denominator can be calculated from the full enumeration of districts as the

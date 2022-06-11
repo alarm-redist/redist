@@ -9,7 +9,7 @@ avg_by_prec(plans, x, draws = NA)
 \arguments{
 \item{plans}{a `redist_plans` object}
 
-\item{x}{an expression to average. Tidy-evaluted in `plans`.}
+\item{x}{an expression to average. Tidy-evaluated in `plans`.}
 
 \item{draws}{which draws to average. `NULL` will average all draws, including
 reference plans. The special value `NA` will average all sampled draws. An

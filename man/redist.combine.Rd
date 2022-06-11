@@ -14,7 +14,7 @@ of the saved simulations.}
 
 \item{nthin}{How much to thin the simulations being combined.}
 
-\item{temper}{Wheterh simulated tempering was used (1) or not (0)
+\item{temper}{Whether simulated tempering was used (1) or not (0)
 in the simulations. Default is 0.}
 }
 \value{

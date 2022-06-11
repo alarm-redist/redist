@@ -182,7 +182,7 @@ Polsby Popper metric. Values of \code{strength} may be of moderate size.
 
 The \code{fry_hold} constraint adds a term encouraging compactness as defined by the
 Fryer Holden metric. Values of \code{strength} should be extremely small, as the
-underlying values are massive whent the true minimum Fryer Holden dneominator is not known.
+underlying values are massive when the true minimum Fryer Holden denominator is not known.
 
 The \code{segregation} constraint adds a term encouraging segregation among minority groups,
 as measured by the dissimilarity index.
