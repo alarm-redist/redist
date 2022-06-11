@@ -143,7 +143,7 @@ Convergence Diagnosis and Output Analysis for MCMC." R News.</p>
 <span class="r-in"></span>
 <span class="r-in"><span class="co">## 25 precinct, three districts - no pop constraint ##</span></span>
 <span class="r-in"><span class="va">alg_253</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist.flip.html">redist.flip</a></span><span class="op">(</span>adj <span class="op">=</span> <span class="va">fl25_adj</span>, total_pop <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span>,</span>
-<span class="r-in">                       init_plan <span class="op">=</span> <span class="va">init_plan</span>, nsims <span class="op">=</span> <span class="fl">10000</span><span class="op">)</span></span>
+<span class="r-in">    init_plan <span class="op">=</span> <span class="va">init_plan</span>, nsims <span class="op">=</span> <span class="fl">10000</span><span class="op">)</span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Please use `redist_flip`. This will be gone in 4.1.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ==================== </span>
@@ -153,8 +153,22 @@ Convergence Diagnosis and Output Analysis for MCMC." R News.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Preprocessing data.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Starting swMH().</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■                               </span>   0% | ETA: 7s</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.97</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■                               </span>   0% | ETA: 6s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■                               </span>   1% | ETA: 3s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■                            </span>  10% | ETA: 2s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■                          </span>  18% | ETA:  2s | MH Acceptance: 0.95</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■                       </span>  26% | ETA:  2s | MH Acceptance: 0.95</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■                     </span>  35% | ETA:  2s | MH Acceptance: 0.95</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■                  </span>  42% | ETA:  2s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■                </span>  48% | ETA:  1s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■              </span>  57% | ETA:  1s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■            </span>  65% | ETA:  1s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■         </span>  73% | ETA:  1s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■       </span>  81% | ETA:  1s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■      </span>  83% | ETA:  0s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■    </span>  92% | ETA:  0s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.96</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"></span>
 <span class="r-in"><span class="co">## Get Republican Dissimilarity Index from simulations</span></span>
@@ -172,8 +186,8 @@ Convergence Diagnosis and Output Analysis for MCMC." R News.</p>
 <span class="r-in"></span>
 <span class="r-in"><span class="co">## Gelman Rubin needs two chains, so we run a second</span></span>
 <span class="r-in"><span class="va">alg_253_2</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist.flip.html">redist.flip</a></span><span class="op">(</span>adj <span class="op">=</span> <span class="va">fl25_adj</span>,</span>
-<span class="r-in">total_pop <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span>,</span>
-<span class="r-in">init_plan <span class="op">=</span> <span class="va">init_plan</span>, nsims <span class="op">=</span> <span class="fl">10000</span><span class="op">)</span></span>
+<span class="r-in">    total_pop <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span>,</span>
+<span class="r-in">    init_plan <span class="op">=</span> <span class="va">init_plan</span>, nsims <span class="op">=</span> <span class="fl">10000</span><span class="op">)</span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Please use `redist_flip`. This will be gone in 4.1.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ==================== </span>
@@ -183,7 +197,21 @@ Convergence Diagnosis and Output Analysis for MCMC." R News.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Preprocessing data.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Starting swMH().</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■                               </span>   0% | ETA: 5s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■                               </span>   0% | ETA: 6s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■                              </span>   3% | ETA: 3s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■                            </span>  11% | ETA:  2s | MH Acceptance: 0.97</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■                         </span>  19% | ETA:  2s | MH Acceptance: 0.97</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■                       </span>  28% | ETA:  2s | MH Acceptance: 0.97</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■                    </span>  36% | ETA:  2s | MH Acceptance: 0.97</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■                  </span>  43% | ETA:  1s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■                </span>  51% | ETA:  1s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■             </span>  59% | ETA:  1s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■           </span>  67% | ETA:  1s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■        </span>  75% | ETA:  1s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■      </span>  83% | ETA:  0s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■    </span>  90% | ETA:  0s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   </span>  93% | ETA:  0s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  </span>  98% | ETA:  0s | MH Acceptance: 0.96</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.96</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"></span>
@@ -193,7 +221,7 @@ Convergence Diagnosis and Output Analysis for MCMC." R News.</p>
 <span class="r-in"><span class="va">rep_dmi_253_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">rep_dmi_253</span>, <span class="va">rep_dmi_253_2</span><span class="op">)</span></span>
 <span class="r-in"></span>
 <span class="r-in"><span class="co">## Generate Gelman Rubin diagnostic plot</span></span>
-<span class="r-in"><span class="fu">redist.diagplot</span><span class="op">(</span>sumstat <span class="op">=</span> <span class="va">rep_dmi_253_list</span>, plot <span class="op">=</span> <span class="st">'gelmanrubin'</span><span class="op">)</span></span>
+<span class="r-in"><span class="fu">redist.diagplot</span><span class="op">(</span>sumstat <span class="op">=</span> <span class="va">rep_dmi_253_list</span>, plot <span class="op">=</span> <span class="st">"gelmanrubin"</span><span class="op">)</span></span>
 <span class="r-plt img"><img src="redist.diagplot-5.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span class="co"># }</span></span>
 </code></pre></div>

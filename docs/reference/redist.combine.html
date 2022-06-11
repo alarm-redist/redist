@@ -102,7 +102,7 @@ of the saved simulations.</p></dd>
 <dt>nthin</dt>
 <dd><p>How much to thin the simulations being combined.</p></dd>
 <dt>temper</dt>
-<dd><p>Wheterh simulated tempering was used (1) or not (0)
+<dd><p>Whether simulated tempering was used (1) or not (0)
 in the simulations. Default is 0.</p></dd>
 </dl></div>
     <div id="value">
@@ -196,8 +196,8 @@ Carlo." Working Paper. Available at
 <span class="r-in"><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span class="r-in"><span class="va">temp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
 <span class="r-in"><span class="co"># alg_253 &lt;- redist.flip(adj = fl25_adj, total_pop = fl25$pop,</span></span>
-<span class="r-in"><span class="co">#                       init_plan = init_plan, nsims = 10000,</span></span>
-<span class="r-in"><span class="co">#                       nloop = 2, savename = paste0(temp, "/test"))</span></span>
+<span class="r-in"><span class="co"># init_plan = init_plan, nsims = 10000,</span></span>
+<span class="r-in"><span class="co"># nloop = 2, savename = paste0(temp, "/test"))</span></span>
 <span class="r-in"><span class="co"># out &lt;- redist.combine(savename = paste0(temp, "/test"), nloop = 2, nthin = 10)</span></span>
 <span class="r-in"><span class="co"># }</span></span>
 </code></pre></div>

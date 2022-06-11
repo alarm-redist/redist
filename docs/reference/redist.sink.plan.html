@@ -105,12 +105,11 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">fl25_enum</span><span class="op">)</span></span>
 <span class="r-in"><span class="va">plan</span> <span class="op">&lt;-</span> <span class="va">fl25_enum</span><span class="op">$</span><span class="va">plans</span><span class="op">[</span>, <span class="fl">5118</span><span class="op">]</span></span>
 <span class="r-in"><span class="co"># Subset based on something:</span></span>
-<span class="r-in"><span class="va">plan</span> <span class="op">&lt;-</span> <span class="va">plan</span><span class="op">[</span><span class="va">plan</span><span class="op">!=</span><span class="fl">2</span><span class="op">]</span></span>
+<span class="r-in"><span class="va">plan</span> <span class="op">&lt;-</span> <span class="va">plan</span><span class="op">[</span><span class="va">plan</span> <span class="op">!=</span> <span class="fl">2</span><span class="op">]</span></span>
 <span class="r-in"><span class="va">plan</span> <span class="op">&lt;-</span> <span class="fu">redist.sink.plan</span><span class="op">(</span><span class="va">plan</span><span class="op">)</span></span>
 <span class="r-in"><span class="co"># Now plan can be used with redist.flip()</span></span>
 <span class="r-in"><span class="va">plan</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [1] 1 2 1 2 2 1 2 2 2 2 2 2</span>
-<span class="r-in"></span>
 <span class="r-in"></span>
 </code></pre></div>
     </div>

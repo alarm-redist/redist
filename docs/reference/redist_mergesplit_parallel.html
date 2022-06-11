@@ -211,8 +211,8 @@ Markov chains for redistricting. arXiv preprint arXiv:1911.05725.</p>
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span>
 <span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">fl25</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">fl_map</span> <span class="op">=</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">fl25</span>, ndists<span class="op">=</span><span class="fl">3</span>, pop_tol<span class="op">=</span><span class="fl">0.1</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">sampled</span> <span class="op">=</span> <span class="fu">redist_mergesplit_parallel</span><span class="op">(</span><span class="va">fl_map</span>, nsims<span class="op">=</span><span class="fl">100</span>, chains<span class="op">=</span><span class="fl">100</span><span class="op">)</span></span>
+<span class="r-in"><span class="va">fl_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">fl25</span>, ndists <span class="op">=</span> <span class="fl">3</span>, pop_tol <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span></span>
+<span class="r-in"><span class="va">sampled</span> <span class="op">&lt;-</span> <span class="fu">redist_mergesplit_parallel</span><span class="op">(</span><span class="va">fl_map</span>, nsims <span class="op">=</span> <span class="fl">100</span>, chains <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
 <span class="r-in"><span class="op">}</span></span>
 <span class="r-in"></span>
 </code></pre></div>

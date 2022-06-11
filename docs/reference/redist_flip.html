@@ -207,7 +207,8 @@ If the Metropolis Hastings acceptance rate is too large, this may impact the
 target distribution, but may be fine for general exploration of possible maps.</p>
 <p>There are currently 9 implemented constraint types, though `<code>compact</code> and
 <code>partisan</code> have sub-types which are specified via a character <code>metric</code>
-within their respective list objects. The constraints are as follows:</p><ul><li><p><code>compact</code> - biases the algorithm towards drawing more compact districts.</p><ul><li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
+within their respective list objects. The constraints are as follows:</p><ul><li><p><code>compact</code> - biases the algorithm towards drawing more compact districts.</p></li>
+<li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
 <li><p>metric - which metric to use. Must be one of <code>edges-removed</code> (the default),
 <code>polsby-popper</code>, <code>fryer-holden</code>, or <code>log-st</code>. Using Polsby Popper
 is generally not recommended, as <code>edges-removed</code> is faster and highly correlated.
@@ -220,50 +221,49 @@ border lengths.</p></li>
 precinct centroids.</p></li>
 <li><p>ssd_denom - Only used with <code>fryer-holden</code> - a positive integer to use
 as the normalizing constant for the Relative Proximity Index.</p></li>
-</ul></li>
 <li><p><code>population</code> - A Gibbs constraint to complement the hard population
 constraint set by <code>pop_tol</code>. This penalizes moves which move away from smaller
 population parity deviations. It is very useful when an <code>init_plan</code> sits
 outside of the desired <code>pop_tol</code> but there are substantive reasons to use
-that plan. This constraint uses the input to <code>total_pop</code>.</p><ul><li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
-</ul></li>
+that plan. This constraint uses the input to <code>total_pop</code>.</p></li>
+<li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
 <li><p><code>countysplit</code> This is a Gibbs constraint to minimize county splits. Unlike
 SMC's county constraint, this allows for more than <code>ndists - 1</code> splits and
-does not require that counties are contiguous.</p><ul><li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
-</ul></li>
+does not require that counties are contiguous.</p></li>
+<li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
 <li><p><code>hinge</code> This uses the proportion of a group in a district and matches to the
 nearest target proportion, and then creates a penalty of
-\(\sqrt{max(0, nearest.target - group.pct)}\).</p><ul><li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
+\(\sqrt{max(0, nearest.target - group.pct)}\).</p></li>
+<li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
 <li><p>minorityprop - A numeric vector of minority proportions (between 0 and 1) which
 districts should aim to have</p></li>
-</ul></li>
 <li><p><code>vra</code> This takes two target proportions of the presence of a minority group
-within a district. \((|target.min - group.pct||target.other - group.pct|)^{1.5})\)</p><ul><li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
+within a district. \((|target.min - group.pct||target.other - group.pct|)^{1.5})\)</p></li>
+<li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
 <li><p>target_min - the target minority percentage. Often, this is set to 0.55 to encourage
 minority majority districts.</p></li>
 <li><p>target_other - the target minority percentage for non majority minority districts.</p></li>
-</ul></li>
 <li><p><code>minority</code> This constraint sorts the districts by the proportion of a group in
 a district and compares the highest districts to the entries of minorityprop.
 This takes the form \(\sum_{i=1}^{n} \sqrt{|group.pct(i) - minorityprop(i)| }\) where n
-is the length of minorityprop input.</p><ul><li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
+is the length of minorityprop input.</p></li>
+<li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
 <li><p>minorityprop - A numeric vector of minority proportions (between 0 and 1) which
 districts should aim to have</p></li>
-</ul></li>
 <li><p><code>similarity</code> This is a status-quo constraint which penalizes plans which
-are very different from the starting place. It is useful for local exploration.</p><ul><li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
-</ul></li>
+are very different from the starting place. It is useful for local exploration.</p></li>
+<li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
 <li><p><code>partisan</code> This is a constraint which minimizes partisan bias, either as
 measured as the difference from proportional representation or as the magnitude of
-the efficiency gap.</p><ul><li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
+the efficiency gap.</p></li>
+<li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
 <li><p>rvote - An integer vector of votes for Republicans or other party</p></li>
 <li><p>dvote - An integer vector of votes for Democrats or other party</p></li>
 <li><p>metric - which metric to use. Must be one of <code>proportional-representation</code>
 or <code>efficiency-gap</code>.</p></li>
-</ul></li>
 <li><p><code>segregation</code> This constraint attempts to minimize the degree of dissimilarity
-between districts by group population.</p><ul><li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
-</ul></li>
+between districts by group population.</p></li>
+<li><p>weight - the coefficient to put on the Gibbs constraint</p></li>
 </ul></div>
     <div id="references">
     <h2>References</h2>
@@ -277,7 +277,7 @@ Carlo." Working Paper. Available at
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span></span>
 <span class="r-in"><span class="va">iowa_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, ndists <span class="op">=</span> <span class="fl">4</span>, existing_plan <span class="op">=</span> <span class="va">cd_2010</span>, total_pop <span class="op">=</span> <span class="va">pop</span>,</span>
-<span class="r-in">pop_tol <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span>
+<span class="r-in">    pop_tol <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span>
 <span class="r-in"><span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu">redist_flip</span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span>, nsims <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="color: #BB0000; font-weight: bold;">redist_flip()</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────────────</span></span>
@@ -285,6 +285,10 @@ Carlo." Working Paper. Available at
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■                               </span>   1% | ETA: 0s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■                             </span>   8% | ETA: 0s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.78</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"></span>
 </code></pre></div>
     </div>
