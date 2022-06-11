@@ -157,11 +157,11 @@ data(fl25)
 
 fl_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
 
-sampled_basic <- redist_smc(fl_map, 10000)
+sampled_basic <- redist_smc(fl_map, 5000)
 
 constr <- redist_constr(fl_map)
 constr <- add_constr_incumbency(constr, strength = 100, incumbents = c(3, 6, 25))
-sampled_constr <- redist_smc(fl_map, 10000, constraints = constr)
+sampled_constr <- redist_smc(fl_map, 5000, constraints = constr)
 
 # Multiple parallel independent runs
 redist_smc(fl_map, 1000, runs = 2)
