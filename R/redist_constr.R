@@ -293,7 +293,7 @@ add_constr_grp_pow <- function(constr, strength, group_pop, total_pop = NULL,
 add_constr_grp_hinge <- function(constr, strength, group_pop, total_pop = NULL,
                                  tgts_group = c(0.55)) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
-    if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
+    # if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
     data <- attr(constr, "data")
 
     new_constr <- list(strength = strength,
@@ -321,7 +321,7 @@ add_constr_grp_hinge <- function(constr, strength, group_pop, total_pop = NULL,
 add_constr_grp_inv_hinge <- function(constr, strength, group_pop, total_pop = NULL,
                                      tgts_group = c(0.55)) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
-    if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
+    # if (strength <= 0) cli_warn("Nonpositive strength may lead to unexpected results")
     data <- attr(constr, "data")
 
     new_constr <- list(strength = strength,
@@ -746,6 +746,16 @@ print.redist_constr <- function(x, header = TRUE, details = TRUE, ...) {
 #'
 #' @method plot redist_constr
 #' @return A ggplot object
+#'
+#' @examples
+#' data(iowa)
+#' iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05)
+#' constr <- redist_constr(iowa_map)
+#' constr <- add_constr_grp_hinge(constr, strength = 30,
+#'                                dem_08, tot_08, tgts_group = 0.5)
+#' constr <- add_constr_grp_hinge(constr, strength = -20,
+#'                                dem_08, tot_08, tgts_group = 0.3)
+#' plot(constr)
 #'
 #' @export
 plot.redist_constr <- function(x, y, type="group", xlim=c(0, 1), ...) {
