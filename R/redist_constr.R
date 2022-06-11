@@ -757,6 +757,7 @@ print.redist_constr <- function(x, header = TRUE, details = TRUE, ...) {
 #'                                dem_08, tot_08, tgts_group = 0.3)
 #' plot(constr)
 #'
+#' @concept prepare
 #' @export
 plot.redist_constr <- function(x, y, type="group", xlim=c(0, 1), ...) {
     if (type != "group") cli_abort("Only {.arg type = \"group\"} is currently supported.")

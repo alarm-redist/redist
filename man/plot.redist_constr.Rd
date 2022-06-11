@@ -37,3 +37,4 @@ constr <- add_constr_grp_hinge(constr, strength = -20,
 plot(constr)
 
 }
+\concept{prepare}
