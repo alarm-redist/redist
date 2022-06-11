@@ -5,10 +5,8 @@
 \title{Run parameter testing for \code{redist.flip}}
 \usage{
 redist.findparams(
-  adj,
-  total_pop,
+  map,
   nsims,
-  ndists = NULL,
   init_plan = NULL,
   adapt_lambda = FALSE,
   adapt_eprob = FALSE,
@@ -27,16 +25,9 @@ redist.findparams(
 )
 }
 \arguments{
-\item{adj}{An adjacency matrix, list, or object of class
-"SpatialPolygonsDataFrame."}
-
-\item{total_pop}{A vector containing the populations of each
-geographic unit.}
+\item{map}{A \code{\link{redist_map}} object.}
 
 \item{nsims}{The number of simulations run before a save point.}
-
-\item{ndists}{The number of congressional districts.
-The default is \code{NULL}.}
 
 \item{init_plan}{A vector containing the congressional district labels
 of each geographic unit. The default is \code{NULL}. If not provided, random
@@ -91,7 +82,7 @@ about each parameter setting.
 }
 \description{
 \code{redist.findparams} is used to find optimal parameter values of
-\code{redist.flip} for a given map.
+\code{redist_flip} for a given map.
 }
 \details{
 This function allows users to test multiple parameter settings of
@@ -108,9 +99,11 @@ init_plan <- fl25_enum$plans[, 5118]
 
 params <- expand.grid(eprob = c(.01, .05, .1))
 
+# Make map
+map_fl <- redist_map(fl25, ndists = 3, pop_tol = 0.2)
 ## Run the algorithm
-redist.findparams(adj = fl25_adj, total_pop = fl25$pop,
-                  init_plan = init_plan, nsims = 10000, params = params)
+redist.findparams(map_fl,
+    init_plan = init_plan, nsims = 10000, params = params)
 }
 }
 \references{

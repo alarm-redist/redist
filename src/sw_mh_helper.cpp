@@ -7,12 +7,7 @@
 /////////////////////////////////////
 
 // Header files
-#include <RcppArmadillo.h>
-#include "redist_types.h"
-#include "make_swaps_helper.h"
-#include "constraint_calc_helper.h"
-
-using namespace Rcpp;
+#include "sw_mh_helper.h"
 
 // Function to generate initial vector of populations
 NumericVector init_pop(NumericVector popvec,
@@ -390,36 +385,16 @@ int draw_p(int lambda)
 List make_swaps(List boundary_cc,
                 List aList,
                 NumericVector cds_old,
-                NumericVector cds_orig,
                 NumericVector pop_vec,
                 NumericVector cd_pop_vec,
-                NumericVector group_pop_vec,
-                NumericVector areas_vec,
-                arma::mat borderlength_mat,
-                NumericMatrix ssdmat,
-                IntegerVector county_membership,
+                List constraints,
+                CharacterVector psi_names,
                 double minparity,
                 double maxparity,
+                double parity,
                 int p,
                 double eprob,
                 double beta,
-                double weight_population,
-                double weight_compact,
-                double weight_segregation,
-                double weight_vra,
-                double weight_similar,
-                double weight_countysplit,
-                double weight_partisan,
-                double weight_minority,
-                double weight_hinge,
-                double ssd_denominator,
-                double tgt_min,
-                double tgt_other,
-                IntegerVector rvote,
-                IntegerVector dvote,
-                NumericVector minorityprop,
-                std::string compactness_measure,
-                std::string partisan_measure,
                 const Graph &g)
 {
 
@@ -429,8 +404,6 @@ List make_swaps(List boundary_cc,
    aList: full adjacency list
 
    cds_old: Current cong district assignments
-
-   cds_orig: original cong district assignments. For similarity constraint
 
    pop_vec: unit populations
 
@@ -474,32 +447,23 @@ List make_swaps(List boundary_cc,
   // Initialize metropolis-hastings probabilities
   double mh_prob = 1.0;
 
-  double pop_new_psi = 0.0;
-  double pop_old_psi = 0.0;
-  double compact_new_psi = 0.0;
-  double compact_old_psi = 0.0;
-  double segregation_new_psi = 0.0;
-  double segregation_old_psi = 0.0;
-  double vra_new_psi = 0.0;
-  double vra_old_psi = 0.0;
-  double similar_new_psi = 0.0;
-  double similar_old_psi = 0.0;
-  double countysplit_new_psi = 0.0;
-  double countysplit_old_psi = 0.0;
-  double partisan_new_psi = 0.0;
-  double partisan_old_psi = 0.0;
-  double minority_new_psi = 0.0;
-  double minority_old_psi = 0.0;
-  double hinge_new_psi = 0.0;
-  double hinge_old_psi = 0.0;
+  NumericVector old_psi(psi_names.size());
+  old_psi.names() = psi_names;
+  NumericVector new_psi(psi_names.size());
+  new_psi.names() = psi_names;
 
   // Number of unique congressional districts
   int ndists = max(cds_old) + 1;
+  int nprec = cds_old.size();
 
   // Break indicators
   int breakp = 0;
   int numaccept = 0;
   int goodprop = 0;
+
+  IntegerVector curr_cd_swaps(p);
+  IntegerVector prop_cd_swaps(p);
+  int n_swaps = 0;
 
   // Begin loop over p
   for(int i = 0; i < p; i++){
@@ -511,7 +475,7 @@ List make_swaps(List boundary_cc,
     NumericVector prop_partitions;
     while(boundary_cc.size() > 0){
       Rcpp::checkUserInterrupt();
-      
+
       // (1) - select a connected component from boundary_cc randomly
       arma::vec rand_sample_index = runif(1, 0, 1000000000);
       int sample_index = fmod(rand_sample_index(0), boundary_cc.size());
@@ -634,6 +598,8 @@ List make_swaps(List boundary_cc,
     NumericVector cd_pair(2);
     cd_pair(0) = curr_cd;
     cd_pair(1) = prop_cd;
+    curr_cd_swaps(i) = curr_cd;
+    prop_cd_swaps(i) = prop_cd;
 
     // Update metropolis-hastings probabilities
     mh_prob = update_mhprob(prop_partitions,
@@ -642,69 +608,6 @@ List make_swaps(List boundary_cc,
                             prop_cd,
                             eprob,
                             mh_prob);
-
-    // Calculate beta constraints
-    List population_constraint;
-    List compact_constraint;
-    List segregation_constraint;
-    List vra_constraint;
-    List similar_constraint;
-    List partisan_constraint;
-    List minority_constraint;
-    List hinge_constraint;
-    if(weight_population != 0.0){
-
-      population_constraint = calc_psipop(cds_prop, cds_test, pop_vec, cd_pair);
-
-      pop_new_psi += as<double>(population_constraint["pop_new_psi"]);
-      pop_old_psi += as<double>(population_constraint["pop_old_psi"]);
-
-    }
-    if(weight_compact != 0.0){
-
-      compact_constraint = calc_psicompact(cds_prop,
-                                           cds_test,
-                                           cd_pair,
-                                           compactness_measure,
-                                           aList,
-                                           areas_vec,
-                                           borderlength_mat,
-                                           true,
-                                           pop_vec,
-                                           ssdmat,
-                                           ndists,
-                                           g,
-                                           as<arma::vec>(county_membership),
-                                           ssd_denominator);
-
-      compact_new_psi += as<double>(compact_constraint["compact_new_psi"]);
-      compact_old_psi += as<double>(compact_constraint["compact_old_psi"]);
-
-    }
-    if(weight_segregation != 0.0){
-
-      segregation_constraint = calc_psisegregation(cds_prop, cds_test, pop_vec, cd_pair, group_pop_vec);
-
-      segregation_new_psi += as<double>(segregation_constraint["segregation_new_psi"]);
-      segregation_old_psi += as<double>(segregation_constraint["segregation_old_psi"]);
-
-    }
-    if(weight_vra != 0.0){
-
-      vra_constraint = calc_psivra(cds_prop, cds_test, pop_vec, cd_pair, group_pop_vec, tgt_min, tgt_other);
-
-      vra_new_psi += as<double>(vra_constraint["vra_new_psi"]);
-      vra_old_psi += as<double>(vra_constraint["vra_old_psi"]);
-
-    }
-    if(weight_similar != 0.0){
-
-      similar_constraint = calc_psisimilar(cds_prop, cds_test, cds_orig, cd_pair);
-
-      similar_new_psi += as<double>(similar_constraint["similar_new_psi"]);
-      similar_old_psi += as<double>(similar_constraint["similar_old_psi"]);
-
-    }
 
     // Update cd assignments and cd populations
     cds_prop = cds_test;
@@ -715,59 +618,45 @@ List make_swaps(List boundary_cc,
       accepted_partitions.push_back(prop_partitions(j));
     }
 
+    n_swaps++;
+
     // If we get enough partitions
     if(breakp == 1){
       break;
     }
 
+  } // end loop over p
+
+  // Now calculate target pieces:
+  IntegerVector swaps(2 * n_swaps);
+
+  for (int i = 0; i < n_swaps; i++) {
+      swaps(i) = curr_cd_swaps(i);
+      swaps(i + n_swaps) = prop_cd_swaps(i);
   }
 
-  // County split metric
-  if(weight_countysplit != 0.0){
+  swaps = sort_unique(swaps);
 
-    List countysplit_constraint = calc_psicounty(cds_old, cds_prop, as<arma::vec>(county_membership), as<arma::vec>(pop_vec));
+  // make them 1 idxed
+  swaps = swaps + 1;
 
-    countysplit_new_psi += as<double>(countysplit_constraint["countysplit_new_psi"]);
-    countysplit_old_psi += as<double>(countysplit_constraint["countysplit_old_psi"]);
+  std::vector<int> swaps_v = as<std::vector<int>>(swaps);
 
+  mat districts(cds_prop.size(), 2, fill::zeros);
+  for(int r = 0; r < nprec; r++){
+      districts(r, 0) = cds_prop(r) + 1;
+      districts(r, 1) = cds_old(r) + 1;
   }
-  if(weight_partisan != 0.0){
-
-    List partisan_constraint =  calc_psipartisan(cds_prop, cds_test, rvote, dvote, partisan_measure, ndists);
-
-    partisan_new_psi += as<double>(partisan_constraint["partisan_new_psi"]);
-    partisan_old_psi += as<double>(partisan_constraint["partisan_old_psi"]);
-  }
-  if(weight_minority != 0.0){
-
-    List minority_constraint =  calc_psiminority(cds_prop, cds_test,
-                                                 pop_vec, group_pop_vec,
-                                                 ndists, minorityprop);
-
-    minority_new_psi += as<double>(minority_constraint["minority_new_psi"]);
-    minority_old_psi += as<double>(minority_constraint["minority_old_psi"]);
-  }
-  if(weight_hinge != 0.0){
-    
-    List hinge_constraint =  calc_psihinge(cds_prop, cds_test,
-                                                 pop_vec, group_pop_vec,
-                                                 ndists, minorityprop);
-    
-    hinge_new_psi += as<double>(hinge_constraint["hinge_new_psi"]);
-    hinge_old_psi += as<double>(hinge_constraint["hinge_old_psi"]);
-  }
-
+  arma::umat udistricts = conv_to<umat>::from(districts);
+  arma::uvec pops = conv_to<arma::uvec>::from(as<arma::vec>(pop_vec));
 
   // Multiply mh_prob by constraint values
-  double energy_new = weight_population * pop_new_psi + weight_compact * compact_new_psi
-    + weight_segregation * segregation_new_psi + weight_vra * vra_new_psi + weight_similar * similar_new_psi
-    + weight_countysplit * countysplit_new_psi + weight_partisan * partisan_new_psi + 
-    weight_minority * minority_new_psi + weight_hinge * hinge_new_psi;
-    double energy_old = weight_population * pop_old_psi + weight_compact * compact_old_psi
-      + weight_segregation * segregation_old_psi + weight_vra * vra_old_psi + weight_similar * similar_old_psi
-      + weight_countysplit * countysplit_old_psi + weight_partisan * partisan_old_psi + 
-      weight_minority * minority_old_psi + weight_hinge * hinge_old_psi;
-      mh_prob = (double)mh_prob * exp(-1.0 * beta * (energy_new - energy_old));
+  double energy_new = calc_gibbs_tgt(udistricts.col(0), ndists, nprec, swaps_v,
+                                     new_psi, pops, parity, g, constraints);
+  double energy_old = calc_gibbs_tgt(udistricts.col(1), ndists, nprec, swaps_v,
+                                     old_psi, pops, parity, g, constraints);
+
+  mh_prob = (double)mh_prob * exp(-1.0 * beta * (energy_new - energy_old));
 
       // Create returned list
       List out;
@@ -777,46 +666,10 @@ List make_swaps(List boundary_cc,
       out["goodprop"] = goodprop;
       out["energy_new"] = energy_new;
       out["energy_old"] = energy_old;
-      if(weight_population != 0.0){
-        out["pop_new_psi"] = pop_new_psi;
-        out["pop_old_psi"] = pop_old_psi;
-      }
-      if(weight_compact != 0.0){
-        out["compact_new_psi"] = compact_new_psi;
-        out["compact_old_psi"] = compact_old_psi;
-      }
-      if(weight_segregation != 0.0){
-        out["segregation_new_psi"] = segregation_new_psi;
-        out["segregation_old_psi"] = segregation_old_psi;
-      }
-      if(weight_vra != 0.0){
-        out["vra_new_psi"] = vra_new_psi;
-        out["vra_old_psi"] = vra_old_psi;
-      }
-      if(weight_similar != 0.0){
-        out["similar_new_psi"] = similar_new_psi;
-        out["similar_old_psi"] = similar_old_psi;
-      }
-      if(weight_countysplit != 0.0){
-        out["countysplit_new_psi"] = countysplit_new_psi;
-        out["countysplit_old_psi"] = countysplit_old_psi;
-      }
-      if(weight_partisan != 0.0){
-        out["partisan_new_psi"] = partisan_new_psi;
-        out["partisan_old_psi"] = partisan_old_psi;
-      }
-      if(weight_minority != 0.0){
-        out["minority_new_psi"] = minority_new_psi;
-        out["minority_old_psi"] = minority_old_psi;
-      }
-      if(weight_hinge != 0.0){
-        out["hinge_new_psi"] = hinge_new_psi;
-        out["hinge_old_psi"] = hinge_old_psi;
-      }
-
+      out["new_psi"] = new_psi;
+      out["old_psi"] = old_psi;
 
       return out;
-
 }
 
 // Function to accept or reject swaps

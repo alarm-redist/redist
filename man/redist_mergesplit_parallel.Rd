@@ -8,19 +8,20 @@ redist_mergesplit_parallel(
   map,
   nsims,
   chains = 1,
-  warmup = floor(nsims/2),
+  warmup = max(100, nsims\%/\%2),
+  thin = 1L,
   init_plan = NULL,
   counties = NULL,
   compactness = 1,
   constraints = list(),
   constraint_fn = function(m) rep(0, ncol(m)),
-  adapt_k_thresh = 0.975,
+  adapt_k_thresh = 0.98,
   k = NULL,
   ncores = NULL,
   cl_type = "PSOCK",
   return_all = TRUE,
   init_name = NULL,
-  verbose = TRUE,
+  verbose = FALSE,
   silent = FALSE
 )
 }
@@ -33,7 +34,11 @@ redist_mergesplit_parallel(
 \code{nsims} draws. If \code{init_plan} is sampled, each chain will be initialized
 with its own sampled plan.}
 
-\item{warmup}{The number of warmup samples to discard.}
+\item{warmup}{The number of warmup samples to discard. Recommended to be at
+least the first 20\% of samples, and in any case no less than around 100
+samples.}
+
+\item{thin}{Save every \code{thin}-th sample. Defaults to no thinning (1).}
 
 \item{init_plan}{The initial state of the map, provided as a single vector
 to be shared across all chains, or a matrix with \code{chains} columns.
@@ -44,11 +49,12 @@ init_plan="sample".}
 
 \item{counties}{A vector containing county (or other administrative or
 geographic unit) labels for each unit, which may be integers ranging from 1
-to the number of counties, or a factor or character vector.  If provided, the
-algorithm will generate maps tend to follow county lines.  You may combine this
-with a Gibbs constraint on the number of county splits using the
-\code{constraints} parameter; see below. If no county-split considerations
-are desired, this parameter should be left blank.}
+to the number of counties, or a factor or character vector.  If provided,
+the algorithm will generate maps tend to follow county lines. There is no
+strength parameter associated with this constraint. To adjust the number of
+county splits further, or to constrain a second type of administrative
+split, consider using \code{add_constr_splits()}, \code{add_constr_multisplits()},
+and \code{add_constr_total_splits()}.}
 
 \item{compactness}{Controls the compactness of the generated districts, with
 higher values preferring more compact districts. Must be nonnegative. See the
@@ -97,93 +103,22 @@ chains in parallel.
 }
 \details{
 This function draws samples from a specific target measure, controlled by the
-\code{compactness}, \code{constraints}, and \code{constraint_fn} parameters.
+\code{map}, \code{compactness}, and \code{constraints} parameters.
+
+Key to ensuring good performance is monitoring the acceptance rate, which
+is reported at the sample level in the output.
+Users should also check diagnostics of the sample by running
+\code{summary.redist_plans()}.
 
 Higher values of \code{compactness} sample more compact districts;
 setting this parameter to 1 is computationally efficient and generates nicely
 compact districts.
-
-The \code{constraints} parameter allows the user to apply several common
-redistricting constraints without implementing them by hand. This parameter
-is a list, which may contain any of the following named entries:
-\itemize{
-\item \code{status_quo}: a list with two entries:
-\itemize{
-\item \code{strength}, a number controlling the tendency of the generated districts
-to respect the status quo, with higher values preferring more similar
-districts.
-\item \code{current}, a vector containing district assignments for
-the current map.
-}
-\item \code{hinge}: a list with three entries:
-\itemize{
-\item \code{strength}, a number controlling the strength of the Voting Rights Act
-(VRA) constraint, with higher values prioritizing majority-minority districts
-over other considerations.
-\item \code{tgts_min}, the target percentage(s) of minority voters in minority
-opportunity districts. Defaults to \code{c(0.55)}.
-\item \code{min_pop}, A vector containing the minority population of each
-geographic unit.
-}
-\item \code{incumbency}: a list with two entries:
-\itemize{
-\item \code{strength}, a number controlling the tendency of the generated districts
-to avoid pairing up incumbents.
-\item \code{incumbents}, a vector of precinct indices, one for each incumbent's
-home address.
-}
-\item \code{splits}: a list with one entry:
-\itemize{
-\item \code{strength}, a number controlling the tendency of the generated districts
-to avoid splitting counties.
-}
-\item \code{multisplits}: a list with one entry:
-\itemize{
-\item \code{strength}, a number controlling the tendency of the generated districts
-to avoid splitting counties multiple times.
-}
-\item \code{vra}: a list with five entries, which may be set up using
-\code{\link{redist.constraint.helper}}:
-\itemize{
-\item \code{strength}, a number controlling the strength of the Voting Rights Act
-(VRA) constraint, with higher values prioritizing majority-minority districts
-over other considerations.
-\item \code{tgt_vra_min}, the target percentage of minority voters in minority
-opportunity districts. Defaults to 0.55.
-\item \code{tgt_vra_other} The target percentage of minority voters in other
-districts. Defaults to 0.25, but should be set to reflect the total minority
-population in the state.
-\item \code{pow_vra}, which controls the allowed deviation from the target
-minority percentage; higher values are more tolerant. Defaults to 1.5
-\item \code{min_pop}, A vector containing the minority population of each
-geographic unit.
-}
-}
-
-All constraints are fed into a Gibbs measure, with coefficients on each
-constraint set by the corresponding \code{strength} parameters.
-The strength can be any real number, with zero corresponding to no constraint.
-The \code{status_quo} constraint adds a term measuring the variation of
-information distance between the plan and the reference, rescaled to [0, 1].
-The \code{hinge} constraint takes a list of target minority percentages. It
-matches each district to its nearest target percentage, and then applies a
-penalty of the form \eqn{\sqrt{max(0, tgt - minpct)}}, summing across
-districts. This penalizes districts which are below their target population.
-The \code{incumbency} constraint adds a term counting the number of districts
-containing paired-up incumbents. The \code{splits} constraint adds a term
-counting the number of counties which contain precincts belonging to more
-than one district.
-The \code{vra} constraint (not recommended) adds a term of the form
-\eqn{(|tgtvramin-minpct||tgtvraother-minpct|)^{powvra})}, which
-encourages districts to have minority percentages near either \code{tgt_vra_min}
-or \code{tgt_vra_other}. This can be visualized with
-\code{\link{redist.plot.penalty}}.
 }
 \examples{
 \dontrun{
 data(fl25)
-fl_map = redist_map(fl25, ndists=3, pop_tol=0.1)
-sampled = redist_mergesplit_parallel(fl_map, nsims=100, chains=100)
+fl_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
+sampled <- redist_mergesplit_parallel(fl_map, nsims = 100, chains = 100)
 }
 
 }

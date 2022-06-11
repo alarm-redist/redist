@@ -28,7 +28,7 @@ themselves, and not the population.}
 }
 \value{
 \code{distance_matrix} returns a numeric distance matrix for the
-  chosen metric.
+chosen metric.
 
 a named list of distance matrices, one for each distance measure selected.
 }
@@ -47,8 +47,8 @@ distant.
 Variation of Information is a metric on population partitions (i.e.,
 districtings) which is invariant to permutations of the district labels, and
 arises out of information theory. It is calculated as \deqn{
-    VI(\xi, \xi') = -\sum_{i=1}^n\sum_{j=1}^n pop(\xi_i \cap \xi'_j)/P
-    (2log(pop(\xi_i \cap \xi'_j)) - log(pop(\xi_i)) - log(pop(\xi'_j)))
+VI(\xi, \xi') = -\sum_{i=1}^n\sum_{j=1}^n pop(\xi_i \cap \xi'_j)/P
+(2log(pop(\xi_i \cap \xi'_j)) - log(pop(\xi_i)) - log(pop(\xi'_j)))
 } where \eqn{\xi,\xi'} are the partitions, \eqn{\xi_i,\xi_j} the individual
 districts, \eqn{pop(\cdot)} is the population, and \eqn{P} the total
 population of the state. VI is also expressible as the difference between

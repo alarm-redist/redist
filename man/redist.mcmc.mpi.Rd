@@ -31,7 +31,8 @@ redist.mcmc.mpi(
   freq = 100,
   savename = NA,
   maxiterrsg = 5000,
-  verbose = FALSE
+  verbose = FALSE,
+  cities = NULL
 )
 }
 \arguments{
@@ -122,6 +123,8 @@ algorithm to generate starting values. Default is 5000.}
 
 \item{verbose}{Whether to print initialization statement. Default is
 \code{TRUE}.}
+
+\item{cities}{integer vector of cities for QPS constraint.}
 }
 \value{
 \code{redist.mcmc.mpi} returns an object of class "redist". The object
@@ -184,7 +187,7 @@ init_plan <- fl25_enum$plans[, 5118]
 
 ## Run the algorithm
 redist.mcmc.mpi(adj = fl25_adj, total_pop = fl25$pop,
-                init_plan = init_plan, nsims = 10000, savename = "test")
+    init_plan = init_plan, nsims = 10000, savename = "test")
 }
 }
 \references{

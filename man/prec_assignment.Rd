@@ -7,7 +7,7 @@
 prec_assignment(prec, .data = cur_plans())
 }
 \arguments{
-\item{prec}{the precinct number or ID}
+\item{prec}{the precinct number}
 
 \item{.data}{a \code{\link{redist_plans}} object}
 }

@@ -15,44 +15,36 @@
 #' set.seed(2)
 #' data(fl25)
 #' data(fl25_adj)
-#' counties <- sample(c(rep('a', 20), rep('b', 5)))
+#' counties <- sample(c(rep("a", 20), rep("b", 5)))
 #' redist.county.relabel(fl25_adj, counties)
 #'
-redist.county.relabel <- function(adj, counties,  simplify = TRUE){
+redist.county.relabel <- function(adj, counties,  simplify = TRUE) {
+    if (length(adj) != length(counties)) {
+        cli_abort("{.arg adj} and {.arg counties} must have the same length.")
+    }
 
-  if(missing(adj)){
-    stop('Please provide an argument to adj.')
-  }
+    if ("numeric" %in% class(counties) || "integer" %in% class(counties)) {
+        counties <- as.character(counties)
+    }
 
-  if(missing(counties)){
-    stop('Please provide a character vector of counties.')
-  }
-  if(length(adj) != length(counties)){
-    stop('adj and group are different lengths.')
-  }
+    groups <- rep(0, length(counties))
+    sorted <- sort(unique(counties))
+    for (i in 1:length(counties)) {
+        groups[i] <- which(sorted == counties[i])
+    }
 
-  if('numeric' %in% class(counties) | 'integer' %in% class(counties) ){
-    counties <- as.character(counties)
-  }
-
-  groups <- rep(0, length(counties))
-  sorted <- sort(unique(counties))
-  for(i in 1:length(counties)){
-    groups[i] <- which(sorted == counties[i])
-  }
-
-  component <- data.frame(counties = counties, comp = contiguity(adj, groups)) %>%
-    group_by(counties) %>%
-    mutate(comps = max(comp)) %>%
-    ungroup() %>%
-    rowwise() %>%
-    mutate(countiescomp = ifelse(comps > 1, paste0(counties, '-', comp), counties)) %>%
-    ungroup()
-  if(simplify){
-    return(redist.county.id(component$countiescomp))
-  } else{
-    return(component$countiescomp)
-  }
+    component <- data.frame(counties = counties, comp = contiguity(adj, groups)) %>%
+        group_by(counties) %>%
+        mutate(comps = max(.data$comp)) %>%
+        ungroup() %>%
+        rowwise() %>%
+        mutate(countiescomp = ifelse(.data$comps > 1, paste0(counties, "-", .data$comp), counties)) %>%
+        ungroup()
+    if (simplify) {
+        return(redist.county.id(component$countiescomp))
+    } else {
+        return(component$countiescomp)
+    }
 }
 
 
@@ -66,21 +58,19 @@ redist.county.relabel <- function(adj, counties,  simplify = TRUE){
 #' @export
 #' @examples
 #' set.seed(2)
-#' counties <- sample(c(rep('a', 20), rep('b', 5)))
+#' counties <- sample(c(rep("a", 20), rep("b", 5)))
 #' redist.county.id(counties)
 #'
-redist.county.id <- function(counties){
-  if(class(counties) %in% c('character', 'numeric','integer')){
-    uc <- unique(sort(counties))
-    county_id <- rep(0, length(counties))
-    for(i in 1:length(counties)){
-      county_id[i] <- which(uc == counties[i])
+redist.county.id <- function(counties) {
+    if (class(counties) %in% c("character", "numeric", "integer")) {
+        uc <- unique(sort(counties))
+        county_id <- rep(0, length(counties))
+        for (i in 1:length(counties)) {
+            county_id[i] <- which(uc == counties[i])
+        }
+    } else {
+        cli_abort("{.arg counties} must be a character, numeric, or integer vector.")
     }
-  } else{
-    stop('Please provide "counties" as a character, numeric, or integer vector.')
-  }
 
-  return(county_id)
+    return(county_id)
 }
-
-globalVariables(c('comp', 'comps'))

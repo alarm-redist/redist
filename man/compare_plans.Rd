@@ -11,7 +11,8 @@ compare_plans(
   shp = NULL,
   plot = "fill",
   thresh = 0.1,
-  labs = c("Set 1", "Set 2")
+  labs = c("Set 1", "Set 2"),
+  ncores = 1
 )
 }
 \arguments{
@@ -39,6 +40,8 @@ option. See below for more information.  Set to \code{FALSE} to disable plotting
 relevant set of precincts for comparison.}
 
 \item{labs}{the names of the panels in the plot.}
+
+\item{ncores}{the number of parallel cores to use.}
 }
 \value{
 If possible, makes a comparison plot according to \code{plot}. Otherwise
@@ -77,12 +80,12 @@ prior, which is useful for when either \code{set1} or \code{set2} is small.
 }
 \examples{
 data(iowa)
-iowa_map = redist_map(iowa, ndists=4, pop_tol=0.05)
-plans1 = redist_smc(iowa_map, 100, silent=TRUE)
-plans2 = redist_mergesplit(iowa_map, 100, silent=TRUE)
-compare_plans(plans1, plans2, shp=iowa_map)
+iowa_map <- redist_map(iowa, ndists = 4, pop_tol = 0.05)
+plans1 <- redist_smc(iowa_map, 100, silent = TRUE)
+plans2 <- redist_mergesplit(iowa_map, 200, warmup = 100, silent = TRUE)
+compare_plans(plans1, plans2, shp = iowa_map)
 compare_plans(plans2, as.integer(draw) <= 20,
-              as.integer(draw) > 20, shp=iowa_map, plot="line")
+    as.integer(draw) > 20, shp = iowa_map, plot = "line")
 
 }
 \concept{analyze}

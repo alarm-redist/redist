@@ -25,7 +25,7 @@ single \code{list} or \code{data.frame}.  These will be passed on to the
 \code{\link{tibble}} constructor.}
 
 \item{existing_plan}{\code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the
-existing district assignment. Must be numeric or convertable to numeric.}
+existing district assignment. Must be numeric or convertible to numeric.}
 
 \item{pop_tol}{\code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the population tolerance.
 The percentage deviation from the average population will be constrained to
@@ -78,7 +78,7 @@ Other useful methods for \code{redist_map} objects:
 }
 \examples{
 data(fl25)
-d = redist_map(fl25, ndists=3, pop_tol=0.05, total_pop = pop)
+d <- redist_map(fl25, ndists = 3, pop_tol = 0.05, total_pop = pop)
 dplyr::filter(d, pop >= 10e3)
 
 }

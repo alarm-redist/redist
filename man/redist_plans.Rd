@@ -35,6 +35,7 @@ As a data frame, the usual \code{\link{dplyr}} methods will work.
 
 Other useful methods for \code{redist_plans} objects:
 \itemize{
+\item \code{\link{summary.redist_plans}}
 \item \code{\link{add_reference}}
 \item \code{\link{subset_sampled}}
 \item \code{\link{subset_ref}}
@@ -54,8 +55,8 @@ Other useful methods for \code{redist_plans} objects:
 \examples{
 data(iowa)
 
-iowa = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05, total_pop = pop)
-rsg_plan = redist.rsg(iowa$adj, iowa$pop, ndists=4, pop_tol=0.05)$plan
+iowa <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05, total_pop = pop)
+rsg_plan <- redist.rsg(iowa$adj, iowa$pop, ndists = 4, pop_tol = 0.05)$plan
 redist_plans(rsg_plan, iowa, "rsg")
 
 }

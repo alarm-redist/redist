@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <set>
+#include <RcppThread.h>
 #include "smc_base.h"
 #include "tree_op.h"
 
@@ -16,19 +17,27 @@ double log_boundary(const Graph &g, const subview_col<uword> &districts,
 /*
  * Compute the status quo penalty for district `distr`
  */
-double sq_entropy(const subview_col<uword> &districts, const uvec &current,
-                  int distr, const uvec &pop, int n_distr, int n_current, int V);
+double eval_sq_entropy(const subview_col<uword> &districts, const uvec &current,
+                       int distr, const uvec &pop, int n_distr, int n_current, int V);
 
-/*
- * Compute the VRA penalty for district `distr`
- */
-double eval_vra(const subview_col<uword> &districts, int distr, double tgt_min,
-                double tgt_other, double pow_vra, const uvec &pop, const uvec &min_pop);
 /*
  * Compute the new, hinge VRA penalty for district `distr`
  */
-double eval_vra_hinge(const subview_col<uword> &districts, int distr,
-                      const vec &tgts_min, const uvec &pop, const uvec &min_pop);
+double eval_grp_hinge(const subview_col<uword> &districts, int distr,
+                      const vec &tgts_grp, const uvec &grp_pop, const uvec &total_pop);
+
+/*
+ * Compute the new, hinge VRA penalty for district `distr`
+ */
+double eval_grp_inv_hinge(const subview_col<uword> &districts, int distr,
+                      const vec &tgts_grp, const uvec &grp_pop, const uvec &total_pop);
+
+/*
+ * Compute the old VRA penalty for district `distr`
+ */
+double eval_grp_pow(const subview_col<uword> &districts, int distr,
+                    const uvec &grp_pop, const uvec &total_pop,
+                    double tgt_grp, double tgt_other, double pow);
 
 /*
  * Compute the incumbent-preserving penalty for district `distr`
@@ -39,20 +48,73 @@ double eval_inc(const subview_col<uword> &districts, int distr, const uvec &incu
  * Compute the county split penalty for district `distr`
  */
 double eval_splits(const subview_col<uword> &districts, int distr,
-                   const uvec &counties, int n_cty);
+                   const uvec &counties, int n_cty, bool smc);
 
 /*
  * Compute the county fracture penalty for district `distr`
  */
-double eval_fractures(const subview_col<uword> &districts, int distr,
-                      const uvec &counties, int n_cty);
+double eval_multisplits(const subview_col<uword> &districts, int distr,
+                        const uvec &counties, int n_cty, bool smc);
+
+/*
+ * Compute the county split penalty for district `distr`
+ */
+double eval_total_splits(const subview_col<uword> &districts, int distr,
+                   const uvec &counties, int n_cty);
+
+/*
+ * Compute the Polsby Popper penalty for district `distr`
+ */
+double eval_polsby(const subview_col<uword> &districts, int distr,
+            const ivec &from,
+            const ivec &to,
+            const vec &area,
+            const vec &perimeter);
+
+/*
+ * Compute the Fryer-Holden penalty for district `distr`
+ */
+double eval_fry_hold(const subview_col<uword> &districts, int distr,
+                     const uvec &total_pop, mat ssdmat, double denominator);
+
+/*
+ * Compute the population penalty for district `distr`
+ */
+double eval_pop_dev(const subview_col<uword> &districts, int distr,
+                       const uvec &total_pop, double parity);
+
+/*
+ * Compute the segregation penalty for district `distr`
+ */
+double eval_segregation(const subview_col<uword> &districts, int distr,
+                        const uvec &grp_pop, const uvec &total_pop);
+
+/*
+ * Compute the qps penalty for district `distr`
+ */
+double eval_qps(const subview_col<uword> &districts, int distr,
+                const uvec &total_pop, const uvec &cities, int n_city,
+                int nd);
+
+/*
+ * Compute the log spanning tree penalty for district `distr`
+ */
+double eval_log_st(const subview_col<uword> &districts, const Graph g,
+                   arma::uvec counties, int ndists);
+
+/*
+ * Compute the log spanning tree penalty for district `distr`
+ */
+double eval_er(const subview_col<uword> &districts, const Graph g, int ndists);
+
+
 
 /*
  * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,
  * given a collection of plans
  */
 // [[Rcpp::export]]
-arma::mat prec_cooccur(arma::umat m, arma::uvec idxs);
+arma::mat prec_cooccur(arma::umat m, arma::uvec idxs, int ncores=0);
 
 /*
  * Compute the percentage of `group` in each district. Asummes `m` is 1-indexed.

@@ -7,8 +7,9 @@
 ###########################################
 
 
-combine.par.anneal <- function(a, b){
+combine.par.anneal <- function(a, b) {
 
+    .Deprecated("rbind.redist_plans()")
     ## Names of object
     name_out <- names(a)
 
@@ -16,10 +17,10 @@ combine.par.anneal <- function(a, b){
     output_obj <- vector(mode = "list", length = length(a))
 
     ## Combine plans
-    for(i in 1:length(a)){
-        if(i == i){
+    for (i in 1:length(a)) {
+        if (i == i) {
             output_obj[[i]] <- cbind(a[[i]], b[[i]])
-        }else{
+        } else {
             output_obj[[i]] <- c(a[[i]], b[[i]])
         }
     }
@@ -29,7 +30,7 @@ combine.par.anneal <- function(a, b){
 
 }
 
-#' Flip MCMC Redistricting Simulator using Simulated Annealing
+#' (Deprecated) Flip MCMC Redistricting Simulator using Simulated Annealing
 #'
 #' \code{redist.flip.anneal} simulates congressional redistricting plans
 #' using Markov chain Monte Carlo methods coupled with simulated annealing.
@@ -44,6 +45,7 @@ combine.par.anneal <- function(a, b){
 #' of each geographic unit. If not provided, random and contiguous congressional
 #' district assignments will be generated using \code{redist_smc}. To use the old
 #' behavior of generating with \code{redist.rsg}, provide init_plan = 'rsg'.
+#' @param constraints A `redist_constr` list of constraints
 #' @param num_hot_steps The number of steps to run the simulator at beta = 0.
 #' Default is 40000.
 #' @param num_annealing_steps The number of steps to run the simulator with
@@ -59,27 +61,6 @@ combine.par.anneal <- function(a, b){
 #' constraint. \code{pop_tol} = 0.05 means that any proposed swap that
 #' brings a district more than 5\% away from population parity will be
 #' rejected. The default is \code{NULL}.
-#' @param group_pop A vector of populations for some sub-group of
-#' interest. The default is \code{NULL}.
-#' @param areasvec A vector of precinct areas for discrete Polsby-Popper.
-#' The default is \code{NULL}.
-#' @param counties A vector of county membership assignments. The default is \code{NULL}.
-#' @param borderlength_mat A matrix of border length distances, where
-#' the first two columns are the indices of precincts sharing a border and
-#' the third column is its distance. Default is \code{NULL}.
-#' @param ssdmat A matrix of squared distances between geographic
-#' units. The default is \code{NULL}.
-#' @param constraint Which constraint to apply. Accepts any combination of \code{compact},
-#' \code{segregation}, \code{vra}, \code{population}, \code{similarity}, \code{partisan},
-#' \code{minority}, \code{hinge}, \code{countysplit}, or \code{none}
-#' (no constraint applied). The default is NULL.
-#' @param constraintweights The weights to apply to each constraint. Should be a vector
-#' the same length as constraint. Default is NULL.
-#' @param compactness_metric The compactness metric to use when constraining on
-#' compactness. Default is \code{fryer-holden}, the other implemented options
-#' are \code{polsby-popper} and \code{edges-removed}.
-#' @param partisan_metric The partisan metric to use when constraining on partisan metrics.
-#' Only implemented are "efficiency-gap" (default) and "proportional-representation".
 #' @param rngseed Allows the user to set the seed for the
 #' simulations. Default is \code{NULL}.
 #' @param maxiterrsg Maximum number of iterations for random seed-and-grow
@@ -94,13 +75,6 @@ combine.par.anneal <- function(a, b){
 #' @param savename Filename to save simulations. Default is \code{NULL}.
 #' @param verbose Whether to print initialization statement.
 #' Default is \code{TRUE}.
-#' @param ncores The number of cores available to parallelize over. Default is 1.
-#' @param tgt_min The majority minority target percent as a decimal. Default is 0.55.
-#' @param tgt_other The remaining target percent as a decimal. Default is 0.25.
-#' @param rvote integer vector of votes for Republicans by precinct
-#' @param dvote integer vector of votes for Democrats by precinct
-#' @param minorityprop numeric vector of targeted minority proportions for the top
-#' districts with that proportion
 #'
 #' @return list of class redist
 #'
@@ -110,29 +84,19 @@ redist.flip.anneal <- function(adj,
                                total_pop,
                                ndists = NULL,
                                init_plan = NULL,
+                               constraints = redist_constr(),
                                num_hot_steps = 40000, num_annealing_steps = 60000,
                                num_cold_steps = 20000,
                                eprob = 0.05,
                                lambda = 0,
                                pop_tol = NULL,
-                               group_pop = NULL,
-                               areasvec = NULL,
-                               counties = NULL,
-                               borderlength_mat = NULL,
-                               ssdmat = NULL,
-                               constraint = NULL, constraintweights = NULL,
-                               compactness_metric = "fryer-holden",
-                               partisan_metric = "efficiency-gap",
                                rngseed = NULL, maxiterrsg = 5000,
                                adapt_lambda = FALSE, adapt_eprob = FALSE,
-                                exact_mh = FALSE,
-                               savename = NULL, verbose = TRUE,
-                               ncores = 1, tgt_min = 0.55, tgt_other = 0.25, rvote = NULL,
-                               dvote = NULL, minorityprop = NULL){
+                               exact_mh = FALSE,
+                               savename = NULL, verbose = TRUE) {
+    .Deprecated("redist_flip_anneal", msg = "Please use `redist_flip_anneal. This is gone as of 4.1.")
 
-    contiguitymap <- 'rooks'
-
-    if(verbose){
+    if (verbose) {
         ## Initialize ##
         divider <- c(paste(rep("=", 20), sep = "", collapse = ""), "\n")
 
@@ -145,140 +109,84 @@ redist.flip.anneal <- function(adj,
     ## --------------
     ## Initial checks
     ## --------------
-    if(missing(adj)){
+    if (missing(adj)) {
         stop("Please supply adjacency matrix or list")
     }
-    if(missing(total_pop)){
+    if (missing(total_pop)) {
         stop("Please supply vector of geographic unit populations")
     }
-    if(is.null(ndists) & is.null(init_plan) || is.null(ndists) & is.character(init_plan) ){
+    if (is.null(ndists) & is.null(init_plan) || is.null(ndists) & is.character(init_plan)) {
         stop("Please provide either the desired number of congressional districts
               or an initial set of congressional district assignments")
     }
-    if(!(contiguitymap %in% c("queens", "rooks"))){
-        stop("Please supply `queens` or `rooks` for a distance criteria")
-    }
-    if(!is.null(constraint) & is.null(constraintweights)){
-        stop("Please provide a weight value in 'constraintweights' for each constraint specified in 'constraint'.")
-    }
-    if(!(compactness_metric %in% c("fryer-holden", "polsby-popper", "edges-removed"))){
-        stop("We only support 'fryer-holden', 'polsby-popper', or 'edges-removed' as compactness metrics.")
-    }
 
     ## Set seed before first iteration of algorithm if provided by user
-    if(!is.null(rngseed) & is.numeric(rngseed)){
+    if (!is.null(rngseed) & is.numeric(rngseed)) {
         set.seed(rngseed)
     }
 
-    if(adapt_lambda){
+    if (adapt_lambda) {
         adapt_lambda <- 1
-    }else{
+    } else {
         adapt_lambda <- 0
     }
-    if(adapt_eprob){
+    if (adapt_eprob) {
         adapt_eprob <- 1
-    }else{
+    } else {
         adapt_eprob <- 0
     }
-    if(exact_mh){
+    if (exact_mh) {
         exact_mh <- 1
-    }else{
+    } else {
         exact_mh <- 0
     }
 
     ## ------------------
     ## Preprocessing data
     ## ------------------
-    if(verbose){
+    if (verbose) {
         cat("Preprocessing data.\n\n")
     }
     preprocout <- redist.preproc(adj = adj, total_pop = total_pop,
-                                 init_plan = init_plan, ndists = ndists,
-                                 pop_tol = pop_tol,
-                                 counties = counties,
-                                 group_pop = group_pop,
-                                 areasvec = areasvec,
-                                 borderlength_mat = borderlength_mat,
-                                 ssdmat = ssdmat,
-                                 compactness_metric = compactness_metric,
-                                 temper = FALSE,
-                                 constraint = constraint,
-                                 constraintweights = constraintweights,
-                                 betaseq = "powerlaw", betaseqlength = 10,
-                                 betaweights = NULL,
-                                 adjswaps = TRUE, maxiterrsg = maxiterrsg,
-                                 contiguitymap = contiguitymap,
-                                 tgt_min = tgt_min,
-                                 tgt_other = tgt_other,
-                                 rvote = rvote,
-                                 dvote = dvote,
-                                 minorityprop = minorityprop,
-                                 partisan_metric = partisan_metric,
-                                 verbose = verbose)
+        init_plan = init_plan, ndists = ndists,
+        pop_tol = pop_tol,
+        temper = FALSE,
+        betaseq = "powerlaw", betaseqlength = 10,
+        betaweights = NULL,
+        adjswaps = TRUE, maxiterrsg = maxiterrsg,
+        verbose = verbose)
 
 
-    ## Set betas - if tempering, modified later
-    weightpop <- preprocout$params$weightpop
-    weightcompact <- preprocout$params$weightcompact
-    weightseg <- preprocout$params$weightseg
-    weightvra <- preprocout$params$weightvra
-    weightsimilar <- preprocout$params$weightsimilar
-    weightcountysplit <- preprocout$params$weightcountysplit
-    weightpartisan <- preprocout$params$weightpartisan
-    weightminority <- preprocout$params$weightminority
-    weighthinge <- preprocout$params$weighthinge
-
-    if(verbose){
+    if (verbose) {
         cat("Starting swMH().\n")
     }
 
     algout <- swMH(aList = preprocout$data$adjlist,
-                   cdvec = preprocout$data$init_plan,
-                   cdorigvec = preprocout$data$init_plan,
-                   popvec = preprocout$data$total_pop,
-                   grouppopvec = preprocout$data$group_pop,
-                   areas_vec = preprocout$data$areasvec,
-                   county_membership = preprocout$data$counties,
-                   borderlength_mat = preprocout$data$borderlength_mat,
-                   nsims = 100,
-                   eprob = eprob,
-                   pct_dist_parity = preprocout$params$pctdistparity,
-                   beta_sequence = preprocout$params$betaseq,
-                   beta_weights = preprocout$params$betaweights,
-                   ssdmat = preprocout$data$ssdmat,
-                   lambda = lambda,
-                   beta = 0,
-                   weight_population = weightpop,
-                   weight_compact = weightcompact,
-                   weight_segregation = weightseg,
-                   weight_vra = weightvra,
-                   weight_similar = weightsimilar,
-                   weight_countysplit = weightcountysplit,
-                   weight_partisan = weightpartisan,
-                   weight_minority = weightminority,
-                   weight_hinge = weighthinge,
-                   adapt_beta = "annealing",
-                   adjswap = preprocout$params$adjswaps,
-                   exact_mh = exact_mh,
-                   adapt_lambda = adapt_lambda,
-                   adapt_eprob = adapt_eprob,
-                   compactness_measure = compactness_metric,
-                   partisan_measure = preprocout$params$partisan_metricpartisan_metric,
-                   tgt_min = tgt_min,
-                   tgt_other = tgt_other,
-                   rvote = preprocout$params$rvote,
-                   dvote = preprocout$params$dvote,
-                   minorityprop = preprocout$params$minorityprop,
-                   num_hot_steps = num_hot_steps,
-                   num_annealing_steps = num_annealing_steps,
-                   num_cold_steps = num_cold_steps,
-                   verbose = as.logical(verbose))
+        cdvec = preprocout$data$init_plan,
+        popvec = preprocout$data$total_pop,
+        constraints = as.list(constraints),
+        nsims = 100,
+        eprob = eprob,
+        pct_dist_parity = preprocout$params$pctdistparity,
+        beta_sequence = preprocout$params$betaseq,
+        beta_weights = preprocout$params$betaweights,
+        lambda = lambda,
+        beta = 0,
+        adapt_beta = "annealing",
+        adjswap = preprocout$params$adjswaps,
+        exact_mh = exact_mh,
+        adapt_lambda = adapt_lambda,
+        adapt_eprob = adapt_eprob,
+        num_hot_steps = num_hot_steps,
+        num_annealing_steps = num_annealing_steps,
+        num_cold_steps = num_cold_steps,
+        verbose = as.logical(verbose))
     class(algout) <- "redist"
 
     ## -------------------------
     ## Combine and save the data
     ## -------------------------
-    if(!is.null(savename)){
+    if (!is.null(savename)) {
         saveRDS(algout, file = paste0(savename, ".rds"))
     }
 
@@ -288,7 +196,7 @@ redist.flip.anneal <- function(adj,
 
 }
 
-#' redist.combine.anneal
+#' (Deprecated) redist.combine.anneal
 #'
 #' Combine files generated by redist.flip.anneal()
 #'
@@ -327,6 +235,8 @@ redist.flip.anneal <- function(adj,
 #' minority constraint for each accepted redistricting plan.}
 #' \item{constraint_hinge}{A vector containing the value of the
 #' hinge constraint for each accepted redistricting plan.}
+#' \item{constraint_qps}{A vector containing the value of the
+#' QPS constraint for each accepted redistricting plan.}
 #' \item{beta_sequence}{A vector containing the value of beta for each iteration
 #' of the algorithm. Returned when tempering is being used.}
 #' \item{mhdecisions_beta}{A vector specifying whether a proposed beta value was
@@ -339,11 +249,12 @@ redist.flip.anneal <- function(adj,
 #'
 #' @concept post
 #' @export
-redist.combine.anneal <- function(file_name){
+redist.combine.anneal <- function(file_name) {
 
+    .Deprecated("rbind.redist_plans")
     ## List files
     fn <- list.files()[grep(file_name, list.files())]
-    if(length(fn) == 0){
+    if (length(fn) == 0) {
         stop("Can't find any files in current working directory with that name.")
     }
     load(fn[1])
@@ -354,24 +265,24 @@ redist.combine.anneal <- function(file_name){
     nc <- length(fn)
     plans <- matrix(NA, nrow = nr, ncol = nc)
 
-    veclist <- vector(mode = "list", length = length(algout)-1)
-    for(i in 1:length(veclist)){
+    veclist <- vector(mode = "list", length = length(algout) - 1)
+    for (i in 1:length(veclist)) {
         veclist[[i]] <- rep(NA, nc)
     }
 
     ## ------------
     ## Combine data
     ## ------------
-    for(i in 1:length(fn)){
+    for (i in 1:length(fn)) {
         ## Load data
         load(fn[i])
 
         ## Store objects together
-        for(j in 1:length(algout)){
-            if(j == 1){
+        for (j in 1:length(algout)) {
+            if (j == 1) {
                 plans[1:nr, i] <- algout$plans
-            }else{
-                veclist[[j-1]][i] <- algout[[j]]
+            } else {
+                veclist[[j - 1]][i] <- algout[[j]]
             }
         }
     }
@@ -380,11 +291,11 @@ redist.combine.anneal <- function(file_name){
     ## Store data in algout object
     ## ---------------------------
     algout <- vector(mode = "list", length = length(algout))
-    for(i in 1:length(algout)){
-        if(i == 1){
+    for (i in 1:length(algout)) {
+        if (i == 1) {
             algout[[i]] <- plans
-        }else{
-            algout[[i]] <- veclist[[i-1]]
+        } else {
+            algout[[i]] <- veclist[[i - 1]]
         }
     }
     names(algout) <- names_obj
@@ -398,7 +309,7 @@ redist.combine.anneal <- function(file_name){
 }
 
 
-#' Combine successive runs of \code{redist.flip}
+#' (Deprecated) Combine successive runs of \code{redist.flip}
 #'
 #' \code{redist.combine} is used to combine successive runs of \code{redist.flip}
 #' into a single data object
@@ -409,7 +320,7 @@ redist.combine.anneal <- function(file_name){
 #' of the saved simulations.
 #' @param nloop The number of loops being combined. Savename must be non-null.
 #' @param nthin How much to thin the simulations being combined.
-#' @param temper Wheterh simulated tempering was used (1) or not (0)
+#' @param temper Whether simulated tempering was used (1) or not (0)
 #' in the simulations. Default is 0.
 #'
 #' @details This function allows users to combine multiple successive runs of
@@ -446,6 +357,8 @@ redist.combine.anneal <- function(file_name){
 #' minority constraint for each accepted redistricting plan.}
 #' \item{constraint_hinge}{A vector containing the value of the
 #' hinge constraint for each accepted redistricting plan.}
+#' \item{constraint_qps}{A vector containing the value of the
+#' QPS constraint for each accepted redistricting plan.}
 #' \item{beta_sequence}{A vector containing the value of beta for each iteration
 #' of the algorithm. Returned when tempering is being used.}
 #' \item{mhdecisions_beta}{A vector specifying whether a proposed beta value was
@@ -476,14 +389,15 @@ redist.combine.anneal <- function(file_name){
 #' ## Run the algorithm
 #' set.seed(1)
 #' temp <- tempdir()
-#' alg_253 <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
-#'                        init_plan = init_plan, nsims = 10000,
-#'                        nloop = 2, savename = paste0(temp, "/test"))
-#' out <- redist.combine(savename = paste0(temp, "/test"), nloop = 2, nthin = 10)
+#' # alg_253 <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
+#' # init_plan = init_plan, nsims = 10000,
+#' # nloop = 2, savename = paste0(temp, "/test"))
+#' # out <- redist.combine(savename = paste0(temp, "/test"), nloop = 2, nthin = 10)
 #' }
 #' @concept post
 #' @export
-redist.combine <- function(savename, nloop, nthin, temper = 0){
+redist.combine <- function(savename, nloop, nthin, temper = 0) {
+    .Deprecated("rbind.redist_plans")
     ##############################
     ## Set up container objects ##
     ##############################
@@ -494,11 +408,11 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
     nr <- nrow(algout$plans)
     nc <- ncol(algout$plans)
     plans <- matrix(NA, nrow = nr,
-                         ncol = (nc * nloop / nthin))
+        ncol = (nc*nloop/nthin))
 
-    veclist <- vector(mode = "list", length = length(algout)-1)
-    for(i in 1:length(veclist)){
-        veclist[[i]] <- rep(NA, (nc * nloop / nthin))
+    veclist <- vector(mode = "list", length = length(algout) - 1)
+    for (i in 1:length(veclist)) {
+        veclist[[i]] <- rep(NA, (nc*nloop/nthin))
     }
 
     ## Indices for thinning
@@ -507,19 +421,19 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
     ####################################
     ## Combine data in multiple loops ##
     ####################################
-    for(i in 1:nloop){
+    for (i in 1:nloop) {
 
         ## Load data
         algout <- readRDS(paste0(savename, "_loop", i, ".rds"))
 
-        ind <- ((i - 1) * (nc / nthin) + 1):(i * (nc / nthin))
+        ind <- ((i - 1)*(nc/nthin) + 1):(i*(nc/nthin))
 
         ## Store objects together
-        for(j in 1:length(algout)){
-            if(j == 1){
-                plans[1:nr, ind] <- algout$plans[,indthin]
-            }else{
-                veclist[[j-1]][ind] <- algout[[j]][indthin]
+        for (j in 1:length(algout)) {
+            if (j == 1) {
+                plans[1:nr, ind] <- algout$plans[, indthin]
+            } else {
+                veclist[[j - 1]][ind] <- algout[[j]][indthin]
             }
         }
 
@@ -529,11 +443,11 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
     ## Store data in algout object ##
     #################################
     algout <- vector(mode = "list", length = length(algout))
-    for(i in 1:length(algout)){
-        if(i == 1){
+    for (i in 1:length(algout)) {
+        if (i == 1) {
             algout[[i]] <- plans
-        }else{
-            algout[[i]] <- veclist[[i-1]]
+        } else {
+            algout[[i]] <- veclist[[i - 1]]
         }
     }
     names(algout) <- names_obj
@@ -551,7 +465,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
     return(algout)
 }
 
-#' Flip MCMC Redistricting Simulator
+#' (Deprecated) Flip MCMC Redistricting Simulator
 #'
 #' \code{redist.mcmc} is used to simulate Congressional redistricting
 #' plans using Markov Chain Monte Carlo methods.
@@ -567,6 +481,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' of each geographic unit. If not provided, random and contiguous congressional
 #' district assignments will be generated using \code{redist_smc}. To use the old
 #' behavior of generating with \code{redist.rsg}, provide init_plan = 'rsg'.
+#' @param constraints A `redist_constr` list.
 #' @param loopscompleted Number of save points reached by the
 #' algorithm. The default is \code{0}.
 #' @param nloop The total number of save points for the algorithm. The
@@ -584,30 +499,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' constraint. \code{pop_tol} = 0.05 means that any proposed swap that
 #' brings a district more than 5\% away from population parity will be
 #' rejected. The default is \code{NULL}.
-#' @param group_pop A vector of populations for some sub-group of
-#' interest. The default is \code{NULL}.
-#' @param areasvec A vector of precinct areas for discrete Polsby-Popper.
-#' The default is \code{NULL}.
-#' @param counties A vector of county membership assignments. The default is \code{NULL}.
-#' @param borderlength_mat A matrix of border length distances, where
-#' the first two columns are the indices of precincts sharing a border and
-#' the third column is its distance. Default is \code{NULL}.
-#' @param ssdmat A matrix of squared distances between geographic
-#' units. The default is \code{NULL}.
 #' @param temper Whether to use simulated tempering algorithm. Default is FALSE.
-#' @param constraint Which constraint to apply. Accepts any combination of \code{compact},
-#' \code{segregation}, \code{vra}, \code{population}, \code{similarity}, \code{partisan},
-#' \code{minority}, \code{hinge}, \code{countysplit}, or \code{none}
-#' (no constraint applied). The default is NULL.
-#' @param constraintweights The weights to apply to each constraint. Should be a vector
-#' the same length as constraint. Default is NULL.
-#' @param compactness_metric The compactness metric to use when constraining on
-#' compactness. Default is \code{fryer-holden}, the other implemented options
-#' are \code{polsby-popper} and \code{edges-removed}.
-#' @param partisan_metric The partisan metric to use when constraining on partisan metrics.
-#' Only implemented is "efficiency-gap", the default.
-#' @param ssd_denom The normalizing constant for the sum-of-squared distance Fryer-Holden metric.
-#' Default is 1.0 (unnormalized).
 #' @param betaseq Sequence of beta values for tempering. The default is
 #' \code{powerlaw} (see Fifield et. al (2015) for details).
 #' @param betaseqlength Length of beta sequence desired for
@@ -632,12 +524,6 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' @param savename Filename to save simulations. Default is \code{NULL}.
 #' @param verbose Whether to print initialization statement.
 #' Default is \code{TRUE}.
-#' @param tgt_min The majority minority target percent as a decimal. Default is 0.55.
-#' @param tgt_other The remaining target percent as a decimal. Default is 0.25.
-#' @param rvote integer vector of votes for Republicans by precinct
-#' @param dvote integer vector of votes for Democrats by precinct
-#' @param minorityprop numeric vector of targeted minority proportions for the top
-#' districts with that proportion
 #'
 #' @details This function allows users to simulate redistricting plans
 #' using Markov Chain Monte Carlo methods. Several constraints
@@ -678,6 +564,8 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #' minority constraint for each accepted redistricting plan.}
 #' \item{constraint_hinge}{A vector containing the value of the
 #' hinge constraint for each accepted redistricting plan.}
+#' \item{constraint_qps}{A vector containing the value of the
+#' QPS constraint for each accepted redistricting plan.}
 #' \item{beta_sequence}{A vector containing the value of beta for each iteration
 #' of the algorithm. Returned when tempering is being used.}
 #' \item{mhdecisions_beta}{A vector specifying whether a proposed beta value was
@@ -706,43 +594,32 @@ redist.combine <- function(savename, nloop, nthin, temper = 0){
 #'
 #' ## Run the algorithm
 #' alg_253 <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
-#'                        init_plan = init_plan, nsims = 10000)
+#'     init_plan = init_plan, nsims = 10000)
 #'
-#'  ## You can also let it find a plan on its own!
-#'  sims <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
-#'                        ndists = 3, nsims = 10000)
-#'
-#'
+#' ## You can also let it find a plan on its own!
+#' sims <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
+#'     ndists = 3, nsims = 10000)
 #' }
 #'
 #' @concept simulate
 #' @export
 redist.flip <- function(adj,
                         total_pop,  nsims, ndists = NULL,
-                        init_plan = NULL,
+                        init_plan = NULL, constraints = redist_constr(),
                         loopscompleted = 0, nloop = 1,
                         warmup = 0, nthin = 1, eprob = 0.05,
                         lambda = 0,
                         pop_tol = NULL,
-                        group_pop = NULL,
-                        areasvec = NULL,
-                        counties = NULL,
-                        borderlength_mat = NULL, ssdmat = NULL, temper = FALSE,
-                        constraint = NULL, constraintweights = NULL,
-                        compactness_metric = "fryer-holden",
-                        partisan_metric = "efficiency-gap",
-                        ssd_denom = 1.0,
+                        temper = FALSE,
                         betaseq = "powerlaw", betaseqlength = 10,
                         betaweights = NULL,
                         adjswaps = TRUE, rngseed = NULL, maxiterrsg = 5000,
                         adapt_lambda = FALSE, adapt_eprob = FALSE,
                         exact_mh = FALSE, savename = NULL,
-                        verbose = TRUE, tgt_min = 0.55, tgt_other = 0.25,
-                        rvote = NULL, dvote = NULL, minorityprop = NULL){
+                        verbose = TRUE) {
+    .Deprecated("redist_flip", msg = "Please use `redist_flip`. This will be gone in 4.1.")
 
-    contiguitymap <- 'rooks'
-
-    if(verbose){
+    if (verbose) {
         ## Initialize ##
         divider <- c(paste(rep("=", 20), sep = "", collapse = ""), "\n")
 
@@ -755,98 +632,64 @@ redist.flip <- function(adj,
     ##########################
     ## Is anything missing? ##
     ##########################
-    if(missing(adj)){
+    if (missing(adj)) {
         stop("Please supply adjacency matrix or list")
     }
-    if(missing(total_pop)){
+    if (missing(total_pop)) {
         stop("Please supply vector of geographic unit populations")
     }
-    if(missing(nsims)){
+    if (missing(nsims)) {
         stop("Please supply number of simulations to run algorithm")
     }
-    if(is.null(ndists) & is.null(init_plan) || is.null(ndists) & is.character(init_plan) ){
+    if (is.null(ndists) & is.null(init_plan) || is.null(ndists) & is.character(init_plan)) {
         stop("Please provide either the desired number of congressional districts
               or an initial set of congressional district assignments")
     }
-    if(nloop > 1 & missing(savename)){
+    if (nloop > 1 & missing(savename)) {
         stop("Please supply save directory if saving simulations at checkpoints")
-    }
-    if(!(contiguitymap %in% c("queens", "rooks"))){
-        stop("Please supply `queens` or `rooks` for a distance criteria")
-    }
-    if(!is.null(constraint) & is.null(constraintweights)){
-        stop("Please provide a weight value in 'constraintweights' for each constraint specified in 'constraint'.")
-    }
-    if(!(compactness_metric %in% c("fryer-holden", "polsby-popper", 'edges-removed'))){
-        stop("We only support 'fryer-holden', 'polsby-popper', or 'edges-removed' as compactness metrics.")
     }
 
     ## Set seed before first iteration of algorithm if provided by user
-    if(!is.null(rngseed) & is.numeric(rngseed)){
+    if (!is.null(rngseed) & is.numeric(rngseed)) {
         set.seed(rngseed)
     }
 
-    if(adapt_lambda){
+    if (adapt_lambda) {
         adapt_lambda <- 1
-    }else{
+    } else {
         adapt_lambda <- 0
     }
-    if(adapt_eprob){
+    if (adapt_eprob) {
         adapt_eprob <- 1
-    }else{
+    } else {
         adapt_eprob <- 0
     }
-    if(exact_mh){
+    if (exact_mh) {
         exact_mh <- 1
-    }else{
+    } else {
         exact_mh <- 0
     }
 
     #####################
     ## Preprocess data ##
     #####################
-    if(verbose){
-    cat("Preprocessing data.\n\n")
+    if (verbose) {
+        cat("Preprocessing data.\n\n")
     }
     preprocout <- redist.preproc(adj = adj,
-                                 total_pop = total_pop,
-                                 init_plan = init_plan,
-                                 ndists = ndists,
-                                 pop_tol = pop_tol,
-                                 counties = counties,
-                                 group_pop = group_pop,
-                                 areasvec = areasvec,
-                                 borderlength_mat = borderlength_mat,
-                                 ssdmat = ssdmat,
-                                 compactness_metric = compactness_metric,
-                                 partisan_metric = partisan_metric,
-                                 temper = temper,
-                                 constraint = constraint,
-                                 constraintweights = constraintweights,
-                                 betaseq = betaseq,
-                                 betaseqlength = betaseqlength,
-                                 betaweights = betaweights,
-                                 adjswaps = adjswaps,
-                                 maxiterrsg = maxiterrsg,
-                                 contiguitymap = contiguitymap,
-                                 tgt_min = tgt_min,
-                                 tgt_other = tgt_other,
-                                 rvote = rvote,
-                                 dvote = dvote,
-                                 minorityprop = minorityprop,
-                                 verbose = verbose
-                                 )
+        total_pop = total_pop,
+        init_plan = init_plan,
+        ndists = ndists,
+        pop_tol = pop_tol,
+        temper = temper,
+        betaseq = betaseq,
+        betaseqlength = betaseqlength,
+        betaweights = betaweights,
+        adjswaps = adjswaps,
+        maxiterrsg = maxiterrsg,
+        verbose = verbose
+    )
 
-    ## Set betas - if tempering, modified later
-    weightpop <- preprocout$params$weightpop
-    weightcompact <- preprocout$params$weightcompact
-    weightseg <- preprocout$params$weightseg
-    weightvra <- preprocout$params$weightvra
-    weightsimilar <- preprocout$params$weightsimilar
-    weightcountysplit <- preprocout$params$weightcountysplit
-    weightpartisan <- preprocout$params$weightpartisan
-    weightminority <- preprocout$params$weightminority
-    weighthinge <- preprocout$params$weighthinge
 
     ## Get starting loop value
     loopstart <- loopscompleted + 1
@@ -854,106 +697,84 @@ redist.flip <- function(adj,
     #######################
     ## Run the algorithm ##
     #######################
-    for(i in loopstart:nloop){
+    for (i in loopstart:nloop) {
         ## Get congressional districts, tempered beta values
-        if(i > loopstart){
-            cds <- algout$plans[,nsims]
+        if (i > loopstart) {
+            cds <- algout$plans[, nsims]
 
-            if(temper){
+            if (temper) {
                 beta <- algout$beta_sequence[nsims]
             }
 
-            if(!is.null(rngseed) & is.numeric(rngseed)){
+            if (!is.null(rngseed) & is.numeric(rngseed)) {
                 set.seed(algout$randseed)
             }
 
             rm(list = "algout")
 
-        } else{
+        } else {
 
             ## Reload the data if re-startomg
-            if(loopstart > 1){
+            if (loopstart > 1) {
 
                 ## Load the data
                 algout <- readRDS(paste0(savename, "_loop", i - 1, ".rds"))
 
                 ## Stop if number of simulations per loop is different
-                if(nsims != ncol(algout[[1]])){
+                if (nsims != ncol(algout[[1]])) {
                     stop("Please specify the same number of simulations per
                      loop across all loops")
                 }
 
-                cds <- algout$plans[,nsims]
+                cds <- algout$plans[, nsims]
 
-                if(temper){
+                if (temper) {
                     beta <- algout$beta_sequence[nsims]
                 }
 
-                if(!is.null(rngseed) & is.numeric(rngseed)){
+                if (!is.null(rngseed) & is.numeric(rngseed)) {
                     set.seed(algout$randseed)
                 }
 
                 rm(list = "algout")
 
-            }else{
+            } else {
                 cds <- preprocout$data$init_plan
             }
 
         }
 
         ## Run algorithm
-        if(verbose){
+        if (verbose) {
             cat("Starting swMH().\n")
         }
         algout <- swMH(aList = preprocout$data$adjlist,
-                       cdvec = cds,
-                       cdorigvec = preprocout$data$init_plan,
-                       popvec = preprocout$data$total_pop,
-                       grouppopvec = preprocout$data$group_pop,
-                       areas_vec = preprocout$data$areasvec,
-                       county_membership = preprocout$data$counties,
-                       borderlength_mat = preprocout$data$borderlength_mat,
-                       nsims = nsims * nthin + warmup,
-                       eprob = eprob,
-                       pct_dist_parity = preprocout$params$pctdistparity,
-                       beta_sequence = preprocout$params$betaseq,
-                       beta_weights = preprocout$params$betaweights,
-                       ssdmat = preprocout$data$ssdmat,
-                       lambda = lambda,
-                       beta = preprocout$params$beta,
-                       weight_population = weightpop,
-                       weight_compact = weightcompact,
-                       weight_segregation = weightseg,
-                       weight_vra = weightvra,
-                       weight_similar = weightsimilar,
-                       weight_countysplit = weightcountysplit,
-                       weight_partisan = weightpartisan,
-                       weight_minority = weightminority,
-                       weight_hinge = weighthinge,
-                       adapt_beta = preprocout$params$temperbeta,
-                       adjswap = preprocout$params$adjswaps,
-                       exact_mh = exact_mh,
-                       adapt_lambda = adapt_lambda,
-                       adapt_eprob = adapt_eprob,
-                       compactness_measure = compactness_metric,
-                       partisan_measure = preprocout$params$partisan_metric,
-                       ssd_denom = ssd_denom,
-                       tgt_min = tgt_min,
-                       tgt_other = tgt_other,
-                       rvote = preprocout$params$rvote,
-                       dvote = preprocout$params$dvote,
-                       minorityprop = preprocout$params$minorityprop,
-                       verbose = as.logical(verbose))
+            cdvec = cds,
+            popvec = preprocout$data$total_pop,
+            constraints = constraints,
+            nsims = nsims*nthin + warmup,
+            eprob = eprob,
+            pct_dist_parity = preprocout$params$pctdistparity,
+            beta_sequence = preprocout$params$betaseq,
+            beta_weights = preprocout$params$betaweights,
+            lambda = lambda,
+            beta = preprocout$params$beta,
+            adapt_beta = preprocout$params$temperbeta,
+            adjswap = preprocout$params$adjswaps,
+            exact_mh = exact_mh,
+            adapt_lambda = adapt_lambda,
+            adapt_eprob = adapt_eprob,
+            verbose = as.logical(verbose))
 
         class(algout) <- "redist"
 
         ## Save random number state if setting the seed
-        if(!is.null(rngseed)){
+        if (!is.null(rngseed)) {
             algout$randseed <- .Random.seed[3]
         }
 
         ## Save output
-        if(nloop > 1){
+        if (nloop > 1) {
             saveRDS(algout, file = paste0(savename, "_loop", i, ".rds"))
         }
 
@@ -967,16 +788,16 @@ redist.flip <- function(adj,
     ###############################
     ## Combine and save the data ##
     ###############################
-    if(nloop > 1){
+    if (nloop > 1) {
         redist.combine(savename = savename, nloop = nloop,
-                       nthin = nthin,
-                       temper = temperflag)
-    }else if(!is.null(savename)){
+            nthin = nthin,
+            temper = temperflag)
+    } else if (!is.null(savename)) {
         saveRDS(algout, file = paste0(savename, ".rds"))
     }
 
     ## Examine the data
-    if(nloop == 1){
+    if (nloop == 1) {
         algout <- redist.warmup.chain(algout = algout, warmup = warmup)
         algout <- redist.thin.chain(algout, thin = nthin)
     }
@@ -994,7 +815,7 @@ redist.flip <- function(adj,
 #' population parity, geographic compactness, or other constraints are
 #' implemented.
 #'
-#' @param algout An object of class "redist".
+#' @param plans An object of class `redist_plans` from `redist_flip()`.
 #' @param resampleconstraint The constraint implemented in the simulations: one
 #' of "pop", "compact", "segregation", or "similar".
 #' @param targetbeta The target value of the constraint.
@@ -1040,6 +861,8 @@ redist.flip <- function(adj,
 #' minority constraint for each accepted redistricting plan.}
 #' \item{constraint_hinge}{A vector containing the value of the
 #' hinge constraint for each accepted redistricting plan.}
+#' \item{constraint_qps}{A vector containing the value of the
+#' QPS constraint for each accepted redistricting plan.}
 #' \item{beta_sequence}{A vector containing the value of beta for each iteration
 #' of the algorithm. Returned when tempering is being used.}
 #' \item{mhdecisions_beta}{A vector specifying whether a proposed beta value was
@@ -1062,102 +885,87 @@ redist.flip <- function(adj,
 #' @examples
 #' \donttest{
 #' data(iowa)
-#' adj <- redist.adjacency(iowa)
-#' init_plan <- iowa$cd_2010
-#'alg <- redist.flip(adj = adj, total_pop = iowa$pop,
-#'                   init_plan = init_plan, nsims = 1000,
-#'                   constraint = 'population', constraintweights = 5.4)
+#' map_ia <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
+#' cons <- redist_constr(map_ia)
+#' cons <- add_constr_pop_dev(cons, strength = 5.4)
+#' alg <- redist_flip(map_ia, nsims = 500, constraints = cons)
 #'
-#' alg_ipw <- redist.ipw(algout = alg,
-#'                      resampleconstraint = 'pop',
-#'                      targetbeta = 1,
-#'                      targetpop = 0.05)
+#' alg_ipw <- redist.ipw(plans = alg,
+#'     resampleconstraint = "pop_dev",
+#'     targetbeta = 1,
+#'     targetpop = 0.05)
 #' }
 #'
 #' @concept post
 #' @export
-redist.ipw <- function(algout,
-                       resampleconstraint = c("pop", "compact",
-                                              "segregation", "similar"),
+redist.ipw <- function(plans,
+                       resampleconstraint = c("pop_dev", "edges_removed",
+                           "segregation", "status_quo"),
                        targetbeta,
                        targetpop = NULL,
-                       temper = 0){
+                       temper = 0) {
 
     ## Warnings:
-    if(missing(algout) | class(algout) != "redist"){
-        stop("Please provide a proper redist object")
+    if (missing(plans) | !inherits(plans, "redist_plans")) {
+        cli_abort("Please provide {.arg plans} as a {.cls redist_plans}.")
     }
-    if(length(resampleconstraint)!=1){
-        stop("We currently only support one resamplingconstraint at a time.")
+
+    plans_ref <- subset_ref(plans)
+    plans <- subset_sampled(plans)
+
+    if (length(resampleconstraint) != 1) {
+        cli_abort("We currently only support one resamplingconstraint at a time.")
     }
-    if(!(resampleconstraint %in% c("pop", "compact", "segregation", "similar"))){
-        stop("We do not provide support for that constraint at this time")
+    if (!(resampleconstraint %in% c("pop_dev", "edges_removed", "segregation", "status_quo"))) {
+        cli_abort("We do not provide support for that constraint at this time")
     }
-    if(missing(targetbeta)){
-        stop("Please specify the target beta value")
+    if (missing(targetbeta)) {
+        cli_abort("Please specify the target beta value")
     }
 
     ## Get indices drawn under target beta if tempering
-    if(temper == 1){
-        indbeta <- which(algout$beta_sequence == targetbeta)
-    }else{
-        indbeta <- 1:ncol(algout$plans)
+    if (temper == 1) {
+        indbeta <- which(plans$beta_sequence == targetbeta)
+    } else {
+        indbeta <- seq_len(ncol(get_plans_matrix(plans)))
     }
 
     ## Get indices of draws that meet target population
-    if(!is.null(targetpop)){
-        indpop <- which(algout$distance_parity <= targetpop)
-    }else{
-        indpop <- 1:ncol(algout$plans)
+    if (!is.null(targetpop)) {
+        indpop <- which(plans$distance_parity <= targetpop)
+    } else {
+        indpop <- seq_len(ncol(get_plans_matrix(plans)))
     }
 
     ## Get intersection of indices
     inds <- intersect(indpop, indbeta)
     ## Construct weights
-    psi <- algout[[paste0("constraint_", resampleconstraint)]][inds]
-    weights <- 1 / exp(targetbeta * psi)
+    psi <- plans[[paste0("constraint_", resampleconstraint)]][inds]
+    weights <- 1/exp(targetbeta*psi)
 
     ## Resample indices
     inds <- sample(inds, length(inds), replace = TRUE, prob = weights)
+    ndists <- max(plans$district)
+    indx <- unlist(lapply(inds, function(x) {seq(ndists*(x - 1) + 1, ndists*x, by = 1)}))
 
     ## Subset the entire list
-    algout_new <- vector(mode = "list", length = length(algout))
-    for(i in 1:length(algout_new)){
-
-        ## Subset the matrix first, then the vectors
-        if(i == 1){
-            algout_new[[i]] <- algout[[i]][,inds]
-        } else if(length(algout[[i]]) == 1) {
-            algout_new[[i]] <- algout[[i]]
-        } else if(all(names(algout[[i]]) == 'adj')) {
-            algout_new[[i]] <- algout[[i]]
-        } else {
-            algout_new[[i]] <- algout[[i]][inds]
-        }
-    }
-    names(algout_new) <- names(algout)
-
-    ## Change class
-    class(algout_new) <- "redist"
-
-    return(algout_new)
-
+    plans %>% slice(indx)
 }
 
-redist.warmup.chain <- function(algout, warmup = 1){
-    if(warmup <= 0){
+redist.warmup.chain <- function(algout, warmup = 1) {
+    if (warmup <= 0) {
         return(algout)
     }
     inds <- 1:warmup
     algout_new <- vector(mode = "list", length = length(algout))
-    for(i in 1:length(algout)){
+    for (i in 1:length(algout)) {
 
         ## Subset the matrix first, then the vectors
-        if(i == 1){
-            algout_new[[i]] <- algout[[i]][,-inds]
-        } else if(length(algout[[i]]) == 1) {
+        if (i == 1) {
+            algout_new[[i]] <- algout[[i]][, -inds]
+        } else if (length(algout[[i]]) == 1) {
             algout_new[[i]] <- algout[[i]]
-        } else if(all(names(algout[[i]]) == 'adj')) {
+        } else if (all(names(algout[[i]]) == "adj")) {
             algout_new[[i]] <- algout[[i]]
         } else {
             algout_new[[i]] <- algout[[i]][-inds]
@@ -1170,21 +978,21 @@ redist.warmup.chain <- function(algout, warmup = 1){
 }
 
 
-redist.thin.chain <- function(algout, thin = 100){
-    if(thin <= 1){
+redist.thin.chain <- function(algout, thin = 100) {
+    if (thin <= 1) {
         return(algout)
     }
 
     inds <- seq(1, ncol(algout$plans), by = thin)
     algout_new <- vector(mode = "list", length = length(algout))
-    for(i in 1:length(algout)){
+    for (i in 1:length(algout)) {
 
         ## Subset the matrix first, then the vectors
-        if(i == 1){
-            algout_new[[i]] <- algout[[i]][,inds]
-        } else if(length(algout[[i]]) == 1) {
+        if (i == 1) {
+            algout_new[[i]] <- algout[[i]][, inds]
+        } else if (length(algout[[i]]) == 1) {
             algout_new[[i]] <- algout[[i]]
-        } else if(!is.null(names(algout[[i]])) & all(names(algout[[i]]) == 'adj')) {
+        } else if (!is.null(names(algout[[i]])) & all(names(algout[[i]]) == "adj")) {
             algout_new[[i]] <- algout[[i]]
         } else {
             algout_new[[i]] <- algout[[i]][inds]
@@ -1195,4 +1003,3 @@ redist.thin.chain <- function(algout, thin = 100){
     class(algout_new) <- "redist"
     return(algout_new)
 }
-

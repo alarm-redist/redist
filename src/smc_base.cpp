@@ -78,3 +78,8 @@ int select_k(std::vector<double> x, int k) {
         }
     }
 }
+
+List cli_config(bool clear, const char * fmt) {
+    return List::create(_["clear"]=clear, _["show_after"]=0.25,
+                        _["format"]=fmt);
+}

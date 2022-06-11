@@ -10,6 +10,7 @@ redist.plot.distr_qtys(
   sort = "asc",
   geom = "jitter",
   color_thresh = NULL,
+  size = 0.1,
   ...
 )
 }
@@ -30,6 +31,8 @@ quantity of interest.}
 Plans with quantities of interest above the threshold will be colored
 differently than plans below the threshold.}
 
+\item{size}{The dot size for \code{geom="jitter"}.}
+
 \item{...}{passed on to \code{\link[ggplot2]{geom_boxplot}}}
 }
 \value{
@@ -44,8 +47,8 @@ plan, if applicable.
 library(dplyr)
 data(iowa)
 
-iowa = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05, total_pop = pop)
-plans = redist_smc(iowa, nsims=100, silent=TRUE)
+iowa <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05, total_pop = pop)
+plans <- redist_smc(iowa, nsims = 100, silent = TRUE)
 plans \%>\%
     mutate(pct_dem = group_frac(iowa, dem_08, tot_08)) \%>\%
     redist.plot.distr_qtys(pct_dem)

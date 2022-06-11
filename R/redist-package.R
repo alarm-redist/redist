@@ -31,14 +31,16 @@
 #' Dynamics in Monte Carlo Simulations." Physical Review Letters.
 #'
 #' @keywords package
+#' @import redistmetrics
 #' @importFrom Rcpp evalCpp
-#' @importFrom coda mcmc mcmc.list traceplot autocorr.plot densplot cumuplot gelman.plot
 #' @importFrom parallel makeCluster stopCluster
-#' @importFrom doParallel registerDoParallel
-#' @importFrom foreach foreach %dopar%
+#' @importFrom foreach foreach %do% %dopar%
+#' @importFrom doRNG %dorng%
 #' @importFrom grDevices dev.off pdf
-#' @importFrom stats median runif quantile qnorm IQR
+#' @importFrom stats median runif quantile qnorm IQR optim sd qt var na.omit
+#' @importFrom utils str
 #' @importFrom dplyr n dplyr_row_slice dplyr_col_modify dplyr_reconstruct .data
+#' @importFrom cli cli_text cli_abort cli_warn cli_inform
 #' @importFrom rlang :=
 #' @importFrom stringr str_c str_glue
 NULL

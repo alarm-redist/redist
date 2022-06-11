@@ -11,18 +11,13 @@
 /*
  * Main entry point.
  *
- * USING MCMMC
+ * USING MCMC
  * Sample `N` redistricting plans on map `g`, ensuring that the maximum
  * population deviation is between `lower` and `upper` (and ideally `target`)
  */
 Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const uvec &pop,
               int n_distr, double target, double lower, double upper, double rho,
-              double beta_sq, const uvec &current, int n_current,
-              double beta_vra, double tgt_min, double tgt_other,
-              double pow_vra, const uvec &min_pop,
-              double beta_vra_hinge, const vec &tgts_min,
-              double beta_inc, const uvec &incumbents, double beta_splits,
-              double beta_fractures, double thresh, int k, int verbosity) {
+              List constraints, double thresh, int k, int thin, int verbosity) {
     // re-seed MT
     generator.seed((int) Rcpp::sample(INT_MAX, 1)[0]);
 
@@ -31,16 +26,20 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     int V = g.size();
     int n_cty = max(counties);
 
-    umat districts(V, N, fill::zeros);
+    int n_out = N/thin + 2;
+    umat districts(V, n_out, fill::zeros);
     districts.col(0) = init;
+    districts.col(1) = init;
 
-    Rcpp::IntegerVector mh_decisions(N - 1);
+    Rcpp::IntegerVector mh_decisions(N/thin + 1);
 
     double tol = std::max(target - lower, upper - target) / target;
 
     if (verbosity >= 1) {
+        Rcout.imbue(std::locale(""));
         Rcout << "MARKOV CHAIN MONTE CARLO\n";
-        Rcout << "Sampling " << N-1 << " " << V << "-unit maps with " << n_distr
+        Rcout << std::fixed << std::setprecision(0);
+        Rcout << "Sampling " << N << " " << V << "-unit maps with " << n_distr
               << " districts and population between " << lower << " and " << upper << ".\n";
         if (cg.size() > 1)
             Rcout << "Sampling hierarchically with respect to the "
@@ -51,23 +50,35 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     if (k <= 0) {
         adapt_ms_parameters(g, n_distr, k, thresh, tol, init, counties, cg, pop, target);
     }
-    if (verbosity >= 2)
+    if (verbosity >= 3)
         Rcout << "Using k = " << k << "\n";
 
     int distr_1, distr_2;
     select_pair(n_distr, g, init, distr_1, distr_2);
-    int refresh = std::max(N / 20, 1);
     int n_accept = 0;
     int reject_ct;
+    CharacterVector psi_names = CharacterVector::create(
+        "pop_dev", "splits", "multisplits",
+        "segregation", "grp_pow", "grp_hinge", "grp_inv_hinge",
+        "compet", "status_quo", "incumbency",
+        "polsby", "fry_hold", "log_st", "edges_removed",
+        "qps", "custom"
+    );
+    NumericVector new_psi(psi_names.size());
+    std::vector<int> distr_1_2;
+    new_psi.names() = psi_names;
+    RObject bar = cli_progress_bar(N - 1, cli_config(false));
+    int idx = 1;
     for (int i = 1; i < N; i++) {
-        districts.col(i) = districts.col(i - 1); // copy over old map
+        // copy old map to 'working' memory in `idx+1`
+        districts.col(idx+1) = districts.col(idx);
 
         // make the proposal
         double prop_lp = 0.0;
         reject_ct = 0;
         do {
-            select_pair(n_distr, g, districts.col(i), distr_1, distr_2);
-            prop_lp = split_map_ms(g, counties, cg, districts.col(i), distr_1,
+            select_pair(n_distr, g, districts.col(idx+1), distr_1, distr_2);
+            prop_lp = split_map_ms(g, counties, cg, districts.col(idx+1), distr_1,
                                    distr_2, pop, lower, upper, target, k);
             if (reject_ct % 200 == 0) Rcpp::checkUserInterrupt();
             reject_ct++;
@@ -77,15 +88,15 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
         if (rho != 1) {
             double log_st = 0;
             for (int j = 1; j <= n_cty; j++) {
-                log_st += log_st_distr(g, districts, counties, i-1, distr_1, j);
-                log_st += log_st_distr(g, districts, counties, i-1, distr_2, j);
-                log_st -= log_st_distr(g, districts, counties, i, distr_1, j);
-                log_st -= log_st_distr(g, districts, counties, i, distr_2, j);
+                log_st += log_st_distr(g, districts, counties, idx, distr_1, j);
+                log_st += log_st_distr(g, districts, counties, idx, distr_2, j);
+                log_st -= log_st_distr(g, districts, counties, idx+1, distr_1, j);
+                log_st -= log_st_distr(g, districts, counties, idx+1, distr_2, j);
             }
-            log_st += log_st_contr(g, districts, counties, n_cty, i-1, distr_1);
-            log_st += log_st_contr(g, districts, counties, n_cty, i-1, distr_2);
-            log_st -= log_st_contr(g, districts, counties, n_cty, i, distr_1);
-            log_st -= log_st_contr(g, districts, counties, n_cty, i, distr_2);
+            log_st += log_st_contr(g, districts, counties, n_cty, idx, distr_1);
+            log_st += log_st_contr(g, districts, counties, n_cty, idx, distr_2);
+            log_st -= log_st_contr(g, districts, counties, n_cty, idx+1, distr_1);
+            log_st -= log_st_contr(g, districts, counties, n_cty, idx+1, distr_2);
 
             prop_lp += (1 - rho) * log_st;
         }
@@ -93,37 +104,38 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
         // add gibbs target
         // NOTE: different signs than above b/c of how Metropolis proposal has
         // transition ratio flipped relative to the target density ratio
-        prop_lp -= calc_gibbs_tgt(districts.col(i), n_distr, V, distr_1, distr_2,
-                                  pop, beta_sq, current, n_current, beta_vra,
-                                  tgt_min, tgt_other, pow_vra, min_pop,
-                                  beta_vra_hinge, tgts_min,
-                                  beta_inc, incumbents,
-                                  beta_splits, beta_fractures, counties, n_cty);
-        prop_lp += calc_gibbs_tgt(districts.col(i-1), n_distr, V, distr_1, distr_2,
-                                  pop, beta_sq, current, n_current, beta_vra,
-                                  tgt_min, tgt_other, pow_vra, min_pop,
-                                  beta_vra_hinge, tgts_min,
-                                  beta_inc, incumbents,
-                                  beta_splits, beta_fractures, counties, n_cty);
+        distr_1_2 = {distr_1, distr_2};
+
+        prop_lp -= calc_gibbs_tgt(districts.col(idx+1), n_distr, V, distr_1_2, new_psi,
+                                  pop, target, g, constraints);
+        prop_lp += calc_gibbs_tgt(districts.col(idx), n_distr, V, distr_1_2, new_psi,
+                                  pop, target, g, constraints);
 
         double alpha = exp(prop_lp);
         if (alpha >= 1 || unif(generator) <= alpha) { // ACCEPT
             n_accept++;
-            // map already stored in districts.col(i);
-            mh_decisions(i - 1) = 1;
+            districts.col(idx) = districts.col(idx+1); // copy over new map
+            mh_decisions(idx - 1) = 1;
         } else { // REJECT
-            districts.col(i) = districts.col(i - 1); // copy over old map
-            mh_decisions(i - 1) = 0;
+            districts.col(idx+1) = districts.col(idx); // copy over old map
+            mh_decisions(idx - 1) = 0;
         }
 
-        if (verbosity >= 2 && refresh > 0 && (i+1) % refresh == 0) {
-            Rcout << "Iteration " << i+1 << "/" << N-1 << std::endl;
+        if (i % thin == 0) idx++;
+
+        if (verbosity >= 1 && CLI_SHOULD_TICK) {
+            cli_progress_set(bar, i - 1);
+        }
+        if (idx == n_out - 1) { // thin doesn't divide N and we are done early
+            cli_progress_set(bar, N);
+            break;
         }
         Rcpp::checkUserInterrupt();
     }
+    cli_progress_done(bar);
 
     if (verbosity >= 1) {
-        Rcout << "Acceptance rate: " << (100.0 * n_accept) / (N-1) << std::endl;
+        Rcout << "Acceptance rate: " << std::setprecision(2) << (100.0 * n_accept) / (N-1) << "%\n";
     }
 
     Rcpp::List out;
@@ -132,56 +144,6 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
 
     return out;
 }
-
-
-/*
- * Add specific constraint weights & return the cumulative weight vector
- */
-double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
-                      int distr_1, int distr_2, const uvec &pop, double beta_sq,
-                      const uvec &current, int n_current,
-                      double beta_vra, double tgt_min, double tgt_other,
-                      double pow_vra, const uvec &min_pop,
-                      double beta_vra_hinge, const vec &tgts_min,
-                      double beta_inc, const uvec &incumbents,
-                      double beta_splits, double beta_fractures,
-                      const uvec &counties, int n_cty) {
-    double log_tgt = 0;
-
-    if (beta_sq != 0)
-        log_tgt += beta_sq * (
-            sq_entropy(plan, current, distr_1, pop, n_distr, n_current, V) +
-            sq_entropy(plan, current, distr_2, pop, n_distr, n_current, V)
-        );
-    if (beta_vra != 0)
-        log_tgt += beta_vra * (
-            eval_vra(plan, distr_1, tgt_min, tgt_other, pow_vra, pop, min_pop) +
-            eval_vra(plan, distr_2, tgt_min, tgt_other, pow_vra, pop, min_pop)
-        );
-    if (beta_vra_hinge != 0)
-        log_tgt += beta_vra_hinge * (
-            eval_vra_hinge(plan, distr_1, tgts_min, pop, min_pop) +
-            eval_vra_hinge(plan, distr_2, tgts_min, pop, min_pop)
-        );
-    if (beta_inc != 0)
-        log_tgt += beta_inc * (
-            eval_inc(plan, distr_1, incumbents) +
-            eval_inc(plan, distr_2, incumbents)
-        );
-    if (beta_splits != 0)
-        log_tgt += beta_splits * (
-            eval_splits(plan, distr_1, counties, n_cty) +
-            eval_splits(plan, distr_2, counties, n_cty)
-        );
-    if (beta_fractures != 0)
-        log_tgt += beta_fractures * (
-            eval_fractures(plan, distr_1, counties, n_cty) +
-                eval_fractures(plan, distr_2, counties, n_cty)
-        );
-
-    return log_tgt;
-}
-
 
 /*
  * Split a map into two pieces with population lying between `lower` and `upper`
@@ -300,19 +262,23 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
     int max_ok = 0;
     std::vector<bool> ignore(V);
     int distr_1, distr_2;
+    int max_V = 0;
     for (int i = 0; i < N_adapt; i++) {
         Tree ust = init_tree(V);
 
         double joint_pop = 0;
         select_pair(n_distr, g, plan, distr_1, distr_2);
+        int n_vtx = 0;
         for (int j = 0; j < V; j++) {
             if (plan(j) == distr_1 || plan(j) == distr_2) {
                 joint_pop += pop(j);
                 ignore[j] = false;
+                n_vtx++;
             } else {
                 ignore[j] = true;
             }
         }
+        if (n_vtx > max_V) max_V = n_vtx;
 
         ust = sample_sub_ust(g, ust, V, root, ignore, pop, lower, upper, counties, cg);
         if (ust.size() == 0) {
@@ -355,6 +321,8 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
         Rcerr << "Warning: maximum hit; falling back to naive k estimator.\n";
         k = max_ok + 1;
     }
+
+    k = std::min(k, max_V - 1);
 }
 
 /*

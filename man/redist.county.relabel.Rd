@@ -24,7 +24,7 @@ Relabel Discontinuous Counties
 set.seed(2)
 data(fl25)
 data(fl25_adj)
-counties <- sample(c(rep('a', 20), rep('b', 5)))
+counties <- sample(c(rep("a", 20), rep("b", 5)))
 redist.county.relabel(fl25_adj, counties)
 
 }

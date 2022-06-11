@@ -24,7 +24,7 @@ population parity, and keeping close to the original plan
 \donttest{
 data(iowa)
 map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01, total_pop = pop)
-plan <- get_plans_matrix(redist_smc(map, 1))[,2]
+plan <- get_plans_matrix(redist_smc(map, 1))[, 2]
 local <- persily(plan = plan, map = map, counties = region)
 }
 }

@@ -1,6 +1,5 @@
 Package: redist
-Version: 3.1.5
-Date: 2021-10-04
+Version: 4.0.0
 Title: Simulation Methods for Legislative Redistricting
 Authors@R: c(
     person("Christopher T.", "Kenny", email = "christopherkenny@fas.harvard.edu", role = c("aut", "cre")),
@@ -21,10 +20,12 @@ Description: Enables researchers to sample redistricting plans from a pre-specif
     Fifield, Imai, Kawahara, and Kenny (2020) <doi:10.1080/2330443X.2020.1791773>,
     and McCartan and Imai (2020) <arXiv:2008.06131>.
 Depends:
-    R (>= 3.5.0)
+    R (>= 3.5.0),
+    redistmetrics (>= 1.0.2) 
 Imports:
     Rcpp (>= 0.11.0),
     rlang,
+    cli (>= 3.1.0),
     vctrs,
     tidyselect,
     stringr,
@@ -32,14 +33,13 @@ Imports:
     sf,
     doParallel,
     foreach,
+    doRNG,
     servr,
     sys,
-    coda,
     ggplot2,
-    patchwork,
-    readr (>= 2.0.0)
+    patchwork
 Suggests:
-    igraph,
+    coda,
     s2,
     lwgeom,
     withr,
@@ -52,17 +52,18 @@ Suggests:
     rmapshaper,
     scales,
     units,
-    spdep,
     RSpectra,
-    testthat (>= 3.0.0)
-LinkingTo: Rcpp, RcppArmadillo
+    testthat (>= 3.0.0),
+    rstudioapi
+LinkingTo: Rcpp, RcppArmadillo, RcppThread, cli, redistmetrics
 License: GPL (>= 2)
-SystemRequirements: OpenMPI, gmp, libxml2, python
-Packaged: 2015-06-03 18:32:00 UTC; benfifield
+SystemRequirements: OpenMPI, gmp, libxml2, python, C++11
 NeedsCompilation: yes
 BugReports: https://github.com/alarm-redist/redist/issues
-URL: https://alarm-redist.github.io/redist/
-RoxygenNote: 7.1.1
+URL: https://alarm-redist.github.io/redist/, https://github.com/alarm-redist/redist
+RoxygenNote: 7.2.0
 VignetteBuilder: knitr
 Encoding: UTF-8
 Config/testthat/edition: 3
+Language: en-US
+LazyData: true

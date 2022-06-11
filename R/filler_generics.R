@@ -17,7 +17,7 @@ transmute.redist_map <- function(.data, ...) {
 
 #' @export
 #' @importFrom dplyr filter
-filter.redist_map <- function(.data, ..., .preserve=FALSE) {
+filter.redist_map <- function(.data, ..., .preserve = FALSE) {
     reconstruct.redist_map(NextMethod(), .data)
 }
 
@@ -75,6 +75,20 @@ ungroup.redist_map <- function(x, ...) {
     reconstruct.redist_map(NextMethod(), x)
 }
 
+#' @export
+#' @importFrom dplyr rowwise
+rowwise.redist_map <- function(x, ...) {
+    reconstruct.redist_map(NextMethod(), x)
+}
+
+#' @export
+`[[<-.redist_map` <- function(x, i, value) {
+    reconstruct.redist_map(NextMethod(), x)
+}
+#' @export
+`$<-.redist_map` <- function(x, i, value) {
+    reconstruct.redist_map(NextMethod(), x)
+}
 
 # redist_plans generics ------------
 
@@ -92,13 +106,13 @@ transmute.redist_plans <- function(.data, ...) {
 
 #' @export
 #' @importFrom dplyr summarise
-summarise.redist_plans = function(.data, ..., .groups=NULL) {
+summarise.redist_plans <- function(.data, ..., .groups = NULL) {
     reconstruct.redist_plans(NextMethod(), .data)
 }
 
 #' @export
 #' @importFrom dplyr filter
-filter.redist_plans <- function(.data, ..., .preserve=FALSE) {
+filter.redist_plans <- function(.data, ..., .preserve = FALSE) {
     reconstruct.redist_plans(NextMethod(), .data)
 }
 
@@ -165,5 +179,11 @@ group_by.redist_plans <- function(.data, ..., .add = FALSE) {
 #' @export
 #' @importFrom dplyr ungroup
 ungroup.redist_plans <- function(x, ...) {
+    reconstruct.redist_plans(NextMethod(), x)
+}
+
+#' @export
+#' @importFrom dplyr rowwise
+rowwise.redist_plans <- function(x, ...) {
     reconstruct.redist_plans(NextMethod(), x)
 }

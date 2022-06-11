@@ -13,7 +13,7 @@ is_county_split(plan, counties)
 }
 \value{
 A logical vector which is \code{TRUE} for precincts belonging to
-  counties which are split
+counties which are split
 }
 \description{
 Identify which counties are split by a plan

@@ -2,6 +2,10 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#ifndef ARMA_NO_DEBUG
+#define ARMA_NO_DEBUG
+#endif
+
 #include <vector>
 
 // [[Rcpp::depends(RcppArmadillo)]]

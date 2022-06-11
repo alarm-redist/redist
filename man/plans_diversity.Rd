@@ -4,7 +4,12 @@
 \alias{plans_diversity}
 \title{Calculate the diversity of a set of plans}
 \usage{
-plans_diversity(plans, n_max = 100, ncores = 1)
+plans_diversity(
+  plans,
+  n_max = 100,
+  ncores = 1,
+  total_pop = attr(plans, "prec_pop")
+)
 }
 \arguments{
 \item{plans}{a \code{\link{redist_plans}} object.}
@@ -14,6 +19,11 @@ distances. Larger numbers will have less sampling error but will require
 more computation time.}
 
 \item{ncores}{the number of cores to use in computing the distances.}
+
+\item{total_pop}{The vector of precinct populations. Used only if computing
+variation of information. If not provided, equal population of precincts
+will be assumed, i.e. the VI will be computed with respect to the precincts
+themselves, and not the population.}
 }
 \value{
 A numeric vector of off-diagonal variation of information distances.
@@ -21,14 +31,16 @@ A numeric vector of off-diagonal variation of information distances.
 \description{
 Returns the off-diagonal elements of the variation of information distance
 matrix for a sample of plans, which can be used as a diagnostic measure to
-assess the diversity of a set of plans. If there are many values close to zero,
-then the sample has many similar plans and may not be a good approximation
-to the target distribution.
+assess the diversity of a set of plans. While the exact scale varies depending
+on the number of precincts and districts, generally diversity is good if most
+of the values are greater than 0.5. Conversely, if there are many values
+close to zero, then the sample has many similar plans and may not be a good
+approximation to the target distribution.
 }
 \examples{
 data(iowa)
-ia <- redist_map(iowa, existing_plan=cd_2010, pop_tol=0.01)
-plans <- redist_smc(ia, 100, silent=TRUE)
+ia <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
+plans <- redist_smc(ia, 100, silent = TRUE)
 hist(plans_diversity(plans))
 
 }

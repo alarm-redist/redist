@@ -13,20 +13,16 @@ coarsen_adjacency <- function(adj, groups) {
     .Call(`_redist_coarsen_adjacency`, adj, groups)
 }
 
+get_plan_graph <- function(l, V, plan, n_distr) {
+    .Call(`_redist_get_plan_graph`, l, V, plan, n_distr)
+}
+
 color_graph <- function(l, plan) {
     .Call(`_redist_color_graph`, l, plan)
 }
 
 polsbypopper <- function(from, to, area, perimeter, dm, nd) {
     .Call(`_redist_polsbypopper`, from, to, area, perimeter, dm, nd)
-}
-
-schwartzberg <- function(from, to, area, perimeter, dm, nd) {
-    .Call(`_redist_schwartzberg`, from, to, area, perimeter, dm, nd)
-}
-
-talisman <- function(dvs, nd, alpha = 1, beta = 1) {
-    .Call(`_redist_talisman`, dvs, nd, alpha, beta)
 }
 
 genAlConn <- function(aList, cds) {
@@ -57,14 +53,6 @@ dist_dist_diff <- function(p, i_dist, j_dist, x_center, y_center, x, y) {
     .Call(`_redist_dist_dist_diff`, p, i_dist, j_dist, x_center, y_center, x, y)
 }
 
-cppGeneratePartitions <- function(adjList, numBlocks, popSizes, numConstraintLow, numConstraintHigh, popConstraintLow, popConstraintHigh) {
-    .Call(`_redist_cppGeneratePartitions`, adjList, numBlocks, popSizes, numConstraintLow, numConstraintHigh, popConstraintLow, popConstraintHigh)
-}
-
-hamming <- function(v, m) {
-    .Call(`_redist_hamming`, v, m)
-}
-
 log_st_map <- function(g, districts, counties, n_distr) {
     .Call(`_redist_log_st_map`, g, districts, counties, n_distr)
 }
@@ -93,8 +81,8 @@ colmin <- function(x) {
     .Call(`_redist_colmin`, x)
 }
 
-prec_cooccur <- function(m, idxs) {
-    .Call(`_redist_prec_cooccur`, m, idxs)
+prec_cooccur <- function(m, idxs, ncores = 0L) {
+    .Call(`_redist_prec_cooccur`, m, idxs, ncores)
 }
 
 group_pct <- function(m, group_pop, total_pop, n_distr) {
@@ -109,84 +97,12 @@ max_dev <- function(districts, pop, n_distr) {
     .Call(`_redist_max_dev`, districts, pop, n_distr)
 }
 
-ms_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_vra_hinge, tgts_min, beta_inc, incumbents, beta_splits, beta_fractures, thresh, k, verbosity) {
-    .Call(`_redist_ms_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_vra_hinge, tgts_min, beta_inc, incumbents, beta_splits, beta_fractures, thresh, k, verbosity)
-}
-
-agg_p2d <- function(dm, vote, nd) {
-    .Call(`_redist_agg_p2d`, dm, vote, nd)
-}
-
-dseats <- function(dm, dcounts, rcounts, nd) {
-    .Call(`_redist_dseats`, dm, dcounts, rcounts, nd)
-}
-
-dseatsDVS <- function(dvs) {
-    .Call(`_redist_dseatsDVS`, dvs)
-}
-
-DVS <- function(dcounts, rcounts) {
-    .Call(`_redist_DVS`, dcounts, rcounts)
-}
-
-effgapEP <- function(dvs, dseat_vec, nd) {
-    .Call(`_redist_effgapEP`, dvs, dseat_vec, nd)
-}
-
-effgap <- function(dcounts, rcounts, totvote) {
-    .Call(`_redist_effgap`, dcounts, rcounts, totvote)
-}
-
-taugap <- function(tau, dvs, dseat_vec, nd) {
-    .Call(`_redist_taugap`, tau, dvs, dseat_vec, nd)
-}
-
-meanmedian <- function(dvs) {
-    .Call(`_redist_meanmedian`, dvs)
-}
-
-bias <- function(dvs, nd) {
-    .Call(`_redist_bias`, dvs, nd)
-}
-
-declination <- function(dvs, dseat_vec, nd) {
-    .Call(`_redist_declination`, dvs, dseat_vec, nd)
-}
-
-lopsidedwins <- function(dvs, dseat_vec, nd) {
-    .Call(`_redist_lopsidedwins`, dvs, dseat_vec, nd)
-}
-
-responsiveness <- function(dvs, v, nd, bandwidth = .01) {
-    .Call(`_redist_responsiveness`, dvs, v, nd, bandwidth)
-}
-
-biasatv <- function(dvs, v, nd) {
-    .Call(`_redist_biasatv`, dvs, v, nd)
-}
-
-RankedMarginalDev <- function(dvs) {
-    .Call(`_redist_RankedMarginalDev`, dvs)
-}
-
-smoothseat <- function(dvs, nd) {
-    .Call(`_redist_smoothseat`, dvs, nd)
-}
-
-minkowski <- function(v, m, p) {
-    .Call(`_redist_minkowski`, v, m, p)
+ms_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, thresh, k, thin, verbosity) {
+    .Call(`_redist_ms_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, thresh, k, thin, verbosity)
 }
 
 closest_adj_pop <- function(adj, i_dist, g_prop) {
     .Call(`_redist_closest_adj_pop`, adj, i_dist, g_prop)
-}
-
-calc_polsbypopper <- function(new_cds, areas_vec, boundarylist_new, borderlength_mat, pop_vec, aList, discrete = FALSE) {
-    .Call(`_redist_calc_polsbypopper`, new_cds, areas_vec, boundarylist_new, borderlength_mat, pop_vec, aList, discrete)
-}
-
-segregationcalc <- function(distmat, grouppop, fullpop) {
-    .Call(`_redist_segregationcalc`, distmat, grouppop, fullpop)
 }
 
 reindex <- function(dm, nd) {
@@ -201,8 +117,8 @@ renumber_matrix <- function(plans, renumb) {
     .Call(`_redist_renumber_matrix`, plans, renumb)
 }
 
-best_renumber <- function(combn, joint) {
-    .Call(`_redist_best_renumber`, combn, joint)
+solve_hungarian <- function(costMatrix) {
+    .Call(`_redist_solve_hungarian`, costMatrix)
 }
 
 rsg <- function(adj_list, population, Ndistrict, target_pop, thresh, maxiter) {
@@ -217,8 +133,8 @@ k_biggest <- function(x, k = 1L) {
     .Call(`_redist_k_biggest`, x, k)
 }
 
-smc_plans <- function(N, l, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_vra_hinge, tgts_min, beta_inc, incumbents, beta_fractures, lp, thresh, alpha, pop_temper = 0.1, verbosity = 1L) {
-    .Call(`_redist_smc_plans`, N, l, counties, pop, n_distr, target, lower, upper, rho, beta_sq, current, n_current, beta_vra, tgt_min, tgt_other, pow_vra, min_pop, beta_vra_hinge, tgts_min, beta_inc, incumbents, beta_fractures, lp, thresh, alpha, pop_temper, verbosity)
+smc_plans <- function(N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, control, verbosity = 1L) {
+    .Call(`_redist_smc_plans`, N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, control, verbosity)
 }
 
 splits <- function(dm, community, nd, max_split) {
@@ -229,12 +145,8 @@ dist_cty_splits <- function(dm, community, nd) {
     .Call(`_redist_dist_cty_splits`, dm, community, nd)
 }
 
-swMH <- function(aList, cdvec, cdorigvec, popvec, grouppopvec, areas_vec, county_membership, borderlength_mat, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, tgt_min, tgt_other, rvote, dvote, minorityprop, lambda = 0L, beta = 0.0, weight_population = 0.0, weight_compact = 0.0, weight_segregation = 0.0, weight_vra = 0.0, weight_similar = 0.0, weight_countysplit = 0.0, weight_partisan = 0.0, weight_minority = 0.0, weight_hinge = 0.0, adapt_beta = "none", adjswap = 1L, exact_mh = 0L, adapt_eprob = 0L, adapt_lambda = 0L, compactness_measure = "fryer-holden", partisan_measure = "efficiency-gap", ssd_denom = 1.0, num_hot_steps = 0L, num_annealing_steps = 0L, num_cold_steps = 0L, verbose = TRUE) {
-    .Call(`_redist_swMH`, aList, cdvec, cdorigvec, popvec, grouppopvec, areas_vec, county_membership, borderlength_mat, nsims, eprob, pct_dist_parity, beta_sequence, beta_weights, ssdmat, tgt_min, tgt_other, rvote, dvote, minorityprop, lambda, beta, weight_population, weight_compact, weight_segregation, weight_vra, weight_similar, weight_countysplit, weight_partisan, weight_minority, weight_hinge, adapt_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, compactness_measure, partisan_measure, ssd_denom, num_hot_steps, num_annealing_steps, num_cold_steps, verbose)
-}
-
-var_info_mat <- function(m, i, pop) {
-    .Call(`_redist_var_info_mat`, m, i, pop)
+swMH <- function(aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parity, beta_sequence, beta_weights, lambda = 0L, beta = 0.0, adapt_beta = "none", adjswap = 1L, exact_mh = 0L, adapt_eprob = 0L, adapt_lambda = 0L, num_hot_steps = 0L, num_annealing_steps = 0L, num_cold_steps = 0L, verbose = TRUE) {
+    .Call(`_redist_swMH`, aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parity, beta_sequence, beta_weights, lambda, beta, adapt_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, num_hot_steps, num_annealing_steps, num_cold_steps, verbose)
 }
 
 var_info_vec <- function(m, ref, pop) {

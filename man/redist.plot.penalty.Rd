@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_penalty.R
 \name{redist.plot.penalty}
 \alias{redist.plot.penalty}
-\title{Visualize VRA Penalty}
+\title{(Deprecated) Visualize Group Power Penalty}
 \usage{
 redist.plot.penalty(
   tgt_min = 0.55,
@@ -28,18 +28,13 @@ comparability across values.}
 ggplot
 }
 \description{
-Plots the shape of the VRA Gibbs penalty.
+Plots the shape of the [add_constr_grp_pow()] penalty.
 }
 \details{
-This function allows you to plot the un-exponentiated VRA Gibbs penalty implemented as
-`vra` within MCMC, Merge-Split, and SMC. The function takes two key inputs,
+This function allows you to plot the un-exponentiated penalty implemented as
+[add_constr_grp_pow()]. The function takes two key inputs,
 `tgt_min` and `tgt_other` which center the minimum penalty spots. A higher y-value
 indicates a higher penalty and incentivizes moving towards a spot with a lower y-value.
-The x-axis indicates the group population proportion in a given district. The default
-indicates the default settings within \code{redist_smc()}.
-}
-\examples{
-redist.plot.penalty()
-
+The x-axis indicates the group population proportion in a given district.
 }
 \concept{prepare}

@@ -19,3 +19,5 @@ Meta
 src/redist.dll
 inst/enumpart/enumpart.exe
 src-i386/
+/doc/
+/Meta/

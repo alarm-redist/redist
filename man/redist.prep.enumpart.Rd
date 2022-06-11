@@ -35,8 +35,8 @@ Prepares a run of the enumpart algorithm by ordering edges
 temp <- tempdir()
 data(fl25)
 adj <- redist.adjacency(fl25)
-redist.prep.enumpart(adj = adj, unordered_path = paste0(temp, '/unordered'),
-                     ordered_path = paste0(temp, '/ordered'))
+redist.prep.enumpart(adj = adj, unordered_path = paste0(temp, "/unordered"),
+    ordered_path = paste0(temp, "/ordered"))
 }
 }
 \references{

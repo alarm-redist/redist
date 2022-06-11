@@ -16,8 +16,7 @@ redist.metrics(
   biasV = 0.5,
   respV = 0.5,
   bandwidth = 0.01,
-  draw = 1,
-  ncores = 1
+  draw = 1
 )
 }
 \arguments{
@@ -51,8 +50,6 @@ for each precinct and one column for each map. Required.}
 and the column number if multiple maps given. Can also take a factor input, which will become the
 draw column in the output if its length matches the number of entries in plans. If the \code{plans} input
 is a \code{redist_plans} object, it extracts the \code{draw} identifier.}
-
-\item{ncores}{Number of cores to use for parallel computing. Default is 1.}
 }
 \value{
 A tibble with  a column for each specified measure and
@@ -87,7 +84,7 @@ as the "Gerrymandering Index" and is sometimes presented as this value divided b
 data(fl25)
 data(fl25_enum)
 plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
-redist.metrics(plans_05, measure = 'all', rvote = fl25$mccain, dvote = fl25$obama)
+redist.metrics(plans_05, measure = "all", rvote = fl25$mccain, dvote = fl25$obama)
 
 }
 \references{

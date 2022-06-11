@@ -2,7 +2,7 @@
 % Please edit documentation in R/redist_mcmc.R
 \name{redist.combine}
 \alias{redist.combine}
-\title{Combine successive runs of \code{redist.flip}}
+\title{(Deprecated) Combine successive runs of \code{redist.flip}}
 \usage{
 redist.combine(savename, nloop, nthin, temper)
 }
@@ -14,7 +14,7 @@ of the saved simulations.}
 
 \item{nthin}{How much to thin the simulations being combined.}
 
-\item{temper}{Wheterh simulated tempering was used (1) or not (0)
+\item{temper}{Whether simulated tempering was used (1) or not (0)
 in the simulations. Default is 0.}
 }
 \value{
@@ -49,6 +49,8 @@ partisan constraint for each accepted redistricting plan.}
 minority constraint for each accepted redistricting plan.}
 \item{constraint_hinge}{A vector containing the value of the
 hinge constraint for each accepted redistricting plan.}
+\item{constraint_qps}{A vector containing the value of the
+QPS constraint for each accepted redistricting plan.}
 \item{beta_sequence}{A vector containing the value of beta for each iteration
 of the algorithm. Returned when tempering is being used.}
 \item{mhdecisions_beta}{A vector specifying whether a proposed beta value was
@@ -82,10 +84,10 @@ init_plan <- fl25_enum$plans[, 5118]
 ## Run the algorithm
 set.seed(1)
 temp <- tempdir()
-alg_253 <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
-                       init_plan = init_plan, nsims = 10000,
-                       nloop = 2, savename = paste0(temp, "/test"))
-out <- redist.combine(savename = paste0(temp, "/test"), nloop = 2, nthin = 10)
+# alg_253 <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
+# init_plan = init_plan, nsims = 10000,
+# nloop = 2, savename = paste0(temp, "/test"))
+# out <- redist.combine(savename = paste0(temp, "/test"), nloop = 2, nthin = 10)
 }
 }
 \references{

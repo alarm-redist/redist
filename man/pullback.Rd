@@ -4,10 +4,12 @@
 \alias{pullback}
 \title{Pull back plans to unmerged units}
 \usage{
-pullback(plans)
+pullback(plans, map = NULL)
 }
 \arguments{
 \item{plans}{a \code{redist_plans} object}
+
+\item{map}{optionally, a \code{redist_map} object, which will be used to set the new population vector}
 }
 \value{
 a new, re-indexed, \code{redist_plans} object

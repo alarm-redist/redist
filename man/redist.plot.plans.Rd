@@ -4,14 +4,20 @@
 \alias{redist.plot.plans}
 \title{Plot a district assignment}
 \usage{
-redist.plot.plans(plans, draws, geom, qty = NULL, interactive = FALSE, ...)
+redist.plot.plans(
+  plans,
+  draws,
+  shp,
+  qty = NULL,
+  interactive = FALSE,
+  ...,
+  geom = NULL
+)
 }
 \arguments{
 \item{plans}{a \code{redist_plans} object.}
 
 \item{draws}{the plan(s) to plot. Will match the \code{draw} column of \code{x}.}
-
-\item{geom}{the \code{redist_map} geometry to use}
 
 \item{qty}{the quantity to plot. Defaults to the district assignment.}
 
@@ -19,6 +25,8 @@ redist.plot.plans(plans, draws, geom, qty = NULL, interactive = FALSE, ...)
 rather than a static map. Only uses the first element of \code{draws}}
 
 \item{...}{additional arguments passed to the plotting functions.}
+
+\item{geom, shp}{the \code{redist_map} geometry to use (`geom` is deprecated).}
 }
 \value{
 A ggplot
@@ -30,8 +38,8 @@ Plot a district assignment
 library(dplyr)
 data(iowa)
 
-iowa = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.05, total_pop = pop)
-plans = redist_smc(iowa, nsims=100, silent=TRUE)
+iowa <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05, total_pop = pop)
+plans <- redist_smc(iowa, nsims = 100, silent = TRUE)
 redist.plot.plans(plans, c(1, 2, 3, 4), iowa)
 
 }

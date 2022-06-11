@@ -7,14 +7,14 @@
 
 [![Build
 Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist)
-[![CRAN\_Status\_Badge](https://www.r-pkg.org/badges/version-last-release/redist)](https://cran.r-project.org/package=redist)
+[![CRAN_Status_Badge](https://www.r-pkg.org/badges/version-last-release/redist)](https://cran.r-project.org/package=redist)
 ![CRAN downloads](http://cranlogs.r-pkg.org/badges/grand-total/redist)
 
 <!-- badges: end -->
 
 <img src="man/figures/map_photo.jpg" style="width: 100%"/>
 
-<img src="man/figures/logo.png" align="right" height="128" style="margin-left: 4px;"/>
+<img src="man/figures/logo.png" align="right" style="height: 128px; margin-left: 4px;"/>
 
 This R package enables researchers to sample redistricting plans from a
 pre-specified target distribution using Sequential Monte Carlo and
@@ -61,11 +61,11 @@ install.packages("redist")
 ```
 
 You can also install the most recent development version of `redist`
-using the \`remotes\`\` package.
+(which is usually quite stable) using the \`remotes\`\` package.
 
 ``` r
 if (!require(remotes)) install.packages("remotes")
-remotes::install_github("alarm-redist/redist", dependencies=TRUE)
+remotes::install_github("alarm-redist/redist@dev", dependencies=TRUE)
 ```
 
 ## Getting started
@@ -80,19 +80,12 @@ library(dplyr)
 
 data(iowa)
 
-# set a 0.01% population constraint
-iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.0001, total_pop = pop)
-# simulate 250 plans using the SMC algorithm
-iowa_plans = redist_smc(iowa_map, nsims=250, verbose=FALSE)
+# set a 0.1% population constraint
+iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.001, total_pop = pop)
+# simulate 500 plans using the SMC algorithm
+iowa_plans = redist_smc(iowa_map, nsims=500)
 #> SEQUENTIAL MONTE CARLO
-#> Sampling 250 99-unit maps with 4 districts and population between 761513 and 761665.
-#> Making split 1 of 3
-#> Note: maximum hit; falling back to naive k estimator.
-#> Resampling effective sample size: 246.051 (98.4206 efficiency).
-#> Making split 2 of 3
-#> Resampling effective sample size: 245.859 (98.3437 efficiency).
-#> Making split 3 of 3
-#> Resampling effective sample size: 246.756 (98.7022 efficiency).
+#> Sampling 500 99-unit maps with 4 districts and population between 760,827 and 762,350.
 ```
 
 After generating plans, you can use `redist`’s plotting functions to
@@ -103,20 +96,22 @@ ensemble.
 library(ggplot2)
 library(patchwork) # for plotting
 
-redist.plot.plans(iowa_plans, draws=c("cd_2010", "1", "2", "3"),
-                  geom=iowa_map)
+redist.plot.plans(iowa_plans, draws=c("cd_2010", "1", "2", "3"), shp=iowa_map)
 ```
 
 ![](man/figures/README-readme-plot-1.png)<!-- -->
 
 ``` r
-dev_comp = iowa_plans %>%
-    mutate(comp = distr_compactness(iowa_map)) %>%
-    group_by(draw) %>%
-    summarize(`Population deviation` = max(abs(total_pop/get_target(iowa_map) - 1)),
-              Compactness = comp[1])
 
-hist(dev_comp, `Population deviation`) + hist(dev_comp, Compactness) +
+iowa_plans = iowa_plans %>%
+    mutate(Compactness = distr_compactness(iowa_map),
+           `Population deviation` = plan_parity(iowa_map),
+           `Democratic vote` = group_frac(iowa_map, dem_08, tot_08))
+#> An earlier bug incorrectly in redist doubled the number of removed edges.
+#> Current counts are correct.
+#> This message is displayed once per session.
+
+hist(iowa_plans, `Population deviation`) + hist(iowa_plans, Compactness) +
     plot_layout(guides="collect") +
     plot_annotation(title="Simulated plan characteristics")
 ```
@@ -124,16 +119,15 @@ hist(dev_comp, `Population deviation`) + hist(dev_comp, Compactness) +
 ![](man/figures/README-readme-plot-2.png)<!-- -->
 
 ``` r
-redist.plot.scatter(dev_comp, `Population deviation`, Compactness) +
+redist.plot.scatter(iowa_plans, `Population deviation`, Compactness) +
     labs(title="Population deviation and compactness by plan")
 ```
 
 ![](man/figures/README-readme-plot-3.png)<!-- -->
 
 ``` r
-iowa_plans %>%
-    mutate(`Democratic vote` = group_frac(iowa_map, dem_08, tot_08)) %>%
-    plot(`Democratic vote`, size=0.5, color_thresh=0.5) +
+
+plot(iowa_plans, `Democratic vote`, size=0.5, color_thresh=0.5) +
     scale_color_manual(values=c("tomato2", "dodgerblue")) +
     labs(title="Democratic vote share by district")
 ```
@@ -146,15 +140,3 @@ Started](https://alarm-redist.github.io/redist/articles/redist.html)
 page. The package
 [vignettes](https://alarm-redist.github.io/redist/articles/) contain
 more detailed information and guides to specific workflows.
-
-## Recommended Workflows
-
-In some cases, there are two functions with the same purpose that
-operate on different inputs. For most users, we recommend working with
-the versions that operate on `redist_map` and `redist_plan` objects.
-
-| Recommended         | Alternate Options   | Notes                           |
-|---------------------|---------------------|---------------------------------|
-| `redist_smc`        | `redist.smc`        |                                 |
-| `redist_mergesplit` | `redist.mergesplit` |                                 |
-| `redist_flip`       | `redist.flip`       | (Formerly called `redist.mcmc`) |

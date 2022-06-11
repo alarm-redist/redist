@@ -35,62 +35,50 @@
 #'
 #' @examples
 #' data(fl250)
-#' fl250_map = redist_map(fl250, ndists=4, pop_tol=0.01)
-#' plan <- as.matrix(redist_smc(fl250_map, 20, silent=TRUE))
+#' fl250_map <- redist_map(fl250, ndists = 4, pop_tol = 0.01)
+#' plan <- as.matrix(redist_smc(fl250_map, 20, silent = TRUE))
 #' core <- redist.identify.cores(adj = fl250_map$adj, plan = plan)
 #' redist.plot.cores(shp = fl250, plan = plan, core = core)
 #'
 redist.identify.cores <- function(adj, plan, boundary = 1, focus = NULL,
                                   simplify = TRUE) {
-  if(missing(adj)){
-    stop('Please provide an object to adj.')
-  }
-
-  if(! 'list' %in% class(adj)){
-    stop('adj must be an adj list.')
-  }
-
-  if(missing(plan)){
-    stop('Please provide an object to plan.')
-  }
-  if('matrix' %in% class(plan)){
-    plan <- plan[,1]
-  }
+    if (!is.list(adj)) cli_abort("{.arg adj} must be a list.")
+    if (is.matrix(plan)) {
+        plan <- plan[, 1]
+    }
 
 
-  # init a nice empty list
-  cd_within_k <- lapply(1:length(plan), FUN = function(x){integer(0)})
+    # init a nice empty list
+    cd_within_k <- lapply(1:length(plan), FUN = function(x) {integer(0)})
 
-  core <- cores(adj = adj, dm = plan, k = boundary, cd_within_k = cd_within_k)
+    core <- cores(adj = adj, dm = plan, k = boundary, cd_within_k = cd_within_k)
 
-  if(!is.null(focus)){
-    idx <- unlist(lapply(core$cd_within_k, FUN = function(x){focus %in% x})) | plan == focus
+    if (!is.null(focus)) {
+        idx <- unlist(lapply(core$cd_within_k, FUN = function(x) {focus %in% x})) | plan == focus
 
-    core$k <- ifelse(idx, core$k, 0)
+        core$k <- ifelse(idx, core$k, 0)
 
-    conncomp <- update_conncomp(dm  = core$dm, kvec = core$k, adj = adj)
-    core$conncomp <- conncomp
-  }
+        conncomp <- update_conncomp(dm  = core$dm, kvec = core$k, adj = adj)
+        core$conncomp <- conncomp
+    }
 
-  tb <- tibble(dm = plan, boundary = core$k, cc = core$conncomp) %>%
-    group_by(dm, boundary) %>%
-    mutate(gid = row_number()) %>%
-    ungroup() %>%
-    mutate(gid = ifelse(boundary == 0, cc, gid)) %>%
-    mutate(gid = paste0(dm, '-', boundary, '-', gid)) %>% group_by(gid) %>%
-    mutate(group = cur_group_id()) %>% ungroup()
+    tb <- tibble(dm = plan, boundary = core$k, cc = core$conncomp) %>%
+        group_by(.data$dm, boundary) %>%
+        mutate(gid = row_number()) %>%
+        ungroup() %>%
+        mutate(gid = ifelse(boundary == 0, .data$cc, gid)) %>%
+        mutate(gid = paste0(.data$dm, "-", boundary, "-", gid)) %>% group_by(gid) %>%
+        mutate(group = cur_group_id()) %>% ungroup()
 
-  gid <- tb$group
-
-
-  if(simplify){
-    return(gid)
-  } else{
-    core$group_id <- gid
-    return(core)
-  }
+    gid <- tb$group
 
 
+    if (simplify) {
+        return(gid)
+    } else {
+        core$group_id <- gid
+        return(core)
+    }
 }
 
 #' Uncoarsen a District Matrix
@@ -106,19 +94,16 @@ redist.identify.cores <- function(adj, plan, boundary = 1, focus = NULL,
 #'
 #' @concept post
 #' @export
-redist.uncoarsen <- function(plans, group_index){
-  uncoarse <- matrix(nrow = length(group_index),
-                     ncol = ncol(plans))
+redist.uncoarsen <- function(plans, group_index) {
+    uncoarse <- matrix(nrow = length(group_index),
+        ncol = ncol(plans))
 
-  remain <- sort(unique(group_index))
+    remain <- sort(unique(group_index))
 
 
-  for(i in 1:length(group_index)){
-    uncoarse[i,] <- plans[which(group_index[i] == remain),]
-  }
+    for (i in 1:length(group_index)) {
+        uncoarse[i, ] <- plans[which(group_index[i] == remain), ]
+    }
 
-  return(uncoarse)
+    return(uncoarse)
 }
-
-
-globalVariables(c('dm', 'cc'))

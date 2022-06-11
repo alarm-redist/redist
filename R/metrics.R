@@ -2,7 +2,7 @@
 ## Author: Christopher T Kenny
 ## Institution: Harvard University
 ## Date Created: 2020/07/15
-## Date Modified: 2021/03/11
+## Date Modified: 2022/01/13
 ## Purpose: R function to compute gerrymandering metrics
 ########################################################
 
@@ -27,7 +27,6 @@
 #' @param biasV A value between 0 and 1 to compute bias at. Only used with option "BiasV". Defaults to 0.5.
 #' @param respV A value between 0 and 1 to compute responsiveness at. Only used with option "Responsiveness". Defaults to 0.5.
 #' @param bandwidth A value between 0 and 1 for computing responsiveness. Only used with option "Responsiveness." Defaults to 0.01.
-#' @param ncores Number of cores to use for parallel computing. Default is 1.
 #'
 #'
 #' @details This function computes specified compactness scores for a map.  If
@@ -58,7 +57,7 @@
 #' data(fl25)
 #' data(fl25_enum)
 #' plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
-#' redist.metrics(plans_05, measure = 'all', rvote = fl25$mccain, dvote = fl25$obama)
+#' redist.metrics(plans_05, measure = "all", rvote = fl25$mccain, dvote = fl25$obama)
 #'
 #' @references
 #' Jonathan N. Katz, Gary King, and Elizabeth Rosenblatt. 2020.
@@ -80,161 +79,149 @@
 #' @export
 redist.metrics <- function(plans, measure = "DSeats", rvote, dvote,
                            tau = 1, biasV = 0.5, respV = 0.5, bandwidth = 0.01,
-                           draw = 1, ncores = 1){
+                           draw = 1) {
 
-  # All measures available:
-  all_measures <- c("DSeats", "DVS", "EffGap", "EffGapEqPop", "TauGap",
-                    "MeanMedian", "Bias", "BiasV", "Declination", "Responsiveness",
-                    "LopsidedWins", "RankedMarginal", "SmoothedSeat")
+    # All measures available:
+    all_measures <- c("DSeats", "DVS", "EffGap", "EffGapEqPop", "TauGap",
+        "MeanMedian", "Bias", "BiasV", "Declination", "Responsiveness",
+        "LopsidedWins", "RankedMarginal", "SmoothedSeat")
 
-  # Check Inputs
-  if("all" %in% measure){
-    measure <-  all_measures
-  }
-  match.arg(arg = measure,several.ok = TRUE, choices = all_measures)
-
-  if(any(class(plans) %in% 'redist')){
-    plans <- plans$plans
-  }
-
-  if (inherits(plans, 'redist_plans')) {
-    draw <- plans$draw
-    plans <- get_plans_matrix(plans)
-  }
-
-  if(!is.numeric(plans)){
-    stop('Please provide "plans" as a numeric vector or matrix.')
-  }
-  if(!is.matrix(plans)){
-    plans <- as.matrix(plans)
-  }
-  if(any(is.na(plans))){
-    stop('NA value in argument to plans.')
-  }
-
-  if(any(is.na(rvote))){
-    stop('NA value in argument to rvote.')
-  }
-  if(any(is.na(dvote))){
-    stop('NA value in argument to dvote.')
-  }
-  if(!is.numeric(rvote)){
-    stop('Please provide rvote as a numeric or integer vector.')
-  }
-  if(!is.numeric(dvote)){
-    stop('Please provide rvote as a numeric or integer vector.')
-  }
-
-  rvote <- as.integer(rvote)
-  dvote <- as.integer(dvote)
-  if(length(rvote) != nrow(plans)){
-    stop('rvote length and plans row dimension are not equal.')
-  }
-  if(length(dvote) != nrow(plans)){
-    stop('dvote length and plans row dimension are not equal.')
-  }
-
-  if(!is.numeric(draw) & !is.factor(draw)){
-    stop('Please provide "draw" as a numeric.')
-  }
-
-  if(!is.numeric(ncores)){
-    stop('Please provide "ncores" as a numeric.')
-  }
-
-
-  # Precompute a few useful variables
-  nd <- length(unique(plans[, 1]))
-  totvote <- sum(rvote) + sum(dvote)
-  nmap <- ncol(plans)
-  dists <- sort(unique(plans[, 1]))
-
-  # Aggregate to Precinct and get baseline DVS + Seats - compute here to avoid multiple computation
-  rcounts <- agg_p2d(vote = rvote, dm = plans, nd = nd)
-  dcounts <- agg_p2d(vote = dvote, dm = plans, nd = nd)
-  dseat_vec <- dseats(dm = plans, rcounts = rcounts, dcounts = dcounts, nd = nd)
-  dvs <- DVS(dcounts = dcounts, rcounts = rcounts)
-
-
-
-  # Create return tibble:
-  if (!(is.factor(draw) && length(draw) == nd * nmap)) {
-    if (nmap != 1) {
-      draw <- rep(draw + (1:ncol(plans)) - 1, each = nd)
-    } else {
-      draw <- rep(draw, nd)
+    # Check Inputs
+    if ("all" %in% measure) {
+        measure <-  all_measures
     }
-  }
+    match.arg(arg = measure, several.ok = TRUE, choices = all_measures)
 
-  metrics <- tibble(district = rep(x = dists, nmap),
-                 DSeats = rep(NA_real_, nd*nmap),
-                 DVS = rep(NA_real_, nd*nmap),
-                 EffGap = rep(NA_real_, nd*nmap),
-                 EffGapEqPop = rep(NA_real_, nd*nmap),
-                 TauGap = rep(NA_real_, nd*nmap),
-                 MeanMedian = rep(NA_real_, nd*nmap),
-                 Bias = rep(NA_real_, nd*nmap),
-                 BiasV = rep(NA_real_, nd*nmap),
-                 Declination = rep(NA_real_, nd*nmap),
-                 Responsiveness = rep(NA_real_, nd*nmap),
-                 LopsidedWins = rep(NA_real_, nd*nmap),
-                 RankedMarginal = rep(NA_real_, nd*nmap),
-                 SmoothedSeat = rep(NA_real_, nd*nmap),
-                 draw = draw) %>%
-    dplyr::select(all_of(c("district", measure)), draw)
+    if (inherits(plans, "redist_plans")) {
+        draw <- plans$draw
+        plans <- get_plans_matrix(plans)
+    }
 
-  # Compute Metrics if desired:
-  if("DSeats" %in% measure){
-    metrics[['DSeats']] <- rep(dseat_vec, each = nd)
-  }
-  if('DVS' %in% measure){
-    metrics[['DVS']] <- c(dvs)
-  }
-  if("EffGap" %in% measure){
-    eg <- effgap(dcounts = dcounts, rcounts = rcounts, totvote = totvote)
-    metrics[['EffGap']] <-  rep(eg, each = nd)
-  }
-  if("EffGapEqPop" %in% measure){
-    egep <- effgapEP(dvs = dvs, dseat_vec = dseat_vec, nd = nd)
-    metrics[["EffGapEqPop" ]] <- rep(egep, each = nd)
-  }
-  if("TauGap" %in% measure){
-    tg <- taugap(tau = tau, dvs = dvs, dseat_vec = dseat_vec, nd = nd)
-    metrics[["TauGap"]] <- rep(tg, each = nd)
-  }
-  if("MeanMedian" %in% measure){
-    mm <- meanmedian(dvs = dvs)
-    metrics[["MeanMedian"]]<- rep(mm, each = nd)
-  }
-  if("Bias" %in% measure){
-    b <- bias(dvs = dvs, nd = nd)
-    metrics[["Bias"]] <- rep(b, each = nd)
-  }
-  if("BiasV" %in% measure){
-    bv <- biasatv(dvs = dvs, v = biasV, nd = nd)
-    metrics[["BiasV"]] <- rep(bv, each = nd)
-  }
-  if("Declination" %in% measure){
-     dec <- declination(dvs = dvs, dseat_vec = dseat_vec, nd = nd)
-    metrics[["Declination"]] <- rep(dec, each = nd)
-  }
-  if("Responsiveness" %in% measure){
-    resp <- responsiveness(dvs = dvs, v = respV, nd = nd, bandwidth = bandwidth)
-    metrics[["Responsiveness"]] <- rep(resp, each = nd)
-  }
-  if("LopsidedWins" %in% measure){
-    lw <- lopsidedwins(dvs = dvs, dseat_vec = dseat_vec, nd = nd)
-    metrics[["LopsidedWins"]] <- rep(lw, each = nd)
-  }
-  if('RankedMarginal' %in% measure){
-    RMDev <- RankedMarginalDev(dvs = dvs)
-    metrics[["RankedMarginal"]] <- rep(RMDev, each = nd)
-  }
-  if('SmoothedSeat' %in% measure){
-    SSCD <- smoothseat(dvs = dvs, nd = nd)
-    metrics[['SmoothedSeat']] <- rep(SSCD, each = nd)
-  }
+    if (!is.numeric(plans)) {
+        cli_abort("Please provide {.arg plans} as a numeric vector, matrix, or {.cls redist_plans}.")
+    }
+    if (!is.matrix(plans)) {
+        plans <- as.matrix(plans)
+    }
+    if (any(is.na(plans))) {
+        cli_abort("{.val NA} in argument to {.arg plans}.")
+    }
 
-  # Return computed results
-  return(metrics)
+    if (any(is.na(rvote))) {
+        cli_abort("{.val NA} value in argument to {.arg rvote}.")
+    }
+    if (any(is.na(dvote))) {
+        cli_abort("{.val NA} value in argument to {.arg dvote}.")
+    }
+    if (!is.numeric(rvote)) {
+        cli_abort("Please provide {.arg rvote} as a numeric or integer vector.")
+    }
+    if (!is.numeric(dvote)) {
+        cli_abort("Please provide {.arg dvote} as a numeric or integer vector.")
+    }
+
+    rvote <- as.integer(rvote)
+    dvote <- as.integer(dvote)
+    if (length(rvote) != nrow(plans)) {
+        cli_abort("{.arg rvote} length and {.arg plans} row dimension are not equal.")
+    }
+    if (length(dvote) != nrow(plans)) {
+        cli_abort("{.arg dvote} length and {.arg plans} row dimension are not equal.")
+    }
+
+    if (!is.numeric(draw) & !is.factor(draw)) {
+        cli_abort('Please provide "draw" as a numeric or factor.')
+    }
+
+    # Precompute a few useful variables
+    nd <- length(unique(plans[, 1]))
+    nmap <- ncol(plans)
+    dists <- sort(unique(plans[, 1]))
+
+    # Create return tibble:
+    if (!(is.factor(draw) && length(draw) == nd*nmap)) {
+        if (nmap != 1) {
+            draw <- rep(draw + (1:ncol(plans)) - 1, each = nd)
+        } else {
+            draw <- rep(draw, nd)
+        }
+    }
+
+    metrics <- tibble(district = rep(x = dists, nmap),
+        DSeats = rep(NA_real_, nd*nmap),
+        DVS = rep(NA_real_, nd*nmap),
+        EffGap = rep(NA_real_, nd*nmap),
+        EffGapEqPop = rep(NA_real_, nd*nmap),
+        TauGap = rep(NA_real_, nd*nmap),
+        MeanMedian = rep(NA_real_, nd*nmap),
+        Bias = rep(NA_real_, nd*nmap),
+        BiasV = rep(NA_real_, nd*nmap),
+        Declination = rep(NA_real_, nd*nmap),
+        Responsiveness = rep(NA_real_, nd*nmap),
+        LopsidedWins = rep(NA_real_, nd*nmap),
+        RankedMarginal = rep(NA_real_, nd*nmap),
+        SmoothedSeat = rep(NA_real_, nd*nmap),
+        draw = draw) %>%
+        dplyr::select(all_of(c("district", measure)), draw)
+
+    # Compute Metrics if desired:
+    if ("DSeats" %in% measure) {
+        metrics[["DSeats"]] <- redistmetrics::part_dseats(plans = plans, shp = data.frame(),
+            rvote = rvote, dvote = dvote)
+    }
+    if ("DVS" %in% measure) {
+        metrics[["DVS"]] <- redistmetrics::part_dvs(plans = plans, shp = data.frame(),
+            dvote = dvote, rvote = rvote)
+    }
+    if ("EffGap" %in% measure) {
+        cli_inform("{.pkg redist} 4.0.0 aligned pro-Republican biases as positive numbers, reversing the old Efficiency Gap direction.",
+            .frequency = "once", .frequency_id = "eff_gap"
+        )
+        metrics[["EffGap"]] <- redistmetrics::part_egap(plans = plans, shp = data.frame(),
+            dvote = dvote, rvote = rvote)
+    }
+    if ("EffGapEqPop" %in% measure) {
+        metrics[["EffGapEqPop"]] <- redistmetrics::part_egap_ep(plans = plans, shp = data.frame(),
+            dvote = dvote, rvote = rvote)
+    }
+    if ("TauGap" %in% measure) {
+        metrics[["TauGap"]] <- redistmetrics::part_tau_gap(plans = plans, shp = data.frame(),
+            dvote = dvote, rvote = rvote)
+    }
+    if ("MeanMedian" %in% measure) {
+        metrics[["MeanMedian"]] <- redistmetrics::part_mean_median(plans = plans, shp = data.frame(),
+            dvote = dvote, rvote = rvote)
+    }
+    if ("Bias" %in% measure) {
+        metrics[["Bias"]] <- redistmetrics::part_bias(plans = plans, shp = data.frame(),
+            dvote = dvote, rvote = rvote, v = 0.5)
+    }
+    if ("BiasV" %in% measure) {
+        metrics[["BiasV"]] <- redistmetrics::part_bias(plans = plans, shp = data.frame(),
+            dvote = dvote, rvote = rvote, v = biasV)
+    }
+    if ("Declination" %in% measure) {
+        metrics[["Declination"]] <- redistmetrics::part_decl(plans = plans, shp = data.frame(),
+            dvote = dvote, rvote = rvote)
+    }
+    if ("Responsiveness" %in% measure) {
+        metrics[["Responsiveness"]] <- redistmetrics::part_resp(plans = plans, shp = data.frame(),
+            dvote = dvote, rvote = rvote,
+            v = respV, bandwidth = bandwidth)
+    }
+    if ("LopsidedWins" %in% measure) {
+        metrics[["LopsidedWins"]] <- redistmetrics::part_lop_wins(plans = plans, shp = data.frame(),
+            dvote = dvote, rvote = rvote)
+    }
+    if ("RankedMarginal" %in% measure) {
+        metrics[["RankedMarginal"]] <- redistmetrics::part_rmd(plans = plans, shp = data.frame(),
+            dvote = dvote, rvote = rvote)
+    }
+    if ("SmoothedSeat" %in% measure) {
+        metrics[["SmoothedSeat"]] <- redistmetrics::part_sscd(plans = plans, shp = data.frame(),
+            dvote = dvote, rvote = rvote)
+    }
+
+    # Return computed results
+    metrics
 }

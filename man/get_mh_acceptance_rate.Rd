@@ -15,4 +15,4 @@ a numeric acceptance rate
 \description{
 Extract the Metropolis Hastings Acceptance Rate
 }
-\concept{simulate}
+\concept{analysis}

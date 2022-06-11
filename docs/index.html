@@ -27,6 +27,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-home">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -39,18 +41,12 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.1.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.0</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="articles/redist.html">Get started</a>
 </li>
@@ -58,14 +54,14 @@
   <a href="reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
      
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="articles/glossary.html">Glossary of Key Redistricting Terms</a>
+      <a href="articles/common_args.html">Common Arguments to `redist` Functions</a>
     </li>
     <li>
       <a href="articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
@@ -79,7 +75,7 @@
   </ul>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     News
      
     <span class="caret"></span>
@@ -87,10 +83,11 @@
   <ul class="dropdown-menu" role="menu">
 <li class="dropdown-header">Releases</li>
     <li>
-      <a href="https://alarm-redist.github.io/posts/2021-04-02-redist-300/">redist 3.0</a>
+      <a href="https://alarm-redist.github.io/posts/2021-04-02-redist-300/" class="external-link">redist 3.0</a>
     </li>
     <li class="divider">
-    <li>
+    </li>
+<li>
       <a href="news/index.html">Changelog</a>
     </li>
   </ul>
@@ -98,7 +95,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/alarm-redist/redist/">
+  <a href="https://github.com/alarm-redist/redist/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -115,27 +112,28 @@
 
       </header><div class="row">
   <div class="contents col-md-9">
-<div id="redist-simulation-methods-for-legislative-redistricting" class="section level1">
-<div class="page-header"><h1 class="hasAnchor">
-<a href="#redist-simulation-methods-for-legislative-redistricting" class="anchor"></a><strong>redist</strong>: Simulation Methods for Legislative Redistricting</h1></div>
+<div class="section level1">
+<div class="page-header"><h1 id="redist-simulation-methods-for-legislative-redistricting">
+<strong>redist</strong>: Simulation Methods for Legislative Redistricting<a class="anchor" aria-label="anchor" href="#redist-simulation-methods-for-legislative-redistricting"></a>
+</h1></div>
 <!-- badges: start -->
 
 <!-- badges: end -->
 <p><img src="reference/figures/map_photo.jpg" style="width: 100%"></p>
-<p><img src="reference/figures/logo.png" align="right" height="128" style="margin-left: 4px;"></p>
+<p><img src="reference/figures/logo.png" align="right" style="height: 128px; margin-left: 4px;"></p>
 <p>This R package enables researchers to sample redistricting plans from a pre-specified target distribution using Sequential Monte Carlo and Markov Chain Monte Carlo algorithms. The package supports various constraints in the redistricting process, such as geographic compactness and population parity requirements. Tools for analysis, including computation of various summary statistics and plotting functionality, are also included.</p>
 <p>Authors:</p>
 <ul>
 <li>
-<a href="https://www.christophertkenny.com">Christopher T Kenny</a>, <a href="mailto:christopherkenny@fas.harvard.edu" class="email">christopherkenny@fas.harvard.edu</a> (Maintainer)</li>
+<a href="https://www.christophertkenny.com" class="external-link">Christopher T Kenny</a>, <a href="mailto:christopherkenny@fas.harvard.edu" class="email">christopherkenny@fas.harvard.edu</a> (Maintainer)</li>
 <li>
-<a href="https://corymccartan.github.io">Cory McCartan</a>, <a href="mailto:cmccartan@g.harvard.edu" class="email">cmccartan@g.harvard.edu</a>
+<a href="https://corymccartan.github.io" class="external-link">Cory McCartan</a>, <a href="mailto:cmccartan@g.harvard.edu" class="email">cmccartan@g.harvard.edu</a>
 </li>
 <li>
-<a href="https://www.benfifield.com">Ben Fifield</a>, <a href="mailto:benfifield@gmail.com" class="email">benfifield@gmail.com</a>
+<a href="https://www.benfifield.com" class="external-link">Ben Fifield</a>, <a href="mailto:benfifield@gmail.com" class="email">benfifield@gmail.com</a>
 </li>
 <li>
-<a href="https://imai.fas.harvard.edu">Kosuke Imai</a>, <a href="mailto:imai@harvard.edu" class="email">imai@harvard.edu</a>
+<a href="https://imai.fas.harvard.edu" class="external-link">Kosuke Imai</a>, <a href="mailto:imai@harvard.edu" class="email">imai@harvard.edu</a>
 </li>
 </ul>
 <p>Contributors:</p>
@@ -145,170 +143,138 @@
 <li>Alex Tarr, <a href="mailto:atarr@princeton.edu" class="email">atarr@princeton.edu</a>
 </li>
 <li>
-<a href="http://www-personal.k-state.edu/~mikehiggins/">Michael Higgins</a>, <a href="mailto:mjh5@princeton.edu" class="email">mjh5@princeton.edu</a>
+<a href="http://www-personal.k-state.edu/~mikehiggins/" class="external-link">Michael Higgins</a>, <a href="mailto:mjh5@princeton.edu" class="email">mjh5@princeton.edu</a>
 </li>
 </ul>
 <p>Papers:</p>
 <ul>
 <li>
-<a href="https://doi.org/10.1080/10618600.2020.1739532">Automated Redistricting Simulation Using Markov Chain Monte Carlo</a> <em>Journal of Computational and Graphical Statistics</em>
+<a href="https://doi.org/10.1080/10618600.2020.1739532" class="external-link">Automated Redistricting Simulation Using Markov Chain Monte Carlo</a> <em>Journal of Computational and Graphical Statistics</em>
 </li>
 <li>
-<a href="https://doi.org/10.1080/2330443X.2020.1791773">The Essential Role of Empirical Validation in Legislative Redistricting Simulation</a> <em>Statistics and Public Policy</em> Vol. 7, No. 1, pp. 52-68.</li>
-<li><a href="https://arxiv.org/pdf/2008.06131.pdf">Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans</a></li>
+<a href="https://doi.org/10.1080/2330443X.2020.1791773" class="external-link">The Essential Role of Empirical Validation in Legislative Redistricting Simulation</a> <em>Statistics and Public Policy</em> Vol. 7, No. 1, pp. 52-68.</li>
+<li><a href="https://arxiv.org/pdf/2008.06131.pdf" class="external-link">Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans</a></li>
 </ul>
-<div id="installation-instructions" class="section level2">
-<h2 class="hasAnchor">
-<a href="#installation-instructions" class="anchor"></a>Installation Instructions</h2>
+<div class="section level2">
+<h2 id="installation-instructions">Installation Instructions<a class="anchor" aria-label="anchor" href="#installation-instructions"></a>
+</h2>
 <p><code>redist</code> is available on CRAN and can be installed using:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span><span class="op">(</span><span class="st">"redist"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"redist"</span><span class="op">)</span></code></pre></div>
 <p>You can also install the most recent development version of <code>redist</code> using the `remotes`` package.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html">require</a></span><span class="op">(</span><span class="va"><a href="https://remotes.r-lib.org">remotes</a></span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span>
-<span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span><span class="op">(</span><span class="st">"alarm-redist/redist"</span>, dependencies<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="va"><a href="https://remotes.r-lib.org" class="external-link">remotes</a></span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span>
+<span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"alarm-redist/redist"</span>, dependencies<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
 </div>
-<div id="getting-started" class="section level2">
-<h2 class="hasAnchor">
-<a href="#getting-started" class="anchor"></a>Getting started</h2>
+<div class="section level2">
+<h2 id="getting-started">Getting started<a class="anchor" aria-label="anchor" href="#getting-started"></a>
+</h2>
 <p>A basic analysis has two steps. First, you define a redistricting plan using <code>redist_map</code>. Then you simulate plans using one of the algorithm functions: <code>redist_smc</code>, <code>redist_flip</code>, and <code>redist_mergesplit</code>.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://alarm-redist.github.io/redist/">redist</a></span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org">dplyr</a></span><span class="op">)</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alarm-redist.github.io/redist/" class="external-link">redist</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span>
 
-<span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span>
 
-<span class="co"># set a 0.01% population constraint</span>
-<span class="va">iowa_map</span> <span class="op">=</span> <span class="fu"><a href="reference/redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan<span class="op">=</span><span class="va">cd_2010</span>, pop_tol<span class="op">=</span><span class="fl">0.0001</span>, total_pop <span class="op">=</span> <span class="va">pop</span><span class="op">)</span>
-<span class="co"># simulate 250 plans using the SMC algorithm</span>
-<span class="va">iowa_plans</span> <span class="op">=</span> <span class="fu"><a href="reference/redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">iowa_map</span>, nsims<span class="op">=</span><span class="fl">250</span>, verbose<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span>
+<span class="co"># set a 0.1% population constraint</span>
+<span class="va">iowa_map</span> <span class="op">=</span> <span class="fu"><a href="reference/redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan<span class="op">=</span><span class="va">cd_2010</span>, pop_tol<span class="op">=</span><span class="fl">0.001</span>, total_pop <span class="op">=</span> <span class="va">pop</span><span class="op">)</span>
+<span class="co"># simulate 500 plans using the SMC algorithm</span>
+<span class="va">iowa_plans</span> <span class="op">=</span> <span class="fu"><a href="reference/redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">iowa_map</span>, nsims<span class="op">=</span><span class="fl">500</span><span class="op">)</span>
 <span class="co">#&gt; SEQUENTIAL MONTE CARLO</span>
-<span class="co">#&gt; Sampling 250 99-unit maps with 4 districts and population between 761513 and 761665.</span>
-<span class="co">#&gt; Making split 1 of 3</span>
-<span class="co">#&gt; Note: maximum hit; falling back to naive k estimator.</span>
-<span class="co">#&gt; Resampling effective sample size: 246.051 (98.4206 efficiency).</span>
-<span class="co">#&gt; Making split 2 of 3</span>
-<span class="co">#&gt; Resampling effective sample size: 245.859 (98.3437 efficiency).</span>
-<span class="co">#&gt; Making split 3 of 3</span>
-<span class="co">#&gt; Resampling effective sample size: 246.756 (98.7022 efficiency).</span></code></pre></div>
+<span class="co">#&gt; Sampling 500 99-unit maps with 4 districts and population between 760,827 and 762,350.</span></code></pre></div>
 <p>After generating plans, you can use <code>redist</code>’s plotting functions to study the geographic and partisan characteristics of the simulated ensemble.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org">ggplot2</a></span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com">patchwork</a></span><span class="op">)</span> <span class="co"># for plotting</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com" class="external-link">patchwork</a></span><span class="op">)</span> <span class="co"># for plotting</span>
 
-<span class="fu"><a href="reference/redist.plot.plans.html">redist.plot.plans</a></span><span class="op">(</span><span class="va">iowa_plans</span>, draws<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"cd_2010"</span>, <span class="st">"1"</span>, <span class="st">"2"</span>, <span class="st">"3"</span><span class="op">)</span>,
-                  geom<span class="op">=</span><span class="va">iowa_map</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="reference/redist.plot.plans.html">redist.plot.plans</a></span><span class="op">(</span><span class="va">iowa_plans</span>, draws<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cd_2010"</span>, <span class="st">"1"</span>, <span class="st">"2"</span>, <span class="st">"3"</span><span class="op">)</span>, shp<span class="op">=</span><span class="va">iowa_map</span><span class="op">)</span></code></pre></div>
 <p><img src="reference/figures/README-readme-plot-1.png"><!-- --></p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">dev_comp</span> <span class="op">=</span> <span class="va">iowa_plans</span> <span class="op">%&gt;%</span>
-    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>comp <span class="op">=</span> <span class="fu"><a href="reference/distr_compactness.html">distr_compactness</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
-    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html">group_by</a></span><span class="op">(</span><span class="va">draw</span><span class="op">)</span> <span class="op">%&gt;%</span>
-    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize</a></span><span class="op">(</span>`Population deviation` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html">abs</a></span><span class="op">(</span><span class="va">total_pop</span><span class="op">/</span><span class="fu"><a href="reference/get_target.html">get_target</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span>,
-              Compactness <span class="op">=</span> <span class="va">comp</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span>
+<code class="sourceCode R">
+<span class="va">iowa_plans</span> <span class="op">=</span> <span class="va">iowa_plans</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>
+    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>Compactness <span class="op">=</span> <span class="fu"><a href="reference/redist.compactness.html">distr_compactness</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span>,
+           `Population deviation` <span class="op">=</span> <span class="fu"><a href="reference/redist.parity.html">plan_parity</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span>,
+           `Democratic vote` <span class="op">=</span> <span class="fu"><a href="reference/redist.group.percent.html">group_frac</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">dem_08</span>, <span class="va">tot_08</span><span class="op">)</span><span class="op">)</span>
+<span class="co">#&gt; An earlier bug incorrectly in redist doubled the number of removed edges.</span>
+<span class="co">#&gt; Current counts are correct.</span>
+<span class="co">#&gt; This message is displayed once per session.</span>
 
-<span class="fu"><a href="https://rdrr.io/r/graphics/hist.html">hist</a></span><span class="op">(</span><span class="va">dev_comp</span>, <span class="va">`Population deviation`</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/graphics/hist.html">hist</a></span><span class="op">(</span><span class="va">dev_comp</span>, <span class="va">Compactness</span><span class="op">)</span> <span class="op">+</span>
-    <span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_layout.html">plot_layout</a></span><span class="op">(</span>guides<span class="op">=</span><span class="st">"collect"</span><span class="op">)</span> <span class="op">+</span>
-    <span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_annotation.html">plot_annotation</a></span><span class="op">(</span>title<span class="op">=</span><span class="st">"Simulated plan characteristics"</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">`Population deviation`</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">Compactness</span><span class="op">)</span> <span class="op">+</span>
+    <span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_layout.html" class="external-link">plot_layout</a></span><span class="op">(</span>guides<span class="op">=</span><span class="st">"collect"</span><span class="op">)</span> <span class="op">+</span>
+    <span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_annotation.html" class="external-link">plot_annotation</a></span><span class="op">(</span>title<span class="op">=</span><span class="st">"Simulated plan characteristics"</span><span class="op">)</span></code></pre></div>
 <p><img src="reference/figures/README-readme-plot-2.png"><!-- --></p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="reference/redist.plot.scatter.html">redist.plot.scatter</a></span><span class="op">(</span><span class="va">dev_comp</span>, <span class="va">`Population deviation`</span>, <span class="va">Compactness</span><span class="op">)</span> <span class="op">+</span>
-    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">labs</a></span><span class="op">(</span>title<span class="op">=</span><span class="st">"Population deviation and compactness by plan"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="reference/redist.plot.scatter.html">redist.plot.scatter</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">`Population deviation`</span>, <span class="va">Compactness</span><span class="op">)</span> <span class="op">+</span>
+    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title<span class="op">=</span><span class="st">"Population deviation and compactness by plan"</span><span class="op">)</span></code></pre></div>
 <p><img src="reference/figures/README-readme-plot-3.png"><!-- --></p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">iowa_plans</span> <span class="op">%&gt;%</span>
-    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>`Democratic vote` <span class="op">=</span> <span class="fu"><a href="reference/group_frac.html">group_frac</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">dem_08</span>, <span class="va">tot_08</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
-    <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">`Democratic vote`</span>, size<span class="op">=</span><span class="fl">0.5</span>, color_thresh<span class="op">=</span><span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span>
-    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html">scale_color_manual</a></span><span class="op">(</span>values<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"tomato2"</span>, <span class="st">"dodgerblue"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>
-    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">labs</a></span><span class="op">(</span>title<span class="op">=</span><span class="st">"Democratic vote share by district"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R">
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">`Democratic vote`</span>, size<span class="op">=</span><span class="fl">0.5</span>, color_thresh<span class="op">=</span><span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span>
+    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_color_manual</a></span><span class="op">(</span>values<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"tomato2"</span>, <span class="st">"dodgerblue"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>
+    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title<span class="op">=</span><span class="st">"Democratic vote share by district"</span><span class="op">)</span></code></pre></div>
 <p><img src="reference/figures/README-readme-plot-4.png"><!-- --></p>
-<p>A more detailed introduction to redistricting methods and the package can be found in the <a href="https://alarm-redist.github.io/redist/articles/redist.html">Get Started</a> page. The package <a href="https://alarm-redist.github.io/redist/articles/">vignettes</a> contain more detailed information and guides to specific workflows.</p>
-</div>
-<div id="recommended-workflows" class="section level2">
-<h2 class="hasAnchor">
-<a href="#recommended-workflows" class="anchor"></a>Recommended Workflows</h2>
-<p>In some cases, there are two functions with the same purpose that operate on different inputs. For most users, we recommend working with the versions that operate on <code>redist_map</code> and <code>redist_plan</code> objects.</p>
-<table class="table">
-<thead><tr class="header">
-<th>Recommended</th>
-<th>Alternate Options</th>
-<th>Notes</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td><code>redist_smc</code></td>
-<td><code>redist.smc</code></td>
-<td></td>
-</tr>
-<tr class="even">
-<td><code>redist_mergesplit</code></td>
-<td><code>redist.mergesplit</code></td>
-<td></td>
-</tr>
-<tr class="odd">
-<td><code>redist_flip</code></td>
-<td><code>redist.flip</code></td>
-<td>(Formerly called <code>redist.mcmc</code>)</td>
-</tr>
-</tbody>
-</table>
+<p>A more detailed introduction to redistricting methods and the package can be found in the <a href="https://alarm-redist.github.io/redist/articles/redist.html" class="external-link">Get Started</a> page. The package <a href="https://alarm-redist.github.io/redist/articles/" class="external-link">vignettes</a> contain more detailed information and guides to specific workflows.</p>
 </div>
 </div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <div class="links">
-<h2>Links</h2>
+<h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li>Download from CRAN at <br><a href="https://cloud.r-project.org/package=redist">https://​cloud.r-project.org/​package=redist</a>
-</li>
-<li>Browse source code at <br><a href="https://github.com/alarm-redist/redist/">https://​github.com/​alarm-redist/​redist/​</a>
-</li>
-<li>Report a bug at <br><a href="https://github.com/alarm-redist/redist/issues">https://​github.com/​alarm-redist/​redist/​issues</a>
-</li>
-<li>ALARM Project at <br><a href="https://alarm-redist.github.io/">https://​alarm-redist.github.io/​</a>
-</li>
+<li><a href="https://cloud.r-project.org/package=redist" class="external-link">View on CRAN</a></li>
+<li><a href="https://github.com/alarm-redist/redist/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/alarm-redist/redist/issues" class="external-link">Report a bug</a></li>
+<li><a href="https://alarm-redist.github.io/" class="external-link">ALARM Project</a></li>
 </ul>
 </div>
+
 <div class="license">
-<h2>License</h2>
+<h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
 <li>GPL (&gt;= 2)</li>
 </ul>
 </div>
+
+
 <div class="citation">
-<h2>Citation</h2>
+<h2 data-toc-skip>Citation</h2>
 <ul class="list-unstyled">
-<li><a href="authors.html">Citing redist</a></li>
+<li><a href="authors.html#citation">Citing redist</a></li>
 </ul>
 </div>
+
 <div class="developers">
-<h2>Developers</h2>
+<h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
 <li>Christopher T. Kenny <br><small class="roles"> Author, maintainer </small>  </li>
 <li>Cory McCartan <br><small class="roles"> Author </small>  </li>
 <li>Ben Fifield <br><small class="roles"> Author </small>  </li>
 <li>Kosuke Imai <br><small class="roles"> Author </small>  </li>
-<li><a href="authors.html">All authors...</a></li>
+<li><a href="authors.html">More about authors...</a></li>
 </ul>
 </div>
 
-  <div class="dev-status">
-<h2>Dev status</h2>
+<div class="dev-status">
+<h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
-<li><a href="https://travis-ci.org/kosukeimai/redist"><img src="https://travis-ci.org/kosukeimai/redist.svg?branch=master" alt="Build Status"></a></li>
-<li><a href="https://cran.r-project.org/package=redist"><img src="https://www.r-pkg.org/badges/version-last-release/redist" alt="CRAN_Status_Badge"></a></li>
+<li><a href="https://travis-ci.org/kosukeimai/redist" class="external-link"><img src="https://travis-ci.org/kosukeimai/redist.svg?branch=master" alt="Build Status"></a></li>
+<li><a href="https://cran.r-project.org/package=redist" class="external-link"><img src="https://www.r-pkg.org/badges/version-last-release/redist" alt="CRAN_Status_Badge"></a></li>
 </ul>
 </div>
-</div>
+
+  </div>
 </div>
 
 
       <footer><div class="copyright">
-  <p>Developed by Christopher T. Kenny, Cory McCartan, Ben Fifield, Kosuke Imai.</p>
+  <p></p>
+<p>Developed by Christopher T. Kenny, Cory McCartan, Ben Fifield, Kosuke Imai.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
 </div>
 
       </footer>
@@ -316,6 +282,8 @@
 
   
 
+
+  
 
   </body>
 </html>

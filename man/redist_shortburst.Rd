@@ -13,13 +13,14 @@ redist_shortburst(
   maximize = TRUE,
   init_plan = NULL,
   counties = NULL,
+  constraints = redist_constr(map),
   compactness = 1,
-  adapt_k_thresh = 0.975,
+  adapt_k_thresh = 0.95,
   return_all = TRUE,
+  thin = 1L,
   backend = "mergesplit",
   flip_lambda = 0,
   flip_eprob = 0.05,
-  flip_constraints = list(),
   verbose = TRUE
 )
 }
@@ -50,6 +51,8 @@ to the number of counties, or a factor or character vector.  If provided, the
 algorithm will only generate maps which split up to \code{ndists-1} counties.
 If no county-split constraint is desired, this parameter should be left blank.}
 
+\item{constraints}{A \code{redist_constr} with Gibbs constraints.}
+
 \item{compactness}{Controls the compactness of the generated districts, with
 higher values preferring more compact districts. Must be non-negative. See
 \code{\link{redist_mergesplit}} for more information.}
@@ -62,6 +65,9 @@ Must be between 0 and 1.}
 \item{return_all}{Whether to return all the
 Recommended for monitoring purposes.}
 
+\item{thin}{Save every \code{thin}-th sample. Defaults to no thinning (1). Ignored
+if \code{return_all=TRUE}.}
+
 \item{backend}{the MCMC algorithm to use within each burst, either
 "mergesplit" or "flip".}
 
@@ -69,9 +75,6 @@ Recommended for monitoring purposes.}
 The number of swaps each iteration is equal to Pois(lambda) + 1. The default is 0.}
 
 \item{flip_eprob}{The probability of keeping an edge connected in flip mcmc. The default is 0.05.}
-
-\item{flip_constraints}{A list of constraints to use for flip mcmc. Can be created with
-\code{flip_constraints_helper}. Defaults to an edges-removed compactness constraint with weight 0.6.}
 
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended for monitoring purposes.}
@@ -81,20 +84,20 @@ a \code{redist_plans} object containing the final best plan
 (or the best plans after each burst, if \code{return_all=TRUE}.
 }
 \description{
-This function uses \code{\link[=redist_mergesplit]{redist_mergesplit()}} to optimize a redistrict plan
-according to a user-provided criteria. It does so by running the Markov chain
-for "short bursts" of usually 10 iterations, and then starting the chain anew
-from the best plan in the burst, according to the criteria. This implements
-the ideas in the below-referenced paper, "Voting Rights, Markov Chains, and
-Optimization by Short Bursts."
+This function uses \code{\link[=redist_mergesplit]{redist_mergesplit()}} or \code{\link[=redist_flip]{redist_flip()}} to optimize a
+redistrict plan according to a user-provided criteria. It does so by running
+the Markov chain for "short bursts" of usually 10 iterations, and then
+starting the chain anew from the best plan in the burst, according to the
+criteria. This implements the ideas in the below-referenced paper, "Voting
+Rights, Markov Chains, and Optimization by Short Bursts."
 }
 \examples{
 \donttest{
 data(iowa)
 
-iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.01)
-redist_shortburst(iowa_map, scorer_frac_kept(iowa_map), max_bursts=50)
-redist_shortburst(iowa_map, ~ 1 - scorer_frac_kept(iowa_map)(.), max_bursts=50)
+iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
+redist_shortburst(iowa_map, scorer_frac_kept(iowa_map), max_bursts = 50)
+redist_shortburst(iowa_map, ~ 1 - scorer_frac_kept(iowa_map)(.), max_bursts = 50)
 }
 
 }

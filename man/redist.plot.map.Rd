@@ -48,8 +48,8 @@ plan is used as the color and fill as the alpha parameter.
 data(iowa)
 redist.plot.map(shp = iowa, plan = iowa$cd_2010)
 
-iowa_map = redist_map(iowa, existing_plan = cd_2010)
-redist.plot.map(iowa_map, fill=dem_08/tot_08, zoom_to=(cd_2010 == 1))
+iowa_map <- redist_map(iowa, existing_plan = cd_2010)
+redist.plot.map(iowa_map, fill = dem_08/tot_08, zoom_to = (cd_2010 == 1))
 
 }
 \concept{plot}

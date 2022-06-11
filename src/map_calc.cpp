@@ -1,4 +1,6 @@
+// [[Rcpp::depends(redistmetrics)]]
 #include "map_calc.h"
+#include <redistmetrics.h>
 
 /*
  * Compute the logarithm of the graph theoretic length of the boundary between
@@ -8,28 +10,26 @@ double log_boundary(const Graph &g, const subview_col<uword> &districts,
                     int distr_root, int distr_other) {
     int V = g.size();
 
-    int count = 0; // number of cuttable edges to create eq-pop districts
+    double count = 0; // number of cuttable edges to create eq-pop districts
     for (int i = 0; i < V; i++) {
         std::vector<int> nbors = g[i];
-        int length = nbors.size();
         if (districts(i) != distr_root) continue; // same side of boundary as root
-        for (int j = 0; j < length; j++) {
-            int nbor = nbors[j];
+        for (int nbor : nbors) {
             if (districts(nbor) != distr_other)
                 continue;
             // otherwise, boundary with root -> ... -> i -> nbor
-            count++;
+            count += 1.0;
         }
     }
 
-    return log((double) count);
+    return std::log(count);
 }
 
 /*
  * Compute the status quo penalty for district `distr`
  */
-double sq_entropy(const subview_col<uword> &districts, const uvec &current,
-                  int distr, const uvec &pop, int n_distr, int n_current, int V) {
+double eval_sq_entropy(const subview_col<uword> &districts, const uvec &current,
+                       int distr, const uvec &pop, int n_distr, int n_current, int V) {
     double accuml = 0;
     for (int j = 1; j <= n_current; j++) { // 1-indexed districts
         double pop_overlap = 0;
@@ -50,36 +50,58 @@ double sq_entropy(const subview_col<uword> &districts, const uvec &current,
 }
 
 /*
- * Compute the old VRA penalty for district `distr`
+ * Compute the new, hinge group penalty for district `distr`
  */
-double eval_vra(const subview_col<uword> &districts, int distr, double tgt_min,
-                double tgt_other, double pow_vra, const uvec &pop, const uvec &min_pop) {
+double eval_grp_hinge(const subview_col<uword> &districts, int distr,
+                      const vec &tgts_grp, const uvec &grp_pop, const uvec &total_pop) {
     uvec idxs = find(districts == distr);
-    double frac = ((double) sum(min_pop(idxs))) / sum(pop(idxs));
-    return std::pow(std::fabs(frac - tgt_min), pow_vra) *
-        std::pow(std::fabs(frac - tgt_other), pow_vra);
-}
-
-/*
- * Compute the new, hinge VRA penalty for district `distr`
- */
-double eval_vra_hinge(const subview_col<uword> &districts, int distr,
-                      const vec &tgts_min, const uvec &pop, const uvec &min_pop) {
-    uvec idxs = find(districts == distr);
-    double frac = ((double) sum(min_pop(idxs))) / sum(pop(idxs));
+    double frac = ((double) sum(grp_pop(idxs))) / sum(total_pop(idxs));
     // figure out which to compare it to
     double target;
     double diff = 1;
-    int n_tgt = tgts_min.size();
+    int n_tgt = tgts_grp.size();
     for (int i = 0; i < n_tgt; i++) {
-        double new_diff = std::fabs(tgts_min[i] - frac);
+        double new_diff = std::fabs(tgts_grp[i] - frac);
         if (new_diff <= diff) {
             diff = new_diff;
-            target = tgts_min[i];
+            target = tgts_grp[i];
         }
     }
 
     return std::sqrt(std::max(0.0, target - frac));
+}
+
+/*
+ * Compute the new, hinge group penalty for district `distr`
+ */
+double eval_grp_inv_hinge(const subview_col<uword> &districts, int distr,
+                      const vec &tgts_grp, const uvec &grp_pop, const uvec &total_pop) {
+    uvec idxs = find(districts == distr);
+    double frac = ((double) sum(grp_pop(idxs))) / sum(total_pop(idxs));
+    // figure out which to compare it to
+    double target;
+    double diff = 1;
+    int n_tgt = tgts_grp.size();
+    for (int i = 0; i < n_tgt; i++) {
+        double new_diff = std::fabs(tgts_grp[i] - frac);
+        if (new_diff <= diff) {
+            diff = new_diff;
+            target = tgts_grp[i];
+        }
+    }
+
+    return std::sqrt(std::max(0.0, frac - target));
+}
+
+/*
+ * Compute the power-based group penalty for district `distr`
+ */
+double eval_grp_pow(const subview_col<uword> &districts, int distr,
+                   const uvec &grp_pop, const uvec &total_pop,
+                   double tgt_grp, double tgt_other, double pow) {
+    uvec idxs = find(districts == distr);
+    double frac = ((double) sum(grp_pop(idxs))) / sum(total_pop(idxs));
+    return std::pow(std::fabs(frac - tgt_grp) * std::fabs(frac - tgt_other), pow);
 }
 
 /*
@@ -89,73 +111,241 @@ double eval_inc(const subview_col<uword> &districts, int distr, const uvec &incu
     int n_inc = incumbents.size();
     double inc_in_distr = -1.0; // first incumbent doesn't count
     for (int i = 0; i < n_inc; i++) {
-        if (districts[incumbents[i]] == distr)
+        if (districts[incumbents[i] - 1] == distr)
             inc_in_distr++;
     }
 
+    if (inc_in_distr < 0.0) {
+        inc_in_distr = 0.0;
+    }
+
     return inc_in_distr;
+}
+
+
+// helper function
+// calculates districts which appear in each county (but not zeros)
+std::vector<std::set<int>> calc_county_dist(const subview_col<uword> &districts,
+                                            const uvec &counties, int n_cty) {
+    std::vector<std::set<int>> county_dist(n_cty);
+    int V = counties.size();
+    for (int i = 0; i < n_cty; i++) {
+        county_dist[i] = std::set<int>();
+    }
+    for (int i = 0; i < V; i++) {
+        if (districts[i] > 0) {
+            county_dist[counties[i]-1].insert(districts[i]);
+        }
+    }
+    return county_dist;
 }
 
 /*
  * Compute the county split penalty for district `distr`
  */
 double eval_splits(const subview_col<uword> &districts, int distr,
-                   const uvec &counties, int n_cty) {
-    std::vector<std::set<int>> county_dist(n_cty);
-    int V = counties.size();
-    for (int i = 0; i < n_cty; i++) {
-        county_dist[i] = std::set<int>();
-    }
-
-    for (int i = 0; i < V; i++) {
-        county_dist[counties[i]-1].insert(districts[i]);
-    }
+                   const uvec &counties, int n_cty, bool smc) {
+    std::vector<std::set<int>> county_dist = calc_county_dist(districts, counties, n_cty);
 
     int splits = 0;
     for (int i = 0; i < n_cty; i++) {
         int cty_n_distr = county_dist[i].size();
-        if (cty_n_distr > 1)
-            splits++;
+        // for SMC, just count the split when it crosses the threshold
+        // for MCMC there is no sequential nature, & the overcount will cancel
+        bool cond = smc ? cty_n_distr == 2 : cty_n_distr >= 2;
+        if (cond) {
+            auto search = county_dist[i].find(distr);
+            if (search != county_dist[i].end()) {
+                splits += smc ? 1.0 : 1.0 / cty_n_distr; // take care of MCMC overcount
+            }
+        }
     }
 
     return splits;
 }
 
 /*
- * Compute the county fracture penalty for district `distr`
+ * Compute the county multisplit penalty for district `distr`
  */
-double eval_fractures(const subview_col<uword> &districts, int distr,
-                   const uvec &counties, int n_cty) {
-    std::vector<std::set<int>> county_dist(n_cty);
-    int V = counties.size();
-    for (int i = 0; i < n_cty; i++) {
-        county_dist[i] = std::set<int>();
-    }
+double eval_multisplits(const subview_col<uword> &districts, int distr,
+                        const uvec &counties, int n_cty, bool smc) {
+    std::vector<std::set<int>> county_dist = calc_county_dist(districts, counties, n_cty);
 
-    for (int i = 0; i < V; i++) {
-        county_dist[counties[i]-1].insert(districts[i]);
-    }
-
-    int fracts = 0;
+    double splits = 0;
     for (int i = 0; i < n_cty; i++) {
         int cty_n_distr = county_dist[i].size();
-        if (cty_n_distr > 2)
-            fracts++;
+        // for SMC, just count the split when it crosses the threshold
+        // for MCMC there is no sequential nature, & the overcount will cancel
+        bool cond = smc ? cty_n_distr == 3 : cty_n_distr >= 3;
+        if (cond) {
+            auto search = county_dist[i].find(distr);
+            if (search != county_dist[i].end()) {
+                splits += smc ? 1.0 : 1.0 / cty_n_distr; // take care of MCMC overcount
+            }
+        }
     }
 
-    return fracts;
+    return splits;
 }
+
+/*
+ * Compute the total splits penalty for district `distr`
+ */
+double eval_total_splits(const subview_col<uword> &districts, int distr,
+                         const uvec &counties, int n_cty) {
+    std::vector<std::set<int>> county_dist = calc_county_dist(districts, counties, n_cty);
+
+    double splits = 0;
+    for (int i = 0; i < n_cty; i++) {
+        int cty_n_distr = county_dist[i].size();
+        // no over-counting since every split counts
+        if (cty_n_distr > 1) {
+            auto search = county_dist[i].find(distr);
+            if (search != county_dist[i].end()) {
+                splits += 1.0;
+            }
+        }
+    }
+
+    return splits;
+}
+
+/*
+ * Compute the Polsby Popper penalty for district `distr`
+ */
+double eval_polsby(const subview_col<uword> &districts, int distr,
+                   const ivec &from,
+                   const ivec &to,
+                   const vec &area,
+                   const vec &perimeter) {
+    uvec idxs = find(districts == distr);
+
+    double pi4 = 4.0 * 3.14159265;
+    double tot_area = sum(area(idxs));
+
+    double tot_perim = 0.0;
+
+    uvec idx = find(to == distr);
+    for (int e = 0; e < idx.size(); e++) {
+        if(from(idx(e)) == -1) {
+            tot_perim += perimeter(idx(e));
+        } else {
+            if (districts(from(idx(e))) != distr) {
+                tot_perim += perimeter(idx(e));
+            }
+        }
+    }
+
+    double dist_peri2 = pow(tot_perim, 2.0);
+    return 1.0 - (pi4 * tot_area / dist_peri2);
+}
+
+/*
+ * Compute the Fryer-Holden penalty for district `distr`
+ */
+double eval_fry_hold(const subview_col<uword> &districts, int distr,
+                     const uvec &total_pop, mat ssdmat, double denominator = 1.0) {
+    uvec idxs = find(districts == distr);
+    double ssd = 0.0;
+
+    for (int i = 0; i < idxs.size() - 1; i++) {
+        for (int k = i + 1; k < idxs.size(); k++) {
+            ssd += (double) ssdmat(idxs(i), idxs(k)) * total_pop(idxs(i)) *
+                total_pop(idxs(k));
+        }
+    }
+
+    return ssd / denominator;
+}
+
+/*
+ * Compute the population penalty for district `distr`
+ */
+double eval_pop_dev(const subview_col<uword> &districts, int distr,
+                       const uvec &total_pop, double parity) {
+    uvec idxs = find(districts == distr);
+    double pop = sum(total_pop(idxs));
+
+    return std::pow(pop / parity - 1.0, 2.0);
+}
+
+
+/*
+ * Compute the segregation penalty for district `distr`
+ */
+double eval_segregation(const subview_col<uword> &districts, int distr,
+                        const uvec &grp_pop, const uvec &total_pop) {
+
+    int T = sum(total_pop);
+    double pAll = (double) sum(grp_pop) / T;
+    double denom = (double) 2.0 * T * pAll * (1 - pAll);
+
+    uvec idxs = find(districts == distr);
+    double grp = sum(grp_pop(idxs));
+    double pop = sum(total_pop(idxs));
+
+    return (double)(pop * std::abs((grp / pop) - pAll) / denom);
+}
+
+/*
+ * Compute the qps penalty for district `distr`
+ */
+double eval_qps(const subview_col<uword> &districts, int distr,
+                const uvec &total_pop, const uvec &cities, int n_city,
+                int nd) {
+
+    vec tally(n_city);
+    vec pj(n_city);
+    vec j(n_city);
+    vec sumpj(n_city);
+
+    uvec idxs_d = find(districts == distr);
+    double pop = sum(total_pop(idxs_d));
+
+    for (int i = 0; i < n_city; i++){
+        uvec idxs = find(cities == (i + 1));
+        idxs = arma::intersect(idxs_d, idxs);
+        tally(i) = sum(total_pop(idxs));
+        if (tally(i) > 0) {
+            j(i) += 1;
+        }
+    }
+
+    pj = tally / pop;
+    sumpj = pj * (1.0 -  pj);
+    sumpj = sumpj / (double) nd;
+
+    return sum(sumpj) + log(sum(j));
+}
+
+/*
+ * Compute the log spanning tree penalty for district `distr`
+ */
+double eval_log_st(const subview_col<uword> &districts, const Graph g,
+                   arma::uvec counties, int ndists) {
+    return (double) redistmetrics::log_st_map(g, districts, counties, ndists)[0];
+}
+
+/*
+ * Compute the edges removed penalty for district `distr`
+ */
+double eval_er(const subview_col<uword> &districts, const Graph g, int ndists) {
+    return (double) redistmetrics::n_removed(g, districts, ndists)[0];
+}
+
+
+
 
 /*
  * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,
  * given a collection of plans
  */
-mat prec_cooccur(umat m, uvec idxs) {
+mat prec_cooccur(umat m, uvec idxs, int ncores) {
     int v = m.n_rows;
     int n = idxs.n_elem;
     mat out(v, v);
 
-    for (int i = 0; i < v; i++) {
+    RcppThread::parallelFor(0, v, [&] (int i) {
         out(i, i) = 1;
         for (int j = 0; j < i; j++) {
             double shared = 0;
@@ -166,7 +356,7 @@ mat prec_cooccur(umat m, uvec idxs) {
             out(i, j) = shared;
             out(j, i) = shared;
         }
-    }
+    }, ncores);
 
     return out;
 }
@@ -279,7 +469,7 @@ NumericVector max_dev(const IntegerMatrix districts, const vec pop, int n_distr)
 std::vector<double> tree_dev(Tree &ust, int root, const uvec &pop,
                              double total_pop, double target) {
     int V = pop.size();
-    std::vector<int> pop_below(V);
+    std::vector<int> pop_below(V, 0);
     std::vector<int> parent(V);
     tree_pop(ust, root, pop, pop_below, parent);
     // compile a list of candidate edges to cut

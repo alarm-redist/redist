@@ -3,7 +3,7 @@
 \name{group_frac}
 \alias{group_frac}
 \alias{redist.group.percent}
-\title{Calculate Group Percent by District}
+\title{Calculate Group Proportion by District}
 \usage{
 group_frac(
   map,
@@ -32,7 +32,7 @@ for each precinct and one column for each map. Required.}
 matrix with percent for each district
 }
 \description{
-\code{redist.group.percent} computes the percentage that a group makes up in
+\code{redist.group.percent} computes the proportion that a group makes up in
 each district across a matrix of maps.
 }
 \examples{
@@ -42,8 +42,8 @@ data(fl25_enum)
 cd <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
 
 redist.group.percent(plans = cd,
-                    group_pop = fl25$BlackPop,
-                    total_pop = fl25$TotPop)
+    group_pop = fl25$BlackPop,
+    total_pop = fl25$TotPop)
 
 }
 \concept{analyze}

@@ -116,7 +116,7 @@ where larger values are more compact.
 
 The Fryer Holden score for each district is computed with \deqn{Pop\odot D(precinct)^2},
 where \eqn{Pop} is the population product matrix.  Each element is the
-product of the ith and jth precinct's populations.  D represents the distance,
+product of the i-th and j-th precinct's populations.  D represents the distance,
 where the matrix is the distance between each precinct.  To fully compute this
 index, for any map, the sum of these values should be used as the numerator.
 The denominator can be calculated from the full enumeration of districts as the
@@ -130,7 +130,7 @@ The edges removed measure is number of edges removed from the underlying adjacen
 A smaller number of edges removed is more compact.
 
 The fraction kept measure is the fraction of edges that were not removed from the
- underlying adjacency graph. This takes values 0 - 1, where 1 is more compact.
+underlying adjacency graph. This takes values 0 - 1, where 1 is more compact.
 }
 \examples{
 data(fl25)
@@ -138,9 +138,10 @@ data(fl25_enum)
 
 plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
 
-redist.compactness(shp = fl25, plans = plans_05[,1:3],
-measure = c('PolsbyPopper', 'EdgesRemoved'))
-
+redist.compactness(
+    shp = fl25, plans = plans_05[, 1:3],
+    measure = c("PolsbyPopper", "EdgesRemoved")
+)
 }
 \references{
 Boyce, R., & Clark, W. 1964. The Concept of Shape in Geography.

@@ -25,9 +25,9 @@
 #' Social Forces.
 #'
 #' @concept data
-#' @examples 
+#' @examples
 #' data(fl25_enum)
-#' 
+#'
 NULL
 
 
@@ -63,9 +63,9 @@ NULL
 #' Working Paper. Available at
 #' \url{http://imai.princeton.edu/research/files/redist.pdf}.
 #' @concept data
-#' @examples 
+#' @examples
 #' data(fl25)
-#' 
+#'
 NULL
 
 #' Florida 25 Precinct File
@@ -83,9 +83,9 @@ NULL
 #' Working Paper. Available at
 #' \url{http://imai.princeton.edu/research/files/redist.pdf}.
 #' @concept data
-#' @examples 
+#' @examples
 #' data(fl25_adj)
-#' 
+#'
 NULL
 
 
@@ -121,9 +121,9 @@ NULL
 #' The Essential Role of Empirical Validation in Legislative Redistricting Simulation,
 #' Statistics and Public Policy, 7:1, 52-68, doi:10.1080/2330443X.2020.1791773
 #' @concept data
-#' @examples 
+#' @examples
 #' data(fl70)
-#' 
+#'
 NULL
 
 #' Florida 250 Precinct Shape File
@@ -158,7 +158,7 @@ NULL
 #' @concept data
 #' @examples
 #' data(fl250)
-#' 
+#'
 NULL
 
 #' Iowa County File
@@ -169,7 +169,7 @@ NULL
 #' @name iowa
 #' @usage data("iowa")
 #' @format sf tibble containing columns for useful data related to the
-#'   redistricting process
+#' redistricting process
 #' \describe{
 #' \item{\code{fips}}{The FIPS code for the county.}
 #' \item{\code{cd_2010}}{The 2010 congressional district assignments.}
@@ -192,4 +192,24 @@ NULL
 #' @examples
 #' data(iowa)
 #' print(iowa)
+NULL
+
+#' EPSG Table
+#'
+#' This data contains NAD83 (HARN) EPSG codes for every U.S. state.
+#' Since `redist` uses projected geometries, it is often a good idea to use
+#' projections tailored to a particular state, rather than, for example, a
+#' Mercator projection. Use these codes along with [sf::st_transform()] to
+#' project your shapefiles nicely.
+#'
+#' @name EPSG
+#' @usage data("EPSG")
+#' @format named list containing EPSG codes for each U.S. state. Codes are
+#' indexed by state abbreviations.
+#'
+#' @md
+#' @concept data
+#' @examples
+#' data(EPSG)
+#' EPSG$WA # 2855
 NULL

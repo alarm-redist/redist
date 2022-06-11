@@ -91,14 +91,17 @@ problem.
 many helpful functions for compiling these data, and fixing problems in
 geographic data.
 
-Sources for precinct-level geographic and political information include the
-[MIT Election Lab](https://electionlab.mit.edu/data), the 
-[Census](https://www.census.gov/programs-surveys/decennial-census/about/rdo.html),
+The ALARM project provides 
+[pre-cleaned redistricting data files](https://alarm-redist.github.io/posts/2021-08-10-census-2020/) 
+consisting of VEST election data joined 2020 Census data at the precinct level.
+Other sources for precinct-level geographic and political information include 
+the [MIT Election Lab](https://electionlab.mit.edu/data), 
+the [Census](https://www.census.gov/programs-surveys/decennial-census/about/rdo.html),
 the [Redistricting Data Hub](https://redistrictingdatahub.org/),
 the [Voting and Election Science Team](https://dataverse.harvard.edu/dataverse/electionscience),
 the [Harvard Election Data Archive](https://dataverse.harvard.edu/dataverse/eda),
 the [Metric Geometry and Gerrymandering Group](https://github.com/mggg-states),
-and some state websites.
+and some state websites. 
 
 ## Iowa
 
@@ -259,20 +262,15 @@ relatively compact by default.  This can be further controlled by the
 `compactness` parameter (although `compactness=1` is particularly
 computationally convenient).
 
-To simulate, we call `redist_smc()` on our `redist_map` object.
+To simulate, we call `redist_smc()` on our `redist_map` object. We provide
+the `runs=2` parameter, which will run the SMC algorithm twice, in parallel.
+This doubles the total number of sampled plans, but more importantly, it
+provides extremely valuable diagnostic information about whether the algorithm
+is sampling properly.
 
-```{r}
-iowa_plans = redist_smc(iowa_map, nsims=1000, compactness=1)
+```{r message=FALSE}
+iowa_plans = redist_smc(iowa_map, 500, compactness=1, runs=2)
 ```
-
-By default, `redist_smc()` prints a good deal of diagnostic information.  While
-verbose, it is important to monitor this output to ensure the algorithm is
-working properly.  The key number to keep an eye on is the _resampling effective
-sample size_/_resampling efficiency_. This number should be as close to the
-nominal sample size (100%) as possible, and values less than 5--10% generally
-indicate problems---constraints which are too strong or difficult to satisfy.
-Here, the resampling efficiencies are above 90% at each stage, which is 
-excellent.
 
 The output from the algorithm is a `redist_plans` object, which stores a matrix
 of district assignments for each precinct and simulated plans, and a table of 
@@ -287,7 +285,7 @@ print(iowa_plans)
 We can explore specific simulated plans with `redist.plot.plans()`.
 
 ```{r ia-sim-plans}
-redist.plot.plans(iowa_plans, draws=1:6, geom=iowa_map)
+redist.plot.plans(iowa_plans, draws=1:6, shp=iowa_map)
 ```
 
 # Analyzing the simulated plans {#analyze}
@@ -295,11 +293,10 @@ A `redist_plans` object, the output of a sampling algorithm, links a matrix
 of precinct assignments to a table of district statistics, and this linkage 
 makes analyzing the output a breeze.
 
-In problems with a small (generally fewer than 7) number of districts, it may be
-possible to renumber the simulated districts (which have random numbers in
-general) to match the reference plan as closely as possible. This adds a
-`pop_overlap` column which measures how much of the population is in the same
-district in both a given plan and the reference plan.
+Sometimes it may be useful to renumber the simulated districts (which have
+random numbers in general) to match the reference plan as closely as possible.
+This adds a `pop_overlap` column which measures how much of the population is in
+the same district in both a given plan and the reference plan.
 ```{r}
 iowa_plans = match_numbers(iowa_plans, iowa_map$cd_2010)
 print(iowa_plans)
@@ -311,7 +308,7 @@ compactness measure related to the Iowa Code's redistricting requirements, and
 the fraction of minority voters and two-party Democratic vote share by district.
 
 ```{r message=F}
-county_perims = redist.prep.polsbypopper(iowa_map, iowa_map$adj)
+county_perims = prep_perims(iowa_map, iowa_map$adj)
 
 iowa_plans = iowa_plans %>%
     mutate(pop_dev = abs(total_pop / get_target(iowa_map) - 1),
@@ -321,7 +318,34 @@ iowa_plans = iowa_plans %>%
 print(iowa_plans)
 ```
 
-From there, it's quick to turn these into plan-level summary statistics.
+
+Once summary statistics of interest have been calculated, it's very important
+to check the algorithm's diagnostics. As with any complex sampling algorithm,
+things can go wrong. Diagnostics, while not flawless, can help catch problems
+and stop you from making conclusions that are actually the fault of a broken
+sampling process. The `summary()` function is `redist`'s one-stop-shop for
+algorithm diagnostics.
+
+```{r}
+summary(iowa_plans)
+```
+
+There's a lot of diagnostic output there, which you should read more about with
+`?summary.redist_plans`. If anything is obviously wrong, the function will
+alert you and provide instructions on how to try to fix it. But these warnings
+aren't flawless, and it's important to check the numbers yourself. 
+
+If you've used 2 or more `runs`, as we have, `summary()` will calculate R-hat values.
+These should be as close to 1 as possible, and generally less than 1.05. If 
+they are bigger than that, it means that multiple independent runs of the 
+algorithm gave different results.  More samples (higher `nsims`) are usually 
+called for.  The other number to keep an eye on is the plan diversity 
+(top of the output), whose 80% range should generally cover the range from 
+0.5--0.8. 
+
+Since our diagnostics look good, we can return to our analysis.
+It's quick to turn district-level statistics from a `redist_plans` object 
+into plan-level summary statistics.
 
 ```{r}
 plan_sum = group_by(iowa_plans, draw) %>%
@@ -331,6 +355,7 @@ plan_sum = group_by(iowa_plans, draw) %>%
               dem_distr = sum(pct_dem > 0.5))
 print(plan_sum)
 ```
+
 
 These tables of statistics are easily plotted using existing libraries like
 `ggplot2`, but `redist` provides a number of helpful plotting functions that

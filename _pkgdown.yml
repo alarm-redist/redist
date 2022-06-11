@@ -23,14 +23,18 @@ reference:
   desc: "Core functions to perform a redistricting simulation"
 - contents:
   - redist_smc
-  - redist_flip
   - redist_mergesplit
+  - redist_mergesplit_parallel
+  - redist_flip
   - redist_shortburst
+  - redist_constr
+  - constraints
   - has_concept("simulate")
 - title: "Analysis Functions"
   desc: "Functions for analyzing simulation outputs"
 - contents:
   - redist_plans
+  - summary.redist_plans
   - add_reference
   - subset_sampled
   - get_plans_matrix
@@ -38,6 +42,7 @@ reference:
   - number_by
   - pullback
   - match_numbers
+  - tally_var
   - has_concept("analyze")
 - title: "Setup Helpers"
   desc: "Functions that help prepare data and select constraints"

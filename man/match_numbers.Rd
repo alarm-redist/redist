@@ -4,20 +4,26 @@
 \alias{match_numbers}
 \title{Renumber districts to match an existing plan}
 \usage{
-match_numbers(data, plan, col = "pop_overlap", force = FALSE)
+match_numbers(
+  data,
+  plan,
+  total_pop = attr(data, "prec_pop"),
+  col = "pop_overlap"
+)
 }
 \arguments{
-\item{data}{a \code{redist_plans} object}
+\item{data}{a \code{redist_plans} object.}
 
 \item{plan}{a character vector giving the name of the plan to match to (e.g.,
 for a reference plan), or an integer vector containing the plan itself.}
 
+\item{total_pop}{a vector of population counts. Should not be needed for most
+\code{redist_plans} objects.}
+
 \item{col}{the name of a new column to store the vector of population overlap
 with the reference plan: the fraction of the total population who are in
 the same district under each plan and the reference plan. Set to
-\code{NULL} if no column should be created.}
-
-\item{force}{if \code{TRUE}, force computation when there are more than 1,000
+\code{NULL} if no column should be created.
 renumbering options in any plan.}
 }
 \value{
@@ -28,6 +34,14 @@ district numbers in the plan matrix will match the levels of this factor.
 \description{
 District numbers in simulated plans are by and large random.  This
 function attempts to renumber the districts across all simulated plans to
-match the numbers in a provided plan.
+match the numbers in a provided plan, using the Hungarian algorithm.
+}
+\examples{
+data(iowa)
+
+iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05)
+plans <- redist_smc(iowa_map, 100, silent = TRUE)
+match_numbers(plans, "cd_2010")
+
 }
 \concept{analyze}

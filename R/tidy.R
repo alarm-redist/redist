@@ -5,21 +5,21 @@
 ## Purpose: redist functions for a tidy workflow
 ##############################################
 
-# tidy accessor/helper functons ----
+# tidy accessor/helper functions ----
 
 #' Helper function to get current plans/map objects
 #' Traverses call stack to find plans object passed to dplyr verbs
 #' @noRd
-get_cur_df = function(dplyr_funcs) {
-    calls = sys.calls()
-    frames = sys.frames()
+get_cur_df <- function(dplyr_funcs) {
+    calls <- sys.calls()
+    frames <- sys.frames()
     for (i in rev(seq_along(calls))) {
-        call = calls[[i]]
-        frame = frames[[i]]
+        call <- calls[[i]]
+        frame <- frames[[i]]
         if (is.null(rlang::call_name(call))) next
         if (any(vapply(dplyr_funcs,
-                       function(x) identical(x, rlang::call_fn(call, frame)),
-                       logical(1)))) {
+            function(x) identical(x, rlang::call_fn(call, frame)),
+            logical(1)))) {
             return(rlang::env_get(frame, ".data"))
         }
     }
@@ -28,25 +28,25 @@ get_cur_df = function(dplyr_funcs) {
 
 #' Helper function to get current map object
 #' @noRd
-cur_map = function(verbs=c("mutate", "summarize", "merge_by",
-                           "filter", "arrange", "transmute")) {
-    get_cur_df(list(mutate=mutate.redist_map,
-                    transmute=transmute.redist_map,
-                    summarize=summarise.redist_map,
-                    merge_by=merge_by,
-                    filter=filter.redist_map,
-                    arrange=arrange.redist_map)[verbs])
+cur_map <- function(verbs = c("mutate", "summarize", "merge_by",
+                        "filter", "arrange", "transmute")) {
+    get_cur_df(list(mutate = mutate.redist_map,
+        transmute = transmute.redist_map,
+        summarize = summarise.redist_map,
+        merge_by = merge_by,
+        filter = filter.redist_map,
+        arrange = arrange.redist_map)[verbs])
 }
 
 #' Helper function to get current plans object
 #' @noRd
-cur_plans = function(verbs=c("mutate", "summarize", "filter",
-                             "arrange", "transmute")) {
-    get_cur_df(list(mutate=mutate.redist_plans,
-                    transmute=transmute.redist_plans,
-                    summarize=summarise.redist_plans,
-                    filter=filter.redist_plans,
-                    arrange=arrange.redist_plans)[verbs])
+cur_plans <- function(verbs = c("mutate", "summarize", "filter",
+                          "arrange", "transmute")) {
+    get_cur_df(list(mutate = mutate.redist_plans,
+        transmute = transmute.redist_plans,
+        summarize = summarise.redist_plans,
+        filter = filter.redist_plans,
+        arrange = arrange.redist_plans)[verbs])
 }
 #
 
@@ -61,21 +61,21 @@ cur_plans = function(verbs=c("mutate", "summarize", "filter",
 #' @concept prepare
 #'
 #' @export
-is_contiguous = function(x) {
-    stopifnot(inherits(x, "redist_map"))
+is_contiguous <- function(x) {
+    if (!inherits(x, "redist_map")) cli_abort("{.arg x} must be a {.cls redist_map}")
     all(contiguity(get_adj(x), rep(1, nrow(x))) == 1)
 }
 
 
 ## merge helpers
 # checks if is a proportion/pct
-is_prop = function(x) is.double(x) && min(x, na.rm=TRUE) >= 0 && max(x, na.rm=TRUE) <= 1
+is_prop <- function(x) is.double(x) && min(x, na.rm = TRUE) >= 0 && max(x, na.rm = TRUE) <= 1
 # checks if is not a  proportion/pct
-is_nonprop = function(x) is.numeric(x) && (min(x, na.rm=TRUE) < 0 || max(x, na.rm=TRUE) > 1)
+is_nonprop <- function(x) is.numeric(x) && (min(x, na.rm = TRUE) < 0 || max(x, na.rm = TRUE) > 1)
 # checks if x is constant within levels of rel
-is_const_rel = function(rel) {
+is_const_rel <- function(rel) {
     function(x) {
-        !is.numeric(x) && all(tapply(x, rel, FUN=function(y) length(unique(y))) == 1)
+        !is.numeric(x) && all(tapply(x, rel, FUN = function(y) length(unique(y))) == 1)
     }
 }
 
@@ -90,45 +90,45 @@ is_const_rel = function(rel) {
 #' @param ... \code{\link[dplyr:dplyr_tidy_select]{<tidy-select>}} the column(s) to merge by
 #' @param by_existing if an existing assignment is present, whether to also group by it
 #' @param drop_geom whether to drop the geometry column. Recommended, as
-#'   otherwise a costly geometric merge is required.
+#' otherwise a costly geometric merge is required.
 #' @param collapse_chr if \code{TRUE}, preserve character columns by collapsing
-#'   their values. For example, a county name column in Iowa might be merged and
-#'   have entries such as "Cedar~Clinton~Des Moines". Set to \code{FALSE} to
-#'   drop character columns instead.
+#' their values. For example, a county name column in Iowa might be merged and
+#' have entries such as "Cedar~Clinton~Des Moines". Set to \code{FALSE} to
+#' drop character columns instead.
 #'
 #' @returns A merged \code{\link{redist_map}} object
 #'
 #' @concept prepare
 #' @export
-merge_by = function(.data, ..., by_existing=TRUE, drop_geom=TRUE, collapse_chr=TRUE) {
-    .data = as_redist_map(.data)
+merge_by <- function(.data, ..., by_existing = TRUE, drop_geom = TRUE, collapse_chr = TRUE) {
+    .data <- as_redist_map(.data)
 
-    dots = rlang::enquos(...)
-    key_val = rlang::eval_tidy(dots[[1]], .data)
-    pop_col = attr(.data, "pop_col")
+    dots <- rlang::enquos(...)
+    key_val <- rlang::eval_tidy(dots[[1]], .data)
+    pop_col <- attr(.data, "pop_col")
 
-    if (drop_geom)
-        .data = sf::st_drop_geometry(.data)
+    if (drop_geom && inherits(.data, "sf"))
+        .data <- sf::st_drop_geometry(.data)
 
-    col = attr(.data, "existing_col")
-    unique_chr = function(x) paste(unique(x), collapse="~")
-    is_col_chr = if (collapse_chr) is.character else (function(x) FALSE)
+    col <- attr(.data, "existing_col")
+    unique_chr <- function(x) paste(unique(x), collapse = "~")
+    is_col_chr <- if (collapse_chr) is.character else (function(x) FALSE)
     if (!is.null(col) && by_existing) {
         dplyr::group_by(.data, dplyr::across(dplyr::all_of(col)), !!!dots) %>%
             dplyr::summarize(dplyr::across(where(is_prop),
-                                           ~ weighted.mean(., w=.data[[pop_col]], na.rm=TRUE)),
-                             dplyr::across(where(is.numeric), sum, na.rm=TRUE),
-                             dplyr::across(where(is_const_rel(key_val)), ~ .[1]),
-                             dplyr::across(where(is_col_chr), unique_chr),
-                             .groups="drop")
+                ~ weighted.mean(., w = .data[[pop_col]], na.rm = TRUE)),
+            dplyr::across(where(is.numeric), sum, na.rm = TRUE),
+            dplyr::across(where(is_const_rel(key_val)), ~ .[1]),
+            dplyr::across(where(is_col_chr), unique_chr),
+            .groups = "drop")
     } else {
         dplyr::group_by(.data, !!!dots) %>%
             dplyr::summarize(dplyr::across(where(is_prop),
-                                           ~ weighted.mean(., w=.data[[pop_col]], na.rm=TRUE)),
-                             dplyr::across(where(is.numeric), sum, na.rm=TRUE),
-                             dplyr::across(where(is_const_rel(key_val)), ~ .[1]),
-                             dplyr::across(where(is_col_chr), unique_chr),
-                             .groups="drop") %>%
+                ~ weighted.mean(., w = .data[[pop_col]], na.rm = TRUE)),
+            dplyr::across(where(is.numeric), sum, na.rm = TRUE),
+            dplyr::across(where(is_const_rel(key_val)), ~ .[1]),
+            dplyr::across(where(is_col_chr), unique_chr),
+            .groups = "drop") %>%
             `attr<-`("existing_col", NULL)
     }
 }
@@ -138,19 +138,23 @@ merge_by = function(.data, ..., by_existing=TRUE, drop_geom=TRUE, collapse_chr=T
 #'
 #' @param .data a \code{\link{redist_map}} object
 #' @param boundary the core is defined to be at least this number of steps within
-#'   district boundaries
+#' district boundaries
 #'
 #' @concept prepare
 #' @export
-make_cores = function(.data=cur_map(), boundary=1, focus=NULL) {
+make_cores <- function(.data = cur_map(), boundary = 1, focus = NULL) {
     if (is.null(.data))
-        stop('Must provide `.data` if not called within a dplyr verb')
-    if (!inherits(.data, 'redist_map'))
-        stop('`.data` must be a `redist_map` object')
+        cli_abort("Must provide {.arg .data} if not called within a {.pkg dplyr} verb")
+    if (!inherits(.data, "redist_map")) cli_abort("{.arg .data} must be a {.cls redist_map}")
 
-    redist.identify.cores(adj=get_adj(.data),
-                          plan=as.integer(as.factor(get_existing(.data))),
-                          boundary=boundary, focus=focus, simplify=TRUE)
+    existing <- get_existing(.data)
+    if (is.null(existing))
+        cli_abort(c("No existing plan found from which to compute cores.",
+            ">" = "Add one using the {.arg existing_plan} argument to {.fun redist_map}"))
+
+    redist.identify.cores(adj = get_adj(.data),
+        plan = as.integer(as.factor(existing)),
+        boundary = boundary, focus = focus, simplify = TRUE)
 }
 
 
@@ -171,51 +175,55 @@ make_cores = function(.data=cur_map(), boundary=1, focus=NULL) {
 #' @returns a modified \code{redist_plans} object containing the reference plan
 #' @concept analyze
 #' @export
-add_reference = function(plans, ref_plan, name=NULL) {
-    stopifnot(inherits(plans, "redist_plans"))
+add_reference <- function(plans, ref_plan, name = NULL) {
+    if (!inherits(plans, "redist_plans")) cli_abort("{.arg plans} must be a {.cls redist_plans}")
+    if (isTRUE(attr(plans, "partial")))
+        cli_abort("Reference plans not supported for partial plans objects.")
 
-    plan_m = get_plans_matrix(plans)
-    stopifnot(is.numeric(ref_plan))
-    stopifnot(length(ref_plan) == nrow(plan_m))
+    plan_m <- get_plans_matrix(plans)
+    if (!is.numeric(ref_plan)) cli_abort("{.arg ref_plan} must be numeric")
+    if (length(ref_plan) != nrow(plan_m))
+        cli_abort("{.arg ref_plan} must have the same number of precincts as {.arg plans}")
 
     if (is.null(name)) {
-        ref_str = deparse(substitute(ref_plan))
+        ref_str <- deparse(substitute(ref_plan))
         if (stringr::str_detect(ref_str, stringr::fixed("$")))
-            name = strsplit(ref_str, "$", fixed=TRUE)[[1]][2]
+            name <- strsplit(ref_str, "$", fixed = TRUE)[[1]][2]
         else
-            name = ref_str
+            name <- ref_str
     } else {
-        stopifnot(is.character(name))
+        if (!is.character(name)) cli_abort("{.arg name} must be a {.cls chr}")
     }
 
-    ref_plan = as.integer(as.factor(ref_plan))
-    ndists = max(ref_plan)
-    stopifnot(ndists == max(plan_m[,1]))
+    ref_plan <- as.integer(as.factor(ref_plan))
+    ndists <- max(ref_plan)
+    if (ndists != max(plan_m[, 1]))
+        cli_abort("{.arg ref_plan} has a different number of districts than {.arg plans}")
 
     # first the matrix
-    plan_m = cbind(ref_plan, plan_m)
-    colnames(plan_m)[1] = name
+    plan_m <- cbind(ref_plan, plan_m)
+    colnames(plan_m)[1] <- name
 
     # then the dataframe
-    prec_pop = attr(plans, "prec_pop")
+    prec_pop <- attr(plans, "prec_pop")
     if (!is.null(prec_pop))
-        distr_pop = pop_tally(matrix(ref_plan, ncol=1), prec_pop, ndists)
+        distr_pop <- pop_tally(matrix(ref_plan, ncol = 1), prec_pop, ndists)
     else
-        distr_pop = rep(NA_real_, ndists)
+        distr_pop <- rep(NA_real_, ndists)
 
-    if (name %in% levels(plans$draw)) stop("Reference plan name already exists")
-    fct_levels = c(name, levels(plans$draw))
-    new_draw = rep(factor(fct_levels, levels=fct_levels), each=ndists)
-    x = dplyr::bind_rows(
-            tibble(district = 1:ndists,
-                           total_pop = as.numeric(distr_pop)),
-            plans[, -match("draw", names(plans))]
-        ) %>%
-        dplyr::mutate(draw = new_draw, .before="district")
+    if (name %in% levels(plans$draw)) cli_abort("Reference plan name already exists")
+    fct_levels <- c(name, levels(plans$draw))
+    new_draw <- rep(factor(fct_levels, levels = fct_levels), each = ndists)
+    x <- dplyr::bind_rows(
+        tibble(district = 1:ndists,
+            total_pop = as.numeric(distr_pop)),
+        plans[, -match("draw", names(plans))]
+    ) %>%
+        dplyr::mutate(draw = new_draw, .before = "district")
 
-    exist_wgts = get_plans_weights(plans)
+    exist_wgts <- get_plans_weights(plans)
     if (!is.null(exist_wgts))
-        attr(plans, "wgt") = c(0, exist_wgts)
+        attr(plans, "wgt") <- c(0, exist_wgts)
 
     reconstruct.redist_plans(x, set_plan_matrix(plans, plan_m))
 }
@@ -228,97 +236,105 @@ add_reference = function(plans, ref_plan, name=NULL) {
 #' be compatible with the original set of units.
 #'
 #' @param plans a \code{redist_plans} object
+#' @param map optionally, a \code{redist_map} object, which will be used to set the new population vector
 #'
 #' @returns a new, re-indexed, \code{redist_plans} object
 #'
 #' @concept analyze
 #' @export
-pullback = function(plans) {
-    stopifnot(inherits(plans, "redist_plans"))
+pullback <- function(plans, map = NULL) {
+    if (!inherits(plans, "redist_plans")) cli_abort("{.arg plans} must be a {.cls redist_plans}")
 
-    merge_idx = attr(plans, "merge_idx")
+    merge_idx <- attr(plans, "merge_idx")
     if (is.null(merge_idx)) {
-        warning("No merged indexing found.")
+        cli_warn("No merged indexing found.")
         return(plans)
     }
 
-    attr(plans, "merge_idx") = NULL
-    attr(plans, "prec_pop") = NULL
-    set_plan_matrix(plans, get_plans_matrix(plans)[merge_idx,])
+    attr(plans, "merge_idx") <- NULL
+    if (inherits(map, "redist_map")) {
+        attr(plans, "prec_pop") <- map[[attr(map, "pop_col")]]
+    } else {
+        attr(plans, "prec_pop") <- NULL
+    }
+
+    set_plan_matrix(plans, get_plans_matrix(plans)[merge_idx, ])
 }
 
 
 # helper function for match_numbers
-find_numbering = function(plan, ref, pop, force=FALSE) {
-    joint = plan_joint(ref, plan, pop)
-    opts = which(joint > 0, arr.ind=TRUE)
-    if (!force) {
-        n_combn = prod(sapply(split(opts[,2], opts[,1]), length))
-        if (n_combn > 1e3)
-            stop("More than 1,000 renumbering options.")
-    }
-    combn = as.matrix(expand.grid(split(opts[,2], opts[,1])))
-    combn = combn[apply(combn, 1, anyDuplicated) == 0L, , drop=FALSE]
-    best_idx = best_renumber(combn, joint)
+find_numbering <- function(plan, ref, pop, tot_pop) {
+    joint <- plan_joint(ref, plan, pop)
 
-    renumb = as.integer(combn[best_idx,])
-    list(renumb = order(renumb),
-         shared = sum(diag(joint[, renumb])) / sum(pop))
+    renumb <- solve_hungarian(1 - joint/tot_pop)[, 2]
+
+    list(renumb = renumb,
+        shared = sum(diag(joint[, renumb]))/tot_pop)
 }
 
 #' Renumber districts to match an existing plan
 #'
 #' District numbers in simulated plans are by and large random.  This
 #' function attempts to renumber the districts across all simulated plans to
-#' match the numbers in a provided plan.
+#' match the numbers in a provided plan, using the Hungarian algorithm.
 #'
-#' @param data a \code{redist_plans} object
+#' @param data a \code{redist_plans} object.
 #' @param plan a character vector giving the name of the plan to match to (e.g.,
-#'   for a reference plan), or an integer vector containing the plan itself.
+#' for a reference plan), or an integer vector containing the plan itself.
+#' @param total_pop a vector of population counts. Should not be needed for most
+#' \code{redist_plans} objects.
 #' @param col the name of a new column to store the vector of population overlap
-#'   with the reference plan: the fraction of the total population who are in
-#'   the same district under each plan and the reference plan. Set to
-#'   \code{NULL} if no column should be created.
-#' @param force if \code{TRUE}, force computation when there are more than 1,000
-#'   renumbering options in any plan.
+#' with the reference plan: the fraction of the total population who are in
+#' the same district under each plan and the reference plan. Set to
+#' \code{NULL} if no column should be created.
+#' renumbering options in any plan.
 #'
 #' @returns a modified \code{redist_plans} object. New district numbers will be
 #' stored as an ordered factor variable in the \code{district} column. The
 #' district numbers in the plan matrix will match the levels of this factor.
 #'
+#' @examples
+#' data(iowa)
+#'
+#' iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05)
+#' plans <- redist_smc(iowa_map, 100, silent = TRUE)
+#' match_numbers(plans, "cd_2010")
+#'
 #' @concept analyze
 #' @export
-match_numbers = function(data, plan, col="pop_overlap", force=FALSE) {
-    stopifnot(inherits(data, "redist_plans"))
-    stopifnot("district" %in% colnames(data))
+match_numbers <- function(data, plan, total_pop = attr(data, "prec_pop"), col = "pop_overlap") {
+    if (!inherits(data, "redist_plans")) cli_abort("{.arg data} must be a {.cls redist_plans}")
+    if (!"district" %in% names(data)) cli_abort("Missing {.field district} colun in {.arg data}")
 
-    plan_mat = get_plans_matrix(data)
-    if (is.character(plan)) plan = plan_mat[,plan]
-    plan = factor(plan, ordered=TRUE)
-    ndists = length(levels(plan))
-    pop = attr(data, "prec_pop")
+    plan_mat <- get_plans_matrix(data)
+    if (is.character(plan)) plan <- plan_mat[, plan]
+    plan <- factor(plan, ordered = TRUE)
+    ndists <- length(levels(plan))
 
-    if (ndists > 6)
-        warning("`match_numers` may be extremely slow with more than 6 districts.")
-    stopifnot(!is.null(pop))
-    stopifnot(max(plan_mat[,1]) == ndists)
+
+    if (is.null(total_pop))
+        cli_abort("Must provide {.arg total_pop} for this {.cls redist_plans} object.")
+    if (max(plan_mat[, 1]) != ndists)
+        cli_abort("Can't match numbers on a subset of a {.cls redist_plans}")
 
     # compute renumbering and extract info
-    best_renumb = apply(plan_mat, 2, find_numbering, as.integer(plan), pop, force)
-    renumb = as.integer(vapply(best_renumb, function(x) x$renumb, integer(ndists)))
+    best_renumb <- apply(plan_mat, 2, find_numbering,
+        plan = as.integer(plan),
+        pop = total_pop, tot_pop = sum(total_pop))
+    renumb <- as.integer(vapply(best_renumb, function(x) x$renumb, integer(ndists)))
 
     if (!is.null(col))
-        data[[col]] = as.numeric(vapply(best_renumb, function(x) rep(x$shared, ndists),
-                                        numeric(ndists)))
+        data[[col]] <- as.numeric(vapply(best_renumb, function(x) rep(x$shared, ndists),
+            numeric(ndists)))
 
-    renumb_mat = renumber_matrix(plan_mat, renumb)
-    colnames(renumb_mat) = colnames(plan_mat)
-    data = set_plan_matrix(data, renumb_mat)
-    data$district = factor(levels(plan)[renumb], levels(plan), ordered=TRUE)
+    renumb_mat <- renumber_matrix(plan_mat, renumb)
+    colnames(renumb_mat) <- colnames(plan_mat)
+    data <- set_plan_matrix(data, renumb_mat)
+    data$district <- factor(levels(plan)[renumb], levels(plan), ordered = TRUE)
 
-    orig_groups = dplyr::group_vars(data)
+    orig_groups <- dplyr::group_vars(data)
     dplyr::group_by(data, .data$draw) %>%
-        dplyr::arrange(.data$district, .by_group=TRUE) %>%
+        dplyr::arrange(.data$district, .by_group = TRUE) %>%
         dplyr::group_by(dplyr::across(dplyr::all_of(orig_groups)))
 }
 
@@ -338,17 +354,17 @@ match_numbers = function(data, plan, col="pop_overlap", force=FALSE) {
 #'
 #' @concept analyze
 #' @export
-number_by = function(data, x, desc=FALSE) {
-    stopifnot(inherits(data, "redist_plans"))
-    stopifnot("district" %in% colnames(data))
+number_by <- function(data, x, desc = FALSE) {
+    if (!inherits(data, "redist_plans")) cli_abort("{.arg data} must be a {.cls redist_plans}")
+    if (!"district" %in% names(data)) cli_abort("Missing {.field district} colun in {.arg data}")
 
-    ord = 1 - 2*desc
-    m = get_plans_matrix(data)
-    orig_groups = dplyr::group_vars(data)
+    ord <- 1 - 2*desc
+    m <- get_plans_matrix(data)
+    orig_groups <- dplyr::group_vars(data)
     dplyr::group_by(data, .data$draw) %>%
-        dplyr::mutate(district = rank(ord * {{ x }})) %>%
+        dplyr::mutate(district = rank(ord*{{ x }}, ties.method = "random")) %>%
         set_plan_matrix(`colnames<-`(renumber_matrix(m, .$district), colnames(m))) %>%
-        dplyr::arrange(district, .by_group=TRUE) %>%
+        dplyr::arrange(district, .by_group = TRUE) %>%
         dplyr::group_by(dplyr::across(dplyr::all_of(orig_groups)))
 }
 
@@ -356,13 +372,84 @@ number_by = function(data, x, desc=FALSE) {
 
 #' Helper function to check types for tidy wrappers
 #' @noRd
-check_tidy_types = function(map, .data) {
-    if (!inherits(map, 'redist_map'))
-        stop('`.data` must be a `redist_map` object')
+check_tidy_types <- function(map, .data) {
+    if (!is.null(map) && !inherits(map, "redist_map"))
+        cli_abort("{.arg map} must be a {.cls redist_map}")
     if (is.null(.data))
-        stop('Must provide `.data` if not called within a dplyr verb')
-    if (!inherits(.data, 'redist_plans'))
-        stop('`.data` must be a `redist_plans` object')
+        cli_abort("Must provide {.arg .data} if not called within a {.pkg dplyr} verb")
+    if (!inherits(.data, "redist_plans"))
+        cli_abort("{.arg data} must be a {.cls redist_plans}")
+}
+
+
+#' Tally a variable by district
+#'
+#' @param map a `redist_map` object
+#' @param x a variable to tally. Tidy-evaluated.
+#' @param .data a `redist_plans` object
+#'
+#' @return a vector containing the tallied values by district and plan (column-major)
+#'
+#' @concept analyze
+#' @export
+tally_var <- function(map, x, .data = redist:::cur_plans()) {
+    check_tidy_types(map, .data)
+    if (length(unique(diff(as.integer(.data$district)))) > 2)
+        cli_warn("Districts not sorted in ascending order; output may be incorrect.")
+
+    x <- rlang::eval_tidy(rlang::enquo(x), map)
+    as.numeric(pop_tally(get_plans_matrix(.data),
+        x, attr(map, "ndists")))
+}
+
+#' Average a variable by precinct
+#'
+#' Takes a column of a `redist_plans` object and averages it across a set of
+#' `draws` for each precinct.
+#'
+#' @param plans a `redist_plans` object
+#' @param x an expression to average. Tidy-evaluated in `plans`.
+#' @param draws which draws to average. `NULL` will average all draws, including
+#' reference plans. The special value `NA` will average all sampled draws. An
+#' integer, logical, or character vector indicating specific draws may also be
+#' provided.
+#'
+#' @return a vector of length matching the number of precincts, containing the average.
+#'
+#' @concept analyze
+#' @export
+avg_by_prec <- function(plans, x, draws = NA) {
+    plans_m <- get_plans_matrix(plans)
+
+    n_ref <- 0
+    # copied from get_n_ref()
+    if (!is.null(colnames(plans_m))) {
+        refs <- which(nchar(colnames(plans_m)) > 0)
+        n_ref <- length(unique(colnames(plans_m)[refs]))
+    }
+
+    if (is.null(draws)) {
+        draw_idx <- seq_len(ncol(plans_m))
+    } else if (length(draws) == 1 && is.na(draws)) {
+        draw_idx <- seq_len(ncol(plans_m))[-seq_len(n_ref)]
+    } else if (is.logical(draws)) {
+        draw_idx <- which(draws)
+    } else {
+        draw_idx <- match(as.character(draws), levels(plans$draw))
+    }
+
+    plans <- arrange(plans, as.integer(.data$draw), .data$district)
+    n_distr <- max(plans_m[, draw_idx[1]])
+    m_val <- matrix(rlang::eval_tidy(rlang::enquo(x), plans), nrow = n_distr)
+
+    plans_m <- plans_m[, draw_idx, drop = FALSE]
+    m_val <- m_val[, draw_idx, drop = FALSE]
+    m_prec <- matrix(nrow = nrow(plans_m), ncol = ncol(plans_m))
+    for (i in seq_len(ncol(plans_m))) {
+        m_prec[, i] <- m_val[, i][plans_m[, i]]
+    }
+
+    rowMeans(m_prec)
 }
 
 
@@ -376,12 +463,11 @@ check_tidy_types = function(map, .data) {
 #' @export
 plan_parity <- function(map, .data = cur_plans(), ...) {
     check_tidy_types(map, .data)
-    idxs = unique(as.integer(.data$draw))
-    ndists = attr(map, 'ndists')
-    total_pop = map[[attr(map, 'pop_col')]]
-    stopifnot(!is.null(total_pop))
+    ndists <- attr(map, "ndists")
+    total_pop <- map[[attr(map, "pop_col")]]
+    if (is.null(total_pop)) cli_abort("Population vector missing from {.arg map}")
 
-    rep(max_dev(get_plans_matrix(.data)[, idxs, drop=FALSE], total_pop, ndists),
+    rep(max_dev(get_plans_matrix(.data), total_pop, ndists),
         each = ndists)
 }
 
@@ -394,17 +480,16 @@ plan_parity <- function(map, .data = cur_plans(), ...) {
 #'
 #' @concept analyze
 #' @export
-distr_compactness = function(map, measure="FracKept", .data=cur_plans(), ...) {
+distr_compactness <- function(map, measure = "FracKept", .data = cur_plans(), ...) {
     check_tidy_types(map, .data)
 
     # districts not in ascending order
     if (length(unique(diff(as.integer(.data$district)))) > 2)
-        warning("Districts not sorted in ascending order; output may be incorrect.")
+        cli_warn("Districts not sorted in ascending order; output may be incorrect.")
 
-    idxs = unique(as.integer(.data$draw))
-    redist.compactness(shp=map, plans=get_plans_matrix(.data)[, idxs, drop=FALSE],
-                       measure=measure, total_pop=map[[attr(map, "pop_col")]],
-                       adj=get_adj(map), ...)[[measure]]
+    redist.compactness(shp = map, plans = get_plans_matrix(.data),
+        measure = measure, total_pop = map[[attr(map, "pop_col")]],
+        adj = get_adj(map), ...)[[measure]]
 }
 
 #' @rdname redist.group.percent
@@ -415,18 +500,17 @@ distr_compactness = function(map, measure="FracKept", .data=cur_plans(), ...) {
 #'
 #' @concept analyze
 #' @export
-group_frac = function(map, group_pop, total_pop=map[[attr(map, "pop_col")]],
-                          .data=cur_plans()) {
+group_frac <- function(map, group_pop, total_pop = map[[attr(map, "pop_col")]],
+                       .data = cur_plans()) {
     check_tidy_types(map, .data)
     # districts not in ascending order
     if (length(unique(diff(as.integer(.data$district)))) > 2)
-        warning("Districts not sorted in ascending order; output may be incorrect.")
+        cli_warn("Districts not sorted in ascending order; output may be incorrect.")
 
-    idxs = unique(as.integer(.data$draw))
-    group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
-    total_pop = rlang::eval_tidy(rlang::enquo(total_pop), map)
-    as.numeric(redist.group.percent(plans=get_plans_matrix(.data)[, idxs, drop=FALSE],
-                                    group_pop=group_pop, total_pop=total_pop))
+    group_pop <- rlang::eval_tidy(rlang::enquo(group_pop), map)
+    total_pop <- rlang::eval_tidy(rlang::enquo(total_pop), map)
+    as.numeric(redist.group.percent(plans = get_plans_matrix(.data),
+        group_pop = group_pop, total_pop = total_pop))
 }
 
 #' @rdname redist.segcalc
@@ -437,16 +521,15 @@ group_frac = function(map, group_pop, total_pop=map[[attr(map, "pop_col")]],
 #'
 #' @concept analyze
 #' @export
-segregation_index = function(map, group_pop, total_pop=map[[attr(map, "pop_col")]],
-                          .data=cur_plans()) {
+segregation_index <- function(map, group_pop, total_pop = map[[attr(map, "pop_col")]],
+                              .data = cur_plans()) {
     check_tidy_types(map, .data)
-    idxs = unique(as.integer(.data$draw))
-    group_pop = rlang::eval_tidy(rlang::enquo(group_pop), map)
-    total_pop = rlang::eval_tidy(rlang::enquo(total_pop), map)
-    plan_m = get_plans_matrix(.data)[, idxs, drop=FALSE]
-    rep(as.numeric(redist.segcalc(plans=plan_m, group_pop=group_pop,
-                                  total_pop=total_pop)),
-        each=attr(map, "ndists"))
+    group_pop <- rlang::eval_tidy(rlang::enquo(group_pop), map)
+    total_pop <- rlang::eval_tidy(rlang::enquo(total_pop), map)
+    plan_m <- get_plans_matrix(.data)
+    rep(as.numeric(redist.segcalc(plans = plan_m, group_pop = group_pop,
+        total_pop = total_pop)),
+    each = attr(map, "ndists"))
 }
 
 #' @rdname redist.metrics
@@ -458,18 +541,17 @@ segregation_index = function(map, group_pop, total_pop=map[[attr(map, "pop_col")
 #'
 #' @concept analyze
 #' @export
-partisan_metrics = function(map, measure, rvote, dvote, ...,
-                            .data=cur_plans()) {
+partisan_metrics <- function(map, measure, rvote, dvote, ...,
+                             .data = cur_plans()) {
     check_tidy_types(map, .data)
     # districts not in ascending order
     if (length(unique(diff(as.integer(.data$district)))) > 2)
-        warning("Districts not sorted in ascending order; output may be incorrect.")
+        cli_warn("Districts not sorted in ascending order; output may be incorrect.")
 
-    idxs = unique(as.integer(.data$draw))
-    rvote = rlang::eval_tidy(rlang::enquo(rvote), map)
-    dvote = rlang::eval_tidy(rlang::enquo(dvote), map)
-    as.numeric(redist.metrics(plans=get_plans_matrix(.data)[, idxs, drop=FALSE],
-                              measure=measure, rvote=rvote, dvote=dvote, ...)[[measure]])
+    rvote <- rlang::eval_tidy(rlang::enquo(rvote), map)
+    dvote <- rlang::eval_tidy(rlang::enquo(dvote), map)
+    as.numeric(redist.metrics(plans = get_plans_matrix(.data),
+        measure = measure, rvote = rvote, dvote = dvote, ...)[[measure]])
 }
 
 #' @rdname redist.competitiveness
@@ -480,14 +562,12 @@ partisan_metrics = function(map, measure, rvote, dvote, ...,
 #'
 #' @concept analyze
 #' @export
-competitiveness = function(map, rvote, dvote, .data=cur_plans()) {
+competitiveness <- function(map, rvote, dvote, .data = cur_plans()) {
     check_tidy_types(map, .data)
-    idxs = unique(as.integer(.data$draw))
-    rvote = rlang::eval_tidy(rlang::enquo(rvote), map)
-    dvote = rlang::eval_tidy(rlang::enquo(dvote), map)
-    rep(redist.competitiveness(plans=get_plans_matrix(.data)[, idxs, drop=FALSE],
-                               rvote=rvote, dvote=dvote),
-        each = attr(map, "ndists"))
+    rvote <- rlang::eval_tidy(rlang::enquo(rvote), map)
+    dvote <- rlang::eval_tidy(rlang::enquo(dvote), map)
+    redist.competitiveness(plans = get_plans_matrix(.data),
+        rvote = rvote, dvote = dvote)
 }
 
 #' @rdname redist.splits
@@ -498,12 +578,10 @@ competitiveness = function(map, rvote, dvote, .data=cur_plans()) {
 #'
 #' @concept analyze
 #' @export
-county_splits = function(map, counties, .data=cur_plans()) {
+county_splits <- function(map, counties, .data = cur_plans()) {
     check_tidy_types(map, .data)
-    idxs = unique(as.integer(.data$draw))
-    counties = rlang::eval_tidy(rlang::enquo(counties), map)
-    rep(redist.splits(plans=get_plans_matrix(.data)[, idxs, drop=FALSE], counties=counties),
-        each = attr(map, "ndists"))
+    counties <- rlang::eval_tidy(rlang::enquo(counties), map)
+    redist.splits(plans = get_plans_matrix(.data), counties = counties)
 }
 
 
@@ -515,29 +593,36 @@ county_splits = function(map, counties, .data=cur_plans()) {
 #'
 #' @concept analyze
 #' @export
-last_plan = function(plans) {
-    plan_m = get_plans_matrix(plans)
+last_plan <- function(plans) {
+    plan_m <- get_plans_matrix(plans)
     plan_m[, ncol(plan_m)]
 }
 
 #' Extract the district assignments for a precinct across all simulated plans
 #'
-#' @param prec the precinct number or ID
+#' @param prec the precinct number
 #' @param .data a \code{\link{redist_plans}} object
+#'
 #' @return integer vector, a row from a plans matrix
+#'
 #' @concept analyze
 #' @export
-prec_assignment = function(prec, .data=cur_plans()) {
-    if (is.null(.data))
-        stop('Must provide `.data` if not called within a dplyr verb')
-    if (!inherits(.data, 'redist_plans'))
-        stop('`.data` must be a `redist_plans` object')
+prec_assignment <- function(prec, .data = cur_plans()) {
+    check_tidy_types(NULL, .data)
 
-    idxs = unique(as.integer(.data$draw))
-    assignment = get_plans_matrix(.data)[prec, idxs, drop=FALSE]
-    if ("district" %in% colnames(.data) && is.factor(.data$district)) {
-        lev = levels(.data$district)
-        assignment = factor(lev[assignment], lev, ordered=is.ordered(.data$district))
+    m <- get_plans_matrix(.data)
+    if (is.integer(prec)) {
+        if (prec <= 0 || prec > nrow(m))
+            cli_abort(c("{.arg prec} out of bounds",
+                "i" = "There are {nrow(m)} precincts in these plans."))
+    } else {
+        cli_abort("{.arg prec} must be an integer index")
+    }
+
+    assignment <- m[prec, , drop = FALSE]
+    if ("district" %in% names(.data) && is.factor(.data$district)) {
+        lev <- levels(.data$district)
+        assignment <- factor(lev[assignment], lev, ordered = is.ordered(.data$district))
     }
 
     assignment
@@ -551,54 +636,21 @@ prec_assignment = function(prec, .data=cur_plans()) {
 #'
 #' @param plans a [redist_plans] object.
 #' @param which [`<data-masking>`][dplyr::dplyr_data_masking] which plans to
-#'   compute the co-occurrence over.  Defaults to all.
+#' compute the co-occurrence over.  Defaults to all.
 #' @param sampled_only if `TRUE`, do not include reference plans.
+#' @param ncores the number of parallel cores to use in the computation.
 #'
 #' @return a symmetric matrix the size of the number of precincts.
 #'
 #' @concept analyze
 #' @md
 #' @export
-prec_cooccurrence = function(plans, which=NULL, sampled_only=TRUE) {
+prec_cooccurrence <- function(plans, which = NULL, sampled_only = TRUE, ncores = 1) {
     if (sampled_only)
-        plans = subset_sampled(plans)
-    which = eval_tidy(enquo(which), plans)
-    plan_m = get_plans_matrix(plans)
+        plans <- subset_sampled(plans)
+    which <- eval_tidy(enquo(which), plans)
+    plan_m <- get_plans_matrix(plans)
     if (is.null(which))
-        which = seq_len(ncol(plan_m))
-    prec_cooccur(plan_m, which)
-}
-
-
-#' Confidence Intervals for Importance Sampling Estimates
-#'
-#' Builds a confidence interval for the mean of a vector of interest,
-#' given importance sampling weights.
-#'
-#' @param x \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the vector to
-#'   build importance sampling confidence intervals for.
-#' @param conf The confidence level for the intervals.
-#' @param .data a \code{\link{redist_plans}} object
-#'
-#' @returns A tibble with three columns: \code{X}, \code{X_lower}, and
-#'   \code{X_upper}, where \code{X} is the name of the vector of interest,
-#'   containing the mean and confidence interval. When used inside
-#'   \code{\link[dplyr:summarise]{summarize()}} this will create three columns in the
-#'   output data.
-#'
-#' @concept analyze
-#' @export
-imp_confint = function(x, conf=0.95, .data=cur_plans()) {
-    if (is.null(.data))
-        stop('Must provide `.data` if not called within a dplyr verb')
-    if (!inherits(.data, 'redist_plans'))
-        stop('`.data` must be a `redist_plans` object')
-
-    idxs = unique(as.integer(.data$draw))
-    y = rlang::eval_tidy(rlang::enquo(x), .data)
-    ci = redist.smc_is_ci(y, get_plans_weights(.data)[, idxs, drop=FALSE], conf)
-
-    tibble("{{ x }}" := mean(y),
-                   "{{ x }}_lower" := ci[1],
-                   "{{ x }}_upper" := ci[2])
+        which <- seq_len(ncol(plan_m))
+    prec_cooccur(plan_m, which, ncores)
 }

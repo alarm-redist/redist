@@ -1,6 +1,8 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
+#include "hungarian.h"
+
 // row of output is m1 districts
 // col of output is m2 districts
 // [[Rcpp::export]]
@@ -24,7 +26,7 @@ NumericMatrix plan_joint(IntegerVector m1, IntegerVector m2, NumericVector pop) 
 IntegerMatrix renumber_matrix(IntegerMatrix plans, IntegerVector renumb) {
     int V = plans.nrow();
     int N = plans.ncol();
-    int n_distr = max(plans(_, 1));
+    int n_distr = max(plans(_, 0));
     IntegerMatrix out(V, N);
 
     for (int j = 0; j < N; j++) {
@@ -36,24 +38,42 @@ IntegerMatrix renumber_matrix(IntegerMatrix plans, IntegerVector renumb) {
     return out;
 }
 
+// Hungarian Algorithm Solver
+//
+// Wrapper code from Justin Silverman, 2019
+//
+// Solves weighted bipartite matching problems (e.g., optimal matching of people to cars
+// or optimal matching of students to colleges, etc...)
+//
+// @param costMatrix matrix giving cost of each possible pairing - can be rectangular
+// @return List with cost and parings, pairings are given as an Nx2 matrix
+// giving edges that are matched (1-indexed rather than 0-indexed as it will be returned to R)
+// @details this is a copy/wrapper for the code developed by Cong Ma and made available
+// as a github repository (mcximing/hungarian-algorithm-cpp). Code was
+// changed to a header only file for use in other Rcpp packages.
+//
 // [[Rcpp::export]]
-int best_renumber(IntegerMatrix combn, NumericMatrix joint) {
-    int n = combn.nrow();
-    int n_distr = combn.ncol();
-    double best_val = -1;
-    int best_idx = -1;
+IntegerMatrix solve_hungarian(NumericMatrix costMatrix) {
+    int nr = costMatrix.nrow();
+    int nc = costMatrix.ncol();
 
-    for (int i = 0; i < n; i++) {
-        double diag_pop = 0;
-        for (int j = 0; j < n_distr; j++) {
-            diag_pop += joint(j, combn(i, j) - 1);
+    vector<double> c(nc);
+    vector<vector<double>> cm(nr, c);
+    for (int i=0; i < nr; i++){
+        for (int j=0; j < nc; j++){
+            c[j] = costMatrix(i,j);
         }
-
-        if (diag_pop > best_val) {
-            best_val = diag_pop;
-            best_idx = i;
-        }
+        cm[i] = c;
     }
 
-    return best_idx + 1;
+    HungarianAlgorithm HungAlgo;
+    vector<int> assignment;
+    HungAlgo.Solve(cm, assignment);
+    IntegerMatrix assign(nr, 2);
+    for (int i=0; i < nr; i++){
+        assign(i,0) = i+1;
+        assign(i,1) = assignment[i]+1;
+    }
+
+    return assign;
 }

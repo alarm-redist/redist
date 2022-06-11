@@ -9,7 +9,7 @@
 \arguments{
 \item{x}{redist_map}
 
-\item{\dots}{additional argumentss}
+\item{\dots}{additional arguments}
 }
 \value{
 Prints to console and returns input redist_map

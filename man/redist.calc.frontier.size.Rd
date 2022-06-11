@@ -25,8 +25,8 @@ Calculate Frontier Size
 \dontrun{
 data(fl25)
 adj <- redist.adjacency(fl25)
-redist.prep.enumpart(adj, 'unordered', 'ordered')
-redist.calc.frontier.size('ordered')
+redist.prep.enumpart(adj, "unordered", "ordered")
+redist.calc.frontier.size("ordered")
 }
 }
 \concept{enumerate}

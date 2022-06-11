@@ -5,7 +5,7 @@
 \title{Iowa County File}
 \format{
 sf tibble containing columns for useful data related to the
-  redistricting process
+redistricting process
 \describe{
 \item{\code{fips}}{The FIPS code for the county.}
 \item{\code{cd_2010}}{The 2010 congressional district assignments.}
