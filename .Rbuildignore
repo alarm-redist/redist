@@ -20,3 +20,4 @@ builder.sh
 ^data-raw$
 ^explore$
 ^\.github$
+^LICENSE\.md$
