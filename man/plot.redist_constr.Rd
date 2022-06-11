@@ -22,5 +22,7 @@
 A ggplot object
 }
 \description{
-Visualize constraints
+Plots the constraint strength versus some running variable. Currently
+supports visualizing the `grp_hinge`, `grp_inv_hinge`, and `grp_pow`
+constraints.
 }

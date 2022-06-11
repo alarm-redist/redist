@@ -138,18 +138,23 @@ add_to_constr <- function(constr, name, new_constr) {
 #' matches each district to its nearest target percentage, and then applies a
 #' penalty of the form \eqn{\sqrt{max(0, tgt - grouppct)}}, summing across
 #' districts. This penalizes districts which are below their target percentage.
+#' Use [plot.redist_constr()] to visualize the effect of this constraint and
+#' calibrate `strength` appropriately.
 #'
 #' The `grp_inv_hinge` constraint takes a list of target group percentages. It
 #' matches each district to its nearest target percentage, and then applies a
 #' penalty of the form \eqn{\sqrt{max(0, grouppct - tgt)}}, summing across
 #' districts. This penalizes districts which are above their target percentage.
+#' Use [plot.redist_constr()] to visualize the effect of this constraint and
+#' calibrate `strength` appropriately.
 #'
 #' The `grp_pow` constraint (for expert use) adds a term of the form
 #' \eqn{(|tgtgroup-grouppct||tgtother-grouppct|)^{pow})}, which
 #' encourages districts to have group shares near either `tgt_group`
 #' or `tgt_other`.  Values of `strength` depend heavily on the values of these
-#' parameters and especially the `pow` parameter; use [redist.plot.penalty()] to
-#' visualize the effect of the penalty and calibrate `strength` appropriately.
+#' parameters and especially the `pow` parameter.
+#' Use [plot.redist_constr()] to visualize the effect of this constraint and
+#' calibrate `strength` appropriately.
 #'
 #' The `compet` constraint encourages competitiveness by applying the `grp_pow`
 #' constraint with target percentages set to 50%. For convenience, it is
@@ -727,6 +732,10 @@ print.redist_constr <- function(x, header = TRUE, details = TRUE, ...) {
 
 
 #' Visualize constraints
+#'
+#' Plots the constraint strength versus some running variable. Currently
+#' supports visualizing the `grp_hinge`, `grp_inv_hinge`, and `grp_pow`
+#' constraints.
 #'
 #' @param x A [redist_constr] object.
 #' @param y Ignored.
