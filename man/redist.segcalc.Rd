@@ -33,7 +33,7 @@ redistricting plan in \code{algout}.
 }
 \description{
 \code{redist.segcalc} calculates the dissimilarity index of segregation (see
-Massey \& Denton 1987 for more details) for a specified subgroup under any
+Massey & Denton 1987 for more details) for a specified subgroup under any
 redistricting plan.
 }
 \examples{

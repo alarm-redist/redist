@@ -1,7 +1,7 @@
 #' Segregation index calculation for MCMC redistricting.
 #'
 #' \code{redist.segcalc} calculates the dissimilarity index of segregation (see
-#' Massey \& Denton 1987 for more details) for a specified subgroup under any
+#' Massey & Denton 1987 for more details) for a specified subgroup under any
 #' redistricting plan.
 #'
 #' @param plans A matrix of congressional district assignments or a
