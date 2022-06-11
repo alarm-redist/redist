@@ -587,13 +587,13 @@ add_constr_qps <- function(constr, strength, cities, total_pop = NULL) {
 }
 
 # utilty functions for parsing ASTs
-find_env <- function(name, env = caller_env()) {
-    if (identical(env, empty_env())) {
+find_env <- function(name, env = rlang::caller_env()) {
+    if (identical(env, rlang::empty_env())) {
         NULL
-    } else if (env_has(env, name)) {
+    } else if (rlang::env_has(env, name)) {
         env
     } else {
-        find_env(name, env_parent(env))
+        find_env(name, rlang::env_parent(env))
     }
 }
 extract_vars = function(expr) {
