@@ -203,17 +203,22 @@ information distance between the plan and the reference, rescaled to [0, 1].</p>
 <p>The <code>grp_hinge</code> constraint takes a list of target group percentages. It
 matches each district to its nearest target percentage, and then applies a
 penalty of the form \(\sqrt{max(0, tgt - grouppct)}\), summing across
-districts. This penalizes districts which are below their target percentage.</p>
+districts. This penalizes districts which are below their target percentage.
+Use <code><a href="plot.redist_constr.html">plot.redist_constr()</a></code> to visualize the effect of this constraint and
+calibrate <code>strength</code> appropriately.</p>
 <p>The <code>grp_inv_hinge</code> constraint takes a list of target group percentages. It
 matches each district to its nearest target percentage, and then applies a
 penalty of the form \(\sqrt{max(0, grouppct - tgt)}\), summing across
-districts. This penalizes districts which are above their target percentage.</p>
+districts. This penalizes districts which are above their target percentage.
+Use <code><a href="plot.redist_constr.html">plot.redist_constr()</a></code> to visualize the effect of this constraint and
+calibrate <code>strength</code> appropriately.</p>
 <p>The <code>grp_pow</code> constraint (for expert use) adds a term of the form
 \((|tgtgroup-grouppct||tgtother-grouppct|)^{pow})\), which
 encourages districts to have group shares near either <code>tgt_group</code>
 or <code>tgt_other</code>.  Values of <code>strength</code> depend heavily on the values of these
-parameters and especially the <code>pow</code> parameter; use <code><a href="redist.plot.penalty.html">redist.plot.penalty()</a></code> to
-visualize the effect of the penalty and calibrate <code>strength</code> appropriately.</p>
+parameters and especially the <code>pow</code> parameter.
+Use <code><a href="plot.redist_constr.html">plot.redist_constr()</a></code> to visualize the effect of this constraint and
+calibrate <code>strength</code> appropriately.</p>
 <p>The <code>compet</code> constraint encourages competitiveness by applying the <code>grp_pow</code>
 constraint with target percentages set to 50%. For convenience, it is
 specified with Democratic and Republican vote shares.</p>
