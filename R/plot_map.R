@@ -44,7 +44,7 @@
 redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = "",
                             zoom_to = NULL, boundaries = is.null(fill), title = "") {
     # Check inputs
-    if ("SpatialPolygonsDataFrame" %in% class(shp)) {
+    if (inherits(shp, "SpatialPolygonsDataFrame")) {
         shp <- shp %>% st_as_sf()
     } else if (!inherits(shp, "sf")) {
         cli_abort("{.arg shp} must be a {.cls SpatialPolygonsDataFrame} or {.cls sf} object.")
@@ -204,7 +204,7 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = "",
 #' @export
 redist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE,
                             drop = FALSE, plot_shp = TRUE, zoom_to = NULL, title = "") {
-    if ("SpatialPolygonsDataFrame" %in% class(shp)) {
+    if (inherits(shp, "SpatialPolygonsDataFrame")) {
         shp <- shp %>% st_as_sf()
     } else if (!inherits(shp, "sf")) {
         cli_abort("{.arg shp} must be a {.cls SpatialPolygonsDataFrame} or {.cls sf} object.")
