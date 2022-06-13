@@ -158,7 +158,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
             names(tbl_print) <- c("Eff. samples (%)", "Acc. rate",
                 "Log wgt. sd", " Max. unique",
                 "Est. k", "")
-            rownames(tbl_print) <- c(paste("Split", seq_len(n_distr - 1)), "Resample")
+            rownames(tbl_print) <- c(paste("Split", seq_len(nrow(tbl_print) - 1)), "Resample")
 
             if (i == 1 || isTRUE(all_runs)) {
                 cli_text("Sampling diagnostics for SMC run {i} of {n_runs} ({fmt_comma(n_samp)} samples)")
