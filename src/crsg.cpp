@@ -219,7 +219,7 @@ List crsg(List adj_list,
         // Step 3D.5 comes from rep code too
         // we loop over the other precincts in the district if the first option makes
         // population parity worse; note that should then avoid infinite loops
-        pop_swap = ((district_pop[j_dist] + population[prec_swap]) < HPP) &
+        pop_swap = ((district_pop[j_dist] + population[prec_swap]) < HPP) &&
           ((district_pop[i_dist] - population[prec_swap]) > LPP );
         
         
@@ -236,7 +236,7 @@ List crsg(List adj_list,
             swap_candidates.erase(which_max(dist));
             dist.erase(which_max(dist));
             prec_swap = swap_candidates[which_max(dist)];
-            pop_swap = ((district_pop[j_dist] + population[prec_swap]) < HPP) &
+            pop_swap = ((district_pop[j_dist] + population[prec_swap]) < HPP) &&
               ((district_pop[i_dist] - population[prec_swap]) > LPP );
             
             if(pop_swap){
@@ -247,14 +247,14 @@ List crsg(List adj_list,
             }
             
             
-            if(pop_swap & cont_swap){//exp
+            if(pop_swap && cont_swap){//exp
               no_ij = FALSE;
               to_next = FALSE;
             }
           } else{ // then only one prec remains for this ij
             // Try it
             prec_swap = swap_candidates[0];
-            pop_swap = ((district_pop[j_dist] + population[prec_swap]) < HPP) &
+            pop_swap = ((district_pop[j_dist] + population[prec_swap]) < HPP) &&
               ((district_pop[i_dist] - population[prec_swap]) > LPP );
             to_next = FALSE;
             // If it won't work move to next pair ij
@@ -267,7 +267,7 @@ List crsg(List adj_list,
             
             to_next = FALSE;
             // If it won't work move to next pair ij
-            if(!( pop_swap & cont_swap  )){
+            if(!( pop_swap && cont_swap  )){
               no_ij = TRUE;
               i_vec.erase(which_max(pop_dist));
               j_vec.erase(which_max(pop_dist));
