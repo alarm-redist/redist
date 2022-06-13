@@ -112,7 +112,7 @@ List rsg(List adj_list,
 
 
 	iter=0;
-	while( (max(district_pop) > maxpop) | (min(district_pop) < minpop) ){
+	while( (max(district_pop) > maxpop) || (min(district_pop) < minpop) ){
 
 	  // WHILE POPULATION CONSTRAINT NOT MET
 
