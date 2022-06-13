@@ -21,3 +21,4 @@ builder.sh
 ^explore$
 ^\.github$
 ^LICENSE\.md$
+^CRAN-SUBMISSION$
