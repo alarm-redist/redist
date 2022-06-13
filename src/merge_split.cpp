@@ -32,6 +32,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     districts.col(1) = init;
 
     Rcpp::IntegerVector mh_decisions(N/thin + 1);
+    double mha;
 
     double tol = std::max(target - lower, upper - target) / target;
 
@@ -125,6 +126,8 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
 
         if (verbosity >= 1 && CLI_SHOULD_TICK) {
             cli_progress_set(bar, i - 1);
+            mha = (double) n_accept / (i - 1);
+            cli_progress_set_format(bar, "{cli::pb_bar} {cli::pb_percent} | ETA: {cli::pb_eta} | MH Acceptance: %.2f", mha);
         }
         if (idx == n_out - 1) { // thin doesn't divide N and we are done early
             cli_progress_set(bar, N);
@@ -133,6 +136,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
         Rcpp::checkUserInterrupt();
     }
     cli_progress_done(bar);
+
 
     if (verbosity >= 1) {
         Rcout << "Acceptance rate: " << std::setprecision(2) << (100.0 * n_accept) / (N-1) << "%\n";
