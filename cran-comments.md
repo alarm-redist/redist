@@ -15,3 +15,5 @@
 There are no reverse dependencies to check.
 
 ## Additional Notes
+
+* Fixes bitwise/boolean errors in `crsg.cpp`.
