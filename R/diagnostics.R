@@ -192,7 +192,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
         if (warn_bottlenecks) {
             cli::cli_li("(*) {.strong Bottlenecks found:} Consider weakening or removing
                         constraints, or increasing the population tolerance.
-                        If the accpetance rate drops quickly in the final splits,
+                        If the acceptance rate drops quickly in the final splits,
                         try increasing {.arg pop_temper} by 0.01.
                         To visualize what geographic areas may be causing problems,
                         try running the following code. Highlighted areas are
