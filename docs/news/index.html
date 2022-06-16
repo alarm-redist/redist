@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.1</span>
       </span>
     </div>
 
@@ -91,6 +91,8 @@
 <li>Reproducible across-run parallelism throughout the package, via <code>doRNG</code>
 </li>
 <li>Much faster <code><a href="../reference/match_numbers.html">match_numbers()</a></code> using the Hungarian method</li>
+<li>
+<code><a href="../reference/min_move_parity.html">min_move_parity()</a></code> calculates how much population needs to be moved between districts in order to completely balance a redistricting plan.</li>
 <li>Support for partial SMC simulations, where fewer districts are drawn than the total number. Allows advanced users to manually combine partial runs to form complete maps.</li>
 <li>Improved algorithm reporting, including new progress bars and <code>cli</code> errors and warnings throughout the package</li>
 <li>Update the SMC algorithm to include a missing correction factor for the number of ways to sequentially label districts. This factor should not have an effect on substantive conclusions and summary statistics.</li>

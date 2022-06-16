@@ -18,7 +18,7 @@ population parity, and keeping close to the original plan"><meta property="og:im
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.1</span>
       </span>
     </div>
 
@@ -114,34 +114,27 @@ population parity, and keeping close to the original plan</p>
 <span class="r-in"><span class="va">plan</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_plans_matrix.html">get_plans_matrix</a></span><span class="op">(</span><span class="fu"><a href="redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">map</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> SEQUENTIAL MONTE CARLO</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Sampling 1 99-unit maps with 4 districts and population between 753,973 and 769,205.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Split [0/3] <span style="color: #00BB00;">■                               </span> | ETA?</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Split [3/3] <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> | ETA 0s</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span class="va">local</span> <span class="op">&lt;-</span> <span class="fu">persily</span><span class="op">(</span>plan <span class="op">=</span> <span class="va">plan</span>, map <span class="op">=</span> <span class="va">map</span>, counties <span class="op">=</span> <span class="va">region</span><span class="op">)</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> FLIP SHORT BURSTS</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Sampling up to 100 bursts of 50 iterations each.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Burst  Improve?  Score</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     1     🎉     0.575008</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     2     🌟     0.581671</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     3     🥂     0.596157</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     7     🌈     0.617708</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    10     🎃     0.621063</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    14     😀     0.629867</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    19     🪅     0.630686</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    20            0.630686</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    30            0.630686</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    40            0.630686</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    50            0.630686</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    60            0.630686</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    70            0.630686</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    80            0.630686</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    83     🥳     0.638810</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    85     😎     0.662832</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    89     🎇     0.666188</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    90            0.666188</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    91     ⛄     0.667851</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    92     🎆     0.668122</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   100            0.668122</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     1     😀     0.454725</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     4     🎇     0.465416</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     5     🥂     0.468746</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    10     🎆     0.470745</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    11     ⛄     0.470829</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    12     🌈     0.476314</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    19     🎃     0.499611</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    20            0.499611</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    22     🌟     0.514485</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    30            0.514485</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    40            0.514485</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    50            0.514485</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    60            0.514485</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    70            0.514485</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    80            0.514485</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    90            0.514485</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   100            0.514485</span>
 <span class="r-in"><span class="co"># }</span></span>
 </code></pre></div>
     </div>

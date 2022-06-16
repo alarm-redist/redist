@@ -20,7 +20,7 @@ split."><meta property="og:image" content="/logo.png"><!-- mathjax --><script sr
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.1</span>
       </span>
     </div>
 
@@ -128,8 +128,8 @@ Michael Crespin, Political Analysis (2005) 13(3): 253-260</p>
 <span class="r-in"><span class="va">plans</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="fl">2</span><span class="op">)</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> SEQUENTIAL MONTE CARLO</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Sampling 2 99-unit maps with 4 districts and population between 753,973 and 769,205.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Split [0/3] <span style="color: #00BB00;">■                               </span> | ETA?</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Split [3/3] <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> | ETA 0s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Split [0/3] <span style="color: #00BB00;">■                               </span> | ETA?</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Split [3/3] <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> | ETA 0s</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span class="va">plans_mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_plans_matrix.html">get_plans_matrix</a></span><span class="op">(</span><span class="va">plans</span><span class="op">)</span></span>
 <span class="r-in"><span class="va">ov</span> <span class="op">&lt;-</span> <span class="fu">redist.dist.pop.overlap</span><span class="op">(</span><span class="va">plans_mat</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, <span class="va">plans_mat</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span>, <span class="va">iowa_map</span><span class="op">)</span></span>
@@ -161,6 +161,9 @@ Michael Crespin, Political Analysis (2005) 13(3): 253-260</p>
 <span class="r-in"><span class="va">plan_5</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_plans_matrix.html">get_plans_matrix</a></span><span class="op">(</span><span class="fu"><a href="redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">iowa_map_5</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> SEQUENTIAL MONTE CARLO</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Sampling 1 99-unit maps with 5 districts and population between 603,178 and 615,364.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Split [0/4] <span style="color: #00BB00;">■                               </span> | ETA?</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Split [4/4] <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> | ETA 0s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span class="va">ov4_5</span> <span class="op">&lt;-</span> <span class="fu">redist.dist.pop.overlap</span><span class="op">(</span><span class="va">plans_mat</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, <span class="va">plan_5</span>, <span class="va">iowa_map</span><span class="op">)</span></span>
 <span class="r-in"><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">ov4_5</span>, <span class="fl">2</span><span class="op">)</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      1    2    3    4    5</span>
