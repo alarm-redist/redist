@@ -39,6 +39,7 @@ extern SEXP _redist_prec_cooccur(SEXP, SEXP, SEXP);
 extern SEXP _redist_reduce_adj(SEXP, SEXP, SEXP);
 extern SEXP _redist_reindex(SEXP, SEXP);
 extern SEXP _redist_renumber_matrix(SEXP, SEXP);
+extern SEXP _redist_resample_lowvar(SEXP);
 extern SEXP _redist_rsg(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_smc_plans(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _redist_solve_hungarian(SEXP);
@@ -79,6 +80,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_reduce_adj",        (DL_FUNC) &_redist_reduce_adj,         3},
     {"_redist_reindex",           (DL_FUNC) &_redist_reindex,            2},
     {"_redist_renumber_matrix",   (DL_FUNC) &_redist_renumber_matrix,    2},
+    {"_redist_resample_lowvar",   (DL_FUNC) &_redist_resample_lowvar,    1},
     {"_redist_rsg",               (DL_FUNC) &_redist_rsg,                6},
     {"_redist_smc_plans",         (DL_FUNC) &_redist_smc_plans,         15},
     {"_redist_solve_hungarian",   (DL_FUNC) &_redist_solve_hungarian,    1},

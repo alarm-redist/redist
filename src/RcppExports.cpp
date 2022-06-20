@@ -368,6 +368,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// resample_lowvar
+arma::ivec resample_lowvar(arma::vec wgts);
+RcppExport SEXP _redist_resample_lowvar(SEXP wgtsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type wgts(wgtsSEXP);
+    rcpp_result_gen = Rcpp::wrap(resample_lowvar(wgts));
+    return rcpp_result_gen;
+END_RCPP
+}
 // reindex
 IntegerMatrix reindex(IntegerMatrix dm, int nd);
 RcppExport SEXP _redist_reindex(SEXP dmSEXP, SEXP ndSEXP) {
