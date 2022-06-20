@@ -632,7 +632,6 @@ add_constr_custom <- function(constr, strength, fn) {
                 !identical(found, rlang::base_env()) &&
                 !identical(found, constr_env) &&
                 !identical(found, rlang::pkg_env("redist"))) {
-            print(nm)
             constr_env[[nm]] = get(nm, envir=found)
         }
     }
