@@ -299,9 +299,11 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
             } else {
                 mod_wgt <- trunc_fn(wgt)
             }
-            n_eff <- length(mod_wgt)*mean(mod_wgt)^2/mean(mod_wgt^2)
+            mod_wgt <- wgt/sum(wgt)
+            n_eff <- 1/sum(mod_wgt^2)
 
-            rs_idx <- sample(nsims, nsims, replace = TRUE, prob = mod_wgt)
+            # rs_idx <- sample(nsims, nsims, replace = TRUE, prob = mod_wgt)
+            rs_idx <- resample_lowvar(mod_wgt)
             n_unique <- dplyr::n_distinct(rs_idx)
             algout$plans <- algout$plans[, rs_idx, drop = FALSE]
             # algout$log_labels = algout$log_labels[rs_idx]
