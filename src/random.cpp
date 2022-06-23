@@ -11,12 +11,9 @@ int rint(int max) {
     return std::floor(max * unif(generator));
 }
 
-/*
- * Generate a random integer in [0, max) according to weights.
- */
-int rint(int max, vec cum_wgts) {
+// helper
+int find_u(double u, int max, vec cum_wgts) {
     int low = 0, high = max - 1;
-    double u = unif(generator);
 
     if (cum_wgts[0] > u)
         return 0;
@@ -30,6 +27,27 @@ int rint(int max, vec cum_wgts) {
     }
 
     return high;
+}
+
+/*
+ * Generate a random integer in [0, max) according to weights.
+ */
+int rint(int max, vec cum_wgts) {
+    return find_u(unif(generator), max, cum_wgts);
+}
+
+/*
+ * Generate a random integer within a stratum
+ */
+int rint_mixstrat(int max, int stratum, double p, vec cum_wgts) {
+    double u;
+    if (unif(generator) > p) {
+        u = (stratum + unif(generator)) / max;
+    } else {
+        u = unif(generator);
+    }
+
+    return find_u(u, max, cum_wgts);
 }
 
 /*

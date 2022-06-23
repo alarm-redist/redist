@@ -17,16 +17,15 @@
 #' * **Effective samples**: the effective sample size at each iteration, computed
 #' using the SMC weights. Larger is better. The percentage in parentheses is the
 #' ratio of the effective samples to the total samples.
-#' * **Acceptance rate**: the fractino of drawn spanning trees which yield a valid
+#' * **Acceptance rate**: the fraction of drawn spanning trees which yield a valid
 #' redistricting plan within the population tolerance. Very small values (< 1%)
 #' can indicate a bottleneck and may lead to a lack of diversity.
 #' * **Standard deviation of the log weights**: More variable weights (larger s.d.)
 #' indicate less efficient sampling. Values greater than 3 are likely problematic.
 #' * **Maximum unique plans:** an upper bound on the number of unique redistricting
 #' plans that survive each stage. The percentage in parentheses is the ratio of
-#' this number to expected number of unique plans under equal-probability
-#' multinomial resampling. Small values (< 100) indicate a bottleneck, which
-#' leads to a loss of sample diversity and a higher variance.
+#' this number to the total number of samples. Small values (< 100) indicate a
+#' bottleneck, which leads to a loss of sample diversity and a higher variance.
 #' * **Estimated `k` parameter**: How many spanning tree edges were considered for
 #' cutting at each split. Mostly informational, though large jumps may indicate
 #' a need to increase `adapt_k_thresh`.
@@ -151,7 +150,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
                 str_glue("{fmt_comma(n_eff)} ({sprintf('%0.1f%%', 100*eff)})"))
             tbl_print$eff <- NULL
             tbl_print$accept_rate <- with(tbl_print, sprintf("%0.1f%%", 100*accept_rate))
-            max_pct <- with(tbl_print, max_unique/(-n_samp*expm1(-1)))
+            max_pct <- with(tbl_print, max_unique/(-n_samp * expm1(-1)))
             tbl_print$max_unique <- with(tbl_print,
                 str_glue("{fmt_comma(max_unique)} ({sprintf('%3.0f%%', 100*max_pct)})"))
 

@@ -23,6 +23,11 @@ int rint(int max);
 int rint(int max, vec cum_wgts);
 
 /*
+ * Generate a random integer within a stratum with some probability p
+ */
+int rint_mixstrat(int max, int stratum, double p, vec cum_wgts);
+
+/*
  * Generate an integer vector of resampling indices with a low-variance resampler.
  */
 // [[Rcpp::export]]

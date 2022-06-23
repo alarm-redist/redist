@@ -394,6 +394,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         while (!ok) {
             // resample
             idx = rint(N, cum_wgt);
+            // idx = rint_mixstrat(N, i, 0.05, cum_wgt);
             districts_new.col(i) = districts.col(idx);
             iters[i]++;
 
