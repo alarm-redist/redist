@@ -292,9 +292,10 @@ redist.calc.frontier.size <- function(ordered_path) {
     )
 }
 
-#' Enumerate All Parititions
+#' Enumerate All Parititions (Fifield et al. 2020)
 #'
-#' Single function for standard enumeration analysis.
+#' Single function for standard enumeration analysis, using ZDD methodology
+#' (Fifield, Imai, Kawahara, and Kenny 2020).
 #'
 #' @param adj zero indexed adjacency list.
 #' @param unordered_path valid path to output the unordered adjacency map to
@@ -313,6 +314,11 @@ redist.calc.frontier.size <- function(ordered_path) {
 #' @param total_pop the vector of precinct populations
 #'
 #' @return List with entries district_membership and parity.
+#'
+#' @references
+#' Fifield, B., Imai, K., Kawahara, J., & Kenny, C. T. (2020). The essential
+#' role of empirical validation in legislative redistricting simulation.
+#' \emph{Statistics and Public Policy}, 7(1), 52-68.
 #'
 #' @concept enumerate
 #' @export

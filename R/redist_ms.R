@@ -5,15 +5,16 @@
 # Purpose: tidy R wrapper to run Merge-Split/Recom redistricting code
 ####################################################
 
-#' Merge-Split/Recombination MCMC Redistricting Sampler
+#' Merge-Split/Recombination MCMC Redistricting Sampler (Carter et al. 2019)
 #'
-#' \code{redist_mergesplit} uses a Markov Chain Monte Carlo algorithm to
-#' generate congressional or legislative redistricting plans according to
-#' contiguity, population, compactness, and administrative boundary constraints.
-#' The MCMC proposal is the same as is used in the SMC sampler; it is similar
-#' but not identical to those used in the references.  1-level hierarchical
-#' Merge-split is supported through the \code{counties} parameter; unlike in
-#' the SMC algorithm, this does not guarantee a maximum number of county splits.
+#' \code{redist_mergesplit} uses a Markov Chain Monte Carlo algorithm (Carter et
+#' al. 2019; based on DeFord et. al 2019) to generate congressional or legislative redistricting plans
+#' according to contiguity, population, compactness, and administrative boundary
+#' constraints. The MCMC proposal is the same as is used in the SMC sampler
+#' (McCartan and Imai 2020); it is similar but not identical to those used in
+#' the references.  1-level hierarchical Merge-split is supported through the
+#' \code{counties} parameter; unlike in the SMC algorithm, this does not
+#' guarantee a maximum number of county splits.
 #'
 #' This function draws samples from a specific target measure, controlled by the
 #' \code{map}, \code{compactness}, and \code{constraints} parameters.
@@ -73,6 +74,9 @@
 #' Carter, D., Herschlag, G., Hunter, Z., and Mattingly, J. (2019). A
 #' merge-split proposal for reversible Monte Carlo Markov chain sampling of
 #' redistricting plans. arXiv preprint arXiv:1911.01503.
+#'
+#' McCartan, C., & Imai, K. (2020). Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans.
+#' Available at \url{https://arxiv.org/abs/2008.06131}.
 #'
 #' DeFord, D., Duchin, M., and Solomon, J. (2019). Recombination: A family of
 #' Markov chains for redistricting. arXiv preprint arXiv:1911.05725.

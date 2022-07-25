@@ -1,5 +1,5 @@
 Package: redist
-Version: 4.0.1
+Version: 4.1.0
 Date: 2022-06-14
 Title: Simulation Methods for Legislative Redistricting
 Authors@R: c(
@@ -13,13 +13,16 @@ Authors@R: c(
 Maintainer: Christopher T. Kenny <christopherkenny@fas.harvard.edu>
 Description: Enables researchers to sample redistricting plans from a pre-specified
     target distribution using Sequential Monte Carlo and Markov Chain Monte Carlo
-    algorithms.  The package allows for the implementation of various constraints in
+    algorithms. The package allows for the implementation of various constraints in
     the redistricting process such as geographic compactness and population parity
     requirements. Tools for analysis such as computation of various summary statistics
-    and plotting functionality are also included. The package implements methods
-    described in Fifield, Higgins, Imai and Tarr (2020) <doi:10.1080/10618600.2020.1739532>,
-    Fifield, Imai, Kawahara, and Kenny (2020) <doi:10.1080/2330443X.2020.1791773>,
-    and McCartan and Imai (2020) <arXiv:2008.06131>.
+    and plotting functionality are also included. The package implements the SMC 
+    algorithm of McCartan and Imai (2020) <arXiv:2008.06131>, the enumeration 
+    algorithm of Fifield, Imai, Kawahara, and Kenny (2020) <doi:10.1080/2330443X.2020.1791773>,
+    the Flip MCMC algorithm of Fifield, Higgins, Imai and Tarr (2020) <doi:10.1080/10618600.2020.1739532>,
+    the Merge-split/Recombination algorithms of Carter et al. (2019) <arXiv:1911.01503> 
+    and DeFord et al. (2021) <doi:10.1162/99608f92.eb30390f>, and the Short-burst 
+    optimization algorithm of Cannon et al. (2020) <arXiv:2011.02288>.
 Depends:
     R (>= 3.5.0),
     redistmetrics (>= 1.0.2) 
@@ -58,10 +61,10 @@ Suggests:
     rstudioapi
 LinkingTo: Rcpp, RcppArmadillo, RcppThread, cli, redistmetrics
 License: GPL (>= 2)
-SystemRequirements: OpenMPI, gmp, libxml2, python, C++11
+SystemRequirements: C++11, python
 NeedsCompilation: yes
 BugReports: https://github.com/alarm-redist/redist/issues
-URL: https://alarm-redist.github.io/redist/, https://github.com/alarm-redist/redist
+URL: https://alarm-redist.github.io/redist/
 RoxygenNote: 7.2.0
 VignetteBuilder: knitr
 Encoding: UTF-8
