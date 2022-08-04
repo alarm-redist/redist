@@ -561,6 +561,32 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// test_tree_pop1
+List test_tree_pop1(const List l, const arma::uvec& pop, int root);
+RcppExport SEXP _redist_test_tree_pop1(SEXP lSEXP, SEXP popSEXP, SEXP rootSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const List >::type l(lSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< int >::type root(rootSEXP);
+    rcpp_result_gen = Rcpp::wrap(test_tree_pop1(l, pop, root));
+    return rcpp_result_gen;
+END_RCPP
+}
+// test_tree_pop2
+List test_tree_pop2(const List l, const arma::uvec& pop, int root);
+RcppExport SEXP _redist_test_tree_pop2(SEXP lSEXP, SEXP popSEXP, SEXP rootSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const List >::type l(lSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< int >::type root(rootSEXP);
+    rcpp_result_gen = Rcpp::wrap(test_tree_pop2(l, pop, root));
+    return rcpp_result_gen;
+END_RCPP
+}
 // var_info_vec
 NumericVector var_info_vec(IntegerMatrix m, IntegerVector ref, NumericVector pop);
 RcppExport SEXP _redist_var_info_vec(SEXP mSEXP, SEXP refSEXP, SEXP popSEXP) {
@@ -571,6 +597,21 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< IntegerVector >::type ref(refSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type pop(popSEXP);
     rcpp_result_gen = Rcpp::wrap(var_info_vec(m, ref, pop));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sample_ust
+Tree sample_ust(List l, const arma::uvec& pop, double lower, double upper, const arma::uvec& counties);
+RcppExport SEXP _redist_sample_ust(SEXP lSEXP, SEXP popSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP countiesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type l(lSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
+    rcpp_result_gen = Rcpp::wrap(sample_ust(l, pop, lower, upper, counties));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -615,7 +656,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_splits", (DL_FUNC) &_redist_splits, 4},
     {"_redist_dist_cty_splits", (DL_FUNC) &_redist_dist_cty_splits, 3},
     {"_redist_swMH", (DL_FUNC) &_redist_swMH, 20},
+    {"_redist_test_tree_pop1", (DL_FUNC) &_redist_test_tree_pop1, 3},
+    {"_redist_test_tree_pop2", (DL_FUNC) &_redist_test_tree_pop2, 3},
     {"_redist_var_info_vec", (DL_FUNC) &_redist_var_info_vec, 3},
+    {"_redist_sample_ust", (DL_FUNC) &_redist_sample_ust, 5},
     {NULL, NULL, 0}
 };
 

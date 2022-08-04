@@ -19,7 +19,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                umat districts, int n_drawn, int n_steps,
                List constraints, List control, int verbosity) {
     // re-seed MT so that `set.seed()` works in R
-    generator.seed((int) Rcpp::sample(INT_MAX, 1)[0]);
+    seed_rng((int) Rcpp::sample(INT_MAX, 1)[0]);
 
     // unpack control params
     double thresh = (double) control["adapt_k_thresh"];
@@ -389,7 +389,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         bool ok = false;
         int idx;
         double inc_lp;
-        double lower_s = lower;
+            double lower_s = lower;
         double upper_s = upper;
         while (!ok) {
             // resample
@@ -660,13 +660,11 @@ void adapt_parameters(const Graph &g, int &k, int last_k, const vec &lp, double 
     if (idx < N_adapt) N_adapt = idx; // if rejected too many in last step
     // For each k, compute pr(selected edge within top k),
     // among maps where valid edge was selected
-    uvec idxs(N_adapt);
     for (k = 1; k <= k_max; k++) {
-        idxs = as<uvec>(Rcpp::sample(k, N_adapt, true, R_NilValue, false));
         double sum_within = 0;
         int n_ok = 0;
         for (int i = 0; i < N_adapt; i++) {
-            double dev = devs.at(i).at(idxs[i]);
+            double dev = devs.at(i).at(r_int(k));
             if (dev > tol) continue;
             else n_ok++;
             for (int j = 0; j < N_adapt; j++) {

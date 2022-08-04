@@ -8,10 +8,10 @@
 
 using namespace arma;
 
-// INITIALIZE MT RNG
-extern std::random_device rd;
-extern std::mt19937 generator;
-
+/*
+ * Set RNG seed
+ */
+void seed_rng(int seed);
 
 /*
  * Generate a uniform random integer in [0, max). Slightly biased.
