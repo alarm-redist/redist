@@ -393,8 +393,8 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         double upper_s = upper;
         while (!ok) {
             // resample
-            idx = rint(N, cum_wgt);
-            // idx = rint_mixstrat(N, i, 0.05, cum_wgt);
+            idx = r_int_wgt(N, cum_wgt);
+            // idx = r_int_mixstrat(N, i, 0.05, cum_wgt);
             districts_new.col(i) = districts.col(idx);
             iters[i]++;
 
@@ -546,6 +546,9 @@ double cut_districts(Tree &ust, int k, int root, subview_col<uword> &districts,
     std::vector<int> candidates; // candidate edges to cut,
     std::vector<double> deviances; // how far from target pop.
     std::vector<bool> is_ok; // whether they meet constraints
+    candidates.reserve(k);
+    deviances.reserve(k);
+    is_ok.reserve(k);
     int distr_root = districts(root);
     for (int i = 1; i <= V; i++) { // 1-indexing here
         if (districts(i - 1) != distr_root || i - 1 == root) continue;
@@ -564,7 +567,7 @@ double cut_districts(Tree &ust, int k, int root, subview_col<uword> &districts,
     }
     if ((int) candidates.size() < k) return 0.0;
 
-    int idx = rint(k);
+    int idx = r_int(k);
     idx = select_k(deviances, idx + 1);
     int cut_at = std::fabs(candidates[idx]) - 1;
     // reject sample

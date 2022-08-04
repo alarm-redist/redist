@@ -105,6 +105,10 @@ closest_adj_pop <- function(adj, i_dist, g_prop) {
     .Call(`_redist_closest_adj_pop`, adj, i_dist, g_prop)
 }
 
+rint1 <- function(n, max) {
+    .Call(`_redist_rint1`, n, max)
+}
+
 resample_lowvar <- function(wgts) {
     .Call(`_redist_resample_lowvar`, wgts)
 }

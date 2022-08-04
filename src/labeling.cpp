@@ -93,7 +93,7 @@ double log_labelings_IS(const Graph &g, int n) {
         std::vector<bool> candidate(V, false);
         std::vector<bool> visited(V, false);
 
-        double idx = tot_wgt * unif(generator);
+        double idx = tot_wgt * r_unif();
         double accuml = 0;
         int vtx;
         for (vtx = 0; vtx < V - 1; vtx++) {
@@ -112,7 +112,7 @@ double log_labelings_IS(const Graph &g, int n) {
         }
 
         for (int j = 1; j < V; j++) {
-            double idx = n_cands * unif(generator);
+            double idx = n_cands * r_unif();
             double accuml = 0;
             int vtx;
             for (int k = 0; k < V; k++) {

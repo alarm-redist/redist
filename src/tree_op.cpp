@@ -5,7 +5,7 @@
  */
 // TESTED
 int rvtx(const std::vector<bool> &visited, int size, int remaining) {
-    int idx = rint(remaining);
+    int idx = r_int(remaining);
     int accuml = 0;
     for (int i = 0; i < size - 1; i++) {
         accuml += 1 - visited.at(i);
@@ -20,7 +20,7 @@ int rvtx(const std::vector<bool> &visited, int size, int remaining) {
 // TESTED
 int rnbor(const Graph &g, int vtx) {
     int n_nbors = g.at(vtx).size();
-    return g[vtx][rint(n_nbors)];
+    return g[vtx][r_int(n_nbors)];
 }
 
 /*
@@ -163,7 +163,9 @@ Multigraph init_multigraph(int V) {
 Tree init_tree(int V) {
     Tree tree;
     for (int i = 0; i < V; i++) {
-        tree.push_back(std::vector<int>());
+        std::vector<int> tmp;
+        // tmp.reserve(4); // doesn't appear to make things faster
+        tree.push_back(tmp);
     }
     return tree;
 }

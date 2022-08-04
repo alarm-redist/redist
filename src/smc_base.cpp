@@ -35,7 +35,7 @@ int select_k(std::vector<double> x, int k) {
     while (true) {
         if (left == right)
             return idxs[left];
-        int pivot = left + rint(right - left + 1);
+        int pivot = left + r_int(right - left + 1);
         partition_vec(x, idxs, left, right, pivot);
         if (k == pivot) {
             return idxs[k];
