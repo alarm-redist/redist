@@ -161,3 +161,7 @@ var_info_vec <- function(m, ref, pop) {
     .Call(`_redist_var_info_vec`, m, ref, pop)
 }
 
+sample_ust <- function(l, pop, lower, upper, counties) {
+    .Call(`_redist_sample_ust`, l, pop, lower, upper, counties)
+}
+

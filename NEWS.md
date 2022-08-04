@@ -1,5 +1,7 @@
 # redist 4.1.0
 * Improved resampling efficiency at the final SMC stage
+* Faster implementation of loop-erased random walk in C++
+* Faster random number generation in C++
 * Updated citation information
 
 # redist 4.0.0

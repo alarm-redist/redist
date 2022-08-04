@@ -1,5 +1,5 @@
 library(tidyverse)
-library(callr)
+# library(callr)
 library(microbenchmark)
 
 devtools::load_all()
@@ -7,10 +7,13 @@ devtools::load_all()
 data(iowa)
 ia <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
 
+bounds = attr(ia, "pop_bounds")
+tt = sample_ust(ia$adj, ia$pop, bounds[1], bounds[3], as.integer(factor(ia$region)))
+
 x = redist_smc(ia, 100, ncores=1L, silent=TRUE)
 redist.plot.plans(x, 1:4, ia)
 
-microbenchmark(redist_smc(ia, 500, ncores=1L, silent=TRUE), times=10)
+microbenchmark(redist_smc(ia, 100, ncores=1L, silent=TRUE), times=20)
 # 100 -> 182ms
 # 500 -> 976ms
 
@@ -45,6 +48,7 @@ d |>
     # filter(!str_starts(loc, "(main|eval)\\.c")) |>
     filter(!str_starts(fn, "std::")) |>
     select(-raw) |>
+    # group_by(loc) |>
     group_by(fn) |>
     summarize(time = sum(time),
               depth = median(n_mark)) |>

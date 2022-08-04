@@ -1,4 +1,3 @@
-#include <stack>
 #include "tree_op.h"
 
 /*
@@ -6,17 +5,15 @@
  * `lower` is a lower bound (inclusive) on the index of the first unvisited element
  */
 // TESTED
-int rvtx(const std::vector<bool> &visited, int size, int remaining) {
-// int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower) {
+int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower) {
     int idx = r_int(remaining);
     int accuml = 0;
     bool seen_one = false;
-    // for (int i = lower; i < size - 1; i++) {
-    for (int i = 0; i < size - 1; i++) {
-        accuml += 1 - visited.at(i);
+    for (int i = lower; i < size - 1; i++) {
+        accuml += 1 - visited[i];
         if (!seen_one && !visited[i]) {
             seen_one = true;
-            // lower = i;
+            lower = i;
         }
         if (accuml - 1 == idx) return i;
     }
@@ -28,7 +25,7 @@ int rvtx(const std::vector<bool> &visited, int size, int remaining) {
  */
 // TESTED
 int rnbor(const Graph &g, int vtx) {
-    int n_nbors = g.at(vtx).size();
+    int n_nbors = g[vtx].size();
     return g[vtx][r_int(n_nbors)];
 }
 
@@ -172,9 +169,7 @@ Multigraph init_multigraph(int V) {
 Tree init_tree(int V) {
     Tree tree;
     for (int i = 0; i < V; i++) {
-        std::vector<int> tmp;
-        // tmp.reserve(4); // doesn't appear to make things faster
-        tree.push_back(tmp);
+        tree.push_back(std::vector<int>());
     }
     return tree;
 }
@@ -196,54 +191,19 @@ Graph list_to_graph(const List &l) {
  * Count population below each node in tree
  */
 // TESTED
-// int tree_pop(Tree &ust, int vtx, const uvec &pop,
-double tree_pop(Tree &ust, int vtx, const uvec &pop,
-                std::vector<int> &pop_below, std::vector<int> &parent) {
-    // int pop_at = (int) pop(vtx);
-    double pop_at = pop(vtx);
+int tree_pop(Tree &ust, int vtx, const uvec &pop,
+             std::vector<int> &pop_below, std::vector<int> &parent) {
+    int pop_at = pop(vtx);
     const std::vector<int> *nbors = &ust[vtx];
     int length = nbors->size();
     for (int j = 0; j < length; j++) {
         int nbor = (*nbors)[j];
+        parent.at(nbor) = vtx;
         pop_at += tree_pop(ust, nbor, pop, pop_below, parent);
-        if (parent.size()) parent.at(nbor) = vtx;
     }
 
     pop_below.at(vtx) = pop_at;
     return pop_at;
-}
-
-/*
- * Count population below each node in tree
- */
-// TESTED
-int tree_pop_itr(Tree &ust, int vtx, const uvec &pop,
-             std::vector<int> &pop_below, std::vector<int> &parent) {
-    std::stack<int> stack;
-    std::stack<int> path;
-    stack.push(vtx);
-    int accuml = 0;
-    // iterative postorder traversal with two stacks
-    while (!stack.empty()) {
-        int root = stack.top();
-        if (!path.empty() && path.top() == root) {
-            accuml += pop[root];
-            pop_below[root] += accuml;
-            stack.pop();
-            path.pop();
-        } else {
-            pop_below[root] = -accuml;
-            path.push(root);
-            const std::vector<int> *nbors = &ust[root];
-            int length = nbors->size();
-            for (int j = 0; j < length; j++) {
-                int nbor = (*nbors)[j];
-                parent[nbor] = root;
-                stack.push(nbor);
-            }
-        }
-    }
-    return 0;
 }
 
 /*
