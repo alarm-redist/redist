@@ -611,6 +611,7 @@ void adapt_parameters(const Graph &g, int &k, int last_k, const vec &lp, double 
     double upper = target * (1 + tol);
 
     std::vector<std::vector<double>> devs;
+    devs.reserve(N_adapt);
     vec distr_ok(k_max+1, fill::zeros);
     int root;
     int max_ok = 0;

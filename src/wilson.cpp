@@ -1,5 +1,4 @@
 #include "wilson.h"
-#include "tree_op.h"
 
 /*
  * Random walk along `g` from `root` until something in `visited` is hit
@@ -80,9 +79,7 @@ Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
     }
 
     // pick root
-    int lower_i = 0;
-    int lower_c = 0;
-    root = rvtx(visited, V, remaining, lower_i);
+    root = rvtx(visited, V, remaining);
     visited[root] = true;
     remaining--;
     c_visited.at(counties[root] - 1) = true;
@@ -91,7 +88,7 @@ Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
     // Connect counties
     Tree cty_tree = init_tree(n_county);
     while (c_remaining > 0) {
-        int add = rvtx(c_visited, n_county, c_remaining, lower_c);
+        int add = rvtx(c_visited, n_county, c_remaining);
         // random walk from `add` until we hit the path
         std::vector<std::vector<int>> path = walk_until_cty(mg, add,
                                                             c_visited, ignore);
@@ -162,7 +159,7 @@ Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
 
     // Generate tree within each county
     while (remaining > 0) {
-        int add = rvtx(visited, V, remaining, lower_i);
+        int add = rvtx(visited, V, remaining);
         // random walk from `add` until we hit the path
         std::vector<int> path = walk_until(g, add, visited, ignore, counties);
         // update visited list and constructed tree

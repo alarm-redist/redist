@@ -8,7 +8,8 @@
  * `lower` is a lower bound (inclusive) on the index of the first unvisited element
  */
 // TESTED
-int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower);
+int rvtx(const std::vector<bool> &visited, int size, int remaining);
+// int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower);
 
 /*
  * Generate a random neighbor to a vertex, except for the `last` vertex.
@@ -56,7 +57,7 @@ Graph list_to_graph(const List &l);
  * Count population below each node in tree
  */
 // TESTED
-int tree_pop(Tree &ust, int vtx, const uvec &pop,
+double tree_pop(Tree &ust, int vtx, const uvec &pop,
              std::vector<int> &pop_below, std::vector<int> &parent);
 
 /*
