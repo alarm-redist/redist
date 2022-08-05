@@ -14,12 +14,12 @@ using namespace arma;
 void seed_rng(int seed);
 
 /*
- * Generate a uniform random integer in [0, max). Slightly biased.
+ * Generate a uniform random integer in [0, max). Very slightly biased.
  */
 int r_int(uint32_t max);
 
 /*
- * Generate a uniform random double in [0, 1). Slightly biased.
+ * Generate a uniform random double in [0, 1). Very slightly biased.
  */
 double r_unif();
 
