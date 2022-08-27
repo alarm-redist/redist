@@ -178,6 +178,8 @@ redist.plot.scatter <- function(plans, x, y, ..., bigger = TRUE) {
 #' Plans with quantities of interest above the threshold will be colored
 #' differently than plans below the threshold.
 #' @param size The dot size for \code{geom="jitter"}.
+#' @param ref_geom reference plan geometry. \code{"line"} or \code{"point"}
+#' can be passed for reasonable defaults.
 #' @param ... passed on to \code{\link[ggplot2]{geom_boxplot}}
 #'
 #' @returns A ggplot
@@ -188,14 +190,14 @@ redist.plot.scatter <- function(plans, x, y, ..., bigger = TRUE) {
 #'
 #' iowa <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05, total_pop = pop)
 #' plans <- redist_smc(iowa, nsims = 100, silent = TRUE)
-#' plans %>%
-#'     mutate(pct_dem = group_frac(iowa, dem_08, tot_08)) %>%
-#'     redist.plot.distr_qtys(pct_dem)
+#' plans <- plans %>% mutate(pct_dem = group_frac(iowa, dem_08, tot_08))
+#' redist.plot.distr_qtys(plans, pct_dem)
 #'
 #' @concept plot
 #' @export
 redist.plot.distr_qtys <- function(plans, qty, sort = "asc", geom = "jitter",
-                                   color_thresh = NULL, size = 0.1, ...) {
+                                   color_thresh = NULL, size = 0.1, ref_geom,
+                                   ref_label, ...) {
     if (!inherits(plans, "redist_plans")) cli_abort("{.arg plans} must be a {.cls redist_plans}")
 
     if (isFALSE(sort) || sort == "none") {
@@ -225,13 +227,59 @@ redist.plot.distr_qtys <- function(plans, qty, sort = "asc", geom = "jitter",
             ggplot2::guides(color = "none")
     }
 
-    if (geom == "jitter") {
-        p <- p + ggplot2::geom_jitter(size = size, ...)
-    } else if (geom == "boxplot") {
-        p <- p + ggplot2::geom_boxplot(..., outlier.size = 1)
-    } else {
-        cli_abort("{.arg geom} must be either \"jitter\" or \"boxplot\"")
+    if (is.character(geom)) {
+        if (geom == "jitter") {
+            geom <- function(...) ggplot2::geom_jitter(size = size, ...)
+            if (missing(ref_geom)) {
+                if (is.null(color_thresh)) {
+                    ref_geom <- function(...) {
+                        ggplot2::geom_segment(aes(as.integer(.data$.distr_no) - 0.5,
+                                                  xend = as.integer(.data$.distr_no) + 0.5,
+                                                  yend = {{ qty }},
+                                                  color = .data$draw),
+                                              size = 1.2, ...)
+                    }
+                   if (missing(ref_label))
+                       ref_label <- function() labs(color = "Plan", shape = "Plan")
+                } else{
+                    ref_geom <- function(...) {
+                        ggplot2::geom_point(aes(color = .data$draw), shape = 15,
+                                            size = 2, ...)
+                    }
+                    if (missing(ref_label))
+                        ref_label <- function() labs(color = "Plan", shape = "Plan")
+                }
+            }
+        } else if (geom == "boxplot") {
+           geom <- function(...) ggplot2::geom_boxplot(..., outlier.size = 1)
+           if (missing(ref_geom)) {
+               if (is.null(color_thresh)) {
+                   ref_geom <- function(...) {
+                       ggplot2::geom_segment(
+                           aes(as.integer(.data$.distr_no) - 0.5,
+                               xend = as.integer(.data$.distr_no) + 0.5,
+                               yend = {{ qty }},
+                               lty = .data$draw
+                           ), ...,
+                           size = 1.2, color = "black")
+                   }
+                   if (missing(ref_label))
+                       ref_label <- function() labs(lty = "Plan")
+               } else{
+                   ref_geom <- function(...) {
+                       ggplot2::geom_point(aes(shape = .data$draw), color = "black",
+                                           size = 2, ...)
+                   }
+                   if (missing(ref_label))
+                       ref_label <- function() labs(shape = "Plan")
+               }
+           }
+        } else {
+            cli_abort("{.arg geom} must be either \"jitter\" or \"boxplot\"")
+        }
     }
+
+    p <- p + geom(...)
 
     if (isFALSE(sort) || sort == "none")
         p <- p + labs(x = "District")
@@ -240,33 +288,12 @@ redist.plot.distr_qtys <- function(plans, qty, sort = "asc", geom = "jitter",
 
     if (get_n_ref(plans) > 0) {
         pl_ref <- as.data.frame(subset_ref(plans, matrix = FALSE))
-        if (is.null(color_thresh)) {
-            p <- p + labs(color = "Plan", shape = "Plan")
-            if (geom == "jitter") {
-                p <- p + ggplot2::geom_segment(aes(as.integer(.data$.distr_no) - 0.5,
-                    xend = as.integer(.data$.distr_no) + 0.5,
-                    yend = {{ qty }},
-                    color = .data$draw),
-                data = pl_ref, size = 1.2)
-            } else {
-                p <- p + ggplot2::geom_point(aes(color = .data$draw), shape = 15,
-                    size = 2, data = subset_ref(plans))
-            }
-        } else {
-            if (geom == "jitter") {
-                p <- p + labs(lty = "Plan") +
-                    ggplot2::geom_segment(aes(as.integer(.data$.distr_no) - 0.5,
-                        xend = as.integer(.data$.distr_no) + 0.5,
-                        yend = {{ qty }},
-                        lty = .data$draw),
-                    data = pl_ref,
-                    size = 1.2, color = "black")
-            } else {
-                p <- p + labs(shape = "Plan") +
-                    ggplot2::geom_point(aes(shape = .data$draw), color = "black",
-                        size = 2, data = pl_ref)
-            }
-        }
+        if (missing(ref_geom))
+            ref_geom <- function(...) ggplot2::geom_point(
+                aes(color = .data$draw), shape = 15, size = 2, ...
+                )
+        if (missing(ref_label)) ref_label <- function() labs(color = "Plan", shape = "Plan")
+        p <- p + ref_geom(data = pl_ref) + ref_label()
     }
 
     p
