@@ -259,12 +259,12 @@ redist.plot.distr_qtys <- function(plans, qty, sort = "asc", geom = "jitter",
                            aes(as.integer(.data$.distr_no) - 0.5,
                                xend = as.integer(.data$.distr_no) + 0.5,
                                yend = {{ qty }},
-                               lty = .data$draw
+                               color = .data$draw
                            ), ...,
-                           size = 1.2, color = "black")
+                           size = 1.2)
                    }
                    if (missing(ref_label))
-                       ref_label <- function() labs(lty = "Plan")
+                       ref_label <- function() labs(color = "Plan")
                } else{
                    ref_geom <- function(...) {
                        ggplot2::geom_point(aes(shape = .data$draw), color = "black",
