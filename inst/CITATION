@@ -13,7 +13,7 @@ bibentry(
     year = "2022",
     note = "R package",
     key = "redist",
-    url = "https://alarm-redist.github.io/redist/"
+    url = "https://alarm-redist.org/redist/"
 )
 
 bibentry(
