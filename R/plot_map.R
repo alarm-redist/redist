@@ -288,10 +288,14 @@ redist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE,
 }
 
 edge_center_df <- function(shp, adj) {
+
     # Extract Centers
     suppressWarnings(centers <- st_centroid(shp))
     st_crs(centers) <- st_crs(shp)
 
+    if (nrow(shp) == 1) {
+        return(list(nb = NULL, centers = centers))
+    }
 
     # Extract Edges
     nb <- lapply(adj, function(x) {
@@ -322,5 +326,5 @@ edge_center_df <- function(shp, adj) {
     suppressWarnings(nb <- sf::st_as_sf(edgedf))
     suppressWarnings(st_crs(nb) <- st_crs(shp))
 
-    return(list(nb = nb, centers = centers))
+    list(nb = nb, centers = centers)
 }
