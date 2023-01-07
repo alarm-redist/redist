@@ -249,13 +249,13 @@ redist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE,
     if (plot_shp) {
         if (!is.null(plan)) {
             plot <- ggplot(shp) +
-                geom_sf(aes(fill = as.character(plan_to_plot)), size = 0.1) +
+                geom_sf(aes(fill = as.character(plan_to_plot)), linewidth = 0.1) +
                 theme_void() +
                 theme(legend.position = "none") +
                 geom_sf(data = nb)
         } else {
             plot <- ggplot(shp) +
-                geom_sf(size = 0.1) +
+                geom_sf(linewidth = 0.1) +
                 theme_void() +
                 geom_sf(data = nb)
         }
@@ -267,7 +267,7 @@ redist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE,
 
     if (centroids) {
         if (!is.null(plan) & !plot_shp) {
-            plot <- plot + geom_sf(data = centers, aes(color = as.character(plan_to_plot)), size = 2) +
+            plot <- plot + geom_sf(data = centers, aes(color = as.character(plan_to_plot)), linewidth = 2) +
                 theme(legend.position = "none")
         } else {
             plot <- plot + geom_sf(data = centers)
@@ -309,7 +309,7 @@ edge_center_df <- function(shp, adj) {
     edgedf <- edgedf %>%
         rowwise() %>%
         mutate(i = min(.data$start, .data$finish), j = max(.data$start, .data$finish)) %>%
-        select(.data$i, .data$j)
+        select('i', 'j')
     edgedf <- edgedf[!duplicated(edgedf), ]
 
     edgedf <- edgedf %>%

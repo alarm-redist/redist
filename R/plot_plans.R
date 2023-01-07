@@ -98,7 +98,7 @@ redist.plot.hist <- function(plans, qty, bins = NULL, ...) {
     if (get_n_ref(plans) > 0)
         p <- p + labs(color = "Plan") +
             ggplot2::geom_vline(aes(xintercept = {{ qty }}, color = .data$draw),
-                size = 1.15, data = subset_ref(plans))
+                linewidth = 1.15, data = subset_ref(plans))
     p
 }
 
