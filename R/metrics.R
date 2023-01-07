@@ -174,9 +174,6 @@ redist.metrics <- function(plans, measure = "DSeats", rvote, dvote,
             dvote = dvote, rvote = rvote)
     }
     if ("EffGap" %in% measure) {
-        cli_inform("{.pkg redist} 4.0.0 aligned pro-Republican biases as positive numbers, reversing the old Efficiency Gap direction.",
-            .frequency = "once", .frequency_id = "eff_gap"
-        )
         metrics[["EffGap"]] <- redistmetrics::part_egap(plans = plans, shp = data.frame(),
             dvote = dvote, rvote = rvote)
     }
