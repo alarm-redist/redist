@@ -237,7 +237,7 @@ redist.plot.distr_qtys <- function(plans, qty, sort = "asc", geom = "jitter",
                                                   xend = as.integer(.data$.distr_no) + 0.5,
                                                   yend = {{ qty }},
                                                   color = .data$draw),
-                                              size = 1.2, ...)
+                                              linewidth = 1.2, ...)
                     }
                    if (missing(ref_label))
                        ref_label <- function() labs(color = "Plan", shape = "Plan")
@@ -261,7 +261,7 @@ redist.plot.distr_qtys <- function(plans, qty, sort = "asc", geom = "jitter",
                                yend = {{ qty }},
                                color = .data$draw
                            ), ...,
-                           size = 1.2)
+                           linewidth = 1.2)
                    }
                    if (missing(ref_label))
                        ref_label <- function() labs(color = "Plan")
