@@ -6,6 +6,7 @@
 \usage{
 plans_diversity(
   plans,
+  chains = 1,
   n_max = 100,
   ncores = 1,
   total_pop = attr(plans, "prec_pop")
@@ -13,6 +14,9 @@ plans_diversity(
 }
 \arguments{
 \item{plans}{a \code{\link{redist_plans}} object.}
+
+\item{chains}{For plans objects with multiple chains, which ones to compute
+diversity for. Defaults to the first. Specify "all" to use all chains.}
 
 \item{n_max}{the maximum number of plans to sample in computing the
 distances. Larger numbers will have less sampling error but will require

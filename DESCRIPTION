@@ -1,5 +1,5 @@
 Package: redist
-Version: 4.1.0
+Version: 4.1.0.9999
 Date: 2022-06-14
 Title: Simulation Methods for Legislative Redistricting
 Authors@R: c(
@@ -65,7 +65,7 @@ SystemRequirements: C++11, python
 NeedsCompilation: yes
 BugReports: https://github.com/alarm-redist/redist/issues
 URL: https://alarm-redist.github.io/redist/
-RoxygenNote: 7.2.2
+RoxygenNote: 7.2.3
 VignetteBuilder: knitr
 Encoding: UTF-8
 Config/testthat/edition: 3
