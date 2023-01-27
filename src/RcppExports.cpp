@@ -380,6 +380,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// runif1
+Rcpp::NumericVector runif1(int n, int max);
+RcppExport SEXP _redist_runif1(SEXP nSEXP, SEXP maxSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type max(maxSEXP);
+    rcpp_result_gen = Rcpp::wrap(runif1(n, max));
+    return rcpp_result_gen;
+END_RCPP
+}
 // resample_lowvar
 arma::ivec resample_lowvar(arma::vec wgts);
 RcppExport SEXP _redist_resample_lowvar(SEXP wgtsSEXP) {
@@ -618,6 +630,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_ms_plans", (DL_FUNC) &_redist_ms_plans, 15},
     {"_redist_closest_adj_pop", (DL_FUNC) &_redist_closest_adj_pop, 3},
     {"_redist_rint1", (DL_FUNC) &_redist_rint1, 2},
+    {"_redist_runif1", (DL_FUNC) &_redist_runif1, 2},
     {"_redist_resample_lowvar", (DL_FUNC) &_redist_resample_lowvar, 1},
     {"_redist_reindex", (DL_FUNC) &_redist_reindex, 2},
     {"_redist_plan_joint", (DL_FUNC) &_redist_plan_joint, 3},

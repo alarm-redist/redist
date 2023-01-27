@@ -109,6 +109,10 @@ rint1 <- function(n, max) {
     .Call(`_redist_rint1`, n, max)
 }
 
+runif1 <- function(n, max) {
+    .Call(`_redist_runif1`, n, max)
+}
+
 resample_lowvar <- function(wgts) {
     .Call(`_redist_resample_lowvar`, wgts)
 }

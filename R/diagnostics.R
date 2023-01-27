@@ -80,7 +80,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
     }
     est_div <- plans_diversity(object, total_pop = prec_pop, n_max = vi_max)
     div_rg <- format(quantile(est_div, c(0.1, 0.9)), digits = 2)
-    div_bad <- (mean(est_div) <= 0.35) || (mean(est_div <= 0.05) > 0.2)
+    div_bad <- (mean(est_div) <= 0.35) || (mean(est_div <= 0.25) > 0.1)
 
     if (algo == "smc") {
         cli_text("{.strong SMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
@@ -179,7 +179,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
                         Examine the diversity plot with
                         `hist(plans_diversity({name}), breaks=24)`.
                         Consider weakening or removing constraints, or increasing
-                        the population tolerance. If the accpetance rate drops
+                        the population tolerance. If the acceptance rate drops
                         quickly in the final splits, try increasing
                         {.arg pop_temper} by 0.01.")
         }
@@ -193,6 +193,9 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
                         constraints, or increasing the population tolerance.
                         If the acceptance rate drops quickly in the final splits,
                         try increasing {.arg pop_temper} by 0.01.
+                        If the weight variance (Log wgt. sd) increases steadily
+                        or is particularly large for the \"Resample\" step,
+                        consider increasing {.arg seq_alpha}.
                         To visualize what geographic areas may be causing problems,
                         try running the following code. Highlighted areas are
                         those that may be causing the bottleneck.\n\n")

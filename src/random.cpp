@@ -108,6 +108,15 @@ Rcpp::IntegerVector rint1(int n, int max) {
     return out;
 }
 
+// [[Rcpp::export]]
+Rcpp::NumericVector runif1(int n, int max) {
+    Rcpp::NumericVector out(n);
+    for (int i = 0; i < n; i++) {
+        out[i] = r_unif();
+    }
+    return out;
+}
+
 
 // helper
 int find_u(double u, int max, vec cum_wgts) {
