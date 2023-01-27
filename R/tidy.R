@@ -304,7 +304,7 @@ find_numbering <- function(plan, ref, pop, tot_pop) {
 #' @export
 match_numbers <- function(data, plan, total_pop = attr(data, "prec_pop"), col = "pop_overlap") {
     if (!inherits(data, "redist_plans")) cli_abort("{.arg data} must be a {.cls redist_plans}")
-    if (!"district" %in% names(data)) cli_abort("Missing {.field district} colun in {.arg data}")
+    if (!"district" %in% names(data)) cli_abort("Missing {.field district} column in {.arg data}")
 
     plan_mat <- get_plans_matrix(data)
     if (is.character(plan)) plan <- plan_mat[, plan]
@@ -356,7 +356,7 @@ match_numbers <- function(data, plan, total_pop = attr(data, "prec_pop"), col = 
 #' @export
 number_by <- function(data, x, desc = FALSE) {
     if (!inherits(data, "redist_plans")) cli_abort("{.arg data} must be a {.cls redist_plans}")
-    if (!"district" %in% names(data)) cli_abort("Missing {.field district} colun in {.arg data}")
+    if (!"district" %in% names(data)) cli_abort("Missing {.field district} column in {.arg data}")
 
     ord <- 1 - 2*desc
     m <- get_plans_matrix(data)

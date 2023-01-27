@@ -65,7 +65,7 @@ SystemRequirements: C++11, python
 NeedsCompilation: yes
 BugReports: https://github.com/alarm-redist/redist/issues
 URL: https://alarm-redist.github.io/redist/
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.2
 VignetteBuilder: knitr
 Encoding: UTF-8
 Config/testthat/edition: 3

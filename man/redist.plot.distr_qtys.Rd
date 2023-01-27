@@ -11,6 +11,8 @@ redist.plot.distr_qtys(
   geom = "jitter",
   color_thresh = NULL,
   size = 0.1,
+  ref_geom,
+  ref_label,
   ...
 )
 }
@@ -33,6 +35,9 @@ differently than plans below the threshold.}
 
 \item{size}{The dot size for \code{geom="jitter"}.}
 
+\item{ref_geom}{reference plan geometry. \code{"line"} or \code{"point"}
+can be passed for reasonable defaults.}
+
 \item{...}{passed on to \code{\link[ggplot2]{geom_boxplot}}}
 }
 \value{
@@ -49,9 +54,8 @@ data(iowa)
 
 iowa <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05, total_pop = pop)
 plans <- redist_smc(iowa, nsims = 100, silent = TRUE)
-plans \%>\%
-    mutate(pct_dem = group_frac(iowa, dem_08, tot_08)) \%>\%
-    redist.plot.distr_qtys(pct_dem)
+plans <- plans \%>\% mutate(pct_dem = group_frac(iowa, dem_08, tot_08))
+redist.plot.distr_qtys(plans, pct_dem)
 
 }
 \concept{plot}

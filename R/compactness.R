@@ -276,9 +276,6 @@ redist.compactness <- function(shp = NULL,
     }
 
     if ("Schwartzberg" %in% measure) {
-        cli_inform("{.pkg redist} 4.0.0 fixes a bug where Schwartzberg was reporting 1/Schwartzberg. Current values are correct.",
-            .frequency = "once", .frequency_id = "schwartz"
-        )
         comp$Schwartzberg <- redistmetrics::comp_schwartz(
             plans = plans,
             shp = shp,

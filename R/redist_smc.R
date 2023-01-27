@@ -364,7 +364,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
                             diagnostics = l_diag)
     if (runs > 1) {
         out <- mutate(out, chain = rep(seq_len(runs), each = n_dist_act*nsims)) %>%
-            dplyr::relocate(.data$chain, .after = "draw")
+            dplyr::relocate('chain', .after = "draw")
     }
 
     exist_name <- attr(map, "existing_col")
