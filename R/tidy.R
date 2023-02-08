@@ -392,7 +392,7 @@ check_tidy_types <- function(map, .data) {
 #'
 #' @concept analyze
 #' @export
-tally_var <- function(map, x, .data = redist:::cur_plans()) {
+tally_var <- function(map, x, .data = cur_plans()) {
     check_tidy_types(map, .data)
     if (length(unique(diff(as.integer(.data$district)))) > 2)
         cli_warn("Districts not sorted in ascending order; output may be incorrect.")

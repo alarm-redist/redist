@@ -4,7 +4,7 @@
 \alias{tally_var}
 \title{Tally a variable by district}
 \usage{
-tally_var(map, x, .data = redist:::cur_plans())
+tally_var(map, x, .data = cur_plans())
 }
 \arguments{
 \item{map}{a `redist_map` object}
