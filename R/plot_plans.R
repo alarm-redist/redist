@@ -178,8 +178,10 @@ redist.plot.scatter <- function(plans, x, y, ..., bigger = TRUE) {
 #' Plans with quantities of interest above the threshold will be colored
 #' differently than plans below the threshold.
 #' @param size The dot size for \code{geom="jitter"}.
-#' @param ref_geom reference plan geometry. \code{"line"} or \code{"point"}
+#' @param ref_geom The reference plan geometry type. \code{"line"} or \code{"point"}
 #' can be passed for reasonable defaults.
+#' @param ref_label A human-readable name for the reference plan. By default
+#' the name in the `plan` column is used.
 #' @param ... passed on to \code{\link[ggplot2]{geom_boxplot}}
 #'
 #' @returns A ggplot

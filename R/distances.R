@@ -175,7 +175,7 @@ plans_diversity <- function(plans, chains = 1, n_max = 100,
             i_ok = which(plans$chain %in% chains)
             i_min = i_ok[1] - 1
             if ("district" %in% colnames(plans)) {
-                denom = n_distinct(plans$district)
+                denom = dplyr::n_distinct(plans$district)
             } else {
                 denom = 1
             }
