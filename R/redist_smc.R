@@ -358,8 +358,8 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
     n_dist_act <- dplyr::n_distinct(plans[, 1]) # actual number (for partial plans)
 
     # tempering warning
-    temp_ratio = do.call(c, lapply(l_diag, function(x) x$sd_temper / x$sd_lp))
-    if (any(temp_ratio > 0.5)) {
+    temp_ratio = do.call(c, lapply(l_diag, function(x) x$sd_temper / head(x$sd_lp, -1)))
+    if (any(temp_ratio > 0.5, na.rm=TRUE)) {
         cli_warn(c("Population tempering is increasing the variance of the
                    resampling weights by over 50% at some steps.",
                    "*" = "Consider lowering {.arg pop_temper}."))

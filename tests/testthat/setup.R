@@ -10,3 +10,4 @@ adj <- list(1L:14L, c(0L, 3L, 15L, 16L, 17L, 18L, 19L, 20L, 21L), c(0L, 3L, 5L, 
 pop <- fl25$pop
 fl_map <- redist_map(fl25, pop_tol = 0.1, ndists = 3, adj = adj) %>% suppressMessages()
 plans_10 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.10]
+
