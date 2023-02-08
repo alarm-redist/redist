@@ -37,7 +37,7 @@ Contributors:
 
 -   Jun Kawahara, <jkawahara@i.kyoto-u.ac.jp>
 -   Alex Tarr, <atarr@princeton.edu>
--   [Michael Higgins](http://www-personal.k-state.edu/~mikehiggins/),
+-   [Michael Higgins](https://www.k-state.edu/stats/about/people/HigginsMichael.html),
     <mjh5@princeton.edu>
 
 Papers:
