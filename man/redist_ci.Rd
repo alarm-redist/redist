@@ -59,8 +59,10 @@ redist_smc_ci(plans, dem)
 \references{
 Lee, A., & Whiteley, N. (2018). Variance estimation in the particle filter.
 Biometrika, 105(3), 609-625.
+
 Olsson, J., & Douc, R. (2019). Numerically stable online estimation of
 variance in particle filters. Bernoulli, 25(2), 1504-1535.
+
 H. P. Chan and T. L. Lai. A general theory of particle filters in hidden
 Markov models and some applications. Ann. Statist., 41(6):2877–2904, 2013.
 }
