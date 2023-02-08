@@ -431,7 +431,11 @@ avg_by_prec <- function(plans, x, draws = NA) {
     if (is.null(draws)) {
         draw_idx <- seq_len(ncol(plans_m))
     } else if (length(draws) == 1 && is.na(draws)) {
-        draw_idx <- seq_len(ncol(plans_m))[-seq_len(n_ref)]
+        if (n_ref > 0) {
+            draw_idx <- seq_len(ncol(plans_m))[-seq_len(n_ref)]
+        } else {
+            draw_idx <- seq_len(ncol(plans_m))
+        }
     } else if (is.logical(draws)) {
         draw_idx <- which(draws)
     } else {
