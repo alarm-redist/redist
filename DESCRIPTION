@@ -61,7 +61,7 @@ Suggests:
     rstudioapi
 LinkingTo: Rcpp, RcppArmadillo, RcppThread, cli, redistmetrics
 License: GPL (>= 2)
-SystemRequirements: C++11, python
+SystemRequirements: C++17, python
 NeedsCompilation: yes
 BugReports: https://github.com/alarm-redist/redist/issues
 URL: https://alarm-redist.github.io/redist/
