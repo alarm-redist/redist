@@ -103,6 +103,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     std::vector<double> accept_rate(n_steps);
     std::vector<double> sd_labels(n_steps);
     std::vector<double> sd_lp(n_steps);
+    std::vector<double> sd_temper(n_steps);
     std::vector<double> cor_labels(n_steps);
     vec cum_wgt(N, fill::value(1.0 / N));
     cum_wgt = cumsum(cum_wgt);
@@ -143,6 +144,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
         vec inc_only = lp - log_labels;
         sd_labels[i_split] = stddev(log_labels);
         sd_lp[i_split] = stddev(inc_only);
+        sd_temper[i_split] = stddev(log_temper);
         if (i_split >= 1) {
             cor_labels[i_split] = ((mat) cor(log_labels, inc_only))(0, 0);
         }
@@ -183,6 +185,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
         _["ancestors"] = ancestors,
         _["sd_labels"] = sd_labels,
         _["sd_lp"] = sd_lp,
+        _["sd_temper"] = sd_temper,
         _["cor_labels"] = cor_labels,
         _["est_k"] = cut_k,
         _["step_n_eff"] = n_eff,

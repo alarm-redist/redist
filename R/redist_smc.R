@@ -334,6 +334,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
             accept_rate = algout$accept_rate,
             sd_labels = algout$sd_labels,
             sd_lp = c(algout$sd_lp, sd(lr)),
+            sd_temper = algout$sd_temper,
             cor_labels = algout$cor_labels,
             # log_labels = algout$log_labels,
             unique_survive = c(algout$unique_survive, n_unique),
@@ -355,6 +356,14 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
     wgt <- do.call(c, lapply(all_out, function(x) x$wgt))
     l_diag <- lapply(all_out, function(x) x$l_diag)
     n_dist_act <- dplyr::n_distinct(plans[, 1]) # actual number (for partial plans)
+
+    # tempering warning
+    temp_ratio = do.call(c, lapply(l_diag, function(x) x$sd_temper / x$sd_lp))
+    if (any(temp_ratio > 0.5)) {
+        cli_warn(c("Population tempering is increasing the variance of the
+                   resampling weights by over 50% at some steps.",
+                   "*" = "Consider lowering {.arg pop_temper}."))
+    }
 
     out <- new_redist_plans(plans, map, "smc", wgt, resample,
                             ndists = final_dists,
