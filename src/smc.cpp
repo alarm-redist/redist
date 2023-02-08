@@ -367,8 +367,8 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     const int n_cty = max(counties);
     const int n_lags = lags.size();
     // heuristic for how many iterations to use in estimating labels, adjusted by user factor
-    const int n_est_label = std::floor((dist_ctr == n_distr-1 ? 250 : 80) *
-                                       (2 + std::sqrt(dist_ctr)) * est_label_mult);
+    const int n_est_label = std::floor((dist_ctr == n_distr-1 ? 100 : 30) *
+                                       (2 + dist_ctr) * est_label_mult);
 
     umat districts_new(V, N);
     vec pop_left_new(N);
