@@ -182,8 +182,11 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
     # set up parallel
     if (is.null(ncores)) ncores <- parallel::detectCores()
     ncores <- min(ncores, chains)
+    of <- ifelse(Sys.info()[['sysname']] == 'Windows',
+                 tempfile(pattern = paste0('ms_', substr(Sys.time(), 1, 10)), fileext = '.txt'),
+                 '')
     if (!silent)
-        cl <- makeCluster(ncores, outfile = "", methods = FALSE,
+        cl <- makeCluster(ncores, outfile = of, methods = FALSE,
                           useXDR = .Platform$endian != "little")
     else
         cl <- makeCluster(ncores, methods = FALSE,

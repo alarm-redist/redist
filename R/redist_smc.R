@@ -245,8 +245,11 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
 
     if (ncores_runs > 1) {
         `%oper%` <- `%dorng%`
+        of <- ifelse(Sys.info()[['sysname']] == 'Windows',
+                     tempfile(pattern = paste0('smc_', substr(Sys.time(), 1, 10)), fileext = '.txt'),
+                     '')
         if (!silent)
-            cl <- makeCluster(ncores_runs, outfile = "", methods = FALSE,
+            cl <- makeCluster(ncores_runs, outfile = of, methods = FALSE,
                 useXDR = .Platform$endian != "little")
         else
             cl <- makeCluster(ncores_runs, methods = FALSE,
