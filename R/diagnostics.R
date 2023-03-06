@@ -115,7 +115,10 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
             }, numeric(1))
             names(rhats) <- addl_cols
             cat("R-hat values for summary statistics:\n")
-            print(rhats)
+            rhats_p <- vapply(rhats, function(x){
+                ifelse(x < 1.05, sprintf('%.3f', x), paste0('\U274C', round(x, 3)))
+            }, FUN.VALUE = character(1))
+            print(noquote(rhats_p))
 
             if (any(na.omit(rhats) >= 1.05)) {
                 warn_converge <- TRUE
@@ -234,7 +237,10 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
             }, numeric(1))
             names(rhats) <- addl_cols
             cat("R-hat values for summary statistics:\n")
-            print(rhats)
+            rhats_p <- vapply(rhats, function(x){
+                ifelse(x < 1.05, sprintf('%.3f', x), paste0('\U274C', round(x, 3)))
+            }, FUN.VALUE = character(1))
+            print(noquote(rhats_p))
 
             out <- tibble(stat = addl_cols, rhat = rhats)
 
