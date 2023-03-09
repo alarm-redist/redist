@@ -13,6 +13,9 @@
 #' @param district for [redist_plans] objects with multiple districts, which
 #' `district` to subset to. Set to `NULL` to perform no subsetting.
 #' @param conf the desired confidence level.
+#' @param by_chain Whether the confidence interval should indicate overall
+#'   sampling uncertainty (`FALSE`) or per-chain sampling uncertainty (`TRUE`).
+#'   In the latter case the intervals will be wider by a factor of `sqrt(runs)`.
 #'
 #' @references
 #' Lee, A., & Whiteley, N. (2018). Variance estimation in the particle filter.
@@ -43,7 +46,7 @@
 #' @md
 #' @concept analyze
 #' @export
-redist_ci <- function(plans, x, district = 1L, conf = 0.9) {
+redist_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE) {
     algo = attr(plans, "algorithm")
     algos_ok = c("smc", "mergesplit", "flip")
 
@@ -53,15 +56,15 @@ redist_ci <- function(plans, x, district = 1L, conf = 0.9) {
         cli_abort("{.field algorithm} attribute missing from {.arg plans}.
                   Call {.fn redist_smc_ci} or {.fn redist_mcmc_ci} directly.")
     } else if (algo == "smc") {
-        redist_smc_ci(plans, !!x, district, conf)
+        redist_smc_ci(plans, !!x, district, conf, by_chain)
     } else { # MCMC
-        redist_mcmc_ci(plans,!!x, district, conf)
+        redist_mcmc_ci(plans,!!x, district, conf, by_chain)
     }
 }
 
 #' @describeIn redist_ci Compute confidence intervals for SMC output.
 #' @export
-redist_smc_ci <- function(plans, x, district = 1L, conf = 0.9) {
+redist_smc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE) {
     plans <- subset_sampled(plans)
     x_orig <- enquo(x)
     x <- as.numeric(eval_tidy(enquo(x), plans))
@@ -80,7 +83,12 @@ redist_smc_ci <- function(plans, x, district = 1L, conf = 0.9) {
         }
         run_means <- tapply(x, chain, mean) %>%
             `names<-`(NULL)
-        std_err <- sd(run_means) / sqrt(max(chain) - 1) # be slightly conservative
+
+        if (isTRUE(by_chain)) {
+            std_err <- sd(run_means)
+        } else {
+            std_err <- sd(run_means) / sqrt(max(chain) - 1) # be slightly conservative
+        }
     } else {
         std_errs <- apply(attr(plans, "diagnostics")[[1]]$ancestors, 2, function(anc) {
             sum_inner <- tapply(x - est, anc, sum)^2
@@ -99,7 +107,7 @@ redist_smc_ci <- function(plans, x, district = 1L, conf = 0.9) {
 
 #' @describeIn redist_ci Compute confidence intervals for MCMC output.
 #' @export
-redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9) {
+redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE) {
     plans <- subset_sampled(plans)
     x_orig <- enquo(x)
     x <- as.numeric(eval_tidy(enquo(x), plans))
@@ -125,6 +133,9 @@ redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9) {
 
     mcmc = coda::mcmc.list(tapply(x, chain, coda::mcmc))
     std_err <- summary(mcmc)$statistics["Time-series SE"]
+    if (isTRUE(by_chain)) {
+        std_err <- std_err * sqrt(max(chain))
+    }
 
     alpha <- (1 - conf)/2
     ci <- est + qt(c(alpha, 0.5, 1 - alpha), df = N - 1)*std_err

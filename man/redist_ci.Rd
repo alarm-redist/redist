@@ -6,11 +6,11 @@
 \alias{redist_mcmc_ci}
 \title{Confidence Intervals for SMC and MCMC Estimates}
 \usage{
-redist_ci(plans, x, district = 1L, conf = 0.9)
+redist_ci(plans, x, district = 1L, conf = 0.9, by_chain = FALSE)
 
-redist_smc_ci(plans, x, district = 1L, conf = 0.9)
+redist_smc_ci(plans, x, district = 1L, conf = 0.9, by_chain = FALSE)
 
-redist_mcmc_ci(plans, x, district = 1L, conf = 0.9)
+redist_mcmc_ci(plans, x, district = 1L, conf = 0.9, by_chain = FALSE)
 }
 \arguments{
 \item{plans}{a \link{redist_plans} object.}
@@ -21,6 +21,10 @@ redist_mcmc_ci(plans, x, district = 1L, conf = 0.9)
 \code{district} to subset to. Set to \code{NULL} to perform no subsetting.}
 
 \item{conf}{the desired confidence level.}
+
+\item{by_chain}{Whether the confidence interval should indicate overall
+sampling uncertainty (\code{FALSE}) or per-chain sampling uncertainty (\code{TRUE}).
+In the latter case the intervals will be wider by a factor of \code{sqrt(runs)}.}
 }
 \value{
 A tibble with three columns: \code{X}, \code{X_lower}, and
