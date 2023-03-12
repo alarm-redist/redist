@@ -77,8 +77,8 @@ ungroup.redist_map <- function(x, ...) {
 
 #' @export
 #' @importFrom dplyr rowwise
-rowwise.redist_map <- function(x, ...) {
-    reconstruct.redist_map(NextMethod(), x)
+rowwise.redist_map <- function(data, ...) {
+    reconstruct.redist_map(NextMethod(), data)
 }
 
 #' @export
@@ -184,6 +184,6 @@ ungroup.redist_plans <- function(x, ...) {
 
 #' @export
 #' @importFrom dplyr rowwise
-rowwise.redist_plans <- function(x, ...) {
-    reconstruct.redist_plans(NextMethod(), x)
+rowwise.redist_plans <- function(data, ...) {
+    reconstruct.redist_plans(NextMethod(), data)
 }
