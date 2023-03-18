@@ -3,6 +3,7 @@
 * Faster implementation of loop-erased random walk in C++
 * Faster random number generation in C++
 * Updated citation information
+* Improved plotting options with `redist.plot.distr_qtys()` for custom geometry types.
 
 # redist 4.0.0
 * A new constraint interface that is more flexible, user friendly, and consistent 
