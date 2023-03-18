@@ -72,7 +72,7 @@ equal to Pois(\code{lambda}) + 1. The default is \code{0}.}
 
 \item{pop_tol}{The strength of the hard population
 constraint. \code{pop_tol} = 0.05 means that any proposed swap that
-brings a district more than 5\\% away from population parity will be
+brings a district more than 5\% away from population parity will be
 rejected. The default is \code{NULL}.}
 
 \item{temper}{Whether to use simulated tempering algorithm. Default is FALSE.}
@@ -98,10 +98,10 @@ simulations. Default is \code{NULL}.}
 algorithm to generate starting values. Default is 5000.}
 
 \item{adapt_lambda}{Whether to adaptively tune the lambda parameter so that the Metropolis-Hastings
-acceptance probability falls between 20\\% and 40\\%. Default is FALSE.}
+acceptance probability falls between 20\% and 40\%. Default is FALSE.}
 
 \item{adapt_eprob}{Whether to adaptively tune the edgecut probability parameter so that the
-Metropolis-Hastings acceptance probability falls between 20\\% and 40\\%. Default is
+Metropolis-Hastings acceptance probability falls between 20\% and 40\%. Default is
 FALSE.}
 
 \item{exact_mh}{Whether to use the approximate (0) or exact (1)

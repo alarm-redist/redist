@@ -59,16 +59,16 @@ combine.par.anneal <- function(a, b) {
 #' equal to Pois(\code{lambda}) + 1. The default is \code{0}.
 #' @param pop_tol The strength of the hard population
 #' constraint. \code{pop_tol} = 0.05 means that any proposed swap that
-#' brings a district more than 5\% away from population parity will be
+#' brings a district more than 5% away from population parity will be
 #' rejected. The default is \code{NULL}.
 #' @param rngseed Allows the user to set the seed for the
 #' simulations. Default is \code{NULL}.
 #' @param maxiterrsg Maximum number of iterations for random seed-and-grow
 #' algorithm to generate starting values. Default is 5000.
 #' @param adapt_lambda Whether to adaptively tune the lambda parameter so that the Metropolis-Hastings
-#' acceptance probability falls between 20\% and 40\%. Default is FALSE.
+#' acceptance probability falls between 20% and 40%. Default is FALSE.
 #' @param adapt_eprob Whether to adaptively tune the edgecut probability parameter so that the
-#' Metropolis-Hastings acceptance probability falls between 20\% and 40\%. Default is
+#' Metropolis-Hastings acceptance probability falls between 20% and 40%. Default is
 #' FALSE.
 #' @param exact_mh Whether to use the approximate (0) or exact (1)
 #' Metropolis-Hastings ratio calculation for accept-reject rule. Default is FALSE.
@@ -497,7 +497,7 @@ redist.combine <- function(savename, nloop, nthin, temper = 0) {
 #' equal to Pois(\code{lambda}) + 1. The default is \code{0}.
 #' @param pop_tol The strength of the hard population
 #' constraint. \code{pop_tol} = 0.05 means that any proposed swap that
-#' brings a district more than 5\% away from population parity will be
+#' brings a district more than 5% away from population parity will be
 #' rejected. The default is \code{NULL}.
 #' @param temper Whether to use simulated tempering algorithm. Default is FALSE.
 #' @param betaseq Sequence of beta values for tempering. The default is
@@ -515,9 +515,9 @@ redist.combine <- function(savename, nloop, nthin, temper = 0) {
 #' @param maxiterrsg Maximum number of iterations for random seed-and-grow
 #' algorithm to generate starting values. Default is 5000.
 #' @param adapt_lambda Whether to adaptively tune the lambda parameter so that the Metropolis-Hastings
-#' acceptance probability falls between 20\% and 40\%. Default is FALSE.
+#' acceptance probability falls between 20% and 40%. Default is FALSE.
 #' @param adapt_eprob Whether to adaptively tune the edgecut probability parameter so that the
-#' Metropolis-Hastings acceptance probability falls between 20\% and 40\%. Default is
+#' Metropolis-Hastings acceptance probability falls between 20% and 40%. Default is
 #' FALSE.
 #' @param exact_mh Whether to use the approximate (0) or exact (1)
 #' Metropolis-Hastings ratio calculation for accept-reject rule. Default is FALSE.
@@ -820,7 +820,7 @@ redist.flip <- function(adj,
 #' of "pop", "compact", "segregation", or "similar".
 #' @param targetbeta The target value of the constraint.
 #' @param targetpop The desired level of population parity. \code{targetpop} =
-#' 0.01 means that the desired distance from population parity is 1\%. The
+#' 0.01 means that the desired distance from population parity is 1%. The
 #' default is \code{NULL}.
 #' @param temper A flag for whether simulated tempering was used to improve the
 #' mixing of the Markov Chain. The default is \code{1}.

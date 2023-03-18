@@ -54,10 +54,10 @@ each iteration of the algorithm. The number of swaps each iteration is
 equal to Pois(\code{lambda}) + 1. The default is \code{0}.}
 
 \item{adapt_lambda}{Whether to adaptively tune the lambda parameter so that the Metropolis-Hastings
-acceptance probability falls between 20\\% and 40\\%. Default is FALSE.}
+acceptance probability falls between 20\% and 40\%. Default is FALSE.}
 
 \item{adapt_eprob}{Whether to adaptively tune the edgecut probability parameter so that the
-Metropolis-Hastings acceptance probability falls between 20\\% and 40\\%. Default is
+Metropolis-Hastings acceptance probability falls between 20\% and 40\%. Default is
 FALSE.}
 
 \item{exact_mh}{Whether to use the approximate (0) or exact (1)

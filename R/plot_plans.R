@@ -221,7 +221,7 @@ redist.plot.scatter <- function(plans, x, y, ..., bigger = TRUE) {
 #' # redist.plot.distr_qtys(plans, pct_dem, geom = raincloud)
 #'
 #' # The reference geom can also be changed via `reg_geom`
-#' r_geom <- function(...) ggplot2::geom_segment(aes(as.integer(.data$.distr_no) - 0.5,
+#' r_geom <- function(...) ggplot2::geom_segment(ggplot2::aes(as.integer(.data$.distr_no) - 0.5,
 #'                           xend = as.integer(.data$.distr_no) + 0.5,
 #'                           yend = pct_dem,
 #'                           color = .data$draw),
@@ -231,7 +231,7 @@ redist.plot.scatter <- function(plans, x, y, ..., bigger = TRUE) {
 #'
 #' # Finally, the `ref_label` argument can also be swapped for a function, like so:
 #' redist.plot.distr_qtys(plans, pct_dem, geom = ggplot2::geom_violin, ref_geom = r_geom,
-#'     ref_label = function() labs(color = 'Ref.'))
+#'     ref_label = function() ggplot2::labs(color = 'Ref.'))
 #'
 #' @concept plot
 #' @export

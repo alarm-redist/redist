@@ -28,7 +28,7 @@
 #'
 #' \code{redist_flip} samples from a known target distribution which can be described
 #' using the \code{constraints}. The following describes the constraints available. The general
-#' advice is to set weights in a way that gets between 20\% and 40\% acceptance
+#' advice is to set weights in a way that gets between 20% and 40% acceptance
 #' on average, though more tuning advice is available in the vignette on using
 #' MCMC methods.Having too small of an acceptance rate indicates that the weights
 #' within \code{constraints} are too large and will impact sampling efficiency.
@@ -346,9 +346,9 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
 #' each iteration of the algorithm. The number of swaps each iteration is
 #' equal to Pois(\code{lambda}) + 1. The default is \code{0}.
 #' @param adapt_lambda Whether to adaptively tune the lambda parameter so that the Metropolis-Hastings
-#' acceptance probability falls between 20\% and 40\%. Default is FALSE.
+#' acceptance probability falls between 20% and 40%. Default is FALSE.
 #' @param adapt_eprob Whether to adaptively tune the edgecut probability parameter so that the
-#' Metropolis-Hastings acceptance probability falls between 20\% and 40\%. Default is
+#' Metropolis-Hastings acceptance probability falls between 20% and 40%. Default is
 #' FALSE.
 #' @param exact_mh Whether to use the approximate (0) or exact (1)
 #' Metropolis-Hastings ratio calculation for accept-reject rule. Default is FALSE.
