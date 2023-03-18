@@ -156,7 +156,7 @@ redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE
 #' Will be normalized automatically.
 #' @param conf The confidence level for the interval.
 #'
-#' @returns A two-element vector of the form [lower, upper] containing
+#' @returns A two-element vector of the form `[lower, upper]` containing
 #' the importance sampling confidence interval.
 #'
 #' @concept post
