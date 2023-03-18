@@ -43,6 +43,12 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rcmdcheck, Rmpi=?ignore, rmapshaper=?ignore
+          
+      - name: Preinstall package 
+        if: runner.os == 'Windows'
+          run:|
+            devtools::install(reload=FALSE,quick=TRUE,build=TRUE,dependencies=FALSE,build_vignettes=FALSE)
+          shell:Rscript {0}
 
       - uses: r-lib/actions/check-r-package@v2
         env:
