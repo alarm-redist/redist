@@ -58,13 +58,14 @@ Suggests:
     units,
     RSpectra,
     testthat (>= 3.0.0),
-    rstudioapi
+    rstudioapi,
+    spelling
 LinkingTo: Rcpp, RcppArmadillo, RcppThread, cli, redistmetrics
 License: GPL (>= 2)
 SystemRequirements: C++17, python
 NeedsCompilation: yes
 BugReports: https://github.com/alarm-redist/redist/issues
-URL: https://alarm-redist.github.io/redist/
+URL: https://alarm-redist.org/redist/
 RoxygenNote: 7.2.3
 VignetteBuilder: knitr
 Encoding: UTF-8

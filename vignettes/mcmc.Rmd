@@ -108,7 +108,7 @@ redist.plot.map(iowa, plan = cd_2010)
 map_ia <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05)
 ```
 
-From there, we need to build an adjacency graph which identifies which counties are touching which other counties on a map. If you have an existing plan, it's generally advised to supply this to the optional `plan` argument to ensure that the existing plan is a valid, connected plan. If you get a warning, the [geomander R package](https://www.christophertkenny.com/geomander/) can help solve potential issues.
+From there, we need to build an adjacency graph which identifies which counties are touching which other counties on a map. If you have an existing plan, it's generally advised to supply this to the optional `plan` argument to ensure that the existing plan is a valid, connected plan. If you get a warning, the [geomander R package](https://christophertkenny.com/geomander/) can help solve potential issues.
 
 
 ```{r seed, include = FALSE}
