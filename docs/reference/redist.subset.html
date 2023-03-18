@@ -19,7 +19,7 @@ population parity constraints on subsets."><meta property="og:image" content="/l
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -91,40 +91,60 @@ population parity constraints on subsets.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">redist.subset</span><span class="op">(</span><span class="va">shp</span>, <span class="va">adj</span>, <span class="va">keep_rows</span>, <span class="va">total_pop</span>, <span class="va">ndists</span>, <span class="va">pop_tol</span>, <span class="va">sub_ndists</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">redist.subset</span><span class="op">(</span><span class="va">shp</span>, <span class="va">adj</span>, <span class="va">keep_rows</span>, <span class="va">total_pop</span>, <span class="va">ndists</span>, <span class="va">pop_tol</span>, <span class="va">sub_ndists</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>shp</dt>
 <dd><p>An sf object</p></dd>
+
+
 <dt>adj</dt>
 <dd><p>A zero-indexed adjacency list. Created with
 <code>redist.adjacency</code> if not supplied.</p></dd>
+
+
 <dt>keep_rows</dt>
 <dd><p>row numbers of precincts to keep. Random submap selected if not supplied.</p></dd>
+
+
 <dt>total_pop</dt>
 <dd><p>numeric vector with one entry for the population of each precinct.</p></dd>
+
+
 <dt>ndists</dt>
 <dd><p>integer, number of districts in whole map</p></dd>
+
+
 <dt>pop_tol</dt>
 <dd><p>The strength of the hard population constraint.</p></dd>
+
+
 <dt>sub_ndists</dt>
 <dd><p>integer, number of districts in subset map</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>a list containing the following components:</p>
+    
+
+<p>a list containing the following components:</p>
 <dl><dt>shp</dt>
 <dd><p>The subsetted shp object</p></dd>
+
 <dt>adj</dt>
 <dd><p>The subsetted adjacency list for shp</p></dd>
+
 <dt>keep_rows</dt>
 <dd><p>The indices of the rows kept.</p></dd>
+
 <dt>sub_ndists</dt>
 <dd><p>The number of districts in the subset.</p></dd>
+
 <dt>sub_pop_tol</dt>
 <dd><p>The new parity constraint for a subset.</p></dd>
+
 </dl></div>
 
   </div>
@@ -139,7 +159,7 @@ population parity constraints on subsets.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

@@ -20,7 +20,7 @@ aggregate other data columns."><meta property="og:image" content="/logo.png"><!-
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -93,29 +93,40 @@ aggregate other data columns.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">merge_by</span><span class="op">(</span><span class="va">.data</span>, <span class="va">...</span>, by_existing <span class="op">=</span> <span class="cn">TRUE</span>, drop_geom <span class="op">=</span> <span class="cn">TRUE</span>, collapse_chr <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">merge_by</span><span class="op">(</span><span class="va">.data</span>, <span class="va">...</span>, by_existing <span class="op">=</span> <span class="cn">TRUE</span>, drop_geom <span class="op">=</span> <span class="cn">TRUE</span>, collapse_chr <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>.data</dt>
 <dd><p>a <code><a href="redist_map.html">redist_map</a></code> object</p></dd>
+
+
 <dt>...</dt>
 <dd><p><code><a href="https://dplyr.tidyverse.org/reference/dplyr_tidy_select.html" class="external-link">&lt;tidy-select&gt;</a></code> the column(s) to merge by</p></dd>
+
+
 <dt>by_existing</dt>
 <dd><p>if an existing assignment is present, whether to also group by it</p></dd>
+
+
 <dt>drop_geom</dt>
 <dd><p>whether to drop the geometry column. Recommended, as
 otherwise a costly geometric merge is required.</p></dd>
+
+
 <dt>collapse_chr</dt>
 <dd><p>if <code>TRUE</code>, preserve character columns by collapsing
 their values. For example, a county name column in Iowa might be merged and
 have entries such as "Cedar~Clinton~Des Moines". Set to <code>FALSE</code> to
 drop character columns instead.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>A merged <code><a href="redist_map.html">redist_map</a></code> object</p>
+    
+
+<p>A merged <code><a href="redist_map.html">redist_map</a></code> object</p>
     </div>
 
   </div>
@@ -130,7 +141,7 @@ drop character columns instead.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

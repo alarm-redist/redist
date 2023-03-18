@@ -18,7 +18,7 @@ plans using Markov Chain Monte Carlo methods."><meta property="og:image" content
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -89,33 +89,33 @@ plans using Markov Chain Monte Carlo methods.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">redist.flip</span><span class="op">(</span>
-  <span class="va">adj</span>,
-  <span class="va">total_pop</span>,
-  <span class="va">nsims</span>,
-  ndists <span class="op">=</span> <span class="cn">NULL</span>,
-  init_plan <span class="op">=</span> <span class="cn">NULL</span>,
-  constraints <span class="op">=</span> <span class="fu"><a href="redist_constr.html">redist_constr</a></span><span class="op">(</span><span class="op">)</span>,
-  loopscompleted <span class="op">=</span> <span class="fl">0</span>,
-  nloop <span class="op">=</span> <span class="fl">1</span>,
-  warmup <span class="op">=</span> <span class="fl">0</span>,
-  nthin <span class="op">=</span> <span class="fl">1</span>,
-  eprob <span class="op">=</span> <span class="fl">0.05</span>,
-  lambda <span class="op">=</span> <span class="fl">0</span>,
-  pop_tol <span class="op">=</span> <span class="cn">NULL</span>,
-  temper <span class="op">=</span> <span class="cn">FALSE</span>,
-  betaseq <span class="op">=</span> <span class="st">"powerlaw"</span>,
-  betaseqlength <span class="op">=</span> <span class="fl">10</span>,
-  betaweights <span class="op">=</span> <span class="cn">NULL</span>,
-  adjswaps <span class="op">=</span> <span class="cn">TRUE</span>,
-  rngseed <span class="op">=</span> <span class="cn">NULL</span>,
-  maxiterrsg <span class="op">=</span> <span class="fl">5000</span>,
-  adapt_lambda <span class="op">=</span> <span class="cn">FALSE</span>,
-  adapt_eprob <span class="op">=</span> <span class="cn">FALSE</span>,
-  exact_mh <span class="op">=</span> <span class="cn">FALSE</span>,
-  savename <span class="op">=</span> <span class="cn">NULL</span>,
-  verbose <span class="op">=</span> <span class="cn">TRUE</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">redist.flip</span><span class="op">(</span></span>
+<span>  <span class="va">adj</span>,</span>
+<span>  <span class="va">total_pop</span>,</span>
+<span>  <span class="va">nsims</span>,</span>
+<span>  ndists <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  init_plan <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  constraints <span class="op">=</span> <span class="fu"><a href="redist_constr.html">redist_constr</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  loopscompleted <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  nloop <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  warmup <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  nthin <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  eprob <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>  lambda <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  pop_tol <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  temper <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  betaseq <span class="op">=</span> <span class="st">"powerlaw"</span>,</span>
+<span>  betaseqlength <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  betaweights <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  adjswaps <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  rngseed <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  maxiterrsg <span class="op">=</span> <span class="fl">5000</span>,</span>
+<span>  adapt_lambda <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  adapt_eprob <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  exact_mh <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  savename <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -123,86 +123,137 @@ plans using Markov Chain Monte Carlo methods.</p>
     <dl><dt>adj</dt>
 <dd><p>adjacency matrix, list, or object of class
 "SpatialPolygonsDataFrame."</p></dd>
+
+
 <dt>total_pop</dt>
 <dd><p>A vector containing the populations of each geographic
 unit</p></dd>
+
+
 <dt>nsims</dt>
 <dd><p>The number of simulations run before a save point.</p></dd>
+
+
 <dt>ndists</dt>
 <dd><p>The number of congressional districts. The default is
 <code>NULL</code>.</p></dd>
+
+
 <dt>init_plan</dt>
 <dd><p>A vector containing the congressional district labels
 of each geographic unit. If not provided, random and contiguous congressional
 district assignments will be generated using <code>redist_smc</code>. To use the old
 behavior of generating with <code>redist.rsg</code>, provide init_plan = 'rsg'.</p></dd>
+
+
 <dt>constraints</dt>
-<dd><p>A `redist_constr` list.</p></dd>
+<dd><p>A <code>redist_constr</code> list.</p></dd>
+
+
 <dt>loopscompleted</dt>
 <dd><p>Number of save points reached by the
 algorithm. The default is <code>0</code>.</p></dd>
+
+
 <dt>nloop</dt>
 <dd><p>The total number of save points for the algorithm. The
 default is <code>1</code>. Note that the total number of simulations run
 will be <code>nsims</code> * <code>nloop</code>. <code>savename</code> must be non-null.</p></dd>
+
+
 <dt>warmup</dt>
 <dd><p>The number of warmup samples to discard. The default is 0.</p></dd>
+
+
 <dt>nthin</dt>
 <dd><p>The amount by which to thin the Markov Chain. The
 default is <code>1</code>.</p></dd>
+
+
 <dt>eprob</dt>
 <dd><p>The probability of keeping an edge connected. The
 default is <code>0.05</code>.</p></dd>
+
+
 <dt>lambda</dt>
 <dd><p>The parameter determining the number of swaps to attempt
 each iteration of the algorithm. The number of swaps each iteration is
 equal to Pois(<code>lambda</code>) + 1. The default is <code>0</code>.</p></dd>
+
+
 <dt>pop_tol</dt>
 <dd><p>The strength of the hard population
 constraint. <code>pop_tol</code> = 0.05 means that any proposed swap that
 brings a district more than 5% away from population parity will be
 rejected. The default is <code>NULL</code>.</p></dd>
+
+
 <dt>temper</dt>
 <dd><p>Whether to use simulated tempering algorithm. Default is FALSE.</p></dd>
+
+
 <dt>betaseq</dt>
 <dd><p>Sequence of beta values for tempering. The default is
 <code>powerlaw</code> (see Fifield et. al (2015) for details).</p></dd>
+
+
 <dt>betaseqlength</dt>
 <dd><p>Length of beta sequence desired for
 tempering. The default is <code>10</code>.</p></dd>
+
+
 <dt>betaweights</dt>
 <dd><p>Sequence of weights for different values of
 beta. Allows the user to upweight certain values of beta over
 others. The default is <code>NULL</code> (equal weighting).</p></dd>
+
+
 <dt>adjswaps</dt>
 <dd><p>Flag to restrict swaps of beta so that only
 values adjacent to current constraint are proposed. The default is
 <code>TRUE</code>.</p></dd>
+
+
 <dt>rngseed</dt>
 <dd><p>Allows the user to set the seed for the
 simulations. Default is <code>NULL</code>.</p></dd>
+
+
 <dt>maxiterrsg</dt>
 <dd><p>Maximum number of iterations for random seed-and-grow
 algorithm to generate starting values. Default is 5000.</p></dd>
+
+
 <dt>adapt_lambda</dt>
 <dd><p>Whether to adaptively tune the lambda parameter so that the Metropolis-Hastings
 acceptance probability falls between 20% and 40%. Default is FALSE.</p></dd>
+
+
 <dt>adapt_eprob</dt>
 <dd><p>Whether to adaptively tune the edgecut probability parameter so that the
 Metropolis-Hastings acceptance probability falls between 20% and 40%. Default is
 FALSE.</p></dd>
+
+
 <dt>exact_mh</dt>
 <dd><p>Whether to use the approximate (0) or exact (1)
 Metropolis-Hastings ratio calculation for accept-reject rule. Default is FALSE.</p></dd>
+
+
 <dt>savename</dt>
 <dd><p>Filename to save simulations. Default is <code>NULL</code>.</p></dd>
+
+
 <dt>verbose</dt>
 <dd><p>Whether to print initialization statement.
 Default is <code>TRUE</code>.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p><code>redist.mcmc</code> returns an object of class "redist". The object
+    
+
+<p><code>redist.mcmc</code> returns an object of class "redist". The object
 <code>redist</code> is a list that contains the following components (the
 inclusion of some components is dependent on whether tempering
 techniques are used):</p>
@@ -210,56 +261,73 @@ techniques are used):</p>
 <dd><p>Matrix of congressional district assignments generated by the
 algorithm. Each row corresponds to a geographic unit, and each column
 corresponds to a simulation.</p></dd>
+
 <dt>distance_parity</dt>
 <dd><p>Vector containing the maximum distance from parity for
 a particular simulated redistricting plan.</p></dd>
+
 <dt>mhdecisions</dt>
 <dd><p>A vector specifying whether a proposed redistricting plan
 was accepted (1) or rejected (0) in a given iteration.</p></dd>
+
 <dt>mhprob</dt>
 <dd><p>A vector containing the Metropolis-Hastings acceptance
 probability for each iteration of the algorithm.</p></dd>
+
 <dt>pparam</dt>
 <dd><p>A vector containing the draw of the <code>p</code> parameter for each
 simulation, which dictates the number of swaps attempted.</p></dd>
+
 <dt>constraint_pop</dt>
 <dd><p>A vector containing the value of the population
 constraint for each accepted redistricting plan.</p></dd>
+
 <dt>constraint_compact</dt>
 <dd><p>A vector containing the value of the compactness
 constraint for each accepted redistricting plan.</p></dd>
+
 <dt>constraint_segregation</dt>
 <dd><p>A vector containing the value of the
 segregation constraint for each accepted redistricting plan.</p></dd>
+
 <dt>constraint_vra</dt>
 <dd><p>A vector containing the value of the
 vra constraint for each accepted redistricting plan.</p></dd>
+
 <dt>constraint_similar</dt>
 <dd><p>A vector containing the value of the similarity
 constraint for each accepted redistricting plan.</p></dd>
+
 <dt>constraint_partisan</dt>
 <dd><p>A vector containing the value of the
 partisan constraint for each accepted redistricting plan.</p></dd>
+
 <dt>constraint_minority</dt>
 <dd><p>A vector containing the value of the
 minority constraint for each accepted redistricting plan.</p></dd>
+
 <dt>constraint_hinge</dt>
 <dd><p>A vector containing the value of the
 hinge constraint for each accepted redistricting plan.</p></dd>
+
 <dt>constraint_qps</dt>
 <dd><p>A vector containing the value of the
 QPS constraint for each accepted redistricting plan.</p></dd>
+
 <dt>beta_sequence</dt>
 <dd><p>A vector containing the value of beta for each iteration
 of the algorithm. Returned when tempering is being used.</p></dd>
+
 <dt>mhdecisions_beta</dt>
 <dd><p>A vector specifying whether a proposed beta value was
 accepted (1) or rejected (0) in a given iteration of the algorithm. Returned
 when tempering is being used.</p></dd>
+
 <dt>mhprob_beta</dt>
 <dd><p>A vector containing the Metropolis-Hastings acceptance
 probability for each iteration of the algorithm. Returned when tempering
 is being used.</p></dd>
+
 </dl></div>
     <div id="details">
     <h2>Details</h2>
@@ -281,19 +349,19 @@ Carlo." Working Paper. Available at
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="co"># \donttest{</span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">fl25</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">fl25_enum</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">fl25_adj</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co">## Code to run the simulations in Figure 4 in Fifield, Higgins, Imai and Tarr (2015)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co">## Get an initial partition</span></span>
-<span class="r-in"><span class="va">init_plan</span> <span class="op">&lt;-</span> <span class="va">fl25_enum</span><span class="op">$</span><span class="va">plans</span><span class="op">[</span>, <span class="fl">5118</span><span class="op">]</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co">## Run the algorithm</span></span>
-<span class="r-in"><span class="va">alg_253</span> <span class="op">&lt;-</span> <span class="fu">redist.flip</span><span class="op">(</span>adj <span class="op">=</span> <span class="va">fl25_adj</span>, total_pop <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span>,</span>
-<span class="r-in">    init_plan <span class="op">=</span> <span class="va">init_plan</span>, nsims <span class="op">=</span> <span class="fl">10000</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">fl25</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">fl25_enum</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">fl25_adj</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Code to run the simulations in Figure 4 in Fifield, Higgins, Imai and Tarr (2015)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Get an initial partition</span></span></span>
+<span class="r-in"><span><span class="va">init_plan</span> <span class="op">&lt;-</span> <span class="va">fl25_enum</span><span class="op">$</span><span class="va">plans</span><span class="op">[</span>, <span class="fl">5118</span><span class="op">]</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Run the algorithm</span></span></span>
+<span class="r-in"><span><span class="va">alg_253</span> <span class="op">&lt;-</span> <span class="fu">redist.flip</span><span class="op">(</span>adj <span class="op">=</span> <span class="va">fl25_adj</span>, total_pop <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span>,</span></span>
+<span class="r-in"><span>    init_plan <span class="op">=</span> <span class="va">init_plan</span>, nsims <span class="op">=</span> <span class="fl">10000</span><span class="op">)</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Please use `redist_flip`. This will be gone in 4.1.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ==================== </span>
@@ -303,25 +371,27 @@ Carlo." Working Paper. Available at
 <span class="r-out co"><span class="r-pr">#&gt;</span> Preprocessing data.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Starting swMH().</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■                               </span>   0% | ETA: 5s</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■                             </span>   6% | ETA: 2s</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■                          </span>  15% | ETA:  2s | MH Acceptance: 0.97</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■                        </span>  24% | ETA:  2s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■                     </span>  32% | ETA:  2s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■                   </span>  41% | ETA:  1s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■                </span>  49% | ETA:  1s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■              </span>  57% | ETA:  1s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■             </span>  61% | ETA:  1s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■          </span>  70% | ETA:  1s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■       </span>  79% | ETA:  1s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■    </span>  89% | ETA:  0s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  </span>  97% | ETA:  0s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■                               </span>   0% | ETA: 8s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■                               </span>   0% | ETA: 4s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■                             </span>   8% | ETA: 3s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■                          </span>  16% | ETA:  2s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■                        </span>  23% | ETA:  2s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■                      </span>  29% | ETA:  2s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■                    </span>  36% | ETA:  2s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■                  </span>  44% | ETA:  2s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■                </span>  51% | ETA:  1s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■             </span>  59% | ETA:  1s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■           </span>  68% | ETA:  1s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■        </span>  75% | ETA:  1s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■      </span>  84% | ETA:  0s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■    </span>  91% | ETA:  0s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span>  99% | ETA:  0s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.96</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co">## You can also let it find a plan on its own!</span></span>
-<span class="r-in"><span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu">redist.flip</span><span class="op">(</span>adj <span class="op">=</span> <span class="va">fl25_adj</span>, total_pop <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span>,</span>
-<span class="r-in">    ndists <span class="op">=</span> <span class="fl">3</span>, nsims <span class="op">=</span> <span class="fl">10000</span><span class="op">)</span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## You can also let it find a plan on its own!</span></span></span>
+<span class="r-in"><span><span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu">redist.flip</span><span class="op">(</span>adj <span class="op">=</span> <span class="va">fl25_adj</span>, total_pop <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span>,</span></span>
+<span class="r-in"><span>    ndists <span class="op">=</span> <span class="fl">3</span>, nsims <span class="op">=</span> <span class="fl">10000</span><span class="op">)</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Please use `redist_flip`. This will be gone in 4.1.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ==================== </span>
@@ -331,23 +401,24 @@ Carlo." Working Paper. Available at
 <span class="r-out co"><span class="r-pr">#&gt;</span> Preprocessing data.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Starting swMH().</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■                             </span>   5% | ETA: 2s</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■                           </span>  14% | ETA:  2s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■                         </span>  21% | ETA:  2s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■                      </span>  29% | ETA:  2s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■                    </span>  36% | ETA:  2s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■                   </span>  40% | ETA:  2s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■                </span>  49% | ETA:  1s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■             </span>  59% | ETA:  1s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■           </span>  68% | ETA:  1s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■        </span>  77% | ETA:  1s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■     </span>  86% | ETA:  0s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   </span>  94% | ETA:  0s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span>  98% | ETA:  0s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■                              </span>   4% | ETA: 3s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■                            </span>  12% | ETA:  2s | MH Acceptance: 0.95</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■                         </span>  20% | ETA:  2s | MH Acceptance: 0.95</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■                       </span>  27% | ETA:  2s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■                     </span>  35% | ETA:  2s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■                  </span>  42% | ETA:  2s | MH Acceptance: 0.97</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■                </span>  49% | ETA:  1s | MH Acceptance: 0.97</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■              </span>  57% | ETA:  1s | MH Acceptance: 0.97</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■            </span>  64% | ETA:  1s | MH Acceptance: 0.97</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■          </span>  71% | ETA:  1s | MH Acceptance: 0.97</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■       </span>  79% | ETA:  1s | MH Acceptance: 0.97</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■      </span>  85% | ETA:  0s | MH Acceptance: 0.97</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■    </span>  91% | ETA:  0s | MH Acceptance: 0.97</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span>  99% | ETA:  0s | MH Acceptance: 0.97</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.97</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-in"><span class="co"># }</span></span>
-<span class="r-in"></span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
+<span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
   </div>
@@ -362,7 +433,7 @@ Carlo." Working Paper. Available at
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

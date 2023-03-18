@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -87,24 +87,33 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">redist.plot.cores</span><span class="op">(</span><span class="va">shp</span>, plan <span class="op">=</span> <span class="cn">NULL</span>, core <span class="op">=</span> <span class="cn">NULL</span>, lwd <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">redist.plot.cores</span><span class="op">(</span><span class="va">shp</span>, plan <span class="op">=</span> <span class="cn">NULL</span>, core <span class="op">=</span> <span class="cn">NULL</span>, lwd <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>shp</dt>
 <dd><p>A SpatialPolygonsDataFrame or sf object. Required.</p></dd>
+
+
 <dt>plan</dt>
 <dd><p>A numeric vector with one entry for each precinct in shp.
 Used to color the districts. Required.</p></dd>
+
+
 <dt>core</dt>
 <dd><p>Required. integer vector produced by <code><a href="redist.identify.cores.html">redist.identify.cores()</a></code>.</p></dd>
+
+
 <dt>lwd</dt>
 <dd><p>Line width. Defaults to 2.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>ggplot</p>
+    
+
+<p>ggplot</p>
     </div>
 
   </div>
@@ -119,7 +128,7 @@ Used to color the districts. Required.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

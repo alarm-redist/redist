@@ -19,7 +19,7 @@ differs from counties."><meta property="og:image" content="/logo.png"><!-- mathj
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -91,35 +91,44 @@ differs from counties.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">muni_splits</span><span class="op">(</span><span class="va">map</span>, <span class="va">munis</span>, .data <span class="op">=</span> <span class="fu">cur_plans</span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
-
-<span class="fu">redist.muni.splits</span><span class="op">(</span><span class="va">plans</span>, <span class="va">munis</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">muni_splits</span><span class="op">(</span><span class="va">map</span>, <span class="va">munis</span>, .data <span class="op">=</span> <span class="fu">cur_plans</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">redist.muni.splits</span><span class="op">(</span><span class="va">plans</span>, <span class="va">munis</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>map</dt>
 <dd><p>a <code><a href="redist_map.html">redist_map</a></code> object</p></dd>
+
+
 <dt>munis</dt>
 <dd><p>A vector of municipality names or ids.</p></dd>
+
+
 <dt>.data</dt>
 <dd><p>a <code><a href="redist_plans.html">redist_plans</a></code> object</p></dd>
+
+
 <dt>plans</dt>
 <dd><p>A numeric vector (if only one map) or matrix with one row
 for each precinct and one column for each map. Required.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>integer vector of length ndist by ncol(plans)</p>
+    
+
+<p>integer vector of length ndist by ncol(plans)</p>
     </div>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">ia</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan <span class="op">=</span> <span class="va">cd_2010</span>, total_pop <span class="op">=</span> <span class="va">pop</span>, pop_tol <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">plans</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">ia</span>, <span class="fl">50</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">ia</span><span class="op">$</span><span class="va">region</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span>
-<span class="r-in"><span class="va">splits</span> <span class="op">&lt;-</span> <span class="fu">redist.muni.splits</span><span class="op">(</span><span class="va">plans</span>, <span class="va">ia</span><span class="op">$</span><span class="va">region</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ia</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan <span class="op">=</span> <span class="va">cd_2010</span>, total_pop <span class="op">=</span> <span class="va">pop</span>, pop_tol <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">plans</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">ia</span>, <span class="fl">50</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ia</span><span class="op">$</span><span class="va">region</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span></span>
+<span class="r-in"><span><span class="va">splits</span> <span class="op">&lt;-</span> <span class="fu">redist.muni.splits</span><span class="op">(</span><span class="va">plans</span>, <span class="va">ia</span><span class="op">$</span><span class="va">region</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>
   </div>
@@ -134,7 +143,7 @@ for each precinct and one column for each map. Required.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

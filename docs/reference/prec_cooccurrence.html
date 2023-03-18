@@ -19,7 +19,7 @@ precincts were in the same district."><meta property="og:image" content="/logo.p
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -91,24 +91,33 @@ precincts were in the same district.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">prec_cooccurrence</span><span class="op">(</span><span class="va">plans</span>, which <span class="op">=</span> <span class="cn">NULL</span>, sampled_only <span class="op">=</span> <span class="cn">TRUE</span>, ncores <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">prec_cooccurrence</span><span class="op">(</span><span class="va">plans</span>, which <span class="op">=</span> <span class="cn">NULL</span>, sampled_only <span class="op">=</span> <span class="cn">TRUE</span>, ncores <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>plans</dt>
 <dd><p>a <a href="redist_plans.html">redist_plans</a> object.</p></dd>
+
+
 <dt>which</dt>
 <dd><p><code><a href="https://dplyr.tidyverse.org/reference/dplyr_data_masking.html" class="external-link">&lt;data-masking&gt;</a></code> which plans to
 compute the co-occurrence over.  Defaults to all.</p></dd>
+
+
 <dt>sampled_only</dt>
 <dd><p>if <code>TRUE</code>, do not include reference plans.</p></dd>
+
+
 <dt>ncores</dt>
 <dd><p>the number of parallel cores to use in the computation.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>a symmetric matrix the size of the number of precincts.</p>
+    
+
+<p>a symmetric matrix the size of the number of precincts.</p>
     </div>
 
   </div>
@@ -123,7 +132,7 @@ compute the co-occurrence over.  Defaults to all.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

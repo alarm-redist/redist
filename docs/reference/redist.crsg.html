@@ -19,7 +19,7 @@ Rodden (2013)."><meta property="og:image" content="/logo.png"><!-- mathjax --><s
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -91,15 +91,15 @@ Rodden (2013).</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">redist.crsg</span><span class="op">(</span>
-  <span class="va">adj</span>,
-  <span class="va">total_pop</span>,
-  <span class="va">shp</span>,
-  <span class="va">ndists</span>,
-  <span class="va">pop_tol</span>,
-  verbose <span class="op">=</span> <span class="cn">TRUE</span>,
-  maxiter <span class="op">=</span> <span class="fl">5000</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">redist.crsg</span><span class="op">(</span></span>
+<span>  <span class="va">adj</span>,</span>
+<span>  <span class="va">total_pop</span>,</span>
+<span>  <span class="va">shp</span>,</span>
+<span>  <span class="va">ndists</span>,</span>
+<span>  <span class="va">pop_tol</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  maxiter <span class="op">=</span> <span class="fl">5000</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -108,33 +108,48 @@ Rodden (2013).</p>
 <dd><p>List of length N, where N is the number of precincts.
 Each list element is an integer vector indicating which precincts that precinct
 is adjacent to.  It is assumed that precinct numbers start at 0.</p></dd>
+
+
 <dt>total_pop</dt>
 <dd><p>numeric vector of length N, where N is the number of precincts.
 Each element lists the population total of the corresponding precinct, and is
 used to enforce pop_tol constraints.</p></dd>
+
+
 <dt>shp</dt>
 <dd><p>An sf dataframe to compute area and centroids with.</p></dd>
+
+
 <dt>ndists</dt>
 <dd><p>integer, the number of districts we want to partition the
 precincts into.</p></dd>
+
+
 <dt>pop_tol</dt>
 <dd><p>numeric, indicating how close district population targets have
 to be to the target population before algorithm converges.  pop_tol=0.05 for
 example means that all districts must be between 0.95 and 1.05 times the size
 of target.pop in population size.</p></dd>
+
+
 <dt>verbose</dt>
 <dd><p>boolean, indicating whether the time to run the algorithm is
 printed.</p></dd>
+
+
 <dt>maxiter</dt>
 <dd><p>integer, indicating maximum number of iterations to attempt
 before convergence to population constraint fails.  If it fails once, it will
 use a different set of start values and try again.  If it fails again,
 redist.rsg() returns an object of all NAs, indicating that use of more
 iterations may be advised. Default is 5000.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>list, containing three objects containing the completed redistricting
+    
+
+<p>list, containing three objects containing the completed redistricting
 plan.</p><ul><li><p><code>plan</code>  A vector of length N, indicating the
 district membership of each precinct.</p></li>
 <li><p><code>district_list</code>  A list of length Ndistrict.  Each list contains a
@@ -151,9 +166,9 @@ Quarterly Journal of Political Science. 8(3): 239-269.</p>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"fl25"</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist.adjacency.html">redist.adjacency</a></span><span class="op">(</span><span class="va">fl25</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu">redist.crsg</span><span class="op">(</span>adj <span class="op">=</span> <span class="va">adj</span>, total_pop <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span>, shp <span class="op">=</span> <span class="va">fl25</span>, ndists <span class="op">=</span> <span class="fl">2</span>, pop_tol <span class="op">=</span> <span class="fl">.1</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"fl25"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist.adjacency.html">redist.adjacency</a></span><span class="op">(</span><span class="va">fl25</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">redist.crsg</span><span class="op">(</span>adj <span class="op">=</span> <span class="va">adj</span>, total_pop <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span>, shp <span class="op">=</span> <span class="va">fl25</span>, ndists <span class="op">=</span> <span class="fl">2</span>, pop_tol <span class="op">=</span> <span class="fl">.1</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ==================== </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> redist.crsg(): Automated Redistricting Starts</span>
@@ -166,16 +181,16 @@ Quarterly Journal of Political Science. 8(3): 239-269.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $district_list</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $district_list[[1]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1]  9 10 18  7 19  4 24  6 21 12 23 11 14</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1]  9 10 11 24 12 14 21  4  6 19  7 18 23</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $district_list[[2]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] 22  8  5 16  1 15 20 17 13  2  3  0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1]  5 22 13  8  2 16 20  3 17 15  1  0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $district_pop</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 82525 92518</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-in"></span>
+<span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
   </div>
@@ -190,7 +205,7 @@ Quarterly Journal of Political Science. 8(3): 239-269.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

@@ -18,7 +18,7 @@ redistricting plan to a set of simulated plans."><meta property="og:image" conte
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -89,23 +89,30 @@ redistricting plan to a set of simulated plans.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">add_reference</span><span class="op">(</span><span class="va">plans</span>, <span class="va">ref_plan</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">add_reference</span><span class="op">(</span><span class="va">plans</span>, <span class="va">ref_plan</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>plans</dt>
 <dd><p>a <code>redist_plans</code> object</p></dd>
+
+
 <dt>ref_plan</dt>
 <dd><p>an integer vector containing the reference plan. It will be
 renumbered to 1..<code>ndists</code>.</p></dd>
+
+
 <dt>name</dt>
 <dd><p>a human-readable name for the reference plan. Defaults to the
 name of <code>ref_plan</code>.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>a modified <code>redist_plans</code> object containing the reference plan</p>
+    
+
+<p>a modified <code>redist_plans</code> object containing the reference plan</p>
     </div>
 
   </div>
@@ -120,7 +127,7 @@ name of <code>ref_plan</code>.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

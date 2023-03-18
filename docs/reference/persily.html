@@ -18,7 +18,7 @@ population parity, and keeping close to the original plan"><meta property="og:im
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -89,53 +89,71 @@ population parity, and keeping close to the original plan</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">persily</span><span class="op">(</span><span class="va">plan</span>, <span class="va">map</span>, counties <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">persily</span><span class="op">(</span><span class="va">plan</span>, <span class="va">map</span>, counties <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>plan</dt>
 <dd><p>a single plan to optimize from</p></dd>
+
+
 <dt>map</dt>
 <dd><p>a redist map object</p></dd>
+
+
 <dt>counties</dt>
 <dd><p>Required</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>a redist_plans object with one plan</p>
+    
+
+<p>a redist_plans object with one plan</p>
     </div>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="co"># \donttest{</span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">map</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan <span class="op">=</span> <span class="va">cd_2010</span>, pop_tol <span class="op">=</span> <span class="fl">0.01</span>, total_pop <span class="op">=</span> <span class="va">pop</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">plan</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_plans_matrix.html">get_plans_matrix</a></span><span class="op">(</span><span class="fu"><a href="redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">map</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">map</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan <span class="op">=</span> <span class="va">cd_2010</span>, pop_tol <span class="op">=</span> <span class="fl">0.01</span>, total_pop <span class="op">=</span> <span class="va">pop</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">plan</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_plans_matrix.html">get_plans_matrix</a></span><span class="op">(</span><span class="fu"><a href="redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">map</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> SEQUENTIAL MONTE CARLO</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Sampling 1 99-unit maps with 4 districts and population between 753,973 and 769,205.</span>
-<span class="r-in"><span class="va">local</span> <span class="op">&lt;-</span> <span class="fu">persily</span><span class="op">(</span>plan <span class="op">=</span> <span class="va">plan</span>, map <span class="op">=</span> <span class="va">map</span>, counties <span class="op">=</span> <span class="va">region</span><span class="op">)</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Sampling 1 99-unit maps with 4 districts and population between 753973 and 769205.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Split [0/3] <span style="color: #00BB00;">■                               </span> | ETA?</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Split [3/3] <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> | ETA 0s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span><span class="va">local</span> <span class="op">&lt;-</span> <span class="fu">persily</span><span class="op">(</span>plan <span class="op">=</span> <span class="va">plan</span>, map <span class="op">=</span> <span class="va">map</span>, counties <span class="op">=</span> <span class="va">region</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> FLIP SHORT BURSTS</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Sampling up to 100 bursts of 50 iterations each.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Burst  Improve?  Score</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     1     😀     0.454725</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     4     🎇     0.465416</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     5     🥂     0.468746</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    10     🎆     0.470745</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    11     ⛄     0.470829</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    12     🌈     0.476314</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    19     🎃     0.499611</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    20            0.499611</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    22     🌟     0.514485</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    30            0.514485</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    40            0.514485</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    50            0.514485</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    60            0.514485</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    70            0.514485</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    80            0.514485</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    90            0.514485</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   100            0.514485</span>
-<span class="r-in"><span class="co"># }</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     1     🎃     0.510086</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     2     🌈     0.548519</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     4     🥳     0.602268</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     6     💥     0.623950</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     9     🥂     0.642217</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    10            0.642217</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    16     😀     0.647843</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    19     🎇     0.649748</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    20            0.649748</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    22     🌟     0.652631</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    30            0.652631</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    35     🎉     0.658833</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    36     ⛄     0.675004</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    38     🙂     0.683653</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    39     🪅     0.684136</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    40     😎     0.690395</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    50            0.690395</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    60            0.690395</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    70            0.690395</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    76     🎆     0.690680</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    80            0.690680</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    85     🎃     0.697764</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    86     🌈     0.698175</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    90            0.698175</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   100            0.698175</span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </div>
@@ -150,7 +168,7 @@ population parity, and keeping close to the original plan</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

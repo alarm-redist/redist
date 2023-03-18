@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -87,52 +87,69 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">redist.plot.adj</span><span class="op">(</span>
-  <span class="va">shp</span>,
-  adj <span class="op">=</span> <span class="cn">NULL</span>,
-  plan <span class="op">=</span> <span class="cn">NULL</span>,
-  centroids <span class="op">=</span> <span class="cn">TRUE</span>,
-  drop <span class="op">=</span> <span class="cn">FALSE</span>,
-  plot_shp <span class="op">=</span> <span class="cn">TRUE</span>,
-  zoom_to <span class="op">=</span> <span class="cn">NULL</span>,
-  title <span class="op">=</span> <span class="st">""</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">redist.plot.adj</span><span class="op">(</span></span>
+<span>  <span class="va">shp</span>,</span>
+<span>  adj <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  plan <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  centroids <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  drop <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  plot_shp <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  zoom_to <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  title <span class="op">=</span> <span class="st">""</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>shp</dt>
 <dd><p>A SpatialPolygonsDataFrame or sf object. Required.</p></dd>
+
+
 <dt>adj</dt>
 <dd><p>A zero-indexed adjacency list. Created with redist.adjacency
 if not supplied. Default is NULL.</p></dd>
+
+
 <dt>plan</dt>
 <dd><p>A numeric vector with one entry for each precinct in shp.
 Used to remove edges that cross boundaries. Default is <code>NULL</code>.  Optional.</p></dd>
+
+
 <dt>centroids</dt>
 <dd><p>A logical indicating if centroids should be plotted. Default is <code>TRUE</code>.</p></dd>
+
+
 <dt>drop</dt>
 <dd><p>A logical indicating if edges that cross districts should be dropped. Default is <code>FALSE</code>.</p></dd>
+
+
 <dt>plot_shp</dt>
 <dd><p>A logical indicating if the shp should be plotted under the
 graph. Default is <code>TRUE</code>.</p></dd>
+
+
 <dt>zoom_to</dt>
 <dd><p><code><a href="https://dplyr.tidyverse.org/reference/dplyr_data_masking.html" class="external-link">&lt;data-masking&gt;</a></code> An
 indexing vector of units to zoom the map to.</p></dd>
+
+
 <dt>title</dt>
 <dd><p>A string title of plot. Defaults to empty string. Optional.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>ggplot map</p>
+    
+
+<p>ggplot map</p>
     </div>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu">redist.plot.adj</span><span class="op">(</span>shp <span class="op">=</span> <span class="va">iowa</span>, plan <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">cd_2010</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">redist.plot.adj</span><span class="op">(</span>shp <span class="op">=</span> <span class="va">iowa</span>, plan <span class="op">=</span> <span class="va">iowa</span><span class="op">$</span><span class="va">cd_2010</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="redist.plot.adj-1.png" alt="" width="700" height="433"></span>
-<span class="r-in"></span>
+<span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
   </div>
@@ -147,7 +164,7 @@ indexing vector of units to zoom the map to.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

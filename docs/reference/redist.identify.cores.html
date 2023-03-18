@@ -23,7 +23,7 @@ sf::st_union() would produce only connected pieces."><meta property="og:image" c
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -99,35 +99,48 @@ but each of these is assigned a separate grouping id so that a call to
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">make_cores</span><span class="op">(</span>.data <span class="op">=</span> <span class="fu">cur_map</span><span class="op">(</span><span class="op">)</span>, boundary <span class="op">=</span> <span class="fl">1</span>, focus <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>
-
-<span class="fu">redist.identify.cores</span><span class="op">(</span><span class="va">adj</span>, <span class="va">plan</span>, boundary <span class="op">=</span> <span class="fl">1</span>, focus <span class="op">=</span> <span class="cn">NULL</span>, simplify <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">make_cores</span><span class="op">(</span>.data <span class="op">=</span> <span class="fu">cur_map</span><span class="op">(</span><span class="op">)</span>, boundary <span class="op">=</span> <span class="fl">1</span>, focus <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">redist.identify.cores</span><span class="op">(</span><span class="va">adj</span>, <span class="va">plan</span>, boundary <span class="op">=</span> <span class="fl">1</span>, focus <span class="op">=</span> <span class="cn">NULL</span>, simplify <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>.data</dt>
 <dd><p>a <code><a href="redist_map.html">redist_map</a></code> object</p></dd>
+
+
 <dt>boundary</dt>
 <dd><p>Number of steps to check for. Defaults to 1.</p></dd>
+
+
 <dt>focus</dt>
 <dd><p>Optional. Integer. A single district to focus on.</p></dd>
+
+
 <dt>adj</dt>
 <dd><p>zero indexed adjacency list.</p></dd>
+
+
 <dt>plan</dt>
 <dd><p>An integer vector or matrix column of district assignments.</p></dd>
+
+
 <dt>simplify</dt>
 <dd><p>Optional. Logical. Whether to return extra information or just grouping ID.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>integer vector (if simplify is false). Otherwise it returns a tibble with the grouping
+    
+
+<p>integer vector (if simplify is false). Otherwise it returns a tibble with the grouping
 variable as <code>group_id</code> and additional information on connected components.</p>
     </div>
     <div id="details">
     <h2>Details</h2>
     <p>This is a loose interpretation of the
-<a href="https://www.ncsl.org/research/redistricting/redistricting-criteria.aspx" class="external-link">NCSL's summary</a>
+<a href="https://www.ncsl.org/redistricting-and-census/redistricting-criteria" class="external-link">NCSL's summary</a>
 of redistricting criteria to preserve the cores of prior districts. Using the
 adjacency graph for a given plan, it will locate the precincts on the
 boundary of the district, within <code>boundary</code> steps of the edge. Each of
@@ -138,19 +151,19 @@ core of the district.</p>
     </div>
     <div id="see-also">
     <h2>See also</h2>
-    <div class="dont-index"><p>[redist.plot.cores()] for a plotting function</p></div>
+    <div class="dont-index"><p><code><a href="redist.plot.cores.html">redist.plot.cores()</a></code> for a plotting function</p></div>
     </div>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">fl250</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">fl250_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">fl250</span>, ndists <span class="op">=</span> <span class="fl">4</span>, pop_tol <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">fl250</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">fl250_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">fl250</span>, ndists <span class="op">=</span> <span class="fl">4</span>, pop_tol <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Projecting to CRS 3857</span>
-<span class="r-in"><span class="va">plan</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">fl250_map</span>, <span class="fl">20</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">core</span> <span class="op">&lt;-</span> <span class="fu">redist.identify.cores</span><span class="op">(</span>adj <span class="op">=</span> <span class="va">fl250_map</span><span class="op">$</span><span class="va">adj</span>, plan <span class="op">=</span> <span class="va">plan</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu"><a href="redist.plot.cores.html">redist.plot.cores</a></span><span class="op">(</span>shp <span class="op">=</span> <span class="va">fl250</span>, plan <span class="op">=</span> <span class="va">plan</span>, core <span class="op">=</span> <span class="va">core</span><span class="op">)</span></span>
+<span class="r-in"><span><span class="va">plan</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">fl250_map</span>, <span class="fl">20</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">core</span> <span class="op">&lt;-</span> <span class="fu">redist.identify.cores</span><span class="op">(</span>adj <span class="op">=</span> <span class="va">fl250_map</span><span class="op">$</span><span class="va">adj</span>, plan <span class="op">=</span> <span class="va">plan</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="redist.plot.cores.html">redist.plot.cores</a></span><span class="op">(</span>shp <span class="op">=</span> <span class="va">fl250</span>, plan <span class="op">=</span> <span class="va">plan</span>, core <span class="op">=</span> <span class="va">core</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="redist.identify.cores-1.png" alt="" width="700" height="433"></span>
-<span class="r-in"></span>
+<span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
   </div>
@@ -165,7 +178,7 @@ core of the district.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

@@ -18,7 +18,7 @@ plans and takes the first k splits."><meta property="og:image" content="/logo.pn
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -89,29 +89,38 @@ plans and takes the first <code>k</code> splits.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">classify_plans</span><span class="op">(</span><span class="va">dist_mat</span>, k <span class="op">=</span> <span class="fl">8</span>, method <span class="op">=</span> <span class="st">"complete"</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">classify_plans</span><span class="op">(</span><span class="va">dist_mat</span>, k <span class="op">=</span> <span class="fl">8</span>, method <span class="op">=</span> <span class="st">"complete"</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>dist_mat</dt>
 <dd><p>a distance matrix, the output of <code><a href="redist.distances.html">plan_distances()</a></code></p></dd>
+
+
 <dt>k</dt>
 <dd><p>the number of groupings to create</p></dd>
+
+
 <dt>method</dt>
 <dd><p>the clustering method to use. See <code><a href="https://rdrr.io/r/stats/hclust.html" class="external-link">hclust()</a></code> for options.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>An object of class <code>redist_classified</code>, which is a list with two
+    
+
+<p>An object of class <code>redist_classified</code>, which is a list with two
 elements:</p>
 <dl><dt>groups</dt>
 <dd><p>A character vector of group labels of the form <code>"I.A.1.a.i"</code>,
 one for each plan.</p></dd>
+
 <dt>splits</dt>
 <dd><p>A list of splits in the hierarchical clustering. Each list
 element is a list of two mutually exclusive vectors of plan indices, labeled
 by their group classification, indicating the plans on each side of the split.</p></dd>
+
 </dl><p>Use <code><a href="plot.redist_classified.html">plot.redist_classified()</a></code> for a visual summary.</p>
     </div>
 
@@ -127,7 +136,7 @@ by their group classification, indicating the plans on each side of the split.</
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

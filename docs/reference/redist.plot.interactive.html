@@ -19,7 +19,7 @@ interactive=TRUE in plot.redist_map."><meta property="og:image" content="/logo.p
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -91,33 +91,44 @@ optionally colored by a quantity of interest. May also be accessed by setting
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">redist.plot.interactive</span><span class="op">(</span>
-  <span class="va">map</span>,
-  fill <span class="op">=</span> <span class="cn">NULL</span>,
-  scale <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="va"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span>,
-  limits <span class="op">=</span> <span class="cn">NULL</span>,
-  useGL <span class="op">=</span> <span class="cn">FALSE</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">redist.plot.interactive</span><span class="op">(</span></span>
+<span>  <span class="va">map</span>,</span>
+<span>  fill <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  scale <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="va"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span>,</span>
+<span>  limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  useGL <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>map</dt>
 <dd><p>the <code><a href="redist_map.html">redist_map</a></code> object</p></dd>
+
+
 <dt>fill</dt>
 <dd><p><code><a href="https://dplyr.tidyverse.org/reference/dplyr_data_masking.html" class="external-link">&lt;data-masking&gt;</a></code> If
 present, will be used to color the map units.</p></dd>
+
+
 <dt>scale</dt>
 <dd><p>the color scale to use, for numeric <code>fill</code>.</p></dd>
+
+
 <dt>limits</dt>
 <dd><p>the color scale limits. Defaults to the range of the data.</p></dd>
+
+
 <dt>useGL</dt>
 <dd><p>if <code>TRUE</code> and <code>leafgl</code> is installed, use WebGL for
 faster plotting.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>a Leaflet object</p>
+    
+
+<p>a Leaflet object</p>
     </div>
     <div id="details">
     <h2>Details</h2>
@@ -137,7 +148,7 @@ plot the map, which may be useful for larger maps.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

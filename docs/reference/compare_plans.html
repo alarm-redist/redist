@@ -23,7 +23,7 @@ of the map."><meta property="og:image" content="/logo.png"><!-- mathjax --><scri
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -99,31 +99,39 @@ of the map.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">compare_plans</span><span class="op">(</span>
-  <span class="va">plans</span>,
-  <span class="va">set1</span>,
-  <span class="va">set2</span>,
-  shp <span class="op">=</span> <span class="cn">NULL</span>,
-  plot <span class="op">=</span> <span class="st">"fill"</span>,
-  thresh <span class="op">=</span> <span class="fl">0.1</span>,
-  labs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Set 1"</span>, <span class="st">"Set 2"</span><span class="op">)</span>,
-  ncores <span class="op">=</span> <span class="fl">1</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">compare_plans</span><span class="op">(</span></span>
+<span>  <span class="va">plans</span>,</span>
+<span>  <span class="va">set1</span>,</span>
+<span>  <span class="va">set2</span>,</span>
+<span>  shp <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  plot <span class="op">=</span> <span class="st">"fill"</span>,</span>
+<span>  thresh <span class="op">=</span> <span class="fl">0.1</span>,</span>
+<span>  labs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Set 1"</span>, <span class="st">"Set 2"</span><span class="op">)</span>,</span>
+<span>  ncores <span class="op">=</span> <span class="fl">1</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>plans</dt>
 <dd><p>a <a href="redist_plans.html">redist_plans</a> object</p></dd>
+
+
 <dt>set1</dt>
 <dd><p><code><a href="https://dplyr.tidyverse.org/reference/dplyr_data_masking.html" class="external-link">&lt;data-masking&gt;</a></code> indexing vectors
 for the plan draws to compare.  Alternatively, a second <a href="redist_plans.html">redist_plans</a>
 object to compare to.</p></dd>
+
+
 <dt>set2</dt>
 <dd><p><code><a href="https://dplyr.tidyverse.org/reference/dplyr_data_masking.html" class="external-link">&lt;data-masking&gt;</a></code> indexing vectors
 for the plan draws to compare. Must be mutually exclusive with <code>set1</code>.</p></dd>
+
+
 <dt>shp</dt>
 <dd><p>a shapefile for plotting.</p></dd>
+
+
 <dt>plot</dt>
 <dd><p>If <code>plot="line"</code>, display a plot for each set showing the set of
 boundaries which most distinguish it from the other set (the squared
@@ -133,42 +141,57 @@ plot the shows the adjacency graph edges which most distinguish it from the othe
 The adj option is a different graphical option of the same information as the line
 option. See below for more information.  Set to <code>FALSE</code> to disable plotting
 (or leave out <code>shp</code>).</p></dd>
+
+
 <dt>thresh</dt>
 <dd><p>the value to threshold the eigenvector at in determining the
 relevant set of precincts for comparison.</p></dd>
+
+
 <dt>labs</dt>
 <dd><p>the names of the panels in the plot.</p></dd>
+
+
 <dt>ncores</dt>
 <dd><p>the number of parallel cores to use.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>If possible, makes a comparison plot according to <code>plot</code>. Otherwise
+    
+
+<p>If possible, makes a comparison plot according to <code>plot</code>. Otherwise
 returns the following list:</p>
 <dl><dt>eigen1</dt>
 <dd><p>A numeric vector containing the first eigenvector of
 <code>p1 - p2</code>, where <code>p1</code> and <code>p2</code> are the co-occurrence matrices
 for <code>set1</code> and <code>set2</code>, respectively.</p></dd>
+
 <dt>eigen2</dt>
 <dd><p>A numeric vector containing the first eigenvector of
 <code>p2 - p1</code>, where <code>p1</code> and <code>p2</code> are the co-occurrence matrices
 for <code>set1</code> and <code>set2</code>, respectively.</p></dd>
+
 <dt>group_1a, group_1b</dt>
 <dd><p>Lists of precincts. Compared to <code>set2</code>, in the
 <code>set1</code> plans these precincts were much more likely to be in separate
 districts. Computed by thresholding <code>eigen1</code> at <code>thresh</code>.</p></dd>
+
 <dt>group_2a, group_2b</dt>
 <dd><p>Lists of precincts. Compared to <code>set1</code>, in the
 <code>set2</code> plans these precincts were much more likely to be in separate
 districts. Computed by thresholding <code>eigen2</code> at <code>thresh</code>.</p></dd>
+
 <dt>cooccur_sep_1</dt>
 <dd><p>The difference in the average co-occurrence of precincts
 in <code>group_1a</code> and <code>group_1b</code> between <code>set2</code> and <code>set1</code>.
 Higher indicates better separation.</p></dd>
+
 <dt>cooccur_sep_2</dt>
 <dd><p>The difference in the average co-occurrence of precincts
 in <code>group_2a</code> and <code>group_2b</code> between <code>set1</code> and <code>set2</code>.
 Higher indicates better separation.</p></dd>
+
 </dl></div>
     <div id="details">
     <h2>Details</h2>
@@ -178,16 +201,16 @@ prior, which is useful for when either <code>set1</code> or <code>set2</code> is
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">iowa_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, ndists <span class="op">=</span> <span class="fl">4</span>, pop_tol <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">plans1</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="fl">100</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">plans2</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_mergesplit.html">redist_mergesplit</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="fl">200</span>, warmup <span class="op">=</span> <span class="fl">100</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu">compare_plans</span><span class="op">(</span><span class="va">plans1</span>, <span class="va">plans2</span>, shp <span class="op">=</span> <span class="va">iowa_map</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">iowa_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, ndists <span class="op">=</span> <span class="fl">4</span>, pop_tol <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">plans1</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="fl">100</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">plans2</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_mergesplit.html">redist_mergesplit</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="fl">200</span>, warmup <span class="op">=</span> <span class="fl">100</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">compare_plans</span><span class="op">(</span><span class="va">plans1</span>, <span class="va">plans2</span>, shp <span class="op">=</span> <span class="va">iowa_map</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="compare_plans-1.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span class="fu">compare_plans</span><span class="op">(</span><span class="va">plans2</span>, <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="va">draw</span><span class="op">)</span> <span class="op">&lt;=</span> <span class="fl">20</span>,</span>
-<span class="r-in">    <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="va">draw</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">20</span>, shp <span class="op">=</span> <span class="va">iowa_map</span>, plot <span class="op">=</span> <span class="st">"line"</span><span class="op">)</span></span>
+<span class="r-in"><span><span class="fu">compare_plans</span><span class="op">(</span><span class="va">plans2</span>, <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="va">draw</span><span class="op">)</span> <span class="op">&lt;=</span> <span class="fl">20</span>,</span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="va">draw</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">20</span>, shp <span class="op">=</span> <span class="va">iowa_map</span>, plot <span class="op">=</span> <span class="st">"line"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="compare_plans-2.png" alt="" width="700" height="433"></span>
-<span class="r-in"></span>
+<span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
   </div>
@@ -202,7 +225,7 @@ prior, which is useful for when either <code>set1</code> or <code>set2</code> is
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

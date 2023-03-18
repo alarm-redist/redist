@@ -19,7 +19,7 @@ from population parity. See Details."><meta property="og:image" content="/logo.p
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -91,9 +91,9 @@ from population parity. See Details.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">redist.parity</span><span class="op">(</span><span class="va">plans</span>, <span class="va">total_pop</span><span class="op">)</span>
-
-<span class="fu">plan_parity</span><span class="op">(</span><span class="va">map</span>, .data <span class="op">=</span> <span class="fu">cur_plans</span><span class="op">(</span><span class="op">)</span>, <span class="va">...</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">redist.parity</span><span class="op">(</span><span class="va">plans</span>, <span class="va">total_pop</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">plan_parity</span><span class="op">(</span><span class="va">map</span>, .data <span class="op">=</span> <span class="fu">cur_plans</span><span class="op">(</span><span class="op">)</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -101,18 +101,29 @@ from population parity. See Details.</p>
     <dl><dt>plans</dt>
 <dd><p>A matrix with one row for each precinct and one column for each
 map. Required.</p></dd>
+
+
 <dt>total_pop</dt>
 <dd><p>A numeric vector with the population for every precinct.</p></dd>
+
+
 <dt>map</dt>
 <dd><p>a <code><a href="redist_map.html">redist_map</a></code> object</p></dd>
+
+
 <dt>.data</dt>
 <dd><p>a <code><a href="redist_plans.html">redist_plans</a></code> object</p></dd>
+
+
 <dt>...</dt>
 <dd><p>passed on to <code>redist.parity</code></p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>numeric vector with the population parity for each column</p>
+    
+
+<p>numeric vector with the population parity for each column</p>
     </div>
     <div id="details">
     <h2>Details</h2>
@@ -137,7 +148,7 @@ all districts are within 3 percent of population parity.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>
