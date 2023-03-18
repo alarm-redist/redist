@@ -34,10 +34,10 @@ of each geographic unit. The default is \code{NULL}. If not provided, random
 and contiguous congressional district assignments will be generated using \code{redist.rsg}.}
 
 \item{adapt_lambda}{Whether to adaptively tune the lambda parameter so that the Metropolis-Hastings
-acceptance probability falls between 20\% and 40\%. Default is FALSE.}
+acceptance probability falls between 20\\% and 40\\%. Default is FALSE.}
 
 \item{adapt_eprob}{Whether to adaptively tune the edgecut probability parameter so that the
-Metropolis-Hastings acceptance probability falls between 20\% and 40\%. Default is
+Metropolis-Hastings acceptance probability falls between 20\\% and 40\\%. Default is
 FALSE.}
 
 \item{params}{A matrix of parameter values to test, such as the output of

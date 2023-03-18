@@ -35,7 +35,7 @@ a random initial plan will be generated using \code{redist_smc}. You can also
 request to initialize using \code{redist.rsg} by supplying 'rsg', though this is
 not recommended behavior.}
 
-\item{constraints}{A `redist_constr` object.}
+\item{constraints}{A \code{redist_constr} object.}
 
 \item{num_hot_steps}{The number of steps to run the simulator at beta = 0.
 Default is 40000.}
@@ -54,10 +54,10 @@ each iteration of the algorithm. The number of swaps each iteration is
 equal to Pois(\code{lambda}) + 1. The default is \code{0}.}
 
 \item{adapt_lambda}{Whether to adaptively tune the lambda parameter so that the Metropolis-Hastings
-acceptance probability falls between 20\% and 40\%. Default is FALSE.}
+acceptance probability falls between 20\\% and 40\\%. Default is FALSE.}
 
 \item{adapt_eprob}{Whether to adaptively tune the edgecut probability parameter so that the
-Metropolis-Hastings acceptance probability falls between 20\% and 40\%. Default is
+Metropolis-Hastings acceptance probability falls between 20\\% and 40\\%. Default is
 FALSE.}
 
 \item{exact_mh}{Whether to use the approximate (0) or exact (1)

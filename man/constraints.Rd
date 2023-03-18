@@ -99,12 +99,12 @@ add_constr_custom(constr, strength, fn)
 
 \item{incumbents}{A vector of unit indices for incumbents. For example, if
 three incumbents live in the precincts that correspond to rows 1, 2, and
-100 of your [redist_map], entering incumbents = c(1, 2, 100) would avoid
+100 of your \link{redist_map}, entering incumbents = c(1, 2, 100) would avoid
 having two or more incumbents be in the same district.}
 
 \item{admin}{A vector indicating administrative unit membership}
 
-\item{perim_df}{A dataframe output from `redist.prep.polsbypopper`}
+\item{perim_df}{A dataframe output from \code{redist.prep.polsbypopper}}
 
 \item{ssdmat}{Squared distance matrix for Fryer Holden constraint}
 

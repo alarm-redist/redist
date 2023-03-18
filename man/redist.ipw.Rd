@@ -13,7 +13,7 @@ redist.ipw(
 )
 }
 \arguments{
-\item{plans}{An object of class `redist_plans` from `redist_flip()`.}
+\item{plans}{An object of class \code{redist_plans} from \code{redist_flip()}.}
 
 \item{resampleconstraint}{The constraint implemented in the simulations: one
 of "pop", "compact", "segregation", or "similar".}
@@ -21,7 +21,7 @@ of "pop", "compact", "segregation", or "similar".}
 \item{targetbeta}{The target value of the constraint.}
 
 \item{targetpop}{The desired level of population parity. \code{targetpop} =
-0.01 means that the desired distance from population parity is 1\%. The
+0.01 means that the desired distance from population parity is 1\\%. The
 default is \code{NULL}.}
 
 \item{temper}{A flag for whether simulated tempering was used to improve the

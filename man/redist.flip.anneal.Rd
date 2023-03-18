@@ -40,7 +40,7 @@ of each geographic unit. If not provided, random and contiguous congressional
 district assignments will be generated using \code{redist_smc}. To use the old
 behavior of generating with \code{redist.rsg}, provide init_plan = 'rsg'.}
 
-\item{constraints}{A `redist_constr` list of constraints}
+\item{constraints}{A \code{redist_constr} list of constraints}
 
 \item{num_hot_steps}{The number of steps to run the simulator at beta = 0.
 Default is 40000.}
@@ -60,7 +60,7 @@ equal to Pois(\code{lambda}) + 1. The default is \code{0}.}
 
 \item{pop_tol}{The strength of the hard population
 constraint. \code{pop_tol} = 0.05 means that any proposed swap that
-brings a district more than 5\% away from population parity will be
+brings a district more than 5\\% away from population parity will be
 rejected. The default is \code{NULL}.}
 
 \item{rngseed}{Allows the user to set the seed for the
@@ -70,10 +70,10 @@ simulations. Default is \code{NULL}.}
 algorithm to generate starting values. Default is 5000.}
 
 \item{adapt_lambda}{Whether to adaptively tune the lambda parameter so that the Metropolis-Hastings
-acceptance probability falls between 20\% and 40\%. Default is FALSE.}
+acceptance probability falls between 20\\% and 40\\%. Default is FALSE.}
 
 \item{adapt_eprob}{Whether to adaptively tune the edgecut probability parameter so that the
-Metropolis-Hastings acceptance probability falls between 20\% and 40\%. Default is
+Metropolis-Hastings acceptance probability falls between 20\\% and 40\\%. Default is
 FALSE.}
 
 \item{exact_mh}{Whether to use the approximate (0) or exact (1)

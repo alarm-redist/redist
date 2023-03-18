@@ -15,7 +15,7 @@ Will be normalized automatically.}
 \item{conf}{The confidence level for the interval.}
 }
 \value{
-A two-element vector of the form [lower, upper] containing
+A two-element vector of the form \link{lower, upper} containing
 the importance sampling confidence interval.
 }
 \description{
