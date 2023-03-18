@@ -392,10 +392,10 @@ dplyr_row_slice.redist_map <- function(data, i, ...) {
 
     # fix pop. bounds
     bounds <- attr(data, "pop_bounds")
-    bounds[2] <- sum(y[[attr(data, "pop_col")]])/new_distr
     attr(y, "pop_bounds") <- bounds
+    new_tgt <- sum(y[[attr(data, "pop_col")]])/new_distr
 
-    if (bounds[1] > bounds[2] || bounds[3] < bounds[1]) {
+    if (bounds[1] > new_tgt || bounds[3] < new_tgt) {
         cli_warn(c("Your subset was not based on districts.",
             ">" = "Please use {.fn set_pop_tol} to update your
                         {.cls redist_map} or create a new {.cls redist_map}

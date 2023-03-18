@@ -1,3 +1,12 @@
+# redist 4.1.0
+* Improved diagnostic output
+* New `redist_ci` interface for confidence interval calculation
+* Improved plotting options with `redist.plot.distr_qtys()` for custom geometry types.
+* Improved resampling efficiency at the final SMC stage
+* Faster implementation of loop-erased random walk in C++
+* Faster random number generation in C++
+* Updated citation information
+
 # redist 4.0.0
 * A new constraint interface that is more flexible, user friendly, and consistent 
 across algorithms (see `redist_constr()` and `?constraints`). For the first time,

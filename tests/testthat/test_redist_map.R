@@ -22,7 +22,7 @@ test_that("filtering works", {
     bounds_f <- attr(filtered, "pop_bounds")
 
     expect_equal(bounds[1], bounds_f[1])
-    expect_lt(bounds[2], bounds_f[2])
+    expect_equal(bounds[2], bounds_f[2])
     expect_equal(bounds[3], bounds_f[3])
 
     expect_equal(attr(filtered, "ndists"), 2)

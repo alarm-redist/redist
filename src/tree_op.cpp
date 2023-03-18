@@ -2,13 +2,19 @@
 
 /*
  * Generate a random vertex (integer) among unvisited vertices
+ * `lower` is a lower bound (inclusive) on the index of the first unvisited element
  */
 // TESTED
-int rvtx(const std::vector<bool> &visited, int size, int remaining) {
-    int idx = rint(remaining);
+int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower) {
+    int idx = r_int(remaining);
     int accuml = 0;
-    for (int i = 0; i < size - 1; i++) {
-        accuml += 1 - visited.at(i);
+    bool seen_one = false;
+    for (int i = lower; i < size - 1; i++) {
+        accuml += 1 - visited[i];
+        if (!seen_one && !visited[i]) {
+            seen_one = true;
+            lower = i;
+        }
         if (accuml - 1 == idx) return i;
     }
     return size - 1;
@@ -19,8 +25,8 @@ int rvtx(const std::vector<bool> &visited, int size, int remaining) {
  */
 // TESTED
 int rnbor(const Graph &g, int vtx) {
-    int n_nbors = g.at(vtx).size();
-    return g[vtx][rint(n_nbors)];
+    int n_nbors = g[vtx].size();
+    return g[vtx][r_int(n_nbors)];
 }
 
 /*
@@ -185,15 +191,15 @@ Graph list_to_graph(const List &l) {
  * Count population below each node in tree
  */
 // TESTED
-double tree_pop(Tree &ust, int vtx, const uvec &pop,
-                std::vector<int> &pop_below, std::vector<int> &parent) {
-    double pop_at = pop(vtx);
-    std::vector<int> *nbors = &ust[vtx];
+int tree_pop(Tree &ust, int vtx, const uvec &pop,
+             std::vector<int> &pop_below, std::vector<int> &parent) {
+    int pop_at = pop(vtx);
+    const std::vector<int> *nbors = &ust[vtx];
     int length = nbors->size();
     for (int j = 0; j < length; j++) {
         int nbor = (*nbors)[j];
+        parent.at(nbor) = vtx;
         pop_at += tree_pop(ust, nbor, pop, pop_below, parent);
-        if (parent.size()) parent.at(nbor) = vtx;
     }
 
     pop_below.at(vtx) = pop_at;

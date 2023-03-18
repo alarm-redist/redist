@@ -36,10 +36,10 @@ summary statistics and plotting functionality, are also included.
 
 Authors:
 
--   [Christopher T Kenny](https://www.christophertkenny.com),
+-   [Christopher T Kenny](https://christophertkenny.com),
     [christopherkenny\@fas.harvard.edu](mailto:christopherkenny@fas.harvard.edu)
     (Maintainer)
--   [Cory McCartan](https://corymccartan.github.io),
+-   [Cory McCartan](https://corymccartan.com),
     [cmccartan\@g.harvard.edu](mailto:cmccartan@g.harvard.edu)
 -   [Ben Fifield](https://www.benfifield.com),
     [benfifield\@gmail.com](mailto:benfifield@gmail.com)
@@ -50,7 +50,7 @@ Contributors:
 
 -   Jun Kawahara, [jkawahara\@i.kyoto-u.ac.jp](mailto:jkawahara@i.kyoto-u.ac.jp)
 -   Alex Tarr, [atarr\@princeton.edu](mailto:atarr@princeton.edu)
--   [Michael Higgins](http://www-personal.k-state.edu/~mikehiggins/),
+-   [Michael Higgins](https://www.k-state.edu/stats/about/people/HigginsMichael.html),
     [mjh5\@princeton.edu](mailto:mjh5@princeton.edu)
 
 Papers:
@@ -119,11 +119,11 @@ redist.plot.scatter(iowa_plans, `Population deviation`, Compactness) +
     labs(title="Population deviation and compactness by plan")
 
 plot(iowa_plans, `Democratic vote`, size=0.5, color_thresh=0.5) +
-    scale_color_manual(values=c("tomato2", "dodgerblue")) +
+    scale_color_manual(values=c("black", "tomato2", "dodgerblue")) +
     labs(title="Democratic vote share by district")
 ```
 
 A more detailed introduction to redistricting methods and the package can be
-found in the [Get Started](https://alarm-redist.github.io/redist/articles/redist.html) 
-page. The package [vignettes](https://alarm-redist.github.io/redist/articles/) 
+found in the [Get Started](https://alarm-redist.org/redist/articles/redist.html) 
+page. The package [vignettes](https://alarm-redist.org/redist/articles/) 
 contain more detailed information and guides to specific workflows.

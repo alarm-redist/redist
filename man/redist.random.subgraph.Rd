@@ -17,7 +17,7 @@ redist.random.subgraph(shp, n, adj = NULL)
 sf dataframe with n rows
 }
 \description{
-`random.subgraph` returns a random subset of the shp provided
+\code{random.subgraph} returns a random subset of the shp provided
 }
 \details{
 Snowball sampling with backtracking

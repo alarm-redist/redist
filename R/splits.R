@@ -42,7 +42,7 @@ redist.splits <- function(plans, counties) {
 #' @export
 is_county_split <- function(plan, counties) {
     counties <- as.integer(as.factor(counties))
-    (tapply(plan, counties, FUN = function(y) length(unique(y))) > 1)[counties]
+    as.logical((tapply(plan, counties, FUN = function(y) length(unique(y))) > 1)[counties])
 }
 
 

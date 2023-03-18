@@ -42,10 +42,10 @@
 #'
 #' Michael Higgins, Department of Statistics, Kansas State University
 #' \email{mikehiggins@@k-state.edu},
-#' \url{http://www-personal.k-state.edu/~mikehiggins/}
+#' \url{https://www.k-state.edu/stats/about/people/HigginsMichael.html}
 #'
 #' Kosuke Imai, Department of Politics, Princeton University
-#' \email{imai@@harvard.edu}, \url{http://imai.fas.harvard.edu}
+#' \email{imai@@harvard.edu}, \url{https://imai.fas.harvard.edu}
 #'
 #' James Lo, \email{jameslo@@princeton.edu}
 #'

@@ -1,14 +1,14 @@
 #include "wilson.h"
-#include "tree_op.h"
 
 /*
  * Random walk along `g` from `root` until something in `visited` is hit
  */
 // TESTED
-std::vector<int> walk_until(const Graph &g, int root,
-                            const std::vector<bool> &visited,
-                            const std::vector<bool> &ignore,
-                            const uvec &counties);
+int walk_until(const Graph &g, int root,
+               std::vector<int> &path, int MAX,
+               const std::vector<bool> &visited,
+               const std::vector<bool> &ignore,
+               const uvec &counties);
 
 /*
  * Erase loops in `path` that would be created by adding `proposal` to path
@@ -30,7 +30,7 @@ std::vector<std::vector<int>> walk_until_cty(Multigraph &mg, int root,
 void loop_erase_cty(std::vector<std::vector<int>> &path, int proposal, int root);
 
 
-/* DEBUGGING FUNCTION // [[Rcpp::export]]
+// [[Rcpp::export]]
 Tree sample_ust(List l, const arma::uvec &pop, double lower, double upper,
                 const arma::uvec &counties) {
     Graph g = list_to_graph(l);
@@ -41,7 +41,6 @@ Tree sample_ust(List l, const arma::uvec &pop, double lower, double upper,
     const std::vector<bool> ignore(V, false);
     return sample_sub_ust(g, tree, V, root, ignore, pop, lower, upper, counties, cg);
 }
- */
 
 /*
  * Sample a uniform spanning subtree of unvisited nodes using Wilson's algorithm
@@ -69,6 +68,7 @@ Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
             if (c_visited[county]) {
                 c_visited[county] = false;
                 county_members[county] = std::vector<int>();
+                county_members[county].reserve(16);
             }
             county_members[county].push_back(i);
         }
@@ -80,7 +80,9 @@ Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
     }
 
     // pick root
-    root = rvtx(visited, V, remaining);
+    int lower_i = 0;
+    int lower_c = 0;
+    root = rvtx(visited, V, remaining, lower_i);
     visited[root] = true;
     remaining--;
     c_visited.at(counties[root] - 1) = true;
@@ -89,7 +91,7 @@ Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
     // Connect counties
     Tree cty_tree = init_tree(n_county);
     while (c_remaining > 0) {
-        int add = rvtx(c_visited, n_county, c_remaining);
+        int add = rvtx(c_visited, n_county, c_remaining, lower_c);
         // random walk from `add` until we hit the path
         std::vector<std::vector<int>> path = walk_until_cty(mg, add,
                                                             c_visited, ignore);
@@ -113,6 +115,7 @@ Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
     }
 
     // figure out which counties will not need to be split
+    if (n_county > 1) {
     std::vector<int> cty_pop_below(n_county, -1);
     std::vector<int> cty_parent(n_county);
     tree_pop(cty_tree, counties[root] - 1, county_pop, cty_pop_below, cty_parent);
@@ -133,8 +136,6 @@ Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
         // whether the range of split populations misses the 3 possible target intervals
         bool miss_first = split_ub < lower || split_lb > upper;
         bool miss_second = (tot_pop - split_lb) < lower || (tot_pop - split_ub) > upper;
-        //bool miss_first = split_ub < lower;
-        //bool miss_second = (tot_pop - split_ub) > upper;
 
         // impossible for this county to need to be split
         if (cty_pop_below[i] >= 0 && (miss_first && miss_second)) {
@@ -157,14 +158,16 @@ Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
             }
         }
     }
+    }
 
     // Generate tree within each county
+    std::vector<int> path(remaining + 2);
+    int max_try = 50 * remaining * ((int) std::log(remaining));
     while (remaining > 0) {
-        int add = rvtx(visited, V, remaining);
+        int add = rvtx(visited, V, remaining, lower_i);
         // random walk from `add` until we hit the path
-        std::vector<int> path = walk_until(g, add, visited, ignore, counties);
+        int added = walk_until(g, add, path, max_try, visited, ignore, counties);
         // update visited list and constructed tree
-        int added = path.size();
         if (added == 0) { // bail
             Tree null_tree;
             return null_tree;
@@ -186,53 +189,42 @@ Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
  * Random walk along `g` from `root` until something in `visited` is hit
  */
 // TESTED
-std::vector<int> walk_until(const Graph &g, int root,
-                            const std::vector<bool> &visited,
-                            const std::vector<bool> &ignore,
-                            const uvec &counties) {
-    std::vector<int> path = {root};
+int walk_until(const Graph &g, int root,
+               std::vector<int> &path, int MAX,
+               const std::vector<bool> &visited,
+               const std::vector<bool> &ignore,
+               const uvec &counties) {
+    path[0] = root;
     // walk until we hit something in `visited`
     int curr = root;
-    int county = counties(root);
-    //while (true) {
+    int county = counties[root];
+    int added = 1; // cursor
     int i;
-    int max = visited.size() * 500;
-    for (i = 0; i < max; i++) {
+    for (i = 0; i < MAX; i++) {
         int proposal = rnbor(g, curr);
-        if (ignore.at(proposal) || counties(proposal) != county) {
+        if (ignore[proposal] || counties[proposal] != county) {
             continue;
-        } else if (!visited.at(proposal)) {
-            loop_erase(path, proposal);
-            path.push_back(proposal);
-        } else {
-            path.push_back(proposal);
+        } else if (!visited[proposal]) {
+            for (int j = added - 1; j >= 0; j--) {
+                if (path[j] == proposal) { // if yes, restart from there
+                    added = j;
+                    break;
+                }
+            }
+            path[added++] = proposal;
+        } else { // reached something in `visited`
+            path[added++] = proposal;
             break;
         }
         curr = proposal;
     }
-    if (i == max) {
-        path.erase(path.begin(), path.end());
+    if (i == MAX) {
+        added = 0;
     }
 
-    return path;
+    return added;
 }
 
-
-/*
- * Erase loops in `path` that would be created by adding `proposal` to path
- */
-// TESTED
-void loop_erase(std::vector<int> &path, int proposal) {
-    int idx;
-    int length = path.size();
-    for (idx = 0; idx < length; idx++) {
-        if (path[idx] == proposal) break;
-    }
-
-    if (idx != length) { // a loop
-        path.erase(path.begin() + idx, path.begin() + length);
-    }
-}
 
 
 /*
@@ -250,7 +242,7 @@ std::vector<std::vector<int>> walk_until_cty(Multigraph &mg, int root,
     int i;
     int max = visited.size() * 500;
     for (i = 0; i < max; i++) {
-        int prop_idx = rint((int) mg.at(curr).size());
+        int prop_idx = r_int((int) mg.at(curr).size());
         int proposal = mg[curr][prop_idx][0];
         if (ignore[mg[curr][prop_idx][2]] || ignore[mg[curr][prop_idx][1]]) {
             continue;

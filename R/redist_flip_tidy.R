@@ -1,10 +1,10 @@
-#' 'Flip' Markov Chain Monte Carlo Redistricting Simulation
+#' 'Flip' Markov Chain Monte Carlo Redistricting Simulation (Fifield et al. 2020)
 #'
 #' \code{redist_flip} provides a tidy interface to the methods in
 #' \code{\link{redist.flip}}.
 #'
 #' This function allows users to simulate redistricting plans
-#' using the Markov Chain Monte Carlo methods of Fifield et al. Several
+#' using a Markov Chain Monte Carlo algorithm (Fifield, Higgins, Imai, and Tarr 2020). Several
 #' constraints corresponding to substantive requirements in the redistricting
 #' process are implemented, including population parity and geographic
 #' compactness. In addition, the function includes multiple-swap and simulated
@@ -28,7 +28,7 @@
 #'
 #' \code{redist_flip} samples from a known target distribution which can be described
 #' using the \code{constraints}. The following describes the constraints available. The general
-#' advice is to set weights in a way that gets between 20\% and 40\% acceptance
+#' advice is to set weights in a way that gets between 20% and 40% acceptance
 #' on average, though more tuning advice is available in the vignette on using
 #' MCMC methods.Having too small of an acceptance rate indicates that the weights
 #' within \code{constraints} are too large and will impact sampling efficiency.
@@ -140,10 +140,10 @@
 #' @concept simulate
 #' @export
 #'
-#' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander
-#' Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte
-#' Carlo." Working Paper. Available at
-#' \url{http://imai.princeton.edu/research/files/redist.pdf}.
+#' @references
+#' Fifield, B., Higgins, M., Imai, K., & Tarr, A. (2020). Automated
+#' redistricting simulation using Markov chain Monte Carlo. \emph{Journal of
+#' Computational and Graphical Statistics}, 29(4), 715-728.
 #'
 #' @importFrom dplyr bind_cols
 #' @importFrom rlang eval_tidy enquo
@@ -346,9 +346,9 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
 #' each iteration of the algorithm. The number of swaps each iteration is
 #' equal to Pois(\code{lambda}) + 1. The default is \code{0}.
 #' @param adapt_lambda Whether to adaptively tune the lambda parameter so that the Metropolis-Hastings
-#' acceptance probability falls between 20\% and 40\%. Default is FALSE.
+#' acceptance probability falls between 20% and 40%. Default is FALSE.
 #' @param adapt_eprob Whether to adaptively tune the edgecut probability parameter so that the
-#' Metropolis-Hastings acceptance probability falls between 20\% and 40\%. Default is
+#' Metropolis-Hastings acceptance probability falls between 20% and 40%. Default is
 #' FALSE.
 #' @param exact_mh Whether to use the approximate (0) or exact (1)
 #' Metropolis-Hastings ratio calculation for accept-reject rule. Default is FALSE.

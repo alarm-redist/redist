@@ -17,16 +17,15 @@
 #' * **Effective samples**: the effective sample size at each iteration, computed
 #' using the SMC weights. Larger is better. The percentage in parentheses is the
 #' ratio of the effective samples to the total samples.
-#' * **Acceptance rate**: the fractino of drawn spanning trees which yield a valid
+#' * **Acceptance rate**: the fraction of drawn spanning trees which yield a valid
 #' redistricting plan within the population tolerance. Very small values (< 1%)
 #' can indicate a bottleneck and may lead to a lack of diversity.
 #' * **Standard deviation of the log weights**: More variable weights (larger s.d.)
 #' indicate less efficient sampling. Values greater than 3 are likely problematic.
 #' * **Maximum unique plans:** an upper bound on the number of unique redistricting
 #' plans that survive each stage. The percentage in parentheses is the ratio of
-#' this number to expected number of unique plans under equal-probability
-#' multinomial resampling. Small values (< 100) indicate a bottleneck, which
-#' leads to a loss of sample diversity and a higher variance.
+#' this number to the total number of samples. Small values (< 100) indicate a
+#' bottleneck, which leads to a loss of sample diversity and a higher variance.
 #' * **Estimated `k` parameter**: How many spanning tree edges were considered for
 #' cutting at each split. Mostly informational, though large jumps may indicate
 #' a need to increase `adapt_k_thresh`.
@@ -81,7 +80,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
     }
     est_div <- plans_diversity(object, total_pop = prec_pop, n_max = vi_max)
     div_rg <- format(quantile(est_div, c(0.1, 0.9)), digits = 2)
-    div_bad <- (mean(est_div) <= 0.35) || (mean(est_div <= 0.05) > 0.2)
+    div_bad <- (mean(est_div) <= 0.35) || (mean(est_div <= 0.25) > 0.1)
 
     if (algo == "smc") {
         cli_text("{.strong SMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
@@ -116,7 +115,10 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
             }, numeric(1))
             names(rhats) <- addl_cols
             cat("R-hat values for summary statistics:\n")
-            print(rhats)
+            rhats_p <- vapply(rhats, function(x){
+                ifelse(x < 1.05, sprintf('%.3f', x), paste0('\U274C', round(x, 3)))
+            }, FUN.VALUE = character(1))
+            print(noquote(rhats_p))
 
             if (any(na.omit(rhats) >= 1.05)) {
                 warn_converge <- TRUE
@@ -151,7 +153,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
                 str_glue("{fmt_comma(n_eff)} ({sprintf('%0.1f%%', 100*eff)})"))
             tbl_print$eff <- NULL
             tbl_print$accept_rate <- with(tbl_print, sprintf("%0.1f%%", 100*accept_rate))
-            max_pct <- with(tbl_print, max_unique/(-n_samp*expm1(-1)))
+            max_pct <- with(tbl_print, max_unique/(-n_samp * expm1(-1)))
             tbl_print$max_unique <- with(tbl_print,
                 str_glue("{fmt_comma(max_unique)} ({sprintf('%3.0f%%', 100*max_pct)})"))
 
@@ -180,7 +182,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
                         Examine the diversity plot with
                         `hist(plans_diversity({name}), breaks=24)`.
                         Consider weakening or removing constraints, or increasing
-                        the population tolerance. If the accpetance rate drops
+                        the population tolerance. If the acceptance rate drops
                         quickly in the final splits, try increasing
                         {.arg pop_temper} by 0.01.")
         }
@@ -194,6 +196,9 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
                         constraints, or increasing the population tolerance.
                         If the acceptance rate drops quickly in the final splits,
                         try increasing {.arg pop_temper} by 0.01.
+                        If the weight variance (Log wgt. sd) increases steadily
+                        or is particularly large for the \"Resample\" step,
+                        consider increasing {.arg seq_alpha}.
                         To visualize what geographic areas may be causing problems,
                         try running the following code. Highlighted areas are
                         those that may be causing the bottleneck.\n\n")
@@ -232,7 +237,10 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
             }, numeric(1))
             names(rhats) <- addl_cols
             cat("R-hat values for summary statistics:\n")
-            print(rhats)
+            rhats_p <- vapply(rhats, function(x){
+                ifelse(x < 1.05, sprintf('%.3f', x), paste0('\U274C', round(x, 3)))
+            }, FUN.VALUE = character(1))
+            print(noquote(rhats_p))
 
             out <- tibble(stat = addl_cols, rhat = rhats)
 

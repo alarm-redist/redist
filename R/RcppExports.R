@@ -105,6 +105,18 @@ closest_adj_pop <- function(adj, i_dist, g_prop) {
     .Call(`_redist_closest_adj_pop`, adj, i_dist, g_prop)
 }
 
+rint1 <- function(n, max) {
+    .Call(`_redist_rint1`, n, max)
+}
+
+runif1 <- function(n, max) {
+    .Call(`_redist_runif1`, n, max)
+}
+
+resample_lowvar <- function(wgts) {
+    .Call(`_redist_resample_lowvar`, wgts)
+}
+
 reindex <- function(dm, nd) {
     .Call(`_redist_reindex`, dm, nd)
 }
@@ -151,5 +163,9 @@ swMH <- function(aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parit
 
 var_info_vec <- function(m, ref, pop) {
     .Call(`_redist_var_info_vec`, m, ref, pop)
+}
+
+sample_ust <- function(l, pop, lower, upper, counties) {
+    .Call(`_redist_sample_ust`, l, pop, lower, upper, counties)
 }
 

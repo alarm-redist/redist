@@ -19,7 +19,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
               int n_distr, double target, double lower, double upper, double rho,
               List constraints, double thresh, int k, int thin, int verbosity) {
     // re-seed MT
-    generator.seed((int) Rcpp::sample(INT_MAX, 1)[0]);
+    seed_rng((int) Rcpp::sample(INT_MAX, 1)[0]);
 
     Graph g = list_to_graph(l);
     Multigraph cg = county_graph(g, counties);
@@ -113,7 +113,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
                                   pop, target, g, constraints);
 
         double alpha = exp(prop_lp);
-        if (alpha >= 1 || unif(generator) <= alpha) { // ACCEPT
+        if (alpha >= 1 || r_unif() <= alpha) { // ACCEPT
             n_accept++;
             districts.col(idx) = districts.col(idx+1); // copy over new map
             mh_decisions(idx - 1) = 1;
@@ -217,7 +217,7 @@ bool cut_districts_ms(Tree &ust, int k, int root, subview_col<uword> &districts,
     }
     if ((int) candidates.size() < k) return false;
 
-    int idx = rint(k);
+    int idx = r_int(k);
     idx = select_k(deviances, idx + 1);
     int cut_at = candidates[idx];
     // reject sample
@@ -334,7 +334,7 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
  */
 void select_pair(int n, const Graph &g, const uvec &plan, int &i, int &j) {
     int V = g.size();
-    i = 1 + rint(n);
+    i = 1 + r_int(n);
 
     std::set<int> neighboring;
     for (int k = 0; k < V; k++) {
@@ -349,7 +349,7 @@ void select_pair(int n, const Graph &g, const uvec &plan, int &i, int &j) {
     }
 
     int n_nbor = neighboring.size();
-    j = *std::next(neighboring.begin(), rint(n_nbor));
+    j = *std::next(neighboring.begin(), r_int(n_nbor));
 
     return;
 }

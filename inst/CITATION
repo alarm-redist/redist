@@ -1,14 +1,66 @@
-citHeader("To cite redist in publications use:")
+citHeader("To cite `redist` in publications use the first entry below.
+Please also cite the methodology paper for the algorithm(s) you use.")
 
-citEntry(entry = "misc",
-	 title = "{redist}: Simulation Methods for Legislative Redistricting", 
-	 author = personList(as.person("Christopher T. Kenny"), as.person("Cory McCartan"), as.person("Ben Fifield"),
-	 as.person("Kosuke Imai")), 
-	 howpublished = "Available at The Comprehensive R Archive Network (CRAN)", 
-	 year = "2021",
-	 url = "https://CRAN.R-project.org/package=redist",
-	 textVersion = paste(" Christopher T. Kenny, Cory McCartan, Ben Fifield, and Kosuke Imai (2021).",
-	 	             "redist: Simulation Methods for Legislative Redistricting.",
-			     "Available at The Comprehensive R Archive Network (CRAN).",
-			     "URL https://CRAN.R-project.org/package=redist.")
+bibentry(
+    bibtype = "Manual",
+    title = "{redist}: Simulation Methods for Legislative Redistricting",
+    author = c(
+        person("Christopher T.", "Kenny", email = "christopherkenny@fas.harvard.edu", role = c("aut", "cre")),
+        person("Cory", "McCartan", email = "cmccartan@g.harvard.edu", role = "aut"),
+        person("Ben", "Fifield", email = "benfifield@gmail.com", role = "aut"),
+        person("Kosuke", "Imai", email = "imai@harvard.edu", role = "aut")
+        ),
+    year = "2022",
+    note = "R package",
+    key = "redist",
+    url = "https://alarm-redist.org/redist/"
 )
+
+bibentry(
+    bibtype = "article",
+    title = "Sequential Monte Carlo for sampling balanced and compact redistricting plans",
+    author = c(
+        person("Cory", "McCartan", email = "cmccartan@g.harvard.edu", role = "aut"),
+        person("Kosuke", "Imai", email = "imai@harvard.edu", role = "aut")
+        ),
+    year = "2020",
+    journal = "arXiv preprint",
+    key = "mccartan2020",
+    url = "https://arxiv.org/abs/2008.06131"
+)
+
+
+bibentry(
+    bibtype = "article",
+    title = "The essential role of empirical validation in legislative redistricting simulation",
+    author = c(
+        person("Ben", "Fifield", email = "benfifield@gmail.com", role = "aut"),
+        person("Kosuke", "Imai", email = "imai@harvard.edu", role = "aut"),
+        person("Jun", "Kawahara", email = "jkawahara@i.kyoto-u.ac.jp", role = "ctb"),
+        person("Christopher T.", "Kenny", email = "christopherkenny@fas.harvard.edu", role = c("aut", "cre"))
+        ),
+    year = "2020",
+    volume = 7,
+    number = 1,
+    journal = "Statistics and Public Policy",
+    key = "fifield2020enum"
+)
+
+
+bibentry(
+    bibtype = "article",
+    title = "Automated redistricting simulation using Markov chain Monte Carlo",
+    author = c(
+        person("Ben", "Fifield", email = "benfifield@gmail.com", role = "aut"),
+        person("Michael", "Higgins", email = "mikehiggins@k-state.edu", role = "ctb"),
+        person("Kosuke", "Imai", email = "imai@harvard.edu", role = "aut"),
+        person("Alexander", "Tarr", email = "atarr@princeton.edu", role = "ctb")
+        ),
+    year = "2020",
+    volume = 29,
+    number = 4,
+    journal = "Journal of Computational and Graphical Statistics",
+    key = "fifield2020mcmc"
+)
+
+

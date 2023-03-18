@@ -16,15 +16,15 @@ redist.plot.wted.adj(
 \arguments{
 \item{shp}{A SpatialPolygonsDataFrame, sf object, or redist_map. Required.}
 
-\item{plans}{A `redist_plans` object or matrix of redistricting plans, where each
+\item{plans}{A \code{redist_plans} object or matrix of redistricting plans, where each
 column indicates a plan and each}
 
-\item{counties}{unquoted name of a column in `shp` or a vector of county assignments. Subsets to
+\item{counties}{unquoted name of a column in \code{shp} or a vector of county assignments. Subsets to
 edges which cross this boundary if supplied.}
 
 \item{ref}{Plot reference map? Defaults to TRUE which gets the existing plan from}
 
-\item{adj}{A zero-indexed adjacency list. Extracted from `shp` if `shp` is a `redist_map`.
+\item{adj}{A zero-indexed adjacency list. Extracted from \code{shp} if \code{shp} is a \code{redist_map}.
 Otherwise created with redist.adjacency if not supplied. Default is NULL.}
 
 \item{plot_shp}{Should the shapes be plotted? Default is TRUE.}

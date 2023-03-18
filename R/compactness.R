@@ -276,9 +276,6 @@ redist.compactness <- function(shp = NULL,
     }
 
     if ("Schwartzberg" %in% measure) {
-        cli_inform("{.pkg redist} 4.0.0 fixes a bug where Schwartzberg was reporting 1/Schwartzberg. Current values are correct.",
-            .frequency = "once", .frequency_id = "schwartz"
-        )
         comp$Schwartzberg <- redistmetrics::comp_schwartz(
             plans = plans,
             shp = shp,
@@ -349,16 +346,10 @@ redist.compactness <- function(shp = NULL,
     }
 
     if ("EdgesRemoved" %in% measure) {
-        cli_inform("An earlier bug incorrectly in {.pkg redist} doubled the number of removed edges. Current counts are correct.",
-            .frequency = "once", .frequency_id = "comp_nrem"
-        )
         comp$EdgesRemoved <- redistmetrics::comp_edges_rem(plans, shp, adj = adj)
     }
 
     if ("FracKept" %in% measure) {
-        cli_inform("An earlier bug incorrectly in {.pkg redist} doubled the number of removed edges. Current counts are correct.",
-            .frequency = "once", .frequency_id = "comp_kept"
-        )
         comp$FracKept <- redistmetrics::comp_frac_kept(plans, shp, adj = adj)
     }
 

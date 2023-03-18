@@ -13,7 +13,7 @@ redist.ipw(
 )
 }
 \arguments{
-\item{plans}{An object of class `redist_plans` from `redist_flip()`.}
+\item{plans}{An object of class \code{redist_plans} from \code{redist_flip()}.}
 
 \item{resampleconstraint}{The constraint implemented in the simulations: one
 of "pop", "compact", "segregation", or "similar".}

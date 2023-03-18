@@ -141,6 +141,8 @@ plan_distances <- function(plans, measure = "variation of information", ncores =
 #' approximation to the target distribution.
 #'
 #' @param plans a \code{\link{redist_plans}} object.
+#' @param chains For plans objects with multiple chains, which ones to compute
+#'   diversity for. Defaults to the first. Specify "all" to use all chains.
 #' @param n_max the maximum number of plans to sample in computing the
 #' distances. Larger numbers will have less sampling error but will require
 #' more computation time.
@@ -160,12 +162,32 @@ plan_distances <- function(plans, measure = "variation of information", ncores =
 #'
 #' @concept analyze
 #' @export
-plans_diversity <- function(plans, n_max = 100, ncores = 1, total_pop = attr(plans, "prec_pop")) {
+plans_diversity <- function(plans, chains = 1, n_max = 100,
+                            ncores = 1, total_pop = attr(plans, "prec_pop")) {
     m <- get_plans_matrix(plans)
-    n_eval <- min(n_max, ncol(m))
-    idx <- sample.int(ncol(m), n_eval, replace = FALSE)
+    i_min <- 0
+    n_pl <- ncol(m)
+    ndists <- attr(plans, "ndists")
+    if (is.null(ndists)) ndists <- max(m[, 1])
 
-    ndists <- max(m[, 1])
+    if ("chains" %in% colnames(plans) && chains != "all") {
+        if (is.integer(chains)) {
+            i_ok = which(plans$chain %in% chains)
+            i_min = i_ok[1] - 1
+            if ("district" %in% colnames(plans)) {
+                denom = dplyr::n_distinct(plans$district)
+            } else {
+                denom = 1
+            }
+            n_pl = length(i_ok) / denom
+        } else {
+            cli_abort("{.arg chains} must be an integer or the value \"all\".")
+        }
+    }
+
+    n_eval <- min(n_max, n_pl)
+    idx <- i_min + sample.int(n_pl, n_eval, replace = FALSE)
+
 
     if (is.null(total_pop))
         cli_abort("Must provide {.arg total_pop} for this {.cls redist_plans} object.")

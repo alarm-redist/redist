@@ -7,12 +7,12 @@
 avg_by_prec(plans, x, draws = NA)
 }
 \arguments{
-\item{plans}{a `redist_plans` object}
+\item{plans}{a \code{redist_plans} object}
 
-\item{x}{an expression to average. Tidy-evaluated in `plans`.}
+\item{x}{an expression to average. Tidy-evaluated in \code{plans}.}
 
-\item{draws}{which draws to average. `NULL` will average all draws, including
-reference plans. The special value `NA` will average all sampled draws. An
+\item{draws}{which draws to average. \code{NULL} will average all draws, including
+reference plans. The special value \code{NA} will average all sampled draws. An
 integer, logical, or character vector indicating specific draws may also be
 provided.}
 }
@@ -20,7 +20,7 @@ provided.}
 a vector of length matching the number of precincts, containing the average.
 }
 \description{
-Takes a column of a `redist_plans` object and averages it across a set of
-`draws` for each precinct.
+Takes a column of a \code{redist_plans} object and averages it across a set of
+\code{draws} for each precinct.
 }
 \concept{analyze}

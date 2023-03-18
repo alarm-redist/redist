@@ -5,10 +5,10 @@
 # Purpose: tidy R wrapper to run SMC redistricting code
 ####################################################
 
-#' SMC Redistricting Sampler
+#' SMC Redistricting Sampler (McCartan and Imai 2020)
 #'
-#' `redist_smc` uses a Sequential Monte Carlo algorithm to
-#' generate nearly independent congressional or legislative redistricting
+#' `redist_smc` uses a Sequential Monte Carlo algorithm (McCartan and Imai 2020)
+#' to generate nearly independent congressional or legislative redistricting
 #' plans according to contiguity, population, compactness, and administrative
 #' boundary constraints.
 #'
@@ -110,7 +110,7 @@
 #'
 #' @references
 #' McCartan, C., & Imai, K. (2020). Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans.
-#' Available at \url{https://imai.fas.harvard.edu/research/files/SMCredist.pdf}.
+#' Available at \url{https://arxiv.org/abs/2008.06131}.
 #'
 #' @examples \donttest{
 #' data(fl25)
@@ -245,8 +245,11 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
 
     if (ncores_runs > 1) {
         `%oper%` <- `%dorng%`
+        of <- ifelse(Sys.info()[['sysname']] == 'Windows',
+                     tempfile(pattern = paste0('smc_', substr(Sys.time(), 1, 10)), fileext = '.txt'),
+                     '')
         if (!silent)
-            cl <- makeCluster(ncores_runs, outfile = "", methods = FALSE,
+            cl <- makeCluster(ncores_runs, outfile = of, methods = FALSE,
                 useXDR = .Platform$endian != "little")
         else
             cl <- makeCluster(ncores_runs, methods = FALSE,
@@ -299,9 +302,11 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
             } else {
                 mod_wgt <- trunc_fn(wgt)
             }
-            n_eff <- length(mod_wgt)*mean(mod_wgt)^2/mean(mod_wgt^2)
+            mod_wgt <- wgt/sum(wgt)
+            n_eff <- 1/sum(mod_wgt^2)
 
-            rs_idx <- sample(nsims, nsims, replace = TRUE, prob = mod_wgt)
+            # rs_idx <- sample(nsims, nsims, replace = TRUE, prob = mod_wgt)
+            rs_idx <- resample_lowvar(mod_wgt)
             n_unique <- dplyr::n_distinct(rs_idx)
             algout$plans <- algout$plans[, rs_idx, drop = FALSE]
             # algout$log_labels = algout$log_labels[rs_idx]
@@ -332,6 +337,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
             accept_rate = algout$accept_rate,
             sd_labels = algout$sd_labels,
             sd_lp = c(algout$sd_lp, sd(lr)),
+            sd_temper = algout$sd_temper,
             cor_labels = algout$cor_labels,
             # log_labels = algout$log_labels,
             unique_survive = c(algout$unique_survive, n_unique),
@@ -354,6 +360,14 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
     l_diag <- lapply(all_out, function(x) x$l_diag)
     n_dist_act <- dplyr::n_distinct(plans[, 1]) # actual number (for partial plans)
 
+    # tempering warning
+    temp_ratio = do.call(c, lapply(l_diag, function(x) x$sd_temper / head(x$sd_lp, -1)))
+    if (any(temp_ratio > 0.5, na.rm=TRUE)) {
+        cli_warn(c("Population tempering is increasing the variance of the
+                   resampling weights by over 50% at some steps.",
+                   "*" = "Consider lowering {.arg pop_temper}."))
+    }
+
     out <- new_redist_plans(plans, map, "smc", wgt, resample,
                             ndists = final_dists,
                             n_eff = all_out[[1]]$n_eff,
@@ -362,7 +376,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
                             diagnostics = l_diag)
     if (runs > 1) {
         out <- mutate(out, chain = rep(seq_len(runs), each = n_dist_act*nsims)) %>%
-            dplyr::relocate(.data$chain, .after = "draw")
+            dplyr::relocate('chain', .after = "draw")
     }
 
     exist_name <- attr(map, "existing_col")
@@ -389,108 +403,3 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
 #' redist_quantile_trunc(c(1, 2, 3, 4))
 #'
 redist_quantile_trunc <- function(x) pmin(x, quantile(x, 1 - length(x)^(-0.5)))
-
-
-#' Confidence Intervals for SMC Estimates
-#'
-#' Builds a confidence interval for a quantity of interest.
-#' If multiple runs are available, uses the between-run variation to estimate
-#' the standard error. If only one run is available, uses information on the SMC
-#' particle/plan genealogy to estimate the standard error, using a variant of
-#' the method of Olson & Douc (2019). The multiple-run estimator is more
-#' reliable, especially for situations with many districts, and should be used
-#' when parallelism is available.  All reference plans are ignored.
-#'
-#' @param plans a [redist_plans] object.
-#' @param x the quantity to build an interval for. Tidy-evaluated within `plans`.
-#' @param district for [redist_plans] objects with multiple districts, which
-#' `district` to subset to. Set to `NULL` to perform no subsetting.
-#' @param conf the desired confidence level.
-#'
-#' @references
-#' Lee, A., & Whiteley, N. (2018). Variance estimation in the particle filter.
-#' Biometrika, 105(3), 609-625.
-#' Olsson, J., & Douc, R. (2019). Numerically stable online estimation of
-#' variance in particle filters. Bernoulli, 25(2), 1504-1535.
-#' H. P. Chan and T. L. Lai. A general theory of particle filters in hidden
-#' Markov models and some applications. Ann. Statist., 41(6):2877–2904, 2013.
-#'
-#' @return A tibble with three columns: \code{X}, \code{X_lower}, and
-#' \code{X_upper}, where \code{X} is the name of the vector of interest,
-#' containing the mean and confidence interval. When used inside
-#' \code{\link[dplyr:summarise]{summarize()}} this will create three columns in the
-#' output data.
-#'
-#' @examples
-#' library(dplyr)
-#' data(iowa)
-#'
-#' iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05)
-#' plans <- redist_mergesplit_parallel(iowa_map, nsims = 200, chains = 2, silent = TRUE) %>%
-#'     mutate(dem = group_frac(iowa_map, dem_08, dem_08 + rep_08)) %>%
-#'     number_by(dem)
-#' redist_smc_ci(plans, dem)
-#'
-#' @md
-#' @concept analyze
-#' @export
-redist_smc_ci <- function(plans, x, district = 1L, conf = 0.9) {
-    plans <- subset_sampled(plans)
-    x_orig <- enquo(x)
-    x <- eval_tidy(enquo(x), plans)
-    if (!is.null(district))
-        x <- x[plans$district == district]
-    N <- length(x)
-    est <- mean(x)
-
-    if ("chain" %in% names(plans)) { # multiple runs
-        chain <- plans$chain[plans$district == district]
-        rhat <- diag_rhat(x, chain)
-        if (is.finite(rhat) && rhat > 1.05) {
-            cli_warn(c("Runs have not converged for this statistic.",
-                "i" = "R-hat is {round(rhat, 3)}",
-                ">" = "Increase the number of samples."))
-        }
-        run_means <- tapply(x, chain, mean) %>%
-            `names<-`(NULL)
-        std_err <- sd(run_means)
-    } else {
-        std_errs <- apply(attr(plans, "diagnostics")[[1]]$ancestors, 2, function(anc) {
-            sum_inner <- tapply(x - est, anc, sum)^2
-            sqrt(mean(sum_inner[as.character(anc)])/N)
-        })
-        std_err <- quantile(std_errs, 0.75)
-    }
-
-    alpha <- (1 - conf)/2
-    ci <- est + qt(c(alpha, 0.5, 1 - alpha), df = N - 1)*std_err
-
-    tibble("{{ x_orig }}" := ci[2],
-        "{{ x_orig }}_lower" := ci[1],
-        "{{ x_orig }}_upper" := ci[3])
-
-}
-
-
-#' (Deprecated) Confidence Intervals for Importance Sampling Estimates
-#'
-#' Builds a confidence interval for a quantity of interest,
-#' given importance sampling weights.
-#'
-#' @param x A numeric vector containing the quantity of interest
-#' @param wgt A numeric vector containing the nonnegative importance weights.
-#' Will be normalized automatically.
-#' @param conf The confidence level for the interval.
-#'
-#' @returns A two-element vector of the form [lower, upper] containing
-#' the importance sampling confidence interval.
-#'
-#' @concept post
-#' @export
-redist.smc_is_ci <- function(x, wgt, conf = 0.99) {
-    .Deprecated("redist_smc_ci")
-    wgt <- wgt/sum(wgt)
-    mu <- sum(x*wgt)
-    sig <- sqrt(sum((x - mu)^2*wgt^2))
-    mu + qnorm(c((1 - conf)/2, 1 - (1 - conf)/2))*sig
-}

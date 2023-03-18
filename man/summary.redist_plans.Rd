@@ -42,16 +42,15 @@ For SMC, diagnostics statistics include:
 \item \strong{Effective samples}: the effective sample size at each iteration, computed
 using the SMC weights. Larger is better. The percentage in parentheses is the
 ratio of the effective samples to the total samples.
-\item \strong{Acceptance rate}: the fractino of drawn spanning trees which yield a valid
+\item \strong{Acceptance rate}: the fraction of drawn spanning trees which yield a valid
 redistricting plan within the population tolerance. Very small values (< 1\%)
 can indicate a bottleneck and may lead to a lack of diversity.
 \item \strong{Standard deviation of the log weights}: More variable weights (larger s.d.)
 indicate less efficient sampling. Values greater than 3 are likely problematic.
 \item \strong{Maximum unique plans:} an upper bound on the number of unique redistricting
 plans that survive each stage. The percentage in parentheses is the ratio of
-this number to expected number of unique plans under equal-probability
-multinomial resampling. Small values (< 100) indicate a bottleneck, which
-leads to a loss of sample diversity and a higher variance.
+this number to the total number of samples. Small values (< 100) indicate a
+bottleneck, which leads to a loss of sample diversity and a higher variance.
 \item \strong{Estimated \code{k} parameter}: How many spanning tree edges were considered for
 cutting at each split. Mostly informational, though large jumps may indicate
 a need to increase \code{adapt_k_thresh}.

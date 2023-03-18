@@ -37,7 +37,7 @@ but each of these is assigned a separate grouping id so that a call to
 }
 \details{
 This is a loose interpretation of the
-\href{https://www.ncsl.org/research/redistricting/redistricting-criteria.aspx}{NCSL's summary}
+\href{https://www.ncsl.org/redistricting-and-census/redistricting-criteria}{NCSL's summary}
 of redistricting criteria to preserve the cores of prior districts. Using the
 adjacency graph for a given plan, it will locate the precincts on the
 boundary of the district, within \code{boundary} steps of the edge. Each of
@@ -55,6 +55,6 @@ redist.plot.cores(shp = fl250, plan = plan, core = core)
 
 }
 \seealso{
-[redist.plot.cores()] for a plotting function
+\code{\link[=redist.plot.cores]{redist.plot.cores()}} for a plotting function
 }
 \concept{prepare}

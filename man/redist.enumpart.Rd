@@ -2,7 +2,7 @@
 % Please edit documentation in R/enumpart.R
 \name{redist.enumpart}
 \alias{redist.enumpart}
-\title{Enumerate All Parititions}
+\title{Enumerate All Parititions (Fifield et al. 2020)}
 \usage{
 redist.enumpart(
   adj,
@@ -53,6 +53,12 @@ vertex weights, to be used along with \code{lower} and \code{upper}.}
 List with entries district_membership and parity.
 }
 \description{
-Single function for standard enumeration analysis.
+Single function for standard enumeration analysis, using ZDD methodology
+(Fifield, Imai, Kawahara, and Kenny 2020).
+}
+\references{
+Fifield, B., Imai, K., Kawahara, J., & Kenny, C. T. (2020). The essential
+role of empirical validation in legislative redistricting simulation.
+\emph{Statistics and Public Policy}, 7(1), 52-68.
 }
 \concept{enumerate}

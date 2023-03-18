@@ -26,31 +26,31 @@ are also included.
 
 Authors:
 
--   [Christopher T Kenny](https://www.christophertkenny.com),
-    <christopherkenny@fas.harvard.edu> (Maintainer)
--   [Cory McCartan](https://corymccartan.github.io),
-    <cmccartan@g.harvard.edu>
--   [Ben Fifield](https://www.benfifield.com), <benfifield@gmail.com>
--   [Kosuke Imai](https://imai.fas.harvard.edu), <imai@harvard.edu>
+- [Christopher T Kenny](https://christophertkenny.com),
+  <christopherkenny@fas.harvard.edu> (Maintainer)
+- [Cory McCartan](https://corymccartan.com), <cmccartan@g.harvard.edu>
+- [Ben Fifield](https://www.benfifield.com), <benfifield@gmail.com>
+- [Kosuke Imai](https://imai.fas.harvard.edu), <imai@harvard.edu>
 
 Contributors:
 
--   Jun Kawahara, <jkawahara@i.kyoto-u.ac.jp>
--   Alex Tarr, <atarr@princeton.edu>
--   [Michael Higgins](http://www-personal.k-state.edu/~mikehiggins/),
-    <mjh5@princeton.edu>
+- Jun Kawahara, <jkawahara@i.kyoto-u.ac.jp>
+- Alex Tarr, <atarr@princeton.edu>
+- [Michael
+  Higgins](https://www.k-state.edu/stats/about/people/HigginsMichael.html),
+  <mjh5@princeton.edu>
 
 Papers:
 
--   [Automated Redistricting Simulation Using Markov Chain Monte
-    Carlo](https://doi.org/10.1080/10618600.2020.1739532) *Journal of
-    Computational and Graphical Statistics*
--   [The Essential Role of Empirical Validation in Legislative
-    Redistricting
-    Simulation](https://doi.org/10.1080/2330443X.2020.1791773)
-    *Statistics and Public Policy* Vol. 7, No. 1, pp. 52-68.
--   [Sequential Monte Carlo for Sampling Balanced and Compact
-    Redistricting Plans](https://arxiv.org/pdf/2008.06131.pdf)
+- [Automated Redistricting Simulation Using Markov Chain Monte
+  Carlo](https://doi.org/10.1080/10618600.2020.1739532) *Journal of
+  Computational and Graphical Statistics*
+- [The Essential Role of Empirical Validation in Legislative
+  Redistricting
+  Simulation](https://doi.org/10.1080/2330443X.2020.1791773) *Statistics
+  and Public Policy* Vol. 7, No. 1, pp. 52-68.
+- [Sequential Monte Carlo for Sampling Balanced and Compact
+  Redistricting Plans](https://arxiv.org/pdf/2008.06131.pdf)
 
 ## Installation Instructions
 
@@ -85,7 +85,7 @@ iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.001, total_pop = po
 # simulate 500 plans using the SMC algorithm
 iowa_plans = redist_smc(iowa_map, nsims=500)
 #> SEQUENTIAL MONTE CARLO
-#> Sampling 500 99-unit maps with 4 districts and population between 760,827 and 762,350.
+#> Sampling 500 99-unit maps with 4 districts and population between 760827 and 762350.
 ```
 
 After generating plans, you can use `redist`’s plotting functions to
@@ -107,9 +107,6 @@ iowa_plans = iowa_plans %>%
     mutate(Compactness = distr_compactness(iowa_map),
            `Population deviation` = plan_parity(iowa_map),
            `Democratic vote` = group_frac(iowa_map, dem_08, tot_08))
-#> An earlier bug incorrectly in redist doubled the number of removed edges.
-#> Current counts are correct.
-#> This message is displayed once per session.
 
 hist(iowa_plans, `Population deviation`) + hist(iowa_plans, Compactness) +
     plot_layout(guides="collect") +
@@ -128,7 +125,7 @@ redist.plot.scatter(iowa_plans, `Population deviation`, Compactness) +
 ``` r
 
 plot(iowa_plans, `Democratic vote`, size=0.5, color_thresh=0.5) +
-    scale_color_manual(values=c("tomato2", "dodgerblue")) +
+    scale_color_manual(values=c("black", "tomato2", "dodgerblue")) +
     labs(title="Democratic vote share by district")
 ```
 
@@ -136,7 +133,6 @@ plot(iowa_plans, `Democratic vote`, size=0.5, color_thresh=0.5) +
 
 A more detailed introduction to redistricting methods and the package
 can be found in the [Get
-Started](https://alarm-redist.github.io/redist/articles/redist.html)
-page. The package
-[vignettes](https://alarm-redist.github.io/redist/articles/) contain
+Started](https://alarm-redist.org/redist/articles/redist.html) page. The
+package [vignettes](https://alarm-redist.org/redist/articles/) contain
 more detailed information and guides to specific workflows.

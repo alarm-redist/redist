@@ -19,7 +19,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                umat districts, int n_drawn, int n_steps,
                List constraints, List control, int verbosity) {
     // re-seed MT so that `set.seed()` works in R
-    generator.seed((int) Rcpp::sample(INT_MAX, 1)[0]);
+    seed_rng((int) Rcpp::sample(INT_MAX, 1)[0]);
 
     // unpack control params
     double thresh = (double) control["adapt_k_thresh"];
@@ -103,6 +103,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     std::vector<double> accept_rate(n_steps);
     std::vector<double> sd_labels(n_steps);
     std::vector<double> sd_lp(n_steps);
+    std::vector<double> sd_temper(n_steps);
     std::vector<double> cor_labels(n_steps);
     vec cum_wgt(N, fill::value(1.0 / N));
     cum_wgt = cumsum(cum_wgt);
@@ -143,6 +144,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
         vec inc_only = lp - log_labels;
         sd_labels[i_split] = stddev(log_labels);
         sd_lp[i_split] = stddev(inc_only);
+        sd_temper[i_split] = stddev(log_temper);
         if (i_split >= 1) {
             cor_labels[i_split] = ((mat) cor(log_labels, inc_only))(0, 0);
         }
@@ -183,6 +185,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
         _["ancestors"] = ancestors,
         _["sd_labels"] = sd_labels,
         _["sd_lp"] = sd_lp,
+        _["sd_temper"] = sd_temper,
         _["cor_labels"] = cor_labels,
         _["est_k"] = cut_k,
         _["step_n_eff"] = n_eff,
@@ -367,8 +370,8 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     const int n_cty = max(counties);
     const int n_lags = lags.size();
     // heuristic for how many iterations to use in estimating labels, adjusted by user factor
-    const int n_est_label = std::floor((dist_ctr == n_distr-1 ? 250 : 80) *
-                                       (2 + std::sqrt(dist_ctr)) * est_label_mult);
+    const int n_est_label = std::floor((dist_ctr == n_distr-1 ? 100 : 30) *
+                                       (2 + dist_ctr) * est_label_mult);
 
     umat districts_new(V, N);
     vec pop_left_new(N);
@@ -389,11 +392,12 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         bool ok = false;
         int idx;
         double inc_lp;
-        double lower_s = lower;
+            double lower_s = lower;
         double upper_s = upper;
         while (!ok) {
             // resample
-            idx = rint(N, cum_wgt);
+            idx = r_int_wgt(N, cum_wgt);
+            // idx = r_int_mixstrat(N, i, 0.05, cum_wgt);
             districts_new.col(i) = districts.col(idx);
             iters[i]++;
 
@@ -545,6 +549,9 @@ double cut_districts(Tree &ust, int k, int root, subview_col<uword> &districts,
     std::vector<int> candidates; // candidate edges to cut,
     std::vector<double> deviances; // how far from target pop.
     std::vector<bool> is_ok; // whether they meet constraints
+    candidates.reserve(k);
+    deviances.reserve(k);
+    is_ok.reserve(k);
     int distr_root = districts(root);
     for (int i = 1; i <= V; i++) { // 1-indexing here
         if (districts(i - 1) != distr_root || i - 1 == root) continue;
@@ -563,7 +570,7 @@ double cut_districts(Tree &ust, int k, int root, subview_col<uword> &districts,
     }
     if ((int) candidates.size() < k) return 0.0;
 
-    int idx = rint(k);
+    int idx = r_int(k);
     idx = select_k(deviances, idx + 1);
     int cut_at = std::fabs(candidates[idx]) - 1;
     // reject sample
@@ -607,6 +614,7 @@ void adapt_parameters(const Graph &g, int &k, int last_k, const vec &lp, double 
     double upper = target * (1 + tol);
 
     std::vector<std::vector<double>> devs;
+    devs.reserve(N_adapt);
     vec distr_ok(k_max+1, fill::zeros);
     int root;
     int max_ok = 0;
@@ -656,13 +664,11 @@ void adapt_parameters(const Graph &g, int &k, int last_k, const vec &lp, double 
     if (idx < N_adapt) N_adapt = idx; // if rejected too many in last step
     // For each k, compute pr(selected edge within top k),
     // among maps where valid edge was selected
-    uvec idxs(N_adapt);
     for (k = 1; k <= k_max; k++) {
-        idxs = as<uvec>(Rcpp::sample(k, N_adapt, true, R_NilValue, false));
         double sum_within = 0;
         int n_ok = 0;
         for (int i = 0; i < N_adapt; i++) {
-            double dev = devs.at(i).at(idxs[i]);
+            double dev = devs.at(i).at(r_int(k));
             if (dev > tol) continue;
             else n_ok++;
             for (int j = 0; j < N_adapt; j++) {

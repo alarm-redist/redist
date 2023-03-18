@@ -1,37 +1,5 @@
 #include "smc_base.h"
 
-std::random_device rd;
-std::mt19937 generator(rd());
-std::uniform_real_distribution<double> unif(0.0, 1.0);
-
-/*
- * Generate a uniform random integer in [0, max).
- */
-int rint(int max) {
-    return std::floor(max * unif(generator));
-}
-
-/*
- * Generate a random integer in [0, max) according to weights.
- */
-int rint(int max, vec cum_wgts) {
-    int low = 0, high = max - 1;
-    double u = unif(generator);
-
-    if (cum_wgts[0] > u)
-        return 0;
-
-    while (high - low > 1) {
-        int midpt = std::ceil((high + low) / 2.0);
-        if (cum_wgts[midpt] <= u)
-            low = midpt;
-        else
-            high = midpt;
-    }
-
-    return high;
-}
-
 /*
  * Partition `x` and its indices `idxs` between `right` and `left` by `pivot`
  */
@@ -67,7 +35,7 @@ int select_k(std::vector<double> x, int k) {
     while (true) {
         if (left == right)
             return idxs[left];
-        int pivot = left + rint(right - left + 1);
+        int pivot = left + r_int(right - left + 1);
         partition_vec(x, idxs, left, right, pivot);
         if (k == pivot) {
             return idxs[k];

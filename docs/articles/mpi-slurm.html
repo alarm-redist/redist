@@ -40,7 +40,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0.9999</span>
       </span>
     </div>
 
@@ -129,114 +129,114 @@
 <h3 id="no-population-constraint">No Population Constraint<a class="anchor" aria-label="anchor" href="#no-population-constraint"></a>
 </h3>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co">## Load data</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alarm-redist.github.io/redist/" class="external-link">redist</a></span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">algdat.pfull</span><span class="op">)</span>
-
-<span class="co">## Run the simulations</span>
-<span class="va">mcmc.out</span> <span class="op">&lt;-</span> <span class="fu">redist.mcmc</span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">algdat.pfull</span><span class="op">$</span><span class="va">adjlist</span>,
-                        popvec <span class="op">=</span> <span class="va">algdat.pfull</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,
-                        nsims <span class="op">=</span> <span class="fl">10000</span>,
-                        ndists <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="co">## Load data</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alarm-redist.github.io/redist/" class="external-link">redist</a></span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">algdat.pfull</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Run the simulations</span></span>
+<span><span class="va">mcmc.out</span> <span class="op">&lt;-</span> <span class="fu">redist.mcmc</span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">algdat.pfull</span><span class="op">$</span><span class="va">adjlist</span>,</span>
+<span>                        popvec <span class="op">=</span> <span class="va">algdat.pfull</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,</span>
+<span>                        nsims <span class="op">=</span> <span class="fl">10000</span>,</span>
+<span>                        ndists <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="population-constraint">20% Population Constraint<a class="anchor" aria-label="anchor" href="#population-constraint"></a>
 </h3>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co">## Load data</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">algdat.p20</span><span class="op">)</span>
-
-<span class="co">## -----------------------------------------------</span>
-<span class="co">## Run mcmc algorithm - hard population constraint</span>
-<span class="co">## (reject any sample where population parity &gt; 20%)</span>
-<span class="co">## -----------------------------------------------</span>
-<span class="va">mcmc.out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.flip.html">redist.flip</a></span><span class="op">(</span>adj <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">adjlist</span>,
-                        total_pop <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,
-                        nsims <span class="op">=</span> <span class="fl">10000</span>,
-                        pop_tol <span class="op">=</span> <span class="fl">0.2</span>,
-                        ndists <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>
-
-<span class="co">## ---------------------------------------------------------------------</span>
-<span class="co">## Run mcmc algorithm - draws from gibbs defined by distance from parity</span>
-<span class="co">## (Run with no tempering)</span>
-<span class="co">## ---------------------------------------------------------------------</span>
-<span class="va">mcmc.out.gb</span> <span class="op">&lt;-</span> <span class="fu">redist.flilp</span><span class="op">(</span>adj <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">adjlist</span>,
-                           total_pop <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,
-                           ndists <span class="op">=</span> <span class="fl">3</span>,
-                           nsims <span class="op">=</span> <span class="fl">10000</span>,
-                           constraint <span class="op">=</span> <span class="st">"population"</span>,
-                           constraintweights <span class="op">=</span> <span class="fl">5.4</span><span class="op">)</span>
-<span class="co">## Reweight draws back to the uniform distribution</span>
-<span class="va">mcmc.out.gb</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.ipw.html">redist.ipw</a></span><span class="op">(</span><span class="va">mcmc.out.gb</span>, targetpop <span class="op">=</span> <span class="fl">.2</span><span class="op">)</span>
-
-<span class="co">## ---------------------------------------------------------------------</span>
-<span class="co">## Run mcmc algorithm - draws from gibbs defined by distance from parity</span>
-<span class="co">## (Run with simulated tempering, betas power law sequence of length 10</span>
-<span class="co">## from 0 to 1)</span>
-<span class="co">## Also including optional beta weights, to upweight prob of transitions</span>
-<span class="co">## to colder temperatures</span>
-<span class="co">## ---------------------------------------------------------------------</span>
-<span class="va">betaweights</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fl">10</span><span class="op">)</span>; <span class="kw">for</span><span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span><span class="op">{</span><span class="va">betaweights</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">2</span><span class="op">^</span><span class="va">i</span><span class="op">}</span>
-<span class="va">mcmc.out.st</span> <span class="op">&lt;-</span> <span class="fu">redist.mcmc</span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">adjlist</span>,
-                           popvec <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,
-                           ndists <span class="op">=</span> <span class="fl">3</span>,
-                           nsims <span class="op">=</span> <span class="fl">10000</span>,
-                           constraint <span class="op">=</span> <span class="st">"population"</span>,
-                           constraintweights <span class="op">=</span> <span class="fl">5.4</span>,
-                           temper <span class="op">=</span> <span class="cn">TRUE</span>,
-                           betaweights <span class="op">=</span> <span class="va">betaweights</span><span class="op">)</span>
-<span class="va">mcmc.out.st</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.ipw.html">redist.ipw</a></span><span class="op">(</span><span class="va">mcmc.out.st</span>, targetpop <span class="op">=</span> <span class="fl">.2</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="co">## Load data</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">algdat.p20</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## -----------------------------------------------</span></span>
+<span><span class="co">## Run mcmc algorithm - hard population constraint</span></span>
+<span><span class="co">## (reject any sample where population parity &gt; 20%)</span></span>
+<span><span class="co">## -----------------------------------------------</span></span>
+<span><span class="va">mcmc.out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.flip.html">redist.flip</a></span><span class="op">(</span>adj <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">adjlist</span>,</span>
+<span>                        total_pop <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,</span>
+<span>                        nsims <span class="op">=</span> <span class="fl">10000</span>,</span>
+<span>                        pop_tol <span class="op">=</span> <span class="fl">0.2</span>,</span>
+<span>                        ndists <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## ---------------------------------------------------------------------</span></span>
+<span><span class="co">## Run mcmc algorithm - draws from gibbs defined by distance from parity</span></span>
+<span><span class="co">## (Run with no tempering)</span></span>
+<span><span class="co">## ---------------------------------------------------------------------</span></span>
+<span><span class="va">mcmc.out.gb</span> <span class="op">&lt;-</span> <span class="fu">redist.flilp</span><span class="op">(</span>adj <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">adjlist</span>,</span>
+<span>                           total_pop <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,</span>
+<span>                           ndists <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>                           nsims <span class="op">=</span> <span class="fl">10000</span>,</span>
+<span>                           constraint <span class="op">=</span> <span class="st">"population"</span>,</span>
+<span>                           constraintweights <span class="op">=</span> <span class="fl">5.4</span><span class="op">)</span></span>
+<span><span class="co">## Reweight draws back to the uniform distribution</span></span>
+<span><span class="va">mcmc.out.gb</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.ipw.html">redist.ipw</a></span><span class="op">(</span><span class="va">mcmc.out.gb</span>, targetpop <span class="op">=</span> <span class="fl">.2</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## ---------------------------------------------------------------------</span></span>
+<span><span class="co">## Run mcmc algorithm - draws from gibbs defined by distance from parity</span></span>
+<span><span class="co">## (Run with simulated tempering, betas power law sequence of length 10</span></span>
+<span><span class="co">## from 0 to 1)</span></span>
+<span><span class="co">## Also including optional beta weights, to upweight prob of transitions</span></span>
+<span><span class="co">## to colder temperatures</span></span>
+<span><span class="co">## ---------------------------------------------------------------------</span></span>
+<span><span class="va">betaweights</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fl">10</span><span class="op">)</span>; <span class="kw">for</span><span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span><span class="op">{</span><span class="va">betaweights</span><span class="op">[</span><span class="va">i</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">2</span><span class="op">^</span><span class="va">i</span><span class="op">}</span></span>
+<span><span class="va">mcmc.out.st</span> <span class="op">&lt;-</span> <span class="fu">redist.mcmc</span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">adjlist</span>,</span>
+<span>                           popvec <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,</span>
+<span>                           ndists <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>                           nsims <span class="op">=</span> <span class="fl">10000</span>,</span>
+<span>                           constraint <span class="op">=</span> <span class="st">"population"</span>,</span>
+<span>                           constraintweights <span class="op">=</span> <span class="fl">5.4</span>,</span>
+<span>                           temper <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>                           betaweights <span class="op">=</span> <span class="va">betaweights</span><span class="op">)</span></span>
+<span><span class="va">mcmc.out.st</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.ipw.html">redist.ipw</a></span><span class="op">(</span><span class="va">mcmc.out.st</span>, targetpop <span class="op">=</span> <span class="fl">.2</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="population-constraint-and-compactness-constraint">20% Population Constraint and Compactness Constraint<a class="anchor" aria-label="anchor" href="#population-constraint-and-compactness-constraint"></a>
 </h3>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co">## ----------------------------------------------------------</span>
-<span class="co">## Constrain on population and compactness with tempering,</span>
-<span class="co">## weight on population = 5.4 while weight on compactness = 3</span>
-<span class="co">## Also specifying argument for ssdmat, the distance matrix</span>
-<span class="co">## ----------------------------------------------------------</span>
-<span class="va">mcmc.out.st.multiple</span> <span class="op">&lt;-</span> <span class="fu">redist.mcmc</span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">adjlist</span>,
-                                    popvec <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,
-                                    ndists <span class="op">=</span> <span class="fl">3</span>,
-                                    nsims <span class="op">=</span> <span class="fl">10000</span>,
-                                    constraint <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"population"</span>, <span class="st">"compact"</span><span class="op">)</span>,
-                                    constraintweights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5.4</span>, <span class="fl">3</span><span class="op">)</span>,
-                                    ssdmat <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">distancemat</span>,
-                                    temper <span class="op">=</span> <span class="cn">TRUE</span>,
-                                    betaweights <span class="op">=</span> <span class="va">betaweights</span><span class="op">)</span>
-<span class="va">mcmc.out.st</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.ipw.html">redist.ipw</a></span><span class="op">(</span><span class="va">mcmc.out.st.multiple</span>, targetpop <span class="op">=</span> <span class="fl">.2</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="co">## ----------------------------------------------------------</span></span>
+<span><span class="co">## Constrain on population and compactness with tempering,</span></span>
+<span><span class="co">## weight on population = 5.4 while weight on compactness = 3</span></span>
+<span><span class="co">## Also specifying argument for ssdmat, the distance matrix</span></span>
+<span><span class="co">## ----------------------------------------------------------</span></span>
+<span><span class="va">mcmc.out.st.multiple</span> <span class="op">&lt;-</span> <span class="fu">redist.mcmc</span><span class="op">(</span>adjobj <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">adjlist</span>,</span>
+<span>                                    popvec <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,</span>
+<span>                                    ndists <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>                                    nsims <span class="op">=</span> <span class="fl">10000</span>,</span>
+<span>                                    constraint <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"population"</span>, <span class="st">"compact"</span><span class="op">)</span>,</span>
+<span>                                    constraintweights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5.4</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>                                    ssdmat <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">distancemat</span>,</span>
+<span>                                    temper <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>                                    betaweights <span class="op">=</span> <span class="va">betaweights</span><span class="op">)</span></span>
+<span><span class="va">mcmc.out.st</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.ipw.html">redist.ipw</a></span><span class="op">(</span><span class="va">mcmc.out.st.multiple</span>, targetpop <span class="op">=</span> <span class="fl">.2</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="population-constraint-and-compactness-constraint-using-mpi">20% Population Constraint and Compactness Constraint, using MPI<a class="anchor" aria-label="anchor" href="#population-constraint-and-compactness-constraint-using-mpi"></a>
 </h3>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co">## ----------------------------------------------------------</span>
-<span class="co">## Constrain on population and compactness with parallel tempering,</span>
-<span class="co">## weight on population = 5.4 while weight on compactness = 3</span>
-<span class="co">## Also specifying argument for ssdmat, the distance matrix.</span>
-<span class="co">## In addition, specifying a 20-beta tempering ladder.</span>
-<span class="co">## Save file as "redist_mpi.RData"</span>
-<span class="co">## ----------------------------------------------------------</span>
-<span class="fu"><a href="../reference/redist.mcmc.mpi.html">redist.mcmc.mpi</a></span><span class="op">(</span>
-  adjobj <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">adjlist</span>,
-  popvec <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,
-  ndists <span class="op">=</span> <span class="fl">3</span>,
-  nsims <span class="op">=</span> <span class="fl">10000</span>,
-  constraint <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"population"</span>, <span class="st">"compact"</span><span class="op">)</span>,
-  constraintweights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5.4</span>, <span class="fl">3</span><span class="op">)</span>,
-  ssdmat <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">distancemat</span>,
-  betaseqlength <span class="op">=</span> <span class="fl">20</span>,
-  savename <span class="op">=</span> <span class="st">"redist_mpi"</span>,
-  verbose <span class="op">=</span> <span class="cn">TRUE</span>
-<span class="op">)</span>
-
-<span class="co">## Note that reweighting using redist.ipw() currently</span>
-<span class="co">## has to happen in a separate analysis file after</span>
-<span class="co">## redist.mcmc.mpi() is run and the output file is saved. </span>
-<span class="co">## We will change this in a future release to run the </span>
-<span class="co">## inverse probability reweighting inside of</span>
-<span class="co">## redist.mcmc.mpi().</span></code></pre></div>
+<code class="sourceCode R"><span><span class="co">## ----------------------------------------------------------</span></span>
+<span><span class="co">## Constrain on population and compactness with parallel tempering,</span></span>
+<span><span class="co">## weight on population = 5.4 while weight on compactness = 3</span></span>
+<span><span class="co">## Also specifying argument for ssdmat, the distance matrix.</span></span>
+<span><span class="co">## In addition, specifying a 20-beta tempering ladder.</span></span>
+<span><span class="co">## Save file as "redist_mpi.RData"</span></span>
+<span><span class="co">## ----------------------------------------------------------</span></span>
+<span><span class="fu"><a href="../reference/redist.mcmc.mpi.html">redist.mcmc.mpi</a></span><span class="op">(</span></span>
+<span>  adjobj <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">adjlist</span>,</span>
+<span>  popvec <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,</span>
+<span>  ndists <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>  nsims <span class="op">=</span> <span class="fl">10000</span>,</span>
+<span>  constraint <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"population"</span>, <span class="st">"compact"</span><span class="op">)</span>,</span>
+<span>  constraintweights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5.4</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  ssdmat <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">distancemat</span>,</span>
+<span>  betaseqlength <span class="op">=</span> <span class="fl">20</span>,</span>
+<span>  savename <span class="op">=</span> <span class="st">"redist_mpi"</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Note that reweighting using redist.ipw() currently</span></span>
+<span><span class="co">## has to happen in a separate analysis file after</span></span>
+<span><span class="co">## redist.mcmc.mpi() is run and the output file is saved. </span></span>
+<span><span class="co">## We will change this in a future release to run the </span></span>
+<span><span class="co">## inverse probability reweighting inside of</span></span>
+<span><span class="co">## redist.mcmc.mpi().</span></span></code></pre></div>
 <div class="section level4">
 <h4 id="a-sample-slurm-script-for-submitting-mpi-jobs">A Sample slurm Script for Submitting MPI Jobs<a class="anchor" aria-label="anchor" href="#a-sample-slurm-script-for-submitting-mpi-jobs"></a>
 </h4>
@@ -272,48 +272,48 @@
 Annealing<a class="anchor" aria-label="anchor" href="#population-constraint-and-compactness-constraint-using-annealing"></a>
 </h3>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co">## ----------------------------------------------------------</span>
-<span class="co">## Constrain on population and compactness with annealing,</span>
-<span class="co">## weight on population = 5.4 while weight on compactness = 3</span>
-<span class="co">## Also specifying argument for ssdmat, the distance matrix.</span>
-<span class="co">## In addition, specifying a 20-beta tempering ladder.</span>
-<span class="co">## Save file as "redist_anneal_[t].RData", where t is the</span>
-<span class="co">## SLURM array number. </span>
-<span class="co">## </span>
-<span class="co">## In addition, we no longer specify a "sims" argument. </span>
-<span class="co">## This temperature schedule involves simulating at the "hot"</span>
-<span class="co">## temperature (beta = 0) for 500 steps ("num_hot_steps"),</span>
-<span class="co">## then taking a linear annealing temperature schedule for</span>
-<span class="co">## 2000 steps ("num_annealing_steps"), and finally simulating</span>
-<span class="co">## at the cold temperature (beta = 1) for 500 steps ("num_cold_steps").</span>
-<span class="co">## Finally, we take the last draw of the algorithm and store it as output.</span>
-<span class="co">## ----------------------------------------------------------</span>
-
-<span class="va">t</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"SLURM_ARRAY_TASK_ID"</span><span class="op">)</span><span class="op">)</span>
-
-<span class="fu">redist.mcmc.anneal</span><span class="op">(</span>
-  adjobj <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">adjlist</span>,
-  popvec <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,
-  ndists <span class="op">=</span> <span class="fl">3</span>,
-  num_hot_steps <span class="op">=</span> <span class="fl">500</span>, num_annealing_steps <span class="op">=</span> <span class="fl">2000</span>, num_cold_steps <span class="op">=</span> <span class="fl">500</span>,
-  constraint <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"population"</span>, <span class="st">"compact"</span><span class="op">)</span>,
-  constraintweights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5.4</span>, <span class="fl">3</span><span class="op">)</span>,
-  ssdmat <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">distancemat</span>,
-  savename <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"redist_anneal_"</span>, <span class="va">t</span><span class="op">)</span>
-<span class="op">)</span>
-
-<span class="co">## ----------------------------------------------------</span>
-<span class="co">## Note that reweighting using redist.ipw() currently</span>
-<span class="co">## has to happen in a separate analysis file after</span>
-<span class="co">## redist.mcmc.anneal() is run and the output file is saved. </span>
-<span class="co">## Below is sample code for combining multiple runs of</span>
-<span class="co">## redist.mcmc.anneal() back together, which should be run </span>
-<span class="co">## in a separate script. We can then run redist.ipw()</span>
-<span class="co">## on the combined simulations.</span>
-<span class="co">## ----------------------------------------------------</span>
-<span class="fu"><a href="https://rdrr.io/r/base/getwd.html" class="external-link">setwd</a></span><span class="op">(</span><span class="st">"[directory with files]"</span><span class="op">)</span>
-<span class="va">algout</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.combine.anneal.html">redist.combine.anneal</a></span><span class="op">(</span><span class="st">"redist_anneal_"</span><span class="op">)</span>
-<span class="va">algout_rw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.ipw.html">redist.ipw</a></span><span class="op">(</span><span class="va">algout</span>, targetpop <span class="op">=</span> <span class="fl">.2</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="co">## ----------------------------------------------------------</span></span>
+<span><span class="co">## Constrain on population and compactness with annealing,</span></span>
+<span><span class="co">## weight on population = 5.4 while weight on compactness = 3</span></span>
+<span><span class="co">## Also specifying argument for ssdmat, the distance matrix.</span></span>
+<span><span class="co">## In addition, specifying a 20-beta tempering ladder.</span></span>
+<span><span class="co">## Save file as "redist_anneal_[t].RData", where t is the</span></span>
+<span><span class="co">## SLURM array number. </span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## In addition, we no longer specify a "sims" argument. </span></span>
+<span><span class="co">## This temperature schedule involves simulating at the "hot"</span></span>
+<span><span class="co">## temperature (beta = 0) for 500 steps ("num_hot_steps"),</span></span>
+<span><span class="co">## then taking a linear annealing temperature schedule for</span></span>
+<span><span class="co">## 2000 steps ("num_annealing_steps"), and finally simulating</span></span>
+<span><span class="co">## at the cold temperature (beta = 1) for 500 steps ("num_cold_steps").</span></span>
+<span><span class="co">## Finally, we take the last draw of the algorithm and store it as output.</span></span>
+<span><span class="co">## ----------------------------------------------------------</span></span>
+<span></span>
+<span><span class="va">t</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"SLURM_ARRAY_TASK_ID"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">redist.mcmc.anneal</span><span class="op">(</span></span>
+<span>  adjobj <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">adjlist</span>,</span>
+<span>  popvec <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">precinct.data</span><span class="op">$</span><span class="va">pop</span>,</span>
+<span>  ndists <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>  num_hot_steps <span class="op">=</span> <span class="fl">500</span>, num_annealing_steps <span class="op">=</span> <span class="fl">2000</span>, num_cold_steps <span class="op">=</span> <span class="fl">500</span>,</span>
+<span>  constraint <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"population"</span>, <span class="st">"compact"</span><span class="op">)</span>,</span>
+<span>  constraintweights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5.4</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  ssdmat <span class="op">=</span> <span class="va">algdat.p20</span><span class="op">$</span><span class="va">distancemat</span>,</span>
+<span>  savename <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"redist_anneal_"</span>, <span class="va">t</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## ----------------------------------------------------</span></span>
+<span><span class="co">## Note that reweighting using redist.ipw() currently</span></span>
+<span><span class="co">## has to happen in a separate analysis file after</span></span>
+<span><span class="co">## redist.mcmc.anneal() is run and the output file is saved. </span></span>
+<span><span class="co">## Below is sample code for combining multiple runs of</span></span>
+<span><span class="co">## redist.mcmc.anneal() back together, which should be run </span></span>
+<span><span class="co">## in a separate script. We can then run redist.ipw()</span></span>
+<span><span class="co">## on the combined simulations.</span></span>
+<span><span class="co">## ----------------------------------------------------</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/getwd.html" class="external-link">setwd</a></span><span class="op">(</span><span class="st">"[directory with files]"</span><span class="op">)</span></span>
+<span><span class="va">algout</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.combine.anneal.html">redist.combine.anneal</a></span><span class="op">(</span><span class="st">"redist_anneal_"</span><span class="op">)</span></span>
+<span><span class="va">algout_rw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist.ipw.html">redist.ipw</a></span><span class="op">(</span><span class="va">algout</span>, targetpop <span class="op">=</span> <span class="fl">.2</span><span class="op">)</span></span></code></pre></div>
 <div class="section level4">
 <h4 id="a-sample-slurm-script-for-submitting-annealing-jobs">A Sample slurm Script for Submitting Annealing Jobs<a class="anchor" aria-label="anchor" href="#a-sample-slurm-script-for-submitting-annealing-jobs"></a>
 </h4>
@@ -367,7 +367,7 @@ Annealing<a class="anchor" aria-label="anchor" href="#population-constraint-and-
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer>

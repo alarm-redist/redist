@@ -211,12 +211,28 @@ add_reference <- function(plans, ref_plan, name = NULL) {
     else
         distr_pop <- rep(NA_real_, ndists)
 
+    if (is.ordered(plans$district)) {
+        rg_labels = range(as.integer(as.character(levels(plans$district))))
+        if (any(rg_labels != c(1L, attr(plans, "ndists")))) {
+            cli_abort(c("Cannot add a reference plan to a set of plans which
+                        have relabeled district numbers that don't start at 1.",
+                        ">"="Match the district labels on the unmatched plans with
+                            {.fn match_numbers}")
+            )
+        }
+
+        # good to go
+        plans$district = as.integer(plans$district)
+        cli_inform(c("Coercing {.val district} column to integers.",
+                     "i"="You may want to run {.fn match_numbers} again to fix district labels.\n"))
+    }
+
     if (name %in% levels(plans$draw)) cli_abort("Reference plan name already exists")
     fct_levels <- c(name, levels(plans$draw))
     new_draw <- rep(factor(fct_levels, levels = fct_levels), each = ndists)
     x <- dplyr::bind_rows(
         tibble(district = 1:ndists,
-            total_pop = as.numeric(distr_pop)),
+               total_pop = as.numeric(distr_pop)),
         plans[, -match("draw", names(plans))]
     ) %>%
         dplyr::mutate(draw = new_draw, .before = "district")
@@ -304,7 +320,7 @@ find_numbering <- function(plan, ref, pop, tot_pop) {
 #' @export
 match_numbers <- function(data, plan, total_pop = attr(data, "prec_pop"), col = "pop_overlap") {
     if (!inherits(data, "redist_plans")) cli_abort("{.arg data} must be a {.cls redist_plans}")
-    if (!"district" %in% names(data)) cli_abort("Missing {.field district} colun in {.arg data}")
+    if (!"district" %in% names(data)) cli_abort("Missing {.field district} column in {.arg data}")
 
     plan_mat <- get_plans_matrix(data)
     if (is.character(plan)) plan <- plan_mat[, plan]
@@ -356,7 +372,7 @@ match_numbers <- function(data, plan, total_pop = attr(data, "prec_pop"), col = 
 #' @export
 number_by <- function(data, x, desc = FALSE) {
     if (!inherits(data, "redist_plans")) cli_abort("{.arg data} must be a {.cls redist_plans}")
-    if (!"district" %in% names(data)) cli_abort("Missing {.field district} colun in {.arg data}")
+    if (!"district" %in% names(data)) cli_abort("Missing {.field district} column in {.arg data}")
 
     ord <- 1 - 2*desc
     m <- get_plans_matrix(data)
@@ -392,7 +408,7 @@ check_tidy_types <- function(map, .data) {
 #'
 #' @concept analyze
 #' @export
-tally_var <- function(map, x, .data = redist:::cur_plans()) {
+tally_var <- function(map, x, .data = cur_plans()) {
     check_tidy_types(map, .data)
     if (length(unique(diff(as.integer(.data$district)))) > 2)
         cli_warn("Districts not sorted in ascending order; output may be incorrect.")
@@ -431,7 +447,11 @@ avg_by_prec <- function(plans, x, draws = NA) {
     if (is.null(draws)) {
         draw_idx <- seq_len(ncol(plans_m))
     } else if (length(draws) == 1 && is.na(draws)) {
-        draw_idx <- seq_len(ncol(plans_m))[-seq_len(n_ref)]
+        if (n_ref > 0) {
+            draw_idx <- seq_len(ncol(plans_m))[-seq_len(n_ref)]
+        } else {
+            draw_idx <- seq_len(ncol(plans_m))
+        }
     } else if (is.logical(draws)) {
         draw_idx <- which(draws)
     } else {

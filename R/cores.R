@@ -9,7 +9,7 @@
 #' \code{sf::st_union()} would produce only connected pieces.
 #'
 #' This is a loose interpretation of the
-#' \href{https://www.ncsl.org/research/redistricting/redistricting-criteria.aspx}{NCSL's summary}
+#' \href{https://www.ncsl.org/redistricting-and-census/redistricting-criteria}{NCSL's summary}
 #' of redistricting criteria to preserve the cores of prior districts. Using the
 #' adjacency graph for a given plan, it will locate the precincts on the
 #' boundary of the district, within \code{boundary} steps of the edge. Each of

@@ -2,7 +2,7 @@
 % Please edit documentation in R/redist_flip_tidy.R
 \name{redist_flip}
 \alias{redist_flip}
-\title{'Flip' Markov Chain Monte Carlo Redistricting Simulation}
+\title{'Flip' Markov Chain Monte Carlo Redistricting Simulation (Fifield et al. 2020)}
 \usage{
 redist_flip(
   map,
@@ -91,7 +91,7 @@ A \code{\link{redist_plans}} object containing the simulated plans.
 }
 \details{
 This function allows users to simulate redistricting plans
-using the Markov Chain Monte Carlo methods of Fifield et al. Several
+using a Markov Chain Monte Carlo algorithm (Fifield, Higgins, Imai, and Tarr 2020). Several
 constraints corresponding to substantive requirements in the redistricting
 process are implemented, including population parity and geographic
 compactness. In addition, the function includes multiple-swap and simulated
@@ -115,7 +115,7 @@ for most maps, the default constraint should be a good starting place.
 
 \code{redist_flip} samples from a known target distribution which can be described
 using the \code{constraints}. The following describes the constraints available. The general
-advice is to set weights in a way that gets between 20\\% and 40\\% acceptance
+advice is to set weights in a way that gets between 20\% and 40\% acceptance
 on average, though more tuning advice is available in the vignette on using
 MCMC methods.Having too small of an acceptance rate indicates that the weights
 within \code{constraints} are too large and will impact sampling efficiency.
@@ -193,9 +193,8 @@ sims <- redist_flip(map = iowa_map, nsims = 100)
 
 }
 \references{
-Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander
-Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte
-Carlo." Working Paper. Available at
-\url{http://imai.princeton.edu/research/files/redist.pdf}.
+Fifield, B., Higgins, M., Imai, K., & Tarr, A. (2020). Automated
+redistricting simulation using Markov chain Monte Carlo. \emph{Journal of
+Computational and Graphical Statistics}, 29(4), 715-728.
 }
 \concept{simulate}

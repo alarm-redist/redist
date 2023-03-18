@@ -368,6 +368,41 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rint1
+Rcpp::IntegerVector rint1(int n, int max);
+RcppExport SEXP _redist_rint1(SEXP nSEXP, SEXP maxSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type max(maxSEXP);
+    rcpp_result_gen = Rcpp::wrap(rint1(n, max));
+    return rcpp_result_gen;
+END_RCPP
+}
+// runif1
+Rcpp::NumericVector runif1(int n, int max);
+RcppExport SEXP _redist_runif1(SEXP nSEXP, SEXP maxSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< int >::type max(maxSEXP);
+    rcpp_result_gen = Rcpp::wrap(runif1(n, max));
+    return rcpp_result_gen;
+END_RCPP
+}
+// resample_lowvar
+arma::ivec resample_lowvar(arma::vec wgts);
+RcppExport SEXP _redist_resample_lowvar(SEXP wgtsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type wgts(wgtsSEXP);
+    rcpp_result_gen = Rcpp::wrap(resample_lowvar(wgts));
+    return rcpp_result_gen;
+END_RCPP
+}
 // reindex
 IntegerMatrix reindex(IntegerMatrix dm, int nd);
 RcppExport SEXP _redist_reindex(SEXP dmSEXP, SEXP ndSEXP) {
@@ -550,4 +585,70 @@ BEGIN_RCPP
     rcpp_result_gen = Rcpp::wrap(var_info_vec(m, ref, pop));
     return rcpp_result_gen;
 END_RCPP
+}
+// sample_ust
+Tree sample_ust(List l, const arma::uvec& pop, double lower, double upper, const arma::uvec& counties);
+RcppExport SEXP _redist_sample_ust(SEXP lSEXP, SEXP popSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP countiesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type l(lSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
+    rcpp_result_gen = Rcpp::wrap(sample_ust(l, pop, lower, upper, counties));
+    return rcpp_result_gen;
+END_RCPP
+}
+
+static const R_CallMethodDef CallEntries[] = {
+    {"_redist_reduce_adj", (DL_FUNC) &_redist_reduce_adj, 3},
+    {"_redist_collapse_adj", (DL_FUNC) &_redist_collapse_adj, 2},
+    {"_redist_coarsen_adjacency", (DL_FUNC) &_redist_coarsen_adjacency, 2},
+    {"_redist_get_plan_graph", (DL_FUNC) &_redist_get_plan_graph, 4},
+    {"_redist_color_graph", (DL_FUNC) &_redist_color_graph, 2},
+    {"_redist_polsbypopper", (DL_FUNC) &_redist_polsbypopper, 6},
+    {"_redist_genAlConn", (DL_FUNC) &_redist_genAlConn, 2},
+    {"_redist_findBoundary", (DL_FUNC) &_redist_findBoundary, 2},
+    {"_redist_contiguity", (DL_FUNC) &_redist_contiguity, 2},
+    {"_redist_cores", (DL_FUNC) &_redist_cores, 4},
+    {"_redist_update_conncomp", (DL_FUNC) &_redist_update_conncomp, 3},
+    {"_redist_crsg", (DL_FUNC) &_redist_crsg, 9},
+    {"_redist_dist_dist_diff", (DL_FUNC) &_redist_dist_dist_diff, 7},
+    {"_redist_log_st_map", (DL_FUNC) &_redist_log_st_map, 4},
+    {"_redist_n_removed", (DL_FUNC) &_redist_n_removed, 3},
+    {"_redist_countpartitions", (DL_FUNC) &_redist_countpartitions, 1},
+    {"_redist_calcPWDh", (DL_FUNC) &_redist_calcPWDh, 1},
+    {"_redist_group_pct_top_k", (DL_FUNC) &_redist_group_pct_top_k, 5},
+    {"_redist_colmax", (DL_FUNC) &_redist_colmax, 1},
+    {"_redist_colmin", (DL_FUNC) &_redist_colmin, 1},
+    {"_redist_prec_cooccur", (DL_FUNC) &_redist_prec_cooccur, 3},
+    {"_redist_group_pct", (DL_FUNC) &_redist_group_pct, 4},
+    {"_redist_pop_tally", (DL_FUNC) &_redist_pop_tally, 3},
+    {"_redist_max_dev", (DL_FUNC) &_redist_max_dev, 3},
+    {"_redist_ms_plans", (DL_FUNC) &_redist_ms_plans, 15},
+    {"_redist_closest_adj_pop", (DL_FUNC) &_redist_closest_adj_pop, 3},
+    {"_redist_rint1", (DL_FUNC) &_redist_rint1, 2},
+    {"_redist_runif1", (DL_FUNC) &_redist_runif1, 2},
+    {"_redist_resample_lowvar", (DL_FUNC) &_redist_resample_lowvar, 1},
+    {"_redist_reindex", (DL_FUNC) &_redist_reindex, 2},
+    {"_redist_plan_joint", (DL_FUNC) &_redist_plan_joint, 3},
+    {"_redist_renumber_matrix", (DL_FUNC) &_redist_renumber_matrix, 2},
+    {"_redist_solve_hungarian", (DL_FUNC) &_redist_solve_hungarian, 1},
+    {"_redist_rsg", (DL_FUNC) &_redist_rsg, 6},
+    {"_redist_k_smallest", (DL_FUNC) &_redist_k_smallest, 2},
+    {"_redist_k_biggest", (DL_FUNC) &_redist_k_biggest, 2},
+    {"_redist_smc_plans", (DL_FUNC) &_redist_smc_plans, 15},
+    {"_redist_splits", (DL_FUNC) &_redist_splits, 4},
+    {"_redist_dist_cty_splits", (DL_FUNC) &_redist_dist_cty_splits, 3},
+    {"_redist_swMH", (DL_FUNC) &_redist_swMH, 20},
+    {"_redist_var_info_vec", (DL_FUNC) &_redist_var_info_vec, 3},
+    {"_redist_sample_ust", (DL_FUNC) &_redist_sample_ust, 5},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_redist(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
 }

@@ -48,7 +48,8 @@ test_that("Not egregiously incorrect sampling accuracy (5-prec)", {
     wgts <- weights(out)
     avg <- weighted.mean(types, wgts)
     se <- sqrt(sum((types - avg)^2*(wgts/sum(wgts))^2))
-    expect_true(abs(avg - 1.5)/se <= 3)
+    zscores <- (avg - 1.5) / se
+    expect_true(abs(zscores) <= 3)
 })
 
 test_that("Not egregiously incorrect sampling accuracy (25-prec)", {
