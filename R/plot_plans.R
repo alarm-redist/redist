@@ -172,7 +172,7 @@ redist.plot.scatter <- function(plans, x, y, ..., bigger = TRUE) {
 #' @param sort set to \code{"asc"} to sort districts in ascending order of
 #' \code{qty} (the default), \code{"desc"} for descending order, or
 #' \code{FALSE} or \code{"none"} for no sorting.
-#' @param geom the geom to use in plotting the simulated districts: either
+#' @param geom the `ggplot2` geom to use in plotting the simulated districts: either
 #' \code{"jitter"} or \code{"boxplot"}
 #' @param color_thresh if a number, the threshold to use in coloring the points.
 #' Plans with quantities of interest above the threshold will be colored

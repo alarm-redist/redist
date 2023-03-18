@@ -26,7 +26,7 @@ quantity of interest.}
 \code{qty} (the default), \code{"desc"} for descending order, or
 \code{FALSE} or \code{"none"} for no sorting.}
 
-\item{geom}{the geom to use in plotting the simulated districts: either
+\item{geom}{the `ggplot2` geom to use in plotting the simulated districts: either
 \code{"jitter"} or \code{"boxplot"}}
 
 \item{color_thresh}{if a number, the threshold to use in coloring the points.
