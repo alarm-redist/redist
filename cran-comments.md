@@ -1,6 +1,6 @@
 ## Test environments
-* local R installation (macOS), R 4.2.0
-* local R installation (Windows), R 4.2.0
+* local R installation (macOS), R 4.2.2
+* local R installation (Windows), R 4.2.2
 * ubuntu 20.04 (on GitHub Actions), (devel)
 * ubuntu 20.04 (on GitHub Actions), (release)
 * ubuntu 20.04 (on GitHub Actions), (old release)
@@ -16,4 +16,5 @@ There are no reverse dependencies to check.
 
 ## Additional Notes
 
-* Fixes bitwise/boolean errors in `crsg.cpp`.
+* Addresses the C++11 note.
+* Fixes mismatched generic arguments.
