@@ -211,12 +211,28 @@ add_reference <- function(plans, ref_plan, name = NULL) {
     else
         distr_pop <- rep(NA_real_, ndists)
 
+    if (is.ordered(plans$district)) {
+        rg_labels = range(as.integer(as.character(levels(plans$district))))
+        if (any(rg_labels != c(1L, attr(plans, "ndists")))) {
+            cli_abort(c("Cannot add a reference plan to a set of plans which
+                        have relabeled district numbers that don't start at 1.",
+                        ">"="Match the district labels on the unmatched plans with
+                            {.fn match_numbers}")
+            )
+        }
+
+        # good to go
+        plans$district = as.integer(plans$district)
+        cli_inform(c("Coercing {.val district} column to integers.",
+                     "i"="You may want to run {.fn match_numbers} again to fix district labels.\n"))
+    }
+
     if (name %in% levels(plans$draw)) cli_abort("Reference plan name already exists")
     fct_levels <- c(name, levels(plans$draw))
     new_draw <- rep(factor(fct_levels, levels = fct_levels), each = ndists)
     x <- dplyr::bind_rows(
         tibble(district = 1:ndists,
-            total_pop = as.numeric(distr_pop)),
+               total_pop = as.numeric(distr_pop)),
         plans[, -match("draw", names(plans))]
     ) %>%
         dplyr::mutate(draw = new_draw, .before = "district")

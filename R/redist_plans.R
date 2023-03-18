@@ -375,6 +375,7 @@ rbind.redist_plans <- function(..., deparse.level = 1) {
     constr <- attr(objs[[1]], "constraints")
     resamp <- attr(objs[[1]], "resampled")
     comp <- attr(objs[[1]], "compactness")
+    distr_ord <- is.ordered(objs[[1]]$district)
     for (i in 2:n_obj) {
         if (nrow(get_plans_matrix(objs[[i]])) != n_prec)
             cli_abort("Number of precincts must match for all sets of plans.")
@@ -398,6 +399,16 @@ rbind.redist_plans <- function(..., deparse.level = 1) {
         if (!identical(attr(objs[[i]], "constraints"), constr)) {
             cli_inform("Constraints may not match for all sets of plans.")
             constr <- NA
+        }
+        if (is.ordered(objs[[i]]$district) != distr_ord) {
+            cli_abort(c("Some sets of plans have had district numbers matched to a reference plan,
+                         while others have not. This may cause problems in analysis.",
+                        "i"="Do one of the following:",
+                        ">"="Match the district labels on the unmatched plans with
+                            {.fn match_numbers} [recommended]",
+                        ">"="Convert the matched plans district labels to integers with
+                            {.code as.integer(district)}")
+            )
         }
     }
 
