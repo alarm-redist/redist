@@ -119,7 +119,7 @@ redist.plot.scatter(iowa_plans, `Population deviation`, Compactness) +
     labs(title="Population deviation and compactness by plan")
 
 plot(iowa_plans, `Democratic vote`, size=0.5, color_thresh=0.5) +
-    scale_color_manual(values=c("tomato2", "dodgerblue")) +
+    scale_color_manual(values=c("black", "tomato2", "dodgerblue")) +
     labs(title="Democratic vote share by district")
 ```
 
