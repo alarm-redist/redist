@@ -42,7 +42,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck, Rmpi=?ignore, rmapshaper=?ignore
+          extra-packages: any::rcmdcheck, Rmpi=?ignore, rmapshaper=?ignore, local::.
        
       - uses: r-lib/actions/check-r-package@v2
         env:
