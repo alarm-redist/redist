@@ -4,6 +4,9 @@
     <loc>/404.html</loc>
   </url>
   <url>
+    <loc>/LICENSE.html</loc>
+  </url>
+  <url>
     <loc>/articles/common_args.html</loc>
   </url>
   <url>
@@ -31,22 +34,13 @@
     <loc>/index.html</loc>
   </url>
   <url>
-    <loc>/LICENSE.html</loc>
-  </url>
-  <url>
     <loc>/news/index.html</loc>
   </url>
   <url>
+    <loc>/reference/EPSG.html</loc>
+  </url>
+  <url>
     <loc>/reference/add_reference.html</loc>
-  </url>
-  <url>
-    <loc>/reference/algdat.p10.html</loc>
-  </url>
-  <url>
-    <loc>/reference/algdat.p20.html</loc>
-  </url>
-  <url>
-    <loc>/reference/algdat.pfull.html</loc>
   </url>
   <url>
     <loc>/reference/as.matrix.redist.html</loc>
@@ -64,12 +58,6 @@
     <loc>/reference/constraints.html</loc>
   </url>
   <url>
-    <loc>/reference/east_tx.html</loc>
-  </url>
-  <url>
-    <loc>/reference/EPSG.html</loc>
-  </url>
-  <url>
     <loc>/reference/fl25.html</loc>
   </url>
   <url>
@@ -80,9 +68,6 @@
   </url>
   <url>
     <loc>/reference/fl25_enum.html</loc>
-  </url>
-  <url>
-    <loc>/reference/fl25_graph.html</loc>
   </url>
   <url>
     <loc>/reference/fl70.html</loc>
@@ -103,16 +88,16 @@
     <loc>/reference/get_mh_acceptance_rate.html</loc>
   </url>
   <url>
-    <loc>/reference/get_plans_matrix.html</loc>
-  </url>
-  <url>
-    <loc>/reference/get_plans_weights.html</loc>
-  </url>
-  <url>
     <loc>/reference/get_plan_matrix.html</loc>
   </url>
   <url>
     <loc>/reference/get_plan_weights.html</loc>
+  </url>
+  <url>
+    <loc>/reference/get_plans_matrix.html</loc>
+  </url>
+  <url>
+    <loc>/reference/get_plans_weights.html</loc>
   </url>
   <url>
     <loc>/reference/get_pop_tol.html</loc>
