@@ -7,10 +7,11 @@
 #' parity requirements. Tools for analysis such as computation of various
 #' summary statistics and plotting functionality are also included. The package
 #' implements methods described in Fifield, Higgins, Imai and Tarr (2020)
-#' <doi:10.1080/10618600.2020.1739532>, Fifield, Imai, Kawahara, and Kenny (2020)
-#' <doi: 10.1080/2330443X.2020.1791773>, and McCartan and Imai (2020)
-#' <arXiv:2008.06131>.
+#' \doi{10.1080/10618600.2020.1739532}, Fifield, Imai, Kawahara, and Kenny (2020)
+#' \doi{10.1080/2330443X.2020.1791773}, and McCartan and Imai (2020)
+#' arXiv:2008.06131.
 #'
+#' @noMd
 #'
 #' @name redist-package
 #' @useDynLib redist, .registration = TRUE

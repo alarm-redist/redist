@@ -115,7 +115,7 @@ for most maps, the default constraint should be a good starting place.
 
 \code{redist_flip} samples from a known target distribution which can be described
 using the \code{constraints}. The following describes the constraints available. The general
-advice is to set weights in a way that gets between 20\\% and 40\\% acceptance
+advice is to set weights in a way that gets between 20\% and 40\% acceptance
 on average, though more tuning advice is available in the vignette on using
 MCMC methods.Having too small of an acceptance rate indicates that the weights
 within \code{constraints} are too large and will impact sampling efficiency.

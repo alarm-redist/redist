@@ -96,7 +96,7 @@ NULL
 #' This data set contains the 70 Precinct shapefile and related data for each precinct.
 #'
 #' It is a random 70 precinct connected subset from Florida's precincts. This was introduced by
-#' <doi:10.1080/2330443X.2020.1791773>
+#' \doi{10.1080/2330443X.2020.1791773}
 #'
 #' @name fl70
 #' @usage data("fl70")
@@ -131,7 +131,7 @@ NULL
 #' This data set contains the 250 Precinct shapefile and related data for each precinct.
 #'
 #' It is a random 70 precinct connected subset from Florida's precincts. This was introduced by
-#' <doi:10.1080/2330443X.2020.1791773>
+#' \doi{10.1080/2330443X.2020.1791773}
 #'
 #' @name fl250
 #' @usage data("fl250")

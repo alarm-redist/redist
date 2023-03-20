@@ -35,7 +35,7 @@ a random initial plan will be generated using \code{redist_smc}. You can also
 request to initialize using \code{redist.rsg} by supplying 'rsg', though this is
 not recommended behavior.}
 
-\item{constraints}{A `redist_constr` object.}
+\item{constraints}{A \code{redist_constr} object.}
 
 \item{num_hot_steps}{The number of steps to run the simulator at beta = 0.
 Default is 40000.}

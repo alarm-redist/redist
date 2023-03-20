@@ -49,8 +49,8 @@ supplied and needed. Default is NULL.}
 
 \item{draw}{A numeric to specify draw number. Defaults to 1 if only one map provided
 and the column number if multiple maps given. Can also take a factor input, which will become the
-draw column in the output if its length matches the number of entries in plans. If the `plans` input
-is a `redist_plans` object, it extracts the `draw` identifier.}
+draw column in the output if its length matches the number of entries in plans. If the \code{plans} input
+is a \code{redist_plans} object, it extracts the \code{draw} identifier.}
 
 \item{ncores}{Number of cores to use for parallel computing. Default is 1.}
 
@@ -83,7 +83,6 @@ and the log of the Spanning Trees.
 This function computes specified compactness scores for a map.  If
 there is more than one shape specified for a single district, it combines
 them, if necessary, and computes one score for each district.
-
 
 Polsby-Popper is computed as \deqn{\frac{4*\pi*A(d)}{P(d)^2}} where A is the area
 function, the district is d, and P is the perimeter function. All  values are between

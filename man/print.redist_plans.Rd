@@ -7,7 +7,7 @@
 \method{print}{redist_plans}(x, ...)
 }
 \arguments{
-\item{x}{a [redist_plans] object}
+\item{x}{a \link{redist_plans} object}
 
 \item{\dots}{additional arguments (ignored)}
 }

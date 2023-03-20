@@ -29,7 +29,7 @@ This data set contains the 250 Precinct shapefile and related data for each prec
 }
 \details{
 It is a random 70 precinct connected subset from Florida's precincts. This was introduced by
-<doi:10.1080/2330443X.2020.1791773>
+\doi{10.1080/2330443X.2020.1791773}
 }
 \examples{
 data(fl250)

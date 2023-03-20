@@ -40,7 +40,7 @@ of each geographic unit. If not provided, random and contiguous congressional
 district assignments will be generated using \code{redist_smc}. To use the old
 behavior of generating with \code{redist.rsg}, provide init_plan = 'rsg'.}
 
-\item{constraints}{A `redist_constr` list of constraints}
+\item{constraints}{A \code{redist_constr} list of constraints}
 
 \item{num_hot_steps}{The number of steps to run the simulator at beta = 0.
 Default is 40000.}
