@@ -18,7 +18,7 @@ given importance sampling weights."><meta property="og:image" content="/logo.png
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -79,7 +79,7 @@ given importance sampling weights."><meta property="og:image" content="/logo.png
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>(Deprecated) Confidence Intervals for Importance Sampling Estimates</h1>
-    <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/HEAD/R/redist_smc.R" class="external-link"><code>R/redist_smc.R</code></a></small>
+    <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/HEAD/R/confint.R" class="external-link"><code>R/confint.R</code></a></small>
     <div class="hidden name"><code>redist.smc_is_ci.Rd</code></div>
     </div>
 
@@ -89,22 +89,29 @@ given importance sampling weights.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">redist.smc_is_ci</span><span class="op">(</span><span class="va">x</span>, <span class="va">wgt</span>, conf <span class="op">=</span> <span class="fl">0.99</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">redist.smc_is_ci</span><span class="op">(</span><span class="va">x</span>, <span class="va">wgt</span>, conf <span class="op">=</span> <span class="fl">0.99</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>x</dt>
 <dd><p>A numeric vector containing the quantity of interest</p></dd>
+
+
 <dt>wgt</dt>
 <dd><p>A numeric vector containing the nonnegative importance weights.
 Will be normalized automatically.</p></dd>
+
+
 <dt>conf</dt>
 <dd><p>The confidence level for the interval.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>A two-element vector of the form [lower, upper] containing
+    
+
+<p>A two-element vector of the form <code>[lower, upper]</code> containing
 the importance sampling confidence interval.</p>
     </div>
 
@@ -120,7 +127,7 @@ the importance sampling confidence interval.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

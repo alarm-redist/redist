@@ -31,10 +31,10 @@
     <loc>/index.html</loc>
   </url>
   <url>
-    <loc>/news/index.html</loc>
+    <loc>/LICENSE.html</loc>
   </url>
   <url>
-    <loc>/reference/EPSG.html</loc>
+    <loc>/news/index.html</loc>
   </url>
   <url>
     <loc>/reference/add_reference.html</loc>
@@ -65,6 +65,9 @@
   </url>
   <url>
     <loc>/reference/east_tx.html</loc>
+  </url>
+  <url>
+    <loc>/reference/EPSG.html</loc>
   </url>
   <url>
     <loc>/reference/fl25.html</loc>
@@ -100,16 +103,16 @@
     <loc>/reference/get_mh_acceptance_rate.html</loc>
   </url>
   <url>
-    <loc>/reference/get_plan_matrix.html</loc>
-  </url>
-  <url>
-    <loc>/reference/get_plan_weights.html</loc>
-  </url>
-  <url>
     <loc>/reference/get_plans_matrix.html</loc>
   </url>
   <url>
     <loc>/reference/get_plans_weights.html</loc>
+  </url>
+  <url>
+    <loc>/reference/get_plan_matrix.html</loc>
+  </url>
+  <url>
+    <loc>/reference/get_plan_weights.html</loc>
   </url>
   <url>
     <loc>/reference/get_pop_tol.html</loc>
@@ -167,6 +170,9 @@
   </url>
   <url>
     <loc>/reference/plot.redist_classified.html</loc>
+  </url>
+  <url>
+    <loc>/reference/plot.redist_constr.html</loc>
   </url>
   <url>
     <loc>/reference/plot.redist_map.html</loc>
@@ -425,6 +431,9 @@
   </url>
   <url>
     <loc>/reference/redist.wted.adj.html</loc>
+  </url>
+  <url>
+    <loc>/reference/redist_ci.html</loc>
   </url>
   <url>
     <loc>/reference/redist_constr.html</loc>

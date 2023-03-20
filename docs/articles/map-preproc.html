@@ -40,7 +40,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0.9999</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -148,7 +148,7 @@ presidential vote, city, and existing district information.</p>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://scales.r-lib.org" class="external-link">scales</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com" class="external-link">patchwork</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alarm-redist.github.io/redist/" class="external-link">redist</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alarm-redist.org/redist/" class="external-link">redist</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">data_url</span> <span class="op">=</span> <span class="st">"https://github.com/alarm-redist/redist-data/raw/main/data/king_county.rds"</span></span>
 <span><span class="va">data_path</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -243,7 +243,7 @@ Seattle.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">king</span>, <span class="va">distr</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">4</span>, <span class="fl">8</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; A <span style="color: #0000BB;">&lt;redist_map&gt;</span> with 960 units and 12 fields</span></span>
-<span><span class="co">#&gt; To be partitioned into 3 districts with population between 213,049 - 0.9908519% and 213,049 + 2.358299%</span></span>
+<span><span class="co">#&gt; To be partitioned into 3 districts with population between 214,505.7 - 1.663204% and 214,505.7 + 1.663204%</span></span>
 <span><span class="co">#&gt; With geometry:</span></span>
 <span><span class="co">#&gt;     bbox:           xmin: 1217170 ymin: 120178.2 xmax: 1297890 ymax: 271519.8</span></span>
 <span><span class="co">#&gt;     projected CRS:  NAD83(HARN) / Washington North (ftUS)</span></span>
@@ -448,7 +448,7 @@ geometry object, <code>king_land</code>.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> distr        7    <span style="text-decoration: underline;">214</span>210</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> distr        8    <span style="text-decoration: underline;">212</span>491</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> distr        9    <span style="text-decoration: underline;">217</span>432</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 1            1    <span style="text-decoration: underline;">217</span>665</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 1            1    <span style="text-decoration: underline;">213</span>311</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># … with 899 more rows</span></span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="../reference/pullback.html">pullback</a></span><span class="op">(</span><span class="va">plans</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; A <span style="color: #0000BB;">&lt;redist_plans&gt;</span> containing 100 sampled plans and 1 reference plan</span></span>
@@ -468,7 +468,7 @@ geometry object, <code>king_land</code>.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> distr        7    <span style="text-decoration: underline;">214</span>210</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> distr        8    <span style="text-decoration: underline;">212</span>491</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> distr        9    <span style="text-decoration: underline;">217</span>432</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 1            1    <span style="text-decoration: underline;">217</span>665</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 1            1    <span style="text-decoration: underline;">213</span>311</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># … with 899 more rows</span></span></span>
 <span><span class="fu"><a href="../reference/redist.plot.plans.html">redist.plot.plans</a></span><span class="op">(</span><span class="fu"><a href="../reference/pullback.html">pullback</a></span><span class="op">(</span><span class="va">plans</span><span class="op">)</span>, draws<span class="op">=</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, shp<span class="op">=</span><span class="va">king_land</span><span class="op">)</span></span></code></pre></div>
 <p><img src="map-preproc_files/figure-html/unsplit-plan-1.png" width="768"></p>
@@ -482,7 +482,7 @@ completely preserves the municipalities which were frozen with
 <h2 id="district-cores">District Cores<a class="anchor" aria-label="anchor" href="#district-cores"></a>
 </h2>
 <p>A common requirement in redistricting is that districts after
-redistricting resemble the original districts, or <a href="https://www.ncsl.org/research/redistricting/redistricting-criteria.aspx" class="external-link">“preserve
+redistricting resemble the original districts, or <a href="https://www.ncsl.org/redistricting-and-census/redistricting-criteria" class="external-link">“preserve
 the cores” of previous districts</a>, to ensure relative continuity of
 representation. The <code>redist</code> package operationalizes this
 idea by explicitly constructing the cores of a set of districts with

@@ -18,7 +18,7 @@ to counties is provided, it subsets the edges to plot to those that cross over t
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -89,51 +89,64 @@ to counties is provided, it subsets the edges to plot to those that cross over t
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">redist.plot.wted.adj</span><span class="op">(</span>
-  <span class="va">shp</span>,
-  <span class="va">plans</span>,
-  counties <span class="op">=</span> <span class="cn">NULL</span>,
-  ref <span class="op">=</span> <span class="cn">TRUE</span>,
-  adj <span class="op">=</span> <span class="cn">NULL</span>,
-  plot_shp <span class="op">=</span> <span class="cn">TRUE</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">redist.plot.wted.adj</span><span class="op">(</span></span>
+<span>  <span class="va">shp</span>,</span>
+<span>  <span class="va">plans</span>,</span>
+<span>  counties <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  ref <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  adj <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  plot_shp <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>shp</dt>
 <dd><p>A SpatialPolygonsDataFrame, sf object, or redist_map. Required.</p></dd>
+
+
 <dt>plans</dt>
-<dd><p>A `redist_plans` object or matrix of redistricting plans, where each
+<dd><p>A <code>redist_plans</code> object or matrix of redistricting plans, where each
 column indicates a plan and each</p></dd>
+
+
 <dt>counties</dt>
-<dd><p>unquoted name of a column in `shp` or a vector of county assignments. Subsets to
+<dd><p>unquoted name of a column in <code>shp</code> or a vector of county assignments. Subsets to
 edges which cross this boundary if supplied.</p></dd>
+
+
 <dt>ref</dt>
 <dd><p>Plot reference map? Defaults to TRUE which gets the existing plan from</p></dd>
+
+
 <dt>adj</dt>
-<dd><p>A zero-indexed adjacency list. Extracted from `shp` if `shp` is a `redist_map`.
+<dd><p>A zero-indexed adjacency list. Extracted from <code>shp</code> if <code>shp</code> is a <code>redist_map</code>.
 Otherwise created with redist.adjacency if not supplied. Default is NULL.</p></dd>
+
+
 <dt>plot_shp</dt>
 <dd><p>Should the shapes be plotted? Default is TRUE.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>ggplot</p>
+    
+
+<p>ggplot</p>
     </div>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">shp</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan <span class="op">=</span> <span class="va">cd_2010</span>, pop_tol <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">plans</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">shp</span>, <span class="fl">100</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">shp</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan <span class="op">=</span> <span class="va">cd_2010</span>, pop_tol <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">plans</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">shp</span>, <span class="fl">100</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> SEQUENTIAL MONTE CARLO</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Sampling 100 99-unit maps with 4 districts and population between 753,973 and 769,205.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Split [0/3] <span style="color: #00BB00;">■                               </span> | ETA?</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Split [2/3] <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■           </span> | ETA 0s</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Split [3/3] <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> | ETA 0s</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Sampling 100 99-unit maps with 4 districts and population between 753973 and 769205.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Split [0/3] <span style="color: #00BB00;">■                               </span> | ETA?</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Split [2/3] <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■           </span> | ETA 0s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Split [3/3] <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> | ETA 0s</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-in"><span class="fu">redist.plot.wted.adj</span><span class="op">(</span><span class="va">shp</span>, plans <span class="op">=</span> <span class="va">plans</span>, counties <span class="op">=</span> <span class="va">region</span><span class="op">)</span></span>
+<span class="r-in"><span><span class="fu">redist.plot.wted.adj</span><span class="op">(</span><span class="va">shp</span>, plans <span class="op">=</span> <span class="va">plans</span>, counties <span class="op">=</span> <span class="va">region</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="redist.plot.wted.adj-1.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
@@ -149,7 +162,7 @@ Otherwise created with redist.adjacency if not supplied. Default is NULL.</p></d
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

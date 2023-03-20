@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -87,29 +87,42 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="co"># S3 method for redist_classified</span>
-<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">plans</span>, <span class="va">shp</span>, type <span class="op">=</span> <span class="st">"fill"</span>, which <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for redist_classified</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">plans</span>, <span class="va">shp</span>, type <span class="op">=</span> <span class="st">"fill"</span>, which <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>x</dt>
 <dd><p>a <code>redist_classified</code> object, the output of <code><a href="classify_plans.html">classify_plans()</a></code>.</p></dd>
+
+
 <dt>plans</dt>
 <dd><p>a <a href="redist_plans.html">redist_plans</a> object.</p></dd>
+
+
 <dt>shp</dt>
 <dd><p>a shapefile or <a href="redist_map.html">redist_map</a> object.</p></dd>
+
+
 <dt>type</dt>
 <dd><p>either <code>"line"</code> or <code>"fill"</code>. Passed on to <code><a href="compare_plans.html">compare_plans()</a></code> as
 <code>plot</code>.</p></dd>
+
+
 <dt>which</dt>
 <dd><p>indices of the splits to plot. Defaults to all</p></dd>
+
+
 <dt>...</dt>
 <dd><p>passed on to <code><a href="compare_plans.html">compare_plans()</a></code></p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>ggplot comparison plot</p>
+    
+
+<p>ggplot comparison plot</p>
     </div>
 
   </div>
@@ -124,7 +137,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

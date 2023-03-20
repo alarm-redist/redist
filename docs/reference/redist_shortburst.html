@@ -22,7 +22,7 @@ Rights, Markov Chains, and Optimization by Short Bursts."'><meta property="og:im
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -97,87 +97,122 @@ Rights, Markov Chains, and Optimization by Short Bursts."</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">redist_shortburst</span><span class="op">(</span>
-  <span class="va">map</span>,
-  score_fn <span class="op">=</span> <span class="cn">NULL</span>,
-  stop_at <span class="op">=</span> <span class="cn">NULL</span>,
-  burst_size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">backend</span> <span class="op">==</span> <span class="st">"mergesplit"</span>, <span class="fl">10L</span>, <span class="fl">50L</span><span class="op">)</span>,
-  max_bursts <span class="op">=</span> <span class="fl">500L</span>,
-  maximize <span class="op">=</span> <span class="cn">TRUE</span>,
-  init_plan <span class="op">=</span> <span class="cn">NULL</span>,
-  counties <span class="op">=</span> <span class="cn">NULL</span>,
-  constraints <span class="op">=</span> <span class="fu"><a href="redist_constr.html">redist_constr</a></span><span class="op">(</span><span class="va">map</span><span class="op">)</span>,
-  compactness <span class="op">=</span> <span class="fl">1</span>,
-  adapt_k_thresh <span class="op">=</span> <span class="fl">0.95</span>,
-  return_all <span class="op">=</span> <span class="cn">TRUE</span>,
-  thin <span class="op">=</span> <span class="fl">1L</span>,
-  backend <span class="op">=</span> <span class="st">"mergesplit"</span>,
-  flip_lambda <span class="op">=</span> <span class="fl">0</span>,
-  flip_eprob <span class="op">=</span> <span class="fl">0.05</span>,
-  verbose <span class="op">=</span> <span class="cn">TRUE</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">redist_shortburst</span><span class="op">(</span></span>
+<span>  <span class="va">map</span>,</span>
+<span>  score_fn <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  stop_at <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  burst_size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">backend</span> <span class="op">==</span> <span class="st">"mergesplit"</span>, <span class="fl">10L</span>, <span class="fl">50L</span><span class="op">)</span>,</span>
+<span>  max_bursts <span class="op">=</span> <span class="fl">500L</span>,</span>
+<span>  maximize <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  init_plan <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  counties <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  constraints <span class="op">=</span> <span class="fu"><a href="redist_constr.html">redist_constr</a></span><span class="op">(</span><span class="va">map</span><span class="op">)</span>,</span>
+<span>  compactness <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  adapt_k_thresh <span class="op">=</span> <span class="fl">0.95</span>,</span>
+<span>  return_all <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  thin <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  backend <span class="op">=</span> <span class="st">"mergesplit"</span>,</span>
+<span>  flip_lambda <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  flip_eprob <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>map</dt>
 <dd><p>A <code><a href="redist_map.html">redist_map</a></code> object.</p></dd>
+
+
 <dt>score_fn</dt>
 <dd><p>A function which takes a matrix of plans and returns a score
 for each plan. Can also be a purrr-style anonymous function. See
 <code><a href="scorers.html">?scorers</a></code> for some function factories for common scoring rules.</p></dd>
+
+
 <dt>stop_at</dt>
 <dd><p>A threshold to stop optimization at.</p></dd>
+
+
 <dt>burst_size</dt>
 <dd><p>The size of each burst. 10 is recommended for mergesplit and 50 for flip.</p></dd>
+
+
 <dt>max_bursts</dt>
 <dd><p>The maximum number of bursts to run before returning.</p></dd>
+
+
 <dt>maximize</dt>
 <dd><p>If <code>TRUE</code>, try to maximize the score; otherwise, try to
 minimize it.</p></dd>
+
+
 <dt>init_plan</dt>
 <dd><p>The initial state of the map. If not provided, will default to
 the reference map of the <code>map</code> object, or if none exists, will sample
 a random initial state using <code><a href="redist_smc.html">redist_smc</a></code>. You can also request
 a random initial state by setting <code>init_plan="sample"</code>.</p></dd>
+
+
 <dt>counties</dt>
 <dd><p>A vector containing county (or other administrative or
 geographic unit) labels for each unit, which may be integers ranging from 1
 to the number of counties, or a factor or character vector.  If provided, the
 algorithm will only generate maps which split up to <code>ndists-1</code> counties.
 If no county-split constraint is desired, this parameter should be left blank.</p></dd>
+
+
 <dt>constraints</dt>
 <dd><p>A <code>redist_constr</code> with Gibbs constraints.</p></dd>
+
+
 <dt>compactness</dt>
 <dd><p>Controls the compactness of the generated districts, with
 higher values preferring more compact districts. Must be non-negative. See
 <code><a href="redist_mergesplit.html">redist_mergesplit</a></code> for more information.</p></dd>
+
+
 <dt>adapt_k_thresh</dt>
 <dd><p>The threshold value used in the heuristic to select a
 value <code>k_i</code> for each splitting iteration. Set to 0.9999 or 1 if
 the algorithm does not appear to be sampling from the target distribution.
 Must be between 0 and 1.</p></dd>
+
+
 <dt>return_all</dt>
 <dd><p>Whether to return all the
 Recommended for monitoring purposes.</p></dd>
+
+
 <dt>thin</dt>
 <dd><p>Save every <code>thin</code>-th sample. Defaults to no thinning (1). Ignored
 if <code>return_all=TRUE</code>.</p></dd>
+
+
 <dt>backend</dt>
 <dd><p>the MCMC algorithm to use within each burst, either
 "mergesplit" or "flip".</p></dd>
+
+
 <dt>flip_lambda</dt>
 <dd><p>The parameter determining the number of swaps to attempt each iteration of flip mcmc.
 The number of swaps each iteration is equal to Pois(lambda) + 1. The default is 0.</p></dd>
+
+
 <dt>flip_eprob</dt>
 <dd><p>The probability of keeping an edge connected in flip mcmc. The default is 0.05.</p></dd>
+
+
 <dt>verbose</dt>
 <dd><p>Whether to print out intermediate information while sampling.
 Recommended for monitoring purposes.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>a <code>redist_plans</code> object containing the final best plan
+    
+
+<p>a <code>redist_plans</code> object containing the final best plan
 (or the best plans after each burst, if <code>return_all=TRUE</code>.</p>
     </div>
     <div id="references">
@@ -189,84 +224,84 @@ preprint arXiv:2011.02288.</p>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="co"># \donttest{</span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="va">iowa_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan <span class="op">=</span> <span class="va">cd_2010</span>, pop_tol <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu">redist_shortburst</span><span class="op">(</span><span class="va">iowa_map</span>, <span class="fu"><a href="scorers.html">scorer_frac_kept</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span>, max_bursts <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">iowa_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan <span class="op">=</span> <span class="va">cd_2010</span>, pop_tol <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">redist_shortburst</span><span class="op">(</span><span class="va">iowa_map</span>, <span class="fu"><a href="scorers.html">scorer_frac_kept</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span>, max_bursts <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> MERGE-SPLIT SHORT BURSTS</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Sampling up to 50 bursts of 10 iterations each.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Burst  Improve?  Score</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     1     🎆     0.810811</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     3     🌟     0.819820</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     4     🙂     0.824324</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     5            0.824324</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     8     ⛄     0.833333</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    10     🌈     0.842342</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    11     😎     0.846847</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    15            0.846847</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    20            0.846847</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    25            0.846847</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    30            0.846847</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    35            0.846847</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    40            0.846847</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    45            0.846847</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    50            0.846847</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     2     🙂     0.792793</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     3     🪅     0.806306</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     4     🎉     0.833333</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     5            0.833333</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    10     🎆     0.837838</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    15            0.837838</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    20            0.837838</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    25            0.837838</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    30            0.837838</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    35            0.837838</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    40            0.837838</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    45            0.837838</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    50            0.837838</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> A <span style="color: #0000BB;">&lt;redist_plans&gt;</span> containing 50 sampled plans and 1 reference plan</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Plans have 4 districts from a 99-unit map, and were drawn using short bursts.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Plans matrix: int [1:99, 1:51] 3 3 1 2 4 1 1 4 1 1 ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 204 × 4</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    draw   district total_pop score</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> &lt;init&gt;        1    <span style="text-decoration: underline;">761</span>548 0.811</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> &lt;init&gt;        2    <span style="text-decoration: underline;">761</span>624 0.811</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> &lt;init&gt;        3    <span style="text-decoration: underline;">761</span>612 0.811</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> &lt;init&gt;        4    <span style="text-decoration: underline;">761</span>571 0.811</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> 1             1    <span style="text-decoration: underline;">754</span>497 0.811</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> 1             2    <span style="text-decoration: underline;">761</span>624 0.811</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> 1             3    <span style="text-decoration: underline;">761</span>612 0.811</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> 1             4    <span style="text-decoration: underline;">768</span>622 0.811</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> 2             1    <span style="text-decoration: underline;">754</span>497 0.811</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> 2             2    <span style="text-decoration: underline;">761</span>624 0.811</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> &lt;init&gt;        1    <span style="text-decoration: underline;">761</span>548 0.788</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> &lt;init&gt;        2    <span style="text-decoration: underline;">761</span>624 0.788</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> &lt;init&gt;        3    <span style="text-decoration: underline;">761</span>612 0.788</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> &lt;init&gt;        4    <span style="text-decoration: underline;">761</span>571 0.788</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> 1             1    <span style="text-decoration: underline;">761</span>548 0.788</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> 1             2    <span style="text-decoration: underline;">761</span>624 0.788</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> 1             3    <span style="text-decoration: underline;">761</span>612 0.788</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> 1             4    <span style="text-decoration: underline;">761</span>571 0.788</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> 2             1    <span style="text-decoration: underline;">763</span>218 0.793</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> 2             2    <span style="text-decoration: underline;">759</span>954 0.793</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># … with 194 more rows</span></span>
-<span class="r-in"><span class="fu">redist_shortburst</span><span class="op">(</span><span class="va">iowa_map</span>, <span class="op">~</span> <span class="fl">1</span> <span class="op">-</span> <span class="fu"><a href="scorers.html">scorer_frac_kept</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span><span class="op">(</span><span class="va">.</span><span class="op">)</span>, max_bursts <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span>
+<span class="r-in"><span><span class="fu">redist_shortburst</span><span class="op">(</span><span class="va">iowa_map</span>, <span class="op">~</span> <span class="fl">1</span> <span class="op">-</span> <span class="fu"><a href="scorers.html">scorer_frac_kept</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span><span class="op">(</span><span class="va">.</span><span class="op">)</span>, max_bursts <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> MERGE-SPLIT SHORT BURSTS</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Sampling up to 50 bursts of 10 iterations each.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Burst  Improve?  Score</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     2     🌈     0.243243</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     4     🎉     0.252252</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     5            0.252252</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     7     💥     0.261261</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     8     🥳     0.288288</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    10            0.288288</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    14     🎆     0.301802</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    15            0.301802</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    20            0.301802</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    25            0.301802</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    30            0.301802</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    35            0.301802</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    40            0.301802</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    45            0.301802</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    50            0.301802</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     1     😎     0.225225</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     2     🎃     0.229730</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     3     💥     0.256757</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     5            0.256757</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     6     🎉     0.261261</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    10            0.261261</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    14     ⛄     0.283784</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    15            0.283784</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    17     🥳     0.288288</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    20            0.288288</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    25            0.288288</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    30            0.288288</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    35     🌟     0.310811</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    40            0.310811</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    45            0.310811</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    47     🌈     0.315315</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    50            0.315315</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> A <span style="color: #0000BB;">&lt;redist_plans&gt;</span> containing 50 sampled plans and 1 reference plan</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Plans have 4 districts from a 99-unit map, and were drawn using short bursts.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Plans matrix: int [1:99, 1:51] 3 3 1 2 4 1 1 4 1 1 ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 204 × 4</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    draw   district total_pop score</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> &lt;init&gt;        1    <span style="text-decoration: underline;">761</span>548 0.212</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> &lt;init&gt;        2    <span style="text-decoration: underline;">761</span>624 0.212</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> &lt;init&gt;        3    <span style="text-decoration: underline;">761</span>612 0.212</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> &lt;init&gt;        4    <span style="text-decoration: underline;">761</span>571 0.212</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> 1             1    <span style="text-decoration: underline;">761</span>548 0.212</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> 1             2    <span style="text-decoration: underline;">761</span>624 0.212</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> 1             3    <span style="text-decoration: underline;">761</span>612 0.212</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> 1             4    <span style="text-decoration: underline;">761</span>571 0.212</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> 2             1    <span style="text-decoration: underline;">764</span>373 0.243</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> 2             2    <span style="text-decoration: underline;">763</span>930 0.243</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> &lt;init&gt;        1    <span style="text-decoration: underline;">761</span>548 0.225</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> &lt;init&gt;        2    <span style="text-decoration: underline;">761</span>624 0.225</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> &lt;init&gt;        3    <span style="text-decoration: underline;">761</span>612 0.225</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> &lt;init&gt;        4    <span style="text-decoration: underline;">761</span>571 0.225</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> 1             1    <span style="text-decoration: underline;">761</span>548 0.225</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> 1             2    <span style="text-decoration: underline;">761</span>624 0.225</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> 1             3    <span style="text-decoration: underline;">759</span>466 0.225</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> 1             4    <span style="text-decoration: underline;">763</span>717 0.225</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> 2             1    <span style="text-decoration: underline;">761</span>548 0.230</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> 2             2    <span style="text-decoration: underline;">761</span>624 0.230</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># … with 194 more rows</span></span>
-<span class="r-in"><span class="co"># }</span></span>
-<span class="r-in"></span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
+<span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
   </div>
@@ -281,7 +316,7 @@ preprint arXiv:2011.02288.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

@@ -21,7 +21,7 @@ the data frame provided to redist_constr()."><meta property="og:image" content="
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -95,100 +95,129 @@ the data frame provided to <code><a href="redist_constr.html">redist_constr()</a
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">add_constr_status_quo</span><span class="op">(</span><span class="va">constr</span>, <span class="va">strength</span>, <span class="va">current</span><span class="op">)</span>
-
-<span class="fu">add_constr_grp_pow</span><span class="op">(</span>
-  <span class="va">constr</span>,
-  <span class="va">strength</span>,
-  <span class="va">group_pop</span>,
-  total_pop <span class="op">=</span> <span class="cn">NULL</span>,
-  tgt_group <span class="op">=</span> <span class="fl">0.5</span>,
-  tgt_other <span class="op">=</span> <span class="fl">0.5</span>,
-  pow <span class="op">=</span> <span class="fl">1</span>
-<span class="op">)</span>
-
-<span class="fu">add_constr_grp_hinge</span><span class="op">(</span>
-  <span class="va">constr</span>,
-  <span class="va">strength</span>,
-  <span class="va">group_pop</span>,
-  total_pop <span class="op">=</span> <span class="cn">NULL</span>,
-  tgts_group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.55</span><span class="op">)</span>
-<span class="op">)</span>
-
-<span class="fu">add_constr_grp_inv_hinge</span><span class="op">(</span>
-  <span class="va">constr</span>,
-  <span class="va">strength</span>,
-  <span class="va">group_pop</span>,
-  total_pop <span class="op">=</span> <span class="cn">NULL</span>,
-  tgts_group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.55</span><span class="op">)</span>
-<span class="op">)</span>
-
-<span class="fu">add_constr_compet</span><span class="op">(</span><span class="va">constr</span>, <span class="va">strength</span>, <span class="va">dvote</span>, <span class="va">rvote</span>, pow <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span>
-
-<span class="fu">add_constr_incumbency</span><span class="op">(</span><span class="va">constr</span>, <span class="va">strength</span>, <span class="va">incumbents</span><span class="op">)</span>
-
-<span class="fu">add_constr_splits</span><span class="op">(</span><span class="va">constr</span>, <span class="va">strength</span>, <span class="va">admin</span><span class="op">)</span>
-
-<span class="fu">add_constr_multisplits</span><span class="op">(</span><span class="va">constr</span>, <span class="va">strength</span>, <span class="va">admin</span><span class="op">)</span>
-
-<span class="fu">add_constr_total_splits</span><span class="op">(</span><span class="va">constr</span>, <span class="va">strength</span>, <span class="va">admin</span><span class="op">)</span>
-
-<span class="fu">add_constr_pop_dev</span><span class="op">(</span><span class="va">constr</span>, <span class="va">strength</span><span class="op">)</span>
-
-<span class="fu">add_constr_segregation</span><span class="op">(</span><span class="va">constr</span>, <span class="va">strength</span>, <span class="va">group_pop</span>, total_pop <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>
-
-<span class="fu">add_constr_polsby</span><span class="op">(</span><span class="va">constr</span>, <span class="va">strength</span>, perim_df <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>
-
-<span class="fu">add_constr_fry_hold</span><span class="op">(</span>
-  <span class="va">constr</span>,
-  <span class="va">strength</span>,
-  total_pop <span class="op">=</span> <span class="cn">NULL</span>,
-  ssdmat <span class="op">=</span> <span class="cn">NULL</span>,
-  denominator <span class="op">=</span> <span class="fl">1</span>
-<span class="op">)</span>
-
-<span class="fu">add_constr_log_st</span><span class="op">(</span><span class="va">constr</span>, <span class="va">strength</span>, admin <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>
-
-<span class="fu">add_constr_edges_rem</span><span class="op">(</span><span class="va">constr</span>, <span class="va">strength</span><span class="op">)</span>
-
-<span class="fu">add_constr_custom</span><span class="op">(</span><span class="va">constr</span>, <span class="va">strength</span>, <span class="va">fn</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">add_constr_status_quo</span><span class="op">(</span><span class="va">constr</span>, <span class="va">strength</span>, <span class="va">current</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">add_constr_grp_pow</span><span class="op">(</span></span>
+<span>  <span class="va">constr</span>,</span>
+<span>  <span class="va">strength</span>,</span>
+<span>  <span class="va">group_pop</span>,</span>
+<span>  total_pop <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  tgt_group <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  tgt_other <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  pow <span class="op">=</span> <span class="fl">1</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">add_constr_grp_hinge</span><span class="op">(</span></span>
+<span>  <span class="va">constr</span>,</span>
+<span>  <span class="va">strength</span>,</span>
+<span>  <span class="va">group_pop</span>,</span>
+<span>  total_pop <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  tgts_group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.55</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">add_constr_grp_inv_hinge</span><span class="op">(</span></span>
+<span>  <span class="va">constr</span>,</span>
+<span>  <span class="va">strength</span>,</span>
+<span>  <span class="va">group_pop</span>,</span>
+<span>  total_pop <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  tgts_group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.55</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">add_constr_compet</span><span class="op">(</span><span class="va">constr</span>, <span class="va">strength</span>, <span class="va">dvote</span>, <span class="va">rvote</span>, pow <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">add_constr_incumbency</span><span class="op">(</span><span class="va">constr</span>, <span class="va">strength</span>, <span class="va">incumbents</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">add_constr_splits</span><span class="op">(</span><span class="va">constr</span>, <span class="va">strength</span>, <span class="va">admin</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">add_constr_multisplits</span><span class="op">(</span><span class="va">constr</span>, <span class="va">strength</span>, <span class="va">admin</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">add_constr_total_splits</span><span class="op">(</span><span class="va">constr</span>, <span class="va">strength</span>, <span class="va">admin</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">add_constr_pop_dev</span><span class="op">(</span><span class="va">constr</span>, <span class="va">strength</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">add_constr_segregation</span><span class="op">(</span><span class="va">constr</span>, <span class="va">strength</span>, <span class="va">group_pop</span>, total_pop <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">add_constr_polsby</span><span class="op">(</span><span class="va">constr</span>, <span class="va">strength</span>, perim_df <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">add_constr_fry_hold</span><span class="op">(</span></span>
+<span>  <span class="va">constr</span>,</span>
+<span>  <span class="va">strength</span>,</span>
+<span>  total_pop <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  ssdmat <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  denominator <span class="op">=</span> <span class="fl">1</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">add_constr_log_st</span><span class="op">(</span><span class="va">constr</span>, <span class="va">strength</span>, admin <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">add_constr_edges_rem</span><span class="op">(</span><span class="va">constr</span>, <span class="va">strength</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">add_constr_custom</span><span class="op">(</span><span class="va">constr</span>, <span class="va">strength</span>, <span class="va">fn</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>constr</dt>
 <dd><p>A <code><a href="redist_constr.html">redist_constr()</a></code> object</p></dd>
+
+
 <dt>strength</dt>
 <dd><p>The strength of the constraint. Higher values mean a more restrictive constraint.</p></dd>
+
+
 <dt>current</dt>
 <dd><p>The reference map for the status quo constraint.</p></dd>
+
+
 <dt>group_pop</dt>
 <dd><p>A vector of group population</p></dd>
+
+
 <dt>total_pop</dt>
 <dd><p>A vector of total population. Defaults to the population vector used for sampling.</p></dd>
+
+
 <dt>tgt_group, tgt_other</dt>
 <dd><p>Target group shares for the power-type constraint.</p></dd>
+
+
 <dt>pow</dt>
 <dd><p>The exponent for the power-type constraint.</p></dd>
+
+
 <dt>tgts_group</dt>
 <dd><p>A vector of target group shares for the hinge-type constraint.</p></dd>
+
+
 <dt>dvote, rvote</dt>
 <dd><p>A vector of Democratic or Republican vote counts</p></dd>
+
+
 <dt>incumbents</dt>
 <dd><p>A vector of unit indices for incumbents. For example, if
 three incumbents live in the precincts that correspond to rows 1, 2, and
-100 of your [redist_map], entering incumbents = c(1, 2, 100) would avoid
+100 of your <a href="redist_map.html">redist_map</a>, entering incumbents = c(1, 2, 100) would avoid
 having two or more incumbents be in the same district.</p></dd>
+
+
 <dt>admin</dt>
 <dd><p>A vector indicating administrative unit membership</p></dd>
+
+
 <dt>perim_df</dt>
-<dd><p>A dataframe output from `redist.prep.polsbypopper`</p></dd>
+<dd><p>A dataframe output from <code>redist.prep.polsbypopper</code></p></dd>
+
+
 <dt>ssdmat</dt>
 <dd><p>Squared distance matrix for Fryer Holden constraint</p></dd>
+
+
 <dt>denominator</dt>
 <dd><p>Fryer Holden minimum value to normalize by. Default is 1 (no normalization).</p></dd>
+
+
 <dt>fn</dt>
 <dd><p>A function</p></dd>
+
 </dl></div>
     <div id="details">
     <h2>Details</h2>
@@ -270,18 +299,18 @@ constraints are written in C++ and so are more performant.</p>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">iowa_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan <span class="op">=</span> <span class="va">cd_2010</span>, pop_tol <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">constr</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_constr.html">redist_constr</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">constr</span> <span class="op">&lt;-</span> <span class="fu">add_constr_splits</span><span class="op">(</span><span class="va">constr</span>, strength <span class="op">=</span> <span class="fl">1.5</span>, admin <span class="op">=</span> <span class="va">name</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">constr</span> <span class="op">&lt;-</span> <span class="fu">add_constr_grp_hinge</span><span class="op">(</span><span class="va">constr</span>, strength <span class="op">=</span> <span class="fl">100</span>,</span>
-<span class="r-in">    <span class="va">dem_08</span>, <span class="va">tot_08</span>, tgts_group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">0.6</span><span class="op">)</span><span class="op">)</span></span>
-<span class="r-in"><span class="co"># encourage districts to have the same number of counties</span></span>
-<span class="r-in"><span class="va">constr</span> <span class="op">&lt;-</span> <span class="fu">add_constr_custom</span><span class="op">(</span><span class="va">constr</span>, strength <span class="op">=</span> <span class="fl">1000</span>, fn <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">plan</span>, <span class="va">distr</span><span class="op">)</span> <span class="op">{</span></span>
-<span class="r-in">    <span class="co"># notice that we only use information on precincts in `distr`</span></span>
-<span class="r-in">    <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">plan</span> <span class="op">==</span> <span class="va">distr</span><span class="op">)</span> <span class="op">-</span> <span class="fl">99</span><span class="op">/</span><span class="fl">4</span><span class="op">)</span></span>
-<span class="r-in"><span class="op">}</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">constr</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">iowa_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan <span class="op">=</span> <span class="va">cd_2010</span>, pop_tol <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">constr</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_constr.html">redist_constr</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">constr</span> <span class="op">&lt;-</span> <span class="fu">add_constr_splits</span><span class="op">(</span><span class="va">constr</span>, strength <span class="op">=</span> <span class="fl">1.5</span>, admin <span class="op">=</span> <span class="va">name</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">constr</span> <span class="op">&lt;-</span> <span class="fu">add_constr_grp_hinge</span><span class="op">(</span><span class="va">constr</span>, strength <span class="op">=</span> <span class="fl">100</span>,</span></span>
+<span class="r-in"><span>    <span class="va">dem_08</span>, <span class="va">tot_08</span>, tgts_group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">0.6</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># encourage districts to have the same number of counties</span></span></span>
+<span class="r-in"><span><span class="va">constr</span> <span class="op">&lt;-</span> <span class="fu">add_constr_custom</span><span class="op">(</span><span class="va">constr</span>, strength <span class="op">=</span> <span class="fl">1000</span>, fn <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">plan</span>, <span class="va">distr</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>    <span class="co"># notice that we only use information on precincts in `distr`</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">plan</span> <span class="op">==</span> <span class="va">distr</span><span class="op">)</span> <span class="op">-</span> <span class="fl">99</span><span class="op">/</span><span class="fl">4</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">constr</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> A <span style="color: #0000BB;">&lt;redist_constr&gt;</span> with 3 constraints</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">•</span> A splits constraint of strength 1.5</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">•</span> A (hinge-type) group share constraint of strength 100</span>
@@ -290,7 +319,7 @@ constraints are written in C++ and so are more performant.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     tgts_group: num [1:2] 0.5 0.6</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">•</span> A custom constraint of strength 1000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     fn:function (plan, distr)  </span>
-<span class="r-in"></span>
+<span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
   </div>
@@ -305,7 +334,7 @@ constraints are written in C++ and so are more performant.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

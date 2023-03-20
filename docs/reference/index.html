@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -87,11 +87,11 @@
       </tr></tbody><tbody><tr><td>
           <p><code><a href="redist_smc.html">redist_smc()</a></code> </p>
         </td>
-        <td><p>SMC Redistricting Sampler</p></td>
+        <td><p>SMC Redistricting Sampler (McCartan and Imai 2020)</p></td>
       </tr><tr><td>
           <p><code><a href="redist_mergesplit.html">redist_mergesplit()</a></code> </p>
         </td>
-        <td><p>Merge-Split/Recombination MCMC Redistricting Sampler</p></td>
+        <td><p>Merge-Split/Recombination MCMC Redistricting Sampler (Carter et al. 2019)</p></td>
       </tr><tr><td>
           <p><code><a href="redist_mergesplit_parallel.html">redist_mergesplit_parallel()</a></code> </p>
         </td>
@@ -99,7 +99,7 @@
       </tr><tr><td>
           <p><code><a href="redist_flip.html">redist_flip()</a></code> </p>
         </td>
-        <td><p>'Flip' Markov Chain Monte Carlo Redistricting Simulation</p></td>
+        <td><p>'Flip' Markov Chain Monte Carlo Redistricting Simulation (Fifield et al. 2020)</p></td>
       </tr><tr><td>
           <p><code><a href="redist_shortburst.html">redist_shortburst()</a></code> </p>
         </td>
@@ -117,13 +117,13 @@
         </td>
         <td><p>Redistricting via Compact Random Seed and Grow Algorithm</p></td>
       </tr><tr><td>
-          <p><code><a href="redist.flip.html">redist.flip()</a></code> </p>
-        </td>
-        <td><p>(Deprecated) Flip MCMC Redistricting Simulator</p></td>
-      </tr><tr><td>
           <p><code><a href="redist.flip.anneal.html">redist.flip.anneal()</a></code> </p>
         </td>
         <td><p>(Deprecated) Flip MCMC Redistricting Simulator using Simulated Annealing</p></td>
+      </tr><tr><td>
+          <p><code><a href="redist.flip.html">redist.flip()</a></code> </p>
+        </td>
+        <td><p>(Deprecated) Flip MCMC Redistricting Simulator</p></td>
       </tr><tr><td>
           <p><code><a href="redist.mcmc.mpi.html">redist.mcmc.mpi()</a></code> </p>
         </td>
@@ -269,9 +269,9 @@
         </td>
         <td><p>Count County Splits</p></td>
       </tr><tr><td>
-          <p><code><a href="redist_smc_ci.html">redist_smc_ci()</a></code> </p>
+          <p><code><a href="redist_ci.html">redist_ci()</a></code> <code><a href="redist_ci.html">redist_smc_ci()</a></code> <code><a href="redist_ci.html">redist_mcmc_ci()</a></code> </p>
         </td>
-        <td><p>Confidence Intervals for SMC Estimates</p></td>
+        <td><p>Confidence Intervals for SMC and MCMC Estimates</p></td>
       </tr></tbody><tbody><tr><th colspan="2">
           <h2 id="setup-helpers">Setup Helpers <a href="#setup-helpers" class="anchor" aria-hidden="true"></a></h2>
           <p class="section-desc"></p><p>Functions that help prepare data and select constraints</p>
@@ -462,10 +462,6 @@
           <p class="section-desc"></p><p>Functions that help setup outputs for easier use</p>
         </th>
       </tr></tbody><tbody><tr><td>
-          <p><code><a href="redist.combine.html">redist.combine()</a></code> </p>
-        </td>
-        <td><p>(Deprecated) Combine successive runs of <code>redist.flip</code></p></td>
-      </tr><tr><td>
           <p><code><a href="redist.combine.anneal.html">redist.combine.anneal()</a></code> </p>
         </td>
         <td><p>(Deprecated) redist.combine.anneal</p></td>
@@ -473,6 +469,10 @@
           <p><code><a href="redist.combine.mpi.html">redist.combine.mpi()</a></code> </p>
         </td>
         <td><p>Combine successive runs of <code>redist.mcmc.mpi</code></p></td>
+      </tr><tr><td>
+          <p><code><a href="redist.combine.html">redist.combine()</a></code> </p>
+        </td>
+        <td><p>(Deprecated) Combine successive runs of <code>redist.flip</code></p></td>
       </tr><tr><td>
           <p><code><a href="redist.ipw.html">redist.ipw()</a></code> </p>
         </td>
@@ -496,7 +496,7 @@
       </tr><tr><td>
           <p><code><a href="redist.enumpart.html">redist.enumpart()</a></code> </p>
         </td>
-        <td><p>Enumerate All Parititions</p></td>
+        <td><p>Enumerate All Parititions (Fifield et al. 2020)</p></td>
       </tr><tr><td>
           <p><code><a href="redist.init.enumpart.html">redist.init.enumpart()</a></code> </p>
         </td>
@@ -518,7 +518,7 @@
           <p class="section-desc"></p><p>Other functions</p>
         </th>
       </tr></tbody><tbody><tr><td>
-          <p><code><a href="redist-package.html">redist-package</a></code> </p>
+          <p><code><a href="redist-package.html">redist-package</a></code> <code><a href="redist-package.html">redist</a></code> </p>
         </td>
         <td><p>Simulation Methods for Legislative Redistricting</p></td>
       </tr><tr><td>
@@ -606,7 +606,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

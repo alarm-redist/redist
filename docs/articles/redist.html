@@ -40,7 +40,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0.9999</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -135,7 +135,7 @@ data</a></li>
 </ol>
 <p>First, however, a brief overview of the package itself.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alarm-redist.github.io/redist/" class="external-link">redist</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alarm-redist.org/redist/" class="external-link">redist</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
@@ -216,10 +216,10 @@ demographic information from the Census, and precinct-level political
 data. These data generally come from different sources, and may not
 fully overlap with each other, further complicating the problem.</p>
 <p><code>redist</code> is not focused on this data collection process.
-The <a href="https://www.christophertkenny.com/geomander/" class="external-link"><code>geomander</code></a>
+The <a href="https://christophertkenny.com/geomander/" class="external-link"><code>geomander</code></a>
 package contains many helpful functions for compiling these data, and
 fixing problems in geographic data.</p>
-<p>The ALARM project provides <a href="https://alarm-redist.github.io/posts/2021-08-10-census-2020/" class="external-link">pre-cleaned
+<p>The ALARM project provides <a href="https://alarm-redist.org/posts/2021-08-10-census-2020/" class="external-link">pre-cleaned
 redistricting data files</a> consisting of VEST election data joined
 2020 Census data at the precinct level. Other sources for precinct-level
 geographic and political information include the <a href="https://electionlab.mit.edu/data" class="external-link">MIT Election Lab</a>, the <a href="https://www.census.gov/programs-surveys/decennial-census/about/rdo.html" class="external-link">Census</a>,
@@ -529,7 +529,7 @@ population deviation, the perimeter-based compactness measure related to
 the Iowa Code’s redistricting requirements, and the fraction of minority
 voters and two-party Democratic vote share by district.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">county_perims</span> <span class="op">=</span> <span class="fu">prep_perims</span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">iowa_map</span><span class="op">$</span><span class="va">adj</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">county_perims</span> <span class="op">=</span> <span class="fu"><a href="http://alarm-redist.org/redistmetrics/reference/prep_perims.html" class="external-link">prep_perims</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">iowa_map</span><span class="op">$</span><span class="va">adj</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">iowa_plans</span> <span class="op">=</span> <span class="va">iowa_plans</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>pop_dev <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">total_pop</span> <span class="op">/</span> <span class="fu"><a href="../reference/get_target.html">get_target</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span>,</span>
@@ -565,23 +565,23 @@ for algorithm diagnostics.</p>
 <span><span class="co">#&gt; <span style="font-weight: bold;">SMC:</span> 1,000 sampled plans of 4 districts on 99 units</span></span>
 <span><span class="co">#&gt; `adapt_k_thresh`=0.985 • `seq_alpha`=0.5</span></span>
 <span><span class="co">#&gt; `est_label_mult`=1 • `pop_temper`=0</span></span>
-<span><span class="co">#&gt; Plan diversity 80% range: 0.50 to 0.81</span></span>
+<span><span class="co">#&gt; Plan diversity 80% range: 0.50 to 0.82</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; R-hat values for summary statistics:</span></span>
 <span><span class="co">#&gt; pop_overlap     pop_dev        comp     pct_min     pct_dem </span></span>
-<span><span class="co">#&gt;   1.0030542   1.0094895   0.9996249   1.0006561   1.0063754</span></span>
+<span><span class="co">#&gt;       1.002       1.010       1.000       1.002       1.009</span></span>
 <span><span class="co">#&gt; Sampling diagnostics for SMC run 1 of 2 (500 samples)</span></span>
 <span><span class="co">#&gt;          Eff. samples (%) Acc. rate Log wgt. sd  Max. unique Est. k </span></span>
 <span><span class="co">#&gt; Split 1       492 (98.4%)      5.5%        0.26   322 (102%)      5 </span></span>
 <span><span class="co">#&gt; Split 2       486 (97.3%)     10.1%        0.33   312 ( 99%)      3 </span></span>
 <span><span class="co">#&gt; Split 3       480 (96.0%)      4.2%        0.42   275 ( 87%)      2 </span></span>
-<span><span class="co">#&gt; Resample      415 (83.1%)       NA%        0.38   422 (134%)     NA</span></span>
+<span><span class="co">#&gt; Resample      416 (83.2%)       NA%        0.38   425 (134%)     NA</span></span>
 <span><span class="co">#&gt; Sampling diagnostics for SMC run 2 of 2 (500 samples)</span></span>
 <span><span class="co">#&gt;          Eff. samples (%) Acc. rate Log wgt. sd  Max. unique Est. k </span></span>
 <span><span class="co">#&gt; Split 1       491 (98.3%)      5.7%        0.26   309 ( 98%)      5 </span></span>
 <span><span class="co">#&gt; Split 2       483 (96.5%)      9.7%        0.39   309 ( 98%)      3 </span></span>
 <span><span class="co">#&gt; Split 3       478 (95.7%)      4.4%        0.42   283 ( 90%)      2 </span></span>
-<span><span class="co">#&gt; Resample      407 (81.3%)       NA%        0.39   420 (133%)     NA</span></span>
+<span><span class="co">#&gt; Resample      408 (81.5%)       NA%        0.39   429 (136%)     NA</span></span>
 <span><span class="co">#&gt; • <span style="color: #555555;"> Watch out for low effective samples, very low acceptance rates (less than</span></span></span>
 <span><span class="co">#&gt; <span style="color: #555555;">1%), large std. devs. of the log weights (more than 3 or so), and low numbers</span></span></span>
 <span><span class="co">#&gt; <span style="color: #555555;">of unique plans. R-hat values for summary statistics should be between 1 and</span></span></span>

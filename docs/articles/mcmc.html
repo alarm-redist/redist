@@ -40,7 +40,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0.9999</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -123,7 +123,7 @@
     
     
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alarm-redist.github.io/redist/" class="external-link">redist</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alarm-redist.org/redist/" class="external-link">redist</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com" class="external-link">patchwork</a></span><span class="op">)</span></span>
@@ -292,8 +292,8 @@ unit for redistricting, rather than thousands of precincts.)</p>
 which counties are touching which other counties on a map. If you have
 an existing plan, it’s generally advised to supply this to the optional
 <code>plan</code> argument to ensure that the existing plan is a valid,
-connected plan. If you get a warning, the <a href="https://www.christophertkenny.com/geomander/" class="external-link">geomander R
-package</a> can help solve potential issues.</p>
+connected plan. If you get a warning, the <a href="https://christophertkenny.com/geomander/" class="external-link">geomander R package</a>
+can help solve potential issues.</p>
 <p>In addition, we need population for each unit. We’ve included
 <code>iowa$pop</code> as the total population as of the 2010 Census.
 From there, we have the basic information that we need to run our first
@@ -310,7 +310,9 @@ parity deviation of 0.05 (with <code>pop_tol</code>).</p>
 <span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a> [32m■                                [39m   <span class="dv">1</span>% <span class="sc">|</span> ETA<span class="sc">:</span> 0s</span>
 <span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [39m <span class="dv">100</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.65</span></span></code></pre></div>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a> [32m■■                               [39m   <span class="dv">2</span>% <span class="sc">|</span> ETA<span class="sc">:</span> 1s</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [39m <span class="dv">100</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.65</span></span></code></pre></div>
 <p>The printed output can be silenced by setting
 <code>verbose = FALSE</code>, however it displays very important
 information. First, it displays when preprocessing begins and when the
@@ -356,7 +358,9 @@ constraint, as below:</p>
 <span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a> [32m■                                [39m   <span class="dv">1</span>% <span class="sc">|</span> ETA<span class="sc">:</span> 0s</span>
 <span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [39m <span class="dv">100</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.61</span></span></code></pre></div>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a> [32m■■■■■                            [39m  <span class="dv">13</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.70</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [39m <span class="dv">100</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.61</span></span></code></pre></div>
 <p>The first arguments as the same, but this adds three key arguments.
 First, setting <code>constraint</code> to any combination of the nine
 implemented constraints allows us to specify the target distribution.
@@ -442,7 +446,7 @@ flip.</p>
 <span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a> [32m■                                [39m   <span class="dv">1</span>% <span class="sc">|</span> ETA<span class="sc">:</span> 0s</span>
 <span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■                    [39m  <span class="dv">41</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.82</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■             [39m  <span class="dv">63</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.82</span></span>
 <span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [39m <span class="dv">100</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.80</span></span></code></pre></div>
 <p>This highlights a key difference between the <code>redist_flip</code>
@@ -467,7 +471,7 @@ object</p>
 <span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a> [32m■                                [39m   <span class="dv">1</span>% <span class="sc">|</span> ETA<span class="sc">:</span> 0s</span>
 <span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■■■■■■■      [39m  <span class="dv">85</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.96</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■            [39m  <span class="dv">68</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.97</span></span>
 <span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [39m <span class="dv">100</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.97</span></span></code></pre></div>
 <p><code>redist_flip</code> outputs a <code>redist_plans</code>
@@ -589,7 +593,7 @@ advice, we’ll use the following example:</p>
 <span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a> [32m■                                [39m   <span class="dv">1</span>% <span class="sc">|</span> ETA<span class="sc">:</span> 0s</span>
 <span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a> [32m■■■                              [39m   <span class="dv">5</span>% <span class="sc">|</span> ETA<span class="sc">:</span> 0s</span>
+<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■■■■■        [39m  <span class="dv">81</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.57</span></span>
 <span id="cb30-19"><a href="#cb30-19" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb30-20"><a href="#cb30-20" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [39m <span class="dv">100</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.55</span></span></code></pre></div>
 <div class="section level3">
@@ -719,7 +723,9 @@ set up.</p>
 <span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a> [32m■                                [39m   <span class="dv">1</span>% <span class="sc">|</span> ETA<span class="sc">:</span> 0s</span>
 <span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [39m <span class="dv">100</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.75</span></span></code></pre></div>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a> [32m■■■■■                            [39m  <span class="dv">12</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.70</span></span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [39m <span class="dv">100</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.75</span></span></code></pre></div>
 <p>Now, the interesting this here is that adding more constraints
 actually increased the acceptance probability. This is because
 correlated constraints can guide the algorithm towards high probability
@@ -744,7 +750,9 @@ about.</p>
 <span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a> [32m■                                [39m   <span class="dv">1</span>% <span class="sc">|</span> ETA<span class="sc">:</span> 0s</span>
 <span id="cb38-16"><a href="#cb38-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-17"><a href="#cb38-17" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [39m <span class="dv">100</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.19</span></span></code></pre></div>
+<span id="cb38-17"><a href="#cb38-17" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    [39m  <span class="dv">92</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.21</span></span>
+<span id="cb38-18"><a href="#cb38-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-19"><a href="#cb38-19" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [39m <span class="dv">100</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.19</span></span></code></pre></div>
 <p>For example, this new set of constraints might be a good place to
 simulate at.</p>
 <p>Notably, the process of tuning should be guided by the constraint

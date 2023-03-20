@@ -18,7 +18,7 @@ make a traceplot showing the evolution of the statistic over MCMC iterations."><
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -89,39 +89,48 @@ make a traceplot showing the evolution of the statistic over MCMC iterations.</p
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">redist.plot.trace</span><span class="op">(</span><span class="va">plans</span>, <span class="va">qty</span>, district <span class="op">=</span> <span class="fl">1L</span>, <span class="va">...</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">redist.plot.trace</span><span class="op">(</span><span class="va">plans</span>, <span class="va">qty</span>, district <span class="op">=</span> <span class="fl">1L</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>plans</dt>
 <dd><p>the <code>redist_plans</code> object.</p></dd>
+
+
 <dt>qty</dt>
 <dd><p><code><a href="https://dplyr.tidyverse.org/reference/dplyr_data_masking.html" class="external-link">&lt;data-masking&gt;</a></code> the statistic.</p></dd>
+
+
 <dt>district</dt>
 <dd><p>for <code>redist_plans</code> objects with multiple districts,
 which <code>district</code> to subset to for plotting. Set to <code>NULL</code> to
 perform no subsetting.</p></dd>
+
+
 <dt>...</dt>
 <dd><p>passed on to <code><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></code></p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>A ggplot</p>
+    
+
+<p>A ggplot</p>
     </div>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="va">iowa_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan <span class="op">=</span> <span class="va">cd_2010</span>, pop_tol <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">plans</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_mergesplit_parallel.html">redist_mergesplit_parallel</a></span><span class="op">(</span><span class="va">iowa_map</span>, nsims <span class="op">=</span> <span class="fl">200</span>, chains <span class="op">=</span> <span class="fl">2</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span class="r-in">    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>dem <span class="op">=</span> <span class="fu"><a href="redist.group.percent.html">group_frac</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">dem_08</span>, <span class="va">dem_08</span> <span class="op">+</span> <span class="va">rep_08</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span class="r-in">    <span class="fu"><a href="number_by.html">number_by</a></span><span class="op">(</span><span class="va">dem</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu">redist.plot.trace</span><span class="op">(</span><span class="va">plans</span>, <span class="va">dem</span>, district <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">iowa_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan <span class="op">=</span> <span class="va">cd_2010</span>, pop_tol <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">plans</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_mergesplit_parallel.html">redist_mergesplit_parallel</a></span><span class="op">(</span><span class="va">iowa_map</span>, nsims <span class="op">=</span> <span class="fl">200</span>, chains <span class="op">=</span> <span class="fl">2</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>dem <span class="op">=</span> <span class="fu"><a href="redist.group.percent.html">group_frac</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">dem_08</span>, <span class="va">dem_08</span> <span class="op">+</span> <span class="va">rep_08</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="number_by.html">number_by</a></span><span class="op">(</span><span class="va">dem</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">redist.plot.trace</span><span class="op">(</span><span class="va">plans</span>, <span class="va">dem</span>, district <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="redist.plot.trace-1.png" alt="" width="700" height="433"></span>
-<span class="r-in"></span>
+<span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
   </div>
@@ -136,7 +145,7 @@ perform no subsetting.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

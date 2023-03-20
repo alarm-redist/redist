@@ -20,7 +20,7 @@ redistricting routines in this package."><meta property="og:image" content="/log
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -93,7 +93,7 @@ redistricting routines in this package.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">redist.rsg</span><span class="op">(</span><span class="va">adj</span>, <span class="va">total_pop</span>, <span class="va">ndists</span>, <span class="va">pop_tol</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span>, maxiter <span class="op">=</span> <span class="fl">5000</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">redist.rsg</span><span class="op">(</span><span class="va">adj</span>, <span class="va">total_pop</span>, <span class="va">ndists</span>, <span class="va">pop_tol</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span>, maxiter <span class="op">=</span> <span class="fl">5000</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -102,31 +102,44 @@ redistricting routines in this package.</p>
 <dd><p>List of length N, where N is the number of precincts.
 Each list element is an integer vector indicating which precincts that precinct
 is adjacent to.  It is assumed that precinct numbers start at 0.</p></dd>
+
+
 <dt>total_pop</dt>
 <dd><p>numeric vector of length N, where N is the number of precincts.
 Each element lists the population total of the corresponding precinct, and is
 used to enforce population constraints.</p></dd>
+
+
 <dt>ndists</dt>
 <dd><p>integer, the number of districts we want to partition the
 precincts into.</p></dd>
+
+
 <dt>pop_tol</dt>
 <dd><p>numeric, indicating how close district population targets have
 to be to the target population before algorithm converges.  thresh=0.05 for
 example means that all districts must be between 0.95 and 1.05 times the size
 of target.pop in population size.</p></dd>
+
+
 <dt>verbose</dt>
 <dd><p>boolean, indicating whether the time to run the algorithm is
 printed.</p></dd>
+
+
 <dt>maxiter</dt>
 <dd><p>integer, indicating maximum number of iterations to attempt
 before convergence to population constraint fails.  If it fails once, it will
 use a different set of start values and try again.  If it fails again,
 redist.rsg() returns an object of all NAs, indicating that use of more
 iterations may be advised.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>list, containing three objects containing the completed redistricting
+    
+
+<p>list, containing three objects containing the completed redistricting
 plan.</p><ul><li><p><code>plan</code>  A vector of length N, indicating the
 district membership of each precinct.</p></li>
 <li><p><code>district_list</code>  A list of length Ndistrict.  Each list contains a
@@ -146,9 +159,9 @@ Quarterly Journal of Political Science. 8(3): 239-269.</p>
 <a href="mailto:benfifield@gmail.com">benfifield@gmail.com</a>, <a href="https://www.benfifield.com/" class="external-link">https://www.benfifield.com/</a></p>
 <p>Michael Higgins, Department of Statistics, Kansas State University
 <a href="mailto:mikehiggins@k-state.edu">mikehiggins@k-state.edu</a>,
-<a href="http://www-personal.k-state.edu/~mikehiggins/" class="external-link">http://www-personal.k-state.edu/~mikehiggins/</a></p>
+<a href="https://www.k-state.edu/stats/about/people/HigginsMichael.html" class="external-link">https://www.k-state.edu/stats/about/people/HigginsMichael.html</a></p>
 <p>Kosuke Imai, Department of Politics, Princeton University
-<a href="mailto:imai@harvard.edu">imai@harvard.edu</a>, <a href="http://imai.fas.harvard.edu" class="external-link">http://imai.fas.harvard.edu</a></p>
+<a href="mailto:imai@harvard.edu">imai@harvard.edu</a>, <a href="https://imai.fas.harvard.edu" class="external-link">https://imai.fas.harvard.edu</a></p>
 <p>James Lo, <a href="mailto:jameslo@princeton.edu">jameslo@princeton.edu</a></p>
 <p>Alexander Tarr, Department of Electrical Engineering, Princeton University
 <a href="mailto:atarr@princeton.edu">atarr@princeton.edu</a></p>
@@ -156,12 +169,12 @@ Quarterly Journal of Political Science. 8(3): 239-269.</p>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="co">### Real data example from test set</span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">fl25</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">fl25_adj</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">redist.rsg</span><span class="op">(</span>adj <span class="op">=</span> <span class="va">fl25_adj</span>, total_pop <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span>,</span>
-<span class="r-in">    ndists <span class="op">=</span> <span class="fl">3</span>, pop_tol <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co">### Real data example from test set</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">fl25</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">fl25_adj</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">redist.rsg</span><span class="op">(</span>adj <span class="op">=</span> <span class="va">fl25_adj</span>, total_pop <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span>,</span></span>
+<span class="r-in"><span>    ndists <span class="op">=</span> <span class="fl">3</span>, pop_tol <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ==================== </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> redist.rsg(): Automated Redistricting Starts</span>
@@ -169,7 +182,7 @@ Quarterly Journal of Political Science. 8(3): 239-269.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 	3 districts built using 25 precincts in 0 seconds...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-in"></span>
+<span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
   </div>
@@ -184,7 +197,7 @@ Quarterly Journal of Political Science. 8(3): 239-269.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

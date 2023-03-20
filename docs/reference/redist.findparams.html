@@ -18,7 +18,7 @@ redist_flip for a given map."><meta property="og:image" content="/logo.png"><!--
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -89,84 +89,119 @@ redist_flip for a given map."><meta property="og:image" content="/logo.png"><!--
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">redist.findparams</span><span class="op">(</span>
-  <span class="va">map</span>,
-  <span class="va">nsims</span>,
-  init_plan <span class="op">=</span> <span class="cn">NULL</span>,
-  adapt_lambda <span class="op">=</span> <span class="cn">FALSE</span>,
-  adapt_eprob <span class="op">=</span> <span class="cn">FALSE</span>,
-  <span class="va">params</span>,
-  ssdmat <span class="op">=</span> <span class="cn">NULL</span>,
-  group_pop <span class="op">=</span> <span class="cn">NULL</span>,
-  counties <span class="op">=</span> <span class="cn">NULL</span>,
-  nstartval_store <span class="op">=</span> <span class="fl">1</span>,
-  maxdist_startval <span class="op">=</span> <span class="fl">100</span>,
-  maxiterrsg <span class="op">=</span> <span class="fl">5000</span>,
-  report_all <span class="op">=</span> <span class="cn">TRUE</span>,
-  parallel <span class="op">=</span> <span class="cn">FALSE</span>,
-  ncores <span class="op">=</span> <span class="cn">NULL</span>,
-  log <span class="op">=</span> <span class="cn">FALSE</span>,
-  verbose <span class="op">=</span> <span class="cn">TRUE</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">redist.findparams</span><span class="op">(</span></span>
+<span>  <span class="va">map</span>,</span>
+<span>  <span class="va">nsims</span>,</span>
+<span>  init_plan <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  adapt_lambda <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  adapt_eprob <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  <span class="va">params</span>,</span>
+<span>  ssdmat <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  group_pop <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  counties <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  nstartval_store <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  maxdist_startval <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>  maxiterrsg <span class="op">=</span> <span class="fl">5000</span>,</span>
+<span>  report_all <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  ncores <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  log <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>map</dt>
 <dd><p>A <code><a href="redist_map.html">redist_map</a></code> object.</p></dd>
+
+
 <dt>nsims</dt>
 <dd><p>The number of simulations run before a save point.</p></dd>
+
+
 <dt>init_plan</dt>
 <dd><p>A vector containing the congressional district labels
 of each geographic unit. The default is <code>NULL</code>. If not provided, random
 and contiguous congressional district assignments will be generated using <code>redist.rsg</code>.</p></dd>
+
+
 <dt>adapt_lambda</dt>
 <dd><p>Whether to adaptively tune the lambda parameter so that the Metropolis-Hastings
 acceptance probability falls between 20% and 40%. Default is FALSE.</p></dd>
+
+
 <dt>adapt_eprob</dt>
 <dd><p>Whether to adaptively tune the edgecut probability parameter so that the
 Metropolis-Hastings acceptance probability falls between 20% and 40%. Default is
 FALSE.</p></dd>
+
+
 <dt>params</dt>
 <dd><p>A matrix of parameter values to test, such as the output of
 <code>expand.grid</code>. Parameters accepted for <code>params</code> include <code>eprob</code>,
 <code>lambda</code>, <code>pop_tol</code>, <code>beta</code>, and <code>constraint</code>.</p></dd>
+
+
 <dt>ssdmat</dt>
 <dd><p>A matrix of squared distances between geographic
 units. The default is <code>NULL</code>.</p></dd>
+
+
 <dt>group_pop</dt>
 <dd><p>A vector of populations for some sub-group of
 interest. The default is <code>NULL</code>.</p></dd>
+
+
 <dt>counties</dt>
 <dd><p>A vector of county membership assignments. The default is <code>NULL</code>.</p></dd>
+
+
 <dt>nstartval_store</dt>
 <dd><p>The number of maps to sample from the preprocessing chain
 for use as starting values in future simulations. Default is 1.</p></dd>
+
+
 <dt>maxdist_startval</dt>
 <dd><p>The maximum distance from the starting map that
 sampled maps should be. Default is 100 (no restriction).</p></dd>
+
+
 <dt>maxiterrsg</dt>
 <dd><p>Maximum number of iterations for random seed-and-grow
 algorithm to generate starting values. Default is 5000.</p></dd>
+
+
 <dt>report_all</dt>
 <dd><p>Whether to report all summary statistics for each set of
 parameter values. Default is <code>TRUE</code>.</p></dd>
+
+
 <dt>parallel</dt>
 <dd><p>Whether to run separate parameter settings in parallel.
 Default is <code>FALSE</code>.</p></dd>
+
+
 <dt>ncores</dt>
 <dd><p>Number of parallel tasks to run, declared outside of the
 function. Default is <code>NULL</code>.</p></dd>
+
+
 <dt>log</dt>
 <dd><p>Whether to open a log to track progress for each parameter combination
 being tested. Default is FALSE.</p></dd>
+
+
 <dt>verbose</dt>
 <dd><p>Whether to print additional information about the tests.
 Default is <code>TRUE</code>.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p><code>redist.findparams</code> returns a print-out of summary statistics
+    
+
+<p><code>redist.findparams</code> returns a print-out of summary statistics
 about each parameter setting.</p>
     </div>
     <div id="details">
@@ -184,89 +219,95 @@ Carlo." Working Paper. Available at
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="co"># \donttest{</span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">fl25</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">fl25_enum</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">fl25_adj</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co">## Get an initial partition</span></span>
-<span class="r-in"><span class="va">init_plan</span> <span class="op">&lt;-</span> <span class="va">fl25_enum</span><span class="op">$</span><span class="va">plans</span><span class="op">[</span>, <span class="fl">5118</span><span class="op">]</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="va">params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span>eprob <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">.01</span>, <span class="fl">.05</span>, <span class="fl">.1</span><span class="op">)</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co"># Make map</span></span>
-<span class="r-in"><span class="va">map_fl</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">fl25</span>, ndists <span class="op">=</span> <span class="fl">3</span>, pop_tol <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">fl25</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">fl25_enum</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">fl25_adj</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## Get an initial partition</span></span></span>
+<span class="r-in"><span><span class="va">init_plan</span> <span class="op">&lt;-</span> <span class="va">fl25_enum</span><span class="op">$</span><span class="va">plans</span><span class="op">[</span>, <span class="fl">5118</span><span class="op">]</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span>eprob <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">.01</span>, <span class="fl">.05</span>, <span class="fl">.1</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Make map</span></span></span>
+<span class="r-in"><span><span class="va">map_fl</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">fl25</span>, ndists <span class="op">=</span> <span class="fl">3</span>, pop_tol <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Projecting to CRS 3857</span>
-<span class="r-in"><span class="co">## Run the algorithm</span></span>
-<span class="r-in"><span class="fu">redist.findparams</span><span class="op">(</span><span class="va">map_fl</span>,</span>
-<span class="r-in">    init_plan <span class="op">=</span> <span class="va">init_plan</span>, nsims <span class="op">=</span> <span class="fl">10000</span>, params <span class="op">=</span> <span class="va">params</span><span class="op">)</span></span>
+<span class="r-in"><span><span class="co">## Run the algorithm</span></span></span>
+<span class="r-in"><span><span class="fu">redist.findparams</span><span class="op">(</span><span class="va">map_fl</span>,</span></span>
+<span class="r-in"><span>    init_plan <span class="op">=</span> <span class="va">init_plan</span>, nsims <span class="op">=</span> <span class="fl">10000</span>, params <span class="op">=</span> <span class="va">params</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## ------------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ## redist.findparams(): Parameter tuning for redist.flip()</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ## Searching over 3 parameter combinations</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ## ------------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="color: #BB0000; font-weight: bold;">redist_flip()</span> <span style="color: #00BBBB;">────────────────────────────────────────────────────────────────────────────────────────────────────────</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="color: #BB0000; font-weight: bold;">redist_flip()</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────────────</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■                               </span>   0% | ETA: 5s</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■                              </span>   3% | ETA: 4s</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■                             </span>   7% | ETA: 4s</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■                          </span>  17% | ETA:  3s | MH Acceptance: 0.99</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■                       </span>  26% | ETA:  2s | MH Acceptance: 0.99</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■                    </span>  35% | ETA:  2s | MH Acceptance: 0.99</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■                  </span>  45% | ETA:  1s | MH Acceptance: 0.99</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■               </span>  54% | ETA:  1s | MH Acceptance: 0.99</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■             </span>  61% | ETA:  1s | MH Acceptance: 0.99</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■            </span>  64% | ETA:  1s | MH Acceptance: 0.99</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■         </span>  73% | ETA:  1s | MH Acceptance: 0.99</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■      </span>  83% | ETA:  0s | MH Acceptance: 0.99</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   </span>  92% | ETA:  0s | MH Acceptance: 0.99</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.99</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■                               </span>   0% | ETA: 7s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■                             </span>   6% | ETA: 3s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■                           </span>  14% | ETA:  3s | MH Acceptance: 0.99</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■                          </span>  18% | ETA:  3s | MH Acceptance: 0.99</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■                        </span>  25% | ETA:  2s | MH Acceptance: 0.99</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■                      </span>  32% | ETA:  2s | MH Acceptance: 0.99</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■                   </span>  39% | ETA:  2s | MH Acceptance: 0.99</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■                 </span>  45% | ETA:  2s | MH Acceptance: 0.99</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■               </span>  54% | ETA:  1s | MH Acceptance: 0.99</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■             </span>  61% | ETA:  1s | MH Acceptance: 0.99</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■           </span>  68% | ETA:  1s | MH Acceptance: 0.99</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■        </span>  75% | ETA:  1s | MH Acceptance: 0.99</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■      </span>  82% | ETA:  1s | MH Acceptance: 0.99</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■    </span>  89% | ETA:  0s | MH Acceptance: 0.99</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  </span>  97% | ETA:  0s | MH Acceptance: 0.99</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.99</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="color: #BB0000; font-weight: bold;">redist_flip()</span> <span style="color: #00BBBB;">────────────────────────────────────────────────────────────────────────────────────────────────────────</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■                               </span>   0% | ETA: 4s</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■                               </span>   0% | ETA:43s</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■                            </span>  10% | ETA: 3s</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■                         </span>  19% | ETA:  2s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■                      </span>  29% | ETA:  2s | MH Acceptance: 0.97</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■                    </span>  38% | ETA:  2s | MH Acceptance: 0.97</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■                 </span>  47% | ETA:  1s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■              </span>  56% | ETA:  1s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■             </span>  59% | ETA:  1s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■           </span>  67% | ETA:  1s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■        </span>  76% | ETA:  1s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■     </span>  86% | ETA:  0s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   </span>  94% | ETA:  0s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="color: #BB0000; font-weight: bold;">redist_flip()</span> <span style="color: #00BBBB;">────────────────────────────────────────────────────────────────────────────────────────────────────────</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="color: #BB0000; font-weight: bold;">redist_flip()</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────────────</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■                              </span>   2% | ETA: 2s</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■                            </span>  11% | ETA:  2s | MH Acceptance: 0.92</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■                         </span>  19% | ETA:  2s | MH Acceptance: 0.92</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■                       </span>  28% | ETA:  2s | MH Acceptance: 0.93</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■                     </span>  33% | ETA:  2s | MH Acceptance: 0.93</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■                   </span>  40% | ETA:  2s | MH Acceptance: 0.93</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■                </span>  49% | ETA:  1s | MH Acceptance: 0.94</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■             </span>  59% | ETA:  1s | MH Acceptance: 0.93</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■          </span>  68% | ETA:  1s | MH Acceptance: 0.93</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■        </span>  76% | ETA:  1s | MH Acceptance: 0.93</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■      </span>  85% | ETA:  0s | MH Acceptance: 0.93</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   </span>  92% | ETA:  0s | MH Acceptance: 0.93</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  </span>  97% | ETA:  0s | MH Acceptance: 0.93</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.93</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■                               </span>   1% | ETA: 3s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■                            </span>   9% | ETA: 2s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■                          </span>  16% | ETA:  2s | MH Acceptance: 0.97</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■                        </span>  24% | ETA:  2s | MH Acceptance: 0.97</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■                      </span>  31% | ETA:  2s | MH Acceptance: 0.97</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■                    </span>  38% | ETA:  2s | MH Acceptance: 0.97</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■                 </span>  46% | ETA:  2s | MH Acceptance: 0.97</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■               </span>  53% | ETA:  1s | MH Acceptance: 0.97</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■             </span>  60% | ETA:  1s | MH Acceptance: 0.97</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■           </span>  67% | ETA:  1s | MH Acceptance: 0.97</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■         </span>  74% | ETA:  1s | MH Acceptance: 0.97</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■       </span>  81% | ETA:  1s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■     </span>  88% | ETA:  0s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   </span>  94% | ETA:  0s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.96</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="color: #BB0000; font-weight: bold;">redist_flip()</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────────────</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■                              </span>   3% | ETA: 3s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■                            </span>   9% | ETA: 3s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■                          </span>  15% | ETA:  3s | MH Acceptance: 0.92</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■                        </span>  22% | ETA:  3s | MH Acceptance: 0.92</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■                      </span>  29% | ETA:  2s | MH Acceptance: 0.92</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■                    </span>  36% | ETA:  2s | MH Acceptance: 0.92</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■                  </span>  42% | ETA:  2s | MH Acceptance: 0.92</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■                </span>  49% | ETA:  2s | MH Acceptance: 0.92</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■              </span>  56% | ETA:  1s | MH Acceptance: 0.92</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■            </span>  62% | ETA:  1s | MH Acceptance: 0.92</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■          </span>  69% | ETA:  1s | MH Acceptance: 0.92</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■        </span>  76% | ETA:  1s | MH Acceptance: 0.92</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■      </span>  83% | ETA:  1s | MH Acceptance: 0.92</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■    </span>  89% | ETA:  0s | MH Acceptance: 0.92</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  </span>  95% | ETA:  0s | MH Acceptance: 0.92</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.92</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ## -------------------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ## -------------------------------------</span>
@@ -276,16 +317,16 @@ Carlo." Working Paper. Available at
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## No hard population constraint applied</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## -------------------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## Diagnostics:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## Metropolis-Hastings Acceptance Ratio = 0.992</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## Mean population parity distance = 0.868</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## Median population parity distance = 0.868</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## Population parity range = 0.008 1.912</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## MCMC Iteration quantiles of population parity median = 0.905 0.935 0.971 0.935</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## Metropolis-Hastings Acceptance Ratio = 0.993</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## Mean population parity distance = 0.855</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## Median population parity distance = 0.847</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## Population parity range = 0.013 1.81</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## MCMC Iteration quantiles of population parity median = 0.847 0.933 0.866 0.811</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## Mean share of geographies equal to initial assignment = 0.305</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## Median share of geographies equal to initial assignment = 0.28</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## Range of share of geographies equal to initial assignment = 0 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## MCMC Iteration quantiles of geography distance to initial assignment = 0.36 0.24 0.28 0.24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## Mean share of geographies equal to initial assignment = 0.336</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## Median share of geographies equal to initial assignment = 0.32</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## Range of share of geographies equal to initial assignment = 0 0.96</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## MCMC Iteration quantiles of geography distance to initial assignment = 0.32 0.32 0.28 0.32</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## -------------------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## -------------------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -297,16 +338,16 @@ Carlo." Working Paper. Available at
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## No hard population constraint applied</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## -------------------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## Diagnostics:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## Metropolis-Hastings Acceptance Ratio = 0.963</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## Mean population parity distance = 0.812</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## Median population parity distance = 0.824</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## Population parity range = 0.008 1.889</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## MCMC Iteration quantiles of population parity median = 0.866 0.847 0.658 0.991</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## Metropolis-Hastings Acceptance Ratio = 0.964</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## Mean population parity distance = 0.856</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## Median population parity distance = 0.852</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## Population parity range = 0.017 1.886</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## MCMC Iteration quantiles of population parity median = 0.906 0.868 0.939 0.808</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## Mean share of geographies equal to initial assignment = 0.358</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## Mean share of geographies equal to initial assignment = 0.362</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## Median share of geographies equal to initial assignment = 0.36</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## Range of share of geographies equal to initial assignment = 0 0.96</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## MCMC Iteration quantiles of geography distance to initial assignment = 0.32 0.32 0.32 0.36</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## MCMC Iteration quantiles of geography distance to initial assignment = 0.36 0.4 0.32 0.36</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## -------------------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## -------------------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -318,109 +359,109 @@ Carlo." Working Paper. Available at
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## No hard population constraint applied</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## -------------------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## Diagnostics:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## Metropolis-Hastings Acceptance Ratio = 0.926</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## Mean population parity distance = 0.845</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## Median population parity distance = 0.842</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## Population parity range = 0.007 1.903</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## MCMC Iteration quantiles of population parity median = 0.766 0.805 0.772 0.671</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## Metropolis-Hastings Acceptance Ratio = 0.919</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## Mean population parity distance = 0.82</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## Median population parity distance = 0.816</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## Population parity range = 0.008 1.852</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## MCMC Iteration quantiles of population parity median = 0.766 0.918 0.814 0.88</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## Mean share of geographies equal to initial assignment = 0.38</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## Median share of geographies equal to initial assignment = 0.4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## Mean share of geographies equal to initial assignment = 0.365</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## Median share of geographies equal to initial assignment = 0.36</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## Range of share of geographies equal to initial assignment = 0 0.96</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ## MCMC Iteration quantiles of geography distance to initial assignment = 0.4 0.28 0.48 0.4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## MCMC Iteration quantiles of geography distance to initial assignment = 0.28 0.32 0.36 0.44</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## -------------------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## -------------------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $diagnostics</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] " ## -------------------------------------\n ## -------------------------------------\n ## Parameter Values for Simulation 1 \n## Edgecut probability = 0.01\n## Lambda = 0\n## No hard population constraint applied\n## -------------------------------------\n## Diagnostics:\n## Metropolis-Hastings Acceptance Ratio = 0.992\n## Mean population parity distance = 0.868\n## Median population parity distance = 0.868\n## Population parity range = 0.008 1.912\n## MCMC Iteration quantiles of population parity median = 0.905 0.935 0.971 0.935\n\n## Mean share of geographies equal to initial assignment = 0.305\n## Median share of geographies equal to initial assignment = 0.28\n## Range of share of geographies equal to initial assignment = 0 1\n## MCMC Iteration quantiles of geography distance to initial assignment = 0.36 0.24 0.28 0.24\n## -------------------------------------\n## -------------------------------------\n\n ## -------------------------------------\n ## -------------------------------------\n ## Parameter Values for Simulation 1 \n## Edgecut probability = 0.05\n## Lambda = 0\n## No hard population constraint applied\n## -------------------------------------\n## Diagnostics:\n## Metropolis-Hastings Acceptance Ratio = 0.963\n## Mean population parity distance = 0.812\n## Median population parity distance = 0.824\n## Population parity range = 0.008 1.889\n## MCMC Iteration quantiles of population parity median = 0.866 0.847 0.658 0.991\n\n## Mean share of geographies equal to initial assignment = 0.358\n## Median share of geographies equal to initial assignment = 0.36\n## Range of share of geographies equal to initial assignment = 0 0.96\n## MCMC Iteration quantiles of geography distance to initial assignment = 0.32 0.32 0.32 0.36\n## -------------------------------------\n## -------------------------------------\n\n ## -------------------------------------\n ## -------------------------------------\n ## Parameter Values for Simulation 1 \n## Edgecut probability = 0.1\n## Lambda = 0\n## No hard population constraint applied\n## -------------------------------------\n## Diagnostics:\n## Metropolis-Hastings Acceptance Ratio = 0.926\n## Mean population parity distance = 0.845\n## Median population parity distance = 0.842\n## Population parity range = 0.007 1.903\n## MCMC Iteration quantiles of population parity median = 0.766 0.805 0.772 0.671\n\n## Mean share of geographies equal to initial assignment = 0.38\n## Median share of geographies equal to initial assignment = 0.4\n## Range of share of geographies equal to initial assignment = 0 0.96\n## MCMC Iteration quantiles of geography distance to initial assignment = 0.4 0.28 0.48 0.4\n## -------------------------------------\n## -------------------------------------\n\n"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] " ## -------------------------------------\n ## -------------------------------------\n ## Parameter Values for Simulation 1 \n## Edgecut probability = 0.01\n## Lambda = 0\n## No hard population constraint applied\n## -------------------------------------\n## Diagnostics:\n## Metropolis-Hastings Acceptance Ratio = 0.993\n## Mean population parity distance = 0.855\n## Median population parity distance = 0.847\n## Population parity range = 0.013 1.81\n## MCMC Iteration quantiles of population parity median = 0.847 0.933 0.866 0.811\n\n## Mean share of geographies equal to initial assignment = 0.336\n## Median share of geographies equal to initial assignment = 0.32\n## Range of share of geographies equal to initial assignment = 0 0.96\n## MCMC Iteration quantiles of geography distance to initial assignment = 0.32 0.32 0.28 0.32\n## -------------------------------------\n## -------------------------------------\n\n ## -------------------------------------\n ## -------------------------------------\n ## Parameter Values for Simulation 1 \n## Edgecut probability = 0.05\n## Lambda = 0\n## No hard population constraint applied\n## -------------------------------------\n## Diagnostics:\n## Metropolis-Hastings Acceptance Ratio = 0.964\n## Mean population parity distance = 0.856\n## Median population parity distance = 0.852\n## Population parity range = 0.017 1.886\n## MCMC Iteration quantiles of population parity median = 0.906 0.868 0.939 0.808\n\n## Mean share of geographies equal to initial assignment = 0.362\n## Median share of geographies equal to initial assignment = 0.36\n## Range of share of geographies equal to initial assignment = 0 0.96\n## MCMC Iteration quantiles of geography distance to initial assignment = 0.36 0.4 0.32 0.36\n## -------------------------------------\n## -------------------------------------\n\n ## -------------------------------------\n ## -------------------------------------\n ## Parameter Values for Simulation 1 \n## Edgecut probability = 0.1\n## Lambda = 0\n## No hard population constraint applied\n## -------------------------------------\n## Diagnostics:\n## Metropolis-Hastings Acceptance Ratio = 0.919\n## Mean population parity distance = 0.82\n## Median population parity distance = 0.816\n## Population parity range = 0.008 1.852\n## MCMC Iteration quantiles of population parity median = 0.766 0.918 0.814 0.88\n\n## Mean share of geographies equal to initial assignment = 0.365\n## Median share of geographies equal to initial assignment = 0.36\n## Range of share of geographies equal to initial assignment = 0 0.96\n## MCMC Iteration quantiles of geography distance to initial assignment = 0.28 0.32 0.36 0.44\n## -------------------------------------\n## -------------------------------------\n\n"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $startvals</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $startvals[[1]]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       [,1]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1,]    3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1,]    1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [2,]    1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [3,]    3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4,]    3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [5,]    3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [6,]    3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7,]    3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [8,]    3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [9,]    2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10,]    3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [11,]    3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [12,]    3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [13,]    2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [14,]    2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [15,]    2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16,]    1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [17,]    1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [18,]    1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19,]    3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [20,]    3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [21,]    3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22,]    3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [23,]    3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [24,]    3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25,]    3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $startvals[[2]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       [,1]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1,]    3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [2,]    3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [3,]    1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [3,]    2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [4,]    1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [5,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [5,]    3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [6,]    1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [7,]    3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [8,]    3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [9,]    1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10,]    1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [11,]    1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [12,]    1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10,]    3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [11,]    3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [12,]    3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [13,]    1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [14,]    1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [15,]    1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16,]    3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [17,]    3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16,]    1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [17,]    1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [18,]    1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19,]    3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [20,]    3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [21,]    1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22,]    3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [23,]    1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [24,]    2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25,]    3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19,]    1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [20,]    1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [21,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22,]    1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [23,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [24,]    3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25,]    1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $startvals[[3]]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $startvals[[2]]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       [,1]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1,]    1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [2,]    2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [3,]    1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [4,]    1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [5,]    1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [6,]    2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  [7,]    1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [8,]    2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [9,]    3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10,]    2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [11,]    2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [12,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [8,]    1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [9,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10,]    1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [11,]    1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [12,]    1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [13,]    2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [14,]    2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [15,]    2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [16,]    1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [17,]    1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [18,]    1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [19,]    1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [20,]    1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [21,]    1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [22,]    1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [23,]    1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [17,]    3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [18,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19,]    3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [20,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [21,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [23,]    2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [24,]    1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25,]    1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $startvals[[3]]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       [,1]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [2,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [3,]    3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [5,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [6,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [8,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [9,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [11,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [12,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13,]    1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [14,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [15,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16,]    3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [17,]    3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [18,]    3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19,]    3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [20,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [21,]    3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [23,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [24,]    2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25,]    2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-in"><span class="co"># }</span></span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </div>
@@ -435,7 +476,7 @@ Carlo." Working Paper. Available at
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

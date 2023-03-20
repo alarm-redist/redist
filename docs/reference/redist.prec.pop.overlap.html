@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
       </span>
     </div>
 
@@ -87,58 +87,73 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">redist.prec.pop.overlap</span><span class="op">(</span>
-  <span class="va">plan_old</span>,
-  <span class="va">plan_new</span>,
-  <span class="va">total_pop</span>,
-  weighting <span class="op">=</span> <span class="st">"s"</span>,
-  normalize <span class="op">=</span> <span class="cn">TRUE</span>,
-  index_only <span class="op">=</span> <span class="cn">FALSE</span>,
-  return_mat <span class="op">=</span> <span class="cn">FALSE</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">redist.prec.pop.overlap</span><span class="op">(</span></span>
+<span>  <span class="va">plan_old</span>,</span>
+<span>  <span class="va">plan_new</span>,</span>
+<span>  <span class="va">total_pop</span>,</span>
+<span>  weighting <span class="op">=</span> <span class="st">"s"</span>,</span>
+<span>  normalize <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  index_only <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  return_mat <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>plan_old</dt>
 <dd><p>The reference plan to compare against</p></dd>
+
+
 <dt>plan_new</dt>
 <dd><p>The new plan to compare to the reference plan</p></dd>
+
+
 <dt>total_pop</dt>
 <dd><p>The total population by precinct This can also take a redist_map
 object and will use the population in that object. If nothing is provided, it weights
 all entries in plan equally.</p></dd>
+
+
 <dt>weighting</dt>
-<dd><p>Should weighting be done by sum of populations `'s'`, mean of
-populations `'m'`, geometric mean of populations `'g'`, or none `'n'`</p></dd>
+<dd><p>Should weighting be done by sum of populations <code>'s'</code>, mean of
+populations <code>'m'</code>, geometric mean of populations <code>'g'</code>, or none <code>'n'</code></p></dd>
+
+
 <dt>normalize</dt>
 <dd><p>Should entries be normalized by the total population</p></dd>
+
+
 <dt>index_only</dt>
 <dd><p>Default is FALSE. TRUE returns only one numeric index, the
 mean of the upper triangle of the matrix, under the weighting and normalization
 chosen.</p></dd>
+
+
 <dt>return_mat</dt>
 <dd><p>Defaults to FALSE, where it returns the summary by row. If
 TRUE returns matrix with length(plan_old) rows and columns. Ignored if
 index_only = TRUE.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>numeric vector with length(plan_old) entries</p>
+    
+
+<p>numeric vector with length(plan_old) entries</p>
     </div>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">5</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">iowa_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, total_pop <span class="op">=</span> <span class="va">pop</span>, pop_tol <span class="op">=</span> <span class="fl">0.01</span>, ndists <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">plans</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="fl">2</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">plans_mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_plans_matrix.html">get_plans_matrix</a></span><span class="op">(</span><span class="va">plans</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">ov_vec</span> <span class="op">&lt;-</span> <span class="fu">redist.prec.pop.overlap</span><span class="op">(</span><span class="va">plans_mat</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, <span class="va">plans_mat</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span>, <span class="va">iowa_map</span><span class="op">)</span></span>
-<span class="r-in"><span class="fu">redist.prec.pop.overlap</span><span class="op">(</span><span class="va">plans_mat</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, <span class="va">plans_mat</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span>, <span class="va">iowa_map</span>,  weighting <span class="op">=</span> <span class="st">"s"</span>,</span>
-<span class="r-in">    normalize <span class="op">=</span> <span class="cn">FALSE</span>, index_only <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 727.06</span>
-<span class="r-in"></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">5</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">iowa_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, total_pop <span class="op">=</span> <span class="va">pop</span>, pop_tol <span class="op">=</span> <span class="fl">0.01</span>, ndists <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">plans</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="fl">2</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">plans_mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_plans_matrix.html">get_plans_matrix</a></span><span class="op">(</span><span class="va">plans</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">ov_vec</span> <span class="op">&lt;-</span> <span class="fu">redist.prec.pop.overlap</span><span class="op">(</span><span class="va">plans_mat</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, <span class="va">plans_mat</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span>, <span class="va">iowa_map</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">redist.prec.pop.overlap</span><span class="op">(</span><span class="va">plans_mat</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, <span class="va">plans_mat</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span>, <span class="va">iowa_map</span>,  weighting <span class="op">=</span> <span class="st">"s"</span>,</span></span>
+<span class="r-in"><span>    normalize <span class="op">=</span> <span class="cn">FALSE</span>, index_only <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 14020.52</span>
+<span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
   </div>
@@ -153,7 +168,7 @@ index_only = TRUE.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>
