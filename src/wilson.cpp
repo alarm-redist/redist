@@ -161,22 +161,24 @@ Tree sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
     }
 
     // Generate tree within each county
-    std::vector<int> path(remaining + 2);
-    int max_try = 50 * remaining * ((int) std::log(remaining));
-    while (remaining > 0) {
-        int add = rvtx(visited, V, remaining, lower_i);
-        // random walk from `add` until we hit the path
-        int added = walk_until(g, add, path, max_try, visited, ignore, counties);
-        // update visited list and constructed tree
-        if (added == 0) { // bail
-            Tree null_tree;
-            return null_tree;
-        }
-        remaining -= added - 1; // minus 1 because ending vertex already in tree
-        for (int i = 0; i < added - 1; i++) {
-            visited.at(path[i]) = true;
-            // reverse path so that arrows point away from root
-            tree.at(path[i+1]).push_back(path[i]);
+    if (remaining > 0) {
+        std::vector<int> path(remaining + 2);
+        int max_try = 50 * remaining * ((int) std::log(remaining));
+        while (remaining > 0) {
+            int add = rvtx(visited, V, remaining, lower_i);
+            // random walk from `add` until we hit the path
+            int added = walk_until(g, add, path, max_try, visited, ignore, counties);
+            // update visited list and constructed tree
+            if (added == 0) { // bail
+                Tree null_tree;
+                return null_tree;
+            }
+            remaining -= added - 1; // minus 1 because ending vertex already in tree
+            for (int i = 0; i < added - 1; i++) {
+                visited.at(path[i]) = true;
+                // reverse path so that arrows point away from root
+                tree.at(path[i+1]).push_back(path[i]);
+            }
         }
     }
 
