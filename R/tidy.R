@@ -18,7 +18,7 @@ get_cur_df <- function(dplyr_funcs) {
         frame <- frames[[i]]
         if (is.null(rlang::call_name(call))) next
         if (any(vapply(dplyr_funcs,
-            function(x) identical(x, rlang::call_fn(call, frame)),
+            function(x) identical(x, rlang::frame_fn(frame)),
             logical(1)))) {
             return(rlang::env_get(frame, ".data"))
         }
