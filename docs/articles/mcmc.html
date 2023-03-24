@@ -151,26 +151,23 @@ Redistricting Simulation Using Markov Chain Monte Carlo</a>.</p>
 <div class="section level2">
 <h2 id="mcmc">The Flip MCMC Algorithm<a class="anchor" aria-label="anchor" href="#mcmc"></a>
 </h2>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(fl25)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(fl25_enum)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>plan <span class="ot">&lt;-</span> fl25_enum<span class="sc">$</span>plans[, <span class="dv">7241</span>]</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>fl25<span class="sc">$</span>plan <span class="ot">&lt;-</span> plan</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>fl_map <span class="ot">&lt;-</span> <span class="fu">redist_map</span>(fl25, <span class="at">existing_plan =</span> plan, <span class="at">pop_tol =</span> <span class="fl">0.2</span>, <span class="at">total_pop =</span> pop)</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Projecting to CRS 3857</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>constr <span class="ot">&lt;-</span> <span class="fu">redist_constr</span>(fl_map) <span class="sc">%&gt;%</span> </span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_constr_edges_rem</span>(<span class="fl">0.02</span>)</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>sims <span class="ot">&lt;-</span> <span class="fu">redist_flip</span>(<span class="at">map =</span> fl_map, <span class="at">nsims =</span> <span class="dv">6</span>, <span class="at">constraints =</span> constr)</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [36m── [39m  [1m [31mredist_flip() [39m [22m  [36m─────────────────────────────────────────────────────────────── [39m</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ──  [1m [1m [31mAutomated Redistricting Simulation Using Markov Chain Monte Carlo [39m [1m [22m ──</span></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [36mℹ [39m Preprocessing data.</span></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [36mℹ [39m Starting swMH().</span></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■                           [39m  <span class="dv">17</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">1.00</span></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [39m <span class="dv">100</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">1.00</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">fl25</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">fl25_enum</span><span class="op">)</span></span>
+<span><span class="va">plan</span> <span class="op">&lt;-</span> <span class="va">fl25_enum</span><span class="op">$</span><span class="va">plans</span><span class="op">[</span>, <span class="fl">7241</span><span class="op">]</span></span>
+<span><span class="va">fl25</span><span class="op">$</span><span class="va">plan</span> <span class="op">&lt;-</span> <span class="va">plan</span></span>
+<span><span class="va">fl_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">fl25</span>, existing_plan <span class="op">=</span> <span class="va">plan</span>, pop_tol <span class="op">=</span> <span class="fl">0.2</span>, total_pop <span class="op">=</span> <span class="va">pop</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Projecting to CRS 3857</span></span>
+<span><span class="va">constr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_constr.html">redist_constr</a></span><span class="op">(</span><span class="va">fl_map</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>    <span class="fu"><a href="../reference/constraints.html">add_constr_edges_rem</a></span><span class="op">(</span><span class="fl">0.02</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">fl_map</span>, nsims <span class="op">=</span> <span class="fl">6</span>, constraints <span class="op">=</span> <span class="va">constr</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="color: #BB0000; font-weight: bold;">redist_flip()</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span></code></pre></div>
 <p>The <code>flip</code> algorithm is one of the more straightforward
 redistricting algorithms. Beginning with an initial partition of a
 graph, it proposes flipping a node from one partition to an adjacent
@@ -300,19 +297,17 @@ From there, we have the basic information that we need to run our first
 simulation. The below indicates that we are simulating 1000 plans (with
 <code>nsims</code>) for the state of Iowa that have at most a population
 parity deviation of 0.05 (with <code>pop_tol</code>).</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>sims <span class="ot">&lt;-</span> <span class="fu">redist_flip</span>(map_ia, <span class="at">nsims =</span> <span class="dv">100</span>)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [36m── [39m  [1m [31mredist_flip() [39m [22m  [36m─────────────────────────────────────────────────────────────── [39m</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ──  [1m [1m [31mAutomated Redistricting Simulation Using Markov Chain Monte Carlo [39m [1m [22m ──</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [36mℹ [39m Preprocessing data.</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [36mℹ [39m Starting swMH().</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a> [32m■                                [39m   <span class="dv">1</span>% <span class="sc">|</span> ETA<span class="sc">:</span> 0s</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a> [32m■■                               [39m   <span class="dv">2</span>% <span class="sc">|</span> ETA<span class="sc">:</span> 1s</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [39m <span class="dv">100</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.65</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span><span class="va">map_ia</span>, nsims <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="color: #BB0000; font-weight: bold;">redist_flip()</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">■                               </span>   1% | ETA: 0s</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.65</span></span>
+<span><span class="co">#&gt; </span></span></code></pre></div>
 <p>The printed output can be silenced by setting
 <code>verbose = FALSE</code>, however it displays very important
 information. First, it displays when preprocessing begins and when the
@@ -346,21 +341,16 @@ were contiguity and that no plan would be outside of the
 plans than compact plans in the space of all redistricting plans, we end
 up with highly non-compact districts. We can fix this by specifying a
 constraint, as below:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>constr <span class="ot">&lt;-</span> <span class="fu">redist_constr</span>(map_ia) <span class="sc">%&gt;%</span> <span class="fu">add_constr_edges_rem</span>(<span class="fl">0.4</span>)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>sims_comp <span class="ot">&lt;-</span> <span class="fu">redist_flip</span>(map_ia, <span class="at">nsims =</span> <span class="dv">100</span>, <span class="at">constraints =</span> constr)</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [36m── [39m  [1m [31mredist_flip() [39m [22m  [36m─────────────────────────────────────────────────────────────── [39m</span></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ──  [1m [1m [31mAutomated Redistricting Simulation Using Markov Chain Monte Carlo [39m [1m [22m ──</span></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [36mℹ [39m Preprocessing data.</span></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [36mℹ [39m Starting swMH().</span></span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a> [32m■                                [39m   <span class="dv">1</span>% <span class="sc">|</span> ETA<span class="sc">:</span> 0s</span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a> [32m■■■■■                            [39m  <span class="dv">13</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.70</span></span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [39m <span class="dv">100</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.61</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">constr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_constr.html">redist_constr</a></span><span class="op">(</span><span class="va">map_ia</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="../reference/constraints.html">add_constr_edges_rem</a></span><span class="op">(</span><span class="fl">0.4</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">sims_comp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span><span class="va">map_ia</span>, nsims <span class="op">=</span> <span class="fl">100</span>, constraints <span class="op">=</span> <span class="va">constr</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="color: #BB0000; font-weight: bold;">redist_flip()</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span></code></pre></div>
 <p>The first arguments as the same, but this adds three key arguments.
 First, setting <code>constraint</code> to any combination of the nine
 implemented constraints allows us to specify the target distribution.
@@ -405,7 +395,7 @@ specify the number of districts, <code>ndists</code>.</p>
 <p>In Unix-based systems, this can be run considerably faster by running
 this in parallel.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">mcmc_chains</span> <span class="op">&lt;-</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/mcdummies.html" class="external-link">mclapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">nchains</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">{</span></span>
+<code class="sourceCode R"><span><span class="va">mcmc_chains</span> <span class="op">&lt;-</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/mclapply.html" class="external-link">mclapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">nchains</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">{</span></span>
 <span>  <span class="fu"><a href="../reference/redist.flip.html">redist.flip</a></span><span class="op">(</span><span class="va">fl_map</span>, <span class="va">nsims</span><span class="op">)</span></span>
 <span><span class="op">}</span>, mc.set.seed <span class="op">=</span> <span class="fl">1</span>, mc.cores <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><a href="#top">Back to top</a></p>
@@ -436,19 +426,17 @@ outside of that population deviation, <code>flip</code> may take a
 flip.</p>
 <p>Now, we can pass the <code>redist_map</code> object to
 <code>redist_flip</code> to begin simulating.</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>tidy_sims <span class="ot">&lt;-</span> iowa_map <span class="sc">%&gt;%</span> <span class="fu">redist_flip</span>(<span class="at">nsims =</span> <span class="dv">100</span>)</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [36m── [39m  [1m [31mredist_flip() [39m [22m  [36m─────────────────────────────────────────────────────────────── [39m</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ──  [1m [1m [31mAutomated Redistricting Simulation Using Markov Chain Monte Carlo [39m [1m [22m ──</span></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [36mℹ [39m Preprocessing data.</span></span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [36mℹ [39m Starting swMH().</span></span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a> [32m■                                [39m   <span class="dv">1</span>% <span class="sc">|</span> ETA<span class="sc">:</span> 0s</span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■             [39m  <span class="dv">63</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.82</span></span>
-<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [39m <span class="dv">100</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.80</span></span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">tidy_sims</span> <span class="op">&lt;-</span> <span class="va">iowa_map</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span>nsims <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="color: #BB0000; font-weight: bold;">redist_flip()</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">■■■■■■■■■■■■■■■                 </span>  47% | ETA:  0s | MH Acceptance: 0.82</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.80</span></span>
+<span><span class="co">#&gt; </span></span></code></pre></div>
 <p>This highlights a key difference between the <code>redist_flip</code>
 and <code>redist.flip</code> implementations: <code>redist_flip</code>
 appears to have a much lower acceptance rate, even though we didn’t
@@ -461,19 +449,14 @@ object</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cons</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_constr.html">redist_constr</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span></span></code></pre></div>
 <p>Then, you can pass this to <code>redist_flip</code>.</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>tidy_sims_no_comp <span class="ot">&lt;-</span> iowa_map <span class="sc">%&gt;%</span> <span class="fu">redist_flip</span>(<span class="at">nsims =</span> <span class="dv">100</span>, <span class="at">constraints =</span> cons)</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [36m── [39m  [1m [31mredist_flip() [39m [22m  [36m─────────────────────────────────────────────────────────────── [39m</span></span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ──  [1m [1m [31mAutomated Redistricting Simulation Using Markov Chain Monte Carlo [39m [1m [22m ──</span></span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [36mℹ [39m Preprocessing data.</span></span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [36mℹ [39m Starting swMH().</span></span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a> [32m■                                [39m   <span class="dv">1</span>% <span class="sc">|</span> ETA<span class="sc">:</span> 0s</span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■            [39m  <span class="dv">68</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.97</span></span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [39m <span class="dv">100</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.97</span></span></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">tidy_sims_no_comp</span> <span class="op">&lt;-</span> <span class="va">iowa_map</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span>nsims <span class="op">=</span> <span class="fl">100</span>, constraints <span class="op">=</span> <span class="va">cons</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="color: #BB0000; font-weight: bold;">redist_flip()</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span></code></pre></div>
 <p><code>redist_flip</code> outputs a <code>redist_plans</code>
 object.</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
@@ -576,26 +559,21 @@ time and computing power.</p>
 <p>The following highlights some advice on how to tune <code>flip</code>
 to make it work for your particular redistricting problem. For the
 advice, we’ll use the following example:</p>
-<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(iowa)</span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>iowa_map <span class="ot">&lt;-</span> <span class="fu">redist_map</span>(iowa, <span class="at">existing_plan =</span> cd_2010, <span class="at">pop_tol =</span> <span class="fl">0.02</span>, <span class="at">total_pop =</span> pop)</span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>cons <span class="ot">&lt;-</span> <span class="fu">redist_constr</span>(iowa_map) <span class="sc">%&gt;%</span> </span>
-<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_constr_edges_rem</span>(<span class="fl">0.5</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_constr_pop_dev</span>(<span class="dv">100</span>)</span>
-<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>sims <span class="ot">&lt;-</span> <span class="fu">redist_flip</span>(<span class="at">map =</span> iowa_map,  <span class="at">nsims =</span> <span class="dv">100</span>)</span>
-<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [36m── [39m  [1m [31mredist_flip() [39m [22m  [36m─────────────────────────────────────────────────────────────── [39m</span></span>
-<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ──  [1m [1m [31mAutomated Redistricting Simulation Using Markov Chain Monte Carlo [39m [1m [22m ──</span></span>
-<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [36mℹ [39m Preprocessing data.</span></span>
-<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [36mℹ [39m Starting swMH().</span></span>
-<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a> [32m■                                [39m   <span class="dv">1</span>% <span class="sc">|</span> ETA<span class="sc">:</span> 0s</span>
-<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■■■■■        [39m  <span class="dv">81</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.57</span></span>
-<span id="cb30-19"><a href="#cb30-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-20"><a href="#cb30-20" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [39m <span class="dv">100</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.55</span></span></code></pre></div>
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span></span>
+<span><span class="va">iowa_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan <span class="op">=</span> <span class="va">cd_2010</span>, pop_tol <span class="op">=</span> <span class="fl">0.02</span>, total_pop <span class="op">=</span> <span class="va">pop</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">cons</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_constr.html">redist_constr</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>    <span class="fu"><a href="../reference/constraints.html">add_constr_edges_rem</a></span><span class="op">(</span><span class="fl">0.5</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>    <span class="fu"><a href="../reference/constraints.html">add_constr_pop_dev</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span>map <span class="op">=</span> <span class="va">iowa_map</span>,  nsims <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="color: #BB0000; font-weight: bold;">redist_flip()</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="acceptance-ratios">Acceptance Ratios<a class="anchor" aria-label="anchor" href="#acceptance-ratios"></a>
 </h3>
@@ -713,19 +691,14 @@ set up.</p>
 <span>    <span class="fu"><a href="../reference/constraints.html">add_constr_compet</a></span><span class="op">(</span><span class="fl">10</span>, rvote <span class="op">=</span> <span class="va">rep_08</span>, dvote <span class="op">=</span> <span class="va">dem_08</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>    <span class="fu"><a href="../reference/constraints.html">add_constr_splits</a></span><span class="op">(</span><span class="fl">10</span>, admin <span class="op">=</span> <span class="va">region</span><span class="op">)</span></span></code></pre></div>
 <p>Then we can run this for a relatively small number of iterations.</p>
-<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>sims <span class="ot">&lt;-</span> <span class="fu">redist_flip</span>(iowa_map, <span class="dv">100</span>, <span class="at">constraints =</span> cons)</span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [36m── [39m  [1m [31mredist_flip() [39m [22m  [36m─────────────────────────────────────────────────────────────── [39m</span></span>
-<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ──  [1m [1m [31mAutomated Redistricting Simulation Using Markov Chain Monte Carlo [39m [1m [22m ──</span></span>
-<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [36mℹ [39m Preprocessing data.</span></span>
-<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [36mℹ [39m Starting swMH().</span></span>
-<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a> [32m■                                [39m   <span class="dv">1</span>% <span class="sc">|</span> ETA<span class="sc">:</span> 0s</span>
-<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a> [32m■■■■■                            [39m  <span class="dv">12</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.70</span></span>
-<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [39m <span class="dv">100</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.75</span></span></code></pre></div>
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="fl">100</span>, constraints <span class="op">=</span> <span class="va">cons</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="color: #BB0000; font-weight: bold;">redist_flip()</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span></code></pre></div>
 <p>Now, the interesting this here is that adding more constraints
 actually increased the acceptance probability. This is because
 correlated constraints can guide the algorithm towards high probability
@@ -734,25 +707,20 @@ To address this, we might want to increase the constraint weight
 slightly across the board. Had the weights been far too low, we might
 lower them, particularly on constraints that we are not too worried
 about.</p>
-<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>cons <span class="ot">&lt;-</span> cons <span class="ot">&lt;-</span> <span class="fu">redist_constr</span>(iowa_map) <span class="sc">%&gt;%</span> </span>
-<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_constr_edges_rem</span>(<span class="fl">1.5</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_constr_pop_dev</span>(<span class="dv">100</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_constr_compet</span>(<span class="dv">40</span>, <span class="at">rvote =</span> rep_08, <span class="at">dvote =</span> dem_08) <span class="sc">%&gt;%</span> </span>
-<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_constr_splits</span>(<span class="dv">20</span>, <span class="at">admin =</span> region)</span>
-<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>sims <span class="ot">&lt;-</span> <span class="fu">redist_flip</span>(iowa_map, <span class="dv">100</span>, <span class="at">constraints =</span> cons)</span>
-<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [36m── [39m  [1m [31mredist_flip() [39m [22m  [36m─────────────────────────────────────────────────────────────── [39m</span></span>
-<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ──  [1m [1m [31mAutomated Redistricting Simulation Using Markov Chain Monte Carlo [39m [1m [22m ──</span></span>
-<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [36mℹ [39m Preprocessing data.</span></span>
-<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [36mℹ [39m Starting swMH().</span></span>
-<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a> [32m■                                [39m   <span class="dv">1</span>% <span class="sc">|</span> ETA<span class="sc">:</span> 0s</span>
-<span id="cb38-16"><a href="#cb38-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-17"><a href="#cb38-17" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    [39m  <span class="dv">92</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.21</span></span>
-<span id="cb38-18"><a href="#cb38-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-19"><a href="#cb38-19" aria-hidden="true" tabindex="-1"></a> [32m■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  [39m <span class="dv">100</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  0s <span class="sc">|</span> MH Acceptance<span class="sc">:</span> <span class="fl">0.19</span></span></code></pre></div>
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">cons</span> <span class="op">&lt;-</span> <span class="va">cons</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_constr.html">redist_constr</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>    <span class="fu"><a href="../reference/constraints.html">add_constr_edges_rem</a></span><span class="op">(</span><span class="fl">1.5</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>    <span class="fu"><a href="../reference/constraints.html">add_constr_pop_dev</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>    <span class="fu"><a href="../reference/constraints.html">add_constr_compet</a></span><span class="op">(</span><span class="fl">40</span>, rvote <span class="op">=</span> <span class="va">rep_08</span>, dvote <span class="op">=</span> <span class="va">dem_08</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
+<span>    <span class="fu"><a href="../reference/constraints.html">add_constr_splits</a></span><span class="op">(</span><span class="fl">20</span>, admin <span class="op">=</span> <span class="va">region</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">sims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/redist_flip.html">redist_flip</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="fl">100</span>, constraints <span class="op">=</span> <span class="va">cons</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="color: #BB0000; font-weight: bold;">redist_flip()</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span></span></code></pre></div>
 <p>For example, this new set of constraints might be a good place to
 simulate at.</p>
 <p>Notably, the process of tuning should be guided by the constraint
@@ -823,7 +791,7 @@ what’s right!</p>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
 </div>
 
       </footer>

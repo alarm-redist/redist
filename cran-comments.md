@@ -6,7 +6,6 @@
 * ubuntu 20.04 (on GitHub Actions), (old release)
 * macOS-latest (on GitHub Actions), (release)
 * Windows (on GitHub Actions), (release)
-* winbuilder, (release)
 
 ## R CMD check results
 
@@ -17,5 +16,4 @@ There are no reverse dependencies to check.
 
 ## Additional Notes
 
-* Addresses the C++11 note.
-* Fixes mismatched generic arguments.
+* Fixes undefinited behavior found in CRAN checks.
