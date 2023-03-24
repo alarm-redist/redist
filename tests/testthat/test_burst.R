@@ -46,10 +46,11 @@ test_that("short bursts work with multiple scorers", {
         comp = scorer_frac_kept(iowa_map),
         dem = scorer_group_pct(iowa_map, dem_08, tot_08, k=2)
     )
-    plans <- redist_shortburst(iowa_map, scorer, maximize=c(FALSE, TRUE),
+    plans <- redist_shortburst(iowa_map, scorer, maximize=c(comp=FALSE, dem=TRUE),
                                max_bursts = 20, verbose = F)
 
     expect_true(inherits(plans, "redist_plans"))
     expect_equal(dim(get_plans_matrix(plans)), c(99, 21))
-    expect_gt(cor(plans$comp, plans$dem), 0.5)
+    # check frontier is monotone in right direction
+    expect_equal(1, cor(attr(plans, "pareto_score"), method="spearman")[1, 2])
 })

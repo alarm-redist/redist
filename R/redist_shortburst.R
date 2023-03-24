@@ -303,6 +303,9 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
 
     storage.mode(out_mat) <- "integer"
 
+    pareto_scores = t(cur_best_scores * rescale)
+    pareto_scores = pareto_scores[order(pareto_scores[, 1]), , drop=FALSE]
+
     out <- new_redist_plans(out_mat[, out_idx, drop = FALSE], map, "shortburst",
         wgt = NULL, resampled = FALSE,
         burst_size = burst_size(1),
@@ -310,7 +313,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         backend = backend,
         converged = converged,
         pareto_front = cur_best,
-        pareto_scores = t(cur_best_scores * rescale),
+        pareto_scores = pareto_scores,
         score_fn = deparse(substitute(score_fn)))
     score_mat = matrix(rep(scores[out_idx, ], each = ndists), ncol = dim_score)
     colnames(score_mat) = colnames(scores)
