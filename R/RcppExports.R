@@ -101,6 +101,10 @@ ms_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, r
     .Call(`_redist_ms_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, thresh, k, thin, verbosity)
 }
 
+pareto_dominated <- function(x) {
+    .Call(`_redist_pareto_dominated`, x)
+}
+
 closest_adj_pop <- function(adj, i_dist, g_prop) {
     .Call(`_redist_closest_adj_pop`, adj, i_dist, g_prop)
 }
