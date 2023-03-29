@@ -292,7 +292,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
             out_mat[, idx] <- cur_best[, out_idx]
             scores[idx, ] <- cur_best_scores[, out_idx] * rescale
 
-            if (any(colSums(cur_best_scores >= stop_at) == k)) {
+            if (any(colSums(cur_best_scores >= stop_at) == dim_score)) {
                 converged = TRUE
                 break
             }
@@ -326,32 +326,6 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     }
 
     out
-}
-
-# compare matrices rowwise on a Pareto criterion
-pareto_compare <- function(new, old, k) {
-    # rows are 'old' els, cols are 'new' els
-    # so TRUE if <row> dominated by <col>
-    dom_old_new = apply(new, 2, function(new_vec) {
-        els_leq = colSums(new_vec <= old) == k
-        els_strl = colSums(new_vec < old) > 0
-        els_leq & els_strl
-    })
-    if (!is.matrix(dom_old_new))
-        dom_old_new = matrix(dom_old_new, nrow=1)
-
-    dom_new_old = apply(old, 2, function(old_vec) {
-        els_leq = colSums(old_vec <= new) == k
-        els_strl = colSums(old_vec < new) > 0
-        els_leq & els_strl
-    })
-    if (!is.matrix(dom_new_old))
-        dom_new_old = matrix(dom_new_old, nrow=1)
-
-    list(
-        old_dominated = which(rowSums(dom_old_new) > 0),
-        new_undominated = which(rowSums(dom_new_old) == 0)
-    )
 }
 
 
