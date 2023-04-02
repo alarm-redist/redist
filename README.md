@@ -5,8 +5,6 @@
 
 <!-- badges: start -->
 
-[![Build
-Status](https://travis-ci.org/kosukeimai/redist.svg?branch=master)](https://travis-ci.org/kosukeimai/redist)
 [![CRAN_Status_Badge](https://www.r-pkg.org/badges/version-last-release/redist)](https://cran.r-project.org/package=redist)
 ![CRAN downloads](http://cranlogs.r-pkg.org/badges/grand-total/redist)
 
