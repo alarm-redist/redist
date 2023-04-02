@@ -1,3 +1,6 @@
+# redist 4.1.1
+* Resolves a sanitizer error for CRAN
+
 # redist 4.1.0
 * Improved diagnostic output
 * New `redist_ci` interface for confidence interval calculation
