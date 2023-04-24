@@ -4,6 +4,9 @@ With multiple scorers, the algorithm will stochastically explore to try to
 find the largest Pareto frontier for the scores. The frontier can be accessed with
 `attr(<plans obj>, "pareto_score")`.
 
+# redist 4.1.1
+* Resolves a sanitizer error for CRAN
+
 # redist 4.1.0
 * Improved diagnostic output
 * New `redist_ci` interface for confidence interval calculation
