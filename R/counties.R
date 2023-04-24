@@ -29,7 +29,6 @@ redist.county.relabel <- function(adj, counties,  simplify = TRUE) {
     sorted <- sort(unique(counties))
     groups <- match(counties, sorted)
 
-
     component <- data.frame(counties = counties, comp = contiguity(adj, groups)) %>%
         group_by(counties) %>%
         mutate(comps = max(.data$comp)) %>%
