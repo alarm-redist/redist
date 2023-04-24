@@ -1,3 +1,6 @@
+# 4.1.2
+* Improve contiguity checking speed drastically.
+
 # redist 4.1.1
 * Resolves a sanitizer error for CRAN
 
