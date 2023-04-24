@@ -1,3 +1,0 @@
-version      date  description
-1.0      05/18/15  The first version on CRAN.
-1.1	 05/18/15  Fixed log(2) usage in constraint_calc_helper.cpp.

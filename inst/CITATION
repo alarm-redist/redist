@@ -23,8 +23,8 @@ bibentry(
         person("Cory", "McCartan", email = "cmccartan@g.harvard.edu", role = "aut"),
         person("Kosuke", "Imai", email = "imai@harvard.edu", role = "aut")
         ),
-    year = "2020",
-    journal = "arXiv preprint",
+    year = "Forthcoming",
+    journal = "Annals of Applied Statistics",
     key = "mccartan2020",
     url = "https://arxiv.org/abs/2008.06131"
 )
