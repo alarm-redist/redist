@@ -27,8 +27,8 @@ redist.county.relabel <- function(adj, counties,  simplify = TRUE) {
         counties <- as.character(counties)
     }
 
-    sorted <- sort(unique(group))
-    groups <- match(group, sorted)
+    sorted <- sort(unique(counties))
+    groups <- match(counties, sorted)
 
     component <- data.frame(counties = counties, comp = contiguity(adj, groups)) %>%
         group_by(counties) %>%
