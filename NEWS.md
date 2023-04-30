@@ -1,4 +1,5 @@
-# redist 4.2.0
+# 4.1.2
+* Improve contiguity checking speed drastically.
 * Support for multiple independent scoring functions in `redist_shortburst()`.
 With multiple scorers, the algorithm will stochastically explore to try to 
 find the largest Pareto frontier for the scores. The frontier can be accessed with
