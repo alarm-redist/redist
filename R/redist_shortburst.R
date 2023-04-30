@@ -16,13 +16,22 @@
 #'
 #' @param map A \code{\link{redist_map}} object.
 #' @param score_fn A function which takes a matrix of plans and returns a score
-#' for each plan. Can also be a purrr-style anonymous function. See
-#' [`?scorers`][scorers] for some function factories for common scoring rules.
-#' @param stop_at A threshold to stop optimization at.
-#' @param burst_size The size of each burst. 10 is recommended for mergesplit and 50 for flip.
+#'   (or, generally, a row vector) for each plan. Can also be a purrr-style
+#'   anonymous function. See [`?scorers`][scorers] for some function factories
+#'   for common scoring rules.
+#' @param stop_at A threshold to stop optimization at. When `score_fn` returns a
+#'   row vector per plan, `maximize` can be an equal-length vector specifying a
+#'   threshhold for each dimension, which must all be met for the algorithm to
+#'   stop.
+#' @param burst_size The size of each burst. 10 is recommended for the
+#'   `mergesplit` backend and 50 for the `flip` backend. Can also provide
+#'   burst schedule function which takes the current iteration (an integer)
+#'   and returns the desired burst size.
 #' @param max_bursts The maximum number of bursts to run before returning.
 #' @param maximize If \code{TRUE}, try to maximize the score; otherwise, try to
-#' minimize it.
+#'   minimize it. When `score_fn` returns a row vector per plan, `maximize` can
+#'   be an equal-length vector specifying whether each dimension should be
+#'   maximized or minimized.
 #' @param init_plan The initial state of the map. If not provided, will default to
 #' the reference map of the \code{map} object, or if none exists, will sample
 #' a random initial state using \code{\link{redist_smc}}. You can also request
@@ -86,14 +95,17 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     ndists <- attr(map, "ndists")
     thin <- as.integer(thin)
 
-    burst_size <- as.integer(burst_size)
+    if (!is.function(burst_size)) {
+        per_burst <- as.integer(burst_size)
+        burst_size <- function(i) per_burst
+    }
     max_bursts <- as.integer(max_bursts)
     match.arg(backend, c("flip", "mergesplit"))
 
     score_fn <- rlang::as_closure(score_fn)
     stopifnot(is.function(score_fn))
     if (!is.numeric(stop_at)) {
-        stop_at <- if (maximize) Inf else -Inf
+        stop_at <- ifelse(maximize, Inf, -Inf)
     }
 
     if (compactness < 0)
@@ -101,7 +113,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
         cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
 
-    if (burst_size < 1 || max_bursts < 1)
+    if (burst_size(1) < 1 || max_bursts < 1)
         cli_abort("{.arg burst_size} and {.arg max_bursts} must be positive.")
     if (thin < 1 || thin > max_bursts)
         cli_abort("{.arg thin} must be a positive integer, and no larger than {.arg max_bursts}.")
@@ -173,8 +185,8 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
                 ">" = "Please file an issue at
                         {.url https://github.com/alarm-redist/redist/issues/new}"))
 
-        run_burst <- function(init) {
-            ms_plans(burst_size, adj, init, counties, pop, ndists,
+        run_burst <- function(init, i) {
+            ms_plans(burst_size(i), adj, init, counties, pop, ndists,
                 pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
                 constraints, 1.0, k, 1L, verbosity = 0)$plans[, -1L]
         }
@@ -187,9 +199,9 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
             cli_abort("{.arg flip_lambda} must be a nonnegative integer.")
         }
 
-        run_burst <- function(init) {
+        run_burst <- function(init, i) {
             skinny_flips(adj = adj, init_plan = init, total_pop = pop,
-                pop_tol = pop_tol, nsims = burst_size,
+                pop_tol = pop_tol, nsims = burst_size(i),
                 eprob = flip_eprob, lambda = flip_lambda,
                 constraints = constraints)
         }
@@ -199,20 +211,40 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     burst <- 1
     n_out <- max_bursts %/% thin
     out_mat <- matrix(0L, nrow = V, ncol = n_out)
-    cur_best <- init_plan
+    cur_best <- matrix(init_plan, ncol=1)
+    rescale <- 1 - maximize * 2
 
-    scores <- numeric(n_out)
-    cur_best_score <- score_fn(matrix(init_plan, ncol = 1))
+    cur_best_scores <- score_fn(matrix(init_plan, ncol = 1))
+    if (!is.matrix(cur_best_scores)) {
+        cur_best_scores = matrix(cur_best_scores, ncol=1)
+        rownames(cur_best_scores) = "score"
+    } else {
+        cur_best_scores = t(cur_best_scores)
+        if (!is.null(names(rescale))) {
+            rescale = rescale[match(rownames(cur_best_scores), names(rescale))]
+        }
+    }
+    cur_best_scores <- cur_best_scores * rescale
+    dim_score <- nrow(cur_best_scores)
+
+    scores <- matrix(nrow=n_out, ncol=dim_score)
+    colnames(scores) = rownames(cur_best_scores)
 
     if (verbose) {
+        fmt_score <- function(x) {
+            paste0(sprintf("%f", x * rescale), collapse=" ")
+        }
         if (backend == "mergesplit") {
             cat("MERGE-SPLIT SHORT BURSTS\n")
         } else {
             cat("FLIP SHORT BURSTS\n")
         }
-        cat("Sampling up to", max_bursts, "bursts of", burst_size,
+        cat("Sampling up to", max_bursts, "bursts of", burst_size(1),
             "iterations each.\n")
-        cat("Burst  Improve?  Score\n")
+        cat("Burst  Improve? ")
+        cur_fmt_len <- nchar(fmt_score(cur_best_scores[, 1]))
+        cols <- stringr::str_pad(colnames(scores), round(cur_fmt_len / dim_score))
+        cat(cols, "\n")
     }
     report_int <- max(round(max_bursts/10), 1)
     improve_ch <- sample(c("\U0001F973", "\U0001F600", "\U0001F60E",
@@ -221,64 +253,76 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         "\U0001F4A5", "\U0001F389", "\U26C4",
         "\U0001F31F", "\U0001F308"))
     improve_ct <- 1L
-    keep <- seq_len(burst_size)
     idx <- 1L
+    converged <- FALSE
     for (burst in 1:max_bursts) {
-        plans <- run_burst(cur_best)[, keep]
-        plan_scores <- score_fn(plans)
+        this_burst_size <- burst_size(burst)
+        keep <- seq_len(this_burst_size)
+        burst_init = cur_best[, sample.int(ncol(cur_best), 1)]
+        plans <- run_burst(burst_init, burst)[, keep]
+        plan_scores <- t(matrix(score_fn(plans), ncol=dim_score))
+        plan_scores <- plan_scores * rescale
 
-        if (maximize) {
-            best_idx <- which.max(plan_scores)
-            best_score <- plan_scores[best_idx]
-            condition <- best_score > cur_best_score
-        } else {
-            best_idx <- which.min(plan_scores)
-            best_score <- plan_scores[best_idx]
-            condition <- best_score < cur_best_score
-        }
+        cur_best <- cbind(cur_best, plans)
+        cur_best_scores <- cbind(cur_best_scores, plan_scores)
 
-        if (condition) { # improvement
-            cur_best <- plans[, best_idx]
-            cur_best_score <- best_score
+        dominated <- pareto_dominated(cur_best_scores)
+        improved <- any(!tail(dominated, this_burst_size))
+        # remove dominated plans
+        cur_best <- cur_best[, !dominated, drop=FALSE]
+        cur_best_scores <- cur_best_scores[, !dominated, drop=FALSE]
+
+        # add new undominated plans
+        out_idx = sample.int(ncol(cur_best), 1) # random plan from frontier
+        if (improved) { # improvement
             if (verbose) {
                 improve_ct <- (improve_ct %% length(improve_ch)) + 1L
-                cat(sprintf("% 5d     %s     %f\n", burst,
-                    improve_ch[improve_ct], cur_best_score))
+
+                cat(sprintf("% 5d     %s     %s\n", burst,
+                    improve_ch[improve_ct],
+                    fmt_score(cur_best_scores[, out_idx])))
             }
         } else if (verbose && burst %% report_int == 0) {
-            cat(sprintf("% 5d            %f\n", burst, cur_best_score))
+            cat(sprintf("% 5d            %s\n", burst,
+                        fmt_score(cur_best_scores[, out_idx])))
         }
 
         if (burst %% thin == 0) {
             idx <- burst %/% thin
-            out_mat[, idx] <- cur_best
-            scores[idx] <- cur_best_score
+            out_mat[, idx] <- cur_best[, out_idx]
+            scores[idx, ] <- cur_best_scores[, out_idx] * rescale
 
-            if (maximize && cur_best_score >= stop_at) break
-            if (!maximize && cur_best_score <= stop_at) break
+            if (any(colSums(cur_best_scores >= stop_at) == dim_score)) {
+                converged = TRUE
+                break
+            }
         }
     }
 
     out_idx <- if (return_all) seq_len(idx) else idx
-    if (maximize)
-        converged <- cur_best_score >= stop_at
-    else
-        converged <- cur_best_score <= stop_at
 
     storage.mode(out_mat) <- "integer"
 
+    pareto_scores = t(cur_best_scores * rescale)
+    pareto_scores = pareto_scores[order(pareto_scores[, 1]), , drop=FALSE]
+
     out <- new_redist_plans(out_mat[, out_idx, drop = FALSE], map, "shortburst",
         wgt = NULL, resampled = FALSE,
-        burst_size = burst_size,
+        burst_size = burst_size(1),
         n_bursts = burst,
         backend = backend,
         converged = converged,
+        pareto_front = cur_best,
+        pareto_scores = pareto_scores,
         score_fn = deparse(substitute(score_fn)))
-    out$score <- rep(scores[out_idx], each = ndists)
+    score_mat = matrix(rep(scores[out_idx, ], each = ndists), ncol = dim_score)
+    colnames(score_mat) = colnames(scores)
+    out <- dplyr::mutate(out, as.data.frame(score_mat))
 
     if (return_all) {
         out <- add_reference(out, init_plan, "<init>")
-        out$score[1:ndists] <- scores[1]
+        idx_cols = ncol(out) - dim_score:1 + 1
+        out[1:ndists, idx_cols] <- matrix(rep(scores[1, ], each = ndists), ncol = dim_score)
     }
 
     out
@@ -314,8 +358,9 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
 #'
 #' @param map A \code{\link{redist_map}} object.
 #'
-#' @return A scoring function of class `redist_scorer`. single numeric value, where larger values are better for `frac_kept`,
-#' `group_pct`, and `polsby_popper` and smaller values are better for `splits` and `pop_dev`.
+#' @return A scoring function of class `redist_scorer` which returns a single numeric value per plan.
+#' Larger values are generally better for `frac_kept`, `group_pct`, and `polsby_popper`
+#' and smaller values are better for `splits` and `pop_dev`.
 #'
 #' @examples
 #' \donttest{
@@ -327,6 +372,10 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
 #' scorer_group_pct(iowa_map, dem_08, tot_08, k = 2)
 #' 1.5*scorer_frac_kept(iowa_map) + 0.4*scorer_status_quo(iowa_map)
 #' 1.5*scorer_frac_kept(iowa_map) + scorer_frac_kept(iowa_map)*scorer_status_quo(iowa_map)
+#' cbind(
+#'     comp = scorer_frac_kept(iowa_map),
+#'     sq = scorer_status_quo(iowa_map)
+#' )
 #' }
 #'
 #' @concept prepare
@@ -479,6 +528,48 @@ scorer_status_quo <- function(map, existing_plan = get_existing(map)) {
     class(fn) <- c("redist_scorer", "function")
     fn
 }
+
+
+
+#' Combine scoring functions
+#'
+#' `redist_scorer` functions may be combined together to optimize along multiple
+#' dimensions. Rather than linearly combining multiple scorers to form a single
+#' objective as with [scorer-arith], these functions allow analysts to approximate
+#' the Pareto frontier for a set of scorers.
+#'
+#' @name scorer-combine
+#' @concept prepare
+#' @md
+#' @returns function of class redist_scorer. Will return a matrix with each
+#'   column containing every plan's scores for a particular scoring function.
+NULL
+
+#' @rdname scorer-combine
+#'
+#' @param ... a numeric or a `redist_scorer` function, from [`scorers`]
+#' @param deparse.level As in [cbind()].
+#'
+#' @export
+combine_scorers <- function(...) {
+    cbind(...)
+}
+
+#' @rdname scorer-combine
+#' @export
+cbind.redist_scorer <- function(..., deparse.level = 1) {
+    fns <- list(...)
+    stopifnot(all(sapply(fns, function(x) inherits(x, "redist_scorer"))))
+
+    fn <- function(plans) {
+        do.call(cbind, c(lapply(fns, function(fn) {
+            fn(plans)
+        }), list(deparse.level=deparse.level)))
+    }
+    class(fn) <- c("redist_scorer", "function")
+    fn
+}
+
 
 #' Scoring function arithmetic
 #'

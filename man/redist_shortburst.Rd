@@ -28,17 +28,26 @@ redist_shortburst(
 \item{map}{A \code{\link{redist_map}} object.}
 
 \item{score_fn}{A function which takes a matrix of plans and returns a score
-for each plan. Can also be a purrr-style anonymous function. See
-\code{\link[=scorers]{?scorers}} for some function factories for common scoring rules.}
+(or, generally, a row vector) for each plan. Can also be a purrr-style
+anonymous function. See \code{\link[=scorers]{?scorers}} for some function factories
+for common scoring rules.}
 
-\item{stop_at}{A threshold to stop optimization at.}
+\item{stop_at}{A threshold to stop optimization at. When \code{score_fn} returns a
+row vector per plan, \code{maximize} can be an equal-length vector specifying a
+threshhold for each dimension, which must all be met for the algorithm to
+stop.}
 
-\item{burst_size}{The size of each burst. 10 is recommended for mergesplit and 50 for flip.}
+\item{burst_size}{The size of each burst. 10 is recommended for the
+\code{mergesplit} backend and 50 for the \code{flip} backend. Can also provide
+burst schedule function which takes the current iteration (an integer)
+and returns the desired burst size.}
 
 \item{max_bursts}{The maximum number of bursts to run before returning.}
 
 \item{maximize}{If \code{TRUE}, try to maximize the score; otherwise, try to
-minimize it.}
+minimize it. When \code{score_fn} returns a row vector per plan, \code{maximize} can
+be an equal-length vector specifying whether each dimension should be
+maximized or minimized.}
 
 \item{init_plan}{The initial state of the map. If not provided, will default to
 the reference map of the \code{map} object, or if none exists, will sample

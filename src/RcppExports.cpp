@@ -355,6 +355,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// pareto_dominated
+LogicalVector pareto_dominated(arma::mat x);
+RcppExport SEXP _redist_pareto_dominated(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(pareto_dominated(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // closest_adj_pop
 int closest_adj_pop(IntegerVector adj, int i_dist, NumericVector g_prop);
 RcppExport SEXP _redist_closest_adj_pop(SEXP adjSEXP, SEXP i_distSEXP, SEXP g_propSEXP) {
@@ -628,6 +639,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_pop_tally", (DL_FUNC) &_redist_pop_tally, 3},
     {"_redist_max_dev", (DL_FUNC) &_redist_max_dev, 3},
     {"_redist_ms_plans", (DL_FUNC) &_redist_ms_plans, 15},
+    {"_redist_pareto_dominated", (DL_FUNC) &_redist_pareto_dominated, 1},
     {"_redist_closest_adj_pop", (DL_FUNC) &_redist_closest_adj_pop, 3},
     {"_redist_rint1", (DL_FUNC) &_redist_rint1, 2},
     {"_redist_runif1", (DL_FUNC) &_redist_runif1, 2},

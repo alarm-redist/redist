@@ -104,11 +104,12 @@ persily <- function(plan, map, counties = NULL) {
     par <- redist.parity(plan, total_pop = map[[attr(map, "pop_col")]])
     map <- set_pop_tol(map, 2*par)
 
-    redist_shortburst(map, score_fn = (scorer_frac_kept(map = map) - scorer_pop_dev(map = map) -
+    scorer <- scorer_frac_kept(map = map) -
+        scorer_pop_dev(map = map) -
         scorer_splits(map = map, counties = counties) +
-        scorer_status_quo(map = map, existing_plan = plan)),
-    backend = "flip",
-    max_bursts = 100, constraints = cons, return_all = FALSE)
+        scorer_status_quo(map = map, existing_plan = plan)
+    redist_shortburst(map, score_fn = scorer, backend = "flip",
+                      max_bursts = 100, constraints = cons, return_all = FALSE)
 }
 
 

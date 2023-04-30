@@ -1,5 +1,9 @@
 # 4.1.2
 * Improve contiguity checking speed drastically.
+* Support for multiple independent scoring functions in `redist_shortburst()`.
+With multiple scorers, the algorithm will stochastically explore to try to 
+find the largest Pareto frontier for the scores. The frontier can be accessed with
+`attr(<plans obj>, "pareto_score")`.
 
 # redist 4.1.1
 * Resolves a sanitizer error for CRAN

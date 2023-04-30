@@ -46,8 +46,9 @@ the minimum Polsby Popper score}
 \item{existing_plan}{A vector containing the current plan.}
 }
 \value{
-A scoring function of class \code{redist_scorer}. single numeric value, where larger values are better for \code{frac_kept},
-\code{group_pct}, and \code{polsby_popper} and smaller values are better for \code{splits} and \code{pop_dev}.
+A scoring function of class \code{redist_scorer} which returns a single numeric value per plan.
+Larger values are generally better for \code{frac_kept}, \code{group_pct}, and \code{polsby_popper}
+and smaller values are better for \code{splits} and \code{pop_dev}.
 }
 \description{
 The output of these functions may be passed into \code{redist_shortburst()} as
@@ -87,6 +88,10 @@ scorer_status_quo(iowa_map)
 scorer_group_pct(iowa_map, dem_08, tot_08, k = 2)
 1.5*scorer_frac_kept(iowa_map) + 0.4*scorer_status_quo(iowa_map)
 1.5*scorer_frac_kept(iowa_map) + scorer_frac_kept(iowa_map)*scorer_status_quo(iowa_map)
+cbind(
+    comp = scorer_frac_kept(iowa_map),
+    sq = scorer_status_quo(iowa_map)
+)
 }
 
 }
