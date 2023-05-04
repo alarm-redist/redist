@@ -51,7 +51,7 @@ Papers:
   Computational and Graphical Statistics*, 29(4), 715-728.
 - Fifield, B., Imai, K., Kawahara, J., & Kenny, C. T. (2020). [The
   essential role of empirical validation in legislative redistricting
-  simulation]()<https://doi.org/10.1080/2330443X.2020.1791773>.
+  simulation](https://doi.org/10.1080/2330443X.2020.1791773).
   *Statistics and Public Policy*, 7(1), 52-68.
 
 ## Installation Instructions
@@ -63,7 +63,7 @@ install.packages("redist")
 ```
 
 You can also install the most recent development version of `redist`
-(which is usually quite stable) using the \`remotes\`\` package.
+(which is usually quite stable) using the `remotes` package.
 
 ``` r
 if (!require(remotes)) install.packages("remotes")
@@ -87,7 +87,7 @@ iowa_map = redist_map(iowa, existing_plan=cd_2010, pop_tol=0.001, total_pop = po
 # simulate 500 plans using the SMC algorithm
 iowa_plans = redist_smc(iowa_map, nsims=500)
 #> SEQUENTIAL MONTE CARLO
-#> Sampling 500 99-unit maps with 4 districts and population between 760,827 and 762,350.
+#> Sampling 500 99-unit maps with 4 districts and population between 760827 and 762350.
 ```
 
 After generating plans, you can use `redist`’s plotting functions to

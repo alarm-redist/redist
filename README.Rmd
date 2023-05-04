@@ -56,7 +56,7 @@ Papers:
 - McCartan, C., & Imai, K. (Forthcoming). [Sequential Monte Carlo for sampling balanced and compact redistricting plans](https://arxiv.org/abs/2008.06131/). *Annals of Applied Statistics*.
 - Fifield, B., Higgins, M., Imai, K., & Tarr, A. (2020). 
 [Automated redistricting simulation using Markov chain Monte Carlo](https://doi.org/10.1080/10618600.2020.1739532). *Journal of Computational and Graphical Statistics*, 29(4), 715-728.
-- Fifield, B., Imai, K., Kawahara, J., & Kenny, C. T. (2020). [The essential role of empirical validation in legislative redistricting simulation]()https://doi.org/10.1080/2330443X.2020.1791773. *Statistics and Public Policy*, 7(1), 52-68.
+- Fifield, B., Imai, K., Kawahara, J., & Kenny, C. T. (2020). [The essential role of empirical validation in legislative redistricting simulation](https://doi.org/10.1080/2330443X.2020.1791773). *Statistics and Public Policy*, 7(1), 52-68.
 
 ## Installation Instructions
 
@@ -67,7 +67,7 @@ install.packages("redist")
 ```
 
 You can also install the most recent development version of `redist` 
-(which is usually quite stable) using the \`remotes\`\` package.
+(which is usually quite stable) using the `remotes` package.
 
 ```{r eval=FALSE}
 if (!require(remotes)) install.packages("remotes")
