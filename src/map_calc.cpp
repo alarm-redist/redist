@@ -145,20 +145,21 @@ std::vector<std::set<int>> calc_county_dist(const subview_col<uword> &districts,
  */
 double eval_splits(const subview_col<uword> &districts, int distr,
                    const uvec &counties, int n_cty, bool smc) {
-    std::vector<std::set<int>> county_dist = calc_county_dist(districts, counties, n_cty);
+    std::vector<std::set<int>> county_dist(n_cty);
+    int V = counties.size();
+    for (int i = 0; i < n_cty; i++) {
+        county_dist[i] = std::set<int>();
+    }
+    for (int i = 0; i < V; i++) {
+        county_dist[counties[i]-1].insert(districts[i]);
+    }
+    // std::vector<std::set<int>> county_dist = calc_county_dist(districts, counties, n_cty);
 
     int splits = 0;
     for (int i = 0; i < n_cty; i++) {
         int cty_n_distr = county_dist[i].size();
-        // for SMC, just count the split when it crosses the threshold
-        // for MCMC there is no sequential nature, & the overcount will cancel
-        bool cond = smc ? cty_n_distr == 2 : cty_n_distr >= 2;
-        if (cond) {
-            auto search = county_dist[i].find(distr);
-            if (search != county_dist[i].end()) {
-                splits += smc ? 1.0 : 1.0 / cty_n_distr; // take care of MCMC overcount
-            }
-        }
+        if (cty_n_distr > 1)
+            splits++;
     }
 
     return splits;
