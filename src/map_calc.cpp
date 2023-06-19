@@ -167,15 +167,8 @@ double eval_multisplits(const subview_col<uword> &districts, int distr,
     double splits = 0;
     for (int i = 0; i < n_cty; i++) {
         int cty_n_distr = county_dist[i].size();
-        // for SMC, just count the split when it crosses the threshold
-        // for MCMC there is no sequential nature, & the overcount will cancel
-        bool cond = smc ? cty_n_distr == 3 : cty_n_distr >= 3;
-        if (cond) {
-            auto search = county_dist[i].find(distr);
-            if (search != county_dist[i].end()) {
-                splits += smc ? 1.0 : 1.0 / cty_n_distr; // take care of MCMC overcount
-            }
-        }
+        if (cty_n_distr > 2)
+            splits++;
     }
 
     return splits;
@@ -193,10 +186,8 @@ double eval_total_splits(const subview_col<uword> &districts, int distr,
         int cty_n_distr = county_dist[i].size();
         // no over-counting since every split counts
         if (cty_n_distr > 1) {
-            auto search = county_dist[i].find(distr);
-            if (search != county_dist[i].end()) {
-                splits += 1.0;
-            }
+            splits += 1.0;
+
         }
     }
 
