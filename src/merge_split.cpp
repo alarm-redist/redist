@@ -59,7 +59,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     int n_accept = 0;
     int reject_ct;
     CharacterVector psi_names = CharacterVector::create(
-        "pop_dev", "splits", "multisplits",
+        "pop_dev", "splits", "multisplits", "total_splits",
         "segregation", "grp_pow", "grp_hinge", "grp_inv_hinge",
         "compet", "status_quo", "incumbency",
         "polsby", "fry_hold", "log_st", "edges_removed",
