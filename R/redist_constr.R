@@ -625,7 +625,10 @@ add_constr_custom <- function(constr, strength, fn) {
 
     constr_env = rlang::fn_env(fn)
     # every symbol used in the function (except the 2 arguments)
-    var_names = setdiff(unique(extract_vars(rlang::fn_body(fn))), names(args))
+    var_names = setdiff(
+        unique(extract_vars(rlang::fn_body(fn))),
+        c(names(args), '', ' ')
+        )
     for (nm in var_names) {
         found = find_env(nm, constr_env)
         if (!is.null(found) &&
