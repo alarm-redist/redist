@@ -158,11 +158,11 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
     init_pop <- pop_tally(init_plans, pop, ndists)
     if (any(init_pop < pop_bounds[1]) | any(init_pop > pop_bounds[3]))
         cli_abort("Provided initialization does not meet population bounds.")
-    if (any(pop >= get_target(map))) {
+    if (any(pop >= pop_bounds[3])) {
         too_big <- as.character(which(pop >= pop_bounds[3]))
         cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
-                    population larger than the district target.",
-            "x" = "Redistricting impossible."))
+                    population larger than the maximum district size.",
+                    "x" = "Redistricting impossible."))
     }
 
     # kind of hacky -- extract k=... from outupt
