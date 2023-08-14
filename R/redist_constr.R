@@ -640,7 +640,7 @@ add_constr_custom <- function(constr, strength, fn) {
     }
 
     if (!is.null(plan <- get_existing(attr(constr, "data")))) {
-        out <- tryCatch(fn(plan, 1), error = function(e) {
+        out <- tryCatch(fn(plan, min(plan)), error = function(e) {
             cli_abort(c("Ran into an error testing custom constraint
                         on the existing plan:",
                 "x" = e$message))
