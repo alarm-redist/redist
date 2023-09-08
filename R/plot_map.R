@@ -214,7 +214,7 @@ redist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE,
     plan_to_plot <- eval_tidy(enquo(plan), shp)
     if (!is.null(plan_to_plot)) {
         if (!is.numeric(plan_to_plot)) {
-            cli_abort("{.arg} plan must be a numeric vector.")
+            cli_abort("{.arg plan} must be a numeric vector.")
         }
         if (nrow(shp) != length(plan_to_plot)) {
             cli_abort("{.arg plan} and {.arg shp} must have same number of precincts.")
