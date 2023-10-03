@@ -24,10 +24,3 @@ test_that("Population parity is computed correctly inside max_dev", {
     res <- max_dev(plans_10[, 1:10], pop, 3)
     expect_equal(res, dev, tolerance = 2e-5)
 })
-
-test_that("Group percentages are computed correctly", {
-    pct <- c(0.0664929249178703, 0.252476845951228, 0.192413021989597,
-        0.155691917760251, 0.252476845951228, 0.10955590730432)
-    res <- redist.group.percent(plans_10[, 1:2], fl25$BlackPop, fl25$pop)
-    expect_equal(as.numeric(res), pct)
-})

@@ -1,4 +1,5 @@
-# 4.1.2
+# 4.2.0
+* Deprecate functionality that is provided by `redistmetrics` package.
 * Improve contiguity checking speed drastically.
 * Support for multiple independent scoring functions in `redist_shortburst()`.
 With multiple scorers, the algorithm will stochastically explore to try to 
