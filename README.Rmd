@@ -102,7 +102,7 @@ library(patchwork) # for plotting
 redist.plot.plans(iowa_plans, draws=c("cd_2010", "1", "2", "3"), shp=iowa_map)
 
 iowa_plans = iowa_plans %>%
-    mutate(Compactness = distr_compactness(iowa_map),
+    mutate(Compactness = comp_polsby(pl(), iowa_map),
            `Population deviation` = plan_parity(iowa_map),
            `Democratic vote` = group_frac(iowa_map, dem_08, tot_08))
 

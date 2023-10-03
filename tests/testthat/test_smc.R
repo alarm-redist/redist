@@ -11,7 +11,7 @@ test_that("SMC runs without errors", {
 test_that("County constraint works", {
     iowa_map <- redist_map(iowa, ndists = 4, pop_tol = 0.05)
     plans <- redist_smc(iowa_map, 50, counties = region, silent = TRUE)
-    splits <- redist.splits(as.matrix(plans), iowa_map$region)
+    splits <- redistmetrics::splits_admin(plans, iowa_map, region)
     expect_true(all(splits <= 3L))
     expect_true(all(apply(get_plans_matrix(plans), 2,
         function(x) all(contiguity(iowa_map$adj, x) == 1))))

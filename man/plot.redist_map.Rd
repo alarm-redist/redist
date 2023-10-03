@@ -4,7 +4,7 @@
 \alias{plot.redist_map}
 \title{Plot a \code{redist_map}}
 \usage{
-\method{plot}{redist_map}(x, fill = NULL, by_distr = FALSE, adj = FALSE, interactive = FALSE, ...)
+\method{plot}{redist_map}(x, fill = NULL, by_distr = FALSE, adj = FALSE, ...)
 }
 \arguments{
 \item{x}{the \code{redist_map} object}
@@ -20,12 +20,8 @@ district and indicate the \code{fill} variable by shading.}
 \item{adj}{if \code{TRUE}, force plotting the adjacency graph. Overrides
 \code{by_distr}.}
 
-\item{interactive}{if \code{TRUE}, show an interactive map in the viewer
-rather than a static map. Ignores \code{adj} and \code{by_distr}.}
-
 \item{...}{passed on to \code{\link{redist.plot.map}} (or
-\code{\link{redist.plot.adj}} if \code{adj=TRUE}, or
-\code{\link{redist.plot.interactive}} if \code{interactive=TRUE}).
+\code{\link{redist.plot.adj}} if \code{adj=TRUE}).
 Useful parameters may include \code{zoom_to}, \code{boundaries}, and
 \code{title}.}
 }

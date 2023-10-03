@@ -312,7 +312,7 @@ county_perims = prep_perims(iowa_map, iowa_map$adj)
 
 iowa_plans = iowa_plans %>%
     mutate(pop_dev = abs(total_pop / get_target(iowa_map) - 1),
-           comp = distr_compactness(iowa_map, "PolsbyPopper", perim_df=county_perims),
+           comp = comp_polsby(pl(), iowa_map, perim_df=county_perims),
            pct_min = group_frac(iowa_map, vap - wvap, vap),
            pct_dem = group_frac(iowa_map, dem_08, dem_08 + rep_08))
 print(iowa_plans)
