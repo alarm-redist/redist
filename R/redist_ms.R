@@ -126,7 +126,7 @@ redist_mergesplit <- function(map, nsims, warmup = max(100, nsims %/% 2), thin =
     exist_name <- attr(map, "existing_col")
     counties <- rlang::eval_tidy(rlang::enquo(counties), map)
     if (is.null(init_plan) && !is.null(exist_name)) {
-        init_plan <- as.integer(as.factor(get_existing(map)))
+        init_plan <- vctrs::vec_group_id(get_existing(map))
         if (is.null(init_name)) init_name <- exist_name
     }  else if (!is.null(init_plan) && is.null(init_name)) {
         init_name <- "<init>"
@@ -152,7 +152,7 @@ redist_mergesplit <- function(map, nsims, warmup = max(100, nsims %/% 2), thin =
             cli_abort("County vector must not contain missing values.")
 
         # handle discontinuous counties
-        component <- contiguity(adj, as.integer(as.factor(counties)))
+        component <- contiguity(adj, vctrs::vec_group_id(counties))
         counties <- dplyr::if_else(component > 1,
                                    paste0(as.character(counties), "-", component),
                                    as.character(counties)) %>%

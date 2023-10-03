@@ -180,7 +180,7 @@ plan_parity <- function(map, .data = pl(), ...) {
 #' @concept analyze
 #' @export
 is_county_split <- function(plan, counties) {
-    counties <- as.integer(as.factor(counties))
+    counties <- vctrs::vec_group_id(counties)
     as.logical((tapply(plan, counties, FUN = function(y) length(unique(y))) > 1)[counties])
 }
 

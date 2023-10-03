@@ -269,7 +269,7 @@ add_reference <- function(plans, ref_plan, name = NULL) {
         if (!is.character(name)) cli_abort("{.arg name} must be a {.cls chr}")
     }
 
-    ref_plan <- as.integer(as.factor(ref_plan))
+    ref_plan <- vctrs::vec_group_id(ref_plan)
     ndists <- max(ref_plan)
     if (ndists != max(plan_m[, 1]))
         cli_abort("{.arg ref_plan} has a different number of districts than {.arg plans}")

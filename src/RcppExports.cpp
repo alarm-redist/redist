@@ -414,18 +414,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// reindex
-IntegerMatrix reindex(IntegerMatrix dm, int nd);
-RcppExport SEXP _redist_reindex(SEXP dmSEXP, SEXP ndSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerMatrix >::type dm(dmSEXP);
-    Rcpp::traits::input_parameter< int >::type nd(ndSEXP);
-    rcpp_result_gen = Rcpp::wrap(reindex(dm, nd));
-    return rcpp_result_gen;
-END_RCPP
-}
 // plan_joint
 NumericMatrix plan_joint(IntegerVector m1, IntegerVector m2, NumericVector pop);
 RcppExport SEXP _redist_plan_joint(SEXP m1SEXP, SEXP m2SEXP, SEXP popSEXP) {
@@ -644,7 +632,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_rint1", (DL_FUNC) &_redist_rint1, 2},
     {"_redist_runif1", (DL_FUNC) &_redist_runif1, 2},
     {"_redist_resample_lowvar", (DL_FUNC) &_redist_resample_lowvar, 1},
-    {"_redist_reindex", (DL_FUNC) &_redist_reindex, 2},
     {"_redist_plan_joint", (DL_FUNC) &_redist_plan_joint, 3},
     {"_redist_renumber_matrix", (DL_FUNC) &_redist_renumber_matrix, 2},
     {"_redist_solve_hungarian", (DL_FUNC) &_redist_solve_hungarian, 1},

@@ -387,7 +387,7 @@ dplyr_row_slice.redist_map <- function(data, i, ...) {
     # fix merge_idx
     merge_idx <- attr(data, "merge_idx")
     if (!is.null(merge_idx))
-        merge_idx <- as.integer(as.factor(merge_idx[i]))
+        merge_idx <- vctrs::vec_group_id(merge_idx[i])
     attr(y, "merge_idx") <- merge_idx
 
     # fix pop. bounds

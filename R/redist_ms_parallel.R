@@ -76,7 +76,7 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
     counties <- rlang::eval_tidy(rlang::enquo(counties), map)
     if (is.null(init_plan)) {
         if (!is.null(exist_name)) {
-            init_plans <- matrix(rep(as.integer(as.factor(get_existing(map))), chains), ncol = chains)
+            init_plans <- matrix(rep(vctrs::vec_group_id(get_existing(map)), chains), ncol = chains)
             if (is.null(init_name)) {
                 init_names <- rep(exist_name, chains)
             } else {
@@ -125,7 +125,7 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
             cli_abort("{.arg counties} must not contain missing values.")
 
         # handle discontinuous counties
-        component <- contiguity(adj, as.integer(as.factor(counties)))
+        component <- contiguity(adj, vctrs::vec_group_id(counties))
         counties <- dplyr::if_else(component > 1,
                                    paste0(as.character(counties), "-", component),
                                    as.character(counties)) %>%

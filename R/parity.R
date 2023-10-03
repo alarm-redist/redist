@@ -89,7 +89,7 @@ min_move_parity <- function(map, plan, counties = NULL, penalty = 0.2) {
     if (missing(counties)) {
         counties <- rep(1L, V)
     } else {
-        counties <- as.integer(as.factor(eval_tidy(enquo(counties), map)))
+        counties <- vctrs::vec_group_id(eval_tidy(enquo(counties), map))
     }
 
     distr_adj <- get_plan_graph(adj, length(adj), plan, nd)

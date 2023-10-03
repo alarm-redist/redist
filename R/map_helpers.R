@@ -100,6 +100,6 @@ make_cores <- function(.data = cur_map(), boundary = 1, focus = NULL) {
                     ">" = "Add one using the {.arg existing_plan} argument to {.fun redist_map}"))
 
     redist.identify.cores(adj = get_adj(.data),
-                          plan = as.integer(as.factor(existing)),
+                          plan = vctrs::vec_group_id(existing),
                           boundary = boundary, focus = focus, simplify = TRUE)
 }

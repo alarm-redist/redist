@@ -121,10 +121,6 @@ resample_lowvar <- function(wgts) {
     .Call(`_redist_resample_lowvar`, wgts)
 }
 
-reindex <- function(dm, nd) {
-    .Call(`_redist_reindex`, dm, nd)
-}
-
 plan_joint <- function(m1, m2, pop) {
     .Call(`_redist_plan_joint`, m1, m2, pop)
 }

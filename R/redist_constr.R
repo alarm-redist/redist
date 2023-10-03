@@ -391,7 +391,7 @@ add_constr_splits <- function(constr, strength, admin) {
     if (any(is.na(admin))) {
         cli_abort("{.arg admin} many not contain {.val NA}s.")
     }
-    admin <- redist.sink.plan(admin)
+    admin <- vctrs::vec_group_id(admin)
 
     new_constr <- list(strength = strength,
         admin = admin,
@@ -415,7 +415,7 @@ add_constr_multisplits <- function(constr, strength, admin) {
         cli_abort("{.arg admin} many not contain {.val NA}s.")
     }
 
-    admin <- redist.sink.plan(admin)
+    admin <- vctrs::vec_group_id(admin)
 
     new_constr <- list(strength = strength,
         admin = admin,
@@ -438,7 +438,7 @@ add_constr_total_splits <- function(constr, strength, admin) {
         cli_abort("{.arg admin} many not contain {.val NA}s.")
     }
 
-    admin <- redist.sink.plan(admin)
+    admin <- vctrs::vec_group_id(admin)
 
     new_constr <- list(strength = strength,
         admin = admin,
@@ -555,7 +555,7 @@ add_constr_log_st <- function(constr, strength, admin = NULL) {
         cli_abort("{.arg admin} many not contain {.val NA}s.")
     }
 
-    admin <- redist.sink.plan(admin)
+    admin <- vctrs::vec_group_id(admin)
 
     new_constr <- list(strength = strength,
         admin = admin)

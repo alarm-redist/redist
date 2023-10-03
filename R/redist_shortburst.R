@@ -126,7 +126,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
             cli_abort("County vector must not contain missing values.")
 
         # handle discontinuous counties
-        component <- contiguity(adj, as.integer(as.factor(counties)))
+        component <- contiguity(adj, vctrs::vec_group_id(counties))
         counties <- dplyr::if_else(component > 1,
             paste0(as.character(counties), "-", component),
             as.character(counties)) %>%
@@ -138,7 +138,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         }
     }
 
-    if (is.null(init_plan)) init_plan <- as.integer(as.factor(get_existing(map)))
+    if (is.null(init_plan)) init_plan <- vctrs::vec_group_id(get_existing(map))
     if (length(init_plan) == 0L || isTRUE(init_plan == "sample")) {
         init_plan <- as.integer(get_plans_matrix(
             redist_smc(map, 10, counties, resample = FALSE, ref_name = FALSE, silent = TRUE, ncores = 1))[, 1])
@@ -453,7 +453,7 @@ scorer_pop_dev <- function(map) {
 #' @export
 scorer_splits <- function(map, counties) {
     counties <- eval_tidy(enquo(counties), map)
-    counties <- as.integer(as.factor(counties))
+    counties <- vctrs::vec_group_id(counties)
 
     fn <- function(plans) {
         nd <- length(unique(plans[, 1]))
@@ -471,7 +471,7 @@ scorer_splits <- function(map, counties) {
 #' @export
 scorer_multisplits <- function(map, counties) {
     counties <- eval_tidy(enquo(counties), map)
-    counties <- as.integer(as.factor(counties))
+    counties <- vctrs::vec_group_id(counties)
 
     fn <- function(plans) {
         splits(plans, counties, attr(map, "ndists"), 2)/length(unique(counties))

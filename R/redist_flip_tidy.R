@@ -214,7 +214,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
 
         } else {
             if (is.null(init_name)) init_name <- exist_name
-            init_plan <- redist.sink.plan(plan = init_plan)
+            init_plan <- vctrs::vec_group_id(plan = init_plan)
             components <- contiguity(adj, init_plan)
             if (any(components > 1)) {
                 cli::cli_abort("init_plan does not point to a contiguous plan.")
@@ -432,7 +432,7 @@ redist_flip_anneal <- function(map,
 
         } else {
             if (is.null(init_name)) init_name <- exist_name
-            init_plan <- redist.sink.plan(plan = init_plan)
+            init_plan <- vctrs::vec_group_id(plan = init_plan)
             components <- contiguity(adj, init_plan)
             if (any(components > 1)) {
                 cli::cli_abort("init_plan does not point to a contiguous plan.")

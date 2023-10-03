@@ -162,7 +162,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
             cli_abort("County vector must not contain missing values.")
 
         # handle discontinuous counties
-        component <- contiguity(adj, as.integer(as.factor(counties)))
+        component <- contiguity(adj, vctrs::vec_group_id(counties))
         counties <- dplyr::if_else(component > 1,
                                    paste0(as.character(counties), "-", component),
                                    as.character(counties)) %>%
