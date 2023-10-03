@@ -128,7 +128,6 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
 
         }
 
-
         run_dfs <- list()
         n_runs <- length(all_diagn)
         warn_bottlenecks <- FALSE
@@ -250,7 +249,9 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
             }
             cat("\n")
         } else {
-            out <- NULL
+            out <- tibble(accept_rate = attr(object, "mh_acceptance"),
+                          div_q10 = div_rg[1],
+                          div_q90 = div_rg[2])
         }
 
         cli::cli_li(cli::col_grey("
