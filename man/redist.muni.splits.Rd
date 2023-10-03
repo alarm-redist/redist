@@ -32,6 +32,7 @@ data(iowa)
 ia <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop, pop_tol = 0.01)
 plans <- redist_smc(ia, 50, silent = TRUE)
 ia$region[1:10] <- NA
-splits <- redist.muni.splits(plans, ia$region)
+#old redist.muni.splits(plans, ia$region)
+splits_sub_admin(plans, ia, region)
 }
 \concept{analyze}

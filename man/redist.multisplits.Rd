@@ -22,6 +22,7 @@ Counts the total number of counties that are split across more than 2 districts.
 data(iowa)
 ia <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop, pop_tol = 0.01)
 plans <- redist_smc(ia, 50, silent = TRUE)
-splits <- redist.multisplits(plans, ia$region)
+#old redist.multisplits(plans, ia$region)
+splits_multi(plans, ia, region)
 }
 \concept{analyze}

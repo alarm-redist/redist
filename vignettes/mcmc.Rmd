@@ -54,7 +54,8 @@ sims <- redist_flip(map = fl_map, nsims = 6, constraints = constr)
 The `flip` algorithm is one of the more straightforward redistricting algorithms. Beginning with an initial partition of a graph, it proposes flipping a node from one partition to an adjacent partition. By checking that the proposed flip meets basic constraints, such as keeping partitions contiguous and staying within a certain population parity, it ensures that all proposed new partitions are also valid partitions. The implementation within `redist` is a bit more advanced that this, as it allows for multiple flips and rejecting valid partitions based on a Metropolis Hastings algorithm. The following walks through the basics of this algorithm to provide an introduction to using `flip` correctly and efficiently.
 
 ```{r, echo = FALSE}
-redist.plot.map(shp = fl25, plan = plan) + redist.plot.adj(shp = fl25, plan = plan, plot_shp = FALSE) 
+redist.plot.map(shp = fl25, plan = plan) + 
+    redist.plot.adj(shp = fl25, plan = plan, plot_shp = FALSE) 
 ```
 
 Suppose we are redistricting this small map above on the left. To use the `flip` algorithm, we need to consider the adjacency graph that underlies this map, which is above on the right. Each of the 25 precincts on the left are displayed as a node on the right, connected if they are contiguous on the map. If we use the above district as an initial plan, we can then run `flip` for a few steps.
@@ -253,7 +254,7 @@ Alternatively, you can directly use functions on the `redist_plans` object. For 
 
 ```{r}
 tidy_sims <- tidy_sims %>% 
-  mutate(competitiveness = rep(competitiveness(map = iowa_map, rvote = rep_08, dvote = dem_08), each = 4))
+  mutate(competitiveness = compet_talisman(pl(), iowa_map, rvote = rep_08, dvote = dem_08))
 ```
 
 ```{r}
@@ -271,12 +272,10 @@ For more information on using `redist_plans` objects, see the [Get Started page]
 
 When using the MCMC algorithms, there are various useful diagnostic plots. The `redist.diagplot` function creates familiar plots by converting numeric entries into `mcmc` objects to use with `coda`.
 
-We use the dissimilarity index in Massey and Denton 1988 as a summary statistic for the following examples. This can be computed with `segregation_index` or `redist.segcalc`. In this case, we create a Republican dissimilarity index. We can work with two examples, the first is a single vector of the segregation index, while the second is a list of vectors, with one vector for each chain.
+We use the dissimilarity index in Massey and Denton 1988 as a summary statistic for the following examples. This can be computed with `seg_dissim`. In this case, we create a Republican dissimilarity index. We can work with two examples, the first is a single vector of the segregation index, while the second is a list of vectors, with one vector for each chain.
 
 ```{r}
-seg <- redist.segcalc(plans = get_plans_matrix(tidy_sims), 
-                      group_pop = iowa_map$rep_08,
-                      total_pop = iowa_map$pop)
+seg <- by_plan(seg_dissim(tidy_sims, iowa_map, rep_08, pop))
 ```
 
 The first three plots only need a single index.
@@ -302,10 +301,9 @@ redist.diagplot(seg, plot = "mean")
 As examples for the next two plots, we can use the example above which ran 4 chains. This is the same index, but computed for each chain.
 
 ```{r}
-seg_chains <- lapply(1:nchains, 
-                     function(i){redist.segcalc(plans = get_plans_matrix(flip_chains[[i]]), 
-                                                group_pop = iowa_map$rep_08,
-                                                total_pop = iowa_map$pop)})
+seg_chains <- lapply(1:nchains, function(i) { 
+    seg_dissim(flip_chains[[i]], iowa_map, rep_08, pop)
+})
 ```
 
 -   Trace Plot

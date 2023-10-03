@@ -52,7 +52,8 @@ alg_253 <- redist.flip(
 )
 
 ## Get Republican Dissimilarity Index from simulations
-rep_dmi_253 <- redist.segcalc(alg_253, fl25$mccain, fl25$pop)
+# old: rep_dmi_253 <- redist.segcalc(alg_253, fl25$mccain, fl25$pop)
+rep_dmi_253 <- seg_dissim(alg_253, fl25, mccain, pop)
 }
 }
 \references{

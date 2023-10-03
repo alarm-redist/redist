@@ -37,7 +37,8 @@
 #' )
 #'
 #' ## Get Republican Dissimilarity Index from simulations
-#' rep_dmi_253 <- redist.segcalc(alg_253, fl25$mccain, fl25$pop)
+#' # old: rep_dmi_253 <- redist.segcalc(alg_253, fl25$mccain, fl25$pop)
+#' rep_dmi_253 <- seg_dissim(alg_253, fl25, mccain, pop)
 #' }
 #' @concept analyze
 #' @export
@@ -83,7 +84,8 @@ redist.segcalc <- function(plans, group_pop, total_pop) {
 #' data(fl25_enum)
 #'
 #' plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
-#' comp <- redist.competitiveness(plans_05, fl25$mccain, fl25$obama)
+#' # old: comp <- redist.competitiveness(plans_05, fl25$mccain, fl25$obama)
+#' comp <- compet_talisman(plans_05, fl25, mccain, obama)
 #'
 redist.competitiveness <- function(plans, rvote, dvote, alpha = 1, beta = 1) {
     .Deprecated("redistmetrics")
@@ -134,8 +136,8 @@ redist.competitiveness <- function(plans, rvote, dvote, alpha = 1, beta = 1) {
 #' Becomes TRUE if ncol(district_membership > 8) and not manually set.
 #' @param perim_path it checks for an Rds, if no rds exists at the path,
 #' it creates an rds with borders and saves it.
-#' This can be created in advance with \code{redist.prep.polsbypopper}.
-#' @param perim_df A dataframe output from \code{redist.prep.polsbypopper}
+#' This can be created in advance with [prep_perims()].
+#' @param perim_df A dataframe output from [prep_perims()].
 #'
 #' @details This function computes specified compactness scores for a map.  If
 #' there is more than one shape specified for a single district, it combines
@@ -233,10 +235,12 @@ redist.competitiveness <- function(plans, rvote, dvote, alpha = 1, beta = 1) {
 #'
 #' plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
 #'
-#' redist.compactness(
-#'     shp = fl25, plans = plans_05[, 1:3],
-#'     measure = c("PolsbyPopper", "EdgesRemoved")
-#' )
+#' # old redist.compactness(
+#' #     shp = fl25, plans = plans_05[, 1:3],
+#' #     measure = c("PolsbyPopper", "EdgesRemoved")
+#' # )
+#' comp_polsby(plans_05[, 1:3], fl25)
+#' comp_edges_rem(plans_05[, 1:3], fl25, fl25$adj)
 #' @export redist.compactness
 redist.compactness <- function(shp = NULL,
                                plans,
@@ -453,33 +457,6 @@ redist.compactness <- function(shp = NULL,
 }
 
 
-
-#' Prep Polsby Popper Perimeter Dataframe
-#'
-#' @param shp A SpatialPolygonsDataFrame or sf object. Required unless "EdgesRemoved"
-#' and "logSpanningTree" with adjacency provided.
-#' @param planarize a number, indicating the CRS to project the shapefile to if
-#' it is latitude-longitude based. Set to FALSE to avoid planarizing.
-#' @param perim_path A path to save an Rds
-#' @param ncores the number of cores to parallelize over
-#'
-#' @return A perimeter dataframe
-#' @export
-#'
-#' @importFrom sf st_buffer st_is_valid st_geometry<- st_touches st_transform
-#' @examples
-#' data(fl25)
-#' perim_df <- redistmetrics::prep_perims(shp = fl25)
-redist.prep.polsbypopper <- function(shp, planarize = 3857, perim_path, ncores = 1) {
-    .Deprecated(new = "redistmetrics::prep_perims()")
-    if (missing(shp)) {
-        cli_abort("Please provide an argument to {.arg shp}.")
-    }
-    redistmetrics::prep_perims(
-        shp = shp, epsg = planarize, perim_path = perim_path,
-        ncores = ncores
-    )
-}
 #' Calculate Group Proportion by District
 #'
 #' \code{redist.group.percent} computes the proportion that a group makes up in
@@ -501,11 +478,10 @@ redist.prep.polsbypopper <- function(shp, planarize = 3857, perim_path, ncores =
 #' data(fl25_enum)
 #'
 #' cd <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
+#' fl25_map = redist_map(fl25, ndists=3, pop_tol=0.1)
+#' fl25_plans = redist_plans(cd, fl25_map, algorithm="enumpart")
 #'
-#' redist.group.percent(plans = cd,
-#'     group_pop = fl25$BlackPop,
-#'     total_pop = fl25$TotPop)
-#'
+#' group_frac(fl25_map, BlackPop, TotPop, fl25_plans)
 redist.group.percent <- function(plans, group_pop, total_pop, ncores = 1) {
     .Deprecated("group_frac()")
     if (!is.numeric(group_pop) || !is.numeric(total_pop))
@@ -529,13 +505,9 @@ redist.group.percent <- function(plans, group_pop, total_pop, ncores = 1) {
     }
     group_pct(plans, group_pop, total_pop, ndists)
 }
-########################################################
-## Author: Christopher T Kenny
-## Institution: Harvard University
-## Date Created: 2020/07/15
-## Date Modified: 2022/01/13
-## Purpose: R function to compute gerrymandering metrics
-########################################################
+
+
+
 
 #' Calculate gerrymandering metrics for a set of plans
 #'
@@ -588,7 +560,8 @@ redist.group.percent <- function(plans, group_pop, total_pop, ncores = 1) {
 #' data(fl25)
 #' data(fl25_enum)
 #' plans_05 <- fl25_enum$plans[, fl25_enum$pop_dev <= 0.05]
-#' redist.metrics(plans_05, measure = "all", rvote = fl25$mccain, dvote = fl25$obama)
+#' # old: redist.metrics(plans_05, measure = "DSeats", rvote = fl25$mccain, dvote = fl25$obama)
+#' part_dseats(plans_05, fl25, mccain, obama)
 #'
 #' @references
 #' Jonathan N. Katz, Gary King, and Elizabeth Rosenblatt. 2020.
@@ -754,6 +727,7 @@ redist.metrics <- function(plans, measure = "DSeats", rvote, dvote,
     # Return computed results
     metrics
 }
+
 #' Count County Splits
 #' @param plans A numeric vector (if only one map) or matrix with one row
 #' for each precinct and one column for each map. Required.
@@ -806,7 +780,8 @@ redist.splits <- function(plans, counties) {
 #' data(iowa)
 #' ia <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop, pop_tol = 0.01)
 #' plans <- redist_smc(ia, 50, silent = TRUE)
-#' splits <- redist.district.splits(plans, ia$region)
+#' #old redist.district.splits(plans, ia$region)
+#' splits_count(plans, ia, region)
 redist.district.splits <- function(plans, counties) {
     if (missing(plans)) {
         stop("Please provide an argument to plans.")
@@ -852,7 +827,8 @@ redist.district.splits <- function(plans, counties) {
 #' data(iowa)
 #' ia <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop, pop_tol = 0.01)
 #' plans <- redist_smc(ia, 50, silent = TRUE)
-#' splits <- redist.multisplits(plans, ia$region)
+#' #old redist.multisplits(plans, ia$region)
+#' splits_multi(plans, ia, region)
 redist.multisplits <- function(plans, counties) {
     if (missing(plans)) {
         cli_abort("Please provide an argument to {.arg plans}.")
@@ -896,7 +872,8 @@ redist.multisplits <- function(plans, counties) {
 #' ia <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop, pop_tol = 0.01)
 #' plans <- redist_smc(ia, 50, silent = TRUE)
 #' ia$region[1:10] <- NA
-#' splits <- redist.muni.splits(plans, ia$region)
+#' #old redist.muni.splits(plans, ia$region)
+#' splits_sub_admin(plans, ia, region)
 redist.muni.splits <- function(plans, munis) {
     redistmetrics::splits_sub_admin(plans = plans, shp = data.frame(),
         sub_admin = munis)

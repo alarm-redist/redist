@@ -24,6 +24,7 @@ within a district.
 data(iowa)
 ia <- redist_map(iowa, existing_plan = cd_2010, total_pop = pop, pop_tol = 0.01)
 plans <- redist_smc(ia, 50, silent = TRUE)
-splits <- redist.district.splits(plans, ia$region)
+#old redist.district.splits(plans, ia$region)
+splits_count(plans, ia, region)
 }
 \concept{analyze}
