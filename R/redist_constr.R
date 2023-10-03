@@ -622,7 +622,6 @@ add_constr_custom <- function(constr, strength, fn) {
     args <- rlang::fn_fmls(fn)
     if (length(args) != 2) cli_abort("Function must take exactly two arguments.")
 
-
     constr_env = rlang::fn_env(fn)
     # every symbol used in the function (except the 2 arguments)
     var_names = setdiff(
