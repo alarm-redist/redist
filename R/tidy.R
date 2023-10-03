@@ -332,6 +332,10 @@ match_numbers <- function(data, plan, total_pop = attr(data, "prec_pop"), col = 
         cli_abort("Must provide {.arg total_pop} for this {.cls redist_plans} object.")
     if (max(plan_mat[, 1]) != ndists)
         cli_abort("Can't match numbers on a subset of a {.cls redist_plans}")
+    if (length(plan) != nrow(plan_mat))
+        cli_abort(c("{.arg plan} doesn't have the right length.",
+                    "i"="{.code length(plan)} should match the number of precincts,
+                    i.e., {.code nrow(get_plans_matrix(data))}."))
 
     # compute renumbering and extract info
     best_renumb <- apply(plan_mat, 2, find_numbering,
