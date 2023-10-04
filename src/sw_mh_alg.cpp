@@ -68,6 +68,7 @@ List swMH(List aList,
           int num_annealing_steps = 0,
           int num_cold_steps = 0,
           bool verbose = true) {
+    PRINT_LN
 
     /* Inputs to function:
      aList: adjacency list of geographic units
