@@ -603,7 +603,7 @@ ecutsAppend <- function(algout, ndata) {
         }
         names(algout) <- names_obj
     }
-    return(algout)
+    algout
 }
 
 #' MCMC Redistricting Simulator using MPI

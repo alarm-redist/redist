@@ -282,9 +282,8 @@ redist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE,
     }
 
 
-    plot <- plot + labs(title = title)
-    # return plot
-    return(plot)
+    plot + labs(title = title)
+
 }
 
 edge_center_df <- function(shp, adj) {

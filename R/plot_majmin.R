@@ -15,13 +15,11 @@ redist.plot.majmin <- function(grouppercent, type = "hist", title = "") {
     if (type == "hist") {
         mm <- colSums(grouppercent > 0.5)
 
-        p <- tibble(mm = mm) %>%
+        tibble(mm = mm) %>%
             ggplot(aes(x = mm)) +
             geom_histogram() +
             theme_bw() +
             labs(x = "Minority Majority Districts", y = "Count", title = title)
-
-        return(p)
 
     } else if (type == "toptwo") {
         tibble(blk_pct = c(grouppercent), district = rep(1:nrow(grouppercent), ncol(grouppercent)),
@@ -51,10 +49,9 @@ redist.plot.majmin <- function(grouppercent, type = "hist", title = "") {
             theme_bw() +
             labs(x = "Districts, Sorted by Minority Percent", y = "Minority Percent")
 
+    } else {
+        stop("No available type specified.")
     }
-
-
-    stop("No available type specified.")
 }
 
 

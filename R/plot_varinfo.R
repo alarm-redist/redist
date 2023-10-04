@@ -67,7 +67,7 @@ redist.plot.varinfo <- function(plans, group_pop, total_pop, shp) {
   DEF
   "
 
-    return(patchwork::wrap_plots(p2) + patchwork::plot_layout(design = layouts, guides = "collect"))
+    patchwork::wrap_plots(p2) + patchwork::plot_layout(design = layouts, guides = "collect")
 }
 
 utils::globalVariables(c("geometry", "cluster", "mds1", "mds2", "id", "newcd"))

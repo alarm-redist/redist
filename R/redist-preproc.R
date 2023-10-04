@@ -269,7 +269,5 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
     )
 
     class(preprocout) <- "redist"
-
-    return(preprocout)
-
+    preprocout
 }

@@ -119,6 +119,5 @@ redist.rsg <- function(adj, total_pop, ndists, pop_tol,
             round(time[3], digits = 2), " seconds...\n\n", sep = ""), append = TRUE)
     }
 
-    return(ret)
-
+    ret
 }
