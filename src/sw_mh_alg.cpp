@@ -242,10 +242,8 @@ List swMH(List aList,
 
     RObject bar = cli_progress_bar(nsims, cli_config(false));
     Graph g = list_to_graph(aList);
-PRINT_LN
     // Open the simulations
     while (k < nsims) {
-PRINT_LN
 
         /////////////////////////////////////
         // First: determine boundary cases //
@@ -488,7 +486,6 @@ PRINT_LN
     }
 
 
-PRINT_LN
     // Create list, store output
     List out;
     if (adapt_beta != "annealing") {

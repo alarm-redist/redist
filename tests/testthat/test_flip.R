@@ -13,7 +13,7 @@ test_that("flip works", {
 
 test_that("flip works in iowa", {
     iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol=0.01)
-    set.seed(2) # 2 breaks!
+    set.seed(2)
     expect_s3_class(
         redist_flip(iowa_map, nsims = 100),
         "redist_plans"

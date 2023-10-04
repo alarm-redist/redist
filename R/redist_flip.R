@@ -156,7 +156,7 @@
 #' sims <- redist_flip(map = iowa_map, nsims = 100)
 #'
 redist_flip <- function(map, nsims, warmup = 0, init_plan,
-                        constraints = redist_constr(map) %>% add_constr_edges_rem(0.4),
+                        constraints = add_constr_edges_rem(redist_constr(map), 0.4),
                         nthin = 1, eprob = 0.05, lambda = 0, temper = FALSE,
                         betaseq = "powerlaw", betaseqlength = 10, betaweights = NULL,
                         adapt_lambda = FALSE, adapt_eprob = FALSE, exact_mh = FALSE,
