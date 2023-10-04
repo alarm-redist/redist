@@ -72,8 +72,9 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
 
     fmt_comma <- function(x) format(x, nsmall = 0, digits = 1, big.mark = ",")
     if (n_distr == 1 || nrow(plans_m) == 1) {
-        cli_text("{n_samp} sampled plan{?s} of {n_distr}
-                 district{?s} on {nrow(plans_m)} unit{?s}")
+        cli_text("{fmt_comma(n_samp)}{cli::qty(n_samp)} sampled plan{?s} of
+                 {n_distr} district{?s} on
+                 {fmt_comma(nrow(plans_m))}{cli::qty(nrow(plans_m))} unit{?s}")
         return(invisible(1))
     }
 
