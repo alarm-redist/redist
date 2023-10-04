@@ -12,6 +12,17 @@ test_that("flip works", {
 
 })
 
+test_that("flip works in iowa", {
+    set.seed(1, kind = "Mersenne-Twister", normal.kind = "Inversion")
+
+    iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol=0.01)
+    set.seed(2) # 2 breaks!
+    expect_s3_class(
+        redist_flip(iowa_map, nsims = 100),
+        "redist_plans"
+    )
+})
+
 test_that("flip countysplit works", {
     set.seed(1, kind = "Mersenne-Twister", normal.kind = "Inversion")
 

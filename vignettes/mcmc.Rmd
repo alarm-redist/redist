@@ -188,7 +188,8 @@ In Unix-based systems, this can be run considerably faster by running this in pa
 
 ```{r, eval=F}
 mcmc_chains <- parallel::mclapply(1:nchains, function(x){
-  redist.flip(fl_map, nsims)
+  redist_flip(map_ia, nsims = nsims,
+              constraints = constr, verbose = FALSE)
 }, mc.set.seed = 1, mc.cores = parallel::detectCores())
 ```
 
@@ -222,7 +223,7 @@ set.seed(2)
 Now, we can pass the `redist_map` object to `redist_flip` to begin simulating.
 
 ```{r sims}
-tidy_sims <- iowa_map %>% redist_flip(nsims = 100)
+tidy_sims <- redist_flip(iowa_map, nsims = 100)
 ```
 
 This highlights a key difference between the `redist_flip` and `redist.flip` implementations: `redist_flip` appears to have a much lower acceptance rate, even though we didn't explicitly set any constraints. `redist_flip`'s constraint includes a relatively weak compactness constraint by default because simulating compact maps is far more efficient and completely non-compact maps are not super useful for most purposes.
@@ -236,7 +237,7 @@ cons <- redist_constr(iowa_map)
 Then, you can pass this to `redist_flip`.
 
 ```{r}
-tidy_sims_no_comp <- iowa_map %>% redist_flip(nsims = 100, constraints = cons)
+tidy_sims_no_comp <- redist_flip(iowa_map, nsims = 100, constraints = cons)
 ```
 `redist_flip` outputs a `redist_plans` object.
 
