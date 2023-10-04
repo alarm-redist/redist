@@ -466,7 +466,9 @@ List make_swaps(List boundary_cc,
   int n_swaps = 0;
 
   // Begin loop over p
+PRINT_LN
   for(int i = 0; i < p; i++){
+PRINT_LN
 
     // While there are still possible components available
     int breakwhile = 0;
@@ -582,6 +584,7 @@ List make_swaps(List boundary_cc,
       }
 
     }
+PRINT_LN
 
     // If we run out of good partitions
     if((boundary_cc.size() == 0) & (numaccept < p)){
@@ -602,6 +605,7 @@ List make_swaps(List boundary_cc,
     prop_cd_swaps(i) = prop_cd;
 
     // Update metropolis-hastings probabilities
+PRINT_LN
     mh_prob = update_mhprob(prop_partitions,
                             aList,
                             cds_prop,
@@ -651,10 +655,12 @@ List make_swaps(List boundary_cc,
   arma::uvec pops = conv_to<arma::uvec>::from(as<arma::vec>(pop_vec));
 
   // Multiply mh_prob by constraint values
+PRINT_LN
   double energy_new = calc_gibbs_tgt(udistricts.col(0), ndists, nprec, swaps_v,
                                      new_psi, pops, parity, g, constraints);
   double energy_old = calc_gibbs_tgt(udistricts.col(1), ndists, nprec, swaps_v,
                                      old_psi, pops, parity, g, constraints);
+PRINT_LN
 
   mh_prob = (double)mh_prob * exp(-1.0 * beta * (energy_new - energy_old));
 

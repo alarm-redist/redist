@@ -1,0 +1,5 @@
+devtools::load_all(".")
+data(iowa)
+iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol=0.01)
+set.seed(2)
+plans <- redist_flip(iowa_map, nsims = 100)
