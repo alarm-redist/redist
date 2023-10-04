@@ -47,7 +47,7 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
                                        warmup = if (is.null(init_plan)) 10 else max(100, nsims %/% 5),
                                        thin = 1L, init_plan = NULL, counties = NULL, compactness = 1,
                                        constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
-                                       adapt_k_thresh = 0.98, k = NULL, ncores = NULL,
+                                       adapt_k_thresh = 0.99, k = NULL, ncores = NULL,
                                        cl_type = "PSOCK", return_all = TRUE, init_name = NULL,
                                        verbose = FALSE, silent = FALSE) {
     if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
@@ -165,7 +165,7 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
                     "x" = "Redistricting impossible."))
     }
 
-    control = list(adapt_k_thresh=adapt_k_thresh, pair_adj=1)
+    control = list(adapt_k_thresh=adapt_k_thresh)
     # kind of hacky -- extract k=... from outupt
     if (!requireNamespace("utils", quietly = TRUE)) stop()
     out <- utils::capture.output({

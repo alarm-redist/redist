@@ -137,7 +137,7 @@
 #' @export
 redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints = list(),
                        resample = TRUE, runs = 1L, ncores = 0L, init_particles = NULL,
-                       n_steps = NULL, adapt_k_thresh = 0.985, seq_alpha = 0.5,
+                       n_steps = NULL, adapt_k_thresh = 0.99, seq_alpha = 0.5,
                        truncate = (compactness != 1), trunc_fn = redist_quantile_trunc,
                        pop_temper = 0, final_infl = 1, est_label_mult = 1,
                        ref_name = NULL, verbose = FALSE, silent = FALSE) {

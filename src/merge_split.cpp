@@ -23,7 +23,6 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
 
     // unpack control params
     double thresh = (double) control["adapt_k_thresh"];
-    double pair_adj = (double) control["pair_adj"];
 
     Graph g = list_to_graph(l);
     Multigraph cg = county_graph(g, counties);
@@ -76,13 +75,13 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     RObject bar = cli_progress_bar(N - 1, cli_config(false));
     int idx = 1;
     for (int i = 1; i < N; i++) {
-        // copy old map to 'working' memory in `idx+1`
-        districts.col(idx+1) = districts.col(idx);
-
         // make the proposal
         double prop_lp = 0.0;
         reject_ct = 0;
         do {
+            // copy old map to 'working' memory in `idx+1`
+            districts.col(idx+1) = districts.col(idx);
+
             select_pair(n_distr, dist_g, distr_1, distr_2);
             prop_lp = split_map_ms(g, counties, cg, districts.col(idx+1), distr_1,
                                    distr_2, pop, lower, upper, target, k);
@@ -118,17 +117,13 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
                                   pop, target, g, constraints);
 
         // adjust for prob of picking district pair
-        if (pair_adj != 0) {
-            prop_lp += pair_adj * (
-                std::log(dist_g[distr_1 - 1].size() + dist_g[distr_2 - 1].size()) -
-                    std::log(dist_g[distr_1 - 1].size() * dist_g[distr_2 - 1].size())
-            );
-            dist_g = district_graph(g, districts.col(idx+1), n_distr); // update district graph
-            prop_lp -= pair_adj * (
-                std::log(dist_g[distr_1 - 1].size() + dist_g[distr_2 - 1].size()) -
-                    std::log(dist_g[distr_1 - 1].size() * dist_g[distr_2 - 1].size())
-            );
-        }
+        prop_lp -= std::log(
+            1.0/dist_g[distr_1 - 1].size() + 1.0/dist_g[distr_2 - 1].size()
+        );
+        dist_g = district_graph(g, districts.col(idx+1), n_distr); // update district graph
+        prop_lp += std::log(
+            1.0/dist_g[distr_1 - 1].size() + 1.0/dist_g[distr_2 - 1].size()
+        );
 
         double alpha = exp(prop_lp);
         if (alpha >= 1 || r_unif() <= alpha) { // ACCEPT

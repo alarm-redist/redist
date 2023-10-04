@@ -102,7 +102,7 @@ redist_mergesplit <- function(map, nsims,
                               warmup = if (is.null(init_plan)) 10 else max(100, nsims %/% 5),
                               thin = 1L, init_plan = NULL, counties = NULL, compactness = 1,
                               constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
-                              adapt_k_thresh = 0.98, k = NULL, init_name = NULL,
+                              adapt_k_thresh = 0.99, k = NULL, init_name = NULL,
                               verbose = FALSE, silent = FALSE) {
     if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
 
@@ -193,15 +193,20 @@ redist_mergesplit <- function(map, nsims,
             "x" = "Redistricting impossible."))
     }
 
-    control = list(adapt_k_thresh=adapt_k_thresh, pair_adj=1)
+    t1_run <- Sys.time()
+    control = list(adapt_k_thresh=adapt_k_thresh)
     algout <- ms_plans(nsims, adj, init_plan, counties, pop, ndists,
                        pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
                        constraints, control, k, thin, verbosity)
+    t2_run <- Sys.time()
 
     storage.mode(algout$plans) <- "integer"
     acceptances <- as.logical(algout$mhdecisions)
 
     warmup_idx <- c(seq_len(1 + warmup %/% thin), ncol(algout$plans))
+    l_diag <- list(
+        runtime = as.numeric(t2_run - t1_run, units = "secs")
+    )
     out <- new_redist_plans(algout$plans[, -warmup_idx, drop = FALSE],
                             map, "mergesplit", NULL, FALSE,
                             ndists = ndists,
@@ -209,6 +214,7 @@ redist_mergesplit <- function(map, nsims,
                             constraints = constraints,
                             adapt_k_thresh = adapt_k_thresh,
                             version = packageVersion("redist"),
+                            diagnostics = l_diag,
                             mh_acceptance = mean(acceptances))
 
     warmup_idx <- c(seq_len(warmup %/% thin), length(acceptances))

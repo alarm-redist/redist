@@ -7,14 +7,14 @@
 redist_mergesplit(
   map,
   nsims,
-  warmup = max(100, nsims\%/\%2),
+  warmup = if (is.null(init_plan)) 10 else max(100, nsims\%/\%5),
   thin = 1L,
   init_plan = NULL,
   counties = NULL,
   compactness = 1,
   constraints = list(),
   constraint_fn = function(m) rep(0, ncol(m)),
-  adapt_k_thresh = 0.98,
+  adapt_k_thresh = 0.99,
   k = NULL,
   init_name = NULL,
   verbose = FALSE,
@@ -28,7 +28,7 @@ redist_mergesplit(
 
 \item{warmup}{The number of warmup samples to discard. Recommended to be at
 least the first 20\% of samples, and in any case no less than around 100
-samples.}
+samples, unless initializing from a random plan.}
 
 \item{thin}{Save every \code{thin}-th sample. Defaults to no thinning (1).}
 
