@@ -194,7 +194,7 @@ redist_mergesplit <- function(map, nsims,
     }
 
     t1_run <- Sys.time()
-    control = list(adapt_k_thresh=adapt_k_thresh)
+    control = list(adapt_k_thresh=adapt_k_thresh, do_mh=TRUE)
     algout <- ms_plans(nsims, adj, init_plan, counties, pop, ndists,
                        pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
                        constraints, control, k, thin, verbosity)

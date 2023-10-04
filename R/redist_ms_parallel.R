@@ -165,7 +165,7 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
                     "x" = "Redistricting impossible."))
     }
 
-    control = list(adapt_k_thresh=adapt_k_thresh)
+    control = list(adapt_k_thresh=adapt_k_thresh, do_mh=TRUE)
     # kind of hacky -- extract k=... from outupt
     if (!requireNamespace("utils", quietly = TRUE)) stop()
     out <- utils::capture.output({

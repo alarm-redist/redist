@@ -23,6 +23,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
 
     // unpack control params
     double thresh = (double) control["adapt_k_thresh"];
+    bool do_mh = (bool) control["do_mh"];
 
     Graph g = list_to_graph(l);
     Multigraph cg = county_graph(g, counties);
@@ -125,14 +126,20 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
             1.0/dist_g[distr_1 - 1].size() + 1.0/dist_g[distr_2 - 1].size()
         );
 
-        double alpha = exp(prop_lp);
-        if (alpha >= 1 || r_unif() <= alpha) { // ACCEPT
+        if (do_mh) {
+            double alpha = std::exp(prop_lp);
+            if (alpha >= 1 || r_unif() <= alpha) { // ACCEPT
+                n_accept++;
+                districts.col(idx) = districts.col(idx+1); // copy over new map
+                mh_decisions(idx - 1) = 1;
+            } else { // REJECT
+                districts.col(idx+1) = districts.col(idx); // copy over old map
+                mh_decisions(idx - 1) = 0;
+            }
+        } else {
             n_accept++;
             districts.col(idx) = districts.col(idx+1); // copy over new map
             mh_decisions(idx - 1) = 1;
-        } else { // REJECT
-            districts.col(idx+1) = districts.col(idx); // copy over old map
-            mh_decisions(idx - 1) = 0;
         }
 
         if (i % thin == 0) idx++;

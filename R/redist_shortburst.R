@@ -14,7 +14,7 @@
 #' criteria. This implements the ideas in the below-referenced paper, "Voting
 #' Rights, Markov Chains, and Optimization by Short Bursts."
 #'
-#' @param map A \code{\link{redist_map}} object.
+#' @param map A [redist_map] object.
 #' @param score_fn A function which takes a matrix of plans and returns a score
 #'   (or, generally, a row vector) for each plan. Can also be a purrr-style
 #'   anonymous function. See [`?scorers`][scorers] for some function factories
@@ -26,31 +26,36 @@
 #' @param burst_size The size of each burst. 10 is recommended for the
 #'   `mergesplit` backend and 50 for the `flip` backend. Can also provide
 #'   burst schedule function which takes the current iteration (an integer)
-#'   and returns the desired burst size.
+#'   and returns the desired burst size. This can be a random function.
 #' @param max_bursts The maximum number of bursts to run before returning.
-#' @param maximize If \code{TRUE}, try to maximize the score; otherwise, try to
+#' @param maximize If `TRUE`, try to maximize the score; otherwise, try to
 #'   minimize it. When `score_fn` returns a row vector per plan, `maximize` can
 #'   be an equal-length vector specifying whether each dimension should be
 #'   maximized or minimized.
 #' @param init_plan The initial state of the map. If not provided, will default to
-#' the reference map of the \code{map} object, or if none exists, will sample
-#' a random initial state using \code{\link{redist_smc}}. You can also request
-#' a random initial state by setting \code{init_plan="sample"}.
+#' the reference map of the `map` object, or if none exists, will sample
+#' a random initial state using [redist_smc()]. You can also request
+#' a random initial state by setting `init_plan="sample"`.
 #' @param counties A vector containing county (or other administrative or
 #' geographic unit) labels for each unit, which may be integers ranging from 1
 #' to the number of counties, or a factor or character vector.  If provided, the
-#' algorithm will only generate maps which split up to \code{ndists-1} counties.
+#' algorithm will only generate maps which split up to `ndists-1` counties.
 #' If no county-split constraint is desired, this parameter should be left blank.
 #' @param constraints A `redist_constr` with Gibbs constraints.
 #' @param compactness Controls the compactness of the generated districts, with
 #' higher values preferring more compact districts. Must be non-negative. See
 #' \code{\link{redist_mergesplit}} for more information.
 #' @param adapt_k_thresh The threshold value used in the heuristic to select a
-#' value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if
-#' the algorithm does not appear to be sampling from the target distribution.
-#' Must be between 0 and 1.
-#' @param return_all Whether to return all the
-#' Recommended for monitoring purposes.
+#' value `k_i` for each splitting iteration.
+#' @param reversible If `FALSE` and `backend="mergesplit"`, the Markov chain
+#' used will not be reversible. This may speed up optimization.
+#' @param fixed_k If not `NULL`, will be used to set the `k` parameter for the
+#'   `mergesplit` backend. If e.g. `k=1` then the best edge in each spanning
+#'   tree will be used.  Lower values may speed up optimization at the
+#'   cost of the Markov chain no longer targeting a known distribution.
+#'   Recommended only in conjunction with `reversible=FALSE`.
+#' @param return_all Whether to return all the burst results or just the best
+#' one (generally, the Pareto frontier). Recommended for monitoring purposes.
 #' @param thin Save every `thin`-th sample. Defaults to no thinning (1). Ignored
 #' if `return_all=TRUE`.
 #' @param backend the MCMC algorithm to use within each burst, either
@@ -85,6 +90,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
                               max_bursts = 500L, maximize = TRUE, init_plan = NULL,
                               counties = NULL,  constraints = redist_constr(map),
                               compactness = 1, adapt_k_thresh = 0.95,
+                              reversible=TRUE, fixed_k=NULL,
                               return_all = TRUE, thin = 1L, backend = "mergesplit",
                               flip_lambda = 0, flip_eprob = 0.05,
                               verbose = TRUE) {
@@ -105,7 +111,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     score_fn <- rlang::as_closure(score_fn)
     stopifnot(is.function(score_fn))
     if (!is.numeric(stop_at)) {
-        stop_at <- ifelse(maximize, Inf, -Inf)
+        stop_at <- Inf
     }
 
     if (compactness < 0)
@@ -171,24 +177,29 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     constraints <- as.list(constraints)
 
     if (backend == "mergesplit") {
-        # kind of hacky -- extract k=... from outupt
-        if (!requireNamespace("utils", quietly = TRUE)) stop()
-        out <- utils::capture.output({
-            x <- ms_plans(1, adj, init_plan, counties, pop, ndists, pop_bounds[2],
-                pop_bounds[1], pop_bounds[3], compactness,
-                list(), adapt_k_thresh, 0L, 1L, verbosity = 3)
-        }, type = "output")
-        rm(x)
-        k <- as.integer(stats::na.omit(stringr::str_match(out, "Using k = (\\d+)")[, 2]))
-        if (length(k) == 0)
-            cli_abort(c("Adaptive {.var k} not found. This error should not happen.",
-                ">" = "Please file an issue at
-                        {.url https://github.com/alarm-redist/redist/issues/new}"))
+        control = list(adapt_k_thresh=adapt_k_thresh, do_mh=reversible)
+        if (is.null(fixed_k)) {
+            # kind of hacky -- extract k=... from outupt
+            if (!requireNamespace("utils", quietly = TRUE)) stop()
+            out <- utils::capture.output({
+                x <- ms_plans(1, adj, init_plan, counties, pop, ndists, pop_bounds[2],
+                    pop_bounds[1], pop_bounds[3], compactness,
+                    list(), control, 0L, 1L, verbosity = 3)
+            }, type = "output")
+            rm(x)
+            k <- as.integer(stats::na.omit(stringr::str_match(out, "Using k = (\\d+)")[, 2]))
+            if (length(k) == 0)
+                cli_abort(c("Adaptive {.var k} not found. This error should not happen.",
+                    ">" = "Please file an issue at
+                            {.url https://github.com/alarm-redist/redist/issues/new}"))
+        } else {
+            k = fixed_k
+        }
 
-        run_burst <- function(init, i) {
-            ms_plans(burst_size(i), adj, init, counties, pop, ndists,
+        run_burst <- function(init, steps) {
+            ms_plans(steps, adj, init, counties, pop, ndists,
                 pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
-                constraints, 1.0, k, 1L, verbosity = 0)$plans[, -1L]
+                constraints, control, k, 1L, verbosity = 0)$plans[, -1L]
         }
     } else {
 
@@ -199,9 +210,9 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
             cli_abort("{.arg flip_lambda} must be a nonnegative integer.")
         }
 
-        run_burst <- function(init, i) {
+        run_burst <- function(init, steps) {
             skinny_flips(adj = adj, init_plan = init, total_pop = pop,
-                pop_tol = pop_tol, nsims = burst_size(i),
+                pop_tol = pop_tol, nsims = steps,
                 eprob = flip_eprob, lambda = flip_lambda,
                 constraints = constraints)
         }
@@ -211,6 +222,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     burst <- 1
     n_out <- max_bursts %/% thin
     out_mat <- matrix(0L, nrow = V, ncol = n_out)
+    burst_sizes <- integer(n_out)
     cur_best <- matrix(init_plan, ncol=1)
     rescale <- 1 - maximize * 2
 
@@ -257,9 +269,14 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     converged <- FALSE
     for (burst in 1:max_bursts) {
         this_burst_size <- burst_size(burst)
+        burst_sizes[burst] <- this_burst_size
+        if (this_burst_size <= 0) {
+            cli_abort(c("Burst size must be at least 1.",
+                        "x"="Found {this_burst_size} on iteration {burst}."))
+        }
         keep <- seq_len(this_burst_size)
         burst_init = cur_best[, sample.int(ncol(cur_best), 1)]
-        plans <- run_burst(burst_init, burst)[, keep]
+        plans <- run_burst(burst_init, this_burst_size)[, keep, drop=FALSE]
         plan_scores <- t(matrix(score_fn(plans), ncol=dim_score))
         plan_scores <- plan_scores * rescale
 
@@ -299,30 +316,42 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
         }
     }
 
-    out_idx <- if (return_all) seq_len(idx) else idx
-
-    storage.mode(out_mat) <- "integer"
-
-    pareto_scores = t(cur_best_scores * rescale)
-    pareto_scores = pareto_scores[order(pareto_scores[, 1]), , drop=FALSE]
-
-    out <- new_redist_plans(out_mat[, out_idx, drop = FALSE], map, "shortburst",
-        wgt = NULL, resampled = FALSE,
-        burst_size = burst_size(1),
-        n_bursts = burst,
-        backend = backend,
-        converged = converged,
-        pareto_front = cur_best,
-        pareto_scores = pareto_scores,
-        score_fn = deparse(substitute(score_fn)))
-    score_mat = matrix(rep(scores[out_idx, ], each = ndists), ncol = dim_score)
-    colnames(score_mat) = colnames(scores)
-    out <- dplyr::mutate(out, as.data.frame(score_mat))
-
     if (return_all) {
+        out_idx <- seq_len(idx)
+        storage.mode(out_mat) <- "integer"
+
+        pareto_scores = t(cur_best_scores * rescale)
+        pareto_scores = pareto_scores[order(pareto_scores[, 1]), , drop=FALSE]
+
+        out <- new_redist_plans(out_mat[, out_idx, drop = FALSE], map, "shortburst",
+            wgt = NULL, resampled = FALSE,
+            n_bursts = burst,
+            backend = backend,
+            converged = converged,
+            pareto_front = cur_best,
+            pareto_scores = pareto_scores,
+            version = packageVersion("redist"),
+            score_fn = deparse(substitute(score_fn)))
+        score_mat = matrix(rep(scores[out_idx, ], each = ndists), ncol = dim_score)
+        colnames(score_mat) = colnames(scores)
+        out <- dplyr::mutate(out, as.data.frame(score_mat))
+        out$burst_size = rep(burst_sizes[out_idx], each = ndists)
+
         out <- add_reference(out, init_plan, "<init>")
-        idx_cols = ncol(out) - dim_score:1 + 1
+        idx_cols = ncol(out) - dim_score:1
         out[1:ndists, idx_cols] <- matrix(rep(scores[1, ], each = ndists), ncol = dim_score)
+    } else {
+        out <- new_redist_plans(cur_best, map, "shortburst",
+                                wgt = NULL, resampled = FALSE,
+                                n_bursts = burst,
+                                backend = backend,
+                                converged = converged,
+                                version = packageVersion("redist"),
+                                score_fn = deparse(substitute(score_fn)))
+        score_mat = matrix(rep(t(cur_best_scores * rescale), each = ndists),
+                           ncol = dim_score)
+        colnames(score_mat) = colnames(scores)
+        out <- dplyr::mutate(out, as.data.frame(score_mat))
     }
 
     out
