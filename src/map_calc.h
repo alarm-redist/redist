@@ -60,7 +60,7 @@ double eval_multisplits(const subview_col<uword> &districts, int distr,
  * Compute the county split penalty for district `distr`
  */
 double eval_total_splits(const subview_col<uword> &districts, int distr,
-                   const uvec &counties, int n_cty);
+                   const uvec &counties, int n_cty, bool smc);
 
 /*
  * Compute the Polsby Popper penalty for district `distr`
