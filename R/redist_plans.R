@@ -37,7 +37,17 @@ new_redist_plans <- function(plans, map, algorithm, wgt, resampled = TRUE, ndist
         "resampled", "ndists", "merge_idx", "prec_pop",
         names(list(...)))
 
-    structure(tibble(draw = rep(as.factor(1:n_sims), each = ndists),
+    if (is.null(colnames(plans))) {
+        draw_fac = as.factor(1:n_sims)
+    } else {
+        draw_fac = character(n_sims)
+        ref_idx = which(nchar(colnames(plans)) > 0)
+        draw_fac[ref_idx] = colnames(plans)[ref_idx]
+        draw_fac[-ref_idx] = as.character(seq_len(n_sims - length(ref_idx)))
+        draw_fac = factor(draw_fac, levels=draw_fac)
+    }
+
+    structure(tibble(draw = rep(draw_fac, each = ndists),
         district = rep(distr_range, n_sims),
         total_pop = as.numeric(distr_pop)),
     plans = plans, ndists = ndists, algorithm = algorithm, wgt = wgt,
@@ -527,11 +537,13 @@ print.redist_plans <- function(x, ...) {
     nd <- attr(x, "ndists")
     if (is.null(nd)) nd <- max(plans_m[, 1])
 
+    fmt_comma <- function(x) format(x, nsmall = 0, digits = 1, big.mark = ",")
     if (n_ref > 0)
-        cli_text("A {.cls redist_plans} containing {n_samp} sampled plan{?s} and
-                 {n_ref} reference plan{?s}")
+        cli_text("A {.cls redist_plans} containing {fmt_comma(n_samp)}{cli::qty(n_samp)}
+                 sampled plan{?s} and {n_ref} reference plan{?s}")
     else
-        cli_text("A {.cls redist_plans} containing {n_samp} sampled plan{?s}")
+        cli_text("A {.cls redist_plans} containing
+                 {fmt_comma(n_samp)}{cli::qty(n_samp)} sampled plan{?s}")
 
     if (ncol(plans_m) == 0) return(invisible(x))
 
@@ -545,7 +557,8 @@ print.redist_plans <- function(x, ...) {
         none = "a custom collection")[attr(x, "algorithm")]
     if (is.na(alg_name)) alg_name <- "an unknown algorithm"
 
-    cli_text("Plans have {nd} districts from a {nrow(plans_m)}-unit map,
+    cli_text("Plans have {nd} district{?s} from a
+             {fmt_comma(nrow(plans_m))}{cli::qty(nrow(plans_m))}-unit map,
              and were drawn using {alg_name}.")
 
     merge_idx <- attr(x, "merge_idx")
@@ -557,7 +570,7 @@ print.redist_plans <- function(x, ...) {
         if (attr(x, "resampled"))
             cat("With plans resampled from weights\n")
         else
-            cat("With plans not resampled from weights\n")
+            cat("With weighted plans not resampled\n")
     }
 
     cat("Plans matrix:", utils::capture.output(str(plans_m, give.attr = FALSE)),
