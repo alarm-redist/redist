@@ -506,7 +506,8 @@ redist_flip_anneal <- function(map,
         adapt_lambda = as.logical(adapt_lambda),
         warmup = warmup,
         nthin = nthin,
-        mh_acceptance = mean(algout$mhdecisions)
+        mh_acceptance = mean(algout$mhdecisions),
+        version = packageVersion("redist"),
     ) %>% mutate(
         distance_parity = rep(algout$distance_parity, each = ndists),
         mhdecisions = rep(algout$mhdecisions, each = ndists),

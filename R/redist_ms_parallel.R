@@ -44,8 +44,8 @@
 #' @md
 #' @export
 redist_mergesplit_parallel <- function(map, nsims, chains = 1,
-                                       warmup = max(100, nsims %/% 2), thin = 1L,
-                                       init_plan = NULL, counties = NULL, compactness = 1,
+                                       warmup = if (is.null(init_plan)) 10 else max(100, nsims %/% 5),
+                                       thin = 1L, init_plan = NULL, counties = NULL, compactness = 1,
                                        constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
                                        adapt_k_thresh = 0.98, k = NULL, ncores = NULL,
                                        cl_type = "PSOCK", return_all = TRUE, init_name = NULL,
@@ -165,11 +165,12 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
                     "x" = "Redistricting impossible."))
     }
 
+    control = list(adapt_k_thresh=adapt_k_thresh, pair_adj=1)
     # kind of hacky -- extract k=... from outupt
     if (!requireNamespace("utils", quietly = TRUE)) stop()
     out <- utils::capture.output({
         x <- ms_plans(1, adj, init_plans[, 1], counties, pop, ndists, pop_bounds[2],
-                      pop_bounds[1], pop_bounds[3], compactness, list(), adapt_k_thresh,
+                      pop_bounds[1], pop_bounds[3], compactness, list(), control,
                       0L, 1L, verbosity = 3)
     }, type = "output")
     rm(x)
@@ -200,7 +201,7 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
         t1_run <- Sys.time()
         algout <- ms_plans(nsims, adj, init_plans[, chain], counties, pop,
                            ndists, pop_bounds[2], pop_bounds[1], pop_bounds[3],
-                           compactness, constraints, adapt_k_thresh, k, thin, run_verbosity)
+                           compactness, constraints, control, k, thin, run_verbosity)
         t2_run <- Sys.time()
 
         algout$l_diag <- list(
@@ -244,6 +245,7 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
                             ndists = ndists,
                             adapt_k_thresh = adapt_k_thresh,
                             mh_acceptance = mh,
+                            version = packageVersion("redist"),
                             diagnostics = l_diag) %>%
         mutate(chain = rep(seq_len(chains), each = each_len*ndists),
                mcmc_accept = rep(acceptances, each = ndists))

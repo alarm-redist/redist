@@ -377,6 +377,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
                             n_eff = all_out[[1]]$n_eff,
                             compactness = compactness,
                             constraints = constraints,
+                            version = packageVersion("redist"),
                             diagnostics = l_diag)
     if (runs > 1) {
         out <- mutate(out, chain = rep(seq_len(runs), each = n_dist_act*nsims)) %>%

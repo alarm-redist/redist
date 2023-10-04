@@ -32,7 +32,7 @@
 #' @param nsims The number of samples to draw, including warmup.
 #' @param warmup The number of warmup samples to discard. Recommended to be at
 #' least the first 20% of samples, and in any case no less than around 100
-#' samples.
+#' samples, unless initializing from a random plan.
 #' @param thin Save every `thin`-th sample. Defaults to no thinning (1).
 #' @param init_plan The initial state of the map. If not provided, will default to
 #' the reference map of the \code{map} object, or if none exists, will sample
@@ -98,8 +98,9 @@
 #' @md
 #' @order 1
 #' @export
-redist_mergesplit <- function(map, nsims, warmup = max(100, nsims %/% 2), thin = 1L,
-                              init_plan = NULL, counties = NULL, compactness = 1,
+redist_mergesplit <- function(map, nsims,
+                              warmup = if (is.null(init_plan)) 10 else max(100, nsims %/% 5),
+                              thin = 1L, init_plan = NULL, counties = NULL, compactness = 1,
                               constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
                               adapt_k_thresh = 0.98, k = NULL, init_name = NULL,
                               verbose = FALSE, silent = FALSE) {
@@ -192,9 +193,10 @@ redist_mergesplit <- function(map, nsims, warmup = max(100, nsims %/% 2), thin =
             "x" = "Redistricting impossible."))
     }
 
+    control = list(adapt_k_thresh=adapt_k_thresh, pair_adj=1)
     algout <- ms_plans(nsims, adj, init_plan, counties, pop, ndists,
                        pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
-                       constraints, adapt_k_thresh, k, thin, verbosity)
+                       constraints, control, k, thin, verbosity)
 
     storage.mode(algout$plans) <- "integer"
     acceptances <- as.logical(algout$mhdecisions)
@@ -206,6 +208,7 @@ redist_mergesplit <- function(map, nsims, warmup = max(100, nsims %/% 2), thin =
                             compactness = compactness,
                             constraints = constraints,
                             adapt_k_thresh = adapt_k_thresh,
+                            version = packageVersion("redist"),
                             mh_acceptance = mean(acceptances))
 
     warmup_idx <- c(seq_len(warmup %/% thin), length(acceptances))
