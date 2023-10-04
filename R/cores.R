@@ -105,5 +105,5 @@ redist.uncoarsen <- function(plans, group_index) {
         uncoarse[i, ] <- plans[which(group_index[i] == remain), ]
     }
 
-    return(uncoarse)
+    uncoarse
 }

@@ -69,5 +69,5 @@ redist.county.id <- function(counties) {
         cli_abort("{.arg counties} must be a character, numeric, or integer vector.")
     }
 
-    return(county_id)
+    county_id
 }
