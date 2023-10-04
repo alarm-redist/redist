@@ -340,7 +340,7 @@ get_pop_tol <- function(map) {
         cli_warn("Population bounds were not symmetric, using the smaller tolerance.")
     }
 
-    return(min(bot, top))
+    min(bot, top)
 }
 
 #' @param pop_tol the population tolerance

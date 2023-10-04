@@ -63,7 +63,7 @@ redist.freeze <- function(adj, freeze_row, plan = rep(1, length(adj))) {
         group_by(rn) %>%
         mutate(gid = cur_group_id())
 
-    return(tb$gid)
+    tb$gid
 }
 
 #' @rdname redist.freeze

@@ -222,7 +222,7 @@ run_sims <- function(i, params, map, nsims, init_plan,
         sink()
     }
 
-    return(list(printout = out, startval = startval))
+    list(printout = out, startval = startval)
 
 }
 
@@ -416,6 +416,5 @@ redist.findparams <- function(map,
     }
 
     cat(paste(printout, collapse = ""))
-    return(list(diagnostics = printout, startvals = startval))
-
+    list(diagnostics = printout, startvals = startval)
 }

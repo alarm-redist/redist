@@ -173,7 +173,7 @@ redist.warmup.chain <- function(algout, warmup = 1) {
     }
     names(algout_new) <- names(algout)
     class(algout_new) <- "redist"
-    return(algout_new)
+    algout_new
 }
 
 
@@ -200,5 +200,5 @@ redist.thin.chain <- function(algout, thin = 100) {
     }
     names(algout_new) <- names(algout)
     class(algout_new) <- "redist"
-    return(algout_new)
+    algout_new
 }

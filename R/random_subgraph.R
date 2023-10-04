@@ -17,7 +17,7 @@ preproc.shp <- function(shp) {
             stop('Please provide "shp" as a SpatialPolygonsDataFrame or sf object.')
         }
     }
-    return(shp)
+    shp
 }
 
 #' Preprocess adjacency arguments
@@ -39,7 +39,7 @@ preproc.adj <- function(shp, adj) {
     } else if (nrow(shp) != length(adj)) {
         stop("Dimension of shp and adj do not match.")
     }
-    return(adj)
+    adj
 }
 
 
@@ -87,10 +87,8 @@ redist.random.subgraph <- function(shp, n, adj = NULL) {
         candidates <- dplyr::union(candidates, adj[[index[i]]] + 1) %>% dplyr::setdiff(index)
     }
 
-    rlist <- list(shp = shp %>% dplyr::slice(sort(index)),
+    list(
+        shp = shp %>% dplyr::slice(sort(index)),
         keep_rows = sort(index)
-
     )
-    return(rlist)
-
 }

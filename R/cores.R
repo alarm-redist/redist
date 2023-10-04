@@ -74,10 +74,10 @@ redist.identify.cores <- function(adj, plan, boundary = 1, focus = NULL,
 
 
     if (simplify) {
-        return(gid)
+        gid
     } else {
         core$group_id <- gid
-        return(core)
+        core
     }
 }
 

@@ -32,7 +32,7 @@ get_cur_df <- function(dplyr_funcs) {
             return(rlang::env_get(frame, ".data"))
         }
     }
-    return(NULL)
+    NULL
 }
 
 #' Helper function to get current map object

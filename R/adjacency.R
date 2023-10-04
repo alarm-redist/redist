@@ -50,7 +50,7 @@ redist.adjacency <- function(shp, plan) {
     }
 
     # return a checked adjacency list
-    return(adj)
+    adj
 }
 
 #' Reduce Adjacency List
@@ -184,5 +184,5 @@ redist.subset <- function(shp, adj, keep_rows, total_pop, ndists,
         sub_pop_tol = sub_pop_tol
     )
 
-    return(rlist)
+    rlist
 }
