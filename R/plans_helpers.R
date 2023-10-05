@@ -87,9 +87,9 @@ group_frac <- function(map, group_pop, total_pop = map[[attr(map, "pop_col")]],
 
     plans = get_plans_matrix(.data)
     if (length(total_pop) != nrow(plans))
-        cli_abort("{.arg .data} and {.total_pop} must have the same number of precincts.")
+        cli_abort("{.arg .data} and {.arg total_pop} must have the same number of precincts.")
     if (length(group_pop) != nrow(plans))
-        cli_abort("{.arg .data} and {.group_pop} must have the same number of precincts.")
+        cli_abort("{.arg .data} and {.arg group_pop} must have the same number of precincts.")
 
     as.numeric(group_pct(plans, group_pop, total_pop, attr(.data, "ndists")))
 }

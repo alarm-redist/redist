@@ -494,9 +494,9 @@ redist.group.percent <- function(plans, group_pop, total_pop, ncores = 1) {
     }
 
     if (length(total_pop) != nrow(plans))
-        cli_abort("{.arg plans} and {.total_pop} must have the same number of precincts.")
+        cli_abort("{.arg plans} and {.arg total_pop} must have the same number of precincts.")
     if (length(group_pop) != nrow(plans))
-        cli_abort("{.arg plans} and {.group_pop} must have the same number of precincts.")
+        cli_abort("{.arg plans} and {.arg group_pop} must have the same number of precincts.")
 
     ndists <- max(plans[, 1])
     if (ndists ==  length(unique(plans[, 1])) - 1) {
