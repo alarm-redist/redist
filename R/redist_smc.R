@@ -389,9 +389,6 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
     out <- out %>% mutate(b1_probs =  as.vector((all_out[[1]]$b1_probs_mat)))
     out <- out %>% mutate(b2_wgt =  as.vector((all_out[[1]]$b2_wgts_mat)))
 
-    anc <- all_out[[1]]$ancestors + 1
-    anc <- cbind(rep(0, nrow(anc)), anc)
-    out <- out %>% mutate(ancestors = as.vector(t(anc)))
 
     # Convert each slice of the cube to a list of vectors
     all_slices <- apply(all_out[[1]]$district_cube, 1, function(x) as.vector(t(x)))
