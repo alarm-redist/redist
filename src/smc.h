@@ -43,7 +43,8 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 bool adjust_labels, double est_label_mult, int &n_unique,
                 double lower, double upper, double target,
                 double rho, int k, bool check_both,
-                RcppThread::ThreadPool &pool, int verbosity);
+                RcppThread::ThreadPool &pool, int verbosity,
+                mat &b2_mat);
 
 
 /*
