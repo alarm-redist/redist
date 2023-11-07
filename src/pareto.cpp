@@ -6,7 +6,9 @@ LogicalVector pareto_dominated(arma::mat x) {
     int p = x.n_rows;
 
     LogicalVector dominated(n); // initialized to FALSE
-    for (int i = 0; i < n; i++) { // for every el
+    // for every elelement
+    // In backwards order so that new duplicates don't show as undominated
+    for (int i = n - 1; i >= 0; i--) {
         for (int j = 0; j < n; j++) { // for other non-dominated el
             if (i == j || dominated[j]) continue;
 
@@ -25,6 +27,7 @@ LogicalVector pareto_dominated(arma::mat x) {
             }
 
             if (all_eq || (all_leq && any_less)) {
+            // if (all_leq && any_less) {
                 dominated[i] = true;
                 break;
             }

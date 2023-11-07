@@ -14,17 +14,17 @@ test_that("pareto domination is calculated correctly", {
                  1, 0), nrow=2)
     expect_equal(pareto_dominated(x), c(TRUE, FALSE, TRUE))
 
-    # remove dupes
+    # remove dupes in right order
     x = matrix(c(0, 0,
                  0, 0,
                  0, 1), nrow=2)
-    expect_equal(pareto_dominated(x), c(TRUE, FALSE, TRUE))
+    expect_equal(pareto_dominated(x), c(FALSE, TRUE, TRUE))
 })
 
 test_that("short bursts run and improve the score over time", {
     iowa_map <- suppressWarnings(redist_map(iowa, ndists = 4, pop_tol = 0.2))
     plans <- redist_shortburst(iowa_map, scorer_frac_kept(iowa_map),
-        max_bursts = 20, verbose = F)
+        max_bursts = 20, verbose = FALSE)
 
     expect_true(inherits(plans, "redist_plans"))
     expect_equal(dim(get_plans_matrix(plans)), c(99, 21))
