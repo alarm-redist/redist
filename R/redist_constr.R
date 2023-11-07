@@ -623,12 +623,11 @@ add_constr_custom <- function(constr, strength, fn) {
     if (length(args) != 2) cli_abort("Function must take exactly two arguments.")
 
     constr_env = rlang::fn_env(fn)
-    constr_env <- rlang::env(constr_env)
     # every symbol used in the function (except the 2 arguments)
     var_names = setdiff(
-        unique(extract_vars(rlang::fn_body(fn))),
-        c(names(args), '', ' ')
-        )
+        all.names(rlang::fn_body(fn)),
+        names(args)
+    )
 
     for (nm in var_names) {
         found = find_env(nm, constr_env)
@@ -652,8 +651,6 @@ add_constr_custom <- function(constr, strength, fn) {
                 "*" = "Make sure that your constraint function tests all edge cases
                              and never returns {.val {NA}} or {.val {Inf}}."))
     }
-
-    rlang::fn_env(fn) <- constr_env
 
     new_constr <- list(strength = strength, fn = fn)
     add_to_constr(constr, "custom", new_constr)
