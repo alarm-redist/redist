@@ -5,9 +5,9 @@
 # Purpose: tidy R wrapper to run SMC redistricting code
 ####################################################
 
-#' SMC Redistricting Sampler (McCartan and Imai 2020)
+#' SMC Redistricting Sampler (McCartan and Imai 2023)
 #'
-#' `redist_smc` uses a Sequential Monte Carlo algorithm (McCartan and Imai 2020)
+#' `redist_smc` uses a Sequential Monte Carlo algorithm (McCartan and Imai 2023)
 #' to generate nearly independent congressional or legislative redistricting
 #' plans according to contiguity, population, compactness, and administrative
 #' boundary constraints.
@@ -109,9 +109,9 @@
 #' plans.
 #'
 #' @references
-#' McCartan, C., & Imai, K. (Forthcoming). Sequential Monte Carlo for Sampling
-#' Balanced and Compact Redistricting Plans. *Annals of Applied Statistics*.
-#' Available at \url{https://arxiv.org/abs/2008.06131}.
+#' McCartan, C., & Imai, K. (2023). Sequential Monte Carlo for Sampling
+#' Balanced and Compact Redistricting Plans. *Annals of Applied Statistics* 17(4).
+#' Available at \url{http://dx.doi.org/10.1214/23-AOAS1763}.
 #'
 #' @examples \donttest{
 #' data(fl25)

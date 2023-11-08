@@ -2,7 +2,7 @@
 % Please edit documentation in R/redist_smc.R
 \name{redist_smc}
 \alias{redist_smc}
-\title{SMC Redistricting Sampler (McCartan and Imai 2020)}
+\title{SMC Redistricting Sampler (McCartan and Imai 2023)}
 \usage{
 redist_smc(
   map,
@@ -125,7 +125,7 @@ Recommended.}
 plans.
 }
 \description{
-\code{redist_smc} uses a Sequential Monte Carlo algorithm (McCartan and Imai 2020)
+\code{redist_smc} uses a Sequential Monte Carlo algorithm (McCartan and Imai 2023)
 to generate nearly independent congressional or legislative redistricting
 plans according to contiguity, population, compactness, and administrative
 boundary constraints.
@@ -172,8 +172,8 @@ redist_smc(fl_map, 1000, ncores = 2)
 
 }
 \references{
-McCartan, C., & Imai, K. (Forthcoming). Sequential Monte Carlo for Sampling
-Balanced and Compact Redistricting Plans. \emph{Annals of Applied Statistics}.
-Available at \url{https://arxiv.org/abs/2008.06131}.
+McCartan, C., & Imai, K. (2023). Sequential Monte Carlo for Sampling
+Balanced and Compact Redistricting Plans. \emph{Annals of Applied Statistics} 17(4).
+Available at \url{http://dx.doi.org/10.1214/23-AOAS1763}.
 }
 \concept{simulate}

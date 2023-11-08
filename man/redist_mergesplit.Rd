@@ -83,7 +83,7 @@ Recommended.}
 al. 2019; based on DeFord et. al 2019) to generate congressional or legislative redistricting plans
 according to contiguity, population, compactness, and administrative boundary
 constraints. The MCMC proposal is the same as is used in the SMC sampler
-(McCartan and Imai 2020); it is similar but not identical to those used in
+(McCartan and Imai 2023); it is similar but not identical to those used in
 the references.  1-level hierarchical Merge-split is supported through the
 \code{counties} parameter; unlike in the SMC algorithm, this does not
 guarantee a maximum number of county splits.
@@ -120,9 +120,9 @@ Carter, D., Herschlag, G., Hunter, Z., and Mattingly, J. (2019). A
 merge-split proposal for reversible Monte Carlo Markov chain sampling of
 redistricting plans. arXiv preprint arXiv:1911.01503.
 
-McCartan, C., & Imai, K. (Forthcoming). Sequential Monte Carlo for Sampling
-Balanced and Compact Redistricting Plans. \emph{Annals of Applied Statistics}.
-Available at \url{https://arxiv.org/abs/2008.06131}.
+McCartan, C., & Imai, K. (2023). Sequential Monte Carlo for Sampling
+Balanced and Compact Redistricting Plans. \emph{Annals of Applied Statistics} 17(4).
+Available at \url{http://dx.doi.org/10.1214/23-AOAS1763}.
 
 DeFord, D., Duchin, M., and Solomon, J. (2019). Recombination: A family of
 Markov chains for redistricting. arXiv preprint arXiv:1911.05725.
