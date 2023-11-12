@@ -199,6 +199,8 @@ add_to_constr <- function(constr, name, new_constr) {
 #' The `pop_dev` constraint adds a term encouraging plans to have smaller population deviations
 #' from the target population.
 #'
+#' The `contiguity` constraint adds a term encouraging plans to be contiguous.
+#'
 #' The `custom` constraint allows the user to specify their own constraint using
 #' a function which evaluates districts one at a time. The provided function
 #' `fn` should take two arguments: a vector describing the current plan
@@ -573,6 +575,34 @@ add_constr_edges_rem <- function(constr, strength) {
     new_constr <- list(strength = strength)
 
     add_to_constr(constr, "edges_removed", new_constr)
+}
+
+#' @param adj the adjacency graph for the object
+#'
+#' @rdname constraints
+#' @export
+add_constr_contiguity <- function(constr, strength, group_pop, adj) {
+    if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
+    data <- attr(constr, "data")
+
+    if (missing(adj)) {
+        if (inherits(data, 'redist_map')) {
+            adj <- get_adj(data)
+        } else {
+            cli::cli_abort('{.arg adj} is missing and constraint was not initialized on a {.cls redist_map}.')
+        }
+    } else {
+        if (inherits(data, 'redist_map')) {
+            stopifnot(length(adj) == nrow(data))
+        }
+    }
+
+    new_constr <- list(
+        strength = strength,
+        adj = adj
+    )
+
+    add_to_constr(constr, "contiguity", new_constr)
 }
 
 #' @param cities A vector containing zero entries for non-cities and non-zero entries for each city for `qps`.
