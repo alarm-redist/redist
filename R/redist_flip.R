@@ -273,7 +273,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
     algout <- redist.thin.chain(algout, thin = nthin)
 
 
-    algout$plans <- algout$plans + 1
+    algout$plans <- algout$plans + 1L
 
     out <- new_redist_plans(
         plans = algout$plans,
@@ -305,6 +305,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
             boundary_partitions = rep(algout$boundary_partitions, each = ndists),
             boundary_ratio = rep(algout$boundary_partitions, each = ndists)
         )
+
     add_tb <- apply(algout$psi_store, 1, function(x) rep(x, each = ndists)) %>%
         dplyr::as_tibble() %>%
         dplyr::rename_with(function(x) paste0("constraint_", x))

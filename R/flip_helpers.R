@@ -155,9 +155,9 @@ redist.warmup.chain <- function(algout, warmup = 1) {
     if (warmup <= 0) {
         return(algout)
     }
-    inds <- 1:warmup
+    inds <- seq_len(warmup)
     algout_new <- vector(mode = "list", length = length(algout))
-    for (i in 1:length(algout)) {
+    for (i in seq_along(algout)) {
 
         ## Subset the matrix first, then the vectors
         if (i == 1) {
@@ -184,10 +184,10 @@ redist.thin.chain <- function(algout, thin = 100) {
 
     inds <- seq(1, ncol(algout$plans), by = thin)
     algout_new <- vector(mode = "list", length = length(algout))
-    for (i in 1:length(algout)) {
+    for (i in seq_along(algout)) {
 
         ## Subset the matrix first, then the vectors
-        if (i == 1) {
+        if (is.matrix(algout[[i]])) {
             algout_new[[i]] <- algout[[i]][, inds]
         } else if (length(algout[[i]]) == 1) {
             algout_new[[i]] <- algout[[i]]

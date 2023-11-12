@@ -24,7 +24,6 @@ test_that("flip works in iowa", {
 test_that("flip countysplit works", {
     set.seed(1, kind = "Mersenne-Twister", normal.kind = "Inversion")
 
-
     cty <- rep(1, 25)
     cty[1:4] <- 2
 
@@ -60,6 +59,18 @@ test_that("flip hinge works", {
             nsims = 10, verbose = FALSE,
             constraints = cons)
     )
+    par <- redist.parity(get_plans_matrix(out), total_pop = pop)
+
+    expect_equal(range(get_plans_matrix(out)), c(1, 3))
+    expect_true(all(par <= 0.2))
+})
+
+test_that("flip thinning works", {
+    set.seed(1, kind = "Mersenne-Twister", normal.kind = "Inversion")
+
+    out <- redist_flip(fl_map %>% set_pop_tol(0.2), init_plan = plans_10[, 1],
+                           nsims = 10, verbose = FALSE,
+                        nthin = 2)
     par <- redist.parity(get_plans_matrix(out), total_pop = pop)
 
     expect_equal(range(get_plans_matrix(out)), c(1, 3))
