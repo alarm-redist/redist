@@ -236,6 +236,13 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
                 chain <- rep(1, nrow(object))
             }
 
+            const_cols <- vapply(addl_cols, function(col) {
+                x <- object[[col]][idx]
+                all(is.na(x)) || all(x == x[1]) ||
+                    any(tapply(x, object[['chain']][idx], FUN = function(z) length(unique(z))) == 1)
+            }, numeric(1))
+            addl_cols <- addl_cols[!const_cols]
+
             rhats <- vapply(addl_cols, function(col) {
                 x <- object[[col]][idx]
                 na_omit <- !is.na(x)
