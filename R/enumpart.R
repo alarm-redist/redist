@@ -240,12 +240,12 @@ is_last <- function(i, v, edges) {
 #' @param ordered_path path to ordered path created by redist.prep.enumpart
 #'
 #' @return List, four objects
-#' \itemize{
-#' \item{max}{numeric, maximum frontier size}
-#' \item{average}{numeric, average frontier size}
-#' \item{average_sq}{numeric, average((frontier size)^2)}
-#' \item{sequence}{numeric vector, lists out all sizes for every frontier}
-#' }
+#'
+#' - `max` numeric, maximum frontier size
+#' - `average` numeric, average frontier size
+#' - `average_sq` numeric, average((frontier size)^2)
+#' - `sequence` numeric vector, lists out all sizes for every frontier
+#'
 #' @export
 #' @concept enumerate
 #'

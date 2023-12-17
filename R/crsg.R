@@ -27,14 +27,13 @@
 #'
 #' @return list, containing three objects containing the completed redistricting
 #' plan.
-#' \itemize{
-#' \item{\code{plan}}{  A vector of length N, indicating the
-#' district membership of each precinct.}
-#' \item{\code{district_list}}{  A list of length Ndistrict.  Each list contains a
-#' vector of the precincts in the respective district.}
-#' \item{\code{district_pop}}{  A vector of length Ndistrict, containing the
-#' population totals of the respective districts.}
-#' }
+#'
+#' - `plan`:  A vector of length N, indicating the
+#' district membership of each precinct.
+#' - `district_list`  A list of length Ndistrict.  Each list contains a
+#' vector of the precincts in the respective district.
+#' - `district_pop`  A vector of length Ndistrict, containing the
+#' population totals of the respective districts.
 #'
 #'
 #' @references Jowei Chen and Jonathan Rodden (2013) ``Unintentional

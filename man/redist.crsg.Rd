@@ -46,12 +46,12 @@ iterations may be advised. Default is 5000.}
 list, containing three objects containing the completed redistricting
 plan.
 \itemize{
-\item{\code{plan}}{  A vector of length N, indicating the
-district membership of each precinct.}
-\item{\code{district_list}}{  A list of length Ndistrict.  Each list contains a
-vector of the precincts in the respective district.}
-\item{\code{district_pop}}{  A vector of length Ndistrict, containing the
-population totals of the respective districts.}
+\item \code{plan}:  A vector of length N, indicating the
+district membership of each precinct.
+\item \code{district_list}  A list of length Ndistrict.  Each list contains a
+vector of the precincts in the respective district.
+\item \code{district_pop}  A vector of length Ndistrict, containing the
+population totals of the respective districts.
 }
 }
 \description{
