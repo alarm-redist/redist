@@ -161,11 +161,15 @@ swMH <- function(aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parit
     .Call(`_redist_swMH`, aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parity, beta_sequence, beta_weights, lambda, beta, adapt_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, num_hot_steps, num_annealing_steps, num_cold_steps, verbose)
 }
 
+tree_pop <- function(ust, vtx, pop, pop_below, parent) {
+    .Call(`_redist_tree_pop`, ust, vtx, pop, pop_below, parent)
+}
+
 var_info_vec <- function(m, ref, pop) {
     .Call(`_redist_var_info_vec`, m, ref, pop)
 }
 
-sample_ust <- function(l, pop, lower, upper, counties) {
-    .Call(`_redist_sample_ust`, l, pop, lower, upper, counties)
+sample_ust <- function(l, pop, lower, upper, counties, ignore) {
+    .Call(`_redist_sample_ust`, l, pop, lower, upper, counties, ignore)
 }
 

@@ -32,13 +32,12 @@ void loop_erase_cty(std::vector<std::vector<int>> &path, int proposal, int root)
 
 // [[Rcpp::export]]
 Tree sample_ust(List l, const arma::uvec &pop, double lower, double upper,
-                const arma::uvec &counties) {
+                const arma::uvec &counties, const std::vector<bool> ignore) {
     Graph g = list_to_graph(l);
     Multigraph cg = county_graph(g, counties);
     int V = g.size();
     Tree tree = init_tree(V);
     int root;
-    const std::vector<bool> ignore(V, false);
     return sample_sub_ust(g, tree, V, root, ignore, pop, lower, upper, counties, cg);
 }
 

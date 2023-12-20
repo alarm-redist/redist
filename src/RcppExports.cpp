@@ -572,6 +572,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// tree_pop
+int tree_pop(Tree& ust, int vtx, const arma::uvec& pop, std::vector<int>& pop_below, std::vector<int>& parent);
+RcppExport SEXP _redist_tree_pop(SEXP ustSEXP, SEXP vtxSEXP, SEXP popSEXP, SEXP pop_belowSEXP, SEXP parentSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Tree& >::type ust(ustSEXP);
+    Rcpp::traits::input_parameter< int >::type vtx(vtxSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< std::vector<int>& >::type pop_below(pop_belowSEXP);
+    Rcpp::traits::input_parameter< std::vector<int>& >::type parent(parentSEXP);
+    rcpp_result_gen = Rcpp::wrap(tree_pop(ust, vtx, pop, pop_below, parent));
+    return rcpp_result_gen;
+END_RCPP
+}
 // var_info_vec
 NumericVector var_info_vec(IntegerMatrix m, IntegerVector ref, NumericVector pop);
 RcppExport SEXP _redist_var_info_vec(SEXP mSEXP, SEXP refSEXP, SEXP popSEXP) {
@@ -586,8 +601,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // sample_ust
-Tree sample_ust(List l, const arma::uvec& pop, double lower, double upper, const arma::uvec& counties);
-RcppExport SEXP _redist_sample_ust(SEXP lSEXP, SEXP popSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP countiesSEXP) {
+Tree sample_ust(List l, const arma::uvec& pop, double lower, double upper, const arma::uvec& counties, const std::vector<bool> ignore);
+RcppExport SEXP _redist_sample_ust(SEXP lSEXP, SEXP popSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP countiesSEXP, SEXP ignoreSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -596,7 +611,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
     Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
     Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
-    rcpp_result_gen = Rcpp::wrap(sample_ust(l, pop, lower, upper, counties));
+    Rcpp::traits::input_parameter< const std::vector<bool> >::type ignore(ignoreSEXP);
+    rcpp_result_gen = Rcpp::wrap(sample_ust(l, pop, lower, upper, counties, ignore));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -642,8 +658,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_splits", (DL_FUNC) &_redist_splits, 4},
     {"_redist_dist_cty_splits", (DL_FUNC) &_redist_dist_cty_splits, 3},
     {"_redist_swMH", (DL_FUNC) &_redist_swMH, 20},
+    {"_redist_tree_pop", (DL_FUNC) &_redist_tree_pop, 5},
     {"_redist_var_info_vec", (DL_FUNC) &_redist_var_info_vec, 3},
-    {"_redist_sample_ust", (DL_FUNC) &_redist_sample_ust, 5},
+    {"_redist_sample_ust", (DL_FUNC) &_redist_sample_ust, 6},
     {NULL, NULL, 0}
 };
 
