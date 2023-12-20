@@ -126,13 +126,13 @@ plans.
 }
 \description{
 \code{redist_smc} uses a Sequential Monte Carlo algorithm (McCartan and Imai 2023)
-to generate nearly independent congressional or legislative redistricting
-plans according to contiguity, population, compactness, and administrative
-boundary constraints.
+to generate representative samples of congressional or legislative
+redistricting plans according to contiguity, population, compactness, and
+administrative boundary constraints.
 }
 \details{
-This function draws nearly-independent samples from a specific target measure,
-controlled by the \code{map}, \code{compactness}, and \code{constraints} parameters.
+This function draws samples from a specific target measure controlled by
+the \code{map}, \code{compactness}, and \code{constraints} parameters.
 
 Key to ensuring good performance is monitoring the efficiency of the resampling
 process at each SMC stage.  Unless \code{silent=FALSE}, this function will print

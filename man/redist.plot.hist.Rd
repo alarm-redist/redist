@@ -7,7 +7,7 @@
 \usage{
 redist.plot.hist(plans, qty, bins = NULL, ...)
 
-\method{hist}{redist_plans}(x, qty, ...)
+hist.redist_plans(x, qty, ...)
 }
 \arguments{
 \item{plans}{the \code{redist_plans} object.}
