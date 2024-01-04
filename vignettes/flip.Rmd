@@ -99,8 +99,6 @@ While the implementations of Random Seed and Grow (`RSG`) and Compact Random See
 
 With the basics of what the `flip` algorithm is doing down, we can proceed into how to use the algorithm.
 
-There are currently two ways to use `flip` within the `redist` package: via the standard interface (`redist.flip`) or via the tidy interface (`redist_flip`). This section covers the basics using the former. See the [section on the tidy interface](#tidy) below and the `tidy` vignette for more information.
-
 To begin running the MCMC algorithm, we have to provide some basic information, typically beginning with a shapefile. The below loads an Iowa dataset included within the `redist` package and plots the actual congressional districts from 2012-2021. (Iowa is a favorite choice for redistricting simulation examples, as it requires keeping counties together in plans which allows us to use the counties as the unit for redistricting, rather than thousands of precincts.)
 
 ```{r}
@@ -226,7 +224,7 @@ Now, we can pass the `redist_map` object to `redist_flip` to begin simulating.
 tidy_sims <- redist_flip(iowa_map, nsims = 100)
 ```
 
-This highlights a key difference between the `redist_flip` and `redist.flip` implementations: `redist_flip` appears to have a much lower acceptance rate, even though we didn't explicitly set any constraints. `redist_flip`'s constraint includes a relatively weak compactness constraint by default because simulating compact maps is far more efficient and completely non-compact maps are not super useful for most purposes.
+`redist_flip`'s constraint includes a relatively weak compactness constraint by default because simulating compact maps is far more efficient and completely non-compact maps are not super useful for most purposes.
 
 You can override this by making a blank `redist_constr` object
 

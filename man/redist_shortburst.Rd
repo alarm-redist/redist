@@ -36,7 +36,7 @@ for common scoring rules.}
 
 \item{stop_at}{A threshold to stop optimization at. When \code{score_fn} returns a
 row vector per plan, \code{maximize} can be an equal-length vector specifying a
-threshhold for each dimension, which must all be met for the algorithm to
+threshold for each dimension, which must all be met for the algorithm to
 stop.}
 
 \item{burst_size}{The size of each burst. 10 is recommended for the

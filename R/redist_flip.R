@@ -1,8 +1,5 @@
 #' 'Flip' Markov Chain Monte Carlo Redistricting Simulation (Fifield et al. 2020)
 #'
-#' \code{redist_flip} provides a tidy interface to the methods in
-#' \code{\link{redist.flip}}.
-#'
 #' This function allows users to simulate redistricting plans
 #' using a Markov Chain Monte Carlo algorithm (Fifield, Higgins, Imai, and Tarr 2020). Several
 #' constraints corresponding to substantive requirements in the redistricting
@@ -11,9 +8,7 @@
 #' tempering functionality to improve the mixing of the Markov Chain.
 #'
 #' \code{redist_flip} allows for Gibbs constraints to be supplied via a list object
-#' passed to \code{constraints}. This is a change from the original \code{redist.flip}
-#' behavior to allow for a more straightforward function call when used within a pipe.
-#' A key difference between \code{redist_flip} and \code{redist.flip} is that
+#' passed to \code{constraints}.
 #' \code{redist_flip} uses a small compactness constraint by default, as this improves
 #' the realism of the maps greatly and also leads to large speed improvements.
 #' (One of the most time consuming aspects of the flip MCMC backend is checking for

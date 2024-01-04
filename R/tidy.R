@@ -3,7 +3,7 @@
 
 #' Access the Current `redist_plans()` Object
 #'
-#' Useful inside piped experessions and `dplyr` functions.
+#' Useful inside piped expressions and `dplyr` functions.
 #'
 #' @returns A `redist_plans` object, or `NULL` if not called from inside a
 #'   `dplyr` function.

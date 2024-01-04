@@ -29,16 +29,17 @@
 #'
 #' ## Get an initial partition
 #' init_plan <- fl25_enum$plans[, 5118]
+#' fl25$init_plan <- init_plan
 #'
 #' ## 25 precinct, three districts - no pop constraint ##
-#' alg_253 <- redist.flip(
-#'     adj = fl25_adj, total_pop = fl25$pop,
-#'     init_plan = init_plan, nsims = 10000
-#' )
+#' fl_map <- redist_map(fl25, existing_plan = 'init_plan', adj = fl25_adj)
+#' alg_253 <- redist_flip(fl_map, nsims = 10000)
+#'
 #'
 #' ## Get Republican Dissimilarity Index from simulations
 #' # old: rep_dmi_253 <- redist.segcalc(alg_253, fl25$mccain, fl25$pop)
-#' rep_dmi_253 <- seg_dissim(alg_253, fl25, mccain, pop)
+#' rep_dmi_253 <- seg_dissim(alg_253, fl25, mccain, pop)  |>
+#'     redistmetrics::by_plan(ndists = 3)
 #' }
 #' @concept analyze
 #' @export
@@ -264,7 +265,7 @@ redist.compactness <- function(shp = NULL,
 
         if (isTRUE(st_is_longlat(st_geometry(shp)))) {
             if (!is.null(st_crs(shp)) & !is.null(planarize) && !isFALSE(planarize)) {
-                shp <- st_transform(shp, planarize)
+                shp <- sf::st_transform(shp, planarize)
             }
         }
     }

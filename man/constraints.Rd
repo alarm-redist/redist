@@ -104,7 +104,7 @@ having two or more incumbents be in the same district.}
 
 \item{admin}{A vector indicating administrative unit membership}
 
-\item{perim_df}{A dataframe output from \code{redist.prep.polsbypopper}}
+\item{perim_df}{A dataframe output from \code{redistmetrics::prep_perims}}
 
 \item{ssdmat}{Squared distance matrix for Fryer Holden constraint}
 

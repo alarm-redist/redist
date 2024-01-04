@@ -483,7 +483,7 @@ add_constr_segregation <- function(constr, strength, group_pop, total_pop = NULL
     add_to_constr(constr, "segregation", new_constr)
 }
 
-#' @param perim_df A dataframe output from `redist.prep.polsbypopper`
+#' @param perim_df A dataframe output from `redistmetrics::prep_perims`
 #' @rdname constraints
 #' @export
 add_constr_polsby <- function(constr, strength, perim_df = NULL) {
@@ -498,7 +498,7 @@ add_constr_polsby <- function(constr, strength, perim_df = NULL) {
     areas <- sf::st_area(data)
 
     if (is.null(perim_df)) {
-        perim_df <- redist.prep.polsbypopper(data)
+        perim_df <- redistmetrics::prep_perims(data)
     }
 
     new_constr <- list(strength = strength,
