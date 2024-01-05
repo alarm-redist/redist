@@ -303,7 +303,7 @@ edge_center_df <- function(shp, adj) {
         x + 1L
     })
 
-    edgedf <- tibble::tibble(
+    edgedf <- dplyr::tibble(
         start = rep(seq_along(nb), lengths(nb)),
         finish = unlist(nb)
     )
