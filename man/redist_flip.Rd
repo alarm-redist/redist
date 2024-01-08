@@ -10,7 +10,7 @@ redist_flip(
   warmup = 0,
   init_plan,
   constraints = add_constr_edges_rem(redist_constr(map), 0.4),
-  nthin = 1,
+  thin = 1,
   eprob = 0.05,
   lambda = 0,
   temper = FALSE,
@@ -22,7 +22,8 @@ redist_flip(
   exact_mh = FALSE,
   adjswaps = TRUE,
   init_name = NULL,
-  verbose = TRUE
+  verbose = TRUE,
+  nthin
 )
 }
 \arguments{
@@ -40,7 +41,7 @@ not recommended behavior.}
 
 \item{constraints}{A \code{redist_constr} object.}
 
-\item{nthin}{The amount by which to thin the Markov Chain. The
+\item{thin}{The amount by which to thin the Markov Chain. The
 default is \code{1}.}
 
 \item{eprob}{The probability of keeping an edge connected. The
@@ -81,6 +82,8 @@ the initial plan in the output.  Defaults to the column name of the
 existing plan, or "\code{<init>}" if the initial plan is sampled.}
 
 \item{verbose}{Whether to print initialization statement. Default is \code{TRUE}.}
+
+\item{nthin}{Deprecated. Use \code{thin}.}
 }
 \value{
 A \code{\link{redist_plans}} object containing the simulated plans.
