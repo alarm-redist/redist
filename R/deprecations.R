@@ -44,7 +44,7 @@
 #' @concept analyze
 #' @export
 redist.segcalc <- function(plans, group_pop, total_pop) {
-    .Deprecated("redistmetrics")
+    .Deprecated("seg_dissim")
 
     ## If redist object, get the partitions entry
     if (all(class(plans) == "redist")) {
@@ -89,7 +89,7 @@ redist.segcalc <- function(plans, group_pop, total_pop) {
 #' comp <- compet_talisman(plans_05, fl25, mccain, obama)
 #'
 redist.competitiveness <- function(plans, rvote, dvote, alpha = 1, beta = 1) {
-    .Deprecated("redistmetrics")
+    .Deprecated("compet_talisman")
     nd <- length(unique(plans[, 1]))
     redistmetrics::compet_talisman(plans = plans, shp = data.frame(),
         rvote = rvote, dvote = dvote,
@@ -249,7 +249,20 @@ redist.compactness <- function(shp = NULL,
                                total_pop = NULL, adj = NULL, draw = 1,
                                ncores = 1, counties = NULL, planarize = 3857,
                                ppRcpp, perim_path, perim_df) {
-    .Deprecated("redistmetrics")
+    repl = c(
+        PolsbyPopper = "comp_polsby",
+        Schwartzberg = "comp_schwartz",
+        LengthWidth = "comp_lw",
+        ConvexHull = "comp_ch",
+        Reock = "comp_reock",
+        BoyceClark = "comp_bc",
+        FryerHolden = "comp_fh",
+        EdgesRemoved = "comp_edges_rem",
+        FracKept = "comp_frac_kept",
+        logSpanningTree = "comp_log_st"
+    )[measure]
+    .Deprecated(repl)
+
     # Check Inputs
     if (is.null(shp) & is.null(adj)) {
         cli_abort("Please provide a {.arg shp} or {.arg adj} argument.")
@@ -585,7 +598,22 @@ redist.group.percent <- function(plans, group_pop, total_pop, ncores = 1) {
 redist.metrics <- function(plans, measure = "DSeats", rvote, dvote,
                            tau = 1, biasV = 0.5, respV = 0.5, bandwidth = 0.01,
                            draw = 1) {
-    .Deprecated("redistmetrics")
+    repl = c(
+        DSeats = "part_dseats",
+        DVS = "part_dvs",
+        EffGap = "part_egap",
+        EffGapEqPop = "part_egap_ep",
+        TauGap = "part_tau_gap",
+        MeanMedian = "part_mean_median",
+        Bias = "part_bias",
+        BiasV = "part_bias",
+        Declination = "part_decl",
+        Responsiveness = "part_resp",
+        LopsidedWins = "part_lop_wins",
+        RankedMarginal = "part_rmd",
+        SmoothedSeat = "part_sscd"
+    )[measure]
+    .Deprecated(repl)
 
     # All measures available:
     all_measures <- c("DSeats", "DVS", "EffGap", "EffGapEqPop", "TauGap",
@@ -739,7 +767,7 @@ redist.metrics <- function(plans, measure = "DSeats", rvote, dvote,
 #' @concept analyze
 #' @export
 redist.splits <- function(plans, counties) {
-    .Deprecated("redistmetrics")
+    .Deprecated("splits_admin")
     if (missing(plans)) {
         cli_abort("Please provide an argument to {.arg plans}.")
     }
@@ -784,6 +812,7 @@ redist.splits <- function(plans, counties) {
 #' #old redist.district.splits(plans, ia$region)
 #' splits_count(plans, ia, region)
 redist.district.splits <- function(plans, counties) {
+    .Deprecated("splits_count")
     if (missing(plans)) {
         stop("Please provide an argument to plans.")
     }
@@ -831,6 +860,7 @@ redist.district.splits <- function(plans, counties) {
 #' #old redist.multisplits(plans, ia$region)
 #' splits_multi(plans, ia, region)
 redist.multisplits <- function(plans, counties) {
+    .Deprecated("splits_multi")
     if (missing(plans)) {
         cli_abort("Please provide an argument to {.arg plans}.")
     }
@@ -876,6 +906,7 @@ redist.multisplits <- function(plans, counties) {
 #' #old redist.muni.splits(plans, ia$region)
 #' splits_sub_admin(plans, ia, region)
 redist.muni.splits <- function(plans, munis) {
+    .Deprecated("splits_sub_admin")
     redistmetrics::splits_sub_admin(plans = plans, shp = data.frame(),
         sub_admin = munis)
 }

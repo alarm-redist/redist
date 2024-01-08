@@ -9,7 +9,7 @@
 #' @concept analyze
 #' @export
 distr_compactness <- function(map, measure = "FracKept", .data = cur_plans(), ...) {
-    .Deprecated("redistmetrics")
+    .Deprecated()
     check_tidy_types(map, .data)
 
     # districts not in ascending order
@@ -31,7 +31,7 @@ distr_compactness <- function(map, measure = "FracKept", .data = cur_plans(), ..
 #' @export
 segregation_index <- function(map, group_pop, total_pop = map[[attr(map, "pop_col")]],
                               .data = cur_plans()) {
-    .Deprecated("redistmetrics")
+    .Deprecated("seg_dissim")
     check_tidy_types(map, .data)
     group_pop <- rlang::eval_tidy(rlang::enquo(group_pop), map)
     total_pop <- rlang::eval_tidy(rlang::enquo(total_pop), map)
@@ -52,7 +52,7 @@ segregation_index <- function(map, group_pop, total_pop = map[[attr(map, "pop_co
 #' @export
 partisan_metrics <- function(map, measure, rvote, dvote, ...,
                              .data = cur_plans()) {
-    .Deprecated("redistmetrics")
+    .Deprecated()
     check_tidy_types(map, .data)
     # districts not in ascending order
     if (length(unique(diff(as.integer(.data$district)))) > 2)
@@ -73,7 +73,7 @@ partisan_metrics <- function(map, measure, rvote, dvote, ...,
 #' @concept analyze
 #' @export
 competitiveness <- function(map, rvote, dvote, .data = cur_plans()) {
-    .Deprecated("redistmetrics")
+    .Deprecated("compet_talisman")
     check_tidy_types(map, .data)
     rvote <- rlang::eval_tidy(rlang::enquo(rvote), map)
     dvote <- rlang::eval_tidy(rlang::enquo(dvote), map)
@@ -90,7 +90,7 @@ competitiveness <- function(map, rvote, dvote, .data = cur_plans()) {
 #' @concept analyze
 #' @export
 county_splits <- function(map, counties, .data = cur_plans()) {
-    .Deprecated("redistmetrics")
+    .Deprecated("splits_admin")
     check_tidy_types(map, .data)
     counties <- rlang::eval_tidy(rlang::enquo(counties), map)
     redist.splits(plans = get_plans_matrix(.data), counties = counties)
@@ -106,7 +106,7 @@ county_splits <- function(map, counties, .data = cur_plans()) {
 #' @concept analyze
 #' @export
 muni_splits <- function(map, munis, .data = cur_plans()) {
-    .Deprecated("redistmetrics")
+    .Deprecated("spits_sub_admin")
     check_tidy_types(map, .data)
     idxs <- unique(as.integer(.data$draw))
     munis <- rlang::eval_tidy(rlang::enquo(munis), map)
