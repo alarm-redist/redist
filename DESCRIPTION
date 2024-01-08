@@ -44,11 +44,7 @@ Imports:
     patchwork
 Suggests:
     coda,
-    s2,
-    lwgeom,
     withr,
-    leaflet,
-    leafgl,
     loo,
     Rmpi,
     knitr,
@@ -58,7 +54,6 @@ Suggests:
     units,
     RSpectra,
     testthat (>= 3.0.0),
-    rstudioapi,
     spelling
 LinkingTo: Rcpp, RcppArmadillo, RcppThread, cli, redistmetrics
 License: GPL (>= 2)

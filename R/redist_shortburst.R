@@ -21,7 +21,7 @@
 #'   for common scoring rules.
 #' @param stop_at A threshold to stop optimization at. When `score_fn` returns a
 #'   row vector per plan, `maximize` can be an equal-length vector specifying a
-#'   threshhold for each dimension, which must all be met for the algorithm to
+#'   threshold for each dimension, which must all be met for the algorithm to
 #'   stop.
 #' @param burst_size The size of each burst. 10 is recommended for the
 #'   `mergesplit` backend and 50 for the `flip` backend. Can also provide
@@ -520,7 +520,7 @@ scorer_multisplits <- function(map, counties) {
 #' @export
 scorer_polsby_popper <- function(map, perim_df = NULL, areas = NULL, m = 1) {
     ndists <- attr(map, "ndists")
-    if (is.null(perim_df)) perim_df <- redist.prep.polsbypopper(map)
+    if (is.null(perim_df)) perim_df <- redistmetrics::prep_perims(map)
     if (is.null(areas)) areas <- sf::st_area(sf::st_geometry(map))
 
     fn <- function(plans) {

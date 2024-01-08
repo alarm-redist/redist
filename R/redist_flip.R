@@ -1,8 +1,5 @@
 #' 'Flip' Markov Chain Monte Carlo Redistricting Simulation (Fifield et al. 2020)
 #'
-#' \code{redist_flip} provides a tidy interface to the methods in
-#' \code{\link{redist.flip}}.
-#'
 #' This function allows users to simulate redistricting plans
 #' using a Markov Chain Monte Carlo algorithm (Fifield, Higgins, Imai, and Tarr 2020). Several
 #' constraints corresponding to substantive requirements in the redistricting
@@ -11,9 +8,7 @@
 #' tempering functionality to improve the mixing of the Markov Chain.
 #'
 #' \code{redist_flip} allows for Gibbs constraints to be supplied via a list object
-#' passed to \code{constraints}. This is a change from the original \code{redist.flip}
-#' behavior to allow for a more straightforward function call when used within a pipe.
-#' A key difference between \code{redist_flip} and \code{redist.flip} is that
+#' passed to \code{constraints}.
 #' \code{redist_flip} uses a small compactness constraint by default, as this improves
 #' the realism of the maps greatly and also leads to large speed improvements.
 #' (One of the most time consuming aspects of the flip MCMC backend is checking for
@@ -106,7 +101,7 @@
 #' request to initialize using \code{redist.rsg} by supplying 'rsg', though this is
 #' not recommended behavior.
 #' @param constraints A `redist_constr` object.
-#' @param nthin The amount by which to thin the Markov Chain. The
+#' @param thin The amount by which to thin the Markov Chain. The
 #' default is \code{1}.
 #' @param eprob The probability of keeping an edge connected. The
 #' default is \code{0.05}.
@@ -135,6 +130,7 @@
 #' the initial plan in the output.  Defaults to the column name of the
 #' existing plan, or "\code{<init>}" if the initial plan is sampled.
 #' @param verbose Whether to print initialization statement. Default is \code{TRUE}.
+#' @param nthin Deprecated. Use `thin`.
 #'
 #' @return A \code{\link{redist_plans}} object containing the simulated plans.
 #' @concept simulate
@@ -157,10 +153,15 @@
 #'
 redist_flip <- function(map, nsims, warmup = 0, init_plan,
                         constraints = add_constr_edges_rem(redist_constr(map), 0.4),
-                        nthin = 1, eprob = 0.05, lambda = 0, temper = FALSE,
+                        thin = 1, eprob = 0.05, lambda = 0, temper = FALSE,
                         betaseq = "powerlaw", betaseqlength = 10, betaweights = NULL,
                         adapt_lambda = FALSE, adapt_eprob = FALSE, exact_mh = FALSE,
-                        adjswaps = TRUE, init_name = NULL, verbose = TRUE) {
+                        adjswaps = TRUE, init_name = NULL, verbose = TRUE, nthin) {
+
+    if (!missing(nthin)) {
+        thin <- nthin
+        .Deprecated(msg = 'Argument `nthin` is deprecated in favor of `thin` in redist 4.2.0 for consistency.')
+    }
     if (verbose) {
         ## Initialize ##
         cli::cli({
@@ -186,12 +187,12 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
     }
 
 
-    if (!any(class(nthin) %in% c("numeric", "integer"))) {
-        cli::cli_abort("nthin must be an integer")
-    } else if (nthin < 1) {
-        cli::cli_abort("nthin must be a nonnegative integer.")
+    if (!any(class(thin) %in% c("numeric", "integer"))) {
+        cli::cli_abort("thin must be an integer")
+    } else if (thin < 1) {
+        cli::cli_abort("thin must be a nonnegative integer.")
     } else {
-        nthin <- as.integer(nthin)
+        thin <- as.integer(thin)
     }
 
     pop_tol <- get_pop_tol(map)
@@ -254,7 +255,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
         cdvec = preprocout$data$init_plan,
         popvec = preprocout$data$total_pop,
         constraints = as.list(constraints),
-        nsims = nsims*nthin + warmup,
+        nsims = nsims*thin + warmup,
         eprob = eprob,
         pct_dist_parity = preprocout$params$pctdistparity,
         beta_sequence = preprocout$params$betaseq,
@@ -270,7 +271,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
     )
 
     algout <- redist.warmup.chain(algout, warmup = warmup)
-    algout <- redist.thin.chain(algout, thin = nthin)
+    algout <- redist.thin.chain(algout, thin = thin)
 
 
     algout$plans <- algout$plans + 1L
@@ -288,7 +289,7 @@ redist_flip <- function(map, nsims, warmup = 0, init_plan,
         adapt_eprob = as.logical(adapt_eprob),
         adapt_lambda = as.logical(adapt_lambda),
         warmup = warmup,
-        nthin = nthin,
+        nthin = thin,
         mh_acceptance = mean(algout$mhdecisions),
         final_eprob = algout$final_eprob,
         final_lambda = algout$final_lambda,
@@ -404,12 +405,12 @@ redist_flip_anneal <- function(map,
     }
 
 
-    if (!any(class(nthin) %in% c("numeric", "integer"))) {
-        cli::cli_abort("nthin must be an integer")
-    } else if (nthin < 1) {
-        cli::cli_abort("nthin must be a nonnegative integer.")
+    if (!any(class(thin) %in% c("numeric", "integer"))) {
+        cli::cli_abort("thin must be an integer")
+    } else if (thin < 1) {
+        cli::cli_abort("thin must be a nonnegative integer.")
     } else {
-        nthin <- as.integer(nthin)
+        thin <- as.integer(thin)
     }
 
 
@@ -506,7 +507,7 @@ redist_flip_anneal <- function(map,
         adapt_eprob = as.logical(adapt_eprob),
         adapt_lambda = as.logical(adapt_lambda),
         warmup = warmup,
-        nthin = nthin,
+        nthin = thin,
         mh_acceptance = mean(algout$mhdecisions),
         version = packageVersion("redist"),
     ) %>% mutate(

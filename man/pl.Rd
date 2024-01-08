@@ -11,7 +11,7 @@ A \code{redist_plans} object, or \code{NULL} if not called from inside a
 \code{dplyr} function.
 }
 \description{
-Useful inside piped experessions and \code{dplyr} functions.
+Useful inside piped expressions and \code{dplyr} functions.
 }
 \examples{
 pl()

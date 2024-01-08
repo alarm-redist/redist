@@ -12,10 +12,10 @@ redist.calc.frontier.size(ordered_path)
 \value{
 List, four objects
 \itemize{
-\item{max}{numeric, maximum frontier size}
-\item{average}{numeric, average frontier size}
-\item{average_sq}{numeric, average((frontier size)^2)}
-\item{sequence}{numeric vector, lists out all sizes for every frontier}
+\item \code{max} numeric, maximum frontier size
+\item \code{average} numeric, average frontier size
+\item \code{average_sq} numeric, average((frontier size)^2)
+\item \code{sequence} numeric vector, lists out all sizes for every frontier
 }
 }
 \description{
