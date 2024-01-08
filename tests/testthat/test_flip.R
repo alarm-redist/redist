@@ -70,7 +70,7 @@ test_that("flip thinning works", {
 
     out <- redist_flip(fl_map %>% set_pop_tol(0.2), init_plan = plans_10[, 1],
                            nsims = 10, verbose = FALSE,
-                        nthin = 2)
+                        thin = 2)
     par <- redist.parity(get_plans_matrix(out), total_pop = pop)
 
     expect_equal(range(get_plans_matrix(out)), c(1, 3))
