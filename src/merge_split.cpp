@@ -289,15 +289,14 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
     std::vector<bool> ignore(V);
     int distr_1, distr_2;
     int max_V = 0;
-    PRINT_LN;
+
     for (int i = 0; i < N_adapt; i++) {
         Tree ust = init_tree(V);
-        PRINT_LN;
 
         double joint_pop = 0;
         select_pair(n_distr, dist_g, distr_1, distr_2);
         int n_vtx = 0;
-        PRINT_LN;
+
         for (int j = 0; j < V; j++) {
             if (plan(j) == distr_1 || plan(j) == distr_2) {
                 joint_pop += pop(j);
@@ -311,7 +310,6 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
 
         ust = sample_sub_ust(g, ust, V, root, ignore, pop, lower, upper, counties, cg);
         if (ust.size() == 0) {
-            PRINT_LN;
             i--;
             continue;
         }
@@ -319,7 +317,6 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
         devs.push_back(tree_dev(ust, root, pop, joint_pop, target));
         int n_ok = 0;
         for (int j = 0; j < V-1; j++) {
-            PRINT_LN;
             if (ignore[j]) devs.at(i).at(j) = 2; // force not to work
             n_ok += devs.at(i).at(j) <= tol;
         }
@@ -329,7 +326,6 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
         if (n_ok > max_ok && n_ok < k_max)
             max_ok = n_ok;
     }
-    PRINT_LN;
 
     // For each k, compute pr(selected edge within top k),
     // among maps where valid edge was selected
@@ -353,7 +349,7 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
         Rcerr << "Warning: maximum hit; falling back to naive k estimator.\n";
         k = max_ok + 1;
     }
-    PRINT_LN;
+
     k = std::min(k, max_V - 1);
 }
 
