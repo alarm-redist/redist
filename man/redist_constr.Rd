@@ -24,6 +24,7 @@ You can view the exact structure of this list by calling \code{\link[=str]{str()
 Constraints may be added by using one of the following functions:
 \itemize{
 \item \code{\link[=add_constr_compet]{add_constr_compet()}}
+\item \code{\link[=add_constr_contiguity]{add_constr_contiguity()}}
 \item \code{\link[=add_constr_custom]{add_constr_custom()}}
 \item \code{\link[=add_constr_edges_rem]{add_constr_edges_rem()}}
 \item \code{\link[=add_constr_fry_hold]{add_constr_fry_hold()}}

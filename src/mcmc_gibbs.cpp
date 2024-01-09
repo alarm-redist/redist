@@ -132,6 +132,11 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
                                                   n_distr);
                               });
 
+    log_tgt += add_constraint("contiguity", constraints, districts, psi_vec,
+                              [&] (List l, int distr) -> double {
+                                  return eval_contiguity(plan, distr, g);
+                              });
+
     log_tgt += add_constraint("custom", constraints, districts, psi_vec,
                               [&] (List l, int distr) -> double {
                                   Function fn = l["fn"];

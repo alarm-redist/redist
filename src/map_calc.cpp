@@ -346,8 +346,58 @@ double eval_er(const subview_col<uword> &districts, const Graph g, int ndists) {
     return (double) redistmetrics::n_removed(g, districts, ndists)[0];
 }
 
+/*
+ * Compute the (number of pieces) - 1 for district `distr`
+ */
+double eval_contiguity(const subview_col<uword> &districts, int distr, const Graph g) {
+    uvec idxs = find(districts == distr);
+    std::vector<int> temp;
+    std::vector<int> conncomp(idxs.size());
+    int s, r;
+    std::vector<int> reservoir;
+    int temp_j_idx;
+    int cc = 0;
 
+    for (int i = 0; i < idxs.size(); i++) {
+        if (conncomp[i] == 0) {
+            cc++;
+            temp = g[idxs[i]];
+            std::vector<int> reservoir;
+            s = 0;
 
+            for(int j = 0; j < temp.size(); j++){
+                temp_j_idx = std::distance(idxs.begin(), std::find(idxs.begin(), idxs.end(), temp[j]));
+                Rcpp::Rcout << "pt1 temp_j_idx: " << temp_j_idx << std::endl;
+                if(std::find(idxs.begin(), idxs.end(), temp[j]) != idxs.end() &&
+                   conncomp[temp_j_idx] == 0){
+                    reservoir.push_back(temp[j]);
+                    conncomp[temp_j_idx] = cc;
+                    s++;
+                }
+            }
+
+            if(s > 0){
+                r = 0;
+                while(r < s){
+                    temp = g[reservoir[r]];
+                    for(int j = 0; j < temp.size(); j++){
+                        temp_j_idx = std::distance(idxs.begin(), std::find(idxs.begin(), idxs.end(), temp[j]));
+                        Rcpp::Rcout << "pt2 temp_j_idx: " << temp_j_idx << std::endl;
+                        if(std::find(idxs.begin(), idxs.end(), temp[j]) != idxs.end() &&
+                           conncomp[temp_j_idx] == 0){
+                            reservoir.push_back(temp[j]);
+                            conncomp[temp_j_idx] = cc;
+                            s++;
+                        }
+                    }
+                    r++;
+                }
+            }
+        }
+    }
+
+    return (double) cc - 1.0;
+}
 
 /*
  * Compute the cooccurence matrix for a set of precincts indexed by `idxs`,

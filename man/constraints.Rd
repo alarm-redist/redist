@@ -17,6 +17,7 @@
 \alias{add_constr_fry_hold}
 \alias{add_constr_log_st}
 \alias{add_constr_edges_rem}
+\alias{add_constr_contiguity}
 \alias{add_constr_custom}
 \title{Sampling constraints}
 \usage{
@@ -75,6 +76,8 @@ add_constr_fry_hold(
 add_constr_log_st(constr, strength, admin = NULL)
 
 add_constr_edges_rem(constr, strength)
+
+add_constr_contiguity(constr, strength)
 
 add_constr_custom(constr, strength, fn)
 }
@@ -194,6 +197,11 @@ as measured by the dissimilarity index.
 
 The \code{pop_dev} constraint adds a term encouraging plans to have smaller population deviations
 from the target population.
+
+The \code{contiguity} constraint adds a term encouraging plans to be contiguous.
+This addresses a potential issue where non-contiguous precincts can allow for
+a district to be split due to the sequential nature of merge split. Flip already
+includes a contiguity check included when selecting possible swaps.
 
 The \code{custom} constraint allows the user to specify their own constraint using
 a function which evaluates districts one at a time. The provided function

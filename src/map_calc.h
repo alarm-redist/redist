@@ -107,6 +107,10 @@ double eval_log_st(const subview_col<uword> &districts, const Graph g,
  */
 double eval_er(const subview_col<uword> &districts, const Graph g, int ndists);
 
+/*
+ * Compute the (number of pieces) - 1 for district `distr`
+ */
+double eval_contiguity(const subview_col<uword> &districts, int distr, const Graph g);
 
 
 /*
@@ -117,7 +121,7 @@ double eval_er(const subview_col<uword> &districts, const Graph g, int ndists);
 arma::mat prec_cooccur(arma::umat m, arma::uvec idxs, int ncores=0);
 
 /*
- * Compute the percentage of `group` in each district. Asummes `m` is 1-indexed.
+ * Compute the percentage of `group` in each district. Assumes `m` is 1-indexed.
  */
 // [[Rcpp::export]]
 NumericMatrix group_pct(arma::umat m, arma::vec group_pop, arma::vec total_pop, int n_distr);

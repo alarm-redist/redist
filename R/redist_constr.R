@@ -200,6 +200,9 @@ add_to_constr <- function(constr, name, new_constr) {
 #' from the target population.
 #'
 #' The `contiguity` constraint adds a term encouraging plans to be contiguous.
+#' This addresses a potential issue where non-contiguous precincts can allow for
+#' a district to be split due to the sequential nature of merge split. Flip already
+#' includes a contiguity check included when selecting possible swaps.
 #'
 #' The `custom` constraint allows the user to specify their own constraint using
 #' a function which evaluates districts one at a time. The provided function
@@ -577,30 +580,13 @@ add_constr_edges_rem <- function(constr, strength) {
     add_to_constr(constr, "edges_removed", new_constr)
 }
 
-#' @param adj the adjacency graph for the object
-#'
 #' @rdname constraints
 #' @export
-add_constr_contiguity <- function(constr, strength, group_pop, adj) {
+add_constr_contiguity <- function(constr, strength) {
     if (!inherits(constr, "redist_constr")) cli_abort("Not a {.cls redist_constr} object")
     data <- attr(constr, "data")
 
-    if (missing(adj)) {
-        if (inherits(data, 'redist_map')) {
-            adj <- get_adj(data)
-        } else {
-            cli::cli_abort('{.arg adj} is missing and constraint was not initialized on a {.cls redist_map}.')
-        }
-    } else {
-        if (inherits(data, 'redist_map')) {
-            stopifnot(length(adj) == nrow(data))
-        }
-    }
-
-    new_constr <- list(
-        strength = strength,
-        adj = adj
-    )
+    new_constr <- list(strength = strength)
 
     add_to_constr(constr, "contiguity", new_constr)
 }
@@ -755,6 +741,8 @@ print.redist_constr <- function(x, header = TRUE, details = TRUE, ...) {
         } else if (startsWith(nm, "segregation")) {
             cli::cli_bullets(c("*" = "A dissimilarity segregation constraint of strength {x[[nm]]$strength}"))
             print_constr(x[[nm]])
+        } else if (startsWith(nm, "contiguity")) {
+            cli::cli_bullets(c("*" = "A contiguity constraint of strength {x[[nm]]$strength}"))
         } else {
             cli::cli_bullets(c("*" = "An unknown constraint {.var {nm}}"))
             print_constr(x[[nm]])
