@@ -10,7 +10,7 @@ redist.sink.plan(plan)
 \item{plan}{vector of assignments, required.}
 }
 \value{
-A vector with an ID that corresponds from 1:ndists
+A vector with an ID that corresponds from 1:ndists, and attribute \code{n} indicating the number of districts.
 }
 \description{
 Takes a plan and renumbers it to be from 1:ndists
@@ -20,8 +20,8 @@ data(fl25_enum)
 plan <- fl25_enum$plans[, 5118]
 # Subset based on something:
 plan <- plan[plan != 2]
-plan <- redist.sink.plan(plan)
-# Now plan can be used with redist.flip()
+plan <- vctrs::vec_group_id(plan)
+# Now plan can be used with redist_flip()
 plan
 
 }

@@ -214,7 +214,7 @@ redist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE,
     plan_to_plot <- eval_tidy(enquo(plan), shp)
     if (!is.null(plan_to_plot)) {
         if (!is.numeric(plan_to_plot)) {
-            cli_abort("{.arg} plan must be a numeric vector.")
+            cli_abort("{.arg plan} must be a numeric vector.")
         }
         if (nrow(shp) != length(plan_to_plot)) {
             cli_abort("{.arg plan} and {.arg shp} must have same number of precincts.")
@@ -282,16 +282,17 @@ redist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE,
     }
 
 
-    plot <- plot + labs(title = title)
-    # return plot
-    return(plot)
+    plot + labs(title = title)
+
 }
+
 
 edge_center_df <- function(shp, adj) {
 
     # Extract Centers
-    suppressWarnings(centers <- st_centroid(shp))
-    st_crs(centers) <- st_crs(shp)
+    suppressWarnings(centers <- sf::st_centroid(shp))
+    sf::st_crs(centers) <- sf::st_crs(shp)
+    cent_geom <- sf::st_geometry(centers)
 
     if (nrow(shp) == 1) {
         return(list(nb = NULL, centers = centers))
@@ -302,29 +303,34 @@ edge_center_df <- function(shp, adj) {
         x + 1L
     })
 
-    edgedf <- tibble(
-        start = rep(1:length(nb), lengths(nb)),
+    edgedf <- dplyr::tibble(
+        start = rep(seq_along(nb), lengths(nb)),
         finish = unlist(nb)
     )
     edgedf <- edgedf %>%
-        rowwise() %>%
-        mutate(i = min(.data$start, .data$finish), j = max(.data$start, .data$finish)) %>%
-        select('i', 'j')
+        dplyr::mutate(i = pmin(.data$start, .data$finish), j = pmax(.data$start, .data$finish)) %>%
+        dplyr::select('i', 'j')
     edgedf <- edgedf[!duplicated(edgedf), ]
 
+    geoms <- lapply(seq_len(nrow(edgedf)), function(x) {
+        sf::st_linestring(
+            matrix(
+                c(
+                    as.numeric(cent_geom[[edgedf$i[x]]]),
+                    as.numeric(cent_geom[[edgedf$j[x]]])
+                ),
+                nrow = 2,
+                byrow = TRUE
+            )
+        )
+    })
+
     edgedf <- edgedf %>%
-        rowwise() %>%
-        mutate(geometry = st_sfc(st_linestring(matrix(
-            c(
-                as.numeric(sf::st_geometry(centers)[[.data$i]]),
-                as.numeric(sf::st_geometry(centers)[[.data$j]])
-            ),
-            nrow = 2,
-            byrow = TRUE
-        ))))
+        dplyr::mutate(geometry = sf::st_sfc(geoms))
 
     suppressWarnings(nb <- sf::st_as_sf(edgedf))
-    suppressWarnings(st_crs(nb) <- st_crs(shp))
+    suppressWarnings(sf::st_crs(nb) <- sf::st_crs(shp))
 
-    list(nb = nb, centers = centers)
+    list(nb = dplyr::rowwise(nb), centers = centers)
 }
+

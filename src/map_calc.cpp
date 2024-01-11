@@ -126,14 +126,15 @@ double eval_inc(const subview_col<uword> &districts, int distr, const uvec &incu
 // helper function
 // calculates districts which appear in each county (but not zeros)
 std::vector<std::set<int>> calc_county_dist(const subview_col<uword> &districts,
-                                            const uvec &counties, int n_cty) {
+                                            const uvec &counties, int n_cty,
+                                            bool zero_ok) {
     std::vector<std::set<int>> county_dist(n_cty);
     int V = counties.size();
     for (int i = 0; i < n_cty; i++) {
         county_dist[i] = std::set<int>();
     }
     for (int i = 0; i < V; i++) {
-        if (districts[i] > 0) {
+        if (zero_ok || districts[i] > 0) {
             county_dist[counties[i]-1].insert(districts[i]);
         }
     }
@@ -145,18 +146,22 @@ std::vector<std::set<int>> calc_county_dist(const subview_col<uword> &districts,
  */
 double eval_splits(const subview_col<uword> &districts, int distr,
                    const uvec &counties, int n_cty, bool smc) {
-    std::vector<std::set<int>> county_dist = calc_county_dist(districts, counties, n_cty);
+    std::vector<std::set<int>> county_dist = calc_county_dist(districts, counties, n_cty, distr == 0);
 
     int splits = 0;
     for (int i = 0; i < n_cty; i++) {
         int cty_n_distr = county_dist[i].size();
         // for SMC, just count the split when it crosses the threshold
-        // for MCMC there is no sequential nature, & the overcount will cancel
+        // for MCMC there is no sequential nature
         bool cond = smc ? cty_n_distr == 2 : cty_n_distr >= 2;
         if (cond) {
-            auto search = county_dist[i].find(distr);
-            if (search != county_dist[i].end()) {
-                splits += smc ? 1.0 : 1.0 / cty_n_distr; // take care of MCMC overcount
+            if (smc) {
+                auto search = county_dist[i].find(distr);
+                if (search != county_dist[i].end()) {
+                    splits++;
+                }
+            } else {
+                splits++;
             }
         }
     }
@@ -169,18 +174,22 @@ double eval_splits(const subview_col<uword> &districts, int distr,
  */
 double eval_multisplits(const subview_col<uword> &districts, int distr,
                         const uvec &counties, int n_cty, bool smc) {
-    std::vector<std::set<int>> county_dist = calc_county_dist(districts, counties, n_cty);
+    std::vector<std::set<int>> county_dist = calc_county_dist(districts, counties, n_cty, distr == 0);
 
     double splits = 0;
     for (int i = 0; i < n_cty; i++) {
         int cty_n_distr = county_dist[i].size();
         // for SMC, just count the split when it crosses the threshold
-        // for MCMC there is no sequential nature, & the overcount will cancel
+        // for MCMC there is no sequential nature
         bool cond = smc ? cty_n_distr == 3 : cty_n_distr >= 3;
         if (cond) {
-            auto search = county_dist[i].find(distr);
-            if (search != county_dist[i].end()) {
-                splits += smc ? 1.0 : 1.0 / cty_n_distr; // take care of MCMC overcount
+            if (smc) {
+                auto search = county_dist[i].find(distr);
+                if (search != county_dist[i].end()) {
+                    splits++;
+                }
+            } else {
+                splits++;
             }
         }
     }
@@ -192,17 +201,21 @@ double eval_multisplits(const subview_col<uword> &districts, int distr,
  * Compute the total splits penalty for district `distr`
  */
 double eval_total_splits(const subview_col<uword> &districts, int distr,
-                         const uvec &counties, int n_cty) {
-    std::vector<std::set<int>> county_dist = calc_county_dist(districts, counties, n_cty);
+                         const uvec &counties, int n_cty, bool smc) {
+    std::vector<std::set<int>> county_dist = calc_county_dist(districts, counties, n_cty, distr == 0);
 
     double splits = 0;
     for (int i = 0; i < n_cty; i++) {
         int cty_n_distr = county_dist[i].size();
         // no over-counting since every split counts
         if (cty_n_distr > 1) {
-            auto search = county_dist[i].find(distr);
-            if (search != county_dist[i].end()) {
-                splits += 1.0;
+            if (smc) {
+                auto search = county_dist[i].find(distr);
+                if (search != county_dist[i].end()) {
+                    splits++;
+                }
+            } else {
+                splits++;
             }
         }
     }

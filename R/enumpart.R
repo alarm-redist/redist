@@ -38,7 +38,7 @@ redist.init.enumpart <- function() {
         writeLines(text = makecontent, con = system.file("enumpart/Makefile", package = "redist"))
     }
 
-    return(0)
+    0
 }
 
 
@@ -115,7 +115,7 @@ redist.prep.enumpart <- function(adj, unordered_path, ordered_path,
             quote = FALSE, row.names = FALSE, col.names = FALSE)
     }
 
-    return(res)
+    res
 }
 
 #' Runs the enumpart algorithm
@@ -182,7 +182,7 @@ redist.run.enumpart <- function(ordered_path, out_path, ndists = 2,
         args = options,
         std_out = paste0(out_path, ".dat"), std_err = TRUE)
 
-    return(res)
+    res
 }
 
 
@@ -210,7 +210,7 @@ redist.read.enumpart <- function(out_path, skip = 0,  n_max = -1L) {
     sols <- readLines(paste0(out_path, ".dat"), n = n_max)
     if (skip > 0) sols <- sols[-seq_len(skip)]
     sols <- apply(do.call("cbind", strsplit(sols, " ")), 2, as.numeric)
-    return(sols + 1L)
+    sols + 1L
 }
 
 
@@ -231,7 +231,7 @@ is_last <- function(i, v, edges) {
             return(FALSE)
         }
     }
-    return(TRUE)
+    TRUE
 }
 
 
@@ -240,12 +240,12 @@ is_last <- function(i, v, edges) {
 #' @param ordered_path path to ordered path created by redist.prep.enumpart
 #'
 #' @return List, four objects
-#' \itemize{
-#' \item{max}{numeric, maximum frontier size}
-#' \item{average}{numeric, average frontier size}
-#' \item{average_sq}{numeric, average((frontier size)^2)}
-#' \item{sequence}{numeric vector, lists out all sizes for every frontier}
-#' }
+#'
+#' - `max` numeric, maximum frontier size
+#' - `average` numeric, average frontier size
+#' - `average_sq` numeric, average((frontier size)^2)
+#' - `sequence` numeric vector, lists out all sizes for every frontier
+#'
 #' @export
 #' @concept enumerate
 #'
@@ -284,11 +284,12 @@ redist.calc.frontier.size <- function(ordered_path) {
     }
 
 
-    return(
-        list(max = max(frontier_sizes),
-            average = mean(frontier_sizes),
-            average_sq = mean(frontier_sizes^2),
-            sequence = frontier_sizes)
+
+    list(
+        max = max(frontier_sizes),
+        average = mean(frontier_sizes),
+        average_sq = mean(frontier_sizes^2),
+        sequence = frontier_sizes
     )
 }
 
@@ -358,6 +359,5 @@ redist.enumpart <- function(adj, unordered_path, ordered_path,
         return(0)
     }
 
-    return(out)
-
+    out
 }

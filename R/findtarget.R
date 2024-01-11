@@ -2,7 +2,7 @@
 #'
 #' Given a percent goal for majority minority districts, this computes the average
 #' value of minority in non-majority minority districts. This value is "tgt_other"
-#' in \code{redist.flip} and \code{redist_smc}.
+#' in \code{redist_flip} and \code{redist_smc}.
 #'
 #' @param tgt_min target group population for majority minority district
 #' @param group_pop A vector of populations for some subgroup of interest.
@@ -21,7 +21,7 @@ redist.find.target <- function(tgt_min, group_pop, total_pop, ndists, nmmd) {
     totgroup <- sum(group_pop)
     tgt_other <- (totgroup - tmm)/((ndists - nmmd)*targetpop)
     # (sum(group_pop) - nmmd*tgt_min*targetpop)/((ndists-nmmd)*sum(total_pop)/ndists)
-    return(c(tgt_other = tgt_other))
+    c(tgt_other = tgt_other)
 }
 
 #' Create Constraints for SMC

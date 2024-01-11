@@ -20,23 +20,23 @@
 
 using namespace Rcpp;
 
-List vector_to_list(arma::uvec vecname){
+List vector_to_list(arma::uvec vecname) {
 
     List list_out(vecname.n_elem);
-    for(int i = 0; i < vecname.n_elem; i++){
+    for(int i = 0; i < vecname.n_elem; i++) {
         list_out(i) = vecname(i);
     }
     return list_out;
 
 }
 
-arma::uvec get_not_in(arma::uvec vec1, arma::uvec vec2){
+arma::uvec get_not_in(arma::uvec vec1, arma::uvec vec2) {
     int i; arma::uvec findtest; arma::uvec out(vec1.n_elem);
-    for(i = 0; i < vec1.n_elem; i++){
+    for(i = 0; i < vec1.n_elem; i++) {
         findtest = find(vec2 == vec1(i));
-        if(findtest.n_elem == 0){
+        if (findtest.n_elem == 0) {
             out(i) = 1;
-        }else{
+        } else {
             out(i) = 0;
         }
     }
@@ -131,18 +131,18 @@ List swMH(List aList,
     int start_anneal;
     int start_cold;
     NumericVector beta_seq(num_annealing_steps);
-    if(adapt_beta == "annealing"){
+    if (adapt_beta == "annealing") {
         nsims = num_hot_steps + num_annealing_steps + num_cold_steps;
         start_anneal = num_hot_steps;
         start_cold = num_hot_steps + num_annealing_steps;
-        for(int i = 0; i < num_annealing_steps; i++){
+        for(int i = 0; i < num_annealing_steps; i++) {
             beta_seq(i) = (double)i/num_annealing_steps;
         }
     }
 
     // Preprocess vector of congressional district assignments
-    if(min(cdvec) == 1){
-        for(int i = 0; i < cdvec.size(); i++){
+    if (min(cdvec) == 1) {
+        for(int i = 0; i < cdvec.size(); i++) {
             cdvec(i)--;
         }
     }
@@ -154,8 +154,8 @@ List swMH(List aList,
 
     // Get vector of unique district ids
     NumericVector uniquedists;
-    for(int i = 0; i < cdvec.size(); i++){
-        if(is_true(any(uniquedists == cdvec(i))) == FALSE){
+    for(int i = 0; i < cdvec.size(); i++) {
+        if (is_true(any(uniquedists == cdvec(i))) == FALSE) {
             uniquedists.push_back(cdvec(i));
         }
     }
@@ -176,9 +176,9 @@ List swMH(List aList,
 
     // Store outputted congressional districts
     NumericMatrix cd_store;
-    if(adapt_beta != "annealing"){
+    if (adapt_beta != "annealing") {
         cd_store = NumericMatrix(cdvec.size(), nsims);
-    }else{
+    } else {
         cd_store = NumericMatrix(cdvec.size(), 1);
     }
 
@@ -192,7 +192,7 @@ List swMH(List aList,
 
     NumericVector psi_upd;
     CharacterVector psi_names = CharacterVector::create(
-        "pop_dev", "splits", "multisplits",
+        "pop_dev", "splits", "multisplits", "total_splits",
         "segregation", "grp_pow", "grp_hinge", "grp_inv_hinge",
         "compet", "status_quo", "incumbency",
         "polsby", "fry_hold", "log_st", "edges_removed",
@@ -212,14 +212,14 @@ List swMH(List aList,
 
     // Store sequence of betas - geyer thompson
     NumericVector betaseq_store(nsims);
-    if(adapt_beta == "tempering"){
+    if (adapt_beta == "tempering") {
         betaseq_store[z] = beta;
     }
 
     // Iterate up z
     z++;
 
-    if(adapt_beta != "tempering" && beta != 0.0){
+    if (adapt_beta != "tempering" && beta != 0.0) {
         std::fill(betaseq_store.begin(), betaseq_store.end(), beta);
     }
 
@@ -234,7 +234,7 @@ List swMH(List aList,
     List get_constraint; List gt_out; NumericVector cdvec_prop; int i;
     arma::uvec boundary_precincts; List boundary_partitions_list;
 
-    if(adapt_beta == "annealing"){
+    if (adapt_beta == "annealing") {
         Rcout << "---------------------------------" << std::endl;
         Rcout << "-- Simulating at hot temperature." << std::endl;
         Rcout << "---------------------------------" << std::endl;
@@ -243,7 +243,7 @@ List swMH(List aList,
     RObject bar = cli_progress_bar(nsims, cli_config(false));
     Graph g = list_to_graph(aList);
     // Open the simulations
-    while(k < nsims){
+    while (k < nsims) {
 
         /////////////////////////////////////
         // First: determine boundary cases //
@@ -258,9 +258,9 @@ List swMH(List aList,
         // Second: within each congressional district, turn on edges with pr = p //
         ///////////////////////////////////////////////////////////////////////////
         // Continue trying until you get p good swaps
-        do{
+        do {
 
-            if(eprob != 0.0){
+            if (eprob != 0.0) {
                 // First element is connected adjlist, second element is cut adjlist
                 cutedge_lists = cut_edges(aList_con, eprob);
 
@@ -272,7 +272,7 @@ List swMH(List aList,
                 boundary_partitions = bsearch_boundary(cutedge_lists["connectedlist"],
                                                        boundary);
                 boundary_partitions_list = boundary_partitions["bsearch"];
-            }else{
+            } else {
                 boundary_precincts = find(as<arma::vec>(boundary) == 1);
                 boundary_partitions_list = vector_to_list(boundary_precincts);
             }
@@ -299,10 +299,10 @@ List swMH(List aList,
                                          beta,
                                          g);
 
-        }while(as<int>(swap_partitions["goodprop"]) == 0);
+        } while (as<int>(swap_partitions["goodprop"]) == 0);
 
         // // Get new boundary, then get number of partitions
-        // if(exact_mh == 1){
+        // if (exact_mh == 1) {
         //   aList_con_prop = genAlConn(aList, as<NumericVector>(swap_partitions["proposed_partition"]));
         //   boundary_prop = findBoundary(aList, aList_con_prop);
         //   boundary_partitions_prop = bsearch_boundary(cutedge_lists["connectedlist"],
@@ -325,10 +325,10 @@ List swMH(List aList,
         decision = mh_decision(as<double>(swap_partitions["mh_prob"]));
 
         // Store betas
-        if(decision == 1){
+        if (decision == 1) {
             energy_store[k] = swap_partitions["energy_new"];
             psi_upd = swap_partitions["new_psi"];
-        }else{
+        } else {
             energy_store[k] = swap_partitions["energy_old"];
             psi_upd = swap_partitions["new_psi"];
         }
@@ -341,12 +341,12 @@ List swMH(List aList,
         /////////////////////////////////////////////////////////////
         // Also - for simulated tempering, propose a possible swap //
         /////////////////////////////////////////////////////////////
-        if(adapt_beta == "tempering"){
+        if (adapt_beta == "tempering") {
 
             // Run geyer thompson algorithm
-            if(decision == 1){
+            if (decision == 1) {
                 gt_out = changeBeta(beta_sequence, beta, swap_partitions["energy_new"], beta_weights, adjswap);
-            }else{
+            } else {
                 gt_out = changeBeta(beta_sequence, beta, swap_partitions["energy_old"], beta_weights, adjswap);
             }
 
@@ -354,20 +354,20 @@ List swMH(List aList,
             beta = as<double>(gt_out["beta"]);
 
             // Store the output of geyer thompson
-            if(k < nsims){
+            if (k < nsims) {
                 betaseq_store[z] = beta;
             }
             decision_betaseq_store[k] = as<int>(gt_out["mh_decision"]);
             mhprob_betaseq_store[k] = as<double>(gt_out["mh_prob"]);
 
-        }else if(adapt_beta == "annealing"){
+        }else if (adapt_beta == "annealing") {
 
-            if((k >= start_anneal) & (k < start_cold)){
+            if ((k >= start_anneal) & (k < start_cold)) {
                 beta = beta_seq[k - start_anneal];
-            }else if(k >= start_cold){
+            }else if (k >= start_cold) {
                 beta = 1.0;
             }
-            if(k < nsims){
+            if (k < nsims) {
                 betaseq_store[z] = beta;
             }
 
@@ -377,20 +377,20 @@ List swMH(List aList,
         // Six = clean up and store results //
         //////////////////////////////////////
         cdvec_prop = clone(as<NumericVector>(swap_partitions["proposed_partition"]));
-        if(decision == 1){
+        if (decision == 1) {
             // Update cds to proposed cds
             cdvec = clone(as<NumericVector>(swap_partitions["proposed_partition"]));
             // Update district_pops to proposed district pops
             district_pops = clone(as<NumericVector>(swap_partitions["updated_cd_pops"]));
             // Store number of boundary partitions
             boundarypartitions_store[k] = boundary_partitions_list.size();
-        }else{
+        } else {
             boundarypartitions_store[k] = boundarypartitions_store[k-1];
         }
 
         // Store previous iteration
-        if(adapt_beta != "annealing"){
-            for(i = 0; i < cdvec.size(); i++){
+        if (adapt_beta != "annealing") {
+            for(i = 0; i < cdvec.size(); i++) {
                 cd_store[k * cdvec.size() + i] = cdvec(i);
             }
         }
@@ -409,15 +409,15 @@ List swMH(List aList,
         z++;
 
         // Print Progress
-        if(k % nsims_10pct == 0){
+        if (k % nsims_10pct == 0) {
             R_CheckUserInterrupt();
 
-            if(verbose){
+            if (verbose) {
                 // Rcout << (double)k / nsims_10pct * 10 << " percent done." << std::endl;
-                if(adapt_lambda == 1){
+                if (adapt_lambda == 1) {
                     Rcout << "Lambda: " << lambda << std::endl;
                 }
-                if(adapt_eprob == 1){
+                if (adapt_eprob == 1) {
                     Rcout << "Edgecut Probability: " << eprob << std::endl;
                 }
                 // Rcout << "Metropolis acceptance ratio: "<< (double)decision_counter / (k-1) << std::endl << std::endl;
@@ -431,14 +431,14 @@ List swMH(List aList,
         }
 
 
-        if(adapt_beta == "annealing"){
-            if(verbose){
-                if(k == start_anneal){
+        if (adapt_beta == "annealing") {
+            if (verbose) {
+                if (k == start_anneal) {
                     Rcout << "----------------------------" << std::endl;
                     Rcout << "-- Starting annealing stage." << std::endl;
                     Rcout << "----------------------------" << std::endl;
                 }
-                if(k == start_cold){
+                if (k == start_cold) {
                     Rcout << "----------------------------------" << std::endl;
                     Rcout << "-- Simulating at cold temperature." << std::endl;
                     Rcout << "----------------------------------" << std::endl;
@@ -447,21 +447,21 @@ List swMH(List aList,
         }
 
         // Change eprob, lambda if adaptive
-        if(adapt_eprob == 1 || adapt_lambda == 1){
-            if(k % 50 == 0){
-                if((double)decision_counter / (k-1) > .4){
-                    if(adapt_lambda == 1 && lambda < floor((double)aList.size() / 10)){
+        if (adapt_eprob == 1 || adapt_lambda == 1) {
+            if (k % 50 == 0) {
+                if ((double)decision_counter / (k-1) > .4) {
+                    if (adapt_lambda == 1 && lambda < floor((double)aList.size() / 10)) {
                         lambda++;
                     }
-                    if(adapt_eprob == 1 && eprob < .5){
+                    if (adapt_eprob == 1 && eprob < .5) {
                         eprob = eprob + .01;
                     }
                 }
-                if((double)decision_counter / (k-1) < .2){
-                    if(adapt_lambda == 1 && lambda > 0){
+                if ((double)decision_counter / (k-1) < .2) {
+                    if (adapt_lambda == 1 && lambda > 0) {
                         lambda--;
                     }
-                    if(adapt_eprob == 1 && eprob > 0){
+                    if (adapt_eprob == 1 && eprob > 0) {
                         eprob = eprob - .01;
                     }
                 }
@@ -474,11 +474,11 @@ List swMH(List aList,
     // Get distance from parity of each partition
     NumericVector dist_parity_vec;
     NumericVector dist_orig_vec;
-    if(adapt_beta != "annealing"){
+    if (adapt_beta != "annealing") {
         dist_parity_vec = distParity(cd_store, popvec);
         dist_orig_vec = diff_origcds(cd_store, cdorigvec);
-    }else{
-        for(int i = 0; i < cdvec.size(); i++){
+    } else {
+        for(int i = 0; i < cdvec.size(); i++) {
             cd_store[i] = cdvec(i);
         }
         dist_parity_vec = distParity(cd_store, popvec);
@@ -488,7 +488,7 @@ List swMH(List aList,
 
     // Create list, store output
     List out;
-    if(adapt_beta != "annealing"){
+    if (adapt_beta != "annealing") {
         out["plans"] = cd_store;
         out["distance_parity"] = dist_parity_vec;
         out["distance_original"] = dist_orig_vec;
@@ -499,11 +499,11 @@ List swMH(List aList,
         out["energy_psi"] = energy_store;
         out["boundary_partitions"] = boundarypartitions_store;
         out["boundaryratio"] = boundaryratio_store;
-        if(adapt_beta == "tempering"){
+        if (adapt_beta == "tempering") {
             out["mhdecisions_beta"] = decision_betaseq_store;
             out["mhprob_beta"] = mhprob_betaseq_store;
         }
-    }else{
+    } else {
         out["plans"] = cdvec;
         out["distance_parity"] = dist_parity_vec[0];
         out["distance_original"] = dist_orig_vec[0];
@@ -516,10 +516,10 @@ List swMH(List aList,
         out["boundaryratio"] = boundaryratio_store[k-1];
     }
 
-    if(adapt_eprob == 1){
+    if (adapt_eprob == 1) {
         out["final_eprob"] = eprob;
     }
-    if(adapt_lambda == 1){
+    if (adapt_lambda == 1) {
         out["final_lambda"] = lambda;
     }
 

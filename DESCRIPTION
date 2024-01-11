@@ -1,10 +1,10 @@
 Package: redist
-Version: 4.1.2
+Version: 4.2.0.9999
 Date: 2023-04-24
 Title: Simulation Methods for Legislative Redistricting
 Authors@R: c(
     person("Christopher T.", "Kenny", email = "christopherkenny@fas.harvard.edu", role = c("aut", "cre")),
-    person("Cory", "McCartan", email = "cmccartan@g.harvard.edu", role = "aut"),
+    person("Cory", "McCartan", email = "corymccartan@nyu.edu", role = "aut"),
     person("Ben", "Fifield", email = "benfifield@gmail.com", role = "aut"),
     person("Kosuke", "Imai", email = "imai@harvard.edu", role = "aut"),
     person("Jun", "Kawahara", email = "jkawahara@i.kyoto-u.ac.jp", role = "ctb"),
@@ -17,7 +17,7 @@ Description: Enables researchers to sample redistricting plans from a pre-specif
     the redistricting process such as geographic compactness and population parity
     requirements. Tools for analysis such as computation of various summary statistics
     and plotting functionality are also included. The package implements the SMC 
-    algorithm of McCartan and Imai (2020) <arXiv:2008.06131>, the enumeration 
+    algorithm of McCartan and Imai (2023) <doi:10.1214/23-AOAS1763>, the enumeration 
     algorithm of Fifield, Imai, Kawahara, and Kenny (2020) <doi:10.1080/2330443X.2020.1791773>,
     the Flip MCMC algorithm of Fifield, Higgins, Imai and Tarr (2020) <doi:10.1080/10618600.2020.1739532>,
     the Merge-split/Recombination algorithms of Carter et al. (2019) <arXiv:1911.01503> 
@@ -44,11 +44,7 @@ Imports:
     patchwork
 Suggests:
     coda,
-    s2,
-    lwgeom,
     withr,
-    leaflet,
-    leafgl,
     loo,
     Rmpi,
     knitr,
@@ -58,7 +54,6 @@ Suggests:
     units,
     RSpectra,
     testthat (>= 3.0.0),
-    rstudioapi,
     spelling
 LinkingTo: Rcpp, RcppArmadillo, RcppThread, cli, redistmetrics
 License: GPL (>= 2)

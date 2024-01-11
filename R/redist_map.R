@@ -340,7 +340,7 @@ get_pop_tol <- function(map) {
         cli_warn("Population bounds were not symmetric, using the smaller tolerance.")
     }
 
-    return(min(bot, top))
+    min(bot, top)
 }
 
 #' @param pop_tol the population tolerance
@@ -387,7 +387,7 @@ dplyr_row_slice.redist_map <- function(data, i, ...) {
     # fix merge_idx
     merge_idx <- attr(data, "merge_idx")
     if (!is.null(merge_idx))
-        merge_idx <- as.integer(as.factor(merge_idx[i]))
+        merge_idx <- vctrs::vec_group_id(merge_idx[i])
     attr(y, "merge_idx") <- merge_idx
 
     # fix pop. bounds
@@ -544,11 +544,8 @@ print.redist_map <- function(x, ...) {
 #' district and indicate the \code{fill} variable by shading.
 #' @param adj if \code{TRUE}, force plotting the adjacency graph. Overrides
 #' \code{by_distr}.
-#' @param interactive if \code{TRUE}, show an interactive map in the viewer
-#' rather than a static map. Ignores \code{adj} and \code{by_distr}.
 #' @param ... passed on to \code{\link{redist.plot.map}} (or
-#' \code{\link{redist.plot.adj}} if \code{adj=TRUE}, or
-#' \code{\link{redist.plot.interactive}} if \code{interactive=TRUE}).
+#' \code{\link{redist.plot.adj}} if \code{adj=TRUE}).
 #' Useful parameters may include \code{zoom_to}, \code{boundaries}, and
 #' \code{title}.
 #'
@@ -568,18 +565,11 @@ print.redist_map <- function(x, ...) {
 #' @concept prepare
 #' @concept plot
 #' @export
-plot.redist_map <- function(x, fill = NULL, by_distr = FALSE, adj = FALSE,
-                            interactive = FALSE, ...) {
+plot.redist_map <- function(x, fill = NULL, by_distr = FALSE, adj = FALSE, ...) {
     if (!inherits(x, "sf"))
         cli_abort(c("Plotting requires a shapefile.",
             ">" = "If you've just used {.fun merge_by},
                     consider passing {.arg drop_geom = FALSE}."))
-
-    if (interactive) {
-        if (adj) cli_warn("{.arg adj} ignored when {.arg interactive = TRUE}")
-        if (by_distr) warning("{.arg by_distr} ignored when {.arg interactive = TRUE}")
-        return(redist.plot.interactive(x, !!enquo(fill), ...))
-    }
 
     fill <- rlang::enquo(fill)
     existing <- get_existing(x)

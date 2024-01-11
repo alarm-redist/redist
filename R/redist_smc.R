@@ -5,15 +5,15 @@
 # Purpose: tidy R wrapper to run SMC redistricting code
 ####################################################
 
-#' SMC Redistricting Sampler (McCartan and Imai 2020)
+#' SMC Redistricting Sampler (McCartan and Imai 2023)
 #'
-#' `redist_smc` uses a Sequential Monte Carlo algorithm (McCartan and Imai 2020)
-#' to generate nearly independent congressional or legislative redistricting
-#' plans according to contiguity, population, compactness, and administrative
-#' boundary constraints.
+#' `redist_smc` uses a Sequential Monte Carlo algorithm (McCartan and Imai 2023)
+#' to generate representative samples of congressional or legislative
+#' redistricting plans according to contiguity, population, compactness, and
+#' administrative boundary constraints.
 #'
-#' This function draws nearly-independent samples from a specific target measure,
-#' controlled by the `map`, `compactness`, and `constraints` parameters.
+#' This function draws samples from a specific target measure controlled by
+#' the `map`, `compactness`, and `constraints` parameters.
 #'
 #' Key to ensuring good performance is monitoring the efficiency of the resampling
 #' process at each SMC stage.  Unless `silent=FALSE`, this function will print
@@ -109,9 +109,9 @@
 #' plans.
 #'
 #' @references
-#' McCartan, C., & Imai, K. (Forthcoming). Sequential Monte Carlo for Sampling
-#' Balanced and Compact Redistricting Plans. *Annals of Applied Statistics*.
-#' Available at \url{https://arxiv.org/abs/2008.06131}.
+#' McCartan, C., & Imai, K. (2023). Sequential Monte Carlo for Sampling
+#' Balanced and Compact Redistricting Plans. *Annals of Applied Statistics* 17(4).
+#' Available at \url{http://dx.doi.org/10.1214/23-AOAS1763}.
 #'
 #' @examples \donttest{
 #' data(fl25)
@@ -137,7 +137,7 @@
 #' @export
 redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints = list(),
                        resample = TRUE, runs = 1L, ncores = 0L, init_particles = NULL,
-                       n_steps = NULL, adapt_k_thresh = 0.985, seq_alpha = 0.5,
+                       n_steps = NULL, adapt_k_thresh = 0.99, seq_alpha = 0.5,
                        truncate = (compactness != 1), trunc_fn = redist_quantile_trunc,
                        pop_temper = 0, final_infl = 1, est_label_mult = 1,
                        ref_name = NULL, verbose = FALSE, silent = FALSE) {
@@ -162,7 +162,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
             cli_abort("County vector must not contain missing values.")
 
         # handle discontinuous counties
-        component <- contiguity(adj, as.integer(as.factor(counties)))
+        component <- contiguity(adj, vctrs::vec_group_id(counties))
         counties <- dplyr::if_else(component > 1,
                                    paste0(as.character(counties), "-", component),
                                    as.character(counties)) %>%
@@ -246,9 +246,12 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
 
     if (ncores_runs > 1) {
         `%oper%` <- `%dorng%`
-        of <- ifelse(Sys.info()[['sysname']] == 'Windows',
-                     tempfile(pattern = paste0('smc_', substr(Sys.time(), 1, 10)), fileext = '.txt'),
-                     '')
+        of <- if (Sys.info()[["sysname"]] == "Windows") {
+            tempfile(pattern = paste0("smc_", substr(Sys.time(), 1, 10)), fileext = ".txt")
+        } else {
+            ""
+        }
+
         if (!silent)
             cl <- makeCluster(ncores_runs, outfile = of, methods = FALSE,
                 useXDR = .Platform$endian != "little")
@@ -374,6 +377,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
                             n_eff = all_out[[1]]$n_eff,
                             compactness = compactness,
                             constraints = constraints,
+                            version = packageVersion("redist"),
                             diagnostics = l_diag)
     if (runs > 1) {
         out <- mutate(out, chain = rep(seq_len(runs), each = n_dist_act*nsims)) %>%

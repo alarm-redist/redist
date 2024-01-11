@@ -97,8 +97,8 @@ max_dev <- function(districts, pop, n_distr) {
     .Call(`_redist_max_dev`, districts, pop, n_distr)
 }
 
-ms_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, thresh, k, thin, verbosity) {
-    .Call(`_redist_ms_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, thresh, k, thin, verbosity)
+ms_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, verbosity) {
+    .Call(`_redist_ms_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, verbosity)
 }
 
 pareto_dominated <- function(x) {
@@ -119,10 +119,6 @@ runif1 <- function(n, max) {
 
 resample_lowvar <- function(wgts) {
     .Call(`_redist_resample_lowvar`, wgts)
-}
-
-reindex <- function(dm, nd) {
-    .Call(`_redist_reindex`, dm, nd)
 }
 
 plan_joint <- function(m1, m2, pop) {
@@ -165,11 +161,15 @@ swMH <- function(aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parit
     .Call(`_redist_swMH`, aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parity, beta_sequence, beta_weights, lambda, beta, adapt_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, num_hot_steps, num_annealing_steps, num_cold_steps, verbose)
 }
 
+tree_pop <- function(ust, vtx, pop, pop_below, parent) {
+    .Call(`_redist_tree_pop`, ust, vtx, pop, pop_below, parent)
+}
+
 var_info_vec <- function(m, ref, pop) {
     .Call(`_redist_var_info_vec`, m, ref, pop)
 }
 
-sample_ust <- function(l, pop, lower, upper, counties) {
-    .Call(`_redist_sample_ust`, l, pop, lower, upper, counties)
+sample_ust <- function(l, pop, lower, upper, counties, ignore) {
+    .Call(`_redist_sample_ust`, l, pop, lower, upper, counties, ignore)
 }
 

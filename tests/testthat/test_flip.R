@@ -9,12 +9,20 @@ test_that("flip works", {
 
     expect_equal(range(get_plans_matrix(out)), c(1, 3))
     expect_true(all(par <= 0.2))
-
 })
+
+test_that("flip works in iowa", {
+    iowa_map <- redist_map(iowa, existing_plan = cd_2010, pop_tol=0.01)
+    set.seed(2)
+    expect_s3_class(
+        redist_flip(iowa_map, nsims = 100),
+        "redist_plans"
+    )
+})
+
 
 test_that("flip countysplit works", {
     set.seed(1, kind = "Mersenne-Twister", normal.kind = "Inversion")
-
 
     cty <- rep(1, 25)
     cty[1:4] <- 2
@@ -51,6 +59,18 @@ test_that("flip hinge works", {
             nsims = 10, verbose = FALSE,
             constraints = cons)
     )
+    par <- redist.parity(get_plans_matrix(out), total_pop = pop)
+
+    expect_equal(range(get_plans_matrix(out)), c(1, 3))
+    expect_true(all(par <= 0.2))
+})
+
+test_that("flip thinning works", {
+    set.seed(1, kind = "Mersenne-Twister", normal.kind = "Inversion")
+
+    out <- redist_flip(fl_map %>% set_pop_tol(0.2), init_plan = plans_10[, 1],
+                           nsims = 10, verbose = FALSE,
+                        thin = 2)
     par <- redist.parity(get_plans_matrix(out), total_pop = pop)
 
     expect_equal(range(get_plans_matrix(out)), c(1, 3))

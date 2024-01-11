@@ -2,7 +2,7 @@
 % Please edit documentation in R/redist_findparams.R
 \name{redist.findparams}
 \alias{redist.findparams}
-\title{Run parameter testing for \code{redist.flip}}
+\title{Run parameter testing for \code{redist_flip}}
 \usage{
 redist.findparams(
   map,
@@ -86,7 +86,7 @@ about each parameter setting.
 }
 \details{
 This function allows users to test multiple parameter settings of
-\code{redist.flip} in preparation for a longer run for analysis.
+\code{redist_flip} in preparation for a longer run for analysis.
 }
 \examples{
 \donttest{

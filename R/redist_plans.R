@@ -37,7 +37,17 @@ new_redist_plans <- function(plans, map, algorithm, wgt, resampled = TRUE, ndist
         "resampled", "ndists", "merge_idx", "prec_pop",
         names(list(...)))
 
-    structure(tibble(draw = rep(as.factor(1:n_sims), each = ndists),
+    if (is.null(colnames(plans))) {
+        draw_fac = as.factor(1:n_sims)
+    } else {
+        draw_fac = character(n_sims)
+        ref_idx = which(nchar(colnames(plans)) > 0)
+        draw_fac[ref_idx] = colnames(plans)[ref_idx]
+        draw_fac[-ref_idx] = as.character(seq_len(n_sims - length(ref_idx)))
+        draw_fac = factor(draw_fac, levels=draw_fac)
+    }
+
+    structure(tibble(draw = rep(draw_fac, each = ndists),
         district = rep(distr_range, n_sims),
         total_pop = as.numeric(distr_pop)),
     plans = plans, ndists = ndists, algorithm = algorithm, wgt = wgt,
@@ -232,6 +242,90 @@ get_sampling_info <- function(plans) {
     all_attr$redist_attr <- NULL
 
     all_attr
+}
+
+
+#' Add a reference plan to a set of plans
+#'
+#' This function facilitates comparing an existing (i.e., non-simulated)
+#' redistricting plan to a set of simulated plans.
+#'
+#' @param plans a \code{redist_plans} object
+#' @param ref_plan an integer vector containing the reference plan. It will be
+#' renumbered to 1..\code{ndists}.
+#' @param name a human-readable name for the reference plan. Defaults to the
+#' name of \code{ref_plan}.
+#'
+#' @returns a modified \code{redist_plans} object containing the reference plan
+#' @concept analyze
+#' @export
+add_reference <- function(plans, ref_plan, name = NULL) {
+    if (!inherits(plans, "redist_plans")) cli_abort("{.arg plans} must be a {.cls redist_plans}")
+    if (isTRUE(attr(plans, "partial")))
+        cli_abort("Reference plans not supported for partial plans objects.")
+
+    plan_m <- get_plans_matrix(plans)
+    if (!is.numeric(ref_plan)) cli_abort("{.arg ref_plan} must be numeric")
+    if (length(ref_plan) != nrow(plan_m))
+        cli_abort("{.arg ref_plan} must have the same number of precincts as {.arg plans}")
+
+    if (is.null(name)) {
+        ref_str <- deparse(substitute(ref_plan))
+        if (stringr::str_detect(ref_str, stringr::fixed("$")))
+            name <- strsplit(ref_str, "$", fixed = TRUE)[[1]][2]
+        else
+            name <- ref_str
+    } else {
+        if (!is.character(name)) cli_abort("{.arg name} must be a {.cls chr}")
+    }
+
+    ref_plan <- vctrs::vec_group_id(ref_plan)
+    ndists <- max(ref_plan)
+    if (ndists != max(plan_m[, 1]))
+        cli_abort("{.arg ref_plan} has a different number of districts than {.arg plans}")
+
+    # first the matrix
+    plan_m <- cbind(ref_plan, plan_m)
+    colnames(plan_m)[1] <- name
+
+    # then the dataframe
+    prec_pop <- attr(plans, "prec_pop")
+    if (!is.null(prec_pop))
+        distr_pop <- pop_tally(matrix(ref_plan, ncol = 1), prec_pop, ndists)
+    else
+        distr_pop <- rep(NA_real_, ndists)
+
+    if (is.ordered(plans$district)) {
+        rg_labels = range(as.integer(as.character(levels(plans$district))))
+        if (any(rg_labels != c(1L, attr(plans, "ndists")))) {
+            cli_abort(c("Cannot add a reference plan to a set of plans which
+                        have relabeled district numbers that don't start at 1.",
+                        ">"="Match the district labels on the unmatched plans with
+                            {.fn match_numbers}")
+            )
+        }
+
+        # good to go
+        plans$district = as.integer(plans$district)
+        cli_inform(c("Coercing {.val district} column to integers.",
+                     "i"="You may want to run {.fn match_numbers} again to fix district labels.\n"))
+    }
+
+    if (name %in% levels(plans$draw)) cli_abort("Reference plan name already exists")
+    fct_levels <- c(name, levels(plans$draw))
+    new_draw <- rep(factor(fct_levels, levels = fct_levels), each = ndists)
+    x <- dplyr::bind_rows(
+        tibble(district = 1:ndists,
+               total_pop = as.numeric(distr_pop)),
+        plans[, -match("draw", names(plans))]
+    ) %>%
+        dplyr::mutate(draw = new_draw, .before = "district")
+
+    exist_wgts <- get_plans_weights(plans)
+    if (!is.null(exist_wgts))
+        attr(plans, "wgt") <- c(0, exist_wgts)
+
+    reconstruct.redist_plans(x, set_plan_matrix(plans, plan_m))
 }
 
 #' Subset to sampled or reference draws
@@ -443,11 +537,13 @@ print.redist_plans <- function(x, ...) {
     nd <- attr(x, "ndists")
     if (is.null(nd)) nd <- max(plans_m[, 1])
 
+    fmt_comma <- function(x) format(x, nsmall = 0, digits = 1, big.mark = ",")
     if (n_ref > 0)
-        cli_text("A {.cls redist_plans} containing {n_samp} sampled plan{?s} and
-                 {n_ref} reference plan{?s}")
+        cli_text("A {.cls redist_plans} containing {fmt_comma(n_samp)}{cli::qty(n_samp)}
+                 sampled plan{?s} and {n_ref} reference plan{?s}")
     else
-        cli_text("A {.cls redist_plans} containing {n_samp} sampled plan{?s}")
+        cli_text("A {.cls redist_plans} containing
+                 {fmt_comma(n_samp)}{cli::qty(n_samp)} sampled plan{?s}")
 
     if (ncol(plans_m) == 0) return(invisible(x))
 
@@ -461,7 +557,8 @@ print.redist_plans <- function(x, ...) {
         none = "a custom collection")[attr(x, "algorithm")]
     if (is.na(alg_name)) alg_name <- "an unknown algorithm"
 
-    cli_text("Plans have {nd} districts from a {nrow(plans_m)}-unit map,
+    cli_text("Plans have {nd} district{?s} from a
+             {fmt_comma(nrow(plans_m))}{cli::qty(nrow(plans_m))}-unit map,
              and were drawn using {alg_name}.")
 
     merge_idx <- attr(x, "merge_idx")
@@ -473,7 +570,7 @@ print.redist_plans <- function(x, ...) {
         if (attr(x, "resampled"))
             cat("With plans resampled from weights\n")
         else
-            cat("With plans not resampled from weights\n")
+            cat("With weighted plans not resampled\n")
     }
 
     cat("Plans matrix:", utils::capture.output(str(plans_m, give.attr = FALSE)),

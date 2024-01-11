@@ -23,6 +23,6 @@ numeric value to target
 \description{
 Given a percent goal for majority minority districts, this computes the average
 value of minority in non-majority minority districts. This value is "tgt_other"
-in \code{redist.flip} and \code{redist_smc}.
+in \code{redist_flip} and \code{redist_smc}.
 }
 \concept{prepare}

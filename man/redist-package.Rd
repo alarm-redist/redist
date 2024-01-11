@@ -3,31 +3,38 @@
 \docType{package}
 \name{redist-package}
 \alias{redist-package}
+\alias{_PACKAGE}
 \alias{redist}
-\title{Simulation Methods for Legislative Redistricting}
+\title{redist: Simulation Methods for Legislative Redistricting}
 \description{
-Enables researchers to sample redistricting plans from a pre-specified target
-distribution using Sequential Monte Carlo and Markov Chain Monte Carlo
-algorithms.  The package allows for the implementation of various constraints
-in the redistricting process such as geographic compactness and population
-parity requirements. Tools for analysis such as computation of various
-summary statistics and plotting functionality are also included. The package
-implements methods described in Fifield, Higgins, Imai and Tarr (2020)
-\doi{10.1080/10618600.2020.1739532}, Fifield, Imai, Kawahara, and Kenny (2020)
-\doi{10.1080/2330443X.2020.1791773}, and McCartan and Imai (2020)
-arXiv:2008.06131.
-}
-\references{
-Barbu, Adrian and Song-Chun Zhu. (2005) "Generalizing Swendsen-Wang to
-Sampling Arbitrary Posterior Probabilities." IEEE Transactions on
-Pattern Analysis and Machine Intelligence.
+\if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 
-Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander
-Tarr. (2020) "Automated Redistricting Simulation Using Markov
-Chain Monte Carlo."  Available at
-\url{https://imai.fas.harvard.edu/research/files/redist.pdf}.
-
-Swendsen, Robert and Jian-Sheng Wang. (1987) "Nonuniversal Critical
-Dynamics in Monte Carlo Simulations." Physical Review Letters.
+Enables researchers to sample redistricting plans from a pre-specified target distribution using Sequential Monte Carlo and Markov Chain Monte Carlo algorithms. The package allows for the implementation of various constraints in the redistricting process such as geographic compactness and population parity requirements. Tools for analysis such as computation of various summary statistics and plotting functionality are also included. The package implements the SMC algorithm of McCartan and Imai (2023) \doi{10.1214/23-AOAS1763}, the enumeration algorithm of Fifield, Imai, Kawahara, and Kenny (2020) \doi{10.1080/2330443X.2020.1791773}, the Flip MCMC algorithm of Fifield, Higgins, Imai and Tarr (2020) \doi{10.1080/10618600.2020.1739532}, the Merge-split/Recombination algorithms of Carter et al. (2019) \href{https://arxiv.org/abs/1911.01503}{arXiv:1911.01503} and DeFord et al. (2021) \doi{10.1162/99608f92.eb30390f}, and the Short-burst optimization algorithm of Cannon et al. (2020) \href{https://arxiv.org/abs/2011.02288}{arXiv:2011.02288}.
 }
-\keyword{package}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://alarm-redist.org/redist/}
+  \item Report bugs at \url{https://github.com/alarm-redist/redist/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: Christopher T. Kenny \email{christopherkenny@fas.harvard.edu}
+
+Authors:
+\itemize{
+  \item Cory McCartan \email{corymccartan@nyu.edu}
+  \item Ben Fifield \email{benfifield@gmail.com}
+  \item Kosuke Imai \email{imai@harvard.edu}
+}
+
+Other contributors:
+\itemize{
+  \item Jun Kawahara \email{jkawahara@i.kyoto-u.ac.jp} [contributor]
+  \item Alexander Tarr \email{atarr@princeton.edu} [contributor]
+  \item Michael Higgins \email{mikehiggins@k-state.edu} [contributor]
+}
+
+}
+\keyword{internal}

@@ -372,18 +372,7 @@ redist.plot.plans <- function(plans, draws, shp, qty = NULL, interactive = FALSE
         cli_abort("{.arg plans} and {.arg shp} must have the same number of precincts.")
 
     if (interactive) {
-        if (length(draws) > 1)
-            cli_warn("Only first of {.arg draws} plotted when {.arg interactive = TRUE}")
-
-        draw <- draws[1]
-        draw_idx <- match(as.character(draw), levels(plans$draw))
-        qty <- eval_tidy(enquo(qty), plans[plans$draw == as.character(draw), ])
-        if (is.null(qty)) {
-            qty <- as.factor(m[, draw_idx])
-        } else {
-            qty <- qty[m[, draw_idx]]
-        }
-        return(redist.plot.interactive(shp, fill = qty, ...))
+        .Deprecated("interactive", msg = "Interactive editing is no longer supported within redist.")
     }
 
     plot_single <- function(draw) {

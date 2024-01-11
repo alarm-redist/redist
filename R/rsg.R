@@ -28,14 +28,14 @@
 #'
 #' @return list, containing three objects containing the completed redistricting
 #' plan.
-#' \itemize{
-#' \item{\code{plan}}{  A vector of length N, indicating the
-#' district membership of each precinct.}
-#' \item{\code{district_list}}{  A list of length Ndistrict.  Each list contains a
-#' vector of the precincts in the respective district.}
-#' \item{\code{district_pop}}{  A vector of length Ndistrict, containing the
-#' population totals of the respective districts.}
-#' }
+#'
+#' - `plan`:  A vector of length N, indicating the
+#' district membership of each precinct.
+#' \item `district_list`  A list of length Ndistrict.  Each list contains a
+#' vector of the precincts in the respective district.
+#' \item `district_pop`  A vector of length Ndistrict, containing the
+#' population totals of the respective districts.
+#'
 #'
 #' @author Benjamin Fifield, Department of Politics, Princeton University
 #' \email{benfifield@@gmail.com}, \url{https://www.benfifield.com/}
@@ -119,6 +119,5 @@ redist.rsg <- function(adj, total_pop, ndists, pop_tol,
             round(time[3], digits = 2), " seconds...\n\n", sep = ""), append = TRUE)
     }
 
-    return(ret)
-
+    ret
 }

@@ -17,9 +17,13 @@
  */
 Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const uvec &pop,
               int n_distr, double target, double lower, double upper, double rho,
-              List constraints, double thresh, int k, int thin, int verbosity) {
+              List constraints, List control, int k, int thin, int verbosity) {
     // re-seed MT
     seed_rng((int) Rcpp::sample(INT_MAX, 1)[0]);
+
+    // unpack control params
+    double thresh = (double) control["adapt_k_thresh"];
+    bool do_mh = (bool) control["do_mh"];
 
     Graph g = list_to_graph(l);
     Multigraph cg = county_graph(g, counties);
@@ -54,12 +58,13 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     if (verbosity >= 3)
         Rcout << "Using k = " << k << "\n";
 
+    Graph dist_g = district_graph(g, init, n_distr);
     int distr_1, distr_2;
-    select_pair(n_distr, g, init, distr_1, distr_2);
+    select_pair(n_distr, dist_g, distr_1, distr_2);
     int n_accept = 0;
     int reject_ct;
     CharacterVector psi_names = CharacterVector::create(
-        "pop_dev", "splits", "multisplits",
+        "pop_dev", "splits", "multisplits", "total_splits",
         "segregation", "grp_pow", "grp_hinge", "grp_inv_hinge",
         "compet", "status_quo", "incumbency",
         "polsby", "fry_hold", "log_st", "edges_removed",
@@ -71,14 +76,14 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     RObject bar = cli_progress_bar(N - 1, cli_config(false));
     int idx = 1;
     for (int i = 1; i < N; i++) {
-        // copy old map to 'working' memory in `idx+1`
-        districts.col(idx+1) = districts.col(idx);
-
         // make the proposal
         double prop_lp = 0.0;
         reject_ct = 0;
         do {
-            select_pair(n_distr, g, districts.col(idx+1), distr_1, distr_2);
+            // copy old map to 'working' memory in `idx+1`
+            districts.col(idx+1) = districts.col(idx);
+
+            select_pair(n_distr, dist_g, distr_1, distr_2);
             prop_lp = split_map_ms(g, counties, cg, districts.col(idx+1), distr_1,
                                    distr_2, pop, lower, upper, target, k);
             if (reject_ct % 200 == 0) Rcpp::checkUserInterrupt();
@@ -112,14 +117,29 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
         prop_lp += calc_gibbs_tgt(districts.col(idx), n_distr, V, distr_1_2, new_psi,
                                   pop, target, g, constraints);
 
-        double alpha = exp(prop_lp);
-        if (alpha >= 1 || r_unif() <= alpha) { // ACCEPT
+        // adjust for prob of picking district pair
+        prop_lp -= std::log(
+            1.0/dist_g[distr_1 - 1].size() + 1.0/dist_g[distr_2 - 1].size()
+        );
+        dist_g = district_graph(g, districts.col(idx+1), n_distr); // update district graph
+        prop_lp += std::log(
+            1.0/dist_g[distr_1 - 1].size() + 1.0/dist_g[distr_2 - 1].size()
+        );
+
+        if (do_mh) {
+            double alpha = std::exp(prop_lp);
+            if (alpha >= 1 || r_unif() <= alpha) { // ACCEPT
+                n_accept++;
+                districts.col(idx) = districts.col(idx+1); // copy over new map
+                mh_decisions(idx - 1) = 1;
+            } else { // REJECT
+                districts.col(idx+1) = districts.col(idx); // copy over old map
+                mh_decisions(idx - 1) = 0;
+            }
+        } else {
             n_accept++;
             districts.col(idx) = districts.col(idx+1); // copy over new map
             mh_decisions(idx - 1) = 1;
-        } else { // REJECT
-            districts.col(idx+1) = districts.col(idx); // copy over old map
-            mh_decisions(idx - 1) = 0;
         }
 
         if (i % thin == 0) idx++;
@@ -144,6 +164,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
 
     Rcpp::List out;
     out["plans"] = districts;
+    out["est_k"] = k;
     out["mhdecisions"] = mh_decisions;
 
     return out;
@@ -254,6 +275,7 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
                          Multigraph &cg, const uvec &pop, double target) {
     // sample some spanning trees and compute deviances
     int V = g.size();
+    Graph dist_g = district_graph(g, plan, n_distr);
     int k_max = std::min(20 + ((int) std::sqrt(V)), V - 1); // heuristic
     int N_adapt = (int) std::floor(4000.0 / sqrt((double) V));
 
@@ -271,7 +293,7 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
         Tree ust = init_tree(V);
 
         double joint_pop = 0;
-        select_pair(n_distr, g, plan, distr_1, distr_2);
+        select_pair(n_distr, dist_g, distr_1, distr_2);
         int n_vtx = 0;
         for (int j = 0; j < V; j++) {
             if (plan(j) == distr_1 || plan(j) == distr_2) {
@@ -332,24 +354,9 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
 /*
  * Select a pair of neighboring districts i, j
  */
-void select_pair(int n, const Graph &g, const uvec &plan, int &i, int &j) {
-    int V = g.size();
-    i = 1 + r_int(n);
-
-    std::set<int> neighboring;
-    for (int k = 0; k < V; k++) {
-        if (plan(k) != i) continue;
-        std::vector<int> nbors = g[k];
-        int length = nbors.size();
-        for (int l = 0; l < length; l++) {
-            int nbor = nbors[l];
-            if (plan(nbor) == i) continue;
-            neighboring.insert(plan[nbor]);
-        }
-    }
-
-    int n_nbor = neighboring.size();
-    j = *std::next(neighboring.begin(), r_int(n_nbor));
-
-    return;
+void select_pair(int n_distr, const Graph &dist_g, int &i, int &j) {
+    i = r_int(n_distr);
+    std::vector<int> nbors = dist_g[i];
+    j = nbors[r_int(nbors.size())] + 1;
+    i++;
 }

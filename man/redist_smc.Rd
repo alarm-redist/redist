@@ -2,7 +2,7 @@
 % Please edit documentation in R/redist_smc.R
 \name{redist_smc}
 \alias{redist_smc}
-\title{SMC Redistricting Sampler (McCartan and Imai 2020)}
+\title{SMC Redistricting Sampler (McCartan and Imai 2023)}
 \usage{
 redist_smc(
   map,
@@ -15,7 +15,7 @@ redist_smc(
   ncores = 0L,
   init_particles = NULL,
   n_steps = NULL,
-  adapt_k_thresh = 0.985,
+  adapt_k_thresh = 0.99,
   seq_alpha = 0.5,
   truncate = (compactness != 1),
   trunc_fn = redist_quantile_trunc,
@@ -125,14 +125,14 @@ Recommended.}
 plans.
 }
 \description{
-\code{redist_smc} uses a Sequential Monte Carlo algorithm (McCartan and Imai 2020)
-to generate nearly independent congressional or legislative redistricting
-plans according to contiguity, population, compactness, and administrative
-boundary constraints.
+\code{redist_smc} uses a Sequential Monte Carlo algorithm (McCartan and Imai 2023)
+to generate representative samples of congressional or legislative
+redistricting plans according to contiguity, population, compactness, and
+administrative boundary constraints.
 }
 \details{
-This function draws nearly-independent samples from a specific target measure,
-controlled by the \code{map}, \code{compactness}, and \code{constraints} parameters.
+This function draws samples from a specific target measure controlled by
+the \code{map}, \code{compactness}, and \code{constraints} parameters.
 
 Key to ensuring good performance is monitoring the efficiency of the resampling
 process at each SMC stage.  Unless \code{silent=FALSE}, this function will print
@@ -172,8 +172,8 @@ redist_smc(fl_map, 1000, ncores = 2)
 
 }
 \references{
-McCartan, C., & Imai, K. (Forthcoming). Sequential Monte Carlo for Sampling
-Balanced and Compact Redistricting Plans. \emph{Annals of Applied Statistics}.
-Available at \url{https://arxiv.org/abs/2008.06131}.
+McCartan, C., & Imai, K. (2023). Sequential Monte Carlo for Sampling
+Balanced and Compact Redistricting Plans. \emph{Annals of Applied Statistics} 17(4).
+Available at \url{http://dx.doi.org/10.1214/23-AOAS1763}.
 }
 \concept{simulate}

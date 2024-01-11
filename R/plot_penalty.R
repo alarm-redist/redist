@@ -45,7 +45,7 @@ redist.plot.penalty <- function(tgt_min = 0.55, tgt_other = 0.25,
     }
 
 
-    return(ret)
+    ret
 }
 
 globalVariables(c("x", "y"))

@@ -16,6 +16,8 @@ redist_shortburst(
   constraints = redist_constr(map),
   compactness = 1,
   adapt_k_thresh = 0.95,
+  reversible = TRUE,
+  fixed_k = NULL,
   return_all = TRUE,
   thin = 1L,
   backend = "mergesplit",
@@ -25,7 +27,7 @@ redist_shortburst(
 )
 }
 \arguments{
-\item{map}{A \code{\link{redist_map}} object.}
+\item{map}{A \link{redist_map} object.}
 
 \item{score_fn}{A function which takes a matrix of plans and returns a score
 (or, generally, a row vector) for each plan. Can also be a purrr-style
@@ -34,13 +36,13 @@ for common scoring rules.}
 
 \item{stop_at}{A threshold to stop optimization at. When \code{score_fn} returns a
 row vector per plan, \code{maximize} can be an equal-length vector specifying a
-threshhold for each dimension, which must all be met for the algorithm to
+threshold for each dimension, which must all be met for the algorithm to
 stop.}
 
 \item{burst_size}{The size of each burst. 10 is recommended for the
 \code{mergesplit} backend and 50 for the \code{flip} backend. Can also provide
 burst schedule function which takes the current iteration (an integer)
-and returns the desired burst size.}
+and returns the desired burst size. This can be a random function.}
 
 \item{max_bursts}{The maximum number of bursts to run before returning.}
 
@@ -51,7 +53,7 @@ maximized or minimized.}
 
 \item{init_plan}{The initial state of the map. If not provided, will default to
 the reference map of the \code{map} object, or if none exists, will sample
-a random initial state using \code{\link{redist_smc}}. You can also request
+a random initial state using \code{\link[=redist_smc]{redist_smc()}}. You can also request
 a random initial state by setting \code{init_plan="sample"}.}
 
 \item{counties}{A vector containing county (or other administrative or
@@ -67,12 +69,19 @@ higher values preferring more compact districts. Must be non-negative. See
 \code{\link{redist_mergesplit}} for more information.}
 
 \item{adapt_k_thresh}{The threshold value used in the heuristic to select a
-value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if
-the algorithm does not appear to be sampling from the target distribution.
-Must be between 0 and 1.}
+value \code{k_i} for each splitting iteration.}
 
-\item{return_all}{Whether to return all the
-Recommended for monitoring purposes.}
+\item{reversible}{If \code{FALSE} and \code{backend="mergesplit"}, the Markov chain
+used will not be reversible. This may speed up optimization.}
+
+\item{fixed_k}{If not \code{NULL}, will be used to set the \code{k} parameter for the
+\code{mergesplit} backend. If e.g. \code{k=1} then the best edge in each spanning
+tree will be used.  Lower values may speed up optimization at the
+cost of the Markov chain no longer targeting a known distribution.
+Recommended only in conjunction with \code{reversible=FALSE}.}
+
+\item{return_all}{Whether to return all the burst results or just the best
+one (generally, the Pareto frontier). Recommended for monitoring purposes.}
 
 \item{thin}{Save every \code{thin}-th sample. Defaults to no thinning (1). Ignored
 if \code{return_all=TRUE}.}

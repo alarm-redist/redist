@@ -44,10 +44,10 @@
 #' @md
 #' @export
 redist_mergesplit_parallel <- function(map, nsims, chains = 1,
-                                       warmup = max(100, nsims %/% 2), thin = 1L,
-                                       init_plan = NULL, counties = NULL, compactness = 1,
+                                       warmup = if (is.null(init_plan)) 10 else max(100, nsims %/% 5),
+                                       thin = 1L, init_plan = NULL, counties = NULL, compactness = 1,
                                        constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
-                                       adapt_k_thresh = 0.98, k = NULL, ncores = NULL,
+                                       adapt_k_thresh = 0.99, k = NULL, ncores = NULL,
                                        cl_type = "PSOCK", return_all = TRUE, init_name = NULL,
                                        verbose = FALSE, silent = FALSE) {
     if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
@@ -76,7 +76,7 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
     counties <- rlang::eval_tidy(rlang::enquo(counties), map)
     if (is.null(init_plan)) {
         if (!is.null(exist_name)) {
-            init_plans <- matrix(rep(as.integer(as.factor(get_existing(map))), chains), ncol = chains)
+            init_plans <- matrix(rep(vctrs::vec_group_id(get_existing(map)), chains), ncol = chains)
             if (is.null(init_name)) {
                 init_names <- rep(exist_name, chains)
             } else {
@@ -125,7 +125,7 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
             cli_abort("{.arg counties} must not contain missing values.")
 
         # handle discontinuous counties
-        component <- contiguity(adj, as.integer(as.factor(counties)))
+        component <- contiguity(adj, vctrs::vec_group_id(counties))
         counties <- dplyr::if_else(component > 1,
                                    paste0(as.character(counties), "-", component),
                                    as.character(counties)) %>%
@@ -158,18 +158,19 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
     init_pop <- pop_tally(init_plans, pop, ndists)
     if (any(init_pop < pop_bounds[1]) | any(init_pop > pop_bounds[3]))
         cli_abort("Provided initialization does not meet population bounds.")
-    if (any(pop >= get_target(map))) {
+    if (any(pop >= pop_bounds[3])) {
         too_big <- as.character(which(pop >= pop_bounds[3]))
         cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
-                    population larger than the district target.",
-            "x" = "Redistricting impossible."))
+                    population larger than the maximum district size.",
+                    "x" = "Redistricting impossible."))
     }
 
+    control = list(adapt_k_thresh=adapt_k_thresh, do_mh=TRUE)
     # kind of hacky -- extract k=... from outupt
     if (!requireNamespace("utils", quietly = TRUE)) stop()
     out <- utils::capture.output({
         x <- ms_plans(1, adj, init_plans[, 1], counties, pop, ndists, pop_bounds[2],
-                      pop_bounds[1], pop_bounds[3], compactness, list(), adapt_k_thresh,
+                      pop_bounds[1], pop_bounds[3], compactness, list(), control,
                       0L, 1L, verbosity = 3)
     }, type = "output")
     rm(x)
@@ -200,7 +201,7 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
         t1_run <- Sys.time()
         algout <- ms_plans(nsims, adj, init_plans[, chain], counties, pop,
                            ndists, pop_bounds[2], pop_bounds[1], pop_bounds[3],
-                           compactness, constraints, adapt_k_thresh, k, thin, run_verbosity)
+                           compactness, constraints, control, k, thin, run_verbosity)
         t2_run <- Sys.time()
 
         algout$l_diag <- list(
@@ -244,6 +245,7 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
                             ndists = ndists,
                             adapt_k_thresh = adapt_k_thresh,
                             mh_acceptance = mh,
+                            version = packageVersion("redist"),
                             diagnostics = l_diag) %>%
         mutate(chain = rep(seq_len(chains), each = each_len*ndists),
                mcmc_accept = rep(acceptances, each = ndists))

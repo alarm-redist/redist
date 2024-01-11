@@ -11,7 +11,7 @@
 #' al. 2019; based on DeFord et. al 2019) to generate congressional or legislative redistricting plans
 #' according to contiguity, population, compactness, and administrative boundary
 #' constraints. The MCMC proposal is the same as is used in the SMC sampler
-#' (McCartan and Imai 2020); it is similar but not identical to those used in
+#' (McCartan and Imai 2023); it is similar but not identical to those used in
 #' the references.  1-level hierarchical Merge-split is supported through the
 #' \code{counties} parameter; unlike in the SMC algorithm, this does not
 #' guarantee a maximum number of county splits.
@@ -32,7 +32,7 @@
 #' @param nsims The number of samples to draw, including warmup.
 #' @param warmup The number of warmup samples to discard. Recommended to be at
 #' least the first 20% of samples, and in any case no less than around 100
-#' samples.
+#' samples, unless initializing from a random plan.
 #' @param thin Save every `thin`-th sample. Defaults to no thinning (1).
 #' @param init_plan The initial state of the map. If not provided, will default to
 #' the reference map of the \code{map} object, or if none exists, will sample
@@ -75,9 +75,9 @@
 #' merge-split proposal for reversible Monte Carlo Markov chain sampling of
 #' redistricting plans. arXiv preprint arXiv:1911.01503.
 #'
-#' McCartan, C., & Imai, K. (Forthcoming). Sequential Monte Carlo for Sampling
-#' Balanced and Compact Redistricting Plans. *Annals of Applied Statistics*.
-#' Available at \url{https://arxiv.org/abs/2008.06131}.
+#' McCartan, C., & Imai, K. (2023). Sequential Monte Carlo for Sampling
+#' Balanced and Compact Redistricting Plans. *Annals of Applied Statistics* 17(4).
+#' Available at \url{http://dx.doi.org/10.1214/23-AOAS1763}.
 #'
 #' DeFord, D., Duchin, M., and Solomon, J. (2019). Recombination: A family of
 #' Markov chains for redistricting. arXiv preprint arXiv:1911.05725.
@@ -98,10 +98,11 @@
 #' @md
 #' @order 1
 #' @export
-redist_mergesplit <- function(map, nsims, warmup = max(100, nsims %/% 2), thin = 1L,
-                              init_plan = NULL, counties = NULL, compactness = 1,
+redist_mergesplit <- function(map, nsims,
+                              warmup = if (is.null(init_plan)) 10 else max(100, nsims %/% 5),
+                              thin = 1L, init_plan = NULL, counties = NULL, compactness = 1,
                               constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
-                              adapt_k_thresh = 0.98, k = NULL, init_name = NULL,
+                              adapt_k_thresh = 0.99, k = NULL, init_name = NULL,
                               verbose = FALSE, silent = FALSE) {
     if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
 
@@ -126,7 +127,7 @@ redist_mergesplit <- function(map, nsims, warmup = max(100, nsims %/% 2), thin =
     exist_name <- attr(map, "existing_col")
     counties <- rlang::eval_tidy(rlang::enquo(counties), map)
     if (is.null(init_plan) && !is.null(exist_name)) {
-        init_plan <- as.integer(as.factor(get_existing(map)))
+        init_plan <- vctrs::vec_group_id(get_existing(map))
         if (is.null(init_name)) init_name <- exist_name
     }  else if (!is.null(init_plan) && is.null(init_name)) {
         init_name <- "<init>"
@@ -152,7 +153,7 @@ redist_mergesplit <- function(map, nsims, warmup = max(100, nsims %/% 2), thin =
             cli_abort("County vector must not contain missing values.")
 
         # handle discontinuous counties
-        component <- contiguity(adj, as.integer(as.factor(counties)))
+        component <- contiguity(adj, vctrs::vec_group_id(counties))
         counties <- dplyr::if_else(component > 1,
                                    paste0(as.character(counties), "-", component),
                                    as.character(counties)) %>%
@@ -185,27 +186,35 @@ redist_mergesplit <- function(map, nsims, warmup = max(100, nsims %/% 2), thin =
     init_pop <- pop_tally(matrix(init_plan, ncol = 1), pop, ndists)
     if (any(init_pop < pop_bounds[1]) | any(init_pop > pop_bounds[3]))
         cli_abort("Provided initialization does not meet population bounds.")
-    if (any(pop >= get_target(map))) {
+    if (any(pop >= pop_bounds[3])) {
         too_big <- as.character(which(pop >= pop_bounds[3]))
         cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
-                    population larger than the district target.",
+                    population larger than the maximum district size.",
             "x" = "Redistricting impossible."))
     }
 
+    t1_run <- Sys.time()
+    control = list(adapt_k_thresh=adapt_k_thresh, do_mh=TRUE)
     algout <- ms_plans(nsims, adj, init_plan, counties, pop, ndists,
                        pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
-                       constraints, adapt_k_thresh, k, thin, verbosity)
+                       constraints, control, k, thin, verbosity)
+    t2_run <- Sys.time()
 
     storage.mode(algout$plans) <- "integer"
     acceptances <- as.logical(algout$mhdecisions)
 
     warmup_idx <- c(seq_len(1 + warmup %/% thin), ncol(algout$plans))
+    l_diag <- list(
+        runtime = as.numeric(t2_run - t1_run, units = "secs")
+    )
     out <- new_redist_plans(algout$plans[, -warmup_idx, drop = FALSE],
                             map, "mergesplit", NULL, FALSE,
                             ndists = ndists,
                             compactness = compactness,
                             constraints = constraints,
                             adapt_k_thresh = adapt_k_thresh,
+                            version = packageVersion("redist"),
+                            diagnostics = l_diag,
                             mh_acceptance = mean(acceptances))
 
     warmup_idx <- c(seq_len(warmup %/% thin), length(acceptances))

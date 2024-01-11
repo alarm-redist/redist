@@ -18,16 +18,13 @@ redist.reorder <- function(plans) {
     # Check inputs
     if (!is.matrix(plans)) {
         if (is.numeric(plans)) {
-            plans <- as.matrix(plans, )
+            plans <- as.matrix(plans, ncol = 1)
         } else {
             cli_abort("{.arg plans} must be a matrix or integer vector.")
         }
     }
 
-    # Prep objects for Rcpp
-    nd <- length(unique(plans[, 1]))
-
-    reindex(dm = plans, nd = nd)
+    apply(plans, 2, vctrs::vec_group_id)
 }
 
 
@@ -37,7 +34,7 @@ redist.reorder <- function(plans) {
 #'
 #' @param plan vector of assignments, required.
 #'
-#' @return A vector with an ID that corresponds from 1:ndists
+#' @return A vector with an ID that corresponds from 1:ndists, and attribute `n` indicating the number of districts.
 #'
 #' @concept prepare
 #' @export
@@ -46,20 +43,12 @@ redist.reorder <- function(plans) {
 #' plan <- fl25_enum$plans[, 5118]
 #' # Subset based on something:
 #' plan <- plan[plan != 2]
-#' plan <- redist.sink.plan(plan)
-#' # Now plan can be used with redist.flip()
+#' plan <- vctrs::vec_group_id(plan)
+#' # Now plan can be used with redist_flip()
 #' plan
 #'
 redist.sink.plan <- function(plan) {
-    if (is.character(plan) || is.numeric(plan)) {
-        uc <- unique(sort(plan))
-        plan_id <- rep(0, length(plan))
-        for (i in 1:length(plan)) {
-            plan_id[i] <- which(uc == plan[i])
-        }
-    } else {
-        stop('Please provide "plan" as a  numeric or integer vector.')
-    }
-
-    plan_id
+    .Deprecated("vctrs::vec_group_id")
+    vctrs::vec_group_id(plan)
 }
+

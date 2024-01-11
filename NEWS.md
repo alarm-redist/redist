@@ -1,9 +1,11 @@
-# 4.1.2
+# 4.2.0
+* Deprecate functionality that is provided by `redistmetrics` package.
 * Improve contiguity checking speed drastically.
 * Support for multiple independent scoring functions in `redist_shortburst()`.
 With multiple scorers, the algorithm will stochastically explore to try to 
 find the largest Pareto frontier for the scores. The frontier can be accessed with
 `attr(<plans obj>, "pareto_score")`.
+* Removes the MPI vignette which relied on older implementations of `redist.mcmc()`, which was replaced by `redist.flip()` a few years ago, and finally `redist_flip()`.
 
 # redist 4.1.1
 * Resolves a sanitizer error for CRAN

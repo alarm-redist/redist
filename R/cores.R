@@ -74,10 +74,10 @@ redist.identify.cores <- function(adj, plan, boundary = 1, focus = NULL,
 
 
     if (simplify) {
-        return(gid)
+        gid
     } else {
         core$group_id <- gid
-        return(core)
+        core
     }
 }
 
@@ -105,5 +105,5 @@ redist.uncoarsen <- function(plans, group_index) {
         uncoarse[i, ] <- plans[which(group_index[i] == remain), ]
     }
 
-    return(uncoarse)
+    uncoarse
 }

@@ -195,7 +195,7 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
     ## Zero-index cds ##
     ####################
     if (min(init_plan) != 0) {
-        init_plan <- redist.sink.plan(init_plan) - 1
+        init_plan <- vctrs::vec_group_id(init_plan) - 1
     }
     if (length(unique(init_plan)) != (max(init_plan) + 1)) {
         stop("The district numbers in init_plan must be consecutive. The input to `init_plan` could not be transformed using `redist.sink.plan()`.")
@@ -269,7 +269,5 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
     )
 
     class(preprocout) <- "redist"
-
-    return(preprocout)
-
+    preprocout
 }

@@ -41,19 +41,18 @@ double calc_gibbs_tgt(const subview_col<uword> &plan, int n_distr, int V,
                                                       pop, parity);
                               });
 
-    log_tgt += add_constraint("splits", constraints, districts, psi_vec,
+    std::vector<int> distr_dummy = {1};
+    log_tgt += add_constraint("splits", constraints, distr_dummy, psi_vec,
                               [&] (List l, int distr) -> double {
                                   return eval_splits(plan, distr, as<uvec>(l["admin"]), l["n"], false);
                               });
-
-    log_tgt += add_constraint("multisplits", constraints, districts, psi_vec,
+    log_tgt += add_constraint("multisplits", constraints, distr_dummy, psi_vec,
                               [&] (List l, int distr) -> double {
                                   return eval_multisplits(plan, distr, as<uvec>(l["admin"]), l["n"], false);
                               });
-
-    log_tgt += add_constraint("total_splits", constraints, districts, psi_vec,
+    log_tgt += add_constraint("total_splits", constraints, distr_dummy, psi_vec,
                               [&] (List l, int distr) -> double {
-                                  return eval_total_splits(plan, distr, as<uvec>(l["admin"]), l["n"]);
+                                  return eval_total_splits(plan, distr, as<uvec>(l["admin"]), l["n"], false);
                               });
 
     log_tgt += add_constraint("segregation", constraints, districts, psi_vec,

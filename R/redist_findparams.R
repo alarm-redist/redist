@@ -222,11 +222,11 @@ run_sims <- function(i, params, map, nsims, init_plan,
         sink()
     }
 
-    return(list(printout = out, startval = startval))
+    list(printout = out, startval = startval)
 
 }
 
-#' Run parameter testing for \code{redist.flip}
+#' Run parameter testing for \code{redist_flip}
 #'
 #' \code{redist.findparams} is used to find optimal parameter values of
 #' \code{redist_flip} for a given map.
@@ -267,7 +267,7 @@ run_sims <- function(i, params, map, nsims, init_plan,
 #' Default is \code{TRUE}.
 #'
 #' @details This function allows users to test multiple parameter settings of
-#' \code{redist.flip} in preparation for a longer run for analysis.
+#' \code{redist_flip} in preparation for a longer run for analysis.
 #'
 #' @return \code{redist.findparams} returns a print-out of summary statistics
 #' about each parameter setting.
@@ -313,7 +313,7 @@ redist.findparams <- function(map,
     ## Starting statement
     if (verbose) {
         cat(paste("## ------------------------------\n",
-            "## redist.findparams(): Parameter tuning for redist.flip()\n",
+            "## redist.findparams(): Parameter tuning for redist_flip()\n",
             "## Searching over", trials, "parameter combinations\n",
             "## ------------------------------\n\n", sep = " "))
     }
@@ -416,6 +416,5 @@ redist.findparams <- function(map,
     }
 
     cat(paste(printout, collapse = ""))
-    return(list(diagnostics = printout, startvals = startval))
-
+    list(diagnostics = printout, startvals = startval)
 }

@@ -24,8 +24,8 @@
 // [[Rcpp::export]]
 Rcpp::List ms_plans(int N, List l, const arma::uvec init, const arma::uvec &counties,
                     const arma::uvec &pop, int n_distr, double target, double lower,
-                    double upper, double rho, List constraints,
-                    double thresh, int k, int thin, int verbosity);
+                    double upper, double rho, List constraints, List control,
+                    int k, int thin, int verbosity);
 
 
 /*
@@ -54,6 +54,6 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
 /*
  * Select a pair of neighboring districts i, j
  */
-void select_pair(int n, const Graph &g, const uvec &plan, int &i, int &j);
+void select_pair(int n_distr, const Graph &dist_g, int &i, int &j);
 
 #endif

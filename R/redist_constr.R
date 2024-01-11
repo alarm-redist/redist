@@ -391,7 +391,7 @@ add_constr_splits <- function(constr, strength, admin) {
     if (any(is.na(admin))) {
         cli_abort("{.arg admin} many not contain {.val NA}s.")
     }
-    admin <- redist.sink.plan(admin)
+    admin <- vctrs::vec_group_id(admin)
 
     new_constr <- list(strength = strength,
         admin = admin,
@@ -415,7 +415,7 @@ add_constr_multisplits <- function(constr, strength, admin) {
         cli_abort("{.arg admin} many not contain {.val NA}s.")
     }
 
-    admin <- redist.sink.plan(admin)
+    admin <- vctrs::vec_group_id(admin)
 
     new_constr <- list(strength = strength,
         admin = admin,
@@ -438,7 +438,7 @@ add_constr_total_splits <- function(constr, strength, admin) {
         cli_abort("{.arg admin} many not contain {.val NA}s.")
     }
 
-    admin <- redist.sink.plan(admin)
+    admin <- vctrs::vec_group_id(admin)
 
     new_constr <- list(strength = strength,
         admin = admin,
@@ -483,7 +483,7 @@ add_constr_segregation <- function(constr, strength, group_pop, total_pop = NULL
     add_to_constr(constr, "segregation", new_constr)
 }
 
-#' @param perim_df A dataframe output from `redist.prep.polsbypopper`
+#' @param perim_df A dataframe output from `redistmetrics::prep_perims`
 #' @rdname constraints
 #' @export
 add_constr_polsby <- function(constr, strength, perim_df = NULL) {
@@ -498,7 +498,7 @@ add_constr_polsby <- function(constr, strength, perim_df = NULL) {
     areas <- sf::st_area(data)
 
     if (is.null(perim_df)) {
-        perim_df <- redist.prep.polsbypopper(data)
+        perim_df <- redistmetrics::prep_perims(data)
     }
 
     new_constr <- list(strength = strength,
@@ -555,7 +555,7 @@ add_constr_log_st <- function(constr, strength, admin = NULL) {
         cli_abort("{.arg admin} many not contain {.val NA}s.")
     }
 
-    admin <- redist.sink.plan(admin)
+    admin <- vctrs::vec_group_id(admin)
 
     new_constr <- list(strength = strength,
         admin = admin)
@@ -622,10 +622,13 @@ add_constr_custom <- function(constr, strength, fn) {
     args <- rlang::fn_fmls(fn)
     if (length(args) != 2) cli_abort("Function must take exactly two arguments.")
 
-
     constr_env = rlang::fn_env(fn)
     # every symbol used in the function (except the 2 arguments)
-    var_names = setdiff(unique(extract_vars(rlang::fn_body(fn))), names(args))
+    var_names = setdiff(
+        all.names(rlang::fn_body(fn)),
+        names(args)
+    )
+
     for (nm in var_names) {
         found = find_env(nm, constr_env)
         if (!is.null(found) &&
@@ -637,7 +640,7 @@ add_constr_custom <- function(constr, strength, fn) {
     }
 
     if (!is.null(plan <- get_existing(attr(constr, "data")))) {
-        out <- tryCatch(fn(plan, 1), error = function(e) {
+        out <- tryCatch(fn(plan, min(plan)), error = function(e) {
             cli_abort(c("Ran into an error testing custom constraint
                         on the existing plan:",
                 "x" = e$message))

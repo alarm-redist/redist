@@ -68,13 +68,19 @@ redist_smc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE)
     plans <- subset_sampled(plans)
     x_orig <- enquo(x)
     x <- as.numeric(eval_tidy(enquo(x), plans))
+    if (!"district" %in% names(plans))
+        plans$district = rep(1, nrow(plans))
     if (!is.null(district))
         x <- x[plans$district == district]
     N <- length(x)
     est <- mean(x)
 
     if ("chain" %in% names(plans)) { # multiple runs
-        chain <- plans$chain[plans$district == district]
+        if (is.null(district)) {
+            chain <- plans$chain
+        } else {
+            chain <- plans$chain[plans$district == district]
+        }
         rhat <- diag_rhat(x, chain)
         if (is.finite(rhat) && rhat > 1.05) {
             cli_warn(c("Runs have not converged for this statistic.",
@@ -111,6 +117,8 @@ redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE
     plans <- subset_sampled(plans)
     x_orig <- enquo(x)
     x <- as.numeric(eval_tidy(enquo(x), plans))
+    if (!"district" %in% names(plans))
+        plans$district = rep(1, nrow(plans))
     if (!is.null(district))
         x <- x[plans$district == district]
     N <- length(x)

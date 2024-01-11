@@ -38,9 +38,9 @@ redist.county.relabel <- function(adj, counties,  simplify = TRUE) {
         mutate(countiescomp = ifelse(.data$comps > 1, paste0(counties, "-", .data$comp), counties)) %>%
         ungroup()
     if (simplify) {
-        return(redist.county.id(component$countiescomp))
+        redist.county.id(component$countiescomp)
     } else {
-        return(component$countiescomp)
+        component$countiescomp
     }
 }
 
@@ -69,5 +69,5 @@ redist.county.id <- function(counties) {
         cli_abort("{.arg counties} must be a character, numeric, or integer vector.")
     }
 
-    return(county_id)
+    county_id
 }

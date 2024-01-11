@@ -8,14 +8,14 @@ redist_mergesplit_parallel(
   map,
   nsims,
   chains = 1,
-  warmup = max(100, nsims\%/\%2),
+  warmup = if (is.null(init_plan)) 10 else max(100, nsims\%/\%5),
   thin = 1L,
   init_plan = NULL,
   counties = NULL,
   compactness = 1,
   constraints = list(),
   constraint_fn = function(m) rep(0, ncol(m)),
-  adapt_k_thresh = 0.98,
+  adapt_k_thresh = 0.99,
   k = NULL,
   ncores = NULL,
   cl_type = "PSOCK",
@@ -36,7 +36,7 @@ with its own sampled plan.}
 
 \item{warmup}{The number of warmup samples to discard. Recommended to be at
 least the first 20\% of samples, and in any case no less than around 100
-samples.}
+samples, unless initializing from a random plan.}
 
 \item{thin}{Save every \code{thin}-th sample. Defaults to no thinning (1).}
 
@@ -127,9 +127,9 @@ Carter, D., Herschlag, G., Hunter, Z., and Mattingly, J. (2019). A
 merge-split proposal for reversible Monte Carlo Markov chain sampling of
 redistricting plans. arXiv preprint arXiv:1911.01503.
 
-McCartan, C., & Imai, K. (Forthcoming). Sequential Monte Carlo for Sampling
-Balanced and Compact Redistricting Plans. \emph{Annals of Applied Statistics}.
-Available at \url{https://arxiv.org/abs/2008.06131}.
+McCartan, C., & Imai, K. (2023). Sequential Monte Carlo for Sampling
+Balanced and Compact Redistricting Plans. \emph{Annals of Applied Statistics} 17(4).
+Available at \url{http://dx.doi.org/10.1214/23-AOAS1763}.
 
 DeFord, D., Duchin, M., and Solomon, J. (2019). Recombination: A family of
 Markov chains for redistricting. arXiv preprint arXiv:1911.05725.

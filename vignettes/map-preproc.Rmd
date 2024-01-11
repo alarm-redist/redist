@@ -231,7 +231,7 @@ count split municipalities, and the `is_county_split()` function to identify
 split municipalities.
 
 ```{r}
-cat(redist.splits(king_land$distr, king_land$city), "split cities\n")
+cat(splits_admin(king_land$distr, king_land, city), "split cities\n")
 
 king_land %>%
     mutate(is_unsplit = !is_county_split(distr, city)) %>%

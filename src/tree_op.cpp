@@ -191,7 +191,8 @@ Graph list_to_graph(const List &l) {
  * Count population below each node in tree
  */
 // TESTED
-int tree_pop(Tree &ust, int vtx, const uvec &pop,
+// [[Rcpp::export]]
+int tree_pop(Tree &ust, int vtx, const arma::uvec &pop,
              std::vector<int> &pop_below, std::vector<int> &parent) {
     int pop_at = pop(vtx);
     const std::vector<int> *nbors = &ust[vtx];

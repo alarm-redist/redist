@@ -42,13 +42,15 @@
 #'
 #' ## Get an initial partition
 #' init_plan <- fl25_enum$plans[, 5118]
+#' fl25$init_plan <- init_plan
 #'
 #' ## 25 precinct, three districts - no pop constraint ##
-#' alg_253 <- redist.flip(adj = fl25_adj, total_pop = fl25$pop,
-#'     init_plan = init_plan, nsims = 10000)
+#' fl_map <- redist_map(fl25, existing_plan = 'init_plan', adj = fl25_adj)
+#' alg_253 <- redist_flip(fl_map, nsims = 10000)
 #'
 #' ## Get Republican Dissimilarity Index from simulations
-#' rep_dmi_253 <- redist.segcalc(alg_253, fl25$mccain, fl25$pop)
+#' rep_dmi_253 <- redistmetrics::seg_dissim(alg_253, fl25, mccain, pop) |>
+#'     redistmetrics::by_plan(ndists = 3)
 #'
 #' ## Generate diagnostic plots
 #' redist.diagplot(rep_dmi_253, plot = "trace")
@@ -57,17 +59,17 @@
 #' redist.diagplot(rep_dmi_253, plot = "mean")
 #'
 #' ## Gelman Rubin needs two chains, so we run a second
-#' alg_253_2 <- redist.flip(adj = fl25_adj,
-#'     total_pop = fl25$pop,
-#'     init_plan = init_plan, nsims = 10000)
+#' alg_253_2 <- redist_flip(fl_map, nsims = 10000)
 #'
-#' rep_dmi_253_2 <- redist.segcalc(alg_253_2, fl25$mccain, fl25$pop)
+#' rep_dmi_253_2 <- redistmetrics::seg_dissim(alg_253_2, fl25, mccain, pop) |>
+#'     redistmetrics::by_plan(ndists = 3)
 #'
 #' ## Make a list out of the objects:
 #' rep_dmi_253_list <- list(rep_dmi_253, rep_dmi_253_2)
 #'
 #' ## Generate Gelman Rubin diagnostic plot
 #' redist.diagplot(sumstat = rep_dmi_253_list, plot = "gelmanrubin")
+#'
 #' }
 #' @concept plot
 #' @export
