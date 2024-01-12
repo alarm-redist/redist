@@ -174,6 +174,6 @@ redist_smc(fl_map, 1000, ncores = 2)
 \references{
 McCartan, C., & Imai, K. (2023). Sequential Monte Carlo for Sampling
 Balanced and Compact Redistricting Plans. \emph{Annals of Applied Statistics} 17(4).
-Available at \url{http://dx.doi.org/10.1214/23-AOAS1763}.
+Available at \doi{10.1214/23-AOAS1763}.
 }
 \concept{simulate}

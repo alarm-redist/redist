@@ -18,7 +18,7 @@ chains in parallel."><meta property="og:image" content="/logo.png"><!-- mathjax 
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.2.0</span>
       </span>
     </div>
 
@@ -39,13 +39,10 @@ chains in parallel."><meta property="og:image" content="/logo.png"><!-- mathjax 
       <a href="../articles/common_args.html">Common Arguments to `redist` Functions</a>
     </li>
     <li>
+      <a href="../articles/flip.html">Redistricting with Flip MCMC</a>
+    </li>
+    <li>
       <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
-    </li>
-    <li>
-      <a href="../articles/mcmc.html">Redistricting with Flip MCMC</a>
-    </li>
-    <li>
-      <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
     </li>
   </ul></li>
 <li class="dropdown">
@@ -93,14 +90,14 @@ chains in parallel.</p>
 <span>  <span class="va">map</span>,</span>
 <span>  <span class="va">nsims</span>,</span>
 <span>  chains <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  warmup <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fl">100</span>, <span class="va">nsims</span><span class="op"><a href="https://rdrr.io/r/base/Arithmetic.html" class="external-link">%/%</a></span><span class="fl">2</span><span class="op">)</span>,</span>
+<span>  warmup <span class="op">=</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">init_plan</span><span class="op">)</span><span class="op">)</span> <span class="fl">10</span> <span class="kw">else</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fl">100</span>, <span class="va">nsims</span><span class="op"><a href="https://rdrr.io/r/base/Arithmetic.html" class="external-link">%/%</a></span><span class="fl">5</span><span class="op">)</span>,</span>
 <span>  thin <span class="op">=</span> <span class="fl">1L</span>,</span>
 <span>  init_plan <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  counties <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  compactness <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  constraints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  constraint_fn <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">m</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">m</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  adapt_k_thresh <span class="op">=</span> <span class="fl">0.98</span>,</span>
+<span>  adapt_k_thresh <span class="op">=</span> <span class="fl">0.99</span>,</span>
 <span>  k <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  ncores <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cl_type <span class="op">=</span> <span class="st">"PSOCK"</span>,</span>
@@ -130,7 +127,7 @@ with its own sampled plan.</p></dd>
 <dt>warmup</dt>
 <dd><p>The number of warmup samples to discard. Recommended to be at
 least the first 20% of samples, and in any case no less than around 100
-samples.</p></dd>
+samples, unless initializing from a random plan.</p></dd>
 
 
 <dt>thin</dt>
@@ -240,8 +237,10 @@ compact districts.</p>
     <p>Carter, D., Herschlag, G., Hunter, Z., and Mattingly, J. (2019). A
 merge-split proposal for reversible Monte Carlo Markov chain sampling of
 redistricting plans. arXiv preprint arXiv:1911.01503.</p>
-<p>McCartan, C., &amp; Imai, K. (2020). Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans.
-Available at <a href="https://arxiv.org/abs/2008.06131" class="external-link">https://arxiv.org/abs/2008.06131</a>.</p>
+<p>McCartan, C., &amp; Imai, K. (2023). Sequential Monte Carlo for Sampling
+Balanced and Compact Redistricting Plans. <em>Annals of Applied Statistics</em> 17(4).
+Available at <a href="https://doi.org/10.1214/23-AOAS1763" class="external-link">doi:10.1214/23-AOAS1763</a>
+.</p>
 <p>DeFord, D., Duchin, M., and Solomon, J. (2019). Recombination: A family of
 Markov chains for redistricting. arXiv preprint arXiv:1911.05725.</p>
     </div>
@@ -268,7 +267,7 @@ Markov chains for redistricting. arXiv preprint arXiv:1911.05725.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

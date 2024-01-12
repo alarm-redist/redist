@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.2.0</span>
       </span>
     </div>
 
@@ -38,13 +38,10 @@
       <a href="../articles/common_args.html">Common Arguments to `redist` Functions</a>
     </li>
     <li>
+      <a href="../articles/flip.html">Redistricting with Flip MCMC</a>
+    </li>
+    <li>
       <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
-    </li>
-    <li>
-      <a href="../articles/mcmc.html">Redistricting with Flip MCMC</a>
-    </li>
-    <li>
-      <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
     </li>
   </ul></li>
 <li class="dropdown">
@@ -78,7 +75,7 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Counts the Number of Counties Split Between 3 or More Districts</h1>
-    <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/HEAD/R/splits.R" class="external-link"><code>R/splits.R</code></a></small>
+    <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/HEAD/R/deprecations.R" class="external-link"><code>R/deprecations.R</code></a></small>
     <div class="hidden name"><code>redist.multisplits.Rd</code></div>
     </div>
 
@@ -113,7 +110,14 @@ for each precinct and one column for each map. Required.</p></dd>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">iowa</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">ia</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan <span class="op">=</span> <span class="va">cd_2010</span>, total_pop <span class="op">=</span> <span class="va">pop</span>, pop_tol <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">plans</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">ia</span>, <span class="fl">50</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">splits</span> <span class="op">&lt;-</span> <span class="fu">redist.multisplits</span><span class="op">(</span><span class="va">plans</span>, <span class="va">ia</span><span class="op">$</span><span class="va">region</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">#old redist.multisplits(plans, ia$region)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="http://alarm-redist.org/redistmetrics/reference/splits_multi.html" class="external-link">splits_multi</a></span><span class="op">(</span><span class="va">plans</span>, <span class="va">ia</span>, <span class="va">region</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [1] 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3 2 2 2 2 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [38] 3 3 3 3 3 3 3 2 2 2 2 3 3 3 3 3 3 3 3 2 2 2 2 2 2 2 2 2 2 2 2 3 3 3 3 3 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [75] 3 3 3 3 3 3 2 2 2 2 4 4 4 4 2 2 2 2 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3 3 3 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [112] 3 3 3 3 3 4 4 4 4 2 2 2 2 1 1 1 1 4 4 4 4 3 3 3 3 4 4 4 4 2 2 2 2 2 2 2 2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [149] 3 3 3 3 3 3 3 3 3 3 3 3 4 4 4 4 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [186] 2 2 2 3 3 3 3 2 2 2 2 3 3 3 3 3 3 3 3</span>
 </code></pre></div>
     </div>
   </div>
@@ -128,7 +132,7 @@ for each precinct and one column for each map. Required.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>
