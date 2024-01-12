@@ -44,12 +44,13 @@ Imports:
     patchwork
 Suggests:
     coda,
-    withr,
+    matrixStats,
     loo,
     Rmpi,
     knitr,
     rmarkdown,
     rmapshaper,
+    ggpattern,
     scales,
     units,
     RSpectra,

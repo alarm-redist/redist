@@ -438,7 +438,7 @@ NumericVector group_pct_top_k(const IntegerMatrix m, const NumericVector group_p
 
 
 /*
- * Compute the deviation from the equal population constraint.
+ * Tally a variable by district.
  */
 // TESTED
 NumericMatrix pop_tally(IntegerMatrix districts, vec pop, int n_distr) {
@@ -454,6 +454,26 @@ NumericMatrix pop_tally(IntegerMatrix districts, vec pop, int n_distr) {
     }
 
     return tally;
+}
+
+/*
+ * Create the projective distribution of a variable `x`
+ */
+// [[Rcpp::export]]
+NumericMatrix proj_distr_m(IntegerMatrix districts, const arma::vec x,
+                           IntegerVector draw_idx, int n_distr) {
+    int n = draw_idx.size();
+    int V = districts.nrow();
+
+    NumericMatrix out(V, n);
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < V; j++) {
+            int idx = draw_idx[i] - 1;
+            out(j, i) = x[n_distr*idx + districts(j, idx) - 1];
+        }
+    }
+
+    return out;
 }
 
 /*

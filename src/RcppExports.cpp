@@ -255,6 +255,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// proj_distr_m
+NumericMatrix proj_distr_m(IntegerMatrix districts, const arma::vec x, IntegerVector draw_idx, int n_distr);
+RcppExport SEXP _redist_proj_distr_m(SEXP districtsSEXP, SEXP xSEXP, SEXP draw_idxSEXP, SEXP n_distrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type districts(districtsSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type x(xSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type draw_idx(draw_idxSEXP);
+    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
+    rcpp_result_gen = Rcpp::wrap(proj_distr_m(districts, x, draw_idx, n_distr));
+    return rcpp_result_gen;
+END_RCPP
+}
 // colmax
 NumericVector colmax(const NumericMatrix x);
 RcppExport SEXP _redist_colmax(SEXP xSEXP) {
@@ -636,6 +650,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_countpartitions", (DL_FUNC) &_redist_countpartitions, 1},
     {"_redist_calcPWDh", (DL_FUNC) &_redist_calcPWDh, 1},
     {"_redist_group_pct_top_k", (DL_FUNC) &_redist_group_pct_top_k, 5},
+    {"_redist_proj_distr_m", (DL_FUNC) &_redist_proj_distr_m, 4},
     {"_redist_colmax", (DL_FUNC) &_redist_colmax, 1},
     {"_redist_colmin", (DL_FUNC) &_redist_colmin, 1},
     {"_redist_prec_cooccur", (DL_FUNC) &_redist_prec_cooccur, 3},
