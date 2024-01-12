@@ -47,6 +47,7 @@ Suggests:
     matrixStats,
     loo,
     Rmpi,
+    withr,
     knitr,
     rmarkdown,
     rmapshaper,
