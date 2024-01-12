@@ -18,7 +18,7 @@ compute the plans_diversity() of the samples."><meta property="og:image" content
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.2.0</span>
       </span>
     </div>
 
@@ -39,13 +39,10 @@ compute the plans_diversity() of the samples."><meta property="og:image" content
       <a href="../articles/common_args.html">Common Arguments to `redist` Functions</a>
     </li>
     <li>
+      <a href="../articles/flip.html">Redistricting with Flip MCMC</a>
+    </li>
+    <li>
       <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
-    </li>
-    <li>
-      <a href="../articles/mcmc.html">Redistricting with Flip MCMC</a>
-    </li>
-    <li>
-      <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
     </li>
   </ul></li>
 <li class="dropdown">
@@ -161,23 +158,24 @@ suggestions for improvement.</p>
 <span class="r-in"><span><span class="va">iowa_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, ndists <span class="op">=</span> <span class="fl">4</span>, pop_tol <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">plans</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="fl">100</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> SEQUENTIAL MONTE CARLO</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Sampling 100 99-unit maps with 4 districts and population between 685,430 and 837,748.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Sampling 100 99-unit maps with 4 districts and population between 685430 and 837748.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Split [0/3] <span style="color: #00BB00;">■                               </span> | ETA?</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Split [1/3] <span style="color: #00BB00;">■■■■■■■■■■■                     </span> | ETA 0s</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Split [3/3] <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> | ETA 0s</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">plans</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="font-weight: bold;">SMC:</span> 100 sampled plans of 4 districts on 99 units</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> `adapt_k_thresh`=0.985 • `seq_alpha`=0.5</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> `adapt_k_thresh`=0.99 • `seq_alpha`=0.5</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> `est_label_mult`=1 • `pop_temper`=0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Plan diversity 80% range: 0.51 to 0.82</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Plan diversity 80% range: 0.47 to 0.84</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Sampling diagnostics for SMC run 1 of 1 (100 samples)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>          Eff. samples (%) Acc. rate Log wgt. sd  Max. unique Est. k </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Split 1        98 (98.5%)     22.0%        0.25    64 (101%)     13 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Split 2        97 (97.3%)     34.8%        0.34    66 (104%)      8 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Split 3        97 (97.0%)     21.8%        0.37    60 ( 95%)      5 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Resample       89 (88.6%)       NA%        0.35    87 (138%)     NA </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Split 1        98 (98.0%)     22.2%        0.29    68 (108%)     13 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Split 2        97 (97.1%)     37.2%        0.33    60 ( 95%)      8 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Split 3        89 (89.0%)     17.3%        0.61    56 ( 89%)      5 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Resample       53 (53.5%)       NA%        0.56    73 (115%)     NA </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> • <span style="color: #555555;"> Watch out for low effective samples, very low acceptance rates (less than</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #555555;">1%), large std. devs. of the log weights (more than 3 or so), and low numbers</span></span>
@@ -198,7 +196,7 @@ suggestions for improvement.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

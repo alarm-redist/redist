@@ -20,7 +20,7 @@ split."><meta property="og:image" content="/logo.png"><!-- mathjax --><script sr
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.2.0</span>
       </span>
     </div>
 
@@ -41,13 +41,10 @@ split."><meta property="og:image" content="/logo.png"><!-- mathjax --><script sr
       <a href="../articles/common_args.html">Common Arguments to `redist` Functions</a>
     </li>
     <li>
+      <a href="../articles/flip.html">Redistricting with Flip MCMC</a>
+    </li>
+    <li>
       <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
-    </li>
-    <li>
-      <a href="../articles/mcmc.html">Redistricting with Flip MCMC</a>
-    </li>
-    <li>
-      <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
     </li>
   </ul></li>
 <li class="dropdown">
@@ -136,7 +133,7 @@ Michael Crespin, Political Analysis (2005) 13(3): 253-260</p>
 <span class="r-in"><span><span class="va">iowa_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, total_pop <span class="op">=</span> <span class="va">pop</span>, pop_tol <span class="op">=</span> <span class="fl">0.01</span>, ndists <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">plans</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="fl">2</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> SEQUENTIAL MONTE CARLO</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Sampling 2 99-unit maps with 4 districts and population between 753,973 and 769,205.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Sampling 2 99-unit maps with 4 districts and population between 753973 and 769205.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Split [0/3] <span style="color: #00BB00;">■                               </span> | ETA?</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Split [3/3] <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> | ETA 0s</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
@@ -169,10 +166,7 @@ Michael Crespin, Political Analysis (2005) 13(3): 253-260</p>
 <span class="r-in"><span><span class="va">iowa_map_5</span> <span class="op">&lt;-</span> <span class="va">iowa_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, total_pop <span class="op">=</span> <span class="va">pop</span>, pop_tol <span class="op">=</span> <span class="fl">0.01</span>, ndists <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">plan_5</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_plans_matrix.html">get_plans_matrix</a></span><span class="op">(</span><span class="fu"><a href="redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">iowa_map_5</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> SEQUENTIAL MONTE CARLO</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Sampling 1 99-unit maps with 5 districts and population between 603,178 and 615,364.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Split [0/4] <span style="color: #00BB00;">■                               </span> | ETA?</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Split [4/4] <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> | ETA 0s</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Sampling 1 99-unit maps with 5 districts and population between 603178 and 615364.</span>
 <span class="r-in"><span><span class="va">ov4_5</span> <span class="op">&lt;-</span> <span class="fu">redist.dist.pop.overlap</span><span class="op">(</span><span class="va">plans_mat</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, <span class="va">plan_5</span>, <span class="va">iowa_map</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">ov4_5</span>, <span class="fl">2</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      1    2    3    4    5</span>
@@ -195,7 +189,7 @@ Michael Crespin, Political Analysis (2005) 13(3): 253-260</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

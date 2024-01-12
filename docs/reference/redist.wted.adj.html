@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.2.0</span>
       </span>
     </div>
 
@@ -38,13 +38,10 @@
       <a href="../articles/common_args.html">Common Arguments to `redist` Functions</a>
     </li>
     <li>
+      <a href="../articles/flip.html">Redistricting with Flip MCMC</a>
+    </li>
+    <li>
       <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
-    </li>
-    <li>
-      <a href="../articles/mcmc.html">Redistricting with Flip MCMC</a>
-    </li>
-    <li>
-      <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
     </li>
   </ul></li>
 <li class="dropdown">
@@ -113,7 +110,7 @@
 <span class="r-in"><span><span class="va">shp</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan <span class="op">=</span> <span class="va">cd_2010</span>, pop_tol <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">plans</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">shp</span>, <span class="fl">100</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> SEQUENTIAL MONTE CARLO</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Sampling 100 99-unit maps with 4 districts and population between 753,973 and 769,205.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Sampling 100 99-unit maps with 4 districts and population between 753973 and 769205.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Split [0/3] <span style="color: #00BB00;">■                               </span> | ETA?</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Split [3/3] <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> | ETA 0s</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
@@ -121,23 +118,23 @@
 <span class="r-out co"><span class="r-pr">#&gt;</span> Simple feature collection with 222 features and 3 fields</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Geometry type: LINESTRING</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Dimension:     XY</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Bounding box:  xmin: 4192400 ymin: 2974700 xmax: 5729100 ymax: 3978000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Bounding box:  xmin: 4192376 ymin: 2974708 xmax: 5729102 ymax: 3978011</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Projected CRS: NAD83(HARN) / Iowa North (ftUS)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 222 × 4</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># Rowwise: </span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        i     j                           geometry    wt</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  <span style="color: #BCBCBC;">*</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;LINESTRING [US_survey_foot]&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span>     1     2 (4654501 3220689, 4590239 3111565)  0.86</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span>     1    15 (4654501 3220689, 4529015 3222722)  0.82</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span>     1    39 (4654501 3220689, 4647780 3349436)  0.84</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span>     1    61 (4654501 3220689, 4779626 3219592)  0.8 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span>     1    88 (4654501 3220689, 4716357 3109639)  0.89</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span>     2    15 (4590239 3111565, 4529015 3222722)  0.86</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span>     1     2 (4654501 3220689, 4590239 3111565)  0.88</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span>     1    15 (4654501 3220689, 4529015 3222722)  0.84</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span>     1    39 (4654501 3220689, 4647780 3349436)  0.76</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span>     1    61 (4654501 3220689, 4779626 3219592)  0.67</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span>     1    88 (4654501 3220689, 4716357 3109639)  0.66</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span>     2    15 (4590239 3111565, 4529015 3222722)  0.88</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span>     2    69 (4590239 3111565, 4464101 3114115)  0.9 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span>     2    87 (4590239 3111565, 4589159 3005137)  0.95</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span>     2    88 (4590239 3111565, 4716357 3109639)  0.93</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span>     3    22 (5486111 3937993, 5500145 3778167)  0.92</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># … with 212 more rows</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span>     2    87 (4590239 3111565, 4589159 3005137)  0.79</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span>     2    88 (4590239 3111565, 4716357 3109639)  0.71</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span>     3    22 (5486111 3937993, 5500145 3778167)  0.93</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 212 more rows</span></span>
 </code></pre></div>
     </div>
   </div>
@@ -152,7 +149,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

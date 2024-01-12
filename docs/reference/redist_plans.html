@@ -20,7 +20,7 @@ plans."><meta property="og:image" content="/logo.png"><!-- mathjax --><script sr
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.2.0</span>
       </span>
     </div>
 
@@ -41,13 +41,10 @@ plans."><meta property="og:image" content="/logo.png"><!-- mathjax --><script sr
       <a href="../articles/common_args.html">Common Arguments to `redist` Functions</a>
     </li>
     <li>
+      <a href="../articles/flip.html">Redistricting with Flip MCMC</a>
+    </li>
+    <li>
       <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
-    </li>
-    <li>
-      <a href="../articles/mcmc.html">Redistricting with Flip MCMC</a>
-    </li>
-    <li>
-      <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
     </li>
   </ul></li>
 <li class="dropdown">
@@ -159,20 +156,20 @@ As a data frame, the usual <code><a href="https://dplyr.tidyverse.org/reference/
 <span class="r-out co"><span class="r-pr">#&gt;</span> redist.rsg(): Automated Redistricting Starts</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 	4 districts built using 99 precincts in 0.04 seconds...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 	4 districts built using 99 precincts in 0.06 seconds...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="fu">redist_plans</span><span class="op">(</span><span class="va">rsg_plan</span>, <span class="va">iowa</span>, <span class="st">"rsg"</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> A <span style="color: #0000BB;">&lt;redist_plans&gt;</span> containing 1 sampled plan</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Plans have 4 districts from a 99-unit map, and were drawn using random</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> seed-and-grow.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Plans matrix: int [1:99, 1] 4 4 3 1 4 3 2 4 3 3 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Plans matrix: int [1:99, 1] 4 4 1 3 4 3 1 2 1 1 ...</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 4 × 3</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   draw  district total_pop</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">*</span> <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 1            1    <span style="text-decoration: underline;">749</span>754</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 1            2    <span style="text-decoration: underline;">783</span>969</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 1            3    <span style="text-decoration: underline;">785</span>724</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> 1            4    <span style="text-decoration: underline;">726</span>908</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 1            1    <span style="text-decoration: underline;">781</span>611</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 1            2    <span style="text-decoration: underline;">799</span>275</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 1            3    <span style="text-decoration: underline;">724</span>719</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> 1            4    <span style="text-decoration: underline;">740</span>750</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
@@ -188,7 +185,7 @@ As a data frame, the usual <code><a href="https://dplyr.tidyverse.org/reference/
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

@@ -40,7 +40,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.2.0</span>
       </span>
     </div>
 
@@ -63,13 +63,10 @@
       <a href="../articles/common_args.html">Common Arguments to `redist` Functions</a>
     </li>
     <li>
+      <a href="../articles/flip.html">Redistricting with Flip MCMC</a>
+    </li>
+    <li>
       <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
-    </li>
-    <li>
-      <a href="../articles/mcmc.html">Redistricting with Flip MCMC</a>
-    </li>
-    <li>
-      <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
     </li>
   </ul>
 </li>
@@ -156,7 +153,7 @@ presidential vote, city, and existing district information.</p>
 <span><span class="va">king_shp</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="va">data_path</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">king_shp</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Simple feature collection with 2562 features and 10 fields</span></span>
-<span><span class="co">#&gt; Attribute-geometry relationship: 3 constant, 5 aggregate, 2 identity</span></span>
+<span><span class="co">#&gt; Attribute-geometry relationships: constant (3), aggregate (5), identity (2)</span></span>
 <span><span class="co">#&gt; Geometry type: MULTIPOLYGON</span></span>
 <span><span class="co">#&gt; Dimension:     XY</span></span>
 <span><span class="co">#&gt; Bounding box:  xmin: 1217170 ymin: 31464.84 xmax: 1583214 ymax: 287944.6</span></span>
@@ -174,8 +171,8 @@ presidential vote, city, and existing district information.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 330427 EXCALIBUR   UNINCORP     7   660   501    402    164    151   0.006<span style="text-decoration: underline;">89</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 333087 FED 30-3087 FED          7   820   645    453    223    124   0      </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 333238 FED 30-3238 FED          7   997   674    356    161     90   0      </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># … with 2,552 more rows, and 1 more variable:</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;">#   geometry &lt;MULTIPOLYGON [US_survey_foot]&gt;</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2,552 more rows</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: geometry &lt;MULTIPOLYGON [US_survey_foot]&gt;</span></span></span></code></pre></div>
 <p>There are 39 incorporated cities in King County, which together cover
 19% of the population and 19% of the area of the county. The remainder
 is “unincorporated King County”. The county contains a significant
@@ -217,8 +214,8 @@ districts, and ensure that all of our simulations do no worse.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 330427 EXCALIBUR   UNINCORP     7   660   501    402    164    151   0.006<span style="text-decoration: underline;">89</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 333087 FED 30-3087 FED          7   820   645    453    223    124   0      </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 333238 FED 30-3238 FED          7   997   674    356    161     90   0      </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># … with 2,552 more rows, and 2 more variables:</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;">#   geometry &lt;MULTIPOLYGON [US_survey_foot]&gt;, adj &lt;list&gt;</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2,552 more rows</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2 more variables: geometry &lt;MULTIPOLYGON [US_survey_foot]&gt;, adj &lt;list&gt;</span></span></span></code></pre></div>
 <p>This <code>redist_map</code> object contains an adjacency graph for
 the county. We can explore this graph, and zoom in on the city of
 Seattle, using <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>.</p>
@@ -260,8 +257,8 @@ Seattle.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> 331512 SEA 34-1512 SEA          8   379   307    262    200     33     0    </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> 331517 SEA 34-1517 SEA          8   353   295    239    193     17     0    </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 331519 SEA 34-1519 SEA          8   407   328    282    211     44     0    </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># … with 950 more rows, and 2 more variables:</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;">#   geometry &lt;MULTIPOLYGON [US_survey_foot]&gt;, adj &lt;list&gt;</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 950 more rows</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2 more variables: geometry &lt;MULTIPOLYGON [US_survey_foot]&gt;, adj &lt;list&gt;</span></span></span></code></pre></div>
 <p>Looking at the information in the header, and comparing it to the
 original <code>king</code> object, we see that the number of districts
 has been updated from 9 to 3, and the population tolerances have been
@@ -321,19 +318,19 @@ and <code><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="
 <span><span class="co">#&gt; To be partitioned into 9 districts with population between 214,505.7 - 1.663204% and 214,505.7 + 1.663204%</span></span>
 <span><span class="co">#&gt; Merged from another map with reindexing: int [1:2541] 41 41 46 41 41 ...</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 60 × 11</span></span></span>
-<span><span class="co">#&gt;    distr city     pct_w…¹    pop    vap voters dem_08 rep_08 id    preci…² adj  </span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;lis&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>     1 BOT      0        <span style="text-decoration: underline;">17</span>090  <span style="text-decoration: underline;">13</span>312 9.89<span style="color: #949494;">e</span>3  <span style="text-decoration: underline;">5</span>259   <span style="text-decoration: underline;">3</span>017  3332… BOT 01… &lt;int&gt;</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>     1 KIR      0.050<span style="text-decoration: underline;">3</span>    <span style="text-decoration: underline;">7</span>036   <span style="text-decoration: underline;">5</span>856 3.91<span style="color: #949494;">e</span>3  <span style="text-decoration: underline;">2</span>191    947  3329… KIR 45… &lt;int&gt;</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>     1 KMR      0.012<span style="text-decoration: underline;">8</span>   <span style="text-decoration: underline;">20</span>460  <span style="text-decoration: underline;">15</span>787 1.30<span style="color: #949494;">e</span>4  <span style="text-decoration: underline;">7</span>288   <span style="text-decoration: underline;">3</span>476  3306… KMR 32… &lt;int&gt;</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>     1 LFP      0.028<span style="text-decoration: underline;">1</span>   <span style="text-decoration: underline;">12</span>598   <span style="text-decoration: underline;">9</span>975 9.46<span style="color: #949494;">e</span>3  <span style="text-decoration: underline;">6</span>063   <span style="text-decoration: underline;">1</span>992  3306… LFP 32… &lt;int&gt;</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>     1 SEA      0.008<span style="text-decoration: underline;">45</span>  <span style="text-decoration: underline;">72</span>503  <span style="text-decoration: underline;">59</span>161 4.79<span style="color: #949494;">e</span>4 <span style="text-decoration: underline;">34</span>664   <span style="text-decoration: underline;">6</span>527  3323… SEA 46… &lt;int&gt;</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>     1 SHL      0.004<span style="text-decoration: underline;">47</span>  <span style="text-decoration: underline;">53</span>007  <span style="text-decoration: underline;">42</span>873 3.43<span style="color: #949494;">e</span>4 <span style="text-decoration: underline;">20</span>895   <span style="text-decoration: underline;">7</span>184  3325… SHL 32… &lt;int&gt;</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>     1 UNINCORP 0.053<span style="text-decoration: underline;">6</span>   <span style="text-decoration: underline;">24</span>780  <span style="text-decoration: underline;">19</span>208 1.54<span style="color: #949494;">e</span>4  <span style="text-decoration: underline;">8</span>370   <span style="text-decoration: underline;">4</span>440  3305… JEAN~C… &lt;int&gt;</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>     1 WOD      0.002<span style="text-decoration: underline;">60</span>   <span style="text-decoration: underline;">8</span>059   <span style="text-decoration: underline;">6</span>163 4.79<span style="color: #949494;">e</span>3  <span style="text-decoration: underline;">2</span>480   <span style="text-decoration: underline;">1</span>505  3327… WOD 45… &lt;int&gt;</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>     2 SEA      0.040<span style="text-decoration: underline;">8</span>  <span style="text-decoration: underline;">195</span>293 <span style="text-decoration: underline;">162</span>191 1.17<span style="color: #949494;">e</span>5 <span style="text-decoration: underline;">84</span>203  <span style="text-decoration: underline;">10</span>899  3318… SEA 43… &lt;int&gt;</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>     2 UNINCORP 0.024<span style="text-decoration: underline;">8</span>   <span style="text-decoration: underline;">15</span>645  <span style="text-decoration: underline;">11</span>866 7.46<span style="color: #949494;">e</span>3  <span style="text-decoration: underline;">4</span>654.  <span style="text-decoration: underline;">1</span>211. 3309… RAINIE… &lt;int&gt;</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># … with 50 more rows, and abbreviated variable names ¹​pct_water, ²​precinct</span></span></span></code></pre></div>
+<span><span class="co">#&gt;    distr city  pct_water    pop    vap voters dem_08 rep_08 id    precinct adj  </span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;lis&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>     1 BOT     0        <span style="text-decoration: underline;">17</span>090  <span style="text-decoration: underline;">13</span>312 9.89<span style="color: #949494;">e</span>3  <span style="text-decoration: underline;">5</span>259   <span style="text-decoration: underline;">3</span>017  3332… BOT 01-… <span style="color: #949494;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>     1 KIR     0.050<span style="text-decoration: underline;">3</span>    <span style="text-decoration: underline;">7</span>036   <span style="text-decoration: underline;">5</span>856 3.91<span style="color: #949494;">e</span>3  <span style="text-decoration: underline;">2</span>191    947  3329… KIR 45-… <span style="color: #949494;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>     1 KMR     0.012<span style="text-decoration: underline;">8</span>   <span style="text-decoration: underline;">20</span>460  <span style="text-decoration: underline;">15</span>787 1.30<span style="color: #949494;">e</span>4  <span style="text-decoration: underline;">7</span>288   <span style="text-decoration: underline;">3</span>476  3306… KMR 32-… <span style="color: #949494;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>     1 LFP     0.028<span style="text-decoration: underline;">1</span>   <span style="text-decoration: underline;">12</span>598   <span style="text-decoration: underline;">9</span>975 9.47<span style="color: #949494;">e</span>3  <span style="text-decoration: underline;">6</span>063   <span style="text-decoration: underline;">1</span>992  3306… LFP 32-… <span style="color: #949494;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>     1 SEA     0.008<span style="text-decoration: underline;">45</span>  <span style="text-decoration: underline;">72</span>503  <span style="text-decoration: underline;">59</span>161 4.79<span style="color: #949494;">e</span>4 <span style="text-decoration: underline;">34</span>664   <span style="text-decoration: underline;">6</span>527  3323… SEA 46-… <span style="color: #949494;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>     1 SHL     0.004<span style="text-decoration: underline;">47</span>  <span style="text-decoration: underline;">53</span>007  <span style="text-decoration: underline;">42</span>873 3.43<span style="color: #949494;">e</span>4 <span style="text-decoration: underline;">20</span>895   <span style="text-decoration: underline;">7</span>184  3325… SHL 32-… <span style="color: #949494;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>     1 UNIN…   0.053<span style="text-decoration: underline;">6</span>   <span style="text-decoration: underline;">24</span>780  <span style="text-decoration: underline;">19</span>208 1.54<span style="color: #949494;">e</span>4  <span style="text-decoration: underline;">8</span>370   <span style="text-decoration: underline;">4</span>440  3305… JEAN~CE… <span style="color: #949494;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>     1 WOD     0.002<span style="text-decoration: underline;">60</span>   <span style="text-decoration: underline;">8</span>059   <span style="text-decoration: underline;">6</span>163 4.79<span style="color: #949494;">e</span>3  <span style="text-decoration: underline;">2</span>480   <span style="text-decoration: underline;">1</span>505  3327… WOD 45-… <span style="color: #949494;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>     2 SEA     0.040<span style="text-decoration: underline;">8</span>  <span style="text-decoration: underline;">195</span>293 <span style="text-decoration: underline;">162</span>191 1.17<span style="color: #949494;">e</span>5 <span style="text-decoration: underline;">84</span>203  <span style="text-decoration: underline;">10</span>899  3318… SEA 43-… <span style="color: #949494;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>     2 UNIN…   0.024<span style="text-decoration: underline;">8</span>   <span style="text-decoration: underline;">15</span>645  <span style="text-decoration: underline;">11</span>866 7.46<span style="color: #949494;">e</span>3  <span style="text-decoration: underline;">4</span>654.  <span style="text-decoration: underline;">1</span>211. 3309… RAINIER… <span style="color: #949494;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 50 more rows</span></span></span></code></pre></div>
 <p>Under the hood, <code><a href="../reference/merge_by.html">merge_by()</a></code> does several things. First,
 it groups the shapefile by the provided key or keys (here,
 <code>city</code>). By default it also groups by existing districts, so
@@ -385,7 +382,7 @@ merges these groups together. We can use the
 the <code><a href="../reference/is_county_split.html">is_county_split()</a></code> function to identify split
 municipalities.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="../reference/redist.splits.html">redist.splits</a></span><span class="op">(</span><span class="va">king_land</span><span class="op">$</span><span class="va">distr</span>, <span class="va">king_land</span><span class="op">$</span><span class="va">city</span><span class="op">)</span>, <span class="st">"split cities\n"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="http://alarm-redist.org/redistmetrics/reference/splits_admin.html" class="external-link">splits_admin</a></span><span class="op">(</span><span class="va">king_land</span><span class="op">$</span><span class="va">distr</span>, <span class="va">king_land</span>, <span class="va">city</span><span class="op">)</span>, <span class="st">"split cities\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; 11 11 11 11 11 11 11 11 11 split cities</span></span>
 <span></span>
 <span><span class="va">king_land</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -414,7 +411,7 @@ municipalities.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>     1        101 KMR     0.012<span style="text-decoration: underline;">8</span>  <span style="text-decoration: underline;">20</span>460 <span style="text-decoration: underline;">15</span>787  <span style="text-decoration: underline;">12</span>954   <span style="text-decoration: underline;">7</span>288   <span style="text-decoration: underline;">3</span>476 <span style="color: #949494;">&lt;int [10]&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>     1        101 LFP     0.028<span style="text-decoration: underline;">1</span>  <span style="text-decoration: underline;">12</span>598  <span style="text-decoration: underline;">9</span>975   <span style="text-decoration: underline;">9</span>465   <span style="text-decoration: underline;">6</span>063   <span style="text-decoration: underline;">1</span>992 <span style="color: #949494;">&lt;int [4]&gt;</span> </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>     1        101 SHL     0.004<span style="text-decoration: underline;">47</span> <span style="text-decoration: underline;">53</span>007 <span style="text-decoration: underline;">42</span>873  <span style="text-decoration: underline;">34</span>346  <span style="text-decoration: underline;">20</span>895   <span style="text-decoration: underline;">7</span>184 <span style="color: #949494;">&lt;int [14]&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># … with 1,958 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1,958 more rows</span></span></span></code></pre></div>
 <p>The plot above shows which cities will be frozen together so that
 they cannot be split. Notice that we merge by not just
 <code>unsplit_id</code> but also <code>city</code>, so that adjacent
@@ -431,7 +428,7 @@ geometry object, <code>king_land</code>.</p>
 <code class="sourceCode R"><span><span class="va">plans</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">king_unsplit</span>, <span class="fl">100</span>, silent<span class="op">=</span><span class="cn">T</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">plans</span><span class="op">)</span></span>
 <span><span class="co">#&gt; A <span style="color: #0000BB;">&lt;redist_plans&gt;</span> containing 100 sampled plans and 1 reference plan</span></span>
-<span><span class="co">#&gt; Plans have 9 districts from a 1968-unit map, and were drawn using Sequential</span></span>
+<span><span class="co">#&gt; Plans have 9 districts from a 1,968-unit map, and were drawn using Sequential</span></span>
 <span><span class="co">#&gt; Monte Carlo.</span></span>
 <span><span class="co">#&gt; Merged from another map with reindexing: int [1:2541] 1410 1410 1414 1410 1410 ...</span></span>
 <span><span class="co">#&gt; With plans resampled from weights</span></span>
@@ -448,11 +445,11 @@ geometry object, <code>king_land</code>.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> distr        7    <span style="text-decoration: underline;">214</span>210</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> distr        8    <span style="text-decoration: underline;">212</span>491</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> distr        9    <span style="text-decoration: underline;">217</span>432</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 1            1    <span style="text-decoration: underline;">213</span>311</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># … with 899 more rows</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 1            1    <span style="text-decoration: underline;">217</span>248</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 899 more rows</span></span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="../reference/pullback.html">pullback</a></span><span class="op">(</span><span class="va">plans</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; A <span style="color: #0000BB;">&lt;redist_plans&gt;</span> containing 100 sampled plans and 1 reference plan</span></span>
-<span><span class="co">#&gt; Plans have 9 districts from a 2541-unit map, and were drawn using Sequential</span></span>
+<span><span class="co">#&gt; Plans have 9 districts from a 2,541-unit map, and were drawn using Sequential</span></span>
 <span><span class="co">#&gt; Monte Carlo.</span></span>
 <span><span class="co">#&gt; With plans resampled from weights</span></span>
 <span><span class="co">#&gt; Plans matrix: int [1:2541, 1:101] 7 7 7 7 7 7 7 7 7 7 ...</span></span>
@@ -468,8 +465,8 @@ geometry object, <code>king_land</code>.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> distr        7    <span style="text-decoration: underline;">214</span>210</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> distr        8    <span style="text-decoration: underline;">212</span>491</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> distr        9    <span style="text-decoration: underline;">217</span>432</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 1            1    <span style="text-decoration: underline;">213</span>311</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># … with 899 more rows</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 1            1    <span style="text-decoration: underline;">217</span>248</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 899 more rows</span></span></span>
 <span><span class="fu"><a href="../reference/redist.plot.plans.html">redist.plot.plans</a></span><span class="op">(</span><span class="fu"><a href="../reference/pullback.html">pullback</a></span><span class="op">(</span><span class="va">plans</span><span class="op">)</span>, draws<span class="op">=</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, shp<span class="op">=</span><span class="va">king_land</span><span class="op">)</span></span></code></pre></div>
 <p><img src="map-preproc_files/figure-html/unsplit-plan-1.png" width="768"></p>
 <p>Notice how the <code>Merged from another map...</code> line
@@ -554,7 +551,7 @@ the map.</p>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer>

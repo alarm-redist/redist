@@ -41,7 +41,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.2.0</span>
       </span>
     </div>
 
@@ -64,13 +64,10 @@
       <a href="articles/common_args.html">Common Arguments to `redist` Functions</a>
     </li>
     <li>
+      <a href="articles/flip.html">Redistricting with Flip MCMC</a>
+    </li>
+    <li>
       <a href="articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
-    </li>
-    <li>
-      <a href="articles/mcmc.html">Redistricting with Flip MCMC</a>
-    </li>
-    <li>
-      <a href="articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
     </li>
   </ul>
 </li>
@@ -148,12 +145,9 @@
 </ul>
 <p>Papers:</p>
 <ul>
-<li>
-<a href="https://doi.org/10.1080/10618600.2020.1739532" class="external-link">Automated Redistricting Simulation Using Markov Chain Monte Carlo</a> <em>Journal of Computational and Graphical Statistics</em>
-</li>
-<li>
-<a href="https://doi.org/10.1080/2330443X.2020.1791773" class="external-link">The Essential Role of Empirical Validation in Legislative Redistricting Simulation</a> <em>Statistics and Public Policy</em> Vol. 7, No. 1, pp. 52-68.</li>
-<li><a href="https://arxiv.org/pdf/2008.06131.pdf" class="external-link">Sequential Monte Carlo for Sampling Balanced and Compact Redistricting Plans</a></li>
+<li>McCartan, C., &amp; Imai, K. (Forthcoming). <a href="https://arxiv.org/abs/2008.06131/" class="external-link">Sequential Monte Carlo for sampling balanced and compact redistricting plans</a>. <em>Annals of Applied Statistics</em>.</li>
+<li>Fifield, B., Higgins, M., Imai, K., &amp; Tarr, A. (2020). <a href="https://doi.org/10.1080/10618600.2020.1739532" class="external-link">Automated redistricting simulation using Markov chain Monte Carlo</a>. <em>Journal of Computational and Graphical Statistics</em>, 29(4), 715-728.</li>
+<li>Fifield, B., Imai, K., Kawahara, J., &amp; Kenny, C. T. (2020). <a href="https://doi.org/10.1080/2330443X.2020.1791773" class="external-link">The essential role of empirical validation in legislative redistricting simulation</a>. <em>Statistics and Public Policy</em>, 7(1), 52-68.</li>
 </ul>
 <div class="section level2">
 <h2 id="installation-instructions">Installation Instructions<a class="anchor" aria-label="anchor" href="#installation-instructions"></a>
@@ -161,7 +155,7 @@
 <p><code>redist</code> is available on CRAN and can be installed using:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"redist"</span><span class="op">)</span></span></code></pre></div>
-<p>You can also install the most recent development version of <code>redist</code> (which is usually quite stable) using the `remotes`` package.</p>
+<p>You can also install the most recent development version of <code>redist</code> (which is usually quite stable) using the <code>remotes</code> package.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="va"><a href="https://remotes.r-lib.org" class="external-link">remotes</a></span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"alarm-redist/redist@dev"</span>, dependencies<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
@@ -181,7 +175,7 @@
 <span><span class="co"># simulate 500 plans using the SMC algorithm</span></span>
 <span><span class="va">iowa_plans</span> <span class="op">=</span> <span class="fu"><a href="reference/redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">iowa_map</span>, nsims<span class="op">=</span><span class="fl">500</span><span class="op">)</span></span>
 <span><span class="co">#&gt; SEQUENTIAL MONTE CARLO</span></span>
-<span><span class="co">#&gt; Sampling 500 99-unit maps with 4 districts and population between 760827 and 762350.</span></span></code></pre></div>
+<span><span class="co">#&gt; Sampling 500 99-unit maps with 4 districts and population between 760,827 and 762,350.</span></span></code></pre></div>
 <p>After generating plans, you can use <code>redist</code>’s plotting functions to study the geographic and partisan characteristics of the simulated ensemble.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
@@ -192,9 +186,10 @@
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="va">iowa_plans</span> <span class="op">=</span> <span class="va">iowa_plans</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>Compactness <span class="op">=</span> <span class="fu"><a href="reference/redist.compactness.html">distr_compactness</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span>,</span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>Compactness <span class="op">=</span> <span class="fu"><a href="http://alarm-redist.org/redistmetrics/reference/comp_polsby.html" class="external-link">comp_polsby</a></span><span class="op">(</span><span class="fu"><a href="reference/pl.html">pl</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">iowa_map</span><span class="op">)</span>,</span>
 <span>           `Population deviation` <span class="op">=</span> <span class="fu"><a href="reference/redist.parity.html">plan_parity</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span>,</span>
 <span>           `Democratic vote` <span class="op">=</span> <span class="fu"><a href="reference/redist.group.percent.html">group_frac</a></span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">dem_08</span>, <span class="va">tot_08</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Linking to GEOS 3.11.0, GDAL 3.5.3, PROJ 9.1.0; sf_use_s2() is TRUE</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">`Population deviation`</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="va">iowa_plans</span>, <span class="va">Compactness</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_layout.html" class="external-link">plot_layout</a></span><span class="op">(</span>guides<span class="op">=</span><span class="st">"collect"</span><span class="op">)</span> <span class="op">+</span></span>
@@ -256,7 +251,7 @@
 <div class="dev-status">
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
-<li><a href="https://travis-ci.org/kosukeimai/redist" class="external-link"><img src="https://travis-ci.org/kosukeimai/redist.svg?branch=master" alt="Build Status"></a></li>
+<li><a href="https://github.com/alarm-redist/redist/actions/workflows/check-standard.yaml" class="external-link"><img src="https://github.com/alarm-redist/redist/actions/workflows/check-standard.yaml/badge.svg" alt="R-CMD-check"></a></li>
 <li><a href="https://cran.r-project.org/package=redist" class="external-link"><img src="https://www.r-pkg.org/badges/version-last-release/redist" alt="CRAN_Status_Badge"></a></li>
 </ul>
 </div>
@@ -272,7 +267,7 @@
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer>

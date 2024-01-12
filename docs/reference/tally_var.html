@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.2.0</span>
       </span>
     </div>
 
@@ -38,13 +38,10 @@
       <a href="../articles/common_args.html">Common Arguments to `redist` Functions</a>
     </li>
     <li>
+      <a href="../articles/flip.html">Redistricting with Flip MCMC</a>
+    </li>
+    <li>
       <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
-    </li>
-    <li>
-      <a href="../articles/mcmc.html">Redistricting with Flip MCMC</a>
-    </li>
-    <li>
-      <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
     </li>
   </ul></li>
 <li class="dropdown">
@@ -78,7 +75,7 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Tally a variable by district</h1>
-    <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/HEAD/R/tidy.R" class="external-link"><code>R/tidy.R</code></a></small>
+    <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/HEAD/R/plans_helpers.R" class="external-link"><code>R/plans_helpers.R</code></a></small>
     <div class="hidden name"><code>tally_var.Rd</code></div>
     </div>
 
@@ -87,7 +84,7 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">tally_var</span><span class="op">(</span><span class="va">map</span>, <span class="va">x</span>, .data <span class="op">=</span> <span class="fu">cur_plans</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">tally_var</span><span class="op">(</span><span class="va">map</span>, <span class="va">x</span>, .data <span class="op">=</span> <span class="fu"><a href="pl.html">pl</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -101,7 +98,7 @@
 
 
 <dt>.data</dt>
-<dd><p>a <code>redist_plans</code> object</p></dd>
+<dd><p>a <code>redist_plans</code> object or matrix of plans</p></dd>
 
 </dl></div>
     <div id="value">
@@ -123,7 +120,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

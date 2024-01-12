@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.2.0</span>
       </span>
     </div>
 
@@ -38,13 +38,10 @@
       <a href="../articles/common_args.html">Common Arguments to `redist` Functions</a>
     </li>
     <li>
+      <a href="../articles/flip.html">Redistricting with Flip MCMC</a>
+    </li>
+    <li>
       <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
-    </li>
-    <li>
-      <a href="../articles/mcmc.html">Redistricting with Flip MCMC</a>
-    </li>
-    <li>
-      <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
     </li>
   </ul></li>
 <li class="dropdown">
@@ -87,7 +84,7 @@
       </tr></tbody><tbody><tr><td>
           <p><code><a href="redist_smc.html">redist_smc()</a></code> </p>
         </td>
-        <td><p>SMC Redistricting Sampler (McCartan and Imai 2020)</p></td>
+        <td><p>SMC Redistricting Sampler (McCartan and Imai 2023)</p></td>
       </tr><tr><td>
           <p><code><a href="redist_mergesplit.html">redist_mergesplit()</a></code> </p>
         </td>
@@ -116,14 +113,6 @@
           <p><code><a href="redist.crsg.html">redist.crsg()</a></code> </p>
         </td>
         <td><p>Redistricting via Compact Random Seed and Grow Algorithm</p></td>
-      </tr><tr><td>
-          <p><code><a href="redist.flip.html">redist.flip()</a></code> </p>
-        </td>
-        <td><p>(Deprecated) Flip MCMC Redistricting Simulator</p></td>
-      </tr><tr><td>
-          <p><code><a href="redist.flip.anneal.html">redist.flip.anneal()</a></code> </p>
-        </td>
-        <td><p>(Deprecated) Flip MCMC Redistricting Simulator using Simulated Annealing</p></td>
       </tr><tr><td>
           <p><code><a href="redist.mcmc.mpi.html">redist.mcmc.mpi()</a></code> </p>
         </td>
@@ -335,7 +324,7 @@
       </tr><tr><td>
           <p><code><a href="redist.findparams.html">redist.findparams()</a></code> </p>
         </td>
-        <td><p>Run parameter testing for <code>redist.flip</code></p></td>
+        <td><p>Run parameter testing for <code>redist_flip</code></p></td>
       </tr><tr><td>
           <p><code><a href="redist.freeze.html">freeze()</a></code> <code><a href="redist.freeze.html">redist.freeze()</a></code> </p>
         </td>
@@ -364,6 +353,10 @@
           <p><code><a href="scorer-arith.html">`*`(<i>&lt;redist_scorer&gt;</i>)</a></code> <code><a href="scorer-arith.html">`+`(<i>&lt;redist_scorer&gt;</i>)</a></code> <code><a href="scorer-arith.html">`-`(<i>&lt;redist_scorer&gt;</i>)</a></code> </p>
         </td>
         <td><p>Scoring function arithmetic</p></td>
+      </tr><tr><td>
+          <p><code><a href="scorer-combine.html">combine_scorers()</a></code> <code><a href="scorer-combine.html">cbind(<i>&lt;redist_scorer&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Combine scoring functions</p></td>
       </tr><tr><td>
           <p><code><a href="scorers.html">scorer_group_pct()</a></code> <code><a href="scorers.html">scorer_pop_dev()</a></code> <code><a href="scorers.html">scorer_splits()</a></code> <code><a href="scorers.html">scorer_multisplits()</a></code> <code><a href="scorers.html">scorer_frac_kept()</a></code> <code><a href="scorers.html">scorer_polsby_popper()</a></code> <code><a href="scorers.html">scorer_status_quo()</a></code> </p>
         </td>
@@ -462,14 +455,6 @@
           <p class="section-desc"></p><p>Functions that help setup outputs for easier use</p>
         </th>
       </tr></tbody><tbody><tr><td>
-          <p><code><a href="redist.combine.html">redist.combine()</a></code> </p>
-        </td>
-        <td><p>(Deprecated) Combine successive runs of <code>redist.flip</code></p></td>
-      </tr><tr><td>
-          <p><code><a href="redist.combine.anneal.html">redist.combine.anneal()</a></code> </p>
-        </td>
-        <td><p>(Deprecated) redist.combine.anneal</p></td>
-      </tr><tr><td>
           <p><code><a href="redist.combine.mpi.html">redist.combine.mpi()</a></code> </p>
         </td>
         <td><p>Combine successive runs of <code>redist.mcmc.mpi</code></p></td>
@@ -518,9 +503,9 @@
           <p class="section-desc"></p><p>Other functions</p>
         </th>
       </tr></tbody><tbody><tr><td>
-          <p><code><a href="redist-package.html">redist-package</a></code> <code><a href="redist-package.html">redist</a></code> </p>
+          <p><code><a href="redist-package.html">redist-package</a></code> <code><a href="redist-package.html">_PACKAGE</a></code> <code><a href="redist-package.html">redist</a></code> </p>
         </td>
-        <td><p>Simulation Methods for Legislative Redistricting</p></td>
+        <td><p>redist: Simulation Methods for Legislative Redistricting</p></td>
       </tr><tr><td>
           <p><code><a href="get_mh_acceptance_rate.html">get_mh_acceptance_rate()</a></code> </p>
         </td>
@@ -530,13 +515,9 @@
         </td>
         <td><p>Extract the sampling information from a redistricting simulation</p></td>
       </tr><tr><td>
-          <p><code><a href="persily.html">persily()</a></code> </p>
+          <p><code><a href="pl.html">pl()</a></code> </p>
         </td>
-        <td><p>Local Plan Optimization</p></td>
-      </tr><tr><td>
-          <p><code><a href="pick_a_plan.html">pick_a_plan()</a></code> </p>
-        </td>
-        <td><p>Pick One Plan from Many Plans</p></td>
+        <td><p>Access the Current <code><a href="../reference/redist_plans.html">redist_plans()</a></code> Object</p></td>
       </tr><tr><td>
           <p><code><a href="print.redist_classified.html">print(<i>&lt;redist_classified&gt;</i>)</a></code> </p>
         </td>
@@ -562,10 +543,6 @@
         </td>
         <td><p>Compare the Population Overlap Across Plans at the District Level</p></td>
       </tr><tr><td>
-          <p><code><a href="redist.plot.interactive.html">redist.plot.interactive()</a></code> </p>
-        </td>
-        <td><p>Display an interactive map</p></td>
-      </tr><tr><td>
           <p><code><a href="redist.plot.wted.adj.html">redist.plot.wted.adj()</a></code> </p>
         </td>
         <td><p>Plot Weighted Border Adjacency</p></td>
@@ -573,10 +550,6 @@
           <p><code><a href="redist.prec.pop.overlap.html">redist.prec.pop.overlap()</a></code> </p>
         </td>
         <td><p>Compare the Population Overlap Across Plans at the Precinct Level</p></td>
-      </tr><tr><td>
-          <p><code><a href="redist.prep.polsbypopper.html">redist.prep.polsbypopper()</a></code> </p>
-        </td>
-        <td><p>Prep Polsby Popper Perimeter Dataframe</p></td>
       </tr><tr><td>
           <p><code><a href="redist.random.subgraph.html">redist.random.subgraph()</a></code> </p>
         </td>
@@ -606,7 +579,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

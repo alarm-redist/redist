@@ -22,7 +22,7 @@ Rights, Markov Chains, and Optimization by Short Bursts."'><meta property="og:im
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.2.0</span>
       </span>
     </div>
 
@@ -43,13 +43,10 @@ Rights, Markov Chains, and Optimization by Short Bursts."'><meta property="og:im
       <a href="../articles/common_args.html">Common Arguments to `redist` Functions</a>
     </li>
     <li>
+      <a href="../articles/flip.html">Redistricting with Flip MCMC</a>
+    </li>
+    <li>
       <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
-    </li>
-    <li>
-      <a href="../articles/mcmc.html">Redistricting with Flip MCMC</a>
-    </li>
-    <li>
-      <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
     </li>
   </ul></li>
 <li class="dropdown">
@@ -109,6 +106,8 @@ Rights, Markov Chains, and Optimization by Short Bursts."</p>
 <span>  constraints <span class="op">=</span> <span class="fu"><a href="redist_constr.html">redist_constr</a></span><span class="op">(</span><span class="va">map</span><span class="op">)</span>,</span>
 <span>  compactness <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  adapt_k_thresh <span class="op">=</span> <span class="fl">0.95</span>,</span>
+<span>  reversible <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  fixed_k <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  return_all <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  thin <span class="op">=</span> <span class="fl">1L</span>,</span>
 <span>  backend <span class="op">=</span> <span class="st">"mergesplit"</span>,</span>
@@ -121,21 +120,28 @@ Rights, Markov Chains, and Optimization by Short Bursts."</p>
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>map</dt>
-<dd><p>A <code><a href="redist_map.html">redist_map</a></code> object.</p></dd>
+<dd><p>A <a href="redist_map.html">redist_map</a> object.</p></dd>
 
 
 <dt>score_fn</dt>
 <dd><p>A function which takes a matrix of plans and returns a score
-for each plan. Can also be a purrr-style anonymous function. See
-<code><a href="scorers.html">?scorers</a></code> for some function factories for common scoring rules.</p></dd>
+(or, generally, a row vector) for each plan. Can also be a purrr-style
+anonymous function. See <code><a href="scorers.html">?scorers</a></code> for some function factories
+for common scoring rules.</p></dd>
 
 
 <dt>stop_at</dt>
-<dd><p>A threshold to stop optimization at.</p></dd>
+<dd><p>A threshold to stop optimization at. When <code>score_fn</code> returns a
+row vector per plan, <code>maximize</code> can be an equal-length vector specifying a
+threshold for each dimension, which must all be met for the algorithm to
+stop.</p></dd>
 
 
 <dt>burst_size</dt>
-<dd><p>The size of each burst. 10 is recommended for mergesplit and 50 for flip.</p></dd>
+<dd><p>The size of each burst. 10 is recommended for the
+<code>mergesplit</code> backend and 50 for the <code>flip</code> backend. Can also provide
+burst schedule function which takes the current iteration (an integer)
+and returns the desired burst size. This can be a random function.</p></dd>
 
 
 <dt>max_bursts</dt>
@@ -144,13 +150,15 @@ for each plan. Can also be a purrr-style anonymous function. See
 
 <dt>maximize</dt>
 <dd><p>If <code>TRUE</code>, try to maximize the score; otherwise, try to
-minimize it.</p></dd>
+minimize it. When <code>score_fn</code> returns a row vector per plan, <code>maximize</code> can
+be an equal-length vector specifying whether each dimension should be
+maximized or minimized.</p></dd>
 
 
 <dt>init_plan</dt>
 <dd><p>The initial state of the map. If not provided, will default to
 the reference map of the <code>map</code> object, or if none exists, will sample
-a random initial state using <code><a href="redist_smc.html">redist_smc</a></code>. You can also request
+a random initial state using <code><a href="redist_smc.html">redist_smc()</a></code>. You can also request
 a random initial state by setting <code>init_plan="sample"</code>.</p></dd>
 
 
@@ -174,14 +182,25 @@ higher values preferring more compact districts. Must be non-negative. See
 
 <dt>adapt_k_thresh</dt>
 <dd><p>The threshold value used in the heuristic to select a
-value <code>k_i</code> for each splitting iteration. Set to 0.9999 or 1 if
-the algorithm does not appear to be sampling from the target distribution.
-Must be between 0 and 1.</p></dd>
+value <code>k_i</code> for each splitting iteration.</p></dd>
+
+
+<dt>reversible</dt>
+<dd><p>If <code>FALSE</code> and <code>backend="mergesplit"</code>, the Markov chain
+used will not be reversible. This may speed up optimization.</p></dd>
+
+
+<dt>fixed_k</dt>
+<dd><p>If not <code>NULL</code>, will be used to set the <code>k</code> parameter for the
+<code>mergesplit</code> backend. If e.g. <code>k=1</code> then the best edge in each spanning
+tree will be used.  Lower values may speed up optimization at the
+cost of the Markov chain no longer targeting a known distribution.
+Recommended only in conjunction with <code>reversible=FALSE</code>.</p></dd>
 
 
 <dt>return_all</dt>
-<dd><p>Whether to return all the
-Recommended for monitoring purposes.</p></dd>
+<dd><p>Whether to return all the burst results or just the best
+one (generally, the Pareto frontier). Recommended for monitoring purposes.</p></dd>
 
 
 <dt>thin</dt>
@@ -231,72 +250,72 @@ preprint arXiv:2011.02288.</p>
 <span class="r-in"><span><span class="fu">redist_shortburst</span><span class="op">(</span><span class="va">iowa_map</span>, <span class="fu"><a href="scorers.html">scorer_frac_kept</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span>, max_bursts <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> MERGE-SPLIT SHORT BURSTS</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Sampling up to 50 bursts of 10 iterations each.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Burst  Improve?  Score</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     2     💥     0.828829</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     5            0.828829</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    10            0.828829</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    15            0.828829</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    20            0.828829</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    21     🪅     0.833333</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    25            0.833333</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    30            0.833333</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    35            0.833333</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    40            0.833333</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    45            0.833333</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    50            0.833333</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Burst  Improve?    score </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     1     🙂     0.819820</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     2     💥     0.833333</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     5            0.833333</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     9     ⛄     0.842342</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    10            0.842342</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    15            0.842342</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    20            0.842342</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    25            0.842342</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    30            0.842342</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    34     😎     0.846847</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    35            0.846847</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    40            0.846847</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    45            0.846847</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    50            0.846847</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> A <span style="color: #0000BB;">&lt;redist_plans&gt;</span> containing 50 sampled plans and 1 reference plan</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Plans have 4 districts from a 99-unit map, and were drawn using short bursts.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Plans matrix: int [1:99, 1:51] 3 3 1 2 4 1 1 4 1 1 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 204 × 4</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    draw   district total_pop score</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> &lt;init&gt;        1    <span style="text-decoration: underline;">761</span>548 0.788</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> &lt;init&gt;        2    <span style="text-decoration: underline;">761</span>624 0.788</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> &lt;init&gt;        3    <span style="text-decoration: underline;">761</span>612 0.788</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> &lt;init&gt;        4    <span style="text-decoration: underline;">761</span>571 0.788</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> 1             1    <span style="text-decoration: underline;">761</span>548 0.788</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> 1             2    <span style="text-decoration: underline;">761</span>624 0.788</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> 1             3    <span style="text-decoration: underline;">761</span>612 0.788</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> 1             4    <span style="text-decoration: underline;">761</span>571 0.788</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> 2             1    <span style="text-decoration: underline;">756</span>071 0.829</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> 2             2    <span style="text-decoration: underline;">761</span>166 0.829</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># … with 194 more rows</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Plans matrix: int [1:99, 1:51] 1 1 2 3 4 2 2 4 2 2 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 204 × 5</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    draw   district total_pop score burst_size</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> &lt;init&gt;        1    <span style="text-decoration: underline;">761</span>612 0.820         <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> &lt;init&gt;        2    <span style="text-decoration: underline;">761</span>548 0.820         <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> &lt;init&gt;        3    <span style="text-decoration: underline;">761</span>624 0.820         <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> &lt;init&gt;        4    <span style="text-decoration: underline;">761</span>571 0.820         <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> 1             1    <span style="text-decoration: underline;">761</span>612 0.820         10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> 1             2    <span style="text-decoration: underline;">756</span>911 0.820         10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> 1             3    <span style="text-decoration: underline;">761</span>624 0.820         10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> 1             4    <span style="text-decoration: underline;">766</span>208 0.820         10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> 2             1    <span style="text-decoration: underline;">765</span>767 0.833         10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> 2             2    <span style="text-decoration: underline;">758</span>388 0.833         10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 194 more rows</span></span>
 <span class="r-in"><span><span class="fu">redist_shortburst</span><span class="op">(</span><span class="va">iowa_map</span>, <span class="op">~</span> <span class="fl">1</span> <span class="op">-</span> <span class="fu"><a href="scorers.html">scorer_frac_kept</a></span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span><span class="op">(</span><span class="va">.</span><span class="op">)</span>, max_bursts <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> MERGE-SPLIT SHORT BURSTS</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Sampling up to 50 bursts of 10 iterations each.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Burst  Improve?  Score</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     2     😀     0.243243</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     3     🙂     0.252252</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     5     🌟     0.265766</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     7     ⛄     0.283784</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     9     💥     0.288288</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    10     🎉     0.342342</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    15            0.342342</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    20            0.342342</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    25            0.342342</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    29     🪅     0.346847</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    30            0.346847</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    35            0.346847</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    40            0.346847</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    45            0.346847</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    50            0.346847</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Burst  Improve?    score </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     1     ⛄     0.261261</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     5            0.261261</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     6     🎃     0.274775</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    10            0.274775</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    15            0.274775</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    20            0.274775</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    25            0.274775</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    30            0.274775</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    35            0.274775</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    40     🎆     0.279279</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    41     💥     0.292793</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    45            0.292793</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    50            0.292793</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> A <span style="color: #0000BB;">&lt;redist_plans&gt;</span> containing 50 sampled plans and 1 reference plan</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Plans have 4 districts from a 99-unit map, and were drawn using short bursts.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Plans matrix: int [1:99, 1:51] 3 3 1 2 4 1 1 4 1 1 ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 204 × 4</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    draw   district total_pop score</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> &lt;init&gt;        1    <span style="text-decoration: underline;">761</span>548 0.212</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> &lt;init&gt;        2    <span style="text-decoration: underline;">761</span>624 0.212</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> &lt;init&gt;        3    <span style="text-decoration: underline;">761</span>612 0.212</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> &lt;init&gt;        4    <span style="text-decoration: underline;">761</span>571 0.212</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> 1             1    <span style="text-decoration: underline;">761</span>548 0.212</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> 1             2    <span style="text-decoration: underline;">761</span>624 0.212</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> 1             3    <span style="text-decoration: underline;">761</span>612 0.212</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> 1             4    <span style="text-decoration: underline;">761</span>571 0.212</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> 2             1    <span style="text-decoration: underline;">762</span>674 0.243</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> 2             2    <span style="text-decoration: underline;">760</span>498 0.243</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># … with 194 more rows</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Plans matrix: int [1:99, 1:51] 1 1 2 3 4 2 2 4 2 2 ...</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 204 × 5</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    draw   district total_pop score burst_size</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> &lt;init&gt;        1    <span style="text-decoration: underline;">761</span>612 0.261         <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> &lt;init&gt;        2    <span style="text-decoration: underline;">761</span>548 0.261         <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> &lt;init&gt;        3    <span style="text-decoration: underline;">761</span>624 0.261         <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> &lt;init&gt;        4    <span style="text-decoration: underline;">761</span>571 0.261         <span style="color: #BB0000;">NA</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> 1             1    <span style="text-decoration: underline;">758</span>566 0.261         10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> 1             2    <span style="text-decoration: underline;">757</span>170 0.261         10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> 1             3    <span style="text-decoration: underline;">766</span>755 0.261         10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> 1             4    <span style="text-decoration: underline;">763</span>864 0.261         10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> 2             1    <span style="text-decoration: underline;">758</span>566 0.261         10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> 2             2    <span style="text-decoration: underline;">757</span>170 0.261         10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 194 more rows</span></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
@@ -313,7 +332,7 @@ preprint arXiv:2011.02288.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

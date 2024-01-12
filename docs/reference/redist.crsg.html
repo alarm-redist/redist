@@ -19,7 +19,7 @@ Rodden (2013)."><meta property="og:image" content="/logo.png"><!-- mathjax --><s
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.2.0</span>
       </span>
     </div>
 
@@ -40,13 +40,10 @@ Rodden (2013)."><meta property="og:image" content="/logo.png"><!-- mathjax --><s
       <a href="../articles/common_args.html">Common Arguments to `redist` Functions</a>
     </li>
     <li>
+      <a href="../articles/flip.html">Redistricting with Flip MCMC</a>
+    </li>
+    <li>
       <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
-    </li>
-    <li>
-      <a href="../articles/mcmc.html">Redistricting with Flip MCMC</a>
-    </li>
-    <li>
-      <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
     </li>
   </ul></li>
 <li class="dropdown">
@@ -150,7 +147,7 @@ iterations may be advised. Default is 5000.</p></dd>
     
 
 <p>list, containing three objects containing the completed redistricting
-plan.</p><ul><li><p><code>plan</code>  A vector of length N, indicating the
+plan.</p><ul><li><p><code>plan</code>:  A vector of length N, indicating the
 district membership of each precinct.</p></li>
 <li><p><code>district_list</code>  A list of length Ndistrict.  Each list contains a
 vector of the precincts in the respective district.</p></li>
@@ -181,10 +178,10 @@ Quarterly Journal of Political Science. 8(3): 239-269.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $district_list</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $district_list[[1]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1]  9 10 18  7 19  4 24  6 21 12 23 11 14</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1]  9 12 14  7 23 10 11 24 21  4  6 19 18</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $district_list[[2]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] 22  8  5 16  1 15 20 17 13  2  3  0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] 22  5 13  8 16  3  1 15  2 17 20  0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $district_pop</span>
@@ -205,7 +202,7 @@ Quarterly Journal of Political Science. 8(3): 239-269.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>
