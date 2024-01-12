@@ -23,7 +23,7 @@ library(patchwork)
 set.seed(1)
 ```
 
-The `redist` package is designed to allow for replicable redistricting simulations. This vignette covers the Flip Markov Chain Monte Carlo method discussed in: [Automated Redistricting Simulation Using Markov Chain Monte Carlo](https://www.tandfonline.com/doi/full/10.1080/10618600.2020.1739532).
+The `redist` package is designed to allow for replicable redistricting simulations. This vignette covers the Flip Markov Chain Monte Carlo method discussed in: [Automated Redistricting Simulation Using Markov Chain Monte Carlo](https://doi.org/10.1080/10618600.2020.1739532).
 
 # Table of Contents {#top}
 
