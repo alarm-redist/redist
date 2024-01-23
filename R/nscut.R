@@ -41,10 +41,10 @@ order_by_NDS <- function(G, vertex_order_dict, order_vertex_set, result_edge_lis
         order_v_list <- setdiff(order_v_list, v)
         vertex_order_dict[v] <- v_count
         v_count <- v_count + 1
-        vs <- neighbors(G, v)
+        vs <- igraph::neighbors(G, v)
         ws <- sort(vs, decreasing = FALSE, index.return = TRUE)$ix
         for (w in ws) {
-            for (i in seq_len(gsize(G, v, w))) {
+            for (i in seq_len(igraph::gsize(G, v, w))) {
                 if (vertex_order_dict[w] >= 1) {
                     result_edge_list <- c(result_edge_list, c(v, w))
                 }
@@ -289,7 +289,7 @@ get_order_by_cut <- function(edge_list) {
     } else {
         s_t <- get_farthest_two_vertices(G)
         result_edge_list <- character(0)
-        vertex_order_dict <- rep(-1, vcount(G))
+        vertex_order_dict <- rep(-1, igraph::vcount(G))
         vertex_order_dict[s_t[1]] <- 1
         left <- as.character(c(s_t[1]))
         right <- as.character(c(s_t[2]))
@@ -302,9 +302,9 @@ get_order_by_cut <- function(edge_list) {
 
 get_order_by_cut_with_check <- function(edge_list) {
     result_edge_list <- get_order_by_cut(edge_list)
-    G1 <- graph_from_edgelist(edge_list, directed = FALSE)
-    G2 <- graph_from_edgelist(result_edge_list, directed = FALSE)
-    if (!isomorphic(G1, G2)) {
+    G1 <- igraph::graph_from_edgelist(edge_list, directed = FALSE)
+    G2 <- igraph::graph_from_edgelist(result_edge_list, directed = FALSE)
+    if (!igraph::isomorphic(G1, G2)) {
         cli::cli_abort("Graphs are not isomorphic!")
     }
     if (!check_connected_order(result_edge_list)) {
