@@ -1,3 +1,7 @@
+# 4.3.0
+* 4.2.0 introduced a regression in `redist_shortburst()` where the returned `redist_plans` object would store the wrong score for the '<init>' input. This is now fixed. This issue only impacted the returned object and the correct score was used during the shortburst process. (#180)
+* Improves SMC performance by preallocating memory for spanning trees.
+
 # 4.2.0
 * Deprecate functionality that is provided by `redistmetrics` package.
 * Improve contiguity checking speed drastically.
