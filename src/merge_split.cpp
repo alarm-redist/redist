@@ -77,6 +77,8 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     RObject bar = cli_progress_bar(N, cli_config(false));
     int idx = 1;
     Tree ust = init_tree(V);
+    std::vector<bool> visited(V);
+    std::vector<bool> ignore(V);
     for (int i = 1; i <= N; i++) {
         // make the proposal
         double prop_lp = 0.0;
@@ -86,8 +88,9 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
             districts.col(idx+1) = districts.col(idx);
 
             select_pair(n_distr, dist_g, distr_1, distr_2);
-            prop_lp = split_map_ms(g, ust, counties, cg, districts.col(idx+1), distr_1,
-                                   distr_2, pop, lower, upper, target, k);
+            prop_lp = split_map_ms(g, ust, counties, cg, districts.col(idx+1),
+                                   distr_1, distr_2, visited, ignore,
+                                   pop, lower, upper, target, k);
             if (reject_ct % 200 == 0) Rcpp::checkUserInterrupt();
             reject_ct++;
         } while (!std::isfinite(prop_lp));
@@ -179,13 +182,13 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
  */
 double split_map_ms(const Graph &g, Tree &ust, const uvec &counties, Multigraph &cg,
                     subview_col<uword> districts, int distr_1, int distr_2,
+                     std::vector<bool> &visited, std::vector<bool> &ignore,
                     const uvec &pop, double lower, double upper, double target,
                     int k) {
     int V = g.size();
     double orig_lb = log_boundary(g, districts, distr_1, distr_2);
 
     clear_tree(ust);
-    std::vector<bool> ignore(V);
     double total_pop = 0;
     for (int i = 0; i < V; i++) {
         if (districts(i) == distr_1 || districts(i) == distr_2) {
@@ -197,7 +200,8 @@ double split_map_ms(const Graph &g, Tree &ust, const uvec &counties, Multigraph 
     }
 
     int root;
-    int result = sample_sub_ust(g, ust, V, root, ignore, pop, lower, upper, counties, cg);
+    int result = sample_sub_ust(g, ust, V, root, visited, ignore,
+                                pop, lower, upper, counties, cg);
     if (result != 0) return -log(0.0);
 
     // set `lower` as a way to return population of new district
@@ -291,6 +295,7 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
     int root;
     int max_ok = 0;
     std::vector<bool> ignore(V);
+    std::vector<bool> visited(V);
     int distr_1, distr_2;
     int max_V = 0;
     Tree ust = init_tree(V);
@@ -310,7 +315,8 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
         if (n_vtx > max_V) max_V = n_vtx;
 
         clear_tree(ust);
-        int result = sample_sub_ust(g, ust, V, root, ignore, pop, lower, upper, counties, cg);
+        int result = sample_sub_ust(g, ust, V, root, visited, ignore,
+                                    pop, lower, upper, counties, cg);
         if (result != 0) {
             i--;
             continue;

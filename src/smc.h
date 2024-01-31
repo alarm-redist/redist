@@ -58,7 +58,8 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
  * Split a map into two pieces with population lying between `lower` and `upper`
  */
 double split_map(const Graph &g, Tree &ust, const uvec &counties, Multigraph &cg,
-                 subview_col<uword> districts, int dist_ctr, const uvec &pop,
+                 subview_col<uword> districts, int dist_ctr,
+                 std::vector<bool> &visited, std::vector<bool> &ignore, const uvec &pop,
                  double total_pop, double &lower, double upper, double target, int k);
 
 /*
