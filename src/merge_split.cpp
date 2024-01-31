@@ -59,6 +59,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
         Rcout << "Using k = " << k << "\n";
 
     Graph dist_g = district_graph(g, init, n_distr);
+    Graph new_dist_g;
     int distr_1, distr_2;
     select_pair(n_distr, dist_g, distr_1, distr_2);
     int n_accept = 0;
@@ -73,9 +74,9 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     NumericVector new_psi(psi_names.size());
     std::vector<int> distr_1_2;
     new_psi.names() = psi_names;
-    RObject bar = cli_progress_bar(N - 1, cli_config(false));
+    RObject bar = cli_progress_bar(N, cli_config(false));
     int idx = 1;
-    for (int i = 1; i < N; i++) {
+    for (int i = 1; i <= N; i++) {
         // make the proposal
         double prop_lp = 0.0;
         reject_ct = 0;
@@ -118,12 +119,12 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
                                   pop, target, g, constraints);
 
         // adjust for prob of picking district pair
+        new_dist_g = district_graph(g, districts.col(idx+1), n_distr); // update district graph
         prop_lp -= std::log(
             1.0/dist_g[distr_1 - 1].size() + 1.0/dist_g[distr_2 - 1].size()
         );
-        dist_g = district_graph(g, districts.col(idx+1), n_distr); // update district graph
         prop_lp += std::log(
-            1.0/dist_g[distr_1 - 1].size() + 1.0/dist_g[distr_2 - 1].size()
+            1.0/new_dist_g[distr_1 - 1].size() + 1.0/new_dist_g[distr_2 - 1].size()
         );
 
         if (do_mh) {
@@ -131,6 +132,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
             if (alpha >= 1 || r_unif() <= alpha) { // ACCEPT
                 n_accept++;
                 districts.col(idx) = districts.col(idx+1); // copy over new map
+                dist_g = new_dist_g;
                 mh_decisions(idx - 1) = 1;
             } else { // REJECT
                 districts.col(idx+1) = districts.col(idx); // copy over old map
@@ -139,6 +141,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
         } else {
             n_accept++;
             districts.col(idx) = districts.col(idx+1); // copy over new map
+            dist_g = new_dist_g;
             mh_decisions(idx - 1) = 1;
         }
 
