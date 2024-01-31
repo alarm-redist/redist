@@ -227,6 +227,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     rescale <- 1 - maximize * 2
 
     cur_best_scores <- score_fn(matrix(init_plan, ncol = 1))
+    score_init = cur_best_scores
     if (!is.matrix(cur_best_scores)) {
         cur_best_scores = matrix(cur_best_scores, ncol=1)
         rownames(cur_best_scores) = "score"
@@ -339,7 +340,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
 
         out <- add_reference(out, init_plan, "<init>")
         idx_cols = ncol(out) - dim_score:1
-        out[1:ndists, idx_cols] <- matrix(rep(scores[1, ], each = ndists), ncol = dim_score)
+        out[1:ndists, idx_cols] <- matrix(rep(score_init, each = ndists), ncol = dim_score)
     } else {
         out <- new_redist_plans(cur_best, map, "shortburst",
                                 wgt = NULL, resampled = FALSE,
