@@ -394,6 +394,8 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         double inc_lp;
             double lower_s = lower;
         double upper_s = upper;
+
+        Tree ust = init_tree(V);
         while (!ok) {
             // resample
             idx = r_int_wgt(N, cum_wgt);
@@ -410,7 +412,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 RcppThread::checkUserInterrupt(++reject_ct % reject_check_int == 0);
                 continue;
             }
-            inc_lp = split_map(g, counties, cg, districts_new.col(i), dist_ctr,
+            inc_lp = split_map(g, ust, counties, cg, districts_new.col(i), dist_ctr,
                                pop, pop_left(idx), lower_s, upper_s, target, k);
 
             // bad sample; try again
@@ -422,6 +424,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
             ok = true;
         }
         uniques[i] = idx;
+        clear_tree(ust);
 
         // save ancestors/lags
         for (int j = 0; j < n_lags; j++) {
@@ -507,18 +510,18 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
 /*
  * Split a map into two pieces with population lying between `lower` and `upper`
  */
-double split_map(const Graph &g, const uvec &counties, Multigraph &cg,
+double split_map(const Graph &g, Tree &ust, const uvec &counties, Multigraph &cg,
                  subview_col<uword> districts, int dist_ctr, const uvec &pop,
                  double total_pop, double &lower, double upper, double target, int k) {
     int V = g.size();
 
-    Tree ust = init_tree(V);
     std::vector<bool> ignore(V);
     for (int i = 0; i < V; i++) ignore[i] = districts(i) != 0;
 
     int root;
-    ust = sample_sub_ust(g, ust, V, root, ignore, pop, lower, upper, counties, cg);
-    if (ust.size() == 0) return -std::log(0.0);
+    clear_tree(ust);
+    int result = sample_sub_ust(g, ust, V, root, ignore, pop, lower, upper, counties, cg);
+    if (result != 0) return -std::log(0.0);
 
     double new_pop = cut_districts(ust, k, root, districts, dist_ctr, pop, total_pop,
                           lower, upper, target);
@@ -621,13 +624,13 @@ void adapt_parameters(const Graph &g, int &k, int last_k, const vec &lp, double 
     std::vector<bool> ignore(V);
     int idx = 0;
     int max_V = 0;
+    Tree ust = init_tree(V);
     for (int i = 0; i < N_max && idx < N_adapt; i++, idx++) {
         if (std::isinf(lp(i))) { // skip if not valid
             idx--;
             continue;
         }
 
-        Tree ust = init_tree(V);
         int n_vtx = V;
         for (int j = 0; j < V; j++) {
             if (districts(j, i) != 0) {
@@ -637,8 +640,9 @@ void adapt_parameters(const Graph &g, int &k, int last_k, const vec &lp, double 
         }
         if (n_vtx > max_V) max_V = n_vtx;
 
-        ust = sample_sub_ust(g, ust, V, root, ignore, pop, lower, upper, counties, cg);
-        if (ust.size() == 0) {
+        clear_tree(ust);
+        int result = sample_sub_ust(g, ust, V, root, ignore, pop, lower, upper, counties, cg);
+        if (result != 0) {
             idx--;
             continue;
         }

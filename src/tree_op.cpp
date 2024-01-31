@@ -175,6 +175,16 @@ Tree init_tree(int V) {
 }
 
 /*
+ * Initialize empty tree structure on graph with `V` vertices
+ */
+// TESTED
+void clear_tree(Tree &tree) {
+    for (auto &nodes : tree) {
+        nodes.clear();
+    }
+}
+
+/*
  * Convert R adjacency list to Graph object (vector of vectors of ints).
  */
 Graph list_to_graph(const List &l) {

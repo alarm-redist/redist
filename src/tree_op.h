@@ -48,6 +48,11 @@ Multigraph init_multigraph(int V);
 Tree init_tree(int V);
 
 /*
+ * Clear a tree
+ */
+void clear_tree(Tree &tree);
+
+/*
  * Convert R adjacency list to Graph object (vector of vectors of ints).
  */
 Graph list_to_graph(const List &l);
