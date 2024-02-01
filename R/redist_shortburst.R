@@ -310,7 +310,8 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
             out_mat[, idx] <- cur_best[, out_idx]
             scores[idx, ] <- cur_best_scores[, out_idx] * rescale
 
-            if (any(colSums(cur_best_scores >= stop_at) == dim_score)) {
+            if ((maximize && any(colSums(cur_best_scores >= stop_at) == dim_score)) ||
+                (!maximize && any(colSums(cur_best_scores <= stop_at) == dim_score))) {
                 converged = TRUE
                 break
             }

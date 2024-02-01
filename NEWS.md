@@ -1,5 +1,7 @@
 # 4.3.0
-* 4.2.0 introduced a regression in `redist_shortburst()` where the returned `redist_plans` object would store the wrong score for the '<init>' input. This is now fixed. This issue only impacted the returned object and the correct score was used during the shortburst process. (#180)
+* 4.2.0 introduced some regressions in `redist_shortburst()`. The following issues are fixed: 
+  * the returned `redist_plans` object would store the wrong score for the '<init>' input. This issue only impacted the returned object and the correct score was used during the shortburst process. (#180)
+  * the function would return immediately if `stop_at` was specified and `minimize = FALSE`. (#181) 
 * Improves SMC performance by preallocating memory for spanning trees.
 
 # 4.2.0
