@@ -49,6 +49,7 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
                                        constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
                                        adapt_k_thresh = 0.99, k = NULL, ncores = NULL,
                                        cl_type = "PSOCK", return_all = TRUE, init_name = NULL,
+                                       silly_adj_fix = FALSE,
                                        verbose = FALSE, silent = FALSE) {
     if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
 
@@ -124,13 +125,29 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
         if (any(is.na(counties)))
             cli_abort("{.arg counties} must not contain missing values.")
 
-        # handle discontinuous counties
-        component <- contiguity(adj, vctrs::vec_group_id(counties))
-        counties <- dplyr::if_else(component > 1,
-                                   paste0(as.character(counties), "-", component),
-                                   as.character(counties)) %>%
-            as.factor() %>%
-            as.integer()
+        if (silly_adj_fix) {
+            for (j in seq_len(ndists)) {
+                idx_distr <- which(init_plans[, 1] == j)
+                adj_distr <- redist.reduce.adjacency(adj, idx_distr)
+                component <- contiguity(adj_distr, vctrs::vec_group_id(counties[idx_distr]))
+                counties[idx_distr] <- paste0(
+                    j, ":",
+                    dplyr::if_else(component > 1,
+                                   paste0(as.character(counties[idx_distr]), "-", component),
+                                   as.character(counties[idx_distr]))
+                )
+            }
+            counties <- vctrs::vec_group_id(counties)
+        } else {
+            counties = vctrs::vec_group_id(counties)
+            # handle discontinuous counties
+            component <- contiguity(adj, vctrs::vec_group_id(counties))
+            counties <- dplyr::if_else(component > 1,
+                                       paste0(as.character(counties), "-", component),
+                                       as.character(counties)) %>%
+                as.factor() %>%
+                as.integer()
+        }
     }
 
     # Other constraints

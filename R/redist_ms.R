@@ -63,6 +63,7 @@
 #' @param init_name a name for the initial plan, or \code{FALSE} to not include
 #' the initial plan in the output.  Defaults to the column name of the
 #' existing plan, or "\code{<init>}" if the initial plan is sampled.
+#' @param silly_adj_fix Heuristic for fixing weird inputs.
 #' @param verbose Whether to print out intermediate information while sampling.
 #' Recommended.
 #' @param silent Whether to suppress all diagnostic information.
