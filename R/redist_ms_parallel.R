@@ -166,19 +166,11 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
     }
 
     control = list(adapt_k_thresh=adapt_k_thresh, do_mh=TRUE)
-    # kind of hacky -- extract k=... from outupt
-    if (!requireNamespace("utils", quietly = TRUE)) stop()
-    out <- utils::capture.output({
-        x <- ms_plans(1, adj, init_plans[, 1], counties, pop, ndists, pop_bounds[2],
-                      pop_bounds[1], pop_bounds[3], compactness, list(), control,
-                      0L, 1L, verbosity = 3)
-    }, type = "output")
+    x <- ms_plans(1, adj, init_plan, counties, pop, ndists, pop_bounds[2],
+                  pop_bounds[1], pop_bounds[3], compactness,
+                  list(), control, 0L, 1L, verbosity = 0)
+    k <- x$est_k
     rm(x)
-    k <- as.integer(stats::na.omit(stringr::str_match(out, "Using k = (\\d+)")[, 2]))
-    if (length(k) == 0)
-        cli_abort(c("Adaptive {.var k} not found. This error should not happen.",
-            ">" = "Please file an issue at
-                        {.url https://github.com/alarm-redist/redist/issues/new}"))
 
     # set up parallel
     if (is.null(ncores)) ncores <- parallel::detectCores()
@@ -193,9 +185,9 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
         cl <- makeCluster(ncores, methods = FALSE,
                           useXDR = .Platform$endian != "little")
     doParallel::registerDoParallel(cl)
-    on.exit(stopCluster(cl))
+    on.exit(parallel::stopCluster(cl))
 
-    out_par <- foreach(chain = seq_len(chains), .inorder = FALSE, .packages="redist") %dorng% {
+    out_par <- foreach::foreach(chain = seq_len(chains), .inorder = FALSE, .packages="redist") %dorng% {
         if (!silent) cat("Starting chain ", chain, "\n", sep = "")
         run_verbosity <- if (chain == 1 || verbosity == 3) verbosity else 0
         t1_run <- Sys.time()
