@@ -166,7 +166,7 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
     }
 
     control = list(adapt_k_thresh=adapt_k_thresh, do_mh=TRUE)
-    x <- ms_plans(1, adj, init_plan, counties, pop, ndists, pop_bounds[2],
+    x <- ms_plans(1, adj, init_plans[, 1], counties, pop, ndists, pop_bounds[2],
                   pop_bounds[1], pop_bounds[3], compactness,
                   list(), control, 0L, 1L, verbosity = 0)
     k <- x$est_k
@@ -178,16 +178,23 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
     of <- ifelse(Sys.info()[['sysname']] == 'Windows',
                  tempfile(pattern = paste0('ms_', substr(Sys.time(), 1, 10)), fileext = '.txt'),
                  '')
-    if (!silent)
-        cl <- makeCluster(ncores, outfile = of, methods = FALSE,
-                          useXDR = .Platform$endian != "little")
-    else
-        cl <- makeCluster(ncores, methods = FALSE,
-                          useXDR = .Platform$endian != "little")
+    if (!silent) {
+        cl <- parallel::makeCluster(ncores, outfile = of, methods = FALSE,
+                                    useXDR = .Platform$endian != "little")
+    } else {
+        cl <- parallel::makeCluster(ncores, methods = FALSE,
+                                    useXDR = .Platform$endian != "little")
+    }
+
     doParallel::registerDoParallel(cl)
     on.exit(parallel::stopCluster(cl))
 
-    out_par <- foreach::foreach(chain = seq_len(chains), .inorder = FALSE, .packages="redist") %dorng% {
+    to_export <- lapply(constraints$custom, function(x) x$to_export) %>%
+        unlist() %>%
+        unique()
+
+    out_par <- foreach::foreach(chain = seq_len(chains), .inorder = FALSE, .packages="redist",
+                                .export = to_export) %dorng% {
         if (!silent) cat("Starting chain ", chain, "\n", sep = "")
         run_verbosity <- if (chain == 1 || verbosity == 3) verbosity else 0
         t1_run <- Sys.time()

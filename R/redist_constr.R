@@ -623,12 +623,14 @@ add_constr_custom <- function(constr, strength, fn) {
     if (length(args) != 2) cli_abort("Function must take exactly two arguments.")
 
     constr_env = rlang::fn_env(fn)
+    constr_env <- rlang::env(constr_env)
     # every symbol used in the function (except the 2 arguments)
     var_names = setdiff(
         all.names(rlang::fn_body(fn)),
         names(args)
     )
 
+    exports <- NULL
     for (nm in var_names) {
         found = find_env(nm, constr_env)
         if (!is.null(found) &&
@@ -636,6 +638,7 @@ add_constr_custom <- function(constr, strength, fn) {
                 !identical(found, constr_env) &&
                 !identical(found, rlang::pkg_env("redist"))) {
             constr_env[[nm]] = get(nm, envir=found)
+            exports <- c(exports, nm)
         }
     }
 
@@ -652,7 +655,9 @@ add_constr_custom <- function(constr, strength, fn) {
                              and never returns {.val {NA}} or {.val {Inf}}."))
     }
 
-    new_constr <- list(strength = strength, fn = fn)
+    rlang::fn_env(fn) <- constr_env
+
+    new_constr <- list(strength = strength, fn = fn, to_export = exports)
     add_to_constr(constr, "custom", new_constr)
 }
 
