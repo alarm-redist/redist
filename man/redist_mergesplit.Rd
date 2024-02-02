@@ -17,6 +17,7 @@ redist_mergesplit(
   adapt_k_thresh = 0.99,
   k = NULL,
   init_name = NULL,
+  silly_adj_fix = FALSE,
   verbose = FALSE,
   silent = FALSE
 )
