@@ -630,7 +630,6 @@ add_constr_custom <- function(constr, strength, fn) {
         names(args)
     )
 
-    exports <- NULL
     for (nm in var_names) {
         found = find_env(nm, constr_env)
         if (!is.null(found) &&
@@ -638,7 +637,6 @@ add_constr_custom <- function(constr, strength, fn) {
                 !identical(found, constr_env) &&
                 !identical(found, rlang::pkg_env("redist"))) {
             constr_env[[nm]] = get(nm, envir=found)
-            exports <- c(exports, nm)
         }
     }
 
@@ -657,7 +655,7 @@ add_constr_custom <- function(constr, strength, fn) {
 
     rlang::fn_env(fn) <- constr_env
 
-    new_constr <- list(strength = strength, fn = fn, to_export = exports)
+    new_constr <- list(strength = strength, fn = fn)
     add_to_constr(constr, "custom", new_constr)
 }
 
