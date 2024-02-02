@@ -189,10 +189,7 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
     doParallel::registerDoParallel(cl)
     on.exit(parallel::stopCluster(cl))
 
-    to_export <- lapply(constraints$custom, function(x) x$to_export) %>%
-        unlist() %>%
-        unique()
-
+    to_export <- unique(vapply(constraints$custom, function(x) x$to_export, ""))
     out_par <- foreach::foreach(chain = seq_len(chains), .inorder = FALSE, .packages="redist",
                                 .export = to_export) %dorng% {
         if (!silent) cat("Starting chain ", chain, "\n", sep = "")
