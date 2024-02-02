@@ -179,19 +179,10 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     if (backend == "mergesplit") {
         control = list(adapt_k_thresh=adapt_k_thresh, do_mh=reversible)
         if (is.null(fixed_k)) {
-            # kind of hacky -- extract k=... from outupt
-            if (!requireNamespace("utils", quietly = TRUE)) stop()
-            out <- utils::capture.output({
-                x <- ms_plans(1, adj, init_plan, counties, pop, ndists, pop_bounds[2],
-                    pop_bounds[1], pop_bounds[3], compactness,
-                    list(), control, 0L, 1L, verbosity = 3)
-            }, type = "output")
-            rm(x)
-            k <- as.integer(stats::na.omit(stringr::str_match(out, "Using k = (\\d+)")[, 2]))
-            if (length(k) == 0)
-                cli_abort(c("Adaptive {.var k} not found. This error should not happen.",
-                    ">" = "Please file an issue at
-                            {.url https://github.com/alarm-redist/redist/issues/new}"))
+            x <- ms_plans(1, adj, init_plan, counties, pop, ndists, pop_bounds[2],
+                          pop_bounds[1], pop_bounds[3], compactness,
+                          list(), control, 0L, 1L, verbosity = 0)
+            k <- x$est_k
         } else {
             k = fixed_k
         }
