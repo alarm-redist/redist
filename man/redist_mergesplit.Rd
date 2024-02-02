@@ -70,6 +70,8 @@ tree. Should be selected automatically in nearly all cases.}
 the initial plan in the output.  Defaults to the column name of the
 existing plan, or "\code{<init>}" if the initial plan is sampled.}
 
+\item{silly_adj_fix}{Heuristic for fixing weird inputs.}
+
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}
 
