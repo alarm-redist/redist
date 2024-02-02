@@ -110,9 +110,6 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
 
     score_fn <- rlang::as_closure(score_fn)
     stopifnot(is.function(score_fn))
-    if (!is.numeric(stop_at)) {
-        stop_at <- Inf
-    }
 
     if (compactness < 0)
         cli_abort("{.arg compactness} must be non-negative.")
@@ -219,6 +216,11 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
 
     cur_best_scores <- score_fn(matrix(init_plan, ncol = 1))
     score_init = cur_best_scores
+    if (!is.numeric(stop_at)) {
+        stop_at <- -Inf
+    } else {
+        stop_at = rescale * stop_at
+    }
     if (!is.matrix(cur_best_scores)) {
         cur_best_scores = matrix(cur_best_scores, ncol=1)
         rownames(cur_best_scores) = "score"
@@ -301,8 +303,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
             out_mat[, idx] <- cur_best[, out_idx]
             scores[idx, ] <- cur_best_scores[, out_idx] * rescale
 
-            if ((maximize && any(colSums(cur_best_scores >= stop_at) == dim_score)) ||
-                (!maximize && any(colSums(cur_best_scores <= stop_at) == dim_score))) {
+            if (any(colSums(cur_best_scores <= stop_at) == dim_score)) {
                 converged = TRUE
                 break
             }
