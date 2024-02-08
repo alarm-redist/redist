@@ -1,11 +1,11 @@
-map = alarmdata::alarm_50state_map("NC") |>
+map = alarmdata::alarm_50state_map("CT") |>
     set_pop_tol(0.05)
 
 # pl1 = redist_mergesplit_parallel(map, 2200, warmup=200, chains=2)
 # pl2 = redist_mergesplit(map, 2200, warmup=200)
 perims = prep_perims(map)
 
-pl_ms = redist_mergesplit(map, 8200, warmup=200, thin=2, init_plan="sample") |>
+pl_ms = redist_mergesplit(map, 8200, warmup=200, thin=2, init_plan="sample", adapt_k_thresh=1) |>
     mutate(polsby = comp_polsby(pl(), map, perim_df=perims, ncores=4),
            dem = group_frac(map, ndv, ndv + nrv)) |>
     subset_sampled() |>
@@ -44,8 +44,8 @@ t.test(pl_smc$polsby > 0.23, pl_ms$polsby > 0.23)
 t.test(pl_smc$polsby > 0.20 & pl_smc$polsby < 0.21,
        pl_ms$polsby > 0.20 & pl_ms$polsby < 0.21)
 
-hist(pl_smc$polsby, breaks=seq(0.13, 0.26, 0.01), col="#70000070")
-hist(rep(pl_ms$polsby, 1), breaks=seq(0.13, 0.26, 0.01), col="#00007070", add=TRUE)
+hist.default(pl_smc$polsby, breaks=seq(0.1, 0.6, 0.01), col="#70000070")
+hist.default(rep(pl_ms$polsby, 1), breaks=seq(0.1, 0.6, 0.01), col="#00007070", add=TRUE)
 
-hist(pl_smc$e_dem, breaks=3:10, col="#70000070")
-hist(rep(pl_ms$e_dem, 1), breaks=3:10, col="#00007070", add=TRUE)
+hist.default(pl_smc$e_dem, breaks=0:10, col="#70000070")
+hist.default(rep(pl_ms$e_dem, 1), breaks=0:10, col="#00007070", add=TRUE)
