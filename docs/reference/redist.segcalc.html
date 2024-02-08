@@ -19,7 +19,7 @@ redistricting plan."><meta property="og:image" content="/logo.png"><!-- mathjax 
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.2.0</span>
       </span>
     </div>
 
@@ -40,13 +40,10 @@ redistricting plan."><meta property="og:image" content="/logo.png"><!-- mathjax 
       <a href="../articles/common_args.html">Common Arguments to `redist` Functions</a>
     </li>
     <li>
+      <a href="../articles/flip.html">Redistricting with Flip MCMC</a>
+    </li>
+    <li>
       <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
-    </li>
-    <li>
-      <a href="../articles/mcmc.html">Redistricting with Flip MCMC</a>
-    </li>
-    <li>
-      <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
     </li>
   </ul></li>
 <li class="dropdown">
@@ -80,7 +77,7 @@ redistricting plan."><meta property="og:image" content="/logo.png"><!-- mathjax 
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Segregation index calculation for MCMC redistricting.</h1>
-    <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/HEAD/R/tidy.R" class="external-link"><code>R/tidy.R</code></a>, <a href="https://github.com/alarm-redist/redist/blob/HEAD/R/calcstats.R" class="external-link"><code>R/calcstats.R</code></a></small>
+    <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/HEAD/R/tidy_deprecations.R" class="external-link"><code>R/tidy_deprecations.R</code></a>, <a href="https://github.com/alarm-redist/redist/blob/HEAD/R/deprecations.R" class="external-link"><code>R/deprecations.R</code></a></small>
     <div class="hidden name"><code>redist.segcalc.Rd</code></div>
     </div>
 
@@ -151,61 +148,36 @@ Segregation". Social Forces.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## Get an initial partition</span></span></span>
 <span class="r-in"><span><span class="va">init_plan</span> <span class="op">&lt;-</span> <span class="va">fl25_enum</span><span class="op">$</span><span class="va">plans</span><span class="op">[</span>, <span class="fl">5118</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="va">fl25</span><span class="op">$</span><span class="va">init_plan</span> <span class="op">&lt;-</span> <span class="va">init_plan</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## 25 precinct, three districts - no pop constraint ##</span></span></span>
-<span class="r-in"><span><span class="va">alg_253</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist.flip.html">redist.flip</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>    adj <span class="op">=</span> <span class="va">fl25_adj</span>, total_pop <span class="op">=</span> <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span>,</span></span>
-<span class="r-in"><span>    init_plan <span class="op">=</span> <span class="va">init_plan</span>, nsims <span class="op">=</span> <span class="fl">10000</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Please use `redist_flip`. This will be gone in 4.1.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ==================== </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> redist.flip(): Automated Redistricting Simulation Using</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>          Markov Chain Monte Carlo</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Preprocessing data.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Starting swMH().</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■                               </span>   0% | ETA:10s</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■                              </span>   2% | ETA: 7s</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■                              </span>   5% | ETA: 7s</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■                             </span>   8% | ETA: 6s</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■                            </span>  11% | ETA:  6s | MH Acceptance: 0.97</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■                           </span>  13% | ETA:  6s | MH Acceptance: 0.97</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■                          </span>  16% | ETA:  6s | MH Acceptance: 0.97</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■                         </span>  19% | ETA:  6s | MH Acceptance: 0.97</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■                         </span>  21% | ETA:  6s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■                        </span>  24% | ETA:  6s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■                       </span>  27% | ETA:  5s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■                      </span>  30% | ETA:  5s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■                     </span>  33% | ETA:  5s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■                    </span>  36% | ETA:  5s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■                   </span>  39% | ETA:  4s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■                  </span>  42% | ETA:  4s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■                 </span>  45% | ETA:  4s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■                 </span>  48% | ETA:  4s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■                </span>  51% | ETA:  3s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■               </span>  54% | ETA:  3s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■              </span>  57% | ETA:  3s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■             </span>  60% | ETA:  3s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■            </span>  63% | ETA:  3s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■           </span>  66% | ETA:  2s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■          </span>  69% | ETA:  2s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■         </span>  72% | ETA:  2s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■         </span>  75% | ETA:  2s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■        </span>  78% | ETA:  2s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■       </span>  81% | ETA:  1s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■      </span>  84% | ETA:  1s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■     </span>  87% | ETA:  1s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■    </span>  90% | ETA:  1s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   </span>  93% | ETA:  0s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  </span>  96% | ETA:  0s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span>  99% | ETA:  0s | MH Acceptance: 0.96</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.96</span>
+<span class="r-in"><span><span class="va">fl_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">fl25</span>, existing_plan <span class="op">=</span> <span class="st">'init_plan'</span>, adj <span class="op">=</span> <span class="va">fl25_adj</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Projecting to CRS 3857</span>
+<span class="r-in"><span><span class="va">alg_253</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_flip.html">redist_flip</a></span><span class="op">(</span><span class="va">fl_map</span>, nsims <span class="op">=</span> <span class="fl">10000</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="color: #BB0000; font-weight: bold;">redist_flip()</span> <span style="color: #00BBBB;">───────────────────────────────────────────────────────────────</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ── <span style="color: #BB0000; font-weight: bold;">Automated Redistricting Simulation Using Markov Chain Monte Carlo</span> ──</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Preprocessing data.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Starting swMH().</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■                               </span>   0% | ETA: 8s</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■                            </span>  11% | ETA:  2s | MH Acceptance: 0.79</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■                         </span>  21% | ETA:  2s | MH Acceptance: 0.78</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■                      </span>  31% | ETA:  1s | MH Acceptance: 0.78</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■                   </span>  41% | ETA:  1s | MH Acceptance: 0.79</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■                </span>  51% | ETA:  1s | MH Acceptance: 0.78</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■             </span>  61% | ETA:  1s | MH Acceptance: 0.78</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■         </span>  72% | ETA:  1s | MH Acceptance: 0.78</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■      </span>  82% | ETA:  0s | MH Acceptance: 0.77</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   </span>  92% | ETA:  0s | MH Acceptance: 0.77</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ </span> 100% | ETA:  0s | MH Acceptance: 0.77</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## Get Republican Dissimilarity Index from simulations</span></span></span>
-<span class="r-in"><span><span class="va">rep_dmi_253</span> <span class="op">&lt;-</span> <span class="fu">redist.segcalc</span><span class="op">(</span><span class="va">alg_253</span>, <span class="va">fl25</span><span class="op">$</span><span class="va">mccain</span>, <span class="va">fl25</span><span class="op">$</span><span class="va">pop</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># old: rep_dmi_253 &lt;- redist.segcalc(alg_253, fl25$mccain, fl25$pop)</span></span></span>
+<span class="r-in"><span><span class="va">rep_dmi_253</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://alarm-redist.org/redistmetrics/reference/seg_dissim.html" class="external-link">seg_dissim</a></span><span class="op">(</span><span class="va">alg_253</span>, <span class="va">fl25</span>, <span class="va">mccain</span>, <span class="va">pop</span><span class="op">)</span>  <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>    <span class="fu">redistmetrics</span><span class="fu">::</span><span class="fu"><a href="http://alarm-redist.org/redistmetrics/reference/by_plan.html" class="external-link">by_plan</a></span><span class="op">(</span>ndists <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
@@ -221,7 +193,7 @@ Segregation". Social Forces.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

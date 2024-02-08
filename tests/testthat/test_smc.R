@@ -74,6 +74,28 @@ test_that("Not egregiously incorrect sampling accuracy (25-prec)", {
     expect_true(all(abs(zscores) <= 5))
 })
 
+test_that("Labeling accounted for", {
+    skip_on_cran()
+    set.seed(1935)
+
+    g <- list(1:2, c(0L, 3L), c(0L, 3L, 4L), c(1L, 2L, 5L), c(2L, 5L, 6L),
+              c(3L, 4L, 7L), c(4L, 7L), 5:6)
+    map <- redist_map(pop = rep(1, 8), ndists = 4, pop_tol = 0.05, adj = g)
+    out <- redist_smc(map, 10e3, adapt_k_thresh = 1, resample = FALSE, silent = TRUE)
+    types = apply(as.matrix(out), 2, function(x) {
+        paste(vctrs::vec_group_id(x), collapse="")
+    }) |>
+        vctrs::vec_group_id()
+    wgts <- weights(out)
+    avgs <- sapply(1:5, function(i) weighted.mean(types == i, wgts))
+    ses <- sapply(1:5, function(i) {
+        sqrt(sum(((types == i) - 0.2)^2*(wgts/sum(wgts))^2))
+    })
+    zscores <- (avgs - 0.2) / ses
+    expect_true(all(abs(zscores) <= 3))
+})
+
+
 test_that("Partial sampling works accurately", {
     skip_on_cran()
     set.seed(1935)

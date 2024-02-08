@@ -21,6 +21,7 @@ redist_mergesplit_parallel(
   cl_type = "PSOCK",
   return_all = TRUE,
   init_name = NULL,
+  silly_adj_fix = FALSE,
   verbose = FALSE,
   silent = FALSE
 )
@@ -88,6 +89,8 @@ the final plan from each chain.}
 the initial plan in the output.  Defaults to the column name of the
 existing plan, or "\code{<init>}" if the initial plan is sampled.}
 
+\item{silly_adj_fix}{Heuristic for fixing weird inputs.}
+
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}
 
@@ -129,7 +132,7 @@ redistricting plans. arXiv preprint arXiv:1911.01503.
 
 McCartan, C., & Imai, K. (2023). Sequential Monte Carlo for Sampling
 Balanced and Compact Redistricting Plans. \emph{Annals of Applied Statistics} 17(4).
-Available at \url{http://dx.doi.org/10.1214/23-AOAS1763}.
+Available at \doi{10.1214/23-AOAS1763}.
 
 DeFord, D., Duchin, M., and Solomon, J. (2019). Recombination: A family of
 Markov chains for redistricting. arXiv preprint arXiv:1911.05725.

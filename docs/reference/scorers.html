@@ -19,7 +19,7 @@ together using basic arithmetic operations."><meta property="og:image" content="
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.2.0</span>
       </span>
     </div>
 
@@ -40,13 +40,10 @@ together using basic arithmetic operations."><meta property="og:image" content="
       <a href="../articles/common_args.html">Common Arguments to `redist` Functions</a>
     </li>
     <li>
+      <a href="../articles/flip.html">Redistricting with Flip MCMC</a>
+    </li>
+    <li>
       <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
-    </li>
-    <li>
-      <a href="../articles/mcmc.html">Redistricting with Flip MCMC</a>
-    </li>
-    <li>
-      <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
     </li>
   </ul></li>
 <li class="dropdown">
@@ -129,7 +126,7 @@ together using basic arithmetic operations.</p>
 
 
 <dt>perim_df</dt>
-<dd><p>perimeter distance dataframe from <code><a href="redist.prep.polsbypopper.html">redist.prep.polsbypopper</a></code></p></dd>
+<dd><p>perimeter distance dataframe from <code><a href="http://alarm-redist.org/redistmetrics/reference/prep_perims.html" class="external-link">prep_perims()</a></code></p></dd>
 
 
 <dt>areas</dt>
@@ -149,8 +146,11 @@ the minimum Polsby Popper score</p></dd>
     <h2>Value</h2>
     
 
-<p>A scoring function of class <code>redist_scorer</code>. single numeric value, where larger values are better for <code>frac_kept</code>,
-<code>group_pct</code>, and <code>polsby_popper</code> and smaller values are better for <code>splits</code> and <code>pop_dev</code>.</p>
+<p>A scoring function of class <code>redist_scorer</code> which returns a single numeric value per plan.
+Larger values are generally better for <code>frac_kept</code>, <code>group_pct</code>, and <code>polsby_popper</code></p>
+
+
+<p>and smaller values are better for <code>splits</code> and <code>pop_dev</code>.</p>
     </div>
     <div id="details">
     <h2>Details</h2>
@@ -181,35 +181,62 @@ plan is closer to the existing plan.</p></li>
 <span class="r-in"><span><span class="va">iowa_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">iowa</span>, existing_plan <span class="op">=</span> <span class="va">cd_2010</span>, pop_tol <span class="op">=</span> <span class="fl">0.05</span>, total_pop <span class="op">=</span> <span class="va">pop</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">scorer_frac_kept</span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> function(plans) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         (edges - n_removed(adj, plans, ndists))/edges</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x156269438&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> function (plans) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     (edges - n_removed(adj, plans, ndists))/edges</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bytecode: 0x000002401af02e70&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x00000240169bf1d8&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "redist_scorer" "function"     </span>
 <span class="r-in"><span><span class="fu">scorer_status_quo</span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> function(plans) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         1 - 0.5*var_info_vec(plans, existing_plan, pop)/log(ndists)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bytecode: 0x16e777900&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x11d712758&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> function (plans) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     1 - 0.5 * var_info_vec(plans, existing_plan, pop)/log(ndists)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bytecode: 0x000002401414a7c0&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x0000024014149700&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "redist_scorer" "function"     </span>
 <span class="r-in"><span><span class="fu">scorer_group_pct</span><span class="op">(</span><span class="va">iowa_map</span>, <span class="va">dem_08</span>, <span class="va">tot_08</span>, k <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> function(plans) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             group_pct_top_k(plans, group_pop, total_pop, k, ndists)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x16e6ebd28&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> function (plans) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     group_pct_top_k(plans, group_pop, total_pop, k, ndists)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bytecode: 0x0000024016c5e350&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x0000024016c5cbc8&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "redist_scorer" "function"     </span>
 <span class="r-in"><span><span class="fl">1.5</span><span class="op">*</span><span class="fu">scorer_frac_kept</span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span> <span class="op">+</span> <span class="fl">0.4</span><span class="op">*</span><span class="fu">scorer_status_quo</span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> function(plans) { fn1(plans) + fn2(plans) }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x16e669f90&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> function (plans) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     fn1(plans) + fn2(plans)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bytecode: 0x0000024016bc7aa8&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x0000024016bc8288&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "redist_scorer" "function"     </span>
 <span class="r-in"><span><span class="fl">1.5</span><span class="op">*</span><span class="fu">scorer_frac_kept</span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span> <span class="op">+</span> <span class="fu">scorer_frac_kept</span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span><span class="op">*</span><span class="fu">scorer_status_quo</span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> function(plans) { fn1(plans) + fn2(plans) }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x16e5f7ca8&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> function (plans) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     fn1(plans) + fn2(plans)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bytecode: 0x0000024016bc7aa8&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x0000024016b58a98&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "redist_scorer" "function"     </span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    comp <span class="op">=</span> <span class="fu">scorer_frac_kept</span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    sq <span class="op">=</span> <span class="fu">scorer_status_quo</span><span class="op">(</span><span class="va">iowa_map</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> function (plans) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     do.call(cbind, c(lapply(fns, function(fn) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         fn(plans)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     }), list(deparse.level = deparse.level)))</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bytecode: 0x0000024016a4ccc8&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x0000024016a539c8&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "redist_scorer" "function"     </span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
@@ -228,7 +255,7 @@ plan is closer to the existing plan.</p></li>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

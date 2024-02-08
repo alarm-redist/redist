@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">redist</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.2.0</span>
       </span>
     </div>
 
@@ -38,13 +38,10 @@
       <a href="../articles/common_args.html">Common Arguments to `redist` Functions</a>
     </li>
     <li>
+      <a href="../articles/flip.html">Redistricting with Flip MCMC</a>
+    </li>
+    <li>
       <a href="../articles/map-preproc.html">Map Pre-processing for Special Constraints</a>
-    </li>
-    <li>
-      <a href="../articles/mcmc.html">Redistricting with Flip MCMC</a>
-    </li>
-    <li>
-      <a href="../articles/mpi-slurm.html">MPI / Slurm Sample Scripts</a>
     </li>
   </ul></li>
 <li class="dropdown">
@@ -88,7 +85,7 @@
 
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for redist_map</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, fill <span class="op">=</span> <span class="cn">NULL</span>, by_distr <span class="op">=</span> <span class="cn">FALSE</span>, adj <span class="op">=</span> <span class="cn">FALSE</span>, interactive <span class="op">=</span> <span class="cn">FALSE</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, fill <span class="op">=</span> <span class="cn">NULL</span>, by_distr <span class="op">=</span> <span class="cn">FALSE</span>, adj <span class="op">=</span> <span class="cn">FALSE</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -114,15 +111,9 @@ district and indicate the <code>fill</code> variable by shading.</p></dd>
 <code>by_distr</code>.</p></dd>
 
 
-<dt>interactive</dt>
-<dd><p>if <code>TRUE</code>, show an interactive map in the viewer
-rather than a static map. Ignores <code>adj</code> and <code>by_distr</code>.</p></dd>
-
-
 <dt>...</dt>
 <dd><p>passed on to <code><a href="redist.plot.map.html">redist.plot.map</a></code> (or
-<code><a href="redist.plot.adj.html">redist.plot.adj</a></code> if <code>adj=TRUE</code>, or
-<code><a href="redist.plot.interactive.html">redist.plot.interactive</a></code> if <code>interactive=TRUE</code>).
+<code><a href="redist.plot.adj.html">redist.plot.adj</a></code> if <code>adj=TRUE</code>).
 Useful parameters may include <code>zoom_to</code>, <code>boundaries</code>, and
 <code>title</code>.</p></dd>
 
@@ -165,7 +156,7 @@ Useful parameters may include <code>zoom_to</code>, <code>boundaries</code>, and
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

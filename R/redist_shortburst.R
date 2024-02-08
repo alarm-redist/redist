@@ -110,9 +110,6 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
 
     score_fn <- rlang::as_closure(score_fn)
     stopifnot(is.function(score_fn))
-    if (!is.numeric(stop_at)) {
-        stop_at <- Inf
-    }
 
     if (compactness < 0)
         cli_abort("{.arg compactness} must be non-negative.")
@@ -179,19 +176,10 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     if (backend == "mergesplit") {
         control = list(adapt_k_thresh=adapt_k_thresh, do_mh=reversible)
         if (is.null(fixed_k)) {
-            # kind of hacky -- extract k=... from outupt
-            if (!requireNamespace("utils", quietly = TRUE)) stop()
-            out <- utils::capture.output({
-                x <- ms_plans(1, adj, init_plan, counties, pop, ndists, pop_bounds[2],
-                    pop_bounds[1], pop_bounds[3], compactness,
-                    list(), control, 0L, 1L, verbosity = 3)
-            }, type = "output")
-            rm(x)
-            k <- as.integer(stats::na.omit(stringr::str_match(out, "Using k = (\\d+)")[, 2]))
-            if (length(k) == 0)
-                cli_abort(c("Adaptive {.var k} not found. This error should not happen.",
-                    ">" = "Please file an issue at
-                            {.url https://github.com/alarm-redist/redist/issues/new}"))
+            x <- ms_plans(1, adj, init_plan, counties, pop, ndists, pop_bounds[2],
+                          pop_bounds[1], pop_bounds[3], compactness,
+                          list(), control, 0L, 1L, verbosity = 0)
+            k <- x$est_k
         } else {
             k = fixed_k
         }
@@ -227,6 +215,12 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
     rescale <- 1 - maximize * 2
 
     cur_best_scores <- score_fn(matrix(init_plan, ncol = 1))
+    score_init = cur_best_scores
+    if (!is.numeric(stop_at)) {
+        stop_at <- -Inf
+    } else {
+        stop_at = rescale * stop_at
+    }
     if (!is.matrix(cur_best_scores)) {
         cur_best_scores = matrix(cur_best_scores, ncol=1)
         rownames(cur_best_scores) = "score"
@@ -309,7 +303,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
             out_mat[, idx] <- cur_best[, out_idx]
             scores[idx, ] <- cur_best_scores[, out_idx] * rescale
 
-            if (any(colSums(cur_best_scores >= stop_at) == dim_score)) {
+            if (any(colSums(cur_best_scores <= stop_at) == dim_score)) {
                 converged = TRUE
                 break
             }
@@ -339,7 +333,7 @@ redist_shortburst <- function(map, score_fn = NULL, stop_at = NULL,
 
         out <- add_reference(out, init_plan, "<init>")
         idx_cols = ncol(out) - dim_score:1
-        out[1:ndists, idx_cols] <- matrix(rep(scores[1, ], each = ndists), ncol = dim_score)
+        out[1:ndists, idx_cols] <- matrix(rep(score_init, each = ndists), ncol = dim_score)
     } else {
         out <- new_redist_plans(cur_best, map, "shortburst",
                                 wgt = NULL, resampled = FALSE,

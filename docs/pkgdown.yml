@@ -1,11 +1,10 @@
-pandoc: 2.19.2
-pkgdown: 2.0.6
+pandoc: 3.1.1
+pkgdown: 2.0.7
 pkgdown_sha: ~
 articles:
   common_args: common_args.html
+  flip: flip.html
   map-preproc: map-preproc.html
-  mcmc: mcmc.html
-  mpi-slurm: mpi-slurm.html
   redist: redist.html
-last_built: 2023-03-20T17:52Z
+last_built: 2024-01-12T01:39Z
 
