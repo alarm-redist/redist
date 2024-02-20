@@ -219,33 +219,41 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
             runtime = as.numeric(t2_run - t1_run, units = "secs")
         )
 
+        algout$mh <- mean(as.logical(algout$mhdecisions))
+
+        warmup_idx <- c(seq_len(1 + warmup %/% thin), nsims %/% thin + 2L)
+        if (return_all) {
+            algout$plans <- algout$plans[, -warmup_idx, drop = FALSE]
+        } else {
+            algout$plans <- algout$plans[, nsims + 1L, drop = FALSE]
+        }
+        storage.mode(algout$plans) <- "integer"
+
+        warmup_idx <- c(seq_len(warmup %/% thin), nsims %/% thin + 1L)
+        if (!return_all) {
+            algout$mhdecisions <- as.logical(algout$mhdecisions[nsims])
+        } else {
+            algout$mhdecisions <- as.logical(algout$mhdecisions[-warmup_idx])
+        }
+
         algout
     }
 
-    warmup_idx <- c(seq_len(1 + warmup %/% thin), nsims %/% thin + 2L)
+
     plans <- lapply(out_par, function(algout) {
-        if (return_all) {
-            algout$plans[, -warmup_idx, drop = FALSE]
-        } else {
-            algout$plans[, nsims + 1L, drop = FALSE]
-        }
+        algout$plans
     })
     each_len <- ncol(plans[[1]])
     plans <- do.call(cbind, plans)
     storage.mode(plans) <- "integer"
 
     mh <- sapply(out_par, function(algout) {
-        mean(as.logical(algout$mhdecisions))
+        algout$mh
     })
     l_diag <- lapply(out_par, function(algout) algout$l_diag)
 
-    warmup_idx <- c(seq_len(warmup %/% thin), nsims %/% thin + 1L)
     acceptances <- sapply(out_par, function(algout) {
-        if (!return_all) {
-            as.logical(algout$mhdecisions[nsims])
-        } else {
-            as.logical(algout$mhdecisions[-warmup_idx])
-        }
+        algout$mhdecisions
     })
 
 
