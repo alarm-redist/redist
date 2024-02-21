@@ -160,6 +160,8 @@ min_move_parity <- function(map, plan, counties = NULL, penalty = 0.2) {
 #' @export
 optimal_transfer <- function(map, plan, county_splits = FALSE, no_transfer = data.frame()){
 
+    map <- validate_redist_map(map)
+
     if (!is.numeric(plan) && all(plan > 0) && length(plan) == nrow(map))
         cli_abort("{.arg plan} must be a positive integer vector with one entry per precinct.")
 
