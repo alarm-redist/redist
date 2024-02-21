@@ -98,8 +98,6 @@ walnuts_blk <- function(map_prec, map_blk, plan, tolerance = 5) {
 
         new_map$new_plan <- result$plan
 
-        print(new_map$new_plan[1:10])
-
         # Get new plan
         map_blk$new_plan <- NULL
         map_blk <- map_blk %>%
