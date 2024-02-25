@@ -73,6 +73,10 @@ group_pct_top_k <- function(m, group_pop, total_pop, k, n_distr) {
     .Call(`_redist_group_pct_top_k`, m, group_pop, total_pop, k, n_distr)
 }
 
+proj_distr_m <- function(districts, x, draw_idx, n_distr) {
+    .Call(`_redist_proj_distr_m`, districts, x, draw_idx, n_distr)
+}
+
 colmax <- function(x) {
     .Call(`_redist_colmax`, x)
 }

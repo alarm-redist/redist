@@ -2,7 +2,7 @@
 % Please edit documentation in R/plans_helpers.R
 \name{avg_by_prec}
 \alias{avg_by_prec}
-\title{Average a variable by precinct}
+\title{Average a variable by precinct (Deprecated)}
 \usage{
 avg_by_prec(plans, x, draws = NA)
 }
@@ -20,7 +20,7 @@ provided.}
 a vector of length matching the number of precincts, containing the average.
 }
 \description{
+Deprecated in favor of \code{\link[=proj_avg]{proj_avg()}}.
 Takes a column of a \code{redist_plans} object and averages it across a set of
 \code{draws} for each precinct.
 }
-\concept{analyze}
