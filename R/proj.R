@@ -13,7 +13,7 @@
 #' distribution when looking at projective contrasts. The `pfdr` argument to
 #' `proj_contr()` will calculate q-values for each precinct that can be used to
 #' control the positive false discovery rate (pFDR) to avoid being misled by
-#' this variation. See [redist.plot.contr_fdr()] for a way to automatically
+#' this variation. See [redist.plot.contr_pfdr()] for a way to automatically
 #' plot projective contrasts with this false discovery rate control.
 #'
 #' @param plans A [redist_plans] object.
@@ -26,7 +26,7 @@
 #'
 #' @references
 #' McCartan, C. (2024). Projective Averages for Summarizing Redistricting
-#' Ensembles. *arXiv preprint*. Available at \url{https://arxiv.org/abs/}.
+#' Ensembles. *arXiv preprint*. Available at <https://arxiv.org/abs/>.
 #'
 #' @examples
 #' data(iowa)
@@ -88,7 +88,7 @@ proj_avg <- function(plans, x, draws=NA) {
     rowMeans(proj_distr(plans, {{ x }}, draws))
 }
 
-#' @param comp The plan to compare to the rest of the ensemble (which is
+#' @param compare The plan to compare to the rest of the ensemble (which is
 #'   controlled by `draws`). Defaults to the first reference plan, if any exists
 #' @param norm If `TRUE`, normalize the contrast by the standard deviation of
 #'   the projective distribution, precinct-wise. This will make the projective
@@ -104,7 +104,7 @@ proj_avg <- function(plans, x, draws=NA) {
 #'
 #' @rdname proj
 #' @export
-proj_contr <- function(plans, x, comp=NA, draws=NA, norm=FALSE, pfdr=FALSE) {
+proj_contr <- function(plans, x, compare=NA, draws=NA, norm=FALSE, pfdr=FALSE) {
     plans_m <- get_plans_matrix(plans)
 
     n_ref <- 0
@@ -113,17 +113,17 @@ proj_contr <- function(plans, x, comp=NA, draws=NA, norm=FALSE, pfdr=FALSE) {
         n_ref <- sum(nchar(colnames(plans_m)) > 0)
     }
 
-    if (length(comp) != 1) {
-        cli_abort("{.arg comp} must refer to a single plan")
+    if (length(compare) != 1) {
+        cli_abort("{.arg compare} must refer to a single plan")
     }
-    comp_idx <- if (is.na(comp)) {
+    comp_idx <- if (is.na(compare)) {
         if (n_ref > 0) {
             1
         } else {
             cli_abort("If there are no reference plans, {.arg comp} must be specified and not NA.")
         }
-    } else if (is.logical(comp)) {
-        which(comp)
+    } else if (is.logical(compare)) {
+        which(compare)
     } else {
         match(as.character(draws), levels(plans$draw))
     }
@@ -210,20 +210,21 @@ qvalues <- function(ests, p) {
 #'
 #' @examples
 #' # example code
+#' set.seed(1812)
 #' data(iowa)
 #' map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
 #' plans <- redist_smc(map, 50, silent = TRUE)
 #' plans$dem <- group_frac(map, dem_08, tot_08, plans)
 #'
 #' pc = proj_contr(plans, dem, pfdr=TRUE)
-#' redist.plot.contr_fdr(map, pc)
+#' redist.plot.contr_pfdr(map, pc, level=0.4) # high `level` just to demonstrate
 #'
 #'
 #' @concept plot
 #' @export
-redist.plot.contr_fdr <- function(map, contr, level=0.05, density=0.2, spacing=0.015) {
+redist.plot.contr_pfdr <- function(map, contr, level=0.05, density=0.2, spacing=0.015) {
     if (is.null(attr(contr, "q"))) {
-        cli_abort("Must provide {.arg pfdr=TRUE} to {.fn proj_contr} to use {.fn redist.plot.contr_fdr}.")
+        cli_abort("Must provide {.arg pfdr=TRUE} to {.fn proj_contr} to use {.fn redist.plot.contr_pfdr}.")
     }
 
     p = plot(map, contr)

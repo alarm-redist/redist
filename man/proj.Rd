@@ -11,7 +11,7 @@ proj_distr(plans, x, draws = NA)
 
 proj_avg(plans, x, draws = NA)
 
-proj_contr(plans, x, comp = NA, draws = NA, norm = FALSE, pfdr = FALSE)
+proj_contr(plans, x, compare = NA, draws = NA, norm = FALSE, pfdr = FALSE)
 }
 \arguments{
 \item{plans}{A \link{redist_plans} object.}
@@ -24,7 +24,7 @@ object. Tidy-evaluated in \code{plans}.}
 \code{NA} will include all sampled (non-reference) draws. An integer, logical,
 or character vector indicating specific draws may also be provided.}
 
-\item{comp}{The plan to compare to the rest of the ensemble (which is
+\item{compare}{The plan to compare to the rest of the ensemble (which is
 controlled by \code{draws}). Defaults to the first reference plan, if any exists}
 
 \item{norm}{If \code{TRUE}, normalize the contrast by the standard deviation of
@@ -60,7 +60,7 @@ It is very important to properly account for variation in the projective
 distribution when looking at projective contrasts. The \code{pfdr} argument to
 \code{proj_contr()} will calculate q-values for each precinct that can be used to
 control the positive false discovery rate (pFDR) to avoid being misled by
-this variation. See \code{\link[=redist.plot.contr_fdr]{redist.plot.contr_fdr()}} for a way to automatically
+this variation. See \code{\link[=redist.plot.contr_pfdr]{redist.plot.contr_pfdr()}} for a way to automatically
 plot projective contrasts with this false discovery rate control.
 }
 \examples{
