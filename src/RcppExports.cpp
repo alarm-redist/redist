@@ -39,13 +39,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // walnuts_find_boundary_prec
-LogicalVector walnuts_find_boundary_prec(List map, IntegerVector plan, int dist_1, int dist_2, int n_rows);
+Rcpp::LogicalVector walnuts_find_boundary_prec(Rcpp::List map, Rcpp::IntegerVector plan, int dist_1, int dist_2, int n_rows);
 RcppExport SEXP _redist_walnuts_find_boundary_prec(SEXP mapSEXP, SEXP planSEXP, SEXP dist_1SEXP, SEXP dist_2SEXP, SEXP n_rowsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< List >::type map(mapSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type plan(planSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type map(mapSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type plan(planSEXP);
     Rcpp::traits::input_parameter< int >::type dist_1(dist_1SEXP);
     Rcpp::traits::input_parameter< int >::type dist_2(dist_2SEXP);
     Rcpp::traits::input_parameter< int >::type n_rows(n_rowsSEXP);
@@ -54,17 +54,17 @@ BEGIN_RCPP
 END_RCPP
 }
 // walnuts_find_boundary_blk
-LogicalVector walnuts_find_boundary_blk(List map, IntegerVector plan, int dist_1, int dist_2, int n_rows, CharacterVector geoids, std::string gpp);
+Rcpp::LogicalVector walnuts_find_boundary_blk(Rcpp::List map, Rcpp::IntegerVector plan, int dist_1, int dist_2, int n_rows, Rcpp::CharacterVector geoids, std::string gpp);
 RcppExport SEXP _redist_walnuts_find_boundary_blk(SEXP mapSEXP, SEXP planSEXP, SEXP dist_1SEXP, SEXP dist_2SEXP, SEXP n_rowsSEXP, SEXP geoidsSEXP, SEXP gppSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< List >::type map(mapSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type plan(planSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type map(mapSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type plan(planSEXP);
     Rcpp::traits::input_parameter< int >::type dist_1(dist_1SEXP);
     Rcpp::traits::input_parameter< int >::type dist_2(dist_2SEXP);
     Rcpp::traits::input_parameter< int >::type n_rows(n_rowsSEXP);
-    Rcpp::traits::input_parameter< CharacterVector >::type geoids(geoidsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type geoids(geoidsSEXP);
     Rcpp::traits::input_parameter< std::string >::type gpp(gppSEXP);
     rcpp_result_gen = Rcpp::wrap(walnuts_find_boundary_blk(map, plan, dist_1, dist_2, n_rows, geoids, gpp));
     return rcpp_result_gen;
