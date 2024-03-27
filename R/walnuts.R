@@ -16,7 +16,7 @@
 #' precinct that the block belongs to, and the district that it is assigned to
 #'
 #' @examples
-#' map_ar <- alarm_50state_map("AR")
+#' map_ar <- alarmdata::alarm_50state_map("AR")
 #' map_ar_blk <- get_block_map("AR", 4)
 #' new_plan <- suppressWarnings(walnuts_blk(map_ar, map_ar_blk, map_ar$cd_2020))
 #'

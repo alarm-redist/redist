@@ -151,7 +151,7 @@ min_move_parity <- function(map, plan, counties = NULL, penalty = 0.2) {
 #' how much population should be moved from/to each district
 #'
 #' @examples
-#' map_ar <- alarm_50state_map("AR")
+#' map_ar <- alarmdata::alarm_50state_map("AR")
 #' optimal_transfer(map_ar, map_ar$cd_2020)
 #'
 #' @concept analyze
