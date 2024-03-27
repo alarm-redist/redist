@@ -54,10 +54,10 @@ Suggests:
     units,
     RSpectra,
     testthat (>= 3.0.0),
-    spelling
-    censable
-    PL94171
-    lpSolve
+    spelling,
+    censable,
+    PL94171,
+    lpSolve,
     geomander
 LinkingTo: Rcpp, RcppArmadillo, RcppThread, cli, redistmetrics
 License: GPL (>= 2)
