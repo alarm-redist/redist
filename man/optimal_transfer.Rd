@@ -27,9 +27,8 @@ district 1 to district 3) to balance the population between districts such
 that the deviation is at most 1 between districts.
 }
 \examples{
-library(alarmdata)
-map_ar <- alarmdata::alarm_50state_map("AR")
-optimal_transfer(map_ar, map_ar$cd_2020)
+data(iowa)
+optimal_transfer(redist_map(iowa, existing_plan = cd_2010), iowa$cd_2010)
 
 }
 \concept{analyze}

@@ -28,10 +28,10 @@ to move such that it equalizes the population between the districts defined
 in the plan. It returns the new assignment of blocks and precincts to a plan.
 }
 \examples{
-library(alarmdata)
-map_ar <- alarmdata::alarm_50state_map("AR")
-map_ar_blk <- get_block_map("AR", 4)
-new_plan <- suppressWarnings(walnuts_blk(map_ar, map_ar_blk, map_ar$cd_2020))
+data(iowa)
+iowa <- redist_map(iowa, existing_plan = cd_2010)
+iowa_blk <- get_block_map("IA", 4)
+#new_plan <- suppressWarnings(walnuts_blk(iowa, iowa_blk, iowa$cd_2010))
 
 }
 \concept{analyze}

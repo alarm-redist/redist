@@ -16,10 +16,10 @@
 #' precinct that the block belongs to, and the district that it is assigned to
 #'
 #' @examples
-#' library(alarmdata)
-#' map_ar <- alarmdata::alarm_50state_map("AR")
-#' map_ar_blk <- get_block_map("AR", 4)
-#' new_plan <- suppressWarnings(walnuts_blk(map_ar, map_ar_blk, map_ar$cd_2020))
+#' data(iowa)
+#' iowa <- redist_map(iowa, existing_plan = cd_2010)
+#' iowa_blk <- get_block_map("IA", 4)
+#' #new_plan <- suppressWarnings(walnuts_blk(iowa, iowa_blk, iowa$cd_2010))
 #'
 #' @concept analyze
 #' @md
@@ -541,7 +541,7 @@ get_block_map <- function(state_abbr, ndists){
     # Get adjacency for census blocks
     adj <- geomander::adjacency(map_blk)
 
-    if (ccm(adj) != 1){
+    if (geomander::ccm(adj) != 1){
         suggests <- suggest_component_connection(map_blk, adj)
         adj <- adj %>% add_edge(v1 = suggests$x, v2 = suggests$y)
     }
