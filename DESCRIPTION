@@ -58,7 +58,8 @@ Suggests:
     censable,
     PL94171,
     lpSolve,
-    geomander
+    geomander,
+    tibble
 LinkingTo: Rcpp, RcppArmadillo, RcppThread, cli, redistmetrics
 License: GPL (>= 2)
 SystemRequirements: C++17, python
