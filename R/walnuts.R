@@ -43,7 +43,7 @@ walnuts_blk <- function(map_prec, map_blk, plan, tolerance = 5) {
 
     # If no more changes to be made return block-level plan
     if (nrow(transfer) == 0 | sum(transfer$pop) %in% c(-1, 0, 1)){
-        return(as_tibble(map_blk) %>% select(GEOID, BLOCKID, plan))
+        return(tibble::as_tibble(map_blk) %>% select(GEOID, BLOCKID, plan))
     }
 
     # Order transfer by largest population
@@ -102,7 +102,7 @@ walnuts_blk <- function(map_prec, map_blk, plan, tolerance = 5) {
         # Get new plan
         map_blk$new_plan <- NULL
         map_blk <- map_blk %>%
-            left_join(as_tibble(new_map)
+            left_join(tibble::as_tibble(new_map)
                       %>% select(BLOCKID, new_plan), by = "BLOCKID") %>%
             mutate(plan = ifelse(is.na(new_plan), plan, new_plan))
 
@@ -110,7 +110,7 @@ walnuts_blk <- function(map_prec, map_blk, plan, tolerance = 5) {
         new_transfer <- optimal_transfer(map_blk, map_blk$plan)
 
         if (nrow(new_transfer) == 0){
-            return(as_tibble(map_blk) %>% select(GEOID, BLOCKID, plan))
+            return(tibble::as_tibble(map_blk) %>% select(GEOID, BLOCKID, plan))
         }
 
         new_transfer <- new_transfer %>%
@@ -151,7 +151,7 @@ walnuts_blk <- function(map_prec, map_blk, plan, tolerance = 5) {
     }
 
     # Returns precinct GEOIDs, block GEOIDs, and plan
-    return(as_tibble(map_blk) %>% select(GEOID, BLOCKID, plan))
+    return(tibble::as_tibble(map_blk) %>% select(GEOID, BLOCKID, plan))
 }
 
 # Walnuts functions ---------------------------------------------------------
@@ -163,7 +163,7 @@ walnuts_prec_2dists <- function(map, plan, transfer, dist_1, dist_2, shattered =
     original_map <- map
 
     # Convert redist_map to df
-    map <- as_tibble(map)
+    map <- tibble::as_tibble(map)
 
     # Join plan to redist_map
     map$plan <- plan
@@ -303,7 +303,7 @@ walnuts_prec <- function(map, plan){
         # Get new plan
         map$new_plan <- NULL
         map <- map %>%
-            left_join(as_tibble(new_map) %>%
+            left_join(tibble::as_tibble(new_map) %>%
                           select(GEOID, new_plan), by = "GEOID") %>%
             mutate(plan = ifelse(is.na(new_plan), plan, new_plan))
 
@@ -341,7 +341,7 @@ walnuts_blk_2dists <- function(map, plan, transfer, dist_1, dist_2, gpp, shatter
     original_map <- map
 
     # Create dataframe
-    map <- as_tibble(map)
+    map <- tibble::as_tibble(map)
 
     # Join plan to redist_map
     map$plan <- plan
@@ -487,11 +487,11 @@ find_gpp_2dists <- function(map_prec, map_blk, plan, dist_1, dist_2){
 
     scale <- function(x){(x-min(x))/(max(x)-min(x))}
 
-    gpp <- as_tibble(map_blk) %>%
+    gpp <- tibble::as_tibble(map_blk) %>%
         filter(to_swap == TRUE) %>%
         group_by(GEOID) %>%
         summarize(count = n(), pop_on_boundary = sum(pop)) %>%
-        left_join(as_tibble(map_prec) %>% select(GEOID, pop), by = "GEOID") %>%
+        left_join(tibble::as_tibble(map_prec) %>% select(GEOID, pop), by = "GEOID") %>%
         mutate_at(c('count', 'pop_on_boundary', 'pop'), scale) %>%
         mutate(score = count*pop_on_boundary*pop) %>%
         arrange(desc(score)) %>%
@@ -510,11 +510,11 @@ order_gpp_2dists <- function(map_prec, map_blk, plan, dist_1, dist_2){
 
     scale <- function(x){(x-min(x))/(max(x)-min(x))}
 
-    gpp <- as_tibble(map_blk) %>%
+    gpp <- tibble::as_tibble(map_blk) %>%
         filter(to_swap == TRUE) %>%
         group_by(GEOID) %>%
         summarize(count = n(), pop_on_boundary = sum(pop)) %>%
-        left_join(as_tibble(map_prec) %>% select(GEOID, pop), by = "GEOID") %>%
+        left_join(tibble::as_tibble(map_prec) %>% select(GEOID, pop), by = "GEOID") %>%
         mutate_at(c('count', 'pop_on_boundary', 'pop'), scale) %>%
         mutate(score = count*pop_on_boundary*pop) %>%
         arrange(desc(score)) %>%

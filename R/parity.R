@@ -224,7 +224,7 @@ optimal_transfer <- function(map, plan, county_splits = FALSE, no_transfer = dat
 
 # Generate a list of all of the district population deviations
 gen_move_list <- function(redist_map, plan, n_dists){
-    map <- as_tibble(redist_map)
+    map <- tibble::as_tibble(redist_map)
     map$plan <- plan
     pop_ideal <- floor(sum(redist_map$pop)/n_dists)
     move_list <- map %>%
@@ -257,7 +257,7 @@ gen_adj_matrix <- function(redist_map, plan, county_splits = FALSE, no_transfer 
 
     if (county_splits){
         # Create list of counties in each district
-        counties <- as_tibble(redist_map) %>%
+        counties <- tibble::as_tibble(redist_map) %>%
             group_by(plan) %>%
             summarize(county = list(unique(county)))
 
