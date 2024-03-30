@@ -33,13 +33,14 @@ procedure hatched.
 }
 \examples{
 # example code
+set.seed(1812)
 data(iowa)
 map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
 plans <- redist_smc(map, 50, silent = TRUE)
 plans$dem <- group_frac(map, dem_08, tot_08, plans)
 
 pc = proj_contr(plans, dem, pfdr=TRUE)
-redist.plot.contr_pfdr(map, pc)
+redist.plot.contr_pfdr(map, pc, level=0.4) # high `level` just to demonstrate
 
 
 }

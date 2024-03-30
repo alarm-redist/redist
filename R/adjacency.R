@@ -82,7 +82,7 @@ redist.reduce.adjacency <- function(adj, keep_rows) {
     }
 
     # prec_map[keep_rows] = order(keep_rows) - 1L
-    prec_map <- vctrs::vec_group_id(match(seq_along(adj), keep_rows)) - 2L
+    prec_map <- dplyr::coalesce(match(seq_along(adj), keep_rows) - 1L, -1L)
 
     # Reduce!
     reduce_adj(adj, prec_map, length(keep_rows))
