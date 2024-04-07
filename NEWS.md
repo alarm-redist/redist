@@ -4,6 +4,8 @@
 * 4.2.0 introduced some regressions in `redist_shortburst()` along with the new features. The following issues are fixed: 
   * the returned `redist_plans` object would store the wrong score for the '<init>' input. This issue only impacted the returned object and the correct score was used during the shortburst process. (#180)
   * the function would return immediately if `stop_at` was specified and `minimize = FALSE`. (#181) 
+  
+ * Add `summary()` support for plans sampled with the `flip` algorithm. This does not replace the full flip diagnostic suite, but provides an easy way to compute r-hats.
 
 # 4.2.0
 * Deprecate functionality that is provided by `redistmetrics` package.

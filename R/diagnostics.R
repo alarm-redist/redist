@@ -210,9 +210,16 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
             code <- str_glue("plot(<map object>, rowMeans(as.matrix({name}) == <bottleneck iteration>))")
             cli::cat_line("    ", cli::code_highlight(code, "Material"))
         }
-    } else if (algo == "mergesplit") {
-        cli_text("{.strong Merge-Split MCMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
+    } else if (algo %in% c("mergesplit", 'flip')) {
+
+        if (algo == 'mergesplit') {
+            cli_text("{.strong Merge-Split MCMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
                  districts on {fmt_comma(nrow(plans_m))} units")
+        } else {
+            cli_text("{.strong Flip MCMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
+                 districts on {fmt_comma(nrow(plans_m))} units")
+        }
+
 
         accept_rate <- sprintf("%0.1f%%", 100*attr(object, "mh_acceptance"))
         cli_text("Chain acceptance rate{?s}: {accept_rate}")
@@ -224,22 +231,18 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
         cols <- names(object)
         addl_cols <- setdiff(cols, c("chain", "draw", "district", "total_pop", "mcmc_accept"))
         warn_converge <- FALSE
-        if (length(addl_cols) > 0) {
+        if (length(addl_cols) > 0 && "chain" %in% cols) {
             idx <- seq_len(n_samp)
             if ("district" %in% cols) {
                 idx <- 1 + (idx - 1)*n_distr
             }
-            if ("chain" %in% cols) {
-                chain <- object$chain
-            } else {
-                chain <- rep(1, nrow(object))
-            }
+            chain <- object$chain
 
             const_cols <- vapply(addl_cols, function(col) {
                 x <- object[[col]][idx]
                 all(is.na(x)) || all(x == x[1]) ||
                     any(tapply(x, object[['chain']][idx], FUN = function(z) length(unique(z))) == 1)
-            }, numeric(1))
+            }, logical(1))
             addl_cols <- addl_cols[!const_cols]
 
             rhats <- vapply(addl_cols, function(col) {

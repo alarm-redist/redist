@@ -9,6 +9,13 @@
 factor_combine <- function(...) {
     f <- rlang::list2(...)
     lvls <- lapply(f, levels)
-    lvls <- purrr::reduce(lvls, union)
+    lvls <- lapply(seq_along(f), function(i) {
+        if (is.null(lvls[[i]])) {
+            unique(f[[i]])
+        } else {
+            lvls[[i]]
+        }
+    })
+    lvls <- Reduce(f = union, x = lvls, init = c())
     factor(unlist(f), levels = lvls)
 }

@@ -510,13 +510,14 @@ rbind.redist_plans <- function(..., deparse.level = 1) {
         out <- objs[[i]] |>
             dplyr::as_tibble()
 
-        if (is.null(out$chain)) {
+        if (!'chain' %in% names(out)) {
             out$chain <- i
         }
         out
     }) |>
-        purrr::list_rbind()
-    ret$chain <- factor_combine(ret$chain)
+        dplyr::bind_rows()
+
+    #ret$chain <- factor_combine(ret$chain)
     ret <- reconstruct.redist_plans(ret, objs[[1]])
     attr(ret, "compactness") <- comp
     attr(ret, "constraints") <- constr
