@@ -29,6 +29,8 @@ List smc_plans(int N, List l, const arma::uvec &counties, const arma::uvec &pop,
                arma::umat districts, int n_drawn, int n_steps,
                List constraints, List control, int verbosity=1);
 
+
+
 /*
  * Split off a piece from each map in `districts`,
  * keeping deviation between `lower` and `upper`

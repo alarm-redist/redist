@@ -66,6 +66,15 @@ void assign_district(const Tree &ust, subview_col<uword> &districts,
                      int root, int district);
 
 /*
+ * Assign `new_region` to all descendants of `root` in `ust`
+ */
+// TESTED
+void assign_region(const Tree &ust, Plan &plan,
+                   int root,
+                   std::string new_region, int new_region_num_id,
+                   double new_region_pop, int new_region_d);
+
+/*
  * Find the root of a subtree.
  */
 // TESTED

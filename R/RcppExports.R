@@ -53,6 +53,11 @@ dist_dist_diff <- function(p, i_dist, j_dist, x_center, y_center, x, y) {
     .Call(`_redist_dist_dist_diff`, p, i_dist, j_dist, x_center, y_center, x, y)
 }
 
+#' @export
+generalized_smc_plans <- function(N, adj_list, counties, pop, target, lower, upper, M, k_param, control, ncores = -1L, verbosity = 3L) {
+    .Call(`_redist_generalized_smc_plans`, N, adj_list, counties, pop, target, lower, upper, M, k_param, control, ncores, verbosity)
+}
+
 log_st_map <- function(g, districts, counties, n_distr) {
     .Call(`_redist_log_st_map`, g, districts, counties, n_distr)
 }
@@ -107,6 +112,34 @@ ms_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, r
 
 pareto_dominated <- function(x) {
     .Call(`_redist_pareto_dominated`, x)
+}
+
+testing_sample_forest <- function(l, pop, lower, upper, counties, ignore) {
+    .Call(`_redist_testing_sample_forest`, l, pop, lower, upper, counties, ignore)
+}
+
+plan_class_testing <- function(V, num_regions, num_districts) {
+    .Call(`_redist_plan_class_testing`, V, num_regions, num_districts)
+}
+
+split_entire_map <- function(N, adj_list, counties, pop, target, lower, upper, verbose = FALSE) {
+    .Call(`_redist_split_entire_map`, N, adj_list, counties, pop, target, lower, upper, verbose)
+}
+
+split_all_the_way <- function(N, adj_list, counties, pop, target, lower, upper, verbose) {
+    .Call(`_redist_split_all_the_way`, N, adj_list, counties, pop, target, lower, upper, verbose)
+}
+
+copy_semantics_tester_outer <- function() {
+    invisible(.Call(`_redist_copy_semantics_tester_outer`))
+}
+
+test_cpp_discrete_distribution <- function() {
+    invisible(.Call(`_redist_test_cpp_discrete_distribution`))
+}
+
+test_region_lev_graph_stuff <- function(N, adj_list, counties, pop, target, lower, upper, verbose) {
+    .Call(`_redist_test_region_lev_graph_stuff`, N, adj_list, counties, pop, target, lower, upper, verbose)
 }
 
 closest_adj_pop <- function(adj, i_dist, g_prop) {

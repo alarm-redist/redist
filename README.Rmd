@@ -125,4 +125,4 @@ contain more detailed information and guides to specific workflows.
 
 ## About This Branch
 
-Working on adding a more generalized SMC version.
+Working on adding a more generalized SMC version. Added a PHIL_TESTING_FOLDER where I do my own stuff

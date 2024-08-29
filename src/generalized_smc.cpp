@@ -45,7 +45,7 @@ bool cut_regions(Tree &ust, int k_param, int root,
     parent[root] = -1;
     tree_pop(ust, root, pop, pop_below, parent);
 
-    // compile a list of:
+    // compile a list of: things for each edge in tree
     std::vector<int> candidates; // candidate edges to cut,
     std::vector<double> deviances; // how far from target pop.
     std::vector<bool> is_ok; // whether they meet constraints
@@ -60,8 +60,6 @@ bool cut_regions(Tree &ust, int k_param, int root,
     if(plan.region_labels.at(root) != region_to_split){
         Rcout << "Root vertex is not in region to split!";
     }
-
-
 
     // Now loop over all valid edges to cut
     for (int i = 1; i <= plan.V; i++) { // 1-indexing here
@@ -80,7 +78,7 @@ bool cut_regions(Tree &ust, int k_param, int root,
 
 
         // Now try each potential d_nk value from 1 up to d_n-1,k -1
-        // woops fell for 1 instead of 0 indexing error
+        // remember to correct for 0 indexing
         for(int potential_d = 1; potential_d < num_final_districts; potential_d++){
 
             double dev1 = std::fabs(below - target * potential_d);
@@ -92,8 +90,6 @@ bool cut_regions(Tree &ust, int k_param, int root,
              "We are on d = %d and upper is %f while lower is %f \n",
              potential_d, above, below);
              */
-
-            are_ok[potential_d-1] = lower * potential_d < above && above < upper * potential_d;
 
             // If dev1 is smaller then we assign d_nk to below
             if (dev1 < dev2) {
@@ -123,7 +119,6 @@ bool cut_regions(Tree &ust, int k_param, int root,
          */
 
         // Now find the value of d_{n,k} that has the smallest deviation
-
         std::vector<double>::iterator result = std::min_element(devs.begin(), devs.end());
         int best_potential_d = std::distance(devs.begin(), result);
 
@@ -145,6 +140,7 @@ bool cut_regions(Tree &ust, int k_param, int root,
     }
 
 
+    // if less than k_param candidates immediately reject
     if((int) candidates.size() < k_param){
         return false;
     }
