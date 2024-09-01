@@ -116,7 +116,7 @@ redist_gsmc <- function(state_map, M, counties = NULL, k_param_val = 6,
         run_verbosity <- if (chain == 1) verbosity else 0
         t1_run <- Sys.time()
 
-        algout <- redist::generalized_smc_plans(
+        algout <- redist::gsmc_plans(
             N=N,
             adj_list=adj_list,
             counties=counties,

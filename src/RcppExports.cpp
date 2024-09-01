@@ -191,9 +191,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// generalized_smc_plans
-List generalized_smc_plans(int N, List adj_list, const arma::uvec& counties, const arma::uvec& pop, double target, double lower, double upper, int M, int k_param, List control, int ncores, int verbosity);
-RcppExport SEXP _redist_generalized_smc_plans(SEXP NSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP MSEXP, SEXP k_paramSEXP, SEXP controlSEXP, SEXP ncoresSEXP, SEXP verbositySEXP) {
+// gsmc_plans
+List gsmc_plans(int N, List adj_list, const arma::uvec& counties, const arma::uvec& pop, double target, double lower, double upper, int M, int k_param, List control, int ncores, int verbosity);
+RcppExport SEXP _redist_gsmc_plans(SEXP NSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP MSEXP, SEXP k_paramSEXP, SEXP controlSEXP, SEXP ncoresSEXP, SEXP verbositySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -209,7 +209,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< List >::type control(controlSEXP);
     Rcpp::traits::input_parameter< int >::type ncores(ncoresSEXP);
     Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
-    rcpp_result_gen = Rcpp::wrap(generalized_smc_plans(N, adj_list, counties, pop, target, lower, upper, M, k_param, control, ncores, verbosity));
+    rcpp_result_gen = Rcpp::wrap(gsmc_plans(N, adj_list, counties, pop, target, lower, upper, M, k_param, control, ncores, verbosity));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -768,7 +768,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_update_conncomp", (DL_FUNC) &_redist_update_conncomp, 3},
     {"_redist_crsg", (DL_FUNC) &_redist_crsg, 9},
     {"_redist_dist_dist_diff", (DL_FUNC) &_redist_dist_dist_diff, 7},
-    {"_redist_generalized_smc_plans", (DL_FUNC) &_redist_generalized_smc_plans, 12},
+    {"_redist_gsmc_plans", (DL_FUNC) &_redist_gsmc_plans, 12},
     {"_redist_log_st_map", (DL_FUNC) &_redist_log_st_map, 4},
     {"_redist_n_removed", (DL_FUNC) &_redist_n_removed, 3},
     {"_redist_countpartitions", (DL_FUNC) &_redist_countpartitions, 1},

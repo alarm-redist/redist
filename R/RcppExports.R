@@ -53,9 +53,31 @@ dist_dist_diff <- function(p, i_dist, j_dist, x_center, y_center, x, y) {
     .Call(`_redist_dist_dist_diff`, p, i_dist, j_dist, x_center, y_center, x, y)
 }
 
+#' Uses gsmc method to generate a sample of `M` plans in `c++`
+#'
+#' Using the procedure outlined in <PAPER HERE> this function uses Sequential
+#' Monte Carlo (SMC) methods to generate a sample of `M` plans
+#'
+#' @title Run redist gsmc
+#'
+#' @param N The number of districts the final plans will have
+#' @param adj_list A 0-indexed adjacency list representing the undirected graph
+#' which represents the underlying map the plans are to be drawn on
+#' @param counties Vector of county labels of each vertex in `g`
+#' @param pop A vector of the population associated with each vertex in `g`
+#' @param target Ideal population of a valid district. This is what deviance is calculated
+#' relative to
+#' @param lower Acceptable lower bounds on a valid district's population
+#' @param upper Acceptable upper bounds on a valid district's population
+#' @param M The number of plans (samples) to draw
+#' @param k_param The k parameter from the SMC algorithm, you choose among the top k_param edges
+#' @param control Named list of additional parameters.
+#' @param num_threads The number of threads the threadpool should use
+#' @param verbosity What level of detail to print out while the algorithm is
+#' running <ADD OPTIONS>
 #' @export
-generalized_smc_plans <- function(N, adj_list, counties, pop, target, lower, upper, M, k_param, control, ncores = -1L, verbosity = 3L) {
-    .Call(`_redist_generalized_smc_plans`, N, adj_list, counties, pop, target, lower, upper, M, k_param, control, ncores, verbosity)
+gsmc_plans <- function(N, adj_list, counties, pop, target, lower, upper, M, k_param, control, ncores = -1L, verbosity = 3L) {
+    .Call(`_redist_gsmc_plans`, N, adj_list, counties, pop, target, lower, upper, M, k_param, control, ncores, verbosity)
 }
 
 log_st_map <- function(g, districts, counties, n_distr) {
