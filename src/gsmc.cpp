@@ -825,6 +825,7 @@ List gsmc_plans(
         // Now update the weights, region labels, dval column of the matrix
         for(int j=0; j<M; j++){
             // Make the unnormalized weight just the incremental weight from this round
+            // In the future make standalone function to compute these weights
             unnormalized_sampling_weights[j] = std::exp(
                 log_incremental_weights_mat[n][j] // + std::log(unnormalized_sampling_weights[j])
             );

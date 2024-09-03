@@ -8,7 +8,6 @@
 
 #include <string>
 #include <cmath>
-#include <format>
 #include <iostream>
 #include <functional>
 #include <cli/progress.h>
