@@ -15,7 +15,7 @@
 #' @export
 redist_gsmc <- function(state_map, M, counties = NULL, k_param_val = 6,
                        resample = TRUE, runs = 1L, ncores = 0L,
-                       verbose = FALSE, silent = FALSE){
+                       verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE){
     N <- attr(state_map, "ndists")
     # no constraints
     constraints = list()
@@ -128,7 +128,8 @@ redist_gsmc <- function(state_map, M, counties = NULL, k_param_val = 6,
             k_param = k_param_val,
             control = control,
             ncores = as.integer(ncores_per),
-            verbosity=run_verbosity)
+            verbosity=run_verbosity,
+            diagnostic_mode=diagnostic_mode)
 
 
         if (length(algout) == 0) {
@@ -136,12 +137,18 @@ redist_gsmc <- function(state_map, M, counties = NULL, k_param_val = 6,
             cli::cli_process_done()
         }
 
-        # add a plans matrix
-        # IMPORTANT: make it 1 indexed
-        algout$plans <- matrix(
-            unlist(algout$region_ids_mat[[N-1]]),
-            ncol = length(algout$region_ids_mat[[N-1]]),
-            byrow = FALSE) + 1
+
+        # make each element of region_ids_mat_list a V by M matrix
+        algout$region_ids_mat_list <- lapply(
+            algout$region_ids_mat_list,
+            function(x) matrix(unlist(x), ncol = length(x), byrow = FALSE) + 1
+            )
+
+        # make each element of region_dvals_mat_list a V by M matrix
+        algout$region_dvals_mat_list <- lapply(
+            algout$region_dvals_mat_list,
+            function(x) matrix(unlist(x), ncol = length(x), byrow = FALSE)
+        )
 
         # make parent mat into matrix
         algout$parent_index <- matrix(
@@ -149,12 +156,44 @@ redist_gsmc <- function(state_map, M, counties = NULL, k_param_val = 6,
             ncol = length(algout$parent_index),
             byrow = FALSE)
 
+        # make draws tries into a matrix
+        algout$draw_tries_mat  <- matrix(
+            unlist(algout$draw_tries_mat),
+            ncol = length(algout$draw_tries_mat),
+            byrow = FALSE)
+
+        # make the log incremental weights into a matrix
+        algout$log_incremental_weights_mat  <- matrix(
+            unlist(algout$log_incremental_weights_mat),
+            ncol = length(algout$log_incremental_weights_mat),
+            byrow = FALSE)
+
         # pull out the log weights
-        # IDK why its negative
-        lr <- algout$log_incremental_weights_mat[[N-1]]
+        lr <- algout$log_incremental_weights_mat[,N-1]
 
         wgt <- exp(lr - mean(lr))
         n_eff <- length(wgt)*mean(wgt)^2/mean(wgt^2)
+
+        if(diagnostic_mode){
+            # add a plans matrix as the final output because first
+            # N-2 are previous results
+            algout$plans <- algout$region_ids_mat_list[[N-1]]
+
+            algout$final_region_labs <- algout$final_region_labs <- matrix(
+                unlist(algout$final_region_labs),
+                ncol = length(algout$final_region_labs),
+                byrow = FALSE)
+
+        }else{
+            # Just add first element since not diagnostic mode the first N-2
+            # steps were not tracked
+            algout$plans <- algout$region_ids_mat_list[[1]]
+
+            # make the region_ids_mat_list input just null since there's nothing else
+            algout$region_ids_mat_list <- NULL
+            algout$region_dvals_mat_list <- NULL
+            algout$final_region_labs <- NULL
+        }
 
         if (any(is.na(lr))) {
             cli_abort(c("Sampling probabilities have been corrupted.",
@@ -219,9 +258,9 @@ redist_gsmc <- function(state_map, M, counties = NULL, k_param_val = 6,
             district_str_labels = algout$final_region_labs,
             nunique_original_ancestors = algout$nunique_original_ancestors,
             parent_index_mat = algout$parent_index,
-            region_dvals_mat = algout$region_dvals_mat,
+            region_dvals_mat_list = algout$region_dvals_mat_list,
             log_incremental_weights_mat = algout$log_incremental_weights_mat,
-            region_ids_mat = algout$region_ids_mat,
+            region_ids_mat_list = algout$region_ids_mat_list,
             draw_tries_mat = algout$draw_tries_mat
         )
 

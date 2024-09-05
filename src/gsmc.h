@@ -53,7 +53,7 @@ List gsmc_plans(
         double target, double lower, double upper,
         int M, int k_param,// Number of particles aka number of different plans
         List control,
-        int ncores = -1, int verbosity = 3);
+        int ncores = -1, int verbosity = 3, bool diagnostic_mode = false);
 
 
 

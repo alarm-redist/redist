@@ -76,8 +76,8 @@ dist_dist_diff <- function(p, i_dist, j_dist, x_center, y_center, x, y) {
 #' @param verbosity What level of detail to print out while the algorithm is
 #' running <ADD OPTIONS>
 #' @export
-gsmc_plans <- function(N, adj_list, counties, pop, target, lower, upper, M, k_param, control, ncores = -1L, verbosity = 3L) {
-    .Call(`_redist_gsmc_plans`, N, adj_list, counties, pop, target, lower, upper, M, k_param, control, ncores, verbosity)
+gsmc_plans <- function(N, adj_list, counties, pop, target, lower, upper, M, k_param, control, ncores = -1L, verbosity = 3L, diagnostic_mode = FALSE) {
+    .Call(`_redist_gsmc_plans`, N, adj_list, counties, pop, target, lower, upper, M, k_param, control, ncores, verbosity, diagnostic_mode)
 }
 
 log_st_map <- function(g, districts, counties, n_distr) {

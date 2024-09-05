@@ -105,7 +105,7 @@ bool cut_regions(Tree &ust, int k_param, int root,
             } else { // Else if dev2 is smaller we assign d_nk to above
                 devs[potential_d-1] = dev2;
                 dev2_bigger[potential_d-1] = false;
-                are_ok[potential_d-1] = lower * potential_d <= above
+                are_ok[potential_d-1] =    lower * potential_d <= above
                                         && above <= upper * potential_d
                                         && lower * (num_final_districts - potential_d) <= below
                                         && below <= upper * (num_final_districts - potential_d);
@@ -659,7 +659,7 @@ List gsmc_plans(
         double target, double lower, double upper,
         int M, int k_param, // M is Number of particles aka number of different plans
         List control,
-        int num_threads, int verbosity){
+        int num_threads, int verbosity, bool diagnostic_mode){
 
     // set number of threads
     if (num_threads <= 0) num_threads = std::thread::hardware_concurrency();
@@ -678,59 +678,84 @@ List gsmc_plans(
     std::vector<Plan> plans_vec(M, Plan(V, N, total_pop));
     std::vector<Plan> new_plans_vec(M, Plan(V, N, total_pop)); // New plans
 
-    // OUTDATED ONLY DO FINAL ONE TO SAVE MEMORY
-    // Create info tracking we will pass out at the end
-    // This is N-1 by M by V where for each n=1,...,N-1 and m=1,...M it maps vertices to region labels
-    // std::vector<std::vector<std::vector<std::string>>> plan_region_labels_mat(
-    //         N-1,
-    //         std::vector<std::vector<std::string>>(
-    //             M, std::vector<std::string> (V, "MISSING")
-    //     )
-    //
-    // );
 
-
-    std::vector<std::vector<std::string>>final_plan_region_labels(
-                    M, std::vector<std::string> (V, "MISSING")
-            );
-
-    // Create info tracking we will pass out at the end
-    // This is N-1 by M by V where for each n=1,...,N-1 and m=1,...M it maps vertices to integer id
-    std::vector<std::vector<std::vector<int>>> plan_region_ids_mat(
-            N-1,
-            std::vector<std::vector<int>>(
-                M, std::vector<int> (V, -1)
-            )
-
-    );
-    // For integers make default -1 for error tracking
-    // This is N-1 by M by V where for each n=1,...,N-1 and m=1,...M it maps vertices to region d val
-    std::vector<std::vector<std::vector<int>>> plan_d_vals_mat(
-            N-1,
-            std::vector<std::vector<int>>(
-                M, std::vector<int> (V, -1)
-            )
-
-    );
+    // Define output variables that must always be created
 
     // This is N-1 by M where [i][j] is the index of the parent of particle j on step i
     // ie the index of the previous plan that was sampled and used to create particle j on step i
     std::vector<std::vector<int>> parent_index_mat(N-1, std::vector<int> (M, -1));
+
     // This is N-1 by M where [i][j] is the index of the original (first) ancestor of particle j on step i
     std::vector<std::vector<int>> original_ancestor_mat(N-1, std::vector<int> (M, -1));
+
     // This is N-1 by M where [i][j] is the number of tries it took to form particle j on iteration i
     // Inclusive of the final step. ie if succeeds in one try it would be 1
     std::vector<std::vector<int>> draw_tries_mat(N-1, std::vector<int> (M, -1));
 
     // This is N-1 by M where [i][j] is the log incremental weight of particle j on step i
     std::vector<std::vector<double>> log_incremental_weights_mat(N-1, std::vector<double> (M, -1.0));
+
     // This is N-1 by M where [i][j] is the normalized weight of particle j on step i
     std::vector<std::vector<double>> normalized_weights_mat(N-1, std::vector<double> (M, -1.0));
 
+
+
+
+    // Tracks the acceptance rate - total number of tries over M - for each round
     std::vector<double> acceptance_rates(N-1, -1.0);
+
+    // Tracks the effective sample size for the weights of each round
     std::vector<double> n_eff(N-1, -1.0);
+
+    // Tracks the number of unique parent vectors sampled to create the next round
     std::vector<int> nunique_parents_vec(N-1, -1);
+
+    // Tracks the number of unique ancestors left at each step
     std::vector<int> nunique_original_ancestors_vec(N-1, -1);
+
+
+    // Declare variables whose size will depend on whether or not we're in
+    // diagnostic mode or not
+    std::vector<std::vector<std::vector<int>>> plan_region_ids_mat;
+    std::vector<std::vector<std::vector<int>>> plan_d_vals_mat;
+    std::vector<std::vector<std::string>> final_plan_region_labels;
+
+
+
+
+    // If diagnostic mode track stuff from every round
+    if(diagnostic_mode){
+        // Create info tracking we will pass out at the end
+        // This is N-1 by M by V where for each n=1,...,N-1 and m=1,...M it maps vertices to integer id
+        plan_region_ids_mat.resize(N-1, std::vector<std::vector<int>>(
+                M, std::vector<int>(V, -1)
+        ));
+        // For integers make default -1 for error tracking
+        // This is N-1 by M by V where for each n=1,...,N-1 and m=1,...M it maps vertices to region d val
+        plan_d_vals_mat.resize(N-1, std::vector<std::vector<int>>(
+                M, std::vector<int>(V, -1)
+        ));
+
+        //  M by V where for each m=1,...M it maps vertices to region labels in a plan
+        final_plan_region_labels.resize(
+                M, std::vector<std::string> (V, "MISSING")
+        );
+
+    }else{ // else only track for final round
+        // Create info tracking we will pass out at the end
+        // This is M by V where for each m=1,...M it maps vertices to integer id for plan
+        plan_region_ids_mat.resize(1, std::vector<std::vector<int>>(
+                M, std::vector<int>(V, -1)
+        ));
+
+        // For integers make default -1 for error tracking
+        // This is M by V where for each m=1,...M it maps vertices to d value for plan
+        plan_d_vals_mat.resize(1, std::vector<std::vector<int>>(
+                M, std::vector<int>(V, -1)
+        ));
+    }
+
+
 
     // Loading Info
     if (verbosity >= 1) {
@@ -827,11 +852,21 @@ List gsmc_plans(
             // Make the unnormalized weight just the incremental weight from this round
             // In the future make standalone function to compute these weights
             unnormalized_sampling_weights[j] = std::exp(
-                log_incremental_weights_mat[n][j] // + std::log(unnormalized_sampling_weights[j])
+                log_incremental_weights_mat.at(n).at(j) // + std::log(unnormalized_sampling_weights[j])
             );
 
-            plan_region_ids_mat[n][j] = plans_vec[j].region_num_ids;
-            plan_d_vals_mat[n][j] = plans_vec[j].region_dval;
+            if(diagnostic_mode && n == N-2){ // record if in diagnostic mode and final step
+                plan_region_ids_mat.at(n).at(j) = plans_vec[j].region_num_ids;
+                plan_d_vals_mat.at(n).at(j) = plans_vec[j].region_dval;
+                final_plan_region_labels.at(j) = plans_vec[j].region_labels;
+            }else if(diagnostic_mode){ // record if in diagnostic mode but not final step
+                plan_region_ids_mat.at(n).at(j) = plans_vec[j].region_num_ids;
+                plan_d_vals_mat.at(n).at(j) = plans_vec[j].region_dval;
+            }else if(n == N-2){ // else if not only record final step
+                plan_region_ids_mat.at(0).at(j) = plans_vec[j].region_num_ids;
+                plan_d_vals_mat.at(0).at(j) = plans_vec[j].region_dval;
+            }
+
         }
 
 
@@ -847,49 +882,6 @@ List gsmc_plans(
 
     cli_progress_done(bar);
 
-    for(int j=0; j<M; j++){
-        final_plan_region_labels.at(j) = plans_vec[j].region_labels;
-    }
-
-
-//
-//     Rcout << "The integer vector size is "
-//           << sizeof(std::vector<int>) + (sizeof(int) * plan_region_ids_mat[N-2].size())
-//           << " so DONE \n";
-//
-//     size_t totalSize = sizeof(std::vector<std::string>);  // Size of the vector object itself
-//
-//     Rcout << "The STRING vector size is "
-//           << totalSize
-//           << " so DONE \n";
-//
-//     for (const auto& str : plan_region_ids_mat.at(N-2)) {
-//         totalSize += sizeof(str);    // Size of each std::string object
-//         totalSize += str.capacity(); // Size of the allocated string data
-//     }
-//
-//     // auto da_size  = sizeof(std::vector<std::string>) + (sizeof(std::st) * MyVector.size());
-//     Rcout << "The string vector size is "
-//            << totalSize
-//           << " real DONE \n";
-//
-//
-//     totalSize = sizeof(std::vector<std::string>);  // Size of the vector object itself
-//
-//     Rcout << "The STRING vector size is "
-//           << totalSize
-//           << " so DONE \n";
-//
-//     for (const auto& str : final_plan_region_labels.at(N-2)) {
-//         totalSize += sizeof(str);    // Size of each std::string object
-//         totalSize += str.capacity(); // Size of the allocated string data
-//     }
-//
-//     // auto da_size  = sizeof(std::vector<std::string>) + (sizeof(std::st) * MyVector.size());
-//     Rcout << "The string vector size is "
-//           << totalSize
-//           << " real DONE \n";
-
 
     // make first number of unique original ancestors just M
     nunique_original_ancestors_vec.at(0) = M;
@@ -899,8 +891,8 @@ List gsmc_plans(
         _["original_ancestors"] = original_ancestor_mat,
         _["parent_index"] = parent_index_mat,
         _["final_region_labs"] = final_plan_region_labels,
-        _["region_ids_mat"] = plan_region_ids_mat,
-        _["region_dvals_mat"] = plan_d_vals_mat,
+        _["region_ids_mat_list"] = plan_region_ids_mat,
+        _["region_dvals_mat_list"] = plan_d_vals_mat,
         _["log_incremental_weights_mat"] = log_incremental_weights_mat,
         _["normalized_weights_mat"] = normalized_weights_mat,
         _["draw_tries_mat"] = draw_tries_mat,
