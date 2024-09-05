@@ -579,7 +579,7 @@ void adapt_parameters(const Graph &g, int &k, int last_k, const vec &lp, double 
     int V = g.size();
     int k_max = std::min(10 + (int) (2.0 * V * tol), last_k + 4); // heuristic
     int N_max = districts.n_cols;
-    int N_adapt = std::min(60 + (int) std::floor(5000.0 / sqrt((double)V)), N_max);
+    int N_adapt = std::min(100, N_max);
 
     double lower = target * (1 - tol);
     double upper = target * (1 + tol);
