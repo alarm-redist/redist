@@ -675,6 +675,23 @@ List gsmc_plans(
 
     int V = g.size();
     double total_pop = sum(pop);
+
+    // Loading Info
+    if (verbosity >= 1) {
+        Rcout.imbue(std::locale(""));
+        Rcout << std::fixed << std::setprecision(0);
+        Rcout << "GENERALIZED SEQUENTIAL MONTE CARLO\n";
+        Rcout << "Sampling " << M << " " << V << "-unit ";
+        Rcout << "maps with " << N << " districts and population between "
+              << lower << " and " << upper << " using " << num_threads << " threads.\n";
+        if (cg.size() > 1){
+            Rcout << "Ensuring no more than " << N - 1 << " splits of the "
+                  << cg.size() << " administrative units.\n";
+        }
+    }
+
+
+
     std::vector<Plan> plans_vec(M, Plan(V, N, total_pop));
     std::vector<Plan> new_plans_vec(M, Plan(V, N, total_pop)); // New plans
 
@@ -757,19 +774,7 @@ List gsmc_plans(
 
 
 
-    // Loading Info
-    if (verbosity >= 1) {
-        Rcout.imbue(std::locale(""));
-        Rcout << std::fixed << std::setprecision(0);
-        Rcout << "GENERALIZED SEQUENTIAL MONTE CARLO\n";
-        Rcout << "Sampling " << M << " " << V << "-unit ";
-        Rcout << "maps with " << N << " districts and population between "
-              << lower << " and " << upper << " using " << num_threads << " threads.\n";
-        if (cg.size() > 1){
-            Rcout << "Ensuring no more than " << N - 1 << " splits of the "
-                  << cg.size() << " administrative units.\n";
-        }
-    }
+
 
     // Start off all the unnormalized weights at 1
     std::vector<double> unnormalized_sampling_weights(M, 1.0);

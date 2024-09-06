@@ -247,7 +247,7 @@ redist_gsmc <- function(state_map, M, counties = NULL, k_param_val = 6,
             est_k = rep(k_param_val, N-1), # algout$est_k,
             accept_rate = algout$acceptance_rates,
             sd_lp = c(
-                sapply(algout$log_incremental_weights_mat, sd)  , sd(lr)
+                apply(algout$log_incremental_weights_mat, 2, sd), sd(lr)
                 ),
             sd_temper = rep(NA, N-1), # algout$sd_temper,
             unique_survive = c(algout$nunique_parent_indices, n_unique),
