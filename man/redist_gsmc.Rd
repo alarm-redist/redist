@@ -13,7 +13,8 @@ redist_gsmc(
   runs = 1L,
   ncores = 0L,
   verbose = FALSE,
-  silent = FALSE
+  silent = FALSE,
+  diagnostic_mode = FALSE
 )
 }
 \value{

@@ -16,7 +16,8 @@ gsmc_plans(
   k_param,
   control,
   ncores = -1L,
-  verbosity = 3L
+  verbosity = 3L,
+  diagnostic_mode = FALSE
 )
 }
 \arguments{
