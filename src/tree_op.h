@@ -71,8 +71,7 @@ void assign_district(const Tree &ust, subview_col<uword> &districts,
 // TESTED
 void assign_region(const Tree &ust, Plan &plan,
                    int root,
-                   std::string new_region, int new_region_num_id,
-                   double new_region_pop, int new_region_d);
+                   int new_region_num_id);
 
 /*
  * Find the root of a subtree.

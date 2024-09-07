@@ -59,8 +59,8 @@ List gsmc_plans(
 
 
 bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multigraph &cg,
-                           Plan &plan, const std::string region_to_split,
-                           std::vector<std::string> &new_region_labels,
+                           Plan &plan, const int region_id_to_split,
+                           std::vector<int> &new_region_ids,
                            std::vector<bool> &visited, std::vector<bool> &ignore, const uvec &pop,
                            double &lower, double upper, double target, int k_param);
 

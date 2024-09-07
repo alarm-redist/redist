@@ -181,15 +181,11 @@ void assign_district(const Tree &ust, subview_col<uword> &districts,
 // TESTED
 void assign_region(const Tree &ust, Plan &plan,
                      int root,
-                     std::string new_region, int new_region_num_id,
-                     double new_region_pop, int new_region_d) {
-    plan.region_labels.at(root) = new_region;
+                     int new_region_num_id) {
     plan.region_num_ids.at(root) = new_region_num_id;
-    plan.region_pop.at(root) = new_region_pop;
-    plan.region_dval.at(root) = new_region_d;
     int n_desc = ust.at(root).size();
     for (int i = 0; i < n_desc; i++) {
-        assign_region(ust, plan, ust.at(root).at(i), new_region, new_region_num_id, new_region_pop, new_region_d);
+        assign_region(ust, plan, ust.at(root).at(i), new_region_num_id);
     }
 }
 

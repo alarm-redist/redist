@@ -48,16 +48,16 @@ double compute_n_eff(const std::vector<double> &log_wgt) {
 //'
 //' @param g A graph (adjacency list) passed by reference
 //' @param plan A plan object
-//' @param region1_label The label of the first region
-//' @param region2_label The label of the second region
+//' @param region1_id The id of the first region
+//' @param region2_id The id of the second region
 //'
 //' @details No modifications to inputs made
 //'
 //' @return the log of the boundary count
 //'
  double region_log_boundary(const Graph &g, const Plan &plan,
-                            std::string const&region1_label,
-                            std::string const&region2_label
+                            int const&region1_id,
+                            int const&region2_id
  ) {
      int V = g.size(); // get number of vertices
      double count = 0; // count of number of edges across the two regions
@@ -69,17 +69,17 @@ double compute_n_eff(const std::vector<double> &log_wgt) {
           counting we will only count those where first edge is in
           region 1
           */
-         if (plan.region_labels.at(i) != region1_label) continue;
+         if (plan.region_num_ids.at(i) != region1_id) continue;
 
          // Get vertice's neighbors
          std::vector<int> nbors = g[i];
 
          // Since edges show up twice to avoid double counting we will only count
-         // edges where first one is region1_label and second is region2_label
+         // edges where first one is region1_id and second is region2_id
 
          // Now check if neighbors are in second region
          for (int nbor : nbors) {
-             if (plan.region_labels.at(nbor) != region2_label)
+             if (plan.region_num_ids.at(nbor) != region2_id)
                  continue;
              // if they are increase count by one
              count += 1.0;
@@ -103,15 +103,15 @@ double compute_n_eff(const std::vector<double> &log_wgt) {
 //' @title Choose multidistrict to split
 //'
 //' @param plan A plan object
-//' @param region_to_split a string that will be updated by reference with the
-//' name of the region selected to split
+//' @param region_to_split an integer that will be updated by reference with the
+//' id number of the region selected to split
 //'
 //' @details No modifications to inputs made
 //'
 //' @return the region level graph
 //'
 double choose_multidistrict_to_split(
-        Plan const&plan, std::string &region_to_split){
+        Plan const&plan, int &region_id_to_split){
 
     if(plan.num_multidistricts < 1){
         Rprintf("ERROR: Trying to find multidistrict to split when there are none!\n");
@@ -122,18 +122,20 @@ double choose_multidistrict_to_split(
 
     // make vectors with cumulative d value and region label for later
     std::vector<int> multi_d_vals;
-    std::vector<std::string> region_labels;
+    std::vector<int> region_ids;
 
     // Iterate over all regions
-    for (const auto &[key, value]: plan.r_to_d_map ) {
+    for(int region_id = 0; region_id < plan.num_regions; region_id++) {
+
+        int d_val = plan.region_dvals.at(region_id);
 
         // collect info if multidistrict
-        if(value > 1){
+        if(d_val > 1){
             // Add that regions d value to the total
-            total_multi_ds += value;
+            total_multi_ds += d_val;
             // add the count and label to vector
-            multi_d_vals.push_back(value);
-            region_labels.push_back(key);
+            multi_d_vals.push_back(d_val);
+            region_ids.push_back(region_id);
         }
     }
 
@@ -145,7 +147,7 @@ double choose_multidistrict_to_split(
 
     int idx = d(gen);
 
-    region_to_split = region_labels[idx];
+    region_id_to_split = region_ids[idx];
     double log_prob = std::log(
         static_cast<double>(multi_d_vals[idx])
         ) - std::log(
@@ -229,8 +231,8 @@ Graph get_region_graph(const Graph &g, const Plan &plan) {
 //' @title Get Retroactive Split Selection Probability
 //'
 //' @param plan A plan object
-//' @param region1_label The label of the first region to union
-//' @param region2_label The label of the second region to union
+//' @param region1_id The id of the first region to union
+//' @param region2_id The id of the second region to union
 //'
 //' @details No modifications to inputs made
 //'
@@ -239,7 +241,7 @@ Graph get_region_graph(const Graph &g, const Plan &plan) {
 //'
 double get_log_retroactive_splitting_prob(
         const Plan &plan,
-        const std::string region1_label, const std::string region2_label
+        const int region1_id, const int region2_id
 ){
 
     // count total dvals of all the multidistricts
@@ -247,16 +249,18 @@ double get_log_retroactive_splitting_prob(
 
 
     // Iterate over all regions
-    for (const auto &[key, value]: plan.r_to_d_map ) {
+    for(int region_id = 0; region_id < plan.num_regions; region_id++) {
+        int d_val = plan.region_dvals.at(region_id);
+
         // collect info if multidistrict and not the two we started with
-        if(value > 1 && key != region1_label && key != region2_label){
+        if(d_val > 1 && region_id != region1_id && region_id != region2_id){
             // Add that regions d value to the total
-            total_multi_ds += value;
+            total_multi_ds += d_val;
         }
     }
 
     // Now get the sum of dnk values of two regions aka the unioned old region
-    int unioned_region_dnk = plan.r_to_d_map.at(region1_label) + plan.r_to_d_map.at(region2_label);
+    int unioned_region_dnk = plan.region_dvals.at(region1_id) + plan.region_dvals.at(region2_id);
     // update the total number of multi district dvals with the value the union region would have been
     total_multi_ds += unioned_region_dnk;
 
@@ -324,13 +328,10 @@ double compute_log_incremental_weight(const Graph &g, const Plan &plan){
 
     // Now iterate over all adjacent pairs
     for (const auto& edge : adj_region_pairs) {
-        // convert to region string label representation
-        std::string region1_label = plan.num_id_to_str_label_map.at(edge.first);
-        std::string region2_label = plan.num_id_to_str_label_map.at(edge.second);
         // get log of boundary length between regions
-        double log_boundary =  region_log_boundary(g, plan, region1_label, region2_label);
+        double log_boundary =  region_log_boundary(g, plan, edge.first, edge.second);
         // get prob of selecting union of adj regions
-        double log_splitting_prob = get_log_retroactive_splitting_prob(plan, region1_label, region2_label);
+        double log_splitting_prob = get_log_retroactive_splitting_prob(plan, edge.first, edge.second);
         // NO e^J TERM YET but can be added
         // multiply the boundary length and selection probability by adding the logs
         // now exponentiate and add to the sum

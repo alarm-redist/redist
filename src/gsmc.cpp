@@ -14,32 +14,32 @@
 //' @param root The root vertex of the spanning tree
 //' @param pop A vector of the population associated with each vertex in `g`
 //' @param plan A plan object
-//' @param region_to_split The label of the region in the plan object we're attempting to split
+//' @param region_id_to_split The id of the region in the plan object we're attempting to split
 //' @param lower Acceptable lower bounds on a valid district's population
 //' @param upper Acceptable upper bounds on a valid district's population
 //' @param target Ideal population of a valid district. This is what deviance is calculated
 //' relative to
-//' @param new_region_labels A vector that will be updated by reference to contain the names of
+//' @param new_region_ids A vector that will be updated by reference to contain the names of
 //' the two new split regions if function is successful.
 //'
 //' @details Modifications
 //'    - If two new valid regions are split then the plan object is updated accordingly
-//'    - If two new valid regions are split then the new_region_labels is updated so the
+//'    - If two new valid regions are split then the new_region_ids is updated so the
 //'    first entry is the first new region and the second entry is the second new region
 //'
 //' @return True if two valid regions were split off false otherwise
 //'
 bool cut_regions(Tree &ust, int k_param, int root,
                      const uvec &pop,
-                     Plan &plan, const std::string region_to_split,
+                     Plan &plan, const int region_id_to_split,
                      double lower, double upper, double target,
-                     std::vector<std::string> &new_region_labels){
+                     std::vector<int> &new_region_ids){
     // Get population of region being split
-    double total_pop = plan.r_to_pop_map.at(region_to_split);
+    double total_pop = plan.region_pops.at(region_id_to_split);
     // Get the number of final districts in region being split
-    int num_final_districts = plan.r_to_d_map.at(region_to_split);
+    int num_final_districts = plan.region_dvals.at(region_id_to_split);
 
-    // Rcout << "For " << region_to_split << " Total pop is " << total_pop << " and d_nk is " << num_final_districts << "\n";
+    // Rcout << "For " << region_id_to_split << " Total pop is " << total_pop << " and d_nk is " << num_final_districts << "\n";
 
     // create list that points to parents & computes population below each vtx
     std::vector<int> pop_below(plan.V, 0);
@@ -59,14 +59,14 @@ bool cut_regions(Tree &ust, int k_param, int root,
     is_ok.reserve(k_param);
     new_d_val.reserve(k_param);
 
-    if(plan.region_labels.at(root) != region_to_split){
+    if(plan.region_num_ids.at(root) != region_id_to_split){
         Rcout << "Root vertex is not in region to split!";
     }
 
     // Now loop over all valid edges to cut
     for (int i = 1; i <= plan.V; i++) { // 1-indexing here
         // Ignore any vertex not in this region or the root vertex as we wont be cutting those
-        if (plan.region_labels.at(i-1) != region_to_split || i - 1 == root) continue;
+        if (plan.region_num_ids.at(i-1) != region_id_to_split || i - 1 == root) continue;
 
         // Get the population of one side of the partition removing that edge would cause
         double below = pop_below.at(i - 1);
@@ -163,9 +163,11 @@ bool cut_regions(Tree &ust, int k_param, int root,
     }
 
     /*
-    Rcout << "Testing this " << region_to_split + ".R2" << " \n";
+    Rcout << "Testing this " << region_id_to_split + ".R2" << " \n";
     Rcout << "We have Final d =" << new_d_val[idx] << " and " << num_final_districts - new_d_val[idx] << "\n";
      */
+
+
 
     // find index of node to cut at
     std::vector<int> *siblings = &ust[parent[cut_at]];
@@ -190,22 +192,28 @@ bool cut_regions(Tree &ust, int k_param, int root,
     std::string new_region_label1;
     std::string new_region_label2;
 
+    std::string region_to_split = plan.region_str_labels.at(region_id_to_split);
+
     // Set label and count depending on if district or multi district
     if(new_region1_d == 1){
         plan.num_districts++;
+        // if district then string label just adds district number
         new_region_label1 = region_to_split + "." + std::to_string(plan.num_districts);
     }else{
-        new_region_label1 = region_to_split + ".R1";
         plan.num_multidistricts++;
+        // if region then just add current region number
+        new_region_label1 = region_to_split + ".R" + std::to_string(region_id_to_split);
     }
 
     // Now do it for second region
     if(new_region2_d == 1){
         plan.num_districts++;
+        // if district then string label just adds district number
         new_region_label2 = region_to_split + "." + std::to_string(plan.num_districts);
     }else{
-        new_region_label2 = region_to_split + ".R2";
         plan.num_multidistricts++;
+        // if region then just add current region number
+        new_region_label2 = region_to_split + ".R" + std::to_string(plan.num_regions - 1);
     }
 
     // Check whether the new regions are districts or multidistricts
@@ -241,40 +249,40 @@ bool cut_regions(Tree &ust, int k_param, int root,
 
 
     // update the function parameter with names of new regions
-    if(new_region_labels.size() != 2){
-        Rcout << "For some reason the new_region_labels vector in cut_regions is not size 2!\n";
+    if(new_region_ids.size() != 2){
+        Rcout << "For some reason the new_region_ids vector in cut_regions is not size 2!\n";
     }
-    new_region_labels[0] = new_region_label1;
-    new_region_labels[1] = new_region_label2;
 
     // Get the regions current integer id
-    int old_region_num_id = plan.str_label_to_num_id_map[region_to_split];
+    int old_region_num_id = region_id_to_split;
     // make the first new region have the same integer id
     int new_region_num_id1 = old_region_num_id;
     // Second new region has id of the new number of regions minus 1
     int new_region_num_id2 = plan.num_regions - 1;
 
-    // Now update the two cut portions
-    assign_region(ust, plan, tree_vertex1, new_region_label1, new_region_num_id1, new_region1_pop, new_region1_d);
-    assign_region(ust, plan, tree_vertex2, new_region_label2, new_region_num_id2, new_region2_pop, new_region2_d);
+    new_region_ids[0] = new_region_num_id1;
+    new_region_ids[1] = new_region_num_id2;
 
-    // Now update the map objects in the plan
-    plan.r_to_d_map.erase(region_to_split);
-    plan.r_to_pop_map.erase(region_to_split);
-    plan.str_label_to_num_id_map.erase(region_to_split);
-    plan.num_id_to_str_label_map.erase(old_region_num_id);
+
+    // Now update the two cut portions
+    assign_region(ust, plan, tree_vertex1, new_region_num_id1);
+    assign_region(ust, plan, tree_vertex2, new_region_num_id2);
+
+    // Now update the region level information
 
     // Add the new region 1
-    plan.r_to_d_map[new_region_label1] = new_region1_d;
-    plan.r_to_pop_map[new_region_label1] = new_region1_pop;
-    plan.str_label_to_num_id_map[new_region_label1] = new_region_num_id1;
-    plan.num_id_to_str_label_map[new_region_num_id1] = new_region_label1;
+
+    // New region 1 has the same id number as old region so update that
+    plan.region_dvals.at(new_region_num_id1) = new_region1_d;
+    plan.region_str_labels.at(new_region_num_id1) = new_region_label1;
+    plan.region_pops.at(new_region_num_id1) = new_region1_pop;
 
     // Add the new region 2
-    plan.r_to_d_map[new_region_label2] = new_region2_d;
-    plan.r_to_pop_map[new_region_label2] = new_region2_pop;
-    plan.str_label_to_num_id_map[new_region_label2] = new_region_num_id2;
-    plan.num_id_to_str_label_map[new_region_num_id2] = new_region_label2;
+    // New region 2's id is the highest id number so push back
+    plan.region_dvals.push_back(new_region2_d);
+    plan.region_str_labels.push_back(new_region_label2);
+    plan.region_pops.push_back(new_region2_pop);
+
 
     return true;
 
@@ -289,7 +297,7 @@ bool cut_regions(Tree &ust, int k_param, int root,
 //' regions where both regions have valid population bounds. Does this by
 //' drawing a spanning tree uniformly at random then calling `cut_regions` on
 //' that. If the split it successful it returns true and modifies `plan` and
-//' `new_region_labels` accordingly. This is based on the `split_map` function
+//' `new_region_ids` accordingly. This is based on the `split_map` function
 //' in smc.cpp
 //'
 //'
@@ -301,8 +309,8 @@ bool cut_regions(Tree &ust, int k_param, int root,
 //' @param counties Vector of county labels of each vertex in `g`
 //' @param cg multigraph object (not sure why this is needed)
 //' @param plan A plan object
-//' @param region_to_split The label of the region in the plan object we're attempting to split
-//' @param new_region_labels A vector that will be updated by reference to contain the names of
+//' @param region_id_to_split The label of the region in the plan object we're attempting to split
+//' @param new_region_ids A vector that will be updated by reference to contain the names of
 //' the two new split regions if function is successful.
 //' @param lower Acceptable lower bounds on a valid district's population
 //' @param upper Acceptable upper bounds on a valid district's population
@@ -313,14 +321,14 @@ bool cut_regions(Tree &ust, int k_param, int root,
 //'
 //' @details Modifications
 //'    - If two new valid regions are split then the plan object is updated accordingly
-//'    - If two new valid regions are split then the new_region_labels is updated so the
+//'    - If two new valid regions are split then the new_region_ids is updated so the
 //'    first entry is the first new region and the second entry is the second new region
 //'
 //' @return True if two valid regions were split off false otherwise
 //'
 bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multigraph &cg,
-                 Plan &plan, const std::string region_to_split,
-                 std::vector<std::string> &new_region_labels,
+                 Plan &plan, const int region_id_to_split,
+                 std::vector<int> &new_region_ids,
                  std::vector<bool> &visited, std::vector<bool> &ignore, const uvec &pop,
                  double &lower, double upper, double target, int k_param) {
 
@@ -328,7 +336,7 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
 
     // Mark it as ignore if its not in the region to split
     for (int i = 0; i < V; i++){
-        ignore[i] = plan.region_labels[i] != region_to_split;
+        ignore[i] = plan.region_num_ids.at(i) != region_id_to_split;
     }
 
     // Get a uniform spanning tree drawn on that region
@@ -341,9 +349,9 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
 
     // Now try to cut the tree and return that result
     return cut_regions(ust, k_param, root, pop,
-                       plan, region_to_split,
+                       plan, region_id_to_split,
                        lower, upper, target,
-                       new_region_labels);
+                       new_region_ids);
 
 }
 
@@ -433,7 +441,7 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
 //'    original ancestors of the new plans
 //'    - The `parent_vec` is updated to contain the indices of the parents of the
  //'    new plans
-//'    - If two new valid regions are split then the new_region_labels is updated so the
+//'    - If two new valid regions are split then the new_region_ids is updated so the
 //'    first entry is the first new region and the second entry is the second new region
 //'    - The `new_log_incremental_weights` is updated to contain the incremental
 //'    weights of the new plans NOTE: In the future this will be moved to its
@@ -531,8 +539,8 @@ void generalized_split_maps(
         int reject_ct = 0;
         bool ok = false;
         int idx;
-        std::string region_to_split;
-        std::vector<std::string> new_region_labels(2, "INIT");
+        int region_id_to_split;
+        std::vector<int> new_region_ids(2, -1);
 
         Tree ust = init_tree(V);
         std::vector<bool> visited(V);
@@ -546,12 +554,12 @@ void generalized_split_maps(
 
             // pick a region to try to split
             choose_multidistrict_to_split(
-                old_plans_vec[idx], region_to_split);
+                old_plans_vec[idx], region_id_to_split);
 
             // Now try to split that region
             ok = attempt_region_split(g, ust, counties, cg,
-                                      proposed_new_plan, region_to_split,
-                                      new_region_labels,
+                                      proposed_new_plan, region_id_to_split,
+                                      new_region_ids,
                                       visited, ignore, pop,
                                       lower, upper, target, k_param);
 
@@ -747,15 +755,22 @@ List gsmc_plans(
         plan_region_ids_mat.resize(N-1, std::vector<std::vector<int>>(
                 M, std::vector<int>(V, -1)
         ));
-        // For integers make default -1 for error tracking
-        // This is N-1 by M by V where for each n=1,...,N-1 and m=1,...M it maps vertices to region d val
-        plan_d_vals_mat.resize(N-1, std::vector<std::vector<int>>(
-                M, std::vector<int>(V, -1)
-        ));
+
+        // reserve space for N-1 elements
+        plan_d_vals_mat.reserve(N-1);
+
+        // This is N-2 by M by 1,2,...N where for each n=1,...,N-1, m=1,...,M it maps the region
+        // id to the region's d value. So for a given n it is n by M by n+1
+        // It stops at N-2 because for N-1 its all 1
+        for(int n = 1; n < N-1; n++){
+            plan_d_vals_mat.push_back(
+                std::vector<std::vector<int>>(M, std::vector<int>(n+1, -1))
+            );
+        }
 
         //  M by V where for each m=1,...M it maps vertices to region labels in a plan
         final_plan_region_labels.resize(
-                M, std::vector<std::string> (V, "MISSING")
+                M, std::vector<std::string>(N, "MISSING")
         );
 
     }else{ // else only track for final round
@@ -764,14 +779,7 @@ List gsmc_plans(
         plan_region_ids_mat.resize(1, std::vector<std::vector<int>>(
                 M, std::vector<int>(V, -1)
         ));
-
-        // For integers make default -1 for error tracking
-        // This is M by V where for each m=1,...M it maps vertices to d value for plan
-        plan_d_vals_mat.resize(1, std::vector<std::vector<int>>(
-                M, std::vector<int>(V, -1)
-        ));
     }
-
 
 
 
@@ -862,14 +870,12 @@ List gsmc_plans(
 
             if(diagnostic_mode && n == N-2){ // record if in diagnostic mode and final step
                 plan_region_ids_mat.at(n).at(j) = plans_vec[j].region_num_ids;
-                plan_d_vals_mat.at(n).at(j) = plans_vec[j].region_dval;
-                final_plan_region_labels.at(j) = plans_vec[j].region_labels;
+                // final_plan_region_labels.at(j) = plans_vec[j].region_labels;
             }else if(diagnostic_mode){ // record if in diagnostic mode but not final step
                 plan_region_ids_mat.at(n).at(j) = plans_vec[j].region_num_ids;
-                plan_d_vals_mat.at(n).at(j) = plans_vec[j].region_dval;
+                plan_d_vals_mat.at(n).at(j) = plans_vec[j].region_dvals;
             }else if(n == N-2){ // else if not only record final step
                 plan_region_ids_mat.at(0).at(j) = plans_vec[j].region_num_ids;
-                plan_d_vals_mat.at(0).at(j) = plans_vec[j].region_dval;
             }
 
         }

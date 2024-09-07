@@ -18,7 +18,7 @@
 double compute_n_eff(const std::vector<double> &log_wgt);
 
 double choose_multidistrict_to_split(
-        Plan const&plan, std::string &region_to_split);
+        Plan const&plan, int &region_id_to_split);
 
 double compute_log_incremental_weight(const Graph &g, const Plan &plan);
 
