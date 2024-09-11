@@ -162,6 +162,12 @@ redist_gsmc <- function(state_map, M, counties = NULL, k_param_val = 6,
             ncol = length(algout$draw_tries_mat),
             byrow = FALSE)
 
+        # make parent tries into a matrix
+        algout$parent_tries_mat  <- matrix(
+            unlist(algout$parent_tries_mat),
+            ncol = length(algout$parent_tries_mat),
+            byrow = FALSE)
+
         # make the log incremental weights into a matrix
         algout$log_incremental_weights_mat  <- matrix(
             unlist(algout$log_incremental_weights_mat),
@@ -261,7 +267,8 @@ redist_gsmc <- function(state_map, M, counties = NULL, k_param_val = 6,
             region_dvals_mat_list = algout$region_dvals_mat_list,
             log_incremental_weights_mat = algout$log_incremental_weights_mat,
             region_ids_mat_list = algout$region_ids_mat_list,
-            draw_tries_mat = algout$draw_tries_mat
+            draw_tries_mat = algout$draw_tries_mat,
+            parent_tries_mat = algout$parent_tries_mat
         )
 
         algout

@@ -396,9 +396,6 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
 //' @param prev_ancestor_vec A vector used to track the index of the original
 //' ancestor of the previous plans. The value of `prev_ancestor_vec[i]` is the
 //' index of the original ancestor of `old_plans_vec[i]`
-//' @param new_log_incremental_weights A vector of the new log incremental weights
-//' computed for the new plans. The value of `new_log_incremental_weights[i]` is
-//' the log incremental weight for `new_plans_vec[i]`
 //' @param unnormalized_sampling_weights A vector of weights used to sample indices
 //' of the `old_plans_vec`. The value of `unnormalized_sampling_weights[i]` is
 //' the unnormalized probability that index i is selected
@@ -410,6 +407,11 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
 //' many split attempts were made for the i-th new plan (including the successful
 //' split). For example, `draw_tries_vec[i] = 1` means that the first split
 //' attempt was successful.
+//' @param parent_tries_vec A vector used to keep track of how many times the
+//' previous rounds plans were sampled and unsuccessfully split. The value
+//' `parent_tries_vec[i]` represents how many times `old_plans_vec[i]` was sampled
+//' and then unsuccessfully split while creating all `M` of the new plans.
+//' THIS MAY NOT BE THREAD SAFE
 //' @param accept_rate The number of accepted splits over the total number of
 //' attempted splits. This is equal to `sum(draw_tries_vec)/M`
 //' @param n_unique_parent_indices The number of unique parent indices, ie the
@@ -443,15 +445,14 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
  //'    new plans
 //'    - If two new valid regions are split then the new_region_ids is updated so the
 //'    first entry is the first new region and the second entry is the second new region
-//'    - The `new_log_incremental_weights` is updated to contain the incremental
-//'    weights of the new plans NOTE: In the future this will be moved to its
-//'    own function
 //'    - The `normalized_weights_to_fill_in` is updated to contain the normalized
 //'    probabilities the index sampler used. This is only collected for diagnostics
 //'    at this point and should just be equal to `unnormalized_sampling_weights`
 //'    divided by `sum(unnormalized_sampling_weights)`
 //'    - The `draw_tries_vec` is updated to contain the number of tries for each
 //'    of the new plans
+//'    - The `parent_tries_vec` is updated to contain the number of unsuccessful
+//'    samples of the old plans
 //'    - The `accept_rate` is updated to contain the average acceptance rate for
 //'    this iteration
 //'    - `n_unique_parent_indices` and `n_unique_original_ancestors` are updated
@@ -468,10 +469,10 @@ void generalized_split_maps(
         std::vector<int> &original_ancestor_vec,
         std::vector<int> &parent_vec,
         const std::vector<int> &prev_ancestor_vec,
-        std::vector<double> &new_log_incremental_weights,
         const std::vector<double> &unnormalized_sampling_weights,
         std::vector<double> &normalized_weights_to_fill_in,
         std::vector<int> &draw_tries_vec,
+        std::vector<int> &parent_tries_vec,
         double &accept_rate,
         int &n_unique_parent_indices,
         int &n_unique_original_ancestors,
@@ -565,6 +566,8 @@ void generalized_split_maps(
 
             // bad sample; try again
             if (!ok) {
+                // THIS MAY NOT BE THREAD SAFE
+                parent_tries_vec[idx]++; // update unsuccessful try
                 RcppThread::checkUserInterrupt(++reject_ct % reject_check_int == 0);
                 continue;
             }
@@ -574,8 +577,6 @@ void generalized_split_maps(
 
         }
 
-        // compute the log incremental weight for the new plan
-        new_log_incremental_weights[i] = compute_log_incremental_weight(g, new_plans_vec[i]);
         // Record how many tries needed to create i-th new plan
         draw_tries_vec[i] = static_cast<int>(iters[i]);
         // Make the new plans original ancestor the same as its parent
@@ -623,19 +624,60 @@ void generalized_split_maps(
                 100.0 * accept_rate, (int) n_unique_parent_indices , (int) n_unique_original_ancestors);
     }
 
-    if(print_weights){
-        Rprintf("Log Incremental weights are: ");
-        for (auto w : new_log_incremental_weights){
-            Rprintf("%.4f, ", w);
-        }
-        Rprintf("\n");
-    }
-
     // ORIGINAL SMC CODE I DONT KNOW WHAT IT DOES
     ancestors = ancestors_new;
 
 }
 
+
+
+//' Computes log unnormalized weights for vector of plans
+//'
+//' Using the procedure outlined in <PAPER HERE> this function computes the log
+//' incremental weights and the unnormalized weights for a vector of plans (which
+//' may or may not be the same depending on the parameters).
+//'
+//' @title Compute Log Unnormalized Weights
+//'
+//' @param pool A threadpool for multithreading
+//' @param g A graph (adjacency list) passed by reference
+//' @param plans_vec A vector of plans to compute the log unnormalized weights
+//' of
+//' @param log_incremental_weights A vector of the log incremental weights
+//' computed for the plans. The value of `log_incremental_weights[i]` is
+//' the log incremental weight for `plans_vec[i]`
+//' @param unnormalized_sampling_weights A vector of the unnormalized sampling
+//' weights to be used with sampling the `plans_vec` in the next iteration of the
+//' algorithm. Depending on the other hyperparameters this may or may not be the
+//' same as `exp(log_incremental_weights)`
+//' @param pop_temper <DETAILS NEEDED>
+//'
+//' @details Modifications
+//'    - The `log_incremental_weights` is updated to contain the incremental
+//'    weights of the plans
+//'    - The `unnormalized_sampling_weights` is updated to contain the unnormalized
+//'    sampling weights of the plans for the next round
+void get_log_gsmc_weights(
+        RcppThread::ThreadPool &pool,
+        const Graph &g, std::vector<Plan> &plans_vec,
+        std::vector<double> &log_incremental_weights,
+        std::vector<double> &unnormalized_sampling_weights,
+        double pop_temper
+){
+    int M = (int) plans_vec.size();
+
+    // Parallel thread pool where all objects in memory shared by default
+    pool.parallelFor(0, M, [&] (int i) {
+        double log_incr_weight = compute_log_incremental_weight(g, plans_vec.at(i));
+        log_incremental_weights[i] = log_incr_weight;
+        unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
+    });
+
+    // Wait for all the threads to finish
+    pool.wait();
+
+    return;
+}
 
 
 //' Uses gsmc method to generate a sample of `M` plans in `c++`
@@ -675,6 +717,9 @@ List gsmc_plans(
 
     // lags thing (copied from original smc code, don't understand what its doing)
     std::vector<int> lags = as<std::vector<int>>(control["lags"]);
+
+    double pop_temper = .8;
+
     umat ancestors(M, lags.size(), fill::zeros);
 
     // Create map level graph and county level multigraph
@@ -716,6 +761,11 @@ List gsmc_plans(
     // This is N-1 by M where [i][j] is the number of tries it took to form particle j on iteration i
     // Inclusive of the final step. ie if succeeds in one try it would be 1
     std::vector<std::vector<int>> draw_tries_mat(N-1, std::vector<int> (M, -1));
+
+    // This is N-1 by M where [i][j] is the number of times particle j from the
+    // previous round was sampled and unsuccessfully split on iteration i so this
+    // does not count successful sample then split
+    std::vector<std::vector<int>> parent_tries_mat(N-1, std::vector<int> (M, 0));
 
     // This is N-1 by M where [i][j] is the log incremental weight of particle j on step i
     std::vector<std::vector<double>> log_incremental_weights_mat(N-1, std::vector<double> (M, -1.0));
@@ -813,10 +863,10 @@ List gsmc_plans(
             original_ancestor_mat[n],
             parent_index_mat[n],
             dummy_prev_ancestors,
-            log_incremental_weights_mat[n],
             unnormalized_sampling_weights,
             normalized_weights_mat[n],
             draw_tries_mat[n],
+            parent_tries_mat.at(n),
             acceptance_rates[n],
             nunique_parents_vec[n],
             nunique_original_ancestors_vec[n],
@@ -838,10 +888,10 @@ List gsmc_plans(
             original_ancestor_mat[n],
             parent_index_mat[n],
             original_ancestor_mat[n-1],
-            log_incremental_weights_mat[n],
             unnormalized_sampling_weights,
             normalized_weights_mat[n],
             draw_tries_mat[n],
+            parent_tries_mat.at(n),
             acceptance_rates[n],
             nunique_parents_vec[n],
             nunique_original_ancestors_vec[n],
@@ -859,31 +909,35 @@ List gsmc_plans(
         Rcpp::checkUserInterrupt();
 
 
+        // compute log incremental weights and sampling weights for next round
+        get_log_gsmc_weights(
+            pool,
+            g,
+            new_plans_vec,
+            log_incremental_weights_mat.at(n),
+            unnormalized_sampling_weights,
+            pop_temper
+        );
 
-        // Now update the weights, region labels, dval column of the matrix
-        for(int j=0; j<M; j++){
-            // Make the unnormalized weight just the incremental weight from this round
-            // In the future make standalone function to compute these weights
-            unnormalized_sampling_weights[j] = std::exp(
-                log_incremental_weights_mat.at(n).at(j) // + std::log(unnormalized_sampling_weights[j])
-            );
-
-            if(diagnostic_mode && n == N-2){ // record if in diagnostic mode and final step
-                plan_region_ids_mat.at(n).at(j) = plans_vec[j].region_num_ids;
-                // final_plan_region_labels.at(j) = plans_vec[j].region_labels;
-            }else if(diagnostic_mode){ // record if in diagnostic mode but not final step
-                plan_region_ids_mat.at(n).at(j) = plans_vec[j].region_num_ids;
-                plan_d_vals_mat.at(n).at(j) = plans_vec[j].region_dvals;
-            }else if(n == N-2){ // else if not only record final step
-                plan_region_ids_mat.at(0).at(j) = plans_vec[j].region_num_ids;
-            }
-
-        }
-
-
+        // compute effective sample size
         n_eff.at(n) = compute_n_eff(log_incremental_weights_mat[n]);
 
-
+        // Now update the diagnostic info if needed, region labels, dval column of the matrix
+        if(diagnostic_mode && n == N-2){ // record if in diagnostic mode and final step
+            for(int j=0; j<M; j++){
+                plan_region_ids_mat.at(n).at(j) = plans_vec[j].region_num_ids;
+                // final_plan_region_labels.at(j) = plans_vec[j].region_labels;
+            }
+        }else if(diagnostic_mode){ // record if in diagnostic mode but not final step
+            for(int j=0; j<M; j++){
+                plan_region_ids_mat.at(n).at(j) = plans_vec[j].region_num_ids;
+                plan_d_vals_mat.at(n).at(j) = plans_vec[j].region_dvals;
+            }
+        }else if(n == N-2){ // else if not only record final step
+            for(int j=0; j<M; j++){
+                plan_region_ids_mat.at(0).at(j) = plans_vec[j].region_num_ids;
+            }
+        }
 
     }
     } catch (Rcpp::internal::InterruptedException e) {
@@ -907,6 +961,7 @@ List gsmc_plans(
         _["log_incremental_weights_mat"] = log_incremental_weights_mat,
         _["normalized_weights_mat"] = normalized_weights_mat,
         _["draw_tries_mat"] = draw_tries_mat,
+        _["parent_tries_mat"] = parent_tries_mat,
         _["acceptance_rates"] = acceptance_rates,
         _["nunique_parent_indices"] = nunique_parents_vec,
         _["nunique_original_ancestors"] = nunique_original_ancestors_vec,
