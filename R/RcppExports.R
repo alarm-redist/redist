@@ -80,6 +80,25 @@ gsmc_plans <- function(N, adj_list, counties, pop, target, lower, upper, M, k_pa
     .Call(`_redist_gsmc_plans`, N, adj_list, counties, pop, target, lower, upper, M, k_param, control, ncores, verbosity, diagnostic_mode)
 }
 
+#' Compute the log incremental weight of a plan
+#'
+#' Given a plan object this computes the minimum variance weights as derived in
+#' <PAPER NAME HERE>. This is equivalent to the inverse of a sum over all
+#' adjacent regions in a plan.
+#'
+#' @title Compute Incremental Weight of a plan
+#'
+#' @param plan A plan object
+#' @param g The underlying map graph
+#' @param target The target population for a single district
+#' @param pop_temper The population tempering parameter
+#'
+#' @details No modifications to inputs made
+#'
+#' @return the log of the incremental weight of the plan
+#'
+NULL
+
 log_st_map <- function(g, districts, counties, n_distr) {
     .Call(`_redist_log_st_map`, g, districts, counties, n_distr)
 }

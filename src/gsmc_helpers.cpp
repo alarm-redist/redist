@@ -278,6 +278,42 @@ double get_log_retroactive_splitting_prob(
 }
 
 
+double compute_log_pop_temper(
+        const Plan &plan,
+        const int region1_id, const int region2_id,
+        double target, double pop_temper
+){
+    int N = plan.N;
+    // Get pop and dval of two regions and their union
+    double region1_pop = plan.region_pops[region1_id];
+    double region2_pop = plan.region_pops[region2_id];
+    double old_region_pop = region1_pop + region2_pop;
+
+    int region1_dval = plan.region_dvals[region1_id];
+    int region2_dval = plan.region_dvals[region2_id];
+    int old_region_dval = region1_dval + region2_dval;
+
+    // now compute the devations for each of them
+    double dev1 = std::fabs(
+        region1_pop/static_cast<double>(region1_dval) - target
+    )/target;
+    double dev2 = std::fabs(
+        region2_pop/static_cast<double>(region2_dval) - target
+    )/target;
+    double old_dev = std::fabs(
+        old_region_pop/static_cast<double>(old_region_dval) - target
+    )/target;
+
+    // now compute population penalties
+    double pop_pen1 = std::sqrt(static_cast<double>(N) - 2) * std::log(1e-12 + dev1);
+    double pop_pen2 = std::sqrt(static_cast<double>(N) - 2) * std::log(1e-12 + dev2);
+    double old_pop_pen = std::sqrt(static_cast<double>(N) - 2) * std::log(1e-12 + old_dev);
+
+    // now return the values for the old region minus the two new ones
+    return old_pop_pen * pop_temper - (pop_pen1 + pop_pen2) * pop_temper;
+}
+
+
 //' Compute the log incremental weight of a plan
 //'
 //' Given a plan object this computes the minimum variance weights as derived in
@@ -288,12 +324,16 @@ double get_log_retroactive_splitting_prob(
 //'
 //' @param plan A plan object
 //' @param g The underlying map graph
+//' @param target The target population for a single district
+//' @param pop_temper The population tempering parameter
 //'
 //' @details No modifications to inputs made
 //'
 //' @return the log of the incremental weight of the plan
 //'
-double compute_log_incremental_weight(const Graph &g, const Plan &plan){
+double compute_log_incremental_weight(
+        const Graph &g, const Plan &plan,
+        const double target, const double pop_temper){
     // get a region level graph
     Graph rg = get_region_graph(g, plan);
 
@@ -325,6 +365,8 @@ double compute_log_incremental_weight(const Graph &g, const Plan &plan){
 
     double incremental_weight = 0.0;
 
+    bool do_pop_temper = (plan.num_regions < plan.N) && pop_temper > 0;
+
 
     // Now iterate over all adjacent pairs
     for (const auto& edge : adj_region_pairs) {
@@ -333,9 +375,26 @@ double compute_log_incremental_weight(const Graph &g, const Plan &plan){
         // get prob of selecting union of adj regions
         double log_splitting_prob = get_log_retroactive_splitting_prob(plan, edge.first, edge.second);
         // NO e^J TERM YET but can be added
+
+        // Do population tempering term if not final
+        double log_temper;
+        if(do_pop_temper){
+            log_temper = compute_log_pop_temper(
+                plan,
+                edge.first, edge.second,
+                target, pop_temper
+            );
+        }else{
+            log_temper = 0;
+        }
+
+
+
         // multiply the boundary length and selection probability by adding the logs
         // now exponentiate and add to the sum
-        incremental_weight += std::exp(log_boundary + log_splitting_prob);
+        incremental_weight += std::exp(log_boundary
+                                           + log_splitting_prob
+                                           + log_temper);
     }
 
 

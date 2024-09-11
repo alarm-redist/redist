@@ -14,7 +14,7 @@
 #'
 #' @export
 redist_gsmc <- function(state_map, M, counties = NULL, k_param_val = 6,
-                       resample = TRUE, runs = 1L, ncores = 0L,
+                       resample = TRUE, runs = 1L, ncores = 0L, pop_temper = 0,
                        verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE){
     N <- attr(state_map, "ndists")
     # no constraints
@@ -23,7 +23,9 @@ redist_gsmc <- function(state_map, M, counties = NULL, k_param_val = 6,
 
     # make controls intput
     lags <- 1 + unique(round((N - 1)^0.8*seq(0, 0.7, length.out = 4)^0.9))
-    control = list(lags=lags)
+    control = list(
+        lags=lags,
+        pop_temper = pop_temper)
 
     # verbosity stuff
     verbosity <- 1
@@ -266,7 +268,7 @@ redist_gsmc <- function(state_map, M, counties = NULL, k_param_val = 6,
             unique_survive = c(algout$nunique_parent_indices, n_unique),
             ancestors = algout$ancestors,
             seq_alpha = .99,
-            pop_temper = 0,
+            pop_temper = pop_temper,
             runtime = as.numeric(t2_run - t1_run, units = "secs"),
             district_str_labels = algout$final_region_labs,
             nunique_original_ancestors = algout$nunique_original_ancestors,

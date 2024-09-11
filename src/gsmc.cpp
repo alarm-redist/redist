@@ -650,6 +650,7 @@ void generalized_split_maps(
 //' weights to be used with sampling the `plans_vec` in the next iteration of the
 //' algorithm. Depending on the other hyperparameters this may or may not be the
 //' same as `exp(log_incremental_weights)`
+//' @param target Target population of a single district
 //' @param pop_temper <DETAILS NEEDED>
 //'
 //' @details Modifications
@@ -662,13 +663,14 @@ void get_log_gsmc_weights(
         const Graph &g, std::vector<Plan> &plans_vec,
         std::vector<double> &log_incremental_weights,
         std::vector<double> &unnormalized_sampling_weights,
-        double pop_temper
+        double target, double pop_temper
 ){
     int M = (int) plans_vec.size();
 
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
-        double log_incr_weight = compute_log_incremental_weight(g, plans_vec.at(i));
+        double log_incr_weight = compute_log_incremental_weight(
+            g, plans_vec.at(i), target, pop_temper);
         log_incremental_weights[i] = log_incr_weight;
         unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
     });
@@ -718,7 +720,8 @@ List gsmc_plans(
     // lags thing (copied from original smc code, don't understand what its doing)
     std::vector<int> lags = as<std::vector<int>>(control["lags"]);
 
-    double pop_temper = .8;
+    double pop_temper = as<double>(control["pop_temper"]);
+
 
     umat ancestors(M, lags.size(), fill::zeros);
 
@@ -916,6 +919,7 @@ List gsmc_plans(
             new_plans_vec,
             log_incremental_weights_mat.at(n),
             unnormalized_sampling_weights,
+            target,
             pop_temper
         );
 
