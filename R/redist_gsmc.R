@@ -151,10 +151,11 @@ redist_gsmc <- function(state_map, M, counties = NULL, k_param_val = 6,
         )
 
         # make parent mat into matrix
+        # add 1 for R indexing
         algout$parent_index <- matrix(
             unlist(algout$parent_index),
             ncol = length(algout$parent_index),
-            byrow = FALSE)
+            byrow = FALSE) + 1
 
         # make draws tries into a matrix
         algout$draw_tries_mat  <- matrix(
@@ -162,11 +163,17 @@ redist_gsmc <- function(state_map, M, counties = NULL, k_param_val = 6,
             ncol = length(algout$draw_tries_mat),
             byrow = FALSE)
 
-        # make parent tries into a matrix
-        algout$parent_tries_mat  <- matrix(
-            unlist(algout$parent_tries_mat),
-            ncol = length(algout$parent_tries_mat),
+        # make parent unsuccessful tries into a matrix
+        algout$parent_unsuccessful_tries_mat  <- matrix(
+            unlist(algout$parent_unsuccessful_tries_mat),
+            ncol = length(algout$parent_unsuccessful_tries_mat),
             byrow = FALSE)
+
+        # make parent succesful tries matrix counting the number of
+        # times a parent index was successfully sampled
+        parent_successful_tries_mat <- apply(
+            algout$parent_index, 2, tabulate, nbins = M
+            )
 
         # make the log incremental weights into a matrix
         algout$log_incremental_weights_mat  <- matrix(
@@ -268,7 +275,8 @@ redist_gsmc <- function(state_map, M, counties = NULL, k_param_val = 6,
             log_incremental_weights_mat = algout$log_incremental_weights_mat,
             region_ids_mat_list = algout$region_ids_mat_list,
             draw_tries_mat = algout$draw_tries_mat,
-            parent_tries_mat = algout$parent_tries_mat
+            parent_unsuccessful_tries_mat = algout$parent_unsuccessful_tries_mat,
+            parent_successful_tries_mat = parent_successful_tries_mat
         )
 
         algout

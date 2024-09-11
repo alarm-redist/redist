@@ -407,9 +407,9 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
 //' many split attempts were made for the i-th new plan (including the successful
 //' split). For example, `draw_tries_vec[i] = 1` means that the first split
 //' attempt was successful.
-//' @param parent_tries_vec A vector used to keep track of how many times the
+//' @param parent_unsuccessful_tries_vec A vector used to keep track of how many times the
 //' previous rounds plans were sampled and unsuccessfully split. The value
-//' `parent_tries_vec[i]` represents how many times `old_plans_vec[i]` was sampled
+//' `parent_unsuccessful_tries_vec[i]` represents how many times `old_plans_vec[i]` was sampled
 //' and then unsuccessfully split while creating all `M` of the new plans.
 //' THIS MAY NOT BE THREAD SAFE
 //' @param accept_rate The number of accepted splits over the total number of
@@ -451,7 +451,7 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
 //'    divided by `sum(unnormalized_sampling_weights)`
 //'    - The `draw_tries_vec` is updated to contain the number of tries for each
 //'    of the new plans
-//'    - The `parent_tries_vec` is updated to contain the number of unsuccessful
+//'    - The `parent_unsuccessful_tries_vec` is updated to contain the number of unsuccessful
 //'    samples of the old plans
 //'    - The `accept_rate` is updated to contain the average acceptance rate for
 //'    this iteration
@@ -472,7 +472,7 @@ void generalized_split_maps(
         const std::vector<double> &unnormalized_sampling_weights,
         std::vector<double> &normalized_weights_to_fill_in,
         std::vector<int> &draw_tries_vec,
-        std::vector<int> &parent_tries_vec,
+        std::vector<int> &parent_unsuccessful_tries_vec,
         double &accept_rate,
         int &n_unique_parent_indices,
         int &n_unique_original_ancestors,
@@ -567,7 +567,7 @@ void generalized_split_maps(
             // bad sample; try again
             if (!ok) {
                 // THIS MAY NOT BE THREAD SAFE
-                parent_tries_vec[idx]++; // update unsuccessful try
+                parent_unsuccessful_tries_vec[idx]++; // update unsuccessful try
                 RcppThread::checkUserInterrupt(++reject_ct % reject_check_int == 0);
                 continue;
             }
@@ -765,7 +765,7 @@ List gsmc_plans(
     // This is N-1 by M where [i][j] is the number of times particle j from the
     // previous round was sampled and unsuccessfully split on iteration i so this
     // does not count successful sample then split
-    std::vector<std::vector<int>> parent_tries_mat(N-1, std::vector<int> (M, 0));
+    std::vector<std::vector<int>> parent_unsuccessful_tries_mat(N-1, std::vector<int> (M, 0));
 
     // This is N-1 by M where [i][j] is the log incremental weight of particle j on step i
     std::vector<std::vector<double>> log_incremental_weights_mat(N-1, std::vector<double> (M, -1.0));
@@ -866,7 +866,7 @@ List gsmc_plans(
             unnormalized_sampling_weights,
             normalized_weights_mat[n],
             draw_tries_mat[n],
-            parent_tries_mat.at(n),
+            parent_unsuccessful_tries_mat.at(n),
             acceptance_rates[n],
             nunique_parents_vec[n],
             nunique_original_ancestors_vec[n],
@@ -891,7 +891,7 @@ List gsmc_plans(
             unnormalized_sampling_weights,
             normalized_weights_mat[n],
             draw_tries_mat[n],
-            parent_tries_mat.at(n),
+            parent_unsuccessful_tries_mat.at(n),
             acceptance_rates[n],
             nunique_parents_vec[n],
             nunique_original_ancestors_vec[n],
@@ -961,7 +961,7 @@ List gsmc_plans(
         _["log_incremental_weights_mat"] = log_incremental_weights_mat,
         _["normalized_weights_mat"] = normalized_weights_mat,
         _["draw_tries_mat"] = draw_tries_mat,
-        _["parent_tries_mat"] = parent_tries_mat,
+        _["parent_unsuccessful_tries_mat"] = parent_unsuccessful_tries_mat,
         _["acceptance_rates"] = acceptance_rates,
         _["nunique_parent_indices"] = nunique_parents_vec,
         _["nunique_original_ancestors"] = nunique_original_ancestors_vec,
