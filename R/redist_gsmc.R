@@ -8,12 +8,15 @@
 
 #' gSMC Redistricting Sampler
 #'
+#' @param k_params Either a single value to use as the splitting parameter for
+#' every round or a vector of length N-1 where each value is the one to use for
+#' a split.
 #'
 #' @return `redist_smc` returns a [redist_plans] object containing the simulated
 #' plans.
 #'
 #' @export
-redist_gsmc <- function(state_map, M, counties = NULL, k_param_val = 6,
+redist_gsmc <- function(state_map, M, counties = NULL, k_params = 6,
                        resample = TRUE, runs = 1L, ncores = 0L, pop_temper = 0,
                        verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE){
     N <- attr(state_map, "ndists")
@@ -23,9 +26,27 @@ redist_gsmc <- function(state_map, M, counties = NULL, k_param_val = 6,
 
     # make controls intput
     lags <- 1 + unique(round((N - 1)^0.8*seq(0, 0.7, length.out = 4)^0.9))
+
+    # check k param imput
+    if(any(k_params < 1)){
+        cli_abort("K parameter values must be all at least 1.")
+    }
+
+    # if just a single number then repeat it
+    if(length(k_params) == 1 && floor(k_params) == k_params){
+        k_params <- rep(k_params, N-1)
+    }else if(length(k_params) != N-1){
+        cli_abort("K parameter input must be either 1 value or N-1!")
+    }else if(any(floor(k_params) != k_params)){
+        # if either the length is not N-1 or its not all integers then throw
+        # error
+        cli_abort("K parameter values must be all integers")
+    }
+
     control = list(
         lags=lags,
-        pop_temper = pop_temper)
+        pop_temper = pop_temper,
+        k_params = k_params)
 
     # verbosity stuff
     verbosity <- 1
@@ -59,6 +80,7 @@ redist_gsmc <- function(state_map, M, counties = NULL, k_param_val = 6,
             cli_warn("Counties were not contiguous; expect additional splits.")
         }
     }
+
 
 
 
@@ -127,7 +149,6 @@ redist_gsmc <- function(state_map, M, counties = NULL, k_param_val = 6,
             lower=pop_bounds[1],
             upper=pop_bounds[3],
             M=M,
-            k_param = k_param_val,
             control = control,
             ncores = as.integer(ncores_per),
             verbosity=run_verbosity,
@@ -151,6 +172,13 @@ redist_gsmc <- function(state_map, M, counties = NULL, k_param_val = 6,
             algout$region_dvals_mat_list,
             function(x) matrix(unlist(x), ncol = length(x), byrow = FALSE)
         )
+
+        # make original ancestor matrix
+        # add 1 for R indexing
+        algout$original_ancestors_mat <- matrix(
+            unlist(algout$original_ancestors),
+            ncol = length(algout$original_ancestors),
+            byrow = FALSE) + 1
 
         # make parent mat into matrix
         # add 1 for R indexing
@@ -194,7 +222,7 @@ redist_gsmc <- function(state_map, M, counties = NULL, k_param_val = 6,
             # N-2 are previous results
             algout$plans <- algout$region_ids_mat_list[[N-1]]
 
-            algout$final_region_labs <- algout$final_region_labs <- matrix(
+            algout$final_region_labs <- matrix(
                 unlist(algout$final_region_labs),
                 ncol = length(algout$final_region_labs),
                 byrow = FALSE)
@@ -259,7 +287,7 @@ redist_gsmc <- function(state_map, M, counties = NULL, k_param_val = 6,
             n_eff = n_eff,
             step_n_eff = algout$step_n_eff,
             adapt_k_thresh = .99, # adapt_k_thresh, NEED TO DEAL WITH
-            est_k = rep(k_param_val, N-1), # algout$est_k,
+            est_k = k_params, # algout$est_k,
             accept_rate = algout$acceptance_rates,
             sd_lp = c(
                 apply(algout$log_incremental_weights_mat, 2, sd), sd(lr)
@@ -273,6 +301,7 @@ redist_gsmc <- function(state_map, M, counties = NULL, k_param_val = 6,
             district_str_labels = algout$final_region_labs,
             nunique_original_ancestors = algout$nunique_original_ancestors,
             parent_index_mat = algout$parent_index,
+            original_ancestors_mat = algout$original_ancestors_mat,
             region_dvals_mat_list = algout$region_dvals_mat_list,
             log_incremental_weights_mat = algout$log_incremental_weights_mat,
             region_ids_mat_list = algout$region_ids_mat_list,

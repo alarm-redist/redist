@@ -699,7 +699,6 @@ void get_log_gsmc_weights(
 //' @param lower Acceptable lower bounds on a valid district's population
 //' @param upper Acceptable upper bounds on a valid district's population
 //' @param M The number of plans (samples) to draw
-//' @param k_param The k parameter from the SMC algorithm, you choose among the top k_param edges
 //' @param control Named list of additional parameters.
 //' @param num_threads The number of threads the threadpool should use
 //' @param verbosity What level of detail to print out while the algorithm is
@@ -709,8 +708,8 @@ List gsmc_plans(
         int N, List adj_list,
         const arma::uvec &counties, const arma::uvec &pop,
         double target, double lower, double upper,
-        int M, int k_param, // M is Number of particles aka number of different plans
-        List control,
+        int M, // M is Number of particles aka number of different plans
+        List control, // control has pop temper, and k parameter value
         int num_threads, int verbosity, bool diagnostic_mode){
 
     // set number of threads
@@ -719,6 +718,8 @@ List gsmc_plans(
 
     // lags thing (copied from original smc code, don't understand what its doing)
     std::vector<int> lags = as<std::vector<int>>(control["lags"]);
+    // k param values to use
+    std::vector<int> k_params = as<std::vector<int>>(control["k_params"]);
 
     double pop_temper = as<double>(control["pop_temper"]);
 
@@ -821,7 +822,7 @@ List gsmc_plans(
             );
         }
 
-        //  M by V where for each m=1,...M it maps vertices to region labels in a plan
+        //  M by N-1 where for each m=1,...M it maps region ids to region labels in a plan
         final_plan_region_labels.resize(
                 M, std::vector<std::string>(N, "MISSING")
         );
@@ -875,7 +876,7 @@ List gsmc_plans(
             nunique_original_ancestors_vec[n],
             ancestors, lags,
             lower, upper, target,
-            k_param,
+            k_params[n],
             pool,
             verbosity
         );
@@ -900,7 +901,7 @@ List gsmc_plans(
             nunique_original_ancestors_vec[n],
             ancestors, lags,
             lower, upper, target,
-            k_param,
+            k_params[n],
             pool,
             verbosity
         );
@@ -930,7 +931,7 @@ List gsmc_plans(
         if(diagnostic_mode && n == N-2){ // record if in diagnostic mode and final step
             for(int j=0; j<M; j++){
                 plan_region_ids_mat.at(n).at(j) = plans_vec[j].region_num_ids;
-                // final_plan_region_labels.at(j) = plans_vec[j].region_labels;
+                final_plan_region_labels.at(j) = plans_vec[j].region_str_labels;
             }
         }else if(diagnostic_mode){ // record if in diagnostic mode but not final step
             for(int j=0; j<M; j++){

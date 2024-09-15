@@ -51,7 +51,7 @@ List gsmc_plans(
         int N, List adj_list,
         const arma::uvec &counties, const arma::uvec &pop,
         double target, double lower, double upper,
-        int M, int k_param,// Number of particles aka number of different plans
+        int M, // Number of particles aka number of different plans
         List control,
         int ncores = -1, int verbosity = 3, bool diagnostic_mode = false);
 

@@ -192,8 +192,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // gsmc_plans
-List gsmc_plans(int N, List adj_list, const arma::uvec& counties, const arma::uvec& pop, double target, double lower, double upper, int M, int k_param, List control, int ncores, int verbosity, bool diagnostic_mode);
-RcppExport SEXP _redist_gsmc_plans(SEXP NSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP MSEXP, SEXP k_paramSEXP, SEXP controlSEXP, SEXP ncoresSEXP, SEXP verbositySEXP, SEXP diagnostic_modeSEXP) {
+List gsmc_plans(int N, List adj_list, const arma::uvec& counties, const arma::uvec& pop, double target, double lower, double upper, int M, List control, int ncores, int verbosity, bool diagnostic_mode);
+RcppExport SEXP _redist_gsmc_plans(SEXP NSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP MSEXP, SEXP controlSEXP, SEXP ncoresSEXP, SEXP verbositySEXP, SEXP diagnostic_modeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -205,12 +205,11 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
     Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
     Rcpp::traits::input_parameter< int >::type M(MSEXP);
-    Rcpp::traits::input_parameter< int >::type k_param(k_paramSEXP);
     Rcpp::traits::input_parameter< List >::type control(controlSEXP);
     Rcpp::traits::input_parameter< int >::type ncores(ncoresSEXP);
     Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
     Rcpp::traits::input_parameter< bool >::type diagnostic_mode(diagnostic_modeSEXP);
-    rcpp_result_gen = Rcpp::wrap(gsmc_plans(N, adj_list, counties, pop, target, lower, upper, M, k_param, control, ncores, verbosity, diagnostic_mode));
+    rcpp_result_gen = Rcpp::wrap(gsmc_plans(N, adj_list, counties, pop, target, lower, upper, M, control, ncores, verbosity, diagnostic_mode));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -769,7 +768,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_update_conncomp", (DL_FUNC) &_redist_update_conncomp, 3},
     {"_redist_crsg", (DL_FUNC) &_redist_crsg, 9},
     {"_redist_dist_dist_diff", (DL_FUNC) &_redist_dist_dist_diff, 7},
-    {"_redist_gsmc_plans", (DL_FUNC) &_redist_gsmc_plans, 13},
+    {"_redist_gsmc_plans", (DL_FUNC) &_redist_gsmc_plans, 12},
     {"_redist_log_st_map", (DL_FUNC) &_redist_log_st_map, 4},
     {"_redist_n_removed", (DL_FUNC) &_redist_n_removed, 3},
     {"_redist_countpartitions", (DL_FUNC) &_redist_countpartitions, 1},

@@ -216,7 +216,6 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
 
         cli_text("{.strong gSMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
                  districts on {fmt_comma(nrow(plans_m))} units with a population between {fmt_comma(pop_lb)} and {fmt_comma(pop_ub)}")
-        cli_text("{.arg k}={all_diagn[[1]]$est_k[1]}")
         cli_text("{.arg pop_temper}={format(all_diagn[[1]]$pop_temper, digits=3)}")
         cat("\n")
 
