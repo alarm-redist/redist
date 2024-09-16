@@ -9,6 +9,33 @@ collapse_adj <- function(graph, idxs) {
     .Call(`_redist_collapse_adj`, graph, idxs)
 }
 
+#' Uses gsmc method to generate a sample of `M` plans in `c++`
+#'
+#' Using the procedure outlined in <PAPER HERE> this function uses Sequential
+#' Monte Carlo (SMC) methods to generate a sample of `M` plans
+#'
+#' @title Run redist gsmc
+#'
+#' @param N The number of districts the final plans will have
+#' @param adj_list A 0-indexed adjacency list representing the undirected graph
+#' which represents the underlying map the plans are to be drawn on
+#' @param counties Vector of county labels of each vertex in `g`
+#' @param pop A vector of the population associated with each vertex in `g`
+#' @param target Ideal population of a valid district. This is what deviance is calculated
+#' relative to
+#' @param lower Acceptable lower bounds on a valid district's population
+#' @param upper Acceptable upper bounds on a valid district's population
+#' @param M The number of plans (samples) to draw
+#' @param k_param The k parameter from the SMC algorithm, you choose among the top k_param edges
+#' @param control Named list of additional parameters.
+#' @param num_threads The number of threads the threadpool should use
+#' @param verbosity What level of detail to print out while the algorithm is
+#' running <ADD OPTIONS>
+#' @export
+basic_smc_plans <- function(N, adj_list, counties, pop, target, lower, upper, M, control, ncores = -1L, verbosity = 3L, diagnostic_mode = FALSE) {
+    .Call(`_redist_basic_smc_plans`, N, adj_list, counties, pop, target, lower, upper, M, control, ncores, verbosity, diagnostic_mode)
+}
+
 coarsen_adjacency <- function(adj, groups) {
     .Call(`_redist_coarsen_adjacency`, adj, groups)
 }
@@ -237,6 +264,14 @@ dist_cty_splits <- function(dm, community, nd) {
 
 swMH <- function(aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parity, beta_sequence, beta_weights, lambda = 0L, beta = 0.0, adapt_beta = "none", adjswap = 1L, exact_mh = 0L, adapt_eprob = 0L, adapt_lambda = 0L, num_hot_steps = 0L, num_annealing_steps = 0L, num_cold_steps = 0L, verbose = TRUE) {
     .Call(`_redist_swMH`, aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parity, beta_sequence, beta_weights, lambda, beta, adapt_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, num_hot_steps, num_annealing_steps, num_cold_steps, verbose)
+}
+
+split_entire_map_once_basic_smc <- function(N, adj_list, counties, pop, target, lower, upper, verbose) {
+    .Call(`_redist_split_entire_map_once_basic_smc`, N, adj_list, counties, pop, target, lower, upper, verbose)
+}
+
+basic_smc_split_all_the_way <- function(N, adj_list, counties, pop, target, lower, upper, verbose) {
+    .Call(`_redist_basic_smc_split_all_the_way`, N, adj_list, counties, pop, target, lower, upper, verbose)
 }
 
 tree_pop <- function(ust, vtx, pop, pop_below, parent) {

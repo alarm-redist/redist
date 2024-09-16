@@ -13,7 +13,6 @@ gsmc_plans(
   lower,
   upper,
   M,
-  k_param,
   control,
   ncores = -1L,
   verbosity = 3L,
@@ -39,12 +38,12 @@ relative to}
 
 \item{M}{The number of plans (samples) to draw}
 
-\item{k_param}{The k parameter from the SMC algorithm, you choose among the top k_param edges}
-
 \item{control}{Named list of additional parameters.}
 
 \item{verbosity}{What level of detail to print out while the algorithm is
 running \if{html}{\out{<ADD OPTIONS>}}}
+
+\item{k_param}{The k parameter from the SMC algorithm, you choose among the top k_param edges}
 
 \item{num_threads}{The number of threads the threadpool should use}
 }

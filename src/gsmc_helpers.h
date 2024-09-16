@@ -41,6 +41,11 @@ double compute_log_incremental_weight(
      const Graph &g, const Plan &plan,
      const double target, const double pop_temper);
 
+
+double compute_basic_smc_log_incremental_weight(
+        const Graph &g, const Plan &plan,
+        const double target, const double pop_temper);
+
 Graph get_region_graph(const Graph &g, const Plan &plan);
 
 #endif

@@ -408,3 +408,94 @@ double compute_log_incremental_weight(
     return -std::log(incremental_weight);
 
 }
+
+
+
+
+//' Compute the log incremental weight of a plan under basic smc scheme
+//'
+//' Given a plan object this computes the minimum variance weights as derived in
+//' <PAPER NAME HERE>. This is equivalent to the inverse of a sum over all
+//' adjacent regions in a plan.
+//'
+//' @title Compute Incremental Weight of a plan
+//'
+//' @param plan A plan object
+//' @param g The underlying map graph
+//' @param target The target population for a single district
+//' @param pop_temper The population tempering parameter
+//'
+//' @details No modifications to inputs made
+//'
+//' @return the log of the incremental weight of the plan
+//'
+double compute_basic_smc_log_incremental_weight(
+     const Graph &g, const Plan &plan,
+     const double target, const double pop_temper){
+    // get a region level graph
+    Graph rg = get_region_graph(g, plan);
+
+
+    // sanity check: make sure the region level graph's number of vertices is
+    // the same as the number of regions in the plan
+    if((int)rg.size() != plan.num_regions){
+     Rprintf("SOMETHING WENT WRONG IN COMPPUTE LOG INCREMENT WEIGHJT\n");
+    }
+
+
+ // Now get all unique adjacent region pairs and store them such that
+ // the first vertex is always the smaller numbered of the edge
+ // We use a set because it doesn't keep duplicates
+ std::set<std::pair<int, int>> adj_region_pairs;
+
+ int u = plan.num_regions - 1;
+
+ // Iterate through the adjacency list of remainder region
+ // which is always the number of regions minus 1
+    for(auto v: rg[u]){
+     // store the edges such that smaller vertex is always first
+     if (u < v) {
+         adj_region_pairs.emplace(u, v);
+     } else {
+         adj_region_pairs.emplace(v, u);
+     }
+    }
+
+
+    double incremental_weight = 0.0;
+    bool do_pop_temper = (plan.num_regions < plan.N) && pop_temper > 0;
+
+    // Now iterate over all adjacent pairs
+    for (const auto& edge : adj_region_pairs) {
+     // get log of boundary length between regions
+     double log_boundary =  region_log_boundary(g, plan, edge.first, edge.second);
+
+     // Do population tempering term if not final
+     double log_temper;
+     if(do_pop_temper){
+         log_temper = compute_log_pop_temper(
+             plan,
+             edge.first, edge.second,
+             target, pop_temper
+         );
+     }else{
+         log_temper = 0;
+     }
+
+     // multiply the boundary length and pop tempering by adding the logs
+     // now exponentiate and add to the sum
+     incremental_weight += std::exp(log_boundary
+                                        + log_temper);
+    }
+
+
+    // Check its not infinity
+    if(incremental_weight == -std::numeric_limits<double>::infinity()){
+     Rprintf("Error! weight is negative infinity for some reason \n");
+    }
+
+
+    // now return the log of the inverse of the sum
+    return -std::log(incremental_weight);
+
+}

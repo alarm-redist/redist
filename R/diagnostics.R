@@ -210,11 +210,11 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
             code <- str_glue("plot(<map object>, rowMeans(as.matrix({name}) == <bottleneck iteration>))")
             cli::cat_line("    ", cli::code_highlight(code, "Material"))
         }
-    } else if(algo == "gsmc") {
+    } else if(algo %in% c("gsmc", 'basic_smc')) {
         pop_lb <- attr(object, "pop_bounds")[1]
         pop_ub <- attr(object, "pop_bounds")[3]
 
-        cli_text("{.strong gSMC:} {fmt_comma(n_samp)} sampled plans of {n_distr}
+        cli_text("{.strong {algo}:} {fmt_comma(n_samp)} sampled plans of {n_distr}
                  districts on {fmt_comma(nrow(plans_m))} units with a population between {fmt_comma(pop_lb)} and {fmt_comma(pop_ub)}")
         cli_text("{.arg pop_temper}={format(all_diagn[[1]]$pop_temper, digits=3)}")
         cat("\n")

@@ -48,7 +48,7 @@
 #' @export
 redist_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE) {
     algo = attr(plans, "algorithm")
-    algos_ok = c("smc", "gsmc", "mergesplit", "flip")
+    algos_ok = c("smc", "gsmc", "basic_smc", "mergesplit", "flip")
 
     x = enquo(x)
 
@@ -58,6 +58,8 @@ redist_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE) {
     } else if (algo == "smc") {
         redist_smc_ci(plans, !!x, district, conf, by_chain)
     } else if (algo == "gsmc") {
+        redist_smc_ci(plans, !!x, district, conf, by_chain)
+    } else if (algo == "basic_smc") {
         redist_smc_ci(plans, !!x, district, conf, by_chain)
     } else { # MCMC
         redist_mcmc_ci(plans,!!x, district, conf, by_chain)

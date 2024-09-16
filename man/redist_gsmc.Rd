@@ -8,14 +8,20 @@ redist_gsmc(
   state_map,
   M,
   counties = NULL,
-  k_param_val = 6,
+  k_params = 6,
   resample = TRUE,
   runs = 1L,
   ncores = 0L,
+  pop_temper = 0,
   verbose = FALSE,
   silent = FALSE,
   diagnostic_mode = FALSE
 )
+}
+\arguments{
+\item{k_params}{Either a single value to use as the splitting parameter for
+every round or a vector of length N-1 where each value is the one to use for
+a split.}
 }
 \value{
 \code{redist_smc} returns a \link{redist_plans} object containing the simulated
