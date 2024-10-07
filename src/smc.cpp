@@ -100,13 +100,23 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     vec cum_wgt(N, fill::value(1.0 / N));
     cum_wgt = cumsum(cum_wgt);
 
+
+    // This is n_drawn by N where [i][j] is the index of the parent of particle j on step i
+    // ie the index of the previous plan that was sampled and used to create particle j on step i
+    std::vector<std::vector<int>> parent_index_mat(n_steps, std::vector<int> (N, -1));
+
+    // This is n_drawn by N where [i][j] is the index of the original (first) ancestor of particle j on step i
+    std::vector<std::vector<int>> original_ancestor_mat(n_steps, std::vector<int> (N, -1));
+
     RcppThread::ThreadPool pool(cores);
 
     std::string bar_fmt = "Split [{cli::pb_current}/{cli::pb_total}] {cli::pb_bar} | ETA{cli::pb_eta}";
     RObject bar = cli_progress_bar(n_steps, cli_config(false, bar_fmt.c_str()));
     try {
     for (int ctr = n_drawn + 1; ctr <= n_drawn + n_steps; ctr++) {
+
         int i_split = ctr - n_drawn - 1;
+
         if (verbosity >= 3) {
             Rcout << "Making split " << ctr - n_drawn << " of " << n_steps;
         }
@@ -126,11 +136,42 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
             lower = target - (target - lower) * final_infl;
             upper = target + (upper - target) * final_infl;
         }
+
+
+        // For the first iteration we need to pass a special previous ancestor thing
+        if(i_split == 0){
+        std::vector<int> dummy_prev_ancestors(N, 1);
+        // split the map
         split_maps(g, counties, cg, pop, districts, cum_wgt, lp, pop_left,
                    log_temper, pop_temper, accept_rate[i_split],
                    n_distr, ctr, ancestors, lags, n_unique[i_split],
+                    original_ancestor_mat.at(i_split),
+                    parent_index_mat.at(i_split),
+                    dummy_prev_ancestors,
                    lower, upper, target,
                    rho, cut_k[i_split], check_both, pool, verbosity);
+
+
+
+            // For the first ancestor one make every ancestor themselves
+            std::iota (parent_index_mat.at(0).begin(), parent_index_mat.at(0).end(), 0);
+            std::iota (original_ancestor_mat.at(0).begin(), original_ancestor_mat.at(0).end(), 0);
+        }else{
+            // split the map and we can use the previous original ancestor matrix row
+
+        split_maps(g, counties, cg, pop, districts, cum_wgt, lp, pop_left,
+                   log_temper, pop_temper, accept_rate[i_split],
+                   n_distr, ctr, ancestors, lags, n_unique[i_split],
+                    original_ancestor_mat.at(i_split),
+                    parent_index_mat.at(i_split),
+                    original_ancestor_mat.at(i_split-1),
+                   lower, upper, target,
+                   rho, cut_k[i_split], check_both, pool, verbosity);
+
+
+        }
+
+
 
         sd_lp[i_split] = stddev(lp);
         sd_temper[i_split] = stddev(log_temper);
@@ -162,6 +203,8 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     }
 
     List out = List::create(
+        _["original_ancestors"] = original_ancestor_mat,
+        _["parent_index"] = parent_index_mat,
         _["plans"] = districts,
         _["lp"] = lp,
         _["ancestors"] = ancestors,
@@ -339,6 +382,9 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 vec &pop_left, vec &log_temper, double pop_temper,
                 double &accept_rate, int n_distr, int dist_ctr,
                 umat &ancestors, const std::vector<int> &lags, int &n_unique,
+                std::vector<int> &original_ancestor_vec,
+                std::vector<int> &parent_vec,
+                const std::vector<int> &prev_ancestor_vec,
                 double lower, double upper, double target,
                 double rho, int k, bool check_both,
                 RcppThread::ThreadPool &pool, int verbosity) {
@@ -398,6 +444,11 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
 
             ok = true;
         }
+        // update this particles ancestor to be the ancestor of its previous one
+        parent_vec[i] = idx;
+        original_ancestor_vec[i] = prev_ancestor_vec[idx];
+
+
         uniques[i] = idx;
         clear_tree(ust);
 

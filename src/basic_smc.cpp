@@ -639,27 +639,14 @@ void get_log_basic_smc_weights(
 ){
     int M = (int) plans_vec.size();
 
+    // Parallel thread pool where all objects in memory shared by default
+    pool.parallelFor(0, M, [&] (int i) {
+        double log_incr_weight = compute_basic_smc_log_incremental_weight(
+            g, plans_vec.at(i), target, pop_temper);
+        log_incremental_weights[i] = log_incr_weight;
+        unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
+    });
 
-    int n = plans_vec.at(0).num_regions;
-    int N = plans_vec.at(0).N;
-
-    // do basic smc weights unless N regions
-    if(n < N){
-        // Parallel thread pool where all objects in memory shared by default
-        pool.parallelFor(0, M, [&] (int i) {
-            double log_incr_weight = compute_basic_smc_log_incremental_weight(
-                g, plans_vec.at(i), target, pop_temper);
-            log_incremental_weights[i] = log_incr_weight;
-            unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
-        });
-    }else{
-        pool.parallelFor(0, M, [&] (int i) {
-            double log_incr_weight = compute_log_incremental_weight(
-                g, plans_vec.at(i), target, pop_temper);
-            log_incremental_weights[i] = log_incr_weight;
-            unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
-        });
-    }
 
     // Wait for all the threads to finish
     pool.wait();

@@ -442,24 +442,41 @@ double compute_basic_smc_log_incremental_weight(
      Rprintf("SOMETHING WENT WRONG IN COMPPUTE LOG INCREMENT WEIGHJT\n");
     }
 
+    // We use a set to track edges because it doesn't keep duplicates
+    std::set<std::pair<int, int>> adj_region_pairs;
 
- // Now get all unique adjacent region pairs and store them such that
- // the first vertex is always the smaller numbered of the edge
- // We use a set because it doesn't keep duplicates
- std::set<std::pair<int, int>> adj_region_pairs;
+    // If n < N just get adjacent to remainder
+    if(plan.num_regions < plan.N){
+        // adjacent region always has id n-1
+        int u = plan.num_regions - 1;
 
- int u = plan.num_regions - 1;
-
- // Iterate through the adjacency list of remainder region
- // which is always the number of regions minus 1
-    for(auto v: rg[u]){
-     // store the edges such that smaller vertex is always first
-     if (u < v) {
-         adj_region_pairs.emplace(u, v);
-     } else {
-         adj_region_pairs.emplace(v, u);
-     }
+        // Iterate through the adjacency list of remainder region
+        // which is always the number of regions minus 1
+        for(auto v: rg[u]){
+            // store the edges such that smaller vertex is always first
+            if (u < v) {
+                adj_region_pairs.emplace(u, v);
+            } else {
+                adj_region_pairs.emplace(v, u);
+            }
+        }
+    }else{ // else get all adjacent districts
+        // Iterate through the adjacency list
+        // Now get all unique adjacent region pairs and store them such that
+        // the first vertex is always the smaller numbered of the edge
+        for (int u = 0; u < rg.size(); u++){
+            // iterate over neighbors
+            for(auto v: rg[u]){
+                // store the edges such that smaller vertex is always first
+                if (u < v) {
+                    adj_region_pairs.emplace(u, v);
+                } else {
+                    adj_region_pairs.emplace(v, u);
+                }
+            }
+        }
     }
+
 
 
     double incremental_weight = 0.0;

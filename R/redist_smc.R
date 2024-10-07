@@ -273,6 +273,26 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
             cli::cli_process_done()
         }
 
+
+
+        # make original ancestor matrix
+        # add 1 for R indexing
+        algout$original_ancestors_mat <- matrix(
+            unlist(algout$original_ancestors),
+            ncol = length(algout$original_ancestors),
+            byrow = FALSE) + 1
+
+
+
+        # make parent mat into matrix
+        # add 1 for R indexing
+        algout$parent_index <- matrix(
+            unlist(algout$parent_index),
+            ncol = length(algout$parent_index),
+            byrow = FALSE) + 1
+
+
+
         lr <- -algout$lp
         wgt <- exp(lr - mean(lr))
         n_eff <- length(wgt)*mean(wgt)^2/mean(wgt^2)
@@ -325,6 +345,9 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
 
         algout$wgt <- wgt
 
+        nunique_original_ancestors <- algout$original_ancestors_mat |>
+            apply(2, function(x) length(unique(x)))
+
         algout$l_diag <- list(
             n_eff = n_eff,
             step_n_eff = algout$step_n_eff,
@@ -337,7 +360,10 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
             ancestors = algout$ancestors,
             seq_alpha = seq_alpha,
             pop_temper = pop_temper,
-            runtime = as.numeric(t2_run - t1_run, units = "secs")
+            runtime = as.numeric(t2_run - t1_run, units = "secs"),
+            parent_index_mat = algout$parent_index,
+            original_ancestors_mat = algout$original_ancestors_mat,
+            nunique_original_ancestors=nunique_original_ancestors
         )
 
         algout

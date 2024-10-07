@@ -147,7 +147,8 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
                                    accept_rate = c(diagn$accept_rate, NA),
                                    sd_log_wgt = diagn$sd_lp,
                                    max_unique = diagn$unique_survive,
-                                   est_k = c(diagn$est_k, NA))
+                                   est_k = c(diagn$est_k, NA),
+                                   unique_original = c(diagn$nunique_original_ancestors, NA))
 
             tbl_print <- as.data.frame(run_dfs[[i]])
             min_n <- max(0.05*n_samp, min(0.4*n_samp, 100))
@@ -164,7 +165,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
 
             names(tbl_print) <- c("Eff. samples (%)", "Acc. rate",
                                   "Log wgt. sd", " Max. unique",
-                                  "Est. k", "")
+                                  "Est. k", "Unique Original Ancestors" , "")
             rownames(tbl_print) <- c(paste("Split", seq_len(nrow(tbl_print) - 1)), "Resample")
 
             if (i == 1 || isTRUE(all_runs)) {
@@ -211,10 +212,15 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
             cli::cat_line("    ", cli::code_highlight(code, "Material"))
         }
     } else if(algo %in% c("gsmc", 'basic_smc')) {
+        if(algo == "gsmc"){
+            algo_label <- "gSMC"
+        }else if(algo == "basic_smc"){
+            algo_label <- "basicSMC"
+        }
         pop_lb <- attr(object, "pop_bounds")[1]
         pop_ub <- attr(object, "pop_bounds")[3]
 
-        cli_text("{.strong {algo}:} {fmt_comma(n_samp)} sampled plans of {n_distr}
+        cli_text("{.strong {algo_label}:} {fmt_comma(n_samp)} sampled plans of {n_distr}
                  districts on {fmt_comma(nrow(plans_m))} units with a population between {fmt_comma(pop_lb)} and {fmt_comma(pop_ub)}")
         cli_text("{.arg pop_temper}={format(all_diagn[[1]]$pop_temper, digits=3)}")
         cat("\n")
@@ -251,7 +257,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
 
             if (any(na.omit(rhats) >= 1.05)) {
                 warn_converge <- TRUE
-                cli::cli_alert_danger("{.strong WARNING:} gSMC runs have not converged.")
+                cli::cli_alert_danger("{.strong WARNING:} {algo} runs have not converged.")
             }
             cat("\n")
 
@@ -294,7 +300,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
             rownames(tbl_print) <- c(paste("Split", seq_len(nrow(tbl_print) - 1)), "Resample")
 
             if (i == 1 || isTRUE(all_runs)) {
-                cli_text("Sampling diagnostics for gSMC run {i} of {n_runs} ({fmt_comma(n_samp)} samples)")
+                cli_text("Sampling diagnostics for {algo_label} run {i} of {n_runs} ({fmt_comma(n_samp)} samples)")
                 print(tbl_print, digits = 2)
                 cat("\n")
             }
@@ -318,7 +324,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
                         {.arg pop_temper} by 0.01.")
         }
         if (warn_converge) {
-            cli::cli_li("{.strong gSMC convergence:} Increase the number of samples.
+            cli::cli_li("{.strong {algo_label} convergence:} Increase the number of samples.
                         If you are experiencing low plan diversity or bottlenecks as well,
                         address those issues first.")
         }
@@ -445,4 +451,65 @@ diag_rhat <- function(x, grp, split = FALSE) {
 
     max(diag_calc_rhat(diag_ranknorm(x), grp),
         diag_calc_rhat(diag_ranknorm(diag_fold(x)), grp))
+}
+
+
+
+#' Get k-step Ancestors of particles
+#'
+#' Tells you for a given index what its original ancestor was.
+#'
+#' @param parent_mat Ancestor matrix where entry [i,j] equals the index of the
+#' parent of particle i after step j
+#' @param steps_back How many steps back we should find the ancestors of (so
+#' parents are 1 step ancestors). Defaults to going all the way back to the
+#' original ancestors
+#' @param start_col Which column to start at. Defaults to the last column
+#'
+#' @returns indices of k-step ancestors for particles at iteration `start_col`
+#' @md
+#' @export
+get_k_step_ancestors <- function(parent_mat, steps_back = NULL, start_col = NULL){
+    nparent_cols <- ncol(parent_mat)
+
+    # if null then just start on final set of plans
+    if(is.null(start_col)){
+        start_col <- nparent_cols
+    }else{
+        # else assert starting column is between 1 and number of cols
+        assertthat::assert_that(
+            assertthat::is.scalar(start_col) &&
+                start_col <= nparent_cols &&
+                start_col > 1,
+            msg = sprintf("Error!\nInput start_col=`%s` is not valid.
+                          Input must be a number between 1 and %d",
+                          toString(start_col), nparent_cols)
+        )
+    }
+
+    # check steps back is between [1, nnparent_cols -1]
+    if(is.null(steps_back)){
+        steps_back <- nparent_cols-2
+    }else{
+        assertthat::assert_that(
+            assertthat::is.scalar(steps_back) &&
+                steps_back <= start_col-1 &&
+                steps_back >= 1,
+            msg = sprintf(
+                "Error!\nInput steps_back=`%s` is not valid.
+Input must be between 1 and the start_col value (you input %d)",
+                toString(steps_back), steps_back)
+        )
+    }
+
+    # vector where index i maps to the index of its ancestor
+    # initialize to this
+    ancestor <- 1:nrow(parent_mat)
+
+
+    # iterate through each step back we select the successive parent indices
+    for (j in start_col:(start_col - steps_back + 1)) {
+        ancestor <- parent_mat[ancestor, j]
+    }
+    return(ancestor)
 }

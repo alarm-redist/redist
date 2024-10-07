@@ -25,11 +25,10 @@ redist_basic_smc <- function(state_map, M, counties = NULL, k_params = 6,
     # no constraints
     constraints = list()
 
-
-    # make controls intput
+    # make controls input
     lags <- 1 + unique(round((N - 1)^0.8*seq(0, 0.7, length.out = 4)^0.9))
 
-    # check k param imput
+    # check k param input
     if(any(k_params < 1)){
         cli_abort("K parameter values must be all at least 1.")
     }
