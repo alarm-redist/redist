@@ -168,11 +168,6 @@ redist_basic_smc <- function(state_map, M, counties = NULL, k_params = 6,
             function(x) matrix(unlist(x), ncol = length(x), byrow = FALSE) + 1
             )
 
-        # make each element of region_dvals_mat_list a V by M matrix
-        algout$region_dvals_mat_list <- lapply(
-            algout$region_dvals_mat_list,
-            function(x) matrix(unlist(x), ncol = length(x), byrow = FALSE)
-        )
 
         # make original ancestor matrix
         # add 1 for R indexing
@@ -223,10 +218,6 @@ redist_basic_smc <- function(state_map, M, counties = NULL, k_params = 6,
             # N-2 are previous results
             algout$plans <- algout$region_ids_mat_list[[N-1]]
 
-            algout$final_region_labs <- matrix(
-                unlist(algout$final_region_labs),
-                ncol = length(algout$final_region_labs),
-                byrow = FALSE)
 
         }else{
             # Just add first element since not diagnostic mode the first N-2
@@ -235,8 +226,6 @@ redist_basic_smc <- function(state_map, M, counties = NULL, k_params = 6,
 
             # make the region_ids_mat_list input just null since there's nothing else
             algout$region_ids_mat_list <- NULL
-            algout$region_dvals_mat_list <- NULL
-            algout$final_region_labs <- NULL
         }
 
         if (any(is.na(lr))) {
@@ -299,11 +288,9 @@ redist_basic_smc <- function(state_map, M, counties = NULL, k_params = 6,
             seq_alpha = .99,
             pop_temper = pop_temper,
             runtime = as.numeric(t2_run - t1_run, units = "secs"),
-            district_str_labels = algout$final_region_labs,
             nunique_original_ancestors = algout$nunique_original_ancestors,
             parent_index_mat = algout$parent_index,
             original_ancestors_mat = algout$original_ancestors_mat,
-            region_dvals_mat_list = algout$region_dvals_mat_list,
             log_incremental_weights_mat = algout$log_incremental_weights_mat,
             region_ids_mat_list = algout$region_ids_mat_list,
             draw_tries_mat = algout$draw_tries_mat,

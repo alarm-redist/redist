@@ -769,8 +769,6 @@ List basic_smc_plans(
     // Declare variables whose size will depend on whether or not we're in
     // diagnostic mode or not
     std::vector<std::vector<std::vector<int>>> plan_region_ids_mat;
-    std::vector<std::vector<std::vector<int>>> plan_d_vals_mat;
-    std::vector<std::vector<std::string>> final_plan_region_labels;
 
 
 
@@ -783,22 +781,7 @@ List basic_smc_plans(
                 M, std::vector<int>(V, -1)
         ));
 
-        // reserve space for N-1 elements
-        plan_d_vals_mat.reserve(N-1);
 
-        // This is N-2 by M by 1,2,...N where for each n=1,...,N-1, m=1,...,M it maps the region
-        // id to the region's d value. So for a given n it is n by M by n+1
-        // It stops at N-2 because for N-1 its all 1
-        for(int n = 1; n < N-1; n++){
-            plan_d_vals_mat.push_back(
-                std::vector<std::vector<int>>(M, std::vector<int>(n+1, -1))
-            );
-        }
-
-        //  M by N-1 where for each m=1,...M it maps region ids to region labels in a plan
-        final_plan_region_labels.resize(
-                M, std::vector<std::string>(N, "MISSING")
-        );
 
     }else{ // else only track for final round
         // Create info tracking we will pass out at the end
@@ -898,16 +881,14 @@ List basic_smc_plans(
         // compute effective sample size
         n_eff.at(n) = compute_n_eff(log_incremental_weights_mat[n]);
 
-        // Now update the diagnostic info if needed, region labels, dval column of the matrix
+        // Now update the diagnostic info if needed
         if(diagnostic_mode && n == N-2){ // record if in diagnostic mode and final step
             for(int j=0; j<M; j++){
                 plan_region_ids_mat.at(n).at(j) = plans_vec[j].region_num_ids;
-                final_plan_region_labels.at(j) = plans_vec[j].region_str_labels;
             }
         }else if(diagnostic_mode){ // record if in diagnostic mode but not final step
             for(int j=0; j<M; j++){
                 plan_region_ids_mat.at(n).at(j) = plans_vec[j].region_num_ids;
-                plan_d_vals_mat.at(n).at(j) = plans_vec[j].region_dvals;
             }
         }else if(n == N-2){ // else if not only record final step
             for(int j=0; j<M; j++){
@@ -931,9 +912,7 @@ List basic_smc_plans(
     List out = List::create(
         _["original_ancestors"] = original_ancestor_mat,
         _["parent_index"] = parent_index_mat,
-        _["final_region_labs"] = final_plan_region_labels,
         _["region_ids_mat_list"] = plan_region_ids_mat,
-        _["region_dvals_mat_list"] = plan_d_vals_mat,
         _["log_incremental_weights_mat"] = log_incremental_weights_mat,
         _["normalized_weights_mat"] = normalized_weights_mat,
         _["draw_tries_mat"] = draw_tries_mat,

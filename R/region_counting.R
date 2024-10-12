@@ -1,6 +1,6 @@
 # Creates a hash map that counts the number of times a specific region appears
 # in a matrix of plans or partial plans
-get_region_counts <- function(plan_mat, N){
+get_region_count_map <- function(plan_mat, N){
     # create hash map
     region_count_map <- hash::hash()
 
@@ -47,7 +47,7 @@ get_region_counts <- function(plan_mat, N){
 
 
 get_region_count_df <- function(plan_mat, N){
-    district_count_map <- get_region_counts(plan_mat, N)
+    district_count_map <- get_region_count_map(plan_mat, N)
 
     district_count_df <- data.frame(
         district=names(hash::values(district_count_map, USE.NAMES=TRUE)),
@@ -65,7 +65,7 @@ get_district_count_df <- function(plans, chain_num){
     district_count_map <- plans %>%
             filter(chain == chain_num) %>%
             as.matrix() %>%
-            get_region_counts(attr(plans, "ndist"))
+            get_region_count_map(attr(plans, "ndist"))
 
     district_count_df <- data.frame(
         district=names(hash::values(district_count_map, USE.NAMES=TRUE)),
