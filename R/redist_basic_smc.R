@@ -19,7 +19,9 @@
 #'
 #' @export
 redist_basic_smc <- function(state_map, M, counties = NULL, k_params = 6,
-                       resample = TRUE, runs = 1L, ncores = 0L, pop_temper = 0,
+                       resample = TRUE, runs = 1L,
+                       ncores = 0L, multiprocess=TRUE,
+                       pop_temper = 0,
                        verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE){
     N <- attr(state_map, "ndists")
     # no constraints
@@ -111,8 +113,18 @@ redist_basic_smc <- function(state_map, M, counties = NULL, k_params = 6,
         }
     }
 
+    # if sequentially
+    if(!multiprocess){
+        # either max cores if
+        if(ncores == 0){
+            ncores_per = ncores_max
+        }else{
+            ncores_per = ncores
+        }
+    }
 
-    if (ncores_runs > 1) {
+
+    if (ncores_runs > 1 && multiprocess) {
         `%oper%` <- `%dorng%`
         of <- if (Sys.info()[["sysname"]] == "Windows") {
             tempfile(pattern = paste0("smc_", substr(Sys.time(), 1, 10)), fileext = ".txt")
@@ -138,7 +150,7 @@ redist_basic_smc <- function(state_map, M, counties = NULL, k_params = 6,
     all_out <- foreach(chain = seq_len(runs), .inorder = FALSE, .packages="redist") %oper% {
 
 
-        run_verbosity <- if (chain == 1) verbosity else 0
+        run_verbosity <- if (chain == 1 || !multiprocess) verbosity else 0
         t1_run <- Sys.time()
 
         algout <- redist::basic_smc_plans(
@@ -175,6 +187,7 @@ redist_basic_smc <- function(state_map, M, counties = NULL, k_params = 6,
             unlist(algout$original_ancestors),
             ncol = length(algout$original_ancestors),
             byrow = FALSE) + 1
+        algout$original_ancestors <- NULL
 
         # make parent mat into matrix
         # add 1 for R indexing
@@ -249,9 +262,18 @@ redist_basic_smc <- function(state_map, M, counties = NULL, k_params = 6,
 
             rs_idx <- resample_lowvar(normalized_wgts)
             n_unique <- dplyr::n_distinct(rs_idx)
+            # makes algout$plans[i] now equal to algout$plans[rs_idx[i]]
             algout$plans <- algout$plans[, rs_idx, drop = FALSE]
-
+            # now adjust for the resampling
             algout$ancestors <- algout$ancestors[rs_idx, , drop = FALSE]
+
+            # adjust for the resampling
+            # NOTE: IN FUTURE THIS SHOULD BE SEPERATED INTO FINAL SAMPLE INFO
+            algout$original_ancestors_mat <- algout$original_ancestors_mat[rs_idx, , drop = FALSE]
+            algout$parent_index <- algout$original_ancestors_mat[rs_idx, , drop = FALSE]
+
+
+            #TODO probably need to adjust the rest of these as well
             storage.mode(algout$ancestors) <- "integer"
         }
 
@@ -295,7 +317,8 @@ redist_basic_smc <- function(state_map, M, counties = NULL, k_params = 6,
             region_ids_mat_list = algout$region_ids_mat_list,
             draw_tries_mat = algout$draw_tries_mat,
             parent_unsuccessful_tries_mat = algout$parent_unsuccessful_tries_mat,
-            parent_successful_tries_mat = parent_successful_tries_mat
+            parent_successful_tries_mat = parent_successful_tries_mat,
+            rs_idx = rs_idx
         )
 
         algout
