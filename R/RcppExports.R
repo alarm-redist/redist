@@ -266,6 +266,10 @@ swMH <- function(aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parit
     .Call(`_redist_swMH`, aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parity, beta_sequence, beta_weights, lambda, beta, adapt_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, num_hot_steps, num_annealing_steps, num_cold_steps, verbose)
 }
 
+split_entire_map_once_new_cut_func <- function(N, adj_list, counties, pop, target, lower, upper, split_district_only, verbose) {
+    .Call(`_redist_split_entire_map_once_new_cut_func`, N, adj_list, counties, pop, target, lower, upper, split_district_only, verbose)
+}
+
 split_entire_map_once_basic_smc <- function(N, adj_list, counties, pop, target, lower, upper, verbose) {
     .Call(`_redist_split_entire_map_once_basic_smc`, N, adj_list, counties, pop, target, lower, upper, verbose)
 }

@@ -731,6 +731,25 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// split_entire_map_once_new_cut_func
+List split_entire_map_once_new_cut_func(int N, List adj_list, const arma::uvec& counties, const arma::uvec& pop, double target, double lower, double upper, bool split_district_only, bool verbose);
+RcppExport SEXP _redist_split_entire_map_once_new_cut_func(SEXP NSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP split_district_onlySEXP, SEXP verboseSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< List >::type adj_list(adj_listSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< bool >::type split_district_only(split_district_onlySEXP);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(split_entire_map_once_new_cut_func(N, adj_list, counties, pop, target, lower, upper, split_district_only, verbose));
+    return rcpp_result_gen;
+END_RCPP
+}
 // split_entire_map_once_basic_smc
 List split_entire_map_once_basic_smc(int N, List adj_list, const arma::uvec& counties, const arma::uvec& pop, double target, double lower, double upper, bool verbose);
 RcppExport SEXP _redist_split_entire_map_once_basic_smc(SEXP NSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP verboseSEXP) {
@@ -863,6 +882,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_splits", (DL_FUNC) &_redist_splits, 4},
     {"_redist_dist_cty_splits", (DL_FUNC) &_redist_dist_cty_splits, 3},
     {"_redist_swMH", (DL_FUNC) &_redist_swMH, 20},
+    {"_redist_split_entire_map_once_new_cut_func", (DL_FUNC) &_redist_split_entire_map_once_new_cut_func, 9},
     {"_redist_split_entire_map_once_basic_smc", (DL_FUNC) &_redist_split_entire_map_once_basic_smc, 8},
     {"_redist_basic_smc_split_all_the_way", (DL_FUNC) &_redist_basic_smc_split_all_the_way, 8},
     {"_redist_tree_pop", (DL_FUNC) &_redist_tree_pop, 5},

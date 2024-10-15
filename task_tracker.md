@@ -8,6 +8,7 @@ Note all of the diagnostic information is accurately updated to account for a re
 
 # ----- ACTIVE TASKS -----
 
+
 **Create More Internal Visualization/Examination Stuff**
 Already created a new file, `splitting_inspection.cpp` to help with this but general idea is create code that allows someone in R to pass in a graph in adjacency list form (and potentially other stuff) and see things like the cut tree output by the splitting procedure or an internal region level graph. This will be helpful for making figures for the paper and also for deep level debugging/diagnostic things.  
 
