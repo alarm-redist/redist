@@ -29,4 +29,12 @@ bool get_edge_to_cut(Tree &ust, int root,
 );
 
 
+void update_plan_from_cut(
+        Tree &ust, Plan &plan,
+        const int old_region_id,
+        const int new_region1_tree_root, const int new_region1_dval, const double new_region1_pop,
+        const int new_region2_tree_root, const int new_region2_dval, const double new_region2_pop,
+        int &new_region1_id,  int &new_region2_id
+);
+
 #endif

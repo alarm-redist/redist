@@ -41,13 +41,14 @@ Plan::Plan(int V, int N, double total_map_pop){
 // Prints our object using Rcout. Should be used in Rcpp call
 void Plan::Rprint() const{
     RcppThread::Rcout << "Plan with " << num_regions << " regions, " << num_districts
-                      << " districts and "<< V << " Vertices.\n[";
+                      << " districts, " << num_multidistricts << " multidistricts and "
+                      << V << " Vertices.\n[";
 
 
     RcppThread::Rcout << "Region Level Values:";
     for(int region_id = 0; region_id < num_regions; region_id++){
-        RcppThread::Rcout << "(" << region_str_labels.at(region_id) << " aka " << region_id << " also " <<
-            ", " << region_dvals.at(region_id) << ", " << region_pops.at(region_id) <<" ), ";
+        RcppThread::Rcout << "(" << region_str_labels.at(region_id) << " aka " << region_id <<
+            ", dval=" << region_dvals.at(region_id) << ", " << region_pops.at(region_id) <<" ), ";
     }
     RcppThread::Rcout << "\n";
 //

@@ -240,3 +240,77 @@ bool get_edge_to_cut(Tree &ust, int root,
     return true;
 
 };
+
+
+
+
+void update_plan_from_cut(
+        Tree &ust, Plan &plan,
+        const int old_region_id,
+        const int new_region1_tree_root, const int new_region1_dval, const double new_region1_pop,
+        const int new_region2_tree_root, const int new_region2_dval, const double new_region2_pop,
+        int &new_region1_id,  int &new_region2_id
+){
+
+    // update plan with new regions
+    plan.num_regions++; // increase region count by 1
+    plan.num_multidistricts--; // Decrease by one to avoid double counting later
+
+    // Create info for two new districts
+    std::string new_region_label1;
+    std::string new_region_label2;
+
+    std::string region_to_split = plan.region_str_labels.at(old_region_id);
+
+    // Set label and count depending on if district or multi district
+    if(new_region1_dval == 1){
+        plan.num_districts++;
+        // if district then string label just adds district number
+        new_region_label1 = region_to_split + "." + std::to_string(plan.num_districts);
+    }else{
+        plan.num_multidistricts++;
+        // if region then just add current region number
+        new_region_label1 = region_to_split + ".R" + std::to_string(old_region_id);
+    }
+
+    // Now do it for second region
+    if(new_region2_dval == 1){
+        plan.num_districts++;
+        // if district then string label just adds district number
+        new_region_label2 = region_to_split + "." + std::to_string(plan.num_districts);
+    }else{
+        plan.num_multidistricts++;
+        // if region then just add current region number
+        new_region_label2 = region_to_split + ".R" + std::to_string(plan.num_regions - 1);
+    }
+
+    // TODO: Figure out how to do this to preserve the order districts were added
+
+    // make the first new region have the same integer id
+    new_region1_id = old_region_id;
+    // Second new region has id of the new number of regions minus 1
+    new_region2_id = plan.num_regions - 1;
+
+
+    // Now update the two cut portions
+    assign_region(ust, plan, new_region1_tree_root, new_region1_id);
+    assign_region(ust, plan, new_region2_tree_root, new_region2_id);
+
+    // Now update the region level information
+
+    // Add the new region 1
+    // New region 1 has the same id number as old region so update that
+    plan.region_dvals.at(new_region1_id) = new_region1_dval;
+    plan.region_str_labels.at(new_region1_id) = new_region_label1;
+    plan.region_pops.at(new_region1_id) = new_region1_pop;
+
+    // Add the new region 2
+    // New region 2's id is the highest id number so push back
+    plan.region_dvals.push_back(new_region2_dval);
+    plan.region_str_labels.push_back(new_region_label2);
+    plan.region_pops.push_back(new_region2_pop);
+
+    // done
+    return;
+
+};

@@ -701,6 +701,32 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// perform_a_valid_region_split
+List perform_a_valid_region_split(List adj_list, const arma::uvec& counties, const arma::uvec& pop, int k_param, int region_id_to_split, double target, double lower, double upper, int N, int num_regions, int num_districts, std::vector<int> region_ids, std::vector<int> region_dvals, std::vector<double> region_pops, bool split_district_only, bool verbose);
+RcppExport SEXP _redist_perform_a_valid_region_split(SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP k_paramSEXP, SEXP region_id_to_splitSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP NSEXP, SEXP num_regionsSEXP, SEXP num_districtsSEXP, SEXP region_idsSEXP, SEXP region_dvalsSEXP, SEXP region_popsSEXP, SEXP split_district_onlySEXP, SEXP verboseSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type adj_list(adj_listSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< int >::type k_param(k_paramSEXP);
+    Rcpp::traits::input_parameter< int >::type region_id_to_split(region_id_to_splitSEXP);
+    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< int >::type num_regions(num_regionsSEXP);
+    Rcpp::traits::input_parameter< int >::type num_districts(num_districtsSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type region_ids(region_idsSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type region_dvals(region_dvalsSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type region_pops(region_popsSEXP);
+    Rcpp::traits::input_parameter< bool >::type split_district_only(split_district_onlySEXP);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(perform_a_valid_region_split(adj_list, counties, pop, k_param, region_id_to_split, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, verbose));
+    return rcpp_result_gen;
+END_RCPP
+}
 // swMH
 List swMH(List aList, NumericVector cdvec, NumericVector popvec, int nsims, List constraints, double eprob, double pct_dist_parity, NumericVector beta_sequence, NumericVector beta_weights, int lambda, double beta, std::string adapt_beta, int adjswap, int exact_mh, int adapt_eprob, int adapt_lambda, int num_hot_steps, int num_annealing_steps, int num_cold_steps, bool verbose);
 RcppExport SEXP _redist_swMH(SEXP aListSEXP, SEXP cdvecSEXP, SEXP popvecSEXP, SEXP nsimsSEXP, SEXP constraintsSEXP, SEXP eprobSEXP, SEXP pct_dist_paritySEXP, SEXP beta_sequenceSEXP, SEXP beta_weightsSEXP, SEXP lambdaSEXP, SEXP betaSEXP, SEXP adapt_betaSEXP, SEXP adjswapSEXP, SEXP exact_mhSEXP, SEXP adapt_eprobSEXP, SEXP adapt_lambdaSEXP, SEXP num_hot_stepsSEXP, SEXP num_annealing_stepsSEXP, SEXP num_cold_stepsSEXP, SEXP verboseSEXP) {
@@ -881,6 +907,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_smc_plans", (DL_FUNC) &_redist_smc_plans, 15},
     {"_redist_splits", (DL_FUNC) &_redist_splits, 4},
     {"_redist_dist_cty_splits", (DL_FUNC) &_redist_dist_cty_splits, 3},
+    {"_redist_perform_a_valid_region_split", (DL_FUNC) &_redist_perform_a_valid_region_split, 16},
     {"_redist_swMH", (DL_FUNC) &_redist_swMH, 20},
     {"_redist_split_entire_map_once_new_cut_func", (DL_FUNC) &_redist_split_entire_map_once_new_cut_func, 9},
     {"_redist_split_entire_map_once_basic_smc", (DL_FUNC) &_redist_split_entire_map_once_basic_smc, 8},
