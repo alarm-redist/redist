@@ -319,7 +319,7 @@ double compute_basic_smc_log_incremental_weight(
     // sanity check: make sure the region level graph's number of vertices is
     // the same as the number of regions in the plan
     if((int)rg.size() != plan.num_regions){
-     Rprintf("SOMETHING WENT WRONG IN COMPPUTE LOG INCREMENT WEIGHJT\n");
+     Rprintf("SOMETHING WENT WRONG IN COMPUTE LOG INCREMENT WEIGHJT\n");
     }
 
     // We use a set to track edges because it doesn't keep duplicates

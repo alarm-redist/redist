@@ -9,33 +9,6 @@ collapse_adj <- function(graph, idxs) {
     .Call(`_redist_collapse_adj`, graph, idxs)
 }
 
-#' Uses gsmc method to generate a sample of `M` plans in `c++`
-#'
-#' Using the procedure outlined in <PAPER HERE> this function uses Sequential
-#' Monte Carlo (SMC) methods to generate a sample of `M` plans
-#'
-#' @title Run redist gsmc
-#'
-#' @param N The number of districts the final plans will have
-#' @param adj_list A 0-indexed adjacency list representing the undirected graph
-#' which represents the underlying map the plans are to be drawn on
-#' @param counties Vector of county labels of each vertex in `g`
-#' @param pop A vector of the population associated with each vertex in `g`
-#' @param target Ideal population of a valid district. This is what deviance is calculated
-#' relative to
-#' @param lower Acceptable lower bounds on a valid district's population
-#' @param upper Acceptable upper bounds on a valid district's population
-#' @param M The number of plans (samples) to draw
-#' @param k_param The k parameter from the SMC algorithm, you choose among the top k_param edges
-#' @param control Named list of additional parameters.
-#' @param num_threads The number of threads the threadpool should use
-#' @param verbosity What level of detail to print out while the algorithm is
-#' running <ADD OPTIONS>
-#' @export
-basic_smc_plans <- function(N, adj_list, counties, pop, target, lower, upper, M, control, ncores = -1L, verbosity = 3L, diagnostic_mode = FALSE) {
-    .Call(`_redist_basic_smc_plans`, N, adj_list, counties, pop, target, lower, upper, M, control, ncores, verbosity, diagnostic_mode)
-}
-
 coarsen_adjacency <- function(adj, groups) {
     .Call(`_redist_coarsen_adjacency`, adj, groups)
 }
@@ -78,33 +51,6 @@ crsg <- function(adj_list, population, area, x_center, y_center, Ndistrict, targ
 
 dist_dist_diff <- function(p, i_dist, j_dist, x_center, y_center, x, y) {
     .Call(`_redist_dist_dist_diff`, p, i_dist, j_dist, x_center, y_center, x, y)
-}
-
-#' Uses gsmc method to generate a sample of `M` plans in `c++`
-#'
-#' Using the procedure outlined in <PAPER HERE> this function uses Sequential
-#' Monte Carlo (SMC) methods to generate a sample of `M` plans
-#'
-#' @title Run redist gsmc
-#'
-#' @param N The number of districts the final plans will have
-#' @param adj_list A 0-indexed adjacency list representing the undirected graph
-#' which represents the underlying map the plans are to be drawn on
-#' @param counties Vector of county labels of each vertex in `g`
-#' @param pop A vector of the population associated with each vertex in `g`
-#' @param target Ideal population of a valid district. This is what deviance is calculated
-#' relative to
-#' @param lower Acceptable lower bounds on a valid district's population
-#' @param upper Acceptable upper bounds on a valid district's population
-#' @param M The number of plans (samples) to draw
-#' @param k_param The k parameter from the SMC algorithm, you choose among the top k_param edges
-#' @param control Named list of additional parameters.
-#' @param num_threads The number of threads the threadpool should use
-#' @param verbosity What level of detail to print out while the algorithm is
-#' running <ADD OPTIONS>
-#' @export
-gsmc_plans <- function(N, adj_list, counties, pop, target, lower, upper, M, control, ncores = -1L, verbosity = 3L, diagnostic_mode = FALSE) {
-    .Call(`_redist_gsmc_plans`, N, adj_list, counties, pop, target, lower, upper, M, control, ncores, verbosity, diagnostic_mode)
 }
 
 log_st_map <- function(g, districts, counties, n_distr) {
@@ -496,14 +442,6 @@ swMH <- function(aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parit
 
 split_entire_map_once_new_cut_func <- function(N, adj_list, counties, pop, target, lower, upper, split_district_only, verbose) {
     .Call(`_redist_split_entire_map_once_new_cut_func`, N, adj_list, counties, pop, target, lower, upper, split_district_only, verbose)
-}
-
-split_entire_map_once_basic_smc <- function(N, adj_list, counties, pop, target, lower, upper, verbose) {
-    .Call(`_redist_split_entire_map_once_basic_smc`, N, adj_list, counties, pop, target, lower, upper, verbose)
-}
-
-basic_smc_split_all_the_way <- function(N, adj_list, counties, pop, target, lower, upper, verbose) {
-    .Call(`_redist_basic_smc_split_all_the_way`, N, adj_list, counties, pop, target, lower, upper, verbose)
 }
 
 #' Creates the region level graph of a plan
