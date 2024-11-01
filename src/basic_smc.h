@@ -18,7 +18,8 @@
 #include "tree_op.h"
 #include "map_calc.h"
 #include "redist_types.h"
-#include "gsmc_helpers.h"
+#include "weights.h"
+#include "splitting.h"
 
 
 

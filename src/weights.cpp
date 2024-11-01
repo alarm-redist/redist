@@ -1,5 +1,11 @@
-#include "gsmc_helpers.h"
+/********************************************************
+* Author: Philip O'Sullivan
+* Institution: Harvard University
+* Date Created: 2024/11
+* Purpose: SMC weight calculation related functions
+********************************************************/
 
+#include "weights.h"
 
 //' Computes the effective sample size from log incremental weights
 //'
@@ -35,6 +41,8 @@ double compute_n_eff(const std::vector<double> &log_wgt) {
 
 
 
+
+
 //' Returns the log of the count of the number of edges across two regions in
 //' the underlying graph.
 //'
@@ -58,7 +66,7 @@ double compute_n_eff(const std::vector<double> &log_wgt) {
  double region_log_boundary(const Graph &g, const Plan &plan,
                             int const&region1_id,
                             int const&region2_id
- ) {
+) {
      int V = g.size(); // get number of vertices
      double count = 0; // count of number of edges across the two regions
 
@@ -87,140 +95,11 @@ double compute_n_eff(const std::vector<double> &log_wgt) {
      }
 
      return std::log(count);
- }
-
-
-
-//' Selects a multidistrict with probability proportional to its d_nk value and
-//' returns the log probability of the selected region
-//'
-//' Given a plan object with at least one multidistrict this function randomly
-//' selects a multidistrict with probability proporitional to its d_nk value
-//' (relative to all multidistricts) and returns the log of the probability that
-//' region was chosen.
-//'
-//'
-//' @title Choose multidistrict to split
-//'
-//' @param plan A plan object
-//' @param region_to_split an integer that will be updated by reference with the
-//' id number of the region selected to split
-//'
-//' @details No modifications to inputs made
-//'
-//' @return the region level graph
-//'
-double choose_multidistrict_to_split(
-        Plan const&plan, int &region_id_to_split){
-
-    if(plan.num_multidistricts < 1){
-        Rprintf("ERROR: Trying to find multidistrict to split when there are none!\n");
-    }
-
-    // count total
-    int total_multi_ds = 0;
-
-    // make vectors with cumulative d value and region label for later
-    std::vector<int> multi_d_vals;
-    std::vector<int> region_ids;
-
-    // Iterate over all regions
-    for(int region_id = 0; region_id < plan.num_regions; region_id++) {
-
-        int d_val = plan.region_dvals.at(region_id);
-
-        // collect info if multidistrict
-        if(d_val > 1){
-            // Add that regions d value to the total
-            total_multi_ds += d_val;
-            // add the count and label to vector
-            multi_d_vals.push_back(d_val);
-            region_ids.push_back(region_id);
-        }
-    }
-
-
-    // Now pick an index proportational to d_nk value
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::discrete_distribution<> d(multi_d_vals.begin(), multi_d_vals.end());
-
-    int idx = d(gen);
-
-    region_id_to_split = region_ids[idx];
-    double log_prob = std::log(
-        static_cast<double>(multi_d_vals[idx])
-        ) - std::log(
-                static_cast<double>(total_multi_ds)
-        );
-
-    return log_prob;
 }
 
 
 
 
-
-
-// NOT FULLY TESTED but taken from district_graph function which was tested
-
-//' Creates the region level graph of a plan
-//'
-//' Given a plan object this returns a graph of the regions in the plan using
-//' the region ids as indices
-//'
-//' @title Get Region-Level Graph
-//'
-//' @param g The graph of the entire map
-//' @param plan A plan object
-//'
-//' @details No modifications to inputs made
-//'
-//' @return the log of the probability the specific value of `region_to_split` was chosen
-//'
-Graph get_region_graph(const Graph &g, const Plan &plan) {
-    int V = g.size();
-    Graph out;
-
-    // make a matrix where entry i,j represents if region i and j are adjacent
-    std::vector<std::vector<bool>> gr_bool(
-            plan.num_regions, std::vector<bool>(plan.num_regions, false)
-        );
-
-    // iterate over all vertices in g
-    for (int i = 0; i < V; i++) {
-        std::vector<int> nbors = g[i];
-        // Find out which region this vertex corresponds to
-        int region_num_i = plan.region_num_ids[i];
-
-        // now iterate over its neighbors
-        for (int nbor : nbors) {
-            // find which region neighbor corresponds to
-            int region_num_j = plan.region_num_ids[nbor];
-            // if they are different regions mark matrix true since region i
-            // and region j are adjacent as they share an edge across
-            if (region_num_i != region_num_j) {
-                gr_bool.at(region_num_i).at(region_num_j) = true;
-            }
-        }
-    }
-
-
-    // Now build the region level graph
-    for (int i = 0; i < plan.num_regions; i++) {
-        // create vector of i's neighbors
-        std::vector<int> tmp;
-        for (int j = 0; j < plan.num_regions; j++) {
-            // check if i and j are adjacent, if so add j
-            if (gr_bool.at(i).at(j)) {
-                tmp.push_back(j);
-            }
-        }
-        out.push_back(tmp);
-    }
-
-    return out;
-}
 
 
 //' Get the probability the union of two regions was chosen to split

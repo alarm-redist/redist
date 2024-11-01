@@ -29,6 +29,25 @@ Multigraph county_graph(const Graph &g, const uvec &counties);
 // TESTED
 Graph district_graph(const Graph &g, const uvec &plan, int nd, bool zero=false);
 
+
+// NOT FULLY TESTED but taken from district_graph function which was tested
+//' Creates the region level graph of a plan
+//'
+//' Given a plan object this returns a graph of the regions in the plan using
+//' the region ids as indices
+//'
+//' @title Get Region-Level Graph
+//'
+//' @param g The graph of the entire map
+//' @param plan A plan object
+//'
+//' @details No modifications to inputs made
+//'
+//' @return the log of the probability the specific value of `region_to_split` was chosen
+//'
+Graph get_region_graph(const Graph &g, const Plan &plan);
+
+
 /*
  * Initialize empty multigraph structure on graph with `V` vertices
  */

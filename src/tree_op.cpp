@@ -93,6 +93,66 @@ Graph district_graph(const Graph &g, const uvec &plan, int nd, bool zero) {
 }
 
 
+
+// NOT FULLY TESTED but taken from district_graph function which was tested
+//' Creates the region level graph of a plan
+//'
+//' Given a plan object this returns a graph of the regions in the plan using
+//' the region ids as indices
+//'
+//' @title Get Region-Level Graph
+//'
+//' @param g The graph of the entire map
+//' @param plan A plan object
+//'
+//' @details No modifications to inputs made
+//'
+//' @return the log of the probability the specific value of `region_to_split` was chosen
+//'
+Graph get_region_graph(const Graph &g, const Plan &plan) {
+    int V = g.size();
+    Graph out;
+
+    // make a matrix where entry i,j represents if region i and j are adjacent
+    std::vector<std::vector<bool>> gr_bool(
+            plan.num_regions, std::vector<bool>(plan.num_regions, false)
+        );
+
+    // iterate over all vertices in g
+    for (int i = 0; i < V; i++) {
+        std::vector<int> nbors = g[i];
+        // Find out which region this vertex corresponds to
+        int region_num_i = plan.region_num_ids[i];
+
+        // now iterate over its neighbors
+        for (int nbor : nbors) {
+            // find which region neighbor corresponds to
+            int region_num_j = plan.region_num_ids[nbor];
+            // if they are different regions mark matrix true since region i
+            // and region j are adjacent as they share an edge across
+            if (region_num_i != region_num_j) {
+                gr_bool.at(region_num_i).at(region_num_j) = true;
+            }
+        }
+    }
+
+
+    // Now build the region level graph
+    for (int i = 0; i < plan.num_regions; i++) {
+        // create vector of i's neighbors
+        std::vector<int> tmp;
+        for (int j = 0; j < plan.num_regions; j++) {
+            // check if i and j are adjacent, if so add j
+            if (gr_bool.at(i).at(j)) {
+                tmp.push_back(j);
+            }
+        }
+        out.push_back(tmp);
+    }
+
+    return out;
+}
+
 /*
  * Initialize empty multigraph structure on graph with `V` vertices
  */

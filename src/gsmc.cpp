@@ -326,7 +326,7 @@ bool cut_regions(Tree &ust, int k_param, int root,
 //'
 //' @return True if two valid regions were split off false otherwise
 //'
-bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multigraph &cg,
+bool OLD_attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multigraph &cg,
                  Plan &plan, const int region_id_to_split,
                  std::vector<int> &new_region_ids,
                  std::vector<bool> &visited, std::vector<bool> &ignore, const uvec &pop,
@@ -463,7 +463,7 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
 //'
 //' @return nothing
 //'
-void generalized_split_maps(
+void OLD_generalized_split_maps(
         const Graph &g, const uvec &counties, Multigraph &cg, const uvec &pop,
         std::vector<Plan> &old_plans_vec, std::vector<Plan> &new_plans_vec,
         std::vector<int> &original_ancestor_vec,
@@ -558,7 +558,7 @@ void generalized_split_maps(
                 old_plans_vec[idx], region_id_to_split);
 
             // Now try to split that region
-            ok = attempt_region_split(g, ust, counties, cg,
+            ok = OLD_attempt_region_split(g, ust, counties, cg,
                                       proposed_new_plan, region_id_to_split,
                                       new_region_ids,
                                       visited, ignore, pop,
@@ -658,7 +658,7 @@ void generalized_split_maps(
 //'    weights of the plans
 //'    - The `unnormalized_sampling_weights` is updated to contain the unnormalized
 //'    sampling weights of the plans for the next round
-void get_log_gsmc_weights(
+void OLD_get_log_gsmc_weights(
         RcppThread::ThreadPool &pool,
         const Graph &g, std::vector<Plan> &plans_vec,
         std::vector<double> &log_incremental_weights,
@@ -861,7 +861,7 @@ List gsmc_plans(
         if(n == 0){
         std::vector<int> dummy_prev_ancestors(M, 1);
         // split the map
-        generalized_split_maps(
+        OLD_generalized_split_maps(
             g, counties, cg, pop,
             plans_vec, new_plans_vec,
             original_ancestor_mat[n],
@@ -886,7 +886,7 @@ List gsmc_plans(
             std::iota (original_ancestor_mat[0].begin(), original_ancestor_mat[0].end(), 0);
         }else{
         // split the map and we can use the previous original ancestor matrix row
-        generalized_split_maps(
+        OLD_generalized_split_maps(
             g, counties, cg, pop,
             plans_vec, new_plans_vec,
             original_ancestor_mat[n],
@@ -914,7 +914,7 @@ List gsmc_plans(
 
 
         // compute log incremental weights and sampling weights for next round
-        get_log_gsmc_weights(
+        OLD_get_log_gsmc_weights(
             pool,
             g,
             new_plans_vec,

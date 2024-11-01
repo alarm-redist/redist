@@ -18,8 +18,8 @@
 #include "tree_op.h"
 #include "map_calc.h"
 #include "redist_types.h"
-#include "gsmc_helpers.h"
-
+#include "weights.h"
+#include "splitting.h"
 
 
 
@@ -58,7 +58,7 @@ List gsmc_plans(
 
 
 
-bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multigraph &cg,
+bool OLD_attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multigraph &cg,
                            Plan &plan, const int region_id_to_split,
                            std::vector<int> &new_region_ids,
                            std::vector<bool> &visited, std::vector<bool> &ignore, const uvec &pop,
