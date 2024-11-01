@@ -159,6 +159,33 @@ ms_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, r
     .Call(`_redist_ms_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, verbosity)
 }
 
+#' Uses gsmc method with optimal weights to generate a sample of `M` plans in `c++`
+#'
+#' Using the procedure outlined in <PAPER HERE> this function uses Sequential
+#' Monte Carlo (SMC) methods to generate a sample of `M` plans
+#'
+#' @title Run Optimalgsmc
+#'
+#' @param N The number of districts the final plans will have
+#' @param adj_list A 0-indexed adjacency list representing the undirected graph
+#' which represents the underlying map the plans are to be drawn on
+#' @param counties Vector of county labels of each vertex in `g`
+#' @param pop A vector of the population associated with each vertex in `g`
+#' @param target Ideal population of a valid district. This is what deviance is calculated
+#' relative to
+#' @param lower Acceptable lower bounds on a valid district's population
+#' @param upper Acceptable upper bounds on a valid district's population
+#' @param M The number of plans (samples) to draw
+#' @param k_param The k parameter from the SMC algorithm, you choose among the top k_param edges
+#' @param control Named list of additional parameters.
+#' @param num_threads The number of threads the threadpool should use
+#' @param verbosity What level of detail to print out while the algorithm is
+#' running <ADD OPTIONS>
+#' @export
+optimal_gsmc_plans <- function(N, adj_list, counties, pop, target, lower, upper, M, control, ncores = -1L, verbosity = 3L, diagnostic_mode = FALSE) {
+    .Call(`_redist_optimal_gsmc_plans`, N, adj_list, counties, pop, target, lower, upper, M, control, ncores, verbosity, diagnostic_mode)
+}
+
 pareto_dominated <- function(x) {
     .Call(`_redist_pareto_dominated`, x)
 }
@@ -262,6 +289,8 @@ dist_cty_splits <- function(dm, community, nd) {
 #'
 #' @return the region level graph
 #'
+#' @noRd
+#' @keywords internal
 NULL
 
 #' Attempts to cut one region into two from a spanning tree and if successful
@@ -316,6 +345,8 @@ NULL
 #'
 #' @return True if two valid regions were successfully split, false otherwise
 #'
+#' @noRd
+#' @keywords internal
 NULL
 
 #' Updates a `Plan` object using a cut tree
@@ -349,6 +380,8 @@ NULL
 #'    - `new_region1_id` and `new_region2_id` are updated by reference to what
 #'    the values of the two new region ids were set to
 #'
+#' @noRd
+#' @keywords internal
 NULL
 
 #' Splits a multidistrict in all of the plans
@@ -449,6 +482,8 @@ NULL
 #'
 #' @return nothing
 #'
+#' @noRd
+#' @keywords internal
 NULL
 
 perform_a_valid_region_split <- function(adj_list, counties, pop, k_param, region_id_to_split, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, verbose) {
@@ -510,6 +545,38 @@ var_info_vec <- function(m, ref, pop) {
 #'
 #' @return sum of weights squared over sum of squared weights (sum(wgt)^2 / sum(wgt^2))
 #'
+NULL
+
+#' Computes log unnormalized weights for vector of plans
+#'
+#' Using the procedure outlined in <PAPER HERE> this function computes the log
+#' incremental weights and the unnormalized weights for a vector of plans (which
+#' may or may not be the same depending on the parameters).
+#'
+#' @title Compute Log Unnormalized Weights
+#'
+#' @param pool A threadpool for multithreading
+#' @param g A graph (adjacency list) passed by reference
+#' @param plans_vec A vector of plans to compute the log unnormalized weights
+#' of
+#' @param split_district_only whether or not to compute the weights under 
+#' the district only split scheme or not. If `split_district_only` is true
+#' then uses optimal weights from one-district split scheme.
+#' @param log_incremental_weights A vector of the log incremental weights
+#' computed for the plans. The value of `log_incremental_weights[i]` is
+#' the log incremental weight for `plans_vec[i]`
+#' @param unnormalized_sampling_weights A vector of the unnormalized sampling
+#' weights to be used with sampling the `plans_vec` in the next iteration of the
+#' algorithm. Depending on the other hyperparameters this may or may not be the
+#' same as `exp(log_incremental_weights)`
+#' @param target Target population of a single district
+#' @param pop_temper <DETAILS NEEDED>
+#'
+#' @details Modifications
+#'    - The `log_incremental_weights` is updated to contain the incremental
+#'    weights of the plans
+#'    - The `unnormalized_sampling_weights` is updated to contain the unnormalized
+#'    sampling weights of the plans for the next round
 NULL
 
 sample_ust <- function(l, pop, lower, upper, counties, ignore) {

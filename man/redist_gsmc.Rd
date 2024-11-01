@@ -12,6 +12,7 @@ redist_gsmc(
   resample = TRUE,
   runs = 1L,
   ncores = 0L,
+  multiprocess = TRUE,
   pop_temper = 0,
   verbose = FALSE,
   silent = FALSE,
@@ -22,6 +23,9 @@ redist_gsmc(
 \item{k_params}{Either a single value to use as the splitting parameter for
 every round or a vector of length N-1 where each value is the one to use for
 a split.}
+
+\item{multiprocess}{Whether or not to launch multiple processes (sometimes
+better to disable to avoid using too much memory.)}
 }
 \value{
 \code{redist_smc} returns a \link{redist_plans} object containing the simulated

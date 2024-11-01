@@ -413,6 +413,28 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// optimal_gsmc_plans
+List optimal_gsmc_plans(int N, List adj_list, const arma::uvec& counties, const arma::uvec& pop, double target, double lower, double upper, int M, List control, int ncores, int verbosity, bool diagnostic_mode);
+RcppExport SEXP _redist_optimal_gsmc_plans(SEXP NSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP MSEXP, SEXP controlSEXP, SEXP ncoresSEXP, SEXP verbositySEXP, SEXP diagnostic_modeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< List >::type adj_list(adj_listSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< int >::type M(MSEXP);
+    Rcpp::traits::input_parameter< List >::type control(controlSEXP);
+    Rcpp::traits::input_parameter< int >::type ncores(ncoresSEXP);
+    Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
+    Rcpp::traits::input_parameter< bool >::type diagnostic_mode(diagnostic_modeSEXP);
+    rcpp_result_gen = Rcpp::wrap(optimal_gsmc_plans(N, adj_list, counties, pop, target, lower, upper, M, control, ncores, verbosity, diagnostic_mode));
+    return rcpp_result_gen;
+END_RCPP
+}
 // pareto_dominated
 LogicalVector pareto_dominated(arma::mat x);
 RcppExport SEXP _redist_pareto_dominated(SEXP xSEXP) {
@@ -886,6 +908,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_pop_tally", (DL_FUNC) &_redist_pop_tally, 3},
     {"_redist_max_dev", (DL_FUNC) &_redist_max_dev, 3},
     {"_redist_ms_plans", (DL_FUNC) &_redist_ms_plans, 15},
+    {"_redist_optimal_gsmc_plans", (DL_FUNC) &_redist_optimal_gsmc_plans, 12},
     {"_redist_pareto_dominated", (DL_FUNC) &_redist_pareto_dominated, 1},
     {"_redist_testing_sample_forest", (DL_FUNC) &_redist_testing_sample_forest, 6},
     {"_redist_plan_class_testing", (DL_FUNC) &_redist_plan_class_testing, 3},

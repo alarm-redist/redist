@@ -39,6 +39,8 @@
 //'
 //' @return the region level graph
 //'
+//' @noRd
+//' @keywords internal
 double choose_multidistrict_to_split(
         Plan const&plan, int &region_id_to_split);
 
@@ -96,6 +98,8 @@ double choose_multidistrict_to_split(
 //'
 //' @return True if two valid regions were successfully split, false otherwise
 //'
+//' @noRd
+//' @keywords internal
 bool get_edge_to_cut(Tree &ust, int root,
                      int k_param, bool split_district_only,
                      const uvec &pop, const Plan &plan, const int region_id_to_split,
@@ -137,6 +141,8 @@ bool get_edge_to_cut(Tree &ust, int root,
 //'    - `new_region1_id` and `new_region2_id` are updated by reference to what
 //'    the values of the two new region ids were set to
 //'
+//' @noRd
+//' @keywords internal
 void update_plan_from_cut(
         Tree &ust, Plan &plan,
         const int old_region_id,
@@ -244,6 +250,8 @@ void update_plan_from_cut(
 //'
 //' @return nothing
 //'
+//' @noRd
+//' @keywords internal
 void generalized_split_maps(
         const Graph &g, const uvec &counties, Multigraph &cg, const uvec &pop,
         std::vector<Plan> &old_plans_vec, std::vector<Plan> &new_plans_vec,

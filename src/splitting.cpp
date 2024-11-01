@@ -56,9 +56,10 @@ double choose_multidistrict_to_split(
         }
     }
 
-    // If only one then return that 
-    if(multi_d_vals.size() == 1){
-        region_id_to_split = multi_d_vals.at(0);
+    // https://stackoverflow.com/questions/14599057/how-compare-vector-size-with-an-integer
+    size_t intendedSize = 1;
+    if(region_ids.size() == intendedSize){
+        region_id_to_split = region_ids.at(0);
         // probability of picking is 1 and log(1) = 0
         return 0;
     }
@@ -505,7 +506,6 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
                     new_region1_tree_root, new_region1_dval, new_region1_pop,
                     new_region2_tree_root, new_region2_dval, new_region2_pop);
 
-    int new_region1_id, new_region2_id;
 
     if(successful_edge_found){
         // if successful then update the plan
@@ -514,7 +514,7 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
             region_id_to_split,
             new_region1_tree_root, new_region1_dval,  new_region1_pop,
             new_region2_tree_root, new_region2_dval, new_region2_pop,
-            new_region1_id, new_region2_id
+            new_region_ids[1], new_region_ids[2]
         );
         return true;
     }else{
@@ -624,8 +624,7 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
 //'    - `ancestors` is updated to something. THIS IS FROM ORIGINAL SMC CODE,
 //'    I DO NOT KNOW WHAT IT MEANS
 //'
-//' @return nothing
-//'
+//' @keywords internal
 void generalized_split_maps(
         const Graph &g, const uvec &counties, Multigraph &cg, const uvec &pop,
         std::vector<Plan> &old_plans_vec, std::vector<Plan> &new_plans_vec,
@@ -720,6 +719,7 @@ void generalized_split_maps(
             choose_multidistrict_to_split(
                 old_plans_vec[idx], region_id_to_split);
 
+
             // Now try to split that region
             ok = attempt_region_split(g, ust, counties, cg,
                                       proposed_new_plan, region_id_to_split,
@@ -727,6 +727,7 @@ void generalized_split_maps(
                                       visited, ignore, pop,
                                       lower, upper, target,
                                       k_param, split_district_only);
+
 
             // bad sample; try again
             if (!ok) {

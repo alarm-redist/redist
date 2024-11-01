@@ -55,7 +55,8 @@ double compute_n_eff(const std::vector<double> &log_wgt) {
 //' @title Log Region boundary count
 //'
 //' @param g A graph (adjacency list) passed by reference
-//' @param plan A plan object
+//' @param vertex_region_ids A vector mapping vertex id to the region its in 
+//' so `vertex_region_ids[i] = r` means vertex i is in region r
 //' @param region1_id The id of the first region
 //' @param region2_id The id of the second region
 //'
@@ -63,7 +64,8 @@ double compute_n_eff(const std::vector<double> &log_wgt) {
 //'
 //' @return the log of the boundary count
 //'
- double region_log_boundary(const Graph &g, const Plan &plan,
+ double region_log_boundary(const Graph &g, 
+                            const std::vector<int> &vertex_region_ids,
                             int const&region1_id,
                             int const&region2_id
 ) {
@@ -77,7 +79,7 @@ double compute_n_eff(const std::vector<double> &log_wgt) {
           counting we will only count those where first edge is in
           region 1
           */
-         if (plan.region_num_ids.at(i) != region1_id) continue;
+         if (vertex_region_ids.at(i) != region1_id) continue;
 
          // Get vertice's neighbors
          std::vector<int> nbors = g[i];
@@ -87,7 +89,7 @@ double compute_n_eff(const std::vector<double> &log_wgt) {
 
          // Now check if neighbors are in second region
          for (int nbor : nbors) {
-             if (plan.region_num_ids.at(nbor) != region2_id)
+             if (vertex_region_ids.at(nbor) != region2_id)
                  continue;
              // if they are increase count by one
              count += 1.0;
@@ -96,8 +98,6 @@ double compute_n_eff(const std::vector<double> &log_wgt) {
 
      return std::log(count);
 }
-
-
 
 
 
@@ -156,7 +156,8 @@ double get_log_retroactive_splitting_prob(
 
 }
 
-
+// TODO: DOCUMENTATION NEEDED
+// Computes log population tempering term
 double compute_log_pop_temper(
         const Plan &plan,
         const int region1_id, const int region2_id,
@@ -250,7 +251,7 @@ double compute_log_incremental_weight(
     // Now iterate over all adjacent pairs
     for (const auto& edge : adj_region_pairs) {
         // get log of boundary length between regions
-        double log_boundary =  region_log_boundary(g, plan, edge.first, edge.second);
+        double log_boundary =  region_log_boundary(g, plan.region_num_ids, edge.first, edge.second);
         // get prob of selecting union of adj regions
         double log_splitting_prob = get_log_retroactive_splitting_prob(plan, edge.first, edge.second);
         // NO e^J TERM YET but can be added
@@ -364,7 +365,7 @@ double compute_basic_smc_log_incremental_weight(
     // Now iterate over all adjacent pairs
     for (const auto& edge : adj_region_pairs) {
      // get log of boundary length between regions
-     double log_boundary =  region_log_boundary(g, plan, edge.first, edge.second);
+     double log_boundary =  region_log_boundary(g, plan.region_num_ids, edge.first, edge.second);
 
      // Do population tempering term if not final
      double log_temper;
@@ -394,4 +395,75 @@ double compute_basic_smc_log_incremental_weight(
     // now return the log of the inverse of the sum
     return -std::log(incremental_weight);
 
+}
+
+
+
+
+//' Computes log unnormalized weights for vector of plans
+//'
+//' Using the procedure outlined in <PAPER HERE> this function computes the log
+//' incremental weights and the unnormalized weights for a vector of plans (which
+//' may or may not be the same depending on the parameters).
+//'
+//' @title Compute Log Unnormalized Weights
+//'
+//' @param pool A threadpool for multithreading
+//' @param g A graph (adjacency list) passed by reference
+//' @param plans_vec A vector of plans to compute the log unnormalized weights
+//' of
+//' @param split_district_only whether or not to compute the weights under 
+//' the district only split scheme or not. If `split_district_only` is true
+//' then uses optimal weights from one-district split scheme.
+//' @param log_incremental_weights A vector of the log incremental weights
+//' computed for the plans. The value of `log_incremental_weights[i]` is
+//' the log incremental weight for `plans_vec[i]`
+//' @param unnormalized_sampling_weights A vector of the unnormalized sampling
+//' weights to be used with sampling the `plans_vec` in the next iteration of the
+//' algorithm. Depending on the other hyperparameters this may or may not be the
+//' same as `exp(log_incremental_weights)`
+//' @param target Target population of a single district
+//' @param pop_temper <DETAILS NEEDED>
+//'
+//' @details Modifications
+//'    - The `log_incremental_weights` is updated to contain the incremental
+//'    weights of the plans
+//'    - The `unnormalized_sampling_weights` is updated to contain the unnormalized
+//'    sampling weights of the plans for the next round
+void get_all_plans_log_gsmc_weights(
+        RcppThread::ThreadPool &pool,
+        const Graph &g, std::vector<Plan> &plans_vec,
+        bool split_district_only,
+        std::vector<double> &log_incremental_weights,
+        std::vector<double> &unnormalized_sampling_weights,
+        double target, double pop_temper
+){
+    int M = (int) plans_vec.size();
+
+    // check which scheme to compute weights under 
+    if(split_district_only){
+        // Parallel thread pool where all objects in memory shared by default
+        pool.parallelFor(0, M, [&] (int i) {
+            double log_incr_weight = compute_basic_smc_log_incremental_weight(
+                g, plans_vec.at(i), target, pop_temper);
+            log_incremental_weights[i] = log_incr_weight;
+            unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
+        });
+
+        // Wait for all the threads to finish
+        pool.wait();
+    }else{
+        // Parallel thread pool where all objects in memory shared by default
+        pool.parallelFor(0, M, [&] (int i) {
+            double log_incr_weight = compute_log_incremental_weight(
+                g, plans_vec.at(i), target, pop_temper);
+            log_incremental_weights[i] = log_incr_weight;
+            unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
+        });
+
+        // Wait for all the threads to finish
+        pool.wait();
+    }
+
+    return;
 }
