@@ -299,6 +299,7 @@ NULL
 #'
 #' Takes a cut spanning tree `ust` and variables on the two new regions
 #' induced by the cuts and updates `plan` to add those two new regions.
+#' It also sets `plan.remainder_region` equal to `new_region2_id`.
 #'
 #'
 #' @title Update plan regions from cut tree
@@ -306,6 +307,8 @@ NULL
 #' @param ust A cut (ie has two partition pieces) directed spanning tree
 #' passed by reference
 #' @param plan A plan object
+#' @param split_district_only Whether or not this was split according to a 
+#' one district split scheme (as in does the remainder need to be updated)
 #' @param old_region_id The id of old (split) region
 #' @param new_region1_tree_root The vertex of the root of one piece of the cut
 #' tree. This always corresponds to the region with the smaller dval (allowing
@@ -325,6 +328,7 @@ NULL
 #'    is removed
 #'    - `new_region1_id` and `new_region2_id` are updated by reference to what
 #'    the values of the two new region ids were set to
+#'
 #'
 #' @noRd
 #' @keywords internal

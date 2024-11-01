@@ -194,16 +194,22 @@ double compute_log_pop_temper(
 }
 
 
-//' Compute the log incremental weight of a plan
+
+
+//' Compute the optimal log incremental weight of a plan
 //'
 //' Given a plan object this computes the minimum variance weights as derived in
-//' <PAPER NAME HERE>. This is equivalent to the inverse of a sum over all
-//' adjacent regions in a plan.
+//' <PAPER NAME HERE>. This is equal to the inverse of a sum over all
+//' adjacent regions in a plan if using generalized region split and 
+//' sum over all districts adajacent to the remainder if using one district
+//' split approach.
 //'
-//' @title Compute Incremental Weight of a plan
+//' @title Compute Optimal Incremental Weight of a plan
 //'
-//' @param plan A plan object
 //' @param g The underlying map graph
+//' @param plan A plan object
+//' @param split_district_only whether or not to compute the weights under 
+//' the district only split scheme or not.
 //' @param target The target population for a single district
 //' @param pop_temper The population tempering parameter
 //'
@@ -211,12 +217,12 @@ double compute_log_pop_temper(
 //'
 //' @return the log of the incremental weight of the plan
 //'
-double compute_log_incremental_weight(
+double compute_optimal_log_incremental_weight(
         const Graph &g, const Plan &plan,
+        bool split_district_only,
         const double target, const double pop_temper){
     // get a region level graph
     Graph rg = get_region_graph(g, plan);
-
 
     // sanity check: make sure the region level graph's number of vertices is
     // the same as the number of regions in the plan
@@ -228,10 +234,15 @@ double compute_log_incremental_weight(
     // the first vertex is always the smaller numbered of the edge
     // We use a set because it doesn't keep duplicates
     std::set<std::pair<int, int>> adj_region_pairs;
-    // Iterate through the adjacency list
-    for (int u = 0; u < rg.size(); u++){
-        // iterate over neighbors
-        for(auto v: rg[u]){
+
+
+    // If n < N and split_district_only true then just get adjacent to remainder
+    if(plan.num_regions < plan.N && split_district_only){
+        // get remainder region id
+        int u = plan.remainder_region;
+
+        // Iterate through the adjacency list of remainder region
+        for(auto v: rg.at(u)){
             // store the edges such that smaller vertex is always first
             if (u < v) {
                 adj_region_pairs.emplace(u, v);
@@ -239,8 +250,22 @@ double compute_log_incremental_weight(
                 adj_region_pairs.emplace(v, u);
             }
         }
+    }else{ // else get all adjacent districts
+        // Iterate through the adjacency list
+        // Now get all unique adjacent region pairs and store them such that
+        // the first vertex is always the smaller numbered of the edge
+        for (int u = 0; u < rg.size(); u++){
+            // iterate over neighbors
+            for(auto v: rg.at(u)){
+                // store the edges such that smaller vertex is always first
+                if (u < v) {
+                    adj_region_pairs.emplace(u, v);
+                } else {
+                    adj_region_pairs.emplace(v, u);
+                }
+            }
+        }
     }
-
 
 
     double incremental_weight = 0.0;
@@ -251,10 +276,19 @@ double compute_log_incremental_weight(
     // Now iterate over all adjacent pairs
     for (const auto& edge : adj_region_pairs) {
         // get log of boundary length between regions
-        double log_boundary =  region_log_boundary(g, plan.region_num_ids, edge.first, edge.second);
+        double log_boundary =  region_log_boundary(g, plan.region_ids, edge.first, edge.second);
         // get prob of selecting union of adj regions
-        double log_splitting_prob = get_log_retroactive_splitting_prob(plan, edge.first, edge.second);
-        // NO e^J TERM YET but can be added
+        double log_splitting_prob;
+
+        // for one district split the probability that region was chosen to be split is always 1
+        if(split_district_only){
+            log_splitting_prob = 0;
+        }else{
+            // in generalized region split find probability you would have 
+            // picked to split the union of the the two regions 
+            log_splitting_prob = get_log_retroactive_splitting_prob(plan, edge.first, edge.second);
+        }
+
 
         // Do population tempering term if not final
         double log_temper;
@@ -267,8 +301,6 @@ double compute_log_incremental_weight(
         }else{
             log_temper = 0;
         }
-
-
 
         // multiply the boundary length and selection probability by adding the logs
         // now exponentiate and add to the sum
@@ -288,116 +320,6 @@ double compute_log_incremental_weight(
     return -std::log(incremental_weight);
 
 }
-
-
-
-
-//' Compute the log incremental weight of a plan under basic smc scheme
-//'
-//' Given a plan object this computes the minimum variance weights as derived in
-//' <PAPER NAME HERE>. This is equivalent to the inverse of a sum over all
-//' adjacent regions in a plan.
-//'
-//' @title Compute Incremental Weight of a plan
-//'
-//' @param plan A plan object
-//' @param g The underlying map graph
-//' @param target The target population for a single district
-//' @param pop_temper The population tempering parameter
-//'
-//' @details No modifications to inputs made
-//'
-//' @return the log of the incremental weight of the plan
-//'
-double compute_basic_smc_log_incremental_weight(
-     const Graph &g, const Plan &plan,
-     const double target, const double pop_temper){
-    // get a region level graph
-    Graph rg = get_region_graph(g, plan);
-
-
-    // sanity check: make sure the region level graph's number of vertices is
-    // the same as the number of regions in the plan
-    if((int)rg.size() != plan.num_regions){
-     Rprintf("SOMETHING WENT WRONG IN COMPUTE LOG INCREMENT WEIGHJT\n");
-    }
-
-    // We use a set to track edges because it doesn't keep duplicates
-    std::set<std::pair<int, int>> adj_region_pairs;
-
-    // If n < N just get adjacent to remainder
-    if(plan.num_regions < plan.N){
-        // adjacent region always has id n-1
-        int u = plan.num_regions - 1;
-
-        // Iterate through the adjacency list of remainder region
-        // which is always the number of regions minus 1
-        for(auto v: rg[u]){
-            // store the edges such that smaller vertex is always first
-            if (u < v) {
-                adj_region_pairs.emplace(u, v);
-            } else {
-                adj_region_pairs.emplace(v, u);
-            }
-        }
-    }else{ // else get all adjacent districts
-        // Iterate through the adjacency list
-        // Now get all unique adjacent region pairs and store them such that
-        // the first vertex is always the smaller numbered of the edge
-        for (int u = 0; u < rg.size(); u++){
-            // iterate over neighbors
-            for(auto v: rg[u]){
-                // store the edges such that smaller vertex is always first
-                if (u < v) {
-                    adj_region_pairs.emplace(u, v);
-                } else {
-                    adj_region_pairs.emplace(v, u);
-                }
-            }
-        }
-    }
-
-
-
-    double incremental_weight = 0.0;
-    bool do_pop_temper = (plan.num_regions < plan.N) && pop_temper > 0;
-
-    // Now iterate over all adjacent pairs
-    for (const auto& edge : adj_region_pairs) {
-     // get log of boundary length between regions
-     double log_boundary =  region_log_boundary(g, plan.region_num_ids, edge.first, edge.second);
-
-     // Do population tempering term if not final
-     double log_temper;
-     if(do_pop_temper){
-         log_temper = compute_log_pop_temper(
-             plan,
-             edge.first, edge.second,
-             target, pop_temper
-         );
-     }else{
-         log_temper = 0;
-     }
-
-     // multiply the boundary length and pop tempering by adding the logs
-     // now exponentiate and add to the sum
-     incremental_weight += std::exp(log_boundary
-                                        + log_temper);
-    }
-
-
-    // Check its not infinity
-    if(incremental_weight == -std::numeric_limits<double>::infinity()){
-     Rprintf("Error! weight is negative infinity for some reason \n");
-    }
-
-
-    // now return the log of the inverse of the sum
-    return -std::log(incremental_weight);
-
-}
-
-
 
 
 //' Computes log unnormalized weights for vector of plans
@@ -440,30 +362,18 @@ void get_all_plans_log_gsmc_weights(
 ){
     int M = (int) plans_vec.size();
 
-    // check which scheme to compute weights under 
-    if(split_district_only){
-        // Parallel thread pool where all objects in memory shared by default
-        pool.parallelFor(0, M, [&] (int i) {
-            double log_incr_weight = compute_basic_smc_log_incremental_weight(
-                g, plans_vec.at(i), target, pop_temper);
-            log_incremental_weights[i] = log_incr_weight;
-            unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
-        });
+    // Parallel thread pool where all objects in memory shared by default
+    pool.parallelFor(0, M, [&] (int i) {
+        double log_incr_weight = compute_optimal_log_incremental_weight(
+            g, plans_vec.at(i), split_district_only,
+            target, pop_temper);
+        log_incremental_weights[i] = log_incr_weight;
+        unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
+    });
 
-        // Wait for all the threads to finish
-        pool.wait();
-    }else{
-        // Parallel thread pool where all objects in memory shared by default
-        pool.parallelFor(0, M, [&] (int i) {
-            double log_incr_weight = compute_log_incremental_weight(
-                g, plans_vec.at(i), target, pop_temper);
-            log_incremental_weights[i] = log_incr_weight;
-            unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
-        });
+    // Wait for all the threads to finish
+    pool.wait();
 
-        // Wait for all the threads to finish
-        pool.wait();
-    }
 
     return;
 }

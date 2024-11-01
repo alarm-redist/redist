@@ -22,6 +22,7 @@ new_redist_plans <- function(plans, map, algorithm, wgt, resampled = TRUE, ndist
     map_dists <- attr(map, "ndists")
     partial <- ndists < map_dists
 
+
     prec_pop <- map[[attr(map, "pop_col")]]
     if (!partial) {
         distr_range <- 1:ndists
@@ -32,6 +33,7 @@ new_redist_plans <- function(plans, map, algorithm, wgt, resampled = TRUE, ndist
         pl_tmp <- plans + 1L
         distr_pop <- pop_tally(pl_tmp, prec_pop, ndists)
     }
+
 
     attr_names <- c("redist_attr", "plans", "ndists", "algorithm", "wgt",
         "resampled", "ndists", "merge_idx", "prec_pop",
@@ -46,6 +48,8 @@ new_redist_plans <- function(plans, map, algorithm, wgt, resampled = TRUE, ndist
         draw_fac[-ref_idx] = as.character(seq_len(n_sims - length(ref_idx)))
         draw_fac = factor(draw_fac, levels=draw_fac)
     }
+
+
 
     structure(tibble(draw = rep(draw_fac, each = ndists),
         district = rep(distr_range, n_sims),

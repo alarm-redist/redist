@@ -32,11 +32,10 @@ List perform_a_valid_region_split(
     plan.num_regions = num_regions;
     plan.num_districts = num_districts;
     plan.num_multidistricts = plan.num_regions - plan.num_districts;
-    plan.region_num_ids = region_ids;
+    plan.region_ids = region_ids;
     plan.region_dvals = region_dvals;
     plan.region_pops = region_pops;
-    // Need to fix string labels
-    plan.region_str_labels = std::vector<std::string>(plan.num_regions, "IGNORE");
+
 
     if(verbose){
         plan.Rprint();
@@ -52,7 +51,7 @@ List perform_a_valid_region_split(
 
     // Mark it as ignore if its not in the region to split
     for (int i = 0; i < V; i++){
-        ignore[i] = plan.region_num_ids.at(i) != region_id_to_split;
+        ignore[i] = plan.region_ids.at(i) != region_id_to_split;
     }
 
 
@@ -106,7 +105,7 @@ List perform_a_valid_region_split(
     int new_region1_id, new_region2_id;
 
     update_plan_from_cut(
-        ust, plan,
+        ust, plan, split_district_only,
         region_id_to_split,
         new_region1_tree_root, new_region1_dval,  new_region1_pop,
         new_region2_tree_root, new_region2_dval, new_region2_pop,
@@ -121,7 +120,7 @@ List perform_a_valid_region_split(
         _["num_attempts"] = try_counter,
         _["region_id_that_was_split"] = region_id_to_split,
         _["region_dvals"] = plan.region_dvals,
-        _["plan_vertex_ids"] = plan.region_num_ids,
+        _["plan_vertex_ids"] = plan.region_ids,
         _["pops"] = plan.region_pops,
         _["num_regions"] = plan.num_regions,
         _["num_districts"] = plan.num_districts,
@@ -229,7 +228,7 @@ List get_successful_proposed_cut(int N, List adj_list, const arma::uvec &countie
     List out = List::create(
         _["num_attempts"] = try_counter,
         _["region_dvals"] = plan.region_dvals,
-        _["plan"] = plan.region_num_ids,
+        _["plan"] = plan.region_ids,
         _["tree"] = ust,
         _["uncut_tree"] = pre_split_ust,
         _["pops"] = plan.region_pops,

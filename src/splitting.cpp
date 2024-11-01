@@ -180,14 +180,14 @@ bool get_edge_to_cut(Tree &ust, int root,
     is_ok.reserve(k_param);
     new_d_val.reserve(k_param);
 
-    if(plan.region_num_ids.at(root) != region_id_to_split){
+    if(plan.region_ids.at(root) != region_id_to_split){
         Rcout << "Root vertex is not in region to split!";
     }
 
     // Now loop over all valid edges to cut
     for (int i = 1; i <= plan.V; i++) { // 1-indexing here
         // Ignore any vertex not in this region or the root vertex as we wont be cutting those
-        if (plan.region_num_ids.at(i-1) != region_id_to_split || i - 1 == root) continue;
+        if (plan.region_ids.at(i-1) != region_id_to_split || i - 1 == root) continue;
 
         // Get the population of one side of the partition removing that edge would cause
         double below = pop_below.at(i - 1);
@@ -323,6 +323,7 @@ bool get_edge_to_cut(Tree &ust, int root,
 //'
 //' Takes a cut spanning tree `ust` and variables on the two new regions
 //' induced by the cuts and updates `plan` to add those two new regions.
+//' It also sets `plan.remainder_region` equal to `new_region2_id`.
 //'
 //'
 //' @title Update plan regions from cut tree
@@ -330,6 +331,8 @@ bool get_edge_to_cut(Tree &ust, int root,
 //' @param ust A cut (ie has two partition pieces) directed spanning tree
 //' passed by reference
 //' @param plan A plan object
+//' @param split_district_only Whether or not this was split according to a 
+//' one district split scheme (as in does the remainder need to be updated)
 //' @param old_region_id The id of old (split) region
 //' @param new_region1_tree_root The vertex of the root of one piece of the cut
 //' tree. This always corresponds to the region with the smaller dval (allowing
@@ -351,7 +354,7 @@ bool get_edge_to_cut(Tree &ust, int root,
 //'    the values of the two new region ids were set to
 //'
 void update_plan_from_cut(
-        Tree &ust, Plan &plan,
+        Tree &ust, Plan &plan, bool split_district_only,
         const int old_region_id,
         const int new_region1_tree_root, const int new_region1_dval, const double new_region1_pop,
         const int new_region2_tree_root, const int new_region2_dval, const double new_region2_pop,
@@ -363,31 +366,19 @@ void update_plan_from_cut(
     plan.num_multidistricts--; // Decrease by one to avoid double counting later
 
     // Create info for two new districts
-    std::string new_region_label1;
-    std::string new_region_label2;
-
-    std::string region_to_split = plan.region_str_labels.at(old_region_id);
 
     // Set label and count depending on if district or multi district
     if(new_region1_dval == 1){
         plan.num_districts++;
-        // if district then string label just adds district number
-        new_region_label1 = region_to_split + "." + std::to_string(plan.num_districts);
     }else{
         plan.num_multidistricts++;
-        // if region then just add current region number
-        new_region_label1 = region_to_split + ".R" + std::to_string(old_region_id);
     }
 
     // Now do it for second region
     if(new_region2_dval == 1){
         plan.num_districts++;
-        // if district then string label just adds district number
-        new_region_label2 = region_to_split + "." + std::to_string(plan.num_districts);
     }else{
         plan.num_multidistricts++;
-        // if region then just add current region number
-        new_region_label2 = region_to_split + ".R" + std::to_string(plan.num_regions - 1);
     }
 
     // TODO: Figure out how to do this to preserve the order districts were added
@@ -396,6 +387,14 @@ void update_plan_from_cut(
     new_region1_id = old_region_id;
     // Second new region has id of the new number of regions minus 1
     new_region2_id = plan.num_regions - 1;
+
+    // make the first new region get max plus one
+    plan.region_order_max++;
+    int new_region1_order_added_num = plan.region_order_max;
+
+    // Now make the second new region max plus one again
+    plan.region_order_max++;
+    int new_region2_order_added_num = plan.region_order_max;
 
 
     // Now update the two cut portions
@@ -407,14 +406,19 @@ void update_plan_from_cut(
     // Add the new region 1
     // New region 1 has the same id number as old region so update that
     plan.region_dvals.at(new_region1_id) = new_region1_dval;
-    plan.region_str_labels.at(new_region1_id) = new_region_label1;
+    plan.region_added_order.at(new_region1_id) = new_region1_order_added_num;
     plan.region_pops.at(new_region1_id) = new_region1_pop;
 
     // Add the new region 2
     // New region 2's id is the highest id number so push back
     plan.region_dvals.push_back(new_region2_dval);
-    plan.region_str_labels.push_back(new_region_label2);
+    plan.region_added_order.push_back(new_region2_order_added_num);
     plan.region_pops.push_back(new_region2_pop);
+
+    if(split_district_only){
+        // update the remainder region value if needed
+        plan.remainder_region = new_region2_id;
+    }
 
     // done
     return;
@@ -478,7 +482,7 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
 
     // Mark it as ignore if its not in the region to split
     for (int i = 0; i < V; i++){
-        ignore[i] = plan.region_num_ids.at(i) != region_id_to_split;
+        ignore[i] = plan.region_ids.at(i) != region_id_to_split;
     }
 
     // Get a uniform spanning tree drawn on that region
@@ -510,7 +514,7 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
     if(successful_edge_found){
         // if successful then update the plan
         update_plan_from_cut(
-            ust, plan,
+            ust, plan, split_district_only,
             region_id_to_split,
             new_region1_tree_root, new_region1_dval,  new_region1_pop,
             new_region2_tree_root, new_region2_dval, new_region2_pop,
@@ -715,10 +719,14 @@ void generalized_split_maps(
             idx = index_sampler(gen);
             Plan proposed_new_plan = old_plans_vec[idx];
 
-            // pick a region to try to split
-            choose_multidistrict_to_split(
-                old_plans_vec[idx], region_id_to_split);
-
+            if(split_district_only){
+                // if just doing district splits just use remainder region
+                region_id_to_split = proposed_new_plan.remainder_region;
+            }else{
+                // if generalized split pick a region to try to split
+                choose_multidistrict_to_split(
+                    old_plans_vec[idx], region_id_to_split);
+            }
 
             // Now try to split that region
             ok = attempt_region_split(g, ust, counties, cg,

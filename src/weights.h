@@ -35,13 +35,7 @@
 double compute_n_eff(const std::vector<double> &log_wgt);
 
 
-double compute_log_incremental_weight(
-        const Graph &g, const Plan &plan,
-        const double target, const double pop_temper);
 
-double compute_basic_smc_log_incremental_weight(
-        const Graph &g, const Plan &plan,
-        const double target, const double pop_temper);
 
 
 //' Computes log unnormalized weights for vector of plans

@@ -19,12 +19,13 @@
 #'
 #' @export
 redist_optimal_gsmc <- function(state_map, M, counties = NULL,
-                        k_params = 6, split_district_only = FALSE,   
+                        k_params = 6, split_district_only = FALSE,
                        resample = TRUE, runs = 1L,
                        ncores = 0L, multiprocess=TRUE,
                        pop_temper = 0,
                        verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE){
     N <- attr(state_map, "ndists")
+    ndists <- attr(state_map, "ndists")
 
     # figure out the alg type
     if(split_district_only){
@@ -164,6 +165,7 @@ redist_optimal_gsmc <- function(state_map, M, counties = NULL,
         run_verbosity <- if (chain == 1 || !multiprocess) verbosity else 0
         t1_run <- Sys.time()
 
+
         algout <- redist::optimal_gsmc_plans(
             N=N,
             adj_list=adj_list,
@@ -179,10 +181,26 @@ redist_optimal_gsmc <- function(state_map, M, counties = NULL,
             diagnostic_mode=diagnostic_mode)
 
 
+
+
         if (length(algout) == 0) {
             cli::cli_process_done()
             cli::cli_process_done()
         }
+
+        # convert the order added results into an actual list of arrays where
+        # for each list entry n and column entry i that is a vector of length n
+        # mapping the region id to its sorted order. The way to interpret is
+        # the index where algout$region_order_added_list[[test_n]][,test_i] == r
+        # is the new index region id r was mapped to.
+        # In other words which(algout$region_order_added_list[[n]][,i] == r) is
+        # the new ordered value r should be set to
+        algout$region_order_added_list <- lapply(
+            algout$region_order_added_list,
+            function(x) matrix(unlist(x), ncol = length(x), byrow = FALSE)
+        ) |> lapply(
+            function(a_l) apply(a_l, 2, order))
+
 
 
         # make each element of region_ids_mat_list a V by M matrix
@@ -191,11 +209,105 @@ redist_optimal_gsmc <- function(state_map, M, counties = NULL,
             function(x) matrix(unlist(x), ncol = length(x), byrow = FALSE) + 1
             )
 
-        # make each element of region_dvals_mat_list a V by M matrix
+        # make each element of region_dvals_mat_list a n by M matrix
         algout$region_dvals_mat_list <- lapply(
             algout$region_dvals_mat_list,
             function(x) matrix(unlist(x), ncol = length(x), byrow = FALSE)
         )
+
+        if(diagnostic_mode && !split_district_only){
+            # update the labels to reflect the order regions were added for each step
+            for (n in 1:(N-2)) {
+                for (i in 1:M) {
+                    # reorder d values. Recall
+                    # algout$region_order_added_list[[n]][,i] permutes the original
+                    # region label vector to its new ordered form so its ok here
+                    algout$region_dvals_mat_list[[n]][,i] <- algout$region_dvals_mat_list[[n]][,i][
+                        algout$region_order_added_list[[n]][,i]
+                    ]
+                    # reorder the labels themselves
+                    # the reason for the order call again is it ensures that if
+                    # r is the original region id and r_new is the new ordered one
+                    # then
+                    # order(algout$region_order_added_list[[1]][,i])[r] = r_new
+                    algout$region_ids_mat_list[[n]][,i] <- order(
+                        algout$region_order_added_list[[n]][,i]
+                    )[
+                        algout$region_ids_mat_list[[n]][,i]
+                    ]
+
+                }
+            }
+            # do final step
+            for (i in 1:M) {
+                # reorder the labels themselves
+                # the reason for the order call again is it ensures that if
+                # r is the original region id and r_new is the new ordered one
+                # then
+                # order(algout$region_order_added_list[[1]][,i])[r] = r_new
+                algout$region_ids_mat_list[[N-1]][,i] <- order(
+                    algout$region_order_added_list[[N-1]][,i]
+                )[
+                    algout$region_ids_mat_list[[N-1]][,i]
+                ]
+
+            }
+
+            # add a plans matrix as the final output because first
+            # N-2 are previous results
+            algout$plans <- algout$region_ids_mat_list[[N-1]]
+        }else if(diagnostic_mode){
+            # if diagnostic but only one district splits we only care about
+            # labels
+            # update the labels to reflect the order regions were added for each step
+            for (n in 1:(N-1)) {
+                for (i in 1:M) {
+                    # reorder the labels themselves
+                    # the reason for the order call again is it ensures that if
+                    # r is the original region id and r_new is the new ordered one
+                    # then
+                    # order(algout$region_order_added_list[[1]][,i])[r] = r_new
+                    algout$region_ids_mat_list[[n]][,i] <- order(
+                        algout$region_order_added_list[[n]][,i]
+                    )[
+                        algout$region_ids_mat_list[[n]][,i]
+                    ]
+
+                }
+            }
+
+            # add a plans matrix as the final output because first
+            # N-2 are previous results
+            algout$plans <- algout$region_ids_mat_list[[N-1]]
+        }else{
+            # relabel the region ids so they are all in order
+            for (i in 1:M) {
+                # reorder the labels themselves
+                # the reason for the order call again is it ensures that if
+                # r is the original region id and r_new is the new ordered one
+                # then
+                # order(algout$region_order_added_list[[1]][,i])[r] = r_new
+                algout$region_ids_mat_list[[1]][,i] <- order(
+                    algout$region_order_added_list[[1]][,i]
+                )[
+                    algout$region_ids_mat_list[[1]][,i]
+                ]
+
+            }
+
+            # Just add first element since not diagnostic mode the first N-2
+            # steps were not tracked
+            algout$plans <- algout$region_ids_mat_list[[1]]
+
+            # make the region_ids_mat_list input just null since there's nothing else
+            algout$region_ids_mat_list <- NULL
+            algout$region_dvals_mat_list <- NULL
+        }
+
+        # now we can remove the relabelling info
+        algout$region_order_added_list <- NULL
+        gc()
+
 
         # make original ancestor matrix
         # add 1 for R indexing
@@ -242,26 +354,6 @@ redist_optimal_gsmc <- function(state_map, M, counties = NULL,
         wgt <- exp(lr - mean(lr))
         n_eff <- length(wgt)*mean(wgt)^2/mean(wgt^2)
 
-        if(diagnostic_mode){
-            # add a plans matrix as the final output because first
-            # N-2 are previous results
-            algout$plans <- algout$region_ids_mat_list[[N-1]]
-
-            algout$final_region_labs <- matrix(
-                unlist(algout$final_region_labs),
-                ncol = length(algout$final_region_labs),
-                byrow = FALSE)
-
-        }else{
-            # Just add first element since not diagnostic mode the first N-2
-            # steps were not tracked
-            algout$plans <- algout$region_ids_mat_list[[1]]
-
-            # make the region_ids_mat_list input just null since there's nothing else
-            algout$region_ids_mat_list <- NULL
-            algout$region_dvals_mat_list <- NULL
-            algout$final_region_labs <- NULL
-        }
 
         if (any(is.na(lr))) {
             cli_abort(c("Sampling probabilities have been corrupted.",
@@ -275,7 +367,6 @@ redist_optimal_gsmc <- function(state_map, M, counties = NULL,
                                  {.code rlang::trace_back()} and file an issue at
                                  {.url https://github.com/alarm-redist/redist/issues/new}"))
         }
-
 
 
         if (resample) {
@@ -297,7 +388,7 @@ redist_optimal_gsmc <- function(state_map, M, counties = NULL,
             if(diagnostic_mode){
                 # makes algout$final_region_labs[i] now equal to algout$final_region_labs[rs_idx[i]]
                 # to account for resampling
-                algout$final_region_labs[,rs_idx, drop = FALSE]
+                # algout$final_region_labs[,rs_idx, drop = FALSE]
             }
 
             #TODO probably need to adjust the rest of these as well
@@ -337,7 +428,6 @@ redist_optimal_gsmc <- function(state_map, M, counties = NULL,
             seq_alpha = .99,
             pop_temper = pop_temper,
             runtime = as.numeric(t2_run - t1_run, units = "secs"),
-            district_str_labels = algout$final_region_labs,
             nunique_original_ancestors = algout$nunique_original_ancestors,
             parent_index_mat = algout$parent_index,
             original_ancestors_mat = algout$original_ancestors_mat,
@@ -349,6 +439,7 @@ redist_optimal_gsmc <- function(state_map, M, counties = NULL,
             parent_successful_tries_mat = parent_successful_tries_mat,
             rs_idx = rs_idx
         )
+
 
         algout
 
@@ -367,6 +458,8 @@ redist_optimal_gsmc <- function(state_map, M, counties = NULL,
     n_dist_act <- dplyr::n_distinct(plans[, 1]) # actual number (for partial plans)
 
 
+
+
     out <- new_redist_plans(plans, map, alg_type, wgt, resample,
                             ndists = N,
                             n_eff = all_out[[1]]$n_eff,
@@ -377,10 +470,13 @@ redist_optimal_gsmc <- function(state_map, M, counties = NULL,
                             pop_bounds = pop_bounds)
 
 
+
     if (runs > 1) {
         out <- mutate(out, chain = rep(seq_len(runs), each = n_dist_act*M)) %>%
             dplyr::relocate('chain', .after = "draw")
     }
+
+
 
     exist_name <- attr(map, "existing_col")
     if (!is.null(exist_name) && !isFALSE(ref_name) && N == final_dists) {

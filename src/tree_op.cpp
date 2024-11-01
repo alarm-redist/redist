@@ -122,12 +122,12 @@ Graph get_region_graph(const Graph &g, const Plan &plan) {
     for (int i = 0; i < V; i++) {
         std::vector<int> nbors = g[i];
         // Find out which region this vertex corresponds to
-        int region_num_i = plan.region_num_ids[i];
+        int region_num_i = plan.region_ids[i];
 
         // now iterate over its neighbors
         for (int nbor : nbors) {
             // find which region neighbor corresponds to
-            int region_num_j = plan.region_num_ids[nbor];
+            int region_num_j = plan.region_ids[nbor];
             // if they are different regions mark matrix true since region i
             // and region j are adjacent as they share an edge across
             if (region_num_i != region_num_j) {
@@ -242,7 +242,7 @@ void assign_district(const Tree &ust, subview_col<uword> &districts,
 void assign_region(const Tree &ust, Plan &plan,
                      int root,
                      int new_region_num_id) {
-    plan.region_num_ids.at(root) = new_region_num_id;
+    plan.region_ids.at(root) = new_region_num_id;
     int n_desc = ust.at(root).size();
     for (int i = 0; i < n_desc; i++) {
         assign_region(ust, plan, ust.at(root).at(i), new_region_num_id);

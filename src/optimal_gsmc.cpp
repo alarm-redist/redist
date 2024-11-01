@@ -87,8 +87,8 @@ List optimal_gsmc_plans(
     }
 
 
-    std::vector<Plan> plans_vec(M, Plan(V, N, total_pop));
-    std::vector<Plan> new_plans_vec(M, Plan(V, N, total_pop)); // New plans
+    std::vector<Plan> plans_vec(M, Plan(V, N, total_pop, split_district_only));
+    std::vector<Plan> new_plans_vec(M, Plan(V, N, total_pop, split_district_only)); // New plans
 
 
     // Define output variables that must always be created
@@ -133,7 +133,7 @@ List optimal_gsmc_plans(
     // diagnostic mode or not
     std::vector<std::vector<std::vector<int>>> plan_region_ids_mat;
     std::vector<std::vector<std::vector<int>>> plan_d_vals_mat;
-    std::vector<std::vector<std::string>> final_plan_region_labels;
+    std::vector<std::vector<std::vector<int>>> plan_region_order_added_mat;
 
 
 
@@ -146,28 +146,46 @@ List optimal_gsmc_plans(
                 M, std::vector<int>(V, -1)
         ));
 
+        // reserve space for N-2 elements if doing generalized region splits
+        if(!split_district_only){
+            plan_d_vals_mat.reserve(N-2);
+        }
+        
         // reserve space for N-1 elements
-        plan_d_vals_mat.reserve(N-1);
+        plan_region_order_added_mat.reserve(N-1);
 
         // This is N-2 by M by 1,2,...N where for each n=1,...,N-1, m=1,...,M it maps the region
         // id to the region's d value. So for a given n it is n by M by n+1
         // It stops at N-2 because for N-1 its all 1
         for(int n = 1; n < N-1; n++){
-            plan_d_vals_mat.push_back(
+            if(!split_district_only){
+                plan_d_vals_mat.push_back(
+                    std::vector<std::vector<int>>(M, std::vector<int>(n+1, -1))
+                );
+            }
+
+            plan_region_order_added_mat.push_back(
                 std::vector<std::vector<int>>(M, std::vector<int>(n+1, -1))
             );
         }
+        // We care about order added for every split so also do final one 
+        plan_region_order_added_mat.push_back(
+                std::vector<std::vector<int>>(M, std::vector<int>(N, -1))
+        );
 
         //  M by N-1 where for each m=1,...M it maps region ids to region labels in a plan
-        final_plan_region_labels.resize(
-                M, std::vector<std::string>(N, "MISSING")
-        );
+        // final_plan_region_labels.resize(
+        //         M, std::vector<std::string>(N, "MISSING")
+        // );
 
     }else{ // else only track for final round
         // Create info tracking we will pass out at the end
         // This is M by V where for each m=1,...M it maps vertices to integer id for plan
         plan_region_ids_mat.resize(1, std::vector<std::vector<int>>(
                 M, std::vector<int>(V, -1)
+        ));
+        plan_region_order_added_mat.resize(1, std::vector<std::vector<int>>(
+                M, std::vector<int>(N, -1)
         ));
     }
 
@@ -192,6 +210,7 @@ List optimal_gsmc_plans(
             Rprintf("Iteration %d \n", n+1);
         }
 
+        
 
         // For the first iteration we need to pass a special previous ancestor thing
         if(n == 0){
@@ -200,19 +219,19 @@ List optimal_gsmc_plans(
         generalized_split_maps(
             g, counties, cg, pop,
             plans_vec, new_plans_vec,
-            original_ancestor_mat[n],
-            parent_index_mat[n],
+            original_ancestor_mat.at(n),
+            parent_index_mat.at(n),
             dummy_prev_ancestors,
             unnormalized_sampling_weights,
-            normalized_weights_mat[n],
-            draw_tries_mat[n],
+            normalized_weights_mat.at(n),
+            draw_tries_mat.at(n),
             parent_unsuccessful_tries_mat.at(n),
-            acceptance_rates[n],
-            nunique_parents_vec[n],
-            nunique_original_ancestors_vec[n],
+            acceptance_rates.at(n),
+            nunique_parents_vec.at(n),
+            nunique_original_ancestors_vec.at(n),
             ancestors, lags,
             lower, upper, target,
-            k_params[n], split_district_only,
+            k_params.at(n), split_district_only,
             pool,
             verbosity
         );
@@ -225,19 +244,19 @@ List optimal_gsmc_plans(
         generalized_split_maps(
             g, counties, cg, pop,
             plans_vec, new_plans_vec,
-            original_ancestor_mat[n],
-            parent_index_mat[n],
+            original_ancestor_mat.at(n),
+            parent_index_mat.at(n),
             original_ancestor_mat[n-1],
             unnormalized_sampling_weights,
-            normalized_weights_mat[n],
-            draw_tries_mat[n],
+            normalized_weights_mat.at(n),
+            draw_tries_mat.at(n),
             parent_unsuccessful_tries_mat.at(n),
-            acceptance_rates[n],
-            nunique_parents_vec[n],
-            nunique_original_ancestors_vec[n],
+            acceptance_rates.at(n),
+            nunique_parents_vec.at(n),
+            nunique_original_ancestors_vec.at(n),
             ancestors, lags,
             lower, upper, target,
-            k_params[n], split_district_only,
+            k_params.at(n), split_district_only,
             pool,
             verbosity
         );
@@ -263,22 +282,25 @@ List optimal_gsmc_plans(
 
 
         // compute effective sample size
-        n_eff.at(n) = compute_n_eff(log_incremental_weights_mat[n]);
+        n_eff.at(n) = compute_n_eff(log_incremental_weights_mat.at(n));
 
         // Now update the diagnostic info if needed, region labels, dval column of the matrix
-        if(diagnostic_mode && n == N-2){ // record if in diagnostic mode and final step
+        if(diagnostic_mode && n < N-2 && !split_district_only){ // record if in diagnostic mode and generalized splits
             for(int j=0; j<M; j++){
-                plan_region_ids_mat.at(n).at(j) = plans_vec[j].region_num_ids;
-                final_plan_region_labels.at(j) = plans_vec[j].region_str_labels;
-            }
-        }else if(diagnostic_mode){ // record if in diagnostic mode but not final step
-            for(int j=0; j<M; j++){
-                plan_region_ids_mat.at(n).at(j) = plans_vec[j].region_num_ids;
+                plan_region_ids_mat.at(n).at(j) = plans_vec[j].region_ids;
+                plan_region_order_added_mat.at(n).at(j) = plans_vec.at(j).region_added_order;
                 plan_d_vals_mat.at(n).at(j) = plans_vec[j].region_dvals;
             }
-        }else if(n == N-2){ // else if not only record final step
+        }else if(diagnostic_mode){ // record if in diagnostic mode but not generalized splits 
+            // or if its the last round and so dval doesn't matter
             for(int j=0; j<M; j++){
-                plan_region_ids_mat.at(0).at(j) = plans_vec[j].region_num_ids;
+                plan_region_ids_mat.at(n).at(j) = plans_vec[j].region_ids;
+                plan_region_order_added_mat.at(n).at(j) = plans_vec.at(j).region_added_order;
+            }
+        }else if(n == N-2){ // else if not diagnostic only record final step
+            for(int j=0; j<M; j++){
+                plan_region_ids_mat.at(0).at(j) = plans_vec[j].region_ids;
+                plan_region_order_added_mat.at(0).at(j) = plans_vec.at(j).region_added_order;
             }
         }
 
@@ -299,9 +321,9 @@ List optimal_gsmc_plans(
     List out = List::create(
         _["original_ancestors"] = original_ancestor_mat,
         _["parent_index"] = parent_index_mat,
-        _["final_region_labs"] = final_plan_region_labels,
         _["region_ids_mat_list"] = plan_region_ids_mat,
         _["region_dvals_mat_list"] = plan_d_vals_mat,
+        _["region_order_added_list"] = plan_region_order_added_mat,
         _["log_incremental_weights_mat"] = log_incremental_weights_mat,
         _["normalized_weights_mat"] = normalized_weights_mat,
         _["draw_tries_mat"] = draw_tries_mat,

@@ -8,14 +8,13 @@ Note all of the diagnostic information is accurately updated to account for a re
 
 # ----- ACTIVE TASKS -----
 
-**Create Separate Updating Function**
-Create a function which takes a cut tree and information on the new regions and updates them. Previously this was in the `cut_regions` function but it has now been seperated out since sometimes for the MCMC step we want to know what a cut region would look like but don't neccesarily always want to actually change it. 
+**Seperate New Region ID Creation from Update Edges**
+To make code more resuable for merge split stuff make it so that creating IDs/resizing attributes in the plan is done outside the `update_plan_from_cut` function and instead that function only handles updating the plan. 
 
 **Create Diagnostics Object for cpp code**
 To avoid needing to pass so many different parameters in the function header consider creating a new diagnostic class in cpp which serves as a wrapper for all the diagnostic things that are collected in the `split_maps` function. 
 
-**Rewrite gsmc and basic_smc **
-Use the code from the new `smc_and_mcmc.cpp` file to rewrite the gsmc and basic_smc stuff. It should be possible to make one version of most of the functions and just have a single input control whether or not it just splits districts. This should cut down on the code and eliminate the big redundancy problem. 
+
 
 **Create More Internal Visualization/Examination Stuff**
 Already created a new file, `splitting_inspection.cpp` to help with this but general idea is create code that allows someone in R to pass in a graph in adjacency list form (and potentially other stuff) and see things like the cut tree output by the splitting procedure or an internal region level graph. This will be helpful for making figures for the paper and also for deep level debugging/diagnostic things.  
@@ -38,6 +37,25 @@ Need to more cleanly seperate diagnostic information from stuff in the final sam
     - Partition split problem 
 
 # ----- COMPLETED TASKS -----
+
+**Remove Plan String Label and Replace with Split Order Number - DONE 11/1/2024**
+Task: Remove the string label attribute from plan objects and instead just have a vector which tracks the relative order regions were added. This will be a vector mapping region id to a number where the order of the number relative to the others indicates the order it was added. Will also need to add a region_order_max attribute so each time a new region is added it is set to that plus one. At the end you can use this to recover the order districts were created but it can also be used to inspect intermediate results as well. 
+
+Comments after completion: Successfully redesigned cpp and R code so it is now possible to track the relative order regions were added and the R function now automatically makes it so that region ID is numbered oldest to most recent added.
+
+**Track Remainder Better - DONE 11/12024**
+Task: Right now the remainder region in a plan is blindly set to region2_id but this will be a problem for the merge split because the remainder might get changed. 
+
+Comments after completion: Added a new option to the `Plan` constructor for specifying whether the plan is for district only splits or not. If its district only splits remainder is initialized to 0 and if not set to -1. That should mean if any future code tries to use remainder region when it shouldn't that will throw an error.
+
+**Rewrite gsmc and basic_smc into one function - DONE 11/1/2024**
+Task: Use the code from the new `smc_and_mcmc.cpp` file to rewrite the gsmc and basic_smc stuff. It should be possible to make one version of most of the functions and just have a single input control whether or not it just splits districts. This should cut down on the code and eliminate the big redundancy problem. 
+
+Comments after completion: The functionality previously in `gsmc.cpp` and `basic_smc.cpp` has now been moved to `optimal_gsmc.cpp` and some of the functions in there (namely the splitting and weight ones) have been moved to their own files. There is now a general purpose function that handles this with a new flag to control whether or not its doing generalized splits or one-district splits only. I also deleted the `redist_gsmc.R` and `redist_basic_smc.R` and consolidated things to the `redist_optimal_gmsc.R` which also now has a flag for generalized vs one district splits.
+
+**Create Separate Updating Function - DONE 11/1/2024**
+Create a function which takes a cut tree and information on the new regions and updates them. Previously this was in the `cut_regions` function but it has now been seperated out since sometimes for the MCMC step we want to know what a cut region would look like but don't neccesarily always want to actually change it. 
+
 
 **Compress dval storage in `plan` object - DONE FORGOT TO RECORD DATE**
 -   We don't actually need to store an `V` length vector of the dvals associated with each vertex. Instead all you need to do is keep a vector mapping region id values to the dvalue 
