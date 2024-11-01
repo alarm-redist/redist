@@ -17,7 +17,7 @@
 #include "tree_op.h"
 #include "map_calc.h"
 #include "active_dev.h"
-#include "smc_and_mcmc.h"
+#include "splitting.h"
 
 
 // [[Rcpp::export]]
