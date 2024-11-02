@@ -10,6 +10,7 @@
 
 
 
+
 //' Uses gsmc method to generate a sample of `M` plans in `c++`
 //'
 //' Using the procedure outlined in <PAPER HERE> this function uses Sequential

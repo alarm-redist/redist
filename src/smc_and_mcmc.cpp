@@ -55,6 +55,37 @@ List optimal_gsmc_with_merge_split_plans(
     int ms_freq = 7;
     int total_ms_steps = (N-1)/ms_freq;
 
+    // TODO: In future the merge_split_step_vec should just be passed in as a parameter
+
+    // total number of steps to run 
+    int total_steps = N-1 + total_ms_steps;
+
+
+    // This is an N-1 + total_ms_steps length vector where [i] being true means that 
+    // step should be a merge split step and false means normal SMC
+    std::vector<bool> merge_split_step_vec(total_steps, false);
+
+    // For now just set every `ms_freq` value to merge split
+    for (int i = 1; i <= total_ms_steps; i++)
+    {
+        merge_split_step_vec.at(i*ms_freq - 1) = true;
+    }
+
+    int cnnt = std::count(merge_split_step_vec.begin(), merge_split_step_vec.end(), true);
+
+    Rprintf("Expected %d and real count was %d\n!", total_ms_steps, cnnt);
+
+    // return List::create(
+    //     _["merge_split_steps"] = merge_split_step_vec,
+    //     _["count"] = cnnt
+    // );
+
+    if(merge_split_step_vec.at(0)){
+        REprintf("BIG PROBLEM SAYS FIRST STEP SHOULD BE MCMC!!!\n");
+    };
+    
+
+
     umat ancestors(M, lags.size(), fill::zeros);
 
     // Create map level graph and county level multigraph
@@ -94,40 +125,46 @@ List optimal_gsmc_with_merge_split_plans(
 
     // Define output variables that must always be created
 
+
+    // TODO: All of these are actually total_steps instead of N-1 even though right now the 
+    // merge split steps don't record anything 
+
     // This is N-1 by M where [i][j] is the index of the parent of particle j on step i
     // ie the index of the previous plan that was sampled and used to create particle j on step i
-    std::vector<std::vector<int>> parent_index_mat(N-1, std::vector<int> (M, -1));
+    std::vector<std::vector<int>> parent_index_mat(total_steps, std::vector<int> (M, -1));
 
     // This is N-1 by M where [i][j] is the index of the original (first) ancestor of particle j on step i
-    std::vector<std::vector<int>> original_ancestor_mat(N-1, std::vector<int> (M, -1));
+    std::vector<std::vector<int>> original_ancestor_mat(total_steps, std::vector<int> (M, -1));
 
     // This is N-1 by M where [i][j] is the number of tries it took to form particle j on iteration i
     // Inclusive of the final step. ie if succeeds in one try it would be 1
-    std::vector<std::vector<int>> draw_tries_mat(N-1, std::vector<int> (M, -1));
+    std::vector<std::vector<int>> draw_tries_mat(total_steps, std::vector<int> (M, -1));
 
     // This is N-1 by M where [i][j] is the number of times particle j from the
     // previous round was sampled and unsuccessfully split on iteration i so this
     // does not count successful sample then split
-    std::vector<std::vector<int>> parent_unsuccessful_tries_mat(N-1, std::vector<int> (M, 0));
+    std::vector<std::vector<int>> parent_unsuccessful_tries_mat(total_steps, std::vector<int> (M, 0));
+
+    // Tracks the number of unique parent vectors sampled to create the next round
+    std::vector<int> nunique_parents_vec(total_steps, -1);
+
+    // Tracks the number of unique ancestors left at each step
+    std::vector<int> nunique_original_ancestors_vec(total_steps, -1);
+
 
     // This is N-1 by M where [i][j] is the log incremental weight of particle j on step i
-    std::vector<std::vector<double>> log_incremental_weights_mat(N-1, std::vector<double> (M, -1.0));
+    std::vector<std::vector<double>> log_incremental_weights_mat(total_steps, std::vector<double> (M, -1.0));
 
     // This is N-1 by M where [i][j] is the normalized weight of particle j on step i
-    std::vector<std::vector<double>> normalized_weights_mat(N-1, std::vector<double> (M, -1.0));
+    std::vector<std::vector<double>> normalized_weights_mat(total_steps, std::vector<double> (M, -1.0));
 
 
     // Tracks the acceptance rate - total number of tries over M - for each round
-    std::vector<double> acceptance_rates(N-1, -1.0);
+    std::vector<double> acceptance_rates(total_steps, -1.0);
 
     // Tracks the effective sample size for the weights of each round
-    std::vector<double> n_eff(N-1, -1.0);
+    std::vector<double> n_eff(total_steps, -1.0);
 
-    // Tracks the number of unique parent vectors sampled to create the next round
-    std::vector<int> nunique_parents_vec(N-1, -1);
-
-    // Tracks the number of unique ancestors left at each step
-    std::vector<int> nunique_original_ancestors_vec(N-1, -1);
 
 
     // Declare variables whose size will depend on whether or not we're in
@@ -143,42 +180,41 @@ List optimal_gsmc_with_merge_split_plans(
     if(diagnostic_mode){
         // Create info tracking we will pass out at the end
         // This is N-1 by M by V where for each n=1,...,N-1 and m=1,...M it maps vertices to integer id
-        plan_region_ids_mat.resize(N-1, std::vector<std::vector<int>>(
+        plan_region_ids_mat.resize(total_steps, std::vector<std::vector<int>>(
                 M, std::vector<int>(V, -1)
         ));
 
-        // reserve space for N-2 elements if doing generalized region splits
+        // reserve space for total_steps-1 elements if doing generalized region splits
         if(!split_district_only){
-            plan_d_vals_mat.reserve(N-2);
+            plan_d_vals_mat.reserve(total_steps-1);
         }
         
-        // reserve space for N-1 elements
-        plan_region_order_added_mat.reserve(N-1);
+        // reserve space for total_steps number of elements
+        plan_region_order_added_mat.reserve(total_steps);
 
-        // This is N-2 by M by 1,2,...N where for each n=1,...,N-1, m=1,...,M it maps the region
-        // id to the region's d value. So for a given n it is n by M by n+1
-        // It stops at N-2 because for N-1 its all 1
-        for(int n = 1; n < N-1; n++){
-            if(!split_district_only){
+
+        int num_regions = 2;
+        for (size_t i = 0; i < total_steps; i++){
+            // Rprintf("Iteration %zu and Number of Regions is %d\n", i, num_regions);
+            // If doing generalized splits then make num regions by M vector to 
+            // track dvals whenever its less than N regions
+            if(!split_district_only && num_regions < N){
                 plan_d_vals_mat.push_back(
-                    std::vector<std::vector<int>>(M, std::vector<int>(n+1, -1))
+                    std::vector<std::vector<int>>(M, std::vector<int>(num_regions, -1))
                 );
             }
 
             plan_region_order_added_mat.push_back(
-                std::vector<std::vector<int>>(M, std::vector<int>(n+1, -1))
+                std::vector<std::vector<int>>(M, std::vector<int>(num_regions, -1))
             );
+
+            // if its not an MCMC step increase the number of regions
+            if(!merge_split_step_vec.at(i)){
+                num_regions++;
+            }
+
         }
-        // We care about order added for every split so also do final one 
-        plan_region_order_added_mat.push_back(
-                std::vector<std::vector<int>>(M, std::vector<int>(N, -1))
-        );
-
-        //  M by N-1 where for each m=1,...M it maps region ids to region labels in a plan
-        // final_plan_region_labels.resize(
-        //         M, std::vector<std::string>(N, "MISSING")
-        // );
-
+        
     }else{ // else only track for final round
         // Create info tracking we will pass out at the end
         // This is M by V where for each m=1,...M it maps vertices to integer id for plan
@@ -190,8 +226,13 @@ List optimal_gsmc_with_merge_split_plans(
         ));
     }
 
-
-
+    // return List::create(
+    //     _["merge_split_steps"] = merge_split_step_vec,
+    //     _["count"] = cnnt,
+    //     _["region_dvals_mat_list"] = plan_d_vals_mat,
+    //     _["region_order_added_list"] = plan_region_order_added_mat,
+    //     _["region_ids_mat_list"] = plan_region_ids_mat
+    // );
 
     // Start off all the unnormalized weights at 1
     std::vector<double> unnormalized_sampling_weights(M, 1.0);
@@ -202,37 +243,45 @@ List optimal_gsmc_with_merge_split_plans(
     RcppThread::ThreadPool pool(num_threads);
 
     std::string bar_fmt = "Split [{cli::pb_current}/{cli::pb_total}] {cli::pb_bar} | ETA{cli::pb_eta}";
-    RObject bar = cli_progress_bar(N-1, cli_config(false, bar_fmt.c_str()));
+    RObject bar = cli_progress_bar(total_steps, cli_config(false, bar_fmt.c_str()));
+
+    // For record tracking 
+    Rprintf("There should be %d Merge split steps!\n", total_ms_steps);
+
+    // counts the number of smc steps
+    int smc_step_num = 0;
 
     // Now for each run through split the map
     try {
-    for(int n=0; n<N-1; n++){
+    for(int step_num=0; step_num< total_steps; step_num++){
         if(verbosity > 1){
-            Rprintf("Iteration %d \n", n+1);
+            if(merge_split_step_vec[step_num]){
+                Rprintf("Iteration %d: Merge Split Step %d \n", step_num+1, step_num - smc_step_num + 1);
+            }else{
+                Rprintf("Iteration %d: SMC Step %d \n",  step_num+1, smc_step_num + 1);
+            }
         }
 
-        
-
         // For the first iteration we need to pass a special previous ancestor thing
-        if(n == 0){
+        if(step_num == 0){
         std::vector<int> dummy_prev_ancestors(M, 1);
         // split the map
         generalized_split_maps(
             g, counties, cg, pop,
             plans_vec, new_plans_vec,
-            original_ancestor_mat.at(n),
-            parent_index_mat.at(n),
+            original_ancestor_mat.at(step_num),
+            parent_index_mat.at(step_num),
             dummy_prev_ancestors,
             unnormalized_sampling_weights,
-            normalized_weights_mat.at(n),
-            draw_tries_mat.at(n),
-            parent_unsuccessful_tries_mat.at(n),
-            acceptance_rates.at(n),
-            nunique_parents_vec.at(n),
-            nunique_original_ancestors_vec.at(n),
+            normalized_weights_mat.at(step_num),
+            draw_tries_mat.at(step_num),
+            parent_unsuccessful_tries_mat.at(step_num),
+            acceptance_rates.at(step_num),
+            nunique_parents_vec.at(step_num),
+            nunique_original_ancestors_vec.at(step_num),
             ancestors, lags,
             lower, upper, target,
-            k_params.at(n), split_district_only,
+            k_params.at(smc_step_num), split_district_only,
             pool,
             verbosity
         );
@@ -240,31 +289,46 @@ List optimal_gsmc_with_merge_split_plans(
             // For the first ancestor one make every ancestor themselves
             std::iota (parent_index_mat[0].begin(), parent_index_mat[0].end(), 0);
             std::iota (original_ancestor_mat[0].begin(), original_ancestor_mat[0].end(), 0);
-        }else{
+            smc_step_num++;
+        }else if(merge_split_step_vec[step_num]){ // check if its a merge split step
+             // Rprintf("%d!\n", step_num);
+
+             // Copy results from previous step
+            original_ancestor_mat.at(step_num) = original_ancestor_mat.at(step_num-1);
+            parent_index_mat.at(step_num) = parent_index_mat.at(step_num-1);
+            draw_tries_mat.at(step_num) = draw_tries_mat.at(step_num-1);
+            parent_unsuccessful_tries_mat.at(step_num) = parent_unsuccessful_tries_mat.at(step_num-1);
+            acceptance_rates.at(step_num) = acceptance_rates.at(step_num-1);
+            nunique_parents_vec.at(step_num) = nunique_parents_vec.at(step_num-1);
+            nunique_original_ancestors_vec.at(step_num) = nunique_original_ancestors_vec.at(step_num-1);
+
+
+        }else{ // else just run a normal smc step 
         // split the map and we can use the previous original ancestor matrix row
-        generalized_split_maps(
-            g, counties, cg, pop,
-            plans_vec, new_plans_vec,
-            original_ancestor_mat.at(n),
-            parent_index_mat.at(n),
-            original_ancestor_mat[n-1],
-            unnormalized_sampling_weights,
-            normalized_weights_mat.at(n),
-            draw_tries_mat.at(n),
-            parent_unsuccessful_tries_mat.at(n),
-            acceptance_rates.at(n),
-            nunique_parents_vec.at(n),
-            nunique_original_ancestors_vec.at(n),
-            ancestors, lags,
-            lower, upper, target,
-            k_params.at(n), split_district_only,
-            pool,
-            verbosity
-        );
+            generalized_split_maps(
+                g, counties, cg, pop,
+                plans_vec, new_plans_vec,
+                original_ancestor_mat.at(step_num),
+                parent_index_mat.at(step_num),
+                original_ancestor_mat.at(step_num-1),
+                unnormalized_sampling_weights,
+                normalized_weights_mat.at(step_num),
+                draw_tries_mat.at(step_num),
+                parent_unsuccessful_tries_mat.at(step_num),
+                acceptance_rates.at(step_num),
+                nunique_parents_vec.at(step_num),
+                nunique_original_ancestors_vec.at(step_num),
+                ancestors, lags,
+                lower, upper, target,
+                k_params.at(smc_step_num), split_district_only,
+                pool,
+                verbosity
+            );
+            smc_step_num++;
         }
 
         if (verbosity == 1 && CLI_SHOULD_TICK){
-            cli_progress_set(bar, n);
+            cli_progress_set(bar, step_num);
         }
         Rcpp::checkUserInterrupt();
 
@@ -275,7 +339,7 @@ List optimal_gsmc_with_merge_split_plans(
             g,
             new_plans_vec,
             split_district_only,
-            log_incremental_weights_mat.at(n),
+            log_incremental_weights_mat.at(step_num),
             unnormalized_sampling_weights,
             target,
             pop_temper
@@ -283,24 +347,24 @@ List optimal_gsmc_with_merge_split_plans(
 
 
         // compute effective sample size
-        n_eff.at(n) = compute_n_eff(log_incremental_weights_mat.at(n));
+        n_eff.at(step_num) = compute_n_eff(log_incremental_weights_mat.at(step_num));
 
         // Now update the diagnostic info if needed, region labels, dval column of the matrix
-        if(diagnostic_mode && n < N-2 && !split_district_only){ // record if in diagnostic mode and generalized splits
+        if(diagnostic_mode && step_num < total_steps -1 && !split_district_only){ // record if in diagnostic mode and generalized splits
             for(int j=0; j<M; j++){
-                plan_region_ids_mat.at(n).at(j) = plans_vec[j].region_ids;
-                plan_region_order_added_mat.at(n).at(j) = plans_vec.at(j).region_added_order;
-                plan_d_vals_mat.at(n).at(j) = plans_vec[j].region_dvals;
+                plan_region_ids_mat.at(step_num).at(j) = plans_vec.at(j).region_ids;
+                plan_region_order_added_mat.at(step_num).at(j) = plans_vec.at(j).region_added_order;
+                plan_d_vals_mat.at(step_num).at(j) = plans_vec.at(j).region_dvals;
             }
         }else if(diagnostic_mode){ // record if in diagnostic mode but not generalized splits 
             // or if its the last round and so dval doesn't matter
             for(int j=0; j<M; j++){
-                plan_region_ids_mat.at(n).at(j) = plans_vec[j].region_ids;
-                plan_region_order_added_mat.at(n).at(j) = plans_vec.at(j).region_added_order;
+                plan_region_ids_mat.at(step_num).at(j) = plans_vec.at(j).region_ids;
+                plan_region_order_added_mat.at(step_num).at(j) = plans_vec.at(j).region_added_order;
             }
-        }else if(n == N-2){ // else if not diagnostic only record final step
+        }else if(step_num == total_steps-1){ // else if not diagnostic only record final step
             for(int j=0; j<M; j++){
-                plan_region_ids_mat.at(0).at(j) = plans_vec[j].region_ids;
+                plan_region_ids_mat.at(0).at(j) = plans_vec.at(j).region_ids;
                 plan_region_order_added_mat.at(0).at(j) = plans_vec.at(j).region_added_order;
             }
         }
@@ -333,7 +397,8 @@ List optimal_gsmc_with_merge_split_plans(
         _["nunique_parent_indices"] = nunique_parents_vec,
         _["nunique_original_ancestors"] = nunique_original_ancestors_vec,
         _["ancestors"] = ancestors,
-        _["step_n_eff"] = n_eff
+        _["step_n_eff"] = n_eff,
+        _["merge_split_steps"] = merge_split_step_vec
     );
 
     return out;

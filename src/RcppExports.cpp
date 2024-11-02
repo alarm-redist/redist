@@ -699,6 +699,28 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// optimal_gsmc_with_merge_split_plans
+List optimal_gsmc_with_merge_split_plans(int N, List adj_list, const arma::uvec& counties, const arma::uvec& pop, double target, double lower, double upper, int M, List control, int ncores, int verbosity, bool diagnostic_mode);
+RcppExport SEXP _redist_optimal_gsmc_with_merge_split_plans(SEXP NSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP MSEXP, SEXP controlSEXP, SEXP ncoresSEXP, SEXP verbositySEXP, SEXP diagnostic_modeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< List >::type adj_list(adj_listSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< int >::type M(MSEXP);
+    Rcpp::traits::input_parameter< List >::type control(controlSEXP);
+    Rcpp::traits::input_parameter< int >::type ncores(ncoresSEXP);
+    Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
+    Rcpp::traits::input_parameter< bool >::type diagnostic_mode(diagnostic_modeSEXP);
+    rcpp_result_gen = Rcpp::wrap(optimal_gsmc_with_merge_split_plans(N, adj_list, counties, pop, target, lower, upper, M, control, ncores, verbosity, diagnostic_mode));
+    return rcpp_result_gen;
+END_RCPP
+}
 // splits
 IntegerVector splits(IntegerMatrix dm, IntegerVector community, int nd, int max_split);
 RcppExport SEXP _redist_splits(SEXP dmSEXP, SEXP communitySEXP, SEXP ndSEXP, SEXP max_splitSEXP) {
@@ -921,6 +943,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_k_smallest", (DL_FUNC) &_redist_k_smallest, 2},
     {"_redist_k_biggest", (DL_FUNC) &_redist_k_biggest, 2},
     {"_redist_smc_plans", (DL_FUNC) &_redist_smc_plans, 15},
+    {"_redist_optimal_gsmc_with_merge_split_plans", (DL_FUNC) &_redist_optimal_gsmc_with_merge_split_plans, 12},
     {"_redist_splits", (DL_FUNC) &_redist_splits, 4},
     {"_redist_dist_cty_splits", (DL_FUNC) &_redist_dist_cty_splits, 3},
     {"_redist_perform_a_valid_region_split", (DL_FUNC) &_redist_perform_a_valid_region_split, 16},

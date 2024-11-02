@@ -8,11 +8,13 @@ Note all of the diagnostic information is accurately updated to account for a re
 
 # ----- ACTIVE TASKS -----
 
+
+
 **Create MH Ratio Calculator**
 Create a function (along with helpers as needed) that computes the MH ratio for valid new proposed plans.
 
 **Create Full Pass through**
-In the `smc_and_mcmc.cpp` file make a function analagous to `optimal_gsmc_plans` that runs it for the whole thing. For now just stick with doing MCMC moves with a set frequency with the amount set to 1/acceptance rate. Need to think about what kind of diagnostics to keep
+In the `smc_and_mcmc.cpp` file make a function analagous to `optimal_gsmc_plans` that runs it for the whole thing. For now just stick with doing MCMC moves with a set frequency with the amount set to 1/acceptance rate. Need to think about what kind of diagnostics to keep. Right now I think it should just be the number of attempts made and how many were successful along with storing the plans and weights at the end 
 
 **Create Function for Diagnostics**
 Since both the smc and smc with merge split share some diagnostics its probably better to write a function to create the vectors shared between them to avoid duplicate code.
