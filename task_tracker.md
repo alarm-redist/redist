@@ -8,8 +8,8 @@ Note all of the diagnostic information is accurately updated to account for a re
 
 # ----- ACTIVE TASKS -----
 
-**Seperate New Region ID Creation from Update Edges**
-To make code more resuable for merge split stuff make it so that creating IDs/resizing attributes in the plan is done outside the `update_plan_from_cut` function and instead that function only handles updating the plan. 
+**Make get_edge_to_cut only need vertex region id vector**
+Change `get_edge_to_cut` to only take in a vector of vertex region ids and a max dval to try instead of taking in a plan. This will make merge split easier by allowing you to just pass in a vertex region id vector with two regions merged without having to bother editing the actual plan.
 
 **Create Diagnostics Object for cpp code**
 To avoid needing to pass so many different parameters in the function header consider creating a new diagnostic class in cpp which serves as a wrapper for all the diagnostic things that are collected in the `split_maps` function. 
@@ -37,6 +37,12 @@ Need to more cleanly seperate diagnostic information from stuff in the final sam
     - Partition split problem 
 
 # ----- COMPLETED TASKS -----
+
+
+**Seperate New Region ID Creation from Update Edges - DONE 11/1/2024**
+Task: To make code more resuable for merge split stuff make it so that creating IDs/resizing attributes in the plan is done outside the `update_plan_from_cut` function and instead that function only handles updating the plan. 
+
+Comments after completion: Changed `update_plan_from_cut` so it just does updating. Resizing plan attributes and coming up with region ids now happen outside the function so it should be fully usable for merge split stuff later on.
 
 **Remove Plan String Label and Replace with Split Order Number - DONE 11/1/2024**
 Task: Remove the string label attribute from plan objects and instead just have a vector which tracks the relative order regions were added. This will be a vector mapping region id to a number where the order of the number relative to the others indicates the order it was added. Will also need to add a region_order_max attribute so each time a new region is added it is set to that plus one. At the end you can use this to recover the order districts were created but it can also be used to inspect intermediate results as well. 

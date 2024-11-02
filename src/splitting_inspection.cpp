@@ -81,12 +81,23 @@ List perform_a_valid_region_split(
         pre_split_ust = ust;
 
         // Try to make a cut
+        int max_potential_d;
+        if(split_district_only){
+            max_potential_d = 1;
+        }else{
+            max_potential_d = plan.region_dvals.at(region_id_to_split) - 1;
+        }
+
+        // try to get an edge to cut
         successful_split_made = get_edge_to_cut(ust, root,
-                                                k_param,  split_district_only, pop,
-                                                plan, region_id_to_split,
-                                                lower, upper, target,
-                                                new_region1_tree_root, new_region1_dval, new_region1_pop,
-                                                new_region2_tree_root, new_region2_dval, new_region2_pop);
+                        k_param, max_potential_d,
+                        pop, plan.region_ids, 
+                        region_id_to_split, plan.region_pops.at(region_id_to_split),
+                        plan.region_dvals.at(region_id_to_split),
+                        lower, upper, target,
+                        new_region1_tree_root, new_region1_dval, new_region1_pop,
+                        new_region2_tree_root, new_region2_dval, new_region2_pop);
+
         try_counter++;
         // increase the counter by 1
         if(verbose && false){
@@ -104,13 +115,45 @@ List perform_a_valid_region_split(
     // TODO: make this optional
     int new_region1_id, new_region2_id;
 
+    // if successful then update the plan
+    // update plan with new regions
+    plan.num_regions++; // increase region count by 1
+    plan.num_multidistricts--; // Decrease by one to avoid double counting later
+
+    // Create info for two new districts
+
+    // Set label and count depending on if district or multi district
+    if(new_region1_dval == 1){
+        plan.num_districts++;
+    }else{
+        plan.num_multidistricts++;
+    }
+
+    // Now do it for second region
+    if(new_region2_dval == 1){
+        plan.num_districts++;
+    }else{
+        plan.num_multidistricts++;
+    }
+
+    // make the first new region have the same integer id as the split region
+    new_region1_id = region_id_to_split;
+    // Second new region has id of the new number of regions minus 1
+    new_region2_id = plan.num_regions - 1;
+
+    // Now resize the region level attributes 
+    plan.region_dvals.resize(plan.num_regions, -1);
+    plan.region_added_order.resize(plan.num_regions, -1);
+    plan.region_pops.resize(plan.num_regions, -1.0);
+
+    // now update things with the new region ids 
     update_plan_from_cut(
         ust, plan, split_district_only,
-        region_id_to_split,
         new_region1_tree_root, new_region1_dval,  new_region1_pop,
         new_region2_tree_root, new_region2_dval, new_region2_pop,
         new_region1_id, new_region2_id
     );
+
 
     if(verbose){
         plan.Rprint();
@@ -203,13 +246,23 @@ List get_successful_proposed_cut(int N, List adj_list, const arma::uvec &countie
         // copy uncut tree
         pre_split_ust = ust;
 
-        // Try to make a cut
+        int max_potential_d;
+        if(split_district_only){
+            max_potential_d = 1;
+        }else{
+            max_potential_d = plan.region_dvals.at(region_id_to_split) - 1;
+        }
+
+        // try to get an edge to cut
         successful_split_made = get_edge_to_cut(ust, root,
-                                                k_param,  split_district_only, pop,
-                                                plan, region_id_to_split,
-                                                lower, upper, target,
-                                                new_region1_tree_root, new_region1_dval, new_region1_pop,
-                                                new_region2_tree_root, new_region2_dval, new_region2_pop);
+                        k_param, max_potential_d,
+                        pop, plan.region_ids, 
+                        region_id_to_split, plan.region_pops.at(region_id_to_split),
+                        plan.region_dvals.at(region_id_to_split),
+                        lower, upper, target,
+                        new_region1_tree_root, new_region1_dval, new_region1_pop,
+                        new_region2_tree_root, new_region2_dval, new_region2_pop);
+                        
         try_counter++;
         // increase the counter by 1
         if(verbose){

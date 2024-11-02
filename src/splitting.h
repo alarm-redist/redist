@@ -57,7 +57,7 @@ double choose_multidistrict_to_split(
 //' update the plan. Instead it just returns the information on the two new
 //' regions if successful and the vertices to use to update the plans.
 //'
-//' Depending on the value of split_district_only will only attempt to split off
+//' Depending on the value of max_potential_d will only attempt to split off
 //' a single district or allows for more general splits.
 //'
 //' By convention the first new region (`new_region1`) will always be the region
@@ -68,11 +68,13 @@ double choose_multidistrict_to_split(
 //' @param ust A directed spanning tree passed by reference
 //' @param root The root vertex of the spanning tree
 //' @param k_param The k parameter from the SMC algorithm, you choose among the top k_param edges
-//' @param split_district_only If true then only tries to split a district, if false allows for
-//' arbitrary region splits
+//' @param max_potential_d The largest potential d value it will try for a cut. Setting this to 
+//' 1 will result in only 1 district splits. 
 //' @param pop A vector of the population associated with each vertex in `g`
-//' @param plan A plan object
+//' @param region_ids A vector mapping 0 indexed vertices to their region id number
 //' @param region_id_to_split The id of the region in the plan object we're attempting to split
+//' @param total_region_pop The total population of the region being split 
+//' @param total_region_dval The dval of the region being split 
 //' @param lower Acceptable lower bounds on a valid district's population
 //' @param upper Acceptable upper bounds on a valid district's population
 //' @param target Ideal population of a valid district. This is what deviance is calculated
@@ -101,8 +103,9 @@ double choose_multidistrict_to_split(
 //' @noRd
 //' @keywords internal
 bool get_edge_to_cut(Tree &ust, int root,
-                     int k_param, bool split_district_only,
-                     const uvec &pop, const Plan &plan, const int region_id_to_split,
+                     int k_param, int max_potential_d,
+                     const uvec &pop, const std::vector<int> &region_ids,
+                     const int region_id_to_split, double total_region_pop, int total_region_dval,
                      const double lower, const double upper, const double target,
                      int &new_region1_tree_root, int &new_region1_dval, double &new_region1_pop,
                      int &new_region2_tree_root, int &new_region2_dval, double &new_region2_pop
@@ -113,8 +116,12 @@ bool get_edge_to_cut(Tree &ust, int root,
 //' Updates a `Plan` object using a cut tree
 //'
 //' Takes a cut spanning tree `ust` and variables on the two new regions
-//' induced by the cuts and updates `plan` to add those two new regions.
-//' It also sets `plan.remainder_region` equal to `new_region2_id`.
+//' induced by the cuts and updates `plan` with information on those two
+//' new regions. Assumes that the plan attributes already have the correct
+//' size and accessing either of the region ids won't create issues.
+//'
+//' It also sets `plan.remainder_region` equal to `new_region2_id` if 
+//' split_district_only is true. 
 //'
 //'
 //' @title Update plan regions from cut tree
@@ -124,7 +131,6 @@ bool get_edge_to_cut(Tree &ust, int root,
 //' @param plan A plan object
 //' @param split_district_only Whether or not this was split according to a 
 //' one district split scheme (as in does the remainder need to be updated)
-//' @param old_region_id The id of old (split) region
 //' @param new_region1_tree_root The vertex of the root of one piece of the cut
 //' tree. This always corresponds to the region with the smaller dval (allowing
 //' for the possiblity the dvals are equal).
@@ -139,20 +145,15 @@ bool get_edge_to_cut(Tree &ust, int root,
 //' @param new_region2_id The id the new region 2 was assigned in the plan
 //'
 //' @details Modifications
-//'    - `plan` is updated in place with the two new regions and the old region
-//'    is removed
-//'    - `new_region1_id` and `new_region2_id` are updated by reference to what
-//'    the values of the two new region ids were set to
-//'
+//'    - `plan` is updated in place with the two new regions
 //'
 //' @noRd
 //' @keywords internal
 void update_plan_from_cut(
         Tree &ust, Plan &plan, bool split_district_only,
-        const int old_region_id, 
         const int new_region1_tree_root, const int new_region1_dval, const double new_region1_pop,
         const int new_region2_tree_root, const int new_region2_dval, const double new_region2_pop,
-        int &new_region1_id,  int &new_region2_id
+        const int new_region1_id,  const int new_region2_id
 );
 
 
