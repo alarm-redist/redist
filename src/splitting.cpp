@@ -383,7 +383,94 @@ void update_plan_from_cut(
 };
 
 
+//' Creates new regions and updates the `Plan` object using a cut tree
+//'
+//' Takes a cut spanning tree `ust` and variables on the two new regions
+//' induced by the cuts and creates space/updates the information on those
+//' two new regions in the `plan` object. This function increases the number
+//' of regions aspect by 1 and updates the region level information and all
+//' other variables changed by adding a new region. 
+//'
+//' It also sets `plan.remainder_region` equal to `new_region2_id` if 
+//' split_district_only is true. 
+//'
+//'
+//' @title Create and update new plan regions from cut tree
+//'
+//' @param ust A cut (ie has two partition pieces) directed spanning tree
+//' passed by reference
+//' @param plan A plan object
+//' @param split_district_only Whether or not this was split according to a 
+//' one district split scheme (as in does the remainder need to be updated)
+//' @param old_split_region_id The id of the region that was split into the two
+//' new ones 
+//' @param new_region1_tree_root The vertex of the root of one piece of the cut
+//' tree. This always corresponds to the region with the smaller dval (allowing
+//' for the possiblity the dvals are equal).
+//' @param new_region1_dval The dval associated with the new region 1
+//' @param new_region1_pop The population associated with the new region 1
+//' @param new_region2_tree_root The vertex of the root of other piece of the cut
+//' tree. This always corresponds to the region with the bigger dval (allowing
+//' for the possiblity the dvals are equal).
+//' @param new_region2_dval The dval associated with the new region 2
+//' @param new_region2_pop The population associated with the new region 2
+//' @param new_region1_id The id the new region 1 was assigned in the plan
+//' @param new_region2_id The id the new region 2 was assigned in the plan
+//'
+//' @details Modifications
+//'    - `plan` is updated in place with the two new regions
+//'    - `new_region1_id` is set to the id new region1 was assigned
+//'    which is just the `old_split_region_id`
+//'    - `new_region2_id` is set to the id new region2 was assigned 
+//'    which is just `plan.num_regions-1`
+//'
+void add_new_regions_to_plan_from_cut(
+        Tree &ust, Plan &plan, bool split_district_only,
+        const int old_split_region_id,
+        const int new_region1_tree_root, const int new_region1_dval, const double new_region1_pop,
+        const int new_region2_tree_root, const int new_region2_dval, const double new_region2_pop,
+        int &new_region1_id,  int &new_region2_id
+){
+    // if successful then update the plan
+    // update plan with new regions
+    plan.num_regions++; // increase region count by 1
+    plan.num_multidistricts--; // Decrease by one to avoid double counting later
 
+    // Create info for two new districts
+
+    // Set label and count depending on if district or multi district
+    if(new_region1_dval == 1){
+        plan.num_districts++;
+    }else{
+        plan.num_multidistricts++;
+    }
+
+    // Now do it for second region
+    if(new_region2_dval == 1){
+        plan.num_districts++;
+    }else{
+        plan.num_multidistricts++;
+    }
+
+    // make the first new region have the same integer id as the split region
+    new_region1_id = old_split_region_id;
+    // Second new region has id of the new number of regions minus 1
+    new_region2_id = plan.num_regions - 1;
+
+    // Now resize the region level attributes 
+    plan.region_dvals.resize(plan.num_regions, -1);
+    plan.region_added_order.resize(plan.num_regions, -1);
+    plan.region_pops.resize(plan.num_regions, -1.0);
+
+    // now update using tree
+    update_plan_from_cut(
+            ust, plan, split_district_only,
+            new_region1_tree_root, new_region1_dval,  new_region1_pop,
+            new_region2_tree_root, new_region2_dval, new_region2_pop,
+            new_region1_id, new_region2_id
+        );
+
+}
 
 
 
@@ -482,40 +569,11 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
         return false;
     }
 
-    // if successful then update the plan
-    // update plan with new regions
-    plan.num_regions++; // increase region count by 1
-    plan.num_multidistricts--; // Decrease by one to avoid double counting later
 
-    // Create info for two new districts
-
-    // Set label and count depending on if district or multi district
-    if(new_region1_dval == 1){
-        plan.num_districts++;
-    }else{
-        plan.num_multidistricts++;
-    }
-
-    // Now do it for second region
-    if(new_region2_dval == 1){
-        plan.num_districts++;
-    }else{
-        plan.num_multidistricts++;
-    }
-
-    // make the first new region have the same integer id as the split region
-    new_region_ids[1] = region_id_to_split;
-    // Second new region has id of the new number of regions minus 1
-    new_region_ids[2] = plan.num_regions - 1;
-
-    // Now resize the region level attributes 
-    plan.region_dvals.resize(plan.num_regions, -1);
-    plan.region_added_order.resize(plan.num_regions, -1);
-    plan.region_pops.resize(plan.num_regions, -1.0);
-
-    // now update things with the new region ids 
-    update_plan_from_cut(
+    // now update the plan with the two new cut regions 
+    add_new_regions_to_plan_from_cut(
         ust, plan, split_district_only,
+        region_id_to_split,
         new_region1_tree_root, new_region1_dval,  new_region1_pop,
         new_region2_tree_root, new_region2_dval, new_region2_pop,
         new_region_ids[1], new_region_ids[2]

@@ -115,44 +115,15 @@ List perform_a_valid_region_split(
     // TODO: make this optional
     int new_region1_id, new_region2_id;
 
-    // if successful then update the plan
-    // update plan with new regions
-    plan.num_regions++; // increase region count by 1
-    plan.num_multidistricts--; // Decrease by one to avoid double counting later
-
-    // Create info for two new districts
-
-    // Set label and count depending on if district or multi district
-    if(new_region1_dval == 1){
-        plan.num_districts++;
-    }else{
-        plan.num_multidistricts++;
-    }
-
-    // Now do it for second region
-    if(new_region2_dval == 1){
-        plan.num_districts++;
-    }else{
-        plan.num_multidistricts++;
-    }
-
-    // make the first new region have the same integer id as the split region
-    new_region1_id = region_id_to_split;
-    // Second new region has id of the new number of regions minus 1
-    new_region2_id = plan.num_regions - 1;
-
-    // Now resize the region level attributes 
-    plan.region_dvals.resize(plan.num_regions, -1);
-    plan.region_added_order.resize(plan.num_regions, -1);
-    plan.region_pops.resize(plan.num_regions, -1.0);
-
     // now update things with the new region ids 
-    update_plan_from_cut(
+    add_new_regions_to_plan_from_cut(
         ust, plan, split_district_only,
+        region_id_to_split,
         new_region1_tree_root, new_region1_dval,  new_region1_pop,
         new_region2_tree_root, new_region2_dval, new_region2_pop,
         new_region1_id, new_region2_id
     );
+
 
 
     if(verbose){
@@ -262,7 +233,7 @@ List get_successful_proposed_cut(int N, List adj_list, const arma::uvec &countie
                         lower, upper, target,
                         new_region1_tree_root, new_region1_dval, new_region1_pop,
                         new_region2_tree_root, new_region2_dval, new_region2_pop);
-                        
+
         try_counter++;
         // increase the counter by 1
         if(verbose){
@@ -271,6 +242,17 @@ List get_successful_proposed_cut(int N, List adj_list, const arma::uvec &countie
 
     }
 
+    // if successful then update the plan
+    // update plan with new regions
+    int new_region1_id, new_region2_id;
+    // now update things with the new region ids 
+    add_new_regions_to_plan_from_cut(
+        ust, plan, split_district_only,
+        region_id_to_split,
+        new_region1_tree_root, new_region1_dval,  new_region1_pop,
+        new_region2_tree_root, new_region2_dval, new_region2_pop,
+        new_region1_id, new_region2_id
+    );
 
     if(verbose){
         plan.Rprint();
@@ -295,3 +277,9 @@ List get_successful_proposed_cut(int N, List adj_list, const arma::uvec &countie
 
     return out;
 }
+
+
+
+
+
+

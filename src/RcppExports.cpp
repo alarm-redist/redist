@@ -418,6 +418,26 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// one_cut_then_merge_split
+List one_cut_then_merge_split(int N, List adj_list, const arma::uvec& counties, const arma::uvec& pop, double target, double lower, double upper, bool split_district_only, int num_merge_split_steps, bool verbose);
+RcppExport SEXP _redist_one_cut_then_merge_split(SEXP NSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP split_district_onlySEXP, SEXP num_merge_split_stepsSEXP, SEXP verboseSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< List >::type adj_list(adj_listSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< bool >::type split_district_only(split_district_onlySEXP);
+    Rcpp::traits::input_parameter< int >::type num_merge_split_steps(num_merge_split_stepsSEXP);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(one_cut_then_merge_split(N, adj_list, counties, pop, target, lower, upper, split_district_only, num_merge_split_steps, verbose));
+    return rcpp_result_gen;
+END_RCPP
+}
 // plan_class_testing
 List plan_class_testing(int V, int num_regions, int num_districts);
 RcppExport SEXP _redist_plan_class_testing(SEXP VSEXP, SEXP num_regionsSEXP, SEXP num_districtsSEXP) {
@@ -829,6 +849,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_redist_optimal_gsmc_plans", (DL_FUNC) &_redist_optimal_gsmc_plans, 12},
     {"_redist_pareto_dominated", (DL_FUNC) &_redist_pareto_dominated, 1},
     {"_redist_testing_sample_forest", (DL_FUNC) &_redist_testing_sample_forest, 6},
+    {"_redist_one_cut_then_merge_split", (DL_FUNC) &_redist_one_cut_then_merge_split, 10},
     {"_redist_plan_class_testing", (DL_FUNC) &_redist_plan_class_testing, 3},
     {"_redist_split_entire_map", (DL_FUNC) &_redist_split_entire_map, 8},
     {"_redist_split_all_the_way", (DL_FUNC) &_redist_split_all_the_way, 8},

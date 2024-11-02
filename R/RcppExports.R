@@ -140,6 +140,10 @@ testing_sample_forest <- function(l, pop, lower, upper, counties, ignore) {
     .Call(`_redist_testing_sample_forest`, l, pop, lower, upper, counties, ignore)
 }
 
+one_cut_then_merge_split <- function(N, adj_list, counties, pop, target, lower, upper, split_district_only, num_merge_split_steps, verbose) {
+    .Call(`_redist_one_cut_then_merge_split`, N, adj_list, counties, pop, target, lower, upper, split_district_only, num_merge_split_steps, verbose)
+}
+
 plan_class_testing <- function(V, num_regions, num_districts) {
     .Call(`_redist_plan_class_testing`, V, num_regions, num_districts)
 }
@@ -330,6 +334,51 @@ NULL
 #'
 #' @details Modifications
 #'    - `plan` is updated in place with the two new regions
+#'
+#' @noRd
+#' @keywords internal
+NULL
+
+#' Creates new regions and updates the `Plan` object using a cut tree
+#'
+#' Takes a cut spanning tree `ust` and variables on the two new regions
+#' induced by the cuts and creates space/updates the information on those
+#' two new regions in the `plan` object. This function increases the number
+#' of regions aspect by 1 and updates the region level information and all
+#' other variables changed by adding a new region. 
+#'
+#' It also sets `plan.remainder_region` equal to `new_region2_id` if 
+#' split_district_only is true. 
+#'
+#'
+#' @title Create and update new plan regions from cut tree
+#'
+#' @param ust A cut (ie has two partition pieces) directed spanning tree
+#' passed by reference
+#' @param plan A plan object
+#' @param split_district_only Whether or not this was split according to a 
+#' one district split scheme (as in does the remainder need to be updated)
+#' @param old_split_region_id The id of the region that was split into the two
+#' new ones 
+#' @param new_region1_tree_root The vertex of the root of one piece of the cut
+#' tree. This always corresponds to the region with the smaller dval (allowing
+#' for the possiblity the dvals are equal).
+#' @param new_region1_dval The dval associated with the new region 1
+#' @param new_region1_pop The population associated with the new region 1
+#' @param new_region2_tree_root The vertex of the root of other piece of the cut
+#' tree. This always corresponds to the region with the bigger dval (allowing
+#' for the possiblity the dvals are equal).
+#' @param new_region2_dval The dval associated with the new region 2
+#' @param new_region2_pop The population associated with the new region 2
+#' @param new_region1_id The id the new region 1 was assigned in the plan
+#' @param new_region2_id The id the new region 2 was assigned in the plan
+#'
+#' @details Modifications
+#'    - `plan` is updated in place with the two new regions
+#'    - `new_region1_id` is set to the id new region1 was assigned
+#'    which is just the `old_split_region_id`
+#'    - `new_region2_id` is set to the id new region2 was assigned 
+#'    which is just `plan.num_regions-1`
 #'
 #' @noRd
 #' @keywords internal
