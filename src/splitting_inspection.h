@@ -18,6 +18,7 @@
 #include "map_calc.h"
 #include "active_dev.h"
 #include "splitting.h"
+#include "merging.h"
 
 
 // [[Rcpp::export]]
@@ -29,6 +30,18 @@ List perform_a_valid_region_split(
         std::vector<int> region_ids, std::vector<int> region_dvals,
         std::vector<double> region_pops,
         bool split_district_only, bool verbose
+);
+
+// [[Rcpp::export]]
+List perform_merge_split_steps(
+        List adj_list, const arma::uvec &counties, const arma::uvec &pop,
+        int k_param,
+        double target, double lower, double upper,
+        int N, int num_regions, int num_districts,
+        std::vector<int> region_ids, std::vector<int> region_dvals,
+        std::vector<double> region_pops,
+        bool split_district_only, int num_merge_split_steps,
+        bool verbose
 );
 
 #endif

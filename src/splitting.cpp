@@ -150,6 +150,8 @@ bool get_edge_to_cut(Tree &ust, int root,
 
     int V = static_cast<int>(region_ids.size());
 
+    
+
     // Rcout << "For " << region_id_to_split << " Total pop is " << total_pop << " and d_nk is " << num_final_districts << "\n";
 
     // create list that points to parents & computes population below each vtx
@@ -173,6 +175,7 @@ bool get_edge_to_cut(Tree &ust, int root,
     if(region_ids.at(root) != region_id_to_split){
         Rcout << "Root vertex is not in region to split!";
     }
+
 
     // Now loop over all valid edges to cut
     for (int i = 1; i <= V; i++) { // 1-indexing here
@@ -234,7 +237,6 @@ bool get_edge_to_cut(Tree &ust, int root,
 
     }
 
-
     // if less than k_param candidates immediately reject
     if((int) candidates.size() < k_param){
         return false;
@@ -258,6 +260,7 @@ bool get_edge_to_cut(Tree &ust, int root,
     for (j = 0; j < length; j++) {
         if ((*siblings)[j] == cut_at) break;
     }
+
 
     // remove edge from tree
     siblings->erase(siblings->begin()+j);
@@ -360,6 +363,7 @@ void update_plan_from_cut(
 
     // Now update the region level information
 
+
     // updates the new region 1
     plan.region_dvals.at(new_region1_id) = new_region1_dval;
     plan.region_added_order.at(new_region1_id) = new_region1_order_added_num;
@@ -370,6 +374,7 @@ void update_plan_from_cut(
     plan.region_dvals.at(new_region2_id) = new_region2_dval;
     plan.region_added_order.at(new_region2_id) = new_region2_order_added_num;
     plan.region_pops.at(new_region2_id) = new_region2_pop;
+
 
     // If district split only then set the remainder region as well
     if(split_district_only){

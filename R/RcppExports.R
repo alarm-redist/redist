@@ -140,6 +140,10 @@ testing_sample_forest <- function(l, pop, lower, upper, counties, ignore) {
     .Call(`_redist_testing_sample_forest`, l, pop, lower, upper, counties, ignore)
 }
 
+perform_a_valid_region_split_then_merge_split <- function(adj_list, counties, pop, k_param, region_id_to_split, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, num_merge_split_steps, verbose) {
+    .Call(`_redist_perform_a_valid_region_split_then_merge_split`, adj_list, counties, pop, k_param, region_id_to_split, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, num_merge_split_steps, verbose)
+}
+
 one_cut_then_merge_split <- function(N, adj_list, counties, pop, target, lower, upper, split_district_only, num_merge_split_steps, verbose) {
     .Call(`_redist_one_cut_then_merge_split`, N, adj_list, counties, pop, target, lower, upper, split_district_only, num_merge_split_steps, verbose)
 }
@@ -488,6 +492,10 @@ NULL
 
 perform_a_valid_region_split <- function(adj_list, counties, pop, k_param, region_id_to_split, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, verbose) {
     .Call(`_redist_perform_a_valid_region_split`, adj_list, counties, pop, k_param, region_id_to_split, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, verbose)
+}
+
+perform_merge_split_steps <- function(adj_list, counties, pop, k_param, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, num_merge_split_steps, verbose) {
+    .Call(`_redist_perform_merge_split_steps`, adj_list, counties, pop, k_param, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, num_merge_split_steps, verbose)
 }
 
 swMH <- function(aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parity, beta_sequence, beta_weights, lambda = 0L, beta = 0.0, adapt_beta = "none", adjswap = 1L, exact_mh = 0L, adapt_eprob = 0L, adapt_lambda = 0L, num_hot_steps = 0L, num_annealing_steps = 0L, num_cold_steps = 0L, verbose = TRUE) {

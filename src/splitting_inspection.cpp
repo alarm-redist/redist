@@ -154,6 +154,74 @@ List perform_a_valid_region_split(
 }
 
 
+// Does a preset number of merge split steps
+List perform_merge_split_steps(
+        List adj_list, const arma::uvec &counties, const arma::uvec &pop,
+        int k_param, 
+        double target, double lower, double upper,
+        int N, int num_regions, int num_districts,
+        std::vector<int> region_ids, std::vector<int> region_dvals,
+        std::vector<double> region_pops,
+        bool split_district_only, int num_merge_split_steps,
+        bool verbose
+){
+    // unpack control params
+    Graph g = list_to_graph(adj_list);
+    Multigraph cg = county_graph(g, counties);
+    int V = g.size();
+    double total_pop = sum(pop);
+
+    // Create a plan object
+    Plan plan = Plan(V, N, total_pop);
+
+    // fill in the plan
+    plan.num_regions = num_regions;
+    plan.num_districts = num_districts;
+    plan.num_multidistricts = plan.num_regions - plan.num_districts;
+    plan.region_ids = region_ids;
+    plan.region_dvals = region_dvals;
+    plan.region_pops = region_pops;
+
+    // TODO FIX THIS but need to create this
+    plan.region_added_order.resize(plan.num_regions, -1);
+    std::iota(plan.region_added_order.begin(), plan.region_added_order.end(), 1);
+
+
+    if(verbose){
+        plan.Rprint();
+    }
+
+    // Create tree related stuff
+    int root;
+    Tree ust = init_tree(V);
+    Tree pre_split_ust = init_tree(V);
+    std::vector<bool> visited(V);
+    std::vector<bool> ignore(V, false);
+
+
+    // now do merge split 
+    int num_successes = run_merge_split_step( 
+        g, counties, cg, pop,
+        split_district_only,
+        ust, k_param,
+        plan, num_merge_split_steps,
+        lower, upper, target,
+        visited, ignore
+    );
+
+    List out = List::create(
+        _["region_dvals"] = plan.region_dvals,
+        _["plan_vertex_ids"] = plan.region_ids,
+        _["pops"] = plan.region_pops,
+        _["num_regions"] = plan.num_regions,
+        _["num_districts"] = plan.num_districts,
+        _["num_success"] = num_successes
+    );
+
+    return out;
+}
+
+
 /*
  * New splitter test function. Performs cut tree function on the entire map
  */

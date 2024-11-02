@@ -8,8 +8,15 @@ Note all of the diagnostic information is accurately updated to account for a re
 
 # ----- ACTIVE TASKS -----
 
-**Make get_edge_to_cut only need vertex region id vector**
-Change `get_edge_to_cut` to only take in a vector of vertex region ids and a max dval to try instead of taking in a plan. This will make merge split easier by allowing you to just pass in a vertex region id vector with two regions merged without having to bother editing the actual plan.
+**Create MH Ratio Calculator**
+Create a function (along with helpers as needed) that computes the MH ratio for valid new proposed plans.
+
+**Create Full Pass through**
+In the `smc_and_mcmc.cpp` file make a function analagous to `optimal_gsmc_plans` that runs it for the whole thing. For now just stick with doing MCMC moves with a set frequency with the amount set to 1/acceptance rate. Need to think about what kind of diagnostics to keep
+
+**Create Function for Diagnostics**
+Since both the smc and smc with merge split share some diagnostics its probably better to write a function to create the vectors shared between them to avoid duplicate code.
+
 
 **Create Diagnostics Object for cpp code**
 To avoid needing to pass so many different parameters in the function header consider creating a new diagnostic class in cpp which serves as a wrapper for all the diagnostic things that are collected in the `split_maps` function. 
@@ -38,6 +45,10 @@ Need to more cleanly seperate diagnostic information from stuff in the final sam
 
 # ----- COMPLETED TASKS -----
 
+**Make get_edge_to_cut only need vertex region id vector* - DONE 11/2/2024**
+Task: Change `get_edge_to_cut` to only take in a vector of vertex region ids and a max dval to try instead of taking in a plan. This will make merge split easier by allowing you to just pass in a vertex region id vector with two regions merged without having to bother editing the actual plan.
+
+Comments after completion: Successfully changed that for merge split stuff.
 
 **Seperate New Region ID Creation from Update Edges - DONE 11/1/2024**
 Task: To make code more resuable for merge split stuff make it so that creating IDs/resizing attributes in the plan is done outside the `update_plan_from_cut` function and instead that function only handles updating the plan. 
