@@ -42,6 +42,14 @@ void get_all_adj_pairs(
 );
 
 
+double get_log_mh_ratio(
+    const Graph &g, 
+    const int region1_id, const int region2_id,
+    const std::vector<int> &old_vertex_region_ids,
+    const std::vector<int> &new_vertex_region_ids,
+    const int num_old_adj_regions, const int num_new_adj_regions
+);
+
 //' Computes log unnormalized weights for vector of plans
 //'
 //' Using the procedure outlined in <PAPER HERE> this function computes the log

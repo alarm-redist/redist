@@ -143,7 +143,41 @@ void get_all_adj_pairs(
      return std::log(count);
 }
 
+// computes log metropolis hastings ratio
+double get_log_mh_ratio(
+    const Graph &g, 
+    const int region1_id, const int region2_id,
+    const std::vector<int> &old_vertex_region_ids,
+    const std::vector<int> &new_vertex_region_ids,
+    const int num_old_adj_regions, const int num_new_adj_regions
+){
+    // get the log boundary lengths
+    double old_log_boundary_length = region_log_boundary(
+        g, old_vertex_region_ids,
+        region1_id, region2_id
+    );
 
+    double new_log_boundary_length = region_log_boundary(
+        g, new_vertex_region_ids,
+        region1_id, region2_id
+    );
+
+    // Get the merge probability which for now is uniform
+    double log_old_merge_prob = std::log(1) - std::log(
+        static_cast<double>(num_old_adj_regions)
+        );
+
+    double log_new_merge_prob = std::log(1) - std::log(
+        static_cast<double>(num_new_adj_regions)
+        );
+
+    double log_mh_ratio_numerator = old_log_boundary_length + log_old_merge_prob;
+    double log_mh_ratio_denominator = new_log_boundary_length + log_new_merge_prob;
+
+    double log_mh_ratio = log_mh_ratio_numerator - log_mh_ratio_denominator;
+
+    return log_mh_ratio;
+}
 
 
 //' Get the probability the union of two regions was chosen to split

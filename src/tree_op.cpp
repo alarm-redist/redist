@@ -249,6 +249,19 @@ void assign_region(const Tree &ust, Plan &plan,
     }
 }
 
+
+void assign_region_just_vertex_vec(const Tree &ust, 
+                    std::vector<int> &region_ids,
+                    int root,
+                    int new_region_num_id) {
+    region_ids.at(root) = new_region_num_id;
+    int n_desc = ust.at(root).size();
+    for (int i = 0; i < n_desc; i++) {
+        assign_region_just_vertex_vec(ust, region_ids, ust.at(root).at(i), new_region_num_id);
+    }
+}
+
+
 /*
  * Find the root of a subtree.
  */

@@ -12,6 +12,7 @@ Note all of the diagnostic information is accurately updated to account for a re
 
 **Create MH Ratio Calculator**
 Create a function (along with helpers as needed) that computes the MH ratio for valid new proposed plans.
+- NOTE: Not sure if there needs to be an extra term in the raito for probability of picking that region to split, don't think so but still
 
 **Create Full Pass through**
 In the `smc_and_mcmc.cpp` file make a function analagous to `optimal_gsmc_plans` that runs it for the whole thing. For now just stick with doing MCMC moves with a set frequency with the amount set to 1/acceptance rate. Need to think about what kind of diagnostics to keep. Right now I think it should just be the number of attempts made and how many were successful along with storing the plans and weights at the end 

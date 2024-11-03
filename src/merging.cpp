@@ -37,6 +37,27 @@ int run_merge_split_step_on_a_plan(
     // get all pairs of adjacent regions 
     std::vector<std::pair<int, int>> adj_pairs_vec;
 
+
+    std::vector<std::pair<int, int>> proposal_adj_pairs_vec;
+
+
+    // For the first run fill in the adjacency thing 
+    std::vector<bool> valid_regions;
+    if(split_district_only){
+        // if splitting district only then only find adjacent to remainder
+        valid_regions.resize(plan.num_regions, false);
+        valid_regions.at(plan.remainder_region) = true;
+    }else{
+        valid_regions.resize(plan.num_regions, true);
+    }
+
+    // Now fill in proposal_adj_pairs_vec
+    get_all_adj_pairs(
+        g, proposal_adj_pairs_vec,
+        plan.region_ids,
+        valid_regions
+    );
+
     // Seed the random generator with the current time
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -54,20 +75,8 @@ int run_merge_split_step_on_a_plan(
         // If plan change from previous step then recreate the region graph and 
         // adjacent pairslist and update tree stuff 
         if(changed_plan){
-            std::vector<bool> valid_regions;
-            if(split_district_only){
-                valid_regions.resize(plan.num_regions, false);
-                valid_regions.at(plan.remainder_region) = true;
-            }else{
-                valid_regions.resize(plan.num_regions, true);
-            }
-            
-            // Now convert to vec
-            get_all_adj_pairs(
-                g, adj_pairs_vec,
-                plan.region_ids,
-                valid_regions
-            );
+            // if plan changed then the proposal becomes the current one
+            adj_pairs_vec = proposal_adj_pairs_vec;
 
             // Define the range for random index
             distrib = std::uniform_int_distribution<size_t>(0, adj_pairs_vec.size() - 1);
@@ -83,15 +92,36 @@ int run_merge_split_step_on_a_plan(
         int old_region1_dval = plan.region_dvals.at(region1_id);
         int old_region2_dval = plan.region_dvals.at(region2_id);
 
-        // just make the first id the merged id
-        int merged_id = region1_id;
+        // make the merged region the one associated with the larger dval
+        int merged_id;
+
+        if (old_region1_dval > old_region2_dval)
+        {
+            merged_id = region1_id;
+        }else{
+            merged_id = region2_id;
+        }
+        
+
+        if(split_district_only)
+        {
+            if(merged_id != plan.remainder_region){
+                REprintf("ERROROROROR merged id is %d but remainder is %d",
+                merged_id, plan.remainder_region);
+            }
+        }
+        
+
+
         // create vector of vertex ids
-        std::vector<int> region_ids = plan.region_ids;
+        std::vector<int> proposal_region_ids = plan.region_ids;
         // Replace all occurance of region 2 with region 1
         for (int v = 0; v < plan.V; v++)
         {
-            if(region_ids[v] == region2_id){
-                region_ids[v] = region1_id;
+            if(proposal_region_ids[v] == region2_id){
+                proposal_region_ids[v] = merged_id;
+            } else if(proposal_region_ids[v] == region1_id){
+                proposal_region_ids[v] = merged_id;
             }
         }
 
@@ -102,7 +132,7 @@ int run_merge_split_step_on_a_plan(
         
         // Prepare to draw uniform spanning tree
         for (int i = 0; i < plan.V; i++){
-            ignore[i] = region_ids.at(i) != merged_id;
+            ignore[i] = proposal_region_ids.at(i) != merged_id;
         }
         int root;
         clear_tree(ust);
@@ -116,7 +146,7 @@ int run_merge_split_step_on_a_plan(
             continue;
         }
 
-            // splitting related params
+        // splitting related params
         int new_region1_tree_root, new_region2_tree_root;
         int new_region1_dval, new_region2_dval;
         double new_region1_pop, new_region2_pop;
@@ -135,7 +165,7 @@ int run_merge_split_step_on_a_plan(
         // try to get an edge to cut
         successful_edge_found = get_edge_to_cut(ust, root,
                         k_param, max_potential_d,
-                        pop, region_ids, 
+                        pop, proposal_region_ids, 
                         merged_id, merged_pop,
                         merged_dval,
                         lower, upper, target,
@@ -144,9 +174,49 @@ int run_merge_split_step_on_a_plan(
 
         // If successful then do uniform thing 
         if(successful_edge_found){
+
+            // update just the vector from the tree
+            // Can just make regions arbitrary I guess 
+            // CODE HERE
+
+            // Now update the two cut portions
+            // its arbitrary so we made region2_id always the bigger one because we 
+            // gave it the second root
+            assign_region_just_vertex_vec(ust, proposal_region_ids, new_region1_tree_root, region1_id);
+            assign_region_just_vertex_vec(ust, proposal_region_ids, new_region2_tree_root, region2_id);
+
+            std::vector<bool> valid_regions;
+            if(split_district_only){
+                // if splitting district only then only find adjacent to remainder
+                // which is region 2 because its the bigger one
+                valid_regions.resize(plan.num_regions, false);
+                valid_regions.at(region2_id) = true;
+            }else{
+                valid_regions.resize(plan.num_regions, true);
+            }
+
+            // get adjacent region pairs under the proposal
+            get_all_adj_pairs(
+                g, proposal_adj_pairs_vec,
+                proposal_region_ids,
+                valid_regions
+            );
+
             double u_draw = unif_rv(rd_u);
-            double mh_ratio = .99;
-            proposal_accepted = u_draw <= mh_ratio;
+            double log_mh_ratio = get_log_mh_ratio(
+                g, 
+                region1_id, region2_id,
+                plan.region_ids,
+                proposal_region_ids,
+                static_cast<int>(adj_pairs_vec.size()), 
+                static_cast<int>(proposal_adj_pairs_vec.size())
+            );
+            // Rprintf("(%d and %d and %.3f)\n", 
+            //     static_cast<int>(adj_pairs_vec.size()),
+            //     static_cast<int>(proposal_adj_pairs_vec.size()),
+            //     std::exp(log_mh_ratio)
+            //     );
+            proposal_accepted = std::log(u_draw) <= log_mh_ratio;
         }
 
         if(proposal_accepted){
@@ -189,7 +259,6 @@ int run_merge_split_step_on_a_plan(
                     region1_id, region2_id
                 );
             
-            
 
             // changed plan successfully 
             changed_plan = true;
@@ -215,6 +284,8 @@ void run_merge_split_step_on_all_plans(
 ){
     int M = (int) plans_vec.size();
 
+    // create a progress bar
+    RcppThread::ProgressBar bar(M, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
         // Create variables needed for each 

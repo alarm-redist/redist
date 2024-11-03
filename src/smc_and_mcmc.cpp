@@ -75,7 +75,7 @@ List optimal_gsmc_with_merge_split_plans(
 
 
 
-    Rprintf("Running %d merge split steps!\n!", total_ms_steps);
+    Rprintf("Running %d merge split steps!\n", total_ms_steps);
 
     // return List::create(
     //     _["merge_split_steps"] = merge_split_step_vec,
