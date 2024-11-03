@@ -39,8 +39,52 @@ double compute_n_eff(const std::vector<double> &log_wgt) {
     );
 }
 
+// only gets regions adjacent to indices where valid_regions is true
+void get_all_adj_pairs(
+    Graph const &g, std::vector<std::pair<int, int>> &adj_pairs_vec,
+    std::vector<int> const &vertex_region_ids,
+    std::vector<bool> const valid_regions
+){
+    int V = g.size();
 
+    // Set to put adjacent pairs in 
+    std::set<std::pair<int, int>> adj_region_pairs;
 
+    // iterate over all vertices in g
+    for (int i = 0; i < V; i++) {
+        // Find out which region this vertex corresponds to
+        int region_num_i = vertex_region_ids.at(i);
+
+        // check if its a valid region and if not continue
+        if(!valid_regions.at(region_num_i)){
+            continue;
+        }
+
+        std::vector<int> nbors = g.at(i);
+
+        // now iterate over its neighbors
+        for (int nbor : nbors) {
+            // find which region neighbor corresponds to
+            int region_num_j = vertex_region_ids.at(nbor);
+
+            // if they are different regions mark matrix true since region i
+            // and region j are adjacent as they share an edge across
+            if (region_num_i != region_num_j) {
+                if (region_num_i < region_num_j) {
+                    adj_region_pairs.emplace(region_num_i, region_num_j);
+                } else {
+                    adj_region_pairs.emplace(region_num_j, region_num_i);
+                }
+            }
+        }
+    }
+
+    // Now convert to vec
+    adj_pairs_vec.assign(adj_region_pairs.begin(), adj_region_pairs.end());
+
+    return;
+
+}
 
 
 //' Returns the log of the count of the number of edges across two regions in

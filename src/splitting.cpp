@@ -31,7 +31,9 @@ double choose_multidistrict_to_split(
         Plan const&plan, int &region_id_to_split){
 
     if(plan.num_multidistricts < 1){
-        Rprintf("ERROR: Trying to find multidistrict to split when there are none!\n");
+        REprintf("ERROR: Trying to find multidistrict to split when there are none!\n");
+        region_id_to_split = -1;
+        return -42;
     }
 
     // count total

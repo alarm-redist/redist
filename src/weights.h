@@ -35,7 +35,11 @@
 double compute_n_eff(const std::vector<double> &log_wgt);
 
 
-
+void get_all_adj_pairs(
+    Graph const &g, std::vector<std::pair<int, int>> &adj_pairs_vec,
+    std::vector<int> const &vertex_region_ids,
+    std::vector<bool> const valid_regions
+);
 
 
 //' Computes log unnormalized weights for vector of plans

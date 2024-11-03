@@ -20,15 +20,25 @@
 #include "map_calc.h"
 #include "redist_types.h"
 #include "splitting.h"
+#include "weights.h"
 
 
-int run_merge_split_step( 
+int run_merge_split_step_on_a_plan( 
     Graph const &g, const uvec &counties, Multigraph &cg, const uvec &pop,
-    bool split_district_only,
-    Tree &ust, int k_param,
-    Plan &plan, int nsteps_to_run,
-    double &lower, double upper, double target,
-    std::vector<bool> &visited, std::vector<bool> &ignore
+    bool const split_district_only,
+    int const k_param,
+    Plan &plan, int const nsteps_to_run,
+    double const lower, double const upper, double const target
+);
+
+void run_merge_split_step_on_all_plans( 
+    RcppThread::ThreadPool &pool,
+    Graph const &g, const uvec &counties, Multigraph &cg, const uvec &pop,
+    std::vector<Plan> &plans_vec, 
+    bool const split_district_only, int const k_param,
+    int const nsteps_to_run,
+    double const lower, double const upper, double const target,
+    std::vector<int> &success_count_vec
 );
 
 #endif

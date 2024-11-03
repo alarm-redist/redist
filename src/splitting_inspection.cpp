@@ -200,13 +200,12 @@ List perform_merge_split_steps(
 
 
     // now do merge split 
-    int num_successes = run_merge_split_step( 
+    int num_successes = run_merge_split_step_on_a_plan( 
         g, counties, cg, pop,
         split_district_only,
-        ust, k_param,
+        k_param,
         plan, num_merge_split_steps,
-        lower, upper, target,
-        visited, ignore
+        lower, upper, target
     );
 
     List out = List::create(

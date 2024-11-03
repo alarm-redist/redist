@@ -11,7 +11,7 @@
 
 # plans has n_precinct columns and n_sims rows
 # map is a redist_map
-# algorithm is one of "smc" or "mcmc"
+# algorithm is one of "smc" or "mcmc" or "gsmc_ms
 # wgt is the weights before any resampling or truncation
 # ... will depend on the algorithm
 new_redist_plans <- function(plans, map, algorithm, wgt, resampled = TRUE, ndists = attr(map, "ndists"), ...) {

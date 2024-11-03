@@ -48,44 +48,45 @@ List optimal_gsmc_with_merge_split_plans(
     std::vector<int> k_params = as<std::vector<int>>(control["k_params"]);
     // Whether or not to only do district splits
     bool split_district_only = as<bool>(control["split_district_only"]);
+    // This is a total_ms_steps by M vector where [s][i] is the number of 
+    // successful merge splits performed for plan i on merge split round s
+    std::vector<bool> merge_split_step_vec = as<std::vector<bool>>(control["merge_split_step_vec"]);
+
 
     double pop_temper = as<double>(control["pop_temper"]);
 
     // there are N-1 splits so for now just do it 
-    int ms_freq = 7;
-    int total_ms_steps = (N-1)/ms_freq;
-
-    // TODO: In future the merge_split_step_vec should just be passed in as a parameter
-
+    int total_smc_steps = N-1;
+    int total_ms_steps = std::count(merge_split_step_vec.begin(), merge_split_step_vec.end(), true);
+    
     // total number of steps to run 
-    int total_steps = N-1 + total_ms_steps;
+    int total_steps = total_smc_steps + total_ms_steps;
+
+    // Merge split related diagnostics
+
+    // For each merge split step this counts the number of attempts that were made
+    std::vector<int> num_merge_split_attempts_vec(total_ms_steps, -1);
+
+    // This is a total_ms_steps by M vector where [s][i] is the number of 
+    // successful merge splits performed for plan i on merge split round s
+    std::vector<std::vector<int>> merge_split_successes_mat(total_ms_steps,
+        std::vector<int> (M, -1)
+    );
 
 
-    // This is an N-1 + total_ms_steps length vector where [i] being true means that 
-    // step should be a merge split step and false means normal SMC
-    std::vector<bool> merge_split_step_vec(total_steps, false);
 
-    // For now just set every `ms_freq` value to merge split
-    for (int i = 1; i <= total_ms_steps; i++)
-    {
-        merge_split_step_vec.at(i*ms_freq - 1) = true;
-    }
-
-    int cnnt = std::count(merge_split_step_vec.begin(), merge_split_step_vec.end(), true);
-
-    Rprintf("Expected %d and real count was %d\n!", total_ms_steps, cnnt);
+    Rprintf("Running %d merge split steps!\n!", total_ms_steps);
 
     // return List::create(
     //     _["merge_split_steps"] = merge_split_step_vec,
     //     _["count"] = cnnt
     // );
 
+    // Make sure first merge split argument isn't true 
     if(merge_split_step_vec.at(0)){
-        REprintf("BIG PROBLEM SAYS FIRST STEP SHOULD BE MCMC!!!\n");
+        throw std::invalid_argument("The first entry of merge_split_step_vec cannot be true.");
     };
     
-
-
     umat ancestors(M, lags.size(), fill::zeros);
 
     // Create map level graph and county level multigraph
@@ -166,14 +167,11 @@ List optimal_gsmc_with_merge_split_plans(
     std::vector<double> n_eff(total_steps, -1.0);
 
 
-
     // Declare variables whose size will depend on whether or not we're in
     // diagnostic mode or not
     std::vector<std::vector<std::vector<int>>> plan_region_ids_mat;
     std::vector<std::vector<std::vector<int>>> plan_d_vals_mat;
     std::vector<std::vector<std::vector<int>>> plan_region_order_added_mat;
-
-
 
 
     // If diagnostic mode track stuff from every round
@@ -250,6 +248,7 @@ List optimal_gsmc_with_merge_split_plans(
 
     // counts the number of smc steps
     int smc_step_num = 0;
+    int merge_split_step_num = 0;
 
     // Now for each run through split the map
     try {
@@ -292,17 +291,44 @@ List optimal_gsmc_with_merge_split_plans(
             smc_step_num++;
         }else if(merge_split_step_vec[step_num]){ // check if its a merge split step
              // Rprintf("%d!\n", step_num);
+            // run merge split 
+            // Set the number of steps to run at 1 over previous stage acceptance rate
+            int nsteps_to_run = std::ceil(1/acceptance_rates.at(step_num-1)) * std::max(merge_split_step_num,1);
+            num_merge_split_attempts_vec.at(merge_split_step_num) = nsteps_to_run;
+
+            run_merge_split_step_on_all_plans( 
+                pool,
+                g, counties, cg, pop,
+                new_plans_vec,
+                split_district_only, k_params.at(smc_step_num),
+                nsteps_to_run,
+                lower, upper, target,
+                merge_split_successes_mat.at(merge_split_step_num)
+            );
+
+            // set the acceptance rate 
+            int total_ms_successes = std::accumulate(
+                merge_split_successes_mat.at(merge_split_step_num).begin(), 
+                merge_split_successes_mat.at(merge_split_step_num).end(), 
+                0);
+
+            int total_ms_attempts = M * nsteps_to_run;
+
+            acceptance_rates.at(step_num) = total_ms_successes / static_cast<double>(total_ms_attempts);
+
+            Rprintf("Ran %d Merge Split Attempts: %d Successes out of %d attempts. Acceptance Rate: %.2f\n", 
+                nsteps_to_run,  
+                total_ms_successes,total_ms_attempts, 100.0*acceptance_rates.at(step_num));
+
 
              // Copy results from previous step
             original_ancestor_mat.at(step_num) = original_ancestor_mat.at(step_num-1);
             parent_index_mat.at(step_num) = parent_index_mat.at(step_num-1);
-            draw_tries_mat.at(step_num) = draw_tries_mat.at(step_num-1);
+            draw_tries_mat.at(step_num) = std::vector<int>(M, nsteps_to_run);
             parent_unsuccessful_tries_mat.at(step_num) = parent_unsuccessful_tries_mat.at(step_num-1);
-            acceptance_rates.at(step_num) = acceptance_rates.at(step_num-1);
             nunique_parents_vec.at(step_num) = nunique_parents_vec.at(step_num-1);
             nunique_original_ancestors_vec.at(step_num) = nunique_original_ancestors_vec.at(step_num-1);
-
-
+            merge_split_step_num++;
         }else{ // else just run a normal smc step 
         // split the map and we can use the previous original ancestor matrix row
             generalized_split_maps(
@@ -398,7 +424,9 @@ List optimal_gsmc_with_merge_split_plans(
         _["nunique_original_ancestors"] = nunique_original_ancestors_vec,
         _["ancestors"] = ancestors,
         _["step_n_eff"] = n_eff,
-        _["merge_split_steps"] = merge_split_step_vec
+        _["merge_split_steps"] = merge_split_step_vec,
+        _["merge_split_attempt_counts"] = num_merge_split_attempts_vec,
+        _["merge_split_success_counts"] = merge_split_successes_mat
     );
 
     return out;
