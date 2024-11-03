@@ -74,9 +74,6 @@ List optimal_gsmc_with_merge_split_plans(
     );
 
 
-
-    Rprintf("Running %d merge split steps!\n", total_ms_steps);
-
     // return List::create(
     //     _["merge_split_steps"] = merge_split_step_vec,
     //     _["count"] = cnnt
@@ -299,7 +296,7 @@ List optimal_gsmc_with_merge_split_plans(
             run_merge_split_step_on_all_plans( 
                 pool,
                 g, counties, cg, pop,
-                new_plans_vec,
+                plans_vec,
                 split_district_only, k_params.at(smc_step_num),
                 nsteps_to_run,
                 lower, upper, target,
@@ -316,9 +313,12 @@ List optimal_gsmc_with_merge_split_plans(
 
             acceptance_rates.at(step_num) = total_ms_successes / static_cast<double>(total_ms_attempts);
 
-            Rprintf("Ran %d Merge Split Attempts: %d Successes out of %d attempts. Acceptance Rate: %.2f\n", 
-                nsteps_to_run,  
-                total_ms_successes,total_ms_attempts, 100.0*acceptance_rates.at(step_num));
+            if (verbosity >= 3){
+                Rprintf("Ran %d Merge Split Attempts: %d Successes out of %d attempts. Acceptance Rate: %.2f\n", 
+                    nsteps_to_run,  
+                    total_ms_successes,total_ms_attempts, 100.0*acceptance_rates.at(step_num));
+            }
+
 
 
              // Copy results from previous step
@@ -363,7 +363,7 @@ List optimal_gsmc_with_merge_split_plans(
         get_all_plans_log_gsmc_weights(
             pool,
             g,
-            new_plans_vec,
+            plans_vec,
             split_district_only,
             log_incremental_weights_mat.at(step_num),
             unnormalized_sampling_weights,
@@ -394,7 +394,6 @@ List optimal_gsmc_with_merge_split_plans(
                 plan_region_order_added_mat.at(0).at(j) = plans_vec.at(j).region_added_order;
             }
         }
-
 
     }
     } catch (Rcpp::internal::InterruptedException e) {
