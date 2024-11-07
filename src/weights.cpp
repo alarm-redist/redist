@@ -171,8 +171,11 @@ double get_log_mh_ratio(
         static_cast<double>(num_new_adj_regions)
         );
 
-    double log_mh_ratio_numerator = old_log_boundary_length + log_old_merge_prob;
-    double log_mh_ratio_denominator = new_log_boundary_length + log_new_merge_prob;
+    // double log_mh_ratio_numerator = old_log_boundary_length + log_old_merge_prob;
+    // double log_mh_ratio_denominator = new_log_boundary_length + log_new_merge_prob;
+
+    double log_mh_ratio_numerator = old_log_boundary_length + log_new_merge_prob;
+    double log_mh_ratio_denominator = new_log_boundary_length + log_old_merge_prob;
 
     double log_mh_ratio = log_mh_ratio_numerator - log_mh_ratio_denominator;
 

@@ -361,6 +361,7 @@ List optimal_gsmc_with_merge_split_plans(
 
 
         // compute log incremental weights and sampling weights for next round
+        if(!merge_split_step_vec[step_num]){
         get_all_plans_log_gsmc_weights(
             pool,
             g,
@@ -371,6 +372,10 @@ List optimal_gsmc_with_merge_split_plans(
             target,
             pop_temper
         );
+        }else{
+            log_incremental_weights_mat.at(step_num) = log_incremental_weights_mat.at(step_num-1);
+        }
+
 
 
         // compute effective sample size
