@@ -128,8 +128,8 @@ ms_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, r
 #' @param verbosity What level of detail to print out while the algorithm is
 #' running <ADD OPTIONS>
 #' @export
-optimal_gsmc_plans <- function(N, adj_list, counties, pop, target, lower, upper, M, control, ncores = -1L, verbosity = 3L, diagnostic_mode = FALSE) {
-    .Call(`_redist_optimal_gsmc_plans`, N, adj_list, counties, pop, target, lower, upper, M, control, ncores, verbosity, diagnostic_mode)
+optimal_gsmc_plans <- function(N, adj_list, counties, pop, target, lower, upper, M, control, num_threads = -1L, verbosity = 3L, diagnostic_mode = FALSE) {
+    .Call(`_redist_optimal_gsmc_plans`, N, adj_list, counties, pop, target, lower, upper, M, control, num_threads, verbosity, diagnostic_mode)
 }
 
 pareto_dominated <- function(x) {
@@ -239,8 +239,8 @@ smc_plans <- function(N, l, counties, pop, n_distr, target, lower, upper, rho, d
 #' @param verbosity What level of detail to print out while the algorithm is
 #' running <ADD OPTIONS>
 #' @export
-optimal_gsmc_with_merge_split_plans <- function(N, adj_list, counties, pop, target, lower, upper, M, control, ncores = -1L, verbosity = 3L, diagnostic_mode = FALSE) {
-    .Call(`_redist_optimal_gsmc_with_merge_split_plans`, N, adj_list, counties, pop, target, lower, upper, M, control, ncores, verbosity, diagnostic_mode)
+optimal_gsmc_with_merge_split_plans <- function(N, adj_list, counties, pop, target, lower, upper, M, control, num_threads = -1L, verbosity = 3L, diagnostic_mode = FALSE) {
+    .Call(`_redist_optimal_gsmc_with_merge_split_plans`, N, adj_list, counties, pop, target, lower, upper, M, control, num_threads, verbosity, diagnostic_mode)
 }
 
 splits <- function(dm, community, nd, max_split) {

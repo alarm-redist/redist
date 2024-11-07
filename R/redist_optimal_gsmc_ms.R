@@ -63,19 +63,38 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
 
     # there are N-1 splits so for now just do it
     total_smc_steps <- N-1
-    total_ms_steps <- floor(total_smc_steps/ms_freq)
+
+    # check if there will be any merge split steps
+    any_ms_steps_ran <- ms_freq <= total_smc_steps
+
+    merge_split_step_vec <- rep(FALSE, N-1)
+
+    if(any_ms_steps_ran){
+        # Now add merge split every `ms_freq` steps
+
+
+        # insertion trick
+        # https://stackoverflow.com/questions/1493969/insert-elements-into-a-vector-at-given-indexes
+        ind <- seq(from = ms_freq, to = N-1, by = ms_freq)
+        val <- c( merge_split_step_vec, rep(TRUE,length(ind)) )
+        id  <- c( seq_along(merge_split_step_vec), ind+0.5 )
+
+        # number of merge split is sum of trues
+        merge_split_step_vec <- val[order(id)]
+
+        # if the last step is merge split then make it one earlier
+        if(merge_split_step_vec[length(merge_split_step_vec)]){
+            merge_split_step_vec[length(merge_split_step_vec)] <- FALSE
+            merge_split_step_vec[length(merge_split_step_vec)-1] <- TRUE
+        }
+    }
+
+    assertthat::assert_that(sum(!merge_split_step_vec) == total_smc_steps)
+
+    total_ms_steps <- sum(merge_split_step_vec)
 
     # total number of steps to run
-    total_steps <- N - 1 + total_ms_steps
-
-    # TODO: In future the merge_split_step_vec should just be passed in as a parameter
-    merge_split_step_vec <- rep(FALSE, total_steps)
-
-    # For now just set every `ms_freq` value to merge split
-    for(i in 1:total_ms_steps){
-        # remember 1 indexed
-        merge_split_step_vec[i*ms_freq] = TRUE
-    }
+    total_steps <- total_smc_steps + total_ms_steps
 
 
     control <- list(
@@ -205,9 +224,10 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
             upper=pop_bounds[3],
             M=M,
             control = control,
-            ncores = as.integer(ncores_per),
+            num_threads = as.integer(ncores_per),
             verbosity=run_verbosity,
             diagnostic_mode=diagnostic_mode)
+
 
 
 
@@ -336,13 +356,19 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
         algout$region_order_added_list <- NULL
         gc()
 
-        # make the M x num_ms_steps by
-        algout$merge_split_success_mat <- matrix(
-            unlist(algout$merge_split_success_counts),
-            ncol = length(algout$merge_split_success_counts),
-            byrow = FALSE
+        # refor
+        if(any_ms_steps_ran){
+            # make the M x num_ms_steps by
+            algout$merge_split_success_mat <- matrix(
+                unlist(algout$merge_split_success_counts),
+                ncol = length(algout$merge_split_success_counts),
+                byrow = FALSE
             )
-        algout$merge_split_success_counts <- NULL
+            algout$merge_split_success_counts <- NULL
+        }else{
+            algout$merge_split_success_counts <- NULL
+        }
+
 
         # turn it into a character vector
         algout$step_split_types <- ifelse(

@@ -48,18 +48,14 @@
 #' @export
 redist_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE) {
     algo = attr(plans, "algorithm")
-    algos_ok = c("smc", "gsmc", "basic_smc", "mergesplit", "flip")
+    algos_ok = c("smc", "gsmc", "basic_smc", "gsmc_ms", "smc_ms", "mergesplit", "flip")
 
     x = enquo(x)
 
     if (is.null(algo) || !algo %in% algos_ok) {
         cli_abort("{.field algorithm} attribute missing from {.arg plans}.
                   Call {.fn redist_smc_ci} or {.fn redist_mcmc_ci} directly.")
-    } else if (algo == "smc") {
-        redist_smc_ci(plans, !!x, district, conf, by_chain)
-    } else if (algo == "gsmc") {
-        redist_smc_ci(plans, !!x, district, conf, by_chain)
-    } else if (algo == "basic_smc") {
+    } else if (algo %in% c("smc", "gsmc", "basic_smc", "gsmc_ms", "smc_ms")) {
         redist_smc_ci(plans, !!x, district, conf, by_chain)
     } else { # MCMC
         redist_mcmc_ci(plans,!!x, district, conf, by_chain)

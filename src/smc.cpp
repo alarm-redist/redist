@@ -108,6 +108,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     // This is n_drawn by N where [i][j] is the index of the original (first) ancestor of particle j on step i
     std::vector<std::vector<int>> original_ancestor_mat(n_steps, std::vector<int> (N, -1));
 
+
     RcppThread::ThreadPool pool(cores);
 
     std::string bar_fmt = "Split [{cli::pb_current}/{cli::pb_total}] {cli::pb_bar} | ETA{cli::pb_eta}";

@@ -176,7 +176,7 @@ redist_optimal_gsmc <- function(state_map, M, counties = NULL,
             upper=pop_bounds[3],
             M=M,
             control = control,
-            ncores = as.integer(ncores_per),
+            num_threads = as.integer(ncores_per),
             verbosity=run_verbosity,
             diagnostic_mode=diagnostic_mode)
 

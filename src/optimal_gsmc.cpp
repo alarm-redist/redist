@@ -67,7 +67,7 @@ List optimal_gsmc_plans(
     // Loading Info
     if (verbosity >= 1) {
         Rcout.imbue(std::locale(""));
-        Rcout << std::fixed << std::setprecision(0);
+        Rcout << std::fixed << std::setprecision(4);
         if(!split_district_only){
             Rcout << "GENERALIZED SEQUENTIAL MONTE CARLO\n";
         }else{

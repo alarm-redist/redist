@@ -53,6 +53,7 @@ List optimal_gsmc_with_merge_split_plans(
     std::vector<bool> merge_split_step_vec = as<std::vector<bool>>(control["merge_split_step_vec"]);
 
 
+
     double pop_temper = as<double>(control["pop_temper"]);
 
     // there are N-1 splits so for now just do it 
@@ -96,15 +97,17 @@ List optimal_gsmc_with_merge_split_plans(
     // Loading Info
     if (verbosity >= 1) {
         Rcout.imbue(std::locale(""));
-        Rcout << std::fixed << std::setprecision(0);
+        Rcout << std::fixed << std::setprecision(4);
         if(!split_district_only){
-            Rcout << "GENERALIZED SEQUENTIAL MONTE CARLO\n";
+            Rcout << "GENERALIZED SEQUENTIAL MONTE CARLO";
         }else{
-            Rcout << "SEQUENTIAL MONTE CARLO\n";
+            Rcout << "SEQUENTIAL MONTE CARLO";
         }
+        Rcout << " WITH MERGE SPLIT\n";
         Rcout << "Sampling " << M << " " << V << "-unit ";
         Rcout << "maps with " << N << " districts and population between "
-              << lower << " and " << upper << " using " << num_threads << " threads ";
+              << lower << " and " << upper << " using " << num_threads << " threads, "
+              << total_ms_steps << " merge split steps, ";
         if(!split_district_only){
             Rcout << "and generalized region splits.\n";
         }else{
@@ -240,8 +243,6 @@ List optimal_gsmc_with_merge_split_plans(
     std::string bar_fmt = "Split [{cli::pb_current}/{cli::pb_total}] {cli::pb_bar} | ETA{cli::pb_eta}";
     RObject bar = cli_progress_bar(total_steps, cli_config(false, bar_fmt.c_str()));
 
-    // For record tracking 
-    Rprintf("There should be %d Merge split steps!\n", total_ms_steps);
 
     // counts the number of smc steps
     int smc_step_num = 0;

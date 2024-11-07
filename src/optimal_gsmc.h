@@ -52,7 +52,7 @@ List optimal_gsmc_plans(
         double target, double lower, double upper,
         int M, // M is Number of particles aka number of different plans
         List control, // control has pop temper, and k parameter value, and whether only district splits are allowed
-        int ncores = -1, int verbosity = 3, bool diagnostic_mode = false
+        int num_threads = -1, int verbosity = 3, bool diagnostic_mode = false
 );
 
 #endif
