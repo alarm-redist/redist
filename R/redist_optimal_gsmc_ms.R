@@ -84,8 +84,21 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
 
         # if the last step is merge split then make it one earlier
         if(merge_split_step_vec[length(merge_split_step_vec)]){
-            merge_split_step_vec[length(merge_split_step_vec)] <- FALSE
-            merge_split_step_vec[length(merge_split_step_vec)-1] <- TRUE
+            merge_split_vec_len <- length(merge_split_step_vec)
+
+            merge_split_step_vec[merge_split_vec_len] <- FALSE
+            merge_split_step_vec[merge_split_vec_len-1] <- TRUE
+
+            # now check if the last two are both merge split (should only
+            # happen when frequency is 1) then remove one
+            if(
+                merge_split_step_vec[merge_split_vec_len-1] &&
+                merge_split_step_vec[merge_split_vec_len-2] ){
+                merge_split_step_vec <- c(
+                    merge_split_step_vec[1:(merge_split_vec_len-2)],
+                    merge_split_step_vec[merge_split_vec_len]
+                )
+            }
         }
     }
 

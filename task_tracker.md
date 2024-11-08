@@ -8,7 +8,8 @@ Note all of the diagnostic information is accurately updated to account for a re
 
 # ----- ACTIVE TASKS -----
 
-
+**Shrink Incremental Weight Mat Size**
+For the MH step the weights don't actually change so we don't need to store the output for every step, just every smc step. 
 
 **Create MH Ratio Calculator**
 Create a function (along with helpers as needed) that computes the MH ratio for valid new proposed plans.

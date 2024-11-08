@@ -291,7 +291,7 @@ List optimal_gsmc_with_merge_split_plans(
              // Rprintf("%d!\n", step_num);
             // run merge split 
             // Set the number of steps to run at 1 over previous stage acceptance rate
-            int nsteps_to_run = std::ceil(1/acceptance_rates.at(step_num-1)) * std::max(merge_split_step_num,1);
+            int nsteps_to_run = std::ceil(1/acceptance_rates.at(step_num-1)); // * std::max(merge_split_step_num,1);
             num_merge_split_attempts_vec.at(merge_split_step_num) = nsteps_to_run;
 
             run_merge_split_step_on_all_plans( 
@@ -322,7 +322,7 @@ List optimal_gsmc_with_merge_split_plans(
 
 
 
-             // Copy results from previous step
+            // Copy results from previous step
             original_ancestor_mat.at(step_num) = original_ancestor_mat.at(step_num-1);
             parent_index_mat.at(step_num) = parent_index_mat.at(step_num-1);
             draw_tries_mat.at(step_num) = std::vector<int>(M, nsteps_to_run);
