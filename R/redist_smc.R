@@ -135,7 +135,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
                        resample = TRUE, runs = 1L, ncores = 0L, init_particles = NULL,
                        n_steps = NULL, adapt_k_thresh = 0.99, seq_alpha = 0.5,
                        truncate = (compactness != 1), trunc_fn = redist_quantile_trunc,
-                       pop_temper = 0, final_infl = 1,
+                       pop_temper = 0, final_infl = 1, multiprocess = FALSE,
                        ref_name = NULL, verbose = FALSE, silent = FALSE) {
     map <- validate_redist_map(map)
     V <- nrow(map)
@@ -229,6 +229,16 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
         }
     }
 
+    # if sequentially
+    if(!multiprocess){
+        # either max cores if
+        if(ncores == 0){
+            ncores_per = ncores_max
+        }else{
+            ncores_per = ncores
+        }
+    }
+
     lags <- 1 + unique(round((ndists - 1)^0.8*seq(0, 0.7, length.out = 4)^0.9))
     control <- list(adapt_k_thresh = adapt_k_thresh,
                     seq_alpha = seq_alpha,
@@ -238,7 +248,9 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
                     cores = as.integer(ncores_per))
 
 
-    if (ncores_runs > 1) {
+
+
+    if (ncores_runs > 1 && multiprocess) {
         `%oper%` <- `%dorng%`
         of <- if (Sys.info()[["sysname"]] == "Windows") {
             tempfile(pattern = paste0("smc_", substr(Sys.time(), 1, 10)), fileext = ".txt")
@@ -248,10 +260,10 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
 
         if (!silent)
             cl <- makeCluster(ncores_runs, outfile = of, methods = FALSE,
-                useXDR = .Platform$endian != "little")
+                              useXDR = .Platform$endian != "little")
         else
             cl <- makeCluster(ncores_runs, methods = FALSE,
-                useXDR = .Platform$endian != "little")
+                              useXDR = .Platform$endian != "little")
         doParallel::registerDoParallel(cl, cores = ncores_runs)
         on.exit(stopCluster(cl))
     } else {
@@ -361,6 +373,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
             seq_alpha = seq_alpha,
             pop_temper = pop_temper,
             runtime = as.numeric(t2_run - t1_run, units = "secs"),
+            num_threads = ncores_per,
             parent_index_mat = algout$parent_index,
             original_ancestors_mat = algout$original_ancestors_mat,
             nunique_original_ancestors=nunique_original_ancestors
