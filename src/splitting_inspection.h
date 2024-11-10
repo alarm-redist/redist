@@ -16,7 +16,6 @@
 #include "wilson.h"
 #include "tree_op.h"
 #include "map_calc.h"
-#include "active_dev.h"
 #include "splitting.h"
 #include "merging.h"
 
