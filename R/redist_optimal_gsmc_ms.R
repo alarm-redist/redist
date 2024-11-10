@@ -118,11 +118,21 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
         merge_split_step_vec = merge_split_step_vec
         )
 
+    # TODO fix this later
     est_k_params <- k_params
-    for (index in which(merge_split_step_vec)) {
-        # Insert a duplicate by concatenating parts of the vector
-        est_k_params <- c(est_k_params[1:index], est_k_params[index], est_k_params[(index + 1):length(est_k_params)])
+    est_k_params <- rep(-1, total_steps)
+    est_k_params[!merge_split_step_vec] <- k_params
+
+    for (i in 1:total_steps) {
+        if(est_k_params[i] <= 0){
+            est_k_params[i] <- est_k_params[i-1]
+        }
     }
+
+    assertthat::assert_that(
+        all(est_k_params > 0),
+        msg = "Something went wrong with est_k_params, fix it!"
+    )
 
     # verbosity stuff
     verbosity <- 1
@@ -512,6 +522,7 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
             seq_alpha = .99,
             pop_temper = pop_temper,
             runtime = as.numeric(t2_run - t1_run, units = "secs"),
+            num_threads = ncores_per,
             nunique_original_ancestors = algout$nunique_original_ancestors,
             parent_index_mat = algout$parent_index,
             original_ancestors_mat = algout$original_ancestors_mat,

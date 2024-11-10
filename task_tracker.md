@@ -8,15 +8,24 @@ Note all of the diagnostic information is accurately updated to account for a re
 
 # ----- ACTIVE TASKS -----
 
-**Shrink Incremental Weight Mat Size**
-For the MH step the weights don't actually change so we don't need to store the output for every step, just every smc step. 
+**Change diagnostics.R to be better**
+Make the display for the new algorithm types better, also figure out a better way to calculate Rhats. For the ones that are by district it should compute for all districts and display the maximum. It also needs to have some way to store these results maybe .
 
-**Create MH Ratio Calculator**
-Create a function (along with helpers as needed) that computes the MH ratio for valid new proposed plans.
-- NOTE: Not sure if there needs to be an extra term in the raito for probability of picking that region to split, don't think so but still
+**Change redist_plans storage scheme**
+Right now I lump everything into diagnostics but there is probably a smarter way to do this. There should be another things called like internal diagnostics or something that only contains things saved during diagnostic mode.
 
-**Create Full Pass through**
-In the `smc_and_mcmc.cpp` file make a function analagous to `optimal_gsmc_plans` that runs it for the whole thing. For now just stick with doing MCMC moves with a set frequency with the amount set to 1/acceptance rate. Need to think about what kind of diagnostics to keep. Right now I think it should just be the number of attempts made and how many were successful along with storing the plans and weights at the end 
+**Consolidate Redist gsmc R files and c++ code**
+Right now the redist_gsmc and redist_gsmc with merge split are in seperate c++ and R files but this seems unneccesary. It should be possible to combine them and just add a flag for whether or not merge split steps need to be run. 
+
+**Shrink Incremental Weight Mat Size and other related variables**
+For the MH step the weights don't actually change so we don't need to store the output for every step, just every smc step. That means we also don't need to track the effective sample size.
+
+**Remove unneccesary variables when not in diagnostics**
+In order to save memory make it so that some things like the log incremental weights matrix are not created or are not big when its not diagnostic mode. This will be really important for saving memory. 
+
+Also need to decide if things like the original ancestors matrix should be created when its not diagnostic mode. Probably not but we will see.
+
+
 
 **Create Function for Diagnostics**
 Since both the smc and smc with merge split share some diagnostics its probably better to write a function to create the vectors shared between them to avoid duplicate code.
@@ -48,6 +57,17 @@ Need to more cleanly seperate diagnostic information from stuff in the final sam
     - Partition split problem 
 
 # ----- COMPLETED TASKS -----
+
+**Create MH Ratio Calculator - DONE 11/6/2024**
+Task: Create a function (along with helpers as needed) that computes the MH ratio for valid new proposed plans.
+
+Comments after completion: Initially got the probability of merging pairs flipped in the ratio but fixed it.
+
+**Create Full Pass through - DONE 11/2/2024**
+Task: In the `smc_and_mcmc.cpp` file make a function analagous to `optimal_gsmc_plans` that runs it for the whole thing. For now just stick with doing MCMC moves with a set frequency with the amount set to 1/acceptance rate. Need to think about what kind of diagnostics to keep. Right now I think it should just be the number of attempts made and how many were successful along with storing the plans and weights at the end 
+
+Comments after completion: None
+
 
 **Make get_edge_to_cut only need vertex region id vector* - DONE 11/2/2024**
 Task: Change `get_edge_to_cut` to only take in a vector of vertex region ids and a max dval to try instead of taking in a plan. This will make merge split easier by allowing you to just pass in a vertex region id vector with two regions merged without having to bother editing the actual plan.

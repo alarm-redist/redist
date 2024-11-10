@@ -367,33 +367,34 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
         addl_cols <- setdiff(cols, c("chain", "draw", "district", "total_pop"))
         warn_converge <- FALSE
         if ("chain" %in% cols && length(addl_cols) > 0) {
-            idx <- seq_len(n_samp)
-            if ("district" %in% cols) idx <- as.integer(district) + (idx - 1)*n_distr
-
-            const_cols <- vapply(addl_cols, function(col) {
-                x <- object[[col]][idx]
-                all(is.na(x)) || all(x == x[1]) ||
-                    any(tapply(x, object[['chain']][idx], FUN = function(z) length(unique(z))) == 1)
-            }, numeric(1))
-            addl_cols <- addl_cols[!const_cols]
-
-            rhats <- vapply(addl_cols, function(col) {
-                x <- object[[col]][idx]
-                na_omit <- !is.na(x)
-                diag_rhat(x[na_omit], object$chain[idx][na_omit])
-            }, numeric(1))
-            names(rhats) <- addl_cols
-            cat("R-hat values for summary statistics:\n")
-            rhats_p <- vapply(rhats, function(x){
-                ifelse(x < 1.05, sprintf('%.3f', x), paste0('\U274C', round(x, 3)))
-            }, FUN.VALUE = character(1))
-            print(noquote(rhats_p))
-
-            if (any(na.omit(rhats) >= 1.05)) {
-                warn_converge <- TRUE
-                cli::cli_alert_danger("{.strong WARNING:} {algo} runs have not converged.")
-            }
-            cat("\n")
+            print("Rhats Still under Dev for Merge Split")
+            # idx <- seq_len(n_samp)
+            # if ("district" %in% cols) idx <- as.integer(district) + (idx - 1)*n_distr
+            #
+            # const_cols <- vapply(addl_cols, function(col) {
+            #     x <- object[[col]][idx]
+            #     all(is.na(x)) || all(x == x[1]) ||
+            #         any(tapply(x, object[['chain']][idx], FUN = function(z) length(unique(z))) == 1)
+            # }, numeric(1))
+            # addl_cols <- addl_cols[!const_cols]
+            #
+            # rhats <- vapply(addl_cols, function(col) {
+            #     x <- object[[col]][idx]
+            #     na_omit <- !is.na(x)
+            #     diag_rhat(x[na_omit], object$chain[idx][na_omit])
+            # }, numeric(1))
+            # names(rhats) <- addl_cols
+            # cat("R-hat values for summary statistics:\n")
+            # rhats_p <- vapply(rhats, function(x){
+            #     ifelse(x < 1.05, sprintf('%.3f', x), paste0('\U274C', round(x, 3)))
+            # }, FUN.VALUE = character(1))
+            # print(noquote(rhats_p))
+            #
+            # if (any(na.omit(rhats) >= 1.05)) {
+            #     warn_converge <- TRUE
+            #     cli::cli_alert_danger("{.strong WARNING:} {algo} runs have not converged.")
+            # }
+            # cat("\n")
 
         }
 
