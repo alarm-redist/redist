@@ -53,7 +53,6 @@ List optimal_gsmc_with_merge_split_plans(
     std::vector<bool> merge_split_step_vec = as<std::vector<bool>>(control["merge_split_step_vec"]);
 
 
-
     double pop_temper = as<double>(control["pop_temper"]);
 
     // there are N-1 splits so for now just do it 
@@ -73,12 +72,6 @@ List optimal_gsmc_with_merge_split_plans(
     std::vector<std::vector<int>> merge_split_successes_mat(total_ms_steps,
         std::vector<int> (M, -1)
     );
-
-
-    // return List::create(
-    //     _["merge_split_steps"] = merge_split_step_vec,
-    //     _["count"] = cnnt
-    // );
 
     // Make sure first merge split argument isn't true 
     if(merge_split_step_vec.at(0)){

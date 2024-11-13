@@ -82,27 +82,11 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
         # number of merge split is sum of trues
         merge_split_step_vec <- val[order(id)]
 
-        # if the last step is merge split then make it one earlier
-        if(merge_split_step_vec[length(merge_split_step_vec)]){
-            merge_split_vec_len <- length(merge_split_step_vec)
-
-            merge_split_step_vec[merge_split_vec_len] <- FALSE
-            merge_split_step_vec[merge_split_vec_len-1] <- TRUE
-
-            # now check if the last two are both merge split (should only
-            # happen when frequency is 1) then remove one
-            if(
-                merge_split_step_vec[merge_split_vec_len-1] &&
-                merge_split_step_vec[merge_split_vec_len-2] ){
-                merge_split_step_vec <- c(
-                    merge_split_step_vec[1:(merge_split_vec_len-2)],
-                    merge_split_step_vec[merge_split_vec_len]
-                )
-            }
-        }
     }
 
     assertthat::assert_that(sum(!merge_split_step_vec) == total_smc_steps)
+    # assert first step is not smc
+    assertthat::assert_that(!merge_split_step_vec[1])
 
     total_ms_steps <- sum(merge_split_step_vec)
 

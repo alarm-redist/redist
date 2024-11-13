@@ -21,6 +21,7 @@ redist_smc(
   trunc_fn = redist_quantile_trunc,
   pop_temper = 0,
   final_infl = 1,
+  multiprocess = FALSE,
   ref_name = NULL,
   verbose = FALSE,
   silent = FALSE
