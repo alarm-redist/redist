@@ -82,18 +82,20 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     for (int i = 1; i <= N; i++) {
         // make the proposal
         double prop_lp = 0.0;
-        reject_ct = 0;
-        do {
-            // copy old map to 'working' memory in `idx+1`
-            districts.col(idx+1) = districts.col(idx);
+        mh_decisions(idx - 1) = 0;
+        // copy old map to 'working' memory in `idx+1`
+        districts.col(idx+1) = districts.col(idx);
 
-            select_pair(n_distr, dist_g, distr_1, distr_2);
-            prop_lp = split_map_ms(g, ust, counties, cg, districts.col(idx+1),
-                                   distr_1, distr_2, visited, ignore,
-                                   pop, lower, upper, target, k);
-            if (reject_ct % 200 == 0) Rcpp::checkUserInterrupt();
-            reject_ct++;
-        } while (!std::isfinite(prop_lp));
+        select_pair(n_distr, dist_g, distr_1, distr_2);
+        prop_lp = split_map_ms(g, ust, counties, cg, districts.col(idx+1),
+                               distr_1, distr_2, visited, ignore,
+                               pop, lower, upper, target, k);
+
+        if (!std::isfinite(prop_lp)) {
+            districts.col(idx+1) = districts.col(idx);
+            if (i % thin == 0) idx++;
+            continue; // reject
+        }
 
         // tau calculations
         if (rho != 1) {
@@ -131,22 +133,11 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
             1.0/new_dist_g[distr_1 - 1].size() + 1.0/new_dist_g[distr_2 - 1].size()
         );
 
-        if (do_mh) {
-            double alpha = std::exp(prop_lp);
-            if (alpha >= 1 || r_unif() <= alpha) { // ACCEPT
+        if (!do_mh || prop_lp >= 0 || std::log(r_unif()) <= prop_lp) { // ACCEPT
                 n_accept++;
                 districts.col(idx) = districts.col(idx+1); // copy over new map
                 dist_g = new_dist_g;
                 mh_decisions(idx - 1) = 1;
-            } else { // REJECT
-                districts.col(idx+1) = districts.col(idx); // copy over old map
-                mh_decisions(idx - 1) = 0;
-            }
-        } else {
-            n_accept++;
-            districts.col(idx) = districts.col(idx+1); // copy over new map
-            dist_g = new_dist_g;
-            mh_decisions(idx - 1) = 1;
         }
 
         if (i % thin == 0) idx++;
