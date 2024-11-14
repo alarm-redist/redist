@@ -237,7 +237,6 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
 
 
 
-
         if (length(algout) == 0) {
             cli::cli_process_done()
             cli::cli_process_done()

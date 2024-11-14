@@ -243,7 +243,7 @@ List optimal_gsmc_with_merge_split_plans(
 
     // Now for each run through split the map
     try {
-    for(int step_num=0; step_num< total_steps; step_num++){
+    for(int step_num=0; step_num < total_steps; step_num++){
         if(verbosity > 1){
             if(merge_split_step_vec[step_num]){
                 Rprintf("Iteration %d: Merge Split Step %d \n", step_num+1, step_num - smc_step_num + 1);
@@ -323,6 +323,7 @@ List optimal_gsmc_with_merge_split_plans(
             parent_unsuccessful_tries_mat.at(step_num) = parent_unsuccessful_tries_mat.at(step_num-1);
             nunique_parents_vec.at(step_num) = nunique_parents_vec.at(step_num-1);
             nunique_original_ancestors_vec.at(step_num) = nunique_original_ancestors_vec.at(step_num-1);
+
             merge_split_step_num++;
         }else{ // else just run a normal smc step 
         // split the map and we can use the previous original ancestor matrix row
@@ -345,7 +346,12 @@ List optimal_gsmc_with_merge_split_plans(
                 pool,
                 verbosity
             );
-            smc_step_num++;
+            // only increase if we have smc steps left else it will cause index issues
+            // with merge split
+            if(smc_step_num < total_smc_steps-1){
+                smc_step_num++;
+            }
+            
         }
 
         if (verbosity == 1 && CLI_SHOULD_TICK){
@@ -369,6 +375,7 @@ List optimal_gsmc_with_merge_split_plans(
         }else{
             log_incremental_weights_mat.at(step_num) = log_incremental_weights_mat.at(step_num-1);
         }
+
 
 
 
@@ -400,6 +407,8 @@ List optimal_gsmc_with_merge_split_plans(
         cli_progress_done(bar);
         return R_NilValue;
     }
+
+
 
     cli_progress_done(bar);
 

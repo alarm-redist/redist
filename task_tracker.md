@@ -8,6 +8,9 @@ Note all of the diagnostic information is accurately updated to account for a re
 
 # ----- ACTIVE TASKS -----
 
+**Fix merge split on district only splits**
+Right now I think there's a bug where if you do merge split after the final smc step (so N districts) the district split only version still uses the remainder meaning it only merges regions adjacent to the remainder. Since this is unlabeled in that case it should just pick an arbitrary pair
+
 **Change diagnostics.R to be better**
 Make the display for the new algorithm types better, also figure out a better way to calculate Rhats. For the ones that are by district it should compute for all districts and display the maximum. It also needs to have some way to store these results maybe .
 
