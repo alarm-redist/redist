@@ -8,6 +8,9 @@ Note all of the diagnostic information is accurately updated to account for a re
 
 # ----- ACTIVE TASKS -----
 
+**Pass results back in arma data types**
+To make things more memory efficient change it so all results are passed back as arma vectors, matrices, or cubes for things that are multiple matrices. 
+
 **Fix merge split on district only splits**
 Right now I think there's a bug where if you do merge split after the final smc step (so N districts) the district split only version still uses the remainder meaning it only merges regions adjacent to the remainder. Since this is unlabeled in that case it should just pick an arbitrary pair
 

@@ -55,6 +55,8 @@ List optimal_gsmc_with_merge_split_plans(
 
     double pop_temper = as<double>(control["pop_temper"]);
 
+    int ms_steps_multiplier = as<int>(control["ms_steps_multiplier"]);
+
     // there are N-1 splits so for now just do it 
     int total_smc_steps = N-1;
     int total_ms_steps = std::count(merge_split_step_vec.begin(), merge_split_step_vec.end(), true);
@@ -217,14 +219,6 @@ List optimal_gsmc_with_merge_split_plans(
         ));
     }
 
-    // return List::create(
-    //     _["merge_split_steps"] = merge_split_step_vec,
-    //     _["count"] = cnnt,
-    //     _["region_dvals_mat_list"] = plan_d_vals_mat,
-    //     _["region_order_added_list"] = plan_region_order_added_mat,
-    //     _["region_ids_mat_list"] = plan_region_ids_mat
-    // );
-
     // Start off all the unnormalized weights at 1
     std::vector<double> unnormalized_sampling_weights(M, 1.0);
 
@@ -285,10 +279,10 @@ List optimal_gsmc_with_merge_split_plans(
             // run merge split 
             // Set the number of steps to run at 1 over previous stage acceptance rate
             // int nsteps_to_run = std::ceil(1/std::pow(acceptance_rates.at(step_num-1),1.5)); // * std::max(merge_split_step_num,1);
-            int nsteps_to_run = std::ceil(1/acceptance_rates.at(step_num-1)); // * std::max(merge_split_step_num,1);
+            int nsteps_to_run = ms_steps_multiplier * std::ceil(1/acceptance_rates.at(step_num-1)); // * std::max(merge_split_step_num,1);
             num_merge_split_attempts_vec.at(merge_split_step_num) = nsteps_to_run;
 
-            run_merge_split_step_on_all_plans( 
+            run_merge_split_step_on_all_plans(
                 pool,
                 g, counties, cg, pop,
                 plans_vec,

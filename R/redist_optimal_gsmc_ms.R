@@ -21,7 +21,7 @@
 #' @export
 redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
                        k_params = 6, split_district_only = FALSE,
-                       ms_freq = 7,
+                       ms_freq = 7, ms_steps_multiplier = 1L,
                        resample = TRUE, runs = 1L,
                        ncores = 0L, multiprocess=TRUE,
                        pop_temper = 0,
@@ -61,6 +61,13 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
 
     # create merge split parameter information
 
+    # check that ms_steps_multiplier is an integer
+    assertthat::assert_that(
+        floor(ms_steps_multiplier) == ms_steps_multiplier &&
+            ms_steps_multiplier > 0,
+        msg = "`ms_steps_multiplier` must be a positive integer!"
+    )
+
     # there are N-1 splits so for now just do it
     total_smc_steps <- N-1
 
@@ -99,7 +106,8 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
         pop_temper = pop_temper,
         k_params = k_params,
         split_district_only = split_district_only,
-        merge_split_step_vec = merge_split_step_vec
+        merge_split_step_vec = merge_split_step_vec,
+        ms_steps_multiplier = ms_steps_multiplier
         )
 
     # TODO fix this later
@@ -520,7 +528,8 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
             step_split_types = algout$step_split_types,
             merge_split_success_mat = algout$merge_split_success_mat,
             merge_split_attempt_counts = algout$merge_split_attempt_counts,
-            num_ms_steps = num_ms_steps
+            num_ms_steps = num_ms_steps,
+            ms_steps_multiplier = ms_steps_multiplier
         )
 
 
