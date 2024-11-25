@@ -138,6 +138,8 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
                 districts.col(idx) = districts.col(idx+1); // copy over new map
                 dist_g = new_dist_g;
                 mh_decisions(idx - 1) = 1;
+        } else { // reject
+            districts.col(idx+1) = districts.col(idx);
         }
 
         if (i % thin == 0) idx++;
