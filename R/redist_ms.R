@@ -63,7 +63,6 @@
 #' @param init_name a name for the initial plan, or \code{FALSE} to not include
 #' the initial plan in the output.  Defaults to the column name of the
 #' existing plan, or "\code{<init>}" if the initial plan is sampled.
-#' @param silly_adj_fix Heuristic for fixing weird inputs.
 #' @param verbose Whether to print out intermediate information while sampling.
 #' Recommended.
 #' @param silent Whether to suppress all diagnostic information.
@@ -104,7 +103,6 @@ redist_mergesplit <- function(map, nsims,
                               thin = 1L, init_plan = NULL, counties = NULL, compactness = 1,
                               constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
                               adapt_k_thresh = 0.99, k = NULL, init_name = NULL,
-                              silly_adj_fix = FALSE,
                               verbose = FALSE, silent = FALSE) {
     if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
 
@@ -128,10 +126,8 @@ redist_mergesplit <- function(map, nsims,
 
     exist_name <- attr(map, "existing_col")
     counties <- rlang::eval_tidy(rlang::enquo(counties), map)
-    orig_lookup = seq_len(ndists)
     if (is.null(init_plan) && !is.null(exist_name)) {
         init_plan <- vctrs::vec_group_id(get_existing(map))
-        orig_lookup = unique(get_existing(map))
         if (is.null(init_name)) init_name <- exist_name
     }  else if (!is.null(init_plan) && is.null(init_name)) {
         init_name <- "<init>"
@@ -157,26 +153,12 @@ redist_mergesplit <- function(map, nsims,
             cli_abort("County vector must not contain missing values.")
 
         # handle discontinuous counties
-        if (silly_adj_fix) {
-            for (j in seq_len(ndists)) {
-                idx_distr = which(init_plan == j)
-                adj_distr = redist.reduce.adjacency(adj, idx_distr)
-                component <- contiguity(adj_distr, vctrs::vec_group_id(counties[idx_distr]))
-                counties[idx_distr] <- paste0(
-                    j, ":",
-                    dplyr::if_else(component > 1,
-                                   paste0(as.character(counties[idx_distr]), "-", component),
-                                   as.character(counties[idx_distr]))
-                )
-            }
-            counties = vctrs::vec_group_id(counties)
-        } else {
-            component <- contiguity(adj, counties)
-            counties <- dplyr::if_else(component > 1,
-                                       paste0(as.character(counties), "-", component),
-                                       as.character(counties)) |>
-                vctrs::vec_group_id()
-        }
+        component <- contiguity(adj, vctrs::vec_group_id(counties))
+        counties <- dplyr::if_else(component > 1,
+                                   paste0(as.character(counties), "-", component),
+                                   as.character(counties)) %>%
+            as.factor() %>%
+            as.integer()
     }
 
     # Other constraints
@@ -223,10 +205,10 @@ redist_mergesplit <- function(map, nsims,
 
     warmup_idx <- c(seq_len(1 + warmup %/% thin), ncol(algout$plans))
     l_diag <- list(
-        runtime = as.numeric(t2_run - t1_run, units = "secs")
+        runtime = as.numeric(t2_run - t1_run, units = "secs"),
+        prethinned_steps = nsims,
+        warmup = warmup
     )
-
-
     out <- new_redist_plans(algout$plans[, -warmup_idx, drop = FALSE],
                             map, "mergesplit", NULL, FALSE,
                             ndists = ndists,
@@ -239,6 +221,7 @@ redist_mergesplit <- function(map, nsims,
 
     warmup_idx <- c(seq_len(warmup %/% thin), length(acceptances))
     out <- out %>% mutate(mcmc_accept = rep(acceptances[-warmup_idx], each = ndists))
+
 
     if (!is.null(init_name) && !isFALSE(init_name)) {
         out <- add_reference(out, init_plan, init_name)

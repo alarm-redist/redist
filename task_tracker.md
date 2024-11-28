@@ -54,7 +54,8 @@ Need to more cleanly seperate diagnostic information from stuff in the final sam
 **For Previous tries track previous index not the current new particle**
 - `draw_tries_vec` is the one. Make one that tracks the previous sampled index
 
-
+**Ask why log compactness takes district matrix despite only using column**
+The compute log tau term here: https://github.com/alarm-redist/redistmetrics/blob/5f7b36d8a7f9c7bc3c9098a7b6c6aa561d9074c7/inst/include/kirchhoff_inline.h#L16 takes a matrix of district values but only actually uses a single column. That can probably be changed.
 
 # ----- GENERAL THOUGHTS -----
 

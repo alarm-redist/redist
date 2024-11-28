@@ -8,6 +8,41 @@
 #include "smc_and_mcmc.h"
 
 
+// #include <iostream>
+// #include <iostream>
+// #include <vector>
+// #include <numeric>      // std::iota
+// #include <algorithm> 
+
+// std::vector<int> getRelativeOrder(const std::vector<int>& rel_order) {
+//     // Create a vector of indices [0, 1, 2, ..., rel_order.size()-1]
+//     std::vector<int> indices(rel_order.size());
+//     for (size_t i = 0; i < indices.size(); ++i) {
+//         indices[i] = i;
+//     }
+    
+//     // Sort the indices based on the values in rel_order
+//     std::sort(indices.begin(), indices.end(), [&rel_order](int a, int b) {
+//         return rel_order[a] < rel_order[b];
+//     });
+    
+//     std::cout<<"Intermediate [";
+//     for(size_t i = 0; i < indices.size(); i++){
+//         std::cout << " " << indices[i];
+//     }
+//     std::cout<<" ]\n";
+    
+//     // Create a mapping vector to store the result
+//     std::vector<int> result(rel_order.size());
+//     for (size_t i = 0; i < indices.size(); ++i) {
+//         result[indices[i]] = i;
+//     }
+    
+//     return result;
+// }
+
+
+
 //' Uses gsmc method to generate a sample of `M` plans in `c++`
 //'
 //' Using the procedure outlined in <PAPER HERE> this function uses Sequential
