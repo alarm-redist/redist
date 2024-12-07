@@ -1,4 +1,4 @@
-Package: redist
+Package: gredist
 Version: 4.2.0.9000
 Date: 2024-01-11
 Title: Simulation Methods for Legislative Redistricting
@@ -61,8 +61,8 @@ LinkingTo: Rcpp, RcppArmadillo, RcppThread, cli, redistmetrics
 License: GPL (>= 2)
 SystemRequirements: C++17, python
 NeedsCompilation: yes
-BugReports: https://github.com/alarm-redist/redist/issues
-URL: https://alarm-redist.org/redist/
+BugReports: https://github.com/alarm-gredist/gredist/issues
+URL: https://alarm-gredist.org/gredist/
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 VignetteBuilder: knitr

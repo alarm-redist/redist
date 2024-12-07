@@ -10,7 +10,7 @@
 #' edges which cross this boundary if supplied.
 #' @param ref Plot reference map? Defaults to TRUE which gets the existing plan from
 #' @param adj A zero-indexed adjacency list. Extracted from `shp` if `shp` is a `redist_map`.
-#' Otherwise created with redist.adjacency if not supplied. Default is NULL.
+#' Otherwise created with gredist.adjacency if not supplied. Default is NULL.
 #' @param plot_shp Should the shapes be plotted? Default is TRUE.
 #'
 #' @return ggplot
@@ -20,8 +20,8 @@
 #' data(iowa)
 #' shp <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
 #' plans <- redist_smc(shp, 100)
-#' redist.plot.wted.adj(shp, plans = plans, counties = region)
-redist.plot.wted.adj <- function(shp, plans, counties = NULL,
+#' gredist.plot.wted.adj(shp, plans = plans, counties = region)
+gredist.plot.wted.adj <- function(shp, plans, counties = NULL,
                                  ref = TRUE, adj = NULL, plot_shp = TRUE) {
     # Check inputs ----
     if ("SpatialPolygonsDataFrame" %in% class(shp)) {
@@ -38,7 +38,7 @@ redist.plot.wted.adj <- function(shp, plans, counties = NULL,
             adj <- get_adj(shp)
         }
     } else if (missing(adj)) {
-        adj <- redist.adjacency(shp)
+        adj <- gredist.adjacency(shp)
     }
 
     counties <- rlang::eval_tidy(rlang::enquo(counties), shp)
@@ -118,8 +118,8 @@ redist.plot.wted.adj <- function(shp, plans, counties = NULL,
 #' data(iowa)
 #' shp <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.01)
 #' plans <- redist_smc(shp, 100)
-#' redist.wted.adj(shp, plans = plans)
-redist.wted.adj <- function(map = NULL, plans = NULL) {
+#' gredist.wted.adj(shp, plans = plans)
+gredist.wted.adj <- function(map = NULL, plans = NULL) {
     plans <- plans %>%
         subset_sampled() %>%
         get_plans_matrix()

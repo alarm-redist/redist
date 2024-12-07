@@ -169,7 +169,7 @@ redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE
 #'
 #' @concept post
 #' @export
-redist.smc_is_ci <- function(x, wgt, conf = 0.99) {
+gredist.smc_is_ci <- function(x, wgt, conf = 0.99) {
     .Deprecated("redist_smc_ci")
     wgt <- wgt/sum(wgt)
     mu <- sum(x*wgt)

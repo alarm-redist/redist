@@ -271,7 +271,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
     }
 
     t1 <- Sys.time()
-    all_out <- foreach(chain = seq_len(runs), .inorder = FALSE, .packages="redist") %oper% {
+    all_out <- foreach(chain = seq_len(runs), .inorder = FALSE, .packages="gredist") %oper% {
         run_verbosity <- if (chain == 1 || !multiprocess) verbosity else 0
         t1_run <- Sys.time()
 
@@ -318,7 +318,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
                              {.val {NA}} or {.val {Inf}}",
                 "*" = "If you are not using any constraints, please call
                              {.code rlang::trace_back()} and file an issue at
-                             {.url https://github.com/alarm-redist/redist/issues/new}"))
+                             {.url https://github.com/alarm-gredist/gredist/issues/new}"))
         }
 
         n_unique <- NA
@@ -405,7 +405,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
                             n_eff = all_out[[1]]$n_eff,
                             compactness = compactness,
                             constraints = constraints,
-                            version = packageVersion("redist"),
+                            version = packageVersion("gredist"),
                             diagnostics = l_diag)
     if (runs > 1) {
         out <- mutate(out, chain = rep(seq_len(runs), each = n_dist_act*nsims)) %>%

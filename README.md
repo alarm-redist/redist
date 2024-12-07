@@ -1,13 +1,13 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# **redist**: Simulation Methods for Legislative Redistricting
+# **gredist**: Simulation Methods for Legislative Redistricting
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/alarm-redist/redist/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/alarm-redist/redist/actions/workflows/check-standard.yaml)
-[![CRAN_Status_Badge](https://www.r-pkg.org/badges/version-last-release/redist)](https://cran.r-project.org/package=redist)
-![CRAN downloads](http://cranlogs.r-pkg.org/badges/grand-total/redist)
+[![R-CMD-check](https://github.com/alarm-gredist/gredist/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/alarm-gredist/gredist/actions/workflows/check-standard.yaml)
+[![CRAN_Status_Badge](https://www.r-pkg.org/badges/version-last-release/gredist)](https://cran.r-project.org/package=gredist)
+![CRAN downloads](http://cranlogs.r-pkg.org/badges/grand-total/gredist)
 
 <!-- badges: end -->
 
@@ -56,18 +56,18 @@ Papers:
 
 ## Installation Instructions
 
-`redist` is available on CRAN and can be installed using:
+`gredist` is available on CRAN and can be installed using:
 
 ``` r
-install.packages("redist")
+install.packages("gredist")
 ```
 
-You can also install the most recent development version of `redist`
+You can also install the most recent development version of `gredist`
 (which is usually quite stable) using the `remotes` package.
 
 ``` r
 if (!require(remotes)) install.packages("remotes")
-remotes::install_github("alarm-redist/redist@dev", dependencies=TRUE)
+remotes::install_github("alarm-gredist/gredist@dev", dependencies=TRUE)
 ```
 
 ## Getting started
@@ -77,7 +77,7 @@ using `redist_map`. Then you simulate plans using one of the algorithm
 functions: `redist_smc`, `redist_flip`, and `redist_mergesplit`.
 
 ``` r
-library(redist)
+library(gredist)
 library(dplyr)
 
 data(iowa)
@@ -90,7 +90,7 @@ iowa_plans = redist_smc(iowa_map, nsims=500)
 #> Sampling 500 99-unit maps with 4 districts and population between 760,827 and 762,350.
 ```
 
-After generating plans, you can use `redist`’s plotting functions to
+After generating plans, you can use `gredist`’s plotting functions to
 study the geographic and partisan characteristics of the simulated
 ensemble.
 
@@ -98,7 +98,7 @@ ensemble.
 library(ggplot2)
 library(patchwork) # for plotting
 
-redist.plot.plans(iowa_plans, draws=c("cd_2010", "1", "2", "3"), shp=iowa_map)
+gredist.plot.plans(iowa_plans, draws=c("cd_2010", "1", "2", "3"), shp=iowa_map)
 ```
 
 ![](man/figures/README-readme-plot-1.png)<!-- -->
@@ -119,7 +119,7 @@ hist(iowa_plans, `Population deviation`) + hist(iowa_plans, Compactness) +
 ![](man/figures/README-readme-plot-2.png)<!-- -->
 
 ``` r
-redist.plot.scatter(iowa_plans, `Population deviation`, Compactness) +
+gredist.plot.scatter(iowa_plans, `Population deviation`, Compactness) +
     labs(title="Population deviation and compactness by plan")
 ```
 
@@ -136,6 +136,6 @@ plot(iowa_plans, `Democratic vote`, size=0.5, color_thresh=0.5) +
 
 A more detailed introduction to redistricting methods and the package
 can be found in the [Get
-Started](https://alarm-redist.org/redist/articles/redist.html) page. The
-package [vignettes](https://alarm-redist.org/redist/articles/) contain
+Started](https://alarm-gredist.org/gredist/articles/gredist.html) page. The
+package [vignettes](https://alarm-gredist.org/gredist/articles/) contain
 more detailed information and guides to specific workflows.

@@ -78,6 +78,9 @@ int run_merge_split_step_on_a_plan(
             // if plan changed then the proposal becomes the current one
             adj_pairs_vec = proposal_adj_pairs_vec;
 
+            // TODO: add function which takes the adjacent pairs vec and returns 
+            // a random sampler 
+
             // Define the range for random index
             distrib = std::uniform_int_distribution<size_t>(0, adj_pairs_vec.size() - 1);
         }

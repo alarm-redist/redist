@@ -3,10 +3,13 @@
 The hope of this document is manage the list of tasks to do and also keep a record of what was done. 
 
 # ---- IMPORTANT TO KEEP IN MIND -----
-Note all of the diagnostic information is accurately updated to account for a resampling. When the weights are really low variance it doesn't really matter but just take that with a grain of salt for everything. 
+Note all of the diagnostic information is accurately updated to account for a final resampling. When the weights are really low variance it doesn't really matter but just take that with a grain of salt for everything. 
 
 
 # ----- ACTIVE TASKS -----
+
+**Make Parent Tries Atomic**
+For the parent tries stuff need to change it to a vector of atomic integers since current implementation is not thread safe.
 
 **Pass results back in arma data types**
 To make things more memory efficient change it so all results are passed back as arma vectors, matrices, or cubes for things that are multiple matrices. 

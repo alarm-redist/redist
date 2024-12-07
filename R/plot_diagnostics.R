@@ -1,8 +1,8 @@
 #' Diagnostic plotting functionality for MCMC redistricting.
 #'
-#' \code{redist.diagplot} generates several common MCMC diagnostic plots.
+#' \code{gredist.diagplot} generates several common MCMC diagnostic plots.
 #'
-#' @usage redist.diagplot(sumstat,
+#' @usage gredist.diagplot(sumstat,
 #' plot = c("trace", "autocorr", "densplot", "mean", "gelmanrubin"),
 #' logit = FALSE, savename = NULL)
 #'
@@ -26,7 +26,7 @@
 #' @references Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander
 #' Tarr. (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte
 #' Carlo." Working Paper. Available at
-#' \url{http://imai.princeton.edu/research/files/redist.pdf}.
+#' \url{http://imai.princeton.edu/research/files/gredist.pdf}.
 #'
 #' Gelman, Andrew and Donald Rubin. (1992) "Inference from iterative simulations
 #' using multiple sequences (with discussion)." Statistical Science.
@@ -53,10 +53,10 @@
 #'     redistmetrics::by_plan(ndists = 3)
 #'
 #' ## Generate diagnostic plots
-#' redist.diagplot(rep_dmi_253, plot = "trace")
-#' redist.diagplot(rep_dmi_253, plot = "autocorr")
-#' redist.diagplot(rep_dmi_253, plot = "densplot")
-#' redist.diagplot(rep_dmi_253, plot = "mean")
+#' gredist.diagplot(rep_dmi_253, plot = "trace")
+#' gredist.diagplot(rep_dmi_253, plot = "autocorr")
+#' gredist.diagplot(rep_dmi_253, plot = "densplot")
+#' gredist.diagplot(rep_dmi_253, plot = "mean")
 #'
 #' ## Gelman Rubin needs two chains, so we run a second
 #' alg_253_2 <- redist_flip(fl_map, nsims = 10000)
@@ -68,16 +68,16 @@
 #' rep_dmi_253_list <- list(rep_dmi_253, rep_dmi_253_2)
 #'
 #' ## Generate Gelman Rubin diagnostic plot
-#' redist.diagplot(sumstat = rep_dmi_253_list, plot = "gelmanrubin")
+#' gredist.diagplot(sumstat = rep_dmi_253_list, plot = "gelmanrubin")
 #'
 #' }
 #' @concept plot
 #' @export
-redist.diagplot <- function(sumstat, plot = c("trace", "autocorr", "densplot",
+gredist.diagplot <- function(sumstat, plot = c("trace", "autocorr", "densplot",
                                 "mean", "gelmanrubin"),
                             logit = FALSE, savename = NULL) {
     if (!requireNamespace("coda", quietly = TRUE))
-        cli_abort(c("{.fn redist.diagplot} requires the {.pkg coda} package.",
+        cli_abort(c("{.fn gredist.diagplot} requires the {.pkg coda} package.",
             ">" = 'Install it with {.code install.packages("coda")}'))
 
     ##############

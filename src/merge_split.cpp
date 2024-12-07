@@ -30,12 +30,14 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     int V = g.size();
     int n_cty = max(counties);
 
-    int n_out = N/thin + 2;
+    int rounded_up_N_over_thin = std::ceil(static_cast<double>(N)/thin);
+
+    int n_out = rounded_up_N_over_thin + 2;
     umat districts(V, n_out, fill::zeros);
     districts.col(0) = init;
     districts.col(1) = init;
 
-    Rcpp::IntegerVector mh_decisions(N/thin + 1);
+    Rcpp::IntegerVector mh_decisions(rounded_up_N_over_thin + 1);
     double mha;
 
     double tol = std::max(target - lower, upper - target) / target;
@@ -80,6 +82,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     std::vector<bool> visited(V);
     std::vector<bool> ignore(V);
     for (int i = 1; i <= N; i++) {
+         
         // make the proposal
         double prop_lp = 0.0;
         mh_decisions(idx - 1) = 0;
@@ -87,9 +90,12 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
         districts.col(idx+1) = districts.col(idx);
 
         select_pair(n_distr, dist_g, distr_1, distr_2);
+
+
         prop_lp = split_map_ms(g, ust, counties, cg, districts.col(idx+1),
                                distr_1, distr_2, visited, ignore,
                                pop, lower, upper, target, k);
+                               
 
         if (!std::isfinite(prop_lp)) {
             districts.col(idx+1) = districts.col(idx);
@@ -133,6 +139,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
             1.0/new_dist_g[distr_1 - 1].size() + 1.0/new_dist_g[distr_2 - 1].size()
         );
 
+        
         if (!do_mh || prop_lp >= 0 || std::log(r_unif()) <= prop_lp) { // ACCEPT
                 n_accept++;
                 districts.col(idx) = districts.col(idx+1); // copy over new map

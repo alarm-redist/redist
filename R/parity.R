@@ -20,7 +20,7 @@
 #'
 #' @concept analyze
 #' @export
-redist.parity <- function(plans, total_pop) {
+gredist.parity <- function(plans, total_pop) {
     if (!is.numeric(total_pop)) {
         cli_abort("{.arg total_pop} must be a numeric vector")
     }

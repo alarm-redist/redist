@@ -431,4 +431,3 @@ NumericVector distParity(NumericMatrix mat,
   return plandevs;
 
 }
-

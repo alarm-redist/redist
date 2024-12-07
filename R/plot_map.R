@@ -13,7 +13,7 @@
 #' plan is used as the color and fill as the alpha parameter.
 #'
 #' @param shp  A SpatialPolygonsDataFrame, sf object, or redist_map. Required.
-#' @param adj A zero-indexed adjacency list. Created with redist.adjacency
+#' @param adj A zero-indexed adjacency list. Created with gredist.adjacency
 #' if not supplied and needed for coloring. Default is NULL.
 #' @param plan \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} A numeric
 #' vector with one entry for each precinct in shp. Used to color the
@@ -34,14 +34,14 @@
 #'
 #' @examples
 #' data(iowa)
-#' redist.plot.map(shp = iowa, plan = iowa$cd_2010)
+#' gredist.plot.map(shp = iowa, plan = iowa$cd_2010)
 #'
 #' iowa_map <- redist_map(iowa, existing_plan = cd_2010)
-#' redist.plot.map(iowa_map, fill = dem_08/tot_08, zoom_to = (cd_2010 == 1))
+#' gredist.plot.map(iowa_map, fill = dem_08/tot_08, zoom_to = (cd_2010 == 1))
 #'
 #' @concept plot
 #' @export
-redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = "",
+gredist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = "",
                             zoom_to = NULL, boundaries = is.null(fill), title = "") {
     # Check inputs
     if (inherits(shp, "SpatialPolygonsDataFrame")) {
@@ -177,7 +177,7 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = "",
 #' Creates a Graph Overlay
 #'
 #' @param shp  A SpatialPolygonsDataFrame or sf object. Required.
-#' @param adj A zero-indexed adjacency list. Created with redist.adjacency
+#' @param adj A zero-indexed adjacency list. Created with gredist.adjacency
 #' if not supplied. Default is NULL.
 #' @param plan A numeric vector with one entry for each precinct in shp.
 #' Used to remove edges that cross boundaries. Default is \code{NULL}.  Optional.
@@ -198,11 +198,11 @@ redist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = "",
 #'
 #' @examples
 #' data(iowa)
-#' redist.plot.adj(shp = iowa, plan = iowa$cd_2010)
+#' gredist.plot.adj(shp = iowa, plan = iowa$cd_2010)
 #'
 #' @concept plot
 #' @export
-redist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE,
+gredist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE,
                             drop = FALSE, plot_shp = TRUE, zoom_to = NULL, title = "") {
     if (inherits(shp, "SpatialPolygonsDataFrame")) {
         shp <- shp %>% st_as_sf()
@@ -226,7 +226,7 @@ redist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE,
             adj <- get_adj(shp)
         }
     } else if (missing(adj)) {
-        adj <- redist.adjacency(shp)
+        adj <- gredist.adjacency(shp)
     }
 
 

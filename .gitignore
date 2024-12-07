@@ -19,4 +19,4 @@ docs/articles/*_cache/*
 vignettes/*_cache/*
 src-i386/
 inst/enumpart/enumpart.exe
-redist/tests/testthat/_snaps
+gredist/tests/testthat/_snaps

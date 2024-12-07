@@ -1,4 +1,4 @@
-redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
+gredist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
                            pop_tol = NULL,
                            temper = NULL,
                            betaseq = NULL, betaseqlength = NULL,
@@ -87,7 +87,7 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
         } else if (inherits(adj, "SpatialPolygonsDataFrame")) { ## shp object
 
             ## Convert shp object to adjacency list
-            adjlist <- redist.adjacency(st_as_sf(adj))
+            adjlist <- gredist.adjacency(st_as_sf(adj))
 
 
         } else { ## If neither list, matrix, or shp, throw error
@@ -96,7 +96,7 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
         }
 
     } else if ("sf" %in% class(adj)) {
-        adjlist <- redist.adjacency(adj)
+        adjlist <- gredist.adjacency(adj)
     } else {
 
         ## Rename adjacency object as list
@@ -146,10 +146,10 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
         if (verbose) {
             cat("\n", append = TRUE)
             cat(divider, append = TRUE)
-            cat("Using redist.rsg() to generate starting values.\n\n", append = TRUE)
+            cat("Using gredist.rsg() to generate starting values.\n\n", append = TRUE)
         }
         ## Run the algorithm
-        initout <- redist.rsg(adj = adjlist,
+        initout <- gredist.rsg(adj = adjlist,
             total_pop = total_pop,
             ndists = ndists,
             pop_tol = pop_tol_rsg,
@@ -198,7 +198,7 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
         init_plan <- vctrs::vec_group_id(init_plan) - 1
     }
     if (length(unique(init_plan)) != (max(init_plan) + 1)) {
-        stop("The district numbers in init_plan must be consecutive. The input to `init_plan` could not be transformed using `redist.sink.plan()`.")
+        stop("The district numbers in init_plan must be consecutive. The input to `init_plan` could not be transformed using `gredist.sink.plan()`.")
     }
 
     ####################################################
@@ -268,6 +268,6 @@ redist.preproc <- function(adj, total_pop, init_plan = NULL, ndists = NULL,
         )
     )
 
-    class(preprocout) <- "redist"
+    class(preprocout) <- "gredist"
     preprocout
 }

@@ -1,6 +1,6 @@
 #' Redistricting via Compact Random Seed and Grow Algorithm
 #'
-#' \code{redist.crsg} generates redistricting plans using a random seed a grow
+#' \code{gredist.crsg} generates redistricting plans using a random seed a grow
 #' algorithm.  This is the compact districting algorithm described in Chen and
 #' Rodden (2013).
 #'
@@ -22,7 +22,7 @@
 #' @param maxiter  integer, indicating maximum number of iterations to attempt
 #' before convergence to population constraint fails.  If it fails once, it will
 #' use a different set of start values and try again.  If it fails again,
-#' redist.rsg() returns an object of all NAs, indicating that use of more
+#' gredist.rsg() returns an object of all NAs, indicating that use of more
 #' iterations may be advised. Default is 5000.
 #'
 #' @return list, containing three objects containing the completed redistricting
@@ -42,12 +42,12 @@
 #'
 #' @examples
 #' data("fl25")
-#' adj <- redist.adjacency(fl25)
-#' redist.crsg(adj = adj, total_pop = fl25$pop, shp = fl25, ndists = 2, pop_tol = .1)
+#' adj <- gredist.adjacency(fl25)
+#' gredist.crsg(adj = adj, total_pop = fl25$pop, shp = fl25, ndists = 2, pop_tol = .1)
 #'
 #' @concept simulate
 #' @export
-redist.crsg <- function(adj, total_pop, shp,  ndists, pop_tol, verbose = TRUE,
+gredist.crsg <- function(adj, total_pop, shp,  ndists, pop_tol, verbose = TRUE,
                         maxiter = 5000) {
     if (missing(shp)) {
         stop("An argument to shp is now required.")
@@ -64,7 +64,7 @@ redist.crsg <- function(adj, total_pop, shp,  ndists, pop_tol, verbose = TRUE,
 
         cat("\n")
         cat(divider)
-        cat("redist.crsg(): Automated Redistricting Starts\n\n")
+        cat("gredist.crsg(): Automated Redistricting Starts\n\n")
     }
 
     target.pop <- sum(total_pop)/ndists
@@ -97,7 +97,7 @@ redist.crsg <- function(adj, total_pop, shp,  ndists, pop_tol, verbose = TRUE,
 
     if (is.na(ret$plan[1])) {
 
-        warning("redist.crsg() failed to return a valid partition. Try increasing maxiter")
+        warning("gredist.crsg() failed to return a valid partition. Try increasing maxiter")
 
     } else {
         ret$plan <- ret$plan + 1

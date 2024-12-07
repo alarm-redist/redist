@@ -5,6 +5,7 @@
 
 #include <string>
 #include <cli/progress.h>
+#include <cmath>
 
 // [[Rcpp::depends(redistmetrics)]]
 

@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Map Pre-processing for Special Constraints • redist</title>
+<title>Map Pre-processing for Special Constraints • gredist</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
 <link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
 <script src="../pkgdown.js"></script><meta property="og:title" content="Map Pre-processing for Special Constraints">
-<meta property="og:description" content="redist">
+<meta property="og:description" content="gredist">
 <meta property="og:image" content="/logo.png">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -39,7 +39,7 @@
         <span class="icon-bar"></span>
       </button>
       <span class="navbar-brand">
-        <a class="navbar-link" href="../index.html">redist</a>
+        <a class="navbar-link" href="../index.html">gredist</a>
         <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">4.2.0</span>
       </span>
     </div>
@@ -47,7 +47,7 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
 <li>
-  <a href="../articles/redist.html">Get started</a>
+  <a href="../articles/gredist.html">Get started</a>
 </li>
 <li>
   <a href="../reference/index.html">Reference</a>
@@ -60,7 +60,7 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/common_args.html">Common Arguments to `redist` Functions</a>
+      <a href="../articles/common_args.html">Common Arguments to `gredist` Functions</a>
     </li>
     <li>
       <a href="../articles/flip.html">Redistricting with Flip MCMC</a>
@@ -79,7 +79,7 @@
   <ul class="dropdown-menu" role="menu">
 <li class="dropdown-header">Releases</li>
     <li>
-      <a href="https://alarm-redist.github.io/posts/2021-04-02-redist-300/" class="external-link">redist 3.0</a>
+      <a href="https://alarm-gredist.github.io/posts/2021-04-02-gredist-300/" class="external-link">gredist 3.0</a>
     </li>
     <li class="divider">
     </li>
@@ -91,7 +91,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/alarm-redist/redist/" class="external-link">
+  <a href="https://github.com/alarm-gredist/gredist/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -112,7 +112,7 @@
       <h1 data-toc-skip>Map Pre-processing for Special Constraints</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/alarm-redist/redist/blob/HEAD/vignettes/map-preproc.Rmd" class="external-link"><code>vignettes/map-preproc.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/alarm-gredist/gredist/blob/HEAD/vignettes/map-preproc.Rmd" class="external-link"><code>vignettes/map-preproc.Rmd</code></a></small>
       <div class="hidden name"><code>map-preproc.Rmd</code></div>
 
     </div>
@@ -124,7 +124,7 @@ only a portion of a map, or hold some districts fixed while others are
 re-simulated. Other analyses might require a status-quo-type constraint
 that encourages simulated districts to be close to a reference plan.</p>
 <p>All of these requirements may be achieved through map pre-processing,
-and this vignette shows how to use <code>redist</code> to do so, using
+and this vignette shows how to use <code>gredist</code> to do so, using
 the Metropolitan King County Council districts as an example.</p>
 <div class="section level2">
 <h2 id="the-map">The Map<a class="anchor" aria-label="anchor" href="#the-map"></a>
@@ -145,9 +145,9 @@ presidential vote, city, and existing district information.</p>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://scales.r-lib.org" class="external-link">scales</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com" class="external-link">patchwork</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alarm-redist.org/redist/" class="external-link">redist</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alarm-gredist.org/gredist/" class="external-link">gredist</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">data_url</span> <span class="op">=</span> <span class="st">"https://github.com/alarm-redist/redist-data/raw/main/data/king_county.rds"</span></span>
+<span><span class="va">data_url</span> <span class="op">=</span> <span class="st">"https://github.com/alarm-gredist/gredist-data/raw/main/data/king_county.rds"</span></span>
 <span><span class="va">data_path</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span><span class="va">data_url</span>, <span class="va">data_path</span><span class="op">)</span></span>
 <span><span class="va">king_shp</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="va">data_path</span><span class="op">)</span></span>
@@ -187,13 +187,13 @@ districts.</p>
 <div class="section level2">
 <h2 id="creating-the-redist_map-object">Creating the <code>redist_map</code> object<a class="anchor" aria-label="anchor" href="#creating-the-redist_map-object"></a>
 </h2>
-<p>The first step one in a <code>redist</code> analysis is creating the
+<p>The first step one in a <code>gredist</code> analysis is creating the
 <code>redist_map</code> object, which stores the basic parameters of the
 redistricting problem. Among these parameters is the desired level of
 population parity. Here, we’ll compute the parity of the current set of
 districts, and ensure that all of our simulations do no worse.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">existing_parity</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist.parity.html">redist.parity</a></span><span class="op">(</span><span class="va">king_shp</span><span class="op">$</span><span class="va">distr</span>, <span class="va">king_shp</span><span class="op">$</span><span class="va">pop</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">existing_parity</span> <span class="op">=</span> <span class="fu"><a href="../reference/gredist.parity.html">gredist.parity</a></span><span class="op">(</span><span class="va">king_shp</span><span class="op">$</span><span class="va">distr</span>, <span class="va">king_shp</span><span class="op">$</span><span class="va">pop</span><span class="op">)</span></span>
 <span><span class="va">king</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist_map.html">redist_map</a></span><span class="op">(</span><span class="va">king_shp</span>, existing_plan<span class="op">=</span><span class="va">distr</span>, pop_tol<span class="op">=</span><span class="va">existing_parity</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">king</span><span class="op">)</span></span>
 <span><span class="co">#&gt; A <span style="color: #0000BB;">&lt;redist_map&gt;</span> with 2562 units and 12 fields</span></span>
@@ -227,7 +227,7 @@ Seattle, using <code><a href="https://rdrr.io/r/graphics/plot.default.html" clas
 <h2 id="subsetting">Subsetting<a class="anchor" aria-label="anchor" href="#subsetting"></a>
 </h2>
 <p>Often, we wish to restrict our analysis to a part of a map or only a
-few of the districts. This is supported in <code>redist</code> using the
+few of the districts. This is supported in <code>gredist</code> using the
 <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter()</a></code> function from <a href="https://dplyr.tidyverse.org/" class="external-link"><code>dplyr</code></a>. The
 package’s version of <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter()</a></code> will automatically update the
 adjacency graph, the number of districts, and the relevant population
@@ -308,7 +308,7 @@ precincts.</p>
 either to visualize or analyze at a coarser scale, or to ensure that the
 merged units are treated as one “block” in any redistricting algorithm.
 Merging units is a part of most map preprocessing workflows, and in
-<code>redist</code> is carried out by the <code><a href="../reference/merge_by.html">merge_by()</a></code>
+<code>gredist</code> is carried out by the <code><a href="../reference/merge_by.html">merge_by()</a></code>
 function, which works like a combination of the <code><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by()</a></code>
 and <code><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize()</a></code> verbs of <code>dplyr</code>.</p>
 <p>For example, we could merge our King County data by city.</p>
@@ -372,17 +372,17 @@ ensuring that any sampled redistricting plans not split any
 municipalities which are not split by the existing plan. That way, the
 number of split municipalities in the set of sampled plans will be
 guaranteed to not exceed the number of existing splits.</p>
-<p>In <code>redist</code>, freezing is accomplished by using the
-<code><a href="../reference/redist.freeze.html">freeze()</a></code> and <code><a href="../reference/merge_by.html">merge_by()</a></code> functions. The former
+<p>In <code>gredist</code>, freezing is accomplished by using the
+<code><a href="../reference/gredist.freeze.html">freeze()</a></code> and <code><a href="../reference/merge_by.html">merge_by()</a></code> functions. The former
 takes in a description of the units which should be frozen, and groups
 them into contiguous chunks of frozen units, returning an indexing
 vector that uniquely identifies each group. Then <code><a href="../reference/merge_by.html">merge_by()</a></code>
 merges these groups together. We can use the
-<code><a href="../reference/redist.splits.html">redist.splits()</a></code> function to count split municipalities, and
+<code><a href="../reference/gredist.splits.html">gredist.splits()</a></code> function to count split municipalities, and
 the <code><a href="../reference/is_county_split.html">is_county_split()</a></code> function to identify split
 municipalities.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="http://alarm-redist.org/redistmetrics/reference/splits_admin.html" class="external-link">splits_admin</a></span><span class="op">(</span><span class="va">king_land</span><span class="op">$</span><span class="va">distr</span>, <span class="va">king_land</span>, <span class="va">city</span><span class="op">)</span>, <span class="st">"split cities\n"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="http://alarm-gredist.org/redistmetrics/reference/splits_admin.html" class="external-link">splits_admin</a></span><span class="op">(</span><span class="va">king_land</span><span class="op">$</span><span class="va">distr</span>, <span class="va">king_land</span>, <span class="va">city</span><span class="op">)</span>, <span class="st">"split cities\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; 11 11 11 11 11 11 11 11 11 split cities</span></span>
 <span></span>
 <span><span class="va">king_land</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -392,7 +392,7 @@ municipalities.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="va">king_unsplit</span> <span class="op">=</span> <span class="va">king_land</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>unsplit_id <span class="op">=</span> <span class="fu"><a href="../reference/redist.freeze.html">freeze</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="../reference/is_county_split.html">is_county_split</a></span><span class="op">(</span><span class="va">distr</span>, <span class="va">city</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>unsplit_id <span class="op">=</span> <span class="fu"><a href="../reference/gredist.freeze.html">freeze</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="../reference/is_county_split.html">is_county_split</a></span><span class="op">(</span><span class="va">distr</span>, <span class="va">city</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>    <span class="fu"><a href="../reference/merge_by.html">merge_by</a></span><span class="op">(</span><span class="va">unsplit_id</span>, <span class="va">city</span>, collapse_chr<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">king_unsplit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; A <span style="color: #0000BB;">&lt;redist_map&gt;</span> with 1968 units and 10 fields</span></span>
@@ -467,13 +467,13 @@ geometry object, <code>king_land</code>.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> distr        9    <span style="text-decoration: underline;">217</span>432</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> 1            1    <span style="text-decoration: underline;">217</span>248</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 899 more rows</span></span></span>
-<span><span class="fu"><a href="../reference/redist.plot.plans.html">redist.plot.plans</a></span><span class="op">(</span><span class="fu"><a href="../reference/pullback.html">pullback</a></span><span class="op">(</span><span class="va">plans</span><span class="op">)</span>, draws<span class="op">=</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, shp<span class="op">=</span><span class="va">king_land</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/gredist.plot.plans.html">gredist.plot.plans</a></span><span class="op">(</span><span class="fu"><a href="../reference/pullback.html">pullback</a></span><span class="op">(</span><span class="va">plans</span><span class="op">)</span>, draws<span class="op">=</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, shp<span class="op">=</span><span class="va">king_land</span><span class="op">)</span></span></code></pre></div>
 <p><img src="map-preproc_files/figure-html/unsplit-plan-1.png" width="768"></p>
 <p>Notice how the <code>Merged from another map...</code> line
 disappears and the number of map units changes after using
 <code><a href="../reference/pullback.html">pullback()</a></code>. Notice also that each of the sampled plans
 completely preserves the municipalities which were frozen with
-<code><a href="../reference/redist.freeze.html">freeze()</a></code> and <code><a href="../reference/merge_by.html">merge_by()</a></code>.</p>
+<code><a href="../reference/gredist.freeze.html">freeze()</a></code> and <code><a href="../reference/merge_by.html">merge_by()</a></code>.</p>
 </div>
 <div class="section level2">
 <h2 id="district-cores">District Cores<a class="anchor" aria-label="anchor" href="#district-cores"></a>
@@ -481,9 +481,9 @@ completely preserves the municipalities which were frozen with
 <p>A common requirement in redistricting is that districts after
 redistricting resemble the original districts, or <a href="https://www.ncsl.org/redistricting-and-census/redistricting-criteria" class="external-link">“preserve
 the cores” of previous districts</a>, to ensure relative continuity of
-representation. The <code>redist</code> package operationalizes this
+representation. The <code>gredist</code> package operationalizes this
 idea by explicitly constructing the cores of a set of districts with
-<code><a href="../reference/redist.identify.cores.html">make_cores()</a></code>, and merging them together with
+<code><a href="../reference/gredist.identify.cores.html">make_cores()</a></code>, and merging them together with
 <code><a href="../reference/merge_by.html">merge_by()</a></code>.</p>
 <p>The idea for constructing district cores is to work inwards from
 district boundaries. First, we merge each district completely. Then, we
@@ -493,7 +493,7 @@ repeat this process a user-specified number of times, leaving only the
 central “cores” of each district frozen. When it comes time to simulate,
 these cores will be assigned a district as a unit, preserving
 representation for all the people living in the core.</p>
-<p>The <code><a href="../reference/redist.identify.cores.html">make_cores()</a></code> function takes a <code>boundary</code>
+<p>The <code><a href="../reference/gredist.identify.cores.html">make_cores()</a></code> function takes a <code>boundary</code>
 parameter which counts the number of these steps;
 <code>boundary=1</code> corresponds to un-freezing the precincts along
 the boundary only. This is often sufficient for a moderate-to-strong
@@ -504,7 +504,7 @@ the population lives inside a district core, while with
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pop_inside_cores</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">boundary</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">king_land</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>        <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>core <span class="op">=</span> <span class="fu"><a href="../reference/redist.identify.cores.html">make_cores</a></span><span class="op">(</span>boundary<span class="op">=</span><span class="va">boundary</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>        <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>core <span class="op">=</span> <span class="fu"><a href="../reference/gredist.identify.cores.html">make_cores</a></span><span class="op">(</span>boundary<span class="op">=</span><span class="va">boundary</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>        <span class="fu"><a href="https://tibble.tidyverse.org/reference/as_tibble.html" class="external-link">as_tibble</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>        <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">core</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>        <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">2</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="co"># filter to cores only</span></span>
@@ -519,7 +519,7 @@ inside each district are merged together after applying
 <code><a href="../reference/merge_by.html">merge_by()</a></code> to the generated cores.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">king_cores</span> <span class="op">=</span> <span class="va">king_land</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>core <span class="op">=</span> <span class="fu"><a href="../reference/redist.identify.cores.html">make_cores</a></span><span class="op">(</span>boundary<span class="op">=</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>core <span class="op">=</span> <span class="fu"><a href="../reference/gredist.identify.cores.html">make_cores</a></span><span class="op">(</span>boundary<span class="op">=</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>    <span class="fu"><a href="../reference/merge_by.html">merge_by</a></span><span class="op">(</span><span class="va">core</span>, drop_geom<span class="op">=</span><span class="cn">F</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">king_cores</span><span class="op">)</span></span></code></pre></div>
 <p><img src="map-preproc_files/figure-html/cores-1.png" width="700"></p>
@@ -529,7 +529,7 @@ original plan. Sampling is also faster, since there are fewer units in
 the map.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">plans</span> <span class="op">=</span> <span class="fu"><a href="../reference/redist_smc.html">redist_smc</a></span><span class="op">(</span><span class="va">king_cores</span>, <span class="fl">100</span>, silent<span class="op">=</span><span class="cn">T</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/redist.plot.plans.html">redist.plot.plans</a></span><span class="op">(</span><span class="va">plans</span>, draws<span class="op">=</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, shp<span class="op">=</span><span class="va">king_cores</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/gredist.plot.plans.html">gredist.plot.plans</a></span><span class="op">(</span><span class="va">plans</span>, draws<span class="op">=</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, shp<span class="op">=</span><span class="va">king_cores</span><span class="op">)</span></span></code></pre></div>
 <p><img src="map-preproc_files/figure-html/core-plans-1.png" width="700"></p>
 </div>
   </div>

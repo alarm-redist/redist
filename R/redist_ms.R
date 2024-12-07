@@ -198,6 +198,7 @@ redist_mergesplit <- function(map, nsims,
     algout <- ms_plans(nsims, adj, init_plan, counties, pop, ndists,
                        pop_bounds[2], pop_bounds[1], pop_bounds[3], compactness,
                        constraints, control, k, thin, verbosity)
+
     t2_run <- Sys.time()
 
     storage.mode(algout$plans) <- "integer"
@@ -215,7 +216,7 @@ redist_mergesplit <- function(map, nsims,
                             compactness = compactness,
                             constraints = constraints,
                             adapt_k_thresh = adapt_k_thresh,
-                            version = packageVersion("redist"),
+                            version = packageVersion("gredist"),
                             diagnostics = l_diag,
                             mh_acceptance = mean(acceptances))
 

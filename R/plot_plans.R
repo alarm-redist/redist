@@ -2,7 +2,7 @@
 ## Author: Cory McCartan
 ## Institution: Harvard University
 ## Date Created: 2021/01/28
-## Purpose: redist functions for a tidy workflow
+## Purpose: gredist functions for a tidy workflow
 ##############################################
 
 
@@ -20,8 +20,8 @@ is_const_num <- function(x, grps) {
 #' @param x the \code{redist_plans} object.
 #' @param ... passed on to the underlying function
 #' @param type the name of the plotting function to use. Will have
-#' \code{redist.plot.}, prepended to it; e.g., use \code{type="plans"} to call
-#' \code{\link{redist.plot.plans}}.
+#' \code{gredist.plot.}, prepended to it; e.g., use \code{type="plans"} to call
+#' \code{\link{gredist.plot.plans}}.
 #'
 #' @concept plot
 #' @export
@@ -29,7 +29,7 @@ plot.redist_plans <- function(x, ..., type = "distr_qtys") {
     if (rlang::dots_n(...) == 0) {
         wgts <- get_plans_weights(subset_sampled(x, matrix = FALSE))
         if (is.null(wgts))
-            return(redist.plot.distr_qtys(x, total_pop, size = 0.1))
+            return(gredist.plot.distr_qtys(x, total_pop, size = 0.1))
         n <- length(wgts)
         iqr <- IQR(wgts)
         bins <- min(max(round(diff(range(wgts))/(2*iqr/n^(1/3))), 3), 100)
@@ -40,7 +40,7 @@ plot.redist_plans <- function(x, ..., type = "distr_qtys") {
             ggplot2::scale_x_continuous(name = "Weights", trans = "log10") +
             ggplot2::labs(y = NULL, title = "Plan weights")
     } else {
-        get(paste0("redist.plot.", type))(x, ...)
+        get(paste0("gredist.plot.", type))(x, ...)
     }
 }
 
@@ -64,11 +64,11 @@ plot.redist_plans <- function(x, ..., type = "distr_qtys") {
 #' plans <- redist_smc(iowa, nsims = 100, silent = TRUE)
 #' group_by(plans, draw) %>%
 #'     summarize(pop_dev = max(abs(total_pop/mean(total_pop) - 1))) %>%
-#'     redist.plot.hist(pop_dev)
+#'     gredist.plot.hist(pop_dev)
 #'
 #' @concept plot
 #' @export
-redist.plot.hist <- function(plans, qty, bins = NULL, ...) {
+gredist.plot.hist <- function(plans, qty, bins = NULL, ...) {
     if (!inherits(plans, "redist_plans")) cli_abort("{.arg plans} must be a {.cls redist_plans}")
     if (missing(qty))
         cli_abort("Must provide a {.arg qty} to make the histogram from.")
@@ -102,14 +102,14 @@ redist.plot.hist <- function(plans, qty, bins = NULL, ...) {
     p
 }
 
-#' @rdname redist.plot.hist
+#' @rdname gredist.plot.hist
 #' @param x \code{\link[dplyr:dplyr_data_masking]{<data-masking>}} the statistic.
 #' @export
 hist.redist_plans <- function(x, qty, ...) {
     if (missing(qty))
         cli_abort("Must provide a {.arg qty} to make the histogram from.")
     qty <- rlang::enquo(qty)
-    redist.plot.hist(x, !!qty, ...)
+    gredist.plot.hist(x, !!qty, ...)
 }
 
 #' Scatter plot of plan summary statistics
@@ -137,11 +137,11 @@ hist.redist_plans <- function(x, qty, ...) {
 #'     group_by(draw) %>%
 #'     summarize(pop_dev = max(abs(total_pop/mean(total_pop) - 1)),
 #'         comp = comp[1]) %>%
-#'     redist.plot.scatter(pop_dev, comp)
+#'     gredist.plot.scatter(pop_dev, comp)
 #'
 #' @concept plot
 #' @export
-redist.plot.scatter <- function(plans, x, y, ..., bigger = TRUE) {
+gredist.plot.scatter <- function(plans, x, y, ..., bigger = TRUE) {
     if (!inherits(plans, "redist_plans")) cli_abort("{.arg plans} must be a {.cls redist_plans}")
 
     p <- ggplot(subset_sampled(plans, matrix = FALSE), aes(x = {{ x }}, y = {{ y }})) +
@@ -212,13 +212,13 @@ redist.plot.scatter <- function(plans, x, y, ..., bigger = TRUE) {
 #' iowa <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05, total_pop = pop)
 #' plans <- redist_smc(iowa, nsims = 100, silent = TRUE)
 #' plans <- plans %>% mutate(pct_dem = group_frac(iowa, dem_08, tot_08))
-#' redist.plot.distr_qtys(plans, pct_dem)
+#' gredist.plot.distr_qtys(plans, pct_dem)
 #'
 #' # It also takes custom functions:
-#' redist.plot.distr_qtys(plans, pct_dem, geom = ggplot2::geom_violin)
+#' gredist.plot.distr_qtys(plans, pct_dem, geom = ggplot2::geom_violin)
 #'
 #' # With the raincloud example, if you have `ggdist`, you can run:
-#' # redist.plot.distr_qtys(plans, pct_dem, geom = raincloud)
+#' # gredist.plot.distr_qtys(plans, pct_dem, geom = raincloud)
 #'
 #' # The reference geom can also be changed via `reg_geom`
 #' r_geom <- function(...) ggplot2::geom_segment(ggplot2::aes(as.integer(.data$.distr_no) - 0.5,
@@ -230,12 +230,12 @@ redist.plot.scatter <- function(plans, x, y, ..., bigger = TRUE) {
 #'
 #'
 #' # Finally, the `ref_label` argument can also be swapped for a function, like so:
-#' redist.plot.distr_qtys(plans, pct_dem, geom = ggplot2::geom_violin, ref_geom = r_geom,
+#' gredist.plot.distr_qtys(plans, pct_dem, geom = ggplot2::geom_violin, ref_geom = r_geom,
 #'     ref_label = function() ggplot2::labs(color = 'Ref.'))
 #'
 #' @concept plot
 #' @export
-redist.plot.distr_qtys <- function(plans, qty, sort = "asc", geom = "jitter",
+gredist.plot.distr_qtys <- function(plans, qty, sort = "asc", geom = "jitter",
                                    color_thresh = NULL, size = 0.1, ref_geom,
                                    ref_label, ...) {
     if (!inherits(plans, "redist_plans")) cli_abort("{.arg plans} must be a {.cls redist_plans}")
@@ -357,11 +357,11 @@ redist.plot.distr_qtys <- function(plans, qty, sort = "asc", geom = "jitter",
 #'
 #' iowa <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.05, total_pop = pop)
 #' plans <- redist_smc(iowa, nsims = 100, silent = TRUE)
-#' redist.plot.plans(plans, c(1, 2, 3, 4), iowa)
+#' gredist.plot.plans(plans, c(1, 2, 3, 4), iowa)
 #'
 #' @concept plot
 #' @export
-redist.plot.plans <- function(plans, draws, shp, qty = NULL, interactive = FALSE, ..., geom = NULL) {
+gredist.plot.plans <- function(plans, draws, shp, qty = NULL, interactive = FALSE, ..., geom = NULL) {
     if (!missing(geom)) {
         .Deprecated("shp", old = "geom")
         if (missing(shp)) shp <- geom
@@ -372,7 +372,7 @@ redist.plot.plans <- function(plans, draws, shp, qty = NULL, interactive = FALSE
         cli_abort("{.arg plans} and {.arg shp} must have the same number of precincts.")
 
     if (interactive) {
-        .Deprecated("interactive", msg = "Interactive editing is no longer supported within redist.")
+        .Deprecated("interactive", msg = "Interactive editing is no longer supported within gredist.")
     }
 
     plot_single <- function(draw) {
@@ -387,7 +387,7 @@ redist.plot.plans <- function(plans, draws, shp, qty = NULL, interactive = FALSE
             qty <- qty[m[, draw_idx]]
         }
 
-        redist.plot.map(shp, fill = qty, fill_label = lab, ...) +
+        gredist.plot.map(shp, fill = qty, fill_label = lab, ...) +
             ggplot2::labs(title = title)
     }
 
@@ -421,11 +421,11 @@ redist.plot.plans <- function(plans, draws, shp, qty = NULL, interactive = FALSE
 #' plans <- redist_mergesplit_parallel(iowa_map, nsims = 200, chains = 2, silent = TRUE) %>%
 #'     mutate(dem = group_frac(iowa_map, dem_08, dem_08 + rep_08)) %>%
 #'     number_by(dem)
-#' redist.plot.trace(plans, dem, district = 1)
+#' gredist.plot.trace(plans, dem, district = 1)
 #'
 #' @concept plot
 #' @export
-redist.plot.trace <- function(plans, qty, district = 1L, ...) {
+gredist.plot.trace <- function(plans, qty, district = 1L, ...) {
     if (!"chain" %in% names(plans)) plans$chain <- 1
     plans <- as.data.frame(plans) %>%
         filter(!is.na(.data$chain)) %>%

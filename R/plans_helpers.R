@@ -2,7 +2,7 @@
 #'
 #' Merging map units through \code{\link{merge_by}} or \code{\link{summarize}}
 #' changes the indexing of each unit.  Use this function to take a set of
-#' redistricting plans from a \code{redist} algorithm and re-index them to
+#' redistricting plans from a \code{gredist} algorithm and re-index them to
 #' be compatible with the original set of units.
 #'
 #' @param plans a \code{redist_plans} object
@@ -64,7 +64,7 @@ tally_var <- function(map, x, .data = pl()) {
     as.numeric(pop_tally(get_plans_matrix(.data), x, attr(.data, "ndists")))
 }
 
-#' @rdname redist.group.percent
+#' @rdname gredist.group.percent
 #' @order 1
 #'
 #' @param map a \code{\link{redist_map}} object
@@ -117,11 +117,11 @@ avg_by_prec <- function(plans, x, draws = NA) {
 }
 
 
-#' @rdname redist.parity
+#' @rdname gredist.parity
 #'
 #' @param map a \code{\link{redist_map}} object
 #' @param .data a \code{\link{redist_plans}} object
-#' @param ... passed on to \code{redist.parity}
+#' @param ... passed on to \code{gredist.parity}
 #'
 #' @concept analyze
 #' @export

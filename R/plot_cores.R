@@ -3,7 +3,7 @@
 #' @param shp A SpatialPolygonsDataFrame or sf object. Required.
 #' @param plan A numeric vector with one entry for each precinct in shp.
 #' Used to color the districts. Required.
-#' @param core Required. integer vector produced by \code{redist.identify.cores()}.
+#' @param core Required. integer vector produced by \code{gredist.identify.cores()}.
 #' @param lwd Line width. Defaults to 2.
 #'
 #' @importFrom dplyr if_else
@@ -11,7 +11,7 @@
 #' @return ggplot
 #' @export
 #' @concept plot
-redist.plot.cores <- function(shp, plan = NULL, core = NULL, lwd = 2) {
+gredist.plot.cores <- function(shp, plan = NULL, core = NULL, lwd = 2) {
     plan <- eval_tidy(enquo(plan), shp)
     if (is.null(plan)) {
         if (inherits(shp, "redist_map")) {

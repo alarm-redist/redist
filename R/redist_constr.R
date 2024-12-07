@@ -2,7 +2,7 @@
 ## Author: Cory McCartan
 ## Institution: Harvard University
 ## Date Created: 2021/11/07
-## Purpose: redist constraints for a tidy workflow
+## Purpose: gredist constraints for a tidy workflow
 ##############################################
 
 
@@ -48,7 +48,7 @@ validate_redist_constr <- function(constr) {
 #' You can view the exact structure of this list by calling [str()].
 #' Constraints may be added by using one of the following functions:
 #'
-#' `r paste0("* [", setdiff(ls("package:redist")[grep("add_constr_", ls("package:redist"))], "add_constr_qps"), "()]", collapse="\n")`
+#' `r paste0("* [", setdiff(ls("package:gredist")[grep("add_constr_", ls("package:gredist"))], "add_constr_qps"), "()]", collapse="\n")`
 #'
 #' More information about each constraint can be found on the relevant constraint page.
 #'
@@ -635,7 +635,7 @@ add_constr_custom <- function(constr, strength, fn) {
         if (!is.null(found) &&
                 !identical(found, rlang::base_env()) &&
                 !identical(found, constr_env) &&
-                !identical(found, rlang::pkg_env("redist"))) {
+                !identical(found, rlang::pkg_env("gredist"))) {
             constr_env[[nm]] = get(nm, envir=found)
         }
     }

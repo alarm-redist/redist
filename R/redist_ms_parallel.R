@@ -178,7 +178,7 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
     if (length(k) == 0)
         cli_abort(c("Adaptive {.var k} not found. This error should not happen.",
             ">" = "Please file an issue at
-                        {.url https://github.com/alarm-redist/redist/issues/new}"))
+                        {.url https://github.com/alarm-gredist/gredist/issues/new}"))
 
     # set up parallel
     if (is.null(ncores)) ncores <- parallel::detectCores()
@@ -195,7 +195,7 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
     doParallel::registerDoParallel(cl)
     on.exit(stopCluster(cl))
 
-    out_par <- foreach(chain = seq_len(chains), .inorder = FALSE, .packages="redist") %dorng% {
+    out_par <- foreach(chain = seq_len(chains), .inorder = FALSE, .packages="gredist") %dorng% {
         if (!silent) cat("Starting chain ", chain, "\n", sep = "")
         run_verbosity <- if (chain == 1 || verbosity == 3) verbosity else 0
         t1_run <- Sys.time()
@@ -209,6 +209,7 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
             prethinned_steps = nsims,
             warmup = warmup
         )
+
 
         algout
     }
@@ -247,7 +248,7 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
                             ndists = ndists,
                             adapt_k_thresh = adapt_k_thresh,
                             mh_acceptance = mh,
-                            version = packageVersion("redist"),
+                            version = packageVersion("gredist"),
                             diagnostics = l_diag) %>%
         mutate(chain = rep(seq_len(chains), each = each_len*ndists),
                mcmc_accept = rep(acceptances, each = ndists))

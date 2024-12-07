@@ -2,107 +2,107 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 reduce_adj <- function(adj_list, prec_map, n_keep) {
-    .Call(`_redist_reduce_adj`, adj_list, prec_map, n_keep)
+    .Call(`_gredist_reduce_adj`, adj_list, prec_map, n_keep)
 }
 
 collapse_adj <- function(graph, idxs) {
-    .Call(`_redist_collapse_adj`, graph, idxs)
+    .Call(`_gredist_collapse_adj`, graph, idxs)
 }
 
 coarsen_adjacency <- function(adj, groups) {
-    .Call(`_redist_coarsen_adjacency`, adj, groups)
+    .Call(`_gredist_coarsen_adjacency`, adj, groups)
 }
 
 get_plan_graph <- function(l, V, plan, n_distr) {
-    .Call(`_redist_get_plan_graph`, l, V, plan, n_distr)
+    .Call(`_gredist_get_plan_graph`, l, V, plan, n_distr)
 }
 
 color_graph <- function(l, plan) {
-    .Call(`_redist_color_graph`, l, plan)
+    .Call(`_gredist_color_graph`, l, plan)
 }
 
 polsbypopper <- function(from, to, area, perimeter, dm, nd) {
-    .Call(`_redist_polsbypopper`, from, to, area, perimeter, dm, nd)
+    .Call(`_gredist_polsbypopper`, from, to, area, perimeter, dm, nd)
 }
 
 genAlConn <- function(aList, cds) {
-    .Call(`_redist_genAlConn`, aList, cds)
+    .Call(`_gredist_genAlConn`, aList, cds)
 }
 
 findBoundary <- function(fullList, conList) {
-    .Call(`_redist_findBoundary`, fullList, conList)
+    .Call(`_gredist_findBoundary`, fullList, conList)
 }
 
 contiguity <- function(adj, group) {
-    .Call(`_redist_contiguity`, adj, group)
+    .Call(`_gredist_contiguity`, adj, group)
 }
 
 cores <- function(adj, dm, k, cd_within_k) {
-    .Call(`_redist_cores`, adj, dm, k, cd_within_k)
+    .Call(`_gredist_cores`, adj, dm, k, cd_within_k)
 }
 
 update_conncomp <- function(dm, kvec, adj) {
-    .Call(`_redist_update_conncomp`, dm, kvec, adj)
+    .Call(`_gredist_update_conncomp`, dm, kvec, adj)
 }
 
 crsg <- function(adj_list, population, area, x_center, y_center, Ndistrict, target_pop, thresh, maxiter) {
-    .Call(`_redist_crsg`, adj_list, population, area, x_center, y_center, Ndistrict, target_pop, thresh, maxiter)
+    .Call(`_gredist_crsg`, adj_list, population, area, x_center, y_center, Ndistrict, target_pop, thresh, maxiter)
 }
 
 dist_dist_diff <- function(p, i_dist, j_dist, x_center, y_center, x, y) {
-    .Call(`_redist_dist_dist_diff`, p, i_dist, j_dist, x_center, y_center, x, y)
+    .Call(`_gredist_dist_dist_diff`, p, i_dist, j_dist, x_center, y_center, x, y)
 }
 
 log_st_map <- function(g, districts, counties, n_distr) {
-    .Call(`_redist_log_st_map`, g, districts, counties, n_distr)
+    .Call(`_gredist_log_st_map`, g, districts, counties, n_distr)
 }
 
 n_removed <- function(g, districts, n_distr) {
-    .Call(`_redist_n_removed`, g, districts, n_distr)
+    .Call(`_gredist_n_removed`, g, districts, n_distr)
 }
 
 countpartitions <- function(aList) {
-    .Call(`_redist_countpartitions`, aList)
+    .Call(`_gredist_countpartitions`, aList)
 }
 
 calcPWDh <- function(x) {
-    .Call(`_redist_calcPWDh`, x)
+    .Call(`_gredist_calcPWDh`, x)
 }
 
 group_pct_top_k <- function(m, group_pop, total_pop, k, n_distr) {
-    .Call(`_redist_group_pct_top_k`, m, group_pop, total_pop, k, n_distr)
+    .Call(`_gredist_group_pct_top_k`, m, group_pop, total_pop, k, n_distr)
 }
 
 proj_distr_m <- function(districts, x, draw_idx, n_distr) {
-    .Call(`_redist_proj_distr_m`, districts, x, draw_idx, n_distr)
+    .Call(`_gredist_proj_distr_m`, districts, x, draw_idx, n_distr)
 }
 
 colmax <- function(x) {
-    .Call(`_redist_colmax`, x)
+    .Call(`_gredist_colmax`, x)
 }
 
 colmin <- function(x) {
-    .Call(`_redist_colmin`, x)
+    .Call(`_gredist_colmin`, x)
 }
 
 prec_cooccur <- function(m, idxs, ncores = 0L) {
-    .Call(`_redist_prec_cooccur`, m, idxs, ncores)
+    .Call(`_gredist_prec_cooccur`, m, idxs, ncores)
 }
 
 group_pct <- function(m, group_pop, total_pop, n_distr) {
-    .Call(`_redist_group_pct`, m, group_pop, total_pop, n_distr)
+    .Call(`_gredist_group_pct`, m, group_pop, total_pop, n_distr)
 }
 
 pop_tally <- function(districts, pop, n_distr) {
-    .Call(`_redist_pop_tally`, districts, pop, n_distr)
+    .Call(`_gredist_pop_tally`, districts, pop, n_distr)
 }
 
 max_dev <- function(districts, pop, n_distr) {
-    .Call(`_redist_max_dev`, districts, pop, n_distr)
+    .Call(`_gredist_max_dev`, districts, pop, n_distr)
 }
 
 ms_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, verbosity) {
-    .Call(`_redist_ms_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, verbosity)
+    .Call(`_gredist_ms_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, verbosity)
 }
 
 #' Uses gsmc method with optimal weights to generate a sample of `M` plans in `c++`
@@ -129,91 +129,91 @@ ms_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, r
 #' running <ADD OPTIONS>
 #' @export
 optimal_gsmc_plans <- function(N, adj_list, counties, pop, target, lower, upper, M, control, num_threads = -1L, verbosity = 3L, diagnostic_mode = FALSE) {
-    .Call(`_redist_optimal_gsmc_plans`, N, adj_list, counties, pop, target, lower, upper, M, control, num_threads, verbosity, diagnostic_mode)
+    .Call(`_gredist_optimal_gsmc_plans`, N, adj_list, counties, pop, target, lower, upper, M, control, num_threads, verbosity, diagnostic_mode)
 }
 
 pareto_dominated <- function(x) {
-    .Call(`_redist_pareto_dominated`, x)
+    .Call(`_gredist_pareto_dominated`, x)
 }
 
 testing_sample_forest <- function(l, pop, lower, upper, counties, ignore) {
-    .Call(`_redist_testing_sample_forest`, l, pop, lower, upper, counties, ignore)
+    .Call(`_gredist_testing_sample_forest`, l, pop, lower, upper, counties, ignore)
 }
 
 perform_a_valid_region_split_then_merge_split <- function(adj_list, counties, pop, k_param, region_id_to_split, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, num_merge_split_steps, verbose) {
-    .Call(`_redist_perform_a_valid_region_split_then_merge_split`, adj_list, counties, pop, k_param, region_id_to_split, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, num_merge_split_steps, verbose)
+    .Call(`_gredist_perform_a_valid_region_split_then_merge_split`, adj_list, counties, pop, k_param, region_id_to_split, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, num_merge_split_steps, verbose)
 }
 
 one_cut_then_merge_split <- function(N, adj_list, counties, pop, target, lower, upper, split_district_only, num_merge_split_steps, verbose) {
-    .Call(`_redist_one_cut_then_merge_split`, N, adj_list, counties, pop, target, lower, upper, split_district_only, num_merge_split_steps, verbose)
+    .Call(`_gredist_one_cut_then_merge_split`, N, adj_list, counties, pop, target, lower, upper, split_district_only, num_merge_split_steps, verbose)
 }
 
 plan_class_testing <- function(V, num_regions, num_districts) {
-    .Call(`_redist_plan_class_testing`, V, num_regions, num_districts)
+    .Call(`_gredist_plan_class_testing`, V, num_regions, num_districts)
 }
 
 split_entire_map <- function(N, adj_list, counties, pop, target, lower, upper, verbose = FALSE) {
-    .Call(`_redist_split_entire_map`, N, adj_list, counties, pop, target, lower, upper, verbose)
+    .Call(`_gredist_split_entire_map`, N, adj_list, counties, pop, target, lower, upper, verbose)
 }
 
 split_all_the_way <- function(N, adj_list, counties, pop, target, lower, upper, verbose) {
-    .Call(`_redist_split_all_the_way`, N, adj_list, counties, pop, target, lower, upper, verbose)
+    .Call(`_gredist_split_all_the_way`, N, adj_list, counties, pop, target, lower, upper, verbose)
 }
 
 copy_semantics_tester_outer <- function() {
-    invisible(.Call(`_redist_copy_semantics_tester_outer`))
+    invisible(.Call(`_gredist_copy_semantics_tester_outer`))
 }
 
 test_cpp_discrete_distribution <- function() {
-    invisible(.Call(`_redist_test_cpp_discrete_distribution`))
+    invisible(.Call(`_gredist_test_cpp_discrete_distribution`))
 }
 
 test_region_lev_graph_stuff <- function(N, adj_list, counties, pop, target, lower, upper, verbose) {
-    .Call(`_redist_test_region_lev_graph_stuff`, N, adj_list, counties, pop, target, lower, upper, verbose)
+    .Call(`_gredist_test_region_lev_graph_stuff`, N, adj_list, counties, pop, target, lower, upper, verbose)
 }
 
 closest_adj_pop <- function(adj, i_dist, g_prop) {
-    .Call(`_redist_closest_adj_pop`, adj, i_dist, g_prop)
+    .Call(`_gredist_closest_adj_pop`, adj, i_dist, g_prop)
 }
 
 rint1 <- function(n, max) {
-    .Call(`_redist_rint1`, n, max)
+    .Call(`_gredist_rint1`, n, max)
 }
 
 runif1 <- function(n, max) {
-    .Call(`_redist_runif1`, n, max)
+    .Call(`_gredist_runif1`, n, max)
 }
 
 resample_lowvar <- function(wgts) {
-    .Call(`_redist_resample_lowvar`, wgts)
+    .Call(`_gredist_resample_lowvar`, wgts)
 }
 
 plan_joint <- function(m1, m2, pop) {
-    .Call(`_redist_plan_joint`, m1, m2, pop)
+    .Call(`_gredist_plan_joint`, m1, m2, pop)
 }
 
 renumber_matrix <- function(plans, renumb) {
-    .Call(`_redist_renumber_matrix`, plans, renumb)
+    .Call(`_gredist_renumber_matrix`, plans, renumb)
 }
 
 solve_hungarian <- function(costMatrix) {
-    .Call(`_redist_solve_hungarian`, costMatrix)
+    .Call(`_gredist_solve_hungarian`, costMatrix)
 }
 
 rsg <- function(adj_list, population, Ndistrict, target_pop, thresh, maxiter) {
-    .Call(`_redist_rsg`, adj_list, population, Ndistrict, target_pop, thresh, maxiter)
+    .Call(`_gredist_rsg`, adj_list, population, Ndistrict, target_pop, thresh, maxiter)
 }
 
 k_smallest <- function(x, k = 1L) {
-    .Call(`_redist_k_smallest`, x, k)
+    .Call(`_gredist_k_smallest`, x, k)
 }
 
 k_biggest <- function(x, k = 1L) {
-    .Call(`_redist_k_biggest`, x, k)
+    .Call(`_gredist_k_biggest`, x, k)
 }
 
 smc_plans <- function(N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, control, verbosity = 1L) {
-    .Call(`_redist_smc_plans`, N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, control, verbosity)
+    .Call(`_gredist_smc_plans`, N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, control, verbosity)
 }
 
 #' Uses gsmc method with optimal weights and merge split steps to generate a sample of `M` plans in `c++`
@@ -240,15 +240,15 @@ smc_plans <- function(N, l, counties, pop, n_distr, target, lower, upper, rho, d
 #' running <ADD OPTIONS>
 #' @export
 optimal_gsmc_with_merge_split_plans <- function(N, adj_list, counties, pop, target, lower, upper, M, control, num_threads = -1L, verbosity = 3L, diagnostic_mode = FALSE) {
-    .Call(`_redist_optimal_gsmc_with_merge_split_plans`, N, adj_list, counties, pop, target, lower, upper, M, control, num_threads, verbosity, diagnostic_mode)
+    .Call(`_gredist_optimal_gsmc_with_merge_split_plans`, N, adj_list, counties, pop, target, lower, upper, M, control, num_threads, verbosity, diagnostic_mode)
 }
 
 splits <- function(dm, community, nd, max_split) {
-    .Call(`_redist_splits`, dm, community, nd, max_split)
+    .Call(`_gredist_splits`, dm, community, nd, max_split)
 }
 
 dist_cty_splits <- function(dm, community, nd) {
-    .Call(`_redist_dist_cty_splits`, dm, community, nd)
+    .Call(`_gredist_dist_cty_splits`, dm, community, nd)
 }
 
 #' Selects a multidistrict with probability proportional to its d_nk value and
@@ -518,19 +518,19 @@ NULL
 NULL
 
 perform_a_valid_region_split <- function(adj_list, counties, pop, k_param, region_id_to_split, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, verbose) {
-    .Call(`_redist_perform_a_valid_region_split`, adj_list, counties, pop, k_param, region_id_to_split, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, verbose)
+    .Call(`_gredist_perform_a_valid_region_split`, adj_list, counties, pop, k_param, region_id_to_split, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, verbose)
 }
 
 perform_merge_split_steps <- function(adj_list, counties, pop, k_param, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, num_merge_split_steps, verbose) {
-    .Call(`_redist_perform_merge_split_steps`, adj_list, counties, pop, k_param, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, num_merge_split_steps, verbose)
+    .Call(`_gredist_perform_merge_split_steps`, adj_list, counties, pop, k_param, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, num_merge_split_steps, verbose)
 }
 
 swMH <- function(aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parity, beta_sequence, beta_weights, lambda = 0L, beta = 0.0, adapt_beta = "none", adjswap = 1L, exact_mh = 0L, adapt_eprob = 0L, adapt_lambda = 0L, num_hot_steps = 0L, num_annealing_steps = 0L, num_cold_steps = 0L, verbose = TRUE) {
-    .Call(`_redist_swMH`, aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parity, beta_sequence, beta_weights, lambda, beta, adapt_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, num_hot_steps, num_annealing_steps, num_cold_steps, verbose)
+    .Call(`_gredist_swMH`, aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parity, beta_sequence, beta_weights, lambda, beta, adapt_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, num_hot_steps, num_annealing_steps, num_cold_steps, verbose)
 }
 
 split_entire_map_once_new_cut_func <- function(N, adj_list, counties, pop, target, lower, upper, split_district_only, verbose) {
-    .Call(`_redist_split_entire_map_once_new_cut_func`, N, adj_list, counties, pop, target, lower, upper, split_district_only, verbose)
+    .Call(`_gredist_split_entire_map_once_new_cut_func`, N, adj_list, counties, pop, target, lower, upper, split_district_only, verbose)
 }
 
 #' Creates the region level graph of a plan
@@ -550,11 +550,11 @@ split_entire_map_once_new_cut_func <- function(N, adj_list, counties, pop, targe
 NULL
 
 tree_pop <- function(ust, vtx, pop, pop_below, parent) {
-    .Call(`_redist_tree_pop`, ust, vtx, pop, pop_below, parent)
+    .Call(`_gredist_tree_pop`, ust, vtx, pop, pop_below, parent)
 }
 
 var_info_vec <- function(m, ref, pop) {
-    .Call(`_redist_var_info_vec`, m, ref, pop)
+    .Call(`_gredist_var_info_vec`, m, ref, pop)
 }
 
 #' Computes the effective sample size from log incremental weights
@@ -607,6 +607,6 @@ NULL
 NULL
 
 sample_ust <- function(l, pop, lower, upper, counties, ignore) {
-    .Call(`_redist_sample_ust`, l, pop, lower, upper, counties, ignore)
+    .Call(`_gredist_sample_ust`, l, pop, lower, upper, counties, ignore)
 }
 

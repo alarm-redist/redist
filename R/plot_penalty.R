@@ -21,7 +21,7 @@
 #' @export
 #'
 #' @importFrom ggplot2 lims labs geom_path
-redist.plot.penalty <- function(tgt_min = 0.55, tgt_other = 0.25,
+gredist.plot.penalty <- function(tgt_min = 0.55, tgt_other = 0.25,
                                 strength_vra = 2500, pow_vra = 1.5, limits = TRUE) {
     .Deprecated("plot.redist_constr")
 

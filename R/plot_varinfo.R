@@ -14,11 +14,11 @@
 #' @return patchworked ggplot
 #' @concept plot
 #' @export
-redist.plot.varinfo <- function(plans, group_pop, total_pop, shp) {
+gredist.plot.varinfo <- function(plans, group_pop, total_pop, shp) {
     centers <- 5
-    gp <- redist.group.percent(plans = plans, group_pop = group_pop, total_pop = total_pop)
+    gp <- gredist.group.percent(plans = plans, group_pop = group_pop, total_pop = total_pop)
     pct_min <- colmin(gp)
-    dists <- redist.distances(plans, "info", total_pop = total_pop)$VI
+    dists <- gredist.distances(plans, "info", total_pop = total_pop)$VI
     mds <- cmdscale(dists)
     tb <- tibble(mds1 = mds[, 1], mds2 = mds[, 2],
         pct_min = pct_min, id = 1:ncol(plans))

@@ -11,6 +11,7 @@ redist_optimal_gsmc_ms(
   k_params = 6,
   split_district_only = FALSE,
   ms_freq = 7,
+  ms_steps_multiplier = 1L,
   resample = TRUE,
   runs = 1L,
   ncores = 0L,

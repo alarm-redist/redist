@@ -2,7 +2,7 @@
 ## Author: Cory McCartan
 ## Institution: Harvard University
 ## Date Created: 2021/01/28
-## Purpose: redist functions for a tidy workflow
+## Purpose: gredist functions for a tidy workflow
 ##############################################
 
 #######################
@@ -46,7 +46,7 @@ validate_redist_map <- function(data, check_contig = TRUE, call = parent.frame()
         components <- contiguity(get_adj(data), rep(1, nrow(data)))
         disconn <- which(components != which.max(table(components)))
         cli_abort(c("Adjacency graph not contiguous.",
-            ">" = "Try manually editing the output of {.fun redist.adjacency}.",
+            ">" = "Try manually editing the output of {.fun gredist.adjacency}.",
             "i" = "Disconnected precincts: c({paste0(disconn, collapse=', ')})"),
         call = call)
     }
@@ -226,7 +226,7 @@ redist_map <- function(..., existing_plan = NULL, pop_tol = NULL,
     pop_tol <- eval_tidy(enquo(pop_tol), x)
     if (is.null(pop_tol) && is.null(pop_bounds)) {
         if (!is.null(existing_col)) {
-            pop_tol <- redist.parity(x[[existing_col]], x[[pop_col]])
+            pop_tol <- gredist.parity(x[[existing_col]], x[[pop_col]])
             if (pop_tol <= 0.001)
                 cli_inform("{.arg pop_tol} calculated from existing plan is \u2264 0.1%")
         } else {
@@ -250,7 +250,7 @@ redist_map <- function(..., existing_plan = NULL, pop_tol = NULL,
             cli_abort(c("Column {.field adj_col} already present in data. ",
                 ">" = "Specify an alternate adj column."))
 
-        adj <- redist.adjacency(x)
+        adj <- gredist.adjacency(x)
     }
 
     validate_redist_map(
@@ -375,7 +375,7 @@ dplyr_row_slice.redist_map <- function(data, i, ...) {
     # reduce adj. graph
     y <- vctrs::vec_slice(data, i)
     gr_col <- attr(data, "adj_col")
-    y[[gr_col]] <- redist.reduce.adjacency(data[[gr_col]], keep_rows = i)
+    y[[gr_col]] <- gredist.reduce.adjacency(data[[gr_col]], keep_rows = i)
 
     # fix ndists if existing_col exists
     exist_col <- attr(data, "existing_col")
@@ -546,8 +546,8 @@ print.redist_map <- function(x, ...) {
 #' district and indicate the \code{fill} variable by shading.
 #' @param adj if \code{TRUE}, force plotting the adjacency graph. Overrides
 #' \code{by_distr}.
-#' @param ... passed on to \code{\link{redist.plot.map}} (or
-#' \code{\link{redist.plot.adj}} if \code{adj=TRUE}).
+#' @param ... passed on to \code{\link{gredist.plot.map}} (or
+#' \code{\link{gredist.plot.adj}} if \code{adj=TRUE}).
 #' Useful parameters may include \code{zoom_to}, \code{boundaries}, and
 #' \code{title}.
 #'
@@ -577,17 +577,17 @@ plot.redist_map <- function(x, fill = NULL, by_distr = FALSE, adj = FALSE, ...) 
     existing <- get_existing(x)
     if (rlang::quo_is_null(fill)) {
         if (!is.null(existing) && isFALSE(adj)) {
-            redist.plot.map(shp = x, adj = get_adj(x), plan = existing, ...)
+            gredist.plot.map(shp = x, adj = get_adj(x), plan = existing, ...)
         } else {
-            redist.plot.adj(shp = x, adj = get_adj(x), ...)
+            gredist.plot.adj(shp = x, adj = get_adj(x), ...)
         }
     } else {
         fill_name <- rlang::quo_text(fill)
         if (!is.null(existing) && isTRUE(by_distr)) {
-            redist.plot.map(shp = x, adj = get_adj(x), plan = existing,
+            gredist.plot.map(shp = x, adj = get_adj(x), plan = existing,
                 fill = !!fill, fill_label = fill_name, ...)
         } else {
-            redist.plot.map(shp = x, fill = !!fill, fill_label = fill_name, ...)
+            gredist.plot.map(shp = x, fill = !!fill, fill_label = fill_name, ...)
         }
     }
 }

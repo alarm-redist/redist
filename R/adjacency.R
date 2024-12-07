@@ -1,4 +1,4 @@
-#' Adjacency List functionality for redist
+#' Adjacency List functionality for gredist
 #'
 #' @param shp A SpatialPolygonsDataFrame or sf object. Required.
 #' @param plan A numeric vector (if only one map) or matrix with one row
@@ -9,7 +9,7 @@
 #'
 #' @importFrom sf st_relate
 #' @export
-redist.adjacency <- function(shp, plan) {
+gredist.adjacency <- function(shp, plan) {
     # Check input
     if (!any(c("sf", "SpatialPolygonsDataFrame") %in% class(shp))) {
         cli_abort("{.arg shp} must be a {.cls sf} or {.cls sp} object")
@@ -67,9 +67,9 @@ redist.adjacency <- function(shp, plan) {
 #'
 #' @examples
 #' data(fl25_adj)
-#' redist.reduce.adjacency(fl25_adj, c(2, 3, 4, 6, 21))
+#' gredist.reduce.adjacency(fl25_adj, c(2, 3, 4, 6, 21))
 #'
-redist.reduce.adjacency <- function(adj, keep_rows) {
+gredist.reduce.adjacency <- function(adj, keep_rows) {
     # Check inputs:
     if (!(class(keep_rows) %in% c("numeric", "integer"))) {
         cli_warn("{.arg keep_rows} must be a numeric or integer vector.")
@@ -98,7 +98,7 @@ redist.reduce.adjacency <- function(adj, keep_rows) {
 #'
 #' @concept prepare
 #' @export
-redist.coarsen.adjacency <- function(adj, groups) {
+gredist.coarsen.adjacency <- function(adj, groups) {
     if (min(unlist(adj)) != 0) {
         cli_abort("{.arg adj} must be a 0-indexed list.")
     }
@@ -125,7 +125,7 @@ redist.coarsen.adjacency <- function(adj, groups) {
 #'
 #' @param shp  An sf object
 #' @param adj A zero-indexed adjacency list. Created with
-#' \code{redist.adjacency} if not supplied.
+#' \code{gredist.adjacency} if not supplied.
 #' @param keep_rows row numbers of precincts to keep. Random submap selected if not supplied.
 #' @param total_pop numeric vector with one entry for the population of each precinct.
 #' @param ndists integer, number of districts in whole map
@@ -141,23 +141,23 @@ redist.coarsen.adjacency <- function(adj, groups) {
 #'
 #' @concept prepare
 #' @export
-redist.subset <- function(shp, adj, keep_rows, total_pop, ndists,
+gredist.subset <- function(shp, adj, keep_rows, total_pop, ndists,
                           pop_tol, sub_ndists) {
     if (missing(shp)) {
         cli_abort(c("{.arg shp} is required.",
-            "i" = "Use {.fn redist.reduce.adjacency} to subset adjacency lists."))
+            "i" = "Use {.fn gredist.reduce.adjacency} to subset adjacency lists."))
     }
     if (!inherits(shp, "sf")) {
         cli_abort("{.arg shp} must be an {.cls sf} object.")
     }
 
     if (missing(adj)) {
-        adj <- redist.adjacency(shp)
+        adj <- gredist.adjacency(shp)
     }
 
     if (missing(keep_rows)) {
         n <- sample(1:nrow(shp), 1)
-        keep_rows <- redist.random.subgraph(shp, n, adj)$keep_rows
+        keep_rows <- gredist.random.subgraph(shp, n, adj)$keep_rows
     }
 
     if (!missing(total_pop) &
@@ -176,7 +176,7 @@ redist.subset <- function(shp, adj, keep_rows, total_pop, ndists,
 
     rlist <- list(
         shp = shp %>% dplyr::slice(keep_rows),
-        adj = redist.reduce.adjacency(adj, keep_rows = keep_rows),
+        adj = gredist.reduce.adjacency(adj, keep_rows = keep_rows),
         keep_rows = keep_rows,
         sub_ndists = sub_ndists,
         sub_pop_tol = sub_pop_tol

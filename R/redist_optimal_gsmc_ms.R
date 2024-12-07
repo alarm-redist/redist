@@ -222,14 +222,14 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
 
 
     t1 <- Sys.time()
-    all_out <- foreach(chain = seq_len(runs), .inorder = FALSE, .packages="redist") %oper% {
+    all_out <- foreach(chain = seq_len(runs), .inorder = FALSE, .packages="gredist") %oper% {
 
 
         run_verbosity <- if (chain == 1 || !multiprocess) verbosity else 0
         t1_run <- Sys.time()
 
 
-        algout <- redist::optimal_gsmc_with_merge_split_plans(
+        algout <- gredist::optimal_gsmc_with_merge_split_plans(
             N=N,
             adj_list=adj_list,
             counties=counties,
@@ -450,7 +450,7 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
                                  {.val {NA}} or {.val {Inf}}",
                         "*" = "If you are not using any constraints, please call
                                  {.code rlang::trace_back()} and file an issue at
-                                 {.url https://github.com/alarm-redist/redist/issues/new}"))
+                                 {.url https://github.com/alarm-gredist/gredist/issues/new}"))
         }
 
 
@@ -557,7 +557,7 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
                             n_eff = all_out[[1]]$n_eff,
                             compactness = 1,
                             constraints = constraints,
-                            version = packageVersion("redist"),
+                            version = packageVersion("gredist"),
                             diagnostics = l_diag,
                             pop_bounds = pop_bounds)
 

@@ -12,20 +12,20 @@
 #' @export
 #' @concept prepare
 #' @examples
-#' library(redist)
+#' library(gredist)
 #' library(dplyr)
 #' data(fl25)
 #' data(fl25_enum)
 #' data(fl25_adj)
 #' plan <- fl25_enum$plans[, 5118]
-#' freeze_id <- redist.freeze(adj = fl25_adj, freeze_row = (plan == 2),
+#' freeze_id <- gredist.freeze(adj = fl25_adj, freeze_row = (plan == 2),
 #'     plan = plan)
 #'
 #' data(iowa)
 #' map <- redist_map(iowa, existing_plan = cd_2010, pop_tol = 0.02)
 #' map <- map %>% merge_by(freeze(cd_2010 == 1, .data = .))
 #'
-redist.freeze <- function(adj, freeze_row, plan = rep(1, length(adj))) {
+gredist.freeze <- function(adj, freeze_row, plan = rep(1, length(adj))) {
     if (missing(adj)) {
         cli_abort("Please provide an object to {.arg adj}.")
     }
@@ -66,7 +66,7 @@ redist.freeze <- function(adj, freeze_row, plan = rep(1, length(adj))) {
     tb$gid
 }
 
-#' @rdname redist.freeze
+#' @rdname gredist.freeze
 #' @order 1
 #'
 #' @param .data a \code{\link{redist_map}} object
@@ -93,7 +93,7 @@ freeze <- function(freeze_row, plan, .data = cur_map()) {
     else
         freeze_row <- as.numeric(freeze_row)
 
-    redist.freeze(adj = adj, freeze_row = freeze_row, plan = plan)
+    gredist.freeze(adj = adj, freeze_row = freeze_row, plan = plan)
 }
 
 globalVariables("rn")

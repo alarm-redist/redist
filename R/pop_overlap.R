@@ -26,22 +26,22 @@
 #' iowa_map <- redist_map(iowa, total_pop = pop, pop_tol = 0.01, ndists = 4)
 #' plans <- redist_smc(iowa_map, 2)
 #' plans_mat <- get_plans_matrix(plans)
-#' ov <- redist.dist.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map)
+#' ov <- gredist.dist.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map)
 #' round(ov, 2)
 #'
-#' ov_col <- redist.dist.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map, normalize_rows = FALSE)
+#' ov_col <- gredist.dist.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map, normalize_rows = FALSE)
 #' round(ov_col, 2)
 #'
-#' ov_un_norm <- redist.dist.pop.overlap(plans_mat[, 1], plans_mat[, 2],
+#' ov_un_norm <- gredist.dist.pop.overlap(plans_mat[, 1], plans_mat[, 2],
 #'     iowa_map, normalize_rows = NULL)
 #' round(ov_un_norm, 2)
 #'
 #' iowa_map_5 <- iowa_map <- redist_map(iowa, total_pop = pop, pop_tol = 0.01, ndists = 5)
 #' plan_5 <- get_plans_matrix(redist_smc(iowa_map_5, 1))
-#' ov4_5 <- redist.dist.pop.overlap(plans_mat[, 1], plan_5, iowa_map)
+#' ov4_5 <- gredist.dist.pop.overlap(plans_mat[, 1], plan_5, iowa_map)
 #' round(ov4_5, 2)
 #'
-redist.dist.pop.overlap <- function(plan_old, plan_new, total_pop, normalize_rows = TRUE) {
+gredist.dist.pop.overlap <- function(plan_old, plan_new, total_pop, normalize_rows = TRUE) {
     if (missing(plan_old)) {
         stop("Please pass an argument to `plan_old`.")
     }
@@ -105,11 +105,11 @@ redist.dist.pop.overlap <- function(plan_old, plan_new, total_pop, normalize_row
 #' iowa_map <- redist_map(iowa, total_pop = pop, pop_tol = 0.01, ndists = 4)
 #' plans <- redist_smc(iowa_map, 2, silent = TRUE)
 #' plans_mat <- get_plans_matrix(plans)
-#' ov_vec <- redist.prec.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map)
-#' redist.prec.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map,  weighting = "s",
+#' ov_vec <- gredist.prec.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map)
+#' gredist.prec.pop.overlap(plans_mat[, 1], plans_mat[, 2], iowa_map,  weighting = "s",
 #'     normalize = FALSE, index_only = TRUE)
 #'
-redist.prec.pop.overlap <- function(plan_old, plan_new, total_pop, weighting = "s",
+gredist.prec.pop.overlap <- function(plan_old, plan_new, total_pop, weighting = "s",
                                     normalize = TRUE, index_only = FALSE, return_mat = FALSE) {
 
     weighting <- match.arg(weighting, choices = c("s", "m", "g", "n"))
