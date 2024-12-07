@@ -136,6 +136,42 @@ pareto_dominated <- function(x) {
     .Call(`_gredist_pareto_dominated`, x)
 }
 
+testing_sample_forest <- function(l, pop, lower, upper, counties, ignore) {
+    .Call(`_gredist_testing_sample_forest`, l, pop, lower, upper, counties, ignore)
+}
+
+perform_a_valid_region_split_then_merge_split <- function(adj_list, counties, pop, k_param, region_id_to_split, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, num_merge_split_steps, verbose) {
+    .Call(`_gredist_perform_a_valid_region_split_then_merge_split`, adj_list, counties, pop, k_param, region_id_to_split, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, num_merge_split_steps, verbose)
+}
+
+one_cut_then_merge_split <- function(N, adj_list, counties, pop, target, lower, upper, split_district_only, num_merge_split_steps, verbose) {
+    .Call(`_gredist_one_cut_then_merge_split`, N, adj_list, counties, pop, target, lower, upper, split_district_only, num_merge_split_steps, verbose)
+}
+
+plan_class_testing <- function(V, num_regions, num_districts) {
+    .Call(`_gredist_plan_class_testing`, V, num_regions, num_districts)
+}
+
+split_entire_map <- function(N, adj_list, counties, pop, target, lower, upper, verbose = FALSE) {
+    .Call(`_gredist_split_entire_map`, N, adj_list, counties, pop, target, lower, upper, verbose)
+}
+
+split_all_the_way <- function(N, adj_list, counties, pop, target, lower, upper, verbose) {
+    .Call(`_gredist_split_all_the_way`, N, adj_list, counties, pop, target, lower, upper, verbose)
+}
+
+copy_semantics_tester_outer <- function() {
+    invisible(.Call(`_gredist_copy_semantics_tester_outer`))
+}
+
+test_cpp_discrete_distribution <- function() {
+    invisible(.Call(`_gredist_test_cpp_discrete_distribution`))
+}
+
+test_region_lev_graph_stuff <- function(N, adj_list, counties, pop, target, lower, upper, verbose) {
+    .Call(`_gredist_test_region_lev_graph_stuff`, N, adj_list, counties, pop, target, lower, upper, verbose)
+}
+
 closest_adj_pop <- function(adj, i_dist, g_prop) {
     .Call(`_gredist_closest_adj_pop`, adj, i_dist, g_prop)
 }
@@ -491,6 +527,10 @@ perform_merge_split_steps <- function(adj_list, counties, pop, k_param, target, 
 
 swMH <- function(aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parity, beta_sequence, beta_weights, lambda = 0L, beta = 0.0, adapt_beta = "none", adjswap = 1L, exact_mh = 0L, adapt_eprob = 0L, adapt_lambda = 0L, num_hot_steps = 0L, num_annealing_steps = 0L, num_cold_steps = 0L, verbose = TRUE) {
     .Call(`_gredist_swMH`, aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parity, beta_sequence, beta_weights, lambda, beta, adapt_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, num_hot_steps, num_annealing_steps, num_cold_steps, verbose)
+}
+
+split_entire_map_once_new_cut_func <- function(N, adj_list, counties, pop, target, lower, upper, split_district_only, verbose) {
+    .Call(`_gredist_split_entire_map_once_new_cut_func`, N, adj_list, counties, pop, target, lower, upper, split_district_only, verbose)
 }
 
 #' Creates the region level graph of a plan

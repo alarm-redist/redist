@@ -82,7 +82,7 @@ gredist.rsg <- function(adj, total_pop, ndists, pop_tol,
     ## Main Call to Computation - if returning NA, break.
     ## If returning districts but not contiguous, repeat
     ## First attempt
-    time <- system.time(ret <- .Call("_redist_rsg",
+    time <- system.time(ret <- .Call("_gredist_rsg",
         PACKAGE = "gredist",
         adj,
         total_pop,
@@ -94,7 +94,7 @@ gredist.rsg <- function(adj, total_pop, ndists, pop_tol,
     ## Make another call if stuck, but only do one more try
     ## because maxiter might be too low
     if (is.na(ret$plan[1])) {
-        time <- system.time(ret <- .Call("_redist_rsg",
+        time <- system.time(ret <- .Call("_gredist_rsg",
             PACKAGE = "gredist",
             adj,
             total_pop,

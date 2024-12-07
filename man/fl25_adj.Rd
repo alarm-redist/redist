@@ -20,6 +20,6 @@ data(fl25_adj)
 Fifield, Benjamin, Michael Higgins, Kosuke Imai and Alexander Tarr.
 (2016) "A New Automated Redistricting Simulator Using Markov Chain Monte Carlo."
 Working Paper. Available at
-\url{http://imai.princeton.edu/research/files/redist.pdf}.
+\url{http://imai.princeton.edu/research/files/gredist.pdf}.
 }
 \concept{data}

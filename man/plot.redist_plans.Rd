@@ -12,8 +12,8 @@
 \item{...}{passed on to the underlying function}
 
 \item{type}{the name of the plotting function to use. Will have
-\code{redist.plot.}, prepended to it; e.g., use \code{type="plans"} to call
-\code{\link{redist.plot.plans}}.}
+\code{gredist.plot.}, prepended to it; e.g., use \code{type="plans"} to call
+\code{\link{gredist.plot.plans}}.}
 }
 \description{
 If no arguments are passed, defaults to plotting the sampling weights for

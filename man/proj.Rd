@@ -60,7 +60,7 @@ It is very important to properly account for variation in the projective
 distribution when looking at projective contrasts. The \code{pfdr} argument to
 \code{proj_contr()} will calculate q-values for each precinct that can be used to
 control the positive false discovery rate (pFDR) to avoid being misled by
-this variation. See \code{\link[=redist.plot.contr_pfdr]{redist.plot.contr_pfdr()}} for a way to automatically
+this variation. See \code{\link[=gredist.plot.contr_pfdr]{gredist.plot.contr_pfdr()}} for a way to automatically
 plot projective contrasts with this false discovery rate control.
 }
 \examples{

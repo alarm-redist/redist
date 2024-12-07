@@ -20,8 +20,8 @@ district and indicate the \code{fill} variable by shading.}
 \item{adj}{if \code{TRUE}, force plotting the adjacency graph. Overrides
 \code{by_distr}.}
 
-\item{...}{passed on to \code{\link{redist.plot.map}} (or
-\code{\link{redist.plot.adj}} if \code{adj=TRUE}).
+\item{...}{passed on to \code{\link{gredist.plot.map}} (or
+\code{\link{gredist.plot.adj}} if \code{adj=TRUE}).
 Useful parameters may include \code{zoom_to}, \code{boundaries}, and
 \code{title}.}
 }
