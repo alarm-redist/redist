@@ -10,7 +10,7 @@
 #define SW_MH_HELPER_H
 
 #include <RcppArmadillo.h>
-#include "redist_types.h"
+#include "gredist_types.h"
 #include "make_swaps_helper.h"
 #include "constraint_calc_helper.h"
 #include "map_calc.h"

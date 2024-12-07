@@ -9,7 +9,7 @@
 #ifndef CONSTRAINT_CALC_HELPER_H
 #define CONSTRAINT_CALC_HELPER_H
 
-#include "redist_types.h"
+#include "gredist_types.h"
 
 Rcpp::NumericVector findBoundary(Rcpp::List fullList,
 				 Rcpp::List conList);

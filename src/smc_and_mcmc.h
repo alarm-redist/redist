@@ -14,7 +14,7 @@
 #include <RcppThread.h>
 
 
-#include "redist_types.h"
+#include "gredist_types.h"
 #include "splitting.h"
 #include "merging.h"
 #include "weights.h"

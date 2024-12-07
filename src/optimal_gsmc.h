@@ -17,7 +17,7 @@
 #include "wilson.h"
 #include "tree_op.h"
 #include "map_calc.h"
-#include "redist_types.h"
+#include "gredist_types.h"
 #include "splitting.h"
 #include "weights.h"
 

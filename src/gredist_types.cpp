@@ -5,7 +5,7 @@
  * Purpose: Sequential Monte Carlo redistricting sampler
  ********************************************************/
 
-#include "redist_types.h"
+#include "gredist_types.h"
 
 
 // Define the constructor template outside the class

@@ -17,7 +17,7 @@
 #include "wilson.h"
 #include "tree_op.h"
 #include "map_calc.h"
-#include "redist_types.h"
+#include "gredist_types.h"
 
 
 //' Selects a multidistrict with probability proportional to its d_nk value and

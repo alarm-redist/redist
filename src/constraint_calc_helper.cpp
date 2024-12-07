@@ -9,7 +9,7 @@
 // Header files
 
 #include <RcppArmadillo.h>
-#include "redist_types.h"
+#include "gredist_types.h"
 #include "tree_op.h"
 
 using namespace Rcpp;
