@@ -22,7 +22,7 @@
 //'
 //' @return sum of weights squared over sum of squared weights (sum(wgt)^2 / sum(wgt^2))
 //'
-double compute_n_eff(const std::vector<double> &log_wgt) {
+double compute_n_eff(const arma::subview_col<double> log_wgt) {
     double sum_wgt = 0.0;
     double sum_wgt_squared = 0.0;
 
@@ -30,7 +30,7 @@ double compute_n_eff(const std::vector<double> &log_wgt) {
     for (const double& log_w : log_wgt) {
         double wgt = std::exp(log_w);
         sum_wgt += wgt;
-        sum_wgt_squared += wgt * wgt;
+        sum_wgt_squared += std::exp(2*log_w);
     }
 
 
@@ -42,7 +42,7 @@ double compute_n_eff(const std::vector<double> &log_wgt) {
 // only gets regions adjacent to indices where valid_regions is true
 void get_all_adj_pairs(
     Graph const &g, std::vector<std::pair<int, int>> &adj_pairs_vec,
-    std::vector<int> const &vertex_region_ids,
+    arma::subview_col<arma::uword> const &vertex_region_ids,
     std::vector<bool> const valid_regions
 ){
     int V = g.size();
@@ -53,7 +53,7 @@ void get_all_adj_pairs(
     // iterate over all vertices in g
     for (int i = 0; i < V; i++) {
         // Find out which region this vertex corresponds to
-        int region_num_i = vertex_region_ids.at(i);
+        int region_num_i = vertex_region_ids(i);
 
         // check if its a valid region and if not continue
         if(!valid_regions.at(region_num_i)){
@@ -65,7 +65,7 @@ void get_all_adj_pairs(
         // now iterate over its neighbors
         for (int nbor : nbors) {
             // find which region neighbor corresponds to
-            int region_num_j = vertex_region_ids.at(nbor);
+            int region_num_j = vertex_region_ids(nbor);
 
             // if they are different regions mark matrix true since region i
             // and region j are adjacent as they share an edge across
@@ -109,9 +109,9 @@ void get_all_adj_pairs(
 //' @return the log of the boundary count
 //'
  double region_log_boundary(const Graph &g, 
-                            const std::vector<int> &vertex_region_ids,
-                            int const&region1_id,
-                            int const&region2_id
+                            const arma::subview_col<arma::uword> &vertex_region_ids,
+                            int const region1_id,
+                            int const region2_id
 ) {
      int V = g.size(); // get number of vertices
      double count = 0; // count of number of edges across the two regions
@@ -123,7 +123,7 @@ void get_all_adj_pairs(
           counting we will only count those where first edge is in
           region 1
           */
-         if (vertex_region_ids.at(i) != region1_id) continue;
+         if (vertex_region_ids(i) != region1_id) continue;
 
          // Get vertice's neighbors
          std::vector<int> nbors = g[i];
@@ -133,7 +133,7 @@ void get_all_adj_pairs(
 
          // Now check if neighbors are in second region
          for (int nbor : nbors) {
-             if (vertex_region_ids.at(nbor) != region2_id)
+             if (vertex_region_ids(nbor) != region2_id)
                  continue;
              // if they are increase count by one
              count += 1.0;
@@ -147,8 +147,8 @@ void get_all_adj_pairs(
 double get_log_mh_ratio(
     const Graph &g, 
     const int region1_id, const int region2_id,
-    const std::vector<int> &old_vertex_region_ids,
-    const std::vector<int> &new_vertex_region_ids,
+    const arma::subview_col<arma::uword> &old_vertex_region_ids,
+    const arma::subview_col<arma::uword> &new_vertex_region_ids,
     const int num_old_adj_regions, const int num_new_adj_regions
 ){
     // get the log boundary lengths
@@ -210,7 +210,7 @@ double get_log_retroactive_splitting_prob(
 
     // Iterate over all regions
     for(int region_id = 0; region_id < plan.num_regions; region_id++) {
-        int d_val = plan.region_dvals.at(region_id);
+        int d_val = plan.region_dvals(region_id);
 
         // collect info if multidistrict and not the two we started with
         if(d_val > 1 && region_id != region1_id && region_id != region2_id){
@@ -220,7 +220,7 @@ double get_log_retroactive_splitting_prob(
     }
 
     // Now get the sum of dnk values of two regions aka the unioned old region
-    int unioned_region_dnk = plan.region_dvals.at(region1_id) + plan.region_dvals.at(region2_id);
+    int unioned_region_dnk = plan.region_dvals(region1_id) + plan.region_dvals(region2_id);
     // update the total number of multi district dvals with the value the union region would have been
     total_multi_ds += unioned_region_dnk;
 
@@ -437,7 +437,7 @@ void get_all_plans_log_gsmc_weights(
         RcppThread::ThreadPool &pool,
         const Graph &g, std::vector<Plan> &plans_vec,
         bool split_district_only,
-        std::vector<double> &log_incremental_weights,
+        arma::subview_col<double> log_incremental_weights,
         std::vector<double> &unnormalized_sampling_weights,
         double target, double pop_temper
 ){
@@ -448,7 +448,7 @@ void get_all_plans_log_gsmc_weights(
         double log_incr_weight = compute_optimal_log_incremental_weight(
             g, plans_vec.at(i), split_district_only,
             target, pop_temper);
-        log_incremental_weights[i] = log_incr_weight;
+        log_incremental_weights(i) = log_incr_weight;
         unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
     });
 

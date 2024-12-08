@@ -608,6 +608,12 @@ diag_rhat <- function(x, grp, split = FALSE) {
 #' @md
 #' @export
 get_k_step_ancestors <- function(parent_mat, steps_back = NULL, start_col = NULL){
+    # check the matrix is not zero indexed
+    assertthat::assert_that(
+        ! 0 %in% parent_mat,
+        msg = "parent_mat must be 1-indexed, not 0 indexed!"
+    )
+
     nparent_cols <- ncol(parent_mat)
 
     # if null then just start on final set of plans
@@ -627,7 +633,7 @@ get_k_step_ancestors <- function(parent_mat, steps_back = NULL, start_col = NULL
 
     # check steps back is between [1, nnparent_cols -1]
     if(is.null(steps_back)){
-        steps_back <- nparent_cols-2
+        steps_back <- nparent_cols-1
     }else{
         assertthat::assert_that(
             assertthat::is.scalar(steps_back) &&
@@ -650,4 +656,35 @@ Input must be between 1 and the start_col value (you input %d)",
         ancestor <- parent_mat[ancestor, j]
     }
     return(ancestor)
+}
+
+
+
+#' Get Original Ancestor Matrix of particles
+#'
+#' Gets a matrix of the original ancestors (ie first splits) of the particles
+#' at each steo,
+#'
+#' @param parent_mat Ancestor matrix where entry [i,j] equals the index of the
+#' parent of particle i after step j
+#'
+#' @returns indices of originals ancestors for particles at every iteration. So
+#' entry [s,j] is the original ancestor of particle j after step s
+#' @md
+#' @export
+get_original_ancestors_mat <- function(parent_mat){
+
+    # get the original ancestors at every step from the parent matrix
+    original_ancestor_mat <- sapply(
+        2:(N-1),
+        function(col_num) gredist::get_k_step_ancestors(parent_mat, steps_back = col_num-1, start_col = col_num)
+    )
+
+    # add the first column where every particles ancestor is iteslf
+    original_ancestor_mat <- cbind(
+        1:nrow(parent_mat),
+        original_ancestor_mat
+    )
+
+    return(original_ancestor_mat)
 }

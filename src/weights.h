@@ -32,12 +32,12 @@
 //'
 //' @return sum of weights squared over sum of squared weights (sum(wgt)^2 / sum(wgt^2))
 //'
-double compute_n_eff(const std::vector<double> &log_wgt);
+double compute_n_eff(const arma::subview_col<double> log_wgt);
 
 
 void get_all_adj_pairs(
     Graph const &g, std::vector<std::pair<int, int>> &adj_pairs_vec,
-    std::vector<int> const &vertex_region_ids,
+    arma::subview_col<arma::uword> const &vertex_region_ids,
     std::vector<bool> const valid_regions
 );
 
@@ -45,8 +45,8 @@ void get_all_adj_pairs(
 double get_log_mh_ratio(
     const Graph &g, 
     const int region1_id, const int region2_id,
-    const std::vector<int> &old_vertex_region_ids,
-    const std::vector<int> &new_vertex_region_ids,
+    const arma::subview_col<arma::uword> &old_vertex_region_ids,
+    const arma::subview_col<arma::uword> &new_vertex_region_ids,
     const int num_old_adj_regions, const int num_new_adj_regions
 );
 
@@ -84,7 +84,7 @@ void get_all_plans_log_gsmc_weights(
         RcppThread::ThreadPool &pool,
         const Graph &g, std::vector<Plan> &plans_vec,
         bool split_district_only,
-        std::vector<double> &log_incremental_weights,
+        arma::subview_col<double> log_incremental_weights,
         std::vector<double> &unnormalized_sampling_weights,
         double target, double pop_temper
 );

@@ -13,8 +13,9 @@ optimal_gsmc_with_merge_split_plans(
   lower,
   upper,
   M,
+  region_id_mat,
+  region_dvals_mat,
   control,
-  num_threads = -1L,
   verbosity = 3L,
   diagnostic_mode = FALSE
 )
@@ -40,12 +41,12 @@ relative to}
 
 \item{control}{Named list of additional parameters.}
 
-\item{num_threads}{The number of threads the threadpool should use}
-
 \item{verbosity}{What level of detail to print out while the algorithm is
 running \if{html}{\out{<ADD OPTIONS>}}}
 
 \item{k_param}{The k parameter from the SMC algorithm, you choose among the top k_param edges}
+
+\item{num_threads}{The number of threads the threadpool should use}
 }
 \description{
 Uses gsmc method with optimal weights and merge split steps to generate a sample of \code{M} plans in \verb{c++}

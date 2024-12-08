@@ -88,8 +88,8 @@ List optimal_gsmc_plans(
     }
 
 
-    std::vector<Plan> plans_vec(M, Plan(V, N, total_pop, split_district_only));
-    std::vector<Plan> new_plans_vec(M, Plan(V, N, total_pop, split_district_only)); // New plans
+    // std::vector<Plan> plans_vec(M, Plan(V, N, total_pop, split_district_only));
+    // std::vector<Plan> new_plans_vec(M, Plan(V, N, total_pop, split_district_only)); // New plans
 
 
     // Define output variables that must always be created
@@ -199,124 +199,124 @@ List optimal_gsmc_plans(
 
     // Create a threadpool
 
-    RcppThread::ThreadPool pool(num_threads);
+    // RcppThread::ThreadPool pool(num_threads);
 
-    std::string bar_fmt = "Split [{cli::pb_current}/{cli::pb_total}] {cli::pb_bar} | ETA{cli::pb_eta}";
-    RObject bar = cli_progress_bar(N-1, cli_config(false, bar_fmt.c_str()));
+    // std::string bar_fmt = "Split [{cli::pb_current}/{cli::pb_total}] {cli::pb_bar} | ETA{cli::pb_eta}";
+    // RObject bar = cli_progress_bar(N-1, cli_config(false, bar_fmt.c_str()));
 
-    // Now for each run through split the map
-    try {
-    for(int n=0; n<N-1; n++){
-        if(verbosity > 1){
-            Rprintf("Iteration %d \n", n+1);
-        }
+    // // Now for each run through split the map
+    // try {
+    // for(int n=0; n<N-1; n++){
+    //     if(verbosity > 1){
+    //         Rprintf("Iteration %d \n", n+1);
+    //     }
 
         
 
-        // For the first iteration we need to pass a special previous ancestor thing
-        if(n == 0){
-        std::vector<int> dummy_prev_ancestors(M, 1);
-        // split the map
-        generalized_split_maps(
-            g, counties, cg, pop,
-            plans_vec, new_plans_vec,
-            original_ancestor_mat.at(n),
-            parent_index_mat.at(n),
-            dummy_prev_ancestors,
-            unnormalized_sampling_weights,
-            normalized_weights_mat.at(n),
-            draw_tries_mat.at(n),
-            parent_unsuccessful_tries_mat.at(n),
-            acceptance_rates.at(n),
-            nunique_parents_vec.at(n),
-            nunique_original_ancestors_vec.at(n),
-            ancestors, lags,
-            lower, upper, target,
-            k_params.at(n), split_district_only,
-            pool,
-            verbosity
-        );
+    //     // For the first iteration we need to pass a special previous ancestor thing
+    //     if(n == 0){
+    //     std::vector<int> dummy_prev_ancestors(M, 1);
+    //     // split the map
+    //     generalized_split_maps(
+    //         g, counties, cg, pop,
+    //         plans_vec, new_plans_vec,
+    //         original_ancestor_mat.at(n),
+    //         parent_index_mat.at(n),
+    //         dummy_prev_ancestors,
+    //         unnormalized_sampling_weights,
+    //         normalized_weights_mat.at(n),
+    //         draw_tries_mat.at(n),
+    //         parent_unsuccessful_tries_mat.at(n),
+    //         acceptance_rates.at(n),
+    //         nunique_parents_vec.at(n),
+    //         nunique_original_ancestors_vec.at(n),
+    //         ancestors, lags,
+    //         lower, upper, target,
+    //         k_params.at(n), split_district_only,
+    //         pool,
+    //         verbosity
+    //     );
 
-            // For the first ancestor one make every ancestor themselves
-            std::iota (parent_index_mat[0].begin(), parent_index_mat[0].end(), 0);
-            std::iota (original_ancestor_mat[0].begin(), original_ancestor_mat[0].end(), 0);
-        }else{
-        // split the map and we can use the previous original ancestor matrix row
-        generalized_split_maps(
-            g, counties, cg, pop,
-            plans_vec, new_plans_vec,
-            original_ancestor_mat.at(n),
-            parent_index_mat.at(n),
-            original_ancestor_mat[n-1],
-            unnormalized_sampling_weights,
-            normalized_weights_mat.at(n),
-            draw_tries_mat.at(n),
-            parent_unsuccessful_tries_mat.at(n),
-            acceptance_rates.at(n),
-            nunique_parents_vec.at(n),
-            nunique_original_ancestors_vec.at(n),
-            ancestors, lags,
-            lower, upper, target,
-            k_params.at(n), split_district_only,
-            pool,
-            verbosity
-        );
-        }
+    //         // For the first ancestor one make every ancestor themselves
+    //         std::iota (parent_index_mat[0].begin(), parent_index_mat[0].end(), 0);
+    //         std::iota (original_ancestor_mat[0].begin(), original_ancestor_mat[0].end(), 0);
+    //     }else{
+    //     // split the map and we can use the previous original ancestor matrix row
+    //     generalized_split_maps(
+    //         g, counties, cg, pop,
+    //         plans_vec, new_plans_vec,
+    //         original_ancestor_mat.at(n),
+    //         parent_index_mat.at(n),
+    //         original_ancestor_mat[n-1],
+    //         unnormalized_sampling_weights,
+    //         normalized_weights_mat.at(n),
+    //         draw_tries_mat.at(n),
+    //         parent_unsuccessful_tries_mat.at(n),
+    //         acceptance_rates.at(n),
+    //         nunique_parents_vec.at(n),
+    //         nunique_original_ancestors_vec.at(n),
+    //         ancestors, lags,
+    //         lower, upper, target,
+    //         k_params.at(n), split_district_only,
+    //         pool,
+    //         verbosity
+    //     );
+    //     }
 
-        if (verbosity == 1 && CLI_SHOULD_TICK){
-            cli_progress_set(bar, n);
-        }
-        Rcpp::checkUserInterrupt();
-
-
-        // compute log incremental weights and sampling weights for next round
-        get_all_plans_log_gsmc_weights(
-            pool,
-            g,
-            new_plans_vec,
-            split_district_only,
-            log_incremental_weights_mat.at(n),
-            unnormalized_sampling_weights,
-            target,
-            pop_temper
-        );
+    //     if (verbosity == 1 && CLI_SHOULD_TICK){
+    //         cli_progress_set(bar, n);
+    //     }
+    //     Rcpp::checkUserInterrupt();
 
 
-        // compute effective sample size
-        n_eff.at(n) = compute_n_eff(log_incremental_weights_mat.at(n));
-
-        // Now update the diagnostic info if needed, region labels, dval column of the matrix
-        if(diagnostic_mode && n < N-2 && !split_district_only){ // record if in diagnostic mode and generalized splits
-            for(int j=0; j<M; j++){
-                plan_region_ids_mat.at(n).at(j) = plans_vec[j].region_ids;
-                plan_region_order_added_mat.at(n).at(j) = plans_vec.at(j).region_added_order;
-                plan_d_vals_mat.at(n).at(j) = plans_vec[j].region_dvals;
-            }
-        }else if(diagnostic_mode){ // record if in diagnostic mode but not generalized splits 
-            // or if its the last round and so dval doesn't matter
-            for(int j=0; j<M; j++){
-                plan_region_ids_mat.at(n).at(j) = plans_vec[j].region_ids;
-                plan_region_order_added_mat.at(n).at(j) = plans_vec.at(j).region_added_order;
-            }
-        }else if(n == N-2){ // else if not diagnostic only record final step
-            for(int j=0; j<M; j++){
-                plan_region_ids_mat.at(0).at(j) = plans_vec[j].region_ids;
-                plan_region_order_added_mat.at(0).at(j) = plans_vec.at(j).region_added_order;
-            }
-        }
+    //     // compute log incremental weights and sampling weights for next round
+    //     get_all_plans_log_gsmc_weights(
+    //         pool,
+    //         g,
+    //         new_plans_vec,
+    //         split_district_only,
+    //         log_incremental_weights_mat.at(n),
+    //         unnormalized_sampling_weights,
+    //         target,
+    //         pop_temper
+    //     );
 
 
-    }
-    } catch (Rcpp::internal::InterruptedException e) {
-        cli_progress_done(bar);
-        return R_NilValue;
-    }
+    //     // compute effective sample size
+    //     n_eff.at(n) = compute_n_eff(log_incremental_weights_mat.at(n));
 
-    cli_progress_done(bar);
+    //     // Now update the diagnostic info if needed, region labels, dval column of the matrix
+    //     if(diagnostic_mode && n < N-2 && !split_district_only){ // record if in diagnostic mode and generalized splits
+    //         for(int j=0; j<M; j++){
+    //             plan_region_ids_mat.at(n).at(j) = plans_vec[j].region_ids;
+    //             plan_region_order_added_mat.at(n).at(j) = plans_vec.at(j).region_added_order;
+    //             plan_d_vals_mat.at(n).at(j) = plans_vec[j].region_dvals;
+    //         }
+    //     }else if(diagnostic_mode){ // record if in diagnostic mode but not generalized splits 
+    //         // or if its the last round and so dval doesn't matter
+    //         for(int j=0; j<M; j++){
+    //             plan_region_ids_mat.at(n).at(j) = plans_vec[j].region_ids;
+    //             plan_region_order_added_mat.at(n).at(j) = plans_vec.at(j).region_added_order;
+    //         }
+    //     }else if(n == N-2){ // else if not diagnostic only record final step
+    //         for(int j=0; j<M; j++){
+    //             plan_region_ids_mat.at(0).at(j) = plans_vec[j].region_ids;
+    //             plan_region_order_added_mat.at(0).at(j) = plans_vec.at(j).region_added_order;
+    //         }
+    //     }
 
 
-    // make first number of unique original ancestors just M
-    nunique_original_ancestors_vec.at(0) = M;
+    // }
+    // } catch (Rcpp::internal::InterruptedException e) {
+    //     cli_progress_done(bar);
+    //     return R_NilValue;
+    // }
+
+    // cli_progress_done(bar);
+
+
+    // // make first number of unique original ancestors just M
+    // nunique_original_ancestors_vec.at(0) = M;
 
     // Return results
     List out = List::create(

@@ -8,6 +8,7 @@
 #include "splitting.h"
 
 
+
 //' Selects a multidistrict with probability proportional to its d_nk value and
 //' returns the log probability of the selected region
 //'
@@ -30,8 +31,11 @@
 double choose_multidistrict_to_split(
         Plan const&plan, int &region_id_to_split){
 
+    
+    // REprintf("Here in split 1!\n");
+
     if(plan.num_multidistricts < 1){
-        REprintf("ERROR: Trying to find multidistrict to split when there are none!\n");
+        // REprintf("ERROR: Trying to find multidistrict to split when there are none!\n");
         region_id_to_split = -1;
         return -42;
     }
@@ -42,11 +46,13 @@ double choose_multidistrict_to_split(
     // make vectors with cumulative d value and region label for later
     std::vector<int> multi_d_vals;
     std::vector<int> region_ids;
+    
 
+    // REprintf("[ ");
     // Iterate over all regions
     for(int region_id = 0; region_id < plan.num_regions; region_id++) {
 
-        int d_val = plan.region_dvals.at(region_id);
+        int d_val = plan.region_dvals(region_id);
 
         // collect info if multidistrict
         if(d_val > 1){
@@ -57,6 +63,9 @@ double choose_multidistrict_to_split(
             region_ids.push_back(region_id);
         }
     }
+    // REprintf("]\n");
+
+    
 
     // https://stackoverflow.com/questions/14599057/how-compare-vector-size-with-an-integer
     size_t intendedSize = 1;
@@ -66,6 +75,7 @@ double choose_multidistrict_to_split(
         return 0;
     }
 
+    // REprintf("Here in split 2!\n");
 
     // Now pick an index proportational to d_nk value
     std::random_device rd;
@@ -74,12 +84,26 @@ double choose_multidistrict_to_split(
 
     int idx = d(gen);
 
-    region_id_to_split = region_ids[idx];
+    // REprintf("Here in split 3 - picked idx %d !", idx);
+
+    // REprintf("[ ");
+    // for (auto i: region_ids){
+    //     REprintf("%d ", i);
+    // }
+    // REprintf("]\n");
+    
+
+    region_id_to_split = region_ids.at(idx);
+
+    // REprintf("Here in split 3.5 - picked idx %d !\n", idx);
+
     double log_prob = std::log(
-        static_cast<double>(multi_d_vals[idx])
+        static_cast<double>(multi_d_vals.at(idx))
         ) - std::log(
                 static_cast<double>(total_multi_ds)
         );
+
+    // REprintf("Here in split 4\n");
 
     return log_prob;
 }
@@ -141,7 +165,7 @@ double choose_multidistrict_to_split(
 //'
 bool get_edge_to_cut(Tree &ust, int root,
                      int k_param, int max_potential_d,
-                     const uvec &pop, const std::vector<int> &region_ids,
+                     const uvec &pop, const arma::subview_col<arma::uword> &region_ids,
                      const int region_id_to_split, double total_region_pop, int total_region_dval,
                      const double lower, const double upper, const double target,
                      int &new_region1_tree_root, int &new_region1_dval, double &new_region1_pop,
@@ -150,8 +174,9 @@ bool get_edge_to_cut(Tree &ust, int root,
 
     // total_region_dval
 
-    int V = static_cast<int>(region_ids.size());
+    int V = static_cast<int>(region_ids.n_elem);
 
+    // REprintf("before!!\n");    
     
 
     // Rcout << "For " << region_id_to_split << " Total pop is " << total_pop << " and d_nk is " << num_final_districts << "\n";
@@ -161,6 +186,10 @@ bool get_edge_to_cut(Tree &ust, int root,
     std::vector<int> parent(V);
     parent[root] = -1;
     tree_pop(ust, root, pop, pop_below, parent);
+
+    // REprintf("The root is %d!!\n", root); 
+
+    // REprintf("Root vertex %d is not in region to split %d!\n", region_ids(root), region_id_to_split);
 
     // compile a list of: things for each edge in tree
     std::vector<int> candidates; // candidate edges to cut,
@@ -174,15 +203,16 @@ bool get_edge_to_cut(Tree &ust, int root,
     is_ok.reserve(k_param);
     new_d_val.reserve(k_param);
 
-    if(region_ids.at(root) != region_id_to_split){
-        Rcout << "Root vertex is not in region to split!";
+    if(region_ids(root) != region_id_to_split){
+        REprintf("Root vertex %d is not in region to split %d!\n", region_ids(root), region_id_to_split);
+        throw std::out_of_range("Root vertex is not in region to split!");
     }
 
 
     // Now loop over all valid edges to cut
     for (int i = 1; i <= V; i++) { // 1-indexing here
         // Ignore any vertex not in this region or the root vertex as we wont be cutting those
-        if (region_ids.at(i-1) != region_id_to_split || i - 1 == root) continue;
+        if (region_ids(i-1) != region_id_to_split || i - 1 == root) continue;
 
         // Get the population of one side of the partition removing that edge would cause
         double below = pop_below.at(i - 1);
@@ -246,11 +276,11 @@ bool get_edge_to_cut(Tree &ust, int root,
 
     int idx = r_int(k_param);
     idx = select_k(deviances, idx + 1);
-    int cut_at = std::fabs(candidates[idx]) - 1;
+    int cut_at = std::fabs(candidates.at(idx)) - 1;
 
 
     // reject sample if not ok
-    if (!is_ok[idx]){
+    if (!is_ok.at(idx)){
         return false;
     }
 
@@ -269,11 +299,11 @@ bool get_edge_to_cut(Tree &ust, int root,
     parent[cut_at] = -1;
 
     // Get dval for two new regions
-    new_region1_dval = new_d_val[idx];
+    new_region1_dval = new_d_val.at(idx);
     new_region2_dval = total_region_dval - new_region1_dval;
 
 
-    if (candidates[idx] > 0) { // Means cut below so first vertex is cut_at
+    if (candidates.at(idx) > 0) { // Means cut below so first vertex is cut_at
         new_region1_tree_root = cut_at;
         new_region2_tree_root = root;
 
@@ -367,13 +397,13 @@ void update_plan_from_cut(
 
 
     // updates the new region 1
-    plan.region_dvals.at(new_region1_id) = new_region1_dval;
+    plan.region_dvals(new_region1_id) = new_region1_dval;
     plan.region_added_order.at(new_region1_id) = new_region1_order_added_num;
     plan.region_pops.at(new_region1_id) = new_region1_pop;
 
     // updates the new region 2
     // New region 2's id is the highest id number so push back
-    plan.region_dvals.at(new_region2_id) = new_region2_dval;
+    plan.region_dvals(new_region2_id) = new_region2_dval;
     plan.region_added_order.at(new_region2_id) = new_region2_order_added_num;
     plan.region_pops.at(new_region2_id) = new_region2_pop;
 
@@ -410,7 +440,8 @@ void update_plan_from_cut(
 //' @param split_district_only Whether or not this was split according to a 
 //' one district split scheme (as in does the remainder need to be updated)
 //' @param old_split_region_id The id of the region that was split into the two
-//' new ones 
+//' new ones. Region1 will be set to this id
+//' @param new_region_id The id that region2 will be set 
 //' @param new_region1_tree_root The vertex of the root of one piece of the cut
 //' tree. This always corresponds to the region with the smaller dval (allowing
 //' for the possiblity the dvals are equal).
@@ -433,10 +464,9 @@ void update_plan_from_cut(
 //'
 void add_new_regions_to_plan_from_cut(
         Tree &ust, Plan &plan, bool split_district_only,
-        const int old_split_region_id,
+        const int old_split_region_id, const int new_region_id,
         const int new_region1_tree_root, const int new_region1_dval, const double new_region1_pop,
-        const int new_region2_tree_root, const int new_region2_dval, const double new_region2_pop,
-        int &new_region1_id,  int &new_region2_id
+        const int new_region2_tree_root, const int new_region2_dval, const double new_region2_pop
 ){
     // if successful then update the plan
     // update plan with new regions
@@ -460,14 +490,9 @@ void add_new_regions_to_plan_from_cut(
     }
 
     // make the first new region have the same integer id as the split region
-    new_region1_id = old_split_region_id;
-    // Second new region has id of the new number of regions minus 1
-    new_region2_id = plan.num_regions - 1;
-
-    // Now resize the region level attributes 
-    plan.region_dvals.resize(plan.num_regions, -1);
-    plan.region_added_order.resize(plan.num_regions, -1);
-    plan.region_pops.resize(plan.num_regions, -1.0);
+    int new_region1_id = old_split_region_id;
+    // Second new region is new_region_id
+    int new_region2_id = new_region_id;
 
     // now update using tree
     update_plan_from_cut(
@@ -504,8 +529,7 @@ void add_new_regions_to_plan_from_cut(
 //' @param cg multigraph object (not sure why this is needed)
 //' @param plan A plan object
 //' @param region_id_to_split The label of the region in the plan object we're attempting to split
-//' @param new_region_ids A vector that will be updated by reference to contain the names of
-//' the two new split regions if function is successful.
+//' @param new_region_id The id of the larger of the two new split reasons if successful
 //' @param lower Acceptable lower bounds on a valid district's population
 //' @param upper Acceptable upper bounds on a valid district's population
 //' @param target Ideal population of a valid district. This is what deviance is calculated
@@ -524,16 +548,16 @@ void add_new_regions_to_plan_from_cut(
 //'
 bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multigraph &cg,
                  Plan &plan, const int region_id_to_split,
-                 std::vector<int> &new_region_ids,
+                 const int new_region_id,
                  std::vector<bool> &visited, std::vector<bool> &ignore, const uvec &pop,
-                 double &lower, double upper, double target,
+                 const double lower, const double upper, const double target,
                  int k_param, bool split_district_only) {
 
     int V = g.size();
 
     // Mark it as ignore if its not in the region to split
     for (int i = 0; i < V; i++){
-        ignore[i] = plan.region_ids.at(i) != region_id_to_split;
+        ignore[i] = plan.region_ids(i) != region_id_to_split;
     }
 
     // Get a uniform spanning tree drawn on that region
@@ -558,15 +582,16 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
     if(split_district_only){
         max_potential_d = 1;
     }else{
-        max_potential_d = plan.region_dvals.at(region_id_to_split) - 1;
+        max_potential_d = plan.region_dvals(region_id_to_split) - 1;
     }
 
+    // REprintf("Attempting to split\n");
     // try to get an edge to cut
     successful_edge_found = get_edge_to_cut(ust, root,
                     k_param, max_potential_d,
                     pop, plan.region_ids, 
                     region_id_to_split, plan.region_pops.at(region_id_to_split),
-                    plan.region_dvals.at(region_id_to_split),
+                    plan.region_dvals(region_id_to_split),
                     lower, upper, target,
                     new_region1_tree_root, new_region1_dval, new_region1_pop,
                     new_region2_tree_root, new_region2_dval, new_region2_pop);
@@ -576,15 +601,17 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
         return false;
     }
 
+    // REprintf("Old was %d and new is (%d,%d)\n", max_potential_d+1, new_region1_dval, new_region2_dval);
+
 
     // now update the plan with the two new cut regions 
     add_new_regions_to_plan_from_cut(
         ust, plan, split_district_only,
-        region_id_to_split,
+        region_id_to_split, new_region_id,
         new_region1_tree_root, new_region1_dval,  new_region1_pop,
-        new_region2_tree_root, new_region2_dval, new_region2_pop,
-        new_region_ids[1], new_region_ids[2]
+        new_region2_tree_root, new_region2_dval, new_region2_pop
     );
+
 
     return true;
 
@@ -611,24 +638,14 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
 //' @param old_plans_vec A vector of plans from the previous step
 //' @param new_plans_vec A vector which will be filled with plans that had a
 //' multidistrict split to make them
-//' @param original_ancestor_vec A vector used to track which original ancestor
-//' the new plans descended from. The value  of `original_ancestor_vec[i]`
-//' is the index of the original ancestor the new plan `new_plans_vec[i]` is
-//' descended from.
-//' @param parent_vec A vector used to track the index of the previous plan
-//' sampled that was successfully split. The value of `parent_vec[i]` is the
+//' @param parent_index_vec A vector used to track the index of the previous plan
+//' sampled that was successfully split. The value of `parent_index_vec[i]` is the
 //' index of the old plan from which the new plan `new_plans_vec[i]` was
 //' successfully split from. In other words `new_plans_vec[i]` is equal to
-//' `attempt_region_split(old_plans_vec[parent_vec[i]], ...)`
-//' @param prev_ancestor_vec A vector used to track the index of the original
-//' ancestor of the previous plans. The value of `prev_ancestor_vec[i]` is the
-//' index of the original ancestor of `old_plans_vec[i]`
+//' `attempt_region_split(old_plans_vec[parent_index_vec[i]], ...)`
 //' @param unnormalized_sampling_weights A vector of weights used to sample indices
 //' of the `old_plans_vec`. The value of `unnormalized_sampling_weights[i]` is
 //' the unnormalized probability that index i is selected
-//' @param normalized_weights_to_fill_in A vector which will be filled with the
-//' normalized weights the index sampler uses. The value of
-//' `normalized_weights_to_fill_in[i]` is the probability that index i is selected
 //' @param draw_tries_vec A vector used to keep track of how many plan split
 //' attempts were made for index i. The value `draw_tries_vec[i]` represents how
 //' many split attempts were made for the i-th new plan (including the successful
@@ -643,9 +660,7 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
 //' attempted splits. This is equal to `sum(draw_tries_vec)/M`
 //' @param n_unique_parent_indices The number of unique parent indices, ie the
 //' number of previous plans that had at least one descendant amongst the new
-//' plans. This is equal to `unique(parent_vec)`
-//' @param n_unique_original_ancestors The number of unique original ancestors,
-//' in the new plans. This is equal to `unique(original_ancestor_vec)`
+//' plans. This is equal to `unique(parent_index_vec)`
 //' @param ancestors Parameter from older `smc.cpp` code. I DON'T UNDERSTAND
 //' WHAT IT IS DOING
 //' @param lags Parameter from older `smc.cpp` code. I DON'T UNDERSTAND
@@ -671,14 +686,10 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
 //'    reference to save memory.
 //'    - The `original_ancestor_vec` is updated to contain the indices of the
 //'    original ancestors of the new plans
-//'    - The `parent_vec` is updated to contain the indices of the parents of the
+//'    - The `parent_index_vec` is updated to contain the indices of the parents of the
  //'    new plans
 //'    - If two new valid regions are split then the new_region_ids is updated so the
 //'    first entry is the first new region and the second entry is the second new region
-//'    - The `normalized_weights_to_fill_in` is updated to contain the normalized
-//'    probabilities the index sampler used. This is only collected for diagnostics
-//'    at this point and should just be equal to `unnormalized_sampling_weights`
-//'    divided by `sum(unnormalized_sampling_weights)`
 //'    - The `draw_tries_vec` is updated to contain the number of tries for each
 //'    of the new plans
 //'    - The `parent_unsuccessful_tries_vec` is updated to contain the number of unsuccessful
@@ -695,30 +706,22 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
 void generalized_split_maps(
         const Graph &g, const uvec &counties, Multigraph &cg, const uvec &pop,
         std::vector<Plan> &old_plans_vec, std::vector<Plan> &new_plans_vec,
-        std::vector<int> &original_ancestor_vec,
-        std::vector<int> &parent_vec,
-        const std::vector<int> &prev_ancestor_vec,
+        arma::subview_col<arma::uword> parent_index_vec,
         const std::vector<double> &unnormalized_sampling_weights,
-        std::vector<double> &normalized_weights_to_fill_in,
-        std::vector<int> &draw_tries_vec,
-        std::vector<int> &parent_unsuccessful_tries_vec,
+        arma::subview_col<arma::uword> draw_tries_vec,
+        arma::subview_col<arma::uword> parent_unsuccessful_tries_vec,
+        std::vector<std::atomic<uint>> &new_parent_unsuccessful_tries_vec,
         double &accept_rate,
         int &n_unique_parent_indices,
-        int &n_unique_original_ancestors,
         umat &ancestors, const std::vector<int> &lags,
-        double lower, double upper, double target,
-        int k_param, bool split_district_only,
+        double const lower, double const upper, double const target,
+        int const k_param, bool const split_district_only,
         RcppThread::ThreadPool &pool,
-        int verbosity
+        int const verbosity, int const diagnostic_level
                 ) {
     // important constants
     const int V = g.size();
     const int M = old_plans_vec.size();
-
-
-    uvec iters(M, fill::zeros); // how many actual iterations, (used to compute acceptance rate)
-    uvec original_ancestor_uniques(M); // used to compute unique original ancestors
-    uvec parent_index_uniques(M); // used to compute unique parent indicies
 
     // PREVIOUS SMC CODE I DONT KNOW WHAT IT DOES
     const int dist_ctr = old_plans_vec.at(0).num_regions;
@@ -737,10 +740,11 @@ void generalized_split_maps(
         );
 
     // extract and record the normalized weights the sampler is using
-    std::vector<double> p = index_sampler.probabilities();
-    int nw_index = 0;
+
     bool print_weights = M < 12 && verbosity > 1;
     if(print_weights){
+    std::vector<double> p = index_sampler.probabilities();
+    int nw_index = 0;
     Rprintf("Unnormalized weights are: ");
     for (auto w : unnormalized_sampling_weights){
         Rprintf("%.4f, ", w);
@@ -748,53 +752,64 @@ void generalized_split_maps(
 
     Rprintf("\n");
     Rprintf("Normalized weights are: ");
-    }
+    
     for (auto prob : p){
         if(print_weights) Rprintf("%.4f, ", prob);
-        normalized_weights_to_fill_in.at(nw_index) = prob;
         nw_index++;
     }
-    if(print_weights) Rprintf("\n");
+    Rprintf("\n");
+    }
 
     // Because of multithreading we have to add specific checks for if the user
     // wants to quit the program
     const int reject_check_int = 200; // check for interrupts every _ rejections
     const int check_int = 50; // check for interrupts every _ iterations
 
+    // The new region in the split plans is the number of regions in a split plan minus
+    // one so the number of regions in a presplit plan
+    int new_region_id = old_plans_vec.at(0).num_regions;
 
     // create a progress bar
     RcppThread::ProgressBar bar(M, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
+        // REprintf("Plan %d\n", i);
         int reject_ct = 0;
         bool ok = false;
         int idx;
         int region_id_to_split;
-        std::vector<int> new_region_ids(2, -1);
 
         Tree ust = init_tree(V);
         std::vector<bool> visited(V);
         std::vector<bool> ignore(V);
         while (!ok) {
-            // increase the iters count by one
-            iters[i]++;
+            // increase the number of tries for particle i by 1
+            draw_tries_vec(i)++;
+            // REprintf("Plan %d, iter %d\n", i, iters[i]);
             // use weights to sample previous plan
             idx = index_sampler(gen);
-            Plan proposed_new_plan = old_plans_vec[idx];
+            // REprintf("Picked idx %d, from vector of size %u\n", i, old_plans_vec.size());
 
+            // We want the data from the old plans vec but we can't modify it since they
+            // point to the same matrix so we do shallow copy             
+            new_plans_vec.at(i).shallow_copy(old_plans_vec.at(idx));
+
+            // REprintf("Now picking region to split\n");
             if(split_district_only){
                 // if just doing district splits just use remainder region
-                region_id_to_split = proposed_new_plan.remainder_region;
+                region_id_to_split = new_plans_vec.at(i).remainder_region;
             }else{
                 // if generalized split pick a region to try to split
                 choose_multidistrict_to_split(
-                    old_plans_vec[idx], region_id_to_split);
+                    old_plans_vec.at(idx), region_id_to_split);
             }
+
+            // REprintf("Now splitting\n");
 
             // Now try to split that region
             ok = attempt_region_split(g, ust, counties, cg,
-                                      proposed_new_plan, region_id_to_split,
-                                      new_region_ids,
+                                      new_plans_vec.at(i), region_id_to_split,
+                                      new_region_id,
                                       visited, ignore, pop,
                                       lower, upper, target,
                                       k_param, split_district_only);
@@ -802,23 +817,26 @@ void generalized_split_maps(
 
             // bad sample; try again
             if (!ok) {
-                // THIS MAY NOT BE THREAD SAFE
-                parent_unsuccessful_tries_vec[idx]++; // update unsuccessful try
+                 // update unsuccessful try
                 RcppThread::checkUserInterrupt(++reject_ct % reject_check_int == 0);
+
+                // if diagnostic level 2 or higher get unsuccessful count 
+                if(diagnostic_level >= 2){
+                    // atomic so its thread safe
+                    parent_unsuccessful_tries_vec(idx)++;
+                    new_parent_unsuccessful_tries_vec.at(idx)++;
+                }
                 continue;
             }
 
-            // else update the new plan and leave the while loop
-            new_plans_vec[i] = proposed_new_plan;
+            // else leave the while loop
+
 
         }
 
-        // Record how many tries needed to create i-th new plan
-        draw_tries_vec[i] = static_cast<int>(iters[i]);
-        // Make the new plans original ancestor the same as its parent
-        original_ancestor_uniques[i] = prev_ancestor_vec[idx];
+
         // record index of new plan's parent
-        parent_index_uniques[i] = idx;
+        parent_index_vec(i) = idx;
         // clear the spanning tree
         clear_tree(ust);
 
@@ -832,32 +850,26 @@ void generalized_split_maps(
             }
         }
 
-
-        // update this particles ancestor to be the ancestor of its previous one
-        parent_vec[i] = idx;
-        original_ancestor_vec[i] = prev_ancestor_vec[idx];
-
         RcppThread::checkUserInterrupt(i % check_int == 0);
     });
 
     // Wait for all the threads to finish
     pool.wait();
 
-
+    // REprintf("Copying now!\n");
 
     // now replace the old plans with the new ones
     for(int i=0; i < M; i++){
-        old_plans_vec[i] = new_plans_vec[i];
+        old_plans_vec.at(i).shallow_copy(new_plans_vec.at(i));
     }
 
 
     // now compute acceptance rate and unique parents and original ancestors
-    accept_rate = M / (1.0 * sum(iters));
-    n_unique_original_ancestors = ((uvec) find_unique(original_ancestor_uniques)).n_elem;
-    n_unique_parent_indices = ((uvec) find_unique(parent_index_uniques)).n_elem;
+    accept_rate = M / (1.0 * sum(draw_tries_vec));
+    n_unique_parent_indices = ((uvec) find_unique(parent_index_vec)).n_elem;
     if (verbosity >= 3) {
-        Rprintf("%.2f acceptance rate, %d unique parent indices sampled, and %d unique original ancestors!\n",
-                100.0 * accept_rate, (int) n_unique_parent_indices , (int) n_unique_original_ancestors);
+        Rprintf("%.2f acceptance rate and %d unique parent indices sampled!\n",
+                100.0 * accept_rate, (int) n_unique_parent_indices);
     }
 
     // ORIGINAL SMC CODE I DONT KNOW WHAT IT DOES

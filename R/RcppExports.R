@@ -136,40 +136,12 @@ pareto_dominated <- function(x) {
     .Call(`_gredist_pareto_dominated`, x)
 }
 
-testing_sample_forest <- function(l, pop, lower, upper, counties, ignore) {
-    .Call(`_gredist_testing_sample_forest`, l, pop, lower, upper, counties, ignore)
+new_plan_testing <- function(region_id_mat, region_id_mat2) {
+    .Call(`_gredist_new_plan_testing`, region_id_mat, region_id_mat2)
 }
 
-perform_a_valid_region_split_then_merge_split <- function(adj_list, counties, pop, k_param, region_id_to_split, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, num_merge_split_steps, verbose) {
-    .Call(`_gredist_perform_a_valid_region_split_then_merge_split`, adj_list, counties, pop, k_param, region_id_to_split, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, num_merge_split_steps, verbose)
-}
-
-one_cut_then_merge_split <- function(N, adj_list, counties, pop, target, lower, upper, split_district_only, num_merge_split_steps, verbose) {
-    .Call(`_gredist_one_cut_then_merge_split`, N, adj_list, counties, pop, target, lower, upper, split_district_only, num_merge_split_steps, verbose)
-}
-
-plan_class_testing <- function(V, num_regions, num_districts) {
-    .Call(`_gredist_plan_class_testing`, V, num_regions, num_districts)
-}
-
-split_entire_map <- function(N, adj_list, counties, pop, target, lower, upper, verbose = FALSE) {
-    .Call(`_gredist_split_entire_map`, N, adj_list, counties, pop, target, lower, upper, verbose)
-}
-
-split_all_the_way <- function(N, adj_list, counties, pop, target, lower, upper, verbose) {
-    .Call(`_gredist_split_all_the_way`, N, adj_list, counties, pop, target, lower, upper, verbose)
-}
-
-copy_semantics_tester_outer <- function() {
-    invisible(.Call(`_gredist_copy_semantics_tester_outer`))
-}
-
-test_cpp_discrete_distribution <- function() {
-    invisible(.Call(`_gredist_test_cpp_discrete_distribution`))
-}
-
-test_region_lev_graph_stuff <- function(N, adj_list, counties, pop, target, lower, upper, verbose) {
-    .Call(`_gredist_test_region_lev_graph_stuff`, N, adj_list, counties, pop, target, lower, upper, verbose)
+arma_testing <- function() {
+    .Call(`_gredist_arma_testing`)
 }
 
 closest_adj_pop <- function(adj, i_dist, g_prop) {
@@ -239,8 +211,8 @@ smc_plans <- function(N, l, counties, pop, n_distr, target, lower, upper, rho, d
 #' @param verbosity What level of detail to print out while the algorithm is
 #' running <ADD OPTIONS>
 #' @export
-optimal_gsmc_with_merge_split_plans <- function(N, adj_list, counties, pop, target, lower, upper, M, control, num_threads = -1L, verbosity = 3L, diagnostic_mode = FALSE) {
-    .Call(`_gredist_optimal_gsmc_with_merge_split_plans`, N, adj_list, counties, pop, target, lower, upper, M, control, num_threads, verbosity, diagnostic_mode)
+optimal_gsmc_with_merge_split_plans <- function(N, adj_list, counties, pop, target, lower, upper, M, region_id_mat, region_dvals_mat, control, verbosity = 3L, diagnostic_mode = FALSE) {
+    .Call(`_gredist_optimal_gsmc_with_merge_split_plans`, N, adj_list, counties, pop, target, lower, upper, M, region_id_mat, region_dvals_mat, control, verbosity, diagnostic_mode)
 }
 
 splits <- function(dm, community, nd, max_split) {
@@ -332,39 +304,45 @@ NULL
 #' @keywords internal
 NULL
 
-#' Updates a `Plan` object using a cut tree
+#' Attempts to split a multi-district within a plan into two new regions with
+#' valid population bounds (has option for one district splits only)
 #'
-#' Takes a cut spanning tree `ust` and variables on the two new regions
-#' induced by the cuts and updates `plan` with information on those two
-#' new regions. Assumes that the plan attributes already have the correct
-#' size and accessing either of the region ids won't create issues.
+#' Given a plan this attempts to split a multi-district in it into two new
+#' regions where both regions have valid population bounds. (If
+#' `split_district_only` is true it will only attempt to split off a district
+#' and a remainder). It does this by drawing a spanning tree uniformly at random
+#' then calling `get_edge_to_cut` on  that. If the a valid cut is found it
+#' then calls `update_plan_from_cut` to update the plan accordingly. If not
+#' successful returns false and does nothing.
 #'
-#' It also sets `plan.remainder_region` equal to `new_region2_id` if 
-#' split_district_only is true. 
+#' This is based on the `split_map` function in `smc.cpp`
 #'
 #'
-#' @title Update plan regions from cut tree
+#' @title Attempt Generalized Region split of a multi-district within a plan
 #'
-#' @param ust A cut (ie has two partition pieces) directed spanning tree
-#' passed by reference
+#' @param g A graph (adjacency list) passed by reference
+#' @param ust A directed tree object (this will be cleared in the function so
+#' whatever it was before doesn't matter)
+#' @param counties Vector of county labels of each vertex in `g`
+#' @param cg multigraph object (not sure why this is needed)
 #' @param plan A plan object
-#' @param split_district_only Whether or not this was split according to a 
-#' one district split scheme (as in does the remainder need to be updated)
-#' @param new_region1_tree_root The vertex of the root of one piece of the cut
-#' tree. This always corresponds to the region with the smaller dval (allowing
-#' for the possiblity the dvals are equal).
-#' @param new_region1_dval The dval associated with the new region 1
-#' @param new_region1_pop The population associated with the new region 1
-#' @param new_region2_tree_root The vertex of the root of other piece of the cut
-#' tree. This always corresponds to the region with the bigger dval (allowing
-#' for the possiblity the dvals are equal).
-#' @param new_region2_dval The dval associated with the new region 2
-#' @param new_region2_pop The population associated with the new region 2
-#' @param new_region1_id The id the new region 1 was assigned in the plan
-#' @param new_region2_id The id the new region 2 was assigned in the plan
+#' @param region_id_to_split The label of the region in the plan object we're attempting to split
+#' @param new_region_id The id of the larger of the two new split reasons if successful
+#' @param lower Acceptable lower bounds on a valid district's population
+#' @param upper Acceptable upper bounds on a valid district's population
+#' @param target Ideal population of a valid district. This is what deviance is calculated
+#' relative to
+#' Target population (probably Total population of map/Num districts)
+#' @param k_param The k parameter from the SMC algorithm, you choose among the top k_param edges
+#' @param split_district_only Whether or not to only allow for one district
+#' split. If `true` then only splits off districts.
 #'
 #' @details Modifications
-#'    - `plan` is updated in place with the two new regions
+#'    - If two new valid regions are split then the plan object is updated accordingly
+#'    - If two new valid regions are split then the new_region_ids is updated so the
+#'    first entry is the first new region and the second entry is the second new region
+#'
+#' @return True if two valid regions were split off false otherwise
 #'
 #' @noRd
 #' @keywords internal
@@ -390,7 +368,8 @@ NULL
 #' @param split_district_only Whether or not this was split according to a 
 #' one district split scheme (as in does the remainder need to be updated)
 #' @param old_split_region_id The id of the region that was split into the two
-#' new ones 
+#' new ones. Region1 will be set to this id
+#' @param new_region_id The id that region2 will be set 
 #' @param new_region1_tree_root The vertex of the root of one piece of the cut
 #' tree. This always corresponds to the region with the smaller dval (allowing
 #' for the possiblity the dvals are equal).
@@ -430,24 +409,14 @@ NULL
 #' @param old_plans_vec A vector of plans from the previous step
 #' @param new_plans_vec A vector which will be filled with plans that had a
 #' multidistrict split to make them
-#' @param original_ancestor_vec A vector used to track which original ancestor
-#' the new plans descended from. The value  of `original_ancestor_vec[i]`
-#' is the index of the original ancestor the new plan `new_plans_vec[i]` is
-#' descended from.
-#' @param parent_vec A vector used to track the index of the previous plan
-#' sampled that was successfully split. The value of `parent_vec[i]` is the
+#' @param parent_index_vec A vector used to track the index of the previous plan
+#' sampled that was successfully split. The value of `parent_index_vec[i]` is the
 #' index of the old plan from which the new plan `new_plans_vec[i]` was
 #' successfully split from. In other words `new_plans_vec[i]` is equal to
-#' `attempt_region_split(old_plans_vec[parent_vec[i]], ...)`
-#' @param prev_ancestor_vec A vector used to track the index of the original
-#' ancestor of the previous plans. The value of `prev_ancestor_vec[i]` is the
-#' index of the original ancestor of `old_plans_vec[i]`
+#' `attempt_region_split(old_plans_vec[parent_index_vec[i]], ...)`
 #' @param unnormalized_sampling_weights A vector of weights used to sample indices
 #' of the `old_plans_vec`. The value of `unnormalized_sampling_weights[i]` is
 #' the unnormalized probability that index i is selected
-#' @param normalized_weights_to_fill_in A vector which will be filled with the
-#' normalized weights the index sampler uses. The value of
-#' `normalized_weights_to_fill_in[i]` is the probability that index i is selected
 #' @param draw_tries_vec A vector used to keep track of how many plan split
 #' attempts were made for index i. The value `draw_tries_vec[i]` represents how
 #' many split attempts were made for the i-th new plan (including the successful
@@ -462,9 +431,7 @@ NULL
 #' attempted splits. This is equal to `sum(draw_tries_vec)/M`
 #' @param n_unique_parent_indices The number of unique parent indices, ie the
 #' number of previous plans that had at least one descendant amongst the new
-#' plans. This is equal to `unique(parent_vec)`
-#' @param n_unique_original_ancestors The number of unique original ancestors,
-#' in the new plans. This is equal to `unique(original_ancestor_vec)`
+#' plans. This is equal to `unique(parent_index_vec)`
 #' @param ancestors Parameter from older `smc.cpp` code. I DON'T UNDERSTAND
 #' WHAT IT IS DOING
 #' @param lags Parameter from older `smc.cpp` code. I DON'T UNDERSTAND
@@ -490,15 +457,11 @@ NULL
 #'    reference to save memory.
 #'    - The `original_ancestor_vec` is updated to contain the indices of the
 #'    original ancestors of the new plans
-#'    - The `parent_vec` is updated to contain the indices of the parents of the
+#'    - The `parent_index_vec` is updated to contain the indices of the parents of the
 NULL
 
 #'    - If two new valid regions are split then the new_region_ids is updated so the
 #'    first entry is the first new region and the second entry is the second new region
-#'    - The `normalized_weights_to_fill_in` is updated to contain the normalized
-#'    probabilities the index sampler used. This is only collected for diagnostics
-#'    at this point and should just be equal to `unnormalized_sampling_weights`
-#'    divided by `sum(unnormalized_sampling_weights)`
 #'    - The `draw_tries_vec` is updated to contain the number of tries for each
 #'    of the new plans
 #'    - The `parent_unsuccessful_tries_vec` is updated to contain the number of unsuccessful
@@ -510,8 +473,6 @@ NULL
 #'    plans respectively
 #'    - `ancestors` is updated to something. THIS IS FROM ORIGINAL SMC CODE,
 #'    I DO NOT KNOW WHAT IT MEANS
-#'
-#' @return nothing
 #'
 #' @noRd
 #' @keywords internal

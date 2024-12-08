@@ -94,7 +94,7 @@ void assign_region(const Tree &ust, Plan &plan,
 
 // TEMP REMOVE LATER
 void assign_region_just_vertex_vec(const Tree &ust, 
-                    std::vector<int> &region_ids,
+                    arma::subview_col<arma::uword> &region_ids,
                     int root,
                     int new_region_num_id);
 

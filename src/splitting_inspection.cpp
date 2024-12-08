@@ -15,7 +15,7 @@ List perform_a_valid_region_split(
         int k_param, int region_id_to_split,
         double target, double lower, double upper,
         int N, int num_regions, int num_districts,
-        std::vector<int> region_ids, std::vector<int> region_dvals,
+        arma::umat region_ids, arma::umat region_dvals,
         std::vector<double> region_pops,
         bool split_district_only, bool verbose
 ){
@@ -26,14 +26,14 @@ List perform_a_valid_region_split(
     double total_pop = sum(pop);
 
     // Create a plan object
-    Plan plan = Plan(V, N, total_pop);
+    Plan plan = Plan(region_ids.col(0), region_dvals.col(0), V, N, total_pop);
+
+    
 
     // fill in the plan
     plan.num_regions = num_regions;
     plan.num_districts = num_districts;
     plan.num_multidistricts = plan.num_regions - plan.num_districts;
-    plan.region_ids = region_ids;
-    plan.region_dvals = region_dvals;
     plan.region_pops = region_pops;
 
 
@@ -51,7 +51,7 @@ List perform_a_valid_region_split(
 
     // Mark it as ignore if its not in the region to split
     for (int i = 0; i < V; i++){
-        ignore[i] = plan.region_ids.at(i) != region_id_to_split;
+        ignore[i] = plan.region_ids(i) != region_id_to_split;
     }
 
 
@@ -85,7 +85,7 @@ List perform_a_valid_region_split(
         if(split_district_only){
             max_potential_d = 1;
         }else{
-            max_potential_d = plan.region_dvals.at(region_id_to_split) - 1;
+            max_potential_d = plan.region_dvals(region_id_to_split) - 1;
         }
 
         // try to get an edge to cut
@@ -93,7 +93,7 @@ List perform_a_valid_region_split(
                         k_param, max_potential_d,
                         pop, plan.region_ids, 
                         region_id_to_split, plan.region_pops.at(region_id_to_split),
-                        plan.region_dvals.at(region_id_to_split),
+                        plan.region_dvals(region_id_to_split),
                         lower, upper, target,
                         new_region1_tree_root, new_region1_dval, new_region1_pop,
                         new_region2_tree_root, new_region2_dval, new_region2_pop);
@@ -118,10 +118,9 @@ List perform_a_valid_region_split(
     // now update things with the new region ids 
     add_new_regions_to_plan_from_cut(
         ust, plan, split_district_only,
-        region_id_to_split,
+        region_id_to_split, plan.num_regions,
         new_region1_tree_root, new_region1_dval,  new_region1_pop,
-        new_region2_tree_root, new_region2_dval, new_region2_pop,
-        new_region1_id, new_region2_id
+        new_region2_tree_root, new_region2_dval, new_region2_pop
     );
 
 
@@ -160,7 +159,7 @@ List perform_merge_split_steps(
         int k_param, 
         double target, double lower, double upper,
         int N, int num_regions, int num_districts,
-        std::vector<int> region_ids, std::vector<int> region_dvals,
+        arma::umat region_ids, arma::umat region_dvals,
         std::vector<double> region_pops,
         bool split_district_only, int num_merge_split_steps,
         bool verbose
@@ -171,20 +170,22 @@ List perform_merge_split_steps(
     int V = g.size();
     double total_pop = sum(pop);
 
+    auto dummy_region_ids = region_ids; auto dummy_region_dvals = region_dvals;
+
     // Create a plan object
-    Plan plan = Plan(V, N, total_pop);
+    Plan plan = Plan(region_ids.col(0), region_dvals.col(0), V, N, total_pop);
+    Plan new_plan = Plan(dummy_region_ids.col(0), dummy_region_dvals.col(0), V, N, total_pop);
 
     // fill in the plan
     plan.num_regions = num_regions;
     plan.num_districts = num_districts;
     plan.num_multidistricts = plan.num_regions - plan.num_districts;
-    plan.region_ids = region_ids;
-    plan.region_dvals = region_dvals;
+    plan.region_ids = region_ids.col(0);
+    plan.region_dvals = region_dvals.col(0);
     plan.region_pops = region_pops;
 
     // TODO FIX THIS but need to create this
-    plan.region_added_order.resize(plan.num_regions, -1);
-    std::iota(plan.region_added_order.begin(), plan.region_added_order.end(), 1);
+    std::iota(plan.region_added_order.begin(), plan.region_added_order.end(), -1);
 
 
     if(verbose){
@@ -204,7 +205,7 @@ List perform_merge_split_steps(
         g, counties, cg, pop,
         split_district_only,
         k_param,
-        plan, num_merge_split_steps,
+        plan, new_plan, num_merge_split_steps,
         lower, upper, target
     );
 
@@ -237,7 +238,11 @@ List get_successful_proposed_cut(int N, List adj_list, const arma::uvec &countie
     double total_pop = sum(pop);
 
     // Create a plan object
-    Plan plan = Plan(V, N, total_pop);
+    Rprintf("THIS DOES NOT WORK. NEED TO FIX DVALS!\n");
+    arma::umat region_ids = arma::regspace<arma::umat>(0, V - 1);
+    arma::umat region_dvals = arma::umat(N, 1, fill::value(N));
+
+    Plan plan = Plan(region_ids.col(0), region_dvals.col(0), V, N, total_pop);;
 
 
     // Create tree related stuff
@@ -288,7 +293,7 @@ List get_successful_proposed_cut(int N, List adj_list, const arma::uvec &countie
         if(split_district_only){
             max_potential_d = 1;
         }else{
-            max_potential_d = plan.region_dvals.at(region_id_to_split) - 1;
+            max_potential_d = plan.region_dvals(region_id_to_split) - 1;
         }
 
         // try to get an edge to cut
@@ -296,7 +301,7 @@ List get_successful_proposed_cut(int N, List adj_list, const arma::uvec &countie
                         k_param, max_potential_d,
                         pop, plan.region_ids, 
                         region_id_to_split, plan.region_pops.at(region_id_to_split),
-                        plan.region_dvals.at(region_id_to_split),
+                        plan.region_dvals(region_id_to_split),
                         lower, upper, target,
                         new_region1_tree_root, new_region1_dval, new_region1_pop,
                         new_region2_tree_root, new_region2_dval, new_region2_pop);
@@ -315,10 +320,9 @@ List get_successful_proposed_cut(int N, List adj_list, const arma::uvec &countie
     // now update things with the new region ids 
     add_new_regions_to_plan_from_cut(
         ust, plan, split_district_only,
-        region_id_to_split,
+        region_id_to_split, plan.num_regions,
         new_region1_tree_root, new_region1_dval,  new_region1_pop,
-        new_region2_tree_root, new_region2_dval, new_region2_pop,
-        new_region1_id, new_region2_id
+        new_region2_tree_root, new_region2_dval, new_region2_pop
     );
 
     if(verbose){

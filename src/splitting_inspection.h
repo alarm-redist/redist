@@ -26,7 +26,7 @@ List perform_a_valid_region_split(
         int k_param, int region_id_to_split,
         double target, double lower, double upper,
         int N, int num_regions, int num_districts,
-        std::vector<int> region_ids, std::vector<int> region_dvals,
+        arma::umat region_ids, arma::umat region_dvals,
         std::vector<double> region_pops,
         bool split_district_only, bool verbose
 );
@@ -37,7 +37,7 @@ List perform_merge_split_steps(
         int k_param,
         double target, double lower, double upper,
         int N, int num_regions, int num_districts,
-        std::vector<int> region_ids, std::vector<int> region_dvals,
+        arma::umat region_ids, arma::umat region_dvals,
         std::vector<double> region_pops,
         bool split_district_only, int num_merge_split_steps,
         bool verbose

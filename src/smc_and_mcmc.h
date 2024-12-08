@@ -12,9 +12,9 @@
 #include <functional>
 #include <cli/progress.h>
 #include <RcppThread.h>
+#include <atomic>
 
 
-#include "gredist_types.h"
 #include "splitting.h"
 #include "merging.h"
 #include "weights.h"
@@ -50,8 +50,9 @@ List optimal_gsmc_with_merge_split_plans(
         const arma::uvec &counties, const arma::uvec &pop,
         double target, double lower, double upper,
         int M, // M is Number of particles aka number of different plans
+        arma::umat region_id_mat, arma::umat region_dvals_mat,
         List control, // control has pop temper, and k parameter value, and whether only district splits are allowed
-        int num_threads = -1, int verbosity = 3, bool diagnostic_mode = false
+        int verbosity = 3, bool diagnostic_mode = false
 );
 
 

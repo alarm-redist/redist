@@ -10,6 +10,7 @@ redist_optimal_gsmc_ms(
   counties = NULL,
   k_params = 6,
   split_district_only = FALSE,
+  run_ms = FALSE,
   ms_freq = 7,
   ms_steps_multiplier = 1L,
   resample = TRUE,
@@ -17,6 +18,8 @@ redist_optimal_gsmc_ms(
   ncores = 0L,
   multiprocess = TRUE,
   pop_temper = 0,
+  init_region_ids_mat = NULL,
+  init_dvals_mat = NULL,
   verbose = FALSE,
   silent = FALSE,
   diagnostic_mode = FALSE

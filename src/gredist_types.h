@@ -23,10 +23,17 @@ typedef std::vector<std::vector<int>> Graph;
 typedef std::vector<std::vector<std::vector<int>>> Multigraph;
 
 
+
 class Plan
 {
 public:
-    Plan(int V, int N, double total_map_pop, bool split_district_only=false); // constructor for 1 region plan
+    // constructor 
+    Plan(arma::subview_col<arma::uword> region_ids_col, 
+             arma::subview_col<arma::uword> region_dvals_col, 
+             int N, double total_map_pop, bool split_district_only=false); // constructor for 1 region plan
+    Plan(const Plan& other); // Copy constructor
+
+
     // attributes
     int N; // Number all d_nk must sum to
     int V; // Number of nodes in graph
@@ -36,13 +43,15 @@ public:
     double map_pop; // The population of the entire map
     int remainder_region; // ID of the remainder region of the plan (if it has one)
 
-    // vectors with length V
-    std::vector<int> region_ids; // Representation of regions in integer form (not as easy to trace
+    // basically vectors with length V
+    arma::subview_col<arma::uword> region_ids; // Representation of regions in integer form (not as easy to trace
     // lineage). This is a length V vector where ith value maps it the integer id of its region
+
+    // Think of this like the pointer to some column in a matrix 
 
 
     // vectors with length num_regions
-    std::vector<int> region_dvals; //Vector of length num_regions mapping region ids to their d values
+    arma::subview_col<arma::uword> region_dvals; //Vector of length num_regions mapping region ids to their d values
     // Regions have R prefix whereas districts end in an integer (in string form).
     std::vector<double> region_pops; // Vector of length num_regions mapping region ids
     // to the regions population
@@ -53,6 +62,10 @@ public:
     // was added after region j
     
     int region_order_max; // value of current largest region order number
+
+    
+    // shallow copy another plan
+    void shallow_copy(const Plan& other);
 
     // methods
     void Rprint() const;

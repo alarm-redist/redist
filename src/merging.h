@@ -23,22 +23,22 @@
 #include "weights.h"
 
 
-int run_merge_split_step_on_a_plan( 
+int run_merge_split_step_on_a_plan(
     Graph const &g, const uvec &counties, Multigraph &cg, const uvec &pop,
-    bool const split_district_only,
+    bool split_district_only,
     int const k_param,
-    Plan &plan, int const nsteps_to_run,
+    Plan &plan, Plan &new_plan, int const nsteps_to_run,
     double const lower, double const upper, double const target
 );
 
 void run_merge_split_step_on_all_plans( 
     RcppThread::ThreadPool &pool,
     Graph const &g, const uvec &counties, Multigraph &cg, const uvec &pop,
-    std::vector<Plan> &plans_vec, 
+    std::vector<Plan> &plans_vec, std::vector<Plan> &new_plans_vec,
     bool const split_district_only, int const k_param,
     int const nsteps_to_run,
     double const lower, double const upper, double const target,
-    std::vector<int> &success_count_vec
+    arma::subview_col<arma::uword> success_count_vec
 );
 
 #endif

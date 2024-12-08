@@ -242,7 +242,7 @@ void assign_district(const Tree &ust, subview_col<uword> &districts,
 void assign_region(const Tree &ust, Plan &plan,
                      int root,
                      int new_region_num_id) {
-    plan.region_ids.at(root) = new_region_num_id;
+    plan.region_ids(root) = new_region_num_id;
     int n_desc = ust.at(root).size();
     for (int i = 0; i < n_desc; i++) {
         assign_region(ust, plan, ust.at(root).at(i), new_region_num_id);
@@ -251,10 +251,10 @@ void assign_region(const Tree &ust, Plan &plan,
 
 
 void assign_region_just_vertex_vec(const Tree &ust, 
-                    std::vector<int> &region_ids,
+                    arma::subview_col<arma::uword> &region_ids,
                     int root,
                     int new_region_num_id) {
-    region_ids.at(root) = new_region_num_id;
+    region_ids(root) = new_region_num_id;
     int n_desc = ust.at(root).size();
     for (int i = 0; i < n_desc; i++) {
         assign_region_just_vertex_vec(ust, region_ids, ust.at(root).at(i), new_region_num_id);

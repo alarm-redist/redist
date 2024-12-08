@@ -20,11 +20,12 @@
 #'
 #' @export
 redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
-                       k_params = 6, split_district_only = FALSE,
+                       k_params = 6, split_district_only = FALSE, run_ms = FALSE,
                        ms_freq = 7, ms_steps_multiplier = 1L,
                        resample = TRUE, runs = 1L,
                        ncores = 0L, multiprocess=TRUE,
                        pop_temper = 0,
+                       init_region_ids_mat = NULL, init_dvals_mat = NULL,
                        verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE){
     N <- attr(state_map, "ndists")
     ndists <- attr(state_map, "ndists")
@@ -72,13 +73,12 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
     total_smc_steps <- N-1
 
     # check if there will be any merge split steps
-    any_ms_steps_ran <- ms_freq <= total_smc_steps
+    any_ms_steps_ran <- ms_freq <= total_smc_steps && run_ms
 
     merge_split_step_vec <- rep(FALSE, N-1)
 
     if(any_ms_steps_ran){
         # Now add merge split every `ms_freq` steps
-
 
         # insertion trick
         # https://stackoverflow.com/questions/1493969/insert-elements-into-a-vector-at-given-indexes
@@ -88,7 +88,6 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
 
         # number of merge split is sum of trues
         merge_split_step_vec <- val[order(id)]
-
     }
 
     assertthat::assert_that(sum(!merge_split_step_vec) == total_smc_steps)
@@ -159,8 +158,42 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
         }
     }
 
+    ndists <- N
+    n_steps <- ndists - 1
 
+    # handle particle inits
+    if (is.null(init_region_ids_mat)) {
+        init_region_ids_mat <- matrix(0L, nrow = V, ncol = nsims)
+        n_drawn <- 0L
+    } else {
+        if (nrow(init_region_ids_mat) != V)
+            cli_abort("{.arg init_region_ids_mat} must have as many rows as {.arg map} has precincts.")
+        if (ncol(init_region_ids_mat) != nsims)
+            cli_abort("{.arg init_region_ids_mat} must have {.arg nsims} columns.")
+        n_drawn <- as.integer(max(init_region_ids_mat[, 1]))
+    }
+    if (is.null(n_steps)) {
+        n_steps <- ndists - n_drawn - 1L
+    }
+    final_dists <- n_drawn + n_steps + 1L
+    if (final_dists > ndists) {
+        cli_abort("Too many districts already drawn to take {n_steps} steps.")
+    }
 
+    # handle region dval inits
+    if (is.null(init_dvals_mat)) {
+        # initialize it so the first element of every column is ndists
+        init_dvals_mat <- matrix(0L, nrow = ndists, ncol = nsims)
+        init_dvals_mat[1,] <- ndists
+    } else {
+        if (nrow(init_dvals_mat) != V)
+            cli_abort("{.arg init_dvals_mat} must have as many rows as {.arg map} has precincts.")
+        if (ncol(init_dvals_mat) != nsims)
+            cli_abort("{.arg init_dvals_mat} must have {.arg nsims} columns.")
+    }
+    if (!all(colSums(init_dvals_mat) == ndists)) {
+        cli_abort("Too many dvals in already drawn plans.")
+    }
 
     # get population stuff
     pop_bounds <- attr(map, "pop_bounds")
@@ -220,6 +253,7 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
     }
 
 
+    control[["num_threads"]] <- as.integer(ncores_per)
 
     t1 <- Sys.time()
     all_out <- foreach(chain = seq_len(runs), .inorder = FALSE, .packages="gredist") %oper% {
@@ -238,8 +272,9 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
             lower=pop_bounds[1],
             upper=pop_bounds[3],
             M=M,
+            region_id_mat = init_region_ids_mat,
+            region_dvals_mat = init_dvals_mat,
             control = control,
-            num_threads = as.integer(ncores_per),
             verbosity=run_verbosity,
             diagnostic_mode=diagnostic_mode)
 
@@ -250,6 +285,9 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
             cli::cli_process_done()
         }
 
+        # convert the integer data to save memory
+        storage.mode(algout$plans_mat) <- "integer"
+
         # convert the order added results into an actual list of arrays where
         # for each list entry n and column entry i that is a vector of length n
         # mapping the region id to its sorted order. The way to interpret is
@@ -257,131 +295,34 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
         # is the new index region id r was mapped to.
         # In other words which(algout$region_order_added_list[[n]][,i] == r) is
         # the new ordered value r should be set to
-        algout$region_order_added_list <- lapply(
-            algout$region_order_added_list,
-            function(x) matrix(unlist(x), ncol = length(x), byrow = FALSE)
-        ) |> lapply(
-            function(a_l) apply(a_l, 2, order))
 
 
-
-        # make each element of region_ids_mat_list a V by M matrix
-        algout$region_ids_mat_list <- lapply(
-            algout$region_ids_mat_list,
-            function(x) matrix(unlist(x), ncol = length(x), byrow = FALSE) + 1
-            )
-
-        # make each element of region_dvals_mat_list a n by M matrix
-        algout$region_dvals_mat_list <- lapply(
-            algout$region_dvals_mat_list,
-            function(x) matrix(unlist(x), ncol = length(x), byrow = FALSE)
-        )
-
-        if(diagnostic_mode && !split_district_only){
-            # update the labels to reflect the order regions were added for each step
-            for (n in 1:(total_steps-1)) {
-                for (i in 1:M) {
-                    # reorder d values. Recall
-                    # algout$region_order_added_list[[n]][,i] permutes the original
-                    # region label vector to its new ordered form so its ok here
-                    algout$region_dvals_mat_list[[n]][,i] <- algout$region_dvals_mat_list[[n]][,i][
-                        algout$region_order_added_list[[n]][,i]
-                    ]
-                    # reorder the labels themselves
-                    # the reason for the order call again is it ensures that if
-                    # r is the original region id and r_new is the new ordered one
-                    # then
-                    # order(algout$region_order_added_list[[1]][,i])[r] = r_new
-                    algout$region_ids_mat_list[[n]][,i] <- order(
-                        algout$region_order_added_list[[n]][,i]
-                    )[
-                        algout$region_ids_mat_list[[n]][,i]
-                    ]
-
-                }
-            }
-            # do final step
-            for (i in 1:M) {
-                # reorder the labels themselves
-                # the reason for the order call again is it ensures that if
-                # r is the original region id and r_new is the new ordered one
-                # then
-                # order(algout$region_order_added_list[[1]][,i])[r] = r_new
-                algout$region_ids_mat_list[[total_steps]][,i] <- order(
-                    algout$region_order_added_list[[total_steps]][,i]
-                )[
-                    algout$region_ids_mat_list[[total_steps]][,i]
-                ]
-
-            }
-
-            # add a plans matrix as the final output because first
-            # N-2 are previous results
-            algout$plans <- algout$region_ids_mat_list[[total_steps]]
-        }else if(diagnostic_mode){
-            # if diagnostic but only one district splits we only care about
-            # labels
-            # update the labels to reflect the order regions were added for each step
-            for (n in 1:(total_steps)) {
-                for (i in 1:M) {
-                    # reorder the labels themselves
-                    # the reason for the order call again is it ensures that if
-                    # r is the original region id and r_new is the new ordered one
-                    # then
-                    # order(algout$region_order_added_list[[1]][,i])[r] = r_new
-                    algout$region_ids_mat_list[[n]][,i] <- order(
-                        algout$region_order_added_list[[n]][,i]
-                    )[
-                        algout$region_ids_mat_list[[n]][,i]
-                    ]
-
-                }
-            }
-
-            # add a plans matrix as the final output because first
-            # N-2 are previous results
-            algout$plans <- algout$region_ids_mat_list[[total_steps]]
-        }else{
-            # relabel the region ids so they are all in order
-            for (i in 1:M) {
-                # reorder the labels themselves
-                # the reason for the order call again is it ensures that if
-                # r is the original region id and r_new is the new ordered one
-                # then
-                # order(algout$region_order_added_list[[1]][,i])[r] = r_new
-                algout$region_ids_mat_list[[1]][,i] <- order(
-                    algout$region_order_added_list[[1]][,i]
-                )[
-                    algout$region_ids_mat_list[[1]][,i]
-                ]
-
-            }
-
-            # Just add first element since not diagnostic mode the first N-2
-            # steps were not tracked
-            algout$plans <- algout$region_ids_mat_list[[1]]
-
+        if(!diagnostic_mode){
+            # if not diagnostic mode
             # make the region_ids_mat_list input just null since there's nothing else
             algout$region_ids_mat_list <- NULL
             algout$region_dvals_mat_list <- NULL
-        }
-
-        # now we can remove the relabelling info
-        algout$region_order_added_list <- NULL
-        gc()
-
-        # refor
-        if(any_ms_steps_ran){
-            # make the M x num_ms_steps by
-            algout$merge_split_success_mat <- matrix(
-                unlist(algout$merge_split_success_counts),
-                ncol = length(algout$merge_split_success_counts),
-                byrow = FALSE
-            )
-            algout$merge_split_success_counts <- NULL
         }else{
-            algout$merge_split_success_counts <- NULL
+            storage.mode(algout$region_ids_mat_list) <- "integer"
+
+            if(!split_district_only){
+                for (i in 1:length(algout$region_dvals_mat_list)) {
+                    storage.mode(algout$region_dvals_mat_list[[i]]) <- "integer"
+                }
+            }
+
         }
+
+
+
+
+        # if no merge split was run them remove those attributes
+        if(!any_ms_steps_ran){
+            algout$merge_split_success_mat <- NULL
+            algout$merge_split_attempt_counts <- NULL
+        }
+
+        gc()
 
 
         # turn it into a character vector
@@ -393,32 +334,15 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
             algout$step_split_types == "ms"
         )
 
-        # make original ancestor matrix
-        # add 1 for R indexing
-        algout$original_ancestors_mat <- matrix(
-            unlist(algout$original_ancestors),
-            ncol = length(algout$original_ancestors),
-            byrow = FALSE) + 1
-        algout$original_ancestors <- NULL
+        # add 1 to make parent mat  1-indexed for R indexing
+        algout$parent_index <- algout$parent_index + 1
 
-        # make parent mat into matrix
-        # add 1 for R indexing
-        algout$parent_index <- matrix(
-            unlist(algout$parent_index),
-            ncol = length(algout$parent_index),
-            byrow = FALSE) + 1
+        # get original ancestor matrix from parent index
+        algout$original_ancestors_mat <- get_original_ancestors_mat(
+            algout$parent_index
+        )
 
-        # make draws tries into a matrix
-        algout$draw_tries_mat  <- matrix(
-            unlist(algout$draw_tries_mat),
-            ncol = length(algout$draw_tries_mat),
-            byrow = FALSE)
 
-        # make parent unsuccessful tries into a matrix
-        algout$parent_unsuccessful_tries_mat  <- matrix(
-            unlist(algout$parent_unsuccessful_tries_mat),
-            ncol = length(algout$parent_unsuccessful_tries_mat),
-            byrow = FALSE)
 
         # make parent succesful tries matrix counting the number of
         # times a parent index was successfully sampled
@@ -426,15 +350,9 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
             algout$parent_index, 2, tabulate, nbins = M
         )
 
-        # make the log incremental weights into a matrix
-        algout$log_incremental_weights_mat  <- matrix(
-            unlist(algout$log_incremental_weights_mat),
-            ncol = length(algout$log_incremental_weights_mat),
-            byrow = FALSE)
-
 
         # pull out the log weights
-        lr <- algout$log_incremental_weights_mat[,total_steps]
+        lr <- algout$log_incremental_weights_mat[,total_smc_steps]
 
         wgt <- exp(lr - mean(lr))
         n_eff <- length(wgt)*mean(wgt)^2/mean(wgt^2)
@@ -461,7 +379,7 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
             rs_idx <- resample_lowvar(normalized_wgts)
             n_unique <- dplyr::n_distinct(rs_idx)
             # makes algout$plans[i] now equal to algout$plans[rs_idx[i]]
-            algout$plans <- algout$plans[, rs_idx, drop = FALSE]
+            algout$plans_mat <- algout$plans_mat[, rs_idx, drop = FALSE]
             # now adjust for the resampling
             algout$ancestors <- algout$ancestors[rs_idx, , drop = FALSE]
 
@@ -480,9 +398,22 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
             storage.mode(algout$ancestors) <- "integer"
         }
 
-        storage.mode(algout$plans) <- "integer"
+
         t2_run <- Sys.time()
 
+        # now for the smc step only diagnostics make it so
+        # the merge split steps are just NA
+        dummy_vec <- rep(NA, length(algout$merge_split_steps))
+
+        # do effective sample size
+        dummy_vec[!algout$merge_split_steps] <- algout$step_n_eff
+        algout$step_n_eff <- dummy_vec
+        # do log weight sd
+        dummy_vec[!algout$merge_split_steps] <- apply(algout$log_incremental_weights_mat, 2, sd)
+        sd_lp <- c(dummy_vec, sd(lr))
+        # do unique original ancestors
+        dummy_vec[!algout$merge_split_steps] <- apply(algout$original_ancestors_mat, 2, dplyr::n_distinct)
+        nunique_original_ancestors <- dummy_vec
 
         if (!is.nan(n_eff) && n_eff/M <= 0.05)
             cli_warn(c("Less than 5% resampling efficiency.",
@@ -504,9 +435,7 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
             adapt_k_thresh = .99, # adapt_k_thresh, NEED TO DEAL WITH
             est_k = est_k_params, # algout$est_k,
             accept_rate = algout$acceptance_rates,
-            sd_lp = c(
-                apply(algout$log_incremental_weights_mat, 2, sd), sd(lr)
-                ),
+            sd_lp = sd_lp,
             sd_temper = rep(NA, total_steps), # algout$sd_temper,
             unique_survive = c(algout$nunique_parent_indices, n_unique),
             ancestors = algout$ancestors,
@@ -514,7 +443,7 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
             pop_temper = pop_temper,
             runtime = as.numeric(t2_run - t1_run, units = "secs"),
             num_threads = ncores_per,
-            nunique_original_ancestors = algout$nunique_original_ancestors,
+            nunique_original_ancestors = nunique_original_ancestors,
             parent_index_mat = algout$parent_index,
             original_ancestors_mat = algout$original_ancestors_mat,
             region_dvals_mat_list = algout$region_dvals_mat_list,

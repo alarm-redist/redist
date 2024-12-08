@@ -402,151 +402,25 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// testing_sample_forest
-Tree testing_sample_forest(List l, const arma::uvec& pop, double lower, double upper, const arma::uvec& counties, const std::vector<bool> ignore);
-RcppExport SEXP _gredist_testing_sample_forest(SEXP lSEXP, SEXP popSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP countiesSEXP, SEXP ignoreSEXP) {
+// new_plan_testing
+List new_plan_testing(arma::umat region_id_mat, arma::umat region_id_mat2);
+RcppExport SEXP _gredist_new_plan_testing(SEXP region_id_matSEXP, SEXP region_id_mat2SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< List >::type l(lSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
-    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
-    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
-    Rcpp::traits::input_parameter< const std::vector<bool> >::type ignore(ignoreSEXP);
-    rcpp_result_gen = Rcpp::wrap(testing_sample_forest(l, pop, lower, upper, counties, ignore));
+    Rcpp::traits::input_parameter< arma::umat >::type region_id_mat(region_id_matSEXP);
+    Rcpp::traits::input_parameter< arma::umat >::type region_id_mat2(region_id_mat2SEXP);
+    rcpp_result_gen = Rcpp::wrap(new_plan_testing(region_id_mat, region_id_mat2));
     return rcpp_result_gen;
 END_RCPP
 }
-// perform_a_valid_region_split_then_merge_split
-List perform_a_valid_region_split_then_merge_split(List adj_list, const arma::uvec& counties, const arma::uvec& pop, int k_param, int region_id_to_split, double target, double lower, double upper, int N, int num_regions, int num_districts, std::vector<int> region_ids, std::vector<int> region_dvals, std::vector<double> region_pops, bool split_district_only, int num_merge_split_steps, bool verbose);
-RcppExport SEXP _gredist_perform_a_valid_region_split_then_merge_split(SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP k_paramSEXP, SEXP region_id_to_splitSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP NSEXP, SEXP num_regionsSEXP, SEXP num_districtsSEXP, SEXP region_idsSEXP, SEXP region_dvalsSEXP, SEXP region_popsSEXP, SEXP split_district_onlySEXP, SEXP num_merge_split_stepsSEXP, SEXP verboseSEXP) {
+// arma_testing
+List arma_testing();
+RcppExport SEXP _gredist_arma_testing() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< List >::type adj_list(adj_listSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
-    Rcpp::traits::input_parameter< int >::type k_param(k_paramSEXP);
-    Rcpp::traits::input_parameter< int >::type region_id_to_split(region_id_to_splitSEXP);
-    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
-    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
-    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
-    Rcpp::traits::input_parameter< int >::type N(NSEXP);
-    Rcpp::traits::input_parameter< int >::type num_regions(num_regionsSEXP);
-    Rcpp::traits::input_parameter< int >::type num_districts(num_districtsSEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type region_ids(region_idsSEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type region_dvals(region_dvalsSEXP);
-    Rcpp::traits::input_parameter< std::vector<double> >::type region_pops(region_popsSEXP);
-    Rcpp::traits::input_parameter< bool >::type split_district_only(split_district_onlySEXP);
-    Rcpp::traits::input_parameter< int >::type num_merge_split_steps(num_merge_split_stepsSEXP);
-    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(perform_a_valid_region_split_then_merge_split(adj_list, counties, pop, k_param, region_id_to_split, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, num_merge_split_steps, verbose));
-    return rcpp_result_gen;
-END_RCPP
-}
-// one_cut_then_merge_split
-List one_cut_then_merge_split(int N, List adj_list, const arma::uvec& counties, const arma::uvec& pop, double target, double lower, double upper, bool split_district_only, int num_merge_split_steps, bool verbose);
-RcppExport SEXP _gredist_one_cut_then_merge_split(SEXP NSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP split_district_onlySEXP, SEXP num_merge_split_stepsSEXP, SEXP verboseSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type N(NSEXP);
-    Rcpp::traits::input_parameter< List >::type adj_list(adj_listSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
-    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
-    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
-    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
-    Rcpp::traits::input_parameter< bool >::type split_district_only(split_district_onlySEXP);
-    Rcpp::traits::input_parameter< int >::type num_merge_split_steps(num_merge_split_stepsSEXP);
-    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(one_cut_then_merge_split(N, adj_list, counties, pop, target, lower, upper, split_district_only, num_merge_split_steps, verbose));
-    return rcpp_result_gen;
-END_RCPP
-}
-// plan_class_testing
-List plan_class_testing(int V, int num_regions, int num_districts);
-RcppExport SEXP _gredist_plan_class_testing(SEXP VSEXP, SEXP num_regionsSEXP, SEXP num_districtsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type V(VSEXP);
-    Rcpp::traits::input_parameter< int >::type num_regions(num_regionsSEXP);
-    Rcpp::traits::input_parameter< int >::type num_districts(num_districtsSEXP);
-    rcpp_result_gen = Rcpp::wrap(plan_class_testing(V, num_regions, num_districts));
-    return rcpp_result_gen;
-END_RCPP
-}
-// split_entire_map
-List split_entire_map(int N, List adj_list, const arma::uvec& counties, const arma::uvec& pop, double target, double lower, double upper, bool verbose);
-RcppExport SEXP _gredist_split_entire_map(SEXP NSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP verboseSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type N(NSEXP);
-    Rcpp::traits::input_parameter< List >::type adj_list(adj_listSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
-    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
-    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
-    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
-    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(split_entire_map(N, adj_list, counties, pop, target, lower, upper, verbose));
-    return rcpp_result_gen;
-END_RCPP
-}
-// split_all_the_way
-List split_all_the_way(int N, List adj_list, const arma::uvec& counties, const arma::uvec& pop, double target, double lower, double upper, bool verbose);
-RcppExport SEXP _gredist_split_all_the_way(SEXP NSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP verboseSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type N(NSEXP);
-    Rcpp::traits::input_parameter< List >::type adj_list(adj_listSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
-    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
-    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
-    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
-    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(split_all_the_way(N, adj_list, counties, pop, target, lower, upper, verbose));
-    return rcpp_result_gen;
-END_RCPP
-}
-// copy_semantics_tester_outer
-void copy_semantics_tester_outer();
-RcppExport SEXP _gredist_copy_semantics_tester_outer() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    copy_semantics_tester_outer();
-    return R_NilValue;
-END_RCPP
-}
-// test_cpp_discrete_distribution
-void test_cpp_discrete_distribution();
-RcppExport SEXP _gredist_test_cpp_discrete_distribution() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    test_cpp_discrete_distribution();
-    return R_NilValue;
-END_RCPP
-}
-// test_region_lev_graph_stuff
-List test_region_lev_graph_stuff(int N, List adj_list, const arma::uvec& counties, const arma::uvec& pop, double target, double lower, double upper, bool verbose);
-RcppExport SEXP _gredist_test_region_lev_graph_stuff(SEXP NSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP verboseSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type N(NSEXP);
-    Rcpp::traits::input_parameter< List >::type adj_list(adj_listSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
-    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
-    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
-    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
-    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(test_region_lev_graph_stuff(N, adj_list, counties, pop, target, lower, upper, verbose));
+    rcpp_result_gen = Rcpp::wrap(arma_testing());
     return rcpp_result_gen;
 END_RCPP
 }
@@ -700,8 +574,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // optimal_gsmc_with_merge_split_plans
-List optimal_gsmc_with_merge_split_plans(int N, List adj_list, const arma::uvec& counties, const arma::uvec& pop, double target, double lower, double upper, int M, List control, int num_threads, int verbosity, bool diagnostic_mode);
-RcppExport SEXP _gredist_optimal_gsmc_with_merge_split_plans(SEXP NSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP MSEXP, SEXP controlSEXP, SEXP num_threadsSEXP, SEXP verbositySEXP, SEXP diagnostic_modeSEXP) {
+List optimal_gsmc_with_merge_split_plans(int N, List adj_list, const arma::uvec& counties, const arma::uvec& pop, double target, double lower, double upper, int M, arma::umat region_id_mat, arma::umat region_dvals_mat, List control, int verbosity, bool diagnostic_mode);
+RcppExport SEXP _gredist_optimal_gsmc_with_merge_split_plans(SEXP NSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP MSEXP, SEXP region_id_matSEXP, SEXP region_dvals_matSEXP, SEXP controlSEXP, SEXP verbositySEXP, SEXP diagnostic_modeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -713,11 +587,12 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
     Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
     Rcpp::traits::input_parameter< int >::type M(MSEXP);
+    Rcpp::traits::input_parameter< arma::umat >::type region_id_mat(region_id_matSEXP);
+    Rcpp::traits::input_parameter< arma::umat >::type region_dvals_mat(region_dvals_matSEXP);
     Rcpp::traits::input_parameter< List >::type control(controlSEXP);
-    Rcpp::traits::input_parameter< int >::type num_threads(num_threadsSEXP);
     Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
     Rcpp::traits::input_parameter< bool >::type diagnostic_mode(diagnostic_modeSEXP);
-    rcpp_result_gen = Rcpp::wrap(optimal_gsmc_with_merge_split_plans(N, adj_list, counties, pop, target, lower, upper, M, control, num_threads, verbosity, diagnostic_mode));
+    rcpp_result_gen = Rcpp::wrap(optimal_gsmc_with_merge_split_plans(N, adj_list, counties, pop, target, lower, upper, M, region_id_mat, region_dvals_mat, control, verbosity, diagnostic_mode));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -749,7 +624,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // perform_a_valid_region_split
-List perform_a_valid_region_split(List adj_list, const arma::uvec& counties, const arma::uvec& pop, int k_param, int region_id_to_split, double target, double lower, double upper, int N, int num_regions, int num_districts, std::vector<int> region_ids, std::vector<int> region_dvals, std::vector<double> region_pops, bool split_district_only, bool verbose);
+List perform_a_valid_region_split(List adj_list, const arma::uvec& counties, const arma::uvec& pop, int k_param, int region_id_to_split, double target, double lower, double upper, int N, int num_regions, int num_districts, arma::umat region_ids, arma::umat region_dvals, std::vector<double> region_pops, bool split_district_only, bool verbose);
 RcppExport SEXP _gredist_perform_a_valid_region_split(SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP k_paramSEXP, SEXP region_id_to_splitSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP NSEXP, SEXP num_regionsSEXP, SEXP num_districtsSEXP, SEXP region_idsSEXP, SEXP region_dvalsSEXP, SEXP region_popsSEXP, SEXP split_district_onlySEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -765,8 +640,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type N(NSEXP);
     Rcpp::traits::input_parameter< int >::type num_regions(num_regionsSEXP);
     Rcpp::traits::input_parameter< int >::type num_districts(num_districtsSEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type region_ids(region_idsSEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type region_dvals(region_dvalsSEXP);
+    Rcpp::traits::input_parameter< arma::umat >::type region_ids(region_idsSEXP);
+    Rcpp::traits::input_parameter< arma::umat >::type region_dvals(region_dvalsSEXP);
     Rcpp::traits::input_parameter< std::vector<double> >::type region_pops(region_popsSEXP);
     Rcpp::traits::input_parameter< bool >::type split_district_only(split_district_onlySEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
@@ -775,7 +650,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // perform_merge_split_steps
-List perform_merge_split_steps(List adj_list, const arma::uvec& counties, const arma::uvec& pop, int k_param, double target, double lower, double upper, int N, int num_regions, int num_districts, std::vector<int> region_ids, std::vector<int> region_dvals, std::vector<double> region_pops, bool split_district_only, int num_merge_split_steps, bool verbose);
+List perform_merge_split_steps(List adj_list, const arma::uvec& counties, const arma::uvec& pop, int k_param, double target, double lower, double upper, int N, int num_regions, int num_districts, arma::umat region_ids, arma::umat region_dvals, std::vector<double> region_pops, bool split_district_only, int num_merge_split_steps, bool verbose);
 RcppExport SEXP _gredist_perform_merge_split_steps(SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP k_paramSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP NSEXP, SEXP num_regionsSEXP, SEXP num_districtsSEXP, SEXP region_idsSEXP, SEXP region_dvalsSEXP, SEXP region_popsSEXP, SEXP split_district_onlySEXP, SEXP num_merge_split_stepsSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -790,8 +665,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type N(NSEXP);
     Rcpp::traits::input_parameter< int >::type num_regions(num_regionsSEXP);
     Rcpp::traits::input_parameter< int >::type num_districts(num_districtsSEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type region_ids(region_idsSEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type region_dvals(region_dvalsSEXP);
+    Rcpp::traits::input_parameter< arma::umat >::type region_ids(region_idsSEXP);
+    Rcpp::traits::input_parameter< arma::umat >::type region_dvals(region_dvalsSEXP);
     Rcpp::traits::input_parameter< std::vector<double> >::type region_pops(region_popsSEXP);
     Rcpp::traits::input_parameter< bool >::type split_district_only(split_district_onlySEXP);
     Rcpp::traits::input_parameter< int >::type num_merge_split_steps(num_merge_split_stepsSEXP);
@@ -923,15 +798,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_ms_plans", (DL_FUNC) &_gredist_ms_plans, 15},
     {"_gredist_optimal_gsmc_plans", (DL_FUNC) &_gredist_optimal_gsmc_plans, 12},
     {"_gredist_pareto_dominated", (DL_FUNC) &_gredist_pareto_dominated, 1},
-    {"_gredist_testing_sample_forest", (DL_FUNC) &_gredist_testing_sample_forest, 6},
-    {"_gredist_perform_a_valid_region_split_then_merge_split", (DL_FUNC) &_gredist_perform_a_valid_region_split_then_merge_split, 17},
-    {"_gredist_one_cut_then_merge_split", (DL_FUNC) &_gredist_one_cut_then_merge_split, 10},
-    {"_gredist_plan_class_testing", (DL_FUNC) &_gredist_plan_class_testing, 3},
-    {"_gredist_split_entire_map", (DL_FUNC) &_gredist_split_entire_map, 8},
-    {"_gredist_split_all_the_way", (DL_FUNC) &_gredist_split_all_the_way, 8},
-    {"_gredist_copy_semantics_tester_outer", (DL_FUNC) &_gredist_copy_semantics_tester_outer, 0},
-    {"_gredist_test_cpp_discrete_distribution", (DL_FUNC) &_gredist_test_cpp_discrete_distribution, 0},
-    {"_gredist_test_region_lev_graph_stuff", (DL_FUNC) &_gredist_test_region_lev_graph_stuff, 8},
+    {"_gredist_new_plan_testing", (DL_FUNC) &_gredist_new_plan_testing, 2},
+    {"_gredist_arma_testing", (DL_FUNC) &_gredist_arma_testing, 0},
     {"_gredist_closest_adj_pop", (DL_FUNC) &_gredist_closest_adj_pop, 3},
     {"_gredist_rint1", (DL_FUNC) &_gredist_rint1, 2},
     {"_gredist_runif1", (DL_FUNC) &_gredist_runif1, 2},
@@ -943,7 +811,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_k_smallest", (DL_FUNC) &_gredist_k_smallest, 2},
     {"_gredist_k_biggest", (DL_FUNC) &_gredist_k_biggest, 2},
     {"_gredist_smc_plans", (DL_FUNC) &_gredist_smc_plans, 15},
-    {"_gredist_optimal_gsmc_with_merge_split_plans", (DL_FUNC) &_gredist_optimal_gsmc_with_merge_split_plans, 12},
+    {"_gredist_optimal_gsmc_with_merge_split_plans", (DL_FUNC) &_gredist_optimal_gsmc_with_merge_split_plans, 13},
     {"_gredist_splits", (DL_FUNC) &_gredist_splits, 4},
     {"_gredist_dist_cty_splits", (DL_FUNC) &_gredist_dist_cty_splits, 3},
     {"_gredist_perform_a_valid_region_split", (DL_FUNC) &_gredist_perform_a_valid_region_split, 16},
