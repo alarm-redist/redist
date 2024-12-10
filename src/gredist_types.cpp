@@ -106,7 +106,7 @@ void Plan::shallow_copy(const Plan& other){
 void Plan::Rprint() const{
     RcppThread::Rcout << "Plan with " << num_regions << " regions, " << num_districts
                       << " districts, " << num_multidistricts << " multidistricts and "
-                      << sum(region_dvals) << " sum of dnk and"
+                      << arma::sum(region_dvals) << " sum of dnk and"
                       << V << " Vertices.\n[";
 
 

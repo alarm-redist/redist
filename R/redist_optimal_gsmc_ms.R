@@ -337,12 +337,6 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
         # add 1 to make parent mat  1-indexed for R indexing
         algout$parent_index <- algout$parent_index + 1
 
-        # get original ancestor matrix from parent index
-        algout$original_ancestors_mat <- get_original_ancestors_mat(
-            algout$parent_index
-        )
-
-
 
         # make parent succesful tries matrix counting the number of
         # times a parent index was successfully sampled
@@ -383,10 +377,9 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
             # now adjust for the resampling
             algout$ancestors <- algout$ancestors[rs_idx, , drop = FALSE]
 
-            # adjust for the resampling
-            # NOTE: IN FUTURE THIS SHOULD BE SEPERATED INTO FINAL SAMPLE INFO
-            algout$original_ancestors_mat <- algout$original_ancestors_mat[rs_idx, , drop = FALSE]
-            algout$parent_index <- algout$original_ancestors_mat[rs_idx, , drop = FALSE]
+            # add a final column for the resampling
+            # NOTE: I THINK THIS IS WRONG, MIGHT NEED TO FLIP COLUMN
+            algout$parent_index <- cbind(algout$parent_index, rs_idx[1:length(rs_idx)])
 
             if(diagnostic_mode){
                 # makes algout$final_region_labs[i] now equal to algout$final_region_labs[rs_idx[i]]
@@ -401,6 +394,11 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
 
         t2_run <- Sys.time()
 
+        # get original ancestor matrix from parent index
+        algout$original_ancestors_mat <- get_original_ancestors_mat(
+            algout$parent_index
+        )
+
         # now for the smc step only diagnostics make it so
         # the merge split steps are just NA
         dummy_vec <- rep(NA, length(algout$merge_split_steps))
@@ -414,6 +412,8 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
         # do unique original ancestors
         dummy_vec[!algout$merge_split_steps] <- apply(algout$original_ancestors_mat, 2, dplyr::n_distinct)
         nunique_original_ancestors <- dummy_vec
+        nunique_original_ancestors <- c(nunique_original_ancestors,
+                                        dplyr::n_distinct(algout$original_ancestors_mat[, ncol(algout$original_ancestors_mat)]))
 
         if (!is.nan(n_eff) && n_eff/M <= 0.05)
             cli_warn(c("Less than 5% resampling efficiency.",

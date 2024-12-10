@@ -341,6 +341,8 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
             algout$plans <- algout$plans[, rs_idx, drop = FALSE]
             algout$ancestors <- algout$ancestors[rs_idx, , drop = FALSE]
             storage.mode(algout$ancestors) <- "integer"
+
+            algout$parent_index <- cbind(algout$parent_index, rs_idx[1:length(rs_idx)])
         }
         storage.mode(algout$plans) <- "integer"
         t2_run <- Sys.time()

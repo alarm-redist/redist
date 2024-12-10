@@ -708,7 +708,7 @@ void generalized_split_maps(
         std::vector<Plan> &old_plans_vec, std::vector<Plan> &new_plans_vec,
         arma::subview_col<arma::uword> parent_index_vec,
         const std::vector<double> &unnormalized_sampling_weights,
-        arma::subview_col<arma::uword> draw_tries_vec,
+        Rcpp::IntegerMatrix::Column draw_tries_vec,
         arma::subview_col<arma::uword> parent_unsuccessful_tries_vec,
         std::vector<std::atomic<uint>> &new_parent_unsuccessful_tries_vec,
         double &accept_rate,
@@ -784,7 +784,8 @@ void generalized_split_maps(
         std::vector<bool> ignore(V);
         while (!ok) {
             // increase the number of tries for particle i by 1
-            draw_tries_vec(i)++;
+            draw_tries_vec[i]++;
+            //draw_tries_vec(i)++;
             // REprintf("Plan %d, iter %d\n", i, iters[i]);
             // use weights to sample previous plan
             idx = index_sampler(gen);

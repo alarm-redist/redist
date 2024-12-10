@@ -9,38 +9,124 @@
 
 
 
-// #include <iostream>
-// #include <iostream>
-// #include <vector>
-// #include <numeric>      // std::iota
-// #include <algorithm> 
+// Takes a plan and reorders the regions 
+// IT IS VERY IMPORTANT THAT THE TWO PLANS NOT POINT TO THE SAME arma::umat or everything breaks
+// After reordering it copies that over to the dummy plan as well
+void reorder_plan_by_oldest_split(
+    Plan &plan, Plan &dummy_plan) {
+    // Make dummy plan a shallow copy of the plan
+    dummy_plan.shallow_copy(plan);
 
-// std::vector<int> getRelativeOrder(const std::vector<int>& rel_order) {
-//     // Create a vector of indices [0, 1, 2, ..., rel_order.size()-1]
-//     std::vector<int> indices(rel_order.size());
-//     for (size_t i = 0; i < indices.size(); ++i) {
-//         indices[i] = i;
-//     }
+    // Recall that the region_added_order attribute is a vector that stores info
+    // on the relative split order. So if entry i is greater than entry j that 
+    // means region i was split more recently than region j
+
+    // For example if you had a plan with 6 regions and a region_added_order vector set to
+    // {4,1,7,3,9,2} then that means 
+    //  - Region 0 was added 3rd
+    //  - Region 1 was added 1st
+    //  - Region 2 was added 5th
+    //  - Region 3 was added 4rd
+    //  - Region 4 was added 6th
+    //  - Region 5 was added 2nd 
+
+    // want to return [3, 0, 4, 2, 5, 1]
+    // std::vector<int> rel_order = {4,1,7,3,9,2};
+
+    // get the relative order vector of the n regions
+    std::vector<int> rel_order(
+        plan.region_added_order.begin(), 
+        plan.region_added_order.begin() + plan.num_regions
+        );
+
+
+    // Create a vector of indices [0, 1, 2, ..., n-1]
+    std::vector<int> indices(rel_order.size());
+    std::iota(indices.begin(), indices.end(), 0);
+
+    /*
+    Sort the indices based on the values in rel_order so that means 
+    indices[i] < indices[j] iff rel_order[i] < rel_order[j] so that means
+    indices[0] is the old (ie not updated) label of the oldest split region, 
+    In general indices[i] == k  means that the region with the old label of
+    k will have a new id of i
+
+    For our example with rel_order = {4,1,7,3,9,2} then that means the indices
+    would be sorted to be {1, 5, 3, 0, 2, 4} so we know old region 1 is now zero,
+    old region 5 is now 1, etc. Alternatively interpret as indices[i] == k means
+    new region i was old region k
+    */
+    std::sort(indices.begin(), indices.end(), [&rel_order](int a, int b) {
+        return rel_order[a] < rel_order[b];
+    });
+
+
+    /*
+    Create a vector mapping old region id to the new ordered region id. So 
+    `old_region_id_to_new_vec[i]` is the new region id of the region with old
+    id i. In other words it means region i should be relabeled as old_region_id_to_new_vec[i]
+    */
+    std::vector<int> old_region_id_to_new_vec(rel_order.size());
+    for (size_t i = 0; i < indices.size(); ++i) {
+        old_region_id_to_new_vec[indices[i]] = i;
+    }
+
+
+    // First we relabel all the region vertex ids
+    for (size_t i = 0; i < plan.region_ids.n_elem; i++)
+    {
+        // Send region id i to old_region_id_to_new_vec[i]
+        plan.region_ids(i) = old_region_id_to_new_vec.at(dummy_plan.region_ids(i));
+    }
+
+
+    // Relabel the remainder region if needed
+    if(plan.remainder_region >= 0){
+        plan.remainder_region = old_region_id_to_new_vec.at(dummy_plan.remainder_region);
+    }
     
-//     // Sort the indices based on the values in rel_order
-//     std::sort(indices.begin(), indices.end(), [&rel_order](int a, int b) {
-//         return rel_order[a] < rel_order[b];
-//     });
+
+
+    // Now we reorder the region dvals and population 
+    for (size_t i = 0; i < plan.num_regions; i++)
+    {
+        // Recall indices[i] == k means the old region with id k now has id i
+        // so we want to set the value at the new region id `i` to the value it
+        // had in the old one which is `indices[i]`
+        int old_region_id = indices[i];
+        int new_region_id = i;
+
+        plan.region_dvals(new_region_id) = dummy_plan.region_dvals(old_region_id);
+        plan.region_pops.at(new_region_id) = dummy_plan.region_pops.at(old_region_id);
+        // Since the regions are in order of added reset the order added to just be 1,..., n
+        plan.region_added_order.at(i) = i+1;
+    }
+
+    // reset the max region counter 
+    plan.region_order_max = plan.num_regions + 6;
     
-//     std::cout<<"Intermediate [";
-//     for(size_t i = 0; i < indices.size(); i++){
-//         std::cout << " " << indices[i];
-//     }
-//     std::cout<<" ]\n";
+    // copy the dummy plan over
+    dummy_plan.shallow_copy(plan);
+}
+
+
+void reorder_all_plans(
+    RcppThread::ThreadPool &pool,
+    std::vector<Plan> &plans_vec, 
+    std::vector<Plan> &dummy_plans_vec){
+
+    int M = (int) plans_vec.size();
+
+
+    // Parallel thread pool where all objects in memory shared by default
+    pool.parallelFor(0, M, [&] (int i) {
+        // reorder every plan
+        reorder_plan_by_oldest_split(plans_vec.at(i), dummy_plans_vec.at(i));
+    });
+
+    return;
     
-//     // Create a mapping vector to store the result
-//     std::vector<int> result(rel_order.size());
-//     for (size_t i = 0; i < indices.size(); ++i) {
-//         result[indices[i]] = i;
-//     }
-    
-//     return result;
-// }
+}
 
 
 // Different diagnostic levels
@@ -187,10 +273,14 @@ List optimal_gsmc_with_merge_split_plans(
 
     // First column is dummy column
     arma::umat parent_index_mat(M, total_smc_steps, arma::fill::ones);
+
     
 
     // Entry [i][s] is the number of tries it took to form particle i on split s
-    arma::umat draw_tries_mat(M, total_steps, arma::fill::ones);
+    // arma::umat draw_tries_mat(M, total_steps, arma::fill::ones);
+
+    Rcpp::IntegerMatrix draw_tries_mat(M, total_steps);
+    draw_tries_mat.fill(0);
 
     
 
@@ -272,7 +362,7 @@ List optimal_gsmc_with_merge_split_plans(
     for(int step_num=0; step_num < total_steps; step_num++){
         if(verbosity > 1){
             if(merge_split_step_vec[step_num]){
-                Rprintf("Iteration %d: Merge Split Step %d \n", step_num+1, step_num - smc_step_num + 1);
+                Rprintf("Iteration %d: Merge Split Step %d \n", step_num+1, merge_split_step_num + 1);
             }else{
                 Rprintf("Iteration %d: SMC Step %d \n",  step_num+1, smc_step_num + 1);
             }
@@ -287,7 +377,7 @@ List optimal_gsmc_with_merge_split_plans(
             plans_vec, new_plans_vec,
             parent_index_mat.col(smc_step_num),
             unnormalized_sampling_weights,
-            draw_tries_mat.col(step_num),
+            draw_tries_mat.column(step_num),
             parent_unsuccessful_tries_mat.col(smc_step_num),
             new_parent_unsuccessful_tries_mat,
             acceptance_rates.at(step_num),
@@ -347,8 +437,6 @@ List optimal_gsmc_with_merge_split_plans(
             // set the acceptance rate 
             int total_ms_successes = arma::sum(merge_split_successes_mat.col(merge_split_step_num));
 
-            // arma::sum(merge_split_successes_mat.col(merge_split_step_num));
-
             int total_ms_attempts = M * nsteps_to_run;
 
             acceptance_rates.at(step_num) = total_ms_successes / static_cast<double>(total_ms_attempts);
@@ -360,7 +448,7 @@ List optimal_gsmc_with_merge_split_plans(
             }
 
 
-            draw_tries_mat.col(step_num) = arma::ucolvec(M, arma::fill::value(nsteps_to_run));
+            // draw_tries_mat.column(step_num) = arma::ucolvec(M, arma::fill::value(nsteps_to_run));
 
             merge_split_step_num++;
         }
@@ -374,6 +462,9 @@ List optimal_gsmc_with_merge_split_plans(
 
         // Now update the diagnostic info if needed, region labels, dval column of the matrix
         if(diagnostic_mode){ // record if in diagnostic mode and generalized splits
+
+            // reorder the plans by oldest split
+            reorder_all_plans(pool, plans_vec, new_plans_vec);
             
             arma::ucolvec data_vec(M);
             for (size_t i = 0; i < M; ++i) {
@@ -406,8 +497,7 @@ List optimal_gsmc_with_merge_split_plans(
         cli_progress_done(bar);
         return R_NilValue;
     }
-
-
+    
 
     cli_progress_done(bar);
 

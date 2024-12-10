@@ -8,11 +8,40 @@ Note all of the diagnostic information is accurately updated to account for a fi
 
 # ----- ACTIVE TASKS -----
 
+
+**Add reordering Function**
+Add a function that reorders the regions in a `Plan` object to be in order of most recently split. 
+
+**Make tree_dev Support Generalized Splits**
+Right now `tree_dev` only works for 1-district splits but it can easily be generalized to support arbitrary region splits.
+
+**Create Diagnostic Levels**
+Make it so the code supports multiple different diagnostic levels. I am thinking 
+    - Level 0: Bare Minimum information needed so
+        - Log weight standard deviations for each step
+        - Acceptance rates for each step 
+        - Number of unique parents at each step
+        - The k values used
+        - Effective sample size 
+        - Step type (smc or merge split)
+    - Level 1: (Default) 
+        - Log weights for every step
+        - Draw tries matrix for every step
+        - Parent index Matrix
+
+    - Level 3: (Very memory intensive)
+        - The plan information (vertex region ids and dvals) for every step
+
+
+**Pass Integer results back in Rcpp Integer data types**
+To make things even more memory efficient change it so all integer data is passed back as Rcpp Integer vectors or matrices. This ensures it is returned to R as integer data which takes up half the space of numeric. 
+
+
 **Make Parent Tries Atomic**
 For the parent tries stuff need to change it to a vector of atomic integers since current implementation is not thread safe.
 
-**Pass results back in arma data types**
-To make things more memory efficient change it so all results are passed back as arma vectors, matrices, or cubes for things that are multiple matrices. 
+**Do Resampling in c++**
+Make it so the resampling step can be done in c++, not R.
 
 **Fix merge split on district only splits**
 Right now I think there's a bug where if you do merge split after the final smc step (so N districts) the district split only version still uses the remainder meaning it only merges regions adjacent to the remainder. Since this is unlabeled in that case it should just pick an arbitrary pair
@@ -67,6 +96,11 @@ The compute log tau term here: https://github.com/alarm-redist/redistmetrics/blo
     - Partition split problem 
 
 # ----- COMPLETED TASKS -----
+
+**Pass results back in arma data types - DONE 11/8/2024**
+Task: To make things more memory efficient change it so all results are passed back as arma vectors, matrices, or cubes for things that are multiple matrices. 
+
+Comments after completion: Realized that all arma matrix types (even unsigned integers) are passed back to R with numeric data. So to make things as memory efficient as possible need to pass things back as Rcpp::IntegerMatrix or Rcpp::IntegerVector whenever possible as integer data in R takes up about half the space of numeric. Not a big deal for most applications but for the FAS cluster this will be a big help as you get heavily penalized for requesting more memory. 
 
 **Create MH Ratio Calculator - DONE 11/6/2024**
 Task: Create a function (along with helpers as needed) that computes the MH ratio for valid new proposed plans.

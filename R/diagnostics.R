@@ -676,7 +676,7 @@ get_original_ancestors_mat <- function(parent_mat){
 
     # get the original ancestors at every step from the parent matrix
     original_ancestor_mat <- sapply(
-        2:(N-1),
+        2:ncol(parent_mat),
         function(col_num) gredist::get_k_step_ancestors(parent_mat, steps_back = col_num-1, start_col = col_num)
     )
 
