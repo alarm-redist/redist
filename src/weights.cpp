@@ -39,6 +39,19 @@ double compute_n_eff(const arma::subview_col<double> log_wgt) {
     );
 }
 
+
+// Custom hash function using Cantor pairing
+// If the input is two natural numbers this returns a unique hash
+// https://en.wikipedia.org/wiki/Pairing_function
+struct cantor_hash {
+    std::size_t operator()(const std::pair<int, int>& p) const {
+        int a = p.first;
+        int b = p.second;
+        return (a + b) * (a + b + 1) / 2 + b;
+    }
+};
+
+
 // only gets regions adjacent to indices where valid_regions is true
 void get_all_adj_pairs(
     Graph const &g, std::vector<std::pair<int, int>> &adj_pairs_vec,
@@ -84,6 +97,62 @@ void get_all_adj_pairs(
 
     return;
 
+}
+
+
+std::unordered_map<std::pair<int, int>, int, bounded_hash> get_pairs_and_boundary_len(
+    Graph const &g, Plan plan,
+    std::vector<bool> const valid_regions
+){
+    
+    // Initialize unordered_map with num_region * 2.5 buckets
+    // Hueristic. Bc we know planar graph has at most 3|V| - 6 edges
+    int init_bucket_size = std::ceil(2.5*plan.num_regions);
+
+    std::unordered_map<std::pair<int, int>, int, bounded_hash> region_pair_map(
+        init_bucket_size, bounded_hash(plan.num_regions-1)
+        );
+
+    int V = g.size();
+
+
+    for (int i = 0; i < V; i++) {
+        // Find out which region this vertex corresponds to
+        int region_num_i = plan.region_ids(i);
+
+        // check if its a valid region and if not continue
+        if(!valid_regions.at(region_num_i)){
+            continue;
+        }
+
+        // get neighbors
+        std::vector<int> nbors = g.at(i);
+
+        // now iterate over its neighbors
+        for (int nbor : nbors) {
+            // find which region neighbor corresponds to
+            int region_num_j = plan.region_ids(nbor);
+
+            // if they are different regions then region i and j are adjacent 
+            // as they share an edge across
+            if (region_num_i != region_num_j) {
+                // if region j is invalid then we don't need to worry about double counting so just add it
+                if(!valid_regions.at(region_num_j)){
+                    region_pair_map[
+                        {std::min(region_num_j,region_num_i), std::max(region_num_j,region_num_i)}
+                        ]++;
+                }else{ // else if both valid then edge will appear twice so we only count if region i
+                // smaller
+                    if (region_num_i < region_num_j) {
+                    region_pair_map[{region_num_i, region_num_j}]++;
+                    }
+                }
+            }
+        }
+    }
+
+    // adj_pairs_vec
+    return region_pair_map;
 }
 
 
@@ -302,81 +371,52 @@ double compute_optimal_log_incremental_weight(
         const Graph &g, const Plan &plan,
         bool split_district_only,
         const double target, const double pop_temper){
-    // get a region level graph
-    Graph rg = get_region_graph(g, plan);
-
-    // sanity check: make sure the region level graph's number of vertices is
-    // the same as the number of regions in the plan
-    if((int)rg.size() != plan.num_regions){
-        Rprintf("SOMETHING WENT WRONG IN COMPPUTE LOG INCREMENT WEIGHJT\n");
-    }
-
-    // Now get all unique adjacent region pairs and store them such that
-    // the first vertex is always the smaller numbered of the edge
-    // We use a set because it doesn't keep duplicates
-    std::set<std::pair<int, int>> adj_region_pairs;
-
-
-    // If n < N and split_district_only true then just get adjacent to remainder
-    if(plan.num_regions < plan.N && split_district_only){
-        // get remainder region id
-        int u = plan.remainder_region;
-
-        // Iterate through the adjacency list of remainder region
-        for(auto v: rg.at(u)){
-            // store the edges such that smaller vertex is always first
-            if (u < v) {
-                adj_region_pairs.emplace(u, v);
-            } else {
-                adj_region_pairs.emplace(v, u);
-            }
-        }
-    }else{ // else get all adjacent districts
-        // Iterate through the adjacency list
-        // Now get all unique adjacent region pairs and store them such that
-        // the first vertex is always the smaller numbered of the edge
-        for (int u = 0; u < rg.size(); u++){
-            // iterate over neighbors
-            for(auto v: rg.at(u)){
-                // store the edges such that smaller vertex is always first
-                if (u < v) {
-                    adj_region_pairs.emplace(u, v);
-                } else {
-                    adj_region_pairs.emplace(v, u);
-                }
-            }
-        }
-    }
-
 
     double incremental_weight = 0.0;
 
     bool do_pop_temper = (plan.num_regions < plan.N) && pop_temper > 0;
 
+    // make vector for if we just want adjacent to remainder or all
+    // adj pairs
+    std::vector<bool> valid_regions;
+    if(split_district_only && plan.num_regions < plan.N){
+        // if splitting district only then only find adjacent to remainder
+        // which is region 2 because its the bigger one
+        valid_regions.resize(plan.num_regions, false);
+        valid_regions.at(plan.remainder_region) = true;
+    }else{
+        valid_regions.resize(plan.num_regions, true);
+    }
 
-    // Now iterate over all adjacent pairs
-    for (const auto& edge : adj_region_pairs) {
-        // get log of boundary length between regions
-        double log_boundary =  region_log_boundary(g, plan.region_ids, edge.first, edge.second);
-        // get prob of selecting union of adj regions
+    // Get all valid adj pairs and the boundary length
+    auto region_pair_map = get_pairs_and_boundary_len(
+    g, plan, valid_regions);
+
+
+    // Iterate over the adjacent region pairs
+    for (const auto& entry : region_pair_map) {
+        const auto& region_pair = entry.first; // get the region pair 
+        const int& boundary_len = entry.second; // get the boundary length
+                // get log of boundary length between regions
+
+        double log_boundary =  std::log((double) boundary_len);
+
         double log_splitting_prob;
-
         // for one district split the probability that region was chosen to be split is always 1
         if(split_district_only){
             log_splitting_prob = 0;
         }else{
             // in generalized region split find probability you would have 
             // picked to split the union of the the two regions 
-            log_splitting_prob = get_log_retroactive_splitting_prob(plan, edge.first, edge.second);
+            log_splitting_prob = get_log_retroactive_splitting_prob(plan, region_pair.first, region_pair.second);
         }
-
 
         // Do population tempering term if not final
         double log_temper;
         if(do_pop_temper){
             log_temper = compute_log_pop_temper(
                 plan,
-                edge.first, edge.second,
+                region_pair.first, region_pair.second,
                 target, pop_temper
             );
         }else{
@@ -393,7 +433,7 @@ double compute_optimal_log_incremental_weight(
 
     // Check its not infinity
     if(incremental_weight == -std::numeric_limits<double>::infinity()){
-        Rcpp::exception("Error! weight is negative infinity for some reason \n");
+        throw Rcpp::exception("Error! weight is negative infinity for some reason \n");
     }
 
 

@@ -289,9 +289,9 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
 
 
         # add 1 to make it plans 1 indexed
-        algout$plans_mat <- algout$plans_mat + 1
+        algout$plans_mat <- algout$plans_mat + 1L
         # add 1 to make parent mat  1-indexed for R indexing
-        algout$parent_index <- algout$parent_index + 1
+        algout$parent_index <- algout$parent_index + 1L
 
 
         # convert the order added results into an actual list of arrays where
@@ -311,7 +311,7 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
         }else{
             # make intermediate plans 1 indexed
             for (i in seq_len(length(algout$region_ids_mat_list))) {
-                algout$region_ids_mat_list[[i]] <- algout$region_ids_mat_list[[i]] + 1
+                algout$region_ids_mat_list[[i]] <- algout$region_ids_mat_list[[i]] + 1L
             }
         }
 

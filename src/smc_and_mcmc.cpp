@@ -386,10 +386,15 @@ List optimal_gsmc_with_merge_split_plans(
                 Rprintf("Iteration %d: SMC Step %d \n",  step_num+1, smc_step_num + 1);
             }
         }
+         using std::chrono::high_resolution_clock;
+            using std::chrono::duration_cast;
+            using std::chrono::duration;
+            using std::chrono::milliseconds;
 
         // Check what step type
         if(!merge_split_step_vec[step_num]){
 
+            auto t1f = high_resolution_clock::now();
         // split the map
         generalized_split_maps(
             g, counties, cg, pop,
@@ -407,6 +412,23 @@ List optimal_gsmc_with_merge_split_plans(
             verbosity, diagnostic_mode ? 3 : 0
         );
 
+        auto t2f = high_resolution_clock::now();
+
+            /* Getting number of milliseconds as an integer. */
+            auto ms_intf = duration_cast<milliseconds>(t2f - t1f);
+
+            /* Getting number of milliseconds as a double. */
+            duration<double, std::milli> ms_doublef = t2f - t1f;
+
+ 
+            Rcout << "Running SMC " << ms_doublef.count() << " ms\n";
+
+           
+
+            auto t1 = high_resolution_clock::now();
+            
+
+
         // compute log incremental weights and sampling weights for next round
         get_all_plans_log_gsmc_weights(
             pool,
@@ -418,6 +440,17 @@ List optimal_gsmc_with_merge_split_plans(
             target,
             pop_temper
         );
+
+            auto t2 = high_resolution_clock::now();
+
+            /* Getting number of milliseconds as an integer. */
+            auto ms_int = duration_cast<milliseconds>(t2 - t1);
+
+            /* Getting number of milliseconds as a double. */
+            duration<double, std::milli> ms_double = t2 - t1;
+
+ 
+            Rcout << "Calculating log weights " << ms_double.count() << " ms\n";
 
         // compute log weight sd
         log_wgt_stddevs.at(smc_step_num) = arma::stddev(log_incremental_weights_mat.col(smc_step_num));
@@ -444,6 +477,8 @@ List optimal_gsmc_with_merge_split_plans(
             int nsteps_to_run = ms_steps_multiplier * std::ceil(1/acceptance_rates.at(step_num-1)); // * std::max(merge_split_step_num,1);
             num_merge_split_attempts_vec.at(merge_split_step_num) = nsteps_to_run;
 
+            auto t1fm = high_resolution_clock::now();
+
             run_merge_split_step_on_all_plans(
                 pool,
                 g, counties, cg, pop,
@@ -453,6 +488,15 @@ List optimal_gsmc_with_merge_split_plans(
                 lower, upper, target,
                 merge_split_successes_mat.column(merge_split_step_num)
             );
+
+            auto t2fm = high_resolution_clock::now();
+
+
+            /* Getting number of milliseconds as a double. */
+            duration<double, std::milli> ms_doublefm = t2fm - t1fm;
+
+ 
+            Rcout << "Running Merge split " << ms_doublefm.count() << " ms\n";
 
             // set the acceptance rate 
             int total_ms_successes = Rcpp::sum(merge_split_successes_mat.column(merge_split_step_num));

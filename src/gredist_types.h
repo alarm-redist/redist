@@ -72,4 +72,17 @@ public:
 
 };
 
+
+
+// Custom hash function for hashing pairs of regions 
+// N should be the number of regions minus 1, ie the biggest
+// region id
+struct bounded_hash {
+    int N;
+    bounded_hash(int max_value) : N(max_value) {}
+    std::size_t operator()(const std::pair<int, int>& p) const {
+        return p.first * (N + 1) + p.second;
+    }
+};
+
 #endif
