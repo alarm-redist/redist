@@ -28,12 +28,12 @@ void merge_regions(
     // merged id should be less than that
     if(merged_id > plan.num_regions-1 ){
         Rprintf("Merging id %d and size is %d \n", merged_id, plan.num_regions);
-        throw std::range_error("Merged id is too big");
+        throw Rcpp::exception("Merged id is too big");
     }
 
     // check the merged id is one of the ids of the region being merged
     if(merged_id != region1_id && merged_id != region2_id){
-        throw std::invalid_argument("Merged id is not one of the two regions being merged");
+        throw Rcpp::exception("Merged id is not one of the two regions being merged");
     }
 
     // update the region vertex ids
@@ -156,6 +156,27 @@ int run_merge_split_step_on_a_plan(
         // Pick two regions to merge
         // pick_regions_to_merge(adj_region_pairs)
         auto adj_pair = adj_pairs_vec.at(distrib(gen));
+
+        // Now just pick one with the oldest index
+
+        // Find the index of the smallest element so oldest
+        // std::vector<int> nums(
+        // plan.region_added_order.begin(), 
+        // plan.region_added_order.begin() + plan.num_regions
+        // );
+        // auto min_iter = std::min_element(nums.begin(), nums.end());
+        // size_t min_index = std::distance(nums.begin(), min_iter);
+
+        // // Now go through the adjacency pairs and find the one 
+        // // with the oldest region 
+        // for (const auto& an_adj_pair : adj_pairs_vec) {
+        //     if(an_adj_pair.first == min_index || an_adj_pair.second == min_index){
+        //         adj_pair = an_adj_pair;
+        //         break;
+        //     }
+        // }
+        
+
         // 
         int region1_id = adj_pair.first;
         int region2_id = adj_pair.second;
@@ -268,7 +289,7 @@ void run_merge_split_step_on_all_plans(
     bool const split_district_only, int const k_param,
     int const nsteps_to_run,
     double const lower, double const upper, double const target,
-    arma::subview_col<arma::uword> success_count_vec
+    Rcpp::IntegerMatrix::Column success_count_vec
 ){
     int M = (int) plans_vec.size();
 
@@ -279,7 +300,7 @@ void run_merge_split_step_on_all_plans(
         // Create variables needed for each 
 
         // store the number of succesful runs
-        success_count_vec(i) = run_merge_split_step_on_a_plan( 
+        success_count_vec[i] = run_merge_split_step_on_a_plan( 
             g, counties, cg, pop,
             split_district_only,
             k_param,

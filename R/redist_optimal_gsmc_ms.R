@@ -20,8 +20,9 @@
 #'
 #' @export
 redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
-                       k_params = 6, split_district_only = FALSE, run_ms = FALSE,
-                       ms_freq = 7, ms_steps_multiplier = 1L,
+                       k_params = 6, split_district_only = FALSE,
+                       ms_freq = 1, ms_steps_multiplier = 1L,
+                       run_ms = 0 < ms_freq && ms_freq <= N,
                        resample = TRUE, runs = 1L,
                        ncores = 0L, multiprocess=TRUE,
                        pop_temper = 0,
@@ -29,6 +30,7 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
                        verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE){
     N <- attr(state_map, "ndists")
     ndists <- attr(state_map, "ndists")
+    nsims <- M
 
     # figure out the alg type
     if(split_district_only){
@@ -285,8 +287,12 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
             cli::cli_process_done()
         }
 
-        # convert the integer data to save memory
-        storage.mode(algout$plans_mat) <- "integer"
+
+        # add 1 to make it plans 1 indexed
+        algout$plans_mat <- algout$plans_mat + 1
+        # add 1 to make parent mat  1-indexed for R indexing
+        algout$parent_index <- algout$parent_index + 1
+
 
         # convert the order added results into an actual list of arrays where
         # for each list entry n and column entry i that is a vector of length n
@@ -303,14 +309,10 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
             algout$region_ids_mat_list <- NULL
             algout$region_dvals_mat_list <- NULL
         }else{
-            storage.mode(algout$region_ids_mat_list) <- "integer"
-
-            if(!split_district_only){
-                for (i in 1:length(algout$region_dvals_mat_list)) {
-                    storage.mode(algout$region_dvals_mat_list[[i]]) <- "integer"
-                }
+            # make intermediate plans 1 indexed
+            for (i in seq_len(length(algout$region_ids_mat_list))) {
+                algout$region_ids_mat_list[[i]] <- algout$region_ids_mat_list[[i]] + 1
             }
-
         }
 
 
@@ -334,8 +336,6 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
             algout$step_split_types == "ms"
         )
 
-        # add 1 to make parent mat  1-indexed for R indexing
-        algout$parent_index <- algout$parent_index + 1
 
 
         # make parent succesful tries matrix counting the number of
@@ -381,6 +381,12 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
             # NOTE: I THINK THIS IS WRONG, MIGHT NEED TO FLIP COLUMN
             algout$parent_index <- cbind(algout$parent_index, rs_idx[1:length(rs_idx)])
 
+            # do unique parents
+            nunique_parent_indices <- c(
+                algout$nunique_parent_indices,
+                dplyr::n_distinct(rs_idx[1:length(rs_idx)]))
+
+
             if(diagnostic_mode){
                 # makes algout$final_region_labs[i] now equal to algout$final_region_labs[rs_idx[i]]
                 # to account for resampling
@@ -407,13 +413,20 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
         dummy_vec[!algout$merge_split_steps] <- algout$step_n_eff
         algout$step_n_eff <- dummy_vec
         # do log weight sd
-        dummy_vec[!algout$merge_split_steps] <- apply(algout$log_incremental_weights_mat, 2, sd)
+        dummy_vec[!algout$merge_split_steps] <- algout$log_weight_stddev
         sd_lp <- c(dummy_vec, sd(lr))
+
+        dummy_vec <- rep(NA, length(algout$merge_split_steps) + 1)
         # do unique original ancestors
-        dummy_vec[!algout$merge_split_steps] <- apply(algout$original_ancestors_mat, 2, dplyr::n_distinct)
+        dummy_vec[!c(algout$merge_split_steps,FALSE)] <- apply(algout$original_ancestors_mat, 2, dplyr::n_distinct)
         nunique_original_ancestors <- dummy_vec
-        nunique_original_ancestors <- c(nunique_original_ancestors,
-                                        dplyr::n_distinct(algout$original_ancestors_mat[, ncol(algout$original_ancestors_mat)]))
+        # do unique parents
+        dummy_vec[!c(algout$merge_split_steps,FALSE)] <- nunique_parent_indices
+        nunique_parent_indices <- dummy_vec
+
+
+        # nunique_original_ancestors <- c(nunique_original_ancestors,
+              #                          dplyr::n_distinct(algout$original_ancestors_mat[, ncol(algout$original_ancestors_mat)]))
 
         if (!is.nan(n_eff) && n_eff/M <= 0.05)
             cli_warn(c("Less than 5% resampling efficiency.",
@@ -437,7 +450,7 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
             accept_rate = algout$acceptance_rates,
             sd_lp = sd_lp,
             sd_temper = rep(NA, total_steps), # algout$sd_temper,
-            unique_survive = c(algout$nunique_parent_indices, n_unique),
+            unique_survive = nunique_parent_indices,
             ancestors = algout$ancestors,
             seq_alpha = .99,
             pop_temper = pop_temper,

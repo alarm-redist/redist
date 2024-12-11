@@ -38,7 +38,7 @@ void run_merge_split_step_on_all_plans(
     bool const split_district_only, int const k_param,
     int const nsteps_to_run,
     double const lower, double const upper, double const target,
-    arma::subview_col<arma::uword> success_count_vec
+    Rcpp::IntegerMatrix::Column success_count_vec
 );
 
 #endif

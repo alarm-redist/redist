@@ -58,6 +58,8 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
     ndists <- attr(map, "ndists")
     thin <- as.integer(thin)
 
+
+
     chains <- as.integer(chains)
     stopifnot(chains > 1)
 
@@ -133,6 +135,7 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
             as.integer()
     }
 
+
     # Other constraints
     if (!inherits(constraints, "redist_constr")) {
         constraints <- new_redist_constr(eval_tidy(enquo(constraints), map))
@@ -164,21 +167,26 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
                     population larger than the maximum district size.",
                     "x" = "Redistricting impossible."))
     }
+    print("starting 1")
 
     control = list(adapt_k_thresh=adapt_k_thresh, do_mh=TRUE)
+
     # kind of hacky -- extract k=... from outupt
     if (!requireNamespace("utils", quietly = TRUE)) stop()
+    print("Starting 2")
     out <- utils::capture.output({
         x <- ms_plans(1, adj, init_plans[, 1], counties, pop, ndists, pop_bounds[2],
                       pop_bounds[1], pop_bounds[3], compactness, list(), control,
                       0L, 1L, verbosity = 3)
     }, type = "output")
+    print("Starting 3")
     rm(x)
     k <- as.integer(stats::na.omit(stringr::str_match(out, "Using k = (\\d+)")[, 2]))
     if (length(k) == 0)
         cli_abort(c("Adaptive {.var k} not found. This error should not happen.",
             ">" = "Please file an issue at
                         {.url https://github.com/alarm-gredist/gredist/issues/new}"))
+
 
     # set up parallel
     if (is.null(ncores)) ncores <- parallel::detectCores()
@@ -194,6 +202,8 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
                           useXDR = .Platform$endian != "little")
     doParallel::registerDoParallel(cl)
     on.exit(stopCluster(cl))
+
+    print("starting")
 
     out_par <- foreach(chain = seq_len(chains), .inorder = FALSE, .packages="gredist") %dorng% {
         if (!silent) cat("Starting chain ", chain, "\n", sep = "")

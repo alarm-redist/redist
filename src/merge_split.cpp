@@ -30,7 +30,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     int V = g.size();
     int n_cty = max(counties);
 
-    int rounded_up_N_over_thin = std::ceil(static_cast<double>(N-1)/thin);
+    int rounded_up_N_over_thin = std::ceil(static_cast<double>(std::max(1, N-1))/thin);
 
     int n_out = rounded_up_N_over_thin + 2;
     umat districts(V, n_out, fill::zeros);

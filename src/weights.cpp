@@ -393,7 +393,7 @@ double compute_optimal_log_incremental_weight(
 
     // Check its not infinity
     if(incremental_weight == -std::numeric_limits<double>::infinity()){
-        Rprintf("Error! weight is negative infinity for some reason \n");
+        Rcpp::exception("Error! weight is negative infinity for some reason \n");
     }
 
 

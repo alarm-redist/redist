@@ -142,13 +142,22 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
             diagn <- all_diagn[[i]]
             n_samp <- nrow(diagn$ancestors)
 
+            # modified to deal with the fact I changed plan data at some point
+
+            # if new do nothing
+            if(length(diagn$sd_lp) == length(diagn$nunique_original_ancestors)){
+                a_unique_orig_ancestors <- diagn$nunique_original_ancestors
+            }else{
+                a_unique_orig_ancestors <- c(diagn$nunique_original_ancestors, NA)
+            }
+
             run_dfs[[i]] <- tibble(n_eff = c(diagn$step_n_eff, diagn$n_eff),
                                    eff = c(diagn$step_n_eff, diagn$n_eff)/n_samp,
                                    accept_rate = c(diagn$accept_rate, NA),
                                    sd_log_wgt = diagn$sd_lp,
                                    max_unique = diagn$unique_survive,
                                    est_k = c(diagn$est_k, NA),
-                                   unique_original = c(diagn$nunique_original_ancestors, NA))
+                                   unique_original = a_unique_orig_ancestors)
 
             tbl_print <- as.data.frame(run_dfs[[i]])
             min_n <- max(0.05*n_samp, min(0.4*n_samp, 100))
@@ -406,13 +415,20 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
             diagn <- all_diagn[[i]]
             n_samp <- nrow(diagn$ancestors)
 
+            # if new do nothing
+            if(length(diagn$sd_lp) == length(diagn$nunique_original_ancestors)){
+                a_unique_orig_ancestors <- diagn$nunique_original_ancestors
+            }else{
+                a_unique_orig_ancestors <- c(diagn$nunique_original_ancestors, NA)
+            }
+
             run_dfs[[i]] <- tibble(n_eff = c(diagn$step_n_eff, diagn$n_eff),
                                    eff = c(diagn$step_n_eff, diagn$n_eff)/n_samp,
                                    accept_rate = c(diagn$accept_rate, NA),
                                    sd_log_wgt = diagn$sd_lp,
                                    max_unique = diagn$unique_survive,
                                    est_k = c(diagn$est_k, NA),
-                                   unique_original = c(diagn$nunique_original_ancestors, NA))
+                                   unique_original = a_unique_orig_ancestors)
 
             tbl_print <- as.data.frame(run_dfs[[i]])
             min_n <- max(0.05*n_samp, min(0.4*n_samp, 100))

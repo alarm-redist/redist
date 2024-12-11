@@ -300,11 +300,10 @@ void add_new_regions_to_plan_from_cut(
 void generalized_split_maps(
         const Graph &g, const uvec &counties, Multigraph &cg, const uvec &pop,
         std::vector<Plan> &old_plans_vec, std::vector<Plan> &new_plans_vec,
-        arma::subview_col<arma::uword> parent_index_vec,
+        Rcpp::IntegerMatrix::Column parent_index_vec,
         const std::vector<double> &unnormalized_sampling_weights,
         Rcpp::IntegerMatrix::Column draw_tries_vec,
-        arma::subview_col<arma::uword> parent_unsuccessful_tries_vec,
-        std::vector<std::atomic<uint>> &new_parent_unsuccessful_tries_vec,
+        Rcpp::IntegerMatrix::Column parent_unsuccessful_tries_vec,
         double &accept_rate,
         int &n_unique_parent_indices,
         umat &ancestors, const std::vector<int> &lags,

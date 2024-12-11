@@ -39,6 +39,15 @@ To make things even more memory efficient change it so all integer data is passe
 
 **Make Parent Tries Atomic**
 For the parent tries stuff need to change it to a vector of atomic integers since current implementation is not thread safe.
+Code is 
+```
+std::vector<std::atomic<uint>> new_parent_unsuccessful_tries_mat(M);
+
+// Initialize the vector elements
+for (size_t i = 0; i < M; ++i) {
+    new_parent_unsuccessful_tries_mat.at(i).store(static_cast<uint>(0)); // Explicitly store values
+}
+```
 
 **Do Resampling in c++**
 Make it so the resampling step can be done in c++, not R.

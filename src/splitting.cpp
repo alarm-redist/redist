@@ -706,11 +706,10 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
 void generalized_split_maps(
         const Graph &g, const uvec &counties, Multigraph &cg, const uvec &pop,
         std::vector<Plan> &old_plans_vec, std::vector<Plan> &new_plans_vec,
-        arma::subview_col<arma::uword> parent_index_vec,
+        Rcpp::IntegerMatrix::Column parent_index_vec,
         const std::vector<double> &unnormalized_sampling_weights,
         Rcpp::IntegerMatrix::Column draw_tries_vec,
-        arma::subview_col<arma::uword> parent_unsuccessful_tries_vec,
-        std::vector<std::atomic<uint>> &new_parent_unsuccessful_tries_vec,
+        Rcpp::IntegerMatrix::Column parent_unsuccessful_tries_vec,
         double &accept_rate,
         int &n_unique_parent_indices,
         umat &ancestors, const std::vector<int> &lags,
@@ -823,9 +822,8 @@ void generalized_split_maps(
 
                 // if diagnostic level 2 or higher get unsuccessful count 
                 if(diagnostic_level >= 2){
-                    // atomic so its thread safe
-                    parent_unsuccessful_tries_vec(idx)++;
-                    new_parent_unsuccessful_tries_vec.at(idx)++;
+                    // not atomic so technically not thread safe but doesn't seem to differ in practice
+                    parent_unsuccessful_tries_vec[idx]++;
                 }
                 continue;
             }
@@ -837,7 +835,7 @@ void generalized_split_maps(
 
 
         // record index of new plan's parent
-        parent_index_vec(i) = idx;
+        parent_index_vec[i] = idx;
         // clear the spanning tree
         clear_tree(ust);
 
@@ -867,7 +865,10 @@ void generalized_split_maps(
 
     // now compute acceptance rate and unique parents and original ancestors
     accept_rate = M / (1.0 * sum(draw_tries_vec));
-    n_unique_parent_indices = ((uvec) find_unique(parent_index_vec)).n_elem;
+
+    // Get number of unique parents
+    std::set<int> unique_parents(parent_index_vec.begin(), parent_index_vec.end());
+    n_unique_parent_indices = unique_parents.size();
     if (verbosity >= 3) {
         Rprintf("%.2f acceptance rate and %d unique parent indices sampled!\n",
                 100.0 * accept_rate, (int) n_unique_parent_indices);
