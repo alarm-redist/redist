@@ -138,7 +138,8 @@ NumericVector max_dev(const IntegerMatrix districts, const arma::vec pop, int n_
  * Calculate the deviation for cutting at every edge in a spanning tree.
  */
 std::vector<double> tree_dev(Tree &ust, int root, const uvec &pop,
-                             double total_pop, double target);
+                             double const total_pop, double const target,
+                             int max_potential_d=1);
 
 
 #endif

@@ -203,7 +203,7 @@ List perform_merge_split_steps(
     // now do merge split 
     int num_successes = run_merge_split_step_on_a_plan( 
         g, counties, cg, pop,
-        split_district_only,
+        split_district_only, "uniform",
         k_param,
         plan, new_plan, num_merge_split_steps,
         lower, upper, target

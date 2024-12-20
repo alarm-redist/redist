@@ -535,6 +535,47 @@ var_info_vec <- function(m, ref, pop) {
 #'
 NULL
 
+#' Returns a vector of the triple (smaller region id, bigger region id, boundary len)
+#' for all valid pairs of adjacent regions in the plan. (Either all adjacent regions if
+#' doing generalized region splits or just adjacent to the remainder if only doing 
+#' one district splits.)
+#'
+#'
+#' @title Get All Valid Adjacent Regions and their Boundary Length
+#'
+#' @param g A graph (adjacency list) passed by reference
+#' @param plan A plan object
+#' @param split_district_only If true only gets regions adjacent to the remainder but if 
+#' false then gets all adjacent regions in the plan
+#'
+#' @details No modifications to inputs made
+#'
+#' @return A vector of integer arrays of size 3 where the values are
+#' (smaller region id, bigger region id, boundary len)
+#'
+NULL
+
+#'
+#' Current supported options are
+#'     - uniform - Every pair has equal probability
+#'     - district_pair - double district pairs have weight 1000, one district is 10,
+#'         and two multidistricts have 1/(1+sum of their dvals)
+#'
+#' @title Get Sampler over Adj Regions List
+#'
+#' @param plan A plan object
+#' @param adj_pairs_and_boundary_lens A vector where each pair is 
+#' (adj region1, adj region2, boundary length between 2 regions)
+#' @param selection_type A string controlling the function to use
+#' in assigning the unnormalized weight to each pair
+#'
+#' @details No modifications to inputs made
+#'
+#' @return A sampler where index i has probability proportional to the weight 
+#' given to that pair 
+#'
+NULL
+
 #' Computes log unnormalized weights for vector of plans
 #'
 #' Using the procedure outlined in <PAPER HERE> this function computes the log

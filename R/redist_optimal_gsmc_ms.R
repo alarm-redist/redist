@@ -20,9 +20,11 @@
 #'
 #' @export
 redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
-                       k_params = 6, split_district_only = FALSE,
-                       ms_freq = 1, ms_steps_multiplier = 1L,
-                       run_ms = 0 < ms_freq && ms_freq <= N,
+                                   estimate_cut_k = TRUE,
+                       manual_k_params = 6, adapt_k_thresh = .9999,
+                       split_district_only = FALSE, weight_type = "optimal",
+                       ms_freq = 0, ms_steps_multiplier = 1L,
+                       run_ms = 0 < ms_freq && ms_freq <= N, merge_prob_type = "uniform",
                        resample = TRUE, runs = 1L,
                        ncores = 0L, multiprocess=TRUE,
                        pop_temper = 0,
@@ -32,12 +34,10 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
     ndists <- attr(state_map, "ndists")
     nsims <- M
 
-    # figure out the alg type
-    if(split_district_only){
-        alg_type <- "smc_ms"
-    }else{
-        alg_type <- "gsmc_ms"
-    }
+
+
+    if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
+        cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
 
     # no constraints
     constraints <- list()
@@ -47,16 +47,16 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
     lags <- 1 + unique(round((N - 1)^0.8*seq(0, 0.7, length.out = 4)^0.9))
 
     # check k param imput
-    if(any(k_params < 1)) {
+    if(any(manual_k_params < 1)) {
         cli_abort("K parameter values must be all at least 1.")
     }
 
     # if just a single number then repeat it
-    if(length(k_params) == 1 && floor(k_params) == k_params){
-        k_params <- rep(k_params, N-1)
-    }else if(length(k_params) != N-1){
+    if(length(manual_k_params) == 1 && floor(manual_k_params) == manual_k_params){
+        manual_k_params <- rep(manual_k_params, N-1)
+    }else if(length(manual_k_params) != N-1){
         cli_abort("K parameter input must be either 1 value or N-1!")
-    }else if(any(floor(k_params) != k_params)){
+    }else if(any(floor(manual_k_params) != manual_k_params)){
         # if either the length is not N-1 or its not all integers then throw
         # error
         cli_abort("K parameter values must be all integers")
@@ -92,6 +92,18 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
         merge_split_step_vec <- val[order(id)]
     }
 
+
+    # figure out the alg type
+    if(split_district_only && any_ms_steps_ran){
+        alg_type <- "smc_ms"
+    }else if(!split_district_only && any_ms_steps_ran){
+        alg_type <- "gsmc_ms"
+    }else if(split_district_only && !any_ms_steps_ran){
+        alg_type <- "basic_smc"
+    }else{
+        alg_type <- "gsmc"
+    }
+
     assertthat::assert_that(sum(!merge_split_step_vec) == total_smc_steps)
     # assert first step is not smc
     assertthat::assert_that(!merge_split_step_vec[1])
@@ -103,29 +115,17 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
 
 
     control <- list(
+        weight_type=weight_type,
         lags=lags,
         pop_temper = pop_temper,
-        k_params = k_params,
+        k_params = manual_k_params,
         split_district_only = split_district_only,
         merge_split_step_vec = merge_split_step_vec,
-        ms_steps_multiplier = ms_steps_multiplier
+        ms_steps_multiplier = ms_steps_multiplier,
+        adapt_k_thresh = adapt_k_thresh,
+        estimate_cut_k=estimate_cut_k,
+        merge_prob_type = merge_prob_type
         )
-
-    # TODO fix this later
-    est_k_params <- k_params
-    est_k_params <- rep(-1, total_steps)
-    est_k_params[!merge_split_step_vec] <- k_params
-
-    for (i in 1:total_steps) {
-        if(est_k_params[i] <= 0){
-            est_k_params[i] <- est_k_params[i-1]
-        }
-    }
-
-    assertthat::assert_that(
-        all(est_k_params > 0),
-        msg = "Something went wrong with est_k_params, fix it!"
-    )
 
     # verbosity stuff
     verbosity <- 1
@@ -279,8 +279,6 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
             control = control,
             verbosity=run_verbosity,
             diagnostic_mode=diagnostic_mode)
-
-
 
         if (length(algout) == 0) {
             cli::cli_process_done()
@@ -443,10 +441,13 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
 
         # add diagnostic stuff
         algout$l_diag <- list(
+            weight_type = weight_type,
+            merge_prob_type = merge_prob_type,
+            estimate_cut_k=estimate_cut_k,
             n_eff = n_eff,
             step_n_eff = algout$step_n_eff,
-            adapt_k_thresh = .99, # adapt_k_thresh, NEED TO DEAL WITH
-            est_k = est_k_params, # algout$est_k,
+            adapt_k_thresh = adapt_k_thresh, # adapt_k_thresh, NEED TO DEAL WITH
+            est_k = algout$est_k,
             accept_rate = algout$acceptance_rates,
             sd_lp = sd_lp,
             sd_temper = rep(NA, total_steps), # algout$sd_temper,

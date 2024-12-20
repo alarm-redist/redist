@@ -216,6 +216,18 @@ void add_new_regions_to_plan_from_cut(
         const int new_region2_tree_root, const int new_region2_dval, const double new_region2_pop
 );
 
+
+
+/*
+ * Choose k and multiplier for efficient, accurate sampling
+ */
+void estimate_cut_k(const Graph &g, int &k, int const last_k, 
+                      const std::vector<double> &unnormalized_weights, double thresh,
+                      double tol, std::vector<Plan> const &plans_vec, 
+                      const uvec &counties,
+                      Multigraph &cg, const uvec &pop, bool split_district_only,
+                      double const target, int const verbosity);
+
 //' Splits a multidistrict in all of the plans
 //'
 //' Using the procedure outlined in <PAPER HERE> this function attempts to split

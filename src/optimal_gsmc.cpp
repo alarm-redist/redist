@@ -270,7 +270,7 @@ List optimal_gsmc_plans(
 
 
     //     // compute log incremental weights and sampling weights for next round
-    //     get_all_plans_log_gsmc_weights(
+    //     get_all_plans_log_optimal_weights(
     //         pool,
     //         g,
     //         new_plans_vec,

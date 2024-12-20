@@ -205,7 +205,7 @@ bool get_edge_to_cut(Tree &ust, int root,
 
     if(region_ids(root) != region_id_to_split){
         REprintf("Root vertex %d is not in region to split %d!\n", region_ids(root), region_id_to_split);
-        throw std::out_of_range("Root vertex is not in region to split!");
+        throw Rcpp::exception("Root vertex is not in region to split!");
     }
 
 
@@ -229,8 +229,8 @@ bool get_edge_to_cut(Tree &ust, int root,
         // remember to correct for 0 indexing
         for(int potential_d = 1; potential_d <= max_potential_d; potential_d++){
 
-            double dev1 = std::fabs(below - target * potential_d);
-            double dev2 = std::fabs(above - target * potential_d);
+            double dev1 = std::fabs(below - target * potential_d) / (target * potential_d);
+            double dev2 = std::fabs(above - target * potential_d) / (target * potential_d);
 
             // If dev1 is smaller then we assign d_nk to below
             if (dev1 < dev2) {
@@ -620,6 +620,137 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
 
 
 
+/*
+ * Choose k and multiplier for efficient, accurate sampling
+ */
+void estimate_cut_k(const Graph &g, int &k, int const last_k, 
+                      const std::vector<double> &unnormalized_weights, double thresh,
+                      double tol, std::vector<Plan> const &plans_vec, 
+                      const uvec &counties,
+                      Multigraph &cg, const uvec &pop, bool split_district_only,
+                      double const target, int const verbosity) {
+    // sample some spanning trees and compute deviances
+    int V = g.size();
+    int k_max = std::min(10 + (int) (2.0 * V * tol), last_k + 4); // heuristic
+    int N_max = plans_vec.size();
+    int N_adapt = std::min(60 + (int) std::floor(5000.0 / sqrt((double)V)), N_max);
+
+    double lower = target * (1 - tol);
+    double upper = target * (1 + tol);
+
+    std::vector<std::vector<double>> devs;
+    devs.reserve(N_adapt);
+    vec distr_ok(k_max+1, fill::zeros);
+    int root;
+    int max_ok = 0;
+    std::vector<bool> ignore(V);
+    std::vector<bool> visited(V);
+    int idx = 0;
+    int max_V = 0;
+    Tree ust = init_tree(V);
+
+    // REprintf("max_ok starting at %d\n", max_ok);
+
+
+    for (int i = 0; i < N_max && idx < N_adapt; i++, idx++) {
+        if (unnormalized_weights.at(i) == 0) { // skip if not valid
+            idx--;
+            continue;
+        }
+
+        int n_vtx = V;
+
+        //auto r = plan.region_dvals(arma::span(0, plan.num_regions - 1));
+
+        // arma::span(0,  plan.num_regions - 1);
+
+        // Get the index of the region with the largest dval
+        int biggest_region_id; int biggest_dval; int max_valid_dval;
+
+        // if split district only just do remainder 
+        if(split_district_only){
+            biggest_region_id = plans_vec.at(i).remainder_region;
+            biggest_dval = plans_vec.at(i).region_dvals(biggest_region_id);
+            max_valid_dval = 1; // max valid dval is 1
+        }else{
+            biggest_region_id = plans_vec.at(i).region_dvals.head(plans_vec.at(i).num_regions).index_max();
+            biggest_dval = plans_vec.at(i).region_dvals(biggest_region_id);
+            max_valid_dval = biggest_dval-1;
+        }
+
+        double biggest_dval_region_pop = plans_vec.at(i).region_pops.at(biggest_region_id);
+
+        for (int j = 0; j < V; j++) {
+            // if not the biggest region mark as ignore
+            if (plans_vec.at(i).region_ids(j) != biggest_region_id) {
+                ignore[j] = true;
+                n_vtx--;
+            }
+        }
+        if (n_vtx > max_V) max_V = n_vtx;
+
+        clear_tree(ust);
+        int result = sample_sub_ust(g, ust, V, root, visited, ignore,
+                                    pop, lower, upper, counties, cg);
+        if (result != 0) {
+            idx--;
+            continue;
+        }
+
+        devs.push_back(tree_dev(ust, root, pop, biggest_dval_region_pop, target, max_valid_dval));
+        int n_ok = 0;
+        for (int j = 0; j < V-1; j++) {
+            if (devs.at(idx).at(j) <= tol) { // sorted
+                n_ok++;
+            } else {
+                break;
+            }
+        }
+
+        if (n_ok <= k_max)
+            distr_ok(n_ok) += 1.0 / N_adapt;
+        if (n_ok > max_ok && n_ok < k_max){
+            max_ok = n_ok;
+            // REprintf("max_ok now %d\n", max_ok);
+        }
+            
+
+        
+
+        Rcpp::checkUserInterrupt();
+    }
+
+    if (idx < N_adapt) N_adapt = idx; // if rejected too many in last step
+    // For each k, compute pr(selected edge within top k),
+    // among maps where valid edge was selected
+    for (k = 1; k <= k_max; k++) {
+        double sum_within = 0;
+        int n_ok = 0;
+        for (int i = 0; i < N_adapt; i++) {
+            double dev = devs.at(i).at(r_int(k));
+            if (dev > tol) continue;
+            else n_ok++;
+            for (int j = 0; j < N_adapt; j++) {
+                sum_within += ((double) (dev <= devs.at(j).at(k-1))) / N_adapt;
+            }
+        }
+        if (sum_within / n_ok >= thresh) break;
+    }
+
+    if (k >= k_max) {
+        if (verbosity >= 3) {
+            Rcout << " [maximum hit; falling back to naive k estimator]";
+        }
+        k = std::max(max_ok, k_max); // NOTE: used to be max_ok but that seemed too small??
+    }
+
+    if (last_k < k_max && k < last_k * 0.6) k = (int) (0.5*k + 0.5*last_k);
+
+    k = std::min(std::max(max_ok + 1, k) + 1 - (distr_ok(k) > 0.99) + (thresh == 1),
+                 max_V - 1);
+}
+
+
 
 
 
@@ -743,7 +874,6 @@ void generalized_split_maps(
     bool print_weights = M < 12 && verbosity > 1;
     if(print_weights){
     std::vector<double> p = index_sampler.probabilities();
-    int nw_index = 0;
     Rprintf("Unnormalized weights are: ");
     for (auto w : unnormalized_sampling_weights){
         Rprintf("%.4f, ", w);
@@ -754,7 +884,7 @@ void generalized_split_maps(
     
     for (auto prob : p){
         if(print_weights) Rprintf("%.4f, ", prob);
-        nw_index++;
+
     }
     Rprintf("\n");
     }

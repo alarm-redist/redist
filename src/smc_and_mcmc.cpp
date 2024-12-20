@@ -196,11 +196,14 @@ List optimal_gsmc_with_merge_split_plans(
         List control, // control has pop temper, and k parameter value, and whether only district splits are allowed
         int verbosity, bool diagnostic_mode){
 
-    
-
     // unpack control params
+    // adaptive k estimation threshold
+    bool try_to_estimate_cut_k = as<bool>(control["estimate_cut_k"]);
+    double thresh = (double) control["adapt_k_thresh"];
     // Whether or not to only do district splits only 
     bool split_district_only = as<bool>(control["split_district_only"]);
+    // weight type
+    std::string wgt_type = as<std::string>(control["weight_type"]);
     // population tempering parameter 
     double pop_temper = as<double>(control["pop_temper"]);
     // lags thing (copied from original smc code, don't understand what its doing)
@@ -212,10 +215,13 @@ List optimal_gsmc_with_merge_split_plans(
     std::vector<bool> merge_split_step_vec = as<std::vector<bool>>(control["merge_split_step_vec"]);
     // multipler for number of merge split steps 
     int ms_steps_multiplier = as<int>(control["ms_steps_multiplier"]);
+    std::string merge_prob_type = as<std::string>(control["merge_prob_type"]);
     // set the number of threads
     int num_threads = (int) control["num_threads"];
     if (num_threads <= 0) num_threads = std::thread::hardware_concurrency();
     if (num_threads == 1) num_threads = 0;
+
+    double tol = std::max(target - lower, upper - target) / target;
 
 
 
@@ -226,6 +232,9 @@ List optimal_gsmc_with_merge_split_plans(
     
     // total number of steps to run 
     int total_steps = total_smc_steps + total_ms_steps;
+
+    // get the k used 
+    Rcpp::IntegerVector cut_k_values(total_steps);
 
     // Do some input checking 
     
@@ -326,7 +335,10 @@ List optimal_gsmc_with_merge_split_plans(
         }else{
             Rcout << "SEQUENTIAL MONTE CARLO";
         }
-        Rcout << " WITH MERGE SPLIT\n";
+        if(total_ms_steps > 0){
+            Rcout << " WITH MERGE SPLIT";
+        }
+        Rcout << "\n";
         Rcout << "Sampling " << M << " " << V << "-unit ";
         Rcout << "maps with " << N << " districts and population between "
               << lower << " and " << upper << " using " << num_threads << " threads, "
@@ -386,128 +398,168 @@ List optimal_gsmc_with_merge_split_plans(
                 Rprintf("Iteration %d: SMC Step %d \n",  step_num+1, smc_step_num + 1);
             }
         }
-         using std::chrono::high_resolution_clock;
-            using std::chrono::duration_cast;
-            using std::chrono::duration;
-            using std::chrono::milliseconds;
+        //  using std::chrono::high_resolution_clock;
+        // using std::chrono::duration_cast;
+        // using std::chrono::duration;
+        // using std::chrono::milliseconds;
+        
+        int prev_k;
 
         // Check what step type
         if(!merge_split_step_vec[step_num]){
 
-            auto t1f = high_resolution_clock::now();
-        // split the map
-        generalized_split_maps(
-            g, counties, cg, pop,
-            plans_vec, new_plans_vec,
-            parent_index_mat.column(smc_step_num),
-            unnormalized_sampling_weights,
-            draw_tries_mat.column(step_num),
-            parent_unsuccessful_tries_mat.column(smc_step_num),
-            acceptance_rates.at(step_num),
-            nunique_parents.at(smc_step_num),
-            ancestors, lags,
-            lower, upper, target,
-            k_params.at(smc_step_num), split_district_only,
-            pool,
-            verbosity, diagnostic_mode ? 3 : 0
-        );
+            if (verbosity >= 3) {
+                Rcout << "\tMaking split " << smc_step_num+1 << " of " << total_steps;
+            }
+            // check if k is passed in or estimate 
+            if(try_to_estimate_cut_k){
+                // est k
+                int est_cut_k;
+                int last_k = smc_step_num == 0 ? std::max(1, V - 5) : k_params.at(smc_step_num-1);
+                // double thresh = (double) control["adapt_k_thresh"];
 
-        auto t2f = high_resolution_clock::now();
+                estimate_cut_k(g, est_cut_k, last_k, unnormalized_sampling_weights, thresh,
+                            tol, plans_vec, 
+                            counties,
+                            cg, pop, split_district_only,
+                            target, verbosity);
+                k_params.at(smc_step_num) = est_cut_k;
 
-            /* Getting number of milliseconds as an integer. */
-            auto ms_intf = duration_cast<milliseconds>(t2f - t1f);
+                if (verbosity >= 3) {
+                    Rcout << " (using k = " << k_params.at(smc_step_num) << ")\n";
+                }
+            }else{
+                if (verbosity >= 3) {
+                    Rcout << " (using input k = " << k_params.at(smc_step_num) << ")\n";
+                }
+            }
 
-            /* Getting number of milliseconds as a double. */
-            duration<double, std::milli> ms_doublef = t2f - t1f;
+            // auto t1f = high_resolution_clock::now();
 
- 
-            Rcout << "Running SMC " << ms_doublef.count() << " ms\n";
+            // split the map
+            generalized_split_maps(
+                g, counties, cg, pop,
+                plans_vec, new_plans_vec,
+                parent_index_mat.column(smc_step_num),
+                unnormalized_sampling_weights,
+                draw_tries_mat.column(step_num),
+                parent_unsuccessful_tries_mat.column(smc_step_num),
+                acceptance_rates.at(step_num),
+                nunique_parents.at(smc_step_num),
+                ancestors, lags,
+                lower, upper, target,
+                k_params.at(smc_step_num), split_district_only,
+                pool,
+                verbosity, diagnostic_mode ? 3 : 0
+            );
 
-           
+            cut_k_values.at(step_num) = k_params.at(smc_step_num);
+            prev_k = k_params.at(smc_step_num);
 
-            auto t1 = high_resolution_clock::now();
+
+            // auto t2f = high_resolution_clock::now();
+            // /* Getting number of milliseconds as a double. */
+            // duration<double, std::milli> ms_doublef = t2f - t1f;
+            // Rcout << "Running SMC " << ms_doublef.count() << " ms\n";
+            // auto t1 = high_resolution_clock::now();
+
             
 
+            if(wgt_type == "optimal"){
+                // compute log incremental weights and sampling weights for next round
+                get_all_plans_log_optimal_weights(
+                    pool,
+                    g,
+                    plans_vec,
+                    split_district_only,
+                    log_incremental_weights_mat.col(smc_step_num),
+                    unnormalized_sampling_weights,
+                    target,
+                    pop_temper
+                );
+            }else if(wgt_type == "adj_uniform"){
+                get_all_plans_uniform_adj_weights(
+                    pool,
+                    g,
+                    plans_vec,
+                    split_district_only,
+                    log_incremental_weights_mat.col(smc_step_num),
+                    unnormalized_sampling_weights,
+                    target,
+                    pop_temper
+                );
+            }else{
+                throw Rcpp::exception("invalid weight type!");
+            }
+                
+            
 
-        // compute log incremental weights and sampling weights for next round
-        get_all_plans_log_gsmc_weights(
-            pool,
-            g,
-            plans_vec,
-            split_district_only,
-            log_incremental_weights_mat.col(smc_step_num),
-            unnormalized_sampling_weights,
-            target,
-            pop_temper
-        );
+            // auto t2 = high_resolution_clock::now();
+            // /* Getting number of milliseconds as a double. */
+            // duration<double, std::milli> ms_double = t2 - t1; 
+            // Rcout << "Calculating log weights " << ms_double.count() << " ms\n";
 
-            auto t2 = high_resolution_clock::now();
+            // compute log weight sd
+            log_wgt_stddevs.at(smc_step_num) = arma::stddev(log_incremental_weights_mat.col(smc_step_num));
+            // compute effective sample size
+            n_eff.at(smc_step_num) = compute_n_eff(log_incremental_weights_mat.col(smc_step_num));
 
-            /* Getting number of milliseconds as an integer. */
-            auto ms_int = duration_cast<milliseconds>(t2 - t1);
+            if(step_num == 0){
+                // For the first ancestor one make every ancestor themselves
+                // regspace<ucolvec>(0,  9);
+                std::iota(parent_index_mat.column(0).begin(), parent_index_mat.column(0).end(), 0);
+            }
 
-            /* Getting number of milliseconds as a double. */
-            duration<double, std::milli> ms_double = t2 - t1;
-
- 
-            Rcout << "Calculating log weights " << ms_double.count() << " ms\n";
-
-        // compute log weight sd
-        log_wgt_stddevs.at(smc_step_num) = arma::stddev(log_incremental_weights_mat.col(smc_step_num));
-
-        // compute effective sample size
-        n_eff.at(smc_step_num) = compute_n_eff(log_incremental_weights_mat.col(smc_step_num));
-
-        if(step_num == 0){
-            // For the first ancestor one make every ancestor themselves
-            // regspace<ucolvec>(0,  9);
-            std::iota(parent_index_mat.column(0).begin(), parent_index_mat.column(0).end(), 0);
-        }
-
-        // only increase if we have smc steps left else it will cause index issues
-        // with merge split
-        if(smc_step_num < total_smc_steps-1){
-            smc_step_num++;
-        }
+            // only increase if we have smc steps left else it will cause index issues
+            // with merge split
+            if(smc_step_num < total_smc_steps-1){
+                smc_step_num++;
+            }
 
         }else if(merge_split_step_vec[step_num]){ // check if its a merge split step
             // run merge split 
             // Set the number of steps to run at 1 over previous stage acceptance rate
+
+            // TODO formalize this more 
+            int prev_acceptance_index = merge_split_step_num == 0 ? step_num-1 : step_num - 2;
+
             // int nsteps_to_run = std::ceil(1/std::pow(acceptance_rates.at(step_num-1),1.5)); // * std::max(merge_split_step_num,1);
-            int nsteps_to_run = ms_steps_multiplier * std::ceil(1/acceptance_rates.at(step_num-1)); // * std::max(merge_split_step_num,1);
+            int nsteps_to_run = ms_steps_multiplier * std::ceil(1/acceptance_rates.at(prev_acceptance_index)); // * std::max(merge_split_step_num,1);
             num_merge_split_attempts_vec.at(merge_split_step_num) = nsteps_to_run;
 
-            auto t1fm = high_resolution_clock::now();
+            if (verbosity >= 3){
+                Rprintf("Ran %d Merge Split Attempts: ", 
+                    nsteps_to_run);
+            }
+
+            // auto t1fm = high_resolution_clock::now();
 
             run_merge_split_step_on_all_plans(
                 pool,
                 g, counties, cg, pop,
                 plans_vec, new_plans_vec,
-                split_district_only, k_params.at(smc_step_num),
-                nsteps_to_run,
+                split_district_only, merge_prob_type,
+                prev_k, nsteps_to_run,
                 lower, upper, target,
                 merge_split_successes_mat.column(merge_split_step_num)
             );
 
-            auto t2fm = high_resolution_clock::now();
 
+            cut_k_values.at(step_num) = prev_k;
 
-            /* Getting number of milliseconds as a double. */
-            duration<double, std::milli> ms_doublefm = t2fm - t1fm;
-
- 
-            Rcout << "Running Merge split " << ms_doublefm.count() << " ms\n";
+            // auto t2fm = high_resolution_clock::now();
+            // /* Getting number of milliseconds as a double. */
+            // duration<double, std::milli> ms_doublefm = t2fm - t1fm;
+            // Rcout << "Running Merge split " << ms_doublefm.count() << " ms\n";
 
             // set the acceptance rate 
             int total_ms_successes = Rcpp::sum(merge_split_successes_mat.column(merge_split_step_num));
-
             int total_ms_attempts = M * nsteps_to_run;
 
             acceptance_rates.at(step_num) = total_ms_successes / static_cast<double>(total_ms_attempts);
 
             if (verbosity >= 3){
-                Rprintf("Ran %d Merge Split Attempts: %d Successes out of %d attempts. Acceptance Rate: %.2f\n", 
-                    nsteps_to_run,  
+                Rprintf("%d Successes out of %d attempts. Acceptance Rate: %.2f\n",   
                     total_ms_successes,total_ms_attempts, 100.0*acceptance_rates.at(step_num));
             }
 
@@ -592,7 +644,7 @@ List optimal_gsmc_with_merge_split_plans(
         _["ancestors"] = ancestors,
         _["step_n_eff"] = n_eff,
         _["log_weight_stddev"] = log_wgt_stddevs,
-        _["est_k"] = k_params,
+        _["est_k"] = cut_k_values,
         _["merge_split_steps"] = merge_split_step_vec,
         _["merge_split_attempt_counts"] = num_merge_split_attempts_vec,
         _["merge_split_success_mat"] = merge_split_successes_mat

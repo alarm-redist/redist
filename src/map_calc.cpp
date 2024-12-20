@@ -500,7 +500,8 @@ NumericVector max_dev(const IntegerMatrix districts, const vec pop, int n_distr)
  * Calculate the deviation for cutting at every edge in a spanning tree.
  */
 std::vector<double> tree_dev(Tree &ust, int root, const uvec &pop,
-                             double total_pop, double target) {
+                             double const total_pop, double const target,
+                             int const max_potential_d) {
     int V = pop.size();
     std::vector<int> pop_below(V, 0);
     std::vector<int> parent(V);
@@ -510,8 +511,20 @@ std::vector<double> tree_dev(Tree &ust, int root, const uvec &pop,
     std::vector<double> devs(V-1);
     for (int i = 0; i < V; i++) {
         if (i == root) continue;
-        devs.at(idx) = std::min(std::fabs(pop_below.at(i) - target),
-                std::fabs(total_pop - pop_below[i] - target)) / target;
+
+        // start at total pop since deviance will never be more than total_pop/2
+        double smallest_dev = total_pop;
+
+        // for each possible d value get the deviation above and below
+        for(int potential_d = 1; potential_d <= max_potential_d; potential_d++){
+            // take this minimum of this d value and all previous ones 
+            double min_dev = std::min(
+                std::fabs(pop_below.at(i) - target * potential_d),
+                std::fabs(total_pop - pop_below.at(i) - target * potential_d)
+            ) / (target * potential_d);
+            smallest_dev = std::min(smallest_dev, min_dev);
+        }
+        devs.at(idx) = smallest_dev;
         idx++;
     }
 
