@@ -139,7 +139,7 @@ NumericVector max_dev(const IntegerMatrix districts, const arma::vec pop, int n_
  */
 std::vector<double> tree_dev(Tree &ust, int root, const uvec &pop,
                              double const total_pop, double const target,
-                             int max_potential_d=1);
+                             int const min_potential_d=1, int const max_potential_d=1);
 
 
 #endif

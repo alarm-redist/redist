@@ -216,7 +216,8 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
 
         algout$l_diag <- list(
             runtime = as.numeric(t2_run - t1_run, units = "secs"),
-            prethinned_steps = nsims,
+            prethinned_sims = nsims,
+            thin = thin,
             warmup = warmup
         )
 

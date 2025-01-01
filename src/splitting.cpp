@@ -29,15 +29,12 @@
 //' @return the region level graph
 //'
 double choose_multidistrict_to_split(
-        Plan const&plan, int &region_id_to_split){
+        Plan const&plan, int &region_id_to_split, int min_region_cut_size
+        ){
 
-    
-    // REprintf("Here in split 1!\n");
 
     if(plan.num_multidistricts < 1){
-        // REprintf("ERROR: Trying to find multidistrict to split when there are none!\n");
-        region_id_to_split = -1;
-        return -42;
+        throw Rcpp::exception("ERROR: Trying to find multidistrict to split when there are none!\n");
     }
 
     // count total
@@ -55,7 +52,7 @@ double choose_multidistrict_to_split(
         int d_val = plan.region_dvals(region_id);
 
         // collect info if multidistrict
-        if(d_val > 1){
+        if(d_val > min_region_cut_size){
             // Add that regions d value to the total
             total_multi_ds += d_val;
             // add the count and label to vector
@@ -110,27 +107,29 @@ double choose_multidistrict_to_split(
 
 
 //' Attempts to cut one region into two from a spanning tree and if successful
-//' returns information on what the two new regions would be. Does not actually
-//' update the plan
+//' cuts the tree object and returns information on what the two new regions 
+//' would be. Does not actually update the plan vertex list.
 //'
 //' Takes a spanning tree `ust` drawn on a specific region and attempts to cut
 //' it to produce two new regions using the generalized splitting procedure
 //' outlined <PAPER HERE>. This function is based on `cut_districts` in `smc.cpp`
 //' however the crucial difference is even if a cut is successful it does not
 //' update the plan. Instead it just returns the information on the two new
-//' regions if successful and the vertices to use to update the plans.
+//' regions if successful and the cut tree.
 //'
-//' Depending on the value of max_potential_d will only attempt to split off
-//' a single district or allows for more general splits.
+//' It will only attempt to create regions where the size is between
+//' min_potential_d and max_potential_d (inclusive). So the one district
+//' split case is `min_potential_d=max_potential_d=1`.
 //'
 //' By convention the first new region (`new_region1`) will always be the region
 //' with the smaller d-value (although they can be equal).
 //'
-//' @title Attempt to Cut Region Tree into Two New Regions
+//' @title Attempt to Find a Valid Spanning Tree Edge to Cut into Two New Regions 
 //'
 //' @param ust A directed spanning tree passed by reference
 //' @param root The root vertex of the spanning tree
 //' @param k_param The k parameter from the SMC algorithm, you choose among the top k_param edges
+//' @param min_potential_d The smallest potential d value it will try for a cut. 
 //' @param max_potential_d The largest potential d value it will try for a cut. Setting this to 
 //' 1 will result in only 1 district splits. 
 //' @param pop A vector of the population associated with each vertex in `g`
@@ -164,32 +163,21 @@ double choose_multidistrict_to_split(
 //' @return True if two valid regions were successfully split, false otherwise
 //'
 bool get_edge_to_cut(Tree &ust, int root,
-                     int k_param, int max_potential_d,
+                     int k_param, int min_potential_d, int max_potential_d,
                      const uvec &pop, const arma::subview_col<arma::uword> &region_ids,
-                     const int region_id_to_split, double total_region_pop, int total_region_dval,
+                     const int region_id_to_split, int total_region_pop, int total_region_dval,
                      const double lower, const double upper, const double target,
-                     int &new_region1_tree_root, int &new_region1_dval, double &new_region1_pop,
-                     int &new_region2_tree_root, int &new_region2_dval, double &new_region2_pop
+                     int &new_region1_tree_root, int &new_region1_dval, int &new_region1_pop,
+                     int &new_region2_tree_root, int &new_region2_dval, int &new_region2_pop
                      ){
 
-    // total_region_dval
-
     int V = static_cast<int>(region_ids.n_elem);
-
-    // REprintf("before!!\n");    
-    
-
-    // Rcout << "For " << region_id_to_split << " Total pop is " << total_pop << " and d_nk is " << num_final_districts << "\n";
 
     // create list that points to parents & computes population below each vtx
     std::vector<int> pop_below(V, 0);
     std::vector<int> parent(V);
     parent[root] = -1;
     tree_pop(ust, root, pop, pop_below, parent);
-
-    // REprintf("The root is %d!!\n", root); 
-
-    // REprintf("Root vertex %d is not in region to split %d!\n", region_ids(root), region_id_to_split);
 
     // compile a list of: things for each edge in tree
     std::vector<int> candidates; // candidate edges to cut,
@@ -204,7 +192,7 @@ bool get_edge_to_cut(Tree &ust, int root,
     new_d_val.reserve(k_param);
 
     if(region_ids(root) != region_id_to_split){
-        REprintf("Root vertex %d is not in region to split %d!\n", region_ids(root), region_id_to_split);
+        REprintf("Root vertex %u is not in region to split %d!\n", region_ids(root), region_id_to_split);
         throw Rcpp::exception("Root vertex is not in region to split!");
     }
 
@@ -215,58 +203,55 @@ bool get_edge_to_cut(Tree &ust, int root,
         if (region_ids(i-1) != region_id_to_split || i - 1 == root) continue;
 
         // Get the population of one side of the partition removing that edge would cause
-        double below = pop_below.at(i - 1);
+        int below = pop_below.at(i - 1);
         // Get the population of the other side
-        double above = total_region_pop - below;
+        int above = total_region_pop - below;
 
-        // vectors to keep track of value for each d_{n,k}
-        std::vector<double> devs(max_potential_d);
-        std::vector<bool> dev2_bigger(max_potential_d);
-        std::vector<bool> are_ok(max_potential_d);
+        // keeps track of the information for the best d_val cut
+        double smallest_dev = target * max_potential_d * max_potential_d; // start off with fake maximal value
+        bool is_dev2_bigger = false;
+        bool cut_is_ok = false;
+        int cut_dval;
 
-
-        // Now try each potential d_nk value from 1 up to d_n-1,k -1
-        // remember to correct for 0 indexing
-        for(int potential_d = 1; potential_d <= max_potential_d; potential_d++){
+        // Now try each potential d_nk value from min_potential_d up to max_potential_d
+        for(int potential_d = min_potential_d; potential_d <= max_potential_d; potential_d++){
 
             double dev1 = std::fabs(below - target * potential_d) / (target * potential_d);
             double dev2 = std::fabs(above - target * potential_d) / (target * potential_d);
 
-            // If dev1 is smaller then we assign d_nk to below
-            if (dev1 < dev2) {
-                devs[potential_d-1] = dev1;
-                dev2_bigger[potential_d-1] = true;
-                // check in bounds
-                are_ok[potential_d-1] =    lower * potential_d <= below
-                                        && below <= upper * potential_d
-                                        && lower * (total_region_dval - potential_d) <= above
-                                        && above <= upper * (total_region_dval - potential_d);
-            } else { // Else if dev2 is smaller we assign d_nk to above
-                devs[potential_d-1] = dev2;
-                dev2_bigger[potential_d-1] = false;
-                are_ok[potential_d-1] =    lower * potential_d <= above
-                                        && above <= upper * potential_d
-                                        && lower * (total_region_dval - potential_d) <= below
-                                        && below <= upper * (total_region_dval - potential_d);
-            }
+            // if dev1 is smaller of the two and beats the last one then update
+            if(dev1 <= dev2 && dev1 < smallest_dev){
+                is_dev2_bigger = true;
+                smallest_dev = dev1;
+                // check if the split induced fits population bounds
+                cut_is_ok = lower * potential_d <= below
+                            && below <= upper * potential_d
+                            && lower * (total_region_dval - potential_d) <= above
+                            && above <= upper * (total_region_dval - potential_d);
 
+                cut_dval = potential_d;
+            }else if(dev2 < dev1 && dev2 < smallest_dev){
+                is_dev2_bigger = false;
+                smallest_dev = dev2;
+                // check if the split induced fits population bounds
+                cut_is_ok = lower * potential_d <= above
+                            && above <= upper * potential_d
+                            && lower * (total_region_dval - potential_d) <= below
+                            && below <= upper * (total_region_dval - potential_d);
+
+                cut_dval = potential_d;
+            }
         }
 
-        // Now find the value of d_{n,k} that has the smallest deviation
-        std::vector<double>::iterator result = std::min_element(devs.begin(), devs.end());
-        int best_potential_d = std::distance(devs.begin(), result);
-
-
-        if(dev2_bigger[best_potential_d]){
+        if(is_dev2_bigger){
             candidates.push_back(i);
         } else{
             candidates.push_back(-i);
         }
 
-        deviances.push_back(devs[best_potential_d]);
-        is_ok.push_back(are_ok[best_potential_d]);
-        new_d_val.push_back(best_potential_d+1);
-
+        deviances.push_back(smallest_dev);
+        is_ok.push_back(cut_is_ok);
+        new_d_val.push_back(cut_dval);
     }
 
     // if less than k_param candidates immediately reject
@@ -302,7 +287,6 @@ bool get_edge_to_cut(Tree &ust, int root,
     new_region1_dval = new_d_val.at(idx);
     new_region2_dval = total_region_dval - new_region1_dval;
 
-
     if (candidates.at(idx) > 0) { // Means cut below so first vertex is cut_at
         new_region1_tree_root = cut_at;
         new_region2_tree_root = root;
@@ -333,9 +317,6 @@ bool get_edge_to_cut(Tree &ust, int root,
     return true;
 
 };
-
-
-
 
 
 
@@ -375,8 +356,8 @@ bool get_edge_to_cut(Tree &ust, int root,
 //'
 void update_plan_from_cut(
         Tree &ust, Plan &plan, bool split_district_only,
-        const int new_region1_tree_root, const int new_region1_dval, const double new_region1_pop,
-        const int new_region2_tree_root, const int new_region2_dval, const double new_region2_pop,
+        const int new_region1_tree_root, const int new_region1_dval, const int new_region1_pop,
+        const int new_region2_tree_root, const int new_region2_dval, const int new_region2_pop,
         const int new_region1_id,  const int new_region2_id
 ){
 
@@ -465,8 +446,8 @@ void update_plan_from_cut(
 void add_new_regions_to_plan_from_cut(
         Tree &ust, Plan &plan, bool split_district_only,
         const int old_split_region_id, const int new_region_id,
-        const int new_region1_tree_root, const int new_region1_dval, const double new_region1_pop,
-        const int new_region2_tree_root, const int new_region2_dval, const double new_region2_pop
+        const int new_region1_tree_root, const int new_region1_dval, const int new_region1_pop,
+        const int new_region2_tree_root, const int new_region2_dval, const int new_region2_pop
 ){
     // if successful then update the plan
     // update plan with new regions
@@ -551,7 +532,8 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
                  const int new_region_id,
                  std::vector<bool> &visited, std::vector<bool> &ignore, const uvec &pop,
                  const double lower, const double upper, const double target,
-                 int k_param, bool split_district_only) {
+                 int k_param, int const min_region_cut_size, int const max_region_cut_size, 
+                 bool split_district_only) {
 
     int V = g.size();
 
@@ -572,7 +554,7 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
     // splitting related params
     int new_region1_tree_root, new_region2_tree_root;
     int new_region1_dval, new_region2_dval;
-    double new_region1_pop, new_region2_pop;
+    int new_region1_pop, new_region2_pop;
 
 
     bool successful_edge_found;
@@ -585,10 +567,12 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
         max_potential_d = plan.region_dvals(region_id_to_split) - 1;
     }
 
+    int min_potential_d = 1;
+
     // REprintf("Attempting to split\n");
     // try to get an edge to cut
     successful_edge_found = get_edge_to_cut(ust, root,
-                    k_param, max_potential_d,
+                    k_param, min_region_cut_size, max_region_cut_size,
                     pop, plan.region_ids, 
                     region_id_to_split, plan.region_pops.at(region_id_to_split),
                     plan.region_dvals(region_id_to_split),
@@ -627,7 +611,9 @@ void estimate_cut_k(const Graph &g, int &k, int const last_k,
                       const std::vector<double> &unnormalized_weights, double thresh,
                       double tol, std::vector<Plan> const &plans_vec, 
                       const uvec &counties,
-                      Multigraph &cg, const uvec &pop, bool split_district_only,
+                      Multigraph &cg, const uvec &pop,
+                      int const min_region_cut_size, int const max_region_cut_size,
+                      bool split_district_only,
                       double const target, int const verbosity) {
     // sample some spanning trees and compute deviances
     int V = g.size();
@@ -697,7 +683,7 @@ void estimate_cut_k(const Graph &g, int &k, int const last_k,
             continue;
         }
 
-        devs.push_back(tree_dev(ust, root, pop, biggest_dval_region_pop, target, max_valid_dval));
+        devs.push_back(tree_dev(ust, root, pop, biggest_dval_region_pop, target, min_region_cut_size, max_region_cut_size));
         int n_ok = 0;
         for (int j = 0; j < V-1; j++) {
             if (devs.at(idx).at(j) <= tol) { // sorted
@@ -714,9 +700,6 @@ void estimate_cut_k(const Graph &g, int &k, int const last_k,
             // REprintf("max_ok now %d\n", max_ok);
         }
             
-
-        
-
         Rcpp::checkUserInterrupt();
     }
 
@@ -845,7 +828,8 @@ void generalized_split_maps(
         int &n_unique_parent_indices,
         umat &ancestors, const std::vector<int> &lags,
         double const lower, double const upper, double const target,
-        int const k_param, bool const split_district_only,
+        int const k_param, int const min_region_cut_size, int const max_region_cut_size, 
+        bool const split_district_only,
         RcppThread::ThreadPool &pool,
         int const verbosity, int const diagnostic_level
                 ) {
@@ -857,7 +841,6 @@ void generalized_split_maps(
     const int dist_ctr = old_plans_vec.at(0).num_regions;
     const int n_lags = lags.size();
     umat ancestors_new(M, n_lags); // lags/ancestor thing
-
 
 
     // Create the obj which will sample from the index with probability
@@ -931,8 +914,13 @@ void generalized_split_maps(
             }else{
                 // if generalized split pick a region to try to split
                 choose_multidistrict_to_split(
-                    old_plans_vec.at(idx), region_id_to_split);
+                    old_plans_vec.at(idx), region_id_to_split, min_region_cut_size);
             }
+
+            auto plan_specific_max_region_cut_size = std::min(
+                max_region_cut_size, // max_region_cut_size 
+                (int) old_plans_vec.at(idx).region_dvals(region_id_to_split)
+            );
 
             // REprintf("Now splitting\n");
 
@@ -942,7 +930,9 @@ void generalized_split_maps(
                                       new_region_id,
                                       visited, ignore, pop,
                                       lower, upper, target,
-                                      k_param, split_district_only);
+                                      k_param, min_region_cut_size, 
+                                      plan_specific_max_region_cut_size,
+                                      split_district_only);
 
 
             // bad sample; try again
@@ -963,11 +953,9 @@ void generalized_split_maps(
 
         }
 
-
         // record index of new plan's parent
         parent_index_vec[i] = idx;
-        // clear the spanning tree
-        clear_tree(ust);
+
 
         // ORIGINAL SMC CODE I DONT KNOW WHAT THIS DOES
         // save ancestors/lags

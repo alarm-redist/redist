@@ -53,6 +53,33 @@ dist_dist_diff <- function(p, i_dist, j_dist, x_center, y_center, x, y) {
     .Call(`_gredist_dist_dist_diff`, p, i_dist, j_dist, x_center, y_center, x, y)
 }
 
+#' Uses gsmc method with optimal weights and merge split steps to generate a sample of `M` plans in `c++`
+#'
+#' Using the procedure outlined in <PAPER HERE> this function uses Sequential
+#' Monte Carlo (SMC) methods to generate a sample of `M` plans
+#'
+#' @title Run Optimalgsmc with Merge Split
+#'
+#' @param N The number of districts the final plans will have
+#' @param adj_list A 0-indexed adjacency list representing the undirected graph
+#' which represents the underlying map the plans are to be drawn on
+#' @param counties Vector of county labels of each vertex in `g`
+#' @param pop A vector of the population associated with each vertex in `g`
+#' @param target Ideal population of a valid district. This is what deviance is calculated
+#' relative to
+#' @param lower Acceptable lower bounds on a valid district's population
+#' @param upper Acceptable upper bounds on a valid district's population
+#' @param M The number of plans (samples) to draw
+#' @param k_param The k parameter from the SMC algorithm, you choose among the top k_param edges
+#' @param control Named list of additional parameters.
+#' @param num_threads The number of threads the threadpool should use
+#' @param verbosity What level of detail to print out while the algorithm is
+#' running <ADD OPTIONS>
+#' @export
+optimal_gsmc_with_merge_split_plans <- function(N, adj_list, counties, pop, target, lower, upper, M, region_id_mat, region_dvals_mat, control, verbosity = 3L, diagnostic_mode = FALSE) {
+    .Call(`_gredist_optimal_gsmc_with_merge_split_plans`, N, adj_list, counties, pop, target, lower, upper, M, region_id_mat, region_dvals_mat, control, verbosity, diagnostic_mode)
+}
+
 log_st_map <- function(g, districts, counties, n_distr) {
     .Call(`_gredist_log_st_map`, g, districts, counties, n_distr)
 }
@@ -67,6 +94,25 @@ countpartitions <- function(aList) {
 
 calcPWDh <- function(x) {
     .Call(`_gredist_calcPWDh`, x)
+}
+
+#'
+#' @returns A list with the following 
+#'     - `uncut_tree`: The spanning tree drawn on the region stored as a
+#'     0-indexed directed edge adjacency graph.
+#'     - `num_attempts`: The number of attempts it took to draw the tree.
+#' 
+#' @keywords internal
+draw_a_tree_on_a_region <- function(adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_draw_tree_on, lower, upper, region_ids, region_dvals, verbose) {
+    .Call(`_gredist_draw_a_tree_on_a_region`, adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_draw_tree_on, lower, upper, region_ids, region_dvals, verbose)
+}
+
+perform_a_valid_region_split <- function(adj_list, counties, pop, N, num_regions, num_districts, region_id_to_split, target, lower, upper, region_ids, region_dvals, split_dval_min, split_dval_max, verbose = FALSE, k_param = 1L) {
+    .Call(`_gredist_perform_a_valid_region_split`, adj_list, counties, pop, N, num_regions, num_districts, region_id_to_split, target, lower, upper, region_ids, region_dvals, split_dval_min, split_dval_max, verbose, k_param)
+}
+
+perform_merge_split_steps <- function(adj_list, counties, pop, k_param, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, num_merge_split_steps, verbose) {
+    .Call(`_gredist_perform_merge_split_steps`, adj_list, counties, pop, k_param, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, num_merge_split_steps, verbose)
 }
 
 group_pct_top_k <- function(m, group_pop, total_pop, k, n_distr) {
@@ -144,6 +190,10 @@ arma_testing <- function() {
     .Call(`_gredist_arma_testing`)
 }
 
+random_cpp_testing <- function() {
+    invisible(.Call(`_gredist_random_cpp_testing`))
+}
+
 closest_adj_pop <- function(adj, i_dist, g_prop) {
     .Call(`_gredist_closest_adj_pop`, adj, i_dist, g_prop)
 }
@@ -188,32 +238,44 @@ smc_plans <- function(N, l, counties, pop, n_distr, target, lower, upper, rho, d
     .Call(`_gredist_smc_plans`, N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, control, verbosity)
 }
 
-#' Uses gsmc method with optimal weights and merge split steps to generate a sample of `M` plans in `c++`
+#' Copies data from an arma Matrix into an Rcpp Matrix
 #'
-#' Using the procedure outlined in <PAPER HERE> this function uses Sequential
-#' Monte Carlo (SMC) methods to generate a sample of `M` plans
+#' Takes an arma matrix subview and copies all the data into an RcppMatrix
+#' of the same size using the Rcpp Threadpool to copy in parallel. 
 #'
-#' @title Run Optimalgsmc with Merge Split
 #'
-#' @param N The number of districts the final plans will have
-#' @param adj_list A 0-indexed adjacency list representing the undirected graph
-#' which represents the underlying map the plans are to be drawn on
-#' @param counties Vector of county labels of each vertex in `g`
-#' @param pop A vector of the population associated with each vertex in `g`
-#' @param target Ideal population of a valid district. This is what deviance is calculated
-#' relative to
-#' @param lower Acceptable lower bounds on a valid district's population
-#' @param upper Acceptable upper bounds on a valid district's population
-#' @param M The number of plans (samples) to draw
-#' @param k_param The k parameter from the SMC algorithm, you choose among the top k_param edges
-#' @param control Named list of additional parameters.
-#' @param num_threads The number of threads the threadpool should use
-#' @param verbosity What level of detail to print out while the algorithm is
-#' running <ADD OPTIONS>
-#' @export
-optimal_gsmc_with_merge_split_plans <- function(N, adj_list, counties, pop, target, lower, upper, M, region_id_mat, region_dvals_mat, control, verbosity = 3L, diagnostic_mode = FALSE) {
-    .Call(`_gredist_optimal_gsmc_with_merge_split_plans`, N, adj_list, counties, pop, target, lower, upper, M, region_id_mat, region_dvals_mat, control, verbosity, diagnostic_mode)
-}
+#' @title Copies data from an arma Matrix into an Rcpp Matrix
+#'
+#' @param pool A threadpool for multithreading
+#' @param arma_mat Subview of an arma unsigned integer matrix 
+#' @param rcpp_mat A matrix of integers with the same size as the arma_mat
+#'
+#' @details Modifications
+#'    - The `rcpp_mat` is filled in with the data om the arma matrix subview
+#'
+#' @noRd
+#' @keywords internal
+NULL
+
+#' Reorders all the plans in the vector by order a region was split
+#'
+#' Takes a vector of plans and uses the vector of dummy plans to reorder
+#' each of the plans by the order a region was split.
+#'
+#'
+#' @title Reorders all the plans in the vector by order a region was split
+#'
+#' @param pool A threadpool for multithreading
+#' @param plans_vec A vector of plans
+#' @param dummy_plans_vec A vector of dummy plans 
+#'
+#' @details Modifications
+#'    - Each plan in the `plans_vec` object is reordered by when the region was split
+#'    - Each plan is a shallow copy of the plans in `plans_vec`
+#'
+#' @noRd
+#' @keywords internal
+NULL
 
 splits <- function(dm, community, nd, max_split) {
     .Call(`_gredist_splits`, dm, community, nd, max_split)
@@ -223,51 +285,30 @@ dist_cty_splits <- function(dm, community, nd) {
     .Call(`_gredist_dist_cty_splits`, dm, community, nd)
 }
 
-#' Selects a multidistrict with probability proportional to its d_nk value and
-#' returns the log probability of the selected region
-#'
-#' Given a plan object with at least one multidistrict this function randomly
-#' selects a multidistrict with probability proporitional to its d_nk value
-#' (relative to all multidistricts) and returns the log of the probability that
-#' region was chosen.
-#'
-#'
-#' @title Choose multidistrict to split
-#'
-#' @param plan A plan object
-#' @param region_to_split an integer that will be updated by reference with the
-#' id number of the region selected to split
-#'
-#' @details No modifications to inputs made
-#'
-#' @return the region level graph
-#'
-#' @noRd
-#' @keywords internal
-NULL
-
 #' Attempts to cut one region into two from a spanning tree and if successful
-#' returns information on what the two new regions would be. Does not actually
-#' update the plan
+#' cuts the tree object and returns information on what the two new regions 
+#' would be. Does not actually update the plan vertex list.
 #'
 #' Takes a spanning tree `ust` drawn on a specific region and attempts to cut
 #' it to produce two new regions using the generalized splitting procedure
 #' outlined <PAPER HERE>. This function is based on `cut_districts` in `smc.cpp`
 #' however the crucial difference is even if a cut is successful it does not
 #' update the plan. Instead it just returns the information on the two new
-#' regions if successful and the vertices to use to update the plans.
+#' regions if successful and the cut tree.
 #'
-#' Depending on the value of max_potential_d will only attempt to split off
-#' a single district or allows for more general splits.
+#' It will only attempt to create regions where the size is between
+#' min_potential_d and max_potential_d (inclusive). So the one district
+#' split case is `min_potential_d=max_potential_d=1`.
 #'
 #' By convention the first new region (`new_region1`) will always be the region
 #' with the smaller d-value (although they can be equal).
 #'
-#' @title Attempt to Cut Region Tree into Two New Regions
+#' @title Attempt to Find a Valid Spanning Tree Edge to Cut into Two New Regions 
 #'
 #' @param ust A directed spanning tree passed by reference
 #' @param root The root vertex of the spanning tree
 #' @param k_param The k parameter from the SMC algorithm, you choose among the top k_param edges
+#' @param min_potential_d The smallest potential d value it will try for a cut. 
 #' @param max_potential_d The largest potential d value it will try for a cut. Setting this to 
 #' 1 will result in only 1 district splits. 
 #' @param pop A vector of the population associated with each vertex in `g`
@@ -477,14 +518,6 @@ NULL
 #' @noRd
 #' @keywords internal
 NULL
-
-perform_a_valid_region_split <- function(adj_list, counties, pop, k_param, region_id_to_split, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, verbose) {
-    .Call(`_gredist_perform_a_valid_region_split`, adj_list, counties, pop, k_param, region_id_to_split, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, verbose)
-}
-
-perform_merge_split_steps <- function(adj_list, counties, pop, k_param, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, num_merge_split_steps, verbose) {
-    .Call(`_gredist_perform_merge_split_steps`, adj_list, counties, pop, k_param, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, num_merge_split_steps, verbose)
-}
 
 swMH <- function(aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parity, beta_sequence, beta_weights, lambda = 0L, beta = 0.0, adapt_beta = "none", adjswap = 1L, exact_mh = 0L, adapt_eprob = 0L, adapt_lambda = 0L, num_hot_steps = 0L, num_annealing_steps = 0L, num_cold_steps = 0L, verbose = TRUE) {
     .Call(`_gredist_swMH`, aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parity, beta_sequence, beta_weights, lambda, beta, adapt_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, num_hot_steps, num_annealing_steps, num_cold_steps, verbose)

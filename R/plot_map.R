@@ -41,7 +41,7 @@
 #'
 #' @concept plot
 #' @export
-gredist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = "",
+gredist.plot.map <- function(shp, adj=NULL, plan = NULL, fill = NULL, fill_label = "",
                             zoom_to = NULL, boundaries = is.null(fill), title = "") {
     # Check inputs
     if (inherits(shp, "SpatialPolygonsDataFrame")) {
@@ -49,6 +49,7 @@ gredist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = ""
     } else if (!inherits(shp, "sf")) {
         cli_abort("{.arg shp} must be a {.cls SpatialPolygonsDataFrame} or {.cls sf} object.")
     }
+
 
     plan <- eval_tidy(enquo(plan), shp)
     if (!is.null(plan)) {
@@ -64,8 +65,10 @@ gredist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = ""
     # Create Plot
     if (!is.null(plan)) {
         if (inherits(shp, "redist_map") & is.null(fill)) {
+            if (is.null(adj)){
+                adj <- get_adj(shp)
+            }
             plan <- as.factor(plan)
-            adj <- get_adj(shp)
             ndists <- length(unique(plan))
             if (ndists > 6)
                 plan <- as.factor(color_graph(adj, as.integer(plan)))
@@ -88,7 +91,9 @@ gredist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = ""
             }
         } else if (inherits(shp, "redist_map")) {
             plan <- as.factor(plan)
-            adj <- get_adj(shp)
+            if (is.null(adj)){
+                adj <- get_adj(shp)
+            }
             ndists <- length(unique(plan))
             if (ndists > 6) {
                 plan <- as.factor(color_graph(adj, as.integer(plan)))
@@ -136,7 +141,9 @@ gredist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = ""
     } else if (!is.null(fill)) { # no plan but fill
         recolor <- FALSE
         if (inherits(shp, "redist_map") && (is.character(fill) || is.factor(fill))) {
-            adj <- get_adj(shp)
+            if (is.null(adj)){
+                adj <- get_adj(shp)
+            }
             nlevels <- length(unique(fill))
             fill <- as.factor(fill)
             recolor <- TRUE
@@ -182,6 +189,7 @@ gredist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = ""
 #' @param plan A numeric vector with one entry for each precinct in shp.
 #' Used to remove edges that cross boundaries. Default is \code{NULL}.  Optional.
 #' @param centroids A logical indicating if centroids should be plotted. Default is \code{TRUE}.
+#' @param centroids_to_plot A vector of indices of centroids to plot if \code{centroids} is \code{TRUE}.
 #' @param drop A logical indicating if edges that cross districts should be dropped. Default is \code{FALSE}.
 #' @param plot_shp A logical indicating if the shp should be plotted under the
 #' graph. Default is \code{TRUE}.
@@ -202,7 +210,7 @@ gredist.plot.map <- function(shp, adj, plan = NULL, fill = NULL, fill_label = ""
 #'
 #' @concept plot
 #' @export
-gredist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE,
+gredist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE, centroids_to_plot = NULL,
                             drop = FALSE, plot_shp = TRUE, zoom_to = NULL, title = "") {
     if (inherits(shp, "SpatialPolygonsDataFrame")) {
         shp <- shp %>% st_as_sf()
@@ -266,11 +274,14 @@ gredist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE,
     }
 
     if (centroids) {
+        if(is.null(centroids_to_plot)){
+            centroids_to_plot <- seq_len(nrow(centers))
+        }
         if (!is.null(plan) & !plot_shp) {
-            plot <- plot + geom_sf(data = centers, aes(color = as.character(plan_to_plot)), linewidth = 2) +
+            plot <- plot + geom_sf(data = centers[centroids_to_plot,], aes(color = as.character(plan_to_plot[centroids_to_plot,])), linewidth = 2) +
                 theme(legend.position = "none")
         } else {
-            plot <- plot + geom_sf(data = centers)
+            plot <- plot + geom_sf(data = centers[centroids_to_plot,])
         }
     }
 

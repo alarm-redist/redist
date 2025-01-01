@@ -207,7 +207,8 @@ redist_mergesplit <- function(map, nsims,
     warmup_idx <- c(seq_len(1 + warmup %/% thin), ncol(algout$plans))
     l_diag <- list(
         runtime = as.numeric(t2_run - t1_run, units = "secs"),
-        prethinned_steps = nsims,
+        prethinned_sims = nsims,
+        thin = thin,
         warmup = warmup
     )
     out <- new_redist_plans(algout$plans[, -warmup_idx, drop = FALSE],

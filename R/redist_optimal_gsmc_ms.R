@@ -7,10 +7,19 @@
 ####################################################
 
 
-#' OptimalgSMC with merge split Redistricting Sampler
+#' gSMC Redistricting Sampler (O'Sullivan, McCartan and Imai ???)
 #'
+#' `redist_gsmc` uses a Sequential Monte Carlo algorithm (O'Sullivan, McCartan and Imai ???)
+#' to generate representative samples of congressional or legislative
+#' redistricting plans according to contiguity, population, compactness, and
+#' administrative boundary constraints.
+#'
+#' This function draws samples from a specific target measure controlled by
+#' the `map` parameters.
+#'
+#' @inheritParams redist_smc
 #' @param k_params Either a single value to use as the splitting parameter for
-#' every round or a vector of length N-1 where each value is the one to use for
+#' every round or a vector of length ndists-1 where each value is the one to use for
 #' a split.
 #' @param multiprocess Whether or not to launch multiple processes (sometimes
 #' better to disable to avoid using too much memory.)
@@ -19,45 +28,48 @@
 #' plans.
 #'
 #' @export
-redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
-                                   estimate_cut_k = TRUE,
-                       manual_k_params = 6, adapt_k_thresh = .9999,
-                       split_district_only = FALSE, weight_type = "optimal",
-                       ms_freq = 0, ms_steps_multiplier = 1L,
-                       run_ms = 0 < ms_freq && ms_freq <= N, merge_prob_type = "uniform",
-                       resample = TRUE, runs = 1L,
-                       ncores = 0L, multiprocess=TRUE,
-                       pop_temper = 0,
-                       init_region_ids_mat = NULL, init_dvals_mat = NULL,
-                       verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE){
-    N <- attr(state_map, "ndists")
+redist_optimal_gsmc_ms <- function(
+        state_map, M, counties = NULL,
+        estimate_cut_k = TRUE,
+       manual_k_params = 6, adapt_k_thresh = .9999,
+       split_district_only = FALSE, weight_type = "optimal",
+       ms_freq = 0, ms_steps_multiplier = 1L,
+       run_ms = 0 < ms_freq && ms_freq <= ndists, merge_prob_type = "uniform",
+       resample = TRUE, runs = 1L,
+       ncores = 0L, multiprocess=TRUE,
+       pop_temper = 0,
+       init_region_ids_mat = NULL, init_dvals_mat = NULL, init_num_regions = 1,
+       min_region_cut_sizes = NULL, max_region_cut_sizes = NULL,
+       verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE){
+
+    if(init_num_regions > 1 || !is.null(init_region_ids_mat) || !is.null(init_dvals_mat)){
+        cli_abort("Starting with non-trivial partial plans not supported yet!")
+    }
+
     ndists <- attr(state_map, "ndists")
     nsims <- M
 
 
-
     if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
         cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
+    # check k param input if not estimating
+    if(any(manual_k_params < 1)) {
+        cli_abort("K parameter values must be all at least 1.")
+    }
 
     # no constraints
     constraints <- list()
 
 
-    # make controls intput
-    lags <- 1 + unique(round((N - 1)^0.8*seq(0, 0.7, length.out = 4)^0.9))
 
-    # check k param imput
-    if(any(manual_k_params < 1)) {
-        cli_abort("K parameter values must be all at least 1.")
-    }
 
     # if just a single number then repeat it
     if(length(manual_k_params) == 1 && floor(manual_k_params) == manual_k_params){
-        manual_k_params <- rep(manual_k_params, N-1)
-    }else if(length(manual_k_params) != N-1){
-        cli_abort("K parameter input must be either 1 value or N-1!")
+        manual_k_params <- rep(manual_k_params, ndists-1)
+    }else if(length(manual_k_params) != ndists-1){
+        cli_abort("K parameter input must be either 1 value or ndists-1!")
     }else if(any(floor(manual_k_params) != manual_k_params)){
-        # if either the length is not N-1 or its not all integers then throw
+        # if either the length is not ndists-1 or its not all integers then throw
         # error
         cli_abort("K parameter values must be all integers")
     }
@@ -71,20 +83,20 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
         msg = "`ms_steps_multiplier` must be a positive integer!"
     )
 
-    # there are N-1 splits so for now just do it
-    total_smc_steps <- N-1
+    # there are ndists-1 splits so for now just do it
+    total_smc_steps <- ndists-1
 
     # check if there will be any merge split steps
     any_ms_steps_ran <- ms_freq <= total_smc_steps && run_ms
 
-    merge_split_step_vec <- rep(FALSE, N-1)
+    merge_split_step_vec <- rep(FALSE, ndists-1)
 
     if(any_ms_steps_ran){
         # Now add merge split every `ms_freq` steps
 
         # insertion trick
         # https://stackoverflow.com/questions/1493969/insert-elements-into-a-vector-at-given-indexes
-        ind <- seq(from = ms_freq, to = N-1, by = ms_freq)
+        ind <- seq(from = ms_freq, to = ndists-1, by = ms_freq)
         val <- c( merge_split_step_vec, rep(TRUE,length(ind)) )
         id  <- c( seq_along(merge_split_step_vec), ind+0.5 )
 
@@ -113,6 +125,22 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
     # total number of steps to run
     total_steps <- total_smc_steps + total_ms_steps
 
+    if(is.null(min_region_cut_sizes)){
+        min_region_cut_sizes <- rep(1, ndists)
+    }
+    if(is.null(max_region_cut_sizes) && split_district_only){
+        max_region_cut_sizes <- rep(1, ndists)
+    }else if(is.null(max_region_cut_sizes) && !split_district_only){
+        max_region_cut_sizes <- rev(seq_len(ndists-1))
+    }
+    # validate the cut sizes
+    validate_cut_sizes(ndists, total_smc_steps, min_region_cut_sizes, max_region_cut_sizes)
+
+
+
+    # compute lags thing
+    lags <- 1 + unique(round((ndists - 1)^0.8*seq(0, 0.7, length.out = 4)^0.9))
+
 
     control <- list(
         weight_type=weight_type,
@@ -120,6 +148,8 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
         pop_temper = pop_temper,
         k_params = manual_k_params,
         split_district_only = split_district_only,
+        min_region_cut_sizes=min_region_cut_sizes,
+        max_region_cut_sizes=max_region_cut_sizes,
         merge_split_step_vec = merge_split_step_vec,
         ms_steps_multiplier = ms_steps_multiplier,
         adapt_k_thresh = adapt_k_thresh,
@@ -133,54 +163,36 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
     if (silent) verbosity <- 0
 
 
-    # get the map in adjacency form
-    map <- validate_redist_map(state_map)
-    V <- nrow(state_map)
-    adj_list <- get_adj(state_map)
+    # get the map parameters
+    map_params <- get_map_parameters(state_map, counties)
+
+    map <- map_params$map
+    V <- map_params$V
+    adj_list <- map_params$adj_list
+    counties <- map_params$counties
+    pop <- map_params$pop
+    pop_bounds <- map_params$pop_bounds
 
 
 
-
-    counties <- rlang::eval_tidy(rlang::enquo(counties), map)
-    if (is.null(counties)) {
-        counties <- rep(1, V)
-    } else {
-        if (any(is.na(counties)))
-            cli_abort("County vector must not contain missing values.")
-
-        # handle discontinuous counties
-        component <- contiguity(adj_list, vctrs::vec_group_id(counties))
-        counties <- dplyr::if_else(component > 1,
-                                   paste0(as.character(counties), "-", component),
-                                   as.character(counties)) %>%
-            as.factor() %>%
-            as.integer()
-        if (any(component > 1)) {
-            cli_warn("Counties were not contiguous; expect additional splits.")
-        }
-    }
-
-    ndists <- N
     n_steps <- ndists - 1
+
+    # validate_initial_region_id_mat
 
     # handle particle inits
     if (is.null(init_region_ids_mat)) {
         init_region_ids_mat <- matrix(0L, nrow = V, ncol = nsims)
-        n_drawn <- 0L
-    } else {
-        if (nrow(init_region_ids_mat) != V)
-            cli_abort("{.arg init_region_ids_mat} must have as many rows as {.arg map} has precincts.")
-        if (ncol(init_region_ids_mat) != nsims)
-            cli_abort("{.arg init_region_ids_mat} must have {.arg nsims} columns.")
-        n_drawn <- as.integer(max(init_region_ids_mat[, 1]))
+    } else { # if user input then check its valid
+        validate_initial_region_id_mat(init_region_ids_mat, V, nsims, init_num_regions)
+        if (is.null(n_steps)) {
+            n_steps <- ndists - n_drawn - 1L
+        }
+        final_dists <- n_drawn + n_steps + 1L
+        if (final_dists > ndists) {
+            cli_abort("Too many districts already drawn to take {n_steps} steps.")
+        }
     }
-    if (is.null(n_steps)) {
-        n_steps <- ndists - n_drawn - 1L
-    }
-    final_dists <- n_drawn + n_steps + 1L
-    if (final_dists > ndists) {
-        cli_abort("Too many districts already drawn to take {n_steps} steps.")
-    }
+
 
     # handle region dval inits
     if (is.null(init_dvals_mat)) {
@@ -188,27 +200,9 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
         init_dvals_mat <- matrix(0L, nrow = ndists, ncol = nsims)
         init_dvals_mat[1,] <- ndists
     } else {
-        if (nrow(init_dvals_mat) != V)
-            cli_abort("{.arg init_dvals_mat} must have as many rows as {.arg map} has precincts.")
-        if (ncol(init_dvals_mat) != nsims)
-            cli_abort("{.arg init_dvals_mat} must have {.arg nsims} columns.")
-    }
-    if (!all(colSums(init_dvals_mat) == ndists)) {
-        cli_abort("Too many dvals in already drawn plans.")
+        validate_initial_region_sizes_mat(init_dvals_mat, ndists, nsims, init_num_regions)
     }
 
-    # get population stuff
-    pop_bounds <- attr(map, "pop_bounds")
-    pop <- map[[attr(map, "pop_col")]]
-    if (any(pop >= pop_bounds[3])) {
-        too_big <- as.character(which(pop >= pop_bounds[3]))
-        cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
-                population larger than the district target.",
-                    "x" = "Redistricting impossible."))
-    }
-
-    # compute lags thing
-    lags <- 1 + unique(round((N - 1)^0.8*seq(0, 0.7, length.out = 4)^0.9))
 
 
     # set up parallel
@@ -266,7 +260,7 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
 
 
         algout <- gredist::optimal_gsmc_with_merge_split_plans(
-            N=N,
+            N=ndists,
             adj_list=adj_list,
             counties=counties,
             pop=pop,
@@ -441,8 +435,6 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
 
         # add diagnostic stuff
         algout$l_diag <- list(
-            weight_type = weight_type,
-            merge_prob_type = merge_prob_type,
             estimate_cut_k=estimate_cut_k,
             n_eff = n_eff,
             step_n_eff = algout$step_n_eff,
@@ -450,7 +442,7 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
             est_k = algout$est_k,
             accept_rate = algout$acceptance_rates,
             sd_lp = sd_lp,
-            sd_temper = rep(NA, total_steps), # algout$sd_temper,
+            sd_temper = rep(NA, total_steps),
             unique_survive = nunique_parent_indices,
             ancestors = algout$ancestors,
             seq_alpha = .99,
@@ -496,13 +488,18 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
 
 
     out <- new_redist_plans(plans, map, alg_type, wgt, resample,
-                            ndists = N,
+                            ndists = ndists,
                             n_eff = all_out[[1]]$n_eff,
                             compactness = 1,
                             constraints = constraints,
                             version = packageVersion("gredist"),
                             diagnostics = l_diag,
-                            pop_bounds = pop_bounds)
+                            pop_bounds = pop_bounds,
+                            entire_runtime = t2-t1,
+                            min_region_cut_sizes = min_region_cut_sizes,
+                            max_region_cut_sizes = max_region_cut_sizes,
+                            weight_type = weight_type,
+                            merge_prob_type = merge_prob_type)
 
 
 
@@ -514,10 +511,11 @@ redist_optimal_gsmc_ms <- function(state_map, M, counties = NULL,
 
 
     exist_name <- attr(map, "existing_col")
-    if (!is.null(exist_name) && !isFALSE(ref_name) && N == final_dists) {
+    if (!is.null(exist_name) && !isFALSE(ref_name) && ndists == final_dists) {
         ref_name <- if (!is.null(ref_name)) ref_name else exist_name
         out <- add_reference(out, map[[exist_name]], ref_name)
     }
 
     out
 }
+

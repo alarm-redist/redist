@@ -30,7 +30,9 @@ public:
     // constructor 
     Plan(arma::subview_col<arma::uword> region_ids_col, 
              arma::subview_col<arma::uword> region_dvals_col, 
-             int N, double total_map_pop, bool split_district_only=false); // constructor for 1 region plan
+             int N, int total_map_pop, bool split_district_only=false,
+             int num_regions=1, int num_districts=0,
+             const arma::uvec &pop = {}); // constructor for 1 region plan
     Plan(const Plan& other); // Copy constructor
 
 
@@ -40,7 +42,7 @@ public:
     int num_regions; // Number of regions in the plan
     int num_districts; // Number of districts in the plan
     int num_multidistricts; // Number of multidistricts, always `num_regions` - `num_districts`
-    double map_pop; // The population of the entire map
+    int map_pop; // The population of the entire map
     int remainder_region; // ID of the remainder region of the plan (if it has one)
 
     // basically vectors with length V
@@ -53,7 +55,7 @@ public:
     // vectors with length num_regions
     arma::subview_col<arma::uword> region_dvals; //Vector of length num_regions mapping region ids to their d values
     // Regions have R prefix whereas districts end in an integer (in string form).
-    std::vector<double> region_pops; // Vector of length num_regions mapping region ids
+    std::vector<int> region_pops; // Vector of length num_regions mapping region ids
     // to the regions population
 
     std::vector<int> region_added_order; // Vector of length num_regions that
@@ -69,6 +71,7 @@ public:
 
     // methods
     void Rprint() const;
+    void reorder_plan_by_oldest_split(Plan &dummy_plan);
 
 };
 

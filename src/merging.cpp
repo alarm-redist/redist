@@ -40,7 +40,8 @@ void merge_regions(
     }
 
     // if either region is the remainder then make it the merged one
-    if(region1_id == plan.remainder_region || region2_id == plan.remainder_region){
+    if((region1_id == plan.remainder_region || region2_id == plan.remainder_region) &&
+        plan.remainder_region != -1){
         plan.remainder_region = merged_id;
     }
 
@@ -62,7 +63,7 @@ void merge_regions(
 
     // now update the region population and dval 
     int merged_dval = plan.region_dvals(region1_id)+ plan.region_dvals(region2_id);
-    double merged_pop = plan.region_pops.at(region1_id) + plan.region_pops.at(region2_id);
+    int merged_pop = plan.region_pops.at(region1_id) + plan.region_pops.at(region2_id);
 
     plan.region_dvals(merged_id) = merged_dval;
     plan.region_pops.at(merged_id) = merged_pop;

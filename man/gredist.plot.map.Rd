@@ -6,7 +6,7 @@
 \usage{
 gredist.plot.map(
   shp,
-  adj,
+  adj = NULL,
   plan = NULL,
   fill = NULL,
   fill_label = "",

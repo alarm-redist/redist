@@ -287,7 +287,7 @@ summary.redist_plans <- function(object, district = 1L, all_runs = TRUE, vi_max 
                                    sd_log_wgt = diagn$sd_lp,
                                    max_unique = diagn$unique_survive,
                                    est_k = c(diagn$est_k, NA),
-                                   unique_original = c(diagn$nunique_original_ancestors, NA))
+                                   unique_original = diagn$nunique_original_ancestors)
 
             tbl_print <- as.data.frame(run_dfs[[i]])
             min_n <- max(0.05*n_samp, min(0.4*n_samp, 100))

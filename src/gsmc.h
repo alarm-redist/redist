@@ -1,6 +1,6 @@
 #pragma once
-#ifndef SMC_AND_MCMC_H
-#define SMC_AND_MCMC_H
+#ifndef GSMC_H
+#define GSMC_H
 
 // [[Rcpp::depends(redistmetrics)]]
 
@@ -18,6 +18,7 @@
 #include "splitting.h"
 #include "merging.h"
 #include "weights.h"
+#include "smc_alg_helpers.h"
 
 
 

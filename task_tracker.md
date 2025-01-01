@@ -8,9 +8,8 @@ Note all of the diagnostic information is accurately updated to account for a fi
 
 # ----- ACTIVE TASKS -----
 
-
-**Add reordering Function**
-Add a function that reorders the regions in a `Plan` object to be in order of most recently split. 
+**Fix merge split bug**
+Right now when running smc+merge split the maps somehow become disconnected for Oregon with the county constraint turned on. Investigate this further, as I'm not sure what is causing the bug. 
 
 **Make tree_dev Support Generalized Splits**
 Right now `tree_dev` only works for 1-district splits but it can easily be generalized to support arbitrary region splits.
@@ -105,6 +104,11 @@ The compute log tau term here: https://github.com/alarm-redist/redistmetrics/blo
     - Partition split problem 
 
 # ----- COMPLETED TASKS -----
+
+**Add reordering Function - Done December 2024**
+Task: Add a function that reorders the regions in a `Plan` object to be in order of most recently split. 
+
+Comments after completion: Right now this function does a redundant copy. In the future think about adding a flag for whether or not the dummy plan needs to be copied first. 
 
 **Pass results back in arma data types - DONE 11/8/2024**
 Task: To make things more memory efficient change it so all results are passed back as arma vectors, matrices, or cubes for things that are multiple matrices. 

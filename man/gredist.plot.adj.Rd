@@ -9,6 +9,7 @@ gredist.plot.adj(
   adj = NULL,
   plan = NULL,
   centroids = TRUE,
+  centroids_to_plot = NULL,
   drop = FALSE,
   plot_shp = TRUE,
   zoom_to = NULL,
@@ -25,6 +26,8 @@ if not supplied. Default is NULL.}
 Used to remove edges that cross boundaries. Default is \code{NULL}.  Optional.}
 
 \item{centroids}{A logical indicating if centroids should be plotted. Default is \code{TRUE}.}
+
+\item{centroids_to_plot}{A vector of indices of centroids to plot if \code{centroids} is \code{TRUE}.}
 
 \item{drop}{A logical indicating if edges that cross districts should be dropped. Default is \code{FALSE}.}
 

@@ -5,157 +5,8 @@
 * Purpose: Run SMC with MCMC merge-split steps mixed in
 ********************************************************/
 
-#include "smc_and_mcmc.h"
+#include "gsmc.h"
 
-
-
-// Takes a plan and reorders the regions 
-// IT IS VERY IMPORTANT THAT THE TWO PLANS NOT POINT TO THE SAME arma::umat or everything breaks
-// After reordering it copies that over to the dummy plan as well
-void reorder_plan_by_oldest_split(
-    Plan &plan, Plan &dummy_plan) {
-    // Make dummy plan a shallow copy of the plan
-    dummy_plan.shallow_copy(plan);
-
-    // Recall that the region_added_order attribute is a vector that stores info
-    // on the relative split order. So if entry i is greater than entry j that 
-    // means region i was split more recently than region j
-
-    // For example if you had a plan with 6 regions and a region_added_order vector set to
-    // {4,1,7,3,9,2} then that means 
-    //  - Region 0 was added 3rd
-    //  - Region 1 was added 1st
-    //  - Region 2 was added 5th
-    //  - Region 3 was added 4rd
-    //  - Region 4 was added 6th
-    //  - Region 5 was added 2nd 
-
-    // want to return [3, 0, 4, 2, 5, 1]
-    // std::vector<int> rel_order = {4,1,7,3,9,2};
-
-    // get the relative order vector of the n regions
-    std::vector<int> rel_order(
-        plan.region_added_order.begin(), 
-        plan.region_added_order.begin() + plan.num_regions
-        );
-
-
-    // Create a vector of indices [0, 1, 2, ..., n-1]
-    std::vector<int> indices(rel_order.size());
-    std::iota(indices.begin(), indices.end(), 0);
-
-    /*
-    Sort the indices based on the values in rel_order so that means 
-    indices[i] < indices[j] iff rel_order[i] < rel_order[j] so that means
-    indices[0] is the old (ie not updated) label of the oldest split region, 
-    In general indices[i] == k  means that the region with the old label of
-    k will have a new id of i
-
-    For our example with rel_order = {4,1,7,3,9,2} then that means the indices
-    would be sorted to be {1, 5, 3, 0, 2, 4} so we know old region 1 is now zero,
-    old region 5 is now 1, etc. Alternatively interpret as indices[i] == k means
-    new region i was old region k
-    */
-    std::sort(indices.begin(), indices.end(), [&rel_order](int a, int b) {
-        return rel_order[a] < rel_order[b];
-    });
-
-
-    /*
-    Create a vector mapping old region id to the new ordered region id. So 
-    `old_region_id_to_new_vec[i]` is the new region id of the region with old
-    id i. In other words it means region i should be relabeled as old_region_id_to_new_vec[i]
-    */
-    std::vector<int> old_region_id_to_new_vec(rel_order.size());
-    for (size_t i = 0; i < indices.size(); ++i) {
-        old_region_id_to_new_vec[indices[i]] = i;
-    }
-
-
-    // First we relabel all the region vertex ids
-    for (size_t i = 0; i < plan.region_ids.n_elem; i++)
-    {
-        // Send region id i to old_region_id_to_new_vec[i]
-        plan.region_ids(i) = old_region_id_to_new_vec.at(dummy_plan.region_ids(i));
-    }
-
-
-    // Relabel the remainder region if needed
-    if(plan.remainder_region >= 0){
-        plan.remainder_region = old_region_id_to_new_vec.at(dummy_plan.remainder_region);
-    }
-    
-
-
-    // Now we reorder the region dvals and population 
-    for (size_t i = 0; i < plan.num_regions; i++)
-    {
-        // Recall indices[i] == k means the old region with id k now has id i
-        // so we want to set the value at the new region id `i` to the value it
-        // had in the old one which is `indices[i]`
-        int old_region_id = indices[i];
-        int new_region_id = i;
-
-        plan.region_dvals(new_region_id) = dummy_plan.region_dvals(old_region_id);
-        plan.region_pops.at(new_region_id) = dummy_plan.region_pops.at(old_region_id);
-        // Since the regions are in order of added reset the order added to just be 1,..., n
-        plan.region_added_order.at(i) = i+1;
-    }
-
-    // reset the max region counter 
-    plan.region_order_max = plan.num_regions + 6;
-    
-    // copy the dummy plan over
-    dummy_plan.shallow_copy(plan);
-}
-
-
-void reorder_all_plans(
-    RcppThread::ThreadPool &pool,
-    std::vector<Plan> &plans_vec, 
-    std::vector<Plan> &dummy_plans_vec){
-
-    int M = (int) plans_vec.size();
-
-    // Parallel thread pool where all objects in memory shared by default
-    pool.parallelFor(0, M, [&] (int i) {
-        // reorder every plan
-        reorder_plan_by_oldest_split(plans_vec.at(i), dummy_plans_vec.at(i));
-    });
-
-    // Wait for all the threads to finish
-    pool.wait();
-
-    return;
-    
-}
-
-void copy_arma_to_rcpp_mat(
-    RcppThread::ThreadPool &pool,
-    arma::subview<arma::uword> arma_mat,
-    Rcpp::IntegerMatrix &rcpp_mat
-){
-    if(rcpp_mat.ncol() != arma_mat.n_cols || rcpp_mat.nrow() != arma_mat.n_rows){
-        throw Rcpp::exception("Arma and Rcpp Matrix are not the same size");
-    }
-
-    // go by column because both are column major
-    int ncols = (int) rcpp_mat.ncol();
-
-    // Parallel thread pool where all objects in memory shared by default
-    pool.parallelFor(0, ncols, [&] (int j) {
-        // Copy column i into the rcpp matrix
-        std::copy(
-            arma_mat.colptr(j), // Start of column in subview
-            arma_mat.colptr(j) + arma_mat.n_rows, // End of column in subview
-            rcpp_mat.column(j).begin() // Start of column in Rcpp::IntegerMatrix
-        );
-    });
-
-    // Wait for all the threads to finish
-    pool.wait();
-    
-}
 
 
 // Different diagnostic levels
@@ -202,6 +53,8 @@ List optimal_gsmc_with_merge_split_plans(
     double thresh = (double) control["adapt_k_thresh"];
     // Whether or not to only do district splits only 
     bool split_district_only = as<bool>(control["split_district_only"]);
+    std::vector<int> min_region_cut_sizes = as<std::vector<int>>(control["min_region_cut_sizes"]);
+    std::vector<int> max_region_cut_sizes = as<std::vector<int>>(control["max_region_cut_sizes"]);
     // weight type
     std::string wgt_type = as<std::string>(control["weight_type"]);
     // population tempering parameter 
@@ -222,7 +75,6 @@ List optimal_gsmc_with_merge_split_plans(
     if (num_threads == 1) num_threads = 0;
 
     double tol = std::max(target - lower, upper - target) / target;
-
 
 
     // Get step related information     
@@ -275,10 +127,6 @@ List optimal_gsmc_with_merge_split_plans(
     // Level 2
     Rcpp::IntegerMatrix parent_unsuccessful_tries_mat(M, total_smc_steps);
     parent_unsuccessful_tries_mat.fill(0);
-
-
-
-
 
     // Level 3 
     std::vector<Rcpp::IntegerMatrix> all_steps_plan_region_ids_list;
@@ -380,8 +228,6 @@ List optimal_gsmc_with_merge_split_plans(
     RcppThread::ThreadPool pool(num_threads);
 
 
-
-
     // counts the number of smc steps
     int smc_step_num = 0;
     int merge_split_step_num = 0;
@@ -411,6 +257,10 @@ List optimal_gsmc_with_merge_split_plans(
             if (verbosity >= 3) {
                 Rcout << "\tMaking split " << smc_step_num+1 << " of " << total_steps;
             }
+
+            Rprintf("\nSplitting regions into pieces of size %d to %d\n",
+                min_region_cut_sizes.at(smc_step_num), max_region_cut_sizes.at(smc_step_num));
+
             // check if k is passed in or estimate 
             if(try_to_estimate_cut_k){
                 // est k
@@ -421,12 +271,14 @@ List optimal_gsmc_with_merge_split_plans(
                 estimate_cut_k(g, est_cut_k, last_k, unnormalized_sampling_weights, thresh,
                             tol, plans_vec, 
                             counties,
-                            cg, pop, split_district_only,
+                            cg, pop, 
+                            min_region_cut_sizes.at(smc_step_num), max_region_cut_sizes.at(smc_step_num), 
+                            split_district_only,
                             target, verbosity);
                 k_params.at(smc_step_num) = est_cut_k;
 
                 if (verbosity >= 3) {
-                    Rcout << " (using k = " << k_params.at(smc_step_num) << ")\n";
+                    Rcout << " (using estimated k = " << k_params.at(smc_step_num) << ")\n";
                 }
             }else{
                 if (verbosity >= 3) {
@@ -448,7 +300,9 @@ List optimal_gsmc_with_merge_split_plans(
                 nunique_parents.at(smc_step_num),
                 ancestors, lags,
                 lower, upper, target,
-                k_params.at(smc_step_num), split_district_only,
+                k_params.at(smc_step_num), 
+                min_region_cut_sizes.at(smc_step_num), max_region_cut_sizes.at(smc_step_num), 
+                split_district_only,
                 pool,
                 verbosity, diagnostic_mode ? 3 : 0
             );
@@ -464,7 +318,6 @@ List optimal_gsmc_with_merge_split_plans(
             // auto t1 = high_resolution_clock::now();
 
             
-
             if(wgt_type == "optimal"){
                 // compute log incremental weights and sampling weights for next round
                 get_all_plans_log_optimal_weights(
@@ -493,7 +346,6 @@ List optimal_gsmc_with_merge_split_plans(
             }
                 
             
-
             // auto t2 = high_resolution_clock::now();
             // /* Getting number of milliseconds as a double. */
             // duration<double, std::milli> ms_double = t2 - t1; 
@@ -645,6 +497,8 @@ List optimal_gsmc_with_merge_split_plans(
         _["step_n_eff"] = n_eff,
         _["log_weight_stddev"] = log_wgt_stddevs,
         _["est_k"] = cut_k_values,
+        _["min_region_cut_sizes"] = min_region_cut_sizes,
+        _["max_region_cut_sizes"] = max_region_cut_sizes,
         _["merge_split_steps"] = merge_split_step_vec,
         _["merge_split_attempt_counts"] = num_merge_split_attempts_vec,
         _["merge_split_success_mat"] = merge_split_successes_mat

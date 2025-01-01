@@ -501,7 +501,7 @@ NumericVector max_dev(const IntegerMatrix districts, const vec pop, int n_distr)
  */
 std::vector<double> tree_dev(Tree &ust, int root, const uvec &pop,
                              double const total_pop, double const target,
-                             int const max_potential_d) {
+                             int const min_potential_d, int const max_potential_d) {
     int V = pop.size();
     std::vector<int> pop_below(V, 0);
     std::vector<int> parent(V);
@@ -513,10 +513,10 @@ std::vector<double> tree_dev(Tree &ust, int root, const uvec &pop,
         if (i == root) continue;
 
         // start at total pop since deviance will never be more than total_pop/2
-        double smallest_dev = total_pop;
+        double smallest_dev = total_pop*total_pop;
 
         // for each possible d value get the deviation above and below
-        for(int potential_d = 1; potential_d <= max_potential_d; potential_d++){
+        for(int potential_d = min_potential_d; potential_d <= max_potential_d; potential_d++){
             // take this minimum of this d value and all previous ones 
             double min_dev = std::min(
                 std::fabs(pop_below.at(i) - target * potential_d),

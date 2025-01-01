@@ -10,6 +10,7 @@
 #include <cmath>
 #include <iostream>
 #include <functional>
+#include <algorithm>
 #include <cli/progress.h>
 #include <RcppThread.h>
 
@@ -20,54 +21,34 @@
 #include "gredist_types.h"
 
 
-//' Selects a multidistrict with probability proportional to its d_nk value and
-//' returns the log probability of the selected region
-//'
-//' Given a plan object with at least one multidistrict this function randomly
-//' selects a multidistrict with probability proporitional to its d_nk value
-//' (relative to all multidistricts) and returns the log of the probability that
-//' region was chosen.
-//'
-//'
-//' @title Choose multidistrict to split
-//'
-//' @param plan A plan object
-//' @param region_to_split an integer that will be updated by reference with the
-//' id number of the region selected to split
-//'
-//' @details No modifications to inputs made
-//'
-//' @return the region level graph
-//'
-//' @noRd
-//' @keywords internal
-double choose_multidistrict_to_split(
-        Plan const&plan, int &region_id_to_split);
+
 
 
 
 //' Attempts to cut one region into two from a spanning tree and if successful
-//' returns information on what the two new regions would be. Does not actually
-//' update the plan
+//' cuts the tree object and returns information on what the two new regions 
+//' would be. Does not actually update the plan vertex list.
 //'
 //' Takes a spanning tree `ust` drawn on a specific region and attempts to cut
 //' it to produce two new regions using the generalized splitting procedure
 //' outlined <PAPER HERE>. This function is based on `cut_districts` in `smc.cpp`
 //' however the crucial difference is even if a cut is successful it does not
 //' update the plan. Instead it just returns the information on the two new
-//' regions if successful and the vertices to use to update the plans.
+//' regions if successful and the cut tree.
 //'
-//' Depending on the value of max_potential_d will only attempt to split off
-//' a single district or allows for more general splits.
+//' It will only attempt to create regions where the size is between
+//' min_potential_d and max_potential_d (inclusive). So the one district
+//' split case is `min_potential_d=max_potential_d=1`.
 //'
 //' By convention the first new region (`new_region1`) will always be the region
 //' with the smaller d-value (although they can be equal).
 //'
-//' @title Attempt to Cut Region Tree into Two New Regions
+//' @title Attempt to Find a Valid Spanning Tree Edge to Cut into Two New Regions 
 //'
 //' @param ust A directed spanning tree passed by reference
 //' @param root The root vertex of the spanning tree
 //' @param k_param The k parameter from the SMC algorithm, you choose among the top k_param edges
+//' @param min_potential_d The smallest potential d value it will try for a cut. 
 //' @param max_potential_d The largest potential d value it will try for a cut. Setting this to 
 //' 1 will result in only 1 district splits. 
 //' @param pop A vector of the population associated with each vertex in `g`
@@ -103,12 +84,12 @@ double choose_multidistrict_to_split(
 //' @noRd
 //' @keywords internal
 bool get_edge_to_cut(Tree &ust, int root,
-                     int k_param, int max_potential_d,
+                     int k_param, int min_potential_d, int max_potential_d,
                      const uvec &pop, const arma::subview_col<arma::uword> &region_ids,
-                     const int region_id_to_split, double total_region_pop, int total_region_dval,
+                     const int region_id_to_split, int total_region_pop, int total_region_dval,
                      const double lower, const double upper, const double target,
-                     int &new_region1_tree_root, int &new_region1_dval, double &new_region1_pop,
-                     int &new_region2_tree_root, int &new_region2_dval, double &new_region2_pop
+                     int &new_region1_tree_root, int &new_region1_dval, int &new_region1_pop,
+                     int &new_region2_tree_root, int &new_region2_dval, int &new_region2_pop
 );
 
 
@@ -161,7 +142,8 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
                  const int new_region_id,
                  std::vector<bool> &visited, std::vector<bool> &ignore, const uvec &pop,
                  const double lower, const double upper, const double target,
-                 int k_param, bool split_district_only);
+                 int k_param, int const min_region_cut_size=1, int const max_region_cut_size=50, 
+                 bool split_district_only=false);
 
 
 
@@ -212,8 +194,8 @@ bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multi
 void add_new_regions_to_plan_from_cut(
         Tree &ust, Plan &plan, bool split_district_only,
         const int old_split_region_id, const int new_region_id,
-        const int new_region1_tree_root, const int new_region1_dval, const double new_region1_pop,
-        const int new_region2_tree_root, const int new_region2_dval, const double new_region2_pop
+        const int new_region1_tree_root, const int new_region1_dval, const int new_region1_pop,
+        const int new_region2_tree_root, const int new_region2_dval, const int new_region2_pop
 );
 
 
@@ -225,7 +207,9 @@ void estimate_cut_k(const Graph &g, int &k, int const last_k,
                       const std::vector<double> &unnormalized_weights, double thresh,
                       double tol, std::vector<Plan> const &plans_vec, 
                       const uvec &counties,
-                      Multigraph &cg, const uvec &pop, bool split_district_only,
+                      Multigraph &cg, const uvec &pop, 
+                      int const min_region_cut_size, int const max_region_cut_size,
+                      bool split_district_only,
                       double const target, int const verbosity);
 
 //' Splits a multidistrict in all of the plans
@@ -320,7 +304,8 @@ void generalized_split_maps(
         int &n_unique_parent_indices,
         umat &ancestors, const std::vector<int> &lags,
         double const lower, double const upper, double const target,
-        int const k_param, bool const split_district_only,
+        int const k_param, int const min_region_cut_size, int const max_region_cut_size, 
+        bool const split_district_only,
         RcppThread::ThreadPool &pool,
         int verbosity, int diagnostic_level
 );
