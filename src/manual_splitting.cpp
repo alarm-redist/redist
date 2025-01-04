@@ -109,14 +109,34 @@ List draw_a_tree_on_a_region(
 }
 
 
-// Splits a region using the forward kernel
-List perform_a_valid_region_split(
+
+
+//' @title Split a multidistrict into two regions
+//' 
+//' Splits a multidistrict into Two New regions within population bounds
+//'
+//' Splits a multidistrict into two new valid regions by drawing spanning
+//' trees uniformly at random and attempting to find an edge to cut until
+//' a successful cut is made.
+//'
+//'
+//' @inheritParams gsmc_plans
+//' @inheritParams get_edge_to_cut
+//'
+//' @returns A list with the following
+//' \itemize{
+//'   \item{uncut_tree}{ - The spanning tree drawn stored as a 0-indexed directed
+//'   adjacency list.}
+//'   \item{root}{ - The 0-indexed root of the tree.}
+//'   \item{num_attempts}{ - The number of attempts it took to draw the tree.}
+//' }
+List perform_a_valid_multidistrict_split(
     List adj_list, const arma::uvec &counties, const arma::uvec &pop,
     int ndists, int num_regions, int num_districts,
     int region_id_to_split,
     double target, double lower, double upper,
-    arma::umat region_ids, arma::umat region_dvals,
-    int split_dval_min, int split_dval_max, 
+    arma::umat region_ids, arma::umat region_sizes,
+    int split_dval_min, int split_dval_max, bool split_district_only,
     bool verbose, int k_param
 ){
     if(split_dval_min > split_dval_max) throw Rcpp::exception("Split min must be less than split max!\n");
@@ -126,11 +146,11 @@ List perform_a_valid_region_split(
     int V = g.size();
     double total_pop = sum(pop);
 
-    bool split_district_only = split_dval_max == 1;
+    Rprintf("It is %d\n", (int) split_district_only);
 
     // Create a plan object
     Plan plan = Plan(
-        region_ids.col(0), region_dvals.col(0), 
+        region_ids.col(0), region_sizes.col(0), 
         ndists, total_pop, split_district_only,
         num_regions, num_districts, pop);
 
@@ -163,12 +183,14 @@ List perform_a_valid_region_split(
     int new_region1_dval, new_region2_dval;
     int new_region1_pop, new_region2_pop;
 
+    int uncut_tree_root;
 
     // Keep running until done
     while(!successful_split_made){
         clear_tree(ust);
         // Get a tree
         int result = sample_sub_ust(g, ust, V, root, visited, ignore, pop, lower, upper, counties, cg);
+        uncut_tree_root = root;
         // Return unsuccessful if tree not drawn
         if (result != 0){
             try_counter++;
@@ -180,18 +202,16 @@ List perform_a_valid_region_split(
 
         // Try to make a cut
         int max_potential_d;
-        if(split_district_only){
-            max_potential_d = 1;
-        }else{
-            max_potential_d = split_dval_max;
-        }
 
-        int min_potential_d = 1;
+        split_dval_max = std::min(
+            split_dval_max, 
+            (int) plan.region_dvals(region_id_to_split) - 1
+            );
 
 
         // try to get an edge to cut
         successful_split_made = get_edge_to_cut(ust, root,
-                        k_param, split_dval_min, max_potential_d,
+                        k_param, split_dval_min, split_dval_max,
                         pop, plan.region_ids, 
                         region_id_to_split, plan.region_pops.at(region_id_to_split),
                         plan.region_dvals(region_id_to_split),
@@ -228,20 +248,21 @@ List perform_a_valid_region_split(
     List out = List::create(
         _["num_attempts"] = try_counter,
         _["region_id_that_was_split"] = region_id_to_split,
-        _["region_dvals"] = plan.region_dvals,
-        _["plan_vertex_ids"] = plan.region_ids,
+        _["region_sizes"] = plan.region_dvals,
+        _["partial_plan_labels"] = plan.region_ids,
         _["region_pops"] = plan.region_pops,
         _["num_regions"] = plan.num_regions,
         _["num_districts"] = plan.num_districts,
-        _["tree"] = ust,
         _["uncut_tree"] = pre_split_ust,
+        _["uncut_tree_root"] = uncut_tree_root,
+        _["cut_tree"] = ust,
         _["new_region1_id"] = new_region1_id,
         _["new_region1_tree_root"] = new_region1_tree_root,
-        _["new_region1_dval"] = new_region1_dval,
+        _["new_region1_size"] = new_region1_dval,
         _["new_region1_pop"] = new_region1_pop,
         _["new_region2_id"] = new_region2_id,
         _["new_region2_tree_root"] = new_region2_tree_root,
-        _["new_region2_dval"] = new_region2_dval,
+        _["new_region2_size"] = new_region2_dval,
         _["new_region2_pop"] = new_region2_pop
     );
 

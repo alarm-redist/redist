@@ -38,12 +38,12 @@
 //' @param verbosity What level of detail to print out while the algorithm is
 //' running <ADD OPTIONS>
 //' @export
-List optimal_gsmc_with_merge_split_plans(
+List gsmc_plans(
         int N, List adj_list,
         const arma::uvec &counties, const arma::uvec &pop,
         double target, double lower, double upper,
         int M, // M is Number of particles aka number of different plans
-        arma::umat region_id_mat, arma::umat region_dvals_mat,
+        arma::umat region_id_mat, arma::umat region_sizes_mat,
         List control, // control has pop temper, and k parameter value, and whether only district splits are allowed
         int verbosity, bool diagnostic_mode){
 
@@ -135,8 +135,8 @@ List optimal_gsmc_with_merge_split_plans(
 
     // Store dvals at every step but last one if needed
     int plan_dval_list_size = (diagnostic_mode & !split_district_only) ? total_steps-1 : 0;
-    std::vector<Rcpp::IntegerMatrix> region_dvals_mat_list;
-    region_dvals_mat_list.reserve(plan_dval_list_size);
+    std::vector<Rcpp::IntegerMatrix> region_sizes_mat_list;
+    region_sizes_mat_list.reserve(plan_dval_list_size);
 
     // If diagnostic mode track vertex region ids from every round
     if(diagnostic_mode){
@@ -155,7 +155,7 @@ List optimal_gsmc_with_merge_split_plans(
             // If doing generalized split and not the final one make dval matrix
             if(!split_district_only && i < total_steps-1){
                 // This is number of regions by M
-                region_dvals_mat_list.emplace_back(num_regions, M);
+                region_sizes_mat_list.emplace_back(num_regions, M);
             }
 
 
@@ -205,7 +205,7 @@ List optimal_gsmc_with_merge_split_plans(
 
     // Create copies of the matrices
     arma::umat dummy_region_id_mat = region_id_mat;
-    arma::umat dummy_region_dvals_mat = region_dvals_mat;
+    arma::umat dummy_region_sizes_mat = region_sizes_mat;
 
     // Now create the vector of plans
     std::vector<Plan> plans_vec; plans_vec.reserve(M);
@@ -214,8 +214,8 @@ List optimal_gsmc_with_merge_split_plans(
     // Loop over each column of region_id_mat
     for (size_t i = 0; i < region_id_mat.n_cols; ++i) {
         // Create a Plan object and add it to the vector
-        plans_vec.emplace_back(region_id_mat.col(i), region_dvals_mat.col(i), N, total_pop, split_district_only);
-        new_plans_vec.emplace_back(dummy_region_id_mat.col(i), dummy_region_dvals_mat.col(i), N, total_pop, split_district_only);
+        plans_vec.emplace_back(region_id_mat.col(i), region_sizes_mat.col(i), N, total_pop, split_district_only);
+        new_plans_vec.emplace_back(dummy_region_id_mat.col(i), dummy_region_sizes_mat.col(i), N, total_pop, split_district_only);
     }
 
 
@@ -452,12 +452,12 @@ List optimal_gsmc_with_merge_split_plans(
             if(step_num < total_steps - 1 && !split_district_only){
                 copy_arma_to_rcpp_mat(
                     pool, 
-                    region_dvals_mat.submat(
+                    region_sizes_mat.submat(
                     0, 0,
                     plans_vec.at(0).num_regions-1,
-                    region_dvals_mat.n_cols-1
+                    region_sizes_mat.n_cols-1
                     ), 
-                    region_dvals_mat_list.at(step_num));
+                    region_sizes_mat_list.at(step_num));
             }
 
         }
@@ -487,7 +487,7 @@ List optimal_gsmc_with_merge_split_plans(
         _["plans_mat"] = plan_mat,
         _["parent_index"] = parent_index_mat,
         _["region_ids_mat_list"] = all_steps_plan_region_ids_list,
-        _["region_dvals_mat_list"] = region_dvals_mat_list,
+        _["region_sizes_mat_list"] = region_sizes_mat_list,
         _["log_incremental_weights_mat"] = log_incremental_weights_mat,
         _["draw_tries_mat"] = draw_tries_mat,
         _["parent_unsuccessful_tries_mat"] = parent_unsuccessful_tries_mat,

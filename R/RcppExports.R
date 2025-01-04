@@ -53,12 +53,14 @@ dist_dist_diff <- function(p, i_dist, j_dist, x_center, y_center, x, y) {
     .Call(`_gredist_dist_dist_diff`, p, i_dist, j_dist, x_center, y_center, x, y)
 }
 
-#' Uses gsmc method with optimal weights and merge split steps to generate a sample of `M` plans in `c++`
+#' Run Optimalgsmc with Merge Split
 #'
+#' Uses gsmc method with optimal weights and merge split steps to generate a sample of `M` plans in `c++` 
+#' 
+#' 
 #' Using the procedure outlined in <PAPER HERE> this function uses Sequential
 #' Monte Carlo (SMC) methods to generate a sample of `M` plans
 #'
-#' @title Run Optimalgsmc with Merge Split
 #'
 #' @param N The number of districts the final plans will have
 #' @param adj_list A 0-indexed adjacency list representing the undirected graph
@@ -76,8 +78,8 @@ dist_dist_diff <- function(p, i_dist, j_dist, x_center, y_center, x, y) {
 #' @param verbosity What level of detail to print out while the algorithm is
 #' running <ADD OPTIONS>
 #' @export
-optimal_gsmc_with_merge_split_plans <- function(N, adj_list, counties, pop, target, lower, upper, M, region_id_mat, region_dvals_mat, control, verbosity = 3L, diagnostic_mode = FALSE) {
-    .Call(`_gredist_optimal_gsmc_with_merge_split_plans`, N, adj_list, counties, pop, target, lower, upper, M, region_id_mat, region_dvals_mat, control, verbosity, diagnostic_mode)
+gsmc_plans <- function(N, adj_list, counties, pop, target, lower, upper, M, region_id_mat, region_sizes_mat, control, verbosity = 3L, diagnostic_mode = FALSE) {
+    .Call(`_gredist_gsmc_plans`, N, adj_list, counties, pop, target, lower, upper, M, region_id_mat, region_sizes_mat, control, verbosity, diagnostic_mode)
 }
 
 log_st_map <- function(g, districts, counties, n_distr) {
@@ -103,16 +105,25 @@ calcPWDh <- function(x) {
 #'     - `num_attempts`: The number of attempts it took to draw the tree.
 #' 
 #' @keywords internal
-draw_a_tree_on_a_region <- function(adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_draw_tree_on, lower, upper, region_ids, region_dvals, verbose) {
-    .Call(`_gredist_draw_a_tree_on_a_region`, adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_draw_tree_on, lower, upper, region_ids, region_dvals, verbose)
+draw_a_tree_on_a_region <- function(adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_draw_tree_on, lower, upper, region_ids, region_sizes, verbose) {
+    .Call(`_gredist_draw_a_tree_on_a_region`, adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_draw_tree_on, lower, upper, region_ids, region_sizes, verbose)
 }
 
-perform_a_valid_region_split <- function(adj_list, counties, pop, N, num_regions, num_districts, region_id_to_split, target, lower, upper, region_ids, region_dvals, split_dval_min, split_dval_max, verbose = FALSE, k_param = 1L) {
-    .Call(`_gredist_perform_a_valid_region_split`, adj_list, counties, pop, N, num_regions, num_districts, region_id_to_split, target, lower, upper, region_ids, region_dvals, split_dval_min, split_dval_max, verbose, k_param)
+#' Splits a multidistrict into two new regions within population bounds
+#'
+#' Splits a multidistrict into two new valid regions by drawing spanning
+#' trees uniformly at random and attempting to find an edge to cut until
+#' a successful cut is made.
+#'
+#' @title Split a multidistrict into two regions
+#'
+#' @inheritParams gsmc_plans
+perform_a_valid_multidistrict_split <- function(adj_list, counties, pop, N, num_regions, num_districts, region_id_to_split, target, lower, upper, region_ids, region_sizes, split_dval_min, split_dval_max, split_district_only, verbose = FALSE, k_param = 1L) {
+    .Call(`_gredist_perform_a_valid_multidistrict_split`, adj_list, counties, pop, N, num_regions, num_districts, region_id_to_split, target, lower, upper, region_ids, region_sizes, split_dval_min, split_dval_max, split_district_only, verbose, k_param)
 }
 
-perform_merge_split_steps <- function(adj_list, counties, pop, k_param, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, num_merge_split_steps, verbose) {
-    .Call(`_gredist_perform_merge_split_steps`, adj_list, counties, pop, k_param, target, lower, upper, N, num_regions, num_districts, region_ids, region_dvals, region_pops, split_district_only, num_merge_split_steps, verbose)
+perform_merge_split_steps <- function(adj_list, counties, pop, k_param, target, lower, upper, N, num_regions, num_districts, region_ids, region_sizes, region_pops, split_district_only, num_merge_split_steps, verbose) {
+    .Call(`_gredist_perform_merge_split_steps`, adj_list, counties, pop, k_param, target, lower, upper, N, num_regions, num_districts, region_ids, region_sizes, region_pops, split_district_only, num_merge_split_steps, verbose)
 }
 
 group_pct_top_k <- function(m, group_pop, total_pop, k, n_distr) {

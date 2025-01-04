@@ -8,6 +8,7 @@ gredist.plot.adj(
   shp,
   adj = NULL,
   plan = NULL,
+  region_labels = NULL,
   centroids = TRUE,
   centroids_to_plot = NULL,
   drop = FALSE,
@@ -24,6 +25,8 @@ if not supplied. Default is NULL.}
 
 \item{plan}{A numeric vector with one entry for each precinct in shp.
 Used to remove edges that cross boundaries. Default is \code{NULL}.  Optional.}
+
+\item{region_labels}{Vector of labels for the regions in the \code{plan}.}
 
 \item{centroids}{A logical indicating if centroids should be plotted. Default is \code{TRUE}.}
 

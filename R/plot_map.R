@@ -188,6 +188,7 @@ gredist.plot.map <- function(shp, adj=NULL, plan = NULL, fill = NULL, fill_label
 #' if not supplied. Default is NULL.
 #' @param plan A numeric vector with one entry for each precinct in shp.
 #' Used to remove edges that cross boundaries. Default is \code{NULL}.  Optional.
+#' @param region_labels Vector of labels for the regions in the `plan`.
 #' @param centroids A logical indicating if centroids should be plotted. Default is \code{TRUE}.
 #' @param centroids_to_plot A vector of indices of centroids to plot if \code{centroids} is \code{TRUE}.
 #' @param drop A logical indicating if edges that cross districts should be dropped. Default is \code{FALSE}.
@@ -210,7 +211,8 @@ gredist.plot.map <- function(shp, adj=NULL, plan = NULL, fill = NULL, fill_label
 #'
 #' @concept plot
 #' @export
-gredist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE, centroids_to_plot = NULL,
+gredist.plot.adj <- function(shp, adj = NULL, plan = NULL, region_labels = NULL,
+                             centroids = TRUE, centroids_to_plot = NULL,
                             drop = FALSE, plot_shp = TRUE, zoom_to = NULL, title = "") {
     if (inherits(shp, "SpatialPolygonsDataFrame")) {
         shp <- shp %>% st_as_sf()
@@ -259,8 +261,19 @@ gredist.plot.adj <- function(shp, adj = NULL, plan = NULL, centroids = TRUE, cen
             plot <- ggplot(shp) +
                 geom_sf(aes(fill = as.character(plan_to_plot)), linewidth = 0.1) +
                 theme_void() +
-                theme(legend.position = "none") +
                 geom_sf(data = nb)
+
+            if(!is.null(region_labels)){
+                plot <- plot +
+                    labs(fill = "Region Sizes", title = "title") +
+                    scale_fill_discrete(labels = region_labels) +  # Apply custom labels
+                    theme(legend.position = "bottom")
+
+            }else{
+                plot <- plot +
+                    theme(legend.position = "none")
+            }
+
         } else {
             plot <- ggplot(shp) +
                 geom_sf(linewidth = 0.1) +

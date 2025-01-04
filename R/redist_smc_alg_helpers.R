@@ -59,11 +59,12 @@ validate_counties <- function(map, adj_list, V, counties){
 get_map_parameters <- function(map, counties=NULL){
 
     # get the map in adjacency form
+    map <- validate_redist_map(map)
     V <- nrow(map)
     adj <- get_adj(map)
 
 
-    counties <- validate_counties(map, adj_list, V, counties)
+    counties <- validate_counties(map, adj, V, counties)
 
 
     # get population stuff
@@ -77,6 +78,7 @@ get_map_parameters <- function(map, counties=NULL){
     }
 
     return(list(
+        map=map,
         adj_list=adj,
         V=V,
         counties=counties,
@@ -97,7 +99,7 @@ get_map_parameters <- function(map, counties=NULL){
 #' @param init_region_ids_mat A V by nsims matrix of zero-indexed partial plans
 #' @param V The number of vertices in the plan graph.
 #' @param nsims The number of simulations being run.
-#' @init_num_regions The number of regions in the partial plans stored in the
+#' @param @init_num_regions The number of regions in the partial plans stored in the
 #' `init_region_ids_mat`
 #'
 validate_initial_region_id_mat <- function(init_region_ids_mat, V, nsims, init_num_regions){
@@ -139,7 +141,7 @@ validate_initial_region_id_mat <- function(init_region_ids_mat, V, nsims, init_n
 #' @param init_dvals_mat A ndists by nsims matrix of region sizes
 #' @param ndists The number of final districts in the plan.
 #' @param nsims The number of simulations being run.
-#' @init_num_regions The number of regions in the partial plans stored in the
+#' @param init_num_regions The number of regions in the partial plans stored in the
 #' `init_region_ids_mat`
 #'
 validate_initial_region_sizes_mat <- function(init_dvals_mat, ndists, nsims, init_num_regions){
@@ -192,13 +194,13 @@ validate_cut_sizes <- function(ndists, num_splits,
         min_region_cut_sizes, max_region_cut_sizes
 ){
     # check the cut sizes are between 1 and num_regions at that step minus 1
-    if(any(min_region_cut_sizes) < 0){
+    if(any(min_region_cut_sizes < 0)){
         cli_abort("Minimum region cut sizes must be 1 or greater!")
     }
     if(any(min_region_cut_sizes > rev(seq_len(ndists-1)))){
         cli_abort("Minimum region cut sizes must be less than {.arg ndists}!")
     }
-    if(any(max_region_cut_sizes) < 0){
+    if(any(max_region_cut_sizes < 0)){
         cli_abort("Maximum region cut sizes must be 1 or greater!")
     }
     if(any(max_region_cut_sizes > rev(seq_len(ndists-1)))){

@@ -259,7 +259,7 @@ void Plan::Rprint() const{
     RcppThread::Rcout << "Region Level Values:[";
     for(int region_id = 0; region_id < num_regions; region_id++){
         RcppThread::Rcout << "(Region " << region_id <<
-            ", dval=" << region_dvals(region_id) << ", pop= " <<
+            ", Size=" << region_dvals(region_id) << ", pop= " <<
             region_pops.at(region_id) <<"), ";
     }
     RcppThread::Rcout << "]\n";
