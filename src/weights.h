@@ -14,6 +14,7 @@
 #include <utility> // for std::pair
 #include <cmath>
 #include "gredist_types.h"
+#include "base_plan_type.h"
 #include "tree_op.h"
 
 
@@ -113,7 +114,7 @@ double get_log_mh_ratio(
 //'
 //' @param pool A threadpool for multithreading
 //' @param g A graph (adjacency list) passed by reference
-//' @param plans_vec A vector of plans to compute the log unnormalized weights
+//' @param plans_ptr_vec A vector of plans to compute the log unnormalized weights
 //' of
 //' @param split_district_only whether or not to compute the weights under 
 //' the district only split scheme or not. If `split_district_only` is true
@@ -135,7 +136,7 @@ double get_log_mh_ratio(
 //'    sampling weights of the plans for the next round
 void get_all_plans_log_optimal_weights(
         RcppThread::ThreadPool &pool,
-        const Graph &g, std::vector<Plan> &plans_vec,
+        const Graph &g, std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
         bool split_district_only,
         arma::subview_col<double> log_incremental_weights,
         std::vector<double> &unnormalized_sampling_weights,
@@ -146,7 +147,7 @@ void get_all_plans_log_optimal_weights(
 
 void get_all_plans_uniform_adj_weights(
         RcppThread::ThreadPool &pool,
-        const Graph &g, std::vector<Plan> &plans_vec,
+        const Graph &g, std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
         bool split_district_only,
         arma::subview_col<double> log_incremental_weights,
         std::vector<double> &unnormalized_sampling_weights,

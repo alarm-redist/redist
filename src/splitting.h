@@ -19,6 +19,10 @@
 #include "tree_op.h"
 #include "map_calc.h"
 #include "gredist_types.h"
+#include "base_plan_type.h"
+
+
+
 
 
 
@@ -84,7 +88,7 @@
 //' @noRd
 //' @keywords internal
 bool get_edge_to_cut(Tree &ust, int root,
-                     int k_param, int min_potential_d, int max_potential_d,
+                     int k_param, const int min_potential_d, const int max_potential_d,
                      const uvec &pop, const arma::subview_col<arma::uword> &region_ids,
                      const int region_id_to_split, int total_region_pop, int total_region_dval,
                      const double lower, const double upper, const double target,
@@ -137,14 +141,12 @@ bool get_edge_to_cut(Tree &ust, int root,
 //'
 //' @noRd
 //' @keywords internal
-bool attempt_region_split(const Graph &g, Tree &ust, const uvec &counties, Multigraph &cg,
+bool attempt_region_split(MapParams &map_params, Tree &ust,
                  Plan &plan, const int region_id_to_split,
                  const int new_region_id,
-                 std::vector<bool> &visited, std::vector<bool> &ignore, const uvec &pop,
-                 const double lower, const double upper, const double target,
+                 std::vector<bool> &visited, std::vector<bool> &ignore, 
                  int k_param, int const min_region_cut_size=1, int const max_region_cut_size=50, 
                  bool split_district_only=false);
-
 
 
 //' Creates new regions and updates the `Plan` object using a cut tree
@@ -205,7 +207,7 @@ void add_new_regions_to_plan_from_cut(
  */
 void estimate_cut_k(const Graph &g, int &k, int const last_k, 
                       const std::vector<double> &unnormalized_weights, double thresh,
-                      double tol, std::vector<Plan> const &plans_vec, 
+                      double tol, std::vector<std::unique_ptr<Plan>> const &plan_ptrs_vec, 
                       const uvec &counties,
                       Multigraph &cg, const uvec &pop, 
                       int const min_region_cut_size, int const max_region_cut_size,
@@ -294,8 +296,9 @@ void estimate_cut_k(const Graph &g, int &k, int const last_k,
 //' @noRd
 //' @keywords internal
 void generalized_split_maps(
-        const Graph &g, const uvec &counties, Multigraph &cg, const uvec &pop,
-        std::vector<Plan> &old_plans_vec, std::vector<Plan> &new_plans_vec,
+        MapParams &map_params, 
+        std::vector<std::unique_ptr<Plan>> &old_plans_vec, 
+        std::vector<std::unique_ptr<Plan>> &new_plans_vec,
         Rcpp::IntegerMatrix::Column parent_index_vec,
         const std::vector<double> &unnormalized_sampling_weights,
         Rcpp::IntegerMatrix::Column draw_tries_vec,
@@ -303,7 +306,6 @@ void generalized_split_maps(
         double &accept_rate,
         int &n_unique_parent_indices,
         umat &ancestors, const std::vector<int> &lags,
-        double const lower, double const upper, double const target,
         int const k_param, int const min_region_cut_size, int const max_region_cut_size, 
         bool const split_district_only,
         RcppThread::ThreadPool &pool,

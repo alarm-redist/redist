@@ -75,15 +75,15 @@ void copy_arma_to_rcpp_mat(
 //' @keywords internal
 void reorder_all_plans(
     RcppThread::ThreadPool &pool,
-    std::vector<Plan> &plans_vec, 
-    std::vector<Plan> &dummy_plans_vec){
+    std::vector<std::unique_ptr<Plan>> &plan_ptrs_vec, 
+    std::vector<std::unique_ptr<Plan>> &dummy_plan_ptrs_vec){
 
-    int M = (int) plans_vec.size();
+    int M = (int) plan_ptrs_vec.size();
 
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
         // reorder every plan
-        plans_vec.at(i).reorder_plan_by_oldest_split(dummy_plans_vec.at(i));
+        plan_ptrs_vec.at(i)->reorder_plan_by_oldest_split(*dummy_plan_ptrs_vec.at(i));
     });
 
     // Wait for all the threads to finish

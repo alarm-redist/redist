@@ -1,91 +1,104 @@
 #pragma once
-#ifndef TYPES_H
-#define TYPES_H
+#ifndef GREDIST_TYPES_H
+#define GREDIST_TYPES_H
 
-#ifndef ARMA_NO_DEBUG
-#define ARMA_NO_DEBUG
-#endif
 
 #define PRINT_LN Rcout << __func__ << "(), " << __FILE__ << ":" << __LINE__ << "\n";
 
 #include <vector>
-#include <iostream>
-#include <RcppThread.h>
 #include <RcppArmadillo.h>
-#include <string>
-#include <cassert>
-#include <map>
+
 
 // [[Rcpp::depends(RcppArmadillo)]]
+
 
 typedef std::vector<std::vector<int>> Tree;
 typedef std::vector<std::vector<int>> Graph;
 typedef std::vector<std::vector<std::vector<int>>> Multigraph;
 
+/*
+ * Initialize empty multigraph structure on graph with `V` vertices
+ */
+// TESTED
+Multigraph init_multigraph(int V);
 
 
-class Plan
-{
-public:
-    // constructor 
-    Plan(arma::subview_col<arma::uword> region_ids_col, 
-             arma::subview_col<arma::uword> region_dvals_col, 
-             int N, int total_map_pop, bool split_district_only=false,
-             int num_regions=1, int num_districts=0,
-             const arma::uvec &pop = {}); // constructor for 1 region plan
-    Plan(const Plan& other); // Copy constructor
+/*
+ * Make a county graph from a precinct graph and list of counties
+ * County graph is list of list of 3: <cty of nbor, index of vtx, index of nbor>
+ */
+// TESTED
+Multigraph county_graph(const Graph &g, const arma::uvec &counties);
 
 
-    // attributes
-    int N; // Number all d_nk must sum to
-    int V; // Number of nodes in graph
-    int num_regions; // Number of regions in the plan
-    int num_districts; // Number of districts in the plan
-    int num_multidistricts; // Number of multidistricts, always `num_regions` - `num_districts`
-    int map_pop; // The population of the entire map
-    int remainder_region; // ID of the remainder region of the plan (if it has one)
+/*
+ * Convert R adjacency list to Graph object (vector of vectors of ints).
+ */
+Graph list_to_graph(const Rcpp::List &l);
 
-    // basically vectors with length V
-    arma::subview_col<arma::uword> region_ids; // Representation of regions in integer form (not as easy to trace
-    // lineage). This is a length V vector where ith value maps it the integer id of its region
+// Essentially just a useful container for map parameters 
 
-    // Think of this like the pointer to some column in a matrix 
+class MapParams {
+    public:
+    // Constructor 
+    MapParams(Rcpp::List adj_list, const arma::uvec &counties, const arma::uvec &pop,
+        int ndists, double lower, double target, double upper);
 
-
-    // vectors with length num_regions
-    arma::subview_col<arma::uword> region_dvals; //Vector of length num_regions mapping region ids to their d values
-    // Regions have R prefix whereas districts end in an integer (in string form).
-    std::vector<int> region_pops; // Vector of length num_regions mapping region ids
-    // to the regions population
-
-    std::vector<int> region_added_order; // Vector of length num_regions that
-    // tracks the relative order that regions were added. As in if we have
-    // region_added_order[i] > region_added_order[j] then that means region i
-    // was added after region j
-    
-    int region_order_max; // value of current largest region order number
-
-    
-    // shallow copy another plan
-    void shallow_copy(const Plan& other);
-
-    // methods
-    void Rprint() const;
-    void reorder_plan_by_oldest_split(Plan &dummy_plan);
+    Graph g; // The graph as undirected adjacency list 
+    arma::uvec counties; // county labels
+    Multigraph cg; // county multigraph
+    arma::uvec pop; // population of each vertex
+    int ndists; // The number of districts a final plan should have
+    double lower; // lower bound on district population
+    double target; // target district population
+    double upper; // upper bound on district population
 
 };
 
+// Designed to allow for different tree splitting methods
+// This allows us to seperate cutting the tree from finding the edge to cut 
+class EdgeCut {
+
+public:
+    // Default Constructor 
+    EdgeCut()
+        : tree_root(0), 
+        cut_vertex(0), 
+        cut_vertex_parent(0), 
+        cut_below_region_size(0), 
+        cut_below_pop(0), 
+        cut_above_region_size(0), 
+        cut_above_pop(0) {}
+    
+    // Constructor
+    EdgeCut(const int tree_root, 
+            const int cut_vertex, const int cut_vertex_parent,
+            const int cut_below_region_size, const int cut_below_pop,
+            const int cut_above_region_size, const int cut_above_pop)
+        : tree_root(tree_root), 
+          cut_vertex(cut_vertex), 
+          cut_vertex_parent(cut_vertex_parent), 
+          cut_below_region_size(cut_below_region_size), 
+          cut_below_pop(cut_below_pop), 
+          cut_above_region_size(cut_above_region_size), 
+          cut_above_pop(cut_above_pop) {}
+    
+    // Attributes
+    int tree_root; // The root of the tree
+    int cut_vertex; // The vertex where we are cutting below it
+    int cut_vertex_parent; // The parent of `cut_vertex` so we are cutting `(cut_vertex_parent, cut_vertex)`
+    int cut_below_region_size; // The size of the region below made by cutting 
+    int cut_below_pop; // The population of the region below made by cutting 
+    int cut_above_region_size; // The size of the region above made by cutting 
+    int cut_above_pop; // The population of the region above made by cutting 
+
+    // Gets the information on the two regions formed from an edge cut by reference
+    void get_split_regions_info(
+        int &split_region1_tree_root, int &split_region1_dval, int &split_region1_pop,
+        int &split_region2_tree_root, int &split_region2_dval, int &split_region2_pop
+    );
 
 
-// Custom hash function for hashing pairs of regions 
-// N should be the number of regions minus 1, ie the biggest
-// region id
-struct bounded_hash {
-    int N;
-    bounded_hash(int max_value) : N(max_value) {}
-    std::size_t operator()(const std::pair<int, int>& p) const {
-        return p.first * (N + 1) + p.second;
-    }
 };
 
 #endif

@@ -36,7 +36,7 @@ redist_gsmc <- function(
        ms_freq = 0, ms_steps_multiplier = 1L,
        run_ms = 0 < ms_freq && ms_freq <= ndists, merge_prob_type = "uniform",
        resample = TRUE, runs = 1L,
-       ncores = 0L, multiprocess=TRUE,
+       ncores = 0L, multiprocess=FALSE,
        pop_temper = 0,
        init_region_ids_mat = NULL, init_dvals_mat = NULL, init_num_regions = 1,
        min_region_cut_sizes = NULL, max_region_cut_sizes = NULL,
@@ -44,6 +44,10 @@ redist_gsmc <- function(
 
     if(init_num_regions > 1 || !is.null(init_region_ids_mat) || !is.null(init_dvals_mat)){
         cli_abort("Starting with non-trivial partial plans not supported yet!")
+    }
+
+    if(run_ms){
+        cli_abort("Merge Split not supported at this moment!")
     }
 
     ndists <- attr(map, "ndists")
@@ -126,10 +130,10 @@ redist_gsmc <- function(
     total_steps <- total_smc_steps + total_ms_steps
 
     if(is.null(min_region_cut_sizes)){
-        min_region_cut_sizes <- rep(1, ndists)
+        min_region_cut_sizes <- rep(1, total_smc_steps)
     }
     if(is.null(max_region_cut_sizes) && split_district_only){
-        max_region_cut_sizes <- rep(1, ndists)
+        max_region_cut_sizes <- rep(1, total_smc_steps)
     }else if(is.null(max_region_cut_sizes) && !split_district_only){
         max_region_cut_sizes <- rev(seq_len(ndists-1))
     }
@@ -471,9 +475,10 @@ redist_gsmc <- function(
         algout
 
     }
+    t2 <- Sys.time()
 
     if (verbosity >= 2) {
-        t2 <- Sys.time()
+
         cli_text("{format(M*runs, big.mark=',')} plans sampled in
                  {format(t2-t1, digits=2)}")
     }

@@ -1,7 +1,19 @@
-#include "smc_base.h"
-
 #ifndef TREE_OP_H
 #define TREE_OP_H
+
+#include <vector>
+#include <limits>
+#include <RcppArmadillo.h>
+#include "gredist_types.h"
+#include "smc_base.h"
+
+// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::plugins("cpp11")]]
+
+using namespace Rcpp;
+using namespace arma;
+
+
 
 /*
  * Generate a random vertex (integer) among unvisited vertices
@@ -17,42 +29,14 @@ int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower);
 int rnbor(const Graph &g, int vtx);
 
 /*
- * Make a county graph from a precinct graph and list of counties
- */
-// TESTED
-Multigraph county_graph(const Graph &g, const uvec &counties);
-
-/*
  * Make the district adjacency graph for `plan` from the overall precinct graph `g`
  * if `zero`=false then ignore zeros, otherwise map them to `nd`
  */
 // TESTED
-Graph district_graph(const Graph &g, const uvec &plan, int nd, bool zero=false);
+Graph district_graph(const Graph &g, const arma::uvec &plan, int nd, bool zero=false);
 
 
-// NOT FULLY TESTED but taken from district_graph function which was tested
-//' Creates the region level graph of a plan
-//'
-//' Given a plan object this returns a graph of the regions in the plan using
-//' the region ids as indices
-//'
-//' @title Get Region-Level Graph
-//'
-//' @param g The graph of the entire map
-//' @param plan A plan object
-//'
-//' @details No modifications to inputs made
-//'
-//' @return the log of the probability the specific value of `region_to_split` was chosen
-//'
-Graph get_region_graph(const Graph &g, const Plan &plan);
 
-
-/*
- * Initialize empty multigraph structure on graph with `V` vertices
- */
-// TESTED
-Multigraph init_multigraph(int V);
 
 /*
  * Initialize empty tree structure on graph with `V` vertices
@@ -65,35 +49,25 @@ Tree init_tree(int V);
  */
 void clear_tree(Tree &tree);
 
-/*
- * Convert R adjacency list to Graph object (vector of vectors of ints).
- */
-Graph list_to_graph(const List &l);
 
 /*
  * Count population below each node in tree
  */
 // TESTED
-int tree_pop(Tree &ust, int vtx, const uvec &pop,
+int tree_pop(Tree &ust, int vtx, const arma::uvec &pop,
              std::vector<int> &pop_below, std::vector<int> &parent);
 
 /*
  * Assign `district` to all descendants of `root` in `ust`
  */
 // TESTED
-void assign_district(const Tree &ust, subview_col<uword> &districts,
+void assign_district(const Tree &ust, arma::subview_col<arma::uword> &districts,
                      int root, int district);
 
-/*
- * Assign `new_region` to all descendants of `root` in `ust`
- */
-// TESTED
-void assign_region(const Tree &ust, Plan &plan,
-                   int root,
-                   int new_region_num_id);
+
 
 // TEMP REMOVE LATER
-void assign_region_just_vertex_vec(const Tree &ust, 
+void assign_region_ids_from_tree(const Tree &ust, 
                     arma::subview_col<arma::uword> &region_ids,
                     int root,
                     int new_region_num_id);
@@ -103,5 +77,25 @@ void assign_region_just_vertex_vec(const Tree &ust,
  */
 // TESTED
 int find_subroot(const Tree &ust, const std::vector<bool> &ignore);
+
+
+//' Erases an edge from a tree
+//'
+//' Erases the directed edge (`cut_edge.parent_vertex`, `cut_edge.child_vertex`)
+//' from the tree `ust`. The directed edge here means we have `child_vertex` being one of 
+//' the values in `ust[parent_vertex]`.
+//'
+//'
+//' @param ust A directed spanning tree passed by reference
+//' @param cut_edge An `EdgeCut` object representing the edge cut
+//'
+//' @details Modifications
+//'    - The edge (`cut_edge.parent_vertex`, `cut_edge.child_vertex`) 
+//'    is removed from `ust`
+//'
+//'
+//' @keyword internal
+//' @noRd
+void erase_tree_edge(Tree &ust, EdgeCut cut_edge);
 
 #endif

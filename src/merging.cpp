@@ -72,11 +72,10 @@ void merge_regions(
 
 
 int run_merge_split_step_on_a_plan(
-    Graph const &g, const uvec &counties, Multigraph &cg, const uvec &pop,
+    MapParams &map_params,
     bool split_district_only, std::string const merge_prob_type,
     int const k_param,
-    Plan &plan, Plan &new_plan, int const nsteps_to_run,
-    double const lower, double const upper, double const target)
+    Plan &plan, Plan &new_plan, int const nsteps_to_run)
 {
     int V = plan.V;
     Tree ust = init_tree(V);
@@ -96,7 +95,7 @@ int run_merge_split_step_on_a_plan(
 
     // get all adjacent pairs in initial plan
     auto adj_pairs_and_boundary_len_vec = get_valid_adj_regions_and_boundary_lens_vec(
-        g, plan, split_district_only
+        map_params.g, plan, split_district_only
     );
 
     // get sampler of adj pairs
@@ -193,13 +192,12 @@ int run_merge_split_step_on_a_plan(
         // REprintf("\n\n");
 
         // now attempt to split them
-        bool successful_split = attempt_region_split(
-            g, ust, counties, cg,
+        bool successful_split = attempt_region_split(map_params, ust,
             new_plan, merged_id,
             new_split_region,
-            visited, ignore, pop,
-            lower, upper, target,
+            visited, ignore, 
             k_param, split_district_only);
+
 
         bool proposal_accepted = false;
 
@@ -208,7 +206,7 @@ int run_merge_split_step_on_a_plan(
 
             // get all valid adjacent pairs in the new proposed plan
             proposed_adj_pairs_and_boundary_len_vec = get_valid_adj_regions_and_boundary_lens_vec(
-                g, new_plan, split_district_only
+                map_params.g, new_plan, split_district_only
             );
 
             // get sampler of adj pairs in proposed plan
@@ -257,7 +255,7 @@ int run_merge_split_step_on_a_plan(
                 double proposed_pair_index_selection_prob = proposed_pair_index_sampler.probabilities().at(region_pair_in_proposal_index);
                 
                 double log_mh_ratio = get_log_mh_ratio(
-                    g, region1_id, region2_id,
+                    map_params.g, region1_id, region2_id,
                     old_region_boundary_length, new_region_boundary_length, 
                     index_selection_prob, proposed_pair_index_selection_prob, 
                     plan, new_plan
@@ -291,14 +289,14 @@ int run_merge_split_step_on_a_plan(
 
 void run_merge_split_step_on_all_plans( 
     RcppThread::ThreadPool &pool,
-    Graph const &g, const uvec &counties, Multigraph &cg, const uvec &pop,
-    std::vector<Plan> &plans_vec, std::vector<Plan> &new_plans_vec, 
+    MapParams &map_params,
+    std::vector<std::unique_ptr<Plan>> &plan_ptrs_vec, 
+    std::vector<std::unique_ptr<Plan>> &new_plan_ptrs_vec, 
     bool const split_district_only, std::string const merge_prob_type, 
     int const k_param, int const nsteps_to_run,
-    double const lower, double const upper, double const target,
     Rcpp::IntegerMatrix::Column success_count_vec
 ){
-    int M = (int) plans_vec.size();
+    int M = (int) plan_ptrs_vec.size();
 
     // create a progress bar
     RcppThread::ProgressBar bar(M, 1);
@@ -307,12 +305,11 @@ void run_merge_split_step_on_all_plans(
         // Create variables needed for each 
 
         // store the number of succesful runs
-        success_count_vec[i] = run_merge_split_step_on_a_plan( 
-            g, counties, cg, pop,
+        success_count_vec[i] = run_merge_split_step_on_a_plan(
+            map_params,
             split_district_only, merge_prob_type,
             k_param,
-            plans_vec.at(i), new_plans_vec.at(i), nsteps_to_run,
-            lower, upper, target
+            *plan_ptrs_vec.at(i), *new_plan_ptrs_vec.at(i), nsteps_to_run
         );
 
     });

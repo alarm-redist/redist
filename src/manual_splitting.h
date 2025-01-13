@@ -18,6 +18,7 @@
 #include "map_calc.h"
 #include "splitting.h"
 #include "merging.h"
+#include "graph_plan_type.h"
 
 
 

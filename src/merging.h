@@ -24,20 +24,19 @@
 
 
 int run_merge_split_step_on_a_plan(
-    Graph const &g, const uvec &counties, Multigraph &cg, const uvec &pop,
+    MapParams &map_params,
     bool split_district_only, std::string const merge_prob_type, 
     int const k_param,
-    Plan &plan, Plan &new_plan, int const nsteps_to_run,
-    double const lower, double const upper, double const target
+    Plan &plan, Plan &new_plan, int const nsteps_to_run
 );
 
 void run_merge_split_step_on_all_plans( 
     RcppThread::ThreadPool &pool,
-    Graph const &g, const uvec &counties, Multigraph &cg, const uvec &pop,
-    std::vector<Plan> &plans_vec, std::vector<Plan> &new_plans_vec, 
+    MapParams &map_params,
+    std::vector<std::unique_ptr<Plan>> &plan_ptrs_vec, 
+    std::vector<std::unique_ptr<Plan>> &new_plan_ptrs_vec, 
     bool const split_district_only, std::string const merge_prob_type, 
     int const k_param, int const nsteps_to_run,
-    double const lower, double const upper, double const target,
     Rcpp::IntegerMatrix::Column success_count_vec
 );
 

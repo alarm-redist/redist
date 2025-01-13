@@ -40,17 +40,6 @@ double compute_n_eff(const arma::subview_col<double> log_wgt) {
 }
 
 
-// Custom hash function using Cantor pairing
-// If the input is two natural numbers this returns a unique hash
-// https://en.wikipedia.org/wiki/Pairing_function
-struct cantor_hash {
-    std::size_t operator()(const std::pair<int, int>& p) const {
-        int a = p.first;
-        int b = p.second;
-        return (a + b) * (a + b + 1) / 2 + b;
-    }
-};
-
 
 // only gets regions adjacent to indices where valid_regions is true
 void get_all_adj_pairs(
@@ -617,16 +606,16 @@ double compute_optimal_log_incremental_weight(
 //'
 //' @param pool A threadpool for multithreading
 //' @param g A graph (adjacency list) passed by reference
-//' @param plans_vec A vector of plans to compute the log unnormalized weights
+//' @param plans_ptr_vec A vector of plans to compute the log unnormalized weights
 //' of
 //' @param split_district_only whether or not to compute the weights under 
 //' the district only split scheme or not. If `split_district_only` is true
 //' then uses optimal weights from one-district split scheme.
 //' @param log_incremental_weights A vector of the log incremental weights
 //' computed for the plans. The value of `log_incremental_weights[i]` is
-//' the log incremental weight for `plans_vec[i]`
+//' the log incremental weight for `plans_ptr_vec[i]`
 //' @param unnormalized_sampling_weights A vector of the unnormalized sampling
-//' weights to be used with sampling the `plans_vec` in the next iteration of the
+//' weights to be used with sampling the `plans_ptr_vec` in the next iteration of the
 //' algorithm. Depending on the other hyperparameters this may or may not be the
 //' same as `exp(log_incremental_weights)`
 //' @param target Target population of a single district
@@ -639,18 +628,18 @@ double compute_optimal_log_incremental_weight(
 //'    sampling weights of the plans for the next round
 void get_all_plans_log_optimal_weights(
         RcppThread::ThreadPool &pool,
-        const Graph &g, std::vector<Plan> &plans_vec,
+        const Graph &g, std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
         bool split_district_only,
         arma::subview_col<double> log_incremental_weights,
         std::vector<double> &unnormalized_sampling_weights,
         double target, double pop_temper
 ){
-    int M = (int) plans_vec.size();
+    int M = (int) plans_ptr_vec.size();
 
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
         double log_incr_weight = compute_optimal_log_incremental_weight(
-            g, plans_vec.at(i), split_district_only,
+            g, *plans_ptr_vec.at(i), split_district_only,
             target, pop_temper);
         log_incremental_weights(i) = log_incr_weight;
         unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
@@ -777,18 +766,18 @@ double compute_uniform_adj_log_incremental_weight(
 
 void get_all_plans_uniform_adj_weights(
         RcppThread::ThreadPool &pool,
-        const Graph &g, std::vector<Plan> &plans_vec,
+        const Graph &g, std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
         bool split_district_only,
         arma::subview_col<double> log_incremental_weights,
         std::vector<double> &unnormalized_sampling_weights,
         double target, double pop_temper
 ){
-    int M = (int) plans_vec.size();
+    int M = (int) plans_ptr_vec.size();
 
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
         double log_incr_weight = compute_uniform_adj_log_incremental_weight(
-            g, plans_vec.at(i), split_district_only,
+            g, *plans_ptr_vec.at(i), split_district_only,
             target, pop_temper);
         log_incremental_weights(i) = log_incr_weight;
         unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
@@ -799,4 +788,66 @@ void get_all_plans_uniform_adj_weights(
 
 
     return;
+}
+
+
+
+
+// NOT FULLY TESTED but taken from district_graph function which was tested
+//' Creates the region level graph of a plan
+//'
+//' Given a plan object this returns a graph of the regions in the plan using
+//' the region ids as indices
+//'
+//' @title Get Region-Level Graph
+//'
+//' @param g The graph of the entire map
+//' @param plan A plan object
+//'
+//' @details No modifications to inputs made
+//'
+//' @return the log of the probability the specific value of `region_to_split` was chosen
+//'
+Graph get_region_graph(const Graph &g, const Plan &plan) {
+    int V = g.size();
+    Graph out;
+
+    // make a matrix where entry i,j represents if region i and j are adjacent
+    std::vector<std::vector<bool>> gr_bool(
+            plan.num_regions, std::vector<bool>(plan.num_regions, false)
+        );
+
+    // iterate over all vertices in g
+    for (int i = 0; i < V; i++) {
+        std::vector<int> nbors = g[i];
+        // Find out which region this vertex corresponds to
+        int region_num_i = plan.region_ids[i];
+
+        // now iterate over its neighbors
+        for (int nbor : nbors) {
+            // find which region neighbor corresponds to
+            int region_num_j = plan.region_ids[nbor];
+            // if they are different regions mark matrix true since region i
+            // and region j are adjacent as they share an edge across
+            if (region_num_i != region_num_j) {
+                gr_bool.at(region_num_i).at(region_num_j) = true;
+            }
+        }
+    }
+
+
+    // Now build the region level graph
+    for (int i = 0; i < plan.num_regions; i++) {
+        // create vector of i's neighbors
+        std::vector<int> tmp;
+        for (int j = 0; j < plan.num_regions; j++) {
+            // check if i and j are adjacent, if so add j
+            if (gr_bool.at(i).at(j)) {
+                tmp.push_back(j);
+            }
+        }
+        out.push_back(tmp);
+    }
+
+    return out;
 }

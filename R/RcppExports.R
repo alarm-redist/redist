@@ -193,10 +193,6 @@ pareto_dominated <- function(x) {
     .Call(`_gredist_pareto_dominated`, x)
 }
 
-new_plan_testing <- function(region_id_mat, region_id_mat2) {
-    .Call(`_gredist_new_plan_testing`, region_id_mat, region_id_mat2)
-}
-
 arma_testing <- function() {
     .Call(`_gredist_arma_testing`)
 }
@@ -277,8 +273,8 @@ NULL
 #' @title Reorders all the plans in the vector by order a region was split
 #'
 #' @param pool A threadpool for multithreading
-#' @param plans_vec A vector of plans
-#' @param dummy_plans_vec A vector of dummy plans 
+#' @param plan_ptrs_vec A vector of pointers to plans 
+#' @param dummy_plans_vec A vector of pointers to dummy plans 
 #'
 #' @details Modifications
 #'    - Each plan in the `plans_vec` object is reordered by when the region was split
@@ -538,25 +534,92 @@ split_entire_map_once_new_cut_func <- function(N, adj_list, counties, pop, targe
     .Call(`_gredist_split_entire_map_once_new_cut_func`, N, adj_list, counties, pop, target, lower, upper, split_district_only, verbose)
 }
 
-#' Creates the region level graph of a plan
+#' Erases an edge from a tree
 #'
-#' Given a plan object this returns a graph of the regions in the plan using
-#' the region ids as indices
+#' Erases the directed edge (`cut_edge.cut_vertex_parent`, `cut_edge.cut_vertex`)
+#' from the tree `ust`. The directed edge here means we have `child_vertex` being one of 
+#' the values in `ust[parent_vertex]`.
 #'
-#' @title Get Region-Level Graph
 #'
-#' @param g The graph of the entire map
-#' @param plan A plan object
+#' @param ust A directed spanning tree passed by reference
+#' @param cut_edge An `EdgeCut` object representing the edge cut
 #'
-#' @details No modifications to inputs made
+#' @details Modifications
+#'    - The edge (`cut_edge.cut_vertex_parent`, `cut_edge.cut_vertex`) 
+#'    is removed from `ust`
 #'
-#' @return the log of the probability the specific value of `region_to_split` was chosen
 #'
 NULL
 
 tree_pop <- function(ust, vtx, pop, pop_below, parent) {
     .Call(`_gredist_tree_pop`, ust, vtx, pop, pop_below, parent)
 }
+
+#' Erases an edge from a tree
+#'
+#' Erases the directed edge (`cut_edge.parent_vertex`, `cut_edge.child_vertex`)
+#' from the tree `ust`. The directed edge here means we have `child_vertex` being one of 
+#' the values in `ust[parent_vertex]`.
+#'
+#'
+#' @param ust A directed spanning tree passed by reference
+#' @param cut_edge An `EdgeCut` object representing the edge cut
+#'
+#' @details Modifications
+#'    - The edge (`cut_edge.parent_vertex`, `cut_edge.child_vertex`) 
+#'    is removed from `ust`
+#'
+#'
+#' @keyword internal
+#' @noRd
+NULL
+
+#' Attempt to pick one of the top k tree edges to split uniformly at random
+#'
+#' 
+#' Attempts to pick one of the top k tree edges to split uniformly at random
+#' and if successful returns information on the edge and region sizes 
+#' associated with the cut. This function is based on `cut_districts` in `smc.cpp`
+#' however the crucial difference is even if a successful cut is found it does not
+#' update the plan or the tree.
+#'
+#'
+#' It will only attempt to create regions where the size is between
+#' min_potential_d and max_potential_d (inclusive). So the one district
+#' split case is `min_potential_d=max_potential_d=1`.
+#' 
+#' Best edge here is defined as the smallest deviation where the deviation for
+#' an edge, size is defined as abs(population - target*size)/target*size. 
+#'
+#' 
+#' @param root The root vertex of the spanning tree
+#' @param pop_below The population corresponding to cutting below each vertex. 
+#' So `pop_below[v]` is the population associated with the region made by cutting
+#' below the vertex `v`
+#' @param tree_vertex_parents The parent of each vertex in the tree. A value of -1
+#' means the vertex is the root or it is not in the tree.
+#' @param k_param The number of best edges we should choose from uniformly
+#' at random
+#' @param min_potential_cut_size The smallest potential region size to try for a cut. 
+#' @param max_potential_cut_size The largest potential region size it will try for a cut. 
+#' Setting this to 1 will result in only 1 district splits. 
+#' @param region_ids A vector mapping 0 indexed vertices to their region id number
+#' @param region_id_to_split The id of the region in the plan object we're attempting to split
+#' @param total_region_pop The total population of the region being split 
+#' @param total_region_size The size of the region being split 
+#' @param lower Acceptable lower bounds on a valid district's population
+#' @param upper Acceptable upper bounds on a valid district's population
+#' @param target Ideal population of a valid district. This is what deviance is calculated
+#' relative to
+#'
+#' @details No modifications made
+#'
+#' @return <True, information on the edge cut> if two valid regions were 
+#' successfully split, false otherwise
+#'
+#' @noRd
+#' @keywords internal
+NULL
 
 var_info_vec <- function(m, ref, pop) {
     .Call(`_gredist_var_info_vec`, m, ref, pop)
@@ -630,7 +693,7 @@ NULL
 #'
 #' @param pool A threadpool for multithreading
 #' @param g A graph (adjacency list) passed by reference
-#' @param plans_vec A vector of plans to compute the log unnormalized weights
+#' @param plans_ptr_vec A vector of plans to compute the log unnormalized weights
 #' of
 #' @param split_district_only whether or not to compute the weights under 
 #' the district only split scheme or not. If `split_district_only` is true

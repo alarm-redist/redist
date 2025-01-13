@@ -9,6 +9,255 @@
 
 
 
+//' Split all the Plans 
+//'
+//' Using the procedure outlined in <PAPER HERE> this function attempts to split
+//' a multidistrict in a previous steps plan until M successful splits have been made. This
+//' is based on the `split_maps` function in smc.cpp
+//'
+//'
+//' @param g A graph (adjacency list) passed by reference
+//' @param counties Vector of county labels of each vertex in `g`
+//' @param cg County level multigraph
+//' @param pop A vector of the population associated with each vertex in `g`
+//' @param old_plans_vec A vector of plans from the previous step
+//' @param new_plans_vec A vector which will be filled with plans that had a
+//' multidistrict split to make them
+//' @param parent_index_vec A vector used to track the index of the previous plan
+//' sampled that was successfully split. The value of `parent_index_vec[i]` is the
+//' index of the old plan from which the new plan `new_plans_vec[i]` was
+//' successfully split from. In other words `new_plans_vec[i]` is equal to
+//' `attempt_region_split(old_plans_vec[parent_index_vec[i]], ...)`
+//' @param unnormalized_sampling_weights A vector of weights used to sample indices
+//' of the `old_plans_vec`. The value of `unnormalized_sampling_weights[i]` is
+//' the unnormalized probability that index i is selected
+//' @param draw_tries_vec A vector used to keep track of how many plan split
+//' attempts were made for index i. The value `draw_tries_vec[i]` represents how
+//' many split attempts were made for the i-th new plan (including the successful
+//' split). For example, `draw_tries_vec[i] = 1` means that the first split
+//' attempt was successful.
+//' @param parent_unsuccessful_tries_vec A vector used to keep track of how many times the
+//' previous rounds plans were sampled and unsuccessfully split. The value
+//' `parent_unsuccessful_tries_vec[i]` represents how many times `old_plans_vec[i]` was sampled
+//' and then unsuccessfully split while creating all `M` of the new plans.
+//' THIS MAY NOT BE THREAD SAFE
+//' @param accept_rate The number of accepted splits over the total number of
+//' attempted splits. This is equal to `sum(draw_tries_vec)/M`
+//' @param n_unique_parent_indices The number of unique parent indices, ie the
+//' number of previous plans that had at least one descendant amongst the new
+//' plans. This is equal to `unique(parent_index_vec)`
+//' @param ancestors Parameter from older `smc.cpp` code. I DON'T UNDERSTAND
+//' WHAT IT IS DOING
+//' @param lags Parameter from older `smc.cpp` code. I DON'T UNDERSTAND
+//' WHAT IT IS DOING
+//' @param lower Acceptable lower bounds on a valid district's population
+//' @param upper Acceptable upper bounds on a valid district's population
+//' @param target Ideal population of a valid district. This is what deviance is calculated
+//' relative to
+//' @param k_param The top edges to pick parameter for the region splitting
+//' algorithm
+//' @param split_district_only Whether or not to only allow for single district
+//' splits. If set to `true` will only attempt to split off one district at a
+//' time
+//' @param pool A threadpool for multithreading
+//' @param verbosity A parameter controlling the amount of detail printed out
+//' during the algorithms running
+//'
+//' @details Modifications
+//'    - The `new_plans_vec` is updated with all the newly split plans
+//'    - The `old_plans_vec` is updated with all the newly split plans as well.
+//'    Note that the reason both this and `new_plans_vec` are updated is because
+//'    of the nature of the code you need both vectors and so both are passed by
+//'    reference to save memory.
+//'    - The `original_ancestor_vec` is updated to contain the indices of the
+//'    original ancestors of the new plans
+//'    - The `parent_index_vec` is updated to contain the indices of the parents of the
+ //'    new plans
+//'    - If two new valid regions are split then the new_region_ids is updated so the
+//'    first entry is the first new region and the second entry is the second new region
+//'    - The `draw_tries_vec` is updated to contain the number of tries for each
+//'    of the new plans
+//'    - The `parent_unsuccessful_tries_vec` is updated to contain the number of unsuccessful
+//'    samples of the old plans
+//'    - The `accept_rate` is updated to contain the average acceptance rate for
+//'    this iteration
+//'    - `n_unique_parent_indices` and `n_unique_original_ancestors` are updated
+//'    with the unique number of parents and original ancestors for all the new
+//'    plans respectively
+//'    - `ancestors` is updated to something. THIS IS FROM ORIGINAL SMC CODE,
+//'    I DO NOT KNOW WHAT IT MEANS
+//'
+//' @keywords internal
+// void NEW_generalized_split_maps(
+//         const Graph &g, const uvec &counties, Multigraph &cg, const uvec &pop,
+//         std::vector<Plan> &old_plans_vec, std::vector<Plan> &new_plans_vec,
+//         Rcpp::IntegerMatrix::Column parent_index_vec,
+//         const std::vector<double> &unnormalized_sampling_weights,
+//         Rcpp::IntegerMatrix::Column draw_tries_vec,
+//         Rcpp::IntegerMatrix::Column parent_unsuccessful_tries_vec,
+//         double &accept_rate,
+//         int &n_unique_parent_indices,
+//         umat &ancestors, const std::vector<int> &lags,
+//         double const lower, double const upper, double const target,
+//         int const k_param, int const min_region_cut_size, int const max_region_cut_size, 
+//         bool const split_district_only,
+//         RcppThread::ThreadPool &pool,
+//         int const verbosity, int const diagnostic_level
+//                 ) {
+//     // important constants
+//     const int V = g.size();
+//     const int M = old_plans_vec.size();
+
+//     // PREVIOUS SMC CODE I DONT KNOW WHAT IT DOES
+//     const int dist_ctr = old_plans_vec.at(0).num_regions;
+//     const int n_lags = lags.size();
+//     umat ancestors_new(M, n_lags); // lags/ancestor thing
+
+
+//     // Create the obj which will sample from the index with probability
+//     // proportional to the weights
+//     std::random_device rd;
+//     std::mt19937 gen(rd());
+//     std::discrete_distribution<> index_sampler(
+//             unnormalized_sampling_weights.begin(),
+//             unnormalized_sampling_weights.end()
+//         );
+
+//     // extract and record the normalized weights the sampler is using
+
+//     bool print_weights = M < 12 && verbosity > 1;
+//     if(print_weights){
+//     std::vector<double> p = index_sampler.probabilities();
+//     Rprintf("Unnormalized weights are: ");
+//     for (auto w : unnormalized_sampling_weights){
+//         Rprintf("%.4f, ", w);
+//     }
+
+//     Rprintf("\n");
+//     Rprintf("Normalized weights are: ");
+    
+//     for (auto prob : p){
+//         if(print_weights) Rprintf("%.4f, ", prob);
+
+//     }
+//     Rprintf("\n");
+//     }
+
+//     // Because of multithreading we have to add specific checks for if the user
+//     // wants to quit the program
+//     const int reject_check_int = 200; // check for interrupts every _ rejections
+//     const int check_int = 50; // check for interrupts every _ iterations
+
+//     // The new region in the split plans is the number of regions in a split plan minus
+//     // one so the number of regions in a presplit plan
+//     int new_region_id = old_plans_vec.at(0).num_regions;
+
+//     // create a progress bar
+//     RcppThread::ProgressBar bar(M, 1);
+//     // Parallel thread pool where all objects in memory shared by default
+//     pool.parallelFor(0, M, [&] (int i) {
+//         // REprintf("Plan %d\n", i);
+//         int reject_ct = 0;
+//         bool ok = false;
+//         int idx;
+//         int region_id_to_split;
+
+//         Tree ust = init_tree(V);
+//         std::vector<bool> visited(V);
+//         std::vector<bool> ignore(V);
+//         while (!ok) {
+//             // increase the number of tries for particle i by 1
+//             draw_tries_vec[i]++;
+//             //draw_tries_vec(i)++;
+//             // REprintf("Plan %d, iter %d\n", i, iters[i]);
+//             // use weights to sample previous plan
+//             idx = index_sampler(gen);
+//             // REprintf("Picked idx %d, from vector of size %u\n", i, old_plans_vec.size());
+
+//             // We want the data from the old plans vec but we can't modify it since they
+//             // point to the same matrix so we do shallow copy             
+//             new_plans_vec.at(i).shallow_copy(old_plans_vec.at(idx));
+
+
+
+//             auto plan_specific_max_region_cut_size = std::min(
+//                 max_region_cut_size, // max_region_cut_size 
+//                 (int) old_plans_vec.at(idx).region_dvals(region_id_to_split)
+//             );
+
+        
+//             // Now try to split the plan
+//             ok = new_plans_vec.at(i).attempt_split(g, ust, counties,cg,
+//                  visited, ignore, pop,
+//                  lower, upper, target,
+//                  k_param, min_region_cut_size, max_region_cut_size, 
+//                 split_district_only);
+
+
+//             // bad sample; try again
+//             if (!ok) {
+//                  // update unsuccessful try
+//                 RcppThread::checkUserInterrupt(++reject_ct % reject_check_int == 0);
+
+//                 // if diagnostic level 2 or higher get unsuccessful count 
+//                 if(diagnostic_level >= 2){
+//                     // not atomic so technically not thread safe but doesn't seem to differ in practice
+//                     parent_unsuccessful_tries_vec[idx]++;
+//                 }
+//                 continue;
+//             }
+
+//             // else leave the while loop
+//         }
+
+//         // record index of new plan's parent
+//         parent_index_vec[i] = idx;
+
+
+//         // ORIGINAL SMC CODE I DONT KNOW WHAT THIS DOES
+//         // save ancestors/lags
+//         for (int j = 0; j < n_lags; j++) {
+//             if (dist_ctr <= lags[j]) {
+//                 ancestors_new(i, j) = i;
+//             } else {
+//                 ancestors_new(i, j) = ancestors(idx, j);
+//             }
+//         }
+
+//         RcppThread::checkUserInterrupt(i % check_int == 0);
+//     });
+
+//     // Wait for all the threads to finish
+//     pool.wait();
+
+//     // REprintf("Copying now!\n");
+
+//     // now replace the old plans with the new ones
+//     for(int i=0; i < M; i++){
+//         old_plans_vec.at(i).shallow_copy(new_plans_vec.at(i));
+//     }
+
+
+//     // now compute acceptance rate and unique parents and original ancestors
+//     accept_rate = M / (1.0 * sum(draw_tries_vec));
+
+//     // Get number of unique parents
+//     std::set<int> unique_parents(parent_index_vec.begin(), parent_index_vec.end());
+//     n_unique_parent_indices = unique_parents.size();
+//     if (verbosity >= 3) {
+//         Rprintf("%.2f acceptance rate and %d unique parent indices sampled!\n",
+//                 100.0 * accept_rate, (int) n_unique_parent_indices);
+//     }
+
+//     // ORIGINAL SMC CODE I DONT KNOW WHAT IT DOES
+//     ancestors = ancestors_new;
+
+// }
+
+
+
+
+
 // Different diagnostic levels
 //      - level 0 - Does not capture any ancestry information or retain intermediate weights
 //      - level 1 - Saves ancestry information, intermediate weights and the number of tries 
@@ -97,6 +346,7 @@ List gsmc_plans(
     // TODO Check k params 
 
     // Create map level graph and county level multigraph
+    MapParams map_params(adj_list, counties, pop, N, lower, target, upper);
     Graph g = list_to_graph(adj_list);
     Multigraph cg = county_graph(g, counties);
     int V = g.size();
@@ -207,15 +457,23 @@ List gsmc_plans(
     arma::umat dummy_region_id_mat = region_id_mat;
     arma::umat dummy_region_sizes_mat = region_sizes_mat;
 
-    // Now create the vector of plans
-    std::vector<Plan> plans_vec; plans_vec.reserve(M);
-    std::vector<Plan> new_plans_vec; new_plans_vec.reserve(M);
-    
+
+    // Create a vector of pointers to Plan objects
+    // b/c we're using abstract classes we must use pointers to the base class
+    std::vector<std::unique_ptr<Plan>> plans_ptr_vec; plans_ptr_vec.reserve(M);
+    std::vector<std::unique_ptr<Plan>> new_plans_ptr_vec; new_plans_ptr_vec.reserve(M);
+
     // Loop over each column of region_id_mat
     for (size_t i = 0; i < region_id_mat.n_cols; ++i) {
-        // Create a Plan object and add it to the vector
-        plans_vec.emplace_back(region_id_mat.col(i), region_sizes_mat.col(i), N, total_pop, split_district_only);
-        new_plans_vec.emplace_back(dummy_region_id_mat.col(i), dummy_region_sizes_mat.col(i), N, total_pop, split_district_only);
+        // Create the underlying object for each unique pointer
+        plans_ptr_vec.emplace_back(
+            std::make_unique<GraphPlan>(
+                region_id_mat.col(i), region_sizes_mat.col(i), N, total_pop, split_district_only
+            ));
+        new_plans_ptr_vec.emplace_back(
+            std::make_unique<GraphPlan>(
+                dummy_region_id_mat.col(i), dummy_region_sizes_mat.col(i), N, total_pop, split_district_only
+            ));
     }
 
 
@@ -256,10 +514,10 @@ List gsmc_plans(
 
             if (verbosity >= 3) {
                 Rcout << "\tMaking split " << smc_step_num+1 << " of " << total_steps;
+                Rprintf("\nSplitting regions into pieces of size %d to %d\n",
+                min_region_cut_sizes.at(smc_step_num), max_region_cut_sizes.at(smc_step_num));
             }
 
-            Rprintf("\nSplitting regions into pieces of size %d to %d\n",
-                min_region_cut_sizes.at(smc_step_num), max_region_cut_sizes.at(smc_step_num));
 
             // check if k is passed in or estimate 
             if(try_to_estimate_cut_k){
@@ -269,7 +527,7 @@ List gsmc_plans(
                 // double thresh = (double) control["adapt_k_thresh"];
 
                 estimate_cut_k(g, est_cut_k, last_k, unnormalized_sampling_weights, thresh,
-                            tol, plans_vec, 
+                            tol, plans_ptr_vec, 
                             counties,
                             cg, pop, 
                             min_region_cut_sizes.at(smc_step_num), max_region_cut_sizes.at(smc_step_num), 
@@ -289,9 +547,8 @@ List gsmc_plans(
             // auto t1f = high_resolution_clock::now();
 
             // split the map
-            generalized_split_maps(
-                g, counties, cg, pop,
-                plans_vec, new_plans_vec,
+            generalized_split_maps(map_params,
+                plans_ptr_vec, new_plans_ptr_vec,
                 parent_index_mat.column(smc_step_num),
                 unnormalized_sampling_weights,
                 draw_tries_mat.column(step_num),
@@ -299,13 +556,25 @@ List gsmc_plans(
                 acceptance_rates.at(step_num),
                 nunique_parents.at(smc_step_num),
                 ancestors, lags,
-                lower, upper, target,
                 k_params.at(smc_step_num), 
                 min_region_cut_sizes.at(smc_step_num), max_region_cut_sizes.at(smc_step_num), 
                 split_district_only,
                 pool,
                 verbosity, diagnostic_mode ? 3 : 0
             );
+
+            // for (size_t i = 0; i < OLD_plans_vec.size(); i++)
+            // {
+            //     OLD_plans_vec.at(i).shallow_copy(*plans_ptr_vec.at(i));
+            //     OLD_new_plans_vec.at(i).shallow_copy(*new_plans_ptr_vec.at(i));
+            // }
+
+            // for (size_t i = 0; i < plans_ptr_vec.size(); i++)
+            // {
+            //     plans_ptr_vec.at(i)->Rprint();
+            //     //new_plans_ptr_vec.at(i)->Rprint();
+            // }
+            
 
             cut_k_values.at(step_num) = k_params.at(smc_step_num);
             prev_k = k_params.at(smc_step_num);
@@ -323,7 +592,7 @@ List gsmc_plans(
                 get_all_plans_log_optimal_weights(
                     pool,
                     g,
-                    plans_vec,
+                    plans_ptr_vec,
                     split_district_only,
                     log_incremental_weights_mat.col(smc_step_num),
                     unnormalized_sampling_weights,
@@ -334,7 +603,7 @@ List gsmc_plans(
                 get_all_plans_uniform_adj_weights(
                     pool,
                     g,
-                    plans_vec,
+                    plans_ptr_vec,
                     split_district_only,
                     log_incremental_weights_mat.col(smc_step_num),
                     unnormalized_sampling_weights,
@@ -385,14 +654,12 @@ List gsmc_plans(
             }
 
             // auto t1fm = high_resolution_clock::now();
-
             run_merge_split_step_on_all_plans(
                 pool,
-                g, counties, cg, pop,
-                plans_vec, new_plans_vec,
+                map_params,
+                plans_ptr_vec, new_plans_ptr_vec,
                 split_district_only, merge_prob_type,
                 prev_k, nsteps_to_run,
-                lower, upper, target,
                 merge_split_successes_mat.column(merge_split_step_num)
             );
 
@@ -437,7 +704,7 @@ List gsmc_plans(
             // its generalized region splits 
 
             if(merge_split_step_num > 0 || !split_district_only){
-                reorder_all_plans(pool, plans_vec, new_plans_vec);
+                reorder_all_plans(pool, plans_ptr_vec, new_plans_ptr_vec);
             }
 
 
@@ -454,7 +721,7 @@ List gsmc_plans(
                     pool, 
                     region_sizes_mat.submat(
                     0, 0,
-                    plans_vec.at(0).num_regions-1,
+                    plans_ptr_vec.at(0)->num_regions-1,
                     region_sizes_mat.n_cols-1
                     ), 
                     region_sizes_mat_list.at(step_num));
@@ -473,13 +740,16 @@ List gsmc_plans(
 
     // if not diagnostic reorder the plans 
     if(!diagnostic_mode){
-        reorder_all_plans(pool, plans_vec, new_plans_vec);
+        reorder_all_plans(pool, plans_ptr_vec, new_plans_ptr_vec);
     }
 
     // copy the plans into the plan_mat for returning
     copy_arma_to_rcpp_mat(pool, 
         region_id_mat.submat(0,0, region_id_mat.n_rows-1, region_id_mat.n_cols-1), 
         plan_mat);
+
+    //plans_ptr_vec.at(0)->Rprint();
+
         
 
     // Return results

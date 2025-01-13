@@ -19,6 +19,7 @@
 #include "merging.h"
 #include "weights.h"
 #include "smc_alg_helpers.h"
+#include "graph_plan_type.h"
 
 
 

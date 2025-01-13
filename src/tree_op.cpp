@@ -29,30 +29,7 @@ int rnbor(const Graph &g, int vtx) {
     return g[vtx][r_int(n_nbors)];
 }
 
-/*
- * Make a county graph from a precinct graph and list of counties
- * County graph is list of list of 3: <cty of nbor, index of vtx, index of nbor>
- */
-// TESTED
-Multigraph county_graph(const Graph &g, const uvec &counties) {
-    int n_county = max(counties);
-    Multigraph cg = init_multigraph(n_county);
 
-    int V = g.size();
-    for (int i = 0; i < V; i++) {
-        std::vector<int> nbors = g[i];
-        int length = nbors.size();
-        int county = counties.at(i) - 1;
-        for (int j = 0; j < length; j++) {
-            int nbor_cty = counties.at(nbors[j]) - 1;
-            if (county == nbor_cty) continue;
-            std::vector<int> el = {nbor_cty, i, nbors[j]};
-            cg.at(county).push_back(el);
-        }
-    }
-
-    return cg;
-}
 
 
 /*
@@ -94,77 +71,8 @@ Graph district_graph(const Graph &g, const uvec &plan, int nd, bool zero) {
 
 
 
-// NOT FULLY TESTED but taken from district_graph function which was tested
-//' Creates the region level graph of a plan
-//'
-//' Given a plan object this returns a graph of the regions in the plan using
-//' the region ids as indices
-//'
-//' @title Get Region-Level Graph
-//'
-//' @param g The graph of the entire map
-//' @param plan A plan object
-//'
-//' @details No modifications to inputs made
-//'
-//' @return the log of the probability the specific value of `region_to_split` was chosen
-//'
-Graph get_region_graph(const Graph &g, const Plan &plan) {
-    int V = g.size();
-    Graph out;
-
-    // make a matrix where entry i,j represents if region i and j are adjacent
-    std::vector<std::vector<bool>> gr_bool(
-            plan.num_regions, std::vector<bool>(plan.num_regions, false)
-        );
-
-    // iterate over all vertices in g
-    for (int i = 0; i < V; i++) {
-        std::vector<int> nbors = g[i];
-        // Find out which region this vertex corresponds to
-        int region_num_i = plan.region_ids[i];
-
-        // now iterate over its neighbors
-        for (int nbor : nbors) {
-            // find which region neighbor corresponds to
-            int region_num_j = plan.region_ids[nbor];
-            // if they are different regions mark matrix true since region i
-            // and region j are adjacent as they share an edge across
-            if (region_num_i != region_num_j) {
-                gr_bool.at(region_num_i).at(region_num_j) = true;
-            }
-        }
-    }
 
 
-    // Now build the region level graph
-    for (int i = 0; i < plan.num_regions; i++) {
-        // create vector of i's neighbors
-        std::vector<int> tmp;
-        for (int j = 0; j < plan.num_regions; j++) {
-            // check if i and j are adjacent, if so add j
-            if (gr_bool.at(i).at(j)) {
-                tmp.push_back(j);
-            }
-        }
-        out.push_back(tmp);
-    }
-
-    return out;
-}
-
-/*
- * Initialize empty multigraph structure on graph with `V` vertices
- */
-// TESTED
-Multigraph init_multigraph(int V) {
-    Multigraph g;
-    for (int i = 0; i < V; i++) {
-        std::vector<std::vector<int>> el;
-        g.push_back(el);
-    }
-    return g;
-}
 
 /*
  * Initialize empty tree structure on graph with `V` vertices
@@ -188,21 +96,11 @@ void clear_tree(Tree &tree) {
     }
 }
 
-/*
- * Convert R adjacency list to Graph object (vector of vectors of ints).
- */
-Graph list_to_graph(const List &l) {
-    int V = l.size();
-    Graph g;
-    for (int i = 0; i < V; i++) {
-        g.push_back(as<std::vector<int>>((IntegerVector) l[i]));
-    }
-    return g;
-}
+
 
 
 /*
- * Count population below each node in tree
+ * Count population below each node in tree and get each node's parent
  */
 // TESTED
 // [[Rcpp::export]]
@@ -235,29 +133,16 @@ void assign_district(const Tree &ust, subview_col<uword> &districts,
 }
 
 
-/*
- * Assign `new_region` to all descendants of `root` in `ust`
- */
-// TESTED
-void assign_region(const Tree &ust, Plan &plan,
-                     int root,
-                     int new_region_num_id) {
-    plan.region_ids(root) = new_region_num_id;
-    int n_desc = ust.at(root).size();
-    for (int i = 0; i < n_desc; i++) {
-        assign_region(ust, plan, ust.at(root).at(i), new_region_num_id);
-    }
-}
 
 
-void assign_region_just_vertex_vec(const Tree &ust, 
+void assign_region_ids_from_tree(const Tree &ust, 
                     arma::subview_col<arma::uword> &region_ids,
                     int root,
-                    int new_region_num_id) {
-    region_ids(root) = new_region_num_id;
+                    int new_region_id) {
+    region_ids(root) = new_region_id;
     int n_desc = ust.at(root).size();
     for (int i = 0; i < n_desc; i++) {
-        assign_region_just_vertex_vec(ust, region_ids, ust.at(root).at(i), new_region_num_id);
+        assign_region_ids_from_tree(ust, region_ids, ust.at(root).at(i), new_region_id);
     }
 }
 
@@ -280,4 +165,34 @@ int find_subroot(const Tree &ust, const std::vector<bool> &ignore) {
         if (!visited[root] && !ignore.at(root)) break;
     }
     return root;
+}
+
+
+//' Erases an edge from a tree
+//'
+//' Erases the directed edge (`cut_edge.cut_vertex_parent`, `cut_edge.cut_vertex`)
+//' from the tree `ust`. The directed edge here means we have `child_vertex` being one of 
+//' the values in `ust[parent_vertex]`.
+//'
+//'
+//' @param ust A directed spanning tree passed by reference
+//' @param cut_edge An `EdgeCut` object representing the edge cut
+//'
+//' @details Modifications
+//'    - The edge (`cut_edge.cut_vertex_parent`, `cut_edge.cut_vertex`) 
+//'    is removed from `ust`
+//'
+//'
+void erase_tree_edge(Tree &ust, EdgeCut cut_edge){
+    // Get all of the descendents of `cut_vertex_parent` 
+    std::vector<int> *siblings = &ust[cut_edge.cut_vertex_parent];
+    int length = siblings->size();
+    int j;
+    // find index of `cut_vertex` among `cut_vertex_parent`'s children
+    for (j = 0; j < length; j++) {
+        if ((*siblings)[j] == cut_edge.cut_vertex) break;
+    }
+
+    // Now remove the edge corresponding to `cut_vertex` from the tree
+    siblings->erase(siblings->begin()+j);
 }

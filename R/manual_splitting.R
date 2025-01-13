@@ -131,7 +131,7 @@ draw_tree_on_region <- function(
         ndists=ndists, num_regions=num_regions, num_districts=num_districts,
         region_id_to_draw_tree_on=region_id_to_draw_tree_on,
         lower=pop_bounds[1], upper=pop_bounds[3],
-        region_ids=partial_plan_labels, region_dvals=region_sizes,
+        region_ids=partial_plan_labels, region_sizes=region_sizes,
         verbose
     )
 

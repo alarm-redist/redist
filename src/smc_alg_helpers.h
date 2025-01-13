@@ -10,6 +10,7 @@
 #include <limits>
 #include <RcppThread.h>
 
+#include "base_plan_type.h"
 #include "gredist_types.h"
 
 
@@ -48,8 +49,8 @@ void copy_arma_to_rcpp_mat(
 //' @title Reorders all the plans in the vector by order a region was split
 //'
 //' @param pool A threadpool for multithreading
-//' @param plans_vec A vector of plans
-//' @param dummy_plans_vec A vector of dummy plans 
+//' @param plan_ptrs_vec A vector of pointers to plans 
+//' @param dummy_plans_vec A vector of pointers to dummy plans 
 //'
 //' @details Modifications
 //'    - Each plan in the `plans_vec` object is reordered by when the region was split
@@ -59,8 +60,8 @@ void copy_arma_to_rcpp_mat(
 //' @keywords internal
 void reorder_all_plans(
     RcppThread::ThreadPool &pool,
-    std::vector<Plan> &plans_vec, 
-    std::vector<Plan> &dummy_plans_vec);
+    std::vector<std::unique_ptr<Plan>> &plan_ptrs_vec, 
+    std::vector<std::unique_ptr<Plan>> &dummy_plan_ptrs_vec);
 
 
 #endif

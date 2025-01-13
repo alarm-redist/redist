@@ -8,7 +8,7 @@
 #include <vector>
 #include <limits>
 #include <RcppArmadillo.h>
-#include "gredist_types.h"
+
 
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::plugins("cpp11")]]

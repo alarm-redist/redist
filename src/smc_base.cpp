@@ -26,6 +26,10 @@ void partition_vec(std::vector<double> &x, std::vector<int> &idxs, int left,
  */
 // TESTED
 int select_k(std::vector<double> x, int k) {
+    if(k > x.size()){
+        REprintf("k=%d bigger than number of edges=%d!\n", k, (int) x.size());
+        throw Rcpp::exception("k bigger than number of edges!\n");
+    }
     int right = x.size() - 1;
     int left = 0;
     std::vector<int> idxs(right + 1);
