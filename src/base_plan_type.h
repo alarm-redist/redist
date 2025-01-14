@@ -21,6 +21,8 @@
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
+// forward declaration for compilation
+class TreeSplitter;
 
 class Plan {
 public:
@@ -74,14 +76,13 @@ public:
 
     // redist_smc related methods 
     double choose_multidistrict_to_split(int &region_id_to_split, int min_region_cut_size);
-    bool draw_tree_on_region(MapParams &map_params, const int region_to_draw_tree_on,
+    bool draw_tree_on_region(const MapParams &map_params, const int region_to_draw_tree_on,
         Tree &ust, std::vector<bool> &visited, std::vector<bool> &ignore, int &root);
 
 
     void update_region_info_from_cut(
-        bool split_district_only,
-        const int split_region1_id, const int split_region2_id,
-        EdgeCut cut_edge
+        EdgeCut cut_edge, bool split_district_only,
+        const int split_region1_id, const int split_region2_id
     );
 
     virtual void update_vertex_info_from_cut(
@@ -93,19 +94,12 @@ public:
     
 
     // virtual redist_smc methods
-    virtual bool attempt_to_find_edge_to_cut(Tree &ust, int root,
-                     int k_param, int min_potential_d, int max_potential_d,
-                     const arma::uvec &pop, const arma::subview_col<arma::uword> &region_ids,
-                     const int region_id_to_split, int total_region_pop, int total_region_dval,
-                     const double lower, const double upper, const double target,
-                     int &new_region1_tree_root, int &new_region1_dval, int &new_region1_pop,
-                     int &new_region2_tree_root, int &new_region2_dval, int &new_region2_pop
-                     );
 
-    bool attempt_split(MapParams &map_params, Tree &ust, TreeSplitter &tree_splitter,
+    bool attempt_split(const MapParams &map_params, Tree &ust, TreeSplitter &tree_splitter,
                  std::vector<bool> &visited, std::vector<bool> &ignore, 
                  int const min_region_cut_size, int const max_region_cut_size, 
-                 bool split_district_only, int new_region_id);
+                 const bool split_district_only, 
+                 const int region_id_to_split, const int new_region_id);
 
 };
 

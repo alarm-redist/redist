@@ -6,10 +6,11 @@
 #include "gredist_types.h"
 #include "tree_op.h"
 #include "tree_splitting.h"
+#include "base_plan_type.h"
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
-
+class Plan;
 
 // Designed to allow for different tree splitting methods
 // This allows us to seperate cutting the tree from finding the edge to cut 
@@ -21,11 +22,15 @@ public:
     
     // Takes a spanning tree and returns the edge to cut if successful
     virtual std::pair<bool,EdgeCut> select_edge_to_cut(
-        const MapParams &map_params,
+        const MapParams &map_params, Plan &plan,
         Tree &ust, const int root, 
         const int min_potential_cut_size, const int max_potential_cut_size,
-        const arma::subview_col<arma::uword> &region_ids, 
-        const int region_id_to_split, const int total_region_pop, const int total_region_size) = 0;
+        const int region_id_to_split) = 0;
+
+    // used to update the k parameter for top k splitter
+    virtual void update_single_int_param(int int_param){
+        throw Rcpp::exception("Update single int param not implemented!\n");
+    };
 
 };
 
@@ -40,13 +45,15 @@ public:
 
     int k_param; // top k value
 
+    // how to update the k param
+    void update_single_int_param(int int_param);
+
 
     std::pair<bool,EdgeCut> select_edge_to_cut(
-        const MapParams &map_params,
+        const MapParams &map_params, Plan &plan,
         Tree &ust, const int root, 
-        const int min_potential_cut_size, const int max_potential_cut_size,
-        const arma::subview_col<arma::uword> &region_ids, 
-        const int region_id_to_split, const int total_region_pop, const int total_region_size);
+        const int min_potential_cut_size, const int max_potential_cut_size, 
+        const int region_id_to_split);
 };
 
 

@@ -20,7 +20,7 @@
 #include "map_calc.h"
 #include "gredist_types.h"
 #include "base_plan_type.h"
-
+#include "tree_splitter_types.h"
 
 
 
@@ -141,7 +141,7 @@ bool get_edge_to_cut(Tree &ust, int root,
 //'
 //' @noRd
 //' @keywords internal
-bool attempt_region_split(MapParams &map_params, Tree &ust,
+bool attempt_region_split(const MapParams &map_params, Tree &ust,
                  Plan &plan, const int region_id_to_split,
                  const int new_region_id,
                  std::vector<bool> &visited, std::vector<bool> &ignore, 
@@ -296,17 +296,18 @@ void estimate_cut_k(const Graph &g, int &k, int const last_k,
 //' @noRd
 //' @keywords internal
 void generalized_split_maps(
-        MapParams &map_params, 
+        const MapParams &map_params, 
         std::vector<std::unique_ptr<Plan>> &old_plans_vec, 
         std::vector<std::unique_ptr<Plan>> &new_plans_vec,
+        std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
         Rcpp::IntegerMatrix::Column parent_index_vec,
-        const std::vector<double> &unnormalized_sampling_weights,
+        const arma::vec &normalized_cumulative_weights,
         Rcpp::IntegerMatrix::Column draw_tries_vec,
         Rcpp::IntegerMatrix::Column parent_unsuccessful_tries_vec,
         double &accept_rate,
         int &n_unique_parent_indices,
         umat &ancestors, const std::vector<int> &lags,
-        int const k_param, int const min_region_cut_size, int const max_region_cut_size, 
+        int const min_region_cut_size, int const max_region_cut_size, 
         bool const split_district_only,
         RcppThread::ThreadPool &pool,
         int verbosity, int diagnostic_level

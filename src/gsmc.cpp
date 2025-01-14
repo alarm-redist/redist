@@ -347,9 +347,7 @@ List gsmc_plans(
 
     // Create map level graph and county level multigraph
     MapParams map_params(adj_list, counties, pop, N, lower, target, upper);
-    Graph g = list_to_graph(adj_list);
-    Multigraph cg = county_graph(g, counties);
-    int V = g.size();
+    int V = map_params.g.size();
     double total_pop = sum(pop);
 
 
@@ -446,9 +444,9 @@ List gsmc_plans(
         }else{
             Rcout << "and only performing 1-district splits.\n";
         }
-        if (cg.size() > 1){
+        if (map_params.cg.size() > 1){
             Rcout << "Ensuring no more than " << N - 1 << " splits of the "
-                  << cg.size() << " administrative units.\n";
+                  << map_params.cg.size() << " administrative units.\n";
         }
     }
 
@@ -463,6 +461,10 @@ List gsmc_plans(
     std::vector<std::unique_ptr<Plan>> plans_ptr_vec; plans_ptr_vec.reserve(M);
     std::vector<std::unique_ptr<Plan>> new_plans_ptr_vec; new_plans_ptr_vec.reserve(M);
 
+    // Vector of splitters
+    std::vector<std::unique_ptr<TreeSplitter>> tree_splitters_ptr_vec; tree_splitters_ptr_vec.reserve(M);
+
+
     // Loop over each column of region_id_mat
     for (size_t i = 0; i < region_id_mat.n_cols; ++i) {
         // Create the underlying object for each unique pointer
@@ -473,6 +475,11 @@ List gsmc_plans(
         new_plans_ptr_vec.emplace_back(
             std::make_unique<GraphPlan>(
                 dummy_region_id_mat.col(i), dummy_region_sizes_mat.col(i), N, total_pop, split_district_only
+            ));
+        // TODO This belongs in a seperate function in the future 
+        tree_splitters_ptr_vec.emplace_back(
+            std::make_unique<NaiveTopKSplitter>(
+                -1
             ));
     }
 
@@ -526,10 +533,10 @@ List gsmc_plans(
                 int last_k = smc_step_num == 0 ? std::max(1, V - 5) : k_params.at(smc_step_num-1);
                 // double thresh = (double) control["adapt_k_thresh"];
 
-                estimate_cut_k(g, est_cut_k, last_k, unnormalized_sampling_weights, thresh,
+                estimate_cut_k(map_params.g, est_cut_k, last_k, unnormalized_sampling_weights, thresh,
                             tol, plans_ptr_vec, 
                             counties,
-                            cg, pop, 
+                            map_params.cg, pop, 
                             min_region_cut_sizes.at(smc_step_num), max_region_cut_sizes.at(smc_step_num), 
                             split_district_only,
                             target, verbosity);
@@ -544,19 +551,34 @@ List gsmc_plans(
                 }
             }
 
+            for (size_t j = 0; j < tree_splitters_ptr_vec.size(); j++)
+            {
+                tree_splitters_ptr_vec.at(j)->update_single_int_param(k_params.at(smc_step_num));
+            }
+            
+
             // auto t1f = high_resolution_clock::now();
+
+            arma::vec cumulative_weights = arma::cumsum(
+                arma::vec(unnormalized_sampling_weights)
+            );
+
+            arma::vec normalized_cumulative_weights = cumulative_weights / cumulative_weights(
+                cumulative_weights.size()-1
+            );
+            
 
             // split the map
             generalized_split_maps(map_params,
-                plans_ptr_vec, new_plans_ptr_vec,
+                plans_ptr_vec, new_plans_ptr_vec, 
+                tree_splitters_ptr_vec,
                 parent_index_mat.column(smc_step_num),
-                unnormalized_sampling_weights,
+                normalized_cumulative_weights,
                 draw_tries_mat.column(step_num),
                 parent_unsuccessful_tries_mat.column(smc_step_num),
                 acceptance_rates.at(step_num),
                 nunique_parents.at(smc_step_num),
                 ancestors, lags,
-                k_params.at(smc_step_num), 
                 min_region_cut_sizes.at(smc_step_num), max_region_cut_sizes.at(smc_step_num), 
                 split_district_only,
                 pool,
@@ -591,7 +613,7 @@ List gsmc_plans(
                 // compute log incremental weights and sampling weights for next round
                 get_all_plans_log_optimal_weights(
                     pool,
-                    g,
+                    map_params.g,
                     plans_ptr_vec,
                     split_district_only,
                     log_incremental_weights_mat.col(smc_step_num),
@@ -602,7 +624,7 @@ List gsmc_plans(
             }else if(wgt_type == "adj_uniform"){
                 get_all_plans_uniform_adj_weights(
                     pool,
-                    g,
+                    map_params.g,
                     plans_ptr_vec,
                     split_district_only,
                     log_incremental_weights_mat.col(smc_step_num),
@@ -658,8 +680,9 @@ List gsmc_plans(
                 pool,
                 map_params,
                 plans_ptr_vec, new_plans_ptr_vec,
+                tree_splitters_ptr_vec,
                 split_district_only, merge_prob_type,
-                prev_k, nsteps_to_run,
+                nsteps_to_run,
                 merge_split_successes_mat.column(merge_split_step_num)
             );
 

@@ -135,14 +135,14 @@ void assign_district(const Tree &ust, subview_col<uword> &districts,
 
 
 
-void assign_region_ids_from_tree(const Tree &ust, 
+void assign_region_id_from_tree(const Tree &ust, 
                     arma::subview_col<arma::uword> &region_ids,
                     int root,
-                    int new_region_id) {
+                    const int new_region_id) {
     region_ids(root) = new_region_id;
     int n_desc = ust.at(root).size();
     for (int i = 0; i < n_desc; i++) {
-        assign_region_ids_from_tree(ust, region_ids, ust.at(root).at(i), new_region_id);
+        assign_region_id_from_tree(ust, region_ids, ust.at(root).at(i), new_region_id);
     }
 }
 

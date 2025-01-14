@@ -205,6 +205,26 @@ closest_adj_pop <- function(adj, i_dist, g_prop) {
     .Call(`_gredist_closest_adj_pop`, adj, i_dist, g_prop)
 }
 
+#' Generate a random index of `unnormalized_wgts` with probability proportional to its weight
+#'
+#' Takes a vector of strictly positive weights and returns an index with probability 
+#' proportional to its weight. In other words, it selects index `i` with probability
+#' proporitional to `unnormalized_wgts[i]` 
+#' (or exactly `unnormalized_wgts[i]/sum(unnormalized_wgts)`). This does not support
+#' inputs where some of the weights are zero. This has positive probability of 
+#' returning indices that have weight zero. 
+#'
+#'
+#' @param unnormalized_wgts An arma vector of positive numbers
+#'
+#' @details no Modifications to inputs made
+#'
+#' @returns An integer in [0, `unnormalized_wgts.size()`)
+#'
+#' @keyword internal
+#' @noRd
+NULL
+
 rint1 <- function(n, max) {
     .Call(`_gredist_rint1`, n, max)
 }
@@ -212,6 +232,26 @@ rint1 <- function(n, max) {
 runif1 <- function(n, max) {
     .Call(`_gredist_runif1`, n, max)
 }
+
+#' Generate a random index of `unnormalized_wgts` with probability proportional to its weight
+#'
+#' Takes a vector of strictly positive weights and returns an index with probability 
+#' proportional to its weight. In other words, it selects index `i` with probability
+#' proporitional to `unnormalized_wgts[i]` 
+#' (or exactly `unnormalized_wgts[i]/sum(unnormalized_wgts)`). This does not support
+#' inputs where some of the weights are zero. This has positive probability of 
+#' returning indices that have weight zero. 
+#'
+#'
+#' @param unnormalized_wgts An arma vector of positive numbers
+#'
+#' @details no Modifications to inputs made
+#'
+#' @returns An integer in [0, `unnormalized_wgts.size()`)
+#'
+#' @keyword internal
+#' @noRd
+NULL
 
 resample_lowvar <- function(wgts) {
     .Call(`_gredist_resample_lowvar`, wgts)

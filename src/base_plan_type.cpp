@@ -300,66 +300,50 @@ double Plan::choose_multidistrict_to_split(
         REprintf("The min_region_cut_size is %d\n", min_region_cut_size);
         throw Rcpp::exception("ERROR: Min cut size less than 1!\n");
     }
+    if(num_multidistricts == 1){
+        region_id_to_split = region_dvals.index_max();
+        return 0.0;
+    }
 
     // count total
     int total_multi_ds = 0;
 
     // make vectors with cumulative d value and region label for later
-    std::vector<int> multi_d_vals;
     std::vector<int> region_ids;
+    arma::vec region_unnormed_prob(num_multidistricts, arma::fill::zeros);
+
+    // r_int_wgt(int max, vec cum_wgts)
+    
     
 
     // REprintf("[ ");
     // Iterate over all regions
-    for(int region_id = 0; region_id < num_regions; region_id++) {
+    int vec_index=0;
+    for(int region_id = 0 ; region_id < num_regions; region_id++) {
 
-        int d_val = region_dvals(region_id);
+        int region_size = region_dvals(region_id);
 
         // collect info if multidistrict
-        if(d_val > min_region_cut_size){
+        if(region_size > min_region_cut_size){
             // Add that regions d value to the total
-            total_multi_ds += d_val;
+            total_multi_ds += region_size;
             // add the count and label to vector
-            multi_d_vals.push_back(d_val);
             region_ids.push_back(region_id);
+            region_unnormed_prob(vec_index) = region_size;
+            vec_index++;
         }
     }
-    // REprintf("]\n");
 
-    
 
-    // https://stackoverflow.com/questions/14599057/how-compare-vector-size-with-an-integer
-    size_t intendedSize = 1;
-    if(region_ids.size() == intendedSize){
-        region_id_to_split = region_ids.at(0);
-        // probability of picking is 1 and log(1) = 0
-        return 0;
-    }
-
-    // REprintf("Here in split 2!\n");
-
-    // Now pick an index proportational to d_nk value
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::discrete_distribution<> d(multi_d_vals.begin(), multi_d_vals.end());
-
-    int idx = d(gen);
-
-    // REprintf("Here in split 3 - picked idx %d !", idx);
-
-    // REprintf("[ ");
-    // for (auto i: region_ids){
-    //     REprintf("%d ", i);
-    // }
-    // REprintf("]\n");
-    
+    // Now we only want to consider indices 
+    int idx = r_int_unnormalized_wgt(region_unnormed_prob.head(vec_index));
 
     region_id_to_split = region_ids.at(idx);
 
     // REprintf("Here in split 3.5 - picked idx %d !\n", idx);
 
     double log_prob = std::log(
-        static_cast<double>(multi_d_vals.at(idx))
+        static_cast<double>(region_unnormed_prob.at(idx))
         ) - std::log(
                 static_cast<double>(total_multi_ds)
         );
@@ -415,7 +399,7 @@ double Plan::choose_multidistrict_to_split(
 //'
 //' @keyword internal
 //' @noRd
-bool Plan::draw_tree_on_region(MapParams &map_params, const int region_to_draw_tree_on,
+bool Plan::draw_tree_on_region(const MapParams &map_params, const int region_to_draw_tree_on,
         Tree &ust, std::vector<bool> &visited, std::vector<bool> &ignore, int &root) {
 
     int V = map_params.g.size();
@@ -440,9 +424,8 @@ bool Plan::draw_tree_on_region(MapParams &map_params, const int region_to_draw_t
 
 // Updates the region level info
 void Plan::update_region_info_from_cut(
-    bool split_district_only,
-    const int split_region1_id, const int split_region2_id,
-    EdgeCut cut_edge
+        EdgeCut cut_edge, bool split_district_only,
+        const int split_region1_id, const int split_region2_id
 ){
     // Get information on the two new regions cut
     int split_region1_tree_root, split_region2_tree_root;
@@ -503,39 +486,15 @@ void Plan::update_region_info_from_cut(
     }
 }
 
-bool Plan::attempt_to_find_edge_to_cut(Tree &ust, int root,
-                     int k_param, int min_potential_d, int max_potential_d,
-                     const arma::uvec &pop, const arma::subview_col<arma::uword> &region_ids,
-                     const int region_id_to_split, int total_region_pop, int total_region_dval,
-                     const double lower, const double upper, const double target,
-                     int &new_region1_tree_root, int &new_region1_dval, int &new_region1_pop,
-                     int &new_region2_tree_root, int &new_region2_dval, int &new_region2_pop
-                     ){
-
-    return true;
-
-};
 
 
-
-
-bool Plan::attempt_split(MapParams &map_params, Tree &ust, TreeSplitter &tree_splitter,
+bool Plan::attempt_split(const MapParams &map_params, Tree &ust, TreeSplitter &tree_splitter,
                  std::vector<bool> &visited, std::vector<bool> &ignore, 
                  int const min_region_cut_size, int const max_region_cut_size, 
-                 bool split_district_only, int new_region_id)
+                 const bool split_district_only, 
+                 const int region_id_to_split, const int new_region_id)
 { 
-    // First get region to split 
-    int region_id_to_split;
 
-    if(split_district_only){
-        // if just doing district splits just use remainder region
-        region_id_to_split = remainder_region;
-    }else{
-        // if generalized split pick a region to try to split
-        choose_multidistrict_to_split(
-            region_id_to_split, min_region_cut_size
-        );
-    }
 
     // ensure max cut size never greater than size+1
     auto plan_specific_max_region_cut_size = std::min(
@@ -554,10 +513,9 @@ bool Plan::attempt_split(MapParams &map_params, Tree &ust, TreeSplitter &tree_sp
 
     // Now try to select an edge to cut
     std::pair<bool, EdgeCut> edge_search_result = tree_splitter.select_edge_to_cut(
-        map_params, ust, root,
+        map_params, *this, ust, root,
         min_region_cut_size, plan_specific_max_region_cut_size, 
-        region_ids, region_id_to_split, 
-        region_pops.at(region_id_to_split), region_dvals(region_id_to_split)
+        region_id_to_split
     );
 
     // return false if unsuccessful
@@ -571,16 +529,16 @@ bool Plan::attempt_split(MapParams &map_params, Tree &ust, TreeSplitter &tree_sp
 
 
     // now update the region level information from the edge cut
-    update_region_info_from_cut(split_district_only,
-    region_id_to_split, new_region_id,
-    cut_edge);
+    update_region_info_from_cut(
+        cut_edge, split_district_only,
+        region_id_to_split, new_region_id
+    );
 
     // Now update the vertex level information
     update_vertex_info_from_cut(
         ust, cut_edge, 
         region_id_to_split, new_region_id, split_district_only
-        );
+    );
 
     return true;
-
-                 }
+}

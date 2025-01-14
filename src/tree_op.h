@@ -66,11 +66,14 @@ void assign_district(const Tree &ust, arma::subview_col<arma::uword> &districts,
 
 
 
-// TEMP REMOVE LATER
-void assign_region_ids_from_tree(const Tree &ust, 
+/*
+ * Assign `new_region_num_id` to all descendants of `root` in `ust`
+ */
+// NOT TESTED BUT COPIED FROM `assign_district` so should be ok
+void assign_region_id_from_tree(const Tree &ust, 
                     arma::subview_col<arma::uword> &region_ids,
                     int root,
-                    int new_region_num_id);
+                    const int new_region_num_id);
 
 /*
  * Find the root of a subtree.

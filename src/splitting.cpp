@@ -474,7 +474,7 @@ void add_new_regions_to_plan_from_cut(
 //'
 //' @return True if two valid regions were split off false otherwise
 //'
-bool attempt_region_split(MapParams &map_params, Tree &ust,
+bool attempt_region_split(const MapParams &map_params, Tree &ust,
                  Plan &plan, const int region_id_to_split,
                  const int new_region_id,
                  std::vector<bool> &visited, std::vector<bool> &ignore, 
@@ -782,17 +782,18 @@ void estimate_cut_k(const Graph &g, int &k, int const last_k,
 //'
 //' @keywords internal
 void generalized_split_maps(
-        MapParams &map_params, 
+        const MapParams &map_params, 
         std::vector<std::unique_ptr<Plan>> &old_plans_vec, 
         std::vector<std::unique_ptr<Plan>> &new_plans_vec,
+        std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
         Rcpp::IntegerMatrix::Column parent_index_vec,
-        const std::vector<double> &unnormalized_sampling_weights,
+        const arma::vec &normalized_cumulative_weights,
         Rcpp::IntegerMatrix::Column draw_tries_vec,
         Rcpp::IntegerMatrix::Column parent_unsuccessful_tries_vec,
         double &accept_rate,
         int &n_unique_parent_indices,
         umat &ancestors, const std::vector<int> &lags,
-        int const k_param, int const min_region_cut_size, int const max_region_cut_size, 
+        int const min_region_cut_size, int const max_region_cut_size, 
         bool const split_district_only,
         RcppThread::ThreadPool &pool,
         int verbosity, int diagnostic_level
@@ -807,35 +808,6 @@ void generalized_split_maps(
     umat ancestors_new(M, n_lags); // lags/ancestor thing
 
 
-    // Create the obj which will sample from the index with probability
-    // proportional to the weights
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::discrete_distribution<> index_sampler(
-            unnormalized_sampling_weights.begin(),
-            unnormalized_sampling_weights.end()
-        );
-
-    // extract and record the normalized weights the sampler is using
-
-    bool print_weights = M < 12 && verbosity > 1;
-    if(print_weights){
-    std::vector<double> p = index_sampler.probabilities();
-    Rprintf("Unnormalized weights are: ");
-    for (auto w : unnormalized_sampling_weights){
-        Rprintf("%.4f, ", w);
-    }
-
-    Rprintf("\n");
-    Rprintf("Normalized weights are: ");
-    
-    for (auto prob : p){
-        if(print_weights) Rprintf("%.4f, ", prob);
-
-    }
-    Rprintf("\n");
-    }
-
     // Because of multithreading we have to add specific checks for if the user
     // wants to quit the program
     const int reject_check_int = 200; // check for interrupts every _ rejections
@@ -849,7 +821,7 @@ void generalized_split_maps(
     RcppThread::ProgressBar bar(M, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
-        //REprintf("Plan %d\n\n", i);
+        // REprintf("Plan %d\n\n", i);
         int reject_ct = 0;
         bool ok = false;
         int idx;
@@ -864,7 +836,9 @@ void generalized_split_maps(
             //draw_tries_vec(i)++;
             // REprintf("Plan %d, iter %d\n", i, iters[i]);
             // use weights to sample previous plan
-            idx = index_sampler(gen);
+            // idx = index_sampler(gen);
+            idx = r_int_wgt(M, normalized_cumulative_weights);
+            
             // REprintf("Picked idx %d, from vector of size %u\n", i, old_plans_vec.size());
 
             // We want the data from the old plans vec but we can't modify it since they
@@ -888,17 +862,16 @@ void generalized_split_maps(
             );
 
             // REprintf("Now splitting region %d\n", region_id_to_split);
-
             // Now try to split that region
-            ok = attempt_region_split(map_params, ust,
-                                      *new_plans_vec.at(i), region_id_to_split,
-                                      new_region_id,
-                                      visited, ignore,
-                                      k_param, min_region_cut_size, 
-                                      plan_specific_max_region_cut_size,
-                                      split_district_only);
+            ok = new_plans_vec.at(i)->attempt_split(
+                map_params, ust, *tree_splitters_ptr_vec.at(i), 
+                visited, ignore, 
+                min_region_cut_size, plan_specific_max_region_cut_size,
+                split_district_only,
+                region_id_to_split, new_region_id
+            );
 
-
+            
             // bad sample; try again
             if (!ok) {
                  // update unsuccessful try

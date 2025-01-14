@@ -74,8 +74,9 @@ void merge_regions(
 int run_merge_split_step_on_a_plan(
     MapParams &map_params,
     bool split_district_only, std::string const merge_prob_type,
-    int const k_param,
-    Plan &plan, Plan &new_plan, int const nsteps_to_run)
+    Plan &plan, Plan &new_plan, 
+    TreeSplitter &tree_splitter,
+    int const nsteps_to_run)
 {
     int V = plan.V;
     Tree ust = init_tree(V);
@@ -192,11 +193,22 @@ int run_merge_split_step_on_a_plan(
         // REprintf("\n\n");
 
         // now attempt to split them
-        bool successful_split = attempt_region_split(map_params, ust,
-            new_plan, merged_id,
-            new_split_region,
-            visited, ignore, 
-            k_param, split_district_only);
+        // bool successful_split = attempt_region_split(map_params, ust,
+        //     new_plan, merged_id,
+        //     new_split_region,
+        //     visited, ignore, 
+        //     k_param, split_district_only);
+
+        int min_region_cut_size, plan_specific_max_region_cut_size;
+        throw Rcpp::exception("Fix cut size thing!");
+
+        bool successful_split = new_plan.attempt_split(
+                map_params, ust, tree_splitter, 
+                visited, ignore, 
+                min_region_cut_size, plan_specific_max_region_cut_size,
+                split_district_only,
+                merged_id, new_split_region
+            );
 
 
         bool proposal_accepted = false;
@@ -292,8 +304,9 @@ void run_merge_split_step_on_all_plans(
     MapParams &map_params,
     std::vector<std::unique_ptr<Plan>> &plan_ptrs_vec, 
     std::vector<std::unique_ptr<Plan>> &new_plan_ptrs_vec, 
+    std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
     bool const split_district_only, std::string const merge_prob_type, 
-    int const k_param, int const nsteps_to_run,
+    int const nsteps_to_run,
     Rcpp::IntegerMatrix::Column success_count_vec
 ){
     int M = (int) plan_ptrs_vec.size();
@@ -308,8 +321,9 @@ void run_merge_split_step_on_all_plans(
         success_count_vec[i] = run_merge_split_step_on_a_plan(
             map_params,
             split_district_only, merge_prob_type,
-            k_param,
-            *plan_ptrs_vec.at(i), *new_plan_ptrs_vec.at(i), nsteps_to_run
+            *plan_ptrs_vec.at(i), *new_plan_ptrs_vec.at(i), 
+            *tree_splitters_ptr_vec.at(i),
+            nsteps_to_run
         );
 
     });

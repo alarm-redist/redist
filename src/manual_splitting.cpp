@@ -289,6 +289,9 @@ List perform_merge_split_steps(
     Plan *plan = new GraphPlan(region_ids.col(0), region_dvals.col(0), V, ndists, total_pop);
     Plan *new_plan = new GraphPlan(dummy_region_ids.col(0), dummy_region_dvals.col(0), V, ndists, total_pop);
 
+    // create splitter
+    TreeSplitter *tree_splitter = new NaiveTopKSplitter(k_param);
+
     // fill in the plan
     plan->num_regions = num_regions;
     plan->num_districts = num_districts;
@@ -317,8 +320,8 @@ List perform_merge_split_steps(
     int num_successes = run_merge_split_step_on_a_plan(
         map_params,
         split_district_only, "uniform",
-        k_param,
-        *plan, *new_plan, num_merge_split_steps
+        *plan, *new_plan, *tree_splitter,
+        num_merge_split_steps
     );
 
     List out = List::create(
