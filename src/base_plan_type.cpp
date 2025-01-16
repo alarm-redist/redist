@@ -118,27 +118,7 @@ Plan::Plan(const Plan& other)
 }
 
 
-// Performs a shallow copy of another plan meaning it 
-// copies all its data but does not change the arma:: matrix it points at
-void Plan::shallow_copy(const Plan& other){
-    // Copy simple members
-    N = other.N;
-    V = other.V;
-    num_regions = other.num_regions;
-    num_districts = other.num_districts;
-    num_multidistricts = other.num_multidistricts;
-    map_pop = other.map_pop;
-    remainder_region = other.remainder_region;
 
-    // shallow copy
-    region_ids = other.region_ids;
-    region_dvals = other.region_dvals;
-
-    // Deep copy std::vector members
-    region_pops = other.region_pops;
-    region_added_order = other.region_added_order;
-    region_order_max = other.region_order_max;
-}
 
 
 
@@ -151,7 +131,7 @@ void Plan::shallow_copy(const Plan& other){
 void Plan::reorder_plan_by_oldest_split(
     Plan &dummy_plan) {
     // Make dummy plan a shallow copy of the plan
-    dummy_plan.shallow_copy(*this);
+    dummy_plan = *this;
 
     // Recall that the region_added_order attribute is a vector that stores info
     // on the relative split order. So if entry i is greater than entry j that 
@@ -241,7 +221,7 @@ void Plan::reorder_plan_by_oldest_split(
     this->region_order_max = this->num_regions + 6;
     
     // copy the dummy plan over
-    dummy_plan.shallow_copy(*this);
+    dummy_plan = *this;
 }
 
 

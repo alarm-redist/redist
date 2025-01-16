@@ -592,12 +592,12 @@ void estimate_cut_k(const Graph &g, int &k, int const last_k,
     int max_ok = 0;
     std::vector<bool> ignore(V);
     std::vector<bool> visited(V);
+    std::vector<int> cut_below_pop(V,0);
+    std::vector<int> parents(V);
+
     int idx = 0;
     int max_V = 0;
     Tree ust = init_tree(V);
-
-    // REprintf("max_ok starting at %d\n", max_ok);
-
 
     for (int i = 0; i < N_max && idx < N_adapt; i++, idx++) {
         if (unnormalized_weights.at(i) == 0) { // skip if not valid
@@ -606,10 +606,6 @@ void estimate_cut_k(const Graph &g, int &k, int const last_k,
         }
 
         int n_vtx = V;
-
-        //auto r = plan.region_dvals(arma::span(0, plan.num_regions - 1));
-
-        // arma::span(0,  plan.num_regions - 1);
 
         // Get the index of the region with the largest dval
         int biggest_region_id; int biggest_dval; int max_valid_dval;
@@ -625,7 +621,7 @@ void estimate_cut_k(const Graph &g, int &k, int const last_k,
             max_valid_dval = biggest_dval-1;
         }
 
-        double biggest_dval_region_pop = plan_ptrs_vec.at(i)->region_pops.at(biggest_region_id);
+        int biggest_dval_region_pop = plan_ptrs_vec.at(i)->region_pops.at(biggest_region_id);
 
         for (int j = 0; j < V; j++) {
             // if not the biggest region mark as ignore
@@ -644,21 +640,31 @@ void estimate_cut_k(const Graph &g, int &k, int const last_k,
             continue;
         }
 
-        devs.push_back(tree_dev(ust, root, pop, biggest_dval_region_pop, target, min_region_cut_size, max_region_cut_size));
+        // reset the cut below pop to zero
+        std::fill(cut_below_pop.begin(), cut_below_pop.end(), 0);
+        tree_pop(ust, root, pop, cut_below_pop, parents);
+
+        devs.push_back(
+            tree_cut_devs(ust, root, cut_below_pop, target, 
+                        plan_ptrs_vec.at(i)->region_ids,
+                        biggest_region_id, biggest_dval, biggest_dval_region_pop,
+                        min_region_cut_size, max_region_cut_size)
+                      );
+
         int n_ok = 0;
-        for (int j = 0; j < V-1; j++) {
-            if (devs.at(idx).at(j) <= tol) { // sorted
+        for(const auto &a_dev : devs.at(idx)){
+            if (a_dev <= tol) { // sorted
                 n_ok++;
             } else {
                 break;
             }
         }
 
+
         if (n_ok <= k_max)
             distr_ok(n_ok) += 1.0 / N_adapt;
         if (n_ok > max_ok && n_ok < k_max){
             max_ok = n_ok;
-            // REprintf("max_ok now %d\n", max_ok);
         }
             
         Rcpp::checkUserInterrupt();
@@ -668,13 +674,16 @@ void estimate_cut_k(const Graph &g, int &k, int const last_k,
     // For each k, compute pr(selected edge within top k),
     // among maps where valid edge was selected
     for (k = 1; k <= k_max; k++) {
+        // if k > max_v
         double sum_within = 0;
         int n_ok = 0;
         for (int i = 0; i < N_adapt; i++) {
             double dev = devs.at(i).at(r_int(k));
             if (dev > tol) continue;
             else n_ok++;
-            for (int j = 0; j < N_adapt; j++) {
+            // need min to avoid indexing errors
+            for (int j = 0; j < std::min(N_adapt, (int) devs.size()); j++) {
+                if(devs.at(j).size() < k) throw Rcpp::exception("Potential k is bigger than region!");
                 sum_within += ((double) (dev <= devs.at(j).at(k-1))) / N_adapt;
             }
         }
@@ -685,10 +694,7 @@ void estimate_cut_k(const Graph &g, int &k, int const last_k,
         if (verbosity >= 3) {
             Rcout << " [maximum hit; falling back to naive k estimator]";
         }
-
-        k = std::max(max_ok, k_max); // NOTE: used to be max_ok but that seemed too small??
-        // k = std::min(V-1, k);
-        // Rprintf("We took k as %d\n", k);
+        k = max_ok;
     }
 
     if (last_k < k_max && k < last_k * 0.6) k = (int) (0.5*k + 0.5*last_k);
@@ -843,7 +849,9 @@ void generalized_split_maps(
 
             // We want the data from the old plans vec but we can't modify it since they
             // point to the same matrix so we do shallow copy             
-            new_plans_vec.at(i)->shallow_copy(*old_plans_vec.at(idx));
+            // new_plans_vec.at(i)->shallow_copy(*old_plans_vec.at(idx));
+
+            *new_plans_vec.at(i) = *old_plans_vec.at(idx);
 
             // REprintf("Now picking region to split\n");
             if(split_district_only){
@@ -912,7 +920,8 @@ void generalized_split_maps(
 
     // now replace the old plans with the new ones
     for(int i=0; i < M; i++){
-        old_plans_vec.at(i)->shallow_copy(*new_plans_vec.at(i));
+        *old_plans_vec.at(i) = *new_plans_vec.at(i);
+        // old_plans_vec.at(i)->shallow_copy(*new_plans_vec.at(i));
     }
 
 

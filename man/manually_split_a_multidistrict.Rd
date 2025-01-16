@@ -56,6 +56,9 @@ adjacency list.
 \item \code{uncut_tree_root} - The root of the uncut spanning tree drawn.
 \item \code{cut_tree} - The cut spanning tree drawn stored as a 0-indexed directed
 adjacency list.
+\item \code{pop_below} - The population below each vertex in \code{uncut_tree} ie
+the population induced by removing the edge terminating in that vertex
+\item \code{uncut_tree_vertex_parents}: The parents of each vertex in the uncut tree
 \item \code{new_region1_id} - The label of the first of the two new split
 regions.
 \item \code{new_region1_tree_root} - The root of the cut tree associated with

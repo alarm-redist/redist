@@ -20,7 +20,7 @@ redist_gsmc(
   resample = TRUE,
   runs = 1L,
   ncores = 0L,
-  multiprocess = TRUE,
+  multiprocess = FALSE,
   pop_temper = 0,
   init_region_ids_mat = NULL,
   init_dvals_mat = NULL,

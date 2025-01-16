@@ -65,8 +65,7 @@ public:
     int region_order_max; // value of current largest region order number
 
     
-    // shallow copy another plan
-    void shallow_copy(const Plan& other);
+
 
     virtual ~Plan() = default; 
 

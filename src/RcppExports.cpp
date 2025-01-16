@@ -500,6 +500,28 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// plan_copy_testing
+List plan_copy_testing();
+RcppExport SEXP _gredist_plan_copy_testing() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(plan_copy_testing());
+    return rcpp_result_gen;
+END_RCPP
+}
+// new_plan_testing
+List new_plan_testing(arma::umat region_id_mat, arma::umat region_id_mat2);
+RcppExport SEXP _gredist_new_plan_testing(SEXP region_id_matSEXP, SEXP region_id_mat2SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::umat >::type region_id_mat(region_id_matSEXP);
+    Rcpp::traits::input_parameter< arma::umat >::type region_id_mat2(region_id_mat2SEXP);
+    rcpp_result_gen = Rcpp::wrap(new_plan_testing(region_id_mat, region_id_mat2));
+    return rcpp_result_gen;
+END_RCPP
+}
 // arma_testing
 List arma_testing();
 RcppExport SEXP _gredist_arma_testing() {
@@ -822,6 +844,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_ms_plans", (DL_FUNC) &_gredist_ms_plans, 15},
     {"_gredist_optimal_gsmc_plans", (DL_FUNC) &_gredist_optimal_gsmc_plans, 12},
     {"_gredist_pareto_dominated", (DL_FUNC) &_gredist_pareto_dominated, 1},
+    {"_gredist_plan_copy_testing", (DL_FUNC) &_gredist_plan_copy_testing, 0},
+    {"_gredist_new_plan_testing", (DL_FUNC) &_gredist_new_plan_testing, 2},
     {"_gredist_arma_testing", (DL_FUNC) &_gredist_arma_testing, 0},
     {"_gredist_random_cpp_testing", (DL_FUNC) &_gredist_random_cpp_testing, 0},
     {"_gredist_closest_adj_pop", (DL_FUNC) &_gredist_closest_adj_pop, 3},

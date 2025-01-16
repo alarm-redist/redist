@@ -35,10 +35,13 @@ only the first column is used.}
 \value{
 A list with the following
 \itemize{
-\item{uncut_tree}{ - The spanning tree drawn stored as a 0-indexed directed
-adjacency list.}
-\item{root}{ - The 0-indexed root of the tree.}
-\item{num_attempts}{ - The number of attempts it took to draw the tree.}
+\item \code{uncut_tree} - he spanning tree drawn stored as a 0-indexed directed
+adjacency list.
+\item \code{root} - The 0-indexed root of the tree.
+\item \code{num_attempts} -  The number of attempts it took to draw the tree.
+\item \code{pop_below} - The population below each vertex in \code{uncut_tree} ie
+the population induced by removing the edge terminating in that vertex
+\item \code{uncut_tree_vertex_parents}: The parents of each vertex in the tree
 }
 }
 \description{

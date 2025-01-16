@@ -126,7 +126,7 @@ int run_merge_split_step_on_a_plan(
     // get draw by doing unif_rv(rd_u);
 
     // Make sure the new plan has the same data as the old
-    new_plan.shallow_copy(plan);
+    new_plan = plan;
 
     for (int j = 0; j < nsteps_to_run; j++){
 
@@ -284,14 +284,14 @@ int run_merge_split_step_on_a_plan(
         if(proposal_accepted){
             num_successes++;
             // update plan to new plan
-            plan.shallow_copy(new_plan);
+            plan = new_plan;
             // if plan changed then the proposal adj pairs and sampler becomes 
             // the current one 
             adj_pairs_and_boundary_len_vec = proposed_adj_pairs_and_boundary_len_vec;
             pair_index_sampler = proposed_pair_index_sampler;
         }else{
             // plan didn't change so revert new plan back to old plan
-            new_plan.shallow_copy(plan);
+            new_plan = plan;
         }
 
     }

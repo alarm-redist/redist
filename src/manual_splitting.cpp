@@ -38,6 +38,9 @@
 //'     0-indexed directed edge adjacency graph.
 //'     - `num_attempts`: The number of attempts it took to draw the tree.
 //'     - `root`: The root vertex of the tree (0-indexed)
+//'     - `pop_below`: The population below each vertex in `uncut_tree` ie
+//'     the population induced by removing the edge terminating in that vertex
+//'     - `uncut_tree_vertex_parents`: The parents of each vertex in the tree
 //' @export
 List draw_a_tree_on_a_region(
     List adj_list, const arma::uvec &counties, const arma::uvec &pop,
@@ -77,6 +80,8 @@ List draw_a_tree_on_a_region(
     Tree ust = init_tree(V);
     std::vector<bool> visited(V);
     std::vector<bool> ignore(V, false);
+    std::vector<int> pop_below(V, 0);
+    std::vector<int> tree_vertex_parents(V, -2);
 
 
 
@@ -93,11 +98,17 @@ List draw_a_tree_on_a_region(
         num_attempts++;
     }
 
+    // computes population below each vtx and parent of each vertex
+    tree_vertex_parents.at(root) = -1;
+    tree_pop(ust, root, pop, pop_below, tree_vertex_parents);
+
 
     List out = List::create(
         _["uncut_tree"] = ust,
         _["root"] = root,
-        _["num_attempts"] = num_attempts
+        _["num_attempts"] = num_attempts,
+        _["pop_below"] = pop_below,
+        _["uncut_tree_vertex_parents"] = tree_vertex_parents
     );
 
     return out;
@@ -161,6 +172,8 @@ List perform_a_valid_multidistrict_split(
     Tree pre_split_ust = init_tree(V);
     std::vector<bool> visited(V);
     std::vector<bool> ignore(V, false);
+    std::vector<int> pop_below(V, 0);
+    std::vector<int> tree_vertex_parents(V, -2);
 
 
     // Mark it as ignore if its not in the region to split
@@ -203,6 +216,10 @@ List perform_a_valid_multidistrict_split(
             (int) plan->region_dvals(region_id_to_split) - 1
             );
 
+        // computes population below each vtx and parent of each vertex
+        tree_vertex_parents.at(root) = -1;
+        tree_pop(ust, root, pop, pop_below, tree_vertex_parents);
+
 
         // try to get an edge to cut
         successful_split_made = get_edge_to_cut(ust, root,
@@ -240,6 +257,8 @@ List perform_a_valid_multidistrict_split(
         plan->Rprint();
     }
 
+
+
     List out = List::create(
         _["num_attempts"] = try_counter,
         _["region_id_that_was_split"] = region_id_to_split,
@@ -251,6 +270,8 @@ List perform_a_valid_multidistrict_split(
         _["uncut_tree"] = pre_split_ust,
         _["uncut_tree_root"] = uncut_tree_root,
         _["cut_tree"] = ust,
+        _["pop_below"] = pop_below,
+        _["uncut_tree_vertex_parents"] = tree_vertex_parents,
         _["new_region1_id"] = new_region1_id,
         _["new_region1_tree_root"] = new_region1_tree_root,
         _["new_region1_size"] = new_region1_dval,

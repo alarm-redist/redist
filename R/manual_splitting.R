@@ -72,12 +72,15 @@ get_subtree_from_root <- function(tree_adj_list, root) {
 #' @param verbose Whether or not to print the plan before a tree is drawn on it
 #'
 #' @returns A list with the following
-#' \itemize{
-#'   \item{uncut_tree}{ - The spanning tree drawn stored as a 0-indexed directed
-#'   adjacency list.}
-#'   \item{root}{ - The 0-indexed root of the tree.}
-#'   \item{num_attempts}{ - The number of attempts it took to draw the tree.}
-#' }
+#' * `uncut_tree` - he spanning tree drawn stored as a 0-indexed directed
+#'   adjacency list.
+#' * `root` - The 0-indexed root of the tree.
+#' * `num_attempts` -  The number of attempts it took to draw the tree.
+#' * `pop_below` - The population below each vertex in `uncut_tree` ie
+#'    the population induced by removing the edge terminating in that vertex
+#' * `uncut_tree_vertex_parents`: The parents of each zero-indexed vertex in
+#'    the tree. A value of -1 means that vertex is the root and -2 means that
+#'    vertex is not in the tree.
 #'
 #' @export
 draw_tree_on_region <- function(
@@ -177,6 +180,11 @@ draw_tree_on_region <- function(
 #' * `uncut_tree_root` - The root of the uncut spanning tree drawn.
 #' * `cut_tree` - The cut spanning tree drawn stored as a 0-indexed directed
 #'   adjacency list.
+#' * `pop_below` - The population below each vertex in `uncut_tree` ie
+#'    the population induced by removing the edge terminating in that vertex
+#' * `uncut_tree_vertex_parents`: The parents of each zero-indexed vertex in
+#'    the tree. A value of -1 means that vertex is the root and -2 means that
+#'    vertex is not in the tree.
 #' * `new_region1_id` - The label of the first of the two new split
 #'   regions.
 #' * `new_region1_tree_root` - The root of the cut tree associated with

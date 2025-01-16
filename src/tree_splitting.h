@@ -9,6 +9,7 @@
 #include "smc_base.h"
 
 
+
 // [[Rcpp::depends(RcppArmadillo)]]
 
 
@@ -65,5 +66,14 @@ std::pair<bool, EdgeCut> get_naive_top_k_edge(const int root,
                      const int region_id_to_split, const int total_region_pop, const int total_region_size,
                      const double lower, const double upper, const double target
 );
+
+
+// Gets the deviance for each edge in a tree
+std::vector<double> tree_cut_devs(Tree &ust, int root,
+                             std::vector<int> const &cut_below_pop, double const target,
+                             const arma::subview_col<arma::uword> &region_ids,
+                             int const region_id, int const region_size, int const region_pop,
+                             int const min_potential_cut_size, int const max_potential_cut_size
+                             );
 
 #endif

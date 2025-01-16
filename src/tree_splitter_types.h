@@ -8,6 +8,7 @@
 #include "tree_splitting.h"
 #include "base_plan_type.h"
 
+
 // [[Rcpp::depends(RcppArmadillo)]]
 
 class Plan;

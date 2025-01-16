@@ -106,6 +106,7 @@ void clear_tree(Tree &tree) {
 // [[Rcpp::export]]
 int tree_pop(Tree &ust, int vtx, const arma::uvec &pop,
              std::vector<int> &pop_below, std::vector<int> &parent) {
+    // REprintf("At vertex %d with pop %d\n", vtx, pop(vtx));
     int pop_at = pop(vtx);
     const std::vector<int> *nbors = &ust[vtx];
     int length = nbors->size();
