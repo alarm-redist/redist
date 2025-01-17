@@ -29,7 +29,7 @@
 //' @param lower Acceptable lower bounds on a valid district's population
 //' @param upper Acceptable upper bounds on a valid district's population
 //' @param region_ids A V by 1 matrix with the region ids of each vertex
-//' @param region_dvals A ndists by 1 matrix with the sizes of each regions 
+//' @param region_sizes A ndists by 1 matrix with the sizes of each regions 
 //' @param verbose Whether or not to print out the inputted plan before
 //' attemping to draw a tree. 
 //'
@@ -126,7 +126,7 @@ List draw_a_tree_on_a_region(
 //' a successful cut is made.
 //'
 //'
-//' @inheritParams gsmc_plans
+//' @inheritParams run_redist_gsmc
 //' @inheritParams get_edge_to_cut
 //'
 //' @returns A list with the following
@@ -146,11 +146,12 @@ List perform_a_valid_multidistrict_split(
     bool verbose, int k_param
 ){
     if(split_dval_min > split_dval_max) throw Rcpp::exception("Split min must be less than split max!\n");
+    MapParams map_params(adj_list, counties, pop, ndists, lower, target, upper);
     // unpack control params
-    Graph g = list_to_graph(adj_list);
-    Multigraph cg = county_graph(g, counties);
-    int V = g.size();
+    int V = map_params.V;
     double total_pop = sum(pop);
+
+    
 
     Rprintf("It is %d\n", (int) split_district_only);
 
@@ -160,6 +161,9 @@ List perform_a_valid_multidistrict_split(
         ndists, total_pop, split_district_only,
         num_regions, num_districts, pop);
 
+    // Create tree splitter 
+    TreeSplitter * tree_splitter = new NaiveTopKSplitter(k_param);
+
 
     if(verbose){
         Rprintf("Splitting Plan: ");
@@ -167,7 +171,7 @@ List perform_a_valid_multidistrict_split(
     }
 
     // Create tree related stuff
-    int root;
+    int uncut_tree_root;
     Tree ust = init_tree(V);
     Tree pre_split_ust = init_tree(V);
     std::vector<bool> visited(V);
@@ -183,7 +187,7 @@ List perform_a_valid_multidistrict_split(
 
     // Counts the number of split attempts
     bool successful_split_made = false;
-    int try_counter {0};
+    int try_counter = 1;
 
 
     // splitting related params
@@ -191,66 +195,67 @@ List perform_a_valid_multidistrict_split(
     int new_region1_dval, new_region2_dval;
     int new_region1_pop, new_region2_pop;
 
-    int uncut_tree_root;
-
-    // Keep running until done
-    while(!successful_split_made){
-        clear_tree(ust);
-        // Get a tree
-        int result = sample_sub_ust(g, ust, V, root, visited, ignore, pop, lower, upper, counties, cg);
-        uncut_tree_root = root;
-        // Return unsuccessful if tree not drawn
-        if (result != 0){
-            try_counter++;
-            continue;
-        }
-
-        // copy uncut tree
-        pre_split_ust = ust;
-
-        // Try to make a cut
-        int max_potential_d;
-
-        split_dval_max = std::min(
-            split_dval_max, 
-            (int) plan->region_dvals(region_id_to_split) - 1
-            );
-
-        // computes population below each vtx and parent of each vertex
-        tree_vertex_parents.at(root) = -1;
-        tree_pop(ust, root, pop, pop_below, tree_vertex_parents);
-
-
-        // try to get an edge to cut
-        successful_split_made = get_edge_to_cut(ust, root,
-                        k_param, split_dval_min, split_dval_max,
-                        pop, plan->region_ids, 
-                        region_id_to_split, plan->region_pops.at(region_id_to_split),
-                        plan->region_dvals(region_id_to_split),
-                        lower, upper, target,
-                        new_region1_tree_root, new_region1_dval, new_region1_pop,
-                        new_region2_tree_root, new_region2_dval, new_region2_pop);
-
-        try_counter++;
-        // increase the counter by 1
-        if(verbose){
-            Rcout << "Attempt " << try_counter << "\n";
-        }
-
-    }
-
 
     // make new region ids the split one and num_regions
     int new_region1_id = region_id_to_split; 
     int new_region2_id = plan->num_regions;
 
-    // now update things with the new region ids 
-    add_new_regions_to_plan_from_cut(
-        ust, *plan, split_district_only,
-        region_id_to_split, plan->num_regions,
-        new_region1_tree_root, new_region1_dval,  new_region1_pop,
-        new_region2_tree_root, new_region2_dval, new_region2_pop
-    );
+    // Keep running until done
+    while(!successful_split_made){
+        if(verbose){
+            Rcout << "Attempt " << try_counter << "\n";
+        }
+        clear_tree(ust);
+ 
+        // Try to draw a tree on region
+        bool tree_drawn = plan->draw_tree_on_region(map_params, region_id_to_split,
+            ust, visited, ignore, uncut_tree_root);
+
+        // Try again and increase counter if tree not drawn
+        if (!tree_drawn){
+            try_counter++;
+            continue;
+        }
+
+        split_dval_max = std::min(
+            split_dval_max, 
+            (int) plan->region_sizes(region_id_to_split) - 1
+            );
+
+        // Now try to select an edge to cut
+        std::pair<bool,EdgeCut> edge_search_result = tree_splitter->select_edge_to_cut(
+            map_params, *plan, ust, uncut_tree_root,
+            split_dval_min, split_dval_max, 
+            region_id_to_split
+        );
+
+        // Try again and increase counter if no good edge found
+        if (!edge_search_result.first){
+            try_counter++;
+            continue;
+        }
+
+        // copy uncut tree before splitting 
+        pre_split_ust = ust;
+
+        // If successful extract the edge cut info
+        EdgeCut cut_edge = edge_search_result.second;
+        // Now erase the cut edge in the tree
+        erase_tree_edge(ust, cut_edge);
+
+
+        // now update the region level information from the edge cut
+        plan->update_region_info_from_cut(
+            cut_edge, split_district_only,
+            region_id_to_split, new_region2_id
+        );
+
+        // Now update the vertex level information
+        plan->update_vertex_info_from_cut(
+            ust, cut_edge, 
+            region_id_to_split, new_region2_id, split_district_only
+        );
+    }
 
 
     if(verbose){
@@ -262,7 +267,7 @@ List perform_a_valid_multidistrict_split(
     List out = List::create(
         _["num_attempts"] = try_counter,
         _["region_id_that_was_split"] = region_id_to_split,
-        _["region_sizes"] = plan->region_dvals,
+        _["region_sizes"] = plan->region_sizes,
         _["partial_plan_labels"] = plan->region_ids,
         _["region_pops"] = plan->region_pops,
         _["num_regions"] = plan->num_regions,
@@ -292,7 +297,7 @@ List perform_merge_split_steps(
         int k_param, 
         double target, double lower, double upper,
         int ndists, int num_regions, int num_districts,
-        arma::umat region_ids, arma::umat region_dvals,
+        arma::umat region_ids, arma::umat region_sizes,
         std::vector<int> region_pops,
         bool split_district_only, int num_merge_split_steps,
         bool verbose
@@ -304,10 +309,10 @@ List perform_merge_split_steps(
     int V = g.size();
     double total_pop = sum(pop);
 
-    auto dummy_region_ids = region_ids; auto dummy_region_dvals = region_dvals;
+    auto dummy_region_ids = region_ids; auto dummy_region_dvals = region_sizes;
 
     // Create a plan object
-    Plan *plan = new GraphPlan(region_ids.col(0), region_dvals.col(0), V, ndists, total_pop);
+    Plan *plan = new GraphPlan(region_ids.col(0), region_sizes.col(0), V, ndists, total_pop);
     Plan *new_plan = new GraphPlan(dummy_region_ids.col(0), dummy_region_dvals.col(0), V, ndists, total_pop);
 
     // create splitter
@@ -318,7 +323,7 @@ List perform_merge_split_steps(
     plan->num_districts = num_districts;
     plan->num_multidistricts = plan->num_regions - plan->num_districts;
     plan->region_ids = region_ids.col(0);
-    plan->region_dvals = region_dvals.col(0);
+    plan->region_sizes = region_sizes.col(0);
     plan->region_pops = region_pops;
 
     // TODO FIX THIS but need to create this
@@ -346,7 +351,7 @@ List perform_merge_split_steps(
     );
 
     List out = List::create(
-        _["region_dvals"] = plan->region_dvals,
+        _["region_sizes"] = plan->region_sizes,
         _["plan_vertex_ids"] = plan->region_ids,
         _["pops"] = plan->region_pops,
         _["num_regions"] = plan->num_regions,

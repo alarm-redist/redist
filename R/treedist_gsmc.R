@@ -1,47 +1,46 @@
 #####################################################
 # Author: Philip O'Sullivan
 # Institution: Harvard University
-# Date Created: 2024/08/18
+# Date Created: 2025/1/17
 # Purpose: tidy R wrapper to run gSMC with merge split steps
-# redistricting code
+# redistricting code on the space of spanning forests
 ####################################################
+
 
 
 #' gSMC Redistricting Sampler (O'Sullivan, McCartan and Imai ???)
 #'
-#' `redist_gsmc` uses a Sequential Monte Carlo algorithm (O'Sullivan, McCartan and Imai ???)
+#' `treedist_gsmc` uses a Sequential Monte Carlo algorithm (O'Sullivan, McCartan and Imai ???)
 #' to generate representative samples of congressional or legislative
 #' redistricting plans according to contiguity, population, compactness, and
-#' administrative boundary constraints.
+#' administrative boundary constraints. It samples plans on the space of spanning
+#' forests.
 #'
 #' This function draws samples from a specific target measure controlled by
 #' the `map` parameters.
 #'
-#' @inheritParams redist_smc
-#' @param k_params Either a single value to use as the splitting parameter for
-#' every round or a vector of length ndists-1 where each value is the one to use for
-#' a split.
+#' @inheritParams redist_gsmc
 #' @param multiprocess Whether or not to launch multiple processes (sometimes
 #' better to disable to avoid using too much memory. NOTE: Non multiprocessing
 #' appears to introduce validation bugs right now)
 #'
-#' @return `redist_gsmc` returns a [redist_plans] object containing the simulated
+#' @return `treedist_gsmc` returns a [redist_plans] object containing the simulated
 #' plans.
 #'
 #' @export
-redist_gsmc <- function(
+treedist_gsmc <- function(
         map, M, counties = NULL,
-        estimate_cut_k = TRUE,
-       manual_k_params = 6, adapt_k_thresh = .9999,
-       split_district_only = FALSE, weight_type = "optimal",
-       ms_freq = 0, ms_steps_multiplier = 1L,
-       run_ms = 0 < ms_freq && ms_freq <= ndists, merge_prob_type = "uniform",
-       resample = TRUE, runs = 1L,
-       ncores = 0L, multiprocess=FALSE,
-       pop_temper = 0,
-       init_region_ids_mat = NULL, init_region_sizes_mat = NULL, init_num_regions = 1,
-       min_region_cut_sizes = NULL, max_region_cut_sizes = NULL,
-       verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE){
+        split_district_only = FALSE,
+        splitting_method,
+        weight_type = "optimal",
+        ms_freq = 0, ms_steps_multiplier = 1L,
+        run_ms = 0 < ms_freq && ms_freq <= ndists, merge_prob_type = "uniform",
+        resample = TRUE, runs = 1L,
+        ncores = 0L, multiprocess=FALSE,
+        pop_temper = 0,
+        init_region_ids_mat = NULL, init_region_sizes_mat = NULL, init_num_regions = 1,
+        min_region_cut_sizes = NULL, max_region_cut_sizes = NULL,
+        verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE){
 
     if(init_num_regions > 1 || !is.null(init_region_ids_mat) || !is.null(init_region_sizes_mat)){
         cli_abort("Starting with non-trivial partial plans not supported yet!")
@@ -166,7 +165,7 @@ redist_gsmc <- function(
         adapt_k_thresh = adapt_k_thresh,
         estimate_cut_k=estimate_cut_k,
         merge_prob_type = merge_prob_type
-        )
+    )
 
     # verbosity stuff
     verbosity <- 1
@@ -428,7 +427,7 @@ redist_gsmc <- function(
 
 
         # nunique_original_ancestors <- c(nunique_original_ancestors,
-              #                          dplyr::n_distinct(algout$original_ancestors_mat[, ncol(algout$original_ancestors_mat)]))
+        #                          dplyr::n_distinct(algout$original_ancestors_mat[, ncol(algout$original_ancestors_mat)]))
 
         if (!is.nan(n_eff) && n_eff/M <= 0.05)
             cli_warn(c("Less than 5% resampling efficiency.",
@@ -529,4 +528,3 @@ redist_gsmc <- function(
 
     out
 }
-

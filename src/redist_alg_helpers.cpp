@@ -2,11 +2,10 @@
 * Author: Philip O'Sullivan'
 * Institution: Harvard University
 * Date Created: 2024/10
-* Purpose: Helper functions for all smc algorithm types
+* Purpose: Helper functions for all redist algorithm types
 ********************************************************/
 
-#include "smc_alg_helpers.h"
-
+#include "redist_alg_helpers.h"
 
 
 //' Copies data from an arma Matrix into an Rcpp Matrix
@@ -94,3 +93,34 @@ void reorder_all_plans(
 }
 
 
+
+
+std::vector<std::unique_ptr<TreeSplitter>> get_tree_splitters(
+    SplittingMethodType const splitting_method,
+    Rcpp::List const &control,
+    int const nsims
+){
+    // create the pointer 
+    std::vector<std::unique_ptr<TreeSplitter>> tree_splitters_ptr_vec; 
+    tree_splitters_ptr_vec.reserve(nsims);
+
+    if(splitting_method == SplittingMethodType::NaiveTopK){
+        // set splitting k to -1
+        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), nsims, [] {
+            return std::make_unique<NaiveTopKSplitter>(-1);
+        });
+    }else if(splitting_method == SplittingMethodType::UnifValid){
+        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), nsims, [] {
+            return std::make_unique<UniformValidSplitter>();
+        });
+    }else if(splitting_method == SplittingMethodType::ExpBiggerAbsDev){
+        double alpha = as<double>(control["splitting_alpha"]);
+        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), nsims, [alpha] {
+            return std::make_unique<ExpoWeightedSplitter>(alpha);
+        });
+    }else{
+        throw Rcpp::exception("Invalid Splitting Method!");
+    }
+
+    return tree_splitters_ptr_vec;
+}

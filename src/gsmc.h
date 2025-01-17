@@ -18,7 +18,7 @@
 #include "splitting.h"
 #include "merging.h"
 #include "weights.h"
-#include "smc_alg_helpers.h"
+#include "redist_alg_helpers.h"
 #include "graph_plan_type.h"
 #include "tree_splitter_types.h"
 
@@ -42,20 +42,22 @@
 //' relative to
 //' @param lower Acceptable lower bounds on a valid district's population
 //' @param upper Acceptable upper bounds on a valid district's population
-//' @param M The number of plans (samples) to draw
+//' @param nsims The number of plans (samples) to draw
 //' @param k_param The k parameter from the SMC algorithm, you choose among the top k_param edges
 //' @param control Named list of additional parameters.
 //' @param num_threads The number of threads the threadpool should use
 //' @param verbosity What level of detail to print out while the algorithm is
 //' running <ADD OPTIONS>
 //' @export
+//' @keywords internal
 // [[Rcpp::export]]
-List gsmc_plans(
+List run_redist_gsmc(
         int N, List adj_list,
         const arma::uvec &counties, const arma::uvec &pop,
         double target, double lower, double upper,
-        int M, // M is Number of particles aka number of different plans
+        int nsims, // M is Number of particles aka number of different plans
         arma::umat region_id_mat, arma::umat region_sizes_mat,
+        std::string sampling_space, // sampling space (graphs, forest, etc)
         List control, // control has pop temper, and k parameter value, and whether only district splits are allowed
         int verbosity = 3, bool diagnostic_mode = false
 );

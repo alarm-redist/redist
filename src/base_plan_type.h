@@ -52,7 +52,7 @@ public:
 
 
     // vectors with length num_regions
-    arma::subview_col<arma::uword> region_dvals; //Vector of length num_regions mapping region ids to their d values
+    arma::subview_col<arma::uword> region_sizes; //Vector of length num_regions mapping region ids to their d values
     // Regions have R prefix whereas districts end in an integer (in string form).
     std::vector<int> region_pops; // Vector of length num_regions mapping region ids
     // to the regions population

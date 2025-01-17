@@ -51,10 +51,10 @@ void merge_regions(
     // update the num districts and multi-districts 
 
     // if two districts then -2 districts, +1 multi
-    if(plan.region_dvals(region1_id) == 1 && plan.region_dvals(region2_id) == 1){
+    if(plan.region_sizes(region1_id) == 1 && plan.region_sizes(region2_id) == 1){
         plan.num_districts -= 2;
         plan.num_multidistricts++;
-    }else if(plan.region_dvals(region1_id) == 1 || plan.region_dvals(region2_id) == 1){
+    }else if(plan.region_sizes(region1_id) == 1 || plan.region_sizes(region2_id) == 1){
         // else if only one is a district just decrease number of districts by 1
         plan.num_districts--;
     }else{
@@ -62,10 +62,10 @@ void merge_regions(
     }
 
     // now update the region population and dval 
-    int merged_dval = plan.region_dvals(region1_id)+ plan.region_dvals(region2_id);
+    int merged_dval = plan.region_sizes(region1_id)+ plan.region_sizes(region2_id);
     int merged_pop = plan.region_pops.at(region1_id) + plan.region_pops.at(region2_id);
 
-    plan.region_dvals(merged_id) = merged_dval;
+    plan.region_sizes(merged_id) = merged_dval;
     plan.region_pops.at(merged_id) = merged_pop;
 
 }
@@ -158,8 +158,8 @@ int run_merge_split_step_on_a_plan(
         // get info
         int region1_id = pair_triple.at(0); int region2_id = pair_triple.at(1);
         int old_region_boundary_length = pair_triple.at(2);
-        int old_region1_dval = plan.region_dvals(region1_id);
-        int old_region2_dval = plan.region_dvals(region2_id);
+        int old_region1_dval = plan.region_sizes(region1_id);
+        int old_region2_dval = plan.region_sizes(region2_id);
 
         // make the merged region the one associated with the larger dval
         int merged_id; int new_split_region;

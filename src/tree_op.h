@@ -82,23 +82,23 @@ void assign_region_id_from_tree(const Tree &ust,
 int find_subroot(const Tree &ust, const std::vector<bool> &ignore);
 
 
-//' Erases an edge from a tree
-//'
-//' Erases the directed edge (`cut_edge.parent_vertex`, `cut_edge.child_vertex`)
-//' from the tree `ust`. The directed edge here means we have `child_vertex` being one of 
-//' the values in `ust[parent_vertex]`.
-//'
-//'
-//' @param ust A directed spanning tree passed by reference
-//' @param cut_edge An `EdgeCut` object representing the edge cut
-//'
-//' @details Modifications
-//'    - The edge (`cut_edge.parent_vertex`, `cut_edge.child_vertex`) 
-//'    is removed from `ust`
-//'
-//'
-//' @keyword internal
-//' @noRd
+/*  
+ *  Erases an edge from a tree
+ * 
+ *  Erases the directed edge (`cut_edge.cut_vertex_parent`, `cut_edge.cut_vertex`)
+ *  from the tree `ust`. The directed edge here means we have `child_vertex` being one of 
+ *  the values in `ust[parent_vertex]`.
+ * 
+ * 
+ *  @param ust A directed spanning tree passed by reference
+ *  @param cut_edge An `EdgeCut` object representing the edge cut
+ * 
+ *  @details Modifications
+ *     - The edge (`cut_edge.cut_vertex_parent`, `cut_edge.cut_vertex`) 
+ *     is removed from `ust`
+ * 
+ * 
+ */ 
 void erase_tree_edge(Tree &ust, EdgeCut cut_edge);
 
 #endif

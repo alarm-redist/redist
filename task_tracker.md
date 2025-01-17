@@ -6,6 +6,12 @@ The hope of this document is manage the list of tasks to do and also keep a reco
 Note all of the diagnostic information is accurately updated to account for a final resampling. When the weights are really low variance it doesn't really matter but just take that with a grain of salt for everything. 
 
 
+# ---- Possible Bugs and Other Issues -----
+
+**Random seed bug** 
+Since `state_xo` and `state_sr` are global variables when you run without multiprocessing this seems to cause issues (validation sometimes fails.) This needs to be addressed as when running on the cluster multiprocessing is very inefficient (since memory is more expensive than cpu cores). 
+
+
 # ----- ACTIVE TASKS -----
 
 **Fix merge split bug**

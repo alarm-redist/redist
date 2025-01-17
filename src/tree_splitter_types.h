@@ -58,4 +58,41 @@ public:
 };
 
 
+
+// Splitting method that just tries to pick one of the top k edges unif 
+class UniformValidSplitter : public TreeSplitter{
+
+public:
+    // implementation of the pure virtual function
+    UniformValidSplitter() = default;
+
+
+    std::pair<bool,EdgeCut> select_edge_to_cut(
+        const MapParams &map_params, Plan &plan,
+        Tree &ust, const int root, 
+        const int min_potential_cut_size, const int max_potential_cut_size, 
+        const int region_id_to_split);
+};
+
+
+// Splitting method that picks edge w/ prob ∝ exp(-alpha*bigger dev)
+class ExpoWeightedSplitter : public TreeSplitter{
+
+public:
+    // implementation of the pure virtual function
+    ExpoWeightedSplitter(double alpha): alpha(alpha){
+        if(alpha < 0.0) throw Rcpp::exception("Alpha must be less than zero!");
+    }
+
+    double alpha;
+
+
+    std::pair<bool,EdgeCut> select_edge_to_cut(
+        const MapParams &map_params, Plan &plan,
+        Tree &ust, const int root, 
+        const int min_potential_cut_size, const int max_potential_cut_size, 
+        const int region_id_to_split);
+};
+
+
 #endif

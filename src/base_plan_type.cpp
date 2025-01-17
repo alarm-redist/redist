@@ -20,7 +20,7 @@ Plan::Plan(
     int N, int total_map_pop, bool split_district_only,
     int num_regions, int num_districts,
     const arma::uvec &pop)
-: region_ids(region_ids_col), region_dvals(region_dvals_col) // Initialize the reference
+: region_ids(region_ids_col), region_sizes(region_dvals_col) // Initialize the reference
 {
     // check num_regions and num_districts inputs make sense
     if (N < 2) throw Rcpp::exception("Tried to create a plan with N < 2 regions!");
@@ -29,7 +29,7 @@ Plan::Plan(
     if (num_districts > num_regions) throw Rcpp::exception("Tried to create a plan object with more districts than total regions!");
     if (num_districts == num_regions && num_regions != N) throw Rcpp::exception("Tried to create a partial plan with only districts!");
     if (num_districts < 0 || num_regions < 0 || N < 0) throw Rcpp::exception("Tried to create a plan object with negative number of regions!");
-    if (region_dvals.n_elem != N) throw Rcpp::exception("The region dvals column passed in is not size N!");
+    if (region_sizes.n_elem != N) throw Rcpp::exception("The region dvals column passed in is not size N!");
 
     // set number of regions, districts, multidistricts, map pop, and V
     this->num_regions = num_regions;
@@ -49,15 +49,15 @@ Plan::Plan(
         for (size_t i = 0; i < num_regions; i++)
         {
             // make sure each regions dval is non-zero
-            if(region_dvals(i) <= 0) throw Rcpp::exception("Region dvals input for region is 0 or less!"); 
+            if(region_sizes(i) <= 0) throw Rcpp::exception("Region dvals input for region is 0 or less!"); 
 
-            total_dvals_implied_by_dval_mat += region_dvals(i);
-            if(region_dvals(i) == 1) num_districts_implied_by_dval_mat++;
+            total_dvals_implied_by_dval_mat += region_sizes(i);
+            if(region_sizes(i) == 1) num_districts_implied_by_dval_mat++;
 
             // add check that if split district only then only last one has dval > 1
             if (split_district_only && i != num_regions-1)
             {
-                if(region_dvals(i) != 1) throw Rcpp::exception("For partial plan the remainder does not have region id=num_regions-1!"); 
+                if(region_sizes(i) != 1) throw Rcpp::exception("For partial plan the remainder does not have region id=num_regions-1!"); 
             }
         }
 
@@ -66,7 +66,7 @@ Plan::Plan(
         
         // If multiple regions it assumes that 0 is oldest region then 1 ... num_regions
     }else{
-        if(region_dvals(0) != N) throw Rcpp::exception("Region dvals input for 1-region partial plan not N!");
+        if(region_sizes(0) != N) throw Rcpp::exception("Region dvals input for 1-region partial plan not N!");
     }
 
 
@@ -100,7 +100,7 @@ Plan::Plan(
 
 
 Plan::Plan(const Plan& other)
-    : region_ids(other.region_ids), region_dvals(other.region_dvals) // Share the same reference
+    : region_ids(other.region_ids), region_sizes(other.region_sizes) // Share the same reference
 {
     // Copy simple members
     N = other.N;
@@ -211,7 +211,7 @@ void Plan::reorder_plan_by_oldest_split(
         int old_region_id = indices[i];
         int new_region_id = i;
 
-        this->region_dvals(new_region_id) = dummy_plan.region_dvals(old_region_id);
+        this->region_sizes(new_region_id) = dummy_plan.region_sizes(old_region_id);
         this->region_pops.at(new_region_id) = dummy_plan.region_pops.at(old_region_id);
         // Since the regions are in order of added reset the order added to just be 1,..., n
         this->region_added_order.at(i) = i+1;
@@ -230,14 +230,14 @@ void Plan::reorder_plan_by_oldest_split(
 void Plan::Rprint() const{
     RcppThread::Rcout << "Plan with " << num_regions << " regions, " << num_districts
                       << " districts, " << num_multidistricts << " multidistricts and "
-                      << arma::sum(region_dvals) << " sum of dnk and "
+                      << arma::sum(region_sizes) << " sum of dnk and "
                       << V << " Vertices.\n";
 
 
     RcppThread::Rcout << "Region Level Values:[";
     for(int region_id = 0; region_id < num_regions; region_id++){
         RcppThread::Rcout << "(Region " << region_id <<
-            ", Size=" << region_dvals(region_id) << ", pop= " <<
+            ", Size=" << region_sizes(region_id) << ", pop= " <<
             region_pops.at(region_id) <<"), ";
     }
     RcppThread::Rcout << "]\n";
@@ -281,7 +281,7 @@ double Plan::choose_multidistrict_to_split(
         throw Rcpp::exception("ERROR: Min cut size less than 1!\n");
     }
     if(num_multidistricts == 1){
-        region_id_to_split = region_dvals.index_max();
+        region_id_to_split = region_sizes.index_max();
         return 0.0;
     }
 
@@ -301,7 +301,7 @@ double Plan::choose_multidistrict_to_split(
     int vec_index=0;
     for(int region_id = 0 ; region_id < num_regions; region_id++) {
 
-        int region_size = region_dvals(region_id);
+        int region_size = region_sizes(region_id);
 
         // collect info if multidistrict
         if(region_size > min_region_cut_size){
@@ -403,6 +403,48 @@ bool Plan::draw_tree_on_region(const MapParams &map_params, const int region_to_
 
 
 // Updates the region level info
+//' Creates new regions and updates the `Plan` object using a cut tree
+//'
+//' Takes a cut spanning tree `ust` and variables on the two new regions
+//' induced by the cuts and creates space/updates the information on those
+//' two new regions in the `plan` object. This function increases the number
+//' of regions aspect by 1 and updates the region level information and all
+//' other variables changed by adding a new region. 
+//'
+//' It also sets `plan.remainder_region` equal to `new_region2_id` if 
+//' split_district_only is true. 
+//'
+//'
+//' @title Create and update new plan regions from cut tree
+//'
+//' @param ust A cut (ie has two partition pieces) directed spanning tree
+//' passed by reference
+//' @param plan A plan object
+//' @param split_district_only Whether or not this was split according to a 
+//' one district split scheme (as in does the remainder need to be updated)
+//' @param old_split_region_id The id of the region that was split into the two
+//' new ones. Region1 will be set to this id
+//' @param new_region_id The id that region2 will be set 
+//' @param new_region1_tree_root The vertex of the root of one piece of the cut
+//' tree. This always corresponds to the region with the smaller dval (allowing
+//' for the possiblity the dvals are equal).
+//' @param new_region1_dval The dval associated with the new region 1
+//' @param new_region1_pop The population associated with the new region 1
+//' @param new_region2_tree_root The vertex of the root of other piece of the cut
+//' tree. This always corresponds to the region with the bigger dval (allowing
+//' for the possiblity the dvals are equal).
+//' @param new_region2_dval The dval associated with the new region 2
+//' @param new_region2_pop The population associated with the new region 2
+//' @param new_region1_id The id the new region 1 was assigned in the plan
+//' @param new_region2_id The id the new region 2 was assigned in the plan
+//'
+//' @details Modifications
+//'    - `plan` is updated in place with the two new regions
+//'    - `new_region1_id` is set to the id new region1 was assigned
+//'    which is just the `old_split_region_id`
+//'    - `new_region2_id` is set to the id new region2 was assigned 
+//'    which is just `plan.num_regions-1`
+//'
 void Plan::update_region_info_from_cut(
         EdgeCut cut_edge, bool split_district_only,
         const int split_region1_id, const int split_region2_id
@@ -448,13 +490,13 @@ void Plan::update_region_info_from_cut(
 
     // Now update the region level information
     // updates the new region 1
-    region_dvals(split_region1_id) = split_region1_size;
+    region_sizes(split_region1_id) = split_region1_size;
     region_added_order.at(split_region1_id) = new_region1_order_added_num;
     region_pops.at(split_region1_id) = split_region1_pop;
 
     // updates the new region 2
     // New region 2's id is the highest id number so push back
-    region_dvals(split_region2_id) = split_region2_size;
+    region_sizes(split_region2_id) = split_region2_size;
     region_added_order.at(split_region2_id) = new_region2_order_added_num;
     region_pops.at(split_region2_id) = split_region2_pop;
 
@@ -479,7 +521,7 @@ bool Plan::attempt_split(const MapParams &map_params, Tree &ust, TreeSplitter &t
     // ensure max cut size never greater than size+1
     auto plan_specific_max_region_cut_size = std::min(
         max_region_cut_size, // max_region_cut_size 
-        ((int) region_dvals(region_id_to_split) -1)
+        ((int) region_sizes(region_id_to_split) -1)
     );
 
     // Now try to draw a tree on the region

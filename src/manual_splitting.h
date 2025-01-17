@@ -73,7 +73,7 @@ List draw_a_tree_on_a_region(
 //'
 //' @title Split a multidistrict into two regions
 //'
-//' @inheritParams gsmc_plans
+//' @inheritParams run_redist_gsmc
 // [[Rcpp::export]]
 List perform_a_valid_multidistrict_split(
     List adj_list, const arma::uvec &counties, const arma::uvec &pop,

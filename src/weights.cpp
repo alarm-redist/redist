@@ -278,7 +278,7 @@ std::discrete_distribution<>  get_adj_pair_sampler(
         {
             int region1_id = adj_pairs_and_boundary_lens.at(i).at(0);
             int region2_id = adj_pairs_and_boundary_lens.at(i).at(1);
-            int region1_dval = plan.region_dvals(region1_id); int region2_dval = plan.region_dvals(region2_id);
+            int region1_dval = plan.region_sizes(region1_id); int region2_dval = plan.region_sizes(region2_id);
 
             // check if both are districts
             if(region1_dval == 1 && region2_dval == 1){
@@ -299,7 +299,7 @@ std::discrete_distribution<>  get_adj_pair_sampler(
         {
             int region1_id = adj_pairs_and_boundary_lens.at(i).at(0);
             int region2_id = adj_pairs_and_boundary_lens.at(i).at(1);
-            int region1_dval = plan.region_dvals(region1_id); int region2_dval = plan.region_dvals(region2_id);
+            int region1_dval = plan.region_sizes(region1_id); int region2_dval = plan.region_sizes(region2_id);
 
             // check if both are districts
             if(region1_dval == 1 && region2_dval == 1){
@@ -442,7 +442,7 @@ double get_log_retroactive_splitting_prob(
 
     // Iterate over all regions
     for(int region_id = 0; region_id < plan.num_regions; region_id++) {
-        int d_val = plan.region_dvals(region_id);
+        int d_val = plan.region_sizes(region_id);
 
         // collect info if multidistrict and not the two we started with
         if(d_val > 1 && region_id != region1_id && region_id != region2_id){
@@ -452,7 +452,7 @@ double get_log_retroactive_splitting_prob(
     }
 
     // Now get the sum of dnk values of two regions aka the unioned old region
-    int unioned_region_dnk = plan.region_dvals(region1_id) + plan.region_dvals(region2_id);
+    int unioned_region_dnk = plan.region_sizes(region1_id) + plan.region_sizes(region2_id);
     // update the total number of multi district dvals with the value the union region would have been
     total_multi_ds += unioned_region_dnk;
 
@@ -482,8 +482,8 @@ double compute_log_pop_temper(
     double region2_pop = plan.region_pops[region2_id];
     double old_region_pop = region1_pop + region2_pop;
 
-    int region1_dval = plan.region_dvals[region1_id];
-    int region2_dval = plan.region_dvals[region2_id];
+    int region1_dval = plan.region_sizes[region1_id];
+    int region2_dval = plan.region_sizes[region2_id];
     int old_region_dval = region1_dval + region2_dval;
 
     // now compute the devations for each of them

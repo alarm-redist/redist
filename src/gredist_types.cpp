@@ -8,7 +8,7 @@
 #include "gredist_types.h"
 
 /*
- * Convert R adjacency list to Graph object (vector of vectors of ints).
+ * Convert zero-indxed R adjacency list to Graph object (vector of vectors of ints).
  */
 Graph list_to_graph(const Rcpp::List &l) {
     int V = l.size();
@@ -63,6 +63,7 @@ MapParams::MapParams(Rcpp::List adj_list, const arma::uvec &counties, const arma
     counties(counties), pop(pop), ndists(ndists), lower(lower), target(target), upper(upper) {
         g = list_to_graph(adj_list);
         cg = county_graph(g, counties);
+        V = static_cast<int>(g.size());
 }
 
 
@@ -92,5 +93,78 @@ void EdgeCut::get_split_regions_info(
         split_region1_tree_root = tree_root;
         split_region1_dval = cut_above_region_size;
         split_region1_pop = cut_above_pop;
+    }
+};
+
+
+std::array<double, 2> EdgeCut::compute_signed_pop_deviances(double target){
+    // get the target populations for the regions 
+    double cut_below_target = target*cut_below_region_size;
+    double cut_above_target = target*cut_above_region_size;
+    // get the deviation 
+    double below_dev = (static_cast<double>(cut_below_pop) - cut_below_target)/cut_below_target;
+    double above_dev = (static_cast<double>(cut_above_pop) - cut_above_target)/cut_above_target;
+    
+    std::array<double, 2> unsigned_devs = {below_dev, above_dev};
+
+    return std::array<double, 2>{below_dev, above_dev};
+}
+
+
+std::array<double, 2> EdgeCut::compute_abs_pop_deviances(double target){
+    // get the raw unsigned deviations
+    std::array<double, 2> unsigned_devs = compute_signed_pop_deviances(target);
+    // take the absolute value
+    std::array<double, 2> signed_devs = {
+        std::fabs(unsigned_devs.at(0)), std::fabs(unsigned_devs.at(1))
+    };
+
+    return signed_devs;
+}
+
+
+
+SplittingMethodType get_splitting_type(std::string const &splitting_type_str){
+    // find the type or throw an error 
+    if(splitting_type_str == "naive_top_k"){
+        return SplittingMethodType::NaiveTopK;
+    }else if(splitting_type_str == "uniform_valid_edge"){
+        return SplittingMethodType::UnifValid;
+    }else if(splitting_type_str == "expo_bigger_abs_dev"){
+        return SplittingMethodType::ExpBiggerAbsDev;
+    }else{
+        REprintf("Splitting Type %s is not a valid type!\n", 
+        splitting_type_str.c_str());
+        throw Rcpp::exception("Invalid splitting type passed");
+    }
+}
+
+std::string splitting_method_to_str(SplittingMethodType splitting_method){
+    if(splitting_method == SplittingMethodType::NaiveTopK){
+        return "Naive Top K Splitter";
+    }else if(splitting_method == SplittingMethodType::UnifValid){
+        return "Uniform Valid Edge Splitter";
+    }else if(splitting_method == SplittingMethodType::ExpBiggerAbsDev){
+        return "Exponentially Weighted Absolute Bigger Deviance Splitter";
+    }else{
+        REprintf("Splitting Type %d has no to str form!\n", 
+        splitting_method);
+        throw Rcpp::exception("Invalid splitting type passed to_str");
+    }
+}
+
+
+SplitRegionSizeType get_splitting_size_regime(std::string const &splitting_size_regime_str){
+    // find the type or throw an error 
+    if(splitting_size_regime_str == "split_district_only"){
+        return SplitRegionSizeType::DistrictOnly;
+    }else if(splitting_size_regime_str == "any_valid_sizes"){
+        return SplitRegionSizeType::AnyValidSize;
+    }else if(splitting_size_regime_str == "custom"){
+        return SplitRegionSizeType::CustomSizes;
+    }else{
+        REprintf("Splitting Size Regime %s is not a valid regime!\n", 
+        splitting_size_regime_str.c_str());
+        throw Rcpp::exception("Invalid splitting size regime passed");
     }
 };

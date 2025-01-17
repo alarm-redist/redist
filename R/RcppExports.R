@@ -71,15 +71,16 @@ dist_dist_diff <- function(p, i_dist, j_dist, x_center, y_center, x, y) {
 #' relative to
 #' @param lower Acceptable lower bounds on a valid district's population
 #' @param upper Acceptable upper bounds on a valid district's population
-#' @param M The number of plans (samples) to draw
+#' @param nsims The number of plans (samples) to draw
 #' @param k_param The k parameter from the SMC algorithm, you choose among the top k_param edges
 #' @param control Named list of additional parameters.
 #' @param num_threads The number of threads the threadpool should use
 #' @param verbosity What level of detail to print out while the algorithm is
 #' running <ADD OPTIONS>
 #' @export
-gsmc_plans <- function(N, adj_list, counties, pop, target, lower, upper, M, region_id_mat, region_sizes_mat, control, verbosity = 3L, diagnostic_mode = FALSE) {
-    .Call(`_gredist_gsmc_plans`, N, adj_list, counties, pop, target, lower, upper, M, region_id_mat, region_sizes_mat, control, verbosity, diagnostic_mode)
+#' @keywords internal
+run_redist_gsmc <- function(N, adj_list, counties, pop, target, lower, upper, nsims, region_id_mat, region_sizes_mat, sampling_space, control, verbosity = 3L, diagnostic_mode = FALSE) {
+    .Call(`_gredist_run_redist_gsmc`, N, adj_list, counties, pop, target, lower, upper, nsims, region_id_mat, region_sizes_mat, sampling_space, control, verbosity, diagnostic_mode)
 }
 
 log_st_map <- function(g, districts, counties, n_distr) {
@@ -117,7 +118,7 @@ draw_a_tree_on_a_region <- function(adj_list, counties, pop, ndists, num_regions
 #'
 #' @title Split a multidistrict into two regions
 #'
-#' @inheritParams gsmc_plans
+#' @inheritParams run_redist_gsmc
 perform_a_valid_multidistrict_split <- function(adj_list, counties, pop, N, num_regions, num_districts, region_id_to_split, target, lower, upper, region_ids, region_sizes, split_dval_min, split_dval_max, split_district_only, verbose = FALSE, k_param = 1L) {
     .Call(`_gredist_perform_a_valid_multidistrict_split`, adj_list, counties, pop, N, num_regions, num_districts, region_id_to_split, target, lower, upper, region_ids, region_sizes, split_dval_min, split_dval_max, split_district_only, verbose, k_param)
 }
@@ -162,33 +163,6 @@ ms_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, r
     .Call(`_gredist_ms_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, verbosity)
 }
 
-#' Uses gsmc method with optimal weights to generate a sample of `M` plans in `c++`
-#'
-#' Using the procedure outlined in <PAPER HERE> this function uses Sequential
-#' Monte Carlo (SMC) methods to generate a sample of `M` plans
-#'
-#' @title Run Optimalgsmc
-#'
-#' @param N The number of districts the final plans will have
-#' @param adj_list A 0-indexed adjacency list representing the undirected graph
-#' which represents the underlying map the plans are to be drawn on
-#' @param counties Vector of county labels of each vertex in `g`
-#' @param pop A vector of the population associated with each vertex in `g`
-#' @param target Ideal population of a valid district. This is what deviance is calculated
-#' relative to
-#' @param lower Acceptable lower bounds on a valid district's population
-#' @param upper Acceptable upper bounds on a valid district's population
-#' @param M The number of plans (samples) to draw
-#' @param k_param The k parameter from the SMC algorithm, you choose among the top k_param edges
-#' @param control Named list of additional parameters.
-#' @param num_threads The number of threads the threadpool should use
-#' @param verbosity What level of detail to print out while the algorithm is
-#' running <ADD OPTIONS>
-#' @export
-optimal_gsmc_plans <- function(N, adj_list, counties, pop, target, lower, upper, M, control, num_threads = -1L, verbosity = 3L, diagnostic_mode = FALSE) {
-    .Call(`_gredist_optimal_gsmc_plans`, N, adj_list, counties, pop, target, lower, upper, M, control, num_threads, verbosity, diagnostic_mode)
-}
-
 pareto_dominated <- function(x) {
     .Call(`_gredist_pareto_dominated`, x)
 }
@@ -213,26 +187,6 @@ closest_adj_pop <- function(adj, i_dist, g_prop) {
     .Call(`_gredist_closest_adj_pop`, adj, i_dist, g_prop)
 }
 
-#' Generate a random index of `unnormalized_wgts` with probability proportional to its weight
-#'
-#' Takes a vector of strictly positive weights and returns an index with probability 
-#' proportional to its weight. In other words, it selects index `i` with probability
-#' proporitional to `unnormalized_wgts[i]` 
-#' (or exactly `unnormalized_wgts[i]/sum(unnormalized_wgts)`). This does not support
-#' inputs where some of the weights are zero. This has positive probability of 
-#' returning indices that have weight zero. 
-#'
-#'
-#' @param unnormalized_wgts An arma vector of positive numbers
-#'
-#' @details no Modifications to inputs made
-#'
-#' @returns An integer in [0, `unnormalized_wgts.size()`)
-#'
-#' @keyword internal
-#' @noRd
-NULL
-
 rint1 <- function(n, max) {
     .Call(`_gredist_rint1`, n, max)
 }
@@ -241,56 +195,8 @@ runif1 <- function(n, max) {
     .Call(`_gredist_runif1`, n, max)
 }
 
-#' Generate a random index of `unnormalized_wgts` with probability proportional to its weight
-#'
-#' Takes a vector of strictly positive weights and returns an index with probability 
-#' proportional to its weight. In other words, it selects index `i` with probability
-#' proporitional to `unnormalized_wgts[i]` 
-#' (or exactly `unnormalized_wgts[i]/sum(unnormalized_wgts)`). This does not support
-#' inputs where some of the weights are zero. This has positive probability of 
-#' returning indices that have weight zero. 
-#'
-#'
-#' @param unnormalized_wgts An arma vector of positive numbers
-#'
-#' @details no Modifications to inputs made
-#'
-#' @returns An integer in [0, `unnormalized_wgts.size()`)
-#'
-#' @keyword internal
-#' @noRd
-NULL
-
 resample_lowvar <- function(wgts) {
     .Call(`_gredist_resample_lowvar`, wgts)
-}
-
-plan_joint <- function(m1, m2, pop) {
-    .Call(`_gredist_plan_joint`, m1, m2, pop)
-}
-
-renumber_matrix <- function(plans, renumb) {
-    .Call(`_gredist_renumber_matrix`, plans, renumb)
-}
-
-solve_hungarian <- function(costMatrix) {
-    .Call(`_gredist_solve_hungarian`, costMatrix)
-}
-
-rsg <- function(adj_list, population, Ndistrict, target_pop, thresh, maxiter) {
-    .Call(`_gredist_rsg`, adj_list, population, Ndistrict, target_pop, thresh, maxiter)
-}
-
-k_smallest <- function(x, k = 1L) {
-    .Call(`_gredist_k_smallest`, x, k)
-}
-
-k_biggest <- function(x, k = 1L) {
-    .Call(`_gredist_k_biggest`, x, k)
-}
-
-smc_plans <- function(N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, control, verbosity = 1L) {
-    .Call(`_gredist_smc_plans`, N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, control, verbosity)
 }
 
 #' Copies data from an arma Matrix into an Rcpp Matrix
@@ -332,6 +238,34 @@ NULL
 #' @keywords internal
 NULL
 
+plan_joint <- function(m1, m2, pop) {
+    .Call(`_gredist_plan_joint`, m1, m2, pop)
+}
+
+renumber_matrix <- function(plans, renumb) {
+    .Call(`_gredist_renumber_matrix`, plans, renumb)
+}
+
+solve_hungarian <- function(costMatrix) {
+    .Call(`_gredist_solve_hungarian`, costMatrix)
+}
+
+rsg <- function(adj_list, population, Ndistrict, target_pop, thresh, maxiter) {
+    .Call(`_gredist_rsg`, adj_list, population, Ndistrict, target_pop, thresh, maxiter)
+}
+
+k_smallest <- function(x, k = 1L) {
+    .Call(`_gredist_k_smallest`, x, k)
+}
+
+k_biggest <- function(x, k = 1L) {
+    .Call(`_gredist_k_biggest`, x, k)
+}
+
+smc_plans <- function(N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, control, verbosity = 1L) {
+    .Call(`_gredist_smc_plans`, N, l, counties, pop, n_distr, target, lower, upper, rho, districts, n_drawn, n_steps, constraints, control, verbosity)
+}
+
 splits <- function(dm, community, nd, max_split) {
     .Call(`_gredist_splits`, dm, community, nd, max_split)
 }
@@ -339,156 +273,6 @@ splits <- function(dm, community, nd, max_split) {
 dist_cty_splits <- function(dm, community, nd) {
     .Call(`_gredist_dist_cty_splits`, dm, community, nd)
 }
-
-#' Attempts to cut one region into two from a spanning tree and if successful
-#' cuts the tree object and returns information on what the two new regions 
-#' would be. Does not actually update the plan vertex list.
-#'
-#' Takes a spanning tree `ust` drawn on a specific region and attempts to cut
-#' it to produce two new regions using the generalized splitting procedure
-#' outlined <PAPER HERE>. This function is based on `cut_districts` in `smc.cpp`
-#' however the crucial difference is even if a cut is successful it does not
-#' update the plan. Instead it just returns the information on the two new
-#' regions if successful and the cut tree.
-#'
-#' It will only attempt to create regions where the size is between
-#' min_potential_d and max_potential_d (inclusive). So the one district
-#' split case is `min_potential_d=max_potential_d=1`.
-#'
-#' By convention the first new region (`new_region1`) will always be the region
-#' with the smaller d-value (although they can be equal).
-#'
-#' @title Attempt to Find a Valid Spanning Tree Edge to Cut into Two New Regions 
-#'
-#' @param ust A directed spanning tree passed by reference
-#' @param root The root vertex of the spanning tree
-#' @param k_param The k parameter from the SMC algorithm, you choose among the top k_param edges
-#' @param min_potential_d The smallest potential d value it will try for a cut. 
-#' @param max_potential_d The largest potential d value it will try for a cut. Setting this to 
-#' 1 will result in only 1 district splits. 
-#' @param pop A vector of the population associated with each vertex in `g`
-#' @param region_ids A vector mapping 0 indexed vertices to their region id number
-#' @param region_id_to_split The id of the region in the plan object we're attempting to split
-#' @param total_region_pop The total population of the region being split 
-#' @param total_region_dval The dval of the region being split 
-#' @param lower Acceptable lower bounds on a valid district's population
-#' @param upper Acceptable upper bounds on a valid district's population
-#' @param target Ideal population of a valid district. This is what deviance is calculated
-#' relative to
-#' @param new_region1_tree_root The index of the root of tree associated with
-#' the first new region (if the tree cut was successful)
-#' @param new_region1_dval The d-value of the first new region (if the tree cut
-#'  was successful)
-#' @param new_region1_pop The population of the first new region (if the tree cut
-#' was successful)
-#' @param new_region2_tree_root The index of the root of tree associated with
-#' the second new region (if the tree cut was successful)
-#' @param new_region2_dval The d-value of the second new region (if the tree cut
-#'  was successful)
-#' @param new_region2_pop The population of the second new region (if the tree cut
-#' was successful)
-#'
-#' @details Modifications
-#'    - If two new valid regions are split then the tree `ust` is cut into two
-#'    distjoint pieces
-#'    - If two new valid regions are split then the 6 `new_region` inputs are all
-#'    updated by reference with the values associated with the new regions
-#'
-#' @return True if two valid regions were successfully split, false otherwise
-#'
-#' @noRd
-#' @keywords internal
-NULL
-
-#' Attempts to split a multi-district within a plan into two new regions with
-#' valid population bounds (has option for one district splits only)
-#'
-#' Given a plan this attempts to split a multi-district in it into two new
-#' regions where both regions have valid population bounds. (If
-#' `split_district_only` is true it will only attempt to split off a district
-#' and a remainder). It does this by drawing a spanning tree uniformly at random
-#' then calling `get_edge_to_cut` on  that. If the a valid cut is found it
-#' then calls `update_plan_from_cut` to update the plan accordingly. If not
-#' successful returns false and does nothing.
-#'
-#' This is based on the `split_map` function in `smc.cpp`
-#'
-#'
-#' @title Attempt Generalized Region split of a multi-district within a plan
-#'
-#' @param g A graph (adjacency list) passed by reference
-#' @param ust A directed tree object (this will be cleared in the function so
-#' whatever it was before doesn't matter)
-#' @param counties Vector of county labels of each vertex in `g`
-#' @param cg multigraph object (not sure why this is needed)
-#' @param plan A plan object
-#' @param region_id_to_split The label of the region in the plan object we're attempting to split
-#' @param new_region_id The id of the larger of the two new split reasons if successful
-#' @param lower Acceptable lower bounds on a valid district's population
-#' @param upper Acceptable upper bounds on a valid district's population
-#' @param target Ideal population of a valid district. This is what deviance is calculated
-#' relative to
-#' Target population (probably Total population of map/Num districts)
-#' @param k_param The k parameter from the SMC algorithm, you choose among the top k_param edges
-#' @param split_district_only Whether or not to only allow for one district
-#' split. If `true` then only splits off districts.
-#'
-#' @details Modifications
-#'    - If two new valid regions are split then the plan object is updated accordingly
-#'    - If two new valid regions are split then the new_region_ids is updated so the
-#'    first entry is the first new region and the second entry is the second new region
-#'
-#' @return True if two valid regions were split off false otherwise
-#'
-#' @noRd
-#' @keywords internal
-NULL
-
-#' Creates new regions and updates the `Plan` object using a cut tree
-#'
-#' Takes a cut spanning tree `ust` and variables on the two new regions
-#' induced by the cuts and creates space/updates the information on those
-#' two new regions in the `plan` object. This function increases the number
-#' of regions aspect by 1 and updates the region level information and all
-#' other variables changed by adding a new region. 
-#'
-#' It also sets `plan.remainder_region` equal to `new_region2_id` if 
-#' split_district_only is true. 
-#'
-#'
-#' @title Create and update new plan regions from cut tree
-#'
-#' @param ust A cut (ie has two partition pieces) directed spanning tree
-#' passed by reference
-#' @param plan A plan object
-#' @param split_district_only Whether or not this was split according to a 
-#' one district split scheme (as in does the remainder need to be updated)
-#' @param old_split_region_id The id of the region that was split into the two
-#' new ones. Region1 will be set to this id
-#' @param new_region_id The id that region2 will be set 
-#' @param new_region1_tree_root The vertex of the root of one piece of the cut
-#' tree. This always corresponds to the region with the smaller dval (allowing
-#' for the possiblity the dvals are equal).
-#' @param new_region1_dval The dval associated with the new region 1
-#' @param new_region1_pop The population associated with the new region 1
-#' @param new_region2_tree_root The vertex of the root of other piece of the cut
-#' tree. This always corresponds to the region with the bigger dval (allowing
-#' for the possiblity the dvals are equal).
-#' @param new_region2_dval The dval associated with the new region 2
-#' @param new_region2_pop The population associated with the new region 2
-#' @param new_region1_id The id the new region 1 was assigned in the plan
-#' @param new_region2_id The id the new region 2 was assigned in the plan
-#'
-#' @details Modifications
-#'    - `plan` is updated in place with the two new regions
-#'    - `new_region1_id` is set to the id new region1 was assigned
-#'    which is just the `old_split_region_id`
-#'    - `new_region2_id` is set to the id new region2 was assigned 
-#'    which is just `plan.num_regions-1`
-#'
-#' @noRd
-#' @keywords internal
-NULL
 
 #' Splits a multidistrict in all of the plans
 #'
@@ -578,49 +362,9 @@ swMH <- function(aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parit
     .Call(`_gredist_swMH`, aList, cdvec, popvec, nsims, constraints, eprob, pct_dist_parity, beta_sequence, beta_weights, lambda, beta, adapt_beta, adjswap, exact_mh, adapt_eprob, adapt_lambda, num_hot_steps, num_annealing_steps, num_cold_steps, verbose)
 }
 
-split_entire_map_once_new_cut_func <- function(N, adj_list, counties, pop, target, lower, upper, split_district_only, verbose) {
-    .Call(`_gredist_split_entire_map_once_new_cut_func`, N, adj_list, counties, pop, target, lower, upper, split_district_only, verbose)
-}
-
-#' Erases an edge from a tree
-#'
-#' Erases the directed edge (`cut_edge.cut_vertex_parent`, `cut_edge.cut_vertex`)
-#' from the tree `ust`. The directed edge here means we have `child_vertex` being one of 
-#' the values in `ust[parent_vertex]`.
-#'
-#'
-#' @param ust A directed spanning tree passed by reference
-#' @param cut_edge An `EdgeCut` object representing the edge cut
-#'
-#' @details Modifications
-#'    - The edge (`cut_edge.cut_vertex_parent`, `cut_edge.cut_vertex`) 
-#'    is removed from `ust`
-#'
-#'
-NULL
-
 tree_pop <- function(ust, vtx, pop, pop_below, parent) {
     .Call(`_gredist_tree_pop`, ust, vtx, pop, pop_below, parent)
 }
-
-#' Erases an edge from a tree
-#'
-#' Erases the directed edge (`cut_edge.parent_vertex`, `cut_edge.child_vertex`)
-#' from the tree `ust`. The directed edge here means we have `child_vertex` being one of 
-#' the values in `ust[parent_vertex]`.
-#'
-#'
-#' @param ust A directed spanning tree passed by reference
-#' @param cut_edge An `EdgeCut` object representing the edge cut
-#'
-#' @details Modifications
-#'    - The edge (`cut_edge.parent_vertex`, `cut_edge.child_vertex`) 
-#'    is removed from `ust`
-#'
-#'
-#' @keyword internal
-#' @noRd
-NULL
 
 #' Attempt to pick one of the top k tree edges to split uniformly at random
 #'

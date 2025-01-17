@@ -191,9 +191,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// gsmc_plans
-List gsmc_plans(int N, List adj_list, const arma::uvec& counties, const arma::uvec& pop, double target, double lower, double upper, int M, arma::umat region_id_mat, arma::umat region_sizes_mat, List control, int verbosity, bool diagnostic_mode);
-RcppExport SEXP _gredist_gsmc_plans(SEXP NSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP MSEXP, SEXP region_id_matSEXP, SEXP region_sizes_matSEXP, SEXP controlSEXP, SEXP verbositySEXP, SEXP diagnostic_modeSEXP) {
+// run_redist_gsmc
+List run_redist_gsmc(int N, List adj_list, const arma::uvec& counties, const arma::uvec& pop, double target, double lower, double upper, int nsims, arma::umat region_id_mat, arma::umat region_sizes_mat, std::string sampling_space, List control, int verbosity, bool diagnostic_mode);
+RcppExport SEXP _gredist_run_redist_gsmc(SEXP NSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP nsimsSEXP, SEXP region_id_matSEXP, SEXP region_sizes_matSEXP, SEXP sampling_spaceSEXP, SEXP controlSEXP, SEXP verbositySEXP, SEXP diagnostic_modeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -204,13 +204,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type target(targetSEXP);
     Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
     Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
-    Rcpp::traits::input_parameter< int >::type M(MSEXP);
+    Rcpp::traits::input_parameter< int >::type nsims(nsimsSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type region_id_mat(region_id_matSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type region_sizes_mat(region_sizes_matSEXP);
+    Rcpp::traits::input_parameter< std::string >::type sampling_space(sampling_spaceSEXP);
     Rcpp::traits::input_parameter< List >::type control(controlSEXP);
     Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
     Rcpp::traits::input_parameter< bool >::type diagnostic_mode(diagnostic_modeSEXP);
-    rcpp_result_gen = Rcpp::wrap(gsmc_plans(N, adj_list, counties, pop, target, lower, upper, M, region_id_mat, region_sizes_mat, control, verbosity, diagnostic_mode));
+    rcpp_result_gen = Rcpp::wrap(run_redist_gsmc(N, adj_list, counties, pop, target, lower, upper, nsims, region_id_mat, region_sizes_mat, sampling_space, control, verbosity, diagnostic_mode));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -464,28 +465,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type thin(thinSEXP);
     Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
     rcpp_result_gen = Rcpp::wrap(ms_plans(N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, verbosity));
-    return rcpp_result_gen;
-END_RCPP
-}
-// optimal_gsmc_plans
-List optimal_gsmc_plans(int N, List adj_list, const arma::uvec& counties, const arma::uvec& pop, double target, double lower, double upper, int M, List control, int num_threads, int verbosity, bool diagnostic_mode);
-RcppExport SEXP _gredist_optimal_gsmc_plans(SEXP NSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP MSEXP, SEXP controlSEXP, SEXP num_threadsSEXP, SEXP verbositySEXP, SEXP diagnostic_modeSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type N(NSEXP);
-    Rcpp::traits::input_parameter< List >::type adj_list(adj_listSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
-    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
-    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
-    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
-    Rcpp::traits::input_parameter< int >::type M(MSEXP);
-    Rcpp::traits::input_parameter< List >::type control(controlSEXP);
-    Rcpp::traits::input_parameter< int >::type num_threads(num_threadsSEXP);
-    Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
-    Rcpp::traits::input_parameter< bool >::type diagnostic_mode(diagnostic_modeSEXP);
-    rcpp_result_gen = Rcpp::wrap(optimal_gsmc_plans(N, adj_list, counties, pop, target, lower, upper, M, control, num_threads, verbosity, diagnostic_mode));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -747,25 +726,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// split_entire_map_once_new_cut_func
-List split_entire_map_once_new_cut_func(int N, List adj_list, const arma::uvec& counties, const arma::uvec& pop, double target, double lower, double upper, bool split_district_only, bool verbose);
-RcppExport SEXP _gredist_split_entire_map_once_new_cut_func(SEXP NSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP split_district_onlySEXP, SEXP verboseSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type N(NSEXP);
-    Rcpp::traits::input_parameter< List >::type adj_list(adj_listSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
-    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
-    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
-    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
-    Rcpp::traits::input_parameter< bool >::type split_district_only(split_district_onlySEXP);
-    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(split_entire_map_once_new_cut_func(N, adj_list, counties, pop, target, lower, upper, split_district_only, verbose));
-    return rcpp_result_gen;
-END_RCPP
-}
 // tree_pop
 int tree_pop(Tree& ust, int vtx, const arma::uvec& pop, std::vector<int>& pop_below, std::vector<int>& parent);
 RcppExport SEXP _gredist_tree_pop(SEXP ustSEXP, SEXP vtxSEXP, SEXP popSEXP, SEXP pop_belowSEXP, SEXP parentSEXP) {
@@ -825,7 +785,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_update_conncomp", (DL_FUNC) &_gredist_update_conncomp, 3},
     {"_gredist_crsg", (DL_FUNC) &_gredist_crsg, 9},
     {"_gredist_dist_dist_diff", (DL_FUNC) &_gredist_dist_dist_diff, 7},
-    {"_gredist_gsmc_plans", (DL_FUNC) &_gredist_gsmc_plans, 13},
+    {"_gredist_run_redist_gsmc", (DL_FUNC) &_gredist_run_redist_gsmc, 14},
     {"_gredist_log_st_map", (DL_FUNC) &_gredist_log_st_map, 4},
     {"_gredist_n_removed", (DL_FUNC) &_gredist_n_removed, 3},
     {"_gredist_countpartitions", (DL_FUNC) &_gredist_countpartitions, 1},
@@ -842,7 +802,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_pop_tally", (DL_FUNC) &_gredist_pop_tally, 3},
     {"_gredist_max_dev", (DL_FUNC) &_gredist_max_dev, 3},
     {"_gredist_ms_plans", (DL_FUNC) &_gredist_ms_plans, 15},
-    {"_gredist_optimal_gsmc_plans", (DL_FUNC) &_gredist_optimal_gsmc_plans, 12},
     {"_gredist_pareto_dominated", (DL_FUNC) &_gredist_pareto_dominated, 1},
     {"_gredist_plan_copy_testing", (DL_FUNC) &_gredist_plan_copy_testing, 0},
     {"_gredist_new_plan_testing", (DL_FUNC) &_gredist_new_plan_testing, 2},
@@ -862,7 +821,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_splits", (DL_FUNC) &_gredist_splits, 4},
     {"_gredist_dist_cty_splits", (DL_FUNC) &_gredist_dist_cty_splits, 3},
     {"_gredist_swMH", (DL_FUNC) &_gredist_swMH, 20},
-    {"_gredist_split_entire_map_once_new_cut_func", (DL_FUNC) &_gredist_split_entire_map_once_new_cut_func, 9},
     {"_gredist_tree_pop", (DL_FUNC) &_gredist_tree_pop, 5},
     {"_gredist_var_info_vec", (DL_FUNC) &_gredist_var_info_vec, 3},
     {"_gredist_sample_ust", (DL_FUNC) &_gredist_sample_ust, 6},

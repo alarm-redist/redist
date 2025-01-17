@@ -41,7 +41,9 @@ adjacency list.
 \item \code{num_attempts} -  The number of attempts it took to draw the tree.
 \item \code{pop_below} - The population below each vertex in \code{uncut_tree} ie
 the population induced by removing the edge terminating in that vertex
-\item \code{uncut_tree_vertex_parents}: The parents of each vertex in the tree
+\item \code{uncut_tree_vertex_parents}: The parents of each zero-indexed vertex in
+the tree. A value of -1 means that vertex is the root and -2 means that
+vertex is not in the tree.
 }
 }
 \description{

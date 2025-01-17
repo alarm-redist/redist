@@ -48,6 +48,7 @@ class MapParams {
     arma::uvec counties; // county labels
     Multigraph cg; // county multigraph
     arma::uvec pop; // population of each vertex
+    int V; // Number of vertices in the graph
     int ndists; // The number of districts a final plan should have
     double lower; // lower bound on district population
     double target; // target district population
@@ -98,7 +99,38 @@ public:
         int &split_region2_tree_root, int &split_region2_dval, int &split_region2_pop
     );
 
+    // Gets the signed (not absolute value) deviation of the two regions from the targets
+    // first entry is below and second is above
+    std::array<double, 2> compute_signed_pop_deviances(double target);
+
+    // returns absolute population deviation
+    std::array<double, 2> compute_abs_pop_deviances(double target);
 
 };
+
+
+// enum for various methods of splitting a plan
+enum class SplittingMethodType : unsigned char
+{
+    NaiveTopK, // picks 1 of top k edges even if invalid
+    UnifValid, // picks uniform valid edge at random 
+    ExpBiggerAbsDev // propto exp(-alpha*bigger abs dev of pair)
+};
+
+// loads a splitting type enum from a control string
+SplittingMethodType get_splitting_type(std::string const &splitting_type_str);
+
+// Get convinient string representation
+std::string splitting_method_to_str(SplittingMethodType splitting_method);
+
+enum class SplitRegionSizeType : unsigned char
+{
+    DistrictOnly,
+    AnyValidSize,
+    CustomSizes
+};
+
+// load from control spring 
+SplitRegionSizeType get_splitting_size_regime(std::string const &splitting_size_regime_str);
 
 #endif

@@ -12,7 +12,7 @@
 
 #include "base_plan_type.h"
 #include "gredist_types.h"
-
+#include "tree_splitter_types.h"
 
 
 //' Copies data from an arma Matrix into an Rcpp Matrix
@@ -65,5 +65,10 @@ void reorder_all_plans(
 
 
 
+std::vector<std::unique_ptr<TreeSplitter>> get_tree_splitters(
+    SplittingMethodType const splitting_method,
+    Rcpp::List const &control,
+    int const nsims
+);
 
 #endif
