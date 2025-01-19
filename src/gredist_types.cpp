@@ -147,7 +147,7 @@ std::string splitting_method_to_str(SplittingMethodType splitting_method){
     }else if(splitting_method == SplittingMethodType::ExpBiggerAbsDev){
         return "Exponentially Weighted Absolute Bigger Deviance Splitter";
     }else{
-        REprintf("Splitting Type %d has no to str form!\n", 
+        REprintf("Splitting Type %c has no to str form!\n", 
         splitting_method);
         throw Rcpp::exception("Invalid splitting type passed to_str");
     }

@@ -8,7 +8,7 @@ perform_a_valid_multidistrict_split(
   adj_list,
   counties,
   pop,
-  N,
+  ndists,
   num_regions,
   num_districts,
   region_id_to_split,
@@ -32,7 +32,7 @@ which represents the underlying map the plans are to be drawn on}
 
 \item{pop}{A vector of the population associated with each vertex in \code{g}}
 
-\item{N}{The number of districts the final plans will have}
+\item{ndists}{The number of districts the final plans will have}
 
 \item{target}{Ideal population of a valid district. This is what deviance is calculated
 relative to}

@@ -33,7 +33,7 @@
 //' Monte Carlo (SMC) methods to generate a sample of `M` plans
 //'
 //'
-//' @param N The number of districts the final plans will have
+//' @param ndists The number of districts the final plans will have
 //' @param adj_list A 0-indexed adjacency list representing the undirected graph
 //' which represents the underlying map the plans are to be drawn on
 //' @param counties Vector of county labels of each vertex in `g`
@@ -52,10 +52,10 @@
 //' @keywords internal
 // [[Rcpp::export]]
 List run_redist_gsmc(
-        int N, List adj_list,
+        int ndists, List adj_list,
         const arma::uvec &counties, const arma::uvec &pop,
+        Rcpp::CharacterVector step_types,
         double target, double lower, double upper,
-        int nsims, // M is Number of particles aka number of different plans
         arma::umat region_id_mat, arma::umat region_sizes_mat,
         std::string sampling_space, // sampling space (graphs, forest, etc)
         List control, // control has pop temper, and k parameter value, and whether only district splits are allowed

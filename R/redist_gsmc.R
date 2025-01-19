@@ -30,22 +30,24 @@
 #'
 #' @export
 redist_gsmc <- function(
-        map, M, counties = NULL,
+        map, nsims, counties = NULL,
+        runs = 1L,
+        n_smc_steps = NULL,
         estimate_cut_k = TRUE,
        manual_k_params = 6, adapt_k_thresh = .9999,
        split_district_only = FALSE, weight_type = "optimal",
-       ms_freq = 0, ms_steps_multiplier = 1L,
-       run_ms = 0 < ms_freq && ms_freq <= ndists, merge_prob_type = "uniform",
-       resample = TRUE, runs = 1L,
+       ms_freq = 0,
+       ms_steps_multiplier = 1L,
+       run_ms = 0 < ms_freq && ms_freq <= ndists,
+       merge_prob_type = "uniform",
+       resample = TRUE,
        ncores = 0L, multiprocess=FALSE,
        pop_temper = 0,
-       init_region_ids_mat = NULL, init_region_sizes_mat = NULL, init_num_regions = 1,
+       init_region_ids_mat = NULL,
+       init_region_sizes_mat = NULL,
        min_region_cut_sizes = NULL, max_region_cut_sizes = NULL,
        verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE){
 
-    if(init_num_regions > 1 || !is.null(init_region_ids_mat) || !is.null(init_region_sizes_mat)){
-        cli_abort("Starting with non-trivial partial plans not supported yet!")
-    }
 
     if(run_ms){
         cli_abort("Merge Split not supported at this moment!")
@@ -55,8 +57,43 @@ redist_gsmc <- function(
     constraints <- list()
 
     ndists <- attr(map, "ndists")
-    nsims <- M
 
+    # get the map parameters
+    map_params <- get_map_parameters(map, counties)
+
+    map <- map_params$map
+    V <- map_params$V
+    adj_list <- map_params$adj_list
+    counties <- map_params$counties
+    pop <- map_params$pop
+    pop_bounds <- map_params$pop_bounds
+
+    # handle particle inits
+    if (is.null(init_region_ids_mat)) {
+        init_region_ids_mat <- matrix(0L, nrow = V, ncol = nsims)
+        init_num_regions <-  1
+    } else { # if user input then check its valid
+        init_num_regions <- length(unique(init_region_ids_mat[,1]))
+        validate_initial_region_id_mat(init_region_ids_mat, V, nsims, init_num_regions)
+    }
+    if (is.null(n_smc_steps)) {
+        n_smc_steps <- ndists - init_num_regions
+    }
+    final_dists <- init_num_regions + n_smc_steps
+    if (final_dists > ndists) {
+        cli_abort("Too many districts already drawn to take {n_smc_steps} steps.")
+    }
+
+    # handle region dval inits
+    if (is.null(init_region_sizes_mat)) {
+        # initialize it so the first element of every column is ndists
+        init_region_sizes_mat <- matrix(0L, nrow = ndists, ncol = nsims)
+        init_region_sizes_mat[1,] <- ndists
+    } else {
+        validate_initial_region_sizes_mat(init_region_sizes_mat, ndists, nsims, init_num_regions)
+    }
+
+    total_smc_steps <- n_smc_steps
 
     if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
         cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
@@ -66,14 +103,17 @@ redist_gsmc <- function(
     }
     # if just a single number then repeat it
     if(length(manual_k_params) == 1 && floor(manual_k_params) == manual_k_params){
-        manual_k_params <- rep(manual_k_params, ndists-1)
-    }else if(length(manual_k_params) != ndists-1){
-        cli_abort("K parameter input must be either 1 value or ndists-1!")
+        manual_k_params <- rep(manual_k_params, total_smc_steps)
+    }else if(length(manual_k_params) != total_smc_steps){
+        cli_abort("K parameter input must be either 1 value or number of smc steps!")
     }else if(any(floor(manual_k_params) != manual_k_params)){
         # if either the length is not ndists-1 or its not all integers then throw
         # error
         cli_abort("K parameter values must be all integers")
     }
+
+
+
 
     # create merge split parameter information
 
@@ -84,26 +124,28 @@ redist_gsmc <- function(
         msg = "`ms_steps_multiplier` must be a positive integer!"
     )
 
-    # there are ndists-1 splits so for now just do it
-    total_smc_steps <- ndists-1
 
     # check if there will be any merge split steps
     any_ms_steps_ran <- ms_freq <= total_smc_steps && run_ms
 
-    merge_split_step_vec <- rep(FALSE, ndists-1)
+    merge_split_step_vec <- rep(FALSE, total_smc_steps)
 
     if(any_ms_steps_ran){
         # Now add merge split every `ms_freq` steps
 
         # insertion trick
         # https://stackoverflow.com/questions/1493969/insert-elements-into-a-vector-at-given-indexes
-        ind <- seq(from = ms_freq, to = ndists-1, by = ms_freq)
+        ind <- seq(from = ms_freq, to = total_smc_steps, by = ms_freq)
         val <- c( merge_split_step_vec, rep(TRUE,length(ind)) )
         id  <- c( seq_along(merge_split_step_vec), ind+0.5 )
 
         # number of merge split is sum of trues
         merge_split_step_vec <- val[order(id)]
     }
+
+
+    # get the types
+    step_types <- ifelse(merge_split_step_vec, "ms", "smc")
 
 
     # figure out the alg type
@@ -138,13 +180,17 @@ redist_gsmc <- function(
             min_region_cut_sizes <- rep(1, total_smc_steps)
         }
         if(is.null(max_region_cut_sizes)){
-            max_region_cut_sizes <- rev(seq_len(ndists-1))
+            # num regions-1,..., 1
+            max_region_cut_sizes <-  seq(
+                from = ndists - init_num_regions,
+                by = -1,
+                length.out = total_smc_steps
+                )
         }
         # validate the cut sizes
         validate_cut_sizes(ndists, total_smc_steps, min_region_cut_sizes, max_region_cut_sizes)
         splitting_size_regime = "custom"
     }
-
 
 
     # compute lags thing
@@ -158,7 +204,6 @@ redist_gsmc <- function(
         splitting_method = NAIVE_K_SPLITTING,
         splitting_size_regime = splitting_size_regime,
         k_params = manual_k_params,
-        split_district_only = split_district_only,
         min_region_cut_sizes=min_region_cut_sizes,
         max_region_cut_sizes=max_region_cut_sizes,
         merge_split_step_vec = merge_split_step_vec,
@@ -174,43 +219,7 @@ redist_gsmc <- function(
     if (silent) verbosity <- 0
 
 
-    # get the map parameters
-    map_params <- get_map_parameters(map, counties)
 
-    map <- map_params$map
-    V <- map_params$V
-    adj_list <- map_params$adj_list
-    counties <- map_params$counties
-    pop <- map_params$pop
-    pop_bounds <- map_params$pop_bounds
-
-
-
-    n_steps <- ndists - 1
-
-    # validate_initial_region_id_mat
-
-    # handle particle inits
-    if (is.null(init_region_ids_mat)) {
-        init_region_ids_mat <- matrix(0L, nrow = V, ncol = nsims)
-    } else { # if user input then check its valid
-        validate_initial_region_id_mat(init_region_ids_mat, V, nsims, init_num_regions)
-        if (is.null(n_steps)) {
-            n_steps <- ndists - n_drawn - 1L
-        }
-        final_dists <- n_drawn + n_steps + 1L
-        if (final_dists > ndists) {
-            cli_abort("Too many districts already drawn to take {n_steps} steps.")
-        }
-    }
-    # handle region dval inits
-    if (is.null(init_region_sizes_mat)) {
-        # initialize it so the first element of every column is ndists
-        init_region_sizes_mat <- matrix(0L, nrow = ndists, ncol = nsims)
-        init_region_sizes_mat[1,] <- ndists
-    } else {
-        validate_initial_region_sizes_mat(init_region_sizes_mat, ndists, nsims, init_num_regions)
-    }
 
 
 
@@ -219,7 +228,7 @@ redist_gsmc <- function(
     ncores_runs <- min(ncores_max, runs)
     ncores_per <- as.integer(ncores)
     if (ncores_per == 0) {
-        if (M/100*length(adj_list)/200 < 20) {
+        if (nsims/100*length(adj_list)/200 < 20) {
             ncores_per <- 1L
         } else {
             ncores_per <- floor(ncores_max/ncores_runs)
@@ -269,14 +278,14 @@ redist_gsmc <- function(
 
 
         algout <- gredist::run_redist_gsmc(
-            N=ndists,
+            ndists=ndists,
             adj_list=adj_list,
             counties=counties,
             pop=pop,
+            step_types=step_types,
             target=pop_bounds[2],
             lower=pop_bounds[1],
             upper=pop_bounds[3],
-            nsims=M,
             region_id_mat = init_region_ids_mat,
             region_sizes_mat = init_region_sizes_mat,
             sampling_space = GRAPH_PLAN_SPACE_SAMPLING,
@@ -343,7 +352,7 @@ redist_gsmc <- function(
         # make parent succesful tries matrix counting the number of
         # times a parent index was successfully sampled
         parent_successful_tries_mat <- apply(
-            algout$parent_index, 2, tabulate, nbins = M
+            algout$parent_index, 2, tabulate, nbins = nsims
         )
 
 
@@ -430,7 +439,7 @@ redist_gsmc <- function(
         # nunique_original_ancestors <- c(nunique_original_ancestors,
               #                          dplyr::n_distinct(algout$original_ancestors_mat[, ncol(algout$original_ancestors_mat)]))
 
-        if (!is.nan(n_eff) && n_eff/M <= 0.05)
+        if (!is.nan(n_eff) && n_eff/nsims <= 0.05)
             cli_warn(c("Less than 5% resampling efficiency.",
                        "*" = "Increase the number of samples.",
                        "*" = "Consider weakening or removing constraints.",
@@ -485,7 +494,7 @@ redist_gsmc <- function(
 
     if (verbosity >= 2) {
 
-        cli_text("{format(M*runs, big.mark=',')} plans sampled in
+        cli_text("{format(nsims*runs, big.mark=',')} plans sampled in
                  {format(t2-t1, digits=2)}")
     }
 
@@ -515,7 +524,7 @@ redist_gsmc <- function(
 
 
     if (runs > 1) {
-        out <- mutate(out, chain = rep(seq_len(runs), each = n_dist_act*M)) %>%
+        out <- mutate(out, chain = rep(seq_len(runs), each = n_dist_act*nsims)) %>%
             dplyr::relocate('chain', .after = "draw")
     }
 

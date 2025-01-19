@@ -44,7 +44,7 @@
 // ' @param lower Acceptable lower bounds on a valid district's population
 // ' @param upper Acceptable upper bounds on a valid district's population
 // ' @param region_ids A V by 1 matrix with the region ids of each vertex
-// ' @param region_sizes A N by 1 matrix with the sizes of each regions 
+// ' @param region_sizes A ndists by 1 matrix with the sizes of each regions 
 // ' @param verbose Whether or not to print out the inputted plan before
 // ' attemping to draw a tree. 
 //'
@@ -77,7 +77,7 @@ List draw_a_tree_on_a_region(
 // [[Rcpp::export]]
 List perform_a_valid_multidistrict_split(
     List adj_list, const arma::uvec &counties, const arma::uvec &pop,
-    int N, int num_regions, int num_districts,
+    int ndists, int num_regions, int num_districts,
     int region_id_to_split,
     double target, double lower, double upper,
     arma::umat region_ids, arma::umat region_sizes,
@@ -90,7 +90,7 @@ List perform_merge_split_steps(
         List adj_list, const arma::uvec &counties, const arma::uvec &pop,
         int k_param,
         double target, double lower, double upper,
-        int N, int num_regions, int num_districts,
+        int ndists, int num_regions, int num_districts,
         arma::umat region_ids, arma::umat region_sizes,
         std::vector<int> region_pops,
         bool split_district_only, int num_merge_split_steps,

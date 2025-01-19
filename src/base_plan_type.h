@@ -25,18 +25,23 @@
 class TreeSplitter;
 
 class Plan {
+
+private:
+    // checks inputted plan is valid
+    void check_inputted_region_ids(); 
+    void check_inputted_region_sizes(bool split_district_only);
+
 public:
     // constructor 
     Plan(arma::subview_col<arma::uword> region_ids_col, 
-             arma::subview_col<arma::uword> region_dvals_col, 
-             int N, int total_map_pop, bool split_district_only=false,
-             int num_regions=1, int num_districts=0,
-             const arma::uvec &pop = {}); // constructor for 1 region plan
+        arma::subview_col<arma::uword> region_sizes_col, 
+        int ndists, int num_regions, const arma::uvec &pop, bool split_district_only
+    ); // constructor for plan
     Plan(const Plan& other); // Copy constructor
 
 
     // attributes
-    int N; // Number all d_nk must sum to
+    int ndists; // Number all d_nk must sum to
     int V; // Number of nodes in graph
     int num_regions; // Number of regions in the plan
     int num_districts; // Number of districts in the plan
@@ -105,13 +110,13 @@ public:
 
 
 // Custom hash function for hashing pairs of regions 
-// N should be the number of regions minus 1, ie the biggest
+// ndists should be the number of regions minus 1, ie the biggest
 // region id
 struct bounded_hash {
-    int N;
-    bounded_hash(int max_value) : N(max_value) {}
+    int ndists;
+    bounded_hash(int max_value) : ndists(max_value) {}
     std::size_t operator()(const std::pair<int, int>& p) const {
-        return p.first * (N + 1) + p.second;
+        return p.first * (ndists + 1) + p.second;
     }
 };
 

@@ -84,7 +84,7 @@ int run_merge_split_step_on_a_plan(
     std::vector<bool> ignore(V);
 
     // If its the final step then remainder doesn't matter so make split district only false 
-    if(split_district_only && plan.num_regions == plan.N){
+    if(split_district_only && plan.num_regions == plan.ndists){
         split_district_only = false;
     }
 

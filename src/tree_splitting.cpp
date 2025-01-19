@@ -183,7 +183,8 @@ std::pair<bool, EdgeCut> get_naive_top_k_edge(const int root,
     new_d_val.reserve(k_param);
 
     if(region_ids(root) != region_id_to_split){
-        REprintf("Root vertex %u is not in region to split %d!\n", region_ids(root), region_id_to_split);
+        REprintf("Root vertex %u is not in region to split %d!\n", 
+            (int) region_ids(root), region_id_to_split);
         throw Rcpp::exception("Root vertex is not in region to split!");
     }
 

@@ -64,10 +64,11 @@ List draw_a_tree_on_a_region(
     bool split_district_only = region_sizes.max() == 1;
 
     // Create a plan object
+
+
     Plan * plan = new GraphPlan(
         region_ids.col(0), region_sizes.col(0), 
-        ndists, total_pop, split_district_only,
-        num_regions, num_districts, pop);
+        ndists,num_regions, pop, split_district_only);
 
 
     if(verbose){
@@ -149,8 +150,6 @@ List perform_a_valid_multidistrict_split(
     MapParams map_params(adj_list, counties, pop, ndists, lower, target, upper);
     // unpack control params
     int V = map_params.V;
-    double total_pop = sum(pop);
-
     
 
     Rprintf("It is %d\n", (int) split_district_only);
@@ -158,8 +157,7 @@ List perform_a_valid_multidistrict_split(
     // Create a plan object
     Plan * plan = new GraphPlan(
         region_ids.col(0), region_sizes.col(0), 
-        ndists, total_pop, split_district_only,
-        num_regions, num_districts, pop);
+        ndists, num_regions, pop, split_district_only);
 
     // Create tree splitter 
     TreeSplitter * tree_splitter = new NaiveTopKSplitter(k_param);
@@ -190,16 +188,14 @@ List perform_a_valid_multidistrict_split(
     int try_counter = 1;
 
 
-    // splitting related params
-    int new_region1_tree_root, new_region2_tree_root;
-    int new_region1_dval, new_region2_dval;
-    int new_region1_pop, new_region2_pop;
+
 
 
     // make new region ids the split one and num_regions
     int new_region1_id = region_id_to_split; 
     int new_region2_id = plan->num_regions;
 
+    EdgeCut cut_edge;
     // Keep running until done
     while(!successful_split_made){
         if(verbose){
@@ -239,7 +235,7 @@ List perform_a_valid_multidistrict_split(
         pre_split_ust = ust;
 
         // If successful extract the edge cut info
-        EdgeCut cut_edge = edge_search_result.second;
+        cut_edge = edge_search_result.second;
         // Now erase the cut edge in the tree
         erase_tree_edge(ust, cut_edge);
 
@@ -262,7 +258,16 @@ List perform_a_valid_multidistrict_split(
         plan->Rprint();
     }
 
+    // splitting related params
+    int new_region1_tree_root, new_region2_tree_root;
+    int new_region1_dval, new_region2_dval;
+    int new_region1_pop, new_region2_pop;
 
+
+    cut_edge.get_split_regions_info(
+        new_region1_tree_root, new_region1_dval, new_region1_pop,
+        new_region2_tree_root, new_region2_dval, new_region2_pop
+    );
 
     List out = List::create(
         _["num_attempts"] = try_counter,
@@ -307,13 +312,12 @@ List perform_merge_split_steps(
     Graph g = list_to_graph(adj_list);
     Multigraph cg = county_graph(g, counties);
     int V = g.size();
-    double total_pop = sum(pop);
 
     auto dummy_region_ids = region_ids; auto dummy_region_dvals = region_sizes;
 
     // Create a plan object
-    Plan *plan = new GraphPlan(region_ids.col(0), region_sizes.col(0), V, ndists, total_pop);
-    Plan *new_plan = new GraphPlan(dummy_region_ids.col(0), dummy_region_dvals.col(0), V, ndists, total_pop);
+    Plan *plan = new GraphPlan(region_ids.col(0), region_sizes.col(0), ndists, num_regions, pop, split_district_only);
+    Plan *new_plan = new GraphPlan(dummy_region_ids.col(0), dummy_region_dvals.col(0), ndists, num_regions, pop, split_district_only);
 
     // create splitter
     TreeSplitter *tree_splitter = new NaiveTopKSplitter(k_param);

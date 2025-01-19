@@ -197,7 +197,7 @@ std::vector<std::array<int, 3>> get_valid_adj_regions_and_boundary_lens_vec(
     // make vector for if we just want adjacent to remainder or all
     // adj pairs
     std::vector<bool> valid_regions;
-    if(split_district_only && plan.num_regions < plan.N){
+    if(split_district_only && plan.num_regions < plan.ndists){
         // if splitting district only then only find adjacent to remainder
         // which is region 2 because its the bigger one
         valid_regions.resize(plan.num_regions, false);
@@ -476,7 +476,7 @@ double compute_log_pop_temper(
         const int region1_id, const int region2_id,
         double target, double pop_temper
 ){
-    int N = plan.N;
+    int ndists = plan.ndists;
     // Get pop and dval of two regions and their union
     double region1_pop = plan.region_pops[region1_id];
     double region2_pop = plan.region_pops[region2_id];
@@ -498,9 +498,9 @@ double compute_log_pop_temper(
     )/target;
 
     // now compute population penalties
-    double pop_pen1 = std::sqrt(static_cast<double>(N) - 2) * std::log(1e-12 + dev1);
-    double pop_pen2 = std::sqrt(static_cast<double>(N) - 2) * std::log(1e-12 + dev2);
-    double old_pop_pen = std::sqrt(static_cast<double>(N) - 2) * std::log(1e-12 + old_dev);
+    double pop_pen1 = std::sqrt(static_cast<double>(ndists) - 2) * std::log(1e-12 + dev1);
+    double pop_pen2 = std::sqrt(static_cast<double>(ndists) - 2) * std::log(1e-12 + dev2);
+    double old_pop_pen = std::sqrt(static_cast<double>(ndists) - 2) * std::log(1e-12 + old_dev);
 
     // now return the values for the old region minus the two new ones
     return old_pop_pen * pop_temper - (pop_pen1 + pop_pen2) * pop_temper;
@@ -537,7 +537,7 @@ double compute_optimal_log_incremental_weight(
 
     double incremental_weight = 0.0;
 
-    bool do_pop_temper = (plan.num_regions < plan.N) && pop_temper > 0;
+    bool do_pop_temper = (plan.num_regions < plan.ndists) && pop_temper > 0;
 
     // Get all valid adj pairs and the boundary length
     auto region_pairs_and_boundary_lens_vec = get_valid_adj_regions_and_boundary_lens_vec(
@@ -662,14 +662,14 @@ double compute_uniform_adj_log_incremental_weight(
         const double target, const double pop_temper){
 
 
-    bool do_pop_temper = (plan.num_regions < plan.N) && pop_temper > 0;
+    bool do_pop_temper = (plan.num_regions < plan.ndists) && pop_temper > 0;
 
     // find the index of the two newly split regions 
     // which will be the indices associated with the two largest 
     // region order added values
 
     int largest_index = -1, second_largest_index = -1;
-    int largest_value = -1 * plan.N, second_largest_value = -1* plan.N;
+    int largest_value = -1 * plan.ndists, second_largest_value = -1* plan.ndists;
 
     // Iterate through the vector
     for (std::size_t i = 0; i < plan.num_regions; ++i) {
@@ -696,7 +696,7 @@ double compute_uniform_adj_log_incremental_weight(
     // make vector for if we just want adjacent to remainder or all
     // adj pairs
     std::vector<bool> valid_regions;
-    if(split_district_only && plan.num_regions < plan.N){
+    if(split_district_only && plan.num_regions < plan.ndists){
         // if splitting district only then only find adjacent to remainder
         // which is region 2 because its the bigger one
         valid_regions.resize(plan.num_regions, false);

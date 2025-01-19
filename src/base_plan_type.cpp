@@ -7,6 +7,93 @@
 
 #include "base_plan_type.h"
 
+// checks the inputted plan has the number of regions it claims it does
+// checks the sizes and that the labels make sense.
+// if makes sense then it counts the number of districts and multidistricts
+void Plan::check_inputted_region_sizes(bool split_district_only){
+
+    // check sum of first num_region elements is ndists and it matches expected
+    // number of districts 
+    int num_districts_implied_by_sizes_mat = 0;
+    int total_size_implied_by_sizes_mat = 0;
+    for (size_t i = 0; i < num_regions; i++)
+    {
+        // make sure each regions dval is non-zero
+        if(region_sizes(i) <= 0){
+            throw Rcpp::exception("Region size input for region is 0 or less!");
+        }
+
+        total_size_implied_by_sizes_mat += region_sizes(i);
+        if(region_sizes(i) == 1) num_districts_implied_by_sizes_mat++;
+
+        // add check that if split district only then only last one has dval > 1
+        if (split_district_only && i != num_regions-1)
+        {
+            if(region_sizes(i) != 1) throw Rcpp::exception(
+                "For partial plan the remainder does not have region id=num_regions-1!"
+                ); 
+        }
+    }
+
+
+    if(total_size_implied_by_sizes_mat != ndists){
+        throw Rcpp::exception("Sum of sizez in region sizes mat does equal ndists!");
+    } 
+
+    // check the other entries are zero
+    for (int i = num_regions; i < ndists; i++){
+        // check that the values are 0,...,num_regions - 1
+        if(region_sizes(i) != 0){
+            REprintf("Expected Region %d to be zero it was actually %d!\n",
+                i, (int) region_sizes(i));
+            throw Rcpp::exception(
+                "Plan didn't have the correct expected region size matrix!\n"
+                );
+        }
+    }
+
+    num_districts = num_districts_implied_by_sizes_mat;
+    num_multidistricts = num_regions - num_districts;
+    return;
+}
+
+
+void Plan::check_inputted_region_ids(){
+    // Use std::unordered_set to store unique elements
+    std::unordered_set<int> unique_ids;
+    // get unique labels
+    for (size_t i = 0; i < region_ids.n_elem; ++i) {
+        unique_ids.insert(region_ids(i)); // Insert each element of the subview column
+    }
+    int actual_num_regions = static_cast<int>(unique_ids.size());
+
+    // make sure the size is the number of regions 
+    if(actual_num_regions != num_regions){
+        REprintf("Expected %d regions in plan but there were actually %d!\n",
+            num_regions, actual_num_regions);
+        throw Rcpp::exception(
+            "Plan didn't have the expected number of regions!\n"
+            );
+    }
+
+    // now check the labels are as expected
+    std::vector<int> sorted_labels(unique_ids.begin(), unique_ids.end());
+    std::sort(sorted_labels.begin(), sorted_labels.end());
+    for (int i = 0; i < num_regions; i++)
+    {
+        // check that the values are 0,...,num_regions - 1
+        if(sorted_labels.at(i) != i){
+            REprintf("Expected Region ID %d but it was actually %d!\n",
+                i, sorted_labels.at(i));
+            throw Rcpp::exception(
+                "Plan didn't have the expected region ids!\n"
+                );
+        }
+    }
+    
+    return;
+}
+
 // Define the constructor template outside the class
 // THIS ONLY CONSTRUCTS A ONE REGION MAP. ANYTHING ELSE MUST BE UPDATED
 
@@ -16,86 +103,50 @@
 // THIS ONLY CONSTRUCTS A ONE REGION MAP. ANYTHING ELSE MUST BE UPDATED
 Plan::Plan(
     arma::subview_col<arma::uword> region_ids_col, 
-    arma::subview_col<arma::uword> region_dvals_col, 
-    int N, int total_map_pop, bool split_district_only,
-    int num_regions, int num_districts,
-    const arma::uvec &pop)
-: region_ids(region_ids_col), region_sizes(region_dvals_col) // Initialize the reference
+    arma::subview_col<arma::uword> region_sizes_col, 
+    int ndists, int num_regions, const arma::uvec &pop, bool split_district_only): 
+    ndists(ndists), num_regions(num_regions),
+    region_ids(region_ids_col), region_sizes(region_sizes_col)
 {
     // check num_regions and num_districts inputs make sense
-    if (N < 2) throw Rcpp::exception("Tried to create a plan with N < 2 regions!");
-    if (num_regions > N) throw Rcpp::exception("Tried to create a plan object with more regions than N!");
-    if (num_districts > N) throw Rcpp::exception("Tried to create a plan object with more districts than N!");
-    if (num_districts > num_regions) throw Rcpp::exception("Tried to create a plan object with more districts than total regions!");
-    if (num_districts == num_regions && num_regions != N) throw Rcpp::exception("Tried to create a partial plan with only districts!");
-    if (num_districts < 0 || num_regions < 0 || N < 0) throw Rcpp::exception("Tried to create a plan object with negative number of regions!");
-    if (region_sizes.n_elem != N) throw Rcpp::exception("The region dvals column passed in is not size N!");
+    if (ndists < 2) throw Rcpp::exception("Tried to create a plan with ndists < 2 regions!");
+    if (region_sizes.n_elem != ndists) throw Rcpp::exception("The region dvals column passed in is not size ndists!");
 
-    // set number of regions, districts, multidistricts, map pop, and V
-    this->num_regions = num_regions;
-    this->num_districts = num_districts;
-    num_multidistricts = num_regions - num_districts;
+    // set number of multidistricts, and V
     this->V = region_ids.n_elem;
-    map_pop = total_map_pop;
-    this->N = N;
-    region_order_max = N+1;
+    map_pop = 0;
+    region_order_max = ndists+1;
 
-    // TODO add checks if number of regions > 1
-    if(num_regions > 1){
-        // check sum of first num_region elements is N and it matches expected
-        // number of districts 
-        int num_districts_implied_by_dval_mat = 0;
-        int total_dvals_implied_by_dval_mat = 0;
-        for (size_t i = 0; i < num_regions; i++)
-        {
-            // make sure each regions dval is non-zero
-            if(region_sizes(i) <= 0) throw Rcpp::exception("Region dvals input for region is 0 or less!"); 
-
-            total_dvals_implied_by_dval_mat += region_sizes(i);
-            if(region_sizes(i) == 1) num_districts_implied_by_dval_mat++;
-
-            // add check that if split district only then only last one has dval > 1
-            if (split_district_only && i != num_regions-1)
-            {
-                if(region_sizes(i) != 1) throw Rcpp::exception("For partial plan the remainder does not have region id=num_regions-1!"); 
-            }
-        }
-
-        if(num_districts_implied_by_dval_mat != num_districts) throw Rcpp::exception("Region dvals mat does not have the correct number of districts!"); 
-        if(total_dvals_implied_by_dval_mat != N) throw Rcpp::exception("Sum of dvals in region dvals mat does equal N!"); 
-        
-        // If multiple regions it assumes that 0 is oldest region then 1 ... num_regions
+    if(split_district_only){
+        remainder_region = num_regions-1;
     }else{
-        if(region_sizes(0) != N) throw Rcpp::exception("Region dvals input for 1-region partial plan not N!");
+        remainder_region = -1;
     }
 
+    // check region sizes and labels
+    check_inputted_region_ids();
+    // this also sets the number of regions and multidistricts 
+    check_inputted_region_sizes(split_district_only);
+
+    // now check these
+    if (num_regions > ndists) throw Rcpp::exception("Tried to create a plan object with more regions than ndists!");
+    if (num_districts > ndists) throw Rcpp::exception("Tried to create a plan object with more districts than ndists!");
+    if (num_districts > num_regions) throw Rcpp::exception("Tried to create a plan object with more districts than total regions!");
+    if (num_districts == num_regions && num_regions != ndists) throw Rcpp::exception("Tried to create a partial plan with only districts!");
+    if (num_districts < 0 || num_regions < 0 || ndists < 0) throw Rcpp::exception("Tried to create a plan object with negative number of regions!");
 
     // Create other region-level information 
-    region_added_order = std::vector<int>(N, -1);
+    region_added_order = std::vector<int>(ndists, -1);
     // fill first num_regions entries with 1,...,num_regions 
     std::iota(std::begin(region_added_order), std::begin(region_added_order) + num_regions, 1); 
-    region_pops = std::vector<int>(N, -1);
     
-    if(num_regions > 1){
-        // compute the population for each of the regions 
-        for (size_t v = 0; v < V; v++)
-        {
-            region_pops.at(region_ids(v)) += pop(v);
-        }
-        if(split_district_only){
-            remainder_region = num_regions-1;
-        }else{
-            remainder_region = -1;
-        }
-    }else{
-        region_pops.at(0) = total_map_pop;
-        if(split_district_only){
-            remainder_region = 0;
-        }else{
-            remainder_region = -1;
-        }
+    region_pops = std::vector<int>(ndists, 0);
+    // compute the population for each of the regions 
+    for (size_t v = 0; v < V; v++)
+    {
+        region_pops.at(region_ids(v)) += pop(v);
+        map_pop += pop(v);
     }
-    
 }
 
 
@@ -103,7 +154,7 @@ Plan::Plan(const Plan& other)
     : region_ids(other.region_ids), region_sizes(other.region_sizes) // Share the same reference
 {
     // Copy simple members
-    N = other.N;
+    ndists = other.ndists;
     V = other.V;
     num_regions = other.num_regions;
     num_districts = other.num_districts;

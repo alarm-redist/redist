@@ -255,7 +255,7 @@ manually_split_a_multidistrict <- function(
         adj_list=map_params$adj_list,
         counties=map_params$counties,
         pop=map_params$pop,
-        N=ndists,
+        ndists=ndists,
         num_regions=num_regions,
         num_districts=num_districts,
         region_id_to_split=region_id_to_split,

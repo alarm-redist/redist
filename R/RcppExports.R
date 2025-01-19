@@ -62,7 +62,7 @@ dist_dist_diff <- function(p, i_dist, j_dist, x_center, y_center, x, y) {
 #' Monte Carlo (SMC) methods to generate a sample of `M` plans
 #'
 #'
-#' @param N The number of districts the final plans will have
+#' @param ndists The number of districts the final plans will have
 #' @param adj_list A 0-indexed adjacency list representing the undirected graph
 #' which represents the underlying map the plans are to be drawn on
 #' @param counties Vector of county labels of each vertex in `g`
@@ -79,8 +79,8 @@ dist_dist_diff <- function(p, i_dist, j_dist, x_center, y_center, x, y) {
 #' running <ADD OPTIONS>
 #' @export
 #' @keywords internal
-run_redist_gsmc <- function(N, adj_list, counties, pop, target, lower, upper, nsims, region_id_mat, region_sizes_mat, sampling_space, control, verbosity = 3L, diagnostic_mode = FALSE) {
-    .Call(`_gredist_run_redist_gsmc`, N, adj_list, counties, pop, target, lower, upper, nsims, region_id_mat, region_sizes_mat, sampling_space, control, verbosity, diagnostic_mode)
+run_redist_gsmc <- function(ndists, adj_list, counties, pop, step_types, target, lower, upper, region_id_mat, region_sizes_mat, sampling_space, control, verbosity = 3L, diagnostic_mode = FALSE) {
+    .Call(`_gredist_run_redist_gsmc`, ndists, adj_list, counties, pop, step_types, target, lower, upper, region_id_mat, region_sizes_mat, sampling_space, control, verbosity, diagnostic_mode)
 }
 
 log_st_map <- function(g, districts, counties, n_distr) {
@@ -119,12 +119,12 @@ draw_a_tree_on_a_region <- function(adj_list, counties, pop, ndists, num_regions
 #' @title Split a multidistrict into two regions
 #'
 #' @inheritParams run_redist_gsmc
-perform_a_valid_multidistrict_split <- function(adj_list, counties, pop, N, num_regions, num_districts, region_id_to_split, target, lower, upper, region_ids, region_sizes, split_dval_min, split_dval_max, split_district_only, verbose = FALSE, k_param = 1L) {
-    .Call(`_gredist_perform_a_valid_multidistrict_split`, adj_list, counties, pop, N, num_regions, num_districts, region_id_to_split, target, lower, upper, region_ids, region_sizes, split_dval_min, split_dval_max, split_district_only, verbose, k_param)
+perform_a_valid_multidistrict_split <- function(adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_split, target, lower, upper, region_ids, region_sizes, split_dval_min, split_dval_max, split_district_only, verbose = FALSE, k_param = 1L) {
+    .Call(`_gredist_perform_a_valid_multidistrict_split`, adj_list, counties, pop, ndists, num_regions, num_districts, region_id_to_split, target, lower, upper, region_ids, region_sizes, split_dval_min, split_dval_max, split_district_only, verbose, k_param)
 }
 
-perform_merge_split_steps <- function(adj_list, counties, pop, k_param, target, lower, upper, N, num_regions, num_districts, region_ids, region_sizes, region_pops, split_district_only, num_merge_split_steps, verbose) {
-    .Call(`_gredist_perform_merge_split_steps`, adj_list, counties, pop, k_param, target, lower, upper, N, num_regions, num_districts, region_ids, region_sizes, region_pops, split_district_only, num_merge_split_steps, verbose)
+perform_merge_split_steps <- function(adj_list, counties, pop, k_param, target, lower, upper, ndists, num_regions, num_districts, region_ids, region_sizes, region_pops, split_district_only, num_merge_split_steps, verbose) {
+    .Call(`_gredist_perform_merge_split_steps`, adj_list, counties, pop, k_param, target, lower, upper, ndists, num_regions, num_districts, region_ids, region_sizes, region_pops, split_district_only, num_merge_split_steps, verbose)
 }
 
 group_pct_top_k <- function(m, group_pop, total_pop, k, n_distr) {
@@ -165,14 +165,6 @@ ms_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, r
 
 pareto_dominated <- function(x) {
     .Call(`_gredist_pareto_dominated`, x)
-}
-
-plan_copy_testing <- function() {
-    .Call(`_gredist_plan_copy_testing`)
-}
-
-new_plan_testing <- function(region_id_mat, region_id_mat2) {
-    .Call(`_gredist_new_plan_testing`, region_id_mat, region_id_mat2)
 }
 
 arma_testing <- function() {
