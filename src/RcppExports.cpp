@@ -479,6 +479,16 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// plan_copy_testing
+List plan_copy_testing();
+RcppExport SEXP _gredist_plan_copy_testing() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(plan_copy_testing());
+    return rcpp_result_gen;
+END_RCPP
+}
 // arma_testing
 List arma_testing();
 RcppExport SEXP _gredist_arma_testing() {
@@ -781,6 +791,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_max_dev", (DL_FUNC) &_gredist_max_dev, 3},
     {"_gredist_ms_plans", (DL_FUNC) &_gredist_ms_plans, 15},
     {"_gredist_pareto_dominated", (DL_FUNC) &_gredist_pareto_dominated, 1},
+    {"_gredist_plan_copy_testing", (DL_FUNC) &_gredist_plan_copy_testing, 0},
     {"_gredist_arma_testing", (DL_FUNC) &_gredist_arma_testing, 0},
     {"_gredist_random_cpp_testing", (DL_FUNC) &_gredist_random_cpp_testing, 0},
     {"_gredist_closest_adj_pop", (DL_FUNC) &_gredist_closest_adj_pop, 3},

@@ -16,4 +16,9 @@ public:
             const int split_region1_id, const int split_region2_id,
             bool split_district_only
     );
+
+    // Clone method to create a copy of the ForestPlan object
+    std::unique_ptr<Plan> deep_clone() const override {
+        return std::make_unique<GraphPlan>(*this); // Copy the entire object
+    }
 };

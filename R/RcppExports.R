@@ -167,6 +167,10 @@ pareto_dominated <- function(x) {
     .Call(`_gredist_pareto_dominated`, x)
 }
 
+plan_copy_testing <- function() {
+    .Call(`_gredist_plan_copy_testing`)
+}
+
 arma_testing <- function() {
     .Call(`_gredist_arma_testing`)
 }

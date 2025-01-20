@@ -143,7 +143,6 @@ void run_smc_step(
             draw_tries_vec[i]++;
             idx = r_int_wgt(M, normalized_cumulative_weights);
             
-
             *new_plans_ptr_vec.at(i) = *old_plans_ptr_vec.at(idx);
 
             if(split_district_only){
@@ -286,16 +285,12 @@ List run_redist_gsmc(
     // lags thing (copied from original smc code, don't understand what its doing)
     std::vector<int> lags = as<std::vector<int>>(control["lags"]); arma::umat ancestors(nsims, lags.size(), fill::zeros);
 
-    // adaptive k estimation threshold
-    bool try_to_estimate_cut_k = as<bool>(control["estimate_cut_k"]);
-    double thresh = (double) control["adapt_k_thresh"];
 
     // weight type
     std::string wgt_type = as<std::string>(control["weight_type"]);
     // population tempering parameter 
     double pop_temper = as<double>(control["pop_temper"]);
-    // k param values to potentially use. If set to 0 or lower then estimate
-    std::vector<int> k_params = as<std::vector<int>>(control["k_params"]);
+
     // This is a total_ms_steps by nsims vector where [s][i] is the number of 
     // successful merge splits performed for plan i on merge split round s
 
@@ -390,6 +385,8 @@ List run_redist_gsmc(
         max_region_cut_sizes = as<std::vector<int>>(control["max_region_cut_sizes"]);
     }
 
+    bool use_graph_plan_space = sampling_space == "graph_plan_space";
+
 
     // Do some input checking 
     
@@ -435,7 +432,10 @@ List run_redist_gsmc(
     // Level 3 
     std::vector<Rcpp::IntegerMatrix> all_steps_plan_region_ids_list;
     all_steps_plan_region_ids_list.reserve(diagnostic_mode ? total_steps : 0);
+    std::vector<std::vector<Graph>> all_steps_forests_adj_list;
+    all_steps_forests_adj_list.resize((diagnostic_mode && !use_graph_plan_space) ? total_steps : 0);
 
+    
     // Store size at every step but last one if needed
     int plan_dval_list_size = (diagnostic_mode & !split_district_only) ? total_steps-1 : 0;
     if(!splitting_all_the_way) plan_dval_list_size++;
@@ -487,6 +487,16 @@ List run_redist_gsmc(
     );
 
     bool use_naive_k_splitter = splitting_method == SplittingMethodType::NaiveTopK;
+    // adaptive k estimation threshold
+    bool try_to_estimate_cut_k;
+    double thresh;
+    // k param values to potentially use. If set to 0 or lower then estimate
+    std::vector<int> k_params;
+    if(use_naive_k_splitter){
+        try_to_estimate_cut_k = as<bool>(control["estimate_cut_k"]);
+        thresh = (double) control["adapt_k_thresh"];
+        k_params = as<std::vector<int>>(control["k_params"]);
+    }
 
 
     // Loop over each column of region_id_mat
@@ -505,15 +515,16 @@ List run_redist_gsmc(
                 ndists, initial_num_regions,
                 map_params.pop, split_district_only
             ));
+        use_graph_plan_space = true;
         }else if(sampling_space == "spanning_forest_space"){
         plans_ptr_vec.emplace_back(
-            std::make_unique<GraphPlan>(
+            std::make_unique<ForestPlan>(
                 region_id_mat.col(i), region_sizes_mat.col(i), 
                 ndists, initial_num_regions,
                 map_params.pop, split_district_only
             ));
         new_plans_ptr_vec.emplace_back(
-            std::make_unique<GraphPlan>(
+            std::make_unique<ForestPlan>(
                 dummy_region_id_mat.col(i), dummy_region_sizes_mat.col(i), 
                 ndists, initial_num_regions,
                 map_params.pop, split_district_only
@@ -596,6 +607,7 @@ List run_redist_gsmc(
 
 
             // check if k is passed in or estimate 
+            if(use_naive_k_splitter){
             if(try_to_estimate_cut_k){
                 // est k
                 int est_cut_k;
@@ -618,6 +630,7 @@ List run_redist_gsmc(
                 if (verbosity >= 3) {
                     Rcout << " (using input k = " << k_params.at(smc_step_num) << ")\n";
                 }
+            }
             }
 
             if(use_naive_k_splitter){
@@ -656,9 +669,12 @@ List run_redist_gsmc(
                 verbosity, diagnostic_mode ? 3 : 0
             );
 
+            if(use_naive_k_splitter){
+                cut_k_values.at(step_num) = k_params.at(smc_step_num);
+                prev_k = k_params.at(smc_step_num);
+            }
+            
 
-            cut_k_values.at(step_num) = k_params.at(smc_step_num);
-            prev_k = k_params.at(smc_step_num);
 
             // for (size_t i = 0; i < plans_ptr_vec.size(); i++)
             // {
@@ -700,7 +716,7 @@ List run_redist_gsmc(
             }else{
                 throw Rcpp::exception("invalid weight type!");
             }
-                
+            
             
             // auto t2 = high_resolution_clock::now();
             // /* Getting number of milliseconds as a double. */
@@ -725,6 +741,7 @@ List run_redist_gsmc(
             if(smc_step_num < total_smc_steps-1){
                 smc_step_num++;
             }
+            
 
         }else if(merge_split_step_vec[step_num]){ // check if its a merge split step
             // run merge split 
@@ -787,7 +804,7 @@ List run_redist_gsmc(
         Rcpp::checkUserInterrupt();
 
         
-
+        
         // Now update the diagnostic info if needed, region labels, dval column of the matrix
         if(diagnostic_mode){ // record if in diagnostic mode and generalized splits
             // reorder the plans by oldest split if either we've done any merge split or
@@ -802,6 +819,19 @@ List run_redist_gsmc(
             copy_arma_to_rcpp_mat(pool, 
                 region_id_mat.submat(0,0, region_id_mat.n_rows-1, region_id_mat.n_cols-1), 
                 all_steps_plan_region_ids_list.at(step_num));
+            
+
+            // store the 
+            if(!use_graph_plan_space){
+                all_steps_forests_adj_list.at(step_num).reserve(nsims);
+                for (size_t i = 0; i < nsims; i++)
+                {
+                    // add the forests from each plan at this step
+                    all_steps_forests_adj_list.at(step_num).push_back(
+                        plans_ptr_vec.at(i)->get_forest_adj()
+                    );
+                }
+            }
 
             
             // Copy the sizes if neccesary 
@@ -815,6 +845,7 @@ List run_redist_gsmc(
                     ), 
                     region_sizes_mat_list.at(step_num));
             }
+            
 
         }
 
@@ -826,6 +857,8 @@ List run_redist_gsmc(
     
 
     cli_progress_done(bar);
+
+    
 
     // if not diagnostic reorder the plans 
     if(!diagnostic_mode){
@@ -862,7 +895,8 @@ List run_redist_gsmc(
         _["plan_sizes_mat"] = plan_sizes_mat.at(0),
         _["parent_index"] = parent_index_mat,
         _["region_ids_mat_list"] = all_steps_plan_region_ids_list,
-        _["region_sizes_mat_list"] = region_sizes_mat_list,
+        _["region_sizes_mat_list"] = region_sizes_mat_list, 
+        _["forest_adjs_list"] = all_steps_forests_adj_list,
         _["log_incremental_weights_mat"] = log_incremental_weights_mat,
         _["draw_tries_mat"] = draw_tries_mat,
         _["parent_unsuccessful_tries_mat"] = parent_unsuccessful_tries_mat,

@@ -182,8 +182,6 @@ treedist_gsmc <- function(
         min_region_cut_sizes=min_region_cut_sizes,
         max_region_cut_sizes=max_region_cut_sizes,
         ms_steps_multiplier = ms_steps_multiplier,
-        adapt_k_thresh = adapt_k_thresh,
-        estimate_cut_k=estimate_cut_k,
         merge_prob_type = merge_prob_type
     )
 
@@ -191,17 +189,6 @@ treedist_gsmc <- function(
     verbosity <- 1
     if (verbose) verbosity <- 3
     if (silent) verbosity <- 0
-
-
-
-
-
-
-    # validate_initial_region_id_mat
-
-    # validate_initial_region_id_mat
-
-
 
 
 

@@ -147,6 +147,48 @@ void assign_region_id_from_tree(const Tree &ust,
     }
 }
 
+// updates both the vertex labels and the forest adjacency 
+void sub_assign_region_id_and_forest_from_tree(const Tree &ust, 
+                    arma::subview_col<arma::uword> &region_ids,
+                    Graph &forest_graph,
+                    int root, int parent,
+                    const int new_region_id) {
+    // set new vertex id
+    region_ids(root) = new_region_id;
+    // get the number of descendants
+    int n_desc = ust.at(root).size();
+    // clear this vertices neighbors in the graph and reserve size for children
+    forest_graph.at(root).clear(); forest_graph.at(root).reserve(1+n_desc);
+    // now recursive call and add descendants
+    for (int child_index = 0; child_index < n_desc; child_index++) {
+        // get the child
+        int child = ust.at(root).at(child_index);
+        forest_graph.at(root).push_back(child);
+        sub_assign_region_id_and_forest_from_tree(
+            ust, region_ids, forest_graph,
+            child, root, new_region_id);
+    }
+    // add the edge to the parent
+    forest_graph.at(root).push_back(parent);
+}
+
+
+void assign_region_id_and_forest_from_tree(const Tree &ust, 
+                    arma::subview_col<arma::uword> &region_ids,
+                    Graph &forest_graph,
+                    int root,
+                    const int new_region_id) {
+
+    // call the actual recursive function 
+    sub_assign_region_id_and_forest_from_tree(
+        ust, region_ids, forest_graph,
+        root, -1, new_region_id);
+    
+    // remove the fake parent from the root 
+    forest_graph.at(root).pop_back();
+
+}
+
 
 /*
  * Find the root of a subtree.

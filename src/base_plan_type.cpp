@@ -150,24 +150,28 @@ Plan::Plan(
 }
 
 
-Plan::Plan(const Plan& other)
-    : region_ids(other.region_ids), region_sizes(other.region_sizes) // Share the same reference
-{
-    // Copy simple members
-    ndists = other.ndists;
-    V = other.V;
-    num_regions = other.num_regions;
-    num_districts = other.num_districts;
-    num_multidistricts = other.num_multidistricts;
-    map_pop = other.map_pop;
-    remainder_region = other.remainder_region;
+// Plan::Plan(const Plan& other)
+//     : region_ids(other.region_ids), region_sizes(other.region_sizes) // Share the same reference
+// {
+//     // Copy simple members
+//     ndists = other.ndists;
+//     V = other.V;
+//     num_regions = other.num_regions;
+//     num_districts = other.num_districts;
+//     num_multidistricts = other.num_multidistricts;
+//     map_pop = other.map_pop;
+//     remainder_region = other.remainder_region;
 
-    // Deep copy std::vector members
-    region_pops = other.region_pops;
-    region_added_order = other.region_added_order;
-    region_order_max = other.region_order_max;
-}
+//     // Deep copy std::vector members
+//     region_pops = other.region_pops;
+//     region_added_order = other.region_added_order;
+//     region_order_max = other.region_order_max;
+// }
 
+
+// Plan::Plan(const Plan& other){
+//     return *this;
+// }
 
 
 

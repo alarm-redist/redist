@@ -75,6 +75,13 @@ void assign_region_id_from_tree(const Tree &ust,
                     int root,
                     const int new_region_num_id);
 
+
+void assign_region_id_and_forest_from_tree(const Tree &ust, 
+                    arma::subview_col<arma::uword> &region_ids,
+                    Graph &forest_graph,
+                    int root,
+                    const int new_region_id);
+
 /*
  * Find the root of a subtree.
  */

@@ -37,7 +37,12 @@ public:
         arma::subview_col<arma::uword> region_sizes_col, 
         int ndists, int num_regions, const arma::uvec &pop, bool split_district_only
     ); // constructor for plan
-    Plan(const Plan& other); // Copy constructor
+
+    void shallow_copy(const Plan& plan_to_copy); // Shallow copies everything and doesn't change the underlying 
+    // umat columns that region_ids and region_sizes
+
+    // Virtual deep_clone method to create a copy of the object
+    virtual std::unique_ptr<Plan> deep_clone() const = 0;
 
 
     // attributes
@@ -69,7 +74,9 @@ public:
     
     int region_order_max; // value of current largest region order number
 
-    
+
+    // not actually used by all plan types
+    Graph forest_graph;    
 
 
     virtual ~Plan() = default; 
@@ -77,6 +84,7 @@ public:
     // methods
     void Rprint() const;
     void reorder_plan_by_oldest_split(Plan &dummy_plan);
+    virtual Graph get_forest_adj(){throw Rcpp::exception("Get Forest Adj not Supported for this!\n");};
 
     // redist_smc related methods 
     double choose_multidistrict_to_split(int &region_id_to_split, int min_region_cut_size);
