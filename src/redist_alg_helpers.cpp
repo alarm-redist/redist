@@ -96,6 +96,7 @@ void reorder_all_plans(
 
 
 std::vector<std::unique_ptr<TreeSplitter>> get_tree_splitters(
+    MapParams const &map_params,
     SplittingMethodType const splitting_method,
     Rcpp::List const &control,
     int const nsims
@@ -104,19 +105,21 @@ std::vector<std::unique_ptr<TreeSplitter>> get_tree_splitters(
     std::vector<std::unique_ptr<TreeSplitter>> tree_splitters_ptr_vec; 
     tree_splitters_ptr_vec.reserve(nsims);
 
+    int V = map_params.V;
+
     if(splitting_method == SplittingMethodType::NaiveTopK){
         // set splitting k to -1
-        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), nsims, [] {
-            return std::make_unique<NaiveTopKSplitter>(-1);
+        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), nsims, [V] {
+            return std::make_unique<NaiveTopKSplitter>(V, -1);
         });
     }else if(splitting_method == SplittingMethodType::UnifValid){
-        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), nsims, [] {
-            return std::make_unique<UniformValidSplitter>();
+        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), nsims, [V] {
+            return std::make_unique<UniformValidSplitter>(V);
         });
     }else if(splitting_method == SplittingMethodType::ExpBiggerAbsDev){
         double alpha = as<double>(control["splitting_alpha"]);
-        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), nsims, [alpha] {
-            return std::make_unique<ExpoWeightedSplitter>(alpha);
+        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), nsims, [V, alpha] {
+            return std::make_unique<ExpoWeightedSplitter>(V, alpha);
         });
     }else{
         throw Rcpp::exception("Invalid Splitting Method!");

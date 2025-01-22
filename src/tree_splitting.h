@@ -5,6 +5,7 @@
 #include <RcppArmadillo.h>
 #include <vector>
 #include <utility>
+#include <queue>
 #include "gredist_types.h"
 #include "smc_base.h"
 
@@ -140,5 +141,26 @@ std::vector<double> get_ordered_tree_cut_devs(Tree &ust, int root,
                              int const region_id, int const region_size, int const region_pop,
                              int const min_potential_cut_size, int const max_potential_cut_size
                              );
+
+arma::vec compute_expo_prob_weights_on_edges(
+        std::vector<EdgeCut> valid_edges, double alpha, double target);
+
+
+std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(const int root, 
+                     const std::vector<int> &cut_below_pops, const std::vector<int> &tree_vertex_parents,
+                     const int min_potential_cut_size, const int max_potential_cut_size,
+                     const arma::subview_col<arma::uword> &region_ids,
+                     const int region_id_to_split, const int total_region_pop, const int total_region_size,
+                     const double lower, const double upper, const double target);
+
+
+
+
+std::vector<EdgeCut> NEW2_get_all_valid_edges_in_directed_tree(
+                     const Tree &ust, const int root, 
+                     const std::vector<int> &cut_below_pops,
+                     const int min_potential_cut_size, const int max_potential_cut_size,
+                     const int total_region_pop, const int total_region_size,
+                     const double lower, const double upper, const double target);
 
 #endif

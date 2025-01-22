@@ -42,7 +42,7 @@ void estimate_cut_k(const Graph &g, int &k, int const last_k,
     int idx = 0;
     int max_V = 0;
     Tree ust = init_tree(V);
-
+    
     for (int i = 0; i < N_max && idx < N_adapt; i++, idx++) {
         if (unnormalized_weights.at(i) == 0) { // skip if not valid
             idx--;
@@ -67,6 +67,7 @@ void estimate_cut_k(const Graph &g, int &k, int const last_k,
 
         int biggest_dval_region_pop = plan_ptrs_vec.at(i)->region_pops.at(biggest_region_id);
 
+
         for (int j = 0; j < V; j++) {
             // if not the biggest region mark as ignore
             if (plan_ptrs_vec.at(i)->region_ids(j) != biggest_region_id) {
@@ -74,6 +75,7 @@ void estimate_cut_k(const Graph &g, int &k, int const last_k,
                 n_vtx--;
             }
         }
+
         if (n_vtx > max_V) max_V = n_vtx;
 
         clear_tree(ust);
@@ -88,11 +90,12 @@ void estimate_cut_k(const Graph &g, int &k, int const last_k,
         std::fill(cut_below_pop.begin(), cut_below_pop.end(), 0);
         tree_pop(ust, root, pop, cut_below_pop, parents);
 
+
         devs.push_back(
-            get_ordered_tree_cut_devs(ust, root, cut_below_pop, target, 
-                        plan_ptrs_vec.at(i)->region_ids,
-                        biggest_region_id, biggest_dval, biggest_dval_region_pop,
-                        min_region_cut_size, max_region_cut_size)
+        get_ordered_tree_cut_devs(ust, root, cut_below_pop, target, 
+                    plan_ptrs_vec.at(i)->region_ids,
+                    biggest_region_id, biggest_dval, biggest_dval_region_pop,
+                    min_region_cut_size, max_region_cut_size)
                       );
 
         int n_ok = 0;
@@ -122,7 +125,13 @@ void estimate_cut_k(const Graph &g, int &k, int const last_k,
         double sum_within = 0;
         int n_ok = 0;
         for (int i = 0; i < N_adapt; i++) {
-            double dev = devs.at(i).at(r_int(k));
+            int rand_index = r_int(k);
+            if(rand_index >= devs.at(i).size()){
+                REprintf("For k=%d In est_cut_k rand_index = %d  bigger than devs %d size %d\n",
+                k, rand_index, i, (int)  devs.at(i).size());
+                throw Rcpp::exception("Erorr in estimate cut k!\n");
+            }
+            double dev = devs.at(i).at(rand_index);
             if (dev > tol) continue;
             else n_ok++;
             // need min to avoid indexing errors

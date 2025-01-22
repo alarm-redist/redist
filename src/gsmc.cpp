@@ -483,7 +483,7 @@ List run_redist_gsmc(
 
     // Vector of splitters
     std::vector<std::unique_ptr<TreeSplitter>> tree_splitters_ptr_vec = get_tree_splitters(
-        splitting_method, control, nsims
+        map_params,splitting_method, control, nsims
     );
 
     bool use_naive_k_splitter = splitting_method == SplittingMethodType::NaiveTopK;
@@ -497,7 +497,6 @@ List run_redist_gsmc(
         thresh = (double) control["adapt_k_thresh"];
         k_params = as<std::vector<int>>(control["k_params"]);
     }
-
 
     // Loop over each column of region_id_mat
     for (size_t i = 0; i < region_id_mat.n_cols; ++i) {
@@ -621,6 +620,7 @@ List run_redist_gsmc(
                             min_region_cut_sizes.at(smc_step_num), max_region_cut_sizes.at(smc_step_num), 
                             split_district_only,
                             target, verbosity);
+
                 k_params.at(smc_step_num) = est_cut_k;
 
                 if (verbosity >= 3) {
@@ -651,7 +651,6 @@ List run_redist_gsmc(
                 cumulative_weights.size()-1
             );
             
-
             // split the map
             run_smc_step(map_params,
                 plans_ptr_vec, new_plans_ptr_vec, 
@@ -668,6 +667,7 @@ List run_redist_gsmc(
                 pool,
                 verbosity, diagnostic_mode ? 3 : 0
             );
+
 
             if(use_naive_k_splitter){
                 cut_k_values.at(step_num) = k_params.at(smc_step_num);
@@ -728,7 +728,7 @@ List run_redist_gsmc(
             // compute effective sample size
             n_eff.at(smc_step_num) = compute_n_eff(log_incremental_weights_mat.col(smc_step_num));
 
-            if(step_num == 0){
+            if(smc_step_num == 0 && initial_num_regions == 1){
                 // For the first ancestor one make every ancestor themselves
                 std::iota(
                     parent_index_mat.column(0).begin(), 

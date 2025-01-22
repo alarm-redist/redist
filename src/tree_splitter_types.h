@@ -19,7 +19,19 @@ class TreeSplitter {
 
 public:
     // Default Constructor 
+    TreeSplitter(int V) : pops_below_vertex(V, 0) {};
     virtual ~TreeSplitter() = default; 
+
+    // for storing population below each node
+    std::vector<int> pops_below_vertex;
+
+    // Returns a vector of all the valid edges in the tree 
+    std::vector<EdgeCut> get_all_valid_pop_edge_cuts_in_directed_tree(
+        const MapParams &map_params, Plan &plan,
+        Tree &ust, const int root, 
+        const int min_potential_cut_size, const int max_potential_cut_size,
+        const int region_id_to_split
+    );
     
     // Takes a spanning tree and returns the edge to cut if successful
     virtual std::pair<bool,EdgeCut> select_edge_to_cut(
@@ -40,11 +52,17 @@ public:
 class NaiveTopKSplitter : public TreeSplitter{
 
 public:
-    // implementation of the pure virtual function
-    NaiveTopKSplitter(int k_param): k_param(k_param) {}
-    
+    // Constructor for NaiveTopKSplitter
+    NaiveTopKSplitter(int V, int k_param)
+        : TreeSplitter(V), k_param(k_param), vertex_parents(V,0) {
+        std::random_device rd;  // A seed source for the random number engine
+        gen = std::mt19937(rd()); // Mersenne Twister engine seeded with rd()
+    }
 
-    int k_param; // top k value
+    // Attributes specific to NaiveTopKSplitter
+    int k_param;        // Top k value
+    std::vector<int> vertex_parents;
+    std::mt19937 gen;   // Random number generator
 
     // how to update the k param
     void update_single_int_param(int int_param);
@@ -64,7 +82,7 @@ class UniformValidSplitter : public TreeSplitter{
 
 public:
     // implementation of the pure virtual function
-    UniformValidSplitter() = default;
+    UniformValidSplitter(int V): TreeSplitter(V){};
 
 
     std::pair<bool,EdgeCut> select_edge_to_cut(
@@ -79,9 +97,10 @@ public:
 class ExpoWeightedSplitter : public TreeSplitter{
 
 public:
-    // implementation of the pure virtual function
-    ExpoWeightedSplitter(double alpha): alpha(alpha){
-        if(alpha < 0.0) throw Rcpp::exception("Alpha must be less than zero!");
+
+    ExpoWeightedSplitter(int V, double alpha)
+        : TreeSplitter(V), alpha(alpha) {
+        if(alpha < 0.0) throw Rcpp::exception("Alpha must be greater than zero!");
     }
 
     double alpha;

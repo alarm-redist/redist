@@ -51,11 +51,26 @@ void clear_tree(Tree &tree);
 
 
 /*
- * Count population below each node in tree
+ * Count population below each node in tree and get parent
  */
 // TESTED
 int tree_pop(Tree &ust, int vtx, const arma::uvec &pop,
              std::vector<int> &pop_below, std::vector<int> &parent);
+
+
+/*
+ * Just Count population below each node in tree
+ */
+// TESTED
+int get_tree_pops_below(const Tree &ust, const int vtx, const arma::uvec &pop,
+             std::vector<int> &pop_below);
+
+
+int build_directed_tree_and_get_pops_below(
+    const Graph undirected_forest, 
+    Tree &ust, const int vtx, std::vector<bool> &visited, 
+    const arma::uvec &pop,
+    std::vector<int> &pop_below);
 
 /*
  * Assign `district` to all descendants of `root` in `ust`

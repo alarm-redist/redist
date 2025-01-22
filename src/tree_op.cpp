@@ -106,7 +106,6 @@ void clear_tree(Tree &tree) {
 // [[Rcpp::export]]
 int tree_pop(Tree &ust, int vtx, const arma::uvec &pop,
              std::vector<int> &pop_below, std::vector<int> &parent) {
-    // REprintf("At vertex %d with pop %d\n", vtx, pop(vtx));
     int pop_at = pop(vtx);
     const std::vector<int> *nbors = &ust[vtx];
     int length = nbors->size();
@@ -119,6 +118,51 @@ int tree_pop(Tree &ust, int vtx, const arma::uvec &pop,
     pop_below.at(vtx) = pop_at;
     return pop_at;
 }
+
+
+/*
+ * Just Count population below each node in tree 
+ */
+// TESTED
+int get_tree_pops_below(const Tree &ust, const int vtx, const arma::uvec &pop,
+             std::vector<int> &pop_below) {
+    int pop_at = pop(vtx);
+    const std::vector<int> *nbors = &ust[vtx];
+    int length = nbors->size();
+    for (int j = 0; j < length; j++) {
+        int nbor = (*nbors)[j];
+        pop_at += get_tree_pops_below(ust, nbor, pop, pop_below);
+    }
+
+    pop_below.at(vtx) = pop_at;
+    return pop_at;
+}
+
+
+int build_directed_tree_and_get_pops_below(
+    const Graph undirected_forest, 
+    Tree &ust, const int vtx, std::vector<bool> &visited, 
+    const arma::uvec &pop,
+    std::vector<int> &pop_below) {
+    // mark this vertex as visited
+    visited.at(vtx) = true;
+
+    int pop_at = pop(vtx);
+    for (const auto &child_vtx : undirected_forest.at(vtx)) {
+        // continue if we've already visited this vertex
+        if(visited.at(child_vtx)) continue;
+        // get the population 
+        pop_at += build_directed_tree_and_get_pops_below(
+            undirected_forest, ust, child_vtx, 
+            visited, pop, pop_below);
+        // add this as a child in the tree 
+        ust.at(vtx).push_back(child_vtx);
+    }
+
+    pop_below.at(vtx) = pop_at;
+    return pop_at;
+}
+
 
 /*
  * Assign `district` to all descendants of `root` in `ust`

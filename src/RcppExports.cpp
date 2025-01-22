@@ -499,6 +499,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rand_int_gen_testing
+void rand_int_gen_testing(int ndraws, int max_val);
+RcppExport SEXP _gredist_rand_int_gen_testing(SEXP ndrawsSEXP, SEXP max_valSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type ndraws(ndrawsSEXP);
+    Rcpp::traits::input_parameter< int >::type max_val(max_valSEXP);
+    rand_int_gen_testing(ndraws, max_val);
+    return R_NilValue;
+END_RCPP
+}
 // random_cpp_testing
 void random_cpp_testing();
 RcppExport SEXP _gredist_random_cpp_testing() {
@@ -793,6 +804,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_pareto_dominated", (DL_FUNC) &_gredist_pareto_dominated, 1},
     {"_gredist_plan_copy_testing", (DL_FUNC) &_gredist_plan_copy_testing, 0},
     {"_gredist_arma_testing", (DL_FUNC) &_gredist_arma_testing, 0},
+    {"_gredist_rand_int_gen_testing", (DL_FUNC) &_gredist_rand_int_gen_testing, 2},
     {"_gredist_random_cpp_testing", (DL_FUNC) &_gredist_random_cpp_testing, 0},
     {"_gredist_closest_adj_pop", (DL_FUNC) &_gredist_closest_adj_pop, 3},
     {"_gredist_rint1", (DL_FUNC) &_gredist_rint1, 2},

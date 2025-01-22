@@ -44,16 +44,16 @@ void ForestPlan::update_vertex_info_from_cut(
         ust, region_ids, forest_graph,
         split_region1_tree_root, split_region1_id);
 
-    Rprintf("Root is %d and its size is %d\n", 
-        split_region1_tree_root, (int) forest_graph.at(split_region1_tree_root).size());
+    // Rprintf("Root is %d and its size is %d\n", 
+    //     split_region1_tree_root, (int) forest_graph.at(split_region1_tree_root).size());
 
     assign_region_id_and_forest_from_tree(
         ust, region_ids, forest_graph,
         split_region2_tree_root, split_region2_id);
 
 
-    Rprintf("Root is %d and its size is %d\n", 
-        split_region2_tree_root, (int) forest_graph.at(split_region2_tree_root).size());
+    // Rprintf("Root is %d and its size is %d\n", 
+    //     split_region2_tree_root, (int) forest_graph.at(split_region2_tree_root).size());
 
     return;
 }

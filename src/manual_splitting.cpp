@@ -160,7 +160,7 @@ List perform_a_valid_multidistrict_split(
         ndists, num_regions, pop, split_district_only);
 
     // Create tree splitter 
-    TreeSplitter * tree_splitter = new NaiveTopKSplitter(k_param);
+    TreeSplitter * tree_splitter = new NaiveTopKSplitter(map_params.V, k_param);
 
 
     if(verbose){
@@ -320,7 +320,7 @@ List perform_merge_split_steps(
     Plan *new_plan = new GraphPlan(dummy_region_ids.col(0), dummy_region_dvals.col(0), ndists, num_regions, pop, split_district_only);
 
     // create splitter
-    TreeSplitter *tree_splitter = new NaiveTopKSplitter(k_param);
+    TreeSplitter *tree_splitter = new NaiveTopKSplitter(map_params.V, k_param);
 
     // fill in the plan
     plan->num_regions = num_regions;

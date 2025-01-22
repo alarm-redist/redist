@@ -106,6 +106,27 @@ public:
     // returns absolute population deviation
     std::array<double, 2> compute_abs_pop_deviances(double target);
 
+    // Equality operator
+    bool operator==(const EdgeCut& other) const {
+        return tree_root == other.tree_root &&
+               cut_vertex == other.cut_vertex &&
+               cut_vertex_parent == other.cut_vertex_parent &&
+               cut_below_region_size == other.cut_below_region_size &&
+               cut_below_pop == other.cut_below_pop &&
+               cut_above_region_size == other.cut_above_region_size &&
+               cut_above_pop == other.cut_above_pop;
+    }
+
+    // Not-equal operator
+    bool operator!=(const EdgeCut& other) const {
+        return !(*this == other);
+    }
+
+    // Less-than operator
+    bool operator<(const EdgeCut& other) const {
+        return cut_vertex < other.cut_vertex;
+    }
+
 };
 
 
@@ -132,5 +153,15 @@ enum class SplitRegionSizeType : unsigned char
 
 // load from control spring 
 SplitRegionSizeType get_splitting_size_regime(std::string const &splitting_size_regime_str);
+
+
+class SpanningTree {
+public:
+    Tree ust;
+    std::vector<int> parents, pop_below;
+    std::vector<bool> visited, ignore;
+    int V, tree_size;
+};
+
 
 #endif

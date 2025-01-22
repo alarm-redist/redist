@@ -175,6 +175,10 @@ arma_testing <- function() {
     .Call(`_gredist_arma_testing`)
 }
 
+rand_int_gen_testing <- function(ndraws, max_val) {
+    invisible(.Call(`_gredist_rand_int_gen_testing`, ndraws, max_val))
+}
+
 random_cpp_testing <- function() {
     invisible(.Call(`_gredist_random_cpp_testing`))
 }

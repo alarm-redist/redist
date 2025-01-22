@@ -14,6 +14,13 @@ Since `state_xo` and `state_sr` are global variables when you run without multip
 
 # ----- ACTIVE TASKS -----
 
+**Create new SpanningTree class**
+Create a new `SpanningTree` class that is a wrapper for the directed spanning tree itself along with the vectors that always
+have to be created for it. Namely the `visited, ignore, parent, pop_below` vectors. Right now we allocate `parent, pop_below` vectors everytime and I imagine that is making things expensive. 
+
+**Make get_all_valid_edges_in_directed_tree work directly on tree**
+Right now the function to get all edges in a directed tree requires a population above and parent vector but I think this should be possible to be run on the tree itself starting at the root without needing to compute the parent or pop above vectors. 
+
 **Fix merge split bug**
 Right now when running smc+merge split the maps somehow become disconnected for Oregon with the county constraint turned on. Investigate this further, as I'm not sure what is causing the bug. 
 

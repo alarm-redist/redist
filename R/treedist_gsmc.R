@@ -256,7 +256,7 @@ treedist_gsmc <- function(
             upper=pop_bounds[3],
             region_id_mat = init_region_ids_mat,
             region_sizes_mat = init_region_sizes_mat,
-            sampling_space = GRAPH_PLAN_SPACE_SAMPLING,
+            sampling_space = FOREST_SPACE_SAMPLING,
             control = control,
             verbosity=run_verbosity,
             diagnostic_mode=diagnostic_mode)
