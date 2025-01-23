@@ -355,6 +355,11 @@ std::vector<EdgeCut> get_all_valid_edge_cuts_from_edge(
             double cut_region2_lb = lower*cut_region2_size; 
             double cut_region2_ub = upper*cut_region2_size;
 
+            // REprintf("Hey For %d, %d we compare %f vs %f and %f vs %f", 
+            //     cut_region1_size, cut_region2_size,
+            //     cut_region1_lb, below_pop,
+            //     cut_region2_lb, above_pop);
+
             // check if assigning potential_region_size to cut below leads to valid region
             bool cut_below_ok = cut_region1_lb <= below_pop
                             && below_pop <= cut_region1_ub
@@ -951,5 +956,98 @@ arma::vec compute_expo_prob_weights_on_edges(
     return unnormalized_wgts;
 
 }
+
+
+
+
+// finds all valid edges if you joined the two trees
+// with the edge (region1_root, region2_root)
+// THIS INCLUDES (region1_root, region2_root) as an edge!!
+std::vector<EdgeCut> get_valid_edges_in_joined_tree(
+    MapParams const &map_params,
+    Graph const &forest_graph, Tree &ust,
+    std::vector<bool> &visited, std::vector<int> &pops_below_vertex,
+    const int region1_id, const int region1_root,
+    const int region2_id, const int region2_root,
+    const int min_potential_cut_size, const int max_potential_cut_size,
+    const int total_merged_region_pop, const int total_merged_region_size
+){
+    // clear the tree
+    clear_tree(ust);
+    // clear the pop below and visited 
+    std::fill(visited.begin(), visited.end(), false);
+    std::fill(pops_below_vertex.begin(), pops_below_vertex.end(), 0);
+
+
+    // build the tree starting from root 1
+    build_directed_tree_and_get_pops_below(
+        forest_graph, 
+        ust, region1_root, visited, 
+        map_params.pop, pops_below_vertex);
+    // find the valid edges in this half of the tree 
+    std::vector<EdgeCut> valid_tree1_edges = NEW2_get_all_valid_edges_in_directed_tree(
+        ust, region1_root, 
+        pops_below_vertex,
+        min_potential_cut_size, max_potential_cut_size,
+        total_merged_region_pop, total_merged_region_size,
+        map_params.lower, map_params.upper, map_params.target
+    );
+
+
+    // build the tree starting from root 2
+    build_directed_tree_and_get_pops_below(
+        forest_graph, 
+        ust, region2_root, visited, 
+        map_params.pop, pops_below_vertex);
+    // find the valid edges in this half of the tree 
+    std::vector<EdgeCut> valid_tree2_edges = NEW2_get_all_valid_edges_in_directed_tree(
+        ust, region2_root, 
+        pops_below_vertex,
+        min_potential_cut_size, max_potential_cut_size,
+        total_merged_region_pop, total_merged_region_size,
+        map_params.lower, map_params.upper, map_params.target
+    );
+
+
+    // Now add the joined cut
+    // If strict bounds there's only one option but we check all in case the bounds
+    // are weak. 
+    std::pair<int, int> loop_bounds = get_potential_region_size_for_loop_bounds(
+        total_merged_region_size,
+        min_potential_cut_size, max_potential_cut_size
+    );
+
+    // we make region2 the cut vertex and region1 the parent
+    std::vector<EdgeCut> edge_across_valid_edge_cuts = get_all_valid_edge_cuts_from_edge(
+                region1_root, region2_root, region1_root,
+                total_merged_region_size, total_merged_region_pop,
+                static_cast<double>(pops_below_vertex.at(region2_root)), 
+                static_cast<double>(total_merged_region_pop - pops_below_vertex.at(region2_root)),
+                map_params.lower, map_params.target, map_params.upper,
+                loop_bounds.first, loop_bounds.second);
+
+    // REprintf("Pop below region2_root is %d so above is %d so foound %d\n",
+    //     pops_below_vertex.at(region2_root), 
+    //     total_merged_region_pop -pops_below_vertex.at(region2_root),
+    //     (int) edge_across_valid_edge_cuts.size());
+
+    // now add the edges from the two trees
+    edge_across_valid_edge_cuts.insert(
+        edge_across_valid_edge_cuts.end(),
+        valid_tree1_edges.begin(),
+        valid_tree1_edges.end()
+    );
+
+    edge_across_valid_edge_cuts.insert(
+        edge_across_valid_edge_cuts.end(),
+        valid_tree2_edges.begin(),
+        valid_tree2_edges.end()
+    );
+
+    return edge_across_valid_edge_cuts;
+}
+
+
+
 
 

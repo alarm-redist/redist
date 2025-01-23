@@ -42,9 +42,6 @@ treedist_gsmc <- function(
         min_region_cut_sizes = NULL, max_region_cut_sizes = NULL,
         verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE){
 
-    if(init_num_regions > 1 || !is.null(init_region_ids_mat) || !is.null(init_region_sizes_mat)){
-        cli_abort("Starting with non-trivial partial plans not supported yet!")
-    }
 
     if(run_ms){
         cli_abort("Merge Split not supported at this moment!")
@@ -79,6 +76,7 @@ treedist_gsmc <- function(
         init_region_ids_mat <- matrix(0L, nrow = V, ncol = nsims)
         init_num_regions <-  1
     } else { # if user input then check its valid
+        init_num_regions <- length(unique(init_region_ids_mat[,1]))
         validate_initial_region_id_mat(init_region_ids_mat, V, nsims, init_num_regions)
     }
     if (is.null(n_smc_steps)) {
@@ -170,12 +168,18 @@ treedist_gsmc <- function(
     # compute lags thing
     lags <- 1 + unique(round((ndists - 1)^0.8*seq(0, 0.7, length.out = 4)^0.9))
 
+    # validate splitting method
+    if(splitting_method == EXP_BIGGER_ABS_DEV_SPLITTING){
+        if(!"splitting_alpha" %in% splitting_method_params){
+            splitting_method_params[["splitting_alpha"]] <- 100
+        }
+    }
+
 
     control <- list(
         weight_type="optimal",
         lags=lags,
         pop_temper = pop_temper,
-        step_types =step_types,
         splitting_method = splitting_method,
         splitting_size_regime = splitting_size_regime,
         splitting_method_params=splitting_method_params,
@@ -251,6 +255,7 @@ treedist_gsmc <- function(
             adj_list=adj_list,
             counties=counties,
             pop=pop,
+            step_types=step_types,
             target=pop_bounds[2],
             lower=pop_bounds[1],
             upper=pop_bounds[3],
@@ -422,10 +427,10 @@ treedist_gsmc <- function(
 
         # add diagnostic stuff
         algout$l_diag <- list(
-            estimate_cut_k=estimate_cut_k,
+            estimate_cut_k=NULL,
             n_eff = n_eff,
             step_n_eff = algout$step_n_eff,
-            adapt_k_thresh = adapt_k_thresh, # adapt_k_thresh, NEED TO DEAL WITH
+            adapt_k_thresh = NULL, # adapt_k_thresh, NEED TO DEAL WITH
             est_k = algout$est_k,
             accept_rate = algout$acceptance_rates,
             sd_lp = sd_lp,
@@ -486,7 +491,7 @@ treedist_gsmc <- function(
                             entire_runtime = t2-t1,
                             min_region_cut_sizes = min_region_cut_sizes,
                             max_region_cut_sizes = max_region_cut_sizes,
-                            weight_type = weight_type,
+                            weight_type = NULL,
                             merge_prob_type = merge_prob_type)
 
 

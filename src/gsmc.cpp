@@ -683,14 +683,24 @@ List run_redist_gsmc(
             
 
 
-            // auto t2f = high_resolution_clock::now();
+            // auto t2f = std::chrono::high_resolution_clock::now();
             // /* Getting number of milliseconds as a double. */
-            // duration<double, std::milli> ms_doublef = t2f - t1f;
+            // std::chrono::duration<double, std::milli> ms_doublef = t2f - t1f;
             // Rcout << "Running SMC " << ms_doublef.count() << " ms\n";
-            // auto t1 = high_resolution_clock::now();
+            auto t1 = std::chrono::high_resolution_clock::now();
 
-            
-            if(wgt_type == "optimal"){
+            if(!use_graph_plan_space){
+                Rprintf("Doing tree weights!\n");
+                get_all_forest_plans_log_optimal_weights(
+                    pool,
+                    map_params, plans_ptr_vec, tree_splitters_ptr_vec,
+                    min_region_cut_sizes.at(smc_step_num), max_region_cut_sizes.at(smc_step_num),
+                    split_district_only,
+                    log_incremental_weights_mat.col(smc_step_num),
+                    unnormalized_sampling_weights,
+                    pop_temper
+            );
+            }else if(wgt_type == "optimal"){
                 // compute log incremental weights and sampling weights for next round
                 get_all_plans_log_optimal_weights(
                     pool,
@@ -718,10 +728,10 @@ List run_redist_gsmc(
             }
             
             
-            // auto t2 = high_resolution_clock::now();
-            // /* Getting number of milliseconds as a double. */
-            // duration<double, std::milli> ms_double = t2 - t1; 
-            // Rcout << "Calculating log weights " << ms_double.count() << " ms\n";
+            auto t2 = std::chrono::high_resolution_clock::now();
+            /* Getting number of milliseconds as a double. */
+            std::chrono::duration<double, std::milli> ms_double = t2 - t1; 
+            Rcout << "Calculating log weights " << ms_double.count() << " ms\n";
 
             // compute log weight sd
             log_wgt_stddevs.at(smc_step_num) = arma::stddev(log_incremental_weights_mat.col(smc_step_num));

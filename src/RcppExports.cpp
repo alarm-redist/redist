@@ -13,6 +13,31 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// test_tree_prob_stuff
+Rcpp::List test_tree_prob_stuff(List map_adj_list, const arma::uvec& counties, const arma::uvec& pop, int ndists, int num_regions, double target, double lower, double upper, const int min_potential_cut_size, const int max_potential_cut_size, arma::umat region_ids, arma::umat region_sizes, List forest_adj_list, bool split_district_only, bool verbose);
+RcppExport SEXP _gredist_test_tree_prob_stuff(SEXP map_adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP ndistsSEXP, SEXP num_regionsSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP min_potential_cut_sizeSEXP, SEXP max_potential_cut_sizeSEXP, SEXP region_idsSEXP, SEXP region_sizesSEXP, SEXP forest_adj_listSEXP, SEXP split_district_onlySEXP, SEXP verboseSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type map_adj_list(map_adj_listSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< int >::type ndists(ndistsSEXP);
+    Rcpp::traits::input_parameter< int >::type num_regions(num_regionsSEXP);
+    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< const int >::type min_potential_cut_size(min_potential_cut_sizeSEXP);
+    Rcpp::traits::input_parameter< const int >::type max_potential_cut_size(max_potential_cut_sizeSEXP);
+    Rcpp::traits::input_parameter< arma::umat >::type region_ids(region_idsSEXP);
+    Rcpp::traits::input_parameter< arma::umat >::type region_sizes(region_sizesSEXP);
+    Rcpp::traits::input_parameter< List >::type forest_adj_list(forest_adj_listSEXP);
+    Rcpp::traits::input_parameter< bool >::type split_district_only(split_district_onlySEXP);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(test_tree_prob_stuff(map_adj_list, counties, pop, ndists, num_regions, target, lower, upper, min_potential_cut_size, max_potential_cut_size, region_ids, region_sizes, forest_adj_list, split_district_only, verbose));
+    return rcpp_result_gen;
+END_RCPP
+}
 // reduce_adj
 List reduce_adj(List adj_list, IntegerVector prec_map, int n_keep);
 RcppExport SEXP _gredist_reduce_adj(SEXP adj_listSEXP, SEXP prec_mapSEXP, SEXP n_keepSEXP) {
@@ -771,6 +796,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_gredist_test_tree_prob_stuff", (DL_FUNC) &_gredist_test_tree_prob_stuff, 15},
     {"_gredist_reduce_adj", (DL_FUNC) &_gredist_reduce_adj, 3},
     {"_gredist_collapse_adj", (DL_FUNC) &_gredist_collapse_adj, 2},
     {"_gredist_coarsen_adjacency", (DL_FUNC) &_gredist_coarsen_adjacency, 2},

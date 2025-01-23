@@ -40,6 +40,14 @@ public:
         const int min_potential_cut_size, const int max_potential_cut_size,
         const int region_id_to_split) = 0;
 
+    // Takes a vector of valid edge cuts and returns the log probability 
+    // the one an index idx would have been chosen 
+    virtual double get_log_selection_prob(
+        const MapParams &map_params,
+        const std::vector<EdgeCut> &valid_edges,
+        int idx
+    ) const = 0;
+
     // used to update the k parameter for top k splitter
     virtual void update_single_int_param(int int_param){
         throw Rcpp::exception("Update single int param not implemented!\n");
@@ -73,6 +81,12 @@ public:
         Tree &ust, const int root, 
         const int min_potential_cut_size, const int max_potential_cut_size, 
         const int region_id_to_split);
+
+    double get_log_selection_prob(
+        const MapParams &map_params,
+        const std::vector<EdgeCut> &valid_edges,
+        int idx
+    ) const {throw Rcpp::exception("No log selection prob implemented for naive k!\n");}
 };
 
 
@@ -90,6 +104,13 @@ public:
         Tree &ust, const int root, 
         const int min_potential_cut_size, const int max_potential_cut_size, 
         const int region_id_to_split);
+
+    // since uniform log prob is just -log(# of candidates)
+    double get_log_selection_prob(
+        const MapParams &map_params,
+        const std::vector<EdgeCut> &valid_edges,
+        int idx
+    ) const {return -std::log(valid_edges.size());}
 };
 
 
@@ -111,6 +132,12 @@ public:
         Tree &ust, const int root, 
         const int min_potential_cut_size, const int max_potential_cut_size, 
         const int region_id_to_split);
+
+    double get_log_selection_prob(
+        const MapParams &map_params,
+        const std::vector<EdgeCut> &valid_edges,
+        int idx
+    ) const;
 };
 
 

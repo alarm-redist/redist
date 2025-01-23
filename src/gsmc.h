@@ -13,6 +13,7 @@
 #include <cli/progress.h>
 #include <RcppThread.h>
 #include <atomic>
+#include <chrono>
 
 
 #include "splitting.h"

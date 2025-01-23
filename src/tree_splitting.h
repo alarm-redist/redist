@@ -8,6 +8,7 @@
 #include <queue>
 #include "gredist_types.h"
 #include "smc_base.h"
+#include "tree_op.h"
 
 
 
@@ -162,5 +163,16 @@ std::vector<EdgeCut> NEW2_get_all_valid_edges_in_directed_tree(
                      const int min_potential_cut_size, const int max_potential_cut_size,
                      const int total_region_pop, const int total_region_size,
                      const double lower, const double upper, const double target);
+
+
+std::vector<EdgeCut> get_valid_edges_in_joined_tree(
+    MapParams const &map_params,
+    Graph const &forest_graph, Tree &ust,
+    std::vector<bool> &visited, std::vector<int> &pops_below_vertex,
+    const int region1_id, const int region1_root,
+    const int region2_id, const int region2_root,
+    const int min_potential_cut_size, const int max_potential_cut_size,
+    const int total_merged_region_pop, const int total_merged_region_size
+);
 
 #endif

@@ -187,3 +187,21 @@ std::pair<bool,EdgeCut> ExpoWeightedSplitter::select_edge_to_cut(
                
 
 }
+
+
+
+
+double ExpoWeightedSplitter::get_log_selection_prob(
+    const MapParams &map_params,
+    const std::vector<EdgeCut> &valid_edges,
+    int idx
+    ) const{
+    // get the weights 
+    arma::vec unnormalized_wgts = compute_expo_prob_weights_on_edges(
+        valid_edges, alpha, map_params.target);
+    
+    // we want log of weight at idx / sum of all weight which is equal to
+    // log(prob at idx) - log(sum of all weights)
+    return log(unnormalized_wgts(idx)) - log(arma::sum(unnormalized_wgts));
+
+}

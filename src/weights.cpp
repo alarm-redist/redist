@@ -851,3 +851,234 @@ Graph get_region_graph(const Graph &g, const Plan &plan) {
 
     return out;
 }
+
+
+
+
+
+double get_log_retroactive_splitting_prob_for_joined_tree(
+    MapParams const &map_params,
+    Plan const &plan, Tree &ust, const TreeSplitter &edge_splitter,
+    std::vector<bool> &visited, std::vector<int> &pops_below_vertex,
+    const int region1_root, const int region2_root,
+    const int min_potential_cut_size, const int max_potential_cut_size
+){
+    int region1_id = plan.region_ids(region1_root);
+    int region2_id = plan.region_ids(region2_root);
+    int total_merged_region_pop = plan.region_pops.at(region1_id)+plan.region_pops.at(region2_id); 
+    int total_merged_region_size = plan.region_sizes(region1_id)+plan.region_sizes(region2_id);
+
+    // Get all the valid edges in the joined tree 
+    std::vector<EdgeCut> valid_edges = get_valid_edges_in_joined_tree(
+        map_params, plan.forest_graph, ust,
+        visited, pops_below_vertex,
+        region1_id, region1_root,
+        region2_id, region2_root,
+        min_potential_cut_size, max_potential_cut_size,
+        total_merged_region_pop, total_merged_region_size
+    );
+
+    // find the index of the actual edge we cut 
+    // where we take region2 root as the cut_vertex
+    EdgeCut actual_cut_edge(
+        region1_root, region2_root, region1_root, 
+        plan.region_sizes(region2_id), plan.region_pops.at(region2_id),
+        plan.region_sizes(region1_id), plan.region_pops.at(region1_id)
+    );
+
+    // find the index of the edge we actually removed to get these two regions.
+    // it should be 0 if pop bounds are tight but this allows it to work even
+    // if not.
+    auto it = std::find(valid_edges.begin(), valid_edges.end(), actual_cut_edge);
+
+    int actual_cut_edge_index = std::distance(valid_edges.begin(), it);
+    // REprintf("Actual Cut Edge at Index %d\n", actual_cut_edge_index);
+
+    return edge_splitter.get_log_selection_prob(map_params, valid_edges, actual_cut_edge_index);
+}
+
+
+
+
+
+double compute_optimal_forest_log_incremental_weight(
+        const MapParams &map_params,
+        const Plan &plan, const TreeSplitter &edge_splitter,
+        const int min_potential_cut_size, const int max_potential_cut_size,
+        bool split_district_only,
+        const double pop_temper){
+
+    double incremental_weight = 0.0;
+
+    bool do_pop_temper = (plan.num_regions < plan.ndists) && pop_temper > 0;
+    do_pop_temper = false;
+    Tree ust = init_tree(map_params.V);
+    std::vector<bool> visited(map_params.V);
+    std::vector<int> pops_below_vertex(map_params.V);
+
+
+
+    // make vector for if we just want adjacent to remainder or all
+    // adj pairs
+    std::vector<bool> check_adj_to_regions;
+    if(split_district_only && plan.num_regions < plan.ndists){
+        // if splitting district only then only find adjacent to remainder
+        // which is region 2 because its the bigger one
+        check_adj_to_regions.resize(plan.num_regions, false);
+        check_adj_to_regions.at(plan.remainder_region) = true;
+    }else{
+        check_adj_to_regions.resize(plan.num_regions, true);
+    }
+
+    // Now iterate through the graph and compute tree edges for each term 
+
+
+    // NOTE: In the case where its one district split you maybe don't even need
+    // a hash map since you can just index by the not remainder region but nbd
+    // for now
+    
+    // Initialize unordered_map with num_region * 2.5 buckets
+    // Hueristic. Bc we know planar graph has at most 3|V| - 6 edges
+    int init_bucket_size = std::ceil(2.5*plan.num_regions);
+
+    // create the hash map
+    std::unordered_map<std::pair<int, int>, double, bounded_hash> region_pair_map(
+        init_bucket_size, bounded_hash(plan.num_regions-1)
+        );
+
+    int V = map_params.V;
+
+
+    for (int v = 0; v < V; v++) {
+        // Find out which region this vertex corresponds to
+        int region_num_i = plan.region_ids(v);
+
+        // check if its a region we want to find regions adjacent to 
+        // and if not keep going
+        if(!check_adj_to_regions.at(region_num_i)){
+            continue;
+        }
+
+
+        // now iterate over its neighbors
+        for (int nbor : map_params.g.at(v)) {
+            // find which region neighbor corresponds to
+            int region_num_j = plan.region_ids(nbor);
+
+            // if they are different regions then region i and j are adjacent 
+            // as they share an edge across
+            if (region_num_i != region_num_j) {
+                // if region j is invalid then we don't need to worry about double counting so just add it
+                if(!check_adj_to_regions.at(region_num_j)){
+                    double log_edge_selection_prob = get_log_retroactive_splitting_prob_for_joined_tree(
+                        map_params, plan, ust, edge_splitter,
+                        visited, pops_below_vertex,
+                        v, nbor,
+                        min_potential_cut_size, max_potential_cut_size);
+
+                    // Rprintf("Adding (%d,%d) w/ %.4f\n", v, nbor, std::exp(log_edge_selection_prob));
+
+                    region_pair_map[
+                        {std::min(region_num_j,region_num_i), std::max(region_num_j,region_num_i)}
+                        ] += std::exp(log_edge_selection_prob);
+                }else{ // else if both valid then edge will appear twice so we only count if region i
+                // smaller
+                    if (region_num_i < region_num_j) {
+                        double log_edge_selection_prob = get_log_retroactive_splitting_prob_for_joined_tree(
+                            map_params, plan, ust, edge_splitter,
+                            visited, pops_below_vertex,
+                            v, nbor,
+                            min_potential_cut_size, max_potential_cut_size);
+                            // Rprintf("Adding (%d,%d) w/ %.4f\n", v, nbor, std::exp(log_edge_selection_prob));
+                    region_pair_map[{region_num_i, region_num_j}] += std::exp(log_edge_selection_prob);
+                    }
+                }
+            }
+        }
+    }
+    
+    // Now iterate over adjacent region pairs and add splitting and pop temper
+    for (const auto& pair: region_pair_map){
+        const int region1_id = pair.first.first; // get the smaller region id  
+        const int region2_id = pair.first.second; // get the bigger region id  
+        const double tree_eff_boundary_len = pair.second; // get the effective boundary length
+
+        // Rprintf("For (%d, %d) eff tree boundary: %.4f",
+        //     region1_id, region2_id, tree_eff_boundary_len);
+
+        double log_splitting_prob;
+        // for one district split the probability that region was chosen to be split is always 1
+        if(split_district_only){
+            log_splitting_prob = 0;
+        }else{
+            // in generalized region split find probability you would have 
+            // picked to split the union of the the two regions 
+            log_splitting_prob = get_log_retroactive_splitting_prob(plan, region1_id, region2_id);
+        }
+
+        // Do population tempering term if not final
+        double log_temper;
+        if(do_pop_temper){
+            log_temper = compute_log_pop_temper(
+                plan,
+                region1_id, region2_id,
+                map_params.target, pop_temper
+            );
+        }else{
+            log_temper = 0;
+        }
+
+        // multiply the boundary length and selection probability by adding the logs
+        // now exponentiate and add to the sum
+        // tree eff boundary is not exponentiated so don't worry about that
+        incremental_weight += std::exp(log_splitting_prob + log_temper) * tree_eff_boundary_len;
+
+    }
+
+    // Check its not infinity
+    if(incremental_weight == -std::numeric_limits<double>::infinity()){
+        throw Rcpp::exception("Error! weight is negative infinity for some reason \n");
+    }
+
+
+    // now return the log of the inverse of the sum
+    return -std::log(incremental_weight);
+
+}
+
+
+
+
+
+void get_all_forest_plans_log_optimal_weights(
+        RcppThread::ThreadPool &pool,
+        const MapParams &map_params, std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
+        const std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
+        const int min_potential_cut_size, const int max_potential_cut_size,
+        bool split_district_only,
+        arma::subview_col<double> log_incremental_weights,
+        std::vector<double> &unnormalized_sampling_weights,
+        double pop_temper
+){
+    int M = (int) plans_ptr_vec.size();
+
+    // Parallel thread pool where all objects in memory shared by default
+    pool.parallelFor(0, M, [&] (int i) {
+        // REprintf("I=%d\n", i);
+        double log_incr_weight =  compute_optimal_forest_log_incremental_weight(
+                map_params,*plans_ptr_vec.at(i), 
+                *tree_splitters_ptr_vec.at(i),
+                min_potential_cut_size, max_potential_cut_size,
+                split_district_only,
+                pop_temper);
+
+        log_incremental_weights(i) = log_incr_weight;
+        unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
+    });
+
+    // Wait for all the threads to finish
+    pool.wait();
+
+
+    return;
+}
