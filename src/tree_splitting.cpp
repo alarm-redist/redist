@@ -530,7 +530,7 @@ std::vector<EdgeCut> NEW2_get_all_valid_edges_in_directed_tree(
 
     // this is the largest size a region can be
     // If the population above is bigger than this you can terminate the serach
-    double biggest_upper_bound = upper * std::max(max_potential_cut_size, total_region_size - max_potential_cut_size);
+    double biggest_upper_bound = upper * std::max(max_potential_cut_size, total_region_size - min_potential_cut_size);
     // REprintf("lower=%.4f, big upper=%.4f, big_mul = %d \n", 
     //     lower, biggest_upper_bound, 
     //     std::max(max_potential_cut_size, total_region_size - max_potential_cut_size));
@@ -979,11 +979,18 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
     std::fill(pops_below_vertex.begin(), pops_below_vertex.end(), 0);
 
 
+    auto t1 = std::chrono::high_resolution_clock::now();
     // build the tree starting from root 1
     build_directed_tree_and_get_pops_below(
         forest_graph, 
         ust, region1_root, visited, 
         map_params.pop, pops_below_vertex);
+    auto t2 = std::chrono::high_resolution_clock::now();
+        /* Getting number of milliseconds as a double. */
+    std::chrono::duration<double, std::milli> ms_double = t2 - t1; 
+    Rcout << "Building Tree " << ms_double.count() << " ms\n";
+
+    auto t1f = std::chrono::high_resolution_clock::now();
     // find the valid edges in this half of the tree 
     std::vector<EdgeCut> valid_tree1_edges = NEW2_get_all_valid_edges_in_directed_tree(
         ust, region1_root, 
@@ -992,7 +999,10 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
         total_merged_region_pop, total_merged_region_size,
         map_params.lower, map_params.upper, map_params.target
     );
-
+    auto t2f = std::chrono::high_resolution_clock::now();
+        /* Getting number of milliseconds as a double. */
+    ms_double = t2f - t1f; 
+    Rcout << "Getting Edges in Tree " << ms_double.count() << " ms\n";
 
     // build the tree starting from root 2
     build_directed_tree_and_get_pops_below(

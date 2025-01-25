@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <limits>
+#include <stack>
 #include <RcppArmadillo.h>
 #include "gredist_types.h"
 #include "smc_base.h"
@@ -66,9 +67,18 @@ int get_tree_pops_below(const Tree &ust, const int vtx, const arma::uvec &pop,
              std::vector<int> &pop_below);
 
 
-int build_directed_tree_and_get_pops_below(
+int OLD_RECURSIVE_build_directed_tree_and_get_pops_below(
     const Graph undirected_forest, 
     Tree &ust, const int vtx, std::vector<bool> &visited, 
+    const arma::uvec &pop,
+    std::vector<int> &pop_below);
+
+
+int build_directed_tree_and_get_pops_below(
+    const Graph &undirected_forest, 
+    Tree &ust, 
+    const int root, 
+    std::vector<bool> &visited, 
     const arma::uvec &pop,
     std::vector<int> &pop_below);
 

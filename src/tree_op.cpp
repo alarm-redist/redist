@@ -139,7 +139,7 @@ int get_tree_pops_below(const Tree &ust, const int vtx, const arma::uvec &pop,
 }
 
 
-int build_directed_tree_and_get_pops_below(
+int OLD_RECURSIVE_build_directed_tree_and_get_pops_below(
     const Graph undirected_forest, 
     Tree &ust, const int vtx, std::vector<bool> &visited, 
     const arma::uvec &pop,
@@ -152,7 +152,7 @@ int build_directed_tree_and_get_pops_below(
         // continue if we've already visited this vertex
         if(visited.at(child_vtx)) continue;
         // get the population 
-        pop_at += build_directed_tree_and_get_pops_below(
+        pop_at += OLD_RECURSIVE_build_directed_tree_and_get_pops_below(
             undirected_forest, ust, child_vtx, 
             visited, pop, pop_below);
         // add this as a child in the tree 
@@ -162,6 +162,60 @@ int build_directed_tree_and_get_pops_below(
     pop_below.at(vtx) = pop_at;
     return pop_at;
 }
+
+
+int build_directed_tree_and_get_pops_below(
+    const Graph &undirected_forest, 
+    Tree &ust, 
+    const int root, 
+    std::vector<bool> &visited, 
+    const arma::uvec &pop,
+    std::vector<int> &pop_below) {
+    
+    // Explicit stack for DFS traversal
+    std::stack<std::pair<int, bool>> stack; // (vertex, is_revisiting)
+
+    // Initialize the stack with the root vertex
+    stack.push({root, false});
+
+    // Track the total population at the root
+    int total_pop = 0;
+
+    // Loop until the stack is empty
+    while (!stack.empty()) {
+        auto [vtx, is_revisiting] = stack.top();
+        stack.pop();
+
+        if (is_revisiting) {
+            // All children of this vertex are processed; calculate its population below
+            int pop_at = pop(vtx); // Start with the vertex's own population
+            for (const auto &child : ust[vtx]) {
+                pop_at += pop_below[child]; // Add population from child vertices
+            }
+            pop_below[vtx] = pop_at;
+
+        } else {
+            // First time visiting this vertex
+            visited[vtx] = true;
+
+            // Push the vertex back onto the stack as "revisiting"
+            stack.push({vtx, true});
+
+            // Push unvisited child vertices onto the stack
+            for (const auto &child_vtx : undirected_forest[vtx]) {
+                if (!visited[child_vtx]) {
+                    stack.push({child_vtx, false}); // Visit child
+                    //ust[vtx].push_back(child_vtx); // Add child to the directed tree
+                }
+            }
+        }
+    }
+
+    // Return the total population at the root
+    return pop_below[root];
+}
+
+
 
 
 /*

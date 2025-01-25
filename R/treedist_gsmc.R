@@ -168,12 +168,7 @@ treedist_gsmc <- function(
     # compute lags thing
     lags <- 1 + unique(round((ndists - 1)^0.8*seq(0, 0.7, length.out = 4)^0.9))
 
-    # validate splitting method
-    if(splitting_method == EXP_BIGGER_ABS_DEV_SPLITTING){
-        if(!"splitting_alpha" %in% splitting_method_params){
-            splitting_method_params[["splitting_alpha"]] <- 100
-        }
-    }
+
 
 
     control <- list(
@@ -188,6 +183,14 @@ treedist_gsmc <- function(
         ms_steps_multiplier = ms_steps_multiplier,
         merge_prob_type = merge_prob_type
     )
+
+    # validate splitting method
+    if(splitting_method == EXP_BIGGER_ABS_DEV_SPLITTING){
+        if(!"splitting_alpha" %in% splitting_method_params){
+            splitting_method_params[["splitting_alpha"]] <- 100
+            control[["splitting_alpha"]] <- 100
+        }
+    }
 
     # verbosity stuff
     verbosity <- 1

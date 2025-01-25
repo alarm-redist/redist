@@ -996,6 +996,19 @@ double compute_optimal_forest_log_incremental_weight(
             }
         }
     }
+
+    // auto region_pairs_and_boundary_lens_vec = get_valid_adj_regions_and_boundary_lens_vec(
+    //     map_params.g, plan, split_district_only
+    // );
+
+
+    // // Iterate over the adjacent region pairs
+    // for (const auto& entry : region_pairs_and_boundary_lens_vec) {
+    //     const int region1_id = entry.at(0); // get the smaller region id  
+    //     const int region2_id = entry.at(1); // get the bigger region id  
+    //     const int boundary_len = entry.at(2); // get the boundary length
+    //     Rprintf("(%d,%d): Boundary Len %d \n", region1_id, region2_id, boundary_len);
+    // }
     
     // Now iterate over adjacent region pairs and add splitting and pop temper
     for (const auto& pair: region_pair_map){
@@ -1062,6 +1075,8 @@ void get_all_forest_plans_log_optimal_weights(
 ){
     int M = (int) plans_ptr_vec.size();
 
+    const int check_int = 50; // check for interrupts every _ iterations
+
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
         // REprintf("I=%d\n", i);
@@ -1074,6 +1089,8 @@ void get_all_forest_plans_log_optimal_weights(
 
         log_incremental_weights(i) = log_incr_weight;
         unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
+
+        RcppThread::checkUserInterrupt(i % check_int == 0);
     });
 
     // Wait for all the threads to finish
