@@ -141,4 +141,31 @@ public:
 };
 
 
+
+class ExpoWeightedSmallerDevSplitter : public TreeSplitter{
+
+public:
+
+    ExpoWeightedSmallerDevSplitter(int V, double alpha)
+        : TreeSplitter(V), alpha(alpha) {
+        if(alpha < 0.0) throw Rcpp::exception("Alpha must be greater than zero!");
+    }
+
+    double alpha;
+
+
+    std::pair<bool,EdgeCut> select_edge_to_cut(
+        const MapParams &map_params, Plan &plan,
+        Tree &ust, const int root, 
+        const int min_potential_cut_size, const int max_potential_cut_size, 
+        const int region_id_to_split);
+
+    double get_log_selection_prob(
+        const MapParams &map_params,
+        const std::vector<EdgeCut> &valid_edges,
+        int idx
+    ) const;
+};
+
+
 #endif

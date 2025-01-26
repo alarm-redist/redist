@@ -8,6 +8,7 @@ remove (splitting the tree)
 
 #include "tree_splitting.h"
 
+
 // Given min and max sizes for one of the regions this returns 
 // for loop bounds where you only do each pair once
 std::pair<int, int> get_potential_region_size_for_loop_bounds(
@@ -410,19 +411,15 @@ std::vector<EdgeCut> get_all_valid_edge_cuts_from_edge(
  *
  *
  *
- * 
- * @param root The root vertex of the spanning tree
+ * @param ust A directed edge spanning tree.
+ * @param root The root vertex of the spanning tree.
  * @param cut_below_pops The population corresponding to cutting below each vertex. 
  * So `cut_below_pops[v]` is the population associated with the region made by cutting
  * below the vertex `v`
- * @param tree_vertex_parents The parent of each vertex in the tree. A value of -1
- * means the vertex is the root or it is not in the tree.
  * @param min_potential_cut_size The smallest potential region size at least one of
  * the regions cut must be
  * @param max_potential_cut_size The largest potential region size at least one of
  * the regions cut must be. Setting this to 1 will result in only 1 district splits. 
- * @param region_ids A vector mapping 0 indexed vertices to their region id number
- * @param region_id_to_split The id of the region in the plan object we're attempting to split
  * @param total_region_pop The total population of the region being split 
  * @param total_region_size The size of the region being split 
  * @param lower Acceptable lower bounds on a valid district's population
@@ -435,87 +432,7 @@ std::vector<EdgeCut> get_all_valid_edge_cuts_from_edge(
  * @return A vector of EdgeCut objects
  *
  */ 
-std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(const int root, 
-                     const std::vector<int> &cut_below_pops, const std::vector<int> &tree_vertex_parents,
-                     const int min_potential_cut_size, const int max_potential_cut_size,
-                     const arma::subview_col<arma::uword> &region_ids,
-                     const int region_id_to_split, const int total_region_pop, const int total_region_size,
-                     const double lower, const double upper, const double target){
-    
-    int V = static_cast<int>(region_ids.n_elem);
-    // vector of valid edge cuts
-    std::vector<EdgeCut> valid_edges;
-    valid_edges.reserve(std::ceil(V * .01)+1); // heuristic to reserve, no rhyme or reason
-
-    if(region_ids(root) != region_id_to_split){
-        REprintf("Root vertex %d is not in region to split %d!\n", 
-        (int) region_ids(root), region_id_to_split);
-        throw Rcpp::exception("Root vertex is not in region to split!");
-    }
-
-    // get for loop bounds that avoid redundant checks 
-    std::pair<int, int> loop_bounds = get_potential_region_size_for_loop_bounds(
-    total_region_size,
-    min_potential_cut_size, max_potential_cut_size
-    );
-
-    // Now loop over all valid edges to cut
-    for (int cut_vertex = 0; cut_vertex < V; cut_vertex++) { 
-        // Ignore any vertex not in this region or the root vertex as we wont be cutting those
-        if (region_ids(cut_vertex) != region_id_to_split || cut_vertex == root) continue;
-
-        
-        
-        // Get the population of one side of the partition removing that edge would cause
-        int below = cut_below_pops.at(cut_vertex);
-        // Get the population of the other side
-        int above = total_region_pop - below;
-
-        // REprintf("v=%d: Pop above = %d, Pop below = %d, parent = %d\n", cut_vertex, above, below,
-        // tree_vertex_parents.at(cut_vertex));
-
-        // if one of the populations is zero then ignore since it'll 
-        // never work
-        if(below == 0 || above == 0){
-            continue;
-        } 
-
-        // cast to double probably unneccsary but introduced some weird issue with
-        // zeros in previous iteration
-        double below_pop = static_cast<double>(below);
-        double above_pop = static_cast<double>(above);
-
-        
-        int cut_vertex_parent = tree_vertex_parents.at(cut_vertex);
-
-        // See if any valid edge cuts can be made with this edge 
-        std::vector<EdgeCut> new_valid_edges = get_all_valid_edge_cuts_from_edge(
-            root, cut_vertex, cut_vertex_parent,
-            total_region_size, total_region_pop,
-            below_pop, above_pop,
-            lower, target, upper,
-            loop_bounds.first, loop_bounds.second);
-
-        // if yes then add them
-        if(new_valid_edges.size() > 0){
-            // REprintf("Added v=%d: Pop above = %f, Pop below = %f, parent = %d\n", 
-            // cut_vertex, above_pop, below_pop, cut_vertex_parent);
-            valid_edges.insert(
-                valid_edges.end(),
-                new_valid_edges.begin(),
-                new_valid_edges.end()
-                );
-        }
-
-    }
-
-    return valid_edges;
-
-}
-
-
-
-std::vector<EdgeCut> NEW2_get_all_valid_edges_in_directed_tree( 
+std::vector<EdgeCut> get_all_valid_edges_in_directed_tree( 
                      const Tree &ust, const int root,
                      const std::vector<int> &cut_below_pops,
                      const int min_potential_cut_size, const int max_potential_cut_size,
@@ -609,105 +526,6 @@ std::vector<EdgeCut> NEW2_get_all_valid_edges_in_directed_tree(
 
 
 
-
-std::vector<EdgeCut> get_all_valid_edges_in_merged_tree_half(const int root,
-                     MapParams const &map_params, Graph &forest_graph, std::vector<bool> &visited, 
-                     const int min_potential_cut_size, const int max_potential_cut_size,
-                     const arma::subview_col<arma::uword> &region_ids,
-                     const int tree_region_id, 
-                     const int total_merged_region_pop, const int total_merged_region_size,
-                     const int other_region_pop,
-                     const double lower, const double upper, const double target){
-    
-
-        // get for loop bounds that avoid redundant checks 
-    std::pair<int, int> loop_bounds = get_potential_region_size_for_loop_bounds(
-        total_merged_region_size,
-        min_potential_cut_size, max_potential_cut_size
-    );
-
-    // this is the largest size a region can be
-    // If the population above is bigger than this you can terminate the serach
-    int biggest_upper_bound = upper * std::max(loop_bounds.second, total_merged_region_size - loop_bounds.second);
-
-    // set all other regions to visited 
-    for (size_t v = 0; v < map_params.V; v++)
-    {
-        visited.at(v) = region_ids(v) == tree_region_id;
-    }
-
-    // create a queue with <nodes, population above, parent>
-    std::queue<std::array<int, 3>> node_queue;
-
-    // add the children of the root 
-    for(const auto &child : forest_graph.at(root)){
-        // the population above for cutting this is the other side + the root
-        int pop_above = other_region_pop + map_params.pop(root);
-        // add that to the queue
-        node_queue.push({child, pop_above, root});
-        // mark as visited 
-        visited.at(child) = true;
-    }
-    // mark the root as visited 
-    visited.at(root) = true;
-
-    std::vector<EdgeCut> possible_edge_cuts;
-    
-    // keep running until the queue isn't empty 
-    while(!node_queue.empty()){
-        // get the head of the queue and remove it
-        std::array<int, 3> node_pair = node_queue.front();
-        node_queue.pop();
-        // get the vertex and the population above it
-        int vertex = node_pair.at(0);
-        // mark as visited
-        visited.at(vertex) = true;
-        // get the population above and below it
-        int pop_above = node_pair.at(1);
-        int pop_below = total_merged_region_pop - pop_above;
-        // check if we should terminate going down this branch. We stop if 
-        // - pop_below is less than lower since pop_below only gets smaller
-        // - pop_above is bigger than biggest_upper_bound 
-        if(pop_below < lower || pop_above > biggest_upper_bound) continue;
-
-        // get population of vertex and parent 
-        int vertex_parent = node_pair.at(2);
-        int vertex_pop = static_cast<int>(map_params.pop.at(vertex));
-
-
-        // See if any valid edge cuts can be made with this edge 
-        std::vector<EdgeCut> new_valid_edges = get_all_valid_edge_cuts_from_edge(
-            root, vertex, vertex_parent,
-            total_merged_region_size, total_merged_region_pop,
-            static_cast<double>(pop_below), static_cast<double>(pop_above),
-            lower, target, upper,
-            loop_bounds.first, loop_bounds.second);
-
-        // if yes then add them
-        if(new_valid_edges.size() > 0){
-            possible_edge_cuts.insert(
-                possible_edge_cuts.end(),
-                new_valid_edges.begin(),
-                new_valid_edges.end()
-                );
-        }
-
-        // now iterate over the nodes children 
-        for(const auto &child_vertex : forest_graph.at(vertex)){
-            // only add if its not visited yet
-            if(!visited.at(child_vertex)){
-                // add the child where the population above is current 
-                // pop above plus the pop of this vertex
-                node_queue.push({child_vertex, pop_above+vertex_pop, vertex});
-            }
-        }
-    }
-
-    return possible_edge_cuts;
-    
-}
-
-
 /* 
  * Pick one of the valid tree edges to split uniformly at random if possible
  *
@@ -752,37 +570,6 @@ std::vector<EdgeCut> get_all_valid_edges_in_merged_tree_half(const int root,
  * successfully split, false otherwise
  *
  */
-std::pair<bool, EdgeCut> get_unif_valid_edge(const int root, 
-                     const std::vector<int> &cut_below_pops, const std::vector<int> &tree_vertex_parents,
-                     const int min_potential_cut_size, const int max_potential_cut_size,
-                     const arma::subview_col<arma::uword> &region_ids,
-                     const int region_id_to_split, const int total_region_pop, const int total_region_size,
-                     const double lower, const double upper, const double target){
-    // Get all valid edges 
-    std::vector<EdgeCut> valid_edges = get_all_valid_edges_in_directed_tree(root, 
-                     cut_below_pops,tree_vertex_parents,
-                     min_potential_cut_size, max_potential_cut_size,
-                     region_ids,
-                     region_id_to_split, total_region_pop, total_region_size,
-                     lower, upper, target);
-
-    REprintf("OLD Code Found %d valid edges!\n", (int) valid_edges.size());
-
-    // if no valid edges reject immediately 
-    if(valid_edges.size() == 0){
-        return std::make_pair(false, EdgeCut());
-    }else if(valid_edges.size() == 1){
-        // if only 1 just return that
-        return std::make_pair(true, valid_edges.at(0));
-    }    
-
-    // select an index uniformly at random
-    int idx = r_int(valid_edges.size());
-    EdgeCut selected_edge_cut = valid_edges.at(idx);
-
-    return std::make_pair(true, selected_edge_cut);
-
-}
 
 
 
@@ -835,53 +622,7 @@ std::pair<bool, EdgeCut> get_unif_valid_edge(const int root,
  * successfully split, false otherwise
  *
  */
-std::pair<bool, EdgeCut> get_valid_edge_w_expo_prob(const int root, 
-                     const std::vector<int> &cut_below_pops, const std::vector<int> &tree_vertex_parents,
-                     double alpha,
-                     const int min_potential_cut_size, const int max_potential_cut_size,
-                     const arma::subview_col<arma::uword> &region_ids,
-                     const int region_id_to_split, const int total_region_pop, const int total_region_size,
-                     const double lower, const double upper, const double target){
-    // Get all valid edges 
-    std::vector<EdgeCut> valid_edges = get_all_valid_edges_in_directed_tree(root, 
-                     cut_below_pops,tree_vertex_parents,
-                     min_potential_cut_size, max_potential_cut_size,
-                     region_ids,
-                     region_id_to_split, total_region_pop, total_region_size,
-                     lower, upper, target);
 
-    // if no valid edges reject immediately 
-    if(valid_edges.size() == 0){
-        return std::make_pair(false, EdgeCut());
-    }else if(valid_edges.size() == 1){
-        // if only 1 just return that
-        return std::make_pair(true, valid_edges.at(0));
-    }
-
-    // get the weights 
-    arma::vec unnormalized_wgts(valid_edges.size());
-
-    for (size_t i = 0; i < valid_edges.size(); i++)
-    {
-        std::array<double, 2> devs = valid_edges.at(i).compute_abs_pop_deviances(target);
-        double bigger_dev = std::max(devs.at(0), devs.at(1));
-        unnormalized_wgts(i) = std::exp(-alpha*bigger_dev);
-        // Rprintf("Bigger abs dev = %.3f, Computed weight %.3f\n", 
-        //     bigger_dev, unnormalized_wgts(i));
-
-        Rprintf("devs are (%.3f,%.3f),  Computed weight %.3f\n", 
-            devs.at(0), devs.at(1), unnormalized_wgts(i));
-    }
-    Rprintf("\n\n");
-    
-    // select with prob proportional to the weights
-    int idx = r_int_unnormalized_wgt(unnormalized_wgts);
-    EdgeCut selected_edge_cut = valid_edges.at(idx);
-    // EdgeCut selected_edge_cut = valid_edges.at(unnormalized_wgts.index_max());
-
-    return std::make_pair(true, selected_edge_cut);
-
-}
 
 
 
@@ -959,6 +700,32 @@ arma::vec compute_expo_prob_weights_on_edges(
 
 
 
+arma::vec compute_expo_prob_weights_on_smaller_dev_edges(
+        std::vector<EdgeCut> valid_edges, double alpha, double target){
+
+    // get the weights vector
+    arma::vec unnormalized_wgts(valid_edges.size());
+
+    for (size_t i = 0; i < valid_edges.size(); i++)
+    {
+        std::array<double, 2> devs = valid_edges.at(i).compute_abs_pop_deviances(target);
+        double smaller_dev = std::min(devs.at(0), devs.at(1));
+        unnormalized_wgts(i) = std::exp(-alpha*smaller_dev);
+        // Rprintf("Bigger abs dev = %.3f, Computed weight %.3f\n", 
+        //     smaller_dev, unnormalized_wgts(i));
+
+        // Rprintf("devs are (%.6f,%.6f),  Computed weight %.6f\n", 
+        //     devs.at(0), devs.at(1), unnormalized_wgts(i));
+    }
+    // Rprintf("\n\n");
+    
+
+    return unnormalized_wgts;
+
+}
+
+
+
 
 // finds all valid edges if you joined the two trees
 // with the edge (region1_root, region2_root)
@@ -979,30 +746,30 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
     std::fill(pops_below_vertex.begin(), pops_below_vertex.end(), 0);
 
 
-    auto t1 = std::chrono::high_resolution_clock::now();
+    // auto t1 = std::chrono::high_resolution_clock::now();
     // build the tree starting from root 1
     build_directed_tree_and_get_pops_below(
         forest_graph, 
         ust, region1_root, visited, 
         map_params.pop, pops_below_vertex);
-    auto t2 = std::chrono::high_resolution_clock::now();
-        /* Getting number of milliseconds as a double. */
-    std::chrono::duration<double, std::milli> ms_double = t2 - t1; 
-    Rcout << "Building Tree " << ms_double.count() << " ms\n";
+    // auto t2 = std::chrono::high_resolution_clock::now();
+    //     /* Getting number of milliseconds as a double. */
+    // std::chrono::duration<double, std::milli> ms_double = t2 - t1; 
+    // Rcout << "Building Tree " << ms_double.count() << " ms\n";
 
-    auto t1f = std::chrono::high_resolution_clock::now();
+    // auto t1f = std::chrono::high_resolution_clock::now();
     // find the valid edges in this half of the tree 
-    std::vector<EdgeCut> valid_tree1_edges = NEW2_get_all_valid_edges_in_directed_tree(
+    std::vector<EdgeCut> valid_tree1_edges = get_all_valid_edges_in_directed_tree(
         ust, region1_root, 
         pops_below_vertex,
         min_potential_cut_size, max_potential_cut_size,
         total_merged_region_pop, total_merged_region_size,
         map_params.lower, map_params.upper, map_params.target
     );
-    auto t2f = std::chrono::high_resolution_clock::now();
-        /* Getting number of milliseconds as a double. */
-    ms_double = t2f - t1f; 
-    Rcout << "Getting Edges in Tree " << ms_double.count() << " ms\n";
+    // auto t2f = std::chrono::high_resolution_clock::now();
+    //     /* Getting number of milliseconds as a double. */
+    // ms_double = t2f - t1f; 
+    // Rcout << "Getting Edges in Tree " << ms_double.count() << " ms\n";
 
     // build the tree starting from root 2
     build_directed_tree_and_get_pops_below(
@@ -1010,14 +777,13 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
         ust, region2_root, visited, 
         map_params.pop, pops_below_vertex);
     // find the valid edges in this half of the tree 
-    std::vector<EdgeCut> valid_tree2_edges = NEW2_get_all_valid_edges_in_directed_tree(
+    std::vector<EdgeCut> valid_tree2_edges = get_all_valid_edges_in_directed_tree(
         ust, region2_root, 
         pops_below_vertex,
         min_potential_cut_size, max_potential_cut_size,
         total_merged_region_pop, total_merged_region_size,
         map_params.lower, map_params.upper, map_params.target
     );
-
 
     // Now add the joined cut
     // If strict bounds there's only one option but we check all in case the bounds
@@ -1056,8 +822,6 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
 
     return edge_across_valid_edge_cuts;
 }
-
-
 
 
 

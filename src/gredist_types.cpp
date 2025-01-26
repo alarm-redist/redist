@@ -132,6 +132,8 @@ SplittingMethodType get_splitting_type(std::string const &splitting_type_str){
         return SplittingMethodType::UnifValid;
     }else if(splitting_type_str == "expo_bigger_abs_dev"){
         return SplittingMethodType::ExpBiggerAbsDev;
+    }else if(splitting_type_str == "expo_smaller_abs_dev"){
+        return SplittingMethodType::ExpSmallerAbsDev;
     }else{
         REprintf("Splitting Type %s is not a valid type!\n", 
         splitting_type_str.c_str());
@@ -146,6 +148,8 @@ std::string splitting_method_to_str(SplittingMethodType splitting_method){
         return "Uniform Valid Edge Splitter";
     }else if(splitting_method == SplittingMethodType::ExpBiggerAbsDev){
         return "Exponentially Weighted Absolute Bigger Deviance Splitter";
+    }else if(splitting_method == SplittingMethodType::ExpSmallerAbsDev){
+        return "Exponentially Weighted Absolute Smaller Deviance Splitter";
     }else{
         REprintf("Splitting Type %c has no to str form!\n", 
         splitting_method);

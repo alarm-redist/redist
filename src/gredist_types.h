@@ -135,7 +135,8 @@ enum class SplittingMethodType : unsigned char
 {
     NaiveTopK, // picks 1 of top k edges even if invalid
     UnifValid, // picks uniform valid edge at random 
-    ExpBiggerAbsDev // propto exp(-alpha*bigger abs dev of pair)
+    ExpBiggerAbsDev, // propto exp(-alpha*bigger abs dev of pair)
+    ExpSmallerAbsDev // propto exp(-alpha*smaller abs dev of pair)
 };
 
 // loads a splitting type enum from a control string

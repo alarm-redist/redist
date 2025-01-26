@@ -205,7 +205,7 @@ int build_directed_tree_and_get_pops_below(
             for (const auto &child_vtx : undirected_forest[vtx]) {
                 if (!visited[child_vtx]) {
                     stack.push({child_vtx, false}); // Visit child
-                    //ust[vtx].push_back(child_vtx); // Add child to the directed tree
+                    ust[vtx].push_back(child_vtx); // Add child to the directed tree
                 }
             }
         }
