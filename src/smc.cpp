@@ -44,7 +44,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     double tol = std::max(target - lower, upper - target) / target;
 
     if (verbosity >= 1) {
-        Rcout.imbue(std::locale(""));
+        Rcout.imbue(std::locale::classic());
         Rcout << std::fixed << std::setprecision(0);
         Rcout << "SEQUENTIAL MONTE CARLO\n";
         Rcout << "Sampling " << N << " " << V << "-unit ";
@@ -690,4 +690,3 @@ void adapt_parameters(const Graph &g, int &k, int last_k, const vec &lp, double 
     k = std::min(std::max(max_ok + 1, k) + 1 - (distr_ok(k) > 0.99) + (thresh == 1),
                  max_V - 1);
 }
-
