@@ -419,26 +419,14 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         std::vector<bool> visited(V);
         std::vector<bool> ignore(V);
         while (!ok) {
-            if(iters[i] > 10000){
-                REprintf("i=%d is num_attempts=%d\n", i, iters[i]);
-            }
 
             // resample
             idx = r_int_wgt(N, cum_wgt);
             districts_new.col(i) = districts.col(idx);
             iters[i]++;
 
-            if(iters[i] == 40000){
-                std::string plan_str = "c(";
-                for (size_t ii = 0; ii < V; ii++)
-                {
-                    plan_str += std::to_string(ii);
-                    plan_str += ", ";
-                }
-                plan_str += ")";
-
-                Rcout << "Plan " << i << ":" << plan_str << "\n";
-                
+            if(iters[i] == 40000 && iters[i] % 250 == 0){
+                    print_tree(ust);
             }
 
             if (check_both) {

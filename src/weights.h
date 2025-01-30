@@ -183,7 +183,7 @@ void get_all_forest_plans_log_optimal_weights(
         bool split_district_only,
         arma::subview_col<double> log_incremental_weights,
         std::vector<double> &unnormalized_sampling_weights,
-        double pop_temper
+        double pop_temper, int verbosity
 );
 
 #endif

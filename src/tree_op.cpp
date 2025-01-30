@@ -98,6 +98,18 @@ void clear_tree(Tree &tree) {
 
 
 
+void print_tree(Tree const &ust){
+    for (size_t i = 0; i < ust.size(); i++)
+    {
+        Rprintf("%d: (");
+        for (auto &nodes : ust.at(i)) {
+            Rprintf("%d ");
+        }
+        Rprintf(")\n");
+    }
+
+}
+
 
 /*
  * Count population below each node in tree and get each node's parent

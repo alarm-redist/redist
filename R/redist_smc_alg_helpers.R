@@ -44,7 +44,7 @@ validate_counties <- function(map, adj_list, V, counties){
 
 
 
-#' Takes a map and possibly a county label and returns graph parameters for SMC algorithms
+#' Takes a map and possibly a county label and returns map parameters for SMC algorithms
 #'
 #' Takes a `redist_map` and possibly a county label vector and after checking
 #' the inputs are valid it returns a list with the adjacency map, county vector,
@@ -190,7 +190,7 @@ validate_initial_region_sizes_mat <- function(init_dvals_mat, ndists, nsims, ini
 #' for each split.
 #'
 #' @returns A counties label vector
-validate_cut_sizes <- function(ndists, num_splits,
+OLD_validate_cut_sizes <- function(ndists, num_splits,
         min_region_cut_sizes, max_region_cut_sizes
 ){
     # check the cut sizes are between 1 and num_regions at that step minus 1
@@ -254,4 +254,127 @@ validate_cut_sizes <- function(ndists, num_splits,
     }
 
 
+}
+
+
+# Starts a list
+# check that for each split the allowable sizes make sense
+# also check that sizes make sense
+validate_cut_sizes <- function(
+        ndists, num_splits, initial_num_regions,
+        permitted_region_sizes_list){
+    if(initial_num_regions > 1){
+        cli_abort("Not supported yet!")
+    }
+    # check actually a list
+    if(!is.list(permitted_region_sizes_list)){
+        cli_abort(
+            "{.arg permitted_region_sizes_list} must be a list of numeric vectors!"
+        )
+    }
+    # check each element of the list is a numeric vector
+    if(!all(sapply(permitted_region_sizes_list, is.numeric))){
+        cli_abort(
+            "Each element of {.arg permitted_region_sizes_list} must be a numeric vector!"
+        )
+    }
+    # check each element is an integer
+    if(!all(sapply(permitted_region_sizes_list, function(x) all.equal(x, as.integer(x))))){
+        cli_abort(
+            "Each element of each entry in {.arg permitted_region_sizes_list} must be an integer!"
+        )
+    }
+    # check for each element the max is less than ndists - num_splits
+    for (split_num_i in seq_len(num_splits)) {
+        # the number of regions after the split
+        n_regions_after_split <- initial_num_regions + split_num_i
+        # check that all sizes are between 1 (inclusive) and n_regions_after_split -1
+        if(any(permitted_region_sizes_list[[split_num_i]] < 1)){
+            cli_abort(
+                "An element of entry {split_num_i} of {.arg permitted_region_sizes_list} was less than 1! All valid region sizes must be at least 1!"
+            )
+        }
+        # check that everything is less than or eqaul to n_regions_after_split -1
+        if(any(permitted_region_sizes_list[[split_num_i]] < n_regions_after_split)){
+            cli_abort(
+                "An element of entry {split_num_i} of {.arg permitted_region_sizes_list} was greater than {n_regions_after_split}! All valid region sizes at step {split_num_i} must be less than {n_regions_after_split}!"
+            )
+        }
+    }
+
+
+    # Now check that the sizes passed for each step are all
+    # it is possible to obtain them from the set of valid sizes of the step before
+    # there are no unaccounted for sizes
+    prev_possible_sizes <- c(ndists)
+    for (split_i in seq_len(num_splits)) {
+        # vector of previous step region sizes which can be split in this step
+        # we want to make sure by the end this has at least one element
+        prev_possible_sizes_that_can_be_split <- vector(mode = "numeric", length=0L)
+        # the user input of permitted sizes
+        split_i_permitted_region_sizes <- permitted_region_sizes_list[[split_i]]
+        # vector used to track the actual sizes permitted by this input
+        # and the previous round
+        split_i_possible_region_sizes <- vector(mode = "numeric", length=0L)
+        # check for each value in the permitted size that we could get there
+        for (a_region_size in split_i_permitted_region_sizes) {
+            # for each region
+            # 1. find all regions in previous step bigger than that
+            # 2. check that the other pieces made by splitting are in here
+
+            # Get the potential sizes made if we split `a_region_size` from each of the
+            # previous possible sizes
+            possible_other_split_sizes <- prev_possible_sizes - a_region_size
+            # boolean for each previous possible size if it can be split
+            # which means the other split size is a valid size
+            split_possible_mask <- possible_other_split_sizes %in% split_i_permitted_region_sizes
+
+            # allow for this region to left unsplit
+            # NOTE: This might be missing some edge cases but idk rn
+            split_i_possible_region_sizes <- append(
+                split_i_possible_region_sizes,
+                a_region_size
+            )
+
+            # if all false no split possible and this region will be left untouched
+            # but if at least one is true it can be split
+            if(any(split_possible_mask)){
+                # else at least one split is possible so record that
+                split_i_possible_region_sizes <- append(
+                    split_i_possible_region_sizes,
+                    possible_other_split_sizes[split_possible_mask]
+                )
+                # add those to vector of previous regions that we can split
+                prev_possible_sizes_that_can_be_split <- append(
+                    prev_possible_sizes_that_can_be_split,
+                    prev_possible_sizes[split_possible_mask]
+                )
+            }
+        }
+
+        # now make them unique
+        prev_possible_sizes_that_can_be_split <- unique(prev_possible_sizes_that_can_be_split)
+        split_i_possible_region_sizes <- unique(split_i_possible_region_sizes)
+
+        # Now check the following
+        # 1. at least one of the previous regions can be split
+        if(length(prev_possible_sizes_that_can_be_split) == 0){
+            cli_abort(
+            "It is not possible to split any of the valid sizes from before split {split_i} into a valid size for split {split_i}"
+            )
+        }
+        # 2. There are no implied sizes that were not entered
+        # e.g. ndists=30 and only allow size 9 (when 21 is also implied)
+        if(!base::setequal(split_i_possible_region_sizes, split_i_permitted_region_sizes)){
+            cli_abort(
+            "Inputted permissable sizes for split {split_i} are {sort(split_i_permitted_region_sizes)} but given the previous sizes this would actually produce sizes {sort(split_i_possible_region_sizes)} which is not the same as the input!"
+            )
+        }
+        # now set prev possible sizes to the ones from this round and repeat
+        prev_possible_sizes <- split_i_possible_region_sizes
+    }
+
+
+
+    # need to check
 }

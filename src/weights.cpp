@@ -636,6 +636,7 @@ void get_all_plans_log_optimal_weights(
 ){
     int M = (int) plans_ptr_vec.size();
 
+    RcppThread::ProgressBar bar(M, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
         double log_incr_weight = compute_optimal_log_incremental_weight(
@@ -1071,12 +1072,13 @@ void get_all_forest_plans_log_optimal_weights(
         bool split_district_only,
         arma::subview_col<double> log_incremental_weights,
         std::vector<double> &unnormalized_sampling_weights,
-        double pop_temper
+        double pop_temper, int verbosity
 ){
     int M = (int) plans_ptr_vec.size();
 
     const int check_int = 50; // check for interrupts every _ iterations
 
+    RcppThread::ProgressBar bar(M, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
         // REprintf("I=%d\n", i);
@@ -1089,6 +1091,10 @@ void get_all_forest_plans_log_optimal_weights(
 
         log_incremental_weights(i) = log_incr_weight;
         unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
+
+        if (verbosity >= 3) {
+            ++bar;
+        }
 
         RcppThread::checkUserInterrupt(i % check_int == 0);
     });

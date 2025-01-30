@@ -151,6 +151,8 @@ arma::vec compute_expo_prob_weights_on_smaller_dev_edges(
         std::vector<EdgeCut> valid_edges, double alpha, double target);
 
 
+arma::vec compute_almost_best_weights_on_smaller_dev_edges(
+        std::vector<EdgeCut> valid_edges, double epsilon, double target);
 
 std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
                      const Tree &ust, const int root, 

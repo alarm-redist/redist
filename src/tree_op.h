@@ -50,6 +50,9 @@ Tree init_tree(int V);
  */
 void clear_tree(Tree &tree);
 
+// print a tree
+void print_tree(Tree const &ust);
+
 
 /*
  * Count population below each node in tree and get parent

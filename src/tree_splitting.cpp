@@ -725,6 +725,44 @@ arma::vec compute_expo_prob_weights_on_smaller_dev_edges(
 }
 
 
+arma::vec compute_almost_best_weights_on_smaller_dev_edges(
+        std::vector<EdgeCut> valid_edges, double epsilon, double target){
+
+    // get the weights vector
+    arma::vec unnormalized_wgts(valid_edges.size());
+
+    // find the maximum value 
+    double global_min = 42.0;
+
+    for (size_t i = 0; i < valid_edges.size(); i++)
+    {
+        std::array<double, 2> devs = valid_edges.at(i).compute_abs_pop_deviances(target);
+        double smaller_dev = std::min(devs.at(0), devs.at(1));
+        unnormalized_wgts(i) = smaller_dev;
+        // Rprintf("Bigger abs dev = %.3f, Computed weight %.3f\n", 
+        //     smaller_dev, unnormalized_wgts(i));
+
+        global_min = std::min(global_min, smaller_dev);
+
+        // Rprintf("devs are (%.6f,%.6f),  Best so far is %.6f\n", 
+        //     devs.at(0), devs.at(1), global_min);
+    }
+    // Rprintf("\n\n");
+
+    for (size_t i = 0; i < valid_edges.size(); i++){
+        // make 1 if eqaul to the max, epsilon otherwise
+        // REprintf("Set Weight %d, dev %f to %f \n", 
+        //     (int) i, unnormalized_wgts(i), 
+        //     (unnormalized_wgts(i) == global_min) ? 1.0 : epsilon);
+        unnormalized_wgts(i) = (unnormalized_wgts(i) == global_min) ? 1.0 : epsilon;
+    }
+    
+
+    return unnormalized_wgts;
+
+}
+
+
 
 
 // finds all valid edges if you joined the two trees

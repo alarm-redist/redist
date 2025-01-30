@@ -141,6 +141,9 @@ void run_smc_step(
         while (!ok) {
             // increase the number of tries for particle i by 1
             draw_tries_vec[i]++;
+
+
+
             idx = r_int_wgt(M, normalized_cumulative_weights);
             
             *new_plans_ptr_vec.at(i) = *old_plans_ptr_vec.at(idx);
@@ -168,6 +171,10 @@ void run_smc_step(
                 split_district_only,
                 region_id_to_split, new_region_id
             );
+
+            if(draw_tries_vec[i] == 40000 && draw_tries_vec[i] % 250 == 0){
+                    print_tree(ust);
+            }
 
             
             // bad sample; try again
@@ -198,7 +205,9 @@ void run_smc_step(
                 ancestors_new(i, j) = ancestors(idx, j);
             }
         }
-
+        if (verbosity >= 3) {
+            ++bar;
+        }
         RcppThread::checkUserInterrupt(i % check_int == 0);
     });
 
@@ -218,9 +227,10 @@ void run_smc_step(
     std::set<int> unique_parents(parent_index_vec.begin(), parent_index_vec.end());
     n_unique_parent_indices = unique_parents.size();
     if (verbosity >= 3) {
-        Rprintf("%.2f acceptance rate and %d unique parent indices sampled!\n",
-                100.0 * accept_rate, (int) n_unique_parent_indices);
+        Rcout << "  " << std::setprecision(2) << 100.0 * accept_rate << "% acceptance rate, " <<
+       100.0 * n_unique_parent_indices / M << "% of previous step's plans survived.\n";
     }
+
 
     // ORIGINAL SMC CODE I DONT KNOW WHAT IT DOES
     ancestors = ancestors_new;
@@ -690,7 +700,7 @@ List run_redist_gsmc(
             auto t1 = std::chrono::high_resolution_clock::now();
 
             if(!use_graph_plan_space){
-                Rprintf("Doing tree weights!\n");
+                Rprintf("Computing Weights:\n");
                 get_all_forest_plans_log_optimal_weights(
                     pool,
                     map_params, plans_ptr_vec, tree_splitters_ptr_vec,
@@ -698,7 +708,7 @@ List run_redist_gsmc(
                     split_district_only,
                     log_incremental_weights_mat.col(smc_step_num),
                     unnormalized_sampling_weights,
-                    pop_temper
+                    pop_temper, verbosity
             );
             }else if(wgt_type == "optimal"){
                 // compute log incremental weights and sampling weights for next round
@@ -731,12 +741,16 @@ List run_redist_gsmc(
             auto t2 = std::chrono::high_resolution_clock::now();
             /* Getting number of milliseconds as a double. */
             std::chrono::duration<double, std::milli> ms_double = t2 - t1; 
-            Rcout << "Calculating log weights " << ms_double.count() << " ms\n";
+            if(!use_graph_plan_space) Rcout << "Calculating log weights took" << ms_double.count() << " ms, ";
 
             // compute log weight sd
             log_wgt_stddevs.at(smc_step_num) = arma::stddev(log_incremental_weights_mat.col(smc_step_num));
             // compute effective sample size
             n_eff.at(smc_step_num) = compute_n_eff(log_incremental_weights_mat.col(smc_step_num));
+
+            if (verbosity >= 3) {
+                Rcout << std::setprecision(1) << 100*n_eff.at(smc_step_num)/nsims <<  "% efficiency.\n";
+            }
 
             if(smc_step_num == 0 && initial_num_regions == 1){
                 // For the first ancestor one make every ancestor themselves
@@ -808,12 +822,7 @@ List run_redist_gsmc(
             merge_split_step_num++;
         }
 
-        if (verbosity == 1 && CLI_SHOULD_TICK){
-            cli_progress_set(bar, step_num);
-        }
-        Rcpp::checkUserInterrupt();
 
-        
         
         // Now update the diagnostic info if needed, region labels, dval column of the matrix
         if(diagnostic_mode){ // record if in diagnostic mode and generalized splits
@@ -858,6 +867,10 @@ List run_redist_gsmc(
             
 
         }
+        if (verbosity == 1 && CLI_SHOULD_TICK){
+            cli_progress_set(bar, step_num);
+        }
+        Rcpp::checkUserInterrupt();
 
     }
     } catch (Rcpp::internal::InterruptedException e) {

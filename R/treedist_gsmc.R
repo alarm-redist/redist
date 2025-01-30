@@ -187,9 +187,18 @@ treedist_gsmc <- function(
     # validate splitting method
     if(splitting_method == EXP_BIGGER_ABS_DEV_SPLITTING || splitting_method == "expo_smaller_abs_dev"){
         if(!"splitting_alpha" %in% splitting_method_params){
-            splitting_method_params[["splitting_alpha"]] <- 100
-            control[["splitting_alpha"]] <- 2500
+            control[["splitting_alpha"]] <- 100
+        }else{
+            control[["splitting_alpha"]] <- splitting_method_params[["splitting_alpha"]]
         }
+    }else if(splitting_method == "experimental"){
+        if(!"splitting_epsilon" %in% splitting_method_params){
+            control[["splitting_epsilon"]] <- .00001
+        }else{
+            control[["splitting_epsilon"]] <- splitting_method_params[["splitting_epsilon"]]
+        }
+    }else if(splitting_method != UNIF_VALID_EDGE_SPLITTING){
+        cli_abort("{splitting_method} is not a valid splitting method!")
     }
 
     # verbosity stuff

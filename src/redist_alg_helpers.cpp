@@ -126,6 +126,11 @@ std::vector<std::unique_ptr<TreeSplitter>> get_tree_splitters(
         std::generate_n(std::back_inserter(tree_splitters_ptr_vec), nsims, [V, alpha] {
             return std::make_unique<ExpoWeightedSmallerDevSplitter>(V, alpha);
         });
+    }else if(splitting_method == SplittingMethodType::Experimental){
+        double epsilon = as<double>(control["splitting_epsilon"]);
+        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), nsims, [V, epsilon] {
+            return std::make_unique<ExperimentalSplitter>(V, epsilon);
+        });
     }else{
         throw Rcpp::exception("Invalid Splitting Method!");
     }

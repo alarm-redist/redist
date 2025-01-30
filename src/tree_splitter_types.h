@@ -168,4 +168,29 @@ public:
 };
 
 
+class ExperimentalSplitter : public TreeSplitter{
+
+public:
+
+    ExperimentalSplitter(int V, double epsilon)
+        : TreeSplitter(V), epsilon(epsilon) {
+        if(epsilon < 0.0) throw Rcpp::exception("Epsilon must be greater than zero!");
+    }
+
+    double epsilon;
+
+    std::pair<bool,EdgeCut> select_edge_to_cut(
+        const MapParams &map_params, Plan &plan,
+        Tree &ust, const int root, 
+        const int min_potential_cut_size, const int max_potential_cut_size, 
+        const int region_id_to_split);
+
+    double get_log_selection_prob(
+        const MapParams &map_params,
+        const std::vector<EdgeCut> &valid_edges,
+        int idx
+    ) const;
+};
+
+
 #endif

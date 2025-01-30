@@ -136,7 +136,8 @@ enum class SplittingMethodType : unsigned char
     NaiveTopK, // picks 1 of top k edges even if invalid
     UnifValid, // picks uniform valid edge at random 
     ExpBiggerAbsDev, // propto exp(-alpha*bigger abs dev of pair)
-    ExpSmallerAbsDev // propto exp(-alpha*smaller abs dev of pair)
+    ExpSmallerAbsDev, // propto exp(-alpha*smaller abs dev of pair)
+    Experimental // Just for testing
 };
 
 // loads a splitting type enum from a control string
@@ -156,6 +157,8 @@ enum class SplitRegionSizeType : unsigned char
 SplitRegionSizeType get_splitting_size_regime(std::string const &splitting_size_regime_str);
 
 
+
+// For the future, to avoid needing to create visited and ignore
 class SpanningTree {
 public:
     Tree ust;
