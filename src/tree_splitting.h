@@ -140,7 +140,8 @@ std::vector<double> get_ordered_tree_cut_devs(Tree &ust, int root,
                              std::vector<int> const &cut_below_pop, double const target,
                              const arma::subview_col<arma::uword> &region_ids,
                              int const region_id, int const region_size, int const region_pop,
-                             int const min_potential_cut_size, int const max_potential_cut_size
+                             int const min_potential_cut_size, int const max_potential_cut_size,
+                             std::vector<int> const &smaller_cut_sizes_to_try
                              );
 
 arma::vec compute_expo_prob_weights_on_edges(
@@ -158,6 +159,7 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
                      const Tree &ust, const int root, 
                      const std::vector<int> &cut_below_pops,
                      const int min_potential_cut_size, const int max_potential_cut_size,
+                     std::vector<int> const &smaller_cut_sizes_to_try,
                      const int total_region_pop, const int total_region_size,
                      const double lower, const double upper, const double target);
 
@@ -169,6 +171,7 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
     const int region1_id, const int region1_root,
     const int region2_id, const int region2_root,
     const int min_potential_cut_size, const int max_potential_cut_size,
+    std::vector<int> const &smaller_cut_sizes_to_try,
     const int total_merged_region_pop, const int total_merged_region_size
 );
 

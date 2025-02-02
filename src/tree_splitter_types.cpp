@@ -12,6 +12,7 @@ std::vector<EdgeCut> TreeSplitter::get_all_valid_pop_edge_cuts_in_directed_tree(
         const MapParams &map_params, Plan &plan,
         Tree &ust, const int root, 
         const int min_potential_cut_size, const int max_potential_cut_size,
+        std::vector<int> const &smaller_cut_sizes_to_try,
         const int region_id_to_split
 ){
     // reset pops_below_vertex
@@ -22,6 +23,7 @@ std::vector<EdgeCut> TreeSplitter::get_all_valid_pop_edge_cuts_in_directed_tree(
     std::vector<EdgeCut> valid_edges = get_all_valid_edges_in_directed_tree(ust, root, 
         pops_below_vertex, 
         min_potential_cut_size, max_potential_cut_size,
+        smaller_cut_sizes_to_try,
         plan.region_pops.at(region_id_to_split), plan.region_sizes(region_id_to_split),
         map_params.lower, map_params.upper, map_params.target);
 
@@ -39,22 +41,8 @@ std::pair<bool,EdgeCut> NaiveTopKSplitter::select_edge_to_cut(
         const MapParams &map_params, Plan &plan,
         Tree &ust, const int root, 
         const int min_potential_cut_size, const int max_potential_cut_size, 
+        std::vector<int> const &smaller_cut_sizes_to_try,
         const int region_id_to_split){
-
-    // // create vector that points to parents & get population below each vtx
-    // // reset pops_below_vertex
-    // std::fill(pops_below_vertex.begin(), pops_below_vertex.end(), 0);
-    // // don't need to reset parent vector 
-    // vertex_parents.at(root) = -1;
-    // tree_pop(ust, root, map_params.pop, pops_below_vertex, vertex_parents);
-
-
-    // return get_naive_top_k_edge(root, pops_below_vertex, vertex_parents,
-    //                  k_param, min_potential_cut_size, max_potential_cut_size,
-    //                  plan.region_ids, region_id_to_split, 
-    //                  plan.region_pops.at(region_id_to_split), plan.region_sizes(region_id_to_split),
-    //                  //total_region_pop, total_region_size,
-    //                  map_params.lower, map_params.upper, map_params.target);
 
 
     // get all the valid edges 
@@ -62,6 +50,7 @@ std::pair<bool,EdgeCut> NaiveTopKSplitter::select_edge_to_cut(
         map_params, plan,
         ust, root, 
         min_potential_cut_size, max_potential_cut_size,
+        smaller_cut_sizes_to_try,
         region_id_to_split
     );
 
@@ -83,28 +72,6 @@ std::pair<bool,EdgeCut> NaiveTopKSplitter::select_edge_to_cut(
         return std::make_pair(true, valid_edges[idx]);
     }
 
-    // // create list that points to parents & computes population below each vtx
-    // std::vector<int> pop_below(map_params.V, 0);
-    // std::vector<int> tree_vertex_parents(map_params.V);
-    // tree_vertex_parents.at(root) = -1;
-    // tree_pop(ust, root, map_params.pop, pop_below, tree_vertex_parents);
-
-    // std::vector<EdgeCut> valid_edges = get_all_valid_edges_in_directed_tree(ust, root, 
-    //     pop_below, 
-    //     min_potential_cut_size, max_potential_cut_size,
-    //     plan.region_pops.at(region_id_to_split), plan.region_sizes(region_id_to_split),
-    //     map_params.lower, map_params.upper, map_params.target);
-
-
-
-    
-    // std::set<EdgeCut> valid_edges_set1(valid_edges.begin(), valid_edges.end());
-    // std::set<EdgeCut> valid_edges_set2(valid_edges2.begin(), valid_edges2.end());
-
-    // if(valid_edges_set1 != valid_edges_set2){
-    //     throw Rcpp::exception("Not equal!!");
-    // }
-
 }
 
 
@@ -112,7 +79,8 @@ std::pair<bool,EdgeCut> NaiveTopKSplitter::select_edge_to_cut(
 std::pair<bool,EdgeCut> UniformValidSplitter::select_edge_to_cut(
         const MapParams &map_params, Plan &plan,
         Tree &ust, const int root, 
-        const int min_potential_cut_size, const int max_potential_cut_size, 
+        const int min_potential_cut_size, const int max_potential_cut_size,
+        std::vector<int> const &smaller_cut_sizes_to_try, 
         const int region_id_to_split){
 
     // get all the valid edges 
@@ -120,6 +88,7 @@ std::pair<bool,EdgeCut> UniformValidSplitter::select_edge_to_cut(
         map_params, plan,
         ust, root, 
         min_potential_cut_size, max_potential_cut_size,
+        smaller_cut_sizes_to_try,
         region_id_to_split
     );
 
@@ -134,15 +103,7 @@ std::pair<bool,EdgeCut> UniformValidSplitter::select_edge_to_cut(
     }else{
         int random_idx = r_int(num_valid_edges);
         return std::make_pair(true, valid_edges.at(random_idx));
-    }
-
-
-    // get edge unif at random
-    // return get_unif_valid_edge(root, pop_below, tree_vertex_parents,
-    //                 min_potential_cut_size, max_potential_cut_size,
-    //                  plan.region_ids, region_id_to_split, 
-    //                  plan.region_pops.at(region_id_to_split), plan.region_sizes(region_id_to_split),
-    //                  map_params.lower, map_params.upper, map_params.target);                   
+    }               
 
 }
 
@@ -151,12 +112,14 @@ std::pair<bool,EdgeCut> ExpoWeightedSplitter::select_edge_to_cut(
         const MapParams &map_params, Plan &plan,
         Tree &ust, const int root, 
         const int min_potential_cut_size, const int max_potential_cut_size, 
+        std::vector<int> const &smaller_cut_sizes_to_try,
         const int region_id_to_split){
     // get all the valid edges 
     std::vector<EdgeCut> valid_edges = get_all_valid_pop_edge_cuts_in_directed_tree(
         map_params, plan,
         ust, root, 
         min_potential_cut_size, max_potential_cut_size,
+        smaller_cut_sizes_to_try,
         region_id_to_split
     );
 
@@ -204,12 +167,14 @@ std::pair<bool,EdgeCut> ExpoWeightedSmallerDevSplitter::select_edge_to_cut(
         const MapParams &map_params, Plan &plan,
         Tree &ust, const int root, 
         const int min_potential_cut_size, const int max_potential_cut_size, 
+        std::vector<int> const &smaller_cut_sizes_to_try,
         const int region_id_to_split){
     // get all the valid edges 
     std::vector<EdgeCut> valid_edges = get_all_valid_pop_edge_cuts_in_directed_tree(
         map_params, plan,
         ust, root, 
         min_potential_cut_size, max_potential_cut_size,
+        smaller_cut_sizes_to_try,
         region_id_to_split
     );
 
@@ -257,12 +222,14 @@ std::pair<bool,EdgeCut> ExperimentalSplitter::select_edge_to_cut(
         const MapParams &map_params, Plan &plan,
         Tree &ust, const int root, 
         const int min_potential_cut_size, const int max_potential_cut_size, 
+        std::vector<int> const &smaller_cut_sizes_to_try,
         const int region_id_to_split){
     // get all the valid edges 
     std::vector<EdgeCut> valid_edges = get_all_valid_pop_edge_cuts_in_directed_tree(
         map_params, plan,
         ust, root, 
         min_potential_cut_size, max_potential_cut_size,
+        smaller_cut_sizes_to_try,
         region_id_to_split
     );
 

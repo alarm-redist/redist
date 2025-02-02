@@ -162,17 +162,76 @@ std::string splitting_method_to_str(SplittingMethodType splitting_method){
 }
 
 
-SplitRegionSizeType get_splitting_size_regime(std::string const &splitting_size_regime_str){
+SplittingSizeScheduleType get_splitting_size_regime(std::string const &splitting_size_regime_str){
     // find the type or throw an error 
     if(splitting_size_regime_str == "split_district_only"){
-        return SplitRegionSizeType::DistrictOnly;
+        return SplittingSizeScheduleType::DistrictOnly;
     }else if(splitting_size_regime_str == "any_valid_sizes"){
-        return SplitRegionSizeType::AnyValidSize;
+        return SplittingSizeScheduleType::AnyValidSize;
     }else if(splitting_size_regime_str == "custom"){
-        return SplitRegionSizeType::CustomSizes;
+        return SplittingSizeScheduleType::CustomSizes;
     }else{
         REprintf("Splitting Size Regime %s is not a valid regime!\n", 
         splitting_size_regime_str.c_str());
         throw Rcpp::exception("Invalid splitting size regime passed");
     }
 };
+
+
+
+// init splitting schedule object 
+SplittingSchedule::SplittingSchedule(
+    const int num_splits, const int ndists, const int initial_num_regions, 
+    SplittingSizeScheduleType const schedule_type,
+    Rcpp::List const &control) :
+    schedule_type(schedule_type), 
+    ndists(ndists),
+    valid_split_region_sizes_list(num_splits, std::vector<bool>(ndists+1, false)),
+    all_regions_smaller_cut_sizes_to_try(ndists+1),
+    all_regions_min_and_max_possible_cut_sizes(ndists+1){
+    
+    // If doing split district only for all sizes above 1 the only possible smaller size
+    // is 1 so we can set this at the beginning and not touch it again.
+    if(schedule_type == SplittingSizeScheduleType::DistrictOnly){
+        for (int region_size = 2; region_size <= ndists; region_size++)
+        {
+            all_regions_smaller_cut_sizes_to_try[region_size] = std::vector<int> {1};
+            // smallest possible cut size is 1 and biggest is region_size-1
+            all_regions_min_and_max_possible_cut_sizes[region_size] = {1, region_size-1};
+        }
+    }else if(schedule_type == SplittingSizeScheduleType::AnyValidSize){
+        // If doing any sizes then for `region_size` the possible split sizes are always 
+        // if any sizes allowed then for 2, ..., ndists make it 1,...,floor(size/2)
+        for (int region_size = 2; region_size <= ndists; region_size++)
+        {
+            // Get the lrgest smaller cut size we'll try which is the
+            // floor of the size of region over 2
+            int smaller_cut_size_max = std::floor(region_size / 2);
+            all_regions_smaller_cut_sizes_to_try[region_size].resize(smaller_cut_size_max);
+            // Now makes the entry for region size go 1,...smaller_cut_size_max
+            std::iota(
+                all_regions_smaller_cut_sizes_to_try[region_size].begin(), 
+                all_regions_smaller_cut_sizes_to_try[region_size].end(), 
+                1);
+            // smallest possible cut size is 1 and biggest is region_size-1
+            all_regions_min_and_max_possible_cut_sizes[region_size] = {1, region_size-1};
+        }
+    }else{
+        throw Rcpp::exception("Not implemented yet!!");
+    }
+
+};
+
+void SplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
+    int split_num, int num_regions
+){
+    // We only have to do this for custom, for any size and split district only 
+    // it never changes 
+
+    if(schedule_type != SplittingSizeScheduleType::CustomSizes){
+        return;
+    }
+
+    // If split district only then make the remainder region size 1
+    
+}

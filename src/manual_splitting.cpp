@@ -9,6 +9,33 @@
 #include "manual_splitting.h"
 
 
+std::pair<int, int> TEMP_get_potential_region_size_for_loop_bounds(
+    const int total_region_size,
+    const int min_potential_cut_size, const int max_potential_cut_size
+){
+    
+    // if biggest possible cut size is leq half just return the same bounds
+    if(max_potential_cut_size <= total_region_size/2){
+        return std::pair<int, int>(min_potential_cut_size, max_potential_cut_size);
+    }else if(min_potential_cut_size > total_region_size/2){
+        // else if smallest possible size if more than half just subtract 
+        // total_region_size and flip 
+        return std::pair<int, int>(
+            total_region_size - max_potential_cut_size,
+            total_region_size - min_potential_cut_size
+            );
+    }else{ // else must be true that 
+    // min_potential_cut_size <= total_region_size/2 < max_potential_cut_size
+
+    return std::pair<int, int>(
+            std::min(min_potential_cut_size, total_region_size - max_potential_cut_size),
+            total_region_size/2
+            );
+
+    }
+    
+}
+
 //' Draws a spanning tree uniformly at random on a region and returns it
 //'
 //' Draws a spanning tree uniformly at random on a region of a plan using
@@ -187,6 +214,18 @@ List perform_a_valid_multidistrict_split(
     bool successful_split_made = false;
     int try_counter = 1;
 
+    int region_to_split_size = static_cast<int>(plan->region_ids(region_id_to_split));
+
+    std::pair<int, int> loop_bounds = TEMP_get_potential_region_size_for_loop_bounds(
+    region_to_split_size,
+    split_dval_min, split_dval_max
+    );
+
+    std::vector<int> smaller_cut_sizes_to_try;
+    for (int i = loop_bounds.first; i <= loop_bounds.second; i++)
+    {
+        smaller_cut_sizes_to_try.push_back(i);
+    }
 
 
 
@@ -218,10 +257,13 @@ List perform_a_valid_multidistrict_split(
             (int) plan->region_sizes(region_id_to_split) - 1
             );
 
+
+
         // Now try to select an edge to cut
         std::pair<bool,EdgeCut> edge_search_result = tree_splitter->select_edge_to_cut(
             map_params, *plan, ust, uncut_tree_root,
             split_dval_min, split_dval_max, 
+            smaller_cut_sizes_to_try,
             region_id_to_split
         );
 
@@ -345,10 +387,14 @@ List perform_merge_split_steps(
     std::vector<bool> visited(V);
     std::vector<bool> ignore(V, false);
 
+    Rcpp::List fake_control;
+    SplittingSizeScheduleType splitting_type = get_splitting_size_regime("FAKE");
+    SplittingSchedule splitting_schedule(1, ndists, num_regions, splitting_type, fake_control);
+
 
     // now do merge split 
     int num_successes = run_merge_split_step_on_a_plan(
-        map_params,
+        map_params, splitting_schedule,
         split_district_only, "uniform",
         *plan, *new_plan, *tree_splitter,
         num_merge_split_steps

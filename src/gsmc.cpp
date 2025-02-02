@@ -90,7 +90,7 @@
  * 
  */ 
 void run_smc_step(
-        const MapParams &map_params, 
+        const MapParams &map_params, const SplittingSchedule &splitting_schedule,
         std::vector<std::unique_ptr<Plan>> &old_plans_ptr_vec, 
         std::vector<std::unique_ptr<Plan>> &new_plans_ptr_vec,
         std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
@@ -133,7 +133,7 @@ void run_smc_step(
         int reject_ct = 0;
         bool ok = false;
         int idx;
-        int region_id_to_split;
+        int region_id_to_split, size_of_region_to_split;
 
         Tree ust = init_tree(V);
         std::vector<bool> visited(V);
@@ -141,9 +141,7 @@ void run_smc_step(
         while (!ok) {
             // increase the number of tries for particle i by 1
             draw_tries_vec[i]++;
-
-
-
+            // sample previous plan
             idx = r_int_wgt(M, normalized_cumulative_weights);
             
             *new_plans_ptr_vec.at(i) = *old_plans_ptr_vec.at(idx);
@@ -157,22 +155,30 @@ void run_smc_step(
                     region_id_to_split, min_region_cut_size
                 );
             }
+            size_of_region_to_split = new_plans_ptr_vec.at(i)->region_sizes(region_id_to_split);
 
-            auto plan_specific_max_region_cut_size = std::min(
-                max_region_cut_size, // max_region_cut_size 
-                ((int) new_plans_ptr_vec.at(i)->region_sizes(region_id_to_split) -1)
-            );
+            // Rprintf("Splitting Region size %d. Sizes to try:\n", size_of_region_to_split);
+            // for(auto i: splitting_schedule.all_regions_smaller_cut_sizes_to_try[size_of_region_to_split]){
+            //     Rprintf("%d, ", i);
+            // }
+            // Rprintf("\nThe min possible =%d, max possible=%d\n", 
+            // splitting_schedule.all_regions_min_and_max_possible_cut_sizes[size_of_region_to_split][0],
+            //     splitting_schedule.all_regions_min_and_max_possible_cut_sizes[size_of_region_to_split][1]);
+            
 
             // Now try to split that region
             ok = new_plans_ptr_vec.at(i)->attempt_split(
-                map_params, ust, *tree_splitters_ptr_vec.at(i), 
+                map_params, splitting_schedule, ust, *tree_splitters_ptr_vec.at(i), 
                 visited, ignore, 
-                min_region_cut_size, plan_specific_max_region_cut_size,
+                splitting_schedule.all_regions_min_and_max_possible_cut_sizes[size_of_region_to_split][0],
+                splitting_schedule.all_regions_min_and_max_possible_cut_sizes[size_of_region_to_split][1],
+                splitting_schedule.all_regions_smaller_cut_sizes_to_try[size_of_region_to_split],
                 split_district_only,
                 region_id_to_split, new_region_id
             );
 
             if(draw_tries_vec[i] == 40000 && draw_tries_vec[i] % 250 == 0){
+                    Rprintf("Iter %d\n\n", i);
                     print_tree(ust);
             }
 
@@ -357,16 +363,18 @@ List run_redist_gsmc(
 
 
     // get the splitting size regime
-    SplitRegionSizeType splitting_size_regime = get_splitting_size_regime(
+    SplittingSizeScheduleType splitting_size_regime = get_splitting_size_regime(
         static_cast<std::string>(control["splitting_size_regime"])
-        ); 
+    );
+
+    SplittingSchedule splitting_schedule(total_smc_steps, ndists, initial_num_regions, splitting_size_regime, control);
 
     std::vector<int> min_region_cut_sizes(total_smc_steps,0);
     std::vector<int> max_region_cut_sizes(total_smc_steps,0);
     // Whether or not to only do district splits only 
     bool split_district_only = false;
 
-    if(splitting_size_regime == SplitRegionSizeType::DistrictOnly){
+    if(splitting_size_regime == SplittingSizeScheduleType::DistrictOnly){
         // for split district only just set both to 1 for every one
         std::fill(
             min_region_cut_sizes.begin(), 
@@ -377,7 +385,7 @@ List run_redist_gsmc(
             max_region_cut_sizes.end(), 
             1);
         split_district_only = true;
-    }else if(splitting_size_regime == SplitRegionSizeType::AnyValidSize){
+    }else if(splitting_size_regime == SplittingSizeScheduleType::AnyValidSize){
         // for any make min 1 
         std::fill(
             min_region_cut_sizes.begin(), 
@@ -389,7 +397,7 @@ List run_redist_gsmc(
         {
             max_region_cut_sizes.at(i) = ndists - (initial_num_regions + i);
         }
-    }else if(splitting_size_regime == SplitRegionSizeType::CustomSizes){
+    }else if(splitting_size_regime == SplittingSizeScheduleType::CustomSizes){
         // if custom use the user inputs
         min_region_cut_sizes = as<std::vector<int>>(control["min_region_cut_sizes"]);
         max_region_cut_sizes = as<std::vector<int>>(control["max_region_cut_sizes"]);
@@ -623,7 +631,7 @@ List run_redist_gsmc(
                 int last_k = smc_step_num == 0 ? std::max(1, V - 5) : k_params.at(smc_step_num-1);
                 // double thresh = (double) control["adapt_k_thresh"];
 
-                estimate_cut_k(map_params.g, est_cut_k, last_k, unnormalized_sampling_weights, thresh,
+                estimate_cut_k(splitting_schedule, map_params.g, est_cut_k, last_k, unnormalized_sampling_weights, thresh,
                             tol, plans_ptr_vec, 
                             counties,
                             map_params.cg, pop, 
@@ -662,7 +670,7 @@ List run_redist_gsmc(
             );
             
             // split the map
-            run_smc_step(map_params,
+            run_smc_step(map_params, splitting_schedule,
                 plans_ptr_vec, new_plans_ptr_vec, 
                 tree_splitters_ptr_vec,
                 parent_index_mat.column(smc_step_num),
@@ -703,7 +711,8 @@ List run_redist_gsmc(
                 Rprintf("Computing Weights:\n");
                 get_all_forest_plans_log_optimal_weights(
                     pool,
-                    map_params, plans_ptr_vec, tree_splitters_ptr_vec,
+                    map_params, splitting_schedule, 
+                    plans_ptr_vec, tree_splitters_ptr_vec,
                     min_region_cut_sizes.at(smc_step_num), max_region_cut_sizes.at(smc_step_num),
                     split_district_only,
                     log_incremental_weights_mat.col(smc_step_num),
@@ -714,7 +723,7 @@ List run_redist_gsmc(
                 // compute log incremental weights and sampling weights for next round
                 get_all_plans_log_optimal_weights(
                     pool,
-                    map_params.g,
+                    splitting_schedule, map_params.g, 
                     plans_ptr_vec,
                     split_district_only,
                     log_incremental_weights_mat.col(smc_step_num),
@@ -786,7 +795,7 @@ List run_redist_gsmc(
             // auto t1fm = high_resolution_clock::now();
             run_merge_split_step_on_all_plans(
                 pool,
-                map_params,
+                map_params, splitting_schedule,
                 plans_ptr_vec, new_plans_ptr_vec,
                 tree_splitters_ptr_vec,
                 split_district_only, merge_prob_type,

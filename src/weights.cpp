@@ -531,7 +531,8 @@ double compute_log_pop_temper(
 //' @return the log of the incremental weight of the plan
 //'
 double compute_optimal_log_incremental_weight(
-        const Graph &g, const Plan &plan,
+        const Graph &g, const SplittingSchedule &splitting_schedule,
+        const Plan &plan,
         bool split_district_only,
         const double target, const double pop_temper){
 
@@ -628,6 +629,7 @@ double compute_optimal_log_incremental_weight(
 //'    sampling weights of the plans for the next round
 void get_all_plans_log_optimal_weights(
         RcppThread::ThreadPool &pool,
+        const SplittingSchedule &splitting_schedule,
         const Graph &g, std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
         bool split_district_only,
         arma::subview_col<double> log_incremental_weights,
@@ -640,7 +642,8 @@ void get_all_plans_log_optimal_weights(
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
         double log_incr_weight = compute_optimal_log_incremental_weight(
-            g, *plans_ptr_vec.at(i), split_district_only,
+            g, splitting_schedule, 
+            *plans_ptr_vec.at(i), split_district_only,
             target, pop_temper);
         log_incremental_weights(i) = log_incr_weight;
         unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
@@ -862,7 +865,8 @@ double get_log_retroactive_splitting_prob_for_joined_tree(
     Plan const &plan, Tree &ust, const TreeSplitter &edge_splitter,
     std::vector<bool> &visited, std::vector<int> &pops_below_vertex,
     const int region1_root, const int region2_root,
-    const int min_potential_cut_size, const int max_potential_cut_size
+    const int min_potential_cut_size, const int max_potential_cut_size,
+    std::vector<int> const &smaller_cut_sizes_to_try
 ){
     int region1_id = plan.region_ids(region1_root);
     int region2_id = plan.region_ids(region2_root);
@@ -876,6 +880,7 @@ double get_log_retroactive_splitting_prob_for_joined_tree(
         region1_id, region1_root,
         region2_id, region2_root,
         min_potential_cut_size, max_potential_cut_size,
+        smaller_cut_sizes_to_try,
         total_merged_region_pop, total_merged_region_size
     );
 
@@ -903,7 +908,7 @@ double get_log_retroactive_splitting_prob_for_joined_tree(
 
 
 double compute_optimal_forest_log_incremental_weight(
-        const MapParams &map_params,
+        const MapParams &map_params, const SplittingSchedule &splitting_schedule,
         const Plan &plan, const TreeSplitter &edge_splitter,
         const int min_potential_cut_size, const int max_potential_cut_size,
         bool split_district_only,
@@ -969,13 +974,17 @@ double compute_optimal_forest_log_incremental_weight(
             // if they are different regions then region i and j are adjacent 
             // as they share an edge across
             if (region_num_i != region_num_j) {
+                int merged_region_size = static_cast<int>(plan.region_sizes(region_num_i)+plan.region_sizes(region_num_j));
                 // if region j is invalid then we don't need to worry about double counting so just add it
                 if(!check_adj_to_regions.at(region_num_j)){
+                    
+
                     double log_edge_selection_prob = get_log_retroactive_splitting_prob_for_joined_tree(
                         map_params, plan, ust, edge_splitter,
                         visited, pops_below_vertex,
                         v, nbor,
-                        min_potential_cut_size, max_potential_cut_size);
+                        min_potential_cut_size, max_potential_cut_size,
+                        splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_region_size]);
 
                     // Rprintf("Adding (%d,%d) w/ %.4f\n", v, nbor, std::exp(log_edge_selection_prob));
 
@@ -989,7 +998,8 @@ double compute_optimal_forest_log_incremental_weight(
                             map_params, plan, ust, edge_splitter,
                             visited, pops_below_vertex,
                             v, nbor,
-                            min_potential_cut_size, max_potential_cut_size);
+                            min_potential_cut_size, max_potential_cut_size,
+                            splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_region_size]);
                             // Rprintf("Adding (%d,%d) w/ %.4f\n", v, nbor, std::exp(log_edge_selection_prob));
                     region_pair_map[{region_num_i, region_num_j}] += std::exp(log_edge_selection_prob);
                     }
@@ -1066,7 +1076,8 @@ double compute_optimal_forest_log_incremental_weight(
 
 void get_all_forest_plans_log_optimal_weights(
         RcppThread::ThreadPool &pool,
-        const MapParams &map_params, std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
+        const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+        std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
         const std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
         const int min_potential_cut_size, const int max_potential_cut_size,
         bool split_district_only,
@@ -1083,7 +1094,8 @@ void get_all_forest_plans_log_optimal_weights(
     pool.parallelFor(0, M, [&] (int i) {
         // REprintf("I=%d\n", i);
         double log_incr_weight =  compute_optimal_forest_log_incremental_weight(
-                map_params,*plans_ptr_vec.at(i), 
+                map_params, splitting_schedule,
+                *plans_ptr_vec.at(i), 
                 *tree_splitters_ptr_vec.at(i),
                 min_potential_cut_size, max_potential_cut_size,
                 split_district_only,

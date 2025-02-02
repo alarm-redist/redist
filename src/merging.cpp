@@ -72,7 +72,7 @@ void merge_regions(
 
 
 int run_merge_split_step_on_a_plan(
-    MapParams &map_params,
+    MapParams &map_params, const SplittingSchedule &splitting_schedule,
     bool split_district_only, std::string const merge_prob_type,
     Plan &plan, Plan &new_plan, 
     TreeSplitter &tree_splitter,
@@ -203,9 +203,11 @@ int run_merge_split_step_on_a_plan(
         throw Rcpp::exception("Fix cut size thing!");
 
         bool successful_split = new_plan.attempt_split(
-                map_params, ust, tree_splitter, 
+                map_params, splitting_schedule,
+                ust, tree_splitter, 
                 visited, ignore, 
                 min_region_cut_size, plan_specific_max_region_cut_size,
+                splitting_schedule.all_regions_smaller_cut_sizes_to_try[new_plan.region_sizes(merged_id)],
                 split_district_only,
                 merged_id, new_split_region
             );
@@ -301,7 +303,7 @@ int run_merge_split_step_on_a_plan(
 
 void run_merge_split_step_on_all_plans( 
     RcppThread::ThreadPool &pool,
-    MapParams &map_params,
+    MapParams &map_params, const SplittingSchedule &splitting_schedule,
     std::vector<std::unique_ptr<Plan>> &plan_ptrs_vec, 
     std::vector<std::unique_ptr<Plan>> &new_plan_ptrs_vec, 
     std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
@@ -319,7 +321,7 @@ void run_merge_split_step_on_all_plans(
 
         // store the number of succesful runs
         success_count_vec[i] = run_merge_split_step_on_a_plan(
-            map_params,
+            map_params, splitting_schedule,
             split_district_only, merge_prob_type,
             *plan_ptrs_vec.at(i), *new_plan_ptrs_vec.at(i), 
             *tree_splitters_ptr_vec.at(i),

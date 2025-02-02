@@ -30,6 +30,7 @@ public:
         const MapParams &map_params, Plan &plan,
         Tree &ust, const int root, 
         const int min_potential_cut_size, const int max_potential_cut_size,
+        std::vector<int> const &smaller_cut_sizes_to_try,
         const int region_id_to_split
     );
     
@@ -38,6 +39,7 @@ public:
         const MapParams &map_params, Plan &plan,
         Tree &ust, const int root, 
         const int min_potential_cut_size, const int max_potential_cut_size,
+        std::vector<int> const &smaller_cut_sizes_to_try,
         const int region_id_to_split) = 0;
 
     // Takes a vector of valid edge cuts and returns the log probability 
@@ -80,6 +82,7 @@ public:
         const MapParams &map_params, Plan &plan,
         Tree &ust, const int root, 
         const int min_potential_cut_size, const int max_potential_cut_size, 
+        std::vector<int> const &smaller_cut_sizes_to_try,
         const int region_id_to_split);
 
     double get_log_selection_prob(
@@ -103,6 +106,7 @@ public:
         const MapParams &map_params, Plan &plan,
         Tree &ust, const int root, 
         const int min_potential_cut_size, const int max_potential_cut_size, 
+        std::vector<int> const &smaller_cut_sizes_to_try,
         const int region_id_to_split);
 
     // since uniform log prob is just -log(# of candidates)
@@ -131,6 +135,7 @@ public:
         const MapParams &map_params, Plan &plan,
         Tree &ust, const int root, 
         const int min_potential_cut_size, const int max_potential_cut_size, 
+        std::vector<int> const &smaller_cut_sizes_to_try,
         const int region_id_to_split);
 
     double get_log_selection_prob(
@@ -158,6 +163,7 @@ public:
         const MapParams &map_params, Plan &plan,
         Tree &ust, const int root, 
         const int min_potential_cut_size, const int max_potential_cut_size, 
+        std::vector<int> const &smaller_cut_sizes_to_try,
         const int region_id_to_split);
 
     double get_log_selection_prob(
@@ -183,6 +189,7 @@ public:
         const MapParams &map_params, Plan &plan,
         Tree &ust, const int root, 
         const int min_potential_cut_size, const int max_potential_cut_size, 
+        std::vector<int> const &smaller_cut_sizes_to_try,
         const int region_id_to_split);
 
     double get_log_selection_prob(

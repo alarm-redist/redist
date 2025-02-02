@@ -565,19 +565,14 @@ void Plan::update_region_info_from_cut(
 
 
 
-bool Plan::attempt_split(const MapParams &map_params, Tree &ust, TreeSplitter &tree_splitter,
+bool Plan::attempt_split(const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+                 Tree &ust, TreeSplitter &tree_splitter,
                  std::vector<bool> &visited, std::vector<bool> &ignore, 
                  int const min_region_cut_size, int const max_region_cut_size, 
+                 std::vector<int> const &smaller_cut_sizes_to_try,
                  const bool split_district_only, 
                  const int region_id_to_split, const int new_region_id)
 { 
-
-
-    // ensure max cut size never greater than size+1
-    auto plan_specific_max_region_cut_size = std::min(
-        max_region_cut_size, // max_region_cut_size 
-        ((int) region_sizes(region_id_to_split) -1)
-    );
 
     // Now try to draw a tree on the region
     int root;
@@ -591,7 +586,8 @@ bool Plan::attempt_split(const MapParams &map_params, Tree &ust, TreeSplitter &t
     // Now try to select an edge to cut
     std::pair<bool, EdgeCut> edge_search_result = tree_splitter.select_edge_to_cut(
         map_params, *this, ust, root,
-        min_region_cut_size, plan_specific_max_region_cut_size, 
+        min_region_cut_size, max_region_cut_size, 
+        smaller_cut_sizes_to_try,
         region_id_to_split
     );
 

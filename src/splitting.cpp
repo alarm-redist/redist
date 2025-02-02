@@ -12,7 +12,8 @@
 /*
  * Choose k and multiplier for efficient, accurate sampling
  */
-void estimate_cut_k(const Graph &g, int &k, int const last_k, 
+void estimate_cut_k(const SplittingSchedule &splitting_schedule,
+    const Graph &g, int &k, int const last_k, 
                       const std::vector<double> &unnormalized_weights, double thresh,
                       double tol, std::vector<std::unique_ptr<Plan>> const &plan_ptrs_vec, 
                       const uvec &counties,
@@ -95,7 +96,10 @@ void estimate_cut_k(const Graph &g, int &k, int const last_k,
         get_ordered_tree_cut_devs(ust, root, cut_below_pop, target, 
                     plan_ptrs_vec.at(i)->region_ids,
                     biggest_region_id, biggest_dval, biggest_dval_region_pop,
-                    min_region_cut_size, max_region_cut_size)
+                    splitting_schedule.all_regions_min_and_max_possible_cut_sizes[biggest_dval][0],
+                    splitting_schedule.all_regions_min_and_max_possible_cut_sizes[biggest_dval][1],
+                    splitting_schedule.all_regions_smaller_cut_sizes_to_try[biggest_dval]
+                    )
                       );
 
         int n_ok = 0;

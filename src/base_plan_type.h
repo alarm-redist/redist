@@ -107,9 +107,11 @@ public:
 
     // virtual redist_smc methods
 
-    bool attempt_split(const MapParams &map_params, Tree &ust, TreeSplitter &tree_splitter,
+    bool attempt_split(const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+                Tree &ust, TreeSplitter &tree_splitter,
                  std::vector<bool> &visited, std::vector<bool> &ignore, 
                  int const min_region_cut_size, int const max_region_cut_size, 
+                 std::vector<int> const &smaller_cut_sizes_to_try,
                  const bool split_district_only, 
                  const int region_id_to_split, const int new_region_id);
 

@@ -9,34 +9,7 @@ remove (splitting the tree)
 #include "tree_splitting.h"
 
 
-// Given min and max sizes for one of the regions this returns 
-// for loop bounds where you only do each pair once
-std::pair<int, int> get_potential_region_size_for_loop_bounds(
-    const int total_region_size,
-    const int min_potential_cut_size, const int max_potential_cut_size
-){
-    
-    // if biggest possible cut size is leq half just return the same bounds
-    if(max_potential_cut_size <= total_region_size/2){
-        return std::pair<int, int>(min_potential_cut_size, max_potential_cut_size);
-    }else if(min_potential_cut_size > total_region_size/2){
-        // else if smallest possible size if more than half just subtract 
-        // total_region_size and flip 
-        return std::pair<int, int>(
-            total_region_size - max_potential_cut_size,
-            total_region_size - min_potential_cut_size
-            );
-    }else{ // else must be true that 
-    // min_potential_cut_size <= total_region_size/2 < max_potential_cut_size
 
-    return std::pair<int, int>(
-            std::min(min_potential_cut_size, total_region_size - max_potential_cut_size),
-            total_region_size/2
-            );
-
-    }
-    
-}
 
 
 /*
@@ -51,14 +24,10 @@ std::vector<double> get_ordered_tree_cut_devs(Tree &ust, int root,
                              std::vector<int> const &cut_below_pop, double const target,
                              const arma::subview_col<arma::uword> &region_ids,
                              int const region_id, int const region_size, int const region_pop,
-                             int const min_potential_cut_size, int const max_potential_cut_size
+                             int const min_potential_cut_size, int const max_potential_cut_size,
+                             std::vector<int> const &smaller_cut_sizes_to_try
                              ) {
     int V = cut_below_pop.size();
-    // get for loop bounds that avoid redundant checks 
-    std::pair<int, int> loop_bounds = get_potential_region_size_for_loop_bounds(
-    region_size,
-    min_potential_cut_size, max_potential_cut_size
-    );
     // compile a list of candidate edges to cut
     std::vector<double> devs; 
     devs.reserve(V); // reserve V which is overkill but ok
@@ -83,7 +52,7 @@ std::vector<double> get_ordered_tree_cut_devs(Tree &ust, int root,
 
 
         // for each possible d value get the deviation above and below
-        for(int cut_region1_size = loop_bounds.first; cut_region1_size <= loop_bounds.second; cut_region1_size++){
+        for(auto const cut_region1_size: smaller_cut_sizes_to_try){
             int cut_region2_size = region_size - cut_region1_size;
             double cut_region1_target = target*cut_region1_size; 
             double cut_region2_target = target*cut_region2_size;
@@ -338,16 +307,14 @@ std::pair<bool, EdgeCut> get_naive_top_k_edge(const int root,
  */ 
 std::vector<EdgeCut> get_all_valid_edge_cuts_from_edge(
     int const root, int const cut_vertex, int const cut_vertex_parent,
-    int const total_region_size, int const total_region_pop,
+    int const total_region_size, 
     double const below_pop, double const above_pop,
     double const lower, double const target, double const upper,
-    int const cut_size_loop_start, int const cut_size_loop_end){
+    std::vector<int> const &smaller_cut_sizes_to_try){
 
         std::vector<EdgeCut> valid_edges;
-        // iterate over all possible valid sizes
-        for(int cut_region1_size = cut_size_loop_start; 
-                cut_region1_size <= cut_size_loop_end; 
-                cut_region1_size++){
+        // iterate over all possible valid sizes of the smaller region
+        for(auto const cut_region1_size: smaller_cut_sizes_to_try){
             int cut_region2_size = total_region_size - cut_region1_size;
             // Get the bounds for region 1
             double cut_region1_lb = lower*cut_region1_size; 
@@ -436,21 +403,23 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
                      const Tree &ust, const int root,
                      const std::vector<int> &cut_below_pops,
                      const int min_potential_cut_size, const int max_potential_cut_size,
+                     std::vector<int> const &smaller_cut_sizes_to_try,
                       const int total_region_pop, const int total_region_size,
                      const double lower, const double upper, const double target){
 
-    // get for loop bounds that avoid redundant checks 
-    std::pair<int, int> loop_bounds = get_potential_region_size_for_loop_bounds(
-    total_region_size,
-    min_potential_cut_size, max_potential_cut_size
-    );
-
     // this is the largest size a region can be
     // If the population above is bigger than this you can terminate the serach
-    double biggest_upper_bound = upper * std::max(max_potential_cut_size, total_region_size - min_potential_cut_size);
-    // REprintf("lower=%.4f, big upper=%.4f, big_mul = %d \n", 
-    //     lower, biggest_upper_bound, 
-    //     std::max(max_potential_cut_size, total_region_size - max_potential_cut_size));
+    // since pop above only gets larger as you continue down the tree 
+    double biggest_upper_bound = upper * max_potential_cut_size;
+
+    // this is the smallest size a region can be 
+    // If the pop below is below this then you can terminate the search since 
+    // pop below only gets smaller as you continue along the tree 
+    double smallest_lower_bound = lower * min_potential_cut_size;
+
+    // REprintf("lower=%.4f, big upper=%.4f, min_mul = %d, max_mul = %d \n", 
+    //     smallest_lower_bound, biggest_upper_bound, 
+    //     min_potential_cut_size, max_potential_cut_size);
 
     // vector of valid edge cuts
     std::vector<EdgeCut> valid_edges;
@@ -484,7 +453,7 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
         // - pop_above is bigger than biggest_upper_bound since pop_above
         //   only gets bigger 
         // these conditions should be symmetric but too lazy to prove it now
-        if(pop_below < lower || pop_above > biggest_upper_bound){
+        if(pop_below < smallest_lower_bound || pop_above > biggest_upper_bound){
             // REprintf("HEYYY!! v=%d: Pop above = %f, Pop below = %f, parent = %d\n", 
             // cut_vertex, pop_above, pop_below, tree_vertex_parents.at(cut_vertex));
             continue;
@@ -496,10 +465,10 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
         // See if any valid edge cuts can be made with this edge 
         std::vector<EdgeCut> new_valid_edges = get_all_valid_edge_cuts_from_edge(
             root, cut_vertex, cut_vertex_parent,
-            total_region_size, total_region_pop,
+            total_region_size,
             pop_below, pop_above,
             lower, target, upper,
-            loop_bounds.first, loop_bounds.second);
+            smaller_cut_sizes_to_try);
 
         // if yes then add them
         if(new_valid_edges.size() > 0){
@@ -775,6 +744,7 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
     const int region1_id, const int region1_root,
     const int region2_id, const int region2_root,
     const int min_potential_cut_size, const int max_potential_cut_size,
+    std::vector<int> const &smaller_cut_sizes_to_try,
     const int total_merged_region_pop, const int total_merged_region_size
 ){
     // clear the tree
@@ -801,6 +771,7 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
         ust, region1_root, 
         pops_below_vertex,
         min_potential_cut_size, max_potential_cut_size,
+        smaller_cut_sizes_to_try,
         total_merged_region_pop, total_merged_region_size,
         map_params.lower, map_params.upper, map_params.target
     );
@@ -819,26 +790,20 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
         ust, region2_root, 
         pops_below_vertex,
         min_potential_cut_size, max_potential_cut_size,
+        smaller_cut_sizes_to_try,
         total_merged_region_pop, total_merged_region_size,
         map_params.lower, map_params.upper, map_params.target
     );
 
     // Now add the joined cut
-    // If strict bounds there's only one option but we check all in case the bounds
-    // are weak. 
-    std::pair<int, int> loop_bounds = get_potential_region_size_for_loop_bounds(
-        total_merged_region_size,
-        min_potential_cut_size, max_potential_cut_size
-    );
-
     // we make region2 the cut vertex and region1 the parent
     std::vector<EdgeCut> edge_across_valid_edge_cuts = get_all_valid_edge_cuts_from_edge(
                 region1_root, region2_root, region1_root,
-                total_merged_region_size, total_merged_region_pop,
+                total_merged_region_size,
                 static_cast<double>(pops_below_vertex.at(region2_root)), 
                 static_cast<double>(total_merged_region_pop - pops_below_vertex.at(region2_root)),
                 map_params.lower, map_params.target, map_params.upper,
-                loop_bounds.first, loop_bounds.second);
+                smaller_cut_sizes_to_try);
 
     // REprintf("Pop below region2_root is %d so above is %d so foound %d\n",
     //     pops_below_vertex.at(region2_root), 

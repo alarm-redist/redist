@@ -136,6 +136,7 @@ double get_log_mh_ratio(
 //'    sampling weights of the plans for the next round
 void get_all_plans_log_optimal_weights(
         RcppThread::ThreadPool &pool,
+        const SplittingSchedule &splitting_schedule,
         const Graph &g, std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
         bool split_district_only,
         arma::subview_col<double> log_incremental_weights,
@@ -161,13 +162,14 @@ double get_log_retroactive_splitting_prob_for_joined_tree(
     Plan const &plan, Tree &ust, const TreeSplitter &edge_splitter,
     std::vector<bool> &visited, std::vector<int> &pops_below_vertex,
     const int region1_root, const int region2_root,
-    const int min_potential_cut_size, const int max_potential_cut_size
+    const int min_potential_cut_size, const int max_potential_cut_size,
+    std::vector<int> const &smaller_cut_sizes_to_try
 );
 
 
 
 double compute_optimal_forest_log_incremental_weight(
-        const MapParams &map_params,
+        const MapParams &map_params, const SplittingSchedule &splitting_schedule,
         const Plan &plan, const TreeSplitter &edge_splitter,
         const int min_potential_cut_size, const int max_potential_cut_size,
         bool split_district_only,
@@ -177,7 +179,8 @@ double compute_optimal_forest_log_incremental_weight(
 
 void get_all_forest_plans_log_optimal_weights(
         RcppThread::ThreadPool &pool,
-        const MapParams &map_params, std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
+        const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+        std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
         const std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
         const int min_potential_cut_size, const int max_potential_cut_size,
         bool split_district_only,

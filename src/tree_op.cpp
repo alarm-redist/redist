@@ -99,6 +99,7 @@ void clear_tree(Tree &tree) {
 
 
 void print_tree(Tree const &ust){
+    Rprintf("Printing Tree:\n");
     for (size_t i = 0; i < ust.size(); i++)
     {
         Rprintf("%d: (");
