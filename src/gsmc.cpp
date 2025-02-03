@@ -149,10 +149,10 @@ void run_smc_step(
             if(split_district_only){
                 // if just doing district splits just use remainder region
                 region_id_to_split = new_plans_ptr_vec.at(i)->remainder_region;
-            }else{
+            }else{                
                 // if generalized split pick a region to try to split
                 new_plans_ptr_vec.at(i)->choose_multidistrict_to_split(
-                    region_id_to_split, min_region_cut_size
+                    region_id_to_split, splitting_schedule.valid_region_sizes_to_split
                 );
             }
             size_of_region_to_split = new_plans_ptr_vec.at(i)->region_sizes(region_id_to_split);
@@ -603,7 +603,7 @@ List run_redist_gsmc(
             if(merge_split_step_vec[step_num]){
                 Rprintf("Iteration %d: Merge Split Step %d \n", step_num+1, merge_split_step_num + 1);
             }else{
-                Rprintf("Iteration %d: SMC Step %d \n",  step_num+1, smc_step_num + 1);
+                Rprintf("Iteration %d: SMC Step %d of %d \n",  step_num+1, smc_step_num + 1, total_smc_steps);
             }
         }
         //  using std::chrono::high_resolution_clock;
@@ -616,10 +616,37 @@ List run_redist_gsmc(
         // Check what step type
         if(!merge_split_step_vec[step_num]){
 
-            if (verbosity >= 3) {
-                Rcout << "\tMaking split " << smc_step_num+1 << " of " << total_steps;
-                Rprintf("\nSplitting regions into pieces of size %d to %d\n",
-                min_region_cut_sizes.at(smc_step_num), max_region_cut_sizes.at(smc_step_num));
+            // set the splitting schedule 
+            splitting_schedule.set_potential_cut_sizes_for_each_valid_size(
+                smc_step_num, plans_ptr_vec[0]->num_regions
+                );
+
+            if(verbosity >= 3){
+            Rprintf("For regions we can split:\n");
+            for (size_t i = 1; i <= splitting_schedule.ndists; i++)
+            {
+                std::string stekus = splitting_schedule.valid_region_sizes_to_split[i]? "true": "false";
+                Rprintf("\tSize %d - %s", (int) i, stekus.c_str());
+                if(splitting_schedule.valid_region_sizes_to_split[i]){
+                Rprintf(" | min/max (%d, %d)", 
+                    splitting_schedule.all_regions_min_and_max_possible_cut_sizes[i][0],
+                    splitting_schedule.all_regions_min_and_max_possible_cut_sizes[i][1]);
+                Rprintf(" | smaller cut sizes: ");
+                for(auto i: splitting_schedule.all_regions_smaller_cut_sizes_to_try[i]){
+                    Rprintf("%d, ", i);
+                }
+                }
+                Rprintf(")\n");
+            }
+            Rprintf("Acceptable Split Sizes are:(");
+            for (size_t i = 1; i <= splitting_schedule.ndists; i++)
+            {
+                if(splitting_schedule.valid_split_region_sizes[i]){
+                    Rprintf("%d, ", i);
+                }
+                
+            }
+            Rprintf("\n");
             }
 
 
@@ -734,6 +761,7 @@ List run_redist_gsmc(
             }else if(wgt_type == "adj_uniform"){
                 get_all_plans_uniform_adj_weights(
                     pool,
+                    splitting_schedule,
                     map_params.g,
                     plans_ptr_vec,
                     split_district_only,

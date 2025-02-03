@@ -433,6 +433,7 @@ double get_log_mh_ratio(
 //'
 double get_log_retroactive_splitting_prob(
         const Plan &plan,
+        const std::vector<bool> &valid_region_sizes_to_split,
         const int region1_id, const int region2_id
 ){
 
@@ -442,12 +443,14 @@ double get_log_retroactive_splitting_prob(
 
     // Iterate over all regions
     for(int region_id = 0; region_id < plan.num_regions; region_id++) {
-        int d_val = plan.region_sizes(region_id);
+        int region_size = plan.region_sizes(region_id);
+        // ignore if this is not a region size that could be split 
+        if(!valid_region_sizes_to_split[region_size]) continue;
 
         // collect info if multidistrict and not the two we started with
-        if(d_val > 1 && region_id != region1_id && region_id != region2_id){
+        if(region_size > 1 && region_id != region1_id && region_id != region2_id){
             // Add that regions d value to the total
-            total_multi_ds += d_val;
+            total_multi_ds += region_size;
         }
     }
 
@@ -455,6 +458,8 @@ double get_log_retroactive_splitting_prob(
     int unioned_region_dnk = plan.region_sizes(region1_id) + plan.region_sizes(region2_id);
     // update the total number of multi district dvals with the value the union region would have been
     total_multi_ds += unioned_region_dnk;
+
+    // Rprintf("For (%d,%d) - Prob is %d/%d\n",region1_id, region2_id, unioned_region_dnk, total_multi_ds);
 
     // so prob of picking is the sum of the two regions dnk over the dnk of all
     // multidistricts
@@ -536,6 +541,7 @@ double compute_optimal_log_incremental_weight(
         bool split_district_only,
         const double target, const double pop_temper){
 
+    
     double incremental_weight = 0.0;
 
     bool do_pop_temper = (plan.num_regions < plan.ndists) && pop_temper > 0;
@@ -545,11 +551,27 @@ double compute_optimal_log_incremental_weight(
         g, plan, split_district_only
     );
 
+    //plan.Rprint(); 
 
     // Iterate over the adjacent region pairs
     for (const auto& entry : region_pairs_and_boundary_lens_vec) {
         const int region1_id = entry.at(0); // get the smaller region id  
         const int region2_id = entry.at(1); // get the bigger region id  
+        // get region sizes
+        const auto region1_size = plan.region_sizes(region1_id);
+        const auto region2_size = plan.region_sizes(region2_id);
+        // skip if 
+        //  - one of the region sizes is not a valid split size
+        //  - the sum of the two regions is not a valid size that could be split
+        if(
+            !splitting_schedule.valid_split_region_sizes[region1_size] || 
+            !splitting_schedule.valid_split_region_sizes[region2_size] ||
+            !splitting_schedule.valid_region_sizes_to_split[region2_size+region1_size]){
+            // Rprintf("skipping (%d, %d)!\n", region1_size, region2_size);
+            continue;
+        }
+        
+
         const int boundary_len = entry.at(2); // get the boundary length
                
 
@@ -562,7 +584,10 @@ double compute_optimal_log_incremental_weight(
         }else{
             // in generalized region split find probability you would have 
             // picked to split the union of the the two regions 
-            log_splitting_prob = get_log_retroactive_splitting_prob(plan, region1_id, region2_id);
+            log_splitting_prob = get_log_retroactive_splitting_prob(
+                plan, 
+                splitting_schedule.valid_region_sizes_to_split, 
+                region1_id, region2_id);
         }
 
         // Do population tempering term if not final
@@ -662,6 +687,7 @@ void get_all_plans_log_optimal_weights(
 // the number of ancestors 
 double compute_uniform_adj_log_incremental_weight(
         const Graph &g, const Plan &plan,
+        const SplittingSchedule &splitting_schedule,
         bool split_district_only,
         const double target, const double pop_temper){
 
@@ -728,7 +754,8 @@ double compute_uniform_adj_log_incremental_weight(
     }else{
         // in generalized region split find probability you would have 
         // picked to split the union of the the two regions 
-        log_splitting_prob = get_log_retroactive_splitting_prob(plan, region1_id, region2_id);
+        log_splitting_prob = get_log_retroactive_splitting_prob(plan, 
+        splitting_schedule.valid_split_region_sizes, region1_id, region2_id);
     }
 
     // Do population tempering term if not final
@@ -770,6 +797,7 @@ double compute_uniform_adj_log_incremental_weight(
 
 void get_all_plans_uniform_adj_weights(
         RcppThread::ThreadPool &pool,
+        const SplittingSchedule &splitting_schedule,
         const Graph &g, std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
         bool split_district_only,
         arma::subview_col<double> log_incremental_weights,
@@ -781,7 +809,9 @@ void get_all_plans_uniform_adj_weights(
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
         double log_incr_weight = compute_uniform_adj_log_incremental_weight(
-            g, *plans_ptr_vec.at(i), split_district_only,
+            g, *plans_ptr_vec.at(i), 
+            splitting_schedule,
+            split_district_only,
             target, pop_temper);
         log_incremental_weights(i) = log_incr_weight;
         unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
@@ -1037,7 +1067,7 @@ double compute_optimal_forest_log_incremental_weight(
         }else{
             // in generalized region split find probability you would have 
             // picked to split the union of the the two regions 
-            log_splitting_prob = get_log_retroactive_splitting_prob(plan, region1_id, region2_id);
+            log_splitting_prob = get_log_retroactive_splitting_prob(plan, splitting_schedule.valid_split_region_sizes, region1_id, region2_id);
         }
 
         // Do population tempering term if not final

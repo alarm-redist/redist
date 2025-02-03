@@ -187,6 +187,18 @@ random_cpp_testing <- function() {
     invisible(.Call(`_gredist_random_cpp_testing`))
 }
 
+random_rcpp_list_cast_testing <- function(control) {
+    invisible(.Call(`_gredist_random_rcpp_list_cast_testing`, control))
+}
+
+comb <- function(N, K) {
+    invisible(.Call(`_gredist_comb`, N, K))
+}
+
+testing_get_all_valid_regions_to_split_stuff <- function(valid_split_region_sizes, valid_presplit_region_sizes) {
+    .Call(`_gredist_testing_get_all_valid_regions_to_split_stuff`, valid_split_region_sizes, valid_presplit_region_sizes)
+}
+
 closest_adj_pop <- function(adj, i_dist, g_prop) {
     .Call(`_gredist_closest_adj_pop`, adj, i_dist, g_prop)
 }

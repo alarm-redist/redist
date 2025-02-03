@@ -137,3 +137,4 @@ std::vector<std::unique_ptr<TreeSplitter>> get_tree_splitters(
 
     return tree_splitters_ptr_vec;
 }
+

@@ -148,6 +148,7 @@ void get_all_plans_log_optimal_weights(
 
 void get_all_plans_uniform_adj_weights(
         RcppThread::ThreadPool &pool,
+        const SplittingSchedule &splitting_schedule,
         const Graph &g, std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
         bool split_district_only,
         arma::subview_col<double> log_incremental_weights,

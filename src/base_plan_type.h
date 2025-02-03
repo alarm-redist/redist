@@ -87,7 +87,7 @@ public:
     virtual Graph get_forest_adj(){throw Rcpp::exception("Get Forest Adj not Supported for this!\n");};
 
     // redist_smc related methods 
-    double choose_multidistrict_to_split(int &region_id_to_split, int min_region_cut_size);
+    double choose_multidistrict_to_split(int &region_id_to_split, std::vector<bool> const &valid_region_sizes_to_split);
     bool draw_tree_on_region(const MapParams &map_params, const int region_to_draw_tree_on,
         Tree &ust, std::vector<bool> &visited, std::vector<bool> &ignore, int &root);
 

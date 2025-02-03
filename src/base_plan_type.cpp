@@ -285,7 +285,7 @@ void Plan::reorder_plan_by_oldest_split(
 void Plan::Rprint() const{
     RcppThread::Rcout << "Plan with " << num_regions << " regions, " << num_districts
                       << " districts, " << num_multidistricts << " multidistricts and "
-                      << arma::sum(region_sizes) << " sum of dnk and "
+                      << arma::sum(region_sizes) << " sum of sizes and "
                       << V << " Vertices.\n";
 
 
@@ -324,16 +324,12 @@ void Plan::Rprint() const{
 //' @return the log probability that region was chosen
 //'
 double Plan::choose_multidistrict_to_split(
-        int &region_id_to_split, int min_region_cut_size
+        int &region_id_to_split,  std::vector<bool> const &valid_region_sizes_to_split
         ){
 
 
     if(num_multidistricts < 1){
         throw Rcpp::exception("ERROR: Trying to find multidistrict to split when there are none!\n");
-    }
-    if(min_region_cut_size < 1){
-        REprintf("The min_region_cut_size is %d\n", min_region_cut_size);
-        throw Rcpp::exception("ERROR: Min cut size less than 1!\n");
     }
     if(num_multidistricts == 1){
         region_id_to_split = region_sizes.index_max();
@@ -358,8 +354,8 @@ double Plan::choose_multidistrict_to_split(
 
         int region_size = region_sizes(region_id);
 
-        // collect info if multidistrict
-        if(region_size > min_region_cut_size){
+        // collect info if valid region to split
+        if(valid_region_sizes_to_split[region_size]){
             // Add that regions d value to the total
             total_multi_ds += region_size;
             // add the count and label to vector

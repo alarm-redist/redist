@@ -162,9 +162,10 @@ SplittingSizeScheduleType get_splitting_size_regime(std::string const &splitting
 class SplittingSchedule {
 
 private:
+    // this are both only actually tracked for custom splitting schedules 
     std::vector<std::vector<bool>> valid_split_region_sizes_list; // the allowable splitting sizes for each split
-    // this is only actually tracked for custom splitting schedules 
-
+    std::vector<std::vector<bool>> valid_presplit_region_sizes_list; // the allowable presplit region sizes for each split
+    
 public:
     // constructor 
     SplittingSchedule(
@@ -186,11 +187,19 @@ public:
     // of regions cut from 
     std::vector<std::array<int, 2>> all_regions_min_and_max_possible_cut_sizes;
 
+    // 1-indexed vector of if the region can be split
+    std::vector<bool> valid_region_sizes_to_split;
+    // 1-indexed vector of if that region size could have been the result of a valid split
+    std::vector<bool> valid_split_region_sizes;
 
     // This sets it for that split
     void set_potential_cut_sizes_for_each_valid_size(int split_num, int num_regions);
     
 };
+
+std::tuple<std::vector<bool>, std::vector<std::vector<int>>, std::vector<std::array<int, 2>>> get_all_valid_split_NAME_NEEDED_STUFF(
+    const std::vector<bool> &valid_split_region_sizes, const std::vector<bool> &valid_presplit_region_sizes
+);
 
 
 // For the future, to avoid needing to create visited and ignore

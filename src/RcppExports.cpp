@@ -544,6 +544,39 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// random_rcpp_list_cast_testing
+void random_rcpp_list_cast_testing(Rcpp::List control);
+RcppExport SEXP _gredist_random_rcpp_list_cast_testing(SEXP controlSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type control(controlSEXP);
+    random_rcpp_list_cast_testing(control);
+    return R_NilValue;
+END_RCPP
+}
+// comb
+void comb(int N, int K);
+RcppExport SEXP _gredist_comb(SEXP NSEXP, SEXP KSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    comb(N, K);
+    return R_NilValue;
+END_RCPP
+}
+// testing_get_all_valid_regions_to_split_stuff
+Rcpp::List testing_get_all_valid_regions_to_split_stuff(const std::vector<bool>& valid_split_region_sizes, const std::vector<bool>& valid_presplit_region_sizes);
+RcppExport SEXP _gredist_testing_get_all_valid_regions_to_split_stuff(SEXP valid_split_region_sizesSEXP, SEXP valid_presplit_region_sizesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::vector<bool>& >::type valid_split_region_sizes(valid_split_region_sizesSEXP);
+    Rcpp::traits::input_parameter< const std::vector<bool>& >::type valid_presplit_region_sizes(valid_presplit_region_sizesSEXP);
+    rcpp_result_gen = Rcpp::wrap(testing_get_all_valid_regions_to_split_stuff(valid_split_region_sizes, valid_presplit_region_sizes));
+    return rcpp_result_gen;
+END_RCPP
+}
 // closest_adj_pop
 int closest_adj_pop(IntegerVector adj, int i_dist, NumericVector g_prop);
 RcppExport SEXP _gredist_closest_adj_pop(SEXP adjSEXP, SEXP i_distSEXP, SEXP g_propSEXP) {
@@ -832,6 +865,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_arma_testing", (DL_FUNC) &_gredist_arma_testing, 0},
     {"_gredist_rand_int_gen_testing", (DL_FUNC) &_gredist_rand_int_gen_testing, 2},
     {"_gredist_random_cpp_testing", (DL_FUNC) &_gredist_random_cpp_testing, 0},
+    {"_gredist_random_rcpp_list_cast_testing", (DL_FUNC) &_gredist_random_rcpp_list_cast_testing, 1},
+    {"_gredist_comb", (DL_FUNC) &_gredist_comb, 2},
+    {"_gredist_testing_get_all_valid_regions_to_split_stuff", (DL_FUNC) &_gredist_testing_get_all_valid_regions_to_split_stuff, 2},
     {"_gredist_closest_adj_pop", (DL_FUNC) &_gredist_closest_adj_pop, 3},
     {"_gredist_rint1", (DL_FUNC) &_gredist_rint1, 2},
     {"_gredist_runif1", (DL_FUNC) &_gredist_runif1, 2},

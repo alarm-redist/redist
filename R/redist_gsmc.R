@@ -46,6 +46,8 @@ redist_gsmc <- function(
        init_region_ids_mat = NULL,
        init_region_sizes_mat = NULL,
        min_region_cut_sizes = NULL, max_region_cut_sizes = NULL,
+       permitted_split_region_sizes_list = NULL,
+       permitted_presplit_region_sizes_list = NULL,
        verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE){
 
 
@@ -172,7 +174,7 @@ redist_gsmc <- function(
     # setting the splitting size regime
     if(split_district_only){
         splitting_size_regime = "split_district_only"
-    }else if(is.null(min_region_cut_sizes) && is.null(max_region_cut_sizes)){
+    }else if(is.null(permitted_split_region_sizes_list)){
         # this is means allow any valid sizes
         splitting_size_regime = "any_valid_sizes"
     }else{ # else its custom
@@ -188,7 +190,9 @@ redist_gsmc <- function(
                 )
         }
         # validate the cut sizes
-        validate_cut_sizes(ndists, total_smc_steps, min_region_cut_sizes, max_region_cut_sizes)
+        OLD_validate_cut_sizes(ndists, total_smc_steps, min_region_cut_sizes, max_region_cut_sizes)
+        validate_cut_sizes (ndists, total_smc_steps, init_num_regions, permitted_split_region_sizes_list)
+
         splitting_size_regime = "custom"
     }
 
@@ -204,6 +208,8 @@ redist_gsmc <- function(
         splitting_method = NAIVE_K_SPLITTING,
         splitting_size_regime = splitting_size_regime,
         k_params = manual_k_params,
+        permitted_split_region_sizes_list=permitted_split_region_sizes_list,
+        permitted_presplit_region_sizes_list=permitted_presplit_region_sizes_list,
         min_region_cut_sizes=min_region_cut_sizes,
         max_region_cut_sizes=max_region_cut_sizes,
         merge_split_step_vec = merge_split_step_vec,
