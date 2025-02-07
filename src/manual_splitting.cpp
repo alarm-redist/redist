@@ -187,7 +187,7 @@ List perform_a_valid_multidistrict_split(
         ndists, num_regions, pop, split_district_only);
 
     // Create tree splitter 
-    TreeSplitter * tree_splitter = new NaiveTopKSplitter(map_params.V, k_param);
+    TreeSplitter * tree_splitter = new ExperimentalSplitter(map_params.V, .0001);
 
 
     if(verbose){

@@ -58,10 +58,10 @@ std::pair<bool,EdgeCut> NaiveTopKSplitter::select_edge_to_cut(
     // iif no valid edges immediately return false
     if(num_valid_edges == 0){
         return std::make_pair(false, EdgeCut());
-    }else if(num_valid_edges > k_param){
-        REprintf("k was %d but found %d valid edges\n", k_param, num_valid_edges);
-        // throw Rcpp::exception("K not big enough!\n");
-    }
+    }// else if(num_valid_edges > k_param){
+    //     REprintf("k was %d but found %d valid edges\n", k_param, num_valid_edges);
+    //     // throw Rcpp::exception("K not big enough!\n");
+    // }
 
     int idx = r_int(k_param);
 

@@ -51,10 +51,6 @@
  *  WHAT IT IS DOING
  *  @param lags Parameter from older `smc.cpp` code. I DON'T UNDERSTAND
  *  WHAT IT IS DOING
- *  @param min_region_cut_size The smallest size at least one of the split regions
- *  in a new plan must be.
- *  @param max_region_cut_size The largest size at least one of the split regions
- *  in a new plan can be.
  *  @param split_district_only Whether or not to only allow for single district
  *  splits. If set to `true` will only attempt to split off one district at a
  *  time
@@ -101,7 +97,6 @@ void run_smc_step(
         double &accept_rate,
         int &n_unique_parent_indices,
         umat &ancestors, const std::vector<int> &lags,
-        int const min_region_cut_size, int const max_region_cut_size, 
         bool const split_district_only,
         RcppThread::ThreadPool &pool,
         int verbosity, int diagnostic_level
@@ -351,7 +346,6 @@ List run_redist_gsmc(
 
     double tol = std::max(target - lower, upper - target) / target;
 
-
     // get the k used 
     Rcpp::IntegerVector cut_k_values(total_steps);
 
@@ -359,8 +353,6 @@ List run_redist_gsmc(
     SplittingMethodType splitting_method = get_splitting_type(
         static_cast<std::string>(control["splitting_method"])
         );
-
-
 
     // get the splitting size regime
     SplittingSizeScheduleType splitting_size_regime = get_splitting_size_regime(
@@ -578,10 +570,12 @@ List run_redist_gsmc(
               << lower << " and " << upper << " using " 
               << (num_threads == 0 ? 1 : num_threads) << " threads, "
               << total_ms_steps << " merge split steps, ";
-        if(!split_district_only){
-            Rcout << "and generalized region splits.";
-        }else{
+        if(splitting_size_regime == SplittingSizeScheduleType::DistrictOnly){
             Rcout << "and only performing 1-district splits.";
+        }else if(splitting_size_regime == SplittingSizeScheduleType::AnyValidSize){
+            Rcout << "and generalized region splits.";
+        }else if(splitting_size_regime == SplittingSizeScheduleType::CustomSizes){
+            Rcout << "and custom size region splits.";
         }
         Rcout << " Using " << splitting_method_to_str(splitting_method) << "!\n";
         if (map_params.cg.size() > 1){
@@ -646,7 +640,7 @@ List run_redist_gsmc(
                 }
                 
             }
-            Rprintf("\n");
+            Rprintf(")\n");
             }
 
 
@@ -707,7 +701,6 @@ List run_redist_gsmc(
                 acceptance_rates.at(step_num),
                 nunique_parents.at(smc_step_num),
                 ancestors, lags,
-                min_region_cut_sizes.at(smc_step_num), max_region_cut_sizes.at(smc_step_num), 
                 split_district_only,
                 pool,
                 verbosity, diagnostic_mode ? 3 : 0
@@ -802,8 +795,6 @@ List run_redist_gsmc(
             if(smc_step_num < total_smc_steps-1){
                 smc_step_num++;
             }
-            
-
         }else if(merge_split_step_vec[step_num]){ // check if its a merge split step
             // run merge split 
             // Set the number of steps to run at 1 over previous stage acceptance rate

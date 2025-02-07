@@ -26,7 +26,7 @@ void Plan::check_inputted_region_sizes(bool split_district_only){
         total_size_implied_by_sizes_mat += region_sizes(i);
         if(region_sizes(i) == 1) num_districts_implied_by_sizes_mat++;
 
-        // add check that if split district only then only last one has dval > 1
+        // add check that if split district only then only last one has size > 1
         if (split_district_only && i != num_regions-1)
         {
             if(region_sizes(i) != 1) throw Rcpp::exception(
@@ -123,10 +123,16 @@ Plan::Plan(
         remainder_region = -1;
     }
 
-    // check region sizes and labels
-    check_inputted_region_ids();
-    // this also sets the number of regions and multidistricts 
-    check_inputted_region_sizes(split_district_only);
+    // check region sizes and labels if not just 1 region 
+    if(num_regions > 1){
+        check_inputted_region_ids();
+        // this also sets the number of regions and multidistricts 
+        check_inputted_region_sizes(split_district_only);
+    }else{
+        num_districts = 0;
+        num_multidistricts = num_regions;
+    }
+    
 
     // now check these
     if (num_regions > ndists) throw Rcpp::exception("Tried to create a plan object with more regions than ndists!");
@@ -301,8 +307,6 @@ void Plan::Rprint() const{
 
 
 
-
-
 //' Selects a multidistrict with probability proportional to its d_nk value and
 //' returns the log probability of the selected region
 //'
@@ -340,7 +344,9 @@ double Plan::choose_multidistrict_to_split(
     int total_multi_ds = 0;
 
     // make vectors with cumulative d value and region label for later
-    std::vector<int> region_ids;
+    std::vector<int> valid_region_ids;
+
+
     arma::vec region_unnormed_prob(num_multidistricts, arma::fill::zeros);
 
     // r_int_wgt(int max, vec cum_wgts)
@@ -359,7 +365,7 @@ double Plan::choose_multidistrict_to_split(
             // Add that regions d value to the total
             total_multi_ds += region_size;
             // add the count and label to vector
-            region_ids.push_back(region_id);
+            valid_region_ids.push_back(region_id);
             region_unnormed_prob(vec_index) = region_size;
             vec_index++;
         }
@@ -369,7 +375,7 @@ double Plan::choose_multidistrict_to_split(
     // Now we only want to consider indices 
     int idx = r_int_unnormalized_wgt(region_unnormed_prob.head(vec_index));
 
-    region_id_to_split = region_ids.at(idx);
+    region_id_to_split = valid_region_ids.at(idx);
 
     // REprintf("Here in split 3.5 - picked idx %d !\n", idx);
 

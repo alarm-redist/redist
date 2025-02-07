@@ -324,12 +324,14 @@ redist_gsmc <- function(
             # if not diagnostic mode
             # make the region_ids_mat_list input just null since there's nothing else
             algout$region_ids_mat_list <- NULL
-            algout$region_dvals_mat_list <- NULL
+            algout$region_sizes_mat_list <- NULL
         }else{
             # make intermediate plans 1 indexed
             for (i in seq_len(length(algout$region_ids_mat_list))) {
                 algout$region_ids_mat_list[[i]] <- algout$region_ids_mat_list[[i]] + 1L
             }
+            # add plans as well
+
         }
 
 
@@ -474,10 +476,12 @@ redist_gsmc <- function(
             pop_temper = pop_temper,
             runtime = as.numeric(t2_run - t1_run, units = "secs"),
             num_threads = ncores_per,
+            permitted_split_region_sizes_list=permitted_split_region_sizes_list,
+            permitted_presplit_region_sizes_list=permitted_presplit_region_sizes_list,
             nunique_original_ancestors = nunique_original_ancestors,
             parent_index_mat = algout$parent_index,
             original_ancestors_mat = algout$original_ancestors_mat,
-            region_dvals_mat_list = algout$region_dvals_mat_list,
+            region_sizes_mat_list = algout$region_sizes_mat_list,
             log_incremental_weights_mat = algout$log_incremental_weights_mat,
             region_ids_mat_list = algout$region_ids_mat_list,
             draw_tries_mat = algout$draw_tries_mat,

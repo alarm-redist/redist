@@ -459,7 +459,7 @@ double get_log_retroactive_splitting_prob(
     // update the total number of multi district dvals with the value the union region would have been
     total_multi_ds += unioned_region_dnk;
 
-    // Rprintf("For (%d,%d) - Prob is %d/%d\n",region1_id, region2_id, unioned_region_dnk, total_multi_ds);
+    
 
     // so prob of picking is the sum of the two regions dnk over the dnk of all
     // multidistricts
@@ -469,6 +469,12 @@ double get_log_retroactive_splitting_prob(
     ) - std::log(
             static_cast<double>(total_multi_ds)
     );
+
+    // Rprintf("For regions (%d,%d), size (%d,%d) - Prob is %d/%d, so log is %.5f\n",
+    // region1_id, region2_id, 
+    // (int) plan.region_sizes(region1_id), (int) plan.region_sizes(region2_id),
+    // unioned_region_dnk, total_multi_ds,
+    // log_prob);
 
     return log_prob;
 
@@ -551,15 +557,15 @@ double compute_optimal_log_incremental_weight(
         g, plan, split_district_only
     );
 
-    //plan.Rprint(); 
+    // plan.Rprint(); 
 
     // Iterate over the adjacent region pairs
     for (const auto& entry : region_pairs_and_boundary_lens_vec) {
         const int region1_id = entry.at(0); // get the smaller region id  
         const int region2_id = entry.at(1); // get the bigger region id  
         // get region sizes
-        const auto region1_size = plan.region_sizes(region1_id);
-        const auto region2_size = plan.region_sizes(region2_id);
+        const int region1_size = plan.region_sizes(region1_id);
+        const int region2_size = plan.region_sizes(region2_id);
         // skip if 
         //  - one of the region sizes is not a valid split size
         //  - the sum of the two regions is not a valid size that could be split
@@ -567,7 +573,7 @@ double compute_optimal_log_incremental_weight(
             !splitting_schedule.valid_split_region_sizes[region1_size] || 
             !splitting_schedule.valid_split_region_sizes[region2_size] ||
             !splitting_schedule.valid_region_sizes_to_split[region2_size+region1_size]){
-            // Rprintf("skipping (%d, %d)!\n", region1_size, region2_size);
+            // Rprintf("skipping (%d,%d) which is sizes (%d, %d)!\n", region1_id, region2_id, region1_size, region2_size);
             continue;
         }
         
