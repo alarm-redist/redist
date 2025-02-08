@@ -12,23 +12,23 @@
 /*
  * Choose k and multiplier for efficient, accurate sampling
  */
-void estimate_cut_k(const SplittingSchedule &splitting_schedule,
-    const Graph &g, int &k, int const last_k, 
-                      const std::vector<double> &unnormalized_weights, double thresh,
-                      double tol, std::vector<std::unique_ptr<Plan>> const &plan_ptrs_vec, 
-                      const uvec &counties,
-                      Multigraph &cg, const uvec &pop,
-                      int const min_region_cut_size, int const max_region_cut_size,
-                      bool split_district_only,
-                      double const target, int const verbosity) {
+void estimate_cut_k(
+    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    int &k, int const last_k, 
+    const std::vector<double> &unnormalized_weights, double thresh,
+    double tol, std::vector<std::unique_ptr<Plan>> const &plan_ptrs_vec, 
+    bool split_district_only,
+    int const verbosity) {
     // sample some spanning trees and compute deviances
-    int V = g.size();
+    int V = map_params.V;
     int k_max = std::min(10 + (int) (2.0 * V * tol), last_k + 4); // heuristic
     int N_max = plan_ptrs_vec.size();
     int N_adapt = std::min(60 + (int) std::floor(5000.0 / sqrt((double)V)), N_max);
 
+    double target = map_params.target;
     double lower = target * (1 - tol);
     double upper = target * (1 + tol);
+    int num_regions = plan_ptrs_vec[0]->num_regions;
 
     std::vector<std::vector<double>> devs;
     devs.reserve(N_adapt);
@@ -43,6 +43,8 @@ void estimate_cut_k(const SplittingSchedule &splitting_schedule,
     int idx = 0;
     int max_V = 0;
     Tree ust = init_tree(V);
+
+    bool any_size_split = splitting_schedule.schedule_type == SplittingSizeScheduleType::AnyValidSize;
     
     for (int i = 0; i < N_max && idx < N_adapt; i++, idx++) {
         if (unnormalized_weights.at(i) == 0) { // skip if not valid
@@ -53,21 +55,32 @@ void estimate_cut_k(const SplittingSchedule &splitting_schedule,
         int n_vtx = V;
 
         // Get the index of the region with the largest dval
-        int biggest_region_id; int biggest_dval; int max_valid_dval;
+        int biggest_region_id; int biggest_region_size; 
 
         // if split district only just do remainder 
         if(split_district_only){
             biggest_region_id = plan_ptrs_vec.at(i)->remainder_region;
-            biggest_dval = plan_ptrs_vec.at(i)->region_sizes(biggest_region_id);
-            max_valid_dval = 1; // max valid dval is 1
-        }else{
+            biggest_region_size = plan_ptrs_vec.at(i)->region_sizes(biggest_region_id);
+        }else if(any_size_split){
             biggest_region_id = plan_ptrs_vec.at(i)->region_sizes.head(plan_ptrs_vec.at(i)->num_regions).index_max();
-            biggest_dval = plan_ptrs_vec.at(i)->region_sizes(biggest_region_id);
-            max_valid_dval = biggest_dval-1;
+            biggest_region_size = plan_ptrs_vec.at(i)->region_sizes(biggest_region_id);
+        }else{// custom size 
+            biggest_region_size = -1; biggest_region_id = num_regions -1;
+            for (int j = 0; j < num_regions; j++)
+            {
+                int region_size = plan_ptrs_vec[i]->region_sizes(j);
+                // check if valid and bigger
+                if(splitting_schedule.valid_region_sizes_to_split[region_size] && 
+                   region_size > biggest_region_size){
+                    biggest_region_id = j;
+                    biggest_region_size = region_size;
+                }
+            }
         }
 
-        int biggest_dval_region_pop = plan_ptrs_vec.at(i)->region_pops.at(biggest_region_id);
-
+        int biggest_size_region_pop = plan_ptrs_vec.at(i)->region_pops.at(biggest_region_id);
+        int min_possible_cut_size = splitting_schedule.all_regions_min_and_max_possible_cut_sizes[biggest_region_size][0];
+        int max_possible_cut_size = splitting_schedule.all_regions_min_and_max_possible_cut_sizes[biggest_region_size][1];
 
         for (int j = 0; j < V; j++) {
             // if not the biggest region mark as ignore
@@ -77,11 +90,20 @@ void estimate_cut_k(const SplittingSchedule &splitting_schedule,
             }
         }
 
+        // Rprintf("Tree on region %d of size %d has %d vertices and pop %d!\n",
+        // biggest_region_id,
+        //     biggest_region_size, n_vtx, plan_ptrs_vec.at(i)->region_pops.at(biggest_region_id));
+
+        // plan_ptrs_vec.at(i)->Rprint();
+        // Rprintf("\n\n");
+
         if (n_vtx > max_V) max_V = n_vtx;
 
         clear_tree(ust);
-        int result = sample_sub_ust(g, ust, V, root, visited, ignore,
-                                    pop, lower, upper, counties, cg);
+        int result = sample_sub_ust(map_params.g, ust, V, root, visited, ignore,
+                                    map_params.pop, 
+                                    min_possible_cut_size*lower, max_possible_cut_size*upper, 
+                                    map_params.counties, map_params.cg);
         if (result != 0) {
             idx--;
             continue;
@@ -89,16 +111,16 @@ void estimate_cut_k(const SplittingSchedule &splitting_schedule,
 
         // reset the cut below pop to zero
         std::fill(cut_below_pop.begin(), cut_below_pop.end(), 0);
-        tree_pop(ust, root, pop, cut_below_pop, parents);
+        tree_pop(ust, root, map_params.pop, cut_below_pop, parents);
 
 
         devs.push_back(
         get_ordered_tree_cut_devs(ust, root, cut_below_pop, target, 
                     plan_ptrs_vec.at(i)->region_ids,
-                    biggest_region_id, biggest_dval, biggest_dval_region_pop,
-                    splitting_schedule.all_regions_min_and_max_possible_cut_sizes[biggest_dval][0],
-                    splitting_schedule.all_regions_min_and_max_possible_cut_sizes[biggest_dval][1],
-                    splitting_schedule.all_regions_smaller_cut_sizes_to_try[biggest_dval]
+                    biggest_region_id, biggest_region_size, biggest_size_region_pop,
+                    min_possible_cut_size,
+                    max_possible_cut_size,
+                    splitting_schedule.all_regions_smaller_cut_sizes_to_try[biggest_region_size]
                     )
                       );
 

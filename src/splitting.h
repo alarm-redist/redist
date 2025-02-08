@@ -29,15 +29,13 @@
 /*
  * Choose k and multiplier for efficient, accurate sampling
  */
-void estimate_cut_k(const SplittingSchedule &splitting_schedule,
-        const Graph &g, int &k, int const last_k, 
-                      const std::vector<double> &unnormalized_weights, double thresh,
-                      double tol, std::vector<std::unique_ptr<Plan>> const &plan_ptrs_vec, 
-                      const uvec &counties,
-                      Multigraph &cg, const uvec &pop, 
-                      int const min_region_cut_size, int const max_region_cut_size,
-                      bool split_district_only,
-                      double const target, int const verbosity);
+void estimate_cut_k(
+    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    int &k, int const last_k, 
+    const std::vector<double> &unnormalized_weights, double thresh,
+    double tol, std::vector<std::unique_ptr<Plan>> const &plan_ptrs_vec, 
+    bool split_district_only,
+    int const verbosity);
 
 
 

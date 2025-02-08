@@ -652,13 +652,11 @@ List run_redist_gsmc(
                 int last_k = smc_step_num == 0 ? std::max(1, V - 5) : k_params.at(smc_step_num-1);
                 // double thresh = (double) control["adapt_k_thresh"];
 
-                estimate_cut_k(splitting_schedule, map_params.g, est_cut_k, last_k, unnormalized_sampling_weights, thresh,
-                            tol, plans_ptr_vec, 
-                            counties,
-                            map_params.cg, pop, 
-                            min_region_cut_sizes.at(smc_step_num), max_region_cut_sizes.at(smc_step_num), 
-                            split_district_only,
-                            target, verbosity);
+                estimate_cut_k(
+                    map_params, splitting_schedule, 
+                    est_cut_k, last_k, unnormalized_sampling_weights, thresh,
+                    tol, plans_ptr_vec, 
+                    split_district_only, verbosity);
 
                 k_params.at(smc_step_num) = est_cut_k;
 
