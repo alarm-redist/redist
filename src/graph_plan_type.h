@@ -15,7 +15,7 @@ public:
             Tree &ust, EdgeCut cut_edge, 
             const int split_region1_id, const int split_region2_id,
             bool split_district_only
-    );
+    ) override;
 
     // Clone method to create a copy of the ForestPlan object
     std::unique_ptr<Plan> deep_clone() const override {

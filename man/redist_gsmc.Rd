@@ -8,8 +8,10 @@ redist_gsmc(
   map,
   nsims,
   counties = NULL,
+  runs = 1L,
+  num_splitting_steps = NULL,
   estimate_cut_k = TRUE,
-  manual_k_params = 6,
+  manual_k_params = NULL,
   adapt_k_thresh = 0.9999,
   split_district_only = FALSE,
   weight_type = "optimal",
@@ -18,15 +20,16 @@ redist_gsmc(
   run_ms = 0 < ms_freq && ms_freq <= ndists,
   merge_prob_type = "uniform",
   resample = TRUE,
-  runs = 1L,
-  ncores = 0L,
+  num_processes = 0L,
+  num_threads_per_process = 0L,
   multiprocess = FALSE,
   pop_temper = 0,
   init_region_ids_mat = NULL,
   init_region_sizes_mat = NULL,
-  init_num_regions = 1,
   min_region_cut_sizes = NULL,
   max_region_cut_sizes = NULL,
+  permitted_split_region_sizes_list = NULL,
+  permitted_presplit_region_sizes_list = NULL,
   verbose = FALSE,
   silent = FALSE,
   diagnostic_mode = FALSE
@@ -48,28 +51,39 @@ splits further, or to constrain a second type of administrative split,
 consider using \code{add_constr_splits()}, \code{add_constr_multisplits()}, and
 \code{add_constr_total_splits()}.}
 
-\item{adapt_k_thresh}{The threshold value used in the heuristic to select a
-value \code{k_i} for each splitting iteration. Higher values are more accurate
-but may require more computation. Set to 1 for the most conservative
-sampling. Must be between 0 and 1.}
-
-\item{resample}{Whether to perform a final resampling step so that the
-generated plans can be used immediately.  Set this to \code{FALSE} to
-perform direct importance sampling estimates, or to adjust the weights
-manually.}
-
 \item{runs}{How many independent parallel runs to conduct. Each run will
 have \code{nsims} simulations. Multiple runs allows for estimation of simulation
 standard errors. Output will only be shown for the first run. For
 compatibility with MCMC methods, runs are identified with the \code{chain}
 column in the output.}
 
-\item{ncores}{How many cores to use to parallelize plan generation within each
-run. The default, 0, will use the number of available cores on the machine
-as long as \code{nsims} and the number of units is large enough. If \code{runs>1}
-you will need to set this manually. If more than one core is used, the
-sampler output will not be fully reproducible with \code{set.seed()}. If full
-reproducibility is desired, set \code{ncores=1}.}
+\item{num_splitting_steps}{How many steps to run the SMC algorithm for.
+Each step splits off a new district. Defaults to all remaining districts.
+If fewer than the number of remaining splits, reference plans are disabled.}
+
+\item{manual_k_params}{Either a single value to use as the splitting parameter for
+every round or a vector of length num_splitting_steps-1 where each value is the one to use for
+a split.}
+
+\item{split_district_only}{Whether or not to split plans by splitting off one
+district at a time.}
+
+\item{weight_type}{The type of SMC weights to use. Optimal weights typically
+have lower variance but can be more computationally expensive, especially for
+complex constraints or when sampling on the space of spanning forests.}
+
+\item{resample}{Whether to perform a final resampling step so that the
+generated plans can be used immediately.  Set this to \code{FALSE} to
+perform direct importance sampling estimates, or to adjust the weights
+manually.}
+
+\item{num_processes}{The number of processes (independent instances of R to
+spawn) spawned to simulate the plans. The processes can execute runs in parallel}
+
+\item{num_threads_per_process}{The number of threads assigned to each process.
+This is the number of threads used when performing a specific run. If simulations
+are memory constrained it can be better to lower the number of processes and increase
+the threads per process.}
 
 \item{multiprocess}{Whether or not to launch multiple processes (sometimes
 better to disable to avoid using too much memory. NOTE: Non multiprocessing
@@ -79,14 +93,22 @@ appears to introduce validation bugs right now)}
 values of 0.01-0.05 to start if the algorithm gets stuck on the final few
 splits.}
 
+\item{init_region_ids_mat}{A matrix of partial plans to begin sampling from. For
+advanced use only.  The matrix must have \code{nsims} columns and a row for
+every precinct. It is important to ensure that the existing districts meet
+contiguity and population constraints, or there may be major issues when
+sampling.}
+
+\item{init_region_sizes_mat}{A matrix of region sizes of the partial plans to
+begin sampling from. For advanced use only.  The matrix must have \code{nsims}
+columns and at least as many rows as the number of regions in the
+\code{init_region_ids_mat} and each column must sum to the number of seats in the
+map.}
+
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}
 
 \item{silent}{Whether to suppress all diagnostic information.}
-
-\item{k_params}{Either a single value to use as the splitting parameter for
-every round or a vector of length ndists-1 where each value is the one to use for
-a split.}
 }
 \value{
 \code{redist_gsmc} returns a \link{redist_plans} object containing the simulated

@@ -30,8 +30,9 @@ new_redist_plans <- function(plans, map, algorithm, wgt, resampled = TRUE, ndist
     } else {
         distr_range <- 1:ndists - 1L
         distr_pop <- pop_tally(plans, prec_pop, ndists)
-        pl_tmp <- plans + 1L
-        distr_pop <- pop_tally(pl_tmp, prec_pop, ndists)
+        # from original code not sure why?
+        # pl_tmp <- plans + 1L
+        # distr_pop <- pop_tally(pl_tmp, prec_pop, ndists)
     }
 
 

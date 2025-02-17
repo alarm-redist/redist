@@ -20,12 +20,12 @@ public:
 
     // We now need to keep track of trees as undirected graphs
 
-    Graph get_forest_adj();
+    Graph get_forest_adj() override;
 
-    void update_vertex_info_from_cut(
+    void update_vertex_info_from_cut (
             Tree &ust, EdgeCut cut_edge, 
             const int split_region1_id, const int split_region2_id,
             bool split_district_only
-    );
+    ) override;
 
 };

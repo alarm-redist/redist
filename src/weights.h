@@ -15,6 +15,7 @@
 #include <cmath>
 #include "gredist_types.h"
 #include "base_plan_type.h"
+#include "splitting_schedule_types.h"
 #include "tree_op.h"
 
 
@@ -136,12 +137,12 @@ double get_log_mh_ratio(
 //'    sampling weights of the plans for the next round
 void get_all_plans_log_optimal_weights(
         RcppThread::ThreadPool &pool,
-        const SplittingSchedule &splitting_schedule,
-        const Graph &g, std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
+        const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+        std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
         bool split_district_only,
         arma::subview_col<double> log_incremental_weights,
         std::vector<double> &unnormalized_sampling_weights,
-        double target, double pop_temper
+        double pop_temper
 );
 
 
@@ -172,7 +173,6 @@ double get_log_retroactive_splitting_prob_for_joined_tree(
 double compute_optimal_forest_log_incremental_weight(
         const MapParams &map_params, const SplittingSchedule &splitting_schedule,
         const Plan &plan, const TreeSplitter &edge_splitter,
-        const int min_potential_cut_size, const int max_potential_cut_size,
         bool split_district_only,
         const double pop_temper);
 
@@ -183,11 +183,17 @@ void get_all_forest_plans_log_optimal_weights(
         const MapParams &map_params, const SplittingSchedule &splitting_schedule,
         std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
         const std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
-        const int min_potential_cut_size, const int max_potential_cut_size,
         bool split_district_only,
         arma::subview_col<double> log_incremental_weights,
         std::vector<double> &unnormalized_sampling_weights,
         double pop_temper, int verbosity
 );
+
+
+
+double compute_optimal_log_incremental_weight(
+    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    const Plan &plan, bool split_district_only,
+    const double pop_temper);
 
 #endif

@@ -89,6 +89,101 @@ get_map_parameters <- function(map, counties=NULL){
 }
 
 
+
+#' Checks the sampling space and splitting method are valid
+#'
+#' Checks that the sampling space/splitting method combination given is valid
+#' and that the splitting parameters are valid.
+#'
+#' @inheritParams redist_smc
+#'
+#'
+#' @returns A list of splitting parameters which is safe to pass into c++ code
+validate_sample_space_and_splitting_method <- function(
+        sampling_space, splitting_method, splitting_params, num_splitting_steps
+    ){
+    # first check its a valid sampling space
+    if(!sampling_space %in% VALID_SAMPLING_SPACES){
+        sampling_space_str <- paste0(VALID_SAMPLING_SPACES, collapse=", ")
+        cli_abort("{.arg sampling_space} must be one of the following: [{sampling_space_str}]")
+    }
+
+    # create the
+    cleaned_splitting_params <- list()
+
+    # next check if its graph space then must be naive k
+    if(sampling_space == GRAPH_PLAN_SPACE_SAMPLING){
+        if(splitting_method != NAIVE_K_SPLITTING){
+            cli_abort("{.arg splitting_method} must be {NAIVE_K_SPLITTING} when sampling on Graph Plan Space")
+        }
+        if(!"estimate_cut_k" %in% names(splitting_params)){
+            cli_abort("For Naive Top K splitting method {.arg estimate_cut_k} must be included in {.arg splitting_params}")
+        }
+        # check its a boolean
+        if(!assertthat::is.flag(splitting_params$estimate_cut_k)){
+            cli_abort("{.arg estimate_cut_k} must be a Boolean!")
+        }
+        cleaned_splitting_params$estimate_cut_k <- splitting_params$estimate_cut_k
+
+        # now check if estimating cut k then adapt_k_thresh must be in there
+        if(splitting_params$estimate_cut_k){
+            # now check its included
+            if(!"adapt_k_thresh" %in% names(splitting_params)){
+                cli_abort("If estimating k for Naive Top K splitting method then {.arg estimate_cut_k} must be included in {.arg splitting_params}")
+            }
+            # check its a scalar
+            if (!assertthat::is.number(splitting_params$adapt_k_thresh)){
+                cli_abort("{.arg adapt_k_thresh} must be a number")
+            }
+            # now check its between 0 and 1
+            if (splitting_params$adapt_k_thresh < 0 | splitting_params$adapt_k_thresh > 1){
+                cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
+            }
+            cleaned_splitting_params$adapt_k_thresh <- splitting_params$adapt_k_thresh
+        }else{ # else check manual k parameter were passed in
+            if(!"manual_k_params" %in% names(splitting_params)){
+                cli_abort("If not estimating k for Naive Top K splitting method then {.arg manual_k_params} must be included in {.arg splitting_params}")
+            }
+            # check all inputs are numbers
+            if(!all(sapply(splitting_params$manual_k_params, assertthat::is.number))) {
+                cli_abort("Manual splitting k parameter values all be numbers!")
+            }
+            # check k param input if not estimating
+            if(any(splitting_params$manual_k_params < 1)) {
+                cli_abort("Manual splitting k parameter values must be all at least 1.")
+            }
+            # if just a single number then repeat it
+            if(length(splitting_params$manual_k_params) == 1 && floor(splitting_params$manual_k_params) == splitting_params$manual_k_params){
+                splitting_params$manual_k_params <- rep(splitting_params$manual_k_params, total_smc_steps)
+            }else if(length(splitting_params$manual_k_params) != total_smc_steps){
+                cli_abort("K parameter input must be either 1 value or number of smc steps!")
+            }else if(any(floor(splitting_params$manual_k_params) != splitting_params$manual_k_params)){
+                # if either the length is not ndists-1 or its not all integers then throw
+                # error
+                cli_abort("K parameter values must be all integers")
+            }
+            cleaned_splitting_params$manual_k_params <- splitting_params$manual_k_params
+        }
+    }else if(sampling_space == FOREST_SPACE_SAMPLING){
+        # check splitting method is not naive k
+        if(splitting_method == NAIVE_K_SPLITTING){
+            cli_abort("{.arg splitting_method} cannot be {NAIVE_K_SPLITTING} when sampling on Spanning Forest Space")
+        }else if(!splitting_method %in% VALID_FOREST_SPLITTING_METHODS){
+            clit_abort("{.arg splitting_method} of {splitting_method} is not a valid splitting method. It must be one of[{VALID_FOREST_SPLITTING_METHODS}]")
+        }
+        if(splitting_method == EXP_BIGGER_ABS_DEV_SPLITTING){
+            if(!"splitting_alpha" %in% names(splitting_params)){
+                cli_abort("For {.arg splitting_method} of {splitting_method} then {.arg splitting_alpha} must be included in {.arg splitting_params}")
+            }
+            cleaned_splitting_params$splitting_alpha <- splitting_params$splitting_alpha
+        }
+    }
+
+    return(cleaned_splitting_params)
+}
+
+
+
 #' Checks that a region id matrix is valid
 #'
 #' Checks that every plan in a matrix of partial plans is valid. A partial

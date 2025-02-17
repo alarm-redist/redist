@@ -364,36 +364,7 @@ List run_redist_gsmc(
     std::vector<int> min_region_cut_sizes(total_smc_steps,0);
     std::vector<int> max_region_cut_sizes(total_smc_steps,0);
     // Whether or not to only do district splits only 
-    bool split_district_only = false;
-
-    if(splitting_size_regime == SplittingSizeScheduleType::DistrictOnly){
-        // for split district only just set both to 1 for every one
-        std::fill(
-            min_region_cut_sizes.begin(), 
-            min_region_cut_sizes.end(), 
-            1);
-        std::fill(
-            max_region_cut_sizes.begin(), 
-            max_region_cut_sizes.end(), 
-            1);
-        split_district_only = true;
-    }else if(splitting_size_regime == SplittingSizeScheduleType::AnyValidSize){
-        // for any make min 1 
-        std::fill(
-            min_region_cut_sizes.begin(), 
-            min_region_cut_sizes.end(), 
-            1);
-
-        // for any make max ndists - (initial number of regions -1 + split number -1)
-        for (int i = 0; i < total_smc_steps; i++)
-        {
-            max_region_cut_sizes.at(i) = ndists - (initial_num_regions + i);
-        }
-    }else if(splitting_size_regime == SplittingSizeScheduleType::CustomSizes){
-        // if custom use the user inputs
-        min_region_cut_sizes = as<std::vector<int>>(control["min_region_cut_sizes"]);
-        max_region_cut_sizes = as<std::vector<int>>(control["max_region_cut_sizes"]);
-    }
+    bool split_district_only = splitting_size_regime == SplittingSizeScheduleType::DistrictOnly;
 
     bool use_graph_plan_space = sampling_space == "graph_plan_space";
 
@@ -444,6 +415,10 @@ List run_redist_gsmc(
     all_steps_plan_region_ids_list.reserve(diagnostic_mode ? total_steps : 0);
     std::vector<std::vector<Graph>> all_steps_forests_adj_list;
     all_steps_forests_adj_list.resize((diagnostic_mode && !use_graph_plan_space) ? total_steps : 0);
+    std::vector<std::vector<int>> all_steps_valid_region_sizes_to_split;
+    all_steps_valid_region_sizes_to_split.resize(diagnostic_mode ? total_smc_steps : 0);
+    std::vector<std::vector<int>> all_steps_valid_split_region_sizes;
+    all_steps_valid_split_region_sizes.resize(diagnostic_mode ? total_smc_steps : 0);
 
     
     // Store size at every step but last one if needed
@@ -504,8 +479,12 @@ List run_redist_gsmc(
     std::vector<int> k_params;
     if(use_naive_k_splitter){
         try_to_estimate_cut_k = as<bool>(control["estimate_cut_k"]);
-        thresh = (double) control["adapt_k_thresh"];
-        k_params = as<std::vector<int>>(control["k_params"]);
+        if(try_to_estimate_cut_k){
+            thresh = (double) control["adapt_k_thresh"];
+            k_params.resize(total_smc_steps);
+        }else{
+            k_params = as<std::vector<int>>(control["manual_k_params"]);
+        }
     }
 
     // Loop over each column of region_id_mat
@@ -616,33 +595,31 @@ List run_redist_gsmc(
                 );
 
             if(verbosity >= 3){
-            Rprintf("For regions we can split:\n");
+            Rprintf("The following region sizes can split:\n");
             for (size_t i = 1; i <= splitting_schedule.ndists; i++)
-            {
-                std::string stekus = splitting_schedule.valid_region_sizes_to_split[i]? "true": "false";
-                Rprintf("\tSize %d - %s", (int) i, stekus.c_str());
+            {                
                 if(splitting_schedule.valid_region_sizes_to_split[i]){
-                Rprintf(" | min/max (%d, %d)", 
+                Rprintf("\tRegion Size %d | ", (int) i);
+                Rprintf("min/max (%d, %d)", 
                     splitting_schedule.all_regions_min_and_max_possible_cut_sizes[i][0],
                     splitting_schedule.all_regions_min_and_max_possible_cut_sizes[i][1]);
-                Rprintf(" | smaller cut sizes: ");
-                for(auto i: splitting_schedule.all_regions_smaller_cut_sizes_to_try[i]){
-                    Rprintf("%d, ", i);
+                Rprintf(" | possible split sizes: ");
+                for(auto smaller_size: splitting_schedule.all_regions_smaller_cut_sizes_to_try[i]){
+                    Rprintf("(%d, %d) ", smaller_size, i-smaller_size);
                 }
+                Rprintf("\n");
                 }
-                Rprintf(")\n");
+                
             }
-            Rprintf("Acceptable Split Sizes are:(");
+            Rprintf("All Possible Split Sizes are:(");
             for (size_t i = 1; i <= splitting_schedule.ndists; i++)
             {
                 if(splitting_schedule.valid_split_region_sizes[i]){
                     Rprintf("%d, ", i);
                 }
-                
             }
             Rprintf(")\n");
             }
-
 
             // check if k is passed in or estimate 
             if(use_naive_k_splitter){
@@ -726,12 +703,11 @@ List run_redist_gsmc(
             auto t1 = std::chrono::high_resolution_clock::now();
 
             if(!use_graph_plan_space){
-                Rprintf("Computing Weights:\n");
+                if (verbosity >= 3) Rprintf("Computing Weights:\n");
                 get_all_forest_plans_log_optimal_weights(
                     pool,
                     map_params, splitting_schedule, 
                     plans_ptr_vec, tree_splitters_ptr_vec,
-                    min_region_cut_sizes.at(smc_step_num), max_region_cut_sizes.at(smc_step_num),
                     split_district_only,
                     log_incremental_weights_mat.col(smc_step_num),
                     unnormalized_sampling_weights,
@@ -741,12 +717,11 @@ List run_redist_gsmc(
                 // compute log incremental weights and sampling weights for next round
                 get_all_plans_log_optimal_weights(
                     pool,
-                    splitting_schedule, map_params.g, 
+                    map_params, splitting_schedule,  
                     plans_ptr_vec,
                     split_district_only,
                     log_incremental_weights_mat.col(smc_step_num),
                     unnormalized_sampling_weights,
-                    target,
                     pop_temper
                 );
             }else if(wgt_type == "adj_uniform"){
@@ -769,7 +744,10 @@ List run_redist_gsmc(
             auto t2 = std::chrono::high_resolution_clock::now();
             /* Getting number of milliseconds as a double. */
             std::chrono::duration<double, std::milli> ms_double = t2 - t1; 
-            if(!use_graph_plan_space) Rcout << "Calculating log weights took" << ms_double.count() << " ms, ";
+            if(DEBUG_VERBOSE){
+                Rcout << "Calculating log weights took" << ms_double.count() << " ms, ";
+            }
+
 
             // compute log weight sd
             log_wgt_stddevs.at(smc_step_num) = arma::stddev(log_incremental_weights_mat.col(smc_step_num));
@@ -786,6 +764,22 @@ List run_redist_gsmc(
                     parent_index_mat.column(0).begin(), 
                     parent_index_mat.column(0).end(), 
                     0);
+            }
+
+            if(diagnostic_mode){
+                int current_num_regions = plans_ptr_vec[0]->num_regions;
+                // save the acceptable split sizes 
+                for (int region_size = 1; region_size <= ndists - current_num_regions + 2; region_size++)
+                {
+                    if(splitting_schedule.valid_split_region_sizes[region_size]){
+                        all_steps_valid_split_region_sizes[smc_step_num].push_back(region_size);
+                    }
+                    if(splitting_schedule.valid_region_sizes_to_split[region_size]){
+                        
+                        all_steps_valid_region_sizes_to_split[smc_step_num].push_back(region_size);;
+                    }
+                }
+                
             }
 
             // only increase if we have smc steps left else it will cause index issues
@@ -858,7 +852,6 @@ List run_redist_gsmc(
             if(merge_split_step_num > 0 || !split_district_only){
                 reorder_all_plans(pool, plans_ptr_vec, new_plans_ptr_vec);
             }
-
 
             // Copy the vertex plan matrix 
             copy_arma_to_rcpp_mat(pool, 
@@ -958,6 +951,8 @@ List run_redist_gsmc(
         _["step_types"] = step_types,
         _["min_region_cut_sizes"] = min_region_cut_sizes,
         _["max_region_cut_sizes"] = max_region_cut_sizes,
+        _["valid_split_region_sizes_list"] = all_steps_valid_split_region_sizes,
+        _["valid_region_sizes_to_split_list"] = all_steps_valid_region_sizes_to_split,
         _["merge_split_steps"] = merge_split_step_vec,
         _["merge_split_attempt_counts"] = num_merge_split_attempts_vec,
         _["merge_split_success_mat"] = merge_split_successes_mat

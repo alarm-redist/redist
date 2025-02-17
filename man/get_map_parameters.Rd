@@ -2,7 +2,7 @@
 % Please edit documentation in R/redist_smc_alg_helpers.R
 \name{get_map_parameters}
 \alias{get_map_parameters}
-\title{Takes a map and possibly a county label and returns graph parameters for SMC algorithms}
+\title{Takes a map and possibly a county label and returns map parameters for SMC algorithms}
 \usage{
 get_map_parameters(map, counties = NULL)
 }

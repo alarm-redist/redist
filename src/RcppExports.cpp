@@ -364,6 +364,27 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// compute_a_log_optimal_weight
+double compute_a_log_optimal_weight(List adj_list, const arma::uvec& counties, const arma::uvec& pop, List control, int ndists, int num_regions, double lower, double target, double upper, arma::umat region_ids, arma::umat region_sizes);
+RcppExport SEXP _gredist_compute_a_log_optimal_weight(SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP controlSEXP, SEXP ndistsSEXP, SEXP num_regionsSEXP, SEXP lowerSEXP, SEXP targetSEXP, SEXP upperSEXP, SEXP region_idsSEXP, SEXP region_sizesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type adj_list(adj_listSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< List >::type control(controlSEXP);
+    Rcpp::traits::input_parameter< int >::type ndists(ndistsSEXP);
+    Rcpp::traits::input_parameter< int >::type num_regions(num_regionsSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< arma::umat >::type region_ids(region_idsSEXP);
+    Rcpp::traits::input_parameter< arma::umat >::type region_sizes(region_sizesSEXP);
+    rcpp_result_gen = Rcpp::wrap(compute_a_log_optimal_weight(adj_list, counties, pop, control, ndists, num_regions, lower, target, upper, region_ids, region_sizes));
+    return rcpp_result_gen;
+END_RCPP
+}
 // group_pct_top_k
 NumericVector group_pct_top_k(const IntegerMatrix m, const NumericVector group_pop, const NumericVector total_pop, int k, int n_distr);
 RcppExport SEXP _gredist_group_pct_top_k(SEXP mSEXP, SEXP group_popSEXP, SEXP total_popSEXP, SEXP kSEXP, SEXP n_distrSEXP) {
@@ -851,6 +872,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_draw_a_tree_on_a_region", (DL_FUNC) &_gredist_draw_a_tree_on_a_region, 12},
     {"_gredist_perform_a_valid_multidistrict_split", (DL_FUNC) &_gredist_perform_a_valid_multidistrict_split, 17},
     {"_gredist_perform_merge_split_steps", (DL_FUNC) &_gredist_perform_merge_split_steps, 16},
+    {"_gredist_compute_a_log_optimal_weight", (DL_FUNC) &_gredist_compute_a_log_optimal_weight, 11},
     {"_gredist_group_pct_top_k", (DL_FUNC) &_gredist_group_pct_top_k, 5},
     {"_gredist_proj_distr_m", (DL_FUNC) &_gredist_proj_distr_m, 4},
     {"_gredist_colmax", (DL_FUNC) &_gredist_colmax, 1},

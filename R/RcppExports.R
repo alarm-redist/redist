@@ -131,6 +131,10 @@ perform_merge_split_steps <- function(adj_list, counties, pop, k_param, target, 
     .Call(`_gredist_perform_merge_split_steps`, adj_list, counties, pop, k_param, target, lower, upper, ndists, num_regions, num_districts, region_ids, region_sizes, region_pops, split_district_only, num_merge_split_steps, verbose)
 }
 
+compute_a_log_optimal_weight <- function(adj_list, counties, pop, control, ndists, num_regions, lower, target, upper, region_ids, region_sizes) {
+    .Call(`_gredist_compute_a_log_optimal_weight`, adj_list, counties, pop, control, ndists, num_regions, lower, target, upper, region_ids, region_sizes)
+}
+
 group_pct_top_k <- function(m, group_pop, total_pop, k, n_distr) {
     .Call(`_gredist_group_pct_top_k`, m, group_pop, total_pop, k, n_distr)
 }

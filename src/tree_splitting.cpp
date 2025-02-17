@@ -143,10 +143,12 @@ std::vector<EdgeCut> get_all_valid_edge_cuts_from_edge(
             double cut_region2_lb = lower*cut_region2_size; 
             double cut_region2_ub = upper*cut_region2_size;
 
-            // REprintf("Hey For %d, %d we compare %f vs %f and %f vs %f", 
-            //     cut_region1_size, cut_region2_size,
-            //     cut_region1_lb, below_pop,
-            //     cut_region2_lb, above_pop);
+            if(DEBUG_VERBOSE){
+            REprintf("\tFor (%d, %d): compare %f vs %f vs %f and %f vs %f vs %f \n", 
+                cut_region1_size, cut_region2_size,
+                cut_region1_lb, below_pop, cut_region1_ub,
+                cut_region2_lb, above_pop, cut_region2_ub);
+            }
 
             // check if assigning potential_region_size to cut below leads to valid region
             bool cut_below_ok = cut_region1_lb <= below_pop
@@ -165,6 +167,14 @@ std::vector<EdgeCut> get_all_valid_edge_cuts_from_edge(
 
             // if both sizes are the same then results are symetric so ignore this case
             if(cut_region1_size == cut_region2_size) continue;
+
+
+            if(DEBUG_VERBOSE){
+            REprintf("\tFor (%d, %d): compare %f vs %f vs %f and %f vs %f vs %f \n", 
+                cut_region2_size, cut_region1_size,
+                cut_region2_lb, below_pop, cut_region2_ub,
+                cut_region1_lb, above_pop, cut_region1_ub);
+            }
 
             // check if assigning potential_region_size to cut below leads to valid region
             bool cut_above_ok = cut_region1_lb <= above_pop
@@ -237,9 +247,12 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
     // pop below only gets smaller as you continue along the tree 
     double smallest_lower_bound = lower * min_potential_cut_size;
 
-    // REprintf("lower=%.4f, big upper=%.4f, min_mul = %d, max_mul = %d \n", 
-    //     smallest_lower_bound, biggest_upper_bound, 
-    //     min_potential_cut_size, max_potential_cut_size);
+    if(DEBUG_VERBOSE){
+    REprintf("Region pop=%d, Region size=%d\n",total_region_pop, total_region_size);
+    REprintf("lower=%.4f, big upper=%.4f, min_mul = %d, max_mul = %d \n", 
+        smallest_lower_bound, biggest_upper_bound, 
+        min_potential_cut_size, max_potential_cut_size);
+    }
 
     // vector of valid edge cuts
     std::vector<EdgeCut> valid_edges;
@@ -264,41 +277,52 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
         // get the population below and above it
         double pop_below = static_cast<double>(cut_below_pops.at(cut_vertex));
         double pop_above = static_cast<double>(total_region_pop) - pop_below;
-        // REprintf("v=%d: Pop above = %d, Pop below = %d, parent = %d, its pop = %d\n", 
-        //     cut_vertex, pop_above, pop_below, node_pair.at(2), pop.at(cut_vertex));
 
-                
         // check if we should terminate going down this branch. We stop if 
         // - pop_below is less than lower since pop_below only gets smaller
         // - pop_above is bigger than biggest_upper_bound since pop_above
         //   only gets bigger 
         // these conditions should be symmetric but too lazy to prove it now
         if(pop_below < smallest_lower_bound || pop_above > biggest_upper_bound){
-            // REprintf("HEYYY!! v=%d: Pop above = %f, Pop below = %f, parent = %d\n", 
-            // cut_vertex, pop_above, pop_below, tree_vertex_parents.at(cut_vertex));
+            if(DEBUG_VERBOSE){
+            REprintf("Terminated!! v=%d: Pop above = %f, Pop below = %f, parent = %d\n", 
+            cut_vertex, pop_above, pop_below, queue_element.at(1));
+            }
             continue;
-        } 
+        }else if(pop_below <= biggest_upper_bound && pop_above >= smallest_lower_bound){
+            // At this point its only possible to split if 
+            //  - pop_above is >= the smallest lower bound or 
+            //  - pop_below is <= than biggest_upper_bound
+            if(DEBUG_VERBOSE){
+            REprintf("Trying: v=%d: Pop above = %f, Pop below = %f, parent = %d\n", 
+                cut_vertex, pop_above, pop_below, queue_element.at(1));
+            }
+            // get vertex parent 
+            int cut_vertex_parent = queue_element.at(1);
 
-        // get vertex parent 
-        int cut_vertex_parent = queue_element.at(1);
+            // See if any valid edge cuts can be made with this edge 
+            std::vector<EdgeCut> new_valid_edges = get_all_valid_edge_cuts_from_edge(
+                root, cut_vertex, cut_vertex_parent,
+                total_region_size,
+                pop_below, pop_above,
+                lower, target, upper,
+                smaller_cut_sizes_to_try);
 
-        // See if any valid edge cuts can be made with this edge 
-        std::vector<EdgeCut> new_valid_edges = get_all_valid_edge_cuts_from_edge(
-            root, cut_vertex, cut_vertex_parent,
-            total_region_size,
-            pop_below, pop_above,
-            lower, target, upper,
-            smaller_cut_sizes_to_try);
-
-        // if yes then add them
-        if(new_valid_edges.size() > 0){
-            // REprintf("Added v=%d: Pop above = %f, Pop below = %f, parent = %d\n", 
-            // cut_vertex, pop_above, pop_below, cut_vertex_parent);
-            valid_edges.insert(
-                valid_edges.end(),
-                new_valid_edges.begin(),
-                new_valid_edges.end()
-                );
+            // if yes then add them
+            if(new_valid_edges.size() > 0){
+                // REprintf("Added v=%d: Pop above = %f, Pop below = %f, parent = %d\n", 
+                // cut_vertex, pop_above, pop_below, cut_vertex_parent);
+                valid_edges.insert(
+                    valid_edges.end(),
+                    new_valid_edges.begin(),
+                    new_valid_edges.end()
+                    );
+            }
+        }else{
+            if(DEBUG_VERBOSE){
+            REprintf("Skipping: v=%d: Pop above = %f, Pop below = %f, parent = %d\n", 
+                cut_vertex, pop_above, pop_below, queue_element.at(1));
+            }
         }
 
         // now iterate over the nodes children 

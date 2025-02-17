@@ -574,7 +574,20 @@ bool Plan::attempt_split(const MapParams &map_params, const SplittingSchedule &s
                  std::vector<int> const &smaller_cut_sizes_to_try,
                  const bool split_district_only, 
                  const int region_id_to_split, const int new_region_id)
-{ 
+{
+    if(DEBUG_VERBOSE){
+    REprintf("Drawing tree on region %d which is size %d. Smallest/Biggest is (%d, %d)\n", 
+    region_id_to_split, (int) region_sizes(region_id_to_split), min_region_cut_size,
+    max_region_cut_size);
+    int split_region_size = (int) region_sizes(region_id_to_split);
+    REprintf("We can try cut sizes: ");
+    for (auto const &small_size: smaller_cut_sizes_to_try)
+    {
+        REprintf("(%d, %d), ", small_size, split_region_size-small_size);
+    }
+    REprintf("\n");
+    }
+    
 
     // Now try to draw a tree on the region
     int root;

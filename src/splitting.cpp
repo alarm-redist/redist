@@ -117,9 +117,9 @@ void estimate_cut_k(
         devs.push_back(
         get_ordered_tree_cut_devs(ust, root, cut_below_pop, target, 
                     plan_ptrs_vec.at(i)->region_ids,
-                    biggest_region_id, biggest_region_size, biggest_size_region_pop,
-                    min_possible_cut_size,
-                    max_possible_cut_size,
+                    biggest_region_id, biggest_region_size, 
+                    biggest_size_region_pop,
+                    min_possible_cut_size, max_possible_cut_size,
                     splitting_schedule.all_regions_smaller_cut_sizes_to_try[biggest_region_size]
                     )
                       );
@@ -132,7 +132,6 @@ void estimate_cut_k(
                 break;
             }
         }
-
 
         if (n_ok <= k_max)
             distr_ok(n_ok) += 1.0 / N_adapt;
@@ -155,14 +154,20 @@ void estimate_cut_k(
             if(rand_index >= devs.at(i).size()){
                 REprintf("For k=%d In est_cut_k rand_index = %d  bigger than devs %d size %d\n",
                 k, rand_index, i, (int)  devs.at(i).size());
-                throw Rcpp::exception("Erorr in estimate cut k!\n");
+                continue;
+                // throw Rcpp::exception("Erorr in estimate cut k!\n");
             }
             double dev = devs.at(i).at(rand_index);
             if (dev > tol) continue;
             else n_ok++;
             // need min to avoid indexing errors
             for (int j = 0; j < std::min(N_adapt, (int) devs.size()); j++) {
-                if(devs.at(j).size() < k) throw Rcpp::exception("Potential k is bigger than region!");
+                if(devs.at(j).size() < k){
+                    REprintf("For k=%d its  bigger than the number of devs %d for %d\n",
+                k, (int) devs.at(j).size(), i);
+                    continue;
+                    //throw Rcpp::exception("Potential k is bigger than region!");
+                } 
                 sum_within += ((double) (dev <= devs.at(j).at(k-1))) / N_adapt;
             }
         }
@@ -181,8 +186,5 @@ void estimate_cut_k(
     k = std::min(std::max(max_ok + 1, k) + 1 - (distr_ok(k) > 0.99) + (thresh == 1),
                  max_V - 1);
 }
-
-
-
 
 

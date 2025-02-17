@@ -9,6 +9,7 @@ run_redist_gsmc(
   adj_list,
   counties,
   pop,
+  step_types,
   target,
   lower,
   upper,

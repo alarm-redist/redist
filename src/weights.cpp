@@ -89,6 +89,102 @@ void get_all_adj_pairs(
 }
 
 
+
+
+/* 
+Returns a unordered_map mapping valid pairs of adjacent regions to 
+the length of the boundary between them
+
+Finds all pairs of adjacent regions where at least one region is true in 
+the `check_adj_to_regions` parameter and returns a hash map mapping the pairs
+of valid adjacent regions to the length of the boundary between them.
+
+
+@title Get Valid Adjacent Regions to Boundary Lengths Map
+
+@param g A graph (adjacency list) passed by reference
+@param plan A plan object
+@param check_adj_to_regions A vector of length plan.num_regions of regions tracking
+whether or not we should check for edges adjacent to that region. So for example
+`check_adj_to_regions[i] == true` means we will find all regions adjacent to i.
+If all values are true then the function will find all pairs of adjacent regions
+
+@details No modifications to inputs made
+
+@return A hash map mapping (std::pair<int,int> to int) that maps a pair of region ids
+in sorted order (ie smallest first) to the length of the boundary between them in `g` 
+*/
+
+
+/* 
+ */
+std::unordered_map<std::pair<int, int>, int, bounded_hash> get_valid_pairs_and_boundary_len_map(
+    Graph const &g, Plan const &plan,
+    std::vector<bool> const &check_adj_to_regions,
+    std::vector<std::vector<bool>> const &valid_merge_pairs
+){
+    // NOTE: In the case where its one district split you maybe don't even need
+    // a hash map since you can just index by the not remainder region but nbd
+    // for now
+    
+    // Initialize unordered_map with num_region * 2.5 buckets
+    // Hueristic. Bc we know planar graph has at most 3|V| - 6 edges
+    int init_bucket_size = std::ceil(2.5*plan.num_regions);
+
+    // create the hash map
+    std::unordered_map<std::pair<int, int>, int, bounded_hash> region_pair_map(
+        init_bucket_size, bounded_hash(plan.num_regions-1)
+        );
+
+    int V = g.size();
+
+
+    for (int v = 0; v < V; v++) {
+        // Find out which region this vertex corresponds to
+        int v_region_num = plan.region_ids(v);
+
+        // check if its a region we want to find regions adjacent to 
+        // and if not keep going
+        if(!check_adj_to_regions.at(v_region_num)){
+            continue;
+        }
+
+        auto v_region_size = plan.region_sizes(v_region_num);
+
+        // get neighbors
+        std::vector<int> nbors = g.at(v);
+
+        // now iterate over its neighbors
+        for (int v_nbor : nbors) {
+            // find which region neighbor corresponds to
+            int v_nbor_region_num = plan.region_ids(v_nbor);
+
+            // ignore if they are in the same region
+            if(v_region_num == v_nbor_region_num) continue;
+            // ignore if pair can't be merged
+            auto v_nbor_region_size = plan.region_sizes(v_nbor_region_num);
+            if(!valid_merge_pairs[v_region_size][v_nbor_region_size]) continue;
+
+            // else they are different so regions are adj
+            // check if we need to be aware of double counting. IE if both regions
+            // are ones where we check adjacent to then its possible to double count edges
+            bool double_counting_possible = check_adj_to_regions[v_nbor_region_num];
+
+            // Now add this edge if either we can't double count it 
+            // or `v_region_num` is the smaller of the pair 
+            if(!double_counting_possible || v_region_num < v_nbor_region_num){
+                int smaller_region_id  = std::min(v_nbor_region_num,v_region_num);
+                int bigger_region_id  = std::max(v_nbor_region_num,v_region_num);
+                region_pair_map[{smaller_region_id, bigger_region_id}]++;
+            }
+        }
+    }
+
+    // adj_pairs_vec
+    return region_pair_map;
+}
+
+
 //' Returns a unordered_map mapping valid pairs of adjacent regions to 
 //' the length of the boundary between them
 //'
@@ -101,8 +197,9 @@ void get_all_adj_pairs(
 //'
 //' @param g A graph (adjacency list) passed by reference
 //' @param plan A plan object
-//' @param check_adj_to_regions A vector of length plan.num_regions of regions 
-//' where `check_adj_to_regions[i] == true` means we will find all regions adjacent to i.
+//' @param check_adj_to_regions A vector of length plan.num_regions of regions tracking
+//' whether or not we should check for edges adjacent to that region. So for example
+//' `check_adj_to_regions[i] == true` means we will find all regions adjacent to i.
 //' If all values are true then the function will find all pairs of adjacent regions
 //'
 //' @details No modifications to inputs made
@@ -233,6 +330,56 @@ std::vector<std::array<int, 3>> get_valid_adj_regions_and_boundary_lens_vec(
 }
 
 
+
+//' Returns a vector of the triple (smaller region id, bigger region id, boundary len)
+//' for all valid pairs of adjacent regions in the plan. (Either all adjacent regions if
+//' doing generalized region splits or just adjacent to the remainder if only doing 
+//' one district splits.)
+//'
+//'
+//' @title Get All Valid Adjacent Regions and their Boundary Length
+//'
+//' @param g A graph (adjacency list) passed by reference
+//' @param plan A plan object
+//' @param split_district_only If true only gets regions adjacent to the remainder but if 
+//' false then gets all adjacent regions in the plan
+//'
+//' @details No modifications to inputs made
+//'
+//' @return A vector of integer arrays of size 3 where the values are
+//' (smaller region id, bigger region id, boundary len)
+//'
+std::vector<std::array<int, 3>> get_valid_adj_regions_and_boundary_lens(
+    Graph const &g, Plan const &plan,
+    bool const split_district_only,
+    std::vector<bool> const &check_adj_to_regions,
+    std::vector<std::vector<bool>> const valid_merge_pairs
+){
+
+    // Get all valid adj pairs and the boundary length
+    auto region_pair_map = get_pairs_and_boundary_len_map(
+    g, plan, check_adj_to_regions);
+
+    // Now put them into a vector 
+    std::vector<std::array<int, 3>> adj_pairs_and_boundary_lens;
+    adj_pairs_and_boundary_lens.reserve(region_pair_map.size());
+
+    for (const auto& entry : region_pair_map) {
+        const auto region_pair = entry.first; // get the region pair 
+        const int boundary_len = entry.second; // get the boundary length
+
+    
+        // Make it so elements of array are 
+        // - smaller region id
+        // - bigger region id
+        // - boundary length
+        adj_pairs_and_boundary_lens.emplace_back(
+            std::array<int, 3>{region_pair.first, region_pair.second, boundary_len});
+    }
+
+    return adj_pairs_and_boundary_lens;
+
+}
 
 
 
@@ -542,10 +689,9 @@ double compute_log_pop_temper(
 //' @return the log of the incremental weight of the plan
 //'
 double compute_optimal_log_incremental_weight(
-        const Graph &g, const SplittingSchedule &splitting_schedule,
-        const Plan &plan,
-        bool split_district_only,
-        const double target, const double pop_temper){
+    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    const Plan &plan, bool split_district_only,
+    const double pop_temper){
 
     
     double incremental_weight = 0.0;
@@ -554,10 +700,11 @@ double compute_optimal_log_incremental_weight(
 
     // Get all valid adj pairs and the boundary length
     auto region_pairs_and_boundary_lens_vec = get_valid_adj_regions_and_boundary_lens_vec(
-        g, plan, split_district_only
+        map_params.g, plan, split_district_only
     );
 
     // plan.Rprint(); 
+    int total_boundary_len = 0;
 
     // Iterate over the adjacent region pairs
     for (const auto& entry : region_pairs_and_boundary_lens_vec) {
@@ -579,6 +726,8 @@ double compute_optimal_log_incremental_weight(
         
 
         const int boundary_len = entry.at(2); // get the boundary length
+        total_boundary_len += boundary_len;
+        // Rprintf("Adding (%d,%d) - len %d  which is sizes (%d, %d)!\n", region1_id, region2_id, boundary_len, region1_size, region2_size);
                
 
         double log_boundary =  std::log((double) boundary_len);
@@ -602,11 +751,15 @@ double compute_optimal_log_incremental_weight(
             log_temper = compute_log_pop_temper(
                 plan,
                 region1_id, region2_id,
-                target, pop_temper
+                map_params.target, pop_temper
             );
         }else{
             log_temper = 0;
         }
+
+        // Rprintf("Adding term %f\n", std::exp(log_boundary
+        //                                    + log_splitting_prob
+        //                                    + log_temper));
 
         // multiply the boundary length and selection probability by adding the logs
         // now exponentiate and add to the sum
@@ -621,6 +774,8 @@ double compute_optimal_log_incremental_weight(
         throw Rcpp::exception("Error! weight is negative infinity for some reason \n");
     }
 
+    // Rprintf("Total Boundary %d and log incre = %f\n",
+    // total_boundary_len, -std::log(incremental_weight));
 
     // now return the log of the inverse of the sum
     return -std::log(incremental_weight);
@@ -660,12 +815,12 @@ double compute_optimal_log_incremental_weight(
 //'    sampling weights of the plans for the next round
 void get_all_plans_log_optimal_weights(
         RcppThread::ThreadPool &pool,
-        const SplittingSchedule &splitting_schedule,
-        const Graph &g, std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
+        const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+        std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
         bool split_district_only,
         arma::subview_col<double> log_incremental_weights,
         std::vector<double> &unnormalized_sampling_weights,
-        double target, double pop_temper
+        double pop_temper
 ){
     int M = (int) plans_ptr_vec.size();
 
@@ -673,9 +828,9 @@ void get_all_plans_log_optimal_weights(
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
         double log_incr_weight = compute_optimal_log_incremental_weight(
-            g, splitting_schedule, 
+            map_params, splitting_schedule, 
             *plans_ptr_vec.at(i), split_district_only,
-            target, pop_temper);
+            pop_temper);
         log_incremental_weights(i) = log_incr_weight;
         unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
     });
@@ -946,7 +1101,6 @@ double get_log_retroactive_splitting_prob_for_joined_tree(
 double compute_optimal_forest_log_incremental_weight(
         const MapParams &map_params, const SplittingSchedule &splitting_schedule,
         const Plan &plan, const TreeSplitter &edge_splitter,
-        const int min_potential_cut_size, const int max_potential_cut_size,
         bool split_district_only,
         const double pop_temper){
 
@@ -994,10 +1148,13 @@ double compute_optimal_forest_log_incremental_weight(
     for (int v = 0; v < V; v++) {
         // Find out which region this vertex corresponds to
         int region_num_i = plan.region_ids(v);
+        int region_v_size = static_cast<int>(plan.region_sizes(region_num_i));
 
         // check if its a region we want to find regions adjacent to 
         // and if not keep going
-        if(!check_adj_to_regions.at(region_num_i)){
+        // or if this isn't a valid split size 
+        if(!check_adj_to_regions.at(region_num_i) || 
+            !splitting_schedule.valid_split_region_sizes[region_v_size]){
             continue;
         }
 
@@ -1007,19 +1164,27 @@ double compute_optimal_forest_log_incremental_weight(
             // find which region neighbor corresponds to
             int region_num_j = plan.region_ids(nbor);
 
+
             // if they are different regions then region i and j are adjacent 
             // as they share an edge across
             if (region_num_i != region_num_j) {
                 int merged_region_size = static_cast<int>(plan.region_sizes(region_num_i)+plan.region_sizes(region_num_j));
+                // check the merged region is a size that can be split 
+                if(!splitting_schedule.valid_region_sizes_to_split[merged_region_size] ||
+                   !splitting_schedule.valid_split_region_sizes[plan.region_sizes(region_num_j)]){
+                    continue;
+                }
+
+
                 // if region j is invalid then we don't need to worry about double counting so just add it
                 if(!check_adj_to_regions.at(region_num_j)){
                     
-
                     double log_edge_selection_prob = get_log_retroactive_splitting_prob_for_joined_tree(
                         map_params, plan, ust, edge_splitter,
                         visited, pops_below_vertex,
                         v, nbor,
-                        min_potential_cut_size, max_potential_cut_size,
+                        splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size][0],
+                        splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size][1],
                         splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_region_size]);
 
                     // Rprintf("Adding (%d,%d) w/ %.4f\n", v, nbor, std::exp(log_edge_selection_prob));
@@ -1034,7 +1199,8 @@ double compute_optimal_forest_log_incremental_weight(
                             map_params, plan, ust, edge_splitter,
                             visited, pops_below_vertex,
                             v, nbor,
-                            min_potential_cut_size, max_potential_cut_size,
+                            splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size][0],
+                            splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size][1],
                             splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_region_size]);
                             // Rprintf("Adding (%d,%d) w/ %.4f\n", v, nbor, std::exp(log_edge_selection_prob));
                     region_pair_map[{region_num_i, region_num_j}] += std::exp(log_edge_selection_prob);
@@ -1115,7 +1281,6 @@ void get_all_forest_plans_log_optimal_weights(
         const MapParams &map_params, const SplittingSchedule &splitting_schedule,
         std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
         const std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
-        const int min_potential_cut_size, const int max_potential_cut_size,
         bool split_district_only,
         arma::subview_col<double> log_incremental_weights,
         std::vector<double> &unnormalized_sampling_weights,
@@ -1133,7 +1298,6 @@ void get_all_forest_plans_log_optimal_weights(
                 map_params, splitting_schedule,
                 *plans_ptr_vec.at(i), 
                 *tree_splitters_ptr_vec.at(i),
-                min_potential_cut_size, max_potential_cut_size,
                 split_district_only,
                 pop_temper);
 
