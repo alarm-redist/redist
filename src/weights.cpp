@@ -91,34 +91,36 @@ void get_all_adj_pairs(
 
 
 
-/* 
-Returns a unordered_map mapping valid pairs of adjacent regions to 
-the length of the boundary between them
-
-Finds all pairs of adjacent regions where at least one region is true in 
-the `check_adj_to_regions` parameter and returns a hash map mapping the pairs
-of valid adjacent regions to the length of the boundary between them.
-
-
-@title Get Valid Adjacent Regions to Boundary Lengths Map
-
-@param g A graph (adjacency list) passed by reference
-@param plan A plan object
-@param check_adj_to_regions A vector of length plan.num_regions of regions tracking
-whether or not we should check for edges adjacent to that region. So for example
-`check_adj_to_regions[i] == true` means we will find all regions adjacent to i.
-If all values are true then the function will find all pairs of adjacent regions
-
-@details No modifications to inputs made
-
-@return A hash map mapping (std::pair<int,int> to int) that maps a pair of region ids
-in sorted order (ie smallest first) to the length of the boundary between them in `g` 
-*/
-
-
-/* 
+/*  
+ * @title Get Valid Adjacent Regions to Boundary Lengths Map
+ * 
+ * Returns a unordered_map mapping valid pairs of adjacent regions to 
+ * the length of the boundary between them in the graph
+ * 
+ * Finds all valid pairs of adjacent regions (meaning their sizes are valid 
+ * to merge) and returns a hash map mapping the pairs of valid adjacent 
+ * regions to the length of the boundary between them in `g`
+ * 
+ * 
+ * @param g A graph (adjacency list) passed by reference
+ * @param plan A plan object
+ * @param check_adj_to_regions A vector tracking whether or not we should 
+ * check for edges adjacent to vertices in a region of a particular size. For
+ * example, `check_adj_to_regions[i] == true` means we will attempt to find 
+ * edges adjacent to any vertex in a region of size i. This vector is 1-indexed
+ * meaning we don't need to subtract region size by 1 when accessing.
+ * @param valid_merge_pairs A 2D `ndists+1` by `ndists+1` boolean matrix that
+ * uses region size to check whether or not two regions are considered a valid
+ * merge that can be counted in the map. For example `valid_merge_pairs[i][j]`
+ * being true means that any regions where the sizes are (i,j) are considered
+ * valid to merge. 2D matrix is 1 indexed (don't need to subtract region size)
+ * 
+ * @details No modifications to inputs made
+ * @return A hash map mapping (std::pair<int,int> to int) that maps a pair of
+ * region ids in the form (smaller id, bigger id) to the length of the boundary
+ * between them in `g`.
  */
-std::unordered_map<std::pair<int, int>, int, bounded_hash> get_valid_pairs_and_boundary_len_map(
+std::unordered_map<std::pair<int, int>, int, bounded_hash> get_valid_pairs_and_graph_boundary_len_map(
     Graph const &g, Plan const &plan,
     std::vector<bool> const &check_adj_to_regions,
     std::vector<std::vector<bool>> const &valid_merge_pairs
@@ -142,14 +144,13 @@ std::unordered_map<std::pair<int, int>, int, bounded_hash> get_valid_pairs_and_b
     for (int v = 0; v < V; v++) {
         // Find out which region this vertex corresponds to
         int v_region_num = plan.region_ids(v);
+        auto v_region_size = plan.region_sizes(v_region_num);
 
         // check if its a region we want to find regions adjacent to 
         // and if not keep going
-        if(!check_adj_to_regions.at(v_region_num)){
+        if(!check_adj_to_regions.at(v_region_size)){
             continue;
         }
-
-        auto v_region_size = plan.region_sizes(v_region_num);
 
         // get neighbors
         std::vector<int> nbors = g.at(v);
@@ -167,12 +168,15 @@ std::unordered_map<std::pair<int, int>, int, bounded_hash> get_valid_pairs_and_b
 
             // else they are different so regions are adj
             // check if we need to be aware of double counting. IE if both regions
-            // are ones where we check adjacent to then its possible to double count edges
-            bool double_counting_possible = check_adj_to_regions[v_nbor_region_num];
+            // are ones where check adjacent is true then its possible to double count edges
+            bool double_counting_not_possible = !check_adj_to_regions[v_nbor_region_size];
+            // Rprintf("Neighbor size is %d and Double counting is %d\n", 
+            //     (int) v_nbor_region_size, (int) double_counting_not_possible);
 
             // Now add this edge if either we can't double count it 
             // or `v_region_num` is the smaller of the pair 
-            if(!double_counting_possible || v_region_num < v_nbor_region_num){
+            if(double_counting_not_possible || v_region_num < v_nbor_region_num){
+                // Rprintf("Counting (%d,%d)\n", v, v_nbor);
                 int smaller_region_id  = std::min(v_nbor_region_num,v_region_num);
                 int bigger_region_id  = std::max(v_nbor_region_num,v_region_num);
                 region_pair_map[{smaller_region_id, bigger_region_id}]++;
@@ -197,9 +201,10 @@ std::unordered_map<std::pair<int, int>, int, bounded_hash> get_valid_pairs_and_b
 //'
 //' @param g A graph (adjacency list) passed by reference
 //' @param plan A plan object
-//' @param check_adj_to_regions A vector of length plan.num_regions of regions tracking
-//' whether or not we should check for edges adjacent to that region. So for example
-//' `check_adj_to_regions[i] == true` means we will find all regions adjacent to i.
+//' @param check_adj_to_regions A vector of length plan.num_regions of regions 
+//' tracking whether or not we should check for edges adjacent to vertices in
+//' that region. For example, `check_adj_to_regions[i] == true` means we will 
+//' attempt to find edges adjacent to any vertex in region i
 //' If all values are true then the function will find all pairs of adjacent regions
 //'
 //' @details No modifications to inputs made
@@ -699,37 +704,29 @@ double compute_optimal_log_incremental_weight(
     bool do_pop_temper = (plan.num_regions < plan.ndists) && pop_temper > 0;
 
     // Get all valid adj pairs and the boundary length
-    auto region_pairs_and_boundary_lens_vec = get_valid_adj_regions_and_boundary_lens_vec(
-        map_params.g, plan, split_district_only
+    auto valid_adj_region_pairs_to_boundary_map = get_valid_pairs_and_graph_boundary_len_map(
+        map_params.g, plan,
+        splitting_schedule.check_adj_to_regions, 
+        splitting_schedule.valid_merge_pair_sizes
     );
 
     // plan.Rprint(); 
     int total_boundary_len = 0;
 
     // Iterate over the adjacent region pairs
-    for (const auto& entry : region_pairs_and_boundary_lens_vec) {
-        const int region1_id = entry.at(0); // get the smaller region id  
-        const int region2_id = entry.at(1); // get the bigger region id  
+    // entry is a pair<pair<int,int>, int>
+    for (const auto& entry : valid_adj_region_pairs_to_boundary_map) {
+        const int region1_id = entry.first.first; // get the smaller region id  
+        const int region2_id = entry.first.second; // get the bigger region id  
         // get region sizes
         const int region1_size = plan.region_sizes(region1_id);
         const int region2_size = plan.region_sizes(region2_id);
-        // skip if 
-        //  - one of the region sizes is not a valid split size
-        //  - the sum of the two regions is not a valid size that could be split
-        if(
-            !splitting_schedule.valid_split_region_sizes[region1_size] || 
-            !splitting_schedule.valid_split_region_sizes[region2_size] ||
-            !splitting_schedule.valid_region_sizes_to_split[region2_size+region1_size]){
-            // Rprintf("skipping (%d,%d) which is sizes (%d, %d)!\n", region1_id, region2_id, region1_size, region2_size);
-            continue;
-        }
-        
 
-        const int boundary_len = entry.at(2); // get the boundary length
+    
+        const int boundary_len = entry.second; // get the boundary length
         total_boundary_len += boundary_len;
         // Rprintf("Adding (%d,%d) - len %d  which is sizes (%d, %d)!\n", region1_id, region2_id, boundary_len, region1_size, region2_size);
                
-
         double log_boundary =  std::log((double) boundary_len);
 
         double log_splitting_prob;
@@ -768,7 +765,6 @@ double compute_optimal_log_incremental_weight(
                                            + log_temper);
     }
 
-
     // Check its not infinity
     if(incremental_weight == -std::numeric_limits<double>::infinity()){
         throw Rcpp::exception("Error! weight is negative infinity for some reason \n");
@@ -779,7 +775,6 @@ double compute_optimal_log_incremental_weight(
 
     // now return the log of the inverse of the sum
     return -std::log(incremental_weight);
-
 }
 
 

@@ -19,6 +19,7 @@ SplittingSchedule::SplittingSchedule(
     all_regions_min_and_max_possible_cut_sizes(ndists+1),
     valid_region_sizes_to_split(ndists+1),
     valid_split_region_sizes(ndists+1),
+    check_adj_to_regions(ndists+1),
     valid_merge_pair_sizes(ndists+1, std::vector<bool>(ndists+1, false))
     {
     
@@ -191,6 +192,7 @@ void SplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
     if(schedule_type == SplittingSizeScheduleType::CustomSizes){
         // Use previous result for this step 
         valid_split_region_sizes = valid_split_region_sizes_list[split_num];
+        check_adj_to_regions = valid_split_region_sizes;
         // helper function 
         auto helper_output = get_all_valid_split_NAME_NEEDED_STUFF(
             valid_split_region_sizes, 
@@ -200,6 +202,16 @@ void SplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
         valid_region_sizes_to_split = std::get<0>(helper_output); 
         all_regions_smaller_cut_sizes_to_try = std::get<1>(helper_output);
         all_regions_min_and_max_possible_cut_sizes = std::get<2>(helper_output);
+
+        // WRONG BUT TEMP!
+        for (size_t region1_size = 1; region1_size < max_valid_region_size; region1_size++){
+            for (size_t region2_size = 1; region2_size < max_valid_region_size; region2_size++){
+                if(valid_split_region_sizes[region1_size] && valid_split_region_sizes[region2_size]){
+                    valid_merge_pair_sizes[region1_size][region2_size] = true;
+                }
+            }
+        }
+
         return;
     }
 
@@ -207,13 +219,31 @@ void SplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
     // reset all regions that can be split to false 
     std::fill(valid_region_sizes_to_split.begin(), valid_region_sizes_to_split.end(), false);
     std::fill(valid_split_region_sizes.begin(), valid_split_region_sizes.end(), false);
+    // reset merge pairs
+    for (size_t region_size = 1; region_size <= ndists; region_size++)
+    {
+        std::fill(
+            valid_merge_pair_sizes[region_size].begin(), 
+            valid_merge_pair_sizes[region_size].end(), 
+            false
+        );
+    }
+
+    std::fill(check_adj_to_regions.begin(), check_adj_to_regions.end(), false);
+    
     
     if(schedule_type == SplittingSizeScheduleType::DistrictOnly){
         // we can only split the remainder region which has size max_valid_region_size
         valid_region_sizes_to_split[max_valid_region_size] = true;
         // the only valid split sizes are 1 and remainder_region size -1
         valid_split_region_sizes[1] = true;
-        valid_split_region_sizes[ndists-num_regions] = true;
+        valid_split_region_sizes[max_valid_region_size-1] = true;
+        // we can only merge 1 and reminader region size -1 
+        valid_merge_pair_sizes[1][max_valid_region_size-1] = true;
+        valid_merge_pair_sizes[max_valid_region_size-1][1] = true;
+        check_adj_to_regions[max_valid_region_size-1]=true;
+        // check_adj_to_regions[1]= num_regions == ndists-1;
+
     }else if(schedule_type == SplittingSizeScheduleType::AnyValidSize){
         for (size_t region_size = 2; region_size <=  max_valid_region_size; region_size++)
         {
@@ -227,6 +257,15 @@ void SplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
         valid_split_region_sizes[1] = true;
         // make the largest size false since you'll never get this from a split
         valid_split_region_sizes[max_valid_region_size] = false;
+        check_adj_to_regions = valid_split_region_sizes;
+        // valid merge pairs are anything that sums to less than or equal to the max valid size
+        for (size_t region1_size = 1; region1_size < max_valid_region_size; region1_size++){
+            for (size_t region2_size = 1; region2_size < max_valid_region_size; region2_size++){
+                if(region1_size+region2_size <= max_valid_region_size){
+                    valid_merge_pair_sizes[region1_size][region2_size] = true;
+                }
+            }
+        }
     }else{
         throw Rcpp::exception("Not implemented yet!!");
     }

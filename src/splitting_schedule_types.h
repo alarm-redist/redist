@@ -41,6 +41,8 @@ class SplittingSchedule {
         std::vector<bool> valid_region_sizes_to_split;
         // 1-indexed vector of if that region size could have been the result of a valid split
         std::vector<bool> valid_split_region_sizes;
+        // 1-indexed vector of if we should check adjacency of vertices in a region of that size 
+        std::vector<bool>  check_adj_to_regions;
 
         // 1-indexed matrix for if two regions (size1, size2) can be merged 
         std::vector<std::vector<bool>> valid_merge_pair_sizes;

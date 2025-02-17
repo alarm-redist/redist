@@ -188,7 +188,7 @@ rand_int_gen_testing <- function(ndraws, max_val) {
 }
 
 random_cpp_testing <- function() {
-    invisible(.Call(`_gredist_random_cpp_testing`))
+    .Call(`_gredist_random_cpp_testing`)
 }
 
 random_rcpp_list_cast_testing <- function(control) {

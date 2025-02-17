@@ -216,18 +216,17 @@ generic_redist_gsmc <- function(
         num_processes <- min(runs, num_processes)
     }
 
-    num_threads_per_process <- as.integer(num_threads_per_process)
     if (num_threads_per_process == 0) {
         if(!multiprocess){
             # if no multiprocessing then the single process gets all threads
             num_threads_per_process <- ncores_max
-        }
-        if (nsims/100*length(adj_list)/200 < 20) {
-            num_threads_per_process <- 1L
-        } else {
-            num_threads_per_process <- floor(num_processes/num_threads_per_process)
+        }else{
+            # else each process gets ncores_max/num_processes threads
+            num_threads_per_process <- floor(ncores_max/num_processes)
+            num_threads_per_process <- max(1, num_threads_per_process)
         }
     }
+    num_threads_per_process <- as.integer(num_threads_per_process)
 
 
     if (num_processes > 1 && multiprocess && runs > 1) {

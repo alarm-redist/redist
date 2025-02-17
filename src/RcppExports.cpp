@@ -557,12 +557,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // random_cpp_testing
-void random_cpp_testing();
+Rcpp::List random_cpp_testing();
 RcppExport SEXP _gredist_random_cpp_testing() {
 BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    random_cpp_testing();
-    return R_NilValue;
+    rcpp_result_gen = Rcpp::wrap(random_cpp_testing());
+    return rcpp_result_gen;
 END_RCPP
 }
 // random_rcpp_list_cast_testing

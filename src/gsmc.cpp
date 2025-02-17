@@ -619,6 +619,18 @@ List run_redist_gsmc(
                 }
             }
             Rprintf(")\n");
+            Rprintf("Now doing check_adj_to:\n");
+            for (size_t i = 1; i <= ndists; i++)
+            {
+                std::string t_str = splitting_schedule.check_adj_to_regions[i] ?  "true" : "false";
+                Rprintf("%d: %s\n", (int) i, t_str.c_str());
+            }
+            for (const auto& row : splitting_schedule.valid_merge_pair_sizes) {  // Iterate over rows
+                for (bool val : row) {        // Iterate over elements in the row
+                    std::cout << (val ? "1 " : "0 ");  // Print 1 for true, 0 for false
+                }
+                std::cout << "\n";  // Newline after each row
+            }
             }
 
             // check if k is passed in or estimate 
@@ -779,7 +791,6 @@ List run_redist_gsmc(
                         all_steps_valid_region_sizes_to_split[smc_step_num].push_back(region_size);;
                     }
                 }
-                
             }
 
             // only increase if we have smc steps left else it will cause index issues
