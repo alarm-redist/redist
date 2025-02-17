@@ -189,6 +189,119 @@ std::unordered_map<std::pair<int, int>, int, bounded_hash> get_valid_pairs_and_g
 }
 
 
+
+/*  
+ * @title Get Valid Adjacent Regions to Effective Tree Boundary Lengths Map
+ * 
+ * Returns a unordered_map mapping valid pairs of adjacent regions to 
+ * the length of the effect tree boundary between them in the forest
+ * 
+ * Finds all valid pairs of adjacent regions (meaning their sizes are valid 
+ * to merge) and returns a hash map mapping the pairs of valid adjacent 
+ * regions to the length of the effective tree boundary between them in `g`.
+ * Recall this is the probability that we chose the actual split edge among
+ * the tree made by merging each boundary edge
+ * 
+ * 
+ * @param g A graph (adjacency list) passed by reference
+ * @param plan A plan object
+ * @param check_adj_to_regions A vector tracking whether or not we should 
+ * check for edges adjacent to vertices in a region of a particular size. For
+ * example, `check_adj_to_regions[i] == true` means we will attempt to find 
+ * edges adjacent to any vertex in a region of size i. This vector is 1-indexed
+ * meaning we don't need to subtract region size by 1 when accessing.
+ * @param valid_merge_pairs A 2D `ndists+1` by `ndists+1` boolean matrix that
+ * uses region size to check whether or not two regions are considered a valid
+ * merge that can be counted in the map. For example `valid_merge_pairs[i][j]`
+ * being true means that any regions where the sizes are (i,j) are considered
+ * valid to merge. 2D matrix is 1 indexed (don't need to subtract region size)
+ * 
+ * @details No modifications to inputs made
+ * @return A hash map mapping (std::pair<int,int> to double) that maps a pair of
+ * region ids in the form (smaller id, bigger id) to the effective tree boundary length 
+ * between them in `g`.
+ */
+std::unordered_map<std::pair<int, int>, double, bounded_hash> get_valid_pairs_and_tree_eff_boundary_len_map(
+    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    const Plan &plan, const TreeSplitter &edge_splitter
+){
+    // make a tree
+    Tree ust = init_tree(map_params.V);
+    std::vector<bool> visited(map_params.V);
+    std::vector<int> pops_below_vertex(map_params.V);
+    
+    // Initialize unordered_map with num_region * 2.5 buckets
+    // Hueristic. Bc we know planar graph has at most 3|V| - 6 edges
+    int init_bucket_size = std::ceil(2.5*plan.num_regions);
+
+    // create the hash map
+    std::unordered_map<std::pair<int, int>, double, bounded_hash> region_pair_map(
+        init_bucket_size, bounded_hash(plan.num_regions-1)
+        );
+
+    int V = map_params.V;
+
+
+    for (int v = 0; v < V; v++) {
+        // Find out which region this vertex corresponds to
+        int v_region_num = plan.region_ids(v);
+        auto v_region_size = plan.region_sizes(v_region_num);
+
+        // check if its a region we want to find regions adjacent to 
+        // and if not keep going
+        if(!splitting_schedule.check_adj_to_regions.at(v_region_size)){
+            continue;
+        }
+
+        // get neighbors
+        std::vector<int> nbors = map_params.g.at(v);
+
+        // now iterate over its neighbors
+        for (int v_nbor : nbors) {
+            // find which region neighbor corresponds to
+            int v_nbor_region_num = plan.region_ids(v_nbor);
+
+            // ignore if they are in the same region
+            if(v_region_num == v_nbor_region_num) continue;
+            // ignore if pair can't be merged
+            auto v_nbor_region_size = plan.region_sizes(v_nbor_region_num);
+            if(!splitting_schedule.valid_merge_pair_sizes[v_region_size][v_nbor_region_size]) continue;
+
+            // else they are different so regions are adj
+            // check if we need to be aware of double counting. IE if both regions
+            // are ones where check adjacent is true then its possible to double count edges
+            bool double_counting_not_possible = !splitting_schedule.check_adj_to_regions[v_nbor_region_size];
+            // Rprintf("Neighbor size is %d and Double counting is %d\n", 
+            //     (int) v_nbor_region_size, (int) double_counting_not_possible);
+
+            // Now add this edge if either we can't double count it 
+            // or `v_region_num` is the smaller of the pair 
+            if(double_counting_not_possible || v_region_num < v_nbor_region_num){
+                // Rprintf("Counting (%d,%d)\n", v, v_nbor);
+                int smaller_region_id  = std::min(v_nbor_region_num,v_region_num);
+                int bigger_region_id  = std::max(v_nbor_region_num,v_region_num);
+                auto merged_region_size = v_region_size+v_nbor_region_size;
+
+                // get the log probability
+                double log_edge_selection_prob = get_log_retroactive_splitting_prob_for_joined_tree(
+                    map_params, plan, ust, edge_splitter,
+                    visited, pops_below_vertex,
+                    v, v_nbor,
+                    splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size][0],
+                    splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size][1],
+                    splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_region_size]);
+
+                // Rprintf("Adding (%d,%d) w/ %.4f\n", v, nbor, std::exp(log_edge_selection_prob));
+                // add the non log thing 
+                region_pair_map[{smaller_region_id, bigger_region_id}] += std::exp(log_edge_selection_prob);
+            }
+        }
+    }
+
+    // adj_pairs_vec
+    return region_pair_map;
+}
+
 //' Returns a unordered_map mapping valid pairs of adjacent regions to 
 //' the length of the boundary between them
 //'
@@ -1045,7 +1158,6 @@ Graph get_region_graph(const Graph &g, const Plan &plan) {
 
 
 
-
 double get_log_retroactive_splitting_prob_for_joined_tree(
     MapParams const &map_params,
     Plan const &plan, Tree &ust, const TreeSplitter &edge_splitter,
@@ -1091,8 +1203,6 @@ double get_log_retroactive_splitting_prob_for_joined_tree(
 
 
 
-
-
 double compute_optimal_forest_log_incremental_weight(
         const MapParams &map_params, const SplittingSchedule &splitting_schedule,
         const Plan &plan, const TreeSplitter &edge_splitter,
@@ -1103,120 +1213,11 @@ double compute_optimal_forest_log_incremental_weight(
 
     bool do_pop_temper = (plan.num_regions < plan.ndists) && pop_temper > 0;
     do_pop_temper = false;
-    Tree ust = init_tree(map_params.V);
-    std::vector<bool> visited(map_params.V);
-    std::vector<int> pops_below_vertex(map_params.V);
 
-
-
-    // make vector for if we just want adjacent to remainder or all
-    // adj pairs
-    std::vector<bool> check_adj_to_regions;
-    if(split_district_only && plan.num_regions < plan.ndists){
-        // if splitting district only then only find adjacent to remainder
-        // which is region 2 because its the bigger one
-        check_adj_to_regions.resize(plan.num_regions, false);
-        check_adj_to_regions.at(plan.remainder_region) = true;
-    }else{
-        check_adj_to_regions.resize(plan.num_regions, true);
-    }
-
-    // Now iterate through the graph and compute tree edges for each term 
-
-
-    // NOTE: In the case where its one district split you maybe don't even need
-    // a hash map since you can just index by the not remainder region but nbd
-    // for now
-    
-    // Initialize unordered_map with num_region * 2.5 buckets
-    // Hueristic. Bc we know planar graph has at most 3|V| - 6 edges
-    int init_bucket_size = std::ceil(2.5*plan.num_regions);
-
-    // create the hash map
-    std::unordered_map<std::pair<int, int>, double, bounded_hash> region_pair_map(
-        init_bucket_size, bounded_hash(plan.num_regions-1)
-        );
-
-    int V = map_params.V;
-
-
-    for (int v = 0; v < V; v++) {
-        // Find out which region this vertex corresponds to
-        int region_num_i = plan.region_ids(v);
-        int region_v_size = static_cast<int>(plan.region_sizes(region_num_i));
-
-        // check if its a region we want to find regions adjacent to 
-        // and if not keep going
-        // or if this isn't a valid split size 
-        if(!check_adj_to_regions.at(region_num_i) || 
-            !splitting_schedule.valid_split_region_sizes[region_v_size]){
-            continue;
-        }
-
-
-        // now iterate over its neighbors
-        for (int nbor : map_params.g.at(v)) {
-            // find which region neighbor corresponds to
-            int region_num_j = plan.region_ids(nbor);
-
-
-            // if they are different regions then region i and j are adjacent 
-            // as they share an edge across
-            if (region_num_i != region_num_j) {
-                int merged_region_size = static_cast<int>(plan.region_sizes(region_num_i)+plan.region_sizes(region_num_j));
-                // check the merged region is a size that can be split 
-                if(!splitting_schedule.valid_region_sizes_to_split[merged_region_size] ||
-                   !splitting_schedule.valid_split_region_sizes[plan.region_sizes(region_num_j)]){
-                    continue;
-                }
-
-
-                // if region j is invalid then we don't need to worry about double counting so just add it
-                if(!check_adj_to_regions.at(region_num_j)){
-                    
-                    double log_edge_selection_prob = get_log_retroactive_splitting_prob_for_joined_tree(
-                        map_params, plan, ust, edge_splitter,
-                        visited, pops_below_vertex,
-                        v, nbor,
-                        splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size][0],
-                        splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size][1],
-                        splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_region_size]);
-
-                    // Rprintf("Adding (%d,%d) w/ %.4f\n", v, nbor, std::exp(log_edge_selection_prob));
-
-                    region_pair_map[
-                        {std::min(region_num_j,region_num_i), std::max(region_num_j,region_num_i)}
-                        ] += std::exp(log_edge_selection_prob);
-                }else{ // else if both valid then edge will appear twice so we only count if region i
-                // smaller
-                    if (region_num_i < region_num_j) {
-                        double log_edge_selection_prob = get_log_retroactive_splitting_prob_for_joined_tree(
-                            map_params, plan, ust, edge_splitter,
-                            visited, pops_below_vertex,
-                            v, nbor,
-                            splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size][0],
-                            splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size][1],
-                            splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_region_size]);
-                            // Rprintf("Adding (%d,%d) w/ %.4f\n", v, nbor, std::exp(log_edge_selection_prob));
-                    region_pair_map[{region_num_i, region_num_j}] += std::exp(log_edge_selection_prob);
-                    }
-                }
-            }
-        }
-    }
-
-    // auto region_pairs_and_boundary_lens_vec = get_valid_adj_regions_and_boundary_lens_vec(
-    //     map_params.g, plan, split_district_only
-    // );
-
-
-    // // Iterate over the adjacent region pairs
-    // for (const auto& entry : region_pairs_and_boundary_lens_vec) {
-    //     const int region1_id = entry.at(0); // get the smaller region id  
-    //     const int region2_id = entry.at(1); // get the bigger region id  
-    //     const int boundary_len = entry.at(2); // get the boundary length
-    //     Rprintf("(%d,%d): Boundary Len %d \n", region1_id, region2_id, boundary_len);
-    // }
+    // get region pair to effective boundary length map
+    auto region_pair_map = get_valid_pairs_and_tree_eff_boundary_len_map(
+        map_params, splitting_schedule, plan, edge_splitter
+    );
     
     // Now iterate over adjacent region pairs and add splitting and pop temper
     for (const auto& pair: region_pair_map){
@@ -1261,13 +1262,10 @@ double compute_optimal_forest_log_incremental_weight(
         throw Rcpp::exception("Error! weight is negative infinity for some reason \n");
     }
 
-
     // now return the log of the inverse of the sum
     return -std::log(incremental_weight);
 
 }
-
-
 
 
 

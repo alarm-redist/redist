@@ -7,7 +7,7 @@
 
 
 
-// class used to manage what sizes we allow for splits at each step 
+// base class used to manage what sizes we allow for splits at each step 
 // used for splitting and in computing the weights 
 class SplittingSchedule {
 
@@ -21,6 +21,10 @@ class SplittingSchedule {
         SplittingSchedule(
             const int num_splits, const int ndists, const int initial_num_regions, 
             SplittingSizeScheduleType const schedule_type,
+            Rcpp::List const &control);
+        
+        SplittingSchedule(
+            const int num_splits, const int ndists, const int initial_num_regions, 
             Rcpp::List const &control);
     
         SplittingSizeScheduleType schedule_type; // the splitting type 
@@ -50,15 +54,55 @@ class SplittingSchedule {
         // This sets it for that split
         void set_potential_cut_sizes_for_each_valid_size(int split_num, int num_regions);
         
-    };
+};
     
-    std::tuple<
-        std::vector<bool>, 
-        std::vector<std::vector<int>>, 
-        std::vector<std::array<int, 2>>
-    > get_all_valid_split_NAME_NEEDED_STUFF(
-        const std::vector<bool> &valid_split_region_sizes, const std::vector<bool> &valid_presplit_region_sizes
-    );
+
+/* 
+ * Derived Class for one district split 
+ */
+class DistrictOnlySplittingSchedule : public SplittingSchedule {
+
+    public:
+        // constructor
+        DistrictOnlySplittingSchedule(
+            const int num_splits, const int ndists, const int initial_num_regions, 
+            SplittingSizeScheduleType const schedule_type,
+            Rcpp::List const &control);
+        
+        // void set_potential_cut_sizes_for_each_valid_size(int split_num, int num_regions) override;
+    
+};
+
+
+
+/* 
+ * Derived Class for one custom split schedule. This is where only one type
+ * of split it allowed in each step 
+ * 
+ */
+class OneCustomSplitSchedule : public SplittingSchedule {
+
+    public:
+        // constructor
+        OneCustomSplitSchedule(
+            const int num_splits, const int ndists, const int initial_num_regions, 
+            SplittingSizeScheduleType const schedule_type,
+            Rcpp::List const &control);
+        
+        // void set_potential_cut_sizes_for_each_valid_size(int split_num, int num_regions) override;
+    
+};
+
+
+
+
+std::tuple<
+    std::vector<bool>, 
+    std::vector<std::vector<int>>, 
+    std::vector<std::array<int, 2>>
+> get_all_valid_split_NAME_NEEDED_STUFF(
+    const std::vector<bool> &valid_split_region_sizes, const std::vector<bool> &valid_presplit_region_sizes
+);
     
     
 
