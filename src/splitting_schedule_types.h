@@ -7,8 +7,13 @@
 
 
 
-// base class used to manage what sizes we allow for splits at each step 
-// used for splitting and in computing the weights 
+
+/*
+ * Abstract class for object used to manage what sizes are allowed to be split
+ * at each step. 
+ * 
+ * It is used in all three splitting, merge-split, and weight computation steps.
+ */
 class SplittingSchedule {
 
     private:
@@ -17,24 +22,36 @@ class SplittingSchedule {
         std::vector<std::vector<bool>> valid_presplit_region_sizes_list; // the allowable presplit region sizes for each split
         
     public:
+        virtual ~SplittingSchedule() = default;
         // constructor 
         SplittingSchedule(
             const int num_splits, const int ndists, const int initial_num_regions, 
             SplittingSizeScheduleType const schedule_type,
             Rcpp::List const &control);
         
+        // Base constructor just creates vectors, does not set them
         SplittingSchedule(
-            const int num_splits, const int ndists, const int initial_num_regions, 
-            Rcpp::List const &control);
+            const int num_splits, const int ndists, const int initial_num_regions
+        ):
+            ndists(ndists),
+            all_regions_smaller_cut_sizes_to_try(ndists+1),
+            all_regions_min_and_max_possible_cut_sizes(ndists+1),
+            valid_region_sizes_to_split(ndists+1),
+            valid_split_region_sizes(ndists+1),
+            check_adj_to_regions(ndists+1),
+            valid_merge_pair_sizes(ndists+1, std::vector<bool>(ndists+1, false)
+            ) {};
     
         SplittingSizeScheduleType schedule_type; // the splitting type 
         int ndists; // the number of districts 
     
-        // This is a vector of vectors where entry 
-        // for index `r` it is a vector of smaller cut sizes to try
-        // ie (element, r-element)
-        // For any split its just 1,...,floor(r/2)
-        // for District splits its just 1
+
+        /*
+         * This is a vector of vectors where entry for index `r` it is a vector
+         * of smaller cut sizes to try. ie (element, r-element)
+         *      - For any split its just 1,...,floor(r/2)
+         *      - for District splits its just 1
+         */
         std::vector<std::vector<int>> all_regions_smaller_cut_sizes_to_try; 
     
         // For each element its an array of the minimum and maximum possible cut sizes 
@@ -48,28 +65,53 @@ class SplittingSchedule {
         // 1-indexed vector of if we should check adjacency of vertices in a region of that size 
         std::vector<bool>  check_adj_to_regions;
 
-        // 1-indexed matrix for if two regions (size1, size2) can be merged 
+        // 1-indexed 2D matrix for if two regions (size1, size2) can be merged 
         std::vector<std::vector<bool>> valid_merge_pair_sizes;
     
         // This sets it for that split
-        void set_potential_cut_sizes_for_each_valid_size(int split_num, int num_regions);
-        
+        virtual void set_potential_cut_sizes_for_each_valid_size(int split_num, int presplit_num_regions);
+        // Sets all the boolean vectors and matrices related to splitting and merging to false
+        void reset_splitting_and_merge_booleans();
+      
+        virtual int dummy_meth() = 0;      
 };
     
 
 /* 
- * Derived Class for one district split 
+ * Derived Class for one district split schedule
  */
 class DistrictOnlySplittingSchedule : public SplittingSchedule {
 
     public:
         // constructor
         DistrictOnlySplittingSchedule(
-            const int num_splits, const int ndists, const int initial_num_regions, 
-            SplittingSizeScheduleType const schedule_type,
-            Rcpp::List const &control);
+            const int num_splits, const int ndists, const int initial_num_regions
+        );
+
+
+        void set_potential_cut_sizes_for_each_valid_size(int split_num, int presplit_num_regions) override;
         
         // void set_potential_cut_sizes_for_each_valid_size(int split_num, int num_regions) override;
+        int dummy_meth()override {return 3;};
+    
+};
+
+
+/* 
+ * Derived Class for any region split schedule (full gsmc)
+ */
+class AnyRegionSplittingSchedule : public SplittingSchedule {
+
+    public:
+        // constructor
+        AnyRegionSplittingSchedule(
+            const int num_splits, const int ndists, const int initial_num_regions
+        );
+
+        void set_potential_cut_sizes_for_each_valid_size(int split_num, int presplit_num_regions) override;
+        
+        // void set_potential_cut_sizes_for_each_valid_size(int split_num, int num_regions) override;
+        int dummy_meth()override {return 3;};
     
 };
 
@@ -90,7 +132,7 @@ class OneCustomSplitSchedule : public SplittingSchedule {
             Rcpp::List const &control);
         
         // void set_potential_cut_sizes_for_each_valid_size(int split_num, int num_regions) override;
-    
+        int dummy_meth()override {return 3;};
 };
 
 
@@ -105,6 +147,12 @@ std::tuple<
 );
     
     
+std::unique_ptr<SplittingSchedule> get_splitting_schedule(
+    const int num_splits, const int ndists, const int initial_num_regions, 
+    SplittingSizeScheduleType const schedule_type,
+    Rcpp::List const &control
+);
+
 
 
 #endif

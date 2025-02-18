@@ -389,12 +389,15 @@ List perform_merge_split_steps(
 
     Rcpp::List fake_control;
     SplittingSizeScheduleType splitting_type = get_splitting_size_regime("FAKE");
-    SplittingSchedule splitting_schedule(1, ndists, num_regions, splitting_type, fake_control);
+
+    auto splitting_schedule_ptr = get_splitting_schedule(
+        1, ndists, num_regions, splitting_type, fake_control
+    );
 
 
     // now do merge split 
     int num_successes = run_merge_split_step_on_a_plan(
-        map_params, splitting_schedule,
+        map_params, *splitting_schedule_ptr,
         split_district_only, "uniform",
         *plan, *new_plan, *tree_splitter,
         num_merge_split_steps
