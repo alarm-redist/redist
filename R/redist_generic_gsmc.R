@@ -137,6 +137,11 @@ generic_redist_gsmc <- function(
     )
     total_smc_steps <- num_splitting_steps
 
+    # check weights are ok
+    if(!weight_type %in% c("optimal", "adj_uniform")){
+        cli_abort("{.arg weight_type} must be either `optimal` or `adj_uniform`!")
+    }
+
     # create merge split parameter information
 
     # check that ms_steps_multiplier is an integer

@@ -90,218 +90,6 @@ void get_all_adj_pairs(
 
 
 
-
-/*  
- * @title Get Valid Adjacent Regions to Boundary Lengths Map
- * 
- * Returns a unordered_map mapping valid pairs of adjacent regions to 
- * the length of the boundary between them in the graph
- * 
- * Finds all valid pairs of adjacent regions (meaning their sizes are valid 
- * to merge) and returns a hash map mapping the pairs of valid adjacent 
- * regions to the length of the boundary between them in `g`
- * 
- * 
- * @param g A graph (adjacency list) passed by reference
- * @param plan A plan object
- * @param check_adj_to_regions A vector tracking whether or not we should 
- * check for edges adjacent to vertices in a region of a particular size. For
- * example, `check_adj_to_regions[i] == true` means we will attempt to find 
- * edges adjacent to any vertex in a region of size i. This vector is 1-indexed
- * meaning we don't need to subtract region size by 1 when accessing.
- * @param valid_merge_pairs A 2D `ndists+1` by `ndists+1` boolean matrix that
- * uses region size to check whether or not two regions are considered a valid
- * merge that can be counted in the map. For example `valid_merge_pairs[i][j]`
- * being true means that any regions where the sizes are (i,j) are considered
- * valid to merge. 2D matrix is 1 indexed (don't need to subtract region size)
- * 
- * @details No modifications to inputs made
- * @return A hash map mapping (std::pair<int,int> to int) that maps a pair of
- * region ids in the form (smaller id, bigger id) to the length of the boundary
- * between them in `g`.
- */
-std::unordered_map<std::pair<int, int>, int, bounded_hash> get_valid_pairs_and_graph_boundary_len_map(
-    Graph const &g, Plan const &plan,
-    std::vector<bool> const &check_adj_to_regions,
-    std::vector<std::vector<bool>> const &valid_merge_pairs
-){
-    // NOTE: In the case where its one district split you maybe don't even need
-    // a hash map since you can just index by the not remainder region but nbd
-    // for now
-    
-    // Initialize unordered_map with num_region * 2.5 buckets
-    // Hueristic. Bc we know planar graph has at most 3|V| - 6 edges
-    int init_bucket_size = std::ceil(2.5*plan.num_regions);
-
-    // create the hash map
-    std::unordered_map<std::pair<int, int>, int, bounded_hash> region_pair_map(
-        init_bucket_size, bounded_hash(plan.num_regions-1)
-        );
-
-    int V = g.size();
-
-
-    for (int v = 0; v < V; v++) {
-        // Find out which region this vertex corresponds to
-        int v_region_num = plan.region_ids(v);
-        auto v_region_size = plan.region_sizes(v_region_num);
-
-        // check if its a region we want to find regions adjacent to 
-        // and if not keep going
-        if(!check_adj_to_regions.at(v_region_size)){
-            continue;
-        }
-
-        // get neighbors
-        std::vector<int> nbors = g.at(v);
-
-        // now iterate over its neighbors
-        for (int v_nbor : nbors) {
-            // find which region neighbor corresponds to
-            int v_nbor_region_num = plan.region_ids(v_nbor);
-
-            // ignore if they are in the same region
-            if(v_region_num == v_nbor_region_num) continue;
-            // ignore if pair can't be merged
-            auto v_nbor_region_size = plan.region_sizes(v_nbor_region_num);
-            if(!valid_merge_pairs[v_region_size][v_nbor_region_size]) continue;
-
-            // else they are different so regions are adj
-            // check if we need to be aware of double counting. IE if both regions
-            // are ones where check adjacent is true then its possible to double count edges
-            bool double_counting_not_possible = !check_adj_to_regions[v_nbor_region_size];
-            // Rprintf("Neighbor size is %d and Double counting is %d\n", 
-            //     (int) v_nbor_region_size, (int) double_counting_not_possible);
-
-            // Now add this edge if either we can't double count it 
-            // or `v_region_num` is the smaller of the pair 
-            if(double_counting_not_possible || v_region_num < v_nbor_region_num){
-                // Rprintf("Counting (%d,%d)\n", v, v_nbor);
-                int smaller_region_id  = std::min(v_nbor_region_num,v_region_num);
-                int bigger_region_id  = std::max(v_nbor_region_num,v_region_num);
-                region_pair_map[{smaller_region_id, bigger_region_id}]++;
-            }
-        }
-    }
-
-    // adj_pairs_vec
-    return region_pair_map;
-}
-
-
-
-/*  
- * @title Get Valid Adjacent Regions to Effective Tree Boundary Lengths Map
- * 
- * Returns a unordered_map mapping valid pairs of adjacent regions to 
- * the length of the effect tree boundary between them in the forest
- * 
- * Finds all valid pairs of adjacent regions (meaning their sizes are valid 
- * to merge) and returns a hash map mapping the pairs of valid adjacent 
- * regions to the length of the effective tree boundary between them in `g`.
- * Recall this is the probability that we chose the actual split edge among
- * the tree made by merging each boundary edge
- * 
- * 
- * @param g A graph (adjacency list) passed by reference
- * @param plan A plan object
- * @param check_adj_to_regions A vector tracking whether or not we should 
- * check for edges adjacent to vertices in a region of a particular size. For
- * example, `check_adj_to_regions[i] == true` means we will attempt to find 
- * edges adjacent to any vertex in a region of size i. This vector is 1-indexed
- * meaning we don't need to subtract region size by 1 when accessing.
- * @param valid_merge_pairs A 2D `ndists+1` by `ndists+1` boolean matrix that
- * uses region size to check whether or not two regions are considered a valid
- * merge that can be counted in the map. For example `valid_merge_pairs[i][j]`
- * being true means that any regions where the sizes are (i,j) are considered
- * valid to merge. 2D matrix is 1 indexed (don't need to subtract region size)
- * 
- * @details No modifications to inputs made
- * @return A hash map mapping (std::pair<int,int> to double) that maps a pair of
- * region ids in the form (smaller id, bigger id) to the effective tree boundary length 
- * between them in `g`.
- */
-std::unordered_map<std::pair<int, int>, double, bounded_hash> get_valid_pairs_and_tree_eff_boundary_len_map(
-    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-    const Plan &plan, const TreeSplitter &edge_splitter
-){
-    // make a tree
-    Tree ust = init_tree(map_params.V);
-    std::vector<bool> visited(map_params.V);
-    std::vector<int> pops_below_vertex(map_params.V);
-    
-    // Initialize unordered_map with num_region * 2.5 buckets
-    // Hueristic. Bc we know planar graph has at most 3|V| - 6 edges
-    int init_bucket_size = std::ceil(2.5*plan.num_regions);
-
-    // create the hash map
-    std::unordered_map<std::pair<int, int>, double, bounded_hash> region_pair_map(
-        init_bucket_size, bounded_hash(plan.num_regions-1)
-        );
-
-    int V = map_params.V;
-
-
-    for (int v = 0; v < V; v++) {
-        // Find out which region this vertex corresponds to
-        int v_region_num = plan.region_ids(v);
-        auto v_region_size = plan.region_sizes(v_region_num);
-
-        // check if its a region we want to find regions adjacent to 
-        // and if not keep going
-        if(!splitting_schedule.check_adj_to_regions.at(v_region_size)){
-            continue;
-        }
-
-        // get neighbors
-        std::vector<int> nbors = map_params.g.at(v);
-
-        // now iterate over its neighbors
-        for (int v_nbor : nbors) {
-            // find which region neighbor corresponds to
-            int v_nbor_region_num = plan.region_ids(v_nbor);
-
-            // ignore if they are in the same region
-            if(v_region_num == v_nbor_region_num) continue;
-            // ignore if pair can't be merged
-            auto v_nbor_region_size = plan.region_sizes(v_nbor_region_num);
-            if(!splitting_schedule.valid_merge_pair_sizes[v_region_size][v_nbor_region_size]) continue;
-
-            // else they are different so regions are adj
-            // check if we need to be aware of double counting. IE if both regions
-            // are ones where check adjacent is true then its possible to double count edges
-            bool double_counting_not_possible = !splitting_schedule.check_adj_to_regions[v_nbor_region_size];
-            // Rprintf("Neighbor size is %d and Double counting is %d\n", 
-            //     (int) v_nbor_region_size, (int) double_counting_not_possible);
-
-            // Now add this edge if either we can't double count it 
-            // or `v_region_num` is the smaller of the pair 
-            if(double_counting_not_possible || v_region_num < v_nbor_region_num){
-                // Rprintf("Counting (%d,%d)\n", v, v_nbor);
-                int smaller_region_id  = std::min(v_nbor_region_num,v_region_num);
-                int bigger_region_id  = std::max(v_nbor_region_num,v_region_num);
-                auto merged_region_size = v_region_size+v_nbor_region_size;
-
-                // get the log probability
-                double log_edge_selection_prob = get_log_retroactive_splitting_prob_for_joined_tree(
-                    map_params, plan, ust, edge_splitter,
-                    visited, pops_below_vertex,
-                    v, v_nbor,
-                    splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size][0],
-                    splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size][1],
-                    splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_region_size]);
-
-                // Rprintf("Adding (%d,%d) w/ %.4f\n", v, nbor, std::exp(log_edge_selection_prob));
-                // add the non log thing 
-                region_pair_map[{smaller_region_id, bigger_region_id}] += std::exp(log_edge_selection_prob);
-            }
-        }
-    }
-
-    // adj_pairs_vec
-    return region_pair_map;
-}
-
 //' Returns a unordered_map mapping valid pairs of adjacent regions to 
 //' the length of the boundary between them
 //'
@@ -619,7 +407,7 @@ std::discrete_distribution<>  get_adj_pair_sampler(
                             const arma::subview_col<arma::uword> &vertex_region_ids,
                             int const region1_id,
                             int const region2_id
-) {
+){
      int V = g.size(); // get number of vertices
      double count = 0; // count of number of edges across the two regions
 
@@ -705,6 +493,7 @@ double get_log_retroactive_splitting_prob(
     // count total dvals of all the multidistricts
     int total_multi_ds = 0;
 
+    if(DEBUG_VERBOSE) Rprintf("Possible options: ");
 
     // Iterate over all regions
     for(int region_id = 0; region_id < plan.num_regions; region_id++) {
@@ -715,12 +504,16 @@ double get_log_retroactive_splitting_prob(
         // collect info if multidistrict and not the two we started with
         if(region_size > 1 && region_id != region1_id && region_id != region2_id){
             // Add that regions d value to the total
+            if (DEBUG_VERBOSE) Rprintf(" %d ", region_size);
             total_multi_ds += region_size;
         }
     }
 
     // Now get the sum of dnk values of two regions aka the unioned old region
     int unioned_region_dnk = plan.region_sizes(region1_id) + plan.region_sizes(region2_id);
+
+    if (DEBUG_VERBOSE) Rprintf(" (unioned) %d\n", unioned_region_dnk);
+
     // update the total number of multi district dvals with the value the union region would have been
     total_multi_ds += unioned_region_dnk;
 
@@ -745,346 +538,140 @@ double get_log_retroactive_splitting_prob(
 
 }
 
-// TODO: DOCUMENTATION NEEDED
-// Computes log population tempering term
-double compute_log_pop_temper(
-        const Plan &plan,
-        const int region1_id, const int region2_id,
-        double target, double pop_temper
-){
-    int ndists = plan.ndists;
-    // Get pop and dval of two regions and their union
-    double region1_pop = plan.region_pops[region1_id];
-    double region2_pop = plan.region_pops[region2_id];
-    double old_region_pop = region1_pop + region2_pop;
-
-    int region1_dval = plan.region_sizes[region1_id];
-    int region2_dval = plan.region_sizes[region2_id];
-    int old_region_dval = region1_dval + region2_dval;
-
-    // now compute the devations for each of them
-    double dev1 = std::fabs(
-        region1_pop/static_cast<double>(region1_dval) - target
-    )/target;
-    double dev2 = std::fabs(
-        region2_pop/static_cast<double>(region2_dval) - target
-    )/target;
-    double old_dev = std::fabs(
-        old_region_pop/static_cast<double>(old_region_dval) - target
-    )/target;
-
-    // now compute population penalties
-    double pop_pen1 = std::sqrt(static_cast<double>(ndists) - 2) * std::log(1e-12 + dev1);
-    double pop_pen2 = std::sqrt(static_cast<double>(ndists) - 2) * std::log(1e-12 + dev2);
-    double old_pop_pen = std::sqrt(static_cast<double>(ndists) - 2) * std::log(1e-12 + old_dev);
-
-    // now return the values for the old region minus the two new ones
-    return old_pop_pen * pop_temper - (pop_pen1 + pop_pen2) * pop_temper;
-}
-
-
-
-
-//' Compute the optimal log incremental weight of a plan
-//'
-//' Given a plan object this computes the minimum variance weights as derived in
-//' <PAPER NAME HERE>. This is equal to the inverse of a sum over all
-//' adjacent regions in a plan if using generalized region split and 
-//' sum over all districts adajacent to the remainder if using one district
-//' split approach.
-//'
-//' @title Compute Optimal Incremental Weight of a plan
-//'
-//' @param g The underlying map graph
-//' @param plan A plan object
-//' @param split_district_only whether or not to compute the weights under 
-//' the district only split scheme or not.
-//' @param target The target population for a single district
-//' @param pop_temper The population tempering parameter
-//'
-//' @details No modifications to inputs made
-//'
-//' @return the log of the incremental weight of the plan
-//'
-double compute_optimal_log_incremental_weight(
-    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-    const Plan &plan, bool split_district_only,
-    const double pop_temper){
-
-    
-    double incremental_weight = 0.0;
-
-    bool do_pop_temper = (plan.num_regions < plan.ndists) && pop_temper > 0;
-
-    // Get all valid adj pairs and the boundary length
-    auto valid_adj_region_pairs_to_boundary_map = get_valid_pairs_and_graph_boundary_len_map(
-        map_params.g, plan,
-        splitting_schedule.check_adj_to_regions, 
-        splitting_schedule.valid_merge_pair_sizes
-    );
-
-    // plan.Rprint(); 
-    int total_boundary_len = 0;
-
-    // Iterate over the adjacent region pairs
-    // entry is a pair<pair<int,int>, int>
-    for (const auto& entry : valid_adj_region_pairs_to_boundary_map) {
-        const int region1_id = entry.first.first; // get the smaller region id  
-        const int region2_id = entry.first.second; // get the bigger region id  
-        // get region sizes
-        const int region1_size = plan.region_sizes(region1_id);
-        const int region2_size = plan.region_sizes(region2_id);
-
-    
-        const int boundary_len = entry.second; // get the boundary length
-        total_boundary_len += boundary_len;
-        
-               
-        double log_boundary =  std::log((double) boundary_len);
-
-        double log_splitting_prob;
-        // for one district split the probability that region was chosen to be split is always 1
-        if(split_district_only){
-            log_splitting_prob = 0;
-        }else{
-            // in generalized region split find probability you would have 
-            // picked to split the union of the the two regions 
-            log_splitting_prob = get_log_retroactive_splitting_prob(
-                plan, 
-                splitting_schedule.valid_region_sizes_to_split, 
-                region1_id, region2_id);
-        }
-
-        // Rprintf("Adding (%d,%d) - len %d, split prob %f,  which is sizes (%d, %d)!\n", region1_id, region2_id, boundary_len, 
-        //     std::exp(log_splitting_prob), region1_size, region2_size);
-
-        // Do population tempering term if not final
-        double log_temper;
-        if(do_pop_temper){
-            log_temper = compute_log_pop_temper(
-                plan,
-                region1_id, region2_id,
-                map_params.target, pop_temper
-            );
-        }else{
-            log_temper = 0;
-        }
-
-        // Rprintf("Adding term %f\n", std::exp(log_boundary
-        //                                    + log_splitting_prob
-        //                                    + log_temper));
-
-        // multiply the boundary length and selection probability by adding the logs
-        // now exponentiate and add to the sum
-        incremental_weight += std::exp(log_boundary
-                                           + log_splitting_prob
-                                           + log_temper);
-    }
-
-    // Check its not infinity
-    if(incremental_weight == -std::numeric_limits<double>::infinity()){
-        throw Rcpp::exception("Error! weight is negative infinity for some reason \n");
-    }
-
-    // Rprintf("Total Boundary %d and log incre = %f\n",
-    // total_boundary_len, -std::log(incremental_weight));
-
-    // now return the log of the inverse of the sum
-    return -std::log(incremental_weight);
-}
-
-
-//' Computes log unnormalized weights for vector of plans
-//'
-//' Using the procedure outlined in <PAPER HERE> this function computes the log
-//' incremental weights and the unnormalized weights for a vector of plans (which
-//' may or may not be the same depending on the parameters).
-//'
-//' @title Compute Log Unnormalized Weights
-//'
-//' @param pool A threadpool for multithreading
-//' @param g A graph (adjacency list) passed by reference
-//' @param plans_ptr_vec A vector of plans to compute the log unnormalized weights
-//' of
-//' @param split_district_only whether or not to compute the weights under 
-//' the district only split scheme or not. If `split_district_only` is true
-//' then uses optimal weights from one-district split scheme.
-//' @param log_incremental_weights A vector of the log incremental weights
-//' computed for the plans. The value of `log_incremental_weights[i]` is
-//' the log incremental weight for `plans_ptr_vec[i]`
-//' @param unnormalized_sampling_weights A vector of the unnormalized sampling
-//' weights to be used with sampling the `plans_ptr_vec` in the next iteration of the
-//' algorithm. Depending on the other hyperparameters this may or may not be the
-//' same as `exp(log_incremental_weights)`
-//' @param target Target population of a single district
-//' @param pop_temper <DETAILS NEEDED>
-//'
-//' @details Modifications
-//'    - The `log_incremental_weights` is updated to contain the incremental
-//'    weights of the plans
-//'    - The `unnormalized_sampling_weights` is updated to contain the unnormalized
-//'    sampling weights of the plans for the next round
-void get_all_plans_log_optimal_weights(
-        RcppThread::ThreadPool &pool,
-        const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-        std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
-        bool split_district_only,
-        arma::subview_col<double> log_incremental_weights,
-        std::vector<double> &unnormalized_sampling_weights,
-        double pop_temper
-){
-    int M = (int) plans_ptr_vec.size();
-
-    RcppThread::ProgressBar bar(M, 1);
-    // Parallel thread pool where all objects in memory shared by default
-    pool.parallelFor(0, M, [&] (int i) {
-        double log_incr_weight = compute_optimal_log_incremental_weight(
-            map_params, splitting_schedule, 
-            *plans_ptr_vec.at(i), split_district_only,
-            pop_temper);
-        log_incremental_weights(i) = log_incr_weight;
-        unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
-    });
-
-    // Wait for all the threads to finish
-    pool.wait();
-
-
-    return;
-}
 
 
 
 // computes the backwards kernel that is uniform in 
 // the number of ancestors 
-double compute_uniform_adj_log_incremental_weight(
-        const Graph &g, const Plan &plan,
-        const SplittingSchedule &splitting_schedule,
-        bool split_district_only,
-        const double target, const double pop_temper){
+double compute_uniform_graph_plan_adj_log_incremental_weight(
+    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    ScoringFunction const &scoring_function, Plan const &plan, 
+    const TreeSplitter &edge_splitter, bool compute_log_splitting_prob,
+    bool is_final_plan
+){
 
-
-    bool do_pop_temper = (plan.num_regions < plan.ndists) && pop_temper > 0;
 
     // find the index of the two newly split regions 
-    // which will be the indices associated with the two largest 
-    // region order added values
-
-    int largest_index = -1, second_largest_index = -1;
-    int largest_value = -1 * plan.ndists, second_largest_value = -1* plan.ndists;
-
-    // Iterate through the vector
-    for (std::size_t i = 0; i < plan.num_regions; ++i) {
-        if (plan.region_added_order.at(i) > largest_value) {
-            // Update second-largest before updating largest
-            second_largest_value = largest_value;
-            second_largest_index = largest_index;
-
-            largest_value = plan.region_added_order.at(i);
-            largest_index = i;
-        } else if (plan.region_added_order.at(i) > second_largest_value) {
-            // Update second-largest only
-            second_largest_value = plan.region_added_order.at(i);
-            second_largest_index = i;
-        }
-    }
-
-    // always make region1 the region with the smaller id
-    int region1_id = std::min(largest_index,second_largest_index);
-    int region2_id = std::max(largest_index,second_largest_index);
+    auto most_recent_split_regions = plan.get_most_recently_split_regions();
+    int region1_id = most_recent_split_regions.first;
+    int region2_id = most_recent_split_regions.second;
 
 
-
-    // make vector for if we just want adjacent to remainder or all
-    // adj pairs
-    std::vector<bool> valid_regions;
-    if(split_district_only && plan.num_regions < plan.ndists){
-        // if splitting district only then only find adjacent to remainder
-        // which is region 2 because its the bigger one
-        valid_regions.resize(plan.num_regions, false);
-        valid_regions.at(plan.remainder_region) = true;
-    }else{
-        valid_regions.resize(plan.num_regions, true);
-    }
-
-    // Get all valid adj pairs and the boundary length
-    auto region_pair_map = get_pairs_and_boundary_len_map(
-    g, plan, valid_regions);
-
-    double log_num_valid_adj_regions = std::log(
-        static_cast<double>(region_pair_map.size())
+    // Find all pairs and boundary length 
+    // IN FUTURE CAN REPLACE WITH count valid adj regions and log oundary
+    // that is two passes through as opposed to this which requires a hash as well
+    auto region_pairs_and_log_boundary_len = plan.get_valid_adj_regions_and_eff_log_boundary_lens(
+        map_params, splitting_schedule,
+        edge_splitter
     );
 
 
-    const int boundary_len = region_pair_map[{region1_id, region2_id}];
-    double log_boundary =  std::log((double) boundary_len);
+    const double log_num_valid_adj_regions = std::log(
+        static_cast<double>(region_pairs_and_log_boundary_len.size())
+    );
 
-    double log_splitting_prob;
+    double log_boundary_len; 
+    // need to iterate over the map until we find the pair 
+    for (auto const &pair_tuple: region_pairs_and_log_boundary_len)
+    {
+        if(std::get<0>(pair_tuple) == region1_id && std::get<1>(pair_tuple) == region2_id){
+            log_boundary_len = std::get<2>(pair_tuple);
+        }
+    }
+
+    double log_splitting_prob = 0;
     // for one district split the probability that region was chosen to be split is always 1
-    if(split_district_only){
-        log_splitting_prob = 0;
-    }else{
+    if(compute_log_splitting_prob){
         // in generalized region split find probability you would have 
         // picked to split the union of the the two regions 
         log_splitting_prob = get_log_retroactive_splitting_prob(plan, 
-        splitting_schedule.valid_split_region_sizes, region1_id, region2_id);
+        splitting_schedule.valid_region_sizes_to_split, region1_id, region2_id);
+        if(DEBUG_VERBOSE) Rprintf("Computed split prob %f\n", std::exp(log_splitting_prob));
     }
 
-    // Do population tempering term if not final
-    double log_temper;
-    if(do_pop_temper){
-        log_temper = compute_log_pop_temper(
-            plan,
-            region1_id, region2_id,
-            target, pop_temper
+    double log_constraint_ratio = 0;
+
+    double log_region1_score, log_region2_score, log_merged_region_score;
+
+    log_region1_score = log_region2_score = log_merged_region_score = 0;
+
+    // compute if any constraints 
+    if(scoring_function.any_constraints){
+        // compute scoring functions
+        log_region1_score = scoring_function.compute_log_region_score(
+            plan, region1_id, is_final_plan
         );
-    }else{
-        log_temper = 0;
+        log_region2_score = scoring_function.compute_log_region_score(
+            plan, region2_id, is_final_plan
+        );
+        log_merged_region_score = scoring_function.compute_log_merged_region_score(
+            plan, region1_id, region2_id, is_final_plan
+        );
     }
+
+
 
     // The weight is 
     //      - Numerator: e^J(new_region1+new_region2)
     //      - Denominator: multid_selection_prob * boundary_len * num_valid_adj_regions * e^J(old_region)
 
+    const double log_numerator = log_region1_score + log_region2_score;
+    const double log_denom = log_num_valid_adj_regions + log_boundary_len + log_merged_region_score + log_splitting_prob;
+
+    int region1_size = plan.region_sizes(region1_id);
+    int region2_size = plan.region_sizes(region2_id);
+    if(DEBUG_VERBOSE){
+    Rprintf("Doing (%d,%d) - sizes (%d, %d): len %f, split prob %f, ratio %f!\n", 
+        region1_id, region2_id, region1_size, region2_size, std::exp(log_boundary_len), 
+        std::exp(log_splitting_prob), std::exp(log_numerator - log_merged_region_score));
+
+    Rprintf("Numerator - %f * %f\n", 
+        std::exp(log_region1_score), std::exp(log_region2_score)
+    );
+
+    Rprintf("Denominator - %f * %f * %f * %f \n", 
+        std::exp(log_num_valid_adj_regions), std::exp(log_boundary_len),
+        std::exp(log_merged_region_score), std::exp(log_splitting_prob)
+    );}
+
     // multiply the boundary length and selection probability by adding the logs
     // now exponentiate and add to the sum
-    double incremental_weight = -1.0 * (
-        log_boundary + log_num_valid_adj_regions + 
-        + log_splitting_prob + log_temper);
-
-
+    double incremental_weight = log_numerator - log_denom;
 
     // Check its not - infinity
     if(incremental_weight == -std::numeric_limits<double>::infinity()){
         throw Rcpp::exception("Error! weight is negative infinity for some reason \n");
     }
 
-
-    // now return the log the inverse of the sum
     return incremental_weight;
 }
 
 
-
-
 void get_all_plans_uniform_adj_weights(
-        RcppThread::ThreadPool &pool,
-        const SplittingSchedule &splitting_schedule,
-        const Graph &g, std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
-        bool split_district_only,
-        arma::subview_col<double> log_incremental_weights,
-        std::vector<double> &unnormalized_sampling_weights,
-        double target, double pop_temper
+    RcppThread::ThreadPool &pool,
+    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    ScoringFunction const &scoring_function,
+    std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
+    const std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
+    bool compute_log_splitting_prob, bool is_final_plans,
+    arma::subview_col<double> log_incremental_weights,
+    std::vector<double> &unnormalized_sampling_weights,
+    int verbosity
 ){
     int M = (int) plans_ptr_vec.size();
 
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
-        double log_incr_weight = compute_uniform_adj_log_incremental_weight(
-            g, *plans_ptr_vec.at(i), 
-            splitting_schedule,
-            split_district_only,
-            target, pop_temper);
+
+        double log_incr_weight = compute_uniform_graph_plan_adj_log_incremental_weight(
+            map_params, splitting_schedule,
+            scoring_function, 
+            *plans_ptr_vec.at(i), 
+            *tree_splitters_ptr_vec.at(i),
+            compute_log_splitting_prob,
+            is_final_plans
+        );
+
         log_incremental_weights(i) = log_incr_weight;
         unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
     });
@@ -1206,118 +793,31 @@ double get_log_retroactive_splitting_prob_for_joined_tree(
 
 
 
-double compute_optimal_forest_log_incremental_weight(
-        const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-        const Plan &plan, const TreeSplitter &edge_splitter,
-        bool split_district_only,
-        const double pop_temper){
-
-    double incremental_weight = 0.0;
-
-    bool do_pop_temper = (plan.num_regions < plan.ndists) && pop_temper > 0;
-    do_pop_temper = false;
-
-    // get region pair to effective boundary length map
-    auto region_pair_map = get_valid_pairs_and_tree_eff_boundary_len_map(
-        map_params, splitting_schedule, plan, edge_splitter
-    );
-    
-    // Now iterate over adjacent region pairs and add splitting and pop temper
-    for (const auto& pair: region_pair_map){
-        const int region1_id = pair.first.first; // get the smaller region id  
-        const int region2_id = pair.first.second; // get the bigger region id  
-        const double tree_eff_boundary_len = pair.second; // get the effective boundary length
-
-        // Rprintf("For (%d, %d) eff tree boundary: %.4f",
-        //     region1_id, region2_id, tree_eff_boundary_len);
-
-        double log_splitting_prob;
-        // for one district split the probability that region was chosen to be split is always 1
-        if(split_district_only){
-            log_splitting_prob = 0;
-        }else{
-            // in generalized region split find probability you would have 
-            // picked to split the union of the the two regions 
-            log_splitting_prob = get_log_retroactive_splitting_prob(plan, splitting_schedule.valid_split_region_sizes, region1_id, region2_id);
-        }
-
-        // Do population tempering term if not final
-        double log_temper;
-        if(do_pop_temper){
-            log_temper = compute_log_pop_temper(
-                plan,
-                region1_id, region2_id,
-                map_params.target, pop_temper
-            );
-        }else{
-            log_temper = 0;
-        }
-
-        // multiply the boundary length and selection probability by adding the logs
-        // now exponentiate and add to the sum
-        // tree eff boundary is not exponentiated so don't worry about that
-        incremental_weight += std::exp(log_splitting_prob + log_temper) * tree_eff_boundary_len;
-
-    }
-
-    // Check its not infinity
-    if(incremental_weight == -std::numeric_limits<double>::infinity()){
-        throw Rcpp::exception("Error! weight is negative infinity for some reason \n");
-    }
-
-    // now return the log of the inverse of the sum
-    return -std::log(incremental_weight);
-
-}
-
-
-
-void get_all_forest_plans_log_optimal_weights(
-        RcppThread::ThreadPool &pool,
-        const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-        std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
-        const std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
-        bool split_district_only,
-        arma::subview_col<double> log_incremental_weights,
-        std::vector<double> &unnormalized_sampling_weights,
-        double pop_temper, int verbosity
-){
-    int M = (int) plans_ptr_vec.size();
-
-    const int check_int = 50; // check for interrupts every _ iterations
-
-    RcppThread::ProgressBar bar(M, 1);
-    // Parallel thread pool where all objects in memory shared by default
-    pool.parallelFor(0, M, [&] (int i) {
-        // REprintf("I=%d\n", i);
-        double log_incr_weight =  compute_optimal_forest_log_incremental_weight(
-                map_params, splitting_schedule,
-                *plans_ptr_vec.at(i), 
-                *tree_splitters_ptr_vec.at(i),
-                split_district_only,
-                pop_temper);
-
-        log_incremental_weights(i) = log_incr_weight;
-        unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
-
-        if (verbosity >= 3) {
-            ++bar;
-        }
-
-        RcppThread::checkUserInterrupt(i % check_int == 0);
-    });
-
-    // Wait for all the threads to finish
-    pool.wait();
-
-
-    return;
-}
-
-
 
 
 // eventually need to modify to allow presaved options
+// OLD DOCUMENTATION FROM GRAPH THING NEED TO UPDATE
+//' Compute the optimal log incremental weight of a plan
+//'
+//' Given a plan object this computes the minimum variance weights as derived in
+//' <PAPER NAME HERE>. This is equal to the inverse of a sum over all
+//' adjacent regions in a plan if using generalized region split and 
+//' sum over all districts adajacent to the remainder if using one district
+//' split approach.
+//'
+//' @title Compute Optimal Incremental Weight of a plan
+//'
+//' @param g The underlying map graph
+//' @param plan A plan object
+//' @param split_district_only whether or not to compute the weights under 
+//' the district only split scheme or not.
+//' @param target The target population for a single district
+//' @param pop_temper The population tempering parameter
+//'
+//' @details No modifications to inputs made
+//'
+//' @return the log of the incremental weight of the plan
+//'
 double compute_log_optimal_weights(
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
     ScoringFunction const &scoring_function, Plan const &plan, 
@@ -1348,7 +848,7 @@ double compute_log_optimal_weights(
             // in generalized region split find probability you would have 
             // picked to split the union of the the two regions 
             log_splitting_prob = get_log_retroactive_splitting_prob(
-                plan, splitting_schedule.valid_split_region_sizes, 
+                plan, splitting_schedule.valid_region_sizes_to_split, 
                 region1_id, region2_id
             );
         }
@@ -1403,6 +903,38 @@ double compute_log_optimal_weights(
 
 
 
+
+//' NEED TO UPDATE THIS IS OLD DOCUMENTATION FOR GRAPH STUFF
+//' Computes log unnormalized weights for vector of plans
+//'
+//' Using the procedure outlined in <PAPER HERE> this function computes the log
+//' incremental weights and the unnormalized weights for a vector of plans (which
+//' may or may not be the same depending on the parameters).
+//'
+//' @title Compute Log Unnormalized Weights
+//'
+//' @param pool A threadpool for multithreading
+//' @param g A graph (adjacency list) passed by reference
+//' @param plans_ptr_vec A vector of plans to compute the log unnormalized weights
+//' of
+//' @param split_district_only whether or not to compute the weights under 
+//' the district only split scheme or not. If `split_district_only` is true
+//' then uses optimal weights from one-district split scheme.
+//' @param log_incremental_weights A vector of the log incremental weights
+//' computed for the plans. The value of `log_incremental_weights[i]` is
+//' the log incremental weight for `plans_ptr_vec[i]`
+//' @param unnormalized_sampling_weights A vector of the unnormalized sampling
+//' weights to be used with sampling the `plans_ptr_vec` in the next iteration of the
+//' algorithm. Depending on the other hyperparameters this may or may not be the
+//' same as `exp(log_incremental_weights)`
+//' @param target Target population of a single district
+//' @param pop_temper <DETAILS NEEDED>
+//'
+//' @details Modifications
+//'    - The `log_incremental_weights` is updated to contain the incremental
+//'    weights of the plans
+//'    - The `unnormalized_sampling_weights` is updated to contain the unnormalized
+//'    sampling weights of the plans for the next round
 void compute_all_plans_log_optimal_weights(
     RcppThread::ThreadPool &pool,
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,

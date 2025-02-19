@@ -106,56 +106,20 @@ double get_log_mh_ratio(
     Plan &current_plan, Plan &new_plan
 );
 
-//' Computes log unnormalized weights for vector of plans
-//'
-//' Using the procedure outlined in <PAPER HERE> this function computes the log
-//' incremental weights and the unnormalized weights for a vector of plans (which
-//' may or may not be the same depending on the parameters).
-//'
-//' @title Compute Log Unnormalized Weights
-//'
-//' @param pool A threadpool for multithreading
-//' @param g A graph (adjacency list) passed by reference
-//' @param plans_ptr_vec A vector of plans to compute the log unnormalized weights
-//' of
-//' @param split_district_only whether or not to compute the weights under 
-//' the district only split scheme or not. If `split_district_only` is true
-//' then uses optimal weights from one-district split scheme.
-//' @param log_incremental_weights A vector of the log incremental weights
-//' computed for the plans. The value of `log_incremental_weights[i]` is
-//' the log incremental weight for `plans_vec[i]`
-//' @param unnormalized_sampling_weights A vector of the unnormalized sampling
-//' weights to be used with sampling the `plans_vec` in the next iteration of the
-//' algorithm. Depending on the other hyperparameters this may or may not be the
-//' same as `exp(log_incremental_weights)`
-//' @param target Target population of a single district
-//' @param pop_temper <DETAILS NEEDED>
-//'
-//' @details Modifications
-//'    - The `log_incremental_weights` is updated to contain the incremental
-//'    weights of the plans
-//'    - The `unnormalized_sampling_weights` is updated to contain the unnormalized
-//'    sampling weights of the plans for the next round
-void get_all_plans_log_optimal_weights(
-        RcppThread::ThreadPool &pool,
-        const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-        std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
-        bool split_district_only,
-        arma::subview_col<double> log_incremental_weights,
-        std::vector<double> &unnormalized_sampling_weights,
-        double pop_temper
-);
+
 
 
 
 void get_all_plans_uniform_adj_weights(
-        RcppThread::ThreadPool &pool,
-        const SplittingSchedule &splitting_schedule,
-        const Graph &g, std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
-        bool split_district_only,
-        arma::subview_col<double> log_incremental_weights,
-        std::vector<double> &unnormalized_sampling_weights,
-        double target, double pop_temper
+    RcppThread::ThreadPool &pool,
+    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    ScoringFunction const &scoring_function,
+    std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
+    const std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
+    bool compute_log_splitting_prob, bool is_final_plans,
+    arma::subview_col<double> log_incremental_weights,
+    std::vector<double> &unnormalized_sampling_weights,
+    int verbosity
 );
 
 
@@ -171,39 +135,6 @@ double get_log_retroactive_splitting_prob_for_joined_tree(
 
 
 
-double compute_optimal_forest_log_incremental_weight(
-        const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-        const Plan &plan, const TreeSplitter &edge_splitter,
-        bool split_district_only,
-        const double pop_temper);
-
-
-
-void get_all_forest_plans_log_optimal_weights(
-        RcppThread::ThreadPool &pool,
-        const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-        std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
-        const std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
-        bool split_district_only,
-        arma::subview_col<double> log_incremental_weights,
-        std::vector<double> &unnormalized_sampling_weights,
-        double pop_temper, int verbosity
-);
-
-
-
-double compute_optimal_log_incremental_weight(
-    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-    const Plan &plan, bool split_district_only,
-    const double pop_temper);
-
-
-
-std::unordered_map<std::pair<int, int>, int, bounded_hash> get_valid_pairs_and_graph_boundary_len_map(
-        Graph const &g, Plan const &plan,
-        std::vector<bool> const &check_adj_to_regions,
-        std::vector<std::vector<bool>> const &valid_merge_pairs
-);
 
 
 void compute_all_plans_log_optimal_weights(

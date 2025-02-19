@@ -722,13 +722,14 @@ List run_redist_gsmc(
             // std::chrono::duration<double, std::milli> ms_doublef = t2f - t1f;
             // Rcout << "Running SMC " << ms_doublef.count() << " ms\n";
             auto t1 = std::chrono::high_resolution_clock::now();
+            bool compute_log_splitting_prob = splitting_schedule_ptr->schedule_type != SplittingSizeScheduleType::DistrictOnly &&
+            plans_ptr_vec[0]->num_regions != ndists;
+            bool is_final_plans = plans_ptr_vec[0]->num_regions == ndists;
+            
 
             if(wgt_type == "optimal"){
                 // TODO make more princicpal in the future 
                 // for now its just if not district only and not final round 
-                bool compute_log_splitting_prob = splitting_schedule_ptr->schedule_type != SplittingSizeScheduleType::DistrictOnly &&
-                    plans_ptr_vec[0]->num_regions != ndists;
-                bool is_final_plans = plans_ptr_vec[0]->num_regions == ndists;
                 if (verbosity >= 3) Rprintf("Computing Weights:\n");
                 compute_all_plans_log_optimal_weights(
                     pool,
@@ -743,14 +744,13 @@ List run_redist_gsmc(
             }else if(wgt_type == "adj_uniform" && use_graph_plan_space){
                 get_all_plans_uniform_adj_weights(
                     pool,
-                    *splitting_schedule_ptr,
-                    map_params.g,
-                    plans_ptr_vec,
-                    split_district_only,
+                    map_params, *splitting_schedule_ptr,
+                    scoring_function,
+                    plans_ptr_vec, tree_splitters_ptr_vec,
+                    compute_log_splitting_prob, is_final_plans,
                     log_incremental_weights_mat.col(smc_step_num),
                     unnormalized_sampling_weights,
-                    target,
-                    pop_temper
+                    verbosity
                 );
             }else if(wgt_type == "adj_uniform" && !use_graph_plan_space){
                 Rcpp::stop("Adj weights not supported for forest space");

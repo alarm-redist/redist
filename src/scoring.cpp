@@ -8,6 +8,13 @@
  #include "scoring.h"
 
 
+ /********************************************************
+ * Constraints Supported
+ *   - Population tempering (PopTemperConstraint)
+ *      This one enoucrages smaller deviations 
+ *  
+ ********************************************************/
+
 
 
  double compute_log_pop_temper(

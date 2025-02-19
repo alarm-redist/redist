@@ -101,6 +101,8 @@ public:
     // methods
     void Rprint() const;
     void reorder_plan_by_oldest_split(Plan &dummy_plan);
+    std::pair<int, int> get_most_recently_split_regions() const;
+
     virtual Graph get_forest_adj(){throw Rcpp::exception("Get Forest Adj not Supported for this!\n");};
 
     // redist_smc related methods 

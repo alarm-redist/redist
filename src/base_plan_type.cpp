@@ -181,7 +181,34 @@ Plan::Plan(
 
 
 
+// returns the region ids of the two most recently split regions
+// DO NOT CALL THIS WHEN THERE IS ONLY 1 REGION!
+std::pair<int, int> Plan::get_most_recently_split_regions() const{
+    int largest_index = -1, second_largest_index = -1;
+    int largest_value = -1 * ndists, second_largest_value = -1* ndists;
 
+    // Iterate through the vector
+    for (std::size_t i = 0; i < num_regions; ++i) {
+        if (region_added_order.at(i) > largest_value) {
+            // Update second-largest before updating largest
+            second_largest_value = largest_value;
+            second_largest_index = largest_index;
+
+            largest_value = region_added_order.at(i);
+            largest_index = i;
+        } else if (region_added_order.at(i) > second_largest_value) {
+            // Update second-largest only
+            second_largest_value = region_added_order.at(i);
+            second_largest_index = i;
+        }
+    }
+
+    // always make region1 the region with the smaller id
+    int region1_id = std::min(largest_index,second_largest_index);
+    int region2_id = std::max(largest_index,second_largest_index);
+
+    return std::make_pair(region1_id, region2_id);
+}
 
 
 

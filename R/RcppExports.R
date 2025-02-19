@@ -360,38 +360,6 @@ NULL
 #'
 NULL
 
-#' Computes log unnormalized weights for vector of plans
-#'
-#' Using the procedure outlined in <PAPER HERE> this function computes the log
-#' incremental weights and the unnormalized weights for a vector of plans (which
-#' may or may not be the same depending on the parameters).
-#'
-#' @title Compute Log Unnormalized Weights
-#'
-#' @param pool A threadpool for multithreading
-#' @param g A graph (adjacency list) passed by reference
-#' @param plans_ptr_vec A vector of plans to compute the log unnormalized weights
-#' of
-#' @param split_district_only whether or not to compute the weights under 
-#' the district only split scheme or not. If `split_district_only` is true
-#' then uses optimal weights from one-district split scheme.
-#' @param log_incremental_weights A vector of the log incremental weights
-#' computed for the plans. The value of `log_incremental_weights[i]` is
-#' the log incremental weight for `plans_vec[i]`
-#' @param unnormalized_sampling_weights A vector of the unnormalized sampling
-#' weights to be used with sampling the `plans_vec` in the next iteration of the
-#' algorithm. Depending on the other hyperparameters this may or may not be the
-#' same as `exp(log_incremental_weights)`
-#' @param target Target population of a single district
-#' @param pop_temper <DETAILS NEEDED>
-#'
-#' @details Modifications
-#'    - The `log_incremental_weights` is updated to contain the incremental
-#'    weights of the plans
-#'    - The `unnormalized_sampling_weights` is updated to contain the unnormalized
-#'    sampling weights of the plans for the next round
-NULL
-
 sample_ust <- function(l, pop, lower, upper, counties, ignore) {
     .Call(`_gredist_sample_ust`, l, pop, lower, upper, counties, ignore)
 }
