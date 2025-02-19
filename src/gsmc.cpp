@@ -239,9 +239,6 @@ void run_smc_step(
 }
 
 
-
-
-
 // Different diagnostic levels
 //      - level 0 - Does not capture any ancestry information or retain intermediate weights
 //      - level 1 - Saves ancestry information, intermediate weights and the number of tries 
@@ -369,8 +366,7 @@ List run_redist_gsmc(
         total_smc_steps, ndists, initial_num_regions, splitting_size_regime, control
     );
 
-    std::vector<int> min_region_cut_sizes(total_smc_steps,0);
-    std::vector<int> max_region_cut_sizes(total_smc_steps,0);
+
     // Whether or not to only do district splits only 
     bool split_district_only = splitting_size_regime == SplittingSizeScheduleType::DistrictOnly;
 
@@ -727,29 +723,24 @@ List run_redist_gsmc(
             // Rcout << "Running SMC " << ms_doublef.count() << " ms\n";
             auto t1 = std::chrono::high_resolution_clock::now();
 
-            if(!use_graph_plan_space){
+            if(wgt_type == "optimal"){
+                // TODO make more princicpal in the future 
+                // for now its just if not district only and not final round 
+                bool compute_log_splitting_prob = splitting_schedule_ptr->schedule_type != SplittingSizeScheduleType::DistrictOnly &&
+                    plans_ptr_vec[0]->num_regions != ndists;
+                bool is_final_plans = plans_ptr_vec[0]->num_regions == ndists;
                 if (verbosity >= 3) Rprintf("Computing Weights:\n");
-                get_all_forest_plans_log_optimal_weights(
+                compute_all_plans_log_optimal_weights(
                     pool,
-                    map_params, *splitting_schedule_ptr, 
+                    map_params, *splitting_schedule_ptr,
+                    scoring_function,
                     plans_ptr_vec, tree_splitters_ptr_vec,
-                    split_district_only,
+                    compute_log_splitting_prob, is_final_plans,
                     log_incremental_weights_mat.col(smc_step_num),
                     unnormalized_sampling_weights,
-                    pop_temper, verbosity
-            );
-            }else if(wgt_type == "optimal"){
-                // compute log incremental weights and sampling weights for next round
-                get_all_plans_log_optimal_weights(
-                    pool,
-                    map_params, *splitting_schedule_ptr,  
-                    plans_ptr_vec,
-                    split_district_only,
-                    log_incremental_weights_mat.col(smc_step_num),
-                    unnormalized_sampling_weights,
-                    pop_temper
+                    verbosity
                 );
-            }else if(wgt_type == "adj_uniform"){
+            }else if(wgt_type == "adj_uniform" && use_graph_plan_space){
                 get_all_plans_uniform_adj_weights(
                     pool,
                     *splitting_schedule_ptr,
@@ -761,6 +752,8 @@ List run_redist_gsmc(
                     target,
                     pop_temper
                 );
+            }else if(wgt_type == "adj_uniform" && !use_graph_plan_space){
+                Rcpp::stop("Adj weights not supported for forest space");
             }else{
                 throw Rcpp::exception("invalid weight type!");
             }
@@ -973,8 +966,6 @@ List run_redist_gsmc(
         _["log_weight_stddev"] = log_wgt_stddevs,
         _["est_k"] = cut_k_values,
         _["step_types"] = step_types,
-        _["min_region_cut_sizes"] = min_region_cut_sizes,
-        _["max_region_cut_sizes"] = max_region_cut_sizes,
         _["valid_split_region_sizes_list"] = all_steps_valid_split_region_sizes,
         _["valid_region_sizes_to_split_list"] = all_steps_valid_region_sizes_to_split,
         _["merge_split_steps"] = merge_split_step_vec,

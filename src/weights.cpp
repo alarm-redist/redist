@@ -1313,3 +1313,136 @@ void get_all_forest_plans_log_optimal_weights(
 
     return;
 }
+
+
+
+
+// eventually need to modify to allow presaved options
+double compute_log_optimal_weights(
+    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    ScoringFunction const &scoring_function, Plan const &plan, 
+    const TreeSplitter &edge_splitter, bool compute_log_splitting_prob,
+    bool is_final_plan
+){
+    // boolean for whether or not to compute the splitting probability of merged regions
+    // dont need to do when
+
+    double incremental_weight = 0.0;
+
+    // get region pair to effective boundary length map
+    auto region_pair_log_eff_boundary_map = plan.get_valid_adj_regions_and_eff_log_boundary_lens(
+        map_params, splitting_schedule, edge_splitter
+    );
+
+    // iterate over the pairs 
+
+    // Now iterate over adjacent region pairs and add splitting and pop temper
+    for (const auto& pair_tuple: region_pair_log_eff_boundary_map){
+        const int region1_id = std::get<0>(pair_tuple); // get the smaller region id  
+        const int region2_id = std::get<1>(pair_tuple); // get the bigger region id  
+        const double eff_log_boundary_len = std::get<2>(pair_tuple); // get the effective boundary length
+
+        double log_splitting_prob = 0.0;
+        // If not compute_log_splitting_prob then its just log(1) = 0
+        if(compute_log_splitting_prob){
+            // in generalized region split find probability you would have 
+            // picked to split the union of the the two regions 
+            log_splitting_prob = get_log_retroactive_splitting_prob(
+                plan, splitting_schedule.valid_split_region_sizes, 
+                region1_id, region2_id
+            );
+        }
+
+        // add constraint ratio
+        double log_constraint_ratio = 0;
+
+        // compute if any constraints 
+        if(scoring_function.any_constraints){
+        // compute scoring functions
+        const double log_region1_score = scoring_function.compute_log_region_score(
+            plan, region1_id, is_final_plan
+        );
+        const double log_region2_score = scoring_function.compute_log_region_score(
+            plan, region2_id, is_final_plan
+        );
+        const double log_merged_region_score = scoring_function.compute_log_merged_region_score(
+            plan, region1_id, region2_id, is_final_plan
+        );
+        // log ratio is log score merged - (log region1 + log region2)
+        log_constraint_ratio = log_merged_region_score - (log_region1_score + log_region2_score);
+        }
+
+        // int region1_size = plan.region_sizes(region1_id);
+        // int region2_size = plan.region_sizes(region2_id);
+        // Rprintf("Adding (%d,%d) - sizes (%d, %d): len %f, split prob %f, ratio %f!\n", 
+        //     region1_id, region2_id, region1_size, region2_size, std::exp(eff_log_boundary_len), 
+        //     std::exp(log_splitting_prob), std::exp(log_constraint_ratio));
+
+
+        // Now the term is 
+        //      - log_splitting_prob
+        //      - eff_log_boundary_len
+        //      -log_constraint_ratio
+        incremental_weight += std::exp(log_splitting_prob + eff_log_boundary_len + log_constraint_ratio);
+
+    }
+
+    // Check its not infinity
+    if(incremental_weight == -std::numeric_limits<double>::infinity()){
+        Rcpp::stop("Error! weight is negative infinity for some reason \n");
+    }
+
+    // Rprintf("Total Boundary %d and log incre = %f\n",
+    // total_boundary_len, -std::log(incremental_weight));
+
+    // now return the log of the inverse of the sum
+    return -std::log(incremental_weight);
+
+}
+
+
+
+
+void compute_all_plans_log_optimal_weights(
+    RcppThread::ThreadPool &pool,
+    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    ScoringFunction const &scoring_function,
+    std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
+    const std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
+    bool compute_log_splitting_prob, bool is_final_plans,
+    arma::subview_col<double> log_incremental_weights,
+    std::vector<double> &unnormalized_sampling_weights,
+    int verbosity
+){
+    const int nsims = static_cast<int>(plans_ptr_vec.size());
+    const int check_int = 50; // check for interrupts every _ iterations
+
+    RcppThread::ProgressBar bar(nsims, 1);
+    // Parallel thread pool where all objects in memory shared by default
+    pool.parallelFor(0, nsims, [&] (int i) {
+        // REprintf("I=%d\n", i);
+        double log_incr_weight = compute_log_optimal_weights(
+            map_params, splitting_schedule,
+            scoring_function, 
+            *plans_ptr_vec.at(i), 
+            *tree_splitters_ptr_vec.at(i),
+            compute_log_splitting_prob,
+            is_final_plans
+        );
+
+        log_incremental_weights(i) = log_incr_weight;
+        unnormalized_sampling_weights[i] = std::exp(log_incr_weight);
+
+        if (verbosity >= 3) {
+            ++bar;
+        }
+
+        RcppThread::checkUserInterrupt(i % check_int == 0);
+    });
+
+    // Wait for all the threads to finish
+    pool.wait();
+
+
+    return;
+}

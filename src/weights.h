@@ -17,6 +17,7 @@
 #include "base_plan_type.h"
 #include "splitting_schedule_types.h"
 #include "tree_op.h"
+#include "scoring.h"
 
 
 //' Computes the effective sample size from log incremental weights
@@ -195,5 +196,27 @@ double compute_optimal_log_incremental_weight(
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
     const Plan &plan, bool split_district_only,
     const double pop_temper);
+
+
+
+std::unordered_map<std::pair<int, int>, int, bounded_hash> get_valid_pairs_and_graph_boundary_len_map(
+        Graph const &g, Plan const &plan,
+        std::vector<bool> const &check_adj_to_regions,
+        std::vector<std::vector<bool>> const &valid_merge_pairs
+);
+
+
+void compute_all_plans_log_optimal_weights(
+    RcppThread::ThreadPool &pool,
+    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    ScoringFunction const &scoring_function,
+    std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
+    const std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
+    bool compute_log_splitting_prob, bool is_final_plans,
+    arma::subview_col<double> log_incremental_weights,
+    std::vector<double> &unnormalized_sampling_weights,
+    int verbosity
+);
+
 
 #endif

@@ -47,6 +47,10 @@ class ScoringFunction {
             const MapParams &map_params, Rcpp::List const &constraints, 
             bool const do_pop_temper, double const pop_temper);
 
+        int num_non_final_constraints;
+        int num_final_constraints;
+        bool any_constraints;
+
         double compute_log_region_score(const Plan &plan, int const region_id, bool const is_final) const;
         double compute_log_merged_region_score(const Plan &plan, int const region1_id, int const region2_id, bool const is_final) const;
 };

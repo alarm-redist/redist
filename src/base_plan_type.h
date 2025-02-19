@@ -25,6 +25,22 @@
 // forward declaration for compilation
 class TreeSplitter;
 
+
+// Custom hash function for hashing pairs of regions 
+// ndists should be the number of regions minus 1, ie the biggest
+// region id
+struct bounded_hash {
+    int ndists;
+    bounded_hash(int max_value) : ndists(max_value) {}
+    std::size_t operator()(const std::pair<int, int>& p) const {
+        return p.first * (ndists + 1) + p.second;
+    }
+    // DANGEROUS DO NOT ACTUALLY USE!!
+    // Should probably remove in the future, just needed it to be able to pass default 
+    // version to boundary length function
+    bounded_hash() : ndists(0) {}
+};
+
 class Plan {
 
 private:
@@ -104,7 +120,15 @@ public:
         bool split_district_only
     ) = 0;
 
-    
+    // For a given plan and splitting schedule this finds all pairs of adjacent regions
+    // and the log eff boundary length
+    // - for graph sampling its just the log of the graph theoretic boundary legnth
+    // - for forest sampling its the effective tree boundary length
+    virtual std::vector<std::tuple<int, int, double>> get_valid_adj_regions_and_eff_log_boundary_lens(
+        const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+        TreeSplitter const &tree_splitter,
+        std::unordered_map<std::pair<int, int>, double, bounded_hash> const &existing_pair_map = {}
+    ) const = 0;
 
     // virtual redist_smc methods
 
@@ -120,15 +144,6 @@ public:
 
 
 
-// Custom hash function for hashing pairs of regions 
-// ndists should be the number of regions minus 1, ie the biggest
-// region id
-struct bounded_hash {
-    int ndists;
-    bounded_hash(int max_value) : ndists(max_value) {}
-    std::size_t operator()(const std::pair<int, int>& p) const {
-        return p.first * (ndists + 1) + p.second;
-    }
-};
+
 
 #endif

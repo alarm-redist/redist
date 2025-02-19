@@ -49,7 +49,8 @@ double PopTemperConstraint::compute_log_merged_region_constraint(const Plan &pla
 ScoringFunction::ScoringFunction(
     MapParams const &map_params,
     Rcpp::List const &constraints, bool const do_pop_temper, double const pop_temper
-){
+):
+num_non_final_constraints(0), num_final_constraints(0){
     // add pop temper if doing that 
     if(do_pop_temper){
         non_final_plan_constraint_ptrs.emplace_back(
@@ -57,7 +58,11 @@ ScoringFunction::ScoringFunction(
                 map_params.target, map_params.ndists, 
                 map_params, pop_temper
             ));
+        num_non_final_constraints++;
     }
+
+    any_constraints = num_non_final_constraints+num_final_constraints != 0; 
+
 }
 
 
@@ -72,10 +77,32 @@ double ScoringFunction::compute_log_region_score(const Plan &plan, int const reg
     }
     // if final then return 
     if(is_final) return log_score;
-    
+
     // if not final then add those constraints 
     for(auto const &constraint_ptr: non_final_plan_constraint_ptrs){
         log_score += constraint_ptr->compute_log_region_constraint(plan, region_id);
+    }
+
+    return log_score;
+}
+
+
+double ScoringFunction::compute_log_merged_region_score(const Plan &plan, 
+    int const region1_id, int const region2_id, bool const is_final) 
+    const{
+    // start out with log score of zero
+    double log_score = 0.0;
+
+    // get the log constraint 
+    for(auto const &constraint_ptr: constraint_ptrs){
+        log_score += constraint_ptr->compute_log_merged_region_constraint(plan, region1_id, region2_id);
+    }
+    // if final then return 
+    if(is_final) return log_score;
+
+    // if not final then add those constraints 
+    for(auto const &constraint_ptr: non_final_plan_constraint_ptrs){
+        log_score += constraint_ptr->compute_log_merged_region_constraint(plan, region1_id, region2_id);
     }
 
     return log_score;

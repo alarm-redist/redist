@@ -1,4 +1,5 @@
 #include "base_plan_type.h"
+#include "weights.h"
 
 
 class ForestPlan : public Plan {
@@ -27,5 +28,12 @@ public:
             const int split_region1_id, const int split_region2_id,
             bool split_district_only
     ) override;
+
+
+    std::vector<std::tuple<int, int, double>> get_valid_adj_regions_and_eff_log_boundary_lens(
+        const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+        TreeSplitter const &tree_splitter,
+        std::unordered_map<std::pair<int, int>, double, bounded_hash> const &existing_pair_map = {}
+    ) const override;
 
 };
