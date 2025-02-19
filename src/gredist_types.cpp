@@ -58,13 +58,14 @@ Multigraph county_graph(const Graph &g, const arma::uvec &counties) {
 }
 
 
-MapParams::MapParams(Rcpp::List adj_list, const arma::uvec &counties, const arma::uvec &pop,
-        int ndists, double lower, double target, double upper) :
-    counties(counties), pop(pop), ndists(ndists), lower(lower), target(target), upper(upper) {
-        g = list_to_graph(adj_list);
-        cg = county_graph(g, counties);
-        V = static_cast<int>(g.size());
-}
+// MapParams::MapParams(Rcpp::List adj_list, const arma::uvec &counties, const arma::uvec &pop,
+//         int ndists, double lower, double target, double upper) :
+//      g(list_to_graph(adj_list)), counties(counties), cg(county_graph(g, counties)), pop(pop),
+//      V(static_cast<int>(g.size())), ndists(ndists), lower(lower), target(target), upper(upper) {
+//         // g = list_to_graph(adj_list);
+//         // cg = county_graph(g, counties);
+//         // V = static_cast<int>(g.size());
+// }
 
 
 
@@ -167,6 +168,8 @@ SplittingSizeScheduleType get_splitting_size_regime(std::string const &splitting
         return SplittingSizeScheduleType::DistrictOnly;
     }else if(splitting_size_regime_str == "any_valid_sizes"){
         return SplittingSizeScheduleType::AnyValidSize;
+    }else if(splitting_size_regime_str == "one_custom_size"){
+        return SplittingSizeScheduleType::OneCustomSize;
     }else if(splitting_size_regime_str == "custom"){
         return SplittingSizeScheduleType::CustomSizes;
     }else{

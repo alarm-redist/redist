@@ -271,13 +271,14 @@ void run_smc_step(
 //' running <ADD OPTIONS>
 //' @export
 List run_redist_gsmc(
-        int ndists, List adj_list,
+        int const ndists, List const &adj_list,
         const arma::uvec &counties, const arma::uvec &pop,
-        Rcpp::CharacterVector step_types,
-        double target, double lower, double upper,
+        Rcpp::CharacterVector const &step_types,
+        double const target, double const lower, double const upper,
         arma::umat region_id_mat, arma::umat region_sizes_mat,
-        std::string sampling_space,
-        List control, // control has pop temper, and k parameter value, and whether only district splits are allowed
+        std::string const &sampling_space, // sampling space (graphs, forest, etc)
+        List const &control, // control has pop temper, and k parameter value, and whether only district splits are allowed
+        List const &constraints, // constraints 
         int verbosity, bool diagnostic_mode){
     // re-seed MT so that `set.seed()` works in R
     seed_rng((int) Rcpp::sample(INT_MAX, 1)[0]);
@@ -300,7 +301,10 @@ List run_redist_gsmc(
     // weight type
     std::string wgt_type = as<std::string>(control["weight_type"]);
     // population tempering parameter 
-    double pop_temper = as<double>(control["pop_temper"]);
+    bool do_pop_temper = as<bool>(control["do_pop_temper"]);
+    double pop_temper;
+    if(do_pop_temper) pop_temper = as<double>(control["pop_temper"]);
+
 
     // This is a total_ms_steps by nsims vector where [s][i] is the number of 
     // successful merge splits performed for plan i on merge split round s
@@ -382,8 +386,13 @@ List run_redist_gsmc(
     // TODO Check k params 
 
     // Create map level graph and county level multigraph
-    MapParams map_params(adj_list, counties, pop, ndists, lower, target, upper);
+    MapParams const map_params(adj_list, counties, pop, ndists, lower, target, upper);
     int V = map_params.g.size();
+
+    // Add scoring function (constraints)
+    ScoringFunction const scoring_function(
+        map_params, constraints, 
+        do_pop_temper, pop_temper);
 
 
     // Now create diagnostic information 
@@ -557,7 +566,7 @@ List run_redist_gsmc(
             Rcout << "and only performing 1-district splits.";
         }else if(splitting_size_regime == SplittingSizeScheduleType::AnyValidSize){
             Rcout << "and generalized region splits.";
-        }else if(splitting_size_regime == SplittingSizeScheduleType::CustomSizes){
+        }else if(splitting_size_regime == SplittingSizeScheduleType::OneCustomSize){
             Rcout << "and custom size region splits.";
         }
         Rcout << " Using " << splitting_method_to_str(splitting_method) << "!\n";

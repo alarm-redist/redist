@@ -14,6 +14,9 @@ Since `state_xo` and `state_sr` are global variables when you run without multip
 
 # ----- ACTIVE TASKS -----
 
+**Make immutable class members constant**
+For all classes where a variable doesn't change after initialization (think things like `ndists`, `V`, etc.) make them constant. This might help a little bit with thread safety but the main reason is to avoid modifying things that shouldn't be changed in code. 
+
 **Create new SpanningTree class**
 Create a new `SpanningTree` class that is a wrapper for the directed spanning tree itself along with the vectors that always
 have to be created for it. Namely the `visited, ignore, parent, pop_below` vectors. Right now we allocate `parent, pop_below` vectors everytime and I imagine that is making things expensive. 

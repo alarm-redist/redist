@@ -23,6 +23,7 @@
 #include "graph_plan_type.h"
 #include "forest_plan_type.h"
 #include "tree_splitter_types.h"
+#include "scoring.h"
 
 
 
@@ -54,13 +55,14 @@
 //' @keywords internal
 // [[Rcpp::export]]
 List run_redist_gsmc(
-        int ndists, List adj_list,
+        int const ndists, List const &adj_list,
         const arma::uvec &counties, const arma::uvec &pop,
-        Rcpp::CharacterVector step_types,
-        double target, double lower, double upper,
+        Rcpp::CharacterVector const &step_types,
+        double const target, double const lower, double const upper,
         arma::umat region_id_mat, arma::umat region_sizes_mat,
-        std::string sampling_space, // sampling space (graphs, forest, etc)
-        List control, // control has pop temper, and k parameter value, and whether only district splits are allowed
+        std::string const &sampling_space, // sampling space (graphs, forest, etc)
+        List const &control, // control has pop temper, and k parameter value, and whether only district splits are allowed
+        List const &constraints, // constraints 
         int verbosity = 3, bool diagnostic_mode = false
 );
 

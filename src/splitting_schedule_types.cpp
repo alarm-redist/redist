@@ -26,244 +26,6 @@ void SplittingSchedule::reset_splitting_and_merge_booleans(){
 }
 
 
-// init splitting schedule object 
-SplittingSchedule::SplittingSchedule(
-    const int num_splits, const int ndists, const int initial_num_regions, 
-    SplittingSizeScheduleType const schedule_type,
-    Rcpp::List const &control) :
-    schedule_type(schedule_type), 
-    ndists(ndists),
-    all_regions_smaller_cut_sizes_to_try(ndists+1),
-    all_regions_min_and_max_possible_cut_sizes(ndists+1),
-    valid_region_sizes_to_split(ndists+1),
-    valid_split_region_sizes(ndists+1),
-    check_adj_to_regions(ndists+1),
-    valid_merge_pair_sizes(ndists+1, std::vector<bool>(ndists+1, false))
-    {
-    
-    if(schedule_type == SplittingSizeScheduleType::CustomSizes){
-        // Get the permitted split sizes 
-        Rcpp::List permitted_split_region_sizes_list = control["permitted_split_region_sizes_list"];
-        std::vector<std::vector<int>> permitted_split_region_sizes =
-            Rcpp::as<std::vector<std::vector<int>>>(permitted_split_region_sizes_list);
-        // make sure the length is the same number of splits 
-        if(permitted_split_region_sizes.size() != num_splits){
-            throw Rcpp::exception("Number of splits not equal to permitted split region sizes list!\n");
-        }
-        // Get the permitted split sizes 
-        Rcpp::List permitted_presplit_region_sizes_list = control["permitted_presplit_region_sizes_list"];
-        std::vector<std::vector<int>> permitted_presplit_region_sizes =
-            Rcpp::as<std::vector<std::vector<int>>>(permitted_presplit_region_sizes_list);
-        // make sure the length is the same number of splits 
-        if(permitted_presplit_region_sizes.size() != num_splits){
-            throw Rcpp::exception("Number of splits not equal to permitted split region sizes list!\n");
-        }
-
-
-        // set this
-        valid_split_region_sizes_list = std::vector<std::vector<bool>>(num_splits, std::vector<bool>(ndists+1, false));
-        valid_presplit_region_sizes_list = std::vector<std::vector<bool>>(num_splits, std::vector<bool>(ndists+1, false));
-        // for each split we go through and set things
-        for (size_t split_num = 0; split_num < num_splits; split_num++)
-        {   
-            // sanity check that this is always at least one
-            int num_valid_split_regions = 0;
-            // we go through each valid split size and mark as true 
-            for(auto const valid_split_region_size:permitted_split_region_sizes[split_num]){
-                valid_split_region_sizes_list[split_num][valid_split_region_size] = true;
-                ++num_valid_split_regions;
-            }
-            if(num_valid_split_regions < 1) throw Rcpp::exception("NO bad custom size!\n");
-            // sanity check that this is always at least one
-            int num_valid_presplit_regions = 0;
-            // we go through each valid split size and mark as true 
-            for(auto const valid_presplit_region_size:permitted_presplit_region_sizes[split_num]){
-                valid_presplit_region_sizes_list[split_num][valid_presplit_region_size] = true;
-                ++num_valid_presplit_regions;
-            }
-            if(num_valid_presplit_regions < 1) throw Rcpp::exception("No bad custom size!\n");
-        }
-    }else{
-        throw Rcpp::exception("Not implemented yet!!");
-    }
-
-};
-
-
-
-std::tuple<std::vector<bool>, std::vector<std::vector<int>>, std::vector<std::array<int, 2>>> get_all_valid_split_NAME_NEEDED_STUFF(
-    const std::vector<bool> &valid_split_region_sizes, const std::vector<bool> &valid_presplit_region_sizes
-){
-    int ndists = static_cast<int>(valid_split_region_sizes.size())-1;
-    int num_valid_split_regions = std::accumulate(valid_split_region_sizes.begin(), valid_split_region_sizes.end(), 0);
-    // make the ouput vector 
-    std::vector<std::vector<int>> all_regions_smaller_cut_sizes_to_try(
-        ndists+1, std::vector<int>(0)
-    );
-    std::vector<bool> valid_region_sizes_to_split(ndists+1, false);
-
-
-    // make a vector of sets to avoid possible duplicates
-    // I don't think duplicates are possible but too lazy to prove
-    std::vector<std::set<int>> all_regions_smaller_cut_sizes_to_try_sets(
-            ndists+1
-        );
-
-    // get the actual sizes and put them in a vector to iterate over later
-    std::vector<int> valid_split_region_sizes_vals;
-    valid_split_region_sizes_vals.reserve(num_valid_split_regions);
-    for (int split_region_size = 1; split_region_size <= ndists; split_region_size++)
-    {
-        if(valid_split_region_sizes[split_region_size]){
-            valid_split_region_sizes_vals.push_back(split_region_size);
-            int doubled_region_size = 2*split_region_size;
-            // see if we can split into two pieces of this size
-            if(doubled_region_size <= ndists && valid_presplit_region_sizes[doubled_region_size]){
-                // Then we mark the sum of the regions as valid 
-                valid_region_sizes_to_split[2*split_region_size] = true;
-                // add the smaller of the two to the set of valid cut sizes 
-                all_regions_smaller_cut_sizes_to_try_sets[2*split_region_size].insert(
-                    split_region_size
-                );
-            }
-        }
-    }
-
-
-    // Now iterate over all possible pairs of different valid sizes
-    for (size_t i = 0; i < num_valid_split_regions; i++){
-        for (size_t j = 0; j < i; j++)
-        {
-            int region1_size = valid_split_region_sizes_vals[i];
-            int region2_size = valid_split_region_sizes_vals[j];
-            int combined_region_size = region1_size+region2_size;
-
-            // check if the merged region has both a valid size and its
-            // a valid presplit region size 
-            if(combined_region_size <= ndists && valid_presplit_region_sizes[combined_region_size]){
-                // Then we mark the sum of the regions as valid 
-                valid_region_sizes_to_split[region1_size + region2_size] = true;
-                // add the smaller of the two to the set of valid cut sizes 
-                all_regions_smaller_cut_sizes_to_try_sets[region1_size + region2_size].insert(
-                    std::min(region1_size, region2_size)
-                );
-            }
-        }
-    }
-
-    std::vector<std::array<int, 2>> all_regions_min_and_max_possible_cut_sizes(ndists+1);
-    
-    // now we convert the sets to vectors 
-    for (int region_size = 1; region_size <= ndists; region_size++)
-    {
-    all_regions_smaller_cut_sizes_to_try[region_size] = std::vector<int>(
-            all_regions_smaller_cut_sizes_to_try_sets[region_size].begin(),
-            all_regions_smaller_cut_sizes_to_try_sets[region_size].end()
-        );
-        // set this too
-        if(valid_region_sizes_to_split[region_size]){
-            int smallest_possible_split_region_size = all_regions_smaller_cut_sizes_to_try[region_size][0];
-            int biggest_possible_split_region_size = region_size-smallest_possible_split_region_size;
-            all_regions_min_and_max_possible_cut_sizes[region_size][0] = smallest_possible_split_region_size;
-            all_regions_min_and_max_possible_cut_sizes[region_size][1] = biggest_possible_split_region_size;
-        }
-    
-    }
-
-    
-    return std::make_tuple(valid_region_sizes_to_split, all_regions_smaller_cut_sizes_to_try, all_regions_min_and_max_possible_cut_sizes);
-
-}
-
-void SplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
-    int split_num, int presplit_num_regions
-){
-    // The biggest size a region can be is if all but one region is a district
-    int max_valid_region_size = ndists - presplit_num_regions + 1;
-    // for custom one we can just use results from initialization
-    if(schedule_type == SplittingSizeScheduleType::CustomSizes){
-        // Use previous result for this step 
-        valid_split_region_sizes = valid_split_region_sizes_list[split_num];
-        check_adj_to_regions = valid_split_region_sizes;
-        // helper function 
-        auto helper_output = get_all_valid_split_NAME_NEEDED_STUFF(
-            valid_split_region_sizes, 
-            valid_presplit_region_sizes_list[split_num]
-        );
-
-        valid_region_sizes_to_split = std::get<0>(helper_output); 
-        all_regions_smaller_cut_sizes_to_try = std::get<1>(helper_output);
-        all_regions_min_and_max_possible_cut_sizes = std::get<2>(helper_output);
-
-        // WRONG BUT TEMP!
-        for (size_t region1_size = 1; region1_size < max_valid_region_size; region1_size++){
-            for (size_t region2_size = 1; region2_size < max_valid_region_size; region2_size++){
-                if(valid_split_region_sizes[region1_size] && valid_split_region_sizes[region2_size]){
-                    valid_merge_pair_sizes[region1_size][region2_size] = true;
-                }
-            }
-        }
-
-        return;
-    }
-
-    // for split district only and any size we can compute from scratch easily 
-    // reset all regions that can be split to false 
-    std::fill(valid_region_sizes_to_split.begin(), valid_region_sizes_to_split.end(), false);
-    std::fill(valid_split_region_sizes.begin(), valid_split_region_sizes.end(), false);
-    // reset merge pairs
-    for (size_t region_size = 1; region_size <= ndists; region_size++)
-    {
-        std::fill(
-            valid_merge_pair_sizes[region_size].begin(), 
-            valid_merge_pair_sizes[region_size].end(), 
-            false
-        );
-    }
-
-    std::fill(check_adj_to_regions.begin(), check_adj_to_regions.end(), false);
-    
-    
-    if(schedule_type == SplittingSizeScheduleType::DistrictOnly){
-        // we can only split the remainder region which has size max_valid_region_size
-        valid_region_sizes_to_split[max_valid_region_size] = true;
-        // the only valid split sizes are 1 and remainder_region size -1
-        valid_split_region_sizes[1] = true;
-        valid_split_region_sizes[max_valid_region_size-1] = true;
-        // we can only merge 1 and reminader region size -1 
-        valid_merge_pair_sizes[1][max_valid_region_size-1] = true;
-        valid_merge_pair_sizes[max_valid_region_size-1][1] = true;
-        check_adj_to_regions[max_valid_region_size-1]=true;
-        // check_adj_to_regions[1]= num_regions == ndists-1;
-
-    }else if(schedule_type == SplittingSizeScheduleType::AnyValidSize){
-        for (size_t region_size = 2; region_size <=  max_valid_region_size; region_size++)
-        {
-            // we can split any region between 2 and largest possible region 
-            // size which is max_valid_region_size
-            valid_region_sizes_to_split[region_size] = true;
-            // a valid split size can be anything from 1 to largest possible region size minus 1
-            valid_split_region_sizes[region_size] = true;
-        }
-        // make 1 a valid size
-        valid_split_region_sizes[1] = true;
-        // make the largest size false since you'll never get this from a split
-        valid_split_region_sizes[max_valid_region_size] = false;
-        check_adj_to_regions = valid_split_region_sizes;
-        // valid merge pairs are anything that sums to less than or equal to the max valid size
-        for (size_t region1_size = 1; region1_size < max_valid_region_size; region1_size++){
-            for (size_t region2_size = 1; region2_size < max_valid_region_size; region2_size++){
-                if(region1_size+region2_size <= max_valid_region_size){
-                    valid_merge_pair_sizes[region1_size][region2_size] = true;
-                }
-            }
-        }
-    }else{
-        throw Rcpp::exception("Not implemented yet!!");
-    }
-
-}
-
 
 /*
  * Constructor for district splits only splitting schedule
@@ -271,9 +33,7 @@ void SplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
 DistrictOnlySplittingSchedule::DistrictOnlySplittingSchedule(
     const int num_splits, const int ndists, const int initial_num_regions
 ):
-    SplittingSchedule(num_splits, ndists, initial_num_regions){
-    // set the splitting size schedule type
-    schedule_type = SplittingSizeScheduleType::DistrictOnly;
+    SplittingSchedule(SplittingSizeScheduleType::DistrictOnly, num_splits, ndists, initial_num_regions){
     // For each size above 2 make the min=1 and the max=size-1
     for (int region_size = 2; region_size <= ndists; region_size++)
     {
@@ -314,9 +74,7 @@ void DistrictOnlySplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
 AnyRegionSplittingSchedule::AnyRegionSplittingSchedule(
     const int num_splits, const int ndists, const int initial_num_regions
 ):
-    SplittingSchedule(num_splits, ndists, initial_num_regions){
-    // set the splitting size schedule type
-    schedule_type = SplittingSizeScheduleType::AnyValidSize;
+    SplittingSchedule(SplittingSizeScheduleType::AnyValidSize, num_splits, ndists, initial_num_regions){
     // If doing any sizes then for `region_size` the possible split sizes are always 
     // if any sizes allowed then for 2, ..., ndists make it 1,...,floor(size/2)
     for (int region_size = 2; region_size <= ndists; region_size++)
@@ -374,6 +132,83 @@ void AnyRegionSplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
 }
 
 
+
+
+OneCustomSplitSchedule::OneCustomSplitSchedule(
+    const int num_splits, const int ndists, const int initial_num_regions, 
+    Rcpp::List const &control):
+    SplittingSchedule(SplittingSizeScheduleType::OneCustomSize, num_splits, ndists, initial_num_regions){
+
+    // Ensure "custom_size_split_list" exists and is a list
+    if (!control.containsElementNamed("custom_size_split_list")) {
+        Rcpp::stop("Error: 'permitted_split_region_sizes_list' is missing from control.");
+    }
+
+    // extract
+    Rcpp::List custom_size_split_list = control["custom_size_split_list"];
+    std::vector<std::vector<int>> custom_splits_vector =
+        Rcpp::as<std::vector<std::vector<int>>>(custom_size_split_list);
+    // ensure its the same size as the number of splits 
+    if(num_splits != custom_splits_vector.size()){
+        Rcpp::stop("Error: 'custom_size_split_list' must be the same length as number of splits.");
+    }
+
+    split_array_list.reserve(custom_splits_vector.size());
+    // convert to vector of arrays of size 3
+    for(auto split_vec: custom_splits_vector){
+        // check it is length 3
+        if(split_vec.size() != 3){
+            Rcpp::stop("Error: All vectors in 'custom_size_split_list' must be of length 3.");
+        }
+        // check the first element is sum of second two
+        if(split_vec[0] != split_vec[1]+split_vec[2]){
+            Rcpp::stop("Error: First element in each vector in 'custom_size_split_list' must be sum of other two elements.");
+        }
+        // check first element is above 0
+        if(split_vec[0] <= 0 || split_vec[2] <= 0 || split_vec[2] <= 0){
+            Rcpp::stop("Error: All elements in each vector in 'custom_size_split_list' must be greater than zero.");
+        }
+        split_array_list.push_back({split_vec[0], split_vec[1], split_vec[2]});
+    }
+}
+
+
+void OneCustomSplitSchedule::set_potential_cut_sizes_for_each_valid_size(
+    int split_num, int presplit_num_regions
+){
+
+    // reset all regions split and merge booleans
+    reset_splitting_and_merge_booleans();
+
+    // get the (presplit size, split size 1, split size 2)
+    auto the_custom_split = split_array_list[split_num];
+
+    int valid_region_size_to_split = the_custom_split[0];
+    int valid_split_region1_size = the_custom_split[1];
+    int valid_split_region2_size = the_custom_split[2];
+    int smaller_valid_split_size = std::min(valid_split_region1_size, valid_split_region2_size);
+    int bigger_valid_split_size = std::max(valid_split_region1_size, valid_split_region2_size);
+
+
+    // we can only split the one valid size to split 
+    valid_region_sizes_to_split[valid_region_size_to_split] = true;
+    // only two valid split sizes 
+    valid_split_region_sizes[valid_split_region1_size] = true;
+    valid_split_region_sizes[valid_split_region2_size] = true;
+    check_adj_to_regions = valid_split_region_sizes;
+    // we can only merge those two valid split sizes 
+    valid_merge_pair_sizes[valid_split_region1_size][valid_split_region2_size] = true;
+    valid_merge_pair_sizes[valid_split_region2_size][valid_split_region1_size] = true;
+
+    // Now set the splitting size 
+    all_regions_smaller_cut_sizes_to_try[valid_region_size_to_split] = {smaller_valid_split_size};
+    // set min and max 
+    all_regions_min_and_max_possible_cut_sizes[valid_region_size_to_split] = {smaller_valid_split_size, bigger_valid_split_size};
+
+    return;
+}
+
+
 // Returns a splitting schedule depending on the schedule type 
 std::unique_ptr<SplittingSchedule> get_splitting_schedule(
     const int num_splits, const int ndists, const int initial_num_regions, 
@@ -384,6 +219,8 @@ std::unique_ptr<SplittingSchedule> get_splitting_schedule(
         return std::make_unique<DistrictOnlySplittingSchedule>(num_splits, ndists, initial_num_regions);
     }else if(schedule_type == SplittingSizeScheduleType::AnyValidSize){
         return std::make_unique<AnyRegionSplittingSchedule>(num_splits, ndists, initial_num_regions);
+    }else if(schedule_type == SplittingSizeScheduleType::OneCustomSize){
+        return std::make_unique<OneCustomSplitSchedule>(num_splits, ndists, initial_num_regions, control);
     }else if(schedule_type == SplittingSizeScheduleType::CustomSizes){
         Rprintf("Not implemented!");
         throw Rcpp::exception("Schedule not impliemented yet!");

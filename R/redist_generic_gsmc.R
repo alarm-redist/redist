@@ -79,8 +79,7 @@ generic_redist_gsmc <- function(
         pop_temper = 0,
         init_region_ids_mat = NULL,
         init_region_sizes_mat = NULL,
-        permitted_split_region_sizes_list = NULL,
-        permitted_presplit_region_sizes_list = NULL,
+        custom_size_split_list = NULL,
         num_splitting_steps = NULL,
         verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE)
 {
@@ -180,14 +179,14 @@ generic_redist_gsmc <- function(
     # setting the splitting size regime
     if(split_district_only){
         splitting_size_regime = "split_district_only"
-    }else if(is.null(permitted_split_region_sizes_list)){
+    }else if(is.null(custom_size_split_list)){
         # this is means allow any valid sizes
         splitting_size_regime = "any_valid_sizes"
     }else{ # else its custom
-        # validate the cut sizes
-        # OLD_validate_cut_sizes(ndists, total_smc_steps, min_region_cut_sizes, max_region_cut_sizes)
-        validate_cut_sizes (ndists, total_smc_steps, init_num_regions, permitted_split_region_sizes_list)
-        splitting_size_regime = "custom"
+        # only support doing a single size right now
+        # validate it
+        validate_custom_size_split_list(ndists, num_splitting_steps, init_num_regions, custom_size_split_list)
+        splitting_size_regime = "one_custom_size"
     }
 
     # compute lags thing
@@ -269,12 +268,12 @@ generic_redist_gsmc <- function(
     control <- list(
         weight_type=weight_type,
         lags=lags,
+        do_pop_temper = pop_temper == 0,
         pop_temper = pop_temper,
         num_threads=as.integer(num_threads_per_process),
         splitting_method = splitting_method,
         splitting_size_regime = splitting_size_regime,
-        permitted_split_region_sizes_list=permitted_split_region_sizes_list,
-        permitted_presplit_region_sizes_list=permitted_presplit_region_sizes_list,
+        custom_size_split_list=custom_size_split_list,
         merge_split_step_vec = merge_split_step_vec,
         ms_steps_multiplier = ms_steps_multiplier,
         merge_prob_type = merge_prob_type
@@ -307,6 +306,7 @@ generic_redist_gsmc <- function(
             region_sizes_mat = init_region_sizes_mat,
             sampling_space = sampling_space,
             control = control,
+            constraints = constraints,
             verbosity=run_verbosity,
             diagnostic_mode=diagnostic_mode)
 
@@ -484,8 +484,7 @@ generic_redist_gsmc <- function(
             runtime = as.numeric(t2_run - t1_run, units = "secs"),
             num_processes = num_processes,
             num_threads = num_threads_per_process,
-            permitted_split_region_sizes_list=permitted_split_region_sizes_list,
-            permitted_presplit_region_sizes_list=permitted_presplit_region_sizes_list,
+            custom_size_split_list=custom_size_split_list,
             valid_region_sizes_to_split_list=algout$valid_region_sizes_to_split_list,
             valid_split_region_sizes_list=algout$valid_split_region_sizes_list,
             nunique_original_ancestors = nunique_original_ancestors,

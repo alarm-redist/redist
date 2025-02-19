@@ -217,26 +217,27 @@ BEGIN_RCPP
 END_RCPP
 }
 // run_redist_gsmc
-List run_redist_gsmc(int ndists, List adj_list, const arma::uvec& counties, const arma::uvec& pop, Rcpp::CharacterVector step_types, double target, double lower, double upper, arma::umat region_id_mat, arma::umat region_sizes_mat, std::string sampling_space, List control, int verbosity, bool diagnostic_mode);
-RcppExport SEXP _gredist_run_redist_gsmc(SEXP ndistsSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP step_typesSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP region_id_matSEXP, SEXP region_sizes_matSEXP, SEXP sampling_spaceSEXP, SEXP controlSEXP, SEXP verbositySEXP, SEXP diagnostic_modeSEXP) {
+List run_redist_gsmc(int const ndists, List const& adj_list, const arma::uvec& counties, const arma::uvec& pop, Rcpp::CharacterVector const& step_types, double const target, double const lower, double const upper, arma::umat region_id_mat, arma::umat region_sizes_mat, std::string const& sampling_space, List const& control, List const& constraints, int verbosity, bool diagnostic_mode);
+RcppExport SEXP _gredist_run_redist_gsmc(SEXP ndistsSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP step_typesSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP region_id_matSEXP, SEXP region_sizes_matSEXP, SEXP sampling_spaceSEXP, SEXP controlSEXP, SEXP constraintsSEXP, SEXP verbositySEXP, SEXP diagnostic_modeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type ndists(ndistsSEXP);
-    Rcpp::traits::input_parameter< List >::type adj_list(adj_listSEXP);
+    Rcpp::traits::input_parameter< int const >::type ndists(ndistsSEXP);
+    Rcpp::traits::input_parameter< List const& >::type adj_list(adj_listSEXP);
     Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
     Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type step_types(step_typesSEXP);
-    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
-    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
-    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector const& >::type step_types(step_typesSEXP);
+    Rcpp::traits::input_parameter< double const >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< double const >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double const >::type upper(upperSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type region_id_mat(region_id_matSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type region_sizes_mat(region_sizes_matSEXP);
-    Rcpp::traits::input_parameter< std::string >::type sampling_space(sampling_spaceSEXP);
-    Rcpp::traits::input_parameter< List >::type control(controlSEXP);
+    Rcpp::traits::input_parameter< std::string const& >::type sampling_space(sampling_spaceSEXP);
+    Rcpp::traits::input_parameter< List const& >::type control(controlSEXP);
+    Rcpp::traits::input_parameter< List const& >::type constraints(constraintsSEXP);
     Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
     Rcpp::traits::input_parameter< bool >::type diagnostic_mode(diagnostic_modeSEXP);
-    rcpp_result_gen = Rcpp::wrap(run_redist_gsmc(ndists, adj_list, counties, pop, step_types, target, lower, upper, region_id_mat, region_sizes_mat, sampling_space, control, verbosity, diagnostic_mode));
+    rcpp_result_gen = Rcpp::wrap(run_redist_gsmc(ndists, adj_list, counties, pop, step_types, target, lower, upper, region_id_mat, region_sizes_mat, sampling_space, control, constraints, verbosity, diagnostic_mode));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -567,13 +568,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // random_rcpp_list_cast_testing
-void random_rcpp_list_cast_testing(Rcpp::List control);
+Rcpp::List random_rcpp_list_cast_testing(Rcpp::List control);
 RcppExport SEXP _gredist_random_rcpp_list_cast_testing(SEXP controlSEXP) {
 BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::List >::type control(controlSEXP);
-    random_rcpp_list_cast_testing(control);
-    return R_NilValue;
+    rcpp_result_gen = Rcpp::wrap(random_rcpp_list_cast_testing(control));
+    return rcpp_result_gen;
 END_RCPP
 }
 // comb
@@ -585,18 +587,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type K(KSEXP);
     comb(N, K);
     return R_NilValue;
-END_RCPP
-}
-// testing_get_all_valid_regions_to_split_stuff
-Rcpp::List testing_get_all_valid_regions_to_split_stuff(const std::vector<bool>& valid_split_region_sizes, const std::vector<bool>& valid_presplit_region_sizes);
-RcppExport SEXP _gredist_testing_get_all_valid_regions_to_split_stuff(SEXP valid_split_region_sizesSEXP, SEXP valid_presplit_region_sizesSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::vector<bool>& >::type valid_split_region_sizes(valid_split_region_sizesSEXP);
-    Rcpp::traits::input_parameter< const std::vector<bool>& >::type valid_presplit_region_sizes(valid_presplit_region_sizesSEXP);
-    rcpp_result_gen = Rcpp::wrap(testing_get_all_valid_regions_to_split_stuff(valid_split_region_sizes, valid_presplit_region_sizes));
-    return rcpp_result_gen;
 END_RCPP
 }
 // closest_adj_pop
@@ -865,7 +855,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_update_conncomp", (DL_FUNC) &_gredist_update_conncomp, 3},
     {"_gredist_crsg", (DL_FUNC) &_gredist_crsg, 9},
     {"_gredist_dist_dist_diff", (DL_FUNC) &_gredist_dist_dist_diff, 7},
-    {"_gredist_run_redist_gsmc", (DL_FUNC) &_gredist_run_redist_gsmc, 14},
+    {"_gredist_run_redist_gsmc", (DL_FUNC) &_gredist_run_redist_gsmc, 15},
     {"_gredist_log_st_map", (DL_FUNC) &_gredist_log_st_map, 4},
     {"_gredist_n_removed", (DL_FUNC) &_gredist_n_removed, 3},
     {"_gredist_countpartitions", (DL_FUNC) &_gredist_countpartitions, 1},
@@ -890,7 +880,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_random_cpp_testing", (DL_FUNC) &_gredist_random_cpp_testing, 0},
     {"_gredist_random_rcpp_list_cast_testing", (DL_FUNC) &_gredist_random_rcpp_list_cast_testing, 1},
     {"_gredist_comb", (DL_FUNC) &_gredist_comb, 2},
-    {"_gredist_testing_get_all_valid_regions_to_split_stuff", (DL_FUNC) &_gredist_testing_get_all_valid_regions_to_split_stuff, 2},
     {"_gredist_closest_adj_pop", (DL_FUNC) &_gredist_closest_adj_pop, 3},
     {"_gredist_rint1", (DL_FUNC) &_gredist_rint1, 2},
     {"_gredist_runif1", (DL_FUNC) &_gredist_runif1, 2},

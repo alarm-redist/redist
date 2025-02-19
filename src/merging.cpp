@@ -72,7 +72,7 @@ void merge_regions(
 
 
 int run_merge_split_step_on_a_plan(
-    MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    MapParams const &map_params, const SplittingSchedule &splitting_schedule,
     bool split_district_only, std::string const merge_prob_type,
     Plan &plan, Plan &new_plan, 
     TreeSplitter &tree_splitter,
@@ -303,7 +303,7 @@ int run_merge_split_step_on_a_plan(
 
 void run_merge_split_step_on_all_plans( 
     RcppThread::ThreadPool &pool,
-    MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    MapParams const &map_params, const SplittingSchedule &splitting_schedule,
     std::vector<std::unique_ptr<Plan>> &plan_ptrs_vec, 
     std::vector<std::unique_ptr<Plan>> &new_plan_ptrs_vec, 
     std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,

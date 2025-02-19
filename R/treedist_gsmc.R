@@ -40,8 +40,7 @@ treedist_gsmc <- function(
         pop_temper = 0,
         init_region_ids_mat = NULL,
         init_region_sizes_mat = NULL,
-        permitted_split_region_sizes_list = NULL,
-        permitted_presplit_region_sizes_list = NULL,
+        custom_size_split_list = NULL,
         num_splitting_steps = NULL,
         verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE
 ){
@@ -74,8 +73,7 @@ treedist_gsmc <- function(
         pop_temper = pop_temper,
         init_region_ids_mat = init_region_ids_mat,
         init_region_sizes_mat = init_region_sizes_mat,
-        permitted_split_region_sizes_list = permitted_split_region_sizes_list,
-        permitted_presplit_region_sizes_list = permitted_presplit_region_sizes_list,
+        custom_size_split_list=custom_size_split_list,
         num_splitting_steps = num_splitting_steps,
         verbose = verbose, silent = silent, diagnostic_mode = diagnostic_mode)
 

@@ -838,7 +838,7 @@ double compute_optimal_log_incremental_weight(
     
         const int boundary_len = entry.second; // get the boundary length
         total_boundary_len += boundary_len;
-        // Rprintf("Adding (%d,%d) - len %d  which is sizes (%d, %d)!\n", region1_id, region2_id, boundary_len, region1_size, region2_size);
+        
                
         double log_boundary =  std::log((double) boundary_len);
 
@@ -854,6 +854,9 @@ double compute_optimal_log_incremental_weight(
                 splitting_schedule.valid_region_sizes_to_split, 
                 region1_id, region2_id);
         }
+
+        // Rprintf("Adding (%d,%d) - len %d, split prob %f,  which is sizes (%d, %d)!\n", region1_id, region2_id, boundary_len, 
+        //     std::exp(log_splitting_prob), region1_size, region2_size);
 
         // Do population tempering term if not final
         double log_temper;

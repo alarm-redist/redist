@@ -42,17 +42,20 @@ class MapParams {
     public:
     // Constructor 
     MapParams(Rcpp::List adj_list, const arma::uvec &counties, const arma::uvec &pop,
-        int ndists, double lower, double target, double upper);
+        int ndists, double lower, double target, double upper) :
+        g(list_to_graph(adj_list)), counties(counties), cg(county_graph(g, counties)), pop(pop),
+        V(static_cast<int>(g.size())), ndists(ndists), lower(lower), target(target), upper(upper)
+        {};
 
-    Graph g; // The graph as undirected adjacency list 
-    arma::uvec counties; // county labels
-    Multigraph cg; // county multigraph
-    arma::uvec pop; // population of each vertex
-    int V; // Number of vertices in the graph
-    int ndists; // The number of districts a final plan should have
-    double lower; // lower bound on district population
-    double target; // target district population
-    double upper; // upper bound on district population
+    Graph const g; // The graph as undirected adjacency list 
+    arma::uvec const counties; // county labels
+    Multigraph const cg; // county multigraph
+    arma::uvec const pop; // population of each vertex
+    int const V; // Number of vertices in the graph
+    int const ndists; // The number of districts a final plan should have
+    double const lower; // lower bound on district population
+    double const target; // target district population
+    double const upper; // upper bound on district population
 
 };
 
@@ -150,6 +153,7 @@ enum class SplittingSizeScheduleType : unsigned char
 {
     DistrictOnly,
     AnyValidSize,
+    OneCustomSize,
     CustomSizes
 };
 

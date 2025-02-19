@@ -83,8 +83,8 @@ dist_dist_diff <- function(p, i_dist, j_dist, x_center, y_center, x, y) {
 #' running <ADD OPTIONS>
 #' @export
 #' @keywords internal
-run_redist_gsmc <- function(ndists, adj_list, counties, pop, step_types, target, lower, upper, region_id_mat, region_sizes_mat, sampling_space, control, verbosity = 3L, diagnostic_mode = FALSE) {
-    .Call(`_gredist_run_redist_gsmc`, ndists, adj_list, counties, pop, step_types, target, lower, upper, region_id_mat, region_sizes_mat, sampling_space, control, verbosity, diagnostic_mode)
+run_redist_gsmc <- function(ndists, adj_list, counties, pop, step_types, target, lower, upper, region_id_mat, region_sizes_mat, sampling_space, control, constraints, verbosity = 3L, diagnostic_mode = FALSE) {
+    .Call(`_gredist_run_redist_gsmc`, ndists, adj_list, counties, pop, step_types, target, lower, upper, region_id_mat, region_sizes_mat, sampling_space, control, constraints, verbosity, diagnostic_mode)
 }
 
 log_st_map <- function(g, districts, counties, n_distr) {
@@ -192,15 +192,11 @@ random_cpp_testing <- function() {
 }
 
 random_rcpp_list_cast_testing <- function(control) {
-    invisible(.Call(`_gredist_random_rcpp_list_cast_testing`, control))
+    .Call(`_gredist_random_rcpp_list_cast_testing`, control)
 }
 
 comb <- function(N, K) {
     invisible(.Call(`_gredist_comb`, N, K))
-}
-
-testing_get_all_valid_regions_to_split_stuff <- function(valid_split_region_sizes, valid_presplit_region_sizes) {
-    .Call(`_gredist_testing_get_all_valid_regions_to_split_stuff`, valid_split_region_sizes, valid_presplit_region_sizes)
 }
 
 closest_adj_pop <- function(adj, i_dist, g_prop) {

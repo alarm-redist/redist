@@ -473,7 +473,68 @@ validate_cut_sizes <- function(
         prev_possible_sizes <- split_i_possible_region_sizes
     }
 
-
-
     # need to check
+}
+
+
+
+validate_custom_size_split_list <- function(
+        ndists, num_splits, initial_num_regions, custom_size_split_list
+){
+    if(initial_num_regions > 1){
+        cli_abort("Not supported yet!")
+    }
+    # check actually a list
+    if(!is.list(custom_size_split_list)){
+        cli_abort(
+            "{.arg custom_size_split_list} must be a list of numeric vectors!"
+        )
+    }
+    # check each element of the list is a numeric vector
+    if(!all(sapply(custom_size_split_list, is.numeric))){
+        cli_abort(
+            "Each element of {.arg custom_size_split_list} must be a numeric vector!"
+        )
+    }
+    # check each element is an integer
+    if(!all(sapply(custom_size_split_list, function(x) all.equal(x, as.integer(x))))){
+        cli_abort(
+            "Each element of each entry in {.arg custom_size_split_list} must be an integer!"
+        )
+    }
+    # check each element has length 3
+    if(!all(sapply(custom_size_split_list, length) == 3)){
+        cli_abort(
+            "Each vector in {.arg custom_size_split_list} must be of length 3!"
+        )
+    }
+    # check second two elements sum to the first
+    if(!all(sapply(custom_size_split_list, function(x) x[1] == sum(x[2:3])))){
+        cli_abort(
+            "The first element in each vector in {.arg custom_size_split_list} must be the sum of the last two elements!"
+        )
+    }
+
+
+    # check for each element the max is less than ndists - num_splits
+    for (split_num_i in seq_len(num_splits)) {
+        # the number of regions after the split
+        n_regions_after_split <- initial_num_regions + split_num_i
+        max_possible_region_size <- ndists - n_regions_after_split + 1
+        # check that all sizes are between 1 (inclusive) and n_regions_after_split -1
+        if(any(custom_size_split_list[[split_num_i]] < 1)){
+            cli_abort(
+                "An element of entry {split_num_i} of {.arg custom_size_split_list} was less than 1! All valid region sizes must be at least 1!"
+            )
+        }
+        # check that everything is less than or eqaul to n_regions_after_split -1
+        if(any(custom_size_split_list[[split_num_i]][2:3] > max_possible_region_size)){
+            cli_abort(
+                "An element of entry {split_num_i} of {.arg custom_size_split_list} was greater than {max_possible_region_size}! All valid region sizes at step {split_num_i} must be less than {max_possible_region_size}!"
+            )
+        }
+    }
+
+    # for now just return. No other validation performed
+    return()
 }
