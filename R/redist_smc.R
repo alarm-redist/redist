@@ -132,10 +132,12 @@
 #' @order 1
 #' @export
 redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints = list(),
-                       resample = TRUE, runs = 1L, ncores = 0L, init_particles = NULL,
+                       resample = TRUE, runs = 1L, init_particles = NULL,
                        n_steps = NULL, adapt_k_thresh = 0.99, seq_alpha = 0.5,
                        truncate = (compactness != 1), trunc_fn = redist_quantile_trunc,
-                       pop_temper = 0, final_infl = 1, multiprocess = TRUE,
+                       pop_temper = 0, final_infl = 1,
+                       num_processes=0L, num_threads_per_process=0L,
+                       multiprocess = TRUE,
                        ref_name = NULL, verbose = FALSE, silent = FALSE) {
     map <- validate_redist_map(map)
     V <- nrow(map)
@@ -217,40 +219,51 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
         cli_abort("Too many districts already drawn to take {n_steps} steps.")
     }
 
-    # set up parallel
-    ncores_max <- parallel::detectCores()
-    ncores_runs <- min(ncores_max, runs)
-    ncores_per <- as.integer(ncores)
-    if (ncores_per == 0) {
-        if (nsims/100*length(adj)/200 < 20) {
-            ncores_per <- 1L
-        } else {
-            ncores_per <- floor(ncores_max/ncores_runs)
-        }
-    }
 
-    # if sequentially
-    if(!multiprocess){
-        # either max cores if
-        if(ncores == 0){
-            ncores_per = ncores_max
-        }else{
-            ncores_per = ncores
-        }
-    }
 
     lags <- 1 + unique(round((ndists - 1)^0.8*seq(0, 0.7, length.out = 4)^0.9))
     control <- list(adapt_k_thresh = adapt_k_thresh,
                     seq_alpha = seq_alpha,
                     pop_temper = pop_temper,
                     final_infl = final_infl,
-                    lags = lags,
-                    cores = as.integer(ncores_per))
+                    lags = lags)
 
 
 
 
-    if (ncores_runs > 1 && multiprocess) {
+    # set up parallel processing stuff
+    ncores_max <- parallel::detectCores()
+
+
+    if(num_processes > ncores_max){
+        cli_warn("Inputted number of processes to spawn is greater than detected number of cores on machine")
+    }else if(num_processes == 0){
+        if(multiprocess){# if multiprocess then spawn min(runs, max cores) processes
+            num_processes <- min(runs, ncores_max)
+        }else{
+            num_processes <- 1
+        }
+    }else{
+        # make sure we're not spawning more proccesses than runs
+        num_processes <- min(runs, num_processes)
+    }
+
+    if (num_threads_per_process == 0) {
+        if(!multiprocess || num_processes == 1){
+            # if no multiprocessing then the single process gets all threads
+            num_threads_per_process <- ncores_max
+        }else{
+            # else each process gets ncores_max/num_processes threads
+            num_threads_per_process <- floor(ncores_max/num_processes)
+            num_threads_per_process <- max(1, num_threads_per_process)
+        }
+    }
+    num_threads_per_process <- as.integer(num_threads_per_process)
+
+
+
+
+    if (num_processes > 1 && multiprocess && runs > 1) {
         `%oper%` <- `%dorng%`
         of <- if (Sys.info()[["sysname"]] == "Windows") {
             tempfile(pattern = paste0("smc_", substr(Sys.time(), 1, 10)), fileext = ".txt")
@@ -258,21 +271,43 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
             ""
         }
 
+        # this makes a cluster using socket (NOT FORK) with
         if (!silent)
-            cl <- makeCluster(ncores_runs, outfile = of, methods = FALSE,
+            cl <- makeCluster(num_processes, outfile = of, methods = FALSE,
                               useXDR = .Platform$endian != "little")
         else
-            cl <- makeCluster(ncores_runs, methods = FALSE,
+            cl <- makeCluster(num_processes, methods = FALSE,
                               useXDR = .Platform$endian != "little")
-        doParallel::registerDoParallel(cl, cores = ncores_runs)
+        # this makes it avoid printing the loading required package message each time
+        parallel::clusterEvalQ(cl, {
+            suppressPackageStartupMessages(library(foreach))
+            suppressPackageStartupMessages(library(rngtools))
+            suppressPackageStartupMessages(library(gredist))
+        })
+        # weird code, probably remove in production and find better way to ensure printing
+        # but essentially makes it so only one process will print but if more runs then processes
+        # it doesn't just print once
+        parallel::clusterEvalQ(cl, {
+            if (!exists("is_chain1", envir = .GlobalEnv)) {
+                is_chain1 <- FALSE
+            }
+            NULL
+        })
+        doParallel::registerDoParallel(cl, cores = num_processes)
         on.exit(stopCluster(cl))
     } else {
         `%oper%` <- `%do%`
     }
 
+    control[["cores"]] <- num_threads_per_process
+
     t1 <- Sys.time()
     all_out <- foreach(chain = seq_len(runs), .inorder = FALSE, .packages="gredist") %oper% {
-        run_verbosity <- if (chain == 1 || !multiprocess) verbosity else 0
+        if(chain == 1){
+            is_chain1 <- T
+        }
+
+        run_verbosity <- if (is_chain1 || !multiprocess) verbosity else 0
         t1_run <- Sys.time()
 
         algout <- smc_plans(nsims, adj, counties, pop, ndists,
@@ -378,19 +413,21 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
             seq_alpha = seq_alpha,
             pop_temper = pop_temper,
             runtime = as.numeric(t2_run - t1_run, units = "secs"),
-            num_threads = ncores_per,
             parent_index_mat = algout$parent_index,
             original_ancestors_mat = algout$original_ancestors_mat,
-            nunique_original_ancestors=nunique_original_ancestors
+            nunique_original_ancestors=nunique_original_ancestors,
+            num_processes = num_processes,
+            num_threads = num_threads_per_process
         )
 
         algout
     }
+    t2 <- Sys.time()
     if (verbosity >= 2) {
-        t2 <- Sys.time()
         cli_text("{format(nsims*runs, big.mark=',')} plans sampled in
                  {format(t2-t1, digits=2)}")
     }
+
 
     plans <- do.call(cbind, lapply(all_out, function(x) x$plans))
     wgt <- do.call(c, lapply(all_out, function(x) x$wgt))
@@ -410,6 +447,8 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
                             n_eff = all_out[[1]]$n_eff,
                             compactness = compactness,
                             constraints = constraints,
+                            pop_bounds = pop_bounds,
+                            entire_runtime = t2-t1,
                             version = packageVersion("gredist"),
                             diagnostics = l_diag)
     if (runs > 1) {

@@ -134,7 +134,7 @@ redist_mergesplit <- function(map, nsims,
     }
     if (length(init_plan) == 0L || isTRUE(init_plan == "sample")) {
         init_plan <- as.integer(get_plans_matrix(
-            redist_smc(map, 10, counties, resample = FALSE, ref_name = FALSE, silent = TRUE, ncores = 1))[, 1])
+            redist_smc(map, 10, counties, resample = FALSE, ref_name = FALSE, silent = TRUE, num_processes = 1))[, 1])
         if (is.null(init_name)) init_name <- "<init>"
     }
 

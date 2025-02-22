@@ -107,10 +107,6 @@ generic_redist_gsmc <- function(
     pop <- map_params$pop
     pop_bounds <- map_params$pop_bounds
 
-    return(counties)
-
-
-
 
     # handle particle inits
     if (is.null(init_region_ids_mat)) {

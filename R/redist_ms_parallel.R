@@ -105,7 +105,7 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
         init_plans <- get_plans_matrix(
             redist_smc(map, chains, counties, compactness, constraints,
                        resample = TRUE, adapt_k_thresh = adapt_k_thresh,
-                       ref_name = FALSE, verbose = verbose, silent = silent, ncores = 1))
+                       ref_name = FALSE, verbose = verbose, silent = silent, num_processes = 1))
         if (is.null(init_name))
             init_names <- paste0("<init> ", seq_len(chains))
         else
@@ -207,7 +207,7 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
 
     out_par <- foreach(chain = seq_len(chains), .inorder = FALSE, .packages="gredist") %dorng% {
         if (!silent) cat("Starting chain ", chain, "\n", sep = "")
-        run_verbosity <- if (chain == 1 || verbosity == 3) verbosity else 0
+        run_verbosity <- if (chain == 1 && verbosity == 3) verbosity else 0
         t1_run <- Sys.time()
         algout <- ms_plans(nsims, adj, init_plans[, chain], counties, pop,
                            ndists, pop_bounds[2], pop_bounds[1], pop_bounds[3],
