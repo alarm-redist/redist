@@ -589,49 +589,49 @@ double compute_uniform_graph_plan_adj_log_incremental_weight(
         if(DEBUG_VERBOSE) Rprintf("Computed split prob %f\n", std::exp(log_splitting_prob));
     }
 
-    double log_constraint_ratio = 0;
+    double region1_score, region2_score, merged_region_score;
 
-    double log_region1_score, log_region2_score, log_merged_region_score;
-
-    log_region1_score = log_region2_score = log_merged_region_score = 0;
+    region1_score = region2_score = merged_region_score = 0;
 
     // compute if any constraints 
     if(scoring_function.any_constraints){
         // compute scoring functions
-        log_region1_score = scoring_function.compute_log_region_score(
+        region1_score = scoring_function.compute_region_score(
             plan, region1_id, is_final_plan
         );
-        log_region2_score = scoring_function.compute_log_region_score(
+        region2_score = scoring_function.compute_region_score(
             plan, region2_id, is_final_plan
         );
-        log_merged_region_score = scoring_function.compute_log_merged_region_score(
+        merged_region_score = scoring_function.compute_merged_region_score(
             plan, region1_id, region2_id, is_final_plan
         );
     }
 
-
-
     // The weight is 
-    //      - Numerator: e^J(new_region1+new_region2)
-    //      - Denominator: multid_selection_prob * boundary_len * num_valid_adj_regions * e^J(old_region)
+    //      - Numerator: e^-(J(new_region1)+J(new_region2))
+    //      - Denominator: multid_selection_prob * boundary_len * num_valid_adj_regions * e^-J(old_region)
+    // So
+    //      - log numerator: -(J(new_region1)+J(new_region2))
+    //      - log Denominator: log(multid_selection_prob) + log(boundary_len) + log(num_valid_adj_regions) - J(old_region)
 
-    const double log_numerator = log_region1_score + log_region2_score;
-    const double log_denom = log_num_valid_adj_regions + log_boundary_len + log_merged_region_score + log_splitting_prob;
+    const double log_numerator = -1.0*(region1_score + region2_score);
+    const double log_denom = log_num_valid_adj_regions + log_boundary_len + log_splitting_prob - merged_region_score;
 
+
+    if(DEBUG_VERBOSE){
     int region1_size = plan.region_sizes(region1_id);
     int region2_size = plan.region_sizes(region2_id);
-    if(DEBUG_VERBOSE){
     Rprintf("Doing (%d,%d) - sizes (%d, %d): len %f, split prob %f, ratio %f!\n", 
         region1_id, region2_id, region1_size, region2_size, std::exp(log_boundary_len), 
-        std::exp(log_splitting_prob), std::exp(log_numerator - log_merged_region_score));
+        std::exp(log_splitting_prob), std::exp(log_numerator - merged_region_score));
 
     Rprintf("Numerator - %f * %f\n", 
-        std::exp(log_region1_score), std::exp(log_region2_score)
+        std::exp(region1_score), std::exp(region2_score)
     );
 
     Rprintf("Denominator - %f * %f * %f * %f \n", 
         std::exp(log_num_valid_adj_regions), std::exp(log_boundary_len),
-        std::exp(log_merged_region_score), std::exp(log_splitting_prob)
+        std::exp(merged_region_score), std::exp(log_splitting_prob)
     );}
 
     // multiply the boundary length and selection probability by adding the logs
@@ -854,36 +854,36 @@ double compute_log_optimal_weights(
         }
 
         // add constraint ratio
-        double log_constraint_ratio = 0;
+        double score_ratio = 0.0;
 
         // compute if any constraints 
         if(scoring_function.any_constraints){
-        // compute scoring functions
-        const double log_region1_score = scoring_function.compute_log_region_score(
-            plan, region1_id, is_final_plan
-        );
-        const double log_region2_score = scoring_function.compute_log_region_score(
-            plan, region2_id, is_final_plan
-        );
-        const double log_merged_region_score = scoring_function.compute_log_merged_region_score(
-            plan, region1_id, region2_id, is_final_plan
-        );
-        // log ratio is log score merged - (log region1 + log region2)
-        log_constraint_ratio = log_merged_region_score - (log_region1_score + log_region2_score);
+            // compute scoring functions
+            const double region1_score = scoring_function.compute_region_score(
+                plan, region1_id, is_final_plan
+            );
+            const double region2_score = scoring_function.compute_region_score(
+                plan, region2_id, is_final_plan
+            );
+            const double merged_region_score = scoring_function.compute_merged_region_score(
+                plan, region1_id, region2_id, is_final_plan
+            );
+            // log ratio is (log region1 + log region2) - log score merged
+            score_ratio = region1_score + region2_score - merged_region_score;
         }
 
         // int region1_size = plan.region_sizes(region1_id);
         // int region2_size = plan.region_sizes(region2_id);
         // Rprintf("Adding (%d,%d) - sizes (%d, %d): len %f, split prob %f, ratio %f!\n", 
         //     region1_id, region2_id, region1_size, region2_size, std::exp(eff_log_boundary_len), 
-        //     std::exp(log_splitting_prob), std::exp(log_constraint_ratio));
+        //     std::exp(log_splitting_prob), std::exp(score_ratio));
 
 
         // Now the term is 
         //      - log_splitting_prob
         //      - eff_log_boundary_len
-        //      -log_constraint_ratio
-        incremental_weight += std::exp(log_splitting_prob + eff_log_boundary_len + log_constraint_ratio);
+        //      -score_ratio
+        incremental_weight += std::exp(log_splitting_prob + eff_log_boundary_len + score_ratio);
 
     }
 

@@ -114,6 +114,7 @@ class AnyRegionSplittingSchedule : public SplittingSchedule {
  * Derived Class for one custom split schedule. This is where only one type
  * of split is allowed in each step 
  * 
+ * BE VERY CAREFUL WITH THIS! Not all configurations are guaranteed to be correct
  */
 class OneCustomSplitSchedule : public SplittingSchedule {
 

@@ -27,7 +27,7 @@
 #'
 #' @export
 redist_gsmc <- function(
-        map, nsims, counties = NULL,
+        map, nsims, counties = NULL, constraints = list(),
         runs = 1L,
         num_splitting_steps = NULL,
         estimate_cut_k = TRUE,
@@ -39,12 +39,14 @@ redist_gsmc <- function(
        merge_prob_type = "uniform",
        resample = TRUE,
        num_processes=0L, num_threads_per_process=0L,
-       multiprocess=FALSE,
+       multiprocess=TRUE,
        pop_temper = 0,
        init_region_ids_mat = NULL,
        init_region_sizes_mat = NULL,
        custom_size_split_list = NULL,
+       ref_name = NULL,
        verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE){
+
 
     splitting_params <- list()
 
@@ -107,7 +109,10 @@ redist_gsmc <- function(
 
 
     generic_redist_gsmc(
-        map=map, nsims=nsims, counties = counties, runs = runs,
+        map=map, nsims=nsims,
+        counties_q = rlang::enquo(counties), # pass quosure for validation function
+        constraints=constraints,
+        runs = runs,
         alg_name=alg_type,
         split_district_only = split_district_only, weight_type = weight_type,
         sampling_space=GRAPH_PLAN_SPACE_SAMPLING,
@@ -125,6 +130,7 @@ redist_gsmc <- function(
         init_region_sizes_mat = init_region_sizes_mat,
         custom_size_split_list=custom_size_split_list,
         num_splitting_steps = num_splitting_steps,
+        ref_name = ref_name,
         verbose = verbose, silent = silent, diagnostic_mode = diagnostic_mode)
 
 }

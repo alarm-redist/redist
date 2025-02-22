@@ -14,13 +14,21 @@
 #'
 #' @param map A `redist_map`
 #' @param V The number of vertices in the plan graph.
-#' @param counties The county label input
+#' @param counties County thing
+#' @param counties_q The quosure in the county label input ie
+#' `counties_q <- rlang::enquo(counties)` must have been called in
+#' the nested function.
 #'
 #'
 #' @returns A counties label vector
-validate_counties <- function(map, adj_list, V, counties){
+validate_counties <- function(map, adj_list, V, counties, counties_q=NULL){
 
-    counties <- rlang::eval_tidy(rlang::enquo(counties), map)
+    if(!is.null(counties_q)){
+        counties <- rlang::eval_tidy(counties_q, map)
+    }else{
+        counties <- rlang::eval_tidy(rlang::enquo(counties), map)
+    }
+
     if (is.null(counties)) {
         counties <- rep(1, V)
     } else {
@@ -56,7 +64,7 @@ validate_counties <- function(map, adj_list, V, counties){
 #'
 #' @returns A list with 0-indexed adjancency list, county label vector,
 #' population bounds vector, and population vector.
-get_map_parameters <- function(map, counties=NULL){
+get_map_parameters <- function(map, counties=NULL, counties_q=NULL){
 
     # get the map in adjacency form
     map <- validate_redist_map(map)
@@ -64,7 +72,7 @@ get_map_parameters <- function(map, counties=NULL){
     adj <- get_adj(map)
 
 
-    counties <- validate_counties(map, adj, V, counties)
+    counties <- validate_counties(map, adj, V, counties, counties_q)
 
 
     # get population stuff

@@ -603,7 +603,7 @@ List run_redist_gsmc(
                 smc_step_num, plans_ptr_vec[0]->num_regions
                 );
 
-            if(verbosity >= 3){
+            if(verbosity >= 3 && splitting_size_regime == SplittingSizeScheduleType::OneCustomSize){
             Rprintf("The following region sizes can split:\n");
             for (size_t i = 1; i <= splitting_schedule_ptr->ndists; i++)
             {                
@@ -730,7 +730,7 @@ List run_redist_gsmc(
             if(wgt_type == "optimal"){
                 // TODO make more princicpal in the future 
                 // for now its just if not district only and not final round 
-                if (verbosity >= 3) Rprintf("Computing Weights:\n");
+                if (verbosity >= 3) Rprintf("Computing Optimal Weights:\n");
                 compute_all_plans_log_optimal_weights(
                     pool,
                     map_params, *splitting_schedule_ptr,
@@ -742,6 +742,7 @@ List run_redist_gsmc(
                     verbosity
                 );
             }else if(wgt_type == "adj_uniform" && use_graph_plan_space){
+                if (verbosity >= 3) Rprintf("Computing Simple Backwards Kernel Weights:\n");
                 get_all_plans_uniform_adj_weights(
                     pool,
                     map_params, *splitting_schedule_ptr,

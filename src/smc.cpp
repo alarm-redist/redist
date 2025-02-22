@@ -258,7 +258,9 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
     }
 
     if (constraints.size() > 0) {
+    // i loops over the number of plans
     for (int i = 0; i < N; i++) {
+        // j loops over the number of districts
         for (int j : distr_calc) {
             lp[i] += add_constraint("pop_dev", constraints,
                                       [&] (List l) -> double {

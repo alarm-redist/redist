@@ -66,7 +66,8 @@
 #' plans.
 #'
 generic_redist_gsmc <- function(
-        map, nsims, counties = NULL, runs = 1L, alg_name,
+        map, nsims, counties = NULL, constraints = list(),
+        runs = 1L, alg_name,
         split_district_only = FALSE, weight_type = "optimal",
         sampling_space, splitting_method, splitting_params,
         ms_freq = 0,
@@ -75,33 +76,38 @@ generic_redist_gsmc <- function(
         merge_prob_type = "uniform",
         resample = TRUE,
         num_processes=0L, num_threads_per_process=0L,
-        multiprocess=FALSE,
+        multiprocess=TRUE,
         pop_temper = 0,
         init_region_ids_mat = NULL,
         init_region_sizes_mat = NULL,
         custom_size_split_list = NULL,
         num_splitting_steps = NULL,
-        verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE)
+        ref_name = NULL,
+        verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE,
+        counties_q = NULL)
 {
+
 
     # note that merge split is not supported at the moment
     if(run_ms){
         cli_abort("Merge Split not supported at this moment!")
     }
 
-    # no constraints
-    constraints <- list()
+    # drop data attribute
+    constraints <- as.list(constraints)
     # get the total number of districts
     ndists <- attr(map, "ndists")
 
-    # get the map parameters
-    map_params <- get_map_parameters(map, counties)
+
+    map_params <- get_map_parameters(map, counties, counties_q)
     map <- map_params$map
     V <- map_params$V
     adj_list <- map_params$adj_list
     counties <- map_params$counties
     pop <- map_params$pop
     pop_bounds <- map_params$pop_bounds
+
+    return(counties)
 
 
 
@@ -221,7 +227,7 @@ generic_redist_gsmc <- function(
     }
 
     if (num_threads_per_process == 0) {
-        if(!multiprocess){
+        if(!multiprocess || num_processes == 1){
             # if no multiprocessing then the single process gets all threads
             num_threads_per_process <- ncores_max
         }else{
