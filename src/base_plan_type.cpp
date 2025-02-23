@@ -334,87 +334,69 @@ void Plan::Rprint() const{
 
 
 
-//' Selects a multidistrict with probability proportional to its d_nk value and
-//' returns the log probability of the selected region
+//' Selects a valid multidistrict to split uniformly at random 
 //'
 //' Given a plan object with at least one multidistrict this function randomly
-//' selects a multidistrict with probability proporitional to its d_nk value
-//' (relative to all multidistricts) and returns the log of the probability that
-//' region was chosen.
+//' selects a valid multidistrict to split with uniform probability (ie it is
+//' one over the number of valid multidistricts to split in the plan.) and 
+//' returns the log of the probability that region was chosen.
 //'
-//'
-//' @title Choose multidistrict to split
 //'
 //' @param region_to_split an integer that will be updated by reference with the
 //' id number of the region selected to split
-//' @param min_region_cut_size The smallest possible region size that can potentially
-//' be split. So anything smaller than this will not be split.
+//' @param valid_region_sizes_to_split A 1-indexed vector mapping region sizes to
+//' whether or not they can be split. So `valid_region_sizes_to_split[r] == true`
+//' means that multidistricts of size r can be split.  
 //'
 //' @details `region_id_to_split` is set to the id of the region selected
 //'
-//' @return the log probability that region was chosen
+//' @return the region id that was chosen to be split 
 //'
-double Plan::choose_multidistrict_to_split(
-        int &region_id_to_split,  std::vector<bool> const &valid_region_sizes_to_split
+int Plan::choose_multidistrict_to_split(
+        std::vector<bool> const &valid_region_sizes_to_split
         ){
 
 
     if(num_multidistricts < 1){
         throw Rcpp::exception("ERROR: Trying to find multidistrict to split when there are none!\n");
     }
-    if(num_multidistricts == 1){
-        region_id_to_split = region_sizes.index_max();
-        return 0.0;
+    if(num_multidistricts == 1){ // if just one multidistrict return that 
+        int region_id_to_split = region_sizes.index_max();
+        return region_id_to_split;
     }
 
-    // count total
-    int total_multi_ds = 0;
-
     // make vectors with cumulative d value and region label for later
-    std::vector<int> valid_region_ids;
+    std::vector<int> valid_region_ids, associated_region_sizes;
+    valid_region_ids.reserve(num_multidistricts);
+    associated_region_sizes.reserve(num_multidistricts);
 
 
-    arma::vec region_unnormed_prob(num_multidistricts, arma::fill::zeros);
-
-    // r_int_wgt(int max, vec cum_wgts)
-    
-    
-
-    // REprintf("[ ");
-    // Iterate over all regions
-    int vec_index=0;
     for(int region_id = 0 ; region_id < num_regions; region_id++) {
+        auto region_size = region_sizes(region_id);
 
-        int region_size = region_sizes(region_id);
-
-        // collect info if valid region to split
+        // if valid then add id to vector 
         if(valid_region_sizes_to_split[region_size]){
-            // Add that regions d value to the total
-            total_multi_ds += region_size;
             // add the count and label to vector
             valid_region_ids.push_back(region_id);
-            region_unnormed_prob(vec_index) = region_size;
-            vec_index++;
+            associated_region_sizes.push_back(region_size);
         }
     }
 
+    auto num_candidates = valid_region_ids.size();
 
-    // Now we only want to consider indices 
-    int idx = r_int_unnormalized_wgt(region_unnormed_prob.head(vec_index));
+    // pick index unif at random 
+    // int idx = r_int(num_candidates);
 
-    region_id_to_split = valid_region_ids.at(idx);
+    arma::vec region_wgts(valid_region_ids.size());
+    for (size_t i = 0; i < valid_region_ids.size(); i++)
+    {
+        region_wgts(i) = std::pow(associated_region_sizes[i], SELECTION_ALPHA);
+    }
+    int idx = r_int_unnormalized_wgt(region_wgts); 
+    
+    int region_id_to_split = valid_region_ids.at(idx);
 
-    // REprintf("Here in split 3.5 - picked idx %d !\n", idx);
-
-    double log_prob = std::log(
-        static_cast<double>(region_unnormed_prob.at(idx))
-        ) - std::log(
-                static_cast<double>(total_multi_ds)
-        );
-
-    // REprintf("Here in split 4\n");
-
-    return log_prob;
+    return region_id_to_split;
 }
 
 

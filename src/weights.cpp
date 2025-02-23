@@ -489,44 +489,43 @@ double get_log_retroactive_splitting_prob(
         const std::vector<bool> &valid_region_sizes_to_split,
         const int region1_id, const int region2_id
 ){
-
-    // count total dvals of all the multidistricts
-    int total_multi_ds = 0;
-
     if(DEBUG_VERBOSE) Rprintf("Possible options: ");
 
-    // Iterate over all regions
-    for(int region_id = 0; region_id < plan.num_regions; region_id++) {
-        int region_size = plan.region_sizes(region_id);
-        // ignore if this is not a region size that could be split 
-        if(!valid_region_sizes_to_split[region_size]) continue;
+    // make vectors with cumulative d value and region label for later
+    std::vector<int> associated_region_sizes;
+    associated_region_sizes.reserve(plan.num_multidistricts);
 
-        // collect info if multidistrict and not the two we started with
-        if(region_size > 1 && region_id != region1_id && region_id != region2_id){
-            // Add that regions d value to the total
+    // add the unioned region
+    auto unioned_region_size = plan.region_sizes(region1_id) + plan.region_sizes(region2_id);
+    associated_region_sizes.push_back(unioned_region_size);
+    if (DEBUG_VERBOSE) Rprintf(" (unioned) %d\n", plan.region_sizes(region1_id) + plan.region_sizes(region2_id));
+
+    for(int region_id = 0 ; region_id < plan.num_regions; region_id++) {
+        auto region_size = plan.region_sizes(region_id);
+
+        // add if valid multidistrict and not the two we started with
+        if(valid_region_sizes_to_split[region_size] &&
+            region_size > 1 && region_id != region1_id && 
+            region_id != region2_id){
             if (DEBUG_VERBOSE) Rprintf(" %d ", region_size);
-            total_multi_ds += region_size;
+            // add the count and label to vector
+            associated_region_sizes.push_back(region_size);
         }
     }
 
-    // Now get the sum of dnk values of two regions aka the unioned old region
-    int unioned_region_dnk = plan.region_sizes(region1_id) + plan.region_sizes(region2_id);
-
-    if (DEBUG_VERBOSE) Rprintf(" (unioned) %d\n", unioned_region_dnk);
-
-    // update the total number of multi district dvals with the value the union region would have been
-    total_multi_ds += unioned_region_dnk;
-
     
+    auto potential_candidates = associated_region_sizes.size();
+    arma::vec region_wgts(potential_candidates);
 
-    // so prob of picking is the sum of the two regions dnk over the dnk of all
-    // multidistricts
+    for (size_t i = 0; i < potential_candidates; i++)
+    {
+        region_wgts(i) = std::pow(associated_region_sizes[i], SELECTION_ALPHA);
+    }
+    int idx = r_int_unnormalized_wgt(region_wgts); 
 
-    double log_prob = std::log(
-        static_cast<double>(unioned_region_dnk)
-    ) - std::log(
-            static_cast<double>(total_multi_ds)
-    );
+
+    // so prob of picking is weight of first over sum
+    double log_prob = std::log(static_cast<double>(region_wgts(0))) - std::log(static_cast<double>(arma::sum(region_wgts)));
 
     // Rprintf("For regions (%d,%d), size (%d,%d) - Prob is %d/%d, so log is %.5f\n",
     // region1_id, region2_id, 
@@ -537,7 +536,6 @@ double get_log_retroactive_splitting_prob(
     return log_prob;
 
 }
-
 
 
 

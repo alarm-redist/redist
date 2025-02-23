@@ -146,8 +146,8 @@ void run_smc_step(
                 region_id_to_split = new_plans_ptr_vec.at(i)->remainder_region;
             }else{                
                 // if generalized split pick a region to try to split
-                new_plans_ptr_vec.at(i)->choose_multidistrict_to_split(
-                    region_id_to_split, splitting_schedule.valid_region_sizes_to_split
+                region_id_to_split = new_plans_ptr_vec.at(i)->choose_multidistrict_to_split(
+                    splitting_schedule.valid_region_sizes_to_split
                 );
             }
             size_of_region_to_split = new_plans_ptr_vec.at(i)->region_sizes(region_id_to_split);

@@ -59,12 +59,12 @@
 #' standard errors. Output will only be shown for the first run. For
 #' compatibility with MCMC methods, runs are identified with the `chain`
 #' column in the output.
-#' @param ncores How many cores to use to parallelize plan generation within each
+#' @param num_processes How many cores to use to parallelize plan generation within each
 #' run. The default, 0, will use the number of available cores on the machine
 #' as long as `nsims` and the number of units is large enough. If `runs>1`
 #' you will need to set this manually. If more than one core is used, the
 #' sampler output will not be fully reproducible with `set.seed()`. If full
-#' reproducibility is desired, set `ncores=1`.
+#' reproducibility is desired, set `num_processes=1`.
 #' @param init_particles A matrix of partial plans to begin sampling from. For
 #' advanced use only.  The matrix must have `nsims` columns and a row for
 #' every precinct. It is important to ensure that the existing districts meet
@@ -124,7 +124,7 @@
 #' redist_smc(fl_map, 1000, runs = 2)
 #'
 #' # One run with multiple cores
-#' redist_smc(fl_map, 1000, ncores = 2)
+#' redist_smc(fl_map, 1000, num_processes = 2)
 #' }
 #'
 #' @concept simulate
