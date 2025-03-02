@@ -28,7 +28,7 @@ public:
     // Returns a vector of all the valid edges in the tree 
     std::vector<EdgeCut> get_all_valid_pop_edge_cuts_in_directed_tree(
         const MapParams &map_params, Plan &plan,
-        Tree &ust, const int root, 
+        Tree &ust, const int root,
         const int min_potential_cut_size, const int max_potential_cut_size,
         std::vector<int> const &smaller_cut_sizes_to_try,
         const int region_id_to_split
@@ -37,7 +37,7 @@ public:
     // Takes a spanning tree and returns the edge to cut if successful
     virtual std::pair<bool,EdgeCut> select_edge_to_cut(
         const MapParams &map_params, Plan &plan,
-        Tree &ust, const int root, 
+        Tree &ust, const int root, RNGState &rng_state,
         const int min_potential_cut_size, const int max_potential_cut_size,
         std::vector<int> const &smaller_cut_sizes_to_try,
         const int region_id_to_split) = 0;
@@ -80,7 +80,7 @@ public:
 
     std::pair<bool,EdgeCut> select_edge_to_cut(
         const MapParams &map_params, Plan &plan,
-        Tree &ust, const int root, 
+        Tree &ust, const int root, RNGState &rng_state,
         const int min_potential_cut_size, const int max_potential_cut_size, 
         std::vector<int> const &smaller_cut_sizes_to_try,
         const int region_id_to_split);
@@ -104,7 +104,7 @@ public:
 
     std::pair<bool,EdgeCut> select_edge_to_cut(
         const MapParams &map_params, Plan &plan,
-        Tree &ust, const int root, 
+        Tree &ust, const int root, RNGState &rng_state,
         const int min_potential_cut_size, const int max_potential_cut_size, 
         std::vector<int> const &smaller_cut_sizes_to_try,
         const int region_id_to_split);
@@ -133,7 +133,7 @@ public:
 
     std::pair<bool,EdgeCut> select_edge_to_cut(
         const MapParams &map_params, Plan &plan,
-        Tree &ust, const int root, 
+        Tree &ust, const int root, RNGState &rng_state,
         const int min_potential_cut_size, const int max_potential_cut_size, 
         std::vector<int> const &smaller_cut_sizes_to_try,
         const int region_id_to_split);
@@ -161,7 +161,7 @@ public:
 
     std::pair<bool,EdgeCut> select_edge_to_cut(
         const MapParams &map_params, Plan &plan,
-        Tree &ust, const int root, 
+        Tree &ust, const int root, RNGState &rng_state,
         const int min_potential_cut_size, const int max_potential_cut_size, 
         std::vector<int> const &smaller_cut_sizes_to_try,
         const int region_id_to_split);
@@ -187,7 +187,7 @@ public:
 
     std::pair<bool,EdgeCut> select_edge_to_cut(
         const MapParams &map_params, Plan &plan,
-        Tree &ust, const int root, 
+        Tree &ust, const int root, RNGState &rng_state,
         const int min_potential_cut_size, const int max_potential_cut_size, 
         std::vector<int> const &smaller_cut_sizes_to_try,
         const int region_id_to_split);

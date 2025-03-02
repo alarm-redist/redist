@@ -61,18 +61,20 @@ class GroupHingeConstraint : public Constraint {
 // scoring function 
 class ScoringFunction {
     private:
-        std::vector<std::unique_ptr<Constraint>> constraint_ptrs;
+        std::vector<std::unique_ptr<Constraint>> constraint_ptrs; // These are constraints called on every split
         std::vector<std::unique_ptr<Constraint>> non_final_plan_constraint_ptrs; // these are constraints that are not called on the final round
     
     public:
         ScoringFunction(
             const MapParams &map_params, Rcpp::List const &constraints, 
-            bool const do_pop_temper, double const pop_temper);
+            bool const do_pop_temper, double const pop_temper,
+            bool const score_districts_only = false);
 
         int num_non_final_constraints; // applied to all but final split
         int num_final_constraints; // applied to only final split
         int all_rounds_constraints; // applied to all splits
         bool any_constraints;
+        bool score_districts_only; // If the score should only apply to districts (for backwards compatibility)
 
         double compute_region_score(const Plan &plan, int const region_id, bool const is_final) const;
         double compute_merged_region_score(const Plan &plan, int const region1_id, int const region2_id, bool const is_final) const;

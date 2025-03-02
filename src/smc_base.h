@@ -22,7 +22,14 @@ using namespace arma;
  * Get the index of the k-th smallest element of x
  */
 // TESTED
-int select_k(std::vector<double> x, int k);
+int global_rng_select_k(std::vector<double> x, int k);
+
+
+/*
+ * Get the index of the k-th smallest element of x
+ */
+// TESTED
+int select_k(std::vector<double> x, int k, RNGState &rng_state);
 
 /*
  * Make a progress bar configuration with format string `fmt`

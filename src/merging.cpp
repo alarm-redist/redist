@@ -9,6 +9,9 @@
 
 
 
+// Break into 
+
+
 // Merges two regions together in a plan
 // DOES NOT CHECK FOR ADJACENCY
 // UNLESS SPLIT AFTER THIS BREAKS THE PLAN!!
@@ -92,8 +95,6 @@ int run_merge_split_step_on_a_plan(
     int num_successes = 0;
 
 
-
-
     // get all adjacent pairs in initial plan
     auto adj_pairs_and_boundary_len_vec = get_valid_adj_regions_and_boundary_lens_vec(
         map_params.g, plan, split_district_only
@@ -113,8 +114,6 @@ int run_merge_split_step_on_a_plan(
     std::discrete_distribution<> proposed_pair_index_sampler;
 
 
-
-
     // Seed the random generator with the current time
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -127,6 +126,8 @@ int run_merge_split_step_on_a_plan(
 
     // Make sure the new plan has the same data as the old
     new_plan = plan;
+
+    RNGState rng_state;
 
     for (int j = 0; j < nsteps_to_run; j++){
 
@@ -205,7 +206,7 @@ int run_merge_split_step_on_a_plan(
         bool successful_split = new_plan.attempt_split(
                 map_params, splitting_schedule,
                 ust, tree_splitter, 
-                visited, ignore, 
+                visited, ignore, rng_state,
                 min_region_cut_size, plan_specific_max_region_cut_size,
                 splitting_schedule.all_regions_smaller_cut_sizes_to_try[new_plan.region_sizes(merged_id)],
                 split_district_only,

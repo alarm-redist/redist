@@ -14,6 +14,7 @@
  */
 void estimate_cut_k(
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    RNGState &rng_state,
     int &k, int const last_k, 
     const std::vector<double> &unnormalized_weights, double thresh,
     double tol, std::vector<std::unique_ptr<Plan>> const &plan_ptrs_vec, 
@@ -103,7 +104,7 @@ void estimate_cut_k(
         int result = sample_sub_ust(map_params.g, ust, V, root, visited, ignore,
                                     map_params.pop, 
                                     min_possible_cut_size*lower, max_possible_cut_size*upper, 
-                                    map_params.counties, map_params.cg);
+                                    map_params.counties, map_params.cg, rng_state);
         if (result != 0) {
             idx--;
             continue;
@@ -150,7 +151,7 @@ void estimate_cut_k(
         double sum_within = 0;
         int n_ok = 0;
         for (int i = 0; i < N_adapt; i++) {
-            int rand_index = r_int(k);
+            int rand_index = rng_state.r_int(k);
             if(rand_index >= devs.at(i).size()){
                 REprintf("For k=%d In est_cut_k rand_index = %d  bigger than devs %d size %d\n",
                 k, rand_index, i, (int)  devs.at(i).size());

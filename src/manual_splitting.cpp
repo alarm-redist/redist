@@ -111,6 +111,8 @@ List draw_a_tree_on_a_region(
     std::vector<int> pop_below(V, 0);
     std::vector<int> tree_vertex_parents(V, -2);
 
+    // RNGState rng_state();
+    RNGState rng_state;
 
 
     // Counts the how many attempts it took to draw the tree
@@ -122,7 +124,7 @@ List draw_a_tree_on_a_region(
     while(!successful_split_made){
         // try to draw a tree 
         successful_split_made = plan->draw_tree_on_region(map_params, region_id_to_draw_tree_on,
-        ust, visited, ignore, root);
+        ust, visited, ignore, root, rng_state);
         num_attempts++;
     }
 
@@ -228,7 +230,7 @@ List perform_a_valid_multidistrict_split(
     }
 
 
-
+    RNGState rng_state;
 
     // make new region ids the split one and num_regions
     int new_region1_id = region_id_to_split; 
@@ -244,7 +246,7 @@ List perform_a_valid_multidistrict_split(
  
         // Try to draw a tree on region
         bool tree_drawn = plan->draw_tree_on_region(map_params, region_id_to_split,
-            ust, visited, ignore, uncut_tree_root);
+            ust, visited, ignore, uncut_tree_root, rng_state);
 
         // Try again and increase counter if tree not drawn
         if (!tree_drawn){
@@ -261,7 +263,7 @@ List perform_a_valid_multidistrict_split(
 
         // Now try to select an edge to cut
         std::pair<bool,EdgeCut> edge_search_result = tree_splitter->select_edge_to_cut(
-            map_params, *plan, ust, uncut_tree_root,
+            map_params, *plan, ust, uncut_tree_root, rng_state,
             split_dval_min, split_dval_max, 
             smaller_cut_sizes_to_try,
             region_id_to_split

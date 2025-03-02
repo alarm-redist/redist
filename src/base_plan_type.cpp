@@ -353,7 +353,9 @@ void Plan::Rprint() const{
 //' @return the region id that was chosen to be split 
 //'
 int Plan::choose_multidistrict_to_split(
-        std::vector<bool> const &valid_region_sizes_to_split
+        std::vector<bool> const &valid_region_sizes_to_split, 
+        RNGState &rng_state,
+        double const selection_alpha
         ){
 
 
@@ -390,9 +392,9 @@ int Plan::choose_multidistrict_to_split(
     arma::vec region_wgts(valid_region_ids.size());
     for (size_t i = 0; i < valid_region_ids.size(); i++)
     {
-        region_wgts(i) = std::pow(associated_region_sizes[i], SELECTION_ALPHA);
+        region_wgts(i) = std::pow(associated_region_sizes[i], selection_alpha);
     }
-    int idx = r_int_unnormalized_wgt(region_wgts); 
+    int idx = rng_state.r_int_unnormalized_wgt(region_wgts); 
     
     int region_id_to_split = valid_region_ids.at(idx);
 
@@ -446,7 +448,8 @@ int Plan::choose_multidistrict_to_split(
 //' @keyword internal
 //' @noRd
 bool Plan::draw_tree_on_region(const MapParams &map_params, const int region_to_draw_tree_on,
-        Tree &ust, std::vector<bool> &visited, std::vector<bool> &ignore, int &root) {
+        Tree &ust, std::vector<bool> &visited, std::vector<bool> &ignore, int &root,
+        RNGState &rng_state) {
 
     int V = map_params.g.size();
 
@@ -459,7 +462,10 @@ bool Plan::draw_tree_on_region(const MapParams &map_params, const int region_to_
     clear_tree(ust);
     // Get a tree
     int result = sample_sub_ust(map_params.g, ust, 
-    V, root, visited, ignore, map_params.pop, map_params.lower, map_params.upper, map_params.counties, map_params.cg);
+        V, root, visited, ignore, 
+        map_params.pop, map_params.lower, map_params.upper, 
+        map_params.counties, map_params.cg,
+        rng_state);
     // result == 0 means it was successful
     return(result == 0);
 }
@@ -579,12 +585,13 @@ void Plan::update_region_info_from_cut(
 bool Plan::attempt_split(const MapParams &map_params, const SplittingSchedule &splitting_schedule,
                  Tree &ust, TreeSplitter &tree_splitter,
                  std::vector<bool> &visited, std::vector<bool> &ignore, 
+                 RNGState &rng_state,
                  int const min_region_cut_size, int const max_region_cut_size, 
                  std::vector<int> const &smaller_cut_sizes_to_try,
                  const bool split_district_only, 
                  const int region_id_to_split, const int new_region_id)
 {
-    if(DEBUG_VERBOSE){
+    if(TREE_SPLITTING_DEBUG_VERBOSE){
     REprintf("Drawing tree on region %d which is size %d. Smallest/Biggest is (%d, %d)\n", 
     region_id_to_split, (int) region_sizes(region_id_to_split), min_region_cut_size,
     max_region_cut_size);
@@ -603,13 +610,13 @@ bool Plan::attempt_split(const MapParams &map_params, const SplittingSchedule &s
     
     // Try to draw a tree on region
     bool tree_drawn = draw_tree_on_region(map_params, region_id_to_split,
-        ust, visited, ignore, root);
+        ust, visited, ignore, root, rng_state);
 
     if(!tree_drawn) return false;
 
     // Now try to select an edge to cut
     std::pair<bool, EdgeCut> edge_search_result = tree_splitter.select_edge_to_cut(
-        map_params, *this, ust, root,
+        map_params, *this, ust, root, rng_state,
         min_region_cut_size, max_region_cut_size, 
         smaller_cut_sizes_to_try,
         region_id_to_split

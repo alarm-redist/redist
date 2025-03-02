@@ -19,7 +19,8 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
               int n_distr, double target, double lower, double upper, double rho,
               List constraints, List control, int k, int thin, int verbosity) {
     // re-seed MT
-    seed_rng((int) Rcpp::sample(INT_MAX, 1)[0]);
+    RNGState rng_state((int) Rcpp::sample(INT_MAX, 1)[0]);
+    global_seed_rng((int) Rcpp::sample(INT_MAX, 1)[0]);
 
     // unpack control params
     double thresh = (double) control["adapt_k_thresh"];
@@ -55,7 +56,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
 
     // find k and multipliers
     if (k <= 0) {
-        adapt_ms_parameters(g, n_distr, k, thresh, tol, init, counties, cg, pop, target);
+        adapt_ms_parameters(g, n_distr, k, thresh, tol, init, counties, cg, pop, target, rng_state);
     }
     if (verbosity >= 3)
         Rcout << "Using k = " << k << "\n";
@@ -63,7 +64,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     Graph dist_g = district_graph(g, init, n_distr);
     Graph new_dist_g;
     int distr_1, distr_2;
-    select_pair(n_distr, dist_g, distr_1, distr_2);
+    select_pair(n_distr, dist_g, distr_1, distr_2, rng_state);
     int n_accept = 0;
     int reject_ct;
     CharacterVector psi_names = CharacterVector::create(
@@ -89,12 +90,12 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
         // copy old map to 'working' memory in `idx+1`
         districts.col(idx+1) = districts.col(idx);
 
-        select_pair(n_distr, dist_g, distr_1, distr_2);
+        select_pair(n_distr, dist_g, distr_1, distr_2, rng_state);
 
 
         prop_lp = split_map_ms(g, ust, counties, cg, districts.col(idx+1),
                                distr_1, distr_2, visited, ignore,
-                               pop, lower, upper, target, k);
+                               pop, lower, upper, target, k, rng_state);
                                
 
         if (!std::isfinite(prop_lp)) {
@@ -140,7 +141,7 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
         );
 
         
-        if (!do_mh || prop_lp >= 0 || std::log(r_unif()) <= prop_lp) { // ACCEPT
+        if (!do_mh || prop_lp >= 0 || std::log(rng_state.r_unif()) <= prop_lp) { // ACCEPT
                 n_accept++;
                 districts.col(idx) = districts.col(idx+1); // copy over new map
                 dist_g = new_dist_g;
@@ -184,9 +185,9 @@ double split_map_ms(const Graph &g, Tree &ust, const uvec &counties, Multigraph 
                     subview_col<uword> districts, int distr_1, int distr_2,
                      std::vector<bool> &visited, std::vector<bool> &ignore,
                     const uvec &pop, double lower, double upper, double target,
-                    int k) {
+                    int k, RNGState &rng_state) {
     int V = g.size();
-    double orig_lb = log_boundary(g, districts, distr_1, distr_2);
+    double orig_lb = log_graph_boundary(g, districts, distr_1, distr_2);
 
     clear_tree(ust);
     double total_pop = 0;
@@ -201,16 +202,18 @@ double split_map_ms(const Graph &g, Tree &ust, const uvec &counties, Multigraph 
 
     int root;
     int result = sample_sub_ust(g, ust, V, root, visited, ignore,
-                                pop, lower, upper, counties, cg);
+                                pop, lower, upper, counties, cg, 
+                                rng_state);
     if (result != 0) return -log(0.0);
 
     // set `lower` as a way to return population of new district
     bool success = cut_districts_ms(ust, k, root, districts, distr_1, distr_2,
-                                    pop, total_pop, lower, upper, target);
+                                    pop, total_pop, lower, upper, target,
+                                rng_state);
 
     if (!success) return -log(0.0); // reject sample
 
-    return orig_lb - log_boundary(g, districts, distr_1, distr_2);
+    return orig_lb - log_graph_boundary(g, districts, distr_1, distr_2);
 }
 
 
@@ -220,7 +223,8 @@ double split_map_ms(const Graph &g, Tree &ust, const uvec &counties, Multigraph 
 // TESTED
 bool cut_districts_ms(Tree &ust, int k, int root, subview_col<uword> &districts,
                       int distr_1, int distr_2, const uvec &pop, double total_pop,
-                      double lower, double upper, double target) {
+                      double lower, double upper, double target,
+                      RNGState &rng_state) {
     int V = ust.size();
     // in case we pick a small-V district
     k = std::max(std::min(k, V-3), 1);
@@ -246,8 +250,8 @@ bool cut_districts_ms(Tree &ust, int k, int root, subview_col<uword> &districts,
     }
     if ((int) candidates.size() < k) return false;
 
-    int idx = r_int(k);
-    idx = select_k(deviances, idx + 1);
+    int idx = rng_state.r_int(k);
+    idx = select_k(deviances, idx + 1, rng_state);
     int cut_at = candidates[idx];
     // reject sample
     if (!is_ok[idx]) return false;
@@ -280,7 +284,8 @@ bool cut_districts_ms(Tree &ust, int k, int root, subview_col<uword> &districts,
  */
 void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
                          double tol, const uvec &plan, const uvec &counties,
-                         Multigraph &cg, const uvec &pop, double target) {
+                         Multigraph &cg, const uvec &pop, double target,
+                         RNGState &rng_state) {
     // sample some spanning trees and compute deviances
     int V = g.size();
     Graph dist_g = district_graph(g, plan, n_distr);
@@ -301,7 +306,7 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
     Tree ust = init_tree(V);
     for (int i = 0; i < N_adapt; i++) {
         double joint_pop = 0;
-        select_pair(n_distr, dist_g, distr_1, distr_2);
+        select_pair(n_distr, dist_g, distr_1, distr_2, rng_state);
         int n_vtx = 0;
         for (int j = 0; j < V; j++) {
             if (plan(j) == distr_1 || plan(j) == distr_2) {
@@ -316,7 +321,8 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
 
         clear_tree(ust);
         int result = sample_sub_ust(g, ust, V, root, visited, ignore,
-                                    pop, lower, upper, counties, cg);
+                                    pop, lower, upper, counties, cg,
+                                    rng_state);
         if (result != 0) {
             i--;
             continue;
@@ -364,9 +370,9 @@ void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
 /*
  * Select a pair of neighboring districts i, j
  */
-void select_pair(int n_distr, const Graph &dist_g, int &i, int &j) {
-    i = r_int(n_distr);
+void select_pair(int n_distr, const Graph &dist_g, int &i, int &j, RNGState &rng_state) {
+    i = rng_state.r_int(n_distr);
     std::vector<int> nbors = dist_g[i];
-    j = nbors[r_int(nbors.size())] + 1;
+    j = nbors[rng_state.r_int(nbors.size())] + 1;
     i++;
 }

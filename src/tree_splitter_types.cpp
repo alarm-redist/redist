@@ -39,7 +39,7 @@ void NaiveTopKSplitter::update_single_int_param(int int_param){
 
 std::pair<bool,EdgeCut> NaiveTopKSplitter::select_edge_to_cut(
         const MapParams &map_params, Plan &plan,
-        Tree &ust, const int root, 
+        Tree &ust, const int root, RNGState &rng_state,
         const int min_potential_cut_size, const int max_potential_cut_size, 
         std::vector<int> const &smaller_cut_sizes_to_try,
         const int region_id_to_split){
@@ -63,7 +63,7 @@ std::pair<bool,EdgeCut> NaiveTopKSplitter::select_edge_to_cut(
     //     // throw Rcpp::exception("K not big enough!\n");
     // }
 
-    int idx = r_int(k_param);
+    int idx = rng_state.r_int(k_param);
 
     // if we selected k greater than number of edges failure
     if(idx >= num_valid_edges){
@@ -78,7 +78,7 @@ std::pair<bool,EdgeCut> NaiveTopKSplitter::select_edge_to_cut(
 
 std::pair<bool,EdgeCut> UniformValidSplitter::select_edge_to_cut(
         const MapParams &map_params, Plan &plan,
-        Tree &ust, const int root, 
+        Tree &ust, const int root, RNGState &rng_state,
         const int min_potential_cut_size, const int max_potential_cut_size,
         std::vector<int> const &smaller_cut_sizes_to_try, 
         const int region_id_to_split){
@@ -101,7 +101,7 @@ std::pair<bool,EdgeCut> UniformValidSplitter::select_edge_to_cut(
         // if only 1 just return that
         return std::make_pair(true, valid_edges.at(0));
     }else{
-        int random_idx = r_int(num_valid_edges);
+        int random_idx = rng_state.r_int(num_valid_edges);
         return std::make_pair(true, valid_edges.at(random_idx));
     }               
 
@@ -110,7 +110,7 @@ std::pair<bool,EdgeCut> UniformValidSplitter::select_edge_to_cut(
 
 std::pair<bool,EdgeCut> ExpoWeightedSplitter::select_edge_to_cut(
         const MapParams &map_params, Plan &plan,
-        Tree &ust, const int root, 
+        Tree &ust, const int root, RNGState &rng_state,
         const int min_potential_cut_size, const int max_potential_cut_size, 
         std::vector<int> const &smaller_cut_sizes_to_try,
         const int region_id_to_split){
@@ -138,7 +138,7 @@ std::pair<bool,EdgeCut> ExpoWeightedSplitter::select_edge_to_cut(
         valid_edges, alpha, map_params.target);
     
     // select with prob proportional to the weights
-    int idx = r_int_unnormalized_wgt(unnormalized_wgts);
+    int idx = rng_state.r_int_unnormalized_wgt(unnormalized_wgts);
     EdgeCut selected_edge_cut = valid_edges.at(idx);
     // EdgeCut selected_edge_cut = valid_edges.at(unnormalized_wgts.index_max());
 
@@ -165,7 +165,7 @@ double ExpoWeightedSplitter::get_log_selection_prob(
 
 std::pair<bool,EdgeCut> ExpoWeightedSmallerDevSplitter::select_edge_to_cut(
         const MapParams &map_params, Plan &plan,
-        Tree &ust, const int root, 
+        Tree &ust, const int root, RNGState &rng_state,
         const int min_potential_cut_size, const int max_potential_cut_size, 
         std::vector<int> const &smaller_cut_sizes_to_try,
         const int region_id_to_split){
@@ -193,7 +193,7 @@ std::pair<bool,EdgeCut> ExpoWeightedSmallerDevSplitter::select_edge_to_cut(
         valid_edges, alpha, map_params.target);
     
     // select with prob proportional to the weights
-    int idx = r_int_unnormalized_wgt(unnormalized_wgts);
+    int idx = rng_state.r_int_unnormalized_wgt(unnormalized_wgts);
     // idx = static_cast<int>(unnormalized_wgts.index_max());
     EdgeCut selected_edge_cut = valid_edges.at(idx);
     // EdgeCut selected_edge_cut = valid_edges.at(unnormalized_wgts.index_max());
@@ -220,7 +220,7 @@ double ExpoWeightedSmallerDevSplitter::get_log_selection_prob(
 
 std::pair<bool,EdgeCut> ExperimentalSplitter::select_edge_to_cut(
         const MapParams &map_params, Plan &plan,
-        Tree &ust, const int root, 
+        Tree &ust, const int root, RNGState &rng_state,
         const int min_potential_cut_size, const int max_potential_cut_size, 
         std::vector<int> const &smaller_cut_sizes_to_try,
         const int region_id_to_split){
@@ -248,7 +248,7 @@ std::pair<bool,EdgeCut> ExperimentalSplitter::select_edge_to_cut(
         valid_edges, epsilon, map_params.target);
     
     // select with prob proportional to the weights
-    int idx = r_int_unnormalized_wgt(unnormalized_wgts);
+    int idx = rng_state.r_int_unnormalized_wgt(unnormalized_wgts);
     // idx = static_cast<int>(unnormalized_wgts.index_max());
     EdgeCut selected_edge_cut = valid_edges.at(idx);
     // EdgeCut selected_edge_cut = valid_edges.at(unnormalized_wgts.index_max());

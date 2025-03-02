@@ -120,10 +120,20 @@ void run_smc_step(
     // one so the number of regions in a presplit plan
     int new_region_id = old_plans_ptr_vec.at(0)->num_regions;
 
+    // thread safe id counter for seeding RNG generator 
+    std::atomic<int> thread_id_counter{0};
+    int rng_seed = static_cast<int>(Rcpp::sample(INT_MAX, 1)[0]);
+
     // create a progress bar
     RcppThread::ProgressBar bar(M, 1);
     // Parallel thread pool where all objects in memory shared by default
+
+    // to get thread id try this I guess?
+    // pool.parallelFor(0, M, [&, std::size_t thread_id] (int i)
     pool.parallelFor(0, M, [&] (int i) {
+        static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+        static thread_local RNGState rng_state(rng_seed + thread_id);
+
         // REprintf("Plan %d\n\n", i);
         int reject_ct = 0;
         bool ok = false;
@@ -137,7 +147,7 @@ void run_smc_step(
             // increase the number of tries for particle i by 1
             draw_tries_vec[i]++;
             // sample previous plan
-            idx = r_int_wgt(M, normalized_cumulative_weights);
+            idx = rng_state.r_int_wgt(M, normalized_cumulative_weights);
             
             *new_plans_ptr_vec.at(i) = *old_plans_ptr_vec.at(idx);
 
@@ -147,7 +157,7 @@ void run_smc_step(
             }else{                
                 // if generalized split pick a region to try to split
                 region_id_to_split = new_plans_ptr_vec.at(i)->choose_multidistrict_to_split(
-                    splitting_schedule.valid_region_sizes_to_split
+                    splitting_schedule.valid_region_sizes_to_split, rng_state
                 );
             }
             size_of_region_to_split = new_plans_ptr_vec.at(i)->region_sizes(region_id_to_split);
@@ -164,7 +174,7 @@ void run_smc_step(
             // Now try to split that region
             ok = new_plans_ptr_vec.at(i)->attempt_split(
                 map_params, splitting_schedule, ust, *tree_splitters_ptr_vec.at(i), 
-                visited, ignore, 
+                visited, ignore, rng_state,
                 splitting_schedule.all_regions_min_and_max_possible_cut_sizes[size_of_region_to_split][0],
                 splitting_schedule.all_regions_min_and_max_possible_cut_sizes[size_of_region_to_split][1],
                 splitting_schedule.all_regions_smaller_cut_sizes_to_try[size_of_region_to_split],
@@ -278,7 +288,8 @@ List run_redist_gsmc(
         List const &constraints, // constraints 
         int verbosity, bool diagnostic_mode){
     // re-seed MT so that `set.seed()` works in R
-    seed_rng((int) Rcpp::sample(INT_MAX, 1)[0]);
+    RNGState rng_state((int) Rcpp::sample(INT_MAX, 1)[0]);
+    global_seed_rng((int) Rcpp::sample(INT_MAX, 1)[0]);
 
     int nsims = static_cast<int>(region_id_mat.n_cols);
     // get the number of implied regions in the plans
@@ -542,7 +553,7 @@ List run_redist_gsmc(
 
     // Loading Info
     if (verbosity >= 1) {
-        Rcout.imbue(std::locale(""));
+        Rcout.imbue(std::locale::classic());
         Rcout << std::fixed << std::setprecision(4);
         if(!split_district_only){
             Rcout << "GENERALIZED SEQUENTIAL MONTE CARLO";
@@ -651,7 +662,7 @@ List run_redist_gsmc(
                 // double thresh = (double) control["adapt_k_thresh"];
 
                 estimate_cut_k(
-                    map_params, *splitting_schedule_ptr, 
+                    map_params, *splitting_schedule_ptr, rng_state, 
                     est_cut_k, last_k, unnormalized_sampling_weights, thresh,
                     tol, plans_ptr_vec, 
                     split_district_only, verbosity);
@@ -741,11 +752,12 @@ List run_redist_gsmc(
                     unnormalized_sampling_weights,
                     verbosity
                 );
-            }else if(wgt_type == "adj_uniform" && use_graph_plan_space){
+            }else if(wgt_type == "adj_uniform"){
                 if (verbosity >= 3) Rprintf("Computing Simple Backwards Kernel Weights:\n");
                 get_all_plans_uniform_adj_weights(
                     pool,
                     map_params, *splitting_schedule_ptr,
+                    use_graph_plan_space,
                     scoring_function,
                     plans_ptr_vec, tree_splitters_ptr_vec,
                     compute_log_splitting_prob, is_final_plans,
@@ -753,8 +765,6 @@ List run_redist_gsmc(
                     unnormalized_sampling_weights,
                     verbosity
                 );
-            }else if(wgt_type == "adj_uniform" && !use_graph_plan_space){
-                Rcpp::stop("Adj weights not supported for forest space");
             }else{
                 throw Rcpp::exception("invalid weight type!");
             }

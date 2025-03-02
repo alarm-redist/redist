@@ -29,6 +29,12 @@ public:
             bool split_district_only
     ) override;
 
+    double get_log_eff_boundary_len(
+        const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+        TreeSplitter const &tree_splitter, 
+        const int region1_id, int const region2_id
+    ) const override;
+
 
     std::vector<std::tuple<int, int, double>> get_valid_adj_regions_and_eff_log_boundary_lens(
         const MapParams &map_params, const SplittingSchedule &splitting_schedule,

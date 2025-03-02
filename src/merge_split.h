@@ -36,7 +36,7 @@ double split_map_ms(const Graph &g, Tree &ust, const uvec &counties, Multigraph 
                     subview_col<uword> districts, int distr_1, int distr_2,
                      std::vector<bool> &visited, std::vector<bool> &ignore,
                     const uvec &pop, double lower, double upper, double target,
-                    int k);
+                    int k, RNGState &rng_state);
 
 /*
  * Cut district into two pieces of roughly equal population
@@ -44,18 +44,20 @@ double split_map_ms(const Graph &g, Tree &ust, const uvec &counties, Multigraph 
 // TESTED
 bool cut_districts_ms(Tree &ust, int k, int root, subview_col<uword> &districts,
                       int distr_1, int distr_2, const uvec &pop, double total_pop,
-                      double lower, double upper, double target);
+                      double lower, double upper, double target,
+                      RNGState &rng_state);
 
 /*
  * Choose k and multiplier for efficient, accurate sampling
  */
 void adapt_ms_parameters(const Graph &g, int n_distr, int &k, double thresh,
                          double tol, const uvec &plan, const uvec &counties,
-                         Multigraph &cg, const uvec &pop, double target);
+                         Multigraph &cg, const uvec &pop, double target,
+                         RNGState &rng_state);
 
 /*
  * Select a pair of neighboring districts i, j
  */
-void select_pair(int n_distr, const Graph &dist_g, int &i, int &j);
+void select_pair(int n_distr, const Graph &dist_g, int &i, int &j, RNGState &rng_state);
 
 #endif

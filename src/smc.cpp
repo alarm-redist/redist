@@ -9,17 +9,18 @@
 
 
 /*
- * Main entry point.
- *
- * Sample `N` redistricting plans on map `g`, ensuring that the maximum
- * population deviation is between `lower` and `upper` (and ideally `target`)
- */
+* Main entry point.
+*
+* Sample `N` redistricting plans on map `g`, ensuring that the maximum
+* population deviation is between `lower` and `upper` (and ideally `target`)
+*/
 List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
-               int n_distr, double target, double lower, double upper, double rho,
-               umat districts, int n_drawn, int n_steps,
-               List constraints, List control, int verbosity) {
+            int n_distr, double target, double lower, double upper, double rho,
+            umat districts, int n_drawn, int n_steps,
+            List constraints, List control, int verbosity) {
     // re-seed MT so that `set.seed()` works in R
-    seed_rng((int) Rcpp::sample(INT_MAX, 1)[0]);
+    RNGState rng_state((int) Rcpp::sample(INT_MAX, 1)[0]);
+    global_seed_rng((int) Rcpp::sample(INT_MAX, 1)[0]);
 
     // unpack control params
     double thresh = (double) control["adapt_k_thresh"];
@@ -42,7 +43,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     double tol = std::max(target - lower, upper - target) / target;
 
     if (verbosity >= 1) {
-        Rcout.imbue(std::locale(""));
+        Rcout.imbue(std::locale::classic());
         Rcout << std::fixed << std::setprecision(0);
         Rcout << "SEQUENTIAL MONTE CARLO\n";
         Rcout << "Sampling " << N << " " << V << "-unit ";
@@ -56,7 +57,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
         }
         if (cg.size() > 1)
             Rcout << "Ensuring no more than " << n_distr - 1 << " splits of the "
-                  << cg.size() << " administrative units.\n";
+                << cg.size() << " administrative units.\n";
         if (verbosity >= 3) {
             if (cores == 0) {
                 Rcout << "Using 1 core.\n";
@@ -99,15 +100,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     std::vector<double> sd_temper(n_steps);
     vec cum_wgt(N, fill::value(1.0 / N));
     cum_wgt = cumsum(cum_wgt);
-
-
-    // This is n_drawn by N where [i][j] is the index of the parent of particle j on step i
-    // ie the index of the previous plan that was sampled and used to create particle j on step i
-    std::vector<std::vector<int>> parent_index_mat(n_steps, std::vector<int> (N, -1));
-
-    // This is n_drawn by N where [i][j] is the index of the original (first) ancestor of particle j on step i
-    std::vector<std::vector<int>> original_ancestor_mat(n_steps, std::vector<int> (N, -1));
-
+    Rcpp::IntegerMatrix parent_index_mat(N, n_steps);
 
     RcppThread::ThreadPool pool(cores);
 
@@ -115,9 +108,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     RObject bar = cli_progress_bar(n_steps, cli_config(false, bar_fmt.c_str()));
     try {
     for (int ctr = n_drawn + 1; ctr <= n_drawn + n_steps; ctr++) {
-
         int i_split = ctr - n_drawn - 1;
-
         if (verbosity >= 3) {
             Rcout << "Making split " << ctr - n_drawn << " of " << n_steps;
         }
@@ -125,7 +116,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
         // find k and multipliers
         int last_k = i_split == 0 ? std::max(1, V - 5) : cut_k[i_split - 1];
         adapt_parameters(g, cut_k[i_split], last_k, lp, thresh, tol, districts,
-                         counties, cg, pop, pop_left, target, verbosity);
+                        counties, cg, pop, pop_left, target, verbosity, rng_state);
 
         if (verbosity >= 3) {
             Rcout << " (using k = " << cut_k[i_split] << ")\n";
@@ -137,50 +128,28 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
             lower = target - (target - lower) * final_infl;
             upper = target + (upper - target) * final_infl;
         }
-
-
-        // For the first iteration we need to pass a special previous ancestor thing
-        if(i_split == 0){
-        std::vector<int> dummy_prev_ancestors(N, 1);
-        // split the map
         split_maps(g, counties, cg, pop, districts, cum_wgt, lp, pop_left,
-                   log_temper, pop_temper, accept_rate[i_split],
-                   n_distr, ctr, ancestors, lags, n_unique[i_split],
-                    original_ancestor_mat.at(i_split),
-                    parent_index_mat.at(i_split),
-                    dummy_prev_ancestors,
-                   lower, upper, target,
-                   rho, cut_k[i_split], check_both, pool, verbosity);
+                log_temper, pop_temper, accept_rate[i_split],
+                n_distr, ctr,
+                parent_index_mat.column(i_split), 
+                ancestors, lags, n_unique[i_split],
+                lower, upper, target,
+                rho, cut_k[i_split], check_both, pool, verbosity);
 
-
-
-            // For the first ancestor one make every ancestor themselves
-            std::iota (parent_index_mat.at(0).begin(), parent_index_mat.at(0).end(), 0);
-            std::iota (original_ancestor_mat.at(0).begin(), original_ancestor_mat.at(0).end(), 0);
-        }else{
-            // split the map and we can use the previous original ancestor matrix row
-
-        split_maps(g, counties, cg, pop, districts, cum_wgt, lp, pop_left,
-                   log_temper, pop_temper, accept_rate[i_split],
-                   n_distr, ctr, ancestors, lags, n_unique[i_split],
-                    original_ancestor_mat.at(i_split),
-                    parent_index_mat.at(i_split),
-                    original_ancestor_mat.at(i_split-1),
-                   lower, upper, target,
-                   rho, cut_k[i_split], check_both, pool, verbosity);
-
-
-        }
-
-
+    if(i_split == 0){
+        std::iota(
+            parent_index_mat.column(0).begin(), 
+            parent_index_mat.column(0).end(), 
+            0);
+    }
 
         sd_lp[i_split] = stddev(lp);
         sd_temper[i_split] = stddev(log_temper);
 
         // compute weights for next step
         cum_wgt = get_wgts(districts, n_distr, ctr, final, alpha, lp,
-                           n_eff[i_split], pop, target, g, constraints,
-                           verbosity);
+                        n_eff[i_split], pop, target, g, constraints,
+                        verbosity);
 
         if (verbosity == 1 && CLI_SHOULD_TICK)
             cli_progress_set(bar, i_split);
@@ -204,7 +173,6 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     }
 
     List out = List::create(
-        _["original_ancestors"] = original_ancestor_mat,
         _["parent_index"] = parent_index_mat,
         _["plans"] = districts,
         _["lp"] = lp,
@@ -222,10 +190,10 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
 
 
 /*
- * Helper function to iterate over constraints and apply them
- */
+* Helper function to iterate over constraints and apply them
+*/
 double add_constraint(const std::string& name, List constraints,
-                      std::function<double(List)> fn_constr) {
+                    std::function<double(List)> fn_constr) {
     if (!constraints.containsElementNamed(name.c_str())) return 0;
 
     List constr = constraints[name];
@@ -241,12 +209,12 @@ double add_constraint(const std::string& name, List constraints,
 }
 
 /*
- * Add specific constraint weights & return the cumulative weight vector
- */
+* Add specific constraint weights & return the cumulative weight vector
+*/
 vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
-             double alpha, vec &lp, double &neff,
-             const uvec &pop, double parity, const Graph g,
-             List constraints, int verbosity) {
+            double alpha, vec &lp, double &neff,
+            const uvec &pop, double parity, const Graph g,
+            List constraints, int verbosity) {
     int V = districts.n_rows;
     int N = districts.n_cols;
 
@@ -258,28 +226,26 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
     }
 
     if (constraints.size() > 0) {
-    // i loops over the number of plans
     for (int i = 0; i < N; i++) {
-        // j loops over the number of districts
         for (int j : distr_calc) {
             lp[i] += add_constraint("pop_dev", constraints,
-                                      [&] (List l) -> double {
-                                          return eval_pop_dev(districts.col(i), j,
-                                                                 pop, parity);
-                                      });
+                                    [&] (List l) -> double {
+                                        return eval_pop_dev(districts.col(i), j,
+                                                                pop, parity);
+                                    });
 
             lp[i] += add_constraint("status_quo", constraints,
                 [&] (List l) -> double {
                     return eval_sq_entropy(districts.col(i), as<uvec>(l["current"]),
-                                           j, pop, n_distr,
-                                           as<int>(l["n_current"]), V);
+                                        j, pop, n_distr,
+                                        as<int>(l["n_current"]), V);
                 });
 
             lp[i] += add_constraint("segregation", constraints,
-                                      [&] (List l) -> double {
-                                          return eval_segregation(districts.col(i), j,
-                                                                  as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]));
-                                      });
+                                    [&] (List l) -> double {
+                                        return eval_segregation(districts.col(i), j,
+                                                                as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]));
+                                    });
 
             lp[i] += add_constraint("grp_pow", constraints,
                 [&] (List l) -> double {
@@ -300,13 +266,13 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
             lp[i] += add_constraint("grp_hinge", constraints,
                 [&] (List l) -> double {
                     return eval_grp_hinge(districts.col(i), j, as<vec>(l["tgts_group"]),
-                                          as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]));
+                                        as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]));
                 });
 
             lp[i] += add_constraint("grp_inv_hinge", constraints,
                                     [&] (List l) -> double {
                                         return eval_grp_hinge(districts.col(i), j, as<vec>(l["tgts_group"]),
-                                                              as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]));
+                                                            as<uvec>(l["group_pop"]), as<uvec>(l["total_pop"]));
                                     });
 
             lp[i] += add_constraint("incumbency", constraints,
@@ -330,28 +296,28 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
                 });
 
             lp[i] += add_constraint("polsby", constraints,
-                                      [&] (List l) -> double {
-                                          return eval_polsby(districts.col(i), j,
-                                                             as<ivec>(l["from"]),
-                                                             as<ivec>(l["to"]), as<vec>(l["area"]),
-                                                             as<vec>(l["perimeter"]));
-                                      });
+                                    [&] (List l) -> double {
+                                        return eval_polsby(districts.col(i), j,
+                                                            as<ivec>(l["from"]),
+                                                            as<ivec>(l["to"]), as<vec>(l["area"]),
+                                                            as<vec>(l["perimeter"]));
+                                    });
 
             lp[i] += add_constraint("fry_hold", constraints,
-                                      [&] (List l) -> double {
-                                          return eval_fry_hold(districts.col(i), j,
-                                                               as<uvec>(l["total_pop"]),
-                                                               as<mat>(l["ssdmat"]),
-                                                               as<double>(l["denominator"]));
-                                      });
+                                    [&] (List l) -> double {
+                                        return eval_fry_hold(districts.col(i), j,
+                                                            as<uvec>(l["total_pop"]),
+                                                            as<mat>(l["ssdmat"]),
+                                                            as<double>(l["denominator"]));
+                                    });
 
             lp[i] += add_constraint("qps", constraints,
-                                      [&] (List l) -> double {
-                                          return eval_qps(districts.col(i), j,
-                                                          as<uvec>(l["total_pop"]),
-                                                          as<uvec>(l["cities"]), as<int>(l["n_city"]),
-                                                          n_distr);
-                                      });
+                                    [&] (List l) -> double {
+                                        return eval_qps(districts.col(i), j,
+                                                        as<uvec>(l["total_pop"]),
+                                                        as<uvec>(l["cities"]), as<int>(l["n_city"]),
+                                                        n_distr);
+                                    });
 
             lp[i] += add_constraint("custom", constraints,
                 [&] (List l) -> double {
@@ -377,17 +343,15 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
 
 
 /*
- * Split off a piece from each map in `districts`,
- * keeping deviation between `lower` and `upper`
- */
+* Split off a piece from each map in `districts`,
+* keeping deviation between `lower` and `upper`
+*/
 void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 const uvec &pop, umat &districts, vec &cum_wgt, vec &lp,
                 vec &pop_left, vec &log_temper, double pop_temper,
                 double &accept_rate, int n_distr, int dist_ctr,
+                Rcpp::IntegerMatrix::Column parent_index_vec,
                 umat &ancestors, const std::vector<int> &lags, int &n_unique,
-                std::vector<int> &original_ancestor_vec,
-                std::vector<int> &parent_vec,
-                const std::vector<int> &prev_ancestor_vec,
                 double lower, double upper, double target,
                 double rho, int k, bool check_both,
                 RcppThread::ThreadPool &pool, int verbosity) {
@@ -408,8 +372,14 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     const int check_int = 50; // check for interrupts every _ iterations
     uvec iters(N, fill::zeros); // how many actual iterations
 
+    // thread safe id counter for seeding RNG generator 
+    std::atomic<int> thread_id_counter{0};
+    int rng_seed = static_cast<int>(Rcpp::sample(INT_MAX, 1)[0]);
+
     RcppThread::ProgressBar bar(N, 1);
     pool.parallelFor(0, N, [&] (int i) {
+        static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+        static thread_local RNGState rng_state(rng_seed + thread_id);
         int reject_ct = 0;
         bool ok = false;
         int idx = i;
@@ -421,15 +391,10 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         std::vector<bool> visited(V);
         std::vector<bool> ignore(V);
         while (!ok) {
-
             // resample
-            idx = r_int_wgt(N, cum_wgt);
+            idx = rng_state.r_int_wgt(N, cum_wgt);
             districts_new.col(i) = districts.col(idx);
             iters[i]++;
-
-            if(iters[i] == 40000 && iters[i] % 250 == 0){
-                    print_tree(ust);
-            }
 
             if (check_both) {
                 lower_s = std::max(lower, pop_left(idx) - new_size * upper);
@@ -441,8 +406,8 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 continue;
             }
             inc_lp = split_map(g, ust, counties, cg, districts_new.col(i),
-                               dist_ctr, visited, ignore,
-                               pop, pop_left(idx), lower_s, upper_s, target, k);
+                            dist_ctr, visited, ignore,
+                            pop, pop_left(idx), lower_s, upper_s, target, k, rng_state);
 
             // bad sample; try again
             if (!std::isfinite(inc_lp)) {
@@ -452,11 +417,6 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
 
             ok = true;
         }
-        // update this particles ancestor to be the ancestor of its previous one
-        parent_vec[i] = idx;
-        original_ancestor_vec[i] = prev_ancestor_vec[idx];
-
-
         uniques[i] = idx;
         clear_tree(ust);
 
@@ -513,6 +473,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         log_temper_new(i) = log_temper(idx) + pop_temper*pop_pen;
 
         lp_new(i) = lp(idx) + inc_lp + pop_temper*pop_pen;
+        parent_index_vec[i] = idx;
 
         if (verbosity >= 3) {
             bar++;
@@ -535,40 +496,42 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
 }
 
 /*
- * Split a map into two pieces with population lying between `lower` and `upper`
- */
+* Split a map into two pieces with population lying between `lower` and `upper`
+*/
 double split_map(const Graph &g, Tree &ust, const uvec &counties, Multigraph &cg,
-                 subview_col<uword> districts, int dist_ctr,
-                 std::vector<bool> &visited, std::vector<bool> &ignore, const uvec &pop,
-                 double total_pop, double &lower, double upper, double target, int k) {
+                subview_col<uword> districts, int dist_ctr,
+                std::vector<bool> &visited, std::vector<bool> &ignore, const uvec &pop,
+                double total_pop, double &lower, double upper, double target, int k,
+                RNGState &rng_state) {
     int V = g.size();
 
     for (int i = 0; i < V; i++) ignore[i] = districts(i) != 0;
 
     int root;
     clear_tree(ust);
-    int result = sample_sub_ust(g, ust, V, root, visited, ignore, pop, lower, upper, counties, cg);
+    int result = sample_sub_ust(g, ust, V, root, visited, ignore, pop, lower, upper, counties, cg, rng_state);
     if (result != 0) return -std::log(0.0);
 
     double new_pop = cut_districts(ust, k, root, districts, dist_ctr, pop, total_pop,
-                          lower, upper, target);
+                        lower, upper, target, rng_state);
 
     if (new_pop == 0) {
         return -std::log(0.0); // reject sample
     } else {
         lower = new_pop;  // set `lower` as a way to return population of new district
-        return log_boundary(g, districts, 0, dist_ctr);// - log((double) k); (k is constant)
+        return log_graph_boundary(g, districts, 0, dist_ctr);// - log((double) k); (k is constant)
     }
 }
 
 
 /*
- * Cut district into two pieces of roughly equal population
- */
+* Cut district into two pieces of roughly equal population
+*/
 // TESTED
 double cut_districts(Tree &ust, int k, int root, subview_col<uword> &districts,
-                     int dist_ctr, const uvec &pop, double total_pop,
-                     double lower, double upper, double target) {
+                    int dist_ctr, const uvec &pop, double total_pop,
+                    double lower, double upper, double target,
+                    RNGState &rng_state) {
     int V = ust.size();
     // create list that points to parents & computes population below each vtx
     std::vector<int> pop_below(V, 0);
@@ -600,8 +563,8 @@ double cut_districts(Tree &ust, int k, int root, subview_col<uword> &districts,
     }
     if ((int) candidates.size() < k) return 0.0;
 
-    int idx = r_int(k);
-    idx = select_k(deviances, idx + 1);
+    int idx = rng_state.r_int(k);
+    idx = select_k(deviances, idx + 1, rng_state);
     int cut_at = std::fabs(candidates[idx]) - 1;
     // reject sample
     if (!is_ok[idx]) return 0.0;
@@ -628,17 +591,18 @@ double cut_districts(Tree &ust, int k, int root, subview_col<uword> &districts,
 
 
 /*
- * Choose k and multiplier for efficient, accurate sampling
- */
+* Choose k and multiplier for efficient, accurate sampling
+*/
 void adapt_parameters(const Graph &g, int &k, int last_k, const vec &lp, double thresh,
-                      double tol, const umat &districts, const uvec &counties,
-                      Multigraph &cg, const uvec &pop,
-                      const vec &pop_left, double target, int verbosity) {
+                    double tol, const umat &districts, const uvec &counties,
+                    Multigraph &cg, const uvec &pop,
+                    const vec &pop_left, double target, int verbosity,
+                    RNGState &rng_state) {
     // sample some spanning trees and compute deviances
     int V = g.size();
     int k_max = std::min(10 + (int) (2.0 * V * tol), last_k + 4); // heuristic
     int N_max = districts.n_cols;
-    int N_adapt = std::min(60 + (int) std::floor(5000.0 / sqrt((double)V)), N_max);
+    int N_adapt = std::min(100, N_max);
 
     double lower = target * (1 - tol);
     double upper = target * (1 + tol);
@@ -670,7 +634,7 @@ void adapt_parameters(const Graph &g, int &k, int last_k, const vec &lp, double 
 
         clear_tree(ust);
         int result = sample_sub_ust(g, ust, V, root, visited, ignore,
-                                    pop, lower, upper, counties, cg);
+                                    pop, lower, upper, counties, cg, rng_state);
         if (result != 0) {
             idx--;
             continue;
@@ -701,7 +665,7 @@ void adapt_parameters(const Graph &g, int &k, int last_k, const vec &lp, double 
         double sum_within = 0;
         int n_ok = 0;
         for (int i = 0; i < N_adapt; i++) {
-            double dev = devs.at(i).at(r_int(k));
+            double dev = devs.at(i).at(rng_state.r_int(k));
             if (dev > tol) continue;
             else n_ok++;
             for (int j = 0; j < N_adapt; j++) {
@@ -721,6 +685,5 @@ void adapt_parameters(const Graph &g, int &k, int last_k, const vec &lp, double 
     if (last_k < k_max && k < last_k * 0.6) k = (int) (0.5*k + 0.5*last_k);
 
     k = std::min(std::max(max_ok + 1, k) + 1 - (distr_ok(k) > 0.99) + (thresh == 1),
-                 max_V - 1);
+                max_V - 1);
 }
-

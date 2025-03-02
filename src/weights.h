@@ -18,6 +18,7 @@
 #include "splitting_schedule_types.h"
 #include "tree_op.h"
 #include "scoring.h"
+#include "map_calc.h"
 
 
 //' Computes the effective sample size from log incremental weights
@@ -113,6 +114,7 @@ double get_log_mh_ratio(
 void get_all_plans_uniform_adj_weights(
     RcppThread::ThreadPool &pool,
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    bool const use_graph_plan_space,
     ScoringFunction const &scoring_function,
     std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
     const std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,

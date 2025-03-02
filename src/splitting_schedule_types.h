@@ -21,11 +21,6 @@ class SplittingSchedule {
         
     public:
         virtual ~SplittingSchedule() = default;
-        // constructor 
-        SplittingSchedule(
-            const int num_splits, const int ndists, const int initial_num_regions, 
-            SplittingSizeScheduleType const schedule_type,
-            Rcpp::List const &control);
         
         // Base constructor just creates vectors, does not set them
         SplittingSchedule(
@@ -43,7 +38,7 @@ class SplittingSchedule {
     
         SplittingSizeScheduleType schedule_type; // the splitting type 
         int ndists; // the number of districts 
-    
+        double multidistrict_alpha;
 
         /*
          * This is a vector of vectors where entry for index `r` it is a vector

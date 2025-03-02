@@ -25,6 +25,13 @@ public:
         std::unordered_map<std::pair<int, int>, double, bounded_hash> const &existing_pair_map = {}
     ) const override;
 
+
+    double get_log_eff_boundary_len(
+        const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+        TreeSplitter const &tree_splitter, 
+        const int region1_id, int const region2_id
+    ) const override;
+
     // Clone method to create a copy of the ForestPlan object
     std::unique_ptr<Plan> deep_clone() const override {
         return std::make_unique<GraphPlan>(*this); // Copy the entire object

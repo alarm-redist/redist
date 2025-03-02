@@ -5,8 +5,9 @@
  * `lower` is a lower bound (inclusive) on the index of the first unvisited element
  */
 // TESTED
-int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower) {
-    int idx = r_int(remaining);
+int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower,
+    RNGState &rng_state) {
+    int idx = rng_state.r_int(remaining);
     int accuml = 0;
     bool seen_one = false;
     for (int i = lower; i < size - 1; i++) {
@@ -24,9 +25,9 @@ int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower) 
  * Generate a random neighbor to a vertex, except for the `last` vertex.
  */
 // TESTED
-int rnbor(const Graph &g, int vtx) {
+int rnbor(const Graph &g, int vtx, RNGState &rng_state) {
     int n_nbors = g[vtx].size();
-    return g[vtx][r_int(n_nbors)];
+    return g[vtx][rng_state.r_int(n_nbors)];
 }
 
 

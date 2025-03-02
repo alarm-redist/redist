@@ -487,9 +487,10 @@ double get_log_mh_ratio(
 double get_log_retroactive_splitting_prob(
         const Plan &plan,
         const std::vector<bool> &valid_region_sizes_to_split,
-        const int region1_id, const int region2_id
+        const int region1_id, const int region2_id,
+        double const selection_alpha = SELECTION_ALPHA
 ){
-    if(DEBUG_VERBOSE) Rprintf("Possible options: ");
+    if(WEIGHTS_DEBUG_VERBOSE) Rprintf("Possible options: ");
 
     // make vectors with cumulative d value and region label for later
     std::vector<int> associated_region_sizes;
@@ -498,7 +499,7 @@ double get_log_retroactive_splitting_prob(
     // add the unioned region
     auto unioned_region_size = plan.region_sizes(region1_id) + plan.region_sizes(region2_id);
     associated_region_sizes.push_back(unioned_region_size);
-    if (DEBUG_VERBOSE) Rprintf(" (unioned) %d\n", plan.region_sizes(region1_id) + plan.region_sizes(region2_id));
+    if (WEIGHTS_DEBUG_VERBOSE) Rprintf(" (unioned) %d\n", plan.region_sizes(region1_id) + plan.region_sizes(region2_id));
 
     for(int region_id = 0 ; region_id < plan.num_regions; region_id++) {
         auto region_size = plan.region_sizes(region_id);
@@ -507,7 +508,7 @@ double get_log_retroactive_splitting_prob(
         if(valid_region_sizes_to_split[region_size] &&
             region_size > 1 && region_id != region1_id && 
             region_id != region2_id){
-            if (DEBUG_VERBOSE) Rprintf(" %d ", region_size);
+            if (WEIGHTS_DEBUG_VERBOSE) Rprintf(" %d ", region_size);
             // add the count and label to vector
             associated_region_sizes.push_back(region_size);
         }
@@ -519,9 +520,8 @@ double get_log_retroactive_splitting_prob(
 
     for (size_t i = 0; i < potential_candidates; i++)
     {
-        region_wgts(i) = std::pow(associated_region_sizes[i], SELECTION_ALPHA);
+        region_wgts(i) = std::pow(associated_region_sizes[i], selection_alpha);
     }
-    int idx = r_int_unnormalized_wgt(region_wgts); 
 
 
     // so prob of picking is weight of first over sum
@@ -541,41 +541,38 @@ double get_log_retroactive_splitting_prob(
 
 // computes the backwards kernel that is uniform in 
 // the number of ancestors 
-double compute_uniform_graph_plan_adj_log_incremental_weight(
+double compute_uniform_adj_log_incremental_weight(
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    bool const use_graph_plan_space,
     ScoringFunction const &scoring_function, Plan const &plan, 
-    const TreeSplitter &edge_splitter, bool compute_log_splitting_prob,
-    bool is_final_plan
+    const TreeSplitter &edge_splitter, 
+    bool compute_log_splitting_prob, bool is_final_plan
 ){
-
-
     // find the index of the two newly split regions 
     auto most_recent_split_regions = plan.get_most_recently_split_regions();
     int region1_id = most_recent_split_regions.first;
     int region2_id = most_recent_split_regions.second;
 
+    if(WEIGHTS_DEBUG_VERBOSE) Rprintf("The two regions are %d and %d\n", region1_id, region2_id);
 
-    // Find all pairs and boundary length 
-    // IN FUTURE CAN REPLACE WITH count valid adj regions and log oundary
-    // that is two passes through as opposed to this which requires a hash as well
-    auto region_pairs_and_log_boundary_len = plan.get_valid_adj_regions_and_eff_log_boundary_lens(
-        map_params, splitting_schedule,
-        edge_splitter
-    );
+    // add backwards kernel correction which we only need for graph plan space
+    double log_backwards_kernel_term = 0.0;
 
-
-    const double log_num_valid_adj_regions = std::log(
-        static_cast<double>(region_pairs_and_log_boundary_len.size())
-    );
-
-    double log_boundary_len; 
-    // need to iterate over the map until we find the pair 
-    for (auto const &pair_tuple: region_pairs_and_log_boundary_len)
-    {
-        if(std::get<0>(pair_tuple) == region1_id && std::get<1>(pair_tuple) == region2_id){
-            log_boundary_len = std::get<2>(pair_tuple);
-        }
+    if(use_graph_plan_space){
+        // Get the number of valid adjacent regions 
+        const int num_valid_adj_region_pairs = count_valid_adj_regions(
+            map_params.g, plan,
+            splitting_schedule.check_adj_to_regions,
+            splitting_schedule.valid_merge_pair_sizes
+        );
+        log_backwards_kernel_term = std::log(
+            static_cast<double>(num_valid_adj_region_pairs)
+        );
     }
+
+    double const log_eff_boundary_len = plan.get_log_eff_boundary_len(
+        map_params, splitting_schedule, edge_splitter, region1_id, region2_id
+    );
 
     double log_splitting_prob = 0;
     // for one district split the probability that region was chosen to be split is always 1
@@ -584,7 +581,7 @@ double compute_uniform_graph_plan_adj_log_incremental_weight(
         // picked to split the union of the the two regions 
         log_splitting_prob = get_log_retroactive_splitting_prob(plan, 
         splitting_schedule.valid_region_sizes_to_split, region1_id, region2_id);
-        if(DEBUG_VERBOSE) Rprintf("Computed split prob %f\n", std::exp(log_splitting_prob));
+        if(WEIGHTS_DEBUG_VERBOSE) Rprintf("Computed split prob %f\n", std::exp(log_splitting_prob));
     }
 
     double region1_score, region2_score, merged_region_score;
@@ -613,14 +610,14 @@ double compute_uniform_graph_plan_adj_log_incremental_weight(
     //      - log Denominator: log(multid_selection_prob) + log(boundary_len) + log(num_valid_adj_regions) - J(old_region)
 
     const double log_numerator = -1.0*(region1_score + region2_score);
-    const double log_denom = log_num_valid_adj_regions + log_boundary_len + log_splitting_prob - merged_region_score;
+    const double log_denom = log_backwards_kernel_term + log_eff_boundary_len + log_splitting_prob - merged_region_score;
 
 
-    if(DEBUG_VERBOSE){
+    if(WEIGHTS_DEBUG_VERBOSE){
     int region1_size = plan.region_sizes(region1_id);
     int region2_size = plan.region_sizes(region2_id);
     Rprintf("Doing (%d,%d) - sizes (%d, %d): len %f, split prob %f, ratio %f!\n", 
-        region1_id, region2_id, region1_size, region2_size, std::exp(log_boundary_len), 
+        region1_id, region2_id, region1_size, region2_size, std::exp(log_eff_boundary_len), 
         std::exp(log_splitting_prob), std::exp(log_numerator - merged_region_score));
 
     Rprintf("Numerator - %f * %f\n", 
@@ -628,7 +625,7 @@ double compute_uniform_graph_plan_adj_log_incremental_weight(
     );
 
     Rprintf("Denominator - %f * %f * %f * %f \n", 
-        std::exp(log_num_valid_adj_regions), std::exp(log_boundary_len),
+        std::exp(log_backwards_kernel_term), std::exp(log_eff_boundary_len),
         std::exp(merged_region_score), std::exp(log_splitting_prob)
     );}
 
@@ -648,6 +645,7 @@ double compute_uniform_graph_plan_adj_log_incremental_weight(
 void get_all_plans_uniform_adj_weights(
     RcppThread::ThreadPool &pool,
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    bool const use_graph_plan_space,
     ScoringFunction const &scoring_function,
     std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
     const std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
@@ -661,8 +659,8 @@ void get_all_plans_uniform_adj_weights(
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
 
-        double log_incr_weight = compute_uniform_graph_plan_adj_log_incremental_weight(
-            map_params, splitting_schedule,
+        double log_incr_weight = compute_uniform_adj_log_incremental_weight(
+            map_params, splitting_schedule, use_graph_plan_space,
             scoring_function, 
             *plans_ptr_vec.at(i), 
             *tree_splitters_ptr_vec.at(i),
@@ -784,7 +782,11 @@ double get_log_retroactive_splitting_prob_for_joined_tree(
     auto it = std::find(valid_edges.begin(), valid_edges.end(), actual_cut_edge);
 
     int actual_cut_edge_index = std::distance(valid_edges.begin(), it);
-    // REprintf("Actual Cut Edge at Index %d\n", actual_cut_edge_index);
+    if(WEIGHTS_DEBUG_VERBOSE){
+    REprintf("Actual Cut Edge at Index %d and so prob is %f \n", 
+        actual_cut_edge_index,
+        edge_splitter.get_log_selection_prob(map_params, valid_edges, actual_cut_edge_index));
+    }
 
     return edge_splitter.get_log_selection_prob(map_params, valid_edges, actual_cut_edge_index);
 }

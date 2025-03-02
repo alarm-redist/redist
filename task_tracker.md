@@ -14,6 +14,10 @@ Since `state_xo` and `state_sr` are global variables when you run without multip
 
 # ----- ACTIVE TASKS -----
 
+
+**Do Resampling in c++**
+For `run_gsmc_plans` make the resampling happen in c++ instead of R. This will save on memory overhead since you don't need to do reindexing in R and can use the dummy matrix for space. 
+
 **Make immutable class members constant**
 For all classes where a variable doesn't change after initialization (think things like `ndists`, `V`, etc.) make them constant. This might help a little bit with thread safety but the main reason is to avoid modifying things that shouldn't be changed in code. 
 

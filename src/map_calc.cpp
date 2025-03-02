@@ -4,26 +4,128 @@
 
 /*
  * Compute the logarithm of the graph theoretic length of the boundary between
- * `distr_root` and `distr_other`, where the root of `ust` is in `distr_root`
+ * `region1_id` and `region1_id`
  */
-double log_boundary(const Graph &g, const subview_col<uword> &districts,
-                    int distr_root, int distr_other) {
+double log_graph_boundary(const Graph &g, const subview_col<uword> &districts,
+                    int const region1_id, int const region2_id) {
     int V = g.size();
 
     double count = 0; // number of cuttable edges to create eq-pop districts
     for (int i = 0; i < V; i++) {
-        std::vector<int> nbors = g[i];
-        if (districts(i) != distr_root) continue; // same side of boundary as root
-        for (int nbor : nbors) {
-            if (districts(nbor) != distr_other)
+        if (districts(i) != region1_id) continue; // Only count if starting vertex in region 1
+        for (int nbor : g[i]) {
+            if (districts(nbor) != region2_id)
                 continue;
-            // otherwise, boundary with root -> ... -> i -> nbor
+            // otherwise, boundary with i -> nbor
             count += 1.0;
         }
     }
 
     return std::log(count);
 }
+
+/*  
+ * @title Count the Number of Valid Adjacent Region Pairs
+ * 
+ * Counts and returns the number of valid adjacent region pairs in a graph. 
+ * We define a valid of pair of adjacent regions to be two regions that 
+ *      1. Share at least one edge between them in `g`
+ *      2. The regions sizes are valid to merge with eligibility determined
+ *         by the `valid_merge_pairs` matrix
+ * 
+ * @param g A graph (adjacency list) passed by reference
+ * @param plan A plan object
+ * @param check_adj_to_regions A vector tracking whether or not we should 
+ * check for edges adjacent to vertices in a region of a particular size. For
+ * example, `check_adj_to_regions[i] == true` means we will attempt to find 
+ * edges adjacent to any vertex in a region of size i. This vector is 1-indexed
+ * meaning we don't need to subtract region size by 1 when accessing.
+ * @param valid_merge_pairs A 2D `ndists+1` by `ndists+1` boolean matrix that
+ * uses region size to check whether or not two regions are considered a valid
+ * merge that can be counted in the map. For example `valid_merge_pairs[i][j]`
+ * being true means that any regions where the sizes are (i,j) are considered
+ * valid to merge. 2D matrix is 1 indexed (don't need to subtract region size)
+ * @param existing_pair_map A hash map mapping pairs of regions to a double. 
+ * This is an optional parameter and if its empty then its ignored. If its not
+ * empty then pairs already in the hash won't be counted added to the output.
+ * 
+ * @details No modifications to inputs made
+ * @return The number of valid adjacent region pairs
+ */
+int count_valid_adj_regions(
+    Graph const &g, Plan const &plan,
+    std::vector<bool> const &check_adj_to_regions,
+    std::vector<std::vector<bool>> const &valid_merge_pairs
+){
+    // 2D matrix for tracking if regions are adjacent 
+    // To save space we will only ever access with [smaller id][larger id]
+    // So it will be `num_regions-1` rows and row i will have num_regions-1
+    // elements and the second element will need to be 1 indexed so 
+    // subtract off 1 when accessing
+    std::vector<std::vector<bool>> is_valid_adj_pair(plan.num_regions-1);
+
+    for (size_t i = 0; i < plan.num_regions-1; i++)
+    {
+        // for smaller value i there are num_regions-(i+1) larger values 
+        is_valid_adj_pair[i] = std::vector<bool>(plan.num_regions-(i+1), false);
+    }
+
+    int num_valid_adj_pairs = 0;
+
+    int const V = g.size();
+
+    for (int v = 0; v < V; v++) {
+        // Find out which region this vertex corresponds to
+        int v_region_num = plan.region_ids(v);
+        auto v_region_size = plan.region_sizes(v_region_num);
+
+        // check if its a region we want to find regions adjacent to 
+        // and if not keep going
+        if(!check_adj_to_regions.at(v_region_size)){
+            continue;
+        }
+
+        // get neighbors
+        std::vector<int> nbors = g[v];
+
+        // now iterate over its neighbors
+        for (int v_nbor : nbors) {
+            // find which region neighbor corresponds to
+            int v_nbor_region_num = plan.region_ids(v_nbor);
+
+            // ignore if they are in the same region
+            if(v_region_num == v_nbor_region_num) continue;
+            // ignore if pair can't be merged
+            auto v_nbor_region_size = plan.region_sizes(v_nbor_region_num);
+            if(!valid_merge_pairs[v_region_size][v_nbor_region_size]) continue;
+
+            // else they are different so regions are adj
+            // check if we need to be aware of double counting. IE if both regions
+            // are ones where check adjacent is true then its possible to double count edges
+            bool double_counting_not_possible = !check_adj_to_regions[v_nbor_region_size];
+            // Rprintf("Neighbor size is %d and Double counting is %d\n", 
+            //     (int) v_nbor_region_size, (int) double_counting_not_possible);
+
+            // Now add this edge if either we can't double count it 
+            // or `v_region_num` is the smaller of the pair 
+            if(double_counting_not_possible || v_region_num < v_nbor_region_num){
+                // Rprintf("Counting (%d,%d)\n", v, v_nbor);
+                int smaller_region_id  = std::min(v_nbor_region_num,v_region_num);
+                int bigger_region_id  = std::max(v_nbor_region_num,v_region_num);
+
+                // Check if we've counted this before 
+                if(!is_valid_adj_pair[smaller_region_id][bigger_region_id-1]){
+                    // If not increase the count by one and mark this as true 
+                    ++num_valid_adj_pairs;
+                    is_valid_adj_pair[smaller_region_id][bigger_region_id-1] = true;
+                }
+            }
+        }
+    }
+
+    return num_valid_adj_pairs;
+}
+
 
 /*
  * Compute the status quo penalty for district `distr`
@@ -499,9 +601,11 @@ NumericVector max_dev(const IntegerMatrix districts, const vec pop, int n_distr)
 /*
  * Calculate the deviation for cutting at every edge in a spanning tree.
  */
+/*
+ * Calculate the deviation for cutting at every edge in a spanning tree.
+ */
 std::vector<double> tree_dev(Tree &ust, int root, const uvec &pop,
-                             double const total_pop, double const target,
-                             int const min_potential_d, int const max_potential_d) {
+                             double total_pop, double target) {
     int V = pop.size();
     std::vector<int> pop_below(V, 0);
     std::vector<int> parent(V);
@@ -511,20 +615,8 @@ std::vector<double> tree_dev(Tree &ust, int root, const uvec &pop,
     std::vector<double> devs(V-1);
     for (int i = 0; i < V; i++) {
         if (i == root) continue;
-
-        // start at total pop since deviance will never be more than total_pop/2
-        double smallest_dev = total_pop*total_pop;
-
-        // for each possible d value get the deviation above and below
-        for(int potential_d = min_potential_d; potential_d <= max_potential_d; potential_d++){
-            // take this minimum of this d value and all previous ones 
-            double min_dev = std::min(
-                std::fabs(pop_below.at(i) - target * potential_d),
-                std::fabs(total_pop - pop_below.at(i) - target * potential_d)
-            ) / (target * potential_d);
-            smallest_dev = std::min(smallest_dev, min_dev);
-        }
-        devs.at(idx) = smallest_dev;
+        devs.at(idx) = std::min(std::fabs(pop_below.at(i) - target),
+                std::fabs(total_pop - pop_below[i] - target)) / target;
         idx++;
     }
 

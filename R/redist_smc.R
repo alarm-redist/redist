@@ -322,21 +322,8 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
 
 
 
-        # make original ancestor matrix
-        # add 1 for R indexing
-        algout$original_ancestors_mat <- matrix(
-            unlist(algout$original_ancestors),
-            ncol = length(algout$original_ancestors),
-            byrow = FALSE) + 1
-
-
-
-        # make parent mat into matrix
-        # add 1 for R indexing
-        algout$parent_index <- matrix(
-            unlist(algout$parent_index),
-            ncol = length(algout$parent_index),
-            byrow = FALSE) + 1
+        # add 1 to make parent mat  1-indexed for R indexing
+        algout$parent_index <- algout$parent_index + 1L
 
 
 
@@ -377,13 +364,25 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
             algout$ancestors <- algout$ancestors[rs_idx, , drop = FALSE]
             storage.mode(algout$ancestors) <- "integer"
 
+            # add a final column for the resampling
+            # NOTE: I THINK THIS IS WRONG, MIGHT NEED TO FLIP COLUMN
             algout$parent_index <- cbind(algout$parent_index, rs_idx[1:length(rs_idx)])
-            algout$original_ancestors_mat <- get_original_ancestors_mat(
-                algout$parent_index
-            )
+
+            # do unique parents
+            nunique_parent_indices <- c(
+                algout$nunique_parent_indices,
+                dplyr::n_distinct(rs_idx[1:length(rs_idx)]))
+
+
         }
         storage.mode(algout$plans) <- "integer"
         t2_run <- Sys.time()
+
+
+        # get original ancestor matrix from parent index
+        algout$original_ancestors_mat <- get_original_ancestors_mat(
+            algout$parent_index
+        )
 
         if (!is.nan(n_eff) && n_eff/nsims <= 0.05)
             cli_warn(c("Less than 5% resampling efficiency.",

@@ -106,9 +106,12 @@ public:
     virtual Graph get_forest_adj(){throw Rcpp::exception("Get Forest Adj not Supported for this!\n");};
 
     // redist_smc related methods 
-    int choose_multidistrict_to_split(std::vector<bool> const &valid_region_sizes_to_split);
+    int choose_multidistrict_to_split(std::vector<bool> const &valid_region_sizes_to_split,
+        RNGState &rng_state,
+        double const selection_alpha = SELECTION_ALPHA);
     bool draw_tree_on_region(const MapParams &map_params, const int region_to_draw_tree_on,
-        Tree &ust, std::vector<bool> &visited, std::vector<bool> &ignore, int &root);
+        Tree &ust, std::vector<bool> &visited, std::vector<bool> &ignore, int &root,
+        RNGState &rng_state);
 
 
     void update_region_info_from_cut(
@@ -132,11 +135,20 @@ public:
         std::unordered_map<std::pair<int, int>, double, bounded_hash> const &existing_pair_map = {}
     ) const = 0;
 
+    // Computes the log effective boundary length between two regions
+    // The specifics depend on the sampling space
+    virtual double get_log_eff_boundary_len(
+        const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+        TreeSplitter const &tree_splitter, 
+        const int region1_id, int const region2_id
+    ) const = 0;
+
     // virtual redist_smc methods
 
     bool attempt_split(const MapParams &map_params, const SplittingSchedule &splitting_schedule,
                 Tree &ust, TreeSplitter &tree_splitter,
                  std::vector<bool> &visited, std::vector<bool> &ignore, 
+                 RNGState &rng_state,
                  int const min_region_cut_size, int const max_region_cut_size, 
                  std::vector<int> const &smaller_cut_sizes_to_try,
                  const bool split_district_only, 

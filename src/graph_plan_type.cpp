@@ -177,3 +177,14 @@ std::vector<std::tuple<int, int, double>> GraphPlan::get_valid_adj_regions_and_e
     return region_pairs_tuple_vec;
 
 }
+
+
+double GraphPlan::get_log_eff_boundary_len(
+    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    TreeSplitter const &tree_splitter, 
+    const int region1_id, int const region2_id
+) const{
+    // Return the log of the graph theoretic boundary 
+    return log_graph_boundary(map_params.g, region_ids,
+        region1_id, region2_id);
+}

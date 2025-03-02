@@ -21,13 +21,14 @@ using namespace arma;
  * `lower` is a lower bound (inclusive) on the index of the first unvisited element
  */
 // TESTED
-int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower);
+int rvtx(const std::vector<bool> &visited, int size, int remaining, int &lower,
+         RNGState &rng_state);
 
 /*
  * Generate a random neighbor to a vertex, except for the `last` vertex.
  */
 // TESTED
-int rnbor(const Graph &g, int vtx);
+int rnbor(const Graph &g, int vtx, RNGState &rng_state);
 
 /*
  * Make the district adjacency graph for `plan` from the overall precinct graph `g`

@@ -143,7 +143,7 @@ std::vector<EdgeCut> get_all_valid_edge_cuts_from_edge(
             double cut_region2_lb = lower*cut_region2_size; 
             double cut_region2_ub = upper*cut_region2_size;
 
-            if(DEBUG_VERBOSE){
+            if(TREE_SPLITTING_DEBUG_VERBOSE){
             REprintf("\tFor (%d, %d): compare %f vs %f vs %f and %f vs %f vs %f \n", 
                 cut_region1_size, cut_region2_size,
                 cut_region1_lb, below_pop, cut_region1_ub,
@@ -169,7 +169,7 @@ std::vector<EdgeCut> get_all_valid_edge_cuts_from_edge(
             if(cut_region1_size == cut_region2_size) continue;
 
 
-            if(DEBUG_VERBOSE){
+            if(TREE_SPLITTING_DEBUG_VERBOSE){
             REprintf("\tFor (%d, %d): compare %f vs %f vs %f and %f vs %f vs %f \n", 
                 cut_region2_size, cut_region1_size,
                 cut_region2_lb, below_pop, cut_region2_ub,
@@ -247,7 +247,7 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
     // pop below only gets smaller as you continue along the tree 
     double smallest_lower_bound = lower * min_potential_cut_size;
 
-    if(DEBUG_VERBOSE){
+    if(TREE_SPLITTING_DEBUG_VERBOSE){
     REprintf("Region pop=%d, Region size=%d\n",total_region_pop, total_region_size);
     REprintf("lower=%.4f, big upper=%.4f, min_mul = %d, max_mul = %d \n", 
         smallest_lower_bound, biggest_upper_bound, 
@@ -284,7 +284,7 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
         //   only gets bigger 
         // these conditions should be symmetric but too lazy to prove it now
         if(pop_below < smallest_lower_bound || pop_above > biggest_upper_bound){
-            if(DEBUG_VERBOSE){
+            if(TREE_SPLITTING_DEBUG_VERBOSE){
             REprintf("Terminated!! v=%d: Pop above = %f, Pop below = %f, parent = %d\n", 
             cut_vertex, pop_above, pop_below, queue_element.at(1));
             }
@@ -293,7 +293,7 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
             // At this point its only possible to split if 
             //  - pop_above is >= the smallest lower bound or 
             //  - pop_below is <= than biggest_upper_bound
-            if(DEBUG_VERBOSE){
+            if(TREE_SPLITTING_DEBUG_VERBOSE){
             REprintf("Trying: v=%d: Pop above = %f, Pop below = %f, parent = %d\n", 
                 cut_vertex, pop_above, pop_below, queue_element.at(1));
             }
@@ -319,7 +319,7 @@ std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
                     );
             }
         }else{
-            if(DEBUG_VERBOSE){
+            if(TREE_SPLITTING_DEBUG_VERBOSE){
             REprintf("Skipping: v=%d: Pop above = %f, Pop below = %f, parent = %d\n", 
                 cut_vertex, pop_above, pop_below, queue_element.at(1));
             }

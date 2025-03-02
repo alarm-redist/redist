@@ -297,6 +297,7 @@ generic_redist_gsmc <- function(
             is_chain1 <- T
         }
 
+        if(is_chain1 && !silent) print(sprintf("Chain %d", chain))
         run_verbosity <- if (is_chain1 || !multiprocess) verbosity else 0
         t1_run <- Sys.time()
 
@@ -404,6 +405,7 @@ generic_redist_gsmc <- function(
             n_eff <- 1/sum(normalized_wgts^2)
 
             rs_idx <- resample_lowvar(normalized_wgts)
+
             n_unique <- dplyr::n_distinct(rs_idx)
             # makes algout$plans[i] now equal to algout$plans[rs_idx[i]]
             algout$plans_mat <- algout$plans_mat[, rs_idx, drop = FALSE]
@@ -473,6 +475,9 @@ generic_redist_gsmc <- function(
 
         # add the numerically stable weights back
         algout$wgt <- wgt
+
+        storage.mode(algout$original_ancestors_mat) <- "integer"
+        storage.mode(algout$parent_index) <- "integer"
 
         # add diagnostic stuff
         algout$l_diag <- list(

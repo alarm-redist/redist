@@ -110,9 +110,11 @@ double GroupHingeConstraint::compute_merged_region_constraint_score(const Plan &
 // Scoring function
 ScoringFunction::ScoringFunction(
     MapParams const &map_params,
-    Rcpp::List const &constraints, bool const do_pop_temper, double const pop_temper
+    Rcpp::List const &constraints, bool const do_pop_temper, double const pop_temper,
+    bool const score_districts_only
 ):
-num_non_final_constraints(0), num_final_constraints(0), all_rounds_constraints(0){
+num_non_final_constraints(0), num_final_constraints(0), all_rounds_constraints(0),
+score_districts_only(score_districts_only){
     // add pop temper if doing that 
     if(do_pop_temper){
         non_final_plan_constraint_ptrs.emplace_back(
@@ -282,6 +284,8 @@ num_non_final_constraints(0), num_final_constraints(0), all_rounds_constraints(0
 
 double ScoringFunction::compute_region_score(const Plan &plan, int const region_id, bool const is_final) 
     const{
+    // If only scoring districts return zero if region is multidistrict
+    if(score_districts_only && plan.region_sizes(region_id) > 1) return 0.0;
     // start out with score of zero
     double region_score = 0.0;
 
@@ -304,6 +308,8 @@ double ScoringFunction::compute_region_score(const Plan &plan, int const region_
 double ScoringFunction::compute_merged_region_score(const Plan &plan, 
     int const region1_id, int const region2_id, bool const is_final) 
     const{
+    // If only scoring districts this is always 0
+    if(score_districts_only) return 0.0;
     // start out with log score of zero
     double region_score = 0.0;
 
