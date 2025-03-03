@@ -2,11 +2,12 @@
 % Please edit documentation in R/redist_ms.R
 \name{redist_mergesplit}
 \alias{redist_mergesplit}
-\title{Merge-Split/Recombination MCMC Redistricting Sampler (Carter et al. 2019)}
+\title{Parallel Merge-Split/Recombination MCMC Redistricting Sampler (Carter et al. 2019)}
 \usage{
 redist_mergesplit(
   map,
   nsims,
+  chains = 1,
   warmup = if (is.null(init_plan)) 10 else max(100, nsims\%/\%5),
   thin = 1L,
   init_plan = NULL,
@@ -16,7 +17,11 @@ redist_mergesplit(
   constraint_fn = function(m) rep(0, ncol(m)),
   adapt_k_thresh = 0.99,
   k = NULL,
+  ncores = NULL,
+  cl_type = "PSOCK",
+  return_all = TRUE,
   init_name = NULL,
+  multiprocess = T,
   verbose = FALSE,
   silent = FALSE
 )
@@ -24,13 +29,18 @@ redist_mergesplit(
 \arguments{
 \item{map}{A \code{\link{redist_map}} object.}
 
-\item{nsims}{The number of samples to draw, including warmup.}
+\item{nsims}{The number of samples to generate. The chain will run for
+\code{warmup+(nsims*thin)} steps.}
+
+\item{chains}{the number of parallel chains to run. Each chain will have
+\code{nsims} draws. If \code{init_plan} is sampled, each chain will be initialized
+with its own sampled plan.}
 
 \item{warmup}{The number of warmup samples to discard. Recommended to be at
 least the first 20\% of samples, and in any case no less than around 100
 samples, unless initializing from a random plan.}
 
-\item{thin}{Save every \code{thin}-th sample. Defaults to no thinning (1).}
+\item{thin}{Save every \code{thin}-th sample after running warump. Defaults to no thinning (1).}
 
 \item{init_plan}{The initial state of the map. If not provided, will default to
 the reference map of the \code{map} object, or if none exists, will sample
@@ -65,9 +75,21 @@ Must be between 0 and 1.}
 \item{k}{The number of edges to consider cutting after drawing a spanning
 tree. Should be selected automatically in nearly all cases.}
 
+\item{ncores}{The number of clusters to spawn Defaults to the
+maximum available detected by \code{parallel::detectCores()}.}
+
+\item{cl_type}{the cluster type (see \code{\link[=makeCluster]{makeCluster()}}). Safest is \code{"PSOCK"},
+but \code{"FORK"} may be appropriate in some settings.}
+
+\item{return_all}{if \code{TRUE} return all sampled plans; otherwise, just return
+the final plan from each chain.}
+
 \item{init_name}{a name for the initial plan, or \code{FALSE} to not include
 the initial plan in the output.  Defaults to the column name of the
 existing plan, or "\code{<init>}" if the initial plan is sampled.}
+
+\item{multiprocess}{Whether or not to spawn separate clusters to run the chains
+on or to just run them sequentially.}
 
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}
@@ -75,8 +97,8 @@ Recommended.}
 \item{silent}{Whether to suppress all diagnostic information.}
 }
 \value{
-\code{redist_mergesplit} returns an object of class
-\code{\link{redist_plans}} containing the simulated plans.
+A \code{\link{redist_plans}} object with all of the simulated plans, and an
+additional \code{chain} column indicating the chain the plan was drawn from.
 }
 \description{
 \code{redist_mergesplit} uses a Markov Chain Monte Carlo algorithm (Carter et
@@ -107,11 +129,13 @@ data(fl25)
 
 fl_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
 
-sampled_basic <- redist_mergesplit(fl_map, 10000)
+sampled_basic <- redist_mergesplit(fl_map, 10000, chains = 10)
 
-sampled_constr <- redist_mergesplit(fl_map, 10000, constraints = list(
+sampled_constr <- redist_mergesplit(fl_map, 10000, chains = 10,
+    constraints = list(
     incumbency = list(strength = 1000, incumbents = c(3, 6, 25))
-))
+    )
+)
 }
 
 }

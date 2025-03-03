@@ -17,6 +17,7 @@ run_redist_gsmc(
   region_sizes_mat,
   sampling_space,
   control,
+  constraints,
   verbosity = 3L,
   diagnostic_mode = FALSE
 )

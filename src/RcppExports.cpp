@@ -491,12 +491,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // ms_plans
-Rcpp::List ms_plans(int N, List l, const arma::uvec init, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double target, double lower, double upper, double rho, List constraints, List control, int k, int thin, int verbosity);
-RcppExport SEXP _gredist_ms_plans(SEXP NSEXP, SEXP lSEXP, SEXP initSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP constraintsSEXP, SEXP controlSEXP, SEXP kSEXP, SEXP thinSEXP, SEXP verbositySEXP) {
+Rcpp::List ms_plans(int nsims, int warmup, List l, const arma::uvec init, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double target, double lower, double upper, double rho, List constraints, List control, int k, int thin, int verbosity);
+RcppExport SEXP _gredist_ms_plans(SEXP nsimsSEXP, SEXP warmupSEXP, SEXP lSEXP, SEXP initSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP constraintsSEXP, SEXP controlSEXP, SEXP kSEXP, SEXP thinSEXP, SEXP verbositySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< int >::type nsims(nsimsSEXP);
+    Rcpp::traits::input_parameter< int >::type warmup(warmupSEXP);
     Rcpp::traits::input_parameter< List >::type l(lSEXP);
     Rcpp::traits::input_parameter< const arma::uvec >::type init(initSEXP);
     Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
@@ -511,7 +512,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type k(kSEXP);
     Rcpp::traits::input_parameter< int >::type thin(thinSEXP);
     Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
-    rcpp_result_gen = Rcpp::wrap(ms_plans(N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, verbosity));
+    rcpp_result_gen = Rcpp::wrap(ms_plans(nsims, warmup, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, verbosity));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -872,7 +873,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_group_pct", (DL_FUNC) &_gredist_group_pct, 4},
     {"_gredist_pop_tally", (DL_FUNC) &_gredist_pop_tally, 3},
     {"_gredist_max_dev", (DL_FUNC) &_gredist_max_dev, 3},
-    {"_gredist_ms_plans", (DL_FUNC) &_gredist_ms_plans, 15},
+    {"_gredist_ms_plans", (DL_FUNC) &_gredist_ms_plans, 16},
     {"_gredist_pareto_dominated", (DL_FUNC) &_gredist_pareto_dominated, 1},
     {"_gredist_plan_copy_testing", (DL_FUNC) &_gredist_plan_copy_testing, 0},
     {"_gredist_arma_testing", (DL_FUNC) &_gredist_arma_testing, 0},

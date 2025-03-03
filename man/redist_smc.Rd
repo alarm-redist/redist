@@ -12,7 +12,6 @@ redist_smc(
   constraints = list(),
   resample = TRUE,
   runs = 1L,
-  ncores = 0L,
   init_particles = NULL,
   n_steps = NULL,
   adapt_k_thresh = 0.99,
@@ -21,7 +20,9 @@ redist_smc(
   trunc_fn = redist_quantile_trunc,
   pop_temper = 0,
   final_infl = 1,
-  multiprocess = FALSE,
+  num_processes = 0L,
+  num_threads_per_process = 0L,
+  multiprocess = TRUE,
   ref_name = NULL,
   verbose = FALSE,
   silent = FALSE
@@ -62,13 +63,6 @@ standard errors. Output will only be shown for the first run. For
 compatibility with MCMC methods, runs are identified with the \code{chain}
 column in the output.}
 
-\item{ncores}{How many cores to use to parallelize plan generation within each
-run. The default, 0, will use the number of available cores on the machine
-as long as \code{nsims} and the number of units is large enough. If \code{runs>1}
-you will need to set this manually. If more than one core is used, the
-sampler output will not be fully reproducible with \code{set.seed()}. If full
-reproducibility is desired, set \code{ncores=1}.}
-
 \item{init_particles}{A matrix of partial plans to begin sampling from. For
 advanced use only.  The matrix must have \code{nsims} columns and a row for
 every precinct. It is important to ensure that the existing districts meet
@@ -105,6 +99,13 @@ splits.}
 iteration. Used to loosen the constraint when the sampler is getting stuck
 on the final split. \code{pop_temper} should be tried first, since using
 \code{final_infl} will actually change the target distribution.}
+
+\item{num_processes}{How many cores to use to parallelize plan generation within each
+run. The default, 0, will use the number of available cores on the machine
+as long as \code{nsims} and the number of units is large enough. If \code{runs>1}
+you will need to set this manually. If more than one core is used, the
+sampler output will not be fully reproducible with \code{set.seed()}. If full
+reproducibility is desired, set \code{num_processes=1}.}
 
 \item{ref_name}{a name for the existing plan, which will be added as a
 reference plan, or \code{FALSE} to not include the initial plan in the
@@ -162,7 +163,7 @@ sampled_constr <- redist_smc(fl_map, 5000, constraints = constr)
 redist_smc(fl_map, 1000, runs = 2)
 
 # One run with multiple cores
-redist_smc(fl_map, 1000, ncores = 2)
+redist_smc(fl_map, 1000, num_processes = 2)
 }
 
 }

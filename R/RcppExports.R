@@ -167,8 +167,8 @@ max_dev <- function(districts, pop, n_distr) {
     .Call(`_gredist_max_dev`, districts, pop, n_distr)
 }
 
-ms_plans <- function(N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, verbosity) {
-    .Call(`_gredist_ms_plans`, N, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, verbosity)
+ms_plans <- function(nsims, warmup, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, verbosity) {
+    .Call(`_gredist_ms_plans`, nsims, warmup, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, verbosity)
 }
 
 pareto_dominated <- function(x) {

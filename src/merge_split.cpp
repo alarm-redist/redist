@@ -15,7 +15,7 @@
  * Sample `N` redistricting plans on map `g`, ensuring that the maximum
  * population deviation is between `lower` and `upper` (and ideally `target`)
  */
-Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const uvec &pop,
+Rcpp::List ms_plans(int nsims, int warmup, List l, const uvec init, const uvec &counties, const uvec &pop,
               int n_distr, double target, double lower, double upper, double rho,
               List constraints, List control, int k, int thin, int verbosity) {
     // re-seed MT
@@ -31,27 +31,29 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     int V = g.size();
     int n_cty = max(counties);
 
-    int rounded_up_N_over_thin = std::ceil(static_cast<double>(std::max(1, N-1))/thin);
+    int rounded_up_N_over_thin = std::ceil(static_cast<double>(std::max(1, nsims-1))/thin);
 
-    int n_out = rounded_up_N_over_thin + 2;
-    umat districts(V, n_out, fill::zeros);
+    int n_out = rounded_up_N_over_thin + 3;
+    umat districts(V, nsims + 2, fill::zeros);
     districts.col(0) = init;
     districts.col(1) = init;
 
-    Rcpp::IntegerVector mh_decisions(rounded_up_N_over_thin + 1);
+    Rcpp::IntegerVector mh_decisions(nsims);
     double mha;
 
     double tol = std::max(target - lower, upper - target) / target;
 
     if (verbosity >= 1) {
-        Rcout.imbue(std::locale(""));
+        Rcout.imbue(std::locale::classic());
         Rcout << "MARKOV CHAIN MONTE CARLO\n";
         Rcout << std::fixed << std::setprecision(0);
-        Rcout << "Sampling " << N << " " << V << "-unit maps with " << n_distr
-              << " districts and population between " << lower << " and " << upper << ".\n";
-        if (cg.size() > 1)
+        Rcout << "Sampling " << nsims << " " << V << "-unit maps with " << n_distr
+              << " districts and population between " << lower << " and " << upper 
+              << std::endl;
+        if (cg.size() > 1){
             Rcout << "Sampling hierarchically with respect to the "
-                  << cg.size() << " administrative units.\n";
+                << cg.size() << " administrative units." << std::endl;
+        }
     }
 
     // find k and multipliers
@@ -65,7 +67,6 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     Graph new_dist_g;
     int distr_1, distr_2;
     select_pair(n_distr, dist_g, distr_1, distr_2, rng_state);
-    int n_accept = 0;
     int reject_ct;
     CharacterVector psi_names = CharacterVector::create(
         "pop_dev", "splits", "multisplits", "total_splits",
@@ -77,13 +78,29 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
     NumericVector new_psi(psi_names.size());
     std::vector<int> distr_1_2;
     new_psi.names() = psi_names;
-    RObject bar = cli_progress_bar(N, cli_config(false));
+    
     int idx = 1;
     Tree ust = init_tree(V);
     std::vector<bool> visited(V);
     std::vector<bool> ignore(V);
-    for (int i = 1; i <= N; i++) {
-         
+
+    // vector to track mh ratio 
+    arma::vec log_mh_ratio(nsims);
+
+
+    int total_post_warmup_steps = nsims * thin;
+    int total_steps = total_post_warmup_steps + warmup;
+    int start = 1 - warmup;
+
+    // Track the total number of successes during the warmup 
+    int warmup_acceptances = 0;
+    // Track total number of successes after warmup
+    int post_warump_acceptances = 0;
+
+    RObject bar = cli_progress_bar(total_steps, cli_config(false));
+    for (int i = start, step_num = 0 ; i <= total_post_warmup_steps; i++, step_num++) {
+        // Rprintf("Iter %d and idx %d: ", i, idx);
+        
         // make the proposal
         double prop_lp = 0.0;
         mh_decisions(idx - 1) = 0;
@@ -96,13 +113,20 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
         prop_lp = split_map_ms(g, ust, counties, cg, districts.col(idx+1),
                                distr_1, distr_2, visited, ignore,
                                pop, lower, upper, target, k, rng_state);
-                               
+    
 
         if (!std::isfinite(prop_lp)) {
             districts.col(idx+1) = districts.col(idx);
-            if (i % thin == 0) idx++;
+            if (i > 0 && i % thin == 0){
+                // Rprintf("Here1");
+                log_mh_ratio(idx-1) = prop_lp;
+                // Rprintf(" \t Here Done\n");
+                idx++;
+            } 
             continue; // reject
         }
+
+        // Rprintf("Checkpoint 1, ");
 
         // tau calculations
         if (rho != 1) {
@@ -140,9 +164,14 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
             1.0/new_dist_g[distr_1 - 1].size() + 1.0/new_dist_g[distr_2 - 1].size()
         );
 
+        // Rprintf("Checkpoint 2, ");
         
         if (!do_mh || prop_lp >= 0 || std::log(rng_state.r_unif()) <= prop_lp) { // ACCEPT
-                n_accept++;
+                if(i <= 0){
+                    ++warmup_acceptances;
+                }else{
+                    ++post_warump_acceptances;
+                }
                 districts.col(idx) = districts.col(idx+1); // copy over new map
                 dist_g = new_dist_g;
                 mh_decisions(idx - 1) = 1;
@@ -150,30 +179,41 @@ Rcpp::List ms_plans(int N, List l, const uvec init, const uvec &counties, const 
             districts.col(idx+1) = districts.col(idx);
         }
 
-        if (i % thin == 0) idx++;
+        // Rprintf("Checkpoint 3\n ");
+
+        if (i > 0 && i % thin == 0){
+            // Rprintf("Here1");
+            log_mh_ratio(idx-1) = prop_lp;
+            // Rprintf(" \t Here Done\n");
+            idx++;
+        } 
 
         if (verbosity >= 1 && CLI_SHOULD_TICK) {
-            cli_progress_set(bar, i - 1);
-            mha = (double) n_accept / (i - 1);
+            cli_progress_set(bar, step_num);
+            mha = static_cast<double>(warmup_acceptances + post_warump_acceptances) / (step_num+1);
             cli_progress_set_format(bar, "{cli::pb_bar} {cli::pb_percent} | ETA: {cli::pb_eta} | MH Acceptance: %.2f", mha);
         }
-        if (idx == n_out - 1) { // thin doesn't divide N and we are done early
-            cli_progress_set(bar, N);
-            break;
-        }
         Rcpp::checkUserInterrupt();
+
+        // Rprintf("Checkpoint 4\n ");
+        
     }
     cli_progress_done(bar);
-
-
+    
     if (verbosity >= 1) {
-        Rcout << "Acceptance rate: " << std::setprecision(2) << (100.0 * n_accept) / (N-1) << "%\n";
+        Rcout << "Acceptance rate: " << std::setprecision(2) << 
+        (100.0 * (warmup_acceptances + post_warump_acceptances)) / (total_steps) << 
+        "%" << std::endl;
     }
 
-    Rcpp::List out;
-    out["plans"] = districts;
+    Rcpp::List out; 
+    out["plans"] = districts.cols(1, nsims);
     out["est_k"] = k;
     out["mhdecisions"] = mh_decisions;
+    out["total_steps"] = total_steps;
+    out["warmup_acceptances"] = warmup_acceptances;
+    out["post_warump_acceptances"] = post_warump_acceptances;
+    out["log_mh_ratio"] = log_mh_ratio;
 
     return out;
 }

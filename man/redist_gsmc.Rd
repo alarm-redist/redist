@@ -8,6 +8,7 @@ redist_gsmc(
   map,
   nsims,
   counties = NULL,
+  constraints = list(),
   runs = 1L,
   num_splitting_steps = NULL,
   estimate_cut_k = TRUE,
@@ -22,14 +23,12 @@ redist_gsmc(
   resample = TRUE,
   num_processes = 0L,
   num_threads_per_process = 0L,
-  multiprocess = FALSE,
+  multiprocess = TRUE,
   pop_temper = 0,
   init_region_ids_mat = NULL,
   init_region_sizes_mat = NULL,
-  min_region_cut_sizes = NULL,
-  max_region_cut_sizes = NULL,
-  permitted_split_region_sizes_list = NULL,
-  permitted_presplit_region_sizes_list = NULL,
+  custom_size_split_list = NULL,
+  ref_name = NULL,
   verbose = FALSE,
   silent = FALSE,
   diagnostic_mode = FALSE
@@ -50,6 +49,9 @@ parameter associated with this constraint. To adjust the number of county
 splits further, or to constrain a second type of administrative split,
 consider using \code{add_constr_splits()}, \code{add_constr_multisplits()}, and
 \code{add_constr_total_splits()}.}
+
+\item{constraints}{A \code{\link[=redist_constr]{redist_constr()}} object or a list containing
+information on sampling constraints. See \link{constraints} for more information.}
 
 \item{runs}{How many independent parallel runs to conduct. Each run will
 have \code{nsims} simulations. Multiple runs allows for estimation of simulation
@@ -104,6 +106,10 @@ begin sampling from. For advanced use only.  The matrix must have \code{nsims}
 columns and at least as many rows as the number of regions in the
 \code{init_region_ids_mat} and each column must sum to the number of seats in the
 map.}
+
+\item{ref_name}{a name for the existing plan, which will be added as a
+reference plan, or \code{FALSE} to not include the initial plan in the
+output. Defaults to the column name of the existing plan.}
 
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}

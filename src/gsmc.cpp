@@ -925,10 +925,7 @@ List run_redist_gsmc(
         cli_progress_done(bar);
         return R_NilValue;
     }
-    
-
     cli_progress_done(bar);
-
     
 
     // if not diagnostic reorder the plans 

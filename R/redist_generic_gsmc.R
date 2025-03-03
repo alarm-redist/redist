@@ -267,6 +267,7 @@ generic_redist_gsmc <- function(
         })
         doParallel::registerDoParallel(cl, cores = num_processes)
         on.exit(stopCluster(cl))
+        cat("Spawning " , num_processes, " clusters \n")
     } else {
         `%oper%` <- `%do%`
     }
@@ -289,7 +290,7 @@ generic_redist_gsmc <- function(
     # add the splitting parameters
     control <- c(control, splitting_params)
 
-    cat("Spawning cluster with", num_processes, "processes!\n")
+
     t1 <- Sys.time()
     # all_out <- foreach(chain = seq_len(runs), .inorder = FALSE, .packages="gredist") %oper% {
     all_out <- foreach(chain = seq_len(runs), .inorder = FALSE) %oper% {
@@ -297,7 +298,7 @@ generic_redist_gsmc <- function(
             is_chain1 <- T
         }
 
-        if(is_chain1 && !silent) print(sprintf("Chain %d", chain))
+        if(is_chain1 && !silent) cat("Starting Chain ", chain, "\n", sep = "")
         run_verbosity <- if (is_chain1 || !multiprocess) verbosity else 0
         t1_run <- Sys.time()
 
