@@ -17,7 +17,7 @@ redist.plot.trace(pl_ms, polsby)
 redist.plot.trace(pl_ms, e_dem)
 redist.plot.plans(pl_ms, 4000, map)
 
-pl_smc = redist_smc(map, 2000, ncores=2, runs=2, pop_temper=0.007, adapt_k_thresh=1) |>
+pl_smc = redist_smc(map, 2000, num_threads_per_process=2, runs=2, pop_temper=0.007, adapt_k_thresh=1) |>
     mutate(polsby = comp_polsby(pl(), map, perim_df=perims, ncores=4),
            dem = group_frac(map, ndv, ndv + nrv)) |>
     subset_sampled() |>

@@ -399,6 +399,33 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
         nunique_original_ancestors <- algout$original_ancestors_mat |>
             apply(2, function(x) length(unique(x)))
 
+
+        storage.mode(algout$original_ancestors_mat) <- "integer"
+        storage.mode(algout$parent_index) <- "integer"
+
+        # Internal diagnostics,
+        algout$internal_diagnostics <- list(
+            parent_index_mat = algout$parent_index,
+            original_ancestors_mat = algout$original_ancestors_mat,
+            draw_tries_mat = algout$draw_tries_mat,
+            parent_unsuccessful_tries_mat = algout$parent_unsuccessful_tries_mat
+        )
+
+        # Information about the run
+        algout$run_information <- list(
+            weight_type="old_smc_weights",
+            num_processes = num_processes,
+            num_threads = num_threads_per_process,
+            sampling_space=GRAPH_PLAN_SPACE_SAMPLING,
+            splitting_method = NAIVE_K_SPLITTING,
+            splitting_size_regime = "split_district_only",
+            merge_split_step_vec = rep(FALSE, n_steps),
+            step_types = rep("smc", n_steps),
+            nsims = nsims,
+            alg_name = "original_smc"
+        )
+
+
         algout$l_diag <- list(
             n_eff = n_eff,
             step_n_eff = algout$step_n_eff,
@@ -412,11 +439,8 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
             seq_alpha = seq_alpha,
             pop_temper = pop_temper,
             runtime = as.numeric(t2_run - t1_run, units = "secs"),
-            parent_index_mat = algout$parent_index,
             original_ancestors_mat = algout$original_ancestors_mat,
-            nunique_original_ancestors=nunique_original_ancestors,
-            num_processes = num_processes,
-            num_threads = num_threads_per_process
+            nunique_original_ancestors=nunique_original_ancestors
         )
 
         algout
@@ -431,6 +455,8 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
     plans <- do.call(cbind, lapply(all_out, function(x) x$plans))
     wgt <- do.call(c, lapply(all_out, function(x) x$wgt))
     l_diag <- lapply(all_out, function(x) x$l_diag)
+    run_information <- lapply(all_out, function(x) x$run_information)
+    internal_diagnostics <- lapply(all_out, function(x) x$internal_diagnostics)
     n_dist_act <- dplyr::n_distinct(plans[, 1]) # actual number (for partial plans)
 
     # tempering warning
@@ -449,7 +475,10 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
                             pop_bounds = pop_bounds,
                             entire_runtime = t2-t1,
                             version = packageVersion("gredist"),
-                            diagnostics = l_diag)
+                            diagnostics = l_diag,
+                            run_information = run_information,
+                            internal_diagnostics = internal_diagnostics,
+                            pop_bounds = pop_bounds)
     if (runs > 1) {
         out <- mutate(out, chain = rep(seq_len(runs), each = n_dist_act*nsims)) %>%
             dplyr::relocate('chain', .after = "draw")

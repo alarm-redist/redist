@@ -337,7 +337,6 @@ generic_redist_gsmc <- function(
         # In other words which(algout$region_order_added_list[[n]][,i] == r) is
         # the new ordered value r should be set to
 
-
         if(!diagnostic_mode){
             # if not diagnostic mode
             # make the region_ids_mat_list input just null since there's nothing else
@@ -370,13 +369,12 @@ generic_redist_gsmc <- function(
             algout$step_split_types == "ms"
         )
 
-
-
         # make parent succesful tries matrix counting the number of
         # times a parent index was successfully sampled
-        parent_successful_tries_mat <- apply(
-            algout$parent_index, 2, tabulate, nbins = nsims
-        )
+        # NOTE: Not storing to save space
+        # parent_successful_tries_mat <- apply(
+        #     algout$parent_index, 2, tabulate, nbins = nsims
+        # )
 
 
         # pull out the log weights
@@ -479,9 +477,41 @@ generic_redist_gsmc <- function(
         storage.mode(algout$original_ancestors_mat) <- "integer"
         storage.mode(algout$parent_index) <- "integer"
 
-        # add diagnostic stuff
+
+        # Internal diagnostics,
+        algout$internal_diagnostics <- list(
+            parent_index_mat = algout$parent_index,
+            original_ancestors_mat = algout$original_ancestors_mat,
+            log_incremental_weights_mat = algout$log_incremental_weights_mat,
+            draw_tries_mat = algout$draw_tries_mat,
+            parent_unsuccessful_tries_mat = algout$parent_unsuccessful_tries_mat,
+            region_ids_mat_list = algout$region_ids_mat_list,
+            region_sizes_mat_list = algout$region_sizes_mat_list,
+            merge_split_success_mat = algout$merge_split_success_mat,
+            merge_split_attempt_counts = algout$merge_split_attempt_counts
+        )
+
+        # Information about the run
+        algout$run_information <- list(
+            weight_type=weight_type,
+            num_processes = num_processes,
+            num_threads = num_threads_per_process,
+            custom_size_split_list=custom_size_split_list,
+            valid_region_sizes_to_split_list=algout$valid_region_sizes_to_split_list,
+            valid_split_region_sizes_list=algout$valid_split_region_sizes_list,
+            sampling_space=sampling_space,
+            splitting_method = splitting_method,
+            splitting_size_regime = splitting_size_regime,
+            merge_split_step_vec = merge_split_step_vec,
+            ms_steps_multiplier = ms_steps_multiplier,
+            merge_prob_type = merge_prob_type,
+            step_types = step_types,
+            nsims = nsims,
+            alg_name = alg_name
+        )
+
+        # add high level diagnostic stuff
         algout$l_diag <- list(
-            estimate_cut_k=splitting_params$estimate_cut_k,
             n_eff = n_eff,
             step_n_eff = algout$step_n_eff,
             adapt_k_thresh = splitting_params$adapt_k_thresh, # adapt_k_thresh, NEED TO DEAL WITH
@@ -494,27 +524,7 @@ generic_redist_gsmc <- function(
             seq_alpha = .99,
             pop_temper = pop_temper,
             runtime = as.numeric(t2_run - t1_run, units = "secs"),
-            num_processes = num_processes,
-            num_threads = num_threads_per_process,
-            custom_size_split_list=custom_size_split_list,
-            valid_region_sizes_to_split_list=algout$valid_region_sizes_to_split_list,
-            valid_split_region_sizes_list=algout$valid_split_region_sizes_list,
-            nunique_original_ancestors = nunique_original_ancestors,
-            parent_index_mat = algout$parent_index,
-            original_ancestors_mat = algout$original_ancestors_mat,
-            region_sizes_mat_list = algout$region_sizes_mat_list,
-            log_incremental_weights_mat = algout$log_incremental_weights_mat,
-            region_ids_mat_list = algout$region_ids_mat_list,
-            draw_tries_mat = algout$draw_tries_mat,
-            parent_unsuccessful_tries_mat = algout$parent_unsuccessful_tries_mat,
-            parent_successful_tries_mat = parent_successful_tries_mat,
-            rs_idx = rs_idx,
-            merge_split_steps = algout$merge_split_steps,
-            step_split_types = algout$step_split_types,
-            merge_split_success_mat = algout$merge_split_success_mat,
-            merge_split_attempt_counts = algout$merge_split_attempt_counts,
-            num_ms_steps = num_ms_steps,
-            ms_steps_multiplier = ms_steps_multiplier
+            nunique_original_ancestors = nunique_original_ancestors
         )
 
         algout
@@ -529,8 +539,11 @@ generic_redist_gsmc <- function(
 
 
     plans <- do.call(cbind, lapply(all_out, function(x) x$plans))
+    plan_sizes <- do.call(cbind, lapply(all_out, function(x) x$plan_sizes))
     wgt <- do.call(c, lapply(all_out, function(x) x$wgt))
     l_diag <- lapply(all_out, function(x) x$l_diag)
+    run_information <- lapply(all_out, function(x) x$run_information)
+    internal_diagnostics <- lapply(all_out, function(x) x$internal_diagnostics)
     n_dist_act <- dplyr::n_distinct(plans[, 1]) # actual number (for partial plans)
 
     out <- new_redist_plans(plans, map, alg_name, wgt, resample,
@@ -540,10 +553,11 @@ generic_redist_gsmc <- function(
                             constraints = constraints,
                             version = packageVersion("gredist"),
                             diagnostics = l_diag,
+                            plan_sizes = plan_sizes,
+                            run_information = run_information,
+                            internal_diagnostics = internal_diagnostics,
                             pop_bounds = pop_bounds,
-                            entire_runtime = t2-t1,
-                            weight_type = weight_type,
-                            merge_prob_type = merge_prob_type)
+                            entire_runtime = t2-t1)
 
     if (runs > 1) {
         out <- mutate(out, chain = rep(seq_len(runs), each = n_dist_act*nsims)) %>%

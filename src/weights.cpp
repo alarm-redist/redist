@@ -629,8 +629,7 @@ double compute_uniform_adj_log_incremental_weight(
         std::exp(merged_region_score), std::exp(log_splitting_prob)
     );}
 
-    // multiply the boundary length and selection probability by adding the logs
-    // now exponentiate and add to the sum
+    // now just take the fraction
     double incremental_weight = log_numerator - log_denom;
 
     // Check its not - infinity
@@ -782,7 +781,7 @@ double get_log_retroactive_splitting_prob_for_joined_tree(
     auto it = std::find(valid_edges.begin(), valid_edges.end(), actual_cut_edge);
 
     int actual_cut_edge_index = std::distance(valid_edges.begin(), it);
-    if(WEIGHTS_DEBUG_VERBOSE){
+    if(TREE_SPLITTING_DEBUG_VERBOSE){
     REprintf("Actual Cut Edge at Index %d and so prob is %f \n", 
         actual_cut_edge_index,
         edge_splitter.get_log_selection_prob(map_params, valid_edges, actual_cut_edge_index));

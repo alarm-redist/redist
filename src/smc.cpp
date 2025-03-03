@@ -101,6 +101,8 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     vec cum_wgt(N, fill::value(1.0 / N));
     cum_wgt = cumsum(cum_wgt);
     Rcpp::IntegerMatrix parent_index_mat(N, n_steps);
+    Rcpp::IntegerMatrix draw_tries_mat(N, n_steps);
+    Rcpp::IntegerMatrix parent_unsuccessful_tries_mat(N, n_steps);
 
     RcppThread::ThreadPool pool(cores);
 
@@ -132,6 +134,8 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                 log_temper, pop_temper, accept_rate[i_split],
                 n_distr, ctr,
                 parent_index_mat.column(i_split), 
+                draw_tries_mat.column(i_split),
+                parent_unsuccessful_tries_mat.column(i_split),
                 ancestors, lags, n_unique[i_split],
                 lower, upper, target,
                 rho, cut_k[i_split], check_both, pool, verbosity);
@@ -173,7 +177,6 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     }
 
     List out = List::create(
-        _["parent_index"] = parent_index_mat,
         _["plans"] = districts,
         _["lp"] = lp,
         _["ancestors"] = ancestors,
@@ -182,7 +185,10 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
         _["est_k"] = cut_k,
         _["step_n_eff"] = n_eff,
         _["unique_survive"] = n_unique,
-        _["accept_rate"] = accept_rate
+        _["accept_rate"] = accept_rate,
+        _["parent_index"] = parent_index_mat,
+        _["draw_tries_mat"] = draw_tries_mat,
+        _["parent_unsuccessful_tries_mat"] = parent_unsuccessful_tries_mat
     );
 
     return out;
@@ -351,6 +357,8 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
                 vec &pop_left, vec &log_temper, double pop_temper,
                 double &accept_rate, int n_distr, int dist_ctr,
                 Rcpp::IntegerMatrix::Column parent_index_vec,
+                Rcpp::IntegerMatrix::Column draw_tries_vec,
+                Rcpp::IntegerMatrix::Column parent_unsuccessful_tries_vec,
                 umat &ancestors, const std::vector<int> &lags, int &n_unique,
                 double lower, double upper, double target,
                 double rho, int k, bool check_both,
@@ -370,7 +378,6 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
 
     const int reject_check_int = 200; // check for interrupts every _ rejections
     const int check_int = 50; // check for interrupts every _ iterations
-    uvec iters(N, fill::zeros); // how many actual iterations
 
     // thread safe id counter for seeding RNG generator 
     std::atomic<int> thread_id_counter{0};
@@ -394,7 +401,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
             // resample
             idx = rng_state.r_int_wgt(N, cum_wgt);
             districts_new.col(i) = districts.col(idx);
-            iters[i]++;
+            ++draw_tries_vec[i];
 
             if (check_both) {
                 lower_s = std::max(lower, pop_left(idx) - new_size * upper);
@@ -412,6 +419,8 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
             // bad sample; try again
             if (!std::isfinite(inc_lp)) {
                 RcppThread::checkUserInterrupt(++reject_ct % reject_check_int == 0);
+                // not atomic so technically not thread safe but doesn't seem to differ in practice
+                parent_unsuccessful_tries_vec[idx]++;
                 continue;
             }
 
@@ -482,7 +491,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     });
     pool.wait();
 
-    accept_rate = N / (1.0 * sum(iters));
+    accept_rate = N / (1.0 * sum(draw_tries_vec));
     if (verbosity >= 3) {
         Rcout << "  " << std::setprecision(2) << 100.0 * accept_rate << "% acceptance rate, ";
     }

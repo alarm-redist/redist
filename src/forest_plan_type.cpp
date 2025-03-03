@@ -23,39 +23,7 @@ Graph ForestPlan::get_forest_adj(){
 
 
 
-double ForestPlan::get_log_eff_boundary_len(
-    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-    TreeSplitter const &tree_splitter, 
-    const int region1_id, int const region2_id
-) const{
 
-    Tree ust = init_tree(map_params.V);
-    std::vector<bool> visited(map_params.V);
-    std::vector<int> pops_below_vertex(map_params.V);
-
-    int const V = map_params.V;
-    int const merged_region_size = region_sizes(region1_id)+ region_sizes(region2_id);
-
-    double tree_selection_probs = 0.0;
-    for (int v = 0; v < V; v++) {
-        if (region_ids(v) != region1_id) continue; // Only count if starting vertex in region 1
-        for (int nbor : map_params.g[v]) {
-            if (region_ids(nbor) != region2_id) continue;
-
-            double log_edge_selection_prob = get_log_retroactive_splitting_prob_for_joined_tree(
-                map_params, *this, ust, tree_splitter,
-                visited, pops_below_vertex,
-                v, nbor,
-                splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size][0],
-                splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size][1],
-                splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_region_size]);
-            
-            tree_selection_probs += std::exp(log_edge_selection_prob);
-        }
-    }
-
-    return std::log(tree_selection_probs);
-}
 
 void ForestPlan::update_vertex_info_from_cut(
         Tree &ust, EdgeCut cut_edge, 
@@ -251,4 +219,41 @@ std::vector<std::tuple<int, int, double>> ForestPlan::get_valid_adj_regions_and_
 
     return region_pairs_tuple_vec;
 
+}
+
+
+
+
+double ForestPlan::get_log_eff_boundary_len(
+    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    TreeSplitter const &tree_splitter, 
+    const int region1_id, int const region2_id
+) const{
+
+    Tree ust = init_tree(map_params.V);
+    std::vector<bool> visited(map_params.V);
+    std::vector<int> pops_below_vertex(map_params.V);
+
+    int const V = map_params.V;
+    int const merged_region_size = region_sizes(region1_id)+ region_sizes(region2_id);
+
+    double tree_selection_probs = 0.0;
+    for (int v = 0; v < V; v++) {
+        if (region_ids(v) != region1_id) continue; // Only count if starting vertex in region 1
+        for (int nbor : map_params.g[v]) {
+            if (region_ids(nbor) != region2_id) continue;
+
+            double log_edge_selection_prob = get_log_retroactive_splitting_prob_for_joined_tree(
+                map_params, *this, ust, tree_splitter,
+                visited, pops_below_vertex,
+                v, nbor,
+                splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size][0],
+                splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size][1],
+                splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_region_size]);
+            
+            tree_selection_probs += std::exp(log_edge_selection_prob);
+        }
+    }
+
+    return std::log(tree_selection_probs);
 }

@@ -576,7 +576,8 @@ List run_redist_gsmc(
         }else if(splitting_size_regime == SplittingSizeScheduleType::OneCustomSize){
             Rcout << "and custom size region splits.";
         }
-        Rcout << " Using " << splitting_method_to_str(splitting_method) << "!\n";
+        Rcout << " Using " << splitting_method_to_str(splitting_method) << " with " <<
+        (wgt_type == "optimal" ? "Optimal" : "Simple") << " Weights!\n";
         if (map_params.cg.size() > 1){
             Rcout << "Ensuring no more than " << ndists - 1 << " splits of the "
                   << map_params.cg.size() << " administrative units.\n";

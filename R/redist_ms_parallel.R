@@ -5,25 +5,75 @@
 # Purpose: parallel merge-split
 ####################################################
 
-#' Parallel Merge-Split/Recombination MCMC Redistricting Sampler
+
+#' Parallel Merge-Split/Recombination MCMC Redistricting Sampler (Carter et al. 2019)
 #'
-#' `redist_mergesplit_parallel()` runs [redist_mergesplit()] on several
-#' chains in parallel.
+#' \code{redist_mergesplit} uses a Markov Chain Monte Carlo algorithm (Carter et
+#' al. 2019; based on DeFord et. al 2019) to generate congressional or legislative redistricting plans
+#' according to contiguity, population, compactness, and administrative boundary
+#' constraints. The MCMC proposal is the same as is used in the SMC sampler
+#' (McCartan and Imai 2023); it is similar but not identical to those used in
+#' the references.  1-level hierarchical Merge-split is supported through the
+#' \code{counties} parameter; unlike in the SMC algorithm, this does not
+#' guarantee a maximum number of county splits.
 #'
-#' @inherit redist_mergesplit details
+#' This function draws samples from a specific target measure, controlled by the
+#' \code{map}, \code{compactness}, and \code{constraints} parameters.
 #'
-#' @inheritParams redist_mergesplit
+#' Key to ensuring good performance is monitoring the acceptance rate, which
+#' is reported at the sample level in the output.
+#' Users should also check diagnostics of the sample by running
+#' \code{summary.redist_plans()}.
+#'
+#' Higher values of \code{compactness} sample more compact districts;
+#' setting this parameter to 1 is computationally efficient and generates nicely
+#' compact districts.
+#'
+#' @param map A \code{\link{redist_map}} object.
+#' @param nsims The number of samples to draw, including warmup.
 #' @param chains the number of parallel chains to run. Each chain will have
 #' `nsims` draws. If `init_plan` is sampled, each chain will be initialized
 #' with its own sampled plan.
-#' @param init_plan The initial state of the map, provided as a single vector
-#' to be shared across all chains, or a matrix with `chains` columns.
-#' If not provided, will default to the reference map of the map object, or if
-#' none exists, will sample a random initial state using redist_smc. You can
-#' also request a random initial state for each chain by setting
-#' init_plan="sample".
-#' @param ncores the number of parallel processes to run. Defaults to the
-#' maximum available.
+#' @param warmup The number of warmup samples to discard. Recommended to be at
+#' least the first 20% of samples, and in any case no less than around 100
+#' samples, unless initializing from a random plan.
+#' @param thin Save every `thin`-th sample. Defaults to no thinning (1).
+#' @param init_plan The initial state of the map. If not provided, will default to
+#' the reference map of the \code{map} object, or if none exists, will sample
+#' a random initial state using \code{\link{redist_smc}}. You can also request
+#' a random initial state by setting \code{init_plan="sample"}.
+#' @param counties A vector containing county (or other administrative or
+#' geographic unit) labels for each unit, which may be integers ranging from 1
+#' to the number of counties, or a factor or character vector.  If provided,
+#' the algorithm will generate maps tend to follow county lines. There is no
+#' strength parameter associated with this constraint. To adjust the number of
+#' county splits further, or to constrain a second type of administrative
+#' split, consider using `add_constr_splits()`, `add_constr_multisplits()`,
+#' and `add_constr_total_splits()`.
+#' @param compactness Controls the compactness of the generated districts, with
+#' higher values preferring more compact districts. Must be nonnegative. See the
+#' 'Details' section for more information, and computational considerations.
+#' @param constraints A list containing information on constraints to implement.
+#' See the 'Details' section for more information.
+#' @param constraint_fn A function which takes in a matrix where each column is
+#' a redistricting plan and outputs a vector of log-weights, which will be
+#' added the the final weights.
+#' @param adapt_k_thresh The threshold value used in the heuristic to select a
+#' value \code{k_i} for each splitting iteration. Set to 0.9999 or 1 if
+#' the algorithm does not appear to be sampling from the target distribution.
+#' Must be between 0 and 1.
+#' @param k The number of edges to consider cutting after drawing a spanning
+#' tree. Should be selected automatically in nearly all cases.
+#' @param init_name a name for the initial plan, or \code{FALSE} to not include
+#' the initial plan in the output.  Defaults to the column name of the
+#' existing plan, or "\code{<init>}" if the initial plan is sampled.
+#' @param verbose Whether to print out intermediate information while sampling.
+#' Recommended.
+#' @param silent Whether to suppress all diagnostic information.
+#' @param ncores The number of clusters to spawn Defaults to the
+#' maximum available detected by `parallel::detectCores()`.
+#' @param multiprocess Whether or not to spawn separate clusters to run the chains
+#' on or to just run them sequentially.
 #' @param cl_type the cluster type (see [makeCluster()]). Safest is `"PSOCK"`,
 #' but `"FORK"` may be appropriate in some settings.
 #' @param return_all if `TRUE` return all sampled plans; otherwise, just return
@@ -32,16 +82,35 @@
 #' @returns A [`redist_plans`] object with all of the simulated plans, and an
 #' additional `chain` column indicating the chain the plan was drawn from.
 #'
-#' @inherit redist_mergesplit references
+#' @references
+#' Carter, D., Herschlag, G., Hunter, Z., and Mattingly, J. (2019). A
+#' merge-split proposal for reversible Monte Carlo Markov chain sampling of
+#' redistricting plans. arXiv preprint arXiv:1911.01503.
 #'
-#' @examples \dontrun{
+#' McCartan, C., & Imai, K. (2023). Sequential Monte Carlo for Sampling
+#' Balanced and Compact Redistricting Plans. *Annals of Applied Statistics* 17(4).
+#' Available at \doi{10.1214/23-AOAS1763}.
+#'
+#' DeFord, D., Duchin, M., and Solomon, J. (2019). Recombination: A family of
+#' Markov chains for redistricting. arXiv preprint arXiv:1911.05725.
+#'
+#' @examples \donttest{
 #' data(fl25)
+#'
 #' fl_map <- redist_map(fl25, ndists = 3, pop_tol = 0.1)
-#' sampled <- redist_mergesplit_parallel(fl_map, nsims = 100, chains = 100)
+#'
+#' sampled_basic <- redist_mergesplit(fl_map, 10000, chains = 10)
+#'
+#' sampled_constr <- redist_mergesplit(fl_map, 10000, chains = 10,
+#'     constraints = list(
+#'     incumbency = list(strength = 1000, incumbents = c(3, 6, 25))
+#'     )
+#' )
 #' }
 #'
 #' @concept simulate
 #' @md
+#' @order 1
 #' @export
 redist_mergesplit_parallel <- function(map, nsims, chains = 1,
                                        warmup = if (is.null(init_plan)) 10 else max(100, nsims %/% 5),
@@ -49,6 +118,7 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
                                        constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
                                        adapt_k_thresh = 0.99, k = NULL, ncores = NULL,
                                        cl_type = "PSOCK", return_all = TRUE, init_name = NULL,
+                                       multiprocess = FALSE,
                                        verbose = FALSE, silent = FALSE) {
     if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
 
@@ -57,7 +127,6 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
     adj <- get_adj(map)
     ndists <- attr(map, "ndists")
     thin <- as.integer(thin)
-
 
 
     chains <- as.integer(chains)
@@ -188,26 +257,54 @@ redist_mergesplit_parallel <- function(map, nsims, chains = 1,
                         {.url https://github.com/alarm-gredist/gredist/issues/new}"))
 
 
-    # set up parallel
-    if (is.null(ncores)) ncores <- parallel::detectCores()
-    ncores <- min(ncores, chains)
-    of <- ifelse(Sys.info()[['sysname']] == 'Windows',
-                 tempfile(pattern = paste0('ms_', substr(Sys.time(), 1, 10)), fileext = '.txt'),
-                 '')
-    if (!silent)
-        cl <- makeCluster(ncores, outfile = of, methods = FALSE,
-                          useXDR = .Platform$endian != "little")
-    else
-        cl <- makeCluster(ncores, methods = FALSE,
-                          useXDR = .Platform$endian != "little")
-    doParallel::registerDoParallel(cl)
-    on.exit(stopCluster(cl))
+    if (ncores > 1 && multiprocess && chains > 1) {
+        `%oper%` <- `%dorng%`
+
+        # set up parallel
+        if (is.null(ncores)) ncores <- parallel::detectCores()
+        ncores <- min(ncores, chains)
+        of <- ifelse(Sys.info()[['sysname']] == 'Windows',
+                     tempfile(pattern = paste0('ms_', substr(Sys.time(), 1, 10)), fileext = '.txt'),
+                     '')
+        # this makes a cluster using socket (NOT FORK) with
+        if (!silent)
+            cl <- makeCluster(ncores, outfile = of, methods = FALSE,
+                              useXDR = .Platform$endian != "little")
+        else
+            cl <- makeCluster(ncores, methods = FALSE,
+                              useXDR = .Platform$endian != "little")
+
+        # this makes it avoid printing the loading required package message each time
+        parallel::clusterEvalQ(cl, {
+            suppressPackageStartupMessages(library(foreach))
+            suppressPackageStartupMessages(library(rngtools))
+            suppressPackageStartupMessages(library(gredist))
+        })
+        # weird code, probably remove in production and find better way to ensure printing
+        # but essentially makes it so only one process will print but if more runs then processes
+        # it doesn't just print once
+        parallel::clusterEvalQ(cl, {
+            if (!exists("is_chain1", envir = .GlobalEnv)) {
+                is_chain1 <- FALSE
+            }
+            NULL
+        })
+        doParallel::registerDoParallel(cl, cores = ncores)
+        on.exit(stopCluster(cl))
+    } else {
+        `%oper%` <- `%do%`
+    }
 
     print("starting")
 
-    out_par <- foreach(chain = seq_len(chains), .inorder = FALSE, .packages="gredist") %dorng% {
+    out_par <- foreach(chain = seq_len(chains), .inorder = FALSE, .packages="gredist") %oper% {
         if (!silent) cat("Starting chain ", chain, "\n", sep = "")
-        run_verbosity <- if (chain == 1 && verbosity == 3) verbosity else 0
+        if(chain == 1){
+            is_chain1 <- T
+        }
+
+        run_verbosity <- if (is_chain1 || !multiprocess) verbosity else 0
+
         t1_run <- Sys.time()
         algout <- ms_plans(nsims, adj, init_plans[, chain], counties, pop,
                            ndists, pop_bounds[2], pop_bounds[1], pop_bounds[3],
