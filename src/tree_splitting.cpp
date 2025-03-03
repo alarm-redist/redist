@@ -125,7 +125,7 @@ std::vector<double> get_ordered_tree_cut_devs(Tree &ust, int root,
  * @return A vector of EdgeCut objects
  *
  */ 
-std::vector<EdgeCut> get_all_valid_edge_cuts_from_edge(
+inline std::vector<EdgeCut> get_all_valid_edge_cuts_from_edge(
     int const root, int const cut_vertex, int const cut_vertex_parent,
     int const total_region_size, 
     double const below_pop, double const above_pop,

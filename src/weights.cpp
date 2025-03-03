@@ -560,8 +560,8 @@ double compute_uniform_adj_log_incremental_weight(
 
     if(use_graph_plan_space){
         // Get the number of valid adjacent regions 
-        const int num_valid_adj_region_pairs = count_valid_adj_regions(
-            map_params.g, plan,
+        const int num_valid_adj_region_pairs = plan.count_valid_adj_regions(
+            map_params.g,
             splitting_schedule.check_adj_to_regions,
             splitting_schedule.valid_merge_pair_sizes
         );

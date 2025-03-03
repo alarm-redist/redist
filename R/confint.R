@@ -123,6 +123,7 @@ redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE
         x <- x[plans$district == district]
     N <- length(x)
     est <- mean(x)
+    thin <- attr(plans, "diagnostics")[[1]]$thin
 
     if ("chain" %in% names(plans)) { # multiple runs
         chain <- plans$chain[plans$district == district]
@@ -139,7 +140,7 @@ redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE
 
     rlang::check_installed("coda", "to calculate MCMC standard errors.")
 
-    mcmc = coda::mcmc.list(tapply(x, chain, coda::mcmc))
+    mcmc = coda::mcmc.list(tapply(x, chain, coda::mcmc, thin=thin))
     std_err <- summary(mcmc)$statistics["Time-series SE"]
     if (isTRUE(by_chain)) {
         std_err <- std_err * sqrt(max(chain))

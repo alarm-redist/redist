@@ -18,9 +18,12 @@
 Rcpp::List ms_plans(int nsims, int warmup, List l, const uvec init, const uvec &counties, const uvec &pop,
               int n_distr, double target, double lower, double upper, double rho,
               List constraints, List control, int k, int thin, int verbosity) {
+
+    int the_rng_seed = (int) Rcpp::sample(INT_MAX, 1)[0];
+    RNGState rng_state(the_rng_seed, 6);
+
     // re-seed MT
-    RNGState rng_state((int) Rcpp::sample(INT_MAX, 1)[0]);
-    global_seed_rng((int) Rcpp::sample(INT_MAX, 1)[0]);
+    global_seed_rng((int) Rcpp::sample(INT_MAX, 1)[0], 1);
 
     // unpack control params
     double thresh = (double) control["adapt_k_thresh"];

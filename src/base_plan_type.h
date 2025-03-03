@@ -19,6 +19,7 @@
 #include "tree_splitter_types.h"
 #include "tree_op.h"
 #include "wilson.h"
+#include "map_calc.h"
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
@@ -104,6 +105,23 @@ public:
     std::pair<int, int> get_most_recently_split_regions() const;
 
     virtual Graph get_forest_adj(){throw Rcpp::exception("Get Forest Adj not Supported for this!\n");};
+
+
+    // Compute the log number of spanning trees on a region 
+    double compute_log_region_spanning_tress(MapParams const &map_params,
+        int const region_id) const;
+
+    // Compute the log number of spanning trees on a merged region 
+    double compute_log_merged_region_spanning_tress(MapParams const &map_params,
+        int const region1_id, int const region2_id) const;
+
+    // Count the number of valid adj regions in a map
+    int count_valid_adj_regions(
+        Graph const &g,
+        std::vector<bool> const &check_adj_to_regions,
+        std::vector<std::vector<bool>> const &valid_merge_pairs
+    ) const;
+
 
     // redist_smc related methods 
     int choose_multidistrict_to_split(std::vector<bool> const &valid_region_sizes_to_split,

@@ -34,7 +34,9 @@ List smc_plans(int N, List l, const arma::uvec &counties, const arma::uvec &pop,
  * keeping deviation between `lower` and `upper`
  */
 void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
-                const uvec &pop, umat &districts, vec &cum_wgt, vec &lp,
+                const uvec &pop, umat &districts, 
+                std::vector<RNGState> &rng_states,
+                vec &cum_wgt, vec &lp,
                 vec &pop_left, vec &log_temper, double pop_temper,
                 double &accept_rate, int n_distr, int dist_ctr,
                 Rcpp::IntegerMatrix::Column parent_index_vec,

@@ -13,31 +13,36 @@ class RNGState{
     private:
         uint64_t state_sr;
         uint32_t state_xo[4];
-
+        void long_jump(); // Does Long Jump https://prng.di.unimi.it/
         
 
     public:
-        RNGState(int seed); // seed 
+        RNGState(int seed, int num_jumps = 0); // seed 
         RNGState(void); // seed 
         uint64_t next_sr(); // moves to next state
         uint32_t generator();
-        void seed_rng(int seed); // seed it 
+        void seed_rng(int seed, int num_jumps = 0); // seed it 
+        void do_long_jumps(int num_jumps); // Does num_jumps number of long jumps
+        
 
         int r_int(uint32_t max); // Generate a uniform random integer in [0, max). Slightly biased.
         double r_unif(); // Generate a uniform random double in [0, 1). Slightly biased.
         int r_int_wgt(int max, vec cum_wgts); // Generate a random integer in [0, max) according to cumulative normalized weights.
         int r_int_unnormalized_wgt(const vec &unnormalized_wgts); // Generate random integer with probability proporitional to weights
 
-
-
+        // Delete copy operator 
         RNGState(const RNGState&) = delete;
         RNGState& operator=(const RNGState&) = delete;
+
+        // Allow move semantics
+        RNGState(RNGState&&) = default;
+        RNGState& operator=(RNGState&&) = default;
 };
 
 /*
  * Set global RNGState seed
  */
-void global_seed_rng(int seed);
+void global_seed_rng(int seed, int num_jumps = 1);
 
 
 

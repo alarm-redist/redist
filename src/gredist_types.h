@@ -44,7 +44,8 @@ class MapParams {
     MapParams(Rcpp::List adj_list, const arma::uvec &counties, const arma::uvec &pop,
         int ndists, double lower, double target, double upper) :
         g(list_to_graph(adj_list)), counties(counties), cg(county_graph(g, counties)), pop(pop),
-        V(static_cast<int>(g.size())), ndists(ndists), lower(lower), target(target), upper(upper)
+        V(static_cast<int>(g.size())), ndists(ndists), num_counties(max(counties)),
+        lower(lower), target(target), upper(upper)
         {};
 
     Graph const g; // The graph as undirected adjacency list 
@@ -53,6 +54,7 @@ class MapParams {
     arma::uvec const pop; // population of each vertex
     int const V; // Number of vertices in the graph
     int const ndists; // The number of districts a final plan should have
+    int const num_counties; // The number of distinct counties
     double const lower; // lower bound on district population
     double const target; // target district population
     double const upper; // upper bound on district population

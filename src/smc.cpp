@@ -18,10 +18,6 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
             int n_distr, double target, double lower, double upper, double rho,
             umat districts, int n_drawn, int n_steps,
             List constraints, List control, int verbosity) {
-    // re-seed MT so that `set.seed()` works in R
-    RNGState rng_state((int) Rcpp::sample(INT_MAX, 1)[0]);
-    global_seed_rng((int) Rcpp::sample(INT_MAX, 1)[0]);
-
     // unpack control params
     double thresh = (double) control["adapt_k_thresh"];
     double alpha = (double) control["seq_alpha"];
@@ -32,6 +28,19 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     int cores = (int) control["cores"];
     if (cores <= 0) cores = std::thread::hardware_concurrency();
     if (cores == 1) cores = 0;
+
+    int global_rng_seed = (int) Rcpp::sample(INT_MAX, 1)[0];
+    int num_rng_states = cores > 0 ? cores : 1;
+    std::vector<RNGState> rng_states;rng_states.reserve(num_rng_states);
+    for (size_t i = 1; i <= num_rng_states; i++)
+    {
+        // same seed with i*3 long_jumps for state
+        rng_states.emplace_back(global_rng_seed, i*3);
+    }
+
+    // Legacy, in future remove
+    RNGState rng_state((int) Rcpp::sample(INT_MAX, 1)[0]);
+    global_seed_rng((int) Rcpp::sample(INT_MAX, 1)[0]);
 
     Graph g = list_to_graph(l);
     Multigraph cg = county_graph(g, counties);
@@ -130,7 +139,9 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
             lower = target - (target - lower) * final_infl;
             upper = target + (upper - target) * final_infl;
         }
-        split_maps(g, counties, cg, pop, districts, cum_wgt, lp, pop_left,
+        split_maps(g, counties, cg, pop, districts, 
+                rng_states,
+                cum_wgt, lp, pop_left,
                 log_temper, pop_temper, accept_rate[i_split],
                 n_distr, ctr,
                 parent_index_mat.column(i_split), 
@@ -353,7 +364,9 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
 * keeping deviation between `lower` and `upper`
 */
 void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
-                const uvec &pop, umat &districts, vec &cum_wgt, vec &lp,
+                const uvec &pop, umat &districts, 
+                std::vector<RNGState> &rng_states,
+                vec &cum_wgt, vec &lp,
                 vec &pop_left, vec &log_temper, double pop_temper,
                 double &accept_rate, int n_distr, int dist_ctr,
                 Rcpp::IntegerMatrix::Column parent_index_vec,
@@ -386,7 +399,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
     RcppThread::ProgressBar bar(N, 1);
     pool.parallelFor(0, N, [&] (int i) {
         static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
-        static thread_local RNGState rng_state(rng_seed + thread_id);
+
         int reject_ct = 0;
         bool ok = false;
         int idx = i;
@@ -399,7 +412,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         std::vector<bool> ignore(V);
         while (!ok) {
             // resample
-            idx = rng_state.r_int_wgt(N, cum_wgt);
+            idx = rng_states[thread_id].r_int_wgt(N, cum_wgt);
             districts_new.col(i) = districts.col(idx);
             ++draw_tries_vec[i];
 
@@ -414,7 +427,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
             }
             inc_lp = split_map(g, ust, counties, cg, districts_new.col(i),
                             dist_ctr, visited, ignore,
-                            pop, pop_left(idx), lower_s, upper_s, target, k, rng_state);
+                            pop, pop_left(idx), lower_s, upper_s, target, k, rng_states[thread_id]);
 
             // bad sample; try again
             if (!std::isfinite(inc_lp)) {

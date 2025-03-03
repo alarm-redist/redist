@@ -333,6 +333,151 @@ void Plan::Rprint() const{
 }
 
 
+/*  
+ * @title Count the Number of Valid Adjacent Region Pairs
+ * 
+ * Counts and returns the number of valid adjacent region pairs in a graph. 
+ * We define a valid of pair of adjacent regions to be two regions that 
+ *      1. Share at least one edge between them in `g`
+ *      2. The regions sizes are valid to merge with eligibility determined
+ *         by the `valid_merge_pairs` matrix
+ * 
+ * @param g A graph (adjacency list) passed by reference
+ * @param plan A plan object
+ * @param check_adj_to_regions A vector tracking whether or not we should 
+ * check for edges adjacent to vertices in a region of a particular size. For
+ * example, `check_adj_to_regions[i] == true` means we will attempt to find 
+ * edges adjacent to any vertex in a region of size i. This vector is 1-indexed
+ * meaning we don't need to subtract region size by 1 when accessing.
+ * @param valid_merge_pairs A 2D `ndists+1` by `ndists+1` boolean matrix that
+ * uses region size to check whether or not two regions are considered a valid
+ * merge that can be counted in the map. For example `valid_merge_pairs[i][j]`
+ * being true means that any regions where the sizes are (i,j) are considered
+ * valid to merge. 2D matrix is 1 indexed (don't need to subtract region size)
+ * @param existing_pair_map A hash map mapping pairs of regions to a double. 
+ * This is an optional parameter and if its empty then its ignored. If its not
+ * empty then pairs already in the hash won't be counted added to the output.
+ * 
+ * @details No modifications to inputs made
+ * @return The number of valid adjacent region pairs
+ */
+int Plan::count_valid_adj_regions(
+    Graph const &g,
+    std::vector<bool> const &check_adj_to_regions,
+    std::vector<std::vector<bool>> const &valid_merge_pairs
+) const{
+    // 2D matrix for tracking if regions are adjacent 
+    // To save space we will only ever access with [smaller id][larger id]
+    // So it will be `num_regions-1` rows and row i will have num_regions-1
+    // elements and the second element will need to be 1 indexed so 
+    // subtract off 1 when accessing
+    std::vector<std::vector<bool>> is_valid_adj_pair(num_regions-1);
+
+    for (size_t i = 0; i < num_regions-1; i++)
+    {
+        // for smaller value i there are num_regions-(i+1) larger values 
+        is_valid_adj_pair[i] = std::vector<bool>(num_regions-(i+1), false);
+    }
+
+    int num_valid_adj_pairs = 0;
+
+    int const V = g.size();
+
+    for (int v = 0; v < V; v++) {
+        // Find out which region this vertex corresponds to
+        int v_region_num = region_ids(v);
+        auto v_region_size = region_sizes(v_region_num);
+
+        // check if its a region we want to find regions adjacent to 
+        // and if not keep going
+        if(!check_adj_to_regions.at(v_region_size)){
+            continue;
+        }
+
+        // get neighbors
+        std::vector<int> nbors = g[v];
+
+        // now iterate over its neighbors
+        for (int v_nbor : nbors) {
+            // find which region neighbor corresponds to
+            int v_nbor_region_num = region_ids(v_nbor);
+
+            // ignore if they are in the same region
+            if(v_region_num == v_nbor_region_num) continue;
+            // ignore if pair can't be merged
+            auto v_nbor_region_size = region_sizes(v_nbor_region_num);
+            if(!valid_merge_pairs[v_region_size][v_nbor_region_size]) continue;
+
+            // else they are different so regions are adj
+            // check if we need to be aware of double counting. IE if both regions
+            // are ones where check adjacent is true then its possible to double count edges
+            bool double_counting_not_possible = !check_adj_to_regions[v_nbor_region_size];
+            // Rprintf("Neighbor size is %d and Double counting is %d\n", 
+            //     (int) v_nbor_region_size, (int) double_counting_not_possible);
+
+            // Now add this edge if either we can't double count it 
+            // or `v_region_num` is the smaller of the pair 
+            if(double_counting_not_possible || v_region_num < v_nbor_region_num){
+                // Rprintf("Counting (%d,%d)\n", v, v_nbor);
+                int smaller_region_id  = std::min(v_nbor_region_num,v_region_num);
+                int bigger_region_id  = std::max(v_nbor_region_num,v_region_num);
+
+                // Check if we've counted this before 
+                if(!is_valid_adj_pair[smaller_region_id][bigger_region_id-1]){
+                    // If not increase the count by one and mark this as true 
+                    ++num_valid_adj_pairs;
+                    is_valid_adj_pair[smaller_region_id][bigger_region_id-1] = true;
+                }
+            }
+        }
+    }
+
+    return num_valid_adj_pairs;
+}
+
+
+// Compute the log number of spanning trees on a region 
+double Plan::compute_log_region_spanning_tress(MapParams const &map_params,
+    int const region_id) const{
+    double log_st = 0;
+    // comput tau for each county intersect region
+    for (int county_num = 1; county_num <= map_params.num_counties; county_num++) {
+        log_st += compute_log_region_and_county_spanning_tree(
+            map_params.g, map_params.counties, county_num,
+            region_ids, region_id
+        );
+    }
+    // Add county level multigraph tau
+    log_st += compute_log_county_level_spanning_tree(
+        map_params.g, map_params.counties, map_params.num_counties,
+        region_ids,
+        region_id
+    );
+
+    return log_st;
+}
+
+
+// Compute the log number of spanning trees on a merged region 
+double Plan::compute_log_merged_region_spanning_tress(MapParams const &map_params,
+    int const region1_id, int const region2_id) const{
+    double log_st = 0;
+    // comput tau for each county intersect region
+    for (int county_num = 1; county_num <= map_params.num_counties; county_num++) {
+        log_st += compute_log_region_and_county_spanning_tree(
+            map_params.g, map_params.counties, county_num,
+            region_ids, region1_id, region2_id
+        );
+    }
+    // Add county level multigraph tau
+    log_st += compute_log_county_level_spanning_tree(
+        map_params.g, map_params.counties, map_params.num_counties,
+        region_ids, region1_id, region2_id
+    );
+
+    return log_st;
+}
+
 
 //' Selects a valid multidistrict to split uniformly at random 
 //'

@@ -16,39 +16,7 @@ double log_graph_boundary(const Graph &g, const subview_col<uword> &districts,
                     int const region1_id, int const region2_id);
 
 
-/*  
- * @title Count the Number of Valid Adjacent Region Pairs
- * 
- * Counts and returns the number of valid adjacent region pairs in a graph. 
- * We define a valid of pair of adjacent regions to be two regions that 
- *      1. Share at least one edge between them in `g`
- *      2. The regions sizes are valid to merge with eligibility determined
- *         by the `valid_merge_pairs` matrix
- * 
- * @param g A graph (adjacency list) passed by reference
- * @param plan A plan object
- * @param check_adj_to_regions A vector tracking whether or not we should 
- * check for edges adjacent to vertices in a region of a particular size. For
- * example, `check_adj_to_regions[i] == true` means we will attempt to find 
- * edges adjacent to any vertex in a region of size i. This vector is 1-indexed
- * meaning we don't need to subtract region size by 1 when accessing.
- * @param valid_merge_pairs A 2D `ndists+1` by `ndists+1` boolean matrix that
- * uses region size to check whether or not two regions are considered a valid
- * merge that can be counted in the map. For example `valid_merge_pairs[i][j]`
- * being true means that any regions where the sizes are (i,j) are considered
- * valid to merge. 2D matrix is 1 indexed (don't need to subtract region size)
- * @param existing_pair_map A hash map mapping pairs of regions to a double. 
- * This is an optional parameter and if its empty then its ignored. If its not
- * empty then pairs already in the hash won't be counted added to the output.
- * 
- * @details No modifications to inputs made
- * @return The number of valid adjacent region pairs
- */
-int count_valid_adj_regions(
-    Graph const &g, Plan const &plan,
-    std::vector<bool> const &check_adj_to_regions,
-    std::vector<std::vector<bool>> const &valid_merge_pairs
-);
+
 
 
 /*
@@ -177,5 +145,23 @@ NumericVector max_dev(const IntegerMatrix districts, const arma::vec pop, int n_
 std::vector<double> tree_dev(Tree &ust, int root, const uvec &pop,
                              double const total_pop, double const target);
 
+
+// computes log number of spanning trees on region intersect county
+// In either a region or a merged region 
+double compute_log_region_and_county_spanning_tree(
+    Graph const &g, const uvec &counties, int const county,
+    arma::subview_col<arma::uword> const &region_ids,
+    int const region1_id, int const potential_region2_id = -42
+);
+
+
+/*
+ * Compute the log number of spanning trees for the contracted (ie county level) graph
+ */
+double compute_log_county_level_spanning_tree(
+    Graph const &g, const uvec &counties, int const n_cty,
+    arma::subview_col<arma::uword> const &region_ids,
+    int const region1_id, int const potential_region2_id = -42
+);
 
 #endif

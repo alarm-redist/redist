@@ -87,6 +87,7 @@
  */ 
 void run_smc_step(
         const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+        std::vector<RNGState> &rng_states,
         std::vector<std::unique_ptr<Plan>> &old_plans_ptr_vec, 
         std::vector<std::unique_ptr<Plan>> &new_plans_ptr_vec,
         std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
@@ -122,7 +123,6 @@ void run_smc_step(
 
     // thread safe id counter for seeding RNG generator 
     std::atomic<int> thread_id_counter{0};
-    int rng_seed = static_cast<int>(Rcpp::sample(INT_MAX, 1)[0]);
 
     // create a progress bar
     RcppThread::ProgressBar bar(M, 1);
@@ -132,7 +132,6 @@ void run_smc_step(
     // pool.parallelFor(0, M, [&, std::size_t thread_id] (int i)
     pool.parallelFor(0, M, [&] (int i) {
         static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
-        static thread_local RNGState rng_state(rng_seed + thread_id);
 
         // REprintf("Plan %d\n\n", i);
         int reject_ct = 0;
@@ -147,7 +146,7 @@ void run_smc_step(
             // increase the number of tries for particle i by 1
             draw_tries_vec[i]++;
             // sample previous plan
-            idx = rng_state.r_int_wgt(M, normalized_cumulative_weights);
+            idx = rng_states[thread_id].r_int_wgt(M, normalized_cumulative_weights);
             
             *new_plans_ptr_vec.at(i) = *old_plans_ptr_vec.at(idx);
 
@@ -157,7 +156,7 @@ void run_smc_step(
             }else{                
                 // if generalized split pick a region to try to split
                 region_id_to_split = new_plans_ptr_vec.at(i)->choose_multidistrict_to_split(
-                    splitting_schedule.valid_region_sizes_to_split, rng_state
+                    splitting_schedule.valid_region_sizes_to_split, rng_states[thread_id]
                 );
             }
             size_of_region_to_split = new_plans_ptr_vec.at(i)->region_sizes(region_id_to_split);
@@ -174,7 +173,7 @@ void run_smc_step(
             // Now try to split that region
             ok = new_plans_ptr_vec.at(i)->attempt_split(
                 map_params, splitting_schedule, ust, *tree_splitters_ptr_vec.at(i), 
-                visited, ignore, rng_state,
+                visited, ignore, rng_states[thread_id],
                 splitting_schedule.all_regions_min_and_max_possible_cut_sizes[size_of_region_to_split][0],
                 splitting_schedule.all_regions_min_and_max_possible_cut_sizes[size_of_region_to_split][1],
                 splitting_schedule.all_regions_smaller_cut_sizes_to_try[size_of_region_to_split],
@@ -287,7 +286,21 @@ List run_redist_gsmc(
         List const &control, // control has pop temper, and k parameter value, and whether only district splits are allowed
         List const &constraints, // constraints 
         int verbosity, bool diagnostic_mode){
+    // set the number of threads
+    int num_threads = (int) control["num_threads"];
+    if (num_threads <= 0) num_threads = std::thread::hardware_concurrency();
+    if (num_threads == 1) num_threads = 0;
     // re-seed MT so that `set.seed()` works in R
+    int global_rng_seed = (int) Rcpp::sample(INT_MAX, 1)[0];
+    int num_rng_states = num_threads > 0 ? num_threads : 1;
+    std::vector<RNGState> rng_states;rng_states.reserve(num_rng_states);
+    for (size_t i = 1; i <= num_rng_states; i++)
+    {
+        // same seed with i*3 long_jumps for state
+        rng_states.emplace_back(global_rng_seed, i*3);
+    }
+    
+    // Legacy, in future remove
     RNGState rng_state((int) Rcpp::sample(INT_MAX, 1)[0]);
     global_seed_rng((int) Rcpp::sample(INT_MAX, 1)[0]);
 
@@ -351,10 +364,7 @@ List run_redist_gsmc(
     // multipler for number of merge split steps 
     int ms_steps_multiplier = as<int>(control["ms_steps_multiplier"]);
     std::string merge_prob_type = as<std::string>(control["merge_prob_type"]);
-    // set the number of threads
-    int num_threads = (int) control["num_threads"];
-    if (num_threads <= 0) num_threads = std::thread::hardware_concurrency();
-    if (num_threads == 1) num_threads = 0;
+
 
     double tol = std::max(target - lower, upper - target) / target;
 
@@ -382,7 +392,6 @@ List run_redist_gsmc(
     bool split_district_only = splitting_size_regime == SplittingSizeScheduleType::DistrictOnly;
 
     bool use_graph_plan_space = sampling_space == "graph_plan_space";
-
 
     // Do some input checking 
     
@@ -700,6 +709,7 @@ List run_redist_gsmc(
             
             // split the map
             run_smc_step(map_params, *splitting_schedule_ptr,
+                rng_states,
                 plans_ptr_vec, new_plans_ptr_vec, 
                 tree_splitters_ptr_vec,
                 parent_index_mat.column(smc_step_num),
@@ -738,7 +748,6 @@ List run_redist_gsmc(
             plans_ptr_vec[0]->num_regions != ndists;
             bool is_final_plans = plans_ptr_vec[0]->num_regions == ndists;
             
-
             if(wgt_type == "optimal"){
                 // TODO make more princicpal in the future 
                 // for now its just if not district only and not final round 

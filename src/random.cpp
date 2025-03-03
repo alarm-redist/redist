@@ -20,18 +20,20 @@ static inline uint32_t rotl(const uint32_t x, int k) {
 
 
 // Set the state for RNG state object
-void RNGState::seed_rng(int seed){
+void RNGState::seed_rng(int seed, int num_jumps){
     state_sr = seed;
     // seed xoshiro128++ with SplittableRandom, as recommended by authors
     state_xo[0] = (uint32_t) (next_sr() >> 32);
     state_xo[1] = (uint32_t) (next_sr() >> 32);
     state_xo[2] = (uint32_t) (next_sr() >> 32);
     state_xo[3] = (uint32_t) (next_sr() >> 32);
+    // Now do jumps 
+    do_long_jumps(num_jumps);
 }
 
 // Construct RNG state object 
-RNGState::RNGState(int seed){
-    seed_rng(seed);
+RNGState::RNGState(int seed, int num_jumps){
+    seed_rng(seed, num_jumps);
 }
 
 RNGState::RNGState(void){
@@ -45,7 +47,7 @@ uint64_t RNGState::next_sr(){
     return z ^ (z >> 31);
 }
 
-
+// https://prng.di.unimi.it/xoshiro128plusplus.c
 uint32_t RNGState::generator(void) {
     const uint32_t result = rotl(state_xo[0] + state_xo[3], 7) + state_xo[0];
 
@@ -61,6 +63,39 @@ uint32_t RNGState::generator(void) {
     state_xo[3] = rotl(state_xo[3], 11);
 
     return result;
+}
+
+
+// https://prng.di.unimi.it/xoshiro128plusplus.c
+void RNGState::long_jump(){
+    static const uint32_t LONG_JUMP[] = { 0xb523952e, 0x0b6f099f, 0xccf5a0ef, 0x1c580662 };
+
+	uint32_t s0 = 0;
+	uint32_t s1 = 0;
+	uint32_t s2 = 0;
+	uint32_t s3 = 0;
+	for(int i = 0; i < sizeof LONG_JUMP / sizeof *LONG_JUMP; i++)
+		for(int b = 0; b < 32; b++) {
+			if (LONG_JUMP[i] & UINT32_C(1) << b) {
+				s0 ^= state_xo[0];
+				s1 ^= state_xo[1];
+				s2 ^= state_xo[2];
+				s3 ^= state_xo[3];
+			}
+			generator();	
+		}
+		
+	state_xo[0] = s0;
+	state_xo[1] = s1;
+	state_xo[2] = s2;
+	state_xo[3] = s3;
+}
+
+void RNGState::do_long_jumps(int num_jumps){
+    for (size_t i = 0; i < num_jumps; i++)
+    {
+        long_jump();
+    }
 }
 
 // Rest of file is original code --------------------------------
@@ -218,7 +253,7 @@ ivec resample_lowvar(vec wgts) {
 /*
  * Set RNG seed globally. Be very careful using this, it is not thread safe. 
  */
-void global_seed_rng(int seed) {
-    GLOBAL_RNG.seed_rng(seed);
+void global_seed_rng(int seed, int num_jumps) {
+    GLOBAL_RNG.seed_rng(seed, num_jumps);
 }
 
