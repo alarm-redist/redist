@@ -437,7 +437,7 @@ int Plan::count_valid_adj_regions(
 
 
 // Compute the log number of spanning trees on a region 
-double Plan::compute_log_region_spanning_tress(MapParams const &map_params,
+double Plan::compute_log_region_spanning_trees(MapParams const &map_params,
     int const region_id) const{
     double log_st = 0;
     // comput tau for each county intersect region
@@ -458,8 +458,22 @@ double Plan::compute_log_region_spanning_tress(MapParams const &map_params,
 }
 
 
+
+double Plan::compute_log_plan_spanning_trees(MapParams const &map_params) const{
+    double log_st = 0;
+    // compute tau from each region
+    for (size_t region_id = 0; region_id < num_regions; region_id++)
+    {
+        log_st += compute_log_region_spanning_trees(
+            map_params, region_id
+        );
+    }
+    return log_st;
+}
+
+
 // Compute the log number of spanning trees on a merged region 
-double Plan::compute_log_merged_region_spanning_tress(MapParams const &map_params,
+double Plan::compute_log_merged_region_spanning_trees(MapParams const &map_params,
     int const region1_id, int const region2_id) const{
     double log_st = 0;
     // comput tau for each county intersect region

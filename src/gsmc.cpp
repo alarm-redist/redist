@@ -322,9 +322,7 @@ List run_redist_gsmc(
     // weight type
     std::string wgt_type = as<std::string>(control["weight_type"]);
     // population tempering parameter 
-    bool do_pop_temper = as<bool>(control["do_pop_temper"]);
-    double pop_temper;
-    if(do_pop_temper) pop_temper = as<double>(control["pop_temper"]);
+    double pop_temper = as<double>(control["pop_temper"]);
 
 
     // This is a total_ms_steps by nsims vector where [s][i] is the number of 
@@ -408,7 +406,7 @@ List run_redist_gsmc(
     // Add scoring function (constraints)
     ScoringFunction const scoring_function(
         map_params, constraints, 
-        do_pop_temper, pop_temper);
+        pop_temper);
 
 
     // Now create diagnostic information 

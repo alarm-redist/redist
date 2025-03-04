@@ -108,12 +108,15 @@ public:
 
 
     // Compute the log number of spanning trees on a region 
-    double compute_log_region_spanning_tress(MapParams const &map_params,
+    double compute_log_region_spanning_trees(MapParams const &map_params,
         int const region_id) const;
 
     // Compute the log number of spanning trees on a merged region 
-    double compute_log_merged_region_spanning_tress(MapParams const &map_params,
+    double compute_log_merged_region_spanning_trees(MapParams const &map_params,
         int const region1_id, int const region2_id) const;
+
+    // Compute the log number of spanning trees on the entire plan
+    double compute_log_plan_spanning_trees(MapParams const &map_params) const;
 
     // Count the number of valid adj regions in a map
     int count_valid_adj_regions(

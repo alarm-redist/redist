@@ -21,7 +21,7 @@
 #'
 #'
 #' @returns A counties label vector
-validate_counties <- function(map, adj_list, V, counties, counties_q=NULL){
+validate_counties <- function(map, adj_list, V, counties_q, use_counties_q=TRUE,counties=NULL){
 
     if(!is.null(counties_q)){
         counties <- rlang::eval_tidy(counties_q, map)
@@ -64,7 +64,7 @@ validate_counties <- function(map, adj_list, V, counties, counties_q=NULL){
 #'
 #' @returns A list with 0-indexed adjancency list, county label vector,
 #' population bounds vector, and population vector.
-get_map_parameters <- function(map, counties=NULL, counties_q=NULL){
+get_map_parameters <- function(map, counties_q=NULL, use_counties_q=TRUE, counties=NULL){
 
     # get the map in adjacency form
     map <- validate_redist_map(map)
@@ -72,7 +72,10 @@ get_map_parameters <- function(map, counties=NULL, counties_q=NULL){
     adj <- get_adj(map)
 
 
-    counties <- validate_counties(map, adj, V, counties, counties_q)
+    counties <- validate_counties(
+        map, adj, V,
+        counties=counties, counties_q=counties_q,
+        use_counties_q=use_counties_q)
 
 
     # get population stuff

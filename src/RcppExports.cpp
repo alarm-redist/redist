@@ -386,6 +386,30 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// compute_log_unnormalized_plan_target_density
+arma::vec compute_log_unnormalized_plan_target_density(List adj_list, const arma::uvec& counties, const arma::uvec& pop, List const& constraints, double pop_temper, double rho, int ndists, int num_regions, double lower, double target, double upper, arma::umat region_ids, arma::umat region_sizes, int num_threads);
+RcppExport SEXP _gredist_compute_log_unnormalized_plan_target_density(SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP constraintsSEXP, SEXP pop_temperSEXP, SEXP rhoSEXP, SEXP ndistsSEXP, SEXP num_regionsSEXP, SEXP lowerSEXP, SEXP targetSEXP, SEXP upperSEXP, SEXP region_idsSEXP, SEXP region_sizesSEXP, SEXP num_threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type adj_list(adj_listSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< List const& >::type constraints(constraintsSEXP);
+    Rcpp::traits::input_parameter< double >::type pop_temper(pop_temperSEXP);
+    Rcpp::traits::input_parameter< double >::type rho(rhoSEXP);
+    Rcpp::traits::input_parameter< int >::type ndists(ndistsSEXP);
+    Rcpp::traits::input_parameter< int >::type num_regions(num_regionsSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< arma::umat >::type region_ids(region_idsSEXP);
+    Rcpp::traits::input_parameter< arma::umat >::type region_sizes(region_sizesSEXP);
+    Rcpp::traits::input_parameter< int >::type num_threads(num_threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(compute_log_unnormalized_plan_target_density(adj_list, counties, pop, constraints, pop_temper, rho, ndists, num_regions, lower, target, upper, region_ids, region_sizes, num_threads));
+    return rcpp_result_gen;
+END_RCPP
+}
 // group_pct_top_k
 NumericVector group_pct_top_k(const IntegerMatrix m, const NumericVector group_pop, const NumericVector total_pop, int k, int n_distr);
 RcppExport SEXP _gredist_group_pct_top_k(SEXP mSEXP, SEXP group_popSEXP, SEXP total_popSEXP, SEXP kSEXP, SEXP n_distrSEXP) {
@@ -865,6 +889,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_perform_a_valid_multidistrict_split", (DL_FUNC) &_gredist_perform_a_valid_multidistrict_split, 17},
     {"_gredist_perform_merge_split_steps", (DL_FUNC) &_gredist_perform_merge_split_steps, 16},
     {"_gredist_compute_a_log_optimal_weight", (DL_FUNC) &_gredist_compute_a_log_optimal_weight, 11},
+    {"_gredist_compute_log_unnormalized_plan_target_density", (DL_FUNC) &_gredist_compute_log_unnormalized_plan_target_density, 14},
     {"_gredist_group_pct_top_k", (DL_FUNC) &_gredist_group_pct_top_k, 5},
     {"_gredist_proj_distr_m", (DL_FUNC) &_gredist_proj_distr_m, 4},
     {"_gredist_colmax", (DL_FUNC) &_gredist_colmax, 1},

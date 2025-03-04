@@ -276,7 +276,6 @@ generic_redist_gsmc <- function(
     control <- list(
         weight_type=weight_type,
         lags=lags,
-        do_pop_temper = pop_temper == 0,
         pop_temper = pop_temper,
         num_threads=as.integer(num_threads_per_process),
         splitting_method = splitting_method,

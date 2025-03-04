@@ -135,6 +135,10 @@ compute_a_log_optimal_weight <- function(adj_list, counties, pop, control, ndist
     .Call(`_gredist_compute_a_log_optimal_weight`, adj_list, counties, pop, control, ndists, num_regions, lower, target, upper, region_ids, region_sizes)
 }
 
+compute_log_unnormalized_plan_target_density <- function(adj_list, counties, pop, constraints, pop_temper, rho, ndists, num_regions, lower, target, upper, region_ids, region_sizes, num_threads) {
+    .Call(`_gredist_compute_log_unnormalized_plan_target_density`, adj_list, counties, pop, constraints, pop_temper, rho, ndists, num_regions, lower, target, upper, region_ids, region_sizes, num_threads)
+}
+
 group_pct_top_k <- function(m, group_pop, total_pop, k, n_distr) {
     .Call(`_gredist_group_pct_top_k`, m, group_pop, total_pop, k, n_distr)
 }

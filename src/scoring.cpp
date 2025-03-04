@@ -110,13 +110,13 @@ double GroupHingeConstraint::compute_merged_region_constraint_score(const Plan &
 // Scoring function
 ScoringFunction::ScoringFunction(
     MapParams const &map_params,
-    Rcpp::List const &constraints, bool const do_pop_temper, double const pop_temper,
+    Rcpp::List const &constraints, double const pop_temper,
     bool const score_districts_only
 ):
 num_non_final_constraints(0), num_final_constraints(0), all_rounds_constraints(0),
 score_districts_only(score_districts_only){
     // add pop temper if doing that 
-    if(do_pop_temper){
+    if(pop_temper != 0){
         non_final_plan_constraint_ptrs.emplace_back(
             std::make_unique<PopTemperConstraint>(
                 map_params.target, map_params.ndists, 

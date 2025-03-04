@@ -96,6 +96,10 @@ redist_smc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE)
             std_err <- sd(run_means) / sqrt(max(chain) - 1) # be slightly conservative
         }
     } else {
+        # See
+        # OLSSON, J. and DOUC, R. (2019). Numerically stable online estimation of variance in particle filters. Bernoulli
+        # 25 1504–1535.
+        # LEE, A. and WHITELEY, N. (2018). Variance estimation in the particle filter. Biometrika 105 609–625.
         std_errs <- apply(attr(plans, "diagnostics")[[1]]$ancestors, 2, function(anc) {
             sum_inner <- tapply(x - est, anc, sum)^2
             sqrt(mean(sum_inner[as.character(anc)])/N)
@@ -113,7 +117,7 @@ redist_smc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE)
 
 #' @describeIn redist_ci Compute confidence intervals for MCMC output.
 #' @export
-redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE) {
+redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE, use_coda_std_errors = FALSE) {
     plans <- subset_sampled(plans)
     x_orig <- enquo(x)
     x <- as.numeric(eval_tidy(enquo(x), plans))
@@ -138,12 +142,36 @@ redist_mcmc_ci <- function(plans, x, district = 1L, conf = 0.9, by_chain = FALSE
                    ">" = "Increase the number of samples."))
     }
 
-    rlang::check_installed("coda", "to calculate MCMC standard errors.")
+    if(use_coda_std_errors){
+        rlang::check_installed("coda", "to calculate MCMC standard errors.")
+        mcmc = coda::mcmc.list(tapply(x, chain, coda::mcmc, thin=thin))
+        std_err <- summary(mcmc)$statistics["Time-series SE"]
+        if (isTRUE(by_chain)) {
+            std_err <- std_err * sqrt(max(chain))
+        }
+    }else if("chain" %in% names(plans)) {
+         # multiple runs
+            if (is.null(district)) {
+                chain <- plans$chain
+            } else {
+                chain <- plans$chain[plans$district == district]
+            }
+            rhat <- diag_rhat(x, chain)
+            if (is.finite(rhat) && rhat > 1.05) {
+                cli_warn(c("Runs have not converged for this statistic.",
+                           "i" = "R-hat is {round(rhat, 3)}",
+                           ">" = "Increase the number of samples."))
+            }
+            run_means <- tapply(x, chain, mean) %>%
+                `names<-`(NULL)
 
-    mcmc = coda::mcmc.list(tapply(x, chain, coda::mcmc, thin=thin))
-    std_err <- summary(mcmc)$statistics["Time-series SE"]
-    if (isTRUE(by_chain)) {
-        std_err <- std_err * sqrt(max(chain))
+            if (isTRUE(by_chain)) {
+                std_err <- sd(run_means)
+            } else {
+                std_err <- sd(run_means) / sqrt(max(chain) - 1) # be slightly conservative
+            }
+    }else{
+        cli_abort("Can't do non-coda std errors for single MCMC chain!")
     }
 
     alpha <- (1 - conf)/2

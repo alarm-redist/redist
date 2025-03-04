@@ -239,15 +239,7 @@ redist_mergesplit <- function(map, nsims, chains = 1,
                     "x" = "Redistricting impossible."))
     }
 
-
-    # extract k=... from outupt
     control = list(adapt_k_thresh=adapt_k_thresh, do_mh=TRUE)
-    x <- ms_plans(1, 0, adj, init_plans[, 1], counties, pop, ndists, pop_bounds[2],
-                  pop_bounds[1], pop_bounds[3], compactness,
-                  list(), control, 0L, 1L, verbosity = 0)
-    k <- x$est_k
-    rm(x)
-
 
     # set up parallel
     if (is.null(ncores)) ncores <- parallel::detectCores()

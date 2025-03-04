@@ -67,7 +67,7 @@ class ScoringFunction {
     public:
         ScoringFunction(
             const MapParams &map_params, Rcpp::List const &constraints, 
-            bool const do_pop_temper, double const pop_temper,
+            double const pop_temper,
             bool const score_districts_only = false);
 
         int num_non_final_constraints; // applied to all but final split

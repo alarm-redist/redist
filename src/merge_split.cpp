@@ -62,6 +62,9 @@ Rcpp::List ms_plans(int nsims, int warmup, List l, const uvec init, const uvec &
     // find k and multipliers
     if (k <= 0) {
         adapt_ms_parameters(g, n_distr, k, thresh, tol, init, counties, cg, pop, target, rng_state);
+        if(verbosity >= 3){
+            Rcout << " Using estimated k = " << k << ")\n";
+        }
     }
     if (verbosity >= 3)
         Rcout << "Using k = " << k << "\n";
