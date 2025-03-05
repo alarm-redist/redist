@@ -282,6 +282,7 @@ List run_redist_gsmc(
         const arma::uvec &counties, const arma::uvec &pop,
         Rcpp::CharacterVector const &step_types,
         double const target, double const lower, double const upper,
+        double rho,
         arma::umat region_id_mat, arma::umat region_sizes_mat,
         std::string const &sampling_space_str, // sampling space (graphs, forest, etc)
         List const &control, // control has pop temper, and k parameter value, and whether only district splits are allowed
@@ -758,7 +759,7 @@ List run_redist_gsmc(
                 compute_all_plans_log_optimal_weights(
                     pool,
                     map_params, *splitting_schedule_ptr,
-                    scoring_function,
+                    scoring_function, rho,
                     plans_ptr_vec, tree_splitters_ptr_vec,
                     compute_log_splitting_prob, is_final_plans,
                     log_incremental_weights_mat.col(smc_step_num),
@@ -771,7 +772,7 @@ List run_redist_gsmc(
                     pool,
                     map_params, *splitting_schedule_ptr,
                     sampling_space,
-                    scoring_function,
+                    scoring_function, rho,
                     plans_ptr_vec, tree_splitters_ptr_vec,
                     compute_log_splitting_prob, is_final_plans,
                     log_incremental_weights_mat.col(smc_step_num),

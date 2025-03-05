@@ -288,10 +288,13 @@ double get_log_retroactive_splitting_prob(
 double compute_uniform_adj_log_incremental_weight(
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
     SamplingSpace const sampling_space,
-    ScoringFunction const &scoring_function, Plan const &plan, 
+    ScoringFunction const &scoring_function, double rho,
+    Plan const &plan, 
     const TreeSplitter &edge_splitter, 
     bool compute_log_splitting_prob, bool is_final_plan
 ){
+    // bool for whether we'll need to compute spanning tree count
+    bool compute_log_tau = rho != 1;
     // find the index of the two newly split regions 
     auto most_recent_split_regions = plan.get_most_recently_split_regions();
     int region1_id = most_recent_split_regions.first;
@@ -300,7 +303,8 @@ double compute_uniform_adj_log_incremental_weight(
     if(WEIGHTS_DEBUG_VERBOSE) Rprintf("The two regions are %d and %d\n", region1_id, region2_id);
 
     // compute forward and backwards kernel term 
-    double log_backwards_kernel_term = 0.0; double log_forward_kernel_term = 0;
+    double log_backwards_kernel_term = 0.0; double log_forward_kernel_term = 0.0;
+    double log_tau_ratio_term = 0.0;
 
     if(sampling_space == SamplingSpace::GraphSpace){
         // Get the number of valid adjacent regions 
@@ -313,6 +317,10 @@ double compute_uniform_adj_log_incremental_weight(
         // taus cancel so just add the boundary length
         log_forward_kernel_term = plan.get_log_eff_boundary_len(
             map_params, splitting_schedule, edge_splitter, region1_id, region2_id
+        );
+        // do merged region tau if neccesary
+        log_tau_ratio_term -= (rho-1)*plan.compute_log_merged_region_spanning_trees(
+            map_params, region1_id, region2_id
         );
     }else if(sampling_space == SamplingSpace::ForestSpace){
         // sum of spanning trees 
@@ -353,6 +361,19 @@ double compute_uniform_adj_log_incremental_weight(
         // tree boundary length 
         log_forward_kernel_term += plan.get_log_eff_boundary_len(
             map_params, splitting_schedule, edge_splitter, region1_id, region2_id
+        );
+
+        if(compute_log_tau){
+            log_tau_ratio_term -= (rho-1)*last_split_merge_log_tau;
+        }
+    }
+
+    if(compute_log_tau){
+        log_tau_ratio_term += (rho-1)*plan.compute_log_region_spanning_trees(
+            map_params, region1_id
+        );
+        log_tau_ratio_term += (rho-1)*plan.compute_log_region_spanning_trees(
+            map_params, region2_id
         );
     }
 
@@ -416,7 +437,9 @@ double compute_uniform_adj_log_incremental_weight(
     );}
 
     // now just take the fraction
-    double incremental_weight = log_numerator - log_denom;
+    double incremental_weight = log_numerator - log_denom + log_tau_ratio_term;
+    // DONT KNOW WHY BUT VALIDATION ONLY WORKS IF YOU SUBTRACT LOG TAU
+    // THEORY SAYS IT SHOULD BE ADD SO NEED TO INVESTIGATE 
 
     // Check its not - infinity
     if(incremental_weight == -std::numeric_limits<double>::infinity()){
@@ -432,6 +455,7 @@ void get_all_plans_uniform_adj_weights(
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
     SamplingSpace const sampling_space,
     ScoringFunction const &scoring_function,
+    double rho,
     std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
     const std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
     bool compute_log_splitting_prob, bool is_final_plans,
@@ -446,7 +470,7 @@ void get_all_plans_uniform_adj_weights(
 
         double log_incr_weight = compute_uniform_adj_log_incremental_weight(
             map_params, splitting_schedule, sampling_space,
-            scoring_function, 
+            scoring_function, rho,
             *plans_ptr_vec.at(i), 
             *tree_splitters_ptr_vec.at(i),
             compute_log_splitting_prob,
@@ -605,13 +629,16 @@ double get_log_retroactive_splitting_prob_for_joined_tree(
 //'
 double compute_log_optimal_weights(
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-    ScoringFunction const &scoring_function, Plan const &plan, 
+    ScoringFunction const &scoring_function, double rho,
+    Plan const &plan, 
     const TreeSplitter &edge_splitter, bool compute_log_splitting_prob,
     bool is_final_plan
 ){
+    // bool for whether we'll need to compute spanning tree count
+    bool compute_log_tau = rho != 1;
+
     // boolean for whether or not to compute the splitting probability of merged regions
     // dont need to do when
-
     double incremental_weight = 0.0;
 
     // get region pair to effective boundary length map
@@ -663,12 +690,29 @@ double compute_log_optimal_weights(
         //     region1_id, region2_id, region1_size, region2_size, std::exp(eff_log_boundary_len), 
         //     std::exp(log_splitting_prob), std::exp(score_ratio));
 
+        double log_tau_ratio = 0.0;
+
+        // Do taus if neccesary 
+        if(compute_log_tau){
+            // add merged region
+            log_tau_ratio += (rho-1)*plan.compute_log_merged_region_spanning_trees(
+                map_params, region1_id, region2_id
+            );
+            // subtract split regions
+            log_tau_ratio -= (rho-1)*plan.compute_log_region_spanning_trees(
+                map_params, region1_id
+            );
+            log_tau_ratio -= (rho-1)*plan.compute_log_region_spanning_trees(
+                map_params, region2_id
+            );
+        }
+
 
         // Now the term is 
         //      - log_splitting_prob
         //      - eff_log_boundary_len
         //      -score_ratio
-        incremental_weight += std::exp(log_splitting_prob + eff_log_boundary_len + score_ratio);
+        incremental_weight += std::exp(log_splitting_prob + eff_log_boundary_len + score_ratio + log_tau_ratio);
 
     }
 
@@ -724,6 +768,7 @@ void compute_all_plans_log_optimal_weights(
     RcppThread::ThreadPool &pool,
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
     ScoringFunction const &scoring_function,
+    double rho,
     std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
     const std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
     bool compute_log_splitting_prob, bool is_final_plans,
@@ -740,7 +785,7 @@ void compute_all_plans_log_optimal_weights(
         // REprintf("I=%d\n", i);
         double log_incr_weight = compute_log_optimal_weights(
             map_params, splitting_schedule,
-            scoring_function, 
+            scoring_function, rho,
             *plans_ptr_vec.at(i), 
             *tree_splitters_ptr_vec.at(i),
             compute_log_splitting_prob,

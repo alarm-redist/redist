@@ -26,7 +26,7 @@
 #'
 #' @export
 treedist_gsmc <- function(
-        map, nsims, counties = NULL, constraints = list(),
+        map, nsims, counties = NULL, compactness = 1, constraints = list(),
         runs = 1L, alg_name,
         split_district_only = FALSE, weight_type = "optimal",
         splitting_method = UNIF_VALID_EDGE_SPLITTING,
@@ -61,6 +61,7 @@ treedist_gsmc <- function(
     generic_redist_gsmc(
         map=map, nsims=nsims,
         counties_q = rlang::enquo(counties),
+        compactness=compactness,
         constraints = constraints,
         runs = runs,
         alg_name=alg_type,

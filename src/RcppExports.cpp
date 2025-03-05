@@ -217,8 +217,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // run_redist_gsmc
-List run_redist_gsmc(int const ndists, List const& adj_list, const arma::uvec& counties, const arma::uvec& pop, Rcpp::CharacterVector const& step_types, double const target, double const lower, double const upper, arma::umat region_id_mat, arma::umat region_sizes_mat, std::string const& sampling_space_str, List const& control, List const& constraints, int verbosity, bool diagnostic_mode);
-RcppExport SEXP _gredist_run_redist_gsmc(SEXP ndistsSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP step_typesSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP region_id_matSEXP, SEXP region_sizes_matSEXP, SEXP sampling_space_strSEXP, SEXP controlSEXP, SEXP constraintsSEXP, SEXP verbositySEXP, SEXP diagnostic_modeSEXP) {
+List run_redist_gsmc(int const ndists, List const& adj_list, const arma::uvec& counties, const arma::uvec& pop, Rcpp::CharacterVector const& step_types, double const target, double const lower, double const upper, double rho, arma::umat region_id_mat, arma::umat region_sizes_mat, std::string const& sampling_space_str, List const& control, List const& constraints, int verbosity, bool diagnostic_mode);
+RcppExport SEXP _gredist_run_redist_gsmc(SEXP ndistsSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP step_typesSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP region_id_matSEXP, SEXP region_sizes_matSEXP, SEXP sampling_space_strSEXP, SEXP controlSEXP, SEXP constraintsSEXP, SEXP verbositySEXP, SEXP diagnostic_modeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -230,6 +230,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double const >::type target(targetSEXP);
     Rcpp::traits::input_parameter< double const >::type lower(lowerSEXP);
     Rcpp::traits::input_parameter< double const >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< double >::type rho(rhoSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type region_id_mat(region_id_matSEXP);
     Rcpp::traits::input_parameter< arma::umat >::type region_sizes_mat(region_sizes_matSEXP);
     Rcpp::traits::input_parameter< std::string const& >::type sampling_space_str(sampling_space_strSEXP);
@@ -237,7 +238,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< List const& >::type constraints(constraintsSEXP);
     Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
     Rcpp::traits::input_parameter< bool >::type diagnostic_mode(diagnostic_modeSEXP);
-    rcpp_result_gen = Rcpp::wrap(run_redist_gsmc(ndists, adj_list, counties, pop, step_types, target, lower, upper, region_id_mat, region_sizes_mat, sampling_space_str, control, constraints, verbosity, diagnostic_mode));
+    rcpp_result_gen = Rcpp::wrap(run_redist_gsmc(ndists, adj_list, counties, pop, step_types, target, lower, upper, rho, region_id_mat, region_sizes_mat, sampling_space_str, control, constraints, verbosity, diagnostic_mode));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -880,7 +881,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_update_conncomp", (DL_FUNC) &_gredist_update_conncomp, 3},
     {"_gredist_crsg", (DL_FUNC) &_gredist_crsg, 9},
     {"_gredist_dist_dist_diff", (DL_FUNC) &_gredist_dist_dist_diff, 7},
-    {"_gredist_run_redist_gsmc", (DL_FUNC) &_gredist_run_redist_gsmc, 15},
+    {"_gredist_run_redist_gsmc", (DL_FUNC) &_gredist_run_redist_gsmc, 16},
     {"_gredist_log_st_map", (DL_FUNC) &_gredist_log_st_map, 4},
     {"_gredist_n_removed", (DL_FUNC) &_gredist_n_removed, 3},
     {"_gredist_countpartitions", (DL_FUNC) &_gredist_countpartitions, 1},

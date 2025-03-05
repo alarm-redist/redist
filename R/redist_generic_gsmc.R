@@ -66,7 +66,8 @@
 #' plans.
 #'
 generic_redist_gsmc <- function(
-        map, nsims, counties = NULL, constraints = list(),
+        map, nsims, counties = NULL, compactness = 1,
+        constraints = list(),
         runs = 1L, alg_name,
         split_district_only = FALSE, weight_type = "optimal",
         sampling_space, splitting_method, splitting_params,
@@ -87,6 +88,8 @@ generic_redist_gsmc <- function(
         counties_q = NULL)
 {
 
+    if (compactness < 0)
+        cli_abort("{.arg compactness} must be non-negative.")
 
     # note that merge split is not supported at the moment
     if(run_ms){
@@ -310,6 +313,7 @@ generic_redist_gsmc <- function(
             target=pop_bounds[2],
             lower=pop_bounds[1],
             upper=pop_bounds[3],
+            rho=compactness,
             region_id_mat = init_region_ids_mat,
             region_sizes_mat = init_region_sizes_mat,
             sampling_space = sampling_space,
@@ -549,7 +553,7 @@ generic_redist_gsmc <- function(
     out <- new_redist_plans(plans, map, alg_name, wgt, resample,
                             ndists = n_dist_act,
                             n_eff = all_out[[1]]$n_eff,
-                            compactness = 1,
+                            compactness = compactness,
                             constraints = constraints,
                             version = packageVersion("gredist"),
                             diagnostics = l_diag,

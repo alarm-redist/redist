@@ -27,7 +27,7 @@
 #'
 #' @export
 redist_gsmc <- function(
-        map, nsims, counties = NULL, constraints = list(),
+        map, nsims, counties = NULL, compactness = 1, constraints = list(),
         runs = 1L,
         num_splitting_steps = NULL,
         estimate_cut_k = TRUE,
@@ -110,6 +110,7 @@ redist_gsmc <- function(
 
     generic_redist_gsmc(
         map=map, nsims=nsims,
+        compactness=compactness,
         counties_q = rlang::enquo(counties), # pass quosure for validation function
         constraints=constraints,
         runs = runs,

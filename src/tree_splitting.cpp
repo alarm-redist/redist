@@ -672,3 +672,104 @@ std::vector<EdgeCut> get_valid_edges_in_joined_tree(
 
 
 
+
+
+int TEST_build_directed_tree_and_get_pops_below(
+    const Graph &undirected_forest, 
+    Tree &ust, 
+    const int root, const int root_parent,
+    std::vector<bool> &visited, 
+    const arma::uvec &pop,
+    std::vector<int> &pop_below,
+    const int min_potential_cut_size, const int max_potential_cut_size,
+    std::vector<int> const &smaller_cut_sizes_to_try,
+    const int total_region_pop, const int total_region_size,
+   const double lower, const double upper, const double target) {
+
+    std::vector<EdgeCut> valid_edges;
+    // this is the largest size a region can be
+    // If the population above is bigger than this you can terminate the serach
+    // since pop above only gets larger as you continue down the tree 
+    double biggest_upper_bound = upper * max_potential_cut_size;
+
+    // this is the smallest size a region can be 
+    // If the pop below is below this then you can terminate the search since 
+    // pop below only gets smaller as you continue along the tree 
+    double smallest_lower_bound = lower * min_potential_cut_size;
+    
+
+    // Stack for DFS
+    // Elements are: vertex, parent, is_revisiting
+    std::stack<std::tuple<int, int, bool>> stack;
+
+    // Start with the root 
+    // TODO: Make note about root parent. In splitting case its -1
+    // But for joint tree it might actually matter 
+    stack.push({root, root_parent, false});
+
+
+    // Track the total population at the root
+    int total_pop = 0;
+
+    // Loop until the stack is empty
+    while (!stack.empty()) {
+        // get the top of the stack
+        auto [vtx, parent, is_revisiting] = stack.top();
+        stack.pop();
+
+        // if revisiting it true that means we already visited all the nodes children 
+        // so we can get pop_below
+        if (is_revisiting){
+            // All children of this vertex are processed; calculate its population below
+            int pop_at = pop(vtx); // Start with the vertex's own population
+            // Add population below from each child 
+            for (const auto &child : undirected_forest[vtx]) {
+                // ignore the parent 
+                if(child == parent) continue;
+                pop_at += pop_below[child]; // Add population from child vertices
+            }
+            pop_below[vtx] = pop_at;
+
+            // Check if any cut can be made 
+            // if(pop_below < smallest_lower_bound || pop_above > biggest_upper_bound)
+
+            // See if any valid edge cuts can be made with this edge 
+            std::vector<EdgeCut> new_valid_edges = get_all_valid_edge_cuts_from_edge(
+                root, vtx, parent,
+                total_region_size,
+                pop_below[vtx], total_region_pop - pop_below[vtx],
+                lower, target, upper,
+                smaller_cut_sizes_to_try);
+
+            // if yes then add them
+            if(new_valid_edges.size() > 0){
+                // REprintf("Added v=%d: Pop above = %f, Pop below = %f, parent = %d\n", 
+                // cut_vertex, pop_above, pop_below, cut_vertex_parent);
+                valid_edges.insert(
+                    valid_edges.end(),
+                    new_valid_edges.begin(),
+                    new_valid_edges.end()
+                    );
+            }
+
+        }else{ // Else this is the first time visiting the node 
+            visited[vtx] = true;
+            // NOTE: DOUBLE CHECK IF VISITED ACTUALLY NECCESARY OR IF ITS OK TO JUST CHECK PARENT
+            // I AM NOT SURE
+
+            // Push the vertex back onto the stack as "revisiting"
+            stack.push({vtx, parent, true});
+
+            // Push unvisited child vertices onto the stack to get pop below 
+            // We don't need to check for parents because parents are always visited first
+            for (const auto &child_vtx : undirected_forest[vtx]) {
+                if (!visited[child_vtx]) {
+                    stack.push({child_vtx, vtx, false}); // Visit child
+                }
+            }
+        }
+    }
+
+    // Return the total population at the root
+    return pop_below[root];
+}
