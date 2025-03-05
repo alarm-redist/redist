@@ -60,7 +60,7 @@ void estimate_cut_k(
 
         // if split district only just do remainder 
         if(split_district_only){
-            biggest_region_id = plan_ptrs_vec.at(i)->remainder_region;
+            biggest_region_id = plan_ptrs_vec.at(i)->num_regions-1;
             biggest_region_size = plan_ptrs_vec.at(i)->region_sizes(biggest_region_id);
         }else if(any_size_split){
             biggest_region_id = plan_ptrs_vec.at(i)->region_sizes.head(plan_ptrs_vec.at(i)->num_regions).index_max();

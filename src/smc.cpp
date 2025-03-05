@@ -394,7 +394,6 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
 
     // thread safe id counter for seeding RNG generator 
     std::atomic<int> thread_id_counter{0};
-    int rng_seed = static_cast<int>(Rcpp::sample(INT_MAX, 1)[0]);
 
     RcppThread::ProgressBar bar(N, 1);
     pool.parallelFor(0, N, [&] (int i) {

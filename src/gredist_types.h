@@ -134,6 +134,18 @@ public:
 
 };
 
+// enum for sampling spaces
+enum class SamplingSpace : unsigned char
+{
+    GraphSpace, // Sampling on the space of graph partitions
+    ForestSpace // Sample on the space of spanning forests
+};
+
+// loads a sampling spaces type enum from a control string
+SamplingSpace get_sampling_space(std::string const &sampling_space_str);
+
+// Get convinient string representation
+std::string sampling_space_to_str(SamplingSpace sampling_space);
 
 // enum for various methods of splitting a plan
 enum class SplittingMethodType : unsigned char

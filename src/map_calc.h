@@ -3,7 +3,7 @@
 #include <RcppThread.h>
 #include "smc_base.h"
 #include "tree_op.h"
-#include "base_plan_type.h"
+
 
 #ifndef MAP_CALC_H
 #define MAP_CALC_H

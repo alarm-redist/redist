@@ -41,251 +41,6 @@ double compute_n_eff(const arma::subview_col<double> log_wgt) {
 
 
 
-// only gets regions adjacent to indices where valid_regions is true
-void get_all_adj_pairs(
-    Graph const &g, std::vector<std::pair<int, int>> &adj_pairs_vec,
-    arma::subview_col<arma::uword> const &vertex_region_ids,
-    std::vector<bool> const valid_regions
-){
-    int V = g.size();
-
-    // Set to put adjacent pairs in 
-    std::set<std::pair<int, int>> adj_region_pairs;
-
-    // iterate over all vertices in g
-    for (int i = 0; i < V; i++) {
-        // Find out which region this vertex corresponds to
-        int region_num_i = vertex_region_ids(i);
-
-        // check if its a valid region and if not continue
-        if(!valid_regions.at(region_num_i)){
-            continue;
-        }
-
-        std::vector<int> nbors = g.at(i);
-
-        // now iterate over its neighbors
-        for (int nbor : nbors) {
-            // find which region neighbor corresponds to
-            int region_num_j = vertex_region_ids(nbor);
-
-            // if they are different regions mark matrix true since region i
-            // and region j are adjacent as they share an edge across
-            if (region_num_i != region_num_j) {
-                if (region_num_i < region_num_j) {
-                    adj_region_pairs.emplace(region_num_i, region_num_j);
-                } else {
-                    adj_region_pairs.emplace(region_num_j, region_num_i);
-                }
-            }
-        }
-    }
-
-    // Now convert to vec
-    adj_pairs_vec.assign(adj_region_pairs.begin(), adj_region_pairs.end());
-
-    return;
-
-}
-
-
-
-//' Returns a unordered_map mapping valid pairs of adjacent regions to 
-//' the length of the boundary between them
-//'
-//' Finds all pairs of adjacent regions where at least one region is true in 
-//' the `check_adj_to_regions` parameter and returns a hash map mapping the pairs
-//' of valid adjacent regions to the length of the boundary between them.
-//'
-//'
-//' @title Get Valid Adjacent Regions to Boundary Lengths Map
-//'
-//' @param g A graph (adjacency list) passed by reference
-//' @param plan A plan object
-//' @param check_adj_to_regions A vector of length plan.num_regions of regions 
-//' tracking whether or not we should check for edges adjacent to vertices in
-//' that region. For example, `check_adj_to_regions[i] == true` means we will 
-//' attempt to find edges adjacent to any vertex in region i
-//' If all values are true then the function will find all pairs of adjacent regions
-//'
-//' @details No modifications to inputs made
-//'
-//' @return A hash map mapping (std::pair<int,int> to int) that maps a pair of region ids
-//' in sorted order (ie smallest first) to the length of the boundary between them in `g`
-//'
-std::unordered_map<std::pair<int, int>, int, bounded_hash> get_pairs_and_boundary_len_map(
-    Graph const &g, Plan const &plan,
-    std::vector<bool> const &check_adj_to_regions
-){
-    // NOTE: In the case where its one district split you maybe don't even need
-    // a hash map since you can just index by the not remainder region but nbd
-    // for now
-    
-    // Initialize unordered_map with num_region * 2.5 buckets
-    // Hueristic. Bc we know planar graph has at most 3|V| - 6 edges
-    int init_bucket_size = std::ceil(2.5*plan.num_regions);
-
-    // create the hash map
-    std::unordered_map<std::pair<int, int>, int, bounded_hash> region_pair_map(
-        init_bucket_size, bounded_hash(plan.num_regions-1)
-        );
-
-    int V = g.size();
-
-
-    for (int i = 0; i < V; i++) {
-        // Find out which region this vertex corresponds to
-        int region_num_i = plan.region_ids(i);
-
-        // check if its a region we want to find regions adjacent to 
-        // and if not keep going
-        if(!check_adj_to_regions.at(region_num_i)){
-            continue;
-        }
-
-        // get neighbors
-        std::vector<int> nbors = g.at(i);
-
-        // now iterate over its neighbors
-        for (int nbor : nbors) {
-            // find which region neighbor corresponds to
-            int region_num_j = plan.region_ids(nbor);
-
-            // if they are different regions then region i and j are adjacent 
-            // as they share an edge across
-            if (region_num_i != region_num_j) {
-                // if region j is invalid then we don't need to worry about double counting so just add it
-                if(!check_adj_to_regions.at(region_num_j)){
-                    region_pair_map[
-                        {std::min(region_num_j,region_num_i), std::max(region_num_j,region_num_i)}
-                        ]++;
-                }else{ // else if both valid then edge will appear twice so we only count if region i
-                // smaller
-                    if (region_num_i < region_num_j) {
-                    region_pair_map[{region_num_i, region_num_j}]++;
-                    }
-                }
-            }
-        }
-    }
-
-    // adj_pairs_vec
-    return region_pair_map;
-}
-
-
-//' Returns a vector of the triple (smaller region id, bigger region id, boundary len)
-//' for all valid pairs of adjacent regions in the plan. (Either all adjacent regions if
-//' doing generalized region splits or just adjacent to the remainder if only doing 
-//' one district splits.)
-//'
-//'
-//' @title Get All Valid Adjacent Regions and their Boundary Length
-//'
-//' @param g A graph (adjacency list) passed by reference
-//' @param plan A plan object
-//' @param split_district_only If true only gets regions adjacent to the remainder but if 
-//' false then gets all adjacent regions in the plan
-//'
-//' @details No modifications to inputs made
-//'
-//' @return A vector of integer arrays of size 3 where the values are
-//' (smaller region id, bigger region id, boundary len)
-//'
-std::vector<std::array<int, 3>> get_valid_adj_regions_and_boundary_lens_vec(
-    Graph const &g, Plan const &plan,
-    bool const split_district_only 
-){
-
-    // make vector for if we just want adjacent to remainder or all
-    // adj pairs
-    std::vector<bool> valid_regions;
-    if(split_district_only && plan.num_regions < plan.ndists){
-        // if splitting district only then only find adjacent to remainder
-        // which is region 2 because its the bigger one
-        valid_regions.resize(plan.num_regions, false);
-        valid_regions.at(plan.remainder_region) = true;
-    }else{
-        valid_regions.resize(plan.num_regions, true);
-    }
-
-    // Get all valid adj pairs and the boundary length
-    auto region_pair_map = get_pairs_and_boundary_len_map(
-    g, plan, valid_regions);
-
-    // Now put them into a vector 
-    std::vector<std::array<int, 3>> adj_pairs_and_boundary_lens;
-    adj_pairs_and_boundary_lens.reserve(region_pair_map.size());
-
-    for (const auto& entry : region_pair_map) {
-        const auto region_pair = entry.first; // get the region pair 
-        const int boundary_len = entry.second; // get the boundary length
-
-        
-
-        // Make it so elements of array are 
-        // - smaller region id
-        // - bigger region id
-        // - boundary length
-        adj_pairs_and_boundary_lens.emplace_back(
-            std::array<int, 3>{region_pair.first, region_pair.second, boundary_len});
-    }
-
-    return adj_pairs_and_boundary_lens;
-
-}
-
-
-
-//' Returns a vector of the triple (smaller region id, bigger region id, boundary len)
-//' for all valid pairs of adjacent regions in the plan. (Either all adjacent regions if
-//' doing generalized region splits or just adjacent to the remainder if only doing 
-//' one district splits.)
-//'
-//'
-//' @title Get All Valid Adjacent Regions and their Boundary Length
-//'
-//' @param g A graph (adjacency list) passed by reference
-//' @param plan A plan object
-//' @param split_district_only If true only gets regions adjacent to the remainder but if 
-//' false then gets all adjacent regions in the plan
-//'
-//' @details No modifications to inputs made
-//'
-//' @return A vector of integer arrays of size 3 where the values are
-//' (smaller region id, bigger region id, boundary len)
-//'
-std::vector<std::array<int, 3>> get_valid_adj_regions_and_boundary_lens(
-    Graph const &g, Plan const &plan,
-    bool const split_district_only,
-    std::vector<bool> const &check_adj_to_regions,
-    std::vector<std::vector<bool>> const valid_merge_pairs
-){
-
-    // Get all valid adj pairs and the boundary length
-    auto region_pair_map = get_pairs_and_boundary_len_map(
-    g, plan, check_adj_to_regions);
-
-    // Now put them into a vector 
-    std::vector<std::array<int, 3>> adj_pairs_and_boundary_lens;
-    adj_pairs_and_boundary_lens.reserve(region_pair_map.size());
-
-    for (const auto& entry : region_pair_map) {
-        const auto region_pair = entry.first; // get the region pair 
-        const int boundary_len = entry.second; // get the boundary length
-
-    
-        // Make it so elements of array are 
-        // - smaller region id
-        // - bigger region id
-        // - boundary length
-        adj_pairs_and_boundary_lens.emplace_back(
-            std::array<int, 3>{region_pair.first, region_pair.second, boundary_len});
-    }
-
-    return adj_pairs_and_boundary_lens;
-
-}
 
 
 
@@ -312,7 +67,7 @@ std::vector<std::array<int, 3>> get_valid_adj_regions_and_boundary_lens(
 //'
 std::discrete_distribution<>  get_adj_pair_sampler(
     Plan const &plan,
-    std::vector<std::array<int, 3>> const &adj_pairs_and_boundary_lens,
+    std::vector<std::tuple<int, int, double>> const &adj_pairs_and_boundary_lens,
     std::string const &selection_type
 ){
     // make a vector for the unnormalized weights 
@@ -329,8 +84,8 @@ std::discrete_distribution<>  get_adj_pair_sampler(
         // if district pair then give huge weight to pairs of districts 
         for (size_t i = 0; i < adj_pairs_and_boundary_lens.size(); i++)
         {
-            int region1_id = adj_pairs_and_boundary_lens.at(i).at(0);
-            int region2_id = adj_pairs_and_boundary_lens.at(i).at(1);
+            int region1_id = std::get<0>(adj_pairs_and_boundary_lens[i]);
+            int region2_id = std::get<1>(adj_pairs_and_boundary_lens[i]);
             int region1_dval = plan.region_sizes(region1_id); int region2_dval = plan.region_sizes(region2_id);
 
             // check if both are districts
@@ -350,8 +105,8 @@ std::discrete_distribution<>  get_adj_pair_sampler(
         // if multidistrict pair then give huge weight to pairs of districts 
         for (size_t i = 0; i < adj_pairs_and_boundary_lens.size(); i++)
         {
-            int region1_id = adj_pairs_and_boundary_lens.at(i).at(0);
-            int region2_id = adj_pairs_and_boundary_lens.at(i).at(1);
+            int region1_id = std::get<0>(adj_pairs_and_boundary_lens[i]);
+            int region2_id = std::get<1>(adj_pairs_and_boundary_lens[i]);
             int region1_dval = plan.region_sizes(region1_id); int region2_dval = plan.region_sizes(region2_id);
 
             // check if both are districts
@@ -492,14 +247,14 @@ double get_log_retroactive_splitting_prob(
 ){
     if(WEIGHTS_DEBUG_VERBOSE) Rprintf("Possible options: ");
 
-    // make vectors with cumulative d value and region label for later
-    std::vector<int> associated_region_sizes;
-    associated_region_sizes.reserve(plan.num_multidistricts);
+    // compute weight of the merged region
+    auto unioned_region_size = plan.region_sizes(region1_id) + plan.region_sizes(region2_id);
+    double unioned_region_prob = std::pow(unioned_region_size, selection_alpha);
+    // get the sum of all regions 
+    double prob_sum = unioned_region_prob;
 
     // add the unioned region
-    auto unioned_region_size = plan.region_sizes(region1_id) + plan.region_sizes(region2_id);
-    associated_region_sizes.push_back(unioned_region_size);
-    if (WEIGHTS_DEBUG_VERBOSE) Rprintf(" (unioned) %d\n", plan.region_sizes(region1_id) + plan.region_sizes(region2_id));
+    if (WEIGHTS_DEBUG_VERBOSE) Rprintf(" (unioned) %d\n", unioned_region_size);
 
     for(int region_id = 0 ; region_id < plan.num_regions; region_id++) {
         auto region_size = plan.region_sizes(region_id);
@@ -510,22 +265,12 @@ double get_log_retroactive_splitting_prob(
             region_id != region2_id){
             if (WEIGHTS_DEBUG_VERBOSE) Rprintf(" %d ", region_size);
             // add the count and label to vector
-            associated_region_sizes.push_back(region_size);
+            prob_sum += std::pow(region_size, selection_alpha);
         }
     }
 
-    
-    auto potential_candidates = associated_region_sizes.size();
-    arma::vec region_wgts(potential_candidates);
-
-    for (size_t i = 0; i < potential_candidates; i++)
-    {
-        region_wgts(i) = std::pow(associated_region_sizes[i], selection_alpha);
-    }
-
-
     // so prob of picking is weight of first over sum
-    double log_prob = std::log(static_cast<double>(region_wgts(0))) - std::log(static_cast<double>(arma::sum(region_wgts)));
+    double log_prob = std::log(unioned_region_prob) - std::log(prob_sum);
 
     // Rprintf("For regions (%d,%d), size (%d,%d) - Prob is %d/%d, so log is %.5f\n",
     // region1_id, region2_id, 
@@ -538,12 +283,11 @@ double get_log_retroactive_splitting_prob(
 }
 
 
-
 // computes the backwards kernel that is uniform in 
 // the number of ancestors 
 double compute_uniform_adj_log_incremental_weight(
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-    bool const use_graph_plan_space,
+    SamplingSpace const sampling_space,
     ScoringFunction const &scoring_function, Plan const &plan, 
     const TreeSplitter &edge_splitter, 
     bool compute_log_splitting_prob, bool is_final_plan
@@ -555,24 +299,63 @@ double compute_uniform_adj_log_incremental_weight(
 
     if(WEIGHTS_DEBUG_VERBOSE) Rprintf("The two regions are %d and %d\n", region1_id, region2_id);
 
-    // add backwards kernel correction which we only need for graph plan space
-    double log_backwards_kernel_term = 0.0;
+    // compute forward and backwards kernel term 
+    double log_backwards_kernel_term = 0.0; double log_forward_kernel_term = 0;
 
-    if(use_graph_plan_space){
+    if(sampling_space == SamplingSpace::GraphSpace){
         // Get the number of valid adjacent regions 
         const int num_valid_adj_region_pairs = plan.count_valid_adj_regions(
-            map_params.g,
-            splitting_schedule.check_adj_to_regions,
-            splitting_schedule.valid_merge_pair_sizes
+            map_params, splitting_schedule
         );
-        log_backwards_kernel_term = std::log(
+        log_backwards_kernel_term -= std::log(
             static_cast<double>(num_valid_adj_region_pairs)
+        );
+        // taus cancel so just add the boundary length
+        log_forward_kernel_term = plan.get_log_eff_boundary_len(
+            map_params, splitting_schedule, edge_splitter, region1_id, region2_id
+        );
+    }else if(sampling_space == SamplingSpace::ForestSpace){
+        // sum of spanning trees 
+        double spanning_tree_sum = 0.0;
+        double last_split_merge_log_tau = 0.0;
+
+        auto adj_pairs = plan.get_valid_adj_regions(map_params, splitting_schedule);
+
+        for (auto const &region_pair : adj_pairs){
+            int pair_region1_id = region_pair.first;
+            int pair_region2_id = region_pair.second;
+            
+            // double log_st_term = plan.compute_log_merged_region_spanning_trees(
+            //     map_params, region1_id, region2_id
+            // );
+            // double st_term = std::exp(log_st_term);
+            // Rprintf("Pair (%d, %d) = %f and %f \n", region1_id, region2_id,
+            //     log_st_term, st_term);
+
+            // If its the merged region actually split save it for use in forward kernel
+            if(pair_region1_id == region1_id && pair_region2_id == region2_id){
+                last_split_merge_log_tau = plan.compute_log_merged_region_spanning_trees(
+                    map_params, region1_id, region2_id
+                );
+                spanning_tree_sum += std::exp(last_split_merge_log_tau);
+            }else{
+                spanning_tree_sum += std::exp(plan.compute_log_merged_region_spanning_trees(
+                    map_params, pair_region1_id, pair_region2_id
+                ));
+            }
+        }
+
+        // Rprintf("The total is %f!\n", spanning_tree_sum);
+        log_backwards_kernel_term -= std::log(spanning_tree_sum);
+
+        // One over tau of merged region 
+        log_forward_kernel_term -= last_split_merge_log_tau;
+        // tree boundary length 
+        log_forward_kernel_term += plan.get_log_eff_boundary_len(
+            map_params, splitting_schedule, edge_splitter, region1_id, region2_id
         );
     }
 
-    double const log_eff_boundary_len = plan.get_log_eff_boundary_len(
-        map_params, splitting_schedule, edge_splitter, region1_id, region2_id
-    );
 
     double log_splitting_prob = 0;
     // for one district split the probability that region was chosen to be split is always 1
@@ -603,30 +386,33 @@ double compute_uniform_adj_log_incremental_weight(
     }
 
     // The weight is 
-    //      - Numerator: e^-(J(new_region1)+J(new_region2))
-    //      - Denominator: multid_selection_prob * boundary_len * num_valid_adj_regions * e^-J(old_region)
+    //      - Numerator: backwards kernel * e^-(J(new_region1)+J(new_region2))
+    //      - Denominator: multid_selection_prob * forward kernel term * e^-J(old_region)
     // So
-    //      - log numerator: -(J(new_region1)+J(new_region2))
-    //      - log Denominator: log(multid_selection_prob) + log(boundary_len) + log(num_valid_adj_regions) - J(old_region)
+    //      - log numerator: backwards kernel -J(new_region1)+J(new_region2))
+    //      - log Denominator: log(multid_selection_prob) + log(forward kernel) - J(old_region)
 
-    const double log_numerator = -1.0*(region1_score + region2_score);
-    const double log_denom = log_backwards_kernel_term + log_eff_boundary_len + log_splitting_prob - merged_region_score;
+    const double log_numerator = log_backwards_kernel_term - (region1_score + region2_score);
+    const double log_denom =  log_forward_kernel_term + log_splitting_prob - merged_region_score;
 
 
     if(WEIGHTS_DEBUG_VERBOSE){
     int region1_size = plan.region_sizes(region1_id);
     int region2_size = plan.region_sizes(region2_id);
-    Rprintf("Doing (%d,%d) - sizes (%d, %d): len %f, split prob %f, ratio %f!\n", 
-        region1_id, region2_id, region1_size, region2_size, std::exp(log_eff_boundary_len), 
+    Rprintf("Doing (%d,%d) - sizes (%d, %d): forward %f, backward %f, split prob %f, ratio %f!\n", 
+        region1_id, region2_id, region1_size, region2_size, std::exp(log_forward_kernel_term), 
+        std::exp(log_backwards_kernel_term), 
         std::exp(log_splitting_prob), std::exp(log_numerator - merged_region_score));
 
-    Rprintf("Numerator - %f * %f\n", 
-        std::exp(region1_score), std::exp(region2_score)
+    Rprintf("Numerator - %f * %f * %f\n", 
+        std::exp(region1_score), std::exp(region2_score), 
+        std::exp(log_backwards_kernel_term)
     );
 
-    Rprintf("Denominator - %f * %f * %f * %f \n", 
-        std::exp(log_backwards_kernel_term), std::exp(log_eff_boundary_len),
-        std::exp(merged_region_score), std::exp(log_splitting_prob)
+    Rprintf("Denominator - %f * %f * %f \n", 
+        std::exp(log_splitting_prob),
+        std::exp(log_forward_kernel_term),
+        std::exp(merged_region_score)
     );}
 
     // now just take the fraction
@@ -644,7 +430,7 @@ double compute_uniform_adj_log_incremental_weight(
 void get_all_plans_uniform_adj_weights(
     RcppThread::ThreadPool &pool,
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-    bool const use_graph_plan_space,
+    SamplingSpace const sampling_space,
     ScoringFunction const &scoring_function,
     std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
     const std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
@@ -659,7 +445,7 @@ void get_all_plans_uniform_adj_weights(
     pool.parallelFor(0, M, [&] (int i) {
 
         double log_incr_weight = compute_uniform_adj_log_incremental_weight(
-            map_params, splitting_schedule, use_graph_plan_space,
+            map_params, splitting_schedule, sampling_space,
             scoring_function, 
             *plans_ptr_vec.at(i), 
             *tree_splitters_ptr_vec.at(i),

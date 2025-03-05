@@ -320,7 +320,7 @@ List perform_a_valid_multidistrict_split(
         _["partial_plan_labels"] = plan->region_ids,
         _["region_pops"] = plan->region_pops,
         _["num_regions"] = plan->num_regions,
-        _["num_districts"] = plan->num_districts,
+        _["num_districts"] = plan->get_num_district_and_multidistricts().first,
         _["uncut_tree"] = pre_split_ust,
         _["uncut_tree_root"] = uncut_tree_root,
         _["cut_tree"] = ust,
@@ -368,8 +368,6 @@ List perform_merge_split_steps(
 
     // fill in the plan
     plan->num_regions = num_regions;
-    plan->num_districts = num_districts;
-    plan->num_multidistricts = plan->num_regions - plan->num_districts;
     plan->region_ids = region_ids.col(0);
     plan->region_sizes = region_sizes.col(0);
     plan->region_pops = region_pops;
@@ -410,7 +408,7 @@ List perform_merge_split_steps(
         _["plan_vertex_ids"] = plan->region_ids,
         _["pops"] = plan->region_pops,
         _["num_regions"] = plan->num_regions,
-        _["num_districts"] = plan->num_districts,
+        _["num_districts"] = plan->get_num_district_and_multidistricts().first,
         _["num_success"] = num_successes
     );
 

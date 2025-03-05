@@ -598,9 +598,8 @@ double compute_log_region_and_county_spanning_tree(
     mat adj = zeros<mat>(K-1, K-1); // adjacency matrix (minus 1st row and column)
     for (int i = start; i < V; i++) {
         // ignore if not in either region or the county 
-        if (region_ids(i) != region1_id || 
-            region_ids(i) != region2_id || 
-            counties(i) != county) continue;
+        if ((region_ids(i) != region1_id && region_ids(i) != region2_id) 
+            || counties(i) != county) continue;
 
         int prec = pos.at(i);
         if (prec < 0) continue;
@@ -609,9 +608,8 @@ double compute_log_region_and_county_spanning_tree(
         int degree = 0; // keep track of index within subgraph
         for (int j = 0; j < length; j++) {
             int nbor = nbors[j];
-            if (region_ids(nbor) != region1_id || 
-                region_ids(nbor) != region2_id || 
-                counties(nbor) != county) continue;
+            if ((region_ids(nbor) != region1_id && region_ids(nbor) != region2_id) 
+                || counties(nbor) != county) continue;
             degree++;
             if (pos.at(nbor) < 0) continue;
             adj(prec, pos[nbor]) = -1;
@@ -672,7 +670,7 @@ double compute_log_county_level_spanning_tree(
         int length = nbors.size();
         for (int j = 0; j < length; j++) {
             int nbor = nbors.at(j);
-            if ((region_ids(i) != region1_id && region_ids(i) != region2_id) ||
+            if ((region_ids(nbor) != region1_id && region_ids(nbor) != region2_id) ||
                  pos.at(nbor) == cty) continue;
             adj(cty, cty)++;
             if (pos[nbor] < 0) continue; // ignore 1st row and column

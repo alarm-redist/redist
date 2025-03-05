@@ -124,6 +124,32 @@ std::array<double, 2> EdgeCut::compute_abs_pop_deviances(double target){
 }
 
 
+// loads a sampling spaces type enum from a control string
+SamplingSpace get_sampling_space(std::string const &sampling_space_str){
+    // find the type or throw an error 
+    if(sampling_space_str == "graph_plan_space"){
+        return SamplingSpace::GraphSpace;
+    }else if(sampling_space_str == "spanning_forest_space"){
+        return SamplingSpace::ForestSpace;
+    }else{
+        REprintf("Splitting Type %s is not a valid sampling space!\n", 
+            sampling_space_str.c_str());
+        throw Rcpp::exception("Invalid sampling space passed");
+    }
+}
+
+// Get convinient string representation
+std::string sampling_space_to_str(SamplingSpace sampling_space){
+    if(sampling_space == SamplingSpace::GraphSpace){
+        return "Graph";
+    }else if(sampling_space == SamplingSpace::ForestSpace){
+        return "Forest";
+    }else{
+        REprintf("Sampling Space Type ?? has no to str form!\n");
+        throw Rcpp::exception("Invalid splitting type passed to_str");
+    }
+}
+
 
 SplittingMethodType get_splitting_type(std::string const &splitting_type_str){
     // find the type or throw an error 

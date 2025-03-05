@@ -83,8 +83,8 @@ dist_dist_diff <- function(p, i_dist, j_dist, x_center, y_center, x, y) {
 #' running <ADD OPTIONS>
 #' @export
 #' @keywords internal
-run_redist_gsmc <- function(ndists, adj_list, counties, pop, step_types, target, lower, upper, region_id_mat, region_sizes_mat, sampling_space, control, constraints, verbosity = 3L, diagnostic_mode = FALSE) {
-    .Call(`_gredist_run_redist_gsmc`, ndists, adj_list, counties, pop, step_types, target, lower, upper, region_id_mat, region_sizes_mat, sampling_space, control, constraints, verbosity, diagnostic_mode)
+run_redist_gsmc <- function(ndists, adj_list, counties, pop, step_types, target, lower, upper, region_id_mat, region_sizes_mat, sampling_space_str, control, constraints, verbosity = 3L, diagnostic_mode = FALSE) {
+    .Call(`_gredist_run_redist_gsmc`, ndists, adj_list, counties, pop, step_types, target, lower, upper, region_id_mat, region_sizes_mat, sampling_space_str, control, constraints, verbosity, diagnostic_mode)
 }
 
 log_st_map <- function(g, districts, counties, n_distr) {
@@ -320,26 +320,6 @@ var_info_vec <- function(m, ref, pop) {
 #' @details No modifications to inputs made
 #'
 #' @return sum of weights squared over sum of squared weights (sum(wgt)^2 / sum(wgt^2))
-#'
-NULL
-
-#' Returns a vector of the triple (smaller region id, bigger region id, boundary len)
-#' for all valid pairs of adjacent regions in the plan. (Either all adjacent regions if
-#' doing generalized region splits or just adjacent to the remainder if only doing 
-#' one district splits.)
-#'
-#'
-#' @title Get All Valid Adjacent Regions and their Boundary Length
-#'
-#' @param g A graph (adjacency list) passed by reference
-#' @param plan A plan object
-#' @param split_district_only If true only gets regions adjacent to the remainder but if 
-#' false then gets all adjacent regions in the plan
-#'
-#' @details No modifications to inputs made
-#'
-#' @return A vector of integer arrays of size 3 where the values are
-#' (smaller region id, bigger region id, boundary len)
 #'
 NULL
 

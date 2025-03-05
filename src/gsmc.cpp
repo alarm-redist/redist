@@ -152,7 +152,8 @@ void run_smc_step(
 
             if(split_district_only){
                 // if just doing district splits just use remainder region
-                region_id_to_split = new_plans_ptr_vec.at(i)->remainder_region;
+                // which is always the highest id
+                region_id_to_split = new_plans_ptr_vec.at(i)->num_regions - 1;
             }else{                
                 // if generalized split pick a region to try to split
                 region_id_to_split = new_plans_ptr_vec.at(i)->choose_multidistrict_to_split(
@@ -282,7 +283,7 @@ List run_redist_gsmc(
         Rcpp::CharacterVector const &step_types,
         double const target, double const lower, double const upper,
         arma::umat region_id_mat, arma::umat region_sizes_mat,
-        std::string const &sampling_space, // sampling space (graphs, forest, etc)
+        std::string const &sampling_space_str, // sampling space (graphs, forest, etc)
         List const &control, // control has pop temper, and k parameter value, and whether only district splits are allowed
         List const &constraints, // constraints 
         int verbosity, bool diagnostic_mode){
@@ -299,6 +300,9 @@ List run_redist_gsmc(
         // same seed with i*3 long_jumps for state
         rng_states.emplace_back(global_rng_seed, i*3);
     }
+
+    // Set the sampling space 
+    SamplingSpace sampling_space = get_sampling_space(sampling_space_str);
     
     // Legacy, in future remove
     RNGState rng_state((int) Rcpp::sample(INT_MAX, 1)[0]);
@@ -389,7 +393,7 @@ List run_redist_gsmc(
     // Whether or not to only do district splits only 
     bool split_district_only = splitting_size_regime == SplittingSizeScheduleType::DistrictOnly;
 
-    bool use_graph_plan_space = sampling_space == "graph_plan_space";
+    bool use_graph_plan_space = sampling_space == SamplingSpace::GraphSpace;
 
     // Do some input checking 
     
@@ -517,33 +521,33 @@ List run_redist_gsmc(
     // Loop over each column of region_id_mat
     for (size_t i = 0; i < region_id_mat.n_cols; ++i) {
         // Create the underlying object for each unique pointer
-        if(sampling_space == "graph_plan_space"){
-        plans_ptr_vec.emplace_back(
-            std::make_unique<GraphPlan>(
-                region_id_mat.col(i), region_sizes_mat.col(i), 
-                ndists, initial_num_regions,
-                map_params.pop, split_district_only
-            ));
-        new_plans_ptr_vec.emplace_back(
-            std::make_unique<GraphPlan>(
-                dummy_region_id_mat.col(i), dummy_region_sizes_mat.col(i), 
-                ndists, initial_num_regions,
-                map_params.pop, split_district_only
-            ));
+        if(sampling_space == SamplingSpace::GraphSpace){
+            plans_ptr_vec.emplace_back(
+                std::make_unique<GraphPlan>(
+                    region_id_mat.col(i), region_sizes_mat.col(i), 
+                    ndists, initial_num_regions,
+                    map_params.pop, split_district_only
+                ));
+            new_plans_ptr_vec.emplace_back(
+                std::make_unique<GraphPlan>(
+                    dummy_region_id_mat.col(i), dummy_region_sizes_mat.col(i), 
+                    ndists, initial_num_regions,
+                    map_params.pop, split_district_only
+                ));
         use_graph_plan_space = true;
-        }else if(sampling_space == "spanning_forest_space"){
-        plans_ptr_vec.emplace_back(
-            std::make_unique<ForestPlan>(
-                region_id_mat.col(i), region_sizes_mat.col(i), 
-                ndists, initial_num_regions,
-                map_params.pop, split_district_only
-            ));
-        new_plans_ptr_vec.emplace_back(
-            std::make_unique<ForestPlan>(
-                dummy_region_id_mat.col(i), dummy_region_sizes_mat.col(i), 
-                ndists, initial_num_regions,
-                map_params.pop, split_district_only
-            ));
+        }else if(sampling_space == SamplingSpace::ForestSpace){
+            plans_ptr_vec.emplace_back(
+                std::make_unique<ForestPlan>(
+                    region_id_mat.col(i), region_sizes_mat.col(i), 
+                    ndists, initial_num_regions,
+                    map_params.pop, split_district_only
+                ));
+            new_plans_ptr_vec.emplace_back(
+                std::make_unique<ForestPlan>(
+                    dummy_region_id_mat.col(i), dummy_region_sizes_mat.col(i), 
+                    ndists, initial_num_regions,
+                    map_params.pop, split_district_only
+                ));
         }else{
             throw Rcpp::exception("Input is invalid\n");
         }
@@ -571,7 +575,8 @@ List run_redist_gsmc(
             Rcout << " WITH MERGE SPLIT";
         }
         Rcout << "\n";
-        Rcout << "Sampling " << nsims << " " << V << "-unit ";
+        Rcout << "Using " << sampling_space_to_str(sampling_space);
+        Rcout << " Sampling space to sample " << nsims << " " << V << "-unit ";
         Rcout << "maps with " << ndists << " districts and population between "
               << lower << " and " << upper << " using " 
               << (num_threads == 0 ? 1 : num_threads) << " threads, "
@@ -765,7 +770,7 @@ List run_redist_gsmc(
                 get_all_plans_uniform_adj_weights(
                     pool,
                     map_params, *splitting_schedule_ptr,
-                    use_graph_plan_space,
+                    sampling_space,
                     scoring_function,
                     plans_ptr_vec, tree_splitters_ptr_vec,
                     compute_log_splitting_prob, is_final_plans,

@@ -52,15 +52,15 @@ void Plan::check_inputted_region_sizes(bool split_district_only){
         }
     }
 
-    num_districts = num_districts_implied_by_sizes_mat;
-    num_multidistricts = num_regions - num_districts;
+    int num_districts = num_districts_implied_by_sizes_mat;
+    int num_multidistricts = num_regions - num_districts;
     return;
 }
 
 
-void Plan::check_inputted_region_ids(){
+void Plan::check_inputted_region_ids() const{
     // Use std::unordered_set to store unique elements
-    std::unordered_set<int> unique_ids;
+    std::unordered_set<int> unique_ids;unique_ids.reserve(num_regions);
     // get unique labels
     for (size_t i = 0; i < region_ids.n_elem; ++i) {
         unique_ids.insert(region_ids(i)); // Insert each element of the subview column
@@ -114,44 +114,27 @@ Plan::Plan(
 
     // set number of multidistricts, and V
     this->V = region_ids.n_elem;
-    map_pop = 0;
     region_order_max = ndists+1;
 
-    if(split_district_only){
-        remainder_region = num_regions-1;
-    }else{
-        remainder_region = -1;
-    }
 
-    // check region sizes and labels if not just 1 region 
-    if(num_regions > 1){
-        check_inputted_region_ids();
-        // this also sets the number of regions and multidistricts 
-        check_inputted_region_sizes(split_district_only);
-    }else{
-        num_districts = 0;
-        num_multidistricts = num_regions;
-    }
-    
+
 
     // now check these
     if (num_regions > ndists) throw Rcpp::exception("Tried to create a plan object with more regions than ndists!");
-    if (num_districts > ndists) throw Rcpp::exception("Tried to create a plan object with more districts than ndists!");
-    if (num_districts > num_regions) throw Rcpp::exception("Tried to create a plan object with more districts than total regions!");
-    if (num_districts == num_regions && num_regions != ndists) throw Rcpp::exception("Tried to create a partial plan with only districts!");
-    if (num_districts < 0 || num_regions < 0 || ndists < 0) throw Rcpp::exception("Tried to create a plan object with negative number of regions!");
 
     // Create other region-level information 
     region_added_order = std::vector<int>(ndists, -1);
     // fill first num_regions entries with 1,...,num_regions 
-    std::iota(std::begin(region_added_order), std::begin(region_added_order) + num_regions, 1); 
+    std::iota(
+        std::begin(region_added_order), 
+        std::begin(region_added_order) + num_regions, 
+        1); 
     
     region_pops = std::vector<int>(ndists, 0);
     // compute the population for each of the regions 
     for (size_t v = 0; v < V; v++)
     {
         region_pops.at(region_ids(v)) += pop(v);
-        map_pop += pop(v);
     }
 }
 
@@ -284,10 +267,6 @@ void Plan::reorder_plan_by_oldest_split(
     }
 
 
-    // Relabel the remainder region if needed
-    if(this->remainder_region >= 0){
-        this->remainder_region = old_region_id_to_new_vec.at(dummy_plan.remainder_region);
-    }
     
 
     // Now we reorder the region dvals and population 
@@ -313,9 +292,25 @@ void Plan::reorder_plan_by_oldest_split(
 }
 
 
+// Returns the number of districts and multidistricts in the plan
+std::pair<int, int> Plan::get_num_district_and_multidistricts() const{
+    int num_districts = 0;
+    int num_multidistricts = 0;
+    for (size_t region_id = 0; region_id < num_regions; region_id++)
+    {
+        if(region_sizes(region_id) == 1) num_districts++;
+        if(region_sizes(region_id) > 1) num_multidistricts++;
+    }
+
+    return std::make_pair(num_districts, num_multidistricts);
+    
+}
 
 // Prints our object using Rcout. Should be used in Rcpp call
 void Plan::Rprint() const{
+    auto region_counts = get_num_district_and_multidistricts();
+    int num_districts = region_counts.first;
+    int num_multidistricts = region_counts.second;
     RcppThread::Rcout << "Plan with " << num_regions << " regions, " << num_districts
                       << " districts, " << num_multidistricts << " multidistricts and "
                       << arma::sum(region_sizes) << " sum of sizes and "
@@ -362,9 +357,7 @@ void Plan::Rprint() const{
  * @return The number of valid adjacent region pairs
  */
 int Plan::count_valid_adj_regions(
-    Graph const &g,
-    std::vector<bool> const &check_adj_to_regions,
-    std::vector<std::vector<bool>> const &valid_merge_pairs
+    MapParams const &map_params, SplittingSchedule const &splitting_schedule
 ) const{
     // 2D matrix for tracking if regions are adjacent 
     // To save space we will only ever access with [smaller id][larger id]
@@ -381,7 +374,7 @@ int Plan::count_valid_adj_regions(
 
     int num_valid_adj_pairs = 0;
 
-    int const V = g.size();
+    int const V = map_params.V;
 
     for (int v = 0; v < V; v++) {
         // Find out which region this vertex corresponds to
@@ -390,12 +383,12 @@ int Plan::count_valid_adj_regions(
 
         // check if its a region we want to find regions adjacent to 
         // and if not keep going
-        if(!check_adj_to_regions.at(v_region_size)){
+        if(!splitting_schedule.check_adj_to_regions.at(v_region_size)){
             continue;
         }
 
         // get neighbors
-        std::vector<int> nbors = g[v];
+        std::vector<int> nbors = map_params.g[v];
 
         // now iterate over its neighbors
         for (int v_nbor : nbors) {
@@ -406,12 +399,12 @@ int Plan::count_valid_adj_regions(
             if(v_region_num == v_nbor_region_num) continue;
             // ignore if pair can't be merged
             auto v_nbor_region_size = region_sizes(v_nbor_region_num);
-            if(!valid_merge_pairs[v_region_size][v_nbor_region_size]) continue;
+            if(!splitting_schedule.valid_merge_pair_sizes[v_region_size][v_nbor_region_size]) continue;
 
             // else they are different so regions are adj
             // check if we need to be aware of double counting. IE if both regions
             // are ones where check adjacent is true then its possible to double count edges
-            bool double_counting_not_possible = !check_adj_to_regions[v_nbor_region_size];
+            bool double_counting_not_possible = !splitting_schedule.check_adj_to_regions[v_nbor_region_size];
             // Rprintf("Neighbor size is %d and Double counting is %d\n", 
             //     (int) v_nbor_region_size, (int) double_counting_not_possible);
 
@@ -435,6 +428,108 @@ int Plan::count_valid_adj_regions(
     return num_valid_adj_pairs;
 }
 
+
+/*  
+ * @title Count the Number of Valid Adjacent Region Pairs
+ * 
+ * Counts and returns the number of valid adjacent region pairs in a graph. 
+ * We define a valid of pair of adjacent regions to be two regions that 
+ *      1. Share at least one edge between them in `g`
+ *      2. The regions sizes are valid to merge with eligibility determined
+ *         by the `valid_merge_pairs` matrix
+ * 
+ * @param g A graph (adjacency list) passed by reference
+ * @param plan A plan object
+ * @param check_adj_to_regions A vector tracking whether or not we should 
+ * check for edges adjacent to vertices in a region of a particular size. For
+ * example, `check_adj_to_regions[i] == true` means we will attempt to find 
+ * edges adjacent to any vertex in a region of size i. This vector is 1-indexed
+ * meaning we don't need to subtract region size by 1 when accessing.
+ * @param valid_merge_pairs A 2D `ndists+1` by `ndists+1` boolean matrix that
+ * uses region size to check whether or not two regions are considered a valid
+ * merge that can be counted in the map. For example `valid_merge_pairs[i][j]`
+ * being true means that any regions where the sizes are (i,j) are considered
+ * valid to merge. 2D matrix is 1 indexed (don't need to subtract region size)
+ * @param existing_pair_map A hash map mapping pairs of regions to a double. 
+ * This is an optional parameter and if its empty then its ignored. If its not
+ * empty then pairs already in the hash won't be counted added to the output.
+ * 
+ * @details No modifications to inputs made
+ * @return The number of valid adjacent region pairs
+ */
+std::vector<std::pair<int,int>> Plan::get_valid_adj_regions(
+    MapParams const &map_params, SplittingSchedule const &splitting_schedule
+) const{
+    // 2D matrix for tracking if regions are adjacent 
+    // To save space we will only ever access with [smaller id][larger id]
+    // So it will be `num_regions-1` rows and row i will have num_regions-1
+    // elements and the second element will need to be 1 indexed so 
+    // subtract off 1 when accessing
+    std::vector<std::vector<bool>> is_valid_adj_pair(num_regions-1);
+
+    std::vector<std::pair<int,int>> valid_adj_pairs;
+
+    for (size_t i = 0; i < num_regions-1; i++)
+    {
+        // for smaller value i there are num_regions-(i+1) larger values 
+        is_valid_adj_pair[i] = std::vector<bool>(num_regions-(i+1), false);
+    }
+
+
+    int const V = map_params.V;
+
+    for (int v = 0; v < V; v++) {
+        // Find out which region this vertex corresponds to
+        int v_region_num = region_ids(v);
+        auto v_region_size = region_sizes(v_region_num);
+
+        // check if its a region we want to find regions adjacent to 
+        // and if not keep going
+        if(!splitting_schedule.check_adj_to_regions.at(v_region_size)){
+            continue;
+        }
+
+        // get neighbors
+        std::vector<int> nbors = map_params.g[v];
+
+        // now iterate over its neighbors
+        for (int v_nbor : nbors) {
+            // find which region neighbor corresponds to
+            int v_nbor_region_num = region_ids(v_nbor);
+
+            // ignore if they are in the same region
+            if(v_region_num == v_nbor_region_num) continue;
+            // ignore if pair can't be merged
+            auto v_nbor_region_size = region_sizes(v_nbor_region_num);
+            if(!splitting_schedule.valid_merge_pair_sizes[v_region_size][v_nbor_region_size]) continue;
+
+            // else they are different so regions are adj
+            // check if we need to be aware of double counting. IE if both regions
+            // are ones where check adjacent is true then its possible to double count edges
+            bool double_counting_not_possible = !splitting_schedule.check_adj_to_regions[v_nbor_region_size];
+            // Rprintf("Neighbor size is %d and Double counting is %d\n", 
+            //     (int) v_nbor_region_size, (int) double_counting_not_possible);
+
+            // Now add this edge if either we can't double count it 
+            // or `v_region_num` is the smaller of the pair 
+            if(double_counting_not_possible || v_region_num < v_nbor_region_num){
+                // Rprintf("Counting (%d,%d)\n", v, v_nbor);
+                int smaller_region_id  = std::min(v_nbor_region_num,v_region_num);
+                int bigger_region_id  = std::max(v_nbor_region_num,v_region_num);
+
+                // Check if we've counted this before 
+                if(!is_valid_adj_pair[smaller_region_id][bigger_region_id-1]){
+                    // If not increase the count by one and mark this as true 
+                    is_valid_adj_pair[smaller_region_id][bigger_region_id-1] = true;
+                    // add the pair 
+                    valid_adj_pairs.emplace_back(smaller_region_id, bigger_region_id);
+                }
+            }
+        }
+    }
+
+    return valid_adj_pairs;
+}
 
 // Compute the log number of spanning trees on a region 
 double Plan::compute_log_region_spanning_trees(MapParams const &map_params,
@@ -518,19 +613,8 @@ int Plan::choose_multidistrict_to_split(
         ){
 
 
-    if(num_multidistricts < 1){
-        throw Rcpp::exception("ERROR: Trying to find multidistrict to split when there are none!\n");
-    }
-    if(num_multidistricts == 1){ // if just one multidistrict return that 
-        int region_id_to_split = region_sizes.index_max();
-        return region_id_to_split;
-    }
-
     // make vectors with cumulative d value and region label for later
     std::vector<int> valid_region_ids, associated_region_sizes;
-    valid_region_ids.reserve(num_multidistricts);
-    associated_region_sizes.reserve(num_multidistricts);
-
 
     for(int region_id = 0 ; region_id < num_regions; region_id++) {
         auto region_size = region_sizes(region_id);
@@ -544,6 +628,9 @@ int Plan::choose_multidistrict_to_split(
     }
 
     auto num_candidates = valid_region_ids.size();
+
+    // If one just return that 
+    if(num_candidates == 1) return valid_region_ids[0];
 
     // pick index unif at random 
     // int idx = r_int(num_candidates);
@@ -692,24 +779,6 @@ void Plan::update_region_info_from_cut(
 
     // update plan with new regions
     num_regions++; // increase region count by 1
-    num_multidistricts--; // Decrease by one to avoid double counting later
-
-    // Create info for two new districts
-
-    // Set label and count depending on if district or multi district
-    if(split_region1_size == 1){
-        num_districts++;
-    }else{
-        num_multidistricts++;
-    }
-
-    // Now do it for second region
-    if(split_region2_size == 1){
-        num_districts++;
-    }else{
-        num_multidistricts++;
-    }
-
 
     // make the first new region get max plus one
     region_order_max++;
@@ -732,11 +801,6 @@ void Plan::update_region_info_from_cut(
     region_pops.at(split_region2_id) = split_region2_pop;
 
 
-    // If district split only then set the remainder region as well
-    if(split_district_only){
-        // update the remainder region value if needed
-        remainder_region = split_region2_id;
-    }
 }
 
 

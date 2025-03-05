@@ -194,6 +194,8 @@ validate_sample_space_and_splitting_method <- function(
 }
 
 
+# TODO: Add flag for split district only and if so make sure that
+# the remainder region is always the last one
 
 #' Checks that a region id matrix is valid
 #'

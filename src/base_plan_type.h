@@ -46,7 +46,7 @@ class Plan {
 
 private:
     // checks inputted plan is valid
-    void check_inputted_region_ids(); 
+    void check_inputted_region_ids() const;
     void check_inputted_region_sizes(bool split_district_only);
 
 public:
@@ -67,10 +67,6 @@ public:
     int ndists; // Number all d_nk must sum to
     int V; // Number of nodes in graph
     int num_regions; // Number of regions in the plan
-    int num_districts; // Number of districts in the plan
-    int num_multidistricts; // Number of multidistricts, always `num_regions` - `num_districts`
-    int map_pop; // The population of the entire map
-    int remainder_region; // ID of the remainder region of the plan (if it has one)
 
     // basically vectors with length V
     arma::subview_col<arma::uword> region_ids; // Representation of regions in integer form (not as easy to trace
@@ -103,7 +99,8 @@ public:
     void Rprint() const;
     void reorder_plan_by_oldest_split(Plan &dummy_plan);
     std::pair<int, int> get_most_recently_split_regions() const;
-
+    std::pair<int, int> get_num_district_and_multidistricts() const;
+ 
     virtual Graph get_forest_adj(){throw Rcpp::exception("Get Forest Adj not Supported for this!\n");};
 
 
@@ -120,9 +117,12 @@ public:
 
     // Count the number of valid adj regions in a map
     int count_valid_adj_regions(
-        Graph const &g,
-        std::vector<bool> const &check_adj_to_regions,
-        std::vector<std::vector<bool>> const &valid_merge_pairs
+        MapParams const &map_params, SplittingSchedule const &splitting_schedule
+    ) const;
+
+    // Get a vector of all valid adj region pairs
+    std::vector<std::pair<int,int>> get_valid_adj_regions(
+        MapParams const &map_params, SplittingSchedule const &splitting_schedule
     ) const;
 
 

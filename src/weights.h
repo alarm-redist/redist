@@ -40,34 +40,6 @@ double compute_n_eff(const arma::subview_col<double> log_wgt);
 
 
 
-//' Returns a vector of the triple (smaller region id, bigger region id, boundary len)
-//' for all valid pairs of adjacent regions in the plan. (Either all adjacent regions if
-//' doing generalized region splits or just adjacent to the remainder if only doing 
-//' one district splits.)
-//'
-//'
-//' @title Get All Valid Adjacent Regions and their Boundary Length
-//'
-//' @param g A graph (adjacency list) passed by reference
-//' @param plan A plan object
-//' @param split_district_only If true only gets regions adjacent to the remainder but if 
-//' false then gets all adjacent regions in the plan
-//'
-//' @details No modifications to inputs made
-//'
-//' @return A vector of integer arrays of size 3 where the values are
-//' (smaller region id, bigger region id, boundary len)
-//'
-std::vector<std::array<int, 3>> get_valid_adj_regions_and_boundary_lens_vec(
-    Graph const &g, Plan const &plan,
-    bool const split_district_only 
-);
-
-void get_all_adj_pairs(
-    Graph const &g, std::vector<std::pair<int, int>> &adj_pairs_vec,
-    arma::subview_col<arma::uword> const &vertex_region_ids,
-    std::vector<bool> const valid_regions
-);
 
 
 
@@ -94,7 +66,7 @@ void get_all_adj_pairs(
 //'
 std::discrete_distribution<>  get_adj_pair_sampler(
     Plan const &plan,
-    std::vector<std::array<int, 3>> const &adj_pairs_and_boundary_lens,
+    std::vector<std::tuple<int, int, double>> const &adj_pairs_and_boundary_lens,
     std::string const &selection_type
 );
 
@@ -114,7 +86,7 @@ double get_log_mh_ratio(
 void get_all_plans_uniform_adj_weights(
     RcppThread::ThreadPool &pool,
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-    bool const use_graph_plan_space,
+    SamplingSpace const sampling_space,
     ScoringFunction const &scoring_function,
     std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
     const std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,

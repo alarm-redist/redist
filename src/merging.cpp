@@ -43,26 +43,12 @@ void merge_regions(
     }
 
     // if either region is the remainder then make it the merged one
-    if((region1_id == plan.remainder_region || region2_id == plan.remainder_region) &&
-        plan.remainder_region != -1){
-        plan.remainder_region = merged_id;
-    }
+    // TODO make it so merged region is proper id. I guess that should be new num regions -1 
+    // Since no remainder region anymore ok
 
     // update the number of regions 
     plan.num_regions--;
-    
-    // update the num districts and multi-districts 
 
-    // if two districts then -2 districts, +1 multi
-    if(plan.region_sizes(region1_id) == 1 && plan.region_sizes(region2_id) == 1){
-        plan.num_districts -= 2;
-        plan.num_multidistricts++;
-    }else if(plan.region_sizes(region1_id) == 1 || plan.region_sizes(region2_id) == 1){
-        // else if only one is a district just decrease number of districts by 1
-        plan.num_districts--;
-    }else{
-        plan.num_multidistricts--;
-    }
 
     // now update the region population and dval 
     int merged_dval = plan.region_sizes(region1_id)+ plan.region_sizes(region2_id);
@@ -96,9 +82,11 @@ int run_merge_split_step_on_a_plan(
 
 
     // get all adjacent pairs in initial plan
-    auto adj_pairs_and_boundary_len_vec = get_valid_adj_regions_and_boundary_lens_vec(
-        map_params.g, plan, split_district_only
+    auto adj_pairs_and_boundary_len_vec = plan.get_valid_adj_regions_and_eff_log_boundary_lens(
+        map_params, splitting_schedule, tree_splitter
     );
+
+    
 
     // get sampler of adj pairs
     auto pair_index_sampler = get_adj_pair_sampler(
@@ -109,7 +97,7 @@ int run_merge_split_step_on_a_plan(
 
 
     
-    std::vector<std::array<int,3>> proposed_adj_pairs_and_boundary_len_vec;
+    std::vector<std::tuple<int, int, double >> proposed_adj_pairs_and_boundary_len_vec;
     // get sampler of adj pairs in proposed plan
     std::discrete_distribution<> proposed_pair_index_sampler;
 
@@ -156,9 +144,9 @@ int run_merge_split_step_on_a_plan(
         double index_selection_prob = pair_index_sampler.probabilities().at(pair_index);
         auto pair_triple = adj_pairs_and_boundary_len_vec.at(pair_index);
 
-        // get info
-        int region1_id = pair_triple.at(0); int region2_id = pair_triple.at(1);
-        int old_region_boundary_length = pair_triple.at(2);
+        // get info std::get<0>(adj_pairs_and_boundary_lens[i]);
+        int region1_id = std::get<0>(pair_triple); int region2_id = std::get<1>(pair_triple);
+        double old_region_boundary_length = std::get<2>(pair_triple);
         int old_region1_dval = plan.region_sizes(region1_id);
         int old_region2_dval = plan.region_sizes(region2_id);
 
@@ -173,14 +161,6 @@ int run_merge_split_step_on_a_plan(
         }
         
 
-        if(split_district_only)
-        {
-            if(merged_id != plan.remainder_region){
-                REprintf("ERROROROROR merged id is %d but remainder is %d",
-                merged_id, plan.remainder_region);
-                throw Rcpp::exception("Merged ID is not the same as remainder!\n");
-            }
-        }
         
         // REprintf("Pre-merged %d and %d into %d is \n", region1_id, region2_id, merged_id);
         // new_plan.Rprint();
@@ -220,8 +200,8 @@ int run_merge_split_step_on_a_plan(
         if(successful_split){
 
             // get all valid adjacent pairs in the new proposed plan
-            proposed_adj_pairs_and_boundary_len_vec = get_valid_adj_regions_and_boundary_lens_vec(
-                map_params.g, new_plan, split_district_only
+            proposed_adj_pairs_and_boundary_len_vec = plan.get_valid_adj_regions_and_eff_log_boundary_lens(
+                map_params, splitting_schedule, tree_splitter
             );
 
             // get sampler of adj pairs in proposed plan
@@ -247,8 +227,8 @@ int run_merge_split_step_on_a_plan(
                 //     proposed_adj_pairs_and_boundary_len_vec.at(i).at(1)
                 //     );
 
-                if(proposed_adj_pairs_and_boundary_len_vec.at(i).at(0) == smaller_region_id 
-                && proposed_adj_pairs_and_boundary_len_vec.at(i).at(1) == bigger_region_id){
+                if(std::get<0>(proposed_adj_pairs_and_boundary_len_vec[i]) == smaller_region_id 
+                && std::get<1>(proposed_adj_pairs_and_boundary_len_vec[i]) == bigger_region_id){
                     region_pair_in_proposal_index = i;
                     break;
                 }
@@ -265,7 +245,7 @@ int run_merge_split_step_on_a_plan(
                 proposal_accepted = false;
             }else{
                 // get length of boundary in proposed plan
-                int new_region_boundary_length = proposed_adj_pairs_and_boundary_len_vec.at(region_pair_in_proposal_index).at(2);
+                int new_region_boundary_length = std::get<2>(proposed_adj_pairs_and_boundary_len_vec[region_pair_in_proposal_index]);
                 // get probability we would have picked that pair in the proposed plan
                 double proposed_pair_index_selection_prob = proposed_pair_index_sampler.probabilities().at(region_pair_in_proposal_index);
                 
