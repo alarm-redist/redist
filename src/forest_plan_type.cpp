@@ -9,7 +9,7 @@ ForestPlan::ForestPlan(arma::subview_col<arma::uword> region_ids_col,
               Plan(region_ids_col, region_sizes_col, ndists, num_regions, pop, split_district_only){
 
     if(num_regions == 1){
-        forest_graph.resize(V);
+        forest_graph.resize(region_ids.n_elem);
     }
     if(num_regions > 1){
         forest_graph = list_to_graph(initial_forest_adj_list);

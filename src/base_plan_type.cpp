@@ -10,7 +10,7 @@
 // checks the inputted plan has the number of regions it claims it does
 // checks the sizes and that the labels make sense.
 // if makes sense then it counts the number of districts and multidistricts
-void Plan::check_inputted_region_sizes(bool split_district_only){
+void Plan::check_inputted_region_sizes(int ndists, bool split_district_only) const{
 
     // check sum of first num_region elements is ndists and it matches expected
     // number of districts 
@@ -52,13 +52,11 @@ void Plan::check_inputted_region_sizes(bool split_district_only){
         }
     }
 
-    int num_districts = num_districts_implied_by_sizes_mat;
-    int num_multidistricts = num_regions - num_districts;
     return;
 }
 
 
-void Plan::check_inputted_region_ids() const{
+void Plan::check_inputted_region_ids(int ndists) const{
     // Use std::unordered_set to store unique elements
     std::unordered_set<int> unique_ids;unique_ids.reserve(num_regions);
     // get unique labels
@@ -105,7 +103,7 @@ Plan::Plan(
     arma::subview_col<arma::uword> region_ids_col, 
     arma::subview_col<arma::uword> region_sizes_col, 
     int ndists, int num_regions, const arma::uvec &pop, bool split_district_only): 
-    ndists(ndists), num_regions(num_regions),
+    num_regions(num_regions),
     region_ids(region_ids_col), region_sizes(region_sizes_col)
 {
     // check num_regions and num_districts inputs make sense
@@ -113,7 +111,7 @@ Plan::Plan(
     if (region_sizes.n_elem != ndists) throw Rcpp::exception("The region dvals column passed in is not size ndists!");
 
     // set number of multidistricts, and V
-    this->V = region_ids.n_elem;
+    int const V = region_ids.n_elem;
     region_order_max = ndists+1;
 
 
@@ -168,7 +166,7 @@ Plan::Plan(
 // DO NOT CALL THIS WHEN THERE IS ONLY 1 REGION!
 std::pair<int, int> Plan::get_most_recently_split_regions() const{
     int largest_index = -1, second_largest_index = -1;
-    int largest_value = -1 * ndists, second_largest_value = -1* ndists;
+    int largest_value = -1 * num_regions, second_largest_value = -1* num_regions;
 
     // Iterate through the vector
     for (std::size_t i = 0; i < num_regions; ++i) {
@@ -314,7 +312,7 @@ void Plan::Rprint() const{
     RcppThread::Rcout << "Plan with " << num_regions << " regions, " << num_districts
                       << " districts, " << num_multidistricts << " multidistricts and "
                       << arma::sum(region_sizes) << " sum of sizes and "
-                      << V << " Vertices.\n";
+                      << region_ids.n_elem << " Vertices.\n";
 
 
     RcppThread::Rcout << "Region Level Values:[";

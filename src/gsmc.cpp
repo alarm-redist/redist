@@ -147,6 +147,10 @@ void run_smc_step(
             draw_tries_vec[i]++;
             // sample previous plan
             idx = rng_states[thread_id].r_int_wgt(M, normalized_cumulative_weights);
+
+            // NOTE:
+            // In future can defer this to the end, only need to copy once
+            // successful tree has been split 
             
             *new_plans_ptr_vec.at(i) = *old_plans_ptr_vec.at(idx);
 

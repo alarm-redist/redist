@@ -263,6 +263,85 @@ void assign_region_id_from_tree(const Tree &ust,
     }
 }
 
+// assigns region to tree 
+void NEW_assign_region_id_from_tree(
+    Tree const &ust, arma::subview_col<arma::uword> &region_ids,
+    int const root, const int new_region_id
+){
+    // make a queue 
+    std::queue<int> vertex_queue;
+    // update root and add its children to queue 
+    region_ids(root) = new_region_id;
+    for(auto const &child_vertex: ust[root]){
+        vertex_queue.push(child_vertex);
+    }
+
+    // update all the children
+    while(!vertex_queue.empty()){
+        // get and remove head of queue 
+        int vertex = vertex_queue.front();
+        vertex_queue.pop();
+        // update region ids
+        region_ids(vertex) = new_region_id;
+        // add children 
+        for(auto const &child_vertex: ust[vertex]){
+            vertex_queue.push(child_vertex);
+        }
+    }
+
+    return;
+}
+
+
+// updates both the vertex labels and the forest adjacency 
+void NEW_assign_region_id_and_forest_from_tree(const Tree &ust, 
+    arma::subview_col<arma::uword> &region_ids,
+    Graph &forest_graph,
+    int root, int parent,
+    const int new_region_id){
+
+    // update root region id
+    region_ids(root) = new_region_id;
+
+    // and its forest vertices
+    int n_desc = ust[root].size();
+    // clear this vertices neighbors in the graph and reserve size for children
+    forest_graph[root].clear(); forest_graph[root].reserve(n_desc);
+
+    // make a queue of vertex, parent 
+    std::queue<std::pair<int,int>> vertex_queue;
+    // add roots children to queue 
+    for(auto const &child_vertex: ust[root]){
+        vertex_queue.push({child_vertex, root});
+        forest_graph[root].push_back(child_vertex);
+    }
+
+    // update all the children
+    while(!vertex_queue.empty()){
+        // get and remove head of queue 
+        auto queue_pair = vertex_queue.front();
+        int vertex = queue_pair.first;
+        int parent_vertex = queue_pair.second;
+        vertex_queue.pop();
+        // update region ids
+        region_ids(vertex) = new_region_id;
+        // clear this vertices neighbors in the graph and reserve size for children
+        int n_desc = ust[vertex].size();
+        forest_graph[vertex].clear(); forest_graph[vertex].reserve(n_desc);
+        // add the edge from vertex to parent 
+        forest_graph[vertex].push_back(parent_vertex);
+        
+        for(auto const &child_vertex: ust[vertex]){
+            // add children to queue
+            vertex_queue.push({child_vertex, vertex});
+            // add this edge from vertex to its children 
+            forest_graph[vertex].push_back(child_vertex);
+        }
+    }
+
+    return;
+}
+
 // updates both the vertex labels and the forest adjacency 
 void sub_assign_region_id_and_forest_from_tree(const Tree &ust, 
                     arma::subview_col<arma::uword> &region_ids,

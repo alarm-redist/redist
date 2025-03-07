@@ -4,6 +4,7 @@
 #include <vector>
 #include <limits>
 #include <stack>
+#include <queue>
 #include <RcppArmadillo.h>
 #include "gredist_types.h"
 #include "smc_base.h"

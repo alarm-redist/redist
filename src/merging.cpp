@@ -31,9 +31,9 @@ void merge_regions(
     if(merged_id != region1_id && merged_id != region2_id){
         throw Rcpp::exception("Merged id is not one of the two regions being merged");
     }
-
+    int const V = plan.region_ids.n_elem;
     // update the region vertex ids
-    for (size_t v = 0; v < plan.V; v++)
+    for (size_t v = 0; v < V; v++)
     {
         if(plan.region_ids(v) == region2_id){
             plan.region_ids(v) = merged_id;
@@ -67,13 +67,13 @@ int run_merge_split_step_on_a_plan(
     TreeSplitter &tree_splitter,
     int const nsteps_to_run)
 {
-    int V = plan.V;
+    int V = plan.region_ids.n_elem;
     Tree ust = init_tree(V);
     std::vector<bool> visited(V);
     std::vector<bool> ignore(V);
 
     // If its the final step then remainder doesn't matter so make split district only false 
-    if(split_district_only && plan.num_regions == plan.ndists){
+    if(split_district_only && plan.num_regions == splitting_schedule.ndists){
         split_district_only = false;
     }
 

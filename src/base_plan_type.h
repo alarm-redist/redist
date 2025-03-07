@@ -27,27 +27,60 @@
 class TreeSplitter;
 
 
-// Custom hash function for hashing pairs of regions 
-// ndists should be the number of regions minus 1, ie the biggest
-// region id
+/*
+ * Custom Hash for hashing a pair of region ids 
+ *
+ * This class implements a hash function for a pair a region ids. 
+ * Using the fact that all pair ids will be between 0 and 
+ * `max_num_regions-1` (inclusive) it uses a simple grid id hash. 
+ */
 struct bounded_hash {
-    int ndists;
-    bounded_hash(int max_value) : ndists(max_value) {}
+    int max_num_regions;
+    bounded_hash(int max_num_regions) : max_num_regions(max_num_regions) {}
     std::size_t operator()(const std::pair<int, int>& p) const {
-        return p.first * (ndists + 1) + p.second;
+        return p.first * (max_num_regions + 1) + p.second;
     }
     // DANGEROUS DO NOT ACTUALLY USE!!
     // Should probably remove in the future, just needed it to be able to pass default 
     // version to boundary length function
-    bounded_hash() : ndists(0) {}
+    bounded_hash() : max_num_regions(0) {}
 };
 
+
+/*
+ * Abstract Class implementation of plan 
+ * 
+ * The `Plan` object is the abstract class implementation of a plan. The 
+ * abstract class encapsulates all the attributes and methods a plan needs
+ * to be able to do regardless of sampling space. 
+ * 
+ * Attributes:
+ *  - num_regions The number of regions the plan currently has 
+ *  - region_ids A matrix column of length V mapping each vertex of the graph to the id
+ *      of the region it is associated with. This is associated with an underlying 
+ *      Rcpp armadillo matrix that must remain in memory for the lifetime of the plan
+ *      object
+ *  - region_sizes A matrix column of length `ndists` storing the size of each region 
+ *      (indexed by region id). The sum of all entries should always equal `ndists`.
+ *  - region_pops A vector of length `ndists` storing the population of each region 
+ *    (indexed by region id). 
+ *  - region_added_order A vector of length `ndists` used to deduce the relative order
+ *    of which regions were most recently split in the plan. The relative ordering of
+ *    the values in this vector indicate which region was split more recently. e.g. 
+ *    if `region_added_order[i] < region_added_order[j]` then that means region j 
+ *    was split more recently than region i. 
+ * 
+ * Methods:
+ * 
+ * 
+ * Abstract Methods: 
+ */
 class Plan {
 
 private:
     // checks inputted plan is valid
-    void check_inputted_region_ids() const;
-    void check_inputted_region_sizes(bool split_district_only);
+    void check_inputted_region_ids(int ndists) const;
+    void check_inputted_region_sizes(int ndists, bool split_district_only) const;
 
 public:
     // constructor 
@@ -62,36 +95,17 @@ public:
     // Virtual deep_clone method to create a copy of the object
     virtual std::unique_ptr<Plan> deep_clone() const = 0;
 
-
     // attributes
-    int ndists; // Number all d_nk must sum to
-    int V; // Number of nodes in graph
     int num_regions; // Number of regions in the plan
+    arma::subview_col<arma::uword> region_ids; 
+    arma::subview_col<arma::uword> region_sizes; 
+    std::vector<int> region_pops; 
+    std::vector<int> region_added_order; 
+    int region_order_max; 
 
-    // basically vectors with length V
-    arma::subview_col<arma::uword> region_ids; // Representation of regions in integer form (not as easy to trace
-    // lineage). This is a length V vector where ith value maps it the integer id of its region
-
-    // Think of this like the pointer to some column in a matrix 
-
-
-    // vectors with length num_regions
-    arma::subview_col<arma::uword> region_sizes; //Vector of length num_regions mapping region ids to their d values
-    // Regions have R prefix whereas districts end in an integer (in string form).
-    std::vector<int> region_pops; // Vector of length num_regions mapping region ids
-    // to the regions population
-
-    std::vector<int> region_added_order; // Vector of length num_regions that
-    // tracks the relative order that regions were added. As in if we have
-    // region_added_order[i] > region_added_order[j] then that means region i
-    // was added after region j
-    
-    int region_order_max; // value of current largest region order number
-
-
-    // not actually used by all plan types
+    // not actually used by all plan types but the arma subviews are impossible to change 
+    // so kept to avoid object slicing 
     Graph forest_graph;    
-
 
     virtual ~Plan() = default; 
 
@@ -176,8 +190,6 @@ public:
                  const int region_id_to_split, const int new_region_id);
 
 };
-
-
 
 
 
