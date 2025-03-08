@@ -117,6 +117,8 @@ int run_merge_split_step_on_a_plan(
 
     RNGState rng_state;
 
+    std::vector<int> pops_below_vertex(V,0);
+
     for (int j = 0; j < nsteps_to_run; j++){
 
 
@@ -186,7 +188,7 @@ int run_merge_split_step_on_a_plan(
         bool successful_split = new_plan.attempt_split(
                 map_params, splitting_schedule,
                 ust, tree_splitter, 
-                visited, ignore, rng_state,
+                pops_below_vertex, visited, ignore, rng_state, false,
                 min_region_cut_size, plan_specific_max_region_cut_size,
                 splitting_schedule.all_regions_smaller_cut_sizes_to_try[new_plan.region_sizes(merged_id)],
                 split_district_only,

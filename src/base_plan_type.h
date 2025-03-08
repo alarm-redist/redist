@@ -143,7 +143,8 @@ public:
     // redist_smc related methods 
     int choose_multidistrict_to_split(std::vector<bool> const &valid_region_sizes_to_split,
         RNGState &rng_state,
-        double const selection_alpha = SELECTION_ALPHA);
+        double const selection_alpha = SELECTION_ALPHA) const;
+
     bool draw_tree_on_region(const MapParams &map_params, const int region_to_draw_tree_on,
         Tree &ust, std::vector<bool> &visited, std::vector<bool> &ignore, int &root,
         RNGState &rng_state);
@@ -181,9 +182,9 @@ public:
     // virtual redist_smc methods
 
     bool attempt_split(const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-                Tree &ust, TreeSplitter &tree_splitter,
+                Tree &ust, TreeSplitter &tree_splitter, std::vector<int> &pops_below_vertex,
                  std::vector<bool> &visited, std::vector<bool> &ignore, 
-                 RNGState &rng_state,
+                 RNGState &rng_state, bool const save_selection_prob,
                  int const min_region_cut_size, int const max_region_cut_size, 
                  std::vector<int> const &smaller_cut_sizes_to_try,
                  const bool split_district_only, 

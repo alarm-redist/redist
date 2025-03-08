@@ -189,7 +189,7 @@ List perform_a_valid_multidistrict_split(
         ndists, num_regions, pop, split_district_only);
 
     // Create tree splitter 
-    TreeSplitter * tree_splitter = new ExperimentalSplitter(map_params.V, .0001);
+    TreeSplitter * tree_splitter = new ExperimentalSplitter(map_params.V, .0001, map_params.target);
 
 
     if(verbose){
@@ -262,15 +262,19 @@ List perform_a_valid_multidistrict_split(
 
 
         // Now try to select an edge to cut
-        std::pair<bool,EdgeCut> edge_search_result = tree_splitter->select_edge_to_cut(
-            map_params, *plan, ust, uncut_tree_root, rng_state,
+        std::tuple<bool, EdgeCut, double> edge_search_result = tree_splitter->attempt_to_find_edge_to_cut(
+            map_params, rng_state, 
+            ust, uncut_tree_root,
+            pop_below, visited, 
+            plan->region_pops[region_id_to_split],plan->region_sizes(region_id_to_split), 
             split_dval_min, split_dval_max, 
-            smaller_cut_sizes_to_try,
-            region_id_to_split
+            smaller_cut_sizes_to_try //,
+            //bool save_selection_prob = false
         );
 
+
         // Try again and increase counter if no good edge found
-        if (!edge_search_result.first){
+        if (!std::get<0>(edge_search_result)){
             try_counter++;
             continue;
         }
@@ -279,7 +283,7 @@ List perform_a_valid_multidistrict_split(
         pre_split_ust = ust;
 
         // If successful extract the edge cut info
-        cut_edge = edge_search_result.second;
+        cut_edge = std::get<1>(edge_search_result);
         // Now erase the cut edge in the tree
         erase_tree_edge(ust, cut_edge);
 

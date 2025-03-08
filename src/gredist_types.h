@@ -102,14 +102,14 @@ public:
     void get_split_regions_info(
         int &split_region1_tree_root, int &split_region1_dval, int &split_region1_pop,
         int &split_region2_tree_root, int &split_region2_dval, int &split_region2_pop
-    );
+    ) const;
 
     // Gets the signed (not absolute value) deviation of the two regions from the targets
     // first entry is below and second is above
-    std::array<double, 2> compute_signed_pop_deviances(double target);
+    std::array<double, 2> compute_signed_pop_deviances(double target) const;
 
     // returns absolute population deviation
-    std::array<double, 2> compute_abs_pop_deviances(double target);
+    std::array<double, 2> compute_abs_pop_deviances(double target) const;
 
     // Equality operator
     bool operator==(const EdgeCut& other) const {
@@ -138,7 +138,8 @@ public:
 enum class SamplingSpace : unsigned char
 {
     GraphSpace, // Sampling on the space of graph partitions
-    ForestSpace // Sample on the space of spanning forests
+    ForestSpace, // Sample on the space of spanning forests
+    LinkingEdgeSpace // Sample on space of forests and linking edges
 };
 
 // loads a sampling spaces type enum from a control string

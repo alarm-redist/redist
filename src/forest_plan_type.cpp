@@ -99,10 +99,8 @@ std::unordered_map<std::pair<int, int>, double, bounded_hash> NEW_get_valid_pair
     const Plan &plan, const TreeSplitter &edge_splitter,
     std::unordered_map<std::pair<int, int>, double, bounded_hash> existing_pair_map = {}
 ){
-    // make a tree
-    Tree ust = init_tree(map_params.V);
     std::vector<bool> visited(map_params.V);
-    std::vector<int> pops_below_vertex(map_params.V);
+    std::vector<int> pops_below_vertex(map_params.V, 0);
     
     // Initialize unordered_map with num_region * 2.5 buckets
     // Hueristic. Bc we know planar graph has at most 3|V| - 6 edges
@@ -170,7 +168,7 @@ std::unordered_map<std::pair<int, int>, double, bounded_hash> NEW_get_valid_pair
 
                 // get the log probability
                 double log_edge_selection_prob = get_log_retroactive_splitting_prob_for_joined_tree(
-                    map_params, plan, ust, edge_splitter,
+                    map_params, plan, edge_splitter,
                     visited, pops_below_vertex,
                     v, v_nbor,
                     splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size][0],
@@ -230,7 +228,6 @@ double ForestPlan::get_log_eff_boundary_len(
     const int region1_id, int const region2_id
 ) const{
 
-    Tree ust = init_tree(map_params.V);
     std::vector<bool> visited(map_params.V);
     std::vector<int> pops_below_vertex(map_params.V);
 
@@ -244,7 +241,7 @@ double ForestPlan::get_log_eff_boundary_len(
             if (region_ids(nbor) != region2_id) continue;
 
             double log_edge_selection_prob = get_log_retroactive_splitting_prob_for_joined_tree(
-                map_params, *this, ust, tree_splitter,
+                map_params, *this, tree_splitter,
                 visited, pops_below_vertex,
                 v, nbor,
                 splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size][0],

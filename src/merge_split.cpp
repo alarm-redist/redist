@@ -36,7 +36,6 @@ Rcpp::List ms_plans(int nsims, int warmup, List l, const uvec init, const uvec &
 
     int rounded_up_N_over_thin = std::ceil(static_cast<double>(std::max(1, nsims-1))/thin);
 
-    int n_out = rounded_up_N_over_thin + 3;
     umat districts(V, nsims + 2, fill::zeros);
     districts.col(0) = init;
     districts.col(1) = init;
@@ -73,7 +72,6 @@ Rcpp::List ms_plans(int nsims, int warmup, List l, const uvec init, const uvec &
     Graph new_dist_g;
     int distr_1, distr_2;
     select_pair(n_distr, dist_g, distr_1, distr_2, rng_state);
-    int reject_ct;
     CharacterVector psi_names = CharacterVector::create(
         "pop_dev", "splits", "multisplits", "total_splits",
         "segregation", "grp_pow", "grp_hinge", "grp_inv_hinge",

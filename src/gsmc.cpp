@@ -87,7 +87,7 @@
  */ 
 void run_smc_step(
         const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-        std::vector<RNGState> &rng_states,
+        std::vector<RNGState> &rng_states, SamplingSpace const sampling_space,
         std::vector<std::unique_ptr<Plan>> &old_plans_ptr_vec, 
         std::vector<std::unique_ptr<Plan>> &new_plans_ptr_vec,
         std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
@@ -121,6 +121,9 @@ void run_smc_step(
     // one so the number of regions in a presplit plan
     int new_region_id = old_plans_ptr_vec.at(0)->num_regions;
 
+    // we only save 
+    bool save_edge_selection_prob = sampling_space == SamplingSpace::LinkingEdgeSpace;
+
     // thread safe id counter for seeding RNG generator 
     std::atomic<int> thread_id_counter{0};
 
@@ -132,6 +135,10 @@ void run_smc_step(
     // pool.parallelFor(0, M, [&, std::size_t thread_id] (int i)
     pool.parallelFor(0, M, [&] (int i) {
         static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+        static thread_local Tree ust = init_tree(V);
+        static thread_local std::vector<bool> visited(V);
+        static thread_local std::vector<bool> ignore(V);
+        static thread_local std::vector<int> pops_below_vertex(V,0);
 
         // REprintf("Plan %d\n\n", i);
         int reject_ct = 0;
@@ -139,9 +146,6 @@ void run_smc_step(
         int idx;
         int region_id_to_split, size_of_region_to_split;
 
-        Tree ust = init_tree(V);
-        std::vector<bool> visited(V);
-        std::vector<bool> ignore(V);
         while (!ok) {
             // increase the number of tries for particle i by 1
             draw_tries_vec[i]++;
@@ -151,8 +155,12 @@ void run_smc_step(
             // NOTE:
             // In future can defer this to the end, only need to copy once
             // successful tree has been split 
-            
+            // auto t1_start = std::chrono::high_resolution_clock::now();
             *new_plans_ptr_vec.at(i) = *old_plans_ptr_vec.at(idx);
+            // auto t1_end = std::chrono::high_resolution_clock::now();
+            /* Getting number of milliseconds as a double. */
+            // std::chrono::duration<double, std::milli> t1 = t1_end - t1_start; 
+            // Rprintf("Copying took %f ms!\n", t1.count());
 
             if(split_district_only){
                 // if just doing district splits just use remainder region
@@ -178,7 +186,7 @@ void run_smc_step(
             // Now try to split that region
             ok = new_plans_ptr_vec.at(i)->attempt_split(
                 map_params, splitting_schedule, ust, *tree_splitters_ptr_vec.at(i), 
-                visited, ignore, rng_states[thread_id],
+                pops_below_vertex, visited, ignore, rng_states[thread_id], save_edge_selection_prob,
                 splitting_schedule.all_regions_min_and_max_possible_cut_sizes[size_of_region_to_split][0],
                 splitting_schedule.all_regions_min_and_max_possible_cut_sizes[size_of_region_to_split][1],
                 splitting_schedule.all_regions_smaller_cut_sizes_to_try[size_of_region_to_split],
@@ -186,12 +194,6 @@ void run_smc_step(
                 region_id_to_split, new_region_id
             );
 
-            if(draw_tries_vec[i] == 40000 && draw_tries_vec[i] % 250 == 0){
-                    Rprintf("Iter %d\n\n", i);
-                    print_tree(ust);
-            }
-
-            
             // bad sample; try again
             if (!ok) {
                  // update unsuccessful try
@@ -209,7 +211,6 @@ void run_smc_step(
 
         // record index of new plan's parent
         parent_index_vec[i] = idx;
-
 
         // ORIGINAL SMC CODE I DONT KNOW WHAT THIS DOES
         // save ancestors/lags
@@ -246,10 +247,8 @@ void run_smc_step(
        100.0 * n_unique_parent_indices / M << "% of previous step's plans survived.\n";
     }
 
-
     // ORIGINAL SMC CODE I DONT KNOW WHAT IT DOES
     ancestors = ancestors_new;
-
 }
 
 
@@ -643,14 +642,14 @@ List run_redist_gsmc(
                     splitting_schedule_ptr->all_regions_min_and_max_possible_cut_sizes[i][1]);
                 Rprintf(" | possible split sizes: ");
                 for(auto smaller_size: splitting_schedule_ptr->all_regions_smaller_cut_sizes_to_try[i]){
-                    Rprintf("(%d, %d) ", smaller_size, i-smaller_size);
+                    Rprintf("(%d, %d) ", (int) smaller_size, static_cast<int>(i-smaller_size));
                 }
                 Rprintf("\n");
                 }
                 
             }
             Rprintf("All Possible Split Sizes are:(");
-            for (size_t i = 1; i <= splitting_schedule_ptr->ndists; i++)
+            for (int i = 1; i <= splitting_schedule_ptr->ndists; i++)
             {
                 if(splitting_schedule_ptr->valid_split_region_sizes[i]){
                     Rprintf("%d, ", i);
@@ -717,7 +716,7 @@ List run_redist_gsmc(
             
             // split the map
             run_smc_step(map_params, *splitting_schedule_ptr,
-                rng_states,
+                rng_states, sampling_space,
                 plans_ptr_vec, new_plans_ptr_vec, 
                 tree_splitters_ptr_vec,
                 parent_index_mat.column(smc_step_num),

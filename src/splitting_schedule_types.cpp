@@ -101,7 +101,6 @@ void AnyRegionSplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
 ){
     // The biggest size a region can be is if all but one region is a district
     int presplit_biggest_possible_size = ndists - presplit_num_regions + 1;
-    int after_split_biggest_possible_size = presplit_biggest_possible_size-1;
 
     // reset all regions split and merge booleans
     reset_splitting_and_merge_booleans();

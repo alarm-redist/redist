@@ -101,7 +101,7 @@ void get_all_plans_uniform_adj_weights(
 
 double get_log_retroactive_splitting_prob_for_joined_tree(
     MapParams const &map_params,
-    Plan const &plan, Tree &ust, const TreeSplitter &edge_splitter,
+    Plan const &plan, const TreeSplitter &edge_splitter,
     std::vector<bool> &visited, std::vector<int> &pops_below_vertex,
     const int region1_root, const int region2_root,
     const int min_potential_cut_size, const int max_potential_cut_size,

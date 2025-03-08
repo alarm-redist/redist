@@ -608,7 +608,7 @@ int Plan::choose_multidistrict_to_split(
         std::vector<bool> const &valid_region_sizes_to_split, 
         RNGState &rng_state,
         double const selection_alpha
-        ){
+    ) const{
 
 
     // make vectors with cumulative d value and region label for later
@@ -804,9 +804,9 @@ void Plan::update_region_info_from_cut(
 
 
 bool Plan::attempt_split(const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-                 Tree &ust, TreeSplitter &tree_splitter,
+                 Tree &ust, TreeSplitter &tree_splitter, std::vector<int> &pops_below_vertex,
                  std::vector<bool> &visited, std::vector<bool> &ignore, 
-                 RNGState &rng_state,
+                 RNGState &rng_state, bool const save_selection_prob,
                  int const min_region_cut_size, int const max_region_cut_size, 
                  std::vector<int> const &smaller_cut_sizes_to_try,
                  const bool split_district_only, 
@@ -835,20 +835,27 @@ bool Plan::attempt_split(const MapParams &map_params, const SplittingSchedule &s
 
     if(!tree_drawn) return false;
 
+
+
     // Now try to select an edge to cut
-    std::pair<bool, EdgeCut> edge_search_result = tree_splitter.select_edge_to_cut(
-        map_params, *this, ust, root, rng_state,
+    std::tuple<bool, EdgeCut, double> edge_search_result = tree_splitter.attempt_to_find_edge_to_cut(
+        map_params, rng_state, 
+        ust, root,
+        pops_below_vertex, visited,
+        region_pops[region_id_to_split], region_sizes(region_id_to_split),
         min_region_cut_size, max_region_cut_size, 
-        smaller_cut_sizes_to_try,
-        region_id_to_split
-    );
+        smaller_cut_sizes_to_try //,
+        //bool save_selection_prob = false
+    ); 
+
+
 
     // return false if unsuccessful
-    if(!edge_search_result.first) return false;
+    if(!std::get<0>(edge_search_result)) return false;
 
 
     // If successful extract the edge cut info
-    EdgeCut cut_edge = edge_search_result.second;
+    EdgeCut cut_edge = std::get<1>(edge_search_result);
     // Now erase the cut edge in the tree
     erase_tree_edge(ust, cut_edge);
 

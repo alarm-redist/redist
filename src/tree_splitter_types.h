@@ -19,41 +19,51 @@ class TreeSplitter {
 
 public:
     // Default Constructor 
-    TreeSplitter(int V) : pops_below_vertex(V, 0) {};
+    TreeSplitter(int V) {};
     virtual ~TreeSplitter() = default; 
-
-    // for storing population below each node
-    std::vector<int> pops_below_vertex;
 
     // Returns a vector of all the valid edges in the tree 
     std::vector<EdgeCut> get_all_valid_pop_edge_cuts_in_directed_tree(
-        const MapParams &map_params, Plan &plan,
-        Tree &ust, const int root,
+        MapParams const &map_params, 
+        Tree const &ust, const int root, 
+        std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
+        int const region_population, int const region_size,
         const int min_potential_cut_size, const int max_potential_cut_size,
-        std::vector<int> const &smaller_cut_sizes_to_try,
-        const int region_id_to_split
-    );
+        std::vector<int> const &smaller_cut_sizes_to_try
+    ) const;
     
     // Takes a spanning tree and returns the edge to cut if successful
-    virtual std::pair<bool,EdgeCut> select_edge_to_cut(
-        const MapParams &map_params, Plan &plan,
-        Tree &ust, const int root, RNGState &rng_state,
+    std::tuple<bool, EdgeCut, double> attempt_to_find_edge_to_cut(
+        const MapParams &map_params, RNGState &rng_state,
+        Tree const &ust, const int root, 
+        std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
+        int const region_population, int const region_size,
         const int min_potential_cut_size, const int max_potential_cut_size,
         std::vector<int> const &smaller_cut_sizes_to_try,
-        const int region_id_to_split) = 0;
+        bool save_selection_prob = false
+    ) const;
 
     // Takes a vector of valid edge cuts and returns the log probability 
     // the one an index idx would have been chosen 
     virtual double get_log_selection_prob(
-        const MapParams &map_params,
         const std::vector<EdgeCut> &valid_edges,
         int idx
-    ) const = 0;
+    ) const;
 
     // used to update the k parameter for top k splitter
     virtual void update_single_int_param(int int_param){
         throw Rcpp::exception("Update single int param not implemented!\n");
     };
+
+    // returns edge cut and log probability it was chosen
+    virtual std::tuple<bool, EdgeCut, double> select_edge_to_cut(
+        RNGState &rng_state, std::vector<EdgeCut> const &valid_edges,
+        bool save_selection_prob = false
+    ) const;
+
+    virtual double compute_unnormalized_edge_cut_weight(
+        EdgeCut const &edge_cut
+    ) const {throw Rcpp::exception("Not implemented for this class!");};
 
 };
 
@@ -64,32 +74,27 @@ class NaiveTopKSplitter : public TreeSplitter{
 public:
     // Constructor for NaiveTopKSplitter
     NaiveTopKSplitter(int V, int k_param)
-        : TreeSplitter(V), k_param(k_param), vertex_parents(V,0) {
-        std::random_device rd;  // A seed source for the random number engine
-        gen = std::mt19937(rd()); // Mersenne Twister engine seeded with rd()
+        : TreeSplitter(V), k_param(k_param) {
     }
 
     // Attributes specific to NaiveTopKSplitter
-    int k_param;        // Top k value
-    std::vector<int> vertex_parents;
-    std::mt19937 gen;   // Random number generator
+    int k_param;        // Top k valuex
 
     // how to update the k param
-    void update_single_int_param(int int_param);
+    void update_single_int_param(int int_param) override;
 
 
-    std::pair<bool,EdgeCut> select_edge_to_cut(
-        const MapParams &map_params, Plan &plan,
-        Tree &ust, const int root, RNGState &rng_state,
-        const int min_potential_cut_size, const int max_potential_cut_size, 
-        std::vector<int> const &smaller_cut_sizes_to_try,
-        const int region_id_to_split);
+    std::tuple<bool, EdgeCut, double> select_edge_to_cut(
+        RNGState &rng_state, std::vector<EdgeCut> const &valid_edges,
+        bool save_selection_prob = false
+    ) const override;
 
     double get_log_selection_prob(
-        const MapParams &map_params,
         const std::vector<EdgeCut> &valid_edges,
         int idx
-    ) const {throw Rcpp::exception("No log selection prob implemented for naive k!\n");}
+    ) const override {throw Rcpp::exception("No log selection prob implemented for naive k!\n");}
+
+
 };
 
 
@@ -102,19 +107,16 @@ public:
     UniformValidSplitter(int V): TreeSplitter(V){};
 
 
-    std::pair<bool,EdgeCut> select_edge_to_cut(
-        const MapParams &map_params, Plan &plan,
-        Tree &ust, const int root, RNGState &rng_state,
-        const int min_potential_cut_size, const int max_potential_cut_size, 
-        std::vector<int> const &smaller_cut_sizes_to_try,
-        const int region_id_to_split);
+    std::tuple<bool, EdgeCut, double> select_edge_to_cut(
+        RNGState &rng_state, std::vector<EdgeCut> const &valid_edges,
+        bool save_selection_prob = false
+    ) const override;
 
     // since uniform log prob is just -log(# of candidates)
     double get_log_selection_prob(
-        const MapParams &map_params,
         const std::vector<EdgeCut> &valid_edges,
         int idx
-    ) const {return -std::log(valid_edges.size());}
+    ) const override{return -std::log(valid_edges.size());}
 };
 
 
@@ -123,26 +125,17 @@ class ExpoWeightedSplitter : public TreeSplitter{
 
 public:
 
-    ExpoWeightedSplitter(int V, double alpha)
-        : TreeSplitter(V), alpha(alpha) {
+    ExpoWeightedSplitter(int V, double alpha, double target)
+        : TreeSplitter(V), alpha(alpha), target(target) {
         if(alpha < 0.0) throw Rcpp::exception("Alpha must be greater than zero!");
     }
 
     double alpha;
+    double target;
 
-
-    std::pair<bool,EdgeCut> select_edge_to_cut(
-        const MapParams &map_params, Plan &plan,
-        Tree &ust, const int root, RNGState &rng_state,
-        const int min_potential_cut_size, const int max_potential_cut_size, 
-        std::vector<int> const &smaller_cut_sizes_to_try,
-        const int region_id_to_split);
-
-    double get_log_selection_prob(
-        const MapParams &map_params,
-        const std::vector<EdgeCut> &valid_edges,
-        int idx
-    ) const;
+    virtual double compute_unnormalized_edge_cut_weight(
+        EdgeCut const &edge_cut
+    ) const override;
 };
 
 
@@ -151,26 +144,18 @@ class ExpoWeightedSmallerDevSplitter : public TreeSplitter{
 
 public:
 
-    ExpoWeightedSmallerDevSplitter(int V, double alpha)
-        : TreeSplitter(V), alpha(alpha) {
+    ExpoWeightedSmallerDevSplitter(int V, double alpha, double target)
+        : TreeSplitter(V), alpha(alpha), target(target) {
         if(alpha < 0.0) throw Rcpp::exception("Alpha must be greater than zero!");
     }
 
     double alpha;
+    double target;
 
 
-    std::pair<bool,EdgeCut> select_edge_to_cut(
-        const MapParams &map_params, Plan &plan,
-        Tree &ust, const int root, RNGState &rng_state,
-        const int min_potential_cut_size, const int max_potential_cut_size, 
-        std::vector<int> const &smaller_cut_sizes_to_try,
-        const int region_id_to_split);
-
-    double get_log_selection_prob(
-        const MapParams &map_params,
-        const std::vector<EdgeCut> &valid_edges,
-        int idx
-    ) const;
+    virtual double compute_unnormalized_edge_cut_weight(
+        EdgeCut const &edge_cut
+    ) const override;
 };
 
 
@@ -178,25 +163,23 @@ class ExperimentalSplitter : public TreeSplitter{
 
 public:
 
-    ExperimentalSplitter(int V, double epsilon)
-        : TreeSplitter(V), epsilon(epsilon) {
+    ExperimentalSplitter(int V, double epsilon, double target)
+        : TreeSplitter(V), epsilon(epsilon), target(target) {
         if(epsilon < 0.0) throw Rcpp::exception("Epsilon must be greater than zero!");
     }
 
     double epsilon;
+    double target;
 
-    std::pair<bool,EdgeCut> select_edge_to_cut(
-        const MapParams &map_params, Plan &plan,
-        Tree &ust, const int root, RNGState &rng_state,
-        const int min_potential_cut_size, const int max_potential_cut_size, 
-        std::vector<int> const &smaller_cut_sizes_to_try,
-        const int region_id_to_split);
+    std::tuple<bool, EdgeCut, double> select_edge_to_cut(
+        RNGState &rng_state, std::vector<EdgeCut> const &valid_edges,
+        bool save_selection_prob = false
+    ) const override;
 
     double get_log_selection_prob(
-        const MapParams &map_params,
         const std::vector<EdgeCut> &valid_edges,
         int idx
-    ) const;
+    ) const override;
 };
 
 

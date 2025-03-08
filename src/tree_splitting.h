@@ -88,24 +88,40 @@ arma::vec compute_expo_prob_weights_on_smaller_dev_edges(
 arma::vec compute_almost_best_weights_on_smaller_dev_edges(
         std::vector<EdgeCut> valid_edges, double epsilon, double target);
 
+
 std::vector<EdgeCut> get_all_valid_edges_in_directed_tree(
-                     const Tree &ust, const int root, 
-                     const std::vector<int> &cut_below_pops,
-                     const int min_potential_cut_size, const int max_potential_cut_size,
-                     std::vector<int> const &smaller_cut_sizes_to_try,
-                     const int total_region_pop, const int total_region_size,
-                     const double lower, const double upper, const double target);
+    const Tree &a_ust, 
+    const int root,
+    const arma::uvec &pop,
+    std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
+    const int min_potential_cut_size, const int max_potential_cut_size,
+    std::vector<int> const &smaller_cut_sizes_to_try,
+    const int total_region_pop, const int total_region_size,
+   const double lower, const double upper, const double target
+);
+
+std::vector<EdgeCut> get_all_valid_edges_in_undirected_tree(
+    const Graph &a_ust, 
+    const int root,
+    const arma::uvec &pop,
+    std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
+    const int min_potential_cut_size, const int max_potential_cut_size,
+    std::vector<int> const &smaller_cut_sizes_to_try,
+    const int total_region_pop, const int total_region_size,
+   const double lower, const double upper, const double target
+);
+
 
 
 std::vector<EdgeCut> get_valid_edges_in_joined_tree(
-    MapParams const &map_params,
-    Graph const &forest_graph, Tree &ust,
-    std::vector<bool> &visited, std::vector<int> &pops_below_vertex,
-    const int region1_id, const int region1_root,
-    const int region2_id, const int region2_root,
-    const int min_potential_cut_size, const int max_potential_cut_size,
-    std::vector<int> const &smaller_cut_sizes_to_try,
-    const int total_merged_region_pop, const int total_merged_region_size
+        MapParams const &map_params,
+        Graph const &forest_graph, 
+        std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
+        const int region1_root, const int region1_pop,
+        const int region2_root, const int region2_pop,
+        const int min_potential_cut_size, const int max_potential_cut_size,
+        std::vector<int> const &smaller_cut_sizes_to_try,
+        const int total_merged_region_size
 );
 
 #endif

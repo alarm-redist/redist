@@ -73,7 +73,7 @@ Multigraph county_graph(const Graph &g, const arma::uvec &counties) {
 void EdgeCut::get_split_regions_info(
     int &split_region1_tree_root, int &split_region1_dval, int &split_region1_pop,
     int &split_region2_tree_root, int &split_region2_dval, int &split_region2_pop
-){
+) const{
     // Always make region 1 the smaller one by size (allowing for ties)
 
     if(cut_below_region_size <= cut_above_region_size){
@@ -98,7 +98,7 @@ void EdgeCut::get_split_regions_info(
 };
 
 
-std::array<double, 2> EdgeCut::compute_signed_pop_deviances(double target){
+std::array<double, 2> EdgeCut::compute_signed_pop_deviances(double target) const{
     // get the target populations for the regions 
     double cut_below_target = target*cut_below_region_size;
     double cut_above_target = target*cut_above_region_size;
@@ -106,13 +106,11 @@ std::array<double, 2> EdgeCut::compute_signed_pop_deviances(double target){
     double below_dev = (static_cast<double>(cut_below_pop) - cut_below_target)/cut_below_target;
     double above_dev = (static_cast<double>(cut_above_pop) - cut_above_target)/cut_above_target;
     
-    std::array<double, 2> unsigned_devs = {below_dev, above_dev};
-
     return std::array<double, 2>{below_dev, above_dev};
 }
 
 
-std::array<double, 2> EdgeCut::compute_abs_pop_deviances(double target){
+std::array<double, 2> EdgeCut::compute_abs_pop_deviances(double target) const{
     // get the raw unsigned deviations
     std::array<double, 2> unsigned_devs = compute_signed_pop_deviances(target);
     // take the absolute value
