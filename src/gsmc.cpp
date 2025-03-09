@@ -90,7 +90,7 @@ void run_smc_step(
         std::vector<RNGState> &rng_states, SamplingSpace const sampling_space,
         std::vector<std::unique_ptr<Plan>> &old_plans_ptr_vec, 
         std::vector<std::unique_ptr<Plan>> &new_plans_ptr_vec,
-        std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
+        TreeSplitter const &tree_splitters,
         Rcpp::IntegerMatrix::Column parent_index_vec,
         const arma::vec &normalized_cumulative_weights,
         Rcpp::IntegerMatrix::Column draw_tries_vec,
@@ -171,7 +171,7 @@ void run_smc_step(
             // Try to split the region 
             std::tuple<bool, EdgeCut, double> edge_search_result = ust_sampler.attempt_to_find_valid_tree_split(
                 map_params, splitting_schedule,
-                rng_states[thread_id], *tree_splitters_ptr_vec.at(i),
+                rng_states[thread_id], tree_splitters,
                 *old_plans_ptr_vec.at(idx), region_id_to_split,
                 save_edge_selection_prob
             );
@@ -491,7 +491,7 @@ List run_redist_gsmc(
     std::vector<std::unique_ptr<Plan>> new_plans_ptr_vec; new_plans_ptr_vec.reserve(nsims);
 
     // Vector of splitters
-    std::vector<std::unique_ptr<TreeSplitter>> tree_splitters_ptr_vec = get_tree_splitters(
+    std::unique_ptr<TreeSplitter> tree_splitter_ptr = get_tree_splitters(
         map_params,splitting_method, control, nsims
     );
 
@@ -686,10 +686,7 @@ List run_redist_gsmc(
             }
 
             if(use_naive_k_splitter){
-            for (size_t j = 0; j < tree_splitters_ptr_vec.size(); j++)
-            {
-                tree_splitters_ptr_vec.at(j)->update_single_int_param(k_params.at(smc_step_num));
-            }
+                tree_splitter_ptr->update_single_int_param(k_params.at(smc_step_num));
             }
             
 
@@ -707,7 +704,7 @@ List run_redist_gsmc(
             run_smc_step(map_params, *splitting_schedule_ptr,
                 rng_states, sampling_space,
                 plans_ptr_vec, new_plans_ptr_vec, 
-                tree_splitters_ptr_vec,
+                *tree_splitter_ptr,
                 parent_index_mat.column(smc_step_num),
                 normalized_cumulative_weights,
                 draw_tries_mat.column(step_num),
@@ -752,7 +749,7 @@ List run_redist_gsmc(
                     pool,
                     map_params, *splitting_schedule_ptr,
                     scoring_function, rho,
-                    plans_ptr_vec, tree_splitters_ptr_vec,
+                    plans_ptr_vec, *tree_splitter_ptr,
                     compute_log_splitting_prob, is_final_plans,
                     log_incremental_weights_mat.col(smc_step_num),
                     unnormalized_sampling_weights,
@@ -765,7 +762,7 @@ List run_redist_gsmc(
                     map_params, *splitting_schedule_ptr,
                     sampling_space,
                     scoring_function, rho,
-                    plans_ptr_vec, tree_splitters_ptr_vec,
+                    plans_ptr_vec, *tree_splitter_ptr,
                     compute_log_splitting_prob, is_final_plans,
                     log_incremental_weights_mat.col(smc_step_num),
                     unnormalized_sampling_weights,
@@ -842,7 +839,7 @@ List run_redist_gsmc(
                 pool,
                 map_params, *splitting_schedule_ptr,
                 plans_ptr_vec, new_plans_ptr_vec,
-                tree_splitters_ptr_vec,
+                *tree_splitter_ptr,
                 split_district_only, merge_prob_type,
                 nsteps_to_run,
                 merge_split_successes_mat.column(merge_split_step_num)

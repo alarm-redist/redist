@@ -65,7 +65,7 @@ void reorder_all_plans(
 
 
 
-std::vector<std::unique_ptr<TreeSplitter>> get_tree_splitters(
+std::unique_ptr<TreeSplitter> get_tree_splitters(
     MapParams const &map_params,
     SplittingMethodType const splitting_method,
     Rcpp::List const &control,

@@ -95,47 +95,31 @@ void reorder_all_plans(
 
 
 
-std::vector<std::unique_ptr<TreeSplitter>> get_tree_splitters(
+std::unique_ptr<TreeSplitter> get_tree_splitters(
     MapParams const &map_params,
     SplittingMethodType const splitting_method,
     Rcpp::List const &control,
     int const nsims
 ){
-    // create the pointer 
-    std::vector<std::unique_ptr<TreeSplitter>> tree_splitters_ptr_vec; 
-    tree_splitters_ptr_vec.reserve(nsims);
-
     int V = map_params.V;
     double target = map_params.target;
 
     if(splitting_method == SplittingMethodType::NaiveTopK){
         // set splitting k to -1
-        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), nsims, [V] {
-            return std::make_unique<NaiveTopKSplitter>(V, -1);
-        });
+        return std::make_unique<NaiveTopKSplitter>(V, -1);
     }else if(splitting_method == SplittingMethodType::UnifValid){
-        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), nsims, [V] {
-            return std::make_unique<UniformValidSplitter>(V);
-        });
+        return std::make_unique<UniformValidSplitter>(V);
     }else if(splitting_method == SplittingMethodType::ExpBiggerAbsDev){
         double alpha = as<double>(control["splitting_alpha"]);
-        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), nsims, [V, alpha, target] {
-            return std::make_unique<ExpoWeightedSplitter>(V, alpha, target);
-        });
+        return std::make_unique<ExpoWeightedSplitter>(V, alpha, target);
     }else if(splitting_method == SplittingMethodType::ExpSmallerAbsDev){
         double alpha = as<double>(control["splitting_alpha"]);
-        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), nsims, [V, alpha, target] {
-            return std::make_unique<ExpoWeightedSmallerDevSplitter>(V, alpha, target);
-        });
+        return std::make_unique<ExpoWeightedSmallerDevSplitter>(V, alpha, target);
     }else if(splitting_method == SplittingMethodType::Experimental){
         double epsilon = as<double>(control["splitting_epsilon"]);
-        std::generate_n(std::back_inserter(tree_splitters_ptr_vec), nsims, [V, epsilon, target] {
-            return std::make_unique<ExperimentalSplitter>(V, epsilon, target);
-        });
+        return std::make_unique<ExperimentalSplitter>(V, epsilon, target);
     }else{
         throw Rcpp::exception("Invalid Splitting Method!");
     }
-
-    return tree_splitters_ptr_vec;
 }
 

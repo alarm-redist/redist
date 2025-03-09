@@ -64,7 +64,7 @@ int run_merge_split_step_on_a_plan(
     MapParams const &map_params, const SplittingSchedule &splitting_schedule,
     bool split_district_only, std::string const merge_prob_type,
     Plan &plan, Plan &new_plan, 
-    TreeSplitter &tree_splitter,
+    TreeSplitter const &tree_splitter,
     int const nsteps_to_run)
 {
     int V = plan.region_ids.n_elem;
@@ -185,15 +185,16 @@ int run_merge_split_step_on_a_plan(
         int min_region_cut_size, plan_specific_max_region_cut_size;
         throw Rcpp::exception("Fix cut size thing!");
 
-        bool successful_split = new_plan.attempt_split(
-                map_params, splitting_schedule,
-                ust, tree_splitter, 
-                pops_below_vertex, visited, ignore, rng_state, false,
-                min_region_cut_size, plan_specific_max_region_cut_size,
-                splitting_schedule.all_regions_smaller_cut_sizes_to_try[new_plan.region_sizes(merged_id)],
-                split_district_only,
-                merged_id, new_split_region
-            );
+        // bool successful_split = new_plan.attempt_split(
+        //         map_params, splitting_schedule,
+        //         ust, tree_splitter, 
+        //         pops_below_vertex, visited, ignore, rng_state, false,
+        //         min_region_cut_size, plan_specific_max_region_cut_size,
+        //         splitting_schedule.all_regions_smaller_cut_sizes_to_try[new_plan.region_sizes(merged_id)],
+        //         split_district_only,
+        //         merged_id, new_split_region
+        //     );
+        bool successful_split = false;
 
 
         bool proposal_accepted = false;
@@ -289,7 +290,7 @@ void run_merge_split_step_on_all_plans(
     MapParams const &map_params, const SplittingSchedule &splitting_schedule,
     std::vector<std::unique_ptr<Plan>> &plan_ptrs_vec, 
     std::vector<std::unique_ptr<Plan>> &new_plan_ptrs_vec, 
-    std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
+    TreeSplitter const &tree_splitter,
     bool const split_district_only, std::string const merge_prob_type, 
     int const nsteps_to_run,
     Rcpp::IntegerMatrix::Column success_count_vec
@@ -307,7 +308,7 @@ void run_merge_split_step_on_all_plans(
             map_params, splitting_schedule,
             split_district_only, merge_prob_type,
             *plan_ptrs_vec.at(i), *new_plan_ptrs_vec.at(i), 
-            *tree_splitters_ptr_vec.at(i),
+            tree_splitter,
             nsteps_to_run
         );
 

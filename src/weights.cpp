@@ -457,7 +457,7 @@ void get_all_plans_uniform_adj_weights(
     ScoringFunction const &scoring_function,
     double rho,
     std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
-    const std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
+    TreeSplitter const &tree_splitter,
     bool compute_log_splitting_prob, bool is_final_plans,
     arma::subview_col<double> log_incremental_weights,
     std::vector<double> &unnormalized_sampling_weights,
@@ -472,7 +472,7 @@ void get_all_plans_uniform_adj_weights(
             map_params, splitting_schedule, sampling_space,
             scoring_function, rho,
             *plans_ptr_vec.at(i), 
-            *tree_splitters_ptr_vec.at(i),
+            tree_splitter,
             compute_log_splitting_prob,
             is_final_plans
         );
@@ -768,7 +768,7 @@ void compute_all_plans_log_optimal_weights(
     ScoringFunction const &scoring_function,
     double rho,
     std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,
-    const std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
+    TreeSplitter const &tree_splitter,
     bool compute_log_splitting_prob, bool is_final_plans,
     arma::subview_col<double> log_incremental_weights,
     std::vector<double> &unnormalized_sampling_weights,
@@ -785,7 +785,7 @@ void compute_all_plans_log_optimal_weights(
             map_params, splitting_schedule,
             scoring_function, rho,
             *plans_ptr_vec.at(i), 
-            *tree_splitters_ptr_vec.at(i),
+            tree_splitter,
             compute_log_splitting_prob,
             is_final_plans
         );

@@ -27,7 +27,7 @@ int run_merge_split_step_on_a_plan(
     MapParams const &map_params, const SplittingSchedule &splitting_schedule,
     bool split_district_only, std::string const merge_prob_type, 
     Plan &plan, Plan &new_plan, 
-    TreeSplitter &tree_splitter,
+    TreeSplitter const &tree_splitter,
     int const nsteps_to_run
 );
 
@@ -36,7 +36,7 @@ void run_merge_split_step_on_all_plans(
     MapParams const &map_params, const SplittingSchedule &splitting_schedule,
     std::vector<std::unique_ptr<Plan>> &plan_ptrs_vec, 
     std::vector<std::unique_ptr<Plan>> &new_plan_ptrs_vec, 
-    std::vector<std::unique_ptr<TreeSplitter>> &tree_splitters_ptr_vec,
+    TreeSplitter const &tree_splitter,
     bool const split_district_only, std::string const merge_prob_type, 
     int const nsteps_to_run,
     Rcpp::IntegerMatrix::Column success_count_vec
