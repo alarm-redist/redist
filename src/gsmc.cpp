@@ -101,7 +101,7 @@ void run_smc_step(
         bool const split_district_only,
         RcppThread::ThreadPool &pool,
         int verbosity, int diagnostic_level
-                ) {
+) {
     // important constants
     const int V = map_params.V;
     const int M = static_cast<int>(old_plans_ptr_vec.size());
@@ -131,86 +131,75 @@ void run_smc_step(
     RcppThread::ProgressBar bar(M, 1);
     // Parallel thread pool where all objects in memory shared by default
 
-    // to get thread id try this I guess?
-    // pool.parallelFor(0, M, [&, std::size_t thread_id] (int i)
     pool.parallelFor(0, M, [&] (int i) {
         static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
-        static thread_local Tree ust = init_tree(V);
-        static thread_local std::vector<bool> visited(V);
-        static thread_local std::vector<bool> ignore(V);
-        static thread_local std::vector<int> pops_below_vertex(V,0);
+        static thread_local USTSampler ust_sampler(V);
 
         // REprintf("Plan %d\n\n", i);
-        int reject_ct = 0;
         bool ok = false;
         int idx;
-        int region_id_to_split, size_of_region_to_split;
 
         while (!ok) {
             // increase the number of tries for particle i by 1
             draw_tries_vec[i]++;
             // sample previous plan
             idx = rng_states[thread_id].r_int_wgt(M, normalized_cumulative_weights);
-
-            // NOTE:
-            // In future can defer this to the end, only need to copy once
-            // successful tree has been split 
-            // auto t1_start = std::chrono::high_resolution_clock::now();
-            *new_plans_ptr_vec.at(i) = *old_plans_ptr_vec.at(idx);
-            // auto t1_end = std::chrono::high_resolution_clock::now();
-            /* Getting number of milliseconds as a double. */
-            // std::chrono::duration<double, std::milli> t1 = t1_end - t1_start; 
-            // Rprintf("Copying took %f ms!\n", t1.count());
-
+            
+            // Get region id the split
+            int region_id_to_split;
             if(split_district_only){
                 // if just doing district splits just use remainder region
                 // which is always the highest id
-                region_id_to_split = new_plans_ptr_vec.at(i)->num_regions - 1;
+                region_id_to_split = old_plans_ptr_vec[idx]->num_regions - 1;
             }else{                
                 // if generalized split pick a region to try to split
-                region_id_to_split = new_plans_ptr_vec.at(i)->choose_multidistrict_to_split(
+                region_id_to_split = old_plans_ptr_vec[idx]->choose_multidistrict_to_split(
                     splitting_schedule.valid_region_sizes_to_split, rng_states[thread_id]
                 );
             }
-            size_of_region_to_split = new_plans_ptr_vec.at(i)->region_sizes(region_id_to_split);
-
-            // Rprintf("Splitting Region size %d. Sizes to try:\n", size_of_region_to_split);
+            
+            // int size_of_region_to_split = old_plans_ptr_vec[idx]->region_sizes(region_id_to_split);
+            // Rprintf("Picked idx %d, Splitting Region size %d. Sizes to try:\n", idx, size_of_region_to_split);
             // for(auto i: splitting_schedule.all_regions_smaller_cut_sizes_to_try[size_of_region_to_split]){
             //     Rprintf("%d, ", i);
             // }
             // Rprintf("\nThe min possible =%d, max possible=%d\n", 
             // splitting_schedule.all_regions_min_and_max_possible_cut_sizes[size_of_region_to_split][0],
             //     splitting_schedule.all_regions_min_and_max_possible_cut_sizes[size_of_region_to_split][1]);
-            
 
-            // Now try to split that region
-            ok = new_plans_ptr_vec.at(i)->attempt_split(
-                map_params, splitting_schedule, ust, *tree_splitters_ptr_vec.at(i), 
-                pops_below_vertex, visited, ignore, rng_states[thread_id], save_edge_selection_prob,
-                splitting_schedule.all_regions_min_and_max_possible_cut_sizes[size_of_region_to_split][0],
-                splitting_schedule.all_regions_min_and_max_possible_cut_sizes[size_of_region_to_split][1],
-                splitting_schedule.all_regions_smaller_cut_sizes_to_try[size_of_region_to_split],
-                split_district_only,
-                region_id_to_split, new_region_id
+
+            // Try to split the region 
+            std::tuple<bool, EdgeCut, double> edge_search_result = ust_sampler.attempt_to_find_valid_tree_split(
+                map_params, splitting_schedule,
+                rng_states[thread_id], *tree_splitters_ptr_vec.at(i),
+                *old_plans_ptr_vec.at(idx), region_id_to_split,
+                save_edge_selection_prob
             );
-
-            // bad sample; try again
-            if (!ok) {
-                 // update unsuccessful try
-                RcppThread::checkUserInterrupt(++reject_ct % reject_check_int == 0);
-
-                // if diagnostic level 2 or higher get unsuccessful count 
-                if(diagnostic_level >= 2){
-                    // not atomic so technically not thread safe but doesn't seem to differ in practice
-                    parent_unsuccessful_tries_vec[idx]++;
-                }
-                continue;
+        
+            // if successful update the new plan
+            if(std::get<0>(edge_search_result)){
+                // shallow copy the new plan to be the old one 
+                *new_plans_ptr_vec[i] = *old_plans_ptr_vec[idx];
+                // now split that region we found on the old one
+                new_plans_ptr_vec.at(i)->update_from_successful_split(
+                    ust_sampler.ust, std::get<1>(edge_search_result),
+                    region_id_to_split, new_region_id,
+                    std::get<2>(edge_search_result)
+                );
+                // record index of new plan's parent
+                parent_index_vec[i] = idx;
+                // make ok true to break out of loop
+                ok = true;
+            }else{ // else bad sample so try again
+                 // check for user interrupt
+                 RcppThread::checkUserInterrupt(draw_tries_vec[i] % reject_check_int == 0);
+                 // if diagnostic level 2 or higher get unsuccessful count 
+                 if(diagnostic_level >= 2){
+                     // not atomic so technically not thread safe but doesn't seem to differ in practice
+                     parent_unsuccessful_tries_vec[idx]++;
+                 }
             }
-
         }
-
-        // record index of new plan's parent
-        parent_index_vec[i] = idx;
 
         // ORIGINAL SMC CODE I DONT KNOW WHAT THIS DOES
         // save ancestors/lags
@@ -233,7 +222,7 @@ void run_smc_step(
 
     // now replace the old plans with the new ones
     for(int i=0; i < M; i++){
-        *old_plans_ptr_vec.at(i) = *new_plans_ptr_vec.at(i);
+        *old_plans_ptr_vec[i] = *new_plans_ptr_vec[i];
     }
 
     // now compute acceptance rate and unique parents and original ancestors
@@ -638,8 +627,8 @@ List run_redist_gsmc(
                 if(splitting_schedule_ptr->valid_region_sizes_to_split[i]){
                 Rprintf("\tRegion Size %d | ", (int) i);
                 Rprintf("min/max (%d, %d)", 
-                    splitting_schedule_ptr->all_regions_min_and_max_possible_cut_sizes[i][0],
-                    splitting_schedule_ptr->all_regions_min_and_max_possible_cut_sizes[i][1]);
+                    splitting_schedule_ptr->all_regions_min_and_max_possible_cut_sizes[i].first,
+                    splitting_schedule_ptr->all_regions_min_and_max_possible_cut_sizes[i].second);
                 Rprintf(" | possible split sizes: ");
                 for(auto smaller_size: splitting_schedule_ptr->all_regions_smaller_cut_sizes_to_try[i]){
                     Rprintf("(%d, %d) ", (int) smaller_size, static_cast<int>(i-smaller_size));

@@ -6,12 +6,11 @@
 #include "gredist_types.h"
 #include "tree_op.h"
 #include "tree_splitting.h"
-#include "base_plan_type.h"
 
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
-class Plan;
+
 
 // Designed to allow for different tree splitting methods
 // This allows us to seperate cutting the tree from finding the edge to cut 

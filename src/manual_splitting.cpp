@@ -290,14 +290,14 @@ List perform_a_valid_multidistrict_split(
 
         // now update the region level information from the edge cut
         plan->update_region_info_from_cut(
-            cut_edge, split_district_only,
+            cut_edge,
             region_id_to_split, new_region2_id
         );
 
         // Now update the vertex level information
         plan->update_vertex_info_from_cut(
             ust, cut_edge, 
-            region_id_to_split, new_region2_id, split_district_only
+            region_id_to_split, new_region2_id
         );
     }
 

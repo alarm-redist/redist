@@ -26,9 +26,8 @@ Graph ForestPlan::get_forest_adj(){
 
 
 void ForestPlan::update_vertex_info_from_cut(
-        Tree &ust, EdgeCut cut_edge, 
-        const int split_region1_id, const int split_region2_id,
-        bool split_district_only
+        Tree const &ust, EdgeCut const cut_edge, 
+        const int split_region1_id, const int split_region2_id
 ){
 
 
@@ -166,13 +165,16 @@ std::unordered_map<std::pair<int, int>, double, bounded_hash> NEW_get_valid_pair
 
                 auto merged_region_size = v_region_size+v_nbor_region_size;
 
+                auto cut_size_bounds = splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size];
+                int min_possible_cut_size = cut_size_bounds.first;
+                int max_possible_cut_size = cut_size_bounds.second;
+
                 // get the log probability
                 double log_edge_selection_prob = get_log_retroactive_splitting_prob_for_joined_tree(
                     map_params, plan, edge_splitter,
                     visited, pops_below_vertex,
                     v, v_nbor,
-                    splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size][0],
-                    splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size][1],
+                    min_possible_cut_size, max_possible_cut_size,
                     splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_region_size]);
 
                 // Rprintf("Adding (%d,%d) w/ %.4f\n", v, nbor, std::exp(log_edge_selection_prob));
@@ -234,6 +236,10 @@ double ForestPlan::get_log_eff_boundary_len(
     int const V = map_params.V;
     int const merged_region_size = region_sizes(region1_id)+ region_sizes(region2_id);
 
+    auto cut_size_bounds = splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size];
+    int min_possible_cut_size = cut_size_bounds.first;
+    int max_possible_cut_size = cut_size_bounds.second;
+
     double tree_selection_probs = 0.0;
     for (int v = 0; v < V; v++) {
         if (region_ids(v) != region1_id) continue; // Only count if starting vertex in region 1
@@ -244,8 +250,7 @@ double ForestPlan::get_log_eff_boundary_len(
                 map_params, *this, tree_splitter,
                 visited, pops_below_vertex,
                 v, nbor,
-                splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size][0],
-                splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size][1],
+                min_possible_cut_size,max_possible_cut_size,
                 splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_region_size]);
             
             tree_selection_probs += std::exp(log_edge_selection_prob);

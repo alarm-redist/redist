@@ -177,14 +177,7 @@ SplittingSizeScheduleType get_splitting_size_regime(std::string const &splitting
 
 
 
-// For the future, to avoid needing to create visited and ignore
-class SpanningTree {
-public:
-    Tree ust;
-    std::vector<int> parents, pop_below;
-    std::vector<bool> visited, ignore;
-    int V, tree_size;
-};
+
 
 
 #endif

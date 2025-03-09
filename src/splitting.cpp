@@ -80,8 +80,9 @@ void estimate_cut_k(
         }
 
         int biggest_size_region_pop = plan_ptrs_vec.at(i)->region_pops.at(biggest_region_id);
-        int min_possible_cut_size = splitting_schedule.all_regions_min_and_max_possible_cut_sizes[biggest_region_size][0];
-        int max_possible_cut_size = splitting_schedule.all_regions_min_and_max_possible_cut_sizes[biggest_region_size][1];
+        std::pair<int, int> min_and_max_possible_cut_sizes = splitting_schedule.all_regions_min_and_max_possible_cut_sizes[biggest_region_size];
+        int min_possible_cut_size = min_and_max_possible_cut_sizes.first;
+        int max_possible_cut_size = min_and_max_possible_cut_sizes.second;
 
         for (int j = 0; j < V; j++) {
             // if not the biggest region mark as ignore

@@ -23,8 +23,7 @@
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
-// forward declaration for compilation
-class TreeSplitter;
+
 
 
 /*
@@ -151,14 +150,13 @@ public:
 
 
     void update_region_info_from_cut(
-        EdgeCut cut_edge, bool split_district_only,
+        EdgeCut cut_edge,
         const int split_region1_id, const int split_region2_id
     );
 
     virtual void update_vertex_info_from_cut(
-        Tree &ust, EdgeCut cut_edge, 
-        const int split_region1_id, const int split_region2_id,
-        bool split_district_only
+        Tree const &ust, EdgeCut const cut_edge, 
+        const int split_region1_id, const int split_region2_id
     ) = 0;
 
     // For a given plan and splitting schedule this finds all pairs of adjacent regions
@@ -190,6 +188,13 @@ public:
                  const bool split_district_only, 
                  const int region_id_to_split, const int new_region_id);
 
+
+    void update_from_successful_split(
+        Tree const &ust, EdgeCut const &cut_edge,
+        int const new_region1_id, int const new_region2_id,
+        double const log_selection_prob
+    );
+    
 };
 
 

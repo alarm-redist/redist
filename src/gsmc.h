@@ -24,6 +24,7 @@
 #include "forest_plan_type.h"
 #include "tree_splitter_types.h"
 #include "scoring.h"
+#include "ust_sampler.h"
 
 
 

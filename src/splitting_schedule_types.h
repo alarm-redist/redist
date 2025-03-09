@@ -50,7 +50,7 @@ class SplittingSchedule {
     
         // For each element its an array of the minimum and maximum possible cut sizes 
         // of regions cut from 
-        std::vector<std::array<int, 2>> all_regions_min_and_max_possible_cut_sizes;
+        std::vector<std::pair<int,int>> all_regions_min_and_max_possible_cut_sizes;
     
         // 1-indexed vector of if the region can be split
         std::vector<bool> valid_region_sizes_to_split;

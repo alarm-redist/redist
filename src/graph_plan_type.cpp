@@ -3,12 +3,9 @@
 
 
 void GraphPlan::update_vertex_info_from_cut(
-        Tree &ust, EdgeCut cut_edge, 
-        const int split_region1_id, const int split_region2_id,
-        bool split_district_only
+        Tree const &ust, EdgeCut const cut_edge, 
+        const int split_region1_id, const int split_region2_id
 ){
-
-
     // Get the root of the tree associated with region 1 and 2
     int split_region1_tree_root, split_region2_tree_root;
     int split_region1_size, split_region2_size;

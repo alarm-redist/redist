@@ -610,7 +610,6 @@ int Plan::choose_multidistrict_to_split(
         double const selection_alpha
     ) const{
 
-
     // make vectors with cumulative d value and region label for later
     std::vector<int> valid_region_ids, associated_region_sizes;
 
@@ -629,17 +628,16 @@ int Plan::choose_multidistrict_to_split(
 
     // If one just return that 
     if(num_candidates == 1) return valid_region_ids[0];
-
     // pick index unif at random 
     // int idx = r_int(num_candidates);
 
     arma::vec region_wgts(valid_region_ids.size());
+
     for (size_t i = 0; i < valid_region_ids.size(); i++)
     {
         region_wgts(i) = std::pow(associated_region_sizes[i], selection_alpha);
     }
     int idx = rng_state.r_int_unnormalized_wgt(region_wgts); 
-    
     int region_id_to_split = valid_region_ids.at(idx);
 
     return region_id_to_split;
@@ -762,7 +760,7 @@ bool Plan::draw_tree_on_region(const MapParams &map_params, const int region_to_
 //'    which is just `plan.num_regions-1`
 //'
 void Plan::update_region_info_from_cut(
-        EdgeCut cut_edge, bool split_district_only,
+        EdgeCut cut_edge, 
         const int split_region1_id, const int split_region2_id
 ){
     // Get information on the two new regions cut
@@ -862,15 +860,35 @@ bool Plan::attempt_split(const MapParams &map_params, const SplittingSchedule &s
 
     // now update the region level information from the edge cut
     update_region_info_from_cut(
-        cut_edge, split_district_only,
+        cut_edge, 
         region_id_to_split, new_region_id
     );
 
     // Now update the vertex level information
     update_vertex_info_from_cut(
         ust, cut_edge, 
-        region_id_to_split, new_region_id, split_district_only
+        region_id_to_split, new_region_id
     );
 
     return true;
+}
+
+
+
+void Plan::update_from_successful_split(
+    Tree const &ust, EdgeCut const &cut_edge,
+    int const new_region1_id, int const new_region2_id,
+    double const log_selection_prob
+){
+    // now update the region level information from the edge cut
+    update_region_info_from_cut(
+        cut_edge,
+        new_region1_id, new_region2_id
+    );
+
+    // Now update the vertex level information
+    update_vertex_info_from_cut(
+        ust, cut_edge, 
+        new_region1_id, new_region2_id
+    );    
 }
