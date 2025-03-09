@@ -1,0 +1,74 @@
+/********************************************************
+* Author: Philip O'Sullivan'
+* Institution: Harvard University
+* Date Created: 2025/3
+* Purpose: Encapsulation of uniform spanning tree sampler functions
+********************************************************/
+
+#include "ust_sampler.h"
+
+
+bool USTSampler::draw_tree_on_region(
+    const MapParams &map_params, RNGState &rng_state,
+    Plan const &plan, const int region_to_draw_tree_on){
+    int V = map_params.V;
+
+    // Mark it as ignore if its not in the region to split
+    for (int i = 0; i < V; i++){
+        ignore[i] = plan.region_ids(i) != region_to_draw_tree_on;
+    }
+
+    // clear the tree
+    clear_tree(ust);
+    // Get a uniform spanning tree drawn on that region
+    int result = sample_sub_ust(map_params.g, ust, 
+        V, root, visited, ignore, 
+        map_params.pop, map_params.lower, map_params.upper, 
+        map_params.counties, map_params.cg,
+        rng_state);
+    // result == 0 means it was successful
+    return(result == 0);
+}
+
+
+std::tuple<bool, EdgeCut, double> USTSampler::attempt_to_find_valid_tree_split(
+    const MapParams &map_params, SplittingSchedule const &splitting_schedule,
+    RNGState &rng_state, TreeSplitter const &tree_splitter,
+    Plan const &plan, int const region_to_split,
+    bool const save_selection_prob
+){
+    // Try to draw a tree
+    bool tree_drawn = draw_tree_on_region(
+        map_params, rng_state,
+        plan, region_to_split
+    );
+    // return false if unsuccessful 
+    if(!tree_drawn) return std::make_tuple(false, EdgeCut(), 0.0);
+
+    // Else try to find a valid cut
+    int region_to_split_size = plan.region_sizes(region_to_split);
+    auto cut_size_bounds = splitting_schedule.all_regions_min_and_max_possible_cut_sizes[region_to_split_size];
+    int min_possible_cut_size = cut_size_bounds.first;
+    int max_possible_cut_size = cut_size_bounds.second;
+
+    std::tuple<bool, EdgeCut, double> edge_search_result = tree_splitter.attempt_to_find_edge_to_cut(
+        map_params, rng_state,
+        ust, root, pops_below_vertex, ignore,
+        plan.region_pops[region_to_split], region_to_split_size,
+        min_possible_cut_size, max_possible_cut_size,
+        splitting_schedule.all_regions_smaller_cut_sizes_to_try[region_to_split_size],
+        save_selection_prob
+    );
+
+    bool search_successful = std::get<0>(edge_search_result);
+    // return false if unsuccessful 
+    if(!search_successful) return std::make_tuple(false, EdgeCut(), 0.0);
+
+    // If successful extract the edge cut info
+    EdgeCut cut_edge = std::get<1>(edge_search_result);
+    // Now erase the cut edge in the tree
+    erase_tree_edge(ust, cut_edge);
+
+    return edge_search_result;
+}
+
