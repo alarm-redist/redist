@@ -318,10 +318,12 @@ double compute_simple_log_incremental_weight(
         log_forward_kernel_term = plan.get_log_eff_boundary_len(
             map_params, splitting_schedule, edge_splitter, region1_id, region2_id
         );
-        // do merged region tau if neccesary
-        log_tau_ratio_term -= (rho-1)*plan.compute_log_merged_region_spanning_trees(
-            map_params, region1_id, region2_id
-        );
+        if(compute_log_tau){
+            // do merged region tau if neccesary
+            log_tau_ratio_term -= (rho-1)*plan.compute_log_merged_region_spanning_trees(
+                map_params, region1_id, region2_id
+            );
+        }
     }else if(sampling_space == SamplingSpace::ForestSpace){
         // sum of spanning trees 
         double spanning_tree_sum = 0.0;
@@ -367,7 +369,6 @@ double compute_simple_log_incremental_weight(
             log_tau_ratio_term -= (rho-1)*last_split_merge_log_tau;
         }
     }
-
     if(compute_log_tau){
         log_tau_ratio_term += (rho-1)*plan.compute_log_region_spanning_trees(
             map_params, region1_id
