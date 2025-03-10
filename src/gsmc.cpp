@@ -587,6 +587,9 @@ List run_redist_gsmc(
             Rcout << "Ensuring no more than " << ndists - 1 << " splits of the "
                   << map_params.cg.size() << " administrative units.\n";
         }
+        if(scoring_function.total_constraints > 0){
+            Rcout << "Applying " << scoring_function.total_constraints << " constraints.\n";
+        }
     }
 
     // counts the number of smc steps
@@ -755,9 +758,9 @@ List run_redist_gsmc(
                     unnormalized_sampling_weights,
                     verbosity
                 );
-            }else if(wgt_type == "adj_uniform"){
+            }else if(wgt_type == "simple"){
                 if (verbosity >= 3) Rprintf("Computing Simple Backwards Kernel Weights:\n");
-                get_all_plans_uniform_adj_weights(
+                compute_all_plans_simple_weights(
                     pool,
                     map_params, *splitting_schedule_ptr,
                     sampling_space,

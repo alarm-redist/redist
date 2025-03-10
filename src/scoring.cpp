@@ -113,7 +113,8 @@ ScoringFunction::ScoringFunction(
     Rcpp::List const &constraints, double const pop_temper,
     bool const score_districts_only
 ):
-num_non_final_constraints(0), num_final_constraints(0), all_rounds_constraints(0),
+num_non_final_constraints(0), num_final_constraints(0), all_rounds_constraints(0), 
+total_constraints(0),
 score_districts_only(score_districts_only){
     // add pop temper if doing that 
     if(pop_temper != 0){
@@ -224,7 +225,8 @@ score_districts_only(score_districts_only){
         }
     }
 
-    any_constraints = num_non_final_constraints+num_final_constraints+all_rounds_constraints != 0; 
+    total_constraints = num_non_final_constraints+num_final_constraints+all_rounds_constraints;
+    any_constraints = total_constraints != 0; 
 }
 
 

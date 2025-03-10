@@ -331,7 +331,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
         wgt <- exp(lr - mean(lr))
         n_eff <- length(wgt)*mean(wgt)^2/mean(wgt^2)
         if (any(is.na(lr))) {
-            cli_abort(c("Sampling probabilities have been corrupted.",
+            cli_abort(c("Original SMC: Sampling probabilities have been corrupted.",
                 "*" = "Check that none of your constraint weights are too large.
                              The output of constraint functions multiplied by the weight
                              should generally fall in the -5 to 5 range.",
@@ -385,7 +385,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
         )
 
         if (!is.nan(n_eff) && n_eff/nsims <= 0.05)
-            cli_warn(c("Less than 5% resampling efficiency.",
+            cli_warn(c("Original SMC: Less than 5% resampling efficiency.",
                        "*" = "Increase the number of samples.",
                        "*" = "Consider weakening or removing constraints.",
                        "i" = "If sampling efficiency drops precipitously in the final

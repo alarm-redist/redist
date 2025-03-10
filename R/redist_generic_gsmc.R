@@ -85,7 +85,7 @@ generic_redist_gsmc <- function(
         num_splitting_steps = NULL,
         ref_name = NULL,
         verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE,
-        counties_q = NULL)
+        counties_q = NULL, use_counties_q = F)
 {
 
     if (compactness < 0)
@@ -102,11 +102,12 @@ generic_redist_gsmc <- function(
     ndists <- attr(map, "ndists")
 
 
-    map_params <- get_map_parameters(map, counties, counties_q)
+    map_params <- get_map_parameters(map, counties_q=counties_q, use_counties_q=use_counties_q, counties=counties)
     map <- map_params$map
     V <- map_params$V
     adj_list <- map_params$adj_list
     counties <- map_params$counties
+    num_admin_units <- length(unique(counties))
     pop <- map_params$pop
     pop_bounds <- map_params$pop_bounds
 
@@ -143,8 +144,8 @@ generic_redist_gsmc <- function(
     total_smc_steps <- num_splitting_steps
 
     # check weights are ok
-    if(!weight_type %in% c("optimal", "adj_uniform")){
-        cli_abort("{.arg weight_type} must be either `optimal` or `adj_uniform`!")
+    if(!weight_type %in% c("optimal", "simple")){
+        cli_abort("{.arg weight_type} must be either `optimal` or `simple`!")
     }
 
     # create merge split parameter information
@@ -520,6 +521,7 @@ generic_redist_gsmc <- function(
             step_n_eff = algout$step_n_eff,
             adapt_k_thresh = splitting_params$adapt_k_thresh, # adapt_k_thresh, NEED TO DEAL WITH
             est_k = algout$est_k,
+            splitting_params=splitting_params,
             accept_rate = algout$acceptance_rates,
             sd_lp = sd_lp,
             sd_temper = rep(NA, total_steps),
@@ -561,6 +563,7 @@ generic_redist_gsmc <- function(
                             run_information = run_information,
                             internal_diagnostics = internal_diagnostics,
                             pop_bounds = pop_bounds,
+                            num_admin_units = num_admin_units,
                             entire_runtime = t2-t1)
 
     if (runs > 1) {

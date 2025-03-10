@@ -112,6 +112,7 @@ redist_gsmc <- function(
         map=map, nsims=nsims,
         compactness=compactness,
         counties_q = rlang::enquo(counties), # pass quosure for validation function
+        use_counties_q = T,
         constraints=constraints,
         runs = runs,
         alg_name=alg_type,

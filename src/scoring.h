@@ -73,6 +73,7 @@ class ScoringFunction {
         int num_non_final_constraints; // applied to all but final split
         int num_final_constraints; // applied to only final split
         int all_rounds_constraints; // applied to all splits
+        int total_constraints; // total constraints 
         bool any_constraints;
         bool score_districts_only; // If the score should only apply to districts (for backwards compatibility)
 

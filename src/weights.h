@@ -83,7 +83,7 @@ double get_log_mh_ratio(
 
 
 
-void get_all_plans_uniform_adj_weights(
+void compute_all_plans_simple_weights(
     RcppThread::ThreadPool &pool,
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
     SamplingSpace const sampling_space,

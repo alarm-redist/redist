@@ -285,7 +285,7 @@ double get_log_retroactive_splitting_prob(
 
 // computes the backwards kernel that is uniform in 
 // the number of ancestors 
-double compute_uniform_adj_log_incremental_weight(
+double compute_simple_log_incremental_weight(
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
     SamplingSpace const sampling_space,
     ScoringFunction const &scoring_function, double rho,
@@ -450,7 +450,7 @@ double compute_uniform_adj_log_incremental_weight(
 }
 
 
-void get_all_plans_uniform_adj_weights(
+void compute_all_plans_simple_weights(
     RcppThread::ThreadPool &pool,
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
     SamplingSpace const sampling_space,
@@ -468,7 +468,7 @@ void get_all_plans_uniform_adj_weights(
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
 
-        double log_incr_weight = compute_uniform_adj_log_incremental_weight(
+        double log_incr_weight = compute_simple_log_incremental_weight(
             map_params, splitting_schedule, sampling_space,
             scoring_function, rho,
             *plans_ptr_vec.at(i), 

@@ -23,7 +23,7 @@
 #' @returns A counties label vector
 validate_counties <- function(map, adj_list, V, counties_q, use_counties_q=TRUE,counties=NULL){
 
-    if(!is.null(counties_q)){
+    if(use_counties_q){
         counties <- rlang::eval_tidy(counties_q, map)
     }else{
         counties <- rlang::eval_tidy(rlang::enquo(counties), map)
@@ -72,10 +72,20 @@ get_map_parameters <- function(map, counties_q=NULL, use_counties_q=TRUE, counti
     adj <- get_adj(map)
 
 
-    counties <- validate_counties(
-        map, adj, V,
-        counties=counties, counties_q=counties_q,
-        use_counties_q=use_counties_q)
+    if(use_counties_q){
+        # if true just use the quosure passed in
+        counties <- validate_counties(
+            map, adj, V,
+            counties_q=counties_q,
+            use_counties_q=use_counties_q)
+    }else{
+        # else pass enquo of counties in
+        counties <- validate_counties(
+            map, adj, V,
+            counties_q=rlang::enquo(counties),
+            use_counties_q=T)
+    }
+
 
 
     # get population stuff

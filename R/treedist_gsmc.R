@@ -60,7 +60,7 @@ treedist_gsmc <- function(
 
     generic_redist_gsmc(
         map=map, nsims=nsims,
-        counties_q = rlang::enquo(counties),
+        counties_q = rlang::enquo(counties), use_counties_q = T,
         compactness=compactness,
         constraints = constraints,
         runs = runs,
