@@ -881,11 +881,12 @@ NumericMatrix parallelDVS(
  * Parallel version, lifted directly from here
  * https://github.com/alarm-redist/redistmetrics/blob/main/src/kirchhoff.cpp
  */
-IntegerVector parallel_splits(
+std::vector<int> parallel_splits(
     const IntegerMatrix &dm, const IntegerVector &community,
     int const nd, int const max_split, int const num_threads,
     bool const skip_last){
-    IntegerVector ret(dm.ncol());
+
+    std::vector<int> ret(dm.ncol());
     int const nc = sort_unique(community).size();
     
     int const num_dm_cols =  dm.ncol();
@@ -912,6 +913,7 @@ IntegerVector parallel_splits(
         if (skip_last) {
             to = nc - 1;
         }
+
         for (int i = 0; i < to; i++) {
             int tot_split = 0;
             for (int j = 0; j < nd; j++) {

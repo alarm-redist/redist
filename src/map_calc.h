@@ -228,7 +228,7 @@ NumericMatrix parallelDVS(
  * https://github.com/alarm-redist/redistmetrics/blob/main/src/splits.cpp
  */
 // [[Rcpp::export(rng = false)]]
-IntegerVector parallel_splits(
+std::vector<int> parallel_splits(
     const IntegerMatrix &dm, const IntegerVector &community,
     int const nd, int const max_split, int const num_threads,
     bool const skip_last = false);

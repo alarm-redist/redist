@@ -584,7 +584,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // parallel_splits
-IntegerVector parallel_splits(const IntegerMatrix& dm, const IntegerVector& community, int const nd, int const max_split, int const num_threads, bool const skip_last);
+std::vector<int> parallel_splits(const IntegerMatrix& dm, const IntegerVector& community, int const nd, int const max_split, int const num_threads, bool const skip_last);
 RcppExport SEXP _gredist_parallel_splits(SEXP dmSEXP, SEXP communitySEXP, SEXP ndSEXP, SEXP max_splitSEXP, SEXP num_threadsSEXP, SEXP skip_lastSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

@@ -164,6 +164,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
 
         // compute weights for next step
         cum_wgt = get_wgts(districts, n_distr, ctr, final, alpha, lp,
+                        log_incremental_weights_mat.col(i_split),
                         n_eff[i_split], pop, target, g, constraints,
                         verbosity);
 
@@ -245,7 +246,8 @@ double add_constraint(const std::string& name, List constraints,
 * Add specific constraint weights & return the cumulative weight vector
 */
 vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
-            double alpha, vec &lp, double &neff,
+            double alpha, vec &lp, arma::subview_col<double> log_weights_col,
+            double &neff,
             const uvec &pop, double parity, const Graph g,
             List constraints, int verbosity) {
     int V = districts.n_rows;

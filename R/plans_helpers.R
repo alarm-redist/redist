@@ -127,17 +127,23 @@ avg_by_prec <- function(plans, x, draws = NA) {
 #' @param .data a \code{\link{redist_plans}} object
 #' @param num_threads The number of threads to use for the calculation. Can
 #' significantly speedup calculations for a large number of plans.
+#' @param rep_by_district Whether or not to return a duplicated value for each 
+#' district (so size `nsims*districts`) or return a single value for each plan.
 #'
 #' @concept analyze
 #' @export
-plan_parity <- function(map, .data = pl(), num_threads = 1) {
+plan_parity <- function(map, .data = pl(), num_threads = 1, rep_by_district = TRUE) {
     check_tidy_types(map, .data)
     ndists <- attr(map, "ndists")
     total_pop <- map[[attr(map, "pop_col")]]
     if (is.null(total_pop)) cli_abort("Population vector missing from {.arg map}")
 
-    rep(max_dev(get_plans_matrix(.data), total_pop, ndists, num_threads),
-        each = ndists)
+    if(rep_by_district){
+        return(rep(max_dev(get_plans_matrix(.data), total_pop, ndists, num_threads),
+                each = ndists))
+    }else{
+        return(max_dev(get_plans_matrix(.data), total_pop, ndists, num_threads))
+    }
 }
 
 

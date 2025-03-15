@@ -52,7 +52,8 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
  * Add specific constraint weights & return the cumulative weight vector
  */
 vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
-             double alpha, vec &lp, double &neff,
+             double alpha, vec &lp, arma::subview_col<double> log_weights_col,
+             double &neff,
              const uvec &pop, double parity, const Graph g,
              List constraints, int verbosity);
 
