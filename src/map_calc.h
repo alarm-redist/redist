@@ -125,19 +125,23 @@ arma::mat prec_cooccur(arma::umat m, arma::uvec idxs, int ncores=0);
  * Compute the percentage of `group` in each district. Asummes `m` is 1-indexed.
  */
 // [[Rcpp::export]]
-NumericMatrix group_pct(arma::umat m, arma::vec group_pop, arma::vec total_pop, int n_distr);
+NumericMatrix group_pct(IntegerMatrix const &plans_mat, 
+    arma::vec const &group_pop, arma::vec const &total_pop, 
+    int const n_distr, int const num_threads = 1);
 
 /*
  * Tally a variable by district.
  */
 // [[Rcpp::export]]
-NumericMatrix pop_tally(IntegerMatrix districts, arma::vec pop, int n_distr);
+NumericMatrix pop_tally(IntegerMatrix const &districts, arma::vec const &pop, int const n_distr,
+                        int const num_threads = 1);
 
 /*
  * Compute the maximum deviation from the equal population constraint.
  */
 // [[Rcpp::export]]
-NumericVector max_dev(const IntegerMatrix districts, const arma::vec pop, int n_distr);
+NumericVector max_dev(const IntegerMatrix &districts, const arma::vec &pop, int const n_distr,
+                      int const num_threads = 1);
 
 /*
  * Calculate the deviation for cutting at every edge in a spanning tree.
@@ -163,5 +167,71 @@ double compute_log_county_level_spanning_tree(
     arma::subview_col<arma::uword> const &region_ids,
     int const region1_id, int const potential_region2_id = -42
 );
+
+
+/**************************
+ * Parallel Versions of redistmetric functions for working with very large plans 
+ * Can probably remove in production version
+ ****************************/
+
+/*
+ * Compute the number of edges removed
+ * 
+ * Parallel version lifted directly from here
+ * https://github.com/alarm-redist/redistmetrics/blob/main/src/kirchhoff.cpp
+ */
+// [[Rcpp::export]]
+NumericVector parallel_n_removed(const Graph &g, const IntegerMatrix &districts, int const n_distr, 
+    int const num_threads);
+
+
+// lifted from 
+// https://github.com/alarm-redist/redistmetrics/blob/5f7b36d8a7f9c7bc3c9098a7b6c6aa561d9074c7/src/partisan.cpp#L72
+// [[Rcpp::export(rng = false)]]
+NumericVector parallel_effgap(
+    NumericMatrix const &dcounts, NumericMatrix const &rcounts, 
+    int const totvote, int const num_threads
+);
+
+
+// lifted from 
+// https://github.com/alarm-redist/redistmetrics/blob/5f7b36d8a7f9c7bc3c9098a7b6c6aa561d9074c7/src/partisan.cpp#L72
+// [[Rcpp::export(rng = false)]]
+NumericMatrix parallel_agg_p2d(
+    IntegerMatrix const &dm, NumericVector const &vote, 
+    int const nd, int const num_threads);
+
+// lifted from 
+// https://github.com/alarm-redist/redistmetrics/blob/5f7b36d8a7f9c7bc3c9098a7b6c6aa561d9074c7/src/partisan.cpp#L72
+// [[Rcpp::export(rng = false)]]
+NumericVector parallel_biasatv(
+    NumericMatrix const &dvs, 
+    double const v, int const nd, int const num_threads);
+
+
+
+
+/*
+ * Parallel version, lifted directly from here
+ * https://github.com/alarm-redist/redistmetrics/blob/main/src/kirchhoff.cpp
+ */
+// [[Rcpp::export(rng = false)]]
+NumericMatrix parallelDVS(
+    NumericMatrix const &dcounts, NumericMatrix const &rcounts,
+    int const num_threads);
+
+
+
+
+/*
+ * Parallel version, lifted directly from here
+ * https://github.com/alarm-redist/redistmetrics/blob/main/src/splits.cpp
+ */
+// [[Rcpp::export(rng = false)]]
+IntegerVector parallel_splits(
+    const IntegerMatrix &dm, const IntegerVector &community,
+    int const nd, int const max_split, int const num_threads,
+    bool const skip_last = false);
+
 
 #endif

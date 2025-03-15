@@ -50,18 +50,20 @@ check_tidy_types <- function(map, .data) {
 #' @param map a `redist_map` object
 #' @param x a variable to tally. Tidy-evaluated.
 #' @param .data a `redist_plans` object or matrix of plans
+#' @param num_threads The number of threads to use for the calculation. Can
+#' significantly speedup calculations for a large number of plans. 
 #'
 #' @return a vector containing the tallied values by district and plan (column-major)
 #'
 #' @concept analyze
 #' @export
-tally_var <- function(map, x, .data = pl()) {
+tally_var <- function(map, x, .data = pl(), num_threads = 1) {
     check_tidy_types(map, .data)
     if (length(unique(diff(as.integer(.data$district)))) > 2)
         cli_warn("Districts not sorted in ascending order; output may be incorrect.")
 
     x <- rlang::eval_tidy(rlang::enquo(x), map)
-    as.numeric(pop_tally(get_plans_matrix(.data), x, attr(.data, "ndists")))
+    as.numeric(pop_tally(get_plans_matrix(.data), x, attr(.data, "ndists"), num_threads))
 }
 
 #' @rdname gredist.group.percent
@@ -69,11 +71,13 @@ tally_var <- function(map, x, .data = pl()) {
 #'
 #' @param map a \code{\link{redist_map}} object
 #' @param .data a \code{\link{redist_plans}} object or matrix of plans
+#' @param num_threads The number of threads to use for the calculation. Can
+#' significantly speedup calculations for a large number of plans.
 #'
 #' @concept analyze
 #' @export
 group_frac <- function(map, group_pop, total_pop = map[[attr(map, "pop_col")]],
-                       .data = pl()) {
+                       .data = pl(), num_threads = 1) {
     check_tidy_types(map, .data)
     # districts not in ascending order
     if (length(unique(diff(as.integer(.data$district)))) > 2)
@@ -91,7 +95,7 @@ group_frac <- function(map, group_pop, total_pop = map[[attr(map, "pop_col")]],
     if (length(group_pop) != nrow(plans))
         cli_abort("{.arg .data} and {.arg group_pop} must have the same number of precincts.")
 
-    as.numeric(group_pct(plans, group_pop, total_pop, attr(.data, "ndists")))
+    as.numeric(group_pct(plans, group_pop, total_pop, attr(.data, "ndists"), num_threads))
 }
 
 
@@ -121,17 +125,18 @@ avg_by_prec <- function(plans, x, draws = NA) {
 #'
 #' @param map a \code{\link{redist_map}} object
 #' @param .data a \code{\link{redist_plans}} object
-#' @param ... passed on to \code{gredist.parity}
+#' @param num_threads The number of threads to use for the calculation. Can
+#' significantly speedup calculations for a large number of plans.
 #'
 #' @concept analyze
 #' @export
-plan_parity <- function(map, .data = pl(), ...) {
+plan_parity <- function(map, .data = pl(), num_threads = 1) {
     check_tidy_types(map, .data)
     ndists <- attr(map, "ndists")
     total_pop <- map[[attr(map, "pop_col")]]
     if (is.null(total_pop)) cli_abort("Population vector missing from {.arg map}")
 
-    rep(max_dev(get_plans_matrix(.data), total_pop, ndists),
+    rep(max_dev(get_plans_matrix(.data), total_pop, ndists, num_threads),
         each = ndists)
 }
 

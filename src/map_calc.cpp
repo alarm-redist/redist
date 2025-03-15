@@ -379,27 +379,37 @@ mat prec_cooccur(umat m, uvec idxs, int ncores) {
 /*
  * Compute the percentage of `group` in each district. Asummes `m` is 1-indexed.
  */
-NumericMatrix group_pct(umat m, vec group_pop, vec total_pop, int n_distr) {
-    int v = m.n_rows;
-    int n = m.n_cols;
+NumericMatrix group_pct(
+    IntegerMatrix const &plans_mat, 
+    vec const &group_pop, vec const &total_pop, 
+    int const n_distr, int const num_threads) {
+    int V = plans_mat.nrow();
+    int num_plans = plans_mat.ncol();
 
-    NumericMatrix grp_distr(n_distr, n);
-    NumericMatrix tot_distr(n_distr, n);
+    NumericMatrix grp_distr(n_distr, num_plans);
+    NumericMatrix tot_distr(n_distr, num_plans);
 
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < v; j++) {
-            int distr = m(j, i) - 1;
+    RcppThread::ThreadPool pool(num_threads > 0 ? num_threads : 0);
+
+    pool.parallelFor(0, num_plans, [&] (unsigned int i) {
+        for (int j = 0; j < V; j++) {
+            int distr = plans_mat(j, i) - 1;
             grp_distr(distr, i) += group_pop[j];
             tot_distr(distr, i) += total_pop[j];
         }
-    }
+    });
+
+    pool.wait();
+
 
     // divide
-    for (int i = 0; i < n; i++) {
+    pool.parallelFor(0, num_plans, [&] (unsigned int i) {
         for (int j = 0; j < n_distr; j++) {
             grp_distr(j, i) /= tot_distr(j, i);
         }
-    }
+    });
+
+    pool.wait();
 
     return grp_distr;
 }
@@ -443,17 +453,21 @@ NumericVector group_pct_top_k(const IntegerMatrix m, const NumericVector group_p
  * Tally a variable by district.
  */
 // TESTED
-NumericMatrix pop_tally(IntegerMatrix districts, vec pop, int n_distr) {
-    int N = districts.ncol();
-    int V = districts.nrow();
+// NOTE: Maybe can make parallel version of this? Not sure
+NumericMatrix pop_tally(IntegerMatrix const &districts, vec const &pop, int const n_distr,
+    int const num_threads) {
+    int const num_plans = districts.ncol();
+    int const V = districts.nrow();
 
-    NumericMatrix tally(n_distr, N);
-    for (int i = 0; i < N; i++) {
+    NumericMatrix tally(n_distr, num_plans);
+
+    // parallel for loop over each plan 
+    RcppThread::parallelFor(0, num_plans, [&] (unsigned int i) {
         for (int j = 0; j < V; j++) {
             int d = districts(j, i) - 1; // districts are 1-indexed
             tally(d, i) = tally(d, i) + pop(j);
         }
-    }
+    }, num_threads > 0 ? num_threads : 0);
 
     return tally;
 }
@@ -482,18 +496,23 @@ NumericMatrix proj_distr_m(IntegerMatrix districts, const arma::vec x,
  * Compute the maximum deviation from the equal population constraint.
  */
 // TESTED
-NumericVector max_dev(const IntegerMatrix districts, const vec pop, int n_distr) {
-    int N = districts.ncol();
-    double target_pop = sum(pop) / n_distr;
+// Could be parallelized as well
+NumericVector max_dev(const IntegerMatrix &districts, const arma::vec &pop, int const n_distr,
+                      int const num_threads) {
+    int const num_plans = districts.ncol();
+    double const target_pop = arma::sum(pop) / n_distr;
 
-    NumericMatrix dev = pop_tally(districts, pop, n_distr) / target_pop - 1.0;
-    NumericVector res(N);
-    for (int j = 0; j < n_distr; j++) {
-        for (int i = 0; i < N; i++) {
-            if (std::fabs(dev(j, i)) > res(i))
+    NumericMatrix const dev = pop_tally(districts, pop, n_distr, num_threads) / target_pop - 1.0;
+    NumericVector res(num_plans);
+
+    RcppThread::parallelFor(0, num_plans, [&] (unsigned int i) {
+        for (int j = 0; j < n_distr; j++) {
+            // If deviation at district j bigger then record that
+            if (std::fabs(dev(j, i)) > res(i)){
                 res(i) = std::fabs(dev(j, i));
+            }
         }
-    }
+    }, num_threads > 0 ? num_threads : 0);
 
     return res;
 }
@@ -681,4 +700,231 @@ double compute_log_county_level_spanning_tree(
     double lst, sign;
     log_det(lst, sign, adj);
     return lst;
+}
+
+
+
+/**************************
+ * Parallel Versions of redistmetric functions for working with very large plans 
+ * Can probably remove in production version
+ ****************************/
+
+/*
+ * Compute the number of edges removed
+ * 
+ * Parallel version lifted directly from here
+ * https://github.com/alarm-redist/redistmetrics/blob/main/src/kirchhoff.cpp
+ */
+// TESTED
+NumericVector parallel_n_removed(const Graph &g, const IntegerMatrix &districts, int const n_distr, 
+                                 int const num_threads) {
+    int V = g.size();
+    int N = districts.ncol();
+    NumericVector n_rem(N);
+
+    RcppThread::parallelFor(0, N, [&] (unsigned int n) {
+        double removed = 0.0;
+        for (int i = 0; i < V; i++) {
+          int dist = districts(i, n);
+          std::vector<int> nbors = g[i];
+          int length = nbors.size();
+          for (int j = 0; j < length; j++) {
+            if (districts(nbors[j], n) != dist) removed += 1.0;
+          }
+        }
+        n_rem[n] = removed;
+    }, num_threads > 0 ? num_threads : 0);
+  
+    return n_rem/2;
+  }
+
+
+
+NumericVector parallel_effgap(
+    NumericMatrix const &dcounts, NumericMatrix const &rcounts, 
+    int const totvote, int const num_threads){
+    NumericVector eg(dcounts.ncol());
+
+    NumericMatrix dwaste(dcounts.nrow(), dcounts.ncol());
+    NumericMatrix rwaste(rcounts.nrow(), rcounts.ncol());
+
+    int const num_dcount_cols = dcounts.ncol();
+    int const num_dcount_rows = dcounts.nrow();
+
+    RcppThread::parallelFor(0, num_dcount_cols, [&] (unsigned int c) {
+        for(int r = 0; r <num_dcount_rows; r++){
+            int minwin = floor((dcounts(r,c) + rcounts(r,c))/2.0)+1;
+            if(dcounts(r,c) > rcounts(r,c)){
+                dwaste(r,c) += (dcounts(r,c) - minwin);
+                rwaste(r,c) += rcounts(r,c);
+            } else{
+                dwaste(r,c) += dcounts(r,c);
+                rwaste(r,c) += (rcounts(r,c) - minwin);
+            }
+        }
+    }, num_threads > 0 ? num_threads : 0);
+
+
+  NumericVector netwaste(dcounts.ncol());
+  netwaste = colSums(dwaste) - colSums(rwaste);
+
+  for(int i = 0; i < netwaste.size(); i++){
+    eg[i] = netwaste[i]/(double)totvote;
+  }
+
+  return eg;
+}
+
+/*
+ * Parallel version, lifted directly from here
+ * https://github.com/alarm-redist/redistmetrics/blob/main/src/kirchhoff.cpp
+ */
+NumericMatrix parallel_agg_p2d(
+    IntegerMatrix const &dm, NumericVector const &vote, 
+    int const nd, int const num_threads){
+    
+    NumericMatrix mat = NumericMatrix(nd, dm.ncol());
+
+    int const num_dm_cols = dm.ncol();
+    int const num_dm_rows = dm.nrow();
+
+    RcppThread::parallelFor(0, num_dm_cols, [&] (unsigned int j) {
+        for(int i = 0; i < num_dm_rows; i++){
+            mat(dm(i,j)-1,j) += vote[i];
+        }
+    }, num_threads > 0 ? num_threads : 0);
+
+    return mat;
+}
+
+
+
+/*
+ * Parallel version, lifted directly from here
+ * https://github.com/alarm-redist/redistmetrics/blob/main/src/kirchhoff.cpp
+ */
+IntegerVector parallel_dseatsDVS(NumericMatrix const &dvs, int const num_threads){
+    IntegerVector dseats = IntegerVector(dvs.ncol());
+    int const num_dvs_cols = dvs.ncol();
+    int const num_dvs_row = dvs.nrow();
+
+    RcppThread::parallelFor(0, num_dvs_cols, [&] (unsigned int c) {
+        for(int r = 0; r < num_dvs_row; r++){
+            if(dvs(r,c) > .5){
+                dseats[c] += 1;
+            }
+        }
+    }, num_threads > 0 ? num_threads : 0);
+
+    return dseats;
+}
+
+
+/*
+ * Parallel version, lifted directly from here
+ * https://github.com/alarm-redist/redistmetrics/blob/main/src/kirchhoff.cpp
+ */
+NumericVector parallel_biasatv(
+    NumericMatrix const &dvs, 
+    double const v, int const nd, int const num_threads){
+    NumericVector dshift = (v) - colMeans(dvs);
+    NumericVector rshift = (1-v) - colMeans(dvs);
+    NumericMatrix dvs_dshift = clone(dvs);
+    NumericMatrix dvs_rshift = clone(dvs);
+
+
+    int const num_dvs_cols = dvs.ncol();
+    int const num_dvs_row = dvs.nrow();
+
+    RcppThread::parallelFor(0, num_dvs_cols, [&] (unsigned int c) {
+        for(int r = 0; r < num_dvs_row; r++){
+            dvs_dshift(r,c) += dshift(c);
+            dvs_rshift(r,c) += rshift(c);
+        }
+    }, num_threads > 0 ? num_threads : 0);
+
+    NumericVector seat_dshift = (NumericVector)parallel_dseatsDVS(dvs_dshift, num_threads)/(double)nd;
+    NumericVector seat_rshift = 1.0 - (NumericVector)parallel_dseatsDVS(dvs_rshift, num_threads)/(double)nd;
+
+    return (seat_rshift - seat_dshift)/2;
+}
+
+
+
+
+/*
+ * Parallel version, lifted directly from here
+ * https://github.com/alarm-redist/redistmetrics/blob/main/src/kirchhoff.cpp
+ */
+NumericMatrix parallelDVS(
+    NumericMatrix const &dcounts, NumericMatrix const &rcounts,
+    int const num_threads){
+
+    int const num_dcounts_cols = dcounts.ncol();
+    int const num_dcounts_row = dcounts.nrow();
+
+    NumericMatrix mat = NumericMatrix(num_dcounts_row, num_dcounts_cols);
+
+    RcppThread::parallelFor(0, num_dcounts_cols, [&] (unsigned int c) {
+        for(int r = 0; r < mat.nrow(); r++){
+            mat(r,c) = (double)dcounts(r,c)/(dcounts(r,c)+rcounts(r,c));
+        }
+    }, num_threads > 0 ? num_threads : 0);
+
+    return mat;
+  }
+
+
+
+
+/*
+ * Parallel version, lifted directly from here
+ * https://github.com/alarm-redist/redistmetrics/blob/main/src/kirchhoff.cpp
+ */
+IntegerVector parallel_splits(
+    const IntegerMatrix &dm, const IntegerVector &community,
+    int const nd, int const max_split, int const num_threads,
+    bool const skip_last){
+    IntegerVector ret(dm.ncol());
+    int const nc = sort_unique(community).size();
+    
+    int const num_dm_cols =  dm.ncol();
+
+    int threads_to_use = num_threads > 1 ? num_threads : 0;
+    // by column (aka map)
+
+    RcppThread::parallelFor(0, num_dm_cols, [&] (unsigned int c) {
+        static thread_local std::vector<std::vector<bool>> seen(nc, std::vector<bool>(nd, false));
+        for (int i = 0; i < nc; i++) {
+            std::fill(
+                seen[i].begin(),
+                seen[i].end(), 
+                false
+            );
+            // seen[i] = std::vector<bool>(nd, false);
+        }
+        for(int r = 0; r < dm.nrow(); r++){
+            seen[community[r] - 1][dm(r, c) - 1] = true;
+        }
+
+        int splits = 0;
+        int to = nc;
+        if (skip_last) {
+            to = nc - 1;
+        }
+        for (int i = 0; i < to; i++) {
+            int tot_split = 0;
+            for (int j = 0; j < nd; j++) {
+                tot_split += seen[i][j];
+                if (tot_split > max_split) {
+                    splits++;
+                    break;
+                }
+            }
+        }
+        ret[c] = splits;
+    }, threads_to_use);
+
+    
+    return ret;
 }

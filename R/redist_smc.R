@@ -407,6 +407,7 @@ redist_smc <- function(map, nsims, counties = NULL, compactness = 1, constraints
         algout$internal_diagnostics <- list(
             parent_index_mat = algout$parent_index,
             original_ancestors_mat = algout$original_ancestors_mat,
+            log_incremental_weights_mat = algout$log_incremental_weights_mat,
             draw_tries_mat = algout$draw_tries_mat,
             parent_unsuccessful_tries_mat = algout$parent_unsuccessful_tries_mat
         )

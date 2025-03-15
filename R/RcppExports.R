@@ -159,16 +159,40 @@ prec_cooccur <- function(m, idxs, ncores = 0L) {
     .Call(`_gredist_prec_cooccur`, m, idxs, ncores)
 }
 
-group_pct <- function(m, group_pop, total_pop, n_distr) {
-    .Call(`_gredist_group_pct`, m, group_pop, total_pop, n_distr)
+group_pct <- function(plans_mat, group_pop, total_pop, n_distr, num_threads = 1L) {
+    .Call(`_gredist_group_pct`, plans_mat, group_pop, total_pop, n_distr, num_threads)
 }
 
-pop_tally <- function(districts, pop, n_distr) {
-    .Call(`_gredist_pop_tally`, districts, pop, n_distr)
+pop_tally <- function(districts, pop, n_distr, num_threads = 1L) {
+    .Call(`_gredist_pop_tally`, districts, pop, n_distr, num_threads)
 }
 
-max_dev <- function(districts, pop, n_distr) {
-    .Call(`_gredist_max_dev`, districts, pop, n_distr)
+max_dev <- function(districts, pop, n_distr, num_threads = 1L) {
+    .Call(`_gredist_max_dev`, districts, pop, n_distr, num_threads)
+}
+
+parallel_n_removed <- function(g, districts, n_distr, num_threads) {
+    .Call(`_gredist_parallel_n_removed`, g, districts, n_distr, num_threads)
+}
+
+parallel_effgap <- function(dcounts, rcounts, totvote, num_threads) {
+    .Call(`_gredist_parallel_effgap`, dcounts, rcounts, totvote, num_threads)
+}
+
+parallel_agg_p2d <- function(dm, vote, nd, num_threads) {
+    .Call(`_gredist_parallel_agg_p2d`, dm, vote, nd, num_threads)
+}
+
+parallel_biasatv <- function(dvs, v, nd, num_threads) {
+    .Call(`_gredist_parallel_biasatv`, dvs, v, nd, num_threads)
+}
+
+parallelDVS <- function(dcounts, rcounts, num_threads) {
+    .Call(`_gredist_parallelDVS`, dcounts, rcounts, num_threads)
+}
+
+parallel_splits <- function(dm, community, nd, max_split, num_threads, skip_last = FALSE) {
+    .Call(`_gredist_parallel_splits`, dm, community, nd, max_split, num_threads, skip_last)
 }
 
 ms_plans <- function(nsims, warmup, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, verbosity) {

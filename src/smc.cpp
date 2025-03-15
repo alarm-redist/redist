@@ -112,6 +112,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     Rcpp::IntegerMatrix parent_index_mat(N, n_steps);
     Rcpp::IntegerMatrix draw_tries_mat(N, n_steps);
     Rcpp::IntegerMatrix parent_unsuccessful_tries_mat(N, n_steps);
+    arma::dmat log_incremental_weights_mat(N, n_steps, arma::fill::none); // entry [i][s] is the log unnormalized weight of particle i AFTER split s
 
     RcppThread::ThreadPool pool(cores);
 
@@ -151,20 +152,26 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                 lower, upper, target,
                 rho, cut_k[i_split], check_both, pool, verbosity);
 
-    if(i_split == 0){
-        std::iota(
-            parent_index_mat.column(0).begin(), 
-            parent_index_mat.column(0).end(), 
-            0);
-    }
+        if(i_split == 0){
+            std::iota(
+                parent_index_mat.column(0).begin(), 
+                parent_index_mat.column(0).end(), 
+                0);
+        }
 
-        sd_lp[i_split] = stddev(lp);
+        
         sd_temper[i_split] = stddev(log_temper);
 
         // compute weights for next step
         cum_wgt = get_wgts(districts, n_distr, ctr, final, alpha, lp,
                         n_eff[i_split], pop, target, g, constraints,
                         verbosity);
+
+        sd_lp[i_split] = stddev(lp);
+
+        // save the log probability weights 
+        // log weights are actually inverse so do -lp
+        log_incremental_weights_mat.col(i_split) = -lp;
 
         if (verbosity == 1 && CLI_SHOULD_TICK)
             cli_progress_set(bar, i_split);
@@ -177,6 +184,14 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     cli_progress_done(bar);
 
     lp = lp - log_temper;
+    // log weights are actually inverse so do -lp
+    log_incremental_weights_mat.col(n_steps-1) = -lp;
+
+    // recompute effective sample size with no pop tempering 
+    vec wgt = exp(log_incremental_weights_mat.col(n_steps-1));
+    vec cuml_wgt = cumsum(wgt);
+    n_eff[n_steps-1] = cuml_wgt[N-1] * cuml_wgt[N-1]  / sum(square(wgt));
+
 
     if (n_drawn + n_steps + 1 == n_distr) {
         // Set final district label to n_distr rather than 0
@@ -199,7 +214,8 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
         _["accept_rate"] = accept_rate,
         _["parent_index"] = parent_index_mat,
         _["draw_tries_mat"] = draw_tries_mat,
-        _["parent_unsuccessful_tries_mat"] = parent_unsuccessful_tries_mat
+        _["parent_unsuccessful_tries_mat"] = parent_unsuccessful_tries_mat,
+        _["log_incremental_weights_mat"] = log_incremental_weights_mat
     );
 
     return out;

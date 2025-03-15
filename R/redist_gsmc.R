@@ -94,20 +94,6 @@ redist_gsmc <- function(
 
 
 
-    # figure out the alg type
-    if(split_district_only && run_ms){
-        alg_type <- "smc_ms"
-    }else if(!split_district_only && run_ms){
-        alg_type <- "gsmc_ms"
-    }else if(split_district_only && !run_ms){
-        alg_type <- "basic_smc"
-    }else{
-        alg_type <- "gsmc"
-    }
-
-
-
-
     generic_redist_gsmc(
         map=map, nsims=nsims,
         compactness=compactness,
@@ -115,7 +101,6 @@ redist_gsmc <- function(
         use_counties_q = T,
         constraints=constraints,
         runs = runs,
-        alg_name=alg_type,
         split_district_only = split_district_only, weight_type = weight_type,
         sampling_space=GRAPH_PLAN_SPACE_SAMPLING,
         splitting_method=NAIVE_K_SPLITTING,

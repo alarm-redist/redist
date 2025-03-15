@@ -24,8 +24,6 @@
 #' the `map` parameters.
 #'
 #' @inheritParams redist_smc
-#' @param alg_name The name of the sampling algorithm used. This will be the type
-#' given to the final `redist_plans` object returned at the end.
 #' @param split_district_only Whether or not to split plans by splitting off one
 #' district at a time.
 #' @param sampling_space The space to sample the plans on. Right now the supported
@@ -68,7 +66,7 @@
 generic_redist_gsmc <- function(
         map, nsims, counties = NULL, compactness = 1,
         constraints = list(),
-        runs = 1L, alg_name,
+        runs = 1L,
         split_district_only = FALSE, weight_type = "optimal",
         sampling_space, splitting_method, splitting_params,
         ms_freq = 0,
@@ -511,8 +509,7 @@ generic_redist_gsmc <- function(
             ms_steps_multiplier = ms_steps_multiplier,
             merge_prob_type = merge_prob_type,
             step_types = step_types,
-            nsims = nsims,
-            alg_name = alg_name
+            nsims = nsims
         )
 
         # add high level diagnostic stuff
@@ -552,7 +549,7 @@ generic_redist_gsmc <- function(
     internal_diagnostics <- lapply(all_out, function(x) x$internal_diagnostics)
     n_dist_act <- dplyr::n_distinct(plans[, 1]) # actual number (for partial plans)
 
-    out <- new_redist_plans(plans, map, alg_name, wgt, resample,
+    out <- new_redist_plans(plans, map, "smc", wgt, resample,
                             ndists = n_dist_act,
                             n_eff = all_out[[1]]$n_eff,
                             compactness = compactness,

@@ -422,7 +422,7 @@ List run_redist_gsmc(
 
     // Level 1
     // These are all nsims by number of smc steps 
-    arma::dmat log_incremental_weights_mat(nsims, total_smc_steps, arma::fill::none); // entry [i][s] is the normalized weight of particle i AFTER split s
+    arma::dmat log_incremental_weights_mat(nsims, total_smc_steps, arma::fill::none); // entry [i][s] is the log unnormalized weight of particle i AFTER split s
     Rcpp::IntegerMatrix draw_tries_mat(nsims, total_steps); // Entry [i][s] is the number of tries it took to form particle i on split s
     draw_tries_mat.fill(0); // fill it with zero
     Rcpp::IntegerMatrix parent_index_mat(nsims, total_smc_steps); // Entry [i][s] is the index of the parent of particle i at split s

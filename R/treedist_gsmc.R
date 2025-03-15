@@ -47,24 +47,12 @@ treedist_gsmc <- function(
         verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE
 ){
 
-    # figure out the alg type
-    if(split_district_only && run_ms){
-        alg_type <- "smc_ms"
-    }else if(!split_district_only && run_ms){
-        alg_type <- "gsmc_ms"
-    }else if(split_district_only && !run_ms){
-        alg_type <- "basic_smc"
-    }else{
-        alg_type <- "gsmc"
-    }
-
     generic_redist_gsmc(
         map=map, nsims=nsims,
         counties_q = rlang::enquo(counties), use_counties_q = T,
         compactness=compactness,
         constraints = constraints,
         runs = runs,
-        alg_name=alg_type,
         split_district_only = split_district_only, weight_type = weight_type,
         sampling_space=FOREST_SPACE_SAMPLING,
         splitting_method=splitting_method,
