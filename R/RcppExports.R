@@ -207,30 +207,6 @@ pareto_dominated <- function(x) {
     .Call(`_gredist_pareto_dominated`, x)
 }
 
-plan_copy_testing <- function() {
-    .Call(`_gredist_plan_copy_testing`)
-}
-
-arma_testing <- function() {
-    .Call(`_gredist_arma_testing`)
-}
-
-rand_int_gen_testing <- function(ndraws, max_val) {
-    invisible(.Call(`_gredist_rand_int_gen_testing`, ndraws, max_val))
-}
-
-random_cpp_testing <- function() {
-    .Call(`_gredist_random_cpp_testing`)
-}
-
-random_rcpp_list_cast_testing <- function(control) {
-    .Call(`_gredist_random_rcpp_list_cast_testing`, control)
-}
-
-comb <- function(N, K) {
-    invisible(.Call(`_gredist_comb`, N, K))
-}
-
 closest_adj_pop <- function(adj, i_dist, g_prop) {
     .Call(`_gredist_closest_adj_pop`, adj, i_dist, g_prop)
 }
