@@ -234,4 +234,17 @@ IntegerVector parallel_splits(
     bool const skip_last = false);
 
 
+/*
+ * Parallel version, lifted directly from here
+ * https://github.com/alarm-redist/redistmetrics/blob/main/src/compactness.cpp
+ */
+// [[Rcpp::export(rng = false)]]
+NumericMatrix parallel_polsbypopper(IntegerVector const &from,
+                           IntegerVector const &to,
+                           NumericVector const &area,
+                           NumericVector const &perimeter,
+                           IntegerMatrix const &dm,
+                           int const nd,
+                           int const num_threads);
+
 #endif

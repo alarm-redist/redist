@@ -928,3 +928,51 @@ IntegerVector parallel_splits(
     
     return ret;
 }
+
+
+
+
+NumericMatrix parallel_polsbypopper(IntegerVector const &from,
+                           IntegerVector const &to,
+                           NumericVector const &area,
+                           NumericVector const &perimeter,
+                           IntegerMatrix const &dm,
+                           int const nd,
+                           int const num_threads) {
+
+  NumericMatrix ret(nd, dm.ncol());
+
+  NumericVector zerovec(nd);
+  int ne = from.size();
+  double pi4 = 4.0*3.14159265;
+
+  RcppThread::parallelFor(0, dm.ncol(), [&] (unsigned int c) {
+  //for(int c = 0; c < dm.ncol(); c++){
+    // update holders:
+    std::vector<double> dist_area(nd);
+    std::vector<double> dist_peri(nd);
+
+    // Get a vector of areas ~ just sum
+    for(int r = 0; r < dm.nrow(); r++){
+      dist_area[dm(r,c) - 1] += area(r);
+    }
+    // Get a vector of perims ~ sum by id'ing borders
+    for(int e = 0; e < ne; e++){
+      if(from(e) == -1){
+        dist_peri[dm(to(e) - 1, c) - 1] += perimeter(e);
+      } else {
+        if(dm(from(e) - 1, c) != dm(to(e) - 1, c)){
+          dist_peri[dm(to(e) - 1, c) - 1] += perimeter(e);
+        }
+      }
+    }
+
+
+    for (int d = 0; d < nd; d++) {
+        ret(d, c) = pi4 * dist_area[d] / std::pow(dist_peri[d], 2.0);
+    }
+
+    }, num_threads > 0 ? num_threads : 0);
+
+  return ret;
+}

@@ -598,6 +598,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// parallel_polsbypopper
+NumericMatrix parallel_polsbypopper(IntegerVector const& from, IntegerVector const& to, NumericVector const& area, NumericVector const& perimeter, IntegerMatrix const& dm, int const nd, int const num_threads);
+RcppExport SEXP _gredist_parallel_polsbypopper(SEXP fromSEXP, SEXP toSEXP, SEXP areaSEXP, SEXP perimeterSEXP, SEXP dmSEXP, SEXP ndSEXP, SEXP num_threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< IntegerVector const& >::type from(fromSEXP);
+    Rcpp::traits::input_parameter< IntegerVector const& >::type to(toSEXP);
+    Rcpp::traits::input_parameter< NumericVector const& >::type area(areaSEXP);
+    Rcpp::traits::input_parameter< NumericVector const& >::type perimeter(perimeterSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix const& >::type dm(dmSEXP);
+    Rcpp::traits::input_parameter< int const >::type nd(ndSEXP);
+    Rcpp::traits::input_parameter< int const >::type num_threads(num_threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(parallel_polsbypopper(from, to, area, perimeter, dm, nd, num_threads));
+    return rcpp_result_gen;
+END_RCPP
+}
 // ms_plans
 Rcpp::List ms_plans(int nsims, int warmup, List l, const arma::uvec init, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double target, double lower, double upper, double rho, List constraints, List control, int k, int thin, int verbosity);
 RcppExport SEXP _gredist_ms_plans(SEXP nsimsSEXP, SEXP warmupSEXP, SEXP lSEXP, SEXP initSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP constraintsSEXP, SEXP controlSEXP, SEXP kSEXP, SEXP thinSEXP, SEXP verbositySEXP) {
@@ -988,6 +1004,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_parallel_biasatv", (DL_FUNC) &_gredist_parallel_biasatv, 4},
     {"_gredist_parallelDVS", (DL_FUNC) &_gredist_parallelDVS, 3},
     {"_gredist_parallel_splits", (DL_FUNC) &_gredist_parallel_splits, 6},
+    {"_gredist_parallel_polsbypopper", (DL_FUNC) &_gredist_parallel_polsbypopper, 7},
     {"_gredist_ms_plans", (DL_FUNC) &_gredist_ms_plans, 16},
     {"_gredist_pareto_dominated", (DL_FUNC) &_gredist_pareto_dominated, 1},
     {"_gredist_plan_copy_testing", (DL_FUNC) &_gredist_plan_copy_testing, 0},

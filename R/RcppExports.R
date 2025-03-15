@@ -195,6 +195,10 @@ parallel_splits <- function(dm, community, nd, max_split, num_threads, skip_last
     .Call(`_gredist_parallel_splits`, dm, community, nd, max_split, num_threads, skip_last)
 }
 
+parallel_polsbypopper <- function(from, to, area, perimeter, dm, nd, num_threads) {
+    .Call(`_gredist_parallel_polsbypopper`, from, to, area, perimeter, dm, nd, num_threads)
+}
+
 ms_plans <- function(nsims, warmup, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, verbosity) {
     .Call(`_gredist_ms_plans`, nsims, warmup, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, verbosity)
 }
