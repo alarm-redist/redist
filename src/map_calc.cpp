@@ -881,12 +881,12 @@ NumericMatrix parallelDVS(
  * Parallel version, lifted directly from here
  * https://github.com/alarm-redist/redistmetrics/blob/main/src/kirchhoff.cpp
  */
-std::vector<int> parallel_splits(
+Rcpp::IntegerVector parallel_splits(
     const IntegerMatrix &dm, const IntegerVector &community,
     int const nd, int const max_split, int const num_threads,
     bool const skip_last){
 
-    std::vector<int> ret(dm.ncol());
+    IntegerVector ret(dm.ncol());
     int const nc = sort_unique(community).size();
     
     int const num_dm_cols =  dm.ncol();
@@ -894,7 +894,12 @@ std::vector<int> parallel_splits(
     int threads_to_use = num_threads > 1 ? num_threads : 0;
     // by column (aka map)
 
-    RcppThread::parallelFor(0, num_dm_cols, [&] (unsigned int c) {
+    RcppThread::ThreadPool pool(num_threads > 0 ? num_threads : 0);
+
+    pool.parallelFor(0, num_dm_cols, [&] (unsigned int c) {
+        // DO NOT DO RcppThread::parallelFor when using static variables
+        // If you do that then the variables will be kept in a global state from R calls 
+        // and this will break if you call this function first with a smaller nc
         static thread_local std::vector<std::vector<bool>> seen(nc, std::vector<bool>(nd, false));
         for (int i = 0; i < nc; i++) {
             std::fill(
@@ -902,8 +907,9 @@ std::vector<int> parallel_splits(
                 seen[i].end(), 
                 false
             );
-            // seen[i] = std::vector<bool>(nd, false);
         }
+
+
         for(int r = 0; r < dm.nrow(); r++){
             seen[community[r] - 1][dm(r, c) - 1] = true;
         }
@@ -924,8 +930,11 @@ std::vector<int> parallel_splits(
                 }
             }
         }
+
         ret[c] = splits;
-    }, threads_to_use);
+    });
+
+    pool.wait();
 
     
     return ret;
@@ -948,11 +957,16 @@ NumericMatrix parallel_polsbypopper(IntegerVector const &from,
   int ne = from.size();
   double pi4 = 4.0*3.14159265;
 
-  RcppThread::parallelFor(0, dm.ncol(), [&] (unsigned int c) {
+  RcppThread::ThreadPool pool(num_threads > 0 ? num_threads : 0);
+
+  pool.parallelFor(0, dm.ncol(), [&] (unsigned int c) {
   //for(int c = 0; c < dm.ncol(); c++){
-    // update holders:
-    std::vector<double> dist_area(nd);
-    std::vector<double> dist_peri(nd);
+    // set holders to 0 again 
+    static thread_local std::vector<double> dist_area(nd);
+    static thread_local std::vector<double> dist_peri(nd);
+
+    std::fill(dist_area.begin(), dist_area.end(), 0.0);
+    std::fill(dist_peri.begin(), dist_peri.end(), 0.0);
 
     // Get a vector of areas ~ just sum
     for(int r = 0; r < dm.nrow(); r++){
@@ -974,7 +988,10 @@ NumericMatrix parallel_polsbypopper(IntegerVector const &from,
         ret(d, c) = pi4 * dist_area[d] / std::pow(dist_peri[d], 2.0);
     }
 
-    }, num_threads > 0 ? num_threads : 0);
+    });
+
+
+    pool.wait();
 
   return ret;
 }

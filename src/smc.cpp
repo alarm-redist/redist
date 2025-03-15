@@ -168,11 +168,8 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
                         n_eff[i_split], pop, target, g, constraints,
                         verbosity);
 
-        sd_lp[i_split] = stddev(lp);
+        sd_lp[i_split] = arma::stddev(log_incremental_weights_mat.col(i_split));
 
-        // save the log probability weights 
-        // log weights are actually inverse so do -lp
-        log_incremental_weights_mat.col(i_split) = -lp;
 
         if (verbosity == 1 && CLI_SHOULD_TICK)
             cli_progress_set(bar, i_split);
@@ -187,6 +184,7 @@ List smc_plans(int N, List l, const uvec &counties, const uvec &pop,
     lp = lp - log_temper;
     // log weights are actually inverse so do -lp
     log_incremental_weights_mat.col(n_steps-1) = -lp;
+    sd_lp[n_steps-1] = arma::stddev(lp);
 
     // recompute effective sample size with no pop tempering 
     vec wgt = exp(log_incremental_weights_mat.col(n_steps-1));
@@ -362,6 +360,10 @@ vec get_wgts(const umat &districts, int n_distr, int distr_ctr, bool final,
         }
     } // for
     } // if
+
+    // save the log probability weights 
+    // log weights are actually inverse so do -lp
+    log_weights_col = -lp;
 
     vec wgt = exp(-alpha * lp);
     if (!final) // not the last iteration

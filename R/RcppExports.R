@@ -191,7 +191,7 @@ parallelDVS <- function(dcounts, rcounts, num_threads) {
     .Call(`_gredist_parallelDVS`, dcounts, rcounts, num_threads)
 }
 
-parallel_splits <- function(dm, community, nd, max_split, num_threads, skip_last = FALSE) {
+parallel_splits <- function(dm, community, nd, max_split, num_threads, skip_last) {
     .Call(`_gredist_parallel_splits`, dm, community, nd, max_split, num_threads, skip_last)
 }
 
