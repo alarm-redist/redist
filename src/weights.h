@@ -64,20 +64,20 @@ double compute_n_eff(const arma::subview_col<double> log_wgt);
 //' @return A sampler where index i has probability proportional to the weight 
 //' given to that pair 
 //'
-std::discrete_distribution<>  get_adj_pair_sampler(
+arma::vec get_adj_pair_sampler(
     Plan const &plan,
     std::vector<std::tuple<int, int, double>> const &adj_pairs_and_boundary_lens,
     std::string const &selection_type
 );
 
-
-double get_log_mh_ratio(
-    const Graph &g, 
-    const int region1_id, const int region2_id,
-    const int old_region_boundary_length, const int new_region_boundary_length, 
-    const double current_pair_merge_prob, const double new_pair_merge_prob, 
-    Plan &current_plan, Plan &new_plan
+arma::vec get_adj_pair_unnormalized_weights(
+    Plan const &plan,
+    std::vector<std::pair<int, int>> const &valid_region_adj_pairs,
+    std::string const &selection_type
 );
+
+
+
 
 
 

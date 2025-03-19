@@ -94,8 +94,8 @@ generic_redist_gsmc <- function(
         cli_abort("Merge Split not supported at this moment!")
     }
 
-    # drop data attribute
-    constraints <- as.list(constraints)
+    # validate constraints
+    constraints <- validate_constraints(constraints)
     # get the total number of districts
     ndists <- attr(map, "ndists")
 

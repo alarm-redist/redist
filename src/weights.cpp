@@ -65,13 +65,13 @@ double compute_n_eff(const arma::subview_col<double> log_wgt) {
 //' @return A sampler where index i has probability proportional to the weight 
 //' given to that pair 
 //'
-std::discrete_distribution<>  get_adj_pair_sampler(
+arma::vec get_adj_pair_sampler(
     Plan const &plan,
     std::vector<std::tuple<int, int, double>> const &adj_pairs_and_boundary_lens,
     std::string const &selection_type
 ){
     // make a vector for the unnormalized weights 
-    std::vector<double> unnormalized_sampling_weights(adj_pairs_and_boundary_lens.size());
+    arma::vec unnormalized_sampling_weights(adj_pairs_and_boundary_lens.size());
 
     // if uniform then just make all the weights 1 over the size 
     if(selection_type == "uniform"){
@@ -125,15 +125,79 @@ std::discrete_distribution<>  get_adj_pair_sampler(
     }else{
         throw Rcpp::exception("No valid adjacent pair sampler provided!");
     }
-
-    // now create the sampler 
-    std::discrete_distribution<> index_sampler(
-            unnormalized_sampling_weights.begin(),
-            unnormalized_sampling_weights.end()
-        );
+    // now return normalized weights 
+    arma::vec cum_wgts = arma::cumsum(unnormalized_sampling_weights); 
+    // now normalize them
+    cum_wgts = cum_wgts / cum_wgts(cum_wgts.size()-1);
 
     // Return 1 over the log of the size 
-    return index_sampler;
+    return cum_wgts;
+}
+
+
+
+arma::vec get_adj_pair_unnormalized_weights(
+    Plan const &plan,
+    std::vector<std::pair<int, int>> const &valid_region_adj_pairs,
+    std::string const &selection_type
+){
+    // make a vector for the unnormalized weights 
+    arma::vec unnormalized_sampling_weights(valid_region_adj_pairs.size());
+
+    // if uniform then just make all the weights 1 over the size 
+    if(selection_type == "uniform"){
+        std::fill(
+            unnormalized_sampling_weights.begin(), 
+            unnormalized_sampling_weights.end(), 
+            static_cast<double>(valid_region_adj_pairs.size())
+            );
+    }else if(selection_type == "district_pair"){
+        // if district pair then give huge weight to pairs of districts 
+        for (size_t i = 0; i < valid_region_adj_pairs.size(); i++)
+        {
+            int region1_id = valid_region_adj_pairs[i].first;
+            int region2_id = valid_region_adj_pairs[i].second;
+            int region1_dval = plan.region_sizes(region1_id); int region2_dval = plan.region_sizes(region2_id);
+
+            // check if both are districts
+            if(region1_dval == 1 && region2_dval == 1){
+                unnormalized_sampling_weights.at(i) = 1000.0;
+            }else if(region1_dval == 1 || region2_dval == 1){
+                // else check if at least one is a district
+                unnormalized_sampling_weights.at(i) = 10.0;
+            }else{
+                // if both multidistricts then do 1/1+(sum of two dvals)
+                // This penalizes bigger pairs 
+                unnormalized_sampling_weights.at(i) = 1/(1+ static_cast<double>(region1_dval+region2_dval));
+            }
+        }
+        
+    }else if(selection_type == "multidistrict_pair"){
+        // if multidistrict pair then give huge weight to pairs of districts 
+        for (size_t i = 0; i < valid_region_adj_pairs.size(); i++)
+        {
+            int region1_id = valid_region_adj_pairs[i].first;
+            int region2_id = valid_region_adj_pairs[i].second;
+            int region1_dval = plan.region_sizes(region1_id); int region2_dval = plan.region_sizes(region2_id);
+
+            // check if both are districts
+            if(region1_dval == 1 && region2_dval == 1){
+                unnormalized_sampling_weights.at(i) = .5;
+            }else if(region1_dval == 1 || region2_dval == 1){
+                // else check if at least one is a district
+                unnormalized_sampling_weights.at(i) = 1.0;
+            }else{
+                // if both multidistricts then do 1/1+(sum of two dvals)
+                // This penalizes bigger pairs 
+                unnormalized_sampling_weights.at(i) = 1000.0;
+            }
+        }
+        
+    }else{
+        throw Rcpp::exception("No valid adjacent pair sampler provided!");
+    }
+    // Return weights 
+    return unnormalized_sampling_weights;
 }
 
 
@@ -193,34 +257,7 @@ std::discrete_distribution<>  get_adj_pair_sampler(
      return std::log(count);
 }
 
-// computes log metropolis hastings ratio
-double get_log_mh_ratio(
-    const Graph &g, 
-    const int region1_id, const int region2_id,
-    const int old_region_boundary_length, const int new_region_boundary_length, 
-    const double current_pair_merge_prob, const double new_pair_merge_prob, 
-    Plan &current_plan, Plan &new_plan
-){
-    // get the log boundary lengths
-    double old_log_boundary_length = std::log(static_cast<double>(old_region_boundary_length));
 
-    double new_log_boundary_length = std::log(static_cast<double>(new_region_boundary_length));
-
-    // Get the merge probability which for now is uniform
-    double log_old_merge_prob = std::log(current_pair_merge_prob);
-
-    double log_new_merge_prob = std::log(new_pair_merge_prob);
-
-    // double log_mh_ratio_numerator = old_log_boundary_length + log_old_merge_prob;
-    // double log_mh_ratio_denominator = new_log_boundary_length + log_new_merge_prob;
-
-    double log_mh_ratio_numerator = old_log_boundary_length + log_new_merge_prob;
-    double log_mh_ratio_denominator = new_log_boundary_length + log_old_merge_prob;
-
-    double log_mh_ratio = log_mh_ratio_numerator - log_mh_ratio_denominator;
-
-    return log_mh_ratio;
-}
 
 
 //' Get the probability the union of two regions was chosen to split

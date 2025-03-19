@@ -179,10 +179,10 @@ int find_u(double u, int max, vec cum_wgts) {
 }
 
 /*
- * Generate a random integer in [0, max) according to normalized cumulative weights.
+ * Generate a random integer in [0, cum_wgts.size()) according to normalized cumulative weights.
  */
-int RNGState::r_int_wgt(int max, vec cum_wgts) {
-    return find_u(r_unif(), max, cum_wgts);
+int RNGState::r_int_wgt(vec cum_wgts) {
+    return find_u(r_unif(), cum_wgts.size(), cum_wgts);
 }
 
 /* 
@@ -208,7 +208,7 @@ int RNGState::r_int_unnormalized_wgt(const vec &unnormalized_wgts) {
     arma::vec cum_wgts = arma::cumsum(unnormalized_wgts); 
     // now normalize them
     cum_wgts = cum_wgts / cum_wgts(cum_wgts.size()-1);
-    return r_int_wgt(static_cast<int>(unnormalized_wgts.size()), cum_wgts);
+    return r_int_wgt(cum_wgts);
 }
 
 

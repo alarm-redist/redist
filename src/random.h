@@ -27,7 +27,7 @@ class RNGState{
 
         int r_int(uint32_t max); // Generate a uniform random integer in [0, max). Slightly biased.
         double r_unif(); // Generate a uniform random double in [0, 1). Slightly biased.
-        int r_int_wgt(int max, vec cum_wgts); // Generate a random integer in [0, max) according to cumulative normalized weights.
+        int r_int_wgt(vec cum_wgts); // Generate a random integer in [0, cum_wgts.size()) according to cumulative normalized weights.
         int r_int_unnormalized_wgt(const vec &unnormalized_wgts); // Generate random integer with probability proporitional to weights
 
         // Delete copy operator 

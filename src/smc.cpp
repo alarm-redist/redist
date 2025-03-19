@@ -431,7 +431,7 @@ void split_maps(const Graph &g, const uvec &counties, Multigraph &cg,
         std::vector<bool> ignore(V);
         while (!ok) {
             // resample
-            idx = rng_states[thread_id].r_int_wgt(N, cum_wgt);
+            idx = rng_states[thread_id].r_int_wgt(cum_wgt);
             districts_new.col(i) = districts.col(idx);
             ++draw_tries_vec[i];
 

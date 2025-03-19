@@ -132,6 +132,82 @@ void AnyRegionSplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
 
 
 
+PureMSSplittingSchedule::PureMSSplittingSchedule(
+    const int ndists, int const district_size_lb, int const district_size_ub
+):
+    SplittingSchedule(
+        SplittingSizeScheduleType::PureMergeSplitSize, 
+        1, ndists, ndists){
+    
+    // check bounds make sense
+    if(district_size_lb < 1){
+        throw Rcpp::exception("Pure MS District Size Lower Bound must be at least 1!\n");
+    }
+    if(district_size_lb > district_size_ub){
+        throw Rcpp::exception("Pure MS District Size Lower Bound must not be greater than the upper bound!\n");
+    }
+    if(district_size_ub > ndists){
+        throw Rcpp::exception("Pure MS District Size Upper Bound must not be greater than the total number of districts in the map!\n");
+    }
+
+    for(int district_size1 = district_size_lb; 
+            district_size1 <= district_size_ub;
+            district_size1++){
+        // mark each district size as a valid split region size
+        valid_split_region_sizes[district_size1] = true;
+
+        // don't support irregular district sizes like this right now
+        if(district_size1*2 > ndists){
+            throw Rcpp::exception("Pure MS not supported when one district bigger than half total seats\n");
+        }
+
+        for(int district_size2 = district_size_lb; 
+            district_size2 <= district_size_ub;
+            district_size2++){
+            
+            if(district_size1 + district_size2 <= ndists){
+                valid_merge_pair_sizes[district_size1][district_size2] = true;
+                valid_merge_pair_sizes[district_size2][district_size1] = true;
+                valid_region_sizes_to_split[district_size1+district_size2] = true;
+                // just add we'll sort and make unique later 
+                all_regions_smaller_cut_sizes_to_try[district_size1+district_size2].emplace_back(
+                    std::min(district_size1, district_size2)
+                );
+            }
+        }
+    }
+
+    check_adj_to_regions = valid_split_region_sizes;
+    // make smaller cut sizes unique and sort
+    // get min and max sizes 
+
+    // NOT TESTED
+    for (size_t region_size = 0; region_size <= ndists; region_size++)
+    {
+        if(!valid_region_sizes_to_split[region_size]) continue;
+        // sort and remove duplicates 
+        // 1) Sort the vector
+        std::sort(
+            all_regions_smaller_cut_sizes_to_try[region_size].begin(), 
+            all_regions_smaller_cut_sizes_to_try[region_size].end());
+        
+        all_regions_smaller_cut_sizes_to_try[region_size].erase( 
+            std::unique(
+                all_regions_smaller_cut_sizes_to_try[region_size].begin(), 
+                all_regions_smaller_cut_sizes_to_try[region_size].end())
+            , all_regions_smaller_cut_sizes_to_try[region_size].end() );
+
+        int smallest_possible_size = all_regions_smaller_cut_sizes_to_try[region_size][0];
+
+        // set biggest and smallest possible size
+        all_regions_min_and_max_possible_cut_sizes[region_size] = {
+            smallest_possible_size, 
+            region_size-smallest_possible_size
+        };
+    }
+
+}
+
 
 OneCustomSplitSchedule::OneCustomSplitSchedule(
     const int num_splits, const int ndists, const int initial_num_regions, 

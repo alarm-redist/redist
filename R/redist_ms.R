@@ -113,35 +113,57 @@
 #' @md
 #' @order 1
 #' @export
-redist_mergesplit <- function(map, nsims, chains = 1,
-                                       warmup = if (is.null(init_plan)) 10 else max(100, nsims %/% 5),
-                                       thin = 1L, init_plan = NULL, counties = NULL, compactness = 1,
-                                       constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
-                                       adapt_k_thresh = 0.99, k = NULL, ncores = NULL,
-                                       cl_type = "PSOCK", return_all = TRUE, init_name = NULL,
-                                       multiprocess = T,
-                                       verbose = FALSE, silent = FALSE) {
+redist_mergesplit <- function(
+    map, nsims, counties = NULL,
+    warmup = if (is.null(init_plan)) 10 else max(100, nsims %/% 5),
+    thin = 1L, chains = 1,
+    init_plan = NULL,
+    constraints = list(), constraint_fn = function(m) rep(0, ncol(m)),
+    sampling_space = gredist:::GRAPH_PLAN_SPACE_SAMPLING,
+    splitting_method = gredist:::NAIVE_K_SPLITTING,
+    splitting_params = list(adapt_k_thresh = .99),
+    merge_prob_type = "uniform", compactness = 1,
+    ncores = NULL,
+    cl_type = "PSOCK", return_all = TRUE, init_name = NULL,
+    multiprocess = T,
+    verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE
+) {
     if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
 
-    map <- validate_redist_map(map)
-    V <- nrow(map)
-    adj <- get_adj(map)
+
+    # drop data attribute
+    constraints <- as.list(constraints)
+    # get the total number of districts
     ndists <- attr(map, "ndists")
+
+
+    map_params <- get_map_parameters(map, use_counties_q=T, counties_q = rlang::enquo(counties))
+    map <- map_params$map
+    V <- map_params$V
+    adj_list <- map_params$adj_list
+    counties <- map_params$counties
+    num_admin_units <- length(unique(counties))
+    pop <- map_params$pop
+    pop_bounds <- map_params$pop_bounds
+
+
     thin <- as.integer(thin)
 
     chains <- as.integer(chains)
 
     if (compactness < 0)
         cli_abort("{.arg compactness} must be non-negative.")
-    if (adapt_k_thresh < 0 | adapt_k_thresh > 1)
-        cli_abort("{.arg adapt_k_thresh} must lie in [0, 1].")
     if (thin < 1)
         cli_abort("{.arg thin} must be a positive integer.")
     if (nsims < 1)
         cli_abort("{.arg nsims} must be positive.")
 
+    #validate the splitting method and params
+    splitting_params <- validate_sample_space_and_splitting_method(
+        sampling_space, splitting_method, splitting_params, num_splitting_steps
+    )
+
     exist_name <- attr(map, "existing_col")
-    counties <- rlang::eval_tidy(rlang::enquo(counties), map)
     if (is.null(init_plan)) {
         if (!is.null(exist_name)) {
             init_plans <- matrix(rep(vctrs::vec_group_id(get_existing(map)), chains), ncol = chains)
@@ -160,7 +182,6 @@ redist_mergesplit <- function(map, nsims, chains = 1,
         } else {
             init_plans <- matrix(rep(as.integer(init_plan), chains), ncol = chains)
         }
-
         if (is.null(init_name))
             init_names <- paste0("<init> ", seq_len(chains))
         else
@@ -171,11 +192,11 @@ redist_mergesplit <- function(map, nsims, chains = 1,
         # heuristic. Do at least 50 plans to not get stuck
         n_smc_nsims <- max(chains, 50)
         init_plans <- get_plans_matrix(
-            redist_smc(map, n_smc_nsims, counties, compactness, constraints,
-                       resample = TRUE, adapt_k_thresh = adapt_k_thresh,
+            generic_redist_gsmc(map, n_smc_nsims, counties, compactness, constraints,
+                       resample = TRUE, splitting_params = splitting_params,
+                       sampling_space = sampling_space, splitting_method = splitting_method,
                        ref_name = FALSE, verbose = verbose, silent = silent, num_processes = 1)
             )[, sample.int(n=n_smc_nsims, size=chains, replace=F), drop=FALSE]
-
         if (is.null(init_name))
             init_names <- paste0("<init> ", seq_len(chains))
         else
@@ -183,70 +204,59 @@ redist_mergesplit <- function(map, nsims, chains = 1,
     }
 
 
-    # check init
-    if (nrow(init_plans) != V)
-        cli_abort("{.arg init_plan} must be as long as the number of units as `map`.")
-    if (max(init_plans) != ndists)
-        cli_abort("{.arg init_plan} must have the same number of districts as `map`.")
-    if (any(apply(init_plans, 2, function(x) contiguity(adj, x)) != 1))
-        cli_warn("{.arg init_plan} should have contiguous districts.")
 
-    if (is.null(counties)) {
-        counties <- rep(1, V)
-    } else {
-        if (any(is.na(counties)))
-            cli_abort("{.arg counties} must not contain missing values.")
+    # subtract 1 to make it 0 indexed
+    init_plans <- init_plans - 1
+    # validate initial plans
+    validate_initial_region_id_mat(init_plans, V, chains, ndists)
 
-        # handle discontinuous counties
-        component <- contiguity(adj, vctrs::vec_group_id(counties))
-        counties <- dplyr::if_else(component > 1,
-                                   paste0(as.character(counties), "-", component),
-                                   as.character(counties)) %>%
-            as.factor() %>%
-            as.integer()
-    }
+    # check it satsifies population bounds
+    # add one because we assume 1 indexed
+    init_pop <- pop_tally(init_plans+1, pop, ndists)
+    if (any(init_pop < pop_bounds[1]) | any(init_pop > pop_bounds[3]))
+        cli_abort("Provided initialization does not meet population bounds.")
 
+    # TODO: add support for multimember district in future
+    init_sizes <- matrix(1L, nrow = ndists, ncol = ncol(init_plans))
 
-    # Other constraints
-    if (!inherits(constraints, "redist_constr")) {
-        constraints <- new_redist_constr(eval_tidy(enquo(constraints), map))
-    }
-    if (any(c("edges_removed", "log_st") %in% names(constraints))) {
-        cli_warn(c("{.var edges_removed} or {.var log_st} constraint found in
-           {.arg constraints} and will be ignored.",
-            ">" = "Adjust using {.arg compactness} instead."))
-    }
-    if (any(c("poslby", "fry_hold") %in% names(constraints)) && compactness == 1) {
-        cli_warn("{.var polsby} or {.var fry_hold} constraint found in {.arg constraints}
-                 with {.arg compactness == 1). This may disrupt efficient sampling.")
-    }
-    constraints <- as.list(constraints) # drop data attribute
+    # validate constraints
+    constraints <- validate_constraints(constraints)
 
     verbosity <- 1
     if (verbose) verbosity <- 3
     if (silent) verbosity <- 0
-    if (is.null(k)) k <- 0
 
-    pop_bounds <- attr(map, "pop_bounds")
-    pop <- map[[attr(map, "pop_col")]]
-    init_pop <- pop_tally(init_plans, pop, ndists)
-    if (any(init_pop < pop_bounds[1]) | any(init_pop > pop_bounds[3]))
-        cli_abort("Provided initialization does not meet population bounds.")
-    if (any(pop >= pop_bounds[3])) {
-        too_big <- as.character(which(pop >= pop_bounds[3]))
-        cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
-                    population larger than the maximum district size.",
-                    "x" = "Redistricting impossible."))
-    }
 
-    control = list(adapt_k_thresh=adapt_k_thresh, do_mh=TRUE)
+    control = list(
+        splitting_method=splitting_method
+    )
+
+    # add the splitting parameters
+    # need to do it like this because its a list
+    control <- c(control, splitting_params)
+
+
+    # chain <- 1
+    # algout <- ms_plans(
+    #     nsims, warmup, thin,
+    #     ndists,
+    #     adj_list, counties, pop,
+    #     target=pop_bounds[2], lower=pop_bounds[1], upper=pop_bounds[3],
+    #     compactness,
+    #     init_plans[, chain, drop=FALSE], init_sizes[, chain, drop=FALSE],
+    #     sampling_space_str = sampling_space,
+    #     merge_prob_type,
+    #     control, constraints,
+    #     verbosity, FALSE
+    # )
+    # return(algout)
+
 
     # set up parallel
     if (is.null(ncores)) ncores <- parallel::detectCores()
     ncores <- min(ncores, chains)
     if (ncores > 1 && multiprocess && chains > 1) {
         `%oper%` <- `%dorng%`
-
 
         of <- ifelse(Sys.info()[['sysname']] == 'Windows',
                      tempfile(pattern = paste0('ms_', substr(Sys.time(), 1, 10)), fileext = '.txt'),
@@ -295,18 +305,31 @@ redist_mergesplit <- function(map, nsims, chains = 1,
         run_verbosity <- if (is_chain1 || !multiprocess) verbosity else 0
 
         t1_run <- Sys.time()
-        algout <- ms_plans(nsims, warmup, adj, init_plans[, chain], counties, pop,
-                           ndists, pop_bounds[2], pop_bounds[1], pop_bounds[3],
-                           compactness, constraints, control, k, thin, run_verbosity)
+        algout <- ms_plans(
+            nsims, warmup, thin,
+            ndists,
+            adj_list, counties, pop,
+            target=pop_bounds[2], lower=pop_bounds[1], upper=pop_bounds[3],
+            compactness,
+            init_plans[, chain, drop=FALSE], init_sizes[, chain, drop=FALSE],
+            sampling_space_str = sampling_space,
+            merge_prob_type,
+            control, constraints,
+            run_verbosity, diagnostic_mode
+        )
         t2_run <- Sys.time()
+        # 1 index the plans
+        algout$plans <- algout$plans + 1L
 
         # Internal diagnostics,
         algout$internal_diagnostics <- list(
             log_mh_ratio = algout$log_mh_ratio,
+            mh_acceptance = algout$mhdecisions,
             warmup_acceptances = algout$warmup_acceptances,
             post_warump_acceptances = algout$post_warump_acceptances,
             warmup_accept_rate = algout$warmup_acceptances / warmup,
-            postwarmup_accept_rate = algout$post_warump_acceptances / (nsims*thin)
+            postwarmup_accept_rate = algout$post_warump_acceptances / (nsims*thin),
+            proposed_plans = algout$proposed_plans + 1L
         )
 
         algout$l_diag <- list(
@@ -317,7 +340,8 @@ redist_mergesplit <- function(map, nsims, chains = 1,
             warmup = warmup,
             total_acceptances = (algout$warmup_acceptances + algout$post_warump_acceptances),
             accept_rate = (algout$warmup_acceptances + algout$post_warump_acceptances) / algout$total_steps,
-            total_steps = algout$total_steps
+            total_steps = algout$total_steps,
+            splitting_params=splitting_params
         )
 
 
@@ -363,7 +387,6 @@ redist_mergesplit <- function(map, nsims, chains = 1,
                             compactness = compactness,
                             constraints = constraints,
                             ndists = ndists,
-                            adapt_k_thresh = adapt_k_thresh,
                             mh_acceptance = mh,
                             version = packageVersion("gredist"),
                             diagnostics = l_diag,

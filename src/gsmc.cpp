@@ -143,7 +143,7 @@ void run_smc_step(
             // increase the number of tries for particle i by 1
             draw_tries_vec[i]++;
             // sample previous plan
-            idx = rng_states[thread_id].r_int_wgt(M, normalized_cumulative_weights);
+            idx = rng_states[thread_id].r_int_wgt(normalized_cumulative_weights);
             
             // Get region id the split
             int region_id_to_split;
@@ -184,7 +184,8 @@ void run_smc_step(
                 new_plans_ptr_vec.at(i)->update_from_successful_split(
                     ust_sampler.ust, std::get<1>(edge_search_result),
                     region_id_to_split, new_region_id,
-                    std::get<2>(edge_search_result)
+                    std::get<2>(edge_search_result), 
+                    true
                 );
                 // record index of new plan's parent
                 parent_index_vec[i] = idx;
@@ -836,17 +837,20 @@ List run_redist_gsmc(
                 Rprintf("Ran %d Merge Split Attempts: ", 
                     nsteps_to_run);
             }
-
+            bool is_final = plans_ptr_vec[0]->num_regions == ndists;
             // auto t1fm = high_resolution_clock::now();
             run_merge_split_step_on_all_plans(
                 pool,
-                map_params, *splitting_schedule_ptr,
+                map_params, *splitting_schedule_ptr, 
+                scoring_function,
+                rng_states, sampling_space, 
                 plans_ptr_vec, new_plans_ptr_vec,
                 *tree_splitter_ptr,
-                split_district_only, merge_prob_type,
-                nsteps_to_run,
+                merge_prob_type, nsteps_to_run,
+                rho, is_final,
                 merge_split_successes_mat.column(merge_split_step_num)
             );
+
 
 
             cut_k_values.at(step_num) = prev_k;

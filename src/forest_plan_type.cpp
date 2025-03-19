@@ -8,10 +8,10 @@ ForestPlan::ForestPlan(arma::subview_col<arma::uword> region_ids_col,
               const Rcpp::List &initial_forest_adj_list):
               Plan(region_ids_col, region_sizes_col, ndists, num_regions, pop, split_district_only){
 
-    if(num_regions == 1){
+    if(num_regions == 1 || num_regions == ndists){
         forest_graph.resize(region_ids.n_elem);
-    }
-    if(num_regions > 1){
+    }else if(num_regions > 1){
+        throw Rcpp::exception("Custom forests not ready yet!");
         forest_graph = list_to_graph(initial_forest_adj_list);
     }    
 }
@@ -23,14 +23,10 @@ Graph ForestPlan::get_forest_adj(){
 
 
 
-
-
 void ForestPlan::update_vertex_info_from_cut(
         Tree const &ust, EdgeCut const cut_edge, 
         const int split_region1_id, const int split_region2_id
 ){
-
-
     // Get the root of the tree associated with region 1 and 2
     int split_region1_tree_root, split_region2_tree_root;
     int split_region1_size, split_region2_size;
@@ -40,22 +36,14 @@ void ForestPlan::update_vertex_info_from_cut(
         split_region1_tree_root, split_region1_size, split_region1_pop,
         split_region2_tree_root, split_region2_size, split_region2_pop
     );
-
     // update the vertex labels and the tree
     assign_region_id_and_forest_from_tree(
         ust, region_ids, forest_graph,
         split_region1_tree_root, split_region1_id);
 
-    // Rprintf("Root is %d and its size is %d\n", 
-    //     split_region1_tree_root, (int) forest_graph.at(split_region1_tree_root).size());
-
     assign_region_id_and_forest_from_tree(
         ust, region_ids, forest_graph,
         split_region2_tree_root, split_region2_id);
-
-
-    // Rprintf("Root is %d and its size is %d\n", 
-    //     split_region2_tree_root, (int) forest_graph.at(split_region2_tree_root).size());
 
     return;
 }

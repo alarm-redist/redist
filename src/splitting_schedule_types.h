@@ -99,11 +99,30 @@ class AnyRegionSplittingSchedule : public SplittingSchedule {
         AnyRegionSplittingSchedule(
             const int num_splits, const int ndists, const int initial_num_regions
         );
-
-        void set_potential_cut_sizes_for_each_valid_size(int split_num, int presplit_num_regions) override;    
+        // this does nothing and should not be called
+        void set_potential_cut_sizes_for_each_valid_size(
+            int split_num, int presplit_num_regions) override;    
 };
 
 
+
+/* 
+ * Derived Class for pure merge split. So you can merge any valid district
+ * sizes and create any district sizes. 
+ */
+class PureMSSplittingSchedule : public SplittingSchedule {
+
+    public:
+        // constructor
+        PureMSSplittingSchedule(
+            const int ndists, int const district_size_lb, int const district_size_ub 
+        );
+
+        void set_potential_cut_sizes_for_each_valid_size(
+            int split_num, int presplit_num_regions) override{
+                throw Rcpp::exception("Dont call this method for pure MS!");
+            };    
+};
 
 /* 
  * Derived Class for one custom split schedule. This is where only one type

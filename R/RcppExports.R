@@ -199,8 +199,8 @@ parallel_polsbypopper <- function(from, to, area, perimeter, dm, nd, num_threads
     .Call(`_gredist_parallel_polsbypopper`, from, to, area, perimeter, dm, nd, num_threads)
 }
 
-ms_plans <- function(nsims, warmup, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, verbosity) {
-    .Call(`_gredist_ms_plans`, nsims, warmup, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, verbosity)
+ms_plans <- function(nsims, warmup, thin, ndists, adj_list, counties, pop, target, lower, upper, rho, region_id_mat, region_sizes_mat, sampling_space_str, merge_prob_type, control, constraints, verbosity = 3L, diagnostic_mode = FALSE) {
+    .Call(`_gredist_ms_plans`, nsims, warmup, thin, ndists, adj_list, counties, pop, target, lower, upper, rho, region_id_mat, region_sizes_mat, sampling_space_str, merge_prob_type, control, constraints, verbosity, diagnostic_mode)
 }
 
 pareto_dominated <- function(x) {

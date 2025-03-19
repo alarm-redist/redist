@@ -210,7 +210,6 @@ void assign_region_id_and_forest_from_tree(
 
     // update root region id
     region_ids(root) = new_region_id;
-
     // and its forest vertices
     int n_desc = ust[root].size();
     // clear this vertices neighbors in the graph and reserve size for children
@@ -223,7 +222,7 @@ void assign_region_id_and_forest_from_tree(
         vertex_queue.push({child_vertex, root});
         forest_graph[root].push_back(child_vertex);
     }
-
+    
     // update all the children
     while(!vertex_queue.empty()){
         // get and remove head of queue 

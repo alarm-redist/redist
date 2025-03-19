@@ -10,6 +10,15 @@
 // For the future, to avoid needing to create visited and ignore
 class USTSampler {
 
+private:
+
+    std::tuple<bool, EdgeCut, double> try_to_sample_splittable_tree(
+        const MapParams &map_params, SplittingSchedule const &splitting_schedule,
+        RNGState &rng_state, TreeSplitter const &tree_splitter,
+        int const region_populations, int const region_size,
+        bool const save_selection_prob
+    );
+
 public:
 
     USTSampler(int V) : 
@@ -26,10 +35,23 @@ public:
     bool draw_tree_on_region(const MapParams &map_params, RNGState &rng_state,
         Plan const &plan, const int region_to_draw_tree_on);
 
+    // Attempts to draw a tree on a region formed by merging the two regions
+    bool draw_tree_on_merged_region(const MapParams &map_params, RNGState &rng_state,
+        Plan const &plan, 
+        const int region1_to_draw_tree_on, const int region2_to_draw_tree_on);
+
     std::tuple<bool, EdgeCut, double> attempt_to_find_valid_tree_split(
         const MapParams &map_params, SplittingSchedule const &splitting_schedule,
         RNGState &rng_state, TreeSplitter const &tree_splitter,
         Plan const &plan, int const region_to_split,
+        bool const save_selection_prob
+    );
+
+
+    std::tuple<bool, EdgeCut, double> attempt_to_find_valid_tree_mergesplit(
+        const MapParams &map_params, SplittingSchedule const &splitting_schedule,
+        RNGState &rng_state, TreeSplitter const &tree_splitter,
+        Plan const &plan, int const merge_region1, int const merge_region2,
         bool const save_selection_prob
     );
 

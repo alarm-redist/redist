@@ -761,7 +761,8 @@ bool Plan::draw_tree_on_region(const MapParams &map_params, const int region_to_
 //'
 void Plan::update_region_info_from_cut(
         EdgeCut cut_edge, 
-        const int split_region1_id, const int split_region2_id
+        const int split_region1_id, const int split_region2_id,
+        bool const add_region
 ){
     // Get information on the two new regions cut
     int split_region1_tree_root, split_region2_tree_root;
@@ -773,8 +774,8 @@ void Plan::update_region_info_from_cut(
         split_region2_tree_root, split_region2_size, split_region2_pop
     );
 
-    // update plan with new regions
-    num_regions++; // increase region count by 1
+    // update plan with new regions if needed
+    if(add_region) num_regions++; // increase region count by 1
 
     // make the first new region get max plus one
     region_order_max++;
@@ -801,94 +802,22 @@ void Plan::update_region_info_from_cut(
 
 
 
-bool Plan::attempt_split(const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-                 Tree &ust, TreeSplitter &tree_splitter, std::vector<int> &pops_below_vertex,
-                 std::vector<bool> &visited, std::vector<bool> &ignore, 
-                 RNGState &rng_state, bool const save_selection_prob,
-                 int const min_region_cut_size, int const max_region_cut_size, 
-                 std::vector<int> const &smaller_cut_sizes_to_try,
-                 const bool split_district_only, 
-                 const int region_id_to_split, const int new_region_id)
-{
-    if(TREE_SPLITTING_DEBUG_VERBOSE){
-    REprintf("Drawing tree on region %d which is size %d. Smallest/Biggest is (%d, %d)\n", 
-    region_id_to_split, (int) region_sizes(region_id_to_split), min_region_cut_size,
-    max_region_cut_size);
-    int split_region_size = (int) region_sizes(region_id_to_split);
-    REprintf("We can try cut sizes: ");
-    for (auto const &small_size: smaller_cut_sizes_to_try)
-    {
-        REprintf("(%d, %d), ", small_size, split_region_size-small_size);
-    }
-    REprintf("\n");
-    }
-    
-
-    // Now try to draw a tree on the region
-    int root;
-    
-    // Try to draw a tree on region
-    bool tree_drawn = draw_tree_on_region(map_params, region_id_to_split,
-        ust, visited, ignore, root, rng_state);
-
-    if(!tree_drawn) return false;
-
-
-
-    // Now try to select an edge to cut
-    std::tuple<bool, EdgeCut, double> edge_search_result = tree_splitter.attempt_to_find_edge_to_cut(
-        map_params, rng_state, 
-        ust, root,
-        pops_below_vertex, visited,
-        region_pops[region_id_to_split], region_sizes(region_id_to_split),
-        min_region_cut_size, max_region_cut_size, 
-        smaller_cut_sizes_to_try //,
-        //bool save_selection_prob = false
-    ); 
-
-
-
-    // return false if unsuccessful
-    if(!std::get<0>(edge_search_result)) return false;
-
-
-    // If successful extract the edge cut info
-    EdgeCut cut_edge = std::get<1>(edge_search_result);
-    // Now erase the cut edge in the tree
-    erase_tree_edge(ust, cut_edge);
-
-
-    // now update the region level information from the edge cut
-    update_region_info_from_cut(
-        cut_edge, 
-        region_id_to_split, new_region_id
-    );
-
-    // Now update the vertex level information
-    update_vertex_info_from_cut(
-        ust, cut_edge, 
-        region_id_to_split, new_region_id
-    );
-
-    return true;
-}
-
-
-
 void Plan::update_from_successful_split(
     Tree const &ust, EdgeCut const &cut_edge,
     int const new_region1_id, int const new_region2_id,
-    double const log_selection_prob
+    double const log_selection_prob, bool const add_region
 ){
     // now update the region level information from the edge cut
     update_region_info_from_cut(
         cut_edge,
-        new_region1_id, new_region2_id
+        new_region1_id, new_region2_id,
+        add_region
     );
-
+    
     // Now update the vertex level information
     update_vertex_info_from_cut(
         ust, cut_edge, 
         new_region1_id, new_region2_id
-    );    
+    ); 
+     
 }

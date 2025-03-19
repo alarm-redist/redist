@@ -169,6 +169,7 @@ enum class SplittingSizeScheduleType : unsigned char
     DistrictOnly,
     AnyValidSize,
     OneCustomSize,
+    PureMergeSplitSize,
     CustomSizes
 };
 

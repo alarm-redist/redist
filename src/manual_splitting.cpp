@@ -291,7 +291,8 @@ List perform_a_valid_multidistrict_split(
         // now update the region level information from the edge cut
         plan->update_region_info_from_cut(
             cut_edge,
-            region_id_to_split, new_region2_id
+            region_id_to_split, new_region2_id, 
+            true
         );
 
         // Now update the vertex level information
@@ -355,11 +356,13 @@ List perform_merge_split_steps(
         bool split_district_only, int num_merge_split_steps,
         bool verbose
 ){
+    double rho = 1; bool is_final = false;
     MapParams map_params(adj_list, counties, pop, ndists, lower, target, upper);
     // unpack control params
     Graph g = list_to_graph(adj_list);
     Multigraph cg = county_graph(g, counties);
     int V = g.size();
+    ScoringFunction scoring_function(map_params, adj_list, 0);
 
     auto dummy_region_ids = region_ids; auto dummy_region_dvals = region_sizes;
 
@@ -398,12 +401,19 @@ List perform_merge_split_steps(
         1, ndists, num_regions, splitting_type, fake_control
     );
 
+    int global_rng_seed = (int) Rcpp::sample(INT_MAX, 1)[0];
+    RNGState rng_state(global_rng_seed);
+    SamplingSpace sampling_space = get_sampling_space("graph_space");
+    USTSampler ust_sampler(V);
 
     // now do merge split 
-    int num_successes = run_merge_split_step_on_a_plan(
-        map_params, *splitting_schedule_ptr,
-        split_district_only, "uniform",
-        *plan, *new_plan, *tree_splitter,
+    int num_successes = run_merge_split_steps(
+        map_params, *splitting_schedule_ptr, scoring_function,
+        rng_state, sampling_space,
+        *plan, *new_plan, 
+        ust_sampler, *tree_splitter,
+        "uniform", 
+        rho, is_final, 
         num_merge_split_steps
     );
 

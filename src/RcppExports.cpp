@@ -615,28 +615,31 @@ BEGIN_RCPP
 END_RCPP
 }
 // ms_plans
-Rcpp::List ms_plans(int nsims, int warmup, List l, const arma::uvec init, const arma::uvec& counties, const arma::uvec& pop, int n_distr, double target, double lower, double upper, double rho, List constraints, List control, int k, int thin, int verbosity);
-RcppExport SEXP _gredist_ms_plans(SEXP nsimsSEXP, SEXP warmupSEXP, SEXP lSEXP, SEXP initSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP n_distrSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP constraintsSEXP, SEXP controlSEXP, SEXP kSEXP, SEXP thinSEXP, SEXP verbositySEXP) {
+Rcpp::List ms_plans(int nsims, int warmup, int thin, int const ndists, List const& adj_list, const arma::uvec& counties, const arma::uvec& pop, double const target, double const lower, double const upper, double rho, arma::umat region_id_mat, arma::umat region_sizes_mat, std::string const& sampling_space_str, std::string const& merge_prob_type, List const& control, List const& constraints, int verbosity, bool diagnostic_mode);
+RcppExport SEXP _gredist_ms_plans(SEXP nsimsSEXP, SEXP warmupSEXP, SEXP thinSEXP, SEXP ndistsSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP region_id_matSEXP, SEXP region_sizes_matSEXP, SEXP sampling_space_strSEXP, SEXP merge_prob_typeSEXP, SEXP controlSEXP, SEXP constraintsSEXP, SEXP verbositySEXP, SEXP diagnostic_modeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< int >::type nsims(nsimsSEXP);
     Rcpp::traits::input_parameter< int >::type warmup(warmupSEXP);
-    Rcpp::traits::input_parameter< List >::type l(lSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec >::type init(initSEXP);
+    Rcpp::traits::input_parameter< int >::type thin(thinSEXP);
+    Rcpp::traits::input_parameter< int const >::type ndists(ndistsSEXP);
+    Rcpp::traits::input_parameter< List const& >::type adj_list(adj_listSEXP);
     Rcpp::traits::input_parameter< const arma::uvec& >::type counties(countiesSEXP);
     Rcpp::traits::input_parameter< const arma::uvec& >::type pop(popSEXP);
-    Rcpp::traits::input_parameter< int >::type n_distr(n_distrSEXP);
-    Rcpp::traits::input_parameter< double >::type target(targetSEXP);
-    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
-    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    Rcpp::traits::input_parameter< double const >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< double const >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double const >::type upper(upperSEXP);
     Rcpp::traits::input_parameter< double >::type rho(rhoSEXP);
-    Rcpp::traits::input_parameter< List >::type constraints(constraintsSEXP);
-    Rcpp::traits::input_parameter< List >::type control(controlSEXP);
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    Rcpp::traits::input_parameter< int >::type thin(thinSEXP);
+    Rcpp::traits::input_parameter< arma::umat >::type region_id_mat(region_id_matSEXP);
+    Rcpp::traits::input_parameter< arma::umat >::type region_sizes_mat(region_sizes_matSEXP);
+    Rcpp::traits::input_parameter< std::string const& >::type sampling_space_str(sampling_space_strSEXP);
+    Rcpp::traits::input_parameter< std::string const& >::type merge_prob_type(merge_prob_typeSEXP);
+    Rcpp::traits::input_parameter< List const& >::type control(controlSEXP);
+    Rcpp::traits::input_parameter< List const& >::type constraints(constraintsSEXP);
     Rcpp::traits::input_parameter< int >::type verbosity(verbositySEXP);
-    rcpp_result_gen = Rcpp::wrap(ms_plans(nsims, warmup, l, init, counties, pop, n_distr, target, lower, upper, rho, constraints, control, k, thin, verbosity));
+    Rcpp::traits::input_parameter< bool >::type diagnostic_mode(diagnostic_modeSEXP);
+    rcpp_result_gen = Rcpp::wrap(ms_plans(nsims, warmup, thin, ndists, adj_list, counties, pop, target, lower, upper, rho, region_id_mat, region_sizes_mat, sampling_space_str, merge_prob_type, control, constraints, verbosity, diagnostic_mode));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -942,7 +945,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_parallelDVS", (DL_FUNC) &_gredist_parallelDVS, 3},
     {"_gredist_parallel_splits", (DL_FUNC) &_gredist_parallel_splits, 6},
     {"_gredist_parallel_polsbypopper", (DL_FUNC) &_gredist_parallel_polsbypopper, 7},
-    {"_gredist_ms_plans", (DL_FUNC) &_gredist_ms_plans, 16},
+    {"_gredist_ms_plans", (DL_FUNC) &_gredist_ms_plans, 19},
     {"_gredist_pareto_dominated", (DL_FUNC) &_gredist_pareto_dominated, 1},
     {"_gredist_closest_adj_pop", (DL_FUNC) &_gredist_closest_adj_pop, 3},
     {"_gredist_rint1", (DL_FUNC) &_gredist_rint1, 2},

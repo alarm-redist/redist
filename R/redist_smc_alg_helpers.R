@@ -110,6 +110,33 @@ get_map_parameters <- function(map, counties_q=NULL, use_counties_q=TRUE, counti
 }
 
 
+#' Checks that a constraint input is valid and returns it as a list ready for c++
+#'
+#' Checks that the sampling space/splitting method combination given is valid
+#' and that the splitting parameters are valid.
+#'
+#' @inheritParams redist_smc
+#'
+#'
+#' @returns A list of splitting parameters which is safe to pass into c++ code
+validate_constraints <- function(constraints){
+    # Other constraints
+    if (!inherits(constraints, "redist_constr")) {
+        constraints <- new_redist_constr(eval_tidy(enquo(constraints), map))
+    }
+    if (any(c("edges_removed", "log_st") %in% names(constraints))) {
+        cli_warn(c("{.var edges_removed} or {.var log_st} constraint found in
+           {.arg constraints} and will be ignored.",
+                   ">" = "Adjust using {.arg compactness} instead."))
+    }
+    if (any(c("poslby", "fry_hold") %in% names(constraints)) && compactness == 1) {
+        cli_warn("{.var polsby} or {.var fry_hold} constraint found in {.arg constraints}
+                 with {.arg compactness == 1). This may disrupt efficient sampling.")
+    }
+    constraints <- as.list(constraints) # drop data attribute
+    return(constraints)
+}
+
 
 #' Checks the sampling space and splitting method are valid
 #'
@@ -138,7 +165,9 @@ validate_sample_space_and_splitting_method <- function(
             cli_abort("{.arg splitting_method} must be {NAIVE_K_SPLITTING} when sampling on Graph Plan Space")
         }
         if(!"estimate_cut_k" %in% names(splitting_params)){
-            cli_abort("For Naive Top K splitting method {.arg estimate_cut_k} must be included in {.arg splitting_params}")
+            # If no adapt k mentioned default is to estimate
+            splitting_params$estimate_cut_k <- T
+            #cli_abort("For Naive Top K splitting method {.arg estimate_cut_k} must be included in {.arg splitting_params}")
         }
         # check its a boolean
         if(!assertthat::is.flag(splitting_params$estimate_cut_k)){
@@ -150,7 +179,10 @@ validate_sample_space_and_splitting_method <- function(
         if(splitting_params$estimate_cut_k){
             # now check its included
             if(!"adapt_k_thresh" %in% names(splitting_params)){
-                cli_abort("If estimating k for Naive Top K splitting method then {.arg estimate_cut_k} must be included in {.arg splitting_params}")
+                # cli_abort("If estimating k for Naive Top K splitting method then {.arg estimate_cut_k} must be included in {.arg splitting_params}")
+                cli_warn("No adaptive threshold set for Naive Top K estimation. Defaulting to {.arg .99}")
+                # default is .99
+                splitting_params$adapt_k_thresh <- .99
             }
             # check its a scalar
             if (!assertthat::is.number(splitting_params$adapt_k_thresh)){
@@ -231,7 +263,9 @@ validate_initial_region_id_mat <- function(init_region_ids_mat, V, nsims, init_n
         cli_abort("{.arg init_region_ids_mat} must have {.arg nsims} columns.")
 
     # check that every column only has values from 0 to num_regions-1
-    if(any(colmin(init_region_ids_mat) != 0))
+    if(any(colmin(init_region_ids_mat) > 0))
+        cli_abort("{.arg init_region_ids_mat} must have at least one region with id 0.")
+    if(any(colmin(init_region_ids_mat) < 0))
         cli_abort("{.arg init_region_ids_mat} can't have number less than 0.")
     if(any(colmax(init_region_ids_mat) != init_num_regions-1))
         cli_abort("{.arg init_region_ids_mat} can't have number greater than {.arg init_num_regions}-1.")

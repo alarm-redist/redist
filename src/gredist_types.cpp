@@ -194,6 +194,8 @@ SplittingSizeScheduleType get_splitting_size_regime(std::string const &splitting
         return SplittingSizeScheduleType::AnyValidSize;
     }else if(splitting_size_regime_str == "one_custom_size"){
         return SplittingSizeScheduleType::OneCustomSize;
+    }else if(splitting_size_regime_str == "pure_ms_size"){
+        return SplittingSizeScheduleType::PureMergeSplitSize;
     }else if(splitting_size_regime_str == "custom"){
         return SplittingSizeScheduleType::CustomSizes;
     }else{

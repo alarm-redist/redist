@@ -151,7 +151,8 @@ public:
 
     void update_region_info_from_cut(
         EdgeCut cut_edge,
-        const int split_region1_id, const int split_region2_id
+        const int split_region1_id, const int split_region2_id,
+        bool const add_region
     );
 
     virtual void update_vertex_info_from_cut(
@@ -179,20 +180,11 @@ public:
 
     // virtual redist_smc methods
 
-    bool attempt_split(const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-                Tree &ust, TreeSplitter &tree_splitter, std::vector<int> &pops_below_vertex,
-                 std::vector<bool> &visited, std::vector<bool> &ignore, 
-                 RNGState &rng_state, bool const save_selection_prob,
-                 int const min_region_cut_size, int const max_region_cut_size, 
-                 std::vector<int> const &smaller_cut_sizes_to_try,
-                 const bool split_district_only, 
-                 const int region_id_to_split, const int new_region_id);
-
 
     void update_from_successful_split(
         Tree const &ust, EdgeCut const &cut_edge,
         int const new_region1_id, int const new_region2_id,
-        double const log_selection_prob
+        double const log_selection_prob, bool const add_region
     );
     
 };
