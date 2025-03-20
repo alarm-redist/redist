@@ -282,7 +282,7 @@ Rcpp::List ms_plans(
     Rcpp::IntegerVector mh_decisions(nsims);
     double mha;
 
-    USTSampler ust_sampler(map_params.V);
+    USTSampler ust_sampler(map_params, *splitting_schedule_ptr);
 
 
     int total_post_warmup_steps = nsims * thin;

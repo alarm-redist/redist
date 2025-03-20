@@ -28,8 +28,33 @@ LinkingEdgePlan::LinkingEdgePlan(arma::subview_col<arma::uword> region_ids_col,
 void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
     TreeSplitter const &tree_splitter,
     USTSampler &ust_sampler, EdgeCut const cut_edge, 
-    const int split_region1_id, const int split_region2_id
+    const int split_region1_id, const int split_region2_id,
+    bool const add_region
 ){
+    // If we're not adding a region we need to erase the old linking edge associated 
+    // with these two regions 
+    if(!add_region){
+        int erase_index;
+        std::set<int> merge_region_ids = {split_region1_id, split_region2_id};
+        // Go through and find that pair 
+        for (int i = 0; i < linking_edges.size(); i++)
+        {
+            // get the regions associated with the linking edge
+            std::set<int> candidate_pairs = {
+                static_cast<int>(region_ids(std::get<0>(linking_edges[i]))), 
+                static_cast<int>(region_ids(std::get<1>(linking_edges[i])))
+            };
+            // if they match break
+            if(candidate_pairs == merge_region_ids){
+                erase_index = i;
+                break;
+            }
+        }
+        // erase that pair of linking edges
+        linking_edges.erase(linking_edges.begin()+erase_index);
+    }
+
+
     // Get the root of the tree associated with region 1 and 2
     int split_region1_tree_root, split_region2_tree_root;
     int split_region1_size, split_region2_size;
@@ -53,23 +78,22 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
 
     // First iterate through the old linking edges and update ones touching a split region
     for(auto &a_linking_edge: linking_edges){
-        int edge_region1 = region_ids(std::get<0>(a_linking_edge));
-        int edge_region2 = region_ids(std::get<0>(a_linking_edge));
+        int v = std::get<0>(a_linking_edge); int u = std::get<1>(a_linking_edge);
+        int edge_region1 = region_ids(v);
+        int edge_region2 = region_ids(u);
         // If either of the vertices in the edge is now in a split region we need 
-        // to update the probability 
+        // to update the probability that edge was chosen 
         if(edge_region1 == split_region1_id || edge_region2 == split_region1_id){
-            // std::get<2>(a_linking_edge) = tree_splitter.get_log_retroactive_splitting_prob_for_joined_tree(
-                
-            // )
+            // update the log probability 
+            std::get<2>(a_linking_edge) = get_regions_log_splitting_prob(
+                tree_splitter, ust_sampler,
+                u, v
+            );
         }
     }
 
-
-    
-
-    // Append the new linking edge
+    // Append the new linking edge from the region we just split 
     linking_edges.push_back({cut_edge.cut_vertex, cut_edge.cut_vertex_parent, cut_edge.log_prob});
-    // 
 
     return;
 }
@@ -83,9 +107,40 @@ double LinkingEdgePlan::get_log_eff_boundary_len(
 ) const {
     // Go through and find that pair 
     for (auto const &edge_pair: linking_edges){
-        if(std::get<0>(edge_pair) == region1_id && std::get<1>(edge_pair) == region2_id){
+        // get the regions associated with the linking edge
+        int edge_region1 = std::min(region_ids(std::get<0>(edge_pair)), region_ids(std::get<1>(edge_pair)));
+        int edge_region2 = std::max(region_ids(std::get<0>(edge_pair)), region_ids(std::get<1>(edge_pair)));
+        if(edge_region1 == region1_id && edge_region2 == region2_id){
             return std::get<2>(edge_pair);
         }
     }
     throw Rcpp::exception("Linking Pair not found!\n");
+}
+
+
+std::vector<std::tuple<int, int, double>> LinkingEdgePlan::get_valid_adj_regions_and_eff_log_boundary_lens(
+    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    TreeSplitter const &tree_splitter,
+    std::unordered_map<std::pair<int, int>, double, bounded_hash> const &existing_pair_map
+) const{
+    std::vector<std::tuple<int, int, double>> valid_adj_region_pairs_to_boundary_map;
+    valid_adj_region_pairs_to_boundary_map.reserve(linking_edges.size());
+
+    // TODO: Need to check valid merge 
+    // Go through and find that pair 
+    for (auto const &edge_pair: linking_edges){
+        // get the regions associated with the linking edge
+        int edge_region1 = std::min(region_ids(std::get<0>(edge_pair)), region_ids(std::get<1>(edge_pair)));
+        int edge_region2 = std::max(region_ids(std::get<0>(edge_pair)), region_ids(std::get<1>(edge_pair)));
+
+        int edge_region1_size = region_sizes(edge_region1); int edge_region2_size = region_sizes(edge_region2);
+        
+        // Add if its ok to merge 
+        if(splitting_schedule.valid_merge_pair_sizes[edge_region1_size][edge_region2_size]){
+            valid_adj_region_pairs_to_boundary_map.push_back(
+                {edge_region1, edge_region2, std::get<2>(edge_pair)}
+            );
+        }
+    }
+    return(valid_adj_region_pairs_to_boundary_map);
 }

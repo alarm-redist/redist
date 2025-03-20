@@ -55,6 +55,8 @@ public:
         std::vector<int> const &smaller_cut_sizes_to_try
     ) const;
 
+
+
     // Takes a vector of valid edge cuts and returns the log probability 
     // the one an index idx would have been chosen 
     virtual double get_log_selection_prob(

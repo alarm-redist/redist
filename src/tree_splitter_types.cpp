@@ -174,6 +174,7 @@ double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
     return get_log_selection_prob(valid_edges, actual_cut_edge_index);
 }
 
+
 void NaiveTopKSplitter::update_single_int_param(int int_param){
     if(int_param <= 0) throw Rcpp::exception("Splitting k must be at least 1!\n");
     k_param = int_param;

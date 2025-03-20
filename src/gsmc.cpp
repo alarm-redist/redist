@@ -5,6 +5,9 @@
 * Purpose: Run SMC with MCMC merge-split steps mixed in
 ********************************************************/
 
+
+constexpr bool DEBUG_GSMC_PLANS_VERBOSE = false; // Compile-time constant
+
 #include "gsmc.h"
 
 /* 
@@ -133,7 +136,7 @@ void run_smc_step(
 
     pool.parallelFor(0, M, [&] (int i) {
         static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
-        static thread_local USTSampler ust_sampler(V);
+        static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
 
         // REprintf("Plan %d\n\n", i);
         bool ok = false;
@@ -170,7 +173,6 @@ void run_smc_step(
 
             // Try to split the region 
             std::pair<bool, EdgeCut> edge_search_result = ust_sampler.attempt_to_find_valid_tree_split(
-                map_params, splitting_schedule,
                 rng_states[thread_id], tree_splitters,
                 *old_plans_ptr_vec.at(idx), region_id_to_split,
                 save_edge_selection_prob
@@ -442,7 +444,7 @@ List run_redist_gsmc(
     all_steps_forests_adj_list.resize(
         (diagnostic_mode && sampling_space != SamplingSpace::GraphSpace) ? total_steps : 0
     );
-    std::vector<std::vector<std::tuple<int, int, double>>> all_steps_linking_edge_list;
+    std::vector<std::vector<std::vector<std::array<double, 3>>>> all_steps_linking_edge_list;
     all_steps_linking_edge_list.resize(
         (diagnostic_mode && sampling_space == SamplingSpace::LinkingEdgeSpace) ? total_steps : 0
     );
@@ -544,6 +546,19 @@ List run_redist_gsmc(
                 ));
             new_plans_ptr_vec.emplace_back(
                 std::make_unique<ForestPlan>(
+                    dummy_region_id_mat.col(i), dummy_region_sizes_mat.col(i), 
+                    ndists, initial_num_regions,
+                    map_params.pop, split_district_only
+                ));
+        }else if(sampling_space == SamplingSpace::LinkingEdgeSpace){
+            plans_ptr_vec.emplace_back(
+                std::make_unique<LinkingEdgePlan>(
+                    region_id_mat.col(i), region_sizes_mat.col(i), 
+                    ndists, initial_num_regions,
+                    map_params.pop, split_district_only
+                ));
+            new_plans_ptr_vec.emplace_back(
+                std::make_unique<LinkingEdgePlan>(
                     dummy_region_id_mat.col(i), dummy_region_sizes_mat.col(i), 
                     ndists, initial_num_regions,
                     map_params.pop, split_district_only
@@ -709,7 +724,7 @@ List run_redist_gsmc(
             arma::vec normalized_cumulative_weights = cumulative_weights / cumulative_weights(
                 cumulative_weights.size()-1
             );
-            
+            if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("About to run smc step %d!\n", smc_step_num);
             // split the map
             run_smc_step(map_params, *splitting_schedule_ptr,
                 rng_states, sampling_space,
@@ -726,6 +741,7 @@ List run_redist_gsmc(
                 pool,
                 verbosity, diagnostic_mode ? 3 : 0
             );
+            if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Ran smc step %d!\n", smc_step_num);
 
 
             if(use_naive_k_splitter){
@@ -757,7 +773,7 @@ List run_redist_gsmc(
                 if (verbosity >= 3) Rprintf("Computing Optimal Weights:\n");
                 compute_all_plans_log_optimal_weights(
                     pool,
-                    map_params, *splitting_schedule_ptr,
+                    map_params, *splitting_schedule_ptr, sampling_space,
                     scoring_function, rho,
                     plans_ptr_vec, *tree_splitter_ptr,
                     compute_log_splitting_prob, is_final_plans,
@@ -912,6 +928,16 @@ List run_redist_gsmc(
                         plans_ptr_vec.at(i)->get_forest_adj()
                     );
                 }
+                if(sampling_space == SamplingSpace::LinkingEdgeSpace){
+                    for (size_t i = 0; i < nsims; i++)
+                    {
+                        // add the forests from each plan at this step
+                        all_steps_linking_edge_list.at(step_num).push_back(
+                            plans_ptr_vec.at(i)->get_linking_edges()
+                        );
+                    }
+                    
+                }
             }
 
             
@@ -979,6 +1005,7 @@ List run_redist_gsmc(
         _["region_ids_mat_list"] = all_steps_plan_region_ids_list,
         _["region_sizes_mat_list"] = region_sizes_mat_list, 
         _["forest_adjs_list"] = all_steps_forests_adj_list,
+        _["linking_edges_list"] = all_steps_linking_edge_list,
         _["log_incremental_weights_mat"] = log_incremental_weights_mat,
         _["draw_tries_mat"] = draw_tries_mat,
         _["parent_unsuccessful_tries_mat"] = parent_unsuccessful_tries_mat,

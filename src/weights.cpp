@@ -5,6 +5,7 @@
 * Purpose: SMC weight calculation related functions
 ********************************************************/
 
+constexpr bool DEBUG_WEIGHTS_VERBOSE = true; // Compile-time constant
 #include "weights.h"
 
 //' Computes the effective sample size from log incremental weights
@@ -753,6 +754,7 @@ double compute_log_optimal_weights(
 void compute_all_plans_log_optimal_weights(
     RcppThread::ThreadPool &pool,
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    SamplingSpace const sampling_space,
     ScoringFunction const &scoring_function,
     double rho,
     std::vector<std::unique_ptr<Plan>> &plans_ptr_vec,

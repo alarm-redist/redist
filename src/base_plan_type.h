@@ -119,6 +119,19 @@ public:
  
     virtual Graph get_forest_adj(){throw Rcpp::exception("Get Forest Adj not Supported for this!\n");};
 
+    std::vector<std::array<double, 3>> get_linking_edges(){
+        std::vector<std::array<double, 3>> output;
+        output.reserve(linking_edges.size());
+        for(auto const& an_edge: linking_edges){
+            output.push_back({
+                static_cast<double>(std::get<0>(an_edge)),
+                static_cast<double>(std::get<1>(an_edge)),
+                std::get<2>(an_edge)
+            });
+        }
+        return output;
+    }
+
     // Compute the log number of spanning trees on a region 
     double compute_log_region_spanning_trees(MapParams const &map_params,
         int const region_id) const;
@@ -165,11 +178,19 @@ public:
         bool const add_region
     );
 
+    // For a plan and edge across two regions it returns the log probability 
+    // that edge would be split in the merged tree across the two regions
+    double get_regions_log_splitting_prob(
+        TreeSplitter const &tree_splitter, USTSampler &ust_sampler,
+        const int region1_root, const int region2_root
+    ) const;
+
     // virtual redist_smc methods
     virtual void update_vertex_and_plan_specific_info_from_cut(
         TreeSplitter const &tree_splitter,
         USTSampler &ust_sampler, EdgeCut const cut_edge, 
-        const int split_region1_id, const int split_region2_id
+        const int split_region1_id, const int split_region2_id,
+        bool const add_region
     ) = 0;
 
     // Computes the log effective boundary length between two regions

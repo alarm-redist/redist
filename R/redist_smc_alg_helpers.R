@@ -217,7 +217,7 @@ validate_sample_space_and_splitting_method <- function(
             }
             cleaned_splitting_params$manual_k_params <- splitting_params$manual_k_params
         }
-    }else if(sampling_space == FOREST_SPACE_SAMPLING){
+    }else if(sampling_space == FOREST_SPACE_SAMPLING || sampling_space == LINKING_EDGE_SPACE_SAMPLING){
         # check splitting method is not naive k
         if(splitting_method == NAIVE_K_SPLITTING){
             cli_abort("{.arg splitting_method} cannot be {NAIVE_K_SPLITTING} when sampling on Spanning Forest Space")

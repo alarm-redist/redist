@@ -197,9 +197,11 @@ List perform_a_valid_multidistrict_split(
         plan->Rprint();
     }
 
+    auto splitting_schedule_ptr = std::make_unique<PureMSSplittingSchedule>(ndists, 1, 1);
+
     // Create tree related stuff
     int uncut_tree_root;
-    USTSampler ust_sampler(V);
+    USTSampler ust_sampler(map_params, *splitting_schedule_ptr);
     Tree pre_split_ust = init_tree(V);
     std::vector<bool> visited(V);
     std::vector<bool> ignore(V, false);
@@ -299,7 +301,8 @@ List perform_a_valid_multidistrict_split(
         plan->update_vertex_and_plan_specific_info_from_cut(
             *tree_splitter,
             ust_sampler, cut_edge, 
-            region_id_to_split, new_region2_id
+            region_id_to_split, new_region2_id,
+            true
         );
     }
 
@@ -405,7 +408,7 @@ List perform_merge_split_steps(
     int global_rng_seed = (int) Rcpp::sample(INT_MAX, 1)[0];
     RNGState rng_state(global_rng_seed);
     SamplingSpace sampling_space = get_sampling_space("graph_space");
-    USTSampler ust_sampler(V);
+    USTSampler ust_sampler(map_params, *splitting_schedule_ptr);
 
     // now do merge split 
     int num_successes = run_merge_split_steps(

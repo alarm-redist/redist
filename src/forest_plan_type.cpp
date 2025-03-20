@@ -26,7 +26,8 @@ Graph ForestPlan::get_forest_adj(){
 void ForestPlan::update_vertex_and_plan_specific_info_from_cut(
     TreeSplitter const &tree_splitter,
     USTSampler &ust_sampler, EdgeCut const cut_edge, 
-    const int split_region1_id, const int split_region2_id
+    const int split_region1_id, const int split_region2_id,
+    bool const add_region
 ){
     // Get the root of the tree associated with region 1 and 2
     int split_region1_tree_root, split_region2_tree_root;

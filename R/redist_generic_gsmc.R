@@ -491,7 +491,9 @@ generic_redist_gsmc <- function(
             region_ids_mat_list = algout$region_ids_mat_list,
             region_sizes_mat_list = algout$region_sizes_mat_list,
             merge_split_success_mat = algout$merge_split_success_mat,
-            merge_split_attempt_counts = algout$merge_split_attempt_counts
+            merge_split_attempt_counts = algout$merge_split_attempt_counts,
+            forest_adjs_list = algout$forest_adjs_list,
+            linking_edges_list = algout$linking_edges_list
         )
 
         # Information about the run

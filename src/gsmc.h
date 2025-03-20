@@ -22,6 +22,7 @@
 #include "redist_alg_helpers.h"
 #include "graph_plan_type.h"
 #include "forest_plan_type.h"
+#include "linking_edge_plan_type.h"
 #include "tree_splitter_types.h"
 #include "scoring.h"
 #include "ust_sampler.h"

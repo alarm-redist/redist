@@ -101,7 +101,6 @@ std::tuple<bool, bool, double> attempt_mergesplit_step(
 
     // try to draw a region 
     std::tuple<bool, EdgeCut> edge_search_result = ust_sampler.attempt_to_find_valid_tree_mergesplit(
-        map_params, splitting_schedule,
         rng_state, tree_splitter,
         plan, region1_id, region2_id,
         save_edge_selection_prob
@@ -295,7 +294,7 @@ void run_merge_split_step_on_all_plans(
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, M, [&] (int i) {
         static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
-        static thread_local USTSampler ust_sampler(map_params.V);
+        static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
         // Create variables needed for each 
 
         // store the number of succesful runs

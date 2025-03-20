@@ -26,7 +26,8 @@ public:
     void update_vertex_and_plan_specific_info_from_cut (
         TreeSplitter const &tree_splitter,
         USTSampler &ust_sampler, EdgeCut const cut_edge, 
-        const int split_region1_id, const int split_region2_id
+        const int split_region1_id, const int split_region2_id,
+        bool const add_region
     ) override;
 
     double get_log_eff_boundary_len(
