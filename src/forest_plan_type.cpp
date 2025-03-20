@@ -23,9 +23,10 @@ Graph ForestPlan::get_forest_adj(){
 
 
 
-void ForestPlan::update_vertex_info_from_cut(
-        Tree const &ust, EdgeCut const cut_edge, 
-        const int split_region1_id, const int split_region2_id
+void ForestPlan::update_vertex_and_plan_specific_info_from_cut(
+    TreeSplitter const &tree_splitter,
+    USTSampler &ust_sampler, EdgeCut const cut_edge, 
+    const int split_region1_id, const int split_region2_id
 ){
     // Get the root of the tree associated with region 1 and 2
     int split_region1_tree_root, split_region2_tree_root;
@@ -38,11 +39,11 @@ void ForestPlan::update_vertex_info_from_cut(
     );
     // update the vertex labels and the tree
     assign_region_id_and_forest_from_tree(
-        ust, region_ids, forest_graph,
+        ust_sampler.ust, region_ids, forest_graph,
         split_region1_tree_root, split_region1_id);
 
     assign_region_id_and_forest_from_tree(
-        ust, region_ids, forest_graph,
+        ust_sampler.ust, region_ids, forest_graph,
         split_region2_tree_root, split_region2_id);
 
     return;
@@ -158,10 +159,12 @@ std::unordered_map<std::pair<int, int>, double, bounded_hash> NEW_get_valid_pair
                 int max_possible_cut_size = cut_size_bounds.second;
 
                 // get the log probability
-                double log_edge_selection_prob = get_log_retroactive_splitting_prob_for_joined_tree(
-                    map_params, plan, edge_splitter,
+                double log_edge_selection_prob = edge_splitter.get_log_retroactive_splitting_prob_for_joined_tree(
+                    map_params, plan.forest_graph,
                     visited, pops_below_vertex,
                     v, v_nbor,
+                    plan.region_pops[plan.region_ids(v)], plan.region_pops[plan.region_ids(v_nbor)],
+                    plan.region_sizes(plan.region_ids(v)), plan.region_sizes(plan.region_ids(v_nbor)),
                     min_possible_cut_size, max_possible_cut_size,
                     splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_region_size]);
 
@@ -234,10 +237,12 @@ double ForestPlan::get_log_eff_boundary_len(
         for (int nbor : map_params.g[v]) {
             if (region_ids(nbor) != region2_id) continue;
 
-            double log_edge_selection_prob = get_log_retroactive_splitting_prob_for_joined_tree(
-                map_params, *this, tree_splitter,
+            double log_edge_selection_prob = tree_splitter.get_log_retroactive_splitting_prob_for_joined_tree(
+                map_params, forest_graph,
                 visited, pops_below_vertex,
                 v, nbor,
+                region_pops[region_ids(v)], region_pops[region_ids(nbor)],
+                region_sizes(region_ids(v)), region_sizes(region_ids(nbor)),
                 min_possible_cut_size,max_possible_cut_size,
                 splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_region_size]);
             

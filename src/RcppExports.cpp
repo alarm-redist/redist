@@ -216,6 +216,42 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// get_region_multigraph
+RegionMultigraph get_region_multigraph(Rcpp::List const& adj_list, arma::uvec const& region_ids);
+RcppExport SEXP _gredist_get_region_multigraph(SEXP adj_listSEXP, SEXP region_idsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List const& >::type adj_list(adj_listSEXP);
+    Rcpp::traits::input_parameter< arma::uvec const& >::type region_ids(region_idsSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_region_multigraph(adj_list, region_ids));
+    return rcpp_result_gen;
+END_RCPP
+}
+// get_region_laplacian
+arma::imat get_region_laplacian(Rcpp::List const& adj_list, arma::uvec const& region_ids);
+RcppExport SEXP _gredist_get_region_laplacian(SEXP adj_listSEXP, SEXP region_idsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List const& >::type adj_list(adj_listSEXP);
+    Rcpp::traits::input_parameter< arma::uvec const& >::type region_ids(region_idsSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_region_laplacian(adj_list, region_ids));
+    return rcpp_result_gen;
+END_RCPP
+}
+// get_log_number_linking_edges
+double get_log_number_linking_edges(Rcpp::List const& adj_list, arma::uvec const& region_ids);
+RcppExport SEXP _gredist_get_log_number_linking_edges(SEXP adj_listSEXP, SEXP region_idsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List const& >::type adj_list(adj_listSEXP);
+    Rcpp::traits::input_parameter< arma::uvec const& >::type region_ids(region_idsSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_log_number_linking_edges(adj_list, region_ids));
+    return rcpp_result_gen;
+END_RCPP
+}
 // run_redist_gsmc
 List run_redist_gsmc(int const ndists, List const& adj_list, const arma::uvec& counties, const arma::uvec& pop, Rcpp::CharacterVector const& step_types, double const target, double const lower, double const upper, double rho, arma::umat region_id_mat, arma::umat region_sizes_mat, std::string const& sampling_space_str, List const& control, List const& constraints, int verbosity, bool diagnostic_mode);
 RcppExport SEXP _gredist_run_redist_gsmc(SEXP ndistsSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP step_typesSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP region_id_matSEXP, SEXP region_sizes_matSEXP, SEXP sampling_space_strSEXP, SEXP controlSEXP, SEXP constraintsSEXP, SEXP verbositySEXP, SEXP diagnostic_modeSEXP) {
@@ -920,6 +956,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_update_conncomp", (DL_FUNC) &_gredist_update_conncomp, 3},
     {"_gredist_crsg", (DL_FUNC) &_gredist_crsg, 9},
     {"_gredist_dist_dist_diff", (DL_FUNC) &_gredist_dist_dist_diff, 7},
+    {"_gredist_get_region_multigraph", (DL_FUNC) &_gredist_get_region_multigraph, 2},
+    {"_gredist_get_region_laplacian", (DL_FUNC) &_gredist_get_region_laplacian, 2},
+    {"_gredist_get_log_number_linking_edges", (DL_FUNC) &_gredist_get_log_number_linking_edges, 2},
     {"_gredist_run_redist_gsmc", (DL_FUNC) &_gredist_run_redist_gsmc, 16},
     {"_gredist_log_st_map", (DL_FUNC) &_gredist_log_st_map, 4},
     {"_gredist_n_removed", (DL_FUNC) &_gredist_n_removed, 3},

@@ -199,7 +199,7 @@ List perform_a_valid_multidistrict_split(
 
     // Create tree related stuff
     int uncut_tree_root;
-    Tree ust = init_tree(V);
+    USTSampler ust_sampler(V);
     Tree pre_split_ust = init_tree(V);
     std::vector<bool> visited(V);
     std::vector<bool> ignore(V, false);
@@ -242,11 +242,11 @@ List perform_a_valid_multidistrict_split(
         if(verbose){
             Rcout << "Attempt " << try_counter << "\n";
         }
-        clear_tree(ust);
+        clear_tree(ust_sampler.ust);
  
         // Try to draw a tree on region
         bool tree_drawn = plan->draw_tree_on_region(map_params, region_id_to_split,
-            ust, visited, ignore, uncut_tree_root, rng_state);
+            ust_sampler.ust, visited, ignore, uncut_tree_root, rng_state);
 
         // Try again and increase counter if tree not drawn
         if (!tree_drawn){
@@ -262,9 +262,9 @@ List perform_a_valid_multidistrict_split(
 
 
         // Now try to select an edge to cut
-        std::tuple<bool, EdgeCut, double> edge_search_result = tree_splitter->attempt_to_find_edge_to_cut(
+        std::pair<bool, EdgeCut> edge_search_result = tree_splitter->attempt_to_find_edge_to_cut(
             map_params, rng_state, 
-            ust, uncut_tree_root,
+            ust_sampler.ust, uncut_tree_root,
             pop_below, visited, 
             plan->region_pops[region_id_to_split],plan->region_sizes(region_id_to_split), 
             split_dval_min, split_dval_max, 
@@ -280,12 +280,12 @@ List perform_a_valid_multidistrict_split(
         }
 
         // copy uncut tree before splitting 
-        pre_split_ust = ust;
+        pre_split_ust = ust_sampler.ust;
 
         // If successful extract the edge cut info
         cut_edge = std::get<1>(edge_search_result);
         // Now erase the cut edge in the tree
-        erase_tree_edge(ust, cut_edge);
+        erase_tree_edge(ust_sampler.ust, cut_edge);
 
 
         // now update the region level information from the edge cut
@@ -296,8 +296,9 @@ List perform_a_valid_multidistrict_split(
         );
 
         // Now update the vertex level information
-        plan->update_vertex_info_from_cut(
-            ust, cut_edge, 
+        plan->update_vertex_and_plan_specific_info_from_cut(
+            *tree_splitter,
+            ust_sampler, cut_edge, 
             region_id_to_split, new_region2_id
         );
     }
@@ -328,7 +329,7 @@ List perform_a_valid_multidistrict_split(
         _["num_districts"] = plan->get_num_district_and_multidistricts().first,
         _["uncut_tree"] = pre_split_ust,
         _["uncut_tree_root"] = uncut_tree_root,
-        _["cut_tree"] = ust,
+        _["cut_tree"] = ust_sampler.ust,
         _["pop_below"] = pop_below,
         _["uncut_tree_vertex_parents"] = tree_vertex_parents,
         _["new_region1_id"] = new_region1_id,
@@ -398,7 +399,7 @@ List perform_merge_split_steps(
     SplittingSizeScheduleType splitting_type = get_splitting_size_regime("FAKE");
 
     auto splitting_schedule_ptr = get_splitting_schedule(
-        1, ndists, num_regions, splitting_type, fake_control
+        1, ndists, splitting_type, fake_control
     );
 
     int global_rng_seed = (int) Rcpp::sample(INT_MAX, 1)[0];

@@ -20,6 +20,7 @@
 #include "tree_op.h"
 #include "wilson.h"
 #include "map_calc.h"
+#include "ust_sampler.h"
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
@@ -45,6 +46,7 @@ struct bounded_hash {
     bounded_hash() : max_num_regions(0) {}
 };
 
+class USTSampler;
 
 /*
  * Abstract Class implementation of plan 
@@ -104,7 +106,8 @@ public:
 
     // not actually used by all plan types but the arma subviews are impossible to change 
     // so kept to avoid object slicing 
-    Graph forest_graph;    
+    Graph forest_graph;   
+    std::vector<std::tuple<int, int, double>> linking_edges;
 
     virtual ~Plan() = default; 
 
@@ -115,7 +118,6 @@ public:
     std::pair<int, int> get_num_district_and_multidistricts() const;
  
     virtual Graph get_forest_adj(){throw Rcpp::exception("Get Forest Adj not Supported for this!\n");};
-
 
     // Compute the log number of spanning trees on a region 
     double compute_log_region_spanning_trees(MapParams const &map_params,
@@ -155,20 +157,20 @@ public:
         bool const add_region
     );
 
-    virtual void update_vertex_info_from_cut(
-        Tree const &ust, EdgeCut const cut_edge, 
+
+    void update_from_successful_split(
+        TreeSplitter const &tree_splitter,
+        USTSampler &ust_sampler, EdgeCut const &cut_edge,
+        int const new_region1_id, int const new_region2_id,
+        bool const add_region
+    );
+
+    // virtual redist_smc methods
+    virtual void update_vertex_and_plan_specific_info_from_cut(
+        TreeSplitter const &tree_splitter,
+        USTSampler &ust_sampler, EdgeCut const cut_edge, 
         const int split_region1_id, const int split_region2_id
     ) = 0;
-
-    // For a given plan and splitting schedule this finds all pairs of adjacent regions
-    // and the log eff boundary length
-    // - for graph sampling its just the log of the graph theoretic boundary legnth
-    // - for forest sampling its the effective tree boundary length
-    virtual std::vector<std::tuple<int, int, double>> get_valid_adj_regions_and_eff_log_boundary_lens(
-        const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-        TreeSplitter const &tree_splitter,
-        std::unordered_map<std::pair<int, int>, double, bounded_hash> const &existing_pair_map = {}
-    ) const = 0;
 
     // Computes the log effective boundary length between two regions
     // The specifics depend on the sampling space
@@ -178,15 +180,15 @@ public:
         const int region1_id, int const region2_id
     ) const = 0;
 
-    // virtual redist_smc methods
-
-
-    void update_from_successful_split(
-        Tree const &ust, EdgeCut const &cut_edge,
-        int const new_region1_id, int const new_region2_id,
-        double const log_selection_prob, bool const add_region
-    );
-    
+    // For a given plan and splitting schedule this finds all pairs of adjacent regions
+    // and the log eff boundary length
+    // - for graph sampling its just the log of the graph theoretic boundary legnth
+    // - for forest sampling its the effective tree boundary length
+    virtual std::vector<std::tuple<int, int, double>> get_valid_adj_regions_and_eff_log_boundary_lens(
+        const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+        TreeSplitter const &tree_splitter,
+        std::unordered_map<std::pair<int, int>, double, bounded_hash> const &existing_pair_map = {}
+    ) const = 0;  
 };
 
 

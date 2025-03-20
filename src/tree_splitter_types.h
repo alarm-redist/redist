@@ -32,7 +32,7 @@ public:
     ) const;
     
     // Takes a spanning tree and returns the edge to cut if successful
-    std::tuple<bool, EdgeCut, double> attempt_to_find_edge_to_cut(
+    std::pair<bool, EdgeCut> attempt_to_find_edge_to_cut(
         const MapParams &map_params, RNGState &rng_state,
         Tree const &ust, const int root, 
         std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
@@ -40,6 +40,19 @@ public:
         const int min_potential_cut_size, const int max_potential_cut_size,
         std::vector<int> const &smaller_cut_sizes_to_try,
         bool save_selection_prob = false
+    ) const;
+
+    // Get probability a specific edge was cut in the tree made by joining
+    // the trees in the two regions 
+    double get_log_retroactive_splitting_prob_for_joined_tree(
+        MapParams const &map_params,
+        Graph const &forest_graph, 
+        std::vector<bool> &visited, std::vector<int> &pops_below_vertex,
+        const int region1_root, const int region2_root,
+        const int region1_population, const int region2_population,
+        const int region1_size, const int region2_size,
+        const int min_potential_cut_size, const int max_potential_cut_size,
+        std::vector<int> const &smaller_cut_sizes_to_try
     ) const;
 
     // Takes a vector of valid edge cuts and returns the log probability 
@@ -55,7 +68,7 @@ public:
     };
 
     // returns edge cut and log probability it was chosen
-    virtual std::tuple<bool, EdgeCut, double> select_edge_to_cut(
+    virtual std::pair<bool, EdgeCut> select_edge_to_cut(
         RNGState &rng_state, std::vector<EdgeCut> const &valid_edges,
         bool save_selection_prob = false
     ) const;
@@ -83,7 +96,7 @@ public:
     void update_single_int_param(int int_param) override;
 
 
-    std::tuple<bool, EdgeCut, double> select_edge_to_cut(
+    std::pair<bool, EdgeCut> select_edge_to_cut(
         RNGState &rng_state, std::vector<EdgeCut> const &valid_edges,
         bool save_selection_prob = false
     ) const override;
@@ -106,7 +119,7 @@ public:
     UniformValidSplitter(int V): TreeSplitter(V){};
 
 
-    std::tuple<bool, EdgeCut, double> select_edge_to_cut(
+    std::pair<bool, EdgeCut> select_edge_to_cut(
         RNGState &rng_state, std::vector<EdgeCut> const &valid_edges,
         bool save_selection_prob = false
     ) const override;
@@ -170,7 +183,7 @@ public:
     double epsilon;
     double target;
 
-    std::tuple<bool, EdgeCut, double> select_edge_to_cut(
+    std::pair<bool, EdgeCut> select_edge_to_cut(
         RNGState &rng_state, std::vector<EdgeCut> const &valid_edges,
         bool save_selection_prob = false
     ) const override;

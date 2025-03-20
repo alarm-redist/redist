@@ -23,9 +23,10 @@ public:
 
     Graph get_forest_adj() override;
 
-    void update_vertex_info_from_cut (
-            Tree const &ust, EdgeCut const cut_edge, 
-            const int split_region1_id, const int split_region2_id
+    void update_vertex_and_plan_specific_info_from_cut (
+        TreeSplitter const &tree_splitter,
+        USTSampler &ust_sampler, EdgeCut const cut_edge, 
+        const int split_region1_id, const int split_region2_id
     ) override;
 
     double get_log_eff_boundary_len(

@@ -169,7 +169,7 @@ void run_smc_step(
 
 
             // Try to split the region 
-            std::tuple<bool, EdgeCut, double> edge_search_result = ust_sampler.attempt_to_find_valid_tree_split(
+            std::pair<bool, EdgeCut> edge_search_result = ust_sampler.attempt_to_find_valid_tree_split(
                 map_params, splitting_schedule,
                 rng_states[thread_id], tree_splitters,
                 *old_plans_ptr_vec.at(idx), region_id_to_split,
@@ -182,9 +182,9 @@ void run_smc_step(
                 *new_plans_ptr_vec[i] = *old_plans_ptr_vec[idx];
                 // now split that region we found on the old one
                 new_plans_ptr_vec.at(i)->update_from_successful_split(
-                    ust_sampler.ust, std::get<1>(edge_search_result),
-                    region_id_to_split, new_region_id,
-                    std::get<2>(edge_search_result), 
+                    tree_splitters,
+                    ust_sampler, std::get<1>(edge_search_result),
+                    region_id_to_split, new_region_id, 
                     true
                 );
                 // record index of new plan's parent
@@ -380,7 +380,7 @@ List run_redist_gsmc(
     // SplittingSchedule splitting_schedule(total_smc_steps, ndists, initial_num_regions, splitting_size_regime, control);
 
     auto splitting_schedule_ptr = get_splitting_schedule(
-        total_smc_steps, ndists, initial_num_regions, splitting_size_regime, control
+        total_smc_steps, ndists, splitting_size_regime, control
     );
 
 
@@ -439,7 +439,13 @@ List run_redist_gsmc(
     std::vector<Rcpp::IntegerMatrix> all_steps_plan_region_ids_list;
     all_steps_plan_region_ids_list.reserve(diagnostic_mode ? total_steps : 0);
     std::vector<std::vector<Graph>> all_steps_forests_adj_list;
-    all_steps_forests_adj_list.resize((diagnostic_mode && !use_graph_plan_space) ? total_steps : 0);
+    all_steps_forests_adj_list.resize(
+        (diagnostic_mode && sampling_space != SamplingSpace::GraphSpace) ? total_steps : 0
+    );
+    std::vector<std::vector<std::tuple<int, int, double>>> all_steps_linking_edge_list;
+    all_steps_linking_edge_list.resize(
+        (diagnostic_mode && sampling_space == SamplingSpace::LinkingEdgeSpace) ? total_steps : 0
+    );
     std::vector<std::vector<int>> all_steps_valid_region_sizes_to_split;
     all_steps_valid_region_sizes_to_split.resize(diagnostic_mode ? total_smc_steps : 0);
     std::vector<std::vector<int>> all_steps_valid_split_region_sizes;
@@ -850,7 +856,6 @@ List run_redist_gsmc(
                 rho, is_final,
                 merge_split_successes_mat.column(merge_split_step_num)
             );
-
 
 
             cut_k_values.at(step_num) = prev_k;

@@ -590,56 +590,6 @@ Graph get_region_graph(const Graph &g, const Plan &plan) {
 
 
 
-
-double get_log_retroactive_splitting_prob_for_joined_tree(
-    MapParams const &map_params,
-    Plan const &plan, const TreeSplitter &edge_splitter,
-    std::vector<bool> &visited, std::vector<int> &pops_below_vertex,
-    const int region1_root, const int region2_root,
-    const int min_potential_cut_size, const int max_potential_cut_size,
-    std::vector<int> const &smaller_cut_sizes_to_try
-){
-    int region1_id = plan.region_ids(region1_root);
-    int region2_id = plan.region_ids(region2_root);
-    int total_merged_region_size = plan.region_sizes(region1_id)+plan.region_sizes(region2_id);
-
-    // Get all the valid edges in the joined tree 
-    std::vector<EdgeCut> valid_edges = get_valid_edges_in_joined_tree(
-        map_params, plan.forest_graph, 
-        pops_below_vertex, visited,
-        region1_root, plan.region_pops.at(region1_id),
-        region2_root, plan.region_pops.at(region2_id),
-        min_potential_cut_size, max_potential_cut_size,
-        smaller_cut_sizes_to_try,
-        total_merged_region_size
-    );
-
-
-    // find the index of the actual edge we cut 
-    // where we take region2 root as the cut_vertex
-    EdgeCut actual_cut_edge(
-        region1_root, region2_root, region1_root, 
-        plan.region_sizes(region2_id), plan.region_pops.at(region2_id),
-        plan.region_sizes(region1_id), plan.region_pops.at(region1_id)
-    );
-
-    // find the index of the edge we actually removed to get these two regions.
-    // it should be 0 if pop bounds are tight but this allows it to work even
-    // if not.
-    auto it = std::find(valid_edges.begin(), valid_edges.end(), actual_cut_edge);
-
-    int actual_cut_edge_index = std::distance(valid_edges.begin(), it);
-    if(TREE_SPLITTING_DEBUG_VERBOSE){
-    REprintf("Actual Cut Edge at Index %d and so prob is %f \n", 
-        actual_cut_edge_index,
-        edge_splitter.get_log_selection_prob(valid_edges, actual_cut_edge_index));
-    }
-
-    return edge_splitter.get_log_selection_prob(valid_edges, actual_cut_edge_index);
-}
-
-
-
 // eventually need to modify to allow presaved options
 // OLD DOCUMENTATION FROM GRAPH THING NEED TO UPDATE
 //' Compute the optimal log incremental weight of a plan

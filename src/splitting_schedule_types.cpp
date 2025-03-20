@@ -31,9 +31,9 @@ void SplittingSchedule::reset_splitting_and_merge_booleans(){
  * Constructor for district splits only splitting schedule
  */
 DistrictOnlySplittingSchedule::DistrictOnlySplittingSchedule(
-    const int num_splits, const int ndists, const int initial_num_regions
+    const int num_splits, const int ndists
 ):
-    SplittingSchedule(SplittingSizeScheduleType::DistrictOnly, num_splits, ndists, initial_num_regions){
+    SplittingSchedule(SplittingSizeScheduleType::DistrictOnly, ndists){
     // For each size above 2 make the min=1 and the max=size-1
     for (int region_size = 2; region_size <= ndists; region_size++)
     {
@@ -72,9 +72,9 @@ void DistrictOnlySplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
 
 
 AnyRegionSplittingSchedule::AnyRegionSplittingSchedule(
-    const int num_splits, const int ndists, const int initial_num_regions
+    const int num_splits, const int ndists
 ):
-    SplittingSchedule(SplittingSizeScheduleType::AnyValidSize, num_splits, ndists, initial_num_regions){
+    SplittingSchedule(SplittingSizeScheduleType::AnyValidSize, ndists){
     // If doing any sizes then for `region_size` the possible split sizes are always 
     // if any sizes allowed then for 2, ..., ndists make it 1,...,floor(size/2)
     for (int region_size = 2; region_size <= ndists; region_size++)
@@ -135,9 +135,7 @@ void AnyRegionSplittingSchedule::set_potential_cut_sizes_for_each_valid_size(
 PureMSSplittingSchedule::PureMSSplittingSchedule(
     const int ndists, int const district_size_lb, int const district_size_ub
 ):
-    SplittingSchedule(
-        SplittingSizeScheduleType::PureMergeSplitSize, 
-        1, ndists, ndists){
+    SplittingSchedule(SplittingSizeScheduleType::PureMergeSplitSize, ndists){
     
     // check bounds make sense
     if(district_size_lb < 1){
@@ -210,9 +208,9 @@ PureMSSplittingSchedule::PureMSSplittingSchedule(
 
 
 OneCustomSplitSchedule::OneCustomSplitSchedule(
-    const int num_splits, const int ndists, const int initial_num_regions, 
-    Rcpp::List const &control):
-    SplittingSchedule(SplittingSizeScheduleType::OneCustomSize, num_splits, ndists, initial_num_regions){
+    const int num_splits, const int ndists,
+    Rcpp::List const &control
+): SplittingSchedule(SplittingSizeScheduleType::OneCustomSize, ndists){
 
     // Ensure "custom_size_split_list" exists and is a list
     if (!control.containsElementNamed("custom_size_split_list")) {
@@ -286,16 +284,16 @@ void OneCustomSplitSchedule::set_potential_cut_sizes_for_each_valid_size(
 
 // Returns a splitting schedule depending on the schedule type 
 std::unique_ptr<SplittingSchedule> get_splitting_schedule(
-    const int num_splits, const int ndists, const int initial_num_regions, 
+    const int num_splits, const int ndists, 
     SplittingSizeScheduleType const schedule_type,
     Rcpp::List const &control
 ){
     if(schedule_type == SplittingSizeScheduleType::DistrictOnly){
-        return std::make_unique<DistrictOnlySplittingSchedule>(num_splits, ndists, initial_num_regions);
+        return std::make_unique<DistrictOnlySplittingSchedule>(num_splits, ndists);
     }else if(schedule_type == SplittingSizeScheduleType::AnyValidSize){
-        return std::make_unique<AnyRegionSplittingSchedule>(num_splits, ndists, initial_num_regions);
+        return std::make_unique<AnyRegionSplittingSchedule>(num_splits, ndists);
     }else if(schedule_type == SplittingSizeScheduleType::OneCustomSize){
-        return std::make_unique<OneCustomSplitSchedule>(num_splits, ndists, initial_num_regions, control);
+        return std::make_unique<OneCustomSplitSchedule>(num_splits, ndists, control);
     }else if(schedule_type == SplittingSizeScheduleType::CustomSizes){
         Rprintf("Not implemented!");
         throw Rcpp::exception("Schedule not impliemented yet!");

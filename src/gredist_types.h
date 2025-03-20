@@ -15,6 +15,8 @@
 typedef std::vector<std::vector<int>> Tree;
 typedef std::vector<std::vector<int>> Graph;
 typedef std::vector<std::vector<std::vector<int>>> Multigraph;
+typedef std::vector<std::unordered_map<int, int>> RegionMultigraph;
+
 
 /*
  * Initialize empty multigraph structure on graph with `V` vertices
@@ -74,7 +76,8 @@ public:
         cut_below_region_size(0), 
         cut_below_pop(0), 
         cut_above_region_size(0), 
-        cut_above_pop(0) {}
+        cut_above_pop(0),
+        log_prob(0) {}
     
     // Constructor
     EdgeCut(const int tree_root, 
@@ -87,7 +90,8 @@ public:
           cut_below_region_size(cut_below_region_size), 
           cut_below_pop(cut_below_pop), 
           cut_above_region_size(cut_above_region_size), 
-          cut_above_pop(cut_above_pop) {}
+          cut_above_pop(cut_above_pop),
+          log_prob(0) {}
     
     // Attributes
     int tree_root; // The root of the tree
@@ -97,6 +101,7 @@ public:
     int cut_below_pop; // The population of the region below made by cutting 
     int cut_above_region_size; // The size of the region above made by cutting 
     int cut_above_pop; // The population of the region above made by cutting 
+    double log_prob; // Log Probability this edge was chosen to split in the tree 
 
     // Gets the information on the two regions formed from an edge cut by reference
     void get_split_regions_info(
@@ -175,8 +180,6 @@ enum class SplittingSizeScheduleType : unsigned char
 
 // load from control spring 
 SplittingSizeScheduleType get_splitting_size_regime(std::string const &splitting_size_regime_str);
-
-
 
 
 

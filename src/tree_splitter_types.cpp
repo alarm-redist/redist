@@ -35,7 +35,7 @@ std::vector<EdgeCut> TreeSplitter::get_all_valid_pop_edge_cuts_in_directed_tree(
 }
 
 
-std::tuple<bool, EdgeCut, double> TreeSplitter::attempt_to_find_edge_to_cut(
+std::pair<bool, EdgeCut> TreeSplitter::attempt_to_find_edge_to_cut(
     const MapParams &map_params, RNGState &rng_state,
     Tree const &ust, const int root, 
     std::vector<int> &pops_below_vertex, std::vector<bool> &no_valid_edges_vertices,
@@ -57,15 +57,15 @@ std::tuple<bool, EdgeCut, double> TreeSplitter::attempt_to_find_edge_to_cut(
     int num_valid_edges  = static_cast<int>(valid_edges.size());
     // if no valid edges immediately return false
     if(num_valid_edges == 0){
-        return std::make_tuple(false, EdgeCut(), 0.0);
+        return std::make_pair(false, EdgeCut());
     }else{ // else have derived class choose according to its rule
         return select_edge_to_cut(rng_state, valid_edges);
     }
 }
 
 // returns edge cut and log probability it was chosen
-std::tuple<bool, EdgeCut, double> TreeSplitter::select_edge_to_cut(
-        RNGState &rng_state,std::vector<EdgeCut> const &valid_edges,
+std::pair<bool, EdgeCut> TreeSplitter::select_edge_to_cut(
+        RNGState &rng_state, std::vector<EdgeCut> const &valid_edges,
         bool save_selection_prob
     ) const {
     auto num_valid_edges = valid_edges.size();
@@ -73,7 +73,8 @@ std::tuple<bool, EdgeCut, double> TreeSplitter::select_edge_to_cut(
     // if no valid edges reject immediately 
     if(num_valid_edges == 1){
         // if only 1 just return that
-        return std::make_tuple(true, valid_edges[0], 0.0);
+        // selection prob is just 1 so don't touch
+        return std::make_pair(true, valid_edges[0]);
     }
 
     // get the weights 
@@ -93,10 +94,10 @@ std::tuple<bool, EdgeCut, double> TreeSplitter::select_edge_to_cut(
     // compute selection probability if needed
     double log_selection_prob = 0.0;
     if(save_selection_prob){
-        log_selection_prob = std::log(unnormalized_wgts(idx)) - std::log(arma::sum(unnormalized_wgts));
+        selected_edge_cut.log_prob = std::log(unnormalized_wgts(idx)) - std::log(arma::sum(unnormalized_wgts));;
     }
 
-    return std::make_tuple(true, selected_edge_cut, log_selection_prob);
+    return std::make_pair(true, selected_edge_cut);
 }
 
 
@@ -125,13 +126,61 @@ double TreeSplitter::get_log_selection_prob(
     return std::log(idx_weight) - std::log(weight_sum);
 }
 
+
+double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
+    MapParams const &map_params,
+    Graph const &forest_graph,
+    std::vector<bool> &visited, std::vector<int> &pops_below_vertex,
+    const int region1_root, const int region2_root,
+    const int region1_population, const int region2_population,
+    const int region1_size, const int region2_size,
+    const int min_potential_cut_size, const int max_potential_cut_size,
+    std::vector<int> const &smaller_cut_sizes_to_try
+) const{
+    int total_merged_region_size = region1_size+region2_size;
+
+    // Get all the valid edges in the joined tree 
+    std::vector<EdgeCut> valid_edges = get_valid_edges_in_joined_tree(
+        map_params, forest_graph, 
+        pops_below_vertex, visited,
+        region1_root, region1_population,
+        region2_root, region2_population,
+        min_potential_cut_size, max_potential_cut_size,
+        smaller_cut_sizes_to_try,
+        total_merged_region_size
+    );
+
+
+    // find the index of the actual edge we cut 
+    // where we take region2 root as the cut_vertex
+    EdgeCut actual_cut_edge(
+        region1_root, region2_root, region1_root, 
+        region2_size, region2_population,
+        region1_size, region1_population
+    );
+
+    // find the index of the edge we actually removed to get these two regions.
+    // it should be 0 if pop bounds are tight but this allows it to work even
+    // if not.
+    auto it = std::find(valid_edges.begin(), valid_edges.end(), actual_cut_edge);
+
+    int actual_cut_edge_index = std::distance(valid_edges.begin(), it);
+    if(TREE_SPLITTING_DEBUG_VERBOSE){
+    REprintf("Actual Cut Edge at Index %d and so prob is %f \n", 
+        actual_cut_edge_index,
+        get_log_selection_prob(valid_edges, actual_cut_edge_index));
+    }
+
+    return get_log_selection_prob(valid_edges, actual_cut_edge_index);
+}
+
 void NaiveTopKSplitter::update_single_int_param(int int_param){
     if(int_param <= 0) throw Rcpp::exception("Splitting k must be at least 1!\n");
     k_param = int_param;
 }
 
-std::tuple<bool, EdgeCut, double> NaiveTopKSplitter::select_edge_to_cut(
-    RNGState &rng_state,std::vector<EdgeCut> const &valid_edges,
+std::pair<bool, EdgeCut> NaiveTopKSplitter::select_edge_to_cut(
+    RNGState &rng_state, std::vector<EdgeCut> const &valid_edges,
     bool save_selection_prob
 ) const{
 
@@ -144,23 +193,29 @@ std::tuple<bool, EdgeCut, double> NaiveTopKSplitter::select_edge_to_cut(
     int idx = rng_state.r_int(k_param);
     // if we selected k greater than number of edges failure
     if(idx >= num_valid_edges){
-        return std::make_tuple(false, EdgeCut(), 0.0); 
+        return std::make_pair(false, EdgeCut()); 
     }else{
-        return std::make_tuple(true, valid_edges[idx], save_selection_prob ? - std::log(k_param) : 0.0);
+        // we always store selection probability since its so cheap to compute
+        EdgeCut selected_edge_cut = valid_edges[idx];
+        selected_edge_cut.log_prob = - std::log(k_param);
+        return std::make_pair(true, selected_edge_cut);
     }
 
 }
 
 
 
-std::tuple<bool, EdgeCut, double> UniformValidSplitter::select_edge_to_cut(
+std::pair<bool, EdgeCut> UniformValidSplitter::select_edge_to_cut(
     RNGState &rng_state,std::vector<EdgeCut> const &valid_edges,
     bool save_selection_prob
 ) const{
     int num_valid_edges  = static_cast<int>(valid_edges.size());
     // pick one unif at random 
     int idx = rng_state.r_int(num_valid_edges);
-    return std::make_tuple(true, valid_edges[idx], save_selection_prob ? - std::log(num_valid_edges) : 0.0);
+    // we always store selection probability since its so cheap to compute
+    EdgeCut selected_edge_cut = valid_edges[idx];
+    selected_edge_cut.log_prob = - std::log(num_valid_edges);
+    return std::make_pair(true, selected_edge_cut);
 }
 
 
@@ -184,7 +239,7 @@ double ExpoWeightedSmallerDevSplitter::compute_unnormalized_edge_cut_weight(
 
 
 
-std::tuple<bool, EdgeCut, double> ExperimentalSplitter::select_edge_to_cut(
+std::pair<bool, EdgeCut> ExperimentalSplitter::select_edge_to_cut(
         RNGState &rng_state,std::vector<EdgeCut> const &valid_edges,
         bool save_selection_prob
     ) const {
@@ -193,7 +248,7 @@ std::tuple<bool, EdgeCut, double> ExperimentalSplitter::select_edge_to_cut(
     // if no valid edges reject immediately 
     if(num_valid_edges == 1){
         // if only 1 just return that
-        return std::make_tuple(true, valid_edges[0], 0.0);
+        return std::make_pair(true, valid_edges[0]);
     }
 
     // get the weights 
@@ -207,10 +262,10 @@ std::tuple<bool, EdgeCut, double> ExperimentalSplitter::select_edge_to_cut(
     // compute selection probability if needed
     double log_selection_prob = 0.0;
     if(save_selection_prob){
-        log_selection_prob = std::log(unnormalized_wgts(idx)) - std::log(arma::sum(unnormalized_wgts));
+        selected_edge_cut.log_prob = std::log(unnormalized_wgts(idx)) - std::log(arma::sum(unnormalized_wgts));
     }
 
-    return std::make_tuple(true, selected_edge_cut, log_selection_prob);
+    return std::make_tuple(true, selected_edge_cut);
 }
 
 

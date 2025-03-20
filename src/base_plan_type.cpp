@@ -803,9 +803,10 @@ void Plan::update_region_info_from_cut(
 
 
 void Plan::update_from_successful_split(
-    Tree const &ust, EdgeCut const &cut_edge,
+    TreeSplitter const &tree_splitter,
+    USTSampler &ust_sampler, EdgeCut const &cut_edge,
     int const new_region1_id, int const new_region2_id,
-    double const log_selection_prob, bool const add_region
+    bool const add_region
 ){
     // now update the region level information from the edge cut
     update_region_info_from_cut(
@@ -815,8 +816,9 @@ void Plan::update_from_successful_split(
     );
     
     // Now update the vertex level information
-    update_vertex_info_from_cut(
-        ust, cut_edge, 
+    update_vertex_and_plan_specific_info_from_cut(
+        tree_splitter,
+        ust_sampler, cut_edge, 
         new_region1_id, new_region2_id
     ); 
      

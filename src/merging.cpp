@@ -100,7 +100,7 @@ std::tuple<bool, bool, double> attempt_mergesplit_step(
     }
 
     // try to draw a region 
-    std::tuple<bool, EdgeCut, double> edge_search_result = ust_sampler.attempt_to_find_valid_tree_mergesplit(
+    std::tuple<bool, EdgeCut> edge_search_result = ust_sampler.attempt_to_find_valid_tree_mergesplit(
         map_params, splitting_schedule,
         rng_state, tree_splitter,
         plan, region1_id, region2_id,
@@ -129,9 +129,9 @@ std::tuple<bool, bool, double> attempt_mergesplit_step(
     }
     // now split that region we found on the old one
     new_plan.update_from_successful_split(
-        ust_sampler.ust, std::get<1>(edge_search_result),
+        tree_splitter,
+        ust_sampler, std::get<1>(edge_search_result),
         region1_id, region2_id,
-        std::get<2>(edge_search_result), 
         false
     );
     if(DEBUG_MERGING_VERBOSE){
@@ -211,9 +211,9 @@ std::tuple<bool, bool, double> attempt_mergesplit_step(
     if(proposal_accepted){
         // if successful then actually update
         plan.update_from_successful_split(
-            ust_sampler.ust, std::get<1>(edge_search_result),
+            tree_splitter,
+            ust_sampler, std::get<1>(edge_search_result),
             region1_id, region2_id,
-            std::get<2>(edge_search_result), 
             false
         );
         // update pairs and weights to be current one

@@ -75,7 +75,7 @@ double compute_a_log_optimal_weight(
     bool split_district_only = splitting_size_regime == SplittingSizeScheduleType::DistrictOnly;
 
     auto splitting_schedule_ptr = get_splitting_schedule(
-        1, ndists, num_regions, splitting_size_regime, control
+        1, ndists, splitting_size_regime, control
     );
 
     // set the splitting schedule 

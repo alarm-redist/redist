@@ -57,6 +57,18 @@ dist_dist_diff <- function(p, i_dist, j_dist, x_center, y_center, x, y) {
     .Call(`_gredist_dist_dist_diff`, p, i_dist, j_dist, x_center, y_center, x, y)
 }
 
+get_region_multigraph <- function(adj_list, region_ids) {
+    .Call(`_gredist_get_region_multigraph`, adj_list, region_ids)
+}
+
+get_region_laplacian <- function(adj_list, region_ids) {
+    .Call(`_gredist_get_region_laplacian`, adj_list, region_ids)
+}
+
+get_log_number_linking_edges <- function(adj_list, region_ids) {
+    .Call(`_gredist_get_log_number_linking_edges`, adj_list, region_ids)
+}
+
 #' Run Optimalgsmc with Merge Split
 #'
 #' Uses gsmc method with optimal weights and merge split steps to generate a sample of `M` plans in `c++` 

@@ -24,7 +24,7 @@ class SplittingSchedule {
         
         // Base constructor just creates vectors, does not set them
         SplittingSchedule(
-            const SplittingSizeScheduleType schedule_type, const int num_splits, const int ndists, const int initial_num_regions
+            const SplittingSizeScheduleType schedule_type, const int ndists
         ):
             schedule_type(schedule_type),
             ndists(ndists),
@@ -79,7 +79,7 @@ class DistrictOnlySplittingSchedule : public SplittingSchedule {
     public:
         // constructor
         DistrictOnlySplittingSchedule(
-            const int num_splits, const int ndists, const int initial_num_regions
+            const int num_splits, const int ndists
         );
 
 
@@ -97,7 +97,7 @@ class AnyRegionSplittingSchedule : public SplittingSchedule {
     public:
         // constructor
         AnyRegionSplittingSchedule(
-            const int num_splits, const int ndists, const int initial_num_regions
+            const int num_splits, const int ndists
         );
         // this does nothing and should not be called
         void set_potential_cut_sizes_for_each_valid_size(
@@ -139,7 +139,8 @@ class OneCustomSplitSchedule : public SplittingSchedule {
     public:
         // constructor
         OneCustomSplitSchedule(
-            const int num_splits, const int ndists, const int initial_num_regions, 
+            const int num_splits, 
+            const int ndists,  
             Rcpp::List const &control);
         
         void set_potential_cut_sizes_for_each_valid_size(int split_num, int presplit_num_regions) override;
@@ -148,7 +149,7 @@ class OneCustomSplitSchedule : public SplittingSchedule {
 
     
 std::unique_ptr<SplittingSchedule> get_splitting_schedule(
-    const int num_splits, const int ndists, const int initial_num_regions, 
+    const int num_splits, const int ndists, 
     SplittingSizeScheduleType const schedule_type,
     Rcpp::List const &control
 );

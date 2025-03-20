@@ -55,7 +55,7 @@ bool USTSampler::draw_tree_on_merged_region(const MapParams &map_params, RNGStat
 
 
 
-std::tuple<bool, EdgeCut, double> USTSampler::try_to_sample_splittable_tree(
+std::pair<bool, EdgeCut> USTSampler::try_to_sample_splittable_tree(
     const MapParams &map_params, SplittingSchedule const &splitting_schedule,
     RNGState &rng_state, TreeSplitter const &tree_splitter,
     int const region_populations, int const region_size,
@@ -67,7 +67,7 @@ std::tuple<bool, EdgeCut, double> USTSampler::try_to_sample_splittable_tree(
     int min_possible_cut_size = cut_size_bounds.first;
     int max_possible_cut_size = cut_size_bounds.second;
 
-    std::tuple<bool, EdgeCut, double> edge_search_result = tree_splitter.attempt_to_find_edge_to_cut(
+    std::pair<bool, EdgeCut> edge_search_result = tree_splitter.attempt_to_find_edge_to_cut(
         map_params, rng_state,
         ust, root, pops_below_vertex, ignore,
         region_populations, region_size,
@@ -78,7 +78,7 @@ std::tuple<bool, EdgeCut, double> USTSampler::try_to_sample_splittable_tree(
 
     bool search_successful = std::get<0>(edge_search_result);
     // return false if unsuccessful 
-    if(!search_successful) return std::make_tuple(false, EdgeCut(), 0.0);
+    if(!search_successful) return std::make_pair(false, EdgeCut());
 
     // If successful extract the edge cut info
     EdgeCut cut_edge = std::get<1>(edge_search_result);
@@ -89,7 +89,7 @@ std::tuple<bool, EdgeCut, double> USTSampler::try_to_sample_splittable_tree(
 }
 
 
-std::tuple<bool, EdgeCut, double> USTSampler::attempt_to_find_valid_tree_split(
+std::pair<bool, EdgeCut> USTSampler::attempt_to_find_valid_tree_split(
     const MapParams &map_params, SplittingSchedule const &splitting_schedule,
     RNGState &rng_state, TreeSplitter const &tree_splitter,
     Plan const &plan, int const region_to_split,
@@ -101,7 +101,7 @@ std::tuple<bool, EdgeCut, double> USTSampler::attempt_to_find_valid_tree_split(
         plan, region_to_split
     );
     // return false if unsuccessful 
-    if(!tree_drawn) return std::make_tuple(false, EdgeCut(), 0.0);
+    if(!tree_drawn) return std::make_pair(false, EdgeCut());
 
     // Else try to find a valid cut
     int region_to_split_size = plan.region_sizes(region_to_split);
@@ -117,7 +117,7 @@ std::tuple<bool, EdgeCut, double> USTSampler::attempt_to_find_valid_tree_split(
 
 
 
-std::tuple<bool, EdgeCut, double> USTSampler::attempt_to_find_valid_tree_mergesplit(
+std::pair<bool, EdgeCut> USTSampler::attempt_to_find_valid_tree_mergesplit(
     const MapParams &map_params, SplittingSchedule const &splitting_schedule,
     RNGState &rng_state, TreeSplitter const &tree_splitter,
     Plan const &plan, int const merge_region1, int const merge_region2,
@@ -129,7 +129,7 @@ std::tuple<bool, EdgeCut, double> USTSampler::attempt_to_find_valid_tree_mergesp
         plan, merge_region1, merge_region2
     );
     // return false if unsuccessful 
-    if(!tree_drawn) return std::make_tuple(false, EdgeCut(), 0.0);
+    if(!tree_drawn) return std::make_pair(false, EdgeCut());
 
     // Else try to find a valid cut
     int region_to_split_size = plan.region_sizes(merge_region1)+plan.region_sizes(merge_region2);

@@ -2,9 +2,10 @@
 #include "graph_plan_type.h"
 
 
-void GraphPlan::update_vertex_info_from_cut(
-        Tree const &ust, EdgeCut const cut_edge, 
-        const int split_region1_id, const int split_region2_id
+void GraphPlan::update_vertex_and_plan_specific_info_from_cut(
+    TreeSplitter const &tree_splitter,
+    USTSampler &ust_sampler, EdgeCut const cut_edge, 
+    const int split_region1_id, const int split_region2_id
 ){
     // Get the root of the tree associated with region 1 and 2
     int split_region1_tree_root, split_region2_tree_root;
@@ -17,10 +18,10 @@ void GraphPlan::update_vertex_info_from_cut(
     );
 
     // update the vertex labels
-    assign_region_id_from_tree(ust, region_ids,
+    assign_region_id_from_tree(ust_sampler.ust, region_ids,
         split_region1_tree_root, split_region1_id);
 
-    assign_region_id_from_tree(ust, region_ids,
+    assign_region_id_from_tree(ust_sampler.ust, region_ids,
         split_region2_tree_root, split_region2_id);
 
     return;
