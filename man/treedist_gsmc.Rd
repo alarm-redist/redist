@@ -8,6 +8,7 @@ treedist_gsmc(
   map,
   nsims,
   counties = NULL,
+  compactness = 1,
   constraints = list(),
   runs = 1L,
   alg_name,

@@ -9,7 +9,8 @@ group_frac(
   map,
   group_pop,
   total_pop = map[[attr(map, "pop_col")]],
-  .data = pl()
+  .data = pl(),
+  num_threads = 1
 )
 
 gredist.group.percent(plans, group_pop, total_pop, ncores = 1)
@@ -22,6 +23,9 @@ gredist.group.percent(plans, group_pop, total_pop, ncores = 1)
 \item{total_pop}{A numeric vector with the population for every precinct.}
 
 \item{.data}{a \code{\link{redist_plans}} object or matrix of plans}
+
+\item{num_threads}{The number of threads to use for the calculation. Can
+significantly speedup calculations for a large number of plans.}
 
 \item{plans}{A matrix with one row
 for each precinct and one column for each map. Required.}

@@ -4,7 +4,7 @@
 \alias{tally_var}
 \title{Tally a variable by district}
 \usage{
-tally_var(map, x, .data = pl())
+tally_var(map, x, .data = pl(), num_threads = 1)
 }
 \arguments{
 \item{map}{a \code{redist_map} object}
@@ -12,6 +12,9 @@ tally_var(map, x, .data = pl())
 \item{x}{a variable to tally. Tidy-evaluated.}
 
 \item{.data}{a \code{redist_plans} object or matrix of plans}
+
+\item{num_threads}{The number of threads to use for the calculation. Can
+significantly speedup calculations for a large number of plans.}
 }
 \value{
 a vector containing the tallied values by district and plan (column-major)

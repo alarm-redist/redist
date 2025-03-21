@@ -8,6 +8,7 @@ redist_gsmc(
   map,
   nsims,
   counties = NULL,
+  compactness = 1,
   constraints = list(),
   runs = 1L,
   num_splitting_steps = NULL,
@@ -49,6 +50,11 @@ parameter associated with this constraint. To adjust the number of county
 splits further, or to constrain a second type of administrative split,
 consider using \code{add_constr_splits()}, \code{add_constr_multisplits()}, and
 \code{add_constr_total_splits()}.}
+
+\item{compactness}{Controls the compactness of the generated districts, with
+higher values preferring more compact districts. Must be nonnegative. See
+the 'Details' section for more information, and computational
+considerations.}
 
 \item{constraints}{A \code{\link[=redist_constr]{redist_constr()}} object or a list containing
 information on sampling constraints. See \link{constraints} for more information.}

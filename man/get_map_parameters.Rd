@@ -4,7 +4,12 @@
 \alias{get_map_parameters}
 \title{Takes a map and possibly a county label and returns map parameters for SMC algorithms}
 \usage{
-get_map_parameters(map, counties = NULL, counties_q = NULL)
+get_map_parameters(
+  map,
+  counties_q = NULL,
+  use_counties_q = TRUE,
+  counties = NULL
+)
 }
 \arguments{
 \item{map}{A \code{redist_map}}

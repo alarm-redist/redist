@@ -10,7 +10,14 @@ redist_ci(plans, x, district = 1L, conf = 0.9, by_chain = FALSE)
 
 redist_smc_ci(plans, x, district = 1L, conf = 0.9, by_chain = FALSE)
 
-redist_mcmc_ci(plans, x, district = 1L, conf = 0.9, by_chain = FALSE)
+redist_mcmc_ci(
+  plans,
+  x,
+  district = 1L,
+  conf = 0.9,
+  by_chain = FALSE,
+  use_coda_std_errors = FALSE
+)
 }
 \arguments{
 \item{plans}{a \link{redist_plans} object.}

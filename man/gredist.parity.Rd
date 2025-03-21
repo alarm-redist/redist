@@ -7,7 +7,7 @@
 \usage{
 gredist.parity(plans, total_pop)
 
-plan_parity(map, .data = pl(), ...)
+plan_parity(map, .data = pl(), num_threads = 1, rep_by_district = TRUE)
 }
 \arguments{
 \item{plans}{A matrix with one row for each precinct and one column for each
@@ -19,7 +19,11 @@ map. Required.}
 
 \item{.data}{a \code{\link{redist_plans}} object}
 
-\item{...}{passed on to \code{gredist.parity}}
+\item{num_threads}{The number of threads to use for the calculation. Can
+significantly speedup calculations for a large number of plans.}
+
+\item{rep_by_district}{Whether or not to return a duplicated value for each
+district (so size \code{nsims*districts}) or return a single value for each plan.}
 }
 \value{
 numeric vector with the population parity for each column

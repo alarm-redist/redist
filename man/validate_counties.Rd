@@ -4,18 +4,25 @@
 \alias{validate_counties}
 \title{Checks a county label input is valid and if so returns it.}
 \usage{
-validate_counties(map, adj_list, V, counties, counties_q = NULL)
+validate_counties(
+  map,
+  adj_list,
+  V,
+  counties_q,
+  use_counties_q = TRUE,
+  counties = NULL
+)
 }
 \arguments{
 \item{map}{A \code{redist_map}}
 
 \item{V}{The number of vertices in the plan graph.}
 
-\item{counties}{County thing}
-
 \item{counties_q}{The quosure in the county label input ie
 \code{counties_q <- rlang::enquo(counties)} must have been called in
 the nested function.}
+
+\item{counties}{County thing}
 }
 \value{
 A counties label vector
