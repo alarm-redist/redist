@@ -99,8 +99,12 @@ generic_redist_gsmc <- function(
     # get the total number of districts
     ndists <- attr(map, "ndists")
 
+    # update quosure if quosure not passed in
+    if(!use_counties_q){
+        counties_q <- rlang::enquo(counties)
+    }
 
-    map_params <- get_map_parameters(map, counties_q=counties_q, use_counties_q=use_counties_q, counties=counties)
+    map_params <- get_map_parameters(map, counties_q=counties_q, use_counties_q=T)
     map <- map_params$map
     V <- map_params$V
     adj_list <- map_params$adj_list

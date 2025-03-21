@@ -616,6 +616,7 @@ Graph get_region_graph(const Graph &g, const Plan &plan) {
 //'
 double compute_log_optimal_weights(
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    SamplingSpace const sampling_space,
     ScoringFunction const &scoring_function, double rho,
     Plan const &plan, 
     const TreeSplitter &edge_splitter, bool compute_log_splitting_prob,
@@ -633,29 +634,55 @@ double compute_log_optimal_weights(
         map_params, splitting_schedule, edge_splitter
     );
 
+    // get region multigraph if linked edge 
+    bool const use_linked_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
+    RegionMultigraph region_multigraph(
+        use_linked_edge_space ? plan.num_regions : 0
+    );
+    std::vector<int> merge_index_reshuffle(
+        use_linked_edge_space ? plan.num_regions : 0
+    );
+    if(use_linked_edge_space){
+        region_multigraph = build_region_multigraph(
+            map_params.g, plan.region_ids, plan.num_regions
+        );
+    }
+
     // iterate over the pairs 
 
     // Now iterate over adjacent region pairs and add splitting and pop temper
     for (const auto& pair_tuple: region_pair_log_eff_boundary_map){
+        double log_of_sum_term = 0.0;
+
         const int region1_id = std::get<0>(pair_tuple); // get the smaller region id  
         const int region2_id = std::get<1>(pair_tuple); // get the bigger region id  
         const double eff_log_boundary_len = std::get<2>(pair_tuple); // get the effective boundary length
+        // add to term
+        log_of_sum_term += eff_log_boundary_len;
 
-        double log_splitting_prob = 0.0;
         // If not compute_log_splitting_prob then its just log(1) = 0
         if(compute_log_splitting_prob){
             // in generalized region split find probability you would have 
             // picked to split the union of the the two regions 
-            log_splitting_prob = get_log_retroactive_splitting_prob(
+            double log_splitting_prob = get_log_retroactive_splitting_prob(
                 plan, splitting_schedule.valid_region_sizes_to_split, 
+                region1_id, region2_id
+            );
+            log_of_sum_term += log_splitting_prob;
+        }
+
+
+        // If using linked edge add multigraph tau
+        if(use_linked_edge_space){
+            log_of_sum_term -= get_log_merged_region_multigraph_spanning_tree(
+                region_multigraph,
+                merge_index_reshuffle,
                 region1_id, region2_id
             );
         }
 
-        // add constraint ratio
-        double score_ratio = 0.0;
 
-        // compute if any constraints 
+        // compute score ratio if any constraints 
         if(scoring_function.any_constraints){
             // compute scoring functions
             const double region1_score = scoring_function.compute_region_score(
@@ -668,7 +695,8 @@ double compute_log_optimal_weights(
                 plan, region1_id, region2_id, is_final_plan
             );
             // log ratio is (log region1 + log region2) - log score merged
-            score_ratio = region1_score + region2_score - merged_region_score;
+            double const score_ratio = region1_score + region2_score - merged_region_score;
+            log_of_sum_term += score_ratio;
         }
 
         // int region1_size = plan.region_sizes(region1_id);
@@ -677,10 +705,11 @@ double compute_log_optimal_weights(
         //     region1_id, region2_id, region1_size, region2_size, std::exp(eff_log_boundary_len), 
         //     std::exp(log_splitting_prob), std::exp(score_ratio));
 
-        double log_tau_ratio = 0.0;
+        
 
         // Do taus if neccesary 
         if(compute_log_tau){
+            double log_tau_ratio = 0.0;
             // add merged region
             log_tau_ratio += (rho-1)*plan.compute_log_merged_region_spanning_trees(
                 map_params, region1_id, region2_id
@@ -692,14 +721,11 @@ double compute_log_optimal_weights(
             log_tau_ratio -= (rho-1)*plan.compute_log_region_spanning_trees(
                 map_params, region2_id
             );
+            log_of_sum_term += log_tau_ratio;
         }
 
-
-        // Now the term is 
-        //      - log_splitting_prob
-        //      - eff_log_boundary_len
-        //      -score_ratio
-        incremental_weight += std::exp(log_splitting_prob + eff_log_boundary_len + score_ratio + log_tau_ratio);
+        // Now exponentiate and add to the sum
+        incremental_weight += std::exp(log_of_sum_term);
 
     }
 
@@ -708,11 +734,15 @@ double compute_log_optimal_weights(
         Rcpp::stop("Error! weight is negative infinity for some reason \n");
     }
 
-    // Rprintf("Total Boundary %d and log incre = %f\n",
-    // total_boundary_len, -std::log(incremental_weight));
+    // Extra term if needed
+    double extra_log_terms = 0.0;
+    if(use_linked_edge_space){
+        // need number of linking edges for current plan
+        extra_log_terms -= compute_log_region_multigraph_spanning_tree(region_multigraph);
+    }
 
     // now return the log of the inverse of the sum
-    return -std::log(incremental_weight);
+    return extra_log_terms-std::log(incremental_weight);
 
 }
 
@@ -772,7 +802,7 @@ void compute_all_plans_log_optimal_weights(
     pool.parallelFor(0, nsims, [&] (int i) {
         // REprintf("I=%d\n", i);
         double log_incr_weight = compute_log_optimal_weights(
-            map_params, splitting_schedule,
+            map_params, splitting_schedule, sampling_space,
             scoring_function, rho,
             *plans_ptr_vec.at(i), 
             tree_splitter,

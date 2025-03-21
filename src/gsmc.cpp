@@ -133,7 +133,6 @@ void run_smc_step(
     // create a progress bar
     RcppThread::ProgressBar bar(M, 1);
     // Parallel thread pool where all objects in memory shared by default
-
     pool.parallelFor(0, M, [&] (int i) {
         static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
         static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
@@ -141,6 +140,7 @@ void run_smc_step(
         // REprintf("Plan %d\n\n", i);
         bool ok = false;
         int idx;
+        RcppThread::checkUserInterrupt(i % check_int == 0);
 
         while (!ok) {
             // increase the number of tries for particle i by 1
@@ -216,7 +216,7 @@ void run_smc_step(
         if (verbosity >= 3) {
             ++bar;
         }
-        RcppThread::checkUserInterrupt(i % check_int == 0);
+        
     });
 
     // Wait for all the threads to finish

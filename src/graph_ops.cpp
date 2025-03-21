@@ -36,11 +36,86 @@ RegionMultigraph build_region_multigraph(
     return region_multigraph;
 }
 
-arma::imat build_region_laplacian(
+
+
+
+
+double get_log_merged_region_multigraph_spanning_tree(
+    RegionMultigraph const &region_multigraph,
+    std::vector<int> &merge_index_reshuffle,
+    int region1_id, int region2_id
+){
+    // TODO make the merged reindex the biggest one so we can skip it later
+    int num_regions = region_multigraph.size();
+    int smaller_id = std::min(region1_id, region2_id);
+    int bigger_id = std::max(region1_id, region2_id);
+    int merged_reindex = num_regions-2;
+    for (int current_reindex = 0, i = 0; i < num_regions; i++){
+        if(i == region1_id || i == region2_id){
+            merge_index_reshuffle[i] = merged_reindex;
+        }else{
+            merge_index_reshuffle[i] = current_reindex;
+            ++current_reindex;
+        }
+    }
+    
+    // Rprintf("Reindex is: ");
+    // for (size_t i = 0; i < num_regions; i++)
+    // {
+    //     Rprintf("%d maps to %d\n", i, merge_index_reshuffle[i]);
+    // }
+    
+
+
+    arma::mat laplacian_mat(
+        num_regions-2, 
+        num_regions-2, 
+        arma::fill::zeros);
+    // iterate over the multigraph but ignore last column and row 
+    for (size_t region_id = 0; region_id < num_regions; region_id++)
+    {
+        int reindexed_id = merge_index_reshuffle[region_id];
+        // Rprintf("%d remapped to %d!\n", region_id, reindexed_id);
+        // skip 
+        if(reindexed_id == num_regions-2) continue;
+        int vertex_degree = 0;
+        // iterate over neighbors
+        for (auto const &it : region_multigraph[region_id])
+        {
+            int reindexed_nbor = merge_index_reshuffle[it.first];
+            // ignore loops within the merged region 
+            if(reindexed_id == reindexed_nbor) continue;
+            // Rprintf("%d remapped to %d!\n", it.first, reindexed_nbor);
+            
+            // Rprintf("(%d,%d) Edges %d \n", region_id, it.first, it.second);
+
+            // add number of edges to degree
+            vertex_degree += it.second;
+            // ignore if num_regions-1 since we're skipping last one
+            if(reindexed_nbor == num_regions-2) continue;
+            // need minus equals here to add for both merged regions
+            laplacian_mat(reindexed_id, reindexed_nbor) -= it.second;
+            // laplacian_mat(reindexed_nbor, reindexed_id) -= it.second;
+        }
+        // need plus equals here to add for both merged regions
+        laplacian_mat(reindexed_id, reindexed_id) += vertex_degree;
+    }
+
+    
+    // laplacian_mat.print();
+    
+    double lst, sign;
+    arma::log_det(lst, sign, laplacian_mat);
+
+    return lst;
+
+}
+
+arma::mat build_region_laplacian(
     RegionMultigraph const &region_multigraph
 ){
     int num_regions = region_multigraph.size();
-    arma::imat laplacian_mat(num_regions, num_regions, arma::fill::zeros);
+    arma::mat laplacian_mat(num_regions, num_regions, arma::fill::zeros);
     // iterate over the multigraph
     for (size_t region_id = 0; region_id < num_regions; region_id++)
     {
@@ -77,7 +152,7 @@ RegionMultigraph get_region_multigraph(
     ));
 }
 
-arma::imat get_region_laplacian(
+arma::mat get_region_laplacian(
     Rcpp::List const &adj_list,
     arma::uvec const &region_ids
 ){
@@ -111,6 +186,8 @@ double compute_log_region_multigraph_spanning_tree(
         laplacian_mat(region_id, region_id) = vertex_degree;
     }
 
+    // laplacian_mat.submat(0, 0, num_regions-2, num_regions-2).print();
+
     double lst, sign;
     arma::log_det(lst, sign, 
         laplacian_mat.submat(0, 0, num_regions-2, num_regions-2) );
@@ -130,3 +207,24 @@ double get_log_number_linking_edges(
         )
     ));
 }
+
+
+
+
+double get_merged_log_number_linking_edges(
+    Rcpp::List const &adj_list,
+    arma::uvec const &region_ids,
+    int const region1_id, int const region2_id
+){
+    RegionMultigraph region_multigraph = get_region_multigraph(
+        adj_list,
+        region_ids
+    );
+
+    std::vector<int> merge_index_reshuffle(region_multigraph.size());
+    return get_log_merged_region_multigraph_spanning_tree(
+        region_multigraph, merge_index_reshuffle,
+        region1_id, region2_id
+    );
+}
+

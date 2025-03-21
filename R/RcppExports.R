@@ -69,6 +69,10 @@ get_log_number_linking_edges <- function(adj_list, region_ids) {
     .Call(`_gredist_get_log_number_linking_edges`, adj_list, region_ids)
 }
 
+get_merged_log_number_linking_edges <- function(adj_list, region_ids, region1_id, region2_id) {
+    .Call(`_gredist_get_merged_log_number_linking_edges`, adj_list, region_ids, region1_id, region2_id)
+}
+
 #' Run Optimalgsmc with Merge Split
 #'
 #' Uses gsmc method with optimal weights and merge split steps to generate a sample of `M` plans in `c++` 
@@ -217,6 +221,10 @@ ms_plans <- function(nsims, warmup, thin, ndists, adj_list, counties, pop, targe
 
 pareto_dominated <- function(x) {
     .Call(`_gredist_pareto_dominated`, x)
+}
+
+random_cpp_testing <- function() {
+    .Call(`_gredist_random_cpp_testing`)
 }
 
 closest_adj_pop <- function(adj, i_dist, g_prop) {

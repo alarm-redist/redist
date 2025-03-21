@@ -229,7 +229,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // get_region_laplacian
-arma::imat get_region_laplacian(Rcpp::List const& adj_list, arma::uvec const& region_ids);
+arma::mat get_region_laplacian(Rcpp::List const& adj_list, arma::uvec const& region_ids);
 RcppExport SEXP _gredist_get_region_laplacian(SEXP adj_listSEXP, SEXP region_idsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -249,6 +249,20 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::List const& >::type adj_list(adj_listSEXP);
     Rcpp::traits::input_parameter< arma::uvec const& >::type region_ids(region_idsSEXP);
     rcpp_result_gen = Rcpp::wrap(get_log_number_linking_edges(adj_list, region_ids));
+    return rcpp_result_gen;
+END_RCPP
+}
+// get_merged_log_number_linking_edges
+double get_merged_log_number_linking_edges(Rcpp::List const& adj_list, arma::uvec const& region_ids, int const region1_id, int const region2_id);
+RcppExport SEXP _gredist_get_merged_log_number_linking_edges(SEXP adj_listSEXP, SEXP region_idsSEXP, SEXP region1_idSEXP, SEXP region2_idSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List const& >::type adj_list(adj_listSEXP);
+    Rcpp::traits::input_parameter< arma::uvec const& >::type region_ids(region_idsSEXP);
+    Rcpp::traits::input_parameter< int const >::type region1_id(region1_idSEXP);
+    Rcpp::traits::input_parameter< int const >::type region2_id(region2_idSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_merged_log_number_linking_edges(adj_list, region_ids, region1_id, region2_id));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -690,6 +704,16 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// random_cpp_testing
+Rcpp::List random_cpp_testing();
+RcppExport SEXP _gredist_random_cpp_testing() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(random_cpp_testing());
+    return rcpp_result_gen;
+END_RCPP
+}
 // closest_adj_pop
 int closest_adj_pop(IntegerVector adj, int i_dist, NumericVector g_prop);
 RcppExport SEXP _gredist_closest_adj_pop(SEXP adjSEXP, SEXP i_distSEXP, SEXP g_propSEXP) {
@@ -959,6 +983,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_get_region_multigraph", (DL_FUNC) &_gredist_get_region_multigraph, 2},
     {"_gredist_get_region_laplacian", (DL_FUNC) &_gredist_get_region_laplacian, 2},
     {"_gredist_get_log_number_linking_edges", (DL_FUNC) &_gredist_get_log_number_linking_edges, 2},
+    {"_gredist_get_merged_log_number_linking_edges", (DL_FUNC) &_gredist_get_merged_log_number_linking_edges, 4},
     {"_gredist_run_redist_gsmc", (DL_FUNC) &_gredist_run_redist_gsmc, 16},
     {"_gredist_log_st_map", (DL_FUNC) &_gredist_log_st_map, 4},
     {"_gredist_n_removed", (DL_FUNC) &_gredist_n_removed, 3},
@@ -986,6 +1011,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_parallel_polsbypopper", (DL_FUNC) &_gredist_parallel_polsbypopper, 7},
     {"_gredist_ms_plans", (DL_FUNC) &_gredist_ms_plans, 19},
     {"_gredist_pareto_dominated", (DL_FUNC) &_gredist_pareto_dominated, 1},
+    {"_gredist_random_cpp_testing", (DL_FUNC) &_gredist_random_cpp_testing, 0},
     {"_gredist_closest_adj_pop", (DL_FUNC) &_gredist_closest_adj_pop, 3},
     {"_gredist_rint1", (DL_FUNC) &_gredist_rint1, 2},
     {"_gredist_runif1", (DL_FUNC) &_gredist_runif1, 2},

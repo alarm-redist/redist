@@ -19,7 +19,7 @@
 #include "tree_op.h"
 #include "scoring.h"
 #include "map_calc.h"
-
+#include "graph_ops.h"
 
 //' Computes the effective sample size from log incremental weights
 //'
