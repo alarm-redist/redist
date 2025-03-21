@@ -8,7 +8,7 @@
 
 #include "merge_split.h"
 
-constexpr bool DEBUG_PURE_MS_VERBOSE = false; // Compile-time constant
+constexpr bool DEBUG_PURE_MS_VERBOSE = true; // Compile-time constant
 
 /*
  * Select a pair of neighboring districts i, j
@@ -240,9 +240,20 @@ Rcpp::List ms_plans(
             ndists, ndists,
             map_params.pop, split_district_only
         );
+    }else if(sampling_space == SamplingSpace::LinkingEdgeSpace){
+        current_plan_ptr = std::make_unique<LinkingEdgePlan>(
+            region_id_mat.col(0), region_sizes_mat.col(0), 
+            ndists, ndists,
+            map_params.pop, split_district_only
+        );
 
+        proposed_plan_ptr = std::make_unique<LinkingEdgePlan>(
+            dummy_region_id_mat.col(0), dummy_region_sizes_mat.col(0), 
+            ndists, ndists,
+            map_params.pop, split_district_only
+        );
     }else{
-        throw Rcpp::exception("Input is invalid\n");
+        throw Rcpp::exception("Inputted Sampling Space not supported!\n");
     }
 
     // splitter
@@ -349,7 +360,7 @@ Rcpp::List ms_plans(
         // attempt to mergesplit 
         std::tuple<bool, bool, double> mergesplit_result = attempt_mergesplit_step(
             map_params, *splitting_schedule_ptr, scoring_function,
-            rng_state,
+            rng_state, sampling_space,
             *current_plan_ptr, *proposed_plan_ptr, 
             ust_sampler, *tree_splitter_ptr,
             merge_prob_type, save_edge_selection_prob,

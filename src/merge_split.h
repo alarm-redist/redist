@@ -20,6 +20,7 @@
 #include "base_plan_type.h"
 #include "graph_plan_type.h"
 #include "forest_plan_type.h"
+#include "linking_edge_plan_type.h"
 #include "ust_sampler.h"
 #include "merging.h"
 

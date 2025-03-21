@@ -344,7 +344,6 @@ redist_mergesplit <- function(
             splitting_params=splitting_params
         )
 
-
         # Information about the run
         algout$run_information <- list(
             valid_region_sizes_to_split_list=algout$valid_region_sizes_to_split_list,
@@ -362,7 +361,6 @@ redist_mergesplit <- function(
     }
     t2 <- Sys.time()
 
-    #return(algout)
 
     plans <- lapply(out_par, function(algout) {
         algout$plans

@@ -586,6 +586,15 @@ double Plan::compute_log_merged_region_spanning_trees(MapParams const &map_param
 }
 
 
+double Plan::compute_log_linking_edge_count(
+    MapParams const &map_params
+) const{
+    return compute_log_region_multigraph_spanning_tree(
+        build_region_multigraph(map_params.g, region_ids, num_regions)
+    );
+};
+
+
 //' Selects a valid multidistrict to split uniformly at random 
 //'
 //' Given a plan object with at least one multidistrict this function randomly

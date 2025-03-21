@@ -77,7 +77,7 @@ double get_log_mh_ratio(
 std::tuple<bool, bool, double> attempt_mergesplit_step(
     MapParams const &map_params, const SplittingSchedule &splitting_schedule,
     ScoringFunction const &scoring_function,
-    RNGState &rng_state,
+    RNGState &rng_state, SamplingSpace const sampling_space,
     Plan &plan, Plan &new_plan, 
     USTSampler &ust_sampler, TreeSplitter const &tree_splitter,
     std::string const merge_prob_type, bool save_edge_selection_prob,
@@ -166,6 +166,7 @@ std::tuple<bool, bool, double> attempt_mergesplit_step(
     if(DEBUG_MERGING_VERBOSE){
         Rprintf("selected new pair index is %d!\n", region_pair_proposal_index);
     }
+    bool using_linking_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
     // compute the boundary length 
     double current_log_eff_boundary = plan.get_log_eff_boundary_len(
         map_params, splitting_schedule, tree_splitter,
@@ -175,6 +176,11 @@ std::tuple<bool, bool, double> attempt_mergesplit_step(
         map_params, splitting_schedule, tree_splitter,
         region1_id, region2_id
     );
+    // If linking edge space we need to subtract linking edge correction term
+    if(using_linking_edge_space){
+        current_log_eff_boundary -= plan.compute_log_linking_edge_count(map_params);
+        proposed_log_eff_boundary -= new_plan.compute_log_linking_edge_count(map_params);
+    }
 
     if(DEBUG_MERGING_VERBOSE){
         Rprintf("Doing regions %d, %d!\n", region1_id, region2_id);
@@ -253,7 +259,7 @@ int run_merge_split_steps(
     {
         std::tuple<bool, bool, double> mergesplit_result = attempt_mergesplit_step(
             map_params, splitting_schedule, scoring_function,
-            rng_state,
+            rng_state, sampling_space,
             plan, dummy_plan, 
             ust_sampler, tree_splitter,
             merge_prob_type, save_edge_selection_prob,

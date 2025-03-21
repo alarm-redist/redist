@@ -32,9 +32,10 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
     bool const add_region
 ){
     // If we're not adding a region we need to erase the old linking edge associated 
-    // with these two regions 
+    // with these two regions if it exists 
     if(!add_region){
         int erase_index;
+        bool need_to_erase = false;
         std::set<int> merge_region_ids = {split_region1_id, split_region2_id};
         // Go through and find that pair 
         for (int i = 0; i < linking_edges.size(); i++)
@@ -47,11 +48,12 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
             // if they match break
             if(candidate_pairs == merge_region_ids){
                 erase_index = i;
+                need_to_erase = true;
                 break;
             }
         }
-        // erase that pair of linking edges
-        linking_edges.erase(linking_edges.begin()+erase_index);
+        // erase that pair of linking edges if needed
+        if(need_to_erase) linking_edges.erase(linking_edges.begin()+erase_index);
     }
 
 

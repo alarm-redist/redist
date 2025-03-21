@@ -29,7 +29,7 @@
 std::tuple<bool, bool, double> attempt_mergesplit_step(
     MapParams const &map_params, const SplittingSchedule &splitting_schedule,
     ScoringFunction const &scoring_function,
-    RNGState &rng_state,
+    RNGState &rng_state, SamplingSpace const sampling_space,
     Plan &plan, Plan &new_plan, 
     USTSampler &ust_sampler, TreeSplitter const &tree_splitter,
     std::string const merge_prob_type, bool save_edge_selection_prob,

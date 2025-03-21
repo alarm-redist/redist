@@ -749,7 +749,6 @@ double compute_log_optimal_weights(
 
 
 
-
 //' NEED TO UPDATE THIS IS OLD DOCUMENTATION FOR GRAPH STUFF
 //' Computes log unnormalized weights for vector of plans
 //'

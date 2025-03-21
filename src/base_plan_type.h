@@ -21,6 +21,7 @@
 #include "wilson.h"
 #include "map_calc.h"
 #include "ust_sampler.h"
+#include "graph_ops.h"
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
@@ -142,6 +143,8 @@ public:
 
     // Compute the log number of spanning trees on the entire plan
     double compute_log_plan_spanning_trees(MapParams const &map_params) const;
+
+    double compute_log_linking_edge_count(MapParams const &map_params) const;
 
     // Count the number of valid adj regions in a map
     int count_valid_adj_regions(
