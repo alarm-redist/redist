@@ -151,3 +151,4 @@ this function.
 This function draws samples from a specific target measure controlled by
 the \code{map} parameters.
 }
+\concept{simulate}

@@ -63,6 +63,9 @@
 #' @return `redist_gsmc` returns a [redist_plans] object containing the simulated
 #' plans.
 #'
+#' @concept simulate
+#' @md
+#' @order 1
 #' @export
 generic_redist_gsmc <- function(
         map, nsims, counties = NULL, compactness = 1,
