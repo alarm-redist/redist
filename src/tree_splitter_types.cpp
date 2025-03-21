@@ -266,7 +266,7 @@ std::pair<bool, EdgeCut> ExperimentalSplitter::select_edge_to_cut(
         selected_edge_cut.log_prob = std::log(unnormalized_wgts(idx)) - std::log(arma::sum(unnormalized_wgts));
     }
 
-    return std::make_tuple(true, selected_edge_cut);
+    return std::make_pair(true, selected_edge_cut);
 }
 
 
