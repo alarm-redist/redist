@@ -66,7 +66,7 @@ List run_redist_gsmc(
         std::string const &sampling_space_str, // sampling space (graphs, forest, etc)
         List const &control, // control has pop temper, and k parameter value, and whether only district splits are allowed
         List const &constraints, // constraints 
-        int verbosity = 3, bool diagnostic_mode = false
+        int verbosity = 3, int diagnostic_level = 0
 );
 
 

@@ -224,8 +224,10 @@ void run_smc_step(
 
 
     // now replace the old plans with the new ones
+    // use swap to hopefully reduce copy time
     for(int i=0; i < M; i++){
-        *old_plans_ptr_vec[i] = *new_plans_ptr_vec[i];
+        std::swap(old_plans_ptr_vec[i], new_plans_ptr_vec[i]);
+        //*old_plans_ptr_vec[i] = *new_plans_ptr_vec[i];
     }
 
     // now compute acceptance rate and unique parents and original ancestors
@@ -282,7 +284,8 @@ List run_redist_gsmc(
         std::string const &sampling_space_str, // sampling space (graphs, forest, etc)
         List const &control, // control has pop temper, and k parameter value, and whether only district splits are allowed
         List const &constraints, // constraints 
-        int verbosity, bool diagnostic_mode){
+        int verbosity, int diagnostic_level){
+    bool diagnostic_mode = diagnostic_level == 1;
     // set the number of threads
     int num_threads = (int) control["num_threads"];
     if (num_threads <= 0) num_threads = std::thread::hardware_concurrency();
@@ -452,6 +455,8 @@ List run_redist_gsmc(
     all_steps_valid_region_sizes_to_split.resize(diagnostic_mode ? total_smc_steps : 0);
     std::vector<std::vector<int>> all_steps_valid_split_region_sizes;
     all_steps_valid_split_region_sizes.resize(diagnostic_mode ? total_smc_steps : 0);
+
+
 
     
     // Store size at every step but last one if needed

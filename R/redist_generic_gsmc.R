@@ -86,7 +86,7 @@ generic_redist_gsmc <- function(
         custom_size_split_list = NULL,
         num_splitting_steps = NULL,
         ref_name = NULL,
-        verbose = FALSE, silent = FALSE, diagnostic_mode = FALSE,
+        verbose = FALSE, silent = FALSE, diagnostic_level = 0,
         counties_q = NULL, use_counties_q = F)
 {
 
@@ -327,7 +327,7 @@ generic_redist_gsmc <- function(
             control = control,
             constraints = constraints,
             verbosity=run_verbosity,
-            diagnostic_mode=diagnostic_mode)
+            diagnostic_level=diagnostic_level)
 
         if (length(algout) == 0) {
             cli::cli_process_done()
@@ -347,6 +347,8 @@ generic_redist_gsmc <- function(
         # is the new index region id r was mapped to.
         # In other words which(algout$region_order_added_list[[n]][,i] == r) is
         # the new ordered value r should be set to
+
+        diagnostic_mode = diagnostic_level == 1
 
         if(!diagnostic_mode){
             # if not diagnostic mode

@@ -623,7 +623,7 @@ double compute_log_optimal_weights(
     bool is_final_plan
 ){
     // bool for whether we'll need to compute spanning tree count
-    bool compute_log_tau = rho != 1;
+    bool const compute_log_tau = rho != 1;
 
     // boolean for whether or not to compute the splitting probability of merged regions
     // dont need to do when

@@ -70,7 +70,7 @@ treedist_gsmc <- function(
         custom_size_split_list=custom_size_split_list,
         num_splitting_steps = num_splitting_steps,
         ref_name = ref_name,
-        verbose = verbose, silent = silent, diagnostic_mode = diagnostic_mode)
+        verbose = verbose, silent = silent, diagnostic_level = as.integer(diagnostic_mode))
 
 
 }
