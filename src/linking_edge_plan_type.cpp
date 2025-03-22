@@ -7,6 +7,7 @@
 
  #include "linking_edge_plan_type.h"
 
+constexpr bool DEBUG_L_EDGE_PLANS_VERBOSE = false; // Compile-time constant
 
 LinkingEdgePlan::LinkingEdgePlan(arma::subview_col<arma::uword> region_ids_col, 
     arma::subview_col<arma::uword> region_sizes_col, 
@@ -31,9 +32,25 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
     const int split_region1_id, const int split_region2_id,
     bool const add_region
 ){
+
+    
     // If we're not adding a region we need to erase the old linking edge associated 
     // with these two regions if it exists 
     if(!add_region){
+        if(DEBUG_L_EDGE_PLANS_VERBOSE){
+        Rprintf("Adding Edge (%d, %d) - Regions (%d, %d)\n",
+            cut_edge.cut_vertex, cut_edge.cut_vertex_parent,
+            split_region1_id, split_region2_id);
+        Rprintf("Current Linking Edges:\n");
+        for (auto const &a_edge: linking_edges)
+        {
+            Rprintf("\tEdge(%d, %d) - Region (%d, %d)- Prob %f \n", 
+                std::get<0>(a_edge), std::get<1>(a_edge), 
+            region_ids(std::get<0>(a_edge)), region_ids(std::get<1>(a_edge)),
+            std::exp(std::get<2>(a_edge)));
+        }
+        Rprintf("\n");
+        }
         int erase_index;
         bool need_to_erase = false;
         std::set<int> merge_region_ids = {split_region1_id, split_region2_id};
@@ -53,7 +70,12 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
             }
         }
         // erase that pair of linking edges if needed
-        if(need_to_erase) linking_edges.erase(linking_edges.begin()+erase_index);
+        if(need_to_erase){
+            linking_edges.erase(linking_edges.begin()+erase_index);
+        }else{
+            REprintf("Error could not find old edge!!\n");
+            throw Rcpp::exception("NOOOO");
+        }
     }
 
 
@@ -128,7 +150,7 @@ std::vector<std::tuple<int, int, double>> LinkingEdgePlan::get_valid_adj_regions
     std::vector<std::tuple<int, int, double>> valid_adj_region_pairs_to_boundary_map;
     valid_adj_region_pairs_to_boundary_map.reserve(linking_edges.size());
 
-    // TODO: Need to check valid merge 
+
     // Go through and find that pair 
     for (auto const &edge_pair: linking_edges){
         // get the regions associated with the linking edge
@@ -145,4 +167,52 @@ std::vector<std::tuple<int, int, double>> LinkingEdgePlan::get_valid_adj_regions
         }
     }
     return(valid_adj_region_pairs_to_boundary_map);
+}
+
+
+
+int LinkingEdgePlan::count_valid_adj_regions(
+    MapParams const &map_params, SplittingSchedule const &splitting_schedule
+) const{
+    int num_valid_pairs = 0;
+    // Go through and count linking edge pairs that can be merged
+    for (auto const &edge_pair: linking_edges){
+        // get the regions associated with the linking edge
+        int edge_region1 = std::min(region_ids(std::get<0>(edge_pair)), region_ids(std::get<1>(edge_pair)));
+        int edge_region2 = std::max(region_ids(std::get<0>(edge_pair)), region_ids(std::get<1>(edge_pair)));
+
+        int edge_region1_size = region_sizes(edge_region1); int edge_region2_size = region_sizes(edge_region2);
+        
+        // Add if its ok to merge 
+        if(splitting_schedule.valid_merge_pair_sizes[edge_region1_size][edge_region2_size]){
+            ++num_valid_pairs;
+        }
+    }
+    return(num_valid_pairs);
+}
+
+
+std::vector<std::pair<int,int>> LinkingEdgePlan::get_valid_adj_regions(
+    MapParams const &map_params, SplittingSchedule const &splitting_schedule
+) const{
+    std::vector<std::pair<int,int>> valid_adj_region;
+    valid_adj_region.reserve(linking_edges.size());
+
+
+    // Go through and find that pair 
+    for (auto const &edge_pair: linking_edges){
+        // get the regions associated with the linking edge
+        int edge_region1 = std::min(region_ids(std::get<0>(edge_pair)), region_ids(std::get<1>(edge_pair)));
+        int edge_region2 = std::max(region_ids(std::get<0>(edge_pair)), region_ids(std::get<1>(edge_pair)));
+
+        int edge_region1_size = region_sizes(edge_region1); int edge_region2_size = region_sizes(edge_region2);
+        
+        // Add if its ok to merge 
+        if(splitting_schedule.valid_merge_pair_sizes[edge_region1_size][edge_region2_size]){
+            valid_adj_region.push_back(
+                {edge_region1, edge_region2}
+            );
+        }
+    }
+    return(valid_adj_region);
 }

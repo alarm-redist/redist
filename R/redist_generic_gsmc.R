@@ -75,7 +75,7 @@ generic_redist_gsmc <- function(
         sampling_space, splitting_method, splitting_params,
         ms_freq = 0,
         ms_steps_multiplier = 1L,
-        run_ms = 0 < ms_freq && ms_freq <= ndists,
+        run_ms = 0 < ms_freq && ms_freq <= attr(map, "ndists"),
         merge_prob_type = "uniform",
         resample = TRUE,
         num_processes=0L, num_threads_per_process=0L,
@@ -93,9 +93,21 @@ generic_redist_gsmc <- function(
     if (compactness < 0)
         cli_abort("{.arg compactness} must be non-negative.")
 
-    # note that merge split is not supported at the moment
-    if(run_ms){
-        cli_abort("Merge Split not supported at this moment!")
+    # if graph space default to k stuff
+    if(sampling_space == GRAPH_PLAN_SPACE_SAMPLING){
+        if(missing(splitting_method)){
+            splitting_method <- NAIVE_K_SPLITTING
+        }
+        if(missing(splitting_params)){
+            splitting_params = list(
+                adapt_k_thresh=.99
+            )
+        }
+    }else if(sampling_space == FOREST_SPACE_SAMPLING || sampling_space == LINKING_EDGE_SPACE_SAMPLING){
+        # the others default to uniform
+        if(missing(splitting_method)){
+            splitting_method <- UNIF_VALID_EDGE_SPLITTING
+        }
     }
 
     # validate constraints
@@ -190,7 +202,6 @@ generic_redist_gsmc <- function(
     total_ms_steps <- sum(merge_split_step_vec)
     # total number of steps to run
     total_steps <- total_smc_steps + total_ms_steps
-
 
 
     # setting the splitting size regime
@@ -561,6 +572,7 @@ generic_redist_gsmc <- function(
     internal_diagnostics <- lapply(all_out, function(x) x$internal_diagnostics)
     n_dist_act <- dplyr::n_distinct(plans[, 1]) # actual number (for partial plans)
 
+    alg_type <- ifelse(any_ms_steps_ran, "smc_ms","smc")
     out <- new_redist_plans(plans, map, "smc", wgt, resample,
                             ndists = n_dist_act,
                             n_eff = all_out[[1]]$n_eff,

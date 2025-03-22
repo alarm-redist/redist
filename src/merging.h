@@ -60,7 +60,8 @@ void run_merge_split_step_on_all_plans(
     std::string const merge_prob_type, 
     double const rho, bool const is_final, 
     int const nsteps_to_run,
-    Rcpp::IntegerMatrix::Column success_count_vec
+    Rcpp::IntegerMatrix::Column success_count_vec,
+    int verbosity
 );
 
 #endif

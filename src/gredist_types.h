@@ -8,9 +8,10 @@
 #include <vector>
 #include <RcppArmadillo.h>
 
-
 // [[Rcpp::depends(RcppArmadillo)]]
 
+typedef uint16_t VertexID;
+typedef std::uint_least8_t RegionID;
 
 typedef std::vector<std::vector<int>> Tree;
 typedef std::vector<std::vector<int>> Graph;

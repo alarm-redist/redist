@@ -129,7 +129,7 @@ void run_smc_step(
 
     // thread safe id counter for seeding RNG generator 
     std::atomic<int> thread_id_counter{0};
-
+    if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("About to start SMC Step\n");
     // create a progress bar
     RcppThread::ProgressBar bar(M, 1);
     // Parallel thread pool where all objects in memory shared by default
@@ -180,6 +180,9 @@ void run_smc_step(
         
             // if successful update the new plan
             if(std::get<0>(edge_search_result)){
+                if(DEBUG_GSMC_PLANS_VERBOSE){
+                    Rprintf("Success, updating Plan %d\n", i);
+                } 
                 // shallow copy the new plan to be the old one 
                 *new_plans_ptr_vec[i] = *old_plans_ptr_vec[idx];
                 // now split that region we found on the old one
@@ -818,7 +821,9 @@ List run_redist_gsmc(
             n_eff.at(smc_step_num) = compute_n_eff(log_incremental_weights_mat.col(smc_step_num));
 
             if (verbosity >= 3) {
-                Rcout << std::setprecision(1) << 100*n_eff.at(smc_step_num)/nsims <<  "% efficiency.\n";
+                Rcout << "  " << std::setprecision(2) << 100*n_eff.at(smc_step_num)/nsims <<  "% efficiency."
+                      << std::setprecision(4)
+                      << " Log Weight Standard Deviation: " << log_wgt_stddevs.at(smc_step_num) << std::endl;
             }
 
             if(smc_step_num == 0 && initial_num_regions == 1){
@@ -855,14 +860,17 @@ List run_redist_gsmc(
 
             // TODO formalize this more 
             int prev_acceptance_index = merge_split_step_num == 0 ? step_num-1 : step_num - 2;
+            double prev_acceptance_rate = acceptance_rates.at(prev_acceptance_index);
+            // if the acceptance is zero just default to 5
+            prev_acceptance_rate = prev_acceptance_rate > 0 ? prev_acceptance_rate : .1;
 
             // int nsteps_to_run = std::ceil(1/std::pow(acceptance_rates.at(step_num-1),1.5)); // * std::max(merge_split_step_num,1);
-            int nsteps_to_run = ms_steps_multiplier * std::ceil(1/acceptance_rates.at(prev_acceptance_index)); // * std::max(merge_split_step_num,1);
+            int nsteps_to_run = ms_steps_multiplier * std::ceil(1/prev_acceptance_rate); // * std::max(merge_split_step_num,1);
             num_merge_split_attempts_vec.at(merge_split_step_num) = nsteps_to_run;
 
             if (verbosity >= 3){
-                Rprintf("Ran %d Merge Split Attempts: ", 
-                    nsteps_to_run);
+                Rprintf("  Running %d Merge Split Steps per plan, %d in total!\n", 
+                    nsteps_to_run, nsteps_to_run*nsims);
             }
             bool is_final = plans_ptr_vec[0]->num_regions == ndists;
             // auto t1fm = high_resolution_clock::now();
@@ -873,9 +881,11 @@ List run_redist_gsmc(
                 rng_states, sampling_space, 
                 plans_ptr_vec, new_plans_ptr_vec,
                 *tree_splitter_ptr,
-                merge_prob_type, nsteps_to_run,
+                merge_prob_type, 
                 rho, is_final,
-                merge_split_successes_mat.column(merge_split_step_num)
+                nsteps_to_run,
+                merge_split_successes_mat.column(merge_split_step_num),
+                verbosity
             );
 
 
@@ -893,8 +903,8 @@ List run_redist_gsmc(
             acceptance_rates.at(step_num) = total_ms_successes / static_cast<double>(total_ms_attempts);
 
             if (verbosity >= 3){
-                Rprintf("%d Successes out of %d attempts. Acceptance Rate: %.2f\n",   
-                    total_ms_successes,total_ms_attempts, 100.0*acceptance_rates.at(step_num));
+                Rprintf("  Acceptance Rate: %.2f\n",   
+                    100.0*acceptance_rates.at(step_num));
             }
 
             // Access the column

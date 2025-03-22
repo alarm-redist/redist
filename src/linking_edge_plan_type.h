@@ -37,4 +37,14 @@ class LinkingEdgePlan : public Plan {
             std::unordered_map<std::pair<int, int>, double, bounded_hash> const &existing_pair_map = {}
         ) const override;
 
+        // Count the number of valid adj regions in a map
+        int count_valid_adj_regions(
+            MapParams const &map_params, SplittingSchedule const &splitting_schedule
+        ) const override;
+
+        // Get a vector of all valid adj region pairs
+        std::vector<std::pair<int,int>> get_valid_adj_regions(
+            MapParams const &map_params, SplittingSchedule const &splitting_schedule
+        ) const override;
+
 };

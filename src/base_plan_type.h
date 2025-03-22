@@ -147,12 +147,12 @@ public:
     double compute_log_linking_edge_count(MapParams const &map_params) const;
 
     // Count the number of valid adj regions in a map
-    int count_valid_adj_regions(
+    virtual int count_valid_adj_regions(
         MapParams const &map_params, SplittingSchedule const &splitting_schedule
     ) const;
 
     // Get a vector of all valid adj region pairs
-    std::vector<std::pair<int,int>> get_valid_adj_regions(
+    virtual std::vector<std::pair<int,int>> get_valid_adj_regions(
         MapParams const &map_params, SplittingSchedule const &splitting_schedule
     ) const;
 

@@ -213,7 +213,9 @@ std::tuple<bool, bool, double> attempt_mergesplit_step(
         rho, is_final
     );
     bool proposal_accepted = rng_state.r_unif() <= std::exp(log_mh_ratio);
+    if(DEBUG_MERGING_VERBOSE) Rprintf("Ratio is %f!!\n", std::exp(log_mh_ratio));
     if(proposal_accepted){
+        if(DEBUG_MERGING_VERBOSE) Rprintf("Accepted!!\n", std::exp(log_mh_ratio));
         // if successful then actually update
         plan.update_from_successful_split(
             tree_splitter,
@@ -221,6 +223,7 @@ std::tuple<bool, bool, double> attempt_mergesplit_step(
             region1_id, region2_id,
             false
         );
+        
         // update pairs and weights to be current one
         unnormalized_pair_wgts = new_valid_pair_weights;
         adj_region_pairs = new_valid_adj_region_pairs;
@@ -272,6 +275,7 @@ int run_merge_split_steps(
             ++num_succesful_steps;
         }
     }
+    if(DEBUG_MERGING_VERBOSE) Rprintf("Total success is %d\n", num_succesful_steps);
     return num_succesful_steps;
     
 }
@@ -289,16 +293,19 @@ void run_merge_split_step_on_all_plans(
     std::string const merge_prob_type, 
     double const rho, bool const is_final, 
     int const nsteps_to_run,
-    Rcpp::IntegerMatrix::Column success_count_vec
+    Rcpp::IntegerMatrix::Column success_count_vec,
+    int verbosity
 ){
-    int M = (int) plan_ptrs_vec.size();
+    const int check_int = 50; // check for interrupts every _ iterations
+    int nsims = (int) plan_ptrs_vec.size();
+    if(DEBUG_MERGING_VERBOSE) Rprintf("Going to run %d steps!\n", nsteps_to_run);
 
     // thread safe id counter for seeding RNG generator 
     std::atomic<int> thread_id_counter{0};
     // create a progress bar
-    RcppThread::ProgressBar bar(M, 1);
+    RcppThread::ProgressBar bar(nsims, 1);
     // Parallel thread pool where all objects in memory shared by default
-    pool.parallelFor(0, M, [&] (int i) {
+    pool.parallelFor(0, nsims, [&] (int i) {
         static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
         static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
         // Create variables needed for each 
@@ -314,6 +321,12 @@ void run_merge_split_step_on_all_plans(
             nsteps_to_run
         );
 
+        if (verbosity >= 3) {
+            ++bar;
+        }
+
+        RcppThread::checkUserInterrupt(i % check_int == 0);
+
     });
 
     // Wait for all the threads to finish
@@ -321,4 +334,5 @@ void run_merge_split_step_on_all_plans(
 
     return;
 }
+
 
