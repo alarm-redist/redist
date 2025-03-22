@@ -196,11 +196,10 @@ std::pair<int, int> Plan::get_most_recently_split_regions() const{
 // Takes a plan and reorders the regions according to the order the regions
 // were split
 // IT IS VERY IMPORTANT THAT THE TWO PLANS NOT POINT TO THE SAME arma::umat or everything breaks
-// After reordering it copies that over to the dummy plan as well
+// This breaks the dummy plan and does not copy it to be the original
 void Plan::reorder_plan_by_oldest_split(
     Plan &dummy_plan) {
-    // Make dummy plan a shallow copy of the plan
-    dummy_plan = *this;
+
 
     // Recall that the region_added_order attribute is a vector that stores info
     // on the relative split order. So if entry i is greater than entry j that 
@@ -251,12 +250,13 @@ void Plan::reorder_plan_by_oldest_split(
     `old_region_id_to_new_vec[i]` is the new region id of the region with old
     id i. In other words it means region i should be relabeled as old_region_id_to_new_vec[i]
     */
+   
     std::vector<int> old_region_id_to_new_vec(rel_order.size());
     for (size_t i = 0; i < indices.size(); ++i) {
         old_region_id_to_new_vec[indices[i]] = i;
     }
 
-
+    dummy_plan.region_ids = region_ids;
     // First we relabel all the region vertex ids
     for (size_t i = 0; i < this->region_ids.n_elem; i++)
     {
@@ -266,6 +266,9 @@ void Plan::reorder_plan_by_oldest_split(
 
 
     
+    // Make some dummy plan attributes a shallow copy of the plan
+    dummy_plan.region_sizes = region_sizes;
+    dummy_plan.region_pops = region_pops;
 
     // Now we reorder the region dvals and population 
     for (size_t i = 0; i < this->num_regions; i++)
@@ -284,9 +287,7 @@ void Plan::reorder_plan_by_oldest_split(
 
     // reset the max region counter 
     this->region_order_max = this->num_regions + 6;
-    
-    // copy the dummy plan over
-    dummy_plan = *this;
+
 }
 
 
