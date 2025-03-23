@@ -72,7 +72,7 @@ public:
     // returns edge cut and log probability it was chosen
     virtual std::pair<bool, EdgeCut> select_edge_to_cut(
         RNGState &rng_state, std::vector<EdgeCut> const &valid_edges,
-        bool save_selection_prob = false
+        bool save_selection_prob
     ) const;
 
     virtual double compute_unnormalized_edge_cut_weight(
@@ -100,7 +100,7 @@ public:
 
     std::pair<bool, EdgeCut> select_edge_to_cut(
         RNGState &rng_state, std::vector<EdgeCut> const &valid_edges,
-        bool save_selection_prob = false
+        bool save_selection_prob
     ) const override;
 
     double get_log_selection_prob(
@@ -123,7 +123,7 @@ public:
 
     std::pair<bool, EdgeCut> select_edge_to_cut(
         RNGState &rng_state, std::vector<EdgeCut> const &valid_edges,
-        bool save_selection_prob = false
+        bool save_selection_prob 
     ) const override;
 
     // since uniform log prob is just -log(# of candidates)
@@ -187,7 +187,7 @@ public:
 
     std::pair<bool, EdgeCut> select_edge_to_cut(
         RNGState &rng_state, std::vector<EdgeCut> const &valid_edges,
-        bool save_selection_prob = false
+        bool save_selection_prob
     ) const override;
 
     double get_log_selection_prob(

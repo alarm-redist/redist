@@ -31,6 +31,7 @@ std::vector<EdgeCut> TreeSplitter::get_all_valid_pop_edge_cuts_in_directed_tree(
         region_population, region_size,
         map_params.lower, map_params.upper, map_params.target);
 
+
     return valid_edges;
 }
 
@@ -59,7 +60,7 @@ std::pair<bool, EdgeCut> TreeSplitter::attempt_to_find_edge_to_cut(
     if(num_valid_edges == 0){
         return std::make_pair(false, EdgeCut());
     }else{ // else have derived class choose according to its rule
-        return select_edge_to_cut(rng_state, valid_edges);
+        return select_edge_to_cut(rng_state, valid_edges, save_selection_prob);
     }
 }
 
@@ -158,6 +159,9 @@ double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
         region2_size, region2_population,
         region1_size, region1_population
     );
+
+    // if(TREE_SPLITTING_DEBUG_VERBOSE)
+    // Rprintf("%d valid edges!\n", valid_edges.size());
 
     // find the index of the edge we actually removed to get these two regions.
     // it should be 0 if pop bounds are tight but this allows it to work even

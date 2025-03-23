@@ -107,17 +107,29 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
         int edge_region2 = region_ids(u);
         // If either of the vertices in the edge is now in a split region we need 
         // to update the probability that edge was chosen 
-        if(edge_region1 == split_region1_id || edge_region2 == split_region1_id){
+        if(edge_region1 == split_region1_id || edge_region2 == split_region1_id ||
+            edge_region1 == split_region2_id || edge_region2 == split_region2_id){
+            if(DEBUG_L_EDGE_PLANS_VERBOSE){
+                Rprintf("(%d,%d) in Region (%d,%d)", v,u, edge_region1, edge_region2);
+                Rprintf(" Linking edge prob was %f\n", std::get<2>(a_linking_edge));
+            } 
             // update the log probability 
             std::get<2>(a_linking_edge) = get_regions_log_splitting_prob(
                 tree_splitter, ust_sampler,
                 u, v
             );
+            if(DEBUG_L_EDGE_PLANS_VERBOSE) Rprintf("Linking edge prob is now %f\n", std::get<2>(a_linking_edge));
         }
     }
 
     // Append the new linking edge from the region we just split 
     linking_edges.push_back({cut_edge.cut_vertex, cut_edge.cut_vertex_parent, cut_edge.log_prob});
+    if(DEBUG_L_EDGE_PLANS_VERBOSE){
+        Rprintf("\nAdding New Edge (%d,%d) in Region (%d,%d), log prob %f\n",
+            cut_edge.cut_vertex, cut_edge.cut_vertex_parent,
+            region_ids(cut_edge.cut_vertex), region_ids(cut_edge.cut_vertex_parent),
+            cut_edge.log_prob);
+    } 
 
     return;
 }
