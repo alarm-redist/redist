@@ -75,6 +75,10 @@ std::pair<bool, EdgeCut> TreeSplitter::select_edge_to_cut(
     if(num_valid_edges == 1){
         // if only 1 just return that
         // selection prob is just 1 so don't touch
+        // if(save_selection_prob){
+        //     Rprintf("Save true: %d valid, only 1 edge, log prob is %f \n", 
+        //         num_valid_edges, valid_edges[0].log_prob);
+        // }
         return std::make_pair(true, valid_edges[0]);
     }
 
@@ -95,7 +99,9 @@ std::pair<bool, EdgeCut> TreeSplitter::select_edge_to_cut(
     // compute selection probability if needed
     double log_selection_prob = 0.0;
     if(save_selection_prob){
-        selected_edge_cut.log_prob = std::log(unnormalized_wgts(idx)) - std::log(arma::sum(unnormalized_wgts));;
+        selected_edge_cut.log_prob = std::log(unnormalized_wgts(idx)) - std::log(arma::sum(unnormalized_wgts));
+        // Rprintf("Save, %d valid, log prob is %f and %f\n", num_valid_edges, selected_edge_cut.log_prob, 
+        //     std::log(unnormalized_wgts(idx)) - std::log(arma::sum(unnormalized_wgts)));
     }
 
     return std::make_pair(true, selected_edge_cut);
