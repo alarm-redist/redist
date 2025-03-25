@@ -236,21 +236,6 @@ redist_mergesplit <- function(
     control <- c(control, splitting_params)
 
 
-    # chain <- 1
-    # algout <- ms_plans(
-    #     nsims, warmup, thin,
-    #     ndists,
-    #     adj_list, counties, pop,
-    #     target=pop_bounds[2], lower=pop_bounds[1], upper=pop_bounds[3],
-    #     compactness,
-    #     init_plans[, chain, drop=FALSE], init_sizes[, chain, drop=FALSE],
-    #     sampling_space_str = sampling_space,
-    #     merge_prob_type,
-    #     control, constraints,
-    #     verbosity, FALSE
-    # )
-    # return(algout)
-
 
     # set up parallel
     if (is.null(ncores)) ncores <- parallel::detectCores()
@@ -329,6 +314,8 @@ redist_mergesplit <- function(
             post_warump_acceptances = algout$post_warump_acceptances,
             warmup_accept_rate = algout$warmup_acceptances / warmup,
             postwarmup_accept_rate = algout$post_warump_acceptances / (nsims*thin),
+            tree_sizes = algout$tree_sizes,
+            successful_tree_sizes = algout$successful_tree_sizes,
             proposed_plans = algout$proposed_plans + 1L
         )
 

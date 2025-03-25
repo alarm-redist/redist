@@ -196,6 +196,7 @@ Rcpp::List ms_plans(
     Rcpp::IntegerMatrix saved_plans_mat(V, nsims);
     int current_plan_mat_col = 0;
     std::vector<int> tree_sizes(ndists, 0);
+    std::vector<int> successful_tree_sizes(ndists, 0);
 
     // Level 3 
     // Saves proposal plans 
@@ -401,6 +402,7 @@ Rcpp::List ms_plans(
 
         // if successful then update acceptance count
         if(std::get<1>(mergesplit_result)){
+            ++successful_tree_sizes[std::get<3>(mergesplit_result)-1];
             if(in_warmup){
                 ++warmup_acceptances;
             }else{
