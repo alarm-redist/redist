@@ -73,6 +73,78 @@ std::unique_ptr<TreeSplitter> get_tree_splitters(
 );
 
 
+// Wrapper object for all non-essential diagnostics 
+class SMCDiagnostics{
+
+    public:
+        SMCDiagnostics(
+            SamplingSpace sampling_space, SplittingMethodType splitting_method_type,
+            SplittingSizeScheduleType splitting_schedule_type, 
+            std::vector<bool> &merge_split_step_vec,
+            int V, int nsims,
+            int ndists, int initial_num_regions,
+            int total_smc_steps, int total_ms_steps,
+            int diagnostic_level,
+            bool splitting_all_the_way, bool split_district_only
+        );
+
+    
+    int diagnostic_level;
+    int total_steps;
+    // Level 0
+    // Essential Diagnostics that are always created 
+    std::vector<double> log_wgt_stddevs; // log weight std devs
+    std::vector<double> acceptance_rates; // Tracks the acceptance rate - total number of tries over nsims - for each round
+    std::vector<int> nunique_parents; // number of unique parents
+    std::vector<double> n_eff; // Tracks the effective sample size for the weights of each round
+    // For each merge split step this counts the number of attempts that were made
+    std::vector<int> num_merge_split_attempts_vec;
+    // Only required for graph sampling 
+    std::vector<int> cut_k_values; // k value used at each step
+
+    
+    // Level 1
+    // These are all nsims by number of smc steps 
+    arma::dmat log_incremental_weights_mat; // entry [i][s] is the log unnormalized weight of particle i AFTER split s
+    Rcpp::IntegerMatrix draw_tries_mat; // Entry [i][s] is the number of tries it took to form particle i on split s
+    Rcpp::IntegerMatrix parent_index_mat; // Entry [i][s] is the index of the parent of particle i at split s
+    // This is a nsims by total_ms_steps matrix where [i][s] is the number of 
+    // successful merge splits performed for plan i on merge split round s
+    Rcpp::IntegerMatrix merge_split_successes_mat;
+    // counts the size of the trees
+    Rcpp::IntegerMatrix tree_sizes_mat; // ndists by total_steps matrix
+    Rcpp::IntegerMatrix successful_tree_sizes_mat; // ndists by total_steps matrix
+
+
+    // Level 2
+    Rcpp::IntegerMatrix parent_unsuccessful_tries_mat;
+
+    // level 3
+    std::vector<Rcpp::IntegerMatrix> all_steps_plan_region_ids_list;
+    std::vector<std::vector<Graph>> all_steps_forests_adj_list;
+    std::vector<std::vector<std::vector<std::array<double, 3>>>> all_steps_linking_edge_list;
+    std::vector<std::vector<int>> all_steps_valid_region_sizes_to_split;
+    std::vector<std::vector<int>> all_steps_valid_split_region_sizes;
+    std::vector<Rcpp::IntegerMatrix> region_sizes_mat_list;
+
+
+    // 
+    void add_full_step_diagnostics(
+        int const total_steps, bool const splitting_all_the_way,
+        int const step_num, int const merge_split_step_num, int const smc_step_num,
+        bool const is_smc_step,
+        SamplingSpace const sampling_space,
+        RcppThread::ThreadPool &pool,
+        std::vector<std::unique_ptr<Plan>>  &plans_ptr_vec, 
+        std::vector<std::unique_ptr<Plan>>  &new_plans_ptr_vec,
+        SplittingSchedule const &splitting_schedule,
+        arma::umat &region_id_mat, arma::umat  &region_sizes_mat
+    );
+
+    // Updates the out list with all the diagnostics 
+    void add_diagnostics_to_out_list(Rcpp::List &out);
+};
+
 
 
 #endif

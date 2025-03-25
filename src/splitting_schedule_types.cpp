@@ -25,6 +25,45 @@ void SplittingSchedule::reset_splitting_and_merge_booleans(){
     std::fill(check_adj_to_regions.begin(), check_adj_to_regions.end(), false);
 }
 
+void SplittingSchedule::print_current_step_splitting_info(){
+    Rprintf("The following region sizes can split:\n");
+    for (size_t i = 1; i <= ndists; i++)
+    {                
+        if(valid_region_sizes_to_split[i]){
+        Rprintf("\tRegion Size %d | ", (int) i);
+        Rprintf("min/max (%d, %d)", 
+            all_regions_min_and_max_possible_cut_sizes[i].first,
+            all_regions_min_and_max_possible_cut_sizes[i].second);
+        Rprintf(" | possible split sizes: ");
+        for(auto smaller_size: all_regions_smaller_cut_sizes_to_try[i]){
+            Rprintf("(%d, %d) ", (int) smaller_size, static_cast<int>(i-smaller_size));
+        }
+        Rprintf("\n");
+        }
+        
+    }
+    Rprintf("All Possible Split Sizes are:(");
+    for (int i = 1; i <= ndists; i++)
+    {
+        if(valid_split_region_sizes[i]){
+            Rprintf("%d, ", i);
+        }
+    }
+    Rprintf(")\n");
+    Rprintf("Now doing check_adj_to:\n");
+    for (size_t i = 1; i <= ndists; i++)
+    {
+        std::string t_str = check_adj_to_regions[i] ?  "true" : "false";
+        Rprintf("%d: %s\n", (int) i, t_str.c_str());
+    }
+    for (const auto& row : valid_merge_pair_sizes) {  // Iterate over rows
+        for (bool val : row) {        // Iterate over elements in the row
+            std::cout << (val ? "1 " : "0 ");  // Print 1 for true, 0 for false
+        }
+        std::cout << "\n";  // Newline after each row
+    }
+}
+
 
 
 /*

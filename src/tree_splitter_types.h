@@ -69,6 +69,12 @@ public:
         throw Rcpp::exception("Update single int param not implemented!\n");
     };
 
+    // used to get the k parameter for top k splitter
+    virtual int get_single_int_param() const {
+        throw Rcpp::exception("Update single int param not implemented!\n");
+        return -1;
+    };
+
     // returns edge cut and log probability it was chosen
     virtual std::pair<bool, EdgeCut> select_edge_to_cut(
         RNGState &rng_state, std::vector<EdgeCut> const &valid_edges,
@@ -97,6 +103,10 @@ public:
     // how to update the k param
     void update_single_int_param(int int_param) override;
 
+
+    int get_single_int_param()const override{
+        return k_param;
+    };
 
     std::pair<bool, EdgeCut> select_edge_to_cut(
         RNGState &rng_state, std::vector<EdgeCut> const &valid_edges,

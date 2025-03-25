@@ -409,6 +409,8 @@ List perform_merge_split_steps(
     RNGState rng_state(global_rng_seed);
     SamplingSpace sampling_space = get_sampling_space("graph_space");
     USTSampler ust_sampler(map_params, *splitting_schedule_ptr);
+    std::vector<int> tree_sizes(ndists, 0);
+    std::vector<int> succesful_tree_sizes(ndists, 0);
 
     // now do merge split 
     int num_successes = run_merge_split_steps(
@@ -418,7 +420,8 @@ List perform_merge_split_steps(
         ust_sampler, *tree_splitter,
         "uniform", 
         rho, is_final, 
-        num_merge_split_steps
+        num_merge_split_steps,
+        tree_sizes, succesful_tree_sizes
     );
 
     List out = List::create(

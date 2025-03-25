@@ -74,7 +74,7 @@ double get_log_mh_ratio(
 }
 
 // runs a mergesplit Metropolis Hastings Step
-std::tuple<bool, bool, double> attempt_mergesplit_step(
+std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     MapParams const &map_params, const SplittingSchedule &splitting_schedule,
     ScoringFunction const &scoring_function,
     RNGState &rng_state, SamplingSpace const sampling_space,
@@ -94,6 +94,7 @@ std::tuple<bool, bool, double> attempt_mergesplit_step(
 
     int region1_id = merge_pair.first; 
     int region2_id = merge_pair.second;
+    int merged_region_size = plan.region_sizes(region1_id) + plan.region_sizes(region2_id);
 
     if(DEBUG_MERGING_VERBOSE){
         Rprintf("Picked pair (%d, %d)\n", region1_id, region2_id);
@@ -114,7 +115,7 @@ std::tuple<bool, bool, double> attempt_mergesplit_step(
         if(DEBUG_MERGING_VERBOSE){
             Rprintf("Failed!\n");
         }
-        return std::make_tuple(false, false, -1*std::log(0.0));
+        return std::make_tuple(false, false, -1*std::log(0.0), merged_region_size);
     }
 
 
@@ -228,10 +229,10 @@ std::tuple<bool, bool, double> attempt_mergesplit_step(
         // update pairs and weights to be current one
         unnormalized_pair_wgts = new_valid_pair_weights;
         adj_region_pairs = new_valid_adj_region_pairs;
-        return std::make_tuple(true, true, log_mh_ratio);
+        return std::make_tuple(true, true, log_mh_ratio, merged_region_size);
     }else{
         // else reject and do nothing 
-        return std::make_tuple(true, false, log_mh_ratio);
+        return std::make_tuple(true, false, log_mh_ratio, merged_region_size);
     }
 }
 
@@ -245,7 +246,8 @@ int run_merge_split_steps(
     USTSampler &ust_sampler, TreeSplitter const &tree_splitter,
     std::string const merge_prob_type,
     double const rho, bool const is_final, 
-    int num_steps_to_run
+    int num_steps_to_run,
+    std::vector<int> &tree_sizes, std::vector<int> &successful_tree_sizes
 ){
     int num_succesful_steps = 0;
     bool save_edge_selection_prob = sampling_space == SamplingSpace::LinkingEdgeSpace;
@@ -261,7 +263,7 @@ int run_merge_split_steps(
     // run the merge split steps and count success 
     for (size_t i = 0; i < num_steps_to_run; i++)
     {
-        std::tuple<bool, bool, double> mergesplit_result = attempt_mergesplit_step(
+        std::tuple<bool, bool, double, int> mergesplit_result = attempt_mergesplit_step(
             map_params, splitting_schedule, scoring_function,
             rng_state, sampling_space,
             plan, dummy_plan, 
@@ -271,9 +273,12 @@ int run_merge_split_steps(
             current_plan_pair_unnoramalized_wgts,
             rho, is_final
         );
+        // count tree size
+        ++tree_sizes[std::get<3>(mergesplit_result)-1];
         // increase count if successful
         if(std::get<1>(mergesplit_result)){
             ++num_succesful_steps;
+            ++successful_tree_sizes[std::get<3>(mergesplit_result)-1];
         }
     }
     if(DEBUG_MERGING_VERBOSE) Rprintf("Total success is %d\n", num_succesful_steps);
@@ -283,57 +288,5 @@ int run_merge_split_steps(
 
 
 
-void run_merge_split_step_on_all_plans( 
-    RcppThread::ThreadPool &pool,
-    MapParams const &map_params, const SplittingSchedule &splitting_schedule,
-    ScoringFunction const &scoring_function,
-    std::vector<RNGState> &rng_states, SamplingSpace const sampling_space,
-    std::vector<std::unique_ptr<Plan>> &plan_ptrs_vec, 
-    std::vector<std::unique_ptr<Plan>> &new_plan_ptrs_vec, 
-    TreeSplitter const &tree_splitter,
-    std::string const merge_prob_type, 
-    double const rho, bool const is_final, 
-    int const nsteps_to_run,
-    Rcpp::IntegerMatrix::Column success_count_vec,
-    int verbosity
-){
-    const int check_int = 50; // check for interrupts every _ iterations
-    int nsims = (int) plan_ptrs_vec.size();
-    if(DEBUG_MERGING_VERBOSE) Rprintf("Going to run %d steps!\n", nsteps_to_run);
-
-    // thread safe id counter for seeding RNG generator 
-    std::atomic<int> thread_id_counter{0};
-    // create a progress bar
-    RcppThread::ProgressBar bar(nsims, 1);
-    // Parallel thread pool where all objects in memory shared by default
-    pool.parallelFor(0, nsims, [&] (int i) {
-        static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
-        static thread_local USTSampler ust_sampler(map_params, splitting_schedule);
-        // Create variables needed for each 
-
-        // store the number of succesful runs
-        success_count_vec[i] = run_merge_split_steps(
-            map_params, splitting_schedule, scoring_function,
-            rng_states[thread_id], sampling_space,
-            *plan_ptrs_vec.at(i), *new_plan_ptrs_vec.at(i), 
-            ust_sampler, tree_splitter,
-            merge_prob_type, 
-            rho, is_final, 
-            nsteps_to_run
-        );
-
-        if (verbosity >= 3) {
-            ++bar;
-        }
-
-        RcppThread::checkUserInterrupt(i % check_int == 0);
-
-    });
-
-    // Wait for all the threads to finish
-    pool.wait();
-
-    return;
-}
 
 

@@ -65,7 +65,9 @@ class SplittingSchedule {
         // This sets it for that split
         virtual void set_potential_cut_sizes_for_each_valid_size(int split_num, int presplit_num_regions) = 0;
         // Sets all the boolean vectors and matrices related to splitting and merging to false
-        void reset_splitting_and_merge_booleans();    
+        void reset_splitting_and_merge_booleans();
+        
+        void print_current_step_splitting_info();
 };
     
 

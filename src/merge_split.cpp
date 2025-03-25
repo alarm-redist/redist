@@ -195,6 +195,7 @@ Rcpp::List ms_plans(
     Rcpp::NumericVector log_mh_ratios(nsims); // stores log mh ratio 
     Rcpp::IntegerMatrix saved_plans_mat(V, nsims);
     int current_plan_mat_col = 0;
+    std::vector<int> tree_sizes(ndists, 0);
 
     // Level 3 
     // Saves proposal plans 
@@ -358,7 +359,7 @@ Rcpp::List ms_plans(
         }
 
         // attempt to mergesplit 
-        std::tuple<bool, bool, double> mergesplit_result = attempt_mergesplit_step(
+        std::tuple<bool, bool, double, int> mergesplit_result = attempt_mergesplit_step(
             map_params, *splitting_schedule_ptr, scoring_function,
             rng_state, sampling_space,
             *current_plan_ptr, *proposed_plan_ptr, 
@@ -368,6 +369,8 @@ Rcpp::List ms_plans(
             current_plan_pair_unnoramalized_wgts,
             rho, true
         );
+        // count size
+        ++tree_sizes[std::get<3>(mergesplit_result)-1];
 
         // copy if needed
         if(!in_warmup && i % thin == 0){
@@ -428,6 +431,7 @@ Rcpp::List ms_plans(
     out["warmup_acceptances"] = warmup_acceptances;
     out["post_warump_acceptances"] = post_warump_acceptances;
     out["log_mh_ratio"] = log_mh_ratios;
+    out["tree_sizes"] = tree_sizes;
 
     if(diagnostic_mode){
         out["proposed_plans"] = proposed_plans_mat;

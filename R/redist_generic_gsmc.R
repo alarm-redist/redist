@@ -345,6 +345,7 @@ generic_redist_gsmc <- function(
         }
 
 
+
         # add 1 to make it plans 1 indexed
         algout$plans_mat <- algout$plans_mat + 1L
         # add 1 to make parent mat  1-indexed for R indexing
@@ -508,6 +509,8 @@ generic_redist_gsmc <- function(
             original_ancestors_mat = algout$original_ancestors_mat,
             log_incremental_weights_mat = algout$log_incremental_weights_mat,
             draw_tries_mat = algout$draw_tries_mat,
+            tree_sizes = algout$tree_sizes,
+            successful_tree_sizes = algout$successful_tree_sizes,
             parent_unsuccessful_tries_mat = algout$parent_unsuccessful_tries_mat,
             region_ids_mat_list = algout$region_ids_mat_list,
             region_sizes_mat_list = algout$region_sizes_mat_list,
@@ -564,6 +567,7 @@ generic_redist_gsmc <- function(
     }
 
 
+
     plans <- do.call(cbind, lapply(all_out, function(x) x$plans))
     plan_sizes <- do.call(cbind, lapply(all_out, function(x) x$plan_sizes))
     wgt <- do.call(c, lapply(all_out, function(x) x$wgt))
@@ -573,7 +577,7 @@ generic_redist_gsmc <- function(
     n_dist_act <- dplyr::n_distinct(plans[, 1]) # actual number (for partial plans)
 
     alg_type <- ifelse(any_ms_steps_ran, "smc_ms","smc")
-    out <- new_redist_plans(plans, map, "smc", wgt, resample,
+    out <- new_redist_plans(plans, map, alg_type, wgt, resample,
                             ndists = n_dist_act,
                             n_eff = all_out[[1]]$n_eff,
                             compactness = compactness,

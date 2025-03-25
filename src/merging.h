@@ -26,7 +26,7 @@
 
 
 
-std::tuple<bool, bool, double> attempt_mergesplit_step(
+std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     MapParams const &map_params, const SplittingSchedule &splitting_schedule,
     ScoringFunction const &scoring_function,
     RNGState &rng_state, SamplingSpace const sampling_space,
@@ -46,22 +46,10 @@ int run_merge_split_steps(
     USTSampler &ust_sampler, TreeSplitter const &tree_splitter,
     std::string const merge_prob_type,
     double const rho, bool const is_final, 
-    int num_steps_to_run
+    int num_steps_to_run,
+    std::vector<int> &tree_sizes, std::vector<int> &successful_tree_sizes
 );
 
-void run_merge_split_step_on_all_plans( 
-    RcppThread::ThreadPool &pool,
-    MapParams const &map_params, const SplittingSchedule &splitting_schedule,
-    ScoringFunction const &scoring_function,
-    std::vector<RNGState> &rng_states, SamplingSpace const sampling_space,
-    std::vector<std::unique_ptr<Plan>> &plan_ptrs_vec, 
-    std::vector<std::unique_ptr<Plan>> &new_plan_ptrs_vec, 
-    TreeSplitter const &tree_splitter,
-    std::string const merge_prob_type, 
-    double const rho, bool const is_final, 
-    int const nsteps_to_run,
-    Rcpp::IntegerMatrix::Column success_count_vec,
-    int verbosity
-);
+
 
 #endif
