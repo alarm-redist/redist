@@ -175,6 +175,23 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     if(region_pair_proposal_index == -1){
         REprintf("Merged and Split Regions %d and %d no longer adjacent!\n",
             region1_id, region2_id);
+        REprintf("Current adj pairs: ");
+        for(const auto &a_pair: adj_region_pairs){
+            REprintf("(%d, %d), ", a_pair.first, a_pair.second);
+        }
+        REprintf("\nProposed adj pairs: ");
+        for(const auto &a_pair: new_valid_adj_region_pairs){
+            REprintf("(%d, %d), ", a_pair.first, a_pair.second);
+        }
+        REprintf("\nCurrent Plan is:\n");
+        for(const auto &id: plan.region_ids){
+            REprintf("%d;", id);
+        }
+        REprintf("\n\nProposed Plan is:\n");
+        for(const auto &id: new_plan.region_ids){
+            REprintf("%d;", id);
+        }
+        REprintf("\n\n");
         throw Rcpp::exception("Error in merge split!\n");
     }
     if(DEBUG_MERGING_VERBOSE){
