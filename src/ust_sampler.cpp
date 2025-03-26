@@ -20,10 +20,17 @@ bool USTSampler::draw_tree_on_region(
 
     // clear the tree
     clear_tree(ust);
+
+    // get upper and lower bounds
+    auto min_max_pair = splitting_schedule.all_regions_min_and_max_possible_cut_sizes[
+        plan.region_sizes(region_to_draw_tree_on)
+    ];
+
     // Get a uniform spanning tree drawn on that region
     int result = sample_sub_ust(map_params.g, ust, 
         V, root, visited, ignore, 
-        map_params.pop, map_params.lower, map_params.upper, 
+        map_params.pop, 
+        min_max_pair.first* map_params.lower, min_max_pair.second*map_params.upper, 
         map_params.counties, map_params.cg,
         rng_state);
     // result == 0 means it was successful
