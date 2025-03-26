@@ -141,8 +141,11 @@ int sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
             }
         }
         // whether the range of split populations misses the 3 possible target intervals
-        bool miss_first = split_ub < lower || split_lb > upper;
-        bool miss_second = (tot_pop - split_lb) < lower || (tot_pop - split_ub) > upper;
+        // TEMPORARY ATTEMPT TO FIX IS TURN THIS OFF AND SEE!!
+        // Slows things down but hopefully helps 
+        // bool miss_first = split_ub < lower || split_lb > upper;
+        // bool miss_second = (tot_pop - split_lb) < lower || (tot_pop - split_ub) > upper;
+        bool miss_first = false; bool miss_second = false;
 
         // impossible for this county to need to be split
         if (cty_pop_below[i] >= 0 && (miss_first && miss_second)) {
