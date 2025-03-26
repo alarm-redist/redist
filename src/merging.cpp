@@ -9,6 +9,9 @@
 
 constexpr bool DEBUG_MERGING_VERBOSE = false; // Compile-time constant
 
+
+
+
 // computes log metropolis hastings ratio
 double get_log_mh_ratio(
     MapParams const &map_params, ScoringFunction const &scoring_function,
@@ -137,6 +140,17 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     if(DEBUG_MERGING_VERBOSE){
         Rprintf("A Splitting Checkpoint 2.\n");
     }
+    // check new plan doesn't have illegal number of county splits 
+    int proposal_county_splits = new_plan.count_county_splits(map_params);
+    if(DEBUG_MERGING_VERBOSE){
+        Rprintf("%d county splits!\n", proposal_county_splits);
+    }
+    if(proposal_county_splits > new_plan.num_regions-1){
+        REprintf("Rejected for splits!\n");
+        // return failure
+        return std::make_tuple(true, false, -1*std::log(0.0), merged_region_size);
+    }
+
     // get adj pairs 
     auto new_valid_adj_region_pairs = new_plan.get_valid_adj_regions(
         map_params, splitting_schedule

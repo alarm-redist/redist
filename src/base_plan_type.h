@@ -146,6 +146,9 @@ public:
 
     double compute_log_linking_edge_count(MapParams const &map_params) const;
 
+    // count global number of county splits the map creates
+    int count_county_splits(MapParams const &map_params) const;
+
     // Count the number of valid adj regions in a map
     virtual int count_valid_adj_regions(
         MapParams const &map_params, SplittingSchedule const &splitting_schedule

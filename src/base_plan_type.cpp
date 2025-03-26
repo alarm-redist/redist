@@ -595,6 +595,38 @@ double Plan::compute_log_linking_edge_count(
     );
 };
 
+// counts global number of county splits 
+int Plan::count_county_splits(MapParams const &map_params) const{
+    // if no counties say zero
+    if(map_params.num_counties == 1) return 0;
+    int num_splits = 0;
+    // iterate over each county and see if there's more than one region id
+    for(auto const county_root: map_params.county_forest_roots){
+        int initial_region_id = region_ids(county_root);
+        // traverse tree until either done or we see a different region
+        std::queue<int> vertex_queue;
+        vertex_queue.push(county_root);
+
+        while(!vertex_queue.empty()){
+            // get from queue
+            int v = vertex_queue.front();
+            int v_region_id = region_ids(v);
+            vertex_queue.pop();
+            // check if different from intial region
+            if(v_region_id != initial_region_id){
+                // if different then its split so increase count and move to next county
+                ++num_splits;
+                break;
+            }
+            // else add children
+            for(auto const child_vertex: map_params.county_forest[v]){
+                vertex_queue.push(child_vertex);
+            }
+        }
+    }
+
+    return num_splits;
+}
 
 //' Selects a valid multidistrict to split uniformly at random 
 //'

@@ -58,14 +58,123 @@ Multigraph county_graph(const Graph &g, const arma::uvec &counties) {
 }
 
 
-// MapParams::MapParams(Rcpp::List adj_list, const arma::uvec &counties, const arma::uvec &pop,
-//         int ndists, double lower, double target, double upper) :
-//      g(list_to_graph(adj_list)), counties(counties), cg(county_graph(g, counties)), pop(pop),
-//      V(static_cast<int>(g.size())), ndists(ndists), lower(lower), target(target), upper(upper) {
-//         // g = list_to_graph(adj_list);
-//         // cg = county_graph(g, counties);
-//         // V = static_cast<int>(g.size());
-// }
+std::pair<Tree,std::vector<int>> build_county_forest(
+    const Graph &g, const arma::uvec &counties, int const num_counties
+){
+    // nothing if only 1 county 
+    if(num_counties==1) return make_pair(Tree(0), std::vector<int>());
+    int const V = g.size();
+    // make vector tracking which vertices we've visitied
+    std::vector<bool> visited(V, false);
+    std::vector<bool> county_visited(num_counties, false);
+
+    // make a vector tracking the roots of each county tree
+    std::vector<int> county_forest_roots(num_counties);
+    // init the forest
+    Tree county_forest(V);
+
+    // Go through graph and build tree on each county
+    for (int v = 0; v < V; v++)
+    {
+        // COUNTIES ARE 1 INDEXED!!
+        int v_county = counties(v)-1; 
+        // skip if we've visitied this county before 
+        if(county_visited[v_county]){
+            // sanity check can delete later
+            if(!visited[v]) throw Rcpp::exception("Should have visitied this vertex already!\n");
+            continue;
+        } 
+        
+
+        // else we can start to build a tree on it 
+        // mark this as the root
+        county_forest_roots[v_county] = v;
+        visited[v] = true;
+        // queue with vertex 
+        std::queue<int> vertex_queue;
+        // add the root 
+        vertex_queue.push(v);
+
+        // keep going through the children until queue not empty
+        while(!vertex_queue.empty()){
+            // get from queue
+            int u = vertex_queue.front();
+            vertex_queue.pop();
+            // mark as visited since it has to share this county
+            visited[u] = true;
+            int u_county = counties(u)-1;
+            // sanity check delete later
+            if(counties(u)-1 != v_county){
+                REprintf("v county %d, u county %d", counties(u)-1, v_county);
+                throw Rcpp::exception("County forest went wrong!!\n");
+            } 
+
+            // see if any children in the same county
+            for (int const child_vertex : g[u]){
+                // add to queue if same county and not visitied yet
+                if(counties(child_vertex)-1 == u_county && !visited[child_vertex]){
+                    // add in tree
+                    county_forest[u].push_back(child_vertex);
+                    // mark as visited to avoid being added later  
+                    visited[child_vertex] = true;
+                    vertex_queue.push(child_vertex);
+                }
+            }
+        }
+        // mark this county as visited 
+        county_visited[v_county] = true;
+    }
+    // sanity check, make sure all vertices visitied 
+    int sum = std::count(visited.begin(), visited.end(), true);
+    if(sum != visited.size()){
+        REprintf("Expected %d visitied but only got %d!\n",
+        sum, visited.size());
+        throw Rcpp::exception("WAAAAAA");
+    }else{
+        REprintf("All good 1!\n");
+    }
+    std::vector<bool> new_visited(V, false);
+    // sanity check if we traverse tree we visit everything 
+    for (size_t expected_county_id = 0; expected_county_id < num_counties; expected_county_id++)
+    {
+        // REprintf("County %d!\n", expected_county_id);
+        int county_root = county_forest_roots[expected_county_id];
+        std::queue<int> vertex_queue;
+        vertex_queue.push(county_root);
+
+        while(!vertex_queue.empty()){
+            // get from queue
+            int v = vertex_queue.front();
+            new_visited[v] = true;
+            int v_region_id = counties(v)-1;
+            vertex_queue.pop();
+            // check if different from intial region
+            if(v_region_id != expected_county_id){
+                REprintf("Expected %d and got %d!!\n",v_region_id,  expected_county_id);
+                throw Rcpp::exception("Bad tree!\n");
+            }
+            // else add children
+            // REprintf("Vertex %d has %d children!\n", v, county_forest[v].size());
+            for(auto const child_vertex: county_forest[v]){
+                if(child_vertex == v){
+                    REprintf("Vertex %d is a child of itself!!\n", v);
+                }
+                vertex_queue.push(child_vertex);
+            }
+        }
+    }
+    
+    sum = std::count(new_visited.begin(), new_visited.end(), true);
+    if(sum != new_visited.size()){
+        REprintf("Expected %d visitied but only got %d!\n",
+        sum, new_visited.size());
+        throw Rcpp::exception("WAAAAAA");
+    }else{
+        REprintf("All good!\n");
+    }
+
+    return std::make_pair(county_forest, county_forest_roots);
+}
 
 
 

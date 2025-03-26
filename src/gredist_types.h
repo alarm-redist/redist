@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <RcppArmadillo.h>
+#include <queue>
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
@@ -39,6 +40,15 @@ Multigraph county_graph(const Graph &g, const arma::uvec &counties);
  */
 Graph list_to_graph(const Rcpp::List &l);
 
+/*
+ * Create a forest where each tree is a spanning tree on a county along
+ with a vector of roots. Lets you traverse all counties in O(V) time and
+ space
+ */
+std::pair<Tree,std::vector<int>> build_county_forest(
+    const Graph &g, const arma::uvec &counties, int const num_counties
+);
+
 // Essentially just a useful container for map parameters 
 
 class MapParams {
@@ -46,18 +56,25 @@ class MapParams {
     // Constructor 
     MapParams(Rcpp::List adj_list, const arma::uvec &counties, const arma::uvec &pop,
         int ndists, double lower, double target, double upper) :
-        g(list_to_graph(adj_list)), counties(counties), cg(county_graph(g, counties)), pop(pop),
-        V(static_cast<int>(g.size())), ndists(ndists), num_counties(max(counties)),
-        lower(lower), target(target), upper(upper)
-        {};
+        g(list_to_graph(adj_list)), counties(counties), num_counties(max(counties)),
+        cg(county_graph(g, counties)),
+        // silly but call function twice so attributes can be constant 
+        county_forest(build_county_forest(g, counties, num_counties).first), 
+        county_forest_roots(build_county_forest(g, counties, num_counties).second),
+        pop(pop),
+        V(static_cast<int>(g.size())), ndists(ndists), 
+        lower(lower), target(target), upper(upper){
+        };
 
     Graph const g; // The graph as undirected adjacency list 
     arma::uvec const counties; // county labels
+    int const num_counties; // The number of distinct counties
     Multigraph const cg; // county multigraph
+    Tree const county_forest; // Spanning forest on the counties, ie each tree is a tree on a specific county
+    std::vector<int> const county_forest_roots; // roots of each county tree, so [i] is root of tree on county[i+1]
     arma::uvec const pop; // population of each vertex
     int const V; // Number of vertices in the graph
     int const ndists; // The number of districts a final plan should have
-    int const num_counties; // The number of distinct counties
     double const lower; // lower bound on district population
     double const target; // target district population
     double const upper; // upper bound on district population
