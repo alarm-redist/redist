@@ -124,54 +124,6 @@ std::pair<Tree,std::vector<int>> build_county_forest(
         // mark this county as visited 
         county_visited[v_county] = true;
     }
-    // sanity check, make sure all vertices visitied 
-    int sum = std::count(visited.begin(), visited.end(), true);
-    if(sum != visited.size()){
-        REprintf("Expected %d visitied but only got %d!\n",
-        sum, visited.size());
-        throw Rcpp::exception("WAAAAAA");
-    }else{
-        REprintf("All good 1!\n");
-    }
-    std::vector<bool> new_visited(V, false);
-    // sanity check if we traverse tree we visit everything 
-    for (size_t expected_county_id = 0; expected_county_id < num_counties; expected_county_id++)
-    {
-        // REprintf("County %d!\n", expected_county_id);
-        int county_root = county_forest_roots[expected_county_id];
-        std::queue<int> vertex_queue;
-        vertex_queue.push(county_root);
-
-        while(!vertex_queue.empty()){
-            // get from queue
-            int v = vertex_queue.front();
-            new_visited[v] = true;
-            int v_region_id = counties(v)-1;
-            vertex_queue.pop();
-            // check if different from intial region
-            if(v_region_id != expected_county_id){
-                REprintf("Expected %d and got %d!!\n",v_region_id,  expected_county_id);
-                throw Rcpp::exception("Bad tree!\n");
-            }
-            // else add children
-            // REprintf("Vertex %d has %d children!\n", v, county_forest[v].size());
-            for(auto const child_vertex: county_forest[v]){
-                if(child_vertex == v){
-                    REprintf("Vertex %d is a child of itself!!\n", v);
-                }
-                vertex_queue.push(child_vertex);
-            }
-        }
-    }
-    
-    sum = std::count(new_visited.begin(), new_visited.end(), true);
-    if(sum != new_visited.size()){
-        REprintf("Expected %d visitied but only got %d!\n",
-        sum, new_visited.size());
-        throw Rcpp::exception("WAAAAAA");
-    }else{
-        REprintf("All good!\n");
-    }
 
     return std::make_pair(county_forest, county_forest_roots);
 }

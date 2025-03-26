@@ -146,7 +146,6 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         Rprintf("%d county splits!\n", proposal_county_splits);
     }
     if(proposal_county_splits > new_plan.num_regions-1){
-        REprintf("Rejected for splits!\n");
         // return failure
         return std::make_tuple(true, false, -1*std::log(0.0), merged_region_size);
     }
