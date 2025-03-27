@@ -18,14 +18,13 @@ bool USTSampler::draw_tree_on_region(
         ignore[i] = plan.region_ids(i) != region_to_draw_tree_on;
     }
 
-    // clear the tree
-    clear_tree(ust);
-
-    // get upper and lower bounds
+    // get upper and lower bounds on region pops
     auto min_max_pair = splitting_schedule.all_regions_min_and_max_possible_cut_sizes[
         plan.region_sizes(region_to_draw_tree_on)
     ];
-
+    
+    // clear the tree
+    clear_tree(ust);
     // Get a uniform spanning tree drawn on that region
     int result = sample_sub_ust(map_params.g, ust, 
         V, root, visited, ignore, 
@@ -48,12 +47,19 @@ bool USTSampler::draw_tree_on_merged_region(RNGState &rng_state,
         ignore[i] = plan.region_ids(i) != region1_to_draw_tree_on && plan.region_ids(i) != region2_to_draw_tree_on;
     }
 
+    int merged_region_size = plan.region_sizes(region1_to_draw_tree_on) + plan.region_sizes(region2_to_draw_tree_on);
+    // get upper and lower bounds on region pops
+    auto min_max_pair = splitting_schedule.all_regions_min_and_max_possible_cut_sizes[
+        plan.region_sizes(merged_region_size)
+    ];
+
     // clear the tree
     clear_tree(ust);
     // Get a uniform spanning tree drawn on that region
     int result = sample_sub_ust(map_params.g, ust, 
         V, root, visited, ignore, 
-        map_params.pop, map_params.lower, map_params.upper, 
+        map_params.pop, 
+        min_max_pair.first* map_params.lower, min_max_pair.second*map_params.upper,
         map_params.counties, map_params.cg,
         rng_state);
     // result == 0 means it was successful

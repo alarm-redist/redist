@@ -140,12 +140,19 @@ int sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
                 split_lb = pop_child;
             }
         }
-        // whether the range of split populations misses the 3 possible target intervals
-        // TEMPORARY ATTEMPT TO FIX IS TURN THIS OFF AND SEE!!
-        // Slows things down but hopefully helps 
-        // bool miss_first = split_ub < lower || split_lb > upper;
-        // bool miss_second = (tot_pop - split_lb) < lower || (tot_pop - split_ub) > upper;
-        bool miss_first = false; bool miss_second = false;
+        
+        // split_lb < split_ub so the smallest possible population is 
+        // min(split_lb, tot_pop - split_ub)
+        // its impossible to split if smallest possible size is bigger than largest ub
+        // bool miss_first = std::min(split_lb, tot_pop - split_ub) > upper;
+        // // biggest possible population is max(split_ub, total_pop - split_lb)
+        // // its impossible to split if largest possible size is smaller than smallest lb
+        // bool miss_second = std::max(split_ub, tot_pop - split_lb) < lower;
+
+
+        bool miss_first = split_ub < lower || split_lb > upper;
+        bool miss_second = (tot_pop - split_lb) < lower || (tot_pop - split_ub) > upper;
+
 
         // impossible for this county to need to be split
         if (cty_pop_below[i] >= 0 && (miss_first && miss_second)) {
