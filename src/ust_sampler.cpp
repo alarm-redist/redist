@@ -22,7 +22,7 @@ bool USTSampler::draw_tree_on_region(
     auto min_max_pair = splitting_schedule.all_regions_min_and_max_possible_cut_sizes[
         plan.region_sizes(region_to_draw_tree_on)
     ];
-    
+
     // clear the tree
     clear_tree(ust);
     // Get a uniform spanning tree drawn on that region
@@ -50,8 +50,9 @@ bool USTSampler::draw_tree_on_merged_region(RNGState &rng_state,
     int merged_region_size = plan.region_sizes(region1_to_draw_tree_on) + plan.region_sizes(region2_to_draw_tree_on);
     // get upper and lower bounds on region pops
     auto min_max_pair = splitting_schedule.all_regions_min_and_max_possible_cut_sizes[
-        plan.region_sizes(merged_region_size)
+        merged_region_size
     ];
+
 
     // clear the tree
     clear_tree(ust);
