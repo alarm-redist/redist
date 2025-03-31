@@ -309,6 +309,8 @@ int run_merge_split_steps(
         if(std::get<1>(mergesplit_result)){
             ++num_succesful_steps;
             ++successful_tree_sizes[std::get<3>(mergesplit_result)-1];
+        }else if(std::get<0>(mergesplit_result)){
+            ++successful_tree_sizes[std::get<3>(mergesplit_result)-1];
         }
     }
     if(DEBUG_MERGING_VERBOSE) Rprintf("Total success is %d\n", num_succesful_steps);

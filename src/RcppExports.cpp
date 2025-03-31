@@ -568,6 +568,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// order_district_stats
+Rcpp::NumericVector order_district_stats(Rcpp::NumericVector const& district_stats, int const ndists, int const num_threads);
+RcppExport SEXP _gredist_order_district_stats(SEXP district_statsSEXP, SEXP ndistsSEXP, SEXP num_threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector const& >::type district_stats(district_statsSEXP);
+    Rcpp::traits::input_parameter< int const >::type ndists(ndistsSEXP);
+    Rcpp::traits::input_parameter< int const >::type num_threads(num_threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(order_district_stats(district_stats, ndists, num_threads));
+    return rcpp_result_gen;
+END_RCPP
+}
 // parallel_n_removed
 NumericVector parallel_n_removed(const Graph& g, const IntegerMatrix& districts, int const n_distr, int const num_threads);
 RcppExport SEXP _gredist_parallel_n_removed(SEXP gSEXP, SEXP districtsSEXP, SEXP n_distrSEXP, SEXP num_threadsSEXP) {
@@ -1012,6 +1025,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_group_pct", (DL_FUNC) &_gredist_group_pct, 5},
     {"_gredist_pop_tally", (DL_FUNC) &_gredist_pop_tally, 4},
     {"_gredist_max_dev", (DL_FUNC) &_gredist_max_dev, 4},
+    {"_gredist_order_district_stats", (DL_FUNC) &_gredist_order_district_stats, 3},
     {"_gredist_parallel_n_removed", (DL_FUNC) &_gredist_parallel_n_removed, 4},
     {"_gredist_parallel_effgap", (DL_FUNC) &_gredist_parallel_effgap, 4},
     {"_gredist_parallel_agg_p2d", (DL_FUNC) &_gredist_parallel_agg_p2d, 4},

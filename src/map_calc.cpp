@@ -702,7 +702,39 @@ double compute_log_county_level_spanning_tree(
     return lst;
 }
 
+// Given a numeric vector of statistics computed on each district this 
+// sorts the statistics within each plan.
+// the length district_stats must be a multiple of ndists
+Rcpp::NumericVector order_district_stats(
+    Rcpp::NumericVector const &district_stats, 
+    int const ndists,
+    int const num_threads
+){
+    
+    if(district_stats.size() % ndists != 0){
+        throw Rcpp::exception("The length of the vector of district statistics must be a multiple of the number of districts\n");
+    }else if(ndists <= 1){
+        throw Rcpp::exception("Number of districts must be at least 2!\n");
+    }
 
+    int num_plans = district_stats.size() / ndists;
+
+    NumericVector ordered_district_stats = clone(district_stats);
+
+    RcppThread::parallelFor(0, num_plans, [&] (unsigned int i) {
+        // sort each chunk
+        int start_index = i * ndists;
+        // we don't subtract 1 since the end index is exclusive!!
+        int end_index = start_index + ndists;
+
+        std::sort(
+            ordered_district_stats.begin() + start_index, 
+            ordered_district_stats.begin() + end_index
+        );
+    }, num_threads > 0 ? num_threads : 0);
+
+    return ordered_district_stats;
+}
 
 /**************************
  * Parallel Versions of redistmetric functions for working with very large plans 

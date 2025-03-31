@@ -14,6 +14,8 @@
 typedef uint16_t VertexID;
 typedef std::uint_least8_t RegionID;
 
+typedef std::vector<RegionID> PlanVector;
+
 typedef std::vector<std::vector<int>> Tree;
 typedef std::vector<std::vector<int>> Graph;
 typedef std::vector<std::vector<std::vector<int>>> Multigraph;

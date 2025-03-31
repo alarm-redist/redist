@@ -187,6 +187,10 @@ max_dev <- function(districts, pop, n_distr, num_threads = 1L) {
     .Call(`_gredist_max_dev`, districts, pop, n_distr, num_threads)
 }
 
+order_district_stats <- function(district_stats, ndists, num_threads) {
+    .Call(`_gredist_order_district_stats`, district_stats, ndists, num_threads)
+}
+
 parallel_n_removed <- function(g, districts, n_distr, num_threads) {
     .Call(`_gredist_parallel_n_removed`, g, districts, n_distr, num_threads)
 }

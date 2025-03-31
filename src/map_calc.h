@@ -168,6 +168,13 @@ double compute_log_county_level_spanning_tree(
     int const region1_id, int const potential_region2_id = -42
 );
 
+// [[Rcpp::export]]
+Rcpp::NumericVector order_district_stats(
+    Rcpp::NumericVector const &district_stats, 
+    int const ndists,
+    int const num_threads
+);
+
 
 /**************************
  * Parallel Versions of redistmetric functions for working with very large plans 
