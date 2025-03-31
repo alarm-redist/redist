@@ -717,16 +717,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// random_cpp_testing
-Rcpp::List random_cpp_testing();
-RcppExport SEXP _gredist_random_cpp_testing() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(random_cpp_testing());
-    return rcpp_result_gen;
-END_RCPP
-}
 // closest_adj_pop
 int closest_adj_pop(IntegerVector adj, int i_dist, NumericVector g_prop);
 RcppExport SEXP _gredist_closest_adj_pop(SEXP adjSEXP, SEXP i_distSEXP, SEXP g_propSEXP) {
@@ -1025,7 +1015,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_parallel_polsbypopper", (DL_FUNC) &_gredist_parallel_polsbypopper, 7},
     {"_gredist_ms_plans", (DL_FUNC) &_gredist_ms_plans, 19},
     {"_gredist_pareto_dominated", (DL_FUNC) &_gredist_pareto_dominated, 1},
-    {"_gredist_random_cpp_testing", (DL_FUNC) &_gredist_random_cpp_testing, 0},
     {"_gredist_closest_adj_pop", (DL_FUNC) &_gredist_closest_adj_pop, 3},
     {"_gredist_rint1", (DL_FUNC) &_gredist_rint1, 2},
     {"_gredist_runif1", (DL_FUNC) &_gredist_runif1, 2},
