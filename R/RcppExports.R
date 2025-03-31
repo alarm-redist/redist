@@ -231,10 +231,6 @@ random_cpp_testing <- function() {
     .Call(`_gredist_random_cpp_testing`)
 }
 
-more_random_cpp_testing <- function() {
-    .Call(`_gredist_more_random_cpp_testing`)
-}
-
 closest_adj_pop <- function(adj, i_dist, g_prop) {
     .Call(`_gredist_closest_adj_pop`, adj, i_dist, g_prop)
 }
