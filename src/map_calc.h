@@ -11,9 +11,12 @@
 /*
  * Compute the logarithm of the graph theoretic length of the boundary between
  * `distr_root` and `distr_other`, where the root of `ust` is in `distr_root`
+ * 
+ * If county constraints are on then it won't count any boundaries in invalid counties
  */
-double log_graph_boundary(const Graph &g, const subview_col<uword> &districts,
-                    int const region1_id, int const region2_id);
+double log_graph_boundary(const Graph &g, const subview_col<uword> &region_ids,
+                    int const region1_id, int const region2_id, 
+                    int const num_counties, arma::uvec counties);
 
 
 

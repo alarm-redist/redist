@@ -147,7 +147,10 @@ public:
     double compute_log_linking_edge_count(MapParams const &map_params) const;
 
     // count global number of county splits the map creates
-    int count_county_splits(MapParams const &map_params) const;
+    int count_county_splits(MapParams const &map_params, std::vector<bool> &visited) const;
+
+    int count_merged_county_splits(MapParams const &map_params, std::vector<bool> &visited,
+        int const region1_id, int const region2_id) const;
 
     // Count the number of valid adj regions in a map
     virtual int count_valid_adj_regions(
@@ -156,7 +159,8 @@ public:
 
     // Get a vector of all valid adj region pairs
     virtual std::vector<std::pair<int,int>> get_valid_adj_regions(
-        MapParams const &map_params, SplittingSchedule const &splitting_schedule
+        MapParams const &map_params, SplittingSchedule const &splitting_schedule,
+        bool const check_split_constraint = true
     ) const;
 
 

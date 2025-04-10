@@ -20,7 +20,7 @@ run_redist_gsmc(
   control,
   constraints,
   verbosity = 3L,
-  diagnostic_mode = FALSE
+  diagnostic_level = 0L
 )
 }
 \arguments{

@@ -35,7 +35,7 @@ redist_gsmc <- function(
        split_district_only = FALSE, weight_type = "optimal",
        ms_freq = 0,
        ms_steps_multiplier = 1L,
-       run_ms = 0 < ms_freq && ms_freq <= ndists,
+       run_ms = 0 < ms_freq && ms_freq <= attr(map, "ndists"),
        merge_prob_type = "uniform",
        resample = TRUE,
        num_processes=0L, num_threads_per_process=0L,

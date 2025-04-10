@@ -205,7 +205,8 @@ int LinkingEdgePlan::count_valid_adj_regions(
 
 
 std::vector<std::pair<int,int>> LinkingEdgePlan::get_valid_adj_regions(
-    MapParams const &map_params, SplittingSchedule const &splitting_schedule
+    MapParams const &map_params, SplittingSchedule const &splitting_schedule,
+    bool const check_split_constraint
 ) const{
     std::vector<std::pair<int,int>> valid_adj_region;
     valid_adj_region.reserve(linking_edges.size());

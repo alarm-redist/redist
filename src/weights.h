@@ -97,7 +97,14 @@ void compute_all_plans_simple_weights(
     int verbosity
 );
 
-
+double compute_log_optimal_weights(
+    const MapParams &map_params, const SplittingSchedule &splitting_schedule,
+    SamplingSpace const sampling_space,
+    ScoringFunction const &scoring_function, double rho,
+    Plan const &plan, 
+    const TreeSplitter &edge_splitter, bool compute_log_splitting_prob,
+    bool is_final_plan
+);
 
 void compute_all_plans_log_optimal_weights(
     RcppThread::ThreadPool &pool,

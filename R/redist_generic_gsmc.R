@@ -111,7 +111,8 @@ generic_redist_gsmc <- function(
     }
 
     # validate constraints
-    constraints <- validate_constraints(constraints)
+    constraints_q <- rlang::enquo(constraints)
+    constraints <- validate_constraints(map=map, constraints_q=constraints_q, use_constraints_q=TRUE)
     # get the total number of districts
     ndists <- attr(map, "ndists")
 
@@ -423,6 +424,7 @@ generic_redist_gsmc <- function(
         }
 
 
+
         if (resample) {
             normalized_wgts <- wgt/sum(wgt)
             n_eff <- 1/sum(normalized_wgts^2)
@@ -453,15 +455,17 @@ generic_redist_gsmc <- function(
 
             #TODO probably need to adjust the rest of these as well
             storage.mode(algout$ancestors) <- "integer"
+        }else{
+            nunique_parent_indices <- algout$nunique_parent_indices
         }
 
 
         t2_run <- Sys.time()
-
         # get original ancestor matrix from parent index
         algout$original_ancestors_mat <- get_original_ancestors_mat(
             algout$parent_index
         )
+
 
         # now for the smc step only diagnostics make it so
         # the merge split steps are just NA
@@ -481,6 +485,8 @@ generic_redist_gsmc <- function(
         # do unique parents
         dummy_vec[!c(algout$merge_split_steps,FALSE)] <- nunique_parent_indices
         nunique_parent_indices <- dummy_vec
+
+
 
 
         # nunique_original_ancestors <- c(nunique_original_ancestors,
@@ -565,6 +571,7 @@ generic_redist_gsmc <- function(
         cli_text("{format(nsims*runs, big.mark=',')} plans sampled in
                  {format(t2-t1, digits=2)}")
     }
+    #return(all_out)
 
 
 

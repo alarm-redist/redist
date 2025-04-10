@@ -44,7 +44,8 @@ class LinkingEdgePlan : public Plan {
 
         // Get a vector of all valid adj region pairs
         std::vector<std::pair<int,int>> get_valid_adj_regions(
-            MapParams const &map_params, SplittingSchedule const &splitting_schedule
+            MapParams const &map_params, SplittingSchedule const &splitting_schedule,
+            bool const check_split_constraint = true
         ) const override;
 
 };

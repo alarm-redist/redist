@@ -141,18 +141,22 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         Rprintf("A Splitting Checkpoint 2.\n");
     }
     // check new plan doesn't have illegal number of county splits 
-    int proposal_county_splits = new_plan.count_county_splits(map_params);
+    int proposal_county_splits = new_plan.count_county_splits(map_params, ust_sampler.visited);
     if(DEBUG_MERGING_VERBOSE){
         Rprintf("%d county splits!\n", proposal_county_splits);
     }
     if(proposal_county_splits > new_plan.num_regions-1){
+        if(DEBUG_MERGING_VERBOSE){
+            REprintf("%d splits for %d regions\n", 
+                proposal_county_splits, plan.num_regions);
+        }
         // return failure
         return std::make_tuple(true, false, -1*std::log(0.0), merged_region_size);
     }
 
     // get adj pairs 
     auto new_valid_adj_region_pairs = new_plan.get_valid_adj_regions(
-        map_params, splitting_schedule
+        map_params, splitting_schedule, false
     );
     // get the weights
     auto new_valid_pair_weights = get_adj_pair_unnormalized_weights(
@@ -283,7 +287,7 @@ int run_merge_split_steps(
     bool save_edge_selection_prob = sampling_space == SamplingSpace::LinkingEdgeSpace;
     // Get pairs of adj districts
     std::vector<std::pair<int,int>> current_plan_adj_region_pairs = plan.get_valid_adj_regions(
-        map_params, splitting_schedule
+        map_params, splitting_schedule, false
     );
     arma::vec current_plan_pair_unnoramalized_wgts = get_adj_pair_unnormalized_weights(
         plan,

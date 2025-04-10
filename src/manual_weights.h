@@ -25,12 +25,14 @@
 
 
 // [[Rcpp::export]]
-double compute_a_log_optimal_weight(
+arma::vec compute_plans_log_optimal_weights(
     List adj_list, const arma::uvec &counties, const arma::uvec &pop,
-    List control, 
-    int ndists, int num_regions, 
+    List const &constraints, double pop_temper,  double rho,
+    std::string const &splitting_schedule_str,
+    int ndists, int num_regions,
     double lower, double target, double upper,
-    arma::umat region_ids, arma::umat region_sizes
+    arma::umat region_ids, arma::umat region_sizes,
+    int num_threads
 );
 
 

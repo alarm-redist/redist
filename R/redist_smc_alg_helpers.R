@@ -119,10 +119,14 @@ get_map_parameters <- function(map, counties_q=NULL, use_counties_q=TRUE, counti
 #'
 #'
 #' @returns A list of splitting parameters which is safe to pass into c++ code
-validate_constraints <- function(constraints){
+validate_constraints <- function(map, constraints_q=NULL, use_constraints_q=TRUE, constraints=NULL){
     # Other constraints
     if (!inherits(constraints, "redist_constr")) {
-        constraints <- new_redist_constr(eval_tidy(enquo(constraints), map))
+        if(use_constraints_q){
+            constraints <- new_redist_constr(eval_tidy(constraints_q, map))
+        }else{
+            constraints <- new_redist_constr(eval_tidy(rlang::enquo(constraints), map))
+        }
     }
     if (any(c("edges_removed", "log_st") %in% names(constraints))) {
         cli_warn(c("{.var edges_removed} or {.var log_st} constraint found in
@@ -207,8 +211,8 @@ validate_sample_space_and_splitting_method <- function(
             }
             # if just a single number then repeat it
             if(length(splitting_params$manual_k_params) == 1 && floor(splitting_params$manual_k_params) == splitting_params$manual_k_params){
-                splitting_params$manual_k_params <- rep(splitting_params$manual_k_params, total_smc_steps)
-            }else if(length(splitting_params$manual_k_params) != total_smc_steps){
+                splitting_params$manual_k_params <- rep(splitting_params$manual_k_params, num_splitting_steps)
+            }else if(length(splitting_params$manual_k_params) != num_splitting_steps){
                 cli_abort("K parameter input must be either 1 value or number of smc steps!")
             }else if(any(floor(splitting_params$manual_k_params) != splitting_params$manual_k_params)){
                 # if either the length is not ndists-1 or its not all integers then throw
@@ -322,6 +326,8 @@ validate_initial_region_sizes_mat <- function(init_dvals_mat, ndists, nsims, ini
         cli_abort("All values in rows 1 to {.arg init_num_regions} of each column of {.arg init_dvals_mat} must be greater than 0.")
     if(any(init_dvals_mat[1:init_num_regions,] > ndists))
         cli_abort("All values in rows 1 to {.arg init_num_regions} of each column of {.arg init_dvals_mat} must be less or equal to {.arg ndists}.")
+
+    # TODO: Need to add a check that if split district only then the remainder is the biggest!
 
 }
 

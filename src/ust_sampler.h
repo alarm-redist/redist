@@ -14,11 +14,7 @@ class USTSampler {
 
 private:
 
-    std::pair<bool, EdgeCut> try_to_sample_splittable_tree(
-        RNGState &rng_state, TreeSplitter const &tree_splitter,
-        int const region_populations, int const region_size,
-        bool const save_selection_prob
-    );
+
 
 public:
 
@@ -49,6 +45,12 @@ public:
     std::pair<bool, EdgeCut> attempt_to_find_valid_tree_split(
         RNGState &rng_state, TreeSplitter const &tree_splitter,
         Plan const &plan, int const region_to_split,
+        bool const save_selection_prob
+    );
+
+    std::pair<bool, EdgeCut> try_to_sample_splittable_tree(
+        RNGState &rng_state, TreeSplitter const &tree_splitter,
+        int const region_populations, int const region_size,
         bool const save_selection_prob
     );
 

@@ -130,6 +130,28 @@ std::pair<Tree,std::vector<int>> build_county_forest(
 
 
 
+/*
+ * Given a graph G and county assignments this creates the potentially disconnected graph
+ * created when all edges across counties are removed from G. This guarantees that any
+ * search started from a vertex in one county will never leave that county
+ *  
+ */
+Graph build_restricted_county_graph(Graph const &g,  arma::uvec const &counties){
+    Graph county_graph(g.size());
+    // iterate through g and only add edges in the same county
+    for (int v = 0; v < g.size(); v++)
+    {
+        // iterate over v's neighbors
+        for(const auto &u : g[v]){
+            // if same county add the edge
+            if(counties(v) == counties(u)){
+                county_graph[v].push_back(u);
+            }
+        }
+    }
+    return county_graph;
+}
+
 
 void EdgeCut::get_split_regions_info(
     int &split_region1_tree_root, int &split_region1_dval, int &split_region1_pop,

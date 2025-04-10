@@ -407,7 +407,7 @@ List run_redist_gsmc(
     // set the number of threads
     int num_threads = (int) control["num_threads"];
     if (num_threads <= 0) num_threads = std::thread::hardware_concurrency();
-    if (num_threads == 1) num_threads = 0;
+    if (num_threads == 1) num_threads = 1;
     // re-seed MT so that `set.seed()` works in R
     int global_rng_seed = (int) Rcpp::sample(INT_MAX, 1)[0];
     int num_rng_states = num_threads > 0 ? num_threads : 1;
@@ -547,7 +547,6 @@ List run_redist_gsmc(
 
     // Create a vector of pointers to Plan objects
     // b/c we're using abstract classes we must use pointers to the base class
-    std::vector<std::unique_ptr<Plan>> plans_ptr_vec; plans_ptr_vec.reserve(nsims);
     std::vector<std::unique_ptr<Plan>> new_plans_ptr_vec; new_plans_ptr_vec.reserve(nsims);
 
     // Vector of splitters
@@ -840,6 +839,7 @@ List run_redist_gsmc(
                 Rprintf("  Running %d Merge Split Steps per plan, %d in total!\n", 
                     nsteps_to_run, nsteps_to_run*nsims);
             }
+            // TODO REVISE FOR MMD
             bool is_final = plans_ptr_vec[0]->num_regions == ndists;
             // auto t1fm = high_resolution_clock::now();
             run_merge_split_step_on_all_plans(
@@ -924,6 +924,8 @@ List run_redist_gsmc(
     // end of scope
     }
 
+    if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Exiting main loop and going to do diagnostics!\n");
+
     Rcpp::IntegerMatrix plan_mat(V, nsims); // integer matrix to store final plans
     std::vector<Rcpp::IntegerMatrix> plan_sizes_mat; // hacky way of potentially passing the plan sizes 
     // mat as output if we are not splitting all the way 
@@ -934,8 +936,11 @@ List run_redist_gsmc(
         region_id_mat.submat(0,0, region_id_mat.n_rows-1, region_id_mat.n_cols-1), 
         plan_mat);
 
+    if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Plans saved!\n");
+
     // if only sampling partial plans then return the size matrix
     if(!splitting_all_the_way){
+        if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Getting ready to save region sizes!\n");
         int num_final_regions = plans_ptr_vec.at(0)->num_regions;
         plan_sizes_mat.emplace_back(num_final_regions, nsims);
         copy_arma_to_rcpp_mat(
@@ -951,6 +956,8 @@ List run_redist_gsmc(
         // else create a dummy matrix 
         plan_sizes_mat.emplace_back(1,1);
     }
+
+    if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Plan matrix (and sizes potentially) saved!\n");
 
 
     // Return results

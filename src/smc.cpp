@@ -560,7 +560,7 @@ double split_map(const Graph &g, Tree &ust, const uvec &counties, Multigraph &cg
         return -std::log(0.0); // reject sample
     } else {
         lower = new_pop;  // set `lower` as a way to return population of new district
-        return log_graph_boundary(g, districts, 0, dist_ctr);// - log((double) k); (k is constant)
+        return log_graph_boundary(g, districts, 0, dist_ctr, arma::max(counties), counties);// - log((double) k); (k is constant)
     }
 }
 

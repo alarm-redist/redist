@@ -309,7 +309,7 @@ Rcpp::List ms_plans(
 
     // Get pairs of adj districts
     std::vector<std::pair<int,int>> current_plan_adj_region_pairs = current_plan_ptr->get_valid_adj_regions(
-        map_params, *splitting_schedule_ptr
+        map_params, *splitting_schedule_ptr, false
     );
     arma::vec current_plan_pair_unnoramalized_wgts = get_adj_pair_unnormalized_weights(
         *current_plan_ptr,

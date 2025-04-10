@@ -97,4 +97,29 @@ List perform_merge_split_steps(
         bool verbose
 );
 
+
+// [[Rcpp::export]]
+List draw_trees_on_a_region(
+    List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
+    int const ndists,
+    int const region_id_to_draw_tree_on, int const region_size,
+    double const lower, double const target, double const upper,
+    arma::uvec const &region_ids, 
+    int const num_tree, int num_threads,
+    bool const verbose
+);
+
+
+// [[Rcpp::export]]
+List attempt_splits_on_a_region(
+    List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
+    int const ndists, int const init_num_regions,
+    int const region_id_to_split, 
+    double const lower, double const target, double const upper,
+    arma::umat const &region_ids, arma::umat const &region_sizes,
+    std::string const &splitting_schedule_str, int const k_param,
+    int const num_plans, int num_threads,
+    bool const verbose
+);
+
 #endif

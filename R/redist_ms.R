@@ -131,8 +131,9 @@ redist_mergesplit <- function(
     if (!missing(constraint_fn)) cli_warn("{.arg constraint_fn} is deprecated.")
 
 
-    # drop data attribute
-    constraints <- as.list(constraints)
+    # validate constraints
+    constraints_q <- rlang::enquo(constraints)
+    constraints <- validate_constraints(map=map, constraints_q=constraints_q, use_constraints_q=TRUE)
     # get the total number of districts
     ndists <- attr(map, "ndists")
 
@@ -219,8 +220,7 @@ redist_mergesplit <- function(
     # TODO: add support for multimember district in future
     init_sizes <- matrix(1L, nrow = ndists, ncol = ncol(init_plans))
 
-    # validate constraints
-    constraints <- validate_constraints(constraints)
+
 
     verbosity <- 1
     if (verbose) verbosity <- 3

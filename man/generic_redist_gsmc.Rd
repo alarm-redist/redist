@@ -18,7 +18,7 @@ generic_redist_gsmc(
   splitting_params,
   ms_freq = 0,
   ms_steps_multiplier = 1L,
-  run_ms = 0 < ms_freq && ms_freq <= ndists,
+  run_ms = 0 < ms_freq && ms_freq <= attr(map, "ndists"),
   merge_prob_type = "uniform",
   resample = TRUE,
   num_processes = 0L,
@@ -32,7 +32,7 @@ generic_redist_gsmc(
   ref_name = NULL,
   verbose = FALSE,
   silent = FALSE,
-  diagnostic_mode = FALSE,
+  diagnostic_level = 0,
   counties_q = NULL,
   use_counties_q = F
 )

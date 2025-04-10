@@ -156,6 +156,7 @@ int sample_sub_ust(const Graph &g, Tree &tree, int V, int &root,
 
         // impossible for this county to need to be split
         if (cty_pop_below[i] >= 0 && (miss_first && miss_second)) {
+
             // fill in with a dummy tree
             remaining -= n_vtx - 1; // already visited county root
             int cty_root = -1;

@@ -436,3 +436,295 @@ List perform_merge_split_steps(
     return out;
 }
 
+
+
+// Draws num_trees number of trees on a region
+List draw_trees_on_a_region(
+    List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
+    int const ndists,
+    int const region_id_to_draw_tree_on, int const region_size,
+    double const lower, double const target, double const upper,
+    arma::uvec const &region_ids, 
+    int const num_tree, int num_threads,
+    bool const verbose
+){
+
+    // Create adj params 
+    MapParams map_params(adj_list, counties, pop, ndists, lower, target, upper);
+    // count how many times we had to call sample_sub_ust
+
+    // create thread pool
+    if (num_threads <= 0) num_threads = std::thread::hardware_concurrency();
+    RcppThread::ThreadPool pool(num_threads);
+
+
+    // create list of trees to return 
+    std::vector<std::vector<Graph>> thread_undirected_trees(num_threads == 0 ? 1 : num_threads); 
+    std::vector<int> thread_attempts(num_threads == 0 ? 1 : num_threads,0);
+    std::atomic<int> thread_id_counter{0};
+
+
+    int global_rng_seed = (int) Rcpp::sample(INT_MAX, 1)[0];
+    int num_rng_states = num_threads > 0 ? num_threads : 1;
+    std::vector<RNGState> rng_states;rng_states.reserve(num_rng_states);
+    for (size_t i = 1; i <= num_rng_states; i++)
+    {
+        // same seed with i*3 long_jumps for state
+        rng_states.emplace_back(global_rng_seed, i*3);
+    }
+
+    RcppThread::ProgressBar bar(num_tree, 1);
+    // Parallel thread pool where all objects in memory shared by default
+    pool.parallelFor(0, num_tree, [&] (int ree) {
+
+        static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+        // Stuff for drawing tree
+        int root;
+        static thread_local Tree ust = init_tree(map_params.V); 
+        static thread_local std::vector<bool> visited(map_params.V);
+        static thread_local std::vector<bool> ignore(map_params.V, false);
+        // Tree ust = init_tree(map_params.V); 
+        // std::vector<bool> visited(map_params.V);
+        // std::vector<bool> ignore(map_params.V, false);
+
+        // reset result 
+        int result = 1;
+        while(result != 0){
+            // clear tree 
+            clear_tree(ust);
+            for (size_t i = 0; i < map_params.V; i++)
+            {
+                ignore[i] = region_ids(i) != region_id_to_draw_tree_on;
+            }
+            
+            // sample until successful
+            result = sample_sub_ust(
+                map_params.g, ust, map_params.V, root,
+                visited, ignore, map_params.pop,
+                lower, upper,
+                map_params.counties, map_params.cg,
+                rng_states[thread_id]
+            );
+            ++thread_attempts[thread_id];
+        }
+
+        // go through the tree from the root and add the backwards edge and sort 
+        std::queue<std::pair<int,int>> vertex_queue;
+        // add roots children to queue 
+        for(auto const &child_vertex: ust[root]){
+            vertex_queue.push({child_vertex, root});
+        }
+        // sort the children 
+        std::sort(ust[root].begin(), ust[root].end());
+
+        // update all the children
+        while(!vertex_queue.empty()){
+            // get and remove head of queue 
+            auto queue_pair = vertex_queue.front();
+            int vertex = queue_pair.first;
+            int parent_vertex = queue_pair.second;
+            vertex_queue.pop();
+            // add children to the queue 
+            for(auto const &child_vertex: ust[vertex]){
+                // add children to queue
+                vertex_queue.push({child_vertex, vertex});
+            }
+            // add the edge from vertex to parent 
+            ust[vertex].push_back(parent_vertex);
+            // now sort edges
+            std::sort(ust[vertex].begin(), ust[vertex].end());
+        }
+        // REprintf("about to copy! %d\n", thread_id);
+        thread_undirected_trees[thread_id].push_back(ust);
+        // REprintf("Copied! %d\n", thread_id);
+        ++bar;
+    });
+
+    pool.wait();
+
+    std::vector<Graph> undirected_trees; undirected_trees.reserve(num_tree);
+    int num_attempts = 0;
+
+    for (size_t i = 0; i < num_threads; i++)
+    {
+        // move don't copy 
+        // https://stackoverflow.com/questions/201718/concatenating-two-stdvectors
+        undirected_trees.insert(
+            undirected_trees.end(),
+            std::make_move_iterator(thread_undirected_trees[i].begin()),
+            std::make_move_iterator(thread_undirected_trees[i].end())
+            );
+        num_attempts += thread_attempts[i];
+    }
+    
+    
+
+    List out = List::create(
+        _["trees_list"] = undirected_trees,
+        _["num_attempts"] = num_attempts
+    );
+
+    return out;
+}
+
+
+
+
+
+
+// Draws num_plans number of plans on a region
+// if unsuccessful then just returns the unsplit plan
+List attempt_splits_on_a_region(
+    List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
+    int const ndists, int const init_num_regions,
+    int const region_id_to_split,
+    double const lower, double const target, double const upper,
+    arma::umat const &region_ids, arma::umat const &region_sizes,
+    std::string const &splitting_schedule_str, int const k_param,
+    int const num_plans, int num_threads,
+    bool const verbose
+){
+
+    // Create adj params 
+    MapParams map_params(adj_list, counties, pop, ndists, lower, target, upper);
+    // count how many times we had to call sample_sub_ust
+    Rcpp::List control;
+
+    // get splitting schedule 
+    SplittingSizeScheduleType splitting_schedule_type = get_splitting_size_regime(splitting_schedule_str);
+    auto splitting_schedule = get_splitting_schedule(
+        1, ndists, splitting_schedule_type, control
+    );
+    
+
+    // create the plan
+    GraphPlan const plan(region_ids.col(0), region_sizes.col(0), 
+        ndists, init_num_regions, pop, splitting_schedule_type == SplittingSizeScheduleType::DistrictOnly);
+
+    splitting_schedule->set_potential_cut_sizes_for_each_valid_size(
+        0, plan.num_regions-1
+    );
+
+    arma::umat dummy_region_id_mat(region_ids.n_rows, num_threads, arma::fill::none);
+    arma::umat dummy_sizes_mat(region_sizes.n_rows, num_threads, arma::fill::none);
+
+    std::vector<GraphPlan> plans_vec; plans_vec.reserve(num_threads);
+
+    for (size_t i = 0; i < num_threads; i++)
+    {
+        // copy from original inputs
+        dummy_region_id_mat.col(i) = region_ids.col(0);
+        dummy_sizes_mat.col(i) = region_sizes.col(0);
+        plans_vec.emplace_back(
+            dummy_region_id_mat.col(i), dummy_sizes_mat.col(i), 
+            ndists, init_num_regions, pop, splitting_schedule_type == SplittingSizeScheduleType::DistrictOnly
+        );
+    }
+    
+
+    // create the splitter
+    NaiveTopKSplitter tree_splitter(map_params.V, k_param);
+
+    // create thread pool
+    if (num_threads <= 0) num_threads = std::thread::hardware_concurrency();
+    RcppThread::ThreadPool pool(num_threads);
+
+
+
+    // Create the vector of plans to return
+    Rcpp::IntegerMatrix saved_plans_mat(map_params.V, num_plans);
+    Rcpp::IntegerMatrix saved_region_sizes_mat(ndists, num_plans);
+
+
+    // create list of trees to return 
+    std::vector<std::vector<Graph>> thread_undirected_trees(num_threads == 0 ? 1 : num_threads); 
+    std::vector<int> thread_attempts(num_threads == 0 ? 1 : num_threads,0);
+    std::atomic<int> thread_id_counter{0};
+
+
+    int global_rng_seed = (int) Rcpp::sample(INT_MAX, 1)[0];
+    int num_rng_states = num_threads > 0 ? num_threads : 1;
+    std::vector<RNGState> rng_states;rng_states.reserve(num_rng_states);
+    for (size_t i = 1; i <= num_rng_states; i++)
+    {
+        // same seed with i*3 long_jumps for state
+        rng_states.emplace_back(global_rng_seed, i*3);
+    }
+
+    std::vector<bool> successful_update(num_plans);
+
+    RcppThread::ProgressBar bar(num_plans, 1);
+    // Parallel thread pool where all objects in memory shared by default
+    pool.parallelFor(0, num_plans, [&] (int ree) {
+
+        static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
+        // Stuff for drawing tree
+        static thread_local USTSampler ust_sampler(map_params, *splitting_schedule);
+        // copy the plan again
+        plans_vec[thread_id] = plan;
+
+        // keep trying until a tree is drawn
+        // ie ignore cases where algorithm fails bc of randomness
+        bool tree_successfully_drawn = ust_sampler.draw_tree_on_region(
+            rng_states[thread_id], plans_vec[thread_id], region_id_to_split);
+        ++thread_attempts[thread_id];
+
+        while(!tree_successfully_drawn){
+            tree_successfully_drawn = ust_sampler.draw_tree_on_region(
+                rng_states[thread_id], plans_vec[thread_id], region_id_to_split);
+            ++thread_attempts[thread_id];
+        }
+
+        // now draw a tree 
+        auto edge_search_result = ust_sampler.try_to_sample_splittable_tree(
+            rng_states[thread_id], tree_splitter,
+            plans_vec[thread_id].region_pops[region_id_to_split], plans_vec[thread_id].region_sizes(region_id_to_split),
+            false
+        );
+
+        // if successful then update
+        if(std::get<0>(edge_search_result)){
+            // now split that region we found on the old one
+            plans_vec[thread_id].update_from_successful_split(
+                tree_splitter,
+                ust_sampler, std::get<1>(edge_search_result),
+                region_id_to_split, plans_vec[thread_id].num_regions, 
+                true
+            );
+        }
+        successful_update[ree] = std::get<0>(edge_search_result);
+        // Copy the plan into the matrix 
+        std::copy(
+            dummy_region_id_mat.colptr(thread_id), // Start of column in subview
+            dummy_region_id_mat.colptr(thread_id) + region_ids.n_rows, // End of column in subview
+            saved_plans_mat.column(ree).begin() // Start of column in Rcpp::IntegerMatrix
+        );
+        std::copy(
+            dummy_sizes_mat.colptr(thread_id), // Start of column in subview
+            dummy_sizes_mat.colptr(thread_id) + dummy_sizes_mat.n_rows, // End of column in subview
+            saved_region_sizes_mat.column(ree).begin() // Start of column in Rcpp::IntegerMatrix
+        );
+
+    });
+
+    pool.wait();
+
+
+    int num_attempts = 0;
+
+    for (size_t i = 0; i < num_threads; i++)
+    {
+        num_attempts += thread_attempts[i];
+    }
+    
+    
+
+    List out = List::create(
+        _["plans_mat"] = saved_plans_mat,
+        _["sizes_mat"] = saved_region_sizes_mat,
+        _["successful_search"] = successful_update,
+        _["num_attempts"] = num_attempts
+    );
+
+    return out;
+}

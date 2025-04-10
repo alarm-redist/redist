@@ -201,6 +201,7 @@ std::pair<bool, EdgeCut> NaiveTopKSplitter::select_edge_to_cut(
     //     // throw Rcpp::exception("K not big enough!\n");
     // }
 
+
     int idx = rng_state.r_int(k_param);
     // if we selected k greater than number of edges failure
     if(idx >= num_valid_edges){

@@ -13,7 +13,11 @@ Since `state_xo` and `state_sr` are global variables when you run without multip
 
 
 # ----- ACTIVE TASKS -----
+ 
+**Use Sparse Matrix LDL for log tau**
 
+Use this: https://github.com/samuel-watson/SparseChol for computing log tau terms since graph laplacians are symmetric and 
+sparse for large number of districts 
 
 **Do Resampling in c++**
 For `run_gsmc_plans` make the resampling happen in c++ instead of R. This will save on memory overhead since you don't need to do reindexing in R and can use the dummy matrix for space. 

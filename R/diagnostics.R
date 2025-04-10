@@ -690,6 +690,11 @@ Input must be between 1 and the start_col value (you input %d)",
 #' @export
 get_original_ancestors_mat <- function(parent_mat){
 
+    #if the matrix has one column then its just itself
+    if(ncol(parent_mat) == 1){
+        return(parent_mat)
+    }
+
     # get the original ancestors at every step from the parent matrix
     original_ancestor_mat <- sapply(
         2:ncol(parent_mat),

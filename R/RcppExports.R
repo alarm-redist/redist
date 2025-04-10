@@ -147,8 +147,16 @@ perform_merge_split_steps <- function(adj_list, counties, pop, k_param, target, 
     .Call(`_gredist_perform_merge_split_steps`, adj_list, counties, pop, k_param, target, lower, upper, ndists, num_regions, num_districts, region_ids, region_sizes, region_pops, split_district_only, num_merge_split_steps, verbose)
 }
 
-compute_a_log_optimal_weight <- function(adj_list, counties, pop, control, ndists, num_regions, lower, target, upper, region_ids, region_sizes) {
-    .Call(`_gredist_compute_a_log_optimal_weight`, adj_list, counties, pop, control, ndists, num_regions, lower, target, upper, region_ids, region_sizes)
+draw_trees_on_a_region <- function(adj_list, counties, pop, ndists, region_id_to_draw_tree_on, region_size, lower, target, upper, region_ids, num_tree, num_threads, verbose) {
+    .Call(`_gredist_draw_trees_on_a_region`, adj_list, counties, pop, ndists, region_id_to_draw_tree_on, region_size, lower, target, upper, region_ids, num_tree, num_threads, verbose)
+}
+
+attempt_splits_on_a_region <- function(adj_list, counties, pop, ndists, init_num_regions, region_id_to_split, lower, target, upper, region_ids, region_sizes, splitting_schedule_str, k_param, num_plans, num_threads, verbose) {
+    .Call(`_gredist_attempt_splits_on_a_region`, adj_list, counties, pop, ndists, init_num_regions, region_id_to_split, lower, target, upper, region_ids, region_sizes, splitting_schedule_str, k_param, num_plans, num_threads, verbose)
+}
+
+compute_plans_log_optimal_weights <- function(adj_list, counties, pop, constraints, pop_temper, rho, splitting_schedule_str, ndists, num_regions, lower, target, upper, region_ids, region_sizes, num_threads) {
+    .Call(`_gredist_compute_plans_log_optimal_weights`, adj_list, counties, pop, constraints, pop_temper, rho, splitting_schedule_str, ndists, num_regions, lower, target, upper, region_ids, region_sizes, num_threads)
 }
 
 compute_log_unnormalized_plan_target_density <- function(adj_list, counties, pop, constraints, pop_temper, rho, ndists, num_regions, lower, target, upper, region_ids, region_sizes, num_threads) {
@@ -229,6 +237,18 @@ pareto_dominated <- function(x) {
 
 random_cpp_testing <- function() {
     .Call(`_gredist_random_cpp_testing`)
+}
+
+more_random_cpp_testing <- function() {
+    .Call(`_gredist_more_random_cpp_testing`)
+}
+
+calc_county_dist_test <- function(districts_mat, counties, n_cty, zero_ok) {
+    .Call(`_gredist_calc_county_dist_test`, districts_mat, counties, n_cty, zero_ok)
+}
+
+calc_splits_test <- function(districts_mat, counties, n_cty, num_threads) {
+    .Call(`_gredist_calc_splits_test`, districts_mat, counties, n_cty, num_threads)
 }
 
 closest_adj_pop <- function(adj, i_dist, g_prop) {

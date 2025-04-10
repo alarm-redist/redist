@@ -7,6 +7,11 @@
 
 #include "redist_alg_helpers.h"
 
+// Ensures that the number of districts or vertices isn't
+// too big 
+void valid_ndists_and_V(int const ndists, int const V){
+
+}
 
 //' Copies data from an arma Matrix into an Rcpp Matrix
 //'
@@ -30,12 +35,14 @@ void copy_arma_to_rcpp_mat(
     arma::subview<arma::uword> arma_mat,
     Rcpp::IntegerMatrix &rcpp_mat
 ){
+
     if(rcpp_mat.ncol() != arma_mat.n_cols || rcpp_mat.nrow() != arma_mat.n_rows){
         throw Rcpp::exception("Arma and Rcpp Matrix are not the same size");
     }
 
     // go by column because both are column major
     int ncols = (int) rcpp_mat.ncol();
+    
 
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, ncols, [&] (int j) {

@@ -5,8 +5,44 @@
 * Purpose: SMC weight calculation related functions
 ********************************************************/
 
-constexpr bool DEBUG_WEIGHTS_VERBOSE = true; // Compile-time constant
+constexpr bool DEBUG_WEIGHTS_VERBOSE = false; // Compile-time constant
 #include "weights.h"
+
+
+
+
+
+int calc_merged_splits(const arma::subview_col<arma::uword> &region_ids,
+                       const arma::uvec &counties, int const n_cty,
+                        int const region1_id, int const region2_id) {
+
+    
+    int V = counties.size();
+
+    std::vector<std::set<int>> county_dist(n_cty);
+
+        
+    for (int i = 0; i < n_cty; i++) {
+        county_dist[i] = std::set<int>();
+    }
+    for (int i = 0; i < V; i++) {
+        int region_id = region_ids(i);
+        if(region_id == region2_id) region_id = region1_id;
+        county_dist[counties[i]-1].insert(region_id);
+    }
+
+
+    int total = 0;
+    for (size_t i = 0; i < county_dist.size(); i++)
+    {
+        total += county_dist[i].size();
+    }
+    total = total - n_cty;
+
+    
+
+    return total;
+}
 
 //' Computes the effective sample size from log incremental weights
 //'
@@ -346,9 +382,17 @@ double compute_simple_log_incremental_weight(
 
     if(sampling_space == SamplingSpace::GraphSpace){
         // Get the number of valid adjacent regions 
-        const int num_valid_adj_region_pairs = plan.count_valid_adj_regions(
-            map_params, splitting_schedule
+        // const int num_valid_adj_region_pairs = plan.count_valid_adj_regions(
+        //     map_params, splitting_schedule
+        // );
+
+        // get region pair to effective boundary length map
+        auto region_pair_log_eff_boundary_map = plan.get_valid_adj_regions_and_eff_log_boundary_lens(
+            map_params, splitting_schedule, edge_splitter
         );
+        // TEMP FIX
+        const int num_valid_adj_region_pairs = region_pair_log_eff_boundary_map.size();
+
         log_backwards_kernel_term -= std::log(
             static_cast<double>(num_valid_adj_region_pairs)
         );
@@ -456,7 +500,7 @@ double compute_simple_log_incremental_weight(
     const double log_denom =  log_forward_kernel_term + log_splitting_prob - merged_region_score;
 
 
-    if(WEIGHTS_DEBUG_VERBOSE){
+    if(DEBUG_WEIGHTS_VERBOSE){
     int region1_size = plan.region_sizes(region1_id);
     int region2_size = plan.region_sizes(region2_id);
     Rprintf("Doing (%d,%d) - sizes (%d, %d): forward %f, backward %f, split prob %f, ratio %f!\n", 
@@ -622,6 +666,7 @@ double compute_log_optimal_weights(
     const TreeSplitter &edge_splitter, bool compute_log_splitting_prob,
     bool is_final_plan
 ){
+
     // bool for whether we'll need to compute spanning tree count
     bool const compute_log_tau = rho != 1;
 
@@ -649,6 +694,13 @@ double compute_log_optimal_weights(
     }
 
     // iterate over the pairs 
+    std::vector<bool> visited(map_params.V);
+    if(DEBUG_WEIGHTS_VERBOSE){
+        REprintf("There are %d adjacent pairs!\n",
+            region_pair_log_eff_boundary_map.size()
+        );
+    }
+    
 
     // Now iterate over adjacent region pairs and add splitting and pop temper
     for (const auto& pair_tuple: region_pair_log_eff_boundary_map){
@@ -657,6 +709,24 @@ double compute_log_optimal_weights(
         const int region1_id = std::get<0>(pair_tuple); // get the smaller region id  
         const int region2_id = std::get<1>(pair_tuple); // get the bigger region id  
         const double eff_log_boundary_len = std::get<2>(pair_tuple); // get the effective boundary length
+
+        // CRUDE BUT WILL HAVE TO SUFFICE FOR NOW 
+        // check new plan doesn't have illegal number of county splits 
+        int merged_plan_county_splits = plan.count_merged_county_splits(map_params, visited,
+            region1_id, region2_id);
+
+        if(DEBUG_WEIGHTS_VERBOSE){
+            REprintf("(%d,%d) - %f\n", region1_id, region2_id, std::exp(eff_log_boundary_len));
+        }
+        
+
+        if(merged_plan_county_splits > plan.num_regions - 2){
+            REprintf("(%d,%d):%d regions when merged but merged has %d splits!\n", 
+                region1_id, region2_id,
+            plan.num_regions-1, merged_plan_county_splits);
+            continue;
+        }
+
         // add to term
         log_of_sum_term += eff_log_boundary_len;
 
@@ -703,7 +773,7 @@ double compute_log_optimal_weights(
         // int region2_size = plan.region_sizes(region2_id);
         // Rprintf("Adding (%d,%d) - sizes (%d, %d): len %f, split prob %f, ratio %f!\n", 
         //     region1_id, region2_id, region1_size, region2_size, std::exp(eff_log_boundary_len), 
-        //     std::exp(log_splitting_prob), std::exp(score_ratio));
+        //     std::exp(log_of_sum_term), std::exp(log_of_sum_term));
 
         
 

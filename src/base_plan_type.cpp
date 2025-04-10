@@ -358,71 +358,9 @@ void Plan::Rprint() const{
 int Plan::count_valid_adj_regions(
     MapParams const &map_params, SplittingSchedule const &splitting_schedule
 ) const{
-    // 2D matrix for tracking if regions are adjacent 
-    // To save space we will only ever access with [smaller id][larger id]
-    // So it will be `num_regions-1` rows and row i will have num_regions-1
-    // elements and the second element will need to be 1 indexed so 
-    // subtract off 1 when accessing
-    std::vector<std::vector<bool>> is_valid_adj_pair(num_regions-1);
-
-    for (size_t i = 0; i < num_regions-1; i++)
-    {
-        // for smaller value i there are num_regions-(i+1) larger values 
-        is_valid_adj_pair[i] = std::vector<bool>(num_regions-(i+1), false);
-    }
-
-    int num_valid_adj_pairs = 0;
-
-    int const V = map_params.V;
-
-    for (int v = 0; v < V; v++) {
-        // Find out which region this vertex corresponds to
-        int v_region_num = region_ids(v);
-        auto v_region_size = region_sizes(v_region_num);
-
-        // check if its a region we want to find regions adjacent to 
-        // and if not keep going
-        if(!splitting_schedule.check_adj_to_regions.at(v_region_size)){
-            continue;
-        }
-
-        // get neighbors
-        std::vector<int> nbors = map_params.g[v];
-
-        // now iterate over its neighbors
-        for (int v_nbor : nbors) {
-            // find which region neighbor corresponds to
-            int v_nbor_region_num = region_ids(v_nbor);
-
-            // ignore if they are in the same region
-            if(v_region_num == v_nbor_region_num) continue;
-            // ignore if pair can't be merged
-            auto v_nbor_region_size = region_sizes(v_nbor_region_num);
-            if(!splitting_schedule.valid_merge_pair_sizes[v_region_size][v_nbor_region_size]) continue;
-
-            // else they are different so regions are adj
-            // check if we need to be aware of double counting. IE if both regions
-            // are ones where check adjacent is true then its possible to double count edges
-            bool double_counting_not_possible = !splitting_schedule.check_adj_to_regions[v_nbor_region_size];
-            // Rprintf("Neighbor size is %d and Double counting is %d\n", 
-            //     (int) v_nbor_region_size, (int) double_counting_not_possible);
-
-            // Now add this edge if either we can't double count it 
-            // or `v_region_num` is the smaller of the pair 
-            if(double_counting_not_possible || v_region_num < v_nbor_region_num){
-                // Rprintf("Counting (%d,%d)\n", v, v_nbor);
-                int smaller_region_id  = std::min(v_nbor_region_num,v_region_num);
-                int bigger_region_id  = std::max(v_nbor_region_num,v_region_num);
-
-                // Check if we've counted this before 
-                if(!is_valid_adj_pair[smaller_region_id][bigger_region_id-1]){
-                    // If not increase the count by one and mark this as true 
-                    ++num_valid_adj_pairs;
-                    is_valid_adj_pair[smaller_region_id][bigger_region_id-1] = true;
-                }
-            }
-        }
-    }
+    int num_valid_adj_pairs = get_valid_adj_regions(
+        map_params, splitting_schedule
+    ).size();
 
     return num_valid_adj_pairs;
 }
@@ -457,7 +395,8 @@ int Plan::count_valid_adj_regions(
  * @return The number of valid adjacent region pairs
  */
 std::vector<std::pair<int,int>> Plan::get_valid_adj_regions(
-    MapParams const &map_params, SplittingSchedule const &splitting_schedule
+    MapParams const &map_params, SplittingSchedule const &splitting_schedule,
+    bool const check_split_constraint
 ) const{
     // 2D matrix for tracking if regions are adjacent 
     // To save space we will only ever access with [smaller id][larger id]
@@ -474,6 +413,9 @@ std::vector<std::pair<int,int>> Plan::get_valid_adj_regions(
         is_valid_adj_pair[i] = std::vector<bool>(num_regions-(i+1), false);
     }
 
+
+    // TEMP
+    std::vector<bool> visited(map_params.num_counties > 1 ? map_params.V : 0);
 
     int const V = map_params.V;
 
@@ -520,12 +462,24 @@ std::vector<std::pair<int,int>> Plan::get_valid_adj_regions(
                 if(!is_valid_adj_pair[smaller_region_id][bigger_region_id-1]){
                     // If not increase the count by one and mark this as true 
                     is_valid_adj_pair[smaller_region_id][bigger_region_id-1] = true;
-                    // add the pair 
-                    valid_adj_pairs.emplace_back(smaller_region_id, bigger_region_id);
+                    // if we care about merging or more than one county need to check which to remove
+                    if(!check_split_constraint || map_params.num_counties <= 1){
+                        // add the pair 
+                        valid_adj_pairs.emplace_back(smaller_region_id, bigger_region_id);
+                    }else{
+                        int merged_plan_county_splits = count_merged_county_splits(map_params, visited,
+                            smaller_region_id, bigger_region_id);
+                        // only count if merging has num_regions - 2 splits or less
+                        if(merged_plan_county_splits <= num_regions - 2){
+                            valid_adj_pairs.emplace_back(smaller_region_id, bigger_region_id);
+                        }
+                    }
                 }
             }
         }
     }
+
+     
 
     return valid_adj_pairs;
 }
@@ -596,37 +550,130 @@ double Plan::compute_log_linking_edge_count(
 };
 
 // counts global number of county splits 
-int Plan::count_county_splits(MapParams const &map_params) const{
-    // if no counties say zero
-    if(map_params.num_counties == 1) return 0;
+// Definition accoridng to McCartarn & Imai
+int Plan::count_county_splits(MapParams const &map_params, std::vector<bool> &visited) const{
+    // if 1 county then its just num_regions - 1
+    if(map_params.num_counties == 1) return num_regions - 1;
+    // 
     int num_splits = 0;
-    // iterate over each county and see if there's more than one region id
-    for(auto const county_root: map_params.county_forest_roots){
-        int initial_region_id = region_ids(county_root);
-        // traverse tree until either done or we see a different region
+    int num_connected_components = 0; // counts the total number of connected components in all county intersect region
+    // We iterate over all vertices. For each vertex we explore all
+    // connected neighbors with the same district and county 
+
+    // first reset visited
+    std::fill(visited.begin(), visited.end(), false);
+
+    for (int u = 0; u < map_params.V; u++)
+    {
+        // skip if we've already visited 
+        if(visited[u]) continue;
+        // else we've encountered a new component so increase the count
+        ++num_connected_components;
+        // Now we traverse all neighbors with the same county and region 
+        int current_county = map_params.counties(u);
+        int current_region = region_ids(u);
         std::queue<int> vertex_queue;
-        vertex_queue.push(county_root);
+        vertex_queue.push(u);
 
         while(!vertex_queue.empty()){
             // get from queue
-            int v = vertex_queue.front();
-            int v_region_id = region_ids(v);
-            vertex_queue.pop();
-            // check if different from intial region
-            if(v_region_id != initial_region_id){
-                // if different then its split so increase count and move to next county
-                ++num_splits;
-                break;
+            int v = vertex_queue.front(); vertex_queue.pop();
+            int v_region = region_ids(v);
+            int v_county = map_params.counties(v);
+
+            if(current_county != v_county || current_region != v_region){
+                REprintf("BIG TIME ERROR IN COUNT SPLITS!!\n");
+                throw Rcpp::exception("WOAHHHHH\n");
             }
-            // else add children
-            for(auto const child_vertex: map_params.county_forest[v]){
-                vertex_queue.push(child_vertex);
+            // mark this as visited 
+            visited[v] = true;
+            // go through children 
+            for(auto const child_vertex: map_params.g[v]){
+                // add the children if same region and county and not visited before 
+                if(map_params.counties(child_vertex) == current_county && 
+                   region_ids(child_vertex) == current_region &&
+                   !visited[child_vertex]){
+                    // mark as visited to avoid being added later  
+                    visited[child_vertex] = true;
+                    vertex_queue.push(child_vertex);
+                }                
             }
         }
+
     }
 
-    return num_splits;
+    // REprintf("%d components and %d regions = %d \n", num_connected_components, map_params.num_counties,
+    //     num_connected_components - map_params.num_counties);
+
+    return num_connected_components - map_params.num_counties;
+
 }
+
+
+int Plan::count_merged_county_splits(MapParams const &map_params, std::vector<bool> &visited,
+    int const region1_id, int const region2_id) const{
+        // if 1 county then its just num_regions - 2
+        if(map_params.num_counties == 1) return num_regions - 2;
+        // 
+        int num_splits = 0;
+        int num_connected_components = 0; // counts the total number of connected components in all county intersect region
+        // We iterate over all vertices. For each vertex we explore all
+        // connected neighbors with the same district and county 
+    
+        // first reset visited
+        std::fill(visited.begin(), visited.end(), false);
+    
+        for (int u = 0; u < map_params.V; u++)
+        {
+            // skip if we've already visited 
+            if(visited[u]) continue;
+            // else we've encountered a new component so increase the count
+            ++num_connected_components;
+            // Now we traverse all neighbors with the same county and region 
+            int current_county = map_params.counties(u);
+            int current_region = region_ids(u);
+            // If its region2 we pretend its region 1
+            if(current_region == region2_id) current_region = region1_id;
+            std::queue<int> vertex_queue;
+            vertex_queue.push(u);
+    
+            while(!vertex_queue.empty()){
+                // get from queue
+                int v = vertex_queue.front(); vertex_queue.pop();
+                int v_region = region_ids(v);
+                if(v_region == region2_id) v_region = region1_id;
+                int v_county = map_params.counties(v);
+    
+                if(current_county != v_county || current_region != v_region){
+                    REprintf("BIG TIME ERROR IN COUNT SPLITS!!\n");
+                    throw Rcpp::exception("Error in count merge county splits\n");
+                }
+                // mark this as visited 
+                visited[v] = true;
+                // go through children 
+                for(auto const child_vertex: map_params.county_restricted_graph[v]){
+                    int child_region = region_ids(child_vertex);
+                    // if its in the merged region we make it 1 by default 
+                    if(child_region == region2_id) child_region = region1_id;
+                    // add the children if same region and county and not visited before 
+                    if(map_params.counties(child_vertex) == current_county && 
+                       child_region == current_region &&
+                       !visited[child_vertex]){
+                        // mark as visited to avoid being added later  
+                        visited[child_vertex] = true;
+                        vertex_queue.push(child_vertex);
+                    }                
+                }
+            }
+    
+        }
+    
+        // REprintf("%d components and %d regions = %d \n", num_connected_components, map_params.num_counties,
+        //     num_connected_components - map_params.num_counties);
+    
+        return num_connected_components - map_params.num_counties;
+    
+    }
 
 //' Selects a valid multidistrict to split uniformly at random 
 //'

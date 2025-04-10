@@ -1,6 +1,7 @@
-
 #include "graph_plan_type.h"
 
+
+constexpr bool DEBUG_GRAPH_PLANS_VERBOSE = false; // Compile-time constant
 
 void GraphPlan::update_vertex_and_plan_specific_info_from_cut(
     TreeSplitter const &tree_splitter,
@@ -146,6 +147,74 @@ std::unordered_map<std::pair<int, int>, int, bounded_hash> NEW_get_valid_pairs_a
 }
 
 
+// temp fix 
+// given a pair of adjacent regions it removes all illegal county boundaries
+// meaning boundaries between counties split by either of the regions 
+int count_illegal_county_crossing_edges(
+    MapParams const &map_params, Plan const &plan, 
+    int const region1_id, int const region2_id
+){
+    if(map_params.num_counties <= 1) return 0;
+
+    std::set<int> split_counties;
+
+    // first find the counties split by a district
+    // meaning a district contains both of them 
+    for (int v = 0; v < map_params.V; v++)
+    {
+        int v_region = plan.region_ids(v);
+        int v_county = map_params.counties(v);
+        // ignore if not pairs 
+        if(v_region != region1_id && v_region != region2_id) continue;
+
+        for(auto const &u: map_params.g[v]){
+            int u_region = plan.region_ids(u);
+            if(v_region != u_region){
+                continue;
+            }
+            int u_county = map_params.counties(u);
+            // else if region splits county add it to the set 
+            if(v_county != u_county){
+                split_counties.insert(v_county);
+                split_counties.insert(u_county);
+            }
+        }
+    }
+    // REprintf("\nHey! {");
+    // for(const auto &el: split_counties){
+    //     REprintf("%d, ", el);
+    // }
+    // REprintf("}\n");
+    int remove_count = 0;
+    // Now count boundaries between two regions that 
+    for (int v = 0; v < map_params.V; v++)
+    {
+        int v_region = plan.region_ids(v);
+        int v_county = map_params.counties(v);
+        // ignore if not pairs 
+        if(v_region != region1_id) continue;
+
+        for(auto const &u: map_params.g[v]){
+            // ignore if not regions we want
+            int u_region = plan.region_ids(u);
+            // check if boundary edge and v_region < u_region to avoid double counting
+            if(v_region == region1_id && u_region == region2_id){
+                int u_county = map_params.counties(u);
+                // check if county boundary
+                if(v_county != u_county){
+                    // check if either county is forbidden 
+                    if(split_counties.count(v_county) > 0 || split_counties.count(u_county) > 0){
+                        // if all that then increase the count 
+                        remove_count++;
+                    }
+                }
+            }
+        }
+    }
+
+    return remove_count;
+}
+
 std::vector<std::tuple<int, int, double>> GraphPlan::get_valid_adj_regions_and_eff_log_boundary_lens(
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
     TreeSplitter const &tree_splitter,
@@ -164,12 +233,66 @@ std::vector<std::tuple<int, int, double>> GraphPlan::get_valid_adj_regions_and_e
         valid_adj_region_pairs_to_boundary_map.size()
     );
 
+    if(DEBUG_GRAPH_PLANS_VERBOSE){
+        REprintf("Size is %d with %d counties\n", 
+            valid_adj_region_pairs_to_boundary_map.size(),
+            map_params.num_counties);
+    }
+
+    std::vector<bool> visited(map_params.V);
+
     for(auto const &a_pair: valid_adj_region_pairs_to_boundary_map){
+        // see if illegal merge 
+        int merged_plan_county_splits = count_merged_county_splits(
+            map_params, visited,
+            a_pair.first.first, a_pair.first.second);
+
+        if(merged_plan_county_splits > num_regions - 2){
+            if(DEBUG_GRAPH_PLANS_VERBOSE){
+                REprintf("(%d,%d):%d regions when merged but merged has %d splits!\n", 
+                    a_pair.first.first, a_pair.first.second,
+                num_regions-1, merged_plan_county_splits);
+            }
+            continue;
+        }
+
+        // remove county correction 
+        int correction_term = count_illegal_county_crossing_edges(
+            map_params, *this, 
+            a_pair.first.first, a_pair.first.second
+        );
+        if(DEBUG_GRAPH_PLANS_VERBOSE){
+            REprintf("(%d,%d): %d-%d\n",
+                a_pair.first.first, a_pair.first.second, a_pair.second,
+                correction_term
+            );
+        }
+
+        // double testy = log_graph_boundary(map_params.g, region_ids,
+        //     a_pair.first.first, a_pair.first.second,
+        //      map_params.num_counties, map_params.counties
+        // );
+        // double diff = std::fabs(
+        //     std::exp(testy) - (a_pair.second - correction_term)
+        // );
+
+        // if(diff > 1e10){
+        //     REprintf("Uh oh %f vs %d!\n",
+        //         std::exp(testy), (a_pair.second - correction_term)
+        //     );
+        // }
+
+        // skip if not edges
+        // if(correction_term == a_pair.second){
+        //     REprintf("HIII\n");
+        //     continue;
+        // } 
+        
         // add the region ids and the log of the boundary 
         region_pairs_tuple_vec.emplace_back(
             a_pair.first.first, 
             a_pair.first.second,
-            std::log(static_cast<double>(a_pair.second))
+            std::log(static_cast<double>(a_pair.second-correction_term))
         );
     }
 
@@ -185,5 +308,5 @@ double GraphPlan::get_log_eff_boundary_len(
 ) const{
     // Return the log of the graph theoretic boundary 
     return log_graph_boundary(map_params.g, region_ids,
-        region1_id, region2_id);
+        region1_id, region2_id, map_params.num_counties, map_params.counties);
 }
