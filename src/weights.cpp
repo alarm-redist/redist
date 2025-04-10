@@ -811,6 +811,11 @@ double compute_log_optimal_weights(
         extra_log_terms -= compute_log_region_multigraph_spanning_tree(region_multigraph);
     }
 
+    if(DEBUG_WEIGHTS_VERBOSE){
+        REprintf("Weight=%f\n", incremental_weight);
+    }
+    
+
     // now return the log of the inverse of the sum
     return extra_log_terms-std::log(incremental_weight);
 

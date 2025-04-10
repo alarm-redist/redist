@@ -12,26 +12,24 @@ double log_graph_boundary(const Graph &g, const subview_col<uword> &region_ids,
     int V = g.size();
     std::set<int> split_counties;
     if(num_counties > 1){
-        // first find the counties split by a district
-        // meaning a district contains both of them 
+        // first find the counties that are not wholly contained within either district
         for (int v = 0; v < V; v++)
         {
             int v_region = region_ids(v);
             int v_county = counties(v);
             // ignore if not pairs 
-            if(v_region != region1_id) continue;
+            if(v_region != region1_id && v_region != region2_id) continue;
 
             for(auto const &u: g[v]){
                 int u_region = region_ids(u);
                 // ignore if not region 2
-                if(u_region != region2_id){
+                if(u_region == v_region){
                     continue;
                 }
                 int u_county = counties(u);
                 // else if region splits county add it to the set 
-                if(v_county != u_county){
+                if(v_county == u_county){
                     split_counties.insert(v_county);
-                    split_counties.insert(u_county);
                 }
             }
         }

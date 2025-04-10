@@ -169,14 +169,14 @@ int count_illegal_county_crossing_edges(
 
         for(auto const &u: map_params.g[v]){
             int u_region = plan.region_ids(u);
-            if(v_region != u_region){
+            if(v_region == u_region){
                 continue;
             }
             int u_county = map_params.counties(u);
-            // else if region splits county add it to the set 
-            if(v_county != u_county){
+            // add this if there is an edge between them in same county
+            // which means region doesn't wholly encompass the county
+            if(v_county == u_county){
                 split_counties.insert(v_county);
-                split_counties.insert(u_county);
             }
         }
     }
@@ -283,10 +283,9 @@ std::vector<std::tuple<int, int, double>> GraphPlan::get_valid_adj_regions_and_e
         // }
 
         // skip if not edges
-        // if(correction_term == a_pair.second){
-        //     REprintf("HIII\n");
-        //     continue;
-        // } 
+        if(correction_term == a_pair.second){
+            continue;
+        } 
         
         // add the region ids and the log of the boundary 
         region_pairs_tuple_vec.emplace_back(
