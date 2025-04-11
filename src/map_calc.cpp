@@ -2,6 +2,8 @@
 #include "map_calc.h"
 #include <redistmetrics.h>
 
+
+
 /*
  * Compute the logarithm of the graph theoretic length of the boundary between
  * `region1_id` and `region1_id`
@@ -11,6 +13,7 @@ double log_graph_boundary(const Graph &g, const subview_col<uword> &region_ids,
                     int const num_counties, arma::uvec counties){
     int V = g.size();
     std::set<int> split_counties;
+
     if(num_counties > 1){
         // first find the counties that are not wholly contained within either district
         for (int v = 0; v < V; v++)
