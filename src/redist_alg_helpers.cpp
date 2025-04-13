@@ -30,28 +30,49 @@ void valid_ndists_and_V(int const ndists, int const V){
 //'
 //' @noRd
 //' @keywords internal
-void copy_arma_to_rcpp_mat(
+void copy_plans_to_rcpp_mat(
     RcppThread::ThreadPool &pool,
-    arma::subview<arma::uword> arma_mat,
-    Rcpp::IntegerMatrix &rcpp_mat
+    std::vector<std::unique_ptr<Plan>> &plan_ptrs_vec,
+    Rcpp::IntegerMatrix &rcpp_mat,
+    bool const copy_sizes_not_ids
 ){
-
-    if(rcpp_mat.ncol() != arma_mat.n_cols || rcpp_mat.nrow() != arma_mat.n_rows){
-        throw Rcpp::exception("Arma and Rcpp Matrix are not the same size");
+    int const num_regions = plan_ptrs_vec[0]->num_regions;
+    // check dimensions match 
+    // number of columns should be size of vector
+    // number of rows should match either num regions or V
+    if(copy_sizes_not_ids){
+        if(rcpp_mat.ncol() != plan_ptrs_vec.size() ||
+           rcpp_mat.nrow() != num_regions){
+            throw Rcpp::exception("Rcpp Matrix and Plans are not the same size");
+        }
+    }else{
+        if(rcpp_mat.ncol() != plan_ptrs_vec.size() ||
+           rcpp_mat.nrow() != plan_ptrs_vec[0]->region_ids.size()){
+            throw Rcpp::exception("Rcpp Matrix and Plans are not the same size");
+        }
     }
 
-    // go by column because both are column major
+    // go by column because Rcpp matrices are column major
     int ncols = (int) rcpp_mat.ncol();
     
 
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, ncols, [&] (int j) {
-        // Copy column i into the rcpp matrix
-        std::copy(
-            arma_mat.colptr(j), // Start of column in subview
-            arma_mat.colptr(j) + arma_mat.n_rows, // End of column in subview
-            rcpp_mat.column(j).begin() // Start of column in Rcpp::IntegerMatrix
-        );
+        // Copy plan i into the rcpp matrix
+        // either sizes or vertex ids
+        if(copy_sizes_not_ids){
+            std::copy(
+                plan_ptrs_vec[j]->region_sizes.begin(),
+                plan_ptrs_vec[j]->region_sizes.begin() + num_regions,
+                rcpp_mat.column(j).begin() // Start of column in Rcpp::IntegerMatrix
+            );
+        }else{
+            std::copy(
+                plan_ptrs_vec[j]->region_ids.begin(),
+                plan_ptrs_vec[j]->region_ids.end(),
+                rcpp_mat.column(j).begin() // Start of column in Rcpp::IntegerMatrix
+            );
+        }
     });
 
     // Wait for all the threads to finish
@@ -216,8 +237,7 @@ void SMCDiagnostics::add_full_step_diagnostics(
     RcppThread::ThreadPool &pool,
     std::vector<std::unique_ptr<Plan>> &plans_ptr_vec, 
     std::vector<std::unique_ptr<Plan>> &new_plans_ptr_vec,
-    SplittingSchedule const &splitting_schedule,
-    arma::umat &region_id_mat, arma::umat &region_sizes_mat
+    SplittingSchedule const &splitting_schedule
 ){
     //if(diagnostic_mode){ // record if in diagnostic mode and generalized splits
     // reorder the plans by oldest split if either we'vxe done any merge split or
@@ -247,9 +267,10 @@ void SMCDiagnostics::add_full_step_diagnostics(
     }
 
     // Copy the vertex plan matrix 
-    copy_arma_to_rcpp_mat(pool, 
-        region_id_mat.submat(0,0, region_id_mat.n_rows-1, region_id_mat.n_cols-1), 
-        all_steps_plan_region_ids_list.at(step_num));
+    copy_plans_to_rcpp_mat(pool, 
+        plans_ptr_vec, 
+        all_steps_plan_region_ids_list.at(step_num),
+        false);
 
     // store the 
     if(!(sampling_space == SamplingSpace::GraphSpace)){
@@ -275,14 +296,11 @@ void SMCDiagnostics::add_full_step_diagnostics(
     
     // Copy the sizes if neccesary 
     if(!split_district_only && (step_num < total_steps-1 || !splitting_all_the_way)){
-        copy_arma_to_rcpp_mat(
+        copy_plans_to_rcpp_mat(
             pool, 
-            region_sizes_mat.submat(
-            0, 0,
-            plans_ptr_vec.at(0)->num_regions-1,
-            region_sizes_mat.n_cols-1
-            ), 
-            region_sizes_mat_list.at(step_num));
+            plans_ptr_vec, 
+            region_sizes_mat_list.at(step_num),
+            true);
     }
 
     return;

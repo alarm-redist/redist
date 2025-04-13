@@ -88,13 +88,13 @@ void assign_district(const Tree &ust, arma::subview_col<arma::uword> &districts,
  */
 // NOT TESTED BUT COPIED FROM `assign_district` so should be ok
 void assign_region_id_from_tree(const Tree &ust, 
-                    arma::subview_col<arma::uword> &region_ids,
+                    PlanVector &region_ids,
                     int root,
                     const int new_region_num_id);
 
 
 void assign_region_id_and_forest_from_tree(const Tree &ust, 
-                    arma::subview_col<arma::uword> &region_ids,
+                    PlanVector &region_ids,
                     Graph &forest_graph,
                     int root,
                     const int new_region_id);

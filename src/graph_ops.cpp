@@ -13,7 +13,7 @@
 
 RegionMultigraph build_region_multigraph(
     Graph const &g, 
-    arma::subview_col<arma::uword> const &region_ids,
+    PlanVector const &region_ids,
     int const num_regions
 ){
     RegionMultigraph region_multigraph(num_regions);
@@ -21,12 +21,12 @@ RegionMultigraph build_region_multigraph(
 
     for (int v = 0; v < V; v++) {
         // Find out which region this vertex corresponds to
-        int v_region_num = region_ids(v);
+        int v_region_num = region_ids[v];
 
         // now iterate over its neighbors
         for (int v_nbor : g[v]) {
             // find which region neighbor corresponds to
-            int v_nbor_region_num = region_ids(v_nbor);
+            int v_nbor_region_num = region_ids[v_nbor];
 
             // to avoid double counting only count when v less u
             if(v_region_num < v_nbor_region_num){
@@ -148,10 +148,15 @@ RegionMultigraph get_region_multigraph(
         uniqueElements.insert(element);
     }
 
+    PlanVector region_id_vec(
+        region_ids.begin(),
+        region_ids.end()
+    );
+
     int num_regions = uniqueElements.size();
     return(build_region_multigraph(
         list_to_graph(adj_list), 
-        region_ids.head(region_ids.size()),
+        region_id_vec,
         num_regions
     ));
 }

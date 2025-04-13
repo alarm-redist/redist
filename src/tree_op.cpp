@@ -172,13 +172,13 @@ void assign_district(const Tree &ust, subview_col<uword> &districts,
 
 
 void assign_region_id_from_tree(
-    Tree const &ust, arma::subview_col<arma::uword> &region_ids,
+    Tree const &ust, PlanVector &region_ids,
     int const root, const int new_region_id
 ){
     // make a queue 
     std::queue<int> vertex_queue;
     // update root and add its children to queue 
-    region_ids(root) = new_region_id;
+    region_ids[root] = new_region_id;
     for(auto const &child_vertex: ust[root]){
         vertex_queue.push(child_vertex);
     }
@@ -189,7 +189,7 @@ void assign_region_id_from_tree(
         int vertex = vertex_queue.front();
         vertex_queue.pop();
         // update region ids
-        region_ids(vertex) = new_region_id;
+        region_ids[vertex] = new_region_id;
         // add children 
         for(auto const &child_vertex: ust[vertex]){
             vertex_queue.push(child_vertex);
@@ -203,13 +203,13 @@ void assign_region_id_from_tree(
 // updates both the vertex labels and the forest adjacency 
 void assign_region_id_and_forest_from_tree(
     const Tree &ust, 
-    arma::subview_col<arma::uword> &region_ids,
+    PlanVector &region_ids,
     Graph &forest_graph,
     int root,
     const int new_region_id){
 
     // update root region id
-    region_ids(root) = new_region_id;
+    region_ids[root] = new_region_id;
     // and its forest vertices
     int n_desc = ust[root].size();
     // clear this vertices neighbors in the graph and reserve size for children
@@ -231,7 +231,7 @@ void assign_region_id_and_forest_from_tree(
         int parent_vertex = queue_pair.second;
         vertex_queue.pop();
         // update region ids
-        region_ids(vertex) = new_region_id;
+        region_ids[vertex] = new_region_id;
         // clear this vertices neighbors in the graph and reserve size for children and parent 
         int n_desc = ust[vertex].size();
         forest_graph[vertex].clear(); forest_graph[vertex].reserve(n_desc+1);

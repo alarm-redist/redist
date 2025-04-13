@@ -19,17 +19,17 @@ void Plan::check_inputted_region_sizes(int ndists, bool split_district_only) con
     for (size_t i = 0; i < num_regions; i++)
     {
         // make sure each regions dval is non-zero
-        if(region_sizes(i) <= 0){
+        if(region_sizes[i] <= 0){
             throw Rcpp::exception("Region size input for region is 0 or less!");
         }
 
-        total_size_implied_by_sizes_mat += region_sizes(i);
-        if(region_sizes(i) == 1) num_districts_implied_by_sizes_mat++;
+        total_size_implied_by_sizes_mat += region_sizes[i];
+        if(region_sizes[i] == 1) num_districts_implied_by_sizes_mat++;
 
         // add check that if split district only then only last one has size > 1
         if (split_district_only && i != num_regions-1)
         {
-            if(region_sizes(i) != 1) throw Rcpp::exception(
+            if(region_sizes[i] != 1) throw Rcpp::exception(
                 "For partial plan the remainder does not have region id=num_regions-1!"
                 ); 
         }
@@ -43,9 +43,9 @@ void Plan::check_inputted_region_sizes(int ndists, bool split_district_only) con
     // check the other entries are zero
     for (int i = num_regions; i < ndists; i++){
         // check that the values are 0,...,num_regions - 1
-        if(region_sizes(i) != 0){
+        if(region_sizes[i] != 0){
             REprintf("Expected Region %d to be zero it was actually %d!\n",
-                i, (int) region_sizes(i));
+                i, (int) region_sizes[i]);
             throw Rcpp::exception(
                 "Plan didn't have the correct expected region size matrix!\n"
                 );
@@ -60,8 +60,8 @@ void Plan::check_inputted_region_ids(int ndists) const{
     // Use std::unordered_set to store unique elements
     std::unordered_set<int> unique_ids;unique_ids.reserve(num_regions);
     // get unique labels
-    for (size_t i = 0; i < region_ids.n_elem; ++i) {
-        unique_ids.insert(region_ids(i)); // Insert each element of the subview column
+    for (size_t i = 0; i < region_ids.size(); ++i) {
+        unique_ids.insert(region_ids[i]); // Insert each element of the subview column
     }
     int actual_num_regions = static_cast<int>(unique_ids.size());
 
@@ -104,21 +104,21 @@ Plan::Plan(
     arma::subview_col<arma::uword> region_sizes_col, 
     int ndists, int num_regions, const arma::uvec &pop, bool split_district_only): 
     num_regions(num_regions),
-    region_ids(region_ids_col), region_sizes(region_sizes_col)
+    region_ids(region_ids_col.begin(), region_ids_col.end()),
+    region_sizes(region_sizes_col.begin(), region_sizes_col.end())
 {
     // check num_regions and num_districts inputs make sense
     if (ndists < 2) throw Rcpp::exception("Tried to create a plan with ndists < 2 regions!");
-    if (region_sizes.n_elem != ndists) throw Rcpp::exception("The region dvals column passed in is not size ndists!");
+    if (region_sizes.size() != ndists) throw Rcpp::exception("The region dvals column passed in is not size ndists!");
 
     // set number of multidistricts, and V
-    int const V = region_ids.n_elem;
+    int const V = region_ids.size();
     region_order_max = ndists+1;
-
-
 
 
     // now check these
     if (num_regions > ndists) throw Rcpp::exception("Tried to create a plan object with more regions than ndists!");
+    if (num_regions == 0) throw Rcpp::exception("Tried to create a plan with 0 regions");
 
     // Create other region-level information 
     region_added_order = std::vector<int>(ndists, -1);
@@ -132,7 +132,7 @@ Plan::Plan(
     // compute the population for each of the regions 
     for (size_t v = 0; v < V; v++)
     {
-        region_pops.at(region_ids(v)) += pop(v);
+        region_pops.at(region_ids[v]) += pop(v);
     }
 }
 
@@ -258,10 +258,10 @@ void Plan::reorder_plan_by_oldest_split(
 
     dummy_plan.region_ids = region_ids;
     // First we relabel all the region vertex ids
-    for (size_t i = 0; i < this->region_ids.n_elem; i++)
+    for (size_t i = 0; i < this->region_ids.size(); i++)
     {
         // Send region id i to old_region_id_to_new_vec[i]
-        this->region_ids(i) = old_region_id_to_new_vec.at(dummy_plan.region_ids(i));
+        this->region_ids[i] = old_region_id_to_new_vec.at(dummy_plan.region_ids[i]);
     }
 
 
@@ -279,8 +279,8 @@ void Plan::reorder_plan_by_oldest_split(
         int old_region_id = indices[i];
         int new_region_id = i;
 
-        this->region_sizes(new_region_id) = dummy_plan.region_sizes(old_region_id);
-        this->region_pops.at(new_region_id) = dummy_plan.region_pops.at(old_region_id);
+        this->region_sizes[new_region_id] = dummy_plan.region_sizes[old_region_id];
+        this->region_pops[new_region_id] = dummy_plan.region_pops[old_region_id];
         // Since the regions are in order of added reset the order added to just be 1,..., n
         this->region_added_order.at(i) = i+1;
     }
@@ -297,8 +297,8 @@ std::pair<int, int> Plan::get_num_district_and_multidistricts() const{
     int num_multidistricts = 0;
     for (size_t region_id = 0; region_id < num_regions; region_id++)
     {
-        if(region_sizes(region_id) == 1) num_districts++;
-        if(region_sizes(region_id) > 1) num_multidistricts++;
+        if(region_sizes[region_id] == 1) num_districts++;
+        if(region_sizes[region_id] > 1) num_multidistricts++;
     }
 
     return std::make_pair(num_districts, num_multidistricts);
@@ -310,20 +310,19 @@ void Plan::Rprint() const{
     auto region_counts = get_num_district_and_multidistricts();
     int num_districts = region_counts.first;
     int num_multidistricts = region_counts.second;
-    RcppThread::Rcout << "Plan with " << num_regions << " regions, " << num_districts
+    Rcpp::Rcout << "Plan with " << num_regions << " regions, " << num_districts
                       << " districts, " << num_multidistricts << " multidistricts and "
-                      << arma::sum(region_sizes) << " sum of sizes and "
-                      << region_ids.n_elem << " Vertices.\n";
+                      << std::accumulate(region_sizes.begin(), region_sizes.end(), 0) << " total seats and "
+                      << region_ids.size() << " Vertices.\n";
 
 
-    RcppThread::Rcout << "Region Level Values:[";
+    Rcpp::Rcout << "Region Level Values:[";
     for(int region_id = 0; region_id < num_regions; region_id++){
-        RcppThread::Rcout << "(Region " << region_id <<
-            ", Size=" << region_sizes(region_id) << ", pop= " <<
-            region_pops.at(region_id) <<"), ";
+        Rcpp::Rcout << "(Region " << region_id <<
+            ", Size=" << static_cast<int>(region_sizes[region_id]) << ", pop= " <<
+            region_pops[region_id] <<"), ";
     }
-    RcppThread::Rcout << "]\n";
-
+    Rcpp::Rcout << "]\n";
 }
 
 
@@ -421,8 +420,8 @@ std::vector<std::pair<int,int>> Plan::get_valid_adj_regions(
 
     for (int v = 0; v < V; v++) {
         // Find out which region this vertex corresponds to
-        int v_region_num = region_ids(v);
-        auto v_region_size = region_sizes(v_region_num);
+        int v_region_num = region_ids[v];
+        auto v_region_size = region_sizes[v_region_num];
 
         // check if its a region we want to find regions adjacent to 
         // and if not keep going
@@ -436,12 +435,12 @@ std::vector<std::pair<int,int>> Plan::get_valid_adj_regions(
         // now iterate over its neighbors
         for (int v_nbor : nbors) {
             // find which region neighbor corresponds to
-            int v_nbor_region_num = region_ids(v_nbor);
+            int v_nbor_region_num = region_ids[v_nbor];
 
             // ignore if they are in the same region
             if(v_region_num == v_nbor_region_num) continue;
             // ignore if pair can't be merged
-            auto v_nbor_region_size = region_sizes(v_nbor_region_num);
+            auto v_nbor_region_size = region_sizes[v_nbor_region_num];
             if(!splitting_schedule.valid_merge_pair_sizes[v_region_size][v_nbor_region_size]) continue;
 
             // else they are different so regions are adj
@@ -571,14 +570,14 @@ int Plan::count_county_splits(MapParams const &map_params, std::vector<bool> &vi
         ++num_connected_components;
         // Now we traverse all neighbors with the same county and region 
         int current_county = map_params.counties(u);
-        int current_region = region_ids(u);
+        int current_region = region_ids[u];
         std::queue<int> vertex_queue;
         vertex_queue.push(u);
 
         while(!vertex_queue.empty()){
             // get from queue
             int v = vertex_queue.front(); vertex_queue.pop();
-            int v_region = region_ids(v);
+            int v_region = region_ids[v];
             int v_county = map_params.counties(v);
 
             if(current_county != v_county || current_region != v_region){
@@ -591,7 +590,7 @@ int Plan::count_county_splits(MapParams const &map_params, std::vector<bool> &vi
             for(auto const child_vertex: map_params.g[v]){
                 // add the children if same region and county and not visited before 
                 if(map_params.counties(child_vertex) == current_county && 
-                   region_ids(child_vertex) == current_region &&
+                   region_ids[child_vertex] == current_region &&
                    !visited[child_vertex]){
                     // mark as visited to avoid being added later  
                     visited[child_vertex] = true;
@@ -631,7 +630,7 @@ int Plan::count_merged_county_splits(MapParams const &map_params, std::vector<bo
             ++num_connected_components;
             // Now we traverse all neighbors with the same county and region 
             int current_county = map_params.counties(u);
-            int current_region = region_ids(u);
+            int current_region = region_ids[u];
             // If its region2 we pretend its region 1
             if(current_region == region2_id) current_region = region1_id;
             std::queue<int> vertex_queue;
@@ -640,7 +639,7 @@ int Plan::count_merged_county_splits(MapParams const &map_params, std::vector<bo
             while(!vertex_queue.empty()){
                 // get from queue
                 int v = vertex_queue.front(); vertex_queue.pop();
-                int v_region = region_ids(v);
+                int v_region = region_ids[v];
                 if(v_region == region2_id) v_region = region1_id;
                 int v_county = map_params.counties(v);
     
@@ -652,11 +651,11 @@ int Plan::count_merged_county_splits(MapParams const &map_params, std::vector<bo
                 visited[v] = true;
                 // go through children 
                 for(auto const child_vertex: map_params.county_restricted_graph[v]){
-                    int child_region = region_ids(child_vertex);
+                    int child_region = region_ids[child_vertex];
                     // if its in the merged region we make it 1 by default 
                     if(child_region == region2_id) child_region = region1_id;
                     // add the children if same region and county and not visited before 
-                    if(map_params.counties(child_vertex) == current_county && 
+                    if(map_params.counties[child_vertex] == current_county && 
                        child_region == current_region &&
                        !visited[child_vertex]){
                         // mark as visited to avoid being added later  
@@ -703,8 +702,7 @@ int Plan::choose_multidistrict_to_split(
     std::vector<int> valid_region_ids, associated_region_sizes;
 
     for(int region_id = 0 ; region_id < num_regions; region_id++) {
-        auto region_size = region_sizes(region_id);
-
+        auto region_size = region_sizes[region_id];
         // if valid then add id to vector 
         if(valid_region_sizes_to_split[region_size]){
             // add the count and label to vector
@@ -712,13 +710,10 @@ int Plan::choose_multidistrict_to_split(
             associated_region_sizes.push_back(region_size);
         }
     }
-
     auto num_candidates = valid_region_ids.size();
 
     // If one just return that 
     if(num_candidates == 1) return valid_region_ids[0];
-    // pick index unif at random 
-    // int idx = r_int(num_candidates);
 
     arma::vec region_wgts(valid_region_ids.size());
 
@@ -786,7 +781,7 @@ bool Plan::draw_tree_on_region(const MapParams &map_params, const int region_to_
 
     // Mark it as ignore if its not in the region to split
     for (int i = 0; i < V; i++){
-        ignore[i] = region_ids(i) != region_to_draw_tree_on;
+        ignore[i] = region_ids[i] != region_to_draw_tree_on;
     }
 
     // Get a uniform spanning tree drawn on that region
@@ -876,13 +871,13 @@ void Plan::update_region_info_from_cut(
 
     // Now update the region level information
     // updates the new region 1
-    region_sizes(split_region1_id) = split_region1_size;
+    region_sizes[split_region1_id] = split_region1_size;
     region_added_order.at(split_region1_id) = new_region1_order_added_num;
     region_pops.at(split_region1_id) = split_region1_pop;
 
     // updates the new region 2
     // New region 2's id is the highest id number so push back
-    region_sizes(split_region2_id) = split_region2_size;
+    region_sizes[split_region2_id] = split_region2_size;
     region_added_order.at(split_region2_id) = new_region2_order_added_num;
     region_pops.at(split_region2_id) = split_region2_pop;
 
@@ -919,8 +914,8 @@ double Plan::get_regions_log_splitting_prob(
     TreeSplitter const &tree_splitter, USTSampler &ust_sampler,
     const int region1_root, const int region2_root
 ) const{
-    int region1_id = region_ids(region1_root); int region2_id = region_ids(region2_root);
-    int region1_size = region_sizes(region1_id); int region2_size = region_sizes(region2_id);
+    int region1_id = region_ids[region1_root]; int region2_id = region_ids[region2_root];
+    int region1_size = region_sizes[region1_id]; int region2_size = region_sizes[region2_id];
     int merged_region_size = region1_size + region2_size;
     auto cut_size_bounds = ust_sampler.splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size];
     int min_possible_cut_size = cut_size_bounds.first;

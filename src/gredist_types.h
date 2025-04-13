@@ -21,11 +21,20 @@ constexpr uint MAX_SUPPORTED_NUM_DISTRICTS = static_cast<unsigned int>(
     std::numeric_limits<RegionID>::max()
 ); 
 
+typedef std::uint_least16_t CountyRegion; // type for region_intersect_county lookup
+constexpr uint MAX_SUPPORTED_COUNTYREGION_VALUE = static_cast<unsigned int>(
+    std::numeric_limits<CountyRegion>::max()
+); 
+
+
 typedef std::vector<RegionID> PlanVector;
+typedef std::vector<RegionID> RegionSizeVector;
 typedef std::vector<std::vector<VertexID>> VertexTree;
+
 
 typedef std::vector<std::vector<int>> Tree;
 typedef std::vector<std::vector<int>> Graph;
+typedef std::vector<std::vector<std::tuple<CountyRegion, RegionID, RegionID>>> CountyComponentGraph;
 typedef std::vector<std::vector<std::vector<int>>> Multigraph;
 typedef std::vector<std::unordered_map<int, int>> RegionMultigraph;
 

@@ -15,12 +15,12 @@ bool USTSampler::draw_tree_on_region(
 
     // Mark it as ignore if its not in the region to split
     for (int i = 0; i < V; i++){
-        ignore[i] = plan.region_ids(i) != region_to_draw_tree_on;
+        ignore[i] = plan.region_ids[i] != region_to_draw_tree_on;
     }
 
     // get upper and lower bounds on region pops
     auto min_max_pair = splitting_schedule.all_regions_min_and_max_possible_cut_sizes[
-        plan.region_sizes(region_to_draw_tree_on)
+        plan.region_sizes[region_to_draw_tree_on]
     ];
 
     // clear the tree
@@ -44,10 +44,10 @@ bool USTSampler::draw_tree_on_merged_region(RNGState &rng_state,
 
     // Mark it as ignore if its not in either of the two regions
     for (int i = 0; i < V; i++){
-        ignore[i] = plan.region_ids(i) != region1_to_draw_tree_on && plan.region_ids(i) != region2_to_draw_tree_on;
+        ignore[i] = plan.region_ids[i] != region1_to_draw_tree_on && plan.region_ids[i] != region2_to_draw_tree_on;
     }
 
-    int merged_region_size = plan.region_sizes(region1_to_draw_tree_on) + plan.region_sizes(region2_to_draw_tree_on);
+    int merged_region_size = plan.region_sizes[region1_to_draw_tree_on] + plan.region_sizes[region2_to_draw_tree_on];
     // get upper and lower bounds on region pops
     auto min_max_pair = splitting_schedule.all_regions_min_and_max_possible_cut_sizes[
         merged_region_size
@@ -116,7 +116,7 @@ std::pair<bool, EdgeCut> USTSampler::attempt_to_find_valid_tree_split(
     if(!tree_drawn) return std::make_pair(false, EdgeCut());
 
     // Else try to find a valid cut
-    int region_to_split_size = plan.region_sizes(region_to_split);
+    int region_to_split_size = plan.region_sizes[region_to_split];
     int region_to_split_population = plan.region_pops[region_to_split];
 
     return try_to_sample_splittable_tree(
@@ -142,7 +142,7 @@ std::pair<bool, EdgeCut> USTSampler::attempt_to_find_valid_tree_mergesplit(
     if(!tree_drawn) return std::make_pair(false, EdgeCut());
 
     // Else try to find a valid cut
-    int region_to_split_size = plan.region_sizes(merge_region1)+plan.region_sizes(merge_region2);
+    int region_to_split_size = plan.region_sizes[merge_region1]+plan.region_sizes[merge_region2];
     int region_to_split_population = plan.region_pops[merge_region1]+plan.region_pops[merge_region2];
 
     return try_to_sample_splittable_tree(

@@ -211,14 +211,14 @@ List perform_a_valid_multidistrict_split(
 
     // Mark it as ignore if its not in the region to split
     for (int i = 0; i < V; i++){
-        ignore[i] = plan->region_ids(i) != region_id_to_split;
+        ignore[i] = plan->region_ids[i] != region_id_to_split;
     }
 
     // Counts the number of split attempts
     bool successful_split_made = false;
     int try_counter = 1;
 
-    int region_to_split_size = static_cast<int>(plan->region_ids(region_id_to_split));
+    int region_to_split_size = static_cast<int>(plan->region_ids[region_id_to_split]);
 
     std::pair<int, int> loop_bounds = TEMP_get_potential_region_size_for_loop_bounds(
     region_to_split_size,
@@ -258,7 +258,7 @@ List perform_a_valid_multidistrict_split(
 
         split_dval_max = std::min(
             split_dval_max, 
-            (int) plan->region_sizes(region_id_to_split) - 1
+            (int) plan->region_sizes[region_id_to_split] - 1
             );
 
 
@@ -268,7 +268,7 @@ List perform_a_valid_multidistrict_split(
             map_params, rng_state, 
             ust_sampler.ust, uncut_tree_root,
             pop_below, visited, 
-            plan->region_pops[region_id_to_split],plan->region_sizes(region_id_to_split), 
+            plan->region_pops[region_id_to_split],plan->region_sizes[region_id_to_split], 
             split_dval_min, split_dval_max, 
             smaller_cut_sizes_to_try //,
             //bool save_selection_prob = false
@@ -360,6 +360,7 @@ List perform_merge_split_steps(
         bool split_district_only, int num_merge_split_steps,
         bool verbose
 ){
+    throw Rcpp::exception("Not support rn!");
     double rho = 1; bool is_final = false;
     MapParams map_params(adj_list, counties, pop, ndists, lower, target, upper);
     // unpack control params
@@ -371,16 +372,16 @@ List perform_merge_split_steps(
     auto dummy_region_ids = region_ids; auto dummy_region_dvals = region_sizes;
 
     // Create a plan object
-    Plan *plan = new GraphPlan(region_ids.col(0), region_sizes.col(0), ndists, num_regions, pop, split_district_only);
-    Plan *new_plan = new GraphPlan(dummy_region_ids.col(0), dummy_region_dvals.col(0), ndists, num_regions, pop, split_district_only);
+    std::unique_ptr<Plan> plan = std::make_unique<GraphPlan>(region_ids.col(0), region_sizes.col(0), ndists, num_regions, pop, split_district_only);
+    std::unique_ptr<Plan> new_plan = std::make_unique<GraphPlan>(dummy_region_ids.col(0), dummy_region_dvals.col(0), ndists, num_regions, pop, split_district_only);
 
     // create splitter
     TreeSplitter *tree_splitter = new NaiveTopKSplitter(map_params.V, k_param);
 
     // fill in the plan
     plan->num_regions = num_regions;
-    plan->region_ids = region_ids.col(0);
-    plan->region_sizes = region_sizes.col(0);
+    // plan->region_ids = std::vector< region_ids.col(0);
+    // plan->region_sizes = region_sizes.col(0);
     plan->region_pops = region_pops;
 
     // TODO FIX THIS but need to create this
@@ -416,7 +417,7 @@ List perform_merge_split_steps(
     int num_successes = run_merge_split_steps(
         map_params, *splitting_schedule_ptr, scoring_function,
         rng_state, sampling_space,
-        *plan, *new_plan, 
+        plan, new_plan, 
         ust_sampler, *tree_splitter,
         "uniform", 
         rho, is_final, 
@@ -678,7 +679,7 @@ List attempt_splits_on_a_region(
         // now draw a tree 
         auto edge_search_result = ust_sampler.try_to_sample_splittable_tree(
             rng_states[thread_id], tree_splitter,
-            plans_vec[thread_id].region_pops[region_id_to_split], plans_vec[thread_id].region_sizes(region_id_to_split),
+            plans_vec[thread_id].region_pops[region_id_to_split], plans_vec[thread_id].region_sizes[region_id_to_split],
             false
         );
 

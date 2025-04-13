@@ -267,9 +267,9 @@ resample_lowvar <- function(wgts) {
     .Call(`_gredist_resample_lowvar`, wgts)
 }
 
-#' Copies data from an arma Matrix into an Rcpp Matrix
+#' Copies data from a vector of `Plan` objects into an Rcpp Matrix
 #'
-#' Takes an arma matrix subview and copies all the data into an RcppMatrix
+#' Takes a vector of plans and copies all the data into an RcppMatrix
 #' of the same size using the Rcpp Threadpool to copy in parallel. 
 #'
 #'

@@ -61,15 +61,23 @@ void estimate_cut_k(
         // if split district only just do remainder 
         if(split_district_only){
             biggest_region_id = plan_ptrs_vec.at(i)->num_regions-1;
-            biggest_region_size = plan_ptrs_vec.at(i)->region_sizes(biggest_region_id);
+            biggest_region_size = plan_ptrs_vec.at(i)->region_sizes[biggest_region_id];
         }else if(any_size_split){
-            biggest_region_id = plan_ptrs_vec.at(i)->region_sizes.head(plan_ptrs_vec.at(i)->num_regions).index_max();
-            biggest_region_size = plan_ptrs_vec.at(i)->region_sizes(biggest_region_id);
+            // else get 
+            auto max_it = std::max_element(
+                plan_ptrs_vec.at(i)->region_sizes.begin(),
+                plan_ptrs_vec.at(i)->region_sizes.begin() + num_regions
+            );
+            biggest_region_id = std::distance(
+                plan_ptrs_vec.at(i)->region_sizes.begin(), 
+                max_it
+            );
+            biggest_region_size = plan_ptrs_vec.at(i)->region_sizes[biggest_region_id];
         }else{// custom size 
             biggest_region_size = -1; biggest_region_id = num_regions -1;
             for (int j = 0; j < num_regions; j++)
             {
-                int region_size = plan_ptrs_vec[i]->region_sizes(j);
+                int region_size = plan_ptrs_vec[i]->region_sizes[j];
                 // check if valid and bigger
                 if(splitting_schedule.valid_region_sizes_to_split[region_size] && 
                    region_size > biggest_region_size){
@@ -83,14 +91,15 @@ void estimate_cut_k(
         std::pair<int, int> min_and_max_possible_cut_sizes = splitting_schedule.all_regions_min_and_max_possible_cut_sizes[biggest_region_size];
         int min_possible_cut_size = min_and_max_possible_cut_sizes.first;
         int max_possible_cut_size = min_and_max_possible_cut_sizes.second;
-
+        
         for (int j = 0; j < V; j++) {
             // if not the biggest region mark as ignore
-            if (plan_ptrs_vec.at(i)->region_ids(j) != biggest_region_id) {
+            if (plan_ptrs_vec.at(i)->region_ids[j] != biggest_region_id) {
                 ignore[j] = true;
                 n_vtx--;
             }
         }
+        
 
         // Rprintf("Tree on region %d of size %d has %d vertices and pop %d!\n",
         // biggest_region_id,
@@ -115,7 +124,7 @@ void estimate_cut_k(
         std::fill(cut_below_pop.begin(), cut_below_pop.end(), 0);
         tree_pop(ust, root, map_params.pop, cut_below_pop, parents);
 
-
+        
         devs.push_back(
         get_ordered_tree_cut_devs(ust, root, cut_below_pop, target, 
                     plan_ptrs_vec.at(i)->region_ids,

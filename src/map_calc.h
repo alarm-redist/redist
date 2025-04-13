@@ -157,7 +157,7 @@ std::vector<double> tree_dev(Tree &ust, int root, const uvec &pop,
 // In either a region or a merged region 
 double compute_log_region_and_county_spanning_tree(
     Graph const &g, const uvec &counties, int const county,
-    arma::subview_col<arma::uword> const &region_ids,
+    PlanVector const &region_ids,
     int const region1_id, int const potential_region2_id = -42
 );
 
@@ -167,7 +167,7 @@ double compute_log_region_and_county_spanning_tree(
  */
 double compute_log_county_level_spanning_tree(
     Graph const &g, const uvec &counties, int const n_cty,
-    arma::subview_col<arma::uword> const &region_ids,
+    PlanVector const &region_ids,
     int const region1_id, int const potential_region2_id = -42
 );
 

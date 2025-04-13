@@ -58,11 +58,9 @@ class USTSampler;
  * 
  * Attributes:
  *  - num_regions The number of regions the plan currently has 
- *  - region_ids A matrix column of length V mapping each vertex of the graph to the id
- *      of the region it is associated with. This is associated with an underlying 
- *      Rcpp armadillo matrix that must remain in memory for the lifetime of the plan
- *      object
- *  - region_sizes A matrix column of length `ndists` storing the size of each region 
+ *  - region_ids A vector of length V mapping each vertex of the graph to the id
+ *      of the region it is associated with. 
+ *  - region_sizes A vector of length `ndists` storing the size of each region 
  *      (indexed by region id). The sum of all entries should always equal `ndists`.
  *  - region_pops A vector of length `ndists` storing the population of each region 
  *    (indexed by region id). 
@@ -99,8 +97,9 @@ public:
 
     // attributes
     int num_regions; // Number of regions in the plan
-    arma::subview_col<arma::uword> region_ids; 
-    arma::subview_col<arma::uword> region_sizes; 
+    PlanVector region_ids;
+    RegionSizeVector region_sizes;
+
     std::vector<int> region_pops; 
     std::vector<int> region_added_order; 
     int region_order_max; 

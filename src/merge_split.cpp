@@ -210,9 +210,6 @@ Rcpp::List ms_plans(
     );
 
     if(DEBUG_PURE_MS_VERBOSE) Rprintf("Checkpoint 3!\n");
-    // Create copies of the matrices
-    arma::umat dummy_region_id_mat = region_id_mat;
-    arma::umat dummy_region_sizes_mat = region_sizes_mat;
 
     std::unique_ptr<Plan> current_plan_ptr;
     std::unique_ptr<Plan> proposed_plan_ptr;
@@ -225,20 +222,9 @@ Rcpp::List ms_plans(
             ndists, ndists,
             map_params.pop, split_district_only
         );
-        proposed_plan_ptr = std::make_unique<GraphPlan>(
-            dummy_region_id_mat.col(0), dummy_region_sizes_mat.col(0), 
-            ndists, ndists,
-            map_params.pop, split_district_only
-        );
     }else if(sampling_space == SamplingSpace::ForestSpace){
         current_plan_ptr = std::make_unique<ForestPlan>(
             region_id_mat.col(0), region_sizes_mat.col(0), 
-            ndists, ndists,
-            map_params.pop, split_district_only
-        );
-
-        proposed_plan_ptr = std::make_unique<ForestPlan>(
-            dummy_region_id_mat.col(0), dummy_region_sizes_mat.col(0), 
             ndists, ndists,
             map_params.pop, split_district_only
         );
@@ -248,15 +234,11 @@ Rcpp::List ms_plans(
             ndists, ndists,
             map_params.pop, split_district_only
         );
-
-        proposed_plan_ptr = std::make_unique<LinkingEdgePlan>(
-            dummy_region_id_mat.col(0), dummy_region_sizes_mat.col(0), 
-            ndists, ndists,
-            map_params.pop, split_district_only
-        );
     }else{
         throw Rcpp::exception("Inputted Sampling Space not supported!\n");
     }
+    // now make a deep clone
+    proposed_plan_ptr = current_plan_ptr->deep_clone();
 
     // splitter
     std::unique_ptr<TreeSplitter> tree_splitter_ptr = get_tree_splitters(
@@ -363,7 +345,7 @@ Rcpp::List ms_plans(
         std::tuple<bool, bool, double, int> mergesplit_result = attempt_mergesplit_step(
             map_params, *splitting_schedule_ptr, scoring_function,
             rng_state, sampling_space,
-            *current_plan_ptr, *proposed_plan_ptr, 
+            current_plan_ptr, proposed_plan_ptr, 
             ust_sampler, *tree_splitter_ptr,
             merge_prob_type, save_edge_selection_prob,
             current_plan_adj_region_pairs,
@@ -378,14 +360,14 @@ Rcpp::List ms_plans(
             // Copy the plan into the matrix 
             // since a Plan's region IDs are associated with 
             std::copy(
-                region_id_mat.colptr(0), // Start of column in subview
-                region_id_mat.colptr(0) + region_id_mat.n_rows, // End of column in subview
+                current_plan_ptr->region_ids.begin(), 
+                current_plan_ptr->region_ids.end(),
                 saved_plans_mat.column(current_plan_mat_col).begin() // Start of column in Rcpp::IntegerMatrix
             );
             if(diagnostic_mode){
                 std::copy(
-                    dummy_region_id_mat.colptr(0), // Start of column in subview
-                    dummy_region_id_mat.colptr(0) + dummy_region_id_mat.n_rows, // End of column in subview
+                    proposed_plan_ptr->region_ids.begin(), 
+                    proposed_plan_ptr->region_ids.end(),
                     proposed_plans_mat.column(current_plan_mat_col).begin() // Start of column in Rcpp::IntegerMatrix
                 );
             }

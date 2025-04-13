@@ -8,13 +8,13 @@
  * Compute the logarithm of the graph theoretic length of the boundary between
  * `region1_id` and `region1_id`
  */
-double log_graph_boundary(const Graph &g, const subview_col<uword> &region_ids,
+double log_graph_boundary(const Graph &g, const arma::subview_col<arma::uword> &region_ids,
                     int const region1_id, int const region2_id,
                     int const num_counties, arma::uvec counties){
     int V = g.size();
     std::set<int> split_counties;
 
-    if(num_counties > 1){
+    if(num_counties > 1 && false){
         // first find the counties that are not wholly contained within either district
         for (int v = 0; v < V; v++)
         {
@@ -37,7 +37,7 @@ double log_graph_boundary(const Graph &g, const subview_col<uword> &region_ids,
             }
         }
     }
-    bool const check_county_boundaries = split_counties.size() > 0;
+    bool const check_county_boundaries = split_counties.size() > 0 && false;
 
     double count = 0; // number of cuttable edges to create eq-pop districts
     for (int v = 0; v < V; v++) {
@@ -64,7 +64,61 @@ double log_graph_boundary(const Graph &g, const subview_col<uword> &region_ids,
     return std::log(count);
 }
 
+double new_log_graph_boundary(const Graph &g, PlanVector const &region_ids,
+                    int const region1_id, int const region2_id,
+                    int const num_counties, arma::uvec counties){
+    int V = g.size();
+    std::set<int> split_counties;
 
+    if(num_counties > 1 && false){
+        // first find the counties that are not wholly contained within either district
+        for (int v = 0; v < V; v++)
+        {
+            int v_region = region_ids[v];
+            int v_county = counties(v);
+            // ignore if not pairs 
+            if(v_region != region1_id && v_region != region2_id) continue;
+
+            for(auto const &u: g[v]){
+                int u_region = region_ids[u];
+                // ignore if not region 2
+                if(u_region == v_region){
+                    continue;
+                }
+                int u_county = counties(u);
+                // else if region splits county add it to the set 
+                if(v_county == u_county){
+                    split_counties.insert(v_county);
+                }
+            }
+        }
+    }
+    bool const check_county_boundaries = split_counties.size() > 0 && false;
+
+    double count = 0; // number of cuttable edges to create eq-pop districts
+    for (int v = 0; v < V; v++) {
+        int v_region = region_ids[v];
+        if (v_region != region1_id) continue; // Only count if starting vertex in region 1
+        for (int u : g[v]) {
+            int u_region = region_ids[u];
+            // ignore if not the right id
+            if (region_ids[u] != region2_id){
+                continue;
+            }else if( // ignore if we care about counties and this is invalid boundary split
+                check_county_boundaries &&
+                (counties(v) != counties(u)) &&
+                split_counties.count(counties(v)) > 0 &&
+                split_counties.count(counties(u)) > 0
+            ){ 
+                continue;
+            }
+            // otherwise, boundary with v -> u
+            count += 1.0;
+        }
+    }
+
+    return std::log(count);
+}
 
 
 /*
@@ -268,7 +322,7 @@ double eval_total_splits(const subview_col<uword> &districts, int distr,
 /*
  * Compute the Polsby Popper penalty for district `distr`
  */
-double eval_polsby(const subview_col<uword> &districts, int distr,
+double eval_polsby(const arma::subview_col<arma::uword> &districts, int distr,
                    const ivec &from,
                    const ivec &to,
                    const vec &area,
@@ -632,7 +686,7 @@ NumericVector colmin(const NumericMatrix x) {
 // In either a region or a merged region 
 double compute_log_region_and_county_spanning_tree(
     Graph const &g, const uvec &counties, int const county,
-    arma::subview_col<arma::uword> const &region_ids,
+    PlanVector const &region_ids,
     int const region1_id, int const potential_region2_id
 ){
     // check if region 2 actually different. 
@@ -646,7 +700,7 @@ double compute_log_region_and_county_spanning_tree(
     for (int i = 0; i < V; i++) {
         pos[i] = K - 1; // minus one because we're dropping 1st row and column
         // Check if in either region and the county
-        if ((region_ids(i) == region1_id || region_ids(i) == region2_id) && 
+        if ((region_ids[i] == region1_id || region_ids[i] == region2_id) && 
             counties(i) == county) {
             K++;
             if (K == 2) start = i; // start 2nd vertex
@@ -657,7 +711,7 @@ double compute_log_region_and_county_spanning_tree(
     mat adj = zeros<mat>(K-1, K-1); // adjacency matrix (minus 1st row and column)
     for (int i = start; i < V; i++) {
         // ignore if not in either region or the county 
-        if ((region_ids(i) != region1_id && region_ids(i) != region2_id) 
+        if ((region_ids[i] != region1_id && region_ids[i] != region2_id) 
             || counties(i) != county) continue;
 
         int prec = pos.at(i);
@@ -667,7 +721,7 @@ double compute_log_region_and_county_spanning_tree(
         int degree = 0; // keep track of index within subgraph
         for (int j = 0; j < length; j++) {
             int nbor = nbors[j];
-            if ((region_ids(nbor) != region1_id && region_ids(nbor) != region2_id) 
+            if ((region_ids[nbor] != region1_id && region_ids[nbor] != region2_id) 
                 || counties(nbor) != county) continue;
             degree++;
             if (pos.at(nbor) < 0) continue;
@@ -690,7 +744,7 @@ double compute_log_region_and_county_spanning_tree(
 // TESTED
 double compute_log_county_level_spanning_tree(
     Graph const &g, const uvec &counties, int const n_cty,
-    arma::subview_col<arma::uword> const &region_ids,
+    PlanVector const &region_ids,
     int const region1_id, int const potential_region2_id
 ){
     // If 1 county then just log(1) = 0
@@ -706,7 +760,7 @@ double compute_log_county_level_spanning_tree(
     std::vector<int> seen(n_cty, -2); // county lookup
     int start = 0;
     for (int i = 0; i < V; i++) {
-        if (region_ids(i) != region1_id && region_ids(i) != region2_id) continue;
+        if (region_ids[i] != region1_id && region_ids[i] != region2_id) continue;
 
         if (seen[counties(i)-1] < 0) {
             pos.at(i) = K - 1; // minus one because we're dropping 1st row and column
@@ -721,7 +775,7 @@ double compute_log_county_level_spanning_tree(
 
     mat adj = zeros<mat>(K-1, K-1); // adjacency matrix (minus 1st row and column)
     for (int i = start; i < V; i++) {
-        if (region_ids(i) != region1_id && region_ids(i) != region2_id) continue;
+        if (region_ids[i] != region1_id && region_ids[i] != region2_id) continue;
 
         int cty = pos[i];
         if (cty < 0) continue; // skip 1st row, col
@@ -729,7 +783,7 @@ double compute_log_county_level_spanning_tree(
         int length = nbors.size();
         for (int j = 0; j < length; j++) {
             int nbor = nbors.at(j);
-            if ((region_ids(nbor) != region1_id && region_ids(nbor) != region2_id) ||
+            if ((region_ids[nbor] != region1_id && region_ids[nbor] != region2_id) ||
                  pos.at(nbor) == cty) continue;
             adj(cty, cty)++;
             if (pos[nbor] < 0) continue; // ignore 1st row and column

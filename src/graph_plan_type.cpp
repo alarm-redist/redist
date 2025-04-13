@@ -94,8 +94,8 @@ std::unordered_map<std::pair<int, int>, int, bounded_hash> NEW_get_valid_pairs_a
 
     for (int v = 0; v < V; v++) {
         // Find out which region this vertex corresponds to
-        int v_region_num = plan.region_ids(v);
-        auto v_region_size = plan.region_sizes(v_region_num);
+        int v_region_num = plan.region_ids[v];
+        auto v_region_size = plan.region_sizes[v_region_num];
 
         // check if its a region we want to find regions adjacent to 
         // and if not keep going
@@ -109,12 +109,12 @@ std::unordered_map<std::pair<int, int>, int, bounded_hash> NEW_get_valid_pairs_a
         // now iterate over its neighbors
         for (int v_nbor : nbors) {
             // find which region neighbor corresponds to
-            int v_nbor_region_num = plan.region_ids(v_nbor);
+            int v_nbor_region_num = plan.region_ids[v_nbor];
 
             // ignore if they are in the same region
             if(v_region_num == v_nbor_region_num) continue;
             // ignore if pair can't be merged
-            auto v_nbor_region_size = plan.region_sizes(v_nbor_region_num);
+            auto v_nbor_region_size = plan.region_sizes[v_nbor_region_num];
             if(!valid_merge_pairs[v_region_size][v_nbor_region_size]) continue;
 
             // else they are different so regions are adj
@@ -158,7 +158,7 @@ std::vector<std::unordered_set<std::pair<int, int>, bounded_hash>> TEMP_inner_co
     {
         // Initialize unordered_map with num_counties/region size * 2.5 buckets
         // Hueristic. Bc we know planar graph has at most 3|V| - 6 edges
-        int init_bucket_size = std::ceil((2 * map_params.num_counties) / plan.region_sizes(i));
+        int init_bucket_size = std::ceil((2 * map_params.num_counties) / plan.region_sizes[i]);
         county_crossings_sets.emplace_back(init_bucket_size, bounded_hash(map_params.num_counties));
     }
     
@@ -166,13 +166,13 @@ std::vector<std::unordered_set<std::pair<int, int>, bounded_hash>> TEMP_inner_co
 
     for (int v = 0; v < map_params.V; v++) {
         // Find out which region this vertex corresponds to
-        int v_region = plan.region_ids(v);
+        int v_region = plan.region_ids[v];
         int v_county = map_params.counties(v);
 
         // now iterate over its neighbors
         for (int u : map_params.g[v]) {
             // find which region neighbor corresponds to
-            int u_region = plan.region_ids(u);
+            int u_region = plan.region_ids[u];
 
             // ignore if they are not in the same region 
             if(v_region != u_region) continue;
@@ -214,14 +214,14 @@ int count_illegal_county_crossing_edges(
     // Now count boundaries between two regions that 
     for (int v = 0; v < map_params.V; v++)
     {
-        int v_region = plan.region_ids(v);
+        int v_region = plan.region_ids[v];
         int v_county = map_params.counties(v);
         // ignore if not pairs 
         if(v_region != region1_id) continue;
 
         for(auto const &u: map_params.g[v]){
             // ignore if not regions we want
-            int u_region = plan.region_ids(u);
+            int u_region = plan.region_ids[u];
             if(u_region != region2_id) continue;
             int u_county = map_params.counties(u);
             // ignore if same county 
@@ -336,6 +336,6 @@ double GraphPlan::get_log_eff_boundary_len(
     const int region1_id, int const region2_id
 ) const{
     // Return the log of the graph theoretic boundary 
-    return log_graph_boundary(map_params.g, region_ids,
+    return new_log_graph_boundary(map_params.g, region_ids,
         region1_id, region2_id, map_params.num_counties, map_params.counties);
 }

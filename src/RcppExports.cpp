@@ -267,7 +267,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // run_redist_gsmc
-List run_redist_gsmc(int const ndists, List const& adj_list, const arma::uvec& counties, const arma::uvec& pop, Rcpp::CharacterVector const& step_types, double const target, double const lower, double const upper, double rho, arma::umat region_id_mat, arma::umat region_sizes_mat, std::string const& sampling_space_str, List const& control, List const& constraints, int verbosity, int diagnostic_level);
+List run_redist_gsmc(int const ndists, List const& adj_list, const arma::uvec& counties, const arma::uvec& pop, Rcpp::CharacterVector const& step_types, double const target, double const lower, double const upper, double rho, arma::umat const& region_id_mat, arma::umat const& region_sizes_mat, std::string const& sampling_space_str, List const& control, List const& constraints, int verbosity, int diagnostic_level);
 RcppExport SEXP _gredist_run_redist_gsmc(SEXP ndistsSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP step_typesSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP region_id_matSEXP, SEXP region_sizes_matSEXP, SEXP sampling_space_strSEXP, SEXP controlSEXP, SEXP constraintsSEXP, SEXP verbositySEXP, SEXP diagnostic_levelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -281,8 +281,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double const >::type lower(lowerSEXP);
     Rcpp::traits::input_parameter< double const >::type upper(upperSEXP);
     Rcpp::traits::input_parameter< double >::type rho(rhoSEXP);
-    Rcpp::traits::input_parameter< arma::umat >::type region_id_mat(region_id_matSEXP);
-    Rcpp::traits::input_parameter< arma::umat >::type region_sizes_mat(region_sizes_matSEXP);
+    Rcpp::traits::input_parameter< arma::umat const& >::type region_id_mat(region_id_matSEXP);
+    Rcpp::traits::input_parameter< arma::umat const& >::type region_sizes_mat(region_sizes_matSEXP);
     Rcpp::traits::input_parameter< std::string const& >::type sampling_space_str(sampling_space_strSEXP);
     Rcpp::traits::input_parameter< List const& >::type control(controlSEXP);
     Rcpp::traits::input_parameter< List const& >::type constraints(constraintsSEXP);

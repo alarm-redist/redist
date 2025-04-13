@@ -15,9 +15,9 @@
 #include "tree_splitter_types.h"
 
 
-//' Copies data from an arma Matrix into an Rcpp Matrix
+//' Copies data from a vector of `Plan` objects into an Rcpp Matrix
 //'
-//' Takes an arma matrix subview and copies all the data into an RcppMatrix
+//' Takes a vector of plans and copies all the data into an RcppMatrix
 //' of the same size using the Rcpp Threadpool to copy in parallel. 
 //'
 //'
@@ -32,10 +32,11 @@
 //'
 //' @noRd
 //' @keywords internal
-void copy_arma_to_rcpp_mat(
+void copy_plans_to_rcpp_mat(
     RcppThread::ThreadPool &pool,
-    arma::subview<arma::uword> arma_mat,
-    Rcpp::IntegerMatrix &rcpp_mat
+    std::vector<std::unique_ptr<Plan>> &plan_ptrs_vec,
+    Rcpp::IntegerMatrix &rcpp_mat,
+    bool const copy_sizes_not_ids
 );
 
 
@@ -137,8 +138,7 @@ class SMCDiagnostics{
         RcppThread::ThreadPool &pool,
         std::vector<std::unique_ptr<Plan>>  &plans_ptr_vec, 
         std::vector<std::unique_ptr<Plan>>  &new_plans_ptr_vec,
-        SplittingSchedule const &splitting_schedule,
-        arma::umat &region_id_mat, arma::umat  &region_sizes_mat
+        SplittingSchedule const &splitting_schedule
     );
 
     // Updates the out list with all the diagnostics 

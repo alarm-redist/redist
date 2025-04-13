@@ -9,7 +9,7 @@ ForestPlan::ForestPlan(arma::subview_col<arma::uword> region_ids_col,
               Plan(region_ids_col, region_sizes_col, ndists, num_regions, pop, split_district_only){
 
     if(num_regions == 1 || num_regions == ndists){
-        forest_graph.resize(region_ids.n_elem);
+        forest_graph.resize(region_ids.size());
     }else if(num_regions > 1){
         throw Rcpp::exception("Custom forests not ready yet!");
         forest_graph = list_to_graph(initial_forest_adj_list);
@@ -108,8 +108,8 @@ std::unordered_map<std::pair<int, int>, double, bounded_hash> NEW_get_valid_pair
 
     for (int v = 0; v < V; v++) {
         // Find out which region this vertex corresponds to
-        int v_region_num = plan.region_ids(v);
-        auto v_region_size = plan.region_sizes(v_region_num);
+        int v_region_num = plan.region_ids[v];
+        auto v_region_size = plan.region_sizes[v_region_num];
 
         // check if its a region we want to find regions adjacent to 
         // and if not keep going
@@ -123,12 +123,12 @@ std::unordered_map<std::pair<int, int>, double, bounded_hash> NEW_get_valid_pair
         // now iterate over its neighbors
         for (int v_nbor : nbors) {
             // find which region neighbor corresponds to
-            int v_nbor_region_num = plan.region_ids(v_nbor);
+            int v_nbor_region_num = plan.region_ids[v_nbor];
 
             // ignore if they are in the same region
             if(v_region_num == v_nbor_region_num) continue;
             // ignore if pair can't be merged
-            auto v_nbor_region_size = plan.region_sizes(v_nbor_region_num);
+            auto v_nbor_region_size = plan.region_sizes[v_nbor_region_num];
             if(!splitting_schedule.valid_merge_pair_sizes[v_region_size][v_nbor_region_size]) continue;
 
             // else they are different so regions are adj
@@ -164,8 +164,8 @@ std::unordered_map<std::pair<int, int>, double, bounded_hash> NEW_get_valid_pair
                     map_params, plan.forest_graph,
                     visited, pops_below_vertex,
                     v, v_nbor,
-                    plan.region_pops[plan.region_ids(v)], plan.region_pops[plan.region_ids(v_nbor)],
-                    plan.region_sizes(plan.region_ids(v)), plan.region_sizes(plan.region_ids(v_nbor)),
+                    plan.region_pops[plan.region_ids[v]], plan.region_pops[plan.region_ids[v_nbor]],
+                    plan.region_sizes[plan.region_ids[v]], plan.region_sizes[plan.region_ids[v_nbor]],
                     min_possible_cut_size, max_possible_cut_size,
                     splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_region_size]);
 
@@ -226,7 +226,7 @@ double ForestPlan::get_log_eff_boundary_len(
     std::vector<int> pops_below_vertex(map_params.V);
 
     int const V = map_params.V;
-    int const merged_region_size = region_sizes(region1_id)+ region_sizes(region2_id);
+    int const merged_region_size = region_sizes[region1_id]+ region_sizes[region2_id];
 
     auto cut_size_bounds = splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size];
     int min_possible_cut_size = cut_size_bounds.first;
@@ -234,16 +234,16 @@ double ForestPlan::get_log_eff_boundary_len(
 
     double tree_selection_probs = 0.0;
     for (int v = 0; v < V; v++) {
-        if (region_ids(v) != region1_id) continue; // Only count if starting vertex in region 1
+        if (region_ids[v] != region1_id) continue; // Only count if starting vertex in region 1
         for (int nbor : map_params.g[v]) {
-            if (region_ids(nbor) != region2_id) continue;
+            if (region_ids[nbor] != region2_id) continue;
 
             double log_edge_selection_prob = tree_splitter.get_log_retroactive_splitting_prob_for_joined_tree(
                 map_params, forest_graph,
                 visited, pops_below_vertex,
                 v, nbor,
-                region_pops[region_ids(v)], region_pops[region_ids(nbor)],
-                region_sizes(region_ids(v)), region_sizes(region_ids(nbor)),
+                region_pops[region_ids[v]], region_pops[region_ids[nbor]],
+                region_sizes[region_ids[v]], region_sizes[region_ids[nbor]],
                 min_possible_cut_size,max_possible_cut_size,
                 splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_region_size]);
             

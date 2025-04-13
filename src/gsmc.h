@@ -62,7 +62,7 @@ List run_redist_gsmc(
         Rcpp::CharacterVector const &step_types,
         double const target, double const lower, double const upper,
         double rho, // compactness 
-        arma::umat region_id_mat, arma::umat region_sizes_mat,
+        arma::umat const &region_id_mat, arma::umat const &region_sizes_mat,
         std::string const &sampling_space_str, // sampling space (graphs, forest, etc)
         List const &control, // control has pop temper, and k parameter value, and whether only district splits are allowed
         List const &constraints, // constraints 

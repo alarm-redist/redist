@@ -37,14 +37,14 @@
 
 double PopTemperConstraint::compute_region_constraint_score(const Plan &plan, int const region_id) const{
     int const region_pop = plan.region_pops[region_id];
-    int const region_size = plan.region_sizes(region_id);
+    int const region_size = plan.region_sizes[region_id];
     return compute_log_pop_temper(target, pop_temper, ndists, region_pop, region_size);
 }
 
 
 double PopTemperConstraint::compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
     int const merged_region_pop = plan.region_pops[region1_id] + plan.region_pops[region2_id];
-    int const merged_region_size = plan.region_sizes(region1_id) + plan.region_sizes(region2_id);
+    int const merged_region_size = plan.region_sizes[region1_id] + plan.region_sizes[region2_id];
     return compute_log_pop_temper(target, pop_temper, ndists, merged_region_pop, merged_region_size);
 }
 
@@ -57,11 +57,25 @@ double PopTemperConstraint::compute_merged_region_constraint_score(const Plan &p
  * idxs is  uvec idxs = find(region_ids == region_id);
  */
 double eval_grp_hinge_gsmc_version(
-    const subview_col<uword> &region_ids, 
-    arma::uvec const &idxs, 
-    const arma::vec &tgts_grp, const arma::uvec &grp_pop, const arma::uvec &total_pop) {
-
-    double frac = ((double) sum(grp_pop(idxs))) / sum(total_pop(idxs));
+    PlanVector const &region_ids, 
+    const arma::vec &tgts_grp, const arma::uvec &grp_pop, const arma::uvec &total_pop,
+    RegionID const &region1_id, RegionID const &possible_region2_id = -42) {
+    RegionID const region2_id = possible_region2_id < 0 ? region1_id : possible_region2_id;
+    double subsetted_grp_pop_sum = 0.0;
+    double subsetted_total_pop_sum = 0.0;
+    // get the sum of the two columns in region 1 or 2
+    for (size_t i = 0; i < region_ids.size(); i++)
+    {
+        auto const region_id = region_ids[i];
+        if(region_id == region1_id || region_id == region2_id){
+            subsetted_grp_pop_sum += grp_pop(i);
+            subsetted_total_pop_sum += total_pop(i);
+        }
+    }
+    // do subsetted_grp_pop_sum/subsetted_total_pop_sum
+    double frac = std::exp(
+        std::log(subsetted_grp_pop_sum) - std::log(subsetted_total_pop_sum)
+    );
     // figure out which to compare it to
     double target;
     double diff = 1;
@@ -81,8 +95,9 @@ double eval_grp_hinge_gsmc_version(
 
 double GroupHingeConstraint::compute_region_constraint_score(const Plan &plan, int const region_id) const{
     double raw_score = eval_grp_hinge_gsmc_version(
-        plan.region_ids, arma::find(plan.region_ids == region_id), 
-        tgts_group, group_pop, total_pop);
+        plan.region_ids, 
+        tgts_group, group_pop, total_pop,
+        region_id);
 
     double adj_strength = strength;
     // if(plan.region_sizes(region_id) > 1){
@@ -96,8 +111,9 @@ double GroupHingeConstraint::compute_region_constraint_score(const Plan &plan, i
 // log constraint for region made by merging region 1 and 2
 double GroupHingeConstraint::compute_merged_region_constraint_score(const Plan &plan, int const region1_id, int const region2_id) const{
     double raw_score = eval_grp_hinge_gsmc_version(
-        plan.region_ids,  arma::find(plan.region_ids == region1_id || plan.region_ids == region2_id), 
-        tgts_group, group_pop, total_pop);
+        plan.region_ids,  
+        tgts_group, group_pop, total_pop,
+        region1_id, region2_id);
     double adj_strength = strength;
     // double adj_strength = strength * std::exp(- static_cast<double>(plan.region_sizes(region1_id) + plan.region_sizes(region2_id)) / plan.ndists);
     // adj_strength = strength * std::exp(- static_cast<double>(plan.region_sizes(region1_id) + plan.region_sizes(region2_id)));
@@ -287,7 +303,7 @@ score_districts_only(score_districts_only){
 double ScoringFunction::compute_region_score(const Plan &plan, int const region_id, bool const is_final) 
     const{
     // If only scoring districts return zero if region is multidistrict
-    if(score_districts_only && plan.region_sizes(region_id) > 1) return 0.0;
+    if(score_districts_only && plan.region_sizes[region_id] > 1) return 0.0;
     // start out with score of zero
     double region_score = 0.0;
 

@@ -38,7 +38,7 @@ double get_merged_log_number_linking_edges(
 
 RegionMultigraph build_region_multigraph(
     Graph const &g, 
-    arma::subview_col<arma::uword> const &region_ids,
+    PlanVector const &region_ids,
     int const num_regions
 );
 

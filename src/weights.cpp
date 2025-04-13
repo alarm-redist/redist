@@ -123,7 +123,7 @@ arma::vec get_adj_pair_sampler(
         {
             int region1_id = std::get<0>(adj_pairs_and_boundary_lens[i]);
             int region2_id = std::get<1>(adj_pairs_and_boundary_lens[i]);
-            int region1_dval = plan.region_sizes(region1_id); int region2_dval = plan.region_sizes(region2_id);
+            int region1_dval = plan.region_sizes[region1_id]; int region2_dval = plan.region_sizes[region2_id];
 
             // check if both are districts
             if(region1_dval == 1 && region2_dval == 1){
@@ -144,7 +144,7 @@ arma::vec get_adj_pair_sampler(
         {
             int region1_id = std::get<0>(adj_pairs_and_boundary_lens[i]);
             int region2_id = std::get<1>(adj_pairs_and_boundary_lens[i]);
-            int region1_dval = plan.region_sizes(region1_id); int region2_dval = plan.region_sizes(region2_id);
+            int region1_dval = plan.region_sizes[region1_id]; int region2_dval = plan.region_sizes[region2_id];
 
             // check if both are districts
             if(region1_dval == 1 && region2_dval == 1){
@@ -194,7 +194,7 @@ arma::vec get_adj_pair_unnormalized_weights(
         {
             int region1_id = valid_region_adj_pairs[i].first;
             int region2_id = valid_region_adj_pairs[i].second;
-            int region1_dval = plan.region_sizes(region1_id); int region2_dval = plan.region_sizes(region2_id);
+            int region1_dval = plan.region_sizes[region1_id]; int region2_dval = plan.region_sizes[region2_id];
 
             // check if both are districts
             if(region1_dval == 1 && region2_dval == 1){
@@ -215,7 +215,7 @@ arma::vec get_adj_pair_unnormalized_weights(
         {
             int region1_id = valid_region_adj_pairs[i].first;
             int region2_id = valid_region_adj_pairs[i].second;
-            int region1_dval = plan.region_sizes(region1_id); int region2_dval = plan.region_sizes(region2_id);
+            int region1_dval = plan.region_sizes[region1_id]; int region2_dval = plan.region_sizes[region2_id];
 
             // check if both are districts
             if(region1_dval == 1 && region2_dval == 1){
@@ -322,7 +322,7 @@ double get_log_retroactive_splitting_prob(
     if(WEIGHTS_DEBUG_VERBOSE) Rprintf("Possible options: ");
 
     // compute weight of the merged region
-    auto unioned_region_size = plan.region_sizes(region1_id) + plan.region_sizes(region2_id);
+    auto unioned_region_size = plan.region_sizes[region1_id] + plan.region_sizes[region2_id];
     double unioned_region_prob = std::pow(unioned_region_size, selection_alpha);
     // get the sum of all regions 
     double prob_sum = unioned_region_prob;
@@ -331,7 +331,7 @@ double get_log_retroactive_splitting_prob(
     if (WEIGHTS_DEBUG_VERBOSE) Rprintf(" (unioned) %d\n", unioned_region_size);
 
     for(int region_id = 0 ; region_id < plan.num_regions; region_id++) {
-        auto region_size = plan.region_sizes(region_id);
+        auto region_size = plan.region_sizes[region_id];
 
         // add if valid multidistrict and not the two we started with
         if(valid_region_sizes_to_split[region_size] &&
@@ -348,7 +348,7 @@ double get_log_retroactive_splitting_prob(
 
     // Rprintf("For regions (%d,%d), size (%d,%d) - Prob is %d/%d, so log is %.5f\n",
     // region1_id, region2_id, 
-    // (int) plan.region_sizes(region1_id), (int) plan.region_sizes(region2_id),
+    // (int) plan.region_sizes[region1_id], (int) plan.region_sizes[region2_id],
     // unioned_region_dnk, total_multi_ds,
     // log_prob);
 
@@ -501,8 +501,8 @@ double compute_simple_log_incremental_weight(
 
 
     if(DEBUG_WEIGHTS_VERBOSE){
-    int region1_size = plan.region_sizes(region1_id);
-    int region2_size = plan.region_sizes(region2_id);
+    int region1_size = plan.region_sizes[region1_id];
+    int region2_size = plan.region_sizes[region2_id];
     Rprintf("Doing (%d,%d) - sizes (%d, %d): forward %f, backward %f, split prob %f, ratio %f!\n", 
         region1_id, region2_id, region1_size, region2_size, std::exp(log_forward_kernel_term), 
         std::exp(log_backwards_kernel_term), 
@@ -769,8 +769,8 @@ double compute_log_optimal_weights(
             log_of_sum_term += score_ratio;
         }
 
-        // int region1_size = plan.region_sizes(region1_id);
-        // int region2_size = plan.region_sizes(region2_id);
+        // int region1_size = plan.region_sizes[region1_id];
+        // int region2_size = plan.region_sizes[region2_id];
         // Rprintf("Adding (%d,%d) - sizes (%d, %d): len %f, split prob %f, ratio %f!\n", 
         //     region1_id, region2_id, region1_size, region2_size, std::exp(eff_log_boundary_len), 
         //     std::exp(log_of_sum_term), std::exp(log_of_sum_term));

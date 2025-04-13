@@ -146,7 +146,7 @@ void run_smc_step(
 
     // thread safe id counter for seeding RNG generator 
     std::atomic<int> thread_id_counter{0};
-    if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("About to start SMC Step\n");
+    if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("About to start SMC Step for %d plans\n", M);
     // create a progress bar
     RcppThread::ProgressBar bar(M, 1);
     // Parallel thread pool where all objects in memory shared by default
@@ -177,7 +177,7 @@ void run_smc_step(
                     splitting_schedule.valid_region_sizes_to_split, rng_states[thread_id]
                 );
             }
-            int region_to_split_size = old_plans_ptr_vec[idx]->region_sizes(region_id_to_split);
+            int region_to_split_size = old_plans_ptr_vec[idx]->region_sizes[region_id_to_split];
             
             // int size_of_region_to_split = old_plans_ptr_vec[idx]->region_sizes(region_id_to_split);
             // Rprintf("Picked idx %d, Splitting Region size %d. Sizes to try:\n", idx, size_of_region_to_split);
@@ -205,8 +205,8 @@ void run_smc_step(
                 if(DEBUG_GSMC_PLANS_VERBOSE){
                     Rprintf("Success, updating Plan %d\n", i);
                 } 
-                // shallow copy the new plan to be the old one 
-                *new_plans_ptr_vec[i] = *old_plans_ptr_vec[idx];
+                // make the new plan a copy of the old one 
+                new_plans_ptr_vec[i] = old_plans_ptr_vec[idx]->deep_clone();
                 // now split that region we found on the old one
                 new_plans_ptr_vec.at(i)->update_from_successful_split(
                     tree_splitters,
@@ -329,7 +329,7 @@ void run_merge_split_step_on_all_plans(
         success_count_vec[i] = run_merge_split_steps(
             map_params, splitting_schedule, scoring_function,
             rng_states[thread_id], sampling_space,
-            *plan_ptrs_vec.at(i), *new_plan_ptrs_vec.at(i), 
+            plan_ptrs_vec[i], new_plan_ptrs_vec[i], 
             ust_sampler, tree_splitter,
             merge_prob_type, 
             rho, is_final, 
@@ -398,7 +398,7 @@ List run_redist_gsmc(
         Rcpp::CharacterVector const &step_types,
         double const target, double const lower, double const upper,
         double rho,
-        arma::umat region_id_mat, arma::umat region_sizes_mat,
+        arma::umat const &region_id_mat, arma::umat const &region_sizes_mat,
         std::string const &sampling_space_str, // sampling space (graphs, forest, etc)
         List const &control, // control has pop temper, and k parameter value, and whether only district splits are allowed
         List const &constraints, // constraints 
@@ -541,10 +541,6 @@ List run_redist_gsmc(
     
 
     {
-    // Create copies of the matrices
-    arma::umat dummy_region_id_mat = region_id_mat;
-    arma::umat dummy_region_sizes_mat = region_sizes_mat;
-
     // Create a vector of pointers to Plan objects
     // b/c we're using abstract classes we must use pointers to the base class
     std::vector<std::unique_ptr<Plan>> new_plans_ptr_vec; new_plans_ptr_vec.reserve(nsims);
@@ -582,7 +578,7 @@ List run_redist_gsmc(
                 ));
             new_plans_ptr_vec.emplace_back(
                 std::make_unique<GraphPlan>(
-                    dummy_region_id_mat.col(i), dummy_region_sizes_mat.col(i), 
+                    region_id_mat.col(i), region_sizes_mat.col(i), 
                     ndists, initial_num_regions,
                     map_params.pop, split_district_only
                 ));
@@ -596,7 +592,7 @@ List run_redist_gsmc(
                 ));
             new_plans_ptr_vec.emplace_back(
                 std::make_unique<ForestPlan>(
-                    dummy_region_id_mat.col(i), dummy_region_sizes_mat.col(i), 
+                    region_id_mat.col(i), region_sizes_mat.col(i), 
                     ndists, initial_num_regions,
                     map_params.pop, split_district_only
                 ));
@@ -609,7 +605,7 @@ List run_redist_gsmc(
                 ));
             new_plans_ptr_vec.emplace_back(
                 std::make_unique<LinkingEdgePlan>(
-                    dummy_region_id_mat.col(i), dummy_region_sizes_mat.col(i), 
+                    region_id_mat.col(i), region_sizes_mat.col(i), 
                     ndists, initial_num_regions,
                     map_params.pop, split_district_only
                 ));
@@ -617,7 +613,6 @@ List run_redist_gsmc(
             throw Rcpp::exception("Input is invalid\n");
         }
     }
-
 
     // Define output variables that must always be created
 
@@ -703,11 +698,13 @@ List run_redist_gsmc(
                     // est k
                     int est_cut_k;
                     int last_k = smc_step_num == 0 ? std::max(1, V - 5) : k_params.at(smc_step_num-1);
+                    if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("About to try to estimate cut k!\n");
                     estimate_cut_k(
                         map_params, *splitting_schedule_ptr, rng_state, 
                         est_cut_k, last_k, unnormalized_sampling_weights, thresh,
                         tol, plans_ptr_vec, 
                         split_district_only, verbosity);
+                    if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Estimated cut k!\n");
                     k_params.at(smc_step_num) = est_cut_k;
 
                     if (verbosity >= 3) {
@@ -896,13 +893,9 @@ List run_redist_gsmc(
                 sampling_space,
                 pool,
                 plans_ptr_vec, new_plans_ptr_vec,
-                *splitting_schedule_ptr,
-                region_id_mat,
-                region_sizes_mat
+                *splitting_schedule_ptr
             );
         }
-
-
 
         if (verbosity == 1 && CLI_SHOULD_TICK){
             cli_progress_set(bar, step_num);
@@ -932,9 +925,10 @@ List run_redist_gsmc(
     plan_sizes_mat.reserve(1);
 
     // copy the plans into the plan_mat for returning
-    copy_arma_to_rcpp_mat(pool, 
-        region_id_mat.submat(0,0, region_id_mat.n_rows-1, region_id_mat.n_cols-1), 
-        plan_mat);
+    copy_plans_to_rcpp_mat(pool, 
+        plans_ptr_vec, 
+        plan_mat,
+        false);
 
     if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Plans saved!\n");
 
@@ -943,14 +937,11 @@ List run_redist_gsmc(
         if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Getting ready to save region sizes!\n");
         int num_final_regions = plans_ptr_vec.at(0)->num_regions;
         plan_sizes_mat.emplace_back(num_final_regions, nsims);
-        copy_arma_to_rcpp_mat(
+        copy_plans_to_rcpp_mat(
             pool, 
-            region_sizes_mat.submat(
-            0, 0,
-            num_final_regions-1,
-            region_sizes_mat.n_cols-1
-            ), 
-            plan_sizes_mat.at(0));
+            plans_ptr_vec,
+            plan_sizes_mat.at(0),
+            true);
         // Rcpp::IntegerMatrix plan_mat(V, nsims); // integer matrix to store final plans
     }else{
         // else create a dummy matrix 

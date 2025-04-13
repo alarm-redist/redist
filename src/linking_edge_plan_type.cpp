@@ -18,7 +18,7 @@ LinkingEdgePlan::LinkingEdgePlan(arma::subview_col<arma::uword> region_ids_col,
 
     if(num_regions == 1 || num_regions == ndists){
         linking_edges.reserve(ndists-1);
-        forest_graph.resize(region_ids.n_elem);
+        forest_graph.resize(region_ids.size());
     }else if(num_regions > 1){
         throw Rcpp::exception("Custom linking edges not ready yet!");
         linking_edges = initial_linking_edge_list;
@@ -46,7 +46,7 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
         {
             Rprintf("\tEdge(%d, %d) - Region (%d, %d)- Prob %f \n", 
                 std::get<0>(a_edge), std::get<1>(a_edge), 
-            region_ids(std::get<0>(a_edge)), region_ids(std::get<1>(a_edge)),
+            region_ids[std::get<0>(a_edge)], region_ids[std::get<1>(a_edge)],
             std::exp(std::get<2>(a_edge)));
         }
         Rprintf("\n");
@@ -59,8 +59,8 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
         {
             // get the regions associated with the linking edge
             std::set<int> candidate_pairs = {
-                static_cast<int>(region_ids(std::get<0>(linking_edges[i]))), 
-                static_cast<int>(region_ids(std::get<1>(linking_edges[i])))
+                static_cast<int>(region_ids[std::get<0>(linking_edges[i])]), 
+                static_cast<int>(region_ids[std::get<1>(linking_edges[i])])
             };
             // if they match break
             if(candidate_pairs == merge_region_ids){
@@ -103,8 +103,8 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
     // First iterate through the old linking edges and update ones touching a split region
     for(auto &a_linking_edge: linking_edges){
         int v = std::get<0>(a_linking_edge); int u = std::get<1>(a_linking_edge);
-        int edge_region1 = region_ids(v);
-        int edge_region2 = region_ids(u);
+        int edge_region1 = region_ids[v];
+        int edge_region2 = region_ids[u];
         // If either of the vertices in the edge is now in a split region we need 
         // to update the probability that edge was chosen 
         if(edge_region1 == split_region1_id || edge_region2 == split_region1_id ||
@@ -127,7 +127,7 @@ void LinkingEdgePlan::update_vertex_and_plan_specific_info_from_cut(
     if(DEBUG_L_EDGE_PLANS_VERBOSE){
         Rprintf("\nAdding New Edge (%d,%d) in Region (%d,%d), log prob %f\n",
             cut_edge.cut_vertex, cut_edge.cut_vertex_parent,
-            region_ids(cut_edge.cut_vertex), region_ids(cut_edge.cut_vertex_parent),
+            region_ids[cut_edge.cut_vertex], region_ids[cut_edge.cut_vertex_parent],
             cut_edge.log_prob);
     } 
 
@@ -144,8 +144,8 @@ double LinkingEdgePlan::get_log_eff_boundary_len(
     // Go through and find that pair 
     for (auto const &edge_pair: linking_edges){
         // get the regions associated with the linking edge
-        int edge_region1 = std::min(region_ids(std::get<0>(edge_pair)), region_ids(std::get<1>(edge_pair)));
-        int edge_region2 = std::max(region_ids(std::get<0>(edge_pair)), region_ids(std::get<1>(edge_pair)));
+        int edge_region1 = std::min(region_ids[std::get<0>(edge_pair)], region_ids[std::get<1>(edge_pair)]);
+        int edge_region2 = std::max(region_ids[std::get<0>(edge_pair)], region_ids[std::get<1>(edge_pair)]);
         if(edge_region1 == region1_id && edge_region2 == region2_id){
             return std::get<2>(edge_pair);
         }
@@ -166,10 +166,10 @@ std::vector<std::tuple<int, int, double>> LinkingEdgePlan::get_valid_adj_regions
     // Go through and find that pair 
     for (auto const &edge_pair: linking_edges){
         // get the regions associated with the linking edge
-        int edge_region1 = std::min(region_ids(std::get<0>(edge_pair)), region_ids(std::get<1>(edge_pair)));
-        int edge_region2 = std::max(region_ids(std::get<0>(edge_pair)), region_ids(std::get<1>(edge_pair)));
+        int edge_region1 = std::min(region_ids[std::get<0>(edge_pair)], region_ids[std::get<1>(edge_pair)]);
+        int edge_region2 = std::max(region_ids[std::get<0>(edge_pair)], region_ids[std::get<1>(edge_pair)]);
 
-        int edge_region1_size = region_sizes(edge_region1); int edge_region2_size = region_sizes(edge_region2);
+        int edge_region1_size = region_sizes[edge_region1]; int edge_region2_size = region_sizes[edge_region2];
         
         // Add if its ok to merge 
         if(splitting_schedule.valid_merge_pair_sizes[edge_region1_size][edge_region2_size]){
@@ -190,10 +190,10 @@ int LinkingEdgePlan::count_valid_adj_regions(
     // Go through and count linking edge pairs that can be merged
     for (auto const &edge_pair: linking_edges){
         // get the regions associated with the linking edge
-        int edge_region1 = std::min(region_ids(std::get<0>(edge_pair)), region_ids(std::get<1>(edge_pair)));
-        int edge_region2 = std::max(region_ids(std::get<0>(edge_pair)), region_ids(std::get<1>(edge_pair)));
+        int edge_region1 = std::min(region_ids[std::get<0>(edge_pair)], region_ids[std::get<1>(edge_pair)]);
+        int edge_region2 = std::max(region_ids[std::get<0>(edge_pair)], region_ids[std::get<1>(edge_pair)]);
 
-        int edge_region1_size = region_sizes(edge_region1); int edge_region2_size = region_sizes(edge_region2);
+        int edge_region1_size = region_sizes[edge_region1]; int edge_region2_size = region_sizes[edge_region2];
         
         // Add if its ok to merge 
         if(splitting_schedule.valid_merge_pair_sizes[edge_region1_size][edge_region2_size]){
@@ -215,10 +215,10 @@ std::vector<std::pair<int,int>> LinkingEdgePlan::get_valid_adj_regions(
     // Go through and find that pair 
     for (auto const &edge_pair: linking_edges){
         // get the regions associated with the linking edge
-        int edge_region1 = std::min(region_ids(std::get<0>(edge_pair)), region_ids(std::get<1>(edge_pair)));
-        int edge_region2 = std::max(region_ids(std::get<0>(edge_pair)), region_ids(std::get<1>(edge_pair)));
+        int edge_region1 = std::min(region_ids[std::get<0>(edge_pair)], region_ids[std::get<1>(edge_pair)]);
+        int edge_region2 = std::max(region_ids[std::get<0>(edge_pair)], region_ids[std::get<1>(edge_pair)]);
 
-        int edge_region1_size = region_sizes(edge_region1); int edge_region2_size = region_sizes(edge_region2);
+        int edge_region1_size = region_sizes[edge_region1]; int edge_region2_size = region_sizes[edge_region2];
         
         // Add if its ok to merge 
         if(splitting_schedule.valid_merge_pair_sizes[edge_region1_size][edge_region2_size]){

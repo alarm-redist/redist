@@ -22,7 +22,7 @@ remove (splitting the tree)
  */
 std::vector<double> get_ordered_tree_cut_devs(Tree &ust, int root,
                              std::vector<int> const &cut_below_pop, double const target,
-                             const arma::subview_col<arma::uword> &region_ids,
+                             PlanVector const &region_ids,
                              int const region_id, int const region_size, int const region_pop,
                              int const min_potential_cut_size, int const max_potential_cut_size,
                              std::vector<int> const &smaller_cut_sizes_to_try
@@ -35,7 +35,7 @@ std::vector<double> get_ordered_tree_cut_devs(Tree &ust, int root,
     // REprintf("Starting at %d and %2.f and ", region_pop, static_cast<double>(region_pop)*2.0);
     for (int i = 0; i < V; i++) {
         // ignore vertices not in the region
-        if (i == root || region_ids(i) != region_id) continue;
+        if (i == root || region_ids[i] != region_id) continue;
 
 
         // start at total pop since deviance will never be more than total_pop/2
