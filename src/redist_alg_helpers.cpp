@@ -15,6 +15,8 @@ Rcpp::List maximum_input_sizes(){
         _["max_districts"] = MAX_SUPPORTED_NUM_DISTRICTS,
         _["max_counties"] = MAX_SUPPORTED_NUM_COUNTIES
     );
+
+    return out;
 }
 
 //' Copies data from an arma Matrix into an Rcpp Matrix

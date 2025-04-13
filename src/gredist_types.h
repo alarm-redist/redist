@@ -104,9 +104,9 @@ class MapParams {
                     MAX_SUPPORTED_NUM_DISTRICTS);
                 throw Rcpp::exception("Too many districts! This number of districts isn't supported!\n");
             }
-            if(num_counties-1 > MAX_SUPPORTED_NUM_DISTRICTS){
+            if(num_counties-1 > MAX_SUPPORTED_NUM_COUNTIES){
                 REprintf("The maximum number of counties supported right now is %u!\n",
-                    MAX_SUPPORTED_NUM_DISTRICTS);
+                    MAX_SUPPORTED_NUM_COUNTIES);
                 throw Rcpp::exception("Too many counties! This number of counties isn't supported!\n");
             }
             if(V-1 > MAX_SUPPORTED_NUM_VERTICES){
