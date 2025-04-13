@@ -10,6 +10,12 @@ ForestPlan::ForestPlan(arma::subview_col<arma::uword> region_ids_col,
 
     if(num_regions == 1 || num_regions == ndists){
         forest_graph.resize(region_ids.size());
+        // complete hueristic
+        for (size_t i = 0; i < forest_graph.size(); i++)
+        {
+            forest_graph[i].reserve(2);
+        }
+        
     }else if(num_regions > 1){
         throw Rcpp::exception("Custom forests not ready yet!");
         // forest_graph = list_to_graph(initial_forest_adj_list);
