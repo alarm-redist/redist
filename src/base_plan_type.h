@@ -104,10 +104,8 @@ public:
     std::vector<int> region_added_order; 
     int region_order_max; 
 
-    // not actually used by all plan types but the arma subviews are impossible to change 
-    // so kept to avoid object slicing 
-    Graph forest_graph;   
-    std::vector<std::tuple<int, int, double>> linking_edges;
+      
+    
 
     virtual ~Plan() = default; 
 
@@ -117,20 +115,11 @@ public:
     std::pair<int, int> get_most_recently_split_regions() const;
     std::pair<int, int> get_num_district_and_multidistricts() const;
  
-    virtual Graph get_forest_adj(){throw Rcpp::exception("Get Forest Adj not Supported for this!\n");};
+    virtual VertexGraph get_forest_adj(){throw Rcpp::exception("Get Forest Adj not Supported for this!\n");};
 
-    std::vector<std::array<double, 3>> get_linking_edges(){
-        std::vector<std::array<double, 3>> output;
-        output.reserve(linking_edges.size());
-        for(auto const& an_edge: linking_edges){
-            output.push_back({
-                static_cast<double>(std::get<0>(an_edge)),
-                static_cast<double>(std::get<1>(an_edge)),
-                std::get<2>(an_edge)
-            });
-        }
-        return output;
-    }
+    virtual std::vector<std::array<double, 3>> get_linking_edges(){
+        throw Rcpp::exception("Get Linking edges not Supported for this concrete Plan class!\n");
+    };
 
     // Compute the log number of spanning trees on a region 
     double compute_log_region_spanning_trees(MapParams const &map_params,
@@ -186,13 +175,6 @@ public:
         int const new_region1_id, int const new_region2_id,
         bool const add_region
     );
-
-    // For a plan and edge across two regions it returns the log probability 
-    // that edge would be split in the merged tree across the two regions
-    double get_regions_log_splitting_prob(
-        TreeSplitter const &tree_splitter, USTSampler &ust_sampler,
-        const int region1_root, const int region2_root
-    ) const;
 
     // virtual redist_smc methods
     virtual void update_vertex_and_plan_specific_info_from_cut(

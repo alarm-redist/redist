@@ -136,7 +136,7 @@ double TreeSplitter::get_log_selection_prob(
 
 double TreeSplitter::get_log_retroactive_splitting_prob_for_joined_tree(
     MapParams const &map_params,
-    Graph const &forest_graph,
+    VertexGraph const &forest_graph,
     std::vector<bool> &visited, std::vector<int> &pops_below_vertex,
     const int region1_root, const int region2_root,
     const int region1_population, const int region2_population,
@@ -200,7 +200,6 @@ std::pair<bool, EdgeCut> NaiveTopKSplitter::select_edge_to_cut(
     //     REprintf("k was %d but found %d valid edges\n", k_param, num_valid_edges);
     //     // throw Rcpp::exception("K not big enough!\n");
     // }
-
 
     int idx = rng_state.r_int(k_param);
     // if we selected k greater than number of edges failure

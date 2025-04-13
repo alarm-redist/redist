@@ -306,6 +306,10 @@ NULL
 #' @keywords internal
 NULL
 
+maximum_input_sizes <- function() {
+    .Call(`_gredist_maximum_input_sizes`)
+}
+
 plan_joint <- function(m1, m2, pop) {
     .Call(`_gredist_plan_joint`, m1, m2, pop)
 }

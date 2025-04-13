@@ -909,26 +909,3 @@ void Plan::update_from_successful_split(
      
 }
 
-// NOTE: This really only belongs to Forest and linking edge class, not graph 
-double Plan::get_regions_log_splitting_prob(
-    TreeSplitter const &tree_splitter, USTSampler &ust_sampler,
-    const int region1_root, const int region2_root
-) const{
-    int region1_id = region_ids[region1_root]; int region2_id = region_ids[region2_root];
-    int region1_size = region_sizes[region1_id]; int region2_size = region_sizes[region2_id];
-    int merged_region_size = region1_size + region2_size;
-    auto cut_size_bounds = ust_sampler.splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size];
-    int min_possible_cut_size = cut_size_bounds.first;
-    int max_possible_cut_size = cut_size_bounds.second;
-
-    // get the log probability
-    return tree_splitter.get_log_retroactive_splitting_prob_for_joined_tree(
-        ust_sampler.map_params, forest_graph, 
-        ust_sampler.visited, ust_sampler.pops_below_vertex,
-        region1_root, region2_root,
-        region_pops[region1_id], region_pops[region2_id],
-        region1_size, region2_size,
-        min_possible_cut_size, max_possible_cut_size,
-        ust_sampler.splitting_schedule.all_regions_smaller_cut_sizes_to_try[merged_region_size]
-    );
-}

@@ -73,6 +73,9 @@ std::unique_ptr<TreeSplitter> get_tree_splitters(
     int const nsims
 );
 
+// [[Rcpp::export]]
+Rcpp::List maximum_input_sizes();
+
 
 // Wrapper object for all non-essential diagnostics 
 class SMCDiagnostics{
@@ -122,7 +125,7 @@ class SMCDiagnostics{
 
     // level 3
     std::vector<Rcpp::IntegerMatrix> all_steps_plan_region_ids_list;
-    std::vector<std::vector<Graph>> all_steps_forests_adj_list;
+    std::vector<std::vector<VertexGraph>> all_steps_forests_adj_list;
     std::vector<std::vector<std::vector<std::array<double, 3>>>> all_steps_linking_edge_list;
     std::vector<std::vector<int>> all_steps_valid_region_sizes_to_split;
     std::vector<std::vector<int>> all_steps_valid_split_region_sizes;

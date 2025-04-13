@@ -21,22 +21,28 @@ constexpr uint MAX_SUPPORTED_NUM_DISTRICTS = static_cast<unsigned int>(
     std::numeric_limits<RegionID>::max()
 ); 
 
+typedef std::uint_least16_t CountyID; // type for county vectors to save space from normal int
+constexpr uint MAX_SUPPORTED_NUM_COUNTIES = static_cast<unsigned int>(
+    std::numeric_limits<CountyID>::max()
+); 
+
 typedef std::uint_least16_t CountyRegion; // type for region_intersect_county lookup
 constexpr uint MAX_SUPPORTED_COUNTYREGION_VALUE = static_cast<unsigned int>(
     std::numeric_limits<CountyRegion>::max()
 ); 
 
-
+//
 typedef std::vector<RegionID> PlanVector;
 typedef std::vector<RegionID> RegionSizeVector;
-typedef std::vector<std::vector<VertexID>> VertexTree;
+typedef std::vector<std::vector<RegionID>> VertexGraph; // graphs on vertices
+typedef std::vector<std::unordered_map<int, int>> RegionMultigraph;
 
-
+// old types
 typedef std::vector<std::vector<int>> Tree;
 typedef std::vector<std::vector<int>> Graph;
 typedef std::vector<std::vector<std::tuple<CountyRegion, RegionID, RegionID>>> CountyComponentGraph;
 typedef std::vector<std::vector<std::vector<int>>> Multigraph;
-typedef std::vector<std::unordered_map<int, int>> RegionMultigraph;
+
 
 
 /*
@@ -92,6 +98,22 @@ class MapParams {
         pop(pop),
         V(static_cast<int>(g.size())), ndists(ndists), 
         lower(lower), target(target), upper(upper){
+            // check the sizes are ok 
+            if(ndists-1 > MAX_SUPPORTED_NUM_DISTRICTS){
+                REprintf("The maximum number of districts supported right now is %u!\n",
+                    MAX_SUPPORTED_NUM_DISTRICTS);
+                throw Rcpp::exception("Too many districts! This number of districts isn't supported!\n");
+            }
+            if(num_counties-1 > MAX_SUPPORTED_NUM_DISTRICTS){
+                REprintf("The maximum number of counties supported right now is %u!\n",
+                    MAX_SUPPORTED_NUM_DISTRICTS);
+                throw Rcpp::exception("Too many counties! This number of counties isn't supported!\n");
+            }
+            if(V-1 > MAX_SUPPORTED_NUM_VERTICES){
+                REprintf("The maximum number of vertices supported right now is %u!\n",
+                    MAX_SUPPORTED_NUM_VERTICES);
+                throw Rcpp::exception("Too many vertices in the map! This number of vertices isn't supported!\n");
+            }
         };
 
     Graph const g; // The graph as undirected adjacency list 

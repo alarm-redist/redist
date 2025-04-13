@@ -12,11 +12,15 @@ class LinkingEdgePlan : public Plan {
                   const std::vector<std::tuple<int, int, double>> &initial_linking_edge_list = {}
                 );
 
+
+        VertexGraph forest_graph; 
+        std::vector<std::tuple<int, int, double>> linking_edges;
+
         std::unique_ptr<Plan> deep_clone() const override {
             return std::make_unique<LinkingEdgePlan>(*this); // Copy the entire object
         }
 
-        Graph get_forest_adj() override{return forest_graph;};
+        VertexGraph get_forest_adj() override{return forest_graph;};
 
         void update_vertex_and_plan_specific_info_from_cut(
             TreeSplitter const &tree_splitter,
@@ -42,10 +46,30 @@ class LinkingEdgePlan : public Plan {
             MapParams const &map_params, SplittingSchedule const &splitting_schedule
         ) const override;
 
+        // For a plan and edge across two regions it returns the log probability 
+        // that edge would be split in the merged tree across the two regions
+        double get_regions_log_splitting_prob(
+            TreeSplitter const &tree_splitter, USTSampler &ust_sampler,
+            const int region1_root, const int region2_root
+        ) const;
+
         // Get a vector of all valid adj region pairs
         std::vector<std::pair<int,int>> get_valid_adj_regions(
             MapParams const &map_params, SplittingSchedule const &splitting_schedule,
             bool const check_split_constraint = true
         ) const override;
+
+        std::vector<std::array<double, 3>> get_linking_edges() override{
+            std::vector<std::array<double, 3>> output;
+            output.reserve(linking_edges.size());
+            for(auto const& an_edge: linking_edges){
+                output.push_back({
+                    static_cast<double>(std::get<0>(an_edge)),
+                    static_cast<double>(std::get<1>(an_edge)),
+                    std::get<2>(an_edge)
+                });
+            }
+            return output;
+        };
 
 };

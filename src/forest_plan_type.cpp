@@ -12,12 +12,12 @@ ForestPlan::ForestPlan(arma::subview_col<arma::uword> region_ids_col,
         forest_graph.resize(region_ids.size());
     }else if(num_regions > 1){
         throw Rcpp::exception("Custom forests not ready yet!");
-        forest_graph = list_to_graph(initial_forest_adj_list);
+        // forest_graph = list_to_graph(initial_forest_adj_list);
     }    
 }
 
 
-Graph ForestPlan::get_forest_adj(){
+VertexGraph ForestPlan::get_forest_adj(){
     return forest_graph;
 }
 
@@ -85,7 +85,7 @@ void ForestPlan::update_vertex_and_plan_specific_info_from_cut(
  */
 std::unordered_map<std::pair<int, int>, double, bounded_hash> NEW_get_valid_pairs_and_tree_eff_boundary_len_map(
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
-    const Plan &plan, const TreeSplitter &edge_splitter,
+    const ForestPlan &plan, const TreeSplitter &edge_splitter,
     std::unordered_map<std::pair<int, int>, double, bounded_hash> existing_pair_map = {}
 ){
     std::vector<bool> visited(map_params.V);

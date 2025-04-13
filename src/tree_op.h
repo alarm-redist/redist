@@ -95,7 +95,7 @@ void assign_region_id_from_tree(const Tree &ust,
 
 void assign_region_id_and_forest_from_tree(const Tree &ust, 
                     PlanVector &region_ids,
-                    Graph &forest_graph,
+                    VertexGraph &forest_graph,
                     int root,
                     const int new_region_id);
 

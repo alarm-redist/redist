@@ -46,7 +46,7 @@ public:
     // the trees in the two regions 
     double get_log_retroactive_splitting_prob_for_joined_tree(
         MapParams const &map_params,
-        Graph const &forest_graph, 
+        VertexGraph const &forest_graph, 
         std::vector<bool> &visited, std::vector<int> &pops_below_vertex,
         const int region1_root, const int region2_root,
         const int region1_population, const int region2_population,

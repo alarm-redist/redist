@@ -866,6 +866,16 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// maximum_input_sizes
+Rcpp::List maximum_input_sizes();
+RcppExport SEXP _gredist_maximum_input_sizes() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(maximum_input_sizes());
+    return rcpp_result_gen;
+END_RCPP
+}
 // plan_joint
 NumericMatrix plan_joint(IntegerVector m1, IntegerVector m2, NumericVector pop);
 RcppExport SEXP _gredist_plan_joint(SEXP m1SEXP, SEXP m2SEXP, SEXP popSEXP) {
@@ -1126,6 +1136,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_rint1", (DL_FUNC) &_gredist_rint1, 2},
     {"_gredist_runif1", (DL_FUNC) &_gredist_runif1, 2},
     {"_gredist_resample_lowvar", (DL_FUNC) &_gredist_resample_lowvar, 1},
+    {"_gredist_maximum_input_sizes", (DL_FUNC) &_gredist_maximum_input_sizes, 0},
     {"_gredist_plan_joint", (DL_FUNC) &_gredist_plan_joint, 3},
     {"_gredist_renumber_matrix", (DL_FUNC) &_gredist_renumber_matrix, 2},
     {"_gredist_solve_hungarian", (DL_FUNC) &_gredist_solve_hungarian, 1},

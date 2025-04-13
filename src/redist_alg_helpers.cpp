@@ -7,10 +7,14 @@
 
 #include "redist_alg_helpers.h"
 
-// Ensures that the number of districts or vertices isn't
-// too big 
-void valid_ndists_and_V(int const ndists, int const V){
 
+Rcpp::List maximum_input_sizes(){
+    // Return results
+    List out = List::create(
+        _["max_V"] = MAX_SUPPORTED_NUM_VERTICES,
+        _["max_districts"] = MAX_SUPPORTED_NUM_DISTRICTS,
+        _["max_counties"] = MAX_SUPPORTED_NUM_COUNTIES
+    );
 }
 
 //' Copies data from an arma Matrix into an Rcpp Matrix
