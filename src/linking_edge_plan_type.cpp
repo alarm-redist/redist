@@ -19,11 +19,6 @@ LinkingEdgePlan::LinkingEdgePlan(arma::subview_col<arma::uword> region_ids_col,
     if(num_regions == 1 || num_regions == ndists){
         linking_edges.reserve(ndists-1);
         forest_graph.resize(region_ids.size());
-        // complete hueristic
-        for (size_t i = 0; i < forest_graph.size(); i++)
-        {
-            forest_graph[i].reserve(2);
-        }
     }else if(num_regions > 1){
         throw Rcpp::exception("Custom linking edges not ready yet!");
         linking_edges = initial_linking_edge_list;

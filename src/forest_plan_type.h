@@ -21,7 +21,6 @@ public:
     }
 
     // We now need to keep track of trees as undirected graphs
-
     VertexGraph get_forest_adj() override;
 
     void update_vertex_and_plan_specific_info_from_cut (

@@ -10,21 +10,25 @@
 CountyComponents::CountyComponents(
     MapParams const &map_params, int const num_regions
 ) :
-map_params(map_params), 
+map_params(map_params),
+counties_on(map_params.num_counties > 1),
 num_regions(num_regions),
 max_possible_num_componets(num_regions-1+map_params.num_counties),
-county_district_lookup_table(map_params.num_counties > 1 ? num_regions * (map_params.num_counties) : 0, MAX_SUPPORTED_COUNTYREGION_VALUE),
-vertices_visited(map_params.num_counties > 1 ? map_params.V : 0),
-component_pairs_visited(map_params.num_counties > 1 ? max_possible_num_componets*max_possible_num_componets : 0),
-county_component_graph(map_params.num_counties > 1 ? max_possible_num_componets : 0),
-county_component_forest(map_params.num_counties > 1 ? max_possible_num_componets : 0),
-region_component_counts(map_params.num_counties > 1 ? num_regions : 0){
+county_district_lookup_table(counties_on ? num_regions * (map_params.num_counties) : 0, MAX_SUPPORTED_COUNTYREGION_VALUE),
+vertices_visited(counties_on ? map_params.V : 0),
+components_visited(counties_on ? max_possible_num_componets : 0),
+merged_components_visited(counties_on ? max_possible_num_componets : 0),
+component_pairs_visited(counties_on ? max_possible_num_componets*max_possible_num_componets : 0),
+county_component_graph(counties_on ? max_possible_num_componets : 0),
+region_vertices(counties_on ? num_regions : 0),
+region_component_counts(counties_on ? num_regions : 0),
+component_graph_vertices(counties_on ? max_possible_num_componets : 0){
     // check not too many regions or counties
     if(num_regions > MAX_SUPPORTED_NUM_DISTRICTS){
         REprintf("The maximum number of supported districts is %d!\n", MAX_SUPPORTED_NUM_DISTRICTS);
         throw Rcpp::exception("Number of districts is too large!\n");
     }
-    if(map_params.num_counties > MAX_SUPPORTED_NUM_DISTRICTS){
+    if(map_params.num_counties > MAX_SUPPORTED_NUM_COUNTIES){
         REprintf("The maximum number of supported counties is %d!\n", MAX_SUPPORTED_NUM_DISTRICTS);
         throw Rcpp::exception("Number of counties is too large!\n");
     }
@@ -36,6 +40,8 @@ region_component_counts(map_params.num_counties > 1 ? num_regions : 0){
 void CountyComponents::build_component_graph_and_tree(
     PlanVector const &region_ids
 ){
+    // if no counties then just return 
+    if(!counties_on) return;
     // first reset visited vectors
     std::fill(vertices_visited.begin(), vertices_visited.end(), false);
     std::fill(component_pairs_visited.begin(), component_pairs_visited.end(), false);
@@ -43,7 +49,6 @@ void CountyComponents::build_component_graph_and_tree(
     for (size_t i = 0; i < max_possible_num_componets; i++)
     {
         county_component_graph[i].clear();
-        county_component_forest[i].clear();
     }
     // reset component lookup table
     std::fill(
@@ -52,10 +57,9 @@ void CountyComponents::build_component_graph_and_tree(
         MAX_SUPPORTED_COUNTYREGION_VALUE
     );
 
-    // max possible number of components is num_counties + num_regions-1
-    int max_num_components = map_params.num_counties + num_regions - 1;
-    // 
-    int num_splits = 0;
+    // REprintf("Component pair visited size %u\n",
+    //     component_pairs_visited.size());
+
     num_components = 0; // counts the total number of connected components in all county intersect region
     // We iterate over all vertices. For each vertex we explore all
     // connected neighbors with the same district and county 
@@ -65,15 +69,16 @@ void CountyComponents::build_component_graph_and_tree(
     // each vertex represents a component 
     CountyRegion new_component_graph_index = 0;
 
-    // visited every vertices in the graph
+    // visited every vertices in the graph to build component graph 
     for (int u = 0; u < map_params.V; u++)
     {
         // skip if we've already visited 
         if(vertices_visited[u]) continue;
         
-        int current_county = map_params.counties(u)-1;
-        int current_region = region_ids[u];
-        
+        CountyID current_county = map_params.counties(u)-1;
+        auto current_region = region_ids[u];
+        // Rprintf("Component (%u, %u)\n", current_region, current_county);
+        // for lookup we pretend table is num_counties x num_regions
         int current_component_lookup_index = (current_county * num_regions) + current_region;
         CountyRegion current_component_vertex_id;
         // check if we've already declared this component 
@@ -90,9 +95,12 @@ void CountyComponents::build_component_graph_and_tree(
             current_component_vertex_id = county_district_lookup_table[current_component_lookup_index];
         }
         // declare the vertex which is component ID, region, county
-        std::tuple<CountyRegion, RegionID, RegionID> current_component_vertex(
+        CountyComponentVertex current_component_vertex(
             current_component_vertex_id, current_region, current_county
         );
+        component_graph_vertices[current_component_vertex_id] = current_component_vertex;
+        // also make this the vertex for the region
+        region_vertices[current_region] = current_component_vertex;
 
         
         // Now we traverse all neighbors in the same component 
@@ -101,27 +109,32 @@ void CountyComponents::build_component_graph_and_tree(
 
         while(!vertex_queue.empty()){
             // get from queue
+            // we don't actually need to save this. Can delete in future just for error checking now
             int v = vertex_queue.front(); vertex_queue.pop();
             int v_region = region_ids[v];
-            int v_county = map_params.counties(v);
+            int v_county = map_params.counties(v)-1;
 
             if(current_county != v_county || current_region != v_region){
                 REprintf("BIG TIME ERROR IN COUNT SPLITS!!\n");
                 throw Rcpp::exception("WOAHHHHH\n");
             }
+            // if(v_county == 31){
+            //     REprintf("v=%d, region=%d, county=%u\n", v, v_region, v_county);
+            // }
             // mark this as visited 
             vertices_visited[v] = true;
             // go through children 
             for(auto const child_vertex: map_params.g[v]){
                 // ignore if we already visited 
                 if(vertices_visited[child_vertex]) continue;
+            
+                auto child_region = region_ids[child_vertex];
+                CountyID child_county = map_params.counties(child_vertex)-1;
 
+                // REprintf("Child %d - (%u, %u) ---- ", child_vertex, child_region, child_county);
                 // check if this vertex is in the same component as our current one
-                int child_region = region_ids[child_vertex];
-                int child_county = map_params.counties(child_vertex)-1;
-                // if same then same component 
                 if(child_region == current_region && child_county == current_county){
-                    // mark as visited to avoid being added later  
+                    // if same then same component  mark as visited to avoid being added later  
                     vertices_visited[child_vertex] = true;
                     vertex_queue.push(child_vertex);
                 }else{ // else different components 
@@ -139,27 +152,293 @@ void CountyComponents::build_component_graph_and_tree(
                     }else{ // else we've already defined this component 
                         child_component_vertex_id = county_district_lookup_table[child_component_lookup_index];
                     }
+                    // REprintf(" --- %d, VID=(%u, %u) ", child_component_lookup_index,
+                    //     child_component_vertex_id, current_component_vertex_id);
                     // check if we've already added this edge to the graph if so then continue 
-                    auto component_pair_index1 = (current_component_vertex_id * max_num_components) + child_component_vertex_id;
-                    if(component_pairs_visited[component_pair_index1]) continue;
+                    auto component_pair_index1 = (current_component_vertex_id * max_possible_num_componets) + child_component_vertex_id;
+                    if(component_pairs_visited[component_pair_index1]){
+                        // REprintf("Skipped!\n");
+                        continue;
+                    } 
                     // else add this edge to the graph and mark as added 
-                    auto component_pair_index2 = (child_component_vertex_id * max_num_components) + current_component_vertex_id;
-                    std::tuple<CountyRegion, RegionID, RegionID> child_component_vertex(
+                    auto component_pair_index2 = (child_component_vertex_id * max_possible_num_componets) + current_component_vertex_id;
+                    // REprintf(" %d, %d ---- ", component_pair_index1, component_pair_index2);
+                    CountyComponentVertex child_component_vertex(
                         child_component_vertex_id, child_region, child_county
                     );
+                    // REprintf("-- Size = %d --", county_component_graph.size());
                     // add current to child and vice verse
                     county_component_graph[child_component_vertex_id].push_back(current_component_vertex);
                     county_component_graph[current_component_vertex_id].push_back(child_component_vertex);
                     // now mark this component pair as added 
                     component_pairs_visited[component_pair_index1] = component_pairs_visited[component_pair_index2] = true;
                 }
+                // REprintf("Done!\n");
+            }
+        }
+        // REprintf("Done with component!\n");
+    }
+
+    // if(num_regions == 2){
+    // Rprintf("There are %d components and size %u\n",
+    //     num_components, county_component_graph.size());
+    
+    // for (size_t i = 0; i < county_component_graph.size(); i++)
+    // {
+    //     auto component_vtx = component_graph_vertices[i];
+    //     Rprintf("(%d, %d): ",
+    //         std::get<1>(component_vtx),
+    //         std::get<2>(component_vtx));
+    //     for(auto const &a_vtx: county_component_graph[i]){
+    //         Rprintf("(%d, %d), ",
+    //         std::get<1>(a_vtx),
+    //         std::get<2>(a_vtx));
+    //         // better be connected
+    //         auto component_pair_index1 = (std::get<0>(component_vtx) * max_possible_num_componets) + std::get<0>(a_vtx);
+    //         if(!component_pairs_visited[component_pair_index1]){
+    //             REprintf(" [Index %u but false!] ", 
+    //                 component_pair_index1);
+    //         }
+    //     }
+    //     Rprintf("\n");
+    // }
+    // REprintf("Now printing the plan!\nc(");
+    // // for (size_t i = 0; i < size.region_ids; i++)
+    // // {
+    // //     /* code */
+    // // }
+    
+    // for(auto const &v: region_ids){
+    //     REprintf("%u, ", v);
+    //     // Rcpp::Rcerr << v << ", ";
+    // }
+    // REprintf("\n");
+    // }
+    
+
+
+
+    return;
+}
+
+
+
+
+std::pair<bool, int> CountyComponents::count_county_splits(
+    Plan const &plan
+){
+    // if 1 county then its just num_regions - 1
+    if(map_params.num_counties == 1) return std::make_pair(false, plan.num_regions - 1);
+    // reset internal lookup table 
+    std::fill(
+        county_district_lookup_table.begin(),
+        county_district_lookup_table.end(),
+        MAX_SUPPORTED_COUNTYREGION_VALUE
+    );
+    // reset visit vector 
+    std::fill(
+        vertices_visited.begin(), 
+        vertices_visited.end(), 
+        false
+    );
+
+    
+
+    bool more_than_one_district_intersect_county = false;
+    // 
+    int num_splits = 0;
+    int num_connected_components = 0; // counts the total number of connected components in all county intersect region
+    // We iterate over all vertices. For each vertex we explore all
+    // connected neighbors with the same district and county 
+
+
+    for (int u = 0; u < map_params.V; u++)
+    {
+        // skip if we've already visited 
+        if(vertices_visited[u]) continue;
+        // else we've encountered a new connected component so increase the count
+        ++num_connected_components;
+        // Now we traverse all neighbors with the same county and region 
+        int current_county = map_params.counties(u)-1;
+        int current_region = plan.region_ids[u];
+        // check if we've already visited this district x county component 
+        int component_lookup_index = (current_county * num_regions) + current_region;
+        if(county_district_lookup_table[component_lookup_index] == MAX_SUPPORTED_COUNTYREGION_VALUE){
+            // means we haven't so we'll set this to dummy value of 0
+            county_district_lookup_table[component_lookup_index] = 0;
+        }else{
+            // means we've seen this before so more than one 
+            more_than_one_district_intersect_county = true;
+        }
+
+        std::queue<int> vertex_queue;
+        vertex_queue.push(u);
+
+        while(!vertex_queue.empty()){
+            // get from queue
+            int v = vertex_queue.front(); vertex_queue.pop();
+            int v_region = plan.region_ids[v];
+            int v_county = map_params.counties(v)-1;
+
+            if(current_county != v_county || current_region != v_region){
+                REprintf("BIG TIME ERROR IN COUNT SPLITS!!\n");
+                throw Rcpp::exception("WOAHHHHH\n");
+            }
+            // mark this as visited 
+            vertices_visited[v] = true;
+            // go through children 
+            for(auto const child_vertex: map_params.g[v]){
+                // add the children if same region and county and not visited before 
+                if(map_params.counties(child_vertex)-1 == current_county && 
+                    plan.region_ids[child_vertex] == current_region &&
+                    !vertices_visited[child_vertex]){
+                    // mark as visited to avoid being added later  
+                    vertices_visited[child_vertex] = true;
+                    vertex_queue.push(child_vertex);
+                }                
+            }
+        }
+
+    }
+
+    int num_county_splits = num_connected_components - map_params.num_counties;
+    return std::make_pair(more_than_one_district_intersect_county, num_county_splits);
+}
+
+
+
+bool CountyComponents::check_merging_regions_is_ok(
+    int const region1_id, int const region2_id
+){
+    // reset visited vector 
+    std::fill(
+        components_visited.begin(), 
+        components_visited.end(), 
+        false
+    );
+    std::fill(
+        merged_components_visited.begin(), 
+        merged_components_visited.end(), 
+        false
+    );
+    int removed_splits = 0;
+    // we start at some component vertex in region 1
+    std::queue<CountyComponentVertex> vertex_queue;
+    vertex_queue.push(region_vertices[region1_id]);
+
+    while(!vertex_queue.empty()){
+        // get the vertex component id
+        CountyComponentVertex actual_component_vertex = vertex_queue.front(); 
+        vertex_queue.pop();
+
+        CountyRegion actual_component_vertex_id = std::get<0>(actual_component_vertex);
+        RegionID actual_region = std::get<1>(actual_component_vertex);
+        RegionID other_region = actual_region == region1_id ? region2_id : region1_id;
+        CountyID current_county = std::get<2>(actual_component_vertex);
+        // REprintf("Visiting (%u, %u)\n", actual_region, current_county);
+        // get the lookup of this component 
+        CountyRegion actual_current_component_lookup_index = (current_county * num_regions) + actual_region;
+        // get the lookup of the component of the other region (if it exists)
+        CountyRegion actual_other_component_lookup_index = (current_county * num_regions) + other_region;
+        CountyRegion other_component_vertex_id = county_district_lookup_table[actual_other_component_lookup_index];
+        // see if other component exists meaning lookup index isn't dummy value
+        if(other_component_vertex_id != MAX_SUPPORTED_COUNTYREGION_VALUE){
+            // if it exists then we need to mark the merged component id as visited 
+            // if region1 the id is just itself but if region2 then its the id for region1
+            // if component is in region 2 and region 1 has a component in this county 
+            // we pretend its just region 1
+            CountyRegion merged_component_vertex_id = actual_region == region1_id ?
+                actual_component_vertex_id: other_component_vertex_id;
+
+            // check if already visited 
+            if(merged_components_visited[merged_component_vertex_id]){
+                // REprintf("Already visited (%u, %u)\n", actual_region, current_county);
+                // if already visited then we need to see if there is an adjacent vertex
+                // in the same county but the other region. If not then this is an illegal merge
+                auto other_region_component_vertex_id = county_district_lookup_table[actual_other_component_lookup_index];
+                auto component_pair_index = (other_region_component_vertex_id * max_possible_num_componets) + actual_component_vertex_id;
+                if(component_pairs_visited[component_pair_index]){
+                    // this means they're adjacent and in the same county so increase removed
+                    // splits by 1
+                    ++removed_splits;
+                }else{
+                    // this means they're not adjacent despite being in the same county so 
+                    // not allowed meaning we immideately return false!
+                    // REprintf("\n ALERT: (%u, %u) Disconnected in County %u!\n",
+                    //     region1_id, region2_id, current_county);
+                    return false;
+                }
+            }else{
+                // mark merged as visited and move on 
+                merged_components_visited[merged_component_vertex_id] = true;
+            }
+        }
+        // mark this actual component as visited 
+        components_visited[actual_component_vertex_id] = true;
+
+        // Now we add any unvisited adjacent components in either region 1 or 2
+        for(auto const &child_vertex: county_component_graph[actual_component_vertex_id]){
+            auto child_vertex_id = std::get<0>(child_vertex);
+            auto child_region = std::get<1>(child_vertex);
+            // only add if not visited and in region 1 or 2
+            if(!components_visited[child_vertex_id] &&
+                (child_region == region1_id || child_region == region2_id)
+            ){
+                // mark as visited to avoid being added later  
+                components_visited[child_vertex_id] = true;
+                // REprintf("Adding (%u, %u)\n", child_region, std::get<2>(child_vertex));
+                vertex_queue.push(child_vertex);
             }
         }
     }
+    // now the number of splits for the plan with the two regions merged is
+    // num_components - removed_splits - map_params.num_counties
+    // Now return whether or not thats less than or equal to number of regions minus 2
+    // if(num_components - removed_splits - map_params.num_counties > num_regions - 2){
+    //     REprintf("Comparing %u vs %d!\n",
+    //         num_components - removed_splits - map_params.num_counties, num_regions - 2);
+    // }
+    
+    return num_components - removed_splits - map_params.num_counties <= num_regions - 2;
+}
 
-    // REprintf("%d components and %d regions = %d \n", num_connected_components, map_params.num_counties,
-    //     num_connected_components - map_params.num_counties);
 
-    return;
-    //return num_connected_components - map_params.num_counties;
+
+// only returns true if 
+// - NO edge between (county_A, region1_id), (county_B, region1_id)
+// - NO edge between (county_A, region2_id), (county_B, region2_id)
+bool CountyComponents::count_county_boundary(
+    RegionID region1_id, CountyID county_A,
+    RegionID region2_id, CountyID county_B
+) const{
+    auto county_A_region1_lookup = mat_index_from_pair(county_A, region1_id, num_regions);
+    // check if this component even exists 
+    auto county_B_region1_lookup = mat_index_from_pair(county_B, region1_id, num_regions);
+    // check if county B intersect region 1 exists and they share an edge
+    if(county_district_lookup_table[county_B_region1_lookup] != MAX_SUPPORTED_COUNTYREGION_VALUE &&
+        component_pairs_visited[mat_index_from_pair(
+            county_district_lookup_table[county_B_region1_lookup], 
+            county_district_lookup_table[county_A_region1_lookup], 
+            max_possible_num_componets)]
+        ){  
+            // if yes then this edge can't be counted
+            return false;
+    }
+
+
+    auto county_A_region2_lookup = mat_index_from_pair(county_A, region2_id, num_regions);
+    // check if this component even exists 
+    auto county_B_region2_lookup = mat_index_from_pair(county_B, region2_id, num_regions);
+    // check if county B intersect region 2 exists and they share an edge
+    if(county_district_lookup_table[county_A_region2_lookup] != MAX_SUPPORTED_COUNTYREGION_VALUE &&
+        component_pairs_visited[mat_index_from_pair(
+            county_district_lookup_table[county_B_region2_lookup], 
+            county_district_lookup_table[county_A_region2_lookup], 
+            max_possible_num_componets)]
+        ){  
+            // if yes then this edge can't be counted
+            return false;
+    }
+
+    return true;
 }

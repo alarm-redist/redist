@@ -239,89 +239,123 @@ int count_illegal_county_crossing_edges(
     return remove_count;
 }
 
+
+std::vector<int> new_graph_boundary_counting(
+    MapParams const &map_params,
+    std::vector<int> &pair_boundary_count_vec,
+    PlanVector const &region_ids, int const num_regions,
+    CountyComponents const &county_components
+){
+    bool const check_counties = map_params.num_counties > 1;
+    // iterate through the graph 
+    for (int v = 0; v < map_params.V; v++) {
+        // Find out which region this vertex corresponds to
+        int v_region = region_ids[v];
+        int v_county = map_params.counties(v);
+
+        // now iterate over its neighbors
+        for (int u : map_params.g[v]) {
+            // find which region neighbor corresponds to
+            int u_region = region_ids[u];
+            // ignore if u_region <= v_region to avoid double counting 
+            if(u_region <= v_region) continue;
+            if(!check_counties || v_county == map_params.counties(u)){
+                // if not checking counties we just always count since
+                // incrementing is cheaper then checking and incrementing 
+                ++pair_boundary_count_vec[index_from_ordered_pair(v_region, u_region, num_regions)];
+            }else if(pair_boundary_count_vec[index_from_ordered_pair(v_region, u_region, num_regions)] >= 0){
+                // else this edge crosses a county boundary of pair we care about
+                // We only count if no edges between 
+                //      (v_county, v_region), (u_county, v_region)
+                //      (u_county, u_region), (v_county, u_region)
+                pair_boundary_count_vec[index_from_ordered_pair(v_region, u_region, num_regions)] += county_components.count_county_boundary(
+                    v_region, v_county-1,
+                    u_region, map_params.counties(u)-1
+                );
+                
+            }
+        }
+    }
+    return pair_boundary_count_vec;
+}
+
 std::vector<std::tuple<int, int, double>> GraphPlan::get_valid_adj_regions_and_eff_log_boundary_lens(
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
     TreeSplitter const &tree_splitter,
     std::unordered_map<std::pair<int, int>, double, bounded_hash> const &existing_pair_map
 ) const{
-    // get pairs with graph theoretic boundary 
-    auto valid_adj_region_pairs_to_boundary_map = NEW_get_valid_pairs_and_graph_boundary_len_map(
-        map_params.g, *this,
-        splitting_schedule.check_adj_to_regions,
-        splitting_schedule.valid_merge_pair_sizes
+    CountyComponents county_components(
+        map_params, num_regions
+    );
+    std::vector<int> pair_eff_bounary_counts(
+        (num_regions*(num_regions-1))/2, -1
+    );
+    county_components.build_component_graph_and_tree(region_ids);
+    auto valid_adj_pairs = get_or_count_valid_adj_regions_ignore_counties(
+        map_params, splitting_schedule, false
+    ).second;
+    // REprintf("Initially %u pairs! ", valid_adj_pairs.size());
+
+    // dangerous but removing invalid pairs while iterating over 
+    // https://stackoverflow.com/questions/4713131/removing-item-from-vector-while-iterating
+    auto it = valid_adj_pairs.begin();
+
+    while(it != valid_adj_pairs.end()) {
+        bool pair_ok = !county_components.counties_on || county_components.check_merging_regions_is_ok(
+            it->first, it->second
+        );
+
+        if(pair_ok) {
+            // mark this as pair to check 
+            pair_eff_bounary_counts[index_from_ordered_pair(it->first, it->second, num_regions)] = 0;
+            // increase iterator 
+            ++it;
+        }else{
+            // erase the pair
+            it = valid_adj_pairs.erase(it);
+        }
+    }
+    // REprintf("Now %u pairs!\n", valid_adj_pairs.size());
+
+    // get boundary counts
+    auto new_results_map = new_graph_boundary_counting(
+        map_params, pair_eff_bounary_counts, 
+        region_ids, num_regions,
+         county_components
     );
 
     // declare the vector of tuples
     std::vector<std::tuple<int, int, double>> region_pairs_tuple_vec;
     region_pairs_tuple_vec.reserve(
-        valid_adj_region_pairs_to_boundary_map.size()
+        new_results_map.size()
     );
 
     if(DEBUG_GRAPH_PLANS_VERBOSE){
         REprintf("Size is %d with %d counties\n", 
-            valid_adj_region_pairs_to_boundary_map.size(),
+            new_results_map.size(),
             map_params.num_counties);
     }
 
-    std::vector<bool> visited(map_params.V);
 
-
-    auto county_crossings_sets = TEMP_inner_county_boundaries_crossed(
-        map_params, *this
-    );
-
-    for(auto const &a_pair: valid_adj_region_pairs_to_boundary_map){
-        // see if illegal merge 
-        int merged_plan_county_splits = count_merged_county_splits(
-            map_params, visited,
-            a_pair.first.first, a_pair.first.second);
-
-        if(merged_plan_county_splits > num_regions - 2){
-            if(DEBUG_GRAPH_PLANS_VERBOSE){
-                REprintf("(%d,%d):%d regions when merged but merged has %d splits!\n", 
-                    a_pair.first.first, a_pair.first.second,
-                num_regions-1, merged_plan_county_splits);
+    for(auto const &a_pair: valid_adj_pairs){
+        int boundary_len = pair_eff_bounary_counts[index_from_ordered_pair(a_pair.first, a_pair.second, num_regions)];
+        // see if illegal merge by means of boundary 0
+        if(boundary_len <= 0){
+            if(DEBUG_GRAPH_PLANS_VERBOSE || true){
+                REprintf("(%d,%d): Was listed as valid but boundary length zero!\n", 
+                    a_pair.first, a_pair.second);
             }
             continue;
         }
 
-        // remove county correction 
-        int correction_term = count_illegal_county_crossing_edges(
-            map_params, *this, 
-            a_pair.first.first, a_pair.first.second,
-            county_crossings_sets
-        );
-        if(DEBUG_GRAPH_PLANS_VERBOSE){
-            REprintf("(%d,%d): %d-%d\n",
-                a_pair.first.first, a_pair.first.second, a_pair.second,
-                correction_term
-            );
-        }
-
-        // double testy = log_graph_boundary(map_params.g, region_ids,
-        //     a_pair.first.first, a_pair.first.second,
-        //      map_params.num_counties, map_params.counties
-        // );
-        // double diff = std::fabs(
-        //     std::exp(testy) - (a_pair.second - correction_term)
-        // );
-
-        // if(diff > 1e10){
-        //     REprintf("Uh oh %f vs %d!\n",
-        //         std::exp(testy), (a_pair.second - correction_term)
-        //     );
-        // }
-
-        // skip if not edges
-        if(correction_term == a_pair.second){
-            continue;
-        } 
+        // REprintf("Adding (%d, %d) - %d \n", a_pair.first, 
+        //     a_pair.second, boundary_len);
         
         // add the region ids and the log of the boundary 
         region_pairs_tuple_vec.emplace_back(
-            a_pair.first.first, 
-            a_pair.first.second,
-            std::log(static_cast<double>(a_pair.second-correction_term))
+            a_pair.first, 
+            a_pair.second,
+            std::log(static_cast<double>(boundary_len))
         );
     }
 

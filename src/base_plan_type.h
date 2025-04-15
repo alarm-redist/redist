@@ -140,6 +140,11 @@ public:
     int count_merged_county_splits(MapParams const &map_params, std::vector<bool> &visited,
         int const region1_id, int const region2_id) const;
 
+    std::pair<int, std::vector<std::pair<int,int>>> get_or_count_valid_adj_regions_ignore_counties(
+        MapParams const &map_params, SplittingSchedule const &splitting_schedule,
+        bool const count_only = false
+    ) const;
+
     // Count the number of valid adj regions in a map
     virtual int count_valid_adj_regions(
         MapParams const &map_params, SplittingSchedule const &splitting_schedule

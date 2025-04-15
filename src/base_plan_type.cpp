@@ -483,6 +483,84 @@ std::vector<std::pair<int,int>> Plan::get_valid_adj_regions(
     return valid_adj_pairs;
 }
 
+
+// gets adjacent pairs ignoring county restrictions
+std::pair<int, std::vector<std::pair<int,int>>> Plan::get_or_count_valid_adj_regions_ignore_counties(
+    MapParams const &map_params, SplittingSchedule const &splitting_schedule,
+    bool const count_only
+) const{
+    // 2D matrix for tracking if regions are adjacent 
+    // To save space we will only ever access with [smaller id][larger id]
+    // So it will be `num_regions-1` rows and row i will have num_regions-1
+    // elements and the second element will need to be 1 indexed so 
+    // subtract off 1 when accessing
+    std::vector<std::vector<bool>> is_valid_adj_pair(num_regions-1);
+
+    std::vector<std::pair<int,int>> valid_adj_pairs;
+    int num_valid_adj_regions = 0;
+
+    for (size_t i = 0; i < num_regions-1; i++)
+    {
+        // for smaller value i there are num_regions-(i+1) larger values 
+        is_valid_adj_pair[i] = std::vector<bool>(num_regions-(i+1), false);
+    }
+
+    int const V = map_params.V;
+
+    for (int v = 0; v < V; v++) {
+        // Find out which region this vertex corresponds to
+        int v_region_num = region_ids[v];
+        auto v_region_size = region_sizes[v_region_num];
+
+        // check if its a region we want to find regions adjacent to 
+        // and if not keep going
+        if(!splitting_schedule.check_adj_to_regions.at(v_region_size)){
+            continue;
+        }
+
+        // now iterate over its neighbors
+        for (int v_nbor : map_params.g[v]) {
+            // find which region neighbor corresponds to
+            int v_nbor_region_num = region_ids[v_nbor];
+
+            // ignore if they are in the same region
+            if(v_region_num == v_nbor_region_num) continue;
+            // ignore if pair can't be merged
+            auto v_nbor_region_size = region_sizes[v_nbor_region_num];
+            if(!splitting_schedule.valid_merge_pair_sizes[v_region_size][v_nbor_region_size]) continue;
+
+            // else they are different so regions are adj
+            // check if we need to be aware of double counting. IE if both regions
+            // are ones where check adjacent is true then its possible to double count edges
+            bool double_counting_not_possible = !splitting_schedule.check_adj_to_regions[v_nbor_region_size];
+            // Rprintf("Neighbor size is %d and Double counting is %d\n", 
+            //     (int) v_nbor_region_size, (int) double_counting_not_possible);
+
+            // Now add this edge if either we can't double count it 
+            // or `v_region_num` is the smaller of the pair 
+            if(double_counting_not_possible || v_region_num < v_nbor_region_num){
+                // Rprintf("Counting (%d,%d)\n", v, v_nbor);
+                int smaller_region_id  = std::min(v_nbor_region_num,v_region_num);
+                int bigger_region_id  = std::max(v_nbor_region_num,v_region_num);
+
+                // Check if we've counted this before 
+                if(!is_valid_adj_pair[smaller_region_id][bigger_region_id-1]){
+                    // If not increase the count by one and mark this as true 
+                    is_valid_adj_pair[smaller_region_id][bigger_region_id-1] = true;
+                    ++num_valid_adj_regions;
+                    // if we want the specific pairs then we also add that
+                    if(!count_only){
+                        // add the pair 
+                        valid_adj_pairs.emplace_back(smaller_region_id, bigger_region_id);
+                    }
+                }
+            }
+        }
+    }
+
+    return std::make_pair(num_valid_adj_regions, valid_adj_pairs);
+}
+
 // Compute the log number of spanning trees on a region 
 double Plan::compute_log_region_spanning_trees(MapParams const &map_params,
     int const region_id) const{

@@ -20,6 +20,7 @@
 #include "scoring.h"
 #include "map_calc.h"
 #include "graph_ops.h"
+#include "county_components.h"
 
 //' Computes the effective sample size from log incremental weights
 //'
@@ -102,8 +103,9 @@ double compute_log_optimal_weights(
     SamplingSpace const sampling_space,
     ScoringFunction const &scoring_function, double rho,
     Plan const &plan, 
-    const TreeSplitter &edge_splitter, bool compute_log_splitting_prob,
-    bool is_final_plan
+    TreeSplitter const &edge_splitter, CountyComponents const &county_components,
+    bool const compute_log_splitting_prob,
+    bool const is_final_plan
 );
 
 void compute_all_plans_log_optimal_weights(

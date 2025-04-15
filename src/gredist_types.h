@@ -6,8 +6,9 @@
 #define PRINT_LN Rcout << __func__ << "(), " << __FILE__ << ":" << __LINE__ << "\n";
 
 #include <vector>
-#include <RcppArmadillo.h>
 #include <queue>
+#include <cstdint>
+#include <RcppArmadillo.h>
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
@@ -36,14 +37,30 @@ typedef std::vector<RegionID> PlanVector;
 typedef std::vector<RegionID> RegionSizeVector;
 typedef std::vector<std::vector<RegionID>> VertexGraph; // graphs on vertices
 typedef std::vector<std::unordered_map<int, int>> RegionMultigraph;
+typedef std::tuple<CountyRegion, RegionID, CountyID> CountyComponentVertex;
+typedef std::vector<std::vector<CountyComponentVertex>> CountyComponentGraph;
 
 // old types
 typedef std::vector<std::vector<int>> Tree;
 typedef std::vector<std::vector<int>> Graph;
-typedef std::vector<std::vector<std::tuple<CountyRegion, RegionID, RegionID>>> CountyComponentGraph;
 typedef std::vector<std::vector<std::vector<int>>> Multigraph;
 
+// uniquely maps pairs (x,y) of the form 
+// 0 <= x < y < container_size
+// to a value in (0, container_size choose 2)
+// Currently used in the following scenarios
+//  - Pairs of regions (region1_id, region2_id) with 0 <= region1_id < region2_id < num_regions
+inline int index_from_ordered_pair(int x, int y, int container_size) {
+    return ( (x * (2 * container_size - x - 1)) / 2 ) + (y - x - 1);
+}
 
+// indexing (i,j) in a matrix 
+// assuming the length of a row is row_length
+// i is the row index
+// j is the column index so j < row_length
+inline int mat_index_from_pair(int i, int j, int row_length){
+    return i * row_length + j;
+}
 
 /*
  * Initialize empty multigraph structure on graph with `V` vertices

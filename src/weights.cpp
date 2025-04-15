@@ -374,7 +374,10 @@ double compute_simple_log_incremental_weight(
     int region1_id = most_recent_split_regions.first;
     int region2_id = most_recent_split_regions.second;
 
-    if(WEIGHTS_DEBUG_VERBOSE) Rprintf("The two regions are %d and %d\n", region1_id, region2_id);
+    if(WEIGHTS_DEBUG_VERBOSE){
+        Rprintf("The two regions are %d and %d\n", region1_id, region2_id);
+        Rcpp::Rcerr << std::flush;
+    } 
 
     // compute forward and backwards kernel term 
     double log_backwards_kernel_term = 0.0; double log_forward_kernel_term = 0.0;
@@ -663,8 +666,9 @@ double compute_log_optimal_weights(
     SamplingSpace const sampling_space,
     ScoringFunction const &scoring_function, double rho,
     Plan const &plan, 
-    const TreeSplitter &edge_splitter, bool compute_log_splitting_prob,
-    bool is_final_plan
+    TreeSplitter const &edge_splitter, CountyComponents const &county_components,
+    bool const compute_log_splitting_prob,
+    bool const is_final_plan
 ){
 
     // bool for whether we'll need to compute spanning tree count
@@ -710,23 +714,10 @@ double compute_log_optimal_weights(
         const int region2_id = std::get<1>(pair_tuple); // get the bigger region id  
         const double eff_log_boundary_len = std::get<2>(pair_tuple); // get the effective boundary length
 
-        // CRUDE BUT WILL HAVE TO SUFFICE FOR NOW 
-        // check new plan doesn't have illegal number of county splits 
-        int merged_plan_county_splits = plan.count_merged_county_splits(map_params, visited,
-            region1_id, region2_id);
-
         if(DEBUG_WEIGHTS_VERBOSE){
             REprintf("(%d,%d) - %f\n", region1_id, region2_id, std::exp(eff_log_boundary_len));
         }
         
-
-        if(merged_plan_county_splits > plan.num_regions - 2){
-            REprintf("(%d,%d):%d regions when merged but merged has %d splits!\n", 
-                region1_id, region2_id,
-            plan.num_regions-1, merged_plan_county_splits);
-            continue;
-        }
-
         // add to term
         log_of_sum_term += eff_log_boundary_len;
 
@@ -874,12 +865,15 @@ void compute_all_plans_log_optimal_weights(
     RcppThread::ProgressBar bar(nsims, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, nsims, [&] (int i) {
+        static thread_local CountyComponents county_components(
+            map_params, plans_ptr_vec[0]->num_regions
+        );
         // REprintf("I=%d\n", i);
         double log_incr_weight = compute_log_optimal_weights(
             map_params, splitting_schedule, sampling_space,
             scoring_function, rho,
             *plans_ptr_vec.at(i), 
-            tree_splitter,
+            tree_splitter, county_components,
             compute_log_splitting_prob,
             is_final_plans
         );
