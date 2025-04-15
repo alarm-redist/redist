@@ -81,7 +81,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     MapParams const &map_params, const SplittingSchedule &splitting_schedule,
     ScoringFunction const &scoring_function,
     RNGState &rng_state, SamplingSpace const sampling_space,
-    std::unique_ptr<Plan> &plan_ptr, std::unique_ptr<Plan> &new_plan_ptr, 
+    Plan &plan, Plan &new_plan, 
     USTSampler &ust_sampler, TreeSplitter const &tree_splitter,
     std::string const merge_prob_type, bool save_edge_selection_prob,
     std::vector<std::pair<int,int>> &adj_region_pairs,
@@ -97,7 +97,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
 
     int region1_id = merge_pair.first; 
     int region2_id = merge_pair.second;
-    int merged_region_size = plan_ptr->region_sizes[region1_id] + plan_ptr->region_sizes[region2_id];
+    int merged_region_size = plan.region_sizes[region1_id] + plan.region_sizes[region2_id];
 
     if(DEBUG_MERGING_VERBOSE){
         Rprintf("Picked pair (%d, %d)\n", region1_id, region2_id);
@@ -106,7 +106,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     // try to draw a region 
     std::tuple<bool, EdgeCut> edge_search_result = ust_sampler.attempt_to_find_valid_tree_mergesplit(
         rng_state, tree_splitter,
-        *plan_ptr, region1_id, region2_id,
+        plan, region1_id, region2_id,
         save_edge_selection_prob
     );
     if(DEBUG_MERGING_VERBOSE){
@@ -126,12 +126,12 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     // Just traverse tree and check if not in merged region or something
 
     // copy the new plan to be the old one 
-    new_plan_ptr = plan_ptr->deep_clone();
+    new_plan.shallow_copy(plan);
     if(DEBUG_MERGING_VERBOSE){
         Rprintf("A Splitting Checkpoint 1.5!\n");
     }
     // now split that region we found on the old one
-    new_plan_ptr->update_from_successful_split(
+    new_plan.update_from_successful_split(
         tree_splitter,
         ust_sampler, std::get<1>(edge_search_result),
         region1_id, region2_id,
@@ -141,26 +141,26 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         Rprintf("A Splitting Checkpoint 2.\n");
     }
     // check new plan doesn't have illegal number of county splits 
-    int proposal_county_splits = new_plan_ptr->count_county_splits(map_params, ust_sampler.visited);
+    int proposal_county_splits = new_plan.count_county_splits(map_params, ust_sampler.visited);
     if(DEBUG_MERGING_VERBOSE){
         Rprintf("%d county splits!\n", proposal_county_splits);
     }
-    if(proposal_county_splits > new_plan_ptr->num_regions-1){
+    if(proposal_county_splits > new_plan.num_regions-1){
         if(DEBUG_MERGING_VERBOSE){
             REprintf("%d splits for %d regions\n", 
-                proposal_county_splits, plan_ptr->num_regions);
+                proposal_county_splits, plan.num_regions);
         }
         // return failure
         return std::make_tuple(true, false, -1*std::log(0.0), merged_region_size);
     }
 
     // get adj pairs 
-    auto new_valid_adj_region_pairs = new_plan_ptr->get_valid_adj_regions(
+    auto new_valid_adj_region_pairs = new_plan.get_valid_adj_regions(
         map_params, splitting_schedule, false
     );
     // get the weights
     auto new_valid_pair_weights = get_adj_pair_unnormalized_weights(
-        *new_plan_ptr,
+        new_plan,
         new_valid_adj_region_pairs,
         merge_prob_type
     );
@@ -188,11 +188,11 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
             REprintf("(%d, %d), ", a_pair.first, a_pair.second);
         }
         REprintf("\nCurrent Plan is:\n");
-        for(const auto &id: plan_ptr->region_ids){
+        for(const auto &id: plan.region_ids){
             REprintf("%d;", id);
         }
         REprintf("\n\nProposed Plan is:\n");
-        for(const auto &id: new_plan_ptr->region_ids){
+        for(const auto &id: new_plan.region_ids){
             REprintf("%d;", id);
         }
         REprintf("\n\n");
@@ -203,19 +203,19 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     }
     bool using_linking_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
     // compute the boundary length 
-    double current_log_eff_boundary = plan_ptr->get_log_eff_boundary_len(
+    double current_log_eff_boundary = plan.get_log_eff_boundary_len(
         map_params, splitting_schedule, tree_splitter,
         region1_id, region2_id
     );
-    double proposed_log_eff_boundary = new_plan_ptr->get_log_eff_boundary_len(
+    double proposed_log_eff_boundary = new_plan.get_log_eff_boundary_len(
         map_params, splitting_schedule, tree_splitter,
         region1_id, region2_id
     );
     // If linking edge space we need to subtract linking edge correction term
     if(using_linking_edge_space){
         // add instead of subtract bc its flipped in MH ratio
-        current_log_eff_boundary += plan_ptr->compute_log_linking_edge_count(map_params);
-        proposed_log_eff_boundary += new_plan_ptr->compute_log_linking_edge_count(map_params);
+        current_log_eff_boundary += plan.compute_log_linking_edge_count(map_params);
+        proposed_log_eff_boundary += new_plan.compute_log_linking_edge_count(map_params);
     }
 
     if(DEBUG_MERGING_VERBOSE){
@@ -245,7 +245,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
         proposed_log_eff_boundary, 
         std::log(unnormalized_pair_wgts(sampled_pair_index)) - std::log(arma::sum(unnormalized_pair_wgts)), 
         std::log(new_valid_pair_weights(region_pair_proposal_index)) - std::log(arma::sum(new_valid_pair_weights)), 
-        *plan_ptr, *new_plan_ptr,
+        plan, new_plan,
         rho, is_final
     );
     bool proposal_accepted = rng_state.r_unif() <= std::exp(log_mh_ratio);
@@ -253,7 +253,7 @@ std::tuple<bool, bool, double, int> attempt_mergesplit_step(
     if(proposal_accepted){
         if(DEBUG_MERGING_VERBOSE) Rprintf("Accepted!!\n", std::exp(log_mh_ratio));
         // if successful then actually update
-        plan_ptr->update_from_successful_split(
+        plan.update_from_successful_split(
             tree_splitter,
             ust_sampler, std::get<1>(edge_search_result),
             region1_id, region2_id,
@@ -276,7 +276,7 @@ int run_merge_split_steps(
     MapParams const &map_params, const SplittingSchedule &splitting_schedule,
     ScoringFunction const &scoring_function,
     RNGState &rng_state, SamplingSpace const sampling_space,
-    std::unique_ptr<Plan> &plan_ptr, std::unique_ptr<Plan> &dummy_plan_ptr, 
+    Plan &plan, Plan &dummy_plan, 
     USTSampler &ust_sampler, TreeSplitter const &tree_splitter,
     std::string const merge_prob_type,
     double const rho, bool const is_final, 
@@ -286,11 +286,11 @@ int run_merge_split_steps(
     int num_succesful_steps = 0;
     bool save_edge_selection_prob = sampling_space == SamplingSpace::LinkingEdgeSpace;
     // Get pairs of adj districts
-    std::vector<std::pair<int,int>> current_plan_adj_region_pairs = plan_ptr->get_valid_adj_regions(
+    std::vector<std::pair<int,int>> current_plan_adj_region_pairs = plan.get_valid_adj_regions(
         map_params, splitting_schedule, false
     );
     arma::vec current_plan_pair_unnoramalized_wgts = get_adj_pair_unnormalized_weights(
-        *plan_ptr,
+        plan,
         current_plan_adj_region_pairs,
         merge_prob_type
     );
@@ -300,7 +300,7 @@ int run_merge_split_steps(
         std::tuple<bool, bool, double, int> mergesplit_result = attempt_mergesplit_step(
             map_params, splitting_schedule, scoring_function,
             rng_state, sampling_space,
-            plan_ptr, dummy_plan_ptr, 
+            plan, dummy_plan, 
             ust_sampler, tree_splitter,
             merge_prob_type, save_edge_selection_prob,
             current_plan_adj_region_pairs,

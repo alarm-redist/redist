@@ -10,8 +10,6 @@ constexpr bool DEBUG_WEIGHTS_VERBOSE = false; // Compile-time constant
 
 
 
-
-
 int calc_merged_splits(const arma::subview_col<arma::uword> &region_ids,
                        const arma::uvec &counties, int const n_cty,
                         int const region1_id, int const region2_id) {

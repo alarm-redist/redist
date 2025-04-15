@@ -13,7 +13,7 @@ public:
                bool split_district_only,
               const Rcpp::List &initial_forest_adj_list = {});
     
-    VertexGraph forest_graph; 
+    
 
     // Clone method to create a copy of the ForestPlan object
     std::unique_ptr<Plan> deep_clone() const override {

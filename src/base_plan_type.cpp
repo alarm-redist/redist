@@ -103,34 +103,32 @@ Plan::Plan(
     arma::subview_col<arma::uword> region_ids_col, 
     arma::subview_col<arma::uword> region_sizes_col, 
     int ndists, int num_regions, const arma::uvec &pop, bool split_district_only): 
-    num_regions(num_regions),
     region_ids(region_ids_col.begin(), region_ids_col.end()),
-    region_sizes(region_sizes_col.begin(), region_sizes_col.end())
+    region_sizes(region_sizes_col.begin(), region_sizes_col.end()),
+    region_pops(ndists, 0),
+    region_added_order(ndists, -1),
+    num_regions(num_regions),
+    region_order_max(ndists+1)
 {
     // check num_regions and num_districts inputs make sense
     if (ndists < 2) throw Rcpp::exception("Tried to create a plan with ndists < 2 regions!");
     if (region_sizes.size() != ndists) throw Rcpp::exception("The region dvals column passed in is not size ndists!");
 
-    // set number of multidistricts, and V
-    int const V = region_ids.size();
-    region_order_max = ndists+1;
-
+ 
 
     // now check these
     if (num_regions > ndists) throw Rcpp::exception("Tried to create a plan object with more regions than ndists!");
     if (num_regions == 0) throw Rcpp::exception("Tried to create a plan with 0 regions");
 
     // Create other region-level information 
-    region_added_order = std::vector<int>(ndists, -1);
     // fill first num_regions entries with 1,...,num_regions 
     std::iota(
         std::begin(region_added_order), 
         std::begin(region_added_order) + num_regions, 
         1); 
     
-    region_pops = std::vector<int>(ndists, 0);
     // compute the population for each of the regions 
-    for (size_t v = 0; v < V; v++)
+    for (size_t v = 0; v < region_ids.size(); v++)
     {
         region_pops.at(region_ids[v]) += pop(v);
     }
@@ -323,6 +321,54 @@ void Plan::Rprint() const{
             region_pops[region_id] <<"), ";
     }
     Rcpp::Rcout << "]\n";
+}
+
+
+// this shallow copies two plans of the same size
+void Plan::shallow_copy(Plan const &plan_to_copy){
+    // copy the scalars 
+    num_regions = plan_to_copy.num_regions;
+    region_order_max = plan_to_copy.region_order_max;
+    // copy plan vector
+    std::copy(
+        plan_to_copy.region_ids.begin(),
+        plan_to_copy.region_ids.end(),
+        this->region_ids.begin()
+    );
+    // copy the region sizes vector
+    std::copy(
+        plan_to_copy.region_sizes.begin(),
+        plan_to_copy.region_sizes.end(),
+        this->region_sizes.begin()
+    );
+    // copy population
+    std::copy(
+        plan_to_copy.region_pops.begin(),
+        plan_to_copy.region_pops.end(),
+        this->region_pops.begin()
+    );
+    // copy order added tracker
+    std::copy(
+        plan_to_copy.region_added_order.begin(),
+        plan_to_copy.region_added_order.end(),
+        this->region_added_order.begin()
+    );
+    // if forest graph bigger than 1 copy that 
+    if(forest_graph.size() > 0){
+        for (auto i = 0; i < forest_graph.size(); ++i) {
+            std::copy(
+                plan_to_copy.forest_graph[i].begin(), 
+                plan_to_copy.forest_graph[i].end(), 
+                this->forest_graph[i].begin()
+            );
+        }
+    }
+
+    // if linking edges exist then copy that
+    if(linking_edges.size() > 0){
+        linking_edges = plan_to_copy.linking_edges;
+    }
+    return;
 }
 
 

@@ -174,7 +174,7 @@ arma::mat get_region_laplacian(
 }
 
 
-
+// avoid submat because it copies 
 double compute_log_region_multigraph_spanning_tree(
     RegionMultigraph const &region_multigraph
 ){
@@ -197,11 +197,7 @@ double compute_log_region_multigraph_spanning_tree(
 
     // laplacian_mat.submat(0, 0, num_regions-2, num_regions-2).print();
 
-    double lst, sign;
-    arma::log_det(lst, sign, 
-        laplacian_mat.submat(0, 0, num_regions-2, num_regions-2) );
-
-    return lst;
+    return arma::log_det_sympd(laplacian_mat.submat(0, 0, num_regions-2, num_regions-2));
 }
 
 

@@ -87,6 +87,7 @@ void ForestPlan::update_vertex_and_plan_specific_info_from_cut(
 std::unordered_map<std::pair<int, int>, double, bounded_hash> NEW_get_valid_pairs_and_tree_eff_boundary_len_map(
     const MapParams &map_params, const SplittingSchedule &splitting_schedule,
     const ForestPlan &plan, const TreeSplitter &edge_splitter,
+    VertexGraph const &forest_graph,
     std::unordered_map<std::pair<int, int>, double, bounded_hash> existing_pair_map = {}
 ){
     std::vector<bool> visited(map_params.V);
@@ -162,7 +163,7 @@ std::unordered_map<std::pair<int, int>, double, bounded_hash> NEW_get_valid_pair
 
                 // get the log probability
                 double log_edge_selection_prob = edge_splitter.get_log_retroactive_splitting_prob_for_joined_tree(
-                    map_params, plan.forest_graph,
+                    map_params, forest_graph,
                     visited, pops_below_vertex,
                     v, v_nbor,
                     plan.region_pops[plan.region_ids[v]], plan.region_pops[plan.region_ids[v_nbor]],
@@ -192,7 +193,7 @@ std::vector<std::tuple<int, int, double>> ForestPlan::get_valid_adj_regions_and_
     // get pairs with graph theoretic boundary 
     auto valid_adj_region_pairs_to_boundary_map = NEW_get_valid_pairs_and_tree_eff_boundary_len_map(
         map_params, splitting_schedule, 
-        *this,tree_splitter, existing_pair_map
+        *this,tree_splitter, forest_graph, existing_pair_map
     );
 
     // declare the vector of tuples

@@ -109,7 +109,7 @@ double new_log_graph_boundary(const Graph &g, PlanVector const &region_ids,
                 (counties(v) != counties(u)) &&
                 split_counties.count(counties(v)) > 0 &&
                 split_counties.count(counties(u)) > 0
-            ){ 
+            ){
                 continue;
             }
             // otherwise, boundary with v -> u
@@ -730,12 +730,8 @@ double compute_log_region_and_county_spanning_tree(
         adj(prec, prec) = degree;
     }
 
-    double lst, sign;
-    log_det(lst, sign, adj);
-    return lst;
+    return arma::log_det_sympd(adj);
 }
-
-
 
 
 /*
@@ -791,9 +787,7 @@ double compute_log_county_level_spanning_tree(
         }
     }
 
-    double lst, sign;
-    log_det(lst, sign, adj);
-    return lst;
+    return arma::log_det_sympd(adj);
 }
 
 // Given a numeric vector of statistics computed on each district this 

@@ -417,7 +417,7 @@ List perform_merge_split_steps(
     int num_successes = run_merge_split_steps(
         map_params, *splitting_schedule_ptr, scoring_function,
         rng_state, sampling_space,
-        plan, new_plan, 
+        *plan, *new_plan, 
         ust_sampler, *tree_splitter,
         "uniform", 
         rho, is_final, 

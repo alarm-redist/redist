@@ -9,6 +9,11 @@
 
 constexpr bool DEBUG_L_EDGE_PLANS_VERBOSE = false; // Compile-time constant
 
+
+VertexGraph LinkingEdgePlan::get_forest_adj(){
+    return forest_graph;
+}
+
 LinkingEdgePlan::LinkingEdgePlan(arma::subview_col<arma::uword> region_ids_col, 
     arma::subview_col<arma::uword> region_sizes_col, 
     int ndists, int num_regions, const arma::uvec &pop, 

@@ -12,15 +12,11 @@ class LinkingEdgePlan : public Plan {
                   const std::vector<std::tuple<int, int, double>> &initial_linking_edge_list = {}
                 );
 
-
-        VertexGraph forest_graph; 
-        std::vector<std::tuple<int, int, double>> linking_edges;
-
         std::unique_ptr<Plan> deep_clone() const override {
             return std::make_unique<LinkingEdgePlan>(*this); // Copy the entire object
         }
 
-        VertexGraph get_forest_adj() override{return forest_graph;};
+        VertexGraph get_forest_adj() override;
 
         void update_vertex_and_plan_specific_info_from_cut(
             TreeSplitter const &tree_splitter,

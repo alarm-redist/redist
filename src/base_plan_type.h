@@ -82,6 +82,10 @@ private:
     void check_inputted_region_ids(int ndists) const;
     void check_inputted_region_sizes(int ndists, bool split_district_only) const;
 
+protected:
+    VertexGraph forest_graph; 
+    std::vector<std::tuple<int, int, double>> linking_edges;
+
 public:
     // constructor 
     Plan(arma::subview_col<arma::uword> region_ids_col, 
@@ -89,24 +93,21 @@ public:
         int ndists, int num_regions, const arma::uvec &pop, bool split_district_only
     ); // constructor for plan
 
-    void shallow_copy(const Plan& plan_to_copy); // Shallow copies everything and doesn't change the underlying 
-    // umat columns that region_ids and region_sizes
-
     // Virtual deep_clone method to create a copy of the object
     virtual std::unique_ptr<Plan> deep_clone() const = 0;
+    // shallow copy methods 
+    void shallow_copy(Plan const &plan_to_copy);
 
     // attributes
-    int num_regions; // Number of regions in the plan
     PlanVector region_ids;
     RegionSizeVector region_sizes;
-
     std::vector<int> region_pops; 
     std::vector<int> region_added_order; 
+    int num_regions; // Number of regions in the plan
     int region_order_max; 
 
       
     
-
     virtual ~Plan() = default; 
 
     // methods

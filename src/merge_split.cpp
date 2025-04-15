@@ -345,7 +345,7 @@ Rcpp::List ms_plans(
         std::tuple<bool, bool, double, int> mergesplit_result = attempt_mergesplit_step(
             map_params, *splitting_schedule_ptr, scoring_function,
             rng_state, sampling_space,
-            current_plan_ptr, proposed_plan_ptr, 
+            *current_plan_ptr, *proposed_plan_ptr, 
             ust_sampler, *tree_splitter_ptr,
             merge_prob_type, save_edge_selection_prob,
             current_plan_adj_region_pairs,

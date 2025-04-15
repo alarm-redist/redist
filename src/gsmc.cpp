@@ -206,7 +206,7 @@ void run_smc_step(
                     Rprintf("Success, updating Plan %d\n", i);
                 } 
                 // make the new plan a copy of the old one 
-                new_plans_ptr_vec[i] = old_plans_ptr_vec[idx]->deep_clone();
+                new_plans_ptr_vec[i]->shallow_copy(*old_plans_ptr_vec[idx]);
                 // now split that region we found on the old one
                 new_plans_ptr_vec.at(i)->update_from_successful_split(
                     tree_splitters,
@@ -329,7 +329,7 @@ void run_merge_split_step_on_all_plans(
         success_count_vec[i] = run_merge_split_steps(
             map_params, splitting_schedule, scoring_function,
             rng_states[thread_id], sampling_space,
-            plan_ptrs_vec[i], new_plan_ptrs_vec[i], 
+            *plan_ptrs_vec[i], *new_plan_ptrs_vec[i], 
             ust_sampler, tree_splitter,
             merge_prob_type, 
             rho, is_final, 
