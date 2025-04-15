@@ -319,7 +319,7 @@ double get_log_retroactive_splitting_prob(
         const int region1_id, const int region2_id,
         double const selection_alpha = SELECTION_ALPHA
 ){
-    if(WEIGHTS_DEBUG_VERBOSE) Rprintf("Possible options: ");
+    if(DEBUG_WEIGHTS_VERBOSE) Rprintf("Possible options: ");
 
     // compute weight of the merged region
     auto unioned_region_size = plan.region_sizes[region1_id] + plan.region_sizes[region2_id];
@@ -328,7 +328,7 @@ double get_log_retroactive_splitting_prob(
     double prob_sum = unioned_region_prob;
 
     // add the unioned region
-    if (WEIGHTS_DEBUG_VERBOSE) Rprintf(" (unioned) %d\n", unioned_region_size);
+    if (DEBUG_WEIGHTS_VERBOSE) Rprintf(" (unioned) %d\n", unioned_region_size);
 
     for(int region_id = 0 ; region_id < plan.num_regions; region_id++) {
         auto region_size = plan.region_sizes[region_id];
@@ -337,7 +337,7 @@ double get_log_retroactive_splitting_prob(
         if(valid_region_sizes_to_split[region_size] &&
             region_size > 1 && region_id != region1_id && 
             region_id != region2_id){
-            if (WEIGHTS_DEBUG_VERBOSE) Rprintf(" %d ", region_size);
+            if (DEBUG_WEIGHTS_VERBOSE) Rprintf(" %d ", region_size);
             // add the count and label to vector
             prob_sum += std::pow(region_size, selection_alpha);
         }
@@ -374,7 +374,7 @@ double compute_simple_log_incremental_weight(
     int region1_id = most_recent_split_regions.first;
     int region2_id = most_recent_split_regions.second;
 
-    if(WEIGHTS_DEBUG_VERBOSE){
+    if(DEBUG_WEIGHTS_VERBOSE){
         Rprintf("The two regions are %d and %d\n", region1_id, region2_id);
         Rcpp::Rcerr << std::flush;
     } 
@@ -471,7 +471,7 @@ double compute_simple_log_incremental_weight(
         // picked to split the union of the the two regions 
         log_splitting_prob = get_log_retroactive_splitting_prob(plan, 
         splitting_schedule.valid_region_sizes_to_split, region1_id, region2_id);
-        if(WEIGHTS_DEBUG_VERBOSE) Rprintf("Computed split prob %f\n", std::exp(log_splitting_prob));
+        if(DEBUG_WEIGHTS_VERBOSE) Rprintf("Computed split prob %f\n", std::exp(log_splitting_prob));
     }
 
     double region1_score, region2_score, merged_region_score;
@@ -678,6 +678,8 @@ double compute_log_optimal_weights(
     // dont need to do when
     double incremental_weight = 0.0;
 
+    if(DEBUG_WEIGHTS_VERBOSE) Rprintf("Getting Pairs!");
+
     // get region pair to effective boundary length map
     auto region_pair_log_eff_boundary_map = plan.get_valid_adj_regions_and_eff_log_boundary_lens(
         map_params, splitting_schedule, edge_splitter
@@ -861,7 +863,8 @@ void compute_all_plans_log_optimal_weights(
 ){
     const int nsims = static_cast<int>(plans_ptr_vec.size());
     const int check_int = 50; // check for interrupts every _ iterations
-
+    Rprintf("About to start computing weights!");
+    if(DEBUG_WEIGHTS_VERBOSE) Rprintf("About to start computing weights!");
     RcppThread::ProgressBar bar(nsims, 1);
     // Parallel thread pool where all objects in memory shared by default
     pool.parallelFor(0, nsims, [&] (int i) {

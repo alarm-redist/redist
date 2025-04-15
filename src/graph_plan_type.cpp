@@ -341,10 +341,10 @@ std::vector<std::tuple<int, int, double>> GraphPlan::get_valid_adj_regions_and_e
         int boundary_len = pair_eff_bounary_counts[index_from_ordered_pair(a_pair.first, a_pair.second, num_regions)];
         // see if illegal merge by means of boundary 0
         if(boundary_len <= 0){
-            if(DEBUG_GRAPH_PLANS_VERBOSE || true){
+            // if(DEBUG_GRAPH_PLANS_VERBOSE || true){
                 REprintf("(%d,%d): Was listed as valid but boundary length zero!\n", 
                     a_pair.first, a_pair.second);
-            }
+            // }
             continue;
         }
 

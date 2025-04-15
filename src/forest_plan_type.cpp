@@ -232,7 +232,7 @@ double ForestPlan::get_log_eff_boundary_len(
     auto cut_size_bounds = splitting_schedule.all_regions_min_and_max_possible_cut_sizes[merged_region_size];
     int min_possible_cut_size = cut_size_bounds.first;
     int max_possible_cut_size = cut_size_bounds.second;
-
+    
     double tree_selection_probs = 0.0;
     for (int v = 0; v < V; v++) {
         if (region_ids[v] != region1_id) continue; // Only count if starting vertex in region 1

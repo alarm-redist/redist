@@ -35,7 +35,7 @@ constexpr uint MAX_SUPPORTED_COUNTYREGION_VALUE = static_cast<unsigned int>(
 //
 typedef std::vector<RegionID> PlanVector;
 typedef std::vector<RegionID> RegionSizeVector;
-typedef std::vector<std::vector<RegionID>> VertexGraph; // graphs on vertices
+typedef std::vector<std::vector<VertexID>> VertexGraph; // graphs on vertices
 typedef std::vector<std::unordered_map<int, int>> RegionMultigraph;
 typedef std::tuple<CountyRegion, RegionID, CountyID> CountyComponentVertex;
 typedef std::vector<std::vector<CountyComponentVertex>> CountyComponentGraph;
