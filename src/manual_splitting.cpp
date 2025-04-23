@@ -74,7 +74,8 @@ List draw_a_tree_on_a_region(
     int ndists, int num_regions, int num_districts,
     int region_id_to_draw_tree_on,
     double lower, double upper,
-    arma::umat region_ids, arma::umat region_sizes,
+    Rcpp::IntegerMatrix const &region_ids, 
+    Rcpp::IntegerMatrix const &region_sizes,
     bool verbose
 ){
     // unpack control params
@@ -88,19 +89,22 @@ List draw_a_tree_on_a_region(
 
     MapParams map_params(adj_list, counties, pop, ndists, lower, target, upper);
 
-    bool split_district_only = region_sizes.max() == 1;
 
-    // Create a plan object
-
-
-    Plan * plan = new GraphPlan(
-        region_ids.col(0), region_sizes.col(0), 
-        ndists,num_regions, pop, split_district_only);
+    // Create a plan object via size 1 ensemble
+    RcppThread::ThreadPool pool(0);
+    PlanEnsemble plan_ensemble(
+        V, ndists, num_regions,
+        pop, 1,
+        SamplingSpace::GraphSpace,
+        region_ids, 
+        region_sizes,
+        pool 
+    );
 
 
     if(verbose){
         Rprintf("Drawing Tree on Region %d of Plan: ", region_id_to_draw_tree_on);
-        plan->Rprint();
+        plan_ensemble.plan_ptr_vec[0]->Rprint();
     }
 
     // Create tree related stuff
@@ -123,7 +127,7 @@ List draw_a_tree_on_a_region(
     // Keep running until a tree is successfully drawn
     while(!successful_split_made){
         // try to draw a tree 
-        successful_split_made = plan->draw_tree_on_region(map_params, region_id_to_draw_tree_on,
+        successful_split_made = plan_ensemble.plan_ptr_vec[0]->draw_tree_on_region(map_params, region_id_to_draw_tree_on,
         ust, visited, ignore, root, rng_state);
         num_attempts++;
     }
@@ -171,7 +175,8 @@ List perform_a_valid_multidistrict_split(
     int ndists, int num_regions, int num_districts,
     int region_id_to_split,
     double target, double lower, double upper,
-    arma::umat region_ids, arma::umat region_sizes,
+    Rcpp::IntegerMatrix const &region_ids, 
+    Rcpp::IntegerMatrix const &region_sizes,
     int split_dval_min, int split_dval_max, bool split_district_only,
     bool verbose, int k_param
 ){
@@ -183,10 +188,16 @@ List perform_a_valid_multidistrict_split(
 
     Rprintf("It is %d\n", (int) split_district_only);
 
-    // Create a plan object
-    Plan * plan = new GraphPlan(
-        region_ids.col(0), region_sizes.col(0), 
-        ndists, num_regions, pop, split_district_only);
+    // Create a plan object via size 1 ensemble
+    RcppThread::ThreadPool pool(0);
+    PlanEnsemble plan_ensemble(
+        V, ndists, num_regions,
+        pop, 1,
+        SamplingSpace::GraphSpace,
+        region_ids, 
+        region_sizes,
+        pool 
+    );
 
     // Create tree splitter 
     TreeSplitter * tree_splitter = new ExperimentalSplitter(map_params.V, .0001, map_params.target);
@@ -194,7 +205,7 @@ List perform_a_valid_multidistrict_split(
 
     if(verbose){
         Rprintf("Splitting Plan: ");
-        plan->Rprint();
+        plan_ensemble.plan_ptr_vec[0]->Rprint();
     }
 
     auto splitting_schedule_ptr = std::make_unique<PureMSSplittingSchedule>(ndists, 1, 1);
@@ -211,14 +222,14 @@ List perform_a_valid_multidistrict_split(
 
     // Mark it as ignore if its not in the region to split
     for (int i = 0; i < V; i++){
-        ignore[i] = plan->region_ids[i] != region_id_to_split;
+        ignore[i] = plan_ensemble.plan_ptr_vec[0]->region_ids[i] != region_id_to_split;
     }
 
     // Counts the number of split attempts
     bool successful_split_made = false;
     int try_counter = 1;
 
-    int region_to_split_size = static_cast<int>(plan->region_ids[region_id_to_split]);
+    int region_to_split_size = static_cast<int>(plan_ensemble.plan_ptr_vec[0]->region_ids[region_id_to_split]);
 
     std::pair<int, int> loop_bounds = TEMP_get_potential_region_size_for_loop_bounds(
     region_to_split_size,
@@ -236,7 +247,7 @@ List perform_a_valid_multidistrict_split(
 
     // make new region ids the split one and num_regions
     int new_region1_id = region_id_to_split; 
-    int new_region2_id = plan->num_regions;
+    int new_region2_id = plan_ensemble.plan_ptr_vec[0]->num_regions;
 
     EdgeCut cut_edge;
     // Keep running until done
@@ -247,7 +258,7 @@ List perform_a_valid_multidistrict_split(
         clear_tree(ust_sampler.ust);
  
         // Try to draw a tree on region
-        bool tree_drawn = plan->draw_tree_on_region(map_params, region_id_to_split,
+        bool tree_drawn = plan_ensemble.plan_ptr_vec[0]->draw_tree_on_region(map_params, region_id_to_split,
             ust_sampler.ust, visited, ignore, uncut_tree_root, rng_state);
 
         // Try again and increase counter if tree not drawn
@@ -258,7 +269,7 @@ List perform_a_valid_multidistrict_split(
 
         split_dval_max = std::min(
             split_dval_max, 
-            (int) plan->region_sizes[region_id_to_split] - 1
+            (int) plan_ensemble.plan_ptr_vec[0]->region_sizes[region_id_to_split] - 1
             );
 
 
@@ -268,7 +279,8 @@ List perform_a_valid_multidistrict_split(
             map_params, rng_state, 
             ust_sampler.ust, uncut_tree_root,
             pop_below, visited, 
-            plan->region_pops[region_id_to_split],plan->region_sizes[region_id_to_split], 
+            plan_ensemble.plan_ptr_vec[0]->region_pops[region_id_to_split],
+            plan_ensemble.plan_ptr_vec[0]->region_sizes[region_id_to_split], 
             split_dval_min, split_dval_max, 
             smaller_cut_sizes_to_try //,
             //bool save_selection_prob = false
@@ -291,14 +303,14 @@ List perform_a_valid_multidistrict_split(
 
 
         // now update the region level information from the edge cut
-        plan->update_region_info_from_cut(
+        plan_ensemble.plan_ptr_vec[0]->update_region_info_from_cut(
             cut_edge,
             region_id_to_split, new_region2_id, 
             true
         );
 
         // Now update the vertex level information
-        plan->update_vertex_and_plan_specific_info_from_cut(
+        plan_ensemble.plan_ptr_vec[0]->update_vertex_and_plan_specific_info_from_cut(
             *tree_splitter,
             ust_sampler, cut_edge, 
             region_id_to_split, new_region2_id,
@@ -308,7 +320,7 @@ List perform_a_valid_multidistrict_split(
 
 
     if(verbose){
-        plan->Rprint();
+        plan_ensemble.plan_ptr_vec[0]->Rprint();
     }
 
     // splitting related params
@@ -325,11 +337,11 @@ List perform_a_valid_multidistrict_split(
     List out = List::create(
         _["num_attempts"] = try_counter,
         _["region_id_that_was_split"] = region_id_to_split,
-        _["region_sizes"] = plan->region_sizes,
-        _["partial_plan_labels"] = plan->region_ids,
-        _["region_pops"] = plan->region_pops,
-        _["num_regions"] = plan->num_regions,
-        _["num_districts"] = plan->get_num_district_and_multidistricts().first,
+        _["region_sizes"] = plan_ensemble.flattened_all_region_sizes,
+        _["partial_plan_labels"] = plan_ensemble.flattened_all_plans,
+        _["region_pops"] = plan_ensemble.flattened_all_region_pops,
+        _["num_regions"] = plan_ensemble.plan_ptr_vec[0]->num_regions,
+        _["num_districts"] = plan_ensemble.plan_ptr_vec[0]->get_num_district_and_multidistricts().first,
         _["uncut_tree"] = pre_split_ust,
         _["uncut_tree_root"] = uncut_tree_root,
         _["cut_tree"] = ust_sampler.ust,
@@ -349,93 +361,93 @@ List perform_a_valid_multidistrict_split(
 }
 
 
-// Does a preset number of merge split steps
-List perform_merge_split_steps(
-        List adj_list, const arma::uvec &counties, const arma::uvec &pop,
-        int k_param, 
-        double target, double lower, double upper,
-        int ndists, int num_regions, int num_districts,
-        arma::umat region_ids, arma::umat region_sizes,
-        std::vector<int> region_pops,
-        bool split_district_only, int num_merge_split_steps,
-        bool verbose
-){
-    throw Rcpp::exception("Not support rn!");
-    double rho = 1; bool is_final = false;
-    MapParams map_params(adj_list, counties, pop, ndists, lower, target, upper);
-    // unpack control params
-    Graph g = list_to_graph(adj_list);
-    Multigraph cg = county_graph(g, counties);
-    int V = g.size();
-    ScoringFunction scoring_function(map_params, adj_list, 0);
+// // Does a preset number of merge split steps
+// List perform_merge_split_steps(
+//         List adj_list, const arma::uvec &counties, const arma::uvec &pop,
+//         int k_param, 
+//         double target, double lower, double upper,
+//         int ndists, int num_regions, int num_districts,
+//         arma::umat region_ids, arma::umat region_sizes,
+//         std::vector<int> region_pops,
+//         bool split_district_only, int num_merge_split_steps,
+//         bool verbose
+// ){
+//     throw Rcpp::exception("Not support rn!");
+//     double rho = 1; bool is_final = false;
+//     MapParams map_params(adj_list, counties, pop, ndists, lower, target, upper);
+//     // unpack control params
+//     Graph g = list_to_graph(adj_list);
+//     Multigraph cg = county_graph(g, counties);
+//     int V = g.size();
+//     ScoringFunction scoring_function(map_params, adj_list, 0);
 
-    auto dummy_region_ids = region_ids; auto dummy_region_dvals = region_sizes;
+//     auto dummy_region_ids = region_ids; auto dummy_region_dvals = region_sizes;
 
-    // Create a plan object
-    std::unique_ptr<Plan> plan = std::make_unique<GraphPlan>(region_ids.col(0), region_sizes.col(0), ndists, num_regions, pop, split_district_only);
-    std::unique_ptr<Plan> new_plan = std::make_unique<GraphPlan>(dummy_region_ids.col(0), dummy_region_dvals.col(0), ndists, num_regions, pop, split_district_only);
+//     // Create a plan object
+//     std::unique_ptr<Plan> plan = std::make_unique<GraphPlan>(region_ids.col(0), region_sizes.col(0), ndists, num_regions, pop, split_district_only);
+//     std::unique_ptr<Plan> new_plan = std::make_unique<GraphPlan>(dummy_region_ids.col(0), dummy_region_dvals.col(0), ndists, num_regions, pop, split_district_only);
 
-    // create splitter
-    TreeSplitter *tree_splitter = new NaiveTopKSplitter(map_params.V, k_param);
+//     // create splitter
+//     TreeSplitter *tree_splitter = new NaiveTopKSplitter(map_params.V, k_param);
 
-    // fill in the plan
-    plan->num_regions = num_regions;
-    // plan->region_ids = std::vector< region_ids.col(0);
-    // plan->region_sizes = region_sizes.col(0);
-    plan->region_pops = region_pops;
+//     // fill in the plan
+//     plan->num_regions = num_regions;
+//     // plan->region_ids = std::vector< region_ids.col(0);
+//     // plan->region_sizes = region_sizes.col(0);
+//     plan->region_pops = region_pops;
 
-    // TODO FIX THIS but need to create this
-    std::iota(plan->region_added_order.begin(), plan->region_added_order.end(), -1);
+//     // TODO FIX THIS but need to create this
+//     std::iota(plan->region_added_order.begin(), plan->region_added_order.end(), -1);
 
 
-    if(verbose){
-        plan->Rprint();
-    }
+//     if(verbose){
+//         plan->Rprint();
+//     }
 
-    // Create tree related stuff
-    int root;
-    Tree ust = init_tree(V);
-    Tree pre_split_ust = init_tree(V);
-    std::vector<bool> visited(V);
-    std::vector<bool> ignore(V, false);
+//     // Create tree related stuff
+//     int root;
+//     Tree ust = init_tree(V);
+//     Tree pre_split_ust = init_tree(V);
+//     std::vector<bool> visited(V);
+//     std::vector<bool> ignore(V, false);
 
-    Rcpp::List fake_control;
-    SplittingSizeScheduleType splitting_type = get_splitting_size_regime("FAKE");
+//     Rcpp::List fake_control;
+//     SplittingSizeScheduleType splitting_type = get_splitting_size_regime("FAKE");
 
-    auto splitting_schedule_ptr = get_splitting_schedule(
-        1, ndists, splitting_type, fake_control
-    );
+//     auto splitting_schedule_ptr = get_splitting_schedule(
+//         1, ndists, splitting_type, fake_control
+//     );
 
-    int global_rng_seed = (int) Rcpp::sample(INT_MAX, 1)[0];
-    RNGState rng_state(global_rng_seed);
-    SamplingSpace sampling_space = get_sampling_space("graph_space");
-    USTSampler ust_sampler(map_params, *splitting_schedule_ptr);
-    std::vector<int> tree_sizes(ndists, 0);
-    std::vector<int> succesful_tree_sizes(ndists, 0);
+//     int global_rng_seed = (int) Rcpp::sample(INT_MAX, 1)[0];
+//     RNGState rng_state(global_rng_seed);
+//     SamplingSpace sampling_space = get_sampling_space("graph_space");
+//     USTSampler ust_sampler(map_params, *splitting_schedule_ptr);
+//     std::vector<int> tree_sizes(ndists, 0);
+//     std::vector<int> succesful_tree_sizes(ndists, 0);
 
-    // now do merge split 
-    int num_successes = run_merge_split_steps(
-        map_params, *splitting_schedule_ptr, scoring_function,
-        rng_state, sampling_space,
-        *plan, *new_plan, 
-        ust_sampler, *tree_splitter,
-        "uniform", 
-        rho, is_final, 
-        num_merge_split_steps,
-        tree_sizes, succesful_tree_sizes
-    );
+//     // now do merge split 
+//     int num_successes = run_merge_split_steps(
+//         map_params, *splitting_schedule_ptr, scoring_function,
+//         rng_state, sampling_space,
+//         *plan, *new_plan, 
+//         ust_sampler, *tree_splitter,
+//         "uniform", 
+//         rho, is_final, 
+//         num_merge_split_steps,
+//         tree_sizes, succesful_tree_sizes
+//     );
 
-    List out = List::create(
-        _["region_sizes"] = plan->region_sizes,
-        _["plan_vertex_ids"] = plan->region_ids,
-        _["pops"] = plan->region_pops,
-        _["num_regions"] = plan->num_regions,
-        _["num_districts"] = plan->get_num_district_and_multidistricts().first,
-        _["num_success"] = num_successes
-    );
+//     List out = List::create(
+//         _["region_sizes"] = plan->region_sizes,
+//         _["plan_vertex_ids"] = plan->region_ids,
+//         _["pops"] = plan->region_pops,
+//         _["num_regions"] = plan->num_regions,
+//         _["num_districts"] = plan->get_num_district_and_multidistricts().first,
+//         _["num_success"] = num_successes
+//     );
 
-    return out;
-}
+//     return out;
+// }
 
 
 
@@ -580,7 +592,8 @@ List attempt_splits_on_a_region(
     int const ndists, int const init_num_regions,
     int const region_id_to_split,
     double const lower, double const target, double const upper,
-    arma::umat const &region_ids, arma::umat const &region_sizes,
+    Rcpp::IntegerMatrix const &region_ids, 
+    Rcpp::IntegerMatrix const &region_sizes,
     std::string const &splitting_schedule_str, int const k_param,
     int const num_plans, int num_threads,
     bool const verbose
@@ -597,39 +610,35 @@ List attempt_splits_on_a_region(
         1, ndists, splitting_schedule_type, control
     );
     
-
-    // create the plan
-    GraphPlan const plan(region_ids.col(0), region_sizes.col(0), 
-        ndists, init_num_regions, pop, splitting_schedule_type == SplittingSizeScheduleType::DistrictOnly);
-
-    splitting_schedule->set_potential_cut_sizes_for_each_valid_size(
-        0, plan.num_regions-1
-    );
-
-    arma::umat dummy_region_id_mat(region_ids.n_rows, num_threads, arma::fill::none);
-    arma::umat dummy_sizes_mat(region_sizes.n_rows, num_threads, arma::fill::none);
-
-    std::vector<GraphPlan> plans_vec; plans_vec.reserve(num_threads);
-
-    for (size_t i = 0; i < num_threads; i++)
-    {
-        // copy from original inputs
-        dummy_region_id_mat.col(i) = region_ids.col(0);
-        dummy_sizes_mat.col(i) = region_sizes.col(0);
-        plans_vec.emplace_back(
-            dummy_region_id_mat.col(i), dummy_sizes_mat.col(i), 
-            ndists, init_num_regions, pop, splitting_schedule_type == SplittingSizeScheduleType::DistrictOnly
-        );
-    }
-    
-
-    // create the splitter
-    NaiveTopKSplitter tree_splitter(map_params.V, k_param);
-
     // create thread pool
     if (num_threads <= 0) num_threads = std::thread::hardware_concurrency();
     RcppThread::ThreadPool pool(num_threads);
 
+    // create the plan
+    PlanEnsemble plan_ensemble(
+        map_params.V, ndists, init_num_regions,
+        pop, 1,
+        SamplingSpace::GraphSpace,
+        region_ids, 
+        region_sizes,
+        pool 
+    );
+
+
+    splitting_schedule->set_potential_cut_sizes_for_each_valid_size(
+        0, plan_ensemble.plan_ptr_vec[0]->num_regions-1
+    );
+
+
+    PlanEnsemble thread_plan_ensemble(
+        map_params.V, ndists, arma::sum(pop),
+        num_threads, SamplingSpace::GraphSpace
+    );
+
+
+
+    // create the splitter
+    NaiveTopKSplitter tree_splitter(map_params.V, k_param);
 
 
     // Create the vector of plans to return
@@ -656,54 +665,56 @@ List attempt_splits_on_a_region(
 
     RcppThread::ProgressBar bar(num_plans, 1);
     // Parallel thread pool where all objects in memory shared by default
-    pool.parallelFor(0, num_plans, [&] (int ree) {
+    pool.parallelFor(0, num_plans, [&] (int i) {
 
         static thread_local int thread_id = thread_id_counter.fetch_add(1, std::memory_order_relaxed);
         // Stuff for drawing tree
         static thread_local USTSampler ust_sampler(map_params, *splitting_schedule);
         // copy the plan again
-        plans_vec[thread_id] = plan;
+        thread_plan_ensemble.plan_ptr_vec[thread_id]->shallow_copy(*plan_ensemble.plan_ptr_vec[0]);
+
 
         // keep trying until a tree is drawn
         // ie ignore cases where algorithm fails bc of randomness
         bool tree_successfully_drawn = ust_sampler.draw_tree_on_region(
-            rng_states[thread_id], plans_vec[thread_id], region_id_to_split);
+            rng_states[thread_id], *thread_plan_ensemble.plan_ptr_vec[thread_id], region_id_to_split);
         ++thread_attempts[thread_id];
 
         while(!tree_successfully_drawn){
             tree_successfully_drawn = ust_sampler.draw_tree_on_region(
-                rng_states[thread_id], plans_vec[thread_id], region_id_to_split);
+                rng_states[thread_id], *thread_plan_ensemble.plan_ptr_vec[thread_id], region_id_to_split);
             ++thread_attempts[thread_id];
         }
 
         // now draw a tree 
         auto edge_search_result = ust_sampler.try_to_sample_splittable_tree(
             rng_states[thread_id], tree_splitter,
-            plans_vec[thread_id].region_pops[region_id_to_split], plans_vec[thread_id].region_sizes[region_id_to_split],
+            thread_plan_ensemble.plan_ptr_vec[thread_id]->region_pops[region_id_to_split], 
+            thread_plan_ensemble.plan_ptr_vec[thread_id]->region_sizes[region_id_to_split],
             false
         );
 
         // if successful then update
         if(std::get<0>(edge_search_result)){
             // now split that region we found on the old one
-            plans_vec[thread_id].update_from_successful_split(
+            thread_plan_ensemble.plan_ptr_vec[thread_id]->update_from_successful_split(
                 tree_splitter,
                 ust_sampler, std::get<1>(edge_search_result),
-                region_id_to_split, plans_vec[thread_id].num_regions, 
+                region_id_to_split, thread_plan_ensemble.plan_ptr_vec[thread_id]->num_regions, 
                 true
             );
         }
-        successful_update[ree] = std::get<0>(edge_search_result);
+        successful_update[i] = std::get<0>(edge_search_result);
         // Copy the plan into the matrix 
         std::copy(
-            dummy_region_id_mat.colptr(thread_id), // Start of column in subview
-            dummy_region_id_mat.colptr(thread_id) + region_ids.n_rows, // End of column in subview
-            saved_plans_mat.column(ree).begin() // Start of column in Rcpp::IntegerMatrix
+            thread_plan_ensemble.plan_ptr_vec[thread_id]->region_ids.begin(), 
+            thread_plan_ensemble.plan_ptr_vec[thread_id]->region_ids.end(), 
+            saved_plans_mat.column(i).begin() // Start of column in Rcpp::IntegerMatrix
         );
         std::copy(
-            dummy_sizes_mat.colptr(thread_id), // Start of column in subview
-            dummy_sizes_mat.colptr(thread_id) + dummy_sizes_mat.n_rows, // End of column in subview
-            saved_region_sizes_mat.column(ree).begin() // Start of column in Rcpp::IntegerMatrix
+            thread_plan_ensemble.plan_ptr_vec[thread_id]->region_sizes.begin(), 
+            thread_plan_ensemble.plan_ptr_vec[thread_id]->region_sizes.end(), 
+            saved_region_sizes_mat.column(i).begin() // Start of column in Rcpp::IntegerMatrix
         );
 
     });

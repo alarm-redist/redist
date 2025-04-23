@@ -13,64 +13,78 @@
 // - population tolerance is ok
 // - plans are connected
 arma::vec compute_log_unnormalized_plan_target_density(
-    List adj_list, const arma::uvec &counties, const arma::uvec &pop,
-    List const &constraints, double pop_temper,  double rho,
-    int ndists, int num_regions,
-    double lower, double target, double upper,
-    arma::umat region_ids, arma::umat region_sizes,
+    List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
+    List const &constraints, double const pop_temper,  double const rho,
+    int const ndists, int const num_regions,
+    double const lower, double const target, double const upper,
+    Rcpp::IntegerMatrix const &region_ids, 
+    Rcpp::IntegerMatrix const &region_sizes,
     int num_threads
 ){
-    // Create the plan objects
-    int num_plans = region_ids.n_cols;
-    
-    // check if final splits (ie don't do pop_temper)
-    bool is_final = num_regions == ndists;
-    std::vector<GraphPlan> plans_vec; plans_vec.reserve(num_plans);
-
-    for (size_t i = 0; i < num_plans; i++)
-    {
-        plans_vec.emplace_back(region_ids.col(i), region_sizes.col(i), ndists, num_regions, pop, false);
-    }
-
+    REprintf("Sup %d!\n", num_regions);
     // create the map param object
     MapParams map_params(adj_list, counties, pop, ndists, lower, target, upper);
     // Create the scoring function 
     ScoringFunction scoring_function(map_params, constraints, pop_temper);
 
-    arma::vec log_unnormalized_density(num_plans, arma::fill::zeros);
-    
     // create thread pool
     if (num_threads <= 0) num_threads = std::thread::hardware_concurrency();
     if (num_threads == 1) num_threads = 0;
 
     RcppThread::ThreadPool pool(num_threads);
+    // Create the plan objects
+    int num_plans = region_ids.ncol();
+    REprintf("Sup %d!\n", num_regions);
+    PlanEnsemble plan_ensemble(
+        map_params.V, ndists, num_regions,
+        pop, num_plans,
+        SamplingSpace::GraphSpace,
+        region_ids, 
+        region_sizes,
+        pool 
+    );
+    REprintf("Loaded!\n");
+    
+    // check if final splits (ie don't do pop_temper)
+    bool is_final = num_regions == ndists;
+
+
+    arma::vec log_unnormalized_density(num_plans, arma::fill::zeros);
+    return log_unnormalized_density;
+
     const int check_int = 50; // check for interrupts every _ iterations
 
+    RcppThread::ProgressBar bar(num_plans, 1);
     pool.parallelFor(0, num_plans, [&] (int i) {
         static thread_local CountyComponents county_components(
             map_params, num_regions
         );
+        static thread_local Graph county_graph(map_params.num_counties);
 
-        auto county_splits_result = county_components.count_county_splits(plans_vec[i]);
+        // auto county_splits_result = county_components.count_county_splits(plans_vec[i]);
+        bool const hiearhically_valid = county_components.check_valid_hiearchical_plan(*plan_ensemble.plan_ptr_vec[i], county_graph);
         // check number of counties is valid and no double county intersect region components
         // if too many then log(0) = -Inf
-        if(county_splits_result.second > num_regions - 1 || county_splits_result.first){
+        // if(county_splits_result.second > num_regions - 1 || county_splits_result.first){
+        if(!hiearhically_valid){
             log_unnormalized_density(i) = -arma::math::inf();
         }else{
             // compute the tau for the plan
-            log_unnormalized_density(i) += rho * plans_vec[i].compute_log_plan_spanning_trees(map_params);
+            log_unnormalized_density(i) += rho * plan_ensemble.plan_ptr_vec[i]->compute_log_plan_spanning_trees(map_params);
             // subtract score from each region
             for (size_t region_id = 0; region_id < num_regions; region_id++)
             {
                 log_unnormalized_density(i) -= scoring_function.compute_region_score(
-                    plans_vec[i], region_id, is_final
+                    *plan_ensemble.plan_ptr_vec[i], region_id, is_final
                 );
             }
         }
+        ++bar;
         RcppThread::checkUserInterrupt(i % check_int == 0);
     });
 
     pool.wait();
+    REprintf("Done!\n");
 
     return log_unnormalized_density;
 }
@@ -86,6 +100,7 @@ std::vector<int> new_boundary_counting(
     CountyComponents const &county_components
 ){
     bool const check_counties = map_params.num_counties > 1;
+
     // iterate through the graph 
     for (int v = 0; v < map_params.V; v++) {
         // Find out which region this vertex corresponds to
@@ -102,6 +117,7 @@ std::vector<int> new_boundary_counting(
                 // if not checking counties we just always count since
                 // incrementing is cheaper then checking and incrementing 
                 ++pair_boundary_count_vec[index_from_ordered_pair(v_region, u_region, num_regions)];
+                // REprintf("Counting (%d, %d) - Regions (%u, %u) \n", u, v, v_region, u_region);
             }else if(pair_boundary_count_vec[index_from_ordered_pair(v_region, u_region, num_regions)] >= 0){
                 // else this edge crosses a county boundary of pair we care about
                 // We only count if no edges between 
@@ -120,34 +136,43 @@ std::vector<int> new_boundary_counting(
 
 
 arma::vec compute_plans_log_optimal_weights(
-    List adj_list, const arma::uvec &counties, const arma::uvec &pop,
-    List const &constraints, double pop_temper,  double rho,
+    List const &adj_list, arma::uvec const &counties, arma::uvec const &pop,
+    List const &constraints, double const pop_temper,  double const rho,
     std::string const &splitting_schedule_str,
-    int ndists, int num_regions,
-    double lower, double target, double upper,
-    arma::umat region_ids, arma::umat region_sizes,
+    int const ndists, int const num_regions,
+    double const lower, double const target, double const upper,
+    Rcpp::IntegerMatrix const &region_ids, 
+    Rcpp::IntegerMatrix const &region_sizes,
     int num_threads
 ){
     // Create the plan objects
-    int num_plans = region_ids.n_cols;
+    int num_plans = region_ids.ncol();
 
     // sampling space
     SamplingSpace sampling_space = SamplingSpace::GraphSpace;
     
     // check if final splits (ie don't do pop_temper)
     bool is_final = num_regions == ndists;
-    std::vector<GraphPlan> plans_vec; plans_vec.reserve(num_plans);
 
-
-    for (size_t i = 0; i < num_plans; i++)
-    {
-        plans_vec.emplace_back(region_ids.col(i), region_sizes.col(i), ndists, num_regions, pop, false);
-    }
+    // create thread pool
+    if (num_threads <= 0) num_threads = std::thread::hardware_concurrency();
+    if (num_threads == 1) num_threads = 0;
+    RcppThread::ThreadPool pool(num_threads);
 
     // create the map param object
     MapParams map_params(adj_list, counties, pop, ndists, lower, target, upper);
     // Create the scoring function 
     ScoringFunction scoring_function(map_params, constraints, pop_temper);
+
+    PlanEnsemble plan_ensemble(
+        map_params.V, ndists, num_regions,
+        pop, num_plans,
+        SamplingSpace::GraphSpace,
+        region_ids, 
+        region_sizes,
+        pool 
+    );
+
     // get splitting schedule 
     Rcpp::List control;
     SplittingSizeScheduleType splitting_schedule_type = get_splitting_size_regime(splitting_schedule_str);
@@ -162,19 +187,15 @@ arma::vec compute_plans_log_optimal_weights(
     NaiveTopKSplitter tree_splitter(map_params.V, 1);
 
     bool compute_log_splitting_prob = splitting_schedule_ptr->schedule_type != SplittingSizeScheduleType::DistrictOnly &&
-    plans_vec[0].num_regions != ndists;
+    plan_ensemble.plan_ptr_vec[0]->num_regions != ndists;
     bool const counties_on = map_params.num_counties > 1;
 
     
-    // create thread pool
-    if (num_threads <= 0) num_threads = std::thread::hardware_concurrency();
-    if (num_threads == 1) num_threads = 0;
 
-    RcppThread::ThreadPool pool(num_threads);
 
     arma::vec log_weights(num_plans, arma::fill::none);
 
-    const int nsims = static_cast<int>(plans_vec.size());
+    const int nsims = plan_ensemble.nsims;
     const int check_int = 50; // check for interrupts every _ iterations
 
     RcppThread::ProgressBar bar(nsims, 1);
@@ -186,10 +207,15 @@ arma::vec compute_plans_log_optimal_weights(
         static thread_local std::vector<int> pair_eff_bounary_counts(
             (num_regions*(num_regions-1))/2, -1
         );
+        std::fill(
+            pair_eff_bounary_counts.begin(),
+            pair_eff_bounary_counts.end(),
+            -1
+        );
         // first make sure if counties are on then the plan doesn't
         // have an illegal number of splits 
         if(counties_on){
-            auto county_splits_result = county_components.count_county_splits(plans_vec[i]);
+            auto county_splits_result = county_components.count_county_splits(*plan_ensemble.plan_ptr_vec[i]);
             // check number of counties is valid and no double county intersect region components
             // if too many then log(0) = -Inf
             if(county_splits_result.second > num_regions - 1){
@@ -201,17 +227,22 @@ arma::vec compute_plans_log_optimal_weights(
                     i);
                 throw Rcpp::exception("Plan has at least one region intersect county with more than 1 connected component!\n");
             }
-            county_components.build_component_graph_and_tree(plans_vec[i].region_ids);
+            county_components.build_component_graph_and_tree(plan_ensemble.plan_ptr_vec[i]->region_ids);
         }
 
-        auto adj_pairs_ignoring_county = plans_vec[i].get_or_count_valid_adj_regions_ignore_counties(
+        auto adj_pairs_ignoring_county = plan_ensemble.plan_ptr_vec[i]->get_or_count_valid_adj_regions_ignore_counties(
                 map_params, *splitting_schedule_ptr, false
                 ).second;
         REprintf("Size intially was %u\n", adj_pairs_ignoring_county.size());
+        REprintf("Adjacent regions: ");
+        for(auto const &a_pair: adj_pairs_ignoring_county){
+            REprintf("(%d, %d), ", a_pair.first, a_pair.second);
+        }
+        REprintf("\n");
         // dangerous but removing invalid pairs while iterating over 
         auto it = adj_pairs_ignoring_county.begin();
 
-        while(it != adj_pairs_ignoring_county.end()) {
+        while(it != adj_pairs_ignoring_county.end()){
             bool pair_ok = !county_components.counties_on || county_components.check_merging_regions_is_ok(
                 it->first, it->second
             );
@@ -222,6 +253,8 @@ arma::vec compute_plans_log_optimal_weights(
                 REprintf(" is ok!\n");
                 // mark this as pair to check 
                 pair_eff_bounary_counts[index_from_ordered_pair(it->first, it->second, num_regions)] = 0;
+                REprintf("Index %d, value %d\n",index_from_ordered_pair(it->first, it->second, num_regions),
+                     pair_eff_bounary_counts[index_from_ordered_pair(it->first, it->second, num_regions)]);
                 // increase iterator 
                 ++it;
             }else{
@@ -232,60 +265,31 @@ arma::vec compute_plans_log_optimal_weights(
         }
         REprintf("Size now is %u\n", adj_pairs_ignoring_county.size());
 
-        // auto adj_pairs_ignoring_county = plans_vec[i].get_or_count_valid_adj_regions_ignore_counties(
-        //     map_params, *splitting_schedule_ptr, false
-        // ).second;
-
-        // std::vector<std::pair<int,int>> ok_pairs;
-
-        //     // create the hash map
-        // std::unordered_map<std::pair<int, int>, int, bounded_hash> region_pair_map(
-        //     adj_pairs_ignoring_county.size(), 
-        //     bounded_hash(plans_vec[i].num_regions)
-        //     );
-
-        // for(const auto &a_pair: adj_pairs_ignoring_county){
-        //     // REprintf("Starting Regions (%d, %d):\n",
-        //         // a_pair.first, a_pair.second);
-        //     auto result = county_components.check_merging_regions_is_ok(
-        //         plans_vec[i], a_pair.first, a_pair.second
-        //     );
-        //     REprintf("Regions (%d, %d): ",
-        //         a_pair.first, a_pair.second);
-        //     if(result){
-        //         REprintf(" is ok!\n");
-        //         pair_eff_bounary_counts[index_from_ordered_pair(a_pair.first, a_pair.second, num_regions)] = 0;
-        //         region_pair_map[a_pair] = 0;
-        //         ok_pairs.push_back(a_pair);
-        //     }else{
-        //         REprintf(" is not ok!\n");
-        //     }
-        // }
 
         auto new_results_map = new_boundary_counting(
             map_params, pair_eff_bounary_counts, 
-            plans_vec[i].region_ids, num_regions,
+            plan_ensemble.plan_ptr_vec[i]->region_ids, num_regions,
              county_components
         );
 
 
-        REprintf("\nBoundary Length Maps: ");
+        REprintf("\nBoundary Length Maps:\n");
         for(const auto &map_pair: adj_pairs_ignoring_county){
-            REprintf("(%d, %d) - %d, ",
+            REprintf("(%d, %d) - %d, \n",
                 map_pair.first, map_pair.second,
                 pair_eff_bounary_counts[index_from_ordered_pair(map_pair.first, map_pair.second, num_regions)]);
         }
         REprintf("\n");
 
-        // REprintf("I=%d\n", i);
-        // log_weights(i) = compute_log_optimal_weights(
-        //     map_params, *splitting_schedule_ptr, sampling_space,
-        //     scoring_function, rho,
-        //     plans_vec.at(i), 
-        //     tree_splitter,
-        //     compute_log_splitting_prob,
-        //     is_final
-        // );
+        REprintf("I=%d\n", i);
+        log_weights(i) = compute_log_optimal_weights(
+            map_params, *splitting_schedule_ptr, sampling_space,
+            scoring_function, rho,
+            *plan_ensemble.plan_ptr_vec[i], 
+            tree_splitter, county_components,
+            false,
+            is_final
+        );
 
         ++bar;
 

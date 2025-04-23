@@ -19,6 +19,7 @@ vertices_visited(counties_on ? map_params.V : 0),
 components_visited(counties_on ? max_possible_num_componets : 0),
 merged_components_visited(counties_on ? max_possible_num_componets : 0),
 component_pairs_visited(counties_on ? max_possible_num_componets*max_possible_num_componets : 0),
+counties_component_adj(counties_on ? (map_params.num_counties * (map_params.num_counties-1)) / 2 : 0),
 county_component_graph(counties_on ? max_possible_num_componets : 0),
 region_vertices(counties_on ? num_regions : 0),
 region_component_counts(counties_on ? num_regions : 0),
@@ -241,6 +242,7 @@ std::pair<bool, int> CountyComponents::count_county_splits(
         vertices_visited.end(), 
         false
     );
+    
 
     
 
@@ -441,4 +443,162 @@ bool CountyComponents::count_county_boundary(
     }
 
     return true;
+}
+
+
+bool CountyComponents::check_is_county_component_multigraph_valid(
+    Graph &county_graph
+){
+    // reset graph 
+    for (size_t i = 0; i < map_params.num_counties; i++)
+    {
+        county_graph[i].clear();
+    }
+    
+    // reset component adj
+    std::fill(
+        counties_component_adj.begin(), 
+        counties_component_adj.end(), 
+        false
+    ); 
+    // reset visited vector 
+    std::fill(
+        components_visited.begin(), 
+        components_visited.end(), 
+        false
+    );
+    // now we walk through the graph 
+    std::queue<CountyComponentVertex> vertex_queue;
+    // start at region 0
+    vertex_queue.push(region_vertices[0]);
+    
+
+
+    while(!vertex_queue.empty()){
+        // 
+        CountyComponentVertex current_vertex = vertex_queue.front(); 
+        vertex_queue.pop();
+        // get the county of this component 
+        CountyID current_county = std::get<2>(current_vertex);
+        RegionID current_region = std::get<1>(current_vertex);
+        auto current_vertex_id = std::get<0>(current_vertex);
+        // mark as visited
+        components_visited[current_vertex_id] = true;
+        // now we check its children 
+        for(auto const &child_vertex: county_component_graph[current_vertex_id]){
+            auto child_vertex_id = std::get<0>(child_vertex);
+            auto child_region = std::get<1>(child_vertex);
+            auto child_county = std::get<2>(child_vertex);
+            // check if the child shares the same region but not the same county 
+            // and current component index less than child to avoid double counting 
+            if(current_region == child_region && 
+                current_county != child_county &&
+                current_vertex_id < child_vertex_id
+            ){
+                    // REprintf("Regions (%u, %u), County (%u, %u)\n",
+                        // current_region, child_region, current_county, child_county);
+                    // REprintf("(Region %u, County %u) and (Region %u, County %u)\n",
+                    //     current_region, current_county, child_region, child_county
+                    // );
+                    // REprintf("(County %u) and (County %u)\n",
+                    //     current_county, child_county
+                    // );
+                    // check if this county pair has already been visited 
+                    auto pair_index= index_from_ordered_pair(
+                        std::min(child_county, current_county), 
+                        std::max(child_county, current_county), 
+                        map_params.num_counties);
+                    // if true it means these counties already have an index between them 
+                    // and so this is illegal
+                    if(counties_component_adj[pair_index]){
+                        // REprintf("Caught!\n");
+                        return false;
+                    }else{
+                        // else mark as true 
+                        counties_component_adj[pair_index] = true;
+                        // add this edge to the county graph 
+                        county_graph[child_county].push_back(current_county);
+                        county_graph[current_county].push_back(child_county);
+                    } 
+                }
+            // add if not visited 
+            if(!components_visited[child_vertex_id]){
+                // mark as visited to avoid being added later  
+                components_visited[child_vertex_id] = true;
+                // REprintf("Adding (%u, %u)\n", child_region, std::get<2>(child_vertex));
+                vertex_queue.push(child_vertex);
+            }
+        }
+
+    }
+    // now reuse this for visited county graph 
+    std::fill(
+        counties_component_adj.begin(), 
+        counties_component_adj.end(), 
+        false
+    );
+    // print graph 
+    // for (size_t i = 0; i < map_params.num_counties; i++)
+    // {
+    //     REprintf("%u: ", i);
+    //     for(const auto &el: county_graph[i]){
+    //         REprintf("%u, ", el);
+    //     }
+    //     REprintf("\n");
+    // }
+    
+    // return true;
+
+    // now we check the graph for cycles 
+    for (int u = 0; u < map_params.num_counties; u++)
+    {
+        // skip if we've already visited somehwere else 
+        if(counties_component_adj[u]) continue;
+
+        // else we look through this connected component
+        std::queue<std::pair<int,int>> vertex_queue;
+        vertex_queue.push({u, -1});
+
+        while(!vertex_queue.empty()){
+            
+            auto current_entry = vertex_queue.front(); 
+            vertex_queue.pop();
+            int current_vertex = current_entry.first;
+            int parent = current_entry.second;
+            // Rprintf("v=%d, parent=%d\n",current_vertex, parent);
+            // if we already visited this then that means there's a cycle
+            if(counties_component_adj[current_vertex]){
+                // Rprintf("Cycle!\n");
+                return false;
+            } 
+            // else mark as visited 
+            counties_component_adj[current_vertex] = true;
+            // now we add all the children
+            for(auto const &child_vertex: county_graph[current_vertex]){
+                // ignore if the parent
+                if(child_vertex == parent){
+                    continue;
+                }else{
+                    vertex_queue.push({child_vertex, current_vertex});
+                }
+            }
+        }
+    }
+    return true;
+
+}
+
+
+bool CountyComponents::check_valid_hiearchical_plan(Plan const &plan,
+    Graph &county_graph){
+    if(!counties_on) return true;
+    // first we check if the number of splits and connected components is ok
+    std::pair<bool, int> component_results = count_county_splits(plan);
+    if(component_results.first || component_results.second > num_regions-1) return false;
+
+    // if thats ok then build the component tree 
+    build_component_graph_and_tree(plan.region_ids);
+
+    // now check the restricted county graph of that 
+    return check_is_county_component_multigraph_valid(county_graph);
 }

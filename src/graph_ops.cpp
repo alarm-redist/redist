@@ -148,10 +148,13 @@ RegionMultigraph get_region_multigraph(
         uniqueElements.insert(element);
     }
 
-    PlanVector region_id_vec(
+    AllPlansVector underlying_id_vec(
         region_ids.begin(),
         region_ids.end()
     );
+
+    PlanVector region_id_vec(underlying_id_vec, 0, underlying_id_vec.size()-1);
+
 
     int num_regions = uniqueElements.size();
     return(build_region_multigraph(

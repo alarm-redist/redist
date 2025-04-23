@@ -18,7 +18,7 @@
 #include "map_calc.h"
 #include "splitting.h"
 #include "merging.h"
-#include "graph_plan_type.h"
+#include "redist_alg_helpers.h"
 
 
 
@@ -60,7 +60,8 @@ List draw_a_tree_on_a_region(
     int ndists, int num_regions, int num_districts,
     int region_id_to_draw_tree_on,
     double lower, double upper,
-    arma::umat region_ids, arma::umat region_sizes,
+    Rcpp::IntegerMatrix const &region_ids, 
+    Rcpp::IntegerMatrix const &region_sizes,
     bool verbose
 );
 
@@ -80,22 +81,23 @@ List perform_a_valid_multidistrict_split(
     int ndists, int num_regions, int num_districts,
     int region_id_to_split,
     double target, double lower, double upper,
-    arma::umat region_ids, arma::umat region_sizes,
+    Rcpp::IntegerMatrix const &region_ids, 
+    Rcpp::IntegerMatrix const &region_sizes,
     int split_dval_min, int split_dval_max, bool split_district_only,
     bool verbose = false, int k_param = 1
 );
 
-// [[Rcpp::export]]
-List perform_merge_split_steps(
-        List adj_list, const arma::uvec &counties, const arma::uvec &pop,
-        int k_param,
-        double target, double lower, double upper,
-        int ndists, int num_regions, int num_districts,
-        arma::umat region_ids, arma::umat region_sizes,
-        std::vector<int> region_pops,
-        bool split_district_only, int num_merge_split_steps,
-        bool verbose
-);
+// FORMERLY [[Rcpp WAS ::export]]
+// List perform_merge_split_steps(
+//         List adj_list, const arma::uvec &counties, const arma::uvec &pop,
+//         int k_param,
+//         double target, double lower, double upper,
+//         int ndists, int num_regions, int num_districts,
+//         arma::umat region_ids, arma::umat region_sizes,
+//         std::vector<int> region_pops,
+//         bool split_district_only, int num_merge_split_steps,
+//         bool verbose
+// );
 
 
 // [[Rcpp::export]]
@@ -116,7 +118,8 @@ List attempt_splits_on_a_region(
     int const ndists, int const init_num_regions,
     int const region_id_to_split, 
     double const lower, double const target, double const upper,
-    arma::umat const &region_ids, arma::umat const &region_sizes,
+    Rcpp::IntegerMatrix const &region_ids, 
+    Rcpp::IntegerMatrix const &region_sizes,
     std::string const &splitting_schedule_str, int const k_param,
     int const num_plans, int num_threads,
     bool const verbose

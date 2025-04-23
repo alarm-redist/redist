@@ -33,7 +33,8 @@ constexpr uint MAX_SUPPORTED_COUNTYREGION_VALUE = static_cast<unsigned int>(
 ); 
 
 //
-typedef std::vector<RegionID> PlanVector;
+typedef std::vector<RegionID> AllPlansVector;
+typedef std::vector<RegionID> AllRegionSizesVector;
 typedef std::vector<RegionID> RegionSizeVector;
 typedef std::vector<std::vector<VertexID>> VertexGraph; // graphs on vertices
 typedef std::vector<std::unordered_map<int, int>> RegionMultigraph;
@@ -44,6 +45,59 @@ typedef std::vector<std::vector<CountyComponentVertex>> CountyComponentGraph;
 typedef std::vector<std::vector<int>> Tree;
 typedef std::vector<std::vector<int>> Graph;
 typedef std::vector<std::vector<std::vector<int>>> Multigraph;
+
+
+
+// This is a template class for storing plan attributes 
+// in a way to minimize memory 
+template <typename T> class PlanAttribute {
+    private:
+        int offset_start; // starting index for this subset of vector 
+        int offset_end; // end index for this subset of vector 
+        std::vector<T> &long_vec; // ref to underlying long vector 
+    
+    public:
+        PlanAttribute(std::vector<T> &long_vec, int offset_start, int offset_end):
+        offset_start(offset_start), offset_end(offset_end), long_vec(long_vec)
+        {};
+
+        // methods for accessing 
+        // Const version for read-only access
+        const T operator[](int index) const {
+            // return long_vec[offset_start + index];
+            return long_vec.at(offset_start + index);
+        };
+        // non constant for modification 
+        T& operator [](int index) {
+            // return long_vec[offset_start + index];
+            return long_vec.at(offset_start + index);
+        };
+
+        // Non-const iterator accessors
+        auto begin() { return long_vec.begin() + offset_start; }
+        auto end() { return long_vec.begin() + offset_end; }
+
+        // Const iterator accessors
+        auto begin() const { return long_vec.begin() + offset_start; }
+        auto end() const { return long_vec.begin() + offset_end; }
+
+        // This copies one plans data from another 
+        void copy(PlanAttribute const &other_attr){
+            std::copy(
+                other_attr.begin(),
+                other_attr.end(),
+                begin()
+            );
+        }
+
+        std::size_t size() const noexcept{return offset_end - offset_start + 1;};
+
+};
+
+typedef PlanAttribute<RegionID> PlanVector;
+typedef PlanAttribute<RegionID> RegionSizes;
+typedef PlanAttribute<int> IntPlanAttribute;
+
 
 // uniquely maps pairs (x,y) of the form 
 // 0 <= x < y < container_size

@@ -30,6 +30,7 @@ public:
     std::vector<bool> components_visited;
     std::vector<bool> merged_components_visited;
     std::vector<bool> component_pairs_visited;
+    std::vector<bool> counties_component_adj; // used for checking if there's more than one edge between counties on the components graph
     
     CountyComponentGraph county_component_graph;
     std::vector<CountyComponentVertex> region_vertices; // gives the vertex of some component of each region
@@ -47,6 +48,15 @@ public:
     // counts splits in a plan and checks if any county intersect district has more than 1 
     // connected component 
     std::pair<bool, int> count_county_splits(Plan const &plan);
+
+    // given the number of splits and components is ok 
+    // checks the component graph reduced to a county multigraph is ok
+    bool check_is_county_component_multigraph_valid(Graph &county_graph);
+
+    // checks if a plan is possible to generate hiearchically with 
+    // respect to the given counties 
+    bool check_valid_hiearchical_plan(Plan const &plan, 
+        Graph &county_graph);
 
     // checks if two adjacent regions can be merged
     bool check_merging_regions_is_ok(

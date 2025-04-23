@@ -1,3 +1,6 @@
+#pragma once
+#ifndef GRAPH_PLAN_TYPE_H
+#define GRAPH_PLAN_TYPE_H
 
 #include "base_plan_type.h"
 #include "tree_op.h"
@@ -32,9 +35,6 @@ public:
         TreeSplitter const &tree_splitter, 
         const int region1_id, int const region2_id
     ) const override;
-
-    // Clone method to create a copy of the ForestPlan object
-    std::unique_ptr<Plan> deep_clone() const override {
-        return std::make_unique<GraphPlan>(*this); // Copy the entire object
-    }
 };
+
+#endif

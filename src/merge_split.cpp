@@ -23,7 +23,7 @@ void select_pair(int n_distr, const Graph &dist_g, int &i, int &j, RNGState &rng
  * Choose k and multiplier for efficient, accurate sampling
  */
 int adapt_ms_parameters(const Graph &g, int n_distr, double thresh,
-                         double tol, arma::subview_col<arma::uword> const &plan, const uvec &counties,
+                         double tol, PlanVector const &region_ids, const uvec &counties,
                          Multigraph const &cg, const uvec &pop, double target,
                          RNGState &rng_state) {
     if(DEBUG_PURE_MS_VERBOSE) Rprintf("Estimation checkpint 1!");
@@ -31,7 +31,7 @@ int adapt_ms_parameters(const Graph &g, int n_distr, double thresh,
     // sample some spanning trees and compute deviances
     int V = g.size();
     // IN FUTURE USE MY OWN FUNCTION THIS HAS INEXING ERRORS
-    Graph dist_g = district_graph(g, plan, n_distr, true);
+    Graph dist_g = district_graph(g, region_ids, n_distr, true);
     int k_max = std::min(20 + ((int) std::sqrt(V)), V - 1); // heuristic
     int N_adapt = (int) std::floor(4000.0 / sqrt((double) V));
     
@@ -53,7 +53,7 @@ int adapt_ms_parameters(const Graph &g, int n_distr, double thresh,
         select_pair(n_distr, dist_g, distr_1, distr_2, rng_state);
         int n_vtx = 0;
         for (int j = 0; j < V; j++) {
-            if (plan(j) == distr_1 || plan(j) == distr_2) {
+            if (region_ids[j] == distr_1 || region_ids[j] == distr_2) {
                 joint_pop += pop(j);
                 ignore[j] = false;
                 n_vtx++;
@@ -123,17 +123,17 @@ int adapt_ms_parameters(const Graph &g, int n_distr, double thresh,
  * population deviation is between `lower` and `upper` (and ideally `target`)
  */
 Rcpp::List ms_plans(
-    int nsims, int warmup, int thin, 
+    int const nsims, int const warmup, int const thin, 
     int const ndists, List const &adj_list,
     const arma::uvec &counties, const arma::uvec &pop,
     double const target, double const lower, double const upper,
-    double rho, // compactness 
-    arma::umat region_id_mat, arma::umat region_sizes_mat,
+    double const rho, // compactness 
+    Rcpp::IntegerMatrix const &initial_plan, Rcpp::IntegerMatrix const &initial_region_sizes,
     std::string const &sampling_space_str, // sampling space (graphs, forest, etc)
     std::string const &merge_prob_type, // method for setting probability of picking a pair to merge
     List const &control, // control has pop temper, and k parameter value, and whether only district splits are allowed
     List const &constraints, // constraints 
-    int verbosity, bool diagnostic_mode
+    int const verbosity, bool const diagnostic_mode
 ) {
     if(DEBUG_PURE_MS_VERBOSE) Rprintf("Checkpoint 1!\n");
     Rcpp::List out; // return 
@@ -142,25 +142,20 @@ Rcpp::List ms_plans(
     RNGState rng_state(global_rng_seed, 42);
     // Set the sampling space 
     SamplingSpace sampling_space = get_sampling_space(sampling_space_str);
-    bool use_graph_plan_space = sampling_space == SamplingSpace::GraphSpace;
     bool save_edge_selection_prob = sampling_space == SamplingSpace::LinkingEdgeSpace;
     // TODO: Legacy, in future remove
     global_seed_rng((int) Rcpp::sample(INT_MAX, 1)[0]);
 
-    // there should only be one column in this matrix 
-    if(region_id_mat.n_cols != 1){
-        throw Rcpp::exception("Should only be 1 column in initial plan");
+    // make sure both are 1 column matrix
+    if(initial_plan.ncol() > 1 || initial_region_sizes.ncol() > 1){
+        throw Rcpp::exception("Error!\n");
     }
 
-    // get the number of implied regions in the plans
-    std::unordered_set<arma::uword> unique_values;
-    for (size_t i = 0; i < region_id_mat.n_rows; ++i) {
-        unique_values.insert(region_id_mat(i,0));
-    }
-    int initial_num_regions = static_cast<int>(unique_values.size());
-    if(region_sizes_mat.n_rows != initial_num_regions){
-        REprintf("Inferred %d Initial Regions but Region Sizes Matrix has %d columns!\n",
-            initial_num_regions, region_sizes_mat.n_rows);
+
+    int initial_num_regions = static_cast<int>(ndists);
+    if(initial_region_sizes.nrow() != initial_num_regions){
+        REprintf("Inferred %d Initial Regions but Region Sizes Matrix has %u columns!\n",
+            initial_num_regions, initial_region_sizes.nrow());
         throw Rcpp::exception("Initial plan region sizes should match number of regions");
     }
     if(DEBUG_PURE_MS_VERBOSE) Rprintf("Checkpoint 2!\n");
@@ -211,34 +206,26 @@ Rcpp::List ms_plans(
 
     if(DEBUG_PURE_MS_VERBOSE) Rprintf("Checkpoint 3!\n");
 
-    std::unique_ptr<Plan> current_plan_ptr;
-    std::unique_ptr<Plan> proposed_plan_ptr;
 
     bool split_district_only;
 
-    if(sampling_space == SamplingSpace::GraphSpace){
-        current_plan_ptr = std::make_unique<GraphPlan>(
-            region_id_mat.col(0), region_sizes_mat.col(0), 
-            ndists, ndists,
-            map_params.pop, split_district_only
-        );
-    }else if(sampling_space == SamplingSpace::ForestSpace){
-        current_plan_ptr = std::make_unique<ForestPlan>(
-            region_id_mat.col(0), region_sizes_mat.col(0), 
-            ndists, ndists,
-            map_params.pop, split_district_only
-        );
-    }else if(sampling_space == SamplingSpace::LinkingEdgeSpace){
-        current_plan_ptr = std::make_unique<LinkingEdgePlan>(
-            region_id_mat.col(0), region_sizes_mat.col(0), 
-            ndists, ndists,
-            map_params.pop, split_district_only
-        );
-    }else{
-        throw Rcpp::exception("Inputted Sampling Space not supported!\n");
-    }
-    // now make a deep clone
-    proposed_plan_ptr = current_plan_ptr->deep_clone();
+    // temp plan
+    RcppThread::ThreadPool pool(0);
+    // underlying vector from plan    
+    PlanEnsemble plan_ensemble = get_plan_ensemble(
+        V, ndists, initial_num_regions,
+        pop, 1, sampling_space,
+        initial_plan, initial_region_sizes,
+        pool 
+    );
+    // now get for proposal plan
+    PlanEnsemble proposal_plan_ensemble = get_plan_ensemble(
+        V, ndists, initial_num_regions,
+        pop, 1, sampling_space,
+        initial_plan, initial_region_sizes,
+        pool 
+    );
+
 
     // splitter
     std::unique_ptr<TreeSplitter> tree_splitter_ptr = get_tree_splitters(
@@ -255,7 +242,7 @@ Rcpp::List ms_plans(
             double tol = std::max(target - lower, upper - target) / target;
             cut_k = adapt_ms_parameters(
                 map_params.g, ndists, thresh, tol, 
-                region_id_mat.col(0), 
+                plan_ensemble.plan_ptr_vec[0]->region_ids, 
                 counties, map_params.cg, pop, target, rng_state);
             if(verbosity >= 3){
                 Rcout << " Using estimated k = " << cut_k << ")\n";
@@ -290,11 +277,11 @@ Rcpp::List ms_plans(
     int post_warump_acceptances = 0;
 
     // Get pairs of adj districts
-    std::vector<std::pair<int,int>> current_plan_adj_region_pairs = current_plan_ptr->get_valid_adj_regions(
+    std::vector<std::pair<int,int>> current_plan_adj_region_pairs = plan_ensemble.plan_ptr_vec[0]->get_valid_adj_regions(
         map_params, *splitting_schedule_ptr, false
     );
     arma::vec current_plan_pair_unnoramalized_wgts = get_adj_pair_unnormalized_weights(
-        *current_plan_ptr,
+        *plan_ensemble.plan_ptr_vec[0],
         current_plan_adj_region_pairs,
         merge_prob_type
     );
@@ -345,7 +332,7 @@ Rcpp::List ms_plans(
         std::tuple<bool, bool, double, int> mergesplit_result = attempt_mergesplit_step(
             map_params, *splitting_schedule_ptr, scoring_function,
             rng_state, sampling_space,
-            *current_plan_ptr, *proposed_plan_ptr, 
+            *plan_ensemble.plan_ptr_vec[0], *proposal_plan_ensemble.plan_ptr_vec[0], 
             ust_sampler, *tree_splitter_ptr,
             merge_prob_type, save_edge_selection_prob,
             current_plan_adj_region_pairs,
@@ -360,14 +347,14 @@ Rcpp::List ms_plans(
             // Copy the plan into the matrix 
             // since a Plan's region IDs are associated with 
             std::copy(
-                current_plan_ptr->region_ids.begin(), 
-                current_plan_ptr->region_ids.end(),
+                plan_ensemble.plan_ptr_vec[0]->region_ids.begin(), 
+                plan_ensemble.plan_ptr_vec[0]->region_ids.end(),
                 saved_plans_mat.column(current_plan_mat_col).begin() // Start of column in Rcpp::IntegerMatrix
             );
             if(diagnostic_mode){
                 std::copy(
-                    proposed_plan_ptr->region_ids.begin(), 
-                    proposed_plan_ptr->region_ids.end(),
+                    proposal_plan_ensemble.plan_ptr_vec[0]->region_ids.begin(), 
+                    proposal_plan_ensemble.plan_ptr_vec[0]->region_ids.end(),
                     proposed_plans_mat.column(current_plan_mat_col).begin() // Start of column in Rcpp::IntegerMatrix
                 );
             }

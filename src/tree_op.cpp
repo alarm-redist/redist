@@ -37,7 +37,7 @@ int rnbor(const Graph &g, int vtx, RNGState &rng_state) {
  * Make the district adjacency graph for `plan` from the overall precinct graph `g`
  */
 // TESTED
-Graph district_graph(const Graph &g, const uvec &plan, int nd, bool zero) {
+Graph district_graph(const Graph &g, PlanVector const &region_ids, int nd, bool zero) {
     int V = g.size();
     std::vector<std::vector<bool>> gr_bool;
     for (int i = 0; i < nd; i++) {
@@ -47,9 +47,9 @@ Graph district_graph(const Graph &g, const uvec &plan, int nd, bool zero) {
 
     for (int i = 0; i < V; i++) {
         std::vector<int> nbors = g[i];
-        int dist_i = plan[i] - 1 + zero;
+        int dist_i = region_ids[i] - 1 + zero;
         for (int nbor : nbors) {
-            int dist_j = plan[nbor] - 1 + zero;
+            int dist_j = region_ids[nbor] - 1 + zero;
             if (dist_j != dist_i) {
                 gr_bool[dist_i][dist_j] = true;
             }

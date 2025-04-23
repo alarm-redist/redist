@@ -18,9 +18,6 @@
 #include "scoring.h"
 #include "redist_alg_helpers.h"
 #include "base_plan_type.h"
-#include "graph_plan_type.h"
-#include "forest_plan_type.h"
-#include "linking_edge_plan_type.h"
 #include "ust_sampler.h"
 #include "merging.h"
 
@@ -33,17 +30,17 @@
  */
 // [[Rcpp::export]]
 Rcpp::List ms_plans(
-    int nsims, int warmup, int thin, 
+    int const nsims, int const warmup, int const thin, 
     int const ndists, List const &adj_list,
     const arma::uvec &counties, const arma::uvec &pop,
     double const target, double const lower, double const upper,
-    double rho, // compactness 
-    arma::umat region_id_mat, arma::umat region_sizes_mat,
+    double const rho, // compactness 
+    Rcpp::IntegerMatrix const &initial_plan, Rcpp::IntegerMatrix const &initial_region_sizes,
     std::string const &sampling_space_str, // sampling space (graphs, forest, etc)
     std::string const &merge_prob_type, // method for setting probability of picking a pair to merge
     List const &control, // control has pop temper, and k parameter value, and whether only district splits are allowed
     List const &constraints, // constraints 
-    int verbosity = 3, bool diagnostic_mode = false
+    int const verbosity = 3, bool const diagnostic_mode = false
 );
 
 
@@ -51,7 +48,7 @@ Rcpp::List ms_plans(
  * Choose k and multiplier for efficient, accurate sampling
  */
 int adapt_ms_parameters(const Graph &g, int n_distr, double thresh,
-                         double tol, arma::subview_col<arma::uword> const &plan, const uvec &counties,
+                         double tol, PlanVector const &region_ids, const uvec &counties,
                          Multigraph const &cg, const uvec &pop, double target,
                          RNGState &rng_state);
 

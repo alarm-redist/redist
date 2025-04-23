@@ -36,7 +36,7 @@ int rnbor(const Graph &g, int vtx, RNGState &rng_state);
  * if `zero`=false then ignore zeros, otherwise map them to `nd`
  */
 // TESTED
-Graph district_graph(const Graph &g, const arma::uvec &plan, int nd, bool zero=false);
+Graph district_graph(const Graph &g, PlanVector const &region_ids, int nd, bool zero=false);
 
 
 

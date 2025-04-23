@@ -1,13 +1,18 @@
 #include "forest_plan_type.h"
 
 
-ForestPlan::ForestPlan(arma::subview_col<arma::uword> region_ids_col, 
-               arma::subview_col<arma::uword> region_sizes_col, 
-               int ndists, int num_regions, const arma::uvec &pop, 
-               bool split_district_only,
-              const Rcpp::List &initial_forest_adj_list):
-              Plan(region_ids_col, region_sizes_col, ndists, num_regions, pop, split_district_only){
-
+ForestPlan::ForestPlan(
+    int const V, int const ndists, int const num_regions,
+    int const nsim_number, const arma::uvec &pop,
+    AllPlansVector &all_plans_vec, 
+    AllRegionSizesVector &all_region_sizes_vec,
+    std::vector<int> &all_region_pops_vec,
+    std::vector<int> &all_region_order_added_vec,
+    const Rcpp::List &initial_forest_adj_list
+):
+Plan(V, ndists, num_regions, nsim_number, pop, 
+    all_plans_vec, all_region_sizes_vec, all_region_pops_vec, all_region_order_added_vec
+){
     if(num_regions == 1 || num_regions == ndists){
         forest_graph.resize(region_ids.size());
         // complete hueristic        

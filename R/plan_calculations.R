@@ -69,16 +69,17 @@ compute_log_target_density <- function(
 
 
     num_regions <- dplyr::n_distinct(plan_matrix[,1])
-
+    print(num_threads)
     unnormalized_log_density <- compute_log_unnormalized_plan_target_density(
         adj_list, counties, pop,
         constraints, pop_temper, rho,
-        ndists, num_regions,
+        ndists=ndists, num_regions=num_regions,
         lower=pop_bounds[1],
         target=pop_bounds[2],
         upper=pop_bounds[3],
-        plan_matrix-1L, sizes_matrix,
-        num_threads
+        region_ids=plan_matrix-1L,
+        region_sizes=sizes_matrix,
+        num_threads=num_threads
     )
 
     # check if anything was -Inf so probability 0

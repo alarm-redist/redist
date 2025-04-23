@@ -5,7 +5,7 @@
 * Purpose: SMC weight calculation related functions
 ********************************************************/
 
-constexpr bool DEBUG_WEIGHTS_VERBOSE = false; // Compile-time constant
+constexpr bool DEBUG_WEIGHTS_VERBOSE = true; // Compile-time constant
 #include "weights.h"
 
 
@@ -861,7 +861,6 @@ void compute_all_plans_log_optimal_weights(
 ){
     const int nsims = static_cast<int>(plans_ptr_vec.size());
     const int check_int = 50; // check for interrupts every _ iterations
-    Rprintf("About to start computing weights!");
     if(DEBUG_WEIGHTS_VERBOSE) Rprintf("About to start computing weights!");
     RcppThread::ProgressBar bar(nsims, 1);
     // Parallel thread pool where all objects in memory shared by default

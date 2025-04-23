@@ -14,19 +14,42 @@ VertexGraph LinkingEdgePlan::get_forest_adj(){
     return forest_graph;
 }
 
-LinkingEdgePlan::LinkingEdgePlan(arma::subview_col<arma::uword> region_ids_col, 
-    arma::subview_col<arma::uword> region_sizes_col, 
-    int ndists, int num_regions, const arma::uvec &pop, 
-    bool split_district_only,
-   const std::vector<std::tuple<int, int, double>> &initial_linking_edge_list
-): Plan(region_ids_col, region_sizes_col, ndists, num_regions, pop, split_district_only){
 
+LinkingEdgePlan::LinkingEdgePlan(int const V, int const ndists, int const nsim_number,
+    int const total_pop,
+    AllPlansVector &all_plans_vec, 
+    AllRegionSizesVector &all_region_sizes_vec,
+    std::vector<int> &all_region_pops_vec,
+    std::vector<int> &all_region_order_added_vec
+):
+    Plan(V, ndists, nsim_number, total_pop, 
+    all_plans_vec, all_region_sizes_vec, all_region_pops_vec, all_region_order_added_vec
+    )
+{
+    forest_graph.resize(V);
+    linking_edges.reserve(ndists-1);
+};
+
+LinkingEdgePlan::LinkingEdgePlan(
+    int const V, int const ndists, int const num_regions,
+    int const nsim_number, const arma::uvec &pop,
+    AllPlansVector &all_plans_vec, 
+    AllRegionSizesVector &all_region_sizes_vec,
+    std::vector<int> &all_region_pops_vec,
+    std::vector<int> &all_region_order_added_vec,
+    const std::vector<std::array<double, 3>> &linking_edges,
+    const Rcpp::List &initial_forest_adj_list
+):
+Plan(V, ndists, num_regions, nsim_number, pop, 
+    all_plans_vec, all_region_sizes_vec, all_region_pops_vec, all_region_order_added_vec
+){
+    throw Rcpp::exception("Custom linking edges not ready yet!");
     if(num_regions == 1 || num_regions == ndists){
-        linking_edges.reserve(ndists-1);
         forest_graph.resize(region_ids.size());
+        // complete hueristic        
     }else if(num_regions > 1){
-        throw Rcpp::exception("Custom linking edges not ready yet!");
-        linking_edges = initial_linking_edge_list;
+        throw Rcpp::exception("Custom forests not ready yet!");
+        // forest_graph = list_to_graph(initial_forest_adj_list);
     }    
 }
 

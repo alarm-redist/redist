@@ -87,26 +87,35 @@ protected:
     std::vector<std::tuple<int, int, double>> linking_edges;
 
 public:
-    // constructor 
-    Plan(arma::subview_col<arma::uword> region_ids_col, 
-        arma::subview_col<arma::uword> region_sizes_col, 
-        int ndists, int num_regions, const arma::uvec &pop, bool split_district_only
-    ); // constructor for plan
+    // constructor for a blank plan 
+    Plan(int const V, int const ndists, int const nsim_number,
+        int const total_pop,
+        AllPlansVector &all_plans_vec, 
+        AllRegionSizesVector &all_region_sizes_vec,
+        std::vector<int> &all_region_pops_vec,
+        std::vector<int> &all_region_order_added_vec
+   );
+   // constructor for partial plan (more than 1 region)
+    Plan(int const V, int const ndists, int const num_regions,
+        int const nsim_number, const arma::uvec &pop,
+        AllPlansVector &all_plans_vec, 
+        AllRegionSizesVector &all_region_sizes_vec,
+        std::vector<int> &all_region_pops_vec,
+        std::vector<int> &all_region_order_added_vec
+    ); 
 
-    // Virtual deep_clone method to create a copy of the object
-    virtual std::unique_ptr<Plan> deep_clone() const = 0;
     // shallow copy methods 
     void shallow_copy(Plan const &plan_to_copy);
 
     // attributes
     PlanVector region_ids;
-    RegionSizeVector region_sizes;
-    std::vector<int> region_pops; 
-    std::vector<int> region_added_order; 
+    RegionSizes region_sizes;
+    IntPlanAttribute region_pops;
+    IntPlanAttribute region_added_order;
     int num_regions; // Number of regions in the plan
     int region_order_max; 
 
-      
+
     
     virtual ~Plan() = default; 
 

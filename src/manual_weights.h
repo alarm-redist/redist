@@ -19,31 +19,33 @@
 #include "map_calc.h"
 #include "splitting.h"
 #include "merging.h"
-#include "graph_plan_type.h"
 #include "weights.h"
 #include "county_components.h"
+#include "redist_alg_helpers.h"
 
 
 
 // [[Rcpp::export]]
-arma::vec compute_plans_log_optimal_weights(
-    List adj_list, const arma::uvec &counties, const arma::uvec &pop,
-    List const &constraints, double pop_temper,  double rho,
-    std::string const &splitting_schedule_str,
-    int ndists, int num_regions,
-    double lower, double target, double upper,
-    arma::umat region_ids, arma::umat region_sizes,
+arma::vec compute_log_unnormalized_plan_target_density(
+    List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
+    List const &constraints, double const pop_temper,  double const rho,
+    int const ndists, int const num_regions,
+    double const lower, double const target, double const upper,
+    Rcpp::IntegerMatrix const &region_ids, 
+    Rcpp::IntegerMatrix const &region_sizes,
     int num_threads
 );
 
 
 // [[Rcpp::export]]
-arma::vec compute_log_unnormalized_plan_target_density(
-    List adj_list, const arma::uvec &counties, const arma::uvec &pop,
-    List const &constraints, double pop_temper,  double rho,
-    int ndists, int num_regions,
-    double lower, double target, double upper,
-    arma::umat region_ids, arma::umat region_sizes,
+arma::vec compute_plans_log_optimal_weights(
+    List const &adj_list, arma::uvec const &counties, arma::uvec const &pop,
+    List const &constraints, double const pop_temper,  double const rho,
+    std::string const &splitting_schedule_str,
+    int const ndists, int const num_regions,
+    double const lower, double const target, double const upper,
+    Rcpp::IntegerMatrix const &region_ids, 
+    Rcpp::IntegerMatrix const &region_sizes,
     int num_threads
 );
 

@@ -100,13 +100,17 @@ void Plan::check_inputted_region_ids(int ndists) const{
 // Define the constructor template outside the class
 // THIS ONLY CONSTRUCTS A ONE REGION MAP. ANYTHING ELSE MUST BE UPDATED
 Plan::Plan(
-    arma::subview_col<arma::uword> region_ids_col, 
-    arma::subview_col<arma::uword> region_sizes_col, 
-    int ndists, int num_regions, const arma::uvec &pop, bool split_district_only): 
-    region_ids(region_ids_col.begin(), region_ids_col.end()),
-    region_sizes(region_sizes_col.begin(), region_sizes_col.end()),
-    region_pops(ndists, 0),
-    region_added_order(ndists, -1),
+    int const V, int const ndists, int const num_regions,
+    int const nsim_number, const arma::uvec &pop,
+    AllPlansVector &all_plans_vec, 
+    AllRegionSizesVector &all_region_sizes_vec,
+    std::vector<int> &all_region_pops_vec,
+    std::vector<int> &all_region_order_added_vec
+): 
+    region_ids(all_plans_vec, V * nsim_number, V * nsim_number + V - 1),
+    region_sizes(all_region_sizes_vec, ndists * nsim_number, ndists * nsim_number + ndists - 1),
+    region_pops(all_region_pops_vec, ndists * nsim_number, ndists * nsim_number + ndists - 1),
+    region_added_order(all_region_order_added_vec, ndists * nsim_number, ndists * nsim_number + ndists - 1),
     num_regions(num_regions),
     region_order_max(ndists+1)
 {
@@ -130,10 +134,27 @@ Plan::Plan(
     // compute the population for each of the regions 
     for (size_t v = 0; v < region_ids.size(); v++)
     {
-        region_pops.at(region_ids[v]) += pop(v);
+        region_pops[region_ids[v]] += pop(v);
     }
 }
 
+
+Plan::Plan(int const V, int const ndists, int const nsim_number,
+    int const total_pop,
+    AllPlansVector &all_plans_vec, 
+    AllRegionSizesVector &all_region_sizes_vec,
+    std::vector<int> &all_region_pops_vec,
+    std::vector<int> &all_region_order_added_vec
+):
+    region_ids(all_plans_vec, V * nsim_number, V * nsim_number + V - 1),
+    region_sizes(all_region_sizes_vec, ndists * nsim_number, ndists * nsim_number + ndists - 1),
+    region_pops(all_region_pops_vec, ndists * nsim_number, ndists * nsim_number + ndists - 1),
+    region_added_order(all_region_order_added_vec, ndists * nsim_number, ndists * nsim_number + ndists - 1){
+    if (ndists < 2) throw Rcpp::exception("Tried to create a plan with ndists < 2 regions!");
+    region_pops[0] = total_pop;
+    region_sizes[0] = ndists;
+    all_region_order_added_vec[0] = 1;
+};
 
 // Plan::Plan(const Plan& other)
 //     : region_ids(other.region_ids), region_sizes(other.region_sizes) // Share the same reference
@@ -168,16 +189,16 @@ std::pair<int, int> Plan::get_most_recently_split_regions() const{
 
     // Iterate through the vector
     for (std::size_t i = 0; i < num_regions; ++i) {
-        if (region_added_order.at(i) > largest_value) {
+        if (region_added_order[i] > largest_value) {
             // Update second-largest before updating largest
             second_largest_value = largest_value;
             second_largest_index = largest_index;
 
-            largest_value = region_added_order.at(i);
+            largest_value = region_added_order[i];
             largest_index = i;
-        } else if (region_added_order.at(i) > second_largest_value) {
+        } else if (region_added_order[i] > second_largest_value) {
             // Update second-largest only
-            second_largest_value = region_added_order.at(i);
+            second_largest_value = region_added_order[i];
             second_largest_index = i;
         }
     }
@@ -254,7 +275,7 @@ void Plan::reorder_plan_by_oldest_split(
         old_region_id_to_new_vec[indices[i]] = i;
     }
 
-    dummy_plan.region_ids = region_ids;
+    dummy_plan.region_ids.copy(region_ids);
     // First we relabel all the region vertex ids
     for (size_t i = 0; i < this->region_ids.size(); i++)
     {
@@ -265,8 +286,8 @@ void Plan::reorder_plan_by_oldest_split(
 
     
     // Make some dummy plan attributes a shallow copy of the plan
-    dummy_plan.region_sizes = region_sizes;
-    dummy_plan.region_pops = region_pops;
+    dummy_plan.region_sizes.copy(region_sizes);
+    dummy_plan.region_pops.copy(region_pops);
 
     // Now we reorder the region dvals and population 
     for (size_t i = 0; i < this->num_regions; i++)
@@ -280,7 +301,7 @@ void Plan::reorder_plan_by_oldest_split(
         this->region_sizes[new_region_id] = dummy_plan.region_sizes[old_region_id];
         this->region_pops[new_region_id] = dummy_plan.region_pops[old_region_id];
         // Since the regions are in order of added reset the order added to just be 1,..., n
-        this->region_added_order.at(i) = i+1;
+        this->region_added_order[i] = i+1;
     }
 
     // reset the max region counter 
@@ -330,36 +351,19 @@ void Plan::shallow_copy(Plan const &plan_to_copy){
     num_regions = plan_to_copy.num_regions;
     region_order_max = plan_to_copy.region_order_max;
     // copy plan vector
-    std::copy(
-        plan_to_copy.region_ids.begin(),
-        plan_to_copy.region_ids.end(),
-        this->region_ids.begin()
-    );
+    region_ids.copy(plan_to_copy.region_ids);
     // copy the region sizes vector
-    std::copy(
-        plan_to_copy.region_sizes.begin(),
-        plan_to_copy.region_sizes.end(),
-        this->region_sizes.begin()
-    );
+    region_sizes.copy(plan_to_copy.region_sizes);
     // copy population
-    std::copy(
-        plan_to_copy.region_pops.begin(),
-        plan_to_copy.region_pops.end(),
-        this->region_pops.begin()
-    );
+    region_pops.copy(plan_to_copy.region_pops);
     // copy order added tracker
-    std::copy(
-        plan_to_copy.region_added_order.begin(),
-        plan_to_copy.region_added_order.end(),
-        this->region_added_order.begin()
-    );
+    region_added_order.copy(plan_to_copy.region_added_order);
     // if forest graph bigger than 1 copy that 
     if(forest_graph.size() > 0){
         for (auto i = 0; i < forest_graph.size(); ++i) {
-            std::copy(
+            forest_graph[i].assign(
                 plan_to_copy.forest_graph[i].begin(), 
-                plan_to_copy.forest_graph[i].end(), 
-                this->forest_graph[i].begin()
+                plan_to_copy.forest_graph[i].end()
             );
         }
     }
@@ -535,28 +539,19 @@ std::pair<int, std::vector<std::pair<int,int>>> Plan::get_or_count_valid_adj_reg
     MapParams const &map_params, SplittingSchedule const &splitting_schedule,
     bool const count_only
 ) const{
-    // 2D matrix for tracking if regions are adjacent 
-    // To save space we will only ever access with [smaller id][larger id]
-    // So it will be `num_regions-1` rows and row i will have num_regions-1
-    // elements and the second element will need to be 1 indexed so 
-    // subtract off 1 when accessing
-    std::vector<std::vector<bool>> is_valid_adj_pair(num_regions-1);
-
+    // tracks if we've visited each pair yet or not 
+    std::vector<bool> is_valid_adj_pair((num_regions * (num_regions-1))/2, false);
+    // output
     std::vector<std::pair<int,int>> valid_adj_pairs;
     int num_valid_adj_regions = 0;
 
-    for (size_t i = 0; i < num_regions-1; i++)
-    {
-        // for smaller value i there are num_regions-(i+1) larger values 
-        is_valid_adj_pair[i] = std::vector<bool>(num_regions-(i+1), false);
-    }
 
     int const V = map_params.V;
 
     for (int v = 0; v < V; v++) {
         // Find out which region this vertex corresponds to
-        int v_region_num = region_ids[v];
-        auto v_region_size = region_sizes[v_region_num];
+        int v_region = region_ids[v];
+        auto v_region_size = region_sizes[v_region];
 
         // check if its a region we want to find regions adjacent to 
         // and if not keep going
@@ -565,34 +560,36 @@ std::pair<int, std::vector<std::pair<int,int>>> Plan::get_or_count_valid_adj_reg
         }
 
         // now iterate over its neighbors
-        for (int v_nbor : map_params.g[v]) {
+        for (int u : map_params.g[v]) {
             // find which region neighbor corresponds to
-            int v_nbor_region_num = region_ids[v_nbor];
+            int u_region = region_ids[u];
 
             // ignore if they are in the same region
-            if(v_region_num == v_nbor_region_num) continue;
+            if(v_region == u_region) continue;
             // ignore if pair can't be merged
-            auto v_nbor_region_size = region_sizes[v_nbor_region_num];
-            if(!splitting_schedule.valid_merge_pair_sizes[v_region_size][v_nbor_region_size]) continue;
+            auto u_region_size = region_sizes[u_region];
+            if(!splitting_schedule.valid_merge_pair_sizes[v_region_size][u_region_size]) continue;
 
             // else they are different so regions are adj
             // check if we need to be aware of double counting. IE if both regions
             // are ones where check adjacent is true then its possible to double count edges
-            bool double_counting_not_possible = !splitting_schedule.check_adj_to_regions[v_nbor_region_size];
+            bool double_counting_not_possible = !splitting_schedule.check_adj_to_regions[u_region_size];
             // Rprintf("Neighbor size is %d and Double counting is %d\n", 
             //     (int) v_nbor_region_size, (int) double_counting_not_possible);
 
             // Now add this edge if either we can't double count it 
             // or `v_region_num` is the smaller of the pair 
-            if(double_counting_not_possible || v_region_num < v_nbor_region_num){
-                // Rprintf("Counting (%d,%d)\n", v, v_nbor);
-                int smaller_region_id  = std::min(v_nbor_region_num,v_region_num);
-                int bigger_region_id  = std::max(v_nbor_region_num,v_region_num);
+            if(double_counting_not_possible || v_region < u_region){
+                int smaller_region_id  = std::min(u_region, v_region);
+                int bigger_region_id  = std::max(u_region, v_region);
+                auto check_index = index_from_ordered_pair(smaller_region_id, bigger_region_id, num_regions);
 
                 // Check if we've counted this before 
-                if(!is_valid_adj_pair[smaller_region_id][bigger_region_id-1]){
+                if(!is_valid_adj_pair[check_index]){
+                    // Rprintf("Counting (%d,%d) which is (%u, %u) \n",
+                    //      v, u, v_region, u_region);
                     // If not increase the count by one and mark this as true 
-                    is_valid_adj_pair[smaller_region_id][bigger_region_id-1] = true;
+                    is_valid_adj_pair[check_index] = true;
                     ++num_valid_adj_regions;
                     // if we want the specific pairs then we also add that
                     if(!count_only){
@@ -603,6 +600,7 @@ std::pair<int, std::vector<std::pair<int,int>>> Plan::get_or_count_valid_adj_reg
             }
         }
     }
+
 
     return std::make_pair(num_valid_adj_regions, valid_adj_pairs);
 }
@@ -996,14 +994,14 @@ void Plan::update_region_info_from_cut(
     // Now update the region level information
     // updates the new region 1
     region_sizes[split_region1_id] = split_region1_size;
-    region_added_order.at(split_region1_id) = new_region1_order_added_num;
-    region_pops.at(split_region1_id) = split_region1_pop;
+    region_added_order[split_region1_id] = new_region1_order_added_num;
+    region_pops[split_region1_id] = split_region1_pop;
 
     // updates the new region 2
     // New region 2's id is the highest id number so push back
     region_sizes[split_region2_id] = split_region2_size;
-    region_added_order.at(split_region2_id) = new_region2_order_added_num;
-    region_pops.at(split_region2_id) = split_region2_pop;
+    region_added_order[split_region2_id] = new_region2_order_added_num;
+    region_pops[split_region2_id] = split_region2_pop;
 
 
 }
@@ -1032,4 +1030,5 @@ void Plan::update_from_successful_split(
     ); 
      
 }
+
 

@@ -133,8 +133,8 @@ generic_redist_gsmc <- function(
 
     # handle particle inits
     if (is.null(init_region_ids_mat)) {
-        init_region_ids_mat <- matrix(0L, nrow = V, ncol = nsims)
-        init_num_regions <-  1
+        # if no initial plans passed in then create empty matrix
+        init_region_ids_mat <- matrix(0L)
     } else { # if user input then check its valid
         init_num_regions <- length(unique(init_region_ids_mat[,1]))
         validate_initial_region_id_mat(init_region_ids_mat, V, nsims, init_num_regions)
@@ -149,9 +149,8 @@ generic_redist_gsmc <- function(
 
     # handle region size inits
     if (is.null(init_region_sizes_mat)) {
-        # initialize it so the first element of every column is ndists
-        init_region_sizes_mat <- matrix(0L, nrow = ndists, ncol = nsims)
-        init_region_sizes_mat[1,] <- ndists
+        # if no initial plans passed in then create empty matrix
+        init_region_sizes_mat <- matrix(0L)
     } else {
         validate_initial_region_sizes_mat(init_region_sizes_mat, ndists, nsims, init_num_regions)
     }
@@ -325,6 +324,7 @@ generic_redist_gsmc <- function(
 
         algout <- gredist::run_redist_gsmc(
             ndists=ndists,
+            initial_num_regions=init_num_regions,
             adj_list=adj_list,
             counties=counties,
             pop=pop,
@@ -333,13 +333,14 @@ generic_redist_gsmc <- function(
             lower=pop_bounds[1],
             upper=pop_bounds[3],
             rho=compactness,
-            region_id_mat = init_region_ids_mat,
-            region_sizes_mat = init_region_sizes_mat,
             sampling_space = sampling_space,
             control = control,
             constraints = constraints,
             verbosity=run_verbosity,
-            diagnostic_level=diagnostic_level)
+            diagnostic_level=diagnostic_level,
+            region_id_mat = init_region_ids_mat,
+            region_sizes_mat = init_region_sizes_mat
+        )
 
         if (length(algout) == 0) {
             cli::cli_process_done()

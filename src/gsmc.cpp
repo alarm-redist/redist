@@ -134,7 +134,7 @@ void run_smc_step(
     Rcpp::IntegerMatrix::Column parent_unsuccessful_tries_vec = smc_diagnostics.parent_unsuccessful_tries_mat.column(
         smc_step_num
     );
-
+    
     // count the sizes we draw trees on
     std::vector<std::vector<int>> thread_tree_sizes(rng_states.size(), 
         std::vector<int>(map_params.ndists, 0)
@@ -393,16 +393,18 @@ void run_merge_split_step_on_all_plans(
 //' running <ADD OPTIONS>
 //' @export
 List run_redist_gsmc(
-        int const ndists, List const &adj_list,
-        const arma::uvec &counties, const arma::uvec &pop,
-        Rcpp::CharacterVector const &step_types,
-        double const target, double const lower, double const upper,
-        double rho,
-        arma::umat const &region_id_mat, arma::umat const &region_sizes_mat,
-        std::string const &sampling_space_str, // sampling space (graphs, forest, etc)
-        List const &control, // control has pop temper, and k parameter value, and whether only district splits are allowed
-        List const &constraints, // constraints 
-        int verbosity, int diagnostic_level){
+    int const ndists, int const initial_num_regions, List const &adj_list,
+    arma::uvec const &counties, const arma::uvec &pop,
+    Rcpp::CharacterVector const &step_types,
+    double const target, double const lower, double const upper,
+    double const rho, // compactness 
+    std::string const &sampling_space_str, // sampling space (graphs, forest, etc)
+    List const &control, // control has pop temper, and k parameter value, and splitting method are allowed
+    List const &constraints, // constraints 
+    int const verbosity, int const diagnostic_level,
+    Rcpp::IntegerMatrix const &region_id_mat, 
+    Rcpp::IntegerMatrix const &region_sizes_mat
+){
     bool diagnostic_mode = diagnostic_level == 1;
     // set the number of threads
     int num_threads = (int) control["num_threads"];
@@ -425,16 +427,9 @@ List run_redist_gsmc(
     RNGState rng_state((int) Rcpp::sample(INT_MAX, 1)[0]);
     global_seed_rng((int) Rcpp::sample(INT_MAX, 1)[0]);
 
-    int nsims = static_cast<int>(region_id_mat.n_cols);
-    // get the number of implied regions in the plans
-    auto a_col = region_id_mat.col(0);
-    std::unordered_set<arma::uword> unique_values;
-    for (size_t i = 0; i < a_col.n_elem; ++i) {
-        unique_values.insert(a_col(i));
-    }
-    int initial_num_regions = static_cast<int>(unique_values.size());
+    int nsims = static_cast<int>(region_id_mat.ncol());
 
-    
+
     // unpack control params
     // lags thing (copied from original smc code, don't understand what its doing)
     std::vector<int> lags = as<std::vector<int>>(control["lags"]); arma::umat ancestors(nsims, lags.size(), fill::zeros);
@@ -530,20 +525,26 @@ List run_redist_gsmc(
         pop_temper);
 
 
-    // Create a vector of pointers to Plan objects
-    // b/c we're using abstract classes we must use pointers to the base class
-    std::vector<std::unique_ptr<Plan>> plans_ptr_vec; plans_ptr_vec.reserve(nsims);
-
     // Create a threadpool
     RcppThread::ThreadPool pool(num_threads);
 
     // Now we add everything here to a scope since it won't be needed for the end
-    
+    // create the ensemble 
+    PlanEnsemble plan_ensemble = get_plan_ensemble(
+        V, ndists, initial_num_regions,
+        pop, nsims, sampling_space,
+        region_id_mat, region_sizes_mat,
+        pool 
+    );
 
     {
-    // Create a vector of pointers to Plan objects
-    // b/c we're using abstract classes we must use pointers to the base class
-    std::vector<std::unique_ptr<Plan>> new_plans_ptr_vec; new_plans_ptr_vec.reserve(nsims);
+    // Ensemble of dummy plans for copying 
+    PlanEnsemble dummy_plan_ensemble = get_plan_ensemble(
+        V, ndists, initial_num_regions,
+        pop, nsims, sampling_space,
+        region_id_mat, region_sizes_mat,
+        pool 
+    );
 
     // Vector of splitters
     std::unique_ptr<TreeSplitter> tree_splitter_ptr = get_tree_splitters(
@@ -565,55 +566,6 @@ List run_redist_gsmc(
             k_params = as<std::vector<int>>(control["manual_k_params"]);
         }
     }
-
-    // Loop over each column of region_id_mat
-    for (size_t i = 0; i < region_id_mat.n_cols; ++i) {
-        // Create the underlying object for each unique pointer
-        if(sampling_space == SamplingSpace::GraphSpace){
-            plans_ptr_vec.emplace_back(
-                std::make_unique<GraphPlan>(
-                    region_id_mat.col(i), region_sizes_mat.col(i), 
-                    ndists, initial_num_regions,
-                    map_params.pop, split_district_only
-                ));
-            new_plans_ptr_vec.emplace_back(
-                std::make_unique<GraphPlan>(
-                    region_id_mat.col(i), region_sizes_mat.col(i), 
-                    ndists, initial_num_regions,
-                    map_params.pop, split_district_only
-                ));
-        use_graph_plan_space = true;
-        }else if(sampling_space == SamplingSpace::ForestSpace){
-            plans_ptr_vec.emplace_back(
-                std::make_unique<ForestPlan>(
-                    region_id_mat.col(i), region_sizes_mat.col(i), 
-                    ndists, initial_num_regions,
-                    map_params.pop, split_district_only
-                ));
-            new_plans_ptr_vec.emplace_back(
-                std::make_unique<ForestPlan>(
-                    region_id_mat.col(i), region_sizes_mat.col(i), 
-                    ndists, initial_num_regions,
-                    map_params.pop, split_district_only
-                ));
-        }else if(sampling_space == SamplingSpace::LinkingEdgeSpace){
-            plans_ptr_vec.emplace_back(
-                std::make_unique<LinkingEdgePlan>(
-                    region_id_mat.col(i), region_sizes_mat.col(i), 
-                    ndists, initial_num_regions,
-                    map_params.pop, split_district_only
-                ));
-            new_plans_ptr_vec.emplace_back(
-                std::make_unique<LinkingEdgePlan>(
-                    region_id_mat.col(i), region_sizes_mat.col(i), 
-                    ndists, initial_num_regions,
-                    map_params.pop, split_district_only
-                ));
-        }else{
-            throw Rcpp::exception("Input is invalid\n");
-        }
-    }
-
     // Define output variables that must always be created
 
     // Start off all the unnormalized weights at 1
@@ -684,7 +636,7 @@ List run_redist_gsmc(
 
             // set the splitting schedule 
             splitting_schedule_ptr->set_potential_cut_sizes_for_each_valid_size(
-                smc_step_num, plans_ptr_vec[0]->num_regions
+                smc_step_num, plan_ensemble.plan_ptr_vec[0]->num_regions
                 );
             
             // Print if needed
@@ -702,7 +654,7 @@ List run_redist_gsmc(
                     estimate_cut_k(
                         map_params, *splitting_schedule_ptr, rng_state, 
                         est_cut_k, last_k, unnormalized_sampling_weights, thresh,
-                        tol, plans_ptr_vec, 
+                        tol, plan_ensemble.plan_ptr_vec, 
                         split_district_only, verbosity);
                     if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Estimated cut k!\n");
                     k_params.at(smc_step_num) = est_cut_k;
@@ -732,7 +684,7 @@ List run_redist_gsmc(
             // split the map
             run_smc_step(map_params, *splitting_schedule_ptr,
                 rng_states, sampling_space,
-                plans_ptr_vec, new_plans_ptr_vec, 
+                plan_ensemble.plan_ptr_vec, dummy_plan_ensemble.plan_ptr_vec, 
                 *tree_splitter_ptr,
                 normalized_cumulative_weights,
                 smc_diagnostics,
@@ -750,8 +702,8 @@ List run_redist_gsmc(
             // Rcout << "Running SMC " << ms_doublef.count() << " ms\n";
             auto t1 = std::chrono::high_resolution_clock::now();
             bool compute_log_splitting_prob = splitting_schedule_ptr->schedule_type != SplittingSizeScheduleType::DistrictOnly &&
-            plans_ptr_vec[0]->num_regions != ndists;
-            bool is_final_plans = plans_ptr_vec[0]->num_regions == ndists;
+            plan_ensemble.plan_ptr_vec[0]->num_regions != ndists;
+            bool is_final_plans = plan_ensemble.plan_ptr_vec[0]->num_regions == ndists;
             
             if(wgt_type == "optimal"){
                 // TODO make more princicpal in the future 
@@ -761,7 +713,7 @@ List run_redist_gsmc(
                     pool,
                     map_params, *splitting_schedule_ptr, sampling_space,
                     scoring_function, rho,
-                    plans_ptr_vec, *tree_splitter_ptr,
+                    plan_ensemble.plan_ptr_vec, *tree_splitter_ptr,
                     compute_log_splitting_prob, is_final_plans,
                     smc_diagnostics.log_incremental_weights_mat.col(smc_step_num),
                     unnormalized_sampling_weights,
@@ -774,7 +726,7 @@ List run_redist_gsmc(
                     map_params, *splitting_schedule_ptr,
                     sampling_space,
                     scoring_function, rho,
-                    plans_ptr_vec, *tree_splitter_ptr,
+                    plan_ensemble.plan_ptr_vec, *tree_splitter_ptr,
                     compute_log_splitting_prob, is_final_plans,
                     smc_diagnostics.log_incremental_weights_mat.col(smc_step_num),
                     unnormalized_sampling_weights,
@@ -837,14 +789,14 @@ List run_redist_gsmc(
                     nsteps_to_run, nsteps_to_run*nsims);
             }
             // TODO REVISE FOR MMD
-            bool is_final = plans_ptr_vec[0]->num_regions == ndists;
+            bool is_final = plan_ensemble.plan_ptr_vec[0]->num_regions == ndists;
             // auto t1fm = high_resolution_clock::now();
             run_merge_split_step_on_all_plans(
                 pool,
                 map_params, *splitting_schedule_ptr, 
                 scoring_function,
                 rng_states, sampling_space, 
-                plans_ptr_vec, new_plans_ptr_vec,
+                plan_ensemble.plan_ptr_vec, dummy_plan_ensemble.plan_ptr_vec,
                 *tree_splitter_ptr,
                 merge_prob_type, 
                 rho, is_final,
@@ -892,7 +844,7 @@ List run_redist_gsmc(
                 !merge_split_step_vec[step_num],
                 sampling_space,
                 pool,
-                plans_ptr_vec, new_plans_ptr_vec,
+                plan_ensemble.plan_ptr_vec, dummy_plan_ensemble.plan_ptr_vec,
                 *splitting_schedule_ptr
             );
         }
@@ -912,7 +864,7 @@ List run_redist_gsmc(
 
     // if not diagnostic reorder the plans 
     if(!diagnostic_mode){
-        reorder_all_plans(pool, plans_ptr_vec, new_plans_ptr_vec);
+        reorder_all_plans(pool, plan_ensemble.plan_ptr_vec, dummy_plan_ensemble.plan_ptr_vec);
     }
     // end of scope
     }
@@ -926,7 +878,7 @@ List run_redist_gsmc(
 
     // copy the plans into the plan_mat for returning
     copy_plans_to_rcpp_mat(pool, 
-        plans_ptr_vec, 
+        plan_ensemble.plan_ptr_vec, 
         plan_mat,
         false);
 
@@ -935,11 +887,11 @@ List run_redist_gsmc(
     // if only sampling partial plans then return the size matrix
     if(!splitting_all_the_way){
         if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Getting ready to save region sizes!\n");
-        int num_final_regions = plans_ptr_vec.at(0)->num_regions;
+        int num_final_regions = plan_ensemble.plan_ptr_vec.at(0)->num_regions;
         plan_sizes_mat.emplace_back(num_final_regions, nsims);
         copy_plans_to_rcpp_mat(
             pool, 
-            plans_ptr_vec,
+            plan_ensemble.plan_ptr_vec,
             plan_sizes_mat.at(0),
             true);
         // Rcpp::IntegerMatrix plan_mat(V, nsims); // integer matrix to store final plans

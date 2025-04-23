@@ -11,6 +11,9 @@
 #include <RcppThread.h>
 
 #include "base_plan_type.h"
+#include "graph_plan_type.h"
+#include "forest_plan_type.h"
+#include "linking_edge_plan_type.h"
 #include "gredist_types.h"
 #include "tree_splitter_types.h"
 
@@ -71,6 +74,56 @@ std::unique_ptr<TreeSplitter> get_tree_splitters(
     SplittingMethodType const splitting_method,
     Rcpp::List const &control,
     int const nsims
+);
+
+
+
+// lightweight container for plans 
+class PlanEnsemble {
+
+    public:
+        // constructor for empty plans
+        PlanEnsemble(
+            int const V, int const ndists, 
+            int const total_pop, int const nsims, 
+            SamplingSpace const sampling_space
+        );
+        // constructor for non-empty starting plans 
+        PlanEnsemble(
+            int const V, int const ndists, int const num_regions,
+            arma::uvec const &pop, int const nsims, 
+            SamplingSpace const sampling_space,
+            Rcpp::IntegerMatrix const &plans_mat, 
+            Rcpp::IntegerMatrix const &region_sizes_mat,
+            RcppThread::ThreadPool &pool 
+        );
+
+        // descrutor
+        //~PlanEnsemble();
+    
+        int nsims;
+        std::vector<RegionID> flattened_all_plans;
+        std::vector<RegionID> flattened_all_region_sizes;
+        std::vector<int> flattened_all_region_pops;
+        std::vector<int> flattened_all_region_order_added;
+        std::vector<std::unique_ptr<Plan>> plan_ptr_vec;
+        
+        
+    
+    
+        // This 
+    
+    
+    
+};
+
+PlanEnsemble get_plan_ensemble(
+    int const V, int const ndists, int const num_regions,
+    arma::uvec const &pop, int const nsims, 
+    SamplingSpace const sampling_space,
+    Rcpp::IntegerMatrix const &plans_mat, 
+    Rcpp::IntegerMatrix const &region_sizes_mat,
+    RcppThread::ThreadPool &pool 
 );
 
 // [[Rcpp::export]]

@@ -19,6 +19,140 @@ Rcpp::List maximum_input_sizes(){
     return out;
 }
 
+
+// creates plan ensemble of blank plans
+PlanEnsemble::PlanEnsemble(
+    int const V, int const ndists, 
+    int const total_pop, int const nsims, 
+    SamplingSpace const sampling_space
+):
+    nsims(nsims), 
+    flattened_all_plans(V*nsims, 0),
+    flattened_all_region_sizes(ndists*nsims, 0),
+    flattened_all_region_pops(ndists*nsims, 0),
+    flattened_all_region_order_added(ndists*nsims, -1),
+    plan_ptr_vec(nsims)
+{
+    bool const use_graph_space = sampling_space == SamplingSpace::GraphSpace;
+    bool const use_forest_space = sampling_space == SamplingSpace::ForestSpace;
+    bool const use_linking_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
+    // create the plans 
+    for (int i = 0; i < nsims; i++)
+    {
+        if(use_graph_space){
+            plan_ptr_vec[i] = std::make_unique<GraphPlan>(
+                V, ndists, i, total_pop, 
+                flattened_all_plans, flattened_all_region_sizes,
+                flattened_all_region_pops, flattened_all_region_order_added
+            );
+        }else if(use_forest_space){
+            plan_ptr_vec[i] = std::make_unique<ForestPlan>(
+                V, ndists, i, total_pop, 
+                flattened_all_plans, flattened_all_region_sizes,
+                flattened_all_region_pops, flattened_all_region_order_added
+            );
+        }else if(use_linking_edge_space){
+            plan_ptr_vec[i] = std::make_unique<LinkingEdgePlan>(
+                V, ndists, i, total_pop, 
+                flattened_all_plans, flattened_all_region_sizes,
+                flattened_all_region_pops, flattened_all_region_order_added
+            );
+        }else{
+            throw Rcpp::exception("Input is invalid\n");
+        }
+    }
+    
+    
+}
+
+// creates plan ensemble of partial plans
+PlanEnsemble::PlanEnsemble(
+    int const V, int const ndists, int const num_regions,
+    arma::uvec const &pop, int const nsims,
+    SamplingSpace const sampling_space,
+    Rcpp::IntegerMatrix const &plans_mat, 
+    Rcpp::IntegerMatrix const &region_sizes_mat,
+    RcppThread::ThreadPool &pool 
+):    
+    nsims(nsims), 
+    flattened_all_plans(plans_mat.begin(), plans_mat.end()),
+    flattened_all_region_sizes(region_sizes_mat.begin(), region_sizes_mat.end()),
+    flattened_all_region_pops(ndists*nsims, 0),
+    flattened_all_region_order_added(ndists*nsims, -1),
+    plan_ptr_vec(nsims)
+{
+    REprintf("Its %d!\n", num_regions);
+    // check matrix dimensions 
+    if(plans_mat.ncol() != nsims){
+        REprintf("The number of columns (%u) in the initial plan matrix was not equal to nsims %d!\n",
+            plans_mat.ncol(), nsims
+        );
+    }
+    if(region_sizes_mat.ncol() != nsims){
+        REprintf("The number of columns (%u) in the initial sizes matrix  was not equal to nsims %d!\n",
+            region_sizes_mat.ncol(), nsims
+        );
+    }
+    if(plans_mat.nrow() != V){
+        REprintf("The number of rows (%u) in the initial plan matrix , was not equal to V %d!\n",
+            plans_mat.nrow(), V
+        );
+    }
+    if(region_sizes_mat.nrow() != ndists){
+        REprintf("The number of rows (%u) in the initial sizes matrix, was not equal to ndists %d!\n",
+            region_sizes_mat.nrow(), ndists
+        );
+    }
+
+
+    bool const use_graph_space = sampling_space == SamplingSpace::GraphSpace;
+    bool const use_forest_space = sampling_space == SamplingSpace::ForestSpace;
+    bool const use_linking_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
+
+    Rcpp::Rcout << "Loading Partial Plans" << std::endl;
+    RcppThread::ProgressBar bar(nsims, 1);
+    pool.parallelFor(0, nsims, [&] (int i) {
+        // create the plans 
+        if(use_graph_space){
+            plan_ptr_vec[i] = std::make_unique<GraphPlan>(
+                V, ndists, num_regions, 
+                i, pop, 
+                flattened_all_plans, flattened_all_region_sizes,
+                flattened_all_region_pops, flattened_all_region_order_added
+            );
+        }else{
+            throw Rcpp::exception("This plan type not supported!\n");
+        }
+        ++bar;
+    });
+    
+
+}
+
+
+// PlanEnsemble::~PlanEnsemble(){
+//     Rcpp::Rcout << "gone" << std::endl;
+// }
+
+PlanEnsemble get_plan_ensemble(
+    int const V, int const ndists, int const num_regions,
+    arma::uvec const &pop, int const nsims, 
+    SamplingSpace const sampling_space,
+    Rcpp::IntegerMatrix const &plans_mat, 
+    Rcpp::IntegerMatrix const &region_sizes_mat,
+    RcppThread::ThreadPool &pool 
+){
+    REprintf("Its %d!\n", num_regions);
+    if(num_regions == 1){
+        return PlanEnsemble(V, ndists, arma::sum(pop), nsims, sampling_space);
+    }else{
+        return PlanEnsemble(
+            V, ndists, num_regions, pop, nsims,
+            sampling_space, plans_mat, region_sizes_mat, 
+            pool);
+    }
+}
+
 //' Copies data from an arma Matrix into an Rcpp Matrix
 //'
 //' Takes an arma matrix subview and copies all the data into an RcppMatrix

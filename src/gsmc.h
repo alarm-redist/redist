@@ -20,9 +20,6 @@
 #include "merging.h"
 #include "weights.h"
 #include "redist_alg_helpers.h"
-#include "graph_plan_type.h"
-#include "forest_plan_type.h"
-#include "linking_edge_plan_type.h"
 #include "tree_splitter_types.h"
 #include "scoring.h"
 #include "ust_sampler.h"
@@ -57,16 +54,17 @@
 //' @keywords internal
 // [[Rcpp::export]]
 List run_redist_gsmc(
-        int const ndists, List const &adj_list,
-        const arma::uvec &counties, const arma::uvec &pop,
+        int const ndists, int const initial_num_regions, List const &adj_list,
+        arma::uvec const &counties, const arma::uvec &pop,
         Rcpp::CharacterVector const &step_types,
         double const target, double const lower, double const upper,
-        double rho, // compactness 
-        arma::umat const &region_id_mat, arma::umat const &region_sizes_mat,
+        double const rho, // compactness 
         std::string const &sampling_space_str, // sampling space (graphs, forest, etc)
-        List const &control, // control has pop temper, and k parameter value, and whether only district splits are allowed
+        List const &control, // control has pop temper, and k parameter value, and splitting method are allowed
         List const &constraints, // constraints 
-        int verbosity = 3, int diagnostic_level = 0
+        int const verbosity, int const diagnostic_level,
+        Rcpp::IntegerMatrix const &region_id_mat, 
+        Rcpp::IntegerMatrix const &region_sizes_mat
 );
 
 
