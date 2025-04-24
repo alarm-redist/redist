@@ -11,24 +11,24 @@ class ForestPlan : public Plan {
 
 public:
     // constructor for a blank plan 
-    ForestPlan(int const V, int const ndists, int const nsim_number,
+    ForestPlan(int const ndists,
         int const total_pop,
-        AllPlansVector &all_plans_vec, 
-        AllRegionSizesVector &all_region_sizes_vec,
-        std::vector<int> &all_region_pops_vec,
-        std::vector<int> &all_region_order_added_vec
+        PlanVector &this_plan_region_ids, 
+        RegionSizes &this_plan_region_sizes,
+        IntPlanAttribute &this_plan_region_pops,
+        IntPlanAttribute &this_plan_order_added
    ):
-    Plan(V, ndists, nsim_number, total_pop, 
-       all_plans_vec, all_region_sizes_vec, all_region_pops_vec, all_region_order_added_vec
-    ){forest_graph.resize(V);};
+    Plan(ndists, total_pop, 
+        this_plan_region_ids, this_plan_region_sizes, this_plan_region_pops, this_plan_order_added
+    ){forest_graph.resize(region_ids.size());};
 
    // constructor for partial plan (more than 1 region)
-   ForestPlan(int const V, int const ndists, int const num_regions,
-        int const nsim_number, const arma::uvec &pop,
-        AllPlansVector &all_plans_vec, 
-        AllRegionSizesVector &all_region_sizes_vec,
-        std::vector<int> &all_region_pops_vec,
-        std::vector<int> &all_region_order_added_vec,
+   ForestPlan(int const ndists, int const num_regions,
+        const arma::uvec &pop,
+        PlanVector &this_plan_region_ids, 
+        RegionSizes &this_plan_region_sizes,
+        IntPlanAttribute &this_plan_region_pops,
+        IntPlanAttribute &this_plan_order_added,
         const Rcpp::List &initial_forest_adj_list
     );
     

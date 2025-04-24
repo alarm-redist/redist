@@ -95,8 +95,8 @@ get_merged_log_number_linking_edges <- function(adj_list, region_ids, region1_id
 #' running <ADD OPTIONS>
 #' @export
 #' @keywords internal
-run_redist_gsmc <- function(ndists, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat) {
-    .Call(`_gredist_run_redist_gsmc`, ndists, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat)
+run_redist_gsmc <- function(nsims, ndists, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat) {
+    .Call(`_gredist_run_redist_gsmc`, nsims, ndists, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat)
 }
 
 log_st_map <- function(g, districts, counties, n_distr) {

@@ -5,7 +5,7 @@
 * Purpose: SMC weight calculation related functions
 ********************************************************/
 
-constexpr bool DEBUG_WEIGHTS_VERBOSE = true; // Compile-time constant
+constexpr bool DEBUG_WEIGHTS_VERBOSE = false; // Compile-time constant
 #include "weights.h"
 
 

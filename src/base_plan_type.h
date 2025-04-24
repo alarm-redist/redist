@@ -88,21 +88,21 @@ protected:
 
 public:
     // constructor for a blank plan 
-    Plan(int const V, int const ndists, int const nsim_number,
+    Plan(int const ndists,
         int const total_pop,
-        AllPlansVector &all_plans_vec, 
-        AllRegionSizesVector &all_region_sizes_vec,
-        std::vector<int> &all_region_pops_vec,
-        std::vector<int> &all_region_order_added_vec
+        PlanVector &this_plan_region_ids, 
+        RegionSizes &this_plan_region_sizes,
+        IntPlanAttribute &this_plan_region_pops,
+        IntPlanAttribute &this_plan_order_added
    );
    // constructor for partial plan (more than 1 region)
-    Plan(int const V, int const ndists, int const num_regions,
-        int const nsim_number, const arma::uvec &pop,
-        AllPlansVector &all_plans_vec, 
-        AllRegionSizesVector &all_region_sizes_vec,
-        std::vector<int> &all_region_pops_vec,
-        std::vector<int> &all_region_order_added_vec
-    ); 
+    Plan(int const ndists, int const num_regions,
+        const arma::uvec &pop,
+        PlanVector &this_plan_region_ids, 
+        RegionSizes &this_plan_region_sizes,
+        IntPlanAttribute &this_plan_region_pops,
+        IntPlanAttribute &this_plan_order_added
+    );
 
     // shallow copy methods 
     void shallow_copy(Plan const &plan_to_copy);

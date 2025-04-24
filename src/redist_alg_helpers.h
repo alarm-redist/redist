@@ -86,7 +86,8 @@ class PlanEnsemble {
         PlanEnsemble(
             int const V, int const ndists, 
             int const total_pop, int const nsims, 
-            SamplingSpace const sampling_space
+            SamplingSpace const sampling_space,
+            RcppThread::ThreadPool &pool
         );
         // constructor for non-empty starting plans 
         PlanEnsemble(

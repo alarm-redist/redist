@@ -393,7 +393,8 @@ void run_merge_split_step_on_all_plans(
 //' running <ADD OPTIONS>
 //' @export
 List run_redist_gsmc(
-    int const ndists, int const initial_num_regions, List const &adj_list,
+    int const nsims, int const ndists, int const initial_num_regions, 
+    List const &adj_list,
     arma::uvec const &counties, const arma::uvec &pop,
     Rcpp::CharacterVector const &step_types,
     double const target, double const lower, double const upper,
@@ -426,8 +427,6 @@ List run_redist_gsmc(
     // Legacy, in future remove
     RNGState rng_state((int) Rcpp::sample(INT_MAX, 1)[0]);
     global_seed_rng((int) Rcpp::sample(INT_MAX, 1)[0]);
-
-    int nsims = static_cast<int>(region_id_mat.ncol());
 
 
     // unpack control params

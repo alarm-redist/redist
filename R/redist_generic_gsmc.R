@@ -135,7 +135,13 @@ generic_redist_gsmc <- function(
     if (is.null(init_region_ids_mat)) {
         # if no initial plans passed in then create empty matrix
         init_region_ids_mat <- matrix(0L)
-    } else { # if user input then check its valid
+        init_num_regions <- 1L
+    } else {
+        # make sure size matrix passed in as well, inferring size not supported now
+        if(is.null(init_region_sizes_mat)){
+            cli::cli_abort("Initial Plans Matrix provided but no associated sizes. Inferring region sizes is not supported right now!")
+        }
+        # if user input then check its valid
         init_num_regions <- length(unique(init_region_ids_mat[,1]))
         validate_initial_region_id_mat(init_region_ids_mat, V, nsims, init_num_regions)
     }
@@ -323,6 +329,7 @@ generic_redist_gsmc <- function(
         t1_run <- Sys.time()
 
         algout <- gredist::run_redist_gsmc(
+            nsims=nsims,
             ndists=ndists,
             initial_num_regions=init_num_regions,
             adj_list=adj_list,

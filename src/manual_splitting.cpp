@@ -632,7 +632,8 @@ List attempt_splits_on_a_region(
 
     PlanEnsemble thread_plan_ensemble(
         map_params.V, ndists, arma::sum(pop),
-        num_threads, SamplingSpace::GraphSpace
+        num_threads, SamplingSpace::GraphSpace,
+        pool
     );
 
 

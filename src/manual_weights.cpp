@@ -21,7 +21,6 @@ arma::vec compute_log_unnormalized_plan_target_density(
     Rcpp::IntegerMatrix const &region_sizes,
     int num_threads
 ){
-    REprintf("Sup %d!\n", num_regions);
     // create the map param object
     MapParams map_params(adj_list, counties, pop, ndists, lower, target, upper);
     // Create the scoring function 
@@ -34,7 +33,6 @@ arma::vec compute_log_unnormalized_plan_target_density(
     RcppThread::ThreadPool pool(num_threads);
     // Create the plan objects
     int num_plans = region_ids.ncol();
-    REprintf("Sup %d!\n", num_regions);
     PlanEnsemble plan_ensemble(
         map_params.V, ndists, num_regions,
         pop, num_plans,
@@ -43,17 +41,13 @@ arma::vec compute_log_unnormalized_plan_target_density(
         region_sizes,
         pool 
     );
-    REprintf("Loaded!\n");
     
     // check if final splits (ie don't do pop_temper)
     bool is_final = num_regions == ndists;
-
-
     arma::vec log_unnormalized_density(num_plans, arma::fill::zeros);
-    return log_unnormalized_density;
 
     const int check_int = 50; // check for interrupts every _ iterations
-
+    Rcpp::Rcout << "Computing Log Target Density!" << std::endl;
     RcppThread::ProgressBar bar(num_plans, 1);
     pool.parallelFor(0, num_plans, [&] (int i) {
         static thread_local CountyComponents county_components(
@@ -64,8 +58,7 @@ arma::vec compute_log_unnormalized_plan_target_density(
         // auto county_splits_result = county_components.count_county_splits(plans_vec[i]);
         bool const hiearhically_valid = county_components.check_valid_hiearchical_plan(*plan_ensemble.plan_ptr_vec[i], county_graph);
         // check number of counties is valid and no double county intersect region components
-        // if too many then log(0) = -Inf
-        // if(county_splits_result.second > num_regions - 1 || county_splits_result.first){
+        // if too many then log(target) = -Inf
         if(!hiearhically_valid){
             log_unnormalized_density(i) = -arma::math::inf();
         }else{
@@ -80,11 +73,11 @@ arma::vec compute_log_unnormalized_plan_target_density(
             }
         }
         ++bar;
+        // if(i % check_int == 0) REprintf("%d\n", i);
         RcppThread::checkUserInterrupt(i % check_int == 0);
     });
 
     pool.wait();
-    REprintf("Done!\n");
 
     return log_unnormalized_density;
 }

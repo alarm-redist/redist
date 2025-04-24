@@ -2,16 +2,16 @@
 
 
 ForestPlan::ForestPlan(
-    int const V, int const ndists, int const num_regions,
-    int const nsim_number, const arma::uvec &pop,
-    AllPlansVector &all_plans_vec, 
-    AllRegionSizesVector &all_region_sizes_vec,
-    std::vector<int> &all_region_pops_vec,
-    std::vector<int> &all_region_order_added_vec,
+    int const ndists, int const num_regions,
+    const arma::uvec &pop,
+    PlanVector &this_plan_region_ids, 
+    RegionSizes &this_plan_region_sizes,
+    IntPlanAttribute &this_plan_region_pops,
+    IntPlanAttribute &this_plan_order_added,
     const Rcpp::List &initial_forest_adj_list
 ):
-Plan(V, ndists, num_regions, nsim_number, pop, 
-    all_plans_vec, all_region_sizes_vec, all_region_pops_vec, all_region_order_added_vec
+Plan(ndists, num_regions, pop, 
+    this_plan_region_ids, this_plan_region_sizes, this_plan_region_pops, this_plan_order_added
 ){
     if(num_regions == 1 || num_regions == ndists){
         forest_graph.resize(region_ids.size());

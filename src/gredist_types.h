@@ -52,25 +52,23 @@ typedef std::vector<std::vector<std::vector<int>>> Multigraph;
 // in a way to minimize memory 
 template <typename T> class PlanAttribute {
     private:
-        int offset_start; // starting index for this subset of vector 
-        int offset_end; // end index for this subset of vector 
+        int const offset_start; // starting index for this subset of vector 
+        int const offset_end; // end index for this subset of vector 
         std::vector<T> &long_vec; // ref to underlying long vector 
     
     public:
-        PlanAttribute(std::vector<T> &long_vec, int offset_start, int offset_end):
-        offset_start(offset_start), offset_end(offset_end), long_vec(long_vec)
+        PlanAttribute(std::vector<T> &underyling_long_vec, int offset_start, int offset_end):
+        offset_start(offset_start), offset_end(offset_end), long_vec(underyling_long_vec)
         {};
 
         // methods for accessing 
         // Const version for read-only access
         const T operator[](int index) const {
-            // return long_vec[offset_start + index];
-            return long_vec.at(offset_start + index);
+            return long_vec[offset_start + index];
         };
         // non constant for modification 
         T& operator [](int index) {
-            // return long_vec[offset_start + index];
-            return long_vec.at(offset_start + index);
+            return long_vec[offset_start + index];
         };
 
         // Non-const iterator accessors
@@ -90,7 +88,7 @@ template <typename T> class PlanAttribute {
             );
         }
 
-        std::size_t size() const noexcept{return offset_end - offset_start + 1;};
+        std::size_t size() const noexcept{return offset_end - offset_start;};
 
 };
 

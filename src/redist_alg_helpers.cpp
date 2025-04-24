@@ -24,7 +24,8 @@ Rcpp::List maximum_input_sizes(){
 PlanEnsemble::PlanEnsemble(
     int const V, int const ndists, 
     int const total_pop, int const nsims, 
-    SamplingSpace const sampling_space
+    SamplingSpace const sampling_space,
+    RcppThread::ThreadPool &pool
 ):
     nsims(nsims), 
     flattened_all_plans(V*nsims, 0),
@@ -37,30 +38,40 @@ PlanEnsemble::PlanEnsemble(
     bool const use_forest_space = sampling_space == SamplingSpace::ForestSpace;
     bool const use_linking_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
     // create the plans 
-    for (int i = 0; i < nsims; i++)
-    {
+    Rcpp::Rcout << "Creating Blank Plans!" << std::endl;
+    RcppThread::ProgressBar bar(nsims, 1);
+    pool.parallelFor(0, nsims, [&] (int i) {
+        // create the plan attributes for this specific plan
+        PlanVector plan_region_ids(flattened_all_plans, V * i, V * (i+1));
+        RegionSizes plan_sizes(flattened_all_region_sizes, ndists * i, ndists * (i+1));
+        IntPlanAttribute plan_pops(flattened_all_region_pops, ndists * i, ndists * (i+1));
+        IntPlanAttribute plan_region_order_added(flattened_all_region_order_added, ndists * i, ndists * (i+1));
+        // create the plans 
         if(use_graph_space){
             plan_ptr_vec[i] = std::make_unique<GraphPlan>(
-                V, ndists, i, total_pop, 
-                flattened_all_plans, flattened_all_region_sizes,
-                flattened_all_region_pops, flattened_all_region_order_added
+                ndists, total_pop, 
+                plan_region_ids, plan_sizes,
+                plan_pops, plan_region_order_added
             );
         }else if(use_forest_space){
             plan_ptr_vec[i] = std::make_unique<ForestPlan>(
-                V, ndists, i, total_pop, 
-                flattened_all_plans, flattened_all_region_sizes,
-                flattened_all_region_pops, flattened_all_region_order_added
+                ndists, total_pop, 
+                plan_region_ids, plan_sizes,
+                plan_pops, plan_region_order_added
             );
         }else if(use_linking_edge_space){
             plan_ptr_vec[i] = std::make_unique<LinkingEdgePlan>(
-                V, ndists, i, total_pop, 
-                flattened_all_plans, flattened_all_region_sizes,
-                flattened_all_region_pops, flattened_all_region_order_added
+                ndists, total_pop, 
+                plan_region_ids, plan_sizes,
+                plan_pops, plan_region_order_added
             );
         }else{
             throw Rcpp::exception("Input is invalid\n");
         }
-    }
+        ++bar;
+    });
+
+    pool.wait();
     
     
 }
@@ -81,7 +92,6 @@ PlanEnsemble::PlanEnsemble(
     flattened_all_region_order_added(ndists*nsims, -1),
     plan_ptr_vec(nsims)
 {
-    REprintf("Its %d!\n", num_regions);
     // check matrix dimensions 
     if(plans_mat.ncol() != nsims){
         REprintf("The number of columns (%u) in the initial plan matrix was not equal to nsims %d!\n",
@@ -104,29 +114,36 @@ PlanEnsemble::PlanEnsemble(
         );
     }
 
+    // Now move the data in the matrix 
+
 
     bool const use_graph_space = sampling_space == SamplingSpace::GraphSpace;
     bool const use_forest_space = sampling_space == SamplingSpace::ForestSpace;
     bool const use_linking_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
 
-    Rcpp::Rcout << "Loading Partial Plans" << std::endl;
+    Rcpp::Rcout << "Loading Partial Plans!" << std::endl;
     RcppThread::ProgressBar bar(nsims, 1);
     pool.parallelFor(0, nsims, [&] (int i) {
         // create the plans 
         if(use_graph_space){
+            // create the plan attributes for this specific plan
+            PlanVector plan_region_ids(flattened_all_plans, V * i, V * (i+1));
+            RegionSizes plan_sizes(flattened_all_region_sizes, ndists * i, ndists * (i+1));
+            IntPlanAttribute plan_pops(flattened_all_region_pops, ndists * i, ndists * (i+1));
+            IntPlanAttribute plan_region_order_added(flattened_all_region_order_added, ndists * i, ndists * (i+1));
             plan_ptr_vec[i] = std::make_unique<GraphPlan>(
-                V, ndists, num_regions, 
-                i, pop, 
-                flattened_all_plans, flattened_all_region_sizes,
-                flattened_all_region_pops, flattened_all_region_order_added
+                ndists, num_regions, pop, 
+                plan_region_ids, plan_sizes,
+                plan_pops, plan_region_order_added
             );
+
         }else{
             throw Rcpp::exception("This plan type not supported!\n");
         }
         ++bar;
     });
-    
 
+    pool.wait();
 }
 
 
@@ -144,7 +161,7 @@ PlanEnsemble get_plan_ensemble(
 ){
     REprintf("Its %d!\n", num_regions);
     if(num_regions == 1){
-        return PlanEnsemble(V, ndists, arma::sum(pop), nsims, sampling_space);
+        return PlanEnsemble(V, ndists, arma::sum(pop), nsims, sampling_space, pool);
     }else{
         return PlanEnsemble(
             V, ndists, num_regions, pop, nsims,

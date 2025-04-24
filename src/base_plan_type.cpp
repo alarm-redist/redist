@@ -92,25 +92,20 @@ void Plan::check_inputted_region_ids(int ndists) const{
     return;
 }
 
-// Define the constructor template outside the class
-// THIS ONLY CONSTRUCTS A ONE REGION MAP. ANYTHING ELSE MUST BE UPDATED
 
-// TODO: Need to add option to pass region population
 
-// Define the constructor template outside the class
-// THIS ONLY CONSTRUCTS A ONE REGION MAP. ANYTHING ELSE MUST BE UPDATED
-Plan::Plan(
-    int const V, int const ndists, int const num_regions,
-    int const nsim_number, const arma::uvec &pop,
-    AllPlansVector &all_plans_vec, 
-    AllRegionSizesVector &all_region_sizes_vec,
-    std::vector<int> &all_region_pops_vec,
-    std::vector<int> &all_region_order_added_vec
-): 
-    region_ids(all_plans_vec, V * nsim_number, V * nsim_number + V - 1),
-    region_sizes(all_region_sizes_vec, ndists * nsim_number, ndists * nsim_number + ndists - 1),
-    region_pops(all_region_pops_vec, ndists * nsim_number, ndists * nsim_number + ndists - 1),
-    region_added_order(all_region_order_added_vec, ndists * nsim_number, ndists * nsim_number + ndists - 1),
+// Constructs existing parital plan
+Plan::Plan(int const ndists, int const num_regions,
+    const arma::uvec &pop,
+    PlanVector &this_plan_region_ids, 
+    RegionSizes &this_plan_region_sizes,
+    IntPlanAttribute &this_plan_region_pops,
+    IntPlanAttribute &this_plan_order_added
+):
+    region_ids(this_plan_region_ids),
+    region_sizes(this_plan_region_sizes),
+    region_pops(this_plan_region_pops),
+    region_added_order(this_plan_order_added),
     num_regions(num_regions),
     region_order_max(ndists+1)
 {
@@ -119,7 +114,6 @@ Plan::Plan(
     if (region_sizes.size() != ndists) throw Rcpp::exception("The region dvals column passed in is not size ndists!");
 
  
-
     // now check these
     if (num_regions > ndists) throw Rcpp::exception("Tried to create a plan object with more regions than ndists!");
     if (num_regions == 0) throw Rcpp::exception("Tried to create a plan with 0 regions");
@@ -131,29 +125,32 @@ Plan::Plan(
         std::begin(region_added_order) + num_regions, 
         1); 
     
-    // compute the population for each of the regions 
+    // // compute the population for each of the regions 
     for (size_t v = 0; v < region_ids.size(); v++)
     {
         region_pops[region_ids[v]] += pop(v);
     }
-}
+};
 
-
-Plan::Plan(int const V, int const ndists, int const nsim_number,
+// assumes that the inputted attributes are all zero 
+Plan::Plan(int const ndists,
     int const total_pop,
-    AllPlansVector &all_plans_vec, 
-    AllRegionSizesVector &all_region_sizes_vec,
-    std::vector<int> &all_region_pops_vec,
-    std::vector<int> &all_region_order_added_vec
+    PlanVector &this_plan_region_ids, 
+    RegionSizes &this_plan_region_sizes,
+    IntPlanAttribute &this_plan_region_pops,
+    IntPlanAttribute &this_plan_order_added
 ):
-    region_ids(all_plans_vec, V * nsim_number, V * nsim_number + V - 1),
-    region_sizes(all_region_sizes_vec, ndists * nsim_number, ndists * nsim_number + ndists - 1),
-    region_pops(all_region_pops_vec, ndists * nsim_number, ndists * nsim_number + ndists - 1),
-    region_added_order(all_region_order_added_vec, ndists * nsim_number, ndists * nsim_number + ndists - 1){
+    region_ids(this_plan_region_ids),
+    region_sizes(this_plan_region_sizes),
+    region_pops(this_plan_region_pops),
+    region_added_order(this_plan_order_added),
+    num_regions(1),
+    region_order_max(ndists + 1)    
+{
     if (ndists < 2) throw Rcpp::exception("Tried to create a plan with ndists < 2 regions!");
     region_pops[0] = total_pop;
     region_sizes[0] = ndists;
-    all_region_order_added_vec[0] = 1;
+    region_added_order[0] = 1;
 };
 
 // Plan::Plan(const Plan& other)

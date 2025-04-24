@@ -69,7 +69,6 @@ compute_log_target_density <- function(
 
 
     num_regions <- dplyr::n_distinct(plan_matrix[,1])
-    print(num_threads)
     unnormalized_log_density <- compute_log_unnormalized_plan_target_density(
         adj_list, counties, pop,
         constraints, pop_temper, rho,
