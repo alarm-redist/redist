@@ -159,7 +159,6 @@ PlanEnsemble get_plan_ensemble(
     Rcpp::IntegerMatrix const &region_sizes_mat,
     RcppThread::ThreadPool &pool 
 ){
-    REprintf("Its %d!\n", num_regions);
     if(num_regions == 1){
         return PlanEnsemble(V, ndists, arma::sum(pop), nsims, sampling_space, pool);
     }else{
@@ -466,6 +465,12 @@ void SMCDiagnostics::add_full_step_diagnostics(
 
 
 void SMCDiagnostics::add_diagnostics_to_out_list(Rcpp::List &out){
+    // make parent index 1 indexed in place
+    std::transform(
+        parent_index_mat.begin(), parent_index_mat.end(), 
+        parent_index_mat.begin(), 
+        [](int x) { return x + 1; });
+
     out["acceptance_rates"] = acceptance_rates;
     out["draw_tries_mat"] = draw_tries_mat;
     out["parent_index"] = parent_index_mat;

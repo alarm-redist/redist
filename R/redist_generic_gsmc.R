@@ -352,13 +352,8 @@ generic_redist_gsmc <- function(
         if (length(algout) == 0) {
             cli::cli_process_done()
         }
+        print("Out!")
 
-
-
-        # add 1 to make it plans 1 indexed
-        algout$plans_mat <- algout$plans_mat + 1L
-        # add 1 to make parent mat  1-indexed for R indexing
-        algout$parent_index <- algout$parent_index + 1L
 
 
         # convert the order added results into an actual list of arrays where
@@ -384,6 +379,7 @@ generic_redist_gsmc <- function(
             # add plans as well
 
         }
+        print("Checkpoint 1!")
 
         # if no merge split was run them remove those attributes
         if(!any_ms_steps_ran){
@@ -392,7 +388,7 @@ generic_redist_gsmc <- function(
         }
 
         gc()
-
+        print("Checkpoint 2 - gc!")
 
         # turn it into a character vector
         algout$step_split_types <- ifelse(
@@ -417,7 +413,7 @@ generic_redist_gsmc <- function(
         wgt <- exp(lr - mean(lr))
         n_eff <- length(wgt)*mean(wgt)^2/mean(wgt^2)
 
-
+        print("Checkpoint 3 - weight and lr!")
         if (any(is.na(lr))) {
             cli_abort(c("Sampling probabilities have been corrupted.",
                         "*" = "Check that none of your constraint weights are too large.
@@ -466,13 +462,14 @@ generic_redist_gsmc <- function(
         }else{
             nunique_parent_indices <- algout$nunique_parent_indices
         }
-
+        print("Checkpoint 4 - after resample!")
 
         t2_run <- Sys.time()
         # get original ancestor matrix from parent index
         algout$original_ancestors_mat <- get_original_ancestors_mat(
             algout$parent_index
         )
+        print("Checkpoint 5 - after og anvestor mat!")
 
 
         # now for the smc step only diagnostics make it so
@@ -516,7 +513,7 @@ generic_redist_gsmc <- function(
         storage.mode(algout$original_ancestors_mat) <- "integer"
         storage.mode(algout$parent_index) <- "integer"
 
-
+        print("Checkpoint 6 - before various diagnostics!")
         # Internal diagnostics,
         algout$internal_diagnostics <- list(
             parent_index_mat = algout$parent_index,
@@ -580,7 +577,7 @@ generic_redist_gsmc <- function(
                  {format(t2-t1, digits=2)}")
     }
     #return(all_out)
-
+    print("Checkpoint 7 - Out of for loop!")
 
 
     plans <- do.call(cbind, lapply(all_out, function(x) x$plans))

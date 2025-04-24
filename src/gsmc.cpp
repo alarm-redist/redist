@@ -871,15 +871,23 @@ List run_redist_gsmc(
     if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Exiting main loop and going to do diagnostics!\n");
 
     Rcpp::IntegerMatrix plan_mat(V, nsims); // integer matrix to store final plans
-    std::vector<Rcpp::IntegerMatrix> plan_sizes_mat; // hacky way of potentially passing the plan sizes 
-    // mat as output if we are not splitting all the way 
-    plan_sizes_mat.reserve(1);
-
+    // add 1 to all the plans 
+    for (size_t i = 0; i < plan_ensemble.flattened_all_plans.size(); i++)
+    {
+        ++plan_ensemble.flattened_all_plans[i];
+    }
     // copy the plans into the plan_mat for returning
     copy_plans_to_rcpp_mat(pool, 
         plan_ensemble.plan_ptr_vec, 
         plan_mat,
         false);
+    // to try to save memory kill the vector 
+    plan_ensemble.flattened_all_plans.clear(); plan_ensemble.flattened_all_plans.shrink_to_fit();
+    
+
+    std::vector<Rcpp::IntegerMatrix> plan_sizes_mat; // hacky way of potentially passing the plan sizes 
+    // mat as output if we are not splitting all the way 
+    plan_sizes_mat.reserve(1);
 
     if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Plans saved!\n");
 
@@ -914,6 +922,7 @@ List run_redist_gsmc(
     // add all the diagnostics 
     smc_diagnostics.add_diagnostics_to_out_list(out);
 
+    if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Returning to R!\n");
     return out;
 
 }
