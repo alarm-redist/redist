@@ -493,3 +493,73 @@ void SMCDiagnostics::add_diagnostics_to_out_list(Rcpp::List &out){
 
     return;
 }
+
+
+// 
+Rcpp::IntegerVector resample_plans_lowvar(
+    Rcpp::NumericVector const &normalized_weights,
+    Rcpp::IntegerMatrix &plans_mat,
+    Rcpp::IntegerMatrix &region_sizes_mat,
+    bool const reorder_sizes_mat
+){
+    // generate resampling index
+    int const N = normalized_weights.size();
+
+    double r = GLOBAL_RNG.r_unif() / N;
+    double cuml = normalized_weights[0];
+    Rcpp::IntegerVector resample_index(N);
+    std::vector<bool> index_unchanged(N);
+
+    int i = 0;
+    for (int n = 0; n < N; n++) {
+        double u = r + n / (double) N;
+        while (u > cuml) {
+            cuml += normalized_weights[++i]; // increment then access
+        }
+        // resample_index maps entry i to its new value 
+        // `resample_index[i] = k` means you should replace plan i with plan k
+        resample_index[n] = i;
+    }
+    
+
+    // Now we're going to reorder things one row at a time 
+    // makes algout$plans[i] now equal to algout$plans[rs_idx[i]]
+    // so we're mapping i -> rs_idx[i]
+    std::vector<int> buffer(N);
+    int const nrow = plans_mat.nrow();
+    for (int row = 0; row < nrow; ++row) {
+        // copy current row
+        for (int col = 0; col < N; ++col) {
+          buffer[col] = plans_mat(row, col);
+        }
+        // write back in new order
+        for (int col = 0; col < N; ++col) {
+            plans_mat(row, col) = buffer[resample_index[col]];
+        }
+    }
+
+    // Reorder region sizes if needed 
+    if(reorder_sizes_mat){
+        std::vector<int> sizes_buffer(N);
+        int const nrow = region_sizes_mat.nrow();
+        for (int row = 0; row < nrow; ++row) {
+            // copy current row
+            for (int col = 0; col < N; ++col) {
+              sizes_buffer[col] = region_sizes_mat(row, col);
+            }
+            // write back in new order
+            for (int col = 0; col < N; ++col) {
+                region_sizes_mat(row, col) = sizes_buffer[resample_index[col]];
+            }
+        }
+    }
+
+    // make resampling thing 1 indexed
+    std::transform(
+        resample_index.begin(), resample_index.end(), 
+        resample_index.begin(), 
+        [](int x) { return x + 1; }
+    );
+
+    return resample_index;
+}

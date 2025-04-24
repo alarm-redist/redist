@@ -185,7 +185,6 @@ class SMCDiagnostics{
     std::vector<std::vector<int>> all_steps_valid_split_region_sizes;
     std::vector<Rcpp::IntegerMatrix> region_sizes_mat_list;
 
-
     // 
     void add_full_step_diagnostics(
         int const total_steps, bool const splitting_all_the_way,
@@ -203,5 +202,13 @@ class SMCDiagnostics{
 };
 
 
+// Resamples plans in place using weights 
+// [[Rcpp::export]]
+Rcpp::IntegerVector resample_plans_lowvar(
+    Rcpp::NumericVector const &normalized_weights,
+    Rcpp::IntegerMatrix &plans_mat,
+    Rcpp::IntegerMatrix &region_sizes_mat,
+    bool const reorder_sizes_mat
+);
 
 #endif

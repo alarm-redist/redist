@@ -731,6 +731,29 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// matrix_reorder_testing
+arma::imat matrix_reorder_testing(arma::imat& test_mat, arma::uvec const& reorder_vec);
+RcppExport SEXP _gredist_matrix_reorder_testing(SEXP test_matSEXP, SEXP reorder_vecSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::imat& >::type test_mat(test_matSEXP);
+    Rcpp::traits::input_parameter< arma::uvec const& >::type reorder_vec(reorder_vecSEXP);
+    rcpp_result_gen = Rcpp::wrap(matrix_reorder_testing(test_mat, reorder_vec));
+    return rcpp_result_gen;
+END_RCPP
+}
+// NEW_matrix_reorder_testing
+void NEW_matrix_reorder_testing(Rcpp::IntegerMatrix& test_mat, arma::uvec const& reorder_vec);
+RcppExport SEXP _gredist_NEW_matrix_reorder_testing(SEXP test_matSEXP, SEXP reorder_vecSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix& >::type test_mat(test_matSEXP);
+    Rcpp::traits::input_parameter< arma::uvec const& >::type reorder_vec(reorder_vecSEXP);
+    NEW_matrix_reorder_testing(test_mat, reorder_vec);
+    return R_NilValue;
+END_RCPP
+}
 // more_random_cpp_testing
 List more_random_cpp_testing();
 RcppExport SEXP _gredist_more_random_cpp_testing() {
@@ -824,6 +847,20 @@ BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     rcpp_result_gen = Rcpp::wrap(maximum_input_sizes());
+    return rcpp_result_gen;
+END_RCPP
+}
+// resample_plans_lowvar
+Rcpp::IntegerVector resample_plans_lowvar(Rcpp::NumericVector const& normalized_weights, Rcpp::IntegerMatrix& plans_mat, Rcpp::IntegerMatrix& region_sizes_mat, bool const reorder_sizes_mat);
+RcppExport SEXP _gredist_resample_plans_lowvar(SEXP normalized_weightsSEXP, SEXP plans_matSEXP, SEXP region_sizes_matSEXP, SEXP reorder_sizes_matSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector const& >::type normalized_weights(normalized_weightsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix& >::type plans_mat(plans_matSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix& >::type region_sizes_mat(region_sizes_matSEXP);
+    Rcpp::traits::input_parameter< bool const >::type reorder_sizes_mat(reorder_sizes_matSEXP);
+    rcpp_result_gen = Rcpp::wrap(resample_plans_lowvar(normalized_weights, plans_mat, region_sizes_mat, reorder_sizes_mat));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -1078,6 +1115,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_ms_plans", (DL_FUNC) &_gredist_ms_plans, 19},
     {"_gredist_pareto_dominated", (DL_FUNC) &_gredist_pareto_dominated, 1},
     {"_gredist_random_cpp_testing", (DL_FUNC) &_gredist_random_cpp_testing, 0},
+    {"_gredist_matrix_reorder_testing", (DL_FUNC) &_gredist_matrix_reorder_testing, 2},
+    {"_gredist_NEW_matrix_reorder_testing", (DL_FUNC) &_gredist_NEW_matrix_reorder_testing, 2},
     {"_gredist_more_random_cpp_testing", (DL_FUNC) &_gredist_more_random_cpp_testing, 0},
     {"_gredist_calc_county_dist_test", (DL_FUNC) &_gredist_calc_county_dist_test, 4},
     {"_gredist_calc_splits_test", (DL_FUNC) &_gredist_calc_splits_test, 4},
@@ -1086,6 +1125,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_runif1", (DL_FUNC) &_gredist_runif1, 2},
     {"_gredist_resample_lowvar", (DL_FUNC) &_gredist_resample_lowvar, 1},
     {"_gredist_maximum_input_sizes", (DL_FUNC) &_gredist_maximum_input_sizes, 0},
+    {"_gredist_resample_plans_lowvar", (DL_FUNC) &_gredist_resample_plans_lowvar, 4},
     {"_gredist_plan_joint", (DL_FUNC) &_gredist_plan_joint, 3},
     {"_gredist_renumber_matrix", (DL_FUNC) &_gredist_renumber_matrix, 2},
     {"_gredist_solve_hungarian", (DL_FUNC) &_gredist_solve_hungarian, 1},

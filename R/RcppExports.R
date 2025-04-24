@@ -231,6 +231,14 @@ random_cpp_testing <- function() {
     .Call(`_gredist_random_cpp_testing`)
 }
 
+matrix_reorder_testing <- function(test_mat, reorder_vec) {
+    .Call(`_gredist_matrix_reorder_testing`, test_mat, reorder_vec)
+}
+
+NEW_matrix_reorder_testing <- function(test_mat, reorder_vec) {
+    invisible(.Call(`_gredist_NEW_matrix_reorder_testing`, test_mat, reorder_vec))
+}
+
 more_random_cpp_testing <- function() {
     .Call(`_gredist_more_random_cpp_testing`)
 }
@@ -300,6 +308,10 @@ NULL
 
 maximum_input_sizes <- function() {
     .Call(`_gredist_maximum_input_sizes`)
+}
+
+resample_plans_lowvar <- function(normalized_weights, plans_mat, region_sizes_mat, reorder_sizes_mat) {
+    .Call(`_gredist_resample_plans_lowvar`, normalized_weights, plans_mat, region_sizes_mat, reorder_sizes_mat)
 }
 
 plan_joint <- function(m1, m2, pop) {

@@ -86,6 +86,7 @@ generic_redist_gsmc <- function(
         custom_size_split_list = NULL,
         num_splitting_steps = NULL,
         ref_name = NULL,
+        truncate = (compactness != 1), trunc_fn = redist_quantile_trunc,
         verbose = FALSE, silent = FALSE, diagnostic_level = 0,
         counties_q = NULL, use_counties_q = F)
 {
@@ -430,14 +431,32 @@ generic_redist_gsmc <- function(
 
 
         if (resample) {
+            # NOTE SURE WHAT IS GOING ON HERE????
+            # THINK CURRENT REDIST CODE IS BROKEN
+            # if (!truncate) {
+            #     mod_wgt <- wgt
+            # } else if (requireNamespace("loo", quietly = TRUE) && is.null(trunc_fn)) {
+            #     mod_wgt <- wgt/sum(wgt)
+            #     mod_wgt <- loo::weights.importance_sampling(
+            #         loo::psis(log(mod_wgt), r_eff = NA), log = FALSE)
+            # } else {
+            #     mod_wgt <- trunc_fn(wgt)
+            # }
+            # mod_wgt <- wgt/sum(wgt)
+            # n_eff <- 1/sum(mod_wgt^2)
+
             normalized_wgts <- wgt/sum(wgt)
             n_eff <- 1/sum(normalized_wgts^2)
 
-            rs_idx <- resample_lowvar(normalized_wgts)
+            # resample matrices in place
+            rs_idx <- resample_plans_lowvar(
+                normalized_wgts,
+                algout$plans_mat,
+                matrix(0L), FALSE
+            )
+            print("Checkpoint 3.5 - did in place reordering!")
 
             n_unique <- dplyr::n_distinct(rs_idx)
-            # makes algout$plans[i] now equal to algout$plans[rs_idx[i]]
-            algout$plans_mat <- algout$plans_mat[, rs_idx, drop = FALSE]
             # now adjust for the resampling
             algout$ancestors <- algout$ancestors[rs_idx, , drop = FALSE]
 
@@ -617,3 +636,20 @@ generic_redist_gsmc <- function(
     out
 
 }
+
+
+
+#' Helper function to truncate importance weights
+#'
+#' Defined as \code{pmin(x, quantile(x, 1 - length(x)^(-0.5)))}
+#'
+#' @param x the weights
+#'
+#' @return numeric vector
+#'
+#' @export
+#'
+#' @examples
+#' redist_quantile_trunc(c(1, 2, 3, 4))
+#'
+redist_quantile_trunc <- function(x) pmin(x, quantile(x, 1 - length(x)^(-0.5)))
