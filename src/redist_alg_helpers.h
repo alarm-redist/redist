@@ -87,7 +87,8 @@ class PlanEnsemble {
             int const V, int const ndists, 
             int const total_pop, int const nsims, 
             SamplingSpace const sampling_space,
-            RcppThread::ThreadPool &pool
+            RcppThread::ThreadPool &pool,
+            int const verbosity = 3
         );
         // constructor for non-empty starting plans 
         PlanEnsemble(
@@ -96,7 +97,8 @@ class PlanEnsemble {
             SamplingSpace const sampling_space,
             Rcpp::IntegerMatrix const &plans_mat, 
             Rcpp::IntegerMatrix const &region_sizes_mat,
-            RcppThread::ThreadPool &pool 
+            RcppThread::ThreadPool &pool,
+            int const verbosity = 3 
         );
 
         // descrutor
@@ -126,7 +128,8 @@ PlanEnsemble get_plan_ensemble(
     SamplingSpace const sampling_space,
     Rcpp::IntegerMatrix const &plans_mat, 
     Rcpp::IntegerMatrix const &region_sizes_mat,
-    RcppThread::ThreadPool &pool 
+    RcppThread::ThreadPool &pool,
+    int const verbosity
 );
 
 // [[Rcpp::export]]

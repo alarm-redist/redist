@@ -216,14 +216,14 @@ Rcpp::List ms_plans(
         V, ndists, initial_num_regions,
         pop, 1, sampling_space,
         initial_plan, initial_region_sizes,
-        pool 
+        pool, verbosity
     );
     // now get for proposal plan
     PlanEnsemble proposal_plan_ensemble = get_plan_ensemble(
         V, ndists, initial_num_regions,
         pop, 1, sampling_space,
         initial_plan, initial_region_sizes,
-        pool 
+        pool, verbosity
     );
 
 
@@ -347,8 +347,8 @@ Rcpp::List ms_plans(
             // Copy the plan into the matrix 
             // since a Plan's region IDs are associated with 
             std::copy(
-                plan_ensemble.plan_ptr_vec[0]->region_ids.begin(), 
-                plan_ensemble.plan_ptr_vec[0]->region_ids.end(),
+                plan_ensemble.flattened_all_plans.begin(), 
+                plan_ensemble.flattened_all_plans.end(),
                 saved_plans_mat.column(current_plan_mat_col).begin() // Start of column in Rcpp::IntegerMatrix
             );
             if(diagnostic_mode){
@@ -395,6 +395,12 @@ Rcpp::List ms_plans(
         "%" << std::endl;
     }
 
+    // now add 1 to plans 
+    std::transform(
+        saved_plans_mat.begin(), saved_plans_mat.end(), 
+        saved_plans_mat.begin(), 
+        [](int x) { return x + 1; }
+    );
     
     out["plans"] = saved_plans_mat;
     out["mhdecisions"] = mh_decisions;
@@ -405,6 +411,12 @@ Rcpp::List ms_plans(
     out["tree_sizes"] = tree_sizes;
 
     if(diagnostic_mode){
+        // now add 1 to plans 
+        std::transform(
+            proposed_plans_mat.begin(), proposed_plans_mat.end(), 
+            proposed_plans_mat.begin(), 
+            [](int x) { return x + 1; }
+        );
         out["proposed_plans"] = proposed_plans_mat;
     }
 

@@ -304,7 +304,7 @@ redist_mergesplit <- function(
         )
         t2_run <- Sys.time()
         # 1 index the plans
-        algout$plans <- algout$plans + 1L
+        algout$plans <- algout$plans
 
         # Internal diagnostics,
         algout$internal_diagnostics <- list(
@@ -316,7 +316,7 @@ redist_mergesplit <- function(
             postwarmup_accept_rate = algout$post_warump_acceptances / (nsims*thin),
             tree_sizes = algout$tree_sizes,
             successful_tree_sizes = algout$successful_tree_sizes,
-            proposed_plans = algout$proposed_plans + 1L
+            proposed_plans = algout$proposed_plans
         )
 
         algout$l_diag <- list(

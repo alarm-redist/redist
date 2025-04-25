@@ -25,7 +25,8 @@ PlanEnsemble::PlanEnsemble(
     int const V, int const ndists, 
     int const total_pop, int const nsims, 
     SamplingSpace const sampling_space,
-    RcppThread::ThreadPool &pool
+    RcppThread::ThreadPool &pool,
+    int const verbosity
 ):
     nsims(nsims), 
     V(V),
@@ -39,7 +40,9 @@ PlanEnsemble::PlanEnsemble(
     bool const use_forest_space = sampling_space == SamplingSpace::ForestSpace;
     bool const use_linking_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
     // create the plans 
-    Rcpp::Rcout << "Creating Blank Plans!" << std::endl;
+    if(verbosity >= 3){
+        Rcpp::Rcout << "Creating Blank Plans!" << std::endl;
+    }
     RcppThread::ProgressBar bar(nsims, 1);
     pool.parallelFor(0, nsims, [&] (int i) {
         // create the plan attributes for this specific plan
@@ -69,7 +72,9 @@ PlanEnsemble::PlanEnsemble(
         }else{
             throw Rcpp::exception("Input is invalid\n");
         }
-        ++bar;
+        if (verbosity >= 3) {
+            ++bar;
+        }
     });
 
     pool.wait();
@@ -84,7 +89,8 @@ PlanEnsemble::PlanEnsemble(
     SamplingSpace const sampling_space,
     Rcpp::IntegerMatrix const &plans_mat, 
     Rcpp::IntegerMatrix const &region_sizes_mat,
-    RcppThread::ThreadPool &pool 
+    RcppThread::ThreadPool &pool,
+    int const verbosity 
 ):    
     nsims(nsims), 
     V(V),
@@ -123,7 +129,10 @@ PlanEnsemble::PlanEnsemble(
     bool const use_forest_space = sampling_space == SamplingSpace::ForestSpace;
     bool const use_linking_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
 
-    Rcpp::Rcout << "Loading Partial Plans!" << std::endl;
+    if(verbosity >= 3){
+        Rcpp::Rcout << "Loading Partial Plans!" << std::endl;
+    }
+    
     RcppThread::ProgressBar bar(nsims, 1);
     pool.parallelFor(0, nsims, [&] (int i) {
         // create the plans 
@@ -142,7 +151,9 @@ PlanEnsemble::PlanEnsemble(
         }else{
             throw Rcpp::exception("This plan type not supported!\n");
         }
-        ++bar;
+        if(verbosity >= 3){
+            ++bar;
+        }
     });
 
     pool.wait();
@@ -177,15 +188,16 @@ PlanEnsemble get_plan_ensemble(
     SamplingSpace const sampling_space,
     Rcpp::IntegerMatrix const &plans_mat, 
     Rcpp::IntegerMatrix const &region_sizes_mat,
-    RcppThread::ThreadPool &pool 
+    RcppThread::ThreadPool &pool,
+    int const verbosity
 ){
     if(num_regions == 1){
-        return PlanEnsemble(V, ndists, arma::sum(pop), nsims, sampling_space, pool);
+        return PlanEnsemble(V, ndists, arma::sum(pop), nsims, sampling_space, pool, verbosity);
     }else{
         return PlanEnsemble(
             V, ndists, num_regions, pop, nsims,
             sampling_space, plans_mat, region_sizes_mat, 
-            pool);
+            pool, verbosity);
     }
 }
 

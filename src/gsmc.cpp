@@ -533,7 +533,7 @@ List run_redist_gsmc(
         V, ndists, initial_num_regions,
         pop, nsims, sampling_space,
         region_id_mat, region_sizes_mat,
-        pool 
+        pool, verbosity 
     );
 
     {
@@ -542,7 +542,7 @@ List run_redist_gsmc(
         V, ndists, initial_num_regions,
         pop, nsims, sampling_space,
         region_id_mat, region_sizes_mat,
-        pool 
+        pool, verbosity 
     );
 
     // Vector of splitters
