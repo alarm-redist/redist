@@ -39,8 +39,9 @@
 #' @export
 compute_log_target_density <- function(
         map, plan_matrix, sizes_matrix = NULL,
-        counties = NULL, constraints = list(),
-        num_threads = 0, rho = 1L, pop_temper = 0L
+        counties = NULL, compactness = 1L,
+        constraints = list(),
+        num_threads = 0, pop_temper = 0L
         ){
     ndists <- attr(map, "ndists")
     # if its just a single plan make it a matrix
@@ -71,7 +72,7 @@ compute_log_target_density <- function(
     num_regions <- dplyr::n_distinct(plan_matrix[,1])
     unnormalized_log_density <- compute_log_unnormalized_plan_target_density(
         adj_list, counties, pop,
-        constraints, pop_temper, rho,
+        constraints, pop_temper, rho=compactness,
         ndists=ndists, num_regions=num_regions,
         lower=pop_bounds[1],
         target=pop_bounds[2],
@@ -128,7 +129,7 @@ compute_log_optimal_weights <- function(
         map, plan_matrix, sizes_matrix = NULL,
         counties = NULL, constraints = list(),
         splitting_schedule = "any_valid_sizes",
-        num_threads = 0, rho = 1L, pop_temper = 0L
+        num_threads = 0, compactness = 1L, pop_temper = 0L
 ){
     ndists <- attr(map, "ndists")
     # if its just a single plan make it a matrix
@@ -160,7 +161,7 @@ compute_log_optimal_weights <- function(
 
     unnormalized_log_density <- compute_plans_log_optimal_weights(
         adj_list, counties, pop,
-        constraints, pop_temper, rho,
+        constraints, pop_temper, rho=compactness,
         splitting_schedule,
         ndists, num_regions=num_regions,
         lower=pop_bounds[1],

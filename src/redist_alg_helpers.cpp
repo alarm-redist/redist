@@ -28,6 +28,7 @@ PlanEnsemble::PlanEnsemble(
     RcppThread::ThreadPool &pool
 ):
     nsims(nsims), 
+    V(V),
     flattened_all_plans(V*nsims, 0),
     flattened_all_region_sizes(ndists*nsims, 0),
     flattened_all_region_pops(ndists*nsims, 0),
@@ -86,6 +87,7 @@ PlanEnsemble::PlanEnsemble(
     RcppThread::ThreadPool &pool 
 ):    
     nsims(nsims), 
+    V(V),
     flattened_all_plans(plans_mat.begin(), plans_mat.end()),
     flattened_all_region_sizes(region_sizes_mat.begin(), region_sizes_mat.end()),
     flattened_all_region_pops(ndists*nsims, 0),
@@ -146,6 +148,24 @@ PlanEnsemble::PlanEnsemble(
     pool.wait();
 }
 
+
+Rcpp::IntegerMatrix PlanEnsemble::get_R_plans_matrix(){
+    // make the plans matrix
+    Rcpp::IntegerMatrix plan_mat(V, nsims);
+    // copy data over
+    std::copy(
+        flattened_all_plans.begin(),
+        flattened_all_plans.end(),
+        plan_mat.begin()
+    );
+    // now add 1 to everything 
+    std::transform(
+        plan_mat.begin(), plan_mat.end(), 
+        plan_mat.begin(), 
+        [](int x) { return x + 1; }
+    );
+    return plan_mat;
+}
 
 // PlanEnsemble::~PlanEnsemble(){
 //     Rcpp::Rcout << "gone" << std::endl;
@@ -469,7 +489,8 @@ void SMCDiagnostics::add_diagnostics_to_out_list(Rcpp::List &out){
     std::transform(
         parent_index_mat.begin(), parent_index_mat.end(), 
         parent_index_mat.begin(), 
-        [](int x) { return x + 1; });
+        [](int x) { return x + 1; }
+    );
 
     out["acceptance_rates"] = acceptance_rates;
     out["draw_tries_mat"] = draw_tries_mat;
@@ -505,7 +526,9 @@ Rcpp::IntegerVector resample_plans_lowvar(
     // generate resampling index
     int const N = normalized_weights.size();
 
-    double r = GLOBAL_RNG.r_unif() / N;
+    int rng_seed = (int) Rcpp::sample(INT_MAX, 1)[0];
+    RNGState rng_state(rng_seed, 42);
+    double r = rng_state.r_unif() / N;
     double cuml = normalized_weights[0];
     Rcpp::IntegerVector resample_index(N);
     std::vector<bool> index_unchanged(N);

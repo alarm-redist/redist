@@ -39,7 +39,7 @@ redist_gsmc <- function(
        merge_prob_type = "uniform",
        resample = TRUE,
        num_processes=0L, num_threads_per_process=0L,
-       multiprocess=TRUE,
+       multiprocess=FALSE,
        pop_temper = 0,
        init_region_ids_mat = NULL,
        init_region_sizes_mat = NULL,

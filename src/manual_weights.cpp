@@ -12,7 +12,7 @@
 // TODO need to add checks for 
 // - population tolerance is ok
 // - plans are connected
-arma::vec compute_log_unnormalized_plan_target_density(
+Rcpp::NumericVector compute_log_unnormalized_plan_target_density(
     List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
     List const &constraints, double const pop_temper,  double const rho,
     int const ndists, int const num_regions,
@@ -44,7 +44,7 @@ arma::vec compute_log_unnormalized_plan_target_density(
     
     // check if final splits (ie don't do pop_temper)
     bool is_final = num_regions == ndists;
-    arma::vec log_unnormalized_density(num_plans, arma::fill::zeros);
+    Rcpp::NumericVector log_unnormalized_density(num_plans);
 
     const int check_int = 50; // check for interrupts every _ iterations
     Rcpp::Rcout << "Computing Log Target Density!" << std::endl;
@@ -60,20 +60,20 @@ arma::vec compute_log_unnormalized_plan_target_density(
         // check number of counties is valid and no double county intersect region components
         // if too many then log(target) = -Inf
         if(!hiearhically_valid){
-            log_unnormalized_density(i) = -arma::math::inf();
+            log_unnormalized_density[i] = -arma::math::inf();
         }else{
+            log_unnormalized_density[i] = 0.0;
             // compute the tau for the plan
-            log_unnormalized_density(i) += rho * plan_ensemble.plan_ptr_vec[i]->compute_log_plan_spanning_trees(map_params);
+            log_unnormalized_density[i] += rho * plan_ensemble.plan_ptr_vec[i]->compute_log_plan_spanning_trees(map_params);
             // subtract score from each region
             for (size_t region_id = 0; region_id < num_regions; region_id++)
             {
-                log_unnormalized_density(i) -= scoring_function.compute_region_score(
+                log_unnormalized_density[i] -= scoring_function.compute_region_score(
                     *plan_ensemble.plan_ptr_vec[i], region_id, is_final
                 );
             }
         }
         ++bar;
-        // if(i % check_int == 0) REprintf("%d\n", i);
         RcppThread::checkUserInterrupt(i % check_int == 0);
     });
 

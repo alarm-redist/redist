@@ -5,6 +5,7 @@
 ## Purpose: Wrapper for running gsmc cpp code
 ##############################################
 
+DEBUG_MODE <- FALSE
 
 
 #' gSMC Redistricting Sampler (O'Sullivan, McCartan and Imai ???)
@@ -79,7 +80,7 @@ generic_redist_gsmc <- function(
         merge_prob_type = "uniform",
         resample = TRUE,
         num_processes=0L, num_threads_per_process=0L,
-        multiprocess=TRUE,
+        multiprocess=FALSE,
         pop_temper = 0,
         init_region_ids_mat = NULL,
         init_region_sizes_mat = NULL,
@@ -353,8 +354,7 @@ generic_redist_gsmc <- function(
         if (length(algout) == 0) {
             cli::cli_process_done()
         }
-        print("Out!")
-
+        if(DEBUG_MODE) print("Out!")
 
 
         # convert the order added results into an actual list of arrays where
@@ -380,7 +380,7 @@ generic_redist_gsmc <- function(
             # add plans as well
 
         }
-        print("Checkpoint 1!")
+        if(DEBUG_MODE) print("Checkpoint 1!")
 
         # if no merge split was run them remove those attributes
         if(!any_ms_steps_ran){
@@ -389,7 +389,7 @@ generic_redist_gsmc <- function(
         }
 
         gc()
-        print("Checkpoint 2 - gc!")
+        if(DEBUG_MODE) print("Checkpoint 2 - gc!")
 
         # turn it into a character vector
         algout$step_split_types <- ifelse(
@@ -414,7 +414,7 @@ generic_redist_gsmc <- function(
         wgt <- exp(lr - mean(lr))
         n_eff <- length(wgt)*mean(wgt)^2/mean(wgt^2)
 
-        print("Checkpoint 3 - weight and lr!")
+        if(DEBUG_MODE) print("Checkpoint 3 - weight and lr!")
         if (any(is.na(lr))) {
             cli_abort(c("Sampling probabilities have been corrupted.",
                         "*" = "Check that none of your constraint weights are too large.
@@ -427,7 +427,6 @@ generic_redist_gsmc <- function(
                                  {.code rlang::trace_back()} and file an issue at
                                  {.url https://github.com/alarm-gredist/gredist/issues/new}"))
         }
-
 
 
         if (resample) {
@@ -454,7 +453,7 @@ generic_redist_gsmc <- function(
                 algout$plans_mat,
                 matrix(0L), FALSE
             )
-            print("Checkpoint 3.5 - did in place reordering!")
+            if(DEBUG_MODE) print("Checkpoint 3.5 - did in place reordering!")
 
             n_unique <- dplyr::n_distinct(rs_idx)
             # now adjust for the resampling
@@ -481,14 +480,14 @@ generic_redist_gsmc <- function(
         }else{
             nunique_parent_indices <- algout$nunique_parent_indices
         }
-        print("Checkpoint 4 - after resample!")
+        if(DEBUG_MODE) print("Checkpoint 4 - after resample!")
 
         t2_run <- Sys.time()
         # get original ancestor matrix from parent index
         algout$original_ancestors_mat <- get_original_ancestors_mat(
             algout$parent_index
         )
-        print("Checkpoint 5 - after og anvestor mat!")
+        if(DEBUG_MODE) print("Checkpoint 5 - after og anvestor mat!")
 
 
         # now for the smc step only diagnostics make it so
@@ -532,7 +531,7 @@ generic_redist_gsmc <- function(
         storage.mode(algout$original_ancestors_mat) <- "integer"
         storage.mode(algout$parent_index) <- "integer"
 
-        print("Checkpoint 6 - before various diagnostics!")
+        if(DEBUG_MODE) print("Checkpoint 6 - before various diagnostics!")
         # Internal diagnostics,
         algout$internal_diagnostics <- list(
             parent_index_mat = algout$parent_index,
@@ -596,18 +595,33 @@ generic_redist_gsmc <- function(
                  {format(t2-t1, digits=2)}")
     }
     #return(all_out)
-    print("Checkpoint 7 - Out of for loop!")
+    if(DEBUG_MODE) print("Checkpoint 7 - Out of for loop!")
+
+    # combine if needed
+    if(runs > 1){
+        plans <- do.call(cbind, lapply(all_out, function(x) x$plans))
+        plan_sizes <- do.call(cbind, lapply(all_out, function(x) x$plan_sizes))
+        wgt <- do.call(c, lapply(all_out, function(x) x$wgt))
+        l_diag <- lapply(all_out, function(x) x$l_diag)
+        run_information <- lapply(all_out, function(x) x$run_information)
+        internal_diagnostics <- lapply(all_out, function(x) x$internal_diagnostics)
+    }else{
+        # else if just one run extract directly
+        plans <- all_out[[1]]$plans
+        plan_sizes <- all_out[[1]]$plan_sizes
+        wgt <- all_out[[1]]$wgt
+        l_diag <- list(all_out[[1]]$l_diag)
+        run_information <- list(all_out[[1]]$run_information)
+        internal_diagnostics <- list(all_out[[1]]$internal_diagnostics)
+    }
+
+    if(DEBUG_MODE) print("Checkpoint 7.2 - Past the All Combine")
 
 
-    plans <- do.call(cbind, lapply(all_out, function(x) x$plans))
-    plan_sizes <- do.call(cbind, lapply(all_out, function(x) x$plan_sizes))
-    wgt <- do.call(c, lapply(all_out, function(x) x$wgt))
-    l_diag <- lapply(all_out, function(x) x$l_diag)
-    run_information <- lapply(all_out, function(x) x$run_information)
-    internal_diagnostics <- lapply(all_out, function(x) x$internal_diagnostics)
     n_dist_act <- dplyr::n_distinct(plans[, 1]) # actual number (for partial plans)
 
     alg_type <- ifelse(any_ms_steps_ran, "smc_ms","smc")
+    if(DEBUG_MODE) print("Checkpoint 7.5 -About to create new plans!")
     out <- new_redist_plans(plans, map, alg_type, wgt, resample,
                             ndists = n_dist_act,
                             n_eff = all_out[[1]]$n_eff,
@@ -622,6 +636,7 @@ generic_redist_gsmc <- function(
                             num_admin_units = num_admin_units,
                             entire_runtime = t2-t1)
 
+    if(DEBUG_MODE) print("Checkpoint 8 - Created new plans!")
     if (runs > 1) {
         out <- mutate(out, chain = rep(seq_len(runs), each = n_dist_act*nsims)) %>%
             dplyr::relocate('chain', .after = "draw")

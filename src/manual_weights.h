@@ -26,7 +26,7 @@
 
 
 // [[Rcpp::export]]
-arma::vec compute_log_unnormalized_plan_target_density(
+Rcpp::NumericVector compute_log_unnormalized_plan_target_density(
     List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
     List const &constraints, double const pop_temper,  double const rho,
     int const ndists, int const num_regions,

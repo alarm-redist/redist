@@ -870,21 +870,26 @@ List run_redist_gsmc(
 
     if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Exiting main loop and going to do diagnostics!\n");
 
-    Rcpp::IntegerMatrix plan_mat(V, nsims); // integer matrix to store final plans
-    // add 1 to all the plans 
-    for (size_t i = 0; i < plan_ensemble.flattened_all_plans.size(); i++)
-    {
-        ++plan_ensemble.flattened_all_plans[i];
-    }
-    // copy the plans into the plan_mat for returning
-    copy_plans_to_rcpp_mat(pool, 
-        plan_ensemble.plan_ptr_vec, 
-        plan_mat,
-        false);
+    Rcpp::IntegerMatrix plan_mat = plan_ensemble.get_R_plans_matrix(); // integer matrix to store final plans
     // to try to save memory kill the vector 
     plan_ensemble.flattened_all_plans.clear(); plan_ensemble.flattened_all_plans.shrink_to_fit();
-    
 
+    int nrow = plan_mat.nrow();
+    int ncol = plan_mat.ncol();
+    
+    // Print dimensions
+    // Rcpp::Rcout << "Matrix [" << nrow << " x " << ncol << "]\n";
+    
+    // // Row by row
+    // for (int i = 0; i < nrow; ++i) {
+    //   for (int j = 0; j < ncol; ++j) {
+    //     Rcpp::Rcout << plan_mat(i, j);
+    //     if (j < ncol - 1)
+    //       Rcpp::Rcout << "\t";  // tab between columns
+    //   }
+    //   Rcpp::Rcout << "\n";      // newline at end of each row
+    // }
+    
     std::vector<Rcpp::IntegerMatrix> plan_sizes_mat; // hacky way of potentially passing the plan sizes 
     // mat as output if we are not splitting all the way 
     plan_sizes_mat.reserve(1);

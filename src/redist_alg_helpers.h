@@ -103,6 +103,7 @@ class PlanEnsemble {
         //~PlanEnsemble();
     
         int nsims;
+        int V;
         std::vector<RegionID> flattened_all_plans;
         std::vector<RegionID> flattened_all_region_sizes;
         std::vector<int> flattened_all_region_pops;
@@ -113,7 +114,8 @@ class PlanEnsemble {
     
     
         // This 
-    
+        // exports current plans to 1-indexed Rcpp matrix 
+        Rcpp::IntegerMatrix get_R_plans_matrix();
     
     
 };
