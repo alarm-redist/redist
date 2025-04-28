@@ -529,7 +529,8 @@ List run_redist_gsmc(
     // Now we add everything here to a scope since it won't be needed for the end
     // create the ensemble 
     std::unique_ptr<PlanEnsemble> plan_ensemble_ptr = get_plan_ensemble_ptr(
-        V, ndists, initial_num_regions,
+        V, total_seats,
+        ndists, initial_num_regions,
         pop, nsims, sampling_space,
         region_id_mat, region_sizes_mat,
         pool, verbosity 
@@ -538,7 +539,8 @@ List run_redist_gsmc(
     {
     // Ensemble of dummy plans for copying 
     std::unique_ptr<PlanEnsemble> dummy_plan_ensemble_ptr = get_plan_ensemble_ptr(
-        V, ndists, initial_num_regions,
+        V, total_seats,
+        ndists, initial_num_regions,
         pop, nsims, sampling_space,
         region_id_mat, region_sizes_mat,
         pool, verbosity 

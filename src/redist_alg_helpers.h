@@ -107,7 +107,8 @@ PlanEnsemble get_plan_ensemble(
 
 
 std::unique_ptr<PlanEnsemble> get_plan_ensemble_ptr(
-    int const V, int const ndists, int const num_regions,
+    int const V, int const total_seats,
+    int const ndists, int const num_regions,
     arma::uvec const &pop, int const nsims, 
     SamplingSpace const sampling_space,
     Rcpp::IntegerMatrix const &plans_mat, 

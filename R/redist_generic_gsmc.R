@@ -500,10 +500,12 @@ generic_redist_gsmc <- function(
         # do unique parents
         dummy_vec[!c(algout$merge_split_steps,FALSE)] <- nunique_parent_indices
         nunique_parent_indices <- dummy_vec
-
+        if(DEBUG_MODE) print("Checkpoint 5.1 - got summary info!")
         # make sizes null if needed
-        algout$plan_sizes_mat <- ifelse(algout$plan_sizes_saved, algout$plan_sizes_mat, NULL)
-
+        if(!algout$plan_sizes_saved){
+            algout$plan_sizes_mat <- NULL
+        }
+        if(DEBUG_MODE) print("Checkpoint 5.5 - got summary info!")
 
         # nunique_original_ancestors <- c(nunique_original_ancestors,
         #                          dplyr::n_distinct(algout$original_ancestors_mat[, ncol(algout$original_ancestors_mat)]))
