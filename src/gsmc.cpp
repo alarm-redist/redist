@@ -91,8 +91,8 @@ constexpr bool DEBUG_GSMC_PLANS_VERBOSE = false; // Compile-time constant
 void run_smc_step(
         const MapParams &map_params, const SplittingSchedule &splitting_schedule,
         std::vector<RNGState> &rng_states, SamplingSpace const sampling_space,
-        std::vector<std::unique_ptr<Plan>> &old_plans_ptr_vec, 
-        std::vector<std::unique_ptr<Plan>> &new_plans_ptr_vec,
+        std::unique_ptr<PlanEnsemble> &old_plan_ensemble,
+        std::unique_ptr<PlanEnsemble> &new_plan_ensemble,
         TreeSplitter const &tree_splitters,
         const arma::vec &normalized_cumulative_weights,
         SMCDiagnostics &smc_diagnostics,
@@ -103,11 +103,11 @@ void run_smc_step(
 ) {
     // important constants
     const int V = map_params.V;
-    const int M = static_cast<int>(old_plans_ptr_vec.size());
+    const int M = old_plan_ensemble->nsims;
     bool const split_district_only = splitting_schedule.schedule_type == SplittingSizeScheduleType::DistrictOnly;
 
     // PREVIOUS SMC CODE I DONT KNOW WHAT IT DOES
-    const int dist_ctr = old_plans_ptr_vec.at(0)->num_regions;
+    const int dist_ctr = old_plan_ensemble->plan_ptr_vec.at(0)->num_regions;
     const int n_lags = lags.size();
     umat ancestors_new(M, n_lags); // lags/ancestor thing
 
@@ -119,7 +119,7 @@ void run_smc_step(
 
     // The new region in the split plans is the number of regions in a split plan minus
     // one so the number of regions in a presplit plan
-    int new_region_id = old_plans_ptr_vec.at(0)->num_regions;
+    int new_region_id = old_plan_ensemble->plan_ptr_vec.at(0)->num_regions;
 
     // we only save for linking edge
     bool save_edge_selection_prob = sampling_space == SamplingSpace::LinkingEdgeSpace;
@@ -170,14 +170,14 @@ void run_smc_step(
             if(split_district_only){
                 // if just doing district splits just use remainder region
                 // which is always the highest id
-                region_id_to_split = old_plans_ptr_vec[idx]->num_regions - 1;
+                region_id_to_split = old_plan_ensemble->plan_ptr_vec[idx]->num_regions - 1;
             }else{                
                 // if generalized split pick a region to try to split
-                region_id_to_split = old_plans_ptr_vec[idx]->choose_multidistrict_to_split(
+                region_id_to_split = old_plan_ensemble->plan_ptr_vec[idx]->choose_multidistrict_to_split(
                     splitting_schedule.valid_region_sizes_to_split, rng_states[thread_id]
                 );
             }
-            int region_to_split_size = old_plans_ptr_vec[idx]->region_sizes[region_id_to_split];
+            int region_to_split_size = old_plan_ensemble->plan_ptr_vec[idx]->region_sizes[region_id_to_split];
             
             // int size_of_region_to_split = old_plans_ptr_vec[idx]->region_sizes(region_id_to_split);
             // Rprintf("Picked idx %d, Splitting Region size %d. Sizes to try:\n", idx, size_of_region_to_split);
@@ -196,7 +196,7 @@ void run_smc_step(
             // Try to split the region 
             std::pair<bool, EdgeCut> edge_search_result = ust_sampler.attempt_to_find_valid_tree_split(
                 rng_states[thread_id], tree_splitters,
-                *old_plans_ptr_vec.at(idx), region_id_to_split,
+                *old_plan_ensemble->plan_ptr_vec[idx], region_id_to_split,
                 save_edge_selection_prob
             );
         
@@ -206,9 +206,9 @@ void run_smc_step(
                     Rprintf("Success, updating Plan %d\n", i);
                 } 
                 // make the new plan a copy of the old one 
-                new_plans_ptr_vec[i]->shallow_copy(*old_plans_ptr_vec[idx]);
+                new_plan_ensemble->plan_ptr_vec[i]->shallow_copy(*old_plan_ensemble->plan_ptr_vec[idx]);
                 // now split that region we found on the old one
-                new_plans_ptr_vec.at(i)->update_from_successful_split(
+                new_plan_ensemble->plan_ptr_vec[i]->update_from_successful_split(
                     tree_splitters,
                     ust_sampler, std::get<1>(edge_search_result),
                     region_id_to_split, new_region_id, 
@@ -224,7 +224,7 @@ void run_smc_step(
                  // check for user interrupt
                  RcppThread::checkUserInterrupt(draw_tries_vec[i] % reject_check_int == 0);
                  // if diagnostic level 2 or higher get unsuccessful count 
-                 if(diagnostic_level >= 2){
+                 if(diagnostic_level >= 0){
                      // not atomic so technically not thread safe but doesn't seem to differ in practice
                      parent_unsuccessful_tries_vec[idx]++;
                  }
@@ -250,10 +250,8 @@ void run_smc_step(
     pool.wait();
 
 
-    // now swap the old plans with the new ones. This avoids need to actually copy
-    for(int i=0; i < M; i++){
-        std::swap(old_plans_ptr_vec[i], new_plans_ptr_vec[i]);
-    }
+    // now swap the old plans with the new ones. This avoids needing to actually copy
+    std::swap(old_plan_ensemble, new_plan_ensemble);
 
     // update tree sizes counts 
     for (size_t region_size = 0; region_size < map_params.ndists; region_size++)
@@ -393,7 +391,8 @@ void run_merge_split_step_on_all_plans(
 //' running <ADD OPTIONS>
 //' @export
 List run_redist_gsmc(
-    int const nsims, int const ndists, int const initial_num_regions, 
+    int const nsims, int const total_seats,
+    int const ndists, int const initial_num_regions, 
     List const &adj_list,
     arma::uvec const &counties, const arma::uvec &pop,
     Rcpp::CharacterVector const &step_types,
@@ -529,7 +528,7 @@ List run_redist_gsmc(
 
     // Now we add everything here to a scope since it won't be needed for the end
     // create the ensemble 
-    PlanEnsemble plan_ensemble = get_plan_ensemble(
+    std::unique_ptr<PlanEnsemble> plan_ensemble_ptr = get_plan_ensemble_ptr(
         V, ndists, initial_num_regions,
         pop, nsims, sampling_space,
         region_id_mat, region_sizes_mat,
@@ -538,14 +537,14 @@ List run_redist_gsmc(
 
     {
     // Ensemble of dummy plans for copying 
-    PlanEnsemble dummy_plan_ensemble = get_plan_ensemble(
+    std::unique_ptr<PlanEnsemble> dummy_plan_ensemble_ptr = get_plan_ensemble_ptr(
         V, ndists, initial_num_regions,
         pop, nsims, sampling_space,
         region_id_mat, region_sizes_mat,
         pool, verbosity 
     );
 
-    // Vector of splitters
+    // Get the tree splitter
     std::unique_ptr<TreeSplitter> tree_splitter_ptr = get_tree_splitters(
         map_params,splitting_method, control, nsims
     );
@@ -609,6 +608,7 @@ List run_redist_gsmc(
         }
     }
 
+    // keep track of if we need to swap at the end.
     // counts the number of smc steps
     int smc_step_num = 0;
     int merge_split_step_num = 0;
@@ -635,7 +635,7 @@ List run_redist_gsmc(
 
             // set the splitting schedule 
             splitting_schedule_ptr->set_potential_cut_sizes_for_each_valid_size(
-                smc_step_num, plan_ensemble.plan_ptr_vec[0]->num_regions
+                smc_step_num, plan_ensemble_ptr->plan_ptr_vec[0]->num_regions
                 );
             
             // Print if needed
@@ -653,7 +653,7 @@ List run_redist_gsmc(
                     estimate_cut_k(
                         map_params, *splitting_schedule_ptr, rng_state, 
                         est_cut_k, last_k, unnormalized_sampling_weights, thresh,
-                        tol, plan_ensemble.plan_ptr_vec, 
+                        tol, plan_ensemble_ptr->plan_ptr_vec, 
                         split_district_only, verbosity);
                     if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Estimated cut k!\n");
                     k_params.at(smc_step_num) = est_cut_k;
@@ -672,7 +672,6 @@ List run_redist_gsmc(
 
             
             // auto t1f = high_resolution_clock::now();
-
             arma::vec cumulative_weights = arma::cumsum(
                 arma::vec(unnormalized_sampling_weights)
             );
@@ -683,7 +682,7 @@ List run_redist_gsmc(
             // split the map
             run_smc_step(map_params, *splitting_schedule_ptr,
                 rng_states, sampling_space,
-                plan_ensemble.plan_ptr_vec, dummy_plan_ensemble.plan_ptr_vec, 
+                plan_ensemble_ptr, dummy_plan_ensemble_ptr, 
                 *tree_splitter_ptr,
                 normalized_cumulative_weights,
                 smc_diagnostics,
@@ -701,8 +700,8 @@ List run_redist_gsmc(
             // Rcout << "Running SMC " << ms_doublef.count() << " ms\n";
             auto t1 = std::chrono::high_resolution_clock::now();
             bool compute_log_splitting_prob = splitting_schedule_ptr->schedule_type != SplittingSizeScheduleType::DistrictOnly &&
-            plan_ensemble.plan_ptr_vec[0]->num_regions != ndists;
-            bool is_final_plans = plan_ensemble.plan_ptr_vec[0]->num_regions == ndists;
+            plan_ensemble_ptr->plan_ptr_vec[0]->num_regions != ndists;
+            bool is_final_plans = plan_ensemble_ptr->plan_ptr_vec[0]->num_regions == ndists;
             
             if(wgt_type == "optimal"){
                 // TODO make more princicpal in the future 
@@ -712,7 +711,7 @@ List run_redist_gsmc(
                     pool,
                     map_params, *splitting_schedule_ptr, sampling_space,
                     scoring_function, rho,
-                    plan_ensemble.plan_ptr_vec, *tree_splitter_ptr,
+                    plan_ensemble_ptr->plan_ptr_vec, *tree_splitter_ptr,
                     compute_log_splitting_prob, is_final_plans,
                     smc_diagnostics.log_incremental_weights_mat.col(smc_step_num),
                     unnormalized_sampling_weights,
@@ -725,7 +724,7 @@ List run_redist_gsmc(
                     map_params, *splitting_schedule_ptr,
                     sampling_space,
                     scoring_function, rho,
-                    plan_ensemble.plan_ptr_vec, *tree_splitter_ptr,
+                    plan_ensemble_ptr->plan_ptr_vec, *tree_splitter_ptr,
                     compute_log_splitting_prob, is_final_plans,
                     smc_diagnostics.log_incremental_weights_mat.col(smc_step_num),
                     unnormalized_sampling_weights,
@@ -788,14 +787,14 @@ List run_redist_gsmc(
                     nsteps_to_run, nsteps_to_run*nsims);
             }
             // TODO REVISE FOR MMD
-            bool is_final = plan_ensemble.plan_ptr_vec[0]->num_regions == ndists;
+            bool is_final = plan_ensemble_ptr->plan_ptr_vec[0]->num_regions == ndists;
             // auto t1fm = high_resolution_clock::now();
             run_merge_split_step_on_all_plans(
                 pool,
                 map_params, *splitting_schedule_ptr, 
                 scoring_function,
                 rng_states, sampling_space, 
-                plan_ensemble.plan_ptr_vec, dummy_plan_ensemble.plan_ptr_vec,
+                plan_ensemble_ptr->plan_ptr_vec, dummy_plan_ensemble_ptr->plan_ptr_vec,
                 *tree_splitter_ptr,
                 merge_prob_type, 
                 rho, is_final,
@@ -843,7 +842,7 @@ List run_redist_gsmc(
                 !merge_split_step_vec[step_num],
                 sampling_space,
                 pool,
-                plan_ensemble.plan_ptr_vec, dummy_plan_ensemble.plan_ptr_vec,
+                *plan_ensemble_ptr, *dummy_plan_ensemble_ptr,
                 *splitting_schedule_ptr
             );
         }
@@ -863,53 +862,33 @@ List run_redist_gsmc(
 
     // if not diagnostic reorder the plans 
     if(!diagnostic_mode){
-        reorder_all_plans(pool, plan_ensemble.plan_ptr_vec, dummy_plan_ensemble.plan_ptr_vec);
+        reorder_all_plans(pool, plan_ensemble_ptr->plan_ptr_vec, dummy_plan_ensemble_ptr->plan_ptr_vec);
     }
     // end of scope
     }
 
     if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Exiting main loop and going to do diagnostics!\n");
 
-    Rcpp::IntegerMatrix plan_mat = plan_ensemble.get_R_plans_matrix(); // integer matrix to store final plans
+    Rcpp::IntegerMatrix plan_mat = plan_ensemble_ptr->get_R_plans_matrix(); // integer matrix to store final plans
     // to try to save memory kill the vector 
-    plan_ensemble.flattened_all_plans.clear(); plan_ensemble.flattened_all_plans.shrink_to_fit();
-
-    int nrow = plan_mat.nrow();
-    int ncol = plan_mat.ncol();
-    
-    // Print dimensions
-    // Rcpp::Rcout << "Matrix [" << nrow << " x " << ncol << "]\n";
-    
-    // // Row by row
-    // for (int i = 0; i < nrow; ++i) {
-    //   for (int j = 0; j < ncol; ++j) {
-    //     Rcpp::Rcout << plan_mat(i, j);
-    //     if (j < ncol - 1)
-    //       Rcpp::Rcout << "\t";  // tab between columns
-    //   }
-    //   Rcpp::Rcout << "\n";      // newline at end of each row
-    // }
+    plan_ensemble_ptr->flattened_all_plans.clear(); plan_ensemble_ptr->flattened_all_plans.shrink_to_fit();
     
     std::vector<Rcpp::IntegerMatrix> plan_sizes_mat; // hacky way of potentially passing the plan sizes 
     // mat as output if we are not splitting all the way 
     plan_sizes_mat.reserve(1);
+    bool plan_sizes_saved;
 
     if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Plans saved!\n");
 
     // if only sampling partial plans then return the size matrix
     if(!splitting_all_the_way){
         if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Getting ready to save region sizes!\n");
-        int num_final_regions = plan_ensemble.plan_ptr_vec.at(0)->num_regions;
-        plan_sizes_mat.emplace_back(num_final_regions, nsims);
-        copy_plans_to_rcpp_mat(
-            pool, 
-            plan_ensemble.plan_ptr_vec,
-            plan_sizes_mat.at(0),
-            true);
-        // Rcpp::IntegerMatrix plan_mat(V, nsims); // integer matrix to store final plans
+        plan_sizes_mat.push_back(plan_ensemble_ptr->get_R_sizes_matrix(pool));
+        plan_sizes_saved = true;
     }else{
         // else create a dummy matrix 
         plan_sizes_mat.emplace_back(1,1);
+        plan_sizes_saved = false;
     }
 
     if(DEBUG_GSMC_PLANS_VERBOSE) Rprintf("Plan matrix (and sizes potentially) saved!\n");
@@ -919,6 +898,7 @@ List run_redist_gsmc(
     List out = List::create(
         _["plans_mat"] = plan_mat,
         _["plan_sizes_mat"] = plan_sizes_mat.at(0),
+        _["plan_sizes_saved"] = plan_sizes_saved,
         _["ancestors"] = ancestors,
         _["step_types"] = step_types,
         _["merge_split_steps"] = merge_split_step_vec

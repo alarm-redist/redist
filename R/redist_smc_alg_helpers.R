@@ -32,8 +32,16 @@ validate_counties <- function(map, adj_list, V, counties_q, use_counties_q=TRUE,
     if (is.null(counties)) {
         counties <- rep(1, V)
     } else {
-        if (any(is.na(counties)))
+        if(any(is.na(counties))){
             cli_abort("County vector must not contain missing values.")
+        }
+        if(assertthat::is.scalar(counties) && assertthat::is.string(counties)){
+            if(!counties %in% names(map)){
+                cli::cli_abort("{counties} is not in the map!")
+            }else{
+                counties <- map[[counties]]
+            }
+        }
 
         # handle discontinuous counties
         component <- contiguity(adj_list, vctrs::vec_group_id(counties))
@@ -46,6 +54,7 @@ validate_counties <- function(map, adj_list, V, counties_q, use_counties_q=TRUE,
             cli_warn("Counties were not contiguous; expect additional splits.")
         }
     }
+
 
     return(counties)
 }
@@ -96,6 +105,18 @@ get_map_parameters <- function(map, counties_q=NULL, use_counties_q=TRUE, counti
         cli_abort(c("Unit{?s} {too_big} ha{?ve/s/ve}
                 population larger than the district target.",
                     "x" = "Redistricting impossible."))
+    }
+
+    # now check we don't have too many regions or counties
+    max_possible_sizes <- maximum_input_sizes()
+    if(dplyr::n_distinct(counties) > max_possible_sizes$max_counties ){
+        cli::cli_abort("The maximum number of supported counties is {max_possible_sizes$max_counties}!")
+    }
+    if(V > max_possible_sizes$max_V ){
+        cli::cli_abort("The maximum number of supported vertices in a map is {max_possible_sizes$max_V}!")
+    }
+    if(attr(map, "ndists") > max_possible_sizes$max_districts){
+        cli::cli_abort("The maximum number of supported districts in a map is {max_possible_sizes$max_districts}!")
     }
 
     return(list(

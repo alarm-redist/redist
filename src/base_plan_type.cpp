@@ -356,7 +356,7 @@ void Plan::shallow_copy(Plan const &plan_to_copy){
     // copy order added tracker
     region_added_order.copy(plan_to_copy.region_added_order);
     // if forest graph bigger than 1 copy that 
-    if(forest_graph.size() > 0){
+    if(plan_to_copy.forest_graph.size() > 0){
         for (auto i = 0; i < forest_graph.size(); ++i) {
             forest_graph[i].assign(
                 plan_to_copy.forest_graph[i].begin(), 
@@ -366,7 +366,7 @@ void Plan::shallow_copy(Plan const &plan_to_copy){
     }
 
     // if linking edges exist then copy that
-    if(linking_edges.size() > 0){
+    if(plan_to_copy.linking_edges.size() > 0){
         linking_edges = plan_to_copy.linking_edges;
     }
     return;

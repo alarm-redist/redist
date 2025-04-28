@@ -242,12 +242,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // run_redist_gsmc
-List run_redist_gsmc(int const nsims, int const ndists, int const initial_num_regions, List const& adj_list, arma::uvec const& counties, const arma::uvec& pop, Rcpp::CharacterVector const& step_types, double const target, double const lower, double const upper, double const rho, std::string const& sampling_space_str, List const& control, List const& constraints, int const verbosity, int const diagnostic_level, Rcpp::IntegerMatrix const& region_id_mat, Rcpp::IntegerMatrix const& region_sizes_mat);
-RcppExport SEXP _gredist_run_redist_gsmc(SEXP nsimsSEXP, SEXP ndistsSEXP, SEXP initial_num_regionsSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP step_typesSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP sampling_space_strSEXP, SEXP controlSEXP, SEXP constraintsSEXP, SEXP verbositySEXP, SEXP diagnostic_levelSEXP, SEXP region_id_matSEXP, SEXP region_sizes_matSEXP) {
+List run_redist_gsmc(int const nsims, int const total_seats, int const ndists, int const initial_num_regions, List const& adj_list, arma::uvec const& counties, const arma::uvec& pop, Rcpp::CharacterVector const& step_types, double const target, double const lower, double const upper, double const rho, std::string const& sampling_space_str, List const& control, List const& constraints, int const verbosity, int const diagnostic_level, Rcpp::IntegerMatrix const& region_id_mat, Rcpp::IntegerMatrix const& region_sizes_mat);
+RcppExport SEXP _gredist_run_redist_gsmc(SEXP nsimsSEXP, SEXP total_seatsSEXP, SEXP ndistsSEXP, SEXP initial_num_regionsSEXP, SEXP adj_listSEXP, SEXP countiesSEXP, SEXP popSEXP, SEXP step_typesSEXP, SEXP targetSEXP, SEXP lowerSEXP, SEXP upperSEXP, SEXP rhoSEXP, SEXP sampling_space_strSEXP, SEXP controlSEXP, SEXP constraintsSEXP, SEXP verbositySEXP, SEXP diagnostic_levelSEXP, SEXP region_id_matSEXP, SEXP region_sizes_matSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< int const >::type nsims(nsimsSEXP);
+    Rcpp::traits::input_parameter< int const >::type total_seats(total_seatsSEXP);
     Rcpp::traits::input_parameter< int const >::type ndists(ndistsSEXP);
     Rcpp::traits::input_parameter< int const >::type initial_num_regions(initial_num_regionsSEXP);
     Rcpp::traits::input_parameter< List const& >::type adj_list(adj_listSEXP);
@@ -265,7 +266,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int const >::type diagnostic_level(diagnostic_levelSEXP);
     Rcpp::traits::input_parameter< Rcpp::IntegerMatrix const& >::type region_id_mat(region_id_matSEXP);
     Rcpp::traits::input_parameter< Rcpp::IntegerMatrix const& >::type region_sizes_mat(region_sizes_matSEXP);
-    rcpp_result_gen = Rcpp::wrap(run_redist_gsmc(nsims, ndists, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat));
+    rcpp_result_gen = Rcpp::wrap(run_redist_gsmc(nsims, total_seats, ndists, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -1085,7 +1086,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_gredist_get_region_laplacian", (DL_FUNC) &_gredist_get_region_laplacian, 2},
     {"_gredist_get_log_number_linking_edges", (DL_FUNC) &_gredist_get_log_number_linking_edges, 2},
     {"_gredist_get_merged_log_number_linking_edges", (DL_FUNC) &_gredist_get_merged_log_number_linking_edges, 4},
-    {"_gredist_run_redist_gsmc", (DL_FUNC) &_gredist_run_redist_gsmc, 18},
+    {"_gredist_run_redist_gsmc", (DL_FUNC) &_gredist_run_redist_gsmc, 19},
     {"_gredist_log_st_map", (DL_FUNC) &_gredist_log_st_map, 4},
     {"_gredist_n_removed", (DL_FUNC) &_gredist_n_removed, 3},
     {"_gredist_countpartitions", (DL_FUNC) &_gredist_countpartitions, 1},

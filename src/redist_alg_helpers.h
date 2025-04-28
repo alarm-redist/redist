@@ -18,31 +18,8 @@
 #include "tree_splitter_types.h"
 
 
-//' Copies data from a vector of `Plan` objects into an Rcpp Matrix
-//'
-//' Takes a vector of plans and copies all the data into an RcppMatrix
-//' of the same size using the Rcpp Threadpool to copy in parallel. 
-//'
-//'
-//' @title Copies data from an arma Matrix into an Rcpp Matrix
-//'
-//' @param pool A threadpool for multithreading
-//' @param arma_mat Subview of an arma unsigned integer matrix 
-//' @param rcpp_mat A matrix of integers with the same size as the arma_mat
-//'
-//' @details Modifications
-//'    - The `rcpp_mat` is filled in with the data om the arma matrix subview
-//'
-//' @noRd
-//' @keywords internal
-void copy_plans_to_rcpp_mat(
-    RcppThread::ThreadPool &pool,
-    std::vector<std::unique_ptr<Plan>> &plan_ptrs_vec,
-    Rcpp::IntegerMatrix &rcpp_mat,
-    bool const copy_sizes_not_ids
-);
-
-
+// [[Rcpp::export]]
+Rcpp::List maximum_input_sizes();
 
 //' Reorders all the plans in the vector by order a region was split
 //'
@@ -68,15 +45,12 @@ void reorder_all_plans(
     std::vector<std::unique_ptr<Plan>> &dummy_plan_ptrs_vec);
 
 
-
 std::unique_ptr<TreeSplitter> get_tree_splitters(
     MapParams const &map_params,
     SplittingMethodType const splitting_method,
     Rcpp::List const &control,
     int const nsims
 );
-
-
 
 // lightweight container for plans 
 class PlanEnsemble {
@@ -101,11 +75,10 @@ class PlanEnsemble {
             int const verbosity = 3 
         );
 
-        // descrutor
-        //~PlanEnsemble();
     
         int nsims;
         int V;
+        int ndists;
         std::vector<RegionID> flattened_all_plans;
         std::vector<RegionID> flattened_all_region_sizes;
         std::vector<int> flattened_all_region_pops;
@@ -113,12 +86,12 @@ class PlanEnsemble {
         std::vector<std::unique_ptr<Plan>> plan_ptr_vec;
         
         
-    
-    
-        // This 
         // exports current plans to 1-indexed Rcpp matrix 
         Rcpp::IntegerMatrix get_R_plans_matrix();
-    
+        // export current region sizes to Rcpp matrix 
+        Rcpp::IntegerMatrix get_R_sizes_matrix(
+            RcppThread::ThreadPool &pool
+        );
     
 };
 
@@ -132,11 +105,24 @@ PlanEnsemble get_plan_ensemble(
     int const verbosity
 );
 
-// [[Rcpp::export]]
-Rcpp::List maximum_input_sizes();
 
+std::unique_ptr<PlanEnsemble> get_plan_ensemble_ptr(
+    int const V, int const ndists, int const num_regions,
+    arma::uvec const &pop, int const nsims, 
+    SamplingSpace const sampling_space,
+    Rcpp::IntegerMatrix const &plans_mat, 
+    Rcpp::IntegerMatrix const &region_sizes_mat,
+    RcppThread::ThreadPool &pool,
+    int const verbosity
+);
 
-// Wrapper object for all non-essential diagnostics 
+// swaps the contents of two plan ensembles 
+void swap_plan_ensembles(
+    PlanEnsemble &plan_ensemble1,
+    PlanEnsemble &plan_ensemble2
+);
+
+// Wrapper object for all non-essential SMC diagnostics 
 class SMCDiagnostics{
 
     public:
@@ -190,15 +176,15 @@ class SMCDiagnostics{
     std::vector<std::vector<int>> all_steps_valid_split_region_sizes;
     std::vector<Rcpp::IntegerMatrix> region_sizes_mat_list;
 
-    // 
+    // adds full diagnostics (takes a lot of memory)
     void add_full_step_diagnostics(
         int const total_steps, bool const splitting_all_the_way,
         int const step_num, int const merge_split_step_num, int const smc_step_num,
         bool const is_smc_step,
         SamplingSpace const sampling_space,
         RcppThread::ThreadPool &pool,
-        std::vector<std::unique_ptr<Plan>>  &plans_ptr_vec, 
-        std::vector<std::unique_ptr<Plan>>  &new_plans_ptr_vec,
+        PlanEnsemble &plan_ensemble,
+        PlanEnsemble &new_plans_ensemble,
         SplittingSchedule const &splitting_schedule
     );
 

@@ -30,6 +30,7 @@ PlanEnsemble::PlanEnsemble(
 ):
     nsims(nsims), 
     V(V),
+    ndists(ndists),
     flattened_all_plans(V*nsims, 0),
     flattened_all_region_sizes(ndists*nsims, 0),
     flattened_all_region_pops(ndists*nsims, 0),
@@ -94,6 +95,7 @@ PlanEnsemble::PlanEnsemble(
 ):    
     nsims(nsims), 
     V(V),
+    ndists(ndists),
     flattened_all_plans(plans_mat.begin(), plans_mat.end()),
     flattened_all_region_sizes(region_sizes_mat.begin(), region_sizes_mat.end()),
     flattened_all_region_pops(ndists*nsims, 0),
@@ -178,9 +180,34 @@ Rcpp::IntegerMatrix PlanEnsemble::get_R_plans_matrix(){
     return plan_mat;
 }
 
-// PlanEnsemble::~PlanEnsemble(){
-//     Rcpp::Rcout << "gone" << std::endl;
-// }
+Rcpp::IntegerMatrix PlanEnsemble::get_R_sizes_matrix(
+    RcppThread::ThreadPool &pool
+){
+    int const num_regions = plan_ptr_vec[0]->num_regions;
+    // make the sizes matrix 
+    Rcpp::IntegerMatrix sizes_mat(num_regions, nsims);
+    // to avoid wasting space if not ndists we don't copy all 
+    if(num_regions < ndists){
+        // copy over the non-zero sizes for each plan
+        pool.parallelFor(0, nsims, [&] (int i){
+            std::copy(
+                plan_ptr_vec[i]->region_sizes.begin(),
+                plan_ptr_vec[i]->region_sizes.begin() + num_regions,
+                sizes_mat.column(i).begin() // Start of column in Rcpp::IntegerMatrix
+            );
+        });
+        pool.wait();
+    }else{
+        // else we can just copy the entire vector
+        std::copy(
+            flattened_all_region_sizes.begin(),
+            flattened_all_region_sizes.end(),
+            sizes_mat.begin()
+        );
+    }
+
+    return sizes_mat;
+}
 
 PlanEnsemble get_plan_ensemble(
     int const V, int const ndists, int const num_regions,
@@ -201,73 +228,44 @@ PlanEnsemble get_plan_ensemble(
     }
 }
 
-//' Copies data from an arma Matrix into an Rcpp Matrix
-//'
-//' Takes an arma matrix subview and copies all the data into an RcppMatrix
-//' of the same size using the Rcpp Threadpool to copy in parallel. 
-//'
-//'
-//' @title Copies data from an arma Matrix into an Rcpp Matrix
-//'
-//' @param pool A threadpool for multithreading
-//' @param arma_mat Subview of an arma unsigned integer matrix 
-//' @param rcpp_mat A matrix of integers with the same size as the arma_mat
-//'
-//' @details Modifications
-//'    - The `rcpp_mat` is filled in with the data om the arma matrix subview
-//'
-//' @noRd
-//' @keywords internal
-void copy_plans_to_rcpp_mat(
+
+std::unique_ptr<PlanEnsemble> get_plan_ensemble_ptr(
+    int const V, int const ndists, int const num_regions,
+    arma::uvec const &pop, int const nsims, 
+    SamplingSpace const sampling_space,
+    Rcpp::IntegerMatrix const &plans_mat, 
+    Rcpp::IntegerMatrix const &region_sizes_mat,
     RcppThread::ThreadPool &pool,
-    std::vector<std::unique_ptr<Plan>> &plan_ptrs_vec,
-    Rcpp::IntegerMatrix &rcpp_mat,
-    bool const copy_sizes_not_ids
+    int const verbosity
 ){
-    int const num_regions = plan_ptrs_vec[0]->num_regions;
-    // check dimensions match 
-    // number of columns should be size of vector
-    // number of rows should match either num regions or V
-    if(copy_sizes_not_ids){
-        if(rcpp_mat.ncol() != plan_ptrs_vec.size() ||
-           rcpp_mat.nrow() != num_regions){
-            throw Rcpp::exception("Rcpp Matrix and Plans are not the same size");
-        }
+    if(num_regions == 1){
+        return std::make_unique<PlanEnsemble>(
+            V, ndists, arma::sum(pop), nsims, sampling_space, pool, verbosity
+        );
     }else{
-        if(rcpp_mat.ncol() != plan_ptrs_vec.size() ||
-           rcpp_mat.nrow() != plan_ptrs_vec[0]->region_ids.size()){
-            throw Rcpp::exception("Rcpp Matrix and Plans are not the same size");
-        }
+        return std::make_unique<PlanEnsemble>(
+            V, ndists, num_regions, pop, nsims,
+            sampling_space, plans_mat, region_sizes_mat, 
+            pool, verbosity
+        );
     }
-
-    // go by column because Rcpp matrices are column major
-    int ncols = (int) rcpp_mat.ncol();
-    
-
-    // Parallel thread pool where all objects in memory shared by default
-    pool.parallelFor(0, ncols, [&] (int j) {
-        // Copy plan i into the rcpp matrix
-        // either sizes or vertex ids
-        if(copy_sizes_not_ids){
-            std::copy(
-                plan_ptrs_vec[j]->region_sizes.begin(),
-                plan_ptrs_vec[j]->region_sizes.begin() + num_regions,
-                rcpp_mat.column(j).begin() // Start of column in Rcpp::IntegerMatrix
-            );
-        }else{
-            std::copy(
-                plan_ptrs_vec[j]->region_ids.begin(),
-                plan_ptrs_vec[j]->region_ids.end(),
-                rcpp_mat.column(j).begin() // Start of column in Rcpp::IntegerMatrix
-            );
-        }
-    });
-
-    // Wait for all the threads to finish
-    pool.wait();
-    
 }
 
+
+void swap_plan_ensembles(
+    PlanEnsemble &plan_ensemble1,
+    PlanEnsemble &plan_ensemble2
+){
+    // We only swap the pointers to the plans themselves 
+    // Note this does not properly swap the underlying vectors 
+    // so care is needed
+    std::swap(plan_ensemble1.plan_ptr_vec, plan_ensemble2.plan_ptr_vec);
+    std::swap(plan_ensemble1.flattened_all_plans, plan_ensemble2.flattened_all_plans);
+    std::swap(plan_ensemble1.flattened_all_region_sizes, plan_ensemble2.flattened_all_region_sizes);
+    std::swap(plan_ensemble1.flattened_all_region_pops, plan_ensemble2.flattened_all_region_pops);
+    std::swap(plan_ensemble1.flattened_all_region_order_added, plan_ensemble2.flattened_all_region_order_added);
+    
+}
 
 
 //' Reorders all the plans in the vector by order a region was split
@@ -423,8 +421,8 @@ void SMCDiagnostics::add_full_step_diagnostics(
     bool const is_smc_step,
     SamplingSpace const sampling_space,
     RcppThread::ThreadPool &pool,
-    std::vector<std::unique_ptr<Plan>> &plans_ptr_vec, 
-    std::vector<std::unique_ptr<Plan>> &new_plans_ptr_vec,
+    PlanEnsemble &plan_ensemble,
+    PlanEnsemble &new_plans_ensemble,
     SplittingSchedule const &splitting_schedule
 ){
     //if(diagnostic_mode){ // record if in diagnostic mode and generalized splits
@@ -432,11 +430,11 @@ void SMCDiagnostics::add_full_step_diagnostics(
     // its generalized region splits 
 
     bool const split_district_only = splitting_schedule.schedule_type == SplittingSizeScheduleType::DistrictOnly;
-    int const nsims = plans_ptr_vec.size();
+    int const nsims = plan_ensemble.nsims;
 
     // if smc step update splitting step info
     if(is_smc_step){
-        int current_num_regions = plans_ptr_vec[0]->num_regions;
+        int current_num_regions = plan_ensemble.plan_ptr_vec[0]->num_regions;
         // save the acceptable split sizes 
         for (int region_size = 1; region_size <= splitting_schedule.ndists - current_num_regions + 2; region_size++)
         {
@@ -451,14 +449,11 @@ void SMCDiagnostics::add_full_step_diagnostics(
     }
 
     if(merge_split_step_num > 0 || !split_district_only){
-        reorder_all_plans(pool, plans_ptr_vec, new_plans_ptr_vec);
+        reorder_all_plans(pool, plan_ensemble.plan_ptr_vec, new_plans_ensemble.plan_ptr_vec);
     }
 
     // Copy the vertex plan matrix 
-    copy_plans_to_rcpp_mat(pool, 
-        plans_ptr_vec, 
-        all_steps_plan_region_ids_list.at(step_num),
-        false);
+    all_steps_plan_region_ids_list.at(step_num) = plan_ensemble.get_R_plans_matrix();
 
     // store the 
     if(!(sampling_space == SamplingSpace::GraphSpace)){
@@ -467,7 +462,7 @@ void SMCDiagnostics::add_full_step_diagnostics(
         {
             // add the forests from each plan at this step
             all_steps_forests_adj_list.at(step_num).push_back(
-                plans_ptr_vec.at(i)->get_forest_adj()
+                plan_ensemble.plan_ptr_vec[i]->get_forest_adj()
             );
         }
         if(sampling_space == SamplingSpace::LinkingEdgeSpace){
@@ -475,7 +470,7 @@ void SMCDiagnostics::add_full_step_diagnostics(
             {
                 // add the forests from each plan at this step
                 all_steps_linking_edge_list.at(step_num).push_back(
-                    plans_ptr_vec.at(i)->get_linking_edges()
+                    plan_ensemble.plan_ptr_vec[i]->get_linking_edges()
                 );
             }
             
@@ -484,11 +479,7 @@ void SMCDiagnostics::add_full_step_diagnostics(
     
     // Copy the sizes if neccesary 
     if(!split_district_only && (step_num < total_steps-1 || !splitting_all_the_way)){
-        copy_plans_to_rcpp_mat(
-            pool, 
-            plans_ptr_vec, 
-            region_sizes_mat_list.at(step_num),
-            true);
+        region_sizes_mat_list.at(step_num) = plan_ensemble.get_R_sizes_matrix(pool);
     }
 
     return;

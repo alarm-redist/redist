@@ -407,7 +407,7 @@ double compute_simple_log_incremental_weight(
                 map_params, region1_id, region2_id
             );
         }
-    }else if(sampling_space == SamplingSpace::ForestSpace){
+    }else if(sampling_space == SamplingSpace::ForestSpace || sampling_space == SamplingSpace::LinkingEdgeSpace){
         // sum of spanning trees 
         double spanning_tree_sum = 0.0;
         double last_split_merge_log_tau = 0.0;

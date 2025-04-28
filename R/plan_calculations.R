@@ -86,7 +86,7 @@ compute_log_target_density <- function(
     num_prob_zero <- sum(!is.finite(unnormalized_log_density))
 
     if(num_prob_zero > 0){
-        cli::cli_warn("{num_prob_zero} of the plans have probability 0!")
+        cli::cli_warn("{num_prob_zero} of the {length(unnormalized_log_density)} plans have probability 0!")
     }
 
     return(unnormalized_log_density)

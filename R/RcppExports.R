@@ -95,8 +95,8 @@ get_merged_log_number_linking_edges <- function(adj_list, region_ids, region1_id
 #' running <ADD OPTIONS>
 #' @export
 #' @keywords internal
-run_redist_gsmc <- function(nsims, ndists, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat) {
-    .Call(`_gredist_run_redist_gsmc`, nsims, ndists, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat)
+run_redist_gsmc <- function(nsims, total_seats, ndists, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat) {
+    .Call(`_gredist_run_redist_gsmc`, nsims, total_seats, ndists, initial_num_regions, adj_list, counties, pop, step_types, target, lower, upper, rho, sampling_space_str, control, constraints, verbosity, diagnostic_level, region_id_mat, region_sizes_mat)
 }
 
 log_st_map <- function(g, districts, counties, n_distr) {
@@ -266,25 +266,6 @@ runif1 <- function(n, max) {
 resample_lowvar <- function(wgts) {
     .Call(`_gredist_resample_lowvar`, wgts)
 }
-
-#' Copies data from a vector of `Plan` objects into an Rcpp Matrix
-#'
-#' Takes a vector of plans and copies all the data into an RcppMatrix
-#' of the same size using the Rcpp Threadpool to copy in parallel. 
-#'
-#'
-#' @title Copies data from an arma Matrix into an Rcpp Matrix
-#'
-#' @param pool A threadpool for multithreading
-#' @param arma_mat Subview of an arma unsigned integer matrix 
-#' @param rcpp_mat A matrix of integers with the same size as the arma_mat
-#'
-#' @details Modifications
-#'    - The `rcpp_mat` is filled in with the data om the arma matrix subview
-#'
-#' @noRd
-#' @keywords internal
-NULL
 
 #' Reorders all the plans in the vector by order a region was split
 #'

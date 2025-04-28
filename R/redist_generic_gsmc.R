@@ -332,6 +332,7 @@ generic_redist_gsmc <- function(
 
         algout <- gredist::run_redist_gsmc(
             nsims=nsims,
+            total_seats=ndists,
             ndists=ndists,
             initial_num_regions=init_num_regions,
             adj_list=adj_list,
@@ -428,10 +429,8 @@ generic_redist_gsmc <- function(
                                  {.url https://github.com/alarm-gredist/gredist/issues/new}"))
         }
 
-
         if (resample) {
-            # NOTE SURE WHAT IS GOING ON HERE????
-            # THINK CURRENT REDIST CODE IS BROKEN
+            # SKIPPED FOR NOW!
             # if (!truncate) {
             #     mod_wgt <- wgt
             # } else if (requireNamespace("loo", quietly = TRUE) && is.null(trunc_fn)) {
@@ -451,7 +450,7 @@ generic_redist_gsmc <- function(
             rs_idx <- resample_plans_lowvar(
                 normalized_wgts,
                 algout$plans_mat,
-                matrix(0L), FALSE
+                algout$plan_sizes_mat, algout$plan_sizes_saved
             )
             if(DEBUG_MODE) print("Checkpoint 3.5 - did in place reordering!")
 
@@ -467,13 +466,6 @@ generic_redist_gsmc <- function(
             nunique_parent_indices <- c(
                 algout$nunique_parent_indices,
                 dplyr::n_distinct(rs_idx[1:length(rs_idx)]))
-
-
-            if(diagnostic_mode){
-                # makes algout$final_region_labs[i] now equal to algout$final_region_labs[rs_idx[i]]
-                # to account for resampling
-                # algout$final_region_labs[,rs_idx, drop = FALSE]
-            }
 
             #TODO probably need to adjust the rest of these as well
             storage.mode(algout$ancestors) <- "integer"
@@ -509,7 +501,8 @@ generic_redist_gsmc <- function(
         dummy_vec[!c(algout$merge_split_steps,FALSE)] <- nunique_parent_indices
         nunique_parent_indices <- dummy_vec
 
-
+        # make sizes null if needed
+        algout$plan_sizes_mat <- ifelse(algout$plan_sizes_saved, algout$plan_sizes_mat, NULL)
 
 
         # nunique_original_ancestors <- c(nunique_original_ancestors,
