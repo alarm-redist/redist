@@ -109,14 +109,6 @@ Plan::Plan(int const ndists, int const num_regions,
     num_regions(num_regions),
     region_order_max(ndists+1)
 {
-    // check num_regions and num_districts inputs make sense
-    if (ndists < 2) throw Rcpp::exception("Tried to create a plan with ndists < 2 regions!");
-    if (region_sizes.size() != ndists) throw Rcpp::exception("The region dvals column passed in is not size ndists!");
-
- 
-    // now check these
-    if (num_regions > ndists) throw Rcpp::exception("Tried to create a plan object with more regions than ndists!");
-    if (num_regions == 0) throw Rcpp::exception("Tried to create a plan with 0 regions");
 
     // Create other region-level information 
     // fill first num_regions entries with 1,...,num_regions 
@@ -133,7 +125,7 @@ Plan::Plan(int const ndists, int const num_regions,
 };
 
 // assumes that the inputted attributes are all zero 
-Plan::Plan(int const ndists,
+Plan::Plan(int const total_seats,
     int const total_pop,
     PlanVector &this_plan_region_ids, 
     RegionSizes &this_plan_region_sizes,
@@ -145,36 +137,12 @@ Plan::Plan(int const ndists,
     region_pops(this_plan_region_pops),
     region_added_order(this_plan_order_added),
     num_regions(1),
-    region_order_max(ndists + 1)    
+    region_order_max(total_seats + 1)    
 {
-    if (ndists < 2) throw Rcpp::exception("Tried to create a plan with ndists < 2 regions!");
     region_pops[0] = total_pop;
-    region_sizes[0] = ndists;
+    region_sizes[0] = total_seats;
     region_added_order[0] = 1;
 };
-
-// Plan::Plan(const Plan& other)
-//     : region_ids(other.region_ids), region_sizes(other.region_sizes) // Share the same reference
-// {
-//     // Copy simple members
-//     ndists = other.ndists;
-//     V = other.V;
-//     num_regions = other.num_regions;
-//     num_districts = other.num_districts;
-//     num_multidistricts = other.num_multidistricts;
-//     map_pop = other.map_pop;
-//     remainder_region = other.remainder_region;
-
-//     // Deep copy std::vector members
-//     region_pops = other.region_pops;
-//     region_added_order = other.region_added_order;
-//     region_order_max = other.region_order_max;
-// }
-
-
-// Plan::Plan(const Plan& other){
-//     return *this;
-// }
 
 
 

@@ -5,7 +5,10 @@
 \title{Run Optimalgsmc with Merge Split}
 \usage{
 run_redist_gsmc(
+  nsims,
+  total_seats,
   ndists,
+  initial_num_regions,
   adj_list,
   counties,
   pop,
@@ -14,16 +17,18 @@ run_redist_gsmc(
   lower,
   upper,
   rho,
-  region_id_mat,
-  region_sizes_mat,
   sampling_space_str,
   control,
   constraints,
-  verbosity = 3L,
-  diagnostic_level = 0L
+  verbosity,
+  diagnostic_level,
+  region_id_mat,
+  region_sizes_mat
 )
 }
 \arguments{
+\item{nsims}{The number of plans (samples) to draw}
+
 \item{ndists}{The number of districts the final plans will have}
 
 \item{adj_list}{A 0-indexed adjacency list representing the undirected graph
@@ -44,8 +49,6 @@ relative to}
 
 \item{verbosity}{What level of detail to print out while the algorithm is
 running \if{html}{\out{<ADD OPTIONS>}}}
-
-\item{nsims}{The number of plans (samples) to draw}
 
 \item{k_param}{The k parameter from the SMC algorithm, you choose among the top k_param edges}
 

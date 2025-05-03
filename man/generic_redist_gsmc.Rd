@@ -23,13 +23,15 @@ generic_redist_gsmc(
   resample = TRUE,
   num_processes = 0L,
   num_threads_per_process = 0L,
-  multiprocess = TRUE,
+  multiprocess = FALSE,
   pop_temper = 0,
   init_region_ids_mat = NULL,
   init_region_sizes_mat = NULL,
   custom_size_split_list = NULL,
   num_splitting_steps = NULL,
   ref_name = NULL,
+  truncate = (compactness != 1),
+  trunc_fn = redist_quantile_trunc,
   verbose = FALSE,
   silent = FALSE,
   diagnostic_level = 0,
@@ -125,6 +127,15 @@ If fewer than the number of remaining splits, reference plans are disabled.}
 \item{ref_name}{a name for the existing plan, which will be added as a
 reference plan, or \code{FALSE} to not include the initial plan in the
 output. Defaults to the column name of the existing plan.}
+
+\item{truncate}{Whether to truncate the importance sampling weights at the
+final step by \code{trunc_fn}.  Recommended if \code{compactness} is not 1.
+Truncation only applied if \code{resample=TRUE}.}
+
+\item{trunc_fn}{A function which takes in a vector of weights and returns a
+truncated vector. If the \link[loo:loo]{loo} package is installed (strongly
+recommended), will default to Pareto-smoothed Importance Sampling (PSIS)
+rather than naive truncation.}
 
 \item{verbose}{Whether to print out intermediate information while sampling.
 Recommended.}

@@ -20,6 +20,98 @@ Rcpp::List maximum_input_sizes(){
 }
 
 
+//' Get canonically relabeled plans matrix
+//'
+//' Given a matrix of 1-indexed plans (or partial plans) this function 
+//' returns a new plans matrix with all the plans labeled canonically. 
+//' The canonical labelling of a plan is the one where the region of the 
+//' first vertex gets mapped to 1, the region of the next smallest vertex
+//' in a different region than the first gets mapped to 2, and so on. This
+//' is guaranteed to result in the same labelling for any plan where the 
+//' region ids have been permuted. 
+//'
+//'
+//' @param plans_mat A matrix of 1-indexed plans
+//' @param num_regions The number of regions in the plan
+//' @param num_threads The number of threads to use. Defaults to number of machine threads.
+//'
+//' @details Modifications
+//'    - None
+//'
+//' @returns A matrix of canonically labelled plans
+//'
+//' @keywords internal
+Rcpp::IntegerMatrix get_canonical_plan_labelling(
+    Rcpp::IntegerMatrix const &plans_mat,
+    int const num_regions,
+    int const num_threads
+){
+    int const V = plans_mat.nrow();
+    int const nsims = plans_mat.ncol();
+    // check the plan isn't zero indexed
+    for (size_t i = 0; i < V; i++)
+    {
+        if(plans_mat(i,0) == 0){
+            throw Rcpp::exception("Plans matrix in `get_canonical_plan_labelling` must be 1-indexed!\n");
+        }
+    }
+
+    Rcpp::IntegerMatrix relabelled_plan_mat(V, nsims);
+
+    // create thread pool
+    int actual_num_threads;
+    if(num_threads == 1){
+        actual_num_threads = 0;
+    }else if(num_threads > 1){
+        actual_num_threads = num_threads;
+    }else{
+        actual_num_threads = std::thread::hardware_concurrency();
+    }
+    RcppThread::ThreadPool pool(actual_num_threads);
+
+    // now relabel 
+    pool.parallelFor(0, nsims, [&] (int i) {
+        // make a vector which maps old region ids to the new canonical one
+        static thread_local std::vector<int> reindex_vec(num_regions, -1);
+        // reset the vector indices 
+        std::fill(
+            reindex_vec.begin(),
+            reindex_vec.end(),
+            -1
+        );
+
+        int current_region_relabel_counter = 1;
+
+        for (size_t v = 0; v < V; v++)
+        {
+            // check if this region has been relabelled yet
+            if(reindex_vec[plans_mat(v, i) - 1] <= 0){
+                // if not then we haven't set a relabel for this region
+                reindex_vec[plans_mat(v, i) - 1] = current_region_relabel_counter;
+                ++current_region_relabel_counter;
+            }
+
+            // now relabel 
+            relabelled_plan_mat(v, i) = reindex_vec[plans_mat(v, i) - 1];
+        }        
+    });
+
+    pool.wait();
+    
+    return relabelled_plan_mat;
+}
+
+
+RcppThread::ThreadPool get_thread_pool(int const num_threads){
+    if(num_threads == 1){
+        return RcppThread::ThreadPool(0);
+    }else if(num_threads > 1){
+        return RcppThread::ThreadPool(num_threads);
+    }else{
+        return RcppThread::ThreadPool(std::thread::hardware_concurrency());
+    }
+}
+
 // creates plan ensemble of blank plans
 PlanEnsemble::PlanEnsemble(
     int const V, int const ndists, 
@@ -37,6 +129,8 @@ PlanEnsemble::PlanEnsemble(
     flattened_all_region_order_added(ndists*nsims, -1),
     plan_ptr_vec(nsims)
 {
+    if (ndists < 2) throw Rcpp::exception("Tried to create a plan with fewer than 2 districts!");
+
     bool const use_graph_space = sampling_space == SamplingSpace::GraphSpace;
     bool const use_forest_space = sampling_space == SamplingSpace::ForestSpace;
     bool const use_linking_edge_space = sampling_space == SamplingSpace::LinkingEdgeSpace;
@@ -124,6 +218,10 @@ PlanEnsemble::PlanEnsemble(
         );
     }
 
+    // check num_regions and num_districts inputs make sense
+    if (ndists < 2) throw Rcpp::exception("Tried to create a plan with ndists < 2 regions!");
+    if (num_regions > ndists) throw Rcpp::exception("Tried to create a plan object with more regions than ndists!");
+    if (num_regions == 0) throw Rcpp::exception("Tried to create a plan with 0 regions");
     // Now move the data in the matrix 
 
 

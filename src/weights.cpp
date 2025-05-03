@@ -803,7 +803,7 @@ double compute_log_optimal_weights(
     }
 
     if(DEBUG_WEIGHTS_VERBOSE){
-        REprintf("Weight=%f\n", incremental_weight);
+        REprintf("Weight=%f, log weight = %f\n", incremental_weight, extra_log_terms-std::log(incremental_weight));
     }
     
 

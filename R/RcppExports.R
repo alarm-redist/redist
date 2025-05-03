@@ -151,6 +151,10 @@ compute_log_unnormalized_plan_target_density <- function(adj_list, counties, pop
     .Call(`_gredist_compute_log_unnormalized_plan_target_density`, adj_list, counties, pop, constraints, pop_temper, rho, ndists, num_regions, lower, target, upper, region_ids, region_sizes, num_threads)
 }
 
+compute_log_unnormalized_region_target_density <- function(adj_list, counties, pop, constraints, pop_temper, rho, ndists, num_regions, lower, target, upper, region_ids, region_sizes, num_threads) {
+    .Call(`_gredist_compute_log_unnormalized_region_target_density`, adj_list, counties, pop, constraints, pop_temper, rho, ndists, num_regions, lower, target, upper, region_ids, region_sizes, num_threads)
+}
+
 compute_plans_log_optimal_weights <- function(adj_list, counties, pop, constraints, pop_temper, rho, splitting_schedule_str, ndists, num_regions, lower, target, upper, region_ids, region_sizes, num_threads) {
     .Call(`_gredist_compute_plans_log_optimal_weights`, adj_list, counties, pop, constraints, pop_temper, rho, splitting_schedule_str, ndists, num_regions, lower, target, upper, region_ids, region_sizes, num_threads)
 }
@@ -289,6 +293,31 @@ NULL
 
 maximum_input_sizes <- function() {
     .Call(`_gredist_maximum_input_sizes`)
+}
+
+#' Get canonically relabeled plans matrix
+#'
+#' Given a matrix of 1-indexed plans (or partial plans) this function 
+#' returns a new plans matrix with all the plans labeled canonically. 
+#' The canonical labelling of a plan is the one where the region of the 
+#' first vertex gets mapped to 1, the region of the next smallest vertex
+#' in a different region than the first gets mapped to 2, and so on. This
+#' is guaranteed to result in the same labelling for any plan where the 
+#' region ids have been permuted. 
+#'
+#'
+#' @param plans_mat A matrix of 1-indexed plans
+#' @param num_regions The number of regions in the plan
+#' @param num_threads The number of threads to use. Defaults to number of machine threads.
+#'
+#' @details Modifications
+#'    - None
+#'
+#' @returns A matrix of canonically labelled plans
+#'
+#' @keywords internal
+get_canonical_plan_labelling <- function(plans_mat, num_regions, num_threads) {
+    .Call(`_gredist_get_canonical_plan_labelling`, plans_mat, num_regions, num_threads)
 }
 
 resample_plans_lowvar <- function(normalized_weights, plans_mat, region_sizes_mat, reorder_sizes_mat) {

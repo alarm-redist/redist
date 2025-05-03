@@ -21,6 +21,45 @@
 // [[Rcpp::export]]
 Rcpp::List maximum_input_sizes();
 
+
+
+//' Get canonically relabeled plans matrix
+//'
+//' Given a matrix of 1-indexed plans (or partial plans) this function 
+//' returns a new plans matrix with all the plans labeled canonically. 
+//' The canonical labelling of a plan is the one where the region of the 
+//' first vertex gets mapped to 1, the region of the next smallest vertex
+//' in a different region than the first gets mapped to 2, and so on. This
+//' is guaranteed to result in the same labelling for any plan where the 
+//' region ids have been permuted. 
+//'
+//'
+//' @param plans_mat A matrix of 1-indexed plans
+//' @param num_regions The number of regions in the plan
+//' @param num_threads The number of threads to use. Defaults to number of machine threads.
+//'
+//' @details Modifications
+//'    - None
+//'
+//' @returns A matrix of canonically labelled plans
+//'
+//' @keywords internal
+// [[Rcpp::export]]
+Rcpp::IntegerMatrix get_canonical_plan_labelling(
+    Rcpp::IntegerMatrix const &plans_mat,
+    int const num_regions,
+    int const num_threads
+);
+
+
+/*
+ * Creates a Rcpp Threadpool
+ *
+ * 
+ */
+RcppThread::ThreadPool get_thread_pool(int const num_threads);
+
+
 //' Reorders all the plans in the vector by order a region was split
 //'
 //' Takes a vector of plans and uses the vector of dummy plans to reorder

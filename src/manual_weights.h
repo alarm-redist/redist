@@ -33,7 +33,19 @@ Rcpp::NumericVector compute_log_unnormalized_plan_target_density(
     double const lower, double const target, double const upper,
     Rcpp::IntegerMatrix const &region_ids, 
     Rcpp::IntegerMatrix const &region_sizes,
-    int num_threads
+    int const num_threads
+);
+
+
+// [[Rcpp::export]]
+Rcpp::NumericMatrix compute_log_unnormalized_region_target_density(
+    List const &adj_list, const arma::uvec &counties, const arma::uvec &pop,
+    List const &constraints, double const pop_temper,  double const rho,
+    int const ndists, int const num_regions,
+    double const lower, double const target, double const upper,
+    Rcpp::IntegerMatrix const &region_ids, 
+    Rcpp::IntegerMatrix const &region_sizes,
+    int const num_threads
 );
 
 
